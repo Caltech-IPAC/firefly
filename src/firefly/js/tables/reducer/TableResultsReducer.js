@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import update from 'react-addons-update';
+import {updateSet, updateDelete} from '../../util/WebUtil.js';
 import {set, get, has, omit} from 'lodash';
 
 import * as Cntlr from '../TablesCntlr.js';
@@ -28,7 +28,7 @@ export function resultsReducer(state={results:{}}, action={}) {
             if (!has(root, 'active')) {
                 set(root, 'active', undefined);
             }
-            return update(root, {active: {$set: tbl_id}});
+            return updateSet(root, 'active', tbl_id);
             
         case (Cntlr.TABLE_REMOVE)    :
             return removeTable(root, action);
@@ -44,8 +44,7 @@ function removeTable(root, action) {
         return get(root, ['tables', tbl_ui_id, 'tbl_id']) === tbl_id;
     }).forEach( (tbl_ui_id) => {
         if (has(root, ['tables', tbl_ui_id])) {
-            const changes = omit(root.tables, tbl_ui_id);
-            root = update(root, {tables: {$set: changes}});
+            root = updateDelete(root, 'tables', tbl_ui_id);
         }
     });
 
@@ -53,7 +52,7 @@ function removeTable(root, action) {
         // active table have been remove. set it to the first available table
         const first = Object.keys(root.tables)[0];
         const newActiveId = first && root.tables[first].tbl_id;
-        root = update(root, {active: {$set: newActiveId}});
+        root = updateSet(root, 'active', newActiveId);
     }
 
     return root;

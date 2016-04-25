@@ -7,7 +7,7 @@ import {get, omitBy, pickBy, isUndefined} from 'lodash';
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
 import shallowequal from 'shallowequal';
-import {dataReducer} from './reducer/TableDataReduer.js';
+import {dataReducer} from './reducer/TableDataReducer.js';
 import {uiReducer} from './reducer/TableUiReducer.js';
 import {resultsReducer} from './reducer/TableResultsReducer.js';
 import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
@@ -88,6 +88,7 @@ export function fetchTable(action) {
                 actionType = TABLE_UPDATE;
             } else {
                 actionType = TABLE_NEW;
+                request.startIdx = 0;
                 dispatch({type: TABLE_REPLACE, payload: {tbl_id}});
                 dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:dispatchTableLoaded});
             }

@@ -5,8 +5,8 @@
 /*global __MODULE_NAME__*/
 
 import Enum from 'enum';
-import isBlank from 'underscore.string/isBlank';
-import {get, isObject, union, isFunction, isEqual} from 'lodash';
+import update from 'react-addons-update';
+import {get, set, omit, isObject, union, isFunction, isEqual} from 'lodash';
 import { getRootURL } from './BrowserUtil.js';
 
 const  MEG          = 1048576;
@@ -292,3 +292,56 @@ export function deepDiff(o1, o2, p) {
         console.groupEnd();
     }
 }
+
+/*----------------------------/ update ----------------------------*/
+/**
+ * This is a wrapper of React update's $set for use with deep object update.
+ * *Syntax is similar to lodash set.
+ * @param object (Object): The object to modify.
+ * @param path (Array|string): The path of the property to set.
+ * @param value (*): The value to set.
+ */
+export function updateSet(object, path, value) {
+    const o = set({}, path, {$set: value});
+    return update(object, o);
+}
+
+/**
+ * This is a wrapper of React update's $merge for use with deep object update.
+ * *Syntax is similar to as lodash set.
+ * @param object (Object): The object to modify.
+ * @param path (Array|string): The path of the property to merge.
+ * @param value (*): The value to merge.
+ */
+export function updateMerge(object, path, value) {
+    const o = set({}, path, {$merge: value});
+    return update(object, o);
+}
+
+/**
+ * This is a generic wrapper of React's update for use with deep object update.
+ * Command can be on of:
+ * {$push: array}, {$unshift: array}, {$splice: array of arrays}, {$set: any}, {$apply: function}
+ * see React's update for details.
+ * *Syntax is similar to as lodash set.
+ * @param object (Object): The object to modify.
+ * @param path (Array|string): The path of the property to apply the function to.
+ * @param command (*): The command portion of react's update.
+ */
+export function updateWith(object, path, command) {
+    const o = set({}, path, command);
+    return update(object, o);
+}
+
+/**
+ * Delete a property from an object
+ * Syntax is similar to as lodash set.
+ * @param object (Object): The object to modify.
+ * @param path (Array|string): The path of the container of the property to delete.
+ * @param value (*): The property to delete.
+ */
+export function updateDelete(object, path, value) {
+    const v = omit(get(object, path), value);
+    return updateSet(object, path, v);
+}
+/*---------------------------- update /----------------------------*/
