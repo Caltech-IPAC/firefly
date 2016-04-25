@@ -189,7 +189,7 @@ function renderWiseSearch(fields) {
                     <CheckboxGroupInputField
                         fieldKey='wiseBands'
                         initialState= {{
-                                    value: '_all_',
+                                    value: '1,2,3,4',   // workaround for _all_ for now
                                     tooltip: 'Please select some boxes',
                                     label : 'Bands:' }}
                         options={options}
@@ -427,9 +427,8 @@ function doWise(request) {
         mcenter:  (request.intersect==='CENTER' || request.intersect==='COVERS') ? request.mcenter : 'all',
         size: request.size,
         subsize: request.subsize,
-        band : request.wisebands,
-        META_INFO : {title: `${schemaParams[request.wiseDataSet].title}${tgtName}`}
-    }, omit(schemaParams[request.wiseDataSet], 'title'));
+        band : request.wisebands
+    }, schemaParams[request.wiseDataSet]);
     
     dispatchTableSearch(TableRequest.newInstance(reqParams));
 }
