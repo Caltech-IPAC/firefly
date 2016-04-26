@@ -90,7 +90,7 @@ export function fetchTable(action) {
             } else {
                 actionType = TABLE_NEW;
                 request.startIdx = 0;
-                dispatch({type: TABLE_REPLACE, payload: {tbl_id}});
+                dispatch({type: TABLE_REPLACE, payload: {tbl_id, isFetching: true}});
                 dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:dispatchTableLoaded});
             }
 

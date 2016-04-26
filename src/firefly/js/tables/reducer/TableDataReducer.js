@@ -33,8 +33,8 @@ export function dataReducer(state={data:{}}, action={}) {
 
         case (Cntlr.TABLE_NEW)  :
         case (Cntlr.TABLE_REPLACE)  :
-            const nTable = Object.assign({selectInfo: SelectInfo.newInstance({}).data},action.payload);
-            return update(root, {$merge: {[tbl_id] : nTable}});
+            const nTable = Object.assign({isFetching:false, selectInfo: SelectInfo.newInstance({}).data},action.payload);
+            return updateSet(root, [tbl_id], nTable);
 
         case (Cntlr.TABLE_REMOVE)  :
             root = Object.assign({}, root);

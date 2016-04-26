@@ -307,7 +307,6 @@ img, html {
     animation-duration: 2s;
     animation-iteration-count: infinite;
     animation-timing-function: linear;
-    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.33));
 }
 /*------------------- loading mask ---------------------*/
 

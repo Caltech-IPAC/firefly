@@ -75,12 +75,13 @@ const App = React.createClass({
                     </header>
                     <main>
                         <ResultsPanel title={title}
-                            imagePlot ={<TriViewImageSection showCoverage={true} showFits={true}
+                            imagePlot ={<TriViewImageSection key='res-tri-img'
+                                                             showCoverage={true} showFits={true}
                                                              showImageMetaData={true}
                                                              imageExpandedMode={expandedMode===LO_EXPANDED.images.view} />}
-                            visToolbar = {<VisToolbar/>}
-                            xyPlot = {<ChartsContainer key='results-xyplots' tblId={activeTblId} />}
-                            tables = {<TablesContainer key='results-tables' /> }
+                            visToolbar = {<VisToolbar key='res-vis-tb'/>}
+                            xyPlot = {<ChartsContainer key='res-xyplots' tblId={activeTblId} />}
+                            tables = {<TablesContainer key='res-tables' /> }
                         />
                     </main>
                 </div>

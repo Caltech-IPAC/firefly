@@ -59,7 +59,7 @@ export class BasicTable extends Component {
 
     render() {
         const {selectable, border, renderers} = this.props;
-        const {columns, showUnits, showFilters, textView, startIdx,
+        const {columns, showUnits, showFilters, textView, startIdx, showMask, currentPage,
                 hlRowIdx, selectInfo, filterInfo, sortInfo, data, error} = this.state;
         const {tableConnector} = this;
         if (error) return <div className='TablePanel__error'>{error}</div>;
@@ -80,6 +80,8 @@ export class BasicTable extends Component {
                         filterInfo={filterInfo}
                         sortInfo={sortInfo}
                         textView={textView}
+                        showMask={showMask}
+                        currentPage={currentPage}
                         callbacks={tableConnector}
                         renderers={renderers}
                     />
