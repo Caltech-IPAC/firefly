@@ -66,7 +66,7 @@ export class TablePanel extends Component {
     render() {
         const {selectable, expandable, expandedMode, border, renderers} = this.props;
         var {totalRows, request, showLoading, columns, showOptions, showUnits, showFilters, textView, colSortDir} = this.state;
-        const {error, startIdx, hlRowIdx, highlightedRow, pageSize, selectInfo,
+        const {error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
             filterInfo, filterCount, sortInfo, data} = this.state;
         const {tableConnector} = this;
 
@@ -85,7 +85,7 @@ export class TablePanel extends Component {
                             <button style={{width:70}}>Download</button>
                         </div>
 
-                        <PagingBar {...{highlightedRow, pageSize, showLoading, totalRows, callbacks:tableConnector}} />
+                        <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:tableConnector}} />
 
                         <div className='group'>
                             {filterCount > 0 &&
@@ -118,6 +118,8 @@ export class TablePanel extends Component {
                             filterInfo={filterInfo}
                             sortInfo={sortInfo}
                             textView={textView}
+                            showMask={showMask}
+                            currentPage={currentPage}
                             callbacks={tableConnector}
                             renderers={renderers}
                         />

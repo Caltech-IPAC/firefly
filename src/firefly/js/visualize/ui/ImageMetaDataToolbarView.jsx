@@ -92,7 +92,7 @@ export function ImageMetaDataToolbarView({visRoot, viewerId, viewerPlotIds, layo
                                  onClick={() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])} />
                 }
             </div>
-            {showPager && <ImagePager pageSize={10} highlightedRow={activeTable.highlightedRow} tbl_id={activeTable.tbl_id} />}
+            {showPager && <ImagePager pageSize={10} tbl_id={activeTable.tbl_id} />}
         </div>
     );
 }
@@ -114,8 +114,8 @@ function showThreeColorOps(viewer,dataId) {
     showColorBandChooserPopup(viewer.viewerId,newCustom,dataId);
 }
 
-function ImagePager({pageSize, highlightedRow, tbl_id}) {
-    const {totalRows, showLoading} = getTblInfoById(tbl_id, pageSize);
+function ImagePager({pageSize, tbl_id}) {
+    const {totalRows, showLoading, currentPage} = getTblInfoById(tbl_id, pageSize);
     const onGotoPage = (pageNum) => {
         const hlRowIdx = Math.max( pageSize * (pageNum-1), 0 );
         dispatchTableHighlight(tbl_id, hlRowIdx);
@@ -123,7 +123,7 @@ function ImagePager({pageSize, highlightedRow, tbl_id}) {
     
     return (
         <div role='toolbar'>
-            <PagingBar {...{highlightedRow, pageSize, showLoading, totalRows, callbacks:{onGotoPage}}} />
+            <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:{onGotoPage}}} />
         </div>
     );
 }

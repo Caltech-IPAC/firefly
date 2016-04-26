@@ -16,9 +16,9 @@ export class PagingBar extends Component {
     }
 
     render() {
-        const {highlightedRow, totalRows, pageSize, showLoading, callbacks} = this.props;
+        const {currentPage, totalRows, pageSize, showLoading, callbacks} = this.props;
 
-        const currentPage = highlightedRow >= 0 ? Math.floor(highlightedRow / pageSize)+1 : 1;
+        // const currentPage = highlightedRow >= 0 ? Math.floor(highlightedRow / pageSize)+1 : 1;
         const startIdx = (currentPage-1) * pageSize;
         const endIdx = Math.min(startIdx+pageSize, totalRows);
         var totalPages = Math.ceil((totalRows || 0)/pageSize);
@@ -53,7 +53,7 @@ export class PagingBar extends Component {
 }
 
 PagingBar.propTypes = {
-    highlightedRow: PropTypes.number,
+    currentPage: PropTypes.number,
     totalRows: PropTypes.number,
     pageSize: PropTypes.number,
     showLoading: PropTypes.bool,
@@ -63,6 +63,7 @@ PagingBar.propTypes = {
 };
 
 PagingBar.defaultProps = {
+    currentPage: 1,
     showLoading: false,
     pageSize: 10
 };

@@ -14,8 +14,8 @@ export const ResultsPanel = function (props) {
     const expandedView = getExpandedMode();
     return (
             expandedView
-                ? <ExpandedView expandedView={expandedView} { ...pick(props, ['imagePlot','xyPlot','tables'] ) } />
-                : <StandardView {...props} />
+                ? <ExpandedView key='res-exp-view' expandedView={expandedView} { ...pick(props, ['imagePlot','xyPlot','tables'] ) } />
+                : <StandardView key='res-std-view' {...props} />
             );
 };
 

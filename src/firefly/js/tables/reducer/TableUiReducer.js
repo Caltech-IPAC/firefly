@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import update from 'react-addons-update';
 import {set, has, get, isEmpty, cloneDeep} from 'lodash';
 
+import {updateSet} from '../../util/WebUtil.js';
 import * as Cntlr from '../TablesCntlr.js';
 import * as TblUtil from '../TableUtil.js';
 
@@ -59,18 +59,19 @@ function uiStateReducer(ui, tableModel) {
     const filterCount = filterInfo ? filterInfo.split(';').length : 0;
     const sortInfo = get(tableModel, 'request.sortInfo');
     const showLoading = !TblUtil.isTableLoaded(tableModel);
+    const showMask = tableModel.isFetching;
 
     var data = has(tableModel, 'tableData.data') ? tableModel.tableData.data.slice(startIdx, endIdx) : [];
     var tableRowCount = data.length;
 
-    var uiData = {startIdx, endIdx, tableRowCount, sortInfo, filterInfo, filterCount, data, showLoading, ...others};
+    var uiData = {startIdx, endIdx, tableRowCount, sortInfo, filterInfo, filterCount, data, showLoading, showMask, ...others};
 
     Object.keys(ui).filter( (ui_id) => {
         return get(ui, [ui_id, 'tbl_id']) === tableModel.tbl_id;
     }).forEach( (tbl_ui_id) => {
         const columns = get(ui, [tbl_ui_id, 'columns']);
         uiData.columns = ensureColumns({tableModel, columns});
-        ui = update(ui, {$merge: {[tbl_ui_id]: uiData}});
+        ui = updateSet(ui, [tbl_ui_id], uiData);
     });
     return ui;
 }

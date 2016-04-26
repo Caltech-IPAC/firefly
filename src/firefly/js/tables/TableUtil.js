@@ -43,9 +43,6 @@ export function doFetchTable(tableRequest, hlRowIdx) {
                 }, []);
             }
             tableModel.highlightedRow = hlRowIdx || startIdx;
-            // if (!tableModel.selectInfo) {
-            //     tableModel.selectInfo = SelectInfo.newInstance({rowCount:tableModel.totalRows}).data;
-            // }
             return tableModel;
         });
     });
@@ -278,9 +275,9 @@ export function sortTable(origTableModel, sortInfoStr) {
     return tableModel;
 }
 
-export function getTblInfoById(tbl_id) {
+export function getTblInfoById(tbl_id, aPageSize) {
     const tableModel = findTblById(tbl_id);
-    return Object.assign(getTblInfo(tableModel), {tableModel});
+    return getTblInfo(tableModel, aPageSize);
 }
 
 /**
@@ -291,10 +288,14 @@ export function getTblInfoById(tbl_id) {
  */
 export function getTblInfo(tableModel, aPageSize) {
     if (!tableModel) return {};
-    var {tbl_id, request, highlightedRow, totalRows, tableMeta={}, selectInfo, error} = tableModel;
+    var {tbl_id, request, highlightedRow=0, totalRows=0, tableMeta={}, selectInfo, error} = tableModel;
     const {title} = tableMeta;
     const pageSize = aPageSize || get(request, 'pageSize', 1);  // there should be a pageSize.. default to 1 in case of error.  pageSize cannot be 0 because it'll overflow.
-    highlightedRow = highlightedRow < 0 || highlightedRow > totalRows ? 0 : highlightedRow;
+    if (highlightedRow < 0 ) {
+        highlightedRow = 0;
+    } else  if (highlightedRow >= totalRows-1) {
+        highlightedRow = totalRows-1;
+    }
     const currentPage = highlightedRow >= 0 ? Math.floor(highlightedRow / pageSize)+1 : 1;
     const hlRowIdx = highlightedRow >= 0 ? highlightedRow % pageSize : 0;
     const startIdx = (currentPage-1) * pageSize;
