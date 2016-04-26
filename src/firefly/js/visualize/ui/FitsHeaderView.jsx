@@ -30,7 +30,7 @@ const popupPanelResizableStyle = {
 
 
 //define the display style for the file size and pixel information and the table in the same div
-const tableAndTitleInfoStyle = {width: '100%', height: 'calc(100% - 40px)', display: 'flex'};
+const tableAndTitleInfoStyle = {width: '100%', height: 'calc(100% - 40px)', display: 'flex', resize:'none'};
 
 //define the table style only in the table div
 const tableStyle = {boxSizing: 'border-box', paddingLeft:5,paddingRight:5, width: '100%', height: 'calc(100% - 70px)', overflow: 'hidden', flexGrow: 1, display: 'flex', resize:'none'};
@@ -61,11 +61,12 @@ const tabStyle =  {width: '100%',height:'100%'};
 
 
 function popupForm(plot, fitsHeaderInfo, popupId) {
-    if (fitsHeaderInfo && fitsHeaderInfo.NO_BAND) {
-        return renderNoBandFitsHeader(plot, fitsHeaderInfo, popupId);
+
+    if (fitsHeaderInfo && plot.plotState.getBands().length===1 ) {
+        return renderSingleBandFitsHeader(plot, fitsHeaderInfo, popupId);
     }
     else {
-        return render3BandFitsHeaders(plot, fitsHeaderInfo, popupId);
+        return renderColorBandsFitsHeaders(plot, fitsHeaderInfo, popupId);
     }
 }
 
@@ -85,26 +86,48 @@ function showFitsHeaderPopup(plot, tableId, fitsHeaderInfo) {
     dispatchShowDialog(popupId);
 }
 
-function renderNoBandFitsHeader(plot, fitsHeaderInfo, popupId){
+function renderSingleBandFitsHeader(plot, fitsHeaderInfo, popupId){
+    const band = plot.plotState.getBands()[0];
     return (
         <div style={ popupPanelResizableStyle}>
-            {renderFileSizeAndPixelSize(plot, Band.NO_BAND, fitsHeaderInfo)}
-            { renderTable( Band.NO_BAND,fitsHeaderInfo)}
+            {renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo)}
+            { renderTable( band,fitsHeaderInfo, false)}
             { renderCloseAndHelpButtons(popupId)}
         </div>
     );
 
 }
-function render3BandFitsHeaders(plot, fitsHeaderInfo, popupId) {
+
+
+function renderColorBandsFitsHeaders(plot, fitsHeaderInfo, popupId) {
+
+    const bands = plot.plotState.getBands();
+
+    var colorBandTabs;
+    switch (bands.length){
+        case 2:
+        colorBandTabs = (
+                <Tabs defaultSelected={0} >
+                    {renderSingleTab(plot, bands[0],fitsHeaderInfo )}
+                    {renderSingleTab(plot, bands[1],fitsHeaderInfo )}
+            </Tabs>
+         );
+            break;
+        case 3:
+            colorBandTabs = (
+                <Tabs defaultSelected={0} >
+                    {renderSingleTab(plot, bands[0],fitsHeaderInfo )}
+                    {renderSingleTab(plot, bands[1],fitsHeaderInfo )}
+                    {renderSingleTab(plot, bands[2],fitsHeaderInfo )}
+                </Tabs>
+            );
+            break;
+    }
 
     return (
         <div style={ popupPanelResizableStyle} >
           <div style = {tableAndTitleInfoStyle}>
-            <Tabs defaultSelected={0} >
-                {renderSingleTab(plot, Band.RED,fitsHeaderInfo )}
-                {renderSingleTab(plot, Band.GREEN,fitsHeaderInfo )}
-                {renderSingleTab(plot, Band.BLUE,fitsHeaderInfo )}
-            </Tabs>
+              {colorBandTabs}
         </div>
             { renderCloseAndHelpButtons(popupId)}
         </div>
@@ -120,7 +143,10 @@ function renderSingleTab(plot, band, fitsHeaderInfo) {
     <Tab name = {band.key}  >
         <div style={{position:'relative', flexGrow:1}}>
             <div style={{position:'absolute', top:0, bottom:0, left:0, right:0}}>
-                {renderSingleBandFitsHeader(plot, band, fitsHeaderInfo)}
+                <div style={tabStyle}>
+                    {renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo)}
+                    { renderTable( band,fitsHeaderInfo,true)}
+                </div>
             </div>
         </div>
     </Tab>
@@ -141,19 +167,6 @@ function renderCloseAndHelpButtons(popupId){
         </div>
     </div>
 );
-}
-function renderSingleBandFitsHeader(plot,band, fitsHeaderInfo) {
-
-
-   // var fitsHeaderInfoStyle = band==Band.NO_BAND? tableAndTitleInfoStyle: tabStyle;
-    return (
-
-        <div style={tabStyle}>
-            {renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo)}
-            { renderTable( band,fitsHeaderInfo)}
-        </div>
-
-    );
 }
 
 function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo) {
@@ -179,10 +192,10 @@ function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo) {
  * @param fitsHeaderInfo
  * @returns {XML}
  */
-function renderTable(band, fitsHeaderInfo) {
+function renderTable(band, fitsHeaderInfo, isPlacedOnTab) {
 
     const tableModel = fitsHeaderInfo[band];
-    var myTableStyle= band===Band.NO_BAND?tableStyle:tableOnTabStyle;
+    var myTableStyle= isPlacedOnTab?tableOnTabStyle:tableStyle;
     return (
         <div style={ myTableStyle}>
            <BasicTable

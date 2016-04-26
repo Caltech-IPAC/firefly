@@ -24,8 +24,8 @@ import sCompare from 'react-addons-shallow-compare';
 import {MouseState} from '../VisMouseCntlr.js';
 
 const rS = {
-    width: 650,
-    minWidth: 550,
+    width: 660,
+    minWidth: 650,
     height: 32,
     minHeight: 32,
     display: 'inline-block',
@@ -53,17 +53,16 @@ const labelMap = {
     sPixelSize: 'Screen Pixel Size:'
 };
 
-const columnColorBandFluxLabel = {
+const column1 = {
     width: 60,
     paddingRight: 1,
     textAlign: 'right',
     color: 'DarkGray',
     display: 'inline-block'
 };
-const columnColorBandFluxValue = {width: 90, display: 'inline-block'};
-const column1Fl = {width: 80, paddingRight: 1, textAlign: 'right', color: 'DarkGray', display: 'inline-block'};
+const column2 = {width: 90, display: 'inline-block'};
 
-const column1 = {
+const column3 = {
     width: 80,
     paddingRight: 2,
     textAlign: 'right',
@@ -72,8 +71,10 @@ const column1 = {
     fontStyle: 'italic',
     display: 'inline-block'
 };
-const column2 = {width: 88, display: 'inline-block'};
-const column3 = {
+const column3_r2 = {width: 80, paddingRight: 1, textAlign: 'right', color: 'DarkGray', display: 'inline-block'};
+
+const column4 = {width: 88, display: 'inline-block'};
+const column5 = {
     width: 74,
     paddingRight: 1,
     textAlign: 'right',
@@ -82,9 +83,9 @@ const column3 = {
     fontStyle: 'italic',
     display: 'inline-block'
 };
-const column4 = {width: 152, display: 'inline-block'};
-const column5 = {width: 80, paddingLeft: 4, display: 'inline-block'};
-const column5_1 = {width: 90, paddingLeft: 1, display: 'inline-block'};
+const column6 = {width: 152, display: 'inline-block'};
+const column7 = {width: 90, paddingLeft: 6, display: 'inline-block'};
+const column7_r2 = {width: 90, paddingLeft: 3, display: 'inline-block'};
 
 
 const precision7Digit = '0.0000000';
@@ -116,9 +117,13 @@ export class MouseReadout extends React.Component {
                     if (result.hasOwnProperty('NO_BAND')) {
                         var fluxUnitStr = plot.webFitsData[Band.NO_BAND.value].fluxUnits;
                         var fValue = parseFloat(result.NO_BAND);
+                        var fluxStr='';
+                        if (fValue !== 'NoContext') {
 
-                        var fluxStr = fValue < 1000 ? fValue.toFixed(6) : fValue.toExponential(6).replace('e+', 'E');
-                        fluxStr = (fValue !== 'NoContext') ? `${fluxStr} ${fluxUnitStr}` : '';
+                            var fluxStr = fValue < 1000 ? fValue.toFixed(6) : fValue.toExponential(6).replace('e+', 'E');
+                           //fluxStr = (fValue !== 'NoContext') ? `${fluxStr} ${fluxUnitStr}` : '';
+                           fluxStr = `${fluxStr} ${fluxUnitStr}`;
+                        }
                         fluxArray = [fluxStr];
                         if (isLocked && mouseState.mouseState.key === 'UP' || !isLocked) {
                             this.setState({flux: fluxArray});
@@ -143,8 +148,10 @@ export class MouseReadout extends React.Component {
                             }
                             unitStr = get(plot.webFitsData, [bands[i].value, 'fluxUnits'], '');
                             fnum = parseFloat(result[bandName]);
-                            fluxValue = (fnum < 1000) ? fnum.toFixed(6) : fnum.toExponential(6).replace('e+', 'E');
-                            fluxArray[i] = `${fluxValue} ${unitStr}`;
+                            if (fnum !=='NoContext') {
+                                fluxValue = (fnum < 1000) ? fnum.toFixed(6) : fnum.toExponential(6).replace('e+', 'E');
+                                fluxArray[i] = `${fluxValue} ${unitStr}`;
+                            }
                         }
 
                         if (isLocked && mouseState.mouseState.key === 'UP' || !isLocked) {
@@ -274,33 +281,33 @@ export class MouseReadout extends React.Component {
 
             {/*row1*/}
             <div  >
-                <div style={ columnColorBandFluxLabel}>{fluxLabels[1]} </div>
-                <div style={ columnColorBandFluxValue}>  {fluxValues[1]}  </div>
-                <div style={ column1} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
+                <div style={ column1}>{fluxLabels[1]} </div>
+                <div style={ column2}>  {fluxValues[1]}  </div>
+                <div style={ column3} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
                     {labelMap[visRoot.pixelSize] }
                 </div>
-                <div style={column2}>{pixelSize} </div>
+                <div style={column4}>{pixelSize} </div>
 
-                <div style={ column3} onClick={ () => showDialog('mouseReadout1' ,visRoot.mouseReadout1)}>
+                <div style={ column5} onClick={ () => showDialog('mouseReadout1' ,visRoot.mouseReadout1)}>
                     { labelMap[visRoot.mouseReadout1] }
                 </div>
-                <div style={column4}> {mouseReadout1} </div>
+                <div style={column6}> {mouseReadout1} </div>
 
 
-                <div style={column5}> {title}  </div>
+                <div style={column7}> {title}  </div>
             </div>
             <div>{/* row2*/}
-                    <div style={ columnColorBandFluxLabel}>{fluxLabels[2]} </div>
-                    <div style={ columnColorBandFluxValue}> { fluxValues[2]} </div>
+                    <div style={ column1}>{fluxLabels[2]} </div>
+                    <div style={ column2}> { fluxValues[2]} </div>
 
-                    <div style={ column1Fl}>{fluxLabels[0]}</div>
-                    <div style={ column2}> {fluxValues[0]}</div>
+                    <div style={ column3_r2}>{fluxLabels[0]}</div>
+                    <div style={ column4}> {fluxValues[0]}</div>
 
-                    <div style={ column3} onClick={ () => showDialog('mouseReadout2' ,visRoot.mouseReadout2)}>
+                    <div style={ column5} onClick={ () => showDialog('mouseReadout2' ,visRoot.mouseReadout2)}>
                         {labelMap[visRoot.mouseReadout2] } </div>
 
-                    <div style={column4}>  {mouseReadout2}  </div>
-                    <div style={column5_1} title='Click on an image to lock the display at that point.'>
+                    <div style={column6}>  {mouseReadout2}  </div>
+                    <div style={column7_r2} title='Click on an image to lock the display at that point.'>
                         <input type='checkbox' name='aLock' value='lock'
                                onChange={ (request) => this.setLockState( request) }/>
                         Lock by click

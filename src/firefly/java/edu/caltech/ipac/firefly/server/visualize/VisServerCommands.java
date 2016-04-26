@@ -77,7 +77,7 @@ public class VisServerCommands {
             ImagePt pt = sp.getRequiredImagePt("pt");
 
             FileAndHeaderInfo fahAry[];
-            List<FileAndHeaderInfo> list = new ArrayList<FileAndHeaderInfo>(3);
+            List<FileAndHeaderInfo> list = new ArrayList<FileAndHeaderInfo>(state.getBands().length);
             for(Band b : state.getBands()) {
                 list.add(state.getFileAndHeaderInfo(b));
             }
@@ -85,6 +85,10 @@ public class VisServerCommands {
 
             String[] res = VisServerOps.getFileFlux(fahAry, pt);
 
+
+            if (res.length<state.getBands().length){
+                System.out.println("bug");
+            }
             JSONObject obj= new JSONObject();
             obj.put("JSON", true);
             obj.put("success", true);
