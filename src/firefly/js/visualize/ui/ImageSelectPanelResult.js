@@ -319,7 +319,9 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
             wpSet.forEach((item) => {
                 if (item) {
                     item.setPlotGroupId(groupId);
-                    item.setTitle('3-Color Image');
+                    if (plotInfo.isThreeColor) {
+                        item.setTitle('3-Color Image');
+                    }
                 }
             });
         }
