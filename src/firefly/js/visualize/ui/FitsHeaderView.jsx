@@ -14,7 +14,6 @@ import {logError} from '../../util/WebUtil.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {getSizeAsString} from '../../util/WebUtil.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
-import {Band} from '../Band.js';
 
 const popupIdRoot = 'fitsHeader';
 
@@ -190,6 +189,7 @@ function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo) {
  * display the data into a tabular format
  * @param band
  * @param fitsHeaderInfo
+ * @param isPlacedOnTab
  * @returns {XML}
  */
 function renderTable(band, fitsHeaderInfo, isPlacedOnTab) {

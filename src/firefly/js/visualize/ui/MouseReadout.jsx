@@ -117,7 +117,7 @@ export class MouseReadout extends React.Component {
                     if (result.hasOwnProperty('NO_BAND')) {
                         var fluxUnitStr = plot.webFitsData[Band.NO_BAND.value].fluxUnits;
                         var fValue = parseFloat(result.NO_BAND);
-                        var fluxStr='';
+                        fluxStr='';
                         if (fValue !== 'NoContext') {
 
                             var fluxStr = fValue < 1000 ? fValue.toFixed(6) : fValue.toExponential(6).replace('e+', 'E');
@@ -396,7 +396,7 @@ function getCoordinateMap(coordinateRadioValue) {
     var coordinate;
     var type;
 
-    if (coordinateRadioValue === 'eqj2000hms') {
+    if ( coordinateRadioValue === 'eqj2000hms') {
         coordinate = CoordinateSys.EQ_J2000;
         type = 'hms';
     }
@@ -436,7 +436,7 @@ function getSingleMouseReadout(plot, imagePt, toCoordinateName) {
     var wpt = cc.getWorldCoords(imagePt);
     if (!wpt) return;
     var result;
-    var {coordinate, type} =getCoordinateMap(toCoordinateName);
+    var {coordinate, type} = getCoordinateMap(toCoordinateName);
 
     if (coordinate) {
         var ptInCoord = VisUtil.convert(wpt, coordinate);

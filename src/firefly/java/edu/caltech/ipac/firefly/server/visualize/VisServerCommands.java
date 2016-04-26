@@ -86,17 +86,14 @@ public class VisServerCommands {
             String[] res = VisServerOps.getFileFlux(fahAry, pt);
 
 
-            if (res.length<state.getBands().length){
-                System.out.println("bug");
-            }
             JSONObject obj= new JSONObject();
             obj.put("JSON", true);
             obj.put("success", true);
 
-            int cnt=0;
             JSONObject data= new JSONObject();
-            for(Band b : state.getBands()) {
-                data.put(b.toString(), res[cnt++]);
+            Band[] bands = state.getBands();
+            for (int i=0; i<res.length; i++){
+                data.put(bands[i].toString(), res[i]);
             }
             data.put("success", true);
 
