@@ -454,18 +454,11 @@ function do2Mass(request) {
 function doRegionLoad(request) {
     getDS9Region(request.fileUpload)
         .then( (result) => {
-            console.log(result);
+            //console.log(result);
 
-            try {
-                if (result.RegionData) {
-                    var rgAry = RegionFactory.parseRegionJson(result.RegionData);  // todo: region drawing
-                }
-            }
-            catch(e) {
-                console.log(e.message);
+            if (result.RegionData) {
+                var rgAry = RegionFactory.parseRegionJson(result.RegionData);  // todo: region drawing
             }
         });
-    console.log('load region');
-    
 }
 

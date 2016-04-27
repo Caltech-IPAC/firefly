@@ -2,46 +2,41 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import { RegionType, RegionCsys, RegionValueUnit,
-         RegionOptions, RegionValue, RegionDimension, RegionPointType, RegParseException,
-         getRegionType, getRegionCoordSys, getRegionPointType, makeFont,
+import { RegionType, RegionCsys, RegionValueUnit, regionPropsList,
+         makeRegionOptions, RegionValue, RegionDimension, RegionPointType, makeRegionMsg,
+         getRegionType, getRegionCoordSys, getRegionPointType, makeRegionFont,
          makePoint, makeText, makeBox, makeBoxAnnulus, makeAnnulus, makeCircle, makeEllipse, makeEllipseAnnulus,
          makeLine, makePolygon} from './Region.js';
 import validator from 'validator';
 import {CoordinateSys} from '../CoordSys.js';
 import {makeWorldPt} from '../Point.js';
 import {convertAngle} from '../VisUtil.js';
+import {set, unset, has} from 'lodash';
 
 var RegionParseError = {
-    ErrSyntax: 'wrong region syntax',
-    InvalidCoord: 'region coordinate undefined',
-    InvalidType:  'region type undefined',
-    InvalidParam:  'invalid region syntax',
-    InvalidProp: 'invalid region properties'
+    InvalidCoord:   'region coordinate undefined',
+    InvalidType:    'region type undefined',
+    InvalidParam:   'invalid region description syntax',
+    InvalidProp:    'invalid region properties'
 };
 
 export class RegionFactory {
 
     static parseRegionJson(RegionData) {
-        try {
-            return RegionData.reduce ( (prev, region, index) => {
+        return RegionData.reduce ( (prev, region, index) => {
                 const rg = RegionFactory.parsePart(region, index);  // skip comment line
-                if (rg) {
+                if (rg) {            // skip comment line
                     prev.push(rg);
                 }
                 return prev;
             }, []);
-        }
-        catch (e) {
-            throw e;
-        }
     }
 
     /**
      * parsePart parses the region data of JSON result (one item from RegionData array)
      * @param regionStr
      * @param index
-     * @returns {Region} or throw RegParseException
+     * @returns {makeRegion} including makeRegion().message to contain error message if there is
      */
     static parsePart(regionStr, index = -1) {
 
@@ -58,7 +53,7 @@ export class RegionFactory {
                 return null;        // comment line
             }
             // bad syntax
-            throw new RegParseException(`[${RegionParseError.ErrSyntax}] ${rgMsg}`);
+            return makeRegionMsg(`[${RegionParseError.ErrSyntax}] ${rgMsg}`);
         }
 
         // split string into region coordinate, description and property portions
@@ -77,7 +72,7 @@ export class RegionFactory {
         // check coordinate system
         var regionCsys = getRegionCoordSys(regionCoord);
         if (regionCsys === RegionCsys.UNDEFINED) {
-            throw new RegParseException(`[${RegionParseError.InvalidCoord}] ${rgMsg}`);
+            return makeRegionMsg(`[${RegionParseError.InvalidCoord}] ${rgMsg}`);
         }
 
 
@@ -85,7 +80,7 @@ export class RegionFactory {
         // [ RegionType, wp.x, wp.y, ...], at least 3 items
         regionParams = regionDes.split(' ');
         if (regionParams.length <= 2) {
-            throw new RegParseException(`[${RegionParseError.InvalidParam}] ${rgMsg}`);
+            return makeRegionMsg(`[${RegionParseError.InvalidParam}] ${rgMsg}`);
         }
 
         // check region type
@@ -94,20 +89,19 @@ export class RegionFactory {
         var regionType; // RegionType
 
         if ((regionType = getRegionType(regionParams[0])) === RegionType.undefined) {
-            throw new RegParseException(`[${RegionParseError.InvalidType}] ${rgMsg}`);
+            return makeRegionMsg(`[${RegionParseError.InvalidType}] ${rgMsg}`);
+        }
+
+        rg = rf.parseRegionParams(regionType, regionParams.slice(1), regionCsys);
+        if (!rg) {
+            return makeRegionMsg(`[${RegionParseError.InvalidParam}] ${rgMsg}`);
         }
 
         // check region properties
         rgProps = rf.parseRegionOptions(regionOptions);
 
-
         if (rgProps.message) {
-            throw new RegParseException(`[${RegionParseError.InvalidProp}] ${rgProps.message} at ${rgMsg}`);
-        }
-
-        rg = rf.parseRegionParams(regionType, regionParams.slice(1), regionCsys);
-        if (!rg) {
-            throw new RegParseException(`[${RegionParseError.InvalidParam}] ${rgMsg}`);
+            return makeRegionMsg(`[${RegionParseError.InvalidProp}] ${rgProps.message} at ${rgMsg}`);
         }
 
         rg.options = rgProps;
@@ -417,7 +411,7 @@ export class RegionFactory {
     }
 
     parseRegionOptions(optionStr, rgOps = null) {
-        var rgOptions = rgOps ? rgOps : RegionOptions({});
+        var rgOptions = rgOps ? rgOps : makeRegionOptions({});
         var ops;
         var idx;
         const [ERR, CONT, STOP] = [0, 1, 2];
@@ -467,7 +461,7 @@ export class RegionFactory {
             if ((idx = ops.indexOf('=', idx)) < 0) {   // no more property
                 break;
             } else if (idx === 0) {
-                rgOptions.message = 'empty region property found';
+                set(rgOptions, regionPropsList.MSG, 'empty region property found');
                 return rgOptions;
             }
 
@@ -475,7 +469,7 @@ export class RegionFactory {
 
             ops = ops.substring(idx + 1).trim();
             if (ops.length === 0) {
-                rgOptions.message = `invalid setting of ${opName}`;
+                set(rgOptions, regionPropsList.MSG, `invalid setting of ${opName}`);
                 break;
             }
 
@@ -484,25 +478,25 @@ export class RegionFactory {
                 case 'color':
                     opValRes = getOptionValue(ops, [' ']);
                     if (opValRes.valueStr) {
-                        rgOptions.color = opValRes.valueStr.slice(0);
+                        set(rgOptions, regionPropsList.COLOR, opValRes.valueStr.slice(0));
                     }
                     break;
                 case 'width':
                     opValRes = getOptionValue(ops, [' ']);
                     if (opValRes.valueStr) {
-                        rgOptions.lineWidth = parseInt(opValRes.valueStr);
+                        set(rgOptions, regionPropsList.LNWIDTH, parseInt(opValRes.valueStr));
                     }
                     break;
                 case 'text':
                     opValRes = getOptionValue(ops, ['{', '}']);
                     if (opValRes.valueStr) {
-                        rgOptions.text = opValRes.valueStr.slice(0);
+                        set(rgOptions, regionPropsList.TEXT, opValRes.valueStr.slice(0));
                     }
                     break;
                 case 'font':
                     opValRes = getOptionValue(ops, ['"', '"']);
                     if (opValRes.valueStr) {
-                        rgOptions.font = this.parseFont(opValRes.valueStr);
+                        set(rgOptions, regionPropsList.FONT, this.parseFont(opValRes.valueStr));
                     }
                     break;
                 case 'select':
@@ -510,68 +504,68 @@ export class RegionFactory {
                 case 'highlite':
                     opValRes = getOptionValue(ops, [' ']);
                     if (opValRes.valueStr) {
-                        rgOptions.highlightable = isTrue(opValRes.valueStr);
+                        set(rgOptions, regionPropsList.HIGHLITE,  isTrue(opValRes.valueStr));
                     }
                     break;
                 case 'include':
                     opValRes = getOptionValue(ops, [' ']);
                     if (opValRes.valueStr) {
-                        rgOptions.include = isTrue(opValRes.valueStr);
+                        set(rgOptions, regionPropsList.INCLUDE, isTrue(opValRes.valueStr));
                     }
                     break;
                 case 'edit':
                     opValRes = getOptionValue(ops, [' ']);
                     if (opValRes.valueStr) {
-                        rgOptions.editable = isTrue(opValRes.valueStr);
+                        set(rgOptions, regionPropsList.EDIT,  isTrue(opValRes.valueStr));
                     }
                     break;
                 case 'move':
                     opValRes = getOptionValue(ops, [' ']);
                     if (opValRes.valueStr) {
-                        rgOptions.movable = isTrue(opValRes.valueStr);
+                        set(rgOptions, regionPropsList.MOVE, isTrue(opValRes.valueStr));
                     }
                     break;
                 case 'rotate':
                     opValRes = getOptionValue(ops, [' ']);
                     if (opValRes.valueStr) {
-                        rgOptions.rotatable = isTrue(opValRes.valueStr);
+                        set(rgOptions, regionPropsList.ROTATE, isTrue(opValRes.valueStr));
                     }
                     break;
                 case 'delete':
                     opValRes = getOptionValue(ops, [' ']);
                     if (opValRes.valueStr) {
-                        rgOptions.deletable = isTrue(opValRes.valueStr);
+                        set(rgOptions, regionPropsList.DELETE, isTrue(opValRes.valueStr));
                     }
                     break;
                 case 'offsetx':
                     opValRes = getOptionValue(ops, [' ']);
                     if (opValRes.valueStr) {
-                        rgOptions.offsetX = parseInt(opValRes.valueStr);
+                        set(rgOptions, regionPropsList.OFFX, parseInt(opValRes.valueStr));
                     }
                     break;
                 case 'offsety':
                     opValRes = getOptionValue(ops, [' ']);
                     if (opValRes.valueStr) {
-                        rgOptions.offsetY = parseInt(opValRes.valueStr);
+                        set(rgOptions, regionPropsList.OFFY, parseInt(opValRes.valueStr));
                      }
                     break;
                 case 'fixed':
                     opValRes = getOptionValue(ops, [' ']);
                     if (opValRes.valueStr) {
-                        rgOptions.fixedSize = isTrue(opValRes.valueStr);
+                        set(rgOptions, regionPropsList.FIXED, isTrue(opValRes.valueStr));
                     }
                     break;
                 case 'point':      // point value is set at the end of the string with type and size
                     opValRes = getOptionValue(ops, [';']);
                     if (opValRes.valueStr) {
                         this.parsePointProp(opValRes.valueStr, rgOptions);
-                        if (!rgOptions.pointType) {
+                        if (!has(rgOptions, regionPropsList.PTTYPE)) {
                             opValRes.toContinue = ERR;
                         }
                     }
                     break;
                 default:
-                    rgOptions.message = `invalid region property, ${opName},`;
+                    set(rgOptions, regionPropsList.MSG, `invalid region property, ${opName},`);
                     return rgOptions;
             }
             if (opValRes.toContinue === CONT) {
@@ -579,7 +573,7 @@ export class RegionFactory {
             } else if (opValRes.toContinue === STOP) {   // at end of line
                 break;
             } else if (opValRes.toContinue === ERR) {    // parse error
-                rgOptions.message = `invalid setting of ${opName}`;
+                set(rgOptions, regionPropsList.MSG, `invalid setting of ${opName}`);
                 break;
             }
         }
@@ -589,21 +583,24 @@ export class RegionFactory {
 
 
     parsePointProp(ptStr, option = null) {
-        var ops = option ? option : RegionOptions({});
+        var ops = option ? option : makeRegionOptions({});
         const features = ptStr.split(' ');
 
-        ops.pointType = null;
-        ops.pointSize = -1;
-
+        if (has(option, regionPropsList.PTTYPE)) {
+            unset(option, regionPropsList.PTTYPE);
+        }
+        if (has(option, regionPropsList.PTSIZE)) {
+            unset(option, regionPropsList.PTSIZE);
+        }
         if (features.length >= 1) {
             var pType = getRegionPointType(features[0]);
 
             if ( pType && pType !== RegionPointType.undefined ) {
                 if (features.length === 1) {
-                    ops.pointType = pType;
+                    set(ops, regionPropsList.PTTYPE, pType);
                 } else if (validator.isFloat(features[1])) {
-                    ops.pointSize = parseInt(features[1]);
-                    ops.pointType = pType;
+                    set(ops, regionPropsList.PTSIZE, parseInt(features[1]));
+                    set(ops, regionPropsList.PTTYPE, pType);
                 }
             }
         }
@@ -613,12 +610,7 @@ export class RegionFactory {
     parseFont(fontStr) {
         const params = fontStr.split(' ');
 
-        const name = params.length >= 1 ?  params[0] : null;
-        const point = params.length >= 2 ? params[1] : null;
-        const weight = params.length >= 3 ? params[2] : null;
-        const slant = params.length >= 4 ? params[3] : null;
-
-        return makeFont(name, point, weight, slant);
+        return makeRegionFont(...params);
 
     }
 }
