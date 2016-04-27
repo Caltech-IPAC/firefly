@@ -16,6 +16,7 @@ import {getSizeAsString} from '../../util/WebUtil.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {Band} from '../Band.js';
 const popupIdRoot = 'fitsHeader';
+import numeral from 'numeral';
 
 const popupPanelResizableStyle = {
     width: 450,
@@ -33,11 +34,11 @@ const rgba='rgba(238, 238, 238, 0.25)';
 const titleStyle = {width: '100%', height: 30,display: 'inline-block', background: rgba};
 
 //define the first label column in the textStyle div
-const labelColumn1 = { paddingLeft:6, paddingTop:5, width:60, textAlign: 'left', color: 'Black', fontWeight: 'bold', display: 'inline-block'};
+const labelColumn1 = { paddingTop:5, width:80, textAlign: 'right', color: 'Black', fontWeight: 'bold', display: 'inline-block'};
 //define the second label column in the textStyle div
-const labelColumn2 = { paddingTop:5, width:55, display: 'inline-block', color: 'Black', fontWeight: 'bold'};
+const labelColumn2 = { paddingTop:5, width:70, textAlign: 'right',display: 'inline-block', color: 'Black', fontWeight: 'bold'};
 //define the text data style
-const textStyle={ paddingTop:5,paddingLeft:2, width:150, color: 'Black', fontWeight: 'normal', display: 'inline-block'};
+const textStyle={ paddingTop:5,paddingLeft:3, width:140, color: 'Black', fontWeight: 'normal', display: 'inline-block'};
 
 //define the display style for the file size and pixel information and the table in the same div
 const tableAndTitleInfoStyle = {width: '100%', height: 'calc(100% - 40px)', display: 'flex', resize:'none'};
@@ -177,8 +178,9 @@ function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo, isOnTab) {
     const pixelSize = pt.toFixed(2) + '"';
 
     const  meta = tableModel.tableMeta;
-    const fileSize = getSizeAsString(meta.fileSize);
-
+    var fileSize = getSizeAsString(meta.fileSize);
+    var   flen = fileSize.substring(0, fileSize.length-2);
+    var  fileSizeStr = `${numeral(flen).format('0.00')}${fileSize.substring(fileSize.length-1, fileSize.length)}`;
 
 
 
@@ -187,7 +189,7 @@ function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo, isOnTab) {
             <div style={ labelColumn1 }>Pixel Size:</div>
             < div style= {textStyle} >{pixelSize}</div>
             <div style={ labelColumn2}> File Size:</div>
-            <div style= {textStyle} >{fileSize}</div>
+            <div style= {textStyle} >{fileSizeStr}</div>
         </div>
     );
 }
