@@ -9,22 +9,9 @@ import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import CoordUtil from '../visualize/CoordUtil.js';
 import {get} from 'lodash';
-import AppDataCntlr from '../core/AppDataCntlr.js';
 import numeral from 'numeral';
+import { getDrawLayerParameters} from './WebGrid.js';
 
-export const COORDIANTE_PREFERENCE = 'coordinate';
-
-const  coordinateArray = [
-    {coordName:'eq2000hms',        csys:CoordinateSys.EQ_J2000},
-    {coordName:'eq2000dcm',        csys:CoordinateSys.EQ_J2000},
-    {coordName:'eqb1950hms',       csys:CoordinateSys.EQ_B1950},
-    {coordName:'eqb1950dcm',       csys: CoordinateSys.EQ_B1950},
-    {coordName:'galactic',         csys:CoordinateSys.GALACTIC},
-    {coordName:'superGalactic',    csys:CoordinateSys.SUPERGALACTIC},
-    {coordName:'epj2000',          csys:CoordinateSys.ECL_J2000},
-    {coordName:'epb1950',          csys:CoordinateSys.ECL_B1950}
-
-];
 const precision3Digit = '0.000';
 
 const RANGE_THRESHOLD = 1.02;
@@ -36,23 +23,6 @@ const maxUserDistance= 3.00;   // user defined min dist. (deg)
 var useLabels= true;
 var userDefinedDistance = false;
 
-
-/**
- * Return a Coordinate object for a given coordinate name
- * @param csysName
- * @returns {*}
- */
-
-function getCoordinateSystem(csysName) {
-
-    for (let i = 0; i < coordinateArray.length; i += 1) {
-        if (get(coordinateArray[i], 'coordName') === csysName) {
-            return coordinateArray[i].csys;
-
-        }
-    }
-
-}
 
 /**
  * This method does the calculation for drawing data array
@@ -74,27 +44,6 @@ export function getData (plot,  cc){
         var aitoff = (!wpt);
         return  drawLines(csys, bounds, labels, xLines, yLines, levels[0].length, levels[1].length, aitoff, screenWidth);
     }
-}
-/**
- * This method prepare the input parameters needed for calculating the drawing data array
- * @param plot
- * @returns {{width: (dataWidth|*), height: (*|dataHeight), screenWidth: *, csys: *, labelFormat: string}}
- */
-function getDrawLayerParameters(plot){
-    var width = plot.dataWidth;
-    var height = plot.dataHeight;
-    var screenWidth = plot.screenSize.width;
-
-    var csysName = AppDataCntlr.getPreference(COORDIANTE_PREFERENCE);
-    if (!csysName) {
-        csysName='eq2000hms';//set default
-    }
-    var csys=getCoordinateSystem(csysName);
-
-
-    var labelFormat=csysName.endsWith('hms')? 'hms':'dcm';
-
-    return {width, height, screenWidth, csys,labelFormat};
 }
 
 /**
