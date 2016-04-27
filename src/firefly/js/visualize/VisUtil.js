@@ -682,15 +682,25 @@ const makePt= function(type,  x, y) {
 };
 
 export function convertAngle(from, to, angle) {
-    const angleUnit = ['deg', 'arcmin', 'arcsec'];
+    const angleUnit = ['deg', 'arcmin', 'arcsec', 'radius'];
+    const rIdx = angleUnit.indexOf('radius');
     var   fromIdx, toIdx;
     var   numAngle = (typeof angle === 'string') ? parseFloat(angle) : angle;
 
-    if (((fromIdx = angleUnit.indexOf(from)) < 0) ||
-        ((toIdx = angleUnit.indexOf(to)) < 0)) {
+    if (((fromIdx = angleUnit.indexOf(from.toLowerCase())) < 0) ||       // invalid unit
+        ((toIdx = angleUnit.indexOf(to.toLowerCase())) < 0)) {
         return numAngle;
     } else {
-        return  numAngle * Math.pow(60.0, (toIdx-fromIdx));
+        if ( fromIdx === rIdx ) {
+            numAngle = numAngle * 180.0/Math.PI;
+            fromIdx = 0;
+        }
+
+        if (toIdx === rIdx) {
+            numAngle = numAngle * Math.PI/180.0;
+            toIdx = 0;
+        }
+        return numAngle * Math.pow(60.0, (toIdx - fromIdx));
     }
 }
 
