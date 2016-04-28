@@ -4,12 +4,11 @@
  * 4/15/16
  */
 import React, {PropTypes} from 'react';
-import {dispatchForceDrawLayerUpdate, dispatchModifyCustomField} from '../visualize/DrawLayerCntlr.js';
+import {dispatchModifyCustomField} from '../visualize/DrawLayerCntlr.js';
 import AppDataCntlr from '../core/AppDataCntlr.js';
 import {get} from 'lodash';
 import {ListBoxInputFieldView} from '../ui/ListBoxInputField.jsx';
-import {COORDIANTE_PREFERENCE} from './ComputeWebGridData.js';
-
+import {COORDINATE_PREFERENCE} from './WebGrid.js';
 
 export const getUIComponent = (drawLayer,pv) => < WebGridUI drawLayer={drawLayer} pv={pv}/>;
 
@@ -25,10 +24,16 @@ const coordinateOptionArray = [
 
 ];
 
-
+/**
+ * This method create the UI component displayed at the layer property popup dialog in the toolbar.
+ * @param drawLayer - DrawLayer object
+ * @param pv - plotView object
+ * @returns {XML} - UI component
+ * @constructor
+ */
 function WebGridUI({drawLayer,pv}) {
 
-    var pref= AppDataCntlr.getPreference(COORDIANTE_PREFERENCE);
+   var pref= AppDataCntlr.getPreference(COORDINATE_PREFERENCE);
    return  (
         <div>
            <ListBoxInputFieldView
@@ -52,12 +57,19 @@ WebGridUI.propTypes= {
     pv            : PropTypes.object.isRequired
 };
 
-
+/**
+ * This method is dispatching the changes made in the customer field to the DrawLayerCtr and the reducer.
+ * @param plotId
+ * @param drawLayer
+ * @param ev
+ */
 function onCoordinateChange(plotId, drawLayer, ev) {
     var csysName = get(ev, 'target.value');
-    AppDataCntlr.dispatchAddPreference(COORDIANTE_PREFERENCE,csysName);
-    dispatchModifyCustomField(drawLayer.displayGroupId,{COORDIANTE_PREFERENCE:csysName}, plotId);
-    //dispatchForceDrawLayerUpdate(drawLayer.displayGroupId, plotId);
+    AppDataCntlr.dispatchAddPreference(COORDINATE_PREFERENCE,csysName);
+    //add or update the coordinate reference to the drawLayer
+    drawLayer['changes']={COORDINATE_PREFERENCE:csysName};
+    dispatchModifyCustomField( drawLayer.displayGroupId,drawLayer.changes, plotId);
+
 
 }
 

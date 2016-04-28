@@ -8,7 +8,6 @@ import { makeWorldPt, makeImagePt,makeImageWorkSpacePt} from '../visualize/Point
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import CoordUtil from '../visualize/CoordUtil.js';
-import {get} from 'lodash';
 import numeral from 'numeral';
 import { getDrawLayerParameters} from './WebGrid.js';
 
@@ -26,8 +25,9 @@ var userDefinedDistance = false;
 
 /**
  * This method does the calculation for drawing data array
- * @param plot
- * @param cc
+ * @param plot - primePlot object
+ * @param cc - the CoordinateSys object
+ * @return a DrawData object
  */
 export function getData (plot,  cc){
 
@@ -48,10 +48,10 @@ export function getData (plot,  cc){
 
 /**
  * Define a rectangle object
- * @param x
- * @param y
- * @param width
- * @param height
+ * @param x - the x coordinate
+ * @param y - the y coordinate
+ * @param width - the width of the rectangle
+ * @param height - the height of the rectangle
  * @constructor
  */
 function Rectangle(x, y, width, height){
@@ -63,14 +63,14 @@ function Rectangle(x, y, width, height){
 /**
  * walk around four corners to find the proper ranges
  * @param intervals
- * @param x0
- * @param y0
- * @param dx
- * @param dy
- * @param range
- * @param csys
- * @param wrap
- * @param cc
+ * @param x0 - the starting x value of the corner
+ * @param y0 - the starting y value of the corner
+ * @param dx - the increment
+ * @param dy - the increment
+ * @param range - the x and y rangs
+ * @param csys - the coordinate system the grid is drawing with
+ * @param wrap - boolean value, true or false
+ * @param cc - the CoordinateSys object
  */
 function edgeRun (intervals,x0,  y0,dx, dy, range, csys, wrap, cc) {
 
@@ -112,13 +112,13 @@ function edgeRun (intervals,x0,  y0,dx, dy, range, csys, wrap, cc) {
 }
 /**
  * get the ege value
- * @param intervals
- * @param width
- * @param height
- * @param csys
- * @param wrap
- * @param cc
- * @returns {*[]}
+ * @param intervals - the number of interval to look for the values
+ * @param width - the width of the image
+ * @param height - the height of the image
+ * @param csys - the coordinate system the grid is drawing with
+ * @param wrap - boolean value, true or false
+ * @param cc - the CoordinateSys object
+ * @returns the value at the edge of the image
  */
 function  edgeVals(intervals, width, height, csys, wrap, cc) {
 
@@ -186,13 +186,6 @@ function  testEdge( xrange, trange)
      * value of the test or old set of data.
      */
 
-   // var delta = [];
-
-  /*
-    for (let i=0; i<trange.length; i+=1) {
-        delta[i] = Math.abs(trange[i][1]-trange[i][0]);
-    }*/
-
     /* Find the differences between the old data */
     var delta =trange.map( (t)=>{
         return Math.abs(t[1]-t[0]);
@@ -232,11 +225,11 @@ function  testEdge( xrange, trange)
 }
 /**
  * Get the line ranges
- * @param csys
- * @param width
- * @param height
- * @param cc
- * @returns {*[]}
+ * @param width - the width of the image
+ * @param height - the height of the image
+ * @param csys - the coordinate system the grid is drawing with
+ * @param cc - the CoordinateSys object
+ * @returns the range array
  */
 function getRange( csys, width, height, cc) {
 
@@ -348,9 +341,9 @@ function getRange( csys, width, height, cc) {
 
 /**
  *
- * @param ranges
- * @param factor
- * @returns {Array}
+ * @param ranges - two -dimension array of the x and y ranges
+ * @param factor - zoom factor
+ * @returns number of line intervals
  */
 function getLevels(ranges,factor){
 
@@ -497,12 +490,13 @@ function getLabels(levels,csys, labelFormat) {
 }
 /**
  * calculate lines
- * @param cc
- * @param csys
- * @param direction
- * @param value
+ * @param csys - the coordinate system the grid is drawing with
+ * @param cc - the CoordinateSys object
+ * @param direction - an integer,  0 and 1 to indicate which direction the lines are
+ * @param value - x or y value in the image
  * @param range
- * @param screenWidth
+ * @param screenWidth - a screen width
+ * @return the points found
  */
 function findLine(cc,csys, direction, value, range, screenWidth){
 

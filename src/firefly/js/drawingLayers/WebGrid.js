@@ -12,15 +12,13 @@ import {primePlot} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {getUIComponent} from './WebGridUI.jsx';
 import { getData } from './ComputeWebGridData.js';
-import DrawLayerCntlr, {dispatchModifyCustomField, dispatchForceDrawLayerUpdate} from '../visualize/DrawLayerCntlr.js';
+import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import AppDataCntlr from '../core/AppDataCntlr.js';
- import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
- import CoordinateSys from '../visualize/CoordSys.js';
- import CoordUtil from '../visualize/CoordUtil.js';
- import {get} from 'lodash';
+import CoordinateSys from '../visualize/CoordSys.js';
+import {get} from 'lodash';
 
 
- export const COORDIANTE_PREFERENCE = 'coordinate';
+export const COORDINATE_PREFERENCE = 'Coordinate';
 
 const  coordinateArray = [
      {coordName:'eq2000hms',        csys:CoordinateSys.EQ_J2000},
@@ -42,8 +40,8 @@ export default {factoryDef, TYPE_ID}; // every draw layer must default export wi
  * Color used to draw the grid
  **/
 const  DEF_GRID_COLOR = 'green';
+ 
 var idCnt=0;
-
 
 /**
  *
@@ -78,25 +76,36 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
      var plot= primePlot(visRoot(),plotId);
      if (!plot)return null;
 
+
      var cc= CsysConverter.make(plot);
      if (!cc) return null;
 
      return lastDataRet ||getData(plot, cc) ;
+
  }
 
-
+ /**
+  * This method is called when the user's has customer field changes
+  * @param drawLayer - drawLayer object
+  * @param action  - the action object which may contains user's custom fields
+  * @returns {*} - a new object which contains the new changes and the null data
+  */
  function getLayerChanges(drawLayer, action) {
      if  (action.type!==DrawLayerCntlr.MODIFY_CUSTOM_FIELD) return null; // don't do anything
-     const {coordinate}= action.payload;                  // get new coordSys
-     if (coordinate!==drawLayer.coordinate) return null;       // it not different, don't do anything
-     const dd= Object.assign({},drawLayer.drawData);   // the the drawData from the layer
-     dd[drawLayer.DATA]= null;                                      // clear it
-     return Object.assign({coordinate:{drawData:dd}});     // return the drawLayer changes
+     //get the changes in the action payload
+     const {changes}= action.payload.hasOwnProperty('changes') ? action.payload:null;
+     //If the customer field is the same as the drawLayer's, update the drawData, if not return null
+     if (changes!==drawLayer.changes) return null;
+     const drawDataObj= Object.assign({},drawLayer.drawData);
+     //clear the data inside the drawDataObj object
+     drawDataObj.data= null;
+     //return a new object with a null data in the drawData
+     return Object.assign({changes}, {drawData: drawDataObj});
  }
 
  /**
   * This method prepare the input parameters needed for calculating the drawing data array
-  * @param plot
+  * @param plot - primePlot object
   * @returns {{width: (dataWidth|*), height: (*|dataHeight), screenWidth: *, csys: *, labelFormat: string}}
   */
  export function getDrawLayerParameters(plot){
@@ -104,13 +113,11 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
      var height = plot.dataHeight;
      var screenWidth = plot.screenSize.width;
 
-     var csysName = AppDataCntlr.getPreference(COORDIANTE_PREFERENCE);
+     var csysName = AppDataCntlr.getPreference(COORDINATE_PREFERENCE);
      if (!csysName) {
-         csysName='eq2000hms';//set default
+         csysName = 'eq2000hms';//set default
      }
      var csys=getCoordinateSystem(csysName);
-
-
      var labelFormat=csysName.endsWith('hms')? 'hms':'dcm';
 
      return {width, height, screenWidth, csys,labelFormat};
@@ -118,8 +125,8 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
 
  /**
   * Return a Coordinate object for a given coordinate name
-  * @param csysName
-  * @returns {*}
+  * @param csysName - the string expression of the coordinate system
+  * @returns the corresponding CoordSys object
   */
 
  function getCoordinateSystem(csysName) {
