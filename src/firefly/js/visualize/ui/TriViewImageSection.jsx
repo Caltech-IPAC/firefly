@@ -74,5 +74,6 @@ TriViewImageSection.propTypes= {
     showCoverage : PropTypes.bool,
     showFits : PropTypes.bool,
     showImageMetaData : PropTypes.bool,
-    imageExpandedMode : PropTypes.bool
+    imageExpandedMode : PropTypes.bool,
+    closeable: PropTypes.bool
 };

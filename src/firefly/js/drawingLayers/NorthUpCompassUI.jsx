@@ -5,7 +5,6 @@
 import React from 'react';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
 import {dispatchModifyCustomField, dispatchForceDrawLayerUpdate} from '../visualize/DrawLayerCntlr.js';
-import AppDataCntlr from '../core/AppDataCntlr.js';
 
 export const getUIComponent = (drawLayer,pv) => <NorthUpCompassUI drawLayer={drawLayer} pv={pv}/>;
 

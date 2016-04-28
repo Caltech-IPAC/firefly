@@ -12,7 +12,7 @@ import {SORT_ASC, UNSORTED} from '../SortInfo';
 
 import ASC_ICO from 'html/images/sort_asc.gif';
 import DESC_ICO from 'html/images/sort_desc.gif';
-import {deepDiff} from '../../util/WebUtil.js';
+// import {deepDiff} from '../../util/WebUtil.js';
 
 const {Cell} = FixedDataTable;
 

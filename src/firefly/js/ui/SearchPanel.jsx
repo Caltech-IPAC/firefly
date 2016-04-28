@@ -12,7 +12,7 @@ import {download} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
 import {FileUpload} from '../ui/FileUpload.jsx';
 
-import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
+import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 
 import {TableRequest} from '../tables/TableRequest.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
@@ -79,7 +79,7 @@ function doFileDownload() {
 }
 
 function hideSearchPanel() {
-    dispatchHideDropDownUi();
+    dispatchHideDropDown();
 }
 
 function onSearchSubmit(request) {

@@ -17,7 +17,7 @@ import React, { Component, PropTypes} from 'react';
 import {flux} from '../Firefly.js';
 import {visRoot } from '../visualize/ImagePlotCntlr.js';
 import FormPanel from './FormPanel.jsx';
-import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
+import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
 import {ImageSelection, getPlotInfo, panelKey, isCreatePlot, PLOT_NO,
         isOnThreeColorSetting, completeButtonKey} from '../visualize/ui/ImageSelectPanel.jsx';
@@ -94,5 +94,5 @@ ImageSelectDropdown.defaultProps = {
 
 
 function hideSearchPanel() {
-    dispatchHideDropDownUi();
+    dispatchHideDropDown();
 }

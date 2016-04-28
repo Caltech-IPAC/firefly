@@ -2,8 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import cntlr from '../AppDataCntlr.js';
-
 
 function reducer(state={}, action={}) {
 

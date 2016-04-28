@@ -3,7 +3,6 @@
  */
 
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
-import AppDataCntlr from '../core/AppDataCntlr.js';
 import ImagePlotCntlr, {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef,Style, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';

@@ -2,23 +2,24 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
-import './Menu.css';
+import React, {Component, PropTypes} from 'react';
+import sCompare from 'react-addons-shallow-compare';
+import {isEmpty, get} from 'lodash';
+import {COMMAND, getMenu} from '../core/AppDataCntlr.js';
 import {flux} from '../Firefly.js';
-import appDataCntlr from '../core/AppDataCntlr.js';
-import {dispatchShowDropDownUi} from '../core/LayoutCntlr.js';
-
+import {dispatchShowDropDown} from '../core/LayoutCntlr.js';
+// import {deepDiff} from '../util/WebUtil.js';
+import './Menu.css';
 
 
 function handleAction (menuItem) {
 
     // set whether search menu should be shown
-    if (menuItem.type === appDataCntlr.DROP_DOWN_TYPE) {
-        dispatchShowDropDownUi( {view: menuItem.action});
-    } else {
+    if (menuItem.type === COMMAND) {
         flux.process({type: menuItem.action, payload:{}});
+    } else {
+        dispatchShowDropDown( {view: menuItem.action});
     }
-
 }
 
 /**
@@ -52,14 +53,27 @@ function makeMenuItem(menuItem, isSelected) {
     );
 }
 
-const Menu = React.createClass({
 
-    propTypes: {
-        menu   : React.PropTypes.object.isRequired
-    },
+
+export class Menu extends Component {
+
+    constructor(props) {
+        super(props);
+    }
+
+    shouldComponentUpdate(np, ns) {
+        return sCompare(this, np, ns);
+    }
+
+    // componentDidUpdate(prevProps, prevState) {
+    //     deepDiff({props: prevProps, state: prevState},
+    //         {props: this.props, state: this.state},
+    //         this.constructor.name);
+    // }
 
     render() {
         var {menu} = this.props;
+        if (get(menu, 'menuItems',[]).length === 0) return <div/>;
 
         var items = [];
         menu.menuItems.forEach( (item) => {
@@ -79,6 +93,22 @@ const Menu = React.createClass({
             </div>
         );
     }
-});
+}
 
-export default Menu;
+Menu.propTypes = {
+    menu   : React.PropTypes.object.isRequired
+};
+
+/**
+ * returns an array of drop down actions from the given menu items
+ * @returns {*}
+ */
+export function getDropDownNames() {
+    const menuItems = get(getMenu(), 'menuItems');
+    if (!Array.isArray(menuItems)) return [];
+    return menuItems.filter((el) => el.type !== COMMAND).reduce(
+            (rval, mi) => {
+                rval.push(mi.action);
+                return rval;
+            }, []);
+}

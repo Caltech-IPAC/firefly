@@ -109,18 +109,12 @@ function layoutDom(config, items) {
     }
 }
 
-var prev = {};
-
 const DockLayoutPanel = function (props) {
     var {config, children} = props;
-    if (!isEqual(prev.config, config)) {
-        prev.dpid = uniqueId('dpid-');
-        prev.config = config;
-    }
 
     return (
         <div style={{position: 'relative',  flex: 'auto'}}>
-            <div key={prev.dpid} style={{position: 'absolute', top: '0', bottom: 0, left: 0, right: 0}}>
+            <div style={{position: 'absolute', top: '0', bottom: 0, left: 0, right: 0}}>
                 {layoutDom(config, children)}
             </div>
         </div>

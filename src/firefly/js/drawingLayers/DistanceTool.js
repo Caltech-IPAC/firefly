@@ -4,7 +4,7 @@
 
 import numeral from 'numeral';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
-import AppDataCntlr from '../core/AppDataCntlr.js';
+import {getPreference} from '../core/AppDataCntlr.js';
 import ImagePlotCntlr, {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef,Style, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
@@ -264,7 +264,7 @@ function getDistText(dist, isWorld, pref) {
  * @return {Array}
  */
 function makeSelectObj(firstPt,currentPt, posAngle,cc) {
-    var pref= AppDataCntlr.getPreference(DIST_READOUT);
+    var pref= getPreference(DIST_READOUT);
     var retval;
     var ptAry= [firstPt,currentPt];
 

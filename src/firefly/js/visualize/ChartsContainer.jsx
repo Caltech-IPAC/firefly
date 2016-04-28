@@ -17,7 +17,8 @@ export class ChartsContainer extends Component {
         super(props);
         const expandedMode = getExpandedMode() === LO_EXPANDED.xyPlots.view;
         this.state = {
-            expandedMode
+            expandedMode: props.expandedMode,
+            closeable: props.closeable
         };
     }
 
@@ -39,16 +40,17 @@ export class ChartsContainer extends Component {
     }
 
     render() {
-        const {expandedMode} = this.state;
-        return expandedMode ? <ExpandedView {...this.props} /> : <ChartsTableViewPanel {...this.props} />;
+        const {expandedMode, closeable} = this.state;
+        return expandedMode ? <ExpandedView closeable={closeable} /> : <ChartsTableViewPanel />;
     }
 }
 
 function ExpandedView(props) {
+    const {closeable} = props;
     return (
         <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', overflow: 'hidden'}}>
             <div style={{padding: 10, flex: '0 0 auto'}}>
-                <CloseButton onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/>
+                {closeable && <CloseButton onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/>}
             </div>
             <div style={{ display: 'flex', flex: 'auto', alignItems: 'stretch', flexDirection: 'row', justifyContent: 'flex-start', overflow: 'hidden'}}>
                 <ChartsTableViewPanel expandedMode={true} expandable={false} {...props} />

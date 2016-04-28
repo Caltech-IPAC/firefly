@@ -28,7 +28,7 @@ const DEF_HANDLER = genericHandler('fftools.html');
  * @type {{}}
  */
 const historyAware = [  TABLE_SEARCH, LO.LO_EXPANDED, LO.LO_STANDARD,
-                        LO.SHOW_DROPDOWN_UI
+                        LO.SHOW_DROPDOWN
                     ].reduce( (o, v) => {o[v] = DEF_HANDLER; return o;}, {});
 
 var isHistoryEvent = false;
