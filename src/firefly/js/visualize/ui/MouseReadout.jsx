@@ -24,8 +24,8 @@ import sCompare from 'react-addons-shallow-compare';
 import {MouseState} from '../VisMouseCntlr.js';
 
 const rS = {
-    width: 660,
-    minWidth: 650,
+    width: 670,
+    minWidth: 660,
     height: 32,
     minHeight: 32,
     display: 'inline-block',
@@ -83,8 +83,8 @@ const column5 = {
     fontStyle: 'italic',
     display: 'inline-block'
 };
-const column6 = {width: 152, display: 'inline-block'};
-const column7 = {width: 90, paddingLeft: 6, display: 'inline-block'};
+const column6 = {width: 160,addingLeft: 2, textAlign: 'left', display: 'inline-block'};
+const column7 = {width: 109, paddingLeft: 6, display: 'inline-block'};
 const column7_r2 = {width: 90, paddingLeft: 3, display: 'inline-block'};
 
 
