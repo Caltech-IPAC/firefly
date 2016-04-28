@@ -11,12 +11,37 @@ import {FieldGroup} from '../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 //import InputGroup from '../ui/InputGroup.jsx';
 import Validate from '../util/Validate.js';
+import {Expression} from '../util/expr/Expression.js';
 import {ValidationField} from '../ui/ValidationField.jsx';
 import {CheckboxGroupInputField} from '../ui/CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from '../ui/RadioGroupInputField.jsx';
 import {SuggestBoxInputField} from '../ui/SuggestBoxInputField.jsx';
 import {FieldGroupCollapsible} from '../ui/panel/CollapsiblePanel.jsx';
 
+import {showInfoPopup} from '../ui/PopupUtil.jsx';
+
+/*
+ * Find the last alphanumeric token in the text
+ * @param {string} text - current content of suggest box
+ * @return {Object} with token and priorContent properties
+ */
+function parseSuggestboxContent(text) {
+    let priorContent = '';
+    let token = '';
+    let priorIdx = -1;
+    var i, c;
+    for (i = text.length-1; i>=0; i--) {
+        c = text.charAt(i);
+        if (!/[A-Za-z\d_]/.test(c)) {
+            priorIdx = i;
+            break;
+        }
+    }
+    if (priorIdx > 0) priorContent = text.substring(0, priorIdx+1);
+    if (priorIdx < text.length) token = text.substring(priorIdx+1);
+
+    return {token, priorContent};
+}
 
 
 var XYPlotOptions = React.createClass({
@@ -54,12 +79,19 @@ var XYPlotOptions = React.createClass({
 
     resultsSuccess(flds) {
         const xName = get(flds, ['x.columnOrExpr']);
+        const yName = get(flds, ['y.columnOrExpr']);
+
+        // workaround for validator not being called for unchanged fields
+        if (!xName || !yName) {
+            showInfoPopup('X and Y must not be empty.', 'Action required.');
+            return;
+        }
+
         const xOptions = get(flds, ['x.options']);
         let xLabel = get(flds, ['x.label']), xUnit = get(flds, ['x.unit']);
         if (!xLabel) { xLabel = xName; }
         if (!xUnit) {xUnit = this.getUnit(xName); }
 
-        const yName = get(flds, ['y.columnOrExpr']);
         const yOptions = get(flds, ['y.options']);
         let yLabel = get(flds, ['y.label']);
         let yUnit = get(flds, ['y.unit']);
@@ -103,13 +135,15 @@ var XYPlotOptions = React.createClass({
 
     render() {
         const { colValStats, groupKey }= this.props;
+        const colNames = colValStats.map((colVal) => {return colVal.name;});
         const fields = FieldGroupUtils.getGroupFields(groupKey);
 
         // the suggestions are indexes in the colValStats array - it makes it easier to render then with labels
         const allSuggestions = colValStats.map((colVal,idx)=>{return idx;});
 
         const getSuggestions = (val)=>{
-            const matches = allSuggestions.filter((idx)=>{return colValStats[idx].name.startsWith(val);});
+            const {token} = parseSuggestboxContent(val);
+            const matches = allSuggestions.filter( (idx)=>{return colValStats[idx].name.startsWith(token);} );
             return matches.length ? matches : allSuggestions;
         };
 
@@ -118,12 +152,20 @@ var XYPlotOptions = React.createClass({
             return colVal.name + ' ' + (colVal.unit && colVal.unit !== 'null' ? colVal.unit : '');
         };
 
-        const valueOnSuggestion = (prevVal, idx)=>{return colValStats[idx].name;};
+        const valueOnSuggestion = (prevVal, idx)=>{
+            const {priorContent} = parseSuggestboxContent(prevVal);
+            return priorContent+colValStats[idx].name;
+        };
 
         const colValidator = (val) => {
             let retval = {valid: true, message: ''};
-            if (!colValStats.find((colVal) => (colVal.name === val))) {
-                retval = {valid: false, message: `${val} is not a valid column`};
+            if (!val) {
+                return {valid: false, message: 'Can not be empty. Please provide value or expression'};
+            } else if (colNames.indexOf(val)<0) {
+                const expr = new Expression(val,colNames);
+                if (!expr.isValid()) {
+                    retval = {valid: false, message: `${expr.getError().error}. Unable to parse ${val}.`};
+                }
             }
             return retval;
         };
@@ -284,20 +326,5 @@ var XYPlotOptions = React.createClass({
         );
     }
 });
-
-/*
-                    <CheckboxGroupInputField
-                        initialState= {{
-                            value: '_none_',
-                            tooltip: 'Check if you would like to plot grid',
-                            label : 'Grid:'
-                        }}
-                        options={[
-                            {label: 'grid', value: 'grid'}
-                        ]}
-                        fieldKey='grid'
-                    />
-                    <br/>
- */
 
 export default XYPlotOptions;
