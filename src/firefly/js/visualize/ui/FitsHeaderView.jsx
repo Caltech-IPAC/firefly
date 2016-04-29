@@ -28,10 +28,8 @@ const popupPanelResizableStyle = {
     position: 'relative'
 };
 
-const rgba='rgba(238, 238, 238, 0.25)';
-
-
-const titleStyle = {width: '100%', height: 30,display: 'inline-block', background: rgba};
+//const rgba='rgba(238, 238, 238, 0.25)';
+const bgColor= '#e3e3e3';
 
 //define the first label column in the textStyle div
 const labelColumn1 = { paddingTop:5, width:80, textAlign: 'right', color: 'Black', fontWeight: 'bold', display: 'inline-block'};
@@ -55,10 +53,8 @@ const closeButtonStyle = {'textAlign': 'center', display: 'inline-block', height
 const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginRight: 20};
 
 
-
-
 //3-color styles
-const tabStyle =  {width: '100%',height:'100%', display: 'inline-block', background:'#e3e3e3'};
+const tabStyle =  {width: '100%',height:'100%', display: 'inline-block', background:bgColor};
 
 
 function popupForm(plot, fitsHeaderInfo, popupId) {
@@ -181,8 +177,9 @@ function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo, isOnTab) {
     var fileSize = getSizeAsString(meta.fileSize);
     var   flen = fileSize.substring(0, fileSize.length-2);
     var  fileSizeStr = `${numeral(flen).format('0.00')}${fileSize.substring(fileSize.length-1, fileSize.length)}`;
-
-
+    const titleStyleNoTab = {width: '100%', height: 30,display: 'inline-block', background:bgColor};
+    const titleStyleOnTab = {width: '100%', height: 30,display: 'inline-block'};
+    var titleStyle = isOnTab? titleStyleOnTab:titleStyleNoTab;
 
    return (
         <div style={titleStyle}>
