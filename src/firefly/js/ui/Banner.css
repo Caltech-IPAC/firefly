@@ -1,5 +1,8 @@
 .banner__Title {
-    float: left;
+    /*float: left;*/
+    position : absolute;
+    left : 0;
+    top : 0;
     letter-spacing: 1px;
     margin-left: 10px;
     color: white;
