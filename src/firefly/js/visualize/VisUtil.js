@@ -16,6 +16,7 @@ import Point, {makeImageWorkSpacePt, makeViewPortPt, makeImagePt,
     makeScreenPt, makeWorldPt, isValidPoint} from './Point.js';
 import ZoomUtil from './ZoomUtil.js';
 import DrawOp from './draw/DrawOp.js';
+import {isArray} from 'lodash';
 
 var {AllPlots} = window.ffgwt ? window.ffgwt.Visualize : {AllPlots:null};
 
@@ -683,13 +684,14 @@ const makePt= function(type,  x, y) {
 };
 
 export function convertAngle(from, to, angle) {
-    const angleUnit = ['deg', 'arcmin', 'arcsec', 'radius'];
-    const rIdx = angleUnit.indexOf('radius');
+    const angleUnit = [['deg', 'degree'], 'arcmin', 'arcsec', 'radian'];
+    const rIdx = angleUnit.indexOf('radian');
     var   fromIdx, toIdx;
     var   numAngle = (typeof angle === 'string') ? parseFloat(angle) : angle;
+    var   unitIdx = (unit) => angleUnit.findIndex( (au) => (isArray(au) ? au.includes(unit) : au === unit));
 
-    if (((fromIdx = angleUnit.indexOf(from.toLowerCase())) < 0) ||       // invalid unit
-        ((toIdx = angleUnit.indexOf(to.toLowerCase())) < 0)) {
+    if (((fromIdx = unitIdx(from.toLowerCase())) < 0) ||       // invalid unit
+        ((toIdx = unitIdx(to.toLowerCase())) < 0)) {
         return numAngle;
     } else {
         if ( fromIdx === rIdx ) {

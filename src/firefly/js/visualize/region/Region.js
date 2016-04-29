@@ -17,7 +17,7 @@ export const RegionCsys = new Enum(['PHYSICAL', 'FK4', 'B1950', 'FK5', 'J2000',
                                     'IMAGE', 'ECLIPTIC', 'GALACTIC',
                                     'ICRS', 'AMPLIFIER', 'LINEAR', 'DETECTOR', 'UNDEFINED'], {ignoreCase: true});
 
-export const RegionValueUnit = new Enum(['CONTEXT', 'DEGREE', 'RADIUS', 'ARCMIN', 'ARCSEC',
+export const RegionValueUnit = new Enum(['CONTEXT', 'DEGREE', 'RADIAN', 'ARCMIN', 'ARCSEC',
                                          'SCREEN_PIXEL', 'IMAGE_PIXEL'], {ignoreCase: true});
 
 export const RegionPointType = new Enum(['circle', 'box', 'cross', 'diamond', 'x',
@@ -43,6 +43,7 @@ var cloneArg = (arg) => Object.keys(arg).reduce((prev, key) =>
  * @param type  RegionType
  * @param options   RegionOptions, properties of region
  * @param highlighted bool
+ * @param message parsing message
  * @constructor
  */
 export var makeRegion = (
@@ -118,7 +119,7 @@ export const regionPropsList = {
         COLOR:  'color',
         TEXT:   'text',
         FONT:   'font',
-        PTTYPE: 'pointtype',
+        PTTYPE: 'pointType',
         PTSIZE: 'pointSize',
         EDIT:   'editable',
         MOVE:   'movable',
@@ -138,7 +139,7 @@ const defaultRegionProperty = {
     text:  '',
     font:  {name: 'helvetica', point: '10', weight: 'normal', slant: 'normal'},
     pointType: RegionPointType.cross,
-    porintSize: 5,
+    pointSize: 5,
     editable: true,
     movable:  true,
     rotatable: false,
@@ -152,7 +153,7 @@ const defaultRegionProperty = {
     message: ''
 };
 
-export var getRegionPropDefault = (prop) => (has(defaultRegionProperty, prop) ? defaultRegionProperty[prop] : null);
+export var getRegionDefault = (prop) => (has(defaultRegionProperty, prop) ? defaultRegionProperty[prop] : null);
 
 /**
  *
@@ -222,7 +223,7 @@ export var makeRegionFont = (name = 'helvetica', point = '10', weight = 'normal'
  * @param options
  * @param highlighted
  */
-export function makePoint(worldPoint, options, highlighted) {
+export function makeRegionPoint(worldPoint, options, highlighted) {
     return  makeRegion({type: RegionType.point, wpAry: [worldPoint],  options, highlighted});
 }
 
@@ -232,7 +233,7 @@ export function makePoint(worldPoint, options, highlighted) {
  * @param options
  * @param highlighted
  */
-export function makeText(worldPoint, options, highlighted) {
+export function makeRegionText(worldPoint, options, highlighted) {
     return makeRegion({type: RegionType.text, wpAry: [worldPoint], options, highlighted});
 }
 
@@ -244,7 +245,7 @@ export function makeText(worldPoint, options, highlighted) {
  * @param options
  * @param highlighted
  */
-export function makeBox(worldPoint, dim, angle, options, highlighted) {
+export function makeRegionBox(worldPoint, dim, angle, options, highlighted) {
     return makeRegion({type: RegionType.box, wpAry: [worldPoint], dimensionAry: [dim], angle, options, highlighted});
 }
 
@@ -257,7 +258,7 @@ export function makeBox(worldPoint, dim, angle, options, highlighted) {
  * @param highlighted
  *
  */
-export function makeBoxAnnulus(worldPoint, dimAry,  angle, options, highlighted) {
+export function makeRegionBoxAnnulus(worldPoint, dimAry,  angle, options, highlighted) {
     return makeRegion({type: RegionType.boxannulus, wpAry: [worldPoint], dimensionAry: dimAry, angle, options, highlighted});
 }
 
@@ -268,7 +269,7 @@ export function makeBoxAnnulus(worldPoint, dimAry,  angle, options, highlighted)
  * @param options
  * @param highlighted
  */
-export function makeAnnulus(worldPoint, radAry,  options, highlighted) {
+export function makeRegionAnnulus(worldPoint, radAry,  options, highlighted) {
     return makeRegion({type: RegionType.annulus, wpAry: [worldPoint], radiusAry: radAry, options, highlighted});
 }
 
@@ -279,7 +280,7 @@ export function makeAnnulus(worldPoint, radAry,  options, highlighted) {
  * @param options
  * @param highlighted
  */
-export function makeCircle(worldPoint, radius,  options, highlighted) {
+export function makeRegionCircle(worldPoint, radius,  options, highlighted) {
     return makeRegion({type: RegionType.circle, wpAry: [worldPoint], radiusAry: [radius], options, highlighted});
 }
 
@@ -291,7 +292,7 @@ export function makeCircle(worldPoint, radius,  options, highlighted) {
  * @param options
  * @param highlighted
  */
-export function makeEllipse(worldPoint, dim, angle, options, highlighted) {
+export function makeRegionEllipse(worldPoint, dim, angle, options, highlighted) {
     return makeRegion({type: RegionType.ellipse, wpAry: [worldPoint],
                         dimensionAry: [dim], angle, options, highlighted });
 }
@@ -305,7 +306,7 @@ export function makeEllipse(worldPoint, dim, angle, options, highlighted) {
  * @param options
  * @param highlighted
  */
-export function makeEllipseAnnulus(worldPoint, dimAry, angle, options, highlighted ) {
+export function makeRegionEllipseAnnulus(worldPoint, dimAry, angle, options, highlighted ) {
     return makeRegion({type: RegionType.ellipseannulus, wpAry: [worldPoint],
                     dimensionAry: dimAry, angle, options, highlighted});
 }
@@ -317,7 +318,7 @@ export function makeEllipseAnnulus(worldPoint, dimAry, angle, options, highlight
  * @param options
  * @param highlight
  */
-export function makeLine(worldPoint1, worldPoint2, options, highlight ) {
+export function makeRegionLine(worldPoint1, worldPoint2, options, highlight ) {
     return makeRegion({ type: RegionType.line, wpAry: [worldPoint1, worldPoint2], options, highlight});
 }
 
@@ -327,6 +328,6 @@ export function makeLine(worldPoint1, worldPoint2, options, highlight ) {
  * @param options
  * @param highlight
  */
-export function makePolygon(wpAry, options, highlight) {
+export function makeRegionPolygon(wpAry, options, highlight) {
     return makeRegion({type: RegionType.polygon, wpAry, options, highlight});
 }

@@ -1,13 +1,16 @@
 
 import {makeScreenPt} from '../Point.js';
 import {DrawSymbol} from './PointDataObj.js';
+import {isNil} from 'lodash';
+
 
 var FALLBACK_COLOR = 'red';
 
 export default {getColor, beginPath, stroke, strokeRec, drawLine, drawText, drawPath, makeShadow,
                 drawHandledLine, drawInnerRecWithHandles, rotateAroundScreenPt,
                 drawX, drawSquareX, drawSquare, drawEmpSquareX, drawCross, drawSymbol,
-                drawEmpCross, drawDiamond, drawDot, drawCircle,clear,clearCanvas, fillRec};
+                drawEmpCross, drawDiamond, drawDot, drawCircle, drawEllipse, drawBoxcircle,
+                drawArrow, clear,clearCanvas, fillRec};
 
 function drawHandledLine(ctx, color, sx, sy, ex, ey, onlyAddToPath= false) {
     var slope= NaN;
@@ -126,10 +129,6 @@ function drawText(drawTextAry,text, x,y,color,
 }
 
 
-
-
-
-
 /**
  * create a shadow object to use with DrawObj
  * @param blur
@@ -185,14 +184,13 @@ function addStyle(ctx,renderOptions) {
         if (offY) ctx.shadowOffsetY= offY;
     }
 
-    if (rotAngle) {
-        ctx.rotation(rotAngle);
-    }
-
     if (translation) {
         ctx.translate(translation.x,translation.y);
     }
 
+    if (!isNil(rotAngle)) {
+        ctx.rotate(rotAngle);
+    }
 }
 
 /**
@@ -255,9 +253,6 @@ function drawPath(ctx, color, lineWidth, pts, close, renderOptions) {
 }
 
 
-
-
-
 function rotateAroundScreenPt(worldPt, plot, angle, centerScreenPt) {
     var pti = plot.getScreenCoords(worldPt);
     var xc = centerScreenPt.x;
@@ -300,6 +295,7 @@ function drawSquare(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
         strokeRec(ctx,color,1,x-size,y-size, 2*size, 2*size,renderOptions);
     }
 }
+
 
 function drawEmpSquareX(ctx, x, y, color, size, renderOptions, c1, c2) {
     drawX(ctx,x,y,color,renderOptions, false);
@@ -362,6 +358,41 @@ function drawDot(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
 }
 
 
+function drawBoxcircle(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
+    drawSquare(ctx, x, y, color, size+3, renderOptions, onlyAddToPath);
+    drawCircle(ctx, x, y, color, 1, size, renderOptions, onlyAddToPath);
+}
+
+function drawArrow(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
+    if (!onlyAddToPath) beginPath(ctx,color, 1, renderOptions);
+    ctx.moveTo(x,y);
+    ctx.lineTo(x-size, y-size);
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y-size*0.8);
+    ctx.moveTo(x, y);
+    ctx.lineTo(x-size*0.8,y);
+    if (!onlyAddToPath) stroke(ctx);
+}
+
+/**
+ *
+ * @param ctx
+ * @param x: center
+ * @param y
+ * @param color
+ * @param r1  axis
+ * @param r2
+ * @param angle rotation angle in radian
+ * @param renderOptions
+ * @param onlyAddToPath
+ */
+function drawEllipse(ctx, x, y, color, lineWidth, r1, r2, angle, renderOptions, onlyAddToPath ) {
+
+    if (!onlyAddToPath) beginPath(ctx, color, lineWidth, renderOptions);
+    ctx.ellipse(x, y, r1, r2, angle, 0, 2*Math.PI);
+    if (!onlyAddToPath) stroke(ctx);
+}
+
 function drawSymbol(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
     var {color,size}= drawParams;
     switch (drawParams.symbol) {
@@ -391,6 +422,12 @@ function drawSymbol(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
             break;
         case DrawSymbol.CIRCLE :
             drawCircle(ctx, x, y, color, 1, size, renderOptions, onlyAddToPath);
+            break;
+        case DrawSymbol.BOXCIRCLE :
+            drawBoxcircle(ctx, x, y, color, size, renderOptions, onlyAddToPath);
+            break;
+        case DrawSymbol.ARROW :
+            drawArrow(ctx, x, y, color, size, renderOptions, onlyAddToPath);
             break;
         default :
             break;

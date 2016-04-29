@@ -31,6 +31,7 @@ import { fitsHeaderView} from './FitsHeaderView.jsx';
 import sCompare from 'react-addons-shallow-compare';
 import { getDlAry } from '../DrawLayerCntlr.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
+import {showRegionFileUploadPanel} from '../region/RegionFileUploadView.jsx';
 
 
 
@@ -161,7 +162,7 @@ export class VisToolbarView extends Component {
                                enabled={enabled}
                                horizontal={true}
                                visible={mi.fitsDownload}
-                               onClick={showFitsDownloadDialog}/>
+                               onClick={showFitsDownloadDialog.bind(null, 'Load Region')}/>
 
                 <ToolbarHorizontalSeparator/>
 
@@ -256,8 +257,7 @@ export class VisToolbarView extends Component {
                                enabled={enabled}
                                horizontal={true}
                                visible={mi.ds9Region}
-                               todo={true}
-                               onClick={() => console.log('todo- region dialog')}/>
+                               onClick={showRegionFileUploadPanel}/>
 
                 <ToolbarButton icon={MASK}
                                tip='Overlay a mask Image'

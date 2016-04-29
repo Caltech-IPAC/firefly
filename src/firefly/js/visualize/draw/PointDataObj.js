@@ -15,7 +15,7 @@ import {CCUtil} from '../CsysConverter.js';
 
 
 export const DrawSymbol = new Enum([
-    'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE', 'SQUARE_X', 'EMP_CROSS','EMP_SQUARE_X'
+    'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE', 'SQUARE_X', 'EMP_CROSS','EMP_SQUARE_X', 'BOXCIRCLE', 'ARROW'
 ]);
 
 export const POINT_DATA_OBJ= 'PointDataObj';
@@ -148,7 +148,7 @@ function drawPt(ctx, drawTextAry, pt, plot,drawParams, renderOptions, vpPtM, onl
 function drawXY(ctx, drawTextAry, x, y, drawParams,renderOptions, onlyAddToPath) {
     var {text}= drawParams;
     drawSymbolOnPlot(ctx, x,y, drawParams,renderOptions, onlyAddToPath);
-    if (text) DrawUtil.drawText(drawTextAry, text, x, y,drawParams.color, renderOptions);
+    if (text) DrawUtil.drawText(drawTextAry, text, x, y, 'black', renderOptions);
 }
 
 function drawSymbolOnPlot(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
@@ -180,6 +180,12 @@ function drawSymbolOnPlot(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
             break;
         case DrawSymbol.CIRCLE :
             DrawUtil.drawCircle(ctx, x, y, color, 1, size, renderOptions, onlyAddToPath);
+            break;
+        case DrawSymbol.BOXCIRCLE :
+            DrawUtil.drawBoxcircle(ctx, x, y, color, size, renderOptions, onlyAddToPath);
+            break;
+        case DrawSymbol.ARROW :
+            DrawUtil.drawArrow(ctx, x, y, color, size, renderOptions, onlyAddToPath);
             break;
         default :
             break;
@@ -214,6 +220,12 @@ function toRegion(pt, plot,drawParams,renderOptions) {
             break;
         case DrawSymbol.CIRCLE :
             pointType='Circle';
+            break;
+        case DrawSymbol.BOXCIRCLE :
+            pointType='Boxcircle';
+            break;
+        case DrawSymbol.ARROW :
+            pointType = 'Arrow';
             break;
         default :
             r= null;
