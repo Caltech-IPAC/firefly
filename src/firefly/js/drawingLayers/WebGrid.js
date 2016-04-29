@@ -11,7 +11,7 @@ import CsysConverter from '../visualize/CsysConverter.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {getUIComponent} from './WebGridUI.jsx';
-import { getData } from './ComputeWebGridData.js';
+import { makeGridDrawData } from './ComputeWebGridData.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import AppDataCntlr from '../core/AppDataCntlr.js';
 import CoordinateSys from '../visualize/CoordSys.js';
@@ -80,12 +80,12 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
      var cc= CsysConverter.make(plot);
      if (!cc) return null;
 
-     return lastDataRet ||getData(plot, cc) ;
+     return lastDataRet ||makeGridDrawData(plot, cc) ;
 
  }
 
  /**
-  * This method is called when the user's has customer field changes
+  * This method is called when the user's has custom field changes
   * @param drawLayer - drawLayer object
   * @param action  - the action object which may contains user's custom fields
   * @returns {*} - a new object which contains the new changes and the null data
@@ -93,8 +93,8 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
  function getLayerChanges(drawLayer, action) {
      if  (action.type!==DrawLayerCntlr.MODIFY_CUSTOM_FIELD) return null; // don't do anything
      //get the changes in the action payload
-     const {changes}= action.payload.hasOwnProperty('changes') ? action.payload:null;
-     //If the customer field is the same as the drawLayer's, update the drawData, if not return null
+     const {changes}= action.payload;
+     //If the custom field is the same as the drawLayer's, update the drawData, if not return null
      if (changes!==drawLayer.changes) return null;
      const drawDataObj= Object.assign({},drawLayer.drawData);
      //clear the data inside the drawDataObj object

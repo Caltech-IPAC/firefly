@@ -29,7 +29,7 @@ var userDefinedDistance = false;
  * @param cc - the CoordinateSys object
  * @return a DrawData object
  */
-export function getData (plot,  cc){
+export function makeGridDrawData (plot,  cc){
 
     const {width, height, screenWidth, csys,labelFormat} = getDrawLayerParameters(plot);
     if (width > 0 && height >0) {
