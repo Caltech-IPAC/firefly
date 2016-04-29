@@ -37,40 +37,41 @@ const rators2 = [
         Expr.ATAN2, Expr.MAX, Expr.MIN
 ];
 
- //Parses strings representing mathematical formulas with variables.
- //The following operators, in descending order of precedence, are
- //defined:
- //
- //<UL>
- //<LI>^ (raise to a power)
- //<LI>* /
- //<LI>Unary minus (-x)
- //<LI>+ -
- //<LI>&lt; &lt;= = &lt;&gt; &gt;= &gt;
- //<LI>and
- //<LI>or
- //</UL>
- //
- //^ associates right-to-left; other operators associate left-to-right.
- //
- //<P>These unary functions are defined:
- //abs, acos, asin, atan,
- //ceil, cos, exp, floor,
- //log, round, sin, sqrt,
- //tan.  Each requires one argument enclosed in parentheses.
- //
- //<P>There are also binary functions: atan2, min, max; and a ternary
- //conditional function: if(test, then, else).
- //
- //<P>Whitespace outside identifiers is ignored.
- //
- //<P>Examples:
- //<UL>
- //<LI>42
- //<LI>2-3
- //<LI>cos(x^2) + sin(x^2)
- //<UL>
+/**
+ Parses strings representing mathematical formulas with variables.
+ The following operators, in descending order of precedence, are
+ defined:
 
+ <UL>
+ <LI>^ (raise to a power)
+ <LI>* /
+ <LI>Unary minus (-x)
+ <LI>+ -
+ <LI>&lt; &lt;= = &lt;&gt; &gt;= &gt;
+ <LI>and
+ <LI>or
+ </UL>
+
+ ^ associates right-to-left; other operators associate left-to-right.
+
+ <P>These unary functions are defined:
+ abs, acos, asin, atan,
+ ceil, cos, exp, floor,
+ log, round, sin, sqrt,
+ tan.  Each requires one argument enclosed in parentheses.
+
+ <P>There are also binary functions: atan2, min, max; and a ternary
+ conditional function: if(test, then, else).
+
+ <P>Whitespace outside identifiers is ignored.
+
+ <P>Examples:
+ <UL>
+ <LI>42
+ <LI>2-3
+ <LI>cos(x^2) + sin(x^2)
+ <UL>
+ */
  export class Parser {
 
     constructor() {

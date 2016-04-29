@@ -49,13 +49,13 @@ export class Expression {
      *
      */
     getParsedVariables() {
-        return this.parsedVariablesMap.keys();
+        return this.parsedVariablesMap ? Array.from(this.parsedVariablesMap.keys()) : [];
     }
 
     /*
     * Set variable value
-    * @param {String} name
-    * @param {Number} value
+    * @param {string} name
+    * @param {number} value
      */
     setVariableValue(name, value) {
         const v = this.parsedVariablesMap.get(name);

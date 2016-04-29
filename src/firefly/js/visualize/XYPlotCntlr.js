@@ -270,7 +270,6 @@ function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
         limits = [xMin, xMax, yMin, yMax];
     }
 
-    // todo support expressions
     const req = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']), {
         'startIdx' : 0,
         'pageSize' : 1000000,

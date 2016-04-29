@@ -21,25 +21,20 @@ import {FieldGroupCollapsible} from '../ui/panel/CollapsiblePanel.jsx';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
 /*
- * Find the last alphanumeric token in the text
+ * Split content into prior content and the last alphanumeric token in the text
  * @param {string} text - current content of suggest box
  * @return {Object} with token and priorContent properties
  */
 function parseSuggestboxContent(text) {
-    let priorContent = '';
-    let token = '';
-    let priorIdx = -1;
-    var i, c;
-    for (i = text.length-1; i>=0; i--) {
-        c = text.charAt(i);
-        if (!/[A-Za-z\d_]/.test(c)) {
-            priorIdx = i;
-            break;
+    let token='', priorContent='';
+    if (text && text.length) {
+        // [entireMatch, firstCature, secondCapture] or null
+        const match =  text.match(/^(.*[^A-Za-z\d_]|)([A-Za-z\d_]*)$/);
+        if (match && match.length == 3) {
+            priorContent = match[1];
+            token = match[2];
         }
     }
-    if (priorIdx > 0) priorContent = text.substring(0, priorIdx+1);
-    if (priorIdx < text.length) token = text.substring(priorIdx+1);
-
     return {token, priorContent};
 }
 
@@ -149,7 +144,7 @@ var XYPlotOptions = React.createClass({
 
         const renderSuggestion = (idx)=>{
             const colVal = colValStats[idx];
-            return colVal.name + ' ' + (colVal.unit && colVal.unit !== 'null' ? colVal.unit : '');
+            return colVal.name + (colVal.unit && colVal.unit !== 'null' ? ', '+colVal.unit : ' ');
         };
 
         const valueOnSuggestion = (prevVal, idx)=>{
