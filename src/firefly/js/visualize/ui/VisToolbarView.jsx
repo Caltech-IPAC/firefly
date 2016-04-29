@@ -131,7 +131,6 @@ export class VisToolbarView extends Component {
     }
     
     render() {
-        console.log('VisToolbarView');
         const {visRoot, dlCount}= this.props;
         var rS= {
             display: 'inline-block',

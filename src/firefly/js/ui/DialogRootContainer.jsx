@@ -12,8 +12,8 @@ import {flux} from '../Firefly.js';
 
 export default {defineDialog, showTmpPopup};
 
-const dialogs= {};
-const tmpPopups= {};
+var dialogs= [];
+var tmpPopups= [];
 const DIALOG_DIV= 'dialogRootDiv';
 const TMP_ROOT='TMP=';
 var tmpCount=0;
@@ -25,15 +25,53 @@ var init= function() {
     divElement.id= DIALOG_DIV;
 };
 
-function DialogRootComponent({dialogs,tmpPopups}) {
-    var dialogAry = Object.keys(dialogs).map( (k) => React.cloneElement(dialogs[k],{key:k}));
-    var tmpPopupAry = Object.keys(tmpPopups).map( (k) => React.cloneElement(tmpPopups[k],{key:k}));
-    return  <div style={{position:'relative', zIndex:200}}> {dialogAry} {tmpPopupAry}</div>;
+
+class DialogRootComponent extends Component {
+
+    constructor(props) {
+        super(props);
+        this.requestOnTop= this.requestOnTop.bind(this);
+        this.state = {oneTopKey:null};
+    }
+    
+    componentWillReceiveProps(nextProps, context) {
+        this.setState({dialogs:null,onTopKey:null});
+    }
+
+    requestOnTop(key) {
+        if (this.state.onTopKey!==key) {
+            dialogs= sortZIndex(dialogs,key);
+            this.setState({dialogs,onTopKey:key});
+        }
+    }
+
+    render() {
+        var {dialogs,tmpPopups}= this.props;
+        if (this.state.dialogs) dialogs= this.state.dialogs;
+        var dialogAry = dialogs.map( (d) =>
+                                React.cloneElement(d.component,
+                                    {
+                                        key:d.dialogId,
+                                        zIndex:d.zIndex,
+                                        requestOnTop:this.requestOnTop
+                                    }));
+        var tmpPopupAry = tmpPopups.map( (p) => React.cloneElement(p.component,{key:p.dialogId}));
+        return (
+                <div style={{position:'relative', zIndex:200}}>
+                    {dialogAry}
+                    <div style={{position:'relative', zIndex:10}}>
+                        {tmpPopupAry}
+                    </div>
+                </div>
+
+            );
+
+    }
 }
 
 DialogRootComponent.propTypes = {
-    dialogs : PropTypes.object,
-    tmpPopups : PropTypes.object
+    dialogs : PropTypes.array,
+    tmpPopups : PropTypes.array
 };
 
 
@@ -66,10 +104,10 @@ class PopupStoreConnection extends Component {
     render() {
         var {visible}= this.state;
         if (!visible) return false;
-        var {dialogId,popupPanel}= this.props;
+        var {dialogId,popupPanel,requestOnTop,zIndex}= this.props;
         return  React.cloneElement(popupPanel,
             {
-                visible,
+                visible, requestOnTop, dialogId, zIndex,
                 requestToClose : () => dispatchHideDialog(dialogId)
             });
     }
@@ -78,7 +116,9 @@ class PopupStoreConnection extends Component {
 
 PopupStoreConnection.propTypes= {
     popupPanel : PropTypes.object.isRequired,
-    dialogId   : PropTypes.string.isRequired
+    dialogId   : PropTypes.string.isRequired,
+    requestOnTop : PropTypes.func,
+    zIndex : PropTypes.number.isRequired
 };
 
 
@@ -93,9 +133,46 @@ function reRender(dialogs,tmpPopups) {
  */
 function defineDialog(dialogId, dialog) {
     if (!divElement) init();
-    dialogs[dialogId]= <PopupStoreConnection popupPanel={dialog} dialogId={dialogId}/>;
+    const idx= dialogs.findIndex((d) => d.dialogId===dialogId);
+    const newD= {
+        dialogId,
+        component: <PopupStoreConnection popupPanel={dialog} dialogId={dialogId} zIndex={1}/>
+    };
+    if (idx < 0) {
+        dialogs.push(newD);
+    }
+    else {
+        dialogs[idx]= newD;
+    }
+    dialogs= sortZIndex(dialogs,dialogId);
     reRender(dialogs,tmpPopups);
 }
+
+
+/**
+ * Set the zindex for the active one is on top while maintaining the order of the others.
+ * @param inDialogAry
+ * @param topId
+ * @return {*}
+ *
+ *
+ * This is probably not the best way to do this.  I take the active id and make make it so it is bigger
+ * than any of the others. Over time my counter will get too high so occasionally I reduce all the zIndexes too
+ * something more reasonable.
+ */
+function sortZIndex(inDialogAry, topId) {
+    var max= inDialogAry.reduce((prev,d) => (d.zIndex &&d.zIndex>prev) ? d.zIndex : prev, 1);
+    if (max<inDialogAry.length) max= inDialogAry.length+1;
+    var retval= inDialogAry.map( (d,idx) => Object.assign({},d,{zIndex:d.dialogId===topId ? max+1 : (d.zIndex||idx+1) }));
+
+    var min= retval.reduce((prev,d) => (d.zIndex &&d.zIndex<prev) ? d.zIndex : prev, Number.MAX_SAFE_INTEGER);
+    if (retval.length>1 && min>10000) {
+        inDialogAry.forEach( (d) => d.zIndex-=7000);
+    }
+    return retval;
+}
+
+
 
 /**
  * @param popup {object}
@@ -104,11 +181,11 @@ function showTmpPopup(popup) {
     if (!divElement) init();
     tmpCount++;
     const id= TMP_ROOT+tmpCount;
-    tmpPopups[id]= popup;
+    tmpPopups.push( {dialogId:id, component:popup});
     reRender(dialogs,tmpPopups);
     return () => {
-        if (tmpPopups[id]) {
-            Reflect.deleteProperty(tmpPopups, id);
+        if (tmpPopups.some( (p) => (p.dialogId==id))) {
+            tmpPopups= tmpPopups.filter( (p) => p.dialogId!=id);
             reRender(dialogs,tmpPopups);
         }
     };

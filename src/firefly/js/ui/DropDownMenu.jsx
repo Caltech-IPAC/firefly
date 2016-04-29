@@ -59,11 +59,11 @@ export class DropDownMenuWrapper extends Component {
     }
 
     render() {
-        var {x,y,content,visible}= this.props;
+        var {x,y,content,visible,zIndex}= this.props;
         if (!visible) return false;
         if (!x && !y && !content) return false;
         return (
-            <div style={{position:'absolute',left:0,top:0, visibility:'hidden' }}
+            <div style={{position:'absolute',left:0,top:0, visibility:'hidden',zIndex }}
                  onClick={futureCallback} >
                     <div style={{padding : 5}} className='ff-dropdown-menu'>
                         {content}
@@ -81,5 +81,6 @@ DropDownMenuWrapper.propTypes= {
     visible : PropTypes.bool,
     x : PropTypes.number.isRequired,
     y : PropTypes.number.isRequired,
-    content : PropTypes.object.isRequired
+    content : PropTypes.object.isRequired,
+    zIndex : PropTypes.number
 };

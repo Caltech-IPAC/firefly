@@ -26,8 +26,11 @@ export var PopupPanel= React.createClass(
         title : PropTypes.string,
         closePromise : PropTypes.object,
         requestToClose : PropTypes.func,
+        requestOnTop : PropTypes.func,
         closeCallback : PropTypes.func,
-        visible : PropTypes.bool
+        visible : PropTypes.bool,
+        dialogId : PropTypes.string,
+        zIndex : PropTypes.number
     },
 
 
@@ -87,6 +90,8 @@ export var PopupPanel= React.createClass(
     },
 
     dialogMoveStart(ev)  {
+        const {requestOnTop,dialogId}= this.props;
+        requestOnTop && requestOnTop(dialogId);
         var e= ReactDOM.findDOMNode(this);
         var titleBar= ReactDOM.findDOMNode(this.titleBarRef);
         this.mouseCtx= humanStart(ev,e,titleBar);
@@ -118,7 +123,8 @@ export var PopupPanel= React.createClass(
             //left : '40px',
             //right : '170px'
             left : `${this.state.posX}px`,
-            top : `${this.state.posY}px`
+            top : `${this.state.posY}px`,
+            zIndex:this.props.zIndex
         };
 
 
