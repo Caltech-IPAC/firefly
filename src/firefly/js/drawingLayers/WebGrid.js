@@ -91,16 +91,20 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
   * @returns {*} - a new object which contains the new changes and the null data
   */
  function getLayerChanges(drawLayer, action) {
+
+
      if  (action.type!==DrawLayerCntlr.MODIFY_CUSTOM_FIELD) return null; // don't do anything
-     //get the changes in the action payload
-     const {changes}= action.payload;
-     //If the custom field is the same as the drawLayer's, update the drawData, if not return null
-     if (changes!==drawLayer.changes) return null;
-     const drawDataObj= Object.assign({},drawLayer.drawData);
-     //clear the data inside the drawDataObj object
-     drawDataObj.data= null;
-     //return a new object with a null data in the drawData
-     return Object.assign({changes}, {drawData: drawDataObj});
+
+     const {COORDINATE_PREFERENCE}= action.payload.changes;
+     /*only the coordinate in the custom changes is the same as the one in the drawLayer,
+      the drawLayer will be updated.  Otherwise, it return null, no update is made.
+      */
+     if (COORDINATE_PREFERENCE===drawLayer.changes.COORDINATE_PREFERENCE) {
+         const drawData= Object.assign({},drawLayer.drawData, {data:null});
+         return { COORDINATE_PREFERENCE, drawData};
+     }
+     return null;
+
  }
 
  /**
