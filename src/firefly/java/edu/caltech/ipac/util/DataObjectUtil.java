@@ -37,7 +37,7 @@ public class DataObjectUtil {
 
 
     public static List<String> getNumericCols(DataType[] dataTypes) {
-        List<String> numericCols = new ArrayList();
+        List<String> numericCols = new ArrayList<>();
         for (DataType dt : dataTypes) {
             Class type = dt.getDataType();
             if (type.equals(Double.class) ||
@@ -54,7 +54,7 @@ public class DataObjectUtil {
         DataType col;
 
         Expression colExpr = null;
-        DataType [] colDataTypes = null;
+        ArrayList<DataType> colDataTypes = null;
 
         public DoubleValueGetter(DataType[] dataTypes, String columnNameOrExpr) {
             col = getDataDefinition(dataTypes, columnNameOrExpr);
@@ -66,11 +66,14 @@ public class DataObjectUtil {
                     colExpr = null;
                 } else {
                     Set<String> vars = colExpr.getParsedVariables();
-                    colDataTypes = new DataType[vars.size()];
-                    int varIdx = 0;
+                    colDataTypes = new ArrayList<>(vars.size());
+                    DataType dt;
                     for (String var : vars) {
-                        colDataTypes[varIdx] = getDataDefinition(dataTypes, var);
-                        varIdx++;
+                        dt = getDataDefinition(dataTypes, var);
+                        // exclude predefined variables like pi or e
+                        if (dt != null) {
+                            colDataTypes.add(dt);
+                        }
                     }
                 }
             }

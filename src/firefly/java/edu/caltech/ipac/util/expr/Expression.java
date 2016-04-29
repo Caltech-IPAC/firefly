@@ -31,9 +31,13 @@ public class Expression {
         try {
             expr = parser.parseString(input);
             Set<Variable> parsedVariables = parser.getParsedVariables();
-            parsedVariablesMap = new HashMap<String,Variable>(parsedVariables.size());
-            for (Variable var : parsedVariables) {
-                parsedVariablesMap.put(var.toString(), var);
+            if (parsedVariables == null) {
+                parsedVariablesMap = new HashMap<>(0);
+            } else {
+                parsedVariablesMap = new HashMap<>(parsedVariables.size());
+                for (Variable var : parsedVariables) {
+                    parsedVariablesMap.put(var.toString(), var);
+                }
             }
         } catch (SyntaxException e) {
             syntaxException = e;

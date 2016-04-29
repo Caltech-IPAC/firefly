@@ -270,11 +270,12 @@ function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
         limits = [xMin, xMax, yMin, yMax];
     }
 
-    // todo support expressions
-    const req = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']), {'startIdx' : 0, 'pageSize' : 1000000,
-        'inclCols' : `${xyPlotParams.x.columnOrExpr},${xyPlotParams.y.columnOrExpr}`,
+    const req = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']), {
+        'startIdx' : 0,
+        'pageSize' : 1000000,
+        //'inclCols' : `${xyPlotParams.x.columnOrExpr},${xyPlotParams.y.columnOrExpr}`, // ignored if 'decimate' is present
         'decimate' : serializeDecimateInfo(xyPlotParams.x.columnOrExpr, xyPlotParams.y.columnOrExpr, 10000, 1.0, ...limits)
-        });
+    });
 
     const tblId = activeTableServerRequest.tbl_id;
     req.tbl_id = 'xyplot-'+tblId;
