@@ -80,7 +80,7 @@ class TabsHeader extends Component {
     render() {
         return (
             <div style={{flexGrow: 0, height: 18}}>
-                <Resizable id='tabs-resizer' style={{position: 'relative', width: '100%', height: '100%', overflow: 'hidden'}} onResize={this.onResize}>
+                <Resizable id='tabs-resizer' style={{ width: '100%', height: '100%', overflow: 'hidden'}} onResize={this.onResize}>
                     <ul className='TabPanel__Tabs'
                         ref={(c)=>{this.adjustTabsWidth(c);}}>
                         {this.props.children}
@@ -141,10 +141,12 @@ export class Tabs extends Component {
                 });
             });
         return (
+
             <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden'}}>
                 <TabsHeader>{children}</TabsHeader>
                 <div ref='contentRef' className='TabPanel__Content'>{(content)?content:''}</div>
             </div>
+
         );
     }
 }
