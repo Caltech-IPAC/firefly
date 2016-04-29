@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import difference from 'lodash/difference';
+import {difference,isArray,has,isString,omit,isEmpty} from 'lodash';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeImagePt, pointEquals} from './Point.js';
 import {CsysConverter} from './CsysConverter.js';
@@ -11,24 +11,31 @@ import {CsysConverter} from './CsysConverter.js';
 
 const clone = (obj,params={}) => Object.assign({},obj,params);
 
+function getPlotViewAry(ref) {
+    if (ref.plotViewAry && has(ref,'activePlotId')) { // I was passed the visRoot
+        return ref.plotViewAry;
+    }
+    else if (isArray(ref) && ref.length>0 && ref[0].plotId)  { // passed a plotViewAry
+        return ref;
+    }
+}
+
 /**
+ * Take a visRoot, a plotViewAry, or a plotView and find the primePlot.  plotId is required when passing
+ * a plotViewAry. plotId is ignored when passing a plotView.  It is optional when passed a visRoot. 
+ * When plotId is not included with visRoot it uses the activePlotId.
  *
- * @param {{} | [] }ref this can be the visRoot or a plotView Object.  If it is view root then it will
- * find the active plotView and get the primePlot otherwise it will find the primePlot in the plotView
- * @param {string} [plotId] this is passed then the behavior changes some.  If the ref is a visRoot then it will used the passed
- * plotId instead of the visRoot active plotId. Also when the plotId is passed then ref is also allowed to be the
- * plotViewAry.  In this case, it will find the prime plot on the plotViewAry by looking up the plotView in the array
- * and then returning the primePLot
+ * @param {{} |[]} ref this can be the visRoot or the plotViewAry, or a plotView Object.  
+ * @param {string} [plotId] the plotId, required with plotViewAry, ignored for  plotView, optional with visRoot
  */
 export function primePlot(ref,plotId) {
     var pv;
     if (!ref) return null;
-    if (typeof plotId !== 'string') plotId= '';
-    if (ref.plotViewAry) { // I was passed the visRoot
-        var id= plotId?plotId:ref.activePlotId;
-        pv= getPlotViewById(ref,id);
+    if (!isString(plotId)) plotId= '';
+    if (ref.plotViewAry) { // I was passed the visRoot, use either plot it or the active plot id
+        pv= getPlotViewById(ref, plotId ? plotId : ref.activePlotId);
     }
-    else if (plotId && Array.isArray(ref) && ref.length>0 && ref[0].plotId) { //i was passed a plotViewAry
+    else if (plotId && isArray(ref) && ref.length>0 && ref[0].plotId) { //i was passed a plotViewAry
         pv= ref.find( (pv) => pv.plotId===plotId);
     }
     else if (ref.plotId && ref.plots) { // i was passed a plotView
@@ -45,13 +52,7 @@ export function primePlot(ref,plotId) {
  */
 export function getPlotViewById(ref,plotId) {
     if (!plotId) return null;
-    var plotViewAry;
-    if (ref.plotViewAry) {// I was passed the visRoot
-        plotViewAry= ref.plotViewAry;
-    }
-    else if (Array.isArray(ref)) { //i was passed a plotViewAry
-        plotViewAry= ref;
-    }
+    var plotViewAry= getPlotViewAry(ref);
     if (!plotViewAry) return null;
 
     return plotViewAry.find( (pv) => pv.plotId===plotId);
@@ -70,14 +71,7 @@ export function getPlotViewIdxById(visRoot,plotId) {
  * @return {Array.<T>}
  */
 export function expandedPlotViewAry(ref,activePlotId=null) {
-    var plotViewAry;
-    if (ref.plotViewAry && ref.activePlotId) { // I was passed the visRoot
-        plotViewAry= ref.plotViewAry;
-    }
-    else if (Array.isArray(ref) && ref.length>0 && ref[0].plotId)  { // passwd a plotViewAry
-        plotViewAry= ref;
-    }
-    if (!plotViewAry) return null;
+    var plotViewAry= getPlotViewAry(ref);
     return plotViewAry.filter( (pv) => (pv.plotId===activePlotId || pv.plotViewCtx.inExpandedList));
 }
 
@@ -170,7 +164,9 @@ export function getAllDrawLayers(dlRoot) { return dlRoot.drawLayerAry; }
  * @return {Array}
  */
 export function getAllDrawLayersForPlot(ref,plotId,mustBeVisible=false) {
+    if (!plotId) return [];
     var dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
+    if (isEmpty(dlAry)) return [];
     if (mustBeVisible) {
         return dlAry.filter( (dl) => dl.visiblePlotIdAry.includes(plotId));
     }
@@ -362,15 +358,31 @@ export function getOnePvOrGroup(plotViewAry, plotId,plotGroup) {
 
 
 /**
- * make a new copy of the plotview array with an object set on the plotview that matches the plotId
- * @param plotViewAry
- * @param plotId
- * @param obj
- * @return {*}
+ * make a new copy of the plotview array with an object set on a cloned copy of the matched plotview.
+ * @param ref visRoot or plotViewAry
+ * @param {string} plotId
+ * @param {{}} obj fields to replace
+ * @return {[]}
  */
-export function clonePvAry(plotViewAry, plotId, obj) {
+export function clonePvAry(ref, plotId, obj) {
+    var plotViewAry= getPlotViewAry(ref);
+    if (!plotViewAry) return null;
+
     return plotViewAry.map( (pv) => pv.plotId===plotId ? clone(pv,obj) : pv);
 }
+
+/**
+ * make a new copy of the plotview array with the passed plotView replacing the old one
+ * @param ref visRoot or plotViewAry
+ * @param {obj} plotView
+ * @return {[]}
+ */
+export function clonePvAryWithPv(ref, plotView) {
+    var plotViewAry= getPlotViewAry(ref);
+    if (!plotViewAry) return null;
+    return plotViewAry.map( (pv) => pv.plotId===plotView.plotId ? plotView : pv);
+}
+
 
 
 /**
@@ -414,5 +426,9 @@ export function isMultiImageFitsWithSameArea(pv) {
                 pointEquals(iwc4,c4) );
     });
 }
+
+
+
+
 
 

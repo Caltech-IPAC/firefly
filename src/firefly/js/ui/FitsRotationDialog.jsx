@@ -15,7 +15,7 @@ import {PopupPanel} from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {visRoot, dispatchRotate, ActionScope} from '../visualize/ImagePlotCntlr.js';
-import {RotateType} from '../visualize/PlotChangeTask.js';
+import {RotateType} from '../visualize/PlotState.js';
 
 import HelpIcon from './HelpIcon.jsx';
 

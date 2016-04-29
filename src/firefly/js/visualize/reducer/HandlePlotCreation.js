@@ -34,7 +34,7 @@ export function reducer(state, action) {
             plotViewAry= plotFail(state,action);
             break;
         case Cntlr.PLOT_IMAGE  :
-            plotViewAry= addPlot(state,action);
+            plotViewAry= addPlot(state,action, true);
             // activePlotId= action.payload.plotId;
             // todo: also process adding to history
             break;
@@ -52,13 +52,13 @@ export function reducer(state, action) {
             plotViewAry= endServerCallFail(state,action);
             break;
         case Cntlr.ROTATE  :
-            plotViewAry= addPlot(state,action);
+            plotViewAry= addPlot(state,action, true);
             break;
         case Cntlr.FLIP:
-            plotViewAry= addPlot(state,action);
+            plotViewAry= addPlot(state,action, true);
             break;
         case Cntlr.CROP:
-            plotViewAry= addPlot(state,action);
+            plotViewAry= addPlot(state,action, true);
             break;
         default:
             break;
@@ -92,7 +92,7 @@ const updateDefaults= function(plotRequestDefaults, action) {
     }
 };
 
-function addPlot(state,action) {
+function addPlot(state,action, replace) {
     const {plotViewAry}= state;
     const {pvNewPlotInfoAry}= action.payload;
 
@@ -101,14 +101,14 @@ function addPlot(state,action) {
             const info= pvNewPlotInfoAry.find( (i) => i.plotId===pv.plotId);
             if (!info) return pv;
             const {plotAry, overlayPlotViews}= info;
-            return PlotView.replacePlots(pv,plotAry,overlayPlotViews);
+            return PlotView.replacePlots(pv,plotAry,overlayPlotViews,replace);
         });
     }
     else {// used for single plot update
         console.error(`Deprecated payload send to handPlotChange.addPlot: type:${action.type}`);
         const {plotAry, overlayPlotViews, plotId}= action.payload;
         return plotViewAry.map( (pv) => {
-             return pv.plotId===plotId ? PlotView.replacePlots(pv,plotAry,overlayPlotViews) : pv;
+             return pv.plotId===plotId ? PlotView.replacePlots(pv,plotAry,overlayPlotViews, replace) : pv;
          });
     }
 };

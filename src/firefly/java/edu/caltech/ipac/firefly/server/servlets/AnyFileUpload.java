@@ -79,7 +79,7 @@ public class AnyFileUpload extends BaseHttpServlet {
             File destDir = resolveDestDir(dest, fType);
             boolean doPreload = resolvePreload(preload, fType);
 
-            File uf = File.createTempFile("upload_", ext, destDir);
+            File uf = File.createTempFile("upload_", ext, destDir); // other parts of system depend on file name starting with "upload_"
             String rPathInfo = ServerContext.replaceWithPrefix(uf);
 
             UploadFileInfo fi= new UploadFileInfo(rPathInfo,uf,fileName,file.getContentType());

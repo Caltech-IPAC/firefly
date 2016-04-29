@@ -87,7 +87,7 @@ export class DrawerComponent extends React.Component {
             textDrawAry.some( (e,idx) =>
                         !isEqual(e.style,old[idx].style) || e.text!=old[idx].text);
         if (!doUpdate) return;
-        this.setState({textDrawAry});
+        if (this.iAmMounted) this.setState({textDrawAry});
     }
 
     render() {

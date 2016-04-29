@@ -34,7 +34,7 @@ const toolsStyle= {
 
 
 
-export function ImageMetaDataToolbarView({visRoot, viewerId, viewerPlotIds, layoutType, activeTable, converterFactory}) {
+export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds, layoutType, activeTable, converterFactory}) {
 
     const {dataId,converter}= converterFactory(activeTable);
     var nextIdx, prevIdx, leftImageStyle;
@@ -42,7 +42,7 @@ export function ImageMetaDataToolbarView({visRoot, viewerId, viewerPlotIds, layo
 
     // single mode stuff
     if (layoutType===SINGLE) {
-        var cIdx= viewerPlotIds.findIndex( (plotId) => plotId===visRoot.activePlotId);
+        var cIdx= viewerPlotIds.findIndex( (plotId) => plotId===activePlotId);
         if (cIdx<0) cIdx= 0;
         nextIdx= cIdx===viewerPlotIds.length-1 ? 0 : cIdx+1;
         prevIdx= cIdx ? cIdx-1 : viewerPlotIds.length-1;
@@ -98,7 +98,7 @@ export function ImageMetaDataToolbarView({visRoot, viewerId, viewerPlotIds, layo
 }
 
 ImageMetaDataToolbarView.propTypes= {
-    visRoot : PropTypes.object,
+    activePlotId : PropTypes.string,
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string.isRequired,
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,

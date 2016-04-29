@@ -31,14 +31,14 @@ function dispatchSelectPoint(mouseStatePayload) {
     var {plotId,screenPt,drawLayer}= mouseStatePayload;
     if (drawLayer.drawData.data) {
         flux.process({type:DrawLayerCntlr.SELECT_POINT, payload:mouseStatePayload} );
-        dispatchAttributeChange(plotId,true,PlotAttribute.ACTIVE_POINT,{pt:makeSelectedPt(screenPt,plotId)});
+        dispatchAttributeChange(plotId,true,PlotAttribute.ACTIVE_POINT,{pt:makeSelectedPt(screenPt,plotId),true});
     }
 }
 
 
 function onDetach(drawLayer,action) {
     var {plotIdAry}= action.payload;
-    plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.ACTIVE_POINT,null));
+    plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.ACTIVE_POINT,null,true));
 }
 
 

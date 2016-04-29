@@ -730,8 +730,10 @@ public class PlotServUtils {
         return c;
     }
 
+    private static final ProgressMessage EMPTY_MESSAGE= new ProgressMessage("",false);
+
     static ProgressMessage getPlotProgressMessage(ProgressStat stat) {
-        ProgressMessage progMessage = null;
+        ProgressMessage progMessage = EMPTY_MESSAGE;
         if (stat != null) {
             if (stat.isGroup()) {
                 List<String> keyList = stat.getMemberIDList();
@@ -745,8 +747,9 @@ public class PlotServUtils {
         return progMessage;
     }
 
+
     static ProgressMessage getSingleStatusMessage(String key) {
-        ProgressMessage retval = null;
+        ProgressMessage retval = EMPTY_MESSAGE;
         Cache cache = UserCache.getInstance();
         ProgressStat stat = (ProgressStat) cache.get(new StringKey(key));
         if (stat != null) {

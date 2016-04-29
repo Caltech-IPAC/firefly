@@ -7,16 +7,17 @@ import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
+import {getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {flux} from '../../Firefly.js';
-import {VisToolbarView} from './VisToolbarView.jsx';
-//import {deepDiff} from '../../util/WebUtil.js';
+import {VisToolbarViewWrapper} from './VisToolbarView.jsx';
 
+// import {deepDiff} from '../../util/WebUtil.js';
 
 
 export class VisToolbar extends Component {
     constructor(props) {
         super(props);
-        this.state= {visRoot:visRoot(), dlAry:getDlAry(), tip:''};
+        this.state= {visRoot:visRoot(), dlCount:0, tip:''};
         this.tipOn= (tip) => this.setState({tip});
         this.tipOff= () => this.setState({tip:null});
     }
@@ -26,10 +27,9 @@ export class VisToolbar extends Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        // todo: more performance testing
         // deepDiff({props: prevProps, state: prevState},
         //     {props: this.props, state: this.state},
-        //     this.constructor.displayName);
+        //     '---------- vis tool bar', true);
     }
 
     getChildContext() {
@@ -47,14 +47,17 @@ export class VisToolbar extends Component {
     }
 
     storeUpdate() {
-        if (visRoot()!==this.state.visRoot || getDlAry() !==this.state.dlAry) {
-            this.setState({visRoot:visRoot(), dlAry:getDlAry()});
+        const vr= visRoot();
+        const dlCount= getAllDrawLayersForPlot(getDlAry(),vr.activePlotId).length;
+        var needsUpdate= (vr!==this.state.visRoot && vr.activePlotId!==this.state.visRoot.activePlotId);
+        if (needsUpdate || dlCount!==this.state.dlCount) {
+            this.setState({visRoot:visRoot(), dlCount});
         }
     }
 
     render() {
-        var {visRoot,dlAry,tip}= this.state;
-        return <VisToolbarView visRoot={visRoot} dlAry={dlAry} toolTip={tip}/>;
+        var {visRoot,tip,dlCount}= this.state;
+        return <VisToolbarViewWrapper visRoot={visRoot} toolTip={tip} dlCount={dlCount}/>;
     }
 
 

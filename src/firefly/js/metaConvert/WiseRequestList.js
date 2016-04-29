@@ -40,7 +40,7 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
     const band= getCellValue(table,row,'band');
 
     if (includeSingle) {
-        retval.single= builder('wise-1','ibe_file_retrieve', 'Wise band 1', row, {band});
+        retval.single= builder(`wise-${band}`,'ibe_file_retrieve', `Wise band ${band}`, row, {band});
     }
 
     if (includeStandard) {

@@ -3,18 +3,20 @@
  */
 
 import React, {PropTypes} from 'react';
+import {isEmpty} from 'lodash';
 import {getDrawLayerByType, isDrawLayerAttached } from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {dispatchCreateDrawLayer,
+     getDlAry,
     dispatchAttachLayerToPlot,
     dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 
 
-export function SimpleLayerOnOffButton({plotView:pv,tip,dlAry,typeId,iconOn,iconOff,visible,todo, isIconOn, onClick}) {
+export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,visible,todo, isIconOn, onClick}) {
     var enabled= pv ? true : false;
     var isOn= isIconOn;
     if (typeId) {
-        const distLayer= getDrawLayerByType(dlAry,typeId);
+        const distLayer= getDrawLayerByType(getDlAry(),typeId);
         isOn=  distLayer && isDrawLayerAttached(distLayer,pv.plotId);
     }
 
@@ -25,13 +27,12 @@ export function SimpleLayerOnOffButton({plotView:pv,tip,dlAry,typeId,iconOn,icon
                        horizontal={true}
                        visible={visible}
                        todo={todo}
-                       onClick={() => onClick ? onClick(pv,!isOn) : onOff(pv,dlAry,typeId,todo)}/>
+                       onClick={() => onClick ? onClick(pv,!isOn) : onOff(pv,typeId,todo)}/>
     );
 }
 
 SimpleLayerOnOffButton.propTypes= {
     plotView : PropTypes.object,
-    dlAry : PropTypes.arrayOf(React.PropTypes.object),
     typeId :  PropTypes.string,
     tip : PropTypes.string,
     iconOn : PropTypes.string,
@@ -48,15 +49,15 @@ SimpleLayerOnOffButton.defaultProps= {
 
 
 
-function onOff(pv,dlAry,typeId,todo) {
-    if (!pv || !dlAry || !typeId) return;
+function onOff(pv,typeId,todo) {
+    const dlAry= getDlAry();
+    if (!pv || isEmpty(dlAry) || !typeId) return;
 
     if (todo) {
         console.log('todo');
         return;
     }
-
-    var dl= getDrawLayerByType(dlAry, typeId);
+    var dl= getDrawLayerByType(getDlAry(), typeId);
     if (!dl) {
         dispatchCreateDrawLayer(typeId);
     }
