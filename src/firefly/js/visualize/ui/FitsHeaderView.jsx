@@ -58,7 +58,7 @@ const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height:40, 
 
 
 //3-color styles
-const tabStyle =  {width: '100%',height:'100%', display: 'inline-block'};
+const tabStyle =  {width: '100%',height:'100%', display: 'inline-block', background:'#e3e3e3'};
 
 
 function popupForm(plot, fitsHeaderInfo, popupId) {
