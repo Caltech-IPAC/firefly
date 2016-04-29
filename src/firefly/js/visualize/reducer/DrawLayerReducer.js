@@ -39,10 +39,8 @@ function makeReducer(factory) {
 
             case DrawLayerCntlr.FORCE_DRAW_LAYER_UPDATE:
             case ImagePlotCntlr.ANY_REPLOT:
-                return updateFromLayer(drawLayer,action,factory);
-                break;
             case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
-                return updateCustomChangeFromLayer(drawLayer,action,factory);
+                return updateFromLayer(drawLayer,action,factory);
                 break;
 
             default:
@@ -51,10 +49,6 @@ function makeReducer(factory) {
         }
     };
 }
-
-
-
-
 
 
 function handleOtherAction(drawLayer,action,factory) {
@@ -99,23 +93,6 @@ function updateFromLayer(drawLayer,action,factory) {
     }
     return drawLayer;
 }
-
-
-function updateCustomChangeFromLayer(drawLayer,action,factory) {
-    var {plotIdAry, changes}= action.payload;
-
-    drawLayer= Object.assign({}, drawLayer, {changes});
-    drawLayer= Object.assign({}, drawLayer, changes, factory.getLayerChanges(drawLayer,action));
-    if (drawLayer.hasPerPlotData) {
-        plotIdAry.forEach( (id) =>
-            drawLayer.drawData= getDrawData(factory,drawLayer, action, id));
-    }
-    else {
-        drawLayer.drawData= getDrawData(factory,drawLayer, action);
-    }
-    return drawLayer;
-}
-
 
 /**
  *

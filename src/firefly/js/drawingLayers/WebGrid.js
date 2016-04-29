@@ -96,10 +96,10 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
      if  (action.type!==DrawLayerCntlr.MODIFY_CUSTOM_FIELD) return null; // don't do anything
 
      const {COORDINATE_PREFERENCE}= action.payload.changes;
-     /*only the coordinate in the custom changes is the same as the one in the drawLayer,
+     /*only the coordinate in the custom changes is not the same as the one in the drawLayer,
       the drawLayer will be updated.  Otherwise, it return null, no update is made.
       */
-     if (COORDINATE_PREFERENCE===drawLayer.changes.COORDINATE_PREFERENCE) {
+     if (COORDINATE_PREFERENCE !== (drawLayer.COORDINATE_PREFERENCE?drawLayer.COORDINATE_PREFERENCE:null)) {
          const drawData= Object.assign({},drawLayer.drawData, {data:null});
          return { COORDINATE_PREFERENCE, drawData};
      }
