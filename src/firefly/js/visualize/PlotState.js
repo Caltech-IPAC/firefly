@@ -19,6 +19,7 @@ export const Operation= new Enum(['ROTATE', 'CROP', 'FLIP_Y']);
  */
 const MultiImageAction = new Enum([ 'GUESS',      // Default, guess between load first, and use all, depending on three color params
                                     'USE_FIRST',   // only valid option if loading a three color with multiple Request
+                                    'USE_IDX',   // use a specific image from the fits read Array
                                     'MAKE_THREE_COLOR', // make a three color out of the first three images, not yet implemented
                                     'USE_ALL' // only valid in non three color, make a array of WebPlots
                                     ]);
