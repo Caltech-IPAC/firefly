@@ -459,18 +459,24 @@ function getLabels(levels,csys, labelFormat) {
             delta = levels[i][1]-levels[i][0];
             delta = delta<0?delta+360:delta;
         }
+
+        var lon, lat,num;
         for (let j=0; j < levels[i].length; j += 1) {
 
             if (sexigesimal) {
                 try {
                     switch (i) {
                         case 0:
-                            var lon = CoordUtil.convertLonToString(levels[i][j], csys);
-                            labels[offset] = labelFormat === 'hms' ? lon : CoordUtil.convertStringToLon(lon, csys).toFixed(3);
+                            lon = CoordUtil.convertLonToString(levels[i][j], csys);
+                            num = labelFormat === 'hms' ? lon : CoordUtil.convertStringToLon(lon, csys);
+                            //labels[offset] = labelFormat === 'hms' ? lon : CoordUtil.convertStringToLon(lon, csys).toFixed(3);
+                            labels[offset] =`${numeral(num).format(precision3Digit)}`;
                             break;
                         case 1:
-                            var lat = CoordUtil.convertLatToString(levels[i][j], csys);
-                            labels[offset] = labelFormat === 'hms' ? lat : CoordUtil.convertStringToLat(lat, csys).toFixed(3);
+                            lat = CoordUtil.convertLatToString(levels[i][j], csys);
+                            num = labelFormat === 'hms' ? lat : CoordUtil.convertStringToLat(lat, csys);
+                            //labels[offset] = labelFormat === 'hms' ? lat : CoordUtil.convertStringToLat(lat, csys).toFixed(3);
+                            labels[offset] =`${numeral(num).format(precision3Digit)}`;
                             break;
                     }
 
@@ -480,7 +486,7 @@ function getLabels(levels,csys, labelFormat) {
 
             }
             else {
-                labels[offset] = Math.trunc(levels[i][j]);
+                labels[offset] = `${numeral(levels[i][j]).format(precision3Digit)}`;
             }
             offset += 1;
         }

@@ -67,7 +67,7 @@ function onCoordinateChange(plotId, drawLayer, ev) {
     var csysName = get(ev, 'target.value');
     AppDataCntlr.dispatchAddPreference(COORDINATE_PREFERENCE,csysName);
     //add or update the coordinate reference to the drawLayer
-    var customChanges ={COORDINATE_PREFERENCE:csysName};
+    var customChanges ={[COORDINATE_PREFERENCE]:csysName};
     dispatchModifyCustomField( drawLayer.displayGroupId,customChanges, plotId);
 
 
