@@ -307,7 +307,15 @@ function updatePlotGroupScrollXY(plotId,plotViewAry, plotGroupAry, newScrollPt) 
     return plotViewAry;
 }
 
+function setGroupLocked(pv,plotId,plotViewAry, plotGroupAry) {
+    var plotView= getPlotViewById(plotViewAry, plotId);
+    var plotGroup= findPlotGroup(plotView.plotGroupId,plotGroupAry);
+    if (plotGroup && plotGroup.lockRelated) {
+        var groupLocked= plotGroup.lockRelated;
 
+    }
+    return groupLocked;
+}
 
 
 

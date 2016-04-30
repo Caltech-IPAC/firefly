@@ -93,6 +93,7 @@ const UPDATE_VIEW_SIZE= 'ImagePlotCntlr.UpdateViewSize';
 const PROCESS_SCROLL= 'ImagePlotCntlr.ProcessScroll';
 const RECENTER= 'ImagePlotCntlr.recenter';
 const RESTORE_DEFAULTS= 'ImagePlotCntlr.restoreDefaults';
+const GROUP_LOCKING= 'ImagePlotCntlr.GroupLocking';
 
 const CHANGE_POINT_SELECTION= 'ImagePlotCntlr.ChangePointSelection';
 
@@ -183,7 +184,7 @@ export default {
     COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL,
     CHANGE_POINT_SELECTION,
-    PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER,
+    PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER, GROUP_LOCKING,
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
     DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT
 };
@@ -337,6 +338,18 @@ export function dispatchUpdateViewSize(plotId,width,height,updateScroll=true,cen
     });
 }
 
+/**
+ *
+ * @param plotId
+ * @param groupLock
+ */
+export function dispatchGroupLocking(plotId,plotGroupId,plotGroupAry,plotGroup,groupLocked) {
+    flux.process({
+        type: GROUP_LOCKING,
+        payload :{
+            plotId,plotGroupId,plotGroupAry,plotGroup,groupLocked
+        }});
+}
 
 
 /**
@@ -681,6 +694,7 @@ function reducer(state=initState(), action={}) {
         case STRETCH_CHANGE  :
         case STRETCH_CHANGE_FAIL:
         case RECENTER:
+        case GROUP_LOCKING:
         case PLOT_PROGRESS_UPDATE  :
         case CHANGE_PRIME_PLOT  :
             retState= plotChangeReducer(state,action);
