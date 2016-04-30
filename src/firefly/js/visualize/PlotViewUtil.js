@@ -391,7 +391,7 @@ export function clonePvAryWithPv(ref, plotView) {
  * @return {boolean}
  */
 export function isMultiImageFitsWithSameArea(pv) {
-    if (!pv.containsMultiImageFits) return false;
+    if (!pv.plotViewCtx.containsMultiImageFits) return false;
     var plot= primePlot(pv);
     var {dataWidth:w, dataHeight:h} = plot;
 

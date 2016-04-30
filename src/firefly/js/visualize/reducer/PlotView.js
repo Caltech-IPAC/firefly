@@ -66,25 +66,21 @@ export default {replacePlots,
  */
 export function makePlotView(plotId, req, pvOptions) {
     var pv= {
-        plotId,
-        plotGroupId: req.getPlotGroupId(),
-        drawingSubGroupId: req.getDrawingSubGroupId(), //todo, string, this is an id
+        plotId, // should never change
+        plotGroupId: req.getPlotGroupId(), //should never change
+        drawingSubGroupId: req.getDrawingSubGroupId(), //todo, string, this is an id, should never change
         plots:[],
         plottingStatus:'Plotting...',
         serverCall:'success', // one of 'success', 'working', 'fail'
         primeIdx:-1,
-        plotCounter:0, // index of how many plots, used for making next ID
         wcsMarginX: 0, // todo
         wcsMarginY: 0, // todo
         scrollX : -1,
         scrollY : -1,
         viewDim : {width:0, height:0}, // size of viewable area  (div size: offsetWidth & offsetHeight)
         overlayPlotViews: [], //todo
-        containsMultiImageFits : false,
-        containsMultipleCubes : false,
-        lockPlotHint: false, //todo
         attributes: {}, //todo, i hope to remove this an only hold attributes on web plot
-        menuItemKeys: makeMenuItemKeys(req,pvOptions,defMenuItemKeys),
+        menuItemKeys: makeMenuItemKeys(req,pvOptions,defMenuItemKeys), // normally wil not change
         plotViewCtx: createPlotViewContextData(req),
 
 
@@ -128,6 +124,10 @@ function createPlotViewContextData(req) {
         preferenceColorKey: req.getPreferenceColorKey(),
         preferenceZoomKey:  req.getPreferenceZoomKey(),
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
+        containsMultiImageFits : false,
+        containsMultipleCubes : false,
+        lockPlotHint: false, //todo
+        plotCounter:0 // index of how many plots, used for making next ID
     };
 }
 
@@ -175,6 +175,7 @@ export function changePrimePlot(pv, nextIdx) {
 function replacePlots(pv, plotAry, overlayPlotViews=null,keepPrimeIdx=false) {
 
     pv= Object.assign({},pv);
+    pv.plotViewCtx= Object.assign({},pv.plotViewCtx);
 
     if (pv.plots && pv.plots.length) {
         pv.plots.forEach( (plot) => {
@@ -191,8 +192,8 @@ function replacePlots(pv, plotAry, overlayPlotViews=null,keepPrimeIdx=false) {
 
     pv.plots.forEach( (plot) => {
         plot.attributes= Object.assign({},plot.attributes, getNewAttributes(plot));
-        plot.plotImageId= `${pv.plotId}--${pv.plotCounter}`;
-        pv.plotCounter++;
+        plot.plotImageId= `${pv.plotId}--${pv.plotViewCtx.plotCounter}`;
+        pv.plotViewCtx.plotCounter++;
     });
 
 
@@ -206,8 +207,8 @@ function replacePlots(pv, plotAry, overlayPlotViews=null,keepPrimeIdx=false) {
 
     setClientSideRequestOptions(pv,pv.plots[pv.primeIdx].plotState.getWebPlotRequest());
 
-    pv.containsMultiImageFits= pv.plots.every( (p) => p.plotState.isMultiImageFile());
-    pv.containsMultipleCubes= pv.plots.every( (p) => p.plotState.getCubeCnt()>1);
+    pv.plotViewCtx.containsMultiImageFits= pv.plots.every( (p) => p.plotState.isMultiImageFile());
+    pv.plotViewCtx.containsMultipleCubes= pv.plots.every( (p) => p.plotState.getCubeCnt()>1);
     pv.plotViewCtx.rotateNorthLock= pv.plots[pv.primeIdx].plotState.getRotateType()===RotateType.NORTH;  // todo, study this more, understand why
     pv.plotViewCtx.lastCollapsedZoomLevel= pv.plots[pv.primeIdx].zoomFactor;
 
