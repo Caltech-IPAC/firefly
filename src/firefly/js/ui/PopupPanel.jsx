@@ -3,8 +3,8 @@
  */
 
 import React, {Componennt, PropTypes} from 'react';
-import {getRootURL, getAbsoluteLeft, getAbsoluteTop} from '../util/BrowserUtil.js';
-import _ from 'lodash';
+import {getRootURL} from '../util/BrowserUtil.js';
+import {debounce} from 'lodash';
 import Enum from 'enum';
 import ReactDOM from 'react-dom';
 import {getPopupPosition, humanStart, humanMove, humanStop } from './PopupPanelHelper.js';
@@ -69,12 +69,9 @@ export var PopupPanel= React.createClass(
         var {visible}= this.props;
         this.moveCallback= (ev)=> this.dialogMove(ev);
         this.buttonUpCallback= (ev)=> this.dialogMoveEnd(ev);
-        this.browserResizeCallback= _.debounce(() => { this.updateLayoutPosition(); },150);
+        this.browserResizeCallback= debounce(() => { this.updateLayoutPosition(); },150);
         var e= ReactDOM.findDOMNode(this);
         if (visible) this.updateLayoutPosition();
-        //_.defer(function() {
-        //    this.computeDir(e);
-        //}.bind(this));
         window.addEventListener('resize', this.browserResizeCallback);
         document.addEventListener('mousemove', this.moveCallback);
         document.addEventListener('mouseup', this.buttonUpCallback);

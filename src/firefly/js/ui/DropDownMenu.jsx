@@ -7,18 +7,11 @@ import './DropDownMenu.css';
 
 
 
-function computePosition(e,tgtX,tgtY) {
-    //var {left,top} = e.getBoundingClientRect();
-    //var x= tgtX-left;
-    //var y= tgtY-top;
-    var x= tgtX;
-    var y= tgtY;
-    return {x,y:y+18};
-}
+const computePosition= (tgtX,tgtY)  => ({x:tgtX,y:tgtY+18});
 
 function placeDropDown(e,x,y) {
     var {scrollX,scrollY}= window;
-    var pos= computePosition(e,x,y);
+    var pos= computePosition(x,y);
 
     var left= pos.x - 10 - scrollX;
     if (left<5) {

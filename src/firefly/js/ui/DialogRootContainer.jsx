@@ -4,127 +4,31 @@
 
 import React, {Component, PropTypes} from 'react';
 import ReactDOM from 'react-dom';
-import {dispatchHideDialog,isDialogVisible} from '../core/ComponentCntlr.js';
 import sCompare from 'react-addons-shallow-compare';
-import {flux} from '../Firefly.js';
+import {PopupStoreConnection} from './PopupStoreConnection.jsx';
 
 
+const DIALOG_DIV= 'dialogRootDiv';
+const TMP_ROOT='TMP-';
 
 export default {defineDialog, showTmpPopup};
 
 var dialogs= [];
 var tmpPopups= [];
-const DIALOG_DIV= 'dialogRootDiv';
-const TMP_ROOT='TMP=';
 var tmpCount=0;
 var divElement;
 
-var init= function() {
-    divElement= document.createElement('div');
-    document.body.appendChild(divElement);
-    divElement.id= DIALOG_DIV;
-};
 
 
-class DialogRootComponent extends Component {
-
-    constructor(props) {
-        super(props);
-        this.requestOnTop= this.requestOnTop.bind(this);
-        this.state = {oneTopKey:null};
-    }
-    
-    componentWillReceiveProps(nextProps, context) {
-        this.setState({dialogs:null,onTopKey:null});
-    }
-
-    requestOnTop(key) {
-        if (this.state.onTopKey!==key) {
-            dialogs= sortZIndex(dialogs,key);
-            this.setState({dialogs,onTopKey:key});
-        }
-    }
-
-    render() {
-        var {dialogs,tmpPopups}= this.props;
-        if (this.state.dialogs) dialogs= this.state.dialogs;
-        var dialogAry = dialogs.map( (d) =>
-                                React.cloneElement(d.component,
-                                    {
-                                        key:d.dialogId,
-                                        zIndex:d.zIndex,
-                                        requestOnTop:this.requestOnTop
-                                    }));
-        var tmpPopupAry = tmpPopups.map( (p) => React.cloneElement(p.component,{key:p.dialogId}));
-        return (
-                <div style={{position:'relative', zIndex:200}}>
-                    {dialogAry}
-                    <div style={{position:'relative', zIndex:10}}>
-                        {tmpPopupAry}
-                    </div>
-                </div>
-
-            );
-
+function requestOnTop(key) {
+    var topKey= dialogs.sort( (d1,d2) => d2.zIndex-d1.zIndex)[0].dialogId;
+    if (topKey!==key) {
+        dialogs= sortZIndex(dialogs,key);
+        reRender(dialogs,tmpPopups,requestOnTop);
     }
 }
 
-DialogRootComponent.propTypes = {
-    dialogs : PropTypes.array,
-    tmpPopups : PropTypes.array
-};
 
-
-class PopupStoreConnection extends Component {
-
-    constructor(props)  {
-        super(props);
-        var visible= isDialogVisible(props.dialogId);
-        this.state = { visible};
-    }
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
-
-    componentWillUnmount() {
-        if (this.storeListenerRemove) this.storeListenerRemove();
-    }
-
-    componentDidMount() {
-        this.storeListenerRemove= flux.addListener(() => this.updateVisibility());
-    }
-
-    updateVisibility() {
-        var {visible}= this.state;
-        var newVisible= isDialogVisible(this.props.dialogId);
-        if (newVisible !== visible) {
-            this.setState( {visible : newVisible} );
-        }
-    }
-
-    render() {
-        var {visible}= this.state;
-        if (!visible) return false;
-        var {dialogId,popupPanel,requestOnTop,zIndex}= this.props;
-        return  React.cloneElement(popupPanel,
-            {
-                visible, requestOnTop, dialogId, zIndex,
-                requestToClose : () => dispatchHideDialog(dialogId)
-            });
-    }
-
-}
-
-PopupStoreConnection.propTypes= {
-    popupPanel : PropTypes.object.isRequired,
-    dialogId   : PropTypes.string.isRequired,
-    requestOnTop : PropTypes.func,
-    zIndex : PropTypes.number.isRequired
-};
-
-
-function reRender(dialogs,tmpPopups) {
-    ReactDOM.render(<DialogRootComponent dialogs={dialogs} tmpPopups={tmpPopups}/>, divElement);
-}
 
 
 /**
@@ -145,7 +49,82 @@ function defineDialog(dialogId, dialog) {
         dialogs[idx]= newD;
     }
     dialogs= sortZIndex(dialogs,dialogId);
-    reRender(dialogs,tmpPopups);
+    reRender(dialogs,tmpPopups,requestOnTop);
+}
+
+
+/**
+ * @param popup {object}
+ */
+function showTmpPopup(popup) {
+    if (!divElement) init();
+    tmpCount++;
+    const id= TMP_ROOT+tmpCount;
+    tmpPopups.push( {dialogId:id, component:popup});
+    reRender(dialogs,tmpPopups,requestOnTop);
+    return () => {
+        if (tmpPopups.some( (p) => (p.dialogId==id))) {
+            tmpPopups= tmpPopups.filter( (p) => p.dialogId!=id);
+            reRender(dialogs,tmpPopups,requestOnTop);
+        }
+    };
+}
+
+
+
+function init() {
+    divElement= document.createElement('div');
+    document.body.appendChild(divElement);
+    divElement.id= DIALOG_DIV;
+}
+
+
+
+
+
+class DialogRootComponent extends Component {
+
+    constructor(props) { super(props); }
+
+    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
+
+    render() {
+        var {dialogs,tmpPopups,requestOnTop}= this.props;
+        var dialogAry = dialogs.map( (d) =>
+                                React.cloneElement(d.component,
+                                    {
+                                        key:d.dialogId,
+                                        zIndex:d.zIndex,
+                                        requestOnTop
+                                    }));
+        var tmpPopupAry = tmpPopups.map( (p) => React.cloneElement(p.component,{key:p.dialogId}));
+        return (
+                <div style={{position:'relative', zIndex:200}}>
+                    {dialogAry}
+                    <div style={{position:'relative', zIndex:10}}>
+                        {tmpPopupAry}
+                    </div>
+                </div>
+
+            );
+    }
+}
+
+DialogRootComponent.propTypes = {
+    dialogs : PropTypes.array,
+    tmpPopups : PropTypes.array,
+    requestOnTop : PropTypes.func
+};
+
+
+/**
+ *
+ * @param dialogs
+ * @param tmpPopups
+ * @param requestOnTop
+ */
+function reRender(dialogs,tmpPopups,requestOnTop) {
+    ReactDOM.render(<DialogRootComponent dialogs={dialogs} tmpPopups={tmpPopups} requestOnTop={requestOnTop}/>, divElement);
 }
 
 
@@ -174,19 +153,3 @@ function sortZIndex(inDialogAry, topId) {
 
 
 
-/**
- * @param popup {object}
- */
-function showTmpPopup(popup) {
-    if (!divElement) init();
-    tmpCount++;
-    const id= TMP_ROOT+tmpCount;
-    tmpPopups.push( {dialogId:id, component:popup});
-    reRender(dialogs,tmpPopups);
-    return () => {
-        if (tmpPopups.some( (p) => (p.dialogId==id))) {
-            tmpPopups= tmpPopups.filter( (p) => p.dialogId!=id);
-            reRender(dialogs,tmpPopups);
-        }
-    };
-}
