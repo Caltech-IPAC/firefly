@@ -2,7 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PropTypes} from 'react';
+import React, {Component, PropTypes} from 'react';
+import {isEmpty} from 'lodash';
+import sCompare from 'react-addons-shallow-compare';
 import {primePlot,isMultiImageFitsWithSameArea,getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {CysConverter} from '../CsysConverter.js';
 import {PlotAttribute} from '../WebPlot.js';
@@ -14,7 +16,7 @@ import SelectArea from '../../drawingLayers/SelectArea.js';
 import {showImageAreaStatsPopup} from './ImageStatsPopup.jsx';
 
 import {dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
-import {dispatchCrop} from '../ImagePlotCntlr.js';
+import {dispatchCrop, dispatchChangePrimePlot} from '../ImagePlotCntlr.js';
 import {makeExtActivateData} from '../PlotCmdExtension.js';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 import {selectCatalog,unselectCatalog,filterCatalog,clearFilterCatalog} from '../../drawingLayers/Catalog.js';
@@ -25,6 +27,8 @@ import SELECTED from 'html/images/icons-2014/24x24_Checkmark.png';
 import UNSELECTED from 'html/images/icons-2014/24x24_CheckmarkOff_Circle.png';
 import FILTER from 'html/images/icons-2014/24x24_FilterAdd.png';
 import CLEAR_FILTER from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
+import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
+import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 
 import CoordUtil from '../CoordUtil.js';
 import { parseImagePt } from '../Point.js';
@@ -214,72 +218,100 @@ function makeExtensionButtons(extensionAry,pv,dlAry) {
  * @param showUnSelect
  * @param showFilter
  * @param showClearFilter
- * @param extensionAry
+ * @param showMultiImageController
  * @return {XML}
  * @constructor
  */
-export function VisCtxToolbarView({plotView:pv, dlAry, extensionAry, showCrop=false, 
-                                   showStats=false, showSelect=false, showUnSelect=false, 
-                                   showFilter=false, showClearFilter=false }) {
 
-    var rS= {
-        width: '100% - 2px',
-        height: 34,
-        display: 'inline-block',
-        position: 'relative',
-        verticalAlign: 'top',
-        whiteSpace: 'nowrap'
+export class VisCtxToolbarView extends Component {
 
-    };
-    var showSeparator= (showCrop|| showStats|| showSelect|| showUnSelect|| showFilter || showClearFilter)
-                        && extensionAry && extensionAry.length;
+    constructor(props) {
+        super(props);
+    }
 
-    return (
-        <div style={rS}>
-            <div
-                style={{display: 'inline-block', padding: '8px 7px 0 5px', float : 'left', fontStyle: 'italic'}}>
-                Options:</div>
-            <ToolbarButton icon={CROP}
-                           tip='Crop the image to the selected area'
-                           horizontal={true}
-                           visible={showCrop}
-                           onClick={() => crop(pv)}/>
-
-            <ToolbarButton icon={STATISTICS}
-                           tip='Show statistics for the selected area'
-                           horizontal={true}
-                           visible={showStats}
-                           onClick={() => stats(pv)}/>
-
-            <ToolbarButton icon={SELECTED}
-                           tip='Mark data in area as selected'
-                           horizontal={true}
-                           visible={showSelect}
-                           onClick={() => selectCatalog(pv,dlAry)}/>
-
-            <ToolbarButton icon={UNSELECTED}
-                           tip='Mark all data unselected'
-                           horizontal={true}
-                           visible={showUnSelect}
-                           onClick={() => unselectCatalog(pv,dlAry)}/>
-
-            <ToolbarButton icon={FILTER}
-                           tip='Filter in the selected area'
-                           horizontal={true}
-                           visible={showFilter}
-                           onClick={() => filterCatalog(pv,dlAry)}/>
-
-            <ToolbarButton icon={CLEAR_FILTER}
-                           tip='Clear all the Filters'
-                           horizontal={true}
-                           visible={showClearFilter}
-                           onClick={() => clearFilterCatalog(pv,dlAry)}/>
+    shouldComponentUpdate(np, ns) {
+        return sCompare(this, np, ns);
+    }
 
 
-            {makeExtensionButtons(extensionAry,pv,dlAry)}
-        </div>
-    );
+    render() {
+        const {
+            plotView:pv, dlAry, extensionAry, showCrop=false,
+            showStats=false, showSelect=false, showUnSelect=false,
+            showFilter=false, showClearFilter=false,
+            showMultiImageController=false }= this.props;
+
+        const rS= {
+            width: '100% - 2px',
+            display:'flex',
+            height: 34,
+            position: 'relative',
+            verticalAlign: 'top',
+            whiteSpace: 'nowrap',
+            flexDirection:'row',
+            flexWrap:'nowrap',
+            alignItems: 'center'
+
+        };
+
+        var showOptions= showCrop|| showStats|| showSelect|| showUnSelect ||
+            showFilter || showClearFilter || !isEmpty(extensionAry);
+
+        return (
+            <div style={rS}>
+                {showMultiImageController && <MultiImageControllerView plotView={pv} />}
+                {showOptions && <div
+                    style={{display: 'inline-block', padding: '8px 7px 0 8px', alignSelf:'flex-start',
+                        float : 'left', fontStyle: 'italic'}}>
+                    Options:</div>
+                }
+                <ToolbarButton icon={CROP}
+                               tip='Crop the image to the selected area'
+                               horizontal={true}
+                               visible={showCrop}
+                               onClick={() => crop(pv)}/>
+
+                <ToolbarButton icon={STATISTICS}
+                               tip='Show statistics for the selected area'
+                               horizontal={true}
+                               visible={showStats}
+                               onClick={() => stats(pv)}/>
+
+                <ToolbarButton icon={SELECTED}
+                               tip='Mark data in area as selected'
+                               horizontal={true}
+                               visible={showSelect}
+                               onClick={() => selectCatalog(pv,dlAry)}/>
+
+                <ToolbarButton icon={UNSELECTED}
+                               tip='Mark all data unselected'
+                               horizontal={true}
+                               visible={showUnSelect}
+                               onClick={() => unselectCatalog(pv,dlAry)}/>
+
+                <ToolbarButton icon={FILTER}
+                               tip='Filter in the selected area'
+                               horizontal={true}
+                               visible={showFilter}
+                               onClick={() => filterCatalog(pv,dlAry)}/>
+
+                <ToolbarButton icon={CLEAR_FILTER}
+                               tip='Clear all the Filters'
+                               horizontal={true}
+                               visible={showClearFilter}
+                               onClick={() => clearFilterCatalog(pv,dlAry)}/>
+
+
+                {makeExtensionButtons(extensionAry,pv,dlAry)}
+
+            </div>
+        );
+    }
 }
+
+
+
+
 
 
 VisCtxToolbarView.propTypes= {
@@ -291,7 +323,8 @@ VisCtxToolbarView.propTypes= {
     showSelect : PropTypes.bool,
     showUnSelect : PropTypes.bool,
     showFilter : PropTypes.bool,
-    showClearFilter : PropTypes.bool
+    showClearFilter : PropTypes.bool,
+    showMultiImageController : PropTypes.bool
 };
 
 
@@ -306,5 +339,61 @@ ToolbarButton.defaultProps= {
 };
 
 
+const leftImageStyle= {
+    verticalAlign:'bottom',
+    cursor:'pointer',
+    flex: '0 0 auto',
+    paddingLeft: 3
+};
 
+
+
+
+const mulImStyle= {
+    display:'inline-flex',
+    height: 34,
+    position: 'relative',
+    verticalAlign: 'top',
+    whiteSpace: 'nowrap',
+    flexDirection:'row',
+    flexWrap:'nowrap',
+    alignItems: 'center',
+    // width:'100%',
+};
+
+
+export function MultiImageControllerView({plotView:pv}) {
+
+    const {plots,plotId}= pv;
+
+    if (plots.length<3) {
+        leftImageStyle.visibility='hidden';
+    }
+    const plot= primePlot(pv);
+
+    var cIdx= plots.findIndex( (p) => p.plotImageId===plot.plotImageId);
+    if (cIdx<0) cIdx= 0;
+
+    const nextIdx= cIdx===plots.length-1 ? 0 : cIdx+1;
+    const prevIdx= cIdx ? cIdx-1 : plots.length-1;
+    
+    return (
+        <div style={mulImStyle}>
+            <div style={{fontStyle: 'italic', padding: '8px 0 0 5px', alignSelf:'flex-start'}}>Image:</div>
+            <img style={leftImageStyle} src={PAGE_LEFT}
+                 onClick={() => dispatchChangePrimePlot(plotId,prevIdx)} />
+            <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right', paddingLeft:3, flex: '0 0 auto'}}
+                 src={PAGE_RIGHT}
+                 onClick={() => dispatchChangePrimePlot(plotId,nextIdx)} />
+            {plots[cIdx].plotDesc &&
+                  <div style={{minWidth: '3em', padding:'0 10px 0 5px', fontWeight:'bold'}}>{plots[cIdx].plotDesc}</div>}
+            <div style={{minWidth: '3em', paddingLeft:4}}>{`${cIdx+1}/${plots.length}`}</div>
+        </div>
+    );
+}
+
+
+MultiImageControllerView.propTypes= {
+    plotView : PropTypes.object.isRequired,
+};
 

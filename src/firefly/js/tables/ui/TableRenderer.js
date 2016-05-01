@@ -5,7 +5,6 @@
 import React from 'react';
 import FixedDataTable from 'fixed-data-table';
 import {set, get, omit, isEqual} from 'lodash';
-import sCompare from 'react-addons-shallow-compare';
 
 import {FilterInfo, FILTER_TTIPS} from '../FilterInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
@@ -76,7 +75,7 @@ export class SelectableHeader extends React.Component {
     // componentDidUpdate(prevProps, prevState) {
     //     deepDiff({props: prevProps, state: prevState},
     //         {props: this.props, state: this.state},
-    //         this.constructor.displayName);
+    //         this.constructor.name);
     // }
 
     render() {
@@ -85,7 +84,7 @@ export class SelectableHeader extends React.Component {
             <div className='tablePanel__checkbox'>
                 <input type='checkbox' checked={checked} onChange ={(e) => onSelectAll(e.target.checked)}/>
             </div>
-        )
+        );
     }
 }
 
@@ -110,7 +109,7 @@ export class SelectableCell extends React.Component {
             <div className='tablePanel__checkbox tablePanel__checkbox--cell'>
                 <input type='checkbox' checked={selectInfoCls.isSelected(rowIndex)} onChange={(e) => onRowSelect(e.target.checked, rowIndex)} />
             </div>
-        )
+        );
     }
 }
 
@@ -143,7 +142,7 @@ export class TextCell extends React.Component {
             <div className='public_fixedDataTableCell_cellContent'>
                 {getValue(this.props)}
             </div>
-        )
+        );
     }
 }
 
@@ -171,7 +170,7 @@ export const createLinkCell = ({valFromCol, value}) => {
                 <a href={href}>{val}</a>
             </Cell>
         );
-    }
+    };
 };
 
 /**
@@ -201,7 +200,7 @@ export const createInputCell = (tooltips, size=10, validator, onChange) => {
                 />
             </div>
         );
-    }
+    };
 };
 
 

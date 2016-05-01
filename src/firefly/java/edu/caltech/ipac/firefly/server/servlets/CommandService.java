@@ -70,6 +70,7 @@ public class CommandService extends BaseHttpServlet {
 
 //            res.setContentType("text/plain");
         } catch (Exception e) {
+            e.printStackTrace();
             StringBuilder sb = new StringBuilder(500);
             sb.append("[{");
             sb.append("\"success\" :  \"").append(false).append("\",");

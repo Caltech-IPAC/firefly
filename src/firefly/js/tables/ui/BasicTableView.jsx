@@ -13,7 +13,6 @@ import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo';
 import {tableToText} from '../TableUtil.js';
 import {TextCell, HeaderCell, SelectableHeader, SelectableCell} from './TableRenderer.js';
-import {deepDiff} from '../../util/WebUtil.js';
 
 import './TablePanel.css';
 
@@ -32,7 +31,7 @@ export class BasicTableView extends React.Component {
 
         this.onResize =  debounce((size) => {
                 if (size) {
-                    var widthPx = size.width;
+                    var widthPx = size.width-1;
                     var heightPx = size.height;
                     this.setState({widthPx, heightPx});
                 }
@@ -40,6 +39,7 @@ export class BasicTableView extends React.Component {
 
         this.onColumnResizeEndCallback = this.onColumnResizeEndCallback.bind(this);
         this.rowClassName = this.rowClassName.bind(this);
+        this.onKeyDown = this.onKeyDown.bind(this);
     }
 
     onColumnResizeEndCallback(newColumnWidth, columnKey) {
@@ -56,29 +56,40 @@ export class BasicTableView extends React.Component {
         if (isEmpty(this.state.columnWidths) && !isEmpty(nProps.columns)) {
             this.setState({columnWidths: makeColWidth(nProps.columns, nProps.data, nProps.showUnits)});
         }
-        this.setState({showMask: false});
     }
 
     shouldComponentUpdate(nProps, nState) {
         return sCompare(this, nProps, nState);
     }
 
+    onKeyDown(e) {
+        const {callbacks, hlRowIdx, currentPage} = this.props;
+        const key = get(e, 'key');
+        if (key === 'ArrowDown') {
+            callbacks.onRowHighlight && callbacks.onRowHighlight(hlRowIdx + 1);
+        } else if (key === 'ArrowUp') {
+            callbacks.onRowHighlight && callbacks.onRowHighlight(hlRowIdx - 1);
+        } else if (key === 'PageDown') {
+            callbacks.onGotoPage && callbacks.onGotoPage(currentPage + 1);
+        } else if (key === 'PageUp') {
+            callbacks.onGotoPage && callbacks.onGotoPage(currentPage - 1);
+        }
+    }
+
     render() {
         const {columns, data, hlRowIdx, showUnits, showFilters, filterInfo,
-                    sortInfo, callbacks, textView, rowHeight} = this.props;
-        const {widthPx, heightPx, columnWidths, showMask} = this.state;
+                    sortInfo, callbacks, textView, rowHeight, showMask} = this.props;
+        const {widthPx, heightPx, columnWidths} = this.state;
 
         if (isEmpty(columns)) return (<div style={{top: 0}} className='loading-mask'/>);
 
         const filterInfoCls = FilterInfo.parse(filterInfo);
         const sortInfoCls = SortInfo.parse(sortInfo);
 
-        const showMaskNow = () => this.setState({showMask: true});
         const onRowSelect = (checked, rowIndex) => callbacks.onRowSelect && callbacks.onRowSelect(checked, rowIndex);
         const onSelectAll = (checked) => callbacks.onSelectAll && callbacks.onSelectAll(checked);
         const onSort = (cname) => {
                 if (callbacks.onSort) {
-                    showMaskNow();
                     callbacks.onSort(sortInfoCls.toggle(cname).serialize());
                 }
             };
@@ -87,7 +98,6 @@ export class BasicTableView extends React.Component {
                 if (callbacks.onFilter) {
                     if (valid && !filterInfoCls.isEqual(fieldKey, value)) {
                         filterInfoCls.setFilter(fieldKey, value);
-                        showMaskNow();
                         callbacks.onFilter(filterInfoCls.serialize());
                     }
                 }
@@ -98,7 +108,7 @@ export class BasicTableView extends React.Component {
 
         const headerHeight = 22 + (showUnits && 12) + (showFilters && 20);
         return (
-            <Resizable id='table-resizer' style={{position: 'relative', width: '100%', height: '100%', overflow: 'hidden'}} onResize={this.onResize}>
+            <Resizable id='table-resizer' tabIndex='-1' onKeyDown={this.onKeyDown} className='TablePanel__frame' onResize={this.onResize}>
                 { textView ? <TextView { ...{columns, data, showUnits, heightPx, widthPx} }/> :
                     <Table
                         rowHeight={rowHeight}
@@ -115,7 +125,7 @@ export class BasicTableView extends React.Component {
                     </Table>
                 }
                 {showMask && <div style={{top: 0}} className='loading-mask'/>}
-                {isEmpty(data) && <div className='tablePanel_NoData'> No Data Found </div>}
+                {!showMask && isEmpty(data) && <div className='tablePanel_NoData'> No Data Found </div>}
             </Resizable>
         );
     }
@@ -134,6 +144,8 @@ BasicTableView.propTypes = {
     showFilters: PropTypes.bool,
     textView: PropTypes.bool,
     rowHeight: PropTypes.number,
+    showMask: PropTypes.bool,
+    currentPage: PropTypes.number,
     renderers: PropTypes.objectOf(
         PropTypes.shape({
             cellRenderer: PropTypes.func,
@@ -145,7 +157,8 @@ BasicTableView.propTypes = {
         onRowSelect: PropTypes.func,
         onSelectAll: PropTypes.func,
         onSort: PropTypes.func,
-        onFilter: PropTypes.func
+        onFilter: PropTypes.func,
+        onGotoPage: PropTypes.func
     })
 };
 
@@ -153,7 +166,9 @@ BasicTableView.defaultProps = {
     selectable: false,
     showUnits: false,
     showFilters: false,
-    rowHeight: 20
+    showMask: false,
+    rowHeight: 20,
+    currentPage: -1
 };
 
 const TextView = ({columns, data, showUnits, widthPx, heightPx}) => {
@@ -198,7 +213,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
                 fixed={false}
                 width={columnWidths[col.name]}
                 isResizable={true}
-                allowCellsRecycling={false}
+                allowCellsRecycling={true}
             />
         );
     });
@@ -210,7 +225,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
             cell={<SelectableCell selectInfoCls={selectInfoCls} onRowSelect={onRowSelect} />}
             fixed={true}
             width={25}
-            allowCellsRecycling={false}
+            allowCellsRecycling={true}
         />;
         colsEl.splice(0, 0, cbox);
     }

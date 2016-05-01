@@ -2,12 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isEmpty} from 'lodash';
+import {isEmpty, get} from 'lodash';
 import {getCellValue} from '../tables/TableUtil.js';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {WebPlotRequest} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
-import {findTblById,gatherTableState} from '../tables/TableUtil.js';
+import {findTblById,getTblInfo} from '../tables/TableUtil.js';
 import {converterFactory} from './ConverterFactory.js';
 import {MetaConst} from '../data/MetaConst.js';
 
@@ -88,22 +88,12 @@ export const computePlotId= (plotIdRoot ,plotIdx) => `${plotIdRoot}-row-${plotId
  */
 export function findGridTableRows(table,maxRows, plotIdRoot) {
 
-    const tabState= gatherTableState(table);
-    const {pageSize, highlightedRow, startIdx, endIdx}= tabState;
-
-
-    const subPageSize= Math.min(maxRows,pageSize);
-    const subPage= Math.floor(highlightedRow /subPageSize);
-    const highlightSubPageIdx= highlightedRow % subPageSize;
-
-    const start= (subPage * subPageSize) + startIdx;
-    const max= Math.min(start+subPageSize,endIdx);
-
+    const {startIdx, endIdx, highlightedRow}= getTblInfo(table, maxRows);
 
     var j= 0;
     const retval= [];
 
-    for(var i=start; (i<max );i++) {
+    for(var i=startIdx; (i<endIdx );i++) {
         retval[j++] = {plotId: computePlotId(plotIdRoot, i), row: i, highlight: i === highlightedRow};
     }
     return retval;
@@ -116,8 +106,8 @@ export function findGridTableRows(table,maxRows, plotIdRoot) {
  */
 export function isMetaDataTable(tbl_id) {
     const table= findTblById(tbl_id);
-    if (!table) return false;
-    const {tableMeta}= table;
+    const tableMeta= get(table, 'tableMeta');
+    if (!tableMeta) return false;
 
     if (tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] || tableMeta[MetaConst.CATALOG_COORD_COLS])  return false;
     const converter= converterFactory(table);

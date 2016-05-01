@@ -3,6 +3,8 @@
  */
 
 import React from 'react';
+import {omit} from 'lodash';
+import shallowequal from 'shallowequal';
 import DrawLayer from './DrawLayer.js';
 import sCompare from 'react-addons-shallow-compare';
 import Drawer from './Drawer.js';
@@ -72,7 +74,7 @@ const getDataForPlot= (data,plotId) => {
     else                     return data[plotId];
 };
 
-function makeDummyDrawLayer(drawData) {
+export function makeDummyDrawLayer(drawData) {
     return {
         drawLayerId:'no-layer-defined',
         drawingDef:makeDrawingDef(),
@@ -88,9 +90,40 @@ class CanvasWrapper extends React.Component {
     constructor(props) {
         super(props);
         this.drawer= null;
+        this.lastDrawLayer= null;
+        
     }
 
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
+    // shouldComponentUpdate(np,ns) {
+    //     return sCompare(this,np,ns);
+    // }
+
+
+    shouldComponentUpdate(nProps) {
+
+        var {plot,drawLayer,width,height}= nProps;
+        const p= this.props;
+
+        const update= (width!==p.width || height!==p.height || plot!==p.plot);
+
+        if (!update) {
+            this.updateDrawLayer(nProps);
+        }
+        return update;
+    }
+
+    
+    updateDrawLayer(props,force=false) {
+        var {plot,drawLayer,width,height,getDrawLayer}= props;
+        var dl= getDrawLayer ? getDrawLayer() : drawLayer;
+        if (!force && dl===this.lastDrawLayer) return;
+        this.lastDrawLayer= dl;
+        if (Array.isArray(dl)) dl= makeDummyDrawLayer(dl);
+
+        window.requestAnimationFrame(() => {
+            if (this.drawer) updateDrawer(this.drawer,plot,width,height,dl);
+        });
+    }
 
     componentWillMount() {
         var {textUpdateCallback}= this.props;
@@ -103,18 +136,19 @@ class CanvasWrapper extends React.Component {
     }
 
     componentDidUpdate() {
-        var {plot,drawData,drawLayer,width,height}= this.props;
-        if (!drawLayer) drawLayer= makeDummyDrawLayer(drawData);
-        if (this.drawer) updateDrawer(this.drawer,plot,width,height,drawLayer);
-
+        this.updateDrawLayer(this.props,true);
     }
 
 
     render() {
-        var {plot, drawData,drawLayer,width,height}= this.props;
-        if (plot && !isVisible(drawLayer,plot.plotId)) return false;
-        if (!drawLayer) drawLayer= makeDummyDrawLayer(drawData);
-        var canvasLayers= makeCanvasLayers(drawLayer, this.drawer,width,height);
+        var {plot, drawLayer,width,height, getDrawLayer}= this.props;
+        this.lastDrawLayer= getDrawLayer ? getDrawLayer() : drawLayer;
+        var dl= this.lastDrawLayer;
+        if (plot && !isVisible(dl,plot.plotId)) return false;
+
+        if (Array.isArray(dl)) dl= makeDummyDrawLayer(this.lastDrawLayer);
+
+        var canvasLayers= makeCanvasLayers(dl, this.drawer,width,height);
 
         var style= {position:'absolute',left:0,right:0,width,height};
         if (!canvasLayers.length) return false;
@@ -133,7 +167,7 @@ CanvasWrapper.propTypes= {
     height: React.PropTypes.number.isRequired,
     plot : React.PropTypes.object,
     drawLayer : React.PropTypes.object, //drawLayer or drawData is Required
-    drawData : React.PropTypes.array // only used it drawLayer is not defined
+    getDrawLayer: React.PropTypes.func  // can be used instead of passing the data
 };
 
 export default CanvasWrapper;

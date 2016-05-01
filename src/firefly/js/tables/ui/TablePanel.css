@@ -29,6 +29,24 @@
     flex-grow: 1;
 }
 
+.TablePanel__frame {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+.TablePanel__frame:focus {
+    outline: rgb(91, 157, 217) auto 2px;
+    outline-offset: -1px;
+}
+
+.TablePanel__error {
+    position: relative;
+    flex-grow: 1;
+    align-self: center;
+    text-align: center;
+}
+
 .TablePanel__wrapper .border {
     border: 1px solid #b3b3b3;
     padding: 0 3px 3px 3px;
@@ -43,13 +61,14 @@
 
 .TablePanel__table {
     background-color: white;
-    display: -ms-flexbox;
-    -ms-flex-positive: 1;
+    display: flex;
     position: absolute;
     top: 33px;
     bottom: 0;
     left: 0;
-    right: 0;}
+    right: 0;
+    margin: 1px;
+}
 
 .TablePanel__header {
     white-space: nowrap;

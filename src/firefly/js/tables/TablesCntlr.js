@@ -1,17 +1,18 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, omitBy, pickBy, isUndefined} from 'lodash';
+import {take} from 'redux-saga/effects';
+import {get, set, omitBy, pickBy, isUndefined, cloneDeep} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
 import shallowequal from 'shallowequal';
-import {dataReducer} from './reducer/TableDataReduer.js';
+import {dataReducer} from './reducer/TableDataReducer.js';
 import {uiReducer} from './reducer/TableUiReducer.js';
 import {resultsReducer} from './reducer/TableResultsReducer.js';
 import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
 import {dispatchSetupTblTracking} from '../visualize/TableStatsCntlr.js';
-import {logError} from '../util/WebUtil.js';
+import {dispatchAddSaga} from '../core/MasterSaga.js';
 
 export const TABLE_SPACE_PATH = 'table_space';
 export const TABLE_RESULTS_PATH = 'table_space.results.tables';
@@ -24,10 +25,10 @@ export const TABLE_SEARCH         = `${DATA_PREFIX}.search`;
 export const TABLE_FETCH          = `${DATA_PREFIX}.fetch`;
 export const TABLE_FETCH_UPDATE   = `${DATA_PREFIX}.fetchUpdate`;
 export const TABLE_NEW            = `${DATA_PREFIX}.new`;
+export const TABLE_NEW_LOADED     = `${DATA_PREFIX}.newLoaded`;
 export const TABLE_UPDATE         = `${DATA_PREFIX}.update`;
 export const TABLE_REPLACE        = `${DATA_PREFIX}.replace`;
 export const TABLE_REMOVE         = `${DATA_PREFIX}.remove`;
-export const TABLE_LOAD_STATUS    = `${DATA_PREFIX}.loadStatus`;
 export const TABLE_SELECT         = `${DATA_PREFIX}.select`;
 export const TABLE_HIGHLIGHT      = `${DATA_PREFIX}.highlight`;
 
@@ -44,13 +45,14 @@ export function tableSearch(action) {
         //dispatch(validate(FETCH_TABLE, action));
         if (!action.err) {
             var {request, tbl_ui_id=TblUtil.uniqueTblUiId()} = action.payload;
+            const {tbl_id} = request;
             
-            dispatchSetupTblTracking(request.tbl_id);
+            dispatchSetupTblTracking(tbl_id);
             dispatchTableFetch(request);
             dispatchHideDropDownUi();
             if (!TblUtil.findTblResultsById(tbl_ui_id)) {
-                dispatchTableAdded(tbl_ui_id, request.tbl_id, get(request, 'META_INFO.title'));
-                dispatchActiveTableChanged(request.tbl_id);
+                dispatchTableAdded(tbl_ui_id, tbl_id, get(request, 'META_INFO.title'));
+                dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:() => dispatchActiveTableChanged(tbl_id)});
             }
         }
     };
@@ -61,17 +63,17 @@ export function highlightRow(action) {
         const {tbl_id} = action.payload;
         var tableModel = TblUtil.findTblById(tbl_id);
         var tmpModel = TblUtil.smartMerge(tableModel, action.payload);
-        const {hlRowIdx, startIdx, endIdx, pageSize} = TblUtil.gatherTableState(tmpModel);
+        const {hlRowIdx, startIdx, endIdx, pageSize} = TblUtil.getTblInfo(tmpModel);
         if (TblUtil.isTblDataAvail(startIdx, endIdx, tableModel)) {
             dispatch(action);
         } else {
-            const request = Object.assign({}, tableModel.request, {startIdx, pageSize});
+            const request = cloneDeep(tableModel.request);
+            set(request, 'META_INFO.padResults', true);
+            Object.assign(request, {startIdx, pageSize});
             TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
                 dispatch( {type:TABLE_UPDATE, payload: tableModel} );
             }).catch( (error) => {
-                TblUtil.error(error);
-                // if fetch causes error, re-dispatch that same action with error msg.
-                action.err = error;
+                dispatch({type: TABLE_UPDATE, payload: {tbl_id: request.tbl_id, error: `Fail to load table. \n   ${error}`}});
             });
         }
     };
@@ -82,17 +84,20 @@ export function fetchTable(action) {
         //dispatch(validate(FETCH_TABLE, action));
         if (!action.err) {
             var {request, hlRowIdx} = action.payload;
+            var actionType, {tbl_id} = request;
+            if (action.type === TABLE_FETCH_UPDATE) {
+                actionType = TABLE_UPDATE;
+            } else {
+                actionType = TABLE_NEW;
+                request.startIdx = 0;
+                dispatch({type: TABLE_REPLACE, payload: {tbl_id, isFetching: true}});
+                dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:dispatchTableLoaded});
+            }
+
             TblUtil.doFetchTable(request, hlRowIdx).then ( (tableModel) => {
-                if (action.type === TABLE_FETCH_UPDATE) {
-                    dispatch( {type:TABLE_UPDATE, payload: tableModel} );
-                } else {
-                    dispatch( {type:TABLE_NEW, payload: tableModel} );
-                }
+                dispatch( {type: actionType, payload: tableModel} );
             }).catch( (error) => {
-                logError(error);
-                // if fetch causes error, re-dispatch that same action with error msg.
-                TblUtil.error(error);
-                dispatch(action);
+                dispatch({type: TABLE_UPDATE, payload: {tbl_id, error: `Fail to load table. \n   ${error}`}});
             });
         }
     };
@@ -132,6 +137,14 @@ export function dispatchTableSearch(request, tbl_ui_id) {
  */
 export function dispatchTableFetch(request, hlRowIdx) {
     flux.process( {type: TABLE_FETCH, payload: {request, hlRowIdx} });
+}
+
+/**
+ * Notify that a new table has been added and it is fully loaded.
+ * @param tbl_info table info.  see TableUtil.getTblInfo for details.
+ */
+export function dispatchTableLoaded(tbl_info) {
+    flux.process( {type: TABLE_NEW_LOADED, payload: tbl_info });
 }
 
 /**
@@ -185,10 +198,10 @@ export function dispatchTableAdded(tbl_ui_id=TblUtil.uniqueTblUiId(), tbl_id, ti
 
 /**
  *
- * @param tbl_ui
+ * @param tbl_ui_info
  */
-export function dispatchTableUiUpdate(tbl_ui) {
-    flux.process( {type: TBL_UI_UPDATE, payload: tbl_ui});
+export function dispatchTableUiUpdate(tbl_ui_info) {
+    flux.process( {type: TBL_UI_UPDATE, payload: tbl_ui_info});
 }
 
 /**
@@ -213,3 +226,32 @@ function validate(type, action) {
     return TblUtil.doValidate(type, action);
 }
 
+
+/**
+ * this saga does the following:
+ * <ul>
+ *     <li>watches to table load
+ *     <li>when table is completely loaded, it will execute the given callback with loaded table info
+ * </ul>
+ * @param tbl_id  table id to watch
+ * @param callback  callback to execute when table is loaded.
+ */
+export function* doOnTblLoaded({tbl_id, callback}) {
+
+    var isLoaded = false, hasData = false;
+    while (!(isLoaded && hasData)) {
+        const action = yield take([TABLE_NEW, TABLE_UPDATE]);
+        const a_id = get(action, 'payload.tbl_id');
+        if (tbl_id === a_id) {
+            isLoaded = isLoaded || TblUtil.isTableLoaded(action.payload);
+            const tableModel = TblUtil.findTblById(tbl_id);
+            hasData = hasData || get(tableModel, 'tableData.columns.length');
+            if (get(tableModel, 'error')) {
+                // there was an error loading this table.
+                // exit without callback
+                return;
+            }
+        }
+    }
+    callback && callback(TblUtil.getTblInfoById(tbl_id));
+}

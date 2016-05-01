@@ -3,10 +3,11 @@
  */
 import {flux} from '../Firefly.js';
 
-import {has, get, set} from 'lodash';
+import {has, get, omit, set} from 'lodash';
 
 import {TableRequest} from '../tables/TableRequest.js';
 import * as TableUtil from '../tables/TableUtil.js';
+import * as TablesCntlr from '../tables/TablesCntlr.js';
 
 /*
  Possible structure of store:
@@ -46,13 +47,13 @@ export const dispatchLoadColData = function(histogramParams, searchRequest) {
 
 /*
  * Get column histogram data
+ * @param {Number} tblId - table id
  * @param {boolean} isColDataReady - flags that column histogram data are available
  * @param {Number[][]} histogramData - an array of the number arrays with npoints, binmin, binmax
  * @param {Object} histogramParams - histogram options (column name, etc.)
- * @param {ServerRequest} searchRequest - table search request
  */
-const dispatchUpdateColData = function(isColDataReady, histogramData, histogramParams, searchRequest) {
-    flux.process({type: UPDATE_COL_DATA, payload: {isColDataReady,histogramData,histogramParams,searchRequest}});
+const dispatchUpdateColData = function(tblId, isColDataReady, histogramData, histogramParams) {
+    flux.process({type: UPDATE_COL_DATA, payload: {tblId, isColDataReady,histogramData,histogramParams}});
 };
 
 /*
@@ -94,21 +95,38 @@ function stateWithNewData(tblId, state, newProps) {
 
 export function reducer(state=getInitState(), action={}) {
     switch (action.type) {
+        case (TablesCntlr.TABLE_NEW_LOADED)  :
+        {
+            const {tbl_id, request} = action.payload;
+            if (has(state, tbl_id)) {
+                action.sideEffect((dispatch) => fetchColData(dispatch, request, state[tbl_id].histogramParams));
+            }
+            return state;
+        }
+        case (TablesCntlr.TABLE_REMOVE)  :
+        {
+            const {tbl_id} = action.payload.tbl_id;
+            if (has(state, tbl_id)) {
+                const newState = Object.assign({}, state);
+                Reflect.deleteProperty(newState, [tbl_id]);
+                return newState;
+            }
+            return state;
+        }
         case (LOAD_COL_DATA)  :
         {
-            let {histogramParams, searchRequest} = action.payload;
+            const {histogramParams, searchRequest} = action.payload;
             const newState = Object.assign({}, state);
             set(newState, searchRequest.tbl_id, {isColDataReady: false});
             return newState;
         }
         case (UPDATE_COL_DATA)  :
         {
-            let {isColDataReady, histogramData, histogramParams, searchRequest} = action.payload;
-            return stateWithNewData(searchRequest.tbl_id, state, {
+            const {tblId, isColDataReady, histogramData, histogramParams} = action.payload;
+            return stateWithNewData(tblId, state, {
                 isColDataReady,
                 histogramData,
-                histogramParams,
-                searchRequest
+                histogramParams
             });
         }
         default:
@@ -135,7 +153,9 @@ function updateColData(data) {
  */
 function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
 
-    const sreq = Object.assign({}, activeTableServerRequest, {'startIdx' : 0, 'pageSize' : 1000000});
+    const tblId = activeTableServerRequest['tbl_id'];
+    const sreq = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']),
+        {'startIdx' : 0, 'pageSize' : 1000000});
 
     const req = TableRequest.newInstance({id:'HistogramProcessor'});
     req.searchRequest = JSON.stringify(sreq);
@@ -158,7 +178,7 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
         req.max = histogramParams.maxCutoff;
     }
 
-    req.tbl_id = activeTableServerRequest.tbl_id;
+    req.tbl_id = 'histogram-'+activeTableServerRequest.tbl_id;
 
     TableUtil.doFetchTable(req).then(
         (tableModel) => {
@@ -180,10 +200,10 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
 
                 dispatch(updateColData(
                     {
+                        tblId,
                         isColDataReady : true,
                         histogramParams,
-                        histogramData,
-                        searchRequest : sreq
+                        histogramData
                     }));
             }
         }

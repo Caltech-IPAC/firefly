@@ -3,13 +3,16 @@
  */
 
 import update from 'react-addons-update';
+import {get,isEmpty} from 'lodash';
 import Cntlr, {ExpandType} from '../ImagePlotCntlr.js';
-import PlotView, {replacePlotView, replacePrimaryPlot} from './PlotView.js';
-import WebPlot, {clonePlotWithZoom, PlotAttribute} from '../WebPlot.js';
+import PlotView, {replacePlotView, replacePrimaryPlot, changePrimePlot} from './PlotView.js';
+import {WebPlot, clonePlotWithZoom, PlotAttribute} from '../WebPlot.js';
 import {logError} from '../../util/WebUtil.js';
 import {CCUtil} from '../CsysConverter.js';
 import {PlotPref} from './../PlotPref.js';
 import {primePlot,
+        clonePvAry,
+        clonePvAryWithPv,
         matchPlotView,
         applyToOnePvOrGroup,
         getPlotViewIdxById,
@@ -25,9 +28,22 @@ import {UserZoomTypes} from '../ZoomUtil.js';
 const isFitFill= (userZoomType) =>  (userZoomType===UserZoomTypes.FIT || userZoomType===UserZoomTypes.FILL);
 const clone = (obj,params={}) => Object.assign({},obj,params);
 
-function replaceAtt(pv,att) {
-    var p= primePlot(pv);
-    return replacePrimaryPlot(pv,clone(p,{attributes:clone(p.attributes, att)}));
+/**
+ * 
+ * @param pv
+ * @param att
+ * @param toAll
+ * @return {*} new plotview objject
+ */
+function replaceAtt(pv,att, toAll) {
+    if (toAll) {
+        const plots= pv.plots.map( (p) => clone(p,{attributes:clone(p.attributes, att)}));
+        return clone(pv,{plots});
+    }
+    else {
+        var p= primePlot(pv);
+        return replacePrimaryPlot(pv,clone(p,{attributes:clone(p.attributes, att)}));
+    }
 }
 
 
@@ -38,9 +54,18 @@ export function reducer(state, action) {
         case Cntlr.ZOOM_IMAGE_START  :
             retState= zoomStart(state, action);
             break;
+
+
+        case Cntlr.STRETCH_CHANGE_START  :
+        case Cntlr.COLOR_CHANGE_START  :
+            retState= workingServerCall(state,action);
+            break;
+        
+        
         case Cntlr.ZOOM_IMAGE_FAIL  :
         case Cntlr.STRETCH_CHANGE_FAIL:
         case Cntlr.COLOR_CHANGE_FAIL:
+            retState= endServerCallFail(state,action);
             break;
         case Cntlr.COLOR_CHANGE  :
         case Cntlr.ZOOM_IMAGE  :
@@ -63,6 +88,12 @@ export function reducer(state, action) {
         case Cntlr.ZOOM_LOCKING:
             retState= changeLocking(state,action);
             break;
+        case Cntlr.PLOT_PROGRESS_UPDATE  :
+            retState= updatePlotProgress(state,action);
+            break;
+        case Cntlr.CHANGE_PRIME_PLOT  :
+            retState= makeNewPrimePlot(state,action);
+            break;
         default:
             break;
     }
@@ -71,7 +102,7 @@ export function reducer(state, action) {
 
 
 function changePlotAttribute(state,action) {
-    var {plotId,attKey,attValue}= action.payload;
+    var {plotId,attKey,attValue,toAll}= action.payload;
     var {plotViewAry,plotGroupAry}= state;
     var pv= getPlotViewById(state,plotId);
     var plot= primePlot(pv);
@@ -80,7 +111,7 @@ function changePlotAttribute(state,action) {
     var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
 
     plotViewAry= applyToOnePvOrGroup( plotViewAry, plotId, plotGroup,
-        (pv)=> replaceAtt(pv,{[attKey]:attValue}) );
+        (pv)=> replaceAtt(pv,{[attKey]:attValue},toAll) );
     return clone(state,{plotViewAry});
 }
 
@@ -137,6 +168,7 @@ function installTiles(state, action) {
 
     var centerImagePt= PlotView.findCurrentCenterPoint(pv,pv.scrollX,pv.scrollY);
     pv= replacePrimaryPlot(pv,WebPlot.setPlotState(plot,primaryStateJson,primaryTiles));
+    pv.serverCall='success';
     pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv,idx) => {
         var p= WebPlot.setPlotState(oPv.plot,overlayStateJsonAry[idx],overlayTilesAry[idx]);
         return clone(oPv, {plot:p});
@@ -211,3 +243,35 @@ function recenterPv(pv) {
     return PlotView.updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv,centerImagePt));
 }
 
+function makeNewPrimePlot(state,action) {
+    var {plotId,primeIdx}= action.payload;
+    var pv=  getPlotViewById(state,plotId);
+    if (!pv || isEmpty(pv.plots) || pv.plots.length<=primeIdx) return state;
+    pv= changePrimePlot(pv, primeIdx);
+    return clone(state,{plotViewAry:clonePvAryWithPv(state,pv)});
+}
+
+
+function endServerCallFail(state,action) {
+    var {plotId,message}= action.payload;
+    const stat= {serverCall:'fail'};
+    if (typeof message === 'string') stat.plottingStatus= message;
+    return clone(state,{plotViewAry:clonePvAry(state,plotId, stat)});
+}
+function workingServerCall(state,action) {
+    var {plotId,message}= action.payload;
+    return clone(state,{plotViewAry:clonePvAry(state,plotId,
+                           {serverCall:'working', plottingStatus:message})});
+}
+
+
+function updatePlotProgress(state,action) {
+    const {plotId, message:plottingStatus, done}= action.payload;
+    //console.log(`updatePlotProgress: plotId;${plotId}, message:${plottingStatus}, done:${done}`);
+    if (!plotId) return state;
+    const plotView=  getPlotViewById(state,plotId);
+    if (!plotView) return state;
+    if (plotView.plottingStatus===plottingStatus) return state;
+    const changes= {plottingStatus,serverCall:done ? 'success': 'working'};
+    return clone(state,{plotViewAry:clonePvAry(state,plotId, changes)});
+}

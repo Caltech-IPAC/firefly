@@ -13,6 +13,7 @@ import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.util.event.Name;
+import edu.jhu.util.StringUtil;
 import org.json.simple.JSONObject;
 
 import java.io.BufferedReader;
@@ -386,12 +387,12 @@ public class IpacTableUtil {
      * @param state
      */
     public static void sendLoadStatusEvents(Map<String,String> meta, File outf, int crows, DataGroupPart.State state) {
-        if (meta == null) return;
+        if (meta == null || StringUtils.isEmpty(meta.get("tbl_id"))) return;
 
         String source = ServerContext.replaceWithPrefix(outf);
         String tblId = String.valueOf( meta.get("tbl_id") );
 
-        FluxAction action = new FluxAction("table.loadStatus");
+        FluxAction action = new FluxAction("table.update");
         action.setValue(tblId, "tbl_id");
         action.setValue(crows, "totalRows");
         action.setValue(state.name(), "tableMeta", DataGroupPart.LOADING_STATUS);

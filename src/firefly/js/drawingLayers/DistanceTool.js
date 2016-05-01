@@ -53,7 +53,7 @@ var idCnt=0;
 function dispatchDistanceToolEnd(mouseStatePayload) {
     var {plotId,drawLayer}= mouseStatePayload;
     var sel= {pt0:drawLayer.firstPt,pt1:drawLayer.currentPt};
-    dispatchAttributeChange(plotId,true,PlotAttribute.ACTIVE_DISTANCE,sel);
+    dispatchAttributeChange(plotId,true,PlotAttribute.ACTIVE_DISTANCE,sel,true);
     flux.process({type:DrawLayerCntlr.DT_END, payload:mouseStatePayload} );
 }
 
@@ -86,7 +86,7 @@ function creator() {
 
 function onDetach(drawLayer,action) {
     var {plotIdAry}= action.payload;
-    plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.ACTIVE_DISTANCE,null));
+    plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.ACTIVE_DISTANCE,null,true));
 }
 
 

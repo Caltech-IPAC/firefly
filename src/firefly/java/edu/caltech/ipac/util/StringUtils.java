@@ -186,6 +186,8 @@ public class StringUtils {
                 value = value.replaceAll("%26", "&");
                 value = value.replaceAll("%2C", ",");
                 value = value.replaceAll("%3D", "=");
+                value = value.replaceAll("%3A", ":");
+                value = value.replaceAll("%2F", "/");
             }
             map.put(kv[0].trim(), value);
         }
@@ -210,6 +212,8 @@ public class StringUtils {
                     v = v.replaceAll("&", "%26");
                     v = v.replaceAll(",", "%2C");
                     v = v.replaceAll("=", "%3D");
+                    v = v.replaceAll(":", "%3A");
+                    v = v.replaceAll("/", "%2F");
                     val.append(v);
                 }
             }

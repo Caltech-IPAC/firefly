@@ -22,7 +22,7 @@ const DEF_PATH = getRootPath() + 'sticky/CmdSrv';
 
 function preparePostParamList(cmd,paramList) {
     if (Array.isArray(paramList)) {
-        const initObj= cmd ? {name: ServerParams.COMMAND, value: cmd} : {};
+        const initObj= cmd ? {[ServerParams.COMMAND]: cmd} : {};
          return paramList.reduce( (rval, entry) => {
                     if (entry.name) rval[entry.name]= get(entry, 'value','');
                     return rval;
@@ -78,7 +78,11 @@ export const jsonRequest= function(baseUrl, cmd, paramList, doPost) {
 
 
     return new Promise(function(resolve, reject) {
-        fetchUrl(url,options ).then( (response) => {
+        fetchUrl(url,options,true ).then( (response) => {
+            if (!response.ok) {
+                reject(new Error(`Error from Server for command ${cmd}: code: ${response.status}, text: ${response.statusText}`));
+                return;
+            }
             response.json().then( (result) => {
                 if (result && result[0]) {
                     if (result[0] && result[0].success && result[0].success !== 'false' && result[0].data) {
@@ -88,7 +92,7 @@ export const jsonRequest= function(baseUrl, cmd, paramList, doPost) {
                     else if (result[0] && get(result,'0.error')){//result[0].error) {
                         reject(new Error(result[0].error));
                     } else {
-                        reject(new Error(`Unreconized result: ${result}`));
+                        reject(new Error(`Unrecognized result: ${result}`));
                     }
                 }
                 else { //this part did not use WebPlotResultSerializer for making the return result in VisServerCommands

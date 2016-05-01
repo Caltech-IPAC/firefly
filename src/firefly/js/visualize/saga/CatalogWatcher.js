@@ -4,7 +4,7 @@
 
 import {take} from 'redux-saga/effects';
 import {isEmpty, get} from 'lodash';
-import {TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE, TABLE_RESULTS_PATH} from '../../tables/TablesCntlr.js';
+import {TABLE_NEW_LOADED,TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE, TABLE_RESULTS_PATH} from '../../tables/TablesCntlr.js';
 import {dispatchCreateDrawLayer,dispatchAttachLayerToPlot,dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {findTblById,doFetchTable} from '../../tables/TableUtil.js';
@@ -42,11 +42,11 @@ export function* watchCatalogs() {
 
 
     while (true) {
-        const action= yield take([TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE,
+        const action= yield take([TABLE_NEW_LOADED,TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE,
                                   TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE]);
         const {tbl_id}= action.payload;
         switch (action.type) {
-            case TABLE_NEW:
+            case TABLE_NEW_LOADED:
                 handleCatalogUpdate(tbl_id);
                 break;
             

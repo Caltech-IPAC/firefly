@@ -9,19 +9,19 @@
  */
 
 import update from 'react-addons-update';
-import {isEqual} from 'lodash';
-import WebPlot, {PlotAttribute} from './../WebPlot.js';
+import {isEqual,unionBy} from 'lodash';
+import {WebPlot, PlotAttribute} from './../WebPlot.js';
 import {WPConst} from './../WebPlotRequest.js';
 import {RotateType} from './../PlotState.js';
 import {makeScreenPt} from './../Point.js';
 import {getActiveTarget} from '../../core/AppDataCntlr.js';
 import VisUtil from './../VisUtil.js';
-import PlotViewUtil, {getPlotViewById, matchPlotView, primePlot, findPlotGroup} from './../PlotViewUtil.js';
+import {getPlotViewById, matchPlotView, primePlot, findPlotGroup} from './../PlotViewUtil.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {PlotPref} from './../PlotPref.js';
 import {DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import SimpleMemCache from '../../util/SimpleMemCache.js';
-import {CCUtil} from './../CsysConverter.js';
+import {CCUtil, CysConverter} from './../CsysConverter.js';
 import {defMenuItemKeys} from '../MenuItemKeys.js';
 
 // export const DATASET_INFO_CONVERTER = 'DATASET_INFO_CONVERTER';
@@ -66,23 +66,21 @@ export default {replacePlots,
  */
 export function makePlotView(plotId, req, pvOptions) {
     var pv= {
-        plotId,
-        plotGroupId: req.getPlotGroupId(),
-        drawingSubGroupId: req.getDrawingSubGroupId(), //todo, string, this is an id
+        plotId, // should never change
+        plotGroupId: req.getPlotGroupId(), //should never change
+        drawingSubGroupId: req.getDrawingSubGroupId(), //todo, string, this is an id, should never change
         plots:[],
+        plottingStatus:'Plotting...',
+        serverCall:'success', // one of 'success', 'working', 'fail'
         primeIdx:-1,
-        plotCounter:0, // index of how many plots, used for making next ID
         wcsMarginX: 0, // todo
         wcsMarginY: 0, // todo
         scrollX : -1,
         scrollY : -1,
         viewDim : {width:0, height:0}, // size of viewable area  (div size: offsetWidth & offsetHeight)
         overlayPlotViews: [], //todo
-        containsMultiImageFits : false,
-        containsMultipleCubes : false,
-        lockPlotHint: false, //todo
         attributes: {}, //todo, i hope to remove this an only hold attributes on web plot
-        menuItemKeys: makeMenuItemKeys(req,pvOptions,defMenuItemKeys),
+        menuItemKeys: makeMenuItemKeys(req,pvOptions,defMenuItemKeys), // normally wil not change
         plotViewCtx: createPlotViewContextData(req),
 
 
@@ -121,12 +119,15 @@ function createPlotViewContextData(req) {
         rotateNorthLock : false,// todo MAYBE!!! // rotate this plot north when plotting,
         userModifiedRotate: false, // the user modified the rotate status, todo
         zoomLockingEnabled : false,
-        zoomLockingType: UserZoomTypes.FIT,
+        zoomLockingType: UserZoomTypes.FIT, // can be FIT or FILL
         lastCollapsedZoomLevel: 0,
         preferenceColorKey: req.getPreferenceColorKey(),
         preferenceZoomKey:  req.getPreferenceZoomKey(),
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
-        gridId : null// todo: grid id is associated with the MultiImageView and DataViewGrid, need to figure out how, or if we should keep it
+        containsMultiImageFits : false,
+        containsMultipleCubes : false,
+        lockPlotHint: false, //todo
+        plotCounter:0 // index of how many plots, used for making next ID
     };
 }
 
@@ -138,7 +139,29 @@ function makeMenuItemKeys(req,pvOptions,defMenuItemKeys) {
     return defMenuItemKeys;
 }
 
-const initScrollCenterPoint= (pv) => updatePlotViewScrollXY(pv,findScrollPtForCenter(pv));
+export const initScrollCenterPoint= (pv) => updatePlotViewScrollXY(pv,findScrollPtForCenter(pv));
+
+
+export function changePrimePlot(pv, nextIdx) {
+    const {plots}= pv;
+    if (!plots[nextIdx]) return pv;
+    // var currentCenterImPt= findCurrentCenterPoint(pv);
+    var currentScrollImPt= CCUtil.getImageCoords(primePlot(pv),makeScreenPt(pv.scrollX,pv.scrollY));
+    //=================
+    
+    pv= Object.assign({},pv,{primeIdx:nextIdx});
+    
+    const cc= CysConverter.make(plots[nextIdx]);
+    if (cc.pointInData(currentScrollImPt)) {
+        pv= updatePlotViewScrollXY(pv,cc.getScreenCoords(currentScrollImPt));
+    }
+    else {
+        pv= initScrollCenterPoint(pv);
+    }
+    return pv;
+}
+
+
 
 /**
  *
@@ -146,11 +169,13 @@ const initScrollCenterPoint= (pv) => updatePlotViewScrollXY(pv,findScrollPtForCe
  * @param plotAry
  * @param expanded
  * @param overlayPlotViews
+ * @param keepPrimeIdx
  * @return {Object|*}
  */
-function replacePlots(pv, plotAry, overlayPlotViews=null) {
+function replacePlots(pv, plotAry, overlayPlotViews=null,keepPrimeIdx=false) {
 
     pv= Object.assign({},pv);
+    pv.plotViewCtx= Object.assign({},pv.plotViewCtx);
 
     if (pv.plots && pv.plots.length) {
         pv.plots.forEach( (plot) => {
@@ -167,12 +192,14 @@ function replacePlots(pv, plotAry, overlayPlotViews=null) {
 
     pv.plots.forEach( (plot) => {
         plot.attributes= Object.assign({},plot.attributes, getNewAttributes(plot));
-        plot.plotImageId= `${pv.plotId}--${pv.plotCounter}`;
-        pv.plotCounter++;
+        plot.plotImageId= `${pv.plotId}--${pv.plotViewCtx.plotCounter}`;
+        pv.plotViewCtx.plotCounter++;
     });
 
 
-    pv.primeIdx=0;
+    if (!keepPrimeIdx || pv.primeIdx<0 || pv.primeIdx>=pv.plots.length) pv.primeIdx=0;
+    pv.plottingStatus='';
+    pv.serverCall='success';
 
     PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, pv.plots[pv.primeIdx].plotState);
     PlotPref.putCacheZoomPref(pv.plotViewCtx.preferenceZoomKey, pv.plots[pv.primeIdx].plotState);
@@ -180,9 +207,9 @@ function replacePlots(pv, plotAry, overlayPlotViews=null) {
 
     setClientSideRequestOptions(pv,pv.plots[pv.primeIdx].plotState.getWebPlotRequest());
 
-    pv.containsMultiImageFits= pv.plots.every( (p) => p.plotState.isMultiImageFile());
-    pv.containsMultipleCubes= pv.plots.every( (p) => p.plotState.getCubeCnt()>1);
-    pv.plotViewCtx.rotateNorthLock= pv.plots[pv.primeIdx].plotState.getRotateType()===RotateType.NORTH;
+    pv.plotViewCtx.containsMultiImageFits= pv.plots.every( (p) => p.plotState.isMultiImageFile());
+    pv.plotViewCtx.containsMultipleCubes= pv.plots.every( (p) => p.plotState.getCubeCnt()>1);
+    pv.plotViewCtx.rotateNorthLock= pv.plots[pv.primeIdx].plotState.getRotateType()===RotateType.NORTH;  // todo, study this more, understand why
     pv.plotViewCtx.lastCollapsedZoomLevel= pv.plots[pv.primeIdx].zoomFactor;
 
     pv= initScrollCenterPoint(pv);
@@ -203,6 +230,7 @@ function replacePlots(pv, plotAry, overlayPlotViews=null) {
 
 /**
  * create a copy of the PlotView with a new scroll position and a new view port if necessary
+ * The scroll position is the top left visible point.
  * @param {object} plotView the current plotView
  * @param {object} newScrollPt  the screen point of the scroll position
  * @return {object} new copy of plotView
@@ -259,8 +287,6 @@ export function replacePlotView(plotViewAry,newPlotView) {
 export function replacePrimaryPlot(plotView,primePlot) {
     return update(plotView, { plots : {[plotView.primeIdx] : { $set : primePlot } }} );
 }
-
-
 
 /**
  * scroll a plot view to a new screen pt, if plotGroup.lockRelated is true then all the plot views in the group
@@ -388,7 +414,7 @@ function getNewAttributes(plot) {
  * is zoomed the image point will be what we want in the center.
  * The screen coordinates will be completely different.
  * @return ImagePt the center point
- * @param plotView
+ * @param {{}} plotView
  * @param [scrollX] optional scrollX if not defined us plotView.scrollX
  * @param [scrollY] optional scrollY if not defined us plotView.scrollY
  */

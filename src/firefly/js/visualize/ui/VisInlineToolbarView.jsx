@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PropTypes} from 'react';
+import React, {Component, PropTypes} from 'react';
+import sCompare from 'react-addons-shallow-compare';
 import {primePlot } from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LayerButton} from './VisToolbarView.jsx';
@@ -16,17 +17,31 @@ import DELETE from 'html/images/blue_delete_10x10.png';
 
 
 
-function expand(pv) {
-    //console.log('todo- expand:' + primePlot(pv).title);
-    dispatchChangeActivePlotView(pv.plotId);
+function expand(plotId) {
+    dispatchChangeActivePlotView(plotId);
     dispatchSetLayoutMode( LO_EXPANDED.images );
     dispatchChangeExpandedMode(true);
 }
 
 
+
+const rS= {
+    width: '100% - 2px',
+    height: 34,
+    position: 'relative',
+    verticalAlign: 'top',
+    whiteSpace: 'nowrap',
+    display:'inline-flex',
+    flexDirection:'row',
+    flexWrap:'nowrap',
+    alignItems: 'center'
+};
+
+
+
 /**
  *
- * @param pv
+ * @param plotId
  * @param dlAry
  * @param showLayer
  * @param showExpand
@@ -34,56 +49,53 @@ function expand(pv) {
  * @return {XML}
  * @constructor
  */
-export function VisInlineToolbarView({plotView:pv, dlAry, showLayer, showExpand, showDelete}) {
 
-    var rS= {
-        width: '100% - 2px',
-        height: 34,
-        position: 'relative',
-        verticalAlign: 'top',
-        whiteSpace: 'nowrap',
-        display:'inline-flex',
-        flexDirection:'row',
-        flexWrap:'nowrap',
-        alignItems: 'center'
-    };
+export class VisInlineToolbarView extends Component {
+    constructor(props) {
+        super(props);
+        this.deleteClick= this.deleteClick.bind(this);
+        this.expandClick= this.expandClick.bind(this);
+    }
 
-    return (
-        <div style={rS}>
-            <LayerButton plotView={pv} dlAry={dlAry} visible={showLayer}/>
+    shouldComponentUpdate(np, ns) {
+        return sCompare(this, np, ns);
+    }
 
-            <ToolbarButton icon={OUTLINE_EXPAND}
-                           tip='Expand this panel to take up a larger area'
-                           horizontal={true}
-                           visible={showExpand}
-                           onClick={() => expand(pv)}/>
+    deleteClick() {dispatchDeletePlotView(this.props.plotId);}
+    expandClick() {expand(this.props.plotId);}
 
-            <ToolbarButton icon={DELETE}
-                           tip='Delete Image'
-                           additionalStyle={{alignSelf:'flex-start'}}
-                           horizontal={true}
-                           visible={showDelete}
-                           onClick={() => dispatchDeletePlotView(pv.plotId)}/>
+    render() {
+        const {plotId, dlAry, showLayer, showExpand, showDelete}= this.props;
 
-        </div>
-    );
+        return (
+            <div style={rS}>
+                <LayerButton plotId={plotId} dlCount={dlAry.length} visible={showLayer}/>
+
+                <ToolbarButton icon={OUTLINE_EXPAND}
+                               tip='Expand this panel to take up a larger area'
+                               horizontal={true}
+                               visible={showExpand}
+                               onClick={this.expandClick}/>
+
+                <ToolbarButton icon={DELETE}
+                               tip='Delete Image'
+                               additionalStyle={{alignSelf:'flex-start'}}
+                               horizontal={true}
+                               visible={showDelete}
+                               onClick={this.deleteClick}/>
+
+            </div>
+        );
+    }
+
 }
 
-// <div style={{ position: 'relative', display: 'inline-block', float: 'right' }}>
-// </div>
-
 VisInlineToolbarView.propTypes= {
-    plotView : PropTypes.object.isRequired,
+    plotId : PropTypes.string.isRequired,
     dlAry : PropTypes.arrayOf(React.PropTypes.object),
     extensionAry : PropTypes.arrayOf(React.PropTypes.object),
     showLayer : PropTypes.bool,
     showExpand : PropTypes.bool,
     showDelete : PropTypes.bool
 };
-
-
-
-
-
-
 

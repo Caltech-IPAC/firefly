@@ -4,6 +4,7 @@
 
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
+import {omit} from 'lodash';
 import shallowequal from 'shallowequal';
 import {getPlotViewById,getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {ImageViewerView} from './ImageViewerView.jsx';
@@ -39,7 +40,6 @@ export class ImageViewer extends Component {
         if (this.removeListener) this.removeListener();
     }
 
-
     componentDidMount() {
         this.removeListener= flux.addListener(() => this.storeUpdate());
         this.storeUpdate();
@@ -47,10 +47,11 @@ export class ImageViewer extends Component {
 
     storeUpdate() {
         var {state}= this;
-        var allPlots= visRoot();
-        var dlAry= getDlAry();
-        var extRoot= extensionRoot();
-        var mState= currMouseState();
+        const allPlots= visRoot();
+        const dlAry= getDlAry();
+        const extRoot= extensionRoot();
+        const mState= currMouseState();
+        const {plotId}= this.props;
         var mousePlotId= mState.plotId;
         if (this.timeId) clearTimeout(this.timeId);
         this.timeId= null;
@@ -61,11 +62,12 @@ export class ImageViewer extends Component {
         }
 
         var drawLayersAry= getAllDrawLayersForPlot(dlAry,this.props.plotId);
-        if (allPlots!==state.allPlots  ||
+        if (shallowequal(drawLayersAry,state.drawLayersAry)) drawLayersAry= state.drawLayersAry;
+
+        if (changeAffectsPV(plotId,allPlots,state.allPlots)  ||
+            mousePlotIdAffectPv(plotId,state.mousePlotId,mousePlotId) ||
             extRoot!==state.extRoot ||
-            mousePlotId!==state.mousePlotId ||
-            !shallowequal(drawLayersAry,state.drawLayersAry)) {
-            var {plotId}= this.props;
+            drawLayersAry!==state.drawLayersAry) {
             var plotView= getPlotViewById(allPlots,plotId);
             this.setState({plotView, dlAry, allPlots, drawLayersAry,extRoot,mousePlotId});
         }
@@ -113,4 +115,34 @@ ImageViewer.propTypes= {
 function drawLayersDiffer(dlAry1, dlAry2) {
     return true;
 }
+
+
+const omitList= ['plotViewAry','activePlotId'];
+
+function changeAffectsPV(plotId,newVisRoot,oldVisRoot) {
+    if (newVisRoot===oldVisRoot) return false;
+
+    if (newVisRoot.activePlotId!==oldVisRoot.activePlotId &&
+        (newVisRoot.activePlotId===plotId || oldVisRoot.activePlotId===plotId)) {
+        return true;
+    }
+
+    const pv1= getPlotViewById(newVisRoot,plotId);
+    const pv2= getPlotViewById(oldVisRoot,plotId);
+
+    if (pv1!==pv2) return true;
+
+
+    if (!shallowequal(omit(newVisRoot,omitList), omit(oldVisRoot,omitList))) {
+        return true;
+    }
+    return false;
+
+}
+
+function mousePlotIdAffectPv(plotId,oldMousePlotId,newMousePlotId) {
+    return (oldMousePlotId!==newMousePlotId && (oldMousePlotId===plotId || newMousePlotId===plotId));
+}
+
+
 

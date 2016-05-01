@@ -4,10 +4,9 @@
 
 import {get, set, isEmpty, uniqueId, padEnd, cloneDeep} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
-import {SelectInfo} from './SelectInfo.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {flux} from '../Firefly.js';
-import {fetchUrl, encodeServerUrl} from '../util/WebUtil.js';
+import {fetchUrl, encodeServerUrl, encodeParams} from '../util/WebUtil.js';
 import {getRootPath, getRootURL} from '../util/BrowserUtil.js';
 import {TableRequest} from './TableRequest.js';
 
@@ -28,8 +27,12 @@ export function doFetchTable(tableRequest, hlRowIdx) {
         tbl_id : (tableRequest.tbl_id || tableRequest.title || tableRequest.id)
     };
     var params = Object.assign(def, tableRequest);
+    // encoding for method post
+    if (params[TableRequest.keys.META_INFO]) {
+         params.META_INFO = encodeParams(params[TableRequest.keys.META_INFO]);
+    }
 
-    return fetchUrl(SRV_PATH, {params}).then( (response) => {
+    return fetchUrl(SRV_PATH, {method: 'post', params}).then( (response) => {
         return response.json().then( (tableModel) => {
             const startIdx = get(tableModel, ['request',TableRequest.keys.startIdx], 0);
             if (startIdx > 0) {
@@ -40,9 +43,6 @@ export function doFetchTable(tableRequest, hlRowIdx) {
                 }, []);
             }
             tableModel.highlightedRow = hlRowIdx || startIdx;
-            // if (!tableModel.selectInfo) {
-            //     tableModel.selectInfo = SelectInfo.newInstance({rowCount:tableModel.totalRows}).data;
-            // }
             return tableModel;
         });
     });
@@ -275,36 +275,33 @@ export function sortTable(origTableModel, sortInfoStr) {
     return tableModel;
 }
 
-
-export function gatherTableState(tableModel) {
-    var {tbl_id, highlightedRow} = tableModel;
-
-    const pageSize = get(tableModel, 'request.pageSize', 1);  // there should be a pageSize.. default to 1 in case of error.  pageSize cannot be 0 because it'll overflow.
-    const currentPage = highlightedRow >= 0 ? Math.floor(highlightedRow / pageSize)+1 : 1;
-    const hlRowIdx = highlightedRow >= 0 ? highlightedRow % pageSize : 0;
-    const startIdx = (currentPage-1) * pageSize;
-    const endIdx = Math.min(startIdx+pageSize, tableModel.totalRows) || startIdx ;
-    var totalPages = Math.ceil((tableModel.totalRows || 0)/pageSize);
-    return {tbl_id, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow};
-}
-
-export function getTblInfoById(tbl_id) {
+export function getTblInfoById(tbl_id, aPageSize) {
     const tableModel = findTblById(tbl_id);
-    return Object.assign(getTblInfo(tableModel), {tableModel});
+    return getTblInfo(tableModel, aPageSize);
 }
 
-export function getTblInfo(tableModel) {
+/**
+ * collects all available table information given the tableModel.
+ * @param tableModel
+ * @param aPageSize  use this pageSize instead of the one in the request.
+ * @returns {*}
+ */
+export function getTblInfo(tableModel, aPageSize) {
     if (!tableModel) return {};
-    var {tbl_id, request, highlightedRow, totalRows, tableMeta={}, selectInfo} = tableModel;
+    var {tbl_id, request, highlightedRow=0, totalRows=0, tableMeta={}, selectInfo, error} = tableModel;
     const {title} = tableMeta;
-    const pageSize = get(request, 'pageSize', 1);  // there should be a pageSize.. default to 1 in case of error.  pageSize cannot be 0 because it'll overflow.
-    highlightedRow = highlightedRow < 0 || highlightedRow > totalRows ? 0 : highlightedRow;
+    const pageSize = aPageSize || get(request, 'pageSize', 1);  // there should be a pageSize.. default to 1 in case of error.  pageSize cannot be 0 because it'll overflow.
+    if (highlightedRow < 0 ) {
+        highlightedRow = 0;
+    } else  if (highlightedRow >= totalRows-1) {
+        highlightedRow = totalRows-1;
+    }
     const currentPage = highlightedRow >= 0 ? Math.floor(highlightedRow / pageSize)+1 : 1;
     const hlRowIdx = highlightedRow >= 0 ? highlightedRow % pageSize : 0;
     const startIdx = (currentPage-1) * pageSize;
     const endIdx = Math.min(startIdx+pageSize, totalRows) || startIdx ;
     var totalPages = Math.ceil((totalRows || 0)/pageSize);
-    return { tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow, selectInfo};
+    return { tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow, selectInfo, error};
 }
 
 export function tableToText(columns, dataAry, showUnits=false) {

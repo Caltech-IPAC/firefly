@@ -54,7 +54,7 @@ function dispatchSelectAreaEnd(mouseStatePayload) {
     if (drawLayer.drawData.data) {
         var selectBox= drawLayer.drawData.data[0];
         var sel= {pt0:selectBox.pt1,pt1:selectBox.pt2};
-        dispatchAttributeChange(plotId,true,PlotAttribute.SELECTION,sel);
+        dispatchAttributeChange(plotId,true,PlotAttribute.SELECTION,sel,true);
         flux.process({type:DrawLayerCntlr.SELECT_AREA_END, payload:mouseStatePayload} );
     }
 }
@@ -91,7 +91,7 @@ function creator() {
 
 function onDetach(drawLayer,action) {
     var {plotIdAry}= action.payload;
-    plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.SELECTION,null));
+    plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.SELECTION,null,true));
 }
 
 function getLayerChanges(drawLayer, action) {

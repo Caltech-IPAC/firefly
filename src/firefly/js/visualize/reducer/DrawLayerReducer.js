@@ -13,6 +13,8 @@ import ImagePlotCntlr from '../ImagePlotCntlr.js';
 
 export default {makeReducer};
 
+const EMPTY_OBJ={};
+const EMPTY_ARY=[];
 
 /**
  *
@@ -148,6 +150,7 @@ function detachLayerFromPlot(drawLayer,action,factory) {
 
 
 function detachPerPlotData(drawData, plotId) {
+    if (!drawData) return null;
     var highlightData= null;
     var selectIdxs= drawData.selectIdxs;
 

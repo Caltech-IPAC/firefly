@@ -100,7 +100,7 @@ public class WebPlotReader {
 
         File originalFile = fd.getFile();
         String uploadedName= null;
-        if (ServerContext.isInUploadDir(originalFile)) {
+        if (ServerContext.isInUploadDir(originalFile) || originalFile.getName().startsWith("upload_")) {
             uploadedName= fd.getDesc();
         }
 
@@ -156,7 +156,7 @@ public class WebPlotReader {
             imageIdx= 0;
             File originalFile = fd.getFile();
             String uploadedName= null;
-            if (ServerContext.isInUploadDir(originalFile)) {
+            if (ServerContext.isInUploadDir(originalFile) || originalFile.getName().startsWith("upload_")) {
                 uploadedName= fd.getDesc();
             }
 

@@ -19,6 +19,7 @@ export const Operation= new Enum(['ROTATE', 'CROP', 'FLIP_Y']);
  */
 const MultiImageAction = new Enum([ 'GUESS',      // Default, guess between load first, and use all, depending on three color params
                                     'USE_FIRST',   // only valid option if loading a three color with multiple Request
+                                    'USE_IDX',   // use a specific image from the fits read Array
                                     'MAKE_THREE_COLOR', // make a three color out of the first three images, not yet implemented
                                     'USE_ALL' // only valid in non three color, make a array of WebPlots
                                     ]);
@@ -50,8 +51,8 @@ export class PlotState {
 //======================================================================
 
     /**
-     * get the first used band
-     * @return {Band} the first band
+     * returns the first used band. It is possible that this method will return null.  You should always check.
+     * @return {Band} the first name used.
      */
     firstBand() {
         var bandAry= this.getBands();
@@ -59,8 +60,8 @@ export class PlotState {
     }
 
     /**
-     * get All the used bands
-     * @return {Array} an array of Band
+     * Get an array of used band.  It is possible that this routine will return a array of length 0
+     * @return {Array} the bands in use
      */
     getBands() {
         if (!this.usedBands) {
@@ -102,29 +103,12 @@ export class PlotState {
      */
     isNewPlot() { return this.newPlot; }
 
-    /**
-     *
-     * @param {boolean} newPlot
-     */
-    setNewPlot(newPlot) { this.newPlot= newPlot; }
 
     /**
      *
      * @return {number}
      */
     getColorTableId() { return this.colorTableId; }
-
-    /**
-     *
-     * @param {number} id
-     */
-    setColorTableId(id) { this.colorTableId= id; }
-
-    /**
-     *
-     * @param {boolean} threeColor
-     */
-    setThreeColor(threeColor) { this.threeColor= threeColor; }
 
     /**
      *
@@ -140,11 +124,6 @@ export class PlotState {
         return this.get(this.firstBand()).getWebPlotRequest().getThumbnailSize();
     }
 
-    /**
-     *
-     * @param {number} z
-     */
-    setZoomLevel(z) {this.zoomLevel= z; }
 
     /**
      *
@@ -152,11 +131,6 @@ export class PlotState {
      */
     getZoomLevel() {return this.zoomLevel; }
 
-    /**
-     *
-     * @param {RotateType} rotationType
-     */
-    setRotateType(rotationType) { this.rotationType= rotationType; }
 
     /**
      *
@@ -190,11 +164,6 @@ export class PlotState {
      */
     getRotationAngle() { return this.rotationAngle; }
 
-    /**
-     *
-     * @param {CoordinateSys } csys
-     */
-    setRotateNorthType(csys) { this.rotaNorthType= csys; }
 
     /**
      *
@@ -227,24 +196,15 @@ export class PlotState {
     isMultiImageFile(band) { return this.get(band || this.firstBand()).isMultiImageFile(); }
     isPrimaryMultiImageFile() { return this.get(this.firstBand()).isMultiImageFile(); }
 
-    /**
-     *
-     * @param {boolean} multiImageFile
-     * @param {Band} band
-     */
-    setMultiImageFile(multiImageFile, band) { this.get(band).setMultiImageFile(multiImageFile); }
-
 
     getCubeCnt(band) { return this.get(band || this.firstBand()).getCubeCnt(); }
     getPrimaryCubeCnt() { return this.get(this.firstBand()).getCubeCnt(); }
-    //setCubeCnt(cubeCnt, band) { this.get(band).setCubeCnt(cubeCnt); }
 
 
     getCubePlaneNumber(band) {
         return this.get(band || this.firstBand()).getCubePlaneNumber();
     }
     getPrimaryCubePlaneNumber() { return this.get(this.firstBand()).getCubePlaneNumber(); }
-    //setCubePlaneNumber(cubeIdx, band) { this.get(band).setCubePlaneNumber(cubeIdx); }
 
 
     /**
@@ -295,23 +255,18 @@ export class PlotState {
      * @return {string}
      */
     getWorkingFitsFileStr(band) { return band ? this.get(band).getWorkingFitsFileStr() : null; }
-    //setWorkingFitsFileStr(fileStr, band) { this.get(band).setWorkingFitsFileStr(fileStr); }
 
     /**
      * @return {string}
      */
     getOriginalFitsFileStr(band) { return band ? this.get(band).getOriginalFitsFileStr() : null; }
-    //setOriginalFitsFileStr(fileStr, band) { this.get(band).setOriginalFitsFileStr(fileStr); }
 
 
     getUploadFileName(band) { return band ? this.get(band).getUploadedFileName() : null; }
-    setUploadFileName(fileStr, band) { this.get(band).setUploadedFileName(fileStr); }
 
-    //setImageIdx(idx, band) { this.get(band).setImageIdx(idx); }
     getImageIdx(band) { return this.get(band).getImageIdx(); }
 
 
-    //setOriginalImageIdx(idx, band) { this.get(band).setOriginalImageIdx(idx); }
     getOriginalImageIdx(band) { return this.get(band).getOriginalImageIdx(); }
 
     /**

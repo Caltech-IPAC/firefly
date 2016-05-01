@@ -5,8 +5,8 @@
 /*global __MODULE_NAME__*/
 
 import Enum from 'enum';
-import isBlank from 'underscore.string/isBlank';
-import {get, isObject, union, isFunction, isEqual} from 'lodash';
+import update from 'react-addons-update';
+import {get, set, omit, isObject, union, isFunction, isEqual,  isNil} from 'lodash';
 import { getRootURL } from './BrowserUtil.js';
 
 const  MEG          = 1048576;
@@ -120,18 +120,20 @@ export const encodeServerUrl= function(url, params) {
  * This function applies default behaviors before fetching.
  * options.params is a custom property used to carry a set of parameters.  It does not need to
  *                be encoded.  Base on the method used, it will be handled internally.
+ * options.method can be one of get, post, or multipart
+ *                when 'multipart', it will post with 'multipart/form-data' encoding.
  *
  * @param url
  * @param options
  * @return a promise of the response when successful, or reject with an Error.
  */
-export function fetchUrl(url, options) {
+export function fetchUrl(url, options, returnAllResponses= false) {
 
     if (!url) return;
 
     // define defaults request options
     options = options || {};
-    const req = { method: 'GET',
+    const req = { method: 'get',
             mode: 'cors',
             credentials: 'include',
             cache: 'default'
@@ -139,23 +141,26 @@ export function fetchUrl(url, options) {
     options = Object.assign(req, options);
 
     const headers = {};
-    if (options.method.toUpperCase() === 'POST') {
-        // add default content-type header when method is 'post'
-    }
     options.headers = Object.assign(headers, options.headers);
 
     if (options.params) {
-        if (options.method.toUpperCase() === 'GET') {
+        if (options.method.toLowerCase() === 'get') {
             url = encodeUrl(url, options.params);
         } else {
             url = encodeUrl(url);
             if (!options.body) {
                 // if 'post' but, body is not provided, add the parameters into the body.
-                var data = new FormData();
-                Object.keys(options.params).forEach( (key) => {
-                    data.append(key, options.params[key]);
-                });
-                options.body = data;
+                if (options.method.toLowerCase() === 'post') {
+                    options.headers['Content-type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
+                    options.body = encodeParams(options.params);
+                } else if (options.method.toLowerCase() === 'multipart') {
+                    options.method = 'post';
+                    var data = new FormData();
+                    Object.keys(options.params).forEach( (key) => {
+                        data.append(key, options.params[key]);
+                    });
+                    options.body = data;
+                }
                 Reflect.deleteProperty(options, 'params');
             }
         }
@@ -164,6 +169,7 @@ export function fetchUrl(url, options) {
     // do the actually fetch, then return a promise.
     return fetch(url, options)
         .then( (response) => {
+            if (returnAllResponses) return response;
             if (response.ok) {
                 return response;
             } else {
@@ -256,14 +262,21 @@ function isRequiredUpdateObject(o) {
     return Array.isArray(o) || (o && o.constructor === Object.prototype.constructor);
 }
 
-export function deepDiff(o1, o2, p) {
+/**
+ * Diff the the two objects and prints differences to console
+ * @param o1
+ * @param o2
+ * @param p the title
+ * @param collapsed show the differences collapsed
+ */
+export function deepDiff(o1, o2, p, collapsed=false) {
     const notify = (status) => {
         console.warn(' Update %s', status);
         console.log('%cbefore', 'font-weight: bold', o1);
         console.log('%cafter ', 'font-weight: bold', o2);
     };
     if (!isEqual(o1, o2)) {
-        console.group(p);
+        collapsed ? console.groupCollapsed(p) : console.group(p);
         if ([o1, o2].every(isFunction)) {
             notify('avoidable?');
         } else if (![o1, o2].every(isRequiredUpdateObject)) {
@@ -276,7 +289,7 @@ export function deepDiff(o1, o2, p) {
         }
         console.groupEnd();
     } else if (o1 !== o2) {
-        console.group(p);
+        collapsed ? console.groupCollapsed(p) : console.group(p);
         notify('avoidable!');
         if (isObject(o1) && isObject(o2)) {
             const keys = union(Object.keys(o1), Object.keys(o2));
@@ -287,3 +300,92 @@ export function deepDiff(o1, o2, p) {
         console.groupEnd();
     }
 }
+/*----------------------------< COOKIES ----------------------------*/
+export function setCookie(name, value, options = {}) {
+    var str = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+
+    if (isNil(value)) options.maxage = -1;
+
+    if (options.maxage) {
+        options.expires = new Date(+new Date() + options.maxage);
+    }
+
+    if (options.path) str += '; path=' + options.path;
+    if (options.domain) str += '; domain=' + options.domain;
+    if (options.expires) str += '; expires=' + options.expires.toUTCString();
+    if (options.secure) str += '; secure';
+
+    document.cookie = str;
+}
+
+export function getCookie(name) {
+    const cookies = parseCookies(document.cookie);
+    return name ? cookies[name] : cookies;
+}
+
+function parseCookies(str) {
+    var obj = {},
+        pairs = str.split(/ *; */);
+
+    if (!pairs[0]) return obj;
+
+    pairs.forEach( (pair) => {
+        pair = pair.split('=');
+        obj[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+    });
+    return obj;
+}
+/*---------------------------- COOKIES >----------------------------*/
+
+/*----------------------------/ update ----------------------------*/
+/**
+ * This is a wrapper of React update's $set for use with deep object update.
+ * *Syntax is similar to lodash set.
+ * @param object (Object): The object to modify.
+ * @param path (Array|string): The path of the property to set.
+ * @param value (*): The value to set.
+ */
+export function updateSet(object, path, value) {
+    const o = set({}, path, {$set: value});
+    return update(object, o);
+}
+
+/**
+ * This is a wrapper of React update's $merge for use with deep object update.
+ * *Syntax is similar to as lodash set.
+ * @param object (Object): The object to modify.
+ * @param path (Array|string): The path of the property to merge.
+ * @param value (*): The value to merge.
+ */
+export function updateMerge(object, path, value) {
+    const o = set({}, path, {$merge: value});
+    return update(object, o);
+}
+
+/**
+ * This is a generic wrapper of React's update for use with deep object update.
+ * Command can be on of:
+ * {$push: array}, {$unshift: array}, {$splice: array of arrays}, {$set: any}, {$apply: function}
+ * see React's update for details.
+ * *Syntax is similar to as lodash set.
+ * @param object (Object): The object to modify.
+ * @param path (Array|string): The path of the property to apply the function to.
+ * @param command (*): The command portion of react's update.
+ */
+export function updateWith(object, path, command) {
+    const o = set({}, path, command);
+    return update(object, o);
+}
+
+/**
+ * Delete a property from an object
+ * Syntax is similar to as lodash set.
+ * @param object (Object): The object to modify.
+ * @param path (Array|string): The path of the container of the property to delete.
+ * @param value (*): The property to delete.
+ */
+export function updateDelete(object, path, value) {
+    const v = omit(get(object, path), value);
+    return updateSet(object, path, v);
+}
+/*---------------------------- update /----------------------------*/

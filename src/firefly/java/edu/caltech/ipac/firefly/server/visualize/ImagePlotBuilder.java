@@ -122,7 +122,7 @@ public class ImagePlotBuilder {
         long readStart = System.currentTimeMillis();
         WebPlotReader wpr= new WebPlotReader(workingCtxStr);
         Map<Band, FileReadInfo[]> readInfoMap = wpr.readFiles(fileDataMap, firstR);
-        PlotServUtils.updateProgress( firstR.getProgressKey(), ProgressStat.PType.CREATING,
+        PlotServUtils.updateProgress( firstR, ProgressStat.PType.CREATING,
                                       PlotServUtils.CREATING_MSG);
         purgeFailedBands(readInfoMap, requestMap);
         long readElapse = System.currentTimeMillis() - readStart;
@@ -151,7 +151,7 @@ public class ImagePlotBuilder {
         ImagePlotInfo pInfo[];
         // ------------ read the FITS files
         long readStart = System.currentTimeMillis();
-        PlotServUtils.updateProgress(request.getProgressKey(), ProgressStat.PType.CREATING,
+        PlotServUtils.updateProgress(request, ProgressStat.PType.CREATING,
                                      PlotServUtils.CREATING_MSG);
         long readElapse = System.currentTimeMillis() - readStart;
 //        VisContext.shouldContinue(workingCtxStr);

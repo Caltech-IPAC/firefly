@@ -15,7 +15,7 @@ import {PopupPanel} from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {visRoot, dispatchRotate, ActionScope} from '../visualize/ImagePlotCntlr.js';
-import {RotateType} from '../visualize/PlotChangeTask.js';
+import {RotateType} from '../visualize/PlotState.js';
 
 import HelpIcon from './HelpIcon.jsx';
 
@@ -79,14 +79,16 @@ class FitsRotationDialog extends Component {
 
     componentWillUnmount() {
 
+        this.iAmMounted= false;
         if (this.unbinder) this.unbinder();
     }
 
 
     componentDidMount() {
 
+        this.iAmMounted= true;
         this.unbinder = FieldGroupUtils.bindToStore('FITS_ROTATION_FORM', (fields) => {
-            this.setState({fields});
+            if (this.iAmMounted) this.setState({fields});
         });
     }
 

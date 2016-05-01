@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import Enum from 'enum';
 import {get} from 'lodash';
+import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import PlotImageTask from './PlotImageTask.js';
 import {UserZoomTypes} from './ZoomUtil.js';
@@ -18,13 +18,15 @@ import {isActivePlotView,
         findPlotGroup,
         isDrawLayerAttached,
         getDrawLayerByType } from './PlotViewUtil.js';
+import {changePrime} from './ChangePrime.js';
 
 import PointSelection from '../drawingLayers/PointSelection.js';
 import {dispatchAttachLayerToPlot,
         dispatchCreateDrawLayer,
         dispatchDetachLayerFromPlot,
         DRAWING_LAYER_KEY} from './DrawLayerCntlr.js';
-import {dispatchReplaceImages, getExpandedViewerPlotIds, getMultiViewRoot, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
+import {dispatchReplaceImages, getExpandedViewerPlotIds,
+         getMultiViewRoot, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
 
 export {zoomActionCreator} from './ZoomUtil.js';
 
@@ -99,15 +101,12 @@ const CHANGE_PLOT_ATTRIBUTE= 'ImagePlotCntlr.ChangePlotAttribute';
 
 const CHANGE_EXPANDED_MODE= 'ImagePlotCntlr.changeExpandedMode';
 const EXPANDED_AUTO_PLAY= 'ImagePlotCntlr.expandedAutoPlay';
-// const EXPANDED_LIST= 'ImagePlotCntlr.expandedList';
+const EXPANDED_LIST= 'ImagePlotCntlr.expandedList';
+const CHANGE_PRIME_PLOT= 'ImagePlotCntlr.changePrimePlot';
 
 const CHANGE_MOUSE_READOUT_MODE='ImagePlotCntlr.changeMouseReadoutMode';
 const DELETE_PLOT_VIEW='ImagePlotCntlr.deletePlotView';
 
-/**
- * action should contain:
- * todo - add documentation
- */
 const PLOT_PROGRESS_UPDATE= 'ImagePlotCntlr.PlotProgressUpdate';
 
 export const IMAGE_PLOT_KEY= 'allPlots';
@@ -121,7 +120,8 @@ export function visRoot() { return flux.getState()[IMAGE_PLOT_KEY]; }
 
 /**
  * The state is best thought of at the following:
- * The state contains an array of PlotView each have a plotId and tie to an Image Viewer, one might be active (PlotView.js)
+ * The state contains an array of PlotView each have a plotId and tie to an Image Viewer,
+ * one might be active (PlotView.js)
  * A PlotView has an array of WebPlots, one is primary (WebPlot.js)
  * An ImageViewer shows the primary plot of a plotView. (ImageView.js)
  */
@@ -185,8 +185,7 @@ export default {
     CHANGE_POINT_SELECTION,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER,
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
-    DELETE_PLOT_VIEW,
-    CHANGE_ACTIVE_PLOT_VIEW
+    DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT
 };
 
 
@@ -207,6 +206,28 @@ export function makeUniqueRequestKey() {
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
+
+
+/**
+ *
+ * @param plotId
+ * @param primeIdx
+ */
+export function dispatchChangePrimePlot(plotId, primeIdx) {
+    flux.process({ type: CHANGE_PRIME_PLOT , payload: { plotId, primeIdx }});
+}
+
+
+/**
+ * 
+ * @param plotId
+ * @param message
+ * @param done
+ */
+export function dispatchPlotProgressUpdate(plotId, message, done ) {
+    flux.process({ type: PLOT_PROGRESS_UPDATE, payload: { plotId, done, message }});
+}
+
 
 
 /**
@@ -430,8 +451,16 @@ export function dispatchChangeActivePlotView(plotId) {
     }
 }
 
-export function dispatchAttributeChange(plotId,applyToGroup,attKey,attValue) {
-    flux.process({ type: CHANGE_PLOT_ATTRIBUTE, payload: {plotId,attKey,attValue,applyToGroup} });
+/**
+ * 
+ * @param plotId
+ * @param applyToGroup
+ * @param attKey
+ * @param attValue
+ * @param toAll if a multiImageFits apply to all the images
+ */
+export function dispatchAttributeChange(plotId,applyToGroup,attKey,attValue,toAll=false) {
+    flux.process({ type: CHANGE_PLOT_ATTRIBUTE, payload: {plotId,attKey,attValue,applyToGroup,toAll} });
 }
 
 /**
@@ -447,7 +476,8 @@ export function dispatchChangePointSelection(requester, enabled) {
 
 /**
  *
- * @param {ExpandType|boolean} expandedMode the mode to change to, it true the expand and match the last one, if false colapse
+ * @param {ExpandType|boolean} expandedMode the mode to change to, it true the expand and match the last one,
+ *          if false colapse
  */
 export function dispatchChangeExpandedMode(expandedMode) {
 
@@ -505,6 +535,16 @@ export function dispatchDeletePlotView(plotId) {
 //======================================== Action Creators =============================
 //======================================== Action Creators =============================
 //======================================== Action Creators =============================
+
+
+/**
+ * @param rawAction
+ * @return {Function}
+ */
+export function changePrimeActionCreator(rawAction) {
+    return (dispatcher, getState) => changePrime(rawAction,dispatcher,getState);
+}
+
 
 export function plotImageActionCreator(rawAction) {
     return PlotImageTask.makePlotImageAction(rawAction);
@@ -631,15 +671,18 @@ function reducer(state=initState(), action={}) {
         case ZOOM_IMAGE_START  :
         case ZOOM_IMAGE_FAIL  :
         case ZOOM_IMAGE  :
-        case PLOT_PROGRESS_UPDATE  :
         case UPDATE_VIEW_SIZE :
         case PROCESS_SCROLL  :
         case CHANGE_PLOT_ATTRIBUTE:
         case COLOR_CHANGE  :
+        case COLOR_CHANGE_START  :
         case COLOR_CHANGE_FAIL  :
+        case STRETCH_CHANGE_START  :
         case STRETCH_CHANGE  :
         case STRETCH_CHANGE_FAIL:
         case RECENTER:
+        case PLOT_PROGRESS_UPDATE  :
+        case CHANGE_PRIME_PLOT  :
             retState= plotChangeReducer(state,action);
             break;
 
@@ -665,6 +708,9 @@ function reducer(state=initState(), action={}) {
         case DELETE_PLOT_VIEW:
             retState= deletePlotView(state,action);
             break;
+
+
+
         default:
             break;
 
@@ -703,13 +749,17 @@ function changeMouseReadout(state, action) {
 }
 
 function changeActivePlotView(state,action) {
-    if (action.payload.plotId===state.activePlotId) return state;
+    const {plotId}= action.payload;
+    if (plotId===state.activePlotId) return state;
+    if (!getPlotViewById(state,plotId)) return state;
 
     return clone(state, {activePlotId:action.payload.plotId});
 }
 
 
-const isExpanded = (expandedMode) => expandedMode===true || expandedMode===ExpandType.GRID || expandedMode===ExpandType.SINGLE;
+const isExpanded = (expandedMode) => expandedMode===true ||
+                                     expandedMode===ExpandType.GRID ||
+                                     expandedMode===ExpandType.SINGLE;
 
 function changeExpandedMode(state,action) {
     var {expandedMode}= action.payload;
@@ -764,9 +814,11 @@ function deletePlotView(state,action) {
  * @param removeOldPlot
  * @param addToHistory
  * @param useContextModifications
- * @return {{plotId: *, plotGroupId: *, removeOldPlot: boolean, addToHistory: boolean, useContextModifications: boolean, groupLocked: *, threeColor: *}}
+ * @return {{plotId: *, plotGroupId: *, removeOldPlot: boolean, addToHistory: boolean,
+ *               useContextModifications: boolean, groupLocked: *, threeColor: *}}
  */
-function initPlotImagePayload(plotId,req, threeColor, removeOldPlot= true, addToHistory=false, useContextModifications= true) {
+function initPlotImagePayload(plotId,req, threeColor, removeOldPlot= true,
+                              addToHistory=false, useContextModifications= true) {
     if (!plotId) plotId= req.getPlotId();
 
     const plotGroupId= req.getPlotGroupId();

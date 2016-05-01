@@ -250,6 +250,7 @@ export class WebPlotRequest extends ServerRequest {
     static makeFilePlotRequest(fileName, initZoomLevel) {
         var req = new WebPlotRequest(RequestType.FILE, 'Fits file: ' + fileName);
         req.setParam(C.FILE, fileName);
+        req.setTitleOptions(TitleOptions.FILE_NAME);
         if (initZoomLevel) {
             req.setParam(C.INIT_ZOOM_LEVEL, initZoomLevel + '');
         }
@@ -270,6 +271,7 @@ export class WebPlotRequest extends ServerRequest {
 
     static makeURLPlotRequest(url, userDesc) {
         var req = new WebPlotRequest(RequestType.URL, userDesc||'Fits from URL: ' + url);
+        req.setTitleOptions(TitleOptions.FILE_NAME);
         req.setURL(url);
         return req;
     }

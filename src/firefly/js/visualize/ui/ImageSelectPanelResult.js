@@ -30,7 +30,7 @@ const loadErrorMsg = {
 
 function *newPlotIdMaker() {
     var imgNo = 0;
-    const plotName = 'SELECTIMAGEPANEL_imgPlot';
+    const plotName = 'ImPanel_';
 
     while (true) {
         yield `${plotName}${(++imgNo)}`;
@@ -319,6 +319,9 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
             wpSet.forEach((item) => {
                 if (item) {
                     item.setPlotGroupId(groupId);
+                    if (plotInfo.isThreeColor) {
+                        item.setTitle('3-Color Image');
+                    }
                 }
             });
         }
