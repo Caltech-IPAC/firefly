@@ -38,21 +38,19 @@ function makeReducer(factory) {
             case DrawLayerCntlr.DETACH_LAYER_FROM_PLOT:
                 return detachLayerFromPlot(drawLayer,action,factory);
                 break;
-            case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+
             case DrawLayerCntlr.FORCE_DRAW_LAYER_UPDATE:
             case ImagePlotCntlr.ANY_REPLOT:
+            case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
                 return updateFromLayer(drawLayer,action,factory);
                 break;
+
             default:
                 return handleOtherAction(drawLayer,action,factory);
                 break;
         }
     };
 }
-
-
-
-
 
 
 function handleOtherAction(drawLayer,action,factory) {
@@ -97,9 +95,6 @@ function updateFromLayer(drawLayer,action,factory) {
     }
     return drawLayer;
 }
-
-
-
 
 /**
  *

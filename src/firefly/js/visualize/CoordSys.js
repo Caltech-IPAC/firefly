@@ -31,7 +31,8 @@ export const CoordinateSys = function () {
     var GALACTIC = init('GALACTIC', false, GALACTIC_JSYS, 2000);
     var SUPERGALACTIC = init('SUPERGALACTIC', false, SUPERGALACTIC_JSYS, 2000 );
     var ECL_J2000 = init('EC_J2000', false, ECLIPTIC_J, 2000);
-    var ECL_B1950 = init('EC_B1950', false, ECLIPTIC_B, 2000);
+    var ECL_B1950 = init('EC_B1950', false, ECLIPTIC_B, 1950);
+
     var PIXEL = init('PIXEL', false,-999, 0);
     var SCREEN_PIXEL = init('SCREEN_PIXEL', false,-999, 0);
     var UNDEFINED = init('UNDEFINED', false,-999, 0);

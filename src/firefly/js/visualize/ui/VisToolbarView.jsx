@@ -7,7 +7,7 @@ import {get,isEmpty} from 'lodash';
 import {getActivePlotView,
     primePlot,
     getAllDrawLayersForPlot} from '../PlotViewUtil.js';
-import {dispatchRotate, dispatchFlip, dispatchRecenter, 
+import {dispatchRotate, dispatchFlip, dispatchRecenter,
         dispatchRestoreDefaults, ActionScope} from '../ImagePlotCntlr.js';
 import {RotateType} from '../PlotState.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
@@ -27,6 +27,7 @@ import NorthUpCompass from '../../drawingLayers/NorthUpCompass.js';
 import { fitsHeaderView} from './FitsHeaderView.jsx';
 import sCompare from 'react-addons-shallow-compare';
 import { getDlAry } from '../DrawLayerCntlr.js';
+import WebGrid from '../../drawingLayers/WebGrid.js';
 
 
 
@@ -125,11 +126,11 @@ export class VisToolbarView extends Component {
     constructor(props) {
         super(props);
     }
-    
+
     shouldComponentUpdate(np,ns) {
         return sCompare(this,np,ns);
     }
-    
+
     render() {
         const {visRoot, dlCount}= this.props;
         var rS= {
@@ -231,12 +232,12 @@ export class VisToolbarView extends Component {
                 />
 
                 <SimpleLayerOnOffButton plotView={pv}
-                                        typeId={'TODO'}
-                                        tip='Add grid annotation to image'
+                                        typeId={WebGrid.TYPE_ID}
+                                        tip='Add grid layer to the image'
                                         iconOn={GRID_ON}
                                         iconOff={GRID_OFF}
                                         visible={mi.grid}
-                                        todo={true} />
+                />
 
 
 
@@ -292,7 +293,7 @@ export class VisToolbarView extends Component {
 
             </div>
         );
-        
+
     }
 }
 
