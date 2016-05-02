@@ -57,10 +57,8 @@ function creator() {
         isPointData:false,
         canUserChangeColor: ColorChangeType.DYNAMIC
     };
-
-    return DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, 'grid',
-        options , drawingDef, {});
-
+    
+    return DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, 'grid', options , drawingDef);
 }
 
  /**
@@ -97,7 +95,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
      switch (action.type){
          case ImagePlotCntlr.ANY_REPLOT:
              const drawData= Object.assign({},drawLayer.drawData, {data:null});
-             return {drawData}
+             return {drawData};
          case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
              const {coordinate}= action.payload.changes;
              if (coordinate !== drawLayer.coordinate ) {
