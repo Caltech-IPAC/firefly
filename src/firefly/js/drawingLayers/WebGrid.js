@@ -15,7 +15,9 @@ import { makeGridDrawData } from './ComputeWebGridData.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import AppDataCntlr from '../core/AppDataCntlr.js';
 import CoordinateSys from '../visualize/CoordSys.js';
-import {get} from 'lodash';
+ import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
+
+ import {get} from 'lodash';
 
 
 export const COORDINATE_PREFERENCE = 'coordinate';
@@ -92,17 +94,19 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
   */
  function getLayerChanges(drawLayer, action) {
 
-     if  (action.type!==DrawLayerCntlr.MODIFY_CUSTOM_FIELD) return null; // don't do anything
-     const {coordinate}= action.payload.changes;
-     if (coordinate !== drawLayer.coordinate ) {
-         const drawData= Object.assign({},drawLayer.drawData, {data:null});
-         return { coordinate, drawData};
+     switch (action.type){
+         case ImagePlotCntlr.ANY_REPLOT:
+             const drawData= Object.assign({},drawLayer.drawData, {data:null});
+             return {drawData}
+         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+             const {coordinate}= action.payload.changes;
+             if (coordinate !== drawLayer.coordinate ) {
+                 const drawData= Object.assign({},drawLayer.drawData, {data:null});
+                 return { coordinate, drawData};
+             }
      }
      return null;
-
-
-
-
+     
  }
 
  /**
