@@ -22,7 +22,7 @@
 */
 
 
-body {
+.rootStyle {
     background-color: #e3e3e3;
     padding: 0 1px 0 1px;
     border:0 none;
@@ -30,7 +30,7 @@ body {
     font-size: 11px;
 }
 
-img, html {
+.rootStyle, div.rootStyle>img, div.rootStyle > html {
     border:0 none;
 }
 

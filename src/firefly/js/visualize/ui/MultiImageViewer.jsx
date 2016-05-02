@@ -10,6 +10,7 @@ import {dispatchAddViewer, dispatchViewerMounted, dispatchViewerUnmounted,
         getMultiViewRoot, getViewer, getLayoutType} from '../MultiViewCntlr.js';
 import {MultiImageViewerView} from './MultiImageViewerView.jsx';
 import {visRoot} from '../ImagePlotCntlr.js';
+import {getDlAry} from '../DrawLayerCntlr.js';
 
 export class MultiImageViewer extends Component {
 
@@ -29,11 +30,13 @@ export class MultiImageViewer extends Component {
     }
 
     componentWillUnmount() {
+        this.iAmMounted= false;
         if (this.removeListener) this.removeListener();
         dispatchViewerUnmounted(this.props.viewerId);
     }
 
     componentWillMount() {
+        this.iAmMounted= true;
         this.removeListener= flux.addListener(() => this.storeUpdate(this.props));
         var {viewerId, canReceiveNewPlots}= this.props;
         dispatchAddViewer(viewerId,canReceiveNewPlots,true);
@@ -43,14 +46,14 @@ export class MultiImageViewer extends Component {
         var {state}= this;
         var {viewerId}= props;
         var viewer= getViewer(getMultiViewRoot(),viewerId);
-        if (viewer!==state.viewer || visRoot()!==state.visRoot) {
-            this.setState({viewer,visRoot:visRoot()});
+        if (viewer!==state.viewer || visRoot()!==state.visRoot || getDlAry() != state.dlAry) {
+            if (this.iAmMounted) this.setState({viewer,visRoot:visRoot(),dlAry:getDlAry()});
         }
     }
 
     render() {
-        const {forceRowSize, forceColSize, gridDefFunc,Toolbar,viewerId, insideFlex, closeable= true}= this.props;
-        const {viewer}= this.state;
+        const {forceRowSize, forceColSize, gridDefFunc,Toolbar,viewerId, insideFlex, closeFunc, canDelete}= this.props;
+        const {viewer,visRoot,dlAry}= this.state;
         const layoutType= getLayoutType(getMultiViewRoot(),viewerId);
         if (!viewer || isEmpty(viewer.plotIdAry)) return false;
         return (
@@ -61,9 +64,12 @@ export class MultiImageViewer extends Component {
                                   layoutType={layoutType}
                                   Toolbar={Toolbar}
                                   viewerId={viewerId}
-                                  visRoot={this.state.visRoot}
+                                  visRoot={visRoot}
+                                  dlAry={dlAry}
+                                  showWhenExpanded={false}
                                   insideFlex={insideFlex}
-                                  closeable={closeable}
+                                  closeFunc={closeFunc}
+                                  canDelete={canDelete}
             />
         );
     }
@@ -76,8 +82,9 @@ MultiImageViewer.propTypes= {
     forceRowSize : PropTypes.number,
     forceColSize : PropTypes.number,
     gridDefFunc : PropTypes.func,
-    insizeFlex : PropTypes.bool,
-    closeable : PropTypes.bool
+    insideFlex : PropTypes.bool,
+    closeFunc : PropTypes.func,
+    canDelete :  PropTypes.bool
 };
 
 // function gridDefFunc(plotIdAry) : [ {title :string, [plotId:string]}]
@@ -92,5 +99,6 @@ MultiImageViewer.propTypes= {
 
 
 MultiImageViewer.defaultProps= {
-    canReceiveNewPlots : false
+    canReceiveNewPlots : false,
+    canDelete : true
 };

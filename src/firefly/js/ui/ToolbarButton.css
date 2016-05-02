@@ -5,6 +5,7 @@
 .ff-MenuItem {
     cursor: pointer;
     border : 2px solid transparent;
+    white-space: nowrap;
     position: relative;
 }
 

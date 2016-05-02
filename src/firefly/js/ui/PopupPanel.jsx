@@ -11,7 +11,7 @@ import {getPopupPosition, humanStart, humanMove, humanStop } from './PopupPanelH
 import './PopupPanel.css';
 
 
-const LayoutType= new Enum(['CENTER', 'TOP_CENTER', 'NONE', 'USER_POSITION']);
+export const LayoutType= new Enum(['CENTER', 'TOP_EDGE_CENTER', 'TOP_CENTER', 'TOP_LEFT', 'TOP_RIGHT', 'NONE', 'USER_POSITION']);
 
 export var PopupPanel= React.createClass(
 {
@@ -30,20 +30,22 @@ export var PopupPanel= React.createClass(
         closeCallback : PropTypes.func,
         visible : PropTypes.bool,
         dialogId : PropTypes.string,
-        zIndex : PropTypes.number
+        zIndex : PropTypes.number,
+        mouseInDialog : PropTypes.func
     },
 
+    getDefaultProps() {
+        return {
+            layoutPosition : LayoutType.TOP_CENTER
+        };
+    },
 
     updateLayoutPosition() {
         var e= ReactDOM.findDOMNode(this);
 
-        var activeLayoutType = LayoutType.TOP_CENTER;
-        //var {posX,posY}= getPopupPosition(e,lt);
+        var activeLayoutType = this.props.layoutPosition;
         var r= getPopupPosition(e,activeLayoutType);
-        //e.style.left= results.left;
-        //e.style.top= results.top;
         this.setState({activeLayoutType, posX:r.left, posY:r.top });
-        //e.style.visibility="visible";
 
     },
 
@@ -104,6 +106,14 @@ export var PopupPanel= React.createClass(
         }
     },
 
+    onMouseEnter() {
+        this.props.mouseInDialog && this.props.mouseInDialog(true);
+    },
+
+    onMouseLeave() {
+        this.props.mouseInDialog && this.props.mouseInDialog(false);
+    },
+
     dialogMoveEnd(ev)  {
         this.mouseCtx= humanStop(ev,this.mouseCtx);
         this.mouseCtx= null;
@@ -113,14 +123,9 @@ export var PopupPanel= React.createClass(
     renderAsTopHeader() {
 
         var rootStyle= {position: 'absolute',
-            //width : "100px",
-            //height : "100px",
-            //background : 'white',
             visibility : this.state.activeLayoutType===LayoutType.NONE ? 'hidden' : 'visible',
-            //left : '40px',
-            //right : '170px'
-            left : `${this.state.posX}px`,
-            top : `${this.state.posY}px`,
+            left : this.state.posX,
+            top : this.state.posY,
             zIndex:this.props.zIndex
         };
 
@@ -132,7 +137,10 @@ export var PopupPanel= React.createClass(
                 <div style={rootStyle} className={'popup-panel-shadow disable-select'}
                      onTouchStart={this.dialogMoveStart}
                      onTouchMove={this.dialogMove}
-                     onTouchEnd={this.dialogMoveEnd} >
+                     onTouchEnd={this.dialogMoveEnd}
+                     onMouseEnter={this.onMouseEnter}
+                     onMouseLeave={this.onMouseLeave}
+                >
                     <div className={'standard-border'}>
                         <div style={{position:'relative', height:'14px', width:'100%', cursor:'default'}}
                              className={'title-bar title-color popup-panel-title-background'}

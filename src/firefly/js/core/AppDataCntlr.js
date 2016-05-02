@@ -32,6 +32,7 @@ export const ACTIVE_TARGET = `${APP_DATA_PATH}.activeTarget`;
 export const ADD_PREF = `${APP_DATA_PATH}.addPreference`;
 export const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
 export const REINIT_RESULT_VIEW = `${APP_DATA_PATH}.reinitResultView`;
+export const ROOT_URL_PATH = `${APP_DATA_PATH}.rootUrlPath`;
 
 //const HELP_LOAD = `${APP_DATA_PATH}.helpLoad`;
 export const HELP_LOAD = 'overviewHelp';    //note: consistent with AppMenu.prop
@@ -145,6 +146,10 @@ export function getPreference(name) {
     return flux.getState()[APP_DATA_PATH].preferences[name];
 }
 
+export function getRootUrlPath() {
+    return flux.getState()[APP_DATA_PATH].rootUrlPath;
+}
+
 /**
  * @param wp center WorldPt
  * @param corners array of 4 WorldPts that represent the corners of a image
@@ -168,6 +173,7 @@ function getInitState() {
     return {
         isReady : false,
         activeTarget: null,
+        rootUrlPath : null,
         taskCounters: [],
         commandState:{},   // key is command id, value is anything the action drops in, only stateful commands need this
         preferences:initPreferences()  // preferences, will be backed by local storage
@@ -221,12 +227,25 @@ function appDataReducer(state, action={}) {
 
         case REMOVE_PREF  :
             return removePreference(state,action);
+        
+        case ROOT_URL_PATH :
+            return Object.assign({},state, {rootUrlPath:action.payload.rootUrlPath});
 
         default:
             return state;
     }
 }
 /*---------------------------- DISPATCHERS -----------------------------*/
+
+
+/**
+ * 
+ * @param set the root url path.  This allows use to create full urls from relative urls
+ */
+export function dispatchRootUrlPath(rootUrlPath) {
+    flux.process({type: ROOT_URL_PATH, payload: {rootUrlPath}});
+}
+
 
 /**
  * @param componentId the id or array of ids of the component to record the task count

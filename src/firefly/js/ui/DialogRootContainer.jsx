@@ -76,6 +76,9 @@ function init() {
     divElement= document.createElement('div');
     document.body.appendChild(divElement);
     divElement.id= DIALOG_DIV;
+    divElement.style.position= 'absolute';
+    divElement.style.left= '0';
+    divElement.style.top= '0';
 }
 
 
@@ -99,7 +102,7 @@ class DialogRootComponent extends Component {
                                     }));
         var tmpPopupAry = tmpPopups.map( (p) => React.cloneElement(p.component,{key:p.dialogId}));
         return (
-                <div style={{position:'relative', zIndex:200}}>
+                <div style={{position:'relative', zIndex:200}} className='rootStyle'>
                     {dialogAry}
                     <div style={{position:'relative', zIndex:10}}>
                         {tmpPopupAry}

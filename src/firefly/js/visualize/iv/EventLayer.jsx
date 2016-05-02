@@ -6,7 +6,7 @@ import React, {Component,PropTypes} from 'react';
 import ReactDOM from 'react-dom';
 import sCompare from 'react-addons-shallow-compare';
 import {makeScreenPt} from '../Point.js';
-import {MouseState}  from '../VisMouseCntlr.js';
+import {MouseState}  from '../VisMouseSync.js';
 import {getAbsoluteLeft, getAbsoluteTop} from '../../util/BrowserUtil.js';
 
 

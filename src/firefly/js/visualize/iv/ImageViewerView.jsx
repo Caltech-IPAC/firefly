@@ -3,13 +3,10 @@
  */
 
 import React, {Component,PropTypes} from 'react';
-import ReactDOM from 'react-dom';
 import sCompare from 'react-addons-shallow-compare';
-import debounce from 'lodash/debounce';
+import {debounce} from 'lodash';
 import Resizable from 'react-component-resizable';
 import {ImageViewerDecorate} from './ImageViewerDecorate.jsx';
-import {dispatchZoom} from '../ImagePlotCntlr.js';
-import {flux} from '../../Firefly.js';
 
 const style= {
     width: '100%',
@@ -51,19 +48,14 @@ export class ImageViewerView extends Component {
         }, 100);
     }
 
+    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     render() {
         var {width,height}= this.state;
 
-        var {plotView,visRoot,drawLayersAry,mousePlotId, extensionList}= this.props;
         return (
             <Resizable id='imageViewerResizer' onResize={this.onResize} style={style}>
-                <ImageViewerDecorate plotView={plotView}
-                                     drawLayersAry={drawLayersAry}
-                                     visRoot={visRoot}
-                                     mousePlotId={mousePlotId}
-                                     extensionList={extensionList}
-                                     width={width} height={height} />
+                <ImageViewerDecorate {...this.props} width={width} height={height} />
             </Resizable>
         );
     }
@@ -75,7 +67,8 @@ ImageViewerView.propTypes= {
     drawLayersAry: PropTypes.array.isRequired,
     visRoot: PropTypes.object.isRequired,
     extensionList : PropTypes.array.isRequired,
-    mousePlotId : PropTypes.string
+    mousePlotId : PropTypes.string,
+    handleInlineTools : PropTypes.bool
 };
 
 

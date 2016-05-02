@@ -5,7 +5,7 @@ import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
-import {MouseState} from '../visualize/VisMouseCntlr.js';
+import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {makeScreenPt} from '../visualize/Point.js';

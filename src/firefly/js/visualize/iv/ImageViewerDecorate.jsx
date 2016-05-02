@@ -157,22 +157,42 @@ function contextToolbar(pv,dlAry,extensionList) {
 }
 
 
+const bgSlightGray= {background: 'rgba(255,255,255,.2)'};
 
 
-function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId) {
+function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId, handleInlineTools, showDelete) {
     if (!pv) return false;
     var useInlineToolbar = toolsAnno.includes(pv.options.annotationOps);
+    const isExpanded= visRoot.expandedMode!==ExpandType.COLLAPSE;
 
-    if (!useInlineToolbar || visRoot.expandedMode!==ExpandType.COLLAPSE) return false;
-    var lVis= BrowserInfo.isTouchInput() || (visRoot.toolBarIsPopup && mousePlotId===pv.plotId);
+    if (!useInlineToolbar) return false;
+    if (isExpanded) {
+        if (showDelete) {
+            return (
+
+                <div className='iv-decorate-inline-toolbar-container'>
+                    <VisInlineToolbarView
+                        plotId={pv.plotId} dlAry={dlAry}
+                        showLayer={false} showExpand={false} showToolbarButton={false} showDelete ={true} />
+                </div>
+            );
+        }
+        else {
+            return false;
+        }
+    }
+    var lVis= BrowserInfo.isTouchInput() || (visRoot.apiToolsView && mousePlotId===pv.plotId);
     var exVis= BrowserInfo.isTouchInput() || mousePlotId===pv.plotId;
+    var tb= !isExpanded && visRoot.apiToolsView;
+    const style= (lVis || tb) && handleInlineTools ? bgSlightGray : {};
     return (
-        <div className='iv-decorate-inline-toolbar-container'>
+        <div style={style} className='iv-decorate-inline-toolbar-container'>
             <VisInlineToolbarView
                 plotId={pv.plotId} dlAry={dlAry}
-                showLayer={lVis}
-                showExpand={exVis}
-                showDelete ={true}
+                showLayer={lVis && handleInlineTools}
+                showExpand={exVis && handleInlineTools}
+                showToolbarButton={tb && handleInlineTools}
+                showDelete ={showDelete}
                 />
         </div>
     );
@@ -252,7 +272,8 @@ export class ImageViewerDecorate extends Component {
     }
 
     render() {
-        const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId,width,height}= this.props;
+        const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId,
+               handleInlineTools,showDelete,width,height}= this.props;
 
         if (!width || !height) return false;
 
@@ -320,7 +341,7 @@ export class ImageViewerDecorate extends Component {
                                                       width={iWidth} height={iHeight}
                                                       externalWidth={width} externalHeight={height}/>
                         {inlineTitle}
-                        {makeInlineRightToolbar(visRoot,pv,drawLayersAry,mousePlotId)}
+                        {makeInlineRightToolbar(visRoot,pv,drawLayersAry,mousePlotId,handleInlineTools,showDelete)}
                     </div>
                 </div>
             </div>
@@ -337,7 +358,13 @@ ImageViewerDecorate.propTypes= {
     extensionList : PropTypes.array.isRequired,
     mousePlotId : PropTypes.string,
     width : PropTypes.number.isRequired,
-    height : PropTypes.number.isRequired
+    height : PropTypes.number.isRequired,
+    handleInlineTools : PropTypes.bool,
+    showDelete : PropTypes.bool 
 };
 
 
+ImageViewerDecorate.defaultProps = {
+    handleInlineTools : true,
+    showDelete : false
+};

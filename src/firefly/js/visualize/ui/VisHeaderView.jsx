@@ -35,7 +35,7 @@ export function VisHeaderView({visRoot,currMouseState}) {
     var mousePv= getPlotViewById(visRoot,currMouseState.plotId);
 
     return (
-        <div>
+        <div style={{display:'inline-block', float:'right', whiteSpace:'nowrap'}}>
             <div style={rS}>
                 <div style={{position:'absolute', color:'white'}}>
                     <MouseReadout visRoot={visRoot} plotView={mousePv} mouseState={currMouseState} />

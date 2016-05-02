@@ -23,7 +23,8 @@ function DrawLayerItemView({drawLayer,pv, maxTitleChars, lastItem, getUIComponen
         width:'100%',
         height:'100%',
         position: 'relative',
-        overflow:'hidden'
+        overflow:'hidden',
+        whiteSpace : 'nowrap'
     };
 
     if (lastItem) {
@@ -40,13 +41,20 @@ function DrawLayerItemView({drawLayer,pv, maxTitleChars, lastItem, getUIComponen
     var plotId= pv.plotId;
     return (
         <div style={style} className='draw-layer-item'>
-            <div style={{lineHeight:'1em'}} >
-                <input type='checkbox'
-                       checked={isDrawLayerVisible(drawLayer,plotId)}
-                       onChange={(ev) => changeVisible(drawLayer, plotId)}
-                />
-                {getTitleTag(drawLayer,pv,maxTitleChars)}
-                <div style={{float:'right'}}>
+            <div style={{lineHeight:'1em', position: 'relative', display:'inline-flex',
+                         flexDirection:'row', flexWrap:'nowrap',
+                         justifyContent: 'space-between',
+                         alignItems: 'center',
+                         width:'100%'
+                         }} >
+                <div>
+                    <input type='checkbox'
+                           checked={isDrawLayerVisible(drawLayer,plotId)}
+                           onChange={(ev) => changeVisible(drawLayer, plotId)}
+                    />
+                    {getTitleTag(drawLayer,pv,maxTitleChars)}
+                </div>
+                <div style={{padding:'0 4px 0 5px'}}>
                     {makeColorChange(drawLayer,pv)}
                     {makeShape(drawLayer,pv)}
                     {makeDelete(drawLayer,pv)}
@@ -75,7 +83,7 @@ function getTitleTag(drawLayer,pv,maxTitleChars) {
         display:'inline-block',
         whiteSpace: 'nowrap',
         minWidth: (maxTitleChars*.7)+'em',
-        paddingLeft : 5
+        // paddingLeft : 5
     };
 
     return (

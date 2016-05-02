@@ -4,14 +4,19 @@
 
 
 import React, {Component, PropTypes} from 'react';
+import {take} from 'redux-saga/effects';
 import {omit,pick} from 'lodash';
 import sCompare from 'react-addons-shallow-compare';
 import shallowequal from 'shallowequal';
-import {visRoot} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot, ExpandType} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {getAllDrawLayersForPlot,getActivePlotView} from '../PlotViewUtil.js';
 import {flux} from '../../Firefly.js';
 import {VisToolbarViewWrapper} from './VisToolbarView.jsx';
+import {dispatchShowDialog,dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
+import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
+import {LayoutType, PopupPanel} from '../../ui/PopupPanel.jsx'
+import {dispatchAddSaga} from '../../core/MasterSaga.js';
 
 // import {deepDiff} from '../../util/WebUtil.js';
 
@@ -95,3 +100,28 @@ VisToolbar.childContextTypes= {
     tipOnCB : PropTypes.func,
     tipOffCB : PropTypes.func
 };
+
+
+
+
+export function showTools() {
+    if (!isDialogVisible('PopupToolbar')) {
+        const popup= (
+            <PopupPanel title={'Tools'} layoutPosition={LayoutType.TOP_LEFT} >
+                <VisToolbar />
+            </PopupPanel>
+        );
+        DialogRootContainer.defineDialog('PopupToolbar', popup);
+        dispatchShowDialog('PopupToolbar');
+        dispatchAddSaga(autoClose);
+    }
+}
+
+function *autoClose() {
+    const action= yield take([ImagePlotCntlr.CHANGE_EXPANDED_MODE]);
+    dispatchHideDialog('PopupToolbar');
+}
+
+
+
+

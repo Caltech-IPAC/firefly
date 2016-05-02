@@ -75,12 +75,14 @@ const tipStyle= {
     display: 'inline-block',
     position : 'relative',
     overflow : 'hidden',
-    width : 300,
+    maxWidth : 300,
     fontSize: 10,
     whiteSpace: 'normal',
     verticalAlign: 'top',
     top : 3,
-    left : 15
+    left : 15,
+    textOverflow: 'ellipsis',
+    flex: '1 1 auto'
 };
 
 
@@ -97,10 +99,12 @@ export function VisToolbarViewWrapper({visRoot,toolTip,dlCount}) {
     var rS= {
         width: 'calc(100% - 2px)',
         height: VIS_TOOLBAR_HEIGHT,
-        display: 'inline-block',
+        display: 'inline-flex',
         position: 'relative',
         verticalAlign: 'top',
-        whiteSpace: 'nowrap'
+        whiteSpace: 'nowrap',
+        flexWrap:'nowrap',
+        flexDirection:'row'
     };
 
 

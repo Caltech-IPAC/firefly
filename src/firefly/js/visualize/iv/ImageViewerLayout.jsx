@@ -4,7 +4,7 @@
 
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {difference,xor,isEmpty} from 'lodash';
+import {difference,xor,isEmpty,get} from 'lodash';
 import {TileDrawer} from './TileDrawer.jsx';
 import {EventLayer} from './EventLayer.jsx';
 import {ImageViewerStatus} from './ImageViewerStatus.jsx';
@@ -19,10 +19,7 @@ import {
     dispatchProcessScroll,
     dispatchChangeActivePlotView,
     dispatchUpdateViewSize} from '../ImagePlotCntlr.js';
-import {
-    MouseState,
-    dispatchMouseStateChange,
-    makeMouseStatePayload}  from '../VisMouseCntlr.js';
+import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from '../VisMouseSync.js';
 
 
 
@@ -40,7 +37,6 @@ export class ImageViewerLayout extends Component {
         var {width,height}= this.props;
         var {plotView:pv}= this.props;
         this.previousDim= makePrevDim(this.props);
-        //console.log(`Mount: UpdateView Size: width=${width}, height=${height} ${plotId}`);
         dispatchUpdateViewSize(pv.plotId,width,height);
         if (pv && pv.plotViewCtx.zoomLockingEnabled) {
             dispatchZoom(pv.plotId,pv.plotViewCtx.zoomLockingType,true,true, true);
@@ -66,9 +62,9 @@ export class ImageViewerLayout extends Component {
     eventCB(plotId,mouseState,screenPt,screenX,screenY) {
         var {drawLayersAry}= this.props;
         var mouseStatePayload= makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY);
-        var list= drawLayersAry.filter( (dl) => dl.mouseEventMap.hasOwnProperty(mouseState.key));
+        var list= drawLayersAry.filter( (dl) => get(dl,['mouseEventMap',mouseState.key],false));
 
-        var exclusive= list.find((dl) => dl.mouseEventMap[mouseState.key].exclusive);
+        var exclusive= list.find((dl) => get(dl,['mouseEventMap',mouseState.key,'exclusive']));
         if (exclusive) {
             fireMouseEvent(exclusive,mouseState,mouseStatePayload);
         }
@@ -76,7 +72,7 @@ export class ImageViewerLayout extends Component {
             list.forEach( (dl) => fireMouseEvent(dl,mouseState,mouseStatePayload) );
             this.scroll(plotId,mouseState,screenX,screenY);
         }
-        dispatchMouseStateChange(mouseStatePayload);
+        fireMouseCtxChange(mouseStatePayload);
     }
 
     scroll(plotId,mouseState,screenX,screenY) {

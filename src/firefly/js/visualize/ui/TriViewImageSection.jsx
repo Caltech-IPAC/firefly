@@ -16,6 +16,8 @@ import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {watchImageMetaData} from '../saga/ImageMetaDataWatcher.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
+import {dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
+import {LO_EXPANDED} from '../../core/LayoutCntlr.js';
 
 
 
@@ -25,6 +27,7 @@ import {dispatchAddSaga} from '../../core/MasterSaga.js';
  * @param showFits
  * @param showImageMetaData
  * @param imageExpandedMode if true, then imageExpandedMode overrides everything else
+ * @param closeable expanded mode should have a close button
  * @return {XML}
  * @constructor
  */
@@ -32,7 +35,9 @@ export function TriViewImageSection({showCoverage=true, showFits=true,
                                      showImageMetaData=true, imageExpandedMode=false, closeable=true}) {
     
     if (imageExpandedMode) {
-        return <ExpandedModeDisplay   {...{key:'results-plots-expanded',forceExpandedMode:true,closeable}}/>;
+        return <ExpandedModeDisplay   {...{key:'results-plots-expanded',
+                                            forceExpandedMode:true,
+                                            closeFunc:closeable?closeExpanded:null}}/>;
     }
 
     if (showCoverage && showFits && showImageMetaData) {
@@ -45,12 +50,14 @@ export function TriViewImageSection({showCoverage=true, showFits=true,
                             <MultiImageViewer viewerId='triViewImages'
                                               insideFlex={true}
                                               canReceiveNewPlots={true}
+                                              canDelete={true}
                                               Toolbar={MultiViewStandardToolbar}/>
                         </Tab>
                         <Tab name='Image Meta Data' removable={false} id='meta'>
                             <MultiImageViewer viewerId='triViewImageMetaData'
                                               insideFlex={true}
                                               canReceiveNewPlots={false}
+                                              canDelete={false}
                                               Toolbar={ImageMetaDataToolbar}/>
                         </Tab>
                         <Tab name='Coverage' removable={false} id='cov'>
@@ -66,6 +73,10 @@ export function TriViewImageSection({showCoverage=true, showFits=true,
     }
 }
 
+
+function closeExpanded() {
+    dispatchSetLayoutMode(LO_EXPANDED.none);
+}
 
 export function launchImageMetaDataSega() {
     dispatchAddSaga(watchImageMetaData,{viewerId:'triViewImageMetaData'});

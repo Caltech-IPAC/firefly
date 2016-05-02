@@ -5,14 +5,12 @@
 
 import React, {PropTypes} from 'react';
 import {ExpandType, dispatchChangeExpandedMode, dispatchExpandedAutoPlay} from '../ImagePlotCntlr.js';
-import {dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {showExpandedOptionsPopup} from '../ui/ExpandedOptionsPopup.jsx';
 import { dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
-import {LO_EXPANDED} from '../../core/LayoutCntlr.js';
 import {VisToolbar} from '../ui/VisToolbar.jsx';
 import {VIS_TOOLBAR_HEIGHT} from '../ui/VisToolbarView.jsx';
 import {getMultiViewRoot, getExpandedViewerPlotIds} from '../MultiViewCntlr.js';
@@ -108,7 +106,7 @@ const gridPlotTitleStyle= {
 };
 
 
-export function ExpandedTools({visRoot,closeable= true}) {
+export function ExpandedTools({visRoot,closeFunc}) {
     var {expandedMode,plotViewAry,activePlotId, singleAutoPlay}= visRoot;
     var single= expandedMode===ExpandType.SINGLE;
     var plot= primePlot(visRoot);
@@ -134,9 +132,8 @@ export function ExpandedTools({visRoot,closeable= true}) {
     return (
         <div>
             <div style={{display: 'flex', paddingBottom: 2, borderBottom: '1px solid rgba(0,0,0,.2)' }}>
-                {closeable &&
-                    <CloseButton style={closeButtonStyle} onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/>}
-                <div style={{'flexGrow':1}}>
+                {closeFunc && <CloseButton style={closeButtonStyle} onClick={closeFunc}/>}
+                <div style={{'flex': '1 1 auto'}}>
                     <VisToolbar/>
                 </div>
             </div>
