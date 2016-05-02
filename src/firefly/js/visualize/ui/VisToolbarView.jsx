@@ -101,7 +101,7 @@ export function VisToolbarViewWrapper({visRoot,toolTip,dlCount}) {
     return (
         <div style={rS}>
             <VisToolbarView visRoot={visRoot} dlCount={dlCount}/>
-            <div style={tipStyle}>{toolTip}</div>;
+            <div style={tipStyle}>{toolTip}</div>
         </div>
     );
 
