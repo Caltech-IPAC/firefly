@@ -6,9 +6,12 @@ import React, {Component, PropTypes} from 'react';
 import {get,isEmpty} from 'lodash';
 import {getActivePlotView,
     primePlot,
+    hasGroupLock,
+    findPlotGroup,
+    getPlotViewById,
     getAllDrawLayersForPlot} from '../PlotViewUtil.js';
-import {dispatchRotate, dispatchFlip, dispatchRecenter,
-        dispatchRestoreDefaults, ActionScope} from '../ImagePlotCntlr.js';
+import {dispatchRotate, dispatchFlip, dispatchRecenter, 
+        dispatchRestoreDefaults,dispatchZoomLocking, dispatchGroupLocking, ActionScope} from '../ImagePlotCntlr.js';
 import {RotateType} from '../PlotState.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
@@ -56,6 +59,8 @@ import CATALOG from 'html/images/catalog_28x28.png';
 import SAVE from 'html/images/icons-2014/Save.png';
 import FLIP_Y from 'html/images/icons-2014/Mirror.png';
 import RECENTER from 'html/images/icons-2014/RecenterImage.png';
+import LOCKED from 'html/images/icons-2014/BkgLocked.png';
+import UNLOCKED from 'html/images/icons-2014/BkgUnlocked.png';
 
 import COLOR from 'html/images/icons-2014/28x28_ColorPalette.png';
 import STRETCH from 'html/images/icons-2014/28x28_Log.png';
@@ -142,6 +147,9 @@ export class VisToolbarView extends Component {
 
         var pv= getActivePlotView(visRoot);
         var plot= primePlot(pv);
+        var plotViewAry= visRoot.plotViewAry;
+        var plotGroupAry= visRoot.plotGroupAry;
+
         var mi= pv ? pv.menuItemKeys : defMenuItemKeys;
 
         var enabled= pv ? true : false;
@@ -282,12 +290,23 @@ export class VisToolbarView extends Component {
                                visible={mi.restore}
                                onClick={() => dispatchRestoreDefaults(pv.plotId)}/>
 
+                <SimpleLayerOnOffButton plotView={pv}
+                                isIconOn={pv&&plot? isGroupLocked(pv,plotGroupAry) : false }
+                                tip='lock images of all bands for zooming, scolling etc.'
+                                iconOn={LOCKED}
+                                iconOff={UNLOCKED}
+                                visible={mi.lockRelated}
+                                onClick={() => toggleLockRelated(pv,plotGroupAry)}
+                                 />
+
+
                 <ToolbarButton icon={FITS_HEADER}
                                tip='Show FITS header'
                                enabled={enabled}
                                horizontal={true}
                                visible={mi.fitsHeader}
                                onClick={() =>  fitsHeaderView(pv)}/>
+
 
 
 
@@ -312,6 +331,31 @@ function flipY(pv) {
     dispatchFlip(pv.plotId,true);
 }
 
+
+
+function showToolTip(toolTip) {
+    return <div style={tipStyle}>{toolTip}</div>;
+}
+
+function isGroupLocked(pv,plotGroupAry){
+    var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
+    var lockEnabled = hasGroupLock(pv,plotGroup);
+    return lockEnabled;
+
+}
+function toggleLockRelated(pv,plotGroupAry){
+    var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
+    var lockEnabled = hasGroupLock(pv,plotGroup);
+    var setgroupLock= lockEnabled;
+    if (!lockEnabled)
+    {
+        setgroupLock= true;
+    } else {
+        setgroupLock= false;
+    }
+
+    dispatchGroupLocking(pv.plotId,setgroupLock);
+}
 
 //==================================================================================
 //==================================================================================

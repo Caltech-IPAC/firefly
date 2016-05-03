@@ -7,7 +7,7 @@ import {get,isEmpty} from 'lodash';
 import Cntlr, {ExpandType} from '../ImagePlotCntlr.js';
 import PlotView, {replacePlotView, replacePrimaryPlot, changePrimePlot} from './PlotView.js';
 import {WebPlot, clonePlotWithZoom, PlotAttribute} from '../WebPlot.js';
-import {logError} from '../../util/WebUtil.js';
+import {logError, updateSet} from '../../util/WebUtil.js';
 import {CCUtil} from '../CsysConverter.js';
 import {PlotPref} from './../PlotPref.js';
 import {primePlot,
@@ -16,7 +16,9 @@ import {primePlot,
         matchPlotView,
         applyToOnePvOrGroup,
         getPlotViewIdxById,
+        getPlotGroupIdxById,
         findPlotGroup,
+        hasGroupLock,
         getPlotViewById} from '../PlotViewUtil.js';
 import {makeImagePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
@@ -87,6 +89,9 @@ export function reducer(state, action) {
             break;
         case Cntlr.ZOOM_LOCKING:
             retState= changeLocking(state,action);
+            break;
+        case Cntlr.GROUP_LOCKING:
+            retState= changeGroupLocking(state,action);
             break;
         case Cntlr.PLOT_PROGRESS_UPDATE  :
             retState= updatePlotProgress(state,action);
@@ -251,6 +256,18 @@ function makeNewPrimePlot(state,action) {
     return clone(state,{plotViewAry:clonePvAryWithPv(state,pv)});
 }
 
+function changeGroupLocking(state,action) {
+    var {plotGroupAry}= state;
+    var {plotId,groupLocked}=  action.payload;
+    const pv= getPlotViewById(state,plotId);
+    const {plotGroupId} = pv;
+
+    const pgIdx= getPlotGroupIdxById(state,plotGroupId);
+
+    if (pgIdx < 0) return state;
+    return updateSet(state, ['plotGroupAry',pgIdx,'lockRelated'], groupLocked);
+
+}
 
 function endServerCallFail(state,action) {
     var {plotId,message}= action.payload;
