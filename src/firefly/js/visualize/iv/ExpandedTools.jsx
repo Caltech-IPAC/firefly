@@ -108,7 +108,7 @@ const gridPlotTitleStyle= {
 };
 
 
-export function ExpandedTools({visRoot}) {
+export function ExpandedTools({visRoot,closeable= true}) {
     var {expandedMode,plotViewAry,activePlotId, singleAutoPlay}= visRoot;
     var single= expandedMode===ExpandType.SINGLE;
     var plot= primePlot(visRoot);
@@ -134,7 +134,8 @@ export function ExpandedTools({visRoot}) {
     return (
         <div>
             <div style={{display: 'flex', paddingBottom: 2, borderBottom: '1px solid rgba(0,0,0,.2)' }}>
-                <CloseButton style={closeButtonStyle} onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/>
+                {closeable &&
+                    <CloseButton style={closeButtonStyle} onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/>}
                 <div style={{'flexGrow':1}}>
                     <VisToolbar/>
                 </div>
@@ -159,7 +160,8 @@ export function ExpandedTools({visRoot}) {
 //{makeInlineTitle(visRoot,pv)}
 
 ExpandedTools.propTypes= {
-    visRoot : PropTypes.object.isRequired
+    visRoot : PropTypes.object.isRequired,
+    closeable : PropTypes.bool
 };
 
 

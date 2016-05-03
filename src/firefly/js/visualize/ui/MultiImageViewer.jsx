@@ -49,8 +49,8 @@ export class MultiImageViewer extends Component {
     }
 
     render() {
+        const {forceRowSize, forceColSize, gridDefFunc,Toolbar,viewerId, insideFlex, closeable= true}= this.props;
         const {viewer}= this.state;
-        const {forceRowSize, forceColSize, gridDefFunc,Toolbar,viewerId, insideFlex}= this.props;
         const layoutType= getLayoutType(getMultiViewRoot(),viewerId);
         if (!viewer || isEmpty(viewer.plotIdAry)) return false;
         return (
@@ -63,6 +63,7 @@ export class MultiImageViewer extends Component {
                                   viewerId={viewerId}
                                   visRoot={this.state.visRoot}
                                   insideFlex={insideFlex}
+                                  closeable={closeable}
             />
         );
     }
@@ -75,7 +76,8 @@ MultiImageViewer.propTypes= {
     forceRowSize : PropTypes.number,
     forceColSize : PropTypes.number,
     gridDefFunc : PropTypes.func,
-    insizeFlex : PropTypes.bool
+    insizeFlex : PropTypes.bool,
+    closeable : PropTypes.bool
 };
 
 // function gridDefFunc(plotIdAry) : [ {title :string, [plotId:string]}]
