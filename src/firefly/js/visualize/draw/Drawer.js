@@ -4,7 +4,7 @@
 
 
 import Point, {makeViewPortPt,makeImagePt,pointEquals} from '../Point.js';
-import AppDataCntlr from '../../core/AppDataCntlr.js';
+import * as AppDataCntlr from '../../core/AppDataCntlr.js';
 import BrowserInfo, {Browser} from '../../util/BrowserInfo.js';
 import DrawUtil from './DrawUtil.js';
 import Color from '../../util/Color.js';

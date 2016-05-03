@@ -2,17 +2,21 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {flux} from '../Firefly.js';
-import BrowserCache from '../util/BrowserCache.js';
-import menuRenderer from './reducers/MenuReducer.js';
+import {take} from 'redux-saga/effects';
+import {get} from 'lodash'; 
 import strLeft from 'underscore.string/strLeft';
 import strRight from 'underscore.string/strRight';
+
+import {flux} from '../Firefly.js';
+import {dispatchAddSaga} from '../core/MasterSaga.js';
+import BrowserCache from '../util/BrowserCache.js';
+import menuRenderer from './reducers/MenuReducer.js';
 import {fetchUrl} from '../util/WebUtil.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
 import {getModuleName} from '../util/WebUtil.js';
 
 export const APP_DATA_PATH = 'app_data';
-const DROP_DOWN_TYPE = 'dropdownType';
+export const COMMAND = 'COMMAND';
 const TASK= 'task-';
 const APP_PREFERENCES= 'APP_PREFERENCES';
 var taskCnt=0;
@@ -30,7 +34,7 @@ export const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
 export const REINIT_RESULT_VIEW = `${APP_DATA_PATH}.reinitResultView`;
 
 //const HELP_LOAD = `${APP_DATA_PATH}.helpLoad`;
-export const HELP_LOAD = `overviewHelp`;    //note: consistent with AppMenu.prop
+export const HELP_LOAD = 'overviewHelp';    //note: consistent with AppMenu.prop
 
 /*---------------------------- CREATORS ----------------------------*/
 
@@ -39,14 +43,14 @@ const makeTaskId= function() {
     return TASK+taskCnt++;
 };
 
-const updateActiveTarget= function(state,action) {
+export const updateActiveTarget= function(state,action) {
     var {worldPt,corners}= action;
     if (!worldPt || !corners) return state;
     return Object.assign({}, state, {activeTarget:{worldPt,corners}});
 };
 
 
-const addTaskCount= function(state,action) {
+export const addTaskCount= function(state,action) {
     var {componentId,taskId}= action.payload;
     if (!componentId && !taskId) return state;
     var taskArray= state.taskCounters[componentId] | [];
@@ -55,7 +59,7 @@ const addTaskCount= function(state,action) {
     return Object.assign({},state, {taskCounters});
 };
 
-const removeTaskCount= function(state,action) {
+export const removeTaskCount= function(state,action) {
     var {componentId,taskId}= action.payload;
     if (!componentId && !taskId) return state;
     var taskArray= state.taskCounters[componentId] | [];
@@ -64,13 +68,13 @@ const removeTaskCount= function(state,action) {
     return Object.assign({},state, {taskCounters});
 };
 
-function getCommandState(stateId) {
+export function getCommandState(stateId) {
     return flux.getState()[APP_DATA_PATH].commandState[stateId];
 }
 
 
 
-function addPreference(state,action) {
+export function addPreference(state,action) {
     if (!action.payload) return state;
     var {name,value}= action.payload;
     var preferences= Object.assign({},state.preferences,{[name]:value} );
@@ -78,7 +82,7 @@ function addPreference(state,action) {
     return Object.assign({},state,{preferences});
 }
 
-function removePreference(state,action) {
+export function removePreference(state,action) {
     if (!action.payload) return state;
     var {name}= action.payload;
     var preferences= Object.assign({},state.preferences);
@@ -87,7 +91,7 @@ function removePreference(state,action) {
     return Object.assign({},state,{preferences});
 }
 
-function loadAppData() {
+export function loadAppData() {
 
     return function (dispatch) {
         dispatch({ type : APP_LOAD });
@@ -95,7 +99,7 @@ function loadAppData() {
     };
 }
 
-function onlineHelpLoad( action )
+export function onlineHelpLoad( action )
 {
     return () => {
         var url = flux.getState()[APP_DATA_PATH].props['help.base.url'];  // ending with '/'
@@ -124,7 +128,7 @@ function onlineHelpLoad( action )
  * @param appData {Object} The partial object to merge with the appData branch under root
  * @returns {{type: string, payload: object}}
  */
-function updateAppData(appData) {
+export function updateAppData(appData) {
     return { type : APP_UPDATE, payload: appData };
 }
 
@@ -137,7 +141,7 @@ export function getTaskCount(componentId) {
     return state.taskCounters[componentId] ? state.taskCounters[componentId] : 0;
 }
 
-function getPreference(name) {
+export function getPreference(name) {
     return flux.getState()[APP_DATA_PATH].preferences[name];
 }
 
@@ -176,7 +180,7 @@ function initPreferences() {
 }
 
 
-function reducer(state=getInitState(), action={}) {
+export function reducer(state=getInitState(), action={}) {
 
     if (action.type && !action.type.startsWith(APP_DATA_PATH)) return state;
 
@@ -228,7 +232,7 @@ function appDataReducer(state, action={}) {
  * @param componentId the id or array of ids of the component to record the task count
  * @param taskId id of task, you create with makeTaskId()
  */
-function dispatchAddTaskCount(componentId,taskId) {
+export function dispatchAddTaskCount(componentId,taskId) {
     flux.process({type: ADD_TASK_COUNT, payload: {componentId,taskId}});
 }
 
@@ -236,7 +240,7 @@ function dispatchAddTaskCount(componentId,taskId) {
  * @param componentId the id or array of ids of the component to record the task count
  * @param taskId id of task, create with makeTaskId()
  */
-function dispatchRemoveTaskCount(componentId,taskId) {
+export function dispatchRemoveTaskCount(componentId,taskId) {
     flux.process({type: REMOVE_TASK_COUNT, payload: {componentId,taskId}});
 }
 
@@ -245,7 +249,7 @@ function dispatchRemoveTaskCount(componentId,taskId) {
  * @param name name of preference
  * @param value value of preference
  */
-function dispatchAddPreference(name,value) {
+export function dispatchAddPreference(name,value) {
     flux.process({type: ADD_PREF, payload: {name,value}});
 }
 
@@ -253,32 +257,57 @@ function dispatchAddPreference(name,value) {
  *
  * @param name name of preference
  */
-function dispatchRemovePreference(name) {
+export function dispatchRemovePreference(name) {
     flux.process({type: REMOVE_PREF, payload: {name}});
 }
 
-/*---------------------------- EXPORTS -----------------------------*/
+/**
+ *
+ * @param menu the menu object to set.
+ */
+export function dispatchSetMenu(menu) {
+    flux.process({ type : APP_UPDATE, payload: {menu} });
+}
 
-export default {
-    APP_LOAD,
-    APP_UPDATE,
-    APP_DATA_PATH,
-    DROP_DOWN_TYPE,
-    HELP_LOAD,
-    reducer,
-    loadAppData,
-    onlineHelpLoad,
-    updateAppData,
-    getPreference,
-    dispatchAddTaskCount,
-    dispatchRemoveTaskCount,
-    dispatchAddPreference,
-    dispatchRemovePreference,
-    makeTaskId,
-    getCommandState
-};
+/**
+ * execute this callback when app is ready.
+ */
+export function dispatchOnAppReady(callback) {
+    if (isAppReady()) {
+        callback && callback(flux.getState());
+    } else {
+        dispatchAddSaga(doOnAppReady, callback);
+    }
+}
 
+
+/*---------------------------- EXPORTED FUNTIONS -----------------------------*/
+export function isAppReady() {
+    return get(flux.getState(), [APP_DATA_PATH, 'isReady']);
+}
+
+export function getMenu() {
+    return get(flux.getState(), [APP_DATA_PATH, 'menu']);
+}
 /*---------------------------- PRIVATE -----------------------------*/
+
+/**
+ * this saga does the following:
+ * <ul>
+ *     <li>watches for app_data.isReady
+ *     <li>when isReady, it will execute the given callback with the current state
+ * </ul>
+ * @param callback  callback to execute when table is loaded.
+ */
+function* doOnAppReady(callback, dispatch, getState) {
+
+    var isReady = isAppReady();
+    while (!isReady) {
+        const action = yield take([APP_UPDATE, APP_LOAD]);
+        isReady = get(action, 'payload.isReady');
+    }
+    callback && callback(getState());
+}
 
 /**
  * fetches all of the necessary data to construct app_data.
@@ -335,7 +364,7 @@ function makeMenu(props) {
         const label = props[`${action}.Title`];
         const desc = props[`${action}.ShortDescription`];
         const icon = props[`${action}.Icon`];
-        const type = props[`${action}.ToolbarButtonType`] || DROP_DOWN_TYPE;
+        const type = props[`${action}.ToolbarButtonType`] || '';
         menuItems.push({label, action, icon, desc, type});
     });
     return {selected, menuItems};

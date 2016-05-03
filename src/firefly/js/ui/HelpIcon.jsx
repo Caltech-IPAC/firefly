@@ -4,7 +4,7 @@
 
 import React, {PropTypes} from 'react';
 import {flux} from '../Firefly.js';
-import appDataCntlr from '../core/AppDataCntlr.js';
+import {HELP_LOAD} from '../core/AppDataCntlr.js';
 
 import largeHelp from 'html/images/icons-2014/Help.png';
 import smallHelp from 'html/images/icons-2014/Help-16x16.png';
@@ -16,7 +16,7 @@ function HelpIcon({helpId, size='small'}) {
 
     var onClick = () => {
         flux.process({
-            type: appDataCntlr.HELP_LOAD,
+            type: HELP_LOAD,
             payload: {helpId}
         });
     };

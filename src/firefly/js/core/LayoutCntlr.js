@@ -3,7 +3,7 @@
  */
 
 import update from 'react-addons-update';
-import {get, set, has, pickBy, isUndefined} from 'lodash';
+import {get, set, has, pickBy, isUndefined, isEmpty} from 'lodash';
 
 import {smartMerge} from '../tables/TableUtil.js';
 import {flux} from '../Firefly.js';
@@ -28,10 +28,10 @@ export const LO_STANDARD = {
 
 /*---------------------------- Actions ----------------------------*/
 
-export const UPDATE_LAYOUT     = 'layout.updateLayout';
-export const SET_LAYOUT_MODE   = 'layout.setLayoutMode';
-export const SHOW_DROPDOWN_UI   = 'layout.showDropDownUi';
-export const HIDE_DROPDOWN_UI   = 'layout.hideDropDownUi';
+export const UPDATE_LAYOUT      = 'layout.updateLayout';
+export const SET_LAYOUT_MODE    = 'layout.setLayoutMode';
+export const SHOW_DROPDOWN      = 'layout.showDropDown';
+export const HIDE_DROPDOWN      = 'layout.hideDropDown ';
 export const ACTIVE_TABLE_CHANGED   = 'layout.activeTableChanged';
 
 
@@ -50,10 +50,10 @@ export function reducer(state={dropDown: {}}, action={}) {
             }
             return update(state, {mode: {[mode]: {$set: view}}});
 
-        case SHOW_DROPDOWN_UI :
+        case SHOW_DROPDOWN :
             return update(state, {dropDown: {$set: {visible: true, view}}});
 
-        case HIDE_DROPDOWN_UI :
+        case HIDE_DROPDOWN :
             return update(state, {dropDown: {$set: {visible: false}}});
 
         case ACTIVE_TABLE_CHANGED :
@@ -98,20 +98,17 @@ export function dispatchSetLayoutMode({mode=LO_STANDARD.mode, view}) {
  * show the drop down container
  * @param view name of the component to display in the drop-down container
  */
-export function dispatchShowDropDownUi({view}) {
-    flux.process({type: SHOW_DROPDOWN_UI, payload: {view}});
+export function dispatchShowDropDown({view}) {
+    flux.process({type: SHOW_DROPDOWN, payload: {view}});
 }
 
 /**
  * hide the drop down container
  */
-export function dispatchHideDropDownUi() {
-    flux.process({type: HIDE_DROPDOWN_UI, payload: {}});
+export function dispatchHideDropDown() {
+    flux.process({type: HIDE_DROPDOWN, payload: {}});
 }
 
-export function dispatchActiveTableChanged(tbl_id) {
-    flux.process({type: ACTIVE_TABLE_CHANGED, payload: {tbl_id}});
-}
 
 /*------------------------- Util functions -------------------------*/
 export function getExpandedMode() {
@@ -126,6 +123,14 @@ export function getDropDownInfo() {
     return get(flux.getState(), 'layout.dropDown', {visible: false});
 }
 
-export function getActiveTableId() {
-    return get(flux.getState(), 'layout.active.table');
+export function getLayouInfo() {
+    const hasImages = get(flux.getState(), 'allPlots.plotViewAry.length') > 0;
+    const hasTables = !isEmpty(get(flux.getState(), 'table_space.results.tables', {}));
+    const hasXyPlots = hasTables;
+    const expanded = getExpandedMode();
+    const standard = getStandardMode();
+    const ddInfo = getDropDownInfo();
+    
+    return {hasImages, hasTables, hasXyPlots, expanded, standard, 
+            dropdownVisible: ddInfo.visible, dropdownView: ddInfo.view};
 }

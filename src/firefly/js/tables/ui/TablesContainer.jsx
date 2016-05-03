@@ -21,12 +21,10 @@ export class TablesContainer extends Component {
     constructor(props) {
         super(props);
         const tblResults = TblUtil.findTableResults();
-        this.state = tblResults ||
-            {
-                layout: 'tabs',
-                tables: {}
-            };
-        this.state.expandedMode= getExpandedMode() === LO_EXPANDED.tables.view;
+        this.state = Object.assign({layout: 'tabs', tables: {}}, tblResults, {
+                        expandedMode: props.expandedMode,
+                        closeable: props.closeable
+                    });
     }
 
     componentDidMount() {
@@ -48,10 +46,10 @@ export class TablesContainer extends Component {
     }
 
     render() {
-        const {expandedMode, tables, layout, active} = this.state;
+        const {expandedMode, tables, layout, active, closeable} = this.state;
 
         if (expandedMode) {
-            return <ExpandedView {...{active, tables, layout, expandedMode}} />;
+            return <ExpandedView {...{active, tables, layout, expandedMode, closeable}} />;
         } else {
             return isEmpty(tables) ? <div></div> : <TabsView {...{active, tables, expandedMode}} />;
         }
@@ -59,26 +57,28 @@ export class TablesContainer extends Component {
 }
 
 TablesContainer.propTypes = {
-    expandedMode: PropTypes.bool
+    expandedMode: PropTypes.bool,
+    closeable: PropTypes.bool
 };
 TablesContainer.defaultProps = {
-    expandedMode: false
+    expandedMode: false,
+    closeable: true
 };
 
 
 
 function ExpandedView(props) {
-    const {tables} = props;
+    const {tables, closeable} = props;
     return (
         <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', overflow: 'hidden'}}>
-            <div style={{marginBottom: 3}}><CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/></div>
+            <div style={{marginBottom: 3}}>
+                {closeable && <CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/>}
+            </div>
             {!isEmpty(tables) && <TabsView expandedMode={true} {...props} />}
         </div>
     );
 
 }
-ExpandedView.propTypes = TabsView.propTypes;
-ExpandedView.defaultProps = TabsView.defaultProps;
 
 
 function TabsView(props) {
@@ -88,7 +88,7 @@ function TabsView(props) {
     activeIdx = activeIdx === -1 ? 0 : activeIdx;
     const onTabSelect = (idx) => {
         const tbl_id = get(tables, [Object.keys(tables)[idx], 'tbl_id']);
-        tbl_id && dispatchActiveTableChanged(tbl_id)
+        tbl_id && dispatchActiveTableChanged(tbl_id);
     };
 
     return (

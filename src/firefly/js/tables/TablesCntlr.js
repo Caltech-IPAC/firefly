@@ -10,7 +10,7 @@ import shallowequal from 'shallowequal';
 import {dataReducer} from './reducer/TableDataReducer.js';
 import {uiReducer} from './reducer/TableUiReducer.js';
 import {resultsReducer} from './reducer/TableResultsReducer.js';
-import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
+import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 import {dispatchSetupTblTracking} from '../visualize/TableStatsCntlr.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 
@@ -49,7 +49,7 @@ export function tableSearch(action) {
             
             dispatchSetupTblTracking(tbl_id);
             dispatchTableFetch(request);
-            dispatchHideDropDownUi();
+            dispatchHideDropDown();
             if (!TblUtil.findTblResultsById(tbl_ui_id)) {
                 dispatchTableAdded(tbl_ui_id, tbl_id, get(request, 'META_INFO.title'));
                 dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:() => dispatchActiveTableChanged(tbl_id)});

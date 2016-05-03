@@ -14,7 +14,7 @@ import WebPlotRequest, {ServiceType, AnnotationOps} from '../WebPlotRequest.js';
 import {visRoot,dispatchPlotImage} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {getDrawLayerByType, getActivePlotView, isDrawLayerAttached} from '../PlotViewUtil.js';
-import AppDataCntlr from '../../core/AppDataCntlr.js';
+import {getCommandState} from '../../core/AppDataCntlr.js';
 import {parseWorldPt} from '../Point.js';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {dispatchAddImages,getMultiViewRoot, findViewerWithPlotId} from '../MultiViewCntlr.js';
@@ -152,7 +152,7 @@ function showImageSelectPanel() {
 }
 
 function TestImagePanelView({selectOn,distOn}) {
-    var s = AppDataCntlr.getCommandState('SelectAreaCmd');
+    var s = getCommandState('SelectAreaCmd');
     var selectText = (selectOn) ? 'Turn Select Off' : 'Turn Select On';
     var distText = (distOn) ? 'Turn Distance Tool Off' : 'Turn Distance Tool On';
     return (

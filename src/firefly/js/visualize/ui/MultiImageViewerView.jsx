@@ -29,10 +29,11 @@ const flexToolbarStyle= {
 };
 
 
-export function MultiImageViewerView({Toolbar, layoutType,viewerId, visRoot, 
-                                      viewerPlotIds, forceRowSize, forceColSize, gridDefFunc,
-                                      additionalStyle, defaultDecoration=true, insideFlex=false}) {
+export function MultiImageViewerView(props) {
 
+    const {Toolbar, layoutType,viewerId, visRoot,
+           viewerPlotIds, forceRowSize, forceColSize, gridDefFunc,
+           additionalStyle, defaultDecoration=true, insideFlex=false}= props; 
     var wrapperStyle; 
     if (insideFlex) {
         wrapperStyle= Object.assign({}, flexContainerStyle, {flex:'1 1 auto'});
@@ -67,8 +68,7 @@ export function MultiImageViewerView({Toolbar, layoutType,viewerId, visRoot,
         <div style={s}>
             {Toolbar &&
                 <div style={flexToolbarStyle}>
-                    <Toolbar visRoot={visRoot} viewerId={viewerId} 
-                             viewerPlotIds={viewerPlotIds} layoutType={layoutType}/> 
+                    <Toolbar {...props} /> 
                 </div>}
             <div style={{position:'relative', width:'100%', height:'100%', flex:'1 1 auto'}}>
                 {container}

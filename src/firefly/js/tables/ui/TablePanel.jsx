@@ -35,6 +35,12 @@ export class TablePanel extends Component {
         this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, isLocal);
         const uiState = TblUtil.findTableUiById(tbl_ui_id);
         this.state = uiState || {};
+
+        this.toggleFilter = this.toggleFilter.bind(this);
+        this.toggleTextView = this.toggleTextView.bind(this);
+        this.clearFilter = this.clearFilter.bind(this);
+        this.saveTable = this.saveTable.bind(this);
+        this.toggleOptions = this.toggleOptions.bind(this);
     }
 
     componentDidMount() {
@@ -63,9 +69,29 @@ export class TablePanel extends Component {
         this.setState(uiState);
     }
 
+    toggleFilter() {
+        this.tableConnector.onOptionUpdate({showFilters: !this.state.showFilters});
+    }
+    toggleTextView() {
+        this.tableConnector.onToggleTextView(!this.state.textView);
+    }
+    clearFilter() {
+        this.tableConnector.onFilter('');
+    }
+    saveTable() {
+        const {columns, request} = this.state;
+        download(TblUtil.getTableSourceUrl(columns, request));
+    }
+    toggleOptions() {
+        this.tableConnector.onToggleOptions(!this.state.showOptions);
+    }
+    expandTable() {
+        dispatchSetLayoutMode(LO_EXPANDED.tables);
+    }
+
     render() {
         const {selectable, expandable, expandedMode, border, renderers} = this.props;
-        var {totalRows, request, showLoading, columns, showOptions, showUnits, showFilters, textView, colSortDir} = this.state;
+        var {totalRows, showLoading, columns, showOptions, showUnits, showFilters, textView, colSortDir} = this.state;
         const {error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
             filterInfo, filterCount, sortInfo, data} = this.state;
         const {tableConnector} = this;
@@ -89,19 +115,19 @@ export class TablePanel extends Component {
 
                         <div className='group'>
                             {filterCount > 0 &&
-                            <button onClick={() => tableConnector.onFilter('')} className='tablepanel clearFilters'/>}
+                            <button onClick={this.clearFilter} className='tablepanel clearFilters'/>}
                             <ToolbarButton icon={FILTER}
                                            tip='The Filter Panel can be used to remove unwanted data from the search results'
                                            visible={true}
                                            badgeCount={filterCount}
-                                           onClick={() => tableConnector.onOptionUpdate({showFilters: !showFilters})}/>
-                            <button onClick={() => tableConnector.onToggleTextView(!textView)} className={viewIcoStyle}/>
-                            <button onClick={() => download(TblUtil.getTableSourceUrl(columns, request))}
+                                           onClick={this.toggleFilter}/>
+                            <button onClick={this.toggleTextView} className={viewIcoStyle}/>
+                            <button onClick={this.saveTable}
                                     className='tablepanel save'/>
-                            <button style={{marginLeft: '4px'}} onClick={() => tableConnector.onToggleOptions(!showOptions)}
+                            <button style={{marginLeft: '4px'}} onClick={this.toggleOptions}
                                     className='tablepanel options'/>
                             { expandable && !expandedMode &&
-                                <button onClick={() => dispatchSetLayoutMode(LO_EXPANDED.tables)}>
+                                <button onClick={this.expandTable}>
                                     <img src={OUTLINE_EXPAND} title='Expand this panel to take up a larger area'/>
                                 </button>}
                         </div>

@@ -3,13 +3,27 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
-import {get} from 'lodash';
+import shallowequal from 'shallowequal';
+import {get, pick} from 'lodash';
 
 import {getDropDownInfo} from '../core/LayoutCntlr.js';
 import {flux} from '../Firefly.js';
+import {SearchPanel} from '../ui/SearchPanel.jsx';
+import {TestQueriesPanel} from '../ui/TestQueriesPanel.jsx';
+import {ImageSelectDropdown} from '../ui/ImageSelectDropdown.jsx';
 
 import './DropDownContainer.css';
+// import {deepDiff} from '../util/WebUtil.js';
+
+
+const dropDownMap = {
+    AnyDataSetSearch: <SearchPanel />,
+    TestSearches: <TestQueriesPanel />,
+    ImageSelectDropDownCmd: <ImageSelectDropdown />
+};
+
+
+
 
 /**
  * The container for items appearing in the drop down panel.
@@ -21,9 +35,23 @@ import './DropDownContainer.css';
 export class DropDownContainer extends Component {
     constructor(props) {
         super(props);
+
+        React.Children.forEach(this.props.children, (el) => {
+            const key = get(el, 'props.name');
+            if (key) dropDownMap[key] = el;
+        });
+
+        if (props.searchPanels) {
+            props.searchPanels.forEach( (el) => {
+                const key = get(el, 'props.name');
+                if (key) dropDownMap[key] = el;
+            } );
+        }
+
         this.state = {
                 visible: props.visible,
-                selected: props.selected
+                selected: props.selected,
+                searches: props.searches
             };
     }
 
@@ -36,26 +64,29 @@ export class DropDownContainer extends Component {
     }
 
     shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
-    }
+        const check = ['visible','selected'];
+        return !shallowequal(pick(nState, check), pick(this.state, check));
+   }
+
+    // componentDidUpdate(prevProps, prevState) {
+    //     deepDiff({props: prevProps, state: prevState},
+    //         {props: this.props, state: this.state},
+    //         this.constructor.name);
+    // }
 
     storeUpdate() {
         const {visible, view} = getDropDownInfo();
-        if (visible!==this.state.visible || view!==this.state.view) {
+        if (visible!==this.state.visible || view!==this.state.selected) {
             this.setState({visible, selected: view});
         }
     }
 
     render() {
         var { visible, selected }= this.state;
-        var view;
-        React.Children.forEach(this.props.children, (child) => {
-            if (selected === get(child, 'props.name')) {
-                view = child;
-            }
-        });
+        var view = dropDownMap[selected];
+
+        if (!visible) return <div/>;
         return (
-            visible &&
             <div className='DD-ToolBar'>
                 <div className='DD-ToolBar__content'>
                     {view}
@@ -69,7 +100,9 @@ export class DropDownContainer extends Component {
 
 DropDownContainer.propTypes = {
     visible: PropTypes.bool,
-    selected: PropTypes.string
+    selected: PropTypes.string,
+    searches: PropTypes.arrayOf(PropTypes.string),
+    searchPanels: PropTypes.arrayOf(PropTypes.element)
 };
 DropDownContainer.defaultProps = {
     visible: false

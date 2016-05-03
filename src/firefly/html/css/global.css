@@ -81,6 +81,7 @@ img, html {
 .button-std {
     height: 23px;
     padding: 0 3px;
+    margin-right: 3px;
 }
 
 .button-hl {

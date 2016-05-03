@@ -26,7 +26,7 @@ import {ServerParams} from '../data/ServerParams.js';
 import {showInfoPopup} from './PopupUtil.jsx';
 
 import Validate from '../util/Validate.js';
-import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
+import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 
 import {TableRequest} from '../tables/TableRequest.js';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
@@ -116,7 +116,7 @@ TestQueriesPanel.defaultProps = {
 
 
 function hideSearchPanel() {
-    dispatchHideDropDownUi();
+    dispatchHideDropDown();
 }
 
 
@@ -402,7 +402,7 @@ function doImages(request) {
     
     var viewer= getAViewFromMultiView(getMultiViewRoot());
     dispatchAddImages(viewer.viewerId, ['TestImage1', 'TestImage2', 'TestImage3', 'TestImage4', 'TestImage3Color']);
-    dispatchHideDropDownUi();
+    dispatchHideDropDown();
 
 }
 

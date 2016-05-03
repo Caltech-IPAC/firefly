@@ -24,7 +24,7 @@ import {InputGroup} from '../ui/InputGroup.jsx';
 import {ServerParams} from '../data/ServerParams.js';
 
 import Validate from '../util/Validate.js';
-import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
+import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 
 import {TableRequest} from '../tables/TableRequest.js';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';

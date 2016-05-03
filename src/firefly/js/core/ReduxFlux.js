@@ -8,9 +8,8 @@ import createSagaMiddleware from 'redux-saga';
 import thunkMiddleware from 'redux-thunk';
 import loggerMiddleware from 'redux-logger';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
-import { connect, Provider } from 'react-redux';
 import { actionSideEffectMiddleware } from '../side-effects';
-import AppDataCntlr  from './AppDataCntlr.js';
+import * as AppDataCntlr  from './AppDataCntlr.js';
 import {recordHistory} from './History.js';
 import {LAYOUT_PATH, reducer as layoutReducer}  from './LayoutCntlr.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
@@ -258,13 +257,6 @@ function getRedux() {
    return redux;
 }
 
-function createSmartComponent(connector, component) {
-    var Wrapper = connect(connector)(component);
-    return (
-        <Provider store={redux}><Wrapper/></Provider>
-    );
-}
-
 function getDrawLayerFactory() {
     return drawLayerFactory;
 }
@@ -285,7 +277,6 @@ export var reduxFlux = {
     getState,
     process,
     addListener,
-    createSmartComponent,
     registerDrawLayer,
     createDrawLayer,
     getDrawLayerFactory,

@@ -13,7 +13,7 @@ import {panelCatalogs} from './ImageSelectPanelProp.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {sizeFromDeg} from '../../ui/SizeInputField.jsx';
 import {get} from 'lodash';
-import {dispatchHideDropDownUi} from '../../core/LayoutCntlr.js';
+import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {getPlotViewById} from '../PlotViewUtil.js';
 
 const loadErrorMsg = {
@@ -328,7 +328,7 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
 
 
         if (hideDropdown) {
-            dispatchHideDropDownUi();
+            dispatchHideDropDown();
         }
 
         if (plotInfo.isThreeColor) {

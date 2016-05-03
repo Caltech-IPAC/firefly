@@ -5,7 +5,7 @@
 import React from 'react';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
 import {dispatchModifyCustomField, dispatchForceDrawLayerUpdate} from '../visualize/DrawLayerCntlr.js';
-import AppDataCntlr from '../core/AppDataCntlr.js';
+import * as AppDataCntlr from '../core/AppDataCntlr.js';
 import {DIST_READOUT,ARC_SEC,ARC_MIN,DEG} from './DistanceTool.js';
 
 

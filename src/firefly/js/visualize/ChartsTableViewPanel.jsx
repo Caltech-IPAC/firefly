@@ -2,16 +2,15 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PropTypes} from 'react';
-//import sCompare from 'react-addons-shallow-compare';
-//import {deepDiff} from '../util/WebUtil.js';
+import React, {Component, PropTypes} from 'react';
+import sCompare from 'react-addons-shallow-compare';
+// import {deepDiff} from '../util/WebUtil.js';
 
 import {get, debounce, defer} from 'lodash';
 import Resizable from 'react-component-resizable';
 
-import { connect } from 'react-redux';
 
-
+import {flux} from '../Firefly.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import * as TblUtil from '../tables/TableUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
@@ -496,17 +495,51 @@ ChartsPanel.defaultProps = {
     expandable: true
 };
 
-const connector = function(state, ownProps) {
-    return {
-        tableModel: TblUtil.findTblById(ownProps.tblId),
-        tblStatsData: state[TableStatsCntlr.TBLSTATS_DATA_KEY][ownProps.tblId],
-        tblHistogramData: state[HistogramCntlr.HISTOGRAM_DATA_KEY][ownProps.tblId],
-        tblPlotData: state[XYPlotCntlr.XYPLOT_DATA_KEY][ownProps.tblId]
-    };
-};
+export class ChartsTableViewPanel extends Component {
 
-export const ChartsTableViewPanel = connect(connector)(ChartsPanel);
+    constructor(props) {
+        super(props);
+        this.state = this.getNextState();
+    }
 
+    shouldComponentUpdate(np, ns) {
+        return sCompare(this, np, ns);
+    }
+
+    // componentDidUpdate(prevProps, prevState) {
+    //     deepDiff({props: prevProps, state: prevState},
+    //         {props: this.props, state: this.state},
+    //         this.constructor.name);
+    // }
+
+    componentDidMount() {
+        this.removeListener = flux.addListener(() => this.storeUpdate());
+    }
+
+    componentWillUnmount() {
+        this.removeListener && this.removeListener();
+    }
+
+    getNextState() {
+        const tblId = TblUtil.getActiveTableId();
+        const tableModel = TblUtil.findTblById(tblId);
+        const tblStatsData = flux.getState()[TableStatsCntlr.TBLSTATS_DATA_KEY][tblId];
+        const tblHistogramData = flux.getState()[HistogramCntlr.HISTOGRAM_DATA_KEY][tblId];
+        const tblPlotData = flux.getState()[XYPlotCntlr.XYPLOT_DATA_KEY][tblId];
+        return {tblId, tableModel, tblStatsData, tblHistogramData, tblPlotData};
+    }
+
+    storeUpdate() {
+        this.setState(this.getNextState());
+    }
+
+    render() {
+        const {tblId, tableModel, tblStatsData, tblHistogramData, tblPlotData} = this.state;
+        return (
+            <ChartsPanel {...{tblId, tableModel, tblStatsData, tblHistogramData, tblPlotData}}/>
+        );
+    }
+}
 
 export class OptionsWrapper extends React.Component {
     constructor(props) {
@@ -519,11 +552,11 @@ export class OptionsWrapper extends React.Component {
             nProps.chartType != this.props.chartType;
     }
 
-    //componentDidUpdate(prevProps, prevState) {
+    // componentDidUpdate(prevProps, prevState) {
     //     deepDiff({props: prevProps, state: prevState},
     //         {props: this.props, state: this.state},
     //         this.constructor.name);
-    //}
+    // }
 
     render() {
         const { tblId, tableModel, tblStatsData, chartType} = this.props;

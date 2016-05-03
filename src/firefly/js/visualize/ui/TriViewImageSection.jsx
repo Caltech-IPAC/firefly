@@ -28,10 +28,11 @@ import {dispatchAddSaga} from '../../core/MasterSaga.js';
  * @return {XML}
  * @constructor
  */
-export function TriViewImageSection({showCoverage=true, showFits=true, showImageMetaData=true, imageExpandedMode=false}) {
+export function TriViewImageSection({showCoverage=true, showFits=true, 
+                                     showImageMetaData=true, imageExpandedMode=false, closeable=true}) {
     
     if (imageExpandedMode) {
-        return <ExpandedModeDisplay   key='results-plots-expanded' forceExpandedMode={true}/>;
+        return <ExpandedModeDisplay   {...{key:'results-plots-expanded',forceExpandedMode:true,closeable}}/>;
     }
 
     if (showCoverage && showFits && showImageMetaData) {
@@ -74,5 +75,6 @@ TriViewImageSection.propTypes= {
     showCoverage : PropTypes.bool,
     showFits : PropTypes.bool,
     showImageMetaData : PropTypes.bool,
-    imageExpandedMode : PropTypes.bool
+    imageExpandedMode : PropTypes.bool,
+    closeable: PropTypes.bool
 };
