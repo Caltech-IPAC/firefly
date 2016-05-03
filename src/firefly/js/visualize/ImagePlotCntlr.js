@@ -345,11 +345,11 @@ export function dispatchUpdateViewSize(plotId,width,height,updateScroll=true,cen
  * @param {boolean} groupLocked,  true to set group lockRelated on
  * @param {plotGroupAry}
  */
-export function dispatchGroupLocking(plotId,plotGroupAry,groupLocked) {
+export function dispatchGroupLocking(plotId,groupLocked) {
     flux.process({
         type: GROUP_LOCKING,
         payload :{
-            plotId,plotGroupAry,groupLocked
+            plotId, groupLocked
         }});
 }
 

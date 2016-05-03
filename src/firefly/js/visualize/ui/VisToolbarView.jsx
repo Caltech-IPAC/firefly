@@ -354,7 +354,7 @@ function toggleLockRelated(pv,plotGroupAry){
         setgroupLock= false;
     }
 
-    dispatchGroupLocking(pv.plotId,plotGroupAry,setgroupLock);
+    dispatchGroupLocking(pv.plotId,setgroupLock);
 }
 
 //==================================================================================
