@@ -13,7 +13,7 @@ import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {getUIComponent} from './WebGridUI.jsx';
 import { makeGridDrawData } from './ComputeWebGridData.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
-import AppDataCntlr from '../core/AppDataCntlr.js';
+import {getPreference} from '../core/AppDataCntlr.js';
 import CoordinateSys from '../visualize/CoordSys.js';
  import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 
@@ -117,7 +117,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
      var height = plot.dataHeight;
      var screenWidth = plot.screenSize.width;
 
-     var csysName = AppDataCntlr.getPreference(COORDINATE_PREFERENCE);
+     var csysName = getPreference(COORDINATE_PREFERENCE);
      if (!csysName) {
          csysName = 'eq2000hms';//set default
      }

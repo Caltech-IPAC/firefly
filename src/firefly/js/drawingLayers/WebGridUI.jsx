@@ -5,7 +5,7 @@
  */
 import React, {PropTypes} from 'react';
 import {dispatchModifyCustomField} from '../visualize/DrawLayerCntlr.js';
-import AppDataCntlr from '../core/AppDataCntlr.js';
+import {dispatchAddPreference,getPreference} from '../core/AppDataCntlr.js';
 import {get} from 'lodash';
 import {ListBoxInputFieldView} from '../ui/ListBoxInputField.jsx';
 import {COORDINATE_PREFERENCE} from './WebGrid.js';
@@ -33,7 +33,7 @@ const coordinateOptionArray = [
  */
 function WebGridUI({drawLayer,pv}) {
 
-   var pref= AppDataCntlr.getPreference(COORDINATE_PREFERENCE);
+   var pref= getPreference(COORDINATE_PREFERENCE);
    return  (
         <div>
            <ListBoxInputFieldView
@@ -65,7 +65,7 @@ WebGridUI.propTypes= {
  */
 function onCoordinateChange(plotId, drawLayer, ev) {
     var csysName = get(ev, 'target.value');
-    AppDataCntlr.dispatchAddPreference(COORDINATE_PREFERENCE,csysName);
+    dispatchAddPreference(COORDINATE_PREFERENCE,csysName);
     //add or update the coordinate reference to the drawLayer
     var customChanges ={[COORDINATE_PREFERENCE]:csysName};
     dispatchModifyCustomField( drawLayer.displayGroupId,customChanges, plotId);
