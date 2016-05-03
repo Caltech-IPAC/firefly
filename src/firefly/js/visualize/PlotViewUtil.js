@@ -63,9 +63,10 @@ export function getPlotViewIdxById(visRoot,plotId) {
     return visRoot.plotViewAry.findIndex( (pv) => pv.plotId===plotId);
 }
 
-export function getPlotGroupIdxById(visRoot,plotGroupId) {
-    if (!plotGroupId) return null;
-    return visRoot.plotGroupAry.findIndex( (pg) => pg.plotGroupId===plotGroupId);
+export function getPlotGroupIdxById(ref,plotGroupId) {
+    if (!ref) return null;
+    const plotGroupAry= ref.plotGroupAry ? ref.plotGroupAry : ref;
+    return plotGroupAry.findIndex( (pg) => pg.plotGroupId===plotGroupId);
 }
 
 

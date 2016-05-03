@@ -291,14 +291,12 @@ export class VisToolbarView extends Component {
                                onClick={() => dispatchRestoreDefaults(pv.plotId)}/>
 
                 <SimpleLayerOnOffButton plotView={pv}
-    //                            isIconOn={pv&&plot ? hasGroupLock(pv,plot.plotGroupId) : false }
-                                isIconOn={pv&&plot? isGroupLocked(pv,plotViewAry,plotGroupAry) : false }
-
+                                isIconOn={pv&&plot? isGroupLocked(pv,plotGroupAry) : false }
                                 tip='lock images of all bands for zooming, scolling etc.'
                                 iconOn={LOCKED}
                                 iconOff={UNLOCKED}
                                 visible={mi.lockRelated}
-                                onClick={() => toggleLockRelated(pv,plotViewAry,plotGroupAry)}
+                                onClick={() => toggleLockRelated(pv,plotGroupAry)}
                                  />
 
 
@@ -339,13 +337,13 @@ function showToolTip(toolTip) {
     return <div style={tipStyle}>{toolTip}</div>;
 }
 
-function isGroupLocked(pv,plotViewAry,plotGroupAry){
+function isGroupLocked(pv,plotGroupAry){
     var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
     var lockEnabled = hasGroupLock(pv,plotGroup);
     return lockEnabled;
 
 }
-function toggleLockRelated(pv,plotViewAry,plotGroupAry){
+function toggleLockRelated(pv,plotGroupAry){
     var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
     var lockEnabled = hasGroupLock(pv,plotGroup);
     var setgroupLock= lockEnabled;
@@ -356,7 +354,7 @@ function toggleLockRelated(pv,plotViewAry,plotGroupAry){
         setgroupLock= false;
     }
 
-    dispatchGroupLocking(pv.plotId,pv.plotGroupId,plotGroupAry,plotGroup,setgroupLock);
+    dispatchGroupLocking(pv.plotId,plotGroupAry,setgroupLock);
 }
 
 //==================================================================================

@@ -258,7 +258,10 @@ function makeNewPrimePlot(state,action) {
 
 function changeGroupLocking(state,action) {
     var {plotGroupAry}= state;
-    var {plotId,plotGroupId,groupLocked}=  action.payload;
+    var {plotId,groupLocked}=  action.payload;
+    const pv= getPlotViewById(state,plotId);
+    const {plotGroupId} = pv;
+
     const pgIdx= getPlotGroupIdxById(state,plotGroupId);
 
     if (pgIdx < 0) return state;

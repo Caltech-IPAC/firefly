@@ -339,15 +339,17 @@ export function dispatchUpdateViewSize(plotId,width,height,updateScroll=true,cen
 }
 
 /**
+ * change group lock for zoom and scolling
  *
- * @param plotId
- * @param groupLock
+ * @param {string} plotId is required
+ * @param {boolean} groupLocked,  true to set group lockRelated on
+ * @param {plotGroupAry}
  */
-export function dispatchGroupLocking(plotId,plotGroupId,plotGroupAry,plotGroup,groupLocked) {
+export function dispatchGroupLocking(plotId,plotGroupAry,groupLocked) {
     flux.process({
         type: GROUP_LOCKING,
         payload :{
-            plotId,plotGroupId,plotGroupAry,plotGroup,groupLocked
+            plotId,plotGroupAry,groupLocked
         }});
 }
 
