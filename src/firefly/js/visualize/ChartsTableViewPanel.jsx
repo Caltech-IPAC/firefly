@@ -536,7 +536,7 @@ export class ChartsTableViewPanel extends Component {
     render() {
         const {tblId, tableModel, tblStatsData, tblHistogramData, tblPlotData} = this.state;
         return (
-            <ChartsPanel {...{tblId, tableModel, tblStatsData, tblHistogramData, tblPlotData}}/>
+            <ChartsPanel {...this.props} {...{tblId, tableModel, tblStatsData, tblHistogramData, tblPlotData}}/>
         );
     }
 }

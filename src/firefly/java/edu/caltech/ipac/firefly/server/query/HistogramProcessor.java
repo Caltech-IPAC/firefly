@@ -74,7 +74,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             String name = (String) param;
             if (!name.equalsIgnoreCase(ServerParams.ID)) {
                 value = searchRequestJSON.get(param).toString();
-                sReq.setParam(name, value);
+                sReq.setTrueParam(name, value);
             }
         }
 
