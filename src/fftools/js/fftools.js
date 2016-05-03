@@ -8,7 +8,7 @@ import ReactDOM from 'react-dom';
 import {get} from 'lodash';
 
 import {firefly} from 'firefly/Firefly.js';
-import {Application} from 'firefly/core/Application.js';
+import {FireflyViewer} from 'firefly/core/FireflyViewer.js';
 
 /**
  * By default, fftools.js will startup in api mode.
@@ -44,7 +44,7 @@ if (app) {
     };
     const props = Object.assign({}, defProps, get(window, 'firefly.app'));
 
-    ReactDOM.render(React.createElement(Application, props),
+    ReactDOM.render(React.createElement(FireflyViewer, props),
         document.getElementById(props.div));
 }
 

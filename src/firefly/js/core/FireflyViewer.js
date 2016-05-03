@@ -23,21 +23,26 @@ import {TriViewImageSection, launchImageMetaDataSega} from '../visualize/ui/TriV
 import {dispatchAddViewer} from '../visualize/MultiViewCntlr.js';
 // import {deepDiff} from '../util/WebUtil.js';
 
+const TriView_Types = ['tables', 'images', 'xyPlots', 'tri_view', 'image_xyplot', 'image_table', 'xyplot_table'];
+const Image_Support = ['tri_view', 'image_xyplot', 'image_table', 'images'];
+const XyPlot_Support = ['tri_view', 'image_xyplot', 'xyplot_table', 'xyPlots'];
+const Table_Support = ['tri_view', 'image_table', 'xyplot_table', 'tables'];
+
 /**
- * This is a generic firely application with some configurable behaviors.
+ * This FireflyViewer is a generic application with some configurable behaviors.
  * The application is separated into these major parts:  banner, menu, searches, and results.
  * The props below allow you to alter their default behaviors.
  *
  * <b>Props</b>
  * <li><b>title</b>:  This title will appears at center top of the results area. Defaults to 'FFTools'. </li>
  * <li><b>menu</b>:  menu is an array of menu items {label, action, icon, desc, type}.  Leave type blank for dropdown.  If type='COMMAND', it will fire the action without triggering dropdown.</li>
- * <li><b>appTitle</b>:  The title of the application.  It will appears at top left of the banner. Defaults to 'Firefly'. </li>
+ * <li><b>appTitle</b>:  The title of the FireflyViewer.  It will appears at top left of the banner. Defaults to 'Firefly'. </li>
  * <li><b>appIcon</b>:  A url string to the icon to appear on the banner. </li>
  * <li><b>searchPanels</b>:  An array of additional react elements which are mapped to a menu item's action. </li>
  * <li><b>views</b>:  The type of result view.  Choices are 'tri_view', 'image_xyplot', 'image_table', 'xyplot_table', 'tables', 'images', or 'xyPlots'.  Default is 'tri_view'.</li>
  *
  */
-export class Application extends Component {
+export class FireflyViewer extends Component {
 
     constructor(props) {
         super(props);
@@ -60,7 +65,7 @@ export class Application extends Component {
     componentDidMount() {
         this.mounted = true;
         dispatchOnAppReady((state) => {
-            onReady({state, menu: this.props.menu});
+            onReady({state, menu: this.props.menu, views: this.props.views});
         });
         this.removeListener = flux.addListener(() => this.storeUpdate());
     }
@@ -112,30 +117,32 @@ export class Application extends Component {
  * searchPanels is an array of additional react elements which are mapped to a menu item's action.
  * @type {{title: *, menu: *, appTitle: *, appIcon: *, altAppIcon: *, searchPanels: *, views: *}}
  */
-Application.propTypes = {
+FireflyViewer.propTypes = {
     title: PropTypes.string,
     menu: PropTypes.arrayOf(PropTypes.object),
     appTitle: PropTypes.string,
     appIcon: PropTypes.string,
     altAppIcon: PropTypes.string,
     searchPanels: PropTypes.arrayOf(PropTypes.element),
-    views: PropTypes.oneOf(['tables', 'images', 'xyPlots',
-                           'tri_view', 'image_xyplot', 'image_table', 'xyplot_table'])
+    views: PropTypes.oneOf(TriView_Types)
 };
 
-Application.defaultProps = {
+FireflyViewer.defaultProps = {
     title: 'Firefly',
     views: 'tri_view'
 };
 
-function onReady({menu}) {
+function onReady({menu, views}) {
     if (menu) {
         dispatchSetMenu({menuItems: menu});
     }
-    dispatchAddViewer('triViewImages', true, true);
+    if (Image_Support.includes(views) ) {
+        dispatchAddViewer('triViewImages', true, true);
+    }
+
     launchImageMetaDataSega();
     const home = getDropDownNames()[0];
-    const goto = getActionFromUrl() || {type: SHOW_DROPDOWN, payload: {view: home}};
+    const goto = getActionFromUrl() || (home && {type: SHOW_DROPDOWN, payload: {view: home}});
     if (goto) firefly.process(goto);
 }
 
@@ -151,7 +158,28 @@ function BannerSection(props) {
 }
 
 
-export class DynamicResults extends Component {
+function DynamicResults(props) {
+    var {views} = props;
+    if (TriView_Types.includes(views)) {
+        return <TriViewResults key='triview' {...props} />;
+    }
+}
+DynamicResults.propTypes = {
+    title: PropTypes.string,
+    expanded: PropTypes.string,
+    views: PropTypes.string,
+    hasTables: PropTypes.bool,
+    hasXyPlots: PropTypes.bool,
+    hasImages: PropTypes.bool
+};
+
+
+
+/**
+ * One view of the results this FireflyViewer can serve.
+ * Must manually added to the DynamicResults component.
+ */
+export class TriViewResults extends Component {
 
     constructor(props) {
         super(props);
@@ -165,15 +193,15 @@ export class DynamicResults extends Component {
         var hasData = [];
         var addTables, addImages, addXy;
 
-        if (['tri_view', 'image_xyplot', 'image_table', 'images'].includes(views) ) {
+        if (Image_Support.includes(views) ) {
             hasData.push(hasImages);
             addImages = hasImages;
         }
-        if (['tri_view', 'image_xyplot', 'xyplot_table', 'xyPlots'].includes(views)) {
+        if (XyPlot_Support.includes(views)) {
             hasData.push(hasXyPlots);
             addXy = hasXyPlots;
         }
-        if (['tri_view', 'image_table', 'xyplot_table', 'tables'].includes(views)) {
+        if (Table_Support.includes(views)) {
             hasData.push(hasTables);
             addTables = hasTables;
         }
@@ -190,11 +218,15 @@ export class DynamicResults extends Component {
         }
         if (addXy) {
             expanded = count ===1 ? LO_EXPANDED.xyPlots.view : expanded;
-            content.xyPlot = <ChartsContainer key='res-xyplots' closeable={count>1} expandedMode={expanded===LO_EXPANDED.xyPlots.view}/>;
+            content.xyPlot = <ChartsContainer key='res-xyplots'
+                                              closeable={count>1}
+                                              expandedMode={expanded===LO_EXPANDED.xyPlots.view}/>;
         }
         if (addTables) {
             expanded = count ===1 ? LO_EXPANDED.tables.view : expanded;
-            content.tables = <TablesContainer key='res-tables' closeable={count>1} expandedMode={expanded===LO_EXPANDED.tables.view}/>;
+            content.tables = <TablesContainer key='res-tables'
+                                              closeable={count>1}
+                                              expandedMode={expanded===LO_EXPANDED.tables.view}/>;
         }
 
         if (count === 0) return <div/>;
@@ -205,13 +237,13 @@ export class DynamicResults extends Component {
                               expanded={expanded}
                               standard={views}
                               visToolbar={<VisToolbar key='res-vis-tb'/>}
-                        { ...content}
+                    { ...content}
                 />
             );
         }
     }
 }
-DynamicResults.propTypes = {
+TriViewResults.propTypes = {
     title: PropTypes.string,
     expanded: PropTypes.string,
     views: PropTypes.string,
