@@ -1,6 +1,6 @@
 import React, {Component, PropTypes}  from 'react';
 import ReactDOM from 'react-dom';
-import {get, isArray, isUndefined, defer} from 'lodash';
+import {get, isArray, isUndefined, debounce} from 'lodash';
 
 import {logError} from '../util/WebUtil.js';
 
@@ -84,7 +84,9 @@ const SuggestBox = (props) => {
 
     return (
 
-        <ul className={'SuggestBox'} ref={(c)=>{ensureVisible(c, highlightedIdx);}} onMouseMove={handleMouseMove.bind(this)}>
+        <ul className={'SuggestBox'} ref={(c)=>{ensureVisible(c, highlightedIdx);}}
+            onMouseDown={handleOptionClick.bind(this, highlightedIdx)} //onClick competes with onBlur
+            onMouseMove={handleMouseMove.bind(this)}>
             {suggestions.map((suggestion, idx) => {
                 const highlighted = idx === highlightedIdx;
                 return (
@@ -92,7 +94,6 @@ const SuggestBox = (props) => {
                         className={'SuggestBox__Suggestion'+(highlighted ? ' SuggestBox__Suggestion--highlighted' : '')}
                         renderSuggestion={renderSuggestion}
                         key={idx}
-                        onMouseDown={handleOptionClick.bind(this, idx)} //onClick competes with onBlur
                         onMouseEnter={handleOptionMouseEnter.bind(this, idx)}
                         suggestion={suggestion}
                     />
@@ -119,7 +120,7 @@ class SuggestBoxInputFieldView extends Component {
         this.changeValue = this.changeValue.bind(this);
         this.changeHighlighted = this.changeHighlighted.bind(this);
         this.handleKeyPress = this.handleKeyPress.bind(this);
-        this.updateSuggestions = this.updateSuggestions.bind(this);
+        this.updateSuggestions = debounce(this.updateSuggestions.bind(this), 200);
     }
 
 
@@ -140,7 +141,7 @@ class SuggestBoxInputFieldView extends Component {
             if (arrayOrPromise === this.suggestionsPromise && isArray(suggestions) && suggestions.length > 0) {
                 this.setState({isOpen: true, suggestions});
             }
-        }).catch(err => logError(err))
+        }).catch((err) => logError(err));
     }
 
 
@@ -220,7 +221,7 @@ class SuggestBoxInputFieldView extends Component {
                     <InputFieldView
                         valid={valid}
                         onChange={this.onValueChange}
-                        onBlur={() => {isOpen && this.changeValue(undefined)}}
+                        onBlur={() => {isOpen && this.changeValue(undefined);}}
                         value={displayValue}
                         message={message}
                         label={label}

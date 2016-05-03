@@ -8,8 +8,6 @@ import {get} from 'lodash';
 import ColValuesStatistics from './ColValuesStatistics.js';
 import CompleteButton from '../ui/CompleteButton.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
-//import InputGroup from '../ui/InputGroup.jsx';
 import Validate from '../util/Validate.js';
 import {Expression} from '../util/expr/Expression.js';
 import {ValidationField} from '../ui/ValidationField.jsx';
@@ -41,7 +39,6 @@ function parseSuggestboxContent(text) {
 
 var XYPlotOptions = React.createClass({
 
-    unbinder : null,
 
     propTypes: {
         groupKey: PropTypes.string.isRequired,
@@ -49,22 +46,11 @@ var XYPlotOptions = React.createClass({
         onOptionsSelected: PropTypes.func.isRequired
     },
 
-    getInitialState() {
-        return {fields : FieldGroupUtils.getGroupFields(this.props.groupKey)};
+
+    shouldComponentUpdate(np) {
+        return this.props.groupKey !== np.groupKey || this.props.colValStats !== np.colValStats;
     },
 
-    shouldComponentUpdate(nextProps, nextState) {
-        return Boolean(this.state.fields !== nextState.fields ||
-            this.props.colValStats !== nextProps.colValStats);
-    },
-
-    componentWillUnmount() {
-        if (this.unbinder) this.unbinder();
-    },
-
-    componentDidMount() {
-        this.unbinder = FieldGroupUtils.bindToStore(this.props.groupKey, (fields) => this.setState({fields}));
-    },
 
     getUnit(colname) {
         const statrow = this.props.colValStats.find((el) => { return el.name===colname; });
@@ -131,7 +117,6 @@ var XYPlotOptions = React.createClass({
     render() {
         const { colValStats, groupKey }= this.props;
         const colNames = colValStats.map((colVal) => {return colVal.name;});
-        const fields = FieldGroupUtils.getGroupFields(groupKey);
 
         // the suggestions are indexes in the colValStats array - it makes it easier to render then with labels
         const allSuggestions = colValStats.map((colVal,idx)=>{return idx;});
@@ -171,7 +156,6 @@ var XYPlotOptions = React.createClass({
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
                     <SuggestBoxInputField
                         initialState= {{
-                            value: FieldGroupUtils.getFldValue(fields, 'x.columnOrExpr'),
                             tooltip: 'Column or expression for X axis',
                             label: 'X:',
                             validator: colValidator
@@ -188,7 +172,6 @@ var XYPlotOptions = React.createClass({
                                             fieldKey='xplotoptions'>
                         <ValidationField
                             initialState= {{
-                                value: FieldGroupUtils.getFldValue(fields, 'x.label'),
                                 validator() { return {valid: true,message: ''}; },
                                 tooltip: 'X axis label',
                                 label : 'Label:'
@@ -198,7 +181,6 @@ var XYPlotOptions = React.createClass({
                             labelWidth={50}/>
                         <ValidationField
                             initialState= {{
-                                value: FieldGroupUtils.getFldValue(fields, 'x.unit'),
                                 validator() { return {valid: true,message: ''}; },
                                 tooltip: 'X axis unit',
                                 label : 'Unit:'
@@ -210,7 +192,7 @@ var XYPlotOptions = React.createClass({
                         <br/>
                         <CheckboxGroupInputField
                             initialState= {{
-                                value: FieldGroupUtils.getFldValue(fields, 'x.options','_none_'),
+                                value: '_none_',
                                 tooltip: 'Check if you would like to plot grid',
                                 label : 'Options:'
                             }}
@@ -230,7 +212,6 @@ var XYPlotOptions = React.createClass({
                         initialState= {{
                             tooltip: 'Column or expression for Y axis',
                             label : 'Y:',
-                            value: FieldGroupUtils.getFldValue(fields, 'y.columnOrExpr'),
                             validator: colValidator
                         }}
                         getSuggestions={getSuggestions}
@@ -245,7 +226,6 @@ var XYPlotOptions = React.createClass({
                                             fieldKey='yplotoptions'>
                         <ValidationField
                             initialState= {{
-                                value: FieldGroupUtils.getFldValue(fields, 'y.label'),
                                 validator() { return {valid: true,message: ''}; },
                                 tooltip: 'Y axis label',
                                 label : 'Label:'
@@ -255,7 +235,6 @@ var XYPlotOptions = React.createClass({
                             labelWidth={50}/>
                         <ValidationField
                             initialState= {{
-                                value: FieldGroupUtils.getFldValue(fields, 'y.init'),
                                 validator() { return {valid: true,message: ''}; },
                                 tooltip: 'Y axis unit',
                                 label : 'Unit:'
@@ -267,7 +246,6 @@ var XYPlotOptions = React.createClass({
                         <br/>
                         <CheckboxGroupInputField
                             initialState= {{
-                                value: FieldGroupUtils.getFldValue(fields, 'y.options', 'grid'),
                                 tooltip: 'Check if you would like to plot grid',
                                 label : 'Options:'
 
@@ -285,7 +263,6 @@ var XYPlotOptions = React.createClass({
                     </FieldGroupCollapsible>
                     <ValidationField style={{width:50}}
                         initialState= {{
-                            value: FieldGroupUtils.getFldValue(fields, 'xyRatio'),
                             validator: Validate.intRange.bind(null, 1, 10, 'X/Y ratio'),
                             tooltip: 'X/Y ratio',
                             label : 'X/Y ratio:'
@@ -297,7 +274,6 @@ var XYPlotOptions = React.createClass({
                     <RadioGroupInputField
                         alignment='horizontal'
                         initialState= {{
-                            value: FieldGroupUtils.getFldValue(fields, 'stretch'),
                             tooltip: 'Should the plot fit into the available space or fill the available width?',
                             label : 'Stretch to:'
                         }}

@@ -12,7 +12,6 @@ import {ListBoxInputField} from '../ui/ListBoxInputField.jsx';
 import {RadioGroupInputField} from '../ui/RadioGroupInputField.jsx';
 import {FieldGroupCollapsible} from '../ui/panel/CollapsiblePanel.jsx';
 
-
 var HistogramOptions = React.createClass({
 
     unbinder : null,
@@ -34,6 +33,11 @@ var HistogramOptions = React.createClass({
       })
      */
 
+    shouldComponentUpdate(np, ns) {
+        return this.props.groupKey !== np.groupKey || this.props.colValStats !== np.colValStats ||
+            FieldGroupUtils.getFldValue(this.state.fields, 'algorithm') !== FieldGroupUtils.getFldValue(ns.fields, 'algorithm');
+    },
+
     getInitialState() {
         return {fields : FieldGroupUtils.getGroupFields(this.props.groupKey)};
     },
@@ -43,7 +47,12 @@ var HistogramOptions = React.createClass({
     },
 
     componentDidMount() {
-        this.unbinder = FieldGroupUtils.bindToStore(this.props.groupKey, (fields) => this.setState({fields}));
+        this.unbinder = FieldGroupUtils.bindToStore(this.props.groupKey,
+            (fields) => {
+                if (fields != this.state.fields) {
+                    this.setState({fields});
+                }
+            });
     },
 
     resultsSuccess(histogramParams) {
@@ -66,7 +75,7 @@ var HistogramOptions = React.createClass({
                 <ValidationField
                     style={{width: 30}}
                     initialState= {{
-                        value: FieldGroupUtils.getFldValue(fields, 'falsePositiveRate', 0.05),
+                        value: 0.05,
                         validator: Validate.floatRange.bind(null, 0.01, 0.5, 2,'falsePositiveRate'),
                         tooltip: 'Acceptable false positive rate',
                         label : 'False Positive Rate:'
@@ -82,7 +91,7 @@ var HistogramOptions = React.createClass({
                 <ValidationField
                     style={{width: 30}}
                     initialState= {{
-                        value: FieldGroupUtils.getFldValue(fields, 'numBins', 10),
+                        value: 10,
                         validator: Validate.intRange.bind(null, 1, 500, 'numBins'),
                         tooltip: 'Number of fixed size bins',
                         label : 'Number of bins:'
@@ -104,7 +113,6 @@ var HistogramOptions = React.createClass({
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
                     <ListBoxInputField
                         initialState= {{
-                            value: FieldGroupUtils.getFldValue(fields, 'columnOrExpr'),
                             tooltip: 'Please select a column',
                             label : 'Column or expression:'
                         }}
@@ -127,7 +135,7 @@ var HistogramOptions = React.createClass({
                         <InputGroup labelWidth={20}>
                             <CheckboxGroupInputField
                                 initialState= {{
-                                    value: FieldGroupUtils.getFldValue(fields, 'x', '_none_'),
+                                    value: '_none_',
                                     tooltip: 'X axis options',
                                     label : 'X:'
                                 }}
@@ -139,7 +147,7 @@ var HistogramOptions = React.createClass({
                             />
                             <CheckboxGroupInputField
                                 initialState= {{
-                                    value: FieldGroupUtils.getFldValue(fields, 'y', '_none_'),
+                                    value: '_none_',
                                     tooltip: 'Y axis options',
                                     label : 'Y:'
                                 }}
@@ -155,7 +163,7 @@ var HistogramOptions = React.createClass({
                     <InputGroup labelWidth={60}>
                         <RadioGroupInputField
                             initialState= {{
-                                value : FieldGroupUtils.getFldValue(fields, 'algorithm', 'fixedSizeBins'),
+                                value : 'fixedSizeBins',
                                 tooltip: 'Please select an algorithm',
                                 label: 'Algorithm:'
                             }}
