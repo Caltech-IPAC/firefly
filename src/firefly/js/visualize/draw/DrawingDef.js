@@ -28,6 +28,14 @@ export const TextLocation = new Enum([ 'DEFAULT',
     'CIRCLE_NW',
     'CIRCLE_SE',
     'CIRCLE_SW',
+    'RECT_NE',
+    'RECT_NW',
+    'RECT_SE',
+    'RECT_SW',
+    'ELLIPSE_NE',
+    'ELLIPSE_NW',
+    'ELLIPSE_SE',
+    'ELLIPSE_SW',
     'CENTER']); // use MID_X, MID_X_LONG, MID_Y, MID_Y_LONG for vertical or horizontal lines
 
 export const Style= new Enum(['STANDARD','HANDLED', 'LIGHT']);

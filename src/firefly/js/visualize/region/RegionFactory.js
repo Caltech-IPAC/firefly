@@ -5,11 +5,12 @@
 import { RegionType, RegionCsys, RegionValueUnit, regionPropsList,
          makeRegionOptions, RegionValue, RegionDimension, RegionPointType, makeRegionMsg,
          getRegionType, getRegionCoordSys, getRegionPointType, makeRegionFont,
-         makePoint, makeText, makeBox, makeBoxAnnulus, makeAnnulus, makeCircle, makeEllipse, makeEllipseAnnulus,
-         makeLine, makePolygon} from './Region.js';
+         makeRegionPoint, makeRegionText, makeRegionBox, makeRegionBoxAnnulus,
+         makeRegionAnnulus, makeRegionCircle, makeRegionEllipse, makeRegionEllipseAnnulus,
+         makeRegionLine, makeRegionPolygon} from './Region.js';
 import validator from 'validator';
 import {CoordinateSys} from '../CoordSys.js';
-import {makeWorldPt} from '../Point.js';
+import {makeWorldPt, makeImagePt, makeScreenPt} from '../Point.js';
 import {convertAngle} from '../VisUtil.js';
 import {set, unset, has} from 'lodash';
 
@@ -22,14 +23,14 @@ var RegionParseError = {
 
 export class RegionFactory {
 
-    static parseRegionJson(RegionData) {
-        return RegionData.reduce ( (prev, region, index) => {
+    static parseRegionJson(regionData) {
+        return regionData? regionData.reduce ( (prev, region, index) => {
                 const rg = RegionFactory.parsePart(region, index);  // skip comment line
                 if (rg) {            // skip comment line
                     prev.push(rg);
                 }
                 return prev;
-            }, []);
+            }, []) : null;
     }
 
     /**
@@ -130,13 +131,13 @@ export class RegionFactory {
         switch (regionType) {   // 2 params
             case RegionType.text:
                 if (wp1 = this.parseXY(regionCsys, params[n], params[++n])) {
-                    region = makeText(wp1);
+                    region = makeRegionText(wp1);
                 }
                 break;
 
             case RegionType.point:
                 if (wp1 = this.parseXY(regionCsys, params[n], params[++n])) {
-                    region = makePoint(wp1);
+                    region = makeRegionPoint(wp1);
                 }
                 break;
 
@@ -172,9 +173,9 @@ export class RegionFactory {
                 }
 
                 if (isAnnulus) {   // boxannulus
-                    region = makeBoxAnnulus(wp1, dimAry, angle);
+                    region = makeRegionBoxAnnulus(wp1, dimAry, angle);
                 } else {
-                    region = makeBox(wp1, dimAry[0], angle);
+                    region = makeRegionBox(wp1, dimAry[0], angle);
                 }
                 break;
 
@@ -199,7 +200,7 @@ export class RegionFactory {
                     }
                 }
                 if (radAry.length >= 2) {
-                    region = makeAnnulus(wp1, radAry);
+                    region = makeRegionAnnulus(wp1, radAry);
                 }
                 break;
 
@@ -215,7 +216,7 @@ export class RegionFactory {
                 if (!(r = this.convertToRegionValue(params[++n], regionCsys))) {
                     break;
                 }
-                region = makeCircle(wp1, r);
+                region = makeRegionCircle(wp1, r);
                 break;
 
             case RegionType.ellipse:  // 4 params x, y, r1, r2, r3, r4,.. angle
@@ -251,9 +252,9 @@ export class RegionFactory {
                 }
 
                 if (isAnnulus) {
-                    region = makeEllipseAnnulus(wp1, dimAry, angle);
+                    region = makeRegionEllipseAnnulus(wp1, dimAry, angle);
                 } else {
-                    region = makeEllipse(wp1, dimAry[0], angle);
+                    region = makeRegionEllipse(wp1, dimAry[0], angle);
                 }
                 break;
 
@@ -268,7 +269,7 @@ export class RegionFactory {
                 if (!(wp2 = this.parseXY(regionCsys, params[++n], params[++n]))) {
                     break;
                 }
-                region = makeLine(wp1, wp2);
+                region = makeRegionLine(wp1, wp2);
                 break;
 
             case RegionType.polygon:  // at least 6 params x1, y1, x2, y2, x3, y3, ...
@@ -288,7 +289,7 @@ export class RegionFactory {
                     n++;
                 }
                 if (wpAry.length >= 3) {
-                    region = makePolygon(wpAry);
+                    region = makeRegionPolygon(wpAry);
                 }
                 break;
             default:
@@ -306,8 +307,15 @@ export class RegionFactory {
             return null;
         }
 
-        var csys = this.parse_coordinate(coordSys);
-        return makeWorldPt(rgValX.value, rgValY.value, csys);
+        if (coordSys === RegionCsys.IMAGE) {
+            return makeImagePt(rgValX.value, rgValY.value);
+        } else if (coordSys === RegionCsys.SCREEN_PIXEL) {
+            return makeScreenPt(rgValX.value, rgValY.value);
+        } else {
+            var csys = this.parse_coordinate(coordSys);
+
+            return makeWorldPt(rgValX.value, rgValY.value, csys);
+        }
     }
 
 
@@ -365,7 +373,7 @@ export class RegionFactory {
                     unit = RegionValueUnit.DEGREE;
                     break;
                 case 'r':
-                    unit = RegionValueUnit.RADIUS;
+                    unit = RegionValueUnit.RADIAN;
                     break;
                 case 'p':
                     unit = RegionValueUnit.SCREEN_PIXEL;
@@ -396,14 +404,10 @@ export class RegionFactory {
             } else {
                 unit = RegionValueUnit.DEGREE;
             }
-        } else if (unit === RegionValueUnit.ARCMIN) {
-            val = convertAngle('arcmin', 'degree', val);
-            unit = RegionValueUnit.DEGREE;
-        } else if (unit === RegionValueUnit.ARCSEC) {
-            val = convertAngle('arcsec', 'degree', val);
-            unit = RegionValueUnit.DEGREE;
-        } else if (unit === RegionValueUnit.RADIUS) {
-            val = convertAngle('radius', 'degree', val);
+        } else if (unit === RegionValueUnit.ARCMIN ||
+                   unit === RegionValueUnit.ARCSEC ||
+                   unit === RegionValueUnit.RADIAN) {
+            val = convertAngle(unit.key, 'degree', val);
             unit = RegionValueUnit.DEGREE;
         }
 

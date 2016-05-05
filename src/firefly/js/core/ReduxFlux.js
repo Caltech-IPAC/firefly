@@ -44,6 +44,7 @@ import NorthUpCompass from '../drawingLayers/NorthUpCompass.js';
 import Catalog from '../drawingLayers/Catalog.js';
 import WebGrid from '../drawingLayers/WebGrid.js';
 
+import RegionPlot from '../drawingLayers/RegionPlot.js';
 
 import {showExampleDialog} from '../ui/ExampleDialog.jsx';
 
@@ -62,7 +63,8 @@ const actionCreators = new Map();
 
 const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,DistanceTool,
                                                      PointSelection, StatsPoint, NorthUpCompass,
-                                                     Catalog, WebGrid);
+                                                     Catalog, WebGrid, RegionPlot);
+
 
 
 /**
