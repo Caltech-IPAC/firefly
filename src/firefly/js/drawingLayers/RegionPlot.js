@@ -31,12 +31,9 @@ function creator(initPayload) {
         hasPerPlotData: true
     };
 
-    const dl = DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, 'Region Plot',
-                                     options, drawingDef, null, null );
+    return DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, get(initPayload, 'title', 'Region Plot'),
+                                     options, drawingDef );
 
-    var regions = get(initPayload, 'regions');
-    dl.regions = Object.assign({}, regions);   // keep the original Region data
-    return dl;
 }
 
 /**
@@ -50,11 +47,10 @@ function getLayerChanges(drawLayer, action) {
     switch (action.type) {
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
             let drawData = {};
-
             const regions = get(action, 'payload.changes.regions');
 
             if (regions) {
-                drawLayer.regions = Object.assign({}, regions);
+                //drawLayer.regions = Object.assign({}, regions);
                 drawData[DataTypes.DATA] = plotAllRegions(regions);
             }
 

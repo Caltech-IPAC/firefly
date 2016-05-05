@@ -14,6 +14,7 @@ import {getDrawLayerByType, isDrawLayerAttached } from '../PlotViewUtil.js';
 import {dispatchCreateDrawLayer,
         dispatchAttachLayerToPlot,
         dispatchDetachLayerFromPlot,
+        dispathDestroyDrawLayer,
         dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -46,58 +47,63 @@ export function showRegionFileUploadPanel(popTitle) {
  * @param rgComp
  */
 function uploadAndProcessRegion(request, rgComp) {
+    const [FieldKeyErr, RegionErr, DrawObjErr, JSONErr] = [
+            'no region file uploaded yet',
+            'invalid description in region file',
+            'create drawing object error',
+            'get region json error' ];
+
     var regionFile = get(request, rgUploadFieldKey);
-    var rgAry = null;
-    var setStatus = (ret, message, plotId, rgComp)  => {
+    var setStatus = (ret, message)  => {
             var s = {upload: ret, message};
 
             if (rgComp) {
                 rgComp.setState(s);
             }
-            if (!ret) {
-                dispatchDetachLayerFromPlot(regionDrawLayerId, plotId);
+
+            if (ret) {
+                var plotId = get(visRoot(), 'activePlotId');
+                const dl = getDrawLayerByType(getDlAry(), regionDrawLayerId);
+
+                if (!dl) {
+                    dispatchCreateDrawLayer(regionDrawLayerId, {title: message});
+                } else {
+                    dl.title = message;
+                }
+                if (!isDrawLayerAttached(dl, plotId)) {
+                    dispatchAttachLayerToPlot(regionDrawLayerId, plotId);
+                }
+                dispatchHideDialog(popupId);
             }
     };
 
-    var plotId = get(visRoot(), 'activePlotId');
-    const dl = getDrawLayerByType(getDlAry(), regionDrawLayerId);
-
-    if (!dl) {
-        dispatchCreateDrawLayer(regionDrawLayerId);
-    }
-
-    if (!isDrawLayerAttached(dl, plotId)) {
-        dispatchAttachLayerToPlot(regionDrawLayerId, plotId);
-    }
-
-    setStatus(true, '', rgComp);
 
     if (!regionFile) {
-        setStatus(false, 'upload field key error', rgComp);
+        setStatus(false, FieldKeyErr);
     } else {
         getDS9Region(regionFile)
             .then((result) => {
                 if (!result.RegionData) {
                     // temporarily showing some hard coded regions which are defined but currently not identified by server
-                    // remove the hard code setting later
-
+/*
                     result.RegionData = [
                         'J2000;ellipse 202.55556, 47.188286 20p 40p 3i # color=magenta text={ellipse 1}',
                         'physical;ellipse 100 400 20p 40p 30p 60p 40p 80p 2i # color=green text={ellipseannulus 2}',
                         'image;box 100 100 20p 40p 30p 50p 70p 100p 30 # color=red text={slanted box annulus 3}'];
-
-                    //setStatus(false, 'region json error', plotId, rgComp);
+*/
+                    return setStatus(false, RegionErr);
                     //return;
                 }
-                rgAry = RegionFactory.parseRegionJson(result.RegionData);
+                var rgAry = RegionFactory.parseRegionJson(result.RegionData);
 
                 if (rgAry) {
-                    dispatchModifyCustomField(regionDrawLayerId, {regions: rgAry}, plotId, false);
+                    setStatus(true, get(result, 'Title', 'Region Plot'));
+                    dispatchModifyCustomField(regionDrawLayerId, {regions: rgAry}, false);
                 } else {
-                    setStatus(false, 'create drawing object error', plotId, rgComp);
+                    setStatus(false, DrawObjErr);
                 }
             }, ()=> {
-                setStatus(false, 'get region file error', plotId, rgComp);
+                setStatus(false, JSONErr);
             });
     }
 }
