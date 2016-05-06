@@ -28,6 +28,12 @@
     width: 100%;
 }
 
+.DD-ToolBar__version {
+    color: rgba(256,256,256,0.1);
+    position: absolute;
+    bottom: 15px;
+    right: 15px;}
+
 .DD-ToolBar__footer--icons {
     display: inline-block;
     text-decoration: none;

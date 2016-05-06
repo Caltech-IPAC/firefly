@@ -7,14 +7,12 @@ var nRetries = 0;
 var pinger;
 var connectBaseUrl;
 var listenters = [];
+var wsConn;
 
+const wsClient = {send: wsSend, addListener};
 
 export function wsConnect(baseUrl) {
-    if (!window.firefly) {
-        window.firefly = {};
-    }
     connectBaseUrl = baseUrl;
-
     var l = window.location;
     if (baseUrl == null) {
         var proto = (l.protocol === 'https:') ? 'wss://' : 'ws://';
@@ -28,13 +26,13 @@ export function wsConnect(baseUrl) {
 
     console.log('Connecting to ' + baseUrl + '/sticky/firefly/events' + queryString);
 
-    var wsClient = new WebSocket(baseUrl + '/sticky/firefly/events' + queryString);
-    wsClient.onopen = onOpen;
-    wsClient.onerror = onError;
-    wsClient.onclose = onClose;
-    wsClient.onmessage = onMessage;
-
-    window.firefly.WebSocketClient = wsClient;
+    wsConn = new WebSocket(baseUrl + '/sticky/firefly/events' + queryString);
+    wsConn.onopen = onOpen;
+    wsConn.onerror = onError;
+    wsConn.onclose = onClose;
+    wsConn.onmessage = onMessage;
+    
+    return wsClient;
 }
 
 /**
@@ -44,12 +42,12 @@ export function wsConnect(baseUrl) {
  * @param dataType One of 'JSON', 'BG_STATUS', 'STRING'.
  * @param data String.
  */
-export function wsSend({name='ping', scope, dataType, data}) {
+function wsSend({name='ping', scope, dataType, data}) {
     if (name === 'ping') {
-        window.firefly.WebSocketClient.send('');
+        wsConn.send('');
     } else {
         const msg = JSON.stringify(arguments[0]);
-        window.firefly.WebSocketClient.send(msg);
+        wsConn.send(msg);
     }
 
 }
@@ -61,7 +59,7 @@ export function wsSend({name='ping', scope, dataType, data}) {
  * @param onEvent a function that takes an event({name, data}) as its parameter.  this function is called
  *                whenever an event matches its listener.
  */
-export function addListener( {matches, onEvent} ) {
+function addListener( {matches, onEvent} ) {
     listenters.push(arguments[0]);
 }
 
@@ -94,12 +92,13 @@ function onMessage(event) {
             // connection established.. doing handshake.
             const sEventInfo = eventData.data.connID + '_' + eventData.data.channel;
             setCookie('seinfo', sEventInfo);
+        } else {
+            listenters.forEach( (l) => {
+                if (!l.matches || l.matches(eventData)) {
+                    l.onEvent(eventData);
+                }
+            });
         }
-        listenters.forEach( (l) => {
-            if (!l.matches || l.matches(eventData)) {
-                l.onEvent(eventData);
-            }
-        });
     }
 
 }

@@ -7,7 +7,7 @@ import shallowequal from 'shallowequal';
 import {get, pick} from 'lodash';
 
 import {getDropDownInfo} from '../core/LayoutCntlr.js';
-import {flux} from '../Firefly.js';
+import {flux, getVersion} from '../Firefly.js';
 import {SearchPanel} from '../ui/SearchPanel.jsx';
 import {TestQueriesPanel} from '../ui/TestQueriesPanel.jsx';
 import {ImageSelectDropdown} from '../ui/ImageSelectDropdown.jsx';
@@ -62,7 +62,7 @@ export class DropDownContainer extends Component {
     componentWillUnmount() {
         this.removeListener && this.removeListener();
     }
-
+    
     shouldComponentUpdate(nProps, nState) {
         const check = ['visible','selected'];
         return !shallowequal(pick(nState, check), pick(this.state, check));
@@ -125,18 +125,21 @@ DropDownContainer.defaultProps = {
                 <a href='http://www.ipac.caltech.edu/'
                    alt='Infrared Processing and Analysis Center' target='ipac'
                    title='Infrared Processing and Analysis Center'><img alt='Icon_ipac'
-                                                                        src='footer/icon_ipac-white-78x60.png'/></a>
+                                                                        src='images/footer/icon_ipac-white-78x60.png'/></a>
                 <a href='http://www.caltech.edu/'
                    alt='California Institute of Technology'
                    target='caltech' title='California Institute of Technology'><img
-                    alt='Icon_caltech' src='footer/icon_caltech-new.png'/></a>
+                    alt='Icon_caltech' src='images/footer/icon_caltech-new.png'/></a>
                 <a href='http://www.jpl.nasa.gov/' alt='Jet Propulsion Laboratory'
                    target='jpl' title='Jet Propulsion Laboratory'><img alt='Icon_jpl'
-                                                                       src='footer/icon_jpl-white-91x60.png'/></a>
+                                                                       src='images/footer/icon_jpl-white-91x60.png'/></a>
                 <a href='http://www.nasa.gov/'
                    alt='National Aeronautics and Space Administration' target='nasa'
                    title='National Aeronautics and Space Administration'><img
-                    alt='Icon_nasa' src='footer/icon_nasa-white-59x60.png'/></a>
+                    alt='Icon_nasa' src='images/footer/icon_nasa-white-59x60.png'/></a>
+            </div>
+            <div className='DD-ToolBar__version'>
+                {getVersion()}
             </div>
         </div>
     );

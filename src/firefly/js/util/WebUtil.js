@@ -6,7 +6,7 @@
 
 import Enum from 'enum';
 import update from 'react-addons-update';
-import {get, set, omit, isObject, union, isFunction, isEqual,  isNil} from 'lodash';
+import {get, set, omit, isObject, union, isFunction, isEqual,  isNil, last} from 'lodash';
 import { getRootURL } from './BrowserUtil.js';
 
 const  MEG          = 1048576;
@@ -221,16 +221,19 @@ export function parseUrl(url) {
             }
         });
     });
+    const p = last(paths);
+    const filename = p.includes(';') ? p.split(';')[0] : p;
 
     return {
         protocol: parser.protocol,
         host: parser.host,
         hostname: parser.hostname,
         port: parser.port,
-        pathname: parser.pathname,
+        path: parser.pathname,
         search: parser.search,
         hash: parser.hash,
         searchObject,
+        filename,
         pathAry
     };
 }
@@ -351,18 +354,6 @@ export function updateSet(object, path, value) {
 }
 
 /**
- * This is a wrapper of React update's $merge for use with deep object update.
- * *Syntax is similar to as lodash set.
- * @param object (Object): The object to modify.
- * @param path (Array|string): The path of the property to merge.
- * @param value (*): The value to merge.
- */
-export function updateMerge(object, path, value) {
-    const o = set({}, path, {$merge: value});
-    return update(object, o);
-}
-
-/**
  * This is a generic wrapper of React's update for use with deep object update.
  * Command can be on of:
  * {$push: array}, {$unshift: array}, {$splice: array of arrays}, {$set: any}, {$apply: function}
@@ -389,3 +380,4 @@ export function updateDelete(object, path, value) {
     return updateSet(object, path, v);
 }
 /*---------------------------- update /----------------------------*/
+

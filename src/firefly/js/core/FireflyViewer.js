@@ -138,9 +138,8 @@ function onReady({menu, views}) {
     }
     if (Image_Support.includes(views) ) {
         dispatchAddViewer('triViewImages', true, true);
+        launchImageMetaDataSega();
     }
-
-    launchImageMetaDataSega();
     const home = getDropDownNames()[0];
     const goto = getActionFromUrl() || (home && {type: SHOW_DROPDOWN, payload: {view: home}});
     if (goto) firefly.process(goto);

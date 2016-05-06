@@ -21,7 +21,7 @@ import {encodeUrl, parseUrl} from '../util/WebUtil.js';
 import * as LO from './LayoutCntlr.js';
 
 const MAX_HISTORY_LENGTH = 20;
-const DEF_HANDLER = genericHandler('fftools.html');
+const DEF_HANDLER = genericHandler(parseUrl(document.location).filename);
 
 /**
  * a map of all actions that should be in history

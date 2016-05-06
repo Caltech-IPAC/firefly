@@ -270,6 +270,15 @@ export function dispatchSetMenu(menu) {
 }
 
 /**
+ * updates app-data.  This does a merge with the existing data.
+ * @param appData
+ * @returns {{type: string, payload: *}}
+ */
+export function dispatchUpdateAppData(appData) {
+    flux.process({ type : APP_UPDATE, payload: appData });
+}
+
+/**
  * execute this callback when app is ready.
  */
 export function dispatchOnAppReady(callback) {
@@ -283,7 +292,8 @@ export function dispatchOnAppReady(callback) {
 
 /*---------------------------- EXPORTED FUNTIONS -----------------------------*/
 export function isAppReady() {
-    return get(flux.getState(), [APP_DATA_PATH, 'isReady']);
+    return get(flux.getState(), [APP_DATA_PATH, 'isReady']) &&
+           get(flux.getState(), [APP_DATA_PATH, 'gwtLoaded']);
 }
 
 export function getMenu() {
@@ -303,8 +313,8 @@ function* doOnAppReady(callback, dispatch, getState) {
 
     var isReady = isAppReady();
     while (!isReady) {
-        const action = yield take([APP_UPDATE, APP_LOAD]);
-        isReady = get(action, 'payload.isReady');
+        yield take([APP_UPDATE, APP_LOAD]);
+        isReady = isAppReady();
     }
     callback && callback(getState());
 }
@@ -321,7 +331,7 @@ function fetchAppData(dispatch) {
             dispatch(updateAppData(
                 {
                     isReady: true,
-                    menu: makeMenu(props),
+                    // menu: makeMenu(props),
                     props
                 }));
         })

@@ -1,0 +1,252 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Demo of Firefly Tools</title>
+</head>
+
+<body>
+
+
+<div style="width: 500px; padding: 80px 0 30px 40px; font-size: 18pt">
+Demo of Firefly Tools
+</div>
+
+<div>
+    <div id="primaryID" style="width: 350px; height: 350px; padding: 10px 5px 5px 5px; display:inline-block; vertical-align: top"></div>
+    <div style="display:inline-block;vertical-align: top;position:relative">
+      <div id="subsetID" style="width: 350px; height: 350px; padding: 10px 5px 5px 5px;display:inline-block;vertical-align: top;"></div>
+      <div style="width: 350px; padding: 10px 5px 5px 5px; position: absolute; top: -40px;">
+        On point selection callback an image of the corresponding quadrant will be here:
+      </div>
+    </div>
+
+    <div style="padding: 10px 5px 5px 5px;display:inline-block;vertical-align: top;position:relative;">
+      <div id="tableHere"  style="display:inline-block; width: 450px; height: 350px;
+                                border: solid 1px;"></div>
+      <div style="width: 450px; padding: 10px 5px 5px 5px; position:absolute; top: -20px;">
+	On area selection callback a table will show up here:
+      </div>
+    </div>
+</div>
+<div style="padding: 15px 0 0 0;">
+    <div id="messages" style="width: 350px; height: 350px; padding: 10px 5px 5px 5px; display:inline-block; vertical-align: top; overflow-y: auto; overflow-x: auto;">
+        <div style="padding-top: 100px;">
+	  Messages Here
+        </div>
+    </div>    
+    <div style="padding: 10px 5px 5px 5px;display:inline-block;vertical-align: top;position:relative;">
+      <div id="chartHere"  style="display:inline-block; width: 800px; height: 350px;
+                                border: solid 1px;"></div>
+      <div style="width: 800px; padding: 10px 5px 5px 5px; position:absolute; top: -20px;">
+	On line selection callback a chart will show up here:
+      </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+    {
+        var launcherAvailable=true;
+
+        resetHelp= function() {
+            document.getElementById('messages').innerHTML= 
+	        '<ui>'+
+                    '<li>To draw a point, click on the image when no other plotting tool is selected.'+
+                    '<li>To draw a line open up plot settings and use a ruler or <i>Distance Tool</i>. Draw a line by clicking and dragging on the image.'+  
+                    '<li>To select an area, use <i>Select an Area</i> tool in plot settings. Click and drag the rectangle on the image.'+  
+                '</ui>'+
+                '<p>After a point or a line appear, notice the change in context menu <i>Options</i> above the image.<br>'+
+                'When user clicks on an option, it triggers a user-defined callback. Try it.';          
+        };
+
+        checkLauncherAvailable = function() {
+            var launcher = 'python';
+            var task = 'JsonTaskNoArg';
+            var taskParams = {};
+            firefly.getJsonFromTask(launcher, task, taskParams)
+              .then(function () {
+                  launcherAvailable = true;
+              }).catch(function () {
+                  launcherAvailable = false;
+              });
+        };
+
+        onFireflyLoaded= function() {
+            firefly.debug= true;
+            resetHelp();
+
+            var subset= firefly.makeImageViewer("subsetID");
+            var primaryViewer= firefly.makeImageViewer("primaryID");
+            primaryViewer.plot( {
+                        "URL"       : "http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits",
+                        "Title"     : "Some WISE image",
+                        "ZoomType"  : "TO_WIDTH",
+                        "ZoomToWidth" : "350"}
+            );
+
+            // run a task through python launcher to see if it is available
+            checkLauncherAvailable();
+
+
+            var subsetParams= { "InitZoomLevel"  : "1.3"};
+
+
+
+
+            var extFunc= function(data) {
+                document.getElementById('messages').innerHTML=
+                        'The <i>data</i> from the callback can be used to construct the parameters to other firefly methods.<br>'+
+                        'Here is the content of <i>data</i> object from the latest callback:<pre>'+JSON.stringify(data, null, 4)+'</pre>';
+
+                if (data.type==='POINT' && data.PlotId==='primaryID' && data.ipt) {
+
+                    var idx1= (data.ipt.y<300) ? '1' : '0';
+                    var idx2= (data.ipt.x<300) ? '0' : '1';
+                    subsetParams.URL= 'http://web.ipac.caltech.edu/staff/roby/demo/wise-'+idx1+idx2+'.fits';
+                    subsetParams.Title= 'Quadrant- '+idx1+','+idx2;
+                    subset.plot( subsetParams);
+                }
+                else if (data.type==='LINE_SELECT') {
+                    if (launcherAvailable) {
+                        document.getElementById("chartHere").innerHTML = "";
+
+                        var launcher = 'python';
+                        var task = 'JsonTaskToGetHistogramData';
+                        var ipts = data.ipt1.x - data.ipt0.x;
+                        var bins = 25;
+                        if (ipts > 200) {
+                            bins = 200;
+                        }
+                        else if (ipts > 100) {
+                            bins = 100;
+                        }
+                        else if (ipts > 50) {
+                            bins = 50;
+                        }
+                        //alert(ipts+" "+bins);
+
+                        var taskParams = {'numbins': bins};
+                        firefly.getJsonFromTask(launcher, task, taskParams)
+                                .then(function (histdata) {
+                                    console.log('Returned JSON: ' + JSON.stringify(histdata));
+                                    firefly.showHistogram(
+                                            {
+                                                'descr': 'Histogram data returned from python JSON task',
+                                                'binColor': '#3d3033',
+                                                'height': 350,
+                                                'data': histdata
+                                            },
+                                            "chartHere");
+
+                                }
+                        ).catch(function (reason) {
+                                     console.log('Error fetching JSON data from ' + launcher + ' task ' + task + ': ' + reason);
+                                }
+                        );
+                    } else {
+                        document.getElementById("chartHere").innerHTML = "";
+                        // show a plot from a URL instead
+                        var chartParams = {
+                            "source": 'http://web.ipac.caltech.edu/staff/roby/demo/SPITZER_S5_3539456_01_merge.tbl',
+                            "chartTitle": 'Sample Merged Spectra Table',
+                            "xCol": 'wavelength',
+                            "yCol": 'flux_density',
+                            "errorCol": 'error',
+                            "orderCol": 'order',
+                            "plotStyle": 'line',
+                            "showLegend": "always",
+                            "plotTitle": 'Sample Chart'
+                        };
+                        firefly.showPlot(chartParams, "chartHere");
+                    }
+                }
+                else if (data.type==='AREA_SELECT') {
+                    if (launcherAvailable) {
+                        var tableData= { "processor" : "TableFromExternalTask",
+                            "launcher" : "python",
+                            "task" : "TableTask",
+                            "taskParams" : {
+                                "param1" : "str +1",
+                                "param2" : "str +2"
+                            }
+                        };
+                        firefly.showTable(tableData, "tableHere");
+                    } else {
+                        document.getElementById("chartHere").innerHTML = "";
+
+                        var tableData1= { "source" : "http://web.ipac.caltech.edu/staff/roby/demo/test-table4.tbl"};
+                        firefly.showTable(tableData1, "tableHere");
+                    }
+                }
+                else if (data.type==='PLOT_MOUSE_READ_OUT') {
+                    if (data.flux || data.pause) {
+                        console.log(data);
+                    }
+                }
+            };
+
+            var extension= {
+                id : "MySpecialExt",
+                plotId : "primaryID",
+                imageUrl : null,
+                title : "Get Quadrant",
+                toolTip : "a tool tip",
+                extType: "POINT",
+                callback: extFunc
+            };
+
+            var actions= firefly.appFlux.getActions('ExternalAccessActions');
+            actions.extensionAdd(extension);
+            actions.channelActivate("tt");
+
+            var extension2= {
+                id : "MyLineExt",
+                plotId : "primaryID",
+                imageUrl : null,
+                title : "Do Graph",
+                toolTip : "a tool tip",
+                extType: "LINE_SELECT",
+                callback: extFunc
+            };
+            actions.extensionAdd(extension2);
+
+
+            var extension3= {
+                id : "MyAreaExt",
+                plotId : "primaryID",
+                imageUrl : null,
+                title : "Get Table",
+                toolTip : "a tool tip",
+                extType: "AREA_SELECT",
+                callback: extFunc
+            };
+            actions.extensionAdd(extension3);
+
+            var extension4= {
+                id : "readout",
+                plotId : "primaryID",
+                extType: "PLOT_MOUSE_READ_OUT",
+                callback: extFunc
+            };
+            actions.extensionAdd(extension4);
+
+        }
+    }
+
+</script>
+
+
+
+
+
+<script type="text/javascript" language='javascript' src='http://localhost:8080/fftools/fftools.nocache.js'>
+</script>
+
+</body>
+</html>

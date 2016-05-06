@@ -301,7 +301,7 @@ export function getTblInfo(tableModel, aPageSize) {
     const startIdx = (currentPage-1) * pageSize;
     const endIdx = Math.min(startIdx+pageSize, totalRows) || startIdx ;
     var totalPages = Math.ceil((totalRows || 0)/pageSize);
-    return { tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow, selectInfo, error};
+    return { tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow, selectInfo, error};
 }
 
 export function tableToText(columns, dataAry, showUnits=false) {

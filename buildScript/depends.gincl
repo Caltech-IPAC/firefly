@@ -109,6 +109,7 @@ task buildClient (dependsOn: loadConfig) {
 
   doLast {
     def wpBuildDir = "${buildDir}/gwt/${project['app-name']}"
+    def tag = "v" + getVersionTag() + ' Built On:' + build_time;
 
     try {
       def process = "npm version".execute()
@@ -131,8 +132,9 @@ task buildClient (dependsOn: loadConfig) {
     }
 
     def res = exec {
+      environment '__VERSION_TAG__': tag
       environment 'WP_BUILD_DIR': wpBuildDir
-      environment 'NODE_ENV': project.env
+      environment 'NODE_ENV': (project.env == 'local' ? 'development' : 'production')
       executable "npm"
       args 'run', 'build'
     }

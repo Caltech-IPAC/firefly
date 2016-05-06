@@ -1,0 +1,40 @@
+<module rename-to="firefly">
+
+    <!-- Specify the app entry point class.                   -->
+    <entry-point class='edu.caltech.ipac.firefly.core.FireflyEntryPoint'/>
+
+    <source path="firefly/core">
+        <include name="FireflyEntryPoint.java"/>
+    </source>
+
+    <source path="firefly/visualize/" >
+        <include name="ProjectionSerializer.java"/>
+        <include name="ProjectionParams.java"/>
+        <include name="package-info.java"/>
+    </source>
+
+    <source path="astro/conv"/>
+
+    <source path="visualize/plot/projection"/>
+    <source path="visualize/plot/" >
+        <include name="ProjectionPt.java"/>
+        <include name="*Pt.java"/>
+        <include name="CoordinateSys.java"/>
+        <include name="ProjectionException.java"/>
+        <include name="PixelValueException.java"/>
+        <include name="RangeValues.java"/>
+        <!--<include name="CoveragePolygons.java"/>-->
+        <!--<include name="Circle.java"/>-->
+        <!--<include name="ImageCorners.java"/>-->
+        <!--<include name="MiniFitsHeader.java"/>-->
+
+        <exclude name="ResolvedWorldPt.java"/>
+    </source>
+
+    <source path="util/">
+        <include name="StringTokenizer.java"/>
+        <include name="StringUtils.java"/>
+        <include name="HandSerialize.java"/>
+    </source>
+
+  </module>

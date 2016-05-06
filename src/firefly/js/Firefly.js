@@ -1,13 +1,16 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+/*global __VERSION_TAG__*/
+
 
 import 'babel/polyfill';
 import 'isomorphic-fetch';
 import React from 'react';
 import 'styles/global.css';
+import {isUndefined} from 'lodash';
 
-import {APP_LOAD} from 'firefly/core/AppDataCntlr.js';
+import {APP_LOAD, dispatchUpdateAppData} from './core/AppDataCntlr.js';
 import {ExtensionJavaInterface } from './gwtinterface/ExtensionJavaInterface.js';
 import {ExtensionResult } from './gwtinterface/ExtensionResult.js';
 import {PlotCmdExtension } from './visualize/PlotCmdExtension.js';
@@ -21,11 +24,9 @@ import ExternalAccessUtils from './core/ExternalAccessUtils.js';
 
 import {reduxFlux} from './core/ReduxFlux.js';
 import {wsConnect} from './core/messaging/WebSocketClient.js';
-import {addListener} from './core/messaging/WebSocketClient.js';
-import {GwtEventHandler, ActionEventHandler} from './core/messaging/MessageHandlers.js';
+import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
 
 export const flux = reduxFlux;
-
 
 /**
  * work around for transition from flummox to redux
@@ -46,6 +47,12 @@ const appFlux= {
 
 
 function fireflyInit() {
+
+    if (! window.ffgwt ) {
+        window.ffgwt = {
+            onLoaded: () => dispatchUpdateAppData({gwtLoaded: true})
+        };
+    }
 
     if (! (window.firefly && window.firefly.initialized) ) {
         flux.bootstrap();
@@ -79,14 +86,20 @@ function fireflyInit() {
         window.firefly.initialized = true;
 
         // start WebSocketClient
-        wsConnect();
-        addListener(GwtEventHandler);
-        addListener(ActionEventHandler);
+        const wsClient = wsConnect();
+        wsClient.addListener(ActionEventHandler);
+        window.firefly.wsClient = wsClient;
+
+        if (!isUndefined(__VERSION_TAG__)) {
+            window.firefly.version = __VERSION_TAG__;
+        }
     }
 }
 
-
-
+export function getVersion() {
+  return isUndefined(__VERSION_TAG__) ? 'unknown' :
+        window.firefly.version = __VERSION_TAG__;
+} 
 
 
 export var firefly = {

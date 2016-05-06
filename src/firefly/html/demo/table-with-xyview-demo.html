@@ -1,0 +1,56 @@
+<!doctype html>
+
+<html>
+<head> <title>Firefly Tools with XY Plot View, Coverage & Preview</title> </head>
+<body>
+
+<div style="margin: 80px 0px 20px 20px;font-size: 20pt;">Firefly Tools with XY Plot View, Coverage & Preview</div>
+
+
+<div style="white-space: nowrap;">
+    <div id="previewHere" style="display:inline-block;width: 350px; height: 350px; padding: 5px 5px 5px 5px; border: solid 1px;"></div>
+    <div id="tableHere"  style="display:inline-block; width: 710px; height: 350px;
+                                padding: 5px 5px 5px 5px; border: solid 1px;"></div>
+</div>
+
+<div style="white-space: nowrap;">
+    <div id="xyPlotHere"  style="display:inline-block; width: 710px; height: 350px;
+                                padding: 5px 5px 5px 5px; border: solid 1px;"></div>
+    <div id="coverageHere"  style="display:inline-block;width: 350px; height: 350px; padding: 5px 5px 5px 5px; border: solid 1px;"></div>
+</div>
+
+
+<script type="text/javascript">
+    {
+        function onFireflyLoaded() {
+            firefly.showTable({"source" : "http://web.ipac.caltech.edu/staff/roby/demo/wd/WiseQuery.tbl",
+                                           "type" : "selectable"}, "tableHere");
+            firefly.addXYPlot(
+                    {"QUERY_ID" : "tableHere",
+                     "xCol" : "frame_num",
+                     "yCol" : "band"}, "xyPlotHere" );
+
+
+            firefly.addDataViewer( {"DataSource"  : "URL",
+                                    "DataColumn"  : "file",
+                                    "MinSize"     : "100x100",
+                                    //"ColorTable"  : "1",
+                                    "RangeValues" : firefly.serializeRangeValues("Sigma",-2,8,"Linear"),
+                                    "QUERY_ID"    : "tableHere"  },
+                                   "previewHere" );
+
+            firefly.addCoveragePlot({"QUERY_ID" : "tableHere",
+                                                 "CornerColumns" : "ra1,dec1,ra2,dec2,ra3,dec3,ra4,dec4",
+                                                 "CenterColumns" : "in_ra,in_dec",
+                                                 "MinSize"    : "100x100"},
+                                                 "coverageHere" );
+        }
+    }
+</script>
+
+
+<script type="text/javascript" language='javascript'
+                 src='http://localhost:8080/fftools/fftools.nocache.js'> </script>
+
+</body>
+</html>

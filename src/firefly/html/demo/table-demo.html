@@ -1,0 +1,95 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Demo of Firefly Tools</title>
+</head>
+
+<body>
+
+<div style="width: 500px; padding: 20px 0 0 20px;">
+    This pages demos how you can bring up a firefly tools table and then attach a plot to it.
+    <br>
+    <br>
+    The first table attaches a coverage. Notice that the coverage overlay is linked to the plot.
+    Clicking on the plot causes the table to change, clicking on the table causes the overlay to highlight.
+    <br>
+    <br>
+    The second tables attaches a plot plot preview to the table.  Clicking on the table changes the plot.
+    <br>
+    <br>
+    <!--<span style="font-weight: bold;"  >Click on a row of the table to see a image</span>-->
+    <br>
+    <br>
+</div>
+
+
+<table>
+    <tr>
+        <td>
+            <div id="tableHere" style="width: 800px; height: 400px; margin : 5px 8px 0px 10px; padding: 5px 5px 5px 5px; border: solid 1px;"></div>
+        </td>
+        <td>
+            <div id="coverageHere" style="width: 400px; height: 400px; padding: 5px 5px 5px 5px; border: solid 1px;"></div>
+        </td>
+    </tr>
+    <tr>
+
+    </tr>
+</table>
+
+<table>
+    <tr>
+        <td>
+            <div id="table2Here" style="width: 600px; height: 300px; margin : 5px 8px 0px 10px; padding: 5px 5px 5px 5px; border: solid 1px;"></div>
+        </td>
+        <td>
+            <div id="previewHere" style="width: 300px; height: 300px; padding: 5px 5px 5px 5px; border: solid 1px;"></div>
+        </td>
+    </tr>
+    <tr>
+
+    </tr>
+</table>
+
+
+
+<script type="text/javascript">
+    {
+        onFireflyLoaded= function() {
+            firefly.debug= true;
+
+            var table1Data= { "source" : "http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl"};
+            firefly.showTable(table1Data, "tableHere");
+            firefly.addCoveragePlot({"QUERY_ID" : "tableHere",
+                                     "CornerColumns" : "ra1,dec1,ra2,dec2,ra3,dec3,ra4,dec4",
+                                     "CenterColumns" : "in_ra,in_dec",
+                                     "MinSize"    : "100x100" },
+                                     "coverageHere" );
+
+            var table2Data= { "source" : "http://web.ipac.caltech.edu/staff/roby/demo/test-table4.tbl"};
+            firefly.showTable(table2Data, "table2Here");
+            firefly.addDataViewer( {"DataSource" : "URL",
+                                       "DataColumn" : "FITS",
+                                       "MinSize"    : "100x100",
+                                       "QUERY_ID" : "table2Here"  },
+                                   "previewHere" );
+
+        }
+   }
+   
+</script>
+
+<script type="text/javascript" language='javascript'
+        src='http://localhost:8080/fftools/fftools.nocache.js'>
+</script>
+
+
+
+</body>
+</html>
