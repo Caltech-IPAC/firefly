@@ -29,16 +29,19 @@ public class WebFitsData implements Serializable {
     private double _dataMax;
     private long   _fitsFileSize;
     private String _fluxUnits;
+    private double  _beta;
 
     @JsNoExport
     public WebFitsData() {}
 
     public WebFitsData(double dataMin,
                        double dataMax,
+                       double beta,
                        long   fitsFileSize,
                        String fluxUnits ) {
         _dataMin= dataMin;
         _dataMax= dataMax;
+        _beta = beta;
         _fitsFileSize= fitsFileSize;
         _fluxUnits= fluxUnits;
 
@@ -46,6 +49,7 @@ public class WebFitsData implements Serializable {
 
     public double getDataMin()      { return _dataMin; }
     public double getDataMax()      { return _dataMax; }
+    public double getBeta()         {return _beta;}
 
     /**
      * Return the size of the fits file the this image was created from
@@ -71,14 +75,15 @@ public class WebFitsData implements Serializable {
         if (s==null) return null;
         String sAry[]= s.split(SPLIT_TOKEN,5);
         WebFitsData retval= null;
-        if (sAry.length==4) {
+        if (sAry.length==5) {
             try {
                 int i= 0;
                 double dataMin= StringUtils.getDouble(sAry[i++]);
                 double dataMax= StringUtils.getDouble(sAry[i++]);
+                double beta =  StringUtils.getDouble(sAry[i++]);
                 long fitsFileSize= Long.parseLong(sAry[i++]);
                 String fluxUnits= getString(sAry[i]);;
-                retval= new WebFitsData(dataMin,dataMax,fitsFileSize,fluxUnits);
+                retval= new WebFitsData(dataMin,dataMax,beta, fitsFileSize,fluxUnits);
             } catch (NumberFormatException e) {
                 retval= null;
             }

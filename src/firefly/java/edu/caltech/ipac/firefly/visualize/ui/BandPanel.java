@@ -20,7 +20,6 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.FormBuilder;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.input.FieldLabel;
 import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.input.StretchInputField;
@@ -35,8 +34,6 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.util.dd.ValidationException;
 import edu.caltech.ipac.visualize.plot.RangeValues;
-
-import java.util.Iterator;
 
 
 /**
@@ -88,7 +85,7 @@ public class BandPanel extends Composite {
     private InputField  _sampPerLine;
     private InputField _bp;
     private InputField  _wp;
-    private InputField _dr;
+    private InputField _beta;
     private InputField  _gamma;
     private Widget _asinhPanel;
     private Widget _gammaPanel;
@@ -176,10 +173,8 @@ public class BandPanel extends Composite {
 
 
         //create DR, BP,  WP and gamma
-        _dr= FormBuilder.createField(_prop.makeBase("DR"));
-        _bp= FormBuilder.createField(_prop.makeBase("BP"));
-        _wp= FormBuilder.createField(_prop.makeBase("WP"));
-        _asinhPanel= FormBuilder.createPanel(90,_dr, _bp, _wp);
+        _beta = FormBuilder.createField(_prop.makeBase("Beta"));
+        _asinhPanel= FormBuilder.createPanel(90, _beta);
 
         _gamma= FormBuilder.createField(_prop.makeBase("Gamma"));
         _gammaPanel= FormBuilder.createPanel(90,_gamma);
@@ -292,10 +287,8 @@ public class BandPanel extends Composite {
         float min= _minStretch.getNumberValue().floatValue();
         float max= _maxStretch.getNumberValue().floatValue();
 
-        float zp = _bp.getNumberValue().floatValue();
-        float wp = _wp.getNumberValue().floatValue();
 
-        float dr = _dr.getNumberValue().floatValue();
+        float beta = _beta.getNumberValue().floatValue();
         float gamma = _gamma.getNumberValue().floatValue();
 
         _minStretch.getDataType();
@@ -305,7 +298,7 @@ public class BandPanel extends Composite {
 
         if (_useZScale.getValue()) {
             range= new RangeValues( RangeValues.ZSCALE, min,
-                                    RangeValues.ZSCALE, max,dr,zp, wp, gamma,
+                                    RangeValues.ZSCALE, max,beta,gamma,
                                     getStretch(),
                                     _contrast.getNumberValue().intValue(),
                                     _numSamp.getNumberValue().intValue(),
@@ -313,7 +306,7 @@ public class BandPanel extends Composite {
         }
         else {
             range=  new RangeValues( _minStretch.getDataType(), min,
-                                     _maxStretch.getDataType(), max, dr,zp, wp, gamma,
+                                     _maxStretch.getDataType(), max, beta,gamma,
                                      getStretch());
         }
         return range;

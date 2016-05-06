@@ -68,7 +68,7 @@ export function stretchChangeActionCreator(rawAction) {
         if (!plot || !pv || !stretchData) return;
 
 
-        dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_START, payload: {plotId} } );
+        dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_START, payload: {plotId} } );
 
         const threeColor= plot.plotState.isThreeColor();
         doStretch(dispatcher,store,plotId,stretchData);

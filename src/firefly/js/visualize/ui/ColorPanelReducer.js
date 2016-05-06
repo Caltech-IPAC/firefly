@@ -20,7 +20,6 @@ export const BLUE_PANEL= 'bluePanel';
 export const NO_BAND_PANEL= 'nobandPanel';
 
 
-
 /**
  * Reducer entry point. This function returns a reducer initialized to work with the passed band.
  * @return a reducer function. a standard type reducer function.
@@ -29,15 +28,20 @@ export const colorPanelChange= function(band) {
     return (fields,action) => {
         if (!fields || !Object.keys(fields).length) fields= getFieldInit();
         var plot= primePlot(visRoot());
+
         if (!plot.plotState.isBandUsed(band)) return fields;
 
         var plottedRV= null;
         var fitsData= null;
         if (plot) {
             fitsData= plot.webFitsData[band.value];
+            //var beta = fitsData.beta;
             plottedRV= plot.plotState.getRangeValues(band);
-            if (!fitsData || !plottedRV) return fields;
+
+           // if ( !newPlot) return fields;
+            if (!fitsData || ! plottedRV ) return fields;
         }
+
         return computeColorPanelState(fields, plottedRV, fitsData, band, action.type);
     };
 };
@@ -58,6 +62,7 @@ const computeColorPanelState= function(fields, plottedRV, fitsData, band, action
 
     switch (actionType) {
         case FieldGroupCntlr.VALUE_CHANGE:
+        case ImagePlotCntlr.ANY_REPLOT:
             var valid= Object.keys(fields).every( (key) => {
                 return !fields[key].mounted ? true :  fields[key].valid;
             } );
@@ -65,17 +70,16 @@ const computeColorPanelState= function(fields, plottedRV, fitsData, band, action
             return syncFields(fields,makeRangeValuesFromFields(fields),fitsData);
             break;
 
-        case FieldGroupCntlr.INIT_FIELD_GROUP:
-        case ImagePlotCntlr.ANY_REPLOT:
+      case FieldGroupCntlr.INIT_FIELD_GROUP:
             if (!plottedRV && !fitsData) return fields;
             var newFields = updateFieldsFromRangeValues(fields,plottedRV,fitsData);
             return syncFields(newFields,plottedRV,fitsData);
             break;
+
     }
     return fields;
 
 };
-
 
 /**
  * Sync the fields so that are consistent with the passed RangeValues object.
@@ -95,6 +99,7 @@ function syncFields(fields,rv,fitsData) {
     newFields.upperWhich=   clone(fields.upperWhich, {value: rv.upperWhich});
     if (newFields.lowerWhich.value===ZSCALE) newFields.lowerWhich.value= PERCENTAGE;
     if (newFields.upperWhich.value===ZSCALE) newFields.upperWhich.value= PERCENTAGE;
+
 
     return  newFields;
 }
@@ -180,16 +185,16 @@ const computeUpperRangeField= function(fields,rv,fitsData) {
  * @return {RangeValues}
  */
 const makeRangeValuesFromFields= function(fields) {
+
     var lowerWhich= (fields.zscale.value==='zscale') ? ZSCALE : fields.lowerWhich.value;
     var upperWhich= (fields.zscale.value==='zscale') ? ZSCALE : fields.upperWhich.value;
+
     return new RangeValues(
             lowerWhich,
             fields.lowerRange.value,
             upperWhich,
             fields.upperRange.value,
-            fields.DR.value,
-            fields.BP.value,
-            fields.WP.value,
+            fields.beta.value,
             fields.gamma.value,
             fields.algorithm.value,
             fields.zscaleContrast.value,
@@ -202,15 +207,13 @@ const makeRangeValuesFromFields= function(fields) {
  * @param fields
  * @param rv RangeValues
  */
-const updateFieldsFromRangeValues= function(fields,rv) {
+const updateFieldsFromRangeValues= function(fields,rv, fitsData) {
     fields= clone(fields);
     fields.lowerWhich= cloneWithValue(fields.lowerWhich, rv.lowerWhich===ZSCALE ? PERCENTAGE : rv.lowerWhich);
     fields.lowerRange= cloneWithValue(fields.lowerRange, rv.lowerValue);
     fields.upperWhich= cloneWithValue(fields.upperWhich, rv.lowerWhich===ZSCALE ? PERCENTAGE : rv.upperWhich);
     fields.upperRange= cloneWithValue(fields.upperRange, rv.upperValue);
-    fields.DR= cloneWithValue(fields.DR, rv.drValue);
-    fields.BP= cloneWithValue(fields.BP, rv.bpValue);
-    fields.WP= cloneWithValue(fields.WP, rv.wpValue);
+    fields.beta= cloneWithValue(fields.beta,fitsData.beta);//rv.betaValue); //
     fields.gamma= cloneWithValue(fields.gamma, rv.gammaValue);
     fields.algorithm= cloneWithValue(fields.algorithm, rv.algorithm);
     fields.zscaleContrast= cloneWithValue(fields.zscaleContrast, rv.zscaleContrast);
@@ -223,9 +226,10 @@ const updateFieldsFromRangeValues= function(fields,rv) {
 
 /**
  * defines fields
- * @return {{lowerRange: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, upperRange: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, zscaleContrast: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, zscaleSamples: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, zscaleSamplesPerLine: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, DR: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, gamma: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, BP: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, WP: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, algorithm: {tooltip: string, label: string, value}, lowerWhich: {tooltip: string, label: string, value}, upperWhich: {tooltip: string, label: string, value}, zscale: {value: string, tooltip: string, label: string}}}
+ * @return {{lowerRange: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, upperRange: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, zscaleContrast: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, zscaleSamples: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, zscaleSamplesPerLine: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, beta: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, gamma: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, BP: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, WP: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, algorithm: {tooltip: string, label: string, value}, lowerWhich: {tooltip: string, label: string, value}, upperWhich: {tooltip: string, label: string, value}, zscale: {value: string, tooltip: string, label: string}}}
  */
 var getFieldInit= function() {
+
     return {
         lowerRange: {
             fieldKey: 'lowerRange',
@@ -263,12 +267,12 @@ var getFieldInit= function() {
             label: 'Samples per line:'
         },
 
-        DR: {
-            fieldKey: 'DR',
-            value: '1.0',
-            validator: Validate.floatRange.bind(null, 1, 1000000, 1, 'DR'),
-            tooltip: 'The dynamic range scaling factor of data',
-            label: 'Dynamic Range:'
+        beta: {
+            fieldKey: 'beta',
+            value: '0.1',
+            validator: Validate.floatRange.bind(null, 0.000001, 100, 1, 'beta'),
+            tooltip: 'an arbitrary "softness"',
+            label: 'beta:'
         },
         gamma: {
             fieldKey: 'gamma',
@@ -277,20 +281,7 @@ var getFieldInit= function() {
             tooltip: ' The Gamma value of the Power Law Gamma Stretch',
             label: 'Gamma:'
         },
-        BP: {
-            fieldKey: 'BP',
-            value: '0',
-            validator: Validate.floatRange.bind(null, 0, 1000000, 4, 'Black Point'),
-            tooltip: 'black point for image display',
-            label: 'Black Point:'
-        },
-        WP: {
-            fieldKey: 'WP',
-            value: '1.0',
-            validator: Validate.floatRange.bind(null, 0, 1000000, 4, 'White Point'),
-            tooltip: 'white point for image display',
-            label: 'White Point:'
-        },
+
         algorithm: {
             tooltip: 'Choose Stretch algorithm',
             label: 'Stretch Type: ',

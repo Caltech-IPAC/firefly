@@ -15,15 +15,16 @@ class WebFitsData {
      * @param {number} fitsFileSize
      * @param {string} fluxUnits = the units string, i.e. a string the describes the units
      */
-    constructor(dataMin, dataMax, fitsFileSize, fluxUnits ) {
+    constructor(dataMin, dataMax, beta, fitsFileSize, fluxUnits ) {
         this.dataMin= dataMin;
         this.dataMax= dataMax;
+        this.beta = beta;
         this.fitsFileSize= fitsFileSize;
         this.fluxUnits= fluxUnits;
     }
 
     toString() {
-        return join(SPLIT_TOKEN, this.dataMin,  this.dataMax,  this.fitsFileSize,  this.fluxUnits);
+        return join(SPLIT_TOKEN, this.dataMin,  this.dataMax, this.beta, this.fitsFileSize,  this.fluxUnits);
     }
 
     static parse(s) {
@@ -34,9 +35,10 @@ class WebFitsData {
         var i= 0;
         const dataMin= parseFloat(sAry[i++], 0);
         const dataMax= parseFloat(sAry[i++], 0);
+        const beta= parseFloat(sAry[i++], 0);
         const fitsFileSize= parseInt(sAry[i++], 0);
         const fluxUnits= getStringWithNull(sAry[i], 0);
-        return new WebFitsData(dataMin,dataMax,fitsFileSize,fluxUnits);
+        return new WebFitsData(dataMin,dataMax,beta,fitsFileSize,fluxUnits);
     }
 }
 

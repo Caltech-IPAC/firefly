@@ -146,7 +146,7 @@ export function fieldGroupConnector(FieldComponent,
         labelWidth: PropTypes.number,
         forceReinit: PropTypes.bool
     };
-    
+
     if (connectorPropTypes) {
         Object.assign(FGConnector.propTypes, connectorDefProps);
     }

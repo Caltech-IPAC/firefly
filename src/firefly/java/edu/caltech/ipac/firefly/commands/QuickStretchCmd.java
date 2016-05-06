@@ -26,10 +26,8 @@ import edu.caltech.ipac.visualize.plot.RangeValues;
 public class QuickStretchCmd extends BaseGroupVisCmd {
     private RangeValues _range;
     private final String _baseLabel;
-    private static final float DR = 1;
+    private static final float BETA = 0.2f;
     private static final float GAMMA=2;
-    private static final float ZP = 0;
-    private static final float WP=1;
 
     public QuickStretchCmd(String commandName,
                            float percent) {
@@ -48,7 +46,7 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
                 RangeValues.STRETCH_LINEAR);
         updateLabel();
 
-        Listener l= new Listener(stretchType, lowerFactor,upperFactor, DR,ZP, WP, GAMMA);
+        Listener l= new Listener(stretchType, lowerFactor,upperFactor, BETA,GAMMA);
 
         AllPlots.getInstance().addListener(Name.REPLOT, l);
         AllPlots.getInstance().addListener(Name.FITS_VIEWER_CHANGE, l);
@@ -56,24 +54,24 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
     }
 
     public QuickStretchCmd(String commandName,
-                           float percent, float drValue,float zpValue,float wpValue , float gammaValue) {
-        this(commandName,100-percent, percent,drValue,zpValue, wpValue, gammaValue , RangeValues.PERCENTAGE );
+                           float percent, float betaValue, float gammaValue) {
+        this(commandName,100-percent, percent,betaValue,gammaValue , RangeValues.PERCENTAGE );
     }
 
 
     public QuickStretchCmd(String commandName,
                            float lowerFactor,
-                           float upperFactor,  float drFactor,float zpFactor,float wpFactor, float gammaFactor,
+                           float upperFactor,  float betaFactor, float gammaFactor,
                            int   stretchType) {
         super(commandName);
 
         _baseLabel= getLabel();
         _range=  new RangeValues(stretchType, lowerFactor,
-                                 stretchType, upperFactor, drFactor, zpFactor, wpFactor, gammaFactor,
+                                 stretchType, upperFactor, betaFactor, gammaFactor,
                                  RangeValues.STRETCH_LINEAR);
         updateLabel();
 
-        Listener l= new Listener(stretchType, lowerFactor,upperFactor,drFactor,zpFactor, wpFactor, gammaFactor);
+        Listener l= new Listener(stretchType, lowerFactor,upperFactor,betaFactor, gammaFactor);
 
         AllPlots.getInstance().addListener(Name.REPLOT, l);
         AllPlots.getInstance().addListener(Name.FITS_VIEWER_CHANGE, l);
@@ -134,20 +132,16 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
 
         private final float _lowerFactor;
         private final float _upperFactor;
-        private final float _drFactor;
+        private final float _betaFactor;
         private final float _gammaFactor;
-        private final float _zpFactor;
-        private final float _wpFactor;
         private final int _stretchType;
 
 
-        Listener(int stretchType, float lowerFactor, float upperFactor, float drFactor,float zpFactor, float wpFactor, float gammaFactor )  {
+        Listener(int stretchType, float lowerFactor, float upperFactor, float betaFactor,float gammaFactor )  {
             _lowerFactor= lowerFactor;
             _upperFactor= upperFactor;
             _stretchType= stretchType;
-            _drFactor = drFactor;
-            _zpFactor = zpFactor;
-            _wpFactor = wpFactor;
+            _betaFactor = betaFactor;
             _gammaFactor=gammaFactor;
         }
 
@@ -166,10 +160,8 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
                                              _lowerFactor,
                                              _stretchType,
                                              _upperFactor,
-                                             _drFactor,
-                                              _zpFactor,
-                                              _wpFactor,
-                                              _gammaFactor,
+                                             _betaFactor,
+                                             _gammaFactor,
                                              getCurrentRV().getStretchAlgorithm());
                     updateLabel();
                 }
