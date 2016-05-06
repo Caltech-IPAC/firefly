@@ -5,6 +5,7 @@
 import {flux} from '../Firefly.js';
 import {fork, take} from 'redux-saga/effects';
 import {watchCatalogs} from '../visualize/saga/CatalogWatcher.js';
+import {syncCharts} from '../visualize/saga/ChartsSync.js';
 import {imagePlotter} from '../visualize/saga/ImagePlotter.js';
 
 export const ADD_SAGA= 'MasterSaga.addSaga';
@@ -30,6 +31,7 @@ export function* masterSaga() {
     // This section starts any predefined Sagas
     yield fork( watchCatalogs, null, dispatch, getState);
     yield fork( imagePlotter, null, dispatch, getState);
+    yield fork( syncCharts, null, dispatch, getState);
     
     // Start a saga from any action
     while (true) {

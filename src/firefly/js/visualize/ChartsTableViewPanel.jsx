@@ -225,13 +225,13 @@ class ChartsPanel extends React.Component {
 
     addZoom() {
         if (this.state.chartType === SCATTER) {
-            XYPlotCntlr.dispatchSetZoom(this.props.tblId, get(this.props, 'tblPlotData.xyPlotParams.selection'));
+            XYPlotCntlr.dispatchZoom(this.props.tblId, get(this.props, 'tblPlotData.xyPlotParams.selection'));
         }
     }
 
     resetZoom() {
         if (this.state.chartType === SCATTER) {
-            XYPlotCntlr.dispatchResetZoom(this.props.tblId);
+            XYPlotCntlr.dispatchZoom(this.props.tblId);
         }
     }
 
@@ -447,11 +447,9 @@ class ChartsPanel extends React.Component {
         var {tblStatsData, width, height} = this.props;
         width = width || '100%';
 
-        if (!tblStatsData) {
-            return (<div>.....</div>);
-        } else if (!tblStatsData.isTblLoaded) {
+        if (!(tblStatsData && tblStatsData.isColStatsReady) ) {
             return (<img style={{verticalAlign:'top', height: 16, padding: 10, float: 'left'}}
-                         title='Loading Table...'
+                         title='Loading Table Statistics...'
                          src={LOADING}/>
             );
         } else {
