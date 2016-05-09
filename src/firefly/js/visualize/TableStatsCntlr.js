@@ -1,7 +1,8 @@
 import {flux} from '../Firefly.js';
 
-import {has, get, omit, set} from 'lodash';
+import {has, omit} from 'lodash';
 
+import {updateSet, updateMerge} from '../util/WebUtil.js';
 import ColValuesStatistics from './ColValuesStatistics.js';
 
 import {TableRequest} from '../tables/TableRequest.js';
@@ -14,7 +15,6 @@ import * as TablesCntlr from '../tables/TablesCntlr.js';
  /tblstats
    tbl_id: Object - the name of this node matches table id
    {
-     isTblLoaded: boolean - tells if the table is completely loaded
      isColStatsReady: boolean
      colStats: [ColValuesStatistics]
    }
@@ -70,53 +70,13 @@ function getInitState() {
     return {};
 }
 
-/*
- Get the new state related to a particular table (if it's tracked)
- @param tblId {string} table id
- @param state {object} histogram store
- @param newProps {object} new properties
- @return {object} new state
- */
-function stateWithNewData(tblId, state, newProps) {
-    if (has(state, tblId)) {
-        const tblData = get(state, tblId);
-        const newTblData = Object.assign({}, tblData, newProps);
-        const newState = Object.assign({}, state);
-        set(newState, tblId, newTblData);
-        return newState;
-    }
-    return state;
-}
 
 export function reducer(state=getInitState(), action={}) {
     switch (action.type) {
         case (SETUP_TBL_TRACKING) :
         {
             const {tblId} = action.payload;
-            let isTblLoaded;
-            if (TableUtil.isFullyLoaded(tblId)) {
-                isTblLoaded = true;
-                action.sideEffect((dispatch) => fetchTblStats(dispatch, TableUtil.findTblById(tblId).request));
-
-            } else {
-                isTblLoaded = false;
-            }
-            const newState = Object.assign({}, state);
-            set(newState, tblId, {isTblLoaded});
-            return newState;
-        }
-        case (TablesCntlr.TABLE_NEW_LOADED)  :
-        {
-            const {tbl_id, request} = action.payload;
-            if (has(state, tbl_id)) {
-                if (!get(state, [tbl_id, 'isTblLoaded'])) {
-                    const newState = Object.assign({}, state);
-                    set(newState, tbl_id, {isTblLoaded: true});
-                    action.sideEffect((dispatch) => fetchTblStats(dispatch, request));
-                    return newState;
-                }
-            }
-            return state;
+            return updateSet(state, tblId, {isColStatsReady: false});
         }
         case (TablesCntlr.TABLE_REMOVE)  :
         {
@@ -130,13 +90,12 @@ export function reducer(state=getInitState(), action={}) {
         }
         case (LOAD_TBL_STATS)  :
         {
-            const {tblId} = action.payload;
-            return stateWithNewData(tblId, state, {isColStatsReady: false});
+            return updateSet(state, action.payload.tblId, {isColStatsReady: false});
         }
         case (UPDATE_TBL_STATS)  :
         {
             const {tblId, isColStatsReady, colStats} = action.payload;
-            return stateWithNewData(tblId, state, {isColStatsReady, colStats});
+            return updateMerge(state, tblId, {isColStatsReady, colStats});
         }
         default:
             return state;

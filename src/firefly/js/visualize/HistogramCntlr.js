@@ -3,8 +3,9 @@
  */
 import {flux} from '../Firefly.js';
 
-import {has, get, omit, set} from 'lodash';
+import {has, omit} from 'lodash';
 
+import {updateSet, updateMerge} from '../util/WebUtil.js';
 import {TableRequest} from '../tables/TableRequest.js';
 import * as TableUtil from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
@@ -75,34 +76,9 @@ function getInitState() {
 }
 
 
-/*
- Get the new state related to a particular table (if it's tracked)
- @param tblId {string} table id
- @param state {object} histogram store
- @param newProps {object} new properties
- @return {object} new state
- */
-function stateWithNewData(tblId, state, newProps) {
-    if (has(state, tblId)) {
-        const tblData = get(state, tblId);
-        const newTblData = Object.assign({}, tblData, newProps);
-        const newState = Object.assign({}, state);
-        set(newState, tblId, newTblData);
-        return newState;
-    }
-    return state;
-}
 
 export function reducer(state=getInitState(), action={}) {
     switch (action.type) {
-        case (TablesCntlr.TABLE_NEW_LOADED)  :
-        {
-            const {tbl_id, request} = action.payload;
-            if (has(state, tbl_id)) {
-                action.sideEffect((dispatch) => fetchColData(dispatch, request, state[tbl_id].histogramParams));
-            }
-            return state;
-        }
         case (TablesCntlr.TABLE_REMOVE)  :
         {
             const {tbl_id} = action.payload.tbl_id;
@@ -116,18 +92,19 @@ export function reducer(state=getInitState(), action={}) {
         case (LOAD_COL_DATA)  :
         {
             const {histogramParams, searchRequest} = action.payload;
-            const newState = Object.assign({}, state);
-            set(newState, searchRequest.tbl_id, {isColDataReady: false});
-            return newState;
+            return updateSet(state, searchRequest.tbl_id, {isColDataReady: false, histogramParams});
         }
         case (UPDATE_COL_DATA)  :
         {
             const {tblId, isColDataReady, histogramData, histogramParams} = action.payload;
-            return stateWithNewData(tblId, state, {
-                isColDataReady,
-                histogramData,
-                histogramParams
-            });
+            if (state[tblId].histogramParams === histogramParams) {
+                return updateMerge(state, tblId, {
+                    isColDataReady,
+                    histogramData
+                });
+            } else {
+                return state;
+            }
         }
         default:
             return state;
@@ -171,12 +148,14 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
     if (histogramParams.falsePositiveRate) {  // variable size bins using Bayesian Blocks
         req.falsePositiveRate = histogramParams.falsePositiveRate;
     }
+    /*
     if (histogramParams.minCutoff) {
         req.min = histogramParams.minCutoff;
     }
     if (histogramParams.maxCutoff) {
         req.max = histogramParams.maxCutoff;
     }
+    */
 
     req.tbl_id = 'histogram-'+activeTableServerRequest.tbl_id;
 

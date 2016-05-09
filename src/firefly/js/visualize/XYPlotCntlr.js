@@ -1,8 +1,10 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 import {flux} from '../Firefly.js';
 
-import update from 'react-addons-update';
+import {updateSet} from '../util/WebUtil.js';
 import {get, has, omit, omitBy, isUndefined, isString} from 'lodash';
-
 
 import {doFetchTable, findTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
@@ -13,8 +15,8 @@ export const XYPLOT_DATA_KEY = 'xyplot';
 export const LOAD_PLOT_DATA = `${XYPLOT_DATA_KEY}/LOAD_COL_DATA`;
 export const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
 export const SET_SELECTION = `${XYPLOT_DATA_KEY}/SET_SELECTION`;
-export const SET_ZOOM = `${XYPLOT_DATA_KEY}/SET_ZOOM`;
-export const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
+const SET_ZOOM = `${XYPLOT_DATA_KEY}/SET_ZOOM`;
+const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
 
 /*
  Possible structure of store:
@@ -72,25 +74,54 @@ export function dispatchLoadPlotData(xyPlotParams, searchRequest) {
 }
 
 /*
- * Update xy plot data
- * @param {boolean} isPlotDataReady - flags that xy plot data are available
- * @param {Number[][]} xyPlotData - an array of the number arrays with rowIdx, x, y, [error]
- * @param {Object} xyPlotParams - XY plot options (column names, etc.)
+ * Set selection to give user choice of actions on selection (zoom, filter, or select points)
  * @param {String} tblId - table id
+ * @param {Object} selection - {xMin, xMax, yMin, yMax}
  */
-export function dispatchUpdatePlotData(isPlotDataReady, xyPlotData, xyPlotParams, tblId) {
-    flux.process({type: UPDATE_PLOT_DATA, payload: {isPlotDataReady, xyPlotData, xyPlotParams, tblId}});
-}
-
 export function dispatchSetSelection(tblId, selection) {
     flux.process({type: SET_SELECTION, payload: {tblId, selection}});
 }
 
-export function dispatchSetZoom(tblId, selection) {
+/*
+ * Zoom XY plot to a given selection or reset zoom if no selection is given
+ * @param {String} tblId - table id
+ * @param {Object} selection - {xMin, xMax, yMin, yMax}
+ */
+export function dispatchZoom(tblId, selection) {
+    const {xyPlotData, xyPlotParams, decimatedUnzoomed} = get(flux.getState(), [XYPLOT_DATA_KEY,tblId], {});
+    if (xyPlotData && xyPlotParams) {
+        if (selection) {
+            // zoom to selection
+            if (xyPlotData.decimateKey) {
+                const tableModel = findTblById(tblId);
+                if (tableModel) {
+                    const paramsWithZoom = Object.assign({}, xyPlotParams, {zoom: xyPlotParams.selection});
+                    dispatchLoadPlotData(paramsWithZoom, tableModel.request);
+                }
+            } else {
+                dispatchSetZoom(tblId, selection);
+            }
+        } else {
+            // reset zoom
+            if (decimatedUnzoomed || isUndefined(decimatedUnzoomed)) {
+                const tableModel = findTblById(tblId);
+                if (tableModel) {
+                    const paramsWithoutZoom = Object.assign({}, omit(xyPlotParams, 'zoom'));
+                    dispatchLoadPlotData(paramsWithoutZoom, tableModel.request);
+                }
+            } else {
+                dispatchResetZoom(tblId);
+            }
+
+        }
+    }
+}
+
+function dispatchSetZoom(tblId, selection) {
     flux.process({type: SET_ZOOM, payload: {tblId, selection}});
 }
 
-export function dispatchResetZoom(tblId) {
+function dispatchResetZoom(tblId) {
     flux.process({type: RESET_ZOOM, payload: {tblId}});
 }
 
@@ -101,155 +132,90 @@ export function dispatchResetZoom(tblId) {
  */
 export function loadPlotData (rawAction) {
     return (dispatch) => {
+        const {searchRequest, xyPlotParams} = rawAction.payload;
         dispatch({ type : LOAD_PLOT_DATA, payload : rawAction.payload });
-        if (rawAction.payload.searchRequest && rawAction.payload.xyPlotParams) {
-            fetchPlotData(dispatch, rawAction.payload.searchRequest, rawAction.payload.xyPlotParams);
+        if (searchRequest && xyPlotParams) {
+            fetchPlotData(dispatch, searchRequest, xyPlotParams);
         }
 
     };
 }
 
-
-/*
- Get the new state related to a particular table (if it's tracked)
- @param tblId {string} table id
- @param state {object} histogram store
- @param newProps {object} new properties
- @return {object} new state
- */
-function stateWithNewData(tblId, state, newProps) {
-    if (has(state, tblId)) {
-        const tblData = state[tblId];
-        const newTblData = Object.assign({}, tblData, newProps);
-        const newState = Object.assign({}, state);
-        newState[tblId] = newTblData;
-        return newState;
-    }
-    return state;
-}
-
-export function reducer(state={}, action={}) {
-    switch (action.type) {
-        case (TablesCntlr.TABLE_NEW_LOADED)  :
-        {
-            const {tbl_id, request} = action.payload;
-            if (has(state, tbl_id)) {
-                // use xyPlotParams with cleared selection box
-                const prevXyPlotParams = state[tbl_id].xyPlotParams;
-                const xyPlotParamsNext = has(prevXyPlotParams, 'selection') ?
-                    update(prevXyPlotParams, {selection: {$set: undefined}}) : prevXyPlotParams;
-                action.sideEffect((dispatch) => fetchPlotData(dispatch, request, xyPlotParamsNext));
-            }
-            return state;
-        }
-        case (TablesCntlr.TABLE_REMOVE)  :
-        {
-            const {tbl_id} = action.payload.tbl_id;
-            if (has(state, tbl_id)) {
-                const newState = Object.assign({}, state);
-                Reflect.deleteProperty(newState, [tbl_id]);
-                return newState;
-            }
-            return state;
-        }
-        case (LOAD_PLOT_DATA)  :
-        {
-            const {searchRequest} = action.payload;
-            const tblId = searchRequest.tbl_id;
-            const newState = Object.assign({}, state);
-            newState[tblId]= {isPlotDataReady: false};
-            // we need to know if the original unzoomed plot was decimated
-            if (state[tblId]) {
-                newState[tblId].decimatedUnzoomed = state[tblId].decimatedUnzoomed;
-            }
-            return newState;
-        }
-        case (UPDATE_PLOT_DATA)  :
-        {
-            const {isPlotDataReady, decimatedUnzoomed, xyPlotData, xyPlotParams, tblId} = action.payload;
-            const decimatedUnzoomedNext = isUndefined(decimatedUnzoomed) ? state[tblId].decimatedUnzoomed : decimatedUnzoomed;
-            return stateWithNewData(tblId, state, {
-                isPlotDataReady,
-                decimatedUnzoomed: decimatedUnzoomedNext,
-                xyPlotData,
-                xyPlotParams
-            });
-        }
-        case (SET_SELECTION) :
-        {
-            const {tblId, selection} = action.payload;
-            return update(state, {[tblId] : {xyPlotParams: {selection: {$set: selection}}}});
-        }
-        case (SET_ZOOM) :
-        {
-            const {tblId, selection} = action.payload;
-            const newState = update(state,
-                {[tblId] :
-                    {xyPlotParams:
-                        {
-                            selection: {$set: undefined},
-                            zoom: {$set: selection}
-                         }
-                    }});
-            if  (get(newState[tblId], 'xyPlotData.decimateKey')) {
-                const nextPlotParams = newState[tblId].xyPlotParams;
-                newState[tblId] = {plotDataReady: false, decimatedUnzoomed: state[tblId].decimatedUnzoomed};
-                const request = findTblById(tblId).request;
-                action.sideEffect((dispatch) => fetchPlotData(dispatch, request, nextPlotParams));
-            }
-            return newState;
-        }
-        case (RESET_ZOOM) :
-        {
-            const tblId = action.payload.tblId;
-            const newState = update(state,
-                {[tblId] :
-                    {xyPlotParams:
-                        {
-                            selection: {$set: undefined},
-                            zoom: {$set: undefined}
-                        }
-                    }});
-            if  (state[tblId].decimatedUnzoomed || isUndefined(state[tblId].decimatedUnzoomed)) {
-                const nextPlotParams = newState[tblId].xyPlotParams;
-                newState[tblId] = {plotDataReady: false};
-                const request = findTblById(tblId).request;
-                action.sideEffect((dispatch) => fetchPlotData(dispatch, request, nextPlotParams));
-            }
-            return newState;
-
-        }
-        case (TablesCntlr.TABLE_SELECT) :
-        {
-            const tbl_id = action.payload.tbl_id; //also has selectInfo
-            if (has(state, tbl_id)) {
-                return update(state,
-                    {
-                        [tbl_id]: {
-                            xyPlotParams: {
-                                selection: {$set: undefined}
-                            }
-                        }
-                    });
-            } else {
-                return state;
-            }
-
-        }
-        default:
-            return state;
-    }
-}
-
-
 /**
- *
+ * The data is an object with
+ * tblId - string, table id,
+ * isPlotDataReady - boolean, flags that xy plot data are available
+ * xyPlotData - an array of data rows
+ * xyPlotParams - plot parameters
+ * decimatedUnzoomed - tells if unzoomed data are decimated
  * @param data {Object} the data to merge with the xyplot branch
  * @returns {{type: string, payload: object}}
  */
 function updatePlotData(data) {
     return { type : UPDATE_PLOT_DATA, payload: data };
 }
+
+export function reducer(state={}, action={}) {
+    switch (action.type) {
+        case (TablesCntlr.TABLE_REMOVE)  :
+        {
+            const tbl_id = action.payload.tbl_id;
+            if (has(state, tbl_id)) {
+                const newState = Object.assign({}, state);
+                Reflect.deleteProperty(newState, tbl_id);
+                return newState;
+            }
+            return state;
+        }
+        case (LOAD_PLOT_DATA)  :
+        {
+            const {xyPlotParams, searchRequest} = action.payload;
+            const tblId = searchRequest.tbl_id;
+            return updateSet(state, tblId,
+                { isPlotDataReady: false, xyPlotParams, decimatedUnzoomed: get(state, [tblId,'decimatedUnzoomed'])});
+        }
+        case (UPDATE_PLOT_DATA)  :
+        {
+            const {isPlotDataReady, decimatedUnzoomed, xyPlotData, tblId, xyPlotParams} = action.payload;
+            if (state[tblId].xyPlotParams === xyPlotParams) {
+                const decimatedUnzoomedNext = isUndefined(decimatedUnzoomed) ? state[tblId].decimatedUnzoomed : decimatedUnzoomed;
+                const newParams = xyPlotParams.selection ?  updateSet(xyPlotParams, 'selection', undefined) : xyPlotParams;
+                return updateSet(state, tblId,
+                    {isPlotDataReady, decimatedUnzoomed: decimatedUnzoomedNext, xyPlotData, xyPlotParams: newParams});
+            }
+            return state;
+        }
+        case (SET_SELECTION) :
+        {
+            const {tblId, selection} = action.payload;
+            return updateSet(state, [tblId,'xyPlotParams','selection'], selection);
+        }
+        case (SET_ZOOM) :
+        {
+            const {tblId, selection} = action.payload;
+            const newState = updateSet(state, [tblId,'xyPlotParams','zoom'], selection);
+            Reflect.deleteProperty(newState[tblId].xyPlotParams, 'selection');
+            return newState;
+        }
+        case (RESET_ZOOM) :
+        {
+            const tblId = action.payload.tblId;
+            const newParams = Object.assign({}, omit(state[tblId].xyPlotParams, ['selection', 'zoom']));
+            return updateSet(state, [tblId,'xyPlotParams'], newParams);
+        }
+        case (TablesCntlr.TABLE_SELECT) :
+        {
+            const tbl_id = action.payload.tbl_id; //also has selectInfo
+            if (has(state, [tbl_id,'xyPlotParams','selection'])) {
+                return updateSet(state, [tbl_id,'xyPlotParams','selection'], undefined);
+            }
+            return state;
+        }
+        default:
+            return state;
+    }
+}
+
 
 
 /**
@@ -284,9 +250,9 @@ function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
     doFetchTable(req).then(
         (tableModel) => {
             if (tableModel.tableData && tableModel.tableData.data) {
-                const {tableData, tableMeta} = tableModel;
+                const {tableMeta} = tableModel;
                 const xyPlotData = omitBy({
-                    rows: tableData.data,
+                    rows: tableModel.tableData.data,
                     decimateKey: tableMeta['decimate_key'],
                     xMin: tableMeta['decimate.X-MIN'],
                     xMax: tableMeta['decimate.X-MAX'],
