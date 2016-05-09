@@ -88,7 +88,7 @@ export function dispatchSetSelection(tblId, selection) {
  * @param {Object} selection - {xMin, xMax, yMin, yMax}
  */
 export function dispatchZoom(tblId, selection) {
-    const {xyPlotData, xyPlotParams, decimatedUnzoomed} = flux.getState()[XYPLOT_DATA_KEY][tblId];
+    const {xyPlotData, xyPlotParams, decimatedUnzoomed} = get(flux.getState(), [XYPLOT_DATA_KEY,tblId], {});
     if (xyPlotData && xyPlotParams) {
         if (selection) {
             // zoom to selection
@@ -106,8 +106,7 @@ export function dispatchZoom(tblId, selection) {
             if (decimatedUnzoomed || isUndefined(decimatedUnzoomed)) {
                 const tableModel = findTblById(tblId);
                 if (tableModel) {
-                    const paramsWithoutZoom = Object.assign({}, xyPlotParams);
-                    Reflect.deleteProperty(paramsWithoutZoom, 'zoom');
+                    const paramsWithoutZoom = Object.assign({}, omit(xyPlotParams, 'zoom'));
                     dispatchLoadPlotData(paramsWithoutZoom, tableModel.request);
                 }
             } else {
@@ -163,7 +162,7 @@ export function reducer(state={}, action={}) {
             const tbl_id = action.payload.tbl_id;
             if (has(state, tbl_id)) {
                 const newState = Object.assign({}, state);
-                Reflect.deleteProperty(newState, [tbl_id]);
+                Reflect.deleteProperty(newState, tbl_id);
                 return newState;
             }
             return state;
@@ -201,9 +200,7 @@ export function reducer(state={}, action={}) {
         case (RESET_ZOOM) :
         {
             const tblId = action.payload.tblId;
-            const newParams = Object.assign({}, state[tblId].xyPlotParams);
-            Reflect.deleteProperty(newParams, 'selection');
-            Reflect.deleteProperty(newParams, 'zoom');
+            const newParams = Object.assign({}, omit(state[tblId].xyPlotParams, ['selection', 'zoom']));
             return updateSet(state, [tblId,'xyPlotParams'], newParams);
         }
         case (TablesCntlr.TABLE_SELECT) :

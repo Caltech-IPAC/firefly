@@ -44,7 +44,7 @@ export function* syncCharts() {
                 }
                 histogramState = flux.getState()[HistogramCntlr.HISTOGRAM_DATA_KEY];
                 if (has(histogramState, tbl_id)) {
-                    const histogramParams = xyPlotState[tbl_id].histogramParams;
+                    const histogramParams = histogramState[tbl_id].histogramParams;
                     HistogramCntlr.dispatchLoadColData(histogramParams, request);
                 }
                 break;

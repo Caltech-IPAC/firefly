@@ -3,12 +3,10 @@
  */
 
 
-import React from 'react';
 import createSagaMiddleware from 'redux-saga';
 import thunkMiddleware from 'redux-thunk';
 import loggerMiddleware from 'redux-logger';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
-import { actionSideEffectMiddleware } from '../side-effects';
 import * as AppDataCntlr  from './AppDataCntlr.js';
 import {recordHistory} from './History.js';
 import {LAYOUT_PATH, reducer as layoutReducer}  from './LayoutCntlr.js';
@@ -176,7 +174,7 @@ var logger= loggerMiddleware({duration:true, predicate:logFilter, collapsed:coll
 function createRedux() {
     // create a rootReducer from all of the registered reducers
     const rootReducer = combineReducers(reducers);
-    const middleWare=  applyMiddleware(actionSideEffectMiddleware, thunkMiddleware, createSagaMiddleware(masterSaga));
+    const middleWare=  applyMiddleware(thunkMiddleware, createSagaMiddleware(masterSaga));
     
     return createStore(rootReducer, middleWare);
 }
