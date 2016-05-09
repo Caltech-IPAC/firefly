@@ -126,9 +126,9 @@ export class TextCell extends React.Component {
     }
 
     shouldComponentUpdate(nProps, nState) {
-        return getValue(nProps) !== getValue(this.props) ||
-               nProps.col !== this.props.col ||
-               nProps.rowIndex !== this.props.rowIndex;
+        return  nProps.columnKey !== this.props.columnKey ||
+               nProps.rowIndex !== this.props.rowIndex ||
+               getValue(nProps) !== getValue(this.props);
     }
 
     componentDidUpdate(prevProps, prevState) {

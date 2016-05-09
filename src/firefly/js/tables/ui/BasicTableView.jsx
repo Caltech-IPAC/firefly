@@ -6,7 +6,7 @@ import React, {PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import FixedDataTable from 'fixed-data-table';
 import Resizable from 'react-component-resizable';
-import {debounce, get, isEmpty, pick} from 'lodash';
+import {debounce, defer, get, isEmpty, pick} from 'lodash';
 
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
@@ -29,13 +29,21 @@ export class BasicTableView extends React.Component {
             columnWidths: makeColWidth(props.columns, props.data, props.showUnits)
         };
 
-        this.onResize =  debounce((size) => {
-                if (size) {
-                    var widthPx = size.width-1;
-                    var heightPx = size.height;
-                    this.setState({widthPx, heightPx});
-                }
-            }, 100);
+        const normal = (size) => {
+            if (size) {
+                var widthPx = size.width;
+                var heightPx = size.height;
+                this.setState({widthPx, heightPx});
+            }
+        };
+        const debounced = debounce(normal, 100);
+        this.onResize =  (size) => {
+            if (this.state.widthPx === 0) {
+                defer(normal, size);
+            } else {
+                debounced(size);
+            }
+        };
 
         this.onColumnResizeEndCallback = this.onColumnResizeEndCallback.bind(this);
         this.rowClassName = this.rowClassName.bind(this);
@@ -109,7 +117,8 @@ export class BasicTableView extends React.Component {
         const headerHeight = 22 + (showUnits && 12) + (showFilters && 20);
         return (
             <Resizable id='table-resizer' tabIndex='-1' onKeyDown={this.onKeyDown} className='TablePanel__frame' onResize={this.onResize}>
-                { textView ? <TextView { ...{columns, data, showUnits, heightPx, widthPx} }/> :
+                {   widthPx === 0 ? <div /> :
+                    textView ? <TextView { ...{columns, data, showUnits, heightPx, widthPx} }/> :
                     <Table
                         rowHeight={rowHeight}
                         headerHeight={headerHeight}

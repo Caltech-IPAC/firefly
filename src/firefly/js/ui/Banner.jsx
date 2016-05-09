@@ -22,7 +22,7 @@ function menu(menuComp) {
 
 
 function appIcon(icoSrc) {
-    const src = icoSrc || 'http://localhost:8080/fftools/images/fftools-logo-offset-small-75x75.png';
+    const src = icoSrc || 'images/fftools-logo-offset-small-75x75.png';
     return (
         <div id='app-icon' align='left' style={{width: '100%', height: '100%', float: 'left'}}>
             <img src={src} className='gwt-Image' style={{width: '75px', height: '75px'}}></img>

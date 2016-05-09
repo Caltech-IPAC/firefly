@@ -60,14 +60,22 @@ class ChartsPanel extends React.Component {
             heightPx: 20
         };
 
-        this.onResize = debounce((size) => {
+        const normal = (size) => {
             if (size) {
                 var widthPx = size.width - 10;
                 var heightPx = size.height - 30;
                 //console.log('width: '+widthPx+', height: '+heightPx);
                 this.setState({widthPx, heightPx});
             }
-        }, 200);
+        };
+        const debounced = debounce(normal, 200);
+        this.onResize =  (size) => {
+            if (this.state.widthPx === 0) {
+                defer(normal, size);
+            } else {
+                debounced(size);
+            }
+        };
 
         this.renderXYPlot = this.renderXYPlot.bind(this);
         this.renderHistogram = this.renderHistogram.bind(this);
