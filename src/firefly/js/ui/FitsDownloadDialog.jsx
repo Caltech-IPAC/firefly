@@ -23,8 +23,13 @@ import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {encodeUrl, ParamType}  from '../util/WebUtil.js';
 import {RequestType} from '../visualize/RequestType.js';
 import {ServiceType} from '../visualize/WebPlotRequest.js';
+import {makeRegionsFromPlot} from '../visualize/region/RegionDescription.js';
+import {saveDS9RegionFile} from '../rpc/PlotServicesJson.js';
+import {get} from 'lodash';
 
 import HelpIcon from './HelpIcon.jsx';
+
+const STRING_SPLIT_TOKEN= '--STR--';
 
 
 function getDialogBuilder() {
@@ -344,6 +349,24 @@ function resultsSuccess(request, plot) {
         var  url = encodeUrl(getRootURL() + '/servlet/Download', param);
         //download(getRootURL() + '/servlet/Download?file=' + fitsFile);
         download(url);
+    } else if (ext && ext.toLowerCase() === 'reg') {
+        var regionDes, regionString;
+
+        regionDes = makeRegionsFromPlot(plot);
+        regionString = `[${regionDes.join(STRING_SPLIT_TOKEN)}]`;
+
+        saveDS9RegionFile(regionString).then( (result ) => {
+            var rgFile = get(result, 'RegionFileName');
+
+            if (rgFile) {
+                var param={file: rgFile, log: true};
+                var url = encodeUrl(getRootURL() + '/servlet/Download', param);
+
+                download(url);
+            }
+        }, () => {
+            console.log('error');
+        });
     }
 
 }

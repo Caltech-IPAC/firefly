@@ -6,12 +6,25 @@ import { RegionType, RegionValueUnit, regionPropsList,
          getRegionDefault } from './Region.js';
 import {makeOffsetPt} from '../Point.js';
 import {convertAngle} from '../VisUtil.js';
-import {get, isEmpty} from 'lodash';
+import {get, isEmpty, pick} from 'lodash';
 import ShapeDataObj from '../draw/ShapeDataObj.js';
 import {DrawSymbol, make as makePoint } from '../draw/PointDataObj.js';
 import {union, isArray} from 'lodash';
 import {TextLocation} from '../draw/DrawingDef.js';
+import Point from '../Point.js';
 
+export const DEFAULT_TEXTLOC = {
+    [RegionType.circle.key]: TextLocation.CIRCLE_NE,
+    [RegionType.annulus.key]: TextLocation.REGION_NE,
+    [RegionType.line.key]: TextLocation.LINE_TOP,
+    [RegionType.box.key]: TextLocation.RECT_NE,
+    [RegionType.boxannulus.key]: TextLocation.REGION_NE,
+    [RegionType.ellipse.key]: TextLocation.ELLIPSE_NE,
+    [RegionType.ellipseannulus.key]: TextLocation.REGION_NE,
+    [RegionType.point.key]: TextLocation.REGION_NE,
+    [RegionType.polygon.key]: TextLocation.REGION_NE,
+    [RegionType.text.key]: TextLocation.DEFAULT
+};
 
 /**
  * make drawObj based on region type
@@ -51,6 +64,7 @@ export function drawRegion(regionObj) {
     switch (regionObj.type) {
         case RegionType.circle:
             dAry = drawRegionCircle(regionObj);
+            //dAry = drawRegionAnnulus(regionObj);
             break;
         case RegionType.annulus:
             dAry = drawRegionAnnulus(regionObj);
@@ -130,7 +144,7 @@ function regionPtTypeToDrawObj(ptype) {
             s = DrawSymbol.X;
             break;
         case 'boxcircle':
-            s = DrawSymbol.BOXCIRCLE;     // alternate
+            s = DrawSymbol.BOXCIRCLE;
             break;
         case 'arrow':
             s = DrawSymbol.ARROW;
@@ -166,7 +180,7 @@ function updateDrawobjProp(rgPropAry, rgOptions, dObj) {
                     var f = get(rgOptions, regionProp, getRegionDefault(regionProp));
 
                     dObj.fontName = f.name;
-                    dObj.fontSize = f.point;
+                    dObj.fontSize = `${f.point}pt`;
                     dObj.fontWeight = f.weight;
                     dObj.fontStyle = f.slant;
                 }
@@ -203,6 +217,40 @@ function updateDrawobjProp(rgPropAry, rgOptions, dObj) {
     rgPropAry.forEach((prop) => addPropToDrawObj(prop, rgOptions, dObj));
 }
 
+const commonProps = [regionPropsList.COLOR, regionPropsList.LNWIDTH];
+const doAry = 'drawObjAry';
+const textProps = [regionPropsList.TEXT, regionPropsList.FONT, regionPropsList.OFFX];
+const allProps = [...commonProps,...textProps];
+/**
+ * convert array of RegionValue into an array of number without unit
+ * @param rgValAry
+ * @param unitType
+ */
+var valAry = (rgValAry, unitType) => rgValAry.map( (val) => {
+    if (unitType === ShapeDataObj.UnitType.ARCSEC) {
+        return convertAngle(val.unit.key, 'arcsec', val.value);
+    } else {
+        return val.value;
+    }
+});
+
+
+/**
+ * convert array of RegionDimension into an array of [width, height]
+ * @param rgDimAry
+ * @param unitType
+ */
+var dimAry = (rgDimAry, unitType) => rgDimAry.map( (dim) => {
+    if (unitType === ShapeDataObj.UnitType.ARCSEC) {
+        return [convertAngle(dim.width.unit.key, 'arcsec', dim.width.value),
+            convertAngle(dim.height.unit.key, 'arcsec', dim.height.value)];
+    } else {
+        return [dim.width.value, dim.height.value];
+    }
+});
+
+
+
 /**
  * produce DrawObj for region circle
  * @param r
@@ -231,10 +279,9 @@ function drawOneCircle(r, wp, options, propChkAry) {
 
 function drawRegionCircle(regionObj) {
     var l = regionObj.radiusAry.length-1;
-    var dObj = drawOneCircle(regionObj.radiusAry[l], regionObj.wpAry[0], regionObj.options,
-                            [regionPropsList.COLOR, regionPropsList.TEXT, regionPropsList.FONT,
-                             regionPropsList.LNWIDTH, regionPropsList.OFFX]);
+    var dObj = drawOneCircle(regionObj.radiusAry[l], regionObj.wpAry[0], regionObj.options, allProps);
 
+    dObj.textLoc = DEFAULT_TEXTLOC[RegionType.circle.key];
     return [dObj];
 }
 
@@ -244,19 +291,29 @@ function drawRegionCircle(regionObj) {
  * @returns {*}
  */
 function drawRegionAnnulus(regionObj) {
-    var firstObj = drawRegionCircle(regionObj);
+    var firstObj = drawOneCircle(regionObj.radiusAry[regionObj.radiusAry.length-1],
+                                 regionObj.wpAry[0], regionObj.options, commonProps);
+    var annulusObj = ShapeDataObj.makeAnnulus(regionObj.wpAry[0],
+                                              valAry(regionObj.radiusAry, firstObj.unitType),
+                                              firstObj.unitType);
 
-    firstObj[0].textLoc = TextLocation.CIRCLE_SE;
+    updateDrawobjProp( textProps, regionObj.options, annulusObj);
+    annulusObj.textLoc = DEFAULT_TEXTLOC[RegionType.annulus.key];
+
+    annulusObj = Object.assign(annulusObj, pick(firstObj, commonProps));
+
+    //var firstObj = drawRegionCircle(regionObj);
+
     var moreObj = regionObj.radiusAry.reverse().slice(1).map((r) => {
         var nextObj = drawOneCircle(r, regionObj.wpAry[0], regionObj.options, []);
 
-        nextObj.color = firstObj[0].color;
-        nextObj.lineWidth = firstObj[0].lineWidth;
-        return nextObj;
+        return  Object.assign(nextObj, pick(firstObj, commonProps));
     });
 
-    return union(firstObj, moreObj);
+    annulusObj[doAry] = union([firstObj], moreObj);
+    return [annulusObj];
 }
+
 
 
 /**
@@ -277,18 +334,28 @@ function drawOneBox(w, h, a, wp, options, propChkAry) {
     if (unit === ShapeDataObj.UnitType.ARCSEC) {
         width = convertAngle(w.unit.key, ShapeDataObj.UnitType.ARCSEC.key, w.value);
         height = convertAngle(h.unit.key, ShapeDataObj.UnitType.ARCSEC.key, h.value);
+        /*
+        var angleInfo = calculateRectAngleInScreen(wp, width, height, unit);
+        width = angleInfo.width;
+        height = angleInfo.height;
+        unit = angleInfo.unit;
+        angle = angleInfo.angle;    // in arcsec unit
+        */
     } else {
         width = w.value;
         height = h.value;
+        //angle = 0.0;
     }
 
+    // DS9 angle is counterclockwise, canvas angle is clockwise
     if (angleUnit === ShapeDataObj.UnitType.ARCSEC) {
-        angle= convertAngle(a.unit.key, angleUnit.key, a.value);
-    } else {
-        angle = a.value;
+        angle = -convertAngle(a.unit.key, angleUnit.key, a.value);
+    } else {  // treat as radian
+        angle = -convertAngle('radian', 'arcsec', a.value);
+        angleUnit = ShapeDataObj.UnitType.ARCSEC;
     }
 
-    var dObj = ShapeDataObj.makeRectangleByCenter(wp, width, height, unit, angle, angleUnit);
+    var dObj = ShapeDataObj.makeRectangleByCenter(wp, width, height, unit, angle, angleUnit, wp.type === Point.W_PT);
 
     updateDrawobjProp(propChkAry, options, dObj);
     return dObj;
@@ -307,10 +374,12 @@ function drawRegionBox(regionObj) {
                           regionObj.angle,
                           regionObj.wpAry[0],
                           regionObj.options,
-                          [regionPropsList.COLOR, regionPropsList.TEXT, regionPropsList.FONT,
-                              regionPropsList.LNWIDTH, regionPropsList.OFFX]);
+                          allProps);
+
+    dObj.textLoc = DEFAULT_TEXTLOC[RegionType.box.key];
     return [dObj];
 }
+
 
 /**
  * make DrawObj array for region box annulus, get the outmost box first
@@ -318,18 +387,32 @@ function drawRegionBox(regionObj) {
  * @returns {*}
  */
 function drawRegionBoxAnnulus(regionObj) {
-    var firstObj = drawRegionBox(regionObj);
+    var l = regionObj.dimensionAry.length-1;
+    var firstObj = drawOneBox(regionObj.dimensionAry[l].width,
+                              regionObj.dimensionAry[l].height,
+                              regionObj.angle,
+                              regionObj.wpAry[0],
+                              regionObj.options,
+                              commonProps);
+    var boxannulusObj = ShapeDataObj.makeBoxAnnulus(regionObj.wpAry[0],
+                                                    dimAry(regionObj.dimensionAry, firstObj.unitType),
+                                                    firstObj.unitType,
+                                                    get(firstObj, 'angle'),
+                                                    get(firstObj, 'angleUnit'));
 
-    firstObj[0].textLoc = TextLocation.RECT_SE;
+    updateDrawobjProp( textProps, regionObj.options, boxannulusObj);
+    boxannulusObj.textLoc = DEFAULT_TEXTLOC[RegionType.boxannulus.key];
+
+    boxannulusObj = Object.assign(boxannulusObj, pick(firstObj, commonProps));
+
     var moreObj = regionObj.dimensionAry.reverse().slice(1).map((d) => {
         var nextObj = drawOneBox(d.width, d.height, regionObj.angle, regionObj.wpAry[0], regionObj.options, []);
 
-        nextObj.color = firstObj[0].color;
-        nextObj.lineWidth = firstObj[0].lineWidth;
-        return nextObj;
+        return Object.assign(nextObj, pick(firstObj, commonProps));
     });
 
-    return union(firstObj, moreObj);
+    boxannulusObj[doAry] = union([firstObj], moreObj);
+    return [boxannulusObj];
 }
 
 /**
@@ -349,8 +432,9 @@ function drawOneLine(pt1, pt2, options, propChkAry) {
 
 function drawRegionLine(regionObj) {
     var dObj = drawOneLine(regionObj.wpAry[0], regionObj.wpAry[1], regionObj.options,
-                          [regionPropsList.COLOR, regionPropsList.TEXT, regionPropsList.FONT,
-                            regionPropsList.LNWIDTH, regionPropsList.OFFX]);
+                            allProps);
+
+    dObj.textLoc =  DEFAULT_TEXTLOC[RegionType.line.key];
     return [dObj];
 }
 
@@ -360,18 +444,25 @@ function drawRegionLine(regionObj) {
  * @returns {*}
  */
 function drawRegionPolygon(regionObj) {
-    var firstObj = drawRegionLine(regionObj);
+    var firstLine = drawOneLine(regionObj.wpAry[0], regionObj.wpAry[1], regionObj.options,
+                                commonProps);
+    var polygonObj = ShapeDataObj.makePolygon(regionObj.wpAry);
+
+    updateDrawobjProp( textProps, regionObj.options, polygonObj);
+    polygonObj.textLoc = DEFAULT_TEXTLOC[RegionType.polygon.key];
+
+    polygonObj = Object.assign(polygonObj, pick(firstLine, commonProps));
+
     var wpAry = [...regionObj.wpAry.slice(1), regionObj.wpAry[0]];
 
     var moreObj = wpAry.slice(0, -1).map( (wp, index) => {
         var nextObj = drawOneLine(wp, wpAry[index+1], regionObj.options, []);
 
-        nextObj.color = firstObj[0].color;
-        nextObj.lineWidth = firstObj[0].lineWidth;
-        return nextObj;
+        return Object.assign(nextObj, pick(firstLine, commonProps));
     });
 
-    return union(firstObj, moreObj);
+    polygonObj[doAry] = union([firstLine], moreObj);
+    return [polygonObj];
 }
 
 
@@ -394,18 +485,28 @@ function drawOneEllipse(r1, r2, a, wp, options, propChkAry) {
     if (unit === ShapeDataObj.UnitType.ARCSEC) {
         radius1 = convertAngle(r1.unit.key, ShapeDataObj.UnitType.ARCSEC.key, r1.value);
         radius2 = convertAngle(r2.unit.key, ShapeDataObj.UnitType.ARCSEC.key, r2.value);
+/*
+        var angleInfo = calculateRectAngleInScreen(wp, radius1, radius2, unit);
+        radius1 = angleInfo.width;     // in screen point unit
+        radius2 = angleInfo.height;
+        unit = angleInfo.unit;
+        angle = angleInfo.angle;    // in arcsec unit
+*/
     } else {
         radius1 = r1.value;
         radius2 = r2.value;
+//        angle = 0.0;
     }
 
+    // DS9 angle is counterclockwise, canvas angle is clockwise
     if (angleUnit === ShapeDataObj.UnitType.ARCSEC) {
-        angle= convertAngle(a.unit.key, angleUnit.key, a.value);
-    } else {
-        angle = a.value;
+        angle = -convertAngle(a.unit.key, angleUnit.key, a.value);
+    } else {  // treat as radian
+        angle = -convertAngle('radian', 'arcsec', a.value);
+        angleUnit = ShapeDataObj.UnitType.ARCSEC;
     }
 
-    var dObj = ShapeDataObj.makeEllipse(wp, radius1, radius2, unit, angle, angleUnit);
+    var dObj = ShapeDataObj.makeEllipse(wp, radius1, radius2, unit, angle, angleUnit, wp.type === Point.W_PT);
 
     updateDrawobjProp(propChkAry, options, dObj);
     return dObj;
@@ -424,9 +525,9 @@ function drawRegionEllipse(regionObj) {
         regionObj.angle,
         regionObj.wpAry[0],
         regionObj.options,
-        [regionPropsList.COLOR, regionPropsList.TEXT, regionPropsList.FONT,
-            regionPropsList.LNWIDTH, regionPropsList.OFFX]);
+        allProps);
 
+    dObj.textLoc =  DEFAULT_TEXTLOC[RegionType.ellipse.key];
     return [dObj];
 }
 
@@ -436,18 +537,32 @@ function drawRegionEllipse(regionObj) {
  * @returns {*}
  */
 function drawRegionEllipseAnnulus(regionObj) {
-    var firstObj = drawRegionEllipse(regionObj);
+    var l = regionObj.dimensionAry.length-1;
+    var firstObj = drawOneEllipse(regionObj.dimensionAry[l].width,
+                                  regionObj.dimensionAry[l].height,
+                                  regionObj.angle,
+                                  regionObj.wpAry[0],
+                                  regionObj.options,
+                                  commonProps);
+    var ellipseannObj = ShapeDataObj.makeEllipseAnnulus(regionObj.wpAry[0],
+                                                        dimAry(regionObj.dimensionAry, firstObj.unitType),
+                                                        firstObj.unitType,
+                                                        get(firstObj, 'angle'),
+                                                        get(firstObj, 'angleUnit'));
 
-    firstObj[0].textLoc = TextLocation.ELLIPSE_SE;
+    updateDrawobjProp( textProps, regionObj.options, ellipseannObj);
+    ellipseannObj.textLoc = DEFAULT_TEXTLOC[RegionType.ellipseannulus.key];
+
+    ellipseannObj = Object.assign(ellipseannObj, pick(firstObj, commonProps));
+
     var moreObj = regionObj.dimensionAry.reverse().slice(1).map((d) => {
         var nextObj = drawOneEllipse(d.width, d.height, regionObj.angle, regionObj.wpAry[0], regionObj.options, []);
 
-        nextObj.color = firstObj[0].color;
-        nextObj.lineWidth = firstObj[0].lineWidth;
-        return nextObj;
+        return Object.assign(nextObj, pick(firstObj, commonProps));
     });
 
-    return union(firstObj, moreObj);
+    ellipseannObj[doAry] = union([firstObj], moreObj);
+    return [ellipseannObj];
 }
 
 
@@ -460,9 +575,11 @@ function drawRegionEllipseAnnulus(regionObj) {
 function drawRegionPoint(regionObj) {
     var pObj = makePoint(regionObj.wpAry[0]);
 
-    updateDrawobjProp([regionPropsList.COLOR, regionPropsList.TEXT, regionPropsList.FONT,
-                        regionPropsList.PTTYPE, regionPropsList.PTSIZE, regionPropsList.OFFX],
-                      regionObj.options, pObj);
+    updateDrawobjProp([regionPropsList.COLOR,  regionPropsList.PTTYPE, regionPropsList.PTSIZE,
+                       regionPropsList.TEXT, regionPropsList.FONT, regionPropsList.OFFX],
+                       regionObj.options, pObj);
+
+    pObj.textLoc =  DEFAULT_TEXTLOC[RegionType.point.key];
 
     return [pObj];
 }
@@ -485,3 +602,4 @@ function drawRegionText(regionObj) {
 
     return [tObj];
 }
+

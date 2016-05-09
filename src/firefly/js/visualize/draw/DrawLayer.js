@@ -99,6 +99,7 @@ function makeDrawLayer(drawLayerId,
         isPointData: false,
         canUserChangeColor: ColorChangeType.STATIC,
         canUserDelete: true,
+        destroyWhenAllDetached : false, // hint to controller, when all plots have been detached, destroy this layer
         helpLine : '',
 
            // drawData contains the components that may be drawn.

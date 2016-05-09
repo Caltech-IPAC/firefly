@@ -12,7 +12,11 @@ import validator from 'validator';
 import {CoordinateSys} from '../CoordSys.js';
 import {makeWorldPt, makeImagePt, makeScreenPt} from '../Point.js';
 import {convertAngle} from '../VisUtil.js';
-import {set, unset, has} from 'lodash';
+import CsysConverter from '../CsysConverter.js';
+import {primePlot} from '../PlotViewUtil.js';
+import {visRoot } from '../ImagePlotCntlr.js';
+
+import {set, unset, has, get} from 'lodash';
 
 var RegionParseError = {
     InvalidCoord:   'region coordinate undefined',
@@ -60,8 +64,10 @@ export class RegionFactory {
         // split string into region coordinate, description and property portions
         regionCoord = tmpAry[0].trim();
 
-
         tmpAry = tmpAry[1].split('#');
+        if (tmpAry.length > 2) {     // in case '#' occurs in the options, like color=#ffffff
+            tmpAry[1] = tmpAry.slice(1).join('#');
+        }
         regionDes = tmpAry[0].trim();
 
         if (tmpAry.length >= 2) {
@@ -153,6 +159,7 @@ export class RegionFactory {
                 dimAry = [];
                 isAnnulus = -1;
 
+                // width & height
                 while (params.length > (n + 3)) {
                     w = this.convertToRegionValue(params[++n], regionCsys);
                     h = this.convertToRegionValue(params[++n], regionCsys);
@@ -168,7 +175,7 @@ export class RegionFactory {
                 if (isAnnulus < 0) {   //  width or height error
                     break;
                 }
-                if (!(angle = this.convertToRegionValue(params[++n], regionCsys))) {
+                if (!(angle = this.convertToRegionValueForAngle(params[++n]))) {
                     break;
                 }
 
@@ -247,7 +254,7 @@ export class RegionFactory {
                     break;
                 }
 
-                if (!(angle = this.convertToRegionValue(params[++n], regionCsys))) {
+                if (!(angle = this.convertToRegionValueForAngle(params[++n]))) {
                     break;
                 }
 
@@ -299,25 +306,92 @@ export class RegionFactory {
         return region;
     }
 
+
     parseXY(coordSys, xStr, yStr) {
         var rgValX = this.convertToRegionValue(xStr, coordSys);
         var rgValY = this.convertToRegionValue(yStr, coordSys);
+        var isWorldUnit = (c) => (  (c !== RegionCsys.PHYSICAL) &&
+                                    (c !== RegionCsys.UNDEFINED) &&
+                                    (c !== RegionCsys.IMAGE) &&
+                                    (c !== RegionCsys.ICRS) &&
+                                    (c !== RegionCsys.AMPLIFIER) &&
+                                    (c !== RegionCsys.LINEAR) &&
+                                    (c !== RegionCsys.DETECTOR) );
 
         if (!rgValX || !rgValY) {
             return null;
         }
 
-        if (coordSys === RegionCsys.IMAGE) {
-            return makeImagePt(rgValX.value, rgValY.value);
-        } else if (coordSys === RegionCsys.SCREEN_PIXEL) {
-            return makeScreenPt(rgValX.value, rgValY.value);
-        } else {
-            var csys = this.parse_coordinate(coordSys);
+        var plotId = get(visRoot(), 'activePlotId');
+        var plot =   primePlot(visRoot(),plotId);
+        var cc = CsysConverter.make(plot);
+        var pt;
+        var ptx, pty;
 
-            return makeWorldPt(rgValX.value, rgValY.value, csys);
+        if (isWorldUnit(coordSys)) {
+            ptx = this.refactorRegionValueUnit( RegionValueUnit.DEGREE, rgValX, cc);
+            pty = this.refactorRegionValueUnit( RegionValueUnit.DEGREE, rgValY, cc);
+            pt = makeWorldPt(ptx.value, pty.value);
+        } else if (coordSys === RegionCsys.IMAGE) {
+            ptx = this.refactorRegionValueUnit( RegionValueUnit.IMAGE_PIXEL, rgValX, cc);
+            pty = this.refactorRegionValueUnit( RegionValueUnit.IMAGE_PIXEL, rgValY, cc);
+            pt = makeImagePt(ptx.value, pty.value);
+        } else if (coordSys === RegionCsys.PHYSICAL) {
+            ptx = this.refactorRegionValueUnit( RegionValueUnit.SCREEN_PIXEL, rgValX, cc);
+            pty = this.refactorRegionValueUnit( RegionValueUnit.SCREEN_PIXEL, rgValY, cc);
+            pt = makeScreenPt(ptx.value, pty.value);
+        } else {
+            pt = null;
         }
+
+        return pt;
+
     }
 
+    refactorRegionValueUnit(unit, rv2, cc) {
+        var pt = Object.assign({}, rv2);
+
+        // change v2 unit to be the same as that of rv1
+        if (unit === rv2.unit) return pt;
+
+       var v = rv2.value;
+
+        if (unit === RegionValueUnit.IMAGE_PIXEL) {
+            if (rv2.unit === RegionValueUnit.SCREEN_PIXEL) {
+                v = this.getScreenPixelToImagePixel(rv2.value, cc);
+            } else if (rv2 === RegionValueUnit.DEGREE) {
+                v = this.getDegreeToImagePixel(rv2.value, cc);
+            }
+        } else if (unit === RegionValueUnit.SCREEN_PIXEL) {
+            if (rv2.unit === RegionValueUnit.IMAGE_PIXEL) {
+                v = this.getImagePixelToScreenPixel(rv2.value, cc);
+            } else if (rv2 === RegionValueUnit.DEGREE) {
+                v = this.getDegreeToScreenPixel(rv2.value, cc);
+            }
+        } else { // world unit
+            if (rv2.unit === RegionValueUnit.IMAGE_PIXEL) {
+                v = this.getImagePixelToDegree(rv2.value, cc);
+            } else if (rv2 === RegionValueUnit.SCREEN_PIXEL) {
+                v = this.getScreenPixelToDegree(rv2.value, cc);
+            }
+        }
+
+        pt.value = v;
+        pt.unit = unit;
+        return pt;
+    }
+
+    getDegreeToImagePixel(val, cc) { return val/cc.getImagePixelScaleInDeg(); }
+
+    getImagePixelToDegree(val, cc) { return val * cc.getImagePixelScaleInDeg(); }
+
+    getScreenPixelToDegree(val, cc) { return val * cc.getImagePixelScaleInDeg()/cc.zoomFactor; }
+
+    getDegreeToScreenPixel(val, cc) { return val * cc.zoomFactor /cc.getImagePixelScaleInDeg(); }
+
+    getScreenPixelToImagePixel(val, cc) { return val/cc.zoomFactor; }
+
+    getImagePixelToScreenPixel(val, cc) { return val * cc.zoomFactor; }
 
     parse_coordinate(coordSys) {
         var cs;
@@ -356,7 +430,7 @@ export class RegionFactory {
         return cs;
     }
 
-    convertToRegionValue(vstr, coordSys) {
+    textToValueAndUnit(vstr) {
         var unit_char = vstr.charAt(vstr.length-1);
         var unit = RegionValueUnit.CONTEXT;
         var nstr;
@@ -377,6 +451,7 @@ export class RegionFactory {
                     break;
                 case 'p':
                     unit = RegionValueUnit.SCREEN_PIXEL;
+                    //unit = RegionValueUnit.IMAGE_PIXEL;
                     break;
                 case 'i':
                     unit = RegionValueUnit.IMAGE_PIXEL;
@@ -396,6 +471,29 @@ export class RegionFactory {
 
         var val = parseFloat(nstr);
 
+        return {unit, val};
+    }
+
+    convertToRegionValueForAngle(vstr) {
+        var {unit, val} = this.textToValueAndUnit(vstr);
+
+        // context is for degree unit
+        if (unit === RegionValueUnit.CONTEXT) {
+            unit = RegionValueUnit.DEGREE;
+        } else if (unit === RegionValueUnit.ARCMIN ||
+            unit === RegionValueUnit.ARCSEC ||
+            unit === RegionValueUnit.RADIAN) {
+            val = convertAngle(unit.key, 'degree', val);
+            unit = RegionValueUnit.DEGREE;
+        }
+
+        return RegionValue(val, unit);
+    }
+
+    convertToRegionValue(vstr, coordSys) {
+        var {unit, val} = this.textToValueAndUnit(vstr);
+
+        // keep the unit as origianlly indicated if there is
         if (unit === RegionValueUnit.CONTEXT) {
             if (coordSys === RegionCsys.IMAGE) {
                 unit = RegionValueUnit.IMAGE_PIXEL;
@@ -405,14 +503,16 @@ export class RegionFactory {
                 unit = RegionValueUnit.DEGREE;
             }
         } else if (unit === RegionValueUnit.ARCMIN ||
-                   unit === RegionValueUnit.ARCSEC ||
-                   unit === RegionValueUnit.RADIAN) {
+            unit === RegionValueUnit.ARCSEC ||
+            unit === RegionValueUnit.RADIAN) {
             val = convertAngle(unit.key, 'degree', val);
             unit = RegionValueUnit.DEGREE;
         }
 
         return RegionValue(val, unit);
     }
+
+
 
     parseRegionOptions(optionStr, rgOps = null) {
         var rgOptions = rgOps ? rgOps : makeRegionOptions({});
@@ -459,7 +559,7 @@ export class RegionFactory {
         while (true) {
             var opName;
             var opValRes = {};
-            var isTrue = (s) => (parseInt(s) !== 0);
+            var isTrue = (s) => (parseInt(s) !== 0 ? 1 : 0);
 
             idx = 0;
             if ((idx = ops.indexOf('=', idx)) < 0) {   // no more property
@@ -503,12 +603,17 @@ export class RegionFactory {
                         set(rgOptions, regionPropsList.FONT, this.parseFont(opValRes.valueStr));
                     }
                     break;
-                case 'select':
                 case 'highlight':
                 case 'highlite':
                     opValRes = getOptionValue(ops, [' ']);
                     if (opValRes.valueStr) {
                         set(rgOptions, regionPropsList.HIGHLITE,  isTrue(opValRes.valueStr));
+                    }
+                    break;
+                case 'select':
+                    opValRes = getOptionValue(ops, [' ']);
+                    if (opValRes.valueStr) {
+                        set(rgOptions, regionPropsList.SELECT,  isTrue(opValRes.valueStr));
                     }
                     break;
                 case 'include':
@@ -603,7 +708,15 @@ export class RegionFactory {
                 if (features.length === 1) {
                     set(ops, regionPropsList.PTTYPE, pType);
                 } else if (validator.isFloat(features[1])) {
-                    set(ops, regionPropsList.PTSIZE, parseInt(features[1]));
+                    var s;
+
+                    if (pType === RegionPointType.arrow) {
+                        s = parseInt(parseFloat(features[1])+0.5);
+                    } else {
+                        s = parseInt(parseFloat(features[1]) + 0.5) / 2;
+                    }
+
+                    set(ops, regionPropsList.PTSIZE, s);
                     set(ops, regionPropsList.PTTYPE, pType);
                 }
             }

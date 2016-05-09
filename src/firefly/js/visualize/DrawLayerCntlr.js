@@ -3,10 +3,10 @@
  */
 
 import {flux} from '../Firefly.js';
-import {getPlotViewIdListInGroup, getDrawLayerById} from './PlotViewUtil.js';
+import {getPlotViewIdListInGroup, getDrawLayerById, getConnectedPlotsIds} from './PlotViewUtil.js';
 import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
-import {without,union,omit} from 'lodash';
+import {without,union,omit,isEmpty} from 'lodash';
 
 
 
@@ -196,8 +196,10 @@ export function dispatchAttachLayerToPlot(id,plotId, attachPlotGroup=false) {
  * @param {string|[]} plotId to attach this may by a string or an array of strings
  * @param detachPlotGroup
  * @param useLayerGroup
+ * @param destroyWhenAllDetached if all plots are detached then destroy this plot
  */
-export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false, useLayerGroup=true) {
+export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false, 
+                                            useLayerGroup=true, destroyWhenAllDetached=false) {
     var plotIdAry;
 
     if (Array.isArray(plotId)) {
@@ -209,7 +211,7 @@ export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false, us
 
     getDrawLayerIdAry(dlRoot(),id,useLayerGroup)
         .forEach( (drawLayerId) => {
-            flux.process({type: DETACH_LAYER_FROM_PLOT, payload: {drawLayerId,plotIdAry} });
+            flux.process({type: DETACH_LAYER_FROM_PLOT, payload: {drawLayerId,plotIdAry, destroyWhenAllDetached} });
         });
 
 }
@@ -290,6 +292,11 @@ function makeReducer(factory) {
                 break;
             case DETACH_LAYER_FROM_PLOT:
                 retState = deferToLayerReducer(state, action, dlReducer);
+                const {payload}= action;
+                if (payload.destroyWhenAllDetached &&  
+                    isEmpty(getConnectedPlotsIds(retState,payload.drawLayerId))) {
+                    retState = destroyDrawLayer(retState, action);
+                }
                 break;
             case PRE_ATTACH_LAYER_TO_PLOT:
                 retState = preattachLayerToPlot(state,action);

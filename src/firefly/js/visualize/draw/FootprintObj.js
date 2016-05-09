@@ -4,8 +4,10 @@ import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil';
 import {makeScreenPt, makeWorldPt} from '../Point.js';
 import {Style} from './DrawingDef.js';
-
-
+import {startRegionDes, setRegionPropertyDes, endRegionDes} from '../region/RegionDescription.js';
+import {regionPropsList, RegionType} from '../region/Region.js';
+import {isEmpty} from 'lodash';
+import CsysConverter from '../CsysConverter.js';
 
 const FOOTPRINT_OBJ= 'FootprintObj';
 const DEFAULT_STYLE= Style.STANDARD;
@@ -102,8 +104,8 @@ var draw=  {
 		drawFootprint(ctx, plot, drawObj.footprintAry, drawParams, drawObj.renderOptions, onlyAddToPath);
 	},
 
-	toRegion(drawObj,def) {
-		toRegion(drawObj.footprintAry, makeDrawParams(drawObj,def),drawObj.renderOptions);
+	toRegion(drawObj, plot, def) {
+		return toRegion(drawObj.footprintAry, plot, makeDrawParams(drawObj,def),drawObj.renderOptions);
 	},
 
 	translateTo(drawObj,plot, apt) {
@@ -237,9 +239,6 @@ function drawFootprint(ctx, plot, footprintAry, drawParams, renderOptions, onlyA
 }
 
 
-
-
-
 function drawStandardFootprint(ctx, footprint, plot, drawParams, onlyAddToPath) {
 
 	var wpt0 = footprint[footprint.length - 1];
@@ -262,16 +261,22 @@ function drawStandardFootprint(ctx, footprint, plot, drawParams, onlyAddToPath) 
 }
 
 
-function toRegion(footprintAry, drawParams) {
-	var {color} = drawParams;
-	return footprintAry.map( (footprint) => {
-		var rl = window.ffgwt.util.dd.RegionLines.makeRegionLines(footprint.map( (wp)  => wp.toString()));
-		rl.getOptions().setColor(color);
-		return rl;
-	});
+function toRegion(footprintAry, plot, drawParams) {
+	var {color, lineWidth} = drawParams;
+	var cc = CsysConverter.make(plot);
+	var wpAry;
+	var des;
+
+	wpAry = footprintAry.map( (footprint) => cc.getWorldCoords(footprint) );
+	des = startRegionDes(RegionType.polygon, cc, wpAry, null, null);
+	if (isEmpty(des)) return [];
+
+	des +=  setRegionPropertyDes(regionPropsList.COLOR, color) +
+			setRegionPropertyDes(regionPropsList.LNWIDTH, lineWidth);
+	des = endRegionDes(des);
+
+	return [des];
 }
-
-
 
 function translateTo(footprintAry, plot, apt) {
 	var pt = plot.getScreenCoords(apt);

@@ -9,23 +9,19 @@ import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil';
 import VisUtil, {convertAngle} from '../VisUtil.js';
 import {TextLocation, Style, DEFAULT_FONT_SIZE} from './DrawingDef.js';
-import {makeScreenPt, makeViewPortPt, makeOffsetPt} from '../Point.js';
+import {makeScreenPt, makeViewPortPt, makeOffsetPt, makeWorldPt, makeImagePt} from '../Point.js';
+import {toRegion} from './ShapeToRegion.js';
+import {getDrawobjArea,  isScreenPtInRegion, makeHighlightShapeDataObj} from './ShapeHighlight.js';
+import CsysConverter from '../CsysConverter.js';
 import {has, isNil} from 'lodash';
 
-
-
 const FONT_FALLBACK= ',sans-serif';
-const HTML_DEG= '&deg;';
 
 var UnitType= new Enum(['PIXEL','ARCSEC','IMAGE_PIXEL']);
-var ShapeType= new Enum(['Line', 'Text','Circle', 'Rectangle', 'Ellipse']);
-
-
-
-
+var ShapeType= new Enum(['Line', 'Text','Circle', 'Rectangle', 'Ellipse',
+                         'Annulus', 'BoxAnnulus', 'EllipseAnnulus', 'Polygon']);
 const SHAPE_DATA_OBJ= 'ShapeDataObj';
 const DEF_WIDTH = 1;
-
 
 function make(sType) {
     const obj= DrawObj.makeDrawObj();
@@ -68,12 +64,92 @@ function makeRectangleByCorners(pt1, pt2) {
     return Object.assign(make(ShapeType.Rectangle), {pts:[pt1, pt2]});
 }
 
-function makeRectangleByCenter(pt1, width, height, unitType=UnitType.PIXEL, angle = 0.0, angleUnit = UnitType.ARCSEC) {
-    return Object.assign(make(ShapeType.Rectangle), {pts:[pt1], width, height, unitType, angle, angleUnit});
+/**
+ * make rectangle drawobj with the center and rotate angle specified
+ * @param pt1
+ * @param width
+ * @param height
+ * @param unitType
+ * @param angle
+ * @param angleUnit
+ * @param isOnWorld if the rectangle have the width and height move along the east and north direction over the world domain
+ * @returns {*}
+ */
+function makeRectangleByCenter(pt1, width, height, unitType=UnitType.PIXEL, angle = 0.0, angleUnit = UnitType.ARCSEC, isOnWorld = true) {
+    var isCenter = true;
+    return Object.assign(make(ShapeType.Rectangle), {pts:[pt1], width, height, unitType, angle, angleUnit, isOnWorld, isCenter});
 }
 
-function makeEllipse(pt1, radius1, radius2, unitType=UnitType.PIXEL, angle = 0.0, angleUnit = UnitType.ARCSEC) {
-    return Object.assign(make(ShapeType.Ellipse), {pts:[pt1], radius1, radius2, unitType, angle, angleUnit});
+/**
+ * make ellipse drawobj with the center and rotate angle specified
+ * @param pt1
+ * @param radius1
+ * @param radius2
+ * @param unitType
+ * @param angle
+ * @param angleUnit
+ * @param isOnWorld if the rectangle have the width and height move along the east and north direction over the world domain
+ * @returns {*}
+ */
+function makeEllipse(pt1, radius1, radius2, unitType=UnitType.PIXEL, angle = 0.0, angleUnit = UnitType.ARCSEC, isOnWorld = true) {
+    return Object.assign(make(ShapeType.Ellipse), {pts:[pt1], radius1, radius2, unitType, angle, angleUnit, isOnWorld});
+}
+
+/**
+ * DrawObj contains pts, sType, radiusAry, unitType, drawObjAry
+ * and optional properties for color, lineWidth, text, textOffset, font, textLoc
+ * @param pt1
+ * @param radiusAry [r1, r2, ...]
+ * @param unitType
+ * @param drawObjAry
+ * @returns {*}
+ */
+function makeAnnulus(pt1, radiusAry, unitType = UnitType.PIXEL, drawObjAry = null) {
+    return Object.assign(make(ShapeType.Annulus), {pts:[pt1], radiusAry, unitType, drawObjAry});
+}
+
+/**
+ * DrawObj contains pts, sType, radiusAry, unitType, drawObjAry
+ * and optional properties for color, lineWidth, text, textOffset, font, textLoc
+ * @param pt1
+ * @param dimensionAry [[w, h], [w, h], ...]
+ * @param unitType
+ * @param angle
+ * @param angleUnit
+ * @param drawObjAry
+ * @returns {*}
+ */
+function makeBoxAnnulus(pt1, dimensionAry, unitType = UnitType.PIXEL,
+                        angle = 0.0, angleUnit = UnitType.ARCSEC, drawObjAry = null) {
+    return Object.assign(make(ShapeType.BoxAnnulus), {pts:[pt1], dimensionAry, unitType, angle, angleUnit, drawObjAry});
+}
+
+
+/**
+ * DrawObj contains pts, sType, radiusAry, unitType, drawObjAry
+ * and optional properties for color, lineWidth, text, textOffset, font, textLoc
+ * @param pt1
+ * @param dimensionAry [[r1, r2], [r1, r2], ...]
+ * @param unitType
+ * @param angle
+ * @param angleUnit
+ * @param drawObjAry
+ * @returns {*}
+ */
+function makeEllipseAnnulus(pt1, dimensionAry, unitType = UnitType.PIXEL,
+                            angle = 0.0, angleUnit = UnitType.ARCSEC, drawObjAry = null) {
+    return Object.assign(make(ShapeType.EllipseAnnulus), {pts:[pt1], dimensionAry, unitType, angle, angleUnit, drawObjAry});
+}
+
+/**
+ * DrawObj contains pts, sType, radiusAry, unitType, drawObjAry
+ * and optional properties for color, lineWidth, text, textOffset, font, textLoc
+ * @param ptAry
+ * @param drawObjAry
+ * @returns {*}
+ */
+function makePolygon(ptAry, drawObjAry=null) {
+    return Object.assign(make(ShapeType.Polygon), {pts: ptAry, drawObjAry});
 }
 
 /**
@@ -149,7 +225,7 @@ var draw=  {
 
     toRegion(drawObj,plot, def) {
         var drawParams= makeDrawParams(drawObj,def);
-        toRegion(drawObj,plot,drawParams);
+        return toRegion(drawObj,plot,drawParams);
     },
 
     translateTo(drawObj,plot, apt) {
@@ -158,21 +234,31 @@ var draw=  {
 
     rotateAround(drawObj, plot, angle, worldPt) {
         return rotateAround(plot,drawObj.pts,angle,worldPt);
+    },
+
+    makeHighlight(drawObj, plot, def) {
+        return makeHighlightShapeDataObj(drawObj, CsysConverter.make(plot),  def);
+    },
+
+    isScreenPointInside(screenPt, drawObj, plot, def) {
+        return  isScreenPtInRegion(drawObj, screenPt, CsysConverter.make(plot), def);
     }
 };
 
 export default {
     make,draw,makeLine,makeCircle,makeCircleWithRadius,
     makeRectangleByCorners,makeText, makeRectangleByCenter,
-    makeTextWithOffset,makeRectangle, makeEllipse, SHAPE_DATA_OBJ, UnitType
+    makeTextWithOffset,makeRectangle, makeEllipse,
+    makeAnnulus, makeBoxAnnulus, makeEllipseAnnulus, makePolygon,
+    SHAPE_DATA_OBJ, FONT_FALLBACK, UnitType, ShapeType
 };
-
 
 
 function getRectangleCenterScreenPt(drawObj,plot,unitType) {
     var pt0, pt1;
     var w, h;
     var {width,height,pts}= drawObj;
+
     if (pts.length===1 && width && height) {
         pt0 = plot.getScreenCoords(pts[0]);
 
@@ -181,10 +267,11 @@ function getRectangleCenterScreenPt(drawObj,plot,unitType) {
                 w= width;
                 h= height;
                 break;
+
             case UnitType.ARCSEC:
-                w= getValueInScreenPixel(plot,width);
-                h= getValueInScreenPixel(plot,height);
-                break;
+                var corners = getRectCorners(pts[0], false, width, height, plot);
+                return plot.getScreenCoords(corners.center);
+
             case UnitType.IMAGE_PIXEL:
                 var scale= plot.zoomFactor;
                 w= scale*width;
@@ -206,7 +293,152 @@ function getRectangleCenterScreenPt(drawObj,plot,unitType) {
     }
 }
 
-function getValueInScreenPixel(plot, arcsecValue) {
+/**
+ * get the 4 corners of the rectangle with width and height in the unit of arcsec
+ *
+ * if the given point is the center of rectange, then find the corners around,
+ * otherewise, the given point is assumed to be the upper right corner, then find the center first
+ *
+ * the return contains 4 corners and the center in world coordinate
+ *
+ * @param pt point in any coordinates
+ * @param isCenter if the given point is the center of the rectangle
+ * @param width  in arcsec
+ * @param height in arcsec
+ * @param plot
+ * @returns {{upperLeft: *, upperRight: *, lowerLeft: *, lowerRight: *}} corners in world coordinate
+ */
+function getRectCorners(pt, isCenter, width, height, plot) {
+    var wpt = plot.getWorldCoords(pt);
+    var upperLeft, upperRight, lowerLeft, lowerRight;
+    var posLeft, posRight, posUp, posDown;
+    var w = width/2;
+    var h = height/2;
+
+
+    // compute 4 corners in J2000
+    if (!isCenter) {
+        var posCenter = VisUtil.calculatePosition(wpt, +w, -h); // go east and south to find the center
+
+        wpt = makeWorldPt(posCenter.getLon(), posCenter.getLat());
+    }
+
+    posLeft = VisUtil.calculatePosition(wpt, +w, 0.0); // go east
+    posRight = VisUtil.calculatePosition(wpt, -w, 0.0);
+    posUp = VisUtil.calculatePosition(wpt, 0.0, +h);   // go north
+    posDown = VisUtil.calculatePosition(wpt, 0.0, -h);
+
+    upperLeft = makeWorldPt(posLeft.getLon(), posUp.getLat());
+    upperRight = makeWorldPt(posRight.getLon(), posUp.getLat());
+    lowerLeft = makeWorldPt(posLeft.getLon(), posDown.getLat());
+    lowerRight = makeWorldPt(posRight.getLon(), posDown.getLat());
+
+    // return 4 corners and center in world coordinate
+    return {upperLeft, upperRight, lowerLeft, lowerRight, center: wpt};
+}
+
+
+var imagePixelToArcsec = (val, cc) => val * cc.projection.getPixelScaleArcSec();
+var screenPixelToArcsec = (val, cc) => val * cc.projection.getPixelScaleArcSec()/cc.zoomFactor;
+
+/**
+ * cancluate the rectangle slanted angle on the screen
+ * the angle is in clockwise direction, consistent with canvas drawing
+ *
+ * return the upperLeft corner, dimension and slanted angle of the rectangle in screen or image coordinate
+ * and the center of the rectangle
+ *
+ * @param wpt
+ * @param plot
+ * @param isCenter
+ * @param width
+ * @param height
+ * @param unit
+ * @param isOnWorld
+ * @returns {{width: *, height: *, unit: *, angle: *}} angle in radian on image coordinate, height, width in image pixel
+ */
+
+export function rectOnImage(wpt, isCenter, plot, width, height, unit, isOnWorld) {
+    var corners;
+    var imgUpperLeft, imgUpperRight, imgLowerLeft, imgLowerRight;
+    var centerPt;
+    var angle;
+
+    if (isOnWorld) {
+        // change the size to be arcse for 'center' typed rect
+        if (unit === UnitType.IMAGE_PIXEL) {
+            width = imagePixelToArcsec(width, plot);
+            height = imagePixelToArcsec(height, plot);
+        } else if (unit === UnitType.PIXEL) {
+            width = screenPixelToArcsec(width, plot);
+            height = screenPixelToArcsec(height, plot);
+        }
+
+        corners = getRectCorners(wpt, isCenter, width, height, plot);
+        imgUpperLeft = plot.getImageCoords(corners.upperLeft);
+        imgUpperRight = plot.getImageCoords(corners.upperRight);
+        imgLowerLeft = plot.getImageCoords(corners.lowerLeft);
+        imgLowerRight = plot.getImageCoords(corners.lowerRight);
+        if (!imgUpperLeft || !imgUpperRight || !imgLowerLeft || !imgLowerRight) return null;
+
+        var xdist = (imgUpperLeft.x - imgUpperRight.x);
+        var ydist = (imgUpperLeft.y - imgUpperRight.y);
+
+        angle = Math.atan(ydist / xdist);
+        width = Math.sqrt(xdist * xdist + ydist * ydist);
+
+        xdist = (imgUpperLeft.x - imgLowerLeft.x);
+        ydist = (imgUpperLeft.y - imgLowerLeft.y);
+        height = Math.sqrt(xdist * xdist + ydist * ydist);
+
+        unit = UnitType.IMAGE_PIXEL;
+
+        centerPt = isCenter ? wpt : corners.center;
+    } else {
+        angle = 0.0;
+
+        width = lengthToImagePixel(width, plot, unit);
+        height = lengthToImagePixel(height, plot, unit);
+        unit = UnitType.IMAGE_PIXEL;
+
+
+        if (!isCenter) {
+            var pt = plot.getImageCoords(wpt);  // upperLeft corner
+
+            if (!pt) return null;
+            centerPt = makeImagePt(pt.x + width/2, pt.y - height/2);
+        } else {
+            centerPt = plot.getImageCoords(wpt);
+        }
+
+        imgUpperLeft = makeImagePt(centerPt.x - width/2, centerPt.y + height/2);
+        imgUpperRight = makeImagePt(centerPt.x + width/2, centerPt.y + height/2);
+        imgLowerLeft = makeImagePt(centerPt.x - width/2, centerPt.y - height/2);
+        imgLowerRight = makeImagePt(centerPt.x + width/2, centerPt.y - height/2);
+
+        if (!centerPt || !imgUpperLeft || !imgUpperRight || !imgLowerLeft || !imgLowerRight) return null;
+    }
+
+    return {width, height, unit, centerPt, angle, corners:[imgUpperLeft, imgUpperRight, imgLowerRight, imgLowerLeft]};
+}
+
+/**
+ * compute if any of the 4 corners of rect is in viewport
+ * @param cornerAry world coordinate
+ * @param plot
+ * @returns {boolean}
+ */
+function cornerInView(cornerAry, plot) {
+    var cInView;
+
+    if (cornerAry) {
+        cInView = cornerAry.find( (c) => plot.pointInViewPort(plot.getViewPortCoords(c)) );
+    }
+
+    return !isNil(cInView);
+}
+
+export function getValueInScreenPixel(plot, arcsecValue) {
     var retval= plot ?
                   arcsecValue/(plot.projection.getPixelScaleArcSec()/plot.zoomFactor) :
                   arcsecValue;
@@ -224,10 +456,9 @@ function getValueInScreenPixel(plot, arcsecValue) {
  */
 function drawShape(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath) {
 
-    var {sType,pts}= drawObj;
-    switch (sType) {
+    switch (drawObj.sType) {
         case ShapeType.Text:
-            drawText(drawObj,drawTextAry,plot,pts[0], drawParams);
+            drawText(drawObj,drawTextAry, plot, drawObj.pts[0], drawParams);
             break;
         case ShapeType.Line:
             drawLine(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath);
@@ -241,7 +472,12 @@ function drawShape(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath) {
         case ShapeType.Ellipse:
             drawEllipse(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath);
             break;
-    }
+        case ShapeType.Annulus:
+        case ShapeType.BoxAnnulus:
+        case ShapeType.EllipseAnnulus:
+        case ShapeType.Polygon:
+            drawCompositeObject(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath);
+            break;}
 }
 
 /**
@@ -349,7 +585,7 @@ function drawCircle(drawObj, ctx, drawTextAry, plot, drawParams) {
  * @param inPt
  * @param drawParams
  */
-function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
+export function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
     var {text, textOffset, renderOptions}= drawObj;
     var {fontName, fontSize, fontWeight, fontStyle}= drawParams;
 
@@ -360,7 +596,7 @@ function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
         var y= pt.y<2 ? 2 : pt.y;
 
         var height= 12;
-        if (validator.isFloat(fontSize)) {
+        if (validator.isFloat(fontSize.substring(0, fontSize.length - 2))) {
             height = parseFloat(fontSize.substring(0, fontSize.length - 2)) * 14 / 10;
         }
 
@@ -383,9 +619,10 @@ function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
         //TODO: better solution would be to adapt text color with background
 
         // in case shape 'text' defines the color of its own
-        var color = drawObj.sType === ShapeType.Text&&has(drawObj, 'color') ? drawObj.color : 'black';
+        var color = has(drawObj, 'color') ? drawObj.color : 'black';
         DrawUtil.drawText(drawTextAry, text, x, y, color, renderOptions,
                 fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle);
+        drawObj.textImgLoc = plot.getImageCoords(makeViewPortPt(x, y));
     }
 }
 
@@ -393,57 +630,85 @@ function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
  *
  * @param drawObj
  * @param ctx
+ * @param drawTextAry
  * @param plot
  * @param drawParams
  * @param onlyAddToPath
  */
 function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPath) {
-    var {pts, text, width, height, renderOptions, angle, angleUnit}= drawObj;
-    var {color, lineWidth, style, textLoc, unitType}= drawParams;
+    var {pts, text, width, height, renderOptions, angle = 0.0, angleUnit, isCenter = false, isOnWorld = false}= drawObj;
+    var {color, lineWidth, style, textLoc, unitType, fontSize}= drawParams;
     var inView = false;
     var centerPt;
     var pt0, pt1;
     var x, y, w, h;
 
-
     w = 0; h = 0; x = 0; y = 0;
     centerPt = null;
 
     if (pts.length===1 && !isNil(width) && !isNil(height)) {
-        var isCenter = !isNil(angle);
+        var rectAngle = 0.0;      // in radian
+
+        var sRect;
+
+        if (isCenter) {
+            sRect = rectOnImage(pts[0], isCenter, plot, width, height, unitType, isOnWorld);
+        }
 
         pt0 = plot ? plot.getViewPortCoords(pts[0]) : pts[0];
-        if (!plot || plot.pointInViewPort(pt0)) {
+        if (!plot || (!isCenter && plot.pointInViewPort(pt0)) ||
+                     (isCenter && sRect && cornerInView(sRect.corners, plot))) {
             inView = true;
 
             switch (unitType) {
                 case UnitType.PIXEL:
-                    w = width
-                    h = height;
+                    if (isCenter) {
+                        w = sRect.width * plot.zoomFactor;
+                        h = sRect.height * plot.zoomFactor;
+                        rectAngle = -sRect.angle;
+                    } else {
+                        w = width;
+                        h = height;
+                    }
                     break;
                 case UnitType.ARCSEC:
-                    w = getValueInScreenPixel(plot, width);
-                    h = getValueInScreenPixel(plot, height);
+                    if (isCenter) {      // center and in view
+                        w = sRect.width * plot.zoomFactor;
+                        h = sRect.height * plot.zoomFactor;
+
+                        // pt0 is the center
+                        rectAngle = -sRect.angle;
+                    } else {         // not center case
+                        w = getValueInScreenPixel(plot, width);
+                        h = getValueInScreenPixel(plot, height);
+                    }
+
                     break;
                 case UnitType.IMAGE_PIXEL:
-                    w = plot.zoomFactor * width;
-                    h = plot.zoomFactor * height;
-                    break;
+                    if (isCenter) {
+                        w = sRect.width * plot.zoomFactor;
+                        h = sRect.height * plot.zoomFactor;
+                        rectAngle = -sRect.angle;
+                    } else {
+                        w = plot.zoomFactor * width;
+                        h = plot.zoomFactor * height;
+                     }
+                     break;
                 default:
                     w = width;
                     h = height;
-                    break;
             }
 
-            x = pt0.x;
+            x = pt0.x;   // x, y in viewport coordinate
             y = pt0.y;
-            if (h < 0 && !isCenter) {
+            if (h < 0 ) {
                 h *= -1;
-                y -= h;
+                y = (isCenter) ? y - h/2 : y - h;
             }
+
             if (w < 0 && !isCenter) {
                 w *= -1;
-                x -= w;
+                x = (isCenter) ? x - w/2 : x - w;
             }
 
             // make adjustment for rectangle with center and rotate angle
@@ -455,6 +720,7 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
                     angle =  plot.zoomFactor * angle;
                 }
 
+                angle += rectAngle;
                 // move the rotation point to the center, drawing position[0, 0] is visually at {x, y}
                 renderOptions = Object.assign({}, renderOptions,
                         {
@@ -462,13 +728,13 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
                             translation: {x, y}
                         });
 
-                centerPt = makeScreenPt(x, y);
+                centerPt = makeViewPortPt(x, y);
 
                 // draw the rect from {-w/2, -h/2} relative to the new origin
                 x = -w/2;
                 y = -h/2;
             } else {
-                centerPt = makeScreenPt(x+w/2, y+h/2);
+                centerPt = makeViewPortPt(x+w/2, y+h/2);
             }
 
             if (!onlyAddToPath || style === Style.HANDLED) {
@@ -481,7 +747,7 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
         }
 
     }
-    else {
+    else {  // two corners case
         pt0 = plot ? plot.getViewPortCoords(pts[0]) : pts[0];
         pt1 = plot ? plot.getViewPortCoords(pts[1]) : pts[1];
         if (!pt0 || !pt1) return;
@@ -500,12 +766,13 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
             if (!onlyAddToPath || style === Style.HANDLED) {
                 DrawUtil.stroke(ctx);
             }
-            centerPt = makeScreenPt(x+w/2, y+h/2);
+            centerPt = makeViewPortPt(x+w/2, y+h/2);
+            angle = 0.0;
         }
     }
 
     if (text && inView) {
-        var textPt= makeTextLocationRectangle(plot, textLoc, centerPt, w, h, angle);
+        var textPt= makeTextLocationRectangle(plot, textLoc, fontSize, centerPt, w, h, angle, lineWidth);
         drawText(drawObj, drawTextAry, plot, textPt, drawParams);
     }
     if (style == Style.HANDLED && inView) {
@@ -518,26 +785,39 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
  * draw ellipse
  * @param drawObj
  * @param ctx
+ * @param drawTextAry
  * @param plot
  * @param drawParams
  * @param onlyAddToPath
  */
 function drawEllipse(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPath) {
-    var {pts, text, radius1, radius2, renderOptions, angle, angleUnit}= drawObj;
-    var {color, lineWidth, style, textLoc, unitType}= drawParams;
+    var {pts, text, radius1, radius2, renderOptions, angle = 0.0, angleUnit, isOnWorld = true}= drawObj;
+    var {color, lineWidth, style, textLoc, unitType, fontSize}= drawParams;
     var inView = false;
     var centerPt;
     var pt0;
     var x, y, w, h;
+    var eAngle = 0.0;
 
     centerPt = null;
     x = 0; y=0; w=0; h=0;
-    if ( pts.length ===1 && !isNil(radius1) && !isNil(radius2) && !isNil(angle) && angleUnit) {
+
+    if ( pts.length ===1 && !isNil(radius1) && !isNil(radius2)) {
         pt0 = plot ? plot.getViewPortCoords(pts[0]) : pts[0];
         centerPt = pt0;
-        if (!plot || plot.pointInViewPort(pt0)) {
-            inView = true;
 
+        if (plot) {
+            var sRect = rectOnImage(pts[0], true, plot, radius1*2, radius2*2, unitType, isOnWorld);
+            if (!plot.pointInViewPort(pt0) || !sRect || !cornerInView(sRect.corners, plot)) {
+                inView = false;
+            } else {
+                w = sRect.width * plot.zoomFactor/2;
+                h = sRect.height * plot.zoomFactor/2;
+                eAngle = -sRect.angle;
+                inView = true;
+            }
+        } else {
+            inView = true;
             switch (unitType) {
                 case UnitType.PIXEL:
                     w = radius1;
@@ -556,7 +836,9 @@ function drawEllipse(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPath
                     h = radius2;
                     break;
             }
+        }
 
+        if (inView) {
             x = pt0.x;
             y = pt0.y;
             if (h < 0) {
@@ -573,6 +855,8 @@ function drawEllipse(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPath
                 angle = plot.zoomFactor * angle;
             }
 
+            angle += eAngle;
+
             if (!onlyAddToPath || style === Style.HANDLED) {
                 DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
             }
@@ -585,7 +869,7 @@ function drawEllipse(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPath
     }
 
     if (text && inView) {
-        var textPt= makeTextLocationEllipse(plot, textLoc, centerPt, w, h, angle);
+        var textPt= makeTextLocationEllipse(plot, textLoc, fontSize, centerPt, w, h, angle, lineWidth);
         drawText(drawObj, drawTextAry, plot, textPt, drawParams);
     }
     if (style == Style.HANDLED && inView) {
@@ -594,26 +878,42 @@ function drawEllipse(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPath
 }
 
 /**
- *
+ * draw the object which contains drawObj array
+ * @param drawObj
+ * @param ctx
+ * @param drawTextAry
  * @param plot
- * @param pts
- * @return {number}
+ * @param drawParams
+ * @param onlyAddToPath
  */
-function findRadius(plot,pts) {
-    var retval= -1;
-    var pt0= plot.getScreenCoords(pts[0]);
-    var pt1= plot.getScreenCoords(pts[1]);
-    if (pt0 && pt1) {
-        var xDist= Math.abs(pt0.x-pt1.x)/2;
-        var yDist= Math.abs(pt0.y-pt1.y)/2;
-        retval= Math.min(xDist,yDist);
+function drawCompositeObject(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath) {
+    var {drawObjAry, text}= drawObj;
+    var {lineWidth, textLoc, fontSize} = drawParams;
+
+    // draw the child drawObj
+    if (drawObjAry) {
+        drawObjAry.forEach( (oneDrawObj) => drawShape(oneDrawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath));
     }
-    return retval;
+
+    // draw the text asscociated with the shape, find the overal covered area first
+    if (text) {
+        var objArea = getDrawobjArea(drawObj, plot);
+
+        if (objArea && isAreaInView(objArea, plot)) {
+            var textPt = makeTextLocationComposite(plot, textLoc, fontSize,
+                            objArea.width * plot.zoomFactor,
+                            objArea.height * plot.zoomFactor,
+                            objArea.center,
+                            lineWidth);
+            if (textPt) {
+                drawText(drawObj, drawTextAry, plot, textPt, drawParams);
+            }
+        }
+    }
 }
 
-
 /**
- *
+ * locate text for circle, return the location in screen coordinate
  * @param plot
  * @param textLoc
  * @param centerPt
@@ -646,7 +946,7 @@ function makeTextLocationCircle(plot, textLoc, centerPt, screenRadius) {
 }
 
 /**
- *
+ * locate text position for line in screen coordinate
  * @param plot
  * @param textLoc
  * @param fontSize
@@ -656,13 +956,15 @@ function makeTextLocationCircle(plot, textLoc, centerPt, screenRadius) {
  */
 function makeTextLocationLine(plot, textLoc, fontSize, inPt0, inPt1) {
     if (!inPt0 || !inPt1) return null;
-    const pt0= plot.getScreenCoords(inPt0);
-    const pt1= plot.getScreenCoords(inPt1);
+    var pt0= plot.getScreenCoords(inPt0);
+    var pt1= plot.getScreenCoords(inPt1);
 
     if (!pt0 || !pt1) return null;
-    var height= 12;
-    if (validator.isFloat(fontSize)) {
-        height = parseFloat(fontSize.substring(0, fontSize.length - 2)) * 14 / 10;
+    var height= fontHeight(fontSize);
+
+    // pt1 is supposed to be lower on screen
+    if (pt0.y > pt1.y) {
+        [pt1, pt0] = [pt0, pt1];
     }
     var x = pt1.x+5;
     var y = pt1.y+5;
@@ -680,7 +982,8 @@ function makeTextLocationLine(plot, textLoc, fontSize, inPt0, inPt1) {
 
     switch (textLoc) {
         case TextLocation.LINE_TOP:
-            y= pt1.y- (height+5);
+            y= pt0.y - (height+5);
+            x =pt0.x + 5;
             break;
         case TextLocation.LINE_BOTTOM:
         case TextLocation.DEFAULT:
@@ -698,32 +1001,20 @@ function makeTextLocationLine(plot, textLoc, fontSize, inPt0, inPt1) {
     return makeScreenPt(x,y);
 }
 
-function widthAfterRotation(width, height, angle) {
-    const wcos = width * Math.cos(angle);
-    const hsin = height * Math.sin(angle);
-
-    return Math.max(Math.abs(wcos-hsin), Math.abs(wcos+hsin));
-}
-
-function heightAfterRotation(width, height, angle) {
-    const wsin = width * Math.sin(angle);
-    const hcos = height * Math.cos(angle);
-
-    return Math.max(Math.abs(wsin-hcos), Math.abs(wsin+hcos));
-}
-
 
 /**
- * compute text location for rectangle
+ * compute text location for rectangle in screen coordinate
  * @param plot
  * @param textLoc
+ * @param fontSize
  * @param centerPt
  * @param width
  * @param height
  * @param angle
+ * @param lineWidth
  * @returns {object} screen point
  */
-function makeTextLocationRectangle(plot, textLoc, centerPt, width, height, angle) {
+function makeTextLocationRectangle(plot, textLoc, fontSize, centerPt, width, height, angle = 0.0, lineWidth = 1) {
     var scrCenPt= plot.getScreenCoords(centerPt);
     if (!scrCenPt || width <1 || height < 1) return null;
 
@@ -731,37 +1022,42 @@ function makeTextLocationRectangle(plot, textLoc, centerPt, width, height, angle
     var h = heightAfterRotation(width, height, angle)/2;
 
     var opt;
+    var fHeight = fontHeight(fontSize);
+
+    var offy = fHeight + lineWidth;
     switch (textLoc) {
         case TextLocation.RECT_NE:
-            opt= makeOffsetPt(-1*w, -1*h);
+            opt= makeOffsetPt(-1*w, -1*(h + offy));
             break;
         case TextLocation.RECT_NW:
-            opt= makeOffsetPt(w-10, -1*(h));
+            opt= makeOffsetPt(w, -1*(h));
             break;
         case TextLocation.RECT_SE:
-            opt= makeOffsetPt(-1*w, h);
+            opt= makeOffsetPt(-1*w, h+offy);
             break;
         case TextLocation.RECT_SW:
-            opt= makeOffsetPt(w-10, h);
+            opt= makeOffsetPt(w, h);
             break;
         default:
             opt= makeOffsetPt(0,0);
-            break;
     }
     return makeScreenPt(scrCenPt.x+opt.x, scrCenPt.y+opt.y);
 }
 
 
 /**
- * compute text location for ellipse
+ * compute text location for ellipse in screen coordinate
  * @param plot
  * @param textLoc
+ * @param fontSize
  * @param centerPt
+ * @param angle    in radian
  * @param radius1  radius on horizotal axis
  * @param radius2  radius on vertical axis
+ * @param lineWidth
  * @returns {object} screen location
  */
-function makeTextLocationEllipse(plot, textLoc, centerPt, radius1, radius2, angle) {
+function makeTextLocationEllipse(plot, textLoc, fontSize, centerPt, radius1, radius2, angle, lineWidth = 1) {
     var scrCenPt= plot.getScreenCoords(centerPt);
     if (!scrCenPt || radius1 < 1 || radius2 < 1) return null;
 
@@ -769,249 +1065,68 @@ function makeTextLocationEllipse(plot, textLoc, centerPt, radius1, radius2, angl
     var h = heightAfterRotation(radius1, radius2, angle); // half of vertical coverage
 
     var opt;
+    var height = fontHeight(fontSize);
+
+    var offy = height + lineWidth;
     switch (textLoc) {
         case TextLocation.ELLIPSE_NE:
-            opt= makeOffsetPt(-1*w, -1*(h));
+            opt= makeOffsetPt(-1*w, -1*(h + offy));
             break;
         case TextLocation.ELLIPSE_NW:
-            opt= makeOffsetPt(w-10, -1*(h));
+            opt= makeOffsetPt(w, -1*(h));
             break;
         case TextLocation.ELLIPSE_SE:
-            opt= makeOffsetPt(-1*w, h);
+            opt= makeOffsetPt(-1*w, h + offy) ;
             break;
         case TextLocation.ELLIPSE_SW:
-            opt= makeOffsetPt(w-10, h);
+            opt= makeOffsetPt(w, h);
             break;
         default:
             opt= makeOffsetPt(0,0);
-            break;
     }
     return makeScreenPt(scrCenPt.x+opt.x, scrCenPt.y+opt.y);
-
 }
 
 
 /**
- *
- * @param drawObj
- * @param plot
- * @param drawParams
- * @return {Array}
- */
-function toRegion(drawObj, plot, drawParams) {
-    var {color,unitType,textLoc,fontSize}= drawParams;
-    var {sType,pts,text,textOffset,radius,width,height}= drawObj;
-    var retList= [];
-    switch (sType) {
-        case ShapeType.Text:
-            retList= makeTextRegion(text, pts[0], textOffset, plot, color);
-            break;
-        case ShapeType.Line:
-            retList= makeLineRegion(plot,color,pts,text,textLoc,fontSize);
-            break;
-        case ShapeType.Circle:
-            retList= makeCircleRegion(plot,pts,radius,unitType,textLoc,color);
-            break;
-        case ShapeType.Rectangle:
-            retList= makeRectangleRegion(pts,plot,text,width,height,color);
-            break;
-    }
-    return retList;
-}
-
-
-/**
- *
- * @param text
- * @param textOffset
- * @param inPt
- * @param plot
- * @param color
- * @return {*}
- */
-function makeTextRegion( text, inPt, textOffset, plot, color) {
-    if (!text || !inPt) return [];
-    var wp= plot.getWorldCoords(inPt);
-    if (!wp) return [];
-
-
-    var rt= window.ffgwt.util.dd.RegionText.makeRegionText( wp.toString());
-    var op= rt.getOptions();
-    op.setColor(color);
-    op.setText(makeNonHtml(text));
-
-    if (textOffset) {
-        op.setOffsetX(textOffset.x);
-        op.setOffsetY(textOffset.y);
-    }
-    return [rt];
-}
-
-
-function makeNonHtml(s) {
-    var retval= s;
-    if (s.endsWith(HTML_DEG)) {
-        retval= s.substring(0,s.indexOf(HTML_DEG)) + ' deg';
-    }
-    return retval;
-}
-
-
-/**
- *
- * @param plot
- * @param color
- * @param pts
- * @param text
+ * compute text location for annulus-like and polygon shape
+ * @param cc
  * @param textLoc
- * #param fontSize
- * @return {Array}
- */
-function makeLineRegion(plot, color, pts, text, textLoc, fontSize) {
-    var wp0= plot.getWorldCoords(pts[0]);
-    var wp1= plot.getWorldCoords(pts[1]);
-
-    var retList= [];
-    if (wp0 && wp1) {
-
-        var rl= window.ffgwt.util.dd.RegionLines.makeRegionLines(
-                [wp0.toString(), wp1.toString()] );
-        rl.getOptions().setColor(color);
-        retList= [rl];
-
-        if (text) {
-            var textPt= makeTextLocationLine(plot, textLoc, pts[0], pts[1],fontSize);
-            var textReg= makeTextRegion(text, plot.getWorldCoords(textPt), null, plot, color);
-            retList= [...retList, ...textReg];
-        }
-    }
-    return retList;
-}
-
-/**
- * ONLY VALID FOR CIRCLE!
- * @param plot
- * @param pts
- * @return
- */
-function getCircleCenter(plot,pts) {
-    const pt0= plot.getScreenCoords(pts[0]);
-    const pt1= plot.getScreenCoords(pts[1]);
-    if (!pt0 || !pt1) return null;
-    const x= Math.min(pt0.x,pt1.x) + Math.abs(pt0.x-pt1.x)/2;
-    const y= Math.min(pt0.y,pt1.y) + Math.abs(pt0.y-pt1.y)/2;
-    return plot.getWorldCoords(makeScreenPt(x,y));
-}
-
-
-/**
- *
- * @param plot
- * @param pts
- * @param radius
- * @param unitType
- * @param text
- * @param textLoc
- * @param color
- * @return {Array}
- */
-function makeCircleRegion(plot, pts, radius, unitType, text, textLoc, color) {
-    var wp;
-    var textPtScreen;
-    var retList= [];
-    var st= UnitType.PIXEL;
-    if (pts.length===1 && radius) {
-        st= unitType;
-        wp= plot.getWorldCoords(pts[0]);
-        textPtScreen= makeTextLocationCircle(plot,textLoc,wp, radius);
-    }
-    else {
-        wp= getCircleCenter(plot, pts);
-        radius= findRadius(plot,pts);
-        textPtScreen= makeTextLocationCircle(plot,textLoc,wp,radius);
-    }
-
-    if (wp) {
-        var unit= (st===UnitType.PIXEL) ? 'SCREEN_PIXEL' :'ARCSEC';
-        var rV= window.ffgwt.util.dd.RegionValue.makeRegionValue(radius, unit);
-        var ra= window.ffgwt.util.dd.RegionText.RegionAnnulus( wp.toString(),rV );
-        ra.getOptions().setColor(color);
-        retList.add(ra);
-        retList= [ra];
-        if (text) {
-            var textPt= plot.getWorldCoords(textPtScreen);
-            var textReg= makeTextRegion(text, textPt, null, plot, color);
-            retList= [...retList,...textReg];
-        }
-    }
-    return retList;
-}
-
-
-/**
- *
- * @param pts
- * @param plot
- * @param text
- * @param width
+ * @param fontSize
+ * @param width     in screen coordinate
  * @param height
- * @param color
- * @return {Array}
+ * @param centerPt
+ * @param lineWidth
+ * @returns {null}
  */
-function makeRectangleRegion(pts, plot, text, width, height, color) {
-    if (!pts.length) return [];
-    var textPt;
-    var pt0= plot.getScreenCoords(pts[0]);
-    var pt1;
-    var x= pt0.x;
-    var y= pt0.y;
-    var w, h;
-    var wp;
-    var retList= [];
-    if (pts.length===1 && width  && height) {
-        w= width;
-        h= height;
-        if (h<0) {
-            h*=-1;
-            y-=h;
-        }
-        if (w<0) {
-            w*=-1;
-            x-=w;
-        }
-        wp= plot.getWorldCoords(makeScreenPt(x,y));
-        textPt= wp;
-    }
-    else {
-        pt1= plot.getScreenCoords(pts[1]);
-        if (!pt1) return [];
-        w=  pt1.x-pt0.x;
-        h=  pt1.x-pt0.y;
-        wp= plot.getWorldCoords(makeScreenPt(x,y));
-        textPt= plot.getWorldCoords(pt1);
-    }
+function makeTextLocationComposite(cc, textLoc, fontSize, width, height, centerPt, lineWidth = 1) {
+    var w = width/2;
+    var h = height/2;
+    var scrCenterPt = cc.getScreenCoords(centerPt);
 
-    if (wp) {
-        var wRv= window.ffgwt.util.dd.RegionValue.makeRegionValue(w, 'SCREEN_PIXEL');
-        var hRv= window.ffgwt.util.dd.RegionValue.makeRegionValue(h, 'SCREEN_PIXEL');
-        var dim= window.ffgwt.util.dd.RegionDimension.makeRegionDimension(wRv,hRv);
-        var zero= window.ffgwt.util.dd.RegionValue.makeRegionValue(0, 'SCREEN_PIXEL');
-        var rb= window.ffgwt.util.dd.makeRegionBox(wp.toString(),dim,zero);
-        rb.getOptions().setColor(color);
-        retList= [rb];
-        if (text) {
-            makeTextRegion(retList, textPt, plot, color);
-        }
-        if (text) {
-            var textReg= makeTextRegion(text, textPt, null, plot, color);
-            retList= [...retList,...textReg];
-        }
+    if (!scrCenterPt || width < 1 || height < 1) return null;
+
+    var opt;
+    var offy = fontHeight(fontSize) + lineWidth;
+
+    switch (textLoc) {
+        case TextLocation.REGION_NE:
+            opt= makeOffsetPt(-w, -(h + offy));
+            break;
+        case TextLocation.REGION_NW:
+            opt= makeOffsetPt(w, -h);
+            break;
+        case TextLocation.REGION_SE:
+            opt= makeOffsetPt(-w, h + offy) ;
+            break;
+        case TextLocation.REGION_SW:
+            opt= makeOffsetPt(w, h);
+            break;
+        default:
+            opt= makeOffsetPt(0,0);
     }
-    return retList;
+    return makeScreenPt(scrCenterPt.x+opt.x, scrCenterPt.y+opt.y);
 }
-
-
-
 
 function translateTo(plot, pts, apt) {
     var pt= plot.getScreenCoords(apt);
@@ -1041,3 +1156,75 @@ function rotateAround(plot, pts, angle, wc) {
     });
 }
 
+/**
+ * check if at least one corner of the covered area (in image coordinate) is within viewport
+ * @param objArea
+ * @param plot
+ * @returns {boolean}
+ */
+function isAreaInView(objArea, plot) {
+    var {width: w, height:  h, center: pt} = objArea;
+    var corners = [makeImagePt(pt.x - w/2, pt.y + h/2), makeImagePt(pt.x + w/2, pt.y + h/2),
+        makeImagePt(pt.x + w/2, pt.y - h/2), makeImagePt(pt.x - w/2, pt.y - h/2)];
+    var ptInView = corners.find((cPt) => ( plot.pointInViewPort(plot.getViewPortCoords(cPt))));
+
+    return !isNil(ptInView);
+}
+
+
+// calculate the font height in screen coordinate based on given font size
+export var fontHeight = (fontSize) => {
+    var height = 12;
+
+    if (validator.isFloat(fontSize.substring(0, fontSize.length-2))) {
+        height = parseFloat(fontSize.substring(0, fontSize.length-2)) * 14/10 + 0.5;
+    }
+    return height;
+};
+
+/**
+ * calculate the length in screen coordinate
+ * @param r
+ * @param plot
+ * @param unitType
+ * @returns {*}
+ */
+export function lengthToImagePixel(r, plot, unitType) {
+    var imageRadius;
+
+    switch (unitType) {
+        case UnitType.PIXEL:
+            imageRadius = r/plot.zoomFactor;
+            break;
+        case UnitType.IMAGE_PIXEL:
+            imageRadius = r;
+            break;
+        case UnitType.ARCSEC:
+            imageRadius = r/plot.projection.getPixelScaleArcSec();
+            break;
+        default:
+            imageRadius = r;
+    }
+    return imageRadius;
+}
+
+/**
+ * calcuate the horizontal and vertical coverage after rotating a rectagle with width and height
+ * @param width
+ * @param height
+ * @param angle
+ * @returns {number}
+ */
+export function widthAfterRotation(width, height, angle) {
+    const wcos = width * Math.cos(angle);
+    const hsin = height * Math.sin(angle);
+
+    return Math.max(Math.abs(wcos-hsin), Math.abs(wcos+hsin));
+}
+
+export function heightAfterRotation(width, height, angle) {
+    const wsin = width * Math.sin(angle);
+    const hcos = height * Math.cos(angle);
+
+    return Math.max(Math.abs(wsin-hcos), Math.abs(wsin+hcos));
+}

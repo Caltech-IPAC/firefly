@@ -11,11 +11,12 @@
 
 import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil.js';
-import Point, {makeScreenPt, makeWorldPt} from '../Point.js';
-import CoordinateSys from '../CoordSys.js';
+import Point, {makeScreenPt} from '../Point.js';
 import VisUtil from '../VisUtil.js';
-
-
+import CsysConverter from '../CsysConverter.js';
+import {startRegionDes, setRegionPropertyDes, endRegionDes} from '../region/RegionDescription.js';
+import {regionPropsList, RegionType} from '../region/Region.js';
+import {isEmpty} from 'lodash';
 
 
 const DIR_ARROW_DRAW_OBJ= 'DirectionArrayDrawObj';
@@ -54,7 +55,7 @@ var draw=  {
 
     usePathOptimization(drawObj) { return false; },
 
-    getCenterPt(drawObj) { drawObj.startPt; },
+    getCenterPt(drawObj) { return drawObj.startPt; },
 
     getScreenDist(drawObj,plot, pt) {
         var dist = -1;
@@ -87,7 +88,8 @@ var draw=  {
     toRegion(drawObj,plot, def) {
         var drawParams= makeDrawParams(drawObj,def);
         var {startPt,endPt,renderOptions}= drawObj;
-        toRegion(startPt,endPt,drawParams,renderOptions);
+
+        return toRegion(startPt,endPt,plot,drawParams,renderOptions);
     }
 };
 
@@ -97,9 +99,6 @@ export default {makeDirectionArrowDrawObj,draw,DIR_ARROW_DRAW_OBJ};
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
-
-
-
 
 
 
@@ -131,28 +130,51 @@ function drawDirectionArrow(ctx,drawTextAry,startPt,endPt,drawParams,renderOptio
     DrawUtil.drawText(drawTextAry, text, ret.textX, ret.textY,'black', renderOptions);
 }
 
-function toRegion(startPt,endPt,drawParams,renderOptions) {
-    var pt1= startPt;
-    var pt2= endPt;
+function toRegion(startPt,endPt,plot,drawParams,renderOptions) {
+    var pt1 = startPt;    // screen point
+    var pt2 = endPt;
     var {color,text}=  drawParams;
+    var ret = VisUtil.getArrowCoords(pt1.x, pt1.y, pt2.x, pt2.y);
+    var wpt1, wpt2, barbPt, textPt;
+    var cc = CsysConverter.make(plot);
+    var des;
+    var retList = [];
 
-    var ret= VisUtil.getArrowCoords(pt1.x, pt1.y, pt2.x, pt2.y);
-    var line1= window.ffgwt.util.dd.RegionLines.makeRegionLines(
-                     [makeWorldPt(ret.x1,ret.y1, CoordinateSys.SCREEN_PIXEL).toString(),
-                      makeWorldPt(ret.x2,ret.y2, CoordinateSys.SCREEN_PIXEL).toString()] );
+    wpt1 = cc.getWorldCoords(makeScreenPt(ret.x1, ret.y1));
+    wpt2 = cc.getWorldCoords(makeScreenPt(ret.x2, ret.y2));
+    barbPt = cc.getWorldCoords(makeScreenPt(ret.barbX2, ret.barbY2));
+    textPt = cc.getWorldCoords(makeScreenPt(ret.textX, ret.textY));
 
-    var line2= window.ffgwt.util.dd.RegionLines.makeRegionLines(
-                    [makeWorldPt(ret.barbX1,ret.barbY1, CoordinateSys.SCREEN_PIXEL).toString(),
-                     makeWorldPt(ret.barbX2,ret.barbY2, CoordinateSys.SCREEN_PIXEL).toString()] );
+    des = startRegionDes(RegionType.line, cc, [wpt1, wpt2], null, null);
+    if (isEmpty(des)) return [];
 
-    var regText= window.ffgwt.util.dd.RegionText.makeRegionText(
-                   makeWorldPt(ret.textX,ret.textY, CoordinateSys.SCREEN_PIXEL).toString());
+    des += setRegionPropertyDes(regionPropsList.COLOR, color) +
+           setRegionPropertyDes(regionPropsList.LNWIDTH, 2);
+    des = endRegionDes(des);
+    retList.push(des);
 
-    line1.getOptions().setColor(color);
-    line2.getOptions().setColor(color);
-    regText.getOptions().setColor(color);
-    regText.getOptions().setText(text);
+    des = startRegionDes(RegionType.line, cc, [wpt2, barbPt], null, null);
+    if (isEmpty(des)) return [];
 
-    return [line1,line2,regText];
+    des += setRegionPropertyDes(regionPropsList.COLOR, color) +
+        setRegionPropertyDes(regionPropsList.LNWIDTH, 2);
+    des = endRegionDes(des);
+    retList.push(des);
+
+    des = startRegionDes(RegionType.text, cc, [textPt]);
+    if (isEmpty(des)) return [];
+
+    des += setRegionPropertyDes(regionPropsList.COLOR, 'black');
+
+    if (text) {
+        des += setRegionPropertyDes(regionPropsList.TEXT, text) +
+               setRegionPropertyDes(regionPropsList.FONT, {name: 'helvetica', size: 9, weight: 'normal', style: 'normal'} );
+    }
+    des = endRegionDes(des);
+
+    retList.push(des);
+    return retList;
 }
+
+
 

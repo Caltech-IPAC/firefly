@@ -175,8 +175,7 @@ function modifyColor(dl,plotId) {
 }
 
 function deleteLayer(dl,plotId) {
-    dispatchDetachLayerFromPlot(dl.displayGroupId,plotId,true);
-
+    dispatchDetachLayerFromPlot(dl.displayGroupId,plotId,true, true, dl.destroyWhenAllDetached);
 }
 
 function changeVisible(dl, plotId) {
