@@ -24,7 +24,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     public static final String INCL_COLUMNS = "inclCols";
     public static final String FIXED_LENGTH = "fixedLength";
     public static final String META_INFO = "META_INFO";
-    public static final String SYS_PARAMS = "|" + StringUtils.toString(new String[]{FILTERS,SORT_INFO,PAGE_SIZE,START_IDX,INCL_COLUMNS,FIXED_LENGTH,META_INFO,TBL_ID}, "|") + "|";
+    public static final String SYS_PARAMS = "|" + StringUtils.toString(new String[]{FILTERS,SORT_INFO,PAGE_SIZE,START_IDX,INCL_COLUMNS,FIXED_LENGTH,META_INFO,TBL_ID,DECIMATE_INFO}, "|") + "|";
 
 
     private int pageSize;
@@ -54,7 +54,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
 
     public void setMeta(String meta, String value) {
         if (metaInfo == null) {
-            metaInfo = new HashMap<String, String>();
+            metaInfo = new HashMap<>();
         }
         metaInfo.put(meta, value);
     }
@@ -106,8 +106,8 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
 
     /**
      * This populate the predefined fields as well as the parameter map.
-     * @param name
-     * @param val
+     * @param name name
+     * @param val value
      */
     public void setTrueParam(String name, String val) {
         Param p = new Param(name, val);
@@ -134,7 +134,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     public void setFilters(List<String> filters) {
         if (filters != null) {
             if (this.filters == null) {
-                this.filters = new ArrayList<String>();
+                this.filters = new ArrayList<>();
             }
             this.filters.clear();
             this.filters.addAll(filters);
@@ -162,13 +162,13 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
             if (sreq.filters == null) {
                 filters = null;
             } else {
-                filters = new ArrayList<String>(sreq.filters.size());
+                filters = new ArrayList<>(sreq.filters.size());
                 filters.addAll(sreq.filters);
             }
             if (sreq.metaInfo == null) {
                 metaInfo = null;
             } else {
-                metaInfo = new HashMap<String, String>(sreq.metaInfo.size());
+                metaInfo = new HashMap<>(sreq.metaInfo.size());
                 metaInfo.putAll(sreq.metaInfo);
             }
         }
@@ -177,8 +177,8 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     /**
      * Parses the string argument into a ServerRequest object.
      * This method is reciprocal to toString().
-     * @param str
-     * @return
+     * @param str string representing table request
+     * @return table server request object
      */
     public static TableServerRequest parse(String str) {
         return ServerRequest.parse(str,new TableServerRequest());
@@ -221,7 +221,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     public static List<String> parseFilters(String s) {
         if (StringUtils.isEmpty(s)) return null;
         String[] filters = s.split(";");
-        return filters == null ? null : Arrays.asList(filters);
+        return Arrays.asList(filters);
     }
 
     public static String toFilterStr(List<String> l) {
@@ -239,26 +239,33 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
 //        if (param.getName().equals(SORT_INFO)) {
 //            sortInfo = SortInfo.parse(param.getValue());
 //    }
-         if (param.getName().equals(PAGE_SIZE)) {
-            pageSize = StringUtils.getInt(param.getValue());
-        } else if (param.getName().equals(START_IDX)) {
-            startIdx = StringUtils.getInt(param.getValue());
-        } else if (param.getName().equals(FILTERS)) {
-            String s = param.getValue();
-            if (s == null || s.trim().length() == 0) {
-                setFilters(null);
-            } else {
-                setFilters(parseFilters(s));
+        switch (param.getName()) {
+            case PAGE_SIZE:
+                pageSize = StringUtils.getInt(param.getValue());
+                break;
+            case START_IDX:
+                startIdx = StringUtils.getInt(param.getValue());
+                break;
+            case FILTERS: {
+                String s = param.getValue();
+                if (s == null || s.trim().length() == 0) {
+                    setFilters(null);
+                } else {
+                    setFilters(parseFilters(s));
+                }
+                break;
             }
-         } else if (param.getName().equals(META_INFO)) {
-             String s = param.getValue();
-             if (s == null || s.trim().length() == 0) {
-                 metaInfo = null;
-             } else {
-                 metaInfo = StringUtils.encodedStringToMap(s);
-             }
-        } else {
-            return false;
+            case META_INFO: {
+                String s = param.getValue();
+                if (s == null || s.trim().length() == 0) {
+                    metaInfo = null;
+                } else {
+                    metaInfo = StringUtils.encodedStringToMap(s);
+                }
+                break;
+            }
+            default:
+                return false;
         }
         return true;
     }
