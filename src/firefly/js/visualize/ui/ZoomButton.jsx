@@ -52,7 +52,11 @@ function getZoomer() {
             return;
         }
 
-        dispatchZoom(pv.plotId,zType.utilZt,true,false, isFitFill(zType.utilZt));
+        dispatchZoom({
+            plotId:pv.plotId,
+            userZoomType:zType.utilZt,
+            forceDelay:isFitFill(zType.utilZt)
+        });
     };
 }
 

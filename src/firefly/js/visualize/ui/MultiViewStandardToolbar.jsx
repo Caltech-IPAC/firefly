@@ -24,7 +24,7 @@ const toolsStyle= {
     display:'flex',
     flexDirection:'row',
     flexWrap:'nowrap',
-    alignItems: 'center',
+    // alignItems: 'center',
     width:'100%',
     height: 30,
     justifyContent: 'space-between'

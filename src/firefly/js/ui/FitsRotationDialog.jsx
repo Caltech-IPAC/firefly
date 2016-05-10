@@ -260,9 +260,10 @@ function FitsRotationDialogForm() {
 
 function resultsSuccess(request,plotId) {
     if (request.rotation) {
-        var rotation= Number(request.rotation);
-        dispatchRotate(plotId, rotation?RotateType.ANGLE:RotateType.UNROTATE ,rotation,
-                         request.checkAllimage ? ActionScope.GROUP : ActionScope.SINGLE);
+        var angle= Number(request.rotation);
+        const actionScope= request.checkAllimage ? ActionScope.GROUP : ActionScope.SINGLE;
+        const rotateType= angle?RotateType.ANGLE:RotateType.UNROTATE;
+        dispatchRotate({plotId, rotateType, angle, actionScope} );
     }
 }
 

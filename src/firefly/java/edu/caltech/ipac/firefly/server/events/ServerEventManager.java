@@ -33,15 +33,33 @@ public class ServerEventManager {
 
 
 
-    public static void fireAction(FluxAction action) {
-        fireAction(action, ServerEvent.Scope.SELF);
+    public static void fireAction(FluxAction action) { fireJsonAction(action.toString(), ServerEvent.Scope.SELF,null);
     }
 
-    public static void fireAction(FluxAction action, ServerEvent.Scope scope) {
-        ServerEvent sev = new ServerEvent(Name.ACTION, scope,
-                ServerEvent.DataType.JSON, action.toString());
+    public static void fireAction(FluxAction action, String channel) {
+        fireJsonAction(action.toString(), ServerEvent.Scope.CHANNEL, channel);
+    }
+
+    public static void fireJsonAction(String actionStr, String channel) {
+        fireJsonAction(actionStr, ServerEvent.Scope.CHANNEL, channel);
+    }
+
+    public static void fireJsonAction(String actionStr, ServerEvent.Scope scope, String channel) {
+        ServerEvent sev;
+        if (channel!=null) {
+            ServerEvent.EventTarget t= new ServerEvent.EventTarget(ServerEvent.Scope.CHANNEL,null,channel);
+            sev = new ServerEvent(Name.ACTION, t, ServerEvent.DataType.JSON, actionStr);
+        }
+        else {
+            sev = new ServerEvent(Name.ACTION, scope, ServerEvent.DataType.JSON, actionStr);
+        }
+
         ServerEventManager.fireEvent(sev);
     }
+
+
+
+
 
     public static void fireEvent(ServerEvent sev) {
         if (sev == null || sev.getTarget() == null) {

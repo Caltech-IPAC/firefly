@@ -154,6 +154,20 @@ public class SrvParam {
         }
     }
 
+    public int getOptionalInt(String key, int defValue) {
+        String ary[]= paramMap.get(key);
+        if (ary != null && ary.length>0) {
+            try {
+                return Integer.parseInt(ary[0]);
+            } catch (NumberFormatException e) {
+                return defValue;
+            }
+        }
+        else {
+            return defValue;
+        }
+    }
+
     public int getRequiredInt(String key) {
         String v= getRequired(key);
         try {

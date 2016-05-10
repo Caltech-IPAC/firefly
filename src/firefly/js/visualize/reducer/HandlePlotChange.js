@@ -189,8 +189,8 @@ function installTiles(state, action) {
 
 
 function processScroll(state,action) {
-    const {plotId,scrollScreenPt}= action.payload;
-    var plotViewAry= PlotView.updatePlotGroupScrollXY(plotId,state.plotViewAry,state.plotGroupAry,scrollScreenPt);
+    const {plotId,scrollPt}= action.payload;
+    var plotViewAry= PlotView.updatePlotGroupScrollXY(plotId,state.plotViewAry,state.plotGroupAry,scrollPt);
     return Object.assign({},state,{plotViewAry});
 }
 

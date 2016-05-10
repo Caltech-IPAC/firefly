@@ -16,30 +16,12 @@
 import React, {Component, PropTypes} from 'react';
 import {get} from 'lodash';
 
-import FormPanel from './FormPanel.jsx';
-import {FieldGroup} from '../ui/FieldGroup.jsx';
-import {ValidationField} from '../ui/ValidationField.jsx';
-import {TargetPanel} from '../ui/TargetPanel.jsx';
 import {InputGroup} from '../ui/InputGroup.jsx';
-import {ServerParams} from '../data/ServerParams.js';
 
-import Validate from '../util/Validate.js';
-import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
-
-import {TableRequest} from '../tables/TableRequest.js';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
-import {dispatchSetupTblTracking} from '../visualize/TableStatsCntlr.js';
-import {dispatchTableSearch} from '../tables/TablesCntlr.js';
-import {FieldGroupTabs, Tab} from './panel/TabPanel.jsx';
-import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
-import {SizeInputFields, sizeFromDeg} from './SizeInputField.jsx';
-import {parseWorldPt} from '../visualize/Point.js';
-import * as TblUtil from '../tables/TableUtil.js';
-import {dispatchAddImages,getAViewFromMultiView} from '../visualize/MultiViewCntlr.js';
-import WebPlotRequest from '../visualize/WebPlotRequest.js';
-import {dispatchPlotImage} from '../visualize/ImagePlotCntlr.js';
+import {SizeInputFields} from './SizeInputField.jsx';
 
 
 const mcenTip= `Specifies whether to return only the most centered (in pixel space)
@@ -144,7 +126,7 @@ function renderMostCenter(visible) {
                                    }}
                               options={[
                                       {label: 'Yes', value: 'mcen'},
-                                      {label: 'No', value: 'all'},
+                                      {label: 'No', value: 'all'}
                                       ]}
         />
     );

@@ -76,7 +76,7 @@ export class VisInlineToolbarView extends Component {
         return sCompare(this, np, ns);
     }
 
-    deleteClick() {dispatchDeletePlotView(this.props.plotId);}
+    deleteClick() {dispatchDeletePlotView({plotId:this.props.plotId});}
     expandClick() {expand(this.props.plotId);}
     // showToolsClick() {showTools();}
 

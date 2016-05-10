@@ -163,22 +163,27 @@ function buildDeprecated(llApi) {
 function makePlotSimple(llApi, plotId) {
     return (request) => {
         llApi.util.renderDOM(plotId, llApi.ui.ImageViewer, {plotId});
-        llApi.action.dispatchPlotImage(plotId, Object.assign({}, globalImageViewDefParams,request));
+        llApi.action.dispatchPlotImage({plotId, wpRequest:Object.assign({}, globalImageViewDefParams,request)});
     };
 }
 
 function showImageInMultiViewer(llApi, targetDiv, request) {
     const {dispatchPlotImage, dispatchAddViewer, dispatchAddImages}= llApi.action;
-    const {renderDOM}= llApi.util;
+    const {findInvalidWPRKeys,confirmPlotRequest}= llApi.util.image;
+    const {renderDOM,debug}= llApi.util;
     const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
 
     highlevelImageInit(llApi);
-    request= confirmPlotRequest(request,globalImageViewDefParams,targetDiv);
+    const testR= Array.isArray(request) ? request : [request];
+    testR.forEach( (r) => {
+        const badList= findInvalidWPRKeys(r);
+        if (badList.length) debug(`plot request as the following bad keys: ${badList}`);
+    });
+    request= confirmPlotRequest(request,globalImageViewDefParams,targetDiv,makePlotId);
 
     const plotId= !Array.isArray(request) ? request.plotId : request.find( (r) => r.plotId).plotId;
-    dispatchPlotImage(plotId, request, Array.isArray(request));
     dispatchAddViewer(targetDiv,true);
-    dispatchAddImages(targetDiv, [plotId]);
+    dispatchPlotImage({plotId, wpRequest:request, viewerId:targetDiv});
     renderDOM(targetDiv, MultiImageViewer,
         {viewerId:targetDiv, canReceiveNewPlots:true, Toolbar:MultiViewStandardToolbar });
 
@@ -191,36 +196,6 @@ function highlevelImageInit(llApi) {
         llApi.util.image.initImageViewExpanded(llApi.ui.ApiExpandedDisplay);
         llApi.util.image.initAutoReadout();
         imageInit= true;
-    }
-}
-
-
-function confirmPlotRequest(request,global,targetDiv) {
-    if (Array.isArray(request)) {
-        var locked= true;
-        const idx= request.findIndex( (r) => r.plotId);
-
-        const plotId= (idx>=0) ? request[idx].plotId : makePlotId();
-        var plotGroupId;
-
-        if (idx>=0  && request[idx].plotGroupId) {
-            plotGroupId= request[idx].plotGroupId;
-            locked= true;
-        }
-        else {
-            plotGroupId= targetDiv;
-            locked= false;
-        }
-
-
-        return request.map( (r) => Object.assign({},global,r,{plotId,plotGroupId,GroupLocked:locked}));
-    }
-    else {
-        const r= Object.assign({}, global, request);
-        if (!r.plotId) r.plotId= makePlotId();
-        if (!r.plotGroupId) r.plotGroupId= targetDiv;
-        if (r.plotGroupId===targetDiv) r.GroupLocked= false;
-        return r;
     }
 }
 

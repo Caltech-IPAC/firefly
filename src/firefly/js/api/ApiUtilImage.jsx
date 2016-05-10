@@ -23,13 +23,6 @@ import {RangeValues} from '../visualize/RangeValues.js';
 
 const API_READOUT= 'apiReadout';
 
-
-export {RangeValues} from '../visualize/RangeValues.js';
-export {WPConst} from '../visualize/WebPlotRequest.js';
-export {RequestType} from '../visualize/RequestType';
-export {ExpandType} from '../visualize/ImagePlotCntlr.js';
-
-
 // NOTE 
 // NOTE 
 //----------------------------------------------------------------
@@ -38,6 +31,13 @@ export {ExpandType} from '../visualize/ImagePlotCntlr.js';
 //----------------------------------------------------------------
 // NOTE 
 // NOTE 
+
+export {RangeValues} from '../visualize/RangeValues.js';
+export {WPConst, WebPlotRequest, findInvalidWPRKeys, confirmPlotRequest} from '../visualize/WebPlotRequest.js';
+export {RequestType} from '../visualize/RequestType';
+export {ExpandType} from '../visualize/ImagePlotCntlr.js';
+
+
 
 /**
  * 

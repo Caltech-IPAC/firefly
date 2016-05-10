@@ -152,9 +152,20 @@ public class PushJob {
         return true;
     }
 
-    public static boolean isBrowserClientActive(String ipString) {
-        String channel= ServerContext.getRequestOwner().getEventChannel();
-        return ServerEventManager.getActiveQueueChannelCnt(channel)>1;
+    public static int getBrowserClientActiveCount(String channel, int tryTime) {
+        if (channel==null) channel= ServerContext.getRequestOwner().getEventChannel();
+        int cnt=  ServerEventManager.getActiveQueueChannelCnt(channel);
+        long endTry= System.currentTimeMillis()+tryTime;
+
+        try {
+            while (tryTime>0 && cnt==0 && System.currentTimeMillis()<endTry) {
+                Thread.sleep(200);
+                cnt=  ServerEventManager.getActiveQueueChannelCnt(channel);
+            }
+        } catch (InterruptedException e) {
+        }
+
+        return cnt;
     }
 
     //================================

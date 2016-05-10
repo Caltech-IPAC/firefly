@@ -101,7 +101,7 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds,
                 }
             </div>
             {showPager && <ImagePager pageSize={10} tbl_id={activeTable.tbl_id} />}
-            {handleInlineTools && <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={dlAry} />}
+            {handleInlineTools && <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={pvDlAry} />}
         </div>
     );
 }
@@ -118,7 +118,7 @@ ImageMetaDataToolbarView.propTypes= {
 };
 
 
-function InlineRightToolbarWrapper(visRoot,pv,dlAry){
+function InlineRightToolbarWrapper({visRoot,pv,dlAry}){
     if (!pv) return <div></div>;
 
     var lVis= BrowserInfo.isTouchInput() || visRoot.apiToolsView;

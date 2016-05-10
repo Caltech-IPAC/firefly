@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.astro.target;
 
-import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.astro.conv.CoordConv;
 
 import java.io.Serializable;
@@ -116,7 +115,6 @@ class CoordinateSys implements Serializable {
                 ecliptic = false;
                 eDesc       = null;
                 csysName    = null;
-                Assert.tst(false);
                 break;
        }
        equinoxDesc = eDesc;

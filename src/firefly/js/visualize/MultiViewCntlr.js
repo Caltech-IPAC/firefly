@@ -1,12 +1,9 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
 import {without,union,difference} from 'lodash';
 import {flux} from '../Firefly.js';
+import {clone} from '../util/WebUtil.js';
 import ImagePlotCntlr from './ImagePlotCntlr.js';
 
 
@@ -30,8 +27,6 @@ export function getMultiViewRoot() {
     return flux.getState()[IMAGE_MULTI_VIEW_KEY]; 
 }
 
-const clone = (obj,params={}) => Object.assign({},obj,params);
-
 export default {
     ADD_VIEWER, REMOVE_VIEWER,
     ADD_IMAGES, REMOVE_IMAGES, REPLACE_IMAGES,
@@ -42,6 +37,7 @@ export default {
 export const SINGLE='single';
 export const GRID='grid';
 export const EXPANDED_MODE_RESERVED= 'EXPANDED_MODE_RESERVED';
+export const ANY_VIEWER_RESERVED= 'ANY_VIEWER_RESERVED';
 
 export const GRID_RELATED='gridRelated';
 export const GRID_FULL='gridFull';
@@ -102,7 +98,7 @@ export function dispatchRemoveViewer(viewerId) {
  *
  */
 export function dispatchAddImages(viewerId, plotIdAry) {
-    flux.process({type: ADD_IMAGES , payload: {viewerId, imageAry:plotIdAry} });
+    flux.process({type: ADD_IMAGES , payload: {viewerId, plotIdAry} });
 }
 
 /**
@@ -137,10 +133,10 @@ export function dispatchRemoveImages(viewerId, plotIdAry) {
 /**
  *
  * @param viewerId
- * @param {[]} imageAry  array of {plotId : string, requestAry : array of WebPlotRequest}
+ * @param {[]} plotIdAry  array of {plotId : string, requestAry : array of WebPlotRequest}
  */
-export function dispatchReplaceImages(viewerId, imageAry) {
-    flux.process({type: REPLACE_IMAGES , payload: {viewerId, imageAry} });
+export function dispatchReplaceImages(viewerId, plotIdAry) {
+    flux.process({type: REPLACE_IMAGES , payload: {viewerId, plotIdAry} });
 }
 
 export function dispatchViewerMounted(viewerId) {
@@ -237,15 +233,17 @@ function reducer(state=initState(), action={}) {
     if (!action.payload || !action.type) return state;
 
     var retState= state;
+    const {payload}= action;
+
     switch (action.type) {
         case ADD_VIEWER:
-            retState= addViewer(state,action);
+            retState= addViewer(state,payload);
             break;
         case REMOVE_VIEWER:
             retState= removeViewer(state,action);
             break;
         case ADD_IMAGES:
-            retState= addImages(state,action);
+            retState= addImages(state,payload.viewerId,payload.plotIdAry);
             break;
         case ADD_TO_AUTO_RECEIVER:
             retState= addToAutoReceiver(state,action);
@@ -254,22 +252,30 @@ function reducer(state=initState(), action={}) {
             retState= removeImages(state,action);
             break;
         case REPLACE_IMAGES:
-            retState= replaceImages(state,action);
+            retState= replaceImages(state,payload.viewerId,payload.plotIdAry);
             break;
         case CHANGE_LAYOUT:
             retState= changeLayout(state,action);
             break;
         case VIEWER_MOUNTED:
-            retState= changeMount(state,action.payload.viewerId,true);
+            retState= changeMount(state,payload.viewerId,true);
             break;
         case VIEWER_UNMOUNTED:
-            retState= changeMount(state,action.payload.viewerId,false);
+            retState= changeMount(state,payload.viewerId,false);
             break;
         case UPDATE_CUSTOM_DATA:
             retState= updateCustomData(state,action);
             break;
         case ImagePlotCntlr.DELETE_PLOT_VIEW:
             retState= deletePlotView(state,action);
+            break;
+
+        case ImagePlotCntlr.PLOT_IMAGE_START:
+            if (payload.viewerId) {
+                if (payload.plotId) {
+                    retState= addImages(state,payload.viewerId,[payload.plotId]);
+                }
+            }
             break;
         default:
             break;
@@ -280,9 +286,9 @@ function reducer(state=initState(), action={}) {
 
 
 
-function addViewer(state,action) {
+function addViewer(state,payload) {
 
-    const {viewerId,layout=GRID,canReceiveNewPlots=false,mounted}= action.payload;
+    const {viewerId,layout=GRID,canReceiveNewPlots=false,mounted=false}= payload;
     if (hasViewerId(state,viewerId)) return state;
 
     const entry= { viewerId, canReceiveNewPlots, layout, mounted, plotIdAry: [], customData:{} };
@@ -296,14 +302,51 @@ function removeViewer(state,action) {
 }
 
 
-function addImages(state,action) {
-    const {viewerId,imageAry}= action.payload;
-    var viewer= state.find( (entry) => entry.viewerId===viewerId);
-    if (!viewer) {
-        state= addViewer(state,action);
-        viewer= state.find( (entry) => entry.viewerId===viewerId);
+/**
+ *
+ * @param state
+ * @param viewerId
+ * @param plotIdAry
+ * @return {*}
+ */
+function addImages(state,viewerId,plotIdAry) {
+    var viewer;
+    if (viewerId===ANY_VIEWER_RESERVED) {
+        viewer= getAViewFromMultiView(state);
     }
-    var plotIdAry= union(viewer.plotIdAry,imageAry);
+    else {
+        viewer= state.find( (entry) => entry.viewerId===viewerId);
+        if (!viewer) {
+            state= addViewer(state,{viewerId});
+            viewer= state.find( (entry) => entry.viewerId===viewerId);
+        }
+    }
+
+    plotIdAry= union(viewer.plotIdAry,plotIdAry);
+    return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, {plotIdAry}) : entry);
+}
+
+/**
+ *
+ * @param state
+ * @param viewerId
+ * @param plotIdAry
+ * @return {*}
+ */
+function replaceImages(state,viewerId,plotIdAry) {
+    var viewer;
+    if (viewerId===ANY_VIEWER_RESERVED) {
+        viewer= getAViewFromMultiView(state);
+        viewerId= viewer.viewerId;
+        if (!viewerId) return state;
+    }
+    else {
+        viewer= state.find( (entry) => entry.viewerId===viewerId);
+        if (!viewer) {
+            state= addViewer(state,{viewerId});
+        }
+    }
+
     return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, {plotIdAry}) : entry);
 }
 
@@ -316,11 +359,11 @@ function addToAutoReceiver(state,action) {
 
 
 function removeImages(state,action) {
-    var {viewerId,imageAry}= action.payload;
+    var {viewerId,plotIdAry}= action.payload;
     var viewer= state.find( (entry) => entry.viewerId===viewerId);
     if (!viewer) return state;
 
-    var plotIdAry= difference(viewer.plotIdAry,imageAry);
+    plotIdAry= difference(viewer.plotIdAry,plotIdAry);
     return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, {plotIdAry}) : entry);
 }
 
@@ -334,12 +377,6 @@ function deletePlotView(state,action) {
 
 }
 
-function replaceImages(state,action) {
-    const {viewerId,imageAry}= action.payload;
-    var viewer= state.find( (entry) => entry.viewerId===viewerId);
-    if (!viewer) state= addViewer(state,action);
-    return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, {plotIdAry:imageAry}) : entry);
-}
 
 
 function changeLayout(state,action) {

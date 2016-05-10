@@ -58,6 +58,7 @@ public class ServerParams {
     public static final String ID = "id";
     public static final String BID = "bid";
     public static final String CHANNEL_ID = "channelID";
+    public static final String TRY_MS = "tryMS";
     public static final String PLOT_ID = "plotId";
     public static final String POLLING = "polling";
     public static final String EMAIL = "email";
@@ -140,6 +141,7 @@ public class ServerParams {
     public static final String GET_ALL_SAVED_REQUEST= "getAllSavedRequest";
     public static final String TITLE= "Title";
     public static final String JSON_DEEP= "jsonDeep";
+    public static final String ACTION= "action";
 
     public static final String VIS_PUSH_CREATE_ID= "createID";
     public static final String VIS_PUSH_FITS= "pushFits";
@@ -153,11 +155,13 @@ public class ServerParams {
     public static final String VIS_QUERY_ACTION= "queryAction";
     public static final String VIS_PUSH_WPR= "pushWPR";
     public static final String VIS_PUSH_ALIVE_CHECK= "pushAliveCheck";
+    public static final String VIS_PUSH_ALIVE_COUNT= "pushAliveCount";
     public static final String VIS_PUSH_PAN= "pushPan";
     public static final String VIS_PUSH_ZOOM= "pushZoom";
     public static final String VIS_PUSH_RANGE_VALUES= "pushRangeValues";
     public static final String VIS_PUSH_ADD_MASK= "pushAddMask";
     public static final String VIS_PUSH_REMOVE_MASK= "pushRemoveMask";
+    public static final String VIS_PUSH_ACTION= "pushAction";
 
 
     public static final String USER_TARGET_WORLD_PT = "UserTargetWorldPt";
