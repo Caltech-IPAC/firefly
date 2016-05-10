@@ -10,10 +10,10 @@ export var GwtEventHandler = {
         return name !== 'FLUX_ACTION' && !isEmpty(data);
     },
 
-    onEvent: ({name, data}) => {
+    onEvent: (eventData) => {
         // call gwt if exists
         if (window.ffgwt) {
-            window.ffgwt.Core.ClientEventQueue.onMessage(data);
+            window.ffgwt.Core.ClientEventQueue.onMessage(JSON.stringify(eventData));
         }
     }
 };

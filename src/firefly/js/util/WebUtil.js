@@ -6,7 +6,7 @@
 
 import Enum from 'enum';
 import update from 'react-addons-update';
-import {get, set, omit, isObject, union, isFunction, isEqual,  isNil} from 'lodash';
+import {get, set, omit, isObject, union, isFunction, isEqual,  isNil, last} from 'lodash';
 import { getRootURL } from './BrowserUtil.js';
 
 const  MEG          = 1048576;
@@ -221,16 +221,19 @@ export function parseUrl(url) {
             }
         });
     });
+    const p = last(paths);
+    const filename = p.includes(';') ? p.split(';')[0] : p;
 
     return {
         protocol: parser.protocol,
         host: parser.host,
         hostname: parser.hostname,
         port: parser.port,
-        pathname: parser.pathname,
+        path: parser.pathname,
         search: parser.search,
         hash: parser.hash,
         searchObject,
+        filename,
         pathAry
     };
 }
@@ -389,3 +392,4 @@ export function updateDelete(object, path, value) {
     return updateSet(object, path, v);
 }
 /*---------------------------- update /----------------------------*/
+

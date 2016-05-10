@@ -1,0 +1,84 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Firefly Tools: Histogram</title>
+    <script type="text/javascript" src="http://jscolor.com/jscolor/jscolor.js"></script>
+</head>
+
+<body>
+
+<form>
+    <table border="0">
+        <tr><td>Desciption:</td><td><input size="50" type="text" id="descr-field" name="descr" value="Sample data"/></td></tr>
+        <tr><td>Bin Color:</td><td><input size="10" id="binColor-field" name="binColor" type="text" class="color {hash:true,caps:false,pickerFaceColor:'transparent',pickerFace:3,pickerBorder:0,required:false}"/></td></tr>
+        <tr><td>Log Axes:</td><td><input size="50" type="text" id="logs-field" name="logs" /> &nbsp;x, y, or xy</td></tr>
+        <tr><td>Reversed:</td><td><input size="50" type="text" id="reversed-field" name="reversed" /> &nbsp;x, y, or xy</td></tr>
+    </table>
+</form>
+
+
+<script type="text/javascript">
+    {
+        // process set input fields values from GET parameters
+        var url = window.location.href.split("?");
+        if(url.length > 1) {
+            var terms = url[1].split("&");
+            for(var i = 0; i < terms.length; i++) {
+                var key = terms[i].split('=')[0];
+                var value = unescape((terms[i].split('=')[1]).replace(/[+]/g," "));
+                document.getElementById(key+"-field").value = value;
+            }
+        }
+    }
+</script>
+
+<div style="margin: 20px 0px 20px 20px;font-size: 20pt;">Firefly Tools with Histogram</div>
+
+
+<div style="white-space: nowrap;">
+    <div id="plotHere"  style="display: inline-block; width: 800px; height: 300px;
+                                padding: 5px 5px 5px 5px; border: solid 1px; overflow: auto"></div>
+</div>
+
+
+<script type="text/javascript">
+    {
+        function onFireflyLoaded() {
+
+            firefly.showHistogram(
+                    {
+                        'descr' : document.getElementById('descr-field').value,
+                        'binColor' : (document.getElementById('binColor-field').value && document.getElementById('binColor-field').value.length>0 ? document.getElementById('binColor-field').value : undefined),
+                        'logs' : (document.getElementById('logs-field').value && document.getElementById('logs-field').value.length>0 ? document.getElementById('logs-field').value : undefined),
+                        'reversed' : (document.getElementById('reversed-field').value && document.getElementById('reversed-field').value.length>0 ? document.getElementById('reversed-field').value : undefined),
+
+                        // specify the data to plot histogram
+                        // for now it's an array of rows,
+                        // first col - nPoints or number of points in the bin, second col - binMin, third col - binMax
+                        // (supports variable length bins
+                         'data' : [
+                         [1,1,10],
+                         [10,10,100],
+                         [100,100,1000],
+                         [1000,1000,10000],
+                         [100,10000,100000],
+                         [10,100000,1000000],
+                         [1,1000000,10000000]
+                         ]
+                    },
+                    "plotHere");
+        }
+    }
+</script>
+
+
+<script type="text/javascript" language='javascript' src='http://localhost:8080/fftools/fftools.nocache.js'></script>
+
+</body>
+</html>

@@ -1,21 +1,28 @@
 
+ext["app-name"] = 'firefly'
+
+apply from: "$fireflyPath/buildScript/gwt_webapp.gincl"
+
+dependencies {
+  compile project(':xstream'), project(':simbad')
+  webappLib mysql_lib
+}
+
 sourceSets {
   main.java.srcDir  "java/"
   main.resources {
     srcDirs "java"
+    include "**/theme/**"
+    include "**/firefly/**"
+    include "**/astro/**"
+    include "**/visualize/**"
+    include "**/*.gwt.xml"
     exclude "**/*.gradle"
   }
   test.java.srcDir  "test/"
 }
 
-dependencies {
-  compile project(':xstream'), project(':simbad')
-}
-
 jar {
-
-  dependsOn buildClient
-
   baseName = 'firefly'
   includes = ['edu/caltech/ipac/**/*']
   from sourceSets.main.allJava
@@ -23,5 +30,35 @@ jar {
   manifest {
     attributes(["properties-dir": "edu/caltech/ipac/firefly/resources"],"webapp-properties")
     attributes(["hasSearchProcessors": "true"],"hasSearchProcessors")
+  }
+}
+
+gwt {
+  modules = 'edu.caltech.ipac.jsinterop'
+}
+
+ext.appConfig = {
+  BuildMajor  = "1"
+  BuildMinor  = "0"
+  BuildRev    = "0"
+  ehcache.replicate = false
+
+  FireflyTools.Advertise = ""
+  ehcache.multicast.port = "4011"
+  environments {
+    dev {
+      ehcache.multicast.port = "5011"
+      ehcache.replicate = true
+    }
+
+    test {
+      ehcache.multicast.port = "6011"
+      ehcache.replicate = true
+    }
+
+    ops {
+      ehcache.multicast.port = "7011"
+      ehcache.replicate = true
+    }
   }
 }

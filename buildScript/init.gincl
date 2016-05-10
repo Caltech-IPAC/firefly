@@ -51,18 +51,23 @@ task createVersionTag  {
 
   doLast {
     // generate version tag
-    def major = appConfigProps.get('BuildMajor')
-    def minor = appConfigProps.get('BuildMinor')
-    def rev = appConfigProps.get('BuildRev')
-    def type = appConfigProps.get('BuildType')
-    def buildNum = appConfigProps.get('BuildNumber')
-
-    def tag = "$major.$minor.${rev}_${type}-$buildNum"
+    def tag = getVersionTag()
     def props = new Properties();
     file(project.buildDir).mkdirs()
     props.setProperty('tag', tag)
     props.store(file("${project.buildDir}/version.tag").newWriter(), "Version Info")
   }
+}
+
+ext.getVersionTag = { ->
+  // generate version tag
+  def major = appConfigProps.get('BuildMajor')
+  def minor = appConfigProps.get('BuildMinor')
+  def rev = appConfigProps.get('BuildRev')
+  def type = appConfigProps.get('BuildType')
+  def buildNum = appConfigProps.get('BuildNumber')
+
+  return "$major.$minor.${rev}_${type}-$buildNum"
 }
 
 task createTag(dependsOn: loadConfig) << {

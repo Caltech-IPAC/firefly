@@ -9,7 +9,7 @@ import {pickBy, get, filter} from 'lodash';
 
 import {flux, firefly} from '../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../core/AppDataCntlr.js';
-import {LO_EXPANDED, getLayouInfo, SHOW_DROPDOWN} from '../core/LayoutCntlr.js';
+import {LO_EXPANDED, LO_STANDARD, getLayouInfo, SHOW_DROPDOWN, dispatchSetLayoutMode} from '../core/LayoutCntlr.js';
 import {Menu, getDropDownNames} from '../ui/Menu.jsx';
 import Banner from '../ui/Banner.jsx';
 import {DropDownContainer} from '../ui/DropDownContainer.jsx';
@@ -21,6 +21,7 @@ import {VisToolbar} from '../visualize/ui/VisToolbar.jsx';
 import {getActionFromUrl} from '../core/History.js';
 import {TriViewImageSection, launchImageMetaDataSega} from '../visualize/ui/TriViewImageSection.jsx';
 import {dispatchAddViewer} from '../visualize/MultiViewCntlr.js';
+
 // import {deepDiff} from '../util/WebUtil.js';
 
 const TriView_Types = ['tables', 'images', 'xyPlots', 'tri_view', 'image_xyplot', 'image_table', 'xyplot_table'];
@@ -86,7 +87,7 @@ export class FireflyViewer extends Component {
 
     render() {
         var {title, isReady, menu={}, appTitle, appIcon, altAppIcon,
-                searchPanels, views, expanded, hasTables, hasImages, hasXyPlots,
+                searchPanels, views, expanded,  standard, hasTables, hasImages, hasXyPlots,
                 dropdownVisible, dropdownView} = this.state;
         const searches = getDropDownNames();
 
@@ -104,7 +105,7 @@ export class FireflyViewer extends Component {
                             {...{searches, searchPanels} } />
                     </header>
                     <main>
-                        <DynamicResults {...{title, expanded, views, hasTables, hasImages, hasXyPlots}}/>
+                        <DynamicResults {...{title, expanded, views, standard, hasTables, hasImages, hasXyPlots}}/>
                     </main>
                 </div>
             );
@@ -138,9 +139,8 @@ function onReady({menu, views}) {
     }
     if (Image_Support.includes(views) ) {
         dispatchAddViewer('triViewImages', true, true);
+        launchImageMetaDataSega();
     }
-
-    launchImageMetaDataSega();
     const home = getDropDownNames()[0];
     const goto = getActionFromUrl() || (home && {type: SHOW_DROPDOWN, payload: {view: home}});
     if (goto) firefly.process(goto);
@@ -167,6 +167,7 @@ function DynamicResults(props) {
 DynamicResults.propTypes = {
     title: PropTypes.string,
     expanded: PropTypes.string,
+    standard: PropTypes.string,
     views: PropTypes.string,
     hasTables: PropTypes.bool,
     hasXyPlots: PropTypes.bool,
@@ -189,9 +190,10 @@ export class TriViewResults extends Component {
         return sCompare(this, np, ns);
     }
     render() {
-        var {title, expanded, views, hasTables, hasImages, hasXyPlots} = this.props;
+        var {title, expanded, standard, views, hasTables, hasImages, hasXyPlots} = this.props;
         var hasData = [];
         var addTables, addImages, addXy;
+        standard = standard || views;
 
         if (Image_Support.includes(views) ) {
             hasData.push(hasImages);
@@ -218,24 +220,40 @@ export class TriViewResults extends Component {
         }
         if (addXy) {
             expanded = count ===1 ? LO_EXPANDED.xyPlots.view : expanded;
-            content.xyPlot = <ChartsContainer key='res-xyplots'
+            content.xyPlot = (<ChartsContainer key='res-xyplots'
                                               closeable={count>1}
-                                              expandedMode={expanded===LO_EXPANDED.xyPlots.view}/>;
+                                              expandedMode={expanded===LO_EXPANDED.xyPlots.view}/>);
         }
         if (addTables) {
             expanded = count ===1 ? LO_EXPANDED.tables.view : expanded;
-            content.tables = <TablesContainer key='res-tables'
+            content.tables = (<TablesContainer key='res-tables'
                                               closeable={count>1}
-                                              expandedMode={expanded===LO_EXPANDED.tables.view}/>;
+                                              expandedMode={expanded===LO_EXPANDED.tables.view}/>);
         }
+        const searchDesc = (addImages && addXy && addTables) ?
+                            (<div>
+                                <div style={ {display: 'inline-block', float: 'right'} }>
+                                    <button type='button' className='button-std'
+                                            onClick={() => dispatchSetLayoutMode(LO_STANDARD.tri_view)}>tri-view</button>
+                                    <button type='button' className='button-std'
+                                            onClick={() => dispatchSetLayoutMode(LO_STANDARD.image_table)}>img-tbl</button>
+                                    <button type='button' className='button-std'
+                                            onClick={() => dispatchSetLayoutMode(LO_STANDARD.image_xyplot)}>img-xy</button>
+                                    <button type='button' className='button-std'
+                                            onClick={() => dispatchSetLayoutMode(LO_STANDARD.xyplot_table)}>xy-tbl</button>
+                                </div>
+                            </div>)
+                            : <div/>;
+
 
         if (count === 0) return <div/>;
         else {
             return (
                 <ResultsPanel key='results'
                               title={title}
+                              searchDesc ={searchDesc}
                               expanded={expanded}
-                              standard={views}
+                              standard={standard}
                               visToolbar={<VisToolbar key='res-vis-tb'/>}
                     { ...content}
                 />
@@ -247,6 +265,7 @@ TriViewResults.propTypes = {
     title: PropTypes.string,
     expanded: PropTypes.string,
     views: PropTypes.string,
+    standard: PropTypes.string,
     hasTables: PropTypes.bool,
     hasXyPlots: PropTypes.bool,
     hasImages: PropTypes.bool

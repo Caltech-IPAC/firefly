@@ -7,7 +7,7 @@ import sCompare from 'react-addons-shallow-compare';
 import {pick, filter} from 'lodash';
 
 import DockLayoutPanel from './panel/DockLayoutPanel.jsx';
-import {dispatchSetLayoutMode, LO_EXPANDED, LO_STANDARD} from '../core/LayoutCntlr.js';
+import {LO_EXPANDED, LO_STANDARD} from '../core/LayoutCntlr.js';
 // import {deepDiff} from '../util/WebUtil.js';
 
 const wrapperStyle = { flex: 'auto', display: 'flex', flexFlow: 'column', overflow: 'hidden'};
@@ -75,38 +75,13 @@ const StandardView = ({visToolbar, title, searchDesc, standard, imagePlot, xyPlo
     return (
         <div style={wrapperStyle}>
             {visToolbar}
-            <SearchDesc {...{searchDesc, imagePlot, xyPlot, tables}}/>
+            {searchDesc}
             {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
             <DockLayoutPanel key={standard} config={ config } >
                 {components}
             </DockLayoutPanel>
         </div>
     );
-};
-
-const SearchDesc = ({searchDesc, imagePlot, xyPlot, tables}) => {
-    const tri = imagePlot && xyPlot && tables;
-    if (searchDesc || tri) {
-        return (
-            <div>
-                {searchDesc && <div id='results-searchDesc' style={ {display: 'inline-block'} }>{searchDesc}</div>}
-                {tri &&
-                <div style={ {display: 'inline-block', float: 'right'} }>
-                    <button type='button' className='button-std'
-                            onClick={() => dispatchSetLayoutMode(LO_STANDARD.tri_view)}>tri-view</button>
-                    <button type='button' className='button-std'
-                            onClick={() => dispatchSetLayoutMode(LO_STANDARD.image_table)}>img-tbl</button>
-                    <button type='button' className='button-std'
-                            onClick={() => dispatchSetLayoutMode(LO_STANDARD.image_xyplot)}>img-xy</button>
-                    <button type='button' className='button-std'
-                            onClick={() => dispatchSetLayoutMode(LO_STANDARD.xyplot_table)}>xy-tbl</button>
-                </div>
-                }
-            </div>
-            );
-    } else {
-        return <div/>;
-    }
 };
 
 function generateLayout(standard, results) {

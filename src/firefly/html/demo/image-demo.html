@@ -1,0 +1,186 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Demo of Firefly Tools</title>
+</head>
+
+<body>
+
+
+<div style="width: 500px; padding: 20px 0 0 20px;">
+    This page demos 3 different ways to show fits images.
+    <ul style="padding: 20px 0 0 40px;">
+        <li>The first plot uses the 2mass service</li>
+        <li>The second plots from an URL</li>
+        <li>The last two link show how you can pop out a FITS image by clicking on a link without leaving the page</li>
+    </ul>
+    <br>
+    <br>
+    There are many options on how images can be plotted.  There is full control over the zoom level, stretch,
+    color table, cropping and rotation.
+    <br>
+    <br>
+    <br>
+</div>
+
+<table>
+    <tr>
+        <td>
+            <div id="serviceHere" style="width: 350px; height: 350px; padding: 10px 5px 5px 5px;"></div>
+        </td>
+        <td>
+            <div id="wiseURLHere" style="width: 350px; height: 350px; padding: 10px 5px 5px 5px;"></div>
+        </td>
+        <td>
+        <table style="padding-left: 30px">
+            <tr>
+                <td>Load table </td>
+                <td>
+                    <a href='javascript:firefly.getExternalViewer().showTable({"source" : "http://localhost/m31-2mass-some-data.tbl", "Title" : "Got the title", "OverlayPosition" : "10.692361;41.262649;EQ_J2000"})'>table</a>
+                </td>
+            </tr>
+            <tr>
+                <td> WISE data  </td>
+                <td>
+                    <a href='javascript:open("pop.html")'>WISE level 1 m31</a>
+                </td>
+            </tr>
+            <tr>
+                <td> PTF data  </td>
+                <td>
+                    <a href='javascript:firefly.getExpandViewer().plotURL("http://web.ipac.caltech.edu/staff/roby/demo/ptf-m31-test-file.fits")'>PTF m31</a>
+                </td>
+
+            </tr>
+            <tr>
+                <td> PTF m31 Separate window </td>
+                <td>
+                    <a href='javascript:firefly.getExternalViewer().plot({"URL" : "http://web.ipac.caltech.edu/staff/roby/demo/ptf-m31-test-file.fits", "Title" : "WISE", "OverlayPosition": "10.734779;40.145284;EQ_J2000;next pt"})'>PTF m31 -separate</a>
+                </td>
+
+            </tr>
+            <tr>
+                <td> WISE m51 separate</td>
+                <td>
+                    <a href='javascript:firefly.getExternalViewer().plotURL("http://web.ipac.caltech.edu/staff/roby/demo/wise-m31-level1-3.fits")'>wise -separate</a>
+                   <br>
+                    <a href= 'javascript:firefly.getExternalViewer().plot({"URL" : "http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits", "Title" : "WISE", "OverlayPosition": "202.39074;47.234491;EQ_J2000;a point"})'>
+                                 wise -separate - m51</a>
+                    <br>
+                    <a href= 'javascript:firefly.getExternalViewer().plotFileOrURL("/Library/WebServer/Documents/wise-m51-band2.fits", "http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits")'>
+                        wise -separate, file or url - m51</a>
+                </td>
+
+            </tr>
+        </table>
+        </td>
+    </tr>
+</table>
+
+
+<script type="text/javascript">
+    {
+        onFireflyLoaded= function() {
+            firefly.debug= true;
+//            firefly.setGlobalDefaultParams({"ColorTable": "8"});
+
+            var iv= firefly.makeImageViewer("serviceHere");
+            iv.plot( {  "Type"      : "SERVICE",
+                        "Service"   : "TWOMASS",
+                        "UserDesc"  : "Test",
+//                         "xx"  : "xx",
+//                         "RotationAngle"  : "xx",
+                        "Title"     : "2mass from service",
+                        "ZoomType"  : "STANDARD",
+                        "InitZoomLevel" : "1",
+                        "SurveyKey"  : "k",
+                        "WorldPt"    : "10.68479;41.26906;EQ_J2000",
+                        "OverlayPosition"    : "10.68479;41.26906;EQ_J2000",
+                        "SizeInDeg"  : ".12",
+                        "ColorTable" : "1",
+                        "AllowImageSelection" : "true",
+                        "HideTitleDetail" : "true"
+                     } );
+
+
+            var extFunc= function(data) {
+                console.log("do something was pushed");
+                console.log("wp1= " + data.wpt1);
+            };
+
+
+
+            var extension= {
+                id : "MySpecialExt",
+                plotId : "serviceHere",
+                imageUrl : null,
+                title : "Do something",
+                toolTip : "tip for do something",
+                extType: "AREA_SELECT",
+                callback: extFunc
+            };
+
+            var actions= firefly.appFlux.getActions('ExternalAccessActions');
+
+
+            firefly.makeTabGroup("wiseURLHere", "tabs");
+
+            var iv2= firefly.makeImageViewer("tabs");
+            iv2.plot( {"Type"      : "URL",
+                       "URL"       : "http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits",
+                       "Title"     : "WISE image from a URL",
+                       "ZoomType"  : "TO_WIDTH",
+                       "FlipY"     : "True",
+                       "Rotate"    : "True",
+                       "RotationAngle" : "30",
+                       "ZoomToWidth" : "350"}
+            );
+
+            actions.extensionAdd(extension);
+            actions.channelActivate("tt");
+
+            var ex= firefly.getExpandViewer();
+            ex.setDefaultParams({   "Title"     : "FITS Data",
+                                    "RangeValues" : firefly.serializeRangeValues("Sigma",-2,8,"Linear")
+                                }) ;
+            ex.setWindowClose(true);
+
+            var external= firefly.getExternalViewer();
+            external.setDefaultParams({   "TitleOptions"     : "FILE_NAME",
+                                          "PostTitle"        : "more stuff",
+                                          "RangeValues" : firefly.serializeRangeValues("Sigma",-2,8,"Linear")
+                                      }) ;
+            external.setTarget("_testWin");
+//            setTimeout(function () {actions.extensionAdd(extension);}, 3000);
+        }
+   }
+   
+</script>
+
+
+
+
+<script type="text/javascript">
+    function showPlot(reference) {
+        firefly.getExpandViewer().plotURL(reference);
+    }
+
+</script>
+
+
+<!--<script type="text/javascript" language='javascript'-->
+        <!--src='http://localhost:8080/fftools/fftools.nocache.js'>-->
+<!--</script>-->
+
+<script type="text/javascript" language='javascript'
+        src='fftools.nocache.js'>
+</script>
+
+</body>
+</html>

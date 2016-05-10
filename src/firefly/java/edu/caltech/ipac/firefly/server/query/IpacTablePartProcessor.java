@@ -42,9 +42,7 @@ import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.expr.Expression;
-import org.apache.commons.collections.comparators.BooleanComparator;
 import org.apache.commons.httpclient.HttpStatus;
-import org.apache.xpath.operations.Bool;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -78,8 +76,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public static final Logger.LoggerImpl SEARCH_LOGGER = Logger.getLogger(Logger.SEARCH_LOGGER);
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     public static long logCounter = 0;
-    public static final List<String> SYS_PARAMS = Arrays.asList(TableServerRequest.INCL_COLUMNS, TableServerRequest.FILTERS, TableServerRequest.PAGE_SIZE,
-            TableServerRequest.SORT_INFO, TableServerRequest.START_IDX, TableServerRequest.DECIMATE_INFO);
+    public static final String SYS_PARAMS = TableServerRequest.SYS_PARAMS;
     public static final List<String> PAGE_PARAMS = Arrays.asList(TableServerRequest.PAGE_SIZE, TableServerRequest.START_IDX);
 
 
@@ -135,7 +132,19 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     public ServerRequest inspectRequest(ServerRequest request) {
-        return request;
+        TableServerRequest req = (TableServerRequest) request;
+        String doPadding = req.getMeta("padResults");
+        if (Boolean.parseBoolean(doPadding)) {
+            // if we need to pad the results, change the request.
+            req = (TableServerRequest) req.cloneRequest();
+            int start = Math.max(req.getStartIndex() - 50, 0);
+            req.setStartIndex(start);
+            req.setPageSize(req.getPageSize() + 100);
+            ((TableServerRequest)request).setStartIndex(start);   // the original request needs to be modify as well.
+            return req;
+        } else {
+            return request;
+        }
     }
 
     /**
@@ -189,8 +198,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             } else {
                 try {
                     postProcessData(dgFile, request);
-                    int[] startRowsPair = getStartRowsPair(request);
-                    page = IpacTableParser.getData(dgFile, startRowsPair[0], startRowsPair[1]);
+                    page = IpacTableParser.getData(dgFile, request.getStartIndex(), request.getPageSize());
                     page.getTableDef().ensureStatus();      // make sure there's a status line so
                 } catch (Exception e) {
                     LOGGER.error(e, "Fail to parse ipac table file: " + dgFile);
@@ -217,17 +225,6 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
     }
 
-    private int[] getStartRowsPair(TableServerRequest request) {
-        String doPadding = request.getMeta("padResults");
-        if (Boolean.parseBoolean(doPadding)) {
-            int start = Math.max(request.getStartIndex() - 50, 0);
-            request.setStartIndex(start);
-            return new int[] {start, request.getPageSize() + 100};
-        } else {
-            return new int[] {request.getStartIndex(), request.getPageSize()};
-        }
-    }
-
     protected File postProcessData(File dgFile, TableServerRequest request) throws Exception {
         return dgFile;
     }
@@ -252,7 +249,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         }
 
         for (Param p : request.getParams()) {
-            if (!SYS_PARAMS.contains(p.getName())) {
+            if (!SYS_PARAMS.contains("|" + p.getName() + "|")) {
                 uid += "|" + p.toString();
             }
         }
