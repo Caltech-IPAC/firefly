@@ -235,11 +235,8 @@ function firefly_loader(loadScript, outpath, debug=true) {
             // console.log(Object.keys(stats.compilation));
             var hash = debug ? 'dev' : stats.hash;
 
-            console.log('!!!!!!!!' + path.resolve(outpath, `${stats.compilation.name}.nocache.js`));
-
             var callback='';
             if (fs.existsSync(path.resolve(outpath, `${stats.compilation.name}.nocache.js`))) {
-                console.log('good!!!!!!');
                 callback = `,
                     function() {
                         loadScript('${stats.compilation.name}.nocache.js');
@@ -247,7 +244,6 @@ function firefly_loader(loadScript, outpath, debug=true) {
             }
             var content = fs.readFileSync(loadScript);
             content += `\nloadScript('${stats.compilation.name}-${hash}.js'${callback});`;
-            console.log('after good!!!!!!');
             var loader = path.join(outpath, 'firefly_loader.js');
             fs.writeFileSync(loader, content);
         });

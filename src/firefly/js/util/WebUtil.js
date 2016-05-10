@@ -354,6 +354,18 @@ export function updateSet(object, path, value) {
 }
 
 /**
+ * This is a wrapper of React update's $merge for use with deep object update.
+ * *Syntax is similar to as lodash set.
+ * @param object (Object): The object to modify.
+ * @param path (Array|string): The path of the property to merge.
+ * @param value (*): The value to merge.
+ */
+export function updateMerge(object, path, value) {
+    const o = set({}, path, {$merge: value});
+    return update(object, o);
+}
+
+/**
  * This is a generic wrapper of React's update for use with deep object update.
  * Command can be on of:
  * {$push: array}, {$unshift: array}, {$splice: array of arrays}, {$set: any}, {$apply: function}
