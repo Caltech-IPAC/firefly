@@ -75,13 +75,13 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
     public static final Logger.LoggerImpl SEARCH_LOGGER = Logger.getLogger(Logger.SEARCH_LOGGER);
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
-    public static long logCounter = 0;
+    //public static long logCounter = 0;
     public static final String SYS_PARAMS = TableServerRequest.SYS_PARAMS;
     public static final List<String> PAGE_PARAMS = Arrays.asList(TableServerRequest.PAGE_SIZE, TableServerRequest.START_IDX);
 
 
     private static final Map<StringKey, Object> _activeRequests =
-                Collections.synchronizedMap(new HashMap<StringKey, Object>());
+                Collections.synchronizedMap(new HashMap<>());
 
     public boolean isSecurityAware() {
         return false;
@@ -97,11 +97,11 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
         } catch (MalformedURLException e) {
             LOGGER.error(e, "Bad URL");
-            throw makeException(e, "WISE Query Failed - bad url.");
+            throw makeException(e, "Query Failed - bad url.");
 
         } catch (FailedRequestException e) {
             LOGGER.error(e, e.toString());
-            if (conn != null && conn instanceof HttpURLConnection) {
+            if (conn instanceof HttpURLConnection) {
                 HttpURLConnection httpConn = (HttpURLConnection) conn;
                 int respCode = httpConn.getResponseCode();
                 String desc = respCode == 200 ? e.getMessage() : HttpStatus.getStatusText(respCode);
@@ -150,9 +150,9 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     /**
      * Default behavior is to read file, created by getDataGroupFile
      *
-     * @param sr
-     * @return
-     * @throws Exception
+     * @param sr - server request
+     * @return data group part
+     * @throws DataAccessException when unable to obtain data
      */
     public DataGroupPart getData(ServerRequest sr) throws DataAccessException {
         File dgFile = null;
@@ -189,7 +189,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             }
 
 
-            DataGroupPart page = null;
+            DataGroupPart page;
             // get the page requested
             if (dgFile == null || !dgFile.exists() || dgFile.length() == 0) {
                 TableDef def = new TableDef();
@@ -214,14 +214,15 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         } catch (Exception e) {
             LOGGER.error(e, "Error while processing request:" + StringUtils.truncate(sr, 512));
             throw new DataAccessException("Unexpected error", e);
-        } finally {
-            if (!doCache()) {
+        }
+//        finally {
+//            if (!doCache()) {
 // do not delete file even if it's not to be cached.  download still relies on it.
 //                if (dgFile != null) {
 //                    dgFile.delete();
 //                }
-            }
-        }
+//            }
+//        }
 
     }
 
@@ -248,15 +249,25 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             uid = uid + ServerContext.getRequestOwner().getUserKey();
         }
 
+        // parameters to get original data (before filter, sort, etc.)
+        List<Param> srvParams = new ArrayList<>();
         for (Param p : request.getParams()) {
-            if (!SYS_PARAMS.contains("|" + p.getName() + "|")) {
-                uid += "|" + p.toString();
-            }
+             if (!SYS_PARAMS.contains("|" + p.getName() + "|")) {
+                 srvParams.add(p);
+             }
         }
+
+        // sort by parameter name
+        Collections.sort(srvParams, (p1, p2) -> p1.getName().compareTo(p2.getName()));
+
+        for (Param p : srvParams) {
+            uid += "|" + p.toString();
+        }
+
         return uid;
     }
 
-    // unique key withou page info
+    // unique key without page info
     public String getDataKey(ServerRequest request) {
 
         String uid = request.getRequestId() + "-";
@@ -320,7 +331,6 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
     public File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
 
-        StringKey key = new StringKey(IpacTablePartProcessor.class.getName(), getUniqueID(request));
         Cache cache = CacheManager.getCache(Cache.TYPE_TEMP_FILE);
 
         // if decimation or sorting is requested, you cannot background writing the file to speed up response time.
@@ -338,7 +348,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
         // from here on.. we use resultsFile as the cache key.
         // if the source file changes, we ignore previously cached temp files
-        key = new StringKey(resultsFile.getPath());
+        StringKey key = new StringKey(resultsFile.getPath());
 
         // do filtering
         CollectionUtil.Filter<DataObject>[] filters = QueryUtil.convertToDataFilter(request.getFilters());
@@ -355,7 +365,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
         // do sorting...
         SortInfo sortInfo = request.getSortInfo();
-        if (resultsFile != null && sortInfo != null) {
+        if (sortInfo != null) {
             key = key.appendToKey(sortInfo);
             File sortedFile = validateFile((File) cache.get(key));
             if (sortedFile == null) {
@@ -368,19 +378,19 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
         // do decimation
         DecimateInfo decimateInfo = request.getDecimateInfo();
-        if (resultsFile != null && decimateInfo != null) {
+        if (decimateInfo != null) {
             key = key.appendToKey(decimateInfo);
             File deciFile = validateFile((File) cache.get(key));
             if (deciFile == null) {
                 // only read in the required columns
                 Expression xColExpr = new Expression(decimateInfo.getxColumnName(), null);
                 Expression yColExpr = new Expression(decimateInfo.getyColumnName(), null);
-                List<String> requestedCols = new ArrayList<String>();
+                List<String> requestedCols = new ArrayList<>();
                 if (xColExpr.isValid() && yColExpr.isValid()) {
                     requestedCols.addAll(xColExpr.getParsedVariables());
                     requestedCols.addAll(yColExpr.getParsedVariables());
                 }
-                DataGroup dg = DataGroupReader.read(resultsFile, requestedCols.toArray(new String[0]));
+                DataGroup dg = DataGroupReader.read(resultsFile, requestedCols.toArray(new String[requestedCols.size()]));
 
                 deciFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
                 DataGroup retval = QueryUtil.doDecimation(dg, decimateInfo);
@@ -392,7 +402,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
         // return only the columns requested, ignore when decimation is requested
         String ic = request.getParam(TableServerRequest.INCL_COLUMNS);
-        if (resultsFile != null && decimateInfo == null && !StringUtils.isEmpty(ic) && !ic.equals("ALL")) {
+        if (decimateInfo == null && !StringUtils.isEmpty(ic) && !ic.equals("ALL")) {
             key = key.appendToKey(ic);
             File subFile = validateFile((File) cache.get(key));
             if (subFile == null) {
@@ -461,8 +471,8 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     /**
      * subclass provide how the data are collected
      *
-     * @param request
-     * @return
+     * @param request table request
+     * @return file with the data
      * @throws java.io.IOException
      * @throws edu.caltech.ipac.firefly.server.query.DataAccessException
      *
@@ -487,8 +497,8 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     /**
      * return the file containing data before filter and sort.
      *
-     * @param request
-     * @return
+     * @param request table request
+     * @return file with the base data (before filter, sort, etc.)
      * @throws IOException
      * @throws DataAccessException
      */
@@ -574,7 +584,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     protected File createFile(TableServerRequest request, String fileExt) throws IOException {
-        File file = null;
+        File file;
         if (doCache()) {
             if (useWorkspace) {
                 file = ServerContext.getRequestOwner().getWsManager().createFile(
@@ -590,7 +600,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
     /**
      * this is where your results should be saved.  It's default to WspaceMeta.IMAGESET.
-     * @return
+     * @return path to the workspace directory
      */
     protected String getWspaceSaveDirectory() {
         return "/" + WorkspaceManager.SEARCH_DIR + "/" + WspaceMeta.IMAGESET;
