@@ -1,4 +1,4 @@
-AppMenu.Items = AnyDataSetSearch IrsaCatalogDropDown TestSearches ImageSelectDropDownCmd overviewHelp exampleDialog
+AppMenu.Items = AnyDataSetSearch IrsaCatalogDropDown ImageSelectDropDownCmd overviewHelp
 
 
 
@@ -34,15 +34,6 @@ about.Title=
 overviewHelp.Title= Help
 overviewHelp.ShortDescription= About IRSA view Tool
 overviewHelp.ToolbarButtonType= COMMAND
-
-
-exampleDialog.Title= Example Dialog
-exampleDialog.ShortDescription= An example
-exampleDialog.ToolbarButtonType= COMMAND
-
-
-TestSearches.Title = Test Searches
-TestSearches.ShortDescription= test...
 
 
 AnyDataSetSearch.Name = AnyDataSetSearch

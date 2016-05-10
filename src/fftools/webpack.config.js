@@ -10,7 +10,6 @@ var config = {
     src     : __dirname,
     use_loader: false,
     entry   : {
-        fftools: path.resolve(__dirname, 'js/fftools.js'),
         fflib: path.resolve(firefly_root, 'src/firefly/js/fireflyJSLib.js')
     },
     firefly_dir : path.resolve(firefly_root, 'src/firefly')

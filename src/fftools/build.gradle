@@ -7,7 +7,8 @@ dependencies {
 apply from: "$fireflyPath/buildScript/gwt_webapp.gincl"
 
 dependencies {
-  webappLib mysql_lib
+    compile firefly_lib
+    webappLib mysql_lib, FIREFLY_RUNTIME + firefly_lib + ":$jar.baseName"
 }
 
 gwt {

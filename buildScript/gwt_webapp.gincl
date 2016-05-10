@@ -59,11 +59,6 @@ configurations {
   }
 }
 
-dependencies {
-  compile firefly_lib
-  webappLib FIREFLY_RUNTIME + firefly_lib + ":$jar.baseName"
-}
-
 task prepareWebapp (type:Copy, dependsOn: [gwt, loadConfig, createVersionTag]) {
   description= 'Generates the configuration files needed by the webapp, ie. app.prop, web.xml, etc.'
   group = WEBAPP_GROUP
