@@ -24,6 +24,7 @@ jar {
 
 gwt {
   modules = 'edu.caltech.ipac.jsinterop'
+  module_name = 'jsinterop'
 }
 
 ext.appConfig = {

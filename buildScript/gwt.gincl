@@ -6,6 +6,7 @@ task gwt {
   ext.buildDir = "${project.buildDir}/gwt"
   ext.warDir = "$buildDir/${project['app-name']}"
   ext.modules = "<UNDEFINED>"
+  ext.module_name = project.projectDir.name
   ext.startupUrl = "${project['app-name']}.html"
   ext.localWorkers = "6"
   ext.style = "OBFUSCATED"
@@ -79,9 +80,9 @@ task gwtCompile (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   doLast {
     // because we rename it to a shorter name, we need to shuffle these directories around.
     file(gwt.warDir).renameTo("${gwt.warDir}_tmp")
-    file("${gwt.warDir}_tmp/$gwt.linkedDirName").renameTo(gwt.warDir)
+    file("${gwt.warDir}_tmp/$gwt.module_name").renameTo(gwt.warDir)
     file("$gwt.warDir/WEB-INF").mkdirs()
-    file("${gwt.warDir}_tmp/WEB-INF/deploy/$gwt.linkedDirName").renameTo("$gwt.warDir/WEB-INF/deploy")
+    file("${gwt.warDir}_tmp/WEB-INF/deploy/$gwt.module_name").renameTo("$gwt.warDir/WEB-INF/deploy")
     delete {"${gwt.warDir}_tmp"}
   }
 }

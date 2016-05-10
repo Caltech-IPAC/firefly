@@ -1,4 +1,4 @@
-<module rename-to="firefly">
+<module rename-to="jsinterop">
 
     <!-- Specify the app entry point class.                   -->
     <entry-point class='edu.caltech.ipac.firefly.core.FireflyEntryPoint'/>

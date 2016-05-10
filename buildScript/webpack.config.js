@@ -234,16 +234,17 @@ function firefly_loader(loadScript, outpath, debug=true) {
         this.plugin('done', function (stats) {
             // console.log(Object.keys(stats.compilation));
             var hash = debug ? 'dev' : stats.hash;
+            var cxt_name = stats.compilation.name;
 
             var callback='';
-            if (fs.existsSync(path.resolve(outpath, `${stats.compilation.name}.nocache.js`))) {
+            if (fs.existsSync(path.resolve(outpath, 'jsinterop.nocache.js'))) {
                 callback = `,
                     function() {
-                        loadScript('${stats.compilation.name}.nocache.js');
+                        loadScript('/${cxt_name}/jsinterop.nocache.js');
                     }`;
             }
             var content = fs.readFileSync(loadScript);
-            content += `\nloadScript('${stats.compilation.name}-${hash}.js'${callback});`;
+            content += `\nloadScript('/${cxt_name}/${cxt_name}-${hash}.js'${callback});`;
             var loader = path.join(outpath, 'firefly_loader.js');
             fs.writeFileSync(loader, content);
         });
