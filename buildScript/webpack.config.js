@@ -38,9 +38,13 @@ function makeWebpackConfig(config) {
     config = Object.assign(def_config, config);
 
     var script_names = [];
-    Object.keys(config.entry).forEach( (v) => {
-        script_names.push(v + '.js');
-    });
+    if (config.use_loader) {
+        script_names = ['firefly_loader.js'];
+    } else {
+        Object.keys(config.entry).forEach( (v) => {
+            script_names.push(v + '.js');
+        });
+    }
     const globals = {
         'process.env'   : {NODE_ENV : JSON.stringify(config.env)},
         NODE_ENV        : config.env,

@@ -344,58 +344,9 @@ function* doOnAppReady(callback, dispatch, getState) {
  * @param dispatch
  */
 function fetchAppData(dispatch) {
-    Promise.all( [loadProperties()] )
-        .then(function (results) {
-            const props = results[0];
-            dispatch(updateAppData(
-                {
-                    isReady: true,
-                    // menu: makeMenu(props),
-                    props
-                }));
-        })
-        .catch(function (reason) {
-            console.log('Fail', reason);
-        });
-}
-
-/**
- * returns a Promise containing the properties object.
- */
-function loadProperties() {
-
-    return fetchUrl('servlet/FireFly_PropertyDownload').then( (response) => {
-        return response.text().then( (text) => {
-            const lines = text.split( '\n' ).filter( (val) => !val.trim().startsWith('#') );
-            const props = {};
-            lines.forEach( (line) => {
-                if (line.indexOf('=')) {
-                    props[strLeft(line, '=').trim()] = strRight(line, '=').trim().replace(/\\(?=[\=!:#])/g, '');
-                }
-            } );
-            return props;
-        });
-    }).catch(function(err) {
-        return new Error(`Unable to load properties: ${err}`);
-    });
-}
-
-/**
- *
- * @param props
- * @returns {{selected: string, menuItems: Array}}
- */
-function makeMenu(props) {
-    var menuItems = [];
-    var selected = '';
-    var items = props['AppMenu.Items'] || '';
-    items.split(/\s+/).forEach( (action) => {
-        const label = props[`${action}.Title`];
-        const desc = props[`${action}.ShortDescription`];
-        const icon = props[`${action}.Icon`];
-        const type = props[`${action}.ToolbarButtonType`] || '';
-        menuItems.push({label, action, icon, desc, type});
-    });
-    return {selected, menuItems};
+    dispatch(updateAppData(
+        {
+            isReady: true,
+        }));
 }
 

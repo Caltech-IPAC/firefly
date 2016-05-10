@@ -2,6 +2,7 @@
  * Created by loi on 1/19/16.
  */
 import {setCookie} from '../../util/WebUtil.js';
+import {getRootURL} from '../../util/BrowserUtil.js';
 
 var nRetries = 0;
 var pinger;
@@ -11,22 +12,12 @@ var wsConn;
 
 const wsClient = {send: wsSend, addListener};
 
-export function wsConnect(baseUrl) {
+export function wsConnect(baseUrl=getRootURL()) {
+    baseUrl = baseUrl.replace('https:', 'wss:').replace('http:', 'ws:');
     connectBaseUrl = baseUrl;
-    var l = window.location;
-    if (baseUrl == null) {
-        var proto = (l.protocol === 'https:') ? 'wss://' : 'ws://';
-        var port = (l.port != 80 && l.port != 443) ? ':' + l.port : '';
-        var pathname = l.pathname.substring(0, l.pathname.lastIndexOf('/'));
-        baseUrl = proto + l.hostname + port + '/' + pathname;
-    } else {
-        baseUrl = baseUrl.replace('https:', 'wss:').replace('http:', 'ws:');
-    }
-    var queryString = l.hash ? '?' + decodeURIComponent(l.hash.substring(1)) : '';
+    console.log('Connecting to ' + baseUrl + '/sticky/firefly/events');
 
-    console.log('Connecting to ' + baseUrl + '/sticky/firefly/events' + queryString);
-
-    wsConn = new WebSocket(baseUrl + '/sticky/firefly/events' + queryString);
+    wsConn = new WebSocket(baseUrl + '/sticky/firefly/events');
     wsConn.onopen = onOpen;
     wsConn.onerror = onError;
     wsConn.onclose = onClose;
