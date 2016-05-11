@@ -43,7 +43,7 @@ function defineDialog(dialogId, dialog) {
         component: <PopupStoreConnection popupPanel={dialog} dialogId={dialogId} zIndex={1}/>
     };
     if (idx < 0) {
-        dialogs.push(newD);
+        dialogs= [...dialogs,newD];
     }
     else {
         dialogs[idx]= newD;
@@ -60,7 +60,7 @@ function showTmpPopup(popup) {
     if (!divElement) init();
     tmpCount++;
     const id= TMP_ROOT+tmpCount;
-    tmpPopups.push( {dialogId:id, component:popup});
+    tmpPopups= [...tmpPopups, {dialogId:id, component:popup}];
     reRender(dialogs,tmpPopups,requestOnTop);
     return () => {
         if (tmpPopups.some( (p) => (p.dialogId==id))) {
