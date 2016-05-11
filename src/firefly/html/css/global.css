@@ -311,6 +311,10 @@
 }
 /*------------------- loading mask ---------------------*/
 
+.banner-background {
+    background: url('/images/ipac_bar.jpg');
+}
+
 
 .text-ellipsis {
     display: inline-block;

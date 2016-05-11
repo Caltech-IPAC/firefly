@@ -38,13 +38,17 @@ export class ApiExpandedDisplay extends Component {
         }
     }
 
+    /**
+     *
+     * @return {XML}
+     */
     render() {
         const {closeFunc}= this.props;
         var {visRoot,currMouseState}= this.state;
         return (
             <div style={{width:'100%', height:'100%', display:'flex', flexWrap:'nowrap',
                          alignItems:'stretch', flexDirection:'column'}}>
-                <div style={{background: 'url(images/ipac_bar.jpg)', position: 'relative', marginBottom:'6px'}}>
+                <div style={{position: 'relative', marginBottom:'6px'}} className='banner-background'>
                     <VisHeaderView visRoot={visRoot} currMouseState={currMouseState}/>
                 </div>
                 <div style={{flex: '1 1 auto', display:'flex'}}>
