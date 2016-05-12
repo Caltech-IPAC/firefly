@@ -4,7 +4,7 @@
 
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {difference,xor,isEmpty,get} from 'lodash';
+import {xor,isEmpty,get} from 'lodash';
 import {TileDrawer} from './TileDrawer.jsx';
 import {EventLayer} from './EventLayer.jsx';
 import {ImageViewerStatus} from './ImageViewerStatus.jsx';
@@ -38,18 +38,18 @@ export class ImageViewerLayout extends Component {
         var {plotView:pv}= this.props;
         this.previousDim= makePrevDim(this.props);
         dispatchUpdateViewSize(pv.plotId,width,height);
-        if (pv && pv.plotViewCtx.zoomLockingEnabled) {
+        if (pv && pv.plotViewCtx.zoomLockingEnabled && primePlot(pv)) {
             dispatchZoom(pv.plotId,pv.plotViewCtx.zoomLockingType,true,true, true);
         }
     }
 
     componentDidUpdate() {
-        var {plotView:pv,width,height,externalWidth,externalHeight, plotView:pv}= this.props;
+        var {width,height,externalWidth,externalHeight, plotView:pv}= this.props;
         var {prevWidth,prevHeight, prevExternalWidth, prevExternalHeight, prevPlotId}= this.previousDim;
         if (prevWidth!==width || prevHeight!==height || prevPlotId!==pv.plotId) {
             dispatchUpdateViewSize(pv.plotId,width,height);
             //console.log('dispatchUpdateViewSize');
-            if (pv && pv.plotViewCtx.zoomLockingEnabled) {
+            if (pv && pv.plotViewCtx.zoomLockingEnabled && primePlot(pv)) {
                 if (prevExternalWidth!==externalWidth || prevExternalHeight!==externalHeight) {
                     //console.log('dispatchZoom');
                     dispatchZoom(pv.plotId,pv.plotViewCtx.zoomLockingType,true,true,true);

@@ -4,7 +4,7 @@
 
 
 .api-expanded {
-    position: absolute;
+    position: fixed;
     left: 5px;
     right: 5px;
     top: 5px;

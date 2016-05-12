@@ -215,7 +215,7 @@ function PagingControl({plotViewAry, visRoot,activePlotId, expandedMode}) {
 
     const plotIdAry= getExpandedViewerPlotIds(getMultiViewRoot());
 
-    if (plotIdAry.length<2 || expandedMode!==ExpandType.SINGLE) return <div style={controlStyle}></div>;
+    if (!activePlotId || plotIdAry.length<2 || expandedMode!==ExpandType.SINGLE) return <div style={controlStyle}></div>;
 
     const cIdx= plotIdAry.indexOf(activePlotId);
     const nextIdx= cIdx===plotIdAry.length-1 ? 0 : cIdx+1;
@@ -284,7 +284,7 @@ function PagingControl({plotViewAry, visRoot,activePlotId, expandedMode}) {
 
 PagingControl.propTypes= {
     plotViewAry : PropTypes.array.isRequired,
-    activePlotId: PropTypes.string.isRequired,
+    activePlotId: PropTypes.string,
     expandedMode: PropTypes.object.isRequired,
     visRoot : PropTypes.object.isRequired
 };

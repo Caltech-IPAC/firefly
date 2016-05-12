@@ -121,5 +121,5 @@ ImageViewerStatus.propTypes= {
     maskWaitTimeMS : PropTypes.number,
     useMessageAlpha : PropTypes.bool,
     canClear : PropTypes.bool,
-    clearCB : PropTypes.string
+    clearCB : PropTypes.func
 };

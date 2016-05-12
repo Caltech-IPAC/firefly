@@ -37,7 +37,7 @@ export function showInfoPopup(content, title='Information') {
 function makeContent(content) {
     return (
         <div style={{padding:5}}>
-            <div style={{maxWidth: 400, padding:10, fontSize:'120%'}}>
+            <div style={{minWidth:190, maxWidth: 400, padding:10, fontSize:'120%'}}>
                 {content}
             </div>
             <div style={{padding:'0 0 5px 10px'}}>

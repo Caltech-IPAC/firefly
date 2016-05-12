@@ -16,7 +16,7 @@
 /**
  * 
  * @param llApi the lowlevel api
- * @return {{}}
+ * @return {Object}
  */
 export function buildHighLevelApi(llApi) {
     const current= build(llApi);
@@ -31,7 +31,7 @@ var globalImageViewDefParams= {};
 /**
  * Build the deprecated API
  * @param llApi
- * @return {{}}
+ * @return {Object}
  */
 function build(llApi) {
 
@@ -55,26 +55,26 @@ function buildXYandHistPart(llApi) {
 
 function buildImagePart(llApi) {
 
-
-    const hApi= {};
     const {RequestType}= llApi.util.image;
 
     /**
      * The general plotting function to plot a FITS image.
-     * @param targetDiv to put the image in.
-     * @param request the request object literal with the plotting parameters
+     * @param {String|div} targetDiv to put the image in.
+     * @param {Object} request the request object literal with the plotting parameters
+     * @namespace firefly
      */
-    hApi.showImage= (targetDiv, request)  => showImageInMultiViewer(llApi, targetDiv, request);
+    const showImage= (targetDiv, request)  => showImageInMultiViewer(llApi, targetDiv, request);
 
 
     /**
      * a convenience plotting function to plot a file on the server or a url.  If first looks for the file then
      * the url is the fallback
-     * @param targetDiv to put the image in.
-     * @param file file on server
-     * @param url url reference to a fits file
+     * @param {String|div} targetDiv to put the image in.
+     * @param {String} file file on server
+     * @param {String} url url reference to a fits file
+     * @namespace firefly
      */
-    hApi.showImageFileOrUrl= (targetDiv, file,url) =>
+    const showImageFileOrUrl= (targetDiv, file,url) =>
               showImageInMultiViewer(llApi, targetDiv,
                                            {'File' : file,
                                             'URL' : url,
@@ -83,23 +83,25 @@ function buildImagePart(llApi) {
 
     /**
      * set global fallback params for every image plotting call
-     * @param {{}} params a object literal such as any image plot or showImage uses
+     * @param {Object} params a object literal such as any image plot or showImage uses
+     * @namespace firefly
      */
-    hApi.setGlobalImageDef= (params) => globalImageViewDefParams= params;
+    const setGlobalImageDef= (params) => globalImageViewDefParams= params;
 
     /**
      * Sets the root path for any relative URL. If this method has not been called then relative URLs use the page's root.
-     * @param rootUrlPath
+     * @param {String} rootUrlPath
+     * @namespace firefly
      */
-    hApi.setRootPath= (rootUrlPath) => llApi.action.dispatchRootUrlPath(rootUrlPath);
+    const setRootPath= (rootUrlPath) => llApi.action.dispatchRootUrlPath(rootUrlPath);
 
-    return hApi;
+    return {showImage, showImageFileOrUrl, setGlobalImageDef, setRootPath};
 }
 
 /**
  * Build the deprecated API
  * @param llApi
- * @return {{}}
+ * @return {Object}
  * @Deprecated
  */
 function buildDeprecated(llApi) {
@@ -108,7 +110,7 @@ function buildDeprecated(llApi) {
     const {RequestType}= llApi.util.image;
 
     dApi.makeImageViewer= (plotId) => {
-        llApi.util.debugMsg('makeImageViewer is deprecated, use firefly.showImagePlot() instead')
+        llApi.util.debug('makeImageViewer is deprecated, use firefly.showImagePlot() instead');
         highlevelImageInit(llApi);
         const plotSimple= makePlotSimple(llApi,plotId);
         return {
@@ -167,7 +169,8 @@ function showImageInMultiViewer(llApi, targetDiv, request) {
     const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
 
     highlevelImageInit(llApi);
-    request= confirmPlotRequest(request,globalImageViewDefParams);
+    request= confirmPlotRequest(request,globalImageViewDefParams,targetDiv);
+
     const plotId= !Array.isArray(request) ? request.plotId : request.find( (r) => r.plotId).plotId;
     dispatchPlotImage(plotId, request, Array.isArray(request));
     dispatchAddViewer(targetDiv,true);
@@ -188,21 +191,32 @@ function highlevelImageInit(llApi) {
 }
 
 
-function confirmPlotRequest(request,global) {
-    var plotId;
+function confirmPlotRequest(request,global,targetDiv) {
     if (Array.isArray(request)) {
+        var locked= true;
         const idx= request.findIndex( (r) => r.plotId);
-        if (idx>=0) {
-            return Object.assign({},global,request);
+
+        const plotId= (idx>=0) ? request[idx].plotId : makePlotId();
+        var plotGroupId;
+
+        if (idx>=0  && request[idx].plotGroupId) {
+            plotGroupId= request[idx].plotGroupId;
+            locked= true;
         }
         else {
-            plotId= makePlotId();
-            return request.map( (r) => Object.assign({},global,r,{plotId}));
+            plotGroupId= targetDiv;
+            locked= false;
         }
+
+
+        return request.map( (r) => Object.assign({},global,r,{plotId,plotGroupId,GroupLocked:locked}));
     }
     else {
-        return request.plotId ? Object.assign({}, global, request) :
-                                Object.assign({}, global, request, {plotId: makePlotId()});
+        const r= Object.assign({}, global, request);
+        if (!r.plotId) r.plotId= makePlotId();
+        if (!r.plotGroupId) r.plotGroupId= targetDiv;
+        if (r.plotGroupId===targetDiv) r.GroupLocked= false;
+        return r;
     }
 }
 

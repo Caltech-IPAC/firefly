@@ -101,7 +101,7 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds,
                 }
             </div>
             {showPager && <ImagePager pageSize={10} tbl_id={activeTable.tbl_id} />}
-            {handleInlineTools && makeInlineRightToolbar(vr,pv,pvDlAry)}
+            {handleInlineTools && <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={dlAry} />}
         </div>
     );
 }
@@ -118,8 +118,8 @@ ImageMetaDataToolbarView.propTypes= {
 };
 
 
-function makeInlineRightToolbar(visRoot,pv,dlAry){
-    if (!pv) return false;
+function InlineRightToolbarWrapper(visRoot,pv,dlAry){
+    if (!pv) return <div></div>;
 
     var lVis= BrowserInfo.isTouchInput() || visRoot.apiToolsView;
     var tb= visRoot.apiToolsView;
@@ -135,6 +135,13 @@ function makeInlineRightToolbar(visRoot,pv,dlAry){
         </div>
     );
 }
+
+InlineRightToolbarWrapper.propTypes= {
+    visRoot: PropTypes.object,
+    pv : PropTypes.object,
+    dlAry : PropTypes.array
+};
+
 
 function showThreeColorOps(viewer,dataId) {
     if (!viewer) return;

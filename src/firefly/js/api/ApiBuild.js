@@ -38,7 +38,9 @@ import {buildHighLevelApi} from './ApiHighLevelBuild.js';
 import './ApiStyle.css';
 
 
-
+/**
+ * Start in api mode. Will create the api and call window.onFireflyLoaded(firefly)
+ */
 export function initApi() {
     const lowlevelApi= buildLowlevelAPI();
     const highLevelApi= buildHighLevelApi(lowlevelApi);
@@ -63,7 +65,7 @@ Structure of API
                type: {all action type constants}
               }
      ui: { high level react components }
-     util { renderDom, unrenderDom, isDebug, debugMsg       // built by ApiUtil.js
+     util { renderDom, unrenderDom, isDebug, debug       // built by ApiUtil.js
             image : {image utility routines}                // imported from ApiUtilImage.js
             xyplot : {xyplot utility routines}               // imported from ApiUtilXYPlot.js //todo
             table : {table utility routines}                // imported from ApiUtilTable.js //todo
@@ -93,7 +95,7 @@ export function buildLowlevelAPI() {
         findActionType(ReadoutCntlr, ReadoutCntlr.READOUT_PREFIX),
         findActionType(MultiViewCntlr, MultiViewCntlr.IMAGE_MULTI_VIEW_PREFIX),
         findActionType(ImPlotCntlr.default, ImPlotCntlr.PLOTS_PREFIX),
-        findActionType(AppDataCntlr, AppDataCntlr.APP_DATA_PATH),
+        findActionType(AppDataCntlr, AppDataCntlr.APP_DATA_PATH)
     );
 
 
@@ -120,7 +122,7 @@ export function buildLowlevelAPI() {
         TablePanel
     };
     
-    const util= Object.assign({}, ApiUtil, {image:ApiUtilImage}, {xyplot:{}}, {table:{}}, {data:{}} )
+    const util= Object.assign({}, ApiUtil, {image:ApiUtilImage}, {xyplot:{}}, {table:{}}, {data:{}} );
 
     return { action, ui, util };
 }

@@ -112,7 +112,7 @@ export const getPopupPosition= function(e,layoutType) {
 
             break;
         case 'TOP_RIGHT' :
-            left= window.innerWidth - e.offsetWidth - 10 + window.scrollX;
+            left= window.innerWidth - e.offsetWidth - 30 + window.scrollX;
             top= window.scrollY+ 3;
             break;
         case 'TOP_LEFT' :

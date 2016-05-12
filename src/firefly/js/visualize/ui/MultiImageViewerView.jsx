@@ -14,7 +14,7 @@ const flexContainerStyle= {
     display:'flex',
     flexDirection:'column',
     flexWrap:'nowrap',
-    alignItems: 'stretch',
+    alignItems: 'stretch'
 };
 
 const defDecStyle= {
@@ -31,7 +31,7 @@ const flexToolbarStyle= {
 
 export function MultiImageViewerView(props) {
 
-    const {Toolbar, layoutType,viewerId, visRoot,
+    const {Toolbar, layoutType, visRoot,
            viewerPlotIds, forceRowSize, forceColSize, gridDefFunc,
            showWhenExpanded=false, additionalStyle,
            defaultDecoration=true, insideFlex=false, canDelete=true}= props;
@@ -43,7 +43,10 @@ export function MultiImageViewerView(props) {
         wrapperStyle= Object.assign({}, flexContainerStyle, {width:'100%', height:'100%'});
     }
     var container;
-    if (layoutType==='single' || viewerPlotIds.length===1) {  // SINGLE VIEW
+    if (viewerPlotIds.length===0) {
+        container= false;
+    }
+    else if (layoutType==='single' || viewerPlotIds.length===1) {  // SINGLE VIEW
         var id= viewerPlotIds.includes(visRoot.activePlotId) ? visRoot.activePlotId : viewerPlotIds[0];
         container= makeImageViewerFull(id,showWhenExpanded,canDelete, viewerPlotIds.length===1);
     }
@@ -81,6 +84,7 @@ export function MultiImageViewerView(props) {
 //{Toolbar ? <div style={flexContainerStyle}><Toolbar/> </div> : ''}
 
 MultiImageViewerView.propTypes= {
+    Toolbar : PropTypes.func,
     viewerId : PropTypes.string.isRequired,
     additionalStyle : PropTypes.object,    
     defaultDecoration : PropTypes.bool,
@@ -92,7 +96,8 @@ MultiImageViewerView.propTypes= {
     gridDefFunc : PropTypes.func,  // optional - a function to return the grid definition
     gridComponent : PropTypes.object,  // a react element to define the grid - not implemented, just an idea
     showWhenExpanded : PropTypes.bool,
-    canDelete :  PropTypes.bool
+    canDelete :  PropTypes.bool,
+    insideFlex :  PropTypes.bool
 };
 
 
@@ -201,8 +206,6 @@ function findAutoGridDim(size) {
  * @param {[ {string,[string]}]} gridDef
  //
  */
-function makeSparseGrid(viewerPlotIds,gridDef,showWhenExpanded) {
+function makeSparseGrid(viewerPlotIds,gridDef) {
     //todo
 }
-
-
