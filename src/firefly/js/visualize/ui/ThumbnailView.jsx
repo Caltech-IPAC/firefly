@@ -17,7 +17,7 @@ import {getScrollSize} from '../reducer/PlotView.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {WebPlot} from '../WebPlot.js';
 import {EventLayer} from './../iv/EventLayer.jsx';
-import {MouseState} from '../VisMouseCntlr.js';
+import {MouseState} from '../VisMouseSync.js';
 import {dispatchProcessScroll} from '../ImagePlotCntlr.js';
 
 

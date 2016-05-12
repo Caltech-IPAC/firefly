@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {has} from 'lodash';
 import replaceAll from 'underscore.string/replaceAll';
 import words from 'underscore.string/words';
 import validator from 'validator';
@@ -221,7 +222,7 @@ export class ServerRequest {
 //  convenience data converting routines
 //====================================================================
     getBooleanParam(key, def=false) {
-        return this.params[key] ? validator.toBoolean(this.params[key]) : def;
+        return has(this.params,key) ? validator.toBoolean(this.params[key]) : def;
     }
 
     getIntParam(key, def=0) {

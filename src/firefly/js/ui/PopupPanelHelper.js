@@ -102,14 +102,27 @@ export const getPopupPosition= function(e,layoutType) {
     var top= 0;
     switch (layoutType.toString()) {
         case 'CENTER' :
-            left= window.innerWidth/2 - e.offsetWidth/2;
-            top= window.innerHeight/2 - e.offsetHeight/2;
+            left= window.innerWidth/2 - e.offsetWidth/2 + window.scrollX;
+            top= window.innerHeight/2 - e.offsetHeight/2 + window.scrollY;
 
             break;
         case 'TOP_CENTER' :
-            left= window.innerWidth/2 - e.offsetWidth/2;
-            top= 100;
+            left= window.innerWidth/2 - e.offsetWidth/2 + window.scrollX;
+            top= window.scrollY+ 100;
 
+            break;
+        case 'TOP_RIGHT' :
+            left= window.innerWidth - e.offsetWidth - 30 + window.scrollX;
+            top= window.scrollY+ 3;
+            break;
+        case 'TOP_LEFT' :
+            left= 2 + window.scrollX;
+            top= document.scrollY+ 3;
+            break;
+
+        case 'TOP_EDGE_CENTER' :
+            left= window.innerWidth/2 - e.offsetWidth/2 + window.scrollX;
+            top= window.scrollY+ 3;
             break;
 
     }

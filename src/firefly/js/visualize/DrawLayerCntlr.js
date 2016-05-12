@@ -4,7 +4,6 @@
 
 import {flux} from '../Firefly.js';
 import {getPlotViewIdListInGroup, getDrawLayerById} from './PlotViewUtil.js';
-import VisMouseCntlr from './VisMouseCntlr.js';
 import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
 import {without,union,omit} from 'lodash';
@@ -300,10 +299,6 @@ function makeReducer(factory) {
                 break;
             case ImagePlotCntlr.ANY_REPLOT:
                 retState = determineAndCallLayerReducer(state, action, dlReducer, true);
-                break;
-            case VisMouseCntlr.MOUSE_STATE_CHANGE:
-                retState= state;
-                //retState = mouseStateChange(state, action);
                 break;
             case RETRIEVE_DATA:
                 // todo: for async data:

@@ -43,15 +43,9 @@ export class ImageViewerView extends Component {
     render() {
         var {width,height}= this.state;
 
-        var {plotView,visRoot,drawLayersAry,mousePlotId, extensionList}= this.props;
         return (
             <Resizable id='imageViewerResizer' onResize={this.onResize} style={style}>
-                <ImageViewerDecorate plotView={plotView}
-                                     drawLayersAry={drawLayersAry}
-                                     visRoot={visRoot}
-                                     mousePlotId={mousePlotId}
-                                     extensionList={extensionList}
-                                     width={width} height={height} />
+                <ImageViewerDecorate {...this.props} width={width} height={height} />
             </Resizable>
         );
     }

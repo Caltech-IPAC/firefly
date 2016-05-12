@@ -7,9 +7,9 @@
 import validator from 'validator';
 
 
-export const PERCENTAGE_STR = 'Percent';
-export const ABSOLUTE_STR   = 'Absolute';
-export const SIGMA_STR      = 'Sigma';
+export const PERCENTAGE_STR = 'percent';
+export const ABSOLUTE_STR   = 'absolute';
+export const SIGMA_STR      = 'sigma';
 
 export const PERCENTAGE = 88;
 export const MAXMIN     = 89;
@@ -18,12 +18,12 @@ export const ZSCALE     = 91;
 export const SIGMA      = 92;
 
 
-export const LINEAR_STR= 'Linear';
-export const LOG_STR= 'Log';
-export const LOGLOG_STR= 'LogLog';
-export const EQUAL_STR= 'Equal';
-export const SQUARED_STR= 'Squared';
-export const SQRT_STR= 'Sqrt';
+export const LINEAR_STR= 'linear';
+export const LOG_STR= 'log';
+export const LOGLOG_STR= 'loglog';
+export const EQUAL_STR= 'equal';
+export const SQUARED_STR= 'squared';
+export const SQRT_STR= 'sqrt';
 
 export const ASINH_STR= 'asinh';
 export const POWERLAW_GAMMA_STR= 'powerlaw_gamma';
@@ -40,6 +40,25 @@ export const STRETCH_POWERLAW_GAMMA   = 51;
 
 
 const BYTE_MAX_VALUE= 127;
+
+const boundsStrToConst = {
+    percent:  PERCENTAGE,
+    absolute: ABSOLUTE,
+    sigma: SIGMA
+};
+
+const alStrToConst = {
+    log : STRETCH_LOG,
+    loglog : STRETCH_LOGLOG,
+    equal : STRETCH_EQUAL,
+    squared : STRETCH_SQUARED,
+    sqrt : STRETCH_SQRT,
+    asinh : STRETCH_ASINH,
+    powerlaw_gamma : STRETCH_POWERLAW_GAMMA,
+};
+
+
+
 
 
 
@@ -159,6 +178,49 @@ export class RangeValues {
         return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, drValue,
             bpValue, wpValue, gammaValue, algorithm, zscaleContrast, zscaleSamples,
             zscaleSamplesPerLine, bias, contrast);
+    }
+    
+    /**
+     *
+     * @param boundsType one of 'percent', 'absolute', 'sigma'
+     * @param lowerValue lower value of stretch, based on stretchType
+     * @param upperValue upper value of stretch, based on stretchType
+     * @param algorithm one of 'log', 'loglog', 'equal', 'squared', 'sqrt', 'asinh', powerlaw_gamma'
+     * @return {*}
+     */
+    static makeSimple(boundsType= PERCENTAGE_STR,
+                lowerValue= 1.0,
+                upperValue= 1.0,
+                algorithm= LINEAR_STR) {
+
+        var btValue= PERCENTAGE;
+        if (boundsStrToConst[boundsType.toLowerCase()]) {
+            btValue= boundsStrToConst[boundsType.toLowerCase()];
+        }
+
+        var a= STRETCH_LINEAR;
+        if (alStrToConst[algorithm.toLowerCase()]) {
+            a= alStrToConst[algorithm.toLowerCase()];
+        }
+
+        return new RangeValues.make( btValue, lowerValue, btValue, upperValue,1.0,0,1,2, a);
+
+    }
+
+    /**
+     *
+     * @param boundsType one of 'percent', 'absolute', 'sigma'
+     * @param lowerValue lower value of stretch, based on stretchType
+     * @param upperValue upper value of stretch, based on stretchType
+     * @param algorithm one of 'log', 'loglog', 'equal', 'squared', 'sqrt', 'asinh', powerlaw_gamma'
+     * @return {*}
+     */
+    static serializeSimple(boundsType= PERCENTAGE_STR,
+                           lowerValue= 1.0,
+                           upperValue= 1.0,
+                           algorithm= LINEAR_STR ) {
+        const rv= RangeValues.makeSimple(boundsType,lowerValue,upperValue,algorithm);
+        return rv.serialize();
     }
 
     /**

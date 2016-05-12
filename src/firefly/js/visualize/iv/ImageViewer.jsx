@@ -8,9 +8,10 @@ import {omit} from 'lodash';
 import shallowequal from 'shallowequal';
 import {getPlotViewById,getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {ImageViewerView} from './ImageViewerView.jsx';
-import {visRoot} from '../ImagePlotCntlr.js';
+import {visRoot, ExpandType} from '../ImagePlotCntlr.js';
 import {extensionRoot} from '../../core/ExternalAccessCntlr.js';
-import {currMouseState,MouseState} from '../VisMouseCntlr.js';
+import {MouseState} from '../VisMouseSync.js';
+import {addMouseListener, lastMouseCtx} from '../VisMouseSync.js';
 import {getExtensionList} from '../../core/ExternalAccessUtils.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {flux} from '../../Firefly.js';
@@ -28,7 +29,7 @@ export class ImageViewer extends Component {
         var plotView= getPlotViewById(allPlots,plotId);
         var drawLayersAry= getAllDrawLayersForPlot(dlAry,plotId);
         var extRoot= extensionRoot();
-        var mousePlotId= currMouseState().plotId;
+        var mousePlotId= lastMouseCtx().plotId;
         this.alive= true;
         this.state= {plotView, dlAry, allPlots, drawLayersAry,extRoot, mousePlotId};
     }
@@ -38,10 +39,13 @@ export class ImageViewer extends Component {
     componentWillUnmount() {
         this.alive= false;
         if (this.removeListener) this.removeListener();
+        if (this.removeMouseListener) this.removeMouseListener();
     }
 
     componentDidMount() {
+        this.alive= true;
         this.removeListener= flux.addListener(() => this.storeUpdate());
+        this.removeMouseListener= addMouseListener(() => this.storeUpdate());
         this.storeUpdate();
     }
 
@@ -50,7 +54,7 @@ export class ImageViewer extends Component {
         const allPlots= visRoot();
         const dlAry= getDlAry();
         const extRoot= extensionRoot();
-        const mState= currMouseState();
+        const mState= lastMouseCtx();
         const {plotId}= this.props;
         var mousePlotId= mState.plotId;
         if (this.timeId) clearTimeout(this.timeId);
@@ -68,15 +72,17 @@ export class ImageViewer extends Component {
             mousePlotIdAffectPv(plotId,state.mousePlotId,mousePlotId) ||
             extRoot!==state.extRoot ||
             drawLayersAry!==state.drawLayersAry) {
-            var plotView= getPlotViewById(allPlots,plotId);
-            this.setState({plotView, dlAry, allPlots, drawLayersAry,extRoot,mousePlotId});
+            if (this.alive) {
+                var plotView= getPlotViewById(allPlots,plotId);
+                this.setState({plotView, dlAry, allPlots, drawLayersAry,extRoot,mousePlotId});
+            }
         }
     }
 
     delayMouseIdClear() {
         this.timeId= null;
         var newState= Object.assign({},this.state,{mousePlotId:null});
-        if (this.alive && currMouseState().plotId===this.props.plotId) {
+        if (this.alive && lastMouseCtx().plotId===this.props.plotId) {
             this.setState(newState);
         }
 
@@ -86,9 +92,10 @@ export class ImageViewer extends Component {
 
     render() {
         var {plotView,allPlots,drawLayersAry,mousePlotId}= this.state;
+        var {showWhenExpanded, plotId, handleInlineTools, showDelete}= this.props;
+        if (!showWhenExpanded  && allPlots.expandedMode!==ExpandType.COLLAPSE) return false;
         if (!plotView) return false;
 
-        var {plotId}= this.props;
         if (plotView.plotId!==plotId) {
             allPlots= visRoot();
             plotView= getPlotViewById(allPlots,plotId);
@@ -101,15 +108,25 @@ export class ImageViewer extends Component {
                              drawLayersAry={drawLayersAry}
                              visRoot={allPlots}
                              mousePlotId={mousePlotId}
+                             handleInlineTools={handleInlineTools}
+                             showDelete={showDelete}
                              extensionList={getExtensionList(plotId)} />
         );
     }
 }
 
 ImageViewer.propTypes= {
-    plotId : PropTypes.string.isRequired
+    plotId : PropTypes.string.isRequired,
+    showWhenExpanded : PropTypes.bool,
+    handleInlineTools : PropTypes.bool,
+    showDelete : PropTypes.bool 
 };
 
+ImageViewer.defaultProps = {
+    handleInlineTools : true,
+    showWhenExpanded : false,
+    showDelete : false
+};
 
 
 function drawLayersDiffer(dlAry1, dlAry2) {

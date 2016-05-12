@@ -16,9 +16,9 @@ import {dispatchAddSaga} from '../core/MasterSaga.js';
 
 export const TABLE_SPACE_PATH = 'table_space';
 export const TABLE_RESULTS_PATH = 'table_space.results.tables';
-const DATA_PREFIX = 'table';
-const RESULTS_PREFIX = 'tableResults';
-const UI_PREFIX = 'tableUi';
+export const DATA_PREFIX = 'table';
+export const RESULTS_PREFIX = 'tableResults';
+export const UI_PREFIX = 'tableUi';
 
 /*---------------------------- ACTIONS -----------------------------*/
 export const TABLE_SEARCH         = `${DATA_PREFIX}.search`;

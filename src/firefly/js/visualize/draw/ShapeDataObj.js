@@ -418,7 +418,7 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
 
             switch (unitType) {
                 case UnitType.PIXEL:
-                    w = width;
+                    w = width
                     h = height;
                     break;
                 case UnitType.ARCSEC:

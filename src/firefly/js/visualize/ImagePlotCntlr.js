@@ -2,15 +2,17 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get} from 'lodash';
+import {get,isPlainObject,isArray} from 'lodash';
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
+import {clone} from '../util/WebUtil.js';
 import PlotImageTask from './PlotImageTask.js';
 import {UserZoomTypes} from './ZoomUtil.js';
 import {reducer as plotChangeReducer} from './reducer/HandlePlotChange.js';
 import {reducer as plotCreationReducer} from './reducer/HandlePlotCreation.js';
 import {getPlotGroupById} from './PlotGroup.js';
 import {Band} from './Band.js';
+import {WebPlotRequest} from './WebPlotRequest.js';
 import {isActivePlotView,
         getPlotViewById,
         getOnePvOrGroup,
@@ -41,8 +43,10 @@ export {colorChangeActionCreator,
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
 const WcsMatchMode= new Enum (['NorthAndCenter', 'ByUserPositionAndZoom']);
 
-const ANY_CHANGE= 'ImagePlotCntlr/AnyChange';
 
+export const PLOTS_PREFIX= 'ImagePlotCntlr';
+
+const ANY_CHANGE= '${PLOT_PREFIX}.AnyChange';
 
 /**
  * All PLOT_IMAGES actions should contain:
@@ -53,68 +57,65 @@ const ANY_CHANGE= 'ImagePlotCntlr/AnyChange';
  * {boolean} addToHistory - optional
  * @type {string}
  */
-const PLOT_IMAGE_START= 'ImagePlotCntlr.PlotImageStart';
-const PLOT_IMAGE_FAIL= 'ImagePlotCntlr.PlotImageFail';
-const PLOT_IMAGE= 'ImagePlotCntlr.PlotImage';
-const ANY_REPLOT= 'ImagePlotCntlr.Replot';
+const PLOT_IMAGE_START= `${PLOTS_PREFIX}.PlotImageStart`;
+const PLOT_IMAGE_FAIL= `${PLOTS_PREFIX}.PlotImageFail`;
+const PLOT_IMAGE= `${PLOTS_PREFIX}.PlotImage`;
+const ANY_REPLOT= `${PLOTS_PREFIX}.Replot`;
 
-const ZOOM_IMAGE_START= 'ImagePlotCntlr.ZoomImageStart';
-const ZOOM_IMAGE= 'ImagePlotCntlr.ZoomImage';
-const ZOOM_IMAGE_FAIL= 'ImagePlotCntlr.ZoomImageFail';
+const ZOOM_IMAGE_START= `${PLOTS_PREFIX}.ZoomImageStart`;
+const ZOOM_IMAGE= `${PLOTS_PREFIX}.ZoomImage`;
+const ZOOM_IMAGE_FAIL= `${PLOTS_PREFIX}.ZoomImageFail`;
 
-const ZOOM_LOCKING= 'ImagePlotCntlr.ZoomEnableLocking';
-
-
-const COLOR_CHANGE_START= 'ImagePlotCntlr.ColorChangeStart';
-const COLOR_CHANGE= 'ImagePlotCntlr.ColorChange';
-const COLOR_CHANGE_FAIL= 'ImagePlotCntlr.ColorChangeFail';
+const ZOOM_LOCKING= `${PLOTS_PREFIX}.ZoomEnableLocking`;
 
 
-const STRETCH_CHANGE_START= 'ImagePlotCntlr.StretchChangeStart';
-const STRETCH_CHANGE= 'ImagePlotCntlr.StretchChange';
-const STRETCH_CHANGE_FAIL= 'ImagePlotCntlr.StretchChangeFail';
+const COLOR_CHANGE_START= `${PLOTS_PREFIX}.ColorChangeStart`;
+const COLOR_CHANGE= `${PLOTS_PREFIX}.ColorChange`;
+const COLOR_CHANGE_FAIL= `${PLOTS_PREFIX}.ColorChangeFail`;
 
 
-const ROTATE_START= 'ImagePlotCntlr.RotateChangeStart';
-const ROTATE= 'ImagePlotCntlr.RotateChange';
-const ROTATE_FAIL= 'ImagePlotCntlr.RotateChangeFail';
+const STRETCH_CHANGE_START= `${PLOTS_PREFIX}.StretchChangeStart`;
+const STRETCH_CHANGE= `${PLOTS_PREFIX}.StretchChange`;
+const STRETCH_CHANGE_FAIL= `${PLOTS_PREFIX}.StretchChangeFail`;
 
 
-const FLIP_START= 'ImagePlotCntlr.FlipStart';
-const FLIP= 'ImagePlotCntlr.Flip';
-const FLIP_FAIL= 'ImagePlotCntlr.FlipFail';
+const ROTATE_START= `${PLOTS_PREFIX}.RotateChangeStart`;
+const ROTATE= `${PLOTS_PREFIX}.RotateChange`;
+const ROTATE_FAIL= `${PLOTS_PREFIX}.RotateChangeFail`;
 
 
-const CROP_START= 'ImagePlotCntlr.CropStart';
-const CROP= 'ImagePlotCntlr.Crop';
-const CROP_FAIL= 'ImagePlotCntlr.CropFail';
+const FLIP_START= `${PLOTS_PREFIX}.FlipStart`;
+const FLIP= `${PLOTS_PREFIX}.Flip`;
+const FLIP_FAIL= `${PLOTS_PREFIX}.FlipFail`;
 
-const UPDATE_VIEW_SIZE= 'ImagePlotCntlr.UpdateViewSize';
-const PROCESS_SCROLL= 'ImagePlotCntlr.ProcessScroll';
-const RECENTER= 'ImagePlotCntlr.recenter';
-const RESTORE_DEFAULTS= 'ImagePlotCntlr.restoreDefaults';
-const GROUP_LOCKING= 'ImagePlotCntlr.GroupLocking';
 
-const CHANGE_POINT_SELECTION= 'ImagePlotCntlr.ChangePointSelection';
+const CROP_START= `${PLOTS_PREFIX}.CropStart`;
+const CROP= `${PLOTS_PREFIX}.Crop`;
+const CROP_FAIL= `${PLOTS_PREFIX}.CropFail`;
 
-const CHANGE_ACTIVE_PLOT_VIEW= 'ImagePlotCntlr.ChangeActivePlotView';
-const CHANGE_PLOT_ATTRIBUTE= 'ImagePlotCntlr.ChangePlotAttribute';
+const UPDATE_VIEW_SIZE= `${PLOTS_PREFIX}.UpdateViewSize`;
+const PROCESS_SCROLL= `${PLOTS_PREFIX}.ProcessScroll`;
+const RECENTER= `${PLOTS_PREFIX}.recenter`;
+const RESTORE_DEFAULTS= `${PLOTS_PREFIX}.restoreDefaults`;
+const GROUP_LOCKING= `${PLOTS_PREFIX}.GroupLocking`;
 
-const CHANGE_EXPANDED_MODE= 'ImagePlotCntlr.changeExpandedMode';
-const EXPANDED_AUTO_PLAY= 'ImagePlotCntlr.expandedAutoPlay';
-const EXPANDED_LIST= 'ImagePlotCntlr.expandedList';
-const CHANGE_PRIME_PLOT= 'ImagePlotCntlr.changePrimePlot';
+const CHANGE_POINT_SELECTION= `${PLOTS_PREFIX}.ChangePointSelection`;
 
-const CHANGE_MOUSE_READOUT_MODE='ImagePlotCntlr.changeMouseReadoutMode';
-const DELETE_PLOT_VIEW='ImagePlotCntlr.deletePlotView';
+const CHANGE_ACTIVE_PLOT_VIEW= `${PLOTS_PREFIX}.ChangeActivePlotView`;
+const CHANGE_PLOT_ATTRIBUTE= `${PLOTS_PREFIX}.ChangePlotAttribute`;
 
-const PLOT_PROGRESS_UPDATE= 'ImagePlotCntlr.PlotProgressUpdate';
+const CHANGE_EXPANDED_MODE= `${PLOTS_PREFIX}.changeExpandedMode`;
+const EXPANDED_AUTO_PLAY= `${PLOTS_PREFIX}.expandedAutoPlay`;
+const EXPANDED_LIST= `${PLOTS_PREFIX}.expandedList`;
+const CHANGE_PRIME_PLOT= `${PLOTS_PREFIX}.changePrimePlot`;
+
+const CHANGE_MOUSE_READOUT_MODE=`${PLOTS_PREFIX}.changeMouseReadoutMode`;
+const DELETE_PLOT_VIEW=`${PLOTS_PREFIX}.deletePlotView`;
+
+const PLOT_PROGRESS_UPDATE= `${PLOTS_PREFIX}.PlotProgressUpdate`;
+const API_TOOLS_VIEW= `${PLOTS_PREFIX}.apiToolsView`;
 
 export const IMAGE_PLOT_KEY= 'allPlots';
-
-
-
-const clone = (obj,params={}) => Object.assign({},obj,params);
 
 export const ActionScope= new Enum(['GROUP','SINGLE', 'LIST']);
 export function visRoot() { return flux.getState()[IMAGE_PLOT_KEY]; }
@@ -150,8 +151,8 @@ const initState= function() {
 
         //--  misc
         pointSelEnableAry : [],
-        toolBarIsPopup: false,    //todo
-        mouseReadoutWide: false, //todo
+        apiToolsView: false,    //todo
+        mouseReadoutWide: false, //todo - update 5/6/16: I think i can delete mouseReadoutWide
 
         //-- wcs match parameters //todo this might have to be in a plotGroup, not sure at this point
         matchWCS: false, //todo
@@ -183,7 +184,7 @@ export default {
     CROP_START, CROP, CROP_FAIL,
     COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL,
-    CHANGE_POINT_SELECTION,
+    CHANGE_POINT_SELECTION, CHANGE_EXPANDED_MODE,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER, GROUP_LOCKING,
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
     DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT
@@ -208,6 +209,13 @@ export function makeUniqueRequestKey() {
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
 
+/**
+ * 
+ * @param apiToolsView
+ */
+export function dispatchApiToolsView(apiToolsView) {
+    flux.process({ type: API_TOOLS_VIEW , payload: { apiToolsView}});
+}
 
 /**
  *
@@ -229,6 +237,15 @@ export function dispatchPlotProgressUpdate(plotId, message, done ) {
     flux.process({ type: PLOT_PROGRESS_UPDATE, payload: { plotId, done, message }});
 }
 
+
+function ensureWPR(inVal) {
+    if (isArray(inVal)) {
+        return inVal.map( (v) => isPlainObject(v) ? WebPlotRequest.makeFromObj(v) : v);
+    }
+    else {
+        return isPlainObject(inVal) ? WebPlotRequest.makeFromObj(inVal) : inVal;
+    }
+}
 
 
 /**
@@ -367,9 +384,12 @@ export function dispatchGroupLocking(plotId,groupLocked) {
 export function dispatchPlotImage(plotId,wpRequest, threeColor=false,
                                   removeOldPlot= true, addToHistory=false,
                                   useContextModifications= true ) {
+
+    wpRequest= ensureWPR(wpRequest);
+
     var req;
     if (plotId) {
-        if (Array.isArray(wpRequest)) {
+        if (isArray(wpRequest)) {
             wpRequest.forEach( (r) => {if (r) r.setPlotId(plotId);});
             req= wpRequest.find( (r) => r?true:false);
         }
@@ -379,13 +399,20 @@ export function dispatchPlotImage(plotId,wpRequest, threeColor=false,
         }
     }
     else {
-        plotId= Array.isArray(wpRequest) ? wpRequest[0].getPlotId() : wpRequest.getPlotId();
+        if (isArray(wpRequest)) {
+            req= wpRequest.find( (r) => r?true:false);
+            plotId= req.getPlotId();
+        }
+        else {
+            plotId= wpRequest.getPlotId();
+            req= wpRequest;
+        }
     }
 
     const payload= initPlotImagePayload(plotId,req,threeColor, removeOldPlot,addToHistory,useContextModifications);
 
     if (threeColor) {
-        if (Array.isArray(wpRequest)) {
+        if (isArray(wpRequest)) {
             payload.redReq= wpRequest[Band.RED.value];
             payload.greenReq= wpRequest[Band.GREEN.value];
             payload.blueReq= wpRequest[Band.BLUE.value];
@@ -404,7 +431,7 @@ export function dispatchPlotImage(plotId,wpRequest, threeColor=false,
 export function dispatchPlotGroup(wpRequestAry) {
     
     const payload= {
-        wpRequestAry,
+        wpRequestAry:ensureWPR(wpRequestAry),
         threeColor:false,
         removeOldPlot:true,
         addToHistory:false, 
@@ -701,6 +728,9 @@ function reducer(state=initState(), action={}) {
             retState= plotChangeReducer(state,action);
             break;
 
+        case API_TOOLS_VIEW  :
+            retState= clone(state,{apiToolsView:action.payload.apiToolsView});
+            break;
 
         case CHANGE_ACTIVE_PLOT_VIEW:
             retState= changeActivePlotView(state,action);

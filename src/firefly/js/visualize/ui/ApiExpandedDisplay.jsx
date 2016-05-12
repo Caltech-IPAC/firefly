@@ -2,16 +2,18 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
 import {VisHeaderView} from './VisHeaderView.jsx';
+import {ExpandedModeDisplay} from '../iv/ExpandedModeDisplay.jsx';
+// import {currMouseState} from '../VisMouseCntlr.js';
 import {addMouseListener, lastMouseCtx} from '../VisMouseSync.js';
 
 
 
-export class VisHeader extends React.Component {
+export class ApiExpandedDisplay extends Component {
     constructor(props) {
         super(props);
         this.state= {visRoot:visRoot(), currMouseState:lastMouseCtx()};
@@ -36,8 +38,32 @@ export class VisHeader extends React.Component {
         }
     }
 
+    /**
+     *
+     * @return {XML}
+     */
     render() {
+        const {closeFunc}= this.props;
         var {visRoot,currMouseState}= this.state;
-        return <VisHeaderView visRoot={visRoot} currMouseState={currMouseState}/>;
+        return (
+            <div style={{width:'100%', height:'100%', display:'flex', flexWrap:'nowrap',
+                         alignItems:'stretch', flexDirection:'column'}}>
+                <div style={{position: 'relative', marginBottom:'6px'}} className='banner-background'>
+                    <VisHeaderView visRoot={visRoot} currMouseState={currMouseState}/>
+                </div>
+                <div style={{flex: '1 1 auto', display:'flex'}}>
+                    <ExpandedModeDisplay   {...{key:'results-plots-expanded', closeFunc, insideFlex:true}}/>
+                </div>
+            </div>
+            );
     }
 }
+
+ApiExpandedDisplay.propTypes= {
+    forceExpandedMode : PropTypes.bool,
+    closeFunc: PropTypes.func
+};
+
+ApiExpandedDisplay.defaultProps= {
+    closeFunc:null
+};

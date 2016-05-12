@@ -50,10 +50,10 @@ export class ImageMetaDataToolbar extends Component {
     render() {
         const {activeTable}= this.state;
         
-        const {visRoot, viewerId, viewerPlotIds, layoutType}= this.props;
+        const {visRoot, viewerId, viewerPlotIds, layoutType, dlAry}= this.props;
         return (
             <ImageMetaDataToolbarView activePlotId={visRoot.activePlotId} viewerId={viewerId}
-                                      viewerPlotIds={viewerPlotIds} layoutType={layoutType}
+                                      viewerPlotIds={viewerPlotIds} layoutType={layoutType} dlAry={dlAry}
                                       activeTable={activeTable} converterFactory={converterFactory}
                                         /> 
         );
@@ -61,6 +61,7 @@ export class ImageMetaDataToolbar extends Component {
 }
 
 ImageMetaDataToolbar.propTypes= {
+    dlAry : PropTypes.arrayOf(React.PropTypes.object),
     visRoot : PropTypes.object,
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string.isRequired,

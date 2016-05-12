@@ -354,6 +354,14 @@ export function updateSet(object, path, value) {
 }
 
 /**
+ * Simple wrapper around Object.assign.  This can be used for our most common use case of Object.assign.  It is not
+ * an attempt to replace it.  It is used with you want to copy and object an add new values into it.
+ * @param obj object to clone
+ * @param params an object to merge with the new object
+ */
+export const clone = (obj={},params={}) => Object.assign({},obj,params);
+
+/**
  * This is a wrapper of React update's $merge for use with deep object update.
  * *Syntax is similar to as lodash set.
  * @param object (Object): The object to modify.

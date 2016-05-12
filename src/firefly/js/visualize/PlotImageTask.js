@@ -175,6 +175,7 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
 
     failAry.forEach( (r) => {
         const {data}= r;
+        if (payload.plotId) dispatchAddImages(EXPANDED_MODE_RESERVED, [payload.plotId]);
         resultPayload= Object.assign({},payload);
         // todo: add failure stuff to resultPayload here
         resultPayload.briefDescription= data.briefFailReason;

@@ -9,6 +9,7 @@ import {get} from 'lodash';
 
 import {firefly} from 'firefly/Firefly.js';
 import {FireflyViewer} from 'firefly/core/FireflyViewer.js';
+import {initApi} from 'firefly/api/ApiBuild.js';
 
 /**
  * By default, fftools.js will startup in api mode.
@@ -46,6 +47,9 @@ if (app) {
 
     ReactDOM.render(React.createElement(FireflyViewer, props),
         document.getElementById(props.div));
+}
+else {
+    initApi();
 }
 
 

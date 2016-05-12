@@ -12,7 +12,7 @@ import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import {MouseState} from '../visualize/VisMouseCntlr.js';
+import {MouseState} from '../visualize/VisMouseSync.js';
 import {flux} from '../Firefly.js';
 
 const ID= 'POINT_SELECTION';

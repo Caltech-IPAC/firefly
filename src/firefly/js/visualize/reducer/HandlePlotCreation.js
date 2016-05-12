@@ -29,12 +29,18 @@ export function reducer(state, action) {
             plotRequestDefaults= updateDefaults(state.plotRequestDefaults,action);
             plotGroupAry= confirmPlotGroup(state.plotGroupAry,action);
             plotViewAry= preNewPlotPrep(state.plotViewAry,action);
+            if (plotGroupAry || plotViewAry || plotRequestDefaults) {
+                retState= clone(state, {activePlotId});
+                if (plotViewAry) retState.plotViewAry= plotViewAry;
+                if (plotGroupAry) retState.plotGroupAry= plotGroupAry;
+                if (plotRequestDefaults) retState.plotRequestDefaults= plotRequestDefaults;
+            }
             break;
         case Cntlr.PLOT_IMAGE_FAIL  :
-            plotViewAry= plotFail(state,action);
+            retState= plotFail(state,action);
             break;
         case Cntlr.PLOT_IMAGE  :
-            plotViewAry= addPlot(state,action, true);
+            retState= addPlot(state,action, true, true);
             // activePlotId= action.payload.plotId;
             // todo: also process adding to history
             break;
@@ -42,32 +48,26 @@ export function reducer(state, action) {
         case Cntlr.ROTATE_START  :
         case Cntlr.FLIP_START:
         case Cntlr.CROP_START:
-            plotViewAry= workingServerCall(state,action);
+            retState= workingServerCall(state,action);
             break;
         
         
         case Cntlr.ROTATE_FAIL  :
         case Cntlr.FLIP_FAIL:
         case Cntlr.CROP_FAIL:
-            plotViewAry= endServerCallFail(state,action);
+            retState= endServerCallFail(state,action);
             break;
         case Cntlr.ROTATE  :
-            plotViewAry= addPlot(state,action, true);
+            retState= addPlot(state,action, true, false);
             break;
         case Cntlr.FLIP:
-            plotViewAry= addPlot(state,action, true);
+            retState= addPlot(state,action, true, false);
             break;
         case Cntlr.CROP:
-            plotViewAry= addPlot(state,action, true);
+            retState= addPlot(state,action, true, false);
             break;
         default:
             break;
-    }
-    if (plotGroupAry || plotViewAry || plotRequestDefaults) {
-        retState= clone(state, {activePlotId});
-        if (plotViewAry) retState.plotViewAry= plotViewAry;
-        if (plotGroupAry) retState.plotGroupAry= plotGroupAry;
-        if (plotRequestDefaults) retState.plotRequestDefaults= plotRequestDefaults;
     }
     return retState;
 }
@@ -92,26 +92,30 @@ const updateDefaults= function(plotRequestDefaults, action) {
     }
 };
 
-function addPlot(state,action, replace) {
-    const {plotViewAry}= state;
+function addPlot(state,action, replace, setActive) {
+    var {plotViewAry, activePlotId}= state;
     const {pvNewPlotInfoAry}= action.payload;
 
     if (pvNewPlotInfoAry) { // used for doing groups
-        return plotViewAry.map( (pv) => {
+        plotViewAry= plotViewAry.map( (pv) => { // map has side effect of setting active plotId
             const info= pvNewPlotInfoAry.find( (i) => i.plotId===pv.plotId);
             if (!info) return pv;
             const {plotAry, overlayPlotViews}= info;
+            if (setActive) activePlotId= pv.plotId;
             return PlotView.replacePlots(pv,plotAry,overlayPlotViews,replace);
         });
     }
     else {// used for single plot update
         console.error(`Deprecated payload send to handPlotChange.addPlot: type:${action.type}`);
         const {plotAry, overlayPlotViews, plotId}= action.payload;
-        return plotViewAry.map( (pv) => {
-             return pv.plotId===plotId ? PlotView.replacePlots(pv,plotAry,overlayPlotViews, replace) : pv;
+        plotViewAry= plotViewAry.map( (pv) => { // map has side effect of setting active plotId
+            if (pv.plotId!==plotId ) return pv;
+            if (setActive) activePlotId= plotId;
+            return PlotView.replacePlots(pv,plotAry,overlayPlotViews, replace);
          });
     }
-};
+    return clone(state, {plotViewAry,activePlotId});
+}
 
 
 function plotFail(state,action) {
@@ -120,7 +124,7 @@ function plotFail(state,action) {
     const plotView=  getPlotViewById(state,plotId);
     if (!plotView) return plotViewAry;
     const changes= {plottingStatus:description,serverCall:'fail' };
-    return clonePvAry(plotViewAry,plotId,changes);
+    return clone(state,  {plotViewAry:clonePvAry(plotViewAry,plotId,changes)});
 }
 
 /**
@@ -150,11 +154,12 @@ export function endServerCallFail(state,action) {
     var {plotViewAry}= state;
     const stat= {serverCall:'fail'};
     if (typeof message === 'string') stat.plottingStatus= message;
-    return clonePvAry(state.plotViewAry,plotId, stat);
+    return clone(state, {plotViewAry: clonePvAry(state.plotViewAry,plotId, stat)});
 }
 function workingServerCall(state,action) {
     var {plotId,message}= action.payload;
-    return clonePvAry(state.plotViewAry,plotId, {serverCall:'working', plottingStatus:message});
+    return clone(state, {plotViewAry:
+               clonePvAry(state.plotViewAry,plotId, {serverCall:'working', plottingStatus:message})});
 }
 
 

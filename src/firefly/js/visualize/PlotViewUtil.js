@@ -95,7 +95,7 @@ export function getPlotViewIdListInGroup(visRoot,pvOrId,onlyIfGroupLocked=true) 
     var gid= pv.plotGroupId;
     var group= getPlotGroupById(visRoot,gid);
     var locked= hasGroupLock(pv,group);
-    if (!locked && onlyIfGroupLocked) return [pv];
+    if (!locked && onlyIfGroupLocked) return [pv.plotId];
     return visRoot.plotViewAry.filter( (pv) => pv.plotGroupId===gid).map( (pv) => pv.plotId);
 }
 
@@ -275,10 +275,8 @@ export function getPlotStateAry(pv) {
  * @return {boolean}
  */
 export function hasGroupLock(pv,plotGroup) {
-    return (plotGroup &&
-    plotGroup.plotGroupId &&
-    plotGroup.lockRelated &&
-    pv && pv.plotGroupId===plotGroup.plotGroupId);
+    return Boolean(plotGroup && plotGroup.plotGroupId && plotGroup.lockRelated &&
+                    pv && pv.plotGroupId===plotGroup.plotGroupId);
 }
 
 //--------------------------------------------------------------

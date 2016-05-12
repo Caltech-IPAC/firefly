@@ -128,7 +128,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String DRAWING_SUB_GROUP_ID= "DrawingSubgroupID";
     public static final String GRID_ID = "GRID_ID";
     public static final String DOWNLOAD_FILENAME_ROOT = "DownloadFileNameRoot";
-    public static final String PLOT_ID = "PlotID";
+    public static final String PLOT_ID = "plotId";
 
     private static final String _allKeys[] = {FILE, WORLD_PT, URL, SIZE_IN_DEG, SURVEY_KEY,
                                               SURVEY_KEY_ALT, SURVEY_KEY_BAND, TYPE, ZOOM_TYPE,

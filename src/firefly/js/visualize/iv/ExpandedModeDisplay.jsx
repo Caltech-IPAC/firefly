@@ -48,7 +48,7 @@ export class ExpandedModeDisplay extends Component {
 
 
     render() {
-        const {closeable}= this.props;
+        const {closeFunc,insideFlex}= this.props;
         const {visRoot:vr,multiViewRoot}= this.state;
         if (vr.expandedMode===ExpandType.COLLAPSE) return false;
 
@@ -61,8 +61,11 @@ export class ExpandedModeDisplay extends Component {
                                   viewerId={'EXPANDED_VIEW'}
                                   visRoot={vr}
                                   additionalStyle={{flex:'1 1 auto'}}
-                                  closeable={closeable}
+                                  closeFunc={closeFunc}
                                   defaultDecoration={false} 
+                                  canDelete={true}
+                                  showWhenExpanded={true}
+                                  insideFlex={insideFlex}
             />
         );
     }
@@ -70,10 +73,13 @@ export class ExpandedModeDisplay extends Component {
 
 ExpandedModeDisplay.propTypes= {
     forceExpandedMode : PropTypes.bool,
-    closeable: PropTypes.bool
+    closeFunc: PropTypes.func,
+    insideFlex: PropTypes.bool
 };
 
 ExpandedModeDisplay.defaultProps= {
-    closeable:true
+    forceExpandedMode : false,
+    closeFunc:null,
+    insideFlex:false
 };
 

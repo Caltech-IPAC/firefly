@@ -7,6 +7,7 @@ import {fork, take} from 'redux-saga/effects';
 import {watchCatalogs} from '../visualize/saga/CatalogWatcher.js';
 import {syncCharts} from '../visualize/saga/ChartsSync.js';
 import {imagePlotter} from '../visualize/saga/ImagePlotter.js';
+import {watchReadout} from '../visualize/saga/MouseReadoutWatch.js';
 
 export const ADD_SAGA= 'MasterSaga.addSaga';
 
@@ -32,6 +33,7 @@ export function* masterSaga() {
     yield fork( watchCatalogs, null, dispatch, getState);
     yield fork( imagePlotter, null, dispatch, getState);
     yield fork( syncCharts, null, dispatch, getState);
+    yield fork( watchReadout, null, dispatch, getState);
     
     // Start a saga from any action
     while (true) {
