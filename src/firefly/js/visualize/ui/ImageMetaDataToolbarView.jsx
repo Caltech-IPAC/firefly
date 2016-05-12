@@ -4,7 +4,11 @@
 
 
 import React, {PropTypes} from 'react';
-import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
+import BrowserInfo from '../../util/BrowserInfo.js';
+import {getPlotViewById, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
+import {dispatchChangeActivePlotView, visRoot} from '../ImagePlotCntlr.js';
+import {VisInlineToolbarView} from './VisInlineToolbarView.jsx';
+import {getDlAry} from '../DrawLayerCntlr.js';
 import {dispatchChangeLayout, dispatchUpdateCustom, getViewer, getMultiViewRoot,
         GRID, GRID_FULL, GRID_RELATED, SINGLE} from '../MultiViewCntlr.js';
 import {showColorBandChooserPopup} from './ColorBandChooserPopup.jsx';
@@ -34,11 +38,15 @@ const toolsStyle= {
 
 
 
-export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds, layoutType, activeTable, converterFactory}) {
+export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds, layoutType, dlAry,
+                                          activeTable, converterFactory, handleInlineTools=true }) {
 
     const {dataId,converter}= converterFactory(activeTable);
     var nextIdx, prevIdx, leftImageStyle;
     const viewer= getViewer(getMultiViewRoot(), viewerId);
+    const vr= visRoot();
+    const pv= getPlotViewById(vr, activePlotId);
+    const pvDlAry= getAllDrawLayersForPlot(dlAry,activePlotId,true);
 
     // single mode stuff
     if (layoutType===SINGLE) {
@@ -93,19 +101,46 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds,
                 }
             </div>
             {showPager && <ImagePager pageSize={10} tbl_id={activeTable.tbl_id} />}
+            {handleInlineTools && <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={dlAry} />}
         </div>
     );
 }
 
 ImageMetaDataToolbarView.propTypes= {
+    dlAry : PropTypes.arrayOf(React.PropTypes.object),
     activePlotId : PropTypes.string,
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string.isRequired,
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
     activeTable: PropTypes.object,
-    converterFactory: PropTypes.func
+    converterFactory: PropTypes.func,
+    handleInlineTools : PropTypes.bool
 };
 
+
+function InlineRightToolbarWrapper(visRoot,pv,dlAry){
+    if (!pv) return <div></div>;
+
+    var lVis= BrowserInfo.isTouchInput() || visRoot.apiToolsView;
+    var tb= visRoot.apiToolsView;
+    return (
+        <div>
+            <VisInlineToolbarView
+                plotId={pv.plotId} dlAry={dlAry}
+                showLayer={lVis}
+                showExpand={true}
+                showToolbarButton={tb}
+                showDelete ={false}
+            />
+        </div>
+    );
+}
+
+InlineRightToolbarWrapper.propTypes= {
+    visRoot: PropTypes.object,
+    pv : PropTypes.object,
+    dlAry : PropTypes.array
+};
 
 
 function showThreeColorOps(viewer,dataId) {

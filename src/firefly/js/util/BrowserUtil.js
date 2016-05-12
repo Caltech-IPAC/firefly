@@ -108,12 +108,18 @@ export const getAbsoluteTop= function(elem) {
 };
 
 
+/**
+ *
+ * @param {string} url
+ * @param {string} rootPath
+ * @return {string}
+ */
 export const modifyURLToFull= function(url, rootPath) {
     var retURL = url;
     if (url) {
         if (!isFull(url)) {
             if (!rootPath) {
-                var docUrl = window.documents.URL;
+                var docUrl = document.URL;
                 var lastSlash = docUrl.lastIndexOf('/');
                 if (lastSlash > -1) {
                     var rootURL = docUrl.substring(0, lastSlash + 1);
@@ -133,9 +139,11 @@ export const modifyURLToFull= function(url, rootPath) {
 };
 
 
+const hPref= ['http', 'https', '/', 'file'];
+
 const isFull= function (url) {
     url = url.toLowerCase();
-    return ['http', 'https', '/', 'file'].some( (s) => url.startsWith(s));
+    return hPref.some( (s) => url.startsWith(s));
 }
 
 

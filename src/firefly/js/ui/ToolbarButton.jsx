@@ -4,6 +4,7 @@
 
 
 import React, {Component, PropTypes} from 'react';
+import sCompare from 'react-addons-shallow-compare';
 import './ToolbarButton.css';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
@@ -72,6 +73,8 @@ export class ToolbarButton extends Component {
         this.mouseOut= this.mouseOut.bind(this);
         this.setupRef= this.setupRef.bind(this);
     }
+    
+    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     click() {
         var { dropDownCB, onClick} = this.props;

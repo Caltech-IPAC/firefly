@@ -43,7 +43,7 @@ function defineDialog(dialogId, dialog) {
         component: <PopupStoreConnection popupPanel={dialog} dialogId={dialogId} zIndex={1}/>
     };
     if (idx < 0) {
-        dialogs.push(newD);
+        dialogs= [...dialogs,newD];
     }
     else {
         dialogs[idx]= newD;
@@ -60,7 +60,7 @@ function showTmpPopup(popup) {
     if (!divElement) init();
     tmpCount++;
     const id= TMP_ROOT+tmpCount;
-    tmpPopups.push( {dialogId:id, component:popup});
+    tmpPopups= [...tmpPopups, {dialogId:id, component:popup}];
     reRender(dialogs,tmpPopups,requestOnTop);
     return () => {
         if (tmpPopups.some( (p) => (p.dialogId==id))) {
@@ -76,6 +76,9 @@ function init() {
     divElement= document.createElement('div');
     document.body.appendChild(divElement);
     divElement.id= DIALOG_DIV;
+    divElement.style.position= 'absolute';
+    divElement.style.left= '0';
+    divElement.style.top= '0';
 }
 
 
@@ -99,7 +102,7 @@ class DialogRootComponent extends Component {
                                     }));
         var tmpPopupAry = tmpPopups.map( (p) => React.cloneElement(p.component,{key:p.dialogId}));
         return (
-                <div style={{position:'relative', zIndex:200}}>
+                <div style={{position:'relative', zIndex:200}} className='rootStyle'>
                     {dialogAry}
                     <div style={{position:'relative', zIndex:10}}>
                         {tmpPopupAry}

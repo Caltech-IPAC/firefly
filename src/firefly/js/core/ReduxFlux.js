@@ -11,6 +11,7 @@ import * as AppDataCntlr  from './AppDataCntlr.js';
 import {recordHistory} from './History.js';
 import {LAYOUT_PATH, reducer as layoutReducer}  from './LayoutCntlr.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
+import * as MouseReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
 import ImagePlotCntlr, {IMAGE_PLOT_KEY,
                         plotImageActionCreator, zoomActionCreator,
                         colorChangeActionCreator, stretchChangeActionCreator,
@@ -20,7 +21,6 @@ import ImagePlotCntlr, {IMAGE_PLOT_KEY,
                         changePointSelectionActionCreator  } from '../visualize/ImagePlotCntlr.js';
 
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
-import VisMouseCntlr from '../visualize/VisMouseCntlr.js';
 import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
 import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
 import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
@@ -72,7 +72,6 @@ const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,Dis
 const reducers = {
     [AppDataCntlr.APP_DATA_PATH]: AppDataCntlr.reducer,
     [LAYOUT_PATH]: layoutReducer,
-    [VisMouseCntlr.VIS_MOUSE_KEY]: VisMouseCntlr.reducer,
     [FieldGroupCntlr.FIELD_GROUP_KEY]: FieldGroupCntlr.reducer,
     [IMAGE_PLOT_KEY]: ImagePlotCntlr.reducer,
     [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer,
@@ -82,6 +81,7 @@ const reducers = {
     [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
     [DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory),
     [IMAGE_MULTI_VIEW_KEY]: MultiViewCntlr.reducer,
+    [MouseReadoutCntlr.READOUT_KEY]: MouseReadoutCntlr.reducer,
     [DIALOG_OR_COMPONENT_KEY]: ComponentCntlr.reducer
 };
 

@@ -14,7 +14,7 @@ const flexContainerStyle= {
     display:'flex',
     flexDirection:'column',
     flexWrap:'nowrap',
-    alignItems: 'stretch',
+    alignItems: 'stretch'
 };
 
 const defDecStyle= {
@@ -31,9 +31,10 @@ const flexToolbarStyle= {
 
 export function MultiImageViewerView(props) {
 
-    const {Toolbar, layoutType,viewerId, visRoot,
+    const {Toolbar, layoutType, visRoot,
            viewerPlotIds, forceRowSize, forceColSize, gridDefFunc,
-           additionalStyle, defaultDecoration=true, insideFlex=false}= props; 
+           showWhenExpanded=false, additionalStyle,
+           defaultDecoration=true, insideFlex=false, canDelete=true}= props;
     var wrapperStyle; 
     if (insideFlex) {
         wrapperStyle= Object.assign({}, flexContainerStyle, {flex:'1 1 auto'});
@@ -42,24 +43,27 @@ export function MultiImageViewerView(props) {
         wrapperStyle= Object.assign({}, flexContainerStyle, {width:'100%', height:'100%'});
     }
     var container;
-    if (layoutType==='single') {  // SINGLE VIEW
+    if (viewerPlotIds.length===0) {
+        container= false;
+    }
+    else if (layoutType==='single' || viewerPlotIds.length===1) {  // SINGLE VIEW
         var id= viewerPlotIds.includes(visRoot.activePlotId) ? visRoot.activePlotId : viewerPlotIds[0];
-        container= makeImageViewerFull(id);
+        container= makeImageViewerFull(id,showWhenExpanded,canDelete, viewerPlotIds.length===1);
     }
     else if (gridDefFunc) {  // GRID computed by a function
-        container= makeSparseGrid(viewerPlotIds, gridDefFunc(viewerPlotIds));
+        container= makeSparseGrid(viewerPlotIds, gridDefFunc(viewerPlotIds),showWhenExpanded,canDelete);
     }
     else if (forceRowSize) {  // GRID with row size
         var col = viewerPlotIds.length / forceRowSize + (viewerPlotIds.length % forceRowSize);
-        container= makePackedGrid(viewerPlotIds,forceRowSize,col,false);
+        container= makePackedGrid(viewerPlotIds,forceRowSize,col,false,showWhenExpanded,canDelete);
     }
     else if (forceColSize) { // GRID with column size
         var rows = viewerPlotIds.length / forceColSize + (viewerPlotIds.length % forceColSize);
-        container= makePackedGrid(viewerPlotIds,rows,forceColSize,true);
+        container= makePackedGrid(viewerPlotIds,rows,forceColSize,true,showWhenExpanded,canDelete);
     }
     else {                   // GRID automatic
         const dim= findAutoGridDim(viewerPlotIds.length);
-        container= makePackedGrid(viewerPlotIds,dim.rows,dim.cols,true);
+        container= makePackedGrid(viewerPlotIds,dim.rows,dim.cols,true,showWhenExpanded,canDelete);
     }
     
     var s= Object.assign({}, additionalStyle, wrapperStyle, defaultDecoration? defDecStyle: {});
@@ -80,6 +84,7 @@ export function MultiImageViewerView(props) {
 //{Toolbar ? <div style={flexContainerStyle}><Toolbar/> </div> : ''}
 
 MultiImageViewerView.propTypes= {
+    Toolbar : PropTypes.func,
     viewerId : PropTypes.string.isRequired,
     additionalStyle : PropTypes.object,    
     defaultDecoration : PropTypes.bool,
@@ -89,12 +94,15 @@ MultiImageViewerView.propTypes= {
     forceRowSize : PropTypes.number,   //optional - force a certain number of rows
     forceColSize : PropTypes.number,  //optional - force a certain number of columns
     gridDefFunc : PropTypes.func,  // optional - a function to return the grid definition
-    gridComponent : PropTypes.object  // a react element to define the grid - not implemented, just an idea
+    gridComponent : PropTypes.object,  // a react element to define the grid - not implemented, just an idea
+    showWhenExpanded : PropTypes.bool,
+    canDelete :  PropTypes.bool,
+    insideFlex :  PropTypes.bool
 };
 
 
 
-function makePackedGrid(viewerPlotIds,rows,cols, columnBased) {
+function makePackedGrid(viewerPlotIds,rows,cols, columnBased,showWhenExpanded,canDelete) {
     const percentWidth= 100/cols;
     const percentHeight= 100/rows;
 
@@ -102,12 +110,12 @@ function makePackedGrid(viewerPlotIds,rows,cols, columnBased) {
     const height= `calc(${percentHeight}% - 2px)`;
 
     return columnBased ?
-        columnBasedIvAry(viewerPlotIds,cols,percentWidth,percentHeight,width,height)  :
-        rowBasedIvAry(viewerPlotIds,rows,percentWidth,percentHeight,width,height);
+        columnBasedIvAry(viewerPlotIds,cols,percentWidth,percentHeight,width,height, showWhenExpanded,canDelete)  :
+        rowBasedIvAry(viewerPlotIds,rows,percentWidth,percentHeight,width,height,showWhenExpanded,canDelete);
 }
 
 
-function rowBasedIvAry(viewerPlotIds,rows,percentWidth,percentHeight,width,height) {
+function rowBasedIvAry(viewerPlotIds,rows,percentWidth,percentHeight,width,height,showWhenExpanded,canDelete) {
     var col = 0;
     var row = 0;
     return viewerPlotIds.map( (plotId) => {
@@ -115,13 +123,13 @@ function rowBasedIvAry(viewerPlotIds,rows,percentWidth,percentHeight,width,heigh
         var top= `calc(${row*percentHeight}% + 1px)`;
         row = (row < rows - 1) ? row + 1 : 0;
         if (row===0) col++;
-        return makeImageViewer(plotId,top,left,width,height);
+        return makeImageViewer(plotId,top,left,width,height, showWhenExpanded,canDelete);
     });
 
 }
 
 
-function columnBasedIvAry(viewerPlotIds,cols,percentWidth,percentHeight,width,height) {
+function columnBasedIvAry(viewerPlotIds,cols,percentWidth,percentHeight,width,height,showWhenExpanded,canDelete) {
     var col = 0;
     var row = 0;
     return viewerPlotIds.map( (plotId) => {
@@ -129,20 +137,30 @@ function columnBasedIvAry(viewerPlotIds,cols,percentWidth,percentHeight,width,he
         var top= `calc(${row*percentHeight}% + 1px)`;
         col = (col < cols - 1) ? col + 1 : 0;
         if (col===0) row++;
-        return makeImageViewer(plotId,top,left,width,height);
+        return makeImageViewer(plotId,top,left,width,height, showWhenExpanded,canDelete);
     });
 }
 
 
-const makeImageViewer = (plotId,top,left,width,height) => (
+const makeImageViewer = (plotId,top,left,width,height,showWhenExpanded,canDelete) => (
                       <div style={{position:'absolute', top,left,width,height}} key={plotId}>
-                          <ImageViewer plotId={plotId} key={plotId} />
+                          <ImageViewer plotId={plotId} key={plotId} 
+                                       showWhenExpanded={showWhenExpanded} showDelete={canDelete}
+                                       handleInlineTools={false}/>
                       </div>
                                         );
 
-const makeImageViewerFull = (plotId) => (
+/**
+ * 
+ * @param plotId
+ * @param showWhenExpanded
+ * @param canDelete
+ * @param handleInlineTools
+ */
+const makeImageViewerFull = (plotId, showWhenExpanded, canDelete, handleInlineTools) => (
     <div style={{position:'absolute', top:0,left:0,bottom:0,right:0}} key={plotId}>
-        <ImageViewer plotId={plotId} key={plotId} />
+        <ImageViewer plotId={plotId} key={plotId}  showWhenExpanded={showWhenExpanded}
+                      showDelete={canDelete} handleInlineTools={handleInlineTools} />
     </div>
 );
 
@@ -191,5 +209,3 @@ function findAutoGridDim(size) {
 function makeSparseGrid(viewerPlotIds,gridDef) {
     //todo
 }
-
-

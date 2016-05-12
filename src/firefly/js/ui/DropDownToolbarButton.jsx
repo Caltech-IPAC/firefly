@@ -15,7 +15,7 @@ import {ToolbarButton} from './ToolbarButton.jsx';
 
 
 function computeDropdownXY(divElement) {
-    var bodyRect = document.body.getBoundingClientRect();
+    var bodyRect = document.body.parentElement.getBoundingClientRect();
     var elemRect = divElement.getBoundingClientRect();
     var x = (elemRect.left - bodyRect.left);
     var y = elemRect.top - bodyRect.top;

@@ -12,7 +12,7 @@ import {makeDrawingDef, COLOR_PT_1, COLOR_PT_2,
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
-import {MouseState} from '../visualize/VisMouseCntlr.js';
+import {MouseState} from '../visualize/VisMouseSync.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
 import {makeWorldPt} from '../visualize/Point.js';
 import {dispatchTableHighlight,dispatchTableFetch} from '../tables/TablesCntlr.js';

@@ -8,10 +8,9 @@ import {getActivePlotView,
     primePlot,
     hasGroupLock,
     findPlotGroup,
-    getPlotViewById,
     getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {dispatchRotate, dispatchFlip, dispatchRecenter, 
-        dispatchRestoreDefaults,dispatchZoomLocking, dispatchGroupLocking, ActionScope} from '../ImagePlotCntlr.js';
+        dispatchRestoreDefaults,dispatchGroupLocking, ActionScope} from '../ImagePlotCntlr.js';
 import {RotateType} from '../PlotState.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
@@ -65,22 +64,25 @@ import UNLOCKED from 'html/images/icons-2014/BkgUnlocked.png';
 
 import COLOR from 'html/images/icons-2014/28x28_ColorPalette.png';
 import STRETCH from 'html/images/icons-2014/28x28_Log.png';
-import MARKER from 'html/images/icons-2014/MarkerCirclesIcon_28x28.png';
+// import MARKER from 'html/images/icons-2014/MarkerCirclesIcon_28x28.png';
 
 
 export const VIS_TOOLBAR_HEIGHT=34;
+export const VIS_TOOLBAR_V_HEIGHT=48;
 
 
 const tipStyle= {
     display: 'inline-block',
     position : 'relative',
     overflow : 'hidden',
-    width : 300,
+    maxWidth : 300,
     fontSize: 10,
     whiteSpace: 'normal',
     verticalAlign: 'top',
     top : 3,
-    left : 15
+    left : 15,
+    textOverflow: 'ellipsis',
+    flex: '1 1 auto'
 };
 
 
@@ -90,24 +92,30 @@ const tipStyle= {
  * Vis Toolbar
  * @param visRoot visualization store root
  * @param toolTip tool tip to show
+ * @param dlCount drawing layer count
+ * @param messageUnder put the help message under 
  * @return {XML}
  */
-export function VisToolbarViewWrapper({visRoot,toolTip,dlCount}) {
+export function VisToolbarViewWrapper({visRoot,toolTip,dlCount, messageUnder}) {
 
     var rS= {
         width: 'calc(100% - 2px)',
-        height: VIS_TOOLBAR_HEIGHT,
-        display: 'inline-block',
+        height: messageUnder ? VIS_TOOLBAR_V_HEIGHT : VIS_TOOLBAR_HEIGHT,
+        display: 'inline-flex',
         position: 'relative',
         verticalAlign: 'top',
-        whiteSpace: 'nowrap'
+        whiteSpace: 'nowrap',
+        flexWrap:'nowrap',
+        flexDirection: messageUnder ? 'column' : 'row'
     };
 
+
+    const ts= messageUnder ? Object.assign({},tipStyle, {maxWidth:'100%'}) : tipStyle;
 
     return (
         <div style={rS}>
             <VisToolbarView visRoot={visRoot} dlCount={dlCount}/>
-            <div style={tipStyle}>{toolTip}</div>
+            <div style={ts}>{toolTip}</div>
         </div>
     );
 
@@ -116,7 +124,8 @@ export function VisToolbarViewWrapper({visRoot,toolTip,dlCount}) {
 VisToolbarViewWrapper.propTypes= {
     visRoot : PropTypes.object.isRequired,
     toolTip : PropTypes.string,
-    dlCount : PropTypes.number
+    dlCount : PropTypes.number,
+    messageUnder : PropTypes.bool
 };
 
 
@@ -138,7 +147,7 @@ export class VisToolbarView extends Component {
     }
 
     render() {
-        const {visRoot, dlCount}= this.props;
+        const {visRoot,dlCount}= this.props;
         var rS= {
             display: 'inline-block',
             position: 'relative',
@@ -148,7 +157,6 @@ export class VisToolbarView extends Component {
 
         var pv= getActivePlotView(visRoot);
         var plot= primePlot(pv);
-        var plotViewAry= visRoot.plotViewAry;
         var plotGroupAry= visRoot.plotGroupAry;
 
         var mi= pv ? pv.menuItemKeys : defMenuItemKeys;
@@ -269,7 +277,7 @@ export class VisToolbarView extends Component {
 
 
 
-                <LayerButton plotId={get(pv,'plotId')} visible={mi.layer}/>
+                <LayerButton plotId={get(pv,'plotId')}  dlCount={dlCount} visible={mi.layer}/>
 
                 <ToolbarHorizontalSeparator/>
 
@@ -292,7 +300,7 @@ export class VisToolbarView extends Component {
 
                 <SimpleLayerOnOffButton plotView={pv}
                                 isIconOn={pv&&plot? isGroupLocked(pv,plotGroupAry) : false }
-                                tip='lock images of all bands for zooming, scolling etc.'
+                                tip='lock images of all bands for zooming, scrolling etc.'
                                 iconOn={LOCKED}
                                 iconOff={UNLOCKED}
                                 visible={mi.lockRelated}
@@ -318,7 +326,7 @@ export class VisToolbarView extends Component {
 
 VisToolbarView.propTypes= {
     visRoot : PropTypes.object.isRequired,
-    dlCount : PropTypes.number,
+    dlCount : PropTypes.number
 };
 
 function doRotateNorth(pv,rotate) {
@@ -333,9 +341,9 @@ function flipY(pv) {
 
 
 
-function showToolTip(toolTip) {
-    return <div style={tipStyle}>{toolTip}</div>;
-}
+// function showToolTip(toolTip) {
+//     return <div style={tipStyle}>{toolTip}</div>;
+// }
 
 function isGroupLocked(pv,plotGroupAry){
     var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
@@ -345,16 +353,7 @@ function isGroupLocked(pv,plotGroupAry){
 }
 function toggleLockRelated(pv,plotGroupAry){
     var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
-    var lockEnabled = hasGroupLock(pv,plotGroup);
-    var setgroupLock= lockEnabled;
-    if (!lockEnabled)
-    {
-        setgroupLock= true;
-    } else {
-        setgroupLock= false;
-    }
-
-    dispatchGroupLocking(pv.plotId,setgroupLock);
+    dispatchGroupLocking(pv.plotId,!hasGroupLock(pv,plotGroup));
 }
 
 //==================================================================================
@@ -362,7 +361,7 @@ function toggleLockRelated(pv,plotGroupAry){
 //==================================================================================
 //==================================================================================
 
-export function LayerButton({plotId,visible, dlCount}) {
+export function LayerButton({plotId,visible}) {
     const plotLayers= getAllDrawLayersForPlot(getDlAry(),plotId);
     const enabled= !isEmpty(plotLayers);
 
@@ -380,6 +379,5 @@ export function LayerButton({plotId,visible, dlCount}) {
 LayerButton.propTypes= {
     plotId : PropTypes.string,
     visible : PropTypes.bool.isRequired,
-    dlCount : PropTypes.number,
+    dlCount : PropTypes.number.isRequired // must be here. We don't use directly but it forces an update
 };
-

@@ -21,7 +21,7 @@ function computeStyle(valid,hasFocus) {
 
 function makeMessage(message) {
     return (
-        <div>
+        <div style={{whiteSpace:'nowrap'}}>
             <img src={EXCLAMATION} style={{display:'inline-block', paddingRight:5}}/>
             <div style={{display:'inline-block'}}> {message} </div>
         </div>

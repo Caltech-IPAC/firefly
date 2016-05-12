@@ -21,7 +21,7 @@ import numeral from 'numeral';
 import {Band} from '../Band.js';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
 import sCompare from 'react-addons-shallow-compare';
-import {MouseState} from '../VisMouseCntlr.js';
+import {MouseState} from '../VisMouseSync.js';
 
 const rS = {
     width: 670,

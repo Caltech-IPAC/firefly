@@ -1,0 +1,15 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+
+
+.api-expanded {
+    position: fixed;
+    left: 5px;
+    right: 5px;
+    top: 5px;
+    bottom: 5px;
+    border: 2px solid rgba(1, 1, 1, 0.4);
+    box-sizing: border-box;
+    overflow: hidden;
+}

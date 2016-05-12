@@ -4,14 +4,19 @@
 
 
 import React, {Component, PropTypes} from 'react';
+import {take} from 'redux-saga/effects';
 import {omit,pick} from 'lodash';
 import sCompare from 'react-addons-shallow-compare';
 import shallowequal from 'shallowequal';
-import {visRoot} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {getAllDrawLayersForPlot,getActivePlotView} from '../PlotViewUtil.js';
 import {flux} from '../../Firefly.js';
 import {VisToolbarViewWrapper} from './VisToolbarView.jsx';
+import {dispatchShowDialog,dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
+import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
+import {LayoutType, PopupPanel} from '../../ui/PopupPanel.jsx';
+import {dispatchAddSaga} from '../../core/MasterSaga.js';
 
 // import {deepDiff} from '../../util/WebUtil.js';
 
@@ -30,11 +35,11 @@ export class VisToolbar extends Component {
         return sCompare(this,np,ns);
     }
 
-    componentDidUpdate(prevProps, prevState) {
+    // componentDidUpdate(prevProps, prevState) {
         // deepDiff({props: prevProps, state: prevState},
         //     {props: this.props, state: this.state},
         //     '---------- vis tool bar', true);
-    }
+    // }
 
     getChildContext() {
         return {tipOnCB: this.tipOn, tipOffCB: this.tipOff};
@@ -84,8 +89,12 @@ export class VisToolbar extends Component {
     }
 
     render() {
+        const {messageUnder}= this.props;
         var {visRoot,tip,dlCount}= this.state;
-        return <VisToolbarViewWrapper visRoot={visRoot} toolTip={tip} dlCount={dlCount}/>;
+        return (
+            <VisToolbarViewWrapper visRoot={visRoot} toolTip={tip} dlCount={dlCount} 
+                                      messageUnder={messageUnder}/>
+        );
     }
 
 
@@ -95,3 +104,32 @@ VisToolbar.childContextTypes= {
     tipOnCB : PropTypes.func,
     tipOffCB : PropTypes.func
 };
+
+VisToolbar.propTypes= {
+    messageUnder : PropTypes.bool
+};
+
+VisToolbar.defaultProps= {
+    messageUnder : false
+};
+
+
+
+export function showTools() {
+    if (!isDialogVisible('PopupToolbar')) {
+        const popup= (
+            <PopupPanel title={'Tools'} layoutPosition={LayoutType.TOP_LEFT} >
+                <VisToolbar messageUnder={true}/>
+            </PopupPanel>
+        );
+        DialogRootContainer.defineDialog('PopupToolbar', popup);
+        dispatchShowDialog('PopupToolbar');
+        dispatchAddSaga(autoClose);
+    }
+}
+
+function *autoClose() {
+    yield take([ImagePlotCntlr.CHANGE_EXPANDED_MODE]);
+    dispatchHideDialog('PopupToolbar');
+}
+

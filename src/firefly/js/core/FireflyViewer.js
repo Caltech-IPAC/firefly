@@ -1,3 +1,4 @@
+
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
@@ -95,7 +96,7 @@ export class FireflyViewer extends Component {
             return (<div style={{top: 0}} className='loading-mask'/>);
         } else {
             return (
-                <div id='App'>
+                <div id='App' className='rootStyle'>
                     <header>
                         <BannerSection {...{menu, appTitle, appIcon, altAppIcon}}/>
                         <DropDownContainer

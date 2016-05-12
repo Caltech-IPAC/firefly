@@ -8,7 +8,7 @@ import {getPreference} from '../core/AppDataCntlr.js';
 import ImagePlotCntlr, {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef,Style, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
-import {MouseState} from '../visualize/VisMouseCntlr.js';
+import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import { makeOffsetPt, makeWorldPt, makeImagePt} from '../visualize/Point.js';

@@ -11,18 +11,19 @@ import ImagePlotCntlr from './ImagePlotCntlr.js';
 
 
 export const IMAGE_MULTI_VIEW_KEY= 'imageMultiView';
+export const IMAGE_MULTI_VIEW_PREFIX= 'MultiViewCntlr';
 
-const ADD_VIEWER= 'MultiViewCntlr.AddViewer';
-const REMOVE_VIEWER= 'MultiViewCntlr.RemoveViewer';
-const VIEWER_MOUNTED= 'MultiViewCntlr.viewMounted';
-const VIEWER_UNMOUNTED= 'MultiViewCntlr.viewUnmounted';
-const ADD_IMAGES= 'MultiViewCntlr.addImages';
-const REMOVE_IMAGES= 'MultiViewCntlr.removeImages';
-const REPLACE_IMAGES= 'MultiViewCntlr.replaceImages';
-const IMAGE_VIEW_TYPE= 'MultiViewCntlr.imageViewType';
-const CHANGE_LAYOUT= 'MultiViewCntlr.changeLayout';
-const UPDATE_CUSTOM_DATA= 'MultiViewCntlr.updateCustomData';
-const ADD_TO_AUTO_RECEIVER = 'MultiViewCntlr.addToAutoReceiver';
+export const ADD_VIEWER= `${IMAGE_MULTI_VIEW_PREFIX}.AddViewer`;
+export const REMOVE_VIEWER= `${IMAGE_MULTI_VIEW_PREFIX}.RemoveViewer`;
+export const VIEWER_MOUNTED= `${IMAGE_MULTI_VIEW_PREFIX}.viewMounted`;
+export const VIEWER_UNMOUNTED= `${IMAGE_MULTI_VIEW_PREFIX}.viewUnmounted`;
+export const ADD_IMAGES= `${IMAGE_MULTI_VIEW_PREFIX}.addImages`;
+export const REMOVE_IMAGES= `${IMAGE_MULTI_VIEW_PREFIX}.removeImages`;
+export const REPLACE_IMAGES= `${IMAGE_MULTI_VIEW_PREFIX}.replaceImages`;
+export const IMAGE_VIEW_TYPE= `${IMAGE_MULTI_VIEW_PREFIX}.imageViewType`;
+export const CHANGE_LAYOUT= `${IMAGE_MULTI_VIEW_PREFIX}.changeLayout`;
+export const UPDATE_CUSTOM_DATA= `${IMAGE_MULTI_VIEW_PREFIX}.updateCustomData`;
+export const ADD_TO_AUTO_RECEIVER = `${IMAGE_MULTI_VIEW_PREFIX}.addToAutoReceiver`;
 
 
 export function getMultiViewRoot() { 

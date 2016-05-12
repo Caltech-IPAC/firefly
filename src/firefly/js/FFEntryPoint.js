@@ -9,6 +9,7 @@ import {get} from 'lodash';
 
 import {firefly} from './Firefly.js';
 import {FireflyViewer} from './core/FireflyViewer.js';
+import {initApi} from './api/ApiBuild.js';
 
 /**
  * By default, firefly.js will startup in api mode.
@@ -52,6 +53,9 @@ if (app) {
 
     ReactDOM.render(React.createElement(FireflyViewer, props),
         document.getElementById(props.div));
+}
+else {
+    initApi();
 }
 
 

@@ -123,7 +123,7 @@ const C= {
     DRAWING_SUB_GROUP_ID: 'DrawingSubgroupID',
     //GRID_ID : 'GRID_ID', - deprecated
     DOWNLOAD_FILENAME_ROOT : 'DownloadFileNameRoot',
-    PLOT_ID : 'PlotID',
+    PLOT_ID : 'plotId',
     OVERLAY_IDS: 'PredefinedOverlayIds',
     RELATED_TABLE_ROW : 'RELATED_TABLE_ROW',
 
@@ -141,31 +141,32 @@ const C= {
 
 };
 
+const allKeys= Object.keys(C).map( k => C[k]);
 
-const allKeys =
-        [C.FILE, C.WORLD_PT, C.URLKEY, C.SIZE_IN_DEG, C.SURVEY_KEY,
-         C.SURVEY_KEY_ALT, C.SURVEY_KEY_BAND, C.TYPE, C.ZOOM_TYPE,
-         C.SERVICE, C.USER_DESC, C.INIT_ZOOM_LEVEL,
-         C.TITLE, C.ROTATE_NORTH, C.ROTATE_NORTH_TYPE, C.ROTATE, C.ROTATION_ANGLE,
-         C.HEADER_KEY_FOR_TITLE,
-         C.INIT_RANGE_VALUES, C.INIT_COLOR_TABLE, C.MULTI_IMAGE_FITS, C.MULTI_IMAGE_IDX,
-         C.ZOOM_TO_WIDTH, C.ZOOM_TO_HEIGHT,
-         C.POST_CROP, C.POST_CROP_AND_CENTER, C.FLIP_X, C.FLIP_Y,
-         C.HAS_MAX_ZOOM_LEVEL,
-         C.POST_CROP_AND_CENTER_TYPE, C.CROP_PT1, C.CROP_PT2, C.CROP_WORLD_PT1, C.CROP_WORLD_PT2,
-         C.ZOOM_ARCSEC_PER_SCREEN_PIX, C.CONTINUE_ON_FAIL, C.OBJECT_NAME, C.RESOLVER,
-         C.BLANK_ARCSEC_PER_PIX, C.BLANK_PLOT_WIDTH, C.BLANK_PLOT_HEIGHT,
-
-         C.UNIQUE_KEY,
-         C.PLOT_TO_DIV, C.PREFERENCE_COLOR_KEY, C.PREFERENCE_ZOOM_KEY,
-         C.ROTATE_NORTH_SUGGESTION, C.SAVE_CORNERS,
-         C.SHOW_SCROLL_BARS, C.EXPANDED_TITLE, C.PLOT_DESC_APPEND,
-         C.ALLOW_IMAGE_SELECTION, C.HAS_NEW_PLOT_CONTAINER,
-         C.GRID_ON, C.TITLE_OPTIONS, C.EXPANDED_TITLE_OPTIONS,
-         C.POST_TITLE, C.PRE_TITLE, C.OVERLAY_POSITION,
-         C.MINIMAL_READOUT, C.PLOT_GROUP_ID, C.GROUP_LOCKED, C.DRAWING_SUB_GROUP_ID, C.RELATED_TABLE_ROW,
-         C.DOWNLOAD_FILENAME_ROOT, C.PLOT_ID
-        ];
+// const allKeys =
+//         [C.FILE, C.WORLD_PT, C.URLKEY, C.SIZE_IN_DEG, C.SURVEY_KEY,
+//          C.SURVEY_KEY_ALT, C.SURVEY_KEY_BAND, C.TYPE, C.ZOOM_TYPE,
+//          C.SERVICE, C.USER_DESC, C.INIT_ZOOM_LEVEL,
+//          C.TITLE, C.ROTATE_NORTH, C.ROTATE_NORTH_TYPE, C.ROTATE, C.ROTATION_ANGLE,
+//          C.HEADER_KEY_FOR_TITLE,
+//          C.INIT_RANGE_VALUES, C.INIT_COLOR_TABLE, C.MULTI_IMAGE_FITS, C.MULTI_IMAGE_IDX,
+//          C.ZOOM_TO_WIDTH, C.ZOOM_TO_HEIGHT,
+//          C.POST_CROP, C.POST_CROP_AND_CENTER, C.FLIP_X, C.FLIP_Y,
+//          C.HAS_MAX_ZOOM_LEVEL,
+//          C.POST_CROP_AND_CENTER_TYPE, C.CROP_PT1, C.CROP_PT2, C.CROP_WORLD_PT1, C.CROP_WORLD_PT2,
+//          C.ZOOM_ARCSEC_PER_SCREEN_PIX, C.CONTINUE_ON_FAIL, C.OBJECT_NAME, C.RESOLVER,
+//          C.BLANK_ARCSEC_PER_PIX, C.BLANK_PLOT_WIDTH, C.BLANK_PLOT_HEIGHT,
+//
+//          C.UNIQUE_KEY,
+//          C.PLOT_TO_DIV, C.PREFERENCE_COLOR_KEY, C.PREFERENCE_ZOOM_KEY,
+//          C.ROTATE_NORTH_SUGGESTION, C.SAVE_CORNERS,
+//          C.SHOW_SCROLL_BARS, C.EXPANDED_TITLE, C.PLOT_DESC_APPEND,
+//          C.ALLOW_IMAGE_SELECTION, C.HAS_NEW_PLOT_CONTAINER,
+//          C.GRID_ON, C.TITLE_OPTIONS, C.EXPANDED_TITLE_OPTIONS,
+//          C.POST_TITLE, C.PRE_TITLE, C.OVERLAY_POSITION,
+//          C.MINIMAL_READOUT, C.PLOT_GROUP_ID, C.GROUP_LOCKED, C.DRAWING_SUB_GROUP_ID, C.RELATED_TABLE_ROW,
+//          C.DOWNLOAD_FILENAME_ROOT, C.PLOT_ID
+//         ];
 
 const clientSideKeys =
         [C.UNIQUE_KEY,
@@ -217,7 +218,25 @@ export class WebPlotRequest extends ServerRequest {
 //----------- Most of the time it is better to use these than ----------
 //----------- the constructors                                ----------
 //======================================================================
+    
+    static makeFromObj(obj) {
+        const wpr= new WebPlotRequest();
+        wpr.setParams(cleanupObj(obj));
 
+
+        var typeGuess;
+        if (obj[C.FILE]) typeGuess= RequestType.FILE;
+        if (obj[C.URL]) typeGuess= RequestType.URL;
+        if (obj[C.SURVEY_KEY]) typeGuess= RequestType.SERVICE;
+
+
+        if (obj[C.BLANK_ARCSEC_PER_PIX] && obj[C.BLANK_PLOT_WIDTH] &&
+            obj[C.BLANK_PLOT_HEIGHT]) {
+            typeGuess= RequestType.BLANK;
+        }
+        if (typeGuess && !wpr.params[C.SERVICE]) wpr.setServiceType(typeGuess);
+        return wpr;
+    }
 
     /**
      * Makes a WebPlotRequest from another request.
@@ -1385,5 +1404,24 @@ export class WebPlotRequest extends ServerRequest {
 
 }
 
+
 export const WPConst= C;
 export default WebPlotRequest;
+
+function findKey(key) {
+    key= key.toLowerCase();
+    return allKeys.find( (k) => k.toLowerCase() ===key);
+}
+
+
+function cleanupObj(r) {
+    return Object.keys(r).reduce( (obj,k) => {
+        const newKey= findKey(k);
+        if (newKey) obj[newKey]= r[k];
+        return obj;
+    },{});
+}
+
+
+
+
