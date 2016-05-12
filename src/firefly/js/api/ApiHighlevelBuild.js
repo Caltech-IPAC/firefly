@@ -35,10 +35,11 @@ var globalImageViewDefParams= {};
  */
 function build(llApi) {
 
+    const commonPart= buildCommon(llApi);
     const imagePart= buildImagePart(llApi);
     const xyPart= buildXYandHistPart(llApi);
     const tablePart= buildTablePart(llApi);
-    return Object.assign({}, imagePart,xyPart,tablePart);
+    return Object.assign({}, commonPart, imagePart,xyPart,tablePart);
 }
 
 
@@ -52,6 +53,16 @@ function buildXYandHistPart(llApi) {
     return {};
 }
 
+function buildCommon(llApi) {
+    /**
+     * Sets the root path for any relative URL. If this method has not been called then relative URLs use the page's root.
+     * @param {String} rootUrlPath
+     * @namespace firefly
+     */
+    const setRootPath= (rootUrlPath) => llApi.action.dispatchRootUrlPath(rootUrlPath);
+
+    return {setRootPath};
+}
 
 function buildImagePart(llApi) {
 
@@ -88,14 +99,7 @@ function buildImagePart(llApi) {
      */
     const setGlobalImageDef= (params) => globalImageViewDefParams= params;
 
-    /**
-     * Sets the root path for any relative URL. If this method has not been called then relative URLs use the page's root.
-     * @param {String} rootUrlPath
-     * @namespace firefly
-     */
-    const setRootPath= (rootUrlPath) => llApi.action.dispatchRootUrlPath(rootUrlPath);
-
-    return {showImage, showImageFileOrUrl, setGlobalImageDef, setRootPath};
+    return {showImage, showImageFileOrUrl, setGlobalImageDef};
 }
 
 /**

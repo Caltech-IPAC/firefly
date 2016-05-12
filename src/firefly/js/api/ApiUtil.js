@@ -9,7 +9,7 @@ import {get,isEmpty} from 'lodash';
 import {isElement,isString} from 'lodash';
 import {logError} from '../util/WebUtil.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
-import {take} from 'redux-saga/effects';
+import {take,race,call} from 'redux-saga/effects';
 
 // NOTE 
 // NOTE 
@@ -90,26 +90,43 @@ export function unrenderDOM(div) {
  * Add a listener to any action type
  * @param {string} actionType a string or and array of strings. Each string is an action constant from firefly.action.type
  * @param {function} callBack the call back will be call with two parameters: action object and state object
- *                 If it returns true if will be called the next time, if it returns false it will be removed.
- * @namespace firefly
+ *                 If it returns true the listener will be removed.
+ * @return {function} a function that will remove the listener
  */
-export function addListener(actionType,callBack) {
-    dispatchAddSaga(actionReport,{actionType,callBack});
+export function addActionListener(actionType,callBack) {
+    var pResolve;
+    const cancelPromise= new Promise((resolve) => pResolve= resolve);
+    dispatchAddSaga(actionReport,{actionType,callBack, cancelPromise});
+    return () => pResolve();
 }
-
-
-
-
 
 //=========================================================================
 //------------------ Private ----------------------------------------------
 //=========================================================================
 
-function *actionReport({actionType,callBack},dispatch,getState) {
+/**
+ * This saga call a user callback when when one of the actionTypes are dispatched
+ * This saga does the following:
+ * <ul>
+ *     <li>waits until a type in the actionType list is dispatched or a cancel promise
+ *     <li>if an action call the callback
+ *     <li>if the call back returns true or the cancel promise is resolved then exit
+ * </ul>
+ * @param {string|[]} actionType 
+ * @param callBack the user callback
+ * @param cancelPromise a promise to cancel the callback
+ * @param dispatch
+ * @param getState a function get the application state
+ * 
+ */
+function *actionReport({actionType,callBack, cancelPromise},dispatch,getState) {
     if (!actionType && !callBack) return;
-    var keepGoing= true;
-    while (keepGoing) {
-        const action= yield take(actionType);
-        keepGoing= callBack(action,getState());
+    var stopListening= false;
+    while (!stopListening) {
+        var raceWinner = yield race({
+            action: take(actionType),
+            cancel: call(() => cancelPromise)
+        });
+        stopListening= raceWinner.action ? callBack(raceWinner.action,getState()) : true;
     }
 }
