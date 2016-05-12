@@ -4,7 +4,7 @@
 
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {debounce} from 'lodash';
+import {debounce, defer} from 'lodash';
 import Resizable from 'react-component-resizable';
 import {ImageViewerDecorate} from './ImageViewerDecorate.jsx';
 
@@ -21,31 +21,21 @@ export class ImageViewerView extends Component {
     constructor(props) {
         super(props);
         this.plotDrag= null;
-        this.previousDim= {prevWidth:0,prevHeight:0};
         this.state={width: 0,height:0};
-        //this.timerId= null;
-        this.onResize = (size) => {
+
+        const normal = (size) => {
             if (size) {
-                var {width,height}= size;
-                var {prevWidth,prevHeight}= this.previousDim;
-                if (prevWidth===0 || prevHeight===0) { //the first reset should set right away, otherwise debounce
-                    this.setState({ width,height });
-                    this.previousDim= {prevWidth:width,prevHeight:height};
-                }
-                else {
-                    this.onResizeDebounced(size);
-                }
+                this.setState(size);
             }
         };
-
-
-        this.onResizeDebounced = debounce( (size) => {
-            if (size) {
-                var {width,height}= size;
-                this.setState({ width,height });
-                this.previousDim= {prevWidth:width,prevHeight:height};
+        const debounced = debounce(normal, 100);
+        this.onResize =  (size) => {
+            if (this.state.width === 0 || this.state.height === 0) {  //the first reset should set right away, otherwise debounce
+                defer(normal, size);
+            } else {
+                debounced(size);
             }
-        }, 100);
+        };
     }
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
