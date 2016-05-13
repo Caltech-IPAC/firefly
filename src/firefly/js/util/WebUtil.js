@@ -6,7 +6,7 @@
 
 import Enum from 'enum';
 import update from 'react-addons-update';
-import {get, set, omit, isObject, union, isFunction, isEqual,  isNil, last} from 'lodash';
+import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil, last} from 'lodash';
 import { getRootURL } from './BrowserUtil.js';
 
 const  MEG          = 1048576;
@@ -367,17 +367,12 @@ function parseCookies(str) {
  * @param value (*): The value to set.
  */
 export function updateSet(object, path, value) {
+    if (!has(object, path)) {
+        set(object, path, undefined);
+    }
     const o = set({}, path, {$set: value});
     return update(object, o);
 }
-
-/**
- * Simple wrapper around Object.assign.  This can be used for our most common use case of Object.assign.  It is not
- * an attempt to replace it.  It is used with you want to copy and object an add new values into it.
- * @param obj object to clone
- * @param params an object to merge with the new object
- */
-export const clone = (obj={},params={}) => Object.assign({},obj,params);
 
 /**
  * This is a wrapper of React update's $merge for use with deep object update.
@@ -387,6 +382,9 @@ export const clone = (obj={},params={}) => Object.assign({},obj,params);
  * @param value (*): The value to merge.
  */
 export function updateMerge(object, path, value) {
+    if (!has(object, path)) {
+        set(object, path, undefined);
+    }
     const o = set({}, path, {$merge: value});
     return update(object, o);
 }
@@ -417,5 +415,14 @@ export function updateDelete(object, path, value) {
     const v = omit(get(object, path), value);
     return updateSet(object, path, v);
 }
+
+/**
+ * Simple wrapper around Object.assign.  This can be used for our most common use case of Object.assign.  It is not
+ * an attempt to replace it.  It is used with you want to copy and object an add new values into it.
+ * @param obj object to clone
+ * @param params an object to merge with the new object
+ */
+export const clone = (obj={},params={}) => Object.assign({},obj,params);
+
 /*---------------------------- update /----------------------------*/
 

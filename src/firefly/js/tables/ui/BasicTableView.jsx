@@ -82,6 +82,7 @@ export class BasicTableView extends React.Component {
         } else if (key === 'PageUp') {
             callbacks.onGotoPage && callbacks.onGotoPage(currentPage - 1);
         }
+        e.stopPropagation && e.stopPropagation();
     }
 
     render() {

@@ -42,11 +42,45 @@ function build(llApi) {
     return Object.assign({}, commonPart, imagePart,chartPart,tablePart);
 }
 
+/*----------------------------< TABLE PART ----------------------------*/
+
+function doShowTable(llApi, targetDiv, request, options) {
+    const {dispatchTableSearch}= llApi.action;
+    const {renderDOM}= llApi.util;
+    const {TablesContainer}= llApi.ui;
+
+    dispatchTableSearch(request, options);
+    renderDOM(targetDiv, TablesContainer);
+}
 
 function buildTablePart(llApi) {
-    //todo
-    return {};
+
+    /**
+     * @typedef {object} TblOptions    table options
+     * @prop {string}  tbl_group    the group this table belongs to.  Defaults to 'main'.
+     * @prop {boolean} removable    true if this table can be removed from view.  Defaults to true.
+     * @prop {boolean} showUnits    defaults to false
+     * @prop {boolean} showFilters  defaults to false
+     * @prop {boolean} selectable   defaults to true
+     * @prop {boolean} expandable   defaults to true
+     * @prop {boolean} showToolbar  defaults to true
+     * @prop {boolean} border       defaults to true
+     */
+
+    /**
+     * The general plotting function to plot a FITS image.
+     * @param {string|HTMLDivElement} targetDiv to put the image in.
+     * @param {Object} request         request object created from
+     * @param {TblOptions} options     table options.
+     */
+    const showTable= (targetDiv, request, options)  => doShowTable(llApi, targetDiv, request, options);
+
+    return {showTable};
 }
+
+/*---------------------------- TABLE PART >----------------------------*/
+
+
 
 function buildChartPart(llApi) {
     //todo

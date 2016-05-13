@@ -21,7 +21,8 @@ export function uiReducer(state={ui:{}}, action={}) {
             return removeTable(root, action);
 
         case (Cntlr.TBL_RESULTS_ADDED) :
-            return Object.assign(root, {[tbl_ui_id]:{tbl_ui_id, tbl_id}});
+            const {options} = action.payload || {}; 
+            return Object.assign(root, {[tbl_ui_id]:{tbl_ui_id, tbl_id, ...options}});
 
         case (Cntlr.TABLE_NEW)    :
         case (Cntlr.TABLE_UPDATE) :

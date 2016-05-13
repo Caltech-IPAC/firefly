@@ -32,7 +32,6 @@ export const UPDATE_LAYOUT      = 'layout.updateLayout';
 export const SET_LAYOUT_MODE    = 'layout.setLayoutMode';
 export const SHOW_DROPDOWN      = 'layout.showDropDown';
 export const HIDE_DROPDOWN      = 'layout.hideDropDown ';
-export const ACTIVE_TABLE_CHANGED   = 'layout.activeTableChanged';
 
 
 /*---------------------------- Reducers ----------------------------*/
@@ -55,13 +54,6 @@ export function reducer(state={dropDown: {}}, action={}) {
 
         case HIDE_DROPDOWN :
             return update(state, {dropDown: {$set: {visible: false}}});
-
-        case ACTIVE_TABLE_CHANGED :
-            const {tbl_id} = action.payload;
-            if (!has(state, 'active.table')) {
-                set(state, 'active.table', undefined);
-            }
-            return update(state, {active: {table: {$set: tbl_id}}});
 
         default:
             return state;
@@ -125,7 +117,7 @@ export function getDropDownInfo() {
 
 export function getLayouInfo() {
     const hasImages = get(flux.getState(), 'allPlots.plotViewAry.length') > 0;
-    const hasTables = !isEmpty(get(flux.getState(), 'table_space.results.tables', {}));
+    const hasTables = !isEmpty(get(flux.getState(), 'table_space.results.main.tables', {}));
     const hasXyPlots = hasTables;
     const expanded = getExpandedMode();
     const standard = getStandardMode();

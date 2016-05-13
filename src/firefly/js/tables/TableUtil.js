@@ -2,17 +2,112 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, isEmpty, uniqueId, padEnd, cloneDeep} from 'lodash';
+import {get, set, isEmpty, uniqueId, padEnd, cloneDeep, omitBy, isNil} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {flux} from '../Firefly.js';
 import {fetchUrl, encodeServerUrl, encodeParams} from '../util/WebUtil.js';
 import {getRootPath, getRootURL} from '../util/BrowserUtil.js';
 import {TableRequest} from './TableRequest.js';
+import {parseWorldPt} from '../visualize/Point.js';
 
 const SAVE_TABLE_URL = getRootURL() + 'servlet/SaveAsIpacTable';
 const SRV_PATH = getRootPath() + 'search/json';
 const INT_MAX = Math.pow(2,31) - 1;
+
+/*----------------------------< creator functions ----------------------------*/
+
+export function makeTblRequest(id, title, options={}, tbl_id=uniqueTblId()) {
+    var req = {startIdx: 0, pageSize: 100};
+    title = title || id;
+    var META_INFO = {title, tbl_id};
+    return omitBy(Object.assign(req, options, {META_INFO, id}), isNil);
+}
+
+/**
+ * Table options.  All of the options are optional.  These options let you control
+ * what data and how it will be returned from the request.
+ * @typedef {object} TblReqOptions
+ * @prop {number} startIdx  the starting index to fetch.  defaults to zero.
+ * @prop {number} pageSize  the number of rows per page.  defaults to 100.
+ * @prop {string} filters   list of conditions separted by comma(,). Format:  (col_name|index) operator value.
+ *                  operator is one of '> < = ! >= <= IN'.  See DataGroupQueryStatement.java doc for more details.
+ * @prop {string} sortInfo  sort information.  Format:  SortInfo=(ASC|DESC),col_name[,col_name]*
+ * @prop {string} inclCols  list of columns to select.  Column names separted by comma(,)
+ * @prop {string} decimate  decimation information.
+ * @prop {object} META_INFO meta information passed as key/value pair to server then returned as tableMeta.
+ */
+
+/**
+ * @param {string} [title]      title to display with this table.
+ * @param {string} source       required; location of the ipac table. url or file path.
+ * @param {string} [alt_source] use this if source does not exists.
+ * @param {string} [tbl_id]     a unique ID to reference this table.  One will be created if not given.
+ * @param {TblReqOptions} [options]  more options.  see TblReqOptions for details.
+ * @returns {object}
+ */
+export function makeFileRequest(title, source, alt_source, options={}, tbl_id=uniqueTblId()) {
+    const id = 'IpacTableFromSource';
+    var req = {startIdx: 0, pageSize: 100};
+    title = title || source;
+    var META_INFO = {title, tbl_id};
+    return omitBy(Object.assign(req, options, {source, alt_source, META_INFO, id}), isNil);
+}
+
+
+/**
+ * Parameters for cone search
+ * @typedef {object} ConeParams
+ * @prop {string} method    'Cone'.
+ * @prop {string} position  name or coordinates of the search
+ * @prop {string} radius    radius of the search in arcsec
+ */
+
+/**
+ * Parameters for eliptical search
+ * @typedef {object} ElipParams
+ * @prop {string} method    'Eliptical'.
+ * @prop {string} position  name or coordinates of the search
+ * @prop {string} radius    radius of the search in arcsec
+ * @prop {string} radunits  the units for the radius or side, must be arcsec,arcmin,degree, default arcsec
+ * @prop {string} ratio     ratio for elliptical request
+ * @prop {string} posang    pa for elliptical request
+ */
+
+/**
+ * Parameters for box search
+ * @typedef {object} BoxParams
+ * @prop {string} method    'Eliptical'.
+ * @prop {string} position  name or coordinates of the search
+ * @prop {string} size      the length of a side for a box search
+ */
+
+/**
+ * creates the request to query IRSA catalogs.
+ * @param {string} title    title to be displayed with this table result
+ * @param {string} project
+ * @param {string} catalog  the catalog name to search
+ * @param {string} use      one of 'catalog_overlay', 'catalog_primary', 'data_primary'.
+ * @param {(ConeParams|BoxParams|ElipParams)} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
+ * @param {TblReqOptions} [options]
+ * @returns {object}
+ */
+export function makeIrsaCatalogRequest(title, project, catalog, use='catalog_overlay', params={}, options={}, tbl_id=uniqueTblId()) {
+    var req = {startIdx: 0, pageSize: 100};
+    title = title || catalog;
+    const id = 'GatorQuery';
+    if (params.position) {
+        params.position = parseWorldPt(params.position);
+    }
+    const SearchMethod = params.method;
+    const catalogProject = catalog;
+
+    var META_INFO = {title, tbl_id};
+    return Object.assign(req, options, omit(params, 'method'), {id, META_INFO, SearchMethod, catalogProject, catalog, use});
+}
+
+/*---------------------------- creator functions >----------------------------*/
+
 
 /**
  *
@@ -34,7 +129,7 @@ export function doFetchTable(tableRequest, hlRowIdx) {
 
     return fetchUrl(SRV_PATH, {method: 'post', params}).then( (response) => {
         return response.json().then( (tableModel) => {
-            const startIdx = get(tableModel, ['request',TableRequest.keys.startIdx], 0);
+            const {startIdx} = getTblInfo(tableModel);
             if (startIdx > 0) {
                 // shift data arrays indices to match partial fetch
                 tableModel.tableData.data = tableModel.tableData.data.reduce( (nAry, v, idx) => {
@@ -101,33 +196,35 @@ export function isTblDataAvail(startIdx, endIdx, tableModel) {
 }
 
 
-export function findTblById(id) {
+export function getTblById(id) {
     return get(flux.getState(),[TblCntlr.TABLE_SPACE_PATH, 'data', id]);
 }
 
 /**
- * return the table results area
+ * return the group information
+ * @param {string} tbl_group    the group to look for
  * @returns {*}
  */
-export function findTableResults() {
-    return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results']);
+export function getTableGroup(tbl_group='main') {
+    return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group]);
 }
 
 /**
- * find table ui_group info by tbl_ui_gid
+ * return the table group information for the given IDs.  
  * @param tbl_ui_id
+ * @param tbl_group
  * @returns {*}
  */
-export function findTblResultsById(tbl_ui_id) {
-    return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', 'tables', tbl_ui_id]);
+export function isTableInGroup(tbl_id, tbl_group='main') {
+    return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group, 'tables',  tbl_id]);
 }
 
 /**
- * find working table state by tbl_ui_id
+ * get the table working state by tbl_ui_id
  * @param tbl_ui_id
  * @returns {*}
  */
-export function findTableUiById(tbl_ui_id) {
+export function getTableUiById(tbl_ui_id) {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui', tbl_ui_id]);
 }
 
@@ -137,18 +234,18 @@ export function findTableUiById(tbl_ui_id) {
  * @returns {boolean}
  */
 export function isFullyLoaded(tbl_id) {
-    return isTableLoaded(findTblById(tbl_id));
+    return isTableLoaded(getTblById(tbl_id));
 }
 
-export function findColumnIdx(tableModel, colName) {
+export function getColumnIdx(tableModel, colName) {
     const cols = get(tableModel, 'tableData.columns', []);
     return cols.findIndex((col) => {
         return col.name === colName;
     });
 }
 
-export function getActiveTableId() {
-    return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH,'results','active']);
+export function getActiveTableId(tbl_group='main') {
+    return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH,'results',tbl_group,'active']);
 }
 
 /**
@@ -160,7 +257,7 @@ export function getActiveTableId() {
  */
 export function getCellValue(tableModel, rowIdx, colName) {
     if (get(tableModel, 'tableData.data.length', 0) > 0) {
-        const colIdx = findColumnIdx(tableModel, colName);
+        const colIdx = getColumnIdx(tableModel, colName);
         // might be undefined if row is not loaded
         return get(tableModel.tableData.data, [rowIdx, colIdx]);
     }
@@ -213,7 +310,7 @@ export function smartMerge(target, source) {
 
     if ( source && typeof(source)==='object') {
         if(Array.isArray(source)) {
-            let aryChanges = [];
+            const aryChanges = [];
             source.forEach( (v, idx) => {
                 const nval = smartMerge(target[idx], source[idx]);
                 if (nval !== target[idx]) {
@@ -222,12 +319,12 @@ export function smartMerge(target, source) {
             });
             if (isEmpty(aryChanges)) return target;
             else {
-                let nAry = target.slice();
+                const nAry = target.slice();
                 aryChanges.forEach( (v, idx) => nAry[idx] = v );
                 return nAry;
             }
         } else {
-            let objChanges = {};
+            const objChanges = {};
             Object.keys(source).forEach( (k) => {
                 const nval = smartMerge(target[k], source[k]);
                 if (nval !== target[k]) {
@@ -253,7 +350,7 @@ export function sortTable(origTableModel, sortInfoStr) {
     if (dir === UNSORTED || get(origTableModel, 'tableData.data.length', 0) === 0) return origTableModel;
 
     const multiplier = dir === SORT_ASC ? 1 : -1;
-    const colIdx = findColumnIdx(origTableModel, colName);
+    const colIdx = getColumnIdx(origTableModel, colName);
     const col = get(origTableModel, ['tableData','columns', colIdx]);
 
     var tableModel = cloneDeep(origTableModel);
@@ -275,8 +372,21 @@ export function sortTable(origTableModel, sortInfoStr) {
     return tableModel;
 }
 
+/**
+ * collects all available table request information given the table request.
+ * @param request
+ * @returns {*}
+ */
+export function getTblReqInfo(request) {
+    if (!request) return {};
+    const {startIdx, endIdx, sortInfo, filters, decimate, inclCols} = request;
+    const tbl_id = get(request, 'META_INFO.tbl_id');
+    const title = get(request, 'META_INFO.title', tbl_id);
+    return omitBy({tbl_id, title, startIdx, endIdx, sortInfo, filters, decimate, inclCols}, isNil);
+}
+
 export function getTblInfoById(tbl_id, aPageSize) {
-    const tableModel = findTblById(tbl_id);
+    const tableModel = getTblById(tbl_id);
     return getTblInfo(tableModel, aPageSize);
 }
 
@@ -334,8 +444,7 @@ export function tableToText(columns, dataAry, showUnits=false) {
  * @returns {encoded}
  */
 export function getTableSourceUrl(columns, request, filename) {
-    const {startIdx, pageSize, inclCols} = TableRequest.keys;
-    request = cloneDeep(request);
+    const Request = cloneDeep(request);
     const visiCols = columns.filter( (col) => {
                 return col.visibility === 'show';
             }).map( (col) => {
@@ -344,31 +453,21 @@ export function getTableSourceUrl(columns, request, filename) {
     if (visiCols.length !== columns.length) {
         request[inclCols] = visiCols.toString();
     }
-
-    request[startIdx] = 0;
-    request[pageSize] = Number.MAX_SAFE_INTEGER;
-    filename = filename || request.file_name || request.id;
-    const requestCls = TableRequest.newInstance(request);
-    const params = {
-        Request: requestCls.toString(),
-        file_name: filename
-    };
-    return encodeServerUrl(SAVE_TABLE_URL, params);
+    Request.startIdx = 0;
+    Request.pageSize = Number.MAX_SAFE_INTEGER;
+    const file_name = filename || Request.file_name;
+    return encodeServerUrl(SAVE_TABLE_URL, {file_name, Request: request});
 }
 
 
 
 export function uniqueTblId() {
     const id = uniqueId('tbl_id-');
-    if (findTblById(id)) {
+    if (getTblById(id)) {
         return uniqueTblId();
     } else {
         return id;
     }
-}
-
-export function uniqueTblUiGid() {
-    return uniqueId('tbl_ui_gid-');
 }
 
 export function uniqueTblUiId() {

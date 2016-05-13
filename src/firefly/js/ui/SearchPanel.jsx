@@ -14,7 +14,6 @@ import {FileUpload} from '../ui/FileUpload.jsx';
 
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 
-import {TableRequest} from '../tables/TableRequest.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
 import * as TblUtil from '../tables/TableUtil.js';
 
@@ -83,15 +82,8 @@ function hideSearchPanel() {
 }
 
 function onSearchSubmit(request) {
-    const activeTblId = TblUtil.uniqueTblId();
     if (request.srcTable) {
-        var treq = TableRequest.newInstance({
-            id:'IpacTableFromSource',
-            source: request.srcTable,
-            tbl_id:  activeTblId,
-            title:  request.srcTable,
-            filters: request.filters
-        });
+        const treq = TblUtil.makeFileRequest(null, request.srcTable, null, {filters: request.filters});
         dispatchTableSearch(treq);
     }
 }

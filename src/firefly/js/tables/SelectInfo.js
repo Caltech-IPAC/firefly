@@ -8,7 +8,7 @@
  */
 import {isEmpty} from 'lodash';
 
-import {findTblById} from './TableUtil.js';
+import {getTblById} from './TableUtil.js';
 
 
 export class SelectInfo {
@@ -128,7 +128,7 @@ export class SelectInfo {
      * @returns {SelectInfo}
      */
     static find(tbl_id, root) {
-        var tableModel = findTblById(tbl_id, root);
+        var tableModel = getTblById(tbl_id, root);
         return tableModel && SelectInfo.newInstance(tableModel.selectInfo);
     }
 

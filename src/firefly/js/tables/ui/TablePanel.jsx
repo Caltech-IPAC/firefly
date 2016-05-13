@@ -33,7 +33,7 @@ export class TablePanel extends Component {
         }
         tbl_ui_id = tbl_ui_id || tbl_id + '-ui';
         this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, isLocal);
-        const uiState = TblUtil.findTableUiById(tbl_ui_id);
+        const uiState = TblUtil.getTableUiById(tbl_ui_id);
         this.state = uiState || {};
 
         this.toggleFilter = this.toggleFilter.bind(this);
@@ -65,7 +65,7 @@ export class TablePanel extends Component {
 
     storeUpdate() {
         const {tbl_ui_id} = this.tableConnector;
-        const uiState = TblUtil.findTableUiById(tbl_ui_id) || {columns: []};
+        const uiState = TblUtil.getTableUiById(tbl_ui_id) || {columns: []};
         this.setState(uiState);
     }
 
@@ -101,7 +101,7 @@ export class TablePanel extends Component {
 
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
         const viewIcoStyle = 'tablepanel ' + (textView ? 'tableView' : 'textView');
-        const origColumns = get(TblUtil.findTblById(this.tableConnector.tbl_id), 'tableData.columns');
+        const origColumns = get(TblUtil.getTblById(this.tableConnector.tbl_id), 'tableData.columns');
 
         return (
             <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', overflow: 'hidden'}}>

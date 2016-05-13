@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {take} from 'redux-saga/effects';
-import {get, set, omitBy, pickBy, isUndefined, cloneDeep} from 'lodash';
+import {get, set, omitBy, pickBy, isNil, cloneDeep} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
@@ -44,14 +44,15 @@ export function tableSearch(action) {
     return (dispatch) => {
         //dispatch(validate(FETCH_TABLE, action));
         if (!action.err) {
-            var {request, tbl_ui_id=TblUtil.uniqueTblUiId()} = action.payload;
-            const {tbl_id} = request;
+            var {request, options={}} = action.payload;
+            const {tbl_id, title} = TblUtil.getTblReqInfo(request);
             
             dispatchSetupTblTracking(tbl_id);
             dispatchTableFetch(request);
             dispatchHideDropDown();
-            if (!TblUtil.findTblResultsById(tbl_ui_id)) {
-                dispatchTableAdded(tbl_ui_id, tbl_id, get(request, 'META_INFO.title'));
+            if (!TblUtil.isTableInGroup(tbl_id)) {
+                const {tbl_group, removable} = options;
+                dispatchTblResultsAdded(tbl_id, title, options, removable, tbl_group);
                 dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:() => dispatchActiveTableChanged(tbl_id)});
             }
         }
@@ -61,7 +62,7 @@ export function tableSearch(action) {
 export function highlightRow(action) {
     return (dispatch) => {
         const {tbl_id} = action.payload;
-        var tableModel = TblUtil.findTblById(tbl_id);
+        var tableModel = TblUtil.getTblById(tbl_id);
         var tmpModel = TblUtil.smartMerge(tableModel, action.payload);
         const {hlRowIdx, startIdx, endIdx, pageSize} = TblUtil.getTblInfo(tmpModel);
         if (TblUtil.isTblDataAvail(startIdx, endIdx, tableModel)) {
@@ -79,12 +80,12 @@ export function highlightRow(action) {
     };
 }
 
-export function fetchTable(action) {
+export function tableFetch(action) {
     return (dispatch) => {
         //dispatch(validate(FETCH_TABLE, action));
         if (!action.err) {
             var {request, hlRowIdx} = action.payload;
-            var actionType, {tbl_id} = request;
+            var actionType, {tbl_id} = TblUtil.getTblReqInfo(request);
             if (action.type === TABLE_FETCH_UPDATE) {
                 actionType = TABLE_UPDATE;
             } else {
@@ -124,10 +125,10 @@ export function reducer(state={data:{}, results: {}, ui:{}}, action={}) {
 /**
  * Initiate a search that returns a table which will be added to result view.
  * @param request
- * @param tbl_ui_id  a unique id used to identify this table widget.  One will be generated if not given.
+ * @param {TblOptions} options  table options
  */
-export function dispatchTableSearch(request, tbl_ui_id) {
-    flux.process( {type: TABLE_SEARCH, payload: pickBy({request, tbl_ui_id}) });
+export function dispatchTableSearch(request, options) {
+    flux.process( {type: TABLE_SEARCH, payload: pickBy({request, options}) });
 }
 
 /**
@@ -154,7 +155,7 @@ export function dispatchTableLoaded(tbl_info) {
  * @param request
  */
 export function dispatchTableHighlight(tbl_id, highlightedRow, request) {
-    flux.process( {type: TABLE_HIGHLIGHT, payload: omitBy({tbl_id, highlightedRow, request}, isUndefined) });
+    flux.process( {type: TABLE_HIGHLIGHT, payload: omitBy({tbl_id, highlightedRow, request}, isNil) });
 }
 
 /**
@@ -183,17 +184,20 @@ export function dispatchTableReplace(tableModel) {
     flux.process( {type: TABLE_REPLACE, payload: tableModel});
 }
 
-
 /**
- * Add this table into the TableResults
- * @param tbl_ui_id   table ui id
- * @param tbl_id      table id
- * @param title       table title
- * @param removable  true if this table can be removed from view.
+ * Add this table UI into the results area.
+ * @param {string} tbl_id        table id
+ * @param {string} title         title to be displayed with the table.
+ * @param {TblOptions} options   table options.
+ * @param {boolean} removable    true if this table can be removed from view.
+ * @param {string} tbl_group     table group.  defaults to 'main'
+ * @param {string} tbl_ui_id     table ui id
  */
-export function dispatchTableAdded(tbl_ui_id=TblUtil.uniqueTblUiId(), tbl_id, title, removable=true) {
+export function dispatchTblResultsAdded(tbl_id, title, options, removable, tbl_group, tbl_ui_id=TblUtil.uniqueTblUiId()) {
     title = title || tbl_id;
-    flux.process( {type: TBL_RESULTS_ADDED, payload: {tbl_id, title, removable, tbl_ui_id}});
+    tbl_group = tbl_group || 'main';
+    removable = isNil(removable) ? true : removable;
+    flux.process( {type: TBL_RESULTS_ADDED, payload: {tbl_id, tbl_group, title, removable, tbl_ui_id, options}});
 }
 
 /**
@@ -205,11 +209,12 @@ export function dispatchTableUiUpdate(tbl_ui_info) {
 }
 
 /**
- * 
+ *
  * @param tbl_id
+ * @param tbl_group
  */
-export function dispatchActiveTableChanged(tbl_id) {
-    flux.process({type: TBL_RESULTS_ACTIVE, payload: {tbl_id}});
+export function dispatchActiveTableChanged(tbl_id, tbl_group='main') {
+    flux.process({type: TBL_RESULTS_ACTIVE, payload: {tbl_id, tbl_group}});
 }
 
 /*---------------------------- PRIVATE -----------------------------*/
@@ -244,7 +249,7 @@ export function* doOnTblLoaded({tbl_id, callback}) {
         const a_id = get(action, 'payload.tbl_id');
         if (tbl_id === a_id) {
             isLoaded = isLoaded || TblUtil.isTableLoaded(action.payload);
-            const tableModel = TblUtil.findTblById(tbl_id);
+            const tableModel = TblUtil.getTblById(tbl_id);
             hasData = hasData || get(tableModel, 'tableData.columns.length');
             if (get(tableModel, 'error')) {
                 // there was an error loading this table.

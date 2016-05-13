@@ -28,7 +28,7 @@ export function* syncCharts() {
             case TableStatsCntlr.SETUP_TBL_TRACKING:
                 const {tblId} = action.payload;
                 if (TableUtil.isFullyLoaded(tblId)) {
-                    TableStatsCntlr.dispatchLoadTblStats(TableUtil.findTblById(tblId).request);
+                    TableStatsCntlr.dispatchLoadTblStats(TableUtil.getTblById(tblId).request);
                 }
                 break;
             case TablesCntlr.TABLE_NEW_LOADED:

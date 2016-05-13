@@ -6,15 +6,14 @@ import {take} from 'redux-saga/effects';
 import {union,get,isEmpty,difference,omit} from 'lodash';
 import {Band,allBandAry} from '../Band.js';
 import {TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT,
-        TABLE_REMOVE,TABLE_UPDATE, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
+        TABLE_REMOVE,TABLE_UPDATE, TBL_RESULTS_ACTIVE, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView,
                         dispatchPlotGroup, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
-import {findTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../../tables/TableUtil.js';
+import {getTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../../tables/TableUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
 import MultiViewCntlr, {dispatchReplaceImages, dispatchUpdateCustom, getViewerPlotIds,
                         getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE} from '../MultiViewCntlr.js';
-import {ACTIVE_TABLE_CHANGED} from '../../core/LayoutCntlr.js';
 import {converterFactory, converters} from '../../metaConvert/ConverterFactory.js';
 import {findGridTableRows,isMetaDataTable, computePlotId} from '../../metaConvert/converterUtils.js';
 // import {getActiveTableId} from '../../core/LayoutCntlr.js';
@@ -39,7 +38,7 @@ export function* watchImageMetaData({viewerId}) {
     var paused= true;
     while (true) {
         const action= yield take([TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE,
-                                  ACTIVE_TABLE_CHANGED,
+                                  TBL_RESULTS_ACTIVE,
                                   MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED,
                                   MultiViewCntlr.VIEWER_UNMOUNTED,
                                   MultiViewCntlr.CHANGE_LAYOUT, MultiViewCntlr.UPDATE_CUSTOM_DATA,
@@ -64,7 +63,7 @@ export function* watchImageMetaData({viewerId}) {
             case TABLE_REMOVE:
             case TABLE_HIGHLIGHT:
             case TABLE_UPDATE:
-            case ACTIVE_TABLE_CHANGED:
+            case TBL_RESULTS_ACTIVE:
                 if (!paused) updateImagePlots(tbl_id, viewerId);
                 break;
 
@@ -116,7 +115,7 @@ function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
 
     if (!tbl_id) return [];
     var reqRet;
-    const table= findTblById(tbl_id);
+    const table= getTblById(tbl_id);
     // check to see if tableData is available in this range.
     if (!isTblDataAvail(table.highlightedRow, table.highlightedRow+1, table)) return [];
     const viewer= getViewer(getMultiViewRoot(),viewerId);
@@ -272,7 +271,7 @@ function changeActivePlotView(plotId,tbl_id) {
     if (!plot) return;
     const row= get(plot.attributes, PlotAttribute.TABLE_ROW, -1);
     if (row<0) return;
-    const table= findTblById(tbl_id);
+    const table= getTblById(tbl_id);
     if (!table) return;
     if (table.highlightedRow===row) return;
     dispatchTableHighlight(tbl_id,row,table.request);

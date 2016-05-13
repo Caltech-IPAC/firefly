@@ -6,7 +6,7 @@ import {flux} from '../Firefly.js';
 import {updateSet} from '../util/WebUtil.js';
 import {get, has, omit, omitBy, isUndefined, isString} from 'lodash';
 
-import {doFetchTable, findTblById} from '../tables/TableUtil.js';
+import {doFetchTable, getTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {serializeDecimateInfo} from '../tables/Decimate.js';
 import {logError} from '../util/WebUtil.js';
@@ -93,7 +93,7 @@ export function dispatchZoom(tblId, selection) {
         if (selection) {
             // zoom to selection
             if (xyPlotData.decimateKey) {
-                const tableModel = findTblById(tblId);
+                const tableModel = getTblById(tblId);
                 if (tableModel) {
                     const paramsWithZoom = Object.assign({}, xyPlotParams, {zoom: xyPlotParams.selection});
                     dispatchLoadPlotData(paramsWithZoom, tableModel.request);
@@ -104,7 +104,7 @@ export function dispatchZoom(tblId, selection) {
         } else {
             // reset zoom
             if (decimatedUnzoomed || isUndefined(decimatedUnzoomed)) {
-                const tableModel = findTblById(tblId);
+                const tableModel = getTblById(tblId);
                 if (tableModel) {
                     const paramsWithoutZoom = Object.assign({}, omit(xyPlotParams, 'zoom'));
                     dispatchLoadPlotData(paramsWithoutZoom, tableModel.request);

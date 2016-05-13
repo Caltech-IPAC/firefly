@@ -141,7 +141,7 @@ export class Tabs extends Component {
             });
         return (
 
-            <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden'}}>
+            <div style={{display: 'flex', height: '100%', flexDirection: 'column', flexGrow: 1, overflow: 'hidden'}}>
                 <TabsHeader>{children}</TabsHeader>
                 <div ref='contentRef' className='TabPanel__Content'>{(content)?content:''}</div>
             </div>

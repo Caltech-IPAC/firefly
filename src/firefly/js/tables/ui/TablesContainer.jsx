@@ -20,7 +20,7 @@ import {CloseButton} from '../../ui/CloseButton.jsx';
 export class TablesContainer extends Component {
     constructor(props) {
         super(props);
-        const tblResults = TblUtil.findTableResults();
+        const tblResults = TblUtil.getTableGroup();
         this.state = Object.assign({layout: 'tabs', tables: {}}, tblResults, {
                         expandedMode: props.expandedMode,
                         closeable: props.closeable
@@ -40,7 +40,7 @@ export class TablesContainer extends Component {
     }
 
     storeUpdate() {
-        const tblResults = TblUtil.findTableResults();
+        const tblResults = TblUtil.getTableGroup();
         const expandedMode = getExpandedMode() === LO_EXPANDED.tables.view;
         this.setState({expandedMode,...tblResults});
     }
@@ -70,7 +70,7 @@ TablesContainer.defaultProps = {
 function ExpandedView(props) {
     const {tables, closeable} = props;
     return (
-        <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', overflow: 'hidden'}}>
+        <div style={{ display: 'flex', height: '100%', flexGrow: 1, flexDirection: 'column', overflow: 'hidden'}}>
             <div style={{marginBottom: 3}}>
                 {closeable && <CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/>}
             </div>
@@ -113,12 +113,12 @@ function tablesAsTab(tables, expandedMode) {
     return tables &&
         Object.keys(tables).map( (key) => {
             var {tbl_id, title, removable, tbl_ui_id} = tables[key];
-            const onTabRemove = (tbl_ui_id) => {
+            const onTabRemove = (tbl_id) => {
                 dispatchTableRemove(tbl_id);
             };
             return  (
                 <Tab key={tbl_ui_id} name={title} removable={removable} onTabRemove={onTabRemove}>
-                    <TablePanel key={tbl_ui_id} border={false} {...{tbl_id, tbl_ui_id, expandedMode}} />
+                    <TablePanel key={tbl_id} border={false} {...{tbl_id, tbl_ui_id, expandedMode}} />
                 </Tab>
             );
         } );

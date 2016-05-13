@@ -121,17 +121,15 @@ function updateTblStats(statsData) {
  */
 function fetchTblStats(dispatch, activeTableServerRequest) {
 
-    const tblId = activeTableServerRequest['tbl_id'];
+    const {tbl_id} = TableUtil.getTblReqInfo(activeTableServerRequest);
 
     // searchRequest
-    const sreq = Object.assign({}, omit(activeTableServerRequest, ['tbl_id'], 'META_INFO'),
+    const sreq = Object.assign({}, activeTableServerRequest,
         {'startIdx': 0, 'pageSize': 1000000});
 
-    const req = TableRequest.newInstance({
-                    id:'StatisticsProcessor',
-                    searchRequest: JSON.stringify(sreq),
-                    tbl_id: 'tblstats-'+activeTableServerRequest.tbl_id
-                });
+    const req = TableUtil.makeTblRequest('StatisticsProcessor', null,
+                            { searchRequest: JSON.stringify(sreq) },
+                            'tblstats-'+activeTableServerRequest.tbl_id);
 
     TableUtil.doFetchTable(req).then(
         (tableModel) => {
@@ -142,7 +140,7 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
                 }, []);
                 dispatch(updateTblStats(
                     {
-                        tblId,
+                        tbl_id,
                         isColStatsReady: true,
                         colStats
                     }));

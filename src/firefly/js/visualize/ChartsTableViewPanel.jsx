@@ -111,8 +111,8 @@ class ChartsPanel extends React.Component {
                 // scatter plot
                 doUpdate = nextProps.tblPlotData !== this.props.tblPlotData ||
                     (nextProps.tableModel &&
-                    (nextProps.tableModel.highlightedRow !== this.props.tableModel.highlightedRow ||
-                     nextProps.tableModel.selectInfo !== this.props.tableModel.selectInfo));
+                    (nextProps.tableModel.highlightedRow !== get(this.props, 'tableModel.highlightedRow') ||
+                     nextProps.tableModel.selectInfo !== get(this.props, 'tableModel.selectInfo') ));
             } else {
                 // histogram
                 doUpdate = nextProps.tblHistogramData !== this.props.tblHistogramData;
@@ -590,7 +590,7 @@ export class ChartsTableViewPanel extends Component {
 
     getNextState() {
         const tblId = this.props.tblId || TblUtil.getActiveTableId();
-        const tableModel = TblUtil.findTblById(tblId);
+        const tableModel = TblUtil.getTblById(tblId);
         const tblStatsData = flux.getState()[TableStatsCntlr.TBLSTATS_DATA_KEY][tblId];
         const tblHistogramData = flux.getState()[HistogramCntlr.HISTOGRAM_DATA_KEY][tblId];
         const tblPlotData = flux.getState()[XYPlotCntlr.XYPLOT_DATA_KEY][tblId];

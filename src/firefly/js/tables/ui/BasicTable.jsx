@@ -26,7 +26,7 @@ export class BasicTable extends Component {
         }
         tbl_ui_id = tbl_ui_id || tbl_id + '-ui';
         this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, isLocal);
-        const uiState = TblUtil.findTableUiById(tbl_ui_id);
+        const uiState = TblUtil.getTableUiById(tbl_ui_id);
         this.state = uiState || {};
     }
 
@@ -53,7 +53,7 @@ export class BasicTable extends Component {
 
     storeUpdate() {
         const {tbl_ui_id} = this.tableConnector;
-        const uiState = TblUtil.findTableUiById(tbl_ui_id) || {columns: []};
+        const uiState = TblUtil.getTableUiById(tbl_ui_id) || {columns: []};
         this.setState(uiState);
     }
 
