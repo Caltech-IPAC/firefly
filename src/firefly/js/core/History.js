@@ -18,10 +18,11 @@ import {get, pick} from 'lodash';
 import {flux} from '../Firefly.js';
 import {TABLE_SEARCH} from '../tables/TablesCntlr.js';
 import {encodeUrl, parseUrl} from '../util/WebUtil.js';
+import {CH_ID} from '../core/messaging/WebSocketClient.js';
 import * as LO from './LayoutCntlr.js';
 
 const MAX_HISTORY_LENGTH = 20;
-const DEF_HANDLER = genericHandler(parseUrl(document.location).filename);
+const DEF_HANDLER = genericHandler(document.location);
 
 /**
  * a map of all actions that should be in history
@@ -49,11 +50,11 @@ window.onpopstate = function(event) {
 };
 
 export function getActionFromUrl() {
-    const urlObj = parseUrl(document.location);
-    if (urlObj.searchObject) {
-        const type = get(urlObj.pathAry, '0.a');
+    const urlInfo = parseUrl(document.location);
+    if (urlInfo.searchObject) {
+        const type = get(urlInfo, 'pathAry.0.a');
         if (type) {
-            return {type, payload: urlObj.searchObject};
+            return {type, payload: urlInfo.searchObject};
         }
     }
     return undefined;
@@ -69,11 +70,17 @@ export function recordHistory(action={}) {
     }
 }
 
+function genericHandler(url='') {
+    const urlInfo = parseUrl(url);
+    var filename = get(urlInfo,'filename', '');
+    var wsch = get(urlInfo, ['searchObject',CH_ID]);
+    wsch = get(urlInfo,'pathAry.0.wsch', wsch);
+    wsch = wsch ? `;wsch=${wsch}` : '';
 
-function genericHandler(baseUrl='') {
+    const staticPart = filename + wsch;
     return {
         actionToUrl: (action) => {
-            return encodeUrl(`${baseUrl};a=${action.type}?`, action.payload);
+            return encodeUrl(`${staticPart};a=${action.type}?`, action.payload);
         }
     };
 }

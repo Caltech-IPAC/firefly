@@ -1,8 +1,12 @@
-/**
- * Created by loi on 1/19/16.
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {setCookie} from '../../util/WebUtil.js';
+
+import {get, pickBy} from 'lodash';
+import {setCookie, parseUrl} from '../../util/WebUtil.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
+
+export const CH_ID = 'channelID';
 
 var nRetries = 0;
 var pinger;
@@ -15,9 +19,16 @@ const wsClient = {send: wsSend, addListener};
 export function wsConnect(baseUrl=getRootURL()) {
     baseUrl = baseUrl.replace('https:', 'wss:').replace('http:', 'ws:');
     connectBaseUrl = baseUrl;
-    console.log('Connecting to ' + baseUrl + '/sticky/firefly/events');
 
-    wsConn = new WebSocket(baseUrl + '/sticky/firefly/events');
+    const urlInfo = parseUrl(document.location);
+    var wsch = get(urlInfo,'searchObject.channelID');
+    wsch = get(urlInfo,'pathAry.0.wsch') || wsch;
+    wsch = wsch ? `?${CH_ID}=${wsch}` : '';
+
+    const connUrl = `${baseUrl}/sticky/firefly/events${wsch}`;
+    console.log('Connecting to ' + connUrl);
+
+    wsConn = new WebSocket(connUrl);
     wsConn.onopen = onOpen;
     wsConn.onerror = onError;
     wsConn.onclose = onClose;
@@ -37,7 +48,7 @@ function wsSend({name='ping', scope, dataType, data}) {
     if (name === 'ping') {
         wsConn.send('');
     } else {
-        const msg = JSON.stringify(arguments[0]);
+        const msg = JSON.stringify( pickBy({name, scope, dataType, data}));
         wsConn.send(msg);
     }
 
@@ -51,7 +62,7 @@ function wsSend({name='ping', scope, dataType, data}) {
  *                whenever an event matches its listener.
  */
 function addListener( {matches, onEvent} ) {
-    listenters.push(arguments[0]);
+    listenters.push({matches, onEvent});
 }
 
 function onOpen() {
