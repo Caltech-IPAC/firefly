@@ -8,7 +8,7 @@ import {parseWorldPt, makeProjectionPt} from './Point.js';
 
 
 
-export const makeProjection= function(gwtProjStr) {
+export const makeProjectionGWT= function(gwtProjStr) {
    if (!window.ffgwt) return null;
    var gwtProj= window.ffgwt.Visualize.ProjectionSerializer.deserializeProjection(gwtProjStr);
    return {

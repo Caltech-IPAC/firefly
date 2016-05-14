@@ -7,8 +7,10 @@
 import {RequestType} from './RequestType.js';
 import {isString} from 'lodash';
 import CoordinateSys from './CoordSys.js';
-import {makeProjection} from './Projection.js';
+import {makeProjectionGWT} from './Projection.js';
+import {makeProjection} from './projection/Projection.js';
 import PlotState from './PlotState.js';
+import {USE_GWT} from './VisUtil.js';
 
 
 
@@ -119,7 +121,7 @@ export const WebPlot= {
      */
     makeWebPlotData(plotId, wpInit, asOverlay= false) {
 
-        var projection= makeProjection(wpInit.projection);
+        const projection= USE_GWT ? makeProjectionGWT(wpInit.projection) : makeProjection(wpInit.projectionJson);
         var plotState= PlotState.makePlotStateWithJson(wpInit.plotState);
         var zf= plotState.getZoomLevel();
 
