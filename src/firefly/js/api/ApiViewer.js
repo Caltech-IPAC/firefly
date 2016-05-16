@@ -165,16 +165,15 @@ function doViewerOperation(channel,file,f) {
 
 
 
-function plotRemoteImage(request, channel, dispatch) {
+function plotRemoteImage(request, dispatch) {
 
     const testR= Array.isArray(request) ? request : [request];
     testR.forEach( (r) => {
         const badList= findInvalidWPRKeys(r);
-        if (badList.length) debug(`plot request as the following bad keys: ${badList}`);
+        if (badList.length) debug(`plot request has the following bad keys: ${badList}`);
     });
 
     request= confirmPlotRequest(request,{},'remoteGroup',makePlotId);
-
     dispatchPlotImage({wpRequest:request, dispatcher:dispatch});
 }
 

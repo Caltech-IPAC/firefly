@@ -177,7 +177,7 @@ function showImageInMultiViewer(llApi, targetDiv, request) {
     const testR= Array.isArray(request) ? request : [request];
     testR.forEach( (r) => {
         const badList= findInvalidWPRKeys(r);
-        if (badList.length) debug(`plot request as the following bad keys: ${badList}`);
+        if (badList.length) debug(`plot request has the following bad keys: ${badList}`);
     });
     request= confirmPlotRequest(request,globalImageViewDefParams,targetDiv,makePlotId);
 
