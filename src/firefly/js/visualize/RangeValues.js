@@ -237,7 +237,7 @@ export class RangeValues {
         return valid ? new RangeValues(...params) : null;
     }
 
-    serialize() {
+    toJSON() {
         return RangeValues.serializeRV(this);
     }
 
