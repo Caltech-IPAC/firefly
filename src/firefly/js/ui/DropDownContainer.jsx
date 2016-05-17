@@ -11,6 +11,7 @@ import {flux, getVersion} from '../Firefly.js';
 import {SearchPanel} from '../ui/SearchPanel.jsx';
 import {TestQueriesPanel} from '../ui/TestQueriesPanel.jsx';
 import {ImageSelectDropdown} from '../ui/ImageSelectDropdown.jsx';
+import {CatalogSelectViewPanel} from '../visualize/ui/CatalogSelectViewPanel.jsx';
 
 import './DropDownContainer.css';
 // import {deepDiff} from '../util/WebUtil.js';
@@ -19,7 +20,8 @@ import './DropDownContainer.css';
 const dropDownMap = {
     AnyDataSetSearch: <SearchPanel />,
     TestSearches: <TestQueriesPanel />,
-    ImageSelectDropDownCmd: <ImageSelectDropdown />
+    ImageSelectDropDownCmd: <ImageSelectDropdown />,
+    IrsaCatalogDropDown: <CatalogSelectViewPanel/>
 };
 
 

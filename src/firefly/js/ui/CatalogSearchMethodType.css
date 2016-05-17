@@ -1,0 +1,32 @@
+div.insearch {
+    height: 75px;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: flex-end;
+}
+div.intarget {
+    height: 75px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+div.size {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 30%;
+    border-bottom: 2px solid #c8c8c8;
+    height: 60px;
+}
+
+div.sizellipse {
+    height: 75px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+/*    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 30%;*/
+    border: solid #a3aeb9 1px;
+}

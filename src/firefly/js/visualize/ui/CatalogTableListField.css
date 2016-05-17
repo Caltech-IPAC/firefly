@@ -1,0 +1,60 @@
+/*Main parent*/
+div.catalogpanel {
+    display: flex;
+}
+
+/*left dropdown list and selectors*/
+div.ddselectors {
+    width: 70%;
+}
+
+/*right list of table with catalog names to be selected*/
+div.catalogtable {
+    /*flex: 1;*/
+    overflow: auto;
+    width: 600px;
+    height: 400px;
+    /*!* Grow to rest of container *!*/
+}
+
+div.intarget {
+    height: 75px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+div.size {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 30%;
+    border: solid #a3aeb9 1px;
+    height: 60px;
+}
+
+/*
+
+<td><span style="font-weight:bold;">AllWISE Atlas Metadata Table</span><br
+<span class="marked-text" style="font-size:80%;">Rows: </span><span class="normal-text" style="font-size:80%;">18,240</span>
+<span class="marked-text" style="font-size:80%;">Cols: </span><span class="normal-text" style="font-size:80%;">349</span
+<span class="href-item font-size-eighty-percent" style="font-size:80%;"><a href="http://irsa.ipac.caltech.edu/Missions/wise.html" target="info">info</a></span>
+<span class="href-item font-size-eighty-percent" style="font-size:80%;"><a href="http://wise2.ipac.caltech.edu/docs/release/allwise/expsup/sec4_1ci.html" target="Column Def">Column Def</a></span>
+</td>
+*/
+ul li {
+    list-style-type: none;
+}
+
+li.marked-text {
+
+     font-size:80%;
+
+ }
+
+li.marked-text {
+    font-family: tahoma, arial, helvetica, sans-serif;
+    color: #49a344;
+}
+
+td {
+    font-size:80%;
+}
