@@ -3,6 +3,7 @@
  */
 
 import React, {Component,PropTypes} from 'react';
+import sCompare from 'react-addons-shallow-compare';
 import {isEmpty, get} from 'lodash';
 import {fieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
 //import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
@@ -108,10 +109,8 @@ export class CatalogTableView extends Component {
         var items = data.map((o, index) => {
 
 
-            let clicked = false;
-            if (indexClicked === index) {
-                clicked = true;
-            }
+            const clicked = indexClicked === index;
+
             return (
 
                 <CatalogTableItem
@@ -194,6 +193,10 @@ class CatalogTableItem extends Component {
      */
     constructor(props) {
         super(props);
+    }
+
+    shouldComponentUpdate(np, ns) {
+        return sCompare(this, np, ns);
     }
 
     render() {

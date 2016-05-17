@@ -193,12 +193,12 @@ function sizeArea(searchType) {
         return (
             <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
                 <InputAreaFieldConnected fieldKey='polygoncoords'
-                                wrapperStyle={{display:'flex', flexDirection:'row', alignItems:'center' }}
-                                initialState={{
+                                         wrapperStyle={{display:'flex', flexDirection:'row', alignItems:'center' }}
+                                         initialState={{
                                                tooltip:'Enter polygon coordinates search'
                                             }}
-                                label='Coordinates:'
-                                tooltip='Enter polygon coordinates search'
+                                         label='Coordinates:'
+                                         tooltip='Enter polygon coordinates search'
                 />
                 <ul>
                     <li>- Each vertex is defined by a J2000 RA and Dec position pair</li>
@@ -220,9 +220,10 @@ function sizeArea(searchType) {
 }
 
 function renderTargetPanel(groupKey, searchType) {
-    const visible = (searchType === SpatialMethod.Cone.value || searchType === SpatialMethod.Box.value || searchType === SpatialMethod.Elliptical.value) && searchType != SpatialMethod.get('Multi-Object').value;
+    const visible = searchType === SpatialMethod.Cone.value || searchType === SpatialMethod.Box.value || searchType === SpatialMethod.Elliptical.value;
+
     return (
-        <div className="intarget" style={{visibility: visible ? 'visible' : 'hidden'}}>
+        visible && <div className="intarget">
             <TargetPanel groupKey={groupKey}/>
             <ListBoxInputField
                 fieldKey='targettry'

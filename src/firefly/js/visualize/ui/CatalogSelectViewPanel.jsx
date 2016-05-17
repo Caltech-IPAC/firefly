@@ -3,12 +3,13 @@
  */
 
 import React, {Component, PropTypes} from 'react';
+import sCompare from 'react-addons-shallow-compare';
 import FormPanel from '../../ui/FormPanel.jsx';
 import { get, merge, isEmpty} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {TableRequest} from '../../tables/TableRequest';
-import * as TblUtil from '../../tables/TableUtil.js';
+import {doFetchTable, uniqueTblUiGid} from '../../tables/TableUtil.js';
 import {CatalogTableListField} from './CatalogTableListField.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
@@ -24,7 +25,7 @@ import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {parseWorldPt} from '../../visualize/Point.js';
 import {VoSearchPanel} from '../../ui/VoSearchPanel.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
-import {convertAngle} from '../VisUtil';
+import {convertAngle} from '../VisUtil.js';
 
 import './CatalogTableListField.css';
 
@@ -38,7 +39,7 @@ const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height: 40,
 
 const dropdownName = 'IrsaCatalogDropDown';
 
-const initRadiusArcSec = parseFloat(500 / 3600).toString();
+const initRadiusArcSec = (500 / 3600) + '';
 
 /**
  * Globally scoped here, master table, columns object
@@ -65,6 +66,10 @@ export class CatalogSelectViewPanel extends Component {
                 this.setState({fields});
             }
         });
+    }
+
+    shouldComponentUpdate(np, ns) {
+        return sCompare(this, np, ns);
     }
 
     render() {
@@ -112,15 +117,15 @@ function hideSearchPanel() {
 function doCatalog(request) {
 
     const conesize = convertAngle('deg', 'arcsec', request.conesize);
-    var title = request.project + '-' + request.cattable + ' (' + request.spatial;
+    var title = `${request.project}-${request.cattable} (${request.spatial}`;
     if (request.spatial === SpatialMethod.Box.value || request.spatial === SpatialMethod.Cone.value || request.spatial === SpatialMethod.Elliptical.value) {
-        title += ':' + conesize;
+        title += ':' + conesize + '\'\'';
     }
     title += ')';
     var tReq = TableRequest.newInstance({
 
         id: 'GatorQuery',
-        title: title,
+        title,
         SearchMethod: request.spatial,
         catalog: request.cattable,
         RequestedDataSet: request.catalog,
@@ -146,16 +151,15 @@ function doCatalog(request) {
         || request.spatial === SpatialMethod.Elliptical.value) {
         merge(tReq, {[ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT]});
         if (request.spatial === SpatialMethod.Box.value) {
-            merge(tReq, {'size': conesize});
-        }else{
-            merge(tReq, {'radius': conesize});
+            tReq.size = conesize;
+        } else {
+            tReq.radius = conesize;
         }
     }
 
     if (request.spatial === SpatialMethod.Polygon.value) {
-        const p = escape(request.polygoncoords);//encodeURI
-        encodeURI(request.polygoncoords);
-        merge(tReq, {'polygon': p});
+        const p = encodeURIComponent(request.polygoncoords);//encodeURI
+        tReq.polygon = p;
     }
 
     dispatchTableSearch(tReq);
@@ -201,9 +205,9 @@ class CatalogSelectView extends Component {
     constructor(props) {
         super(props);
         if (!isEmpty(catmaster)) {
-            this.state = {...this.state, master: {catmaster, cols}};
+            this.state = {master: {catmaster, cols}};
         } else {
-            this.state = {...this.state, master: {}};
+            this.state = {master: {}};
         }
     }
 
@@ -224,7 +228,7 @@ class CatalogSelectView extends Component {
     loadMasterCatalogTable() {
 
         const request = {id: 'irsaCatalogMasterTable'}; //Fetch master table
-        TblUtil.doFetchTable(request).then((tableModel) => {
+        doFetchTable(request).then((tableModel) => {
 
             var data = tableModel.tableData.data;
 
@@ -312,7 +316,7 @@ class CatalogSelectView extends Component {
      * @returns {Void} set the state to include master table
      */
     setMaster(master = {}) {
-        this.setState(...this.state, {master});
+        this.setState({master});
     }
 
     render() {
@@ -367,83 +371,81 @@ class CatalogSelectView extends Component {
 var userChangeDispatch = function () {
 
     return (inFields, action) => {
-        if (!inFields) {
-            return fieldInit();
-        } else {
-            switch (action.type) {
-                // update the size field in case tab selection is changed
-                case FieldGroupCntlr.VALUE_CHANGE:
-                    if (action.payload.fieldKey === 'targettry') {
 
-                        break;
+        if (!inFields) return fieldInit();
 
-                    }
-                    const valP = inFields.project.value;
-                    let valC = inFields.catalog.value;
-                    const optList = getSubProjectOptions(catmaster, valP);
-                    if (action.payload.fieldKey === 'project') {
-                        valC = optList[0].value;//If project has changed, initiialise to the first subproject found
-                        inFields = updateMerge(inFields, 'catalog', {
-                            value: valC
-                        });
-                    }
-                    inFields = updateMerge(inFields, 'tableview', {
-                        selProj: valP,
-                        selCat: valC
+        switch (action.type) {
+            // update the size field in case tab selection is changed
+            case FieldGroupCntlr.VALUE_CHANGE:
+
+                const {fieldKey} = action.payload;
+
+                if (fieldKey === 'targettry') {
+
+                    break;
+
+                }
+                const valP = inFields.project.value;
+                let valC = inFields.catalog.value;
+                const optList = getSubProjectOptions(catmaster, valP);
+                if (fieldKey === 'project') {
+                    valC = optList[0].value;//If project has changed, initiialise to the first subproject found
+                    inFields = updateMerge(inFields, 'catalog', {
+                        value: valC
+                    });
+                }
+                inFields = updateMerge(inFields, 'tableview', {
+                    selProj: valP,
+                    selCat: valC
+                });
+
+                // Reinit the table and catalog value:
+                const catTable = getCatalogOptions(catmaster, valP, valC).option;
+
+                let sizeFactor = 1;
+                const method = get(inFields, 'spatial.value', SpatialMethod.Cone.value);
+                if (method === SpatialMethod.Box.value) {
+                    sizeFactor = 2;
+                }
+
+                //No need to act on other fields if user change user wpt or spatial method
+                if (fieldKey === 'UserTargetWorldPt'
+                    || fieldKey === 'conesize') {
+
+                    break;
+
+                }
+                let idx = get(inFields, 'cattable.indexClicked', 0);//Get current value
+                if (fieldKey === 'project'
+                    || fieldKey === 'catalog') {
+                    idx = 0; // reset to first item of the catalog list
+                }
+
+                // User clicked on the table to select a catalog and needs to propagte the index in order
+                // to get the item highlighted
+                if (fieldKey === 'cattable') {
+                    idx = catTable.findIndex((e) => {
+                        return e.value === action.payload.value;
                     });
 
-                    // Reinit the table and catalog value:
-                    const catTable = getCatalogOptions(catmaster, valP, valC).option;
+                }
+                const radius = parseFloat(catTable[idx].cat[7]);
 
-                    let sizeFactor = 1;
-                    const method = get(inFields, 'spatial.value', SpatialMethod.Cone.value);
-                    if (method === SpatialMethod.Box.value) {
-                        sizeFactor = 2;
-                    }
-
-                    //No need to act on other fields if user change user wpt or spatial method
-                    if (action.payload.fieldKey === 'UserTargetWorldPt'
-                        || action.payload.fieldKey === 'conesize') {
-
-                        break;
-
-                    }
-                    let idx = get(inFields, 'cattable.indexClicked', 0);//Get current value
-                    if (action.payload.fieldKey === 'project'
-                        || action.payload.fieldKey === 'catalog') {
-                        idx = 0; // reset to first item of the catalog list
-                    }
-
-                    // User clicked on the table to select a catalog and needs to propagte the index in order
-                    // to get the item highlighted
-                    if (action.payload.fieldKey === 'cattable') {
-                        idx = catTable.findIndex((e) => {
-                            return e.value === action.payload.value;
-                        });
-
-                    }
-                    const radius = parseFloat(catTable[idx].cat[7]);
-
-                    inFields = updateMerge(inFields, 'cattable', {
-                        groupKey: gkey,
-                        fieldKey: 'cattable',
-                        indexClicked: idx,
-                        value: catTable[idx].value
-                    });
-                    inFields = updateMerge(inFields, 'conesize', {
-                        groupKey: gkey,
-                        fieldKey: 'conesize',
-                        max: sizeFactor * radius / 3600
-                    });
-                    break;
-                case FieldGroupCntlr.CHILD_GROUP_CHANGE:
-                    console.log('Child group change called...');
-                    break;
-                default:
-                    break;
-            }
-            return inFields;
+                inFields = updateMerge(inFields, 'cattable', {
+                    indexClicked: idx,
+                    value: catTable[idx].value
+                });
+                inFields = updateMerge(inFields, 'conesize', {
+                    max: sizeFactor * radius / 3600
+                });
+                break;
+            case FieldGroupCntlr.CHILD_GROUP_CHANGE:
+                console.log('Child group change called...');
+                break;
+            default:
+                break;
         }
+        return inFields;
     };
 };
 
@@ -492,6 +494,10 @@ class CatalogDDList extends Component {
     constructor(props) {
         super(props);
         this.state = Object.assign({...this.state}, {...this.props}, {optList: ''});
+    }
+
+    shouldComponentUpdate(np, ns) {
+        return sCompare(this, np, ns);
     }
 
     render() {
@@ -577,7 +583,7 @@ CatalogSelectViewPanel.propTypes = {
 
 CatalogSelectViewPanel.defaultProps = {
     name: dropdownName,
-    resultId: TblUtil.uniqueTblUiGid()
+    resultId: uniqueTblUiGid()
 };
 
 /*
