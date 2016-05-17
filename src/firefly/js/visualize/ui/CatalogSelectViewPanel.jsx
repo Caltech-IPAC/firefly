@@ -117,32 +117,40 @@ function hideSearchPanel() {
 function doCatalog(request) {
 
     const conesize = convertAngle('deg', 'arcsec', request.conesize);
-
-    var tReq = TableRequest.newInstance({
-        SearchMethod: request.spatial,
-        catalog: request.cattable,
-        RequestedDataSet: request.catalog,
-        use: 'catalog_overlay',
-        catalogProject: request.project
-
-    });
-
     var title = `${request.project}-${request.cattable}`;
-
+    var tReq = {};
+    var id = '';
     if (request.spatial === SpatialMethod.get('Multi-Object').value) {
-        tReq.id = 'GatorQuery';
-        tReq.source = request.fileUpload;
-        tReq.filename = request.fileUpload;
-        tReq.radius = conesize;
-        tReq.title = title;
+        id = 'GatorQuery';
+        var filename = request.fileUpload;
+        var radius = conesize;
+        tReq = TableRequest.newInstance({
+            id,
+            filename,
+            radius,
+            SearchMethod: request.spatial,
+            title,
+            catalog: request.cattable,
+            RequestedDataSet: request.catalog,
+            use: 'catalog_overlay',
+            catalogProject: request.project
+        });
     } else {
-        tReq.id = 'GatorQuery';
+        id = 'GatorQuery';
         title += ` (${request.spatial}`;
         if (request.spatial === SpatialMethod.Box.value || request.spatial === SpatialMethod.Cone.value || request.spatial === SpatialMethod.Elliptical.value) {
             title += ':' + conesize + '\'\'';
         }
         title += ')';
-        tReq.title = title;
+        tReq = TableRequest.newInstance({
+            id,
+            SearchMethod: request.spatial,
+            title,
+            catalog: request.cattable,
+            RequestedDataSet: request.catalog,
+            use: 'catalog_overlay',
+            catalogProject: request.project
+        });
     }
 
     // change and merge others parameters in request if elliptical
@@ -194,9 +202,8 @@ function doVoSearch(request) {
 function doLoadTable(request) {
     var tReq = TableRequest.newInstance({
         id: 'userCatalogFromFile',
-        filePath : request.fileUpload,
+        filePath: request.fileUpload,
         title: 'Table Upload',
-        SearchMethod: request.spatial,
         use: 'catalog_overlay'
     });
     dispatchTableSearch(tReq);
