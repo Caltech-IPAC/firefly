@@ -142,11 +142,13 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.VIS_PUSH_XYPLOT,           new PushCommands.PushXYPlot());
         _cmdMap.put(ServerParams.VIS_PUSH_EXT,              new PushCommands.PushExtension());
         _cmdMap.put(ServerParams.VIS_PUSH_ALIVE_CHECK,      new PushCommands.PushAliveCheck());
+        _cmdMap.put(ServerParams.VIS_PUSH_ALIVE_COUNT,      new PushCommands.PushAliveCount());
         _cmdMap.put(ServerParams.VIS_PUSH_PAN,              new PushCommands.PushPan());
         _cmdMap.put(ServerParams.VIS_PUSH_ZOOM,             new PushCommands.PushZoom());
         _cmdMap.put(ServerParams.VIS_PUSH_RANGE_VALUES,     new PushCommands.PushRangeValues());
         _cmdMap.put(ServerParams.VIS_PUSH_ADD_MASK,         new PushCommands.PushAddMask());
         _cmdMap.put(ServerParams.VIS_PUSH_REMOVE_MASK,      new PushCommands.PushRemoveMask());
+        _cmdMap.put(ServerParams.VIS_PUSH_ACTION,           new PushCommands.PushAction());
 //        _cmdMap.put(ServerParams.VIS_QUERY_ACTION,      new PushCommands.QueryAction());
 //        _cmdMap.put(ServerParams.VIS_PUSH_WPR,           new PushCommands.PushFITS());
 

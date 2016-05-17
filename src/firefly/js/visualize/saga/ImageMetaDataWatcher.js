@@ -203,19 +203,21 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
 
     // clean up unused Ids
     const cleanUpIds= difference(inViewerIds,plottingIds);
-    cleanUpIds.forEach( (plotId) => dispatchDeletePlotView(plotId));
+    cleanUpIds.forEach( (plotId) => dispatchDeletePlotView({plotId}));
 
 
     // prepare stand plot
-    const plotReqAry= makePlottingList(reqAry);
-    if (!isEmpty(plotReqAry)) dispatchPlotGroup(plotReqAry);
+    const wpRequestAry= makePlottingList(reqAry);
+    if (!isEmpty(wpRequestAry)) dispatchPlotGroup({wpRequestAry});
     if (activeId) dispatchChangeActivePlotView(activeId);
 
 
     // prepare three color Plot
     if (plottingThree)  {
         const plotThreeReqAry= make3ColorPlottingList(threeReqAry);
-        if (!isEmpty(plotThreeReqAry)) dispatchPlotImage(threeCPlotId,plotThreeReqAry,true);
+        if (!isEmpty(plotThreeReqAry)) {
+            dispatchPlotImage({plotId:threeCPlotId, wpRequest:plotThreeReqAry, threeColor:true});
+        }
     }
     
 }

@@ -7,7 +7,7 @@ import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import {get,isEmpty} from 'lodash';
 import {isElement,isString} from 'lodash';
-import {logError} from '../util/WebUtil.js';
+import {logErrorWithPrefix} from '../util/WebUtil.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {take,race,call} from 'redux-saga/effects';
 
@@ -35,8 +35,8 @@ export const isDebug = () => get(window, 'firefly.debug', false);
  * @param {String|Error} msg any number of messages
  */
 export function debug(...msg) {
-    if (!isEmpty(msg) && isDebug()) {
-        logError(...msg);
+    if (isDebug() && !isEmpty(msg)) {
+        logErrorWithPrefix('Firefly:', ...msg);
     }
 }
 

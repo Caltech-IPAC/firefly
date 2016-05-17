@@ -89,7 +89,6 @@ export function makePlotView(plotId, req, pvOptions) {
             acceptAutoLayers : true,
             // many options -- todo figure out how to set and change, some are set by request, how about the others?
             workingMsg      : DEF_WORKING_MSG,
-            removeOldPlot   : true, // if false keep the last plot for flipping, if true remove the old one before plotting, todo
             hasNewPlotContainer: req.getHasNewPlotContainer(), // if image selection dialog come up, allow to create a new MiniPlotWidth, todo control with MenuItemKeys
             saveCorners     : req.getSaveCorners(), // save the four corners of the plot to the ActiveTarget singleton, todo
             turnOnGridAfterPlot: req.getGridOn(), // turn on the grid after plot, todo
@@ -243,6 +242,8 @@ function updatePlotViewScrollXY(plotView,newScrollPt) {
     var {scrollWidth,scrollHeight}= getScrollSize(plotView);
     if (!plot || !scrollWidth || !scrollHeight) return plotView;
 
+    const cc= CysConverter.make(plot);
+    newScrollPt= cc.getScreenCoords(newScrollPt);
     var {x:newSx,y:newSy}= newScrollPt;
     var {width:oldVPW, height:oldVPH} = plot.viewPort.dim;
     //if (newSx===oldSx && newSy===oldSy && oldVPW && oldVPH) return plotView;
@@ -256,7 +257,7 @@ function updatePlotViewScrollXY(plotView,newScrollPt) {
     }
 
     if (isRecomputeViewPortNecessary(newSx,newSy,scrollWidth,scrollHeight,plot.viewPort) ) {
-        var cp= CCUtil.getScreenCoords(plot,findCurrentCenterPoint(plotView,newSx,newSy));
+        var cp= cc.getScreenCoords(findCurrentCenterPoint(plotView,newSx,newSy));
         var viewPort= computeViewPort(plot,scrollWidth,scrollHeight,cp);
         if (isEqual(viewPort,plot.viewPort) && !newPlotView) return plotView;
 

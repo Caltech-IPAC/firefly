@@ -127,7 +127,7 @@ function scrollPlot(pt,pv,width,height) {
     var spt= cc.getScreenCoords(ipt);
 
 
-    dispatchProcessScroll(pv.plotId,spt);
+    dispatchProcessScroll({plotId:pv.plotId,scrollPt:spt});
     //_pv.fireMouseMove(spt,null); ===>todo: dispatch a mouse readout action here
 }
 

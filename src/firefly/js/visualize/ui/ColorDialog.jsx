@@ -186,7 +186,7 @@ function replotStandard(request) {
     var serRv=  makeSerializedRv(request);
     const stretchData= [{ band : Band.NO_BAND.key, rv :  serRv, bandVisible: true }];
     const pv= getActivePlotView(visRoot());
-    if (pv) dispatchStretchChange(pv.plotId,stretchData);
+    if (pv) dispatchStretchChange({plotId:pv.plotId,stretchData});
 }
 
 /**
@@ -208,7 +208,7 @@ function replot3Color(redReq,greenReq,blueReq,activeTab) {
     if (blueReq)  stretchData.push({band : Band.BLUE.key, rv : makeSerializedRv(blueReq) , bandVisible: true });
 
     const pv= getActivePlotView(visRoot());
-    if (pv) dispatchStretchChange(pv.plotId,stretchData);
+    if (pv) dispatchStretchChange({plotId:pv.plotId,stretchData});
 }
 
 

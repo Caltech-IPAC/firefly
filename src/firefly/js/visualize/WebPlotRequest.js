@@ -4,6 +4,7 @@
  * Time: 9:18:47 AM
  */
 /* eslint prefer-template:0 */
+import {isString, isPlainObject, isArray} from 'lodash';
 import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
 import {RequestType} from './RequestType.js';
 import {ZoomType} from './ZoomType.js';
@@ -15,7 +16,8 @@ import join from 'underscore.string/join';
 import {RangeValues} from './RangeValues.js';
 
 
-export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'NONE']);
+export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'NONE'],
+                                              { ignoreCase: true });
 export const TitleOptions= new Enum([
     'NONE',  // use what it in the title
     'PLOT_DESC', // use the plot description key
@@ -23,7 +25,7 @@ export const TitleOptions= new Enum([
     'HEADER_KEY', // use the header value
     'PLOT_DESC_PLUS', // ??
     'SERVICE_OBS_DATE'
-]);
+], { ignoreCase: true });
 
 export const AnnotationOps= new Enum([
     'INLINE',    //default inline title full title and tools
@@ -33,19 +35,19 @@ export const AnnotationOps= new Enum([
     'TITLE_BAR_BRIEF', // title bar brief title, no tools
     'TITLE_BAR_BRIEF_TOOLS', // title bar brief with w/ tools
     'TITLE_BAR_BRIEF_CHECK_BOX' // title bar brief title with a check box (used in planck)
-]);
+], { ignoreCase: true });
 
 
 
 export const ExpandedTitleOptions= new Enum([ 'REPLACE',// use expanded title when expanded
                                      'PREFIX',// use expanded title as prefix to title
                                      'SUFFIX'// use expanded title as suffix to title
-                                   ]);
-export const GridOnStatus= new Enum(['FALSE','TRUE','TRUE_LABELS_FALSE']);
+                                   ], { ignoreCase: true });
+export const GridOnStatus= new Enum(['FALSE','TRUE','TRUE_LABELS_FALSE'], { ignoreCase: true });
 
 export const DEFAULT_THUMBNAIL_SIZE= 70;
 const WEB_PLOT_REQUEST_CLASS= 'WebPlotRequest';
-const Order= new Enum(['FLIP_Y', 'FLIP_X', 'ROTATE', 'POST_CROP', 'POST_CROP_AND_CENTER']);
+const Order= new Enum(['FLIP_Y', 'FLIP_X', 'ROTATE', 'POST_CROP', 'POST_CROP_AND_CENTER'], { ignoreCase: true });
 
 //keys
 // note- if you add a new key make sure you put it in the _allKeys array
@@ -141,32 +143,8 @@ const C= {
 
 };
 
-const allKeys= Object.keys(C).map( k => C[k]);
+const allKeys= new Enum(Object.keys(C).map( (k) => C[k]), { ignoreCase: true });
 
-// const allKeys =
-//         [C.FILE, C.WORLD_PT, C.URLKEY, C.SIZE_IN_DEG, C.SURVEY_KEY,
-//          C.SURVEY_KEY_ALT, C.SURVEY_KEY_BAND, C.TYPE, C.ZOOM_TYPE,
-//          C.SERVICE, C.USER_DESC, C.INIT_ZOOM_LEVEL,
-//          C.TITLE, C.ROTATE_NORTH, C.ROTATE_NORTH_TYPE, C.ROTATE, C.ROTATION_ANGLE,
-//          C.HEADER_KEY_FOR_TITLE,
-//          C.INIT_RANGE_VALUES, C.INIT_COLOR_TABLE, C.MULTI_IMAGE_FITS, C.MULTI_IMAGE_IDX,
-//          C.ZOOM_TO_WIDTH, C.ZOOM_TO_HEIGHT,
-//          C.POST_CROP, C.POST_CROP_AND_CENTER, C.FLIP_X, C.FLIP_Y,
-//          C.HAS_MAX_ZOOM_LEVEL,
-//          C.POST_CROP_AND_CENTER_TYPE, C.CROP_PT1, C.CROP_PT2, C.CROP_WORLD_PT1, C.CROP_WORLD_PT2,
-//          C.ZOOM_ARCSEC_PER_SCREEN_PIX, C.CONTINUE_ON_FAIL, C.OBJECT_NAME, C.RESOLVER,
-//          C.BLANK_ARCSEC_PER_PIX, C.BLANK_PLOT_WIDTH, C.BLANK_PLOT_HEIGHT,
-//
-//          C.UNIQUE_KEY,
-//          C.PLOT_TO_DIV, C.PREFERENCE_COLOR_KEY, C.PREFERENCE_ZOOM_KEY,
-//          C.ROTATE_NORTH_SUGGESTION, C.SAVE_CORNERS,
-//          C.SHOW_SCROLL_BARS, C.EXPANDED_TITLE, C.PLOT_DESC_APPEND,
-//          C.ALLOW_IMAGE_SELECTION, C.HAS_NEW_PLOT_CONTAINER,
-//          C.GRID_ON, C.TITLE_OPTIONS, C.EXPANDED_TITLE_OPTIONS,
-//          C.POST_TITLE, C.PRE_TITLE, C.OVERLAY_POSITION,
-//          C.MINIMAL_READOUT, C.PLOT_GROUP_ID, C.GROUP_LOCKED, C.DRAWING_SUB_GROUP_ID, C.RELATED_TABLE_ROW,
-//          C.DOWNLOAD_FILENAME_ROOT, C.PLOT_ID
-//         ];
 
 const clientSideKeys =
         [C.UNIQUE_KEY,
@@ -220,22 +198,28 @@ export class WebPlotRequest extends ServerRequest {
 //======================================================================
     
     static makeFromObj(obj) {
-        const wpr= new WebPlotRequest();
-        wpr.setParams(cleanupObj(obj));
-
-
-        var typeGuess;
-        if (obj[C.FILE]) typeGuess= RequestType.FILE;
-        if (obj[C.URL]) typeGuess= RequestType.URL;
-        if (obj[C.SURVEY_KEY]) typeGuess= RequestType.SERVICE;
-
-
-        if (obj[C.BLANK_ARCSEC_PER_PIX] && obj[C.BLANK_PLOT_WIDTH] &&
-            obj[C.BLANK_PLOT_HEIGHT]) {
-            typeGuess= RequestType.BLANK;
+        if (isString(obj)) {
+            return WebPlotRequest.parse(obj);
         }
-        if (typeGuess && !wpr.params[C.SERVICE]) wpr.setServiceType(typeGuess);
-        return wpr;
+        else if (isPlainObject(obj)) {
+            const wpr= new WebPlotRequest();
+            wpr.setParams(cleanupObj(obj));
+
+
+            var typeGuess;
+            if (obj[C.FILE]) typeGuess= RequestType.FILE;
+            if (obj[C.URL]) typeGuess= RequestType.URL;
+            if (obj[C.SURVEY_KEY]) typeGuess= RequestType.SERVICE;
+
+
+            if (obj[C.BLANK_ARCSEC_PER_PIX] && obj[C.BLANK_PLOT_WIDTH] &&
+                obj[C.BLANK_PLOT_HEIGHT]) {
+                typeGuess= RequestType.BLANK;
+            }
+            if (typeGuess && !wpr.params[C.SERVICE]) wpr.setServiceType(typeGuess);
+            return wpr;
+        }
+        return obj;
     }
 
     /**
@@ -1408,20 +1392,67 @@ export class WebPlotRequest extends ServerRequest {
 export const WPConst= C;
 export default WebPlotRequest;
 
-function findKey(key) {
-    key= key.toLowerCase();
-    return allKeys.find( (k) => k.toLowerCase() ===key);
-}
+// function findKey(key) {
+//     key= key.toLowerCase();
+//     return allKeys.find( (k) => k.toLowerCase() ===key);
+// }
 
 
 function cleanupObj(r) {
     return Object.keys(r).reduce( (obj,k) => {
-        const newKey= findKey(k);
+        // const newKey= findKey(k);
+        const newKeyEnum= allKeys.get(k);
+        const newKey= newKeyEnum ? newKeyEnum.toString() : null;
         if (newKey) obj[newKey]= r[k];
         return obj;
     },{});
 }
 
+/**
+ * find all the invalid WebPlotRequest keys.  
+ * @param {Object} r an object literal to evaluate
+ * @return {String[]} an array of invalid keys
+ */
+export function findInvalidWPRKeys(r) {
+    return Object.keys(r).filter( (k) => !Boolean(allKeys.get(k)));
+}
 
+
+/**
+ * take a plain object plot request and clean it up has a minimum required 
+ * to be valid
+ * @param {Object|Array} request
+ * @param global
+ * @param fallbackGroupId
+ * @param {Function} makePlotId make a plot id
+ * @return {*}
+ */
+export function confirmPlotRequest(request,global,fallbackGroupId,makePlotId) {
+    if (isArray(request)) {
+        var locked= true;
+        const idx= request.findIndex( (r) => r.plotId);
+
+        const plotId= (idx>=0) ? request[idx].plotId : makePlotId();
+        var plotGroupId;
+
+        if (idx>=0  && request[idx].plotGroupId) {
+            plotGroupId= request[idx].plotGroupId;
+            locked= true;
+        }
+        else {
+            plotGroupId= fallbackGroupId;
+            locked= false;
+        }
+
+        return request.map( (r) => Object.assign({},global,r,{plotId,plotGroupId,GroupLocked:locked}));
+    }
+    else {
+        const r= Object.assign({}, global, request);
+        if (!r.plotId) r.plotId= makePlotId();
+        if (!r.plotGroupId) r.plotGroupId= fallbackGroupId;
+        if (r.plotGroupId===fallbackGroupId) r.GroupLocked= false;
+        return r;
+    }
+}
 
 

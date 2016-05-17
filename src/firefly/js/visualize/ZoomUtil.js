@@ -5,7 +5,6 @@
 
 import Enum from 'enum';
 import numeral from 'numeral';
-import {flux} from '../Firefly.js';
 import {logError} from '../util/WebUtil.js';
 import {PlotAttribute} from './WebPlot.js';
 import ImagePlotCntlr, {visRoot,ActionScope} from './ImagePlotCntlr.js';
@@ -20,7 +19,7 @@ export const levels= [ .03125, .0625, .125,.25,.5, .75, 1,2,3, 4,5, 6,
 
 const zoomMax= levels[levels.length-1];
 
-export const UserZoomTypes= new Enum(['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL']);
+export const UserZoomTypes= new Enum(['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL'], { ignoreCase: true });
 const ZOOM_WAIT_MS= 2000; // 2 seconds
 
 var zoomTimers= []; // todo: should I use a map? should it be in the redux store?
@@ -31,33 +30,34 @@ var zoomTimers= []; // todo: should I use a map? should it be in the redux store
 
 
 /**
- * zoom Action creator, todo: zoomScope, fit, fill, and much, much more
+ * zoom Action creator,
  * @param rawAction
  * @return {Function}
  */
 export function zoomActionCreator(rawAction) {
     return (dispatcher) => {
-        var {plotId,userZoomType,zoomLockingEnabled, forceDelay, actionScope}= rawAction.payload;
+        var {plotId,userZoomType,zoomLockingEnabled= false,
+             forceDelay=false, level= 1, actionScope= ActionScope.GROUP}= rawAction.payload;
+        userZoomType= UserZoomTypes.get(userZoomType);
+        actionScope= ActionScope.get(actionScope);
         var pv= getPlotViewById(visRoot(),plotId);
         if (!pv) return;
 
 
-        var level;
         var isFullScreen;
         var useDelay;
-        var continueZoom= false;
+        var goodParams= false;
         var plot= primePlot(pv);
-        if ([UserZoomTypes.UP,UserZoomTypes.DOWN,UserZoomTypes.ONE].includes(userZoomType)) {
+        if (userZoomType===UserZoomTypes.LEVEL) { //payload.level is only used in this mode, otherwise it is computed
+            isFullScreen= false;
+            useDelay= false;
+            goodParams= true;
+        }
+        else if ([UserZoomTypes.UP,UserZoomTypes.DOWN,UserZoomTypes.ONE].includes(userZoomType)) {
             level= getNextZoomLevel(plot.zoomFactor,userZoomType);
             isFullScreen= false;
             useDelay= true; //todo
-            continueZoom= true;
-        }
-        else if (userZoomType===UserZoomTypes.LEVEL) {
-            level= rawAction.payload.level || 1;
-            isFullScreen= false;
-            useDelay= false;
-            continueZoom= true;
+            goodParams= true;
         }
         else {
             var dim= pv.viewDim;
@@ -71,7 +71,7 @@ export function zoomActionCreator(rawAction) {
                 else if (userZoomType===UserZoomTypes.FILL) {
                     level = getEstimatedFullZoomFactor(plot, dim, VisUtil.FullType.ONLY_WIDTH);
                 }
-                continueZoom= true;
+                goodParams= true;
             }
 
         }
@@ -82,7 +82,7 @@ export function zoomActionCreator(rawAction) {
         }
 
 
-        if (continueZoom) {
+        if (goodParams) {
             doZoom(dispatcher,plotId,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
             var matchFunc= makeZoomLevelMatcher(dispatcher, pv,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
             if (actionScope===ActionScope.GROUP) {
@@ -90,7 +90,8 @@ export function zoomActionCreator(rawAction) {
             }
         }
         else {
-            dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_FAIL, payload: {plotId, zoomLevel:level, error:'zoom parameters wrong'} } );
+            dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_FAIL,
+                          payload: {plotId, zoomLevel:level, error:'zoom parameters wrong'} } );
         }
     };
 
@@ -177,7 +178,6 @@ function zoomPlotIdNow(dispatcher,plotId,zoomLevel,isFullScreen) {
  * @param plotId
  * @param zoomLevel
  * @param result
- * @param {object} result
  */
 function processZoomSuccess(dispatcher, plotId, zoomLevel, result) {
     var successSent= false;
@@ -232,7 +232,7 @@ export function getNextZoomLevel(currLevel, zoomType) {
         }
     }
     else {
-        console.log('unsupported zoomType');
+        logError('unsupported zoomType');
     }
     return newLevel;
 }

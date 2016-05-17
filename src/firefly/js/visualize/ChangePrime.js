@@ -107,7 +107,7 @@ function* zoomCompleteSega({plotId,scrollToImagePt},dispatch,getState) {
 function changeScrollToImagePt(visRoot, plotId, scrollToImagePt) {
     const pv= getPlotViewById(visRoot,plotId);
     const cc= CysConverter.make(primePlot(pv));
-    dispatchProcessScroll(plotId, cc.getScreenCoords(scrollToImagePt));
+    dispatchProcessScroll({plotId, scrollPt:cc.getScreenCoords(scrollToImagePt)});
 }
 
 
@@ -116,13 +116,23 @@ function checkZoom(plotId, oldP, newP, scrollToImagePt, visRoot) {
     if (zoomOp.zoom) {
         if (zoomOp.zoomByScale) {
             const targetArcSecPix= oldP.projection.getPixelScaleArcSec() / oldP.zoomFactor;
-            const zl= getZoomLevelForScale(newP,targetArcSecPix);
+            const level= getZoomLevelForScale(newP,targetArcSecPix);
             dispatchAddSaga(zoomCompleteSega,{plotId,scrollToImagePt});
-            dispatchZoom(plotId,UserZoomTypes.LEVEL,false,false,false, zl);
+            dispatchZoom({
+                plotId,
+                userZoomTypes:UserZoomTypes.LEVEL,
+                maxCheck:false, 
+                level
+            });
         }
         else {
             dispatchAddSaga(zoomCompleteSega,{plotId,scrollToImagePt});
-            dispatchZoom(plotId,UserZoomTypes.LEVEL,false,false,false, oldP.zoomFactor);
+            dispatchZoom({
+                plotId,
+                userZoomTypes:UserZoomTypes.LEVEL,
+                maxCheck:false, 
+                level:oldP.zoomFactor
+            });
         }
     }
     else {
@@ -141,15 +151,25 @@ function checkRotation(plotId,oldP,newP) {
     const differentAngles= Math.floor(oldAngle)!==Math.floor(newAngle);
 
     if (oldRotType===RotateType.NORTH && newRotType!==RotateType.NORTH) {
-        return () => dispatchRotate(plotId,RotateType.NORTH, -1, ActionScope.SINGLE);
+        return () => dispatchRotate({plotId,
+                                     rotateType:RotateType.NORTH,  
+                                     actionScope:ActionScope.SINGLE
+                                    });
     }
 
     if (oldRotType===RotateType.ANGLE && (differentAngles || isNil(newAngle))) {
-        return () => dispatchRotate(plotId,RotateType.ANGLE, oldAngle, ActionScope.SINGLE);
+        return () => dispatchRotate({plotId,
+                                     rotateType:RotateType.ANGLE, 
+                                     angle:oldAngle, 
+                                     actionScope:ActionScope.SINGLE
+                                     });
     }
 
     if (oldRotType===RotateType.UNROTATE && newRotType!==RotateType.UNROTATE) {
-        return () => dispatchRotate(plotId,RotateType.UNROTATE, -1, ActionScope.SINGLE);
+        return () => dispatchRotate({plotId,
+                                     rotateType:RotateType.UNROTATE, 
+                                     actionScope:ActionScope.SINGLE
+                                    });
     }
     return false;
 }

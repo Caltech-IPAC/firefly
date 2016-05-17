@@ -187,7 +187,7 @@ function crop(pv) {
     var cropMultiAll= p.plotState.isMultiImageFile() && isMultiImageFitsWithSameArea(pv);
 
     dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,pv.plotId,true);
-    dispatchCrop(pv.plotId, ip0,ip1,cropMultiAll);
+    dispatchCrop({plotId:pv.plotId, imagePt1:ip0, imagePt2:ip1, cropMultiAll});
 }
 
 
@@ -381,10 +381,10 @@ export function MultiImageControllerView({plotView:pv}) {
         <div style={mulImStyle}>
             <div style={{fontStyle: 'italic', padding: '8px 0 0 5px', alignSelf:'flex-start'}}>Image:</div>
             <img style={leftImageStyle} src={PAGE_LEFT}
-                 onClick={() => dispatchChangePrimePlot(plotId,prevIdx)} />
+                 onClick={() => dispatchChangePrimePlot({plotId,primeIdx:prevIdx})} />
             <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right', paddingLeft:3, flex: '0 0 auto'}}
                  src={PAGE_RIGHT}
-                 onClick={() => dispatchChangePrimePlot(plotId,nextIdx)} />
+                 onClick={() => dispatchChangePrimePlot({plotId,primeIdx:nextIdx})} />
             {plots[cIdx].plotDesc &&
                   <div style={{minWidth: '3em', padding:'0 10px 0 5px', fontWeight:'bold'}}>{plots[cIdx].plotDesc}</div>}
             <div style={{minWidth: '3em', paddingLeft:4}}>{`${cIdx+1}/${plots.length}`}</div>

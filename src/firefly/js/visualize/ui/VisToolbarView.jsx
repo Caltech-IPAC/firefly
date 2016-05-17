@@ -296,7 +296,7 @@ export class VisToolbarView extends Component {
                                enabled={enabled}
                                horizontal={true}
                                visible={mi.restore}
-                               onClick={() => dispatchRestoreDefaults(pv.plotId)}/>
+                               onClick={() => dispatchRestoreDefaults({plotId:pv.plotId})}/>
 
                 <SimpleLayerOnOffButton plotView={pv}
                                 isIconOn={pv&&plot? isGroupLocked(pv,plotGroupAry) : false }
@@ -330,13 +330,14 @@ VisToolbarView.propTypes= {
 };
 
 function doRotateNorth(pv,rotate) {
-    dispatchRotate(pv.plotId, rotate?RotateType.NORTH:RotateType.UNROTATE ,-1, ActionScope.GROUP);
+    const rotateType= rotate?RotateType.NORTH:RotateType.UNROTATE;
+    dispatchRotate({plotId:pv.plotId, rotateType});
 }
 
-function recenter(pv) { dispatchRecenter(pv.plotId); }
+function recenter(pv) { dispatchRecenter({plotId:pv.plotId}); }
 
 function flipY(pv) {
-    dispatchFlip(pv.plotId,true);
+    dispatchFlip({plotId:pv.plotId});
 }
 
 
