@@ -85,7 +85,7 @@ export const jsonRequest= function(baseUrl, cmd, paramList, doPost) {
             }
             response.json().then( (result) => {
                 if (has(result,'0')) {
-                    if (Boolean(get(result,'0.success'))) {
+                    if (Boolean(result[0].success)) {
                         resolve(result[0].data ? result[0].data : result[0]);
                     }
                     else if (has(result,'0.error')){

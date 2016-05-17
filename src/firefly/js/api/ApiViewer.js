@@ -82,7 +82,7 @@ function buildImagePart(channel,file,dispatch) {
             else {
                 request= clone(request,defP);
             }
-            plotRemoteImage(request,channel,dispatch);
+            plotRemoteImage(request,dispatch);
         });
     };
 

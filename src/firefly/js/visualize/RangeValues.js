@@ -117,7 +117,7 @@ export class RangeValues {
                                 this.bias, this.contrast );
     }
 
-    toString() { return this.serialize(); }
+    toString() { return this.toJSON(); }
 
 
     /**
@@ -220,7 +220,7 @@ export class RangeValues {
                            upperValue= 1.0,
                            algorithm= LINEAR_STR ) {
         const rv= RangeValues.makeSimple(boundsType,lowerValue,upperValue,algorithm);
-        return rv.serialize();
+        return rv.toJSON();
     }
 
     /**
