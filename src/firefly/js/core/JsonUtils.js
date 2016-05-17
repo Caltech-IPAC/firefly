@@ -7,11 +7,11 @@
  */
 
 /*eslint prefer-template:0 */
-import { getRootURL, getRootPath, getHost, getPort } from '../util/BrowserUtil.js';
+import {get, has} from 'lodash';
+import { getRootURL, getRootPath} from '../util/BrowserUtil.js';
 import { encodeServerUrl } from '../util/WebUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {fetchUrl} from '../util/WebUtil.js';
-import {debounce, get, has, omitBy, isUndefined, isString} from 'lodash';
 
 //var http= require('http');
 
@@ -84,12 +84,11 @@ export const jsonRequest= function(baseUrl, cmd, paramList, doPost) {
                 return;
             }
             response.json().then( (result) => {
-                if (result && result[0]) {
-                    if (result[0] && result[0].success && result[0].success !== 'false' && result[0].data) {
-                        resolve(result[0].data);
-
+                if (has(result,'0')) {
+                    if (Boolean(result[0].success)) {
+                        resolve(result[0].data ? result[0].data : result[0]);
                     }
-                    else if (result[0] && get(result,'0.error')){//result[0].error) {
+                    else if (has(result,'0.error')){
                         reject(new Error(result[0].error));
                     } else {
                         reject(new Error(`Unrecognized result: ${result}`));

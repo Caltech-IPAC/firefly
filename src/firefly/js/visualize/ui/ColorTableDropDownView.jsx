@@ -148,7 +148,7 @@ function makeItems(pv,ctAry) {
 
 const isAllThreeColor= (vr,plotIdAry) => plotIdAry.every( (id) => isThreeColor(primePlot(vr,id)));
 
-function handleColorChange(pv,cbarIdx) {
+function handleColorChange(pv,cbarId) {
     var vr= visRoot();
     var plotIdAry= getPlotViewIdListInGroup(vr,pv);
 
@@ -156,7 +156,7 @@ function handleColorChange(pv,cbarIdx) {
         showInfoPopup('This is a three color plot, you can not change the color.', 'Color change not allowed');
     }
     else {
-        dispatchColorChange(pv.plotId,cbarIdx);
+        dispatchColorChange({plotId:pv.plotId,cbarId});
     }
 }
 

@@ -5,8 +5,6 @@ package edu.caltech.ipac.visualize.plot;
 
 import com.google.gwt.core.client.js.JsExport;
 import com.google.gwt.core.client.js.JsType;
-import edu.caltech.ipac.util.HandSerialize;
-import edu.caltech.ipac.util.StringUtils;
 
 import java.io.Serializable;
 
@@ -17,7 +15,7 @@ import java.io.Serializable;
 
 @JsExport
 @JsType
-public class Pt implements Serializable, HandSerialize {
+public class Pt implements Serializable {
    private double _x;
    private double _y;
 
@@ -60,8 +58,8 @@ public class Pt implements Serializable, HandSerialize {
             String sAry[]= serString.split(";");
             if (sAry.length!=2) return null;
 
-            x = StringUtils.parseDouble(sAry[0]);
-            y = StringUtils.parseDouble(sAry[1]);
+            x = parseDouble(sAry[0]);
+            y = parseDouble(sAry[1]);
             pt= new Pt(x,y);
         } catch (NumberFormatException e) {
             pt= null;
@@ -80,4 +78,9 @@ public class Pt implements Serializable, HandSerialize {
     //these methods should not be used except in special circumstances
     protected void setX(double x) { _x= x; }
     protected void setY(double y) { _y= y; }
+
+    public static double parseDouble(String s) throws NumberFormatException {
+        return s.equals("NaN") ? Double.NaN : Double.parseDouble(s);
+    }
+
 }

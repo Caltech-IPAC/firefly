@@ -152,9 +152,29 @@ public class PushJob {
         return true;
     }
 
-    public static boolean isBrowserClientActive(String ipString) {
-        String channel= ServerContext.getRequestOwner().getEventChannel();
-        return ServerEventManager.getActiveQueueChannelCnt(channel)>1;
+    /**
+     * Get the active count. If 0 keep trying for try time milliseconds.
+     * @param channel the channel
+     * @param tryTime  tryTime is the about of time that is will keep checking for. It
+     *                 polls every 200 ms until success or until tryTime runs out.
+     *                 This way it will return quite fast. tryTime is really the time until it gives up.
+     *                 The polling is only looking at an array that is updated in another thread.
+     * @return count
+     */
+    public static int getBrowserClientActiveCount(String channel, int tryTime) {
+        if (channel==null) channel= ServerContext.getRequestOwner().getEventChannel();
+        int cnt=  ServerEventManager.getActiveQueueChannelCnt(channel);
+        long endTry= System.currentTimeMillis()+tryTime;
+
+        try {
+            while (tryTime>0 && cnt==0 && System.currentTimeMillis()<endTry) {
+                Thread.sleep(200);
+                cnt=  ServerEventManager.getActiveQueueChannelCnt(channel);
+            }
+        } catch (InterruptedException e) {
+        }
+
+        return cnt;
     }
 
     //================================

@@ -49,7 +49,7 @@ function changeStretch(pv,rv) {
     const p= primePlot(pv);
     const stretchData= p.plotState.getBands().map( (b) =>
         ({ band : b.key, rv :  serRv, bandVisible: true }) );
-    dispatchStretchChange(pv.plotId,stretchData);
+    dispatchStretchChange({plotId:pv.plotId,stretchData});
 }
 
 

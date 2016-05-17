@@ -13,7 +13,6 @@ import {levels, UserZoomTypes, convertZoomToString} from '../visualize/ZoomUtil'
 import {ToolbarButton} from './ToolbarButton.jsx';
 
 const _levels = levels;
-const _userZoomTypes = UserZoomTypes;
 
 function getDialogBuilder() {
     var popup = null;
@@ -153,6 +152,6 @@ makezoomItems.propTypes= {
 };
 
 function resultsSuccess(plotId,zoomLevel) {
-        var zoom= Number(zoomLevel);
-        dispatchZoom(plotId, _userZoomTypes.LEVEL, true, false, false, zoom, ActionScope.GROUP);
+    var zoom= Number(zoomLevel);
+    dispatchZoom({plotId, userZoomType:UserZoomTypes.LEVEL, level:zoom});
 }

@@ -5,7 +5,6 @@ package edu.caltech.ipac.firefly.visualize;
 
 import com.google.gwt.core.client.js.JsExport;
 import com.google.gwt.core.client.js.JsType;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
 import edu.caltech.ipac.visualize.plot.projection.ProjectionParams;
@@ -43,6 +42,7 @@ public class ProjectionSerializer {
     }
 
 
+    @JsExport
     public static Projection deserializeProjection(String projStr) {
         if (projStr==null) return null;
         Map<String,String> map= new HashMap<String,String>(50);
@@ -145,23 +145,23 @@ public class ProjectionSerializer {
         p.naxis2= Integer.parseInt(map.get("naxis2"));
         p.naxis3= Integer.parseInt(map.get("naxis3"));
 
-        p.crpix1= StringUtils.parseDouble(map.get("crpix1"));
-        p.crpix2= StringUtils.parseDouble(map.get("crpix2"));
-        p.crval1= StringUtils.parseDouble(map.get("crval1"));
-        p.crval2= StringUtils.parseDouble(map.get("crval2"));
-        p.cdelt1= StringUtils.parseDouble(map.get("cdelt1"));
-        p.cdelt2= StringUtils.parseDouble(map.get("cdelt2"));
-        p.crota1= StringUtils.parseDouble(map.get("crota1"));
-        p.crota2= StringUtils.parseDouble(map.get("crota2"));
-        p.file_equinox= StringUtils.parseDouble(map.get("file_equinox"));
+        p.crpix1= parseDouble(map.get("crpix1"));
+        p.crpix2= parseDouble(map.get("crpix2"));
+        p.crval1= parseDouble(map.get("crval1"));
+        p.crval2= parseDouble(map.get("crval2"));
+        p.cdelt1= parseDouble(map.get("cdelt1"));
+        p.cdelt2= parseDouble(map.get("cdelt2"));
+        p.crota1= parseDouble(map.get("crota1"));
+        p.crota2= parseDouble(map.get("crota2"));
+        p.file_equinox= parseDouble(map.get("file_equinox"));
 
-        p.ctype1= StringUtils.checkNull(map.get("ctype1"));
-        p.ctype2= StringUtils.checkNull(map.get("ctype2"));
-        p.radecsys= StringUtils.checkNull(map.get("radecsys"));
+        p.ctype1= checkNull(map.get("ctype1"));
+        p.ctype2= checkNull(map.get("ctype2"));
+        p.radecsys= checkNull(map.get("radecsys"));
 
 
-        p.datamax= StringUtils.parseDouble(map.get("datamax"));
-        p.datamin= StringUtils.parseDouble(map.get("datamin"));
+        p.datamax= parseDouble(map.get("datamax"));
+        p.datamin= parseDouble(map.get("datamin"));
         //p.bscale= parseDouble(map.get("bscale"));
         //p.bzero= parseDouble(map.get("bzero"));
 
@@ -170,35 +170,35 @@ public class ProjectionSerializer {
         p.maptype= Integer.parseInt(map.get("maptype"));
 
 
-        p.cd1_1= StringUtils.parseDouble(map.get("cd1_1"));
-        p.cd1_2= StringUtils.parseDouble(map.get("cd1_2"));
-        p.cd2_1= StringUtils.parseDouble(map.get("cd2_1"));
-        p.cd2_2= StringUtils.parseDouble(map.get("cd2_2"));
+        p.cd1_1= parseDouble(map.get("cd1_1"));
+        p.cd1_2= parseDouble(map.get("cd1_2"));
+        p.cd2_1= parseDouble(map.get("cd2_1"));
+        p.cd2_2= parseDouble(map.get("cd2_2"));
 
 
-        p.dc1_1= StringUtils.parseDouble(map.get("dc1_1"));
-        p.dc1_2= StringUtils.parseDouble(map.get("dc1_2"));
-        p.dc2_1= StringUtils.parseDouble(map.get("dc2_1"));
-        p.dc2_2= StringUtils.parseDouble(map.get("dc2_2"));
+        p.dc1_1= parseDouble(map.get("dc1_1"));
+        p.dc1_2= parseDouble(map.get("dc1_2"));
+        p.dc2_1= parseDouble(map.get("dc2_1"));
+        p.dc2_2= parseDouble(map.get("dc2_2"));
 
         p.using_cd= Boolean.parseBoolean(map.get("using_cd"));
 
-        p.plate_ra= StringUtils.parseDouble(map.get("plate_ra"));
-        p.plate_dec= StringUtils.parseDouble(map.get("plate_dec"));
-        p.x_pixel_offset= StringUtils.parseDouble(map.get("x_pixel_offset"));
-        p.y_pixel_offset= StringUtils.parseDouble(map.get("y_pixel_offset"));
-        p.x_pixel_size= StringUtils.parseDouble(map.get("x_pixel_size"));
-        p.y_pixel_size= StringUtils.parseDouble(map.get("y_pixel_size"));
-        p.plt_scale= StringUtils.parseDouble(map.get("plt_scale"));
+        p.plate_ra= parseDouble(map.get("plate_ra"));
+        p.plate_dec= parseDouble(map.get("plate_dec"));
+        p.x_pixel_offset= parseDouble(map.get("x_pixel_offset"));
+        p.y_pixel_offset= parseDouble(map.get("y_pixel_offset"));
+        p.x_pixel_size= parseDouble(map.get("x_pixel_size"));
+        p.y_pixel_size= parseDouble(map.get("y_pixel_size"));
+        p.plt_scale= parseDouble(map.get("plt_scale"));
 
         p.ppo_coeff= strTo1DimArray(map.get("ppo_coeff"));
         p.amd_x_coeff= strTo1DimArray(map.get("amd_x_coeff"));
         p.amd_y_coeff= strTo1DimArray(map.get("amd_y_coeff"));
 
-        p.a_order= StringUtils.parseDouble(map.get("a_order"));
-        p.ap_order= StringUtils.parseDouble(map.get("ap_order"));
-        p.b_order= StringUtils.parseDouble(map.get("b_order"));
-        p.bp_order= StringUtils.parseDouble(map.get("bp_order"));
+        p.a_order= parseDouble(map.get("a_order"));
+        p.ap_order= parseDouble(map.get("ap_order"));
+        p.b_order= parseDouble(map.get("b_order"));
+        p.bp_order= parseDouble(map.get("bp_order"));
 
 
         int len= ProjectionParams.MAX_SIP_LENGTH;
@@ -211,7 +211,7 @@ public class ProjectionSerializer {
         map.put("keyword", p.keyword+"");
 
         p.map_distortion= Boolean.parseBoolean(map.get("map_distortion"));
-        p.keyword= StringUtils.checkNull(map.get("keyword"));
+        p.keyword= checkNull(map.get("keyword"));
 
         return p;
     }
@@ -233,7 +233,7 @@ public class ProjectionSerializer {
         String sAry[]= s.split(",");
         double retAry[]= new double[sAry.length];
         for(int i=0; (i<sAry.length); i++) {
-            retAry[i]= StringUtils.parseDouble(sAry[i]);
+            retAry[i]= parseDouble(sAry[i]);
         }
         return retAry;
     }
@@ -246,7 +246,7 @@ public class ProjectionSerializer {
 
         for(int j= 0; (j<retAry.length); j++) {
             for(int i= 0; (i<retAry[j].length); i++) {
-                retAry[j][i]= StringUtils.parseDouble(sAry[sIdx++]);
+                retAry[j][i]= parseDouble(sAry[sIdx++]);
             }
         }
         return retAry;
@@ -265,5 +265,14 @@ public class ProjectionSerializer {
         return sb.toString();
     }
 
+    public static double parseDouble(String s) throws NumberFormatException {
+        return s.equals("NaN") ? Double.NaN : Double.parseDouble(s);
+    }
+
+    public static String checkNull(String s) {
+        if (s==null)               return null;
+        else if (s.equals("null")) return null;
+        else                       return s;
+    }
 }
 

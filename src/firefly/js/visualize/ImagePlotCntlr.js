@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get,isPlainObject,isArray} from 'lodash';
+import {get,isArray} from 'lodash';
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
@@ -11,8 +11,6 @@ import {UserZoomTypes} from './ZoomUtil.js';
 import {reducer as plotChangeReducer} from './reducer/HandlePlotChange.js';
 import {reducer as plotCreationReducer} from './reducer/HandlePlotCreation.js';
 import {getPlotGroupById} from './PlotGroup.js';
-import {Band} from './Band.js';
-import {WebPlotRequest} from './WebPlotRequest.js';
 import {isActivePlotView,
         getPlotViewById,
         getOnePvOrGroup,
@@ -48,54 +46,63 @@ export const PLOTS_PREFIX= 'ImagePlotCntlr';
 
 const ANY_CHANGE= '${PLOT_PREFIX}.AnyChange';
 
-/**
- * All PLOT_IMAGES actions should contain:
- * {string} plotId,
- * {WebPlotRequest} wpRequest,
- *  or
- * {WebPlotRequest} redReq, blueReq, greenReq - must contain one
- * {boolean} addToHistory - optional
- * @type {string}
- */
+/** Action Type: plot of new image started */
 const PLOT_IMAGE_START= `${PLOTS_PREFIX}.PlotImageStart`;
+/** Action Type: plot of new image failed */
 const PLOT_IMAGE_FAIL= `${PLOTS_PREFIX}.PlotImageFail`;
+/** Action Type: plot of new image completed */
 const PLOT_IMAGE= `${PLOTS_PREFIX}.PlotImage`;
+
+/** Action Type: A image replot occurred */
 const ANY_REPLOT= `${PLOTS_PREFIX}.Replot`;
 
+/** Action Type: start the zoom process.  The image will appear zoomed by scaling, the server has not updated yet */
 const ZOOM_IMAGE_START= `${PLOTS_PREFIX}.ZoomImageStart`;
+
+/** Action Type: The zoom from the server has complete */
 const ZOOM_IMAGE= `${PLOTS_PREFIX}.ZoomImage`;
 const ZOOM_IMAGE_FAIL= `${PLOTS_PREFIX}.ZoomImageFail`;
 
 const ZOOM_LOCKING= `${PLOTS_PREFIX}.ZoomEnableLocking`;
 
 
+/** Action Type: image with new color table call started */
 const COLOR_CHANGE_START= `${PLOTS_PREFIX}.ColorChangeStart`;
+/** Action Type: image with new color table loaded */
 const COLOR_CHANGE= `${PLOTS_PREFIX}.ColorChange`;
 const COLOR_CHANGE_FAIL= `${PLOTS_PREFIX}.ColorChangeFail`;
 
 
+/** Action Type: server image stretch call started */
 const STRETCH_CHANGE_START= `${PLOTS_PREFIX}.StretchChangeStart`;
+/** Action Type: image loaded with new stretch */
 const STRETCH_CHANGE= `${PLOTS_PREFIX}.StretchChange`;
 const STRETCH_CHANGE_FAIL= `${PLOTS_PREFIX}.StretchChangeFail`;
 
 
 const ROTATE_START= `${PLOTS_PREFIX}.RotateChangeStart`;
+/** Action Type: image rotated */
 const ROTATE= `${PLOTS_PREFIX}.RotateChange`;
 const ROTATE_FAIL= `${PLOTS_PREFIX}.RotateChangeFail`;
 
 
+/** Action Type: server image flipped call started */
 const FLIP_START= `${PLOTS_PREFIX}.FlipStart`;
+/** Action Type: image flipped */
 const FLIP= `${PLOTS_PREFIX}.Flip`;
 const FLIP_FAIL= `${PLOTS_PREFIX}.FlipFail`;
 
 
 const CROP_START= `${PLOTS_PREFIX}.CropStart`;
+/** Action Type: image cropped */
 const CROP= `${PLOTS_PREFIX}.Crop`;
 const CROP_FAIL= `${PLOTS_PREFIX}.CropFail`;
 
 const UPDATE_VIEW_SIZE= `${PLOTS_PREFIX}.UpdateViewSize`;
 const PROCESS_SCROLL= `${PLOTS_PREFIX}.ProcessScroll`;
+/** Action Type: Recenter in image on the active target */
 const RECENTER= `${PLOTS_PREFIX}.recenter`;
+/** Action Type: replot the image with the original plot parameters */
 const RESTORE_DEFAULTS= `${PLOTS_PREFIX}.restoreDefaults`;
 const GROUP_LOCKING= `${PLOTS_PREFIX}.GroupLocking`;
 
@@ -104,12 +111,15 @@ const CHANGE_POINT_SELECTION= `${PLOTS_PREFIX}.ChangePointSelection`;
 const CHANGE_ACTIVE_PLOT_VIEW= `${PLOTS_PREFIX}.ChangeActivePlotView`;
 const CHANGE_PLOT_ATTRIBUTE= `${PLOTS_PREFIX}.ChangePlotAttribute`;
 
+/** Action Type: display mode to or from expanded */
 const CHANGE_EXPANDED_MODE= `${PLOTS_PREFIX}.changeExpandedMode`;
+/** Action Type: turn on/off expanded auto-play */
 const EXPANDED_AUTO_PLAY= `${PLOTS_PREFIX}.expandedAutoPlay`;
-const EXPANDED_LIST= `${PLOTS_PREFIX}.expandedList`;
+/** Action Type: change the primary plot for a multi image fits display */
 const CHANGE_PRIME_PLOT= `${PLOTS_PREFIX}.changePrimePlot`;
 
 const CHANGE_MOUSE_READOUT_MODE=`${PLOTS_PREFIX}.changeMouseReadoutMode`;
+/** Action Type: delete a plotView */
 const DELETE_PLOT_VIEW=`${PLOTS_PREFIX}.deletePlotView`;
 
 const PLOT_PROGRESS_UPDATE= `${PLOTS_PREFIX}.PlotProgressUpdate`;
@@ -132,7 +142,6 @@ const initState= function() {
     return {
         plotViewAry : [],  //there is one plot view for every ImageViewer, a plotView will have a plotId
         plotGroupAry : [], // there is one for each group, a plot group may have multiple plotViews
-        plottingProgressInfo : [], //todo
         plotHistoryRequest: [], //todo
         activePlotId: null,
 
@@ -146,13 +155,12 @@ const initState= function() {
 
         //-- expanded settings
         expandedMode: ExpandType.COLLAPSE,
-        previousExpandedMode: ExpandType.SINGLE, //  must be SINGLE OR GRID
+        previousExpandedMode: ExpandType.GRID, //  must be SINGLE OR GRID
         singleAutoPlay : false,
 
         //--  misc
         pointSelEnableAry : [],
-        apiToolsView: false,    //todo
-        mouseReadoutWide: false, //todo - update 5/6/16: I think i can delete mouseReadoutWide
+        apiToolsView: false,
 
         //-- wcs match parameters //todo this might have to be in a plotGroup, not sure at this point
         matchWCS: false, //todo
@@ -160,7 +168,7 @@ const initState= function() {
         wcsMatchMode: WcsMatchMode.ByUserPositionAndZoom, //todo
         mpwWcsPrimId: null,//todo
 
-        //-- mouse readout settings
+        //-- mouse readout settings - todo move to MouseReadoutCntlr
         mouseReadout1:'eqj2000hms',
         mouseReadout2: 'fitsIP',
         pixelSize: 'pixelSize'
@@ -216,19 +224,8 @@ export function makeUniqueRequestKey() {
 export function dispatchApiToolsView(apiToolsView) {
     flux.process({ type: API_TOOLS_VIEW , payload: { apiToolsView}});
 }
-
 /**
  *
- * @param plotId
- * @param primeIdx
- */
-export function dispatchChangePrimePlot(plotId, primeIdx) {
-    flux.process({ type: CHANGE_PRIME_PLOT , payload: { plotId, primeIdx }});
-}
-
-
-/**
- * 
  * @param plotId
  * @param message
  * @param done
@@ -236,109 +233,6 @@ export function dispatchChangePrimePlot(plotId, primeIdx) {
 export function dispatchPlotProgressUpdate(plotId, message, done ) {
     flux.process({ type: PLOT_PROGRESS_UPDATE, payload: { plotId, done, message }});
 }
-
-
-function ensureWPR(inVal) {
-    if (isArray(inVal)) {
-        return inVal.map( (v) => isPlainObject(v) ? WebPlotRequest.makeFromObj(v) : v);
-    }
-    else {
-        return isPlainObject(inVal) ? WebPlotRequest.makeFromObj(inVal) : inVal;
-    }
-}
-
-
-/**
- *
- * @param {string} plotId
- * @param {number} cbarId
- * @param {ActionScope} actionScope
- */
-export function dispatchColorChange(plotId, cbarId, actionScope=ActionScope.GROUP ) {
-    flux.process({ type: COLOR_CHANGE,
-        payload: { plotId, cbarId, actionScope }});
-}
-
-/**
- *
- * @param {string} plotId
- * @param {[{band:object,rv:object,bandVisible:boolean}]} stretchData
- * 
- * @param {ActionScope} actionScope
- */
-export function dispatchStretchChange(plotId, stretchData, actionScope=ActionScope.GROUP ) {
-    flux.process({ type: STRETCH_CHANGE, payload: { plotId, stretchData, actionScope }});
-}
-
-
-/**
- * Rotate
- *
- * @param {string} plotId
- * @param {object} rotateType enum RotateType
- * @param {number} angle
- * @param actionScope enum ActionScope
- */
-export function dispatchRotate(plotId, rotateType, angle, actionScope=ActionScope.GROUP ) {
-    flux.process({ type: ROTATE,
-        payload: { plotId, angle, rotateType, actionScope, newZoomLevel:0 }});
-}
-
-
-/**
- * Flip
- *
- * @param {string} plotId
- * @param {boolean} isY
- */
-export function dispatchFlip(plotId, isY=true) {
-    flux.process({ type: FLIP,
-        payload: { plotId, isY}});
-}
-
-/**
- * Crop
- *
- * @param {string} plotId
- * @param imagePt1
- * @param imagePt2
- * @param cropMultiAll
- */
-export function dispatchCrop(plotId, imagePt1, imagePt2, cropMultiAll) {
-    flux.process({ type: CROP,
-        payload: { plotId, imagePt1, imagePt2, cropMultiAll}});
-}
-
-
-/**
- * Move the scroll point on this plotId and possible others if it is grouped.
- *
- * @param {string} plotId
- * @param scrollScreenPt a new point to scroll to in screen coordinates
- */
-export function dispatchProcessScroll(plotId,scrollScreenPt) {
-    flux.process({type: PROCESS_SCROLL, payload: {plotId, scrollScreenPt} });
-}
-
-
-/**
- * recenter the images on the plot center or the ACTIVE_TARGET
- *
- * @param {string} plotId
- */
-export function dispatchRecenter(plotId) {
-    flux.process({type: RECENTER, payload: {plotId} });
-}
-
-/**
- * recenter the images to the original plot parameters
- *
- * @param {string} plotId
- */
-export function dispatchRestoreDefaults(plotId) {
-    flux.process({type: RESTORE_DEFAULTS, payload: {plotId} });
-}
-
 
 /**
  * Notify that the size of the plot viewing area has changed
@@ -356,90 +250,169 @@ export function dispatchUpdateViewSize(plotId,width,height,updateScroll=true,cen
 }
 
 /**
- * change group lock for zoom and scolling
+ * change group lock for zoom and scrolling
  *
  * @param {string} plotId is required
  * @param {boolean} groupLocked,  true to set group lockRelated on
  */
 export function dispatchGroupLocking(plotId,groupLocked) {
-    flux.process({
-        type: GROUP_LOCKING,
-        payload :{
-            plotId, groupLocked
-        }});
+    flux.process({ type: GROUP_LOCKING, payload :{ plotId, groupLocked }});
+}
+
+
+//--------------
+
+/**
+ * Change the primary plot for a multi image fits display 
+ * Note - function parameter is a single object
+ * @param {string} plotId
+ * @param {number} primeIdx
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchChangePrimePlot({plotId, primeIdx, dispatcher= flux.process}) {
+    dispatcher({ type: CHANGE_PRIME_PLOT , payload: { plotId, primeIdx }});
+}
+
+
+
+/**
+ * Show image with new color table loaded
+ * Note - function parameter is a single object
+ * @param {string} plotId
+ * @param {number} cbarId
+ * @param {ActionScope} actionScope
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchColorChange({plotId, cbarId, actionScope=ActionScope.GROUP, dispatcher= flux.process} ) {
+    dispatcher({ type: COLOR_CHANGE, payload: { plotId, cbarId, actionScope }});
+}
+
+/**
+ *
+ * Change the image stretch
+ * Note - function parameter is a single object
+ * @param {string} plotId
+ * @param {[{band:object,rv:object,bandVisible:boolean}]} stretchData
+ * @param {ActionScope} actionScope
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchStretchChange({plotId, stretchData, 
+                                       actionScope=ActionScope.GROUP, dispatcher= flux.process} ) {
+    dispatcher({ type: STRETCH_CHANGE, payload: { plotId, stretchData, actionScope }});
+}
+
+
+/**
+ * Rotate image
+ *
+ * Note - function parameter is a single object
+ * @param {string} plotId
+ * @param {object} rotateType enum RotateType
+ * @param {number} angle
+ * @param actionScope enum ActionScope
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchRotate({plotId, rotateType, angle=-1, actionScope=ActionScope.GROUP,
+                                dispatcher= flux.process} ) {
+    dispatcher({ type: ROTATE,
+        payload: { plotId, angle, rotateType, actionScope, newZoomLevel:0 }});
+}
+
+
+/**
+ * Flip
+ *
+ * Note - function parameter is a single object
+ * @param {string} plotId
+ * @param {boolean} isY
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchFlip({plotId, isY=true, dispatcher= flux.process}) {
+    dispatcher({ type: FLIP, payload: { plotId, isY}});
+}
+
+/**
+ * Crop
+ *
+ * Note - function parameter is a single object
+ * @param {string} plotId
+ * @param {Object} imagePt1 image point of corner 1
+ * @param {Object} imagePt2 image point of corner 2
+ * @param {boolean} cropMultiAll
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchCrop({plotId, imagePt1, imagePt2, cropMultiAll, dispatcher= flux.process}) {
+    dispatcher({ type: CROP, payload: { plotId, imagePt1, imagePt2, cropMultiAll}});
+}
+
+
+/**
+ * Move the scroll point on this plotId and possible others if it is grouped.
+ *
+ * Note - function parameter is a single object
+ * @param {string} plotId
+ * @param {object} scrollPt a new point to scroll
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchProcessScroll({plotId,scrollPt, dispatcher= flux.process}) {
+    dispatcher({type: PROCESS_SCROLL, payload: {plotId, scrollPt} });
+}
+
+
+/**
+ * recenter the images on the plot center or the ACTIVE_TARGET
+ *
+ * Note - function parameter is a single object
+ * @param {string} plotId
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchRecenter({plotId, dispatcher= flux.process}) {
+    dispatcher({type: RECENTER, payload: {plotId} });
+}
+
+/**
+ * replot the image with the original plot parameters
+ *
+ * Note - function parameter is a single object
+ * @param {string} plotId
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
+    dispatcher({type: RESTORE_DEFAULTS, payload: {plotId} });
 }
 
 
 /**
  *
+ * Plot an image.  Note this dispatch function only takes an object with the parameters
+ * Note - function parameter is a single object
  * @param {string} plotId is required unless defined in the WebPlotRequest
  * @param {WebPlotRequest|Array} wpRequest, plotting parameters, required or for 3 color pass an array of WebPlotRequest
  * @param {boolean} threeColor is a three color request, if true the wpRequest should be an array
- * @param {boolean} removeOldPlot Remove the old plot from the plotview and tell the server to delete the context.
- *                                This parameter is almost always true
- * @param {boolean} addToHistory add this request to global history of plots
+ * @param {boolean} addToHistory add this request to global history of plots, may be deprecated in the future
  * @param {boolean} useContextModifications it true the request will be modified to use preferences, rotation, etc
  *                                 should only be false when it is doing a 'restore to defaults' type plot
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param viewerId
  */
-export function dispatchPlotImage(plotId,wpRequest, threeColor=false,
-                                  removeOldPlot= true, addToHistory=false,
-                                  useContextModifications= true ) {
+export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpRequest),
+                                  addToHistory=false,
+                                  useContextModifications= true,
+                                  dispatcher= flux.process,
+                                  viewerId} ) {
 
-    wpRequest= ensureWPR(wpRequest);
-
-    var req;
-    if (plotId) {
-        if (isArray(wpRequest)) {
-            wpRequest.forEach( (r) => {if (r) r.setPlotId(plotId);});
-            req= wpRequest.find( (r) => r?true:false);
-        }
-        else {
-            wpRequest.setPlotId(plotId);
-            req= wpRequest;
-        }
-    }
-    else {
-        if (isArray(wpRequest)) {
-            req= wpRequest.find( (r) => r?true:false);
-            plotId= req.getPlotId();
-        }
-        else {
-            plotId= wpRequest.getPlotId();
-            req= wpRequest;
-        }
-    }
-
-    const payload= initPlotImagePayload(plotId,req,threeColor, removeOldPlot,addToHistory,useContextModifications);
-
-    if (threeColor) {
-        if (isArray(wpRequest)) {
-            payload.redReq= wpRequest[Band.RED.value];
-            payload.greenReq= wpRequest[Band.GREEN.value];
-            payload.blueReq= wpRequest[Band.BLUE.value];
-        }
-        else {
-            payload.redReq= wpRequest;
-        }
-    }
-    else {
-        payload.wpRequest= wpRequest;
-    }
-
-    flux.process({ type: PLOT_IMAGE, payload});
+    dispatcher({ type: PLOT_IMAGE,
+                   payload: {plotId,wpRequest, threeColor, addToHistory, useContextModifications,viewerId}});
 }
 
-export function dispatchPlotGroup(wpRequestAry) {
-    
-    const payload= {
-        wpRequestAry:ensureWPR(wpRequestAry),
-        threeColor:false,
-        removeOldPlot:true,
-        addToHistory:false, 
-        useContextModifications:true,
-        groupLocked:true
-    };
-
-    flux.process({ type: PLOT_IMAGE, payload});
+/**
+ *
+ * Note - function parameter is a single object
+ * @param wpRequestAry
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchPlotGroup({wpRequestAry, dispatcher= flux.process}) {
+    dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry} });
 }
 
 
@@ -447,7 +420,8 @@ export function dispatchPlotGroup(wpRequestAry) {
 
 
 /**
- *
+ * Zoom a image
+ * Note - function parameter is a single object
  * @param {string} plotId
  * @param {UserZoomTypes} userZoomType
  * @param {boolean} maxCheck
@@ -455,16 +429,30 @@ export function dispatchPlotGroup(wpRequestAry) {
  * @param {boolean} forceDelay
  * @param {number} level
  * @param {ActionScope} actionScope
+ * @param {function} dispatcher only for special dispatching uses such as remote
  */
-export function dispatchZoom(plotId, userZoomType, maxCheck= true,
-                               zoomLockingEnabled=false, forceDelay=false, level,
-                               actionScope=ActionScope.GROUP ) {
-    flux.process({
+export function dispatchZoom({plotId, userZoomType, maxCheck= true,
+                             zoomLockingEnabled=false, forceDelay=false, level,
+                             actionScope=ActionScope.GROUP,
+                             dispatcher= flux.process} ) {
+    dispatcher({
         type: ZOOM_IMAGE,
         payload :{
             plotId, userZoomType, actionScope, maxCheck, zoomLockingEnabled, forceDelay, level
         }});
 }
+
+/**
+ *
+ * Note - function parameter is a single object
+ * @param plotId
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchDeletePlotView({plotId, dispatcher= flux.process}) {
+    dispatcher({ type: DELETE_PLOT_VIEW, payload: {plotId} });
+}
+
+//--------------
 
 /**
  *
@@ -544,34 +532,39 @@ export function dispatchChangeExpandedMode(expandedMode) {
 
     if (!enable) {
         visRoot().plotViewAry.forEach( (pv) => {
-            const zl= pv.plotViewCtx.lastCollapsedZoomLevel;
-            if (zl>0) dispatchZoom(pv.plotId,UserZoomTypes.LEVEL,false,false,false,zl,ActionScope.SINGLE);
+            const level= pv.plotViewCtx.lastCollapsedZoomLevel;
+            if (level>0) {
+                dispatchZoom({
+                    plotId:pv.plotId,
+                    userZoomTypes:UserZoomTypes.LEVEL,
+                    level, maxCheck:false,
+                    actionScope:ActionScope.SINGLE});
+            }
         });
     }
     
 }
 
 
-
+/**
+ * 
+ * @param readoutType
+ * @param newRadioValue
+ */
 export function dispatchChangeMouseReadout(readoutType, newRadioValue) {
     flux.process({ type: CHANGE_MOUSE_READOUT_MODE, payload: {readoutType, newRadioValue} });
 }
 
+/**
+ * 
+ * @param autoPlayOn
+ */
 export function dispatchExpandedAutoPlay(autoPlayOn) {
     flux.process({ type: EXPANDED_AUTO_PLAY, payload: {autoPlayOn} });
 
 
 }
 
-
-// export function dispatchExpandedList(plotIdAry) {
-//     flux.process({ type: EXPANDED_LIST, payload: {plotIdAry} });
-// }
-
-
-export function dispatchDeletePlotView(plotId) {
-    flux.process({ type: DELETE_PLOT_VIEW, payload: {plotId} });
-}
 
 //======================================== Action Creators =============================
 //======================================== Action Creators =============================
@@ -603,10 +596,14 @@ export function restoreDefaultsActionCreator(rawAction) {
                 if (vr.plotRequestDefaults[pv.plotId]) {
                     const def= vr.plotRequestDefaults[pv.plotId];
                     if (def.threeColor) {
-                        dispatchPlotImage(pv.plotId, [def.redReq,def.greenReq,def.blueReq],true,true,false,false);
+                        dispatchPlotImage({plotId:pv.plotId, 
+                                           wpRequest:[def.redReq,def.greenReq,def.blueReq],
+                                           threeColor:true,
+                                           useContextModifications:false});
                     }
                     else {
-                        dispatchPlotImage(pv.plotId, def.wpRequest,false, true, false, false);
+                        dispatchPlotImage({plotId:pv.plotId, wpRequest:def.wpRequest,
+                                           useContextModifications:false});
                     }
                 }
             });
@@ -849,30 +846,6 @@ function deletePlotView(state,action) {
 
 
 
-/*
-
-/**
- *
- * @param plotId
- * @param req
- * @param threeColor
- * @param removeOldPlot
- * @param addToHistory
- * @param useContextModifications
- * @return {{plotId: *, plotGroupId: *, removeOldPlot: boolean, addToHistory: boolean,
- *               useContextModifications: boolean, groupLocked: *, threeColor: *}}
- */
-function initPlotImagePayload(plotId,req, threeColor, removeOldPlot= true,
-                              addToHistory=false, useContextModifications= true) {
-    if (!plotId) plotId= req.getPlotId();
-
-    const plotGroupId= req.getPlotGroupId();
-    const groupLocked= req.isGroupLocked();
-
-    return {plotId, plotGroupId, removeOldPlot,
-        addToHistory, useContextModifications,
-        groupLocked, threeColor};
-}
 
 //============ end private functions =================================
 //============ end private functions =================================

@@ -48,6 +48,7 @@ export const ServerParams = {
         ID : 'id',
         BID : 'bid',
         CHANNEL_ID : 'channelID',
+        TRY_MS: 'tryMS',
         PLOT_ID : 'plotId',
         POLLING : 'polling',
         EMAIL : 'email',
@@ -126,6 +127,7 @@ export const ServerParams = {
         GET_ALL_SAVED_REQUEST: 'getAllSavedRequest',
         TITLE: 'Title',
         JSON_DEEP: 'jsonDeep',
+        ACTION: 'action',
 
         VIS_PUSH_CREATE_ID: 'createID',
         VIS_PUSH_FITS: 'pushFits',
@@ -138,9 +140,11 @@ export const ServerParams = {
         VIS_QUERY_ACTION: 'queryAction',
         VIS_PUSH_WPR: 'pushWPR',
         VIS_PUSH_ALIVE_CHECK: 'pushAliveCheck',
+        VIS_PUSH_ALIVE_COUNT: 'pushAliveCount',
         VIS_PUSH_PAN: 'pushPan',
         VIS_PUSH_ZOOM: 'pushZoom',
         VIS_PUSH_RANGE_VALUES: 'pushRangeValues',
+        VIS_PUSH_ACTION: 'pushAction',
 
 
         USER_TARGET_WORLD_PT : 'UserTargetWorldPt'

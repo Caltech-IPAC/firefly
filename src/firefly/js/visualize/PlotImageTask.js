@@ -2,9 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {get,isPlainObject,isArray} from 'lodash';
 import {logError} from '../util/WebUtil.js';
+import {WebPlotRequest} from './WebPlotRequest.js';
 import ImagePlotCntlr, {visRoot, makeUniqueRequestKey} from './ImagePlotCntlr.js';
-import WebPlotResult from './WebPlotResult.js';
 import {WebPlot,PlotAttribute} from './WebPlot.js';
 import CsysConverter from './CsysConverter.js';
 import {dispatchActiveTarget, getActiveTarget} from '../core/AppDataCntlr.js';
@@ -12,7 +13,6 @@ import VisUtils from './VisUtil.js';
 import {PlotState} from './PlotState.js';
 import {makeImagePt} from './Point.js';
 import {WPConst, DEFAULT_THUMBNAIL_SIZE} from './WebPlotRequest.js';
-import {getPlotViewById} from './PlotViewUtil.js';
 import {Band} from './Band.js';
 import {PlotPref} from './PlotPref.js';
 import ActiveTarget  from '../drawingLayers/ActiveTarget.js';
@@ -30,20 +30,59 @@ export default {makePlotImageAction};
 //======================================== Exported Functions =============================
 
 
-function dispatchUpdateStatus() {
-    // todo: check to see if the task is finished
-    // todo: if not finished
-    // todo:       call server for status update for request id, start next timer
-    // todo:       when call returns:
-    // todo:             fire  ImagePlotCntlr.LOT_PROGRESS_UPDATE for plot Id
-    // todo:             reset time for 2 seconds
-    // todo:
-    // todo: Also, move to ImagePlotCntlr
-
-}
-
 
 var firstTime= true;
+
+
+function ensureWPR(inVal) {
+    if (isArray(inVal)) {
+        return inVal.map( (v) => WebPlotRequest.makeFromObj(v));
+    }
+    else {
+        return WebPlotRequest.makeFromObj(inVal);
+    }
+}
+
+const getFirstReq= (wpRAry) => isArray(wpRAry) ? wpRAry.find( (r) => r?true:false) : wpRAry;
+
+
+function makeSinglePlotPayload({wpRequest,plotId, threeColor, viewerId, 
+                                addToHistory= false,useContextModifications= true}  ) {
+    wpRequest= ensureWPR(wpRequest);
+
+    const req= getFirstReq(wpRequest);
+
+
+    if (isArray(wpRequest)) {
+        if (!plotId) plotId= req.getPlotId();
+        wpRequest.forEach( (r) => {if (r) r.setPlotId(plotId);});
+    }
+    else {
+        if (plotId) wpRequest.setPlotId(plotId);
+    }
+
+
+    const payload= { plotId:req.getPlotId(),
+                     plotGroupId:req.getPlotGroupId(),
+                     groupLocked:req.isGroupLocked(),
+                     viewerId, addToHistory, useContextModifications, threeColor};
+
+    if (threeColor) {
+        if (isArray(wpRequest)) {
+            payload.redReq= wpRequest[Band.RED.value];
+            payload.greenReq= wpRequest[Band.GREEN.value];
+            payload.blueReq= wpRequest[Band.BLUE.value];
+        }
+        else {
+            payload.redReq= wpRequest;
+        }
+    }
+    else {
+        payload.wpRequest= wpRequest;
+    }
+
+    return payload;
+}
 
 
 /**
@@ -54,17 +93,31 @@ var firstTime= true;
 function makePlotImageAction(rawAction) {
     return (dispatcher) => {
 
+        var {wpRequestAry}= rawAction.payload;
+        var payload;
+
+        if (!wpRequestAry) {
+            payload= makeSinglePlotPayload(rawAction.payload);
+        }
+        else {
+            payload= {
+                wpRequestAry:ensureWPR(wpRequestAry),
+                viewerId:rawAction.payload.viewerId,
+                threeColor:false,
+                addToHistory:false,
+                useContextModifications:true,
+                groupLocked:true
+            };
+        }
+
         if (firstTime) {
             initBuildInDrawLayers();
             firstTime= false;
         }
 
-        const requestKey= makeUniqueRequestKey();
+        payload.requestKey= makeUniqueRequestKey();
 
-        setTimeout(dispatchUpdateStatus, INIT_STATUS_UPDATE_DELAY);
-        dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,
-                      payload: Object.assign({},rawAction.payload, {requestKey})
-        } );
+        dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,payload});
         // NOTE - sega ImagePlotter handles next step
         // NOTE - sega ImagePlotter handles next step
         // NOTE - sega ImagePlotter handles next step

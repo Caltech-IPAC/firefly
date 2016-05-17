@@ -31,6 +31,7 @@ import {TablePanel} from '../tables/ui/TablePanel.jsx';
 
 // builds the highlevel api
 import {buildHighLevelApi} from './ApiHighLevelBuild.js';
+import {buildViewerApi} from './ApiViewer.js';
 
 
 
@@ -43,9 +44,10 @@ import './ApiStyle.css';
  */
 export function initApi() {
     const lowlevelApi= buildLowlevelAPI();
+    const viewInterface= buildViewerApi();
     const highLevelApi= buildHighLevelApi(lowlevelApi);
     if (!window.firefly) window.firefly= {};
-    Object.assign(window.firefly, lowlevelApi,highLevelApi);
+    Object.assign(window.firefly, lowlevelApi, highLevelApi, viewInterface);
     const firefly= window.firefly;
     dispatchOnAppReady(() => {
         window.onFireflyLoaded && window.onFireflyLoaded(firefly);

@@ -305,7 +305,7 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
         if ((plotInfo.addPlot&create) && plotInfo.viewerId) { // create & with viewerId
             groupId = plotInfo.viewerId;
             nPlotId = plotidGen.next().value;
-            dispatchAddImages(plotInfo.viewerId, [nPlotId]);
+            // dispatchAddImages(plotInfo.viewerId, [nPlotId]);
         } else {                                            // replace and with plotId
             nPlotId = plotInfo.plotId;
             if (nPlotId) {
@@ -332,9 +332,9 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
         }
 
         if (plotInfo.isThreeColor) {
-            dispatchPlotImage(nPlotId, wpSet, true);
+            dispatchPlotImage({plotId:nPlotId, wpRequest:wpSet, viewerId:groupId});
         } else {
-            dispatchPlotImage(nPlotId, wpSet[0]);
+            dispatchPlotImage({plotId:nPlotId, wpRequest:wpSet[0], viewerId:groupId});
         }
 
     };

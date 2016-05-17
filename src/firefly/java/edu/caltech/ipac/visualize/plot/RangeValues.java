@@ -4,9 +4,6 @@
 package edu.caltech.ipac.visualize.plot;
 
 
-import edu.caltech.ipac.util.HandSerialize;
-import edu.caltech.ipac.util.StringUtils;
-
 import java.io.Serializable;
 
 /**
@@ -17,7 +14,7 @@ import java.io.Serializable;
  * Add ZP and WP codes
  */
 
-public class RangeValues implements Cloneable, Serializable,HandSerialize {
+public class RangeValues implements Cloneable, Serializable {
 
 
     public static final String PERCENTAGE_STR = "Percent";
@@ -181,13 +178,13 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
                                      double upperValue,
                                      String algorithm) {
         int s= PERCENTAGE;
-        if (!StringUtils.isEmpty(stretchType)) {
+        if (!isEmpty(stretchType)) {
             if (stretchType.equalsIgnoreCase(PERCENTAGE_STR)) s=PERCENTAGE;
             else if (stretchType.equalsIgnoreCase(ABSOLUTE_STR)) s=ABSOLUTE;
             else if (stretchType.equalsIgnoreCase(SIGMA_STR)) s=SIGMA;
         }
         int a= STRETCH_LINEAR;
-        if (!StringUtils.isEmpty(algorithm)) {
+        if (!isEmpty(algorithm)) {
             if (algorithm.equalsIgnoreCase(LINEAR_STR)) a= STRETCH_LINEAR;
             else if (algorithm.equalsIgnoreCase(LOG_STR)) a=STRETCH_LOG;
             else if (algorithm.equalsIgnoreCase(LOGLOG_STR)) a= STRETCH_LOGLOG;
@@ -207,13 +204,13 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
                                      double upperValue, double drValue,double bpValue, double wpValue, double gammaValue,
                                      String algorithm) {
         int s= PERCENTAGE;
-        if (!StringUtils.isEmpty(stretchType)) {
+        if (!isEmpty(stretchType)) {
             if (stretchType.equalsIgnoreCase(PERCENTAGE_STR)) s=PERCENTAGE;
             else if (stretchType.equalsIgnoreCase(ABSOLUTE_STR)) s=ABSOLUTE;
             else if (stretchType.equalsIgnoreCase(SIGMA_STR)) s=SIGMA;
         }
         int a= STRETCH_LINEAR;
-        if (!StringUtils.isEmpty(algorithm)) {
+        if (!isEmpty(algorithm)) {
             if (algorithm.equalsIgnoreCase(LINEAR_STR)) a= STRETCH_LINEAR;
             else if (algorithm.equalsIgnoreCase(LOG_STR)) a=STRETCH_LOG;
             else if (algorithm.equalsIgnoreCase(LOGLOG_STR)) a= STRETCH_LOGLOG;
@@ -281,19 +278,19 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
 
 
     public static RangeValues parse(String sIn) {
-        if (StringUtils.isEmpty(sIn)) return null;
+        if (isEmpty(sIn)) return null;
 
         try {
             String s[]= sIn.split(",");
             int i= 0;
             int    lowerWhich=              Integer.parseInt(s[i++]);
-            double lowerValue=              StringUtils.parseDouble(s[i++]);
+            double lowerValue=              parseDouble(s[i++]);
             int    upperWhich=              Integer.parseInt(s[i++]);
-            double upperValue=              StringUtils.parseDouble(s[i++]);
-            double drValue=                 StringUtils.parseDouble(s[i++]);
-            double bpValue=                 StringUtils.parseDouble(s[i++]);
-            double wpValue=                 StringUtils.parseDouble(s[i++]);
-            double gammaValue=              StringUtils.parseDouble(s[i++]);
+            double upperValue=              parseDouble(s[i++]);
+            double drValue=                 parseDouble(s[i++]);
+            double bpValue=                 parseDouble(s[i++]);
+            double wpValue=                 parseDouble(s[i++]);
+            double gammaValue=              parseDouble(s[i++]);
             int    algorithm=               Integer.parseInt(s[i++]);
             int    zscale_contrast=         Integer.parseInt(s[i++]);
             int    zscale_samples=          Integer.parseInt(s[i++]);
@@ -335,5 +332,11 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
                getZscaleSamplesPerLine();
     }
 
+    private static boolean isEmpty(String s) {
+        return s == null || s.trim().length() == 0;
+    }
 
+    public static double parseDouble(String s) throws NumberFormatException {
+        return s.equals("NaN") ? Double.NaN : Double.parseDouble(s);
+    }
 }

@@ -5,7 +5,6 @@ package edu.caltech.ipac.visualize.plot;
 
 import com.google.gwt.core.client.js.JsExport;
 import com.google.gwt.core.client.js.JsType;
-import edu.caltech.ipac.util.StringUtils;
 
 /**
  * This class contains a world point plus the coordinate system 
@@ -56,16 +55,16 @@ public class WorldPt extends Pt {
     protected static WorldPt stringAryToWorldPt(String wpParts[]) {
         WorldPt retval= null;
         if (wpParts.length>=3) {
-            double lon= StringUtils.parseDouble(wpParts[0]);
-            double lat= StringUtils.parseDouble(wpParts[1]);
+            double lon= parseDouble(wpParts[0]);
+            double lat= parseDouble(wpParts[1]);
             CoordinateSys coordSys= CoordinateSys.parse(wpParts[2]) ;
             if (!Double.isNaN(lon) && !Double.isNaN(lat) && coordSys!=null) {
                 retval= new WorldPt(lon,lat,coordSys);
             }
         }
         if (wpParts.length==2) {
-            double lon= StringUtils.parseDouble(wpParts[0]);
-            double lat= StringUtils.parseDouble(wpParts[1]);
+            double lon= parseDouble(wpParts[0]);
+            double lat= parseDouble(wpParts[1]);
             if (!Double.isNaN(lon) && !Double.isNaN(lat)) {
                 retval= new WorldPt(lon,lat);
             }

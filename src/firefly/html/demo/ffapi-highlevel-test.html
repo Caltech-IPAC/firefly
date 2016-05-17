@@ -23,6 +23,14 @@
     <br>
 </div>
 
+<div>
+    <!--<a href='javascript:firefly.getViewer("testChannel").showImage({url:"http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits"})'>test open</a>-->
+    <a href='javascript:firefly.getViewer().plotURL("http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits")'>test open</a>
+    <a href="javascript:firefly.getViewer().showImage({plotId: 'xxq', Service: 'TWOMASS', Title     : '2mass from service', SurveyKey  : 'k', WorldPt    : '10.68479;41.26906;EQ_J2000', SizeInDeg  : '.12', })">test again</a>
+    <a href="javascript:firefly.getViewer().showImage(window.threeC)">3 C</a>
+    <a href="javascript:firefly.action.dispatchZoom({plotId: 'xxq',userZoomType:'UP' ,dispatcher:window.ffViewer.dispatch})">up</a>
+    <a href="javascript:firefly.action.dispatchZoom({plotId: 'xxq',userZoomType:'DOWN' ,dispatcher:window.ffViewer.dispatch})">down</a>
+</div>
 <div id="imageViewHere" style="width: 550px; height: 550px; padding: 10px 5px 5px 5px;"></div>
 <div id="old1" style="width: 300px; height: 300px; padding: 10px 5px 5px 5px;"></div>
 <div id="old2" style="width: 300px; height: 300px; padding: 10px 5px 5px 5px;"></div>
@@ -31,12 +39,18 @@
 <script type="text/javascript">
     {
         onFireflyLoaded= function(firefly) {
+
+            window.ffViewer= firefly.getViewer();
+
             firefly.setGlobalImageDef({
                 ZoomType  : 'TO_WIDTH'
             } );
 
             firefly.debug= true;
+
+
             var req= {
+                plotId: 'xxq',
                 Type      : 'SERVICE',
 //                plotGroupId : 'myGroup',
                 Service   : 'TWOMASS',
@@ -55,6 +69,9 @@
                 Title     : 'Wise',
                 GridOn     : 'true',
                 SurveyKey  : 'Atlas',
+                bad1  : 'hello',
+                bad2  : 'bye',
+                bad3  : 'again',
                 SurveyKeyBand  : '2',
                 WorldPt    : '10.68479;41.26906;EQ_J2000',
                 SizeInDeg  : '.12',
@@ -63,7 +80,7 @@
 
 
 
-            var threeC= [
+            window.threeC= [
                 {
                     type      : 'SERVICE',
 //                    plotGroupId : 'myGroup',
@@ -89,6 +106,7 @@
                     title     : '3 color',
                     SurveyKey  : 'k',
                     WorldPt    : '10.68479;41.26906;EQ_J2000',
+                    moreBadKeys : 'qqq',
                     SizeInDeg  : '.12'
                 }
             ];
@@ -96,7 +114,7 @@
 
             firefly.showImage('imageViewHere', req);
             firefly.showImage('imageViewHere', req2);
-            firefly.showImage('imageViewHere', threeC);
+            firefly.showImage('imageViewHere', window.threeC);
             firefly.showImage('imageViewHere', {url:'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits'});
 
             var v1= firefly.makeImageViewer('old1');

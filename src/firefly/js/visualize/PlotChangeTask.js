@@ -2,7 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import Enum from 'enum';
 import {logError} from '../util/WebUtil.js';
 import ImagePlotCntlr, {ActionScope,IMAGE_PLOT_KEY} from './ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, operateOnOthersInGroup,getPlotStateAry} from './PlotViewUtil.js';
@@ -33,7 +32,8 @@ import {WebPlot} from './WebPlot.js';
 export function colorChangeActionCreator(rawAction) {
     return (dispatcher,getState) => {
         var store= getState()[IMAGE_PLOT_KEY];
-        var {plotId,cbarId}= rawAction.payload;
+        var {plotId,cbarId, actionScope}= rawAction.payload;
+        actionScope= ActionScope.get(actionScope);
         var pv= getPlotViewById(store,plotId);
         if (!pv) return;
 
@@ -61,7 +61,8 @@ export function colorChangeActionCreator(rawAction) {
 export function stretchChangeActionCreator(rawAction) {
     return (dispatcher,getState) => {
         var store= getState()[IMAGE_PLOT_KEY];
-        var {plotId,stretchData}= rawAction.payload;
+        var {plotId,stretchData,actionScope}= rawAction.payload;
+        actionScope= ActionScope.get(actionScope);
         var pv= getPlotViewById(store,plotId);
         var plot= primePlot(pv);
         if (!plot || !pv || !stretchData) return;
@@ -89,6 +90,8 @@ export function rotateActionCreator(rawAction) {
     return (dispatcher,getState) => {
         var store= getState()[IMAGE_PLOT_KEY];
         var { plotId, angle, rotateType, newZoomLevel, actionScope }= rawAction.payload;
+        actionScope= ActionScope.get(actionScope);
+        rotateType= RotateType.get(rotateType);
         var plotView= getPlotViewById(store,plotId);
         if (!plotView || !rotateType) return;
         var p= primePlot(plotView);
@@ -124,16 +127,13 @@ export function cropActionCreator(rawAction) {
     return (dispatcher,getState) => {
         var store= getState()[IMAGE_PLOT_KEY];
         var { plotId, imagePt1, imagePt2, cropMultiAll, actionScope }= rawAction.payload;
+        actionScope= ActionScope.get(actionScope);
         var plotView= getPlotViewById(store,plotId);
         if (!plotView || !imagePt1 || !imagePt2) return;
         var p= primePlot(plotView);
         if (!p) return;
 
         doCrop(dispatcher,plotView,imagePt1, imagePt2, cropMultiAll);
-        // if (actionScope===ActionScope.GROUP) {
-        //     operateOnOthersInGroup(store,plotView, (pv) =>
-        //         doRotate(dispatcher,pv,rotateType,angle,newZoomLevel));
-        // }
     };
 }
 

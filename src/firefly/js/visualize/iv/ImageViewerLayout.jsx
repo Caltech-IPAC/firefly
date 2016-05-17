@@ -39,7 +39,13 @@ export class ImageViewerLayout extends Component {
         this.previousDim= makePrevDim(this.props);
         dispatchUpdateViewSize(pv.plotId,width,height);
         if (pv && pv.plotViewCtx.zoomLockingEnabled && primePlot(pv)) {
-            dispatchZoom(pv.plotId,pv.plotViewCtx.zoomLockingType,true,true, true);
+            // dispatchZoom(pv.plotId,pv.plotViewCtx.zoomLockingType,true,true, true);
+            dispatchZoom({
+                plotId:pv.plotId,
+                userZoomType:pv.plotViewCtx.zoomLockingType,
+                zoomLockingEnabled:true, 
+                forceDelay:true
+            });
         }
     }
 
@@ -52,7 +58,12 @@ export class ImageViewerLayout extends Component {
             if (pv && pv.plotViewCtx.zoomLockingEnabled && primePlot(pv)) {
                 if (prevExternalWidth!==externalWidth || prevExternalHeight!==externalHeight) {
                     //console.log('dispatchZoom');
-                    dispatchZoom(pv.plotId,pv.plotViewCtx.zoomLockingType,true,true,true);
+                    dispatchZoom({
+                        plotId:pv.plotId,
+                        userZoomType:pv.plotViewCtx.zoomLockingType,
+                        zoomLockingEnabled:true,
+                        forceDelay:true
+                    });
                 }
             }
             this.previousDim= makePrevDim(this.props);
@@ -87,7 +98,7 @@ export class ImageViewerLayout extends Component {
             case MouseState.DRAG :
                 if (this.plotDrag) {
                     const newScrollPt= this.plotDrag(screenX,screenY);
-                    dispatchProcessScroll(plotId,newScrollPt);
+                    dispatchProcessScroll({plotId,scrollPt:newScrollPt});
                 }
                 break;
             case MouseState.UP :

@@ -185,6 +185,24 @@ export function logError(...message) {
         message.forEach( (m) => console.log(m.stack ? m.stack : m) );
     }
 }
+export function logErrorWithPrefix(prefix, ...message) {
+    if (message) {
+        message.forEach( (m,idx) => {
+            if (idx===0) {
+                if (m.stack) {
+                    console.log(prefix);
+                    console.log(m);
+                }
+                else {
+                    console.log(`${prefix} ${m}`);
+                }
+            }
+            else {
+                console.log(m.stack ? m.stack : m);
+            }
+        } );
+    }
+}
 
 
 export function download(url) {

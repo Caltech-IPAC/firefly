@@ -21,20 +21,9 @@
         <include name="*Pt.java"/>
         <include name="CoordinateSys.java"/>
         <include name="ProjectionException.java"/>
-        <include name="PixelValueException.java"/>
-        <include name="RangeValues.java"/>
-        <!--<include name="CoveragePolygons.java"/>-->
-        <!--<include name="Circle.java"/>-->
-        <!--<include name="ImageCorners.java"/>-->
-        <!--<include name="MiniFitsHeader.java"/>-->
 
         <exclude name="ResolvedWorldPt.java"/>
-    </source>
-
-    <source path="util/">
-        <include name="StringTokenizer.java"/>
-        <include name="StringUtils.java"/>
-        <include name="HandSerialize.java"/>
+        <exclude name="ScreenPt.java"/>
     </source>
 
   </module>

@@ -393,12 +393,12 @@ function doImages(request) {
 
 
     //wpr1.setAnnotationOps(AnnotationOps.TITLE_BAR);
-    dispatchPlotImage('TestImage1', wpr1);
-    dispatchPlotImage('TestImage2', wpr2);
-    dispatchPlotImage('TestImage3', wpr3);
-    dispatchPlotImage('TestImage4', wpr4);
+    dispatchPlotImage({plotId:'TestImage1', wpRequest:wpr1});
+    dispatchPlotImage({plotId:'TestImage2', wpRequest:wpr2});
+    dispatchPlotImage({plotId:'TestImage3', wpRequest:wpr3});
+    dispatchPlotImage({plotId:'TestImage4', wpRequest:wpr4});
 
-    dispatchPlotImage('TestImage3Color', [cWpr1,cWpr2,cWpr3],true);
+    dispatchPlotImage({plotId:'TestImage3Color', wpRequest:[cWpr1,cWpr2,cWpr3]});
     
     var viewer= getAViewFromMultiView(getMultiViewRoot());
     dispatchAddImages(viewer.viewerId, ['TestImage1', 'TestImage2', 'TestImage3', 'TestImage4', 'TestImage3Color']);
