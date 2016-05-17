@@ -117,15 +117,8 @@ function hideSearchPanel() {
 function doCatalog(request) {
 
     const conesize = convertAngle('deg', 'arcsec', request.conesize);
-    var title = `${request.project}-${request.cattable} (${request.spatial}`;
-    if (request.spatial === SpatialMethod.Box.value || request.spatial === SpatialMethod.Cone.value || request.spatial === SpatialMethod.Elliptical.value) {
-        title += ':' + conesize + '\'\'';
-    }
-    title += ')';
-    var tReq = TableRequest.newInstance({
 
-        id: 'GatorQuery',
-        title,
+    var tReq = TableRequest.newInstance({
         SearchMethod: request.spatial,
         catalog: request.cattable,
         RequestedDataSet: request.catalog,
@@ -133,6 +126,24 @@ function doCatalog(request) {
         catalogProject: request.project
 
     });
+
+    var title = `${request.project}-${request.cattable}`;
+
+    if (request.spatial === SpatialMethod.get('Multi-Object').value) {
+        tReq.id = 'GatorQuery';
+        tReq.source = request.fileUpload;
+        tReq.filename = request.fileUpload;
+        tReq.radius = conesize;
+        tReq.title = title;
+    } else {
+        tReq.id = 'GatorQuery';
+        title += ` (${request.spatial}`;
+        if (request.spatial === SpatialMethod.Box.value || request.spatial === SpatialMethod.Cone.value || request.spatial === SpatialMethod.Elliptical.value) {
+            title += ':' + conesize + '\'\'';
+        }
+        title += ')';
+        tReq.title = title;
+    }
 
     // change and merge others parameters in request if elliptical
     // plus change spatial name to cone
@@ -182,17 +193,13 @@ function doVoSearch(request) {
 
 function doLoadTable(request) {
     var tReq = TableRequest.newInstance({
-        id: 'IpacTableFromSource',
-        title: request.catalog,
+        id: 'userCatalogFromFile',
+        filePath : request.fileUpload,
+        title: 'Table Upload',
         SearchMethod: request.spatial,
-        catalog: request.cattable,
-        RequestedDataSet: request.catalog,
-        radius: request.conesize,
-        use: 'catalog_overlay',
-        catalogProject: request.project
+        use: 'catalog_overlay'
     });
-    console.log('Does not dispatch yet ' + tReq);
-    //dispatchTableSearch(tReq);
+    dispatchTableSearch(tReq);
 }
 
 /**
