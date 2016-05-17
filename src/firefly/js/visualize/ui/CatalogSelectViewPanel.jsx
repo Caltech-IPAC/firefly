@@ -158,8 +158,7 @@ function doCatalog(request) {
     }
 
     if (request.spatial === SpatialMethod.Polygon.value) {
-        const p = encodeURIComponent(request.polygoncoords);//encodeURI
-        tReq.polygon = p;
+        tReq.polygon = request.polygoncoords;
     }
 
     dispatchTableSearch(tReq);
@@ -183,7 +182,7 @@ function doVoSearch(request) {
 
 function doLoadTable(request) {
     var tReq = TableRequest.newInstance({
-        id: 'GatorQuery',
+        id: 'IpacTableFromSource',
         title: request.catalog,
         SearchMethod: request.spatial,
         catalog: request.cattable,
