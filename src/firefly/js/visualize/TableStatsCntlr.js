@@ -5,7 +5,6 @@ import {has, omit} from 'lodash';
 import {updateSet, updateMerge} from '../util/WebUtil.js';
 import ColValuesStatistics from './ColValuesStatistics.js';
 
-import {TableRequest} from '../tables/TableRequest.js';
 import * as TableUtil from '../tables/TableUtil.js';
 
 import * as TablesCntlr from '../tables/TablesCntlr.js';
@@ -48,7 +47,7 @@ export const dispatchLoadTblStats = function(searchRequest) {
  * @param {boolean} isColStatsReady flags that column statistics is now available
  * @param {ColValuesStatistics[]} an array which holds column statistics for each column
  */
-export const dispatchUpdateTblStats = function(tblId,isColStatsReady,colStats) {
+const dispatchUpdateTblStats = function(tblId,isColStatsReady,colStats) {
     flux.process({type: UPDATE_TBL_STATS, payload: {tblId,isColStatsReady,colStats}});
 };
 
@@ -80,10 +79,10 @@ export function reducer(state=getInitState(), action={}) {
         }
         case (TablesCntlr.TABLE_REMOVE)  :
         {
-            const {tbl_id} = action.payload.tbl_id;
+            const {tbl_id} = action.payload;
             if (has(state, tbl_id)) {
                 const newState = Object.assign({}, state);
-                Reflect.deleteProperty(newState, [tbl_id]);
+                Reflect.deleteProperty(newState, tbl_id);
                 return newState;
             }
             return state;
@@ -124,12 +123,12 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
     const {tbl_id} = TableUtil.getTblReqInfo(activeTableServerRequest);
 
     // searchRequest
-    const sreq = Object.assign({}, activeTableServerRequest,
+    const sreq = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']),
         {'startIdx': 0, 'pageSize': 1000000});
 
     const req = TableUtil.makeTblRequest('StatisticsProcessor', null,
                             { searchRequest: JSON.stringify(sreq) },
-                            'tblstats-'+activeTableServerRequest.tbl_id);
+                            'tblstats-'+tbl_id);
 
     TableUtil.doFetchTable(req).then(
         (tableModel) => {
@@ -140,7 +139,7 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
                 }, []);
                 dispatch(updateTblStats(
                     {
-                        tbl_id,
+                        tblId: tbl_id,
                         isColStatsReady: true,
                         colStats
                     }));

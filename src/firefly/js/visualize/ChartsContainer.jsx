@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 
 import {flux} from '../Firefly.js';
@@ -44,16 +44,18 @@ export class ChartsContainer extends Component {
     }
 }
 
+ChartsContainer.propTypes = {
+    expandedMode: PropTypes.bool,
+    closeable: PropTypes.bool
+};
+
 function ExpandedView(props) {
-    const {closeable} = props;
     return (
-        <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', overflow: 'hidden'}}>
-            <div style={{padding: 10, flex: '0 0 auto'}}>
-                {closeable && <CloseButton onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/>}
+        <div style={{ display: 'flex', height: '100%', flexGrow: 1, flexDirection: 'column', overflow: 'hidden'}}>
+            <div style={{marginBottom: 3}}>
+                {props.closeable && <CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/>}
             </div>
-            <div style={{ display: 'flex', flex: 'auto', alignItems: 'stretch', flexDirection: 'row', justifyContent: 'flex-start', overflow: 'hidden'}}>
-                <ChartsTableViewPanel expandedMode={true} expandable={false} {...props} />
-            </div>
+            <ChartsTableViewPanel expandedMode={true} expandable={false} {...props} />
         </div>
     );
 

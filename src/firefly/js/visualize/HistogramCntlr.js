@@ -92,7 +92,8 @@ export function reducer(state=getInitState(), action={}) {
         case (LOAD_COL_DATA)  :
         {
             const {histogramParams, searchRequest} = action.payload;
-            return updateSet(state, searchRequest.tbl_id, {isColDataReady: false, histogramParams});
+            const {tbl_id} = TableUtil.getTblReqInfo(searchRequest);
+            return updateSet(state, tbl_id, {isColDataReady: false, histogramParams});
         }
         case (UPDATE_COL_DATA)  :
         {
@@ -130,7 +131,7 @@ function updateColData(data) {
  */
 function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
 
-    const tblId = activeTableServerRequest['tbl_id'];
+    const {tbl_id} = TableUtil.getTblReqInfo(activeTableServerRequest);
     const sreq = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']),
         {'startIdx' : 0, 'pageSize' : 1000000});
 
@@ -157,7 +158,7 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
     }
     */
 
-    req.tbl_id = 'histogram-'+activeTableServerRequest.tbl_id;
+    req.tbl_id = 'histogram-'+tbl_id;
 
     TableUtil.doFetchTable(req).then(
         (tableModel) => {
@@ -179,7 +180,7 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
 
                 dispatch(updateColData(
                     {
-                        tblId,
+                        tblId: tbl_id,
                         isColDataReady : true,
                         histogramParams,
                         histogramData

@@ -269,8 +269,8 @@ function showXYPlot(llApi, targetDiv, params) {
     const xyPlotParams = {
         xyRatio,
         stretch,
-        x : { columnOrExpr : xCol, label : xLabel, unit : xUnit, options : xOptions},
-        y : { columnOrExpr : yCol, label : yLabel, unit : yUnit, options : yOptions}
+        x : { columnOrExpr : xCol, label : xLabel||xCol, unit : xUnit||'', options : xOptions},
+        y : { columnOrExpr : yCol, label : yLabel||yCol, unit : yUnit||'', options : yOptions}
     };
     const tblId = `tblid-${targetDiv}`;
 
@@ -292,7 +292,8 @@ function showXYPlot(llApi, targetDiv, params) {
             key: `${targetDiv}-chart`,
             tblId,
             closeable: false,
-            optionsPopup: false,
-            expandedMode: false
-        });
+            optionsPopup: true,
+            expandedMode: true
+        },
+        {width: 'calc(100% - 10px)', height: 'calc(100% - 10px)', overflow: 'auto', padding: '5px'});
 }

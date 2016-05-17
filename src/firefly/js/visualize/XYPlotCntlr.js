@@ -8,6 +8,7 @@ import {get, has, omit, omitBy, isUndefined, isString} from 'lodash';
 
 import {doFetchTable, getTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
+import * as TableUtil from '../tables/TableUtil.js';
 import {serializeDecimateInfo} from '../tables/Decimate.js';
 import {logError} from '../util/WebUtil.js';
 
@@ -170,9 +171,9 @@ export function reducer(state={}, action={}) {
         case (LOAD_PLOT_DATA)  :
         {
             const {xyPlotParams, searchRequest} = action.payload;
-            const tblId = searchRequest.tbl_id;
-            return updateSet(state, tblId,
-                { isPlotDataReady: false, xyPlotParams, decimatedUnzoomed: get(state, [tblId,'decimatedUnzoomed'])});
+            const {tbl_id} = TableUtil.getTblReqInfo(searchRequest);
+            return updateSet(state, tbl_id,
+                { isPlotDataReady: false, xyPlotParams, decimatedUnzoomed: get(state, [tbl_id,'decimatedUnzoomed'])});
         }
         case (UPDATE_PLOT_DATA)  :
         {
@@ -243,8 +244,8 @@ function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
         'decimate' : serializeDecimateInfo(xyPlotParams.x.columnOrExpr, xyPlotParams.y.columnOrExpr, 10000, 1.0, ...limits)
     });
 
-    const tblId = activeTableServerRequest.tbl_id;
-    req.tbl_id = 'xyplot-'+tblId;
+    const {tbl_id} = TableUtil.getTblReqInfo(activeTableServerRequest);
+    req.tbl_id = 'xyplot-'+tbl_id;
 
 
     doFetchTable(req).then(
@@ -276,7 +277,7 @@ function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
                         decimatedUnzoomed: Boolean(tableMeta['decimate_key']) || (xyPlotParams.zoom ? undefined : false),
                         xyPlotParams,
                         xyPlotData,
-                        tblId
+                        tblId : tbl_id
                     }));
             }
         }

@@ -149,7 +149,7 @@ class ChartsPanel extends React.Component {
                 let popupTitle = 'Chart Options';
 
                 const reqTitle = get(tableModel, 'tableMeta.title');
-                if (reqTitle) { popupTitle += ': '+reqTitle; }
+                if (reqTitle) { popupTitle += ': '+decodeURIComponent(reqTitle); }
 
                 var popup = (
                     <PopupPanel title={popupTitle} closeCallback={()=>{this.toggleOptions();}}>
@@ -527,7 +527,7 @@ class ChartsPanel extends React.Component {
             const knownSize = widthPx && heightPx;
 
             return (
-                <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', overflow: 'hidden'}}>
+                <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', height: '100%', overflow: 'hidden'}}>
                     <div style={{ position: 'relative', flexGrow: 1}}>
                         {this.renderToolbar()}
                         <div style={{display: 'flex', flexDirection: 'row', position: 'absolute', top: 30, bottom: 0, left: 0, right: 0}}>
@@ -608,6 +608,10 @@ export class ChartsTableViewPanel extends Component {
         );
     }
 }
+
+ChartsTableViewPanel.propTypes = {
+    tblId: PropTypes.string // if not present, active table id is used
+};
 
 export class OptionsWrapper extends React.Component {
     constructor(props) {
