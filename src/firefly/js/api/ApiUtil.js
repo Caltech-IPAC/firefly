@@ -1,4 +1,3 @@
-
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
@@ -73,6 +72,19 @@ export function renderDOM(div, Component, props, style={width:'100%', height:'10
 }
 
 
+export function myrenderDOM(div, Component, props) {
+    const divElement= isString(div) ? document.getElementById(div) : div;
+
+    if (!isElement(divElement)) debug(`the div element ${isString(div)?div:''} is not defined in the html` );
+    if (!Component) debug('Component must be defined');
+
+
+    const renderStuff= (
+            <Component {...props} />
+    );
+
+    ReactDOM.render(renderStuff,divElement);
+}
 
 /**
  * removed the rendered element

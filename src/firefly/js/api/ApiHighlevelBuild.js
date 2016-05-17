@@ -37,9 +37,9 @@ function build(llApi) {
 
     const commonPart= buildCommon(llApi);
     const imagePart= buildImagePart(llApi);
-    const xyPart= buildXYandHistPart(llApi);
+    const chartPart= buildChartPart(llApi);
     const tablePart= buildTablePart(llApi);
-    return Object.assign({}, commonPart, imagePart,xyPart,tablePart);
+    return Object.assign({}, commonPart, imagePart,chartPart,tablePart);
 }
 
 
@@ -48,9 +48,18 @@ function buildTablePart(llApi) {
     return {};
 }
 
-function buildXYandHistPart(llApi) {
+function buildChartPart(llApi) {
     //todo
-    return {};
+
+    /**
+     * The general plotting function to plot a FITS image.
+     * @param {String|div} targetDiv to put the chart in.
+     * @param {Object} parameters the request object literal with the chart parameters
+     * @namespace firefly
+     */
+    const showPlot= (targetDiv, parameters)  => showXYPlot(llApi, targetDiv, parameters);
+
+    return {showPlot};
 }
 
 function buildCommon(llApi) {
@@ -218,3 +227,38 @@ function makePlotId() {
 //---------- Private XYPlot or Histogram functions
 //================================================================
 
+function showXYPlot(llApi, targetDiv, params) {
+    const {dispatchSetupTblTracking, dispatchTableFetch,dispatchLoadPlotData}= llApi.action;
+    const {renderDOM}= llApi.util;
+    const {ChartsTableViewPanel}= llApi.ui;
+    const {xCol, yCol, xyRatio, stretch, xLabel, yLabel, xUnit, yUnit, xOptions, yOptions} = params;
+    const xyPlotParams = {
+        xyRatio,
+        stretch,
+        x : { columnOrExpr : xCol, label : xLabel, unit : xUnit, options : xOptions},
+        y : { columnOrExpr : yCol, label : yLabel, unit : yUnit, options : yOptions}
+    };
+    const tblId = `tblid-${targetDiv}`;
+
+    const searchRequest = {
+        tbl_id : tblId,
+        id:'IpacTableFromSource',
+        source: params.source,
+        pageSize: 0,
+        title:  params.chartTitle,
+        META_INFO: {tbl_id: tblId, title: 'Chart Test'}
+    };
+
+    dispatchSetupTblTracking(tblId);
+    dispatchTableFetch(searchRequest);
+    dispatchLoadPlotData(xyPlotParams, searchRequest);
+
+    renderDOM(targetDiv, ChartsTableViewPanel,
+        {
+            key: `${targetDiv}-chart`,
+            tblId,
+            closeable: false,
+            optionsPopup: false,
+            expandedMode: false
+        });
+}

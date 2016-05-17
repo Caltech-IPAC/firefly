@@ -28,6 +28,8 @@ import {ExpandedModeDisplay} from '../visualize/iv/ExpandedModeDisplay.jsx';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {TablePanel} from '../tables/ui/TablePanel.jsx';
+import {ChartsContainer} from '../visualize/ChartsContainer.jsx';
+import {ChartsTableViewPanel} from '../visualize/ChartsTableViewPanel.jsx';
 
 // builds the highlevel api
 import {buildHighLevelApi} from './ApiHighLevelBuild.js';
@@ -121,7 +123,9 @@ export function buildLowlevelAPI() {
         ExpandedModeDisplay,
         ImageMetaDataToolbar,
         TablesContainer,
-        TablePanel
+        TablePanel,
+        ChartsContainer,
+        ChartsTableViewPanel
     };
     
     const util= Object.assign({}, ApiUtil, {image:ApiUtilImage}, {xyplot:{}}, {table:{}}, {data:{}} );

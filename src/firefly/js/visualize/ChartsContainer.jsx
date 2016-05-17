@@ -15,7 +15,6 @@ import {ChartsTableViewPanel} from '../visualize/ChartsTableViewPanel.jsx';
 export class ChartsContainer extends Component {
     constructor(props) {
         super(props);
-        const expandedMode = getExpandedMode() === LO_EXPANDED.xyPlots.view;
         this.state = {
             expandedMode: props.expandedMode,
             closeable: props.closeable
@@ -41,7 +40,7 @@ export class ChartsContainer extends Component {
 
     render() {
         const {expandedMode, closeable} = this.state;
-        return expandedMode ? <ExpandedView closeable={closeable} /> : <ChartsTableViewPanel />;
+        return expandedMode ? <ExpandedView closeable={closeable} {...this.props}/> : <ChartsTableViewPanel {...this.props}/>;
     }
 }
 

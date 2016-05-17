@@ -247,13 +247,15 @@ export class XYPlot extends React.Component {
                 }
 
                 if (newWidth !== width || newHeight !== height) {
+                    const {chartWidth, chartHeight} = this.calculateChartSize(newWidth, newHeight);
+                    chart.setSize(chartWidth, chartHeight, false);
+
                     if (this.pendingResize) {
-                        // if resize is fast (small dataset), the animation will do
                         // if resize is slow, we want to do it only once
                         this.pendingResize.cancel();
                     }
                     this.pendingResize = this.debouncedResize();
-                    this.pendingResize(newWidth, newHeight);
+                    this.pendingResize();
                 }
 
                 return false;
@@ -289,11 +291,9 @@ export class XYPlot extends React.Component {
     }
 
     debouncedResize() {
-        return debounce((newWidth, newHeight) => {
+        return debounce(() => {
             const chart = this.refs.chart && this.refs.chart.getChart();
             if (chart) {
-                const {chartWidth, chartHeight} = this.calculateChartSize(newWidth, newHeight);
-                chart.setSize(chartWidth, chartHeight, this.shouldAnimate() );
                 const {data} = this.props;
                 if (data.decimateKey) {
                     // update marker's size
@@ -305,6 +305,7 @@ export class XYPlot extends React.Component {
                     chart.redraw();
                 }
             }
+            this.pendingResize = null;
         }, 300);
     }
 

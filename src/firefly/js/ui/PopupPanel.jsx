@@ -155,7 +155,9 @@ export var PopupPanel= React.createClass(
                                  onTouchMove={this.dialogMove}
                                  onTouchEnd={this.dialogMoveEnd}
                                  className={'title-label'} >
-                                {title}
+                                <div className={'text-ellipsis'} style={{width:'80%'}}>
+                                    {title}
+                                </div>
                             </div>
                             <image className={'popup-panel-header'}
                                    src= {`${getRootURL()}images/blue_delete_10x10.gif`}
