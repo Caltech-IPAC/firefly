@@ -81,10 +81,10 @@ export function reducer(state=getInitState(), action={}) {
     switch (action.type) {
         case (TablesCntlr.TABLE_REMOVE)  :
         {
-            const {tbl_id} = action.payload.tbl_id;
+            const {tbl_id} = action.payload;
             if (has(state, tbl_id)) {
                 const newState = Object.assign({}, state);
-                Reflect.deleteProperty(newState, [tbl_id]);
+                Reflect.deleteProperty(newState, tbl_id);
                 return newState;
             }
             return state;

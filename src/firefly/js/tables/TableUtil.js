@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, isEmpty, uniqueId, padEnd, cloneDeep, omitBy, isNil} from 'lodash';
+import {get, set, isEmpty, uniqueId, padEnd, cloneDeep, omit, omitBy, isNil} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {flux} from '../Firefly.js';
@@ -451,7 +451,7 @@ export function getTableSourceUrl(columns, request, filename) {
                 return col.name;
             } );
     if (visiCols.length !== columns.length) {
-        request[inclCols] = visiCols.toString();
+        request['inclCols'] = visiCols.toString();
     }
     Request.startIdx = 0;
     Request.pageSize = Number.MAX_SAFE_INTEGER;

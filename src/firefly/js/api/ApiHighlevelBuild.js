@@ -81,9 +81,7 @@ function buildTablePart(llApi) {
 /*---------------------------- TABLE PART >----------------------------*/
 
 
-
 function buildChartPart(llApi) {
-    //todo
 
     /**
      * The general plotting function to plot a FITS image.
@@ -92,8 +90,9 @@ function buildChartPart(llApi) {
      * @namespace firefly
      */
     const showPlot= (targetDiv, parameters)  => showXYPlot(llApi, targetDiv, parameters);
+    const addXYPlot= (targetDiv, parameters, tbl_id) => showXYPlot(llApi, targetDiv, parameters, tbl_id);
 
-    return {showPlot};
+    return {showPlot, addXYPlot};
 }
 
 function buildCommon(llApi) {
@@ -261,9 +260,10 @@ function makePlotId() {
 //---------- Private XYPlot or Histogram functions
 //================================================================
 
-function showXYPlot(llApi, targetDiv, params) {
+function showXYPlot(llApi, targetDiv, params, tbl_id) {
     const {dispatchSetupTblTracking, dispatchTableFetch,dispatchLoadPlotData}= llApi.action;
     const {renderDOM}= llApi.util;
+    const {makeTblRequest}= llApi.util.table;
     const {ChartsTableViewPanel}= llApi.ui;
     const {xCol, yCol, xyRatio, stretch, xLabel, yLabel, xUnit, yUnit, xOptions, yOptions} = params;
     const xyPlotParams = {
@@ -272,19 +272,20 @@ function showXYPlot(llApi, targetDiv, params) {
         x : { columnOrExpr : xCol, label : xLabel||xCol, unit : xUnit||'', options : xOptions},
         y : { columnOrExpr : yCol, label : yLabel||yCol, unit : yUnit||'', options : yOptions}
     };
-    const tblId = `tblid-${targetDiv}`;
+    const tblId = tbl_id || `tblid-${targetDiv}`;
 
-    const searchRequest = {
-        tbl_id : tblId,
-        id:'IpacTableFromSource',
-        source: params.source,
-        pageSize: 0,
-        title:  params.chartTitle,
-        META_INFO: {tbl_id: tblId, title: 'Chart Test'}
-    };
+    const searchRequest = makeTblRequest(
+        'IpacTableFromSource', // id
+        params.chartTitle||'', // title
+        {                      // options
+            source: params.source,
+            pageSize: 0
+        },
+        tblId                  // table id
+    );
 
     dispatchSetupTblTracking(tblId);
-    dispatchTableFetch(searchRequest);
+    if (!tbl_id) { dispatchTableFetch(searchRequest); }
     dispatchLoadPlotData(xyPlotParams, searchRequest);
 
     renderDOM(targetDiv, ChartsTableViewPanel,
