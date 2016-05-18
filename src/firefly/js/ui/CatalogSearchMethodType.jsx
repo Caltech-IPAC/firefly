@@ -65,24 +65,24 @@ export class CatalogSearchMethodType extends Component {
         const {groupKey} = this.props;
 
         return (
-            <div style={{padding: 10}}>
-                <InputGroup labelWidth={100}>
-                    {renderTargetPanel(groupKey, searchType)}
-                    <div
-                        style={{padding:5, display:'flex', flexDirection:'row', flexWrap:'no-wrap', alignItems:'center' }}>
-                        <ListBoxInputField
-                            fieldKey='spatial'
-                            initialState={{
+            <div style={{padding: 10, display:'flex', flexDirection:'column', flexWrap:'wrap', alignItems:'center'}}>
+                {renderTargetPanel(groupKey, searchType)}
+                <div
+                    style={{display:'flex', flexDirection:'row', flexWrap:'no-wrap', alignItems:'center' }}>
+                    <ListBoxInputField
+                        fieldKey='spatial'
+                        initialState={{
                                           tooltip: 'Enter a search method',
                                           label : 'Method Search:',
+                                          labelWidth: 80,
                                           value:SpatialMethod.Cone.value
                                       }}
-                            options={ spatialOptions() }
-                            multiple={false}
-                        />
-                        {sizeArea(searchType)}
-                    </div>
-                </InputGroup>
+                        options={ spatialOptions() }
+                        wrapperStyle={{marginRight:'15px'}}
+                        multiple={false}
+                    />
+                    {sizeArea(searchType)}
+                </div>
             </div>
         );
 
@@ -123,12 +123,14 @@ const spatialOptions = () => {
 function radiusInField(label = 'Radius:', tooltip = 'Enter radius of the search', min = 1 / 3600, max = 1) {
     return (
         <SizeInputFields fieldKey='conesize' showFeedback={true}
+                         wrapperStyle={{padding:5, margin: '5px 0 5px 0'}}
                          initialState={{
                                                value:initRadiusArcSec,
                                                tooltip: {tooltip},
                                                unit: 'arcsec',
                                                min:  {min},
-                                               max:  {max}
+                                               max:  {max},
+                                               labelWidth : 100
                                            }}
                          label={label}/>
     );
@@ -137,13 +139,13 @@ function sizeArea(searchType) {
 
     if (searchType === SpatialMethod.Cone.value) {
         return (
-            <div className='size'>
+            <div style={{border: '1px solid #a3aeb9'}}>
                 {radiusInField()}
             </div>
         );
     } else if (searchType === SpatialMethod.Elliptical.value) {
         return (
-            <div className='size'>
+            <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center', border:'solid #a3aeb9 1px' }}>
                 {radiusInField('Semi-major Axis:', 'Enter the semi-major axis of the search')}
                 <ValidationField fieldKey='posangle'
                                  forceReinit={true}
@@ -170,16 +172,17 @@ function sizeArea(searchType) {
     } else if (searchType === SpatialMethod.Box.value) {
 
         return (
-            <div className='size'>
+            <div style={{border: '1px solid #a3aeb9'}}>
                 {radiusInField('Side:', 'Enter side size of the box search', 1 / 3600, 7200 / 3600)}
             </div>
 
         );
     } else if (searchType === SpatialMethod.get('Multi-object').value) {
         return (
-            <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
+            <div
+                style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center', border:'solid #a3aeb9 1px' }}>
                 <FileUpload
-                    wrapperStyle={{margin: '5px 0'}}
+                    wrapperStyle={{padding:10, margin: '5px 0'}}
                     fieldKey='fileUpload'
                     initialState={{
                         tooltip: 'Select a  file to upload',
@@ -191,11 +194,13 @@ function sizeArea(searchType) {
     } else if (searchType === SpatialMethod.Polygon.value) {
 
         return (
-            <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
+            <div
+                style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'wrap', alignItems:'center', border:'solid #a3aeb9 1px' }}>
                 <InputAreaFieldConnected fieldKey='polygoncoords'
-                                         wrapperStyle={{display:'flex', flexDirection:'row', alignItems:'center' }}
+                                         wrapperStyle={{padding:5, display:'flex', flexDirection:'row', flexWrap:'wrap', alignItems:'center'}}
                                          initialState={{
-                                               tooltip:'Enter polygon coordinates search'
+                                               tooltip:'Enter polygon coordinates search',
+                                               labelWidth:70
                                             }}
                                          label='Coordinates:'
                                          tooltip='Enter polygon coordinates search'
@@ -212,7 +217,7 @@ function sizeArea(searchType) {
     } else {
         return (
 
-            <div className='size'>
+            <div style={{border: '1px solid #a3aeb9', padding:'30px 30px'}}>
                 Search the catalog with no spacial constraints
             </div>
         );

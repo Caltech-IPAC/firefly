@@ -28,6 +28,7 @@ import {FileUpload} from '../../ui/FileUpload.jsx';
 import {convertAngle} from '../VisUtil.js';
 
 import './CatalogTableListField.css';
+import './CatalogSelectViewPanel.css';
 
 /**
  * group key for fieldgroup comp
@@ -352,7 +353,7 @@ class CatalogSelectView extends Component {
                     </Tab>
                     <Tab name='Load Catalog' id='loadcat'>
                         <div
-                            style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
+                            style={{padding:5}}>
                             <FileUpload
                                 wrapperStyle={{margin: '5px 0'}}
                                 fieldKey='fileUpload'
@@ -540,6 +541,7 @@ class CatalogDDList extends Component {
                 <div className='ddselectors'>
                     <CatalogSearchMethodType groupKey={gkey}/>
                     <ListBoxInputField fieldKey='project'
+                                       wrapperStyle={{margin:'5px 0 5px 0', padding:5}}
                                        initialState={{
                                           tooltip: 'Select Project',
                                           label : 'Select Project:',
@@ -550,6 +552,7 @@ class CatalogDDList extends Component {
                                        labelWidth={100}
                     />
                     <ListBoxInputField fieldKey='catalog'
+                                       wrapperStyle={{margin:'5px 0 5px 0', padding:5}}
                                        initialState={{
                                           tooltip: 'Select Catalog',
                                           label : 'Select Catalog:',
@@ -560,7 +563,7 @@ class CatalogDDList extends Component {
                                        labelWidth={100}
                     />
                 </div>
-                <div className='catalogtable'>
+                <div>
                     <CatalogTableListField fieldKey='cattable'
                                            data={catTable}
                                            cols={cols}
