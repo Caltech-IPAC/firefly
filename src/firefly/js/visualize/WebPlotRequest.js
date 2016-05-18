@@ -559,7 +559,7 @@ export class WebPlotRequest extends ServerRequest {
      */
     setInitialRangeValues(rangeValues) {
         if (rangeValues) {
-            this.setParam(C.INIT_RANGE_VALUES, rangeValues.serialize());
+            this.setParam(C.INIT_RANGE_VALUES, rangeValues.toJSON());
         }
         else {
             this.removeParam(C.INIT_RANGE_VALUES);

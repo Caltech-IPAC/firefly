@@ -18,7 +18,7 @@ var putCacheColorPref= function(cacheKey, state) {
 
     state.getBands().forEach(
         (band)=> {
-            pref[band.key]= state.getRangeValues(band).serialize();
+            pref[band.key]= state.getRangeValues(band).toJSON();
         });
 
     BrowserCache.put(cacheKey,pref);

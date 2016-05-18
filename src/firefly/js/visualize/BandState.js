@@ -115,7 +115,7 @@ export class BandState {
      */
     setRangeValues(rangeValues) {
         this.rangeValues= null;
-        this.rangeValuesSerialize= (rangeValues==null) ? null : rangeValues.serialize();
+        this.rangeValuesSerialize= (rangeValues==null) ? null : rangeValues.toJSON();
     }
 
     /**
