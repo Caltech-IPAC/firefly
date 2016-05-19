@@ -270,7 +270,7 @@ export function getCellValue(tableModel, rowIdx, colName) {
  * @returns {boolean}
  */
 export function isTableLoaded(tableModel) {
-    const status = tableModel && get(tableModel, 'tableMeta.Loading-Status', 'COMPLETED');
+    const status = tableModel && !tableModel.isFetching && get(tableModel, 'tableMeta.Loading-Status', 'COMPLETED');
     return status === 'COMPLETED';
 }
 

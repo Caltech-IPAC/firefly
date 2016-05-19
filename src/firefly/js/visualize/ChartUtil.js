@@ -8,6 +8,7 @@
  * Created by tatianag on 3/17/16.
  */
 
+import {uniqueId} from 'lodash';
 import {getTblById, getColumnIdx, getCellValue} from '../tables/TableUtil.js';
 import {Expression} from '../util/expr/Expression.js';
 import {logError} from '../util/WebUtil.js';
@@ -56,6 +57,9 @@ function getExpressionValue(strExpr, tableModel, rowIdx) {
     }
 }
 
-//export const getTblId = function(chartId) {
-//    return chartId; // will be chart GUI id in future
-//};
+
+export function uniqueChartId(tblId) {
+    return uniqueId(tblId+'c');
+}
+
+

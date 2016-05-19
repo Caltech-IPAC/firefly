@@ -33,7 +33,8 @@
 </div>
 <div id="imageViewHere" style="width: 550px; height: 550px; padding: 10px 5px 5px 5px;"></div>
 <div id="tableViewHere" style="width: 550px; height: 300px; padding: 10px 5px 5px 5px;"></div>
-<div id="xyPlotViewHere" style="width: 550px; height: 300px; padding: 10px 5px 5px 5px;"></div>
+<div id="xyPlot1" style="width: 550px; height: 300px; padding: 10px 5px 5px 5px;"></div>
+<div id="xyPlot2" style="width: 550px; height: 300px; padding: 10px 5px 5px 5px;"></div>
 <div id="old1" style="width: 300px; height: 300px; padding: 10px 5px 5px 5px;"></div>
 <div id="old2" style="width: 300px; height: 300px; padding: 10px 5px 5px 5px;"></div>
 
@@ -130,7 +131,8 @@
             var tblReq = firefly.util.table.makeTblRequest('IpacTableFromSource', 'WiseDemoTable.tbl',
                                                             {pageSize:15, source: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl'}, tbl_id);
             firefly.showTable('tableViewHere', tblReq, {removable: false, showUnits: true, showFilters: true});
-            firefly.addXYPlot('xyPlotViewHere', {xCol: 'ra1', yCol: 'dec1'}, tbl_id);
+            firefly.addXYPlot('xyPlot1', {xCol: 'ra1', yCol: 'dec1'}, tbl_id);
+            firefly.addXYPlot('xyPlot2', {xCol: 'dtanneal', yCol: 'febgain'}, tbl_id);
         }
    }
    
