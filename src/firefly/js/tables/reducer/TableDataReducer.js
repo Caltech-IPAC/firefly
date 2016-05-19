@@ -1,8 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import update from 'react-addons-update';
-import {get} from 'lodash';
+import {get, omit} from 'lodash';
 
 import {updateSet} from '../../util/WebUtil.js';
 import * as TblUtil from '../TableUtil.js';
@@ -37,9 +36,7 @@ export function dataReducer(state={data:{}}, action={}) {
             return updateSet(root, [tbl_id], nTable);
 
         case (Cntlr.TABLE_REMOVE)  :
-            root = Object.assign({}, root);
-            Reflect.deleteProperty(root, [tbl_id]);
-            return root;
+            return omit(root, [tbl_id]);
 
         default:
             return root;

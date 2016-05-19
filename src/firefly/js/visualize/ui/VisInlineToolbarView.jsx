@@ -9,11 +9,10 @@ import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LayerButton} from './VisToolbarView.jsx';
 import {VisToolbar,showTools} from './VisToolbar.jsx';
 import {LayoutType, PopupPanel} from '../../ui/PopupPanel.jsx'
-import {dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
+import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {dispatchShowDialog,dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {dispatchChangeExpandedMode, dispatchChangeActivePlotView, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
-import {LO_EXPANDED} from '../../core/LayoutCntlr.js';
 
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import DELETE from 'html/images/blue_delete_10x10.png';
@@ -24,7 +23,7 @@ import WRENCH from 'html/images/wrench-24x24.png';
 
 function expand(plotId) {
     dispatchChangeActivePlotView(plotId);
-    dispatchSetLayoutMode( LO_EXPANDED.images );
+    dispatchSetLayoutMode( LO_MODE.expanded, LO_VIEW.images );
     dispatchChangeExpandedMode(true);
 }
 

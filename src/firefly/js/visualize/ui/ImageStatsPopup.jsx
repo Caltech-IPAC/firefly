@@ -121,7 +121,7 @@ function ImageStatsTab({statsResult, plotId})
 
     return (
         <div style={rS}>
-            <Tabs>
+            <Tabs useFlex={true}>
                 {allTabs}
             </Tabs>
             <ImageAreaStatsClose plotId={plotId}/>

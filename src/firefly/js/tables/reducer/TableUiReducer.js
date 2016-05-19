@@ -55,7 +55,7 @@ function removeTable(root, action) {
 
 function uiStateReducer(ui, tableModel) {
     // if (!get(tableModel, 'tableData')) return ui;
-    const {startIdx, endIdx, ...others} = TblUtil .getTblInfo(tableModel);
+    const {startIdx, endIdx, tbl_id, ...others} = TblUtil .getTblInfo(tableModel);
     const filterInfo = get(tableModel, 'request.filters');
     const filterCount = filterInfo ? filterInfo.split(';').length : 0;
     const sortInfo = get(tableModel, 'request.sortInfo');
@@ -65,10 +65,10 @@ function uiStateReducer(ui, tableModel) {
     var data = has(tableModel, 'tableData.data') ? tableModel.tableData.data.slice(startIdx, endIdx) : [];
     var tableRowCount = data.length;
 
-    var uiData = {startIdx, endIdx, tableRowCount, sortInfo, filterInfo, filterCount, data, showLoading, showMask, ...others};
+    var uiData = {tbl_id, startIdx, endIdx, tableRowCount, sortInfo, filterInfo, filterCount, data, showLoading, showMask, ...others};
 
     Object.keys(ui).filter( (ui_id) => {
-        return get(ui, [ui_id, 'tbl_id']) === tableModel.tbl_id;
+        return get(ui, [ui_id, 'tbl_id']) === tbl_id;
     }).forEach( (tbl_ui_id) => {
         const columns = get(ui, [tbl_ui_id, 'columns']);
         uiData.columns = ensureColumns({tableModel, columns});

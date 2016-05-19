@@ -48,9 +48,10 @@ function doShowTable(llApi, targetDiv, request, options) {
     const {dispatchTableSearch}= llApi.action;
     const {renderDOM}= llApi.util;
     const {TablesContainer}= llApi.ui;
+    const contProps = options && options.tbl_group ? {tbl_group: options.tbl_group} : {};
 
     dispatchTableSearch(request, options);
-    renderDOM(targetDiv, TablesContainer);
+    renderDOM(targetDiv, TablesContainer, contProps);
 }
 
 function buildTablePart(llApi) {
@@ -263,7 +264,7 @@ function makePlotId() {
 function showXYPlot(llApi, targetDiv, params, tbl_id) {
     const {dispatchSetupTblTracking, dispatchTableFetch,dispatchLoadPlotData}= llApi.action;
     const {renderDOM}= llApi.util;
-    const {makeTblRequest}= llApi.util.table;
+    const {makeFileRequest}= llApi.util.table;
     const {ChartsTableViewPanel}= llApi.ui;
     const {xCol, yCol, xyRatio, stretch, xLabel, yLabel, xUnit, yUnit, xOptions, yOptions} = params;
     const xyPlotParams = {
@@ -274,12 +275,12 @@ function showXYPlot(llApi, targetDiv, params, tbl_id) {
     };
     const tblId = tbl_id || `tblid-${targetDiv}`;
 
-    const searchRequest = makeTblRequest(
-        'IpacTableFromSource', // id
+    const searchRequest = makeFileRequest(
         params.chartTitle||'', // title
-        {                      // options
-            source: params.source,
-            pageSize: 0
+        params.source,  // source
+        null,  // alt_source
+        {
+            pageSize: 0 // options
         },
         tblId                  // table id
     );

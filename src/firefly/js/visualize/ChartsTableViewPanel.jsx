@@ -20,7 +20,7 @@ import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
 import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
 import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
 
-import {LO_EXPANDED, dispatchSetLayoutMode} from '../core/LayoutCntlr.js';
+import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../core/LayoutCntlr.js';
 
 import {getHighlighted} from './ChartUtil.js';
 import XYPlotOptions from '../visualize/XYPlotOptions.jsx';
@@ -453,7 +453,7 @@ class ChartsPanel extends React.Component {
                     <img style={selectionBtnStyle}
                          title='Expand this panel to take up a larger area'
                          src={OUTLINE_EXPAND}
-                         onClick={() => dispatchSetLayoutMode(LO_EXPANDED.xyPlots)}
+                         onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.xyPlots)}
                     />
                     }
                 </div>

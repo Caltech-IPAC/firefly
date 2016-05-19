@@ -105,7 +105,7 @@ function renderColorBandsFitsHeaders(plot, fitsHeaderInfo, popupId) {
     switch (bands.length){
         case 2:
         colorBandTabs = (
-                <Tabs defaultSelected={0} >
+                <Tabs defaultSelected={0} useFlex={true}>
                     {renderSingleTab(plot, bands[0],fitsHeaderInfo )}
                     {renderSingleTab(plot, bands[1],fitsHeaderInfo )}
             </Tabs>
@@ -113,7 +113,7 @@ function renderColorBandsFitsHeaders(plot, fitsHeaderInfo, popupId) {
             break;
         case 3:
             colorBandTabs = (
-                <Tabs defaultSelected={0} >
+                <Tabs defaultSelected={0} useFlex={true}>
                     {renderSingleTab(plot, bands[0],fitsHeaderInfo )}
                     {renderSingleTab(plot, bands[1],fitsHeaderInfo )}
                     {renderSingleTab(plot, bands[2],fitsHeaderInfo )}

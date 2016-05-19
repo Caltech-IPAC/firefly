@@ -19,7 +19,7 @@ import {flux} from '../Firefly.js';
 import {TABLE_SEARCH} from '../tables/TablesCntlr.js';
 import {encodeUrl, parseUrl} from '../util/WebUtil.js';
 import {CH_ID} from '../core/messaging/WebSocketClient.js';
-import * as LO from './LayoutCntlr.js';
+import {SHOW_DROPDOWN} from './LayoutCntlr.js';
 
 const MAX_HISTORY_LENGTH = 20;
 const DEF_HANDLER = genericHandler(document.location);
@@ -28,8 +28,7 @@ const DEF_HANDLER = genericHandler(document.location);
  * a map of all actions that should be in history
  * @type {{}}
  */
-const historyAware = [  TABLE_SEARCH, LO.LO_EXPANDED, LO.LO_STANDARD,
-                        LO.SHOW_DROPDOWN
+const historyAware = [  TABLE_SEARCH, SHOW_DROPDOWN
                     ].reduce( (o, v) => {o[v] = DEF_HANDLER; return o;}, {});
 
 var isHistoryEvent = false;

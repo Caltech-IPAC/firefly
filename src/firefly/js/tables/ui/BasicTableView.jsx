@@ -75,14 +75,17 @@ export class BasicTableView extends React.Component {
         const key = get(e, 'key');
         if (key === 'ArrowDown') {
             callbacks.onRowHighlight && callbacks.onRowHighlight(hlRowIdx + 1);
+            e.preventDefault && e.preventDefault();
         } else if (key === 'ArrowUp') {
             callbacks.onRowHighlight && callbacks.onRowHighlight(hlRowIdx - 1);
+            e.preventDefault && e.preventDefault();
         } else if (key === 'PageDown') {
             callbacks.onGotoPage && callbacks.onGotoPage(currentPage + 1);
+            e.preventDefault && e.preventDefault();
         } else if (key === 'PageUp') {
             callbacks.onGotoPage && callbacks.onGotoPage(currentPage - 1);
+            e.preventDefault && e.preventDefault();
         }
-        e.stopPropagation && e.stopPropagation();
     }
 
     render() {

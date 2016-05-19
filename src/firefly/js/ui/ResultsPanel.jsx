@@ -7,7 +7,7 @@ import sCompare from 'react-addons-shallow-compare';
 import {pick, filter} from 'lodash';
 
 import DockLayoutPanel from './panel/DockLayoutPanel.jsx';
-import {LO_EXPANDED, LO_STANDARD} from '../core/LayoutCntlr.js';
+import {LO_VIEW} from '../core/LayoutCntlr.js';
 // import {deepDiff} from '../util/WebUtil.js';
 
 const wrapperStyle = { flex: 'auto', display: 'flex', flexFlow: 'column', overflow: 'hidden'};
@@ -34,12 +34,12 @@ export class ResultsPanel extends Component {
     // }
 
     render() {
-        const {expanded} = this.props;
+        const {expanded=LO_VIEW.none} = this.props;
         const expandedProps = pick(this.props, ['expanded','imagePlot','xyPlot','tables'] );
         return (
-            expanded
-                ? <ExpandedView key='res-exp-view' {...expandedProps} />
-                : <StandardView key='res-std-view' {...this.props} />
+            expanded === LO_VIEW.none
+                ? <StandardView key='res-std-view' {...this.props} />
+                : <ExpandedView key='res-exp-view' {...expandedProps} />
         );
     }
 }
@@ -48,17 +48,22 @@ ResultsPanel.propTypes = {
     visToolbar: PropTypes.element,
     searchDesc: PropTypes.element,
     title: PropTypes.string,
-    expanded: PropTypes.string,
-    standard: PropTypes.string,
+    expanded: React.PropTypes.oneOfType([
+                React.PropTypes.string,
+                React.PropTypes.object]),
+    standard: React.PropTypes.oneOfType([
+                React.PropTypes.string,
+                React.PropTypes.object]),
     imagePlot: PropTypes.element,
     xyPlot: PropTypes.element,
     tables: PropTypes.element
 };
 
 
+//noinspection Eslint
 const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
-    const view = expanded === LO_EXPANDED.tables.view ? tables
-                : expanded === LO_EXPANDED.xyPlots.view ? xyPlot
+    const view = expanded === LO_VIEW.tables ? tables
+                : expanded === LO_VIEW.xyPlots ? xyPlot
                 : imagePlot;
     return (
         <div style={wrapperStyle}>
@@ -68,7 +73,9 @@ const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
 };
 
 
+//noinspection Eslint
 const StandardView = ({visToolbar, title, searchDesc, standard, imagePlot, xyPlot, tables}) => {
+    standard = LO_VIEW.get(standard) || LO_VIEW.none;
     const components = resolveComponents(standard, imagePlot, xyPlot, tables);
     const config = generateLayout(standard, components);
 
@@ -85,18 +92,19 @@ const StandardView = ({visToolbar, title, searchDesc, standard, imagePlot, xyPlo
 };
 
 function generateLayout(standard, results) {
+
     if ( results.length === 3 ) {
-        if (standard === LO_STANDARD.image_table.view) {
+        if (standard == LO_VIEW.get('images | tables').value) {
             return eastWest;
-        } else if (standard === LO_STANDARD.image_xyplot.view) {
+        } else if (standard == LO_VIEW.get('images | xyPlots').value) {
             return northSouth;
-        } else if (standard === LO_STANDARD.xyplot_table.view) {
+        } else if (standard == LO_VIEW.get('xyPlots | tables').value) {
             return northSouth;
         } else {
             return triView;
         }
     } else if (results.length === 2 ) {
-        if (standard === LO_STANDARD.image_table.view) {
+        if (standard == LO_VIEW.get('images | tables').value) {
             return eastWest;
         } else {
             return northSouth;
@@ -106,15 +114,15 @@ function generateLayout(standard, results) {
     }
 }
 function resolveComponents(standard, imagePlot, xyPlot, tables) {
-    var components;
-    if (standard === LO_STANDARD.image_table.view) {
-        components = [imagePlot, tables];
-    } else if (standard === LO_STANDARD.image_xyplot.view) {
-        components = [imagePlot, xyPlot];
-    } else if (standard === LO_STANDARD.xyplot_table.view) {
-        components = [tables, xyPlot];
-    } else {
-        components = ([imagePlot, tables, xyPlot]);
+    var components = [];
+    if(standard.has(LO_VIEW.images)) {
+        components.push(imagePlot);
+    }
+    if(standard.has(LO_VIEW.tables)) {
+        components.push(tables);
+    }
+    if(standard.has(LO_VIEW.xyPlots)) {
+        components.push(xyPlot);
     }
     return filter(components);  // only takes declared items
 }

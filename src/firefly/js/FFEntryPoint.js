@@ -39,7 +39,7 @@ const app = get(window, 'firefly.app');
 if (app) {
     const defProps = {
         appTitle: 'Firefly',
-        views: 'tri_view',
+        views: 'images | tables | xyPlots',
         div: 'app',
         menu: [ {label:'Data Sets: Catalogs & Images', action:'AnyDataSetSearch'},
                 {label:'Catalogs CLASSIC', action:'IrsaCatalogDropDown'},

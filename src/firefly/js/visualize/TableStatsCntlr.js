@@ -120,7 +120,7 @@ function updateTblStats(statsData) {
  */
 function fetchTblStats(dispatch, activeTableServerRequest) {
 
-    const {tbl_id} = TableUtil.getTblReqInfo(activeTableServerRequest);
+    const {tbl_id} = activeTableServerRequest;
 
     // searchRequest
     const sreq = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']),

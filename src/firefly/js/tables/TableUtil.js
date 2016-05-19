@@ -8,7 +8,6 @@ import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {flux} from '../Firefly.js';
 import {fetchUrl, encodeServerUrl, encodeParams} from '../util/WebUtil.js';
 import {getRootPath, getRootURL} from '../util/BrowserUtil.js';
-import {TableRequest} from './TableRequest.js';
 import {parseWorldPt} from '../visualize/Point.js';
 
 const SAVE_TABLE_URL = getRootURL() + 'servlet/SaveAsIpacTable';
@@ -16,13 +15,6 @@ const SRV_PATH = getRootPath() + 'search/json';
 const INT_MAX = Math.pow(2,31) - 1;
 
 /*----------------------------< creator functions ----------------------------*/
-
-export function makeTblRequest(id, title, options={}, tbl_id=uniqueTblId()) {
-    var req = {startIdx: 0, pageSize: 100};
-    title = title || id;
-    var META_INFO = {title, tbl_id};
-    return omitBy(Object.assign(req, options, {META_INFO, id}), isNil);
-}
 
 /**
  * Table options.  All of the options are optional.  These options let you control
@@ -39,6 +31,22 @@ export function makeTblRequest(id, title, options={}, tbl_id=uniqueTblId()) {
  */
 
 /**
+ * Creates a table request object for the given id.
+ * @param {string} id       required.  SearchProcessor ID.
+ * @param {string} [title]  title to display with this table.
+ * @param {object} [params] the parameters to include with this request.
+ * @param {TblReqOptions} [options] more options.  see TblReqOptions for details.
+ * @param {string} [tbl_id]
+ * @returns {*}
+ */
+export function makeTblRequest(id, title, params={}, options={}, tbl_id=uniqueTblId()) {
+    var req = {startIdx: 0, pageSize: 100};
+    title = title || id;
+    var META_INFO = {title, tbl_id};
+    return omitBy(Object.assign(req, options, params, {META_INFO, tbl_id, id}), isNil);
+}
+
+/**
  * @param {string} [title]      title to display with this table.
  * @param {string} source       required; location of the ipac table. url or file path.
  * @param {string} [alt_source] use this if source does not exists.
@@ -51,14 +59,14 @@ export function makeFileRequest(title, source, alt_source, options={}, tbl_id=un
     var req = {startIdx: 0, pageSize: 100};
     title = title || source;
     var META_INFO = {title, tbl_id};
-    return omitBy(Object.assign(req, options, {source, alt_source, META_INFO, id}), isNil);
+    return omitBy(Object.assign(req, options, {source, alt_source, META_INFO, tbl_id, id}), isNil);
 }
 
 
 /**
  * Parameters for cone search
  * @typedef {object} ConeParams
- * @prop {string} method    'Cone'.
+ * @prop {string} SearchMethod  'Cone'.
  * @prop {string} position  name or coordinates of the search
  * @prop {string} radius    radius of the search in arcsec
  */
@@ -66,7 +74,7 @@ export function makeFileRequest(title, source, alt_source, options={}, tbl_id=un
 /**
  * Parameters for eliptical search
  * @typedef {object} ElipParams
- * @prop {string} method    'Eliptical'.
+ * @prop {string} SearchMethod  'Eliptical'.
  * @prop {string} position  name or coordinates of the search
  * @prop {string} radius    radius of the search in arcsec
  * @prop {string} radunits  the units for the radius or side, must be arcsec,arcmin,degree, default arcsec
@@ -77,7 +85,7 @@ export function makeFileRequest(title, source, alt_source, options={}, tbl_id=un
 /**
  * Parameters for box search
  * @typedef {object} BoxParams
- * @prop {string} method    'Eliptical'.
+ * @prop {string} SearchMethod 'Eliptical'.
  * @prop {string} position  name or coordinates of the search
  * @prop {string} size      the length of a side for a box search
  */
@@ -96,14 +104,11 @@ export function makeIrsaCatalogRequest(title, project, catalog, use='catalog_ove
     var req = {startIdx: 0, pageSize: 100};
     title = title || catalog;
     const id = 'GatorQuery';
-    if (params.position) {
-        params.position = parseWorldPt(params.position);
-    }
-    const SearchMethod = params.method;
-    const catalogProject = catalog;
+    const UserTargetWorldPt = params.position;  // may need to convert to worldpt.
+    const catalogProject = project;
 
     var META_INFO = {title, tbl_id};
-    return Object.assign(req, options, omit(params, 'method'), {id, META_INFO, SearchMethod, catalogProject, catalog, use});
+    return omitBy(Object.assign(req, options, omit(params, 'position'), {id, tbl_id, META_INFO, UserTargetWorldPt, catalogProject, catalog, use}), isNil);
 }
 
 /*---------------------------- creator functions >----------------------------*/
@@ -116,20 +121,20 @@ export function makeIrsaCatalogRequest(title, project, catalog, use='catalog_ove
  * @returns {Promise.<T>}
  */
 export function doFetchTable(tableRequest, hlRowIdx) {
+
     const def = {
         startIdx: 0,
         pageSize : INT_MAX,
-        tbl_id : (tableRequest.tbl_id || tableRequest.title || tableRequest.id)
     };
     var params = Object.assign(def, tableRequest);
     // encoding for method post
-    if (params[TableRequest.keys.META_INFO]) {
-         params.META_INFO = encodeParams(params[TableRequest.keys.META_INFO]);
+    if (!isEmpty(params.META_INFO)) {
+         params.META_INFO = encodeParams(params.META_INFO);
     }
 
     return fetchUrl(SRV_PATH, {method: 'post', params}).then( (response) => {
         return response.json().then( (tableModel) => {
-            const {startIdx} = getTblInfo(tableModel);
+            const startIdx = get(tableModel, 'request.startIdx', 0);
             if (startIdx > 0) {
                 // shift data arrays indices to match partial fetch
                 tableModel.tableData.data = tableModel.tableData.data.reduce( (nAry, v, idx) => {
@@ -370,19 +375,6 @@ export function sortTable(origTableModel, sortInfoStr) {
     }
     tableModel.tableData.data.sort(comparator);
     return tableModel;
-}
-
-/**
- * collects all available table request information given the table request.
- * @param request
- * @returns {*}
- */
-export function getTblReqInfo(request) {
-    if (!request) return {};
-    const {startIdx, endIdx, sortInfo, filters, decimate, inclCols} = request;
-    const tbl_id = get(request, 'META_INFO.tbl_id');
-    const title = get(request, 'META_INFO.title', tbl_id);
-    return omitBy({tbl_id, title, startIdx, endIdx, sortInfo, filters, decimate, inclCols}, isNil);
 }
 
 export function getTblInfoById(tbl_id, aPageSize) {

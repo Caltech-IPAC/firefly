@@ -53,10 +53,10 @@ public class JsonTableUtil {
                 meta.setAttribute(key, request.getMeta(key));
             }
         }
-        String tblId = meta.getAttribute(TableServerRequest.TBL_ID);
+        String tbl_id = meta.getAttribute(TableServerRequest.TBL_ID);
 
         JSONObject tableModel = new JSONObject();
-        tableModel.put("tbl_id", tblId);
+        tableModel.put("tbl_id", tbl_id);
         tableModel.put("title", page.getData().getTitle());
         tableModel.put("type", guessType(meta));
         tableModel.put("totalRows", page.getRowCount());

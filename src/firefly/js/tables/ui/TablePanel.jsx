@@ -4,20 +4,18 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {isEmpty, get} from 'lodash';
-
+import {isEmpty, get, truncate} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {download} from '../../util/WebUtil.js';
 import * as TblUtil from '../TableUtil.js';
-import {dispatchTableReplace, dispatchTableUiUpdate} from '../TablesCntlr.js';
+import {dispatchTableReplace, dispatchTableUiUpdate, dispatchTableRemove} from '../TablesCntlr.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableConnector} from '../TableConnector.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {PagingBar} from '../../ui/PagingBar.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import {LO_EXPANDED, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
-
+import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 
@@ -57,6 +55,7 @@ export class TablePanel extends Component {
 
     componentWillUnmount() {
         this.removeListener && this.removeListener();
+        this.isUnmounted = true;
     }
 
     shouldComponentUpdate(nProps, nState) {
@@ -64,9 +63,11 @@ export class TablePanel extends Component {
     }
 
     storeUpdate() {
-        const {tbl_ui_id} = this.tableConnector;
-        const uiState = TblUtil.getTableUiById(tbl_ui_id) || {columns: []};
-        this.setState(uiState);
+        if (!this.isUnmounted) {
+            const {tbl_ui_id} = this.tableConnector;
+            const uiState = TblUtil.getTableUiById(tbl_ui_id) || {columns: []};
+            this.setState(uiState);
+        }
     }
 
     toggleFilter() {
@@ -86,13 +87,13 @@ export class TablePanel extends Component {
         this.tableConnector.onToggleOptions(!this.state.showOptions);
     }
     expandTable() {
-        dispatchSetLayoutMode(LO_EXPANDED.tables);
+        dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.tables);
     }
 
     render() {
-        const {selectable, expandable, expandedMode, border, renderers} = this.props;
+        const {selectable, expandable, expandedMode, border, renderers, title, removable} = this.props;
         var {totalRows, showLoading, columns, showOptions, showUnits, showFilters, textView, colSortDir} = this.state;
-        const {error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
+        const {tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
             filterInfo, filterCount, sortInfo, data} = this.state;
         const {tableConnector} = this;
 
@@ -104,12 +105,12 @@ export class TablePanel extends Component {
         const origColumns = get(TblUtil.getTblById(this.tableConnector.tbl_id), 'tableData.columns');
 
         return (
-            <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', overflow: 'hidden'}}>
-                <div className={'TablePanel__wrapper' + (border ? ' border' : '')}>
+            <div style={{ position: 'relative', width: '100%', height: '100%'}}>
+            <div style={{ display: 'flex', height: '100%', flexDirection: 'column', overflow: 'hidden'}}>
+                <div className={'TablePanel__wrapper' + (border ? '--border' : '')}>
                     <div role='toolbar' className='TablePanel__toolbar'>
-                        <div className='group'>
-                            <button style={{width:70}}>Download</button>
-                        </div>
+
+                        <TableTitle {...{tbl_id, title, removable}} />
 
                         <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:tableConnector}} />
 
@@ -161,6 +162,7 @@ export class TablePanel extends Component {
                     </div>
                 </div>
             </div>
+            </div>
         );
     }
 }
@@ -177,6 +179,8 @@ TablePanel.propTypes = {
     expandable: PropTypes.bool,
     showToolbar: PropTypes.bool,
     border: PropTypes.bool,
+    title: PropTypes.string,
+    removable: PropTypes.bool,
     renderers: PropTypes.objectOf(
         PropTypes.shape({
             cellRenderer: PropTypes.func,
@@ -196,3 +200,18 @@ TablePanel.defaultProps = {
     pageSize: 50
 };
 
+function TableTitle({tbl_id, title, removable}) {
+    if (title) {
+        return (
+            <div className='TablePanel__title'>
+                <div style={{display: 'inline-block', marginLeft: 5, marginTop: 2}}
+                     title={title}>{truncate(title)}</div>
+                {removable &&
+                <div style={{right: -5, paddingLeft: 3}} className='btn-close'
+                     title='Remove Tab'
+                     onClick={() => dispatchTableRemove(tbl_id)}/>
+                }
+            </div>
+        );
+    } else return <div/>;
+}

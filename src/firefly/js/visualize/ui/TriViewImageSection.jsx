@@ -16,8 +16,7 @@ import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {watchImageMetaData} from '../saga/ImageMetaDataWatcher.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
-import {dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
-import {LO_EXPANDED} from '../../core/LayoutCntlr.js';
+import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 
 
 
@@ -75,7 +74,7 @@ export function TriViewImageSection({showCoverage=true, showFits=true,
 
 
 function closeExpanded() {
-    dispatchSetLayoutMode(LO_EXPANDED.none);
+    dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);
 }
 
 export function launchImageMetaDataSega() {

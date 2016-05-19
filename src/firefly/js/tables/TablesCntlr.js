@@ -44,16 +44,17 @@ export function tableSearch(action) {
     return (dispatch) => {
         //dispatch(validate(FETCH_TABLE, action));
         if (!action.err) {
-            var {request, options={}} = action.payload;
-            const {tbl_id, title} = TblUtil.getTblReqInfo(request);
+            var {request, options, tbl_group} = action.payload;
+            const {tbl_id} = request;
+            const title = get(request, 'META_INFO.title');
             
             dispatchSetupTblTracking(tbl_id);
             dispatchTableFetch(request);
             dispatchHideDropDown();
-            if (!TblUtil.isTableInGroup(tbl_id)) {
-                const {tbl_group, removable} = options;
+            if (!TblUtil.isTableInGroup(tbl_id, tbl_group)) {
+                const {tbl_group, removable} = options || {};
                 dispatchTblResultsAdded(tbl_id, title, options, removable, tbl_group);
-                dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:() => dispatchActiveTableChanged(tbl_id)});
+                dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:() => dispatchActiveTableChanged(tbl_id, tbl_group)});
             }
         }
     };
@@ -74,7 +75,7 @@ export function highlightRow(action) {
             TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
                 dispatch( {type:TABLE_UPDATE, payload: tableModel} );
             }).catch( (error) => {
-                dispatch({type: TABLE_UPDATE, payload: {tbl_id: request.tbl_id, error: `Fail to load table. \n   ${error}`}});
+                dispatch({type: TABLE_UPDATE, payload: {tbl_id, error: `Fail to load table. \n   ${error}`}});
             });
         }
     };
@@ -85,7 +86,7 @@ export function tableFetch(action) {
         //dispatch(validate(FETCH_TABLE, action));
         if (!action.err) {
             var {request, hlRowIdx} = action.payload;
-            var actionType, {tbl_id} = TblUtil.getTblReqInfo(request);
+            var actionType, {tbl_id} = request;
             if (action.type === TABLE_FETCH_UPDATE) {
                 actionType = TABLE_UPDATE;
             } else {

@@ -3,7 +3,7 @@
  */
 
 import {updateSet, updateDelete} from '../../util/WebUtil.js';
-import {set, get, has, omit} from 'lodash';
+import {set, get, has, findKey} from 'lodash';
 
 import * as Cntlr from '../TablesCntlr.js';
 import * as TblUtil from '../TableUtil.js';
@@ -41,7 +41,7 @@ function removeTable(root, action) {
 
             if (tbl_id === get(root, [tbl_group,'active'])) {
                 // active table have been remove. set it to the first available table
-                const first = get(root, [tbl_group,'tables', 0]);
+                const first = findKey(tbl_group.tables);
                 const newActiveId = first && first.tbl_id;
                 root = updateSet(root, [tbl_group,'active'], newActiveId);
             }

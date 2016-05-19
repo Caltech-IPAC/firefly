@@ -160,7 +160,7 @@ export function reducer(state={}, action={}) {
     switch (action.type) {
         case (TablesCntlr.TABLE_REMOVE)  :
         {
-            const tbl_id = action.payload.tbl_id;
+            const {tbl_id} = action.payload;
             if (has(state, tbl_id)) {
                 const newState = Object.assign({}, state);
                 Reflect.deleteProperty(newState, tbl_id);
@@ -171,7 +171,7 @@ export function reducer(state={}, action={}) {
         case (LOAD_PLOT_DATA)  :
         {
             const {xyPlotParams, searchRequest} = action.payload;
-            const {tbl_id} = TableUtil.getTblReqInfo(searchRequest);
+            const {tbl_id} = searchRequest;
             return updateSet(state, tbl_id,
                 { isPlotDataReady: false, xyPlotParams, decimatedUnzoomed: get(state, [tbl_id,'decimatedUnzoomed'])});
         }
@@ -206,7 +206,7 @@ export function reducer(state={}, action={}) {
         }
         case (TablesCntlr.TABLE_SELECT) :
         {
-            const tbl_id = action.payload.tbl_id; //also has selectInfo
+            const {tbl_id} = action.payload; //also has selectInfo
             if (has(state, [tbl_id,'xyPlotParams','selection'])) {
                 return updateSet(state, [tbl_id,'xyPlotParams','selection'], undefined);
             }
@@ -244,7 +244,7 @@ function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
         'decimate' : serializeDecimateInfo(xyPlotParams.x.columnOrExpr, xyPlotParams.y.columnOrExpr, 10000, 1.0, ...limits)
     });
 
-    const {tbl_id} = TableUtil.getTblReqInfo(activeTableServerRequest);
+    const {tbl_id} = activeTableServerRequest;
     req.tbl_id = 'xyplot-'+tbl_id;
 
 

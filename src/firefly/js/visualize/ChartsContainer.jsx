@@ -7,7 +7,7 @@ import sCompare from 'react-addons-shallow-compare';
 
 import {flux} from '../Firefly.js';
 
-import {LO_EXPANDED, dispatchSetLayoutMode, getExpandedMode} from '../core/LayoutCntlr.js';
+import {LO_VIEW, LO_MODE, dispatchSetLayoutMode, getExpandedMode} from '../core/LayoutCntlr.js';
 import {CloseButton} from '../ui/CloseButton.jsx';
 
 import {ChartsTableViewPanel} from '../visualize/ChartsTableViewPanel.jsx';
@@ -34,7 +34,7 @@ export class ChartsContainer extends Component {
     }
 
     storeUpdate() {
-        const expandedMode = getExpandedMode() === LO_EXPANDED.xyPlots.view;
+        const expandedMode = getExpandedMode() === LO_VIEW.xyPlots;
         this.setState({expandedMode});
     }
 
@@ -53,7 +53,7 @@ function ExpandedView(props) {
     return (
         <div style={{ display: 'flex', height: '100%', flexGrow: 1, flexDirection: 'column', overflow: 'hidden'}}>
             <div style={{marginBottom: 3}}>
-                {props.closeable && <CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/>}
+                {props.closeable && <CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
             </div>
             <ChartsTableViewPanel expandedMode={true} expandable={false} {...props} />
         </div>

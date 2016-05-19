@@ -4,34 +4,23 @@
 
 import update from 'react-addons-update';
 import {get, set, has, pickBy, isUndefined, isEmpty} from 'lodash';
+import Enum from 'enum';
 
 import {smartMerge} from '../tables/TableUtil.js';
 import {flux} from '../Firefly.js';
 
 export const LAYOUT_PATH = 'layout';
 
-export const LO_EXPANDED = {
-    mode: 'expanded',
-    tables: {mode: 'expanded', view: 'tables'},
-    images: {mode: 'expanded', view: 'images'},
-    xyPlots: {mode: 'expanded', view: 'xyPlots'},
-    none: {mode: 'expanded', view: undefined}
-};
-
-export const LO_STANDARD = {
-    mode: 'standard',
-    tri_view: { mode: 'standard', view: 'tri_view'},
-    image_xyplot: { mode: 'standard', view: 'image_xyplot'},
-    image_table: { mode: 'standard', view: 'image_table'},
-    xyplot_table: { mode: 'standard', view: 'xyplot_table'}
-};
+// this enum is flaggable, therefore you can use any combination of the 3, i.e. 'tables | images'.
+export const LO_VIEW = new Enum(['none', 'tables', 'images', 'xyPlots'], { ignoreCase: true });
+export const LO_MODE = new Enum(['expanded', 'standard']);
 
 /*---------------------------- Actions ----------------------------*/
 
-export const UPDATE_LAYOUT      = 'layout.updateLayout';
-export const SET_LAYOUT_MODE    = 'layout.setLayoutMode';
-export const SHOW_DROPDOWN      = 'layout.showDropDown';
-export const HIDE_DROPDOWN      = 'layout.hideDropDown ';
+export const UPDATE_LAYOUT      = `${LAYOUT_PATH}.updateLayout`;
+export const SET_LAYOUT_MODE    = `${LAYOUT_PATH}.setLayoutMode`;
+export const SHOW_DROPDOWN      = `${LAYOUT_PATH}.showDropDown`;
+export const HIDE_DROPDOWN      = `${LAYOUT_PATH}.hideDropDown`;
 
 
 /*---------------------------- Reducers ----------------------------*/
@@ -78,11 +67,11 @@ export function dispatchUpdateLayout({search, results, hasTables, hasImages, has
 }
 
 /**
- * see AppDataUtil.LO_MODE for available options.
+ * set the layout mode of the application.  see LO_MODE and LO_VIEW enums for options.
  * @param mode standard or expanded
- * @param view available values from the selected mode.
+ * @param view the select view to be displayed.
  */
-export function dispatchSetLayoutMode({mode=LO_STANDARD.mode, view}) {
+export function dispatchSetLayoutMode(mode=LO_MODE.standard, view) {
     flux.process({type: SET_LAYOUT_MODE, payload: {mode, view}});
 }
 
