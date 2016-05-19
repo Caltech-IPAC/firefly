@@ -262,9 +262,10 @@ function makePlotId() {
 //================================================================
 
 function showXYPlot(llApi, targetDiv, params, tbl_id) {
-    const {dispatchSetupTblTracking, dispatchTableFetch,dispatchLoadPlotData}= llApi.action;
-    const {renderDOM}= llApi.util;
-    const {makeFileRequest}= llApi.util.table;
+    const {dispatchSetupTblTracking, dispatchTableFetch}= llApi.action;
+    const {renderDOM} = llApi.util;
+    const {makeFileRequest} = llApi.util.table;
+    const {uniqueChartId, loadPlotDataForTbl} = llApi.util.chart;
     const {ChartsTableViewPanel}= llApi.ui;
     const {xCol, yCol, xyRatio, stretch, xLabel, yLabel, xUnit, yUnit, xOptions, yOptions} = params;
     const xyPlotParams = {
@@ -274,6 +275,7 @@ function showXYPlot(llApi, targetDiv, params, tbl_id) {
         y : { columnOrExpr : yCol, label : yLabel||yCol, unit : yUnit||'', options : yOptions}
     };
     const tblId = tbl_id || `tblid-${targetDiv}`;
+    const chartId = uniqueChartId(tblId);
 
     const searchRequest = makeFileRequest(
         params.chartTitle||'', // title
@@ -286,13 +288,15 @@ function showXYPlot(llApi, targetDiv, params, tbl_id) {
     );
 
     dispatchSetupTblTracking(tblId);
+    loadPlotDataForTbl(tblId, chartId, xyPlotParams);
     if (!tbl_id) { dispatchTableFetch(searchRequest); }
-    dispatchLoadPlotData(xyPlotParams, searchRequest);
+
 
     renderDOM(targetDiv, ChartsTableViewPanel,
         {
             key: `${targetDiv}-chart`,
             tblId,
+            chartId,
             closeable: false,
             optionsPopup: true,
             expandedMode: true

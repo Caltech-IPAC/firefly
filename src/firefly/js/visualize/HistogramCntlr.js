@@ -3,7 +3,7 @@
  */
 import {flux} from '../Firefly.js';
 
-import {has, omit} from 'lodash';
+import {omit} from 'lodash';
 
 import {updateSet, updateMerge} from '../util/WebUtil.js';
 import {TableRequest} from '../tables/TableRequest.js';
@@ -13,9 +13,10 @@ import * as TablesCntlr from '../tables/TablesCntlr.js';
 /*
  Possible structure of store:
  /histogram
-   tbl_id: Object - the name of this node matches table id
+   chartId: Object - the name of this node matches chart id
    {
          // tblHistogramData
+         tblId: string // table id
          isColDataReady: boolean
          histogramData: [[numInBin: int, min: double, max: double]*]
          histogramParams: {
@@ -42,19 +43,19 @@ export const UPDATE_COL_DATA = `${HISTOGRAM_DATA_KEY}/UPDATE_COL_DATA`;
  * @param {Object} histogramParams - histogram options (column name, etc.)
  * @param {ServerRequest} searchRequest - table search request
  */
-export const dispatchLoadColData = function(histogramParams, searchRequest) {
-    flux.process({type: LOAD_COL_DATA, payload: {histogramParams, searchRequest}});
+export const dispatchLoadColData = function(chartId, histogramParams, searchRequest) {
+    flux.process({type: LOAD_COL_DATA, payload: {chartId, histogramParams, searchRequest}});
 };
 
 /*
  * Get column histogram data
- * @param {Number} tblId - table id
+ * @param {string} chartId - chart id
  * @param {boolean} isColDataReady - flags that column histogram data are available
- * @param {Number[][]} histogramData - an array of the number arrays with npoints, binmin, binmax
+ * @param {number[][]} histogramData - an array of the number arrays with npoints, binmin, binmax
  * @param {Object} histogramParams - histogram options (column name, etc.)
  */
-const dispatchUpdateColData = function(tblId, isColDataReady, histogramData, histogramParams) {
-    flux.process({type: UPDATE_COL_DATA, payload: {tblId, isColDataReady,histogramData,histogramParams}});
+const dispatchUpdateColData = function(chartId, isColDataReady, histogramData, histogramParams) {
+    flux.process({type: UPDATE_COL_DATA, payload: {chartId,isColDataReady,histogramData,histogramParams}});
 };
 
 /*
@@ -64,8 +65,9 @@ const dispatchUpdateColData = function(tblId, isColDataReady, histogramData, his
 export const loadColData = function(rawAction) {
     return (dispatch) => {
         dispatch({ type : LOAD_COL_DATA, payload : rawAction.payload });
-        if (rawAction.payload.searchRequest && rawAction.payload.histogramParams) {
-            fetchColData(dispatch, rawAction.payload.searchRequest, rawAction.payload.histogramParams);
+        const {searchRequest, histogramParams, chartId} = rawAction.payload;
+        if (searchRequest && histogramParams) {
+            fetchColData(dispatch, searchRequest, histogramParams, chartId);
         }
 
     };
@@ -81,25 +83,27 @@ export function reducer(state=getInitState(), action={}) {
     switch (action.type) {
         case (TablesCntlr.TABLE_REMOVE)  :
         {
-            const {tbl_id} = action.payload;
-            if (has(state, tbl_id)) {
-                const newState = Object.assign({}, state);
-                Reflect.deleteProperty(newState, tbl_id);
-                return newState;
-            }
-            return state;
+            const tbl_id = action.payload.tbl_id;
+            const chartsToDelete = [];
+            Object.keys(state).forEach((cid) => {
+                if (state[cid].tblId === tbl_id) {
+                    chartsToDelete.push(cid);
+                }
+            });
+            return (chartsToDelete.length > 0) ?
+                Object.assign({}, omit(state, chartsToDelete)) : state;
         }
         case (LOAD_COL_DATA)  :
         {
-            const {histogramParams, searchRequest} = action.payload;
+            const {chartId, histogramParams, searchRequest} = action.payload;
             const {tbl_id} = searchRequest;
-            return updateSet(state, tbl_id, {isColDataReady: false, histogramParams});
+            return updateSet(state, chartId, {tblId: tbl_id, isColDataReady: false, histogramParams});
         }
         case (UPDATE_COL_DATA)  :
         {
-            const {tblId, isColDataReady, histogramData, histogramParams} = action.payload;
-            if (state[tblId].histogramParams === histogramParams) {
-                return updateMerge(state, tblId, {
+            const {chartId, isColDataReady, histogramData, histogramParams} = action.payload;
+            if (state[chartId].histogramParams === histogramParams) {
+                return updateMerge(state, chartId, {
                     isColDataReady,
                     histogramData
                 });
@@ -124,14 +128,14 @@ function updateColData(data) {
 /**
  * fetches active table statistics data
  * set isColStatsReady to true once done.
- * @param dispatch
- * @param activeTableServerRequest table search request to obtain source table
- * @param histogramParams object, which contains histogram parameters
-
+ * @param {function} dispatch
+ * @param {Object} activeTableServerRequest table search request to obtain source table
+ * @param {Object} histogramParams object, which contains histogram parameters
+ * @param {string} chartId - chart id
  */
-function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
+function fetchColData(dispatch, activeTableServerRequest, histogramParams, chartId) {
 
-    const {tbl_id} = activeTableServerRequest;
+    //const {tbl_id} = activeTableServerRequest;
     const sreq = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']),
         {'startIdx' : 0, 'pageSize' : 1000000});
 
@@ -158,7 +162,7 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
     }
     */
 
-    req.tbl_id = 'histogram-'+tbl_id;
+    req.tbl_id = 'histogram-'+chartId;
 
     TableUtil.doFetchTable(req).then(
         (tableModel) => {
@@ -180,7 +184,7 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
 
                 dispatch(updateColData(
                     {
-                        tblId: tbl_id,
+                        chartId,
                         isColDataReady : true,
                         histogramParams,
                         histogramData

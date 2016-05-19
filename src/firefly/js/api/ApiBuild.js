@@ -17,6 +17,7 @@ import * as AppDataCntlr from '../core/AppDataCntlr.js';
 
 // Parts of the lowlevel api
 import * as ApiUtil from './ApiUtil.js';
+import  * as ApiUtilChart from './ApiUtilChart.jsx';
 import  * as ApiUtilImage from './ApiUtilImage.jsx';
 import  * as ApiUtilTable from './ApiUtilTable.jsx';
 
@@ -129,7 +130,7 @@ export function buildLowlevelAPI() {
         ChartsTableViewPanel
     };
     
-    const util= Object.assign({}, ApiUtil, {image:ApiUtilImage}, {xyplot:{}}, {table:ApiUtilTable}, {data:{}} );
+    const util= Object.assign({}, ApiUtil, {image:ApiUtilImage}, {chart:ApiUtilChart}, {table:ApiUtilTable}, {data:{}} );
 
     return { action, ui, util };
 }

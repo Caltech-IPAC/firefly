@@ -36,7 +36,8 @@
     <div id="tables-1" style="display: inline-block; width: 550px; height: 550px; margin: 10px; background-color: white"></div>
     <div id="tables-2" style="display: inline-block; width: 550px; height: 550px; margin: 10px; background-color: white; position: absolute"></div>
 </div>
-<div id="xyPlotViewHere" style="width: 550px; height: 300px; margin: 10px;"></div>
+<div id="xyPlot1" style="width: 550px; height: 300px; margin: 10px;"></div>
+<div id="xyPlot2" style="width: 550px; height: 300px; margin: 10px;"></div>
 <div id="old1" style="width: 300px; height: 300px; margin: 10px;"></div>
 <div id="old2" style="width: 300px; height: 300px; margin: 10px;"></div>
 
@@ -130,24 +131,24 @@
 
             //-----------------  TABLE DEMO ------------------------//
             var tblReq1 = firefly.util.table.makeIrsaCatalogRequest('wise_allwise_p3as_psd', 'WISE', 'wise_allwise_p3as_psd', null,
-                                    {   position: '10.68479;41.26906;EQ_J2000;m31;ned',
-                                        SearchMethod: 'Cone',
-                                        radius: 300,
-                                    });
+                    {   position: '10.68479;41.26906;EQ_J2000;m31;ned',
+                        SearchMethod: 'Cone',
+                        radius: 300,
+                    });
             var tblReq2 = firefly.util.table.makeIrsaCatalogRequest('another wise catalog', 'WISE', 'wise_allwise_p3as_psd', null,
-                                    {   position: '10.68479;41.26906;EQ_J2000;m31;ned',
-                                        SearchMethod: 'Cone',
-                                        radius: 300,
-                                    });
+                    {   position: '10.68479;41.26906;EQ_J2000;m31;ned',
+                        SearchMethod: 'Cone',
+                        radius: 300,
+                    });
             var tblReq3 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl', null, {pageSize:15});
 
             firefly.showTable('tables-1', tblReq1);
             firefly.showTable('tables-1', tblReq2);
             firefly.showTable('tables-2', tblReq3, {tbl_group: 'catalogs', removable: false, showUnits: true, showFilters: true});
 
-
             //-----------------  CHART DEMO ------------------------//
-            firefly.addXYPlot('xyPlotViewHere', {xCol: 'ra1', yCol: 'dec1'}, tblReq3.tbl_id);
+            firefly.addXYPlot('xyPlot1', {xCol: 'ra1', yCol: 'dec1'}, tblReq3.tbl_id);
+            firefly.addXYPlot('xyPlot2', {xCol: 'dtanneal', yCol: 'febgain'}, tblReq3.tbl_id);
         }
    }
    
