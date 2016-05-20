@@ -8,7 +8,7 @@ import {isEmpty, get, truncate} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {download} from '../../util/WebUtil.js';
 import * as TblUtil from '../TableUtil.js';
-import {dispatchTableReplace, dispatchTableUiUpdate, dispatchTableRemove} from '../TablesCntlr.js';
+import {dispatchTableReplace, dispatchTableUiUpdate, dispatchTableRemove, dispatchTblExpanded} from '../TablesCntlr.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableConnector} from '../TableConnector.js';
@@ -39,6 +39,7 @@ export class TablePanel extends Component {
         this.clearFilter = this.clearFilter.bind(this);
         this.saveTable = this.saveTable.bind(this);
         this.toggleOptions = this.toggleOptions.bind(this);
+        this.expandTable = this.expandTable.bind(this);
     }
 
     componentDidMount() {
@@ -87,6 +88,8 @@ export class TablePanel extends Component {
         this.tableConnector.onToggleOptions(!this.state.showOptions);
     }
     expandTable() {
+        const {tbl_ui_id, tbl_id} = this.tableConnector;
+        dispatchTblExpanded(tbl_ui_id, tbl_id);
         dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.tables);
     }
 
@@ -200,6 +203,7 @@ TablePanel.defaultProps = {
     pageSize: 50
 };
 
+//noinspection Eslint
 function TableTitle({tbl_id, title, removable}) {
     if (title) {
         return (

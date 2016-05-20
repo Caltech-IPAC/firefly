@@ -20,11 +20,7 @@ import {CloseButton} from '../../ui/CloseButton.jsx';
 export class TablesContainer extends Component {
     constructor(props) {
         super(props);
-        const tblResults = TblUtil.getTableGroup();
-        this.state = Object.assign({layout: 'tabs', tables: {}}, tblResults, {
-                        expandedMode: props.expandedMode,
-                        closeable: props.closeable
-                    });
+        this.state = this.nextState(props);
     }
 
     componentDidMount() {
@@ -33,23 +29,31 @@ export class TablesContainer extends Component {
 
     componentWillUnmount() {
         this.removeListener && this.removeListener();
+        this.isUnmounted = true;
     }
 
     shouldComponentUpdate(nProps, nState) {
         return sCompare(this, nProps, nState);
     }
 
+    nextState(props) {
+        var {mode, tbl_group, closeable} = props;
+        const expandedMode = props.expandedMode || getExpandedMode() === LO_VIEW.tables;
+        if (expandedMode && mode !== 'standard') {
+            tbl_group = TblUtil.getTblExpandedInfo().tbl_group;
+        }
+        const {tables, layout, active} = TblUtil.getTableGroup(tbl_group);
+        return {closeable, tbl_group, expandedMode, tables, layout, active};
+    }
+
     storeUpdate() {
-        const {tbl_group} = this.props;
-        const tblResults = TblUtil.getTableGroup(tbl_group);
-        const expandedMode = getExpandedMode() === LO_VIEW.tables;
-        this.setState({expandedMode,...tblResults});
+        if (!this.isUnmounted) {
+            this.setState(this.nextState(this.props));
+        }
     }
 
     render() {
-        const {tbl_group} = this.props;
-        const {expandedMode, tables, layout, active, closeable} = this.state;
-
+        const {closeable, tbl_group, expandedMode, tables, layout, active} = this.state;
         if (expandedMode) {
             return <ExpandedView {...{active, tables, layout, expandedMode, closeable}} />;
         } else {
@@ -61,11 +65,13 @@ export class TablesContainer extends Component {
 TablesContainer.propTypes = {
     expandedMode: PropTypes.bool,
     closeable: PropTypes.bool,
-    tbl_group: PropTypes.string
+    tbl_group: PropTypes.string,
+    mode: PropTypes.oneOf(['expanded', 'standard', 'both'])
 };
 TablesContainer.defaultProps = {
     expandedMode: false,
-    closeable: true
+    closeable: true,
+    mode: 'standard'
 };
 
 

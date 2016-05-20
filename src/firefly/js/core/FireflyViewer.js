@@ -227,8 +227,9 @@ export class TriViewResults extends Component {
         if (addTables) {
             expanded = count ===1 ? LO_VIEW.tables : expanded;
             content.tables = (<TablesContainer key='res-tables'
-                                              closeable={count>1}
-                                              expandedMode={expanded===LO_VIEW.tables}/>);
+                                               mode='both'
+                                               closeable={count>1}
+                                               expandedMode={expanded===LO_VIEW.tables}/>);
         }
         const searchDesc = (addImages && addXy && addTables) ?
                             (<div>

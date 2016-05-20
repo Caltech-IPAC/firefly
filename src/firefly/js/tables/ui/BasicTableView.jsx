@@ -6,12 +6,11 @@ import React, {PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import FixedDataTable from 'fixed-data-table';
 import Resizable from 'react-component-resizable';
-import {debounce, defer, get, isEmpty, pick} from 'lodash';
+import {debounce, defer, get, isEmpty, pick, padEnd} from 'lodash';
 
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo';
-import {tableToText} from '../TableUtil.js';
 import {TextCell, HeaderCell, SelectableHeader, SelectableCell} from './TableRenderer.js';
 
 import './TablePanel.css';
@@ -30,7 +29,7 @@ export class BasicTableView extends React.Component {
         };
 
         const normal = (size) => {
-            if (size) {
+            if (size && !this.isUnmounted) {
                 var widthPx = size.width;
                 var heightPx = size.height;
                 this.setState({widthPx, heightPx});
@@ -64,6 +63,10 @@ export class BasicTableView extends React.Component {
         if (isEmpty(this.state.columnWidths) && !isEmpty(nProps.columns)) {
             this.setState({columnWidths: makeColWidth(nProps.columns, nProps.data, nProps.showUnits)});
         }
+    }
+
+    componentWillUnmount() {
+        this.isUnmounted = true;
     }
 
     shouldComponentUpdate(nProps, nState) {
@@ -243,5 +246,27 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
         colsEl.splice(0, 0, cbox);
     }
     return colsEl;
+}
+
+
+function tableToText(columns, dataAry, showUnits=false) {
+
+    var textHead = columns.reduce( (pval, cval, idx) => {
+        return pval + (columns[idx].visibility === 'show' ? `${padEnd(cval.name, columns[idx].width)}|` : '');
+    }, '|');
+
+    if (showUnits) {
+        textHead += '\n' + columns.reduce( (pval, cval, idx) => {
+                return pval + (columns[idx].visibility === 'show' ? `${padEnd(cval.units || '', columns[idx].width)}|` : '');
+            }, '|');
+    }
+
+    var textData = dataAry.reduce( (pval, row) => {
+        return pval +
+            row.reduce( (pv, cv, idx) => {
+                return pv + (get(columns, [idx,'visibility']) === 'show' ? `${padEnd(cv || '', columns[idx].width)} ` : '');
+            }, ' ') + '\n';
+    }, '');
+    return textHead + '\n' + textData;
 }
 

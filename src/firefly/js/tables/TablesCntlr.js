@@ -37,6 +37,7 @@ export const TBL_RESULTS_UPDATE   = `${RESULTS_PREFIX}.update`;
 export const TBL_RESULTS_ACTIVE   = `${RESULTS_PREFIX}.active`;
 
 export const TBL_UI_UPDATE        = `${UI_PREFIX}.update`;
+export const TBL_UI_EXPANDED      = `${UI_PREFIX}.expanded`;
 
 /*---------------------------- CREATORS ----------------------------*/
 
@@ -199,6 +200,15 @@ export function dispatchTblResultsAdded(tbl_id, title, options, removable, tbl_g
     tbl_group = tbl_group || 'main';
     removable = isNil(removable) ? true : removable;
     flux.process( {type: TBL_RESULTS_ADDED, payload: {tbl_id, tbl_group, title, removable, tbl_ui_id, options}});
+}
+
+/**
+ * request to have table in expanded mode.
+ * @param tbl_ui_id
+ * @param tbl_id
+ */
+export function dispatchTblExpanded(tbl_ui_id, tbl_id) {
+    flux.process( {type: TBL_UI_EXPANDED, payload: {tbl_ui_id, tbl_id}});
 }
 
 /**

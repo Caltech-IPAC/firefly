@@ -14,6 +14,7 @@ import * as ReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
 import * as ImPlotCntlr from '../visualize/ImagePlotCntlr.js';
 import * as MultiViewCntlr from '../visualize/MultiViewCntlr.js';
 import * as AppDataCntlr from '../core/AppDataCntlr.js';
+import {ApiExpandedView} from './ApiExpandedView.jsx';
 
 // Parts of the lowlevel api
 import * as ApiUtil from './ApiUtil.js';
@@ -56,6 +57,7 @@ export function initApi() {
     dispatchOnAppReady(() => {
         window.onFireflyLoaded && window.onFireflyLoaded(firefly);
     });
+    initExpandedView();
 }
 
 
@@ -162,4 +164,20 @@ function findActionType(obj,prefix) {
         }
         return res;
     },{} );
+}
+
+
+function initExpandedView(div){
+
+    const EXPANDED_DIV= 'expandedArea';
+    var expandedDivEl;
+    if (div) {
+        expandedDivEl= isString(div) ? document.getElementById(div) : div;
+    } else {
+        expandedDivEl= document.createElement('div');
+        document.body.appendChild(expandedDivEl);
+        expandedDivEl.id= EXPANDED_DIV;
+    }
+    
+    ApiUtil.renderDOM(expandedDivEl, ApiExpandedView);
 }

@@ -17,7 +17,6 @@ export const LO_MODE = new Enum(['expanded', 'standard']);
 
 /*---------------------------- Actions ----------------------------*/
 
-export const UPDATE_LAYOUT      = `${LAYOUT_PATH}.updateLayout`;
 export const SET_LAYOUT_MODE    = `${LAYOUT_PATH}.setLayoutMode`;
 export const SHOW_DROPDOWN      = `${LAYOUT_PATH}.showDropDown`;
 export const HIDE_DROPDOWN      = `${LAYOUT_PATH}.hideDropDown`;
@@ -29,9 +28,6 @@ export function reducer(state={dropDown: {}}, action={}) {
     const {mode, view} = action.payload || {};
 
     switch (action.type) {
-        case UPDATE_LAYOUT :
-            return smartMerge(state, action.payload);
-
         case SET_LAYOUT_MODE :
             if (!has(state, ['mode', mode])) {
                 set(state, ['mode', mode], undefined);
@@ -53,18 +49,6 @@ export function reducer(state={dropDown: {}}, action={}) {
 
 
 /*---------------------------- DISPATCHERS -----------------------------*/
-/**
- * Updates the app_data layoutInfo.  This data is responsible for the layout of the top level components
- * i.e. search panel, results panel...
- * @param search    boolean. show the search panel.  defaults to false.
- * @param results   boolean. show the results panel. defaults to true.
- * @param hasTables boolean.  Table data available.
- * @param hasImages boolean. Image data available.
- * @param hasXyPlots boolean. XY Plot data available.
- */
-export function dispatchUpdateLayout({search, results, hasTables, hasImages, hasXyPlots}) {
-    flux.process({type: UPDATE_LAYOUT, payload: pickBy({search, results, hasTables, hasImages, hasXyPlots}, (v)=>(!isUndefined(v)))});
-}
 
 /**
  * set the layout mode of the application.  see LO_MODE and LO_VIEW enums for options.

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {set, has, get, isEmpty, cloneDeep} from 'lodash';
+import {set, has, get, isEmpty, cloneDeep, findKey} from 'lodash';
 
 import {updateSet} from '../../util/WebUtil.js';
 import * as Cntlr from '../TablesCntlr.js';
@@ -32,6 +32,13 @@ export function uiReducer(state={ui:{}}, action={}) {
         case (Cntlr.TABLE_HIGHLIGHT)  :
             // state is in-progress(fresh) data.. use it to reduce ui state.
             return uiStateReducer(root, get(state, ['data', tbl_id]));
+
+        case (Cntlr.TBL_UI_EXPANDED) :
+            const {tbl_ui_id, tbl_id} = action.payload;
+            const tbl_group = findKey(get(state, 'results'), (o) => {
+                return has(o, ['tables', tbl_id]);
+            });
+            return updateSet(root, 'expanded', {tbl_group, tbl_id, tbl_ui_id});
 
         default:
             return root;

@@ -9,7 +9,6 @@ import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.util.*;
 import edu.jhu.util.StringUtil;
@@ -18,6 +17,8 @@ import org.json.simple.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+import static edu.caltech.ipac.firefly.util.DataSetParser.*;
 
 /**
  * @author loi
@@ -162,8 +163,10 @@ public class JsonTableUtil {
 
         ArrayList<JSONObject> cols = new ArrayList<JSONObject>();
         for (DataType dt :dataTypes) {
+            String cname = dt.getKeyName();
             JSONObject c = new JSONObject();
-            c.put("name", dt.getKeyName());
+
+            c.put("name", cname);
             c.put("width", dt.getFormatInfo().getWidth());
             if (!StringUtils.isEmpty(dt.getTypeDesc())) {
                 c.put("type", dt.getTypeDesc());
@@ -175,21 +178,42 @@ public class JsonTableUtil {
                 c.put("desc", dt.getShortDesc());
             }
 
-            boolean sortable = StringUtils.getBoolean(meta.getAttribute(DataSetParser.makeAttribKey(
-                    DataSetParser.SORT_BY_TAG, dt.getKeyName())), true);
-            c.put("sortable", sortable);
-
-            String visikey = DataSetParser.makeAttribKey(DataSetParser.SORT_BY_TAG, dt.getKeyName());
-            String visibility = meta.contains(visikey) ? meta.getAttribute(visikey) : "show";
-            c.put("visibility", visibility);
-
-            String sortByKey = DataSetParser.makeAttribKey(DataSetParser.SORT_BY_TAG, dt.getKeyName());
-            if (meta.contains(sortByKey)) {
-                c.put("sortByCols", StringUtils.asList(meta.getAttribute(sortByKey), ","));
+            // modify column's attributes based on meta
+            String label = meta.getAttribute( makeAttribKey(LABEL_TAG, cname) );
+            if (!StringUtils.isEmpty(label)) {
+                c.put("label", label);
             }
-            String prefWidth = DataSetParser.makeAttribKey(DataSetParser.PREF_WIDTH_TAG, dt.getKeyName());
-            if (meta.contains(prefWidth)) {
-                c.put("prefWidth", meta.getAttribute(prefWidth));
+            String desc = meta.getAttribute( makeAttribKey(DESC_TAG, cname) );
+            if (!StringUtils.isEmpty(desc)) {
+                c.put("desc", desc);
+            }
+            String visibility = meta.getAttribute( makeAttribKey(VISI_TAG, cname) );
+            if (!StringUtils.isEmpty(visibility)) {
+                c.put("visibility", visibility);
+            }
+            String width = meta.getAttribute( makeAttribKey(WIDTH_TAG, cname) );
+            if (!StringUtils.isEmpty(width)) {
+                c.put("width", width);
+            }
+            String prefWidth = meta.getAttribute( makeAttribKey(PREF_WIDTH_TAG, cname) );
+            if (!StringUtils.isEmpty(prefWidth)) {
+                c.put("prefWidth", prefWidth);
+            }
+            String sortable = meta.getAttribute( makeAttribKey(SORTABLE_TAG, cname) );
+            if (!StringUtils.isEmpty(sortable)) {
+                c.put("sortable", sortable);
+            }
+            String units = meta.getAttribute( makeAttribKey(UNIT_TAG, cname) );
+            if (!StringUtils.isEmpty(units)) {
+                c.put("units", units);
+            }
+            String items = meta.getAttribute( makeAttribKey(ITEMS_TAG, cname) );
+            if (!StringUtils.isEmpty(items)) {
+                c.put("items", items);
+            }
+            String sortBy = meta.getAttribute( makeAttribKey(SORT_BY_TAG, cname) );
+            if (!StringUtils.isEmpty(sortBy)) {
+                c.put("sortBy", sortBy);
             }
             cols.add(c);
         }

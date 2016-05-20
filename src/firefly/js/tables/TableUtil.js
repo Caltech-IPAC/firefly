@@ -2,13 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, isEmpty, uniqueId, padEnd, cloneDeep, omit, omitBy, isNil} from 'lodash';
+import {get, set, isEmpty, uniqueId, cloneDeep, omit, omitBy, isNil} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {flux} from '../Firefly.js';
 import {fetchUrl, encodeServerUrl, encodeParams} from '../util/WebUtil.js';
 import {getRootPath, getRootURL} from '../util/BrowserUtil.js';
-import {parseWorldPt} from '../visualize/Point.js';
 
 const SAVE_TABLE_URL = getRootURL() + 'servlet/SaveAsIpacTable';
 const SRV_PATH = getRootPath() + 'search/json';
@@ -234,6 +233,14 @@ export function getTableUiById(tbl_ui_id) {
 }
 
 /**
+ * get table's expanded information. 
+ * @returns {object}
+ */
+export function getTblExpandedInfo() {
+    return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui', 'expanded'], {});
+}
+
+/**
  * return true if the table referenced by the given tbl_id is fully loaded.
  * @param tbl_id
  * @returns {boolean}
@@ -405,28 +412,6 @@ export function getTblInfo(tableModel, aPageSize) {
     var totalPages = Math.ceil((totalRows || 0)/pageSize);
     return { tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow, selectInfo, error};
 }
-
-export function tableToText(columns, dataAry, showUnits=false) {
-
-    var textHead = columns.reduce( (pval, cval, idx) => {
-        return pval + (columns[idx].visibility === 'show' ? `${padEnd(cval.name, columns[idx].width)}|` : '');
-    }, '|');
-
-    if (showUnits) {
-        textHead += '\n' + columns.reduce( (pval, cval, idx) => {
-            return pval + (columns[idx].visibility === 'show' ? `${padEnd(cval.units || '', columns[idx].width)}|` : '');
-        }, '|');
-    }
-
-    var textData = dataAry.reduce( (pval, row) => {
-        return pval +
-            row.reduce( (pv, cv, idx) => {
-                return pv + (get(columns, [idx,'visibility']) === 'show' ? `${padEnd(cv || '', columns[idx].width)} ` : '');
-            }, ' ') + '\n';
-    }, '');
-    return textHead + '\n' + textData;
-}
-
 
 /**
  *
