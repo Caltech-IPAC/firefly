@@ -10,11 +10,11 @@ import {isString} from 'lodash';
 import {flux} from '../Firefly.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import  {DefaultApiReadout} from '../visualize/ui/DefaultApiReadout.jsx';
-import  {VerySimpleMouseReadout} from '../visualize/ui/VerySimpleMouseReadout.jsx';
+import  {PopupMouseReadout} from '../visualize/ui/PopupMouseReadout.jsx';
 import DialogRootContainer from '../ui/DialogRootContainer.jsx';
 import {PopupPanel, LayoutType} from '../ui/PopupPanel.jsx';
 import {dispatchShowDialog,dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
-import {readoutRoot, isLockByClick} from '../visualize/MouseReadoutCntlr.js';
+import {readoutRoot,isAutoReadIsLocked, isLockByClick} from '../visualize/MouseReadoutCntlr.js';
 import {mouseUpdatePromise} from '../visualize/VisMouseSync.js';
 import {renderDOM,unrenderDOM} from './ApiUtil.js';
 import {RangeValues} from '../visualize/RangeValues.js';
@@ -42,7 +42,9 @@ export {ExpandType, dispatchApiToolsView} from '../visualize/ImagePlotCntlr.js';
  * @param props
  */
 export function initAutoReadout(ReadoutComponent= DefaultApiReadout, 
-                                props={MouseReadoutComponent:VerySimpleMouseReadout}){
+                                   props={MouseReadoutComponent:PopupMouseReadout}){
+
+
     dispatchAddSaga(autoReadoutVisibility, {ReadoutComponent,props});
 }
 
@@ -106,7 +108,7 @@ function *autoReadoutVisibility({ReadoutComponent,props}) {
                            mouse: call(mouseUpdatePromise),
                            timer: call(delay, 3000)
                          });
-            if ((!winner.expandedChange || !winner.mouse) && !inDialog && !isLockByClick(readoutRoot())) {
+            if ((!winner.expandedChange || !winner.mouse) && !inDialog && !isLockByClick(readoutRoot()) && !isAutoReadIsLocked(readoutRoot())) {
                 hideReadout();
             }
             else {

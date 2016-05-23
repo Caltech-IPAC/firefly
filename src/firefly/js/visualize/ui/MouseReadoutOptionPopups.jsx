@@ -8,16 +8,12 @@
  */
 
 import React, { PropTypes} from 'react';
-//import InputGroup from '../../ui/InputGroup.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import FieldGroupUtils, {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
-//import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
-//import CoordinateSys from '../CoordSys.js';
-import {dispatchChangeMouseReadout} from '../ImagePlotCntlr.js';
-
+import { dispatchChangeReadoutPrefs} from '../../visualize/MouseReadoutCntlr.js';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 
 //define the labels and values for the radio options
@@ -45,7 +41,6 @@ const leftColumn = { display: 'inline-block', paddingLeft:80, verticalAlign:'mid
 const rightColumn = {display: 'inline-block',  paddingLeft:18};
 
 const dialogStyle = { minWidth : 300, minHeight: 100 , padding:5};
-
 
 /**
  *
@@ -88,7 +83,8 @@ export function showMouseReadoutOptionDialog(fieldKey,radioValue) {
 function doDispatch(fieldGroup,  fieldKey){
 	window.setTimeout(() => { // since the mouse click happens before the store can update, we must defer the actions
 		var results= getFieldGroupResults(fieldGroup,true);
-		dispatchChangeMouseReadout(fieldKey,results[fieldKey] );
+		const payload = {[fieldKey]:results[fieldKey]};
+		dispatchChangeReadoutPrefs(payload);
 		dispatchHideDialog(fieldKey);
 	},0);
 

@@ -16,7 +16,7 @@ import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
  * @param {object} currMouseState  the current state of the mouse
  * @return {XML}
  */
-export function VisHeaderView({visRoot,currMouseState}) {
+export function VisHeaderView({visRoot,currMouseState, readout}) {
 
     var rS= {
         width: 700,
@@ -38,7 +38,7 @@ export function VisHeaderView({visRoot,currMouseState}) {
         <div style={{display:'inline-block', float:'right', whiteSpace:'nowrap'}}>
             <div style={rS}>
                 <div style={{position:'absolute', color:'white'}}>
-                    <MouseReadout visRoot={visRoot} plotView={mousePv} mouseState={currMouseState} />
+                    <MouseReadout  readout={readout}/>
                 </div>
             </div>
 
@@ -51,5 +51,6 @@ export function VisHeaderView({visRoot,currMouseState}) {
 
 VisHeaderView.propTypes= {
     visRoot : React.PropTypes.object.isRequired,
-    currMouseState :React.PropTypes.object
+    currMouseState :React.PropTypes.object,
+    readout:  React.PropTypes.object.isRequire
 };
