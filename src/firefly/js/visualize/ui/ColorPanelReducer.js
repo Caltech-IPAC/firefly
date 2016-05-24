@@ -73,7 +73,7 @@ const computeColorPanelState= function(fields, plottedRV, fitsData, band, action
       case FieldGroupCntlr.INIT_FIELD_GROUP:
             if (!plottedRV && !fitsData) return fields;
             var newFields = updateFieldsFromRangeValues(fields,plottedRV,fitsData);
-            return syncFields(newFields,plottedRV,fitsData);
+            return newFields; //syncFields(newFields,plottedRV,fitsData);
             break;
 
     }
@@ -270,9 +270,9 @@ var getFieldInit= function() {
         beta: {
             fieldKey: 'beta',
             value: '0.1',
-            validator: Validate.floatRange.bind(null, 0.000001, 100, 1, 'beta'),
+            validator: Validate.isPositiveFiniteNumber.bind(null, 'Beta'),
             tooltip: 'an arbitrary "softness"',
-            label: 'beta:'
+            label: 'Beta:'
         },
         gamma: {
             fieldKey: 'gamma',

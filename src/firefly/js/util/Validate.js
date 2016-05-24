@@ -116,6 +116,23 @@ export const isFloat = function(description, valStr) {
     return retval;
 };
 
+export const isPositiveFiniteNumber = (description, valStr)=>{
+    var retval= { valid : true, message : '' };
+    if (valStr) {
+        var aNumber = Number.parseFloat(valStr);
+        if (!isFinite(aNumber)) {
+            retval.valid = false;
+            retval.message = description + ': must be a finite float';
+        }
+        if (aNumber<0){
+            retval.valid = false;
+            retval.message = description + ': must be a positive float';
+        }
+    }
+    return retval;
+
+};
+
 
 export const isInt = function(description, valStr) {
     var retval= { valid : true, message : '' };
@@ -160,6 +177,6 @@ export const emailValidator = function(description) {
 
 
 var Validate = {
-    validateEmail, validateUrl, intRange, floatRange, isFloat, isInt
+    validateEmail, validateUrl, intRange, floatRange, isFloat, isInt,isPositiveFiniteNumber
 };
 export default Validate;
