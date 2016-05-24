@@ -43,7 +43,7 @@ export function dispatchChangeLockByClick(lockByClick) {
 }
 
 export function dispatchChangeReadoutPrefs(readoutPref) {
-    flux.process({type: CHANGE_LOCK_BY_CLICK, payload: {readoutPref}});
+    flux.process({type: CHANGE_READOUT_PREFS, payload: {readoutPref}});
 }
 
 
@@ -107,8 +107,10 @@ export function reducer(state=initState(), action={}) {
         case CHANGE_LOCK_BY_CLICK:
             retState= clone(state,{lockByClick:action.payload.lockByClick});
             break;
-        default:
+        case CHANGE_READOUT_PREFS:
             retState= clone(state,{readoutPref:clone(state.readoutPref,action.payload.readoutPerf)});
+            break;
+        default:
             break;
     }
     return retState;
