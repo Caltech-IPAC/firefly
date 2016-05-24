@@ -214,6 +214,23 @@ export function saveDS9RegionFile(regionData) {
 }
 
 
+/**
+ * 
+ * @param state
+ * @param regionData
+ */
+export function getImagePng(state, regionData) {
+    var params= {
+        [ServerParams.STATE]: state.toJson(),
+        [ServerParams.REGION_DATA]: regionData,
+        [ServerParams.JSON_DEEP]: true
+    };
+    return doJsonRequest(ServerParams.IMAGE_PNG_REG, params, true);
+}
+
+
+
+
 const getOneFileGroup= function(requestList, progressKey) {
     //todo
 };

@@ -36,7 +36,9 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.StringKey;
+import edu.caltech.ipac.util.dd.RegParseException;
 import edu.caltech.ipac.util.dd.Region;
+import edu.caltech.ipac.util.dd.RegionFileElement;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.FileRetrieveException;
 import edu.caltech.ipac.visualize.draw.AreaStatisticsUtil;
@@ -52,8 +54,7 @@ import nom.tam.fits.Header;
 import nom.tam.fits.HeaderCard;
 import nom.tam.util.Cursor;
 
-import java.awt.Color;
-import java.awt.Shape;
+import java.awt.*;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.IndexColorModel;
@@ -69,10 +70,12 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.visualize.Band.NO_BAND;
 import static edu.caltech.ipac.visualize.draw.AreaStatisticsUtil.WhichReadout.LEFT;
 import static edu.caltech.ipac.visualize.draw.AreaStatisticsUtil.WhichReadout.RIGHT;
+
 /**
  * User: roby
  * Date: Aug 7, 2008
@@ -1356,6 +1359,34 @@ public class VisServerOps {
         }
         return retval;
     }
+
+
+    public static WebPlotResult getImagePngWithRegion(PlotState state, String regionData) {
+        WebPlotResult retval;
+        ActiveCallCtx ctx;
+        try {
+            List<String> regOutList = StringUtils.parseStringList(regionData);
+            List<Region> reglist= regOutList.stream().map(s -> {
+                try {
+                     List<RegionFileElement> l= RegionFactory.parsePart(s);
+                     return (Region) l.get(0);
+                } catch (RegParseException e) {
+                    return null;
+                }
+            }).collect(Collectors.toList());
+
+            ctx = CtxControl.prepare(state);
+            String pngFile = PlotPngCreator.createImagePngWithRegions(ctx.getPlot(), ctx.getFitsReadGroup(), reglist);
+            retval = new WebPlotResult(ctx.getKey());
+            retval.putResult(WebPlotResult.IMAGE_FILE_NAME, new DataEntry.Str(pngFile));
+        } catch (Exception e) {
+            retval = createError("on getImagePng", state, e);
+        }
+        return retval;
+    }
+
+
+
 
     public static WebPlotResult saveDS9RegionFile(String regionData) {
         WebPlotResult retval;

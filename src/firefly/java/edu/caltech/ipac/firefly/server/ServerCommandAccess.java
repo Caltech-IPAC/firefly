@@ -102,6 +102,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.FITS_HEADER,  new VisServerCommands.FitsHeader());   //LZ 3/21/16  DM-4494
 
         _cmdMap.put(ServerParams.IMAGE_PNG,    new VisServerCommands.GetImagePng());
+        _cmdMap.put(ServerParams.IMAGE_PNG_REG,    new VisServerCommands.GetImagePngWithRegion());
         _cmdMap.put(ServerParams.PROGRESS,     new VisServerCommands.GetProgress());
         _cmdMap.put(ServerParams.DS9_REGION,   new VisServerCommands.DS9Region());
         _cmdMap.put(ServerParams.SAVE_DS9_REGION,      new VisServerCommands.SaveDS9Region());

@@ -107,6 +107,7 @@ public class ServerParams {
     public static final String FLIP_Y = "CmdFlipY";
     public static final String HISTOGRAM = "CmdHistogram";
     public static final String IMAGE_PNG = "CmdImagePng";
+    public static final String IMAGE_PNG_REG = "CmdImagePngReg";
     public static final String CROP = "CmdCrop";
     public static final String STAT = "CmdStat";
     public static final String HEADER = "CmdHeader";

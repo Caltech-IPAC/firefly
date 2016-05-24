@@ -27,6 +27,7 @@ import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -50,6 +51,16 @@ public class PlotPngCreator {
         return ppC.create(plot,frGroup);
     }
 
+    public static String createImagePngWithRegions(ImagePlot plot,
+                                                   ActiveFitsReadGroup frGroup,
+                                                   List<Region> regionList) throws IOException {
+        StaticDrawInfo sdi= new StaticDrawInfo();
+        sdi.addAllRegions(regionList);
+        sdi.setDrawType(StaticDrawInfo.DrawType.REGION);
+        PlotPngCreator ppC= new PlotPngCreator(Arrays.asList(sdi));
+
+        return ppC.create(plot,frGroup);
+    }
 
     private String create(ImagePlot plot, ActiveFitsReadGroup frGroup) throws IOException {
         for(StaticDrawInfo drawInfo : drawInfoList) {

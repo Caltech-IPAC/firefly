@@ -344,6 +344,18 @@ public class VisServerCommands {
         }
     }
 
+    public static class GetImagePngWithRegion extends ServerCommandAccess.ServCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
+
+            SrvParam sp= new SrvParam(paramMap);
+            PlotState state= sp.getState();
+            String data = sp.getRequired(ServerParams.REGION_DATA);
+            WebPlotResult result = VisServerOps.getImagePngWithRegion(state, data);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
+        }
+    }
+
 
     public static class RotateNorth extends ServerCommandAccess.ServCommand {
 

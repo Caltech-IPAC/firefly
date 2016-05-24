@@ -94,6 +94,7 @@ export const ServerParams = {
         FLIP_Y : 'CmdFlipY',
         HISTOGRAM : 'CmdHistogram',
         IMAGE_PNG : 'CmdImagePng',
+        IMAGE_PNG_REG : 'CmdImagePngReg',
         CROP : 'CmdCrop',
         STAT : 'CmdStat',
         HEADER : 'CmdHeader',
