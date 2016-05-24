@@ -36,6 +36,10 @@
     <div id="tables-1" style="display: inline-block; width: 550px; height: 550px; margin: 10px; background-color: white"></div>
     <div id="tables-2" style="display: inline-block; width: 550px; height: 550px; margin: 10px; background-color: white; position: absolute"></div>
 </div>
+<div>
+    <div id="oldSelectable" style="display: inline-block; width: 550px; height: 550px; margin: 10px; background-color: white"></div>
+    <div id="oldBasic" style="display: inline-block; width: 550px; height: 550px; margin: 10px; background-color: white"></div>
+</div>
 <div id="xyPlot1" style="width: 550px; height: 300px; margin: 10px;"></div>
 <div id="xyPlot2" style="width: 550px; height: 300px; margin: 10px;"></div>
 <div id="old1" style="width: 300px; height: 300px; margin: 10px;"></div>
@@ -145,6 +149,25 @@
             firefly.showTable('tables-1', tblReq1);
             firefly.showTable('tables-1', tblReq2);
             firefly.showTable('tables-2', tblReq3, {tbl_group: 'upload', removable: false, showUnits: true, showFilters: true});
+
+                //-----< old table api ------//
+            var tblParams = {
+                source: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
+                type: 'selectable',
+                Title: 'old api: selectable table',
+                pageSize: 50,
+                tableOptions: "show-filter=true,show-title=true,show-toolbar=true,show-options=true,show-paging=true,show-save=true"
+            }
+            firefly.showTable(tblParams, 'oldSelectable');
+            var tblParams2 = {
+                source: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
+                type: 'basic',
+                Title: 'old api: basic table',
+                pageSize: 1000,
+                tableOptions: "show-toolbar=false"
+            }
+            firefly.showTable(tblParams2, 'oldBasic');
+                //----- old table api >------//
 
             //-----------------  CHART DEMO ------------------------//
             firefly.addXYPlot('xyPlot1', {xCol: 'ra1', yCol: 'dec1'}, tblReq3.tbl_id);

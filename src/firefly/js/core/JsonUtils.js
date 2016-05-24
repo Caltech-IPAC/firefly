@@ -9,7 +9,7 @@
 /*eslint prefer-template:0 */
 import {get, has} from 'lodash';
 import { getRootURL, getRootPath} from '../util/BrowserUtil.js';
-import { encodeServerUrl } from '../util/WebUtil.js';
+import { encodeServerUrl, toBoolean } from '../util/WebUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {fetchUrl} from '../util/WebUtil.js';
 
@@ -85,7 +85,7 @@ export const jsonRequest= function(baseUrl, cmd, paramList, doPost) {
             }
             response.json().then( (result) => {
                 if (has(result,'0')) {
-                    if (Boolean(result[0].success)) {
+                    if (toBoolean(result[0].success)) {
                         resolve(result[0].data ? result[0].data : result[0]);
                     }
                     else if (has(result,'0.error')){

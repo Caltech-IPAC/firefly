@@ -4,7 +4,7 @@
 
 import {set, has, get, isEmpty, cloneDeep, findKey} from 'lodash';
 
-import {updateSet} from '../../util/WebUtil.js';
+import {updateSet, updateMerge} from '../../util/WebUtil.js';
 import * as Cntlr from '../TablesCntlr.js';
 import * as TblUtil from '../TableUtil.js';
 
@@ -79,7 +79,7 @@ function uiStateReducer(ui, tableModel) {
     }).forEach( (tbl_ui_id) => {
         const columns = get(ui, [tbl_ui_id, 'columns']);
         uiData.columns = ensureColumns({tableModel, columns});
-        ui = updateSet(ui, [tbl_ui_id], uiData);
+        ui = updateMerge(ui, [tbl_ui_id], uiData);
     });
     return ui;
 }

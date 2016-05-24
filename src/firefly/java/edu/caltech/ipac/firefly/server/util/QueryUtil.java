@@ -40,6 +40,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Date;
 import java.util.*;
@@ -81,7 +82,7 @@ public class QueryUtil {
             if (!StringUtils.isEmpty(key) && req.getParameterValues(key) != null) {
                 String values = StringUtils.toString(req.getParameterValues(key), ",");
                 if (key.equals(TableServerRequest.META_INFO)) {
-                    Map<String, String> meta = StringUtils.encodedStringToMap(values);
+                    Map<String, String> meta = encodedStringToMap(values);
                     if (meta != null && meta.size() > 0) {
                         for (String k : meta.keySet()) {
                             retval.setMeta(k, meta.get(k));
@@ -827,6 +828,24 @@ public class QueryUtil {
             seq = Integer.parseInt(seqStr);
         }
         return seq;
+    }
+
+    private static Map<String, String> encodedStringToMap(String str) {
+        if (StringUtils.isEmpty(str)) return null;
+        HashMap<String, String> map = new HashMap<String, String>();
+        for (String entry : str.split("&")) {
+            String[] kv = entry.split("=", 2);
+            String value = kv.length > 1 ? kv[1].trim() : "";
+            if (value.contains("%")) {
+                try {
+                    value = URLDecoder.decode(value, "utf-8");
+                } catch (UnsupportedEncodingException e) {
+                    // ignores encoding errors.
+                }
+            }
+            map.put(kv[0].trim(), value);
+        }
+        return map;
     }
 
     public static void main(String[] args) {

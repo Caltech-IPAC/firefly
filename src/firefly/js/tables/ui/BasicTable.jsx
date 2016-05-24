@@ -13,6 +13,10 @@ import {TableConnector} from '../TableConnector.js';
 import {dispatchTableReplace, dispatchTableUiUpdate} from '../TablesCntlr.js';
 import {SelectInfo} from '../SelectInfo.js';
 
+/**
+ * this is no longer needed.  use TablePanel with showToolBar = false
+ * @deprecated
+ */
 export class BasicTable extends Component {
 
     constructor(props) {

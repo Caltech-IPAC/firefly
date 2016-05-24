@@ -44,11 +44,53 @@ function build(llApi) {
 
 /*----------------------------< TABLE PART ----------------------------*/
 
-function doShowTable(llApi, targetDiv, request, options) {
+function oldApi(llApi, params, options) {
+    const {getBoolean} = llApi.util;
+    const {makeFileRequest} = llApi.util.table;
+
+    const oldOpts = params.tableOptions && params.tableOptions.split(',').reduce((rval, s) => {
+                        const kval = s && s.trim().split('=');
+                        rval[kval[0]] = kval[1];
+                        return rval;
+                    }, {});      // convert 'key=value' array into {key: value}.
+    options.showFilters = getBoolean(oldOpts, 'show-filter');
+    options.showTitle = getBoolean(oldOpts, 'show-title');
+    options.showToolbar = getBoolean(oldOpts, 'show-toolbar');
+    options.showOptionButton = getBoolean(oldOpts, 'show-options');
+    options.showPaging = getBoolean(oldOpts, 'show-paging');
+    options.showSave = getBoolean(oldOpts, 'show-save');
+    options.showUnits = getBoolean(oldOpts, 'show-units');
+    // options.?? = getBoolean(oldOpts, 'show-popout');
+    // options.?? = getBoolean(oldOpts, 'show-table-view');
+
+    var {Title, source, alt_source, type, filters, sortInfo, pageSize, startIdx, fixedLength} = params;
+    var request = makeFileRequest(Title, source, alt_source, {filters, sortInfo, pageSize, startIdx});
+    if (type === 'basic') {
+        options.selectable = false;
+    }
+    return request;
+}
+
+function doShowTable(llApi, targetDiv, request, options={}) {
     const {dispatchTableSearch}= llApi.action;
     const {renderDOM}= llApi.util;
     const {TablesContainer}= llApi.ui;
-    const contProps = options && options.tbl_group ? {tbl_group: options.tbl_group} : {};
+    var contProps = options && options.tbl_group ? {tbl_group: options.tbl_group} : {};
+
+    if ((typeof targetDiv).match('string|HTMLDivElement') === null) {
+        // old api.. need to setup request and options before continue.
+        const params = targetDiv;
+        targetDiv = request;
+        request = oldApi(llApi, params, options);
+        contProps.tbl_group = targetDiv;
+        options.tbl_group = targetDiv;
+    }
+
+    Object.keys(options).forEach( (k) => {
+        if (options[k] === undefined) {
+            Reflect.deleteProperty(options, k);
+        }
+    });
 
     dispatchTableSearch(request, options);
     renderDOM(targetDiv, TablesContainer, contProps);
@@ -236,7 +278,7 @@ function showImageInMultiViewer(llApi, targetDiv, request) {
 var imageInit= false;
 function highlevelImageInit(llApi) {
     if (!imageInit) {
-        // llApi.util.image.initImageViewExpanded(llApi.ui.ApiExpandedDisplay);
+        llApi.util.image.initImageViewExpanded(llApi.ui.ApiExpandedDisplay);
         llApi.util.image.initAutoReadout();
         imageInit= true;
     }

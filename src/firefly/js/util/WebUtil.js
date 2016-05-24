@@ -151,7 +151,7 @@ export function fetchUrl(url, options, returnAllResponses= false) {
             if (!options.body) {
                 // if 'post' but, body is not provided, add the parameters into the body.
                 if (options.method.toLowerCase() === 'post') {
-                    options.headers['Content-type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
+                    options.headers['Content-type'] = 'application/x-www-form-urlencoded';
                     options.body = encodeParams(options.params);
                 } else if (options.method.toLowerCase() === 'multipart') {
                     options.method = 'post';
@@ -358,7 +358,7 @@ function parseCookies(str) {
 }
 /*---------------------------- COOKIES >----------------------------*/
 
-/*----------------------------/ update ----------------------------*/
+/*----------------------------< update ----------------------------*/
 /**
  * This is a wrapper of React update's $set for use with deep object update.
  * *Syntax is similar to lodash set.
@@ -424,5 +424,27 @@ export function updateDelete(object, path, value) {
  */
 export const clone = (obj={},params={}) => Object.assign({},obj,params);
 
-/*---------------------------- update /----------------------------*/
+/*---------------------------- update >----------------------------*/
 
+/**
+ * return the boolean value of prop for the given object
+ * @param object
+ * @param prop
+ * @param def
+ * @returns {*}
+ */
+export function getBoolean(object, prop, def=undefined) {
+    return toBoolean(object && object[prop], def);
+}
+
+/**
+ * return true if val is boolean true, or 'true' case-insensitive
+ * @param val the value to convert.
+ * @param def return def if val is undefined
+ * @returns {*}
+ */
+export function toBoolean(val, def=undefined) {
+    return val === undefined ? def :
+        typeof val === 'boolean'? val :
+        String(val).toLowerCase() === 'true';
+}

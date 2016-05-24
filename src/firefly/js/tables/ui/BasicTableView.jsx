@@ -216,7 +216,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
     if (!columns) return false;
 
     var colsEl = columns.map((col, idx) => {
-        if (col.visibility !== 'show') return false;
+        if (col.visibility && col.visibility !== 'show') return false;
         const HeadRenderer = get(renderers, [col.name, 'headRenderer'], HeaderCell);
         const CellRenderer = get(renderers, [col.name, 'cellRenderer'], TextCell);
 
@@ -250,21 +250,20 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
 
 
 function tableToText(columns, dataAry, showUnits=false) {
-
     var textHead = columns.reduce( (pval, cval, idx) => {
-        return pval + (columns[idx].visibility === 'show' ? `${padEnd(cval.name, columns[idx].width)}|` : '');
+        return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cval.name, columns[idx].width)}|` : '');
     }, '|');
 
     if (showUnits) {
         textHead += '\n' + columns.reduce( (pval, cval, idx) => {
-                return pval + (columns[idx].visibility === 'show' ? `${padEnd(cval.units || '', columns[idx].width)}|` : '');
+                return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cval.units || '', columns[idx].width)}|` : '');
             }, '|');
     }
 
     var textData = dataAry.reduce( (pval, row) => {
         return pval +
             row.reduce( (pv, cv, idx) => {
-                return pv + (get(columns, [idx,'visibility']) === 'show' ? `${padEnd(cv || '', columns[idx].width)} ` : '');
+                return pv + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cv || '', columns[idx].width)} ` : '');
             }, ' ') + '\n';
     }, '');
     return textHead + '\n' + textData;

@@ -42,7 +42,7 @@ export class TablesContainer extends Component {
         if (expandedMode && mode !== 'standard') {
             tbl_group = TblUtil.getTblExpandedInfo().tbl_group;
         }
-        const {tables, layout, active} = TblUtil.getTableGroup(tbl_group);
+        const {tables, layout, active} = TblUtil.getTableGroup(tbl_group) || {};
         return {closeable, tbl_group, expandedMode, tables, layout, active};
     }
 
@@ -124,7 +124,7 @@ function SingleTable({table, expandedMode}) {
     var {tbl_id, title, removable, tbl_ui_id} = table;
 
     return  (
-        <TablePanel key={tbl_id} border={false} {...{title, removable, tbl_id, tbl_ui_id, expandedMode, border:true}} />
+        <TablePanel key={tbl_id} border={true} {...{title, removable, tbl_id, tbl_ui_id, expandedMode}} />
     );
 }
 
@@ -138,7 +138,7 @@ function tablesAsTab(tables, expandedMode) {
             };
             return  (
                 <Tab key={tbl_ui_id} name={title} removable={removable} onTabRemove={onTabRemove}>
-                    <TablePanel key={tbl_id} border={false} {...{tbl_id, tbl_ui_id, expandedMode}} />
+                    <TablePanel key={tbl_id} border={false} showTitle={false} {...{tbl_id, tbl_ui_id, expandedMode}} />
                 </Tab>
             );
         } );

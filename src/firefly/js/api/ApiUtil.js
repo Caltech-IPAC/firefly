@@ -19,7 +19,8 @@ import {take,race,call} from 'redux-saga/effects';
 // NOTE 
 // NOTE
 
-
+export {getBoolean} from '../util/WebUtil.js';
+export {toBoolean} from '../util/WebUtil.js';
 
 
 /**

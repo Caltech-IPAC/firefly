@@ -91,7 +91,7 @@ function prepareOptionData(columns, colSortDir) {
     var selectInfoCls = SelectInfo.newInstance({});
     selectInfoCls.data.rowCount = data.length;
     columns.forEach( (v, idx) => {
-        selectInfoCls.setRowSelect(idx, v.visibility === 'show');
+        selectInfoCls.setRowSelect(idx, get(v, 'visibility', 'show') === 'show');
     } );
     var tableRowCount = data.length;
 

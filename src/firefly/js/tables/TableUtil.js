@@ -423,7 +423,7 @@ export function getTblInfo(tableModel, aPageSize) {
 export function getTableSourceUrl(columns, request, filename) {
     const Request = cloneDeep(request);
     const visiCols = columns.filter( (col) => {
-                return col.visibility === 'show';
+                return isNil(col) || col.visibility === 'show';
             }).map( (col) => {
                 return col.name;
             } );

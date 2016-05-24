@@ -47,40 +47,40 @@ export {ExpandType} from '../visualize/ImagePlotCntlr.js';
  */
 export function initImageViewExpanded(Component, props={}, div ){
 
-    const EXPANDED_DIV= 'expandedArea';
-    var expandedDivEl;
-    if (div) {
-        expandedDivEl= isString(div) ? document.getElementById(div) : div;
-    }
-    else {
-        expandedDivEl= document.createElement('div');
-        document.body.appendChild(expandedDivEl);
-        expandedDivEl.id= EXPANDED_DIV;
-        expandedDivEl.style.visibility= 'hidden';
-        expandedDivEl.className= 'api-expanded';
-
-    }
-
-    var isExpanded= false;
-
-    const unExpand= () =>{
-        unrenderDOM(expandedDivEl);
-        isExpanded= false;
-        dispatchChangeExpandedMode(ExpandType.COLLAPSE);
-        expandedDivEl.style.visibility= 'hidden';
-    };
-
-
-    flux.addListener(() => {
-        const vr= visRoot();
-        if (vr.expandedMode!==ExpandType.COLLAPSE && !isExpanded) {
-            isExpanded= true;
-            expandedDivEl.style.visibility= 'visible';
-            renderDOM(expandedDivEl, Component, Object.assign({closeFunc:unExpand}, props),
-                { left: 1, right: 1, top: 1, bottom: 1, position: 'absolute' });
-        }
-    });
-    
+    // const EXPANDED_DIV= 'expandedArea';
+    // var expandedDivEl;
+    // if (div) {
+    //     expandedDivEl= isString(div) ? document.getElementById(div) : div;
+    // }
+    // else {
+    //     expandedDivEl= document.createElement('div');
+    //     document.body.appendChild(expandedDivEl);
+    //     expandedDivEl.id= EXPANDED_DIV;
+    //     expandedDivEl.style.visibility= 'hidden';
+    //     expandedDivEl.className= 'api-expanded';
+    //
+    // }
+    //
+    // var isExpanded= false;
+    //
+    // const unExpand= () =>{
+    //     unrenderDOM(expandedDivEl);
+    //     isExpanded= false;
+    //     dispatchChangeExpandedMode(ExpandType.COLLAPSE);
+    //     expandedDivEl.style.visibility= 'hidden';
+    // };
+    //
+    //
+    // flux.addListener(() => {
+    //     const vr= visRoot();
+    //     if (vr.expandedMode!==ExpandType.COLLAPSE && !isExpanded) {
+    //         isExpanded= true;
+    //         expandedDivEl.style.visibility= 'visible';
+    //         renderDOM(expandedDivEl, Component, Object.assign({closeFunc:unExpand}, props),
+    //             { left: 1, right: 1, top: 1, bottom: 1, position: 'absolute' });
+    //     }
+    // });
+    //
     
     dispatchApiToolsView(true);//todo move this somewhere, not sure where
 }
