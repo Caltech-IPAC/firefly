@@ -8,7 +8,6 @@
 
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
-import {parse} from '../visualize/WebPlotResultParser.js';
 import {PlotState} from '../visualize/PlotState.js';
 
 
@@ -25,8 +24,7 @@ export const callGetColorHistogram= function(state,band,width,height) {
     paramList.push({name:ServerParams.BAND, value: band.key});
     paramList.push({name:ServerParams.JSON_DEEP,value:'true'});
 
-    return doJsonRequest(ServerParams.HISTOGRAM, paramList
-    ).then((data) => parse(data) );
+    return doJsonRequest(ServerParams.HISTOGRAM, paramList)
 };
 
 /**
