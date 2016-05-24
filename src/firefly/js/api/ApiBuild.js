@@ -30,7 +30,7 @@ import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {TablePanel} from '../tables/ui/TablePanel.jsx';
 
 // builds the highlevel api
-import {buildHighLevelApi} from './ApiHighLevelBuild.js';
+import {buildHighLevelApi} from './ApiHighlevelBuild.js';
 import {buildViewerApi} from './ApiViewer.js';
 
 
