@@ -37,16 +37,22 @@ export function* syncCharts() {
                 if (has(tableStatsState, tbl_id)) {
                     TableStatsCntlr.dispatchLoadTblStats(request);
                 }
+
                 xyPlotState = flux.getState()[XYPlotCntlr.XYPLOT_DATA_KEY];
-                if (has(xyPlotState, tbl_id)) {
-                    const xyPlotParams = xyPlotState[tbl_id].xyPlotParams;
-                    XYPlotCntlr.dispatchLoadPlotData(xyPlotParams, request);
-                }
+                Object.keys(xyPlotState).forEach((cid) => {
+                    if (xyPlotState[cid].tblId === tbl_id) {
+                        const xyPlotParams = xyPlotState[cid].xyPlotParams;
+                        XYPlotCntlr.dispatchLoadPlotData(cid, xyPlotParams, request);
+                    }
+                });
+
                 histogramState = flux.getState()[HistogramCntlr.HISTOGRAM_DATA_KEY];
-                if (has(histogramState, tbl_id)) {
-                    const histogramParams = histogramState[tbl_id].histogramParams;
-                    HistogramCntlr.dispatchLoadColData(histogramParams, request);
-                }
+                Object.keys(histogramState).forEach((cid) => {
+                    if (histogramState[cid].tblId === tbl_id) {
+                        const histogramParams = histogramState[cid].histogramParams;
+                        HistogramCntlr.dispatchLoadColData(cid, histogramParams, request);
+                    }
+                });
                 break;
         }
     }

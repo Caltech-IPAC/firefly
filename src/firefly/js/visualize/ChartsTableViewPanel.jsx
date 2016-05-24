@@ -19,6 +19,7 @@ import {FilterInfo} from '../tables/FilterInfo.js';
 import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
 import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
 import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
+import {dispatchChartExpanded} from '../visualize/ChartsCntlr.js';
 
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../core/LayoutCntlr.js';
 
@@ -49,12 +50,11 @@ const HISTOGRAM = 'histogram';
 const OPTIONS_WIDTH = 330;
 
 const PREF_CHART_TYPE = 'pref.chartType';
-const PREF_OPTIONS_SHOWN = 'pref.chartOptionsShown';
 
 const selectionBtnStyle = {verticalAlign: 'top', paddingLeft: 20, cursor: 'pointer'};
 
 function getChartType(props) {
-    if (props.chartId) {
+    if (props.chartId !== props.tblId) {
          if (props.tblPlotData) { return SCATTER; }
          if (props.tblHistogramData) { return HISTOGRAM; }
     }
@@ -67,7 +67,7 @@ class ChartsPanel extends React.Component {
         super(props);
         this.state = {
             chartType: getChartType(props),
-            optionsShown: !(localStorage.getItem(PREF_OPTIONS_SHOWN)==='false'),
+            optionsShown: !props.chartId,
             immediateResize: false
         };
 
@@ -116,9 +116,11 @@ class ChartsPanel extends React.Component {
             nextProps.tblStatsData !== this.props.tblStatsData ||
             nextProps.expandedMode !== this.props.expandedMode;
         if (!doUpdate) {
-            if (nextState.chartType === SCATTER) {
+            const chartType = getChartType(nextProps);
+            if (chartType === SCATTER) {
                 // scatter plot
-                doUpdate = nextProps.tblPlotData !== this.props.tblPlotData ||
+                doUpdate =
+                    nextProps.tblPlotData !== this.props.tblPlotData ||
                     (nextProps.tableModel &&
                     (nextProps.tableModel.highlightedRow !== get(this.props, 'tableModel.highlightedRow') ||
                      nextProps.tableModel.selectInfo !== get(this.props, 'tableModel.selectInfo') ));
@@ -138,6 +140,10 @@ class ChartsPanel extends React.Component {
         this.handlePopups();
     }
 
+    componentWillReceiveProps(nextProps) {
+        this.setState({chartType: getChartType(nextProps)});
+    }
+
     componentWillUnmount() {
         if (isDialogVisible(popupId)) {
             hideChartOptionsPopup();
@@ -148,7 +154,7 @@ class ChartsPanel extends React.Component {
         if (this.props.optionsPopup) {
             const {optionsShown, chartType} = this.state;
             if (optionsShown) {
-                const {tableModel, tblStatsData, tblId, chartId} = this.props;
+                const {tableModel, tblStatsData, tblPlotData, tblHistogramData, tblId, chartId} = this.props;
                 // show options popup
                 let popupTitle = 'Chart Options';
 
@@ -160,7 +166,7 @@ class ChartsPanel extends React.Component {
                         <div
                             style={{overflow:'auto',width:OPTIONS_WIDTH,height:300,paddingTop:10,paddingLeft:10,verticalAlign:'top'}}>
                             {chartId===tblId ? this.renderChartSelection() : false}
-                            <OptionsWrapper {...{chartId, tableModel, tblStatsData, chartType}}/>
+                            <OptionsWrapper {...{chartId, tableModel, tblStatsData, tblPlotData, tblHistogramData, chartType}}/>
                         </div>
                     </PopupPanel>
                 );
@@ -273,7 +279,6 @@ class ChartsPanel extends React.Component {
 
     toggleOptions() {
         const {optionsShown, immediateResize, optionsPopup} = this.state;
-        localStorage.setItem(PREF_OPTIONS_SHOWN, !optionsShown);
         this.setState({optionsShown: !optionsShown, immediateResize: optionsPopup?immediateResize:true});
     }
 
@@ -443,7 +448,7 @@ class ChartsPanel extends React.Component {
     }
 
     renderToolbar() {
-        const {expandable, expandedMode} = this.props;
+        const {expandable, expandedMode, tblId, chartId, optionsPopup} = this.props;
         return (
             <div style={{height: 30, position: 'absolute', top: 0, left: 0, right: 0}}>
                 <img style={{verticalAlign:'top', float: 'left', cursor: 'pointer'}}
@@ -457,7 +462,10 @@ class ChartsPanel extends React.Component {
                     <img style={selectionBtnStyle}
                          title='Expand this panel to take up a larger area'
                          src={OUTLINE_EXPAND}
-                         onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.xyPlots)}
+                         onClick={() => {
+                            dispatchChartExpanded(chartId, tblId, optionsPopup);
+                            dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.xyPlots);
+                         }}
                     />
                     }
                 </div>
@@ -502,13 +510,13 @@ class ChartsPanel extends React.Component {
 
     renderOptions() {
         const {optionsShown, chartType, heightPx} = this.state;
-        const { tblId, tableModel, tblStatsData, optionsPopup, chartId} = this.props;
+        const { tblId, tableModel, tblStatsData, tblPlotData, tblHistogramData, optionsPopup, chartId} = this.props;
         if (optionsShown) {
             if (!optionsPopup) {
                 return (
                     <div style={{flex: '0 0 auto',overflow:'auto',width:OPTIONS_WIDTH,height:heightPx,paddingLeft:10,verticalAlign:'top'}}>
                         {chartId===tblId ? this.renderChartSelection() : false}
-                        <OptionsWrapper  {...{chartId, tableModel, tblStatsData, chartType}}/>
+                        <OptionsWrapper  {...{chartId, tableModel, tblStatsData, tblPlotData, tblHistogramData, chartType}}/>
                     </div>
                 );
             }
@@ -627,6 +635,7 @@ export class OptionsWrapper extends React.Component {
 
     shouldComponentUpdate(nProps) {
         return nProps.chartId != this.props.chartId ||
+        get(nProps, 'tblPlotData.xyPlotParams') !== get(this.props, 'tblPlotData.xyPlotParams') ||
         get(nProps, 'tableModel.tbl_id') !== get(this.props, 'tableModel.tbl_id') ||
             get(nProps, 'tblStatsData.isColStatsReady') !== get(this.props, 'tblStatsData.isColStatsReady') ||
             nProps.chartType != this.props.chartType;
@@ -639,7 +648,7 @@ export class OptionsWrapper extends React.Component {
     // }
 
     render() {
-        const { chartId, tableModel, tblStatsData, chartType} = this.props;
+        const { chartId, tableModel, tblStatsData, chartType, tblPlotData, tblHistogramData} = this.props;
 
         if (get(tblStatsData,'isColStatsReady')) {
             const formName = 'ChartOpt_' + chartId;
@@ -647,6 +656,7 @@ export class OptionsWrapper extends React.Component {
                 return (
                     <XYPlotOptions key={formName} groupKey={formName}
                                    colValStats={tblStatsData.colStats}
+                                   xyPlotParams={get(tblPlotData, 'xyPlotParams')}
                                    onOptionsSelected={(xyPlotParams) => {
                                                 XYPlotCntlr.dispatchLoadPlotData(chartId, xyPlotParams, tableModel.request);
                                             }
@@ -656,6 +666,7 @@ export class OptionsWrapper extends React.Component {
                 return (
                     <HistogramOptions key={formName} groupKey = {formName}
                                       colValStats={tblStatsData.colStats}
+                                      histogramParams={get(tblHistogramData, 'histogramParams')}
                                       onOptionsSelected={(histogramParams) => {
                                                 HistogramCntlr.dispatchLoadColData(chartId, histogramParams, tableModel.request);
                                             }
@@ -675,6 +686,8 @@ OptionsWrapper.propTypes = {
     chartId : PropTypes.string,
     tableModel : PropTypes.object,
     tblStatsData : PropTypes.object,
+    tblPlotData : PropTypes.object,
+    tblHistogramData: PropTypes.object,
     chartType: PropTypes.string
 };
 

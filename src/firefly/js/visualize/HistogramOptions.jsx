@@ -1,5 +1,6 @@
-import React from 'react';
+import React, {PropTypes} from 'react';
 
+import {get} from 'lodash';
 import ColValuesStatistics from './ColValuesStatistics.js';
 import CompleteButton from '../ui/CompleteButton.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
@@ -12,29 +13,28 @@ import {ListBoxInputField} from '../ui/ListBoxInputField.jsx';
 import {RadioGroupInputField} from '../ui/RadioGroupInputField.jsx';
 import {FieldGroupCollapsible} from '../ui/panel/CollapsiblePanel.jsx';
 
+export const histogramParamsShape = PropTypes.shape({
+         algorithm : PropTypes.oneOf(['fixedSizeBins','byesianBlocks']),
+         numBins : PropTypes.string,
+         falsePositiveRate : PropTypes.string,
+         minCutoff : PropTypes.number,
+         maxCutoff : PropTypes.number
+      });
+
 var HistogramOptions = React.createClass({
 
     unbinder : null,
 
     propTypes: {
-        groupKey: React.PropTypes.string.isRequired,
-        colValStats: React.PropTypes.arrayOf(React.PropTypes.instanceOf(ColValuesStatistics)).isRequired,
-        onOptionsSelected: React.PropTypes.func.isRequired
+        groupKey: PropTypes.string.isRequired,
+        colValStats: PropTypes.arrayOf(React.PropTypes.instanceOf(ColValuesStatistics)).isRequired,
+        onOptionsSelected: PropTypes.func.isRequired,
+        histogramParams: histogramParamsShape
     },
-
-    /*
-      @param histogramParams key value pairs
-      React.PropTypes.shape({
-         algorithm : React.PropTypes.oneOf(['fixedSizeBins','byesianBlocks']),
-         numBins : React.PropTypes.number,
-         falsePositiveRate : React.PropTypes.number,
-         minCutoff : React.PropTypes.number,
-         maxCutoff : React.PropTypes.number
-      })
-     */
 
     shouldComponentUpdate(np, ns) {
         return this.props.groupKey !== np.groupKey || this.props.colValStats !== np.colValStats ||
+            this.props.histogramParams !== np.histogramParams ||
             FieldGroupUtils.getFldValue(this.state.fields, 'algorithm') !== FieldGroupUtils.getFldValue(ns.fields, 'algorithm');
     },
 
@@ -64,7 +64,7 @@ var HistogramOptions = React.createClass({
     },
 
     renderAlgorithmParameters() {
-        const {groupKey} = this.props;
+        const {groupKey, histogramParams} = this.props;
         const {fields} = this.state;
 
         var algorithm =  FieldGroupUtils.getFldValue(fields, 'algorithm', 'fixedSizeBins');
@@ -75,7 +75,7 @@ var HistogramOptions = React.createClass({
                 <ValidationField
                     style={{width: 30}}
                     initialState= {{
-                        value: 0.05,
+                        value: get(histogramParams, 'falsePositiveRate')||'0.05',
                         validator: Validate.floatRange.bind(null, 0.01, 0.5, 2,'falsePositiveRate'),
                         tooltip: 'Acceptable false positive rate',
                         label : 'False Positive Rate:'
@@ -91,7 +91,7 @@ var HistogramOptions = React.createClass({
                 <ValidationField
                     style={{width: 30}}
                     initialState= {{
-                        value: 10,
+                        value: get(histogramParams, 'numBins')||'50',
                         validator: Validate.intRange.bind(null, 1, 500, 'numBins'),
                         tooltip: 'Number of fixed size bins',
                         label : 'Number of bins:'
@@ -105,14 +105,14 @@ var HistogramOptions = React.createClass({
     },
 
     render() {
-        const { colValStats, groupKey }= this.props;
-        const {fields} = this.state;
+        const { colValStats, groupKey, histogramParams}= this.props;
         return (
             <div style={{padding:'5px'}}>
                 <br/>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
                     <ListBoxInputField
                         initialState= {{
+                            value: get(histogramParams, 'columnOrExpr'),
                             tooltip: 'Please select a column',
                             label : 'Column or expression:'
                         }}
@@ -135,7 +135,7 @@ var HistogramOptions = React.createClass({
                         <InputGroup labelWidth={20}>
                             <CheckboxGroupInputField
                                 initialState= {{
-                                    value: '_none_',
+                                    value: get(histogramParams, 'x')||'_none_',
                                     tooltip: 'X axis options',
                                     label : 'X:'
                                 }}
@@ -147,7 +147,7 @@ var HistogramOptions = React.createClass({
                             />
                             <CheckboxGroupInputField
                                 initialState= {{
-                                    value: '_none_',
+                                    value: get(histogramParams, 'y')||'_none_',
                                     tooltip: 'Y axis options',
                                     label : 'Y:'
                                 }}
@@ -163,7 +163,7 @@ var HistogramOptions = React.createClass({
                     <InputGroup labelWidth={60}>
                         <RadioGroupInputField
                             initialState= {{
-                                value : 'fixedSizeBins',
+                                value: get(histogramParams, 'algorithm')||'fixedSizeBins',
                                 tooltip: 'Please select an algorithm',
                                 label: 'Algorithm:'
                             }}

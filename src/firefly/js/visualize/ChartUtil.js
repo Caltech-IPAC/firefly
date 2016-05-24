@@ -13,6 +13,7 @@ import {getTblById, getColumnIdx, getCellValue} from '../tables/TableUtil.js';
 import {Expression} from '../util/expr/Expression.js';
 import {logError} from '../util/WebUtil.js';
 
+
 /**
  * This method returns an object with the keys x,y,highlightedRow
  */
@@ -61,5 +62,6 @@ function getExpressionValue(strExpr, tableModel, rowIdx) {
 export function uniqueChartId(tblId) {
     return uniqueId(tblId+'c');
 }
+
 
 

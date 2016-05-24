@@ -308,7 +308,7 @@ function showXYPlot(llApi, targetDiv, params, tbl_id) {
     const {renderDOM} = llApi.util;
     const {makeFileRequest} = llApi.util.table;
     const {uniqueChartId, loadPlotDataForTbl} = llApi.util.chart;
-    const {ChartsTableViewPanel}= llApi.ui;
+    const {ChartsContainer, ChartsTableViewPanel}= llApi.ui;
     const {xCol, yCol, xyRatio, stretch, xLabel, yLabel, xUnit, yUnit, xOptions, yOptions} = params;
     const xyPlotParams = {
         xyRatio,
@@ -319,19 +319,22 @@ function showXYPlot(llApi, targetDiv, params, tbl_id) {
     const tblId = tbl_id || `tblid-${targetDiv}`;
     const chartId = uniqueChartId(tblId);
 
-    const searchRequest = makeFileRequest(
-        params.chartTitle||'', // title
-        params.source,  // source
-        null,  // alt_source
-        {
-            pageSize: 0 // options
-        },
-        tblId                  // table id
-    );
+
 
     dispatchSetupTblTracking(tblId);
     loadPlotDataForTbl(tblId, chartId, xyPlotParams);
-    if (!tbl_id) { dispatchTableFetch(searchRequest); }
+    if (!tbl_id) {
+        const searchRequest = makeFileRequest(
+            params.chartTitle||'', // title
+            params.source,  // source
+            null,  // alt_source
+            {
+                pageSize: 0 // options
+            },
+            tblId // table id
+        );
+        dispatchTableFetch(searchRequest);
+    }
 
 
     renderDOM(targetDiv, ChartsTableViewPanel,
@@ -340,8 +343,7 @@ function showXYPlot(llApi, targetDiv, params, tbl_id) {
             tblId,
             chartId,
             closeable: false,
-            optionsPopup: true,
-            expandedMode: true
+            expandedMode: false
         },
         {width: 'calc(100% - 10px)', height: 'calc(100% - 10px)', overflow: 'auto', padding: '5px'});
 }

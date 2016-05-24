@@ -22,6 +22,7 @@ import ImagePlotCntlr, {IMAGE_PLOT_KEY,
 
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
+import * as ChartsCntlr from '../visualize/ChartsCntlr.js';
 import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
 import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
 import * as TablesCntlr from '../tables/TablesCntlr';
@@ -78,6 +79,7 @@ const reducers = {
     [TableStatsCntlr.TBLSTATS_DATA_KEY]: TableStatsCntlr.reducer,
     [HistogramCntlr.HISTOGRAM_DATA_KEY]: HistogramCntlr.reducer,
     [XYPlotCntlr.XYPLOT_DATA_KEY]: XYPlotCntlr.reducer,
+    [ChartsCntlr.CHART_SPACE_PATH]: ChartsCntlr.reducer,
     [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
     [DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory),
     [IMAGE_MULTI_VIEW_KEY]: MultiViewCntlr.reducer,

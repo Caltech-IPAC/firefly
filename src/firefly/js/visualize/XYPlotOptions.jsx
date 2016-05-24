@@ -15,6 +15,7 @@ import {CheckboxGroupInputField} from '../ui/CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from '../ui/RadioGroupInputField.jsx';
 import {SuggestBoxInputField} from '../ui/SuggestBoxInputField.jsx';
 import {FieldGroupCollapsible} from '../ui/panel/CollapsiblePanel.jsx';
+import {plotParamsShape} from  './XYPlot.jsx';
 
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
@@ -43,12 +44,14 @@ var XYPlotOptions = React.createClass({
     propTypes: {
         groupKey: PropTypes.string.isRequired,
         colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
-        onOptionsSelected: PropTypes.func.isRequired
+        onOptionsSelected: PropTypes.func.isRequired,
+        xyPlotParams: plotParamsShape
     },
 
 
     shouldComponentUpdate(np) {
-        return this.props.groupKey !== np.groupKey || this.props.colValStats !== np.colValStats;
+        return this.props.groupKey !== np.groupKey || this.props.colValStats !== np.colValStats ||
+            this.props.xyPlotParams !== np.xyPlotParams;
     },
 
 
@@ -115,7 +118,7 @@ var XYPlotOptions = React.createClass({
 
 
     render() {
-        const { colValStats, groupKey }= this.props;
+        const { colValStats, groupKey, xyPlotParams }= this.props;
         const colNames = colValStats.map((colVal) => {return colVal.name;});
 
         // the suggestions are indexes in the colValStats array - it makes it easier to render then with labels
@@ -156,6 +159,7 @@ var XYPlotOptions = React.createClass({
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
                     <SuggestBoxInputField
                         initialState= {{
+                            value: get(xyPlotParams, 'x.columnOrExpr')||'',
                             tooltip: 'Column or expression for X axis',
                             label: 'X:',
                             validator: colValidator
@@ -172,6 +176,7 @@ var XYPlotOptions = React.createClass({
                                             fieldKey='xplotoptions'>
                         <ValidationField
                             initialState= {{
+                                value: get(xyPlotParams, 'x.label'),
                                 validator() { return {valid: true,message: ''}; },
                                 tooltip: 'X axis label',
                                 label : 'Label:'
@@ -181,6 +186,7 @@ var XYPlotOptions = React.createClass({
                             labelWidth={50}/>
                         <ValidationField
                             initialState= {{
+                                value: get(xyPlotParams, 'x.unit'),
                                 validator() { return {valid: true,message: ''}; },
                                 tooltip: 'X axis unit',
                                 label : 'Unit:'
@@ -192,7 +198,7 @@ var XYPlotOptions = React.createClass({
                         <br/>
                         <CheckboxGroupInputField
                             initialState= {{
-                                value: '_none_',
+                                value: get(xyPlotParams, 'x.options')||'_none_',
                                 tooltip: 'Check if you would like to plot grid',
                                 label : 'Options:'
                             }}
@@ -210,6 +216,7 @@ var XYPlotOptions = React.createClass({
 
                     <SuggestBoxInputField
                         initialState= {{
+                            value: get(xyPlotParams, 'y.columnOrExpr'),
                             tooltip: 'Column or expression for Y axis',
                             label : 'Y:',
                             validator: colValidator
@@ -226,6 +233,7 @@ var XYPlotOptions = React.createClass({
                                             fieldKey='yplotoptions'>
                         <ValidationField
                             initialState= {{
+                                value: get(xyPlotParams, 'y.label'),
                                 validator() { return {valid: true,message: ''}; },
                                 tooltip: 'Y axis label',
                                 label : 'Label:'
@@ -235,6 +243,7 @@ var XYPlotOptions = React.createClass({
                             labelWidth={50}/>
                         <ValidationField
                             initialState= {{
+                                value: get(xyPlotParams, 'y.unit'),
                                 validator() { return {valid: true,message: ''}; },
                                 tooltip: 'Y axis unit',
                                 label : 'Unit:'
@@ -246,6 +255,7 @@ var XYPlotOptions = React.createClass({
                         <br/>
                         <CheckboxGroupInputField
                             initialState= {{
+                                value: get(xyPlotParams, 'y.options')||'grid',
                                 tooltip: 'Check if you would like to plot grid',
                                 label : 'Options:'
 
@@ -263,6 +273,7 @@ var XYPlotOptions = React.createClass({
                     </FieldGroupCollapsible>
                     <ValidationField style={{width:50}}
                         initialState= {{
+                            value: get(xyPlotParams, 'xyRatio'),
                             validator: Validate.intRange.bind(null, 1, 10, 'X/Y ratio'),
                             tooltip: 'X/Y ratio',
                             label : 'X/Y ratio:'
@@ -274,6 +285,7 @@ var XYPlotOptions = React.createClass({
                     <RadioGroupInputField
                         alignment='horizontal'
                         initialState= {{
+                            value: get(xyPlotParams, 'stretch'),
                             tooltip: 'Should the plot fit into the available space or fill the available width?',
                             label : 'Stretch to:'
                         }}

@@ -7,9 +7,10 @@ import sCompare from 'react-addons-shallow-compare';
 
 import {flux} from '../Firefly.js';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
+import {ChartsContainer} from '../visualize/ChartsContainer.jsx';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
 import {dispatchChangeExpandedMode, ExpandType} from '../visualize/ImagePlotCntlr.js';
-import {dispatchSetLayoutMode, getLayouInfo, LO_MODE, LO_VIEW} from '../core/LayoutCntlr.js'
+import {dispatchSetLayoutMode, getLayouInfo, LO_MODE, LO_VIEW} from '../core/LayoutCntlr.js';
 
 // import {deepDiff} from '../util/WebUtil.js';
 
@@ -20,9 +21,9 @@ export class ApiExpandedView extends Component {
         const closeFunc = () => {
             dispatchChangeExpandedMode(ExpandType.COLLAPSE);
             dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);
-        }
+        };
         const images  = (<ApiExpandedDisplay closeFunc={closeFunc}/>);
-        const xyPlots = (<TablesContainer />);
+        const xyPlots = (<ChartsContainer expandedMode={true} closeable={true}/>);
         const tables  = (<TablesContainer  mode='expanded' />);
         this.state = {images, xyPlots, tables};
     }

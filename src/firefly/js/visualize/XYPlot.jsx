@@ -8,9 +8,10 @@ import ReactHighcharts from 'react-highcharts/bundle/highcharts';
 
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {parseDecimateKey} from '../tables/Decimate.js';
+
 //import {getFormatString} from '../util/MathUtil.js';
 
-const axisParamsShape = PropTypes.shape({
+export const axisParamsShape = PropTypes.shape({
     columnOrExpr : PropTypes.string,
     label : PropTypes.string,
     unit : PropTypes.string,
@@ -20,14 +21,14 @@ const axisParamsShape = PropTypes.shape({
     max : PropTypes.number
 });
 
-const selectionShape = PropTypes.shape({
+export const selectionShape = PropTypes.shape({
     xMin : PropTypes.number,
     xMax : PropTypes.number,
     yMin : PropTypes.number,
     yMax : PropTypes.number
 });
 
-const plotParamsShape = PropTypes.shape({
+export const plotParamsShape = PropTypes.shape({
     xyRatio : PropTypes.string,
     stretch : PropTypes.oneOf(['fit','fill']),
     selection : selectionShape,
