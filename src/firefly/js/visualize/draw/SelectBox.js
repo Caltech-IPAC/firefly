@@ -1,12 +1,16 @@
 
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 
-import Enum from 'enum';
 import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil';
-import Point, {makeScreenPt, makeViewPortPt} from '../Point.js';
-import {CCUtil} from '../CsysConverter.js';
+import Point, {makeScreenPt, makeViewPortPt, makeImagePt} from '../Point.js';
 import VisUtil from '../VisUtil.js';
 import {Style} from './DrawingDef.js';
+import CsysConverter from '../CsysConverter.js';
+import {RegionValue, RegionDimension, RegionValueUnit, RegionType, regionPropsList} from '../region/Region.js';
+import {startRegionDes, setRegionPropertyDes, endRegionDes} from '../region/RegionDescription.js';
 
 
 const SELECT_BOX= 'SelectBox';
@@ -80,9 +84,10 @@ var draw=  {
     },
 
     toRegion(drawObj,plot, def) {
-        var drawParams= makeDrawParams(this,def);
+        var drawParams= makeDrawParams(drawObj, def);
         var {pt1,pt2,renderOptions}= drawObj;
-        toRegion(pt1,pt2, plot,drawParams,renderOptions);
+
+        return toRegion(pt1, pt2, plot, drawParams, renderOptions);
     }
 };
 
@@ -185,33 +190,51 @@ function drawBox(ctx, pt0, pt2, drawParams,renderOptions) {
 }
 
 
-function toRegion(pt1,pt2,plot, drawParams) {
-    var wp= CCUtil.getWorldPtRepresentation(pt1);
-    var {color} = drawParams;
-    var dim;
+function toRegion(pt1,pt2,plot, drawParams, renderOptions) {
+    var {innerBoxColor, color, style} = drawParams;
+    var dim, innerDim;
+    var lineWidth= (style===Style.STANDARD) ? 2 : 1;
+    var innerLineWidth = 2;
+    var screenW, screenH;
+    var centerPt;
+    var des;
+    var cc = CsysConverter.make(plot);
+    var retList  = [];
 
-    var width=  pt2.x-pt1.x;
-    var height= pt2.y-pt1.y;
+    // convert to image point, calculate dimension on image pixel
+    // make selectbox display invariant on various screen pixel systems
+    var wpt1 = cc.getImageCoords(pt1);
+    var wpt2 = cc.getImageCoords(pt2);
 
-    if (pt1.type===Point.IM_WS_PT || pt1.type===Point.IM_PT) {
-        dim= window.ffgwt.util.dd.RegionDimension.makeRegionDimension(
-            window.ffgwt.util.dd.RegionValue.makeRegionValue(width, 'IMAGE_PIXEL'),
-            window.ffgwt.util.dd.RegionValue.makeRegionValue(height, 'IMAGE_PIXEL'));
-    }
-    else if (pt1.type===Point.SPT) {
-        dim= window.ffgwt.util.dd.RegionDimension.makeRegionDimension(
-                window.ffgwt.util.dd.RegionValue.makeRegionValue(width, 'SCREEN_PIXEL'),
-                window.ffgwt.util.dd.RegionValue.makeRegionValue(height, 'SCREEN_PIXEL'));
-    }
-    else  {
-        dim= window.ffgwt.util.dd.RegionDimension.makeRegionDimension(
-                window.ffgwt.util.dd.RegionValue.makeRegionValue(width, 'DEGREE'),
-                window.ffgwt.util.dd.RegionValue.makeRegionValue(height, 'DEGREE'));
-    }
-    var zero= window.ffgwt.util.dd.RegionValue.makeRegionValue(0, 'SCREEN_PIXEL');
-    var r= window.ffgwt.util.dd.RegionBox.makeRegionBox(wp.toString(),dim, zero);
-    r.getOptions().setColor(color);
-    return [r];
+    screenW = Math.abs(wpt1.x - wpt2.x) * cc.zoomFactor;
+    screenH = Math.abs(wpt1.y - wpt2.y) * cc.zoomFactor;
+
+    centerPt =  makeImagePt((wpt1.x+wpt2.x)/2, (wpt1.y+wpt2.y)/2);
+    dim = RegionDimension(
+              RegionValue(screenW, RegionValueUnit.SCREEN_PIXEL),
+              RegionValue(screenH, RegionValueUnit.SCREEN_PIXEL));
+    innerDim =  RegionDimension(
+              RegionValue((screenW - (2 * innerLineWidth)), RegionValueUnit.SCREEN_PIXEL),
+              RegionValue((screenH - (2 * innerLineWidth)), RegionValueUnit.SCREEN_PIXEL));
+
+    // box in color of 'innerBoxColor'
+    des = startRegionDes(RegionType.box, cc, [centerPt], [innerDim], null, true);
+    if (des.length === 0) return [];
+    des += setRegionPropertyDes(regionPropsList.COLOR, innerBoxColor) +
+           setRegionPropertyDes(regionPropsList.LNWIDTH, innerLineWidth);
+    des = endRegionDes(des);
+    retList.push(des);
+
+    // box in color of 'color'
+
+    des = startRegionDes(RegionType.box, cc, [centerPt], [dim], null, true);
+    if (des.length === 0) return [];
+    des += setRegionPropertyDes(regionPropsList.COLOR, color) +
+           setRegionPropertyDes(regionPropsList.LNWIDTH, lineWidth);
+    des = endRegionDes(des);
+    retList.push(des);
+
+    return retList;
 }
 
 

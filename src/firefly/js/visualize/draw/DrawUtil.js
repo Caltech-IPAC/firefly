@@ -175,7 +175,11 @@ function stroke(ctx) {
 }
 
 function addStyle(ctx,renderOptions) {
-    var {shadow,rotAngle,translation}= renderOptions;
+    var {shadow,rotAngle,translation, lineDash}= renderOptions;
+
+    if (lineDash) {
+        ctx.setLineDash(lineDash);
+    }
     if (shadow) {
         var {blur,color,offX,offY} = shadow;
         if (blur) ctx.shadowBlur= blur;
@@ -359,7 +363,7 @@ function drawDot(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
 
 
 function drawBoxcircle(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
-    drawSquare(ctx, x, y, color, size+3, renderOptions, onlyAddToPath);
+    drawSquare(ctx, x, y, color, size+2, renderOptions, onlyAddToPath);
     drawCircle(ctx, x, y, color, 1, size, renderOptions, onlyAddToPath);
 }
 
@@ -368,9 +372,9 @@ function drawArrow(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
     ctx.moveTo(x,y);
     ctx.lineTo(x-size, y-size);
     ctx.moveTo(x, y);
-    ctx.lineTo(x, y-size*0.8);
+    ctx.lineTo(x, y-size*1);
     ctx.moveTo(x, y);
-    ctx.lineTo(x-size*0.8,y);
+    ctx.lineTo(x-size*1, y);
     if (!onlyAddToPath) stroke(ctx);
 }
 
@@ -450,7 +454,7 @@ function drawSymbol(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
 function drawCircle(ctx, x, y, color, lineWidth, size, renderOptions= null, onlyAddToPath= false) {
     if (!onlyAddToPath) beginPath(ctx,color,lineWidth, renderOptions);
     var radius= size+2;
-    ctx.moveTo(x+radius-1,y);
+
     ctx.arc(x, y, radius, 0, 2 * Math.PI);
     if (!onlyAddToPath) stroke(ctx);
 }

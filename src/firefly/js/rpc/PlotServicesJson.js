@@ -210,7 +210,7 @@ export function saveDS9RegionFile(regionData) {
         [ServerParams.REGION_DATA]: regionData,
         [ServerParams.JSON_DEEP]: true
     };
-    return doJsonRequest(ServerParams.SAVE_DS9_REGION, params);
+    return doJsonRequest(ServerParams.SAVE_DS9_REGION, params, true);
 }
 
 

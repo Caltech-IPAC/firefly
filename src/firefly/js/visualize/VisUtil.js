@@ -683,6 +683,13 @@ const makePt= function(type,  x, y) {
     return retval;
 };
 
+/**
+ * convert angle value of one unit to that of another unit
+ * @param {string} from 'degree' or 'deg', 'arcmin', 'arcsec', 'radian' case insensitive
+ * @param {string} to 'degree' or 'deg', 'arcmin', 'arcsec', 'radian' case insensitive
+ * @param {*} angle  number or string
+ * @returns {number}
+ */
 export function convertAngle(from, to, angle) {
     const angleUnit = [['deg', 'degree'], 'arcmin', 'arcsec', 'radian'];
     const rIdx = angleUnit.indexOf('radian');

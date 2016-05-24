@@ -98,6 +98,14 @@ class DrawOp {
      * @param {{draw:function, toRegion:function, getScreenDist:function, getCenterPt:function}} drawFunctionObj
      */
     static addDrawType(key,drawFunctionObj) { drawTypes[key]= drawFunctionObj; }
+
+    static makeHighlight(drawObj, plot, def = {}) {
+        return op(drawObj, 'makeHighlight', false)(drawObj, plot, def);
+    }
+
+    static isScreenPointInside(screenPt, drawObj, plot, def = {}) {
+        return op(drawObj, 'isScreenPointInside', false)(screenPt, drawObj, plot, def);
+    }
 }
 
 

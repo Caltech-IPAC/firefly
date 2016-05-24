@@ -2,15 +2,19 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-
-
-
 import Enum from 'enum';
 import DrawObj from './DrawObj.js';
 import DrawUtil from './DrawUtil.js';
-import Point from '../Point.js';
-import {CCUtil} from '../CsysConverter.js';
-
+import {TextLocation, DEFAULT_FONT_SIZE} from './DrawingDef.js';
+import Point, {makeOffsetPt, makeScreenPt} from '../Point.js';
+import CsysConverter, {CCUtil} from '../CsysConverter.js';
+import {RegionType, regionPropsList} from '../region/Region.js';
+import {startRegionDes, setRegionPropertyDes} from '../region/RegionDescription.js';
+import ShapeDataObj, {fontHeight, drawText} from './ShapeDataObj.js';
+import {isWithinPolygon, makeShapeHighlightRenderOptions, DELTA} from './ShapeHighlight.js';
+import { handleTextFromRegion } from './ShapeToRegion.js';
+import VisUtil from '../VisUtil.js';
+import {isNil, isEmpty} from 'lodash';
 
 
 
@@ -23,11 +27,8 @@ const DEFAULT_SIZE= 4;
 const DOT_DEFAULT_SIZE = 1;
 const DEFAULT_SYMBOL = DrawSymbol.X;
 
-
-
-
 /**
- *
+ * drawObj for point, optional: textLoc
  * @param {number} [size]
  * @param {{x:name,y:name,type:string}} pt
  * @param {Enum} [symbol]
@@ -81,12 +82,21 @@ var draw=  {
 
     draw(drawObj,ctx,drawTextAry, plot,def,vpPtM,onlyAddToPath) {
         var drawParams= makeDrawParams(drawObj,def);
-        drawPt(ctx,drawTextAry,drawObj.pt, plot,drawParams,drawObj.renderOptions,vpPtM,onlyAddToPath);
+        drawPt(ctx,drawTextAry,drawObj.pt, plot, drawObj, drawParams,  drawObj.renderOptions,vpPtM,onlyAddToPath);
     },
 
     toRegion(drawObj,plot, def) {
         var drawParams= makeDrawParams(drawObj,def);
-        toRegion(drawObj.pt, plot,drawParams,drawObj.renderOptions);
+
+        return toRegion(drawObj.pt, plot, drawObj, drawParams,drawObj.renderOptions);
+    },
+
+    makeHighlight(drawObj, plot, def = {}) {
+        return makeHighlightPointDataObj(drawObj,  CsysConverter.make(plot), def);
+    },
+
+    isScreenPointInside(screenPt, drawObj, plot, def = {}) {
+        return isInPointDataobj(drawObj,  CsysConverter.make(plot), screenPt, def);
     }
 };
 
@@ -103,31 +113,41 @@ function makeDrawParams(pointDataObj,def) {
     var symbol= pointDataObj.symbol || def.symbol || DEFAULT_SYMBOL;
     var size= (symbol===DrawSymbol.DOT) ? pointDataObj.size || def.size || DOT_DEFAULT_SIZE :
                                           pointDataObj.size || def.size || DEFAULT_SIZE;
+    var fontName= pointDataObj.fontName || def.fontName || 'helvetica';
+    var fontSize= pointDataObj.fontSize || def.fontSize || DEFAULT_FONT_SIZE;
+    var fontWeight= pointDataObj.fontWeight || def.fontWeight || 'normal';
+    var fontStyle= pointDataObj.fontStyle || def.fontStyle || 'normal';
+    var textLoc= pointDataObj.textLoc || def.textLoc || TextLocation.DEFAULT;
 
     return {
         color: DrawUtil.getColor(pointDataObj.color,def.color),
-        text : pointDataObj.text,
+        textLoc,
+        fontName,
+        fontSize,
+        fontWeight,
+        fontStyle,
         size,
         symbol
     };
-
 }
 
 /**
  *
  * @param ctx
+ * @param drawTextAry
  * @param pt
  * @param plot
+ * @param drawObj
  * @param drawParams
  * @param renderOptions
  * @param vpPtM
  * @param onlyAddToPath
  */
-function drawPt(ctx, drawTextAry, pt, plot,drawParams, renderOptions, vpPtM, onlyAddToPath) {
+function drawPt(ctx, drawTextAry, pt, plot, drawObj, drawParams, renderOptions, vpPtM, onlyAddToPath) {
     if (!pt) return;
 
     if (!plot || pt.type===Point.SPT) {
-        drawXY(ctx,drawTextAry, pt.x,pt.y,drawParams, renderOptions, onlyAddToPath);
+        drawXY(ctx,drawTextAry, pt, plot, drawObj, drawParams, renderOptions, onlyAddToPath);
     }
     else {
         var vpPt;
@@ -139,17 +159,120 @@ function drawPt(ctx, drawTextAry, pt, plot,drawParams, renderOptions, vpPtM, onl
             vpPt=plot.getViewPortCoords(pt);
         }
         if (plot.pointInViewPort(vpPt)) {
-            drawXY(ctx,drawTextAry, vpPt.x,vpPt.y,drawParams, renderOptions, onlyAddToPath);
+            drawXY(ctx,drawTextAry, vpPt, plot, drawObj, drawParams, renderOptions, onlyAddToPath);
         }
     }
 }
 
 
-function drawXY(ctx, drawTextAry, x, y, drawParams,renderOptions, onlyAddToPath) {
-    var {text}= drawParams;
-    drawSymbolOnPlot(ctx, x,y, drawParams,renderOptions, onlyAddToPath);
-    if (text) DrawUtil.drawText(drawTextAry, text, x, y, 'black', renderOptions);
+
+/**
+ * get the covered area of the point object in screen pixel coordinate
+ * size means:
+ * circle: radius, square, square_x, diamond, cross, x, boxcircle: half of width (height)
+ * dot: width, arrow: height, width
+ * @param drawObj
+ * @param cc
+ * @returns {*} pixel and size in screen pixel
+ */
+function getPointDataobjArea(drawObj, cc) {
+    var {size, symbol, pt} = drawObj;
+    var width, height;
+    var spt = cc.getScreenCoords(pt);
+
+    if (!spt) return null;
+
+    switch(symbol) {
+        case DrawSymbol.BOXCIRCLE:
+        case DrawSymbol.CIRCLE:
+        case DrawSymbol.EMP_SQUARE_X:
+        case DrawSymbol.EMP_CROSS :
+            width = (size + 2) * 2;
+            break;
+        case DrawSymbol.SQUARE :
+        case DrawSymbol.SQUARE_X :
+        case DrawSymbol.DIAMOND :
+        case DrawSymbol.CROSS :
+        case DrawSymbol.X :
+            width = size * 2;
+            break;
+        case DrawSymbol.DOT :
+            width = size ? size : 2;
+            break;
+        case DrawSymbol.ARROW :  // pt is set for right lower corner
+            width = Math.floor((size+1)/2) * 2;
+            spt.x -= width/2;
+            spt.y -= width/2;
+            break;
+        default:
+            width = size * 2;
+    }
+
+    height = width;
+    return {centerPt: spt, width, height};
 }
+/**
+ * calculate the text location based on text location, offset, font size, point size and point symbol.
+ * @param drawObj
+ * @param plot
+ * @param textLoc
+ * @param fontSize
+ * @returns {*}
+ */
+function makeTextLocationPoint(drawObj, plot, textLoc, fontSize) {
+    var area = getPointDataobjArea(drawObj, plot);   // in screen pixel
+    if (!area) return null;
+
+    var {centerPt, width, height} = area;
+    var fHeight = fontHeight(fontSize) + 4;
+    var opt;
+
+    switch(textLoc) {
+        case TextLocation.REGION_NE:
+            opt = makeOffsetPt(-width/2, -height/2 - fHeight);
+            break;
+        case TextLocation.REGION_NW:
+            opt = makeOffsetPt(width/2, -height/2 - fHeight);
+            break;
+        case TextLocation.REGION_SE:
+            opt = makeOffsetPt(-width/2, height/2 + fHeight);
+            break;
+        case TextLocation.REGION_SW:
+            opt = makeOffsetPt(width/2, height/2 + fHeight);
+            break;
+        default:
+            opt = makeOffsetPt(0, 0);
+    }
+
+    return makeScreenPt(centerPt.x + opt.x, centerPt.y + opt.y);
+}
+
+
+function drawXY(ctx, drawTextAry, pt, plot, drawObj, drawParams,renderOptions, onlyAddToPath) {
+    var {color, textLoc, fontName, fontSize, fontWeight, fontStyle}= drawParams;
+    var {text, textOffset} = drawObj;
+    drawSymbolOnPlot(ctx, pt.x, pt.y, drawParams,renderOptions, onlyAddToPath);
+
+    if (!text)  return;
+
+    if (isNil(color)) {
+        color = 'black';
+    }
+
+    var vpt;
+
+    if (textLoc) {
+        vpt = plot.getViewPortCoords(makeTextLocationPoint(drawObj, plot, textLoc, fontSize));
+    } else {
+        vpt = plot.getViewPortCoords(pt);
+    }
+    if (textOffset && (textOffset.x !== 0.0 || textOffset.y !== 0.0)) {
+        drawText(drawObj, drawTextAry, plot, vpt, drawParams);
+    } else {
+        DrawUtil.drawText(drawTextAry, text, vpt.x, vpt.y, color, renderOptions,
+                          fontName, fontSize, fontWeight, fontStyle);
+    }
+ }
 
 function drawSymbolOnPlot(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
     var {color,size}= drawParams;
@@ -192,48 +315,104 @@ function drawSymbolOnPlot(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
     }
 }
 
-
-
-
-function toRegion(pt, plot,drawParams,renderOptions) {
-    var r;
-    var {size}= drawParams;
-    var wp= CCUtil.getWorldPtRepresentation(pt);
+function toRegion(pt, plot, drawObj, drawParams, renderOptions) {
+    var {size, symbol, color}= drawParams;
     var pointType;
-    switch (drawParams.symbol) {
+    var des;
+    var cc = CsysConverter.make(plot);
+    var wpt = pt; // cc.getWorldCoords(pt); keep the original coordinate system in description
+    var retList = [];
+
+    switch (symbol) {
         case DrawSymbol.X :
-            pointType='X';
+            pointType = 'x';
             break;
         case DrawSymbol.EMP_CROSS :
         case DrawSymbol.CROSS :
-            pointType='Cross';
+            pointType = 'cross';
             break;
         case DrawSymbol.SQUARE :
-            pointType='Box';
+        case DrawSymbol.SQUARE_X :
+        case DrawSymbol.EMP_SQUARE_X:
+            pointType = 'box';
             break;
         case DrawSymbol.DIAMOND :
-            pointType='Diamond';
+            pointType = 'diamond';
             break;
         case DrawSymbol.DOT :
-            size= 2;
-            pointType='Box';
+            size = 2;
+            pointType = 'box';
             break;
         case DrawSymbol.CIRCLE :
-            pointType='Circle';
+            pointType = 'circle';
             break;
         case DrawSymbol.BOXCIRCLE :
-            pointType='Boxcircle';
+            pointType = 'boxcircle';
             break;
         case DrawSymbol.ARROW :
-            pointType = 'Arrow';
+            pointType = 'arrow';
             break;
-        default :
-            r= null;
+        default:
+            pointType = 'box';
     }
-    r= window.ffgwt.util.dd.RegionPoint.makeRegionPoint(wp.toString(),pointType,size);
-    r.getOptions().setColor(drawParams.color);
-    return [r];
+
+
+    des = startRegionDes(RegionType.point, cc, [wpt]);
+    if (isEmpty(des)) return retList;
+
+    var s = (size && pointType &&
+              (symbol !== DrawSymbol.DOT && pointType !== 'arrow')) ? size*2 : size;
+
+    des += setRegionPropertyDes(regionPropsList.COLOR, color) +
+           setRegionPropertyDes(regionPropsList.PTTYPE, {pointType, pointSize: s});
+
+    handleTextFromRegion(retList, des, drawObj, drawParams, RegionType.point, cc);
+
+
+    return retList;
+
 }
 
+/**
+ * make drawobj to highlight PointDataObj
+ * @param drawObj
+ * @param cc
+ * @returns {*} inside or not and the distance to the point center
+ */
+export function makeHighlightPointDataObj(drawObj, cc) {
+    var area = getPointDataobjArea(drawObj, cc);
+    var w = (DELTA + 1) * 2 + area.width;
+    var h = (DELTA + 1) * 2 + area.height;
 
+    var rectObj = ShapeDataObj.makeRectangleByCenter(area.centerPt, w, h, ShapeDataObj.UnitType.PIXEL,
+                                                                    0.0, ShapeDataObj.UnitType.ARCSEC, false);
+
+    makeShapeHighlightRenderOptions( rectObj );
+    return rectObj;
+}
+
+/**
+ * check if a specified point is within PointDataobj
+ * @param drawObj
+ * @param cc
+ * @param pt
+ * @returns {{inside: *, dist: *}}
+ */
+export function isInPointDataobj(drawObj, cc, pt) {
+    var sPt = cc.getScreenCoords(pt);
+    var area = getPointDataobjArea(drawObj, cc);
+    var {centerPt, width: w, height: h} = area;
+    var dist;
+
+    var inside = isWithinPolygon(sPt,
+                                [ makeScreenPt(centerPt.x - w/2, centerPt.y - h/2),
+                                  makeScreenPt(centerPt.x + w/2, centerPt.y - h/2),
+                                  makeScreenPt(centerPt.x + w/2, centerPt.y + h/2),
+                                  makeScreenPt(centerPt.x - w/2, centerPt.y + h/2)], cc);
+    if (inside) {
+        dist = VisUtil.computeScreenDistance(sPt.x, sPt.y, centerPt.x, centerPt.y);
+    }
+
+    return {inside, dist};
+}
 

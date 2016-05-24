@@ -10,12 +10,9 @@ import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {visRoot } from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
-import {getDrawLayerByType, isDrawLayerAttached } from '../PlotViewUtil.js';
 import {dispatchCreateDrawLayer,
-        dispatchAttachLayerToPlot,
-        dispatchDetachLayerFromPlot,
-        dispathDestroyDrawLayer,
-        dispatchModifyCustomField} from '../DrawLayerCntlr.js';
+        dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
+import {getDrawLayerById, isDrawLayerAttached } from '../PlotViewUtil.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
@@ -24,7 +21,7 @@ import {getDS9Region} from '../../rpc/PlotServicesJson.js';
 import {RegionFactory} from './RegionFactory.js';
 import {dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import RegionPlot from '../../drawingLayers/RegionPlot.js';
-import {get} from 'lodash';
+import {get, has, isEmpty} from 'lodash';
 
 const popupId = 'RegionFilePopup';
 const rgUploadGroupKey = 'RegionUploadGroup';
@@ -40,13 +37,23 @@ export function showRegionFileUploadPanel(popTitle) {
     dispatchShowDialog(popupId);
 }
 
+function* createDrawLayerId() {
+    var idCnt = 0;
+
+    while (true) {
+        yield `${regionDrawLayerId}-${idCnt++}`;
+    }
+}
+
+var drawLayerIdGen = createDrawLayerId();
 
 /**
  * get region json from server, convert json into Region objects and make RegionPlot DrawLayer
  * @param request
  * @param rgComp
+ * @param drawLayerId
  */
-function uploadAndProcessRegion(request, rgComp) {
+function uploadAndProcessRegion(request, rgComp, drawLayerId) {
     const [FieldKeyErr, RegionErr, DrawObjErr, JSONErr] = [
             'no region file uploaded yet',
             'invalid description in region file',
@@ -55,7 +62,7 @@ function uploadAndProcessRegion(request, rgComp) {
 
     var regionFile = get(request, rgUploadFieldKey);
     var setStatus = (ret, message)  => {
-            var s = {upload: ret, message};
+            var s = {upload: !!ret, message};
 
             if (rgComp) {
                 rgComp.setState(s);
@@ -63,15 +70,16 @@ function uploadAndProcessRegion(request, rgComp) {
 
             if (ret) {
                 var plotId = get(visRoot(), 'activePlotId');
-                const dl = getDrawLayerByType(getDlAry(), regionDrawLayerId);
 
+                if (isEmpty(drawLayerId)) {
+                    drawLayerId = drawLayerIdGen.next().value;
+                }
+                var dl = getDrawLayerById(getDlAry(), drawLayerId);
                 if (!dl) {
-                    dispatchCreateDrawLayer(regionDrawLayerId, {title: message});
-                } else {
-                    dl.title = message;
+                    dispatchCreateDrawLayer(regionDrawLayerId, {title: message, regions: ret, drawLayerId});
                 }
                 if (!isDrawLayerAttached(dl, plotId)) {
-                    dispatchAttachLayerToPlot(regionDrawLayerId, plotId);
+                    dispatchAttachLayerToPlot(drawLayerId, plotId);
                 }
                 dispatchHideDialog(popupId);
             }
@@ -83,22 +91,21 @@ function uploadAndProcessRegion(request, rgComp) {
     } else {
         getDS9Region(regionFile)
             .then((result) => {
-                if (!result.RegionData) {
+                if (!has(result, 'RegionData') || result.RegionData.length === 0) {
                     // temporarily showing some hard coded regions which are defined but currently not identified by server
-/*
+                    /*
                     result.RegionData = [
-                        'J2000;ellipse 202.55556, 47.188286 20p 40p 3i # color=magenta text={ellipse 1}',
+                        'J2000;ellipse 202.55556, 47.188286 20p 40p 0i # color=#48f text={ellipse 1} width=10',
                         'physical;ellipse 100 400 20p 40p 30p 60p 40p 80p 2i # color=green text={ellipseannulus 2}',
                         'image;box 100 100 20p 40p 30p 50p 70p 100p 30 # color=red text={slanted box annulus 3}'];
-*/
+                    */
+
                     return setStatus(false, RegionErr);
-                    //return;
                 }
                 var rgAry = RegionFactory.parseRegionJson(result.RegionData);
 
                 if (rgAry) {
-                    setStatus(true, get(result, 'Title', 'Region Plot'));
-                    dispatchModifyCustomField(regionDrawLayerId, {regions: rgAry}, false);
+                    setStatus(rgAry, get(result, 'Title', 'Region Plot'));
                 } else {
                     setStatus(false, DrawObjErr);
                 }
@@ -122,7 +129,7 @@ class RegionUpload extends Component {
     }
 
     onUpload(request) {
-        uploadAndProcessRegion(request, this);
+        uploadAndProcessRegion(request, this, drawLayerIdGen.next().value);
     }
 
     render() {

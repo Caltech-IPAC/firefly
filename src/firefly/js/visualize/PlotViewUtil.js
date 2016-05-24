@@ -182,6 +182,11 @@ export function getAllDrawLayersForPlot(ref,plotId,mustBeVisible=false) {
 }
 
 
+export function getConnectedPlotsIds(ref, drawLayerId) {
+    var dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
+    const dl= getDrawLayerById(dlAry,drawLayerId);
+    return dl ? dl.plotIdAry : [];
+}
 
 
 
