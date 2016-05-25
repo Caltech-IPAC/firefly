@@ -103,7 +103,7 @@ export function makeIrsaCatalogRequest(title, project, catalog, use='catalog_ove
     var req = {startIdx: 0, pageSize: 100};
     title = title || catalog;
     const id = 'GatorQuery';
-    const UserTargetWorldPt = params.position;  // may need to convert to worldpt.
+    const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
     const catalogProject = project;
 
     var META_INFO = {title, tbl_id};
@@ -432,6 +432,7 @@ export function getTableSourceUrl(columns, request, filename) {
     }
     Request.startIdx = 0;
     Request.pageSize = Number.MAX_SAFE_INTEGER;
+    Reflect.deleteProperty(Request, 'tbl_id');
     const file_name = filename || Request.file_name;
     return encodeServerUrl(SAVE_TABLE_URL, {file_name, Request: request});
 }

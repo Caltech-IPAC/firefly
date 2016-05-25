@@ -6,7 +6,6 @@ import {flux} from '../Firefly.js';
 import {omit} from 'lodash';
 
 import {updateSet, updateMerge} from '../util/WebUtil.js';
-import {TableRequest} from '../tables/TableRequest.js';
 import * as TableUtil from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 
@@ -139,7 +138,7 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams, chart
     const sreq = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']),
         {'startIdx' : 0, 'pageSize' : 1000000});
 
-    const req = TableRequest.newInstance({id:'HistogramProcessor'});
+    const req = TableUtil.makeTblRequest('HistogramProcessor');
     req.searchRequest = JSON.stringify(sreq);
 
     // histogram parameters

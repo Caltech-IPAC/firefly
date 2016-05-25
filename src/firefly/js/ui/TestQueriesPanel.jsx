@@ -28,9 +28,7 @@ import {showInfoPopup} from './PopupUtil.jsx';
 import Validate from '../util/Validate.js';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 
-import {TableRequest} from '../tables/TableRequest.js';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
-import {dispatchSetupTblTracking} from '../visualize/TableStatsCntlr.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
 import {FieldGroupTabs, Tab} from './panel/TabPanel.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
@@ -38,7 +36,7 @@ import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {FileUpload} from '../ui/FileUpload.jsx';
 import {parseWorldPt} from '../visualize/Point.js';
-import * as TblUtil from '../tables/TableUtil.js';
+import {makeTblRequest, makeIrsaCatalogRequest} from '../tables/TableUtil.js';
 import {dispatchAddImages,getAViewFromMultiView,getMultiViewRoot} from '../visualize/MultiViewCntlr.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage} from '../visualize/ImagePlotCntlr.js';
@@ -312,17 +310,15 @@ function onSearchSubmit(request) {
 }
 
 function doCatalog(request) {
-    var tReq = TableRequest.newInstance({
-        [ServerParams.USER_TARGET_WORLD_PT] : request[ServerParams.USER_TARGET_WORLD_PT],
-        id:'GatorQuery',
-        title : request.catalog,
-        SearchMethod: 'Cone',
-        catalog : request.catalog,
-        RequestedDataSet :request.catalog,
-        radius : request.radius,
-        use : 'catalog_overlay',
-        catalogProject : options.find( (op) => request.catalog===op.value).proj
-    });
+    var tReq = makeIrsaCatalogRequest(
+                request.catalog,
+                options.find( (op) => request.catalog===op.value).proj,
+                request.catalog, null,
+                {
+                    [ServerParams.USER_TARGET_WORLD_PT] : request[ServerParams.USER_TARGET_WORLD_PT],
+                    SearchMethod: 'Cone',
+                    radius : request.radius,
+                });
     dispatchTableSearch(tReq);
 }
 
@@ -423,34 +419,30 @@ function doWise(request) {
     var tgtName= '';
     const wp= parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
     if (wp.getObjName()) tgtName= ', ' +wp.getObjName();
-    const reqParams= Object.assign({
-        [ServerParams.USER_TARGET_WORLD_PT] : request[ServerParams.USER_TARGET_WORLD_PT],
-        mission: 'wise',
-        id: 'ibe_processor',
-        // title: 'WISE-' + request[ServerParams.USER_TARGET_WORLD_PT],
-        title: `${schemaParams[request.wiseDataSet].title}${tgtName}`,
-        intersect: request.intersect,
-        mcenter:  (request.intersect==='CENTER' || request.intersect==='COVERS') ? request.mcenter : 'all',
-        size: request.size,
-        subsize: request.subsize,
-        band : request.wisebands
-    }, schemaParams[request.wiseDataSet]);
-    
-    dispatchTableSearch(TableRequest.newInstance(reqParams));
+    const params = Object.assign(schemaParams[request.wiseDataSet],
+            {
+                [ServerParams.USER_TARGET_WORLD_PT] : request[ServerParams.USER_TARGET_WORLD_PT],
+                mission: 'wise',
+                intersect: request.intersect,
+                mcenter:  (request.intersect==='CENTER' || request.intersect==='COVERS') ? request.mcenter : 'all',
+                size: request.size,
+                subsize: request.subsize,
+                band : request.wisebands
+            });
+    const reqParams= makeTblRequest('ibe_processor', `${schemaParams[request.wiseDataSet].title}${tgtName}`, params);
+    dispatchTableSearch(reqParams);
 }
 
 function do2Mass(request) {
     console.log('wmass',request);
-    const reqParams= {
-        [ServerParams.USER_TARGET_WORLD_PT] : request[ServerParams.USER_TARGET_WORLD_PT],
-        mission: 'twomass',
-        id: 'ibe_processor',
-        title: '2MASS-' + request[ServerParams.USER_TARGET_WORLD_PT],
-        ds : request.ds,
-        band : request.band
-    };
-
-    dispatchTableSearch(TableRequest.newInstance(reqParams));
+    const reqParams= makeTblRequest('ibe_processor', '2MASS-' + request[ServerParams.USER_TARGET_WORLD_PT],
+                        {
+                            [ServerParams.USER_TARGET_WORLD_PT] : request[ServerParams.USER_TARGET_WORLD_PT],
+                            mission: 'twomass',
+                            ds : request.ds,
+                            band : request.band
+                        });
+    dispatchTableSearch(reqParams);
 }
 
 
