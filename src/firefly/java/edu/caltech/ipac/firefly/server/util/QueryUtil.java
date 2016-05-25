@@ -96,6 +96,38 @@ public class QueryUtil {
         return retval;
     }
 
+    public static TableServerRequest convertToServerRequest(String str) {
+        if (StringUtils.isEmpty(str)) return null;
+        TableServerRequest treq = new TableServerRequest();
+        Map<String, Object> map = convertToMap(str);
+        for (String k : map.keySet()) {
+            if (k.equals(TableServerRequest.META_INFO)) {
+                Map<String, Object> meta = (Map<String, Object>) map.get(k);
+                for (String m : meta.keySet()) {
+                    treq.setMeta(m, String.valueOf(meta.get(m)));
+                }
+            } else {
+                treq.setTrueParam(k, String.valueOf(map.get(k)));
+            }
+        }
+        return treq;
+    }
+
+    public static Map<String, Object> convertToMap(String str) {
+        HashMap<String, Object> map = new HashMap<>();
+        String[] parts = str.split("&");
+        for (String part : parts) {
+            String[] kv = part.split("=");
+            String val = kv.length > 1 ? decode(kv[1].trim()) : "";
+            if (val.length() > 0 && val.contains("&")) {
+                map.put(kv[0], convertToMap(val));
+            } else {
+                map.put(kv[0], val);
+            }
+        }
+        return map;
+    }
+
     public static String encodeUrl(ServerRequest req) {
         StringBuffer sb = new StringBuffer();
         if (req == null || req.getParams() == null || req.getParams().size() == 0) return "";
@@ -835,17 +867,18 @@ public class QueryUtil {
         HashMap<String, String> map = new HashMap<String, String>();
         for (String entry : str.split("&")) {
             String[] kv = entry.split("=", 2);
-            String value = kv.length > 1 ? kv[1].trim() : "";
-            if (value.contains("%")) {
-                try {
-                    value = URLDecoder.decode(value, "utf-8");
-                } catch (UnsupportedEncodingException e) {
-                    // ignores encoding errors.
-                }
-            }
+            String value = kv.length > 1 ? decode(kv[1].trim()) : "";
             map.put(kv[0].trim(), value);
         }
         return map;
+    }
+
+    public static String decode(String str) {
+        try {
+            return URLDecoder.decode(str, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            return str;
+        }
     }
 
     public static void main(String[] args) {

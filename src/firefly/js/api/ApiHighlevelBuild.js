@@ -97,6 +97,7 @@ function doShowTable(llApi, targetDiv, request, options={}) {
 }
 
 function buildTablePart(llApi) {
+    const {dispatchTableFetch}= llApi.action;
 
     /**
      * @typedef {object} TblOptions    table options
@@ -117,6 +118,13 @@ function buildTablePart(llApi) {
      * @param {TblOptions} options     table options.
      */
     const showTable= (targetDiv, request, options)  => doShowTable(llApi, targetDiv, request, options);
+
+    /**
+     * Fetch new table data from the server.
+     * @param request a TableRequest params object.
+     * @param hlRowIdx set the highlightedRow.  default to startIdx.
+     */
+    const fetchTable= (request, hlRowIdx)  => dispatchTableFetch(request, hlRowIdx);
 
     return {showTable};
 }

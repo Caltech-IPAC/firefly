@@ -32,13 +32,19 @@
     <a href="javascript:firefly.action.dispatchZoom({plotId: 'xxq',userZoomType:'DOWN' ,dispatcher:window.ffViewer.dispatch})">down</a>
 </div>
 <div id="imageViewHere" style="width: 550px; height: 550px; margin: 10px;"></div>
-<div>
-    <div id="tables-1" style="display: inline-block; width: 550px; height: 550px; margin: 10px; background-color: white"></div>
-    <div id="tables-2" style="display: inline-block; width: 550px; height: 550px; margin: 10px; background-color: white; position: absolute"></div>
+<div>Tables from API calls:
+    <a href='javascript:firefly.getViewer().showTable(window.tblReq1)'>Open table 1</a>
+    <a href='javascript:firefly.getViewer().showTable(window.tblReq2)'>Open table 2</a>
+    <a href='javascript:window.tblReq2.sortInfo="SortInfo=ASC,ra"; firefly.getViewer().fetchTable(window.tblReq2)'>Sort table 2 by ra</a>
 </div>
 <div>
-    <div id="oldSelectable" style="display: inline-block; width: 550px; height: 550px; margin: 10px; background-color: white"></div>
-    <div id="oldBasic" style="display: inline-block; width: 550px; height: 550px; margin: 10px; background-color: white"></div>
+    <div id="tables-1" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
+    <div id="tables-2" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white; position: absolute"></div>
+</div>
+<div>Tables from deprecated API calls:</div>
+<div>
+    <div id="oldSelectable" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
+    <div id="oldBasic" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
 </div>
 <div id="xyPlot1" style="width: 550px; height: 300px; margin: 10px;"></div>
 <div id="xyPlot2" style="width: 550px; height: 300px; margin: 10px;"></div>
@@ -134,12 +140,12 @@
 
 
             //-----------------  TABLE DEMO ------------------------//
-            var tblReq1 = firefly.util.table.makeIrsaCatalogRequest('wise_allwise_p3as_psd', 'WISE', 'wise_allwise_p3as_psd', null,
+            window.tblReq1 = firefly.util.table.makeIrsaCatalogRequest('wise_allwise_p3as_psd', 'WISE', 'wise_allwise_p3as_psd', null,
                     {   position: '10.68479;41.26906;EQ_J2000;m31;ned',
                         SearchMethod: 'Cone',
                         radius: 300,
                     });
-            var tblReq2 = firefly.util.table.makeIrsaCatalogRequest('another wise catalog', 'WISE', 'wise_allwise_p3as_psd', null,
+            window.tblReq2 = firefly.util.table.makeIrsaCatalogRequest('another wise catalog', 'WISE', 'wise_allwise_p3as_psd', null,
                     {   position: '10.68479;41.26906;EQ_J2000;m31;ned',
                         SearchMethod: 'Cone',
                         radius: 300,

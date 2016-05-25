@@ -128,18 +128,20 @@ export function reducer(state={data:{}, results: {}, ui:{}}, action={}) {
  * Initiate a search that returns a table which will be added to result view.
  * @param request
  * @param {TblOptions} options  table options
+ * @param {function} dispatcher only for special dispatching uses such as remote
  */
-export function dispatchTableSearch(request, options) {
-    flux.process( {type: TABLE_SEARCH, payload: pickBy({request, options}) });
+export function dispatchTableSearch(request, options, dispatcher= flux.process) {
+    dispatcher( {type: TABLE_SEARCH, payload: pickBy({request, options}) });
 }
 
 /**
- * Fetch a table from the server.
+ * Fetch table data from the server.
  * @param request a TableRequest params object.
  * @param hlRowIdx set the highlightedRow.  default to startIdx.
+ * @param {function} dispatcher only for special dispatching uses such as remote
  */
-export function dispatchTableFetch(request, hlRowIdx) {
-    flux.process( {type: TABLE_FETCH, payload: {request, hlRowIdx} });
+export function dispatchTableFetch(request, hlRowIdx, dispatcher= flux.process) {
+    dispatcher( {type: TABLE_FETCH, payload: {request, hlRowIdx} });
 }
 
 /**
