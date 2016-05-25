@@ -77,7 +77,7 @@ function doShowTable(llApi, targetDiv, request, options={}) {
     const {TablesContainer}= llApi.ui;
     var contProps = options && options.tbl_group ? {tbl_group: options.tbl_group} : {};
 
-    if ((typeof targetDiv).match('string|HTMLDivElement') === null) {
+    if ((typeof targetDiv).match(/string|HTMLDivElement/) === null) {
         // old api.. need to setup request and options before continue.
         const params = targetDiv;
         targetDiv = request;
@@ -112,8 +112,8 @@ function buildTablePart(llApi) {
      */
 
     /**
-     * The general plotting function to plot a FITS image.
-     * @param {string|HTMLDivElement} targetDiv to put the image in.
+     * The general plotting function to plot a table.
+     * @param {string|HTMLDivElement} targetDiv to put the table in.
      * @param {Object} request         request object created from
      * @param {TblOptions} options     table options.
      */
@@ -135,13 +135,37 @@ function buildTablePart(llApi) {
 function buildChartPart(llApi) {
 
     /**
-     * The general plotting function to plot a FITS image.
-     * @param {String|div} targetDiv to put the chart in.
-     * @param {Object} parameters the request object literal with the chart parameters
+     * @typedef {object} XYPlotOptions  xy plot options
+     * @prop {string}  source       location of the ipac table, url or file path; ignored when XY plot view is added to table
+     * @prop {string}  QUERY_ID     required when XY plot view is added to the table. It connects this XY Plot to the table and should be the same string that you specified as the div parameter when you created the table.
+     * @prop {string}  chartTitle   title of the chart
+     * @prop {string}  xCol         column or expression to use for x values, can contain multiple column names ex. log(col) or (col1-col2)/col3
+     * @prop {string}  yCol         column or expression to use for y values, can contain multiple column names ex. sin(col) or (col1-col2)/col3
+     * @prop {number}  xyRatio      aspect ratio (must be between 1 and 10)
+     * @prop {string}  stretch      fit or fill
+     * @prop {string}  xLabel       label to use with x axis
+     * @prop {string}  yLabel       label to use with y axis
+     * @prop {string}  xUnit        unit for x axis
+     * @prop {string}  yUnit        unit for y axis
+     * @prop {string}  xOptions     comma separated list of x axis options: grid,flip,log
+     * @prop {string}  yOptions     comma separated list of y axis options: grid,flip,log
+     */
+
+    /**
+     * The general plotting function to plot an XY Plot.
+     * @param {string|HTMLDivElement} targetDiv to put the chart in.
+     * @param {XYPlotOptions} parameters the request object literal with the chart parameters
      * @namespace firefly
      */
     const showPlot= (targetDiv, parameters)  => showXYPlot(llApi, targetDiv, parameters);
-    const addXYPlot= (targetDiv, parameters, tbl_id) => showXYPlot(llApi, targetDiv, parameters, tbl_id);
+
+    /**
+     * Add XY Plot view of an existing table.
+     * @param {string|HTMLDivElement} targetDiv to put the chart in.
+     * @param {XYPlotOptions} parameters the request object literal with the chart parameters
+     * @namespace firefly
+     */
+    const addXYPlot= (targetDiv, parameters) => showXYPlot(llApi, targetDiv, parameters);
 
     return {showPlot, addXYPlot};
 }
@@ -311,12 +335,20 @@ function makePlotId() {
 //---------- Private XYPlot or Histogram functions
 //================================================================
 
-function showXYPlot(llApi, targetDiv, params, tbl_id) {
+function showXYPlot(llApi, targetDiv, params={}) {
     const {dispatchSetupTblTracking, dispatchTableFetch}= llApi.action;
     const {renderDOM} = llApi.util;
-    const {makeFileRequest} = llApi.util.table;
+    const {makeFileRequest, getActiveTableId} = llApi.util.table;
     const {uniqueChartId, loadPlotDataForTbl} = llApi.util.chart;
     const {ChartsContainer, ChartsTableViewPanel}= llApi.ui;
+
+    if ((typeof targetDiv).match(/string|HTMLDivElement/) === null) {
+        // old api.. need to change targetDiv and params
+        const oldApiParams = targetDiv;
+        targetDiv = params;
+        params = oldApiParams;
+    }
+
     const {xCol, yCol, xyRatio, stretch, xLabel, yLabel, xUnit, yUnit, xOptions, yOptions} = params;
     const xyPlotParams = {
         xyRatio,
@@ -324,13 +356,19 @@ function showXYPlot(llApi, targetDiv, params, tbl_id) {
         x : { columnOrExpr : xCol, label : xLabel||xCol, unit : xUnit||'', options : xOptions},
         y : { columnOrExpr : yCol, label : yLabel||yCol, unit : yUnit||'', options : yOptions}
     };
+
+    // it is not quite clear how to handle situation when there are multiple tables in a group
+    // for now we are connecting to the currently active table in the group
+    const tblGroup = params.QUERY_ID;
+    const tbl_id = tblGroup && (getActiveTableId(tblGroup) || tblGroup); // can use tbl_id instead of group
+
     const tblId = tbl_id || `tblid-${targetDiv}`;
     const chartId = uniqueChartId(tblId);
 
-
-
     dispatchSetupTblTracking(tblId);
     loadPlotDataForTbl(tblId, chartId, xyPlotParams);
+
+    // standalone plot, not connected to an existing table
     if (!tbl_id) {
         const searchRequest = makeFileRequest(
             params.chartTitle||'', // title
@@ -344,7 +382,6 @@ function showXYPlot(llApi, targetDiv, params, tbl_id) {
         dispatchTableFetch(searchRequest);
     }
 
-
     renderDOM(targetDiv, ChartsTableViewPanel,
         {
             key: `${targetDiv}-chart`,
@@ -353,5 +390,5 @@ function showXYPlot(llApi, targetDiv, params, tbl_id) {
             closeable: false,
             expandedMode: false
         },
-        {width: 'calc(100% - 10px)', height: 'calc(100% - 10px)', overflow: 'auto', padding: '5px'});
+        {width: 'calc(100% - 10px)', height: 'calc(100% - 10px)', overflow: 'auto', padding: '5px', border: '1px solid'});
 }

@@ -8,7 +8,6 @@ import {get, has, omit, omitBy, isUndefined, isString} from 'lodash';
 
 import {doFetchTable, getTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
-import * as TableUtil from '../tables/TableUtil.js';
 import {serializeDecimateInfo} from '../tables/Decimate.js';
 import {logError} from '../util/WebUtil.js';
 
@@ -71,9 +70,10 @@ const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
  * @param {string} chartId - if no chart id is specified table id is used as chart id
  * @param {Object} xyPlotParams - XY plot options (column names, etc.)
  * @param {ServerRequest} searchRequest - table search request
+ * @param {function} dispatcher only for special dispatching uses such as remote
  */
-export function dispatchLoadPlotData(chartId, xyPlotParams, searchRequest) {
-    flux.process({type: LOAD_PLOT_DATA, payload: {chartId: (chartId||TableUtil.getTblReqInfo(searchRequest)['tbl_id']), xyPlotParams, searchRequest}});
+export function dispatchLoadPlotData(chartId, xyPlotParams, searchRequest, dispatcher= flux.process) {
+    dispatcher({type: LOAD_PLOT_DATA, payload: {chartId: (chartId||searchRequest.tbl_id), xyPlotParams, searchRequest}});
 }
 
 /*
@@ -176,9 +176,8 @@ export function reducer(state={}, action={}) {
         case (LOAD_PLOT_DATA)  :
         {
             const {chartId, xyPlotParams, searchRequest} = action.payload;
-            const {tbl_id} = searchRequest;
             return updateSet(state, chartId,
-                { tblId: tbl_id, isPlotDataReady: false, xyPlotParams, decimatedUnzoomed: get(state, [chartId,'decimatedUnzoomed'])});
+                { tblId: searchRequest.tbl_id, isPlotDataReady: false, xyPlotParams, decimatedUnzoomed: get(state, [chartId,'decimatedUnzoomed'])});
         }
         case (UPDATE_PLOT_DATA)  :
         {

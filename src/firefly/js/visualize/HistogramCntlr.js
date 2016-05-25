@@ -42,9 +42,10 @@ export const UPDATE_COL_DATA = `${HISTOGRAM_DATA_KEY}/UPDATE_COL_DATA`;
  * Get column histogram data
  * @param {Object} histogramParams - histogram options (column name, etc.)
  * @param {ServerRequest} searchRequest - table search request
+ * @param {function} dispatcher only for special dispatching uses such as remote
  */
-export const dispatchLoadColData = function(chartId, histogramParams, searchRequest) {
-    flux.process({type: LOAD_COL_DATA, payload: {chartId, histogramParams, searchRequest}});
+export const dispatchLoadColData = function(chartId, histogramParams, searchRequest, dispatcher= flux.process) {
+    dispatcher({type: LOAD_COL_DATA, payload: {chartId, histogramParams, searchRequest}});
 };
 
 /*
@@ -53,10 +54,10 @@ export const dispatchLoadColData = function(chartId, histogramParams, searchRequ
  * @param {boolean} isColDataReady - flags that column histogram data are available
  * @param {number[][]} histogramData - an array of the number arrays with npoints, binmin, binmax
  * @param {Object} histogramParams - histogram options (column name, etc.)
- */
 const dispatchUpdateColData = function(chartId, isColDataReady, histogramData, histogramParams) {
     flux.process({type: UPDATE_COL_DATA, payload: {chartId,isColDataReady,histogramData,histogramParams}});
 };
+*/
 
 /*
  * @param rawAction (its payload should contain searchRequest to get source table and histogram parameters)
@@ -96,8 +97,7 @@ export function reducer(state=getInitState(), action={}) {
         case (LOAD_COL_DATA)  :
         {
             const {chartId, histogramParams, searchRequest} = action.payload;
-            const {tbl_id} = searchRequest;
-            return updateSet(state, chartId, {tblId: tbl_id, isColDataReady: false, histogramParams});
+            return updateSet(state, chartId, {tblId: searchRequest.tbl_id, isColDataReady: false, histogramParams});
         }
         case (UPDATE_COL_DATA)  :
         {

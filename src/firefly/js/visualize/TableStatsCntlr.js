@@ -28,28 +28,30 @@ export const UPDATE_TBL_STATS = `${TBLSTATS_DATA_KEY}/UPDATE_TBL_STATS`;
 /*
  * Set up store, which will reflect the data relevant to the given table
  * @param {string} tblId - table id
+ * @param {function} dispatcher only for special dispatching uses such as remote
  */
-export const dispatchSetupTblTracking = function(tblId) {
-    flux.process({type: SETUP_TBL_TRACKING, payload: {tblId}});
-};
+export function dispatchSetupTblTracking(tblId, dispatcher= flux.process) {
+    dispatcher({type: SETUP_TBL_TRACKING, payload: {tblId}});
+}
 
 /*
  * Get the number of points, min and max values, units and description for each table column
  * @param {ServerRequest} searchRequest - table search request
+ * @param {function} dispatcher only for special dispatching uses such as remote
  */
-export const dispatchLoadTblStats = function(searchRequest) {
-    flux.process({type: LOAD_TBL_STATS, payload: {searchRequest}});
-};
+export function dispatchLoadTblStats(searchRequest, dispatcher= flux.process) {
+    dispatcher({type: LOAD_TBL_STATS, payload: {searchRequest}});
+}
 
 /*
  * The statistics is successfully returned from the server, update the store
  * @param {Number} tblId - table id
  * @param {boolean} isColStatsReady flags that column statistics is now available
  * @param {ColValuesStatistics[]} an array which holds column statistics for each column
- */
 const dispatchUpdateTblStats = function(tblId,isColStatsReady,colStats) {
     flux.process({type: UPDATE_TBL_STATS, payload: {tblId,isColStatsReady,colStats}});
 };
+*/
 
 /*
  * @param rawAction (its payload should contain searchRequest to get source table)
