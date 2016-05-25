@@ -46,7 +46,7 @@
 <div>Tables from deprecated API calls:</div>
 <div>
     <div id="oldSelectable" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
-    <div id="oldBasic" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
+    <div id="oldBasic" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white; position: absolute"></div>
 </div>
 <div>Deprecated API plot:</div>
 <div>
@@ -161,8 +161,8 @@
             firefly.showTable('tables-2', tblReq3, {tbl_group: 'upload', removable: false, showUnits: true, showFilters: true});
             //-----------------  CHART DEMO ------------------------//
             //--- using QUERY_ID: 'upload' does not work getActiveTableId('upload') returns undefined ---//
-            firefly.addXYPlot('xyPlot1', {QUERY_ID: tblReq3.tbl_id, xCol: 'ra1+ra2', yCol: 'dec1+dec2'});
-            firefly.addXYPlot('xyPlot2', {QUERY_ID: tblReq3.tbl_id, xCol: 'dtanneal', yCol: 'febgain'});
+            firefly.addXYPlot('xyPlot1', {tbl_id: tblReq3.tbl_id, xCol: 'ra1+ra2', yCol: 'dec1+dec2'});
+            firefly.addXYPlot('xyPlot2', {tbl_id: tblReq3.tbl_id, xCol: 'dtanneal', yCol: 'febgain'});
 
             //-----< old table api ------//
             var tblParams = {
@@ -185,7 +185,7 @@
 
             //-----< old xyplot api ------//
             //--- using QUERY_ID: 'oldSelectable' does not work getActiveTableId('upload') returns undefined ---//
-            firefly.addXYPlot({QUERY_ID: tblReq3.tbl_id, xCol: 'crval1', yCol: 'crval2'}, 'oldXyPlot1');
+            firefly.addXYPlot({QUERY_ID: 'oldSelectable', xCol: 'crval1', yCol: 'crval2'}, 'oldXyPlot1');
             //-----< old xyplot api ------//
 
         }

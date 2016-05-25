@@ -119,13 +119,6 @@ function buildTablePart(llApi) {
      */
     const showTable= (targetDiv, request, options)  => doShowTable(llApi, targetDiv, request, options);
 
-    /**
-     * Fetch new table data from the server.
-     * @param request a TableRequest params object.
-     * @param hlRowIdx set the highlightedRow.  default to startIdx.
-     */
-    const fetchTable= (request, hlRowIdx)  => dispatchTableFetch(request, hlRowIdx);
-
     return {showTable};
 }
 
@@ -337,10 +330,12 @@ function makePlotId() {
 
 function showXYPlot(llApi, targetDiv, params={}) {
     const {dispatchSetupTblTracking, dispatchTableFetch}= llApi.action;
+    const {TBL_RESULTS_ACTIVE} = llApi.action.type;
     const {renderDOM} = llApi.util;
-    const {makeFileRequest, getActiveTableId} = llApi.util.table;
+    const {makeFileRequest, getActiveTableId, uniqueTblId} = llApi.util.table;
     const {uniqueChartId, loadPlotDataForTbl} = llApi.util.chart;
     const {ChartsContainer, ChartsTableViewPanel}= llApi.ui;
+    const {addActionListener} = llApi.util;
 
     if ((typeof targetDiv).match(/string|HTMLDivElement/) === null) {
         // old api.. need to change targetDiv and params
@@ -359,17 +354,11 @@ function showXYPlot(llApi, targetDiv, params={}) {
 
     // it is not quite clear how to handle situation when there are multiple tables in a group
     // for now we are connecting to the currently active table in the group
-    const tblGroup = params.QUERY_ID;
-    const tbl_id = tblGroup && (getActiveTableId(tblGroup) || tblGroup); // can use tbl_id instead of group
-
-    const tblId = tbl_id || `tblid-${targetDiv}`;
-    const chartId = uniqueChartId(tblId);
-
-    dispatchSetupTblTracking(tblId);
-    loadPlotDataForTbl(tblId, chartId, xyPlotParams);
-
+    const tblGroup = params.QUERY_ID || params.tbl_group;
+    var tblId = params.tbl_id;
     // standalone plot, not connected to an existing table
-    if (!tbl_id) {
+    if (!tblGroup && !tblId) {
+        tblId = uniqueTblId();
         const searchRequest = makeFileRequest(
             params.chartTitle||'', // title
             params.source,  // source
@@ -381,6 +370,23 @@ function showXYPlot(llApi, targetDiv, params={}) {
         );
         dispatchTableFetch(searchRequest);
     }
+    
+    const chartId = uniqueChartId(tblId);
+    
+    if (tblGroup) {
+        addActionListener(TBL_RESULTS_ACTIVE, (action, state) => {
+            const new_tblId = getActiveTableId(tblGroup);
+            if (new_tblId !== tblId) {
+                tblId = new_tblId;
+                dispatchSetupTblTracking(tblId);
+                loadPlotDataForTbl(tblId, chartId, xyPlotParams);
+            }
+        })
+    } else {
+        dispatchSetupTblTracking(tblId);
+        loadPlotDataForTbl(tblId, chartId, xyPlotParams);
+    }
+
 
     renderDOM(targetDiv, ChartsTableViewPanel,
         {
