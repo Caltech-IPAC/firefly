@@ -1121,9 +1121,6 @@ public class FitsRead implements Serializable {
             case RangeValues.SIGMA:
                 slow = hist.get_sigma(rangeValues.getLowerValue(), false);
                 break;
-            case RangeValues.MAXMIN:
-                slow = hist.get_pct(0.0, false);
-                break;
             case RangeValues.ZSCALE:
 
                 Zscale.ZscaleRetval zscale_retval = getZscaleValue(float1d, imageHeader, rangeValues);
@@ -1146,11 +1143,7 @@ public class FitsRead implements Serializable {
             case RangeValues.SIGMA:
                 shigh = hist.get_sigma(rangeValues.getUpperValue(), true);
                 break;
-            case RangeValues.MAXMIN:
-                shigh = hist.get_pct(100.0, true);
-                break;
             case RangeValues.ZSCALE:
-
                 Zscale.ZscaleRetval zscale_retval = getZscaleValue(float1d, imageHeader, rangeValues);
                 shigh = zscale_retval.getZ2();
                 break;

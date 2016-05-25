@@ -14,7 +14,7 @@ import {formatFlux} from '../VisUtil.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
 
 import {
-    PERCENTAGE, MAXMIN, ABSOLUTE,SIGMA,
+    PERCENTAGE,  ABSOLUTE,SIGMA,
     STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL,
     STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../RangeValues.js';
 
@@ -186,7 +186,7 @@ function suggestedValuesPanel( plot,band, showBeta) {
        return (
 
            <div style={style}>
-                <span style={{float:'left', paddingRight:2, opacity:.5 , marginLeft:20}}>
+                <span style={{float:'left', paddingRight:2, opacity:.5 , marginLeft:30}}>
                     {dataMinStr}   {dataMaxStr}   {betaStr}
                 </span>
            </div>
@@ -252,7 +252,6 @@ function getTypeMinField() {
         <ListBoxInputField fieldKey={'lowerWhich'} inline={true} labelWidth={0}
                            options={ [ {label: '%', value: PERCENTAGE},
                                        {label: 'Data', value: ABSOLUTE},
-                                       {label: 'Data Min', value: MAXMIN},
                                        {label: 'Sigma', value: SIGMA}
                                        ]}
                            multiple={false}
@@ -265,7 +264,6 @@ function getTypeMaxField() {
         <ListBoxInputField fieldKey='upperWhich' inline={true} labelWidth={0}
                            options={ [ {label: '%', value: PERCENTAGE},
                                        {label: 'Data', value: ABSOLUTE},
-                                       {label: 'Data Max', value: MAXMIN},
                                        {label: 'Sigma', value: SIGMA}
                                                   ]}
                            multiple={false}

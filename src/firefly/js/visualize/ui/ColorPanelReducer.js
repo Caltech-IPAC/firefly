@@ -7,7 +7,7 @@ import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
-import RangeValues, {STRETCH_LINEAR, PERCENTAGE, MAXMIN, ABSOLUTE,SIGMA,ZSCALE} from './../RangeValues.js';
+import RangeValues, {STRETCH_LINEAR, PERCENTAGE, ABSOLUTE,SIGMA,ZSCALE} from './../RangeValues.js';
 
 
 const clone = (obj,params={}) => Object.assign({},obj,params);
@@ -122,12 +122,6 @@ const computeLowerRangeField= function (fields,rv,fitsData) {
                 value : resetDefault ? 1 : fields.lowerRange.value
             };
             break;
-        case MAXMIN:
-            retval= {
-                validator: Validate.floatRange.bind(null,fitsData.dataMin, fitsData.dataMax, 3, 'Lower range'),
-                value : resetDefault ? fitsData.dataMin : fields.lowerRange.value
-                };
-            break;
         case ABSOLUTE:
             retval= {validator: Validate.floatRange.bind(null,fitsData.dataMin, fitsData.dataMax, 3, 'Lower range'),
                 value : resetDefault ? fitsData.dataMin : fields.lowerRange.value
@@ -160,11 +154,7 @@ const computeUpperRangeField= function(fields,rv,fitsData) {
                 value : resetDefault ? 99 : fields.upperRange.value
             };
             break;
-        case MAXMIN:
-            retval= {validator: Validate.floatRange.bind(null,fitsData.dataMin, fitsData.dataMax, 3, 'Upper range'),
-                value : resetDefault ? fitsData.dataMax : fields.upperRange.value
-            };
-            break;
+
         case ABSOLUTE:
             retval= {validator: Validate.floatRange.bind(null,fitsData.dataMin, fitsData.dataMax, 3, 'Upper range'),
                 value : resetDefault ? fitsData.dataMax : fields.upperRange.value

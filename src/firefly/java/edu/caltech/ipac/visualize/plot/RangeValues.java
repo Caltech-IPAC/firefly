@@ -25,7 +25,6 @@ public class RangeValues implements Cloneable, Serializable {
     public static final String SIGMA_STR      = "Sigma";
 
     public static final int PERCENTAGE = 88;
-    public static final int MAXMIN     = 89;
     public static final int ABSOLUTE   = 90;
     public static final int ZSCALE     = 91;
     public static final int SIGMA      = 92;
