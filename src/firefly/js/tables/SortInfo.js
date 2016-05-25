@@ -6,14 +6,14 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-const sortInfo_regex = new RegExp('\\s*SortInfo=(\\S+),(\\S+)');
+const sortInfo_regex = new RegExp('\\s*(\\S+),(\\S+)');
 export const SORT_ASC = 'ASC';
 export const SORT_DESC = 'DESC';
 export const UNSORTED = '';
 
 /**
  * convenience class to handle the table's sort information.
- * data is stored as a string of 'SortInfo=(ASC|DESC),col1[,col2]*.  ie.  'SortInfo=ASC,id,band'
+ * data is stored as a string of '(ASC|DESC),col1[,col2]*.  ie.  'ASC,id,band'
  **/
  export class SortInfo {
     constructor(direction=UNSORTED, sortColumns=[]) {
@@ -44,7 +44,7 @@ export const UNSORTED = '';
     }
 
     serialize() {
-        return this.direction === UNSORTED ? '' : `SortInfo=${this.direction},${this.sortColumns.toString()}`;
+        return this.direction === UNSORTED ? '' : `${this.direction},${this.sortColumns.toString()}`;
     }
 
     static parse(sortInfo) {

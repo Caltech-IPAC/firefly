@@ -10,7 +10,7 @@ import {debounce, defer, get, isEmpty, pick, padEnd} from 'lodash';
 
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
-import {SortInfo} from '../SortInfo';
+import {SortInfo} from '../SortInfo.js';
 import {TextCell, HeaderCell, SelectableHeader, SelectableCell} from './TableRenderer.js';
 
 import './TablePanel.css';

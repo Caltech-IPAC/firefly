@@ -33,9 +33,9 @@
 </div>
 <div id="imageViewHere" style="width: 550px; height: 550px; margin: 10px;"></div>
 <div>Tables from API calls:
-    <a href='javascript:firefly.getViewer().showTable(window.tblReq1)'>Open table 1</a>
-    <a href='javascript:firefly.getViewer().showTable(window.tblReq2)'>Open table 2</a>
-    <a href='javascript:window.tblReq2.sortInfo="SortInfo=ASC,ra"; firefly.getViewer().fetchTable(window.tblReq2)'>Sort table 2 by ra</a>
+    <a href='javascript:firefly.getViewer().showTable(tblReq3)'>Open a table</a>
+    <a href='javascript:firefly.getViewer().showTable(tblReq1)'>Open allwise</a>
+    <a href='javascript:tblReq1.sortInfo="ASC,ra"; firefly.getViewer().fetchTable(tblReq1)'>Sort allwise by ra</a>
 </div>
 <div>
     <div id="tables-1" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
@@ -140,17 +140,17 @@
 
 
             //-----------------  TABLE DEMO ------------------------//
-            window.tblReq1 = firefly.util.table.makeIrsaCatalogRequest('wise_allwise_p3as_psd', 'WISE', 'wise_allwise_p3as_psd', null,
+            tblReq1 = firefly.util.table.makeIrsaCatalogRequest('wise_allwise_p3as_psd', 'WISE', 'wise_allwise_p3as_psd', null,
                     {   position: '10.68479;41.26906;EQ_J2000;m31;ned',
                         SearchMethod: 'Cone',
                         radius: 300,
                     });
-            window.tblReq2 = firefly.util.table.makeIrsaCatalogRequest('another wise catalog', 'WISE', 'wise_allwise_p3as_psd', null,
+            tblReq2 = firefly.util.table.makeIrsaCatalogRequest('another wise catalog', 'WISE', 'wise_allwise_p3as_psd', null,
                     {   position: '10.68479;41.26906;EQ_J2000;m31;ned',
                         SearchMethod: 'Cone',
                         radius: 300,
                     });
-            var tblReq3 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl', null, {pageSize:15});
+            tblReq3 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl', null, {pageSize:15});
 
             firefly.showTable('tables-1', tblReq1);
             firefly.showTable('tables-1', tblReq2);

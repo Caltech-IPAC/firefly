@@ -23,7 +23,7 @@ const INT_MAX = Math.pow(2,31) - 1;
  * @prop {number} pageSize  the number of rows per page.  defaults to 100.
  * @prop {string} filters   list of conditions separted by comma(,). Format:  (col_name|index) operator value.
  *                  operator is one of '> < = ! >= <= IN'.  See DataGroupQueryStatement.java doc for more details.
- * @prop {string} sortInfo  sort information.  Format:  SortInfo=(ASC|DESC),col_name[,col_name]*
+ * @prop {string} sortInfo  sort information.  Format:  (ASC|DESC),col_name[,col_name]*
  * @prop {string} inclCols  list of columns to select.  Column names separted by comma(,)
  * @prop {string} decimate  decimation information.
  * @prop {object} META_INFO meta information passed as key/value pair to server then returned as tableMeta.

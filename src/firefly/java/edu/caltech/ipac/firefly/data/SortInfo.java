@@ -19,7 +19,7 @@ public class SortInfo implements Serializable, Comparable {
 
     public enum Direction {ASC, DESC}
 
-    public static final String SORT_INFO_TAG = "SortInfo";
+    public static final String SORT_INFO_TAG = "sortInfo";
 
     private Direction direction;
     private ArrayList<String> sortColumns;
@@ -57,16 +57,14 @@ public class SortInfo implements Serializable, Comparable {
 
     public static SortInfo parse(String str) {
         if (StringUtils.isEmpty(str)) return null;
-        String[] kv = str.split("=", 2);
-        if (kv != null && kv.length == 2 && kv[0].equals(SORT_INFO_TAG)) {
-            String[] values = kv[1].split(",");
-            if (values.length > 1) {
-                if (values[0] != null) {
-                    Direction dir = values[0].equals(Direction.ASC.name()) ? Direction.ASC : Direction.DESC;
-                    String[] cols = new String[values.length-1];
-                    System.arraycopy(values, 1, cols, 0, values.length-1);
-                    return new SortInfo(dir, cols);
-                }
+        str = str.replaceFirst("SortInfo=", "");  // to support old format used by external code.
+        String[] values = str.split(",");
+        if (values.length > 1) {
+            if (values[0] != null) {
+                Direction dir = values[0].equals(Direction.ASC.name()) ? Direction.ASC : Direction.DESC;
+                String[] cols = new String[values.length-1];
+                System.arraycopy(values, 1, cols, 0, values.length-1);
+                return new SortInfo(dir, cols);
             }
         }
         return null;
@@ -74,7 +72,7 @@ public class SortInfo implements Serializable, Comparable {
 
     @Override
     public String toString() {
-        return SORT_INFO_TAG + "=" + direction + "," + StringUtils.toString(sortColumns, ",");
+        return direction + "," + StringUtils.toString(sortColumns, ",");
     }
 
 //====================================================================
