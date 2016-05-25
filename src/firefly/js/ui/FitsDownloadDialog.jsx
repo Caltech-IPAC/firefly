@@ -24,7 +24,7 @@ import {encodeUrl, ParamType}  from '../util/WebUtil.js';
 import {RequestType} from '../visualize/RequestType.js';
 import {ServiceType} from '../visualize/WebPlotRequest.js';
 import {makeRegionsFromPlot} from '../visualize/region/RegionDescription.js';
-import {saveDS9RegionFile} from '../rpc/PlotServicesJson.js';
+import {saveDS9RegionFile, getImagePng} from '../rpc/PlotServicesJson.js';
 import {get} from 'lodash';
 
 import HelpIcon from './HelpIcon.jsx';
@@ -130,7 +130,6 @@ class FitsDownloadDialog extends React.Component {
             if (this.iAmMounted) this.setState({fields});
         });
     }
-
 
     render() {
         return <FitsDownloadDialogForm  />;
@@ -343,19 +342,36 @@ function resultsSuccess(request, plot) {
         plotState.getWorkingFitsFileStr(band) :
         plotState.getOriginalFitsFileStr(band);
 
+    var getRegionsDes = () => {
+        var regionDes;
+
+        regionDes = makeRegionsFromPlot(plot);
+        return `[${regionDes.join(STRING_SPLIT_TOKEN)}]`;
+    };
 
     if (ext && ext.toLowerCase() == 'fits') {
         var param={file: fitsFile, return:makeFileName(plot, band), log: true};
         var  url = encodeUrl(getRootURL() + '/servlet/Download', param);
         //download(getRootURL() + '/servlet/Download?file=' + fitsFile);
         download(url);
+    } else if (ext && ext.toLowerCase() === 'png') {
+
+        getImagePng(plotState, getRegionsDes()).then((result) => {
+            var imgFile = get(result, 'ImageFileName');
+
+            if (imgFile) {
+                var param = {file: imgFile, log: true};
+                var url = encodeUrl(getRootURL() + '/servlet/Download', param);
+
+                download(url);
+            }
+        }, () => {
+            console.log('error');
+        });
+
     } else if (ext && ext.toLowerCase() === 'reg') {
-        var regionDes, regionString;
 
-        regionDes = makeRegionsFromPlot(plot);
-        regionString = `[${regionDes.join(STRING_SPLIT_TOKEN)}]`;
-
-        saveDS9RegionFile(regionString).then( (result ) => {
+        saveDS9RegionFile(getRegionsDes()).then( (result ) => {
             var rgFile = get(result, 'RegionFileName');
 
             if (rgFile) {
@@ -367,6 +383,7 @@ function resultsSuccess(request, plot) {
         }, () => {
             console.log('error');
         });
+        
     }
 
 }
