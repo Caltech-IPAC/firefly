@@ -77,7 +77,10 @@ export function reducer(state=getInitState(), action={}) {
         case (SETUP_TBL_TRACKING) :
         {
             const {tblId} = action.payload;
-            return updateSet(state, tblId, {isColStatsReady: false});
+            if (!state[tblId]) {
+                return updateSet(state, tblId, {isColStatsReady: false});
+            }
+            return state;
         }
         case (TablesCntlr.TABLE_REMOVE)  :
         {

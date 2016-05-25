@@ -59,8 +59,8 @@ function getExpressionValue(strExpr, tableModel, rowIdx) {
 }
 
 
-export function uniqueChartId(tblId) {
-    return uniqueId(tblId+'c');
+export function uniqueChartId(prefix) {
+    return uniqueId(prefix?prefix+'-c':'c');
 }
 
 
