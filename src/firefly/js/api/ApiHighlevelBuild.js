@@ -370,10 +370,11 @@ function showXYPlot(llApi, targetDiv, params={}) {
         );
         dispatchTableFetch(searchRequest);
     }
-    
-    const chartId = uniqueChartId(tblId);
-    
+
+    const chartId = uniqueChartId(tblId||tblGroup);
+
     if (tblGroup) {
+        tblId = getActiveTableId(tblGroup);
         addActionListener(TBL_RESULTS_ACTIVE, (action, state) => {
             const new_tblId = getActiveTableId(tblGroup);
             if (new_tblId !== tblId) {
@@ -381,8 +382,9 @@ function showXYPlot(llApi, targetDiv, params={}) {
                 dispatchSetupTblTracking(tblId);
                 loadPlotDataForTbl(tblId, chartId, xyPlotParams);
             }
-        })
-    } else {
+        });
+    }
+    if (tblId) {
         dispatchSetupTblTracking(tblId);
         loadPlotDataForTbl(tblId, chartId, xyPlotParams);
     }
@@ -395,6 +397,6 @@ function showXYPlot(llApi, targetDiv, params={}) {
             chartId,
             closeable: false,
             expandedMode: false
-        },
-        {width: 'calc(100% - 10px)', height: 'calc(100% - 10px)', overflow: 'auto', padding: '5px', border: '1px solid'});
+        }
+    );
 }

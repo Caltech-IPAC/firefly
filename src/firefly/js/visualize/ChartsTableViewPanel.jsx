@@ -576,6 +576,11 @@ ChartsPanel.defaultProps = {
     expandable: true
 };
 
+function getTblIdForChartId(chartId) {
+    return  get(flux.getState()[XYPlotCntlr.XYPLOT_DATA_KEY], [chartId, 'tblId']) ||
+            get(flux.getState()[HistogramCntlr.HISTOGRAM_DATA_KEY], [chartId, 'tblId']);
+}
+
 export class ChartsTableViewPanel extends Component {
 
     constructor(props) {
@@ -602,8 +607,9 @@ export class ChartsTableViewPanel extends Component {
     }
 
     getNextState() {
-        const tblId = this.props.tblId || TblUtil.getActiveTableId();
-        const chartId = this.props.chartId || tblId;
+        var {tblId, chartId} = this.props;
+        tblId = tblId || chartId ? getTblIdForChartId(chartId) : TblUtil.getActiveTableId();
+        chartId = this.props.chartId || tblId;
         const tableModel = TblUtil.getTblById(tblId);
         const tblStatsData = flux.getState()[TableStatsCntlr.TBLSTATS_DATA_KEY][tblId];
         const tblHistogramData = chartId ? flux.getState()[HistogramCntlr.HISTOGRAM_DATA_KEY][chartId] : undefined;
@@ -617,9 +623,9 @@ export class ChartsTableViewPanel extends Component {
 
     render() {
         const {chartId, tblId, tableModel, tblStatsData, tblHistogramData, tblPlotData} = this.state;
-        return (
+        return tblId ? (
             <ChartsPanel {...this.props} {...{chartId, tblId, tableModel, tblStatsData, tblHistogramData, tblPlotData}}/>
-        );
+        ) : (<div/>);
     }
 }
 
