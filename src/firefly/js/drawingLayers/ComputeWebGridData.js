@@ -437,6 +437,7 @@ function calculateDelta(min, max,factor){
 
 }
 
+
 /**
  * Find the labels according to the coordinates
  * @param levels
@@ -468,15 +469,19 @@ function getLabels(levels,csys, labelFormat) {
                     switch (i) {
                         case 0:
                             lon = CoordUtil.convertLonToString(levels[i][j], csys);
-                            num = labelFormat === 'hms' ? lon : CoordUtil.convertStringToLon(lon, csys);
-                            //labels[offset] = labelFormat === 'hms' ? lon : CoordUtil.convertStringToLon(lon, csys).toFixed(3);
-                            labels[offset] =`${numeral(num).format(precision3Digit)}`;
+                            //num = labelFormat === 'hms' ? lon : CoordUtil.convertStringToLon(lon, csys);
+                            //labels[offset] =labelFormat === 'hms'?num:`${numeral(num).format(precision3Digit)}`;
+                            //above two lines do the same thing as a line below, I still prefer to use toFixed instead
+                            labels[offset] = labelFormat === 'hms' ? lon : CoordUtil.convertStringToLon(lon, csys).toFixed(3);
+
                             break;
                         case 1:
                             lat = CoordUtil.convertLatToString(levels[i][j], csys);
-                            num = labelFormat === 'hms' ? lat : CoordUtil.convertStringToLat(lat, csys);
-                            //labels[offset] = labelFormat === 'hms' ? lat : CoordUtil.convertStringToLat(lat, csys).toFixed(3);
-                            labels[offset] =`${numeral(num).format(precision3Digit)}`;
+                           // num = labelFormat === 'hms' ? lat : CoordUtil.convertStringToLat(lat, csys);
+                            // labels[offset] =labelFormat === 'hms'?num:`${numeral(num).format(precision3Digit)}`;
+                            //above two lines do the same thing as a line below, I still prefer to use toFixed instead
+                            labels[offset] = labelFormat === 'hms' ? lat : CoordUtil.convertStringToLat(lat, csys).toFixed(3);
+
                             break;
                     }
 
