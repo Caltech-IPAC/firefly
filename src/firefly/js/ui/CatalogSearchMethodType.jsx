@@ -65,7 +65,7 @@ export class CatalogSearchMethodType extends Component {
         const {groupKey} = this.props;
 
         return (
-            <div style={{padding: 10, display:'flex', flexDirection:'column', flexWrap:'wrap', alignItems:'center'}}>
+            <div style={{padding: 10, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center'}}>
                 {renderTargetPanel(groupKey, searchType)}
                 <div
                     style={{display:'flex', flexDirection:'row', flexWrap:'no-wrap', alignItems:'center' }}>

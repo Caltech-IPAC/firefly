@@ -116,7 +116,6 @@ export class CatalogTableView extends Component {
             const clicked = indexClicked === index;
 
             return (
-
                 <CatalogTableItem
                     key={index}
                     onClick={onClick}
@@ -132,7 +131,7 @@ export class CatalogTableView extends Component {
                     {projectTitle}
                 </div>
                 <div className='catalogtable'>
-                    <table name={fieldKey}>
+                    <table style={{width:'100%'}} name={fieldKey}>
                         <tbody>
                         {items}
                         </tbody>
@@ -187,9 +186,9 @@ function itemMarkupTransform(element, cols) {
             const val = element.cat[e.key];
             if (val !== 'null') {
                 if (e.value.length > 0) {
-                    html += '<span class="marked-text">' + e.value + '</span>: ' + val;
+                    html += `<span class="marked-text">${e.value}</span>: <span class="normal-text">${val}</span>`;
                 } else {
-                    html += val;
+                    html += `<span class='href-item'>${val}</span>`;
                 }
             }
 
@@ -220,13 +219,13 @@ class CatalogTableItem extends Component {
     render() {
         const {itemData, onClick, isClicked, cols} = this.props;
 
-        const html = '<b>&nbsp;&nbsp;&nbsp;&nbsp;' + itemData.cat[2] + '</b></br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + itemMarkupTransform(itemData, cols);//<li key="' + `${itemData.value}` + '"> + '</li>';
+        const html = '<span class="item-cell-title">' + itemData.cat[2] + '</span></br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + itemMarkupTransform(itemData, cols);
         const v = {__html: html};
         const color = isClicked ? '#7df26a' : 'white';
 
         return (
             <tr>
-                <td value={itemData.value} onClick={(ev) => onClick ? onClick(ev) : null}
+                <td className="cell" value={itemData.value} onClick={(ev) => onClick ? onClick(ev) : null}
                     style={{backgroundColor: `${color}`}}
                     dangerouslySetInnerHTML={v}>
                 </td>

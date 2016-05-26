@@ -1,22 +1,39 @@
 /*right list of table with catalog names to be selected*/
 .catalogtable {
-    /*flex: 1;*/
-    width: auto;
-    overflow: auto;
     height: 300px;
-    /*!* Grow to rest of container *!*/
+    width: 800px;
+    overflow: auto;
+    border: 1px solid #a3aeb9;
+    margin-left: 30px;
 }
 
 .marked-text {
     color: #49a344;
     font-size: 80%;
 }
-
-table {
-    border: 1px solid #a3aeb9;
-    margin-left: 30px;
+.normal-text {
+    font-size: 80%;
+    font-family: tahoma, arial, helvetica, sans-serif;
+    color: black;
 }
 
-td{
-    padding: 5px;
+.href-item {
+    color: #005da4;
+    font-style: italic;
+    cursor: pointer;
+    font-size: 80%;
+}
+
+.item-cell-title {
+    padding:5px;
+    font-weight:bold;
+}
+
+
+.item-cell-content {
+
+}
+
+.cell{
+    padding: 5px 0 5px 0;
 }
