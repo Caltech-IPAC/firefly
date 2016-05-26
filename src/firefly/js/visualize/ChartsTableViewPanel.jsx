@@ -23,7 +23,7 @@ import {dispatchChartExpanded} from '../visualize/ChartsCntlr.js';
 
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../core/LayoutCntlr.js';
 
-import {getHighlighted} from './ChartUtil.js';
+import {getHighlighted, getTblIdForChartId} from './ChartUtil.js';
 import XYPlotOptions from '../visualize/XYPlotOptions.jsx';
 import {XYPlot} from '../visualize/XYPlot.jsx';
 
@@ -72,7 +72,7 @@ class ChartsPanel extends React.Component {
         };
 
         const normal = (size) => {
-            if (size) {
+            if (size && !this.isUnmounted) {
                 var widthPx = size.width - 10;
                 var heightPx = size.height;
                 //console.log('width: '+widthPx+', height: '+heightPx);
@@ -148,6 +148,7 @@ class ChartsPanel extends React.Component {
         if (isDialogVisible(popupId)) {
             hideChartOptionsPopup();
         }
+        this.isUnmounted = true;
     }
 
     handlePopups() {
@@ -159,7 +160,7 @@ class ChartsPanel extends React.Component {
                 let popupTitle = 'Chart Options';
 
                 const reqTitle = get(tableModel, 'tableMeta.title');
-                if (reqTitle) { popupTitle += ': '+chartId+' '+decodeURIComponent(reqTitle); }
+                if (reqTitle) { popupTitle += `: ${chartId} ${reqTitle}`; }
 
                 var popup = (
                     <PopupPanel title={popupTitle} closeCallback={()=>{this.toggleOptions();}}>
@@ -511,15 +512,13 @@ class ChartsPanel extends React.Component {
     renderOptions() {
         const {optionsShown, chartType, heightPx} = this.state;
         const { tblId, tableModel, tblStatsData, tblPlotData, tblHistogramData, optionsPopup, chartId} = this.props;
-        if (optionsShown) {
-            if (!optionsPopup) {
-                return (
-                    <div style={{flex: '0 0 auto',overflow:'auto',width:OPTIONS_WIDTH,height:heightPx,paddingLeft:10,verticalAlign:'top'}}>
-                        {chartId===tblId ? this.renderChartSelection() : false}
-                        <OptionsWrapper  {...{chartId, tableModel, tblStatsData, tblPlotData, tblHistogramData, chartType}}/>
-                    </div>
-                );
-            }
+        if (optionsShown && !optionsPopup) {
+            return (
+                <div style={{flex: '0 0 auto',overflow:'auto',width:OPTIONS_WIDTH,height:heightPx,paddingLeft:10,verticalAlign:'top'}}>
+                    {chartId===tblId ? this.renderChartSelection() : false}
+                    <OptionsWrapper  {...{chartId, tableModel, tblStatsData, tblPlotData, tblHistogramData, chartType}}/>
+                </div>
+            );
         }
         return false;
     }
@@ -576,10 +575,7 @@ ChartsPanel.defaultProps = {
     expandable: true
 };
 
-function getTblIdForChartId(chartId) {
-    return  get(flux.getState()[XYPlotCntlr.XYPLOT_DATA_KEY], [chartId, 'tblId']) ||
-            get(flux.getState()[HistogramCntlr.HISTOGRAM_DATA_KEY], [chartId, 'tblId']);
-}
+
 
 export class ChartsTableViewPanel extends Component {
 

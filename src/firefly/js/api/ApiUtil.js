@@ -68,20 +68,6 @@ export function renderDOM(div, Component, props) {
 }
 
 
-export function myrenderDOM(div, Component, props) {
-    const divElement= isString(div) ? document.getElementById(div) : div;
-
-    if (!isElement(divElement)) debug(`the div element ${isString(div)?div:''} is not defined in the html` );
-    if (!Component) debug('Component must be defined');
-
-
-    const renderStuff= (
-            <Component {...props} />
-    );
-
-    ReactDOM.render(renderStuff,divElement);
-}
-
 /**
  * removed the rendered element
  * @param {string|Object} div a div element or a string id of the div element

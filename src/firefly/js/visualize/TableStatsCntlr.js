@@ -86,9 +86,7 @@ export function reducer(state=getInitState(), action={}) {
         {
             const {tbl_id} = action.payload;
             if (has(state, tbl_id)) {
-                const newState = Object.assign({}, state);
-                Reflect.deleteProperty(newState, tbl_id);
-                return newState;
+                return Object.assign({}, omit(state,[tbl_id]));
             }
             return state;
         }

@@ -7,11 +7,15 @@
  * Utilities related to charts
  * Created by tatianag on 3/17/16.
  */
-
+import {get} from 'lodash';
 import {uniqueId} from 'lodash';
+
+import {flux} from '../Firefly.js';
 import {getTblById, getColumnIdx, getCellValue} from '../tables/TableUtil.js';
 import {Expression} from '../util/expr/Expression.js';
 import {logError} from '../util/WebUtil.js';
+import {XYPLOT_DATA_KEY} from '../visualize/XYPlotCntlr.js';
+import {HISTOGRAM_DATA_KEY} from '../visualize/HistogramCntlr';
 
 
 /**
@@ -58,6 +62,10 @@ function getExpressionValue(strExpr, tableModel, rowIdx) {
     }
 }
 
+export function getTblIdForChartId(chartId) {
+    return  get(flux.getState()[XYPLOT_DATA_KEY], [chartId, 'tblId']) ||
+            get(flux.getState()[HISTOGRAM_DATA_KEY], [chartId, 'tblId']);
+}
 
 export function uniqueChartId(prefix) {
     return uniqueId(prefix?prefix+'-c':'c');

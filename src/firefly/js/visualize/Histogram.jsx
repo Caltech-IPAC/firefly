@@ -36,6 +36,8 @@ var Histogram = React.createClass(
 
         shouldComponentUpdate(nextProps) {
             const {data, width, height, logs, reversed, desc, binColor} = this.props;
+            // should rerender only if data or bin color has changed
+            // otherwise just change the existing chart
             if (data != nextProps.data || binColor !== nextProps.binColor) { return true; }
             const chart = this.refs.chart && this.refs.chart.getChart();
             if (chart) {

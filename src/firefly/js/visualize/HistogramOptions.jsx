@@ -75,7 +75,7 @@ var HistogramOptions = React.createClass({
                 <ValidationField
                     style={{width: 30}}
                     initialState= {{
-                        value: get(histogramParams, 'falsePositiveRate')||'0.05',
+                        value: get(histogramParams, 'falsePositiveRate','0.05'),
                         validator: Validate.floatRange.bind(null, 0.01, 0.5, 2,'falsePositiveRate'),
                         tooltip: 'Acceptable false positive rate',
                         label : 'False Positive Rate:'
@@ -91,7 +91,7 @@ var HistogramOptions = React.createClass({
                 <ValidationField
                     style={{width: 30}}
                     initialState= {{
-                        value: get(histogramParams, 'numBins')||'50',
+                        value: get(histogramParams, 'numBins', '50'),
                         validator: Validate.intRange.bind(null, 1, 500, 'numBins'),
                         tooltip: 'Number of fixed size bins',
                         label : 'Number of bins:'
@@ -135,7 +135,7 @@ var HistogramOptions = React.createClass({
                         <InputGroup labelWidth={20}>
                             <CheckboxGroupInputField
                                 initialState= {{
-                                    value: get(histogramParams, 'x')||'_none_',
+                                    value: get(histogramParams, 'x', '_none_'),
                                     tooltip: 'X axis options',
                                     label : 'X:'
                                 }}
@@ -147,7 +147,7 @@ var HistogramOptions = React.createClass({
                             />
                             <CheckboxGroupInputField
                                 initialState= {{
-                                    value: get(histogramParams, 'y')||'_none_',
+                                    value: get(histogramParams, 'y', '_none_'),
                                     tooltip: 'Y axis options',
                                     label : 'Y:'
                                 }}
@@ -163,7 +163,7 @@ var HistogramOptions = React.createClass({
                     <InputGroup labelWidth={60}>
                         <RadioGroupInputField
                             initialState= {{
-                                value: get(histogramParams, 'algorithm')||'fixedSizeBins',
+                                value: get(histogramParams, 'algorithm', 'fixedSizeBins'),
                                 tooltip: 'Please select an algorithm',
                                 label: 'Algorithm:'
                             }}

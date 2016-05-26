@@ -159,7 +159,7 @@ var XYPlotOptions = React.createClass({
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
                     <SuggestBoxInputField
                         initialState= {{
-                            value: get(xyPlotParams, 'x.columnOrExpr')||'',
+                            value: get(xyPlotParams, 'x.columnOrExpr'),
                             tooltip: 'Column or expression for X axis',
                             label: 'X:',
                             validator: colValidator
@@ -198,7 +198,7 @@ var XYPlotOptions = React.createClass({
                         <br/>
                         <CheckboxGroupInputField
                             initialState= {{
-                                value: get(xyPlotParams, 'x.options')||'_none_',
+                                value: get(xyPlotParams, 'x.options', '_none_'),
                                 tooltip: 'Check if you would like to plot grid',
                                 label : 'Options:'
                             }}
@@ -255,7 +255,7 @@ var XYPlotOptions = React.createClass({
                         <br/>
                         <CheckboxGroupInputField
                             initialState= {{
-                                value: get(xyPlotParams, 'y.options')||'grid',
+                                value: get(xyPlotParams, 'y.options', 'grid'),
                                 tooltip: 'Check if you would like to plot grid',
                                 label : 'Options:'
 
