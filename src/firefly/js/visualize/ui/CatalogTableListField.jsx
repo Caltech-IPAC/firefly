@@ -127,7 +127,7 @@ export class CatalogTableView extends Component {
 
         return (
             <div>
-                <div style={{marginLeft: '30px', padding:'5px 0px 5px 1px'}}>
+                <div className='table-title'>
                     {projectTitle}
                 </div>
                 <div className='catalogtable'>

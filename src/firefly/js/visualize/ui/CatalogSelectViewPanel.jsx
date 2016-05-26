@@ -551,7 +551,7 @@ class CatalogDDList extends Component {
                                       }}
                                        options={optProjects}
                                        multiple={false}
-                                       labelWidth={100}
+                                       labelWidth={75}
                                        label="Select Project:"
                     />
                     <ListBoxInputField fieldKey='catalog'
@@ -562,8 +562,9 @@ class CatalogDDList extends Component {
                                       }}
                                        options={optList}
                                        multiple={false}
-                                       labelWidth={100}
+                                       labelWidth={75}
                                        label="Select Catalog:"
+                                       selectStyle={{width:'350px'}}
                     />
                 </div>
                 <div>

@@ -145,7 +145,8 @@ function sizeArea(searchType) {
         );
     } else if (searchType === SpatialMethod.Elliptical.value) {
         return (
-            <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center', border:'solid #a3aeb9 1px' }}>
+            <div
+                style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center', border:'solid #a3aeb9 1px' }}>
                 {radiusInField('Semi-major Axis:', 'Enter the semi-major axis of the search')}
                 <ValidationField fieldKey='posangle'
                                  forceReinit={true}
@@ -197,7 +198,8 @@ function sizeArea(searchType) {
             <div
                 style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'wrap', alignItems:'center', border:'solid #a3aeb9 1px' }}>
                 <InputAreaFieldConnected fieldKey='polygoncoords'
-                                         wrapperStyle={{padding:5, display:'flex', flexDirection:'row', flexWrap:'wrap', alignItems:'center'}}
+                                         wrapperStyle={{padding:5,display:'flex', flexDirection:'row', flexWrap:'wrap', alignItems:'center'}}
+                                         style={{maxWidth:'350px', width:'200px', height:'30px', maxHeight:'150px', overflow:'auto'}}
                                          initialState={{
                                                tooltip:'Enter polygon coordinates search',
                                                labelWidth:70

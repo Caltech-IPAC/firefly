@@ -18,7 +18,7 @@ const convertValue= (value,options) => (!value) ? options[0].value : value;
 
 
 export function ListBoxInputFieldView({inline, value, onChange, fieldKey, options,
-                                       multiple, labelWidth, tooltip, label,wrapperStyle}) {
+                                       multiple, labelWidth, tooltip, label, wrapperStyle, selectStyle}) {
 
     var vAry= getCurrentValueArr(value);
     const style = Object.assign({whiteSpace:'nowrap', display: inline?'inline-block':'block'}, wrapperStyle);
@@ -27,6 +27,7 @@ export function ListBoxInputFieldView({inline, value, onChange, fieldKey, option
             <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} />
             <select name={fieldKey}
                     title={tooltip}
+                    style={selectStyle}
                     multiple={multiple}
                     onChange={onChange}
                     value={multiple ? vAry : value}>
@@ -55,7 +56,8 @@ ListBoxInputFieldView.propTypes= {
     label:  PropTypes.string,
     tooltip:  PropTypes.string,
     labelWidth : React.PropTypes.number,
-    wrapperStyle: PropTypes.object,
+    selectStyle: PropTypes.object,
+    wrapperStyle: PropTypes.object
 };
 
 function getProps(params, fireValueChange) {
