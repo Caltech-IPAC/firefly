@@ -1,60 +1,46 @@
-/*Main parent*/
-div.catalogpanel {
-    display: flex;
-}
-
-/*left dropdown list and selectors*/
-div.ddselectors {
-    width: 70%;
-}
-
 /*right list of table with catalog names to be selected*/
-div.catalogtable {
-    /*flex: 1;*/
+.catalogtable {
+    height: 300px;
+    width: 350px;
     overflow: auto;
-    width: 600px;
-    height: 400px;
-    /*!* Grow to rest of container *!*/
+    border: 1px solid #a3aeb9;
+    margin-left: 30px;
 }
 
-div.intarget {
-    height: 75px;
-    display: flex;
-    justify-content: flex-start;
-    align-items: flex-start;
-}
-div.size {
-    margin-top: 20px;
-    margin-bottom: 20px;
-    margin-left: 30%;
-    border: solid #a3aeb9 1px;
-    height: 60px;
-}
-
-/*
-
-<td><span style="font-weight:bold;">AllWISE Atlas Metadata Table</span><br
-<span class="marked-text" style="font-size:80%;">Rows: </span><span class="normal-text" style="font-size:80%;">18,240</span>
-<span class="marked-text" style="font-size:80%;">Cols: </span><span class="normal-text" style="font-size:80%;">349</span
-<span class="href-item font-size-eighty-percent" style="font-size:80%;"><a href="http://irsa.ipac.caltech.edu/Missions/wise.html" target="info">info</a></span>
-<span class="href-item font-size-eighty-percent" style="font-size:80%;"><a href="http://wise2.ipac.caltech.edu/docs/release/allwise/expsup/sec4_1ci.html" target="Column Def">Column Def</a></span>
-</td>
-*/
-ul li {
-    list-style-type: none;
-}
-
-li.marked-text {
-
-     font-size:80%;
-
- }
-
-li.marked-text {
-    font-family: tahoma, arial, helvetica, sans-serif;
+.marked-text {
     color: #49a344;
+    font-size: 80%;
 }
 
-td {
-    font-size:80%;
+.normal-text {
+    font-size: 80%;
+    font-family: tahoma, arial, helvetica, sans-serif;
+    color: black;
+}
+
+.href-item {
+    color: #005da4;
+    font-style: italic;
+    cursor: pointer;
+    font-size: 80%;
+}
+
+.item-cell-title {
+    padding: 5px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.cell {
+    padding: 5px 0 5px 0;
+}
+
+.table-title {
+    margin-left: 30px;
+    padding: 5px 0 5px 1px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* max width after '...' appear should be same as the .catalotable:*/
+    max-width: 350px;
+    white-space: nowrap;
 }

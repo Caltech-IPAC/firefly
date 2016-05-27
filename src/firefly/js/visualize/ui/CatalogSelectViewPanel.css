@@ -1,0 +1,15 @@
+/*Main parent*/
+div.catalogpanel {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+}
+
+/*left dropdown list and selectors*/
+div.ddselectors {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+}

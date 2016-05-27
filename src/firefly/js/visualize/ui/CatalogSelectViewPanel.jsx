@@ -28,6 +28,7 @@ import {FileUpload} from '../../ui/FileUpload.jsx';
 import {convertAngle} from '../VisUtil.js';
 
 import './CatalogTableListField.css';
+import './CatalogSelectViewPanel.css';
 
 /**
  * group key for fieldgroup comp
@@ -77,6 +78,7 @@ export class CatalogSelectViewPanel extends Component {
         return (
             <div style={{padding: 10}}>
                 <FormPanel
+                    width='auto' height='auto'
                     groupKey={gkey}
                     onSubmit={(request) => onSearchSubmit(request)}
                     onCancel={hideSearchPanel}>
@@ -352,7 +354,7 @@ class CatalogSelectView extends Component {
                     </Tab>
                     <Tab name='Load Catalog' id='loadcat'>
                         <div
-                            style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
+                            style={{padding:5, width:'800px', height:'300px'}}>
                             <FileUpload
                                 wrapperStyle={{margin: '5px 0'}}
                                 fieldKey='fileUpload'
@@ -368,7 +370,9 @@ class CatalogSelectView extends Component {
                         </div>
                     </Tab>
                     <Tab name='VO Catalog' id='vosearch'>
+
                         <VoSearchPanel fieldKey='vopanel'/>
+
                     </Tab>
                 </FieldGroupTabs>
             </FieldGroup>
@@ -540,27 +544,30 @@ class CatalogDDList extends Component {
                 <div className='ddselectors'>
                     <CatalogSearchMethodType groupKey={gkey}/>
                     <ListBoxInputField fieldKey='project'
+                                       wrapperStyle={{margin:'5px 0 5px 0', padding:5}}
                                        initialState={{
                                           tooltip: 'Select Project',
-                                          label : 'Select Project:',
                                           value: selProject0
                                       }}
                                        options={optProjects}
                                        multiple={false}
-                                       labelWidth={100}
+                                       labelWidth={75}
+                                       label="Select Project:"
                     />
                     <ListBoxInputField fieldKey='catalog'
+                                       wrapperStyle={{margin:'5px 0 5px 0', padding:5}}
                                        initialState={{
                                           tooltip: 'Select Catalog',
-                                          label : 'Select Catalog:',
                                           value: selCat0
                                       }}
                                        options={optList}
                                        multiple={false}
-                                       labelWidth={100}
+                                       labelWidth={75}
+                                       label="Select Catalog:"
+                                       selectStyle={{width:'350px'}}
                     />
                 </div>
-                <div className='catalogtable'>
+                <div>
                     <CatalogTableListField fieldKey='cattable'
                                            data={catTable}
                                            cols={cols}

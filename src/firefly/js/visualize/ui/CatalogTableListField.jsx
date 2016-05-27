@@ -7,7 +7,9 @@ import sCompare from 'react-addons-shallow-compare';
 import {isEmpty, get} from 'lodash';
 import {fieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
 //import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import * as TblUtil from '../../tables/TableUtil.js';
+import {doFetchTable} from '../../tables/TableUtil.js';
+import Enum from 'enum';
+import './CatalogTableListField.css';
 
 export class CatalogTableView extends Component {
 
@@ -55,7 +57,7 @@ export class CatalogTableView extends Component {
 
 
         const request = {id: 'GatorDD', 'catalog': catName}; //Fetch DD master table
-        TblUtil.doFetchTable(request).then((tableModel) => {
+        doFetchTable(request).then((tableModel) => {
 
             var data = tableModel.tableData.data;
             const html = data.map((c) => {
@@ -96,6 +98,8 @@ export class CatalogTableView extends Component {
 
     render() {
         var {data, cols, onClick, fieldKey} = this.props;//data {cat:...}
+        const projectTitle = data[0].proj;
+
         const indexClicked = get(this.state, 'idx', 0);
 
         if (isEmpty(data)) {
@@ -112,7 +116,6 @@ export class CatalogTableView extends Component {
             const clicked = indexClicked === index;
 
             return (
-
                 <CatalogTableItem
                     key={index}
                     onClick={onClick}
@@ -124,12 +127,16 @@ export class CatalogTableView extends Component {
 
         return (
             <div>
-                <table name={fieldKey}>
-                    <tbody>
-                    {items}
-                    </tbody>
-                </table>
-
+                <div className='table-title'>
+                    {projectTitle}
+                </div>
+                <div className='catalogtable'>
+                    <table style={{width:'100%'}} name={fieldKey}>
+                        <tbody>
+                        {items}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         );
     }
@@ -168,21 +175,31 @@ function handleOnClick(ev, params, fireValueChange) {
 }
 
 // get element data and wrapit around html markup knowing the columns name
-function htmlElementMarkup(element, cols) {
-    let m = '';
+function itemMarkupTransform(element, cols) {
     const url = '<a target=\'_new\' href=\'http://irsa.ipac.caltech.edu/cgi-bin/Gator/nph-dd?mode=xml&catalog=@\'>go to dd</a>';
-    cols.forEach((e, idx) => {
-            if (idx < 10) {
-                //<span class="marked-text" style="font-size:80%;">Rows: </span><span class="normal-text" style="font-size:80%;">18,240</span>
-                m += '<b>' + e.name + '</b>: ' + element.cat[idx];
-                if (e.name.includes('cat')) {
-                    m += ' [ ' + url.replace('@', element.cat[idx]) + ' ]';
+
+    const itemIdx = [{key: 6, value: 'Rows'}, {key: 5, value: 'Cols'}, {key: 8, value: ''}, {key: 9, value: ''}];
+    let html = '';
+
+    itemIdx.forEach((e) => {
+
+            const val = element.cat[e.key];
+            if (val !== 'null') {
+                if (e.value.length > 0) {
+                    html += `<span class="marked-text">${e.value}</span>: <span class="normal-text">${val}</span>`;
+                } else {
+                    html += `<span class='href-item'>${val}</span>`;
                 }
-                m += '    ';
             }
+
+            //if (e.name.includes('cat')) {
+            //    m += ' [ ' + url.replace('@', element.cat[idx]) + ' ]';
+            //}
+
+            html += '&nbsp;&nbsp;&nbsp;&nbsp;';
         }
     );
-    return m;
+    return html;
 }
 
 class CatalogTableItem extends Component {
@@ -202,13 +219,13 @@ class CatalogTableItem extends Component {
     render() {
         const {itemData, onClick, isClicked, cols} = this.props;
 
-        const html = '<b>' + itemData.cat[2] + '</b></br>' + htmlElementMarkup(itemData, cols);//<li key="' + `${itemData.value}` + '"> + '</li>';
+        const html = '<span class="item-cell-title">' + itemData.cat[2] + '</span></br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + itemMarkupTransform(itemData, cols);
         const v = {__html: html};
         const color = isClicked ? '#7df26a' : 'white';
 
         return (
             <tr>
-                <td value={itemData.value} onClick={(ev) => onClick ? onClick(ev) : null}
+                <td className="cell" value={itemData.value} onClick={(ev) => onClick ? onClick(ev) : null}
                     style={{backgroundColor: `${color}`}}
                     dangerouslySetInnerHTML={v}>
                 </td>
