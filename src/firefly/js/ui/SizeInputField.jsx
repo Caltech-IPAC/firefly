@@ -196,9 +196,9 @@ class SizeInputFieldView extends Component {
                     <ListBoxInputFieldView
                         onChange={this.onUnitChange}
                         options={
-                              [{label: 'Degree', value: 'deg'},
-                               {label: 'Arc Minutes', value: 'arcmin'},
-                               {label: 'Arc Seconds', value: 'arcsec'}
+                              [{label: 'degree', value: 'deg'},
+                               {label: 'arcminute', value: 'arcmin'},
+                               {label: 'arcsecond', value: 'arcsec'}
                                ]}
                         value={unit}
                         multiple={false}

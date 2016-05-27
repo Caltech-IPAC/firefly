@@ -1,10 +1,10 @@
 /*right list of table with catalog names to be selected*/
 .catalogtable {
-    height: 300px;
-    width: 350px;
+    height: 250px;
+    width: 375px;
     overflow: auto;
     border: 1px solid #a3aeb9;
-    margin-left: 30px;
+    margin-left: 5px;
 }
 
 .marked-text {
@@ -28,7 +28,7 @@
 .item-cell-title {
     padding: 5px;
     font-weight: bold;
-    white-space: nowrap;
+    /*white-space: nowrap;*/
 }
 
 .cell {

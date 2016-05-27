@@ -99,6 +99,8 @@ export class TablePanel extends Component {
                 filterInfo, filterCount, sortInfo, data} = this.state;
         const {tableConnector} = this;
 
+        const {onTableChanged} = this.props;
+
         if (error) return <div className='TablePanel__error'>{error}</div>;
         if (isEmpty(columns)) return <div style={{position: 'relative', width: '100%', height: '100%'}}><div msg='loading...' className='loading-mask'/></div>;
 
@@ -151,6 +153,7 @@ export class TablePanel extends Component {
                             currentPage={currentPage}
                             callbacks={tableConnector}
                             renderers={renderers}
+                            onTableChanged={onTableChanged}
                         />
                         {showOptions && <TablePanelOptions
                             columns={columns}
@@ -189,6 +192,7 @@ TablePanel.propTypes = {
     showSave: PropTypes.bool,
     showOptionButton: PropTypes.bool,
     showFilterButton: PropTypes.bool,
+    onTableChanged: PropTypes.func,
     renderers: PropTypes.objectOf(
         PropTypes.shape({
             cellRenderer: PropTypes.func,

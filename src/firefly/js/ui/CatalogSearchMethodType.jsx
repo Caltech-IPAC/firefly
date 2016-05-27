@@ -67,7 +67,7 @@ export class CatalogSearchMethodType extends Component {
             <div style={{padding: 10, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center'}}>
                 {renderTargetPanel(groupKey, searchType)}
                 <div
-                    style={{display:'flex', flexDirection:'row', flexWrap:'no-wrap', alignItems:'center' }}>
+                    style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
                     <ListBoxInputField
                         fieldKey='spatial'
                         initialState={{
@@ -77,7 +77,7 @@ export class CatalogSearchMethodType extends Component {
                                           value:SpatialMethod.Cone.value
                                       }}
                         options={ spatialOptions() }
-                        wrapperStyle={{marginRight:'15px'}}
+                        wrapperStyle={{marginRight:'15px', padding:'10px 0 5px 0'}}
                         multiple={false}
                     />
                     {sizeArea(searchType)}
@@ -195,10 +195,10 @@ function sizeArea(searchType) {
 
         return (
             <div
-                style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'wrap', alignItems:'center', border:'solid #a3aeb9 1px' }}>
+                style={{padding:5, border:'solid #a3aeb9 1px' }}>
                 <InputAreaFieldConnected fieldKey='polygoncoords'
-                                         wrapperStyle={{padding:5,display:'flex', flexDirection:'row', flexWrap:'wrap', alignItems:'center'}}
-                                         style={{maxWidth:'350px', width:'200px', height:'30px', maxHeight:'150px', overflow:'auto'}}
+                                         wrapperStyle={{padding:5}}
+                                         style={{overflow:'auto',height:'65px', maxHeight:'200px', width:'220px', maxWidth:'300px'}}
                                          initialState={{
                                                tooltip:'Enter polygon coordinates search',
                                                labelWidth:70
@@ -261,7 +261,7 @@ export const SpatialMethod = new Enum({
         'Box': 'Box',
         'Polygon': 'Polygon',
         'Multi-Object': 'Table',
-        'All Sky': 'NONE'
+        'All Sky': 'AllSky'
     },
     {ignoreCase: true}
 );

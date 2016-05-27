@@ -190,16 +190,25 @@ export const ImageCell = ({rowIndex, data, col}) => (
  * @param value  display this value for every cell.
  * @returns {function()}
  */
-export const createLinkCell = ({valFromCol, value}) => {
+export const createLinkCell = ({hrefColIdx, value}) => {
 
     return ({rowIndex, data, col, ...CellProps}) => {
-        const href = get(data, [rowIndex, col],'undef');
-        const val = value || get(data, [rowIndex, valFromCol], 'undef');
+        hrefColIdx = hrefColIdx || col;
+        const href = get(data, [rowIndex, hrefColIdx],'undef');
+        const val = value || get(data, [rowIndex, col], 'undef');
+        if(href ==='undef' || href === '#'){
+            return (
+                <Cell {...CellProps}>
+                    {val}
+                </Cell>
+            );
+        }else {
         return (
             <Cell {...CellProps}>
                 <a href={href}>{val}</a>
             </Cell>
         );
+        }
     };
 };
 
@@ -211,7 +220,7 @@ export const createLinkCell = ({valFromCol, value}) => {
  * @param onChange
  * @returns {function()}
  */
-export const createInputCell = (tooltips, size=10, validator, onChange) => {
+export const createInputCell = ({tooltips, size=10, validator, onChange}) => {
     const changeHandler = (rowIndex, data, col, v) => {
         set(data, [rowIndex, col], v.value);
         onChange && onChange(v);
