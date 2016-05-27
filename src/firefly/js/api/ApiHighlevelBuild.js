@@ -303,7 +303,7 @@ function showImageInMultiViewer(llApi, targetDiv, request) {
 var imageInit= false;
 function highlevelImageInit(llApi) {
     if (!imageInit) {
-        llApi.util.image.initImageViewExpanded(llApi.ui.ApiExpandedDisplay);
+        llApi.util.image.dispatchApiToolsView(true);
         llApi.util.image.initAutoReadout();
         imageInit= true;
     }

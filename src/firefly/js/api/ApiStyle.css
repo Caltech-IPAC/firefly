@@ -13,6 +13,9 @@
     right: 7px;
     box-shadow: 7px 7px 7px -3px rgba(0,0,0,0.75);
     border: 1px solid #b3b3b3;
-    border-top: 2px groove;
+    border-top: 4px groove;
+    border-left: 4px groove;
+    border-top-right-radius: 3px;
+    border-bottom-left-radius: 3px;
     z-index: 100;
 }

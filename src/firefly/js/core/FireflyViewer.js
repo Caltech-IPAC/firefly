@@ -1,4 +1,3 @@
-
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
@@ -127,7 +126,6 @@ FireflyViewer.propTypes = {
 };
 
 FireflyViewer.defaultProps = {
-    title: 'Firefly',
     views: 'tri_view'
 };
 

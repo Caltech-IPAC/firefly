@@ -205,21 +205,21 @@ export function getTblById(id) {
 }
 
 /**
- * return the group information
+ * returns the group information
  * @param {string} tbl_group    the group to look for
- * @returns {*}
+ * @returns {Object}
  */
 export function getTableGroup(tbl_group='main') {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group]);
 }
 
 /**
- * return the table group information for the given IDs.  
- * @param tbl_ui_id
+ * returns the table information for the given id and group.
+ * @param tbl_id
  * @param tbl_group
- * @returns {*}
+ * @returns {Object}
  */
-export function isTableInGroup(tbl_id, tbl_group='main') {
+export function getTableInGroup(tbl_id, tbl_group='main') {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group, 'tables',  tbl_id]);
 }
 

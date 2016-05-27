@@ -52,7 +52,7 @@ export function tableSearch(action) {
             dispatchSetupTblTracking(tbl_id);
             dispatchTableFetch(request);
             dispatchHideDropDown();
-            if (!TblUtil.isTableInGroup(tbl_id, tbl_group)) {
+            if (!TblUtil.getTableInGroup(tbl_id, tbl_group)) {
                 const {tbl_group, removable} = options || {};
                 dispatchTblResultsAdded(tbl_id, title, options, removable, tbl_group);
                 dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:() => dispatchActiveTableChanged(tbl_id, tbl_group)});
