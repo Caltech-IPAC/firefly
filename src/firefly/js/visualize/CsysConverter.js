@@ -563,7 +563,7 @@ export class CysConverter {
 
     /**
      *
-     * @param plot
+     * @param {object} plot
      * @return {CysConverter}
      */
     static make(plot) {
