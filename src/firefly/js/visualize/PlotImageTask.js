@@ -16,7 +16,7 @@ import {WPConst, DEFAULT_THUMBNAIL_SIZE} from './WebPlotRequest.js';
 import {Band} from './Band.js';
 import {PlotPref} from './PlotPref.js';
 import ActiveTarget  from '../drawingLayers/ActiveTarget.js';
-import DrawLayerCntlr from './DrawLayerCntlr.js';
+import * as DrawLayerCntlr from './DrawLayerCntlr.js';
 import {makePostPlotTitle} from './reducer/PlotTitle.js';
 import {dispatchAddImages, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
 

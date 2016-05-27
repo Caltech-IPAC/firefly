@@ -48,6 +48,7 @@ import Catalog from '../drawingLayers/Catalog.js';
 import WebGrid from '../drawingLayers/WebGrid.js';
 
 import RegionPlot from '../drawingLayers/RegionPlot.js';
+import RegionCntlr from '../visualize/region/RegionCntlr.js';
 
 import {showExampleDialog} from '../ui/ExampleDialog.jsx';
 
@@ -131,6 +132,9 @@ actionCreators.set(XYPlotCntlr.LOAD_PLOT_DATA, XYPlotCntlr.loadPlotData);
 actionCreators.set(DrawLayerCntlr.SELECT_AREA_END, selectAreaEndActionCreator);
 actionCreators.set(DrawLayerCntlr.DT_END, distanceToolEndActionCreator);
 
+
+actionCreators.set(DrawLayerCntlr.REGION_CREATE_LAYER, RegionCntlr.regionCreateLayerActionCreator);
+actionCreators.set(DrawLayerCntlr.REGION_DELETE_LAYER, RegionCntlr.regionDeleteLayerActionCreator);
 
 
 actionCreators.set('exampleDialog', (rawAction) => {

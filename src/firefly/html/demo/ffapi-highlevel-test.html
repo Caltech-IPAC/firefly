@@ -55,6 +55,33 @@
 <div id="old1" style="width: 300px; height: 300px; margin: 10px;"></div>
 <div id="old2" style="width: 300px; height: 300px; margin: 10px;"></div>
 
+<div>
+    <div style="display: flex; width:820px">
+        <p style="color:blue; margin:3px">Region</p> <p style="color:blue; margin:3px"> Test: </p>
+        <p style="margin-top:3px">please enter a region ID or select a region ID first, then click the region operation.
+            If there is no region ID entered, the hint shown in the text field is used for "Create Region Layer". </p>
+    </div>
+
+    <a href='javascript:createRegionLayer()'>Create Region Layer</a>
+    <input type='text' placeholder='' list='regionCreated' id='createRegionId' name='createRegionLayer' onChange='updateDatalist()'>
+    <datalist id='regionCreated'>
+    </datalist>
+    <a href='javascript:deleteRegionLayer()'>Delete Region Layer</a>
+    <select id='regionList_delete' onChange='selectRegionLayerToDelete()'><option selected disabled>Region Layer:</option></select>
+    <div>
+        <textarea id="regionLayerContent" style="width: 800px; height: 300px; margin: 10px;"> </textarea>
+    </div>
+</div>
+<div>
+    <a href='javascript:addRegionEntry()'>Add Region Entry </a>
+    <select id='regionEntry_add'><option selected disabled>Regiion Layers:</option></select>
+    <a href='javascript:removeRegionEntry()'>Remove Region Entry</a>
+    <select id='regionEntry_remove'><option selected disabled>Regiion Layers:</option></select>
+    <div>
+        <textarea id="moreRegionContent" style="width: 800px; height: 300px; margin: 10px;"> </textarea>
+    </div>
+</div>
+
 
 <script type="text/javascript">
     {
@@ -188,6 +215,124 @@
             firefly.addXYPlot({QUERY_ID: 'oldSelectable', xCol: 'crval1', yCol: 'crval2'}, 'oldXyPlot1');
             //-----< old xyplot api ------//
 
+            var regionAry = [
+                'global color=green dashlist=8 3 width=1 font="helvetica 10 normal normal" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 rotate=0 source=1',
+                'J2000;point    202.41   47.262 # color=pink text="pt circle 1" point=circle',
+                'line(202.414796 47.281999 202.423758 47.247072) # color=orange width=10 select=0 text={line 2}',
+                'text 30p 40p # color=pink text={text test 3} edit=0 highlite=0 font="BRAGGADOCIO 10 normal roman"',
+                'text 202.437691 47.234228{more text testing 4} # color=purple move=0',
+                'point    202.43    47.270 # point=x 15 color=green text="pt x 5" rotate=0',
+                '#point    202.45    47.262 # color=red 10p text="pt boxcircle 6" delete=0 point=boxcircle 10',
+                'boxcircle point    202.45    47.262 # color=red text="pt boxcircle 6" delete=0',
+                'physical;circle   80 140  20       # color=red offsetx=25  offsety=2 width=5 edit=0 text="circle 7"',
+                'annulus   13h30m16.41s +47d14m43.9s  30p 40p 50p       # color=green text="hello" include=0 text="annulus 8"',
+                'physical;point 200 140 # color=yellow point=cross 20 text="pt cross 9" offsetx=10',
+                'physical;point 13h29m52.73s, +47d11m40.9s # color=purple point=diamond 15 text="pt diamond 10"',
+                '#circle(202.55556, 47.188286 , 20p)  # color=blue text="text 11"',
+                'box(202.55556, 47.188286 ,20p,40p, 30p, 50p, 0)  # color=red width=5 text="boxann 11"',
+                'box(202.52556,47.226286,0.0240,0.006,0)  # color=green width=5 text="box 11-2"',
+                'image;box(100, 150, 50p, 20p, 2r) # color=magenta width=6 text="slanted box 12"',
+                'image;box(190.564796, 47.281999, 50p, 20p, 0) # color=red width=6 offsety=-15 text="box 12-1"',
+                'j2000;box(47.247072i, 180.445347i, 50p, 20p, 0) # color=blue width=6 text="box 12-3"',
+                'physical;-box point 12 12 # text="pt box 13"',
+                'j2000;polygon(202.564796, 47.281999,202.553758, 47.247072, 202.445347, 47.244296, 202.479687, 47.264027, 202.492153, 47.290841) # color=blue text="polygon 14" offsety=10 width=10 font="helvetica 16 bold"',
+                'point    202.45   47.2879 # color=cyan text="pt arrow 15" delete=0 point=arrow 20'
+            ];
+
+            var moreRegionAry =  [
+                'image;ellipse 100 100 20p 40p 30p 60p 40p 80p 20 # color=green text={ellipseannulus 2}',
+                'J2000;ellipse 202.55556, 47.188286 20p 40p 0i # color=#48f text={ellipse 1} width=10',
+                'image;box 130 100 20p 40p 30p 50p 70p 100p 30 # color=red text={slanted box annulus 3}'
+            ];
+
+            window.regions = [];
+            window.regionId = window.regions.length;
+
+            document.getElementById('regionLayerContent').value = regionAry.join('\n');
+            document.getElementById('moreRegionContent').value = moreRegionAry.join('\n');
+            //document.getElementById('createRegionId').placeholder = "Region_Plot_" + (window.regionId+1);
+            updateRegionLayerList();
+        };
+
+        createRegionLayer = function() {
+            var layerId = document.getElementById('createRegionId').value;
+
+            if (!layerId) {
+                window.regionId++;
+                layerId = "Region_Plot_" + window.regionId;
+                document.getElementById('createRegionId').value = layerId;
+            }
+
+            var regionAry = document.getElementById('regionLayerContent').value.split('\n').filter(function(r) { return (r.length !== 0);});
+            window.regions.push(layerId);
+            updateRegionLayerList();
+
+            return firefly.action.dispatchCreateRegionLayer(layerId, layerId, null, regionAry, window.ffViewer.dispatch);
+        };
+
+        updateDataList = function() {
+            var datalist = document.getElementById('regionCreated');
+            var options = '';
+
+            window.regions.forEach( function(r) {
+                options += '<option value="'+r+'" />';
+            });
+
+            datalist.innerHTML = options;
+            document.getElementById('createRegionId').value = '';
+            document.getElementById('createRegionId').placeholder = "Region_Plot_" + (window.regionId+1);
+        };
+
+        updateRegionLayerList = function() {
+            var selectListIds = ['regionList_delete', 'regionEntry_add', 'regionEntry_remove'];
+
+            selectListIds.forEach( function(selectId) {
+                var selectBox = document.getElementById(selectId);
+
+                for (var i = selectBox.options.length - 1; i > 0; i--) {
+                     selectBox.remove(i);
+                }
+                window.regions.forEach(function (r) {
+                    var option = document.createElement('option');
+                    option.value = r;
+                    option.text = r;
+                    selectBox.appendChild(option);
+                });
+
+                selectBox.getElementsByTagName('option')[0].selected = 'selected';
+            });
+
+            updateDataList();
+        };
+
+        deleteRegionLayer = function() {
+            var selectBox = document.getElementById('regionList_delete');
+
+            if (selectBox.selectedIndex !== 0) {
+                var selectedLayerId = selectBox.options[selectBox.selectedIndex].value;
+
+                window.regions.splice(selectBox.selectedIndex - 1, 1);
+                updateRegionLayerList();
+                firefly.action.dispatchDeleteRegionLayer(selectedLayerId, window.ffViewer.dispatch);
+            }
+        };
+
+        addRegionEntry = function() {
+            var selectBox=document.getElementById('regionEntry_add');
+            var selectedLayerId = selectBox.options[selectBox.selectedIndex].value;
+            var addRegions = document.getElementById('moreRegionContent').value.split('\n').filter(function(r) { return (r.length !== 0);});
+
+            selectBox.getElementsByTagName('option')[0].selected = 'selected';
+            return firefly.action.dispatchAddRegionEntry(selectedLayerId, {addRegions}, window.ffViewer.dispatch);
+        };
+
+        removeRegionEntry = function() {
+            var selectBox=document.getElementById('regionEntry_remove');
+            var selectedLayerId = selectBox.options[selectBox.selectedIndex].value;
+            var removeRegions = document.getElementById('moreRegionContent').value.split('\n').filter(function(r) { return (r.length !== 0);});
+
+            selectBox.getElementsByTagName('option')[0].selected = 'selected';
+            return firefly.action.dispatchRemoveRegionEntry(selectedLayerId, {removeRegions}, window.ffViewer.dispatch);
         }
    }
    

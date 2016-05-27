@@ -14,6 +14,7 @@ import * as ReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
 import * as ImPlotCntlr from '../visualize/ImagePlotCntlr.js';
 import * as MultiViewCntlr from '../visualize/MultiViewCntlr.js';
 import * as AppDataCntlr from '../core/AppDataCntlr.js';
+import * as DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {ApiExpandedView} from './ApiExpandedView.jsx';
 
 // Parts of the lowlevel api
@@ -103,7 +104,8 @@ export function buildLowlevelAPI() {
         findActionType(ReadoutCntlr, ReadoutCntlr.READOUT_PREFIX),
         findActionType(MultiViewCntlr, MultiViewCntlr.IMAGE_MULTI_VIEW_PREFIX),
         findActionType(ImPlotCntlr.default, ImPlotCntlr.PLOTS_PREFIX),
-        findActionType(AppDataCntlr, AppDataCntlr.APP_DATA_PATH)
+        findActionType(AppDataCntlr, AppDataCntlr.APP_DATA_PATH),
+        findActionType(DrawLayerCntlr.default, DrawLayerCntlr.DRAWLAYER_PREFIX)
     );
 
 
@@ -116,7 +118,8 @@ export function buildLowlevelAPI() {
         findDispatch(ReadoutCntlr),
         findDispatch(MultiViewCntlr),
         findDispatch(ImPlotCntlr),
-        findDispatch(AppDataCntlr)
+        findDispatch(AppDataCntlr),
+        findDispatch(DrawLayerCntlr)
     );
 
     const ui= {

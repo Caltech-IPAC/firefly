@@ -8,35 +8,42 @@ import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
 import {without,union,omit,isEmpty} from 'lodash';
 
+
 export {selectAreaEndActionCreator} from '../drawingLayers/SelectArea.js';
 export {distanceToolEndActionCreator} from '../drawingLayers/DistanceTool.js';
 
-const RETRIEVE_DATA= 'DrawLayerCntlr.retrieveData';
-const CREATE_DRAWING_LAYER= 'DrawLayerCntlr.createDrawLayer';
-const DESTROY_DRAWING_LAYER= 'DrawLayerCntlr.destroyDrawLayer';
-const CHANGE_VISIBILITY= 'DrawLayerCntlr.changeVisibility';
-const CHANGE_DRAWING_DEF= 'DrawLayerCntlr.changeDrawingDef';
-const ATTACH_LAYER_TO_PLOT= 'DrawLayerCntlr.attachLayerToPlot';
-const PRE_ATTACH_LAYER_TO_PLOT= 'DrawLayerCntlr.attachLayerToPlot';
-const DETACH_LAYER_FROM_PLOT= 'DrawLayerCntlr.detachLayerFromPlot';
-const MODIFY_CUSTOM_FIELD= 'DrawLayerCntlr.modifyCustomField';
-const FORCE_DRAW_LAYER_UPDATE= 'DrawLayerCntlr.forceDrawLayerUpdate';
+export const DRAWLAYER_PREFIX = 'DrawLayerCntlr';
+
+const RETRIEVE_DATA= `${DRAWLAYER_PREFIX}.retrieveData`;
+const CREATE_DRAWING_LAYER= `${DRAWLAYER_PREFIX}.createDrawLayer`;
+const DESTROY_DRAWING_LAYER= `${DRAWLAYER_PREFIX}.destroyDrawLayer`;
+const CHANGE_VISIBILITY= `${DRAWLAYER_PREFIX}.changeVisibility`;
+const CHANGE_DRAWING_DEF= `${DRAWLAYER_PREFIX}.changeDrawingDef`;
+const ATTACH_LAYER_TO_PLOT= `${DRAWLAYER_PREFIX}.attachLayerToPlot`;
+const PRE_ATTACH_LAYER_TO_PLOT= `${DRAWLAYER_PREFIX}.attachLayerToPlot`;
+const DETACH_LAYER_FROM_PLOT= `${DRAWLAYER_PREFIX}.detachLayerFromPlot`;
+const MODIFY_CUSTOM_FIELD= `${DRAWLAYER_PREFIX}.modifyCustomField`;
+const FORCE_DRAW_LAYER_UPDATE= `${DRAWLAYER_PREFIX}.forceDrawLayerUpdate`;
 
 // _- select
-const SELECT_AREA_START= 'DrawLayerCntlr.SelectArea.selectAreaStart';
-const SELECT_AREA_MOVE= 'DrawLayerCntlr.SelectArea.selectAreaMove';
-const SELECT_AREA_END= 'DrawLayerCntlr.SelectArea.selectAreaEnd';
-const SELECT_MOUSE_LOC= 'DrawLayerCntlr.SelectArea.selectMouseLoc';
+const SELECT_AREA_START= `${DRAWLAYER_PREFIX}.SelectArea.selectAreaStart`;
+const SELECT_AREA_MOVE= `${DRAWLAYER_PREFIX}.SelectArea.selectAreaMove`;
+const SELECT_AREA_END= `${DRAWLAYER_PREFIX}.SelectArea.selectAreaEnd`;
+const SELECT_MOUSE_LOC= `${DRAWLAYER_PREFIX}.SelectArea.selectMouseLoc`;
 
-const SELECT_POINT=  'DrawLayerCntlr.SelectPoint.selectPoint';
+const SELECT_POINT=  `${DRAWLAYER_PREFIX}.SelectPoint.selectPoint`;
 
 
 // _- Distance tool
-const DT_START= 'DrawLayerCntlr.DistanceTool.distanceToolStart';
-const DT_MOVE= 'DrawLayerCntlr.DistanceTool.distanceToolMove';
-const DT_END= 'DrawLayerCntlr.DistanceTool.distanceToolEnd';
+const DT_START= `${DRAWLAYER_PREFIX}.DistanceTool.distanceToolStart`;
+const DT_MOVE= `${DRAWLAYER_PREFIX}.DistanceTool.distanceToolMove`;
+const DT_END= `${DRAWLAYER_PREFIX}.DistanceTool.distanceToolEnd`;
 
-
+// region
+const REGION_CREATE_LAYER = `${DRAWLAYER_PREFIX}.RegionPlot.createLayer`;
+const REGION_DELETE_LAYER = `${DRAWLAYER_PREFIX}.RegionPlot.deleteLayer`;
+const REGION_ADD_ENTRY = `${DRAWLAYER_PREFIX}.RegionPlot.addRegion`;
+const REGION_REMOVE_ENTRY = `${DRAWLAYER_PREFIX}.RegionPlot.removeRegion`;
 
 export const DRAWING_LAYER_KEY= 'drawLayers';
 
@@ -62,9 +69,12 @@ export default {
     SELECT_POINT,
     FORCE_DRAW_LAYER_UPDATE,
     DT_START, DT_MOVE, DT_END,
+    REGION_CREATE_LAYER, REGION_DELETE_LAYER, REGION_ADD_ENTRY, REGION_REMOVE_ENTRY,
     makeReducer, dispatchRetrieveData, dispatchChangeVisibility,
     dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
-    dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot
+    dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot,
+    dispatchCreateRegionLayer, dispatchDeleteRegionLayer,
+    dispatchAddRegionEntry, dispatchRemoveRegionEntry
 };
 
 /**
@@ -91,7 +101,6 @@ export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
         dispatchAttachLayerToPlot(drawLayerTypeId,plotIdAry);
     }
 }
-
 
 
 /**
@@ -216,6 +225,48 @@ export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
 
 }
 
+
+export function dispatchCreateRegionLayer(regionId, layerTitle, fileOnServer, rgAry, dispatcher = flux.process) {
+    if (!fileOnServer) {
+        fileOnServer = '';
+    }
+    if (!rgAry) {
+        rgAry = [];
+    }
+
+    var regionAry =  rgAry && (Array.isArray(rgAry) ? rgAry : [rgAry]);
+
+    dispatcher({type: REGION_CREATE_LAYER, payload: {regionId, fileOnServer, layerTitle, regionAry}});
+}
+
+
+export function dispatchDeleteRegionLayer(regionId, dispatcher = flux.process) {
+    dispatcher({type: REGION_DELETE_LAYER, payload: {regionId}});
+}
+
+export function dispatchAddRegionEntry(regionId, regionChanges, dispatcher = flux.process) {
+    var {addRegions} = regionChanges;
+
+    if (!addRegions) {
+        regionChanges = Object.assign({}, regionChanges, {addRegions: []});
+    } else if (!Array.isArray(addRegions)) {
+        regionChanges = Object.assign({}, regionChanges, {addRegions: [addRegions]});
+    }
+
+    dispatcher({type: REGION_ADD_ENTRY, payload: {regionId, regionChanges}});
+}
+
+export function dispatchRemoveRegionEntry(regionId, regionChanges, dispatcher = flux.process) {
+    var {removeRegions} = regionChanges;
+
+    if (!removeRegions) {
+        regionChanges = Object.assign({}, regionChanges, {removeRegions: []});
+    } else if (!Array.isArray(removeRegions)) {
+        regionChanges = Object.assign({}, regionChanges, {removeRegions: [removeRegions]});
+    }
+
+    dispatcher({type: REGION_REMOVE_ENTRY, payload: {regionId, regionChanges}});
+}
 
 
 function getDrawLayerId(dlRoot,id) {
