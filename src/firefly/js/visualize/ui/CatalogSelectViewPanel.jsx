@@ -8,8 +8,7 @@ import FormPanel from '../../ui/FormPanel.jsx';
 import { get, merge, isEmpty} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
-import {TableRequest} from '../../tables/TableRequest';
-import {doFetchTable, uniqueTblUiGid} from '../../tables/TableUtil.js';
+import {doFetchTable, makeTblRequest, makeIrsaCatalogRequest} from '../../tables/TableUtil.js';
 import {CatalogTableListField} from './CatalogTableListField.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
@@ -123,19 +122,14 @@ function doCatalog(request) {
     var tReq = {};
     var id = '';
     if (request.spatial === SpatialMethod.get('Multi-Object').value) {
-        id = 'GatorQuery';
         var filename = request.fileUpload;
         var radius = conesize;
-        tReq = TableRequest.newInstance({
-            id,
+        // export function makeIrsaCatalogRequest(title, project, catalog, use='catalog_overlay', params={}, options={}, tbl_id=uniqueTblId()) {
+        tReq = makeIrsaCatalogRequest(title, request.project, request.cattable, {
             filename,
             radius,
             SearchMethod: request.spatial,
-            title,
-            catalog: request.cattable,
             RequestedDataSet: request.catalog,
-            use: 'catalog_overlay',
-            catalogProject: request.project
         });
     } else {
         id = 'GatorQuery';
@@ -144,14 +138,9 @@ function doCatalog(request) {
             title += ':' + conesize + '\'\'';
         }
         title += ')';
-        tReq = TableRequest.newInstance({
-            id,
+        tReq = makeIrsaCatalogRequest(title, request.project, request.cattable, {
             SearchMethod: request.spatial,
-            title,
-            catalog: request.cattable,
             RequestedDataSet: request.catalog,
-            use: 'catalog_overlay',
-            catalogProject: request.project
         });
     }
 
@@ -186,26 +175,22 @@ function doCatalog(request) {
 }
 
 function doVoSearch(request) {
-    var tReq = TableRequest.newInstance({
-        [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
-        id: 'GatorQuery',
-        title: request.catalog,
-        SearchMethod: request.spatial,
-        catalog: request.cattable,
-        RequestedDataSet: request.catalog,
-        radius: request.conesize,
-        use: 'catalog_overlay',
-        catalogProject: request.project
-    });
+    // tReq = makeIrsaCatalogRequest(title, request.project, request.cattable, null, {
+
+    var tReq = makeIrsaCatalogRequest(request.catalog, request.project, request.cattable, 
+        {
+            [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
+            SearchMethod: request.spatial,
+            RequestedDataSet: request.catalog,
+            radius: request.conesize,
+        });
     console.log('Does not dispatch yet ' + tReq);
     //dispatchTableSearch(tReq);
 }
 
 function doLoadTable(request) {
-    var tReq = TableRequest.newInstance({
-        id: 'userCatalogFromFile',
+    var tReq = makeTblRequest('userCatalogFromFile', 'Table Upload', {
         filePath: request.fileUpload,
-        title: 'Table Upload',
         use: 'catalog_overlay'
     });
     dispatchTableSearch(tReq);
@@ -598,12 +583,10 @@ function getProps(params, fireValueChange) {
 
 CatalogSelectViewPanel.propTypes = {
     name: PropTypes.oneOf([dropdownName]),
-    resultId: PropTypes.string
 };
 
 CatalogSelectViewPanel.defaultProps = {
     name: dropdownName,
-    resultId: uniqueTblUiGid()
 };
 
 /*

@@ -27,6 +27,8 @@ const INT_MAX = Math.pow(2,31) - 1;
  * @prop {string} inclCols  list of columns to select.  Column names separted by comma(,)
  * @prop {string} decimate  decimation information.
  * @prop {object} META_INFO meta information passed as key/value pair to server then returned as tableMeta.
+ * @prop {string} use       one of 'catalog_overlay', 'catalog_primary', 'data_primary'.
+ * @prop {string} tbl_id    a unique id of a table. auto-create if not given.
  */
 
 /**
@@ -35,13 +37,14 @@ const INT_MAX = Math.pow(2,31) - 1;
  * @param {string} [title]  title to display with this table.
  * @param {object} [params] the parameters to include with this request.
  * @param {TblReqOptions} [options] more options.  see TblReqOptions for details.
- * @param {string} [tbl_id]
  * @returns {*}
  */
-export function makeTblRequest(id, title, params={}, options={}, tbl_id=uniqueTblId()) {
+export function makeTblRequest(id, title, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
     title = title || id;
-    var META_INFO = {title, tbl_id};
+    const tbl_id = options.tbl_id || uniqueTblId();
+    var META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
+    options = omit(options, 'tbl_id');
     return omitBy(Object.assign(req, options, params, {META_INFO, tbl_id, id}), isNil);
 }
 
@@ -49,15 +52,16 @@ export function makeTblRequest(id, title, params={}, options={}, tbl_id=uniqueTb
  * @param {string} [title]      title to display with this table.
  * @param {string} source       required; location of the ipac table. url or file path.
  * @param {string} [alt_source] use this if source does not exists.
- * @param {string} [tbl_id]     a unique ID to reference this table.  One will be created if not given.
  * @param {TblReqOptions} [options]  more options.  see TblReqOptions for details.
  * @returns {object}
  */
-export function makeFileRequest(title, source, alt_source, options={}, tbl_id=uniqueTblId()) {
+export function makeFileRequest(title, source, alt_source, options={}) {
     const id = 'IpacTableFromSource';
     var req = {startIdx: 0, pageSize: 100};
     title = title || source;
-    var META_INFO = {title, tbl_id};
+    const tbl_id = options.tbl_id || uniqueTblId();
+    options = omit(options, 'tbl_id');
+    var META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
     return omitBy(Object.assign(req, options, {source, alt_source, META_INFO, tbl_id, id}), isNil);
 }
 
@@ -94,20 +98,24 @@ export function makeFileRequest(title, source, alt_source, options={}, tbl_id=un
  * @param {string} title    title to be displayed with this table result
  * @param {string} project
  * @param {string} catalog  the catalog name to search
- * @param {string} use      one of 'catalog_overlay', 'catalog_primary', 'data_primary'.
  * @param {(ConeParams|BoxParams|ElipParams)} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
  * @param {TblReqOptions} [options]
  * @returns {object}
  */
-export function makeIrsaCatalogRequest(title, project, catalog, use='catalog_overlay', params={}, options={}, tbl_id=uniqueTblId()) {
+export function makeIrsaCatalogRequest(title, project, catalog, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
     title = title || catalog;
+    options.use = options.use || 'catalog_overlay';
+    const tbl_id = options.tbl_id || uniqueTblId();
     const id = 'GatorQuery';
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
     const catalogProject = project;
+    var META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
 
-    var META_INFO = {title, tbl_id};
-    return omitBy(Object.assign(req, options, omit(params, 'position'), {id, tbl_id, META_INFO, UserTargetWorldPt, catalogProject, catalog, use}), isNil);
+    options = omit(options, 'tbl_id');
+    params = omit(params, 'position');
+
+    return omitBy(Object.assign(req, options, params, {id, tbl_id, META_INFO, UserTargetWorldPt, catalogProject, catalog}), isNil);
 }
 
 /*---------------------------- creator functions >----------------------------*/
@@ -115,7 +123,7 @@ export function makeIrsaCatalogRequest(title, project, catalog, use='catalog_ove
 
 /**
  *
- * @param tableRequest is a TableRequest params object
+ * @param tableRequest is a table request params object
  * @param hlRowIdx set the highlightedRow.  default to startIdx.
  * @returns {Promise.<T>}
  */

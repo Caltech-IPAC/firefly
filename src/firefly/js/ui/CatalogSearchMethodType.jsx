@@ -15,7 +15,6 @@ import {ServerParams} from '../data/ServerParams.js';
 import Validate from '../util/Validate.js';
 import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
 
-import {TableRequest} from '../tables/TableRequest.js';
 import Enum from 'enum';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchSetupTblTracking} from '../visualize/TableStatsCntlr.js';

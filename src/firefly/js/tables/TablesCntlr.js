@@ -136,7 +136,7 @@ export function dispatchTableSearch(request, options, dispatcher= flux.process) 
 
 /**
  * Fetch table data from the server.
- * @param request a TableRequest params object.
+ * @param request a table request params object.
  * @param hlRowIdx set the highlightedRow.  default to startIdx.
  * @param {function} dispatcher only for special dispatching uses such as remote
  */

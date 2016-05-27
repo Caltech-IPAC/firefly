@@ -313,7 +313,7 @@ function doCatalog(request) {
     var tReq = makeIrsaCatalogRequest(
                 request.catalog,
                 options.find( (op) => request.catalog===op.value).proj,
-                request.catalog, null,
+                request.catalog,
                 {
                     [ServerParams.USER_TARGET_WORLD_PT] : request[ServerParams.USER_TARGET_WORLD_PT],
                     SearchMethod: 'Cone',
