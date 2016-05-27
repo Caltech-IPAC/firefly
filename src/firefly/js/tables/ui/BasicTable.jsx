@@ -13,6 +13,10 @@ import {TableConnector} from '../TableConnector.js';
 import {dispatchTableReplace, dispatchTableUiUpdate} from '../TablesCntlr.js';
 import {SelectInfo} from '../SelectInfo.js';
 
+/**
+ * this is no longer needed.  use TablePanel with showToolBar = false
+ * @deprecated
+ */
 export class BasicTable extends Component {
 
     constructor(props) {
@@ -26,7 +30,7 @@ export class BasicTable extends Component {
         }
         tbl_ui_id = tbl_ui_id || tbl_id + '-ui';
         this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, isLocal);
-        const uiState = TblUtil.findTableUiById(tbl_ui_id);
+        const uiState = TblUtil.getTableUiById(tbl_ui_id);
         this.state = uiState || {};
     }
 
@@ -53,7 +57,7 @@ export class BasicTable extends Component {
 
     storeUpdate() {
         const {tbl_ui_id} = this.tableConnector;
-        const uiState = TblUtil.findTableUiById(tbl_ui_id) || {columns: []};
+        const uiState = TblUtil.getTableUiById(tbl_ui_id) || {columns: []};
         this.setState(uiState);
     }
 

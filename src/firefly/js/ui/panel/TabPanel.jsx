@@ -123,12 +123,12 @@ export class Tabs extends Component {
 
     render () {
         var { selectedIdx}= this.state;
-        const origChildren = this.props.children;
-        const numTabs = React.Children.count(origChildren);
+        const {children, useFlex} = this.props;
+        const numTabs = React.Children.count(children);
 
         var content;
         selectedIdx = Math.min(selectedIdx, numTabs-1);
-        var children = React.Children.map(origChildren, (child, index) => {
+        var newChildren = React.Children.map(children, (child, index) => {
                 if (index === selectedIdx) {
                     content = React.Children.only(child.props.children);
                 }
@@ -139,11 +139,18 @@ export class Tabs extends Component {
                     ref: 'tab-' + (index)
                 });
             });
-        return (
+        const contentDiv = useFlex ? content :
+                        (   <div style={{display: 'block', position: 'absolute', top:0, bottom:0, left:0, right:0}}>
+                                {content}
+                            </div>
+                        );
 
-            <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden'}}>
-                <TabsHeader>{children}</TabsHeader>
-                <div ref='contentRef' className='TabPanel__Content'>{(content)?content:''}</div>
+        return (
+            <div style={{display: 'flex', height: '100%', flexDirection: 'column', flexGrow: 1, overflow: 'hidden'}}>
+                <TabsHeader>{newChildren}</TabsHeader>
+                <div ref='contentRef' className='TabPanel__Content'>
+                    {(content)?contentDiv:''}
+                </div>
             </div>
 
         );
@@ -154,11 +161,13 @@ export class Tabs extends Component {
 Tabs.propTypes= {
     componentKey: PropTypes.string, // if need to preserve state and is not part of the field group
     defaultSelected:  PropTypes.any,
-    onTabSelect: PropTypes.func
+    onTabSelect: PropTypes.func,
+    useFlex: PropTypes.bool,
 };
 
 Tabs.defaultProps= {
-    defaultSelected: 0
+    defaultSelected: 0,
+    useFlex: false
 };
 
 
@@ -193,7 +202,7 @@ export class Tab extends Component {
                      {name}
                 </div>
                 {removable &&
-                        <div style={{right: -5, top: -2}} className='btn-close'
+                        <div style={{right: -4, top: -3}} className='btn-close'
                              title='Remove Tab'
                              onClick={() => onTabRemove && onTabRemove(name)}/>
                 }
@@ -228,7 +237,8 @@ function getProps(params, fireValueChange) {
     return Object.assign({}, params,
         {
             onTabSelect: (idx,id,name) => onChange(idx,id,name,params, fireValueChange),
-            defaultSelected:params.value
+            defaultSelected:params.value,
+            useFlex: true
         });
 }
 

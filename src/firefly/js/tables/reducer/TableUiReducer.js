@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {set, has, get, isEmpty, cloneDeep} from 'lodash';
+import {set, has, get, isEmpty, cloneDeep, findKey} from 'lodash';
 
-import {updateSet} from '../../util/WebUtil.js';
+import {updateSet, updateMerge} from '../../util/WebUtil.js';
 import * as Cntlr from '../TablesCntlr.js';
 import * as TblUtil from '../TableUtil.js';
 
@@ -21,7 +21,8 @@ export function uiReducer(state={ui:{}}, action={}) {
             return removeTable(root, action);
 
         case (Cntlr.TBL_RESULTS_ADDED) :
-            return Object.assign(root, {[tbl_ui_id]:{tbl_ui_id, tbl_id}});
+            const {options} = action.payload || {}; 
+            return Object.assign(root, {[tbl_ui_id]:{tbl_ui_id, tbl_id, ...options}});
 
         case (Cntlr.TABLE_NEW)    :
         case (Cntlr.TABLE_UPDATE) :
@@ -31,6 +32,13 @@ export function uiReducer(state={ui:{}}, action={}) {
         case (Cntlr.TABLE_HIGHLIGHT)  :
             // state is in-progress(fresh) data.. use it to reduce ui state.
             return uiStateReducer(root, get(state, ['data', tbl_id]));
+
+        case (Cntlr.TBL_UI_EXPANDED) :
+            const {tbl_ui_id, tbl_id} = action.payload;
+            const tbl_group = findKey(get(state, 'results'), (o) => {
+                return has(o, ['tables', tbl_id]);
+            });
+            return updateSet(root, 'expanded', {tbl_group, tbl_id, tbl_ui_id});
 
         default:
             return root;
@@ -54,7 +62,7 @@ function removeTable(root, action) {
 
 function uiStateReducer(ui, tableModel) {
     // if (!get(tableModel, 'tableData')) return ui;
-    const {startIdx, endIdx, ...others} = TblUtil .getTblInfo(tableModel);
+    const {startIdx, endIdx, tbl_id, ...others} = TblUtil .getTblInfo(tableModel);
     const filterInfo = get(tableModel, 'request.filters');
     const filterCount = filterInfo ? filterInfo.split(';').length : 0;
     const sortInfo = get(tableModel, 'request.sortInfo');
@@ -64,14 +72,14 @@ function uiStateReducer(ui, tableModel) {
     var data = has(tableModel, 'tableData.data') ? tableModel.tableData.data.slice(startIdx, endIdx) : [];
     var tableRowCount = data.length;
 
-    var uiData = {startIdx, endIdx, tableRowCount, sortInfo, filterInfo, filterCount, data, showLoading, showMask, ...others};
+    var uiData = {tbl_id, startIdx, endIdx, tableRowCount, sortInfo, filterInfo, filterCount, data, showLoading, showMask, ...others};
 
     Object.keys(ui).filter( (ui_id) => {
-        return get(ui, [ui_id, 'tbl_id']) === tableModel.tbl_id;
+        return get(ui, [ui_id, 'tbl_id']) === tbl_id;
     }).forEach( (tbl_ui_id) => {
         const columns = get(ui, [tbl_ui_id, 'columns']);
         uiData.columns = ensureColumns({tableModel, columns});
-        ui = updateSet(ui, [tbl_ui_id], uiData);
+        ui = updateMerge(ui, [tbl_ui_id], uiData);
     });
     return ui;
 }

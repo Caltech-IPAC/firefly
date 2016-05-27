@@ -14,10 +14,13 @@ import * as ReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
 import * as ImPlotCntlr from '../visualize/ImagePlotCntlr.js';
 import * as MultiViewCntlr from '../visualize/MultiViewCntlr.js';
 import * as AppDataCntlr from '../core/AppDataCntlr.js';
+import {ApiExpandedView} from './ApiExpandedView.jsx';
 
 // Parts of the lowlevel api
 import * as ApiUtil from './ApiUtil.js';
+import  * as ApiUtilChart from './ApiUtilChart.jsx';
 import  * as ApiUtilImage from './ApiUtilImage.jsx';
+import  * as ApiUtilTable from './ApiUtilTable.jsx';
 
 // UI component
 import {MultiImageViewer} from '../visualize/ui/MultiImageViewer.jsx';
@@ -28,6 +31,8 @@ import {ExpandedModeDisplay} from '../visualize/iv/ExpandedModeDisplay.jsx';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {TablePanel} from '../tables/ui/TablePanel.jsx';
+import {ChartsContainer} from '../visualize/ChartsContainer.jsx';
+import {ChartsTableViewPanel} from '../visualize/ChartsTableViewPanel.jsx';
 
 // builds the highlevel api
 import {buildHighLevelApi} from './ApiHighlevelBuild.js';
@@ -52,6 +57,7 @@ export function initApi() {
     dispatchOnAppReady(() => {
         window.onFireflyLoaded && window.onFireflyLoaded(firefly);
     });
+    initExpandedView();
 }
 
 
@@ -121,10 +127,12 @@ export function buildLowlevelAPI() {
         ExpandedModeDisplay,
         ImageMetaDataToolbar,
         TablesContainer,
-        TablePanel
+        TablePanel,
+        ChartsContainer,
+        ChartsTableViewPanel
     };
     
-    const util= Object.assign({}, ApiUtil, {image:ApiUtilImage}, {xyplot:{}}, {table:{}}, {data:{}} );
+    const util= Object.assign({}, ApiUtil, {image:ApiUtilImage}, {chart:ApiUtilChart}, {table:ApiUtilTable}, {data:{}} );
 
     return { action, ui, util };
 }
@@ -156,4 +164,20 @@ function findActionType(obj,prefix) {
         }
         return res;
     },{} );
+}
+
+
+function initExpandedView(div){
+
+    const EXPANDED_DIV= 'expandedArea';
+    var expandedDivEl;
+    if (div) {
+        expandedDivEl= isString(div) ? document.getElementById(div) : div;
+    } else {
+        expandedDivEl= document.createElement('div');
+        document.body.appendChild(expandedDivEl);
+        expandedDivEl.id= EXPANDED_DIV;
+    }
+    
+    ApiUtil.renderDOM(expandedDivEl, ApiExpandedView);
 }

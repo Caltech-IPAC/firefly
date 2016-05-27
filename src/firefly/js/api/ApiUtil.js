@@ -1,4 +1,3 @@
-
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
@@ -20,7 +19,8 @@ import {take,race,call} from 'redux-saga/effects';
 // NOTE 
 // NOTE
 
-
+export {getBoolean} from '../util/WebUtil.js';
+export {toBoolean} from '../util/WebUtil.js';
 
 
 /**
@@ -50,28 +50,22 @@ export function debug(...msg) {
  * @param {string|Object} div a div element or a string id of the div element
  * @param {Object} Component a react component
  * @param {Object} [props] props for the react component
- * @param {Object} [style] css style object, style of this root element. Remember, JavaScript refers to css
- * with camelCase instead of hyphenated.  For example, 'background-color' would be 'backgroundColor' in JavaScript.
  * @namespace firefly
  * @Function renderDOM
  */
-export function renderDOM(div, Component, props, style={width:'100%', height:'100%'}) {
+export function renderDOM(div, Component, props) {
     const divElement= isString(div) ? document.getElementById(div) : div;
 
     if (!isElement(divElement)) debug(`the div element ${isString(div)?div:''} is not defined in the html` );
     if (!Component) debug('Component must be defined');
-
+    divElement.classList.add('rootStyle');
 
     const renderStuff= (
-        <div style={style}
-             className='rootStyle' >
             <Component {...props} />
-        </div>
     );
 
     ReactDOM.render(renderStuff,divElement);
 }
-
 
 
 /**

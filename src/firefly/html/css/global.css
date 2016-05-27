@@ -135,11 +135,12 @@
 }
 
 .Pane.vertical .content, .Pane.horizontal  .content{
-    flex: auto;
-    display: flex;
     overflow: hidden;
-    margin: 5px;
-    position: relative;
+    position: absolute;
+    top: 5px;
+    bottom: 5px;
+    left: 5px;
+    right: 5px;
 }
 
 .Pane.vertical .wrapper, .Pane.horizontal .wrapper{

@@ -6,12 +6,11 @@ import React, {PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import FixedDataTable from 'fixed-data-table';
 import Resizable from 'react-component-resizable';
-import {debounce, defer, get, isEmpty, pick} from 'lodash';
+import {debounce, defer, get, isEmpty, pick, padEnd} from 'lodash';
 
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
-import {SortInfo} from '../SortInfo';
-import {tableToText} from '../TableUtil.js';
+import {SortInfo} from '../SortInfo.js';
 import {TextCell, HeaderCell, SelectableHeader, SelectableCell} from './TableRenderer.js';
 
 import './TablePanel.css';
@@ -30,7 +29,7 @@ export class BasicTableView extends React.Component {
         };
 
         const normal = (size) => {
-            if (size) {
+            if (size && !this.isUnmounted) {
                 var widthPx = size.width;
                 var heightPx = size.height;
                 this.setState({widthPx, heightPx});
@@ -66,6 +65,10 @@ export class BasicTableView extends React.Component {
         }
     }
 
+    componentWillUnmount() {
+        this.isUnmounted = true;
+    }
+
     shouldComponentUpdate(nProps, nState) {
         return sCompare(this, nProps, nState);
     }
@@ -75,12 +78,16 @@ export class BasicTableView extends React.Component {
         const key = get(e, 'key');
         if (key === 'ArrowDown') {
             callbacks.onRowHighlight && callbacks.onRowHighlight(hlRowIdx + 1);
+            e.preventDefault && e.preventDefault();
         } else if (key === 'ArrowUp') {
             callbacks.onRowHighlight && callbacks.onRowHighlight(hlRowIdx - 1);
+            e.preventDefault && e.preventDefault();
         } else if (key === 'PageDown') {
             callbacks.onGotoPage && callbacks.onGotoPage(currentPage + 1);
+            e.preventDefault && e.preventDefault();
         } else if (key === 'PageUp') {
             callbacks.onGotoPage && callbacks.onGotoPage(currentPage - 1);
+            e.preventDefault && e.preventDefault();
         }
     }
 
@@ -209,7 +216,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
     if (!columns) return false;
 
     var colsEl = columns.map((col, idx) => {
-        if (col.visibility !== 'show') return false;
+        if (col.visibility && col.visibility !== 'show') return false;
         const HeadRenderer = get(renderers, [col.name, 'headRenderer'], HeaderCell);
         const CellRenderer = get(renderers, [col.name, 'cellRenderer'], TextCell);
 
@@ -239,5 +246,26 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
         colsEl.splice(0, 0, cbox);
     }
     return colsEl;
+}
+
+
+function tableToText(columns, dataAry, showUnits=false) {
+    var textHead = columns.reduce( (pval, cval, idx) => {
+        return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cval.name, columns[idx].width)}|` : '');
+    }, '|');
+
+    if (showUnits) {
+        textHead += '\n' + columns.reduce( (pval, cval, idx) => {
+                return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cval.units || '', columns[idx].width)}|` : '');
+            }, '|');
+    }
+
+    var textData = dataAry.reduce( (pval, row) => {
+        return pval +
+            row.reduce( (pv, cv, idx) => {
+                return pv + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cv || '', columns[idx].width)} ` : '');
+            }, ' ') + '\n';
+    }, '');
+    return textHead + '\n' + textData;
 }
 

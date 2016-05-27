@@ -1,4 +1,3 @@
-
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
@@ -6,8 +5,7 @@
 import React from 'react';
 import {take,race,call} from 'redux-saga/effects';
 import {MouseState} from '../visualize/VisMouseSync.js';
-import ImagePlotCntlr, {visRoot,dispatchChangeExpandedMode, 
-                        dispatchApiToolsView, ExpandType} from '../visualize/ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot, ExpandType} from '../visualize/ImagePlotCntlr.js';
 import {isString} from 'lodash';
 import {flux} from '../Firefly.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
@@ -35,55 +33,7 @@ const API_READOUT= 'apiReadout';
 export {RangeValues} from '../visualize/RangeValues.js';
 export {WPConst, WebPlotRequest, findInvalidWPRKeys, confirmPlotRequest} from '../visualize/WebPlotRequest.js';
 export {RequestType} from '../visualize/RequestType';
-export {ExpandType} from '../visualize/ImagePlotCntlr.js';
-
-
-
-/**
- * 
- * @param Component the react component to use for expanded view
- * @param props props for the component
- * @param {string|{}} div a div element or a string id of the div element
- */
-export function initImageViewExpanded(Component, props={}, div ){
-
-    const EXPANDED_DIV= 'expandedArea';
-    var expandedDivEl;
-    if (div) {
-        expandedDivEl= isString(div) ? document.getElementById(div) : div;
-    }
-    else {
-        expandedDivEl= document.createElement('div');
-        document.body.appendChild(expandedDivEl);
-        expandedDivEl.id= EXPANDED_DIV;
-        expandedDivEl.style.visibility= 'hidden';
-        expandedDivEl.className= 'api-expanded';
-
-    }
-
-    var isExpanded= false;
-
-    const unExpand= () =>{
-        unrenderDOM(expandedDivEl);
-        isExpanded= false;
-        dispatchChangeExpandedMode(ExpandType.COLLAPSE);
-        expandedDivEl.style.visibility= 'hidden';
-    };
-
-
-    flux.addListener(() => {
-        const vr= visRoot();
-        if (vr.expandedMode!==ExpandType.COLLAPSE && !isExpanded) {
-            isExpanded= true;
-            expandedDivEl.style.visibility= 'visible';
-            renderDOM(expandedDivEl, Component, Object.assign({closeFunc:unExpand}, props),
-                { left: 1, right: 1, top: 1, bottom: 1, position: 'absolute' });
-        }
-    });
-    
-    
-    dispatchApiToolsView(true);//todo move this somewhere, not sure where
-}
+export {ExpandType, dispatchApiToolsView} from '../visualize/ImagePlotCntlr.js';
 
 
 /**

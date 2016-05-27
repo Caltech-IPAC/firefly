@@ -7,30 +7,36 @@
  * Utilities related to charts
  * Created by tatianag on 3/17/16.
  */
+import {get} from 'lodash';
+import {uniqueId} from 'lodash';
 
-import {findTblById, findColumnIdx, getCellValue} from '../tables/TableUtil.js';
+import {flux} from '../Firefly.js';
+import {getTblById, getColumnIdx, getCellValue} from '../tables/TableUtil.js';
 import {Expression} from '../util/expr/Expression.js';
 import {logError} from '../util/WebUtil.js';
+import {XYPLOT_DATA_KEY} from '../visualize/XYPlotCntlr.js';
+import {HISTOGRAM_DATA_KEY} from '../visualize/HistogramCntlr';
+
 
 /**
  * This method returns an object with the keys x,y,highlightedRow
  */
 export const getHighlighted = function(xyPlotParams, tblId) {
 
-    const tableModel = findTblById(tblId);
+    const tableModel = getTblById(tblId);
     if (tableModel && xyPlotParams) {
         const rowIdx = tableModel.highlightedRow;
         const xIn = xyPlotParams.x.columnOrExpr;
         const yIn = xyPlotParams.y.columnOrExpr;
 
         var x, y;
-        if (findColumnIdx(tableModel, xIn) >= 0) {
+        if (getColumnIdx(tableModel, xIn) >= 0) {
             x = getCellValue(tableModel, rowIdx, xIn);
         } else {
             x = getExpressionValue(xIn, tableModel, rowIdx);
         }
 
-        if (findColumnIdx(tableModel, yIn) >= 0) {
+        if (getColumnIdx(tableModel, yIn) >= 0) {
             y = getCellValue(tableModel, rowIdx, yIn);
         } else {
             y = getExpressionValue(yIn, tableModel, rowIdx);
@@ -45,7 +51,7 @@ function getExpressionValue(strExpr, tableModel, rowIdx) {
     if (expr.isValid()) {
         const parsedVars = expr.getParsedVariables();
         parsedVars.forEach((v)=> {
-            if (findColumnIdx(tableModel, v) >= 0) {
+            if (getColumnIdx(tableModel, v) >= 0) {
                 const val = getCellValue(tableModel, rowIdx, v);
                 expr.setVariableValue(v, Number(val));
             }
@@ -56,6 +62,14 @@ function getExpressionValue(strExpr, tableModel, rowIdx) {
     }
 }
 
-//export const getTblId = function(chartId) {
-//    return chartId; // will be chart GUI id in future
-//};
+export function getTblIdForChartId(chartId) {
+    return  get(flux.getState()[XYPLOT_DATA_KEY], [chartId, 'tblId']) ||
+            get(flux.getState()[HISTOGRAM_DATA_KEY], [chartId, 'tblId']);
+}
+
+export function uniqueChartId(prefix) {
+    return uniqueId(prefix?prefix+'-c':'c');
+}
+
+
+

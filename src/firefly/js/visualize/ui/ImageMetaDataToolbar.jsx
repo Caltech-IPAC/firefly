@@ -8,7 +8,7 @@ import {flux} from '../../Firefly.js';
 import shallowequal from 'shallowequal';
 import {ImageMetaDataToolbarView} from './ImageMetaDataToolbarView.jsx';
 import {converterFactory} from '../../metaConvert/ConverterFactory.js';
-import {findTblById, getActiveTableId} from '../../tables/TableUtil.js';
+import {getTblById, getActiveTableId} from '../../tables/TableUtil.js';
 import {isMetaDataTable} from '../../metaConvert/converterUtils.js';
 import {SINGLE} from '../MultiViewCntlr.js';
 
@@ -41,7 +41,7 @@ export class ImageMetaDataToolbar extends Component {
 
     storeUpdate() {
         if (!this.iAmMounted) return;
-        const activeTable= findTblById(getActiveTableId());
+        const activeTable= getTblById(getActiveTableId());
         if (isMetaDataTable(getActiveTableId()) && activeTable!==this.state.activeTable) {
             this.setState({activeTable});
         }

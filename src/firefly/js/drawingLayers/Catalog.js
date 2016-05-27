@@ -23,7 +23,7 @@ import {getSelectedPts} from '../visualize/VisUtil.js';
 import {dispatchTableSelect} from '../tables/TablesCntlr.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
-import {findTblById,getCellValue} from '../tables/TableUtil.js';
+import {getTblById,getCellValue} from '../tables/TableUtil.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
 
 const TYPE_ID= 'CATALOG_TYPE';
@@ -203,7 +203,7 @@ function computeDrawLayer(tableData, columns) {
 function computeHighlightLayer(drawLayer, columns) {
 
 
-    const tbl= findTblById(drawLayer.drawLayerId);
+    const tbl= getTblById(drawLayer.drawLayerId);
     if (!tbl) return null;
     const raStr= getCellValue(tbl,drawLayer.highlightedRow, columns.lonCol);
     const decStr= getCellValue(tbl,drawLayer.highlightedRow, columns.latCol);
@@ -282,7 +282,7 @@ export function filterCatalog(pv,dlAry) {
 
 
 function doClearFilter(dl) {
-    const tbl= findTblById(dl.drawLayerId);
+    const tbl= getTblById(dl.drawLayerId);
     if (!tbl) return;
     const newRequest = Object.assign({}, tbl.request, {filters: ''});
     dispatchTableFetch(newRequest);
@@ -291,7 +291,7 @@ function doClearFilter(dl) {
 
 function doFilter(dl,p,sel) {
 
-    const tbl= findTblById(dl.drawLayerId);
+    const tbl= getTblById(dl.drawLayerId);
     if (!tbl) return;
     const filterInfo = get(tbl, 'request.filters');
     const filterInfoCls = FilterInfo.parse(filterInfo);

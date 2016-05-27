@@ -3,15 +3,14 @@
 import {expect} from 'chai';
 import {assert} from 'chai';
 
-import {TableRequest} from '../TableRequest.js';
-import {doFetchTable} from '../TableUtil.js';
+import { makeTblRequest} from '../TableUtil.js';
 
 describe('A test suite for tables/TablesCntlr.js', function () {
     var request;
 
     /* run once before testing */
     before(() => {
-            request = TableRequest.newInstance({id:'IpacTableFromSource'});
+            request = makeTblRequest('IpacTableFromSource');
         }
     );
     /* run once testing is done */

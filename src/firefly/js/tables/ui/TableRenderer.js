@@ -35,14 +35,16 @@ export class HeaderCell extends React.Component {
     }
 
     render() {
+        //noinspection Eslint
         const {col, showUnits, showFilters, filterInfoCls, sortInfoCls, onSort, onFilter} = this.props;
         const cname = col.name;
+        const cdesc = col.desc || col.title || cname;
         const sortDir = sortInfoCls.getDirection(cname);
         const style = {width: '100%', boxSizing: 'border-box'};
 
         return (
-            <div title={col.title || cname} className='TablePanel__header'>
-                <div style={{width: '100%', cursor: 'pointer'}} onClick={() => onSort(cname)} >{cname}
+            <div title={cdesc} className='TablePanel__header'>
+                <div style={{width: '100%', cursor: 'pointer'}} onClick={() => onSort(cname)} >{col.title || cname}
                     { sortDir!==UNSORTED && <SortSymbol sortDir={sortDir}/> }
                 </div>
                 {showUnits && col.units && <div style={{fontWeight: 'normal'}}>({col.units})</div>}

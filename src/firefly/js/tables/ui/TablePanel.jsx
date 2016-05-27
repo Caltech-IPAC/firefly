@@ -4,20 +4,18 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {isEmpty, get} from 'lodash';
-
+import {isEmpty, get, truncate} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {download} from '../../util/WebUtil.js';
 import * as TblUtil from '../TableUtil.js';
-import {dispatchTableReplace, dispatchTableUiUpdate} from '../TablesCntlr.js';
+import {dispatchTableReplace, dispatchTableUiUpdate, dispatchTableRemove, dispatchTblExpanded} from '../TablesCntlr.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableConnector} from '../TableConnector.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {PagingBar} from '../../ui/PagingBar.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import {LO_EXPANDED, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
-
+import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 
@@ -31,16 +29,17 @@ export class TablePanel extends Component {
             tbl_id = get(tableModel, 'tbl_id');
             isLocal = true;
         }
-        tbl_ui_id = tbl_ui_id || tbl_id + '-ui';
+        tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
         this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, isLocal);
-        const uiState = TblUtil.findTableUiById(tbl_ui_id);
-        this.state = uiState || {};
+        const uiState = TblUtil.getTableUiById(tbl_ui_id);
+        this.state = Object.assign({}, this.props, uiState);
 
         this.toggleFilter = this.toggleFilter.bind(this);
         this.toggleTextView = this.toggleTextView.bind(this);
         this.clearFilter = this.clearFilter.bind(this);
         this.saveTable = this.saveTable.bind(this);
         this.toggleOptions = this.toggleOptions.bind(this);
+        this.expandTable = this.expandTable.bind(this);
     }
 
     componentDidMount() {
@@ -57,6 +56,7 @@ export class TablePanel extends Component {
 
     componentWillUnmount() {
         this.removeListener && this.removeListener();
+        this.isUnmounted = true;
     }
 
     shouldComponentUpdate(nProps, nState) {
@@ -64,9 +64,11 @@ export class TablePanel extends Component {
     }
 
     storeUpdate() {
-        const {tbl_ui_id} = this.tableConnector;
-        const uiState = TblUtil.findTableUiById(tbl_ui_id) || {columns: []};
-        this.setState(uiState);
+        if (!this.isUnmounted) {
+            const {tbl_ui_id} = this.tableConnector;
+            const uiState = TblUtil.getTableUiById(tbl_ui_id) || {columns: []};
+            this.setState(uiState);
+        }
     }
 
     toggleFilter() {
@@ -86,53 +88,56 @@ export class TablePanel extends Component {
         this.tableConnector.onToggleOptions(!this.state.showOptions);
     }
     expandTable() {
-        dispatchSetLayoutMode(LO_EXPANDED.tables);
+        const {tbl_ui_id, tbl_id} = this.tableConnector;
+        dispatchTblExpanded(tbl_ui_id, tbl_id);
+        dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.tables);
     }
 
     render() {
-        const {selectable, expandable, expandedMode, border, renderers} = this.props;
+        const {selectable, expandable, expandedMode, border, renderers, title, removable,
+                showToolbar, showTitle, showOptionButton, showPaging, showSave, showFilterButton} = this.state;
         var {totalRows, showLoading, columns, showOptions, showUnits, showFilters, textView, colSortDir} = this.state;
-        const {error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
-            filterInfo, filterCount, sortInfo, data} = this.state;
+        const {tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
+                filterInfo, filterCount, sortInfo, data} = this.state;
         const {tableConnector} = this;
 
         if (error) return <div className='TablePanel__error'>{error}</div>;
-        if (isEmpty(columns))return <div style={{position: 'relative', flexGrow: 1}}><div msg='loading...' className='loading-mask'/></div>;
+        if (isEmpty(columns)) return <div style={{position: 'relative', width: '100%', height: '100%'}}><div msg='loading...' className='loading-mask'/></div>;
 
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
         const viewIcoStyle = 'tablepanel ' + (textView ? 'tableView' : 'textView');
-        const origColumns = get(TblUtil.findTblById(this.tableConnector.tbl_id), 'tableData.columns');
+        const origColumns = get(TblUtil.getTblById(this.tableConnector.tbl_id), 'tableData.columns');
+        const ttop = showToolbar ? 29 : 0;
 
         return (
-            <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', overflow: 'hidden'}}>
-                <div className={'TablePanel__wrapper' + (border ? ' border' : '')}>
-                    <div role='toolbar' className='TablePanel__toolbar'>
-                        <div className='group'>
-                            <button style={{width:70}}>Download</button>
+            <div style={{ position: 'relative', width: '100%', height: '100%'}}>
+            <div style={{ display: 'flex', height: '100%', flexDirection: 'column', overflow: 'hidden'}}>
+                <div className={'TablePanel__wrapper' + (border ? '--border' : '')}>
+                    {showToolbar &&
+                        <div role='toolbar' className='TablePanel__toolbar'>
+                            {showTitle ? <TableTitle {...{tbl_id, title, removable}} /> : <div className='group'/>}
+                            {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:tableConnector}} /> }
+                            <div className='group'>
+                                {showFilterButton && filterCount > 0 && <button onClick={this.clearFilter} className='tablepanel clearFilters'/>}
+                                {showFilterButton && <ToolbarButton icon={FILTER}
+                                                       tip='The Filter Panel can be used to remove unwanted data from the search results'
+                                                       visible={true}
+                                                       badgeCount={filterCount}
+                                                       onClick={this.toggleFilter}/>
+                                }
+                                <button onClick={this.toggleTextView} className={viewIcoStyle}/>
+                                {showSave && <button onClick={this.saveTable}
+                                                className='tablepanel save'/> }
+                                {showOptionButton && <button style={{marginLeft: '4px'}} onClick={this.toggleOptions}
+                                                        className='tablepanel options'/> }
+                                { expandable && !expandedMode &&
+                                    <button onClick={this.expandTable}>
+                                        <img src={OUTLINE_EXPAND} title='Expand this panel to take up a larger area'/>
+                                    </button>}
+                            </div>
                         </div>
-
-                        <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:tableConnector}} />
-
-                        <div className='group'>
-                            {filterCount > 0 &&
-                            <button onClick={this.clearFilter} className='tablepanel clearFilters'/>}
-                            <ToolbarButton icon={FILTER}
-                                           tip='The Filter Panel can be used to remove unwanted data from the search results'
-                                           visible={true}
-                                           badgeCount={filterCount}
-                                           onClick={this.toggleFilter}/>
-                            <button onClick={this.toggleTextView} className={viewIcoStyle}/>
-                            <button onClick={this.saveTable}
-                                    className='tablepanel save'/>
-                            <button style={{marginLeft: '4px'}} onClick={this.toggleOptions}
-                                    className='tablepanel options'/>
-                            { expandable && !expandedMode &&
-                                <button onClick={this.expandTable}>
-                                    <img src={OUTLINE_EXPAND} title='Expand this panel to take up a larger area'/>
-                                </button>}
-                        </div>
-                    </div>
-                    <div className='TablePanel__table'>
+                    }
+                    <div className='TablePanel__table' style={{top: ttop}}>
                         <BasicTableView
                             columns={columns}
                             data={data}
@@ -161,22 +166,31 @@ export class TablePanel extends Component {
                     </div>
                 </div>
             </div>
+            </div>
         );
     }
 }
+
 
 TablePanel.propTypes = {
     tbl_id: PropTypes.string,
     tbl_ui_id: PropTypes.string,
     tableModel: PropTypes.object,
     pageSize: PropTypes.number,
-    showUnits: PropTypes.bool,
-    showFilters: PropTypes.bool,
     selectable: PropTypes.bool,
     expandedMode: PropTypes.bool,
     expandable: PropTypes.bool,
-    showToolbar: PropTypes.bool,
     border: PropTypes.bool,
+    title: PropTypes.string,
+    removable: PropTypes.bool,
+    showUnits: PropTypes.bool,
+    showFilters: PropTypes.bool,
+    showToolbar: PropTypes.bool,
+    showTitle: PropTypes.bool,
+    showPaging: PropTypes.bool,
+    showSave: PropTypes.bool,
+    showOptionButton: PropTypes.bool,
+    showFilterButton: PropTypes.bool,
     renderers: PropTypes.objectOf(
         PropTypes.shape({
             cellRenderer: PropTypes.func,
@@ -188,11 +202,32 @@ TablePanel.propTypes = {
 TablePanel.defaultProps = {
     showUnits: false,
     showFilters: false,
+    showToolbar: true,
+    showTitle: true,
+    showPaging: true,
+    showSave: true,
+    showOptionButton: true,
+    showFilterButton: true,
     selectable: true,
     expandedMode: false,
     expandable: true,
-    showToolbar: true,
     border: true,
     pageSize: 50
 };
 
+//noinspection Eslint
+function TableTitle({tbl_id, title, removable}) {
+    if (title) {
+        return (
+            <div className='TablePanel__title'>
+                <div style={{display: 'inline-block', marginLeft: 5, marginTop: 2}}
+                     title={title}>{truncate(title)}</div>
+                {removable &&
+                <div style={{right: -5, paddingLeft: 3}} className='btn-close'
+                     title='Remove Tab'
+                     onClick={() => dispatchTableRemove(tbl_id)}/>
+                }
+            </div>
+        );
+    } else return <div/>;
+}

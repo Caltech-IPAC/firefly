@@ -22,6 +22,7 @@ import ImagePlotCntlr, {IMAGE_PLOT_KEY,
 
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
+import * as ChartsCntlr from '../visualize/ChartsCntlr.js';
 import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
 import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
 import * as TablesCntlr from '../tables/TablesCntlr';
@@ -79,6 +80,7 @@ const reducers = {
     [TableStatsCntlr.TBLSTATS_DATA_KEY]: TableStatsCntlr.reducer,
     [HistogramCntlr.HISTOGRAM_DATA_KEY]: HistogramCntlr.reducer,
     [XYPlotCntlr.XYPLOT_DATA_KEY]: XYPlotCntlr.reducer,
+    [ChartsCntlr.CHART_SPACE_PATH]: ChartsCntlr.reducer,
     [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
     [DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory),
     [IMAGE_MULTI_VIEW_KEY]: MultiViewCntlr.reducer,
@@ -108,8 +110,8 @@ actionCreators.set(ImagePlotCntlr.EXPANDED_AUTO_PLAY, autoPlayActionCreator);
 actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionCreator(drawLayerFactory));
 
 actionCreators.set(TablesCntlr.TABLE_SEARCH, TablesCntlr.tableSearch);
-actionCreators.set(TablesCntlr.TABLE_FETCH, TablesCntlr.fetchTable);
-actionCreators.set(TablesCntlr.TABLE_FETCH_UPDATE, TablesCntlr.fetchTable);
+actionCreators.set(TablesCntlr.TABLE_FETCH, TablesCntlr.tableFetch);
+actionCreators.set(TablesCntlr.TABLE_FETCH_UPDATE, TablesCntlr.tableFetch);
 actionCreators.set(TablesCntlr.TABLE_HIGHLIGHT, TablesCntlr.highlightRow);
 
 actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);

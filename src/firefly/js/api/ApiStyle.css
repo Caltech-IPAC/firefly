@@ -4,12 +4,18 @@
 
 
 .api-expanded {
-    position: fixed;
-    left: 5px;
-    right: 5px;
-    top: 5px;
-    bottom: 5px;
-    border: 2px solid rgba(1, 1, 1, 0.4);
-    box-sizing: border-box;
+    padding: 3px;
     overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 7px;
+    right: 7px;
+    box-shadow: 7px 7px 7px -3px rgba(0,0,0,0.75);
+    border: 1px solid #b3b3b3;
+    border-top: 4px groove;
+    border-left: 4px groove;
+    border-top-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    z-index: 100;
 }

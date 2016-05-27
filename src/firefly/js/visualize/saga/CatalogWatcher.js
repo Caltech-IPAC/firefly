@@ -7,7 +7,7 @@ import {isEmpty, get} from 'lodash';
 import {TABLE_NEW_LOADED,TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE, TABLE_RESULTS_PATH} from '../../tables/TablesCntlr.js';
 import {dispatchCreateDrawLayer,dispatchAttachLayerToPlot,dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
-import {findTblById,doFetchTable} from '../../tables/TableUtil.js';
+import {getTblById, doFetchTable, getTableGroup} from '../../tables/TableUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {getDrawLayerById} from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
@@ -35,9 +35,9 @@ export function* watchCatalogs() {
 
     yield take(ImagePlotCntlr.PLOT_IMAGE);
 
-    const tableSpace= get(flux.getState(), TABLE_RESULTS_PATH);
-    if (!isEmpty(tableSpace)) {
-        Object.keys(tableSpace).forEach( (tbl_ui_id) => handleCatalogUpdate(get(tableSpace, [tbl_ui_id, 'tbl_id'])) );
+    const tableGroup= get(getTableGroup(), 'tables', {});  // get the main table group.
+    if (!isEmpty(tableGroup)) {
+        Object.keys(tableGroup).forEach( (tbl_id) => handleCatalogUpdate(tbl_id) );
     }
 
 
@@ -74,7 +74,7 @@ export function* watchCatalogs() {
 const isCName = (name) => (c) => c.name===name;
 
 function handleCatalogUpdate(tbl_id) {
-    const sourceTable= findTblById(tbl_id);
+    const sourceTable= getTblById(tbl_id);
 
     
     const {tableMeta,totalRows,tableData, request, highlightedRow,selectInfo}= sourceTable;

@@ -7,6 +7,7 @@ import ReactHighcharts from 'react-highcharts/bundle/highcharts';
 import numeral from 'numeral';
 import {getFormatString} from '../util/MathUtil.js';
 
+
 var Histogram = React.createClass(
     {
         displayName: 'Histogram',
@@ -14,6 +15,7 @@ var Histogram = React.createClass(
         propTypes: {
             //data: React.PropTypes.array.isRequired
             data: React.PropTypes.arrayOf(React.PropTypes.arrayOf(React.PropTypes.number)), // array of numbers [0] - nInBin, [1] - binMin, [2] - binMax
+            width: React.PropTypes.number,
             height: React.PropTypes.number,
             logs: React.PropTypes.oneOf(['x','y','xy']),
             reversed: React.PropTypes.oneOf(['x','y','xy']),
@@ -27,14 +29,55 @@ var Histogram = React.createClass(
 
         getDefaultProps() {
             return {
-                data: undefined,
-                source: undefined,
-                height: 300,
-                logs: undefined,
-                reversed: undefined,
                 desc: 'Sample Distribution',
                 binColor: '#d1d1d1'
             };
+        },
+
+        shouldComponentUpdate(nextProps) {
+            const {data, width, height, logs, reversed, desc, binColor} = this.props;
+            // should rerender only if data or bin color has changed
+            // otherwise just change the existing chart
+            if (data != nextProps.data || binColor !== nextProps.binColor) { return true; }
+            const chart = this.refs.chart && this.refs.chart.getChart();
+            if (chart) {
+                let doUpdate = false;
+                if (height !== nextProps.height || width !== nextProps.width ) {
+                    chart.setSize(nextProps.width, nextProps.height, false);
+                    return false;
+                }
+
+                if (desc !== nextProps.desc) {
+                    chart.xAxis[0].setTitle(nextProps.desc, false);
+                    doUpdate = true;
+                }
+                if (reversed !== nextProps.reversed){
+                    const nreversed = nextProps.reversed;
+                    const yReversed = (nreversed && nreversed.indexOf('y')>-1 ? true : false);
+                    const xReversed = (nreversed && nreversed.indexOf('x')>-1 ? true : false);
+                    chart.xAxis[0].update({'reversed' : xReversed}, false);
+                    chart.yAxis[0].update({'reversed' : yReversed}, false);
+                    doUpdate = true;
+                }
+                const nreversed = nextProps.reversed;
+                if (reversed !== nreversed){
+                    const yReversed = (nreversed && nreversed.indexOf('y')>-1 ? true : false);
+                    const xReversed = (nreversed && nreversed.indexOf('x')>-1 ? true : false);
+                    chart.xAxis[0].update({reversed : xReversed}, false);
+                    chart.yAxis[0].update({reversed : yReversed}, false);
+                    doUpdate = true;
+                }
+                const nlogs = nextProps.logs;
+                if (logs !== nextProps.logs){
+                    const xtype = nlogs && nlogs.indexOf('x')>-1 ? 'logarithmic' : 'linear';
+                    const ytype = nlogs && nlogs.indexOf('y')>-1 ? 'logarithmic' : 'linear';
+                    chart.xAxis[0].update({type : xtype}, false);
+                    chart.yAxis[0].update({type : ytype}, false);
+                    doUpdate = true;
+                }
+                if (doUpdate) { chart.redraw(false); }
+                return false;
+            }
         },
 
 
@@ -238,7 +281,7 @@ var Histogram = React.createClass(
 
         render() {
 
-            const { binColor, data, desc, height, logs, reversed }= this.props;
+            const { binColor, data, desc, width, height, logs, reversed }= this.props;
             const yReversed = (reversed && reversed.indexOf('y')>-1 ? true : false);
 
             var chartType;
@@ -254,6 +297,7 @@ var Histogram = React.createClass(
                     renderTo: 'container',
                     type: chartType,
                     alignTicks: false,
+                    width: Number(width),
                     height: Number(height),
                     borderColor: '#a5a5a5',
                     borderWidth: 3
@@ -338,7 +382,7 @@ var Histogram = React.createClass(
 
             return (
                 <div>
-                    <ReactHighcharts config={config}/>
+                    <ReactHighcharts config={config} isPureConfig={true} ref='chart'/>
                 </div>
             );
         }

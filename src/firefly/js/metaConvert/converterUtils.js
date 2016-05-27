@@ -7,7 +7,7 @@ import {getCellValue} from '../tables/TableUtil.js';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {WebPlotRequest} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
-import {findTblById,getTblInfo} from '../tables/TableUtil.js';
+import {getTblById,getTblInfo} from '../tables/TableUtil.js';
 import {converterFactory} from './ConverterFactory.js';
 import {MetaConst} from '../data/MetaConst.js';
 
@@ -105,7 +105,7 @@ export function findGridTableRows(table,maxRows, plotIdRoot) {
  * @return {boolean} true if there is image meta data
  */
 export function isMetaDataTable(tbl_id) {
-    const table= findTblById(tbl_id);
+    const table= getTblById(tbl_id);
     const tableMeta= get(table, 'tableMeta');
     if (!tableMeta) return false;
 

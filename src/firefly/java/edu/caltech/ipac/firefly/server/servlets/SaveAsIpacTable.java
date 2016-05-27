@@ -10,12 +10,14 @@ import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.util.Map;
 
 /**
  * Date: Sep 15, 2008
@@ -29,7 +31,7 @@ public class SaveAsIpacTable  extends BaseHttpServlet {
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
         String reqStr = req.getParameter(Request.class.getName());
         reqStr = reqStr == null ? req.getParameter("Request") : reqStr;
-        TableServerRequest request = reqStr == null ? null : TableServerRequest.parse(reqStr);
+        TableServerRequest request = QueryUtil.convertToServerRequest(reqStr);
 
         if (request == null) throw new IllegalArgumentException("Invalid request");
 

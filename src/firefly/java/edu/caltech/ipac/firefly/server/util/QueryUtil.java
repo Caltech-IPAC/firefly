@@ -40,6 +40,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Date;
 import java.util.*;
@@ -81,7 +82,7 @@ public class QueryUtil {
             if (!StringUtils.isEmpty(key) && req.getParameterValues(key) != null) {
                 String values = StringUtils.toString(req.getParameterValues(key), ",");
                 if (key.equals(TableServerRequest.META_INFO)) {
-                    Map<String, String> meta = StringUtils.encodedStringToMap(values);
+                    Map<String, String> meta = encodedStringToMap(values);
                     if (meta != null && meta.size() > 0) {
                         for (String k : meta.keySet()) {
                             retval.setMeta(k, meta.get(k));
@@ -93,6 +94,38 @@ public class QueryUtil {
             }
         }
         return retval;
+    }
+
+    public static TableServerRequest convertToServerRequest(String str) {
+        if (StringUtils.isEmpty(str)) return null;
+        TableServerRequest treq = new TableServerRequest();
+        Map<String, Object> map = convertToMap(str);
+        for (String k : map.keySet()) {
+            if (k.equals(TableServerRequest.META_INFO)) {
+                Map<String, Object> meta = (Map<String, Object>) map.get(k);
+                for (String m : meta.keySet()) {
+                    treq.setMeta(m, String.valueOf(meta.get(m)));
+                }
+            } else {
+                treq.setTrueParam(k, String.valueOf(map.get(k)));
+            }
+        }
+        return treq;
+    }
+
+    public static Map<String, Object> convertToMap(String str) {
+        HashMap<String, Object> map = new HashMap<>();
+        String[] parts = str.split("&");
+        for (String part : parts) {
+            String[] kv = part.split("=");
+            String val = kv.length > 1 ? decode(kv[1].trim()) : "";
+            if (val.length() > 0 && val.contains("&")) {
+                map.put(kv[0], convertToMap(val));
+            } else {
+                map.put(kv[0], val);
+            }
+        }
+        return map;
     }
 
     public static String encodeUrl(ServerRequest req) {
@@ -827,6 +860,25 @@ public class QueryUtil {
             seq = Integer.parseInt(seqStr);
         }
         return seq;
+    }
+
+    private static Map<String, String> encodedStringToMap(String str) {
+        if (StringUtils.isEmpty(str)) return null;
+        HashMap<String, String> map = new HashMap<String, String>();
+        for (String entry : str.split("&")) {
+            String[] kv = entry.split("=", 2);
+            String value = kv.length > 1 ? decode(kv[1].trim()) : "";
+            map.put(kv[0].trim(), value);
+        }
+        return map;
+    }
+
+    public static String decode(String str) {
+        try {
+            return URLDecoder.decode(str, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            return str;
+        }
     }
 
     public static void main(String[] args) {

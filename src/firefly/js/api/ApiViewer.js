@@ -11,6 +11,7 @@ import {dispatchPlotImage}  from '../visualize/ImagePlotCntlr.js';
 import {RequestType}  from '../visualize/RequestType.js';
 import {clone}  from '../util/WebUtil.js';
 import {confirmPlotRequest,findInvalidWPRKeys}  from '../visualize/WebPlotRequest.js';
+import {dispatchTableSearch, dispatchTableFetch}  from '../tables/TablesCntlr.js';
 
 
 /**
@@ -117,8 +118,20 @@ function buildImagePart(channel,file,dispatch) {
 
 
 function buildTablePart(channel,file,dispatch) {
-    // todo
-    return {};
+    
+    const showTable= (request, options)  => {
+        doViewerOperation(channel,file, () => {
+            dispatchTableSearch(request, options, dispatch);
+        });
+    };
+
+    const fetchTable= (request, hlRowIdx) => {
+        doViewerOperation(channel,file, () => {
+            dispatchTableFetch(request, hlRowIdx, dispatch);
+        });
+    };
+
+    return {showTable, fetchTable};
 }
 
 function buildXYPlotPart(channel,file,dispatch) {

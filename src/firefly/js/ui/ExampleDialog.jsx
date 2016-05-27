@@ -124,7 +124,7 @@ var AllTest = React.createClass({
         return (
             <div style={{padding:'5px'}}>
                 <div>
-                    <Tabs componentKey='exampleOuterTabs' defaultSelected={0}>
+                    <Tabs componentKey='exampleOuterTabs' defaultSelected={0} useFlex={true}>
                         <Tab name='First'>
                             <FieldGroupTest />
                         </Tab>

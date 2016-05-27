@@ -45,5 +45,6 @@
     clear: both;
     flex-grow: 1;
     display: flex;
+    position: relative;
 }
 

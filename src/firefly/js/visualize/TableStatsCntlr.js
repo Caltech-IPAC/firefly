@@ -5,7 +5,6 @@ import {has, omit} from 'lodash';
 import {updateSet, updateMerge} from '../util/WebUtil.js';
 import ColValuesStatistics from './ColValuesStatistics.js';
 
-import {TableRequest} from '../tables/TableRequest.js';
 import * as TableUtil from '../tables/TableUtil.js';
 
 import * as TablesCntlr from '../tables/TablesCntlr.js';
@@ -29,28 +28,30 @@ export const UPDATE_TBL_STATS = `${TBLSTATS_DATA_KEY}/UPDATE_TBL_STATS`;
 /*
  * Set up store, which will reflect the data relevant to the given table
  * @param {string} tblId - table id
+ * @param {function} dispatcher only for special dispatching uses such as remote
  */
-export const dispatchSetupTblTracking = function(tblId) {
-    flux.process({type: SETUP_TBL_TRACKING, payload: {tblId}});
-};
+export function dispatchSetupTblTracking(tblId, dispatcher= flux.process) {
+    dispatcher({type: SETUP_TBL_TRACKING, payload: {tblId}});
+}
 
 /*
  * Get the number of points, min and max values, units and description for each table column
  * @param {ServerRequest} searchRequest - table search request
+ * @param {function} dispatcher only for special dispatching uses such as remote
  */
-export const dispatchLoadTblStats = function(searchRequest) {
-    flux.process({type: LOAD_TBL_STATS, payload: {searchRequest}});
-};
+export function dispatchLoadTblStats(searchRequest, dispatcher= flux.process) {
+    dispatcher({type: LOAD_TBL_STATS, payload: {searchRequest}});
+}
 
 /*
  * The statistics is successfully returned from the server, update the store
  * @param {Number} tblId - table id
  * @param {boolean} isColStatsReady flags that column statistics is now available
  * @param {ColValuesStatistics[]} an array which holds column statistics for each column
- */
-export const dispatchUpdateTblStats = function(tblId,isColStatsReady,colStats) {
+const dispatchUpdateTblStats = function(tblId,isColStatsReady,colStats) {
     flux.process({type: UPDATE_TBL_STATS, payload: {tblId,isColStatsReady,colStats}});
 };
+*/
 
 /*
  * @param rawAction (its payload should contain searchRequest to get source table)
@@ -76,15 +77,16 @@ export function reducer(state=getInitState(), action={}) {
         case (SETUP_TBL_TRACKING) :
         {
             const {tblId} = action.payload;
-            return updateSet(state, tblId, {isColStatsReady: false});
+            if (!state[tblId]) {
+                return updateSet(state, tblId, {isColStatsReady: false});
+            }
+            return state;
         }
         case (TablesCntlr.TABLE_REMOVE)  :
         {
-            const {tbl_id} = action.payload.tbl_id;
+            const {tbl_id} = action.payload;
             if (has(state, tbl_id)) {
-                const newState = Object.assign({}, state);
-                Reflect.deleteProperty(newState, [tbl_id]);
-                return newState;
+                return Object.assign({}, omit(state,[tbl_id]));
             }
             return state;
         }
@@ -121,17 +123,15 @@ function updateTblStats(statsData) {
  */
 function fetchTblStats(dispatch, activeTableServerRequest) {
 
-    const tblId = activeTableServerRequest['tbl_id'];
+    const {tbl_id} = activeTableServerRequest;
 
     // searchRequest
-    const sreq = Object.assign({}, omit(activeTableServerRequest, ['tbl_id'], 'META_INFO'),
+    const sreq = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']),
         {'startIdx': 0, 'pageSize': 1000000});
 
-    const req = TableRequest.newInstance({
-                    id:'StatisticsProcessor',
-                    searchRequest: JSON.stringify(sreq),
-                    tbl_id: 'tblstats-'+activeTableServerRequest.tbl_id
-                });
+    const req = TableUtil.makeTblRequest('StatisticsProcessor', null,
+                            { searchRequest: JSON.stringify(sreq) },
+                            'tblstats-'+tbl_id);
 
     TableUtil.doFetchTable(req).then(
         (tableModel) => {
@@ -142,7 +142,7 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
                 }, []);
                 dispatch(updateTblStats(
                     {
-                        tblId,
+                        tblId: tbl_id,
                         isColStatsReady: true,
                         colStats
                     }));

@@ -51,7 +51,7 @@ public class TableJSInterface {
     public static final String TBL_TYPE = "type";
     public static final String TBL_SOURCE = "source";
     public static final String TBL_ALT_SOURCE = "alt_source";
-    public static final String TBL_SORT_INFO = TableServerRequest.SORT_INFO;
+    public static final String TBL_SORT_INFO = "SortInfo";
     public static final String TBL_FILTER_BY = TableServerRequest.FILTERS;
     public static final String TBL_PAGE_SIZE = TableServerRequest.PAGE_SIZE;
     public static final String TBL_START_IDX = TableServerRequest.START_IDX;
