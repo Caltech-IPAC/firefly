@@ -11,6 +11,11 @@ import {CsysConverter} from './CsysConverter.js';
 
 const clone = (obj,params={}) => Object.assign({},obj,params);
 
+/**
+ * 
+ * @param {Object | PlotView[]} ref
+ * @return {PlotView[]}
+ */
 function getPlotViewAry(ref) {
     if (ref.plotViewAry && has(ref,'activePlotId')) { // I was passed the visRoot
         return ref.plotViewAry;
@@ -25,8 +30,9 @@ function getPlotViewAry(ref) {
  * a plotViewAry. plotId is ignored when passing a plotView.  It is optional when passed a visRoot. 
  * When plotId is not included with visRoot it uses the activePlotId.
  *
- * @param {{} |[]} ref this can be the visRoot or the plotViewAry, or a plotView Object.  
+ * @param {{} |PlotView[]|PlotView} ref this can be the visRoot or the plotViewAry, or a plotView Object.  
  * @param {string} [plotId] the plotId, required with plotViewAry, ignored for  plotView, optional with visRoot
+ * @return {WebPlot} the plot
  */
 export function primePlot(ref,plotId) {
     var pv;
@@ -46,7 +52,7 @@ export function primePlot(ref,plotId) {
 
 
 /**
- * @param {{} | [] } ref this can be the visRoot object or a plotViewAry array.
+ * @param {{} | PlotView[] } ref this can be the visRoot object or a plotViewAry array.
  * @param {string} plotId
  * @return {object} the plot view object
  */
@@ -72,9 +78,9 @@ export function getPlotGroupIdxById(ref,plotGroupId) {
 
 /**
  *
- * @param ref visRoot or plotViewAry
+ * @param {Object | PlotView[]} ref visRoot or plotViewAry
  * @param [activePlotId]
- * @return {Array.<T>}
+ * @return {PlotView[]}
  */
 export function expandedPlotViewAry(ref,activePlotId=null) {
     var plotViewAry= getPlotViewAry(ref);

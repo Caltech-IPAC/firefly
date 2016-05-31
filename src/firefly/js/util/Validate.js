@@ -67,7 +67,7 @@ var validateRange = function(min,max,precision,description,dType, valStr) {
         }
         else {
             retval.valid = false;
-            retval.message = description + ': must be a '+ dType.dataTypeDesc + makeErrorMessage(null, min, max, null);
+            retval.message = description + ': must be a '+ dType.dataTypeDesc + makeErrorMessage(null, min, max, precision);
         }
     }
     return retval;
@@ -78,7 +78,7 @@ export const validateEmail = function(description,valStr) {
         valid: true,
         message: ''
     };
-    if (!validator.isEmail(valStr)) {
+    if (valStr && !validator.isEmail(valStr)) {
         retval.valid = false;
         retval.message = description + ': must be a valid email address';
     }
@@ -90,7 +90,7 @@ export const validateUrl = function(description,valStr) {
         valid: true,
         message: ''
     };
-    if (!validator.isURL(valStr)) {
+    if (valStr && !validator.isURL(valStr)) {
         retval.valid = false;
         retval.message = description + ': must be a valid URL';
     }

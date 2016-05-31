@@ -14,9 +14,10 @@ import {SuggestBoxInputField} from './SuggestBoxInputField.jsx';
 import Histogram from '../visualize/Histogram.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
+import {dispatchMultiValueChange, dispatchRestoreDefaults} from '../fieldGroup/FieldGroupCntlr.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
+import FieldGroupUtils, {revalidateFields} from '../fieldGroup/FieldGroupUtils';
 
 import {CollapsiblePanel} from './panel/CollapsiblePanel.jsx';
 import {Tabs, Tab,FieldGroupTabs} from './panel/TabPanel.jsx';
@@ -47,6 +48,47 @@ export function showExampleDialog() {
 }
 
 
+const defValues= {
+    field1: {
+        fieldKey: 'field1',
+        value: '3',
+        validator: Validate.intRange.bind(null, 1, 10, 'my test field'),
+        tooltip: 'this is a tip for field 1',
+        label: 'Int Value:'
+    },
+    field2: {
+        fieldKey: 'field2',
+        value: '',
+        validator: Validate.floatRange.bind(null, 1.2, 22.4, 2, 'a float field'),
+        tooltip: 'field 2 tool tip',
+        label: 'Float Value:',
+        nullAllowed : true,
+        labelWidth: 100
+    },
+    field4: {
+        fieldKey: 'field4',
+        value: 'a.b@c.edu',
+        validator: Validate.validateEmail.bind(null, 'an email field'),
+        tooltip: 'Please enter an email',
+        label: 'Email:'
+    },
+    low: {
+        fieldKey: 'low',
+        value: '1',
+        validator: Validate.intRange.bind(null, 1, 100, 'low field'),
+        tooltip: 'this is a tip for low field',
+        label: 'Low Field:'
+    },
+    high: {
+        fieldKey: 'high',
+        value: '3',
+        validator: Validate.intRange.bind(null, 1, 100, 'high field'),
+        tooltip: 'this is a tip for high field',
+        label: 'High Field:'
+    }
+};
+
+
 
 /**
  *
@@ -56,47 +98,14 @@ export function showExampleDialog() {
  */
 var exDialogReducer= function(inFields, action) {
     if (!inFields)  {
-        return {
-            field1: {
-                fieldKey: 'field1',
-                value: '3',
-                validator: Validate.intRange.bind(null, 1, 10, 'my test field'),
-                tooltip: 'this is a tip for field 1',
-                label: 'Int Value:'
-            },
-            field2: {
-                fieldKey: 'field2',
-                value: '',
-                validator: Validate.floatRange.bind(null, 1.2, 22.4, 2, 'a float field'),
-                tooltip: 'field 2 tool tip',
-                label: 'Float Value:',
-                labelWidth: 100
-            },
-            field4: {
-                fieldKey: 'field4',
-                value: '',
-                validator: Validate.validateEmail.bind(null, 'an email field'),
-                tooltip: 'Please enter an email',
-                label: 'Email:'
-            },
-            low: {
-                fieldKey: 'low',
-                value: '1',
-                validator: Validate.intRange.bind(null, 1, 100, 'low field'),
-                tooltip: 'this is a tip for low field',
-                label: 'Low Field:'
-            },
-            high: {
-                fieldKey: 'high',
-                value: '3',
-                validator: Validate.intRange.bind(null, 1, 100, 'high field'),
-                tooltip: 'this is a tip for high field',
-                label: 'High Field:'
-            }
-        };
+        return defValues;
     }
     else {
         var {low,high}= inFields;
+        // inFields= revalidateFields(inFields);
+        if (!low.valid || !high.valid) {
+            return inFields;
+        }
         if (parseFloat(low.value)> parseFloat(high.value)) {
             low= Object.assign({},low, {valid:false, message:'must be lower than high'});
             high= Object.assign({},high, {valid:false, message:'must be higher than low'});
@@ -122,7 +131,7 @@ var AllTest = React.createClass({
 
     render() {
         return (
-            <div style={{padding:'5px'}}>
+            <div style={{padding:'5px', minWidth: 480}}>
                 <div>
                     <Tabs componentKey='exampleOuterTabs' defaultSelected={0} useFlex={true}>
                         <Tab name='First'>
@@ -221,7 +230,8 @@ function FieldGroupTestView ({fields}) {
     for (var i=1; i<100; i++) { validSuggestions.push(...[`w${i}mpro`, `w${i}mprosig`, `w${i}snr`]); }
 
     return (
-        <FieldGroup groupKey={'DEMO_FORM'} initValues={{extraData:'asdf',field1:'4'}} reducerFunc={exDialogReducer} keepState={true}>
+        <FieldGroup style= {{padding:5}} groupKey={'DEMO_FORM'} initValues={{extraData:'asdf',field1:'4'}} 
+                          reducerFunc={exDialogReducer} keepState={true}>
             <InputGroup labelWidth={110}>
                 <TargetPanel/>
                 <SuggestBoxInputField
@@ -252,8 +262,8 @@ function FieldGroupTestView ({fields}) {
                                  forceReinit={true}
                                  initialState= {{
                                           fieldKey: 'field3',
-                                          value: '12',
-                                          validator: Validate.floatRange.bind(null, 1.23, 1000, 3,'field 3'),
+                                          value: '12.12322',
+                                          validator: Validate.floatRange.bind(null, 1.23333, 1000, 3,'field 3'),
                                           tooltip: 'more tipping',
                                           label : 'Another Float:',
                                           labelWidth : 100
@@ -350,7 +360,7 @@ function FieldGroupTestView ({fields}) {
                             <ValidationField fieldKey='fieldInTabX3'
                                              initialState= {{
                                           fieldKey: 'fieldInTabX3',
-                                          value: '88',
+                                          value: '25',
                                           validator: Validate.intRange.bind(null, 22, 33, 'Tab Test Field 22-33'),
                                           tooltip: 'more tipping',
                                           label : 'tab test field:',
@@ -379,6 +389,13 @@ function FieldGroupTestView ({fields}) {
 
                 <br/><br/>
 
+                <button type='button' className='button-hl'  onClick={() => resetSomeDefaults()}>
+                    <b>Reset Some Defaults</b>
+                </button>
+                <button type='button' className='button-hl'  onClick={() => resetDefaults()}>
+                    <b>Reset All Defaults</b>
+                </button>
+
                 <CompleteButton groupKey='DEMO_FORM'
                                 onSuccess={resultsSuccess}
                                 onFail={resultsFail}
@@ -395,6 +412,16 @@ FieldGroupTestView.propTypes= {
     fields: PropTypes.object
 };
 
+
+function resetSomeDefaults() {
+    const defValueAry= Object.keys(defValues).map( (k) => defValues[k]);
+    dispatchMultiValueChange('DEMO_FORM', defValueAry);
+}
+
+function resetDefaults() {
+    dispatchRestoreDefaults('DEMO_FORM');
+
+}
 
 function showResults(success, request) {
     var statStr= `validate state: ${success}`;

@@ -107,21 +107,7 @@ export const PlotAttribute= {
 };
 
 
-/**
- * This class contains plot information.
- * Publicly this class operations in many coordinate system.
- * Some include a Image coordinate system, a world coordinate system, and a screen
- * coordinate system.
- * <ul>
- * <li>The image coordinate system is the coordinate system of the data. 
- * <li>The world coordinate system is the system that the data represents
- *        (i.e. the coordinate system of the sky)
- * <li>Screen coordinates are the pixel values of the screen.
- * </ul>
- *
- * @author Trey Roby
- * @version $Id: WebPlot.java,v 1.68 2012/12/14 23:59:58 roby Exp $
- */
+
 export const WebPlot= {
 
     /**
@@ -129,7 +115,7 @@ export const WebPlot= {
      * @param plotId
      * @param wpInit init data returned from server
      * @param asOverlay
-     * @return {{}}
+     * @return {WebPlot}
      */
     makeWebPlotData(plotId, wpInit, asOverlay= false) {
 
@@ -254,4 +240,20 @@ export function getNonRotatableReason(plot) {
         }
     }
 }
+
+/**
+ *
+ * This class contains plot information.
+ * Publicly this class operations in many coordinate system.
+ * Some include a Image coordinate system, a world coordinate system, and a screen
+ * coordinate system.
+ * 
+ * @typedef {Object} WebPlot
+ * @prop {String} plotId, immutable
+ * @prop {String} plotImageId, immutable
+ * @prop {Object} serverImage, immutable
+ *
+ */
+
+
 
