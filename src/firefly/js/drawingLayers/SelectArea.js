@@ -169,6 +169,7 @@ function moveMouse(drawLayer,action) {
     if (plot && mode==='edit') {
         var cc= CsysConverter.make(plot);
         var ptAry= getPtAryFromPlot(plot);
+        if (!ptAry) return null;
         var corner= findClosestCorner(cc,ptAry, screenPt, EDIT_DISTANCE);
         var cursor;
         if (corner) {
