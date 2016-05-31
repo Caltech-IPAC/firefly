@@ -29,7 +29,9 @@ import * as TablesCntlr from '../tables/TablesCntlr';
 
 import DrawLayer, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
-import DrawLayerCntlr, {makeDetachLayerActionCreator} from '../visualize/DrawLayerCntlr.js';
+import DrawLayerCntlr, {makeDetachLayerActionCreator,
+                        selectAreaEndActionCreator,
+                        distanceToolEndActionCreator} from '../visualize/DrawLayerCntlr.js';
 import MultiViewCntlr, {IMAGE_MULTI_VIEW_KEY} from '../visualize/MultiViewCntlr.js';
 import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from '../core/ComponentCntlr.js';
 import {masterSaga} from './MasterSaga.js';
@@ -117,6 +119,9 @@ actionCreators.set(TablesCntlr.TABLE_HIGHLIGHT, TablesCntlr.highlightRow);
 actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);
 actionCreators.set(HistogramCntlr.LOAD_COL_DATA, HistogramCntlr.loadColData);
 actionCreators.set(XYPlotCntlr.LOAD_PLOT_DATA, XYPlotCntlr.loadPlotData);
+
+actionCreators.set(DrawLayerCntlr.SELECT_AREA_END, selectAreaEndActionCreator);
+actionCreators.set(DrawLayerCntlr.DT_END, distanceToolEndActionCreator);
 
 
 
