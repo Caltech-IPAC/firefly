@@ -203,7 +203,7 @@ const updateFieldsFromRangeValues= function(fields,rv, fitsData) {
     fields.lowerRange= cloneWithValue(fields.lowerRange, rv.lowerValue);
     fields.upperWhich= cloneWithValue(fields.upperWhich, rv.lowerWhich===ZSCALE ? PERCENTAGE : rv.upperWhich);
     fields.upperRange= cloneWithValue(fields.upperRange, rv.upperValue);
-    fields.beta= cloneWithValue(fields.beta,fitsData.beta);//rv.betaValue); //
+    fields.beta= cloneWithValue(fields.beta,fitsData.beta.toFixed(2) );//rv.betaValue); //
     fields.gamma= cloneWithValue(fields.gamma, rv.gammaValue);
     fields.algorithm= cloneWithValue(fields.algorithm, rv.algorithm);
     fields.zscaleContrast= cloneWithValue(fields.zscaleContrast, rv.zscaleContrast);

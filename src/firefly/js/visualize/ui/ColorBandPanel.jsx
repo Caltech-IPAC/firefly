@@ -173,14 +173,14 @@ const dataStyle= { color: 'red' };
 function suggestedValuesPanel( plot,band, showBeta) {
 
     const precision6Digit = '0.000000';
-    const precision2Digit = '0.00';
+   // const precision2Digit = '0.00';
     const style= { fontSize: '11px', paddingBottom:5, height:16, marginTop:50,  whiteSpace: 'pre'};
 
     const  fitsData= plot.webFitsData[band.value];
     const {dataMin, dataMax, beta} = fitsData;
     const dataMaxStr = `DataMax: ${numeral(dataMax).format(precision6Digit)} `;
     const dataMinStr = `DataMin: ${numeral(dataMin).format(precision6Digit)}`;
-    const betaStr =  `Beta: ${numeral(beta).format(precision2Digit)}`;
+    const betaStr =  `Beta: ${numeral(beta).format(precision6Digit)}`;
 
     if (showBeta) {
        return (
