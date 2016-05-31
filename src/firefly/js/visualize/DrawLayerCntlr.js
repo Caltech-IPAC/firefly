@@ -8,8 +8,8 @@ import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
 import {without,union,omit,isEmpty} from 'lodash';
 
-
-
+export {selectAreaEndActionCreator} from '../drawingLayers/SelectArea.js';
+export {distanceToolEndActionCreator} from '../drawingLayers/DistanceTool.js';
 
 const RETRIEVE_DATA= 'DrawLayerCntlr.retrieveData';
 const CREATE_DRAWING_LAYER= 'DrawLayerCntlr.createDrawLayer';

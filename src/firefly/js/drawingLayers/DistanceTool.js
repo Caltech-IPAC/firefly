@@ -3,9 +3,10 @@
  */
 
 import numeral from 'numeral';
-import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
+import {isBoolean} from 'lodash';
+import DrawLayerCntlr, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import {getPreference} from '../core/AppDataCntlr.js';
-import ImagePlotCntlr, {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
+import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef,Style, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
@@ -15,9 +16,8 @@ import { makeOffsetPt, makeWorldPt, makeImagePt} from '../visualize/Point.js';
 import BrowserInfo from '../util/BrowserInfo.js';
 import VisUtil from '../visualize/VisUtil.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
-import {primePlot} from '../visualize/PlotViewUtil.js';
+import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {getUIComponent} from './DistanceToolUI.jsx';
-//import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {flux} from '../Firefly.js';
 
@@ -50,12 +50,20 @@ export default {factoryDef, TYPE_ID}; // every draw layer must default export wi
 
 var idCnt=0;
 
-function dispatchDistanceToolEnd(mouseStatePayload) {
-    var {plotId,drawLayer}= mouseStatePayload;
-    var sel= {pt0:drawLayer.firstPt,pt1:drawLayer.currentPt};
-    dispatchAttributeChange(plotId,true,PlotAttribute.ACTIVE_DISTANCE,sel,true);
-    flux.process({type:DrawLayerCntlr.DT_END, payload:mouseStatePayload} );
+
+export function distanceToolEndActionCreator(rawAction) {
+    return (dispatcher, getState) => {
+        var {drawLayer, plotId}= rawAction.payload;
+        dispatcher({type:DrawLayerCntlr.DT_END, payload:rawAction.payload} );
+        drawLayer= getDrawLayerById(getState()[DRAWING_LAYER_KEY], drawLayer.drawLayerId);
+        
+        var sel= {pt0:drawLayer.firstPt,pt1:drawLayer.currentPt};
+        dispatchAttributeChange(plotId,true,PlotAttribute.ACTIVE_DISTANCE,sel,true);
+    };
 }
+
+
+
 
 
 /**
@@ -66,10 +74,13 @@ function creator() {
 
     var drawingDef= makeDrawingDef('red');
     var pairs= {
-        [MouseState.DRAG.key]: {exclusive: true, actionType:DrawLayerCntlr.DT_MOVE},
+        [MouseState.DRAG.key]: DrawLayerCntlr.DT_MOVE,
         [MouseState.DOWN.key]: DrawLayerCntlr.DT_START,
-        [MouseState.UP.key]: dispatchDistanceToolEnd
+        [MouseState.UP.key]: DrawLayerCntlr.DT_END
     };
+
+
+    var exclusiveDef= { exclusiveOnDown: true, type : 'anywhere' };
 
     var actionTypes= [DrawLayerCntlr.DT_START,
                       DrawLayerCntlr.DT_MOVE,
@@ -78,15 +89,28 @@ function creator() {
     idCnt++;
     var options= {
         canUseMouse:true,
-        canUserChangeColor: ColorChangeType.DYNAMIC
+        canUserChangeColor: ColorChangeType.DYNAMIC,
+        destroyWhenAllDetached: true
     };
     return DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, 'Distance Tool',
-                                     options, drawingDef, actionTypes, pairs );
+                                     options, drawingDef, actionTypes, pairs, exclusiveDef, getCursor );
 }
 
 function onDetach(drawLayer,action) {
     var {plotIdAry}= action.payload;
     plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.ACTIVE_DISTANCE,null,true));
+}
+
+function getCursor(plotView, screenPt) {
+    const plot= primePlot(plotView);
+    var cc= CsysConverter.make(plot);
+    var ptAry= getPtAry(plot);
+    if (!ptAry) return null;
+    var idx= findClosestPtIdx(ptAry,screenPt);
+    if (screenDistance(ptAry[idx],screenPt)<EDIT_DISTANCE) {
+        return 'pointer';
+    }
+    return null;
 }
 
 
@@ -117,24 +141,46 @@ function getLayerChanges(drawLayer, action) {
 
 }
 
+/**
+ * 
+ * @param plot
+ * @param firstPt
+ * @param currPt
+ * @param drawAry
+ * @return {object}
+ */
+function makeBaseReturnObj(plot,firstPt,currPt,drawAry )  {
+
+    var exclusiveDef= { exclusiveOnDown: true, type : 'vertexThenAnywhere' };
+
+    return {drawData:{data:drawAry},
+            exclusiveDef,
+            vertexDef:{points:[firstPt, currPt], pointDist:EDIT_DISTANCE}
+    };
+
+}
 
 function dealWithUnits(drawLayer,action) {
     var {plotIdAry}= action.payload;
-    var cc= CsysConverter.make(primePlot(visRoot(),plotIdAry[0]));
+    const plot= primePlot(visRoot(),plotIdAry[0]);
+    var cc= CsysConverter.make(plot);
     if (!cc) return null;
-    var drawSel= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, drawLayer.posAngle,cc);
-    return {drawData:{data:drawSel}};
+    var drawAry= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, drawLayer.posAngle,cc);
+
+    return makeBaseReturnObj(plot,drawLayer.firstPt, drawLayer.currentPt,drawAry);
 }
 
 
 
 function dealWithMods(drawLayer,action) {
     var {changes,plotIdAry}= action.payload;
-    if (typeof changes.posAngle=== 'boolean') {
-        var cc= CsysConverter.make(primePlot(visRoot(),plotIdAry[0]));
+    if (isBoolean(changes.posAngle)) {
+        const plot= primePlot(visRoot(),plotIdAry[0]);
+        var cc= CsysConverter.make(plot);
         if (!cc) return null;
-        var drawSel= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, changes.posAngle,cc);
-        return {posAngle:changes.posAngle, drawData:{data:drawSel}};
+        var drawAry= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, changes.posAngle,cc);
+        return Object.assign({posAngle:changes.posAngle},
+                              makeBaseReturnObj(plot,drawLayer.firstPt, drawLayer.currentPt,drawAry));
     }
     return null;
 }
@@ -146,8 +192,11 @@ function attach() {
         drawData:{data:null},
         posAngle: false,
         firstPt: null,
-        currentPt: null
+        currentPt: null,
+        vertexDef: {points:null, pointDist:EDIT_DISTANCE},
+        exclusiveDef: { exclusiveOnDown: true, type : 'anywhere' }
     };
+    
 }
 
 function getMode(plot) {
@@ -157,7 +206,7 @@ function getMode(plot) {
 }
 
 function start(action) {
-    var {screenPt,imagePt,plotId,shiftDown}= action.payload;
+    var {imagePt,plotId,shiftDown}= action.payload;
     var plot= primePlot(visRoot(),plotId);
     var mode= getMode(plot);
     if (!plot) return;
@@ -169,16 +218,18 @@ function start(action) {
         var ptAry= getPtAry(plot);
         if (!ptAry) return retObj;
 
-        var idx= findClosestPtIdx(ptAry,screenPt);
         var cc= CsysConverter.make(plot);
+        var spt= cc.getScreenCoords(imagePt);
+        var idx= findClosestPtIdx(ptAry,spt);
+        
         var testPt= cc.getScreenCoords(ptAry[idx]);
         if (!testPt) return {};
 
-        if (screenDistance(testPt,screenPt)<EDIT_DISTANCE) {
+        if (screenDistance(testPt,spt)<EDIT_DISTANCE) {
             var oppoIdx= idx===0 ? 1 : 0;
             retObj.firstPt= cc.getImageWorkSpaceCoords(ptAry[oppoIdx]);
             retObj.currentPt= cc.getImageWorkSpaceCoords(ptAry[idx]);
-            if (retObj.firstPt==null || retObj.currentPt==null) return {};
+            if (!retObj.firstPt || !retObj.currentPt) return {};
         }
         else {
             retObj= setupSelect(imagePt) ;
@@ -191,10 +242,11 @@ function start(action) {
 
 function drag(drawLayer,action) {
     var {imagePt,plotId}= action.payload;
-    var cc= CsysConverter.make(primePlot(visRoot(),plotId));
+    const plot= primePlot(visRoot(),plotId);
+    var cc= CsysConverter.make(plot);
     if (!cc) return;
-    var drawSel= makeSelectObj(drawLayer.firstPt, imagePt, drawLayer.posAngle,cc); //todo switch back
-    return {currentPt:imagePt, drawData:{data:drawSel}};
+    var drawAry= makeSelectObj(drawLayer.firstPt, imagePt, drawLayer.posAngle,cc); //todo switch back
+    return Object.assign({currentPt:imagePt}, makeBaseReturnObj(plot,drawLayer.firstPt, imagePt,drawAry));
 }
 
 function end(action) {

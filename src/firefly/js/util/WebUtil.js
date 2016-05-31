@@ -182,7 +182,7 @@ export function fetchUrl(url, options, returnAllResponses= false) {
 
 export function logError(...message) {
     if (message) {
-        message.forEach( (m) => console.log(m.stack ? m.stack : m) );
+        message.forEach( (m) => console.log(has(m,'stack') ? m.stack : m) );
     }
 }
 export function logErrorWithPrefix(prefix, ...message) {

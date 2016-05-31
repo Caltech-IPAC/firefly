@@ -1,7 +1,8 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
+import {isEmpty} from 'lodash';
+import DrawLayerCntlr, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
@@ -12,7 +13,7 @@ import {makeScreenPt} from '../visualize/Point.js';
 import BrowserInfo from '../util/BrowserInfo.js';
 import VisUtil from '../visualize/VisUtil.js';
 import SelectBox from '../visualize/draw/SelectBox.js';
-import {getPlotViewById, primePlot} from '../visualize/PlotViewUtil.js';
+import {getPlotViewById, primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {Style} from '../visualize/draw/DrawingDef.js';
 //import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
@@ -49,16 +50,21 @@ export default {factoryDef, TYPE_ID}; // every draw layer must default export wi
 
 var idCnt=0;
 
-function dispatchSelectAreaEnd(mouseStatePayload) {
-    var {plotId,drawLayer}= mouseStatePayload;
-    if (drawLayer.drawData.data) {
-        var selectBox= drawLayer.drawData.data[0];
-        var sel= {pt0:selectBox.pt1,pt1:selectBox.pt2};
-        dispatchAttributeChange(plotId,true,PlotAttribute.SELECTION,sel,true);
-        flux.process({type:DrawLayerCntlr.SELECT_AREA_END, payload:mouseStatePayload} );
-    }
-}
 
+export function selectAreaEndActionCreator(rawAction) {
+    return (dispatcher, getState) => {
+        var {drawLayer, plotId}= rawAction.payload;
+        dispatcher({type:DrawLayerCntlr.SELECT_AREA_END, payload:rawAction.payload} );
+
+        drawLayer= getDrawLayerById(getState()[DRAWING_LAYER_KEY], drawLayer.drawLayerId);
+
+        if (drawLayer.drawData.data) {
+            var selectBox= drawLayer.drawData.data[0];
+            var sel= {pt0:selectBox.pt1,pt1:selectBox.pt2};
+            dispatchAttributeChange(plotId,true,PlotAttribute.SELECTION,sel,true);
+        }
+    };
+}
 
 /**
  *
@@ -69,29 +75,58 @@ function creator() {
     var drawingDef= makeDrawingDef('black');
     var pairs= {
         [MouseState.MOVE.key]: DrawLayerCntlr.SELECT_MOUSE_LOC,
-        [MouseState.DRAG.key]: {exclusive: true, actionType:DrawLayerCntlr.SELECT_AREA_MOVE},
+        [MouseState.DRAG.key]: DrawLayerCntlr.SELECT_AREA_MOVE,
         [MouseState.DOWN.key]: DrawLayerCntlr.SELECT_AREA_START,
-        [MouseState.UP.key]: dispatchSelectAreaEnd
+        [MouseState.UP.key]: DrawLayerCntlr.SELECT_AREA_END,
     };
 
     var actionTypes= [DrawLayerCntlr.SELECT_AREA_START,
                       DrawLayerCntlr.SELECT_AREA_MOVE,
                       DrawLayerCntlr.SELECT_AREA_END,
                       DrawLayerCntlr.SELECT_MOUSE_LOC];
+    
+    var exclusiveDef= { exclusiveOnDown: true, type : 'anywhere' };
+
+
 
     idCnt++;
     var options= {
         canUseMouse:true,
         canUserChangeColor: ColorChangeType.DISABLE,
-        canUserDelete: false
+        canUserDelete: false,
+        destroyWhenAllDetached: true
     };
     return DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, 'Selection Tool',
-                                     options, drawingDef, actionTypes, pairs );
+                                     options, drawingDef, actionTypes, pairs, exclusiveDef, getCursor);
 }
 
 function onDetach(drawLayer,action) {
     var {plotIdAry}= action.payload;
     plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.SELECTION,null,true));
+}
+
+function getCursor(plotView, screenPt) {
+    const plot= primePlot(plotView);
+    var cc= CsysConverter.make(plot);
+    var ptAry= getPtAryFromPlot(plot);
+    if (!ptAry) return null;
+    var corner= findClosestCorner(cc,ptAry, screenPt, EDIT_DISTANCE);
+    if (!corner) return null;
+    switch (corner) {
+        case Corner.NE:
+            return 'ne-resize';
+            break;
+        case Corner.NW:
+            return 'nw-resize';
+            break;
+        case Corner.SE:
+            return 'se-resize';
+            break;
+        case Corner.SW:
+            return 'sw-resize';
+            break;
+    }
+    return null;
 }
 
 function getLayerChanges(drawLayer, action) {
@@ -120,9 +155,10 @@ function getLayerChanges(drawLayer, action) {
 
 function attach() {
     return {
-        //mode: 'select',
         helpLine: selHelpText,
-        drawData:{data:null}
+        drawData:{data:null},
+        vertexDef: {points:null, pointDist:EDIT_DISTANCE},
+        exclusiveDef: { exclusiveOnDown: true, type: 'anywhere' }
     };
 }
 
@@ -132,7 +168,8 @@ function moveMouse(drawLayer,action) {
     var mode= getMode(plot);
     if (plot && mode==='edit') {
         var cc= CsysConverter.make(plot);
-        var ptAry= getPtAry(plot);
+        var ptAry= getPtAryFromPlot(plot);
+        if (!ptAry) return null;
         var corner= findClosestCorner(cc,ptAry, screenPt, EDIT_DISTANCE);
         var cursor;
         if (corner) {
@@ -165,7 +202,7 @@ function start(drawLayer,action) {
         retObj= setupSelect(imagePt);
     }
     else if (mode==='edit') {
-        var ptAry= getPtAry(plot);
+        var ptAry= getPtAryFromPlot(plot);
         if (!ptAry) return retObj;
 
         var idx= findClosestPtIdx(ptAry,screenPt);
@@ -188,20 +225,32 @@ function start(drawLayer,action) {
 
 }
 
-function getPtAry(plot) {
+function getPtAryFromPlot(plot) {
     var sel= plot.attributes[PlotAttribute.SELECTION];
     if (!sel) return null;
-    var cc= CsysConverter.make(plot);
+    return getPtAry(plot,sel.pt0,sel.pt1);
+}
+
+function getPtAry(plot,pt0,pt1) {
     var ptAry=[];
-    ptAry[0]= cc.getScreenCoords(sel.pt0);
-    ptAry[2]= cc.getScreenCoords(sel.pt1);
+    var cc= CsysConverter.make(plot);
+    ptAry[0]= cc.getScreenCoords(pt0);
+    ptAry[2]= cc.getScreenCoords(pt1);
     if (!ptAry[0] || !ptAry[2]) return null;
     ptAry[1] = makeScreenPt(ptAry[2].x, ptAry[0].y);
     ptAry[3] = makeScreenPt(ptAry[0].x, ptAry[2].y);
     return ptAry;
+
 }
 
 
+function getPtAryForCorners(plot,pt0,pt1) {
+    const screenPtAry= getPtAry(plot,pt0,pt1);
+    if (isEmpty(screenPtAry)) return null;
+    var cc= CsysConverter.make(plot);
+    const useWld=  cc.projection.isSpecified();
+    return screenPtAry.map( (sp) => useWld ? cc.getWorldCoords(sp) : cc.getImageCoords(sp));
+}
 
 
 
@@ -210,7 +259,12 @@ function drag(drawLayer,action) {
     var plot= primePlot(visRoot(),plotId);
     if (!plot) return;
     var drawSel= makeSelectObj(drawLayer.firstPt, imagePt, CsysConverter.make(plot));
-    return {currentPt:imagePt, drawData:{data:drawSel}};
+    var exclusiveDef= { exclusiveOnDown: true, type : 'vertexOnly' };
+    return {currentPt:imagePt,
+            drawData:{data:drawSel},
+            exclusiveDef,
+            vertexDef:{points:getPtAryForCorners(plot,drawLayer.firstPt,imagePt), pointDist:EDIT_DISTANCE}
+     };
 }
 
 function end(drawLayer,action) {

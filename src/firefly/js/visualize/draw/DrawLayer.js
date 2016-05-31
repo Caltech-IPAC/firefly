@@ -52,7 +52,9 @@ function makeDrawLayer(drawLayerId,
                        options={},
                        drawingDef= makeDrawingDef('red'),
                        actionTypeAry= [],
-                       mouseEventMap= {}) {
+                       mouseEventMap= {},
+                       exclusiveDef= null,
+                       getCursor= null) {
     var drawLayer=  {
 
 
@@ -147,10 +149,33 @@ function makeDrawLayer(drawLayerId,
            //         [MouseState.DOWN.key]: {static: true, func:dispatchFindClosestLayer}
            //     };
         mouseEventMap,
+        
+        
+        
+           // if defined then:
+                  // exclusiveOnDown: boolean, true if exclusive control on down
+                  // type : 'anywhere',  - has first priority, used with a new layer, like beginning distance or select
+        //                  'vertexOnly', - will be exclusive if near a vertex and there are not layers with 'anywhere'
+        //                  'vertexThenAnywhere' - will be exclusive if near a vertex, or not near,
+        //                                and there are not layers with 'anywhere' or a 'vertexOnly' that matches
+        //   1. First look for a layers that has exclusiveDef.exclusiveOnDown as true
+        //   2. if any of those has exclusiveDef.type === 'anywhere' then return the last in the list
+        //   3. otherwise if any any layer has exclusiveDef.type === 'vertexOnly'  or 'vertexThenAnywhere' return the first that has
+        //             the mouse click near is one if its vertex (vertexDef.points)
+        //   4. otherwise if any layer has exclusiveDef.type === 'vertexThenAnywhere' then return that one
+        //   5. otherwise return null
+        exclusiveDef,
 
-           // the cursor style type that should be set as the cursor on the viewer
+        // if defined then Object with:
+                  // points: array of points, // if not define or empty the down is exclusive anywhere
+                  // pointDist: 10, // how close to the points in the array to match
+        vertexDef: null, 
+        
+
+           // return the cursor style type that should be set as the cursor on the viewer
            // 'nw-resize' or 'se-resize', any css cursor is allowed
-        cursor : ''
+           // parameters - plotView, screenPt
+        getCursor
     };
 
     return Object.assign(drawLayer,options);

@@ -4,7 +4,7 @@
 
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {xor,isEmpty,get} from 'lodash';
+import {xor,isEmpty,get, isString, isObject, isFunction, has, findLast} from 'lodash';
 import {TileDrawer} from './TileDrawer.jsx';
 import {EventLayer} from './EventLayer.jsx';
 import {ImageViewerStatus} from './ImageViewerStatus.jsx';
@@ -12,7 +12,9 @@ import {makeScreenPt} from '../Point.js';
 import {logError} from '../../util/WebUtil.js';
 import {flux} from '../../Firefly.js';
 import {DrawerComponent}  from '../draw/DrawerComponent.jsx';
+import {CysConverter}  from '../CsysConverter.js';
 import {primePlot} from '../PlotViewUtil.js';
+import {contains} from '../VisUtil.js';
 import {
     dispatchPlotProgressUpdate,
     dispatchZoom,
@@ -21,14 +23,20 @@ import {
     dispatchUpdateViewSize} from '../ImagePlotCntlr.js';
 import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from '../VisMouseSync.js';
 
+const DEFAULT_CURSOR= 'crosshair';
 
+const {MOVE,DOWN,DRAG,UP, DRAG_COMPONENT, EXIT, ENTER}= MouseState;
+
+const draggingOrReleasing = (ms) => ms==DRAG || ms===DRAG_COMPONENT || ms===UP || ms===EXIT || ms===ENTER;
 
 export class ImageViewerLayout extends Component {
 
     constructor(props) {
         super(props);
         this.plotDrag= null;
+        this.mouseOwnerLayer= null;
         this.eventCB= this.eventCB.bind(this);
+        this.state= {cursor:DEFAULT_CURSOR};
     }
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
@@ -71,37 +79,51 @@ export class ImageViewerLayout extends Component {
     }
 
     eventCB(plotId,mouseState,screenPt,screenX,screenY) {
-        var {drawLayersAry}= this.props;
+        var {drawLayersAry,plotView}= this.props;
         var mouseStatePayload= makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY);
-        var list= drawLayersAry.filter( (dl) => get(dl,['mouseEventMap',mouseState.key],false));
+        var list= drawLayersAry.filter( (dl) => dl.visiblePlotIdAry.includes(plotView.plotId) &&
+                                                get(dl,['mouseEventMap',mouseState.key],false) );
 
-        var exclusive= list.find((dl) => get(dl,['mouseEventMap',mouseState.key,'exclusive']));
-        if (exclusive) {
-            fireMouseEvent(exclusive,mouseState,mouseStatePayload);
+        if (this.mouseOwnerLayer && draggingOrReleasing(mouseState)) { // use layer from the mouseDown
+            fireMouseEvent(this.mouseOwnerLayer,mouseState,mouseStatePayload);
         }
         else {
-            list.forEach( (dl) => fireMouseEvent(dl,mouseState,mouseStatePayload) );
-            this.scroll(plotId,mouseState,screenX,screenY);
+            const ownerCandidate= findMouseOwner(list,primePlot(plotView),screenPt);         // see if anyone can own that mouse
+            this.mouseOwnerLayer = DOWN.is(mouseState) ? ownerCandidate : null;   // can only happen on mouseDown
+            if (this.mouseOwnerLayer) {
+                fireMouseEvent(this.mouseOwnerLayer,mouseState,mouseStatePayload);
+            }
+            else { // fire to all non-exclusive layers, scroll, and determine cursor
+                list.filter( (dl) => !get(dl, 'exclusiveDef.exclusiveOnDown',false))
+                    .forEach( (dl) => fireMouseEvent(dl,mouseState,mouseStatePayload) );
+                this.scroll(plotId,mouseState,screenX,screenY);
+                var cursor = DEFAULT_CURSOR;
+                const cursorCandidate= ownerCandidate || findMouseOwner(drawLayersAry,primePlot(plotView),screenPt);
+                if (MOVE.is(mouseState) && has(cursorCandidate, 'getCursor') ) {
+                    cursor = cursorCandidate.getCursor(plotView, screenPt) || DEFAULT_CURSOR;
+                }
+                if (cursor !== this.state.cursor) this.setState({cursor});
+            }
         }
-        fireMouseCtxChange(mouseStatePayload);
+        fireMouseCtxChange(mouseStatePayload);  // this for anyone listening directly to the mouse
     }
 
     scroll(plotId,mouseState,screenX,screenY) {
         if (!screenX && !screenY) return;
 
         switch (mouseState) {
-            case MouseState.DOWN :
+            case DOWN :
                 dispatchChangeActivePlotView(plotId);
                 var {scrollX, scrollY}= this.props.plotView;
                 this.plotDrag= plotMover(screenX,screenY,scrollX,scrollY);
                 break;
-            case MouseState.DRAG :
+            case DRAG :
                 if (this.plotDrag) {
                     const newScrollPt= this.plotDrag(screenX,screenY);
                     dispatchProcessScroll({plotId,scrollPt:newScrollPt});
                 }
                 break;
-            case MouseState.UP :
+            case UP :
                 this.plotDrag= null;
                 break;
         }
@@ -130,8 +152,8 @@ export class ImageViewerLayout extends Component {
         const drawLayersIdAry= drawLayersAry ? drawLayersAry.map( (dl) => dl.drawLayerId) : null;
 
 
-        var cursor= drawLayersAry.map( (dl) => dl.cursor).find( (c) => (c && c.length));
-        if (!cursor || !cursor.length) cursor= 'crosshair';
+        // var cursor= drawLayersAry.map( (dl) => dl.cursor).find( (c) => (c && c.length));
+        const {cursor}= this.state;
         return (
             <div className='plot-view-scroll-view-window' style={rootStyle}>
                 <div className='plot-view-master-panel'
@@ -246,25 +268,70 @@ function makeMessageArea(pv,plotShowing) {
     }
 }
 
+
+/**
+ * Do the following:
+ *    1. First look for a layers that has exclusiveDef.exclusiveOnDown as true
+ *    2. if any of those has exclusiveDef.type === 'anywhere' then return the last in the list
+ *    3. otherwise if any any layer has exclusiveDef.type === 'vertexOnly'  or 'vertexThenAnywhere' return the first that has
+ *              the mouse click near is one if its vertex (vertexDef.points)
+ *    4. otherwise if any layer has exclusiveDef.type === 'vertexThenAnywhere' then return that one
+ *    5. otherwise return null
+ * @param dlList
+ * @param plot
+ * @param screenPt
+ * @return {*}
+ */
+function findMouseOwner(dlList, plot, screenPt) {
+                    // Step 1
+    const exList= dlList.filter((dl) => get(dl,'exclusiveDef.exclusiveOnDown'));
+    if (isEmpty(exList)) return null;
+
+                    // Step 2
+    const nowList= exList.filter((dl) => get(dl,'exclusiveDef.type','')==='anywhere');
+
+    if (!isEmpty(nowList)) return nowList[nowList.length-1];
+
+                      // Step 3
+    const cc= CysConverter.make(plot);
+    var vertexDL= exList
+        .filter((dl) => {
+            const exType= get(dl,'exclusiveDef.type','');
+            const points= get(dl,'vertexDef.points',null);
+            return (exType==='vertexOnly' || exType==='vertexThenAnywhere') && !isEmpty(points);
+        })
+        .find( (dl)  => {
+            const {vertexDef}= dl;
+            const dist= vertexDef.pointDist || 5;
+            const x= screenPt.x- dist;
+            const y= screenPt.y- dist;
+            const w= dist*2;
+            const h= dist*2;
+            return vertexDef.points.find( (p) => {
+                const spt= cc.getScreenCoords(p);
+                return contains(x,y,w,h,spt.x,spt.y);
+            } );
+        });
+
+    if (vertexDL) return vertexDL;
+
+                     // Step 4 and 5
+    const anyWhereList= dlList.filter((dl) => get(dl,'exclusiveDef.type','')==='vertexThenAnywhere');
+    return isEmpty(anyWhereList) ? null : anyWhereList[anyWhereList.length-1];
+
+}
+
 function fireMouseEvent(drawLayer,mouseState,mouseStatePayload) {
     var payload= Object.assign({},mouseStatePayload,{drawLayer});
     var fireObj= drawLayer.mouseEventMap[mouseState.key];
-    if (typeof fireObj === 'string') {
+    if (isString(fireObj)) {
         flux.process({type: fireObj, payload});
     }
-    else if (typeof fireObj === 'function') {
+    else if (isFunction(fireObj)) {
         fireObj(payload);
     }
-    else if (typeof fireObj === 'object' && fireObj.func) {
-        fireObj.func(payload);
-    }
-    else if (typeof fireObj === 'object' && fireObj.actionType) {
-        flux.process({type: fireObj.actionType, payload});
-    }
-    else {
-        logError(new Error('could not find a way to process MouseState'+mouseState.key),fireObj);
-    }
 }
+
 
 // ------------ React component
 

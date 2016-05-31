@@ -417,7 +417,7 @@ const getEstimatedFullZoomFactor= function(fullType, dataWidth, dataHeight,
  * @param h the second rec height
  * @return true if rectangles intersect
  */
-const intersects= function(x0, y0, w0, h0, x, y, w, h) {
+export const intersects= function(x0, y0, w0, h0, x, y, w, h) {
     if (w0 <= 0 || h0 <= 0 || w <= 0 || h <= 0) {
         return false;
     }
@@ -435,7 +435,7 @@ const intersects= function(x0, y0, w0, h0, x, y, w, h) {
  * @param y the second point y, top left
  * @return {boolean} true if rectangles intersect
  */
-const contains= function(x0, y0, w0, h0, x, y) {
+export const contains= function(x0, y0, w0, h0, x, y) {
     return (x >= x0 && y >= y0 && x < x0 + w0 && y < y0 + h0);
 };
 
@@ -451,11 +451,11 @@ const contains= function(x0, y0, w0, h0, x, y) {
  * @param h the second rec height
  * @return {boolean} true if rectangles intersect
  */
-const containsRec= function(x0, y0, w0, h0, x, y, w, h) {
+export const containsRec= function(x0, y0, w0, h0, x, y, w, h) {
      return contains(x0,y0,w0,h0,x,y) && contains(x0,y0,w0,h0,x+w,y+h);
 };
 
-const containsCircle= function(x, y, centerX, centerY, radius) {
+export const containsCircle= function(x, y, centerX, centerY, radius) {
     return Math.pow((x - centerX), 2) + Math.pow((y - centerY), 2) < radius * radius;
 };
 
