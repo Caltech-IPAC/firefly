@@ -363,11 +363,19 @@ public class ImagePlotCreator {
         return zoomLevel;
     }
 
+    /**
+     * 5/13/16 LZ modified to add the beta in the WebFitsData calling parameter
+     * @param plot
+     * @param frGroup
+     * @param band
+     * @param f
+     * @return
+     */
     public static WebFitsData makeWebFitsData(ImagePlot plot, ActiveFitsReadGroup frGroup, Band band, File f) {
         long fileLength= (f!=null && f.canRead()) ? f.length() : 0;
         HistogramOps ops= plot.getHistogramOps(band,frGroup);
         Histogram hist= ops.getDataHistogram();
-        return new WebFitsData( ops.getDataMin(hist), ops.getDataMax(hist),
+        return new WebFitsData( ops.getDataMin(hist), ops.getDataMax(hist),ops.getBeta(),
                                 fileLength, plot.getFluxUnits(band,frGroup));
     }
 }

@@ -3,7 +3,7 @@
  */
 
 import React, {Component,PropTypes} from 'react';
-
+import lodash from 'lodash';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
@@ -26,7 +26,7 @@ import {RED_PANEL,
         colorPanelChange} from './ColorPanelReducer.js';
 
 
-import { RangeValues, ZSCALE }from '../RangeValues.js';
+import { RangeValues, ZSCALE,STRETCH_ASINH, STRETCH_POWERLAW_GAMMA}from '../RangeValues.js';
 
 
 export function showColorDialog() {
@@ -75,6 +75,7 @@ class ColorDialog extends Component {
         const gFields= FieldGroupUtils.getGroupFields(GREEN_PANEL);
         const bFields= FieldGroupUtils.getGroupFields(BLUE_PANEL);
 
+
         if (plot!=state.plot || fields!=state.fields ||
             rFields!=state.rFields || gFields!=state.gFields || bFields!=state.bFields) {
             this.setState({plot, fields, rFields, gFields, bFields});
@@ -85,6 +86,7 @@ class ColorDialog extends Component {
     render() {
         const {plot,fields, rFields,gFields,bFields}= this.state;
         if (!plot) return false;
+
 
         if (plot.plotState.isThreeColor()) {
             return renderThreeColorView(plot,rFields,gFields,bFields);
@@ -97,6 +99,7 @@ class ColorDialog extends Component {
 
 function renderThreeColorView(plot,rFields,gFields,bFields) {
     const {plotState}= plot;
+
     return (
         <div style={{paddingTop:4}}>
             <FieldGroup groupKey={'colorDialogTabs'} keepState={false}>
@@ -145,7 +148,10 @@ function renderThreeColorView(plot,rFields,gFields,bFields) {
 
 }
 
+
 function renderStandardView(plot,fields) {
+
+
     return (
         <div>
             <FieldGroup groupKey={NO_BAND_PANEL} keepState={true} >
@@ -154,9 +160,11 @@ function renderStandardView(plot,fields) {
                     closeOnValid={false}
                     style={{padding: '2px 0 7px 10px'}}
                     onSuccess={replot}
+
                     onFail={invalidMessage}
                     text='Refresh'
                     dialogId='ColorStretchDialog'
+
                 />
             </FieldGroup>
         </div>
@@ -175,6 +183,7 @@ function replot(request) {
     }
 
 }
+
 
 function invalidMessage() {
     showInfoPopup('One or more fields are not valid', 'Invalid Data');
@@ -219,7 +228,7 @@ function makeSerializedRv(request) {
         request.lowerRange,
         useZ ? ZSCALE :request.upperWhich,
         request.upperRange,
-        request.DR, request.BP, request.WP,
+        request.beta,
         request.gamma, request.algorithm, request.zscaleContrast,
         request.zscaleSamples, request.zscaleSamplesPerLine);
 

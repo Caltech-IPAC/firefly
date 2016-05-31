@@ -10,6 +10,10 @@ package edu.caltech.ipac.firefly.fftools;
  * 6/26/15
  * User LZ
  * Add ZP, MP parameters for asinh stretch
+ *
+ * 5/04/16
+ * LZ
+ * Removed ZP, MP and changed DR to beta
  */
 
 
@@ -263,9 +267,9 @@ public class FitsViewerJSInterface {
     //LZ 6/11/15 add this method
     public static String serializeRangeValues(String stretchType,
                                               double lowerValue,
-                                              double upperValue, double drValue,double zpValue, double wpValue, double gammaValue,
+                                              double upperValue, double betaValue, double gammaValue,
                                               String algorithm) {
-        RangeValues rv= RangeValues.create(stretchType,lowerValue,upperValue,drValue,zpValue, wpValue, gammaValue, algorithm);
+        RangeValues rv= RangeValues.create(stretchType,lowerValue,upperValue,betaValue, gammaValue, algorithm);
         return rv.serialize();
     }
 

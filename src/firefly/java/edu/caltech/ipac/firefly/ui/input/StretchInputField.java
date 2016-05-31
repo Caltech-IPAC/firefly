@@ -33,7 +33,6 @@ public class StretchInputField extends InputField {
 
      private static final int PERCENT_IDX= 0;
      private static final int ABSOLUTE_IDX= 1;
-     private static final int MINMAX_IDX= 2;
      private static final int SIGMA_IDX= 3;
 
     private final static String _minUnitStrs[]= new String[4];
@@ -47,12 +46,10 @@ public class StretchInputField extends InputField {
     static {
         _minUnitStrs[PERCENT_IDX]= _prop.getName("minStretch.percent");
         _minUnitStrs[ABSOLUTE_IDX]= _prop.getName("minStretch.absolute");
-        _minUnitStrs[MINMAX_IDX]= _prop.getName("minStretch.MinMax");
         _minUnitStrs[SIGMA_IDX]= _prop.getName("minStretch.Sigma");
 
         _maxUnitStrs[PERCENT_IDX]= _prop.getName("maxStretch.percent");
         _maxUnitStrs[ABSOLUTE_IDX]= _prop.getName("maxStretch.absolute");
-        _maxUnitStrs[MINMAX_IDX]= _prop.getName("maxStretch.MinMax");
         _maxUnitStrs[SIGMA_IDX]= _prop.getName("maxStretch.Sigma");
      }
 
@@ -69,13 +66,11 @@ public class StretchInputField extends InputField {
         if (type==Type.MIN) {
             _listBox.addItem(_minUnitStrs[PERCENT_IDX]);
             _listBox.addItem(_minUnitStrs[ABSOLUTE_IDX]);
-            _listBox.addItem(_minUnitStrs[MINMAX_IDX]);
             _listBox.addItem(_minUnitStrs[SIGMA_IDX]);
         }
         else if (type==Type.MAX) {
             _listBox.addItem(_maxUnitStrs[PERCENT_IDX]);
             _listBox.addItem(_maxUnitStrs[ABSOLUTE_IDX]);
-            _listBox.addItem(_maxUnitStrs[MINMAX_IDX]);
             _listBox.addItem(_maxUnitStrs[SIGMA_IDX]);
         }
 
@@ -163,9 +158,7 @@ public class StretchInputField extends InputField {
         else if (idx==ABSOLUTE_IDX) {
             retval= RangeValues.ABSOLUTE;
         }
-        else if (idx==MINMAX_IDX) {
-            retval= RangeValues.MAXMIN;
-        }
+
         else if (idx==SIGMA_IDX) {
             retval= RangeValues.SIGMA;
         }
@@ -257,13 +250,7 @@ public class StretchInputField extends InputField {
                         fd.setDefaultValue(def);
                         setValue(def);
                         break;
-                    case MINMAX_IDX:
-                        def = _type == Type.MIN ? _wFitsData.getDataMin() + "" : _wFitsData.getDataMax() + "";
-                        fd.setMinValue(_wFitsData.getDataMin(), RangeFieldDef.INCLUSIVE);
-                        fd.setMaxValue(_wFitsData.getDataMax(), RangeFieldDef.INCLUSIVE);
-                        fd.setDefaultValue(def);
-                        setValue(def);
-                        break;
+
                     default:
                         break;
                 }
@@ -290,9 +277,7 @@ public class StretchInputField extends InputField {
             case DATA:
                 setUnits(ABSOLUTE_IDX);
                 break;
-            case MINMAX:
-                setUnits(MINMAX_IDX);
-                break;
+
             case SIGMA:
                 setUnits(SIGMA_IDX);
                 break;

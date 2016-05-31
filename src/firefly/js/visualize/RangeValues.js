@@ -4,6 +4,7 @@
 
 //LZ 06/11/15 add arcsine and power law gamma parameters
 //LZ 06/26/15 add zp and wp parameters
+//LZ 05/03/16 Remove zp, wp parameters and changed dp to beta
 import validator from 'validator';
 
 
@@ -12,7 +13,6 @@ export const ABSOLUTE_STR   = 'absolute';
 export const SIGMA_STR      = 'sigma';
 
 export const PERCENTAGE = 88;
-export const MAXMIN     = 89;
 export const ABSOLUTE   = 90;
 export const ZSCALE     = 91;
 export const SIGMA      = 92;
@@ -37,7 +37,6 @@ export const STRETCH_SQUARED = 48;
 export const STRETCH_SQRT    = 49;
 export const  STRETCH_ASINH   = 50;
 export const STRETCH_POWERLAW_GAMMA   = 51;
-
 
 const BYTE_MAX_VALUE= 127;
 
@@ -67,9 +66,7 @@ export class RangeValues {
                  lowerValue= 1.0,
                  upperWhich= PERCENTAGE,
                  upperValue= 99.0,
-                 drValue=1.0,
-                 bpValue=0.0,
-                 wpValue=1.0,
+                 betaValue=0.2,
                  gammaValue=2.0,
                  algorithm= STRETCH_LINEAR,
                  zscaleContrast= 25,
@@ -81,9 +78,7 @@ export class RangeValues {
         this.lowerValue= parseFloat(lowerValue);
         this.upperWhich= parseInt(upperWhich);
         this.upperValue= parseFloat(upperValue);
-        this.drValue = parseFloat(drValue);
-        this.bpValue = parseFloat(bpValue);
-        this.wpValue = parseFloat(wpValue);
+        this.betaValue = parseFloat(betaValue);
         this.gammaValue=parseFloat(gammaValue);
         this.algorithm=  parseInt(algorithm);
         this.zscaleContrast= parseInt(zscaleContrast);
@@ -111,7 +106,7 @@ export class RangeValues {
      */
     static clone() {
         return new RangeValues( this.lowerWhich, this.lowerValue, this.upperWhich,
-                                this.upperValue, this.drValue, this.bpValue, this.wpValue, this.gammaValue, this.algorithm,
+                                this.upperValue, this.betaValue,  this.gammaValue, this.algorithm,
                                 this.zscaleContrast, this.zscaleSamples,
                                 this.zscaleSamplesPerLine,
                                 this.bias, this.contrast );
@@ -148,9 +143,7 @@ export class RangeValues {
      * @param lowerValue
      * @param upperWhich
      * @param upperValue
-     * @param drValue
-     * @param bpValue
-     * @param wpValue
+     * @param betaValue
      * @param gammaValue
      * @param algorithm
      * @param zscaleContrast
@@ -164,9 +157,7 @@ export class RangeValues {
                 lowerValue= 1.0,
                 upperWhich= PERCENTAGE,
                 upperValue= 99.0,
-                drValue=1.0,
-                bpValue=0.0,
-                wpValue=1.0,
+                betaValue=0.1,
                 gammaValue=2.0,
                 algorithm= STRETCH_LINEAR,
                 zscaleContrast= 25,
@@ -175,8 +166,8 @@ export class RangeValues {
                 bias= 0.5,
                 contrast= 1.0 ) {
 
-        return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, drValue,
-            bpValue, wpValue, gammaValue, algorithm, zscaleContrast, zscaleSamples,
+        return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, betaValue,
+             gammaValue, algorithm, zscaleContrast, zscaleSamples,
             zscaleSamplesPerLine, bias, contrast);
     }
     
@@ -246,9 +237,7 @@ export class RangeValues {
                rv.lowerValue+','+
                rv.upperWhich+','+
                rv.upperValue+','+
-               rv.drValue+','+
-               rv.bpValue+','+
-               rv.wpValue+','+
+               rv.betaValue+','+
                rv.gammaValue+','+
                rv.algorithm+','+
                rv.zscaleContrast+','+

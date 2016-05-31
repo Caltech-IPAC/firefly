@@ -124,6 +124,7 @@ public class VisJsonSerializer {
         map.put("JSON", true);
         map.put("dataMin", wfData.getDataMin());
         map.put("dataMax", wfData.getDataMax());
+        map.put("beta", wfData.getBeta());
         map.put("fluxUnits", wfData.getFluxUnits());
         map.put("getFitsFileSize", wfData.getFitsFileSize());
         return map;

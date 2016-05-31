@@ -3,6 +3,7 @@
  */
 
 import React, {Component,PropTypes} from 'react';
+import numeral from 'numeral';
 
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
@@ -13,7 +14,7 @@ import {formatFlux} from '../VisUtil.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
 
 import {
-    PERCENTAGE, MAXMIN, ABSOLUTE,SIGMA,
+    PERCENTAGE,  ABSOLUTE,SIGMA,
     STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL,
     STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../RangeValues.js';
 
@@ -97,12 +98,17 @@ export class ColorBandPanel extends Component {
     render() {
         var {fields,plot,band}=this.props;
         const {dataHistUrl,cbarUrl, histIdx, histValue,histMean,exit}=  this.state;
+
+
+
         var panel;
+        var showBeta=false;
         if (fields) {
             const {algorithm, zscale}=fields;
             var a= Number.parseInt(algorithm.value);
             if (a===STRETCH_ASINH) {
                 panel= renderAsinH(fields);
+                showBeta=true;
             }
             else if (a===STRETCH_POWERLAW_GAMMA) {
                 panel= renderGamma(fields);
@@ -133,7 +139,11 @@ export class ColorBandPanel extends Component {
                     <div style={{display:'table', margin:'auto auto'}}>
                         {getStretchTypeField()}
                     </div>
+
                     {panel}
+                    <div>
+                        {suggestedValuesPanel( plot,band, showBeta)}
+                    </div>
                     <div style={{position:'absolute', bottom:5, left:5, right:5}}>
                         <div style={{display:'table', margin:'auto auto', paddingBottom:5}}>
                             <CheckboxGroupInputField
@@ -160,16 +170,49 @@ ColorBandPanel.propTypes= {
 const readTopBaseStyle= { fontSize: '11px', paddingBottom:5, height:16 };
 const dataStyle= { color: 'red' };
 
-function ReadoutPanel({exit, plot,band,idx,histValue,histMean,width}) {
-    var topStyle= Object.assign({width},readTopBaseStyle);
-    if (exit) {
+function suggestedValuesPanel( plot,band, showBeta) {
+
+    const precision6Digit = '0.000000';
+   // const precision2Digit = '0.00';
+    const style= { fontSize: '11px', paddingBottom:5, height:16, marginTop:50,  whiteSpace: 'pre'};
+
+    const  fitsData= plot.webFitsData[band.value];
+    const {dataMin, dataMax, beta} = fitsData;
+    const dataMaxStr = `DataMax: ${numeral(dataMax).format(precision6Digit)} `;
+    const dataMinStr = `DataMin: ${numeral(dataMin).format(precision6Digit)}`;
+    const betaStr =  `Beta: ${numeral(beta).format(precision6Digit)}`;
+
+    if (showBeta) {
        return (
-           <div style={topStyle}>
-                <span style={{float:'right', paddingRight:2, opacity:.4 }}>
-                Move mouse over graph to see values
+
+           <div style={style}>
+                <span style={{float:'left', paddingRight:2, opacity:.5 , marginLeft:30}}>
+                    {dataMinStr}   {dataMaxStr}   {betaStr}
                 </span>
            </div>
        );
+    }
+    else {
+      return (
+        <div style={style}>
+                <span style={{float:'left', paddingRight:2, opacity:.5, marginLeft:40 }}>
+                  {dataMinStr}            {dataMaxStr}
+                </span>
+        </div>
+       );
+    }
+}
+
+function ReadoutPanel({exit, plot,band,idx,histValue,histMean,width}) {
+    var topStyle= Object.assign({width},readTopBaseStyle);
+    if (exit) {
+        return (
+            <div style={topStyle}>
+                <span style={{float:'right', paddingRight:2, opacity:.4, textAlign: 'center' }}>
+                Move mouse over graph to see values
+                </span>
+            </div>
+        );
     }
     else {
         return (
@@ -209,7 +252,6 @@ function getTypeMinField() {
         <ListBoxInputField fieldKey={'lowerWhich'} inline={true} labelWidth={0}
                            options={ [ {label: '%', value: PERCENTAGE},
                                        {label: 'Data', value: ABSOLUTE},
-                                       {label: 'Data Min', value: MAXMIN},
                                        {label: 'Sigma', value: SIGMA}
                                        ]}
                            multiple={false}
@@ -222,7 +264,6 @@ function getTypeMaxField() {
         <ListBoxInputField fieldKey='upperWhich' inline={true} labelWidth={0}
                            options={ [ {label: '%', value: PERCENTAGE},
                                        {label: 'Data', value: ABSOLUTE},
-                                       {label: 'Data Max', value: MAXMIN},
                                        {label: 'Sigma', value: SIGMA}
                                                   ]}
                            multiple={false}
@@ -301,9 +342,7 @@ function renderAsinH(fields) {
         <div>
             {range}
             <div style={{paddingTop:10}}/>
-            <ValidationField  wrapperStyle={textPadding} labelWidth={LABEL_WIDTH} fieldKey='DR' />
-            <ValidationField  wrapperStyle={textPadding} labelWidth={LABEL_WIDTH} fieldKey='BP' />
-            <ValidationField  wrapperStyle={textPadding} labelWidth={LABEL_WIDTH} fieldKey='WP' />
+            <ValidationField  wrapperStyle={textPadding} labelWidth={LABEL_WIDTH} fieldKey='beta' />
         </div>
     );
 }

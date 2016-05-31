@@ -74,6 +74,7 @@ public class FitsRead implements Serializable {
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
     private  short[] masks=null;
     private Histogram hist;
+    private  double betaValue;
 
 
     private static ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<Integer>(Arrays.asList(8, 16, 32, -32, -64));
@@ -97,7 +98,6 @@ public class FitsRead implements Serializable {
         checkHeader();
         long HDUOffset = getHDUOffset(imageHdu);
         imageHeader = new ImageHeader(header, HDUOffset, planeNumber);
-//        blankValue = imageHeader.blank_value;
 
         if (!SUPPORTED_BIT_PIXS.contains(new Integer(imageHeader.bitpix))) {
             System.out.println("Unimplemented bitpix = " + imageHeader.bitpix);
@@ -111,9 +111,18 @@ public class FitsRead implements Serializable {
         hist= computeHistogram();
 
 
+        /* The error in asinh algorithm is
+         *  V(mu) = [ a * sigma^2)/(4b^2+f^2)] where f is a flux
+         *  When f=0, the error reaches it maximum, if we choose beta = 2b = sigma,
+         *  the error:
+         *  V(mu) = a *simga^2/beta^2 = a
+         *  Thus, we use sigma as a default beta value
+         */
+        betaValue = computeSigma(float1d, imageHeader);
     }
 
 
+    public double getBeta() {return betaValue;}
     /**
      * This constructor may not be needed it.
      * @param fits
@@ -139,6 +148,17 @@ public class FitsRead implements Serializable {
         float1d = getImageHDUDataInFloatArray(imageHdu);
         masks = getMasksInFits(maskExtension);
 
+        hist= computeHistogram();
+
+
+        /* The error in asinh algorithm is
+         *  V(mu) = [ a * sigma^2)/(4b^2+f^2)] where f is a flux
+         *  When f=0, the error reaches it maximum, if we choose beta = 2b = sigma,
+         *  the error:
+         *  V(mu) = a *simga^2/beta^2 = a
+         *  Thus, we use sigma as a default beta value
+         */
+         betaValue = computeSigma(float1d, imageHeader);
 
      }
 
@@ -755,7 +775,20 @@ public class FitsRead implements Serializable {
         return float1d;
     }
 
-
+    private static double[] getMinMaxData(float[] float1d){
+        double min=Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
+        for (int i=0; i<float1d.length; i++){
+            if (float1d[i]<min){
+                min=float1d[i];
+            }
+            if (float1d[i]>max){
+                max = float1d[i];
+            }
+        }
+        double[] ret = {min, max};
+        return ret;
+    }
 
     public synchronized void doStretch(RangeValues rangeValues,
                                        byte[] pixelData,
@@ -768,8 +801,6 @@ public class FitsRead implements Serializable {
 
 
 
-       // Histogram hist= getHistogram();
-
 
         double slow = getSlow(rangeValues, float1d, imageHeader, hist);
         double shigh = getShigh(rangeValues, float1d, imageHeader, hist);
@@ -780,9 +811,161 @@ public class FitsRead implements Serializable {
         byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
 
 
-        stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1, hist,
+        stretchPixels(startPixel, lastPixel, startLine, lastLine,imageHeader.naxis1, imageHeader, hist,
                 blank_pixel_value, float1d, pixelData, rangeValues, slow, shigh);
 
+
+    }
+
+
+    /**
+     * A pixel is a cell or small rectangle which stores the information the computer can handle. A discrete pixels make the map.
+     * Each pixel store a value which represents the color of the map.
+     * Byte image is the pixel having a value in the range of [0, 255].  One byte has 8 bit.  The stretch algorithm is able to convert
+     * some invisible pixel value to become recognizable.
+     * There are several stretch algorithm: liner, log, log-log etc.  Using those technique to calculate new pixel values.  For example:
+     * Suppose you have a certain image in which the values range from 55 to 103. When this map is stretched linearly to output range 0 to
+     * 255: the minimum input value 55 is brought to output value 0, and maximum input value 103 is brought to output value 255, and all
+     * other values in between change accordingly (using the same formula). As 0 is by default displayed in black, and 255 in white, the
+     * contrast will be better when the image is displayed.
+     *
+     * @param startPixel
+     * @param lastPixel
+     * @param startLine
+     * @param lastLine
+     * @param blank_pixel_value
+     */
+    private static void stretchPixels(int startPixel,
+                                      int lastPixel,
+                                      int startLine,
+                                      int lastLine,
+                                      int naxis1,
+                                      ImageHeader imageHeader,
+                                      Histogram hist,
+                                      byte blank_pixel_value,
+                                      float[] float1dArray,
+                                      byte[] pixeldata,
+                                      RangeValues rangeValues,
+                                      double slow,
+                                      double shigh) {
+
+
+
+
+
+        /*
+         * This loop will go through all the pixels and assign them new values based on the
+         * stretch algorithm
+         */
+        if (rangeValues.getStretchAlgorithm()==RangeValues.STRETCH_ASINH) {
+            stretchPixelsUsingAsin( startPixel, lastPixel,startLine,lastLine, naxis1, imageHeader,
+               float1dArray, pixeldata, rangeValues,slow,shigh);
+
+
+        }
+        else {
+            stretchPixelsUsingOtherAlgorithms(startPixel, lastPixel, startLine, lastLine,imageHeader.naxis1, hist,
+                    blank_pixel_value,float1dArray, pixeldata, rangeValues, slow, shigh);
+        }
+    }
+
+    private static void stretchPixelsUsingOtherAlgorithms(int startPixel,
+                                                         int lastPixel,
+                                                         int startLine,
+                                                         int lastLine,
+                                                          int naxis1,
+                                                         Histogram hist,
+                                                         byte blank_pixel_value,
+                                                         float[] float1dArray,
+                                                         byte[] pixeldata,
+                                                         RangeValues rangeValues,
+                                                         double slow,
+                                                         double shigh){
+
+        double sdiff = slow == shigh ? 1.0 : shigh - slow;
+
+        double[] dtbl = new double[256];
+        if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LOG
+                || rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LOGLOG) {
+            dtbl = getLogDtbl(sdiff, slow, rangeValues);
+        }
+        else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_EQUAL) {
+            dtbl = hist.getTblArray();
+        }
+        else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQUARED){
+            dtbl = getSquaredDbl(sdiff, slow, rangeValues);
+        }
+        else if( rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQRT) {
+            dtbl = getSquaredDbl(sdiff, slow, rangeValues);
+        }
+        int deltasav = sdiff > 0 ? 64 : -64;
+
+        double gamma=rangeValues.getGammaValue();
+        int pixelCount = 0;
+        for (int line = startLine; line <= lastLine; line++) {
+            int start_index = line * naxis1 + startPixel;
+            int last_index = line * naxis1 + lastPixel;
+
+            for (int index = start_index; index <= last_index; index++) {
+
+                if (Double.isNaN(float1dArray[index])) { //original pixel value is NaN, assign it to blank
+                    pixeldata[pixelCount] = blank_pixel_value;
+                } else {   // stretch each pixel
+                    if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LINEAR) {
+
+                        double dRunval = ((float1dArray[index] - slow) * 254 / sdiff);
+                        pixeldata[pixelCount] = getLinearStrectchedPixelValue(dRunval);
+
+                    } else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_POWERLAW_GAMMA) {
+
+                        pixeldata[pixelCount] = (byte) getPowerLawGammaStretchedPixelValue(float1dArray[index], gamma, slow, shigh);
+                    } else {
+
+                        pixeldata[pixelCount] = (byte) getNoneLinerStretchedPixelValue(float1dArray[index], dtbl, deltasav);
+                    }
+                    pixeldata[pixelCount] = rangeValues.computeBiasAndContrast(pixeldata[pixelCount]);
+                }
+                pixelCount++;
+
+            }
+        }
+
+    }
+    private static void stretchPixelsUsingAsin(int startPixel,
+                                      int lastPixel,
+                                      int startLine,
+                                      int lastLine,
+                                      int naxis1,
+                                      ImageHeader imageHeader,
+                                      float[] float1dArray,
+                                      byte[] pixeldata,
+                                      RangeValues rangeValues,
+                                      double slow,
+                                      double shigh){
+
+        double beta = rangeValues.getBetaValue();
+        // Here we use flux instead of data since the original paper is using flux. But I don't think it is matter.
+        // flux = raw_dn * imageHeader.bscale + imageHeader.bzero, when bscale=1 and bzero=0, flux=raw_dn
+        double maxFlux = getFlux(shigh, imageHeader);
+        double minFlux = getFlux(slow, imageHeader);
+        if (Double.isNaN(minFlux) || Double.isInfinite((minFlux))){
+            double[] minMax=getMinMaxData(float1dArray);
+            minFlux = getFlux(minMax[0],imageHeader);
+        }
+
+        if ( Double.isNaN(maxFlux) || Double.isInfinite((maxFlux)) ) {
+            double[] minMax=getMinMaxData(float1dArray);
+            minFlux = getFlux(minMax[1], imageHeader);
+        }
+        int pixelCount = 0;
+        for (int line = startLine; line <= lastLine; line++) {
+            int start_index = line * naxis1 + startPixel;
+            int last_index = line * naxis1 + lastPixel;
+            for (int index = start_index; index <= last_index; index++) {
+                pixeldata[pixelCount] =(byte)  getASinhStretchedPixelValue(getFlux(float1dArray[index], imageHeader), maxFlux, minFlux, beta);
+                pixelCount++;
+            }
+        }
 
     }
 
@@ -865,7 +1048,7 @@ public class FitsRead implements Serializable {
 
         int pixelCount = 0;
         ImageMask combinedMask = ImageMask.combineWithAnd(lsstMasks);  //mask=33, index=0 and 6 are set
-       // ImageMask combinedMask = ImageMask.combineWithOr(lsstMasks);
+        // ImageMask combinedMask = ImageMask.combineWithOr(lsstMasks);
 
         for (int line = startLine; line <= lastLine; line++) {
             int start_index = line * naxis1 + startPixel;
@@ -911,7 +1094,6 @@ public class FitsRead implements Serializable {
     }
 
 
-
     private static Zscale.ZscaleRetval getZscaleValue(float[] float1d, ImageHeader imageHeader, RangeValues rangeValues) {
 
         double contrast = rangeValues.getZscaleContrast();
@@ -939,9 +1121,6 @@ public class FitsRead implements Serializable {
             case RangeValues.SIGMA:
                 slow = hist.get_sigma(rangeValues.getLowerValue(), false);
                 break;
-            case RangeValues.MAXMIN:
-                slow = hist.get_pct(0.0, false);
-                break;
             case RangeValues.ZSCALE:
 
                 Zscale.ZscaleRetval zscale_retval = getZscaleValue(float1d, imageHeader, rangeValues);
@@ -964,11 +1143,7 @@ public class FitsRead implements Serializable {
             case RangeValues.SIGMA:
                 shigh = hist.get_sigma(rangeValues.getUpperValue(), true);
                 break;
-            case RangeValues.MAXMIN:
-                shigh = hist.get_pct(100.0, true);
-                break;
             case RangeValues.ZSCALE:
-
                 Zscale.ZscaleRetval zscale_retval = getZscaleValue(float1d, imageHeader, rangeValues);
                 shigh = zscale_retval.getZ2();
                 break;
@@ -1002,101 +1177,6 @@ public class FitsRead implements Serializable {
 
     }
 
-    /**
-     * A pixel is a cell or small rectangle which stores the information the computer can handle. A discrete pixels make the map.
-     * Each pixel store a value which represents the color of the map.
-     * Byte image is the pixel having a value in the range of [0, 255].  One byte has 8 bit.  The stretch algorithm is able to convert
-     * some invisible pixel value to become recognizable.
-     * There are several stretch algorithm: liner, log, log-log etc.  Using those technique to calculate new pixel values.  For example:
-     * Suppose you have a certain image in which the values range from 55 to 103. When this map is stretched linearly to output range 0 to
-     * 255: the minimum input value 55 is brought to output value 0, and maximum input value 103 is brought to output value 255, and all
-     * other values in between change accordingly (using the same formula). As 0 is by default displayed in black, and 255 in white, the
-     * contrast will be better when the image is displayed.
-     *
-     * @param startPixel
-     * @param lastPixel
-     * @param startLine
-     * @param lastLine
-       * @param blank_pixel_value
-     */
-    private static void stretchPixels(int startPixel,
-                                      int lastPixel,
-                                      int startLine,
-                                      int lastLine,
-                                      int naxis1,
-                                      Histogram hist,
-                                      byte blank_pixel_value,
-                                      float[] float1dArray,
-                                      byte[] pixeldata,
-                                      RangeValues rangeValues,
-                                      double slow,
-                                      double shigh) {
-
-
-        double sdiff = slow == shigh ? 1.0 : shigh - slow;
-
-        double[] dtbl = new double[256];
-        if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LOG
-                || rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LOGLOG) {
-            dtbl = getLogDtbl(sdiff, slow, rangeValues);
-        }
-        else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_EQUAL) {
-           dtbl = hist.getTblArray();
-        }
-        else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQUARED){
-            dtbl = getSquaredDbl(sdiff, slow, rangeValues);
-        }
-        else if( rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQRT) {
-            dtbl = getSquaredDbl(sdiff, slow, rangeValues);
-        }
-
-
-        int deltasav = sdiff > 0 ? 64 : -64;
-
-        /*
-         * This loop will go through all the pixels and assign them new values based on the
-         * stretch algorithm
-         */
-
-        double dr= rangeValues.getDrValue();
-        double gamma=rangeValues.getGammaValue();
-        double bp= rangeValues.getBPValue();
-        double wp=rangeValues.getWPValue();
-        int pixelCount = 0;
-        for (int line = startLine; line <= lastLine; line++) {
-            int start_index = line * naxis1 + startPixel;
-            int last_index = line * naxis1 + lastPixel;
-
-            for (int index = start_index; index <= last_index; index++) {
-
-                if (Double.isNaN(float1dArray[index])) { //orignal pixel value is NaN, assign it to blank
-                    pixeldata[pixelCount] = blank_pixel_value;
-                } else {   // stretch each pixel
-                    if (rangeValues.getStretchAlgorithm() ==RangeValues.STRETCH_LINEAR) {
-
-                        double dRunval = ((float1dArray[index] - slow ) * 254 / sdiff);
-                        pixeldata[pixelCount] = getLinearStrectchedPixelValue(dRunval);
-
-                    } else if (rangeValues.getStretchAlgorithm()==RangeValues.STRETCH_ASINH) {
-                        //test simple asinh stretch
-                     pixeldata[pixelCount] = (byte) getASinhStretchedPixelValue(float1dArray[index], dr, slow, shigh, bp, wp);
-                    }
-                    else if (rangeValues.getStretchAlgorithm()==RangeValues.STRETCH_POWERLAW_GAMMA) {
-
-                        pixeldata[pixelCount] = (byte) getPowerLawGammaStretchedPixelValue(float1dArray[index], gamma, slow, shigh);
-                    }
-                    else {
-
-                        pixeldata[pixelCount] = (byte) getNoneLinerStretchedPixelValue(float1dArray[index],  dtbl, deltasav);
-                    }
-                    pixeldata[pixelCount] = rangeValues.computeBiasAndContrast(pixeldata[pixelCount]);
-                }
-                pixelCount++;
-
-            }
-        }
-
-    }
 
     private static double getPowerLawGammaStretchedPixelValue(double x, double gamma, double zp, double mp){
 
@@ -1107,23 +1187,127 @@ public class FitsRead implements Serializable {
         return pixValue;
 
     }
+
+    /**
+     * The asinh stretch algorithm is defined in the paper by Robert Lupton et al at "The Astronomical Journal 118: 1406-1410, 1999 Sept"
+     * In the paper:
+     *    magnitude = m_0-2.5log(b) - a* asinh (x/2b)  = mu_0  -a * asinh (x/2b), where mu_0 =m_0 - 2.5 * ln(b), a =2.5ln(e) = 1.08574,
+     *    m_o=2.5log(flux_0), flux_0 is the flux of an object with magnitude 0.0.
+     *    b is an arbitrary "softening" which determines the flux level as which the liner behavior is set in, and x is the flux,
+     *
+     *
+     *   Since  mu_0 and a are constant, we can use just:
+     *     mu =  asinh( flux/(2.0*b)) ) = asin(x/beta); where beta=2*b;
+     * @param beta
+     * @return
+     */
+    private static double  getASinhStretchedPixelValue(double flux, double maxFlux, double minFlux, double beta)  {
+
+        /*
+         Since the data range is from minFlux to maxFlux, we can shift the data to  the range [0 - (maxFlux-minFlux)].
+         Thus,
+                   flux_new = flux-minFlux,
+                   minFlux_new = 0
+                   maxFlux_new = maxFlux - minFlux
+         min = asinh( abs(minFlux_new) -square(minFlux_new*minFlux_new+1) ) =0
+         max = (max-min) = asinh( maxFlux_new/beta) = asinh( (maxFlux-minFlux)/beta)
+         diff = max - min = max
+         */
+        double asinhMagnitude =  asinh( (flux-minFlux) / beta); //beta = 2*b
+
+        //normalize to 0 - 255:  (nCorlor-1 )*(x - Min)/(Max - Min), 8 bit nCorlor=256
+        //this formula is referred from IDL function: BYTSCL
+        double diff =   asinh ( (maxFlux-minFlux)/beta );
+        return  255* asinhMagnitude/ diff ;
+
+    }
+
+
     private static double asinh(double x) {
 
-        return Math.log(x + Math.sqrt(x * x + 1));
+        double y  = Math.log( Math.abs(x ) + Math.sqrt(x * x + 1));
+        y = x<0? -y:y;
+
+        return y;
 
     }
-    private static double getASinhStretchedPixelValue(double x, double dr, double zp, double mp, double bp, double wp)  {
+
+    /**
+     * Calculate the mean flux value
+     * @param data
+     * @return
+     */
+     private static double getMean(double [] data ) {
+
+           int size = data.length;
+           float sum = 0.0f;
+            for(double a : data)
+                sum += a;
+            return sum/size;
+     }
+
+    /**
+     * Calculate variance and then standard deviation
+     * @param data
+     * @return
+     */
+      private static double getStdDev(double[] data) {
+
+          int size = data.length;
+          double mean = getMean(data);
+          double temp = 0.0f;
+          for(double a :data)
+              temp += (mean - a) * (mean - a);
+
+          return Math.sqrt(temp/size);
+      }
+
+    /**
+     * Process the image fluxes to exclude the 0.0 and NaN and infinity values
+     * @return
+     */
+      private static double[] getNoneZeroValidReadoutArray(float[] float1d, ImageHeader imageHeader){
+        ArrayList<Double> list= new ArrayList<>();
+
+        for (int i=0; i<float1d.length; i++){
+            if (!Double.isNaN(float1d[i]) && !Double.isInfinite(float1d[i]) && float1d[1]!=0.0){
+               list.add( getFlux(float1d[i], imageHeader ) );
+            }
+        }
+        double[] arr = new double[list.size()];
+        for(int i = 0; i < list.size(); i++) {
+            arr[i] = list.get(i);
+        }
+        return arr;
+    }
 
 
+    /**
+     * This sigma value is calculated using the whole image data.
+     * sigma = SQRT [  ( sum (xi-x_average)^2 )/n
+     *   where x_average is the mean value of the x array
+     *   n is the total number of the element of x array
+     * @return
+     */
+    private static double computeSigma(float[] float1d, ImageHeader imageHeader) {
 
-        double rd = dr * (x - zp) / mp; //in the range of 0 - dr (when zp=0.0)
-        double nsd = asinh(rd) / asinh(mp - zp); // in the range 0-1 when zp=0.0
-        double pixValue = 255 * (nsd - bp) / wp;
+        //get none zero and finite flux values
+        double [] validData = getNoneZeroValidReadoutArray(float1d, imageHeader);
+        /*
+         When the index.length>25, the IDL atv uses sky to computer sigma. However the sky.pro uses many other
+         numerical receipt methods such as value_local, fitting etc. Here we uses stddev instead.
+       */
+       if (validData.length>5 ){
+           return getStdDev( validData);
+        }
+        else {
+            return  1.0;
 
-         return pixValue;
+        }
 
 
     }
+
 
 
 
@@ -1241,7 +1425,7 @@ public class FitsRead implements Serializable {
         byte blank_pixel_value = 0;
 
         stretchPixels(start_pixel, last_pixel,
-                start_line, last_line, naxis1, hist,
+                start_line, last_line, naxis1,imageHeader, hist,
                 blank_pixel_value, hist_bin_values,
                 pixeldata,  rangeValues,slow,shigh);
 
@@ -1279,7 +1463,7 @@ public class FitsRead implements Serializable {
      * @param ipt ImagePt coordinates
      */
 
-    public double getFlux(ImagePt ipt)
+    public  double getFlux(ImagePt ipt)
             throws PixelValueException {
 
 
@@ -1294,6 +1478,18 @@ public class FitsRead implements Serializable {
         int index = yint * imageHeader.naxis1 + xint;
 
         double raw_dn = float1d[index];
+        return getFlux(raw_dn, imageHeader);
+
+    }
+
+    /**
+     *
+     * @param raw_dn
+     * @return
+     */
+    private static double getFlux(double  raw_dn, ImageHeader imageHeader){
+
+
 
         if ((raw_dn == imageHeader.blank_value) || (Double.isNaN(raw_dn))) {
             //throw new PixelValueException("No flux available");
@@ -1465,14 +1661,6 @@ public class FitsRead implements Serializable {
         return hdu;
     }
 
-  /*public Header getHeader() {
-        Header retHeader= new Header();
-        for(Iterator i= header.iterator();i.hasNext(); ) {
-            HeaderCard card= (HeaderCard)i.next();
-            retHeader.addLine(card);
-        }
-        return retHeader;
-    }*/
 
     public Header getHeader() {
         return cloneHeader(header);
@@ -1484,7 +1672,19 @@ public class FitsRead implements Serializable {
     }
 
 
+    /**LZ 05/09/16
+    * Modified to use calculated sigma value as beta in asinh stretch
+     */
+   /*
+    public static RangeValues getDefaultRangeValues() {
+        // return (RangeValues) DEFAULT_RANGE_VALUE.clone();
+        RangeValues rv = (RangeValues) DEFAULT_RANGE_VALUE.clone();
 
+        rv.setBetaValue(betaValue);
+        return rv;
+
+    }
+    */
     public static RangeValues getDefaultRangeValues() {
         return (RangeValues) DEFAULT_RANGE_VALUE.clone();
 
