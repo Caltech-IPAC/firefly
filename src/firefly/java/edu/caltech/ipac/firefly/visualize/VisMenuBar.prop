@@ -57,9 +57,9 @@ FootprintNIRSPEC.Title=Add JWST/NIRSPEC prelim. footprint
 FootprintNIRSPEC.ShortDescription= Add a JWST/NIRSPEC preliminary footprint (see help)
 
 FootprintIRAC36.Title=Add SPITZER/IRAC3.6 and 5.8 footprint
-FootprintIRAC36.ShortDescription= Add SPITZER/IRAC 3.6um and 5.8um preliminary footprint (see help)
+FootprintIRAC36.ShortDescription= Add SPITZER/IRAC 3.6um and 5.8um footprint (see help)
 FootprintIRAC45.Title=Add SPITZER/IRAC4.5 and 8.0 footprint
-FootprintIRAC45.ShortDescription= Add SPITZER/IRAC 4.5um and 8.0um preliminary footprint (see help)
+FootprintIRAC45.ShortDescription= Add SPITZER/IRAC 4.5um and 8.0um footprint (see help)
 
 MarkerToolDD.ShortDescription = Overlay Markers and Instrument Footprints
 MarkerToolDD.UseIconOnly= true
