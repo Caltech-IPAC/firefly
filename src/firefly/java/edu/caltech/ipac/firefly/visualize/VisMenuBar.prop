@@ -26,7 +26,7 @@ MarkerToolDD.Items = MarkerTool \
                      FootprintNIRSPEC \
                      FootprintNIS \
                    - FootprintJWST \
-                   - FootprintWFIRST
+                   - FootprintWFIRST \
                    - FootprintIRAC36 \
                      FootprintIRAC45
                      
