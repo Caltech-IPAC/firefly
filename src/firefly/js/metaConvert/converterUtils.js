@@ -3,11 +3,10 @@
  */
 
 import {isEmpty, get} from 'lodash';
-import {getCellValue} from '../tables/TableUtil.js';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {WebPlotRequest} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
-import {getTblById,getTblInfo} from '../tables/TableUtil.js';
+import {getTblById,getTblInfo, getCellValue} from '../tables/TableUtil.js';
 import {converterFactory} from './ConverterFactory.js';
 import {MetaConst} from '../data/MetaConst.js';
 
@@ -113,5 +112,18 @@ export function isMetaDataTable(tbl_id) {
     const converter= converterFactory(table);
     return Boolean(converter);
 
+}
+
+/**
+ * Guess if this table contains catalog data
+ * @param tbl_id
+ * @return {boolean} true if this is catalog data
+ */
+export function isCatalogTable(tbl_id) {
+    const table= getTblById(tbl_id);
+    const tableMeta= get(table, 'tableMeta');
+    if (!tableMeta) return false;
+
+    return Boolean(tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] || tableMeta[MetaConst.CATALOG_COORD_COLS]);
 }
 

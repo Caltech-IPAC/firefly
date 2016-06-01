@@ -35,7 +35,7 @@ export class HeaderCell extends React.Component {
     }
 
     render() {
-        //noinspection Eslint
+        // eslint-disable-next-line
         const {col, showUnits, showFilters, filterInfoCls, sortInfoCls, onSort, onFilter} = this.props;
         const cname = col.name;
         const cdesc = col.desc || col.title || cname;

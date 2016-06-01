@@ -10,16 +10,16 @@ import {SelectInfo} from './SelectInfo.js';
 
 export class TableConnector {
     
-    constructor(tbl_id, tbl_ui_id, isLocal=false) {
+    constructor(tbl_id, tbl_ui_id, tableModel) {
         this.tbl_id = tbl_id;
         this.tbl_ui_id = tbl_ui_id;
-        this.isLocal = isLocal;
+        this.origTableModel = tableModel;
     }
 
     onSort(sortInfoString) {
         var {tableModel, request} = TblUtil.getTblInfoById(this.tbl_id);
-        if (this.isLocal) {
-            tableModel = TblUtil.sortTable(tableModel, sortInfoString);
+        if (this.origTableModel) {
+            tableModel = TblUtil.sortTable(this.origTableModel, sortInfoString);
             flux.process({type: TblCntlr.TABLE_REPLACE, payload: tableModel});
         } else {
             request = Object.assign({}, request, {sortInfo: sortInfoString});
@@ -29,7 +29,7 @@ export class TableConnector {
 
     onFilter(filterIntoString) {
         var {tableModel, request} = TblUtil.getTblInfoById(this.tbl_id);
-        if (this.isLocal) {
+        if (this.origTableModel) {
             // not implemented yet
             flux.process({type: TblCntlr.TABLE_REPLACE, payload: tableModel});
         } else {
@@ -101,7 +101,7 @@ export class TableConnector {
         TblCntlr.dispatchTableUiUpdate(changes);
     }
 
-    static newInstance(tbl_id, tbl_ui_id, isLocal) {
-        return new TableConnector(tbl_id, tbl_ui_id, isLocal);
+    static newInstance(tbl_id, tbl_ui_id, tableModel) {
+        return new TableConnector(tbl_id, tbl_ui_id, tableModel);
     }
 }

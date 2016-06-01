@@ -3,7 +3,6 @@
 import webpack from 'webpack';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
-import ProgressBarPlugin from 'progress-bar-webpack-plugin';
 import RewireWebpackPlugin from 'rewire-webpack';
 import path from 'path';
 import fs from 'fs';
@@ -20,7 +19,6 @@ function makeWebpackConfig(config) {
     var def_config = {
         env         : process.env.NODE_ENV || 'development',
         dist        : process.env.WP_BUILD_DIR || path.resolve(config.project, `build/${config.name}/gwt/${config.name}`),
-        version_tag   : process.env.__VERSION_TAG__ || 'unknown',
         do_lint     : process.env.DO_LINT || process.env.DO_LINT_STRICT || false,
         index_html  : 'index.html',
         html_dir    : 'html',
@@ -45,13 +43,18 @@ function makeWebpackConfig(config) {
             script_names.push(v + '.js');
         });
     }
+
     const globals = {
         'process.env'   : {NODE_ENV : JSON.stringify(config.env)},
         NODE_ENV        : config.env,
         __SCRIPT_NAME__ : JSON.stringify(script_names),
         __MODULE_NAME__ : JSON.stringify(config.name),
-        __VERSION_TAG__ : JSON.stringify(config.version_tag)
     };
+
+    // add all of the env that starts with '__' into globals
+    Object.keys(process.env).filter((k) => k.startsWith('__$')).forEach((k) => {
+        globals[k] = JSON.stringify(process.env[k]);
+    });
 
     const DEBUG    = config.env === 'development' && process.env.DEBUG;
     const PROD      = config.env !== 'development';
@@ -76,9 +79,7 @@ function makeWebpackConfig(config) {
                     ];
     if (DEBUG) {
         plugins.push(
-            new ProgressBarPlugin({
-                callback : progressDone
-            })
+            dev_progress()
         );
     }
 
@@ -255,14 +256,15 @@ function firefly_loader(loadScript, outpath, debug=true) {
     };
 }
 
-var buildCnt=0;
-function progressDone() {
-    buildCnt++;
-    process.stdout.write('\n');
-    var time = new Date();
-    var tStr= time.getHours() + ':' + time.getMinutes() + ':' + time.getSeconds();
-    process.stdout.write('-------------------- Begin build #'+ buildCnt +
-        ' at '+ tStr +'--------------------------\n');
-    //process.stdout.write('Build ' +buildCnt+ ' results: '+ tStr);
+function dev_progress() {
+    return new webpack.ProgressPlugin(function (percent, msg) {
+        if (msg.startsWith('compile'))
+            process.stdout.write('\n\nCompiling new changes ..');
+        if  (percent === 1) {
+            process.stdout.write('\nBuild completed: ' + new Date + '\n\n');
+        } else if (percent * 100 % 5 === 0) {
+            process.stdout.write('.');
+        };
+    });
 }
 

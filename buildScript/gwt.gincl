@@ -168,37 +168,10 @@ task devMode (dependsOn: loadConfig) {
   outputs.upToDateWhen { false }
 
   doLast {
-    def wpBuildDir = "${buildDir}/gwt/${project['app-name']}"
-
-    try {
-      def process = "npm version".execute()
-    } catch (Exception e) {
-      println ">> Task failed due to missing npm package manager which comes bundled with node.js"
-      throw new GradleException("Task failed due to missing npm package manager which comes bundled with node.js", e)
-    }
-
-    if (!file("webpack.config.js").exists()) {
-      println ">> webpack.config.js not found.  Skipping buildClient."
-      throw new StopExecutionException("webpack.config.js not found.  Skipping dev mode.")
-    }
-
-    if (file("${rootDir}/package.json").exists()) {
-      exec {
-        workingDir = rootDir
-        executable "npm"
-        args "install"
-      }
-    }
-
-    def res = exec {
-      environment 'WP_BUILD_DIR': wpBuildDir
-      environment 'NODE_ENV': 'development'
-      executable "npm"
-      args 'run', 'dev'
-    }
-    if (res.getExitValue() != 0) {
-      throw new GradleException("Fail to run dev mode")
-    }
+    def res = project.ext.NPM 'run', 'dev'
+//    if (res.getExitValue() == 0) {
+//      throw new GradleException("Fail to run dev mode")
+//    }
   }
 }
 

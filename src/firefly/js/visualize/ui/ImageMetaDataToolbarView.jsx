@@ -41,7 +41,8 @@ const toolsStyle= {
 export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds, layoutType, dlAry,
                                           activeTable, converterFactory, handleInlineTools=true }) {
 
-    const {dataId,converter}= converterFactory(activeTable);
+    const {dataId,converter}= converterFactory(activeTable) || {};
+    if (!converter) return <div/>;
     var nextIdx, prevIdx, leftImageStyle;
     const viewer= getViewer(getMultiViewRoot(), viewerId);
     const vr= visRoot();

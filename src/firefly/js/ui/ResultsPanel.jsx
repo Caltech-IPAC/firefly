@@ -34,7 +34,8 @@ export class ResultsPanel extends Component {
     // }
 
     render() {
-        const {expanded=LO_VIEW.none} = this.props;
+        var {expanded=LO_VIEW.none} = this.props;
+        expanded = LO_VIEW.get(expanded);
         const expandedProps = pick(this.props, ['expanded','imagePlot','xyPlot','tables'] );
         return (
             expanded === LO_VIEW.none
@@ -60,7 +61,7 @@ ResultsPanel.propTypes = {
 };
 
 
-//noinspection Eslint
+// eslint-disable-next-line
 const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
     const view = expanded === LO_VIEW.tables ? tables
                 : expanded === LO_VIEW.xyPlots ? xyPlot
@@ -73,7 +74,7 @@ const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
 };
 
 
-//noinspection Eslint
+// eslint-disable-next-line
 const StandardView = ({visToolbar, title, searchDesc, standard, imagePlot, xyPlot, tables}) => {
     standard = LO_VIEW.get(standard) || LO_VIEW.none;
     const components = resolveComponents(standard, imagePlot, xyPlot, tables);

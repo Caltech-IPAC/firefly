@@ -128,7 +128,7 @@ export class Tabs extends Component {
 
         var content;
         selectedIdx = Math.min(selectedIdx, numTabs-1);
-        var newChildren = React.Children.map(children, (child, index) => {
+        var newChildren = React.Children.toArray(children).filter((el) => !!el).map((child, index) => {
                 if (index === selectedIdx) {
                     content = React.Children.only(child.props.children);
                 }
@@ -182,9 +182,9 @@ export class Tab extends Component {
 
 
     componentWillMount() {
-        const {selected, onSelect} = this.props;
+        const {selected, onSelect, id, name} = this.props;
         if (selected) {
-            onSelect();
+            onSelect(id, name);
         }
     }
 

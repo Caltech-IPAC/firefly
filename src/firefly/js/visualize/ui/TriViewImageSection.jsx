@@ -2,68 +2,70 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
+import React, {PropTypes} from 'react';
 import {ExpandedModeDisplay} from '../iv/ExpandedModeDisplay.jsx';
-import {isEmpty} from 'lodash';
-import {Tab, Tabs, FieldGroupTabs} from '../../ui/panel/TabPanel.jsx';
-import sCompare from 'react-addons-shallow-compare';
-import {flux} from '../../Firefly.js';
-import {dispatchAddViewer, getMultiViewRoot, getViewer, getLayoutType} from '../MultiViewCntlr.js';
+import {Tab, Tabs} from '../../ui/panel/TabPanel.jsx';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
 import {ImageMetaDataToolbar} from './ImageMetaDataToolbar.jsx';
-import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
-import {visRoot} from '../ImagePlotCntlr.js';
 import {watchImageMetaData} from '../saga/ImageMetaDataWatcher.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
-import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
+import {LO_MODE, LO_VIEW, dispatchSetLayoutMode, dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 
+export const FITS_VIEWER_ID = 'triViewImages';
+export const META_VIEWER_ID = 'triViewImageMetaData';
+export const COVERAGE_VIEWER_ID = 'TBD';
 
 
 /**
  * This component works with ImageMetaDataWatch sega which should be launch during initialization
  * @param showCoverage
  * @param showFits
- * @param showImageMetaData
+ * @param showMeta
  * @param imageExpandedMode if true, then imageExpandedMode overrides everything else
  * @param closeable expanded mode should have a close button
  * @return {XML}
  * @constructor
  */
-export function TriViewImageSection({showCoverage=true, showFits=true, 
-                                     showImageMetaData=true, imageExpandedMode=false, closeable=true}) {
+export function TriViewImageSection({showCoverage=false, showFits=false, selectedTab='fits',
+                                     showMeta=false, imageExpandedMode=false, closeable=true}) {
     
     if (imageExpandedMode) {
-        return <ExpandedModeDisplay   {...{key:'results-plots-expanded',
-                                            forceExpandedMode:true,
-                                            closeFunc:closeable?closeExpanded:null}}/>;
+        return  ( <ExpandedModeDisplay
+                        key='results-plots-expanded'
+                        forceExpandedMode={true}
+                        closeFunc={closeable ? closeExpanded : null}/>
+                );
     }
+    const onTabSelect = (idx, id) => dispatchUpdateLayoutInfo({images:{selectedTab:id}});
 
-    if (showCoverage && showFits && showImageMetaData) {
+    if (showCoverage || showFits || showMeta) {
         return (
-                <FieldGroup groupKey='TRI_VIEW_SELECTION' keepState={true}
-                            style={{display:'flex', position:'absolute',
-                                   left:0, right:0, top:0, bottom:0}} >
-                    <FieldGroupTabs defaultSelected={0} initialState= {{ value:'image' }}>
-                        <Tab name='Fits Data' removable={false} id='image'>
-                            <MultiImageViewer viewerId='triViewImages'
-                                              insideFlex={true}
-                                              canReceiveNewPlots={true}
-                                              canDelete={true}
-                                              Toolbar={MultiViewStandardToolbar}/>
-                        </Tab>
-                        <Tab name='Image Meta Data' removable={false} id='meta'>
-                            <MultiImageViewer viewerId='triViewImageMetaData'
-                                              insideFlex={true}
-                                              canReceiveNewPlots={false}
-                                              canDelete={false}
-                                              Toolbar={ImageMetaDataToolbar}/>
-                        </Tab>
-                        <Tab name='Coverage' removable={false} id='cov'>
-                            <div style={{padding:10}}>TODO: Coverage Here</div>
-                        </Tab>
-                    </FieldGroupTabs>
-                </FieldGroup>
+            <Tabs onTabSelect={onTabSelect} defaultSelected={selectedTab} useFlex={true}>
+                { showFits &&
+                    <Tab name='Fits Data' removable={false} id='fits'>
+                        <MultiImageViewer viewerId= {FITS_VIEWER_ID}
+                                          insideFlex={true}
+                                          canReceiveNewPlots={true}
+                                          canDelete={true}
+                                          Toolbar={MultiViewStandardToolbar}/>
+                    </Tab>
+                }
+                { showMeta &&
+                    <Tab name='Image Meta Data' removable={false} id='meta'>
+                        <MultiImageViewer viewerId= {META_VIEWER_ID}
+                                          insideFlex={true}
+                                          canReceiveNewPlots={false}
+                                          canDelete={false}
+                                          Toolbar={ImageMetaDataToolbar}/>
+                    </Tab>
+                }
+                { showCoverage &&
+                    <Tab name='Coverage' removable={false} id='coverage'>
+                        <div style={{padding:10}}>TODO: Coverage Here</div>
+                    </Tab>
+                }
+            </Tabs>
         );
 
     }
@@ -78,13 +80,14 @@ function closeExpanded() {
 }
 
 export function launchImageMetaDataSega() {
-    dispatchAddSaga(watchImageMetaData,{viewerId:'triViewImageMetaData'});
+    dispatchAddSaga(watchImageMetaData,{viewerId: META_VIEWER_ID});
 }
 
 TriViewImageSection.propTypes= {
     showCoverage : PropTypes.bool,
     showFits : PropTypes.bool,
-    showImageMetaData : PropTypes.bool,
+    showMeta : PropTypes.bool,
     imageExpandedMode : PropTypes.bool,
-    closeable: PropTypes.bool
+    closeable: PropTypes.bool,
+    selectedTab: PropTypes.oneOf(['fits', 'meta', 'coverage'])
 };

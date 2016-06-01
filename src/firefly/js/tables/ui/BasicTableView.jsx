@@ -105,7 +105,7 @@ export class BasicTableView extends React.Component {
         const onSelectAll = (checked) => callbacks.onSelectAll && callbacks.onSelectAll(checked);
         const onSort = (cname) => {
                 if (callbacks.onSort) {
-                    callbacks.onSort(sortInfoCls.toggle(cname).serialize());
+                    callbacks.onSort(sortInfoCls.toggle(cname));
                 }
             };
 
