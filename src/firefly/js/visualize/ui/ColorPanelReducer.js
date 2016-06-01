@@ -7,7 +7,7 @@ import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
-import RangeValues, {STRETCH_LINEAR, PERCENTAGE, ABSOLUTE,SIGMA,ZSCALE} from './../RangeValues.js';
+import RangeValues, {STRETCH_LINEAR, PERCENTAGE, ABSOLUTE,SIGMA,ZSCALE, STRETCH_ASINH} from './../RangeValues.js';
 
 
 const clone = (obj,params={}) => Object.assign({},obj,params);
@@ -20,6 +20,7 @@ export const BLUE_PANEL= 'bluePanel';
 export const NO_BAND_PANEL= 'nobandPanel';
 
 
+
 /**
  * Reducer entry point. This function returns a reducer initialized to work with the passed band.
  * @return a reducer function. a standard type reducer function.
@@ -28,18 +29,14 @@ export const colorPanelChange= function(band) {
     return (fields,action) => {
         if (!fields || !Object.keys(fields).length) fields= getFieldInit();
         var plot= primePlot(visRoot());
-
         if (!plot.plotState.isBandUsed(band)) return fields;
 
         var plottedRV= null;
         var fitsData= null;
         if (plot) {
             fitsData= plot.webFitsData[band.value];
-            //var beta = fitsData.beta;
             plottedRV= plot.plotState.getRangeValues(band);
-
-           // if ( !newPlot) return fields;
-            if (!fitsData || ! plottedRV ) return fields;
+            if (!fitsData || !plottedRV) return fields;
         }
 
         return computeColorPanelState(fields, plottedRV, fitsData, band, action.type);
@@ -62,7 +59,6 @@ const computeColorPanelState= function(fields, plottedRV, fitsData, band, action
 
     switch (actionType) {
         case FieldGroupCntlr.VALUE_CHANGE:
-        case ImagePlotCntlr.ANY_REPLOT:
             var valid= Object.keys(fields).every( (key) => {
                 return !fields[key].mounted ? true :  fields[key].valid;
             } );
@@ -70,16 +66,20 @@ const computeColorPanelState= function(fields, plottedRV, fitsData, band, action
             return syncFields(fields,makeRangeValuesFromFields(fields),fitsData);
             break;
 
-      case FieldGroupCntlr.INIT_FIELD_GROUP:
+        case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
+        case FieldGroupCntlr.INIT_FIELD_GROUP:
+        case ImagePlotCntlr.ANY_REPLOT:
             if (!plottedRV && !fitsData) return fields;
             var newFields = updateFieldsFromRangeValues(fields,plottedRV,fitsData);
-            return newFields; //syncFields(newFields,plottedRV,fitsData);
+            // return newFields; //syncFields(newFields,plottedRV,fitsData);
+            return syncFields(newFields,plottedRV,fitsData);
             break;
 
     }
     return fields;
 
 };
+
 
 /**
  * Sync the fields so that are consistent with the passed RangeValues object.
@@ -99,7 +99,6 @@ function syncFields(fields,rv,fitsData) {
     newFields.upperWhich=   clone(fields.upperWhich, {value: rv.upperWhich});
     if (newFields.lowerWhich.value===ZSCALE) newFields.lowerWhich.value= PERCENTAGE;
     if (newFields.upperWhich.value===ZSCALE) newFields.upperWhich.value= PERCENTAGE;
-
 
     return  newFields;
 }
@@ -195,7 +194,8 @@ const makeRangeValuesFromFields= function(fields) {
 /**
  * Update all the fields from a RangeValues object.
  * @param fields
- * @param rv RangeValues
+ * @param {RangeValues} rv
+ * @param {object} fitsData
  */
 const updateFieldsFromRangeValues= function(fields,rv, fitsData) {
     fields= clone(fields);
@@ -203,7 +203,8 @@ const updateFieldsFromRangeValues= function(fields,rv, fitsData) {
     fields.lowerRange= cloneWithValue(fields.lowerRange, rv.lowerValue);
     fields.upperWhich= cloneWithValue(fields.upperWhich, rv.lowerWhich===ZSCALE ? PERCENTAGE : rv.upperWhich);
     fields.upperRange= cloneWithValue(fields.upperRange, rv.upperValue);
-    fields.beta= cloneWithValue(fields.beta,fitsData.beta.toFixed(2) );//rv.betaValue); //
+    // fields.beta= cloneWithValue(fields.beta,fitsData.beta.toFixed(2) );//rv.betaValue); //
+    fields.beta= cloneWithValue(fields.beta, rv.algorithm===STRETCH_ASINH ? rv.betaValue : fitsData.beta.toFixed(2));
     fields.gamma= cloneWithValue(fields.gamma, rv.gammaValue);
     fields.algorithm= cloneWithValue(fields.algorithm, rv.algorithm);
     fields.zscaleContrast= cloneWithValue(fields.zscaleContrast, rv.zscaleContrast);

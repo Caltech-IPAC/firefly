@@ -40,7 +40,7 @@
     "no-multi-spaces": 0,
     "no-console": 0,
     "no-empty": 1,
-    "no-undef": 1,
+    "no-undef": 2,
     "no-use-before-define": 0,
     "no-unused-vars": 1,
     "object-shorthand": 1,

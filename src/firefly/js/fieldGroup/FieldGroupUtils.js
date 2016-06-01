@@ -2,10 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get} from 'lodash';
+import {get,isFunction,hasIn,isBoolean} from 'lodash';
 import {flux} from '../Firefly.js';
-import {logError} from '../util/WebUtil.js';
-import FieldGroupCntlr, {dispatchValueChange} from './FieldGroupCntlr.js';
+import {logError,clone} from '../util/WebUtil.js';
+import FieldGroupCntlr, {dispatchValueChange,dispatchMultiValueChange} from './FieldGroupCntlr.js';
 
 
 const includeForValidation= (f,includeUnmounted) => f.valid !== undefined && (f.mounted||includeUnmounted);
@@ -30,7 +30,7 @@ var validateSingle= function(groupKey, includeUnmounted) {
 
     //====== clear out all functions
     Object.keys(fields).forEach( (key) => {
-        if (typeof fields[key].value === 'function') {
+        if (isFunction(fields[key].value)) {
             var newValue= fields[key].value();
             if (typeof newValue=== 'object' && // check to see if return is an object that includes {value: any} and not a promise
                 !newValue.then &&
@@ -44,10 +44,25 @@ var validateSingle= function(groupKey, includeUnmounted) {
     });
 
 
-    //===============
+    //====== Validate any plain value fields
 
     fields= getGroupFields(groupKey); // need a new copy
 
+    const newFieldAry= Object.keys(fields)
+        .map( (k) => fields[k])
+        .filter( (f) => !isFunction(f.value) && !hasIn(f.value,'then'))
+        .map( (f) => {
+            if (!f.nullAllowed && !f.value && f.valid && !isBoolean(f.value) && f.mounted) {
+                f= clone(f, {message: 'Value is required', valid: false});
+            }
+            f= (f.validator && f.valid) ? clone(f, f.validator(f.value)) :f;
+            return f;
+        });
+
+    dispatchMultiValueChange(groupKey,newFieldAry);
+
+
+    //===============
     if (!fields) return Promise.resolve(true);
     return Promise.all( Object.keys(fields).map( (key) => Promise.resolve(fields[key].value),this ) )
         .then( () =>
@@ -148,6 +163,20 @@ const bindToStore= function(groupKey, stateUpdaterFunc) {
 };
 
 
+/**
+ *
+ */
+export function revalidateFields(fields) {
+    const newfields= clone(fields);
+    Object.keys(fields).forEach( (key) => {
+        const f= fields[key];
+        if (f.validator && !isFunction(f.value) && f.value && !f.value.then) {
+            const {valid,message} = f.validator(f.value);
+            newfields[key]= Object.assign({},f, {valid,message});
+        }
+    } );
+    return newfields;
+}
 
 
 

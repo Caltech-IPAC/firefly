@@ -18,6 +18,72 @@ const STATIC='static';
 export const DataTypes= {DATA,HIGHLIGHT_DATA,SELECTED_IDXS};
 export const ColorChangeType= {DISABLE,DYNAMIC,STATIC};
 
+/**
+ * @typedef {Object} DrawLayer
+ *
+ * @prop {String} drawLayerId unique for each layer
+ * @prop {String} displayGroupId, any layer in this group Id will be controlled together in the UI.\
+ *                           Default to the drawLayerId layers all have a type string that default to the id,
+ *                           however if multiple of same are added, the type id should be set
+ * @prop {String} drawingTypeId  allows for multiple layers of same type to be added (such as multiple markers)
+ *                if they share the same type id
+ *                a drawing layer factory def should always pass the same type Id
+ *                eg. all catalog overlays will by the same type of have different layer ids
+ * @prop {String} title title to show in the ui
+ * @prop {String[]} plotIdAry array of plotId that are layered
+ * @prop {String[]} visiblePlotIdAry:  array of plotId that are visible, only ids in this array are visible
+ * @prop {String[]} actionTypeAry  what actions that the reducer will allow through the drawing layer reducer
+ * @prop {DrawingDef} drawingDef
+ *
+ * @prop {Boolean} canHighlight default: false,  if the layer can highlight
+ * @prop {Boolean} canSelect  default: false      // todo if true the the default reducer should  handle it. point data only?
+ * @prop {Boolean} dataTooBigForSelection   default: false
+ * @prop {Boolean} canFilter  default: false      // todo if true the the default reducer should  handle it
+ * @prop {Boolean} canUseMouse  default: false, drawing layer has mouse interaction, must set up actionTypeAry
+ * @prop {Boolean} canSubgroup  default: false, can be used with subgrouping   // todo
+ * @prop {Boolean} hasPerPlotData  default: false,  drawing layer produces different data for each plot
+ * @prop {Boolean} asyncData   default: false  //todo
+ * @prop {Boolean} isPointData  default: false
+ * @prop {ColorChangeType} canUserChangeColor  default: ColorChangeType.STATIC
+ * @prop {Boolean} canUserDelete  default: true
+ * @prop {Boolean} destroyWhenAllDetached default: false ,hint to controller, when all plots have been detached, destroy this layer
+ * @prop {String} helpLine   default: '', a one line string describing the operation, for the end user to see
+ *
+ * @prop {Object} drawData   the data to draw
+ * @prop {Object} mouseEventMap,
+ *
+ *
+ *
+ * drawData contains the components that may be drawn.
+ * Three keys are supported data, highlightData, selectedIdxAry
+ * other keys could be added later
+ *
+ *
+ * Key:   data
+ * Value: null or [] or plotId:[]
+ *              arrays are arrays of drawObj
+ *              if data is an array the it applies to all the plots
+ *              if data is an object the it applies to the only to the plotId with
+ *              the fallback being the ALL_PLOTS key
+ *
+ * Key:   highlightData
+ * Value: null or [] or plotId:[]
+ *              arrays are arrays of drawObj
+ *              if data is an object the it applies to the only to the plotId with
+ *
+ * Key: selectIdxs
+ * Value:      null or an array of selected indexes or a function, does not support per plot data
+ *             the indexes in the array refer to  the indexes of the data array
+ *             OPTIONALLY you can return a function for this parameter
+ *             this function should be f(arrayIdx : number) : boolean, true if the index is selected
+ *             IMPORTANT: if the selected data changes a new function must be passed.
+ *             This key is typically only used with catalogs and PointDataObj
+ *
+ *
+ *
+ *
+ *
+ */
 
 /**
  *
@@ -44,7 +110,9 @@ export const ColorChangeType= {DISABLE,DYNAMIC,STATIC};
  * @param {object} drawingDef  the defaults that the drawer will use if not overridden by the object @see DrawingDef
  * @param {Array} actionTypeAry extra [actions] that are allow though to the drawing layer reducer
  * @param {object} mouseEventMap object literal with event to function mapping, see documentation below in object
- * @return {*}
+ *
+ *
+ * @return {DrawLayer}
  */
 function makeDrawLayer(drawLayerId,
                        drawLayerTypeId,
@@ -60,8 +128,7 @@ function makeDrawLayer(drawLayerId,
 
          // it section: The types of IDs
          // drawLayerId: unique for each layer
-         // drawingGroupLayerId: any layer in this group Id will be controlled together in the UI
-         //                       default to the drawLayerId
+         // drawingGroupLayerId:
          // drawingTypeId: allows for multiple layers of same type to be added (such as multiple markers)
          //                if they share the same type id then events mapping marked static will only be fired once
          //                a drawing layer factory def should always pass the same type Id
@@ -136,17 +203,17 @@ function makeDrawLayer(drawLayerId,
 
 
            //
-           //     Mouse type as the key and the function to call when activated @see MouseState
-           //     If the value is an object the a it should define the properties: exclusive:boolean and func:function
-           //     The function usually dispatch type functions, but can be anything
-           //     value can be an action string. In that case flux.process is call to dispatch that action.
-           //     a mouseStatePayload object is always passed.
+           //     mouse type as the key and the function to call when activated @see mousestate
+           //     if the value is an object the a it should define the properties: exclusive:boolean and func:function
+           //     the function usually dispatch type functions, but can be anything
+           //     value can be an action string. in that case flux.process is call to dispatch that action.
+           //     a mousestatepayload object is always passed.
            //     {
-           //         [MouseState.DRAG.key]: {exclusive: true, func:dispatchSelectAreaEdit},
-           //         [MouseState.DOWN.key]: {exclusive: true, actionType:DO_SOMETHING_ELSE},
-           //         [MouseState.DOWN.key]: dispatchSelectAreaStart,
-           //         [MouseState.UP.key]: SELECT_AREA_END
-           //         [MouseState.DOWN.key]: {static: true, func:dispatchFindClosestLayer}
+           //         [mousestate.drag.key]: {exclusive: true, func:dispatchselectareaedit},
+           //         [mousestate.down.key]: {exclusive: true, actiontype:do_something_else},
+           //         [mousestate.down.key]: dispatchselectareastart,
+           //         [mousestate.up.key]: select_area_end
+           //         [mousestate.down.key]: {static: true, func:dispatchfindclosestlayer}
            //     };
         mouseEventMap,
         

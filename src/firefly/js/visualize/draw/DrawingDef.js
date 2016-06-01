@@ -18,6 +18,10 @@ export const COLOR_PT_6 = '#ff8000'; //orange
 export const COLOR_DRAW_1 = '#ff0000';
 export const COLOR_DRAW_2 = '#5500ff';
 
+/** 
+ *  enum
+ *  a very long enum, look at code in DrawingDef.js
+ * */
 export const TextLocation = new Enum([ 'DEFAULT',
     'LINE_TOP',
     'LINE_BOTTOM',
@@ -46,12 +50,32 @@ export const Style= new Enum(['STANDARD','HANDLED', 'LIGHT']);
 
 export const DEFAULT_FONT_SIZE = '9pt';
 
+
+/**
+ * @typedef {Object} DrawingDef
+ *
+ * @prop {String} color color css style
+ * @prop {DrawSymbol} symbol default: DrawSymbol.X,
+ * @prop {Number} lineWidth default:1,
+ * @prop {Number} size  default: 4,
+ * @prop {{shadow:number, rotAngle:number,translation:Object}} renderOptions
+ * @prop {TextLocation} textLoc
+ * @prop {String} fontName default: 'helvetica',
+ * @prop {String} fontSize css size
+ * @prop {String} fontWeight default: 'normal',
+ * @prop {String} fontStyle default: 'normal',
+ * @prop {String} selectedColor color css style
+ * 
+ */
+
+
+
 /**
  * Object to hold defaults for drawing a group of objects.
  *
  * @param color
  * @param pointData
- * @return {{color: *, pointData: boolean, symbol: object, lineWidth: number, renderOptions: {shadow: null, rotAngle: null, translation: null}}}
+ * @return {DrawingDef}
  */
 export function makeDrawingDef(color= 'red') {
 

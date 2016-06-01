@@ -36,10 +36,11 @@ export function showColorDialog() {
         </PopupPanel>
     );
     DialogRootContainer.defineDialog('ColorStretchDialog', content);
-    dispatchInitFieldGroup( NO_BAND_PANEL, true, null, colorPanelChange(Band.NO_BAND), [ImagePlotCntlr.ANY_REPLOT]);
-    dispatchInitFieldGroup( RED_PANEL, true, null, colorPanelChange(Band.RED), [ImagePlotCntlr.ANY_REPLOT]);
-    dispatchInitFieldGroup( GREEN_PANEL, true, null, colorPanelChange(Band.GREEN), [ImagePlotCntlr.ANY_REPLOT]);
-    dispatchInitFieldGroup( BLUE_PANEL, true, null, colorPanelChange(Band.BLUE), [ImagePlotCntlr.ANY_REPLOT]);
+    const watchActions= [ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW];
+    dispatchInitFieldGroup( NO_BAND_PANEL, true, null, colorPanelChange(Band.NO_BAND), watchActions);
+    dispatchInitFieldGroup( RED_PANEL, true, null, colorPanelChange(Band.RED), watchActions);
+    dispatchInitFieldGroup( GREEN_PANEL, true, null, colorPanelChange(Band.GREEN), watchActions);
+    dispatchInitFieldGroup( BLUE_PANEL, true, null, colorPanelChange(Band.BLUE), watchActions);
     dispatchShowDialog('ColorStretchDialog');
 }
 

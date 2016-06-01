@@ -10,7 +10,8 @@ import { createStore, applyMiddleware, combineReducers } from 'redux';
 import * as AppDataCntlr  from './AppDataCntlr.js';
 import {recordHistory} from './History.js';
 import {LAYOUT_PATH, reducer as layoutReducer}  from './LayoutCntlr.js';
-import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
+import FieldGroupCntlr, {valueChangeActionCreator,multiValueChangeActionCreator} 
+                                      from '../fieldGroup/FieldGroupCntlr.js';
 import * as MouseReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
 import ImagePlotCntlr, {IMAGE_PLOT_KEY,
                         plotImageActionCreator, zoomActionCreator,
@@ -53,6 +54,12 @@ import {showExampleDialog} from '../ui/ExampleDialog.jsx';
 //==============
 // import Perf from 'react-addons-perf';
 // window.Perf = Perf;
+
+/**
+ * @typedef {Object} Action
+ * @prop {String} type the action constant
+ * @prop {Object} payload object with anything
+ */
 
 
 /**
@@ -97,6 +104,7 @@ let redux = null;
 actionCreators.set(AppDataCntlr.APP_LOAD, AppDataCntlr.loadAppData);
 actionCreators.set(AppDataCntlr.HELP_LOAD, AppDataCntlr.onlineHelpLoad);
 actionCreators.set(FieldGroupCntlr.VALUE_CHANGE, FieldGroupCntlr.valueChangeActionCreator);
+actionCreators.set(FieldGroupCntlr.MULTI_VALUE_CHANGE, multiValueChangeActionCreator);
 actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.extensionActivateActionCreator);
 actionCreators.set(ImagePlotCntlr.PLOT_IMAGE, plotImageActionCreator);
 actionCreators.set(ImagePlotCntlr.ZOOM_IMAGE, zoomActionCreator);

@@ -58,10 +58,6 @@ const alStrToConst = {
 };
 
 
-
-
-
-
 export class RangeValues {
     constructor( lowerWhich= PERCENTAGE,
                  lowerValue= 1.0,

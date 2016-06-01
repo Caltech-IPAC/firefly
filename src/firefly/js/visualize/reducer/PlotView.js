@@ -49,20 +49,39 @@ export default {replacePlots,
 
 
 /**
- * There is one PlotView object for each react ImageViewer.  A plot view is uniquely identified by the plotId. The
+ * @typedef {Object} PlotView
+ * There is one PlotView object for each react ImageViewer.  A PlotView is uniquely identified by the plotId. The
  * plot id will not change for the life time of the plotView. A plot view can be connected to a plot group.  That is done
  * by the plotGroupId. The will be several plotViews in a plot group.
  *
  * PlotView is mostly about the viewing of the plot.  The plot data is contained in a WebPlot. A plotView can have an
  * array of WebPlots. The array length will only be one for normals fits files and n for multi image fits and cube fits
  * files. plots[primeIdx] refers to the plot currently showing in the plot view.
+ * 
+ * @prop {String} plotId, immutable
+ * @prop {String} plotGroupId, immutable
+ * @prop {String} drawingSubGroupId, immutable
+ * @prop {Array} plots all the plots that this plotView can show, usually the image in the fits file
+ * @prop {String} plottingStatus, end user description of the what is doing on
+ * @prop {String} serverCall, one of 'success', 'working', 'fail'
+ * @prop {number} primeIdx, which of the plots array is active
+ * @prop {number} wcsMarginX X offset for wcs align
+ * @prop {number} wcsMarginY X offset for wcs align
+ * @prop {number} scrollX scroll position X
+ * @prop {number} scrollY scroll position Y
+ * @prop {{x:number, y:number}} viewDim  size of viewable area  (div size: offsetWidth & offsetHeight)
+ * @prop {Object} menuItemKeys - which toolbar button are enables for this plotView
+ * @prop {Object} overlayPlotViews
+ * @prop {Object} options
+ * @prop {Object} plotViewCtx
  */
+
 
 /**
  * @param {string} plotId
  * @param {WebPlotRequest} req
  * @param {object} pvOptions options for this plot view todo- define what pvOptions is, somewhere
- * @return  the plotView object
+ * @return  {PlotView} 
  */
 export function makePlotView(plotId, req, pvOptions) {
     var pv= {
