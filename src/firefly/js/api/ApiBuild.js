@@ -16,6 +16,7 @@ import * as MultiViewCntlr from '../visualize/MultiViewCntlr.js';
 import * as AppDataCntlr from '../core/AppDataCntlr.js';
 import * as DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {ApiExpandedView} from './ApiExpandedView.jsx';
+import {dispatchAddSaga} from '../core/MasterSaga.js';
 
 // Parts of the lowlevel api
 import * as ApiUtil from './ApiUtil.js';
@@ -123,7 +124,8 @@ export function buildLowlevelAPI() {
         findDispatch(MultiViewCntlr),
         findDispatch(ImPlotCntlr),
         findDispatch(AppDataCntlr),
-        findDispatch(DrawLayerCntlr)
+        findDispatch(DrawLayerCntlr),
+        {dispatchAddSaga}
     );
 
     const ui= {

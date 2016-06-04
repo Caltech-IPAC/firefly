@@ -4,8 +4,9 @@
 
 import {get,isPlainObject,isArray} from 'lodash';
 import {logError} from '../util/WebUtil.js';
-import {WebPlotRequest} from './WebPlotRequest.js';
+import {WebPlotRequest, GridOnStatus} from './WebPlotRequest.js';
 import ImagePlotCntlr, {visRoot, makeUniqueRequestKey} from './ImagePlotCntlr.js';
+import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from './DrawLayerCntlr.js';
 import {WebPlot,PlotAttribute} from './WebPlot.js';
 import CsysConverter from './CsysConverter.js';
 import {dispatchActiveTarget, getActiveTarget} from '../core/AppDataCntlr.js';
@@ -19,6 +20,8 @@ import ActiveTarget  from '../drawingLayers/ActiveTarget.js';
 import * as DrawLayerCntlr from './DrawLayerCntlr.js';
 import {makePostPlotTitle} from './reducer/PlotTitle.js';
 import {dispatchAddImages, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
+import {getDrawLayerByType, getConnectedPlotsIds} from './PlotViewUtil.js';
+import WebGrid from '../drawingLayers/WebGrid.js';
 
 const INIT_STATUS_UPDATE_DELAY= 7000;
 
@@ -46,7 +49,7 @@ function ensureWPR(inVal) {
 const getFirstReq= (wpRAry) => isArray(wpRAry) ? wpRAry.find( (r) => r?true:false) : wpRAry;
 
 
-function makeSinglePlotPayload({wpRequest,plotId, threeColor, viewerId, 
+function makeSinglePlotPayload({wpRequest,plotId, threeColor, viewerId, attributes,
                                 addToHistory= false,useContextModifications= true}  ) {
     wpRequest= ensureWPR(wpRequest);
 
@@ -65,7 +68,7 @@ function makeSinglePlotPayload({wpRequest,plotId, threeColor, viewerId,
     const payload= { plotId:req.getPlotId(),
                      plotGroupId:req.getPlotGroupId(),
                      groupLocked:req.isGroupLocked(),
-                     viewerId, addToHistory, useContextModifications, threeColor};
+                     attributes, viewerId, addToHistory, useContextModifications, threeColor};
 
     if (threeColor) {
         if (isArray(wpRequest)) {
@@ -103,6 +106,7 @@ function makePlotImageAction(rawAction) {
             payload= {
                 wpRequestAry:ensureWPR(wpRequestAry),
                 viewerId:rawAction.payload.viewerId,
+                attributes:rawAction.payload.attributes,
                 threeColor:false,
                 addToHistory:false,
                 useContextModifications:true,
@@ -215,11 +219,20 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
         dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotIdAry}});
 
 
-        pvNewPlotInfoAry.forEach((info) => {
-            info.plotAry.map((p) => ({r: p.plotState.getWebPlotRequest(), plotId: p.plotId}))
-                .forEach((obj) => obj.r.getOverlayIds()
-                    .forEach((drawLayerId)=> DrawLayerCntlr.dispatchAttachLayerToPlot(drawLayerId, obj.plotId)));
-        });
+        // pvNewPlotInfoAry.forEach((info) => {
+        //     info.plotAry.map((p) => ({r: p.plotState.getWebPlotRequest(), plotId: p.plotId}))
+        //         .forEach((obj) => obj.r.getOverlayIds()
+        //             .forEach((drawLayerId)=> {
+        //                 DrawLayerCntlr.dispatchAttachLayerToPlot(drawLayerId, obj.plotId);
+        //             });
+        // });
+
+
+        pvNewPlotInfoAry
+            .forEach((info) => info.plotAry
+                .forEach( (p)  => addDrawLayers(p.plotState.getWebPlotRequest(), p.plotId) ));
+
+
 
         //todo- this this plot is in a group and locked, make a unique list of all the drawing layers in the group and add to new
         dispatchAddImages(EXPANDED_MODE_RESERVED, plotIdAry);
@@ -240,6 +253,23 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
 }
 
 
+function addDrawLayers(request, plotId ) {
+    request.getOverlayIds().forEach((drawLayerTypeId)=> {
+        const dl = getDrawLayerByType(dlRoot(), drawLayerTypeId);
+        if (dl) DrawLayerCntlr.dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
+    });
+
+    if (request.getGridOn()!==GridOnStatus.FALSE) {
+        const dl = getDrawLayerByType(dlRoot(), WebGrid.TYPE_ID);
+        if (!dl) {
+            dispatchCreateDrawLayer(WebGrid.TYPE_ID);
+            dispatchAttachLayerToPlot(WebGrid.TYPE_ID, plotId, true);
+        }
+        else {
+            dispatchAttachLayerToPlot(WebGrid.TYPE_ID, plotId, true);
+        }
+    }
+}
 
 
 
@@ -252,17 +282,18 @@ const handleSuccess= function(plotCreate, payload) { //TODO: finish
     const plotState= PlotState.makePlotStateWithJson(plotCreate[0].plotState);
     const plotId= plotState.getWebPlotRequest().getPlotId();
 
-    var plotAry= plotCreate.map((wpInit) => makePlot(wpInit,plotId));
+    var plotAry= plotCreate.map((wpInit) => makePlot(wpInit,plotId, payload.attributes));
     if (plotAry.length) updateActiveTarget(plotAry[0]);
     return {plotId, plotAry, overlayPlotViews:null};
 };
 
-function makePlot(wpInit,plotId) {
+function makePlot(wpInit,plotId, attributes) {
     var plot= WebPlot.makeWebPlotData(plotId, wpInit);
     var r= plot.plotState.getWebPlotRequest();
     plot.title= makePostPlotTitle(plot,r);
     if (r.isMinimalReadout()) plot.attributes[PlotAttribute.MINIMAL_READOUT]= true;
     if (r.getRelatedTableRow()>-1) plot.attributes[PlotAttribute.TABLE_ROW]= r.getRelatedTableRow();
+    Object.assign(plot.attributes,attributes);
     return plot;
 }
 
@@ -308,5 +339,4 @@ function updateActiveTarget(plot) {
 function initBuildInDrawLayers() {
     DrawLayerCntlr.dispatchCreateDrawLayer(ActiveTarget.TYPE_ID);
 }
-
 

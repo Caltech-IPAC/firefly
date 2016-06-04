@@ -4,7 +4,7 @@
  * Time: 9:18:47 AM
  */
 /* eslint prefer-template:0 */
-import {isString, isPlainObject, isArray} from 'lodash';
+import {isString, isPlainObject, isArray, isBoolean} from 'lodash';
 import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
 import {RequestType} from './RequestType.js';
 import {ZoomType} from './ZoomType.js';
@@ -1099,7 +1099,17 @@ export class WebPlotRequest extends ServerRequest {
      *
      * @param gridOnStatus GridOnStatus
      */
-    setGridOn(gridOnStatus) { this.setParam(C.GRID_ON, gridOnStatus.key); }
+
+    setGridOn(gridOnStatus= GridOnStatus.FALSE) {
+        var stat= gridOnStatus;
+        if (isBoolean(gridOnStatus)) {
+            stat= gridOnStatus ? GridOnStatus.TRUE : GridOnStatus.FALSE;
+        }
+        else {
+            stat= GridOnStatus.get(gridOnStatus);
+        }
+        this.setParam(C.GRID_ON, stat.key);
+    }
 
     /**
      *

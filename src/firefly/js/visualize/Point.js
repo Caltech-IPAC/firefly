@@ -1,12 +1,3 @@
-/**
- * Pt module.
- * @module firefly/visualize/Point.js
- */
-
-/**
- * Created by roby on 12/2/14.
- */
-
 
 import CoordinateSys from './CoordSys.js';
 import Resolver, {parseResolver} from '../astro/net/Resolver.js';
@@ -22,6 +13,18 @@ const OFFSET_PT= 'OffsetPt';
 
 var Point = {  SPT, IM_PT, IM_WS_PT, VP_PT, PROJ_PT, W_PT, OFFSET_PT};
 
+
+
+/**
+ * @typedef {Object} Pt
+ * a Point
+ *
+ * @prop {Number} x
+ * @prop {Number} y
+ * @prop {String} type one of 'ScreenPt', 'ImagePt', 'ImageWorkSpacePt', 'WorldPt', 'ViewPortPt', 'ProjectionPt', 'OffsetPt'
+ */
+
+
 var ptTypes= Object.values(Point);
 
 //var makePt = function (x, y) {
@@ -34,7 +37,8 @@ var ptTypes= Object.values(Point);
 //    return retval;
 //};
 
-export class Pt {
+
+export class SimplePt {
     constructor(x,y) {
         this.x= x;
         this.y= y;
@@ -158,33 +162,39 @@ export const makeWorldPt= function (lon,lat,coordSys,objName,resolver) {
 export const makeImagePt= function(x,y) {
     if (typeof x === 'string') x= Number(x);
     if (typeof y === 'string') y= Number(y);
-    return Object.assign(new Pt(x,y), {type:IM_PT});
+    return Object.assign(new SimplePt(x,y), {type:IM_PT});
 };
 
+/**
+ *
+ * @param x
+ * @param y
+ * @return {Pt}
+ */
 export const makeImageWorkSpacePt= function(x,y) {
     if (typeof x === 'string') x= Number(x);
     if (typeof y === 'string') y= Number(y);
-    return Object.assign(new Pt(x,y), {type:IM_WS_PT});
+    return Object.assign(new SimplePt(x,y), {type:IM_WS_PT});
 };
 export const makeScreenPt= function(x,y) {
     if (typeof x === 'string') x= Number(x);
     if (typeof y === 'string') y= Number(y);
-    return Object.assign(new Pt(x,y), {type:SPT});
+    return Object.assign(new SimplePt(x,y), {type:SPT});
 };
 export const makeViewPortPt= function(x,y) {
     if (typeof x === 'string') x= Number(x);
     if (typeof y === 'string') y= Number(y);
-    return Object.assign(new Pt(x,y), {type:VP_PT});
+    return Object.assign(new SimplePt(x,y), {type:VP_PT});
 };
 export const makeProjectionPt= function(x,y) {
     if (typeof x === 'string') x= Number(x);
     if (typeof y === 'string') y= Number(y);
-    return Object.assign(new Pt(x,y), {type:PROJ_PT});
+    return Object.assign(new SimplePt(x,y), {type:PROJ_PT});
 };
 export const makeOffsetPt= function(x,y) {
     if (typeof x === 'string') x= Number(x);
     if (typeof y === 'string') y= Number(y);
-    return Object.assign(new Pt(x,y), {type:OFFSET_PT});
+    return Object.assign(new SimplePt(x,y), {type:OFFSET_PT});
 };
 
 export const pointEquals= function(p1,p2)  {
@@ -196,7 +206,7 @@ export const parsePt= function(type, inStr) {
     if (!inStr) return null;
     var parts= inStr.split(';');
     if (parts.length===2 && validator.isFloat(parts[0]) && validator.isFloat(parts[1])) {
-        var pt= new Pt(validator.toFloat(parts[0]), validator.toFloat(parts[1]));
+        var pt= new SimplePt(validator.toFloat(parts[0]), validator.toFloat(parts[1]));
         pt.type= type;
         return pt;
     }

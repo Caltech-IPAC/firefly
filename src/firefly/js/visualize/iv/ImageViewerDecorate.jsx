@@ -56,17 +56,17 @@ const toolsAnno= [
  */
 function showSelect(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
-        .some( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID && dl.canSelect);
+        .some( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID && dl.canSelect && dl.catalog);
 }
 
 function showFilter(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
-        .some( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID && dl.canFilter);
+        .some( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID && dl.canFilter && dl.catalog);
 }
 
 function showClearFilter(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
-        .some( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID &&  get(dl,'tableRequest.filters') );
+        .some( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID &&  get(dl,'tableRequest.filters' && dl.catalog) );
 }
 
 
@@ -79,7 +79,7 @@ function showClearFilter(pv,dlAry) {
  */
 function showUnselect(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
-        .filter( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID)
+        .filter( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalog)
         .some( (dl) => Boolean(dl.drawData[DataTypes.SELECTED_IDXS] && dl.canSelect));
 }
 

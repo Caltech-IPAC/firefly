@@ -175,6 +175,12 @@ export function getExpandedViewerPlotIds(multiViewRoot) {
     return getViewerPlotIds(multiViewRoot,EXPANDED_MODE_RESERVED);
 }
 
+/**
+ * 
+ * @param multiViewRoot
+ * @param viewerId
+ * @return {*}
+ */
 export function getViewerPlotIds(multiViewRoot,viewerId) {
     if (!multiViewRoot || !viewerId) return null;
     var viewerObj= multiViewRoot.find( (entry) => entry.viewerId===viewerId);

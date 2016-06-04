@@ -3,7 +3,7 @@
  */
 
 import {take} from 'redux-saga/effects';
-import {union,get,isEmpty,difference,omit} from 'lodash';
+import {union,get,isEmpty,difference} from 'lodash';
 import {Band,allBandAry} from '../Band.js';
 import {TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT,
         TABLE_REMOVE,TABLE_UPDATE, TBL_RESULTS_ACTIVE, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
@@ -15,7 +15,7 @@ import {primePlot} from '../PlotViewUtil.js';
 import MultiViewCntlr, {dispatchReplaceImages, dispatchUpdateCustom, getViewerPlotIds,
                         getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE} from '../MultiViewCntlr.js';
 import {converterFactory, converters} from '../../metaConvert/ConverterFactory.js';
-import {findGridTableRows,isMetaDataTable, computePlotId} from '../../metaConvert/converterUtils.js';
+import {findGridTableRows,isMetaDataTable} from '../../metaConvert/converterUtils.js';
 // import {getActiveTableId} from '../../core/LayoutCntlr.js';
 import {PlotAttribute} from '../WebPlot.js';
 

@@ -169,7 +169,7 @@ export class Projection {
         this.scale2= 1/header.cdelt2;
         this.pixelScaleArcSec= Math.abs(header.cdelt1) * 3600.0;
         this.coordSys= coordSys;
-		console.log('Projection: '+translateProjectionName(header.maptype));
+		// console.log('Projection: '+translateProjectionName(header.maptype));
     }
 
     getPixelWidthDegree() { return Math.abs(this.header.cdelt1); }
