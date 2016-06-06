@@ -16,6 +16,7 @@ import edu.caltech.ipac.firefly.visualize.ClientFitsHeader;
 import edu.caltech.ipac.firefly.visualize.InsertBandInitializer;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.PlotState;
+import edu.caltech.ipac.firefly.visualize.ProjectionSerializer;
 import edu.caltech.ipac.firefly.visualize.StretchData;
 import edu.caltech.ipac.firefly.visualize.WebFitsData;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
@@ -23,6 +24,8 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.RangeValues;
+import edu.caltech.ipac.visualize.plot.projection.Projection;
+import edu.caltech.ipac.visualize.plot.projection.ProjectionParams;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -49,6 +52,7 @@ public class VisJsonSerializer {
 
         map.put("imageCoordSys", wpInit.getCoordinatesOfPlot().toString());
         map.put("projection", wpInit.getProjectionSerialized());
+        map.put("projectionJson", serializeProjection(wpInit));
         map.put("dataWidth", wpInit.getDataWidth());
         map.put("dataHeight", wpInit.getDataHeight());
         map.put("imageScaleFactor", wpInit.getImageScaleFactor());
@@ -64,6 +68,94 @@ public class VisJsonSerializer {
 
         return map;
 
+    }
+
+    public static JSONObject serializeProjection(WebPlotInitializer wpInit) {
+        Projection proj= ProjectionSerializer.deserializeProjection(wpInit.getProjectionSerialized());
+        if (proj==null) return null;
+        JSONObject map = new JSONObject();
+        map.put("coorindateSys", proj.getCoordinateSys().toString());
+        map.put("header", serializeProjectionParams(proj.getProjectionParams()));
+        return map;
+    }
+
+    public static JSONObject serializeProjectionParams(ProjectionParams p) {
+        JSONObject map = new JSONObject();
+
+        map.put("bitpix", p.bitpix);
+        map.put("naxis",  p.naxis);
+        map.put("naxis1", p.naxis1);
+        map.put("naxis2", p.naxis2);
+        map.put("naxis3", p.naxis3);
+        map.put("crpix1", p.crpix1);
+        map.put("crpix2", p.crpix2);
+        map.put("crval1", p.crval1);
+        map.put("crval2", p.crval2);
+        map.put("cdelt1", p.cdelt1);
+        map.put("cdelt2", p.cdelt2);
+        map.put("crota1", p.crota1);
+        map.put("crota2", p.crota2);
+        map.put("file_equinox", p.file_equinox);
+        map.put("ctype1", p.ctype1);
+        map.put("ctype2", p.ctype2);
+        map.put("radecsys", p.radecsys);
+        map.put("datamax", p.datamax);
+        map.put("datamin", p.datamin);
+        map.put("maptype", p.maptype);
+        map.put("cd1_1", p.cd1_1);
+        map.put("cd1_2", p.cd1_2);
+        map.put("cd2_1", p.cd2_1);
+        map.put("cd2_2", p.cd2_2);
+        map.put("dc1_1", p.dc1_1);
+        map.put("dc1_2", p.dc1_2);
+        map.put("dc2_1", p.dc2_1);
+        map.put("dc2_2", p.dc2_2);
+        map.put("using_cd", p.using_cd);
+        map.put("plate_ra", p.plate_ra);
+        map.put("plate_dec", p.plate_dec);
+        map.put("x_pixel_offset", p.x_pixel_offset);
+        map.put("y_pixel_offset", p.y_pixel_offset);
+        map.put("x_pixel_size", p.x_pixel_size);
+        map.put("y_pixel_size", p.y_pixel_size);
+        map.put("plt_scale", p.plt_scale);
+
+        map.put("ppo_coeff", makeJAry(p.ppo_coeff));
+        map.put("amd_x_coeff", makeJAry(p.amd_x_coeff));
+        map.put("amd_y_coeff", makeJAry(p.amd_y_coeff));
+        map.put("a_order", p.a_order);
+        map.put("ap_order", p.ap_order);
+        map.put("b_order", p.b_order);
+        map.put("bp_order", p.bp_order);
+        map.put("a", makeJAry2d(p.a));
+        map.put("ap", makeJAry2d(p.ap));
+        map.put("b", makeJAry2d(p.b));
+        map.put("bp", makeJAry2d(p.bp));
+        map.put("map_distortion", p.map_distortion);
+        map.put("keyword", p.keyword);
+
+        return map;
+
+    }
+
+
+    public static JSONArray makeJAry(double a[]) {
+        if (a==null) return null;
+        JSONArray aList= new JSONArray();
+        for(double entry : a) aList.add(entry);
+        return aList;
+    }
+
+    private static JSONArray makeJAry2d(double dAry[][]) {
+        if (dAry==null) return null;
+        JSONArray aList= new JSONArray();
+        for(int j= 0; (j<dAry.length); j++) {
+            JSONArray innerAry= new JSONArray();
+            aList.add(innerAry);
+            for(int i= 0; (i<dAry[j].length); i++) {
+                innerAry.add(dAry[j][i]);
+            }
+        }
+        return aList;
     }
 
 

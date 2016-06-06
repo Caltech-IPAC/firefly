@@ -17,8 +17,14 @@ import Point, {makeImageWorkSpacePt, makeViewPortPt, makeImagePt,
 import ZoomUtil from './ZoomUtil.js';
 import DrawOp from './draw/DrawOp.js';
 import {isArray} from 'lodash';
+import {doConv} from '../astro/conv/CoordConv.js';
 
 var {AllPlots} = window.ffgwt ? window.ffgwt.Visualize : {AllPlots:null};
+
+export const USE_GWT= false;
+
+const doCoordConversion= USE_GWT ? window.ffgwt.astro.CoordConv.doConv : doConv;
+
 
 
 export const DtoR = Math.PI / 180.0;
@@ -95,7 +101,7 @@ function convert(wpt, to= CoordinateSys.EQ_J2000) {
     if (!to || from==to) return wpt;
 
     const tobs=  (from===CoordinateSys.EQ_B1950) ? 1983.5 : 0;
-    const ll = window.ffgwt.astro.CoordConv.doConv(
+    const ll = doCoordConversion(
                           from.getJsys(), from.getEquinox(),
                           wpt.getLon(), wpt.getLat(),
                           to.getJsys(), to.getEquinox(), tobs);
