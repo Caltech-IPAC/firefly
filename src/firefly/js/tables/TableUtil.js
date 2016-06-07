@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, isEmpty, uniqueId, cloneDeep, omit, omitBy, isNil} from 'lodash';
+import {get, set, isEmpty, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {flux} from '../Firefly.js';
@@ -328,30 +328,28 @@ export function transform(tableModel) {
 export function smartMerge(target, source) {
     if (!target) return source;
 
-    if ( source && typeof(source)==='object') {
-        if(Array.isArray(source)) {
-            const aryChanges = [];
-            source.forEach( (v, idx) => {
-                const nval = smartMerge(target[idx], source[idx]);
-                if (nval !== target[idx]) {
-                    aryChanges[idx] = nval;
-                }
-            });
-            if (isEmpty(aryChanges)) return target;
-            else {
-                const nAry = target.slice();
-                aryChanges.forEach( (v, idx) => nAry[idx] = v );
-                return nAry;
+    if (isPlainObject(source)) {
+        const objChanges = {};
+        Object.keys(source).forEach((k) => {
+            const nval = smartMerge(target[k], source[k]);
+            if (nval !== target[k]) {
+                objChanges[k] = nval;
             }
-        } else {
-            const objChanges = {};
-            Object.keys(source).forEach( (k) => {
-                const nval = smartMerge(target[k], source[k]);
-                if (nval !== target[k]) {
-                    objChanges[k] = nval;
-                }
-            });
-            return (isEmpty(objChanges)) ? target : Object.assign({}, target, objChanges);
+        });
+        return (isEmpty(objChanges)) ? target : Object.assign({}, target, objChanges);
+    } else if (isArray(source)){
+        const aryChanges = [];
+        source.forEach((v, idx) => {
+            const nval = smartMerge(target[idx], source[idx]);
+            if (nval !== target[idx]) {
+                aryChanges[idx] = nval;
+            }
+        });
+        if (isEmpty(aryChanges)) return target;
+        else {
+            const nAry = target.slice();
+            aryChanges.forEach((v, idx) => nAry[idx] = v);
+            return nAry;
         }
     } else {
         return (target === source) ? target : source;

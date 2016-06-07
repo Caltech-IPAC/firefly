@@ -24,13 +24,11 @@ export class TablePanel extends Component {
         super(props);
         var {tbl_id, tbl_ui_id, tableModel} = props;
 
-        var isLocal = false;
         if (!tbl_id && tableModel) {
-            tbl_id = get(tableModel, 'tbl_id');
-            isLocal = true;
+            tbl_id = get(tableModel, 'tbl_id', TblUtil.uniqueTblId());
         }
         tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
-        this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, isLocal);
+        this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, tableModel);
         const uiState = TblUtil.getTableUiById(tbl_ui_id);
         this.state = Object.assign({}, this.props, uiState);
 
@@ -48,9 +46,9 @@ export class TablePanel extends Component {
         const {tbl_id, tbl_ui_id} = this.tableConnector;
         if (!get(this.state, 'tbl_id')) {
             dispatchTableUiUpdate({tbl_ui_id, tbl_id});
-        }
-        if (tableModel && isEmpty(this.state)) {
-            dispatchTableReplace(tableModel);
+            if (tableModel) {
+                dispatchTableReplace(tableModel);
+            }
         }
     }
 
@@ -215,7 +213,7 @@ TablePanel.defaultProps = {
     pageSize: 50
 };
 
-//noinspection Eslint
+// eslint-disable-next-line
 function TableTitle({tbl_id, title, removable}) {
     if (title) {
         return (

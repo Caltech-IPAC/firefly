@@ -23,15 +23,13 @@ export class BasicTable extends Component {
         super(props);
         var {tbl_id, tbl_ui_id, tableModel} = props;
 
-        var isLocal = false;
         if (!tbl_id && tableModel) {
-            tbl_id = get(tableModel, 'tbl_id');
-            isLocal = true;
+            tbl_id = get(tableModel, 'tbl_id', TblUtil.uniqueTblId());
         }
-        tbl_ui_id = tbl_ui_id || tbl_id + '-ui';
-        this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, isLocal);
+        tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
+        this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, tableModel);
         const uiState = TblUtil.getTableUiById(tbl_ui_id);
-        this.state = uiState || {};
+        this.state = Object.assign({}, this.props, uiState);
     }
 
     componentDidMount() {
@@ -40,10 +38,9 @@ export class BasicTable extends Component {
         const {tbl_id, tbl_ui_id} = this.tableConnector;
         if (!get(this.state, 'tbl_id')) {
             dispatchTableUiUpdate({tbl_ui_id, tbl_id});
-        }
-        if (tableModel && isEmpty(this.state)) {
-            set(tableModel, 'meta.local', true);
-            dispatchTableReplace(tableModel);
+            if (tableModel) {
+                dispatchTableReplace(tableModel);
+            }
         }
     }
 
@@ -62,7 +59,7 @@ export class BasicTable extends Component {
     }
 
     render() {
-        const {selectable, border, renderers} = this.props;
+        const {selectable, border, renderers} = this.props || {};
         const {columns, showUnits, showFilters, textView, startIdx, showMask, currentPage,
                 hlRowIdx, selectInfo, filterInfo, sortInfo, data, error} = this.state;
         const {tableConnector} = this;

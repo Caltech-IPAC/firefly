@@ -7,7 +7,7 @@
  */
 
 
-import {get} from 'lodash';
+import {get, has} from 'lodash';
 import {makeWisePlotRequest} from './WiseRequestList.js';
 import {make2MassPlotRequest} from './TwoMassRequestList.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
@@ -64,8 +64,11 @@ export const converters = {
 
 
 export function converterFactory(table) {
-    var dataId= get(table, ['tableMeta', MetaConst.DATASET_CONVERTER],'UNKNOWN');
-    const converter= converters[dataId];
+    var dataId= get(table, ['tableMeta', MetaConst.DATASET_CONVERTER]);
+    if (!dataId && has(table, 'tableMeta') && has(table, 'tableData')) {
+        dataId = findAColumn(table.tableMeta, get(table, 'tableData.columns', [])) && 'UNKNOWN';
+    }
+    const converter= dataId && converters[dataId];
     return converter && {converter,dataId};
 }
 
@@ -82,7 +85,7 @@ function makeRequestForUnknown(table, row, includeSingle, includeStandard) {
 
     const {tableMeta:meta}= table;
     const dataSource= meta['DataSource'] || URL;
-    
+
     const col= findAColumn(meta,table.tableData.columns);
     if (!col) return {};
 

@@ -10,7 +10,7 @@ import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../visualize/ChartsContainer.jsx';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
 import {dispatchChangeExpandedMode, ExpandType} from '../visualize/ImagePlotCntlr.js';
-import {dispatchSetLayoutMode, getLayouInfo, LO_MODE, LO_VIEW} from '../core/LayoutCntlr.js';
+import {dispatchSetLayoutMode, getExpandedMode, LO_MODE, LO_VIEW} from '../core/LayoutCntlr.js';
 
 // import {deepDiff} from '../util/WebUtil.js';
 
@@ -43,7 +43,7 @@ export class ApiExpandedView extends Component {
 
     storeUpdate() {
         if (!this.isUnmounted) {
-            const {expanded} = getLayouInfo();
+            const expanded = getExpandedMode();
             this.setState({expanded});
         }
     }

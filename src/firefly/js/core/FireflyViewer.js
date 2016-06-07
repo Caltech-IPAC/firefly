@@ -5,22 +5,20 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {pickBy, filter} from 'lodash';
+import {pickBy} from 'lodash';
 
 import {flux, firefly} from '../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../core/AppDataCntlr.js';
-import {LO_VIEW, LO_MODE, getLayouInfo, SHOW_DROPDOWN, dispatchSetLayoutMode} from '../core/LayoutCntlr.js';
+import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN, layoutManager} from '../core/LayoutCntlr.js';
 import {Menu, getDropDownNames} from '../ui/Menu.jsx';
 import Banner from '../ui/Banner.jsx';
 import {DropDownContainer} from '../ui/DropDownContainer.jsx';
-import {ResultsPanel} from '../ui/ResultsPanel.jsx';
-import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
-import {ChartsContainer} from '../visualize/ChartsContainer.jsx';
+import {TriViewPanel} from '../ui/TriViewPanel.jsx';
 import {VisHeader} from '../visualize/ui/VisHeader.jsx';
-import {VisToolbar} from '../visualize/ui/VisToolbar.jsx';
 import {getActionFromUrl} from '../core/History.js';
-import {TriViewImageSection, launchImageMetaDataSega} from '../visualize/ui/TriViewImageSection.jsx';
+import {launchImageMetaDataSega, FITS_VIEWER_ID} from '../visualize/ui/TriViewImageSection.jsx';
 import {dispatchAddViewer} from '../visualize/MultiViewCntlr.js';
+import {dispatchAddSaga} from '../core/MasterSaga.js';
 
 // import {deepDiff} from '../util/WebUtil.js';
 
@@ -81,12 +79,10 @@ export class FireflyViewer extends Component {
     }
 
     render() {
-        var {title, isReady, menu={}, appTitle, appIcon, altAppIcon,
-                searchPanels, views, expanded,  standard, hasTables, hasImages, hasXyPlots,
-                dropdownVisible, dropdownView} = this.state;
+        var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown,
+                searchPanels, views} = this.state;
+        const {visible, view} = dropDown || {};
         const searches = getDropDownNames();
-        standard = LO_VIEW.get(standard);
-        expanded = LO_VIEW.get(expanded);
 
         if (!isReady || !this.mounted) {
             return (<div style={{top: 0}} className='loading-mask'/>);
@@ -97,12 +93,12 @@ export class FireflyViewer extends Component {
                         <BannerSection {...{menu, appTitle, appIcon, altAppIcon}}/>
                         <DropDownContainer
                             key='dropdown'
-                            visible={dropdownVisible}
-                            selected={dropdownView}
+                            visible={!!visible}
+                            selected={view}
                             {...{searches, searchPanels} } />
                     </header>
                     <main>
-                        <DynamicResults {...{title, expanded, views, standard, hasTables, hasImages, hasXyPlots}}/>
+                        <DynamicResults views={views}/>
                     </main>
                 </div>
             );
@@ -135,11 +131,11 @@ function onReady({menu, views}) {
         dispatchSetMenu({menuItems: menu});
     }
     if (views.has(LO_VIEW.images) ) {
-        dispatchAddViewer('triViewImages', true, true);
+        dispatchAddViewer(FITS_VIEWER_ID, true, true);
+        dispatchAddSaga(layoutManager,{views});
         launchImageMetaDataSega();
     }
-    const home = getDropDownNames()[0];
-    const goto = getActionFromUrl() || (home && {type: SHOW_DROPDOWN, payload: {view: home}});
+    const goto = getActionFromUrl() || {type: SHOW_DROPDOWN};
     if (goto) firefly.process(goto);
 }
 
@@ -158,115 +154,12 @@ function BannerSection(props) {
 function DynamicResults(props) {
     var {views} = props;
     if (LO_VIEW.get(views)) {
-        return <TriViewResults key='triview' {...props} />;
+        return <TriViewPanel/>;
     }
 }
 DynamicResults.propTypes = {
-    title: PropTypes.string,
-    expanded: PropTypes.object,
-    standard: PropTypes.object,
-    views: PropTypes.string,
-    hasTables: PropTypes.bool,
-    hasXyPlots: PropTypes.bool,
-    hasImages: PropTypes.bool
-};
-
-
-
-/**
- * One view of the results this FireflyViewer can serve.
- * Must manually added to the DynamicResults component.
- */
-export class TriViewResults extends Component {
-
-    constructor(props) {
-        super(props);
-    }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
-    render() {
-        var {title, expanded, standard, views, hasTables, hasImages, hasXyPlots} = this.props;
-        var hasData = [];
-        var addTables, addImages, addXy;
-        standard = standard || views;
-        views = LO_VIEW.get(views) || LO_VIEW.none;
-
-        if (views.has(LO_VIEW.images)) {
-            hasData.push(hasImages);
-            addImages = hasImages;
-        }
-        if (views.has(LO_VIEW.xyPlots)) {
-            hasData.push(hasXyPlots);
-            addXy = hasXyPlots;
-        }
-        if (views.has(LO_VIEW.tables)) {
-            hasData.push(hasTables);
-            addTables = hasTables;
-        }
-
-        var content = {};
-        var count = filter(hasData).length;
-        if (addImages) {
-            expanded = count === 1 ? LO_VIEW.images : expanded;
-            content.imagePlot = (<TriViewImageSection key='res-tri-img'
-                                                      showCoverage={true} showFits={true}
-                                                      showImageMetaData={true}
-                                                      closeable={count>1}
-                                                      imageExpandedMode={expanded===LO_VIEW.images} />);
-        }
-        if (addXy) {
-            expanded = count ===1 ? LO_VIEW.xyPlots : expanded;
-            content.xyPlot = (<ChartsContainer key='res-xyplots'
-                                              closeable={count>1}
-                                              expandedMode={expanded===LO_VIEW.xyPlots}/>);
-        }
-        if (addTables) {
-            expanded = count ===1 ? LO_VIEW.tables : expanded;
-            content.tables = (<TablesContainer key='res-tables'
-                                               mode='both'
-                                               closeable={count>1}
-                                               expandedMode={expanded===LO_VIEW.tables}/>);
-        }
-        const searchDesc = (addImages && addXy && addTables) ?
-                            (<div>
-                                <div style={ {display: 'inline-block', float: 'right'} }>
-                                    <button type='button' className='button-std'
-                                            onClick={() => dispatchSetLayoutMode(LO_MODE.standard, LO_VIEW.get('tables | images | xyPlots'))}>tri-view</button>
-                                    <button type='button' className='button-std'
-                                            onClick={() => dispatchSetLayoutMode(LO_MODE.standard, LO_VIEW.get('tables | images'))}>img-tbl</button>
-                                    <button type='button' className='button-std'
-                                            onClick={() => dispatchSetLayoutMode(LO_MODE.standard, LO_VIEW.get('images | xyPlots'))}>img-xy</button>
-                                    <button type='button' className='button-std'
-                                            onClick={() => dispatchSetLayoutMode(LO_MODE.standard, LO_VIEW.get('tables | xyPlots'))}>xy-tbl</button>
-                                </div>
-                            </div>)
-                            : <div/>;
-
-
-        if (count === 0) return <div/>;
-        else {
-            return (
-                <ResultsPanel key='results'
-                              title={title}
-                              searchDesc ={searchDesc}
-                              expanded={expanded}
-                              standard={standard}
-                              visToolbar={<VisToolbar key='res-vis-tb'/>}
-                    { ...content}
-                />
-            );
-        }
-    }
-}
-TriViewResults.propTypes = {
-    title: PropTypes.string,
-    views: PropTypes.string,
-    expanded: PropTypes.object,
-    standard: PropTypes.object,
-    hasTables: PropTypes.bool,
-    hasXyPlots: PropTypes.bool,
-    hasImages: PropTypes.bool
+    views: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.object])
 };
 

@@ -3,15 +3,12 @@
  */
 
 import {take} from 'redux-saga/effects';
-import {get} from 'lodash'; 
-import strLeft from 'underscore.string/strLeft';
-import strRight from 'underscore.string/strRight';
+import {get} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import BrowserCache from '../util/BrowserCache.js';
 import menuRenderer from './reducers/MenuReducer.js';
-import {fetchUrl} from '../util/WebUtil.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
 import {getModuleName} from '../util/WebUtil.js';
 
@@ -103,7 +100,8 @@ export function loadAppData() {
 export function onlineHelpLoad( action )
 {
     return () => {
-        var url = flux.getState()[APP_DATA_PATH].props['help.base.url'];  // ending with '/'
+        /*global __$help_base_url*/
+        var url = typeof __$help_base_url === 'undefined' ? 'unknown' : __$help_base_url;       // this is a global var.. ending with '/'
         var windowName = 'onlineHelp';
         var moduleName = getModuleName();
 

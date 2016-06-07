@@ -108,39 +108,49 @@ task buildClient (dependsOn: loadConfig) {
   outputs.upToDateWhen { false }
 
   doLast {
-    def wpBuildDir = "${buildDir}/gwt/${project['app-name']}"
-    def tag = "v" + getVersionTag() + ' Built On:' + build_time;
-
-    try {
-      def process = "npm version".execute()
-    } catch (Exception e) {
-      println ">> Task failed due to missing npm package manager which comes bundled with node.js"
-      throw new GradleException("Task failed due to missing npm package manager which comes bundled with node.js", e)
-    }
-
-    if (!file("webpack.config.js").exists()) {
-      println ">> webpack.config.js not found.  Skipping buildClient."
-      throw new StopExecutionException("webpack.config.js not found.  Skipping buildClient.")
-    }
-
-    if (file("${rootDir}/package.json").exists()) {
-      exec {
-        workingDir = rootDir
-        executable "npm"
-        args "install"
-      }
-    }
-
-    def res = exec {
-      environment '__VERSION_TAG__': tag
-      environment 'WP_BUILD_DIR': wpBuildDir
-      environment 'NODE_ENV': (project.env == 'local' ? 'development' : 'production')
-      executable "npm"
-      args 'run', 'build'
-    }
+    def res = project.ext.NPM 'run', 'build'
     if (res.getExitValue() != 0) {
       throw new GradleException("Fail to build Client")
     }
   }
 }
 
+/**
+ * this function setup npm environment then run the given command.
+ */
+ext.NPM = { ...cmd ->
+  def wpBuildDir = "${buildDir}/gwt/${project['app-name']}"
+  def tag = "v" + getVersionTag() + ' Built On:' + build_time;
+
+  try {
+    def process = "npm version".execute()
+  } catch (Exception e) {
+    println ">> Task failed due to missing npm package manager which comes bundled with node.js"
+    throw new GradleException("Task failed due to missing npm package manager which comes bundled with node.js", e)
+  }
+
+  if (!file("webpack.config.js").exists()) {
+    println ">> webpack.config.js not found.  Skipping buildClient."
+    throw new StopExecutionException("webpack.config.js not found.  Skipping buildClient.")
+  }
+
+  if (file("${rootDir}/package.json").exists()) {
+    exec {
+      workingDir = rootDir
+      executable "npm"
+      args "install"
+    }
+  }
+
+  // any environment starting with '__$' will be defined as global.
+  // this is a way send config info to JS code.
+  def res = exec {
+    environment '__$version_tag': tag
+    environment '__$help_base_url': project.appConfigProps['help.base.url']
+    environment 'WP_BUILD_DIR': wpBuildDir
+    environment 'NODE_ENV': (project.env == 'local' ? 'development' : 'production')
+    executable "npm"
+    args cmd
+  }
+  return res;
+}

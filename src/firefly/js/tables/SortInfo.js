@@ -35,12 +35,17 @@ export const UNSORTED = '';
         }
     }
 
+    /**
+     * returns the sortInfo string of the next toggle state.
+     * @param colName
+     * @returns {string}
+     */
     toggle(colName) {
         const dir = this.getDirection(colName);
-        this.direction = dir === UNSORTED ? SORT_ASC :
-                         dir === SORT_ASC ? SORT_DESC : UNSORTED;
-        this.sortColumns = UNSORTED ? [] : [colName];
-        return this;
+        const direction = dir === UNSORTED ? SORT_ASC :
+                          dir === SORT_ASC ? SORT_DESC : UNSORTED;
+        const sortColumns = UNSORTED ? [] : [colName];
+        return direction === UNSORTED ? '' : `${direction},${sortColumns.toString()}`;
     }
 
     serialize() {

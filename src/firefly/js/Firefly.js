@@ -1,14 +1,13 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-/*global __VERSION_TAG__*/
+/*global __$version_tag*/
 
 
 import 'babel/polyfill';
 import 'isomorphic-fetch';
 import React from 'react';
 import 'styles/global.css';
-import {isUndefined} from 'lodash';
 
 import {APP_LOAD, dispatchUpdateAppData} from './core/AppDataCntlr.js';
 import {ExtensionJavaInterface } from './gwtinterface/ExtensionJavaInterface.js';
@@ -89,16 +88,11 @@ function fireflyInit() {
         const wsClient = wsConnect();
         wsClient.addListener(ActionEventHandler);
         window.firefly.wsClient = wsClient;
-
-        if (!isUndefined(__VERSION_TAG__)) {
-            window.firefly.version = __VERSION_TAG__;
-        }
     }
 }
 
 export function getVersion() {
-  return isUndefined(__VERSION_TAG__) ? 'unknown' :
-        window.firefly.version = __VERSION_TAG__;
+  return typeof __$version_tag === 'undefined' ? 'unknown' : __$version_tag;
 } 
 
 
