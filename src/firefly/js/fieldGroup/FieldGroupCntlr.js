@@ -22,7 +22,7 @@ import {revalidateFields} from './FieldGroupUtils.js';
  * @prop {boolean} valid the group id, must be unique
  * @prop {Function} validator
  * @prop {boolean} mounted field is mounted
- * @prop {boolean} nullAllowed, default to false
+ * @prop {boolean} nullAllowed, default to true
  */
 
 /**
@@ -435,7 +435,7 @@ const updateMount= function(state, action) {
     if (mounted) {
         const addToInit= !fg.fields[fieldKey];
         var omitPayload= omit(action.payload, ['initFieldState','groupKey']);
-        fg.fields[fieldKey]= Object.assign({valid:true},initFieldState, fg.fields[fieldKey],
+        fg.fields[fieldKey]= Object.assign({valid:true,nullAllowed:true},initFieldState, fg.fields[fieldKey],
                                            omitPayload);
         if (addToInit) fg.initFields= [...fg.initFields,fg.fields[fieldKey]];
     }
