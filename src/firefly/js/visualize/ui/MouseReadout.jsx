@@ -16,6 +16,7 @@ import numeral from 'numeral';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
 import {STANDARD_READOUT, dispatchChangeLockByClick} from '../../visualize/MouseReadoutCntlr.js';
 
+import {padEnd} from 'lodash';
 
 const rS = {
     width: 670,
@@ -86,7 +87,7 @@ const column7_r2 = {width: 90, paddingLeft: 3, display: 'inline-block'};
 const precision7Digit = '0.0000000';
 const precision1Digit = '0.0';
 
-
+const myFormat= (v,precision) => numeral(v).format(padEnd('0.',precision+1,'0') );
 export function MouseReadout({readout}){
 
 
@@ -168,7 +169,7 @@ MouseReadout.propTypes = {
  * @param sndReadout
  * @returns {{fluxLabels: Array, fluxValues: Array}}
  */
-function getFluxInfo(sndReadout){
+export function getFluxInfo(sndReadout){
 
     var fluxObj = [];
     if (sndReadout.threeColor){
@@ -190,8 +191,8 @@ function getFluxInfo(sndReadout){
     var fluxValue,  formatStr;
 
     for (let i = 0; i < fluxObj.length; i++) {
-            formatStr = '0.' + new Array(fluxObj[i].precision + 1).join('0');
-            fluxValue = (fluxObj[i].value < 1000) ? `${numeral(fluxObj[i].value).format(formatStr)}` : fluxObj[i].value.toExponential(6).replace('e+', 'E');
+
+            fluxValue = (fluxObj[i].value < 1000) ? `${myFormat(fluxObj[i].value, fluxObj[i].precision)}` : fluxObj[i].value.toExponential(6).replace('e+', 'E');
             fluxValueArrays.push(fluxValue);
             fluxLabelArrays.push(fluxObj[i].title);
      }
@@ -231,7 +232,9 @@ export function  getMouseReadout(readoutItems, toCoordinateName) {
         var hmsLon = CoordUtil.convertLonToString(lon, coordinate);
         var hmsLat = CoordUtil.convertLatToString(lat, coordinate);
 
+
         switch (coordinate) {
+
             case CoordinateSys.EQ_J2000:
                 if (type === 'hms') {
                     result = ` ${hmsLon}, ${hmsLat}`;
@@ -256,15 +259,12 @@ export function  getMouseReadout(readoutItems, toCoordinateName) {
 
             case CoordinateSys.PIXEL:
                 obj =readoutItems.pixel;
-                fStr = '0.' + new Array(obj.precision + 1).join('0');
-                result = `${numeral(obj.value).format(fStr)} ${obj.unit || ''}`;
-
+                 result = `${myFormat(obj.value, obj.precision)}  ${obj.unit || ''}`;
                 break;
             case CoordinateSys.SCREEN_PIXEL:
                  obj =readoutItems.screenPixel;
-                fStr = '0.' + new Array(obj.precision + 1).join('0');
-                result = `${numeral(obj.value).format(fStr)} ${obj.unit || ''}`;
-                break;
+                 result = `${myFormat(obj.value, obj.precision)}  ${obj.unit || ''}`;
+                 break;
 
             default:
                 result = '';

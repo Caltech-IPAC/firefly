@@ -1,0 +1,153 @@
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Demo of Firefly Tools</title>
+</head>
+
+<body>
+
+
+<div style="width: 500px; padding: 50px 0 0 20px;">
+    <br>
+    This page demos new api
+    <br>
+</div>
+
+<div>
+    <!--<a href='javascript:firefly.getViewer("testChannel").showImage({url:"http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits"})'>test open</a>-->
+    <a href='javascript:firefly.getViewer().plotURL("http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits")'>test open</a>
+    <a href="javascript:firefly.getViewer().showImage({plotId: 'xxq', Service: 'TWOMASS', Title     : '2mass from service', SurveyKey  : 'k', WorldPt    : '10.68479;41.26906;EQ_J2000', SizeInDeg  : '.12', })">test again</a>
+    <a href="javascript:firefly.getViewer().showImage(window.threeC)">3 C</a>
+    <a href="javascript:firefly.action.dispatchZoom({plotId: 'xxq',userZoomType:'UP' ,dispatcher:window.ffViewer.dispatch})">up</a>
+    <a href="javascript:firefly.action.dispatchZoom({plotId: 'xxq',userZoomType:'DOWN' ,dispatcher:window.ffViewer.dispatch})">down</a>
+</div>
+<div id="imageViewHere" style="width: 550px; height: 550px; margin: 10px;"></div>
+
+<div>
+    <div id="tables-2" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
+    <div id="tables-1" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white; position: absolute"></div>
+</div>
+<div id="xyPlot1" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
+<div id="xyPlot2" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white; position: absolute"></div>
+<div>Tables from deprecated API calls:</div>
+<div>
+    <div id="oldSelectable" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
+    <div id="oldBasic" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white; position: absolute"></div>
+</div>
+<div>Deprecated API plot:</div>
+<div>
+    <div id="oldXyPlot1" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
+</div>
+<div id="old1" style="width: 300px; height: 300px; margin: 10px;"></div>
+<div id="old2" style="width: 300px; height: 300px; margin: 10px;"></div>
+
+
+<script type="text/javascript">
+    {
+        onFireflyLoaded= function(firefly) {
+
+            window.ffViewer= firefly.getViewer();
+
+            firefly.setGlobalImageDef({
+                ZoomType  : 'TO_WIDTH'
+            } );
+
+            firefly.debug= true;
+            firefly.util.image.initAutoReadout(firefly.ui.DefaultApiReadout,
+                    {MouseReadoutComponent:firefly.ui.PopupMouseReadoutMinimal,
+                        showMag: false, showThumb:false});
+
+            var req= {
+                plotId: 'xxq',
+                Type      : 'SERVICE',
+//                plotGroupId : 'myGroup',
+                Service   : 'TWOMASS',
+                Title     : '2mass from service',
+                GridOn     : 'true',
+                SurveyKey  : 'k',
+                WorldPt    : '10.68479;41.26906;EQ_J2000',
+                SizeInDeg  : '.12',
+                AllowImageSelection : true
+            };
+
+            var req2= {
+                Type      : 'SERVICE',
+//                plotGroupId : 'myGroup',
+                Service  : 'WISE',
+                Title     : 'Wise',
+                GridOn     : 'true',
+                SurveyKey  : 'Atlas',
+                bad1  : 'hello',
+                bad2  : 'bye',
+                bad3  : 'again',
+                SurveyKeyBand  : '2',
+                WorldPt    : '10.68479;41.26906;EQ_J2000',
+                SizeInDeg  : '.12',
+                RangeValues : firefly.util.image.RangeValues.serializeSimple('Sigma',-2,8,'Linear'),
+                AllowImageSelection : true };
+
+
+
+            window.threeC= [
+                {
+                    type      : 'SERVICE',
+//                    plotGroupId : 'myGroup',
+                    Service   : 'TWOMASS',
+                    Title     : '3 color',
+                    SurveyKey  : 'j',
+                    WorldPt    : '10.68479;41.26906;EQ_J2000',
+                    SizeInDeg  : '.12'
+                },
+                {
+                    Type      : 'SERVICE',
+//                    PLOTgroupId : 'myGroup',
+                    Service   : 'TWOMASS',
+                    Title     : '3 color',
+                    SurveyKey  : 'h',
+                    WorldPt    : '10.68479;41.26906;EQ_J2000',
+                    SizeInDeg  : '.12'
+                },
+                {
+                    Type      : 'SERVICE',
+//                    plotGroupId : 'myGroup',
+                    Service   : 'TWOMASS',
+                    title     : '3 color',
+                    SurveyKey  : 'k',
+                    WorldPt    : '10.68479;41.26906;EQ_J2000',
+                    moreBadKeys : 'qqq',
+                    SizeInDeg  : '.12'
+                }
+            ];
+
+
+            firefly.showImage('imageViewHere', req);
+            firefly.showImage('imageViewHere', req2);
+            firefly.showImage('imageViewHere', window.threeC);
+            firefly.showImage('imageViewHere', {url:'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits'});
+
+            var v1= firefly.makeImageViewer('old1');
+            var v2= firefly.makeImageViewer('old2');
+            v1.plot(req);
+            v2.plotURL('http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits');
+
+
+
+        }
+    }
+
+</script>
+
+
+<script  type="text/javascript" src="../firefly_loader.js"></script>
+
+

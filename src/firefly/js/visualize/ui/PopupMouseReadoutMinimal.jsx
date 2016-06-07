@@ -18,17 +18,15 @@ import LOCKED from    'html/images/icons-2014/lock_20x20.png';
 import UNLOCKED from  'html/images/icons-2014/unlock_20x20.png';
 
 const rS = {
-    padding : 5,
+    padding : 10,
     cursor: 'pointer'
 };
 
 
 const EMPTY = <div style={rS}></div>;
 
-const column1 =    {width: 100,    paddingLeft: 2, textAlign: 'left',display: 'inline-block'};
-const column1_r2 = {width: 100,    addingLeft: 3,  textAlign: 'left',display: 'inline-block'};
 
-const column2 = {
+const column1 = {
     width: 74,
     paddingRight: 1,
     textAlign: 'right',
@@ -38,14 +36,12 @@ const column2 = {
     display: 'inline-block'
 };
 
-const cStyle = {
-    textAlign: 'center',
-    display: 'block'
-};
 
-const column3 = {width: 150,paddingLeft: 2, textAlign: 'left', display: 'inline-block'};
+const column2 = {width: 150,paddingLeft: 2, textAlign: 'left', display: 'inline-block'};
 
-export function PopupMouseReadout({readout}){
+const column3 =    {width: 100,    paddingLeft: 8, textAlign: 'left',display: 'inline-block'};
+
+export function PopupMouseReadoutMinimal({readout}){
 
 
     //get the standard readouts
@@ -61,33 +57,39 @@ export function PopupMouseReadout({readout}){
 
     if (!objList)return EMPTY;
 
+
     const {mouseReadout1, mouseReadout2} = objList;
+
 
     const lock = readout.isLocked ? LOCKED:UNLOCKED;
     return (
-
         <div style={ rS}>
-            <div style = {cStyle}> Coverage
             {/*row1*/}
             <div  >
-                <div style={column1}>
-                   < img  src= {lock}  onClick ={() =>{
-                      dispatchChangeLockUnlockByClick(!readout.isLocked);
-                   }}
-                />
-                </div>
 
-                <div style={ column2} onClick={ () => showDialog('mouseReadout1', readout.readoutPref.mouseReadout1)}>
+
+                <div style={ column1} onClick={ () => showDialog('mouseReadout1', readout.readoutPref.mouseReadout1)}>
                     { labelMap[readout.readoutPref.mouseReadout1] }
                 </div>
-                <div style={column3}> {mouseReadout1} </div>
+                <div style={column2}> {mouseReadout1} </div>
 
-
+                <div style={column3}>
+                    < img  src= {lock}  onClick ={() =>{
+                      dispatchChangeLockUnlockByClick(!readout.isLocked);
+                   }}
+                    />
+                </div>
 
             </div>
             <div>{/* row2*/}
 
-                <div style={column1_r2} title='Click on an image to lock the display at that point.'>
+
+                <div style={ column1} onClick={ () => showDialog('mouseReadout2' ,readout.readoutPref.mouseReadout2 )}>
+                    {labelMap[readout.readoutPref.mouseReadout2] } </div>
+
+                <div style={column2}>  {mouseReadout2}  </div>
+
+                <div style={column3} title='Click on an image to lock the display at that point.'>
                     <input type='checkbox' name='aLock' value='lock'
                            onChange={() => {
                            dispatchChangePointSelection('mouseReadout', !readout.lockByClick);
@@ -96,20 +98,13 @@ export function PopupMouseReadout({readout}){
                     />
                     Lock by click
                 </div>
-                <div style={ column2} onClick={ () => showDialog('mouseReadout2' ,readout.readoutPref.mouseReadout2 )}>
-                    {labelMap[readout.readoutPref.mouseReadout2] } </div>
 
-                <div style={column3}>  {mouseReadout2}  </div>
-
-
-
-            </div>
-           </div>
+             </div>
         </div>
     );
 }
 
-PopupMouseReadout.propTypes = {
+PopupMouseReadoutMinimal.propTypes = {
     readout: PropTypes.object
 };
 
@@ -118,3 +113,4 @@ function showDialog(fieldKey, radioValue) {
     showMouseReadoutOptionDialog(fieldKey, radioValue);
 
 }
+
