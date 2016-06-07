@@ -66,7 +66,7 @@ export const converters = {
 export function converterFactory(table) {
     var dataId= get(table, ['tableMeta', MetaConst.DATASET_CONVERTER]);
     if (!dataId && has(table, 'tableMeta') && has(table, 'tableData')) {
-        dataId = findAColumn(table.tableMeta,table.tableData.columns) && 'UNKNOWN';
+        dataId = findAColumn(table.tableMeta, get(table, 'tableData.columns', [])) && 'UNKNOWN';
     }
     const converter= dataId && converters[dataId];
     return converter && {converter,dataId};

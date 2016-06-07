@@ -5,7 +5,7 @@
       "build" : "npm run webpack -- --bail",
       "lint"  : "DO_LINT=true npm run webpack",
       "lint:strict"  : "DO_LINT_STRICT=true npm run webpack",
-      "dev"   : "DEBUG=true npm run webpack -- -w -d --colors",
+      "dev"   : "DEBUG=true npm run webpack -- -w -d --no-color",
       "test"  : "npm run test:unit && npm run test:server",
       "test:unit": "node ../../node_modules/karma/bin/karma start",
       "test:server": "mocha --harmony bin/test-server"

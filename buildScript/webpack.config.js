@@ -258,10 +258,12 @@ function firefly_loader(loadScript, outpath, debug=true) {
 
 function dev_progress() {
     return new webpack.ProgressPlugin(function (percent, msg) {
-        if (msg.startsWith('compile'))
-            process.stdout.write('\n\nCompiling new changes ..');
+        if (msg.startsWith('compile')) {
+            process.stdout.write('\n\x1b[1;31m> Compiling new changes\x1b[0m');   // set color to red.  for more options.. import a color lib.
+        }
         if  (percent === 1) {
-            process.stdout.write('\nBuild completed: ' + new Date + '\n\n');
+            process.stdout.write('\x1b[0m\n');
+            setTimeout(() => process.stdout.write('\n\x1b[32m\x1b[1m> Build completed: ' + new Date().toLocaleTimeString() + '\x1b[0m \n'));
         } else if (percent * 100 % 5 === 0) {
             process.stdout.write('.');
         };

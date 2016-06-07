@@ -51,7 +51,6 @@ export function tableSearch(action) {
             
             dispatchSetupTblTracking(tbl_id);
             dispatchTableFetch(request);
-            dispatchHideDropDown();
             if (!TblUtil.getTableInGroup(tbl_id, tbl_group)) {
                 const {tbl_group, removable} = options || {};
                 dispatchTblResultsAdded(tbl_id, title, options, removable, tbl_group);

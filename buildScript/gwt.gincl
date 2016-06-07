@@ -169,9 +169,9 @@ task devMode (dependsOn: loadConfig) {
 
   doLast {
     def res = project.ext.NPM 'run', 'dev'
-//    if (res.getExitValue() == 0) {
-//      throw new GradleException("Fail to run dev mode")
-//    }
+    if (res.getExitValue() == 0) {
+      throw new GradleException("Fail to run dev mode")
+    }
   }
 }
 
