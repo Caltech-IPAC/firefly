@@ -33,9 +33,9 @@ export const aliveCheck= function(channelId, tryMS=0) {
  * @return {Promise}
  */
 export const dispatchRemoteAction= function(channelId, action) {
-    const params= Object.assign( {
+
+    const params= {
              [ServerParams.CHANNEL_ID]: channelId,
-             [ServerParams.ACTION]: JSON.stringify(action)
-         }, action.payload );
+             [ServerParams.ACTION]: JSON.stringify(action) };
     return doJsonRequest(ServerParams.VIS_PUSH_ACTION, params);
 };

@@ -34,6 +34,7 @@ function creator(initPayload) {
     var drawingDef= makeDrawingDef('green');
     var pairs = {
         [MouseState.DOWN.key]: highlightChange
+        //[MouseState.DOWN.key]: removeRegionDescription
     };
 
     idCnt++;
@@ -69,7 +70,7 @@ function removeRegionDescription(mouseStatePayload) {
         'image;ellipse 100 100 20p 40p 30p 60p 40p 80p 20 # color=green text={ellipseannulus 2}',
         'J2000;ellipse 202.55556, 47.188286 20p 40p 0i # color=#48f text={ellipse 1} width=10',
         'image;box 130 100 20p 40p 30p 50p 70p 100p 30 # color=red text={slanted box annulus 3}'];
-      dispatchRemoveRegionEntry(id, {removeRegions: removeRegionAry});
+      dispatchRemoveRegionEntry(id, removeRegionAry);
 }
 
 // for testing
@@ -83,7 +84,7 @@ function addRegionDescription(mouseStatePayload) {
         'J2000;ellipse 202.55556, 47.188286 20p 40p 0i # color=#48f text={ellipse 1} width=10',
         'image;box 130 100 20p 40p 30p 50p 70p 100p 30 # color=red text={slanted box annulus 3}'];
 
-    dispatchAddRegionEntry(id, {addRegions: regionAry});
+    dispatchAddRegionEntry(id, regionAry);
 }
 
 /**
@@ -145,7 +146,7 @@ function highlightChange(mouseStatePayload) {
  * @returns {*}
  */
 function getLayerChanges(drawLayer, action) {
-    const {changes, regionChanges, regionId } = action.payload;
+    const {changes, regionId, regionChanges } = action.payload;
     var dd = Object.assign({}, drawLayer.drawData);
 
     switch (action.type) {
@@ -168,15 +169,16 @@ function getLayerChanges(drawLayer, action) {
 
             return Object.assign({}, changes, {drawData: dd});
         case DrawLayerCntrl.REGION_ADD_ENTRY:
-            if (regionId === drawLayer.drawLayerId && regionChanges && regionChanges.addRegions) {
-                dd[DataTypes.DATA] = addRegionsToData(drawLayer, dd[DataTypes.DATA], regionChanges.addRegions);
+            if (regionId === drawLayer.drawLayerId && regionChanges) {
+                dd[DataTypes.DATA] = addRegionsToData(drawLayer, dd[DataTypes.DATA], regionChanges);
             }
             return {drawData: dd};
 
         case DrawLayerCntrl.REGION_REMOVE_ENTRY:
-            if (regionId === drawLayer.drawLayerId && regionChanges && regionChanges.removeRegions) {
-                dd[DataTypes.DATA] = removeRegionsFromData(drawLayer, dd[DataTypes.DATA], regionChanges.removeRegions);
+            if (regionId === drawLayer.drawLayerId && regionChanges) {
+                dd[DataTypes.DATA] = removeRegionsFromData(drawLayer, dd[DataTypes.DATA], regionChanges);
             }
+
             return {drawData: dd};
 
         default:
@@ -186,13 +188,12 @@ function getLayerChanges(drawLayer, action) {
 
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
     const {regions, highlightedRegion} = drawLayer;
-    plotId = get(visRoot(), 'activePlotId');
 
     switch (dataType) {
         case DataTypes.DATA:
             return isEmpty(lastDataRet) ? plotAllRegions(regions) : lastDataRet;
         case DataTypes.HIGHLIGHT_DATA:
-            return isEmpty(lastDataRet) ? plotHighlightRegion(highlightedRegion, plotId) : lastDataRet;
+            return isEmpty(lastDataRet) ? plotHighlightRegion(highlightedRegion) : lastDataRet;
     }
     return null;
 }
@@ -213,18 +214,15 @@ function plotAllRegions(regionAry) {
 /**
  * create DrawingObj for highlighted region
  * @param highlightedObj
- * @param plotId
  * @returns {*}
  */
-function plotHighlightRegion(highlightedObj, plotId) {
+function plotHighlightRegion(highlightedObj) {
     if (!highlightedObj) {
         return [];
     }
 
-    var plot =  primePlot(visRoot(),plotId);
-
     if (highlightedObj.region) highlightedObj.region.highlighted = 1;
-    return [DrawOp.makeHighlight(highlightedObj, plot)];
+    return [DrawOp.makeHighlight(highlightedObj, primePlot(visRoot()))];
 }
 
 /**
@@ -264,9 +262,13 @@ function addRegionsToData(drawLayer, lastData, addedRegions) {
  * @returns {Array}
  */
 function removeRegionsFromData(drawLayer, lastData, removedRegions) {
-    var {regions} = drawLayer;
-    var resultRegions = regions ? regions.slice() : [];
+    var resultRegions;
     var allDrawObjs = lastData ? lastData.slice() : [];
+
+    resultRegions = allDrawObjs.reduce( (prev, drawObj) => {
+        prev.push(drawObj.region);
+        return prev;
+    }, []);
 
     if (resultRegions.length === 0) {
         return [];     // no region to be removed

@@ -12,6 +12,11 @@ import {without,union,omit,isEmpty} from 'lodash';
 export {selectAreaEndActionCreator} from '../drawingLayers/SelectArea.js';
 export {distanceToolEndActionCreator} from '../drawingLayers/DistanceTool.js';
 
+export {regionCreateLayerActionCreator,
+        regionDeleteLayerActionCreator,
+        regionUpdateEntryActionCreator} from './region/RegionTask.js';
+
+
 export const DRAWLAYER_PREFIX = 'DrawLayerCntlr';
 
 const RETRIEVE_DATA= `${DRAWLAYER_PREFIX}.retrieveData`;
@@ -50,8 +55,6 @@ export const DRAWING_LAYER_KEY= 'drawLayers';
 const clone = (obj,params={}) => Object.assign({},obj,params);
 
 
-
-
 export function dlRoot() { return flux.getState()[DRAWING_LAYER_KEY]; }
 
 /**
@@ -69,7 +72,7 @@ export default {
     SELECT_POINT,
     FORCE_DRAW_LAYER_UPDATE,
     DT_START, DT_MOVE, DT_END,
-    REGION_CREATE_LAYER, REGION_DELETE_LAYER, REGION_ADD_ENTRY, REGION_REMOVE_ENTRY,
+    REGION_CREATE_LAYER, REGION_DELETE_LAYER,  REGION_ADD_ENTRY, REGION_REMOVE_ENTRY,
     makeReducer, dispatchRetrieveData, dispatchChangeVisibility,
     dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
     dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot,
@@ -226,45 +229,20 @@ export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
 }
 
 
-export function dispatchCreateRegionLayer(regionId, layerTitle, fileOnServer, rgAry, dispatcher = flux.process) {
-    if (!fileOnServer) {
-        fileOnServer = '';
-    }
-    if (!rgAry) {
-        rgAry = [];
-    }
-
-    var regionAry =  rgAry && (Array.isArray(rgAry) ? rgAry : [rgAry]);
-
-    dispatcher({type: REGION_CREATE_LAYER, payload: {regionId, fileOnServer, layerTitle, regionAry}});
+export function dispatchCreateRegionLayer(regionId, layerTitle, fileOnServer ='', regionAry=[], plotId = [], dispatcher = flux.process) {
+    dispatcher({type: REGION_CREATE_LAYER, payload: {regionId, fileOnServer, plotId, layerTitle, regionAry}});
 }
 
 
-export function dispatchDeleteRegionLayer(regionId, dispatcher = flux.process) {
-    dispatcher({type: REGION_DELETE_LAYER, payload: {regionId}});
+export function dispatchDeleteRegionLayer(regionId, plotId, dispatcher = flux.process) {
+    dispatcher({type: REGION_DELETE_LAYER, payload: {regionId, plotId}});
 }
 
 export function dispatchAddRegionEntry(regionId, regionChanges, dispatcher = flux.process) {
-    var {addRegions} = regionChanges;
-
-    if (!addRegions) {
-        regionChanges = Object.assign({}, regionChanges, {addRegions: []});
-    } else if (!Array.isArray(addRegions)) {
-        regionChanges = Object.assign({}, regionChanges, {addRegions: [addRegions]});
-    }
-
     dispatcher({type: REGION_ADD_ENTRY, payload: {regionId, regionChanges}});
 }
 
 export function dispatchRemoveRegionEntry(regionId, regionChanges, dispatcher = flux.process) {
-    var {removeRegions} = regionChanges;
-
-    if (!removeRegions) {
-        regionChanges = Object.assign({}, regionChanges, {removeRegions: []});
-    } else if (!Array.isArray(removeRegions)) {
-        regionChanges = Object.assign({}, regionChanges, {removeRegions: [removeRegions]});
-    }
-
     dispatcher({type: REGION_REMOVE_ENTRY, payload: {regionId, regionChanges}});
 }
 

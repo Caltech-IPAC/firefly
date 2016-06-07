@@ -67,7 +67,7 @@
     <datalist id='regionCreated'>
     </datalist>
     <a href='javascript:deleteRegionLayer()'>Delete Region Layer</a>
-    <select id='regionList_delete' onChange='selectRegionLayerToDelete()'><option selected disabled>Region Layer:</option></select>
+    <select id='regionList_delete'><option selected disabled>Region Layer:</option></select>
     <div>
         <textarea id="regionLayerContent" style="width: 800px; height: 300px; margin: 10px;"> </textarea>
     </div>
@@ -162,7 +162,7 @@
             firefly.showImage('imageViewHere', req);
             firefly.showImage('imageViewHere', req2);
             firefly.showImage('imageViewHere', window.threeC);
-            firefly.showImage('imageViewHere', {url:'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits'});
+            firefly.showImage('imageViewHere', {url:'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits', plotId: 'regiontest'});
 
             var v1= firefly.makeImageViewer('old1');
             var v2= firefly.makeImageViewer('old2');
@@ -267,7 +267,8 @@
             window.regions.push(layerId);
             updateRegionLayerList();
 
-            return firefly.action.dispatchCreateRegionLayer(layerId, layerId, null, regionAry, window.ffViewer.dispatch);
+            firefly.action.dispatchCreateRegionLayer(layerId, layerId, null, regionAry, 'regiontest');
+            firefly.action.dispatchCreateRegionLayer(layerId, layerId, null, regionAry, null, window.ffViewer.dispatch);
         };
 
         updateDataList = function() {
@@ -313,7 +314,9 @@
 
                 window.regions.splice(selectBox.selectedIndex - 1, 1);
                 updateRegionLayerList();
-                firefly.action.dispatchDeleteRegionLayer(selectedLayerId, window.ffViewer.dispatch);
+
+                firefly.action.dispatchDeleteRegionLayer(selectedLayerId, 'regiontest');
+                firefly.action.dispatchDeleteRegionLayer(selectedLayerId, null, window.ffViewer.dispatch);
             }
         };
 
@@ -323,7 +326,9 @@
             var addRegions = document.getElementById('moreRegionContent').value.split('\n').filter(function(r) { return (r.length !== 0);});
 
             selectBox.getElementsByTagName('option')[0].selected = 'selected';
-            return firefly.action.dispatchAddRegionEntry(selectedLayerId, {addRegions}, window.ffViewer.dispatch);
+
+            firefly.action.dispatchAddRegionEntry(selectedLayerId, addRegions);
+            firefly.action.dispatchAddRegionEntry(selectedLayerId, addRegions, window.ffViewer.dispatch);
         };
 
         removeRegionEntry = function() {
@@ -332,7 +337,8 @@
             var removeRegions = document.getElementById('moreRegionContent').value.split('\n').filter(function(r) { return (r.length !== 0);});
 
             selectBox.getElementsByTagName('option')[0].selected = 'selected';
-            return firefly.action.dispatchRemoveRegionEntry(selectedLayerId, {removeRegions}, window.ffViewer.dispatch);
+            firefly.action.dispatchRemoveRegionEntry(selectedLayerId, removeRegions);
+            firefly.action.dispatchRemoveRegionEntry(selectedLayerId, removeRegions, window.ffViewer.dispatch);
         }
    }
    

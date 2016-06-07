@@ -654,7 +654,8 @@ export function makeHighlightShapeDataObj(drawObj, cc, def = {}) {
     var inc = lineWidth ? Math.floor((lineWidth+1)/2)*2 + DELTA*2 : DELTA*2;
     var w = Math.floor(width * cc.zoomFactor + inc);
     var h = Math.floor(height * cc.zoomFactor + inc);
-    var rectObj = ShapeDataObj.makeRectangleByCenter(center, w, h, ShapeDataObj.UnitType.PIXEL, 0.0, ShapeDataObj.UnitType.ARCSEC, false);
+    var wcenter = cc.getWorldCoords(center);
+    var rectObj = ShapeDataObj.makeRectangleByCenter(wcenter, w, h, ShapeDataObj.UnitType.PIXEL, 0.0, ShapeDataObj.UnitType.ARCSEC, false);
 
     makeShapeHighlightRenderOptions( rectObj );
     return rectObj;

@@ -57,10 +57,10 @@ export function removeRegion( crtRegions, aRegionObj) {
  */
 export function  isEqualRegion(region1, region2) {
     return (isSameType(region1, region2) &&
-    isSamePosition(region1, region2) &&
-    isSameSize(region1, region2) &&
-    isSameAngle(region1, region2) &&
-    isSameOptions(region1, region2));
+            isSamePosition(region1, region2) &&
+            isSameSize(region1, region2) &&
+            isSameAngle(region1, region2) &&
+            isSameOptions(region1, region2));
 }
 
 /**
@@ -70,15 +70,12 @@ export function  isEqualRegion(region1, region2) {
  * @returns {number}
  */
 function countRegionWithout(key,rgAry) {
-    var count = 0;
 
-    rgAry.forEach( (rg) => {
-        if (!has(rg, key)) count++;
-    });
-
-    return count;
+    return rgAry.reduce( (prev, rg) => {
+        if (!has(rg, key)) prev++;
+        return prev;
+    }, 0);
 }
-
 
 /**
  * check if two Region are with the same type
