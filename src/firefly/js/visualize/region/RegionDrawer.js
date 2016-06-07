@@ -6,7 +6,7 @@ import { RegionType, RegionValueUnit, regionPropsList,
          getRegionDefault } from './Region.js';
 import {makeOffsetPt} from '../Point.js';
 import {convertAngle} from '../VisUtil.js';
-import {get, isEmpty, pick} from 'lodash';
+import {get, isEmpty, pick, set} from 'lodash';
 import ShapeDataObj from '../draw/ShapeDataObj.js';
 import {DrawSymbol, make as makePoint } from '../draw/PointDataObj.js';
 import {union, isArray} from 'lodash';
@@ -190,6 +190,19 @@ function updateDrawobjProp(rgPropAry, rgOptions, dObj) {
                 dObj.lineWidth = get(rgOptions, regionProp, getRegionDefault(regionProp));
                 break;
 
+            case regionPropsList.DASH:
+                if (get(rgOptions, regionProp, getRegionDefault(regionProp))) {
+                    dObj.dash = 1;
+                }
+                break;
+
+            case regionPropsList.DASHLIST:
+                if (get(dObj, 'dash', 0) === 1) {
+                    set(dObj, 'renderOptions.lineDash',
+                        get(rgOptions, regionProp, getRegionDefault(regionProp)));
+                }
+                break;
+
             case regionPropsList.OFFX:
                 if (dObj.text) {
                     var x = get(rgOptions, regionPropsList.OFFX, getRegionDefault(regionPropsList.OFFX));
@@ -217,7 +230,7 @@ function updateDrawobjProp(rgPropAry, rgOptions, dObj) {
     rgPropAry.forEach((prop) => addPropToDrawObj(prop, rgOptions, dObj));
 }
 
-const commonProps = [regionPropsList.COLOR, regionPropsList.LNWIDTH];
+const commonProps = [regionPropsList.COLOR, regionPropsList.LNWIDTH, regionPropsList.DASH, regionPropsList.DASHLIST];
 const doAry = 'drawObjAry';
 const textProps = [regionPropsList.TEXT, regionPropsList.FONT, regionPropsList.OFFX];
 const allProps = [...commonProps,...textProps];

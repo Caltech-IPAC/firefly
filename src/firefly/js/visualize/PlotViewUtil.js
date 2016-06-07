@@ -11,12 +11,13 @@ import {CsysConverter} from './CsysConverter.js';
 
 const clone = (obj,params={}) => Object.assign({},obj,params);
 
+
 /**
  * 
  * @param {Object | PlotView[]} ref
  * @return {PlotView[]}
  */
-function getPlotViewAry(ref) {
+export function getPlotViewAry(ref) {
     if (ref.plotViewAry && has(ref,'activePlotId')) { // I was passed the visRoot
         return ref.plotViewAry;
     }

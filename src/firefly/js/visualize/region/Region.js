@@ -7,11 +7,11 @@
  */
 
 import Enum from 'enum';
-import {has, isNil} from 'lodash';
+import {has, isNil, get, omit} from 'lodash';
 
 export const RegionType = new Enum(['circle', 'annulus', 'ellipse', 'ellipseannulus', 'box',
                                     'boxannulus', 'line', 'point', 'polygon', 'text', 'message',
-                                    'undefined'], {ignoreCase: true});
+                                    'undefined', 'global'], {ignoreCase: true});
 
 export const RegionCsys = new Enum(['PHYSICAL', 'FK4', 'B1950', 'FK5', 'J2000',
                                     'IMAGE', 'ECLIPTIC', 'GALACTIC',
@@ -21,7 +21,9 @@ export const RegionValueUnit = new Enum(['CONTEXT', 'DEGREE', 'RADIAN', 'ARCMIN'
                                          'SCREEN_PIXEL', 'IMAGE_PIXEL'], {ignoreCase: true});
 
 export const RegionPointType = new Enum(['circle', 'box', 'cross', 'diamond', 'x',
-                                         'arrow', 'boxcircle', 'undefined'], {ignoreCase: true});
+                                         'arrow', 'boxcircle', 'undefined',
+                                         'vector', 'ruler', 'compass', 'projection',
+                                         'panda', 'epanda', 'bpanda', 'composite'], {ignoreCase: true});
 
 
 
@@ -77,17 +79,21 @@ export var makeRegion = (
  * @param font          makeRegionFont,  default: 'helvetica 10 normal normal'
  * @param pointType     RegionPointType, default:
  * @param pointSize     number   default: 5
- * @param editable      bool     default: true
- * @param movable       bool     default: true
- * @param rotatable     bool     default: false
- * @param highlightable bool     default: true
- * @param deletable     bool     default: true
- * @param fixedSize     bool     default: false
- * @param include       bool     default: true
+ * @param editable      bool     default: 1
+ * @param movable       bool     default: 1
+ * @param rotatable     bool     default: 0
+ * @param highlightable bool     default: 1
+ * @param deletable     bool     default: 1
+ * @param fixedSize     bool     default: 0
+ * @param include       bool     default: 1
  * @param lineWidth     number   default: 0
+ * @param dashlist      string   default: "8 3"
+ * @param source        bool     default: 1
+ * @param dashable      bool     default: 0
  * @param offsetX       number   default: 0
  * @param offsetY       number   default: 0
  * @param message       string,  default: '', containing parsing (error) message
+ * @param coordSys      string
  * @constructor
  */
 
@@ -106,12 +112,16 @@ export var makeRegionOptions = (
                 fixedSize,
                 include,
                 lineWidth,
+                dashable,
+                dashlist,
+                source,
                 offsetX,
                 offsetY,
-                message } )  => (
+                message,
+                coordSys} )  => (
                 cloneArg({color, text, font, pointType, pointSize,
                           editable, movable, rotatable, highlightable, deletable, fixedSize, include,
-                          lineWidth, offsetX, offsetY, message })
+                          lineWidth, dashable, dashlist, source, offsetX, offsetY, message, coordSys })
                 );
 
 
@@ -132,14 +142,17 @@ export const regionPropsList = {
         FIXED:   'fixedSize',
         INCLUDE: 'include',
         LNWIDTH: 'lineWidth',
+        LINE:    'line',
+        RULER:   'ruler',
         SOURCE:  'source',
         OFFX:    'offsetX',
         OFFY:    'offsetY',
         TEXTLOC: 'textloc',
+        COORD:   'coordSys',
         MSG:     'message'
 };
 
-const defaultRegionProperty = {
+export var defaultRegionProperty = {
     color: 'green',
     text:  '',
     font:  {name: 'helvetica', point: '10', weight: 'normal', slant: 'normal'},
@@ -156,14 +169,24 @@ const defaultRegionProperty = {
     dashlist: '8 3',
     include: 1,
     lineWidth: 1,
+    line: '1 1',
+    ruler: 'arcsec',
     source: 1,
     offsetX: 0,
     offsetY: 0,
+    coordSys: 'J2000',
     textLoc: 'DEFAULT',
+
     message: ''
 };
 
 export var getRegionDefault = (prop) => (has(defaultRegionProperty, prop) ? defaultRegionProperty[prop] : null);
+export var setRegionPropDefault = (prop, value) => {
+            if (has(defaultRegionProperty, prop)) {
+                defaultRegionProperty[prop] = value;
+            }
+           };
+
 
 /**
  *
@@ -341,3 +364,4 @@ export function makeRegionLine(worldPoint1, worldPoint2, options, highlight ) {
 export function makeRegionPolygon(wpAry, options, highlight) {
     return makeRegion({type: RegionType.polygon, wpAry, options, highlight});
 }
+

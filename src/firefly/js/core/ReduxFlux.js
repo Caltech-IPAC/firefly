@@ -19,7 +19,7 @@ import ImagePlotCntlr, {IMAGE_PLOT_KEY,
                         rotateActionCreator, flipActionCreator,
                         cropActionCreator, autoPlayActionCreator, changePrimeActionCreator,
                         restoreDefaultsActionCreator,
-                        changePointSelectionActionCreator  } from '../visualize/ImagePlotCntlr.js';
+                        changePointSelectionActionCreator} from '../visualize/ImagePlotCntlr.js';
 
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
@@ -32,7 +32,10 @@ import DrawLayer, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr, {makeDetachLayerActionCreator,
                         selectAreaEndActionCreator,
-                        distanceToolEndActionCreator} from '../visualize/DrawLayerCntlr.js';
+                        distanceToolEndActionCreator,
+                        regionCreateLayerActionCreator,
+                        regionDeleteLayerActionCreator,
+                        regionUpdateEntryActionCreator} from '../visualize/DrawLayerCntlr.js';
 import MultiViewCntlr, {IMAGE_MULTI_VIEW_KEY} from '../visualize/MultiViewCntlr.js';
 import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from '../core/ComponentCntlr.js';
 import {masterSaga} from './MasterSaga.js';
@@ -131,6 +134,11 @@ actionCreators.set(XYPlotCntlr.LOAD_PLOT_DATA, XYPlotCntlr.loadPlotData);
 actionCreators.set(DrawLayerCntlr.SELECT_AREA_END, selectAreaEndActionCreator);
 actionCreators.set(DrawLayerCntlr.DT_END, distanceToolEndActionCreator);
 
+
+actionCreators.set(DrawLayerCntlr.REGION_CREATE_LAYER, regionCreateLayerActionCreator);
+actionCreators.set(DrawLayerCntlr.REGION_DELETE_LAYER, regionDeleteLayerActionCreator);
+actionCreators.set(DrawLayerCntlr.REGION_ADD_ENTRY, regionUpdateEntryActionCreator);
+actionCreators.set(DrawLayerCntlr.REGION_REMOVE_ENTRY, regionUpdateEntryActionCreator);
 
 
 actionCreators.set('exampleDialog', (rawAction) => {

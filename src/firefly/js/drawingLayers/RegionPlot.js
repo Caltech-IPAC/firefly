@@ -6,11 +6,16 @@ import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {drawRegions} from '../visualize/region/RegionDrawer.js';
+import {addNewRegion, removeRegion} from '../visualize/region/RegionUtil.js';
+import {RegionFactory} from '../visualize/region/RegionFactory.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
-import {dispatchModifyCustomField} from '../visualize/DrawLayerCntlr.js';
+import DrawLayerCntrl, {dispatchModifyCustomField,
+                        dispatchAddRegionEntry,
+                        dispatchRemoveRegionEntry} from '../visualize/DrawLayerCntlr.js';
+
 import {get, isEmpty} from 'lodash';
 
 const ID= 'REGION_PLOT';
@@ -29,6 +34,7 @@ function creator(initPayload) {
     var drawingDef= makeDrawingDef('green');
     var pairs = {
         [MouseState.DOWN.key]: highlightChange
+        //[MouseState.DOWN.key]: removeRegionDescription
     };
 
     idCnt++;
@@ -41,15 +47,45 @@ function creator(initPayload) {
         destroyWhenAllDetached: true
     };
 
+    var actionTypes = [DrawLayerCntrl.REGION_ADD_ENTRY,
+                       DrawLayerCntlr.REGION_REMOVE_ENTRY];
+
     var dl = DrawLayer.makeDrawLayer( get(initPayload, 'drawLayerId', `${ID}-${idCnt}`),
                                       TYPE_ID, get(initPayload, 'title', 'Region Plot'),
-                                      options, drawingDef, null, pairs );
+                                      options, drawingDef, actionTypes, pairs );
     dl.regions = get(initPayload, 'regions', null);
     dl.highlightedRegion = get(initPayload, 'highlightedRegion', null);
 
+    idCnt++;
     return dl;
 }
 
+// for testing
+function removeRegionDescription(mouseStatePayload) {
+    //const {drawLayerId} = mouseStatePayload.drawLayer;
+
+    const id= TYPE_ID + '-0';
+
+    var removeRegionAry =  [
+        'image;ellipse 100 100 20p 40p 30p 60p 40p 80p 20 # color=green text={ellipseannulus 2}',
+        'J2000;ellipse 202.55556, 47.188286 20p 40p 0i # color=#48f text={ellipse 1} width=10',
+        'image;box 130 100 20p 40p 30p 50p 70p 100p 30 # color=red text={slanted box annulus 3}'];
+      dispatchRemoveRegionEntry(id, removeRegionAry);
+}
+
+// for testing
+function addRegionDescription(mouseStatePayload) {
+    //const {drawLayerId} = mouseStatePayload.drawLayer;
+
+    const id= TYPE_ID + '-0';
+
+    var regionAry =  [
+        'image;ellipse 100 100 20p 40p 30p 60p 40p 80p 20 # color=green text={ellipseannulus 2}',
+        'J2000;ellipse 202.55556, 47.188286 20p 40p 0i # color=#48f text={ellipse 1} width=10',
+        'image;box 130 100 20p 40p 30p 50p 70p 100p 30 # color=red text={slanted box annulus 3}'];
+
+    dispatchAddRegionEntry(id, regionAry);
+}
 
 /**
  * find the drawObj which is selected for highlight
@@ -110,21 +146,20 @@ function highlightChange(mouseStatePayload) {
  * @returns {*}
  */
 function getLayerChanges(drawLayer, action) {
+    const {changes, regionId, regionChanges } = action.payload;
+    var dd = Object.assign({}, drawLayer.drawData);
 
     switch (action.type) {
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
-            const {changes} = action.payload;
-            var dd = Object.assign({}, drawLayer.drawData);
-
-            if (changes.regions) {
+            if (changes && changes.regions) {
                 dd[DataTypes.HIGHLIGHT_DATA] = null;
                 dd[DataTypes.DATA] = null;
                 if (drawLayer.highlightedRegion) drawLayer.highlightedRegion = null;
-            } else if (changes.highlightedRegion) {
+            } else if (changes && changes.highlightedRegion) {
                 dd[DataTypes.HIGHLIGHT_DATA] = null;
                 if (drawLayer.highlightedRegion) drawLayer.highlightedRegion.highlight = 0;
                 changes.highlightedRegion.highlight = 1;
-            } else {
+            } else if (changes) {
                 dd[DataTypes.HIGHLIGHT_DATA] = null;
                 if (drawLayer.highlightedRegion) {
                     drawLayer.highlightedRegion.highlight = 0; // un-highlight the last one
@@ -133,6 +168,19 @@ function getLayerChanges(drawLayer, action) {
             }
 
             return Object.assign({}, changes, {drawData: dd});
+        case DrawLayerCntrl.REGION_ADD_ENTRY:
+            if (regionId === drawLayer.drawLayerId && regionChanges) {
+                dd[DataTypes.DATA] = addRegionsToData(drawLayer, dd[DataTypes.DATA], regionChanges);
+            }
+            return {drawData: dd};
+
+        case DrawLayerCntrl.REGION_REMOVE_ENTRY:
+            if (regionId === drawLayer.drawLayerId && regionChanges) {
+                dd[DataTypes.DATA] = removeRegionsFromData(drawLayer, dd[DataTypes.DATA], regionChanges);
+            }
+
+            return {drawData: dd};
+
         default:
             return null;
     }
@@ -140,13 +188,12 @@ function getLayerChanges(drawLayer, action) {
 
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
     const {regions, highlightedRegion} = drawLayer;
-    plotId = get(visRoot(), 'activePlotId');
 
     switch (dataType) {
         case DataTypes.DATA:
             return isEmpty(lastDataRet) ? plotAllRegions(regions) : lastDataRet;
         case DataTypes.HIGHLIGHT_DATA:
-            return isEmpty(lastDataRet) ? plotHighlightRegion(highlightedRegion, plotId) : lastDataRet;
+            return isEmpty(lastDataRet) ? plotHighlightRegion(highlightedRegion) : lastDataRet;
     }
     return null;
 }
@@ -164,13 +211,82 @@ function plotAllRegions(regionAry) {
 
 }
 
-function plotHighlightRegion(highlightedObj, plotId) {
+/**
+ * create DrawingObj for highlighted region
+ * @param highlightedObj
+ * @returns {*}
+ */
+function plotHighlightRegion(highlightedObj) {
     if (!highlightedObj) {
         return [];
     }
 
-    var plot =  primePlot(visRoot(),plotId);
-
-    return [DrawOp.makeHighlight(highlightedObj, plot)];
+    if (highlightedObj.region) highlightedObj.region.highlighted = 1;
+    return [DrawOp.makeHighlight(highlightedObj, primePlot(visRoot()))];
 }
 
+/**
+ * add new DrawingObj into originally displayed DrawingObj set
+ * @param drawLayer
+ * @param lastData
+ * @param addedRegions
+ * @returns {Array}
+ */
+function addRegionsToData(drawLayer, lastData, addedRegions) {
+    var {regions} = drawLayer;
+    var resultRegions = regions ? regions.slice() : [];
+    var allDrawobjs = lastData ? lastData.slice() : [];
+
+    if (addedRegions) {
+        resultRegions = addedRegions.reduce ( (prev, aRegionDes) => {
+            var aRegion = RegionFactory.parsePart(aRegionDes);
+            var newDrawobj = addNewRegion(prev, aRegion);
+
+            if (newDrawobj) {
+                prev.push(aRegion);
+                allDrawobjs.push(newDrawobj);
+            }
+            return prev;
+        }, resultRegions);
+    }
+
+    drawLayer.regions = resultRegions;
+    return allDrawobjs;
+}
+
+/**
+ * remove DrawingObj from originally displayed DrawingObj set
+ * @param drawLayer
+ * @param lastData
+ * @param removedRegions
+ * @returns {Array}
+ */
+function removeRegionsFromData(drawLayer, lastData, removedRegions) {
+    var resultRegions;
+    var allDrawObjs = lastData ? lastData.slice() : [];
+
+    resultRegions = allDrawObjs.reduce( (prev, drawObj) => {
+        prev.push(drawObj.region);
+        return prev;
+    }, []);
+
+    if (resultRegions.length === 0) {
+        return [];     // no region to be removed
+    }
+
+    if (removedRegions) {
+        resultRegions = removedRegions.reduce((prev, aRegionDes) => {
+            var rmRegion = RegionFactory.parsePart(aRegionDes);
+            var {index, regions} = removeRegion( prev, rmRegion );
+
+            if (index >= 0) {
+                allDrawObjs.splice(index, 1);
+                prev = regions;
+            }
+            return prev;
+          }, resultRegions);
+    }
+
+    drawLayer.regions = resultRegions;
+    return allDrawObjs;
+}
