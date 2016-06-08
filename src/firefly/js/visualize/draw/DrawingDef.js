@@ -96,3 +96,18 @@ export function makeDrawingDef(color= 'red') {
         selectedColor: COLOR_SELECTED_PT
     };
 }
+
+
+
+export function *colorGenerator() {
+    const defColors= [COLOR_PT_1, COLOR_PT_2, COLOR_PT_3, COLOR_PT_5, COLOR_PT_6];
+    var colorCnt= 0;
+    while (true) {
+        yield defColors[colorCnt% defColors.length];
+        colorCnt++;
+    }
+}
+
+const nextColor= colorGenerator();
+
+export const getNextColor= () => nextColor.next().value;

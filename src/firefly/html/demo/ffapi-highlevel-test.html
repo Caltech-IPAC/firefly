@@ -31,7 +31,10 @@
     <a href="javascript:firefly.action.dispatchZoom({plotId: 'xxq',userZoomType:'UP' ,dispatcher:window.ffViewer.dispatch})">up</a>
     <a href="javascript:firefly.action.dispatchZoom({plotId: 'xxq',userZoomType:'DOWN' ,dispatcher:window.ffViewer.dispatch})">down</a>
 </div>
-<div id="imageViewHere" style="width: 550px; height: 550px; margin: 10px;"></div>
+<div>
+    <div id="imageViewHere" style="display: inline-block; width: 550px; height: 550px; margin: 10px;"></div>
+    <div id="coverageHere" style="display: inline-block; width: 400px; height: 400px; margin: 10px;"></div>
+</div>
 <div>Tables from API calls:
     <a href='javascript:firefly.getViewer().showTable(tblReq3)'>Open a table</a>
     <a href='javascript:firefly.getViewer().showTable(tblReq1)'>Open allwise</a>
@@ -102,7 +105,7 @@
 //                plotGroupId : 'myGroup',
                 Service   : 'TWOMASS',
                 Title     : '2mass from service',
-                GridOn     : 'true',
+                GridOn     : true,
                 SurveyKey  : 'k',
                 WorldPt    : '10.68479;41.26906;EQ_J2000',
                 SizeInDeg  : '.12',
@@ -114,7 +117,7 @@
 //                plotGroupId : 'myGroup',
                 Service  : 'WISE',
                 Title     : 'Wise',
-                GridOn     : 'true',
+                GridOn     : true,
                 SurveyKey  : 'Atlas',
                 bad1  : 'hello',
                 bad2  : 'bye',
@@ -164,6 +167,8 @@
             firefly.showImage('imageViewHere', window.threeC);
             firefly.showImage('imageViewHere', {url:'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits', plotId: 'regiontest'});
 
+            firefly.showCoverage('coverageHere', {gridOn:true});
+
             var v1= firefly.makeImageViewer('old1');
             var v2= firefly.makeImageViewer('old2');
             v1.plot(req);
@@ -172,20 +177,23 @@
 
             //-----------------  TABLE DEMO ------------------------//
             tblReq1 = firefly.util.table.makeIrsaCatalogRequest('wise_allwise_p3as_psd', 'WISE', 'wise_allwise_p3as_psd',
-                    {   position: '10.68479;41.26906;EQ_J2000;m31;ned',
+                    {   position: '148.9;68.8;EQ_J2000',
                         SearchMethod: 'Cone',
                         radius: 300
                     });
             tblReq2 = firefly.util.table.makeIrsaCatalogRequest('another wise catalog', 'WISE', 'wise_allwise_p3as_psd',
-                    {   position: '10.68479;41.26906;EQ_J2000;m31;ned',
+                    {   position: '10.68479;41.26906;EQ_J2000',
                         SearchMethod: 'Cone',
                         radius: 300
                     });
-            tblReq3 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl', {pageSize:15});
+            tblReq3 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+                    { pageSize: 15,
+                        META_INFO: {CENTER_COLUMN: 'crval1;crval2;EQJ2000'}
+                    });
 
             firefly.showTable('tables-1', tblReq1);
-            firefly.showTable('tables-1', tblReq2);
-            firefly.showTable('tables-2', tblReq3, {removable: false, showUnits: true, showFilters: true});
+            firefly.showTable('tables-1', tblReq3);
+            firefly.showTable('tables-2', tblReq2, {removable: false, showUnits: true, showFilters: true});
             //-----------------  CHART DEMO ------------------------//
             //--- using QUERY_ID: 'upload' does not work getActiveTableId('upload') returns undefined ---//
             firefly.addXYPlot('xyPlot1', {tbl_id: tblReq3.tbl_id, xCol: 'ra1+ra2', yCol: 'dec1+dec2'});

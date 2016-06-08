@@ -50,7 +50,7 @@ var divToGrp = (() => {
     return (div) => {
         if (!main) main = div;
         return div === main ? 'main' : div;
-    }
+    };
 })();
 
 function oldApi(llApi, params, options) {
@@ -219,7 +219,11 @@ function buildImagePart(llApi) {
      */
     const setGlobalImageDef= (params) => globalImageViewDefParams= params;
 
-    return {showImage, showImageFileOrUrl, setGlobalImageDef};
+
+
+    const showCoverage= (div,options) => initCoverage(llApi,div,options);
+
+    return {showImage, showImageFileOrUrl, setGlobalImageDef, showCoverage};
 }
 
 /**
@@ -308,6 +312,19 @@ function showImageInMultiViewer(llApi, targetDiv, request) {
         {viewerId:targetDiv, canReceiveNewPlots:true, Toolbar:MultiViewStandardToolbar });
 
 }
+
+function initCoverage(llApi, targetDiv,options= {}) {
+    const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
+    const {dispatchAddSaga}= llApi.action;
+    const {renderDOM,debug}= llApi.util;
+    const {watchImageMetaData,watchCoverage}= llApi.util.image;
+
+
+    renderDOM(targetDiv, MultiImageViewer,
+        {viewerId:targetDiv, canReceiveNewPlots:false, canDelete:false, Toolbar:MultiViewStandardToolbar });
+    dispatchAddSaga(watchCoverage, {viewerId:targetDiv, options});
+}
+
 
 
 var imageInit= false;

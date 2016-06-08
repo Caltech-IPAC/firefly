@@ -392,6 +392,7 @@ export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
  * @param {boolean} addToHistory add this request to global history of plots, may be deprecated in the future
  * @param {boolean} useContextModifications it true the request will be modified to use preferences, rotation, etc
  *                                 should only be false when it is doing a 'restore to defaults' type plot
+ * @param {boolean} attributes the are added to the plot
  * @param {function} dispatcher only for special dispatching uses such as remote
  * @param viewerId
  */
@@ -399,10 +400,12 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
                                   addToHistory=false,
                                   useContextModifications= true,
                                   dispatcher= flux.process,
+                                  attributes={},
                                   viewerId} ) {
 
     dispatcher({ type: PLOT_IMAGE,
-                   payload: {plotId,wpRequest, threeColor, addToHistory, useContextModifications,viewerId}});
+                   payload: {plotId,wpRequest, threeColor, addToHistory, 
+                             attributes, useContextModifications,viewerId}});
 }
 
 /**

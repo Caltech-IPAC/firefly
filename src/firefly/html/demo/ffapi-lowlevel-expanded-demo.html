@@ -1,0 +1,82 @@
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Demo of Firefly Tools</title>
+</head>
+
+<body>
+
+
+<div style="width: 500px; padding: 20px 0 0 20px;">
+    <br>
+    This page demos new api
+    <br>
+</div>
+
+<div id="imageViewHere"
+     style="width: 850px; height: 650px; position:relative; padding: 10px 5px 5px 5px; border: 1px solid black"></div>
+
+
+<script type="text/javascript">
+    {
+        onFireflyLoaded= function() {
+
+            var req= {  "Type"      : "SERVICE",
+                       "Service"   : "TWOMASS",
+                       "UserDesc"  : "Test",
+                       "Title"     : "2mass from service",
+                       "ZoomType"  : "STANDARD",
+                       "InitZoomLevel" : "1",
+                       "GridOn"     : "true",
+                       "SurveyKey"  : "k",
+                       "WorldPt"    : "10.68479;41.26906;EQ_J2000",
+                       "SizeInDeg"  : ".12",
+                       "AllowImageSelection" : "true" };
+
+
+
+
+            firefly.debug= true;
+            var ui= firefly.ui;
+            var util= firefly.util;
+            var action= firefly.action;
+            util.image.initImageViewExpanded(ui.ApiExpandedDisplay, {closeFunc:null}, 'imageViewHere');
+            action.dispatchChangeExpandedMode(util.image.ExpandType.SINGLE);
+//            util.renderDOM("imageViewHere", ui.ImageViewer, {plotId:"imageViewHere"});
+            action.dispatchPlotImage('imageViewHere', req);
+
+
+            var cnt=0;
+            var cntZ=0;
+            var f= function(a,state) {
+                console.log(a);
+                cnt++;
+                if (cnt>1000) {
+                    console.log('ALL DONE');
+                    return true;
+                }
+            };
+
+
+            const stopListener= util.addActionListener([action.type.READOUT_DATA,action.type.ZOOM_IMAGE], f);
+            window.setTimeout(function () {
+                console.log('times up');
+                stopListener();
+            }, 3000)
+        }
+   }
+   
+</script>
+
+<script  type="text/javascript" src="../firefly_loader.js"></script>
+

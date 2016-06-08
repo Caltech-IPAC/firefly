@@ -9,6 +9,7 @@ import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
 import {ImageMetaDataToolbar} from './ImageMetaDataToolbar.jsx';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {watchImageMetaData} from '../saga/ImageMetaDataWatcher.js';
+import {watchCoverage} from '../saga/CoverageWatcher.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode, dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 
@@ -39,6 +40,9 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
     }
     const onTabSelect = (idx, id) => dispatchUpdateLayoutInfo({images:{selectedTab:id}});
 
+
+    // showCoverage= true; // todo - let the application control is coverage is visible
+
     if (showCoverage || showFits || showMeta) {
         return (
             <Tabs onTabSelect={onTabSelect} defaultSelected={selectedTab} useFlex={true}>
@@ -62,7 +66,11 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
                 }
                 { showCoverage &&
                     <Tab name='Coverage' removable={false} id='coverage'>
-                        <div style={{padding:10}}>TODO: Coverage Here</div>
+                        <MultiImageViewer viewerId='coverageImages'
+                                          insideFlex={true}
+                                          canReceiveNewPlots={false}
+                                          canDelete={false}
+                                          Toolbar={MultiViewStandardToolbar}/>
                     </Tab>
                 }
             </Tabs>
@@ -81,6 +89,7 @@ function closeExpanded() {
 
 export function launchImageMetaDataSega() {
     dispatchAddSaga(watchImageMetaData,{viewerId: META_VIEWER_ID});
+    dispatchAddSaga(watchCoverage, {viewerId:'coverageImages'});
 }
 
 TriViewImageSection.propTypes= {
