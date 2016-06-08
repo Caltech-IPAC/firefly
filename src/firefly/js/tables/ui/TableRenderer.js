@@ -1,28 +1,46 @@
-/**
- * Created by loi on 3/17/16.
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
 import React from 'react';
 import FixedDataTable from 'fixed-data-table';
-import {set, get, omit, isEqual} from 'lodash';
+import sCompare from 'react-addons-shallow-compare';
+import {set, get, isEqual, pick} from 'lodash';
 
 import {FilterInfo, FILTER_TTIPS} from '../FilterInfo.js';
+import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
+import {toBoolean} from '../../util/WebUtil.js';
 
 import ASC_ICO from 'html/images/sort_asc.gif';
 import DESC_ICO from 'html/images/sort_desc.gif';
-// import {deepDiff} from '../../util/WebUtil.js';
+import FILTER_SELECTED_ICO from 'html/images/icons-2014/16x16_Filter.png';
 
 const {Cell} = FixedDataTable;
 
-
-
-const SortSymbol = ({sortDir}) => {
-    return <img style={{marginLeft: 2}} src={sortDir === SORT_ASC ? ASC_ICO : DESC_ICO}/>;
-};
+// the components here are small and used by table only.  not all props are defined.
+/* eslint-disable react/prop-types */
 
 /*---------------------------- COLUMN HEADER RENDERERS ----------------------------*/
+function Label({sortable, title, name, sortByCols, sortInfoCls, onSort}) {
+    const sortDir = sortInfoCls.getDirection(name);
+    sortByCols = sortByCols || name;
+
+    if (toBoolean(sortable, true)) {
+        return (
+            <div style={{width: '100%', cursor: 'pointer'}} onClick={() => onSort(sortByCols)} >{title || name}
+                { sortDir!==UNSORTED && <SortSymbol sortDir={sortDir}/> }
+            </div>
+        );
+    } else {
+        return <div>{title || name}</div>;
+    }
+}
+
+function SortSymbol({sortDir}) {
+    return <img style={{marginLeft: 2}} src={sortDir === SORT_ASC ? ASC_ICO : DESC_ICO}/>;
+};
 
 export class HeaderCell extends React.Component {
     constructor(props) {
@@ -30,23 +48,26 @@ export class HeaderCell extends React.Component {
     }
 
     shouldComponentUpdate(nProps, nState) {
-        const excludes = ['onSort', 'onFilter'];
-        return !isEqual(omit(nProps, excludes), omit(this.props, excludes));
+        return sCompare(this, nProps, nState);
     }
 
+    // componentDidUpdate(prevProps, prevState) {
+    //     deepDiff({props: prevProps, state: prevState},
+    //         {props: this.props, state: this.state},
+    //         this.constructor.name);
+    // }
+    //
     render() {
-        // eslint-disable-next-line
-        const {col, showUnits, showFilters, filterInfoCls, sortInfoCls, onSort, onFilter} = this.props;
+        const {col, showUnits, showFilters, filterInfo, sortInfo, onSort, onFilter} = this.props;
         const cname = col.name;
         const cdesc = col.desc || col.title || cname;
-        const sortDir = sortInfoCls.getDirection(cname);
         const style = {width: '100%', boxSizing: 'border-box'};
+        const filterInfoCls = FilterInfo.parse(filterInfo);
+        const sortInfoCls = SortInfo.parse(sortInfo);
 
         return (
             <div title={cdesc} className='TablePanel__header'>
-                <div style={{width: '100%', cursor: 'pointer'}} onClick={() => onSort(cname)} >{col.title || cname}
-                    { sortDir!==UNSORTED && <SortSymbol sortDir={sortDir}/> }
-                </div>
+                <Label {...{sortInfoCls, onSort}} {...col}/>
                 {showUnits && col.units && <div style={{fontWeight: 'normal'}}>({col.units})</div>}
                 {showFilters && <InputField
                     validator={FilterInfo.validator}
@@ -70,8 +91,9 @@ export class SelectableHeader extends React.Component {
         super(props);
     }
 
-    shouldComponentUpdate(nProps, nState) {
-        return nProps.checked !== this.props.checked;
+    shouldComponentUpdate(nProps) {
+        const toCompare = ['checked', 'showUnits', 'showFilters'];
+        return !isEqual(pick(nProps, toCompare), pick(this.props, toCompare));
     }
 
     // componentDidUpdate(prevProps, prevState) {
@@ -79,12 +101,17 @@ export class SelectableHeader extends React.Component {
     //         {props: this.props, state: this.state},
     //         this.constructor.name);
     // }
-
+    //
     render() {
-        const {checked, onSelectAll} = this.props;
+        const {checked, onSelectAll, showUnits, showFilters, onFilterSelected} = this.props;
         return (
-            <div className='tablePanel__checkbox'>
+            <div className='TablePanel__header'>
                 <input type='checkbox' checked={checked} onChange ={(e) => onSelectAll(e.target.checked)}/>
+                {showUnits && <div/>}
+                {showFilters && <img className='button'
+                                     src={FILTER_SELECTED_ICO}
+                                     onClick={onFilterSelected}
+                                     title='Filter on selected rows'/>}
             </div>
         );
     }
@@ -95,8 +122,9 @@ export class SelectableCell extends React.Component {
         super(props);
     }
 
-    shouldComponentUpdate(nProps, nState) {
-        return !isEqual(omit(nProps, 'onRowSelect'), omit(this.props, 'onRowSelect'));
+    shouldComponentUpdate(nProps) {
+        const toCompare = ['rowIndex', 'selectInfoCls'];
+        return !isEqual(pick(nProps, toCompare), pick(this.props, toCompare));
     }
 
     // componentDidUpdate(prevProps, prevState) {
@@ -104,7 +132,7 @@ export class SelectableCell extends React.Component {
     //         {props: this.props, state: this.state},
     //         this.constructor.displayName);
     // }
-
+    //
     render() {
         const {rowIndex, selectInfoCls, onRowSelect} = this.props;
         return (
@@ -127,18 +155,18 @@ export class TextCell extends React.Component {
         super(props);
     }
 
-    shouldComponentUpdate(nProps, nState) {
+    shouldComponentUpdate(nProps) {
         return  nProps.columnKey !== this.props.columnKey ||
                nProps.rowIndex !== this.props.rowIndex ||
                getValue(nProps) !== getValue(this.props);
     }
 
-    componentDidUpdate(prevProps, prevState) {
-        // deepDiff({props: prevProps, state: prevState},
-        //     {props: this.props, state: this.state},
-        //     this.constructor.displayName);
-    }
-
+    // componentDidUpdate(prevProps) {
+    //     deepDiff({props: prevProps, state: prevState},
+    //         {props: this.props, state: this.state},
+    //         this.constructor.displayName);
+    // }
+    //
     render() {
         return (
             <div className='public_fixedDataTableCell_cellContent'>

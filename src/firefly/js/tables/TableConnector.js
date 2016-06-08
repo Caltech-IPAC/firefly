@@ -2,11 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isEmpty, omitBy, isUndefined, cloneDeep} from 'lodash';
+import {isEmpty, omitBy, isUndefined, cloneDeep, get} from 'lodash';
 import {flux} from '../Firefly.js';
 import * as TblCntlr from './TablesCntlr.js';
 import * as TblUtil from './TableUtil.js';
 import {SelectInfo} from './SelectInfo.js';
+import {FilterInfo} from './FilterInfo.js';
+import {fetchUrl} from '../util/WebUtil.js';
 
 export class TableConnector {
     
@@ -31,10 +33,33 @@ export class TableConnector {
         var {tableModel, request} = TblUtil.getTblInfoById(this.tbl_id);
         if (this.origTableModel) {
             // not implemented yet
-            flux.process({type: TblCntlr.TABLE_REPLACE, payload: tableModel});
         } else {
             request = Object.assign({}, request, {filters: filterIntoString});
             TblCntlr.dispatchTableFetch(request);
+        }
+    }
+
+    /**
+     * filter on the selected rows
+     * @param {number[]} selected  array of selected row indices.
+     */
+    onFilterSelected(selected) {
+        var {tableModel, request} = TblUtil.getTblInfoById(this.tbl_id);
+        if (this.origTableModel) {
+            // not implemented yet
+        } else {
+            const filterInfoCls = FilterInfo.parse(request.filters);
+            const filePath = get(tableModel, 'tableMeta.source');
+            if (filePath) {
+                getRowIdFor(filePath, selected).then( (selectedRowIdAry) => {
+                    const value = selectedRowIdAry.reduce((rv, val, idx) => {
+                            return rv + (idx ? ',':'') + val;
+                        }, 'IN (') + ')';
+                    filterInfoCls.addFilter('ROWID', value);
+                    request = Object.assign({}, request, {filters: filterInfoCls.serialize()});
+                    TblCntlr.dispatchTableFetch(request);
+                });
+            }
         }
     }
 
@@ -104,4 +129,16 @@ export class TableConnector {
     static newInstance(tbl_id, tbl_ui_id, tableModel) {
         return new TableConnector(tbl_id, tbl_ui_id, tableModel);
     }
+}
+
+
+function getRowIdFor(filePath, selected) {
+    const params = {id: 'Table__SelectedValues', columnName: 'ROWID', filePath, selectedRows: String(selected)};
+
+    return fetchUrl(TblUtil.SEARCH_SRV_PATH, {method: 'post', params}).then( (response) => {
+        return response.json().then( (selectedRowIdAry) => {
+            return selectedRowIdAry;
+        });
+    });
+
 }

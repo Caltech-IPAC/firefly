@@ -88,7 +88,7 @@ function prepareOptionData(columns, colSortDir) {
     var cols = [{name: 'Column', visibility: 'show', prefWidth: 20}];
     const sortInfo = SortInfo.newInstance(colSortDir, 'Column').serialize();
 
-    var selectInfoCls = SelectInfo.newInstance({});
+    var selectInfoCls = SelectInfo.newInstance({rowCount: data.length});
     selectInfoCls.data.rowCount = data.length;
     columns.forEach( (v, idx) => {
         selectInfoCls.setRowSelect(idx, get(v, 'visibility', 'show') === 'show');

@@ -30,43 +30,29 @@ public class JsonTableUtil {
      * convert data to JSON TableModel. Use toJSONString() to turn it into a String.
      *
      * @param page
-     * @param meta
      * @param request
      * @return
      * @throws IOException
      */
-    public static JSONObject toJsonTableModel(DataGroupPart page, TableMeta meta, TableServerRequest request) throws IOException {
+    public static JSONObject toJsonTableModel(DataGroupPart page, TableServerRequest request) throws IOException {
 
-        if (meta == null) {
-            meta = new TableMeta();
-        }
-        if (page.getTableDef()!=null && page.getTableDef().getAttributes() != null) {
-            if (StringUtils.isEmpty(meta.getSource())) {
-                meta.setSource(page.getTableDef().getSource());
-            }
-            // merge tableDef's attributes with tablemeta's.
-            for (DataGroup.Attribute attr : page.getTableDef().getAttributes()) {
-                // meta override tabledef's.
-                if (!StringUtils.isEmpty(attr.getValue()) && !attr.isComment() && !meta.contains(attr.getKey())) {
-                    meta.setAttribute(attr.getKey(), attr.getValue());
-                }
-            }
-        }
+        TableDef meta = page.getTableDef();
         if (request != null && request.getMeta() != null) {
             for (String key : request.getMeta().keySet()) {
                 meta.setAttribute(key, request.getMeta(key));
             }
         }
-        String tbl_id = meta.getAttribute(TableServerRequest.TBL_ID);
 
         JSONObject tableModel = new JSONObject();
-        tableModel.put("tbl_id", tbl_id);
+        if (meta.contains(TableServerRequest.TBL_ID)) {
+            tableModel.put("tbl_id",  meta.getAttribute(TableServerRequest.TBL_ID).getValue());
+        }
         tableModel.put("title", page.getData().getTitle());
         tableModel.put("type", guessType(meta));
         tableModel.put("totalRows", page.getRowCount());
 
         if (page.getData() != null ) {
-            tableModel.put("tableData", toJsonTableData(page.getData(), page.getTableDef(), meta));
+            tableModel.put("tableData", toJsonTableData(page.getData(), page.getTableDef()));
         }
         
 
@@ -117,7 +103,7 @@ public class JsonTableUtil {
      * @param tableDef
      * @return
      */
-    public static JSONObject toJsonTableData(DataGroup data, TableDef tableDef, TableMeta meta) {
+    public static JSONObject toJsonTableData(DataGroup data, TableDef tableDef) {
         List<List<String>> tableData = new ArrayList<List<String>>();
         for (int i = 0; i < data.size(); i++) {
             List<String> row = new ArrayList<String>();
@@ -129,7 +115,7 @@ public class JsonTableUtil {
 
         JSONObject tdata = new JSONObject();
 
-        tdata.put("columns", toJsonTableColumn(tableDef!=null?tableDef.getCols().toArray(new DataType[0]):data.getDataDefinitions() , meta));
+        tdata.put("columns", toJsonTableColumn(data, tableDef));
         tdata.put("data", tableData);
         return tdata;
     }
@@ -140,19 +126,11 @@ public class JsonTableUtil {
      * @param meta
      * @return
      */
-    public static JSONObject toJsonTableMeta(TableMeta meta) {
+    public static JSONObject toJsonTableMeta(TableDef meta) {
         JSONObject tmeta = new JSONObject();
-        tmeta.put("source", meta.getSource());
-        tmeta.put("fileSize", meta.getFileSize());
-        if (meta.getRelatedCols() != null) {
-            tmeta.put("relatedCols", StringUtils.toString(meta.getRelatedCols(), ","));
-        }
-        if (meta.getGroupByCols() != null) {
-            tmeta.put("groupByCols", StringUtils.toString(meta.getGroupByCols(), ","));
-        }
-        if (meta.getAttributes() != null) {
-            for (String key : meta.getAttributes().keySet()) {
-                tmeta.put(key, meta.getAttribute(key));
+        for (DataGroup.Attribute att : meta.getAttributes()) {
+            if (!att.isComment()) {
+                tmeta.put(att.getKey(), att.getValue());
             }
         }
         return tmeta;
@@ -162,7 +140,9 @@ public class JsonTableUtil {
 //
 //====================================================================
 
-    private static List<JSONObject> toJsonTableColumn(DataType[] dataTypes, TableMeta meta) {
+    private static List<JSONObject> toJsonTableColumn(DataGroup dataGroup, TableDef meta) {
+
+        DataType[] dataTypes = meta.getCols().size() > 0 ? meta.getCols().toArray(new DataType[0]) : dataGroup.getDataDefinitions();
 
         ArrayList<JSONObject> cols = new ArrayList<JSONObject>();
         for (DataType dt :dataTypes) {
@@ -182,53 +162,65 @@ public class JsonTableUtil {
             }
 
             // modify column's attributes based on meta
-            String label = meta.getAttribute( makeAttribKey(LABEL_TAG, cname) );
+            String label = getColAttr(meta, LABEL_TAG, cname);
             if (!StringUtils.isEmpty(label)) {
                 c.put("label", label);
             }
-            String desc = meta.getAttribute( makeAttribKey(DESC_TAG, cname) );
+            String desc = getColAttr(meta, DESC_TAG, cname);
             if (!StringUtils.isEmpty(desc)) {
                 c.put("desc", desc);
             }
-            String visibility = meta.getAttribute( makeAttribKey(VISI_TAG, cname) );
+            String visibility = getColAttr(meta, VISI_TAG, cname);
             if (!StringUtils.isEmpty(visibility)) {
                 c.put("visibility", visibility);
             }
-            String width = meta.getAttribute( makeAttribKey(WIDTH_TAG, cname) );
+            String width = getColAttr(meta, WIDTH_TAG, cname);
             if (!StringUtils.isEmpty(width)) {
                 c.put("width", width);
             }
-            String prefWidth = meta.getAttribute( makeAttribKey(PREF_WIDTH_TAG, cname) );
+            String prefWidth = getColAttr(meta, PREF_WIDTH_TAG, cname);
             if (!StringUtils.isEmpty(prefWidth)) {
                 c.put("prefWidth", prefWidth);
             }
-            String sortable = meta.getAttribute( makeAttribKey(SORTABLE_TAG, cname) );
+            String sortable = getColAttr(meta, SORTABLE_TAG, cname);
             if (!StringUtils.isEmpty(sortable)) {
                 c.put("sortable", sortable);
             }
-            String units = meta.getAttribute( makeAttribKey(UNIT_TAG, cname) );
+            String units = getColAttr(meta, UNIT_TAG, cname);
             if (!StringUtils.isEmpty(units)) {
                 c.put("units", units);
             }
-            String items = meta.getAttribute( makeAttribKey(ITEMS_TAG, cname) );
+            String items = getColAttr(meta, ITEMS_TAG, cname);
             if (!StringUtils.isEmpty(items)) {
                 c.put("items", items);
             }
-            String sortBy = meta.getAttribute( makeAttribKey(SORT_BY_TAG, cname) );
+            String sortBy = getColAttr(meta, SORT_BY_TAG, cname);
             if (!StringUtils.isEmpty(sortBy)) {
-                c.put("sortBy", sortBy);
+                c.put("sortByCols", sortBy);
             }
             cols.add(c);
         }
+        for (DataGroup.Attribute att :  meta.getAttributes()) {
+            // clean up all of the column's attributes since we already set it to the columns
+            if (att.getKey().startsWith("col.")) {
+                meta.removeAttribute(att.getKey());
+            }
+        }
         return cols;
     }
+
+    private static String getColAttr(TableDef meta, String tag, String cname) {
+        DataGroup.Attribute att = meta.getAttribute(makeAttribKey(tag, cname));
+        return (att == null) ? "" : att.getValue();
+    }
+
     /**
      * get the type of data this table contains based on its meta information
      *
      * @param meta
      * @return
      */
-    private static Object guessType(TableMeta meta) {
+    private static Object guessType(TableDef meta) {
         return "table";
     }
 
@@ -236,12 +228,11 @@ public class JsonTableUtil {
     //=============================
 
     //LZ DM-4494
-    public static JSONObject toJsonTableModelMap(Map<String, DataGroup> dataMap, Map<String, TableMeta> metaMap, TableServerRequest request) throws IOException {
+    public static JSONObject toJsonTableModelMap(Map<String, DataGroup> dataMap, TableServerRequest request) throws IOException {
         JSONObject jsoObj = new JSONObject();
         for (Object key : dataMap.keySet()) {
-            TableMeta meta = metaMap.get(key);
             DataGroupPart dp = QueryUtil.convertToDataGroupPart(dataMap.get(key), 0, Integer.MAX_VALUE);
-            JSONObject aJsonTable = JsonTableUtil.toJsonTableModel(dp, meta, request);
+            JSONObject aJsonTable = JsonTableUtil.toJsonTableModel(dp, request);
 
             jsoObj.put(key, aJsonTable);
 

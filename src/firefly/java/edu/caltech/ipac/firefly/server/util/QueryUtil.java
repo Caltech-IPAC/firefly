@@ -302,7 +302,7 @@ public class QueryUtil {
         DataGroup page = dg.subset(startIdx, startIdx+pageSize);
         page.setRowIdxOffset(startIdx);
         TableDef tableDef = new TableDef();
-        tableDef.setSource("unknown");
+        tableDef.addAttributes(dg.getKeywords().toArray(new DataGroup.Attribute[0]));
         tableDef.setStatus(DataGroupPart.State.COMPLETED);
         tableDef.setCols(Arrays.asList(page.getDataDefinitions()));
 

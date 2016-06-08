@@ -78,19 +78,20 @@
     order: 3;
 }
 
-.button-std {
-    height: 23px;
+.button {
     padding: 0 3px;
     margin-right: 3px;
 }
 
-.button-hl {
-    font-weight: bold;
+.button.std {
     height: 23px;
-    padding: 0 3px;
 }
 
-.button-std:hover, .button-hl:hover {
+.button.hl {
+    font-weight: bold;
+}
+
+.button:hover {
     cursor: pointer;
 }
 

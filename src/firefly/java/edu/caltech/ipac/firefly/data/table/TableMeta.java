@@ -202,6 +202,9 @@ public class TableMeta implements Serializable, HandSerialize {
     public void setAttribute(String key, String value) {
         attributes.put(key, value);
     }
+    public void removeAttribute(String key) {
+        attributes.remove(key);
+    }
 
 
     public void setWorldPtAttribute(String key, WorldPt pt) {

@@ -12,8 +12,8 @@ import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import {smartMerge} from '../tables/TableUtil.js';
 import {getDropDownNames} from '../ui/Menu.jsx';
 import {isMetaDataTable, isCatalogTable} from '../metaConvert/converterUtils.js';
-import {META_VIEWER_ID, FITS_VIEWER_ID, COVERAGE_VIEWER_ID} from '../visualize/ui/TriViewImageSection.jsx';
-import {ADD_IMAGES, REPLACE_IMAGES, REMOVE_IMAGES, getViewerPlotIds, getMultiViewRoot} from '../visualize/MultiViewCntlr.js';
+import {META_VIEWER_ID, FITS_VIEWER_ID} from '../visualize/ui/TriViewImageSection.jsx';
+import {REPLACE_IMAGES, getViewerPlotIds, getMultiViewRoot} from '../visualize/MultiViewCntlr.js';
 
 
 export const LAYOUT_PATH = 'layout';
@@ -29,6 +29,15 @@ export const SET_LAYOUT_MODE    = `${LAYOUT_PATH}.setLayoutMode`;
 export const SHOW_DROPDOWN      = `${LAYOUT_PATH}.showDropDown`;
 
 
+export function showDropDownCreator(action) {
+    var {visible=true, view} = action.payload;
+    if (visible && !view) {
+        view =  get(flux.getState(), 'layout.dropDown.view') || getDropDownNames()[0];
+    }
+    action.payload = {visible, view};
+    return action;
+}
+
 /*---------------------------- Reducers ----------------------------*/
 
 export function reducer(state={}, action={}) {
@@ -43,7 +52,6 @@ export function reducer(state={}, action={}) {
 
         case SHOW_DROPDOWN :
             const {visible = true} = action.payload;
-            view =  view || get(state, 'dropDown.view') || getDropDownNames()[0];
             return smartMerge(state, {dropDown: {visible, view}});
 
         default:

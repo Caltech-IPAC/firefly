@@ -24,7 +24,7 @@
     justify-content: center;
     flex-grow: 0;
     margin-bottom: 10px;
-    min-height: 100px;
+    min-height: 25px;
     width: 100%;
 }
 
@@ -44,8 +44,11 @@
     margin: 0 10px;
 }
 
-.DD-ToolBar__footer--links ul {
+.DD-ToolBar__footer--links {
     display: inline-block;
+}
+
+.DD-ToolBar__footer--links ul {
     list-style-type: none;
     margin-right: 60px;
 }

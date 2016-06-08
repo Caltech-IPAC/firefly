@@ -47,7 +47,7 @@ var FormPanel = function (props) {
                             onFail={onError || handleFailfure}
                             text = 'Search'
             />
-            <button style={{display: 'inline-block'}} type='button' className='button-std' onClick={onCancel}>Cancel</button>
+            <button style={{display: 'inline-block'}} type='button' className='button std' onClick={onCancel}>Cancel</button>
         </div>
     );
 };
