@@ -41,7 +41,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
     const onTabSelect = (idx, id) => dispatchUpdateLayoutInfo({images:{selectedTab:id}});
 
 
-    showCoverage= true; // todo - let the application control is coverage is visible
+    // showCoverage= true; // todo - let the application control is coverage is visible
 
     if (showCoverage || showFits || showMeta) {
         return (

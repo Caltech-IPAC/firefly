@@ -129,7 +129,6 @@ export function* watchCoverage({viewerId, options= {}}) {
                 previousDisplayedTableId = null;
                 tbl_id = getActiveTableId();
                 if (!isEmpty(decimatedTables)) {
-                    if (!tbl_id) tbl_id= Object.keys(decimatedTables)[0]; // todo - remove this line when getActiveTable() gets fixed
                     displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
                 }
                 break;

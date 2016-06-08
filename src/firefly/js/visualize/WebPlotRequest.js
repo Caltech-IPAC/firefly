@@ -1101,13 +1101,7 @@ export class WebPlotRequest extends ServerRequest {
      */
 
     setGridOn(gridOnStatus= GridOnStatus.FALSE) {
-        var stat= gridOnStatus;
-        if (isBoolean(gridOnStatus)) {
-            stat= gridOnStatus ? GridOnStatus.TRUE : GridOnStatus.FALSE;
-        }
-        else {
-            stat= GridOnStatus.get(gridOnStatus);
-        }
+        var stat= GridOnStatus.get( String(gridOnStatus) );
         this.setParam(C.GRID_ON, stat.key);
     }
 
