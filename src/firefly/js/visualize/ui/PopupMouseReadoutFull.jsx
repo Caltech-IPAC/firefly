@@ -57,7 +57,7 @@ const column5 = {
     display: 'inline-block'
 };
 
-const column6 = {width: 160,addingLeft: 2, textAlign: 'left', display: 'inline-block'};
+const column6 = {width: 170,addingLeft: 2, textAlign: 'left', display: 'inline-block'};
 const column7 = {width: 109, paddingLeft: 6, display: 'inline-block'};
 
 export function PopupMouseReadoutFull({readout}){

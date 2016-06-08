@@ -14,9 +14,9 @@ import {ThumbnailView} from './ThumbnailView.jsx';
 import {MagnifiedView} from './MagnifiedView.jsx';
 
 var fullStyle= {
-    width: 660,
+    width: 680,
     height: 70,
-    minWidth: 660,
+    minWidth: 680,
     minHeight:70,
     display: 'inline-block',
     position: 'relative',
@@ -82,6 +82,7 @@ export class DefaultApiReadout extends Component {
             return renderMouseReadoutOnly(MouseReadoutComponent, readout);
         }
         else {
+
             const style = MouseReadoutComponent &&  MouseReadoutComponent.name==='PopupMouseReadoutMinimal'?minimalStyle:fullStyle;
             return (
 

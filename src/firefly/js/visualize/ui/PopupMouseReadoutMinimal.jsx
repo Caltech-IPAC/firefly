@@ -37,7 +37,7 @@ const column1 = {
 };
 
 
-const column2 = {width: 150,paddingLeft: 2, textAlign: 'left', display: 'inline-block'};
+const column2 = {width: 170,paddingLeft: 2, textAlign: 'left', display: 'inline-block'};
 
 const column3 =    {width: 100,    paddingLeft: 8, textAlign: 'left',display: 'inline-block'};
 
