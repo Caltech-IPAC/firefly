@@ -185,7 +185,7 @@
 
             firefly.showTable('tables-1', tblReq1);
             firefly.showTable('tables-1', tblReq2);
-            firefly.showTable('tables-2', tblReq3, {tbl_group: 'upload', removable: false, showUnits: true, showFilters: true});
+            firefly.showTable('tables-2', tblReq3, {removable: false, showUnits: true, showFilters: true});
             //-----------------  CHART DEMO ------------------------//
             //--- using QUERY_ID: 'upload' does not work getActiveTableId('upload') returns undefined ---//
             firefly.addXYPlot('xyPlot1', {tbl_id: tblReq3.tbl_id, xCol: 'ra1+ra2', yCol: 'dec1+dec2'});
