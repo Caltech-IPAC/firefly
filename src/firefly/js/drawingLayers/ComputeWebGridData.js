@@ -10,11 +10,11 @@ import CoordinateSys from '../visualize/CoordSys.js';
 import CoordUtil from '../visualize/CoordUtil.js';
 import numeral from 'numeral';
 import { getDrawLayerParameters} from './WebGrid.js';
-
 const precision3Digit = '0.000';
 
 const RANGE_THRESHOLD = 1.02;
 
+//const sortAscending = (a,b)=>{return (a-b);} ;
 
 const minUserDistance= 0.25;   // user defined max dist. (deg)
 const maxUserDistance= 3.00;   // user defined min dist. (deg)
@@ -649,7 +649,46 @@ function fixPoints(points){
     return points;
 }
 
+function count(array,val){
+    var result=0;
+    for(var a in array) {
+        if (array[a] == val) {
+            result++;
+        }
+    }
+    return result;
+}
 
+function getFrequentValInArray(array){
+    var max=0;
+    var checked=[];
+    var result;
+    for (let i=0; i<array.length; i++){
+        if (checked.includes( array[i])) continue;
+        checked.push(array[i]);
+        if (count(array, array[i])>max){
+            max= count(array, array[i]);
+            result=array[i];
+        }
+    }
+    return result;
+}
+function getXYMiddles (xLines, nLevel0, nLevel1){
+
+    var xArray=[];
+    for (let i=0; i<nLevel0; i++){
+        xArray.push(xLines[0].length);
+    }
+    var yArray=[];
+    for (let i=0; i<nLevel1; i++){
+        yArray.push(xLines[nLevel0+i].length);
+    }
+
+    var hM = Math.trunc(getFrequentValInArray(xArray)/2);
+    var vM= Math.trunc(getFrequentValInArray(yArray)/2);
+
+    return {hM, vM};
+}
 function getLabelPoints(bounds, csys, xLines, yLines, nLevel0, nLevel1) {
 
     var points = [];
@@ -666,23 +705,21 @@ function getLabelPoints(bounds, csys, xLines, yLines, nLevel0, nLevel1) {
 
     }
     else {
-        //levels[0] direction labels
+        //find the line's middle points for both directions, then put the labels there
         /*
-         The lines in this direction have the same number of points _xLines, _yLines.
-         Find the middle point which is the half of the length of the _xLines (or _yLines) in this direction.
-         Put the label in the middle of this direction.
+         oneLine = [xLines[i],yLines[i]] is an one dimensional array.  Its middle point is hM when i<nLevel0
+         and vM when i>=nLevel0
          */
-        var hM =  Math.trunc(xLines[0].length/2); //in the middle of the line
+        //This is simple solution before the regrid is implemented. 
+        const {hM, vM} = getXYMiddles(xLines, nLevel0, nLevel1);
+
+
+      //  var hM =  Math.trunc(xLines[0].length/2); //in the middle of the line
         for (let i=0; i< nLevel0; i++){
             points[i] = makeImageWorkSpacePt(xLines[i][hM],yLines[i][hM]);
         }
-        //levels[1] direction labels
-        /*
-         The lines in this direction have the same number of points _xLines, _yLines.
-         Find the middle point which is the half of the length of the _xLines (or _yLines) in this direction.
-         Put the label in the middle of this direction.
-         */
-        var vM=Math.trunc(xLines[nLevel0].length/2);
+
+       // var vM= Math.trunc(xLines[nLevel0+3].length/2);
         for (let i=0; i< nLevel1; i++){
             points[i+ nLevel0] = makeImageWorkSpacePt(xLines[nLevel0 +i][vM], yLines[nLevel0 +i][vM]);
         }
