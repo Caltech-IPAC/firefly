@@ -69,7 +69,7 @@ TablePanelOptions.propTypes = {
 };
 
 function prepareOptionData(columns, colSortDir) {
-
+    columns = columns.filter((c) => c.visibility != 'hidden');
     if (colSortDir) {
         // sort the columns according to colSortDir
         const multiplier = colSortDir === SORT_ASC ? 1 : -1;
@@ -100,7 +100,7 @@ function prepareOptionData(columns, colSortDir) {
 
 function makeCallbacks(onChange, columns, origColumns, data) {
     var onSelectAll = (checked) => {
-        const nColumns = cloneDeep(columns);
+        const nColumns = cloneDeep(columns).filter((c) => c.visibility != 'hidden');
         nColumns.forEach((v) => {
             v.visibility = checked ? 'show' : 'hide';
         });

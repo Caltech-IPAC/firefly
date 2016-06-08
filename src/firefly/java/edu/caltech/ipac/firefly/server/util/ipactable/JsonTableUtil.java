@@ -38,9 +38,12 @@ public class JsonTableUtil {
     public static JSONObject toJsonTableModel(DataGroupPart page, TableMeta meta, TableServerRequest request) throws IOException {
 
         if (meta == null) {
-            meta = new TableMeta("unknown");
+            meta = new TableMeta();
         }
         if (page.getTableDef()!=null && page.getTableDef().getAttributes() != null) {
+            if (StringUtils.isEmpty(meta.getSource())) {
+                meta.setSource(page.getTableDef().getSource());
+            }
             // merge tableDef's attributes with tablemeta's.
             for (DataGroup.Attribute attr : page.getTableDef().getAttributes()) {
                 // meta override tabledef's.

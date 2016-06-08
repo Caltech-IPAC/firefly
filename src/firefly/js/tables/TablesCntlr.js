@@ -10,7 +10,6 @@ import shallowequal from 'shallowequal';
 import {dataReducer} from './reducer/TableDataReducer.js';
 import {uiReducer} from './reducer/TableUiReducer.js';
 import {resultsReducer} from './reducer/TableResultsReducer.js';
-import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 import {dispatchSetupTblTracking} from '../visualize/TableStatsCntlr.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 
@@ -23,11 +22,13 @@ export const UI_PREFIX = 'tableUi';
 /*---------------------------- ACTIONS -----------------------------*/
 export const TABLE_SEARCH         = `${DATA_PREFIX}.search`;
 export const TABLE_FETCH          = `${DATA_PREFIX}.fetch`;
-export const TABLE_FETCH_UPDATE   = `${DATA_PREFIX}.fetchUpdate`;
 export const TABLE_NEW            = `${DATA_PREFIX}.new`;
 export const TABLE_NEW_LOADED     = `${DATA_PREFIX}.newLoaded`;
 export const TABLE_UPDATE         = `${DATA_PREFIX}.update`;
 export const TABLE_REPLACE        = `${DATA_PREFIX}.replace`;
+
+export const TABLE_SORT           = `${DATA_PREFIX}.sort`;
+export const TABLE_FILTER         = `${DATA_PREFIX}.filter`;
 export const TABLE_REMOVE         = `${DATA_PREFIX}.remove`;
 export const TABLE_SELECT         = `${DATA_PREFIX}.select`;
 export const TABLE_HIGHLIGHT      = `${DATA_PREFIX}.highlight`;
@@ -83,19 +84,20 @@ export function highlightRow(action) {
 
 export function tableFetch(action) {
     return (dispatch) => {
-        //dispatch(validate(FETCH_TABLE, action));
         if (!action.err) {
             var {request, hlRowIdx} = action.payload;
             var actionType, {tbl_id} = request;
-            if (action.type === TABLE_FETCH_UPDATE) {
-                actionType = TABLE_UPDATE;
-            } else {
-                actionType = TABLE_NEW;
-                request.startIdx = 0;
-                dispatch({type: TABLE_REPLACE, payload: {tbl_id, isFetching: true}});
-                dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:dispatchTableLoaded});
-            }
+            switch (action.type) {
+                case (TABLE_SORT)  :
+                    actionType = TABLE_REPLACE;
+                    break;
 
+                case (TABLE_FETCH)  :
+                    actionType = TABLE_NEW;
+                    dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:dispatchTableLoaded});
+            }
+            request.startIdx = 0;
+            dispatch({type: TABLE_REPLACE, payload: {tbl_id, isFetching: true}});
             TblUtil.doFetchTable(request, hlRowIdx).then ( (tableModel) => {
                 dispatch( {type: actionType, payload: tableModel} );
             }).catch( (error) => {
@@ -141,6 +143,16 @@ export function dispatchTableSearch(request, options, dispatcher= flux.process) 
  */
 export function dispatchTableFetch(request, hlRowIdx, dispatcher= flux.process) {
     dispatcher( {type: TABLE_FETCH, payload: {request, hlRowIdx} });
+}
+
+/**
+ * Sort the table given the request.
+ * @param request a table request params object.
+ * @param hlRowIdx set the highlightedRow.  default to startIdx.
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchTableSort(request, hlRowIdx, dispatcher= flux.process) {
+    dispatcher( {type: TABLE_SORT, payload: {request, hlRowIdx} });
 }
 
 /**

@@ -59,6 +59,7 @@ export function initApi() {
         window.onFireflyLoaded && window.onFireflyLoaded(firefly);
     });
     initExpandedView();
+    window.firefly.ignoreHistory = true;
 }
 
 

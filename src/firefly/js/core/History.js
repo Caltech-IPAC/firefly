@@ -34,6 +34,7 @@ const historyAware = [  TABLE_SEARCH, SHOW_DROPDOWN
 var isHistoryEvent = false;
 
 window.onpopstate = function(event) {
+    if (get(window, 'firefly.ignoreHistory', false)) return;
     isHistoryEvent = true;
     try {
         if (event.state) {
@@ -49,6 +50,7 @@ window.onpopstate = function(event) {
 };
 
 export function getActionFromUrl() {
+    if (get(window, 'firefly.ignoreHistory', false)) return;
     const urlInfo = parseUrl(document.location);
     if (urlInfo.searchObject) {
         const type = get(urlInfo, 'pathAry.0.a');
@@ -60,7 +62,7 @@ export function getActionFromUrl() {
 }
 
 export function recordHistory(action={}) {
-    if (isHistoryEvent) return;
+    if (get(window, 'firefly.ignoreHistory', false) || isHistoryEvent) return;
 
     const handler = historyAware[action.type];
     if (get(handler, 'actionToUrl')) {

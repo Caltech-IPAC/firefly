@@ -41,8 +41,7 @@ function removeTable(root, action) {
 
             if (tbl_id === get(root, [tbl_group,'active'])) {
                 // active table have been remove. set it to the first available table
-                const first = findKey(tbl_group.tables);
-                const newActiveId = first && first.tbl_id;
+                const newActiveId = findKey(root[tbl_group].tables);
                 root = updateSet(root, [tbl_group,'active'], newActiveId);
             }
         }

@@ -86,8 +86,7 @@ function uiStateReducer(ui, tableModel) {
 
 function updateAllUi(ui, tbl_id, tbl_ui_id, payload) {
     if (tbl_ui_id) {
-        const changes = set({}, [tbl_ui_id], payload);
-        return TblUtil.smartMerge(ui, changes);
+        return updateMerge(ui, tbl_ui_id, payload);
     } else {
         Object.keys(ui).filter( (ui_id) => {
             return get(ui, [ui_id, 'tbl_id']) === tbl_id;
