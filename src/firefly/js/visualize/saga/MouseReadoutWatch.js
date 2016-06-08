@@ -133,7 +133,8 @@ function makeReadout(plot, worldPt, screenPt, imagePt) {
         screenPt: makePointReadoutItem('Screen Point', screenPt),
         imagePt: makePointReadoutItem('Image Point', imagePt),
         title: makeDescriptionItem(plot.title),
-        pixel: makeValueReadoutItem('Pixel Size',plot.projection.getPixelScaleArcSec(),'arcsec', 3)
+        pixel: makeValueReadoutItem('Pixel Size',plot.projection.getPixelScaleArcSec(),'arcsec', 3),
+        screenPixel:makeValueReadoutItem('Screen Pixel Size',plot.projection.getPixelScaleArcSec()/plot.zoomFactor,'arcsec', 3)
     };
 
 }

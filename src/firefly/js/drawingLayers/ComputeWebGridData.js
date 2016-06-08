@@ -672,7 +672,7 @@ function getLabelPoints(bounds, csys, xLines, yLines, nLevel0, nLevel1) {
          Find the middle point which is the half of the length of the _xLines (or _yLines) in this direction.
          Put the label in the middle of this direction.
          */
-        var hM =  Math.trunc(xLines[0].length/2); //in the middle of the line
+        var hM =  Math.trunc(xLines[0].length/2); //in the middle of the  line
         for (let i=0; i< nLevel0; i++){
             points[i] = makeImageWorkSpacePt(xLines[i][hM],yLines[i][hM]);
         }
@@ -682,7 +682,7 @@ function getLabelPoints(bounds, csys, xLines, yLines, nLevel0, nLevel1) {
          Find the middle point which is the half of the length of the _xLines (or _yLines) in this direction.
          Put the label in the middle of this direction.
          */
-        var vM=Math.trunc(xLines[nLevel0].length/2);
+        var vM=Math.trunc(xLines[nLevel0].length/2); //middle of lines
         for (let i=0; i< nLevel1; i++){
             points[i+ nLevel0] = makeImageWorkSpacePt(xLines[nLevel0 +i][vM], yLines[nLevel0 +i][vM]);
         }

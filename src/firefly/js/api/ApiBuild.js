@@ -34,6 +34,9 @@ import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {TablePanel} from '../tables/ui/TablePanel.jsx';
 import {ChartsContainer} from '../visualize/ChartsContainer.jsx';
 import {ChartsTableViewPanel} from '../visualize/ChartsTableViewPanel.jsx';
+import {PopupMouseReadoutMinimal} from  '../visualize/ui/PopupMouseReadoutMinimal.jsx';
+import {PopupMouseReadoutFull} from  '../visualize/ui/PopupMouseReadoutFull.jsx';
+
 
 // builds the highlevel api
 import {buildHighLevelApi} from './ApiHighlevelBuild.js';
@@ -133,7 +136,9 @@ export function buildLowlevelAPI() {
         TablesContainer,
         TablePanel,
         ChartsContainer,
-        ChartsTableViewPanel
+        ChartsTableViewPanel,
+        PopupMouseReadoutMinimal,
+        PopupMouseReadoutFull
     };
     
     const util= Object.assign({}, ApiUtil, {image:ApiUtilImage}, {chart:ApiUtilChart}, {table:ApiUtilTable}, {data:{}} );

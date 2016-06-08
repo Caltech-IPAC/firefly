@@ -8,20 +8,15 @@
  */
 import React, {PropTypes} from 'react';
 import {get} from 'lodash';
-import {primePlot} from '../PlotViewUtil.js';
-import {isBlankImage} from '../WebPlot.js';
 import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
 import CoordinateSys from '../CoordSys.js';
-import CysConverter from '../CsysConverter.js';
 import CoordUtil from '../CoordUtil.js';
 import VisUtil from '../VisUtil.js';
-import {debounce} from 'lodash';
-import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
 import numeral from 'numeral';
-import {Band} from '../Band.js';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
-import sCompare from 'react-addons-shallow-compare';
-import {MouseState} from '../VisMouseSync.js';
+import {STANDARD_READOUT, dispatchChangeLockByClick} from '../../visualize/MouseReadoutCntlr.js';
+
+import {padEnd} from 'lodash';
 
 const rS = {
     width: 670,
@@ -43,7 +38,7 @@ const coordinateMap = {
     pixelSize: CoordinateSys.PIXEL,
     sPixelSize: CoordinateSys.SCREEN_PIXEL
 };
-const labelMap = {
+export const labelMap = {
     eqj2000hms: 'EQ-J2000:',
     eqj2000DCM: 'EQ-J2000:',
     galactic: 'Gal:',
@@ -73,7 +68,7 @@ const column3 = {
 };
 const column3_r2 = {width: 80, paddingRight: 1, textAlign: 'right', color: 'DarkGray', display: 'inline-block'};
 
-const column4 = {width: 88, display: 'inline-block'};
+const column4 = {width: 88, paddingLeft:4, display: 'inline-block'};
 const column5 = {
     width: 74,
     paddingRight: 1,
@@ -83,199 +78,39 @@ const column5 = {
     fontStyle: 'italic',
     display: 'inline-block'
 };
+
 const column6 = {width: 160,addingLeft: 2, textAlign: 'left', display: 'inline-block'};
 const column7 = {width: 109, paddingLeft: 6, display: 'inline-block'};
 const column7_r2 = {width: 90, paddingLeft: 3, display: 'inline-block'};
 
 
 const precision7Digit = '0.0000000';
-const precision3Digit = '0.000';
 const precision1Digit = '0.0';
 
-export class MouseReadout extends React.Component {
-
-    constructor(props) {
-        super(props);
-        this.showFlux = this.showFlux.bind(this);
-        this.setLockState = this.setLockState.bind(this);
-
-        this.isLocked = false;
-
-        this.state = ({
-            flux: [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT],
-            fluxLabel: [],
-            mouseReadouts: {},
-            imagePt: this.props.mouseState.imagePt
-
-        });
+const myFormat= (v,precision) => numeral(v).format(padEnd('0.',precision+1,'0') );
+export function MouseReadout({readout}){
 
 
-        this.getFlux = debounce((mouseState, plot, iPt, isLocked) => {
-            callGetFileFlux(plot.plotState, iPt)
-                .then((result) => {
-                    var fluxArray = [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT];
-                    if (result.hasOwnProperty('NO_BAND')) {
-                        var fluxUnitStr = plot.webFitsData[Band.NO_BAND.value].fluxUnits;
-                        var fValue = parseFloat(result.NO_BAND);
-                        fluxStr='';
-                        if (fValue !== 'NoContext') {
-
-                            var fluxStr = fValue < 1000 ? fValue.toFixed(6) : fValue.toExponential(6).replace('e+', 'E');
-                           //fluxStr = (fValue !== 'NoContext') ? `${fluxStr} ${fluxUnitStr}` : '';
-                           fluxStr = `${fluxStr} ${fluxUnitStr}`;
-                        }
-                        fluxArray = [fluxStr];
-                        if (isLocked && mouseState.mouseState.key === 'UP' || !isLocked) {
-                            this.setState({flux: fluxArray});
-                        }
-                    }
-                    else {
-                        const bands = plot.plotState.getBands();
-
-                        fluxArray = [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT];
-                        var bandName, unitStr, fnum, fluxValue;
-                        for (let i = 0; i < bands.length; i++) {
-                            switch (bands[i].key) {
-                                case 'RED':
-                                    bandName = 'Red';
-                                    break;
-                                case 'GREEN':
-                                    bandName = 'Green';
-                                    break;
-                                case 'BLUE':
-                                    bandName = 'Blue';
-                                    break;
-                            }
-                            unitStr = get(plot.webFitsData, [bands[i].value, 'fluxUnits'], '');
-                            fnum = parseFloat(result[bandName]);
-                            if (fnum !=='NoContext') {
-                                fluxValue = (fnum < 1000) ? fnum.toFixed(6) : fnum.toExponential(6).replace('e+', 'E');
-                                fluxArray[i] = `${fluxValue} ${unitStr}`;
-                            }
-                        }
-
-                        if (isLocked && mouseState.mouseState.key === 'UP' || !isLocked) {
-                            this.setState({flux: fluxArray});
-
-                        }
-
-                    }
-                })
-                .catch((e) => {
-                    console.log(`flux error: ${plot.plotId}`, e);
-                    return [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT];
-                });
-        }, 200);
-
-    }
-
-    componentWillReceiveProps(nextProps) {
-
-        const {mouseState}= nextProps.mouseState;
-
-        if (nextProps.plotView && (this.isLocked && mouseState === MouseState.UP || !this.isLocked  )) {
-
-            this.setState({
-
-                fluxLabel: getFluxLabels(nextProps.plotView),
-                flux: [],
-                mouseReadouts: getAllMouseReadouts(nextProps.plotView, nextProps.mouseState, nextProps.visRoot),
-                imagePt: nextProps.mouseState.imagePt
-
-            });
-
-            this.showFlux(nextProps.plotView, nextProps.mouseState);
+   //get the standard readouts
+    const sndReadout= readout[STANDARD_READOUT];
+    if (!get(sndReadout,'readoutItems')) return EMPTY;
 
 
-        }
+    const title = sndReadout.readoutItems.title?sndReadout.readoutItems.title.value:'';
+
+    var objList={};
+    Object.keys( readout.readoutPref).forEach( (key) =>  {
+         objList[key]=getMouseReadout(sndReadout.readoutItems,  readout.readoutPref[key] );
+    });
+
+    if (!objList)return EMPTY;
+
+    const {mouseReadout1, mouseReadout2, pixelSize} = objList;
+
+    const {fluxLabels, fluxValues} = getFluxInfo(sndReadout);
 
 
-    }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-
-    }
-
-    setLockState(request) {
-
-        if (request.hasOwnProperty('target')) {
-            var target = request.target;
-            var pixelClickLock = target.checked;
-
-            this.isLocked = pixelClickLock;
-
-            dispatchChangePointSelection('mouseReadout', pixelClickLock);
-            this.setState({flux: [], fluxLabel: [], mouseReadouts: {}});
-        }
-
-    }
-
-
-    showFlux(plotView, mouseState) {
-        var plot = primePlot(plotView);
-        if (!plot) return;
-        var spt = mouseState.screenPt;
-        if (!spt) return;
-        var iPt = mouseState.imagePt;
-        if (iPt) {
-            this.getFlux(mouseState, plot, iPt, this.isLocked);
-        }
-
-    }
-
-    render() {
-
-        const {visRoot, plotView, mouseState}= this.props;
-
-        if (!plotView) return EMPTY;
-
-        var plot = primePlot(plotView);
-        if (!plot) return EMPTY;
-        if (isBlankImage(plot)) return EMPTY;
-
-
-        var title = plot.title;
-
-
-        var spt = mouseState.screenPt;
-        var {width:screenW, height:screenH }= plot.screenSize;
-        const isOutside = (spt && (spt.x < 0 || spt.x > screenW || spt.y < 0 || spt.y > screenH))
-            || mouseState.mouseState === MouseState.EXIT;
-
-
-        var fluxLabels = ( !this.isLocked && !isOutside || this.isLocked ) ? this.state.fluxLabel : [];
-
-        var fluxValues = ( !this.isLocked && !isOutside || this.isLocked) ? this.state.flux : [];
-
-        var mouseReadoutInfo = this.state.mouseReadouts;
-
-        var mouseReadoutInState = [];
-
-        if (mouseReadoutInfo) {
-            var currentCoordinates = [visRoot.mouseReadout1, visRoot.mouseReadout2, visRoot.pixelSize];
-            var coordinatesInPt = mouseReadoutInfo.coordinates;
-            mouseReadoutInState = mouseReadoutInfo.mouseReadouts;
-
-            if (coordinatesInPt && currentCoordinates !== coordinatesInPt) {
-
-                for (var i = 0; i < 3; i++) {
-                    //convert the existing readouts to the newly changed coordinates
-                    if (currentCoordinates[i] != coordinatesInPt[i]) {
-                        mouseReadoutInState[i] = getSingleMouseReadout(plot, this.state.imagePt, currentCoordinates[i]);
-                    }
-                }
-
-            }
-        }
-
-        var mouseReadouts = ( !this.isLocked && !isOutside || this.isLocked) ? mouseReadoutInState : [];
-
-        var mouseReadout1=mouseReadouts ? mouseReadouts[0] : '';
-        var pixelSize =mouseReadouts ? mouseReadouts[2] : '';
-        var mouseReadout2 =mouseReadouts ? mouseReadouts[1] : '';
-
-        return (
+    return (
 
         <div style={ rS}>
 
@@ -283,13 +118,13 @@ export class MouseReadout extends React.Component {
             <div  >
                 <div style={ column1}>{fluxLabels[1]} </div>
                 <div style={ column2}>  {fluxValues[1]}  </div>
-                <div style={ column3} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
-                    {labelMap[visRoot.pixelSize] }
+                <div style={ column3} onClick={ () => showDialog('pixelSize', readout.readoutPref.pixelSize)}>
+                    {labelMap[readout.readoutPref.pixelSize] }
                 </div>
                 <div style={column4}>{pixelSize} </div>
 
-                <div style={ column5} onClick={ () => showDialog('mouseReadout1' ,visRoot.mouseReadout1)}>
-                    { labelMap[visRoot.mouseReadout1] }
+                <div style={ column5} onClick={ () => showDialog('mouseReadout1', readout.readoutPref.mouseReadout1)}>
+                    { labelMap[readout.readoutPref.mouseReadout1] }
                 </div>
                 <div style={column6}> {mouseReadout1} </div>
 
@@ -297,156 +132,109 @@ export class MouseReadout extends React.Component {
                 <div style={column7}> {title}  </div>
             </div>
             <div>{/* row2*/}
-                    <div style={ column1}>{fluxLabels[2]} </div>
-                    <div style={ column2}> { fluxValues[2]} </div>
+                <div style={ column1}>{fluxLabels[2]} </div>
+                <div style={ column2}> { fluxValues[2]} </div>
 
-                    <div style={ column3_r2}>{fluxLabels[0]}</div>
-                    <div style={ column4}> {fluxValues[0]}</div>
+                <div style={ column3_r2}>{fluxLabels[0]}</div>
+                <div style={ column4}> {fluxValues[0]}</div>
 
-                    <div style={ column5} onClick={ () => showDialog('mouseReadout2' ,visRoot.mouseReadout2)}>
-                        {labelMap[visRoot.mouseReadout2] } </div>
+                <div style={ column5} onClick={ () => showDialog('mouseReadout2' ,readout.readoutPref.mouseReadout2 )}>
+                    {labelMap[readout.readoutPref.mouseReadout2] } </div>
 
-                    <div style={column6}>  {mouseReadout2}  </div>
-                    <div style={column7_r2} title='Click on an image to lock the display at that point.'>
-                        <input type='checkbox' name='aLock' value='lock'
-                               onChange={ (request) => this.setLockState( request) }/>
-                        Lock by click
-                    </div>
+                <div style={column6}>  {mouseReadout2}  </div>
+                <div style={column7_r2} title='Click on an image to lock the display at that point.'>
+                    <input type='checkbox' name='aLock' value='lock'
+                           onChange={() => {
+                           dispatchChangePointSelection('mouseReadout', !readout.lockByClick);
+                            dispatchChangeLockByClick(!readout.lockByClick);
 
-
+                        }}
+                    />
+                    Lock by click
                 </div>
 
+
             </div>
-        );
 
-
-    }
-
+        </div>
+    );
 }
 
 MouseReadout.propTypes = {
-    visRoot: PropTypes.object.isRequired,
-    plotView: PropTypes.object,
-    mouseState: PropTypes.object.isRequired
-
+    readout: PropTypes.object
 };
 
-//===================end of MouseReadout class===========================================================
-
-
-
-function getFluxLabels(plotView) {
-
-    var plot = primePlot(plotView);
-    if (!plot) return EMPTY;
-    var bands = plot.plotState.getBands();
-    var fluxLabels = [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT];
-    for (var i = 0; i < bands.length; i++) {
-            fluxLabels[i] = showSingleBandFluxLabel(plot, bands[i]);
-    }
-    return fluxLabels;
-
-}
-function showSingleBandFluxLabel(plot, band) {
-
-    if (!plot) return EMPTY_READOUT;
-
-    var webFitsData = plot.webFitsData;
-    if (!band) return EMPTY_READOUT;
-    var fluxUnits = webFitsData[band.value].fluxUnits;
-
-    var start;
-    switch (band) {
-        case Band.RED :
-            start = 'Red ';
-            break;
-        case Band.GREEN :
-            start = 'Green ';
-            break;
-        case Band.BLUE :
-            start = 'Blue ';
-            break;
-        case Band.NO_BAND :
-            start = '';
-            break;
-        default :
-            start = '';
-            break;
-    }
-    var valStr = start.length > 0 ? 'Val: ' : 'Value: ';
-
-    var fluxUnitInUpperCase = fluxUnits.toUpperCase();
-    if (fluxUnitInUpperCase === 'DN' || fluxUnitInUpperCase === 'FRAMES' || fluxUnitInUpperCase === '') {
-        return start + valStr;
-    }
-    else {
-        return start + 'Flux: ';
-    }
-
-}
-
-
 /**
- *
- * This method map the value in coordinate option popup to its value
- * @param coordinateRadioValue : the value in the radio button
- * @returns {{coordinate: *, type: *}}
+ * This method passes the standard readout and then get the flux information
+ * @param sndReadout
+ * @returns {{fluxLabels: Array, fluxValues: Array}}
  */
-function getCoordinateMap(coordinateRadioValue) {
-    var coordinate;
-    var type;
+export function getFluxInfo(sndReadout){
 
-    if ( coordinateRadioValue === 'eqj2000hms') {
-        coordinate = CoordinateSys.EQ_J2000;
-        type = 'hms';
+    var fluxObj = [];
+    if (sndReadout.threeColor){
+        if (sndReadout.readoutItems.hasOwnProperty('REDFlux')){
+            fluxObj.push(sndReadout.readoutItems['REDFlux']);
+        }
+        if (sndReadout.readoutItems.hasOwnProperty('GREENFlux')){
+            fluxObj.push(sndReadout.readoutItems['GREENFlux']);
+        }
+        if (sndReadout.readoutItems.hasOwnProperty('BLUEFlux')){
+            fluxObj.push(sndReadout.readoutItems['BLUEFlux']);
+        }
     }
-    else if (coordinateRadioValue === 'eqj2000DCM') {
-        coordinate = CoordinateSys.EQ_J2000;
-        type = 'decimal';
+    else if (sndReadout.readoutItems.hasOwnProperty('nobandFlux')){
+        fluxObj.push(sndReadout.readoutItems.nobandFlux);
     }
-    else {
-        coordinate = coordinateMap[coordinateRadioValue];
-        //if coordinate is not define, assign it as below
-        if (!coordinate) coordinate = CoordinateSys.UNDEFINED;
+    var fluxValueArrays=[];
+    var fluxLabelArrays=[];
+    var fluxValue,  formatStr;
+
+    for (let i = 0; i < fluxObj.length; i++) {
+
+            fluxValue = (fluxObj[i].value < 1000) ? `${myFormat(fluxObj[i].value, fluxObj[i].precision)}` : fluxObj[i].value.toExponential(6).replace('e+', 'E');
+            fluxValueArrays.push(fluxValue);
+            fluxLabelArrays.push(fluxObj[i].title);
+     }
+
+    if (fluxLabelArrays.length<3) { //fill with empty
+        for (let i = fluxLabelArrays.length; i < 3; i++) {
+            fluxValueArrays.push(EMPTY_READOUT);
+            fluxLabelArrays.push(EMPTY_READOUT);
+        }
     }
-    return {coordinate, type};
+    return {fluxLabels:fluxLabelArrays, 'fluxValues':fluxValueArrays};
+
 }
+/**
+ * Get the mouse readouts from the standard readout and convert to the values based on the toCoordinaeName
+ * @param readoutItems
+ * @param toCoordinateName
+ * @returns {*}
+ */
+export function  getMouseReadout(readoutItems, toCoordinateName) {
+    var imagePt=readoutItems.imagePt;
+    if (!imagePt || !imagePt.value) return;
 
-function getAllMouseReadouts(plotView, mouseState, visRoot) {
-    var results = [];
-
-    var readoutValues = [visRoot.mouseReadout1, visRoot.mouseReadout2, visRoot.pixelSize];
-
-    var plot = primePlot(plotView);
-    for (var i = 0; i < readoutValues.length; i++) {
-
-        results[i] = getSingleMouseReadout(plot, mouseState.imagePt, readoutValues[i]);
-    }
-    return {coordinates: readoutValues, mouseReadouts: results};
-}
-
-
-function getSingleMouseReadout(plot, imagePt, toCoordinateName) {
-    if (!imagePt || !plot) return;
     if (toCoordinateName === 'fitsIP') {
-        return ` ${numeral(imagePt.x).format(precision1Digit)}, ${
-            numeral(imagePt.y).format(precision1Digit)}`;
+        return ` ${numeral(imagePt.value.x).format(precision1Digit)}, ${
+            numeral(imagePt.value.y).format(precision1Digit)}`;
     }
-    var cc = CysConverter.make(plot);
-    var wpt = cc.getWorldCoords(imagePt);
-    if (!wpt) return;
-    var result;
+    var wpt = readoutItems.worldPt;
+    if (!wpt.value) return;
+
+    var result,fStr, obj;
     var {coordinate, type} = getCoordinateMap(toCoordinateName);
-
     if (coordinate) {
-        var ptInCoord = VisUtil.convert(wpt, coordinate);
-
+        var ptInCoord = VisUtil.convert(wpt.value, coordinate);
         var lon = ptInCoord.getLon();
         var lat = ptInCoord.getLat();
         var hmsLon = CoordUtil.convertLonToString(lon, coordinate);
         var hmsLat = CoordUtil.convertLatToString(lat, coordinate);
 
+
         switch (coordinate) {
+
             case CoordinateSys.EQ_J2000:
                 if (type === 'hms') {
                     result = ` ${hmsLon}, ${hmsLat}`;
@@ -470,13 +258,13 @@ function getSingleMouseReadout(plot, imagePt, toCoordinateName) {
                 break;
 
             case CoordinateSys.PIXEL:
-                var pt = plot.projection.getPixelScaleArcSec();
-                result = `  ${numeral(pt).format(precision3Digit)}"`;
+                obj =readoutItems.pixel;
+                 result = `${myFormat(obj.value, obj.precision)}  ${obj.unit || ''}`;
                 break;
             case CoordinateSys.SCREEN_PIXEL:
-                var size = plot.projection.getPixelScaleArcSec() / plot.zoomFactor;
-                result = `  ${numeral(size).format(precision3Digit)}"`;
-                break;
+                 obj =readoutItems.screenPixel;
+                 result = `${myFormat(obj.value, obj.precision)}  ${obj.unit || ''}`;
+                 break;
 
             default:
                 result = '';
@@ -489,6 +277,33 @@ function getSingleMouseReadout(plot, imagePt, toCoordinateName) {
     return result;
 
 }
+
+/**
+ *
+ * This method map the value in coordinate option popup to its value
+ * @param coordinateName : the value in the radio button
+ * @returns {{coordinate: *, type: *}}
+ */
+function getCoordinateMap(coordinateName) {
+    var coordinate;
+    var type;
+
+    if ( coordinateName === 'eqj2000hms') {
+        coordinate = CoordinateSys.EQ_J2000;
+        type = 'hms';
+    }
+    else if (coordinateName === 'eqj2000DCM') {
+        coordinate = CoordinateSys.EQ_J2000;
+        type = 'decimal';
+    }
+    else {
+        coordinate = coordinateMap[coordinateName];
+        //if coordinate is not define, assign it as below
+        if (!coordinate) coordinate = CoordinateSys.UNDEFINED;
+    }
+    return {coordinate, type};
+}
+
 
 function showDialog(fieldKey, radioValue) {
 
