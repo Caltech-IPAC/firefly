@@ -383,7 +383,7 @@ export function updateSet(object, path, value) {
  */
 export function updateMerge(object, path, value) {
     if (!has(object, path)) {
-        set(object, path, undefined);
+        set(object, path, {});
     }
     const o = set({}, path, {$merge: value});
     return update(object, o);
