@@ -31,7 +31,7 @@ import sCompare from 'react-addons-shallow-compare';
 import { getDlAry } from '../DrawLayerCntlr.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
 import {showRegionFileUploadPanel} from '../region/RegionFileUploadView.jsx';
-
+import {MarkerDropDownView} from './MarkerDropDownView.jsx';
 
 
 //===================================================
@@ -64,7 +64,7 @@ import UNLOCKED from 'html/images/icons-2014/BkgUnlocked.png';
 
 import COLOR from 'html/images/icons-2014/28x28_ColorPalette.png';
 import STRETCH from 'html/images/icons-2014/28x28_Log.png';
-// import MARKER from 'html/images/icons-2014/MarkerCirclesIcon_28x28.png';
+import MARKER from 'html/images/icons-2014/MarkerCirclesIcon_28x28.png';
 
 
 export const VIS_TOOLBAR_HEIGHT=34;
@@ -239,6 +239,12 @@ export class VisToolbarView extends Component {
                                         iconOn={DIST_ON}
                                         iconOff={DIST_OFF}
                                         visible={mi.distanceTool} />
+
+                <DropDownToolbarButton icon={MARKER}
+                                       tip='Overlay Markers and Instrument Footprints'
+                                       enabled={enabled} horizontal={true}
+                                       visible={mi.markerToolDD}
+                                       dropDown={<MarkerDropDownView plotView={pv}/>} />
 
                 <SimpleLayerOnOffButton plotView={pv}
                                         typeId={NorthUpCompass.TYPE_ID}

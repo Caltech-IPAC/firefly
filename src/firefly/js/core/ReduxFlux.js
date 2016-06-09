@@ -35,7 +35,11 @@ import DrawLayerCntlr, {makeDetachLayerActionCreator,
                         distanceToolEndActionCreator,
                         regionCreateLayerActionCreator,
                         regionDeleteLayerActionCreator,
-                        regionUpdateEntryActionCreator} from '../visualize/DrawLayerCntlr.js';
+                        regionUpdateEntryActionCreator,
+                        markerToolAttachActionCreator,
+                        markerToolStartActionCreator,
+                        markerToolMoveActionCreator,
+                        markerToolEndActionCreator} from '../visualize/DrawLayerCntlr.js';
 import MultiViewCntlr, {IMAGE_MULTI_VIEW_KEY} from '../visualize/MultiViewCntlr.js';
 import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from '../core/ComponentCntlr.js';
 import {masterSaga} from './MasterSaga.js';
@@ -51,7 +55,7 @@ import Catalog from '../drawingLayers/Catalog.js';
 import WebGrid from '../drawingLayers/WebGrid.js';
 
 import RegionPlot from '../drawingLayers/RegionPlot.js';
-
+import MarkerTool from '../drawingLayers/MarkerTool.js';
 import {showExampleDialog} from '../ui/ExampleDialog.jsx';
 
 //==============
@@ -75,7 +79,7 @@ const actionCreators = new Map();
 
 const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,DistanceTool,
                                                      PointSelection, StatsPoint, NorthUpCompass,
-                                                     Catalog, WebGrid, RegionPlot);
+                                                     Catalog, WebGrid, RegionPlot, MarkerTool);
 
 
 
@@ -133,7 +137,10 @@ actionCreators.set(XYPlotCntlr.LOAD_PLOT_DATA, XYPlotCntlr.loadPlotData);
 
 actionCreators.set(DrawLayerCntlr.SELECT_AREA_END, selectAreaEndActionCreator);
 actionCreators.set(DrawLayerCntlr.DT_END, distanceToolEndActionCreator);
-
+actionCreators.set(DrawLayerCntlr.MARKER_ATTACH, markerToolAttachActionCreator);
+actionCreators.set(DrawLayerCntlr.MARKER_START, markerToolStartActionCreator);
+actionCreators.set(DrawLayerCntlr.MARKER_MOVE, markerToolMoveActionCreator);
+actionCreators.set(DrawLayerCntlr.MARKER_END, markerToolEndActionCreator);
 
 actionCreators.set(DrawLayerCntlr.REGION_CREATE_LAYER, regionCreateLayerActionCreator);
 actionCreators.set(DrawLayerCntlr.REGION_DELETE_LAYER, regionDeleteLayerActionCreator);

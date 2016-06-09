@@ -99,7 +99,7 @@ export class ImageViewerLayout extends Component {
                 this.scroll(plotId,mouseState,screenX,screenY);
                 var cursor = DEFAULT_CURSOR;
                 const cursorCandidate= ownerCandidate || findMouseOwner(drawLayersAry,primePlot(plotView),screenPt);
-                if (MOVE.is(mouseState) && has(cursorCandidate, 'getCursor') ) {
+                if (MOVE.is(mouseState) && get(cursorCandidate, 'getCursor') ) {
                     cursor = cursorCandidate.getCursor(plotView, screenPt) || DEFAULT_CURSOR;
                 }
                 if (cursor !== this.state.cursor) this.setState({cursor});
