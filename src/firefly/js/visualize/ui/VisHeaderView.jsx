@@ -52,5 +52,5 @@ export function VisHeaderView({visRoot,currMouseState, readout}) {
 VisHeaderView.propTypes= {
     visRoot : React.PropTypes.object.isRequired,
     currMouseState :React.PropTypes.object,
-    readout:  React.PropTypes.object.isRequire
+    readout:  React.PropTypes.object.isRequired
 };
