@@ -6,13 +6,14 @@ import {take} from 'redux-saga/effects';
 import {get, isEmpty, filter, omitBy, isNil} from 'lodash';
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
+import {clone} from '../util/WebUtil.js';
 import {TBL_RESULTS_ADDED, TABLE_NEW, TABLE_REMOVE} from '../tables/TablesCntlr.js';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import {smartMerge} from '../tables/TableUtil.js';
 import {getDropDownNames} from '../ui/Menu.jsx';
 import {isMetaDataTable, isCatalogTable} from '../metaConvert/converterUtils.js';
 import {META_VIEWER_ID, FITS_VIEWER_ID, COVERAGE_VIEWER_ID} from '../visualize/ui/TriViewImageSection.jsx';
-import {ADD_IMAGES, REPLACE_IMAGES, REMOVE_IMAGES} from '../visualize/MultiViewCntlr.js';
+import {ADD_IMAGES, REPLACE_IMAGES, REMOVE_IMAGES, getViewerPlotIds, getMultiViewRoot} from '../visualize/MultiViewCntlr.js';
 
 
 export const LAYOUT_PATH = 'layout';
@@ -106,7 +107,7 @@ export function getLayouInfo() {
     const hasImages = get(flux.getState(), 'allPlots.plotViewAry.length') > 0;
     const hasTables = !isEmpty(get(flux.getState(), 'table_space.results.main.tables', {}));
     const hasXyPlots = hasTables;
-    return Object.assign({}, layout, {hasImages, hasTables, hasXyPlots});
+    return clone(layout, {hasImages, hasTables, hasXyPlots});
 }
 
 
@@ -134,54 +135,34 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         var {images, tables, xyPlots} = others;     //images, tables, and xyPlots are additional states relevant only to them.
         var {expanded, standard} = mode || {};
         var searchDesc = '';
-        var closeable = true;
+        var closeable = true, ignore = false;
         standard = standard || views;
 
         var showImages = hasImages && views.has(LO_VIEW.images);
         const showXyPlots = hasXyPlots && views.has(LO_VIEW.xyPlots);
         const showTables = hasTables && views.has(LO_VIEW.tables);
 
+        const ids = getViewerPlotIds(getMultiViewRoot(), FITS_VIEWER_ID);
+        images = clone(images, {showFits: ids && ids.length > 0});
+
         // special cases which could affect the layout..
-        const {viewerId} = action.payload || {};
         switch (action.type) {
             case SHOW_DROPDOWN :
-                if (get(action, 'payload.visible', true)) continue;         // ignore show action
-                break;
-
             case SET_LAYOUT_MODE :
-                if (get(action, 'payload.mode') === LO_MODE.expanded) continue;     // ignore expanded mode action.
+                ignore = handleLayoutChanges(action);
                 break;
 
             case TABLE_NEW :
-                // check for catalog or meta images
-                const {tbl_id} = action.payload;
-                if (isCatalogTable(tbl_id)) {
-                    [showImages, images] = selectCoverageIf(images, showImages);
-                } else if (isMetaDataTable(tbl_id)) {
-                    [showImages, images] = selectMeta(images);
-                };
+                [showImages, images] = handleNewTable(action, images, showImages);
                 break;
 
             case REPLACE_IMAGES :
-                // select image meta tab when new images are added.
-                if (viewerId === META_VIEWER_ID) {
-                    [showImages, images] = selectMeta(images);
-                } else {
-                    continue;   // ignores others viewerId..
-                };
-                break;
-
             case ImagePlotCntlr.PLOT_IMAGE :
-                // select image tab when new images are added.
-                const {plotGroupId} = action.payload || {};
-                if (viewerId === FITS_VIEWER_ID ||
-                    (!viewerId && plotGroupId === 'remoteGroup') ) {    // only way to pick up external viewer api images
-                    [showImages, images] = selectFits(images);
-                } else {
-                    continue;   // ignores others viewerId..
-                };
+                [showImages, images, ignore] = handleNewImage(action, images);
                 break;
         }
+
+        if (ignore) continue;  // ignores, don't update layout.
 
         const count = filter([showTables, showXyPlots, showImages]).length;
         if (count === 1) {
@@ -200,18 +181,46 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
     }
 }
 
-function selectFits(images) {
-    return [true, Object.assign({}, images || {}, {selectedTab: 'fits', showFits: true})];
-}
-
-function selectMeta(images) {
-    return [true, Object.assign({}, images || {}, {selectedTab: 'meta', showMeta: true})];
-}
-
-function selectCoverageIf(images, showImages) {
-    if (!showImages) {
-        return [true, Object.assign({}, images || {}, {selectedTab: 'coverage', showCoverage: true})];
+function handleLayoutChanges(action) {
+    if (action.type === SHOW_DROPDOWN && get(action, 'payload.visible', true)) {
+        return true;
+    } else if (action.type === SET_LAYOUT_MODE && get(action, 'payload.mode') === LO_MODE.expanded){
+        return true;
     } else {
-        return [showImages, images];
+        return false;
     }
+}
+
+function handleNewTable(action, images, showImages) {
+    // check for catalog or meta images
+    const {tbl_id} = action.payload;
+    const isMeta = isMetaDataTable(tbl_id);
+    if (isMeta || isCatalogTable(tbl_id)) {
+        if (!get(images, 'showFits')) {
+            images = clone(images, {selectedTab: 'coverage', showCoverage: true});
+            showImages = true;
+        }
+    }
+    if (isMeta) {
+        images = clone(images, {selectedTab: 'meta', showMeta: true});
+        showImages = true;
+    }
+    return [showImages, images];
+}
+
+function handleNewImage(action, images) {
+    var ignore = false;
+    const {viewerId, plotGroupId} = action.payload || {};
+    if (viewerId === META_VIEWER_ID) {
+        // select image meta tab when new images are added.
+        images = clone(images, {selectedTab: 'meta', showMeta: true});
+    } else if (viewerId === FITS_VIEWER_ID ||
+        (!viewerId && plotGroupId === 'remoteGroup') ) {    // only way to pick up external viewer api images
+        // select image tab when new images are added.
+        images = clone(images, {selectedTab: 'fits', showFits: true});
+    } else {
+        ignore = true;
+    };
+
+    return [true, images, ignore];
 }

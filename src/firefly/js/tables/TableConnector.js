@@ -23,7 +23,7 @@ export class TableConnector {
             flux.process({type: TblCntlr.TABLE_REPLACE, payload: tableModel});
         } else {
             request = Object.assign({}, request, {sortInfo: sortInfoString});
-            TblCntlr.dispatchTableFetch(request);
+            TblCntlr.dispatchTableSort(request);
         }
     }
 

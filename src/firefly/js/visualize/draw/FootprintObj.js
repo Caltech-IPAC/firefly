@@ -32,7 +32,7 @@ function make(footprintAry,style) {
 	var obj= DrawObj.makeDrawObj();
 	obj.type= FOOTPRINT_OBJ;
 	obj.footprintAry= footprintAry;
-	if (style) obj.style= Style.STANDARD;
+	if (!style) obj.style= Style.STANDARD;
 	return obj;
 
 }
@@ -74,14 +74,15 @@ var draw=  {
 
 	getScreenDist(drawObj,plot, pt) {
 		var minDistSq = Number.MAX_VALUE;
+		const cc= CsysConverter.make(plot);
 
 		drawObj.footprintAry.forEach( (footprint) => {
 			var totX = 0;
 			var distSq;
 			var totY = 0;
-			var last = plot.getScreenCoords(footprint[footprint.length - 1]);
+			var last = cc.getScreenCoords(footprint[footprint.length - 1]);
 			footprint.forEach( (wpt) => {
-				var testPt = plot.getScreenCoords(wpt);
+				var testPt = cc.getScreenCoords(wpt);
 				if (testPt) {
 					distSq = ptSegDistSq(testPt.x, testPt.y, last.x, last.y, pt.x, pt.y);
 					totX += testPt.x;
@@ -128,12 +129,11 @@ export default {make,draw, FOOTPRINT_OBJ};
 ////////////////////////////////////////////////
 
 
-
 function makeDrawParams(fpObj,def) {
 	var style= fpObj.style || def.style || DEFAULT_STYLE;
 	var lineWidth= fpObj.lineWidth || def.lineWidth || DEF_WIDTH;
 	return {
-		color: DrawUtil.getColor(this.color,def.color),
+		color: DrawUtil.getColor(fpObj.color,def.color),
 		lineWidth,
 		style
 	};
@@ -233,7 +233,7 @@ function drawFootprint(ctx, plot, footprintAry, drawParams, renderOptions, onlyA
 
 	if (inView) {
 		for (footprint of footprintAry) {
-			drawStandardFootprint(ctx, plot, footprint, drawParams, renderOptions, onlyAddToPath);
+			drawStandardFootprint(ctx, footprint, plot, drawParams, onlyAddToPath);
 		}
 	}
 }

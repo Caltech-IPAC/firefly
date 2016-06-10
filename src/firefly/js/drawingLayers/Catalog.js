@@ -7,8 +7,8 @@ import {isEmpty,get} from 'lodash';
 import {primePlot,getAllDrawLayersForPlot} from '../visualize/PlotViewUtil.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import PointDataObj, {DrawSymbol} from '../visualize/draw/PointDataObj.js';
-import {makeDrawingDef, COLOR_PT_1, COLOR_PT_2, 
-    COLOR_PT_3, COLOR_PT_5, COLOR_PT_6} from '../visualize/draw/DrawingDef.js';
+import FootprintObj from '../visualize/draw/FootprintObj.js';
+import {makeDrawingDef, getNextColor} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
@@ -28,8 +28,7 @@ import {FilterInfo} from '../tables/FilterInfo.js';
 
 const TYPE_ID= 'CATALOG_TYPE';
 
-const helpText=
-    `Click on point to highlight`;
+const helpText= 'Click on point to highlight';
 
 
 
@@ -39,8 +38,6 @@ const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges,nul
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
 var createCnt= 0;
-const defColors= [COLOR_PT_1, COLOR_PT_2, COLOR_PT_3, COLOR_PT_5, COLOR_PT_6];
-
 
 
 //---------------------------------------------------------------------
@@ -52,8 +49,9 @@ const defColors= [COLOR_PT_1, COLOR_PT_2, COLOR_PT_3, COLOR_PT_5, COLOR_PT_6];
 
 
 function creator(initPayload) {
-    const {catalogId, tableData, tableMeta, selectInfo, columns, 
-        tableRequest, highlightedRow,dataTooBigForSelection }= initPayload;
+    const {catalogId, tableData, tableMeta, title,
+           selectInfo, columns, tableRequest, highlightedRow, color,
+           dataTooBigForSelection=false, catalog=true,boxData=false }= initPayload;
     var drawingDef= makeDrawingDef();
     drawingDef.symbol= DrawSymbol.SQUARE;
 
@@ -61,7 +59,7 @@ function creator(initPayload) {
         [MouseState.DOWN.key]: highlightChange
     };
 
-    drawingDef.color= tableMeta[MetaConst.DEFAULT_COLOR] || defColors[createCnt % defColors.length];
+    drawingDef.color= (color || tableMeta[MetaConst.DEFAULT_COLOR] || getNextColor());
 
     var options= {
         hasPerPlotData:false,
@@ -69,15 +67,16 @@ function creator(initPayload) {
         canUserDelete: true,
         canUseMouse:true,
         canHighlight: true,
-        canSelect: true,
+        canSelect: catalog,
         canFilter: true,
         dataTooBigForSelection,
         helpLine : helpText,
         canUserChangeColor: ColorChangeType.STATIC
     };
     // todo: get the real title
-    const dl= DrawLayer.makeDrawLayer(catalogId,TYPE_ID, `Catalog: ${tableMeta.title || catalogId}`,
-        options, drawingDef, null, pairs );
+    const dl= DrawLayer.makeDrawLayer(catalogId,TYPE_ID, 
+                                      title || `Catalog: ${tableMeta.title || catalogId}`,
+                                      options, drawingDef, null, pairs );
     dl.catalogId= catalogId;
     dl.tableData= tableData;
     dl.tableMeta= tableMeta;
@@ -85,7 +84,8 @@ function creator(initPayload) {
     dl.selectInfo= selectInfo;
     dl.highlightedRow= highlightedRow;
     dl.columns= columns;
-
+    dl.catalog= catalog;
+    dl.boxData= boxData;
 
     createCnt++;
     return dl;
@@ -158,17 +158,26 @@ function getLayerChanges(drawLayer, action) {
 }
 
 
-
+/**
+ * 
+ * @param dataType
+ * @param plotId
+ * @param drawLayer
+ * @param action
+ * @param lastDataRet
+ * @return {*}
+ */
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 
     const{tableData, columns}= drawLayer;
     switch (dataType) {
         case DataTypes.DATA:
-            return isEmpty(lastDataRet) ? computeDrawLayer(tableData, columns) : lastDataRet;
+            return isEmpty(lastDataRet) ? computeDrawLayer(drawLayer, tableData, columns) : lastDataRet;
         case DataTypes.HIGHLIGHT_DATA:
             return isEmpty(lastDataRet) ? 
                           computeHighlightLayer(drawLayer, columns) : lastDataRet;
         case DataTypes.SELECTED_IDXS:
+            if (!drawLayer.catalog) return null;
             return isEmpty(lastDataRet) ?
                 computeSelectedIdxAry(drawLayer.selectInfo) : lastDataRet;
     }
@@ -178,11 +187,18 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 
 /**
  * 
+ * @param drawLayer
  * @param tableData
  * @param columns
  * @return {[]} build and return an array of PointDataObj for drawing.
  */
-function computeDrawLayer(tableData, columns) {
+function computeDrawLayer(drawLayer, tableData, columns) {
+    return drawLayer.boxData ? computeBoxDrawLayer(tableData,columns) : computePointDrawLayer(tableData,columns);
+
+}
+
+
+function computePointDrawLayer(tableData, columns) {
 
     const lonIdx= findColIdx(tableData.columns, columns.lonCol);
     const latIdx= findColIdx(tableData.columns, columns.latCol);
@@ -194,13 +210,36 @@ function computeDrawLayer(tableData, columns) {
     });
 }
 
+function computeBoxDrawLayer(tableData, columns) {
+
+    // const lonIdx= findColIdx(tableData.columns, columns.lonCol);
+    // const latIdx= findColIdx(tableData.columns, columns.latCol);
+    // if (lonIdx<0 || latIdx<0) return null;
+    
+    
+    return tableData.data.map( (d) => {
+        const fp= columns.map( (c) => {
+            const lonIdx= findColIdx(tableData.columns, c.lonCol);
+            const latIdx= findColIdx(tableData.columns, c.latCol);
+            return makeWorldPt( d[lonIdx], d[latIdx], c.csys);
+        });
+        return FootprintObj.make([fp]);
+    });
+}
+
+function computeHighlightLayer(drawLayer, columns) {
+    return drawLayer.boxData ? computeBoxHighlightLayer(drawLayer,columns, drawLayer.highlightedRow) :
+                               computePointHighlightLayer(drawLayer,columns);
+}
+
+
 /**
  *
  * @param drawLayer
  * @param columns
  * @return {[]} return a array of PointDataObj that represents the highlighted object
  */
-function computeHighlightLayer(drawLayer, columns) {
+function computePointHighlightLayer(drawLayer, columns) {
 
 
     const tbl= getTblById(drawLayer.drawLayerId);
@@ -217,7 +256,21 @@ function computeHighlightLayer(drawLayer, columns) {
     return [obj,obj2];
 }
 
+function computeBoxHighlightLayer(drawLayer, columns, highlightedRow) {
+    const {tableData}= drawLayer;
+    const d= tableData.data[highlightedRow];
+    const fp= columns.map( (c) => {
+        const lonIdx= findColIdx(tableData.columns, c.lonCol);
+        const latIdx= findColIdx(tableData.columns, c.latCol);
+        return makeWorldPt( d[lonIdx], d[latIdx], c.csys);
+    });
+    const fpObj= FootprintObj.make([fp]);
+    fpObj.color= COLOR_HIGHLIGHTED_PT;
+    return [fpObj];
+}
+
 function computeSelectedIdxAry(selectInfo) {
+    if (!selectInfo) return null;
     const si= SelectInfo.newInstance(selectInfo);
     if (!si.getSelectedCount()) return null;
     return (idx) => si.isSelected(idx);
@@ -243,7 +296,7 @@ export function selectCatalog(pv,dlAry) {
         const tooBig= catDlAry.some( (dl) => dl.dataTooBigForSelection);
         if (tooBig) {
             showInfoPopup('Your data set is too large to select. You must filter it down first.',
-                `Can't Select`);
+                `Can't Select`); // eslint-disable-line quotes
         }
         else {
             catDlAry.forEach( (dl) => {

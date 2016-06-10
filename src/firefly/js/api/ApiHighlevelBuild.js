@@ -44,6 +44,15 @@ function build(llApi) {
 
 /*----------------------------< TABLE PART ----------------------------*/
 
+var divToGrp = (() => {
+    // workaround to support mapping first targetDiv to 'main'
+    var main;
+    return (div) => {
+        if (!main) main = div;
+        return div === main ? 'main' : div;
+    };
+})();
+
 function oldApi(llApi, params, options) {
     const {getBoolean} = llApi.util;
     const {makeFileRequest} = llApi.util.table;
@@ -75,16 +84,17 @@ function doShowTable(llApi, targetDiv, request, options={}) {
     const {dispatchTableSearch}= llApi.action;
     const {renderDOM}= llApi.util;
     const {TablesContainer}= llApi.ui;
-    var contProps = options && options.tbl_group ? {tbl_group: options.tbl_group} : {};
+    var contProps = {};
 
     if ((typeof targetDiv).match(/string|HTMLDivElement/) === null) {
         // old api.. need to setup request and options before continue.
         const params = targetDiv;
         targetDiv = request;
         request = oldApi(llApi, params, options);
-        contProps.tbl_group = targetDiv;
-        options.tbl_group = targetDiv;
     }
+
+    options.tbl_group = options.tbl_group || divToGrp(targetDiv);
+    contProps.tbl_group = options.tbl_group;
 
     Object.keys(options).forEach( (k) => {
         if (options[k] === undefined) {
@@ -209,7 +219,11 @@ function buildImagePart(llApi) {
      */
     const setGlobalImageDef= (params) => globalImageViewDefParams= params;
 
-    return {showImage, showImageFileOrUrl, setGlobalImageDef};
+
+
+    const showCoverage= (div,options) => initCoverage(llApi,div,options);
+
+    return {showImage, showImageFileOrUrl, setGlobalImageDef, showCoverage};
 }
 
 /**
@@ -298,6 +312,19 @@ function showImageInMultiViewer(llApi, targetDiv, request) {
         {viewerId:targetDiv, canReceiveNewPlots:true, Toolbar:MultiViewStandardToolbar });
 
 }
+
+function initCoverage(llApi, targetDiv,options= {}) {
+    const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
+    const {dispatchAddSaga}= llApi.action;
+    const {renderDOM,debug}= llApi.util;
+    const {watchImageMetaData,watchCoverage}= llApi.util.image;
+
+
+    renderDOM(targetDiv, MultiImageViewer,
+        {viewerId:targetDiv, canReceiveNewPlots:false, canDelete:false, Toolbar:MultiViewStandardToolbar });
+    dispatchAddSaga(watchCoverage, {viewerId:targetDiv, options});
+}
+
 
 
 var imageInit= false;

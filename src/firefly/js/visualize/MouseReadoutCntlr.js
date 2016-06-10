@@ -11,7 +11,7 @@ export const READOUT_PREFIX= 'ReadoutCntlr';
 export const READOUT_DATA= `${READOUT_PREFIX}.ReadoutData`;
 export const CHANGE_LOCK_BY_CLICK= `${READOUT_PREFIX}.ChangeLockByClick`;
 export const CHANGE_READOUT_PREFS= `${READOUT_PREFIX}.ChangeReadoutPref`;
-
+export const CHANGE_LOCK_UNLOCK_BY_CLICK= `${READOUT_PREFIX}.ChangeLockUnlockByClick`;
 export const READOUT_KEY= 'readout';
 export const STANDARD_READOUT= 'standardReadout';
 
@@ -42,6 +42,11 @@ export function dispatchChangeLockByClick(lockByClick) {
     flux.process({type: CHANGE_LOCK_BY_CLICK, payload: {lockByClick}});
 }
 
+
+export function dispatchChangeLockUnlockByClick(isLocked) {
+    flux.process({type: CHANGE_LOCK_UNLOCK_BY_CLICK, payload: {isLocked}});
+}
+
 export function dispatchChangeReadoutPrefs(readoutPref) {
     flux.process({type: CHANGE_READOUT_PREFS, payload: {readoutPref}});
 }
@@ -61,6 +66,11 @@ export function getReadoutPref(root,key) {
 
 export function isLockByClick(root) {
     return root.lockByClick;
+}
+
+
+export function isAutoReadIsLocked(root) {
+    return root.isLocked;
 }
 
 
@@ -107,15 +117,22 @@ export function reducer(state=initState(), action={}) {
         case CHANGE_LOCK_BY_CLICK:
             retState= clone(state,{lockByClick:action.payload.lockByClick});
             break;
-        case CHANGE_READOUT_PREFS:
-            retState= clone(state,{readoutPref:clone(state.readoutPref,action.payload.readoutPerf)});
+
+        case CHANGE_LOCK_UNLOCK_BY_CLICK:
+            retState= clone(state,{isLocked:action.payload.isLocked});
             break;
+        case CHANGE_READOUT_PREFS:
+            var readoutPref = state.readoutPref;
+            var key = Object.keys(action.payload.readoutPref);
+            readoutPref[key]=action.payload.readoutPref[ key];
+            retState= clone(state,{readoutPref:clone(state.readoutPref,readoutPref)});
+            break;
+
         default:
             break;
     }
     return retState;
 }
-
 
 
  function processReadoutData(state,action) {
@@ -131,10 +148,12 @@ const initState= function() {
     return {
         [STANDARD_READOUT] : {},
         lockByClick : false,
+        isLocked: false,
         readoutPref :{
             mouseReadout1:'eqj2000hms',
             mouseReadout2: 'fitsIP',
             pixelSize: 'pixelSize'
+
         }
     };
 

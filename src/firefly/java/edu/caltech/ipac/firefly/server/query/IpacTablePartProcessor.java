@@ -197,9 +197,10 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 page = new DataGroupPart(def, new DataGroup("No result found", new DataType[0]), 0, 0);
             } else {
                 try {
-                    postProcessData(dgFile, request);
+                    dgFile = postProcessData(dgFile, request);
                     page = IpacTableParser.getData(dgFile, request.getStartIndex(), request.getPageSize());
                     page.getTableDef().ensureStatus();      // make sure there's a status line so
+                    page.getTableDef().setSource(ServerContext.replaceWithPrefix(dgFile));  // set table meta source to file it came from.
                 } catch (Exception e) {
                     LOGGER.error(e, "Fail to parse ipac table file: " + dgFile);
                     throw e;

@@ -710,16 +710,14 @@ function getLabelPoints(bounds, csys, xLines, yLines, nLevel0, nLevel1) {
          oneLine = [xLines[i],yLines[i]] is an one dimensional array.  Its middle point is hM when i<nLevel0
          and vM when i>=nLevel0
          */
+
         //This is simple solution before the regrid is implemented. 
         const {hM, vM} = getXYMiddles(xLines, nLevel0, nLevel1);
 
-
-      //  var hM =  Math.trunc(xLines[0].length/2); //in the middle of the line
         for (let i=0; i< nLevel0; i++){
             points[i] = makeImageWorkSpacePt(xLines[i][hM],yLines[i][hM]);
         }
 
-       // var vM= Math.trunc(xLines[nLevel0+3].length/2);
         for (let i=0; i< nLevel1; i++){
             points[i+ nLevel0] = makeImageWorkSpacePt(xLines[nLevel0 +i][vM], yLines[nLevel0 +i][vM]);
         }

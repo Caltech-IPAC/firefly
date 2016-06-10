@@ -145,7 +145,7 @@ function updateDrawingLayer(tbl_id, tableData, tableMeta, tableRequest,
     else { // new drawing layer
         dispatchCreateDrawLayer(Catalog.TYPE_ID,
             {catalogId:tbl_id, tableData, tableMeta, tableRequest, highlightedRow, 
-                                selectInfo, columns, dataTooBigForSelection});
+                                selectInfo, columns, dataTooBigForSelection, catalog:true});
         dispatchAttachLayerToPlot(tbl_id, plotIdAry);
     }
 }
@@ -153,7 +153,7 @@ function updateDrawingLayer(tbl_id, tableData, tableMeta, tableRequest,
 
 function attachToAllCatalogs(plotId) {
     dlRoot().drawLayerAry.forEach( (dl) => {
-        if (dl.drawLayerTypeId===Catalog.TYPE_ID) {
+        if (dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalog) {
             dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
         }
     });

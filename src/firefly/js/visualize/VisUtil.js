@@ -96,7 +96,7 @@ const computeSimpleDistance= function(p1, p2) {
  * @param {object} to CoordSys, the coordinate system to convert to
  * @return WorldPt the world point in the new coordinate system
  */
-function convert(wpt, to= CoordinateSys.EQ_J2000) {
+export function convert(wpt, to= CoordinateSys.EQ_J2000) {
     var from = wpt.getCoordSys();
     if (!to || from==to) return wpt;
 
@@ -114,9 +114,9 @@ function convertToJ2000(wpt) { return convert(wpt); }
  * Find an approximate central point and search radius for a group of positions
  *
  * @param inPoints array of points for which the central point is desired
- * @return CentralPointRetval WorldPt and search radius
+ * @return {{centralPoint:WorldPt, maxRadius: Number}}
  */
-const computeCentralPointAndRadius= function(inPoints) {
+export function computeCentralPointAndRadius(inPoints) {
     var lon, lat;
     var radius;
     var maxRadius = Number.NEGATIVE_INFINITY;
@@ -131,17 +131,17 @@ const computeCentralPointAndRadius= function(inPoints) {
     var minLat = Number.POSITIVE_INFINITY;
 
     points.forEach((pt) => {
-        if (pt.getLon() > maxLon) {
-            maxLon = pt.getLon();
+        if (pt.x > maxLon) {
+            maxLon = pt.x;
         }
-        if (pt.getLon() < minLon) {
-            minLon = pt.getLon();
+        if (pt.x < minLon) {
+            minLon = pt.x;
         }
-        if (pt.getLat() > maxLat) {
-            maxLat = pt.getLat();
+        if (pt.y > maxLat) {
+            maxLat = pt.y;
         }
-        if (pt.getLat() < minLat) {
-            minLat = pt.getLat();
+        if (pt.y < minLat) {
+            minLat = pt.y;
         }
     });
     if (maxLon - minLon > 180) {
@@ -156,7 +156,7 @@ const computeCentralPointAndRadius= function(inPoints) {
 
     points.forEach((pt) => {
         radius = computeDistance(centralPoint,
-                                 makeWorldPt(pt.getLon(), pt.getLat()));
+                                 makeWorldPt(pt.x, pt.y));
         if (maxRadius < radius) {
             maxRadius = radius;
         }
