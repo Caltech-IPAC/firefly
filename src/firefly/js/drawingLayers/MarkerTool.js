@@ -1,8 +1,8 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isEmpty, get, set, isArray} from 'lodash';
-import DrawLayerCntlr, {DRAWING_LAYER_KEY, dispatchAttachLayerToPlot} from '../visualize/DrawLayerCntlr.js';
+import {get, set, isArray} from 'lodash';
+import DrawLayerCntlr, {dispatchAttachLayerToPlot} from '../visualize/DrawLayerCntlr.js';
 import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
@@ -11,14 +11,10 @@ import {PlotAttribute} from '../visualize/WebPlot.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import BrowserInfo from '../util/BrowserInfo.js';
 import VisUtil from '../visualize/VisUtil.js';
-import SelectBox from '../visualize/draw/SelectBox.js';
-import {getPlotViewById, primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
-import {Style} from '../visualize/draw/DrawingDef.js';
-//import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
+import {primePlot} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import {makeImagePt, makeScreenPt} from '../visualize/Point.js';
-import {flux} from '../Firefly.js';
 import Enum from 'enum';
 
 
@@ -34,7 +30,7 @@ const markerInterval = 3000; // time interval for showing marker with handlers a
 const ID= 'OVERLAY_MARKER';
 const TYPE_ID= 'OVERLAY_MARKER_TYPE';
 
-const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,onDetach,null);
+const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,null,null);
 
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 const MarkerStatus = new Enum(['attached', 'select', 'relocate', 'resize']);
@@ -44,7 +40,120 @@ var getCC = (plotId) => {
     return CsysConverter.make(plot);
 };
 
+var isWorld = (cc) => (cc.projection.isSpecified());
+var getWorldOrImage = (pt, cc) => (isWorld(cc) ? cc.getWorldCoords(pt) : cc.getImageCoords(pt));
+
 var idCnt=0;
+
+/**
+ * action creator for MARKER_ATTACH
+ * @param rawAction
+ * @returns {Function}
+ */
+export function markerToolAttachActionCreator(rawAction) {
+    return (dispatcher) => {
+        //console.log('in attach');
+        var {plotId= get(visRoot(), 'activePlotId'), drawLayerId, attachPlotGroup } = rawAction.payload;
+
+        if (plotId) {
+            dispatchAttachLayerToPlot(drawLayerId, plotId, attachPlotGroup);
+
+            var plot = primePlot(visRoot(), plotId);
+            if (plot) {
+                var wpt = plot.attributes[PlotAttribute.FIXED_TARGET];
+
+                showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_ATTACH, evenSize(), wpt, plotId,
+                    MarkerStatus.attached, markerInterval, drawLayerId);
+
+            }
+        }
+    };
+}
+
+/**
+ * action creator for MARKER_START
+ * @param rawAction
+ * @returns {Function}
+ */
+export function markerToolStartActionCreator(rawAction) {
+    return (dispatcher) => {
+        //console.log('in start');
+        var {plotId, imagePt, screenPt, drawLayer} = rawAction.payload;
+        var cc = getCC(plotId);
+        var wpt;
+        var {markerStatus, currentSize, currentPt, timeoutProcess, drawLayerId} = drawLayer;
+
+        cancelTimeoutProcess(timeoutProcess);
+
+        if (markerStatus === MarkerStatus.attached)  {             // marker moves to the mouse down position
+            wpt = getWorldOrImage(imagePt, cc);
+
+            showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_START, evenSize(currentSize), wpt, plotId,
+                MarkerStatus.relocate, markerInterval, drawLayerId);
+        } else if (markerStatus === MarkerStatus.select) {        // check the position of mouse down: on circle, on handler, or none
+            var idx = findClosestIndex(drawLayer.drawData.data, screenPt, cc);
+
+            if (idx >= 0) {
+                var nextStatus = idx === 0 ? MarkerStatus.relocate : MarkerStatus.resize;
+                wpt = getWorldOrImage(currentPt, cc);
+
+                // makrer stays at current position
+                showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_START, evenSize(currentSize), wpt, plotId,
+                    nextStatus, markerInterval, drawLayerId);
+            }
+        }
+    };
+}
+
+/**
+ * action creator for MARKER_END
+ * @param rawAction
+ * @returns {Function}
+ */
+export function markerToolEndActionCreator(rawAction) {
+    return (dispatcher) => {
+        //console.log('in end');
+        var {plotId, drawLayer} = rawAction.payload;
+        var cc = getCC(plotId);
+        var {markerStatus, currentSize, currentPt, timeoutProcess, drawLayerId} = drawLayer;
+
+        cancelTimeoutProcess(timeoutProcess);
+
+        // mouse stay at current position and size
+        if (markerStatus === MarkerStatus.relocate || markerStatus === MarkerStatus.resize) {
+            var wpt = getWorldOrImage(currentPt, cc);
+
+            showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_END, evenSize(currentSize), wpt, plotId,
+                MarkerStatus.select, markerInterval, drawLayerId);
+        }
+    };
+}
+
+/**
+ * action create for MARKER_MOVE
+ * @param rawAction
+ * @returns {Function}
+ */
+export function markerToolMoveActionCreator(rawAction) {
+    return (dispatcher) => {
+        //console.log('in move');
+        var {plotId, imagePt, screenPt, drawLayer} = rawAction.payload;
+        var cc = getCC(plotId);
+        var {markerStatus, currentSize: newSize, currentPt: wpt, timeoutProcess, drawLayerId} = drawLayer;
+
+        cancelTimeoutProcess(timeoutProcess);
+
+        if (markerStatus === MarkerStatus.resize)  {               // mmarker stay at current point, and change size
+            var screenCenter = cc.getScreenCoords(wpt);
+            newSize = [Math.abs(screenPt.x - screenCenter.x)*2, Math.abs(screenPt.y - screenCenter.y)*2];
+        } else if (markerStatus === MarkerStatus.relocate) {      // marker move to new mouse down positon
+            wpt = getWorldOrImage(imagePt, cc);
+        }
+        showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_MOVE, newSize, wpt, plotId,
+            markerStatus, 0, drawLayerId);
+    };
+}
+
 
 /**
  *
@@ -59,11 +168,13 @@ function creator(initPayload) {
         [MouseState.UP.key]: DrawLayerCntlr.MARKER_END
     };
 
+    //var actionTypes=[DrawLayerCntlr.MARKER_LOC];
+
     var actionTypes= [DrawLayerCntlr.MARKER_MOVE,
                       DrawLayerCntlr.MARKER_START,
                       DrawLayerCntlr.MARKER_END,
                       DrawLayerCntlr.MARKER_ATTACH];
-    
+
     var exclusiveDef= { exclusiveOnDown: true, type : 'anywhere' };
 
 
@@ -79,33 +190,33 @@ function creator(initPayload) {
                                     options, drawingDef, actionTypes, pairs, exclusiveDef);
 }
 
-function onDetach(drawLayer,action) {
-    var {plotIdAry}= action.payload;
-    plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.SELECTION,null,true));
-}
-
+/**
+ * reducer for MarkerTool layer
+ * @param drawLayer
+ * @param action
+ * @returns {*}
+ */
 function getLayerChanges(drawLayer, action) {
     var {drawLayerId} = action.payload;
 
-    if (drawLayerId !== drawLayer.drawLayerId) return null;
+    if (!drawLayerId || drawLayerId !== drawLayer.drawLayerId) return null;
 
     switch (action.type) {
         case DrawLayerCntlr.MARKER_START:
-            console.log(action.type);
-            var dl = makeMarker(action);
-            console.log('next marker status: ' +(get(dl, 'markerStatus') ? dl.markerStatus.key : 'null'));
-            return dl;
+        case DrawLayerCntlr.MARKER_ATTACH:
         case DrawLayerCntlr.MARKER_MOVE:
         case DrawLayerCntlr.MARKER_END:
-        case DrawLayerCntlr.MARKER_ATTACH:
-            console.log(action.type);
-            var dl = makeMarker(action);
-            console.log('next marker status: ' + (get(dl, 'markerStatus') ? dl.markerStatus.key : 'null'));
-            return dl;
+            //console.log(action.type);
+            return makeMarker(action);
+            //console.log('next marker status: ' + (get(dl, 'markerStatus') ? dl.markerStatus.key : 'null'));
     }
-
 }
 
+/**
+ * make rectangle with the same width and height
+ * @param size
+ * @returns {*[]}
+ */
 var evenSize = (size) => {
     var s;
     if (size) {
@@ -116,127 +227,51 @@ var evenSize = (size) => {
     return [s, s];
 };
 
-export function markerToolAttachActionCreator(rawAction) {
-    return (dispatcher) => {
-        var {plotId= get(visRoot(), 'activePlotId'), drawLayerId, attachPlotGroup } = rawAction.payload;
+var cancelTimeoutProcess = (toP) => { if (toP) clearTimeout(toP); };
 
-        if (plotId) {
-            dispatchAttachLayerToPlot(drawLayerId, plotId, attachPlotGroup);
-
-            var plot = primePlot(visRoot(), plotId);
-            if (plot) {
-                var wpt = plot.attributes[PlotAttribute.FIXED_TARGET];
-
-                showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_ATTACH, evenSize(), wpt, plotId,
-                                   MarkerStatus.attached, markerInterval, drawLayerId);
-
-            }
-        }
-    };
-}
-
-
-export function markerToolStartActionCreator(rawAction) {
-    return (dispatcher) => {
-        var {plotId, imagePt, screenPt, drawLayer} = rawAction.payload;
-        var cc = getCC(plotId);
-
-        var wpt;
-        var {markerStatus, currentSize, currentPt, timeoutProcess, drawLayerId} = drawLayer;
-
-        console.log('start: status = ' + (markerStatus? markerStatus.key: 'null') + ' timeout: ' + (timeoutProcess ? timeoutProcess : 'null'));
-        if (timeoutProcess) clearTimeout(timeoutProcess);
-
-        if (markerStatus === MarkerStatus.attached)  {             // marker moves to the mouse down position
-            wpt = cc.getWorldCoords(imagePt);
-            showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_START, evenSize(currentSize), wpt, plotId,
-                               MarkerStatus.relocate, markerInterval, drawLayerId);
-        } else if (markerStatus === MarkerStatus.select) {        // check the position of mouse down: on circle, on handler, or none
-             var idx = findClosestIndex(drawLayer.drawData.data, screenPt, cc);
-
-
-             if (idx >= 0) {
-                 var nextStatus = idx === 0 ? MarkerStatus.relocate : MarkerStatus.resize;
-                 wpt = cc.getWorldCoords(currentPt);
-
-                 // makrer stays at current position
-                 showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_START, evenSize(currentSize), wpt, plotId,
-                                    nextStatus, markerInterval, drawLayerId);
-             }
-        }
-    };
-}
-
-export function markerToolEndActionCreator(rawAction) {
-    return (dispatcher) => {
-        var {plotId, drawLayer} = rawAction.payload;
-        var cc = getCC(plotId);
-        var {markerStatus, currentSize, currentPt, timeoutProcess, drawLayerId} = drawLayer;
-
-        if (timeoutProcess) clearTimeout(timeoutProcess);
-console.log('end: status = ' + (markerStatus? rawAction.payload.drawLayer.markerStatus.key: 'null') + ' timeout: ' + (timeoutProcess ? timeoutProcess : 'null'));
-        // mouse stay at current position and size
-        if (markerStatus === MarkerStatus.relocate || markerStatus === MarkerStatus.resize) {
-            var wpt = cc.getWorldCoords(currentPt);
-            showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_END, evenSize(currentSize), wpt, plotId,
-                               timeoutProcess, MarkerStatus.select, markerInterval, drawLayerId);
-        }
-    };
-}
-
-export function markerToolMoveActionCreator(rawAction) {
-    return (dispatcher) => {
-        var {plotId, imagePt, screenPt, drawLayer} = rawAction.payload;
-        var cc = getCC(plotId);
-        var {markerStatus, currentSize: newSize, currentPt: wpt, timeoutProcess, drawLayerId} = drawLayer;
-
-        if (timeoutProcess) clearTimeout(timeoutProcess);
-        console.log('move: status = ' + (markerStatus? markerStatus.key: 'null') + ' timeout: ' + (timeoutProcess ? timeoutProcess : 'null'));
-
-        if (markerStatus === MarkerStatus.resize)  {               // mmarker stay at current point, and change size
-            var screenCenter = cc.getScreenCoords(wpt);
-            newSize = [Math.abs(screenPt.x - screenCenter.x)*2, Math.abs(screenPt.y - screenCenter.y)*2];
-        } else if (markerStatus === MarkerStatus.relocate) {      // marker move to new mouse down positon
-            wpt = cc.getWorldCoords(imagePt);
-        }
-        showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_MOVE, newSize, wpt, plotId,
-                           markerStatus, markerInterval, drawLayerId);
-    };
-}
 
 const screenDistance= (pt1,pt2) => VisUtil.computeScreenDistance(pt1.x,pt1.y,pt2.x,pt2.y);
 
+/**
+ * find the drawObj inside the marker which is closest to the given screenPt
+ * @param drawObjAry
+ * @param screenPt
+ * @param cc
+ * @returns {*}
+ */
 function findClosestIndex(drawObjAry, screenPt, cc) {
     var distance = EDIT_DISTANCE;
 
     return  drawObjAry.reduce( (prev, drawObj, index) => {
         var dist;
-        var centerPt = cc.getScreenCoords(drawObj.pts);
+        var centerPt = cc.getScreenCoords(drawObj.pts[0]);
 
-        if (drawObj.type === ShapeDataObj.UnitType.Circle) {
-            dist = screenDistance(screenPt, centerPt) - drawObj.radius;
-            if (dist < 0) {
-                dist = 0;
+        if (drawObj.type === ShapeDataObj.SHAPE_DATA_OBJ) {
+
+            dist = distance;
+            if (drawObj.sType === ShapeDataObj.ShapeType.Circle) {
+                dist = screenDistance(screenPt, centerPt) - drawObj.radius;
+                if (dist < 0) {
+                    dist = 0;
+                }
+            } else if (drawObj.sType === ShapeDataObj.ShapeType.Rectangle) {
+
+                var x1 = centerPt.x - drawObj.width / 2;
+                var x2 = centerPt.x + drawObj.width / 2;
+                var y1 = centerPt.y - drawObj.height / 2;
+                var y2 = centerPt.y + drawObj.height / 2;
+
+                var bx = (screenPt.x >= x1 && screenPt.x <= x2) ? screenPt.x :
+                    ((screenPt.x < x1) ? x1 : x2);
+                var by = (screenPt.y >= y1 && screenPt.y <= y2) ? screenPt.y :
+                    ((screenPt.y < y1) ? y1 : y2);
+
+                dist = screenDistance(screenPt, makeScreenPt(bx, by));
             }
-        } else if (drawObj.type === ShapeDataObj.UnitType.Rectangle) {
-            var x1, x2, y1, y2;
-
-            x1 = centerPt.x - drawObj.width/2;
-            x2 = centerPt.x + drawObj.width/2;
-            y1 = centerPt.y - drawObj.height/2;
-            y2 = centerPt.y + drawObj.height/2;
-
-            var bx = (screenPt.x >= x1 && screenPt.x <= x2) ? screenPt.x :
-                     ((screenPt.x < x1) ? x1 : x2);
-            var by = (screenPt.y >= y1 && screenPt.y <= y2) ? screenPt.y :
-                     ((screenPt.y < y1) ? y1 : y2);
-
-            dist = screenDistance(screenPt, makeScreenPt(bx, by));
-        }
-
-        if (dist < distance) {
-            distance = dist;
-            prev = index;
+            if (dist < distance) {
+                distance = dist;
+                prev = index;
+            }
         }
         return prev;
     }, -1);
@@ -246,9 +281,12 @@ function findClosestIndex(drawObjAry, screenPt, cc) {
 /**
  * dispatch action to locate marker with corners and no corner by timer interval on the draw layer
  * @param dispatcher
+ * @param actionType
  * @param size   in screen coordinate
  * @param wpt    marker location world coordinate
  * @param plotId
+ * @param doneStatus
+ * @param drawLayerId
  * @param timer  milliseconds
  */
 function showMarkersByTimer(dispatcher, actionType, size, wpt, plotId,  doneStatus, timer, drawLayerId) {
@@ -257,12 +295,16 @@ function showMarkersByTimer(dispatcher, actionType, size, wpt, plotId,  doneStat
         payload: {isHandler, size, wpt, plotId, markerStatus: doneStatus, drawLayerId}
     });
 
-    var timeoutProcess = setTimeout(() => dispatcher(setAction(false)), timer);
-    console.log('new timeout ' + timeoutProcess);
+    var timeoutProcess = (timer !== 0) && (setTimeout(() => dispatcher(setAction(false)), timer));
     var crtAction = set(setAction(true), 'payload.timeoutProcess', timeoutProcess);
     dispatcher(crtAction);
 }
 
+/**
+ * create drawlayer object containing only the properties which has updated value
+ * @param action
+ * @returns {*}
+ */
 function makeMarker(action) {
      var {plotId, isHandler, wpt, size, markerStatus, timeoutProcess} = action.payload;
 
@@ -275,8 +317,8 @@ function makeMarker(action) {
      var dlObj =  {
         helpLine: editHelpText,
         drawData: {data:markObjs},
-        currentPt: wpt,                    // center
-        currentSize: [markerW, markerH],
+        currentPt: wpt,                    // center, world or image coordinate
+        currentSize: [markerW, markerH]
      };
      if (timeoutProcess) {
          dlObj.timeoutProcess = timeoutProcess;
@@ -290,7 +332,7 @@ function makeMarker(action) {
              exclusiveDef = { exclusiveOnDown: true, type : 'anywhere' };
              vertexDef = {points:null, pointDist:EDIT_DISTANCE};
          } else {
-             exclusiveDef = { exclusiveOnDown: true, type : 'vertexThenAnywhere' };
+             exclusiveDef = { exclusiveOnDown: true, type : 'vertexOnly' };
              vertexDef = {points:[imgPt], pointDist: Math.sqrt(Math.pow(markerW/2, 2) + Math.pow(markerH/2, 2))};
          }
          return Object.assign(dlObj, {markerStatus, vertexDef, exclusiveDef});
@@ -299,6 +341,16 @@ function makeMarker(action) {
      }
 }
 
+
+/**
+ * create drawObj object set for marker
+ * @param plot
+ * @param centerPt
+ * @param width
+ * @param height
+ * @param includeHandler
+ * @returns {Array}
+ */
 function makeMarkDrawObj(plot, centerPt, width, height, includeHandler) {
     var retval;
     var radius = Math.min(width, height)/2;
@@ -314,7 +366,7 @@ function makeMarkDrawObj(plot, centerPt, width, height, includeHandler) {
             var x = imgPt.x + coord[0] * width/(2*cc.zoomFactor);
             var y = imgPt.y + coord[1] * height/(2*cc.zoomFactor);
 
-            var handlerCenter = cc.getWorldCoords(makeImagePt(x, y));
+            var handlerCenter = getWorldOrImage(makeImagePt(x, y), cc);
             var handlerBox = ShapeDataObj.makeRectangleByCenter(handlerCenter, HANDLER_BOX, HANDLER_BOX,
                             ShapeDataObj.UnitType.PIXEL, 0.0, ShapeDataObj.UnitType.ARCSEC, false);
             prev.push(handlerBox);
