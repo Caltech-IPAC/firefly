@@ -89,7 +89,7 @@ export function tableFetch(action) {
             var actionType = action.type;
             if (action.type === TABLE_FETCH) {
                     actionType = TABLE_NEW;
-                    dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:dispatchTableLoaded});
+                    dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:() => dispatchTableLoaded(TblUtil.getTblInfoById(tbl_id))});
             }
             
             request.startIdx = 0;

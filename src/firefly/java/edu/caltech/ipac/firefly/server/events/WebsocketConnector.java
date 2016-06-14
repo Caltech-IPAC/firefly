@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -25,8 +26,10 @@ import javax.websocket.server.ServerEndpoint;
 public class WebsocketConnector implements ServerEventQueue.EventConnector {
     public static final String CHANNEL_ID = "channelID";
     public static final Logger.LoggerImpl LOG = Logger.getLogger();
+    private static final String CONN_UPDATED = "app_data.wsConnUpdated";
     private Session session;
     private String channelID;
+    private ServerEventQueue eventQueue;
 
     @OnOpen
     public void onOpen(final Session session) {
@@ -35,10 +38,13 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
             Map<String, List<String>> params = session.getRequestParameterMap();
             channelID = params.containsKey(CHANNEL_ID) ? String.valueOf(params.get(CHANNEL_ID).get(0)) : null;
             channelID = StringUtils.isEmpty(channelID) ? ServerContext.getRequestOwner().getUserKey() : channelID;
-            ServerEventQueue eventQueue = new ServerEventQueue(session.getId(), channelID, this);
+            eventQueue = new ServerEventQueue(session.getId(), channelID, this);
             ServerEvent connected = new ServerEvent(Name.EVT_CONN_EST, ServerEvent.Scope.SELF, "{\"connID\": \"" + session.getId() + "\", \"channel\": \"" + channelID + "\"}");
             send(ServerEventQueue.convertToJson(connected));
             ServerEventManager.addEventQueue(eventQueue);
+            // notify clients within the same channel
+            updateClientConnections(CONN_UPDATED, channelID);
+
         } catch (Exception e) {
             LOG.error(e, "Unable to open websocket connection:" + session.getId());
         }
@@ -65,6 +71,8 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
 
     @OnClose
     public void onClose(Session session, CloseReason closeReason) {
+        ServerEventManager.removeEventQueue(eventQueue);
+        updateClientConnections(CONN_UPDATED, channelID);
         LOG.error("Websocket connection closed:" + session.getId() + " - " + closeReason.getReasonPhrase());
     }
 
@@ -93,5 +101,36 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
             }
         }
     }
+
+    /**
+     * notify the clients that connections have been updated from the given channel.
+     * In order for external viewer to work correctly, we have to treat them as pair.
+     * So, event though they have different channels, we notify them both when connections are
+     * added/removed from them.
+     * The event will be sent to both of them.
+     * @param type  action type.  Either "app_data.wsConnAdded" or "app_data.wsConnRemoved"
+     * @param channelID
+     */
+    private void updateClientConnections(String type, String channelID) {
+        List<ServerEventQueue> conns = ServerEventManager.getEvQueueList();
+        String baseChannel = channelID.replace("__viewer", "");
+        String viewerChannel = baseChannel + "__viewer";
+        ArrayList<String> baseList = new ArrayList<>();
+        ArrayList<String> viewerList = new ArrayList<>();
+        FluxAction action = new FluxAction(type);
+        for (ServerEventQueue q : conns) {
+            if (q.getChannel().equals(baseChannel)) {
+                baseList.add(q.getConnID());
+            }else if (q.getChannel().equals(viewerChannel)) {
+                viewerList.add(q.getConnID());
+            }
+        }
+        action.setValue(baseList, baseChannel);
+        action.setValue(viewerList, viewerChannel);
+        ServerEventManager.fireAction(action, baseChannel);
+        ServerEventManager.fireAction(action, viewerChannel);
+
+    }
+
 }
 

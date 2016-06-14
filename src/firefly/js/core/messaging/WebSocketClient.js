@@ -8,6 +8,8 @@ import {getRootURL} from '../../util/BrowserUtil.js';
 
 export const CH_ID = 'channelID';
 
+var channel;
+var connId;
 var nRetries = 0;
 var pinger;
 var connectBaseUrl;
@@ -92,8 +94,8 @@ function onMessage(event) {
         // console.log('ws message: ' + JSON.stringify(eventData));
         if (eventData.name === 'EVT_CONN_EST') {
             // connection established.. doing handshake.
-            const sEventInfo = eventData.data.connID + '_' + eventData.data.channel;
-            setCookie('seinfo', sEventInfo);
+            [connId, channel] = [eventData.data.connID, eventData.data.channel];
+            setCookie('seinfo', `${connId}_${channel}`);
         } else {
             listenters.forEach( (l) => {
                 if (!l.matches || l.matches(eventData)) {
@@ -105,4 +107,12 @@ function onMessage(event) {
 
 }
 
+/**
+ * @returns {string}  the channel websocket is connected to.
+ */
+export function getWsChannel() { return channel; }
 
+/**
+ * @returns {string}  the connection ID websocket is connected to.
+ */
+export function getWsConnId() { return connId; }

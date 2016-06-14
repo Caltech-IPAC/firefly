@@ -9,7 +9,8 @@ import {pickBy} from 'lodash';
 
 import {flux, firefly} from '../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../core/AppDataCntlr.js';
-import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN, layoutManager} from '../core/LayoutCntlr.js';
+import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../core/LayoutCntlr.js';
+import {layoutManager} from '../core/layout/FireflyLayoutManager.js';
 import {Menu, getDropDownNames} from '../ui/Menu.jsx';
 import Banner from '../ui/Banner.jsx';
 import {DropDownContainer} from '../ui/DropDownContainer.jsx';
@@ -42,6 +43,7 @@ export class FireflyViewer extends Component {
     constructor(props) {
         super(props);
         this.state = this.getNextState();
+        dispatchAddSaga(layoutManager,{views: props.views});
     }
 
     getNextState() {
@@ -135,11 +137,13 @@ function onReady({menu, views}) {
     }
     if (views.has(LO_VIEW.images) ) {
         dispatchAddViewer(FITS_VIEWER_ID, true, true);
-        dispatchAddSaga(layoutManager,{views});
         launchImageMetaDataSega();
     }
-    const goto = getActionFromUrl() || {type: SHOW_DROPDOWN};
-    if (goto) firefly.process(goto);
+    const {hasImages, hasTables, hasXyPlots} = getLayouInfo();
+    if (!(hasImages || hasTables || hasXyPlots)) {
+        const goto = getActionFromUrl() || {type: SHOW_DROPDOWN};
+        if (goto) firefly.process(goto);
+    }
 }
 
 function BannerSection(props) {

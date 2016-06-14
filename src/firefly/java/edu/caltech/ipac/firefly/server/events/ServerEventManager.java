@@ -101,7 +101,7 @@ public class ServerEventManager {
                         if (queue.getEventConnector() != null) {
                             queue.getEventConnector().close();
                         }
-                        evQueueList.remove(queue);
+                        removeEventQueue(queue);  // cleanup.. but only as a precaution.  WebsocketConnector should have done it already.
                     }
                 }
             }catch (Exception e) {
@@ -124,14 +124,18 @@ public class ServerEventManager {
         for(ServerEventQueue queue : evQueueList) {
             if (queue.getEventConnector().isOpen()) {
                 cnt++;
-            } else {
-                removeEventQueue(queue);
             }
         }
         return cnt;
     }
 
 
+    /**
+     * bad logic.. removing good eventQueue(ws connetions)..
+     * this is still used by python.  should use websocket communication to
+     * determine these info.
+     */
+    @Deprecated
     public static int getActiveQueueChannelCnt(String channel) {
         int cnt = 0;
         if (StringUtils.isEmpty(channel)) return 0;
@@ -139,7 +143,7 @@ public class ServerEventManager {
             if (channel.equals(queue.getChannel()) && queue.getEventConnector().isOpen()) {
                 cnt++;
             } else {
-                removeEventQueue(queue);
+//                removeEventQueue(queue);
             }
         }
         return cnt;

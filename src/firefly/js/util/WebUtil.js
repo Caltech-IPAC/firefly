@@ -368,7 +368,7 @@ function parseCookies(str) {
  */
 export function updateSet(object, path, value) {
     if (!has(object, path)) {
-        set(object, path, undefined);
+        set(object, path);
     }
     const o = set({}, path, {$set: value});
     return update(object, o);
@@ -400,6 +400,10 @@ export function updateMerge(object, path, value) {
  * @param command (*): The command portion of react's update.
  */
 export function updateWith(object, path, command) {
+    const defVal = command.$merge ? {} : [];
+    if (!has(object, path)) {
+        set(object, path, defVal);
+    }
     const o = set({}, path, command);
     return update(object, o);
 }

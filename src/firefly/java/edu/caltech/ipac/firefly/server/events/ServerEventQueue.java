@@ -37,6 +37,8 @@ public class ServerEventQueue {
 
     public String getChannel() { return channel; }
 
+    public String getConnID() { return connID; }
+
     public void putEvent(ServerEvent ev) throws Exception{
         if (eventTerminal ==null){
             throw new IllegalStateException("Event terminal is null.. should remove this queue.");
