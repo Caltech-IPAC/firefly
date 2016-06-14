@@ -133,10 +133,10 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
 
     while (true) {
         const action = yield take([
-                                ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_IMAGES,
-                                TBL_RESULTS_ADDED, TABLE_REMOVE, TABLE_NEW,
-                                SHOW_DROPDOWN, SET_LAYOUT_MODE
-                            ]);
+                    REPLACE_IMAGES, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.DELETE_PLOT_VIEW, ImagePlotCntlr.PLOT_IMAGE_FAIL,
+                    TBL_RESULTS_ADDED, TABLE_REMOVE, TABLE_NEW,
+                    SHOW_DROPDOWN, SET_LAYOUT_MODE
+                ]);
 
         var {hasImages, hasTables, hasXyPlots, mode, ...others} = getLayouInfo();
         // eslint-disable-next-line

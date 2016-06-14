@@ -21,17 +21,16 @@ export const UI_PREFIX = 'tableUi';
 
 /*---------------------------- ACTIONS -----------------------------*/
 export const TABLE_SEARCH         = `${DATA_PREFIX}.search`;
-export const TABLE_FETCH          = `${DATA_PREFIX}.fetch`;
 export const TABLE_NEW            = `${DATA_PREFIX}.new`;
 export const TABLE_NEW_LOADED     = `${DATA_PREFIX}.newLoaded`;
-export const TABLE_UPDATE         = `${DATA_PREFIX}.update`;
-export const TABLE_REPLACE        = `${DATA_PREFIX}.replace`;
-
 export const TABLE_SORT           = `${DATA_PREFIX}.sort`;
-export const TABLE_FILTER         = `${DATA_PREFIX}.filter`;
 export const TABLE_REMOVE         = `${DATA_PREFIX}.remove`;
+
+export const TABLE_FETCH          = `${DATA_PREFIX}.fetch`;
 export const TABLE_SELECT         = `${DATA_PREFIX}.select`;
 export const TABLE_HIGHLIGHT      = `${DATA_PREFIX}.highlight`;
+export const TABLE_UPDATE         = `${DATA_PREFIX}.update`;
+export const TABLE_REPLACE        = `${DATA_PREFIX}.replace`;
 
 export const TBL_RESULTS_ADDED    = `${RESULTS_PREFIX}.added`;
 export const TBL_RESULTS_UPDATE   = `${RESULTS_PREFIX}.update`;
@@ -86,16 +85,13 @@ export function tableFetch(action) {
     return (dispatch) => {
         if (!action.err) {
             var {request, hlRowIdx} = action.payload;
-            var actionType, {tbl_id} = request;
-            switch (action.type) {
-                case (TABLE_SORT)  :
-                    actionType = TABLE_REPLACE;
-                    break;
-
-                case (TABLE_FETCH)  :
+            const {tbl_id} = request;
+            var actionType = action.type;
+            if (action.type === TABLE_FETCH) {
                     actionType = TABLE_NEW;
                     dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:dispatchTableLoaded});
             }
+            
             request.startIdx = 0;
             dispatch({type: TABLE_REPLACE, payload: {tbl_id, isFetching: true}});
             TblUtil.doFetchTable(request, hlRowIdx).then ( (tableModel) => {

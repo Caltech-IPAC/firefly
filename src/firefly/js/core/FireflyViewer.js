@@ -81,7 +81,7 @@ export class FireflyViewer extends Component {
 
     render() {
         var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown,
-                searchPanels, views, footer} = this.state;
+                searchPanels, views, footer, style} = this.state;
         const {visible, view} = dropDown || {};
         const searches = getDropDownNames();
 
@@ -89,7 +89,7 @@ export class FireflyViewer extends Component {
             return (<div style={{top: 0}} className='loading-mask'/>);
         } else {
             return (
-                <div id='App' className='rootStyle'>
+                <div id='App' className='rootStyle' style={style}>
                     <header>
                         <BannerSection {...{menu, appTitle, appIcon, altAppIcon}}/>
                         <DropDownContainer
@@ -121,7 +121,8 @@ FireflyViewer.propTypes = {
     altAppIcon: PropTypes.string,
     footer: PropTypes.element,
     searchPanels: PropTypes.arrayOf(PropTypes.element),
-    views: PropTypes.string     // combination of LO_VIEW separated by ' | '.  ie. 'images | tables'.
+    views: PropTypes.string,     // combination of LO_VIEW separated by ' | '.  ie. 'images | tables'.
+    style: PropTypes.object
 };
 
 FireflyViewer.defaultProps = {
