@@ -22,7 +22,7 @@ export function* syncCharts() {
     var tableStatsState, xyPlotState, histogramState;
 
     while (true) {
-        const action= yield take([TableStatsCntlr.SETUP_TBL_TRACKING, TablesCntlr.TABLE_NEW_LOADED]);
+        const action= yield take([TableStatsCntlr.SETUP_TBL_TRACKING, TablesCntlr.TABLE_NEW_LOADED, TablesCntlr.TABLE_SORT]);
         const request= action.payload.request;
         switch (action.type) {
             case TableStatsCntlr.SETUP_TBL_TRACKING:
@@ -31,6 +31,7 @@ export function* syncCharts() {
                     TableStatsCntlr.dispatchLoadTblStats(TableUtil.getTblById(tblId)['request']);
                 }
                 break;
+            case TablesCntlr.TABLE_SORT:
             case TablesCntlr.TABLE_NEW_LOADED:
                 const {tbl_id} = action.payload;
                 tableStatsState = flux.getState()[TableStatsCntlr.TBLSTATS_DATA_KEY];

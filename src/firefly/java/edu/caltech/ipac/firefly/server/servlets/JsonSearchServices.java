@@ -4,7 +4,6 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.core.EndUserException;
-import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -19,13 +18,13 @@ import javax.servlet.http.HttpServletResponse;
  */
 
 @MultipartConfig
-public class SearchServices extends BaseHttpServlet {
+public class JsonSearchServices extends BaseHttpServlet {
 
     @Override
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
         TableServerRequest tsr = QueryUtil.convertToServerRequest(req);
         try {
-            String jsonStr = new SearchManager().getJsonString(tsr);
+            String jsonStr = new SearchManager().handleJsonRequest(tsr);
             res.setContentType("application/json");
             FileUtil.writeStringToStream(jsonStr, res.getOutputStream());
 

@@ -3,12 +3,13 @@
  */
 
 import {take} from 'redux-saga/effects';
+import shallowequal from 'shallowequal';
 import {get} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import BrowserCache from '../util/BrowserCache.js';
-import menuRenderer from './reducers/MenuReducer.js';
+import {menuReducer} from './reducers/MenuReducer.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
 import {getModuleName} from '../util/WebUtil.js';
 
@@ -186,21 +187,14 @@ function initPreferences() {
 
 export function reducer(state=getInitState(), action={}) {
 
-    if (action.type && !action.type.startsWith(APP_DATA_PATH)) return state;
+    var nstate = appDataReducer(state, action);
+    nstate.menu = menuReducer(nstate.menu, action);
 
-    var newState = appDataReducer(state, action);
-
-    var menu = menuRenderer.reducer(newState.menu, action);
-
-    return mergeAll(state, newState, {menu});
-}
-
-function mergeAll(orig, newval, updates) {
-
-    var hasChanged = orig !== newval;
-    hasChanged = hasChanged || Object.keys(updates).reduce( (prev, next) => prev || orig[next] != updates[next], false);
-
-    return hasChanged ? Object.assign({}, newval, updates) : orig;
+    if (shallowequal(state, nstate)) {
+        return state;
+    } else {
+        return nstate;
+    }
 }
 
 function appDataReducer(state, action={}) {
@@ -310,7 +304,7 @@ export function dispatchOnAppReady(callback) {
 /*---------------------------- EXPORTED FUNTIONS -----------------------------*/
 export function isAppReady() {
     return get(flux.getState(), [APP_DATA_PATH, 'isReady']) &&
-           get(flux.getState(), [APP_DATA_PATH, 'gwtLoaded']);
+        (get(window, 'firefly.noGWT') || get(flux.getState(), [APP_DATA_PATH, 'gwtLoaded']));
 }
 
 export function getMenu() {

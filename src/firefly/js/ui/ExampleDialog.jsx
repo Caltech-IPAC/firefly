@@ -389,10 +389,10 @@ function FieldGroupTestView ({fields}) {
 
                 <br/><br/>
 
-                <button type='button' className='button-hl'  onClick={() => resetSomeDefaults()}>
+                <button type='button' className='button std hl'  onClick={() => resetSomeDefaults()}>
                     <b>Reset Some Defaults</b>
                 </button>
-                <button type='button' className='button-hl'  onClick={() => resetDefaults()}>
+                <button type='button' className='button std hl'  onClick={() => resetDefaults()}>
                     <b>Reset All Defaults</b>
                 </button>
 

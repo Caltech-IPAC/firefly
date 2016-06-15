@@ -9,8 +9,8 @@ import {flux} from '../Firefly.js';
 import {fetchUrl, encodeServerUrl, encodeParams} from '../util/WebUtil.js';
 import {getRootPath, getRootURL} from '../util/BrowserUtil.js';
 
+export const SEARCH_SRV_PATH = getRootPath() + 'search/json';
 const SAVE_TABLE_URL = getRootURL() + 'servlet/SaveAsIpacTable';
-const SRV_PATH = getRootPath() + 'search/json';
 const INT_MAX = Math.pow(2,31) - 1;
 
 /*----------------------------< creator functions ----------------------------*/
@@ -139,7 +139,7 @@ export function doFetchTable(tableRequest, hlRowIdx) {
          params.META_INFO = encodeParams(params.META_INFO);
     }
 
-    return fetchUrl(SRV_PATH, {method: 'post', params}).then( (response) => {
+    return fetchUrl(SEARCH_SRV_PATH, {method: 'post', params}).then( (response) => {
         return response.json().then( (tableModel) => {
             const startIdx = get(tableModel, 'request.startIdx', 0);
             if (startIdx > 0) {

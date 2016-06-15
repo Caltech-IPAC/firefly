@@ -46,7 +46,12 @@ export class BasicTableView extends React.Component {
 
         this.onColumnResizeEndCallback = this.onColumnResizeEndCallback.bind(this);
         this.rowClassName = this.rowClassName.bind(this);
-        this.onKeyDown = this.onKeyDown.bind(this);
+        this.onKeyDown    = this.onKeyDown.bind(this);
+        this.onRowSelect  = this.onRowSelect.bind(this);
+        this.onSelectAll  = this.onSelectAll.bind(this);
+        this.onSort       = this.onSort.bind(this);
+        this.onFilter     = this.onFilter.bind(this);
+        this.onFilterSelected = this.onFilterSelected.bind(this);
     }
 
     onColumnResizeEndCallback(newColumnWidth, columnKey) {
@@ -90,36 +95,57 @@ export class BasicTableView extends React.Component {
             e.preventDefault && e.preventDefault();
         }
     }
+    onFilterSelected() {
+        const {callbacks, selectInfoCls} = this.props;
+        if (callbacks.onFilterSelected) {
+            const selected = [...selectInfoCls.getSelected()];
+            callbacks.onFilterSelected(selected);
+        }
+    }
+
+    onFilter({fieldKey, valid, value}) {
+        const {callbacks, filterInfo} = this.props;
+        if (callbacks.onFilter) {
+            const filterInfoCls = FilterInfo.parse(filterInfo);
+            if (valid && !filterInfoCls.isEqual(fieldKey, value)) {
+                filterInfoCls.setFilter(fieldKey, value);
+                callbacks.onFilter(filterInfoCls.serialize());
+            }
+        }
+    };
+
+    onSort(cname) {
+        const {callbacks, sortInfo} = this.props;
+        if (callbacks.onSort) {
+            const sortInfoCls = SortInfo.parse(sortInfo);
+            callbacks.onSort(sortInfoCls.toggle(cname));
+        }
+    };
+
+    onSelectAll(checked) {
+        const {callbacks} = this.props;
+        callbacks.onSelectAll && callbacks.onSelectAll(checked);
+    }
+
+    onRowSelect(checked, rowIndex) {
+        const {callbacks} = this.props;
+        callbacks.onRowSelect && callbacks.onRowSelect(checked, rowIndex);
+    }
 
     render() {
-        const {columns, data, hlRowIdx, showUnits, showFilters, filterInfo,
-                    sortInfo, callbacks, textView, rowHeight, showMask} = this.props;
+        const {columns, data, hlRowIdx, showUnits, showFilters, filterInfo, renderers,
+            selectable, selectInfoCls, sortInfo, callbacks, textView, rowHeight, showMask} = this.props;
         const {widthPx, heightPx, columnWidths} = this.state;
+        const {onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected} = this;
 
         if (isEmpty(columns)) return (<div style={{top: 0}} className='loading-mask'/>);
 
-        const filterInfoCls = FilterInfo.parse(filterInfo);
-        const sortInfoCls = SortInfo.parse(sortInfo);
-
-        const onRowSelect = (checked, rowIndex) => callbacks.onRowSelect && callbacks.onRowSelect(checked, rowIndex);
-        const onSelectAll = (checked) => callbacks.onSelectAll && callbacks.onSelectAll(checked);
-        const onSort = (cname) => {
-                if (callbacks.onSort) {
-                    callbacks.onSort(sortInfoCls.toggle(cname));
-                }
-            };
-
-        const onFilter = ({fieldKey, valid, value}) => {
-                if (callbacks.onFilter) {
-                    if (valid && !filterInfoCls.isEqual(fieldKey, value)) {
-                        filterInfoCls.setFilter(fieldKey, value);
-                        callbacks.onFilter(filterInfoCls.serialize());
-                    }
-                }
-            };
-
-        const colProps = pick(this.props, ['columns', 'data', 'selectable', 'selectInfoCls', 'callbacks', 'renderers']);
-        Object.assign(colProps, {columnWidths, filterInfoCls, sortInfoCls, showUnits, showFilters}, {onSort, onFilter, onRowSelect, onSelectAll});
+        // const filterInfoCls = FilterInfo.parse(filterInfo);
+        // const sortInfoCls = SortInfo.parse(sortInfo);
+        //
+        const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers,
+                                  columnWidths, filterInfo, sortInfo, showUnits, showFilters,
+                                  onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected};
 
         const headerHeight = 22 + (showUnits && 12) + (showFilters && 20);
         return (
@@ -137,7 +163,7 @@ export class BasicTableView extends React.Component {
                         scrollToRow={hlRowIdx}
                         width={widthPx}
                         height={heightPx}>
-                        { makeColumns(colProps) }
+                        { makeColumns(makeColumnsProps) }
                     </Table>
                 }
                 {showMask && <div style={{top: 0}} className='loading-mask'/>}
@@ -187,6 +213,9 @@ BasicTableView.defaultProps = {
     currentPage: -1
 };
 
+
+// components here on down are private.  not all props are defined.
+/* eslint-disable react/prop-types */
 const TextView = ({columns, data, showUnits, widthPx, heightPx}) => {
     const text = tableToText(columns, data, showUnits);
     return (
@@ -198,13 +227,13 @@ const TextView = ({columns, data, showUnits, widthPx, heightPx}) => {
     );
 };
 
-function makeColWidth(columns, data, showUnits) {
-    return !columns ? {} : columns.reduce((widths, col, cidx) => {
+function makeColWidth(columns, showUnits) {
+    return !columns ? {} : columns.reduce((widths, col) => {
         const label = col.name;
         var nchar = col.prefWidth;
         const unitLength = showUnits ? get(col, 'units.length', 0) : 0;
         if (!nchar) {
-            nchar = Math.max(label.length+2, unitLength+2, get(data, `0.${cidx}.length`, 0)); // 2 is for padding and sort symbol
+            nchar = Math.max(label.length+2, unitLength+2, get(col,'width', 0)); // 2 is for padding and sort symbol
         }
         widths[col.name] = nchar * 8;
         return widths;
@@ -212,7 +241,7 @@ function makeColWidth(columns, data, showUnits) {
 }
 
 function makeColumns ({columns, columnWidths, data, selectable, showUnits, showFilters, renderers,
-            selectInfoCls, filterInfoCls, sortInfoCls, onRowSelect, onSelectAll, onSort, onFilter}) {
+            selectInfoCls, filterInfo, sortInfo, onRowSelect, onSelectAll, onSort, onFilter, onFilterSelected}) {
     if (!columns) return false;
 
     var colsEl = columns.map((col, idx) => {
@@ -224,7 +253,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
             <Column
                 key={col.name}
                 columnKey={col.name}
-                header={<HeadRenderer {...{col, showUnits, showFilters, filterInfoCls, sortInfoCls, onSort, onFilter}} />}
+                header={<HeadRenderer {...{col, showUnits, showFilters, filterInfo, sortInfo, onSort, onFilter}} />}
                 cell={<CellRenderer data={data} col={idx} />}
                 fixed={false}
                 width={columnWidths[col.name]}
@@ -234,15 +263,16 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
         );
     });
     if (selectable) {
-        var cbox = <Column
+        const checked = selectInfoCls.isSelectAll();
+        var cbox = (<Column
             key='selectable-checkbox'
             columnKey='selectable-checkbox'
-            header={<SelectableHeader checked={selectInfoCls.isSelectAll()} onSelectAll={onSelectAll} />}
+            header={<SelectableHeader {...{checked, onSelectAll, showUnits, showFilters, onFilterSelected}} />}
             cell={<SelectableCell selectInfoCls={selectInfoCls} onRowSelect={onRowSelect} />}
             fixed={true}
             width={25}
             allowCellsRecycling={true}
-        />;
+        />);
         colsEl.splice(0, 0, cbox);
     }
     return colsEl;

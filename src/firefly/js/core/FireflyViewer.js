@@ -32,6 +32,7 @@ import {dispatchAddSaga} from '../core/MasterSaga.js';
  * <li><b>menu</b>:  menu is an array of menu items {label, action, icon, desc, type}.  Leave type blank for dropdown.  If type='COMMAND', it will fire the action without triggering dropdown.</li>
  * <li><b>appTitle</b>:  The title of the FireflyViewer.  It will appears at top left of the banner. Defaults to 'Firefly'. </li>
  * <li><b>appIcon</b>:  A url string to the icon to appear on the banner. </li>
+ * <li><b>footer</b>:   A react elements to place on the footer when the menu drop down. </li>
  * <li><b>searchPanels</b>:  An array of additional react elements which are mapped to a menu item's action. </li>
  * <li><b>views</b>:  The type of result view.  Choices are 'images', 'tables', and 'xyPlots'.  They can be combined with ' | ', i.e.  'images | tables'</li>
  *
@@ -80,7 +81,7 @@ export class FireflyViewer extends Component {
 
     render() {
         var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown,
-                searchPanels, views} = this.state;
+                searchPanels, views, footer, style} = this.state;
         const {visible, view} = dropDown || {};
         const searches = getDropDownNames();
 
@@ -88,11 +89,12 @@ export class FireflyViewer extends Component {
             return (<div style={{top: 0}} className='loading-mask'/>);
         } else {
             return (
-                <div id='App' className='rootStyle'>
+                <div id='App' className='rootStyle' style={style}>
                     <header>
                         <BannerSection {...{menu, appTitle, appIcon, altAppIcon}}/>
                         <DropDownContainer
                             key='dropdown'
+                            footer={footer}
                             visible={!!visible}
                             selected={view}
                             {...{searches, searchPanels} } />
@@ -117,8 +119,10 @@ FireflyViewer.propTypes = {
     appTitle: PropTypes.string,
     appIcon: PropTypes.string,
     altAppIcon: PropTypes.string,
+    footer: PropTypes.element,
     searchPanels: PropTypes.arrayOf(PropTypes.element),
-    views: PropTypes.string     // combination of LO_VIEW separated by ' | '.  ie. 'images | tables'.
+    views: PropTypes.string,     // combination of LO_VIEW separated by ' | '.  ie. 'images | tables'.
+    style: PropTypes.object
 };
 
 FireflyViewer.defaultProps = {

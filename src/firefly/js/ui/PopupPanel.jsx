@@ -10,6 +10,8 @@ import ReactDOM from 'react-dom';
 import {getPopupPosition, humanStart, humanMove, humanStop } from './PopupPanelHelper.js';
 import './PopupPanel.css';
 
+import DEL_ICO from 'html/images/blue_delete_10x10.gif';
+
 
 export const LayoutType= new Enum(['CENTER', 'TOP_EDGE_CENTER', 'TOP_CENTER', 'TOP_LEFT', 'TOP_RIGHT', 'NONE', 'USER_POSITION']);
 
@@ -160,7 +162,7 @@ export var PopupPanel= React.createClass(
                                 </div>
                             </div>
                             <image className={'popup-panel-header'}
-                                   src= {`${getRootURL()}images/blue_delete_10x10.gif`}
+                                   src= {DEL_ICO}
                                    style= {{position:'absolute', right:'0px', top:'0px'}}
                                    onClick={this.askParentToClose} />
 

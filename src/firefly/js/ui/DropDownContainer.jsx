@@ -84,6 +84,7 @@ export class DropDownContainer extends Component {
     }
 
     render() {
+        const {footer} = this.props;
         var { visible, selected }= this.state;
         var view = dropDownMap[selected];
 
@@ -93,8 +94,12 @@ export class DropDownContainer extends Component {
                 <div className='DD-ToolBar__content'>
                     {view}
                 </div>
-
-                <Footers />
+                <div id='footer' className='DD-ToolBar__footer'>
+                    {footer}
+                    <div className='DD-ToolBar__version'>
+                        {getVersion()}
+                    </div>
+                </div>
             </div>
         );
     }
@@ -104,47 +109,11 @@ DropDownContainer.propTypes = {
     visible: PropTypes.bool,
     selected: PropTypes.string,
     searches: PropTypes.arrayOf(PropTypes.string),
-    searchPanels: PropTypes.arrayOf(PropTypes.element)
+    searchPanels: PropTypes.arrayOf(PropTypes.element),
+    footer: PropTypes.node
 };
 DropDownContainer.defaultProps = {
     visible: false
-};
-
-
-
-
- const Footers = (props) => {
-    return (
-        <div id='footer' className='DD-ToolBar__footer'>
-            <div className='DD-ToolBar__footer--links'>
-                <ul>
-                    <li><a href='https://irsasupport.ipac.caltech.edu/' target='helpdesk'>Contact</a></li>
-                    <li><a href='http://irsa.ipac.caltech.edu/privacy.html' target='privacy'>Privacy Policy</a></li>
-                    <li><a href='http://irsa.ipac.caltech.edu/ack.html' target='ack'>Acknowledge IRSA</a></li>
-                </ul>
-            </div>
-            <div className='DD-ToolBar__footer--icons'>
-                <a href='http://www.ipac.caltech.edu/'
-                   alt='Infrared Processing and Analysis Center' target='ipac'
-                   title='Infrared Processing and Analysis Center'><img alt='Icon_ipac'
-                                                                        src='images/footer/icon_ipac-white-78x60.png'/></a>
-                <a href='http://www.caltech.edu/'
-                   alt='California Institute of Technology'
-                   target='caltech' title='California Institute of Technology'><img
-                    alt='Icon_caltech' src='images/footer/icon_caltech-new.png'/></a>
-                <a href='http://www.jpl.nasa.gov/' alt='Jet Propulsion Laboratory'
-                   target='jpl' title='Jet Propulsion Laboratory'><img alt='Icon_jpl'
-                                                                       src='images/footer/icon_jpl-white-91x60.png'/></a>
-                <a href='http://www.nasa.gov/'
-                   alt='National Aeronautics and Space Administration' target='nasa'
-                   title='National Aeronautics and Space Administration'><img
-                    alt='Icon_nasa' src='images/footer/icon_nasa-white-59x60.png'/></a>
-            </div>
-            <div className='DD-ToolBar__version'>
-                {getVersion()}
-            </div>
-        </div>
-    );
 };
 
 const Alerts = (props) => {

@@ -1,4 +1,5 @@
 import React, {PropTypes} from 'react';
+import {has} from 'lodash';
 
 import {InputFieldView} from './InputFieldView.jsx';
 
@@ -30,7 +31,8 @@ export class InputField extends React.Component {
         const value = e.target.value;
         const nState = {fieldKey, value};
         if (shouldAct(e, actOn)) {
-            var {valid, message} = validator ? validator(value) : {valid:true, message:''};
+            var {valid, message, ...others} = validator ? validator(value) : {valid:true, message:''};
+            has(others, 'value') && (nState.value = others.value);    // allow the validator to modify the value.. useful in auto-correct.
             nState.valid = valid;
             nState.message = valid ? '' : (label + message).replace('::', ':');
             onChange && onChange(nState);

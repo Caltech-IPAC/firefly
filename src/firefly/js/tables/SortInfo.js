@@ -1,12 +1,6 @@
-/**
- * Created by loi on 1/15/16.
- */
-
-
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-const sortInfo_regex = new RegExp('\\s*(\\S+),(\\S+)');
 export const SORT_ASC = 'ASC';
 export const SORT_DESC = 'DESC';
 export const UNSORTED = '';
@@ -28,7 +22,7 @@ export const UNSORTED = '';
      * @returns {*}
      */
     getDirection(colName) {
-        if (this.sortColumns.includes(colName)) {
+        if (this.sortColumns[0] === colName) {
             return this.direction;
         } else {
             return UNSORTED;
@@ -41,7 +35,8 @@ export const UNSORTED = '';
      * @returns {string}
      */
     toggle(colName) {
-        const dir = this.getDirection(colName);
+        const name = colName.split(',')[0].trim();
+        const dir = this.getDirection(name);
         const direction = dir === UNSORTED ? SORT_ASC :
                           dir === SORT_ASC ? SORT_DESC : UNSORTED;
         const sortColumns = UNSORTED ? [] : [colName];
@@ -54,10 +49,10 @@ export const UNSORTED = '';
 
     static parse(sortInfo) {
         if (sortInfo) {
-            const parts = sortInfo.trim().match(sortInfo_regex);
+            const parts = sortInfo.split(',').map((s) => s.trim());
             if (parts) {
-                const direction = parts[1] && parts[1].toUpperCase();
-                const sortColumns = parts[2] && parts[2].split(',');
+                const direction = parts[0] && parts[0].toUpperCase();
+                const sortColumns = parts[1] && parts.slice(1);
                 return new SortInfo(direction, sortColumns);
             }
         } else {

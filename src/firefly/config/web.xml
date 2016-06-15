@@ -134,7 +134,7 @@
     </servlet-mapping>
 
     <servlet>
-        <servlet-class>edu.caltech.ipac.firefly.server.servlets.SearchServices</servlet-class>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.JsonSearchServices</servlet-class>
         <servlet-name>FireFly SearchService</servlet-name>
     </servlet>
     <servlet-mapping>

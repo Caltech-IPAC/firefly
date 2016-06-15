@@ -24,11 +24,12 @@ export function uiReducer(state={ui:{}}, action={}) {
             const {options} = action.payload || {}; 
             return Object.assign(root, {[tbl_ui_id]:{tbl_ui_id, tbl_id, ...options}});
 
-        case (Cntlr.TABLE_NEW)    :
-        case (Cntlr.TABLE_UPDATE) :
-        case (Cntlr.TABLE_REPLACE):
-        case (Cntlr.TABLE_SELECT)  :
-        case (Cntlr.TABLE_NEW_LOADED)  :
+        case (Cntlr.TABLE_NEW)      :
+        case (Cntlr.TABLE_SORT)     :
+        case (Cntlr.TABLE_UPDATE)   :
+        case (Cntlr.TABLE_REPLACE)  :
+        case (Cntlr.TABLE_SELECT)   :
+        case (Cntlr.TABLE_NEW_LOADED) :
         case (Cntlr.TABLE_HIGHLIGHT)  :
             // state is in-progress(fresh) data.. use it to reduce ui state.
             return uiStateReducer(root, get(state, ['data', tbl_id]));

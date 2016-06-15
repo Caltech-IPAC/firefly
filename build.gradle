@@ -12,3 +12,7 @@ subprojects {
 
 apply from: "$fireflyPath/buildScript/utils.gincl"
 
+task purge << {
+  println('Removes all firefly build directories.')
+  delete "${fireflyPath}/build", "${fireflyPath}/jars/build", "${fireflyPath}/node_modules"
+}

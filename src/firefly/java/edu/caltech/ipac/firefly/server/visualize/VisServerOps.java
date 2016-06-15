@@ -7,12 +7,12 @@ import edu.caltech.ipac.firefly.data.BandInfo;
 import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
+import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.ClientFitsHeader;
@@ -47,11 +47,7 @@ import edu.caltech.ipac.visualize.draw.HistogramDisplay;
 import edu.caltech.ipac.visualize.draw.Metric;
 import edu.caltech.ipac.visualize.draw.Metrics;
 import edu.caltech.ipac.visualize.plot.*;
-import nom.tam.fits.BasicHDU;
-import nom.tam.fits.Fits;
-import nom.tam.fits.FitsException;
-import nom.tam.fits.Header;
-import nom.tam.fits.HeaderCard;
+import nom.tam.fits.*;
 import nom.tam.util.Cursor;
 
 import java.awt.*;
@@ -876,12 +872,12 @@ public class VisServerOps {
         DataType comment = new DataType("Comments", String.class);
         DataType keyword = new DataType("Keyword", String.class);
         DataType value = new DataType("Value", String.class);
-        comment.getFormatInfo().setWidth(80);
-        value.getFormatInfo().setWidth(80);
-        keyword.getFormatInfo().setWidth(68);
-        DataType[] types = new DataType[]{
-                new DataType("#", Integer.class),
-                keyword, value, comment};
+        DataType num = new DataType("#", Integer.class);
+        comment.getFormatInfo().setWidth(30);
+        value.getFormatInfo().setWidth(10);
+        keyword.getFormatInfo().setWidth(10);
+        num.getFormatInfo().setWidth(3);
+        DataType[] types = new DataType[]{num, keyword, value, comment};
         DataGroup dg = new DataGroup("Headers - " + name, types);
 
         int i = 0;
@@ -946,10 +942,11 @@ public class VisServerOps {
      * DM-4494
      *
      * @param state
-     * @return
+     * @param f
+     *@param tableID @return
      */
 
-    public static Map  getFitsHeaderExtend(PlotState state) throws FitsException {
+    private static Map  getFitsHeaderExtend(PlotState state, File f, String tableID) throws FitsException {
         HashMap<String, DataGroup> dataMap = new HashMap<String, DataGroup>();
         ActiveCallCtx ctx = null;
 
@@ -960,9 +957,11 @@ public class VisServerOps {
             for (Band band : state.getBands()) {
                 FitsRead fr = plot.getHistogramOps(band, ctx.getFitsReadGroup()).getFitsRead();
                 DataGroup dg = getFitsHeaders(fr.getHeader(), plot.getPlotDesc());
+                dg.addAttribute("source", ServerContext.replaceWithPrefix(f));
+                dg.addAttribute("fileSize", String.valueOf(f.length()));
+                dg.addAttribute(TableServerRequest.TBL_ID, tableID + '-' + band.name());
 
                 dataMap.put(band.name(), dg);
-
             }
           return dataMap;
 
@@ -981,12 +980,10 @@ public class VisServerOps {
      * @return
      */
 
-    public static  Object[] getFitsHeader(PlotState state, String tableID) throws FitsException {
+    public static HashMap<String, DataGroup> getFitsHeader(PlotState state, String tableID) throws FitsException {
 
 
         HashMap<String, DataGroup> dataMap = new HashMap<String, DataGroup>();
-
-        HashMap<String, TableMeta> metaMap = new HashMap<String, TableMeta>();
         try {
             for (Band band : state.getBands()) {
                 File f = PlotStateUtil.getWorkingFitsFile(state, band);
@@ -995,25 +992,21 @@ public class VisServerOps {
                 TableServerRequest  request = new TableServerRequest("fitsHeaderTale");
                 request.setTblId(tableID);
 
-                TableMeta meta = new TableMeta("fitsHeader");
-                meta.setFileSize(f.length());
-                meta.setAttribute(TableServerRequest.TBL_ID, tableID + '-' + band.name());
-
-                metaMap.put(band.name(), meta);
                 BasicHDU hdu[] = fits.read();
                 Header header = hdu[0].getHeader();
                 if (header.containsKey("EXTEND") && header.getBooleanValue("EXTEND")) {
-                    dataMap = (HashMap<String, DataGroup>) getFitsHeaderExtend(state);
+                    dataMap = (HashMap<String, DataGroup>) getFitsHeaderExtend(state, f, tableID);
                 } else {
                     DataGroup dg = getFitsHeaders(header, "fits data");
-
+                    dg.addAttribute("source", ServerContext.replaceWithPrefix(f));
+                    dg.addAttribute("fileSize", String.valueOf(f.length()));
+                    dg.addAttribute(TableServerRequest.TBL_ID, tableID + '-' + band.name());
                     dataMap.put(band.name(), dg);
                 }
             }
 
             ////LZcounters.incrementVis("Fits header");
-            Object[] mapObj =  {dataMap, metaMap};
-            return mapObj;
+            return dataMap;
 
         }
         catch (Exception e  ) {

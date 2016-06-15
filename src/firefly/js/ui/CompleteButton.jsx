@@ -45,12 +45,10 @@ export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
                           closeOnValid=true, dialogId,includeUnmounted= false,
                           style={}}, context) {
     if (!groupKey && context) groupKey= context.groupKey;
+    const onComplete = () => onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,includeUnmounted);
     return (
         <div style={style}>
-            <button type='button' className='button-hl'  onClick={() =>
-                                    onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,includeUnmounted)}>
-                <b>{text}</b>
-            </button>
+            <button type='button' className='button std hl'  onClick={onComplete}>{text}</button>
         </div>
     );
 }

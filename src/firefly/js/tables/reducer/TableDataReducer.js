@@ -30,9 +30,11 @@ export function dataReducer(state={data:{}}, action={}) {
         case (Cntlr.TABLE_UPDATE)  :
             return TblUtil.smartMerge(root, {[tbl_id] : action.payload});
 
-        case (Cntlr.TABLE_NEW)  :
+        case (Cntlr.TABLE_NEW)      :
+        case (Cntlr.TABLE_SORT)     :
         case (Cntlr.TABLE_REPLACE)  :
-            const nTable = Object.assign({isFetching:false, selectInfo: SelectInfo.newInstance({}).data},action.payload);
+            const rowCount = action.payload.totalRows || get(action, 'payload.tableData.data.length', 0);
+            const nTable = Object.assign({isFetching:false, selectInfo: SelectInfo.newInstance({rowCount}).data},action.payload);
             return updateSet(root, [tbl_id], nTable);
 
         case (Cntlr.TABLE_REMOVE)  :

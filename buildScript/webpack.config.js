@@ -10,10 +10,24 @@ import fs from 'fs';
 
 var exclude_dirs = [/node_modules/, /java/, /python/, /config/, /test/];
 
-function makeWebpackConfig(config) {
+/**
+ * A helper function to create the webpack config object to be sent to webpack module bundler. 
+ * @param {Object}  config configuration parameters used to create the webpack config object.
+ * @param {string}  config.src  source directory
+ * @param {string}  config.firefly_root  Firefly's build root
+ * @param {string}  [config.firefly_dir]  Firefly's JS source directory
+ * @param {Object}  [config.alias]  additional alias
+ * @param {boolean=true} [config.use_loader]  generate a loader to load compiled JS script(s).  Defautls to true
+ * @param {string}  [config.project]  project name
+ * @param {string}  [config.filename]  name of the generated JS script.
+ * @returns {Object} a webpack config object.
+ */
+export default function makeWebpackConfig(config) {
     
     // setting defaults
-    config.firefly_dir = config.firefly_dir || config.src;
+    config.src = config.src || __dirname;
+    config.firefly_root = config.firefly_root || path.resolve(config.src, '../..');
+    config.firefly_dir = config.firefly_dir || path.resolve(config.firefly_root, 'src/firefly');
     config.project = config.project || path.resolve(config.src, '../../');
 
     var def_config = {
@@ -229,11 +243,6 @@ function makeWebpackConfig(config) {
 
 
 
-
-export default makeWebpackConfig;
-
-
-
 function firefly_loader(loadScript, outpath, debug=true) {
     return function () {
         this.plugin('done', function (stats) {
@@ -249,7 +258,7 @@ function firefly_loader(loadScript, outpath, debug=true) {
                     }`;
             }
             var content = fs.readFileSync(loadScript);
-            content += `\nloadScript('/${cxt_name}/${cxt_name}-${hash}.js'${callback});`;
+            content += `\nloadScript('/${cxt_name}/firefly-${hash}.js'${callback});`;
             var loader = path.join(outpath, 'firefly_loader.js');
             fs.writeFileSync(loader, content);
         });

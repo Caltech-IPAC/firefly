@@ -64,13 +64,13 @@ export class TriViewPanel extends Component {
         const searchDesc = (showImages && showXyPlots && showTables) ?
             (<div>
                 <div style={ {display: 'inline-block', float: 'right'} }>
-                    <button type='button' className='button-std'
+                    <button type='button' className='button std'
                             onClick={() => dispatchSetLayoutMode(LO_MODE.standard, LO_VIEW.get('tables | images | xyPlots'))}>tri-view</button>
-                    <button type='button' className='button-std'
+                    <button type='button' className='button std'
                             onClick={() => dispatchSetLayoutMode(LO_MODE.standard, LO_VIEW.get('tables | images'))}>img-tbl</button>
-                    <button type='button' className='button-std'
+                    <button type='button' className='button std'
                             onClick={() => dispatchSetLayoutMode(LO_MODE.standard, LO_VIEW.get('images | xyPlots'))}>img-xy</button>
-                    <button type='button' className='button-std'
+                    <button type='button' className='button std'
                             onClick={() => dispatchSetLayoutMode(LO_MODE.standard, LO_VIEW.get('tables | xyPlots'))}>xy-tbl</button>
                 </div>
             </div>)

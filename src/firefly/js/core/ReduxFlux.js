@@ -8,9 +8,9 @@ import thunkMiddleware from 'redux-thunk';
 import loggerMiddleware from 'redux-logger';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
 import * as AppDataCntlr  from './AppDataCntlr.js';
+import * as LayoutCntlr  from './LayoutCntlr.js';
 import {recordHistory} from './History.js';
-import {LAYOUT_PATH, reducer as layoutReducer}  from './LayoutCntlr.js';
-import FieldGroupCntlr, {valueChangeActionCreator,multiValueChangeActionCreator} 
+import FieldGroupCntlr, {valueChangeActionCreator,multiValueChangeActionCreator}
                                       from '../fieldGroup/FieldGroupCntlr.js';
 import * as MouseReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
 import ImagePlotCntlr, {IMAGE_PLOT_KEY,
@@ -85,7 +85,7 @@ const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,Dis
  */
 const reducers = {
     [AppDataCntlr.APP_DATA_PATH]: AppDataCntlr.reducer,
-    [LAYOUT_PATH]: layoutReducer,
+    [LayoutCntlr.LAYOUT_PATH]: LayoutCntlr.reducer,
     [FieldGroupCntlr.FIELD_GROUP_KEY]: FieldGroupCntlr.reducer,
     [IMAGE_PLOT_KEY]: ImagePlotCntlr.reducer,
     [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer,
@@ -106,6 +106,7 @@ let redux = null;
 // pre-map a set of action => creator prior to boostraping.
 actionCreators.set(AppDataCntlr.APP_LOAD, AppDataCntlr.loadAppData);
 actionCreators.set(AppDataCntlr.HELP_LOAD, AppDataCntlr.onlineHelpLoad);
+actionCreators.set(LayoutCntlr.SHOW_DROPDOWN, LayoutCntlr.showDropDownCreator);
 actionCreators.set(FieldGroupCntlr.VALUE_CHANGE, FieldGroupCntlr.valueChangeActionCreator);
 actionCreators.set(FieldGroupCntlr.MULTI_VALUE_CHANGE, multiValueChangeActionCreator);
 actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.extensionActivateActionCreator);

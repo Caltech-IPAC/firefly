@@ -300,13 +300,11 @@ public class VisServerCommands {
             //TableServerRequest req=TableServerRequest.parse(sp.getRequired(ServerParams.FITS_HEADER));
             PlotState state= sp.getState();
 
-           Object[]  dataInfo = VisServerOps.getFitsHeader(state, tableID);
-           HashMap<String, DataGroup> dataGroupMap= (HashMap<String, DataGroup> ) dataInfo[0];
-           HashMap<String, TableMeta> metaMap = ( HashMap<String, TableMeta> ) dataInfo[1];
+           HashMap<String, DataGroup> dataGroupMap = VisServerOps.getFitsHeader(state, tableID);
 
            TableServerRequest treq = new TableServerRequest("fitsHeaderTale");
            treq.setPageSize(Integer.MAX_VALUE);
-           return JsonTableUtil.toJsonTableModelMap(dataGroupMap, metaMap, treq).toJSONString();
+           return JsonTableUtil.toJsonTableModelMap(dataGroupMap, treq).toJSONString();
 
 
         }

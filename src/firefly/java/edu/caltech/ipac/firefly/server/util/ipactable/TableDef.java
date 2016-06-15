@@ -1,10 +1,13 @@
 package edu.caltech.ipac.firefly.server.util.ipactable;
 
+import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -15,18 +18,16 @@ import java.util.List;
 */
 public class TableDef {
     private List<DataType> cols = new ArrayList<DataType>();
-    private ArrayList<DataGroup.Attribute> attributes = new ArrayList<DataGroup.Attribute>();
+    private HashMap<String, DataGroup.Attribute> attributes = new HashMap<>();
     private int lineWidth;
     private int rowCount;
-    private int colCount;
     private int rowStartOffset;
-    private String sourceFile;
     private int lineSepLength;
 
     public void addAttributes(DataGroup.Attribute... attributes) {
         if (attributes != null) {
             for(DataGroup.Attribute a : attributes) {
-                this.attributes.add(a);
+                this.attributes.put(a.getKey(), a);
             }
         }
     }
@@ -36,20 +37,18 @@ public class TableDef {
         return cols;
     }
 
-    public void addCols(DataType col) {
-        cols.add(col);
+    public List<DataGroup.Attribute> getAttributes() {
+        return  new ArrayList<>(attributes.values());
     }
 
-    public List<DataGroup.Attribute> getAttributes() {
-        return attributes;
-    }
+    public boolean contains(String name) { return attributes.containsKey(name);};
 
     public void setAttribute(String name, String value) {
-        DataGroup.Attribute att = getAttribute(name);
-        if (att != null) {
-            attributes.remove(att);
-        }
-        attributes.add(new DataGroup.Attribute(name, value));
+        attributes.put(name, new DataGroup.Attribute(name, value));
+    }
+
+    public void removeAttribute(String name) {
+        attributes.remove(name);
     }
 
     public void setStatus(DataGroupPart.State status) {
@@ -57,10 +56,7 @@ public class TableDef {
     }
 
     DataGroup.Attribute getAttribute(String key) {
-        for (DataGroup.Attribute at : attributes) {
-            if (at.getKey().equals(key)) return at;
-        }
-        return null;
+        return attributes.get(key);
     }
 
     public void ensureStatus() {
@@ -109,11 +105,52 @@ public class TableDef {
     }
 
     public String getSource() {
-        return sourceFile;
+        DataGroup.Attribute source = getAttribute("source");
+        return source != null ? source.getValue() : null;
     }
 
     public void setSource(String sourceFile) {
-        this.sourceFile = sourceFile;
+        setAttribute("source", sourceFile);
+    }
+
+    public void setMetaTo(TableMeta meta) {
+        if (meta == null) return;
+        if (contains("groupByCols")) {
+            meta.setGroupByCols(StringUtils.asList(getAttribute("groupByCols").getValue(), ","));
+        }
+        if (contains("relatedCols")) {
+            meta.setRelatedCols(StringUtils.asList(getAttribute("relatedCols").getValue(), ","));
+        }
+        if (contains("fileSize")) {
+            meta.setFileSize(Long.parseLong(getAttribute("fileSize").getValue()));
+        }
+        if (getSource() != null) {
+            meta.setSource(getSource());
+        }
+        meta.setIsLoaded(Boolean.parseBoolean(getAttribute("isFullyLoaded").getValue()));
+        for (String key : meta.getAttributes().keySet()) {
+            setAttribute(key, meta.getAttribute(key));
+        }
+    }
+
+    public void getMetaFrom(TableMeta meta) {
+        if (meta == null) return;
+        if (meta.getGroupByCols().size() > 0) {
+            setAttribute("groupByCols", StringUtils.toString(meta.getGroupByCols()));
+        }
+        if (meta.getRelatedCols().size() > 0) {
+            setAttribute("relatedCols", StringUtils.toString(meta.getRelatedCols()));
+        }
+        if (meta.getFileSize() > 0) {
+            setAttribute("fileSize", String.valueOf( meta.getFileSize()) );
+        }
+        if (meta.getSource() != null) {
+            setSource(meta.getSource());
+        }
+        setAttribute("isFullyLoaded", String.valueOf(meta.isLoaded()));
+        for (String key : meta.getAttributes().keySet()) {
+            setAttribute(key, meta.getAttribute(key));
+        }
     }
 }
 /*
