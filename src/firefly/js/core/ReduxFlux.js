@@ -36,10 +36,10 @@ import DrawLayerCntlr, {makeDetachLayerActionCreator,
                         regionCreateLayerActionCreator,
                         regionDeleteLayerActionCreator,
                         regionUpdateEntryActionCreator,
-                        markerToolAttachActionCreator,
                         markerToolStartActionCreator,
                         markerToolMoveActionCreator,
-                        markerToolEndActionCreator} from '../visualize/DrawLayerCntlr.js';
+                        markerToolEndActionCreator,
+                        markerToolCreateLayerActionCreator} from '../visualize/DrawLayerCntlr.js';
 import MultiViewCntlr, {IMAGE_MULTI_VIEW_KEY} from '../visualize/MultiViewCntlr.js';
 import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from '../core/ComponentCntlr.js';
 import {masterSaga} from './MasterSaga.js';
@@ -137,10 +137,10 @@ actionCreators.set(XYPlotCntlr.LOAD_PLOT_DATA, XYPlotCntlr.loadPlotData);
 
 actionCreators.set(DrawLayerCntlr.SELECT_AREA_END, selectAreaEndActionCreator);
 actionCreators.set(DrawLayerCntlr.DT_END, distanceToolEndActionCreator);
-actionCreators.set(DrawLayerCntlr.MARKER_ATTACH, markerToolAttachActionCreator);
 actionCreators.set(DrawLayerCntlr.MARKER_START, markerToolStartActionCreator);
 actionCreators.set(DrawLayerCntlr.MARKER_MOVE, markerToolMoveActionCreator);
 actionCreators.set(DrawLayerCntlr.MARKER_END, markerToolEndActionCreator);
+actionCreators.set(DrawLayerCntlr.MARKER_CREATE, markerToolCreateLayerActionCreator);
 
 actionCreators.set(DrawLayerCntlr.REGION_CREATE_LAYER, regionCreateLayerActionCreator);
 actionCreators.set(DrawLayerCntlr.REGION_DELETE_LAYER, regionDeleteLayerActionCreator);

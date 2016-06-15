@@ -8,16 +8,15 @@ import SelectBox from './SelectBox.js';
 import ShapeDataObj from './ShapeDataObj.js';
 import FootprintObj from './FootprintObj.js';
 import DirectionArrowDrawObj from './DirectionArrowDrawObj.js';
-
-
-
+import MarkerObj from './MarkerObj.js';
 
 export var drawTypes= {
     [POINT_DATA_OBJ] : PointDataObj.draw,
     [SelectBox.SELECT_BOX] : SelectBox.draw,
     [FootprintObj.FOOTPRINT_OBJ] : FootprintObj.draw,
     [DirectionArrowDrawObj.DIR_ARROW_DRAW_OBJ] : DirectionArrowDrawObj.draw,
-    [ShapeDataObj.SHAPE_DATA_OBJ] : ShapeDataObj.draw
+    [ShapeDataObj.SHAPE_DATA_OBJ] : ShapeDataObj.draw,
+    [MarkerObj.MARKER_DATA_OBJ] : MarkerObj.draw
 };
 
 class DrawOp {

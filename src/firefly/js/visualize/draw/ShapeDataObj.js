@@ -454,7 +454,7 @@ export function getValueInScreenPixel(plot, arcsecValue) {
  * @param drawParams
  * @param onlyAddToPath
  */
-function drawShape(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath) {
+export function drawShape(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath) {
 
     switch (drawObj.sType) {
         case ShapeType.Text:
@@ -507,7 +507,7 @@ function drawLine(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath) {
         if (!onlyAddToPath || style===Style.HANDLED) DrawUtil.stroke(ctx);
     }
 
-    if (text && inView) {
+    if (!isNil(text) && inView) {
         const textLocPt= makeTextLocationLine(plot, textLoc, fontSize,pts[0], pts[1]);
         drawText(drawObj, drawTextAry, plot, plot.getViewPortCoords(textLocPt),
                 drawParams);
@@ -529,7 +529,7 @@ function drawLine(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath) {
  */
 function drawCircle(drawObj, ctx, drawTextAry, plot, drawParams) {
     var {pts, text, radius, renderOptions}= drawObj;
-    var {color, lineWidth, textLoc, unitType,}= drawParams;
+    var {color, lineWidth, fontSize, textLoc, unitType,}= drawParams;
 
 
     var inView= false;
@@ -571,8 +571,8 @@ function drawCircle(drawObj, ctx, drawTextAry, plot, drawParams) {
         }
     }
 
-    if (text && inView && centerPt) {
-        var textPt= makeTextLocationCircle(plot,textLoc,centerPt,screenRadius);
+    if (!isNil(text) && inView && centerPt) {
+        var textPt= makeTextLocationCircle(plot,textLoc, fontSize, centerPt, (screenRadius+lineWidth));
         drawText(drawObj, drawTextAry, plot,textPt, drawParams);
     }
 }
@@ -771,7 +771,7 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
         }
     }
 
-    if (text && inView) {
+    if (!isNil(text) && inView) {
         var textPt= makeTextLocationRectangle(plot, textLoc, fontSize, centerPt, w, h, angle, lineWidth);
         drawText(drawObj, drawTextAry, plot, textPt, drawParams);
     }
@@ -868,7 +868,7 @@ function drawEllipse(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPath
 
     }
 
-    if (text && inView) {
+    if (!isNil(text) && inView) {
         var textPt= makeTextLocationEllipse(plot, textLoc, fontSize, centerPt, w, h, angle, lineWidth);
         drawText(drawObj, drawTextAry, plot, textPt, drawParams);
     }
@@ -896,7 +896,7 @@ function drawCompositeObject(drawObj, ctx, drawTextAry, plot, drawParams, onlyAd
     }
 
     // draw the text asscociated with the shape, find the overal covered area first
-    if (text) {
+    if (!isNil(text)) {
         var objArea = getDrawobjArea(drawObj, plot);
 
         if (objArea && isAreaInView(objArea, plot)) {
@@ -920,19 +920,21 @@ function drawCompositeObject(drawObj, ctx, drawTextAry, plot, drawParams, onlyAd
  * @param screenRadius
  * @return {null}
  */
-function makeTextLocationCircle(plot, textLoc, centerPt, screenRadius) {
+function makeTextLocationCircle(plot, textLoc, fontSize, centerPt, screenRadius) {
     var scrCenPt= plot.getScreenCoords(centerPt);
     if (!scrCenPt || screenRadius<1) return null;
     var opt;
+    var fHeight = fontHeight(fontSize);
+
     switch (textLoc) {
         case TextLocation.CIRCLE_NE:
-            opt= makeOffsetPt(-1*screenRadius, -1*(screenRadius+10));
+            opt= makeOffsetPt(-1*screenRadius, -1*(screenRadius+fHeight));
             break;
         case TextLocation.CIRCLE_NW:
-            opt= makeOffsetPt(screenRadius, -1*(screenRadius));
+            opt= makeOffsetPt(screenRadius, -1*(screenRadius+fHeight) );
             break;
         case TextLocation.CIRCLE_SE:
-            opt= makeOffsetPt(-1*screenRadius, screenRadius+5);
+            opt= makeOffsetPt(-1*screenRadius, screenRadius);
             break;
         case TextLocation.CIRCLE_SW:
             opt= makeOffsetPt(screenRadius, screenRadius);
