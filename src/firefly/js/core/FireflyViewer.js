@@ -58,7 +58,6 @@ export class FireflyViewer extends Component {
     }
 
     componentDidMount() {
-        this.mounted = true;
         dispatchOnAppReady((state) => {
             onReady({state, menu: this.props.menu, views: this.props.views});
         });
@@ -85,7 +84,7 @@ export class FireflyViewer extends Component {
         const {visible, view} = dropDown || {};
         const searches = getDropDownNames();
 
-        if (!isReady || !this.mounted) {
+        if (!isReady) {
             return (<div style={{top: 0}} className='loading-mask'/>);
         } else {
             return (
