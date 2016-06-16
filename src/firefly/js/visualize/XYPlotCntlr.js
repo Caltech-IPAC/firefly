@@ -41,6 +41,8 @@ const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
          xyPlotParams: {
            title: string
            xyRatio: number
+           nbins {x,y}
+           shading: string (lin|log)
            selection: {xMin, xMax, yMin, yMax} // currently selected rectangle
            zoom: {xMin, xMax, yMin, yMax} // currently zoomed rectangle
            stretch: string (fit|fill)
@@ -49,18 +51,12 @@ const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
                 label
                 unit
                 options: [grid,log,flip]
-                nbins
-                min
-                max
               }
            y: {
                 columnOrExpr
                 label
                 unit
                 options: [grid,log,flip]
-                nbins
-                min
-                max
            }
      }
  */
@@ -244,11 +240,19 @@ function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams, chartId
         limits = [xMin, xMax, yMin, yMax];
     }
 
+    let maxBins = 10000;
+    let xyRatio = xyPlotParams.xyRatio || 1.0;
+    if (xyPlotParams.nbins) {
+        const {x, y} = xyPlotParams.nbins;
+        maxBins = x*y;
+        xyRatio = x/y;
+    }
+
     const req = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']), {
         'startIdx' : 0,
         'pageSize' : 1000000,
         //'inclCols' : `${xyPlotParams.x.columnOrExpr},${xyPlotParams.y.columnOrExpr}`, // ignored if 'decimate' is present
-        'decimate' : serializeDecimateInfo(xyPlotParams.x.columnOrExpr, xyPlotParams.y.columnOrExpr, 10000, 1.0, ...limits)
+        'decimate' : serializeDecimateInfo(xyPlotParams.x.columnOrExpr, xyPlotParams.y.columnOrExpr, maxBins, xyRatio, ...limits)
     });
 
     req.tbl_id = `xy-${chartId}`;

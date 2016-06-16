@@ -3,7 +3,7 @@
  */
 import React, {PropTypes} from 'react';
 
-import {get} from 'lodash';
+import {get, isUndefined, omitBy} from 'lodash';
 
 import ColValuesStatistics from './ColValuesStatistics.js';
 import CompleteButton from '../ui/CompleteButton.jsx';
@@ -18,6 +18,8 @@ import {FieldGroupCollapsible} from '../ui/panel/CollapsiblePanel.jsx';
 import {plotParamsShape} from  './XYPlot.jsx';
 
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
+
+const DECI_ENABLE_SIZE = 5000;
 
 /*
  * Split content into prior content and the last alphanumeric token in the text
@@ -82,7 +84,8 @@ var XYPlotOptions = React.createClass({
         if (!yLabel) { yLabel = yName; }
         if (!yUnit) {yUnit = this.getUnit(yName); }
 
-
+        const nbinsX = get(flds, ['nbins.x']);
+        const nbinsY = get(flds, ['nbins.y']);
 
         /*
           const axisParamsShape = PropTypes.shape({
@@ -90,24 +93,25 @@ var XYPlotOptions = React.createClass({
              label : PropTypes.string,
              unit : PropTypes.string,
              options : PropTypes.string, // ex. 'grid,log,flip'
-             nbins : PropTypes.number,
-             min : PropTypes.number,
-             max : PropTypes.number
           });
 
           const xyPlotParamsShape = PropTypes.shape({
-             xyRatio : PropTypes.number,
+             xyRatio : PropTypes.string,
              stretch : PropTypes.oneOf(['fit','fill']),
+             nbins : PropTypes.shape({x : PropTypes.number, y : PropTypes.number}),
+             shading : PropTypes.oneOf(['lin', 'log']),
              x : axisParamsShape,
              y : axisParamsShape
           });
           */
-        const xyPlotParams = {
-            xyRatio : flds.xyRatio ? flds.xyRatio : undefined,
+        const xyPlotParams = omitBy({
+            xyRatio : flds.xyRatio || undefined,
             stretch : flds.stretch,
+            nbins : (nbinsX && nbinsY) ? {x: Number(nbinsX), y: Number(nbinsY)} : undefined,
+            shading: flds.shading || undefined,
             x : { columnOrExpr : xName, label : xLabel, unit : xUnit, options : xOptions},
             y : { columnOrExpr : yName, label : yLabel, unit : yUnit, options : yOptions}
-        };
+        }, isUndefined);
 
         this.props.onOptionsSelected(xyPlotParams);
     },
@@ -116,6 +120,52 @@ var XYPlotOptions = React.createClass({
         // TODO: do I need to do anything here?
     },
 
+    renderBinningOptions() {
+        const { colValStats, groupKey, xyPlotParams }= this.props;
+        const displayBinningOptions = Boolean(colValStats.find((el) => { return el.numpoints>DECI_ENABLE_SIZE; }));
+        if (displayBinningOptions) {
+            return ( <FieldGroupCollapsible  header='Binning Options'
+                                    initialState= {{ value:'closed' }}
+                                    fieldKey='binningOptions'>
+                <ValidationField style={{width:50}}
+                    initialState= {{
+                        value: get(xyPlotParams, 'nbins.x', 100),
+                        validator: Validate.intRange.bind(null, 1, 500, 'X-Bins'),
+                        tooltip: 'Number of bins along X axis',
+                        label : 'X-Bins:'
+                    }}
+                    fieldKey='nbins.x'
+                    groupKey={groupKey}
+                    labelWidth={60}/>
+                <ValidationField style={{width:50}}
+                    initialState= {{
+                        value: get(xyPlotParams, 'nbins.y', 100),
+                        validator: Validate.intRange.bind(null, 1, 500, 'Y-Bins'),
+                        tooltip: 'Number of bins along Y axis',
+                        label : 'Y-Bins:'
+                    }}
+                    fieldKey='nbins.y'
+                    groupKey={groupKey}
+                    labelWidth={60}/>
+                <br/>
+                <RadioGroupInputField
+                    alignment='horizontal'
+                    initialState= {{
+                        value: get(xyPlotParams, 'shading', 'log'),
+                        tooltip: 'When assigning shades to the number of bins, should we use linear or logarithmic scale?',
+                        label : 'Shading:'
+                    }}
+                    options={[
+                        {label: 'Linear', value: 'lin'},
+                        {label: 'Logarithmic', value: 'log'}
+                    ]}
+                    fieldKey='shading'
+                    groupKey={groupKey}
+                    labelWidth={60}
+                />
+            </FieldGroupCollapsible> );
+        } else { return null; }
+    },
 
     render() {
         const { colValStats, groupKey, xyPlotParams }= this.props;
@@ -274,7 +324,7 @@ var XYPlotOptions = React.createClass({
                     <ValidationField style={{width:50}}
                         initialState= {{
                             value: get(xyPlotParams, 'xyRatio'),
-                            validator: Validate.intRange.bind(null, 1, 10, 'X/Y ratio'),
+                            validator: Validate.floatRange.bind(null, 1, 10, 1, 'X/Y ratio'),
                             tooltip: 'X/Y ratio',
                             label : 'X/Y ratio:'
                         }}
@@ -297,6 +347,7 @@ var XYPlotOptions = React.createClass({
                         groupKey={groupKey}
                         labelWidth={60}
                     />
+                    {this.renderBinningOptions()}
                     <br/>
 
                     <CompleteButton groupKey={groupKey}

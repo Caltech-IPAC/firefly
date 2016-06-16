@@ -34,9 +34,21 @@ export function* syncCharts() {
             case TablesCntlr.TABLE_SORT:
             case TablesCntlr.TABLE_NEW_LOADED:
                 const {tbl_id} = action.payload;
-                tableStatsState = flux.getState()[TableStatsCntlr.TBLSTATS_DATA_KEY];
-                if (has(tableStatsState, tbl_id)) {
-                    TableStatsCntlr.dispatchLoadTblStats(request);
+
+                // table statistics and histogram data do not change on table sort
+                if (action.type !== TablesCntlr.TABLE_SORT) {
+                    tableStatsState = flux.getState()[TableStatsCntlr.TBLSTATS_DATA_KEY];
+                    if (has(tableStatsState, tbl_id)) {
+                        TableStatsCntlr.dispatchLoadTblStats(request);
+                    }
+
+                    histogramState = flux.getState()[HistogramCntlr.HISTOGRAM_DATA_KEY];
+                    Object.keys(histogramState).forEach((cid) => {
+                        if (histogramState[cid].tblId === tbl_id) {
+                            const histogramParams = histogramState[cid].histogramParams;
+                            HistogramCntlr.dispatchLoadColData(cid, histogramParams, request);
+                        }
+                    });
                 }
 
                 xyPlotState = flux.getState()[XYPlotCntlr.XYPLOT_DATA_KEY];
@@ -47,13 +59,6 @@ export function* syncCharts() {
                     }
                 });
 
-                histogramState = flux.getState()[HistogramCntlr.HISTOGRAM_DATA_KEY];
-                Object.keys(histogramState).forEach((cid) => {
-                    if (histogramState[cid].tblId === tbl_id) {
-                        const histogramParams = histogramState[cid].histogramParams;
-                        HistogramCntlr.dispatchLoadColData(cid, histogramParams, request);
-                    }
-                });
                 break;
         }
     }

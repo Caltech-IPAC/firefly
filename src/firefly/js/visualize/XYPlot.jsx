@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isUndefined, debounce} from 'lodash';
+import {isUndefined, debounce, get} from 'lodash';
 import shallowequal from 'shallowequal';
 import React, {PropTypes} from 'react';
 import ReactHighcharts from 'react-highcharts/bundle/highcharts';
@@ -15,10 +15,7 @@ export const axisParamsShape = PropTypes.shape({
     columnOrExpr : PropTypes.string,
     label : PropTypes.string,
     unit : PropTypes.string,
-    options : PropTypes.string, // ex. 'grid,log,flip'
-    nbins : PropTypes.number,
-    min : PropTypes.number,
-    max : PropTypes.number
+    options : PropTypes.string // ex. 'grid,log,flip'
 });
 
 export const selectionShape = PropTypes.shape({
@@ -33,6 +30,8 @@ export const plotParamsShape = PropTypes.shape({
     stretch : PropTypes.oneOf(['fit','fill']),
     selection : selectionShape,
     zoom : selectionShape,
+    nbins : PropTypes.shape({x : PropTypes.number, y : PropTypes.number}),
+    shading : PropTypes.oneOf(['lin', 'log']),
     x : axisParamsShape,
     y : axisParamsShape
 });
@@ -49,11 +48,11 @@ const plotDataShape = PropTypes.shape({
     idStr: PropTypes.string
 });
 
-const UNSELECTED = 'unselected';
+const DATAPOINTS = 'data';
 const SELECTED = 'selected';
 const HIGHLIGHTED = 'highlighted';
 
-const unselectedColor = 'rgba(63, 127, 191, 0.5)';
+const datapointsColor = 'rgba(63, 127, 191, 0.5)';
 const selectedColor = 'rgba(21, 138, 15, 0.5)';
 const highlightedColor = 'rgba(250, 243, 40, 1)';
 const selectionRectColor = 'rgba(165, 165, 165, 0.5)';
@@ -102,7 +101,10 @@ const getWeightBasedGroup = function(weight, minWeight, maxWeight, logShading=tr
     // should not reach
 };
 
-
+const getWeightedDataDescr = function(defaultDescr, numericData, minWeight, maxWeight, logShading) {
+    if (numericData.length < 1) { return defaultDescr; }
+    return getWeightBasedGroup(numericData[0].weight, minWeight, maxWeight, logShading, false);
+};
 
 const getXAxisOptions = function(params) {
     const xTitle = params.x.label + (params.x.unit ? ', ' + params.x.unit : '');
@@ -144,7 +146,7 @@ const selFinite = (v1, v2) => {return Number.isFinite(v1) ? v1 : v2;};
  @param options {object} has hD - half difference between width and height of the rectangle
  */
 ReactHighcharts.Highcharts.SVGRenderer.prototype.symbols.rectangle = function (x, y, w, h, options) {
-    const hD = !isUndefined(options.hD) ? options.hD : Math.round(h/4);
+    const hD = get(options, 'hD', Math.round(h/4));
     // SVG path for the rectangle
     return [
         'M', x, y+hD,
@@ -198,8 +200,8 @@ export class XYPlot extends React.Component {
 
     shouldComponentUpdate(nextProps) {
         const {data, width, height, params, highlighted, selectInfo, desc} = this.props;
-        if (nextProps.data !== data ||
-            (nextProps.selectInfo !== selectInfo && !data.decimateKey)) {
+        // only rerender when plot data change
+        if (nextProps.data !== data) {
             return true;
         } else {
             const chart = this.refs.chart && this.refs.chart.getChart();
@@ -208,6 +210,23 @@ export class XYPlot extends React.Component {
                 if (newDesc !== desc) {
                     chart.setTitle(newDesc, undefined, false);
                 }
+
+                // selection change (selection is not supported for decimated data)
+                if (data && data.rows && !data.decimateKey && nextProps.selectInfo !== selectInfo) {
+                    const selectedData = [];
+                    if (nextProps.selectInfo) {
+                        const selectInfoCls = SelectInfo.newInstance(nextProps.selectInfo, 0);
+                        data.rows.forEach((arow, idx) => {
+                            if (selectInfoCls.isSelected(idx)) {
+                                const nrow = arow.map(toNumber);
+                                selectedData.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
+                            }
+                        });
+                    }
+                    chart.get(SELECTED).setData(selectedData);
+                }
+
+                // highlight change
                 if (!shallowequal(highlighted, newHighlighted)) {
                     const highlightedData = [];
                     if (!isUndefined(newHighlighted)) {
@@ -216,6 +235,8 @@ export class XYPlot extends React.Component {
                     chart.get(HIGHLIGHTED).setData(highlightedData);
                 }
 
+
+                // plot parameters change
                 if (params !== newParams) {
                     const xoptions = {};
                     const yoptions = {};
@@ -247,6 +268,7 @@ export class XYPlot extends React.Component {
 
                 }
 
+                // size change
                 if (newWidth !== width || newHeight !== height) {
                     const {chartWidth, chartHeight} = this.calculateChartSize(newWidth, newHeight);
                     chart.setSize(chartWidth, chartHeight, false);
@@ -300,7 +322,7 @@ export class XYPlot extends React.Component {
                     // update marker's size
                     const {xUnitPx, yUnitPx} = getDeciSymbolSize(chart, data.decimateKey);
                     chart.series.forEach((series) => {
-                        series.name.includes(UNSELECTED) && series.update({
+                        series.name.includes(DATAPOINTS) && series.update({
                             marker: {radius: xUnitPx/2.0, hD: (xUnitPx-yUnitPx)/2.0}}, false);
                     });
                     chart.redraw();
@@ -361,7 +383,7 @@ export class XYPlot extends React.Component {
     makeSeries(chart) {
         //const chart = this.refs.chart && this.refs.chart.getChart();
         if (chart) {
-            const {data, selectInfo, highlighted, onHighlightChange} = this.props;
+            const {data, params, selectInfo, highlighted, onHighlightChange} = this.props;
             const {rows, decimateKey, weightMin, weightMax} = data;
 
             let allSeries, marker;
@@ -388,32 +410,35 @@ export class XYPlot extends React.Component {
                 let pushFunc;
                 if (selectInfo) {
                     const selectInfoCls = SelectInfo.newInstance(selectInfo, 0);
-                    // split data into selected and unselected
+                    // set all and selected data
                     pushFunc = (numdata, nrow, idx) => {
-                        selectInfoCls.isSelected(idx) ?
-                            numdata.selected.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]}) :
-                            numdata.unselected.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
+                        numdata.all.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
+                        if (selectInfoCls.isSelected(idx)) {
+                            numdata.selected.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
+                        }
                     };
                 } else {
                     pushFunc = (numdata, nrow) => {
-                        numdata.unselected.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
+                        numdata.all.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
                     };
                 }
                 const numericData = rows.reduce((numdata, arow, idx) => {
                     const nrow = arow.map(toNumber);
                     pushFunc(numdata, nrow, idx);
                     return numdata;
-                }, {selected: [], unselected: []});
+                }, {selected: [], all: []});
+
 
                 marker = {symbol: 'circle'};
                 allSeries = [
                     {
-                        id: UNSELECTED,
-                        name: UNSELECTED,
-                        color: unselectedColor,
-                        data: numericData.unselected,
+                        id: DATAPOINTS,
+                        name: DATAPOINTS,
+                        color: datapointsColor,
+                        data: numericData.all,
                         marker,
                         turboThreshold: 0,
+                        showInLegend: false,
                         point
                     },
                     {
@@ -423,6 +448,7 @@ export class XYPlot extends React.Component {
                         data: numericData.selected,
                         marker,
                         turboThreshold: 0,
+                        showInLegend: false,
                         point
                     }
                 ];
@@ -445,7 +471,7 @@ export class XYPlot extends React.Component {
                 for (var i= 0, l = rows.length; i < l; i++) {
                     const nrow = rows[i].map(toNumber);
                     const weight = nrow[3];
-                    const group = getWeightBasedGroup(weight, weightMin, weightMax);
+                    const group = getWeightBasedGroup(weight, weightMin, weightMax, params.shading==='log');
                     const {x,y} = getCenter(nrow[0], nrow[1]);
                     numericDataArr[group-1].push({x, y, rowIdx: nrow[2], weight});
                 }
@@ -455,12 +481,13 @@ export class XYPlot extends React.Component {
 
                 allSeries = numericDataArr.map((numericData, idx) => {
                     return {
-                        id: UNSELECTED+idx,
-                        name: UNSELECTED+idx,
+                        id: DATAPOINTS+idx,
+                        name: getWeightedDataDescr(DATAPOINTS+idx, numericData, weightMin, weightMax, params.shading==='log'),
                         color: weightBasedColors[idx],
                         data: numericData,
                         marker,
                         turboThreshold: 0,
+                        showInLegend: numericData.length>0 && (xUnitPx<20 && yUnitPx<20), // legend symbol size can not be adjusted as of now
                         point
                     };
                 });
@@ -474,7 +501,8 @@ export class XYPlot extends React.Component {
                 name: HIGHLIGHTED,
                 color: highlightedColor,
                 marker: {symbol: 'circle', lineColor: '#404040', lineWidth: 1, radius: 5},
-                data: highlightedData
+                data: highlightedData,
+                showInLegend: false
             }, true, false);
         }
     }
@@ -531,7 +559,13 @@ export class XYPlot extends React.Component {
                 enabled: true
             },
             legend: {
-                enabled: false
+                enabled: true,
+                align: 'right',
+                layout: 'vertical',
+                verticalAlign: 'top',
+                symbolHeight: 12,
+                symbolWidth: 12,
+                symbolRadius: 6
             },
             title: {
                 text: desc
@@ -592,7 +626,8 @@ export class XYPlot extends React.Component {
                 name: 'minmax',
                 color: '#f0f0f0',
                 marker: {radius: 2},
-                data: [[selFinite(xMin, xDataMin), selFinite(yMin,yDataMin)], [selFinite(xMax, xDataMax), selFinite(yMax,yDataMax)]]
+                data: [[selFinite(xMin, xDataMin), selFinite(yMin,yDataMin)], [selFinite(xMax, xDataMax), selFinite(yMax,yDataMax)]],
+                showInLegend: false
             }],
             credits: {
                 enabled: false // removes a reference to Highcharts.com from the chart
