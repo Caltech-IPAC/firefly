@@ -13,7 +13,7 @@ import {has, get} from 'lodash';
 var idCnt=0;
 
 const markerItem = {
-    marker: {label: 'Marker'}
+    marker: {label: 'Marker'}     // TODO: add more items for footprint cases
 };
 
 function displayItemText(itemName) {

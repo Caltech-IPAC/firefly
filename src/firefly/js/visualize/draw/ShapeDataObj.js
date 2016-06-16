@@ -529,7 +529,7 @@ function drawLine(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath) {
  */
 function drawCircle(drawObj, ctx, drawTextAry, plot, drawParams) {
     var {pts, text, radius, renderOptions}= drawObj;
-    var {color, lineWidth, fontSize, textLoc, unitType,}= drawParams;
+    var {color, lineWidth, fontSize, textLoc, unitType}= drawParams;
 
 
     var inView= false;
@@ -916,6 +916,7 @@ function drawCompositeObject(drawObj, ctx, drawTextAry, plot, drawParams, onlyAd
  * locate text for circle, return the location in screen coordinate
  * @param plot
  * @param textLoc
+ * @param fontSize
  * @param centerPt
  * @param screenRadius
  * @return {null}

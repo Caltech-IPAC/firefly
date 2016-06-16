@@ -64,7 +64,7 @@ class MarkerToolUI extends React.Component {
                                                   onChange={this.changeMarkerText}/>
                 </div>
                 <div style={tStyle}> Corners:
-                    <select defaultValue={TextLocation.CIRCLE_SE.key} onChange={ this.changeMarkerTextLocation }>
+                    <select value={this.state.markerTextLoc} onChange={ this.changeMarkerTextLocation }>
                         <option value={TextLocation.CIRCLE_NE.key}> NE </option>
                         <option value={TextLocation.CIRCLE_NW.key}> NW </option>
                         <option value={TextLocation.CIRCLE_SE.key}> SE </option>
@@ -88,5 +88,5 @@ MarkerToolUI.propTypes= {
 };
 
 MarkerToolUI.defaultProps={
-    markerType    : 'marker'
+    markerType    : 'marker'      // could be set for marker or other footprint cases
 };

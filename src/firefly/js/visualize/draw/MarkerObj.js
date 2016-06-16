@@ -46,6 +46,18 @@ function make(sType) {
 
 var getWorldOrImage = (pt, cc) => (cc.projection.isSpecified() ? cc.getWorldCoords(pt) : cc.getImageCoords(pt));
 
+/**
+ * make drawObj for Marker with handlers or not. Marker is defined as a circle with 4 handlers at the corners
+ * @param centerPt
+ * @param width
+ * @param height
+ * @param isHandler
+ * @param plot
+ * @param text
+ * @param textLoc
+ * @param unitType
+ * @returns {*}
+ */
 export function makeMarker(centerPt, width, height, isHandler, plot, text, textLoc, unitType = ShapeDataObj.UnitType.PIXEL) {
     var dObj = Object.assign(make(MarkerType.Marker), {pts: [centerPt], width, height, unitType});
     var retval;

@@ -18,12 +18,10 @@ import {getMarkerToolUIComponent} from './MarkerToolUI.jsx';
 import Enum from 'enum';
 
 
-const editHelpText=
-'Click center and drage to move, click corner and drage to resize';
-
+const editHelpText='Click center and drage to move, click corner and drage to resize';
 
 const MARKER_SIZE = 40;      // marker original size in screen coordinate (radius of a circle)
-const markerInterval = 3000; // time interval for showing marker with handlers and no handlerss
+const markerInterval = 3000; // time interval for showing marker with handlers and no handlers
 const ID= 'OVERLAY_MARKER';
 const TYPE_ID= 'OVERLAY_MARKER_TYPE';
 const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,null,getMarkerToolUIComponent);
@@ -41,18 +39,21 @@ var getWorldOrImage = (pt, cc) => (isWorld(cc) ? cc.getWorldCoords(pt) : cc.getI
 
 var idCnt=0;
 
+
+var cancelTimeoutProcess = (toP) => { if (toP) clearTimeout(toP); };
+
 export function markerToolCreateLayerActionCreator(rawAction) {
     return (dispatcher) => {
         var {plotId,
              markerId: drawLayerId,
              layerTitle:Title, attachPlotGroup} = rawAction.payload;
-
         var dl = getDrawLayerById(getDlAry(), drawLayerId);
 
         if (!dl) {
             dispatchCreateDrawLayer(TYPE_ID, {Title, drawLayerId});
         }
 
+        // plotId could be an array or single value
         var pId = (!plotId || (isArray(plotId)&&plotId.length === 0)) ? get(visRoot(), 'activePlotId') :
                                                                         isArray(plotId) ? plotId[0] : plotId;
 
@@ -85,7 +86,7 @@ export function markerToolStartActionCreator(rawAction) {
         var wpt;
         var {markerStatus, currentSize, currentPt, timeoutProcess, drawLayerId} = drawLayer;
 
-        if (timeoutProcess) cancelTimeoutProcess(timeoutProcess);
+        cancelTimeoutProcess(timeoutProcess);
 
         if (markerStatus === MarkerStatus.attached)  {             // marker moves to the mouse down position
             wpt = getWorldOrImage(imagePt, cc);
@@ -99,7 +100,8 @@ export function markerToolStartActionCreator(rawAction) {
                 var nextStatus = idx === 0 ? MarkerStatus.relocate : MarkerStatus.resize;
 
                 wpt = getWorldOrImage(currentPt, cc);
-                // makrer stays at current position
+
+                // makrer stays at current position for further mouse drag (resize or relocate) or mouse up
                 showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_START, evenSize(currentSize), wpt, plotId,
                                    nextStatus, markerInterval, drawLayerId);
             }
@@ -119,14 +121,14 @@ export function markerToolEndActionCreator(rawAction) {
         var cc = getCC(plotId);
         var {markerStatus, currentSize, currentPt, timeoutProcess, drawLayerId} = drawLayer;
 
-        if (timeoutProcess) cancelTimeoutProcess(timeoutProcess);
+        cancelTimeoutProcess(timeoutProcess);
 
-        // mouse stay at current position and size
+        // marker stays at current position and size
         if (markerStatus === MarkerStatus.relocate || markerStatus === MarkerStatus.resize) {
             var wpt = getWorldOrImage(currentPt, cc);
 
             showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_END, evenSize(currentSize), wpt, plotId,
-                MarkerStatus.select, markerInterval, drawLayerId);
+                               MarkerStatus.select, markerInterval, drawLayerId);
         }
     };
 }
@@ -143,7 +145,7 @@ export function markerToolMoveActionCreator(rawAction) {
         var cc = getCC(plotId);
         var {markerStatus, currentSize: newSize, currentPt: wpt, timeoutProcess, drawLayerId} = drawLayer;
 
-        if (timeoutProcess) cancelTimeoutProcess(timeoutProcess);
+        cancelTimeoutProcess(timeoutProcess);
 
         if (markerStatus === MarkerStatus.resize)  {               // mmarker stay at current point, and change size
             var screenCenter = cc.getScreenCoords(wpt);
@@ -151,14 +153,15 @@ export function markerToolMoveActionCreator(rawAction) {
         } else if (markerStatus === MarkerStatus.relocate) {      // marker move to new mouse down positon
             wpt = getWorldOrImage(imagePt, cc);
         }
+        // resize (newDize) or relocate (wpt),  status remains the same
         showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_MOVE, newSize, wpt, plotId,
-            markerStatus, 0, drawLayerId);
+                           markerStatus, 0, drawLayerId);
     };
 }
 
 
 /**
- *
+ * create drawing layer for a new marker
  * @return {Function}
  */
 function creator(initPayload) {
@@ -204,7 +207,6 @@ function getLayerChanges(drawLayer, action) {
 
     if (!drawLayerId || drawLayerId !== drawLayer.drawLayerId) return null;
     var dd = Object.assign({}, drawLayer.drawData);
-    var dl;
 
     switch (action.type) {
         case DrawLayerCntlr.MARKER_CREATE:
@@ -214,11 +216,11 @@ function getLayerChanges(drawLayer, action) {
             var data = get(dd, DataTypes.DATA);
             var {text, textLoc} = isEmpty(data) ? {} : data[0];
 
-            dl = createMarkerObjs(action, text, textLoc);
-            return dl;
-            //console.log('next marker status: ' + (get(dl, 'markerStatus') ? dl.markerStatus.key : 'null'));
+            return createMarkerObjs(action, text, textLoc);
+
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
             var {markerText, markerTextLoc} = action.payload.changes;
+
             return updateMarkerText(markerText, markerTextLoc, dd[DataTypes.DATA]);
     }
 }
@@ -233,12 +235,9 @@ function getLayerChanges(drawLayer, action) {
 function updateMarkerText(text, textLoc, markerDrawObj) {
     var textUpdatedObj = updateMarkerDrawObjText(markerDrawObj[0], text, textLoc);
 
-    if (textUpdatedObj) {
-        return {drawData: {data: [textUpdatedObj]}};
-    } else {
-        return null;
-    }
+    return textUpdatedObj? {drawData: {data: [textUpdatedObj]}} : null;
 }
+
 /**
  * make rectangle with the same width and height
  * @param size
@@ -246,6 +245,7 @@ function updateMarkerText(text, textLoc, markerDrawObj) {
  */
 var evenSize = (size) => {
     var s;
+
     if (size) {
         s = (isArray(size) && size.length > 1) ? Math.min(size[0], size[1]): size;
     } else {
@@ -254,11 +254,9 @@ var evenSize = (size) => {
     return [s, s];
 };
 
-var cancelTimeoutProcess = (toP) => { if (toP) clearTimeout(toP); };
-
 
 /**
- * dispatch action to locate marker with corners and no corner by timer interval on the draw layer
+ * dispatch action to locate marker with corners and no corner by timer interval on the drawing layer
  * @param dispatcher
  * @param actionType
  * @param size   in screen coordinate
