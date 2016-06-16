@@ -622,7 +622,7 @@ export function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
         var color = has(drawObj, 'color') ? drawObj.color : 'black';
         DrawUtil.drawText(drawTextAry, text, x, y, color, renderOptions,
                 fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle);
-        drawObj.textImgLoc = plot.getImageCoords(makeViewPortPt(x, y));
+        drawObj.textWorldLoc = plot.getImageCoords(makeViewPortPt(x, y));
     }
 }
 
