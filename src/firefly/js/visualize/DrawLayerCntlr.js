@@ -7,6 +7,7 @@ import {getPlotViewIdListInGroup, getDrawLayerById, getConnectedPlotsIds} from '
 import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
 import {without,union,omit,isEmpty} from 'lodash';
+import {clone} from '../util/WebUtil.js';
 
 
 export {selectAreaEndActionCreator} from '../drawingLayers/SelectArea.js';
@@ -54,16 +55,13 @@ const REGION_DELETE_LAYER = `${DRAWLAYER_PREFIX}.RegionPlot.deleteLayer`;
 const REGION_ADD_ENTRY = `${DRAWLAYER_PREFIX}.RegionPlot.addRegion`;
 const REGION_REMOVE_ENTRY = `${DRAWLAYER_PREFIX}.RegionPlot.removeRegion`;
 
-// makler and footprint
+// marker and footprint
 const MARKER_START = `${DRAWLAYER_PREFIX}.MarkerTool.markerStart`;
 const MARKER_MOVE = `${DRAWLAYER_PREFIX}.MarkerTool.markerMove`;
 const MARKER_END = `${DRAWLAYER_PREFIX}.MarkerTool.markerEnd`;
 const MARKER_CREATE= `${DRAWLAYER_PREFIX}.MarkerTool.markerCreate`;
 
 export const DRAWING_LAYER_KEY= 'drawLayers';
-
-const clone = (obj,params={}) => Object.assign({},obj,params);
-
 
 export function dlRoot() { return flux.getState()[DRAWING_LAYER_KEY]; }
 

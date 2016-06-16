@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {get, set, isArray, isEmpty} from 'lodash';
-import DrawLayerCntlr, {dispatchAttachLayerToPlot,
+import DrawLayerCntlr, {dlRoot, dispatchAttachLayerToPlot,
                         dispatchCreateDrawLayer, getDlAry} from '../visualize/DrawLayerCntlr.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
@@ -10,7 +10,7 @@ import DrawLayer, {DataTypes,ColorChangeType}  from '../visualize/draw/DrawLayer
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
+import {primePlot, getDrawLayerById, getAllDrawLayersForPlot} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {makeMarker, findClosestIndex,
         updateMarkerDrawObjText, MARKER_DISTANCE} from '../visualize/draw/MarkerObj.js';
@@ -192,7 +192,7 @@ function creator(initPayload) {
     };
     return  DrawLayer.makeDrawLayer( get(initPayload, 'drawLayerId', `${ID}-${idCnt}`),
                                     TYPE_ID, get(initPayload, 'Title', 'Marker Tool'),
-                                    options, drawingDef, actionTypes, pairs, exclusiveDef);
+                                    options, drawingDef, actionTypes, pairs, exclusiveDef, getCursor);
 }
 
 
@@ -225,8 +225,34 @@ function getLayerChanges(drawLayer, action) {
     }
 }
 
+const cornerCursor = ['pointer', 'nw-resize', 'ne-resize', 'se-resize', 'sw-resize'];
+
+function getCursor(plotView, screenPt) {
+    var dlAry = dlRoot().drawLayerAry.filter( (dl) => {
+        return (dl.drawLayerTypeId === TYPE_ID) && (get(dl, ['plotIdAry', '0'], '') === plotView.plotId);
+    });
+    const plot= primePlot(plotView);
+    var   cursor = '';
+    var cc= CsysConverter.make(plot);
+
+    dlAry.find( (dl) => {
+        var drawObj = get(dl, ['drawData', 'data', '0']);
+        var idx = findClosestIndex(screenPt, drawObj, cc);
+
+        console.log('idx =' + idx);
+        if (idx >= 0 && idx <= cornerCursor.length) {
+            cursor = cornerCursor[idx];
+            return true;
+        } else {
+            return false;
+        }
+    });
+    console.log('cursor = ' + cursor);
+    return cursor;
+}
+
 /**
- *
+ * update text in marker object
  * @param text
  * @param textLoc
  * @param markerDrawObj

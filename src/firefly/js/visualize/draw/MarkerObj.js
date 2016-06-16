@@ -38,6 +38,7 @@ function make(sType) {
         //obj.sType = MarkerType.Marker
         //obj.unitType = UnitType.PIXEL;
         //obj.includeHandler = true|false
+        //obj.handlerIndex // handler starting index
         //obj.textLoc= TextLocation.CIRCLE_SE
         //obj.textOffset= null;   // offsetScreenPt
         //obj.drawObjAry= array of ShapeDataObj
@@ -70,27 +71,25 @@ export function makeMarker(centerPt, width, height, isHandler, plot, text, textL
     mainCircle = Object.assign(mainCircle, textProps);
     retval = [mainCircle];    // circle is the first element in the marker's drawobj array
 
-    dObj.includeHandler = isHandler ? 1 : 0; // start index of handler object
+    dObj.includeHandler = isHandler; // start index of handler object
+    dObj.handlerIndex = 1;
 
+    var cc = CsysConverter.make(plot);
+    var corners = [[-1, 1], [1, 1], [1, -1], [-1, -1]];
+    var imgPt = cc.getImageCoords(centerPt);
+    var nW = (width)/(2 * cc.zoomFactor);
+    var nH = (height)/(2 * cc.zoomFactor);
 
-    if (isHandler) {
-        var cc = CsysConverter.make(plot);
-        var corners = [[-1, 1], [1, 1], [-1, -1], [1, -1]];
-        var imgPt = cc.getImageCoords(centerPt);
-        var nW = (width)/(2 * cc.zoomFactor);
-        var nH = (height)/(2 * cc.zoomFactor);
+    retval = corners.reduce((prev, coord) => {
+        var x = imgPt.x + coord[0] * nW;
+        var y = imgPt.y + coord[1] * nH;
 
-        retval = corners.reduce((prev, coord) => {
-            var x = imgPt.x + coord[0] * nW;
-            var y = imgPt.y + coord[1] * nH;
-
-            var handlerCenter = getWorldOrImage(makeImagePt(x, y), cc);
-            var handlerBox = ShapeDataObj.makeRectangleByCenter(handlerCenter, HANDLER_BOX, HANDLER_BOX,
-                                 ShapeDataObj.UnitType.PIXEL, 0.0, ShapeDataObj.UnitType.ARCSEC, false);
-            prev.push(handlerBox);
-            return prev;
-        }, retval);
-    }
+        var handlerCenter = getWorldOrImage(makeImagePt(x, y), cc);
+        var handlerBox = ShapeDataObj.makeRectangleByCenter(handlerCenter, HANDLER_BOX, HANDLER_BOX,
+                             ShapeDataObj.UnitType.PIXEL, 0.0, ShapeDataObj.UnitType.ARCSEC, false);
+        prev.push(handlerBox);
+        return prev;
+    }, retval);
 
     dObj.drawObjAry = retval;
     markerTextOffset(dObj);
@@ -199,7 +198,7 @@ export default {
  */
 export function findClosestIndex(screenPt, drawObj, cc) {
     var distance = MARKER_DISTANCE;
-    if (!has(drawObj, 'drawObjAry')) {
+    if (!drawObj || !has(drawObj, 'drawObjAry')) {
         return -1;
     }
 
@@ -227,10 +226,11 @@ export function findClosestIndex(screenPt, drawObj, cc) {
  */
 function drawMarkerObject(drawObj, ctx, drawTextAry, plot, def, vpPtM, onlyAddToPath) {
     var {drawObjAry}= drawObj;
+    var dObjs = (drawObj.includeHandler) ? drawObjAry : drawObjAry.slice(0, drawObj.handlerIndex);
 
     // draw the child drawObj
-    if (drawObjAry) {
-        drawObjAry.forEach( (oneDrawObj) => DrawOp.draw(oneDrawObj, ctx, drawTextAry, plot, def, vpPtM, onlyAddToPath));
+    if (dObjs) {
+        dObjs.forEach( (oneDrawObj) => DrawOp.draw(oneDrawObj, ctx, drawTextAry, plot, def, vpPtM, onlyAddToPath));
     }
 }
 
@@ -286,49 +286,42 @@ function rotateMakerAround(plot,drawObj,angle,worldPt) {
     };
 
     var newPt = rotateAroundPt(drawObjPt);
-    var handlers = null;
 
     // regenerate 4 handlers on the corners of the rectangular coverage after rotation
-    if (drawObj.includeHandler > 0) {
-        var w = drawObj.width/(2*plot.zoomFactor);    // half of width in image coordinate
-        var h = drawObj.height/(2*plot.zoomFactor);   // half of height in image coordinate
-        var corners = [[-1, 1], [1, 1], [1, -1], [-1, -1]];
-        var rotatedCorners = corners.map( (oneCorner) => {    // corners after rotation
-            var x = oneCorner[0] * w + drawObjPt.x;   // 4 corners before rotation on image coordinate
-            var y = oneCorner[1] * h + drawObjPt.y;
+    var handlers = drawObj.drawObjAry.slice(drawObj.handlerIndex);
+    var rotatedCorners = handlers.map( (oneCorner) => {    // corners after rotation
+          return rotateAroundPt(plot.getImageCoords(oneCorner.pts));
+    });
 
-            return rotateAroundPt(makeImagePt(x, y));
-        });
+    // rectangular coverage after rotation in image coordinate
+    var {min_x, min_y, max_x, max_y} = rotatedCorners.reduce((prev, corner) => {
+        if (!has(prev, 'min_x') || corner.x < prev.min_x ) {
+            prev.min_x = corner.x;
+        }
+        if (!has(prev, 'max_x') || corner.x > prev.max_x ) {
+            prev.max_x = corner.x;
+        }
+        if (!has(prev, 'min_y') || corner.y < prev.min_y ) {
+            prev.min_y = corner.y;
+        }
+        if (!has(prev, 'max_y') || corner.y > prev.max_y ) {
+            prev.max_y = corner.y;
+        }
+        return prev;
+    }, {});
 
-        // rectangular coverage after rotation in image coordinate
-        var {min_x, min_y, max_x, max_y} = rotatedCorners.reduce((prev, corner) => {
-            if (!has(prev, 'min_x') || corner.x < prev.min_x ) {
-                prev.min_x = corner.x;
-            }
-            if (!has(prev, 'max_x') || corner.x > prev.max_x ) {
-                prev.max_x = corner.x;
-            }
-            if (!has(prev, 'min_y') || corner.y < prev.min_y ) {
-                prev.min_y = corner.y;
-            }
-            if (!has(prev, 'max_y') || corner.y > prev.max_y ) {
-                prev.max_y = corner.y;
-            }
-            return prev;
-        }, {});
-
-        corners = [[min_x, max_y], [max_y, max_y], [max_x, min_y], [min_x, min_y]];   // corners of rectangular coverage
-        handlers = corners.map( (corner) => {
-            return ShapeDataObj.makeRectangleByCenter(getWorldOrImage(makeImagePt(corner[0], corner[1]), plot),
+    // create new handlers at the new corners
+    var corners = [[min_x, max_y], [max_x, max_y], [max_x, min_y], [min_x, min_y]];   // corners of rectangular coverage
+    handlers = corners.map( (corner) => {
+        return ShapeDataObj.makeRectangleByCenter(getWorldOrImage(makeImagePt(corner[0], corner[1]), plot),
                 HANDLER_BOX, HANDLER_BOX, ShapeDataObj.UnitType.PIXEL, 0.0, ShapeDataObj.UnitType.ARCSEC, false);
-        });
-    }
+    });
 
     drawObj.pts = [newPt];
 
     // rotate each shape drawObj contained inside
     if (has(drawObj, 'drawObjAry')) {
-        var dAry = drawObj.includeHandler > 0 ? drawObj.drawObjAry.slice(drawObj.includeHandler): drawObj.drawObjAry;
+        var dAry =  drawObj.drawObjAry.slice(0, drawObj.handlerIndex);
 
         dAry = dAry.map((oneObj) => {
             var {pts} = oneObj;                             // rotate pts around worldPt
@@ -337,11 +330,10 @@ function rotateMakerAround(plot,drawObj,angle,worldPt) {
                     return rotateAroundPt(ptImg);
                 });
             var newObj = Object.assign({}, oneObj, {pts: newPts});
-            updateShapeAngle(newObj, angle);               // update angle for the shape which has angle property
-            return newObj;
+            return updateShapeAngle(newObj, angle);               // update angle for the shape which has angle property
         });
 
-        drawObj.drawObjAry = handlers ? [...dAry,...handlers] : dAry;
+        drawObj.drawObjAry = [...dAry,...handlers];
         return drawObj.drawObjAry;
     }
     return null;
@@ -352,6 +344,7 @@ function updateShapeAngle(drawObj, angle) {
         drawObj.sType === ShapeDataObj.ShapeType.Ellipse) {
         drawObj.angle = angle;
     }
+    return drawObj;
 }
 
 /**

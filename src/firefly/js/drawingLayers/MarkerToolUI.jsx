@@ -17,7 +17,7 @@ class MarkerToolUI extends React.Component {
     constructor(props) {
         super(props);
 
-        var markerText = get(this.props.drawLayer, ['drawData', 'data', '0', 'text'], '');
+        var markerText = get(this.props.drawLayer, 'title');
         var markerTextLoc = get(this.props.drawLayer, ['drawData', 'data', '0', 'textLoc'], defaultMarkerTextLoc);
 
         this.state = {markerText,  markerTextLoc: markerTextLoc.key};
@@ -33,6 +33,7 @@ class MarkerToolUI extends React.Component {
         if (isNil(markerText)) markerText = '';
         this.setState({markerText});
 
+        this.props.drawLayer.title = markerText;
         dispatchModifyCustomField( this.props.drawLayer.drawLayerId,
                     {markerText, markerTextLoc: TextLocation.get(this.state.markerTextLoc)}, this.props.pv.plotId);
     }
