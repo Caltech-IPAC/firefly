@@ -144,6 +144,6 @@ const hPref= ['http', 'https', '/', 'file'];
 const isFull= function (url) {
     url = url.toLowerCase();
     return hPref.some( (s) => url.startsWith(s));
-}
+};
 
 
