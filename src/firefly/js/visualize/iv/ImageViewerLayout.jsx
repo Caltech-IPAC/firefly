@@ -34,7 +34,7 @@ export class ImageViewerLayout extends Component {
     constructor(props) {
         super(props);
         this.plotDrag= null;
-        this.mouseOwnerLayer= null;
+        this.mouseOwnerLayerId= null;
         this.eventCB= this.eventCB.bind(this);
         this.state= {cursor:DEFAULT_CURSOR};
     }
@@ -84,14 +84,16 @@ export class ImageViewerLayout extends Component {
         var list= drawLayersAry.filter( (dl) => dl.visiblePlotIdAry.includes(plotView.plotId) &&
                                                 get(dl,['mouseEventMap',mouseState.key],false) );
 
-        if (this.mouseOwnerLayer && draggingOrReleasing(mouseState)) { // use layer from the mouseDown
-            fireMouseEvent(this.mouseOwnerLayer,mouseState,mouseStatePayload);
+        if (this.mouseOwnerLayerId && draggingOrReleasing(mouseState)) { // use layer from the mouseDown
+            const dl= getLayer(drawLayersAry,this.mouseOwnerLayerId);
+            fireMouseEvent(dl,mouseState,mouseStatePayload);
         }
         else {
             const ownerCandidate= findMouseOwner(list,primePlot(plotView),screenPt);         // see if anyone can own that mouse
-            this.mouseOwnerLayer = DOWN.is(mouseState) ? ownerCandidate : null;   // can only happen on mouseDown
-            if (this.mouseOwnerLayer) {
-                fireMouseEvent(this.mouseOwnerLayer,mouseState,mouseStatePayload);
+            this.mouseOwnerLayerId = DOWN.is(mouseState) && ownerCandidate ? ownerCandidate.drawLayerId : null;   // can only happen on mouseDown
+            if (this.mouseOwnerLayerId) {
+                const dl= getLayer(drawLayersAry,this.mouseOwnerLayerId);
+                fireMouseEvent(dl,mouseState,mouseStatePayload);
             }
             else { // fire to all non-exclusive layers, scroll, and determine cursor
                 list.filter( (dl) => !get(dl, 'exclusiveDef.exclusiveOnDown',false))
@@ -99,7 +101,7 @@ export class ImageViewerLayout extends Component {
                 this.scroll(plotId,mouseState,screenX,screenY);
                 var cursor = DEFAULT_CURSOR;
                 const cursorCandidate= ownerCandidate || findMouseOwner(drawLayersAry,primePlot(plotView),screenPt);
-                if (MOVE.is(mouseState) && has(cursorCandidate, 'getCursor') ) {
+                if (MOVE.is(mouseState) && get(cursorCandidate, 'getCursor') ) {
                     cursor = cursorCandidate.getCursor(plotView, screenPt) || DEFAULT_CURSOR;
                 }
                 if (cursor !== this.state.cursor) this.setState({cursor});
@@ -332,6 +334,8 @@ function fireMouseEvent(drawLayer,mouseState,mouseStatePayload) {
     }
 }
 
+
+const getLayer= (list,drawLayerId) => list.find( (dl) => dl.drawLayerId===drawLayerId);
 
 // ------------ React component
 

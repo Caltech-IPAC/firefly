@@ -11,7 +11,7 @@ import {getDrawLayerById} from '../PlotViewUtil.js';
 import RegionPlot from '../../drawingLayers/RegionPlot.js';
 import {getPlotViewAry} from '../PlotViewUtil.js';
 import {visRoot } from '../ImagePlotCntlr.js';
-import {has, isArray} from 'lodash';
+import {has, isArray, get} from 'lodash';
 
 const regionDrawLayerId = RegionPlot.TYPE_ID;
 
@@ -22,16 +22,9 @@ var [RegionIdErr, RegionErr, DrawObjErr, JSONErr] = [
     'create drawing object error',
     'get region json error'];
 
-var getPlotIdAry = (plotId) => {
-    if (plotId) {
-        if (isArray(plotId)) {
-            if (plotId.length > 0) return plotId;
-        } else {
-            return [plotId];
-        }
-    }
+var getPlotId = (plotId) => {
+    return (!plotId || (isArray(plotId)&&plotId.length === 0)) ? get(visRoot(), 'activePlotId') : plotId;
 
-    return getPlotViewAry(visRoot()).map((pv) => pv.plotId);
 };
 
 /**
@@ -84,11 +77,13 @@ function createRegionLayer(regionAry, title, regionId, plotId, dataFrom = 'ds9')
             var dl = getDrawLayerById(getDlAry(), regionId);
 
             if (!dl) {
-                 dispatchCreateDrawLayer(regionDrawLayerId, {title, drawLayerId: regionId, regions: rgAry});
+                dispatchCreateDrawLayer(regionDrawLayerId, {title, drawLayerId: regionId, regions: rgAry});
             }
 
-            var plotIdAry = getPlotIdAry(plotId);
-            dispatchAttachLayerToPlot(regionId, plotIdAry, !plotIdAry);
+            var pId = getPlotId(plotId);
+            if (pId) {
+                dispatchAttachLayerToPlot(regionId, pId, true);
+            }
         } else {
             reportError(DrawObjErr);
         }
@@ -107,10 +102,10 @@ export function regionDeleteLayerActionCreator(rawAction) {
     return (dispatcher) => {
         var {plotId, regionId} = rawAction.payload;
 
-        var plotIdAry = getPlotIdAry(plotId);
+        var pId = getPlotId(plotId);
 
-        if (regionId) {
-            dispatchDetachLayerFromPlot(regionId, plotIdAry, !plotIdAry, false);
+        if (regionId && pId) {
+            dispatchDetachLayerFromPlot(regionId, pId, true, false);
         } else {
             reportError(`${RegionIdErr} for deleting region layer`);
         }

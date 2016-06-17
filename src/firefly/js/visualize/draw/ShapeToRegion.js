@@ -177,10 +177,10 @@ export function createTextRegionFromShape(drawObj, drawParams, regionType, cc) {
         var doChild = null;
 
         if (has(drawObj, 'drawObjAry')) {
-            doChild = drawObj.drawObjAry.find( ( childDrawObj ) =>  has(childDrawObj, 'textImgLoc') );
+            doChild = drawObj.drawObjAry.find( ( childDrawObj ) =>  has(childDrawObj, 'textWorldLoc') );
         }
 
-        return doChild ? doChild.textImgLoc : null;
+        return doChild ? doChild.textWorldLoc : null;
     };
 
     // check if no text
@@ -191,10 +191,10 @@ export function createTextRegionFromShape(drawObj, drawParams, regionType, cc) {
         (!textOffset || (textOffset.x === 0.0 && textOffset.y === 0.0)))  return des;
 
     // adapt the computed text location if there is or recompute the text location
-    var textImgLoc = get(drawObj, 'textImgLoc', searchTextLoc());
-    if (!textImgLoc) return des;
+    var textWorldLoc = get(drawObj, 'textWorldLoc', searchTextLoc());
+    if (!textWorldLoc) return des;
 
-    return makeTextRegion(cc.getImageCoords(textImgLoc), cc, drawObj, drawParams);
+    return makeTextRegion(cc.getWorldCoords(textWorldLoc), cc, drawObj, drawParams);
 }
 
 /**

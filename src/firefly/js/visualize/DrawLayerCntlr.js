@@ -7,10 +7,15 @@ import {getPlotViewIdListInGroup, getDrawLayerById, getConnectedPlotsIds} from '
 import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
 import {without,union,omit,isEmpty} from 'lodash';
+import {clone} from '../util/WebUtil.js';
 
 
 export {selectAreaEndActionCreator} from '../drawingLayers/SelectArea.js';
 export {distanceToolEndActionCreator} from '../drawingLayers/DistanceTool.js';
+export {markerToolStartActionCreator,
+        markerToolMoveActionCreator,
+        markerToolEndActionCreator,
+        markerToolCreateLayerActionCreator} from '../drawingLayers/MarkerTool.js';
 
 export {regionCreateLayerActionCreator,
         regionDeleteLayerActionCreator,
@@ -50,10 +55,13 @@ const REGION_DELETE_LAYER = `${DRAWLAYER_PREFIX}.RegionPlot.deleteLayer`;
 const REGION_ADD_ENTRY = `${DRAWLAYER_PREFIX}.RegionPlot.addRegion`;
 const REGION_REMOVE_ENTRY = `${DRAWLAYER_PREFIX}.RegionPlot.removeRegion`;
 
+// marker and footprint
+const MARKER_START = `${DRAWLAYER_PREFIX}.MarkerTool.markerStart`;
+const MARKER_MOVE = `${DRAWLAYER_PREFIX}.MarkerTool.markerMove`;
+const MARKER_END = `${DRAWLAYER_PREFIX}.MarkerTool.markerEnd`;
+const MARKER_CREATE= `${DRAWLAYER_PREFIX}.MarkerTool.markerCreate`;
+
 export const DRAWING_LAYER_KEY= 'drawLayers';
-
-const clone = (obj,params={}) => Object.assign({},obj,params);
-
 
 export function dlRoot() { return flux.getState()[DRAWING_LAYER_KEY]; }
 
@@ -73,11 +81,13 @@ export default {
     FORCE_DRAW_LAYER_UPDATE,
     DT_START, DT_MOVE, DT_END,
     REGION_CREATE_LAYER, REGION_DELETE_LAYER,  REGION_ADD_ENTRY, REGION_REMOVE_ENTRY,
+    MARKER_START, MARKER_MOVE, MARKER_END, MARKER_CREATE,
     makeReducer, dispatchRetrieveData, dispatchChangeVisibility,
     dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
     dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot,
     dispatchCreateRegionLayer, dispatchDeleteRegionLayer,
-    dispatchAddRegionEntry, dispatchRemoveRegionEntry
+    dispatchAddRegionEntry, dispatchRemoveRegionEntry,
+    dispatchCreateMarkerLayer
 };
 
 /**
@@ -244,6 +254,10 @@ export function dispatchAddRegionEntry(regionId, regionChanges, dispatcher = flu
 
 export function dispatchRemoveRegionEntry(regionId, regionChanges, dispatcher = flux.process) {
     dispatcher({type: REGION_REMOVE_ENTRY, payload: {regionId, regionChanges}});
+}
+
+export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], attachPlotGroup=true, dispatcher = flux.process) {
+    dispatcher({type: MARKER_CREATE, payload: {plotId, markerId, layerTitle, attachPlotGroup}});
 }
 
 
