@@ -17,7 +17,7 @@ class MarkerToolUI extends React.Component {
     constructor(props) {
         super(props);
 
-        var markerText = get(this.props.drawLayer, 'title');
+        var markerText = get(this.props.drawLayer, ['drawData', 'data', '0', 'text'], '');
         var markerTextLoc = get(this.props.drawLayer, ['drawData', 'data', '0', 'textLoc'], defaultMarkerTextLoc);
 
         this.state = {markerText,  markerTextLoc: markerTextLoc.key};

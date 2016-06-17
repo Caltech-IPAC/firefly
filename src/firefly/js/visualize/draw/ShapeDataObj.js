@@ -1212,6 +1212,60 @@ export function lengthToImagePixel(r, plot, unitType) {
 }
 
 /**
+ * calculate the length in screen coordinate
+ * @param r
+ * @param plot
+ * @param unitType
+ * @returns {*}
+ */
+export function lengthToScreenPixel(r, plot, unitType) {
+    var screenRadius;
+
+    switch (unitType) {
+        case UnitType.PIXEL:
+            screenRadius = r;
+            break;
+        case UnitType.IMAGE_PIXEL:
+            screenRadius = r * plot.zoomFactor;
+            break;
+        case UnitType.ARCSEC:
+            screenRadius = r * plot.zoomFactor/(plot.projection.getPixelScaleArcSec());
+            break;
+        default:
+            screenRadius = r;
+    }
+    return screenRadius;
+}
+
+
+/**
+ * calculate the length in world coordinate
+ * @param r
+ * @param plot
+ * @param unitType
+ * @returns {*}
+ */
+export function lengthToArcsec(r, plot, unitType) {
+    var arcsecRadius;
+
+    switch (unitType) {
+        case UnitType.PIXEL:
+            arcsecRadius = screenPixelToArcsec(r, plot);
+            break;
+        case UnitType.IMAGE_PIXEL:
+            arcsecRadius = imagePixelToArcsec(r, plot);
+            break;
+        case UnitType.ARCSEC:
+            arcsecRadius = r;
+            break;
+        default:
+            arcsecRadius = r;
+    }
+    return arcsecRadius;
+}
+
+
+/**
  * calcuate the horizontal and vertical coverage after rotating a rectagle with width and height
  * @param width
  * @param height
