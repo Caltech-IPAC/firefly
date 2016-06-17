@@ -269,7 +269,7 @@
     content: '×'; /* UTF-8 symbol */
 }
 
-/*------------------- loading mask ---------------------*/
+/*-------------------< loading mask ---------------------*/
 .loading-mask {
     position: absolute;
     width: 100%;
@@ -311,7 +311,7 @@
     animation-iteration-count: infinite;
     animation-timing-function: linear;
 }
-/*------------------- loading mask ---------------------*/
+/*------------------- loading mask >---------------------*/
 
 .banner-background {
     background: url('/images/ipac_bar.jpg');
@@ -323,4 +323,22 @@
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+}
+
+.alerts__msg {
+    color: #1A2739;
+    text-align: center;
+    background-color: #FFF7C2;
+    padding: 5px 20px;
+    border: 1px solid #BDB05D;
+    font: 12px sans-serif;
+    text-shadow: none;
+    vertical-align: middle;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.alerts__msg a {
+    color: blue;
+    text-decoration: none;
 }

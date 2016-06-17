@@ -23,6 +23,11 @@ public class Alert implements Serializable {
 
     public Alert() {}
 
+    public Alert(String msg, long lastModDate) {
+        this.msg = msg;
+        this.lastModDate = lastModDate;
+    }
+
     public Alert(String url, String title, boolean isNew) {
         this.url = url;
         this.msg = title;
