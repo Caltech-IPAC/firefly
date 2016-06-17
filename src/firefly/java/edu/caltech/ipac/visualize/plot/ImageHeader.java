@@ -785,6 +785,49 @@ public class ImageHeader implements Serializable
         return miniHeader;
     }
 
+	/*public static String[] parameterNames(){
+
+        String[] names = {
+		"bitpix",
+		"file_equinox",
+		"ctype1 ",
+		"ctype2 ",
+		"radecsys",
+		"datamax",
+		"datamin",
+		"maptype",
+		"cd1_1 ",
+		"cd1_2 ",
+		"cd2_1 ",
+		"cd2_2 ",
+		"dc1_1 ",
+		"dc1_2 ",
+		"dc2_1 ",
+		"dc2_2 ",
+		"using_cd" ,
+		"plate_ra" ,
+		"plate_dec",
+		"x_pixel_offset",
+		"y_pixel_offset",
+		"x_pixel_size",
+		"y_pixel_size" ,
+		"plt_scale",
+		"ppo_coeff",
+		"amd_x_coeff" ,
+		"amd_y_coeff" ,
+		"a_order",
+		"ap_order",
+		"b_order" ,
+		"bp_order",
+		"a" ,
+		"ap",
+		"b",
+		"bp",
+		"map_distortion" ,
+		"keyword"
+		};
+		return names;
+	}*/
     public String toString()
     {
 	StringBuffer sb = new StringBuffer();
@@ -810,10 +853,48 @@ public class ImageHeader implements Serializable
 	    "\n  file_equinox = " + file_equinox + "  ctype1 = " + ctype1 +
 	    " ctype2 = " + ctype2);
 	sb.append("\n  maptype = " + Projection.getProjectionName(maptype));
+
+	//LZ add the rest fields
+
+/*	sb.append("\n  plate_ra = "+ plate_ra);
+	sb.append("\n  plate_dec = "+ plate_dec);
+	sb.append("\n x_pixel_offset = " +x_pixel_offset);
+	sb.append("\n y_pixel_offset = "+ y_pixel_offset);
+	sb.append("\n x_pixel_size = "+ x_pixel_size);
+	sb.append("\n y_pixel_size = "+y_pixel_size);
+	sb.append("\n plt_scale = "+ plt_scale);*/
+
 	return sb.toString();
     }
 
+	public String imageHeaderoString()
+	{
+		StringBuffer sb = new StringBuffer();
+		sb.append(
+				"\n  bitpix = " + bitpix + " naxis = " + naxis +
+						" naxis1 = " + naxis1 + " naxis2 = " + naxis2 +
+						" naxis3 = " + naxis3);
+		sb.append(
+				"\n  crpix1 = " + crpix1 + " crpix2 = " + crpix2 +
+						"\n  crval1 = " + crval1 + " crval2 = " + crval2 +
+						"\n  cdelt1 = " + cdelt1 + " cdelt2 = " + cdelt2 +
+						" crota2 = " + crota2);
+		if (using_cd)
+		{
+			sb.append(
+					"\n  cd1_1 = " + cd1_1 + " cd1_2 = " + cd1_2 + " cd2_1 = " +
+							cd2_1 + " cd2_2 = " + cd2_2);
+			sb.append(
+					"\n  dc1_1 = " + dc1_1 + " dc1_2 = " + dc1_2 + " dc2_1 = " +
+							dc2_1 + " dc2_2 = " + dc2_2);
+		}
+		sb.append(
+				"\n  file_equinox = " + file_equinox + "  ctype1 = " + ctype1 +
+						" ctype2 = " + ctype2);
+		sb.append("\n  maptype = " + maptype);
 
+		return sb.toString();
+	}
 
 
     // main is for testing only

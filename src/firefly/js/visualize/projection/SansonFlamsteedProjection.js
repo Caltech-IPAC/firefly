@@ -9,6 +9,7 @@ import {makeProjectionPt, makeImagePt} from '../Point.js';
 export const SansonFlamsteedProjection= {
 
     revProject (lon, lat, hdr, useProjException= false) {
+
         var fline, fsamp;
         const celref = [];
         const euler = [];
@@ -50,7 +51,6 @@ export const SansonFlamsteedProjection= {
 
         const x = fsamp + crpix1 - 1;
         const y = fline + crpix2 - 1;
-
         return makeImagePt(x, y);
     },
 

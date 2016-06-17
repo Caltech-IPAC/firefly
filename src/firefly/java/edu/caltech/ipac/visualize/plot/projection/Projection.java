@@ -6,13 +6,11 @@ package edu.caltech.ipac.visualize.plot.projection;
 import com.google.gwt.core.client.js.JsExport;
 import com.google.gwt.core.client.js.JsNoExport;
 import com.google.gwt.core.client.js.JsType;
-import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.ImagePt;
-import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
-import edu.caltech.ipac.visualize.plot.ProjectionPt;
-import edu.caltech.ipac.visualize.plot.Pt;
-import edu.caltech.ipac.visualize.plot.WorldPt;
+import edu.caltech.ipac.visualize.plot.*;
+import nom.tam.fits.BasicHDU;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
+import nom.tam.fits.Header;
 
 import java.io.Serializable;
 
@@ -286,103 +284,6 @@ public class Projection implements Serializable {
 	return (retval);
     }
 
-//    public static void main(String args[])
-//    {
-//	Fits myFits;
-//	BasicHDU[] HDUs;
-//	ProjectionPt image_pt;
-//	WorldPt world_pt;
-//	ImageHeader hdr = null;
-//	Header header;
-//	double input_ra, input_dec;
-//
-//	if (args.length != 1)
-//	{
-//	    System.out.println("usage:  java Projection <filename>");
-//	    System.exit(1);
-//	}
-//
-//	// RBH: these header values are taken from the image of m31
-//	//      on which table file 13876_irsky_iso was overlayed.
-//	/*
-//	Projection proj = new Projection(
-//	    60,   // NAXIS1
-//	    60,   // NAXIS2
-//	    -60.0,            // CRPIX1
-//	    -10.0,            // CRPIX2
-//	    1.300000000E+01,  // CRVAL1
-//	    4.000000000E+01,  // CRVAL2
-//	    -2.500000000E-02, // CDELT1
-//	    2.500000000E-02,  // CDELT2
-//	    0.0,              // CROTA2
-//            Plot.EQ_J2000 );
-//	*/
-//	try
-//	{
-//	    myFits = new Fits(args[0]);
-//	    HDUs = myFits.read();
-//	    if (HDUs == null)
-//	    {
-//		System.out.println("Error: file doesn't have any HDUs!");
-//		System.exit(1);
-//	    }
-//	    header = HDUs[0].getHeader();
-//	    hdr = new ImageHeader(header);
-//	}
-//	catch (FitsException e)
-//	{
-//	    System.out.println("got FitsException: " + e.getMessage());
-//	    System.exit(1);
-//	}
-//
-//	Projection proj = hdr.createProjection(CoordinateSys.EQ_J2000 );
-//
-//	// RBH: these coordinates are taken from the first line of
-//	//      table file 13876_irsky_iso
-//	input_ra = 9.4092059;
-//	input_dec = +41.4161779;
-//
-//
-//	/* these values are a bright spot on m31.fits */
-//	input_ra = 10.472992;
-//	input_dec = +40.397477;
-//
-//	/* these values are a bright spot on DSSI.2.fits */
-//	input_ra = 11.0003;
-//	input_dec = +21.0007;
-//	input_ra = 196.929994;
-//	input_dec = 27.509292;
-//
-//	/* these values are the upper right corner on c1632b1.fits (ORTHOGR) */
-//	input_ra = 83.295382;
-//	input_dec = -6.2797047;
-//
-//	/* these values are a bright spot on file7.fits (NCP) */
-//	input_ra = 234.007968;
-//	input_dec = -55.907927;
-//
-//	System.out.println("input values:  RA = " + input_ra +
-//	    "  DEC = " + input_dec);
-//
-//	try
-//	{
-//	image_pt = proj.getImageCoords( input_ra, input_dec);
-//	System.out.println("RBH SC X  = " + image_pt.getFsamp() +
-//	    "   SC Y  = " + image_pt.getFline());
-//
-//
-//
-//	world_pt = proj.getWorldCoords(image_pt.getFsamp(), image_pt.getFline());
-//	System.out.println("RBH ra = " + world_pt.getX() +
-//	    "    dec = " + world_pt.getY());
-//	}
-//	catch (ProjectionException pe)
-//	{
-//	    System.out.println("got ProjectionException: " + pe.getMessage());
-//	}
-//
-//
-//    }
 
     /**
      *  compute the distance between two positions (lon1, lat1)
@@ -463,5 +364,107 @@ public class Projection implements Serializable {
     }
 
 
+    public static void main(String args[])
+    {
+
+
+        Fits myFits;
+        BasicHDU[] HDUs;
+
+        ProjectionPt image_pt;
+        WorldPt world_pt;
+        ImageHeader hdr = null;
+
+        Header header;
+        double input_ra, input_dec;
+
+        if (args.length != 1)
+        {
+            System.out.println("usage:  java Projection <filename>");
+            System.exit(1);
+        }
+
+        // RBH: these header values are taken from the image of m31
+        //      on which table file 13876_irsky_iso was overlayed.
+	/*
+	Projection proj = new Projection(
+	    60,   // NAXIS1
+	    60,   // NAXIS2
+	    -60.0,            // CRPIX1
+	    -10.0,            // CRPIX2
+	    1.300000000E+01,  // CRVAL1
+	    4.000000000E+01,  // CRVAL2
+	    -2.500000000E-02, // CDELT1
+	    2.500000000E-02,  // CDELT2
+	    0.0,              // CROTA2
+            Plot.EQ_J2000 );
+	*/
+        try
+        {
+            myFits = new Fits(args[0]);
+            HDUs = myFits.read();
+            if (HDUs == null)
+            {
+                System.out.println("Error: file doesn't have any HDUs!");
+                System.exit(1);
+            }
+            header = HDUs[0].getHeader();
+            hdr = new ImageHeader(header);
+        }
+        catch (FitsException e)
+        {
+            System.out.println("got FitsException: " + e.getMessage());
+            System.exit(1);
+        }
+
+        Projection proj = hdr.createProjection(CoordinateSys.EQ_J2000 );
+
+        // RBH: these coordinates are taken from the first line of
+        //      table file 13876_irsky_iso
+        input_ra = 9.4092059;
+        input_dec = +41.4161779;
+
+
+	/* these values are a bright spot on m31.fits */
+        input_ra = 10.472992;
+        input_dec = +40.397477;
+
+	/* these values are a bright spot on DSSI.2.fits */
+        input_ra = 11.0003;
+        input_dec = +21.0007;
+        input_ra = 196.929994;
+        input_dec = 27.509292;
+
+	/* these values are the upper right corner on c1632b1.fits (ORTHOGR) */
+        input_ra = 83.295382;
+        input_dec = -6.2797047;
+
+	/* these values are a bright spot on file7.fits (NCP) */
+        input_ra = 234.007968;
+        input_dec = -55.907927;
+
+        System.out.println("input values:  RA = " + input_ra +
+                "  DEC = " + input_dec);
+
+        try
+        {
+            image_pt = proj.getImageCoords( input_ra, input_dec);
+            System.out.println("RBH SC X  = " + image_pt.getFsamp() +
+                    "   SC Y  = " + image_pt.getFline());
+
+
+
+            world_pt = proj.getWorldCoords(image_pt.getFsamp(), image_pt.getFline());
+            System.out.println("RBH ra = " + world_pt.getX() +
+                    "    dec = " + world_pt.getY());
+        }
+        catch (ProjectionException pe)
+        {
+            System.out.println("got ProjectionException: " + pe.getMessage());
+        }
+
+
+    }
 
 }
+
