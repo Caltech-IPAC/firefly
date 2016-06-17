@@ -34,6 +34,8 @@ import {PopupPanel} from '../ui/PopupPanel.jsx';
 import DialogRootContainer from '../ui/DialogRootContainer.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 
+import {showInfoPopup} from '../ui/PopupUtil.jsx';
+
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import SETTINGS from 'html/images/icons-2014/24x24_GearsNEW.png';
 import ZOOM_IN from 'html/images/icons-2014/24x24_ZoomIn.png';
@@ -322,23 +324,28 @@ class ChartsPanel extends React.Component {
 
     addSelection() {
         if (this.state.chartType === SCATTER) {
-            const {tblId, tableModel} = this.props;
-            const selection = get(this.props, 'tblPlotData.xyPlotParams.selection');
-            const rows = get(this.props, 'tblPlotData.xyPlotData.rows');
-            if (tableModel && rows && selection) {
-                const {xMin, xMax, yMin, yMax} = selection;
-                const selectInfoCls = SelectInfo.newInstance({rowCount: tableModel.totalRows});
-                // add all rows which fall into selection
-                const xIdx = 0, yIdx = 1;
-                rows.forEach((arow, index) => {
-                    const x = Number(arow[xIdx]);
-                    const y = Number(arow[yIdx]);
-                    if (x>=xMin && x<=xMax && y>=yMin && y<=yMax) {
-                        selectInfoCls.setRowSelect(index, true);
-                    }
-                });
-                const selectInfo = selectInfoCls.data;
-                TablesCntlr.dispatchTableSelect(tblId, selectInfo);
+            if (get(this.props, 'tblPlotData.xyPlotData.decimateKey')) {
+                showInfoPopup('Your data set is too large to select. You must filter it down first.',
+                                `Can't Select`); // eslint-disable-line quotes
+            } else {
+                const {tblId, tableModel} = this.props;
+                const selection = get(this.props, 'tblPlotData.xyPlotParams.selection');
+                const rows = get(this.props, 'tblPlotData.xyPlotData.rows');
+                if (tableModel && rows && selection) {
+                    const {xMin, xMax, yMin, yMax} = selection;
+                    const selectInfoCls = SelectInfo.newInstance({rowCount: tableModel.totalRows});
+                    // add all rows which fall into selection
+                    const xIdx = 0, yIdx = 1, rowIdx = 2;
+                    rows.forEach((arow) => {
+                        const x = Number(arow[xIdx]);
+                        const y = Number(arow[yIdx]);
+                        if (x >= xMin && x <= xMax && y >= yMin && y <= yMax) {
+                            selectInfoCls.setRowSelect(Number(arow[rowIdx]), true);
+                        }
+                    });
+                    const selectInfo = selectInfoCls.data;
+                    TablesCntlr.dispatchTableSelect(tblId, selectInfo);
+                }
             }
         }
     }
@@ -389,15 +396,19 @@ class ChartsPanel extends React.Component {
 
     selectionNotEmpty(selection) {
         const rows = get(this.props, 'tblPlotData.xyPlotData.rows');
-        if (rows && selection) {
-            const {xMin, xMax, yMin, yMax} = selection;
-            const xIdx = 0, yIdx = 1;
-            const aPt = rows.find((arow) => {
-                const x = Number(arow[xIdx]);
-                const y = Number(arow[yIdx]);
-                return (x >= xMin && x <= xMax && y >= yMin && y <= yMax);
-            });
-            return Boolean(aPt);
+        if (rows) {
+            if (selection) {
+                const {xMin, xMax, yMin, yMax} = selection;
+                const xIdx = 0, yIdx = 1;
+                const aPt = rows.find((arow) => {
+                    const x = Number(arow[xIdx]);
+                    const y = Number(arow[yIdx]);
+                    return (x >= xMin && x <= xMax && y >= yMin && y <= yMax);
+                });
+                return Boolean(aPt);
+            } else {
+                return true; // empty selection replacing non-empty
+            }
         } else {
             return false;
         }
@@ -413,7 +424,7 @@ class ChartsPanel extends React.Component {
                          src={ZOOM_IN}
                          onClick={() => this.addZoom()}
                     />
-                    {!get(this.props, 'tblPlotData.xyPlotData.decimateKey') && <img style={selectionBtnStyle}
+                    {<img style={selectionBtnStyle}
                          title='Select enclosed points'
                          src={SELECT_ROWS}
                          onClick={() => this.addSelection()}

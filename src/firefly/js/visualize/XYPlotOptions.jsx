@@ -17,9 +17,9 @@ import {SuggestBoxInputField} from '../ui/SuggestBoxInputField.jsx';
 import {FieldGroupCollapsible} from '../ui/panel/CollapsiblePanel.jsx';
 import {plotParamsShape} from  './XYPlot.jsx';
 
-import {showInfoPopup} from '../ui/PopupUtil.jsx';
-
 const DECI_ENABLE_SIZE = 5000;
+
+const helpStyle = {fontStyle: 'italic', color: '#808080', paddingBottom: 10};
 
 /*
  * Split content into prior content and the last alphanumeric token in the text
@@ -66,12 +66,6 @@ var XYPlotOptions = React.createClass({
     resultsSuccess(flds) {
         const xName = get(flds, ['x.columnOrExpr']);
         const yName = get(flds, ['y.columnOrExpr']);
-
-        // workaround for validator not being called for unchanged fields
-        if (!xName || !yName) {
-            showInfoPopup('X and Y must not be empty.', 'Action required.');
-            return;
-        }
 
         const xOptions = get(flds, ['x.options']);
         let xLabel = get(flds, ['x.label']), xUnit = get(flds, ['x.unit']);
@@ -130,7 +124,8 @@ var XYPlotOptions = React.createClass({
                 <ValidationField style={{width:50}}
                     initialState= {{
                         value: get(xyPlotParams, 'nbins.x', 100),
-                        validator: Validate.intRange.bind(null, 1, 500, 'X-Bins'),
+                        nullAllowed : false,
+                        validator: Validate.intRange.bind(null, 1, 300, 'X-Bins'),
                         tooltip: 'Number of bins along X axis',
                         label : 'X-Bins:'
                     }}
@@ -140,7 +135,8 @@ var XYPlotOptions = React.createClass({
                 <ValidationField style={{width:50}}
                     initialState= {{
                         value: get(xyPlotParams, 'nbins.y', 100),
-                        validator: Validate.intRange.bind(null, 1, 500, 'Y-Bins'),
+                        nullAllowed : false,
+                        validator: Validate.intRange.bind(null, 1, 300, 'Y-Bins'),
                         tooltip: 'Number of bins along Y axis',
                         label : 'Y-Bins:'
                     }}
@@ -207,11 +203,16 @@ var XYPlotOptions = React.createClass({
             <div style={{padding:'5px'}}>
                 <br/>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
+                    <div style={helpStyle}>
+                        For X and Y, enter a column or an expression<br/>
+                        ex. log(col); 100*col1/col2; col1-col2
+                    </div>
                     <SuggestBoxInputField
                         initialState= {{
                             value: get(xyPlotParams, 'x.columnOrExpr'),
                             tooltip: 'Column or expression for X axis',
                             label: 'X:',
+                            nullAllowed : false,
                             validator: colValidator
                         }}
                         getSuggestions={getSuggestions}
@@ -269,6 +270,7 @@ var XYPlotOptions = React.createClass({
                             value: get(xyPlotParams, 'y.columnOrExpr'),
                             tooltip: 'Column or expression for Y axis',
                             label : 'Y:',
+                            nullAllowed : false,
                             validator: colValidator
                         }}
                         getSuggestions={getSuggestions}
@@ -321,6 +323,10 @@ var XYPlotOptions = React.createClass({
                         />
                         <br/>
                     </FieldGroupCollapsible>
+                    <div style={helpStyle}>
+                        Enter display aspect ratio below.<br/>
+                        Leave it blank to use all available space.<br/>
+                    </div>
                     <ValidationField style={{width:50}}
                         initialState= {{
                             value: get(xyPlotParams, 'xyRatio'),

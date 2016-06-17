@@ -37,7 +37,7 @@ export const plotParamsShape = PropTypes.shape({
 });
 
 const plotDataShape = PropTypes.shape({
-    rows: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.string)),
+    rows: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.string)), // [x,y,rowIdx,weight]
     decimateKey: PropTypes.string,
     xMin: PropTypes.number,
     xMax: PropTypes.number,
@@ -216,8 +216,8 @@ export class XYPlot extends React.Component {
                     const selectedData = [];
                     if (nextProps.selectInfo) {
                         const selectInfoCls = SelectInfo.newInstance(nextProps.selectInfo, 0);
-                        data.rows.forEach((arow, idx) => {
-                            if (selectInfoCls.isSelected(idx)) {
+                        data.rows.forEach((arow) => {
+                            if (selectInfoCls.isSelected(Number(arow[2]))) {
                                 const nrow = arow.map(toNumber);
                                 selectedData.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
                             }
@@ -302,6 +302,9 @@ export class XYPlot extends React.Component {
             if (params.stretch === 'fit') {
                 chartHeight = Number(heightPx) - 2;
                 chartWidth = Number(params.xyRatio) * Number(chartHeight) + 20;
+                if (chartWidth > Number(widthPx)) {
+                    chartHeight -= 15; // to accommodate scroll bar
+                }
             } else {
                 chartWidth = Number(widthPx) - 15;
                 chartHeight = Number(widthPx) / Number(params.xyRatio);
@@ -411,9 +414,9 @@ export class XYPlot extends React.Component {
                 if (selectInfo) {
                     const selectInfoCls = SelectInfo.newInstance(selectInfo, 0);
                     // set all and selected data
-                    pushFunc = (numdata, nrow, idx) => {
+                    pushFunc = (numdata, nrow) => {
                         numdata.all.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
-                        if (selectInfoCls.isSelected(idx)) {
+                        if (selectInfoCls.isSelected(nrow[2])) {
                             numdata.selected.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
                         }
                     };
@@ -422,9 +425,9 @@ export class XYPlot extends React.Component {
                         numdata.all.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
                     };
                 }
-                const numericData = rows.reduce((numdata, arow, idx) => {
+                const numericData = rows.reduce((numdata, arow) => {
                     const nrow = arow.map(toNumber);
-                    pushFunc(numdata, nrow, idx);
+                    pushFunc(numdata, nrow);
                     return numdata;
                 }, {selected: [], all: []});
 
@@ -487,7 +490,7 @@ export class XYPlot extends React.Component {
                         data: numericData,
                         marker,
                         turboThreshold: 0,
-                        showInLegend: numericData.length>0 && (xUnitPx<20 && yUnitPx<20), // legend symbol size can not be adjusted as of now
+                        showInLegend: numericData.length>0 && (xUnitPx>2 && xUnitPx<20 && yUnitPx>2 && yUnitPx<20), // legend symbol size can not be adjusted as of now
                         point
                     };
                 });
@@ -521,6 +524,8 @@ export class XYPlot extends React.Component {
 
         const makeSeries = this.makeSeries;
 
+        const component = this;
+
         var config = {
             chart: {
                 animation: this.shouldAnimate(),
@@ -533,6 +538,11 @@ export class XYPlot extends React.Component {
                 borderWidth: 3,
                 zoomType: 'xy',
                 events: {
+                    click() {
+                        if (component.props.params.selection && onSelection) {
+                            onSelection();
+                        }
+                    },
                     selection(event) {
                         if (onSelection) {
                             onSelectionEvent(event);
@@ -636,7 +646,7 @@ export class XYPlot extends React.Component {
 
 
         return (
-            <div style={{float: 'right'}}>
+            <div style={chartWidth<width?{float: 'right'}:{}}>
                 <ReactHighcharts config={config} isPureConfig={true} ref='chart'/>
             </div>
         );
