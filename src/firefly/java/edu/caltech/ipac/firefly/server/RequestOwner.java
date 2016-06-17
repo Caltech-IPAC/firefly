@@ -64,15 +64,17 @@ public class RequestOwner implements Cloneable {
 
     public void setRequestAgent(RequestAgent requestAgent) {
         this.requestAgent = requestAgent;
-        host = requestAgent.getHeader("host");
-        referrer = requestAgent.getHeader("Referer");
+        if (requestAgent != null) {
+            host = requestAgent.getHeader("host");
+            referrer = requestAgent.getHeader("Referer");
 
-        String sei = requestAgent.getCookie("seinfo");
-        if (!StringUtils.isEmpty(sei)) {
-            String [] parts =  sei.split("_");
-            if (parts.length > 1) {
-                eventConnID = parts[0];
-                eventChannel = parts[1];
+            String sei = requestAgent.getCookie("seinfo");
+            if (!StringUtils.isEmpty(sei)) {
+                String [] parts =  sei.split("_");
+                if (parts.length > 1) {
+                    eventConnID = parts[0];
+                    eventChannel = parts[1];
+                }
             }
         }
     }
@@ -91,7 +93,7 @@ public class RequestOwner implements Cloneable {
 
     public String getUserKey() {
         if (userKey == null) {
-            String userKeyAndName = requestAgent.getCookie(USER_KEY);
+            String userKeyAndName = requestAgent == null ? null : requestAgent.getCookie(USER_KEY);
             userKey = userKeyAndName == null ? null :
                     userKeyAndName.split("/", 2)[0];
 
@@ -238,12 +240,14 @@ public class RequestOwner implements Cloneable {
 
     private void updateUserKey(String userName) {
         String nVal = userKey + "/" + userName;
-        String cVal = requestAgent.getCookie(USER_KEY);
-        if (!nVal.equals(String.valueOf(cVal))) {
-            Cookie cookie = new Cookie(USER_KEY, userKey + "/" + userName);
-            cookie.setMaxAge(3600 * 24 * 7 * 2);      // to live for two weeks
-            cookie.setPath("/"); // to make it available to all subpasses within base URL
-            requestAgent.sendCookie(cookie);
+        if (requestAgent != null) {
+            String cVal = requestAgent.getCookie(USER_KEY);
+            if (!nVal.equals(String.valueOf(cVal))) {
+                Cookie cookie = new Cookie(USER_KEY, userKey + "/" + userName);
+                cookie.setMaxAge(3600 * 24 * 7 * 2);      // to live for two weeks
+                cookie.setPath("/"); // to make it available to all subpasses within base URL
+                requestAgent.sendCookie(cookie);
+            }
         }
     }
 

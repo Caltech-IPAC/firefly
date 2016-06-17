@@ -5,6 +5,7 @@
 package edu.caltech.ipac.firefly.server.events;
 
 import edu.caltech.ipac.firefly.data.ServerEvent;
+import edu.caltech.ipac.firefly.server.AlertsMonitor;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -44,6 +45,8 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
             ServerEventManager.addEventQueue(eventQueue);
             // notify clients within the same channel
             updateClientConnections(CONN_UPDATED, channelID);
+            // check for alerts
+            AlertsMonitor.checkAlerts(true);
 
         } catch (Exception e) {
             LOG.error(e, "Unable to open websocket connection:" + session.getId());

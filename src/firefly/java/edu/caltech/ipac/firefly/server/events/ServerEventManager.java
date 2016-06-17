@@ -40,6 +40,10 @@ public class ServerEventManager {
         fireJsonAction(action.toString(), ServerEvent.Scope.CHANNEL, channel);
     }
 
+    public static void fireAction(FluxAction action, ServerEvent.Scope scope) {
+        fireJsonAction(action.toString(), scope, null);
+    }
+
     public static void fireJsonAction(String actionStr, String channel) {
         fireJsonAction(actionStr, ServerEvent.Scope.CHANNEL, channel);
     }

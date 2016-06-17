@@ -8,10 +8,7 @@ import edu.caltech.ipac.firefly.server.filters.CommonFilter;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorFactory;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
-import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.cache.CacheManager;
 import org.apache.log4j.PropertyConfigurator;
 import org.json.simple.JSONArray;
@@ -21,14 +18,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.websocket.HandshakeResponse;
 import javax.websocket.server.HandshakeRequest;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -102,6 +93,9 @@ public class ServerContext {
 
         // initialize search processors
         SearchProcessorFactory.init();
+
+        // alerts monitoring
+        AlertsMonitor.startMonitor();
     }
 
     public static void configInit() {

@@ -29,6 +29,7 @@ export const ADD_PREF = `${APP_DATA_PATH}.addPreference`;
 export const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
 export const REINIT_RESULT_VIEW = `${APP_DATA_PATH}.reinitResultView`;
 export const ROOT_URL_PATH = `${APP_DATA_PATH}.rootUrlPath`;
+export const SET_ALERTS = `${APP_DATA_PATH}.setAlerts`;
 
 export const HELP_LOAD = `${APP_DATA_PATH}.helpLoad`;
 
@@ -189,6 +190,10 @@ function appDataReducer(state, action={}) {
         case WS_CONN_UPDATED :
             return updateSet(state, ['connections'], action.payload);
 
+        case SET_ALERTS :
+            const {msg=''} = action.payload || {};
+            return updateSet(state, ['alerts'], {msg});
+
         default:
             return state;
     }
@@ -275,6 +280,10 @@ export function isAppReady() {
 
 export function getMenu() {
     return get(flux.getState(), [APP_DATA_PATH, 'menu']);
+}
+
+export function getAlerts() {
+    return get(flux.getState(), [APP_DATA_PATH, 'alerts'], {});
 }
 /*---------------------------- PRIVATE -----------------------------*/
 

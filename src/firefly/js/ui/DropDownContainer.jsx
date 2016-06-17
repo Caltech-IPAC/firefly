@@ -3,6 +3,7 @@
  */
 
 import React, {Component, PropTypes} from 'react';
+import sCompare from 'react-addons-shallow-compare';
 import shallowequal from 'shallowequal';
 import {get, pick} from 'lodash';
 
@@ -12,6 +13,7 @@ import {SearchPanel} from '../ui/SearchPanel.jsx';
 import {TestQueriesPanel} from '../ui/TestQueriesPanel.jsx';
 import {ImageSelectDropdown} from '../ui/ImageSelectDropdown.jsx';
 import {CatalogSelectViewPanel} from '../visualize/ui/CatalogSelectViewPanel.jsx';
+import {getAlerts} from '../core/AppDataCntlr.js';
 
 import './DropDownContainer.css';
 // import {deepDiff} from '../util/WebUtil.js';
@@ -84,20 +86,25 @@ export class DropDownContainer extends Component {
     }
 
     render() {
-        const {footer} = this.props;
+        const {footer, alerts} = this.props;
         var { visible, selected }= this.state;
         var view = dropDownMap[selected];
 
         if (!visible) return <div/>;
         return (
-            <div className='DD-ToolBar'>
-                <div className='DD-ToolBar__content'>
-                    {view}
-                </div>
-                <div id='footer' className='DD-ToolBar__footer'>
-                    {footer}
-                    <div className='DD-ToolBar__version'>
-                        {getVersion()}
+            <div>
+                <div className='DD-ToolBar'>
+                    {alerts || <Alerts />}
+                    <div style={{flexGrow: 1}}>
+                        <div className='DD-ToolBar__content'>
+                            {view}
+                        </div>
+                    </div>
+                    <div id='footer' className='DD-ToolBar__footer'>
+                        {footer}
+                        <div className='DD-ToolBar__version'>
+                            {getVersion()}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -110,16 +117,50 @@ DropDownContainer.propTypes = {
     selected: PropTypes.string,
     searches: PropTypes.arrayOf(PropTypes.string),
     searchPanels: PropTypes.arrayOf(PropTypes.element),
-    footer: PropTypes.node
+    footer: PropTypes.node,
+    alerts: PropTypes.node
 };
 DropDownContainer.defaultProps = {
     visible: false
 };
 
-const Alerts = (props) => {
-    return (
-        <div id="region-alerts" aria-hidden="true" style="width: 100%; height: 100%; display: none;">
-            <div align="left" style="width: 100%; height: 100%;"></div>
-        </div>
-    );
+export class Alerts extends Component {
+
+    constructor(props) {
+        super(props);
+        this.state = Object.assign({}, props);
+    }
+
+    componentDidMount() {
+        this.removeListener= flux.addListener(() => this.storeUpdate());
+    }
+
+    componentWillUnmount() {
+        this.removeListener && this.removeListener();
+    }
+
+    shouldComponentUpdate(nProps, nState) {
+        return sCompare(this, nProps, nState);
+    }
+
+    storeUpdate() {
+        this.setState(getAlerts());
+    }
+
+    render() {
+        const {msg, style} = this.state;
+        if (msg) {
+            /* eslint-disable react/no-danger */
+            return (
+                <div className='alerts__msg' style={style}>
+                    <div dangerouslySetInnerHTML={{__html: msg}} />
+                </div>
+            );
+        } else return <div/>;
+    }
+};
+
+Alerts.propTypes = {
+    msg: PropTypes.string,
+    style: PropTypes.object
 };
