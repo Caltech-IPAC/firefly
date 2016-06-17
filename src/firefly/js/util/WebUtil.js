@@ -37,7 +37,7 @@ export function getModuleName() {
 export const encodeUrl= function(url, params) {
 
     var rval = url.trim();
-    if ( !(rval.toLowerCase().startsWith('http') || rval.startsWith('/')) ) {
+    if ( !rval.toLowerCase().startsWith('http') ) {
         rval = getRootURL() + rval;
     }
     if (!params) return rval;
