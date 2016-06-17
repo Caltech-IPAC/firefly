@@ -1,15 +1,14 @@
 package edu.caltech.ipac.firefly.server;
 
-import com.google.gwt.media.dom.client.TimeRanges;
 import edu.caltech.ipac.firefly.data.Alert;
 import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.jhu.util.StringUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +25,7 @@ public class AlertsMonitor {
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private static final String ALERTS_DIR = AppProperties.getProperty("alerts.dir", "/hydra/alerts/");
     private static final File alertDir = new File(ALERTS_DIR);
-    private static Alert alerts = new Alert(null, "", true);;
+    private static Alert alerts = null;
     private static Timer timer;
 
     /**
@@ -35,25 +34,27 @@ public class AlertsMonitor {
      */
     public static void checkAlerts(boolean forceSend) {
         long lastMod = alerts == null ? 0 : alerts.getLastModDate();
-        if (alertDir.lastModified() > lastMod) {
-            File[] files = alertDir.listFiles(file -> file.isFile() && !file.isHidden());
-            alerts = new Alert(null, "", true);
-            if (files != null && files.length > 0) {
-                // found alerts
-                alerts.setLastModDate(alertDir.lastModified());
-                for (File f : files) {
-                    try {
-                        if (!StringUtils.isEmpty(alerts.getMsg())) {
-                            alerts.setMsg(alerts.getMsg() + " <br> ");
-                        }
-                        alerts.setMsg(alerts.getMsg() + FileUtil.readFile(f));
-                    } catch (IOException e) {
-                        LOG.error(e, "Error reading alerts.");
+        File[] files = alertDir.listFiles(file -> file.isFile() && !file.isHidden());
+        long mod = Math.max(lastMod, alertDir.lastModified());
+        String msg = "";
+        if (files != null && files.length > 0) {
+            // found alerts
+            for (File f : files) {
+                mod = Math.max(mod, f.lastModified());
+                try {
+                    if (msg.length() > 0) {
+                        msg += " <br> ";
                     }
+                    msg += FileUtil.readFile(f);
+                } catch (IOException e) {
+                    LOG.error(e, "Error reading alerts.");
                 }
             }
+        }
+        if (mod > lastMod ) {
+            alerts = new Alert(msg, mod);
             sendAlerts(alerts);
-        } else if (alerts != null && forceSend) {
+        } else  if (forceSend && alerts != null) {
             sendAlerts(alerts);
         }
     }
