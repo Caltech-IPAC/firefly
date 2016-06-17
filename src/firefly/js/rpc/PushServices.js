@@ -18,6 +18,7 @@ import {doJsonRequest} from '../core/JsonUtils.js';
 /**
  *
  * @return {Promise}
+ * @deprecated  no longer needed.  client connections info can be found in $flux_state:connections
  */
 export const aliveCheck= function(channelId, tryMS=0) {
     var params= {

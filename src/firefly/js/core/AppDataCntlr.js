@@ -11,13 +11,11 @@ import {dispatchAddSaga} from '../core/MasterSaga.js';
 import BrowserCache from '../util/BrowserCache.js';
 import {menuReducer} from './reducers/MenuReducer.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
-import {getModuleName} from '../util/WebUtil.js';
+import {getModuleName, updateWith, updateSet} from '../util/WebUtil.js';
 
 export const APP_DATA_PATH = 'app_data';
 export const COMMAND = 'COMMAND';
-const TASK= 'task-';
 const APP_PREFERENCES= 'APP_PREFERENCES';
-var taskCnt=0;
 
 /*---------------------------- ACTIONS -----------------------------*/
 
@@ -32,63 +30,15 @@ export const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
 export const REINIT_RESULT_VIEW = `${APP_DATA_PATH}.reinitResultView`;
 export const ROOT_URL_PATH = `${APP_DATA_PATH}.rootUrlPath`;
 
-//const HELP_LOAD = `${APP_DATA_PATH}.helpLoad`;
-export const HELP_LOAD = 'overviewHelp';    //note: consistent with AppMenu.prop
+export const HELP_LOAD = `${APP_DATA_PATH}.helpLoad`;
+
+/** fired when there's a connection is added/removed from this channel.  useful for tracking connections in channel, etc   */
+export const WS_CONN_UPDATED = `${APP_DATA_PATH}.wsConnUpdated`;
+
+/** grab focus */
+export const GRAB_WINDOW_FOCUS = `${APP_DATA_PATH}.grabFocus`;
 
 /*---------------------------- CREATORS ----------------------------*/
-
-const makeTaskId= function() {
-    taskCnt++;
-    return TASK+taskCnt++;
-};
-
-export const updateActiveTarget= function(state,action) {
-    var {worldPt,corners}= action;
-    if (!worldPt || !corners) return state;
-    return Object.assign({}, state, {activeTarget:{worldPt,corners}});
-};
-
-
-export const addTaskCount= function(state,action) {
-    var {componentId,taskId}= action.payload;
-    if (!componentId && !taskId) return state;
-    var taskArray= state.taskCounters[componentId] | [];
-    taskArray= [...taskArray,taskId];
-    var taskCounters= Object.assign({}, taskCounters, {[componentId]:taskArray});
-    return Object.assign({},state, {taskCounters});
-};
-
-export const removeTaskCount= function(state,action) {
-    var {componentId,taskId}= action.payload;
-    if (!componentId && !taskId) return state;
-    var taskArray= state.taskCounters[componentId] | [];
-    taskArray= taskArray.filter( (id) => id!==taskId);
-    var taskCounters= Object.assign({}, taskCounters, {[componentId]:taskArray});
-    return Object.assign({},state, {taskCounters});
-};
-
-export function getCommandState(stateId) {
-    return flux.getState()[APP_DATA_PATH].commandState[stateId];
-}
-
-
-
-export function addPreference(state,action) {
-    if (!action.payload) return state;
-    var {name,value}= action.payload;
-    var preferences= Object.assign({},state.preferences,{[name]:value} );
-    BrowserCache.put(APP_PREFERENCES,preferences);
-    return Object.assign({},state,{preferences});
-}
-
-export function removePreference(state,action) {
-    if (!action.payload) return state;
-    var {name}= action.payload;
-    var preferences= Object.assign({},state.preferences);
-    Reflect.deleteProperty(preferences,name);
-    BrowserCache.put(APP_PREFERENCES,preferences);
-    return Object.assign({},state,{preferences});
-}
 
 export function loadAppData() {
 
@@ -96,6 +46,10 @@ export function loadAppData() {
         dispatch({ type : APP_LOAD });
         fetchAppData(dispatch, 'fftools_v1.0.1 Beta', 2);
     };
+}
+
+export function grabWindowFocus() {
+    return blinkWindowTitle;
 }
 
 export function onlineHelpLoad( action )
@@ -150,6 +104,14 @@ export function getRootUrlPath() {
 }
 
 /**
+ * @param channel
+ * @returns {number}  the number of connections/clients connected to the given channel
+ */
+export function getConnectionCount(channel) {
+    return get(flux.getState(), [APP_DATA_PATH, 'connections', channel, 'length'], 0);
+}
+
+/**
  * @param wp center WorldPt
  * @param corners array of 4 WorldPts that represent the corners of a image
  */
@@ -171,6 +133,7 @@ export const dispatchActiveTarget= function(wp,corners) {
 function getInitState() {
     return {
         isReady : false,
+        connections: {},      // channel:[] ... keyed by channel, contains an array of connId(s).
         activeTarget: null,
         rootUrlPath : null,
         taskCounters: [],
@@ -222,6 +185,9 @@ function appDataReducer(state, action={}) {
         
         case ROOT_URL_PATH :
             return Object.assign({},state, {rootUrlPath:action.payload.rootUrlPath});
+
+        case WS_CONN_UPDATED :
+            return updateSet(state, ['connections'], action.payload);
 
         default:
             return state;
@@ -342,3 +308,65 @@ function fetchAppData(dispatch) {
         }));
 }
 
+
+
+/*---------------------------- REDUCING FUNTIONS -----------------------------*/
+const updateActiveTarget= function(state,action) {
+    var {worldPt,corners}= action;
+    if (!worldPt || !corners) return state;
+    return Object.assign({}, state, {activeTarget:{worldPt,corners}});
+};
+
+const addTaskCount= function(state,action) {
+    var {componentId,taskId}= action.payload;
+    if (!componentId && !taskId) return state;
+    var taskArray= state.taskCounters[componentId] | [];
+    taskArray= [...taskArray,taskId];
+    var taskCounters= Object.assign({}, taskCounters, {[componentId]:taskArray});
+    return Object.assign({},state, {taskCounters});
+};
+
+const removeTaskCount= function(state,action) {
+    var {componentId,taskId}= action.payload;
+    if (!componentId && !taskId) return state;
+    var taskArray= state.taskCounters[componentId] | [];
+    taskArray= taskArray.filter( (id) => id!==taskId);
+    var taskCounters= Object.assign({}, taskCounters, {[componentId]:taskArray});
+    return Object.assign({},state, {taskCounters});
+};
+
+function addPreference(state,action) {
+    if (!action.payload) return state;
+    var {name,value}= action.payload;
+    var preferences= Object.assign({},state.preferences,{[name]:value} );
+    BrowserCache.put(APP_PREFERENCES,preferences);
+    return Object.assign({},state,{preferences});
+}
+
+function removePreference(state,action) {
+    if (!action.payload) return state;
+    var {name}= action.payload;
+    var preferences= Object.assign({},state.preferences);
+    Reflect.deleteProperty(preferences,name);
+    BrowserCache.put(APP_PREFERENCES,preferences);
+    return Object.assign({},state,{preferences});
+}
+
+const blinkWindowTitle = ( () => {
+    var oldTitle = oldTitle || document.title;
+    var msg = 'Updated!';
+    var timeoutId;
+    var blink = () => { document.title = document.title == msg ? oldTitle : msg; };
+    var clear = () => {
+        clearInterval(timeoutId);
+        document.title = oldTitle;
+        window.onmousemove = null;
+        timeoutId = null;
+    };
+    return function () {
+        if (!timeoutId) {
+            timeoutId = setInterval(blink, 1000);
+            window.onmousemove = clear;
+        }
+    };
+})();

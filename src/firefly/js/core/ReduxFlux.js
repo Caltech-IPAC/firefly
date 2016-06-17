@@ -105,8 +105,8 @@ let redux = null;
 
 // pre-map a set of action => creator prior to boostraping.
 actionCreators.set(AppDataCntlr.APP_LOAD, AppDataCntlr.loadAppData);
+actionCreators.set(AppDataCntlr.GRAB_WINDOW_FOCUS, AppDataCntlr.grabWindowFocus);
 actionCreators.set(AppDataCntlr.HELP_LOAD, AppDataCntlr.onlineHelpLoad);
-actionCreators.set(LayoutCntlr.SHOW_DROPDOWN, LayoutCntlr.showDropDownCreator);
 actionCreators.set(FieldGroupCntlr.VALUE_CHANGE, FieldGroupCntlr.valueChangeActionCreator);
 actionCreators.set(FieldGroupCntlr.MULTI_VALUE_CHANGE, multiValueChangeActionCreator);
 actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.extensionActivateActionCreator);

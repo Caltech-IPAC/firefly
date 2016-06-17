@@ -1,18 +1,23 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {take} from 'redux-saga/effects';
+import {isArray, get} from 'lodash';
 
-import {has, isArray} from 'lodash';
 import {debug} from './ApiUtil.js';
 import {getRootURL}  from '../util/BrowserUtil.js';
-import {getCookie}  from '../util/WebUtil.js';
-import {aliveCheck, dispatchRemoteAction}  from '../rpc/PushServices.js';
+import {dispatchRemoteAction}  from '../rpc/PushServices.js';
 import {dispatchPlotImage}  from '../visualize/ImagePlotCntlr.js';
 import {RequestType}  from '../visualize/RequestType.js';
 import {clone}  from '../util/WebUtil.js';
 import {confirmPlotRequest,findInvalidWPRKeys}  from '../visualize/WebPlotRequest.js';
 import {dispatchTableSearch, dispatchTableFetch}  from '../tables/TablesCntlr.js';
+import {getWsChannel} from '../core/messaging/WebSocketClient.js';
+import {getConnectionCount, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS} from '../core/AppDataCntlr.js';
+import {dispatchAddSaga} from '../core/MasterSaga.js';
 
+const VIEWER_ID = '__viewer';
+var viewerWindow;
 
 /**
  * Build the interface to remotely communicate to the firefly viewer
@@ -22,28 +27,17 @@ export function buildViewerApi() {
     return {getViewer,getExternalViewer};
 }
 
-function getDefChannel() {
-    var root= getCookie('usrkey');
-    if (root) {
-        const idx= root.indexOf('/');
-        if (idx>-1) root= root.substring(0,idx);
-    }
-    else {
-        root= 'remote';
-    }
-    return `${root}-viewer`;
-}
-
 /**
  *
  * @param {string} [channel] the channel id string, if not specified then one will be generated
  * @param file the html of the viewer to launch. In time there will be several
  * @return {object} viewer interface
  */
-function getViewer(channel= getDefChannel(),file='') {
+function getViewer(channel= getWsChannel(),file='') {
+    channel += VIEWER_ID;
     const dispatch= (action) => dispatchRemoteAction(channel,action);
 
-    return Object.assign({dispatch},
+    return Object.assign({dispatch, channel},
                           buildImagePart(channel,file,dispatch),
                           buildTablePart(channel,file,dispatch),
                           buildXYPlotPart(channel,file,dispatch)
@@ -140,27 +134,32 @@ function buildXYPlotPart(channel,file,dispatch) {
 }
 
 
-
 function doViewerOperation(channel,file,f) {
-    aliveCheck(channel)
-        .then( (result) => {
-            if (result.activeCount) {
-                f();
-            }
-            else {
-                const url= `${getRootURL()}${file};wsch=${channel}`;
-                window.open(url, channel);
-                aliveCheck(channel,5000).then( (result) => {
-                    if (result.activeCount) {
-                        f();
-                    }
-                    else {
-                        debug('Operation fail: Could not launch a new browser tab.');
-                    }
-                } );
-            }
-        });
+    const cnt = getConnectionCount(channel);
+    if (cnt > 0) {
+        if (viewerWindow){
+            viewerWindow.focus();
+        } else {
+            dispatchRemoteAction(channel, {type:GRAB_WINDOW_FOCUS});
+        }
+        f && f();
+    } else {
+        dispatchAddSaga(doOnWindowConnected, {channel, f});
+        const url= `${getRootURL()}${file};wsch=${channel}`;
+        viewerWindow = window.open(url, channel);
+    }
 }
+
+export function* doOnWindowConnected({channel, f}) {
+    var isLoaded = false;
+    while (!isLoaded) {
+        const action = yield take([WS_CONN_UPDATED]);
+        const cnt = get(action, ['payload', channel, 'length'], 0);
+        isLoaded = cnt > 0;
+    }
+    f && f();
+}
+
 
 //================================================================
 //---------- Private XYPlot functions
