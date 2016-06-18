@@ -193,6 +193,7 @@ function getDrawobjRectArea(drawObj, cc, def) {
             rAngle -= angle;
         }
     }
+    rAngle -= get(drawObj, 'renderOptions.rotAngle', 0.0);
 
     var area_w, area_h;
 
@@ -243,6 +244,7 @@ function getDrawobjEllipseArea(drawObj, cc, def) {
             rAngle -= angle;
         }
     }
+    rAngle -= get(drawObj, 'renderOptions.rotAngle', 0.0);
 
     var ux = w * Math.cos(rAngle);
     var uy = w * Math.sin(rAngle);
@@ -387,6 +389,7 @@ export function isWithinPolygon(sPt, corners, cc, lineWidth = 1) {
         });
     }
 
+
     return inside;
 }
 
@@ -517,6 +520,7 @@ function isInDrawobjRectangle(drawObj, sPt, cc, def) {
             rAngle -= angle;
         }
     }
+    rAngle -= get(drawObj, 'renderOptiosn.rotAngle', 0.0);
 
     corners = [ [-w/2, +h/2],   // in image coordinate
                 [+w/2, +h/2],
@@ -576,6 +580,7 @@ function isInDrawobjEllipse(drawObj, sPt, cc, def) {
             rAngle += angle;
         }
     }
+    rAngle += get(drawObj, 'renderOptiosn.rotAngle', 0.0);
 
     var newx, newy;
     var cos = Math.cos(rAngle);

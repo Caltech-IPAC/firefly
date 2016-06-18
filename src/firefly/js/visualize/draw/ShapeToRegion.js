@@ -10,7 +10,7 @@ import {makeScreenPt} from '../Point.js';
 import {startRegionDes, setRegionPropertyDes, endRegionDes} from '../region/RegionDescription.js';
 import {RegionType, regionPropsList, RegionValue, RegionValueUnit, RegionDimension} from '../region/Region.js';
 import {DEFAULT_TEXTLOC} from '../region/RegionDrawer.js';
-import ShapeDataObj, {rectOnImage, getValueInScreenPixel} from './ShapeDataObj.js';
+import ShapeDataObj, {rectOnImage} from './ShapeDataObj.js';
 import {has, get, isNil, isEmpty} from 'lodash';
 
 const HTML_DEG= '&deg;';
@@ -271,32 +271,6 @@ function getCircleCenter(plot,pts) {
     const x= Math.min(pt0.x,pt1.x) + Math.abs(pt0.x-pt1.x)/2;
     const y= Math.min(pt0.y,pt1.y) + Math.abs(pt0.y-pt1.y)/2;
     return plot.getWorldCoords(makeScreenPt(x,y));
-}
-
-/**
- * calculate the radius on screen
- * @param r
- * @param plot
- * @param unitType
- * @returns {*}
- */
-export function lengthToScreenPixel(r, plot, unitType) {
-    var screenRadius;
-
-    switch (unitType) {
-        case ShapeDataObj.UnitType.PIXEL:
-            screenRadius = r;
-            break;
-        case ShapeDataObj.UnitType.IMAGE_PIXEL:
-            screenRadius = (plot.zoomFactor * r);
-            break;
-        case ShapeDataObj.UnitType.ARCSEC:
-            screenRadius = getValueInScreenPixel(plot, r);
-            break;
-        default:
-            screenRadius = r;
-    }
-    return screenRadius;
 }
 
 /**

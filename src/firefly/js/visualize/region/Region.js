@@ -50,7 +50,7 @@ var cloneArg = (arg) => Object.keys(arg).reduce((prev, key) =>
  */
 export var makeRegion = (
             {
-                wpAry,
+                wpAry,       // for polygon, polygonCenter is added optionally based on VisUtil.computerCentralAndRadius
                 radiusAry,
                 dimensionAry,
                 angle,
@@ -118,6 +118,7 @@ export var makeRegionOptions = (
                 offsetX,
                 offsetY,
                 message,
+                tag,
                 coordSys} )  => (
                 cloneArg({color, text, font, pointType, pointSize,
                           editable, movable, rotatable, highlightable, deletable, fixedSize, include,
@@ -145,6 +146,7 @@ export const regionPropsList = {
         LINE:    'line',
         RULER:   'ruler',
         SOURCE:  'source',
+        TAG:     'tag',
         OFFX:    'offsetX',
         OFFY:    'offsetY',
         TEXTLOC: 'textloc',
@@ -171,6 +173,7 @@ export var defaultRegionProperty = {
     lineWidth: 1,
     line: '1 1',
     ruler: 'arcsec',
+    tag: '',
     source: 1,
     offsetX: 0,
     offsetY: 0,

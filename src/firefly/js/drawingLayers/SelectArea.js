@@ -114,16 +114,16 @@ function getCursor(plotView, screenPt) {
     if (!corner) return null;
     switch (corner) {
         case Corner.NE:
-            return 'ne-resize';
+            return 'nesw-resize';
             break;
         case Corner.NW:
-            return 'nw-resize';
+            return 'nwse-resize';
             break;
         case Corner.SE:
-            return 'se-resize';
+            return 'nwse-resize';
             break;
         case Corner.SW:
-            return 'sw-resize';
+            return 'nesw-resize';
             break;
     }
     return null;

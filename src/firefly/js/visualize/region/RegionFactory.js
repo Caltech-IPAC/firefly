@@ -55,7 +55,7 @@ export class RegionFactory {
      * parse ds9 region description
      * @param regionData
      * @param bAllowHeader
-     * @returns {null}
+     * @returns {array} an array of Region object
      */
     static parseRegionDS9(regionData, bAllowHeader = true) {
         var regionLines = regionData.reduce ((prev, oneLine) => {
@@ -146,7 +146,9 @@ export class RegionFactory {
             regionCoord = tmpAry[0].trim();
             tmpAry =  tmpAry[1].split('#');
         } else {
-            regionCoord = globalOptions ? globalOptions.coordSys.key : 'J2000';   // default coordinate is J2000 in case not specified
+            // default coordinate is J2000 in case not specified
+            regionCoord = globalOptions && has(globalOptions, regionPropsList.COORD)  ?
+                          globalOptions[regionPropsList.COORD] : 'J2000';
             tmpAry = tmpAry[0].split('#');
         }
 
@@ -893,6 +895,16 @@ export class RegionFactory {
                     opValRes = getOptionValue(ops, getValueInDelimiters, ['{', '}'], ['"', '"'], ['\'', '\'']);
                     if (opValRes.valueStr) {
                         set(rgOptions, regionPropsList.TEXT, opValRes.valueStr.slice(0));
+                    }
+                    break;
+                case 'tag':
+                    opValRes = getOptionValue(ops, getValueInDelimiters, ['{', '}'], ['"', '"'], ['\'', '\'']);
+                    if (opValRes.valueStr) {
+                        if (has(rgOptions, regionPropsList.TAG)) {
+                            rgOptions[regionPropsList.TAG].push(opValRes.valueStr.slice(0));
+                        } else {
+                            rgOptions[regionPropsList.TAG] = [opValRes.valueStr.slice(0)];
+                        }
                     }
                     break;
                 case 'font':

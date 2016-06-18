@@ -14,15 +14,15 @@ import {TextLocation} from '../draw/DrawingDef.js';
 import Point from '../Point.js';
 
 export const DEFAULT_TEXTLOC = {
-    [RegionType.circle.key]: TextLocation.CIRCLE_NE,
-    [RegionType.annulus.key]: TextLocation.REGION_NE,
-    [RegionType.line.key]: TextLocation.LINE_TOP,
-    [RegionType.box.key]: TextLocation.RECT_NE,
-    [RegionType.boxannulus.key]: TextLocation.REGION_NE,
-    [RegionType.ellipse.key]: TextLocation.ELLIPSE_NE,
-    [RegionType.ellipseannulus.key]: TextLocation.REGION_NE,
-    [RegionType.point.key]: TextLocation.REGION_NE,
-    [RegionType.polygon.key]: TextLocation.REGION_NE,
+    [RegionType.circle.key]: TextLocation.CIRCLE_SE,
+    [RegionType.annulus.key]: TextLocation.REGION_SE,
+    [RegionType.line.key]: TextLocation.LINE_BOTTOM,
+    [RegionType.box.key]: TextLocation.RECT_SE,
+    [RegionType.boxannulus.key]: TextLocation.REGION_SE,
+    [RegionType.ellipse.key]: TextLocation.ELLIPSE_SE,
+    [RegionType.ellipseannulus.key]: TextLocation.REGION_SE,
+    [RegionType.point.key]: TextLocation.REGION_SE,
+    [RegionType.polygon.key]: TextLocation.REGION_SE,
     [RegionType.text.key]: TextLocation.DEFAULT
 };
 

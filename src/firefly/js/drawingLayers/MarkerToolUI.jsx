@@ -19,8 +19,9 @@ class MarkerToolUI extends React.Component {
 
         var markerText = get(this.props.drawLayer, ['drawData', 'data', '0', 'text'], '');
         var markerTextLoc = get(this.props.drawLayer, ['drawData', 'data', '0', 'textLoc'], defaultMarkerTextLoc);
+        var markerType = get(this.props.drawLayer, ['markerType'], 'marker');
 
-        this.state = {markerText,  markerTextLoc: markerTextLoc.key};
+        this.state = {markerText,  markerTextLoc: markerTextLoc.key, markerType};
         this.changeMarkerText = this.changeMarkerText.bind(this);
         this.changeMarkerTextLocation = this.changeMarkerTextLocation.bind(this);
     }
@@ -54,8 +55,8 @@ class MarkerToolUI extends React.Component {
             paddingLeft : 5
         };
 
-        var textOnLink = `Add ${this.props.markerType}`;
-        var tipOnLink = `Add a ${this.props.markerType}`;
+        var textOnLink = `Add ${this.state.markerType}`;
+        var tipOnLink = `Add a ${this.state.markerType}`;
 
         return (
             <div style={{ padding:'5px 0 9px 0'}}>
@@ -74,7 +75,7 @@ class MarkerToolUI extends React.Component {
                 </div>
                 <div style={tStyle}  title={tipOnLink}>
                     <a className='ff-href' style={{textDecoration: 'underline'}}
-                       onClick={()=>addNewDrawLayer(this.props.pv, this.props.markerType)}>{textOnLink}</a>
+                       onClick={()=>addNewDrawLayer(this.props.pv, this.state.markerType)}>{textOnLink}</a>
                 </div>
             </div>
         );
@@ -84,10 +85,5 @@ class MarkerToolUI extends React.Component {
 
 MarkerToolUI.propTypes= {
     drawLayer     : React.PropTypes.object.isRequired,
-    pv            : React.PropTypes.object.isRequired,
-    markerType    : React.PropTypes.string
-};
-
-MarkerToolUI.defaultProps={
-    markerType    : 'marker'      // could be set for marker or other footprint cases
+    pv            : React.PropTypes.object.isRequired
 };

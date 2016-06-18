@@ -21,6 +21,11 @@ export {regionCreateLayerActionCreator,
         regionDeleteLayerActionCreator,
         regionUpdateEntryActionCreator} from './region/RegionTask.js';
 
+export {footprintCreateLayerActionCreator,
+        footprintStartActionCreator,
+        footprintMoveActionCreator,
+        footprintEndActionCreator
+} from '../drawingLayers/FootprintTool.js';
 
 export const DRAWLAYER_PREFIX = 'DrawLayerCntlr';
 
@@ -60,6 +65,10 @@ const MARKER_START = `${DRAWLAYER_PREFIX}.MarkerTool.markerStart`;
 const MARKER_MOVE = `${DRAWLAYER_PREFIX}.MarkerTool.markerMove`;
 const MARKER_END = `${DRAWLAYER_PREFIX}.MarkerTool.markerEnd`;
 const MARKER_CREATE= `${DRAWLAYER_PREFIX}.MarkerTool.markerCreate`;
+const FOOTPRINT_CREATE = `${DRAWLAYER_PREFIX}.FootprintTool.footprintCreate`;
+const FOOTPRINT_START = `${DRAWLAYER_PREFIX}.FootprintTool.footprintStart`;
+const FOOTPRINT_END = `${DRAWLAYER_PREFIX}.FootprintTool.footprintEnd`;
+const FOOTPRINT_MOVE = `${DRAWLAYER_PREFIX}.FootprintTool.footprintMove`;
 
 export const DRAWING_LAYER_KEY= 'drawLayers';
 
@@ -82,12 +91,13 @@ export default {
     DT_START, DT_MOVE, DT_END,
     REGION_CREATE_LAYER, REGION_DELETE_LAYER,  REGION_ADD_ENTRY, REGION_REMOVE_ENTRY,
     MARKER_START, MARKER_MOVE, MARKER_END, MARKER_CREATE,
+    FOOTPRINT_CREATE, FOOTPRINT_START, FOOTPRINT_END, FOOTPRINT_MOVE,
     makeReducer, dispatchRetrieveData, dispatchChangeVisibility,
     dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
     dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot,
     dispatchCreateRegionLayer, dispatchDeleteRegionLayer,
     dispatchAddRegionEntry, dispatchRemoveRegionEntry,
-    dispatchCreateMarkerLayer
+    dispatchCreateMarkerLayer, dispatchCreateFootprintLayer
 };
 
 /**
@@ -260,6 +270,11 @@ export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], att
     dispatcher({type: MARKER_CREATE, payload: {plotId, markerId, layerTitle, attachPlotGroup}});
 }
 
+export function dispatchCreateFootprintLayer(footprintId, layerTitle, footprint, instrument, plotId = [],
+                                                                      attachPlotGroup=true, dispatcher = flux.process) {
+    dispatcher({type: FOOTPRINT_CREATE, payload: {plotId, footprintId, layerTitle, footprint, instrument, attachPlotGroup}});
+
+}
 
 function getDrawLayerId(dlRoot,id) {
     var drawLayer= dlRoot.drawLayerAry.find( (dl) => id===dl.drawLayerId);

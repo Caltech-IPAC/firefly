@@ -10,7 +10,7 @@ import Point, {makeOffsetPt, makeScreenPt} from '../Point.js';
 import CsysConverter, {CCUtil} from '../CsysConverter.js';
 import {RegionType, regionPropsList} from '../region/Region.js';
 import {startRegionDes, setRegionPropertyDes} from '../region/RegionDescription.js';
-import ShapeDataObj, {fontHeight, drawText} from './ShapeDataObj.js';
+import ShapeDataObj, {fontHeight, drawText, translateTo, rotateAround} from './ShapeDataObj.js';
 import {isWithinPolygon, makeShapeHighlightRenderOptions, DELTA} from './ShapeHighlight.js';
 import { handleTextFromRegion } from './ShapeToRegion.js';
 import VisUtil from '../VisUtil.js';
@@ -20,10 +20,12 @@ import {isNil, isEmpty} from 'lodash';
 
 /**
  *  enum
+ *  ROTATE is the symbol mainly used as an indication for rotation in drawing layer
  *  one of 'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE', 'SQUARE_X', 'EMP_CROSS','EMP_SQUARE_X', 'BOXCIRCLE', 'ARROW'
  * */
 export const DrawSymbol = new Enum([
-    'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE', 'SQUARE_X', 'EMP_CROSS','EMP_SQUARE_X', 'BOXCIRCLE', 'ARROW'
+    'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE', 'SQUARE_X', 'EMP_CROSS','EMP_SQUARE_X',
+    'BOXCIRCLE', 'ARROW', 'ROTATE'
 ]);
 
 export const POINT_DATA_OBJ= 'PointDataObj';
@@ -49,11 +51,12 @@ export function make(pt,size,symbol,text) {
     if (size) obj.size= size;
     if (symbol) obj.symbol= symbol;
     if (text) obj.text= text;
-
     return obj;
 }
 
-
+export function makePointDataObj(pt, size, symbol, text) {
+    return make(pt, size, symbol, text);
+}
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
@@ -95,12 +98,20 @@ var draw=  {
         return toRegion(drawObj.pt, plot, drawObj, drawParams,drawObj.renderOptions);
     },
 
+    translateTo(drawObj,plot, apt) {
+        return Object.assign({}, drawObj, {...translatePtTo(plot,drawObj, apt)});
+    },
+
+    rotateAround(drawObj, plot, angle, worldPt) {
+        return Object.assign({}, drawObj, {...rotatePtAround(plot, drawObj, angle, worldPt)});
+    },
+
     makeHighlight(drawObj, plot, def = {}) {
-        return makeHighlightPointDataObj(drawObj,  CsysConverter.make(plot), def);
+        return makeHighlightPointDataObj(drawObj,  CsysConverter.make(plot));
     },
 
     isScreenPointInside(screenPt, drawObj, plot, def = {}) {
-        return isInPointDataobj(drawObj,  CsysConverter.make(plot), screenPt, def);
+        return isInPointDataobj(drawObj,  CsysConverter.make(plot), screenPt);
     }
 };
 
@@ -111,6 +122,33 @@ export default {make,draw};
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 
+/**
+ * translate the point symbol
+ * @param plot
+ * @param drawObj
+ * @param apt
+ * @returns {{pt: *}}
+ */
+function translatePtTo(plot, drawObj, apt) {
+    var tPt = translateTo(plot, [drawObj.pt], apt);
+
+    return {pt: tPt[0]};  // use translateTo in shapedataobj
+}
+
+/**
+ * rotate the point symbol (rotate the point defined for the point, not the entire symbol)
+ * if the entire symbol needs to be rotated, set the angle to renderOptions.rotAngle externally
+ * @param plot
+ * @param drawObj
+ * @param angle in screen coodinate direction, radian
+ * @param worldPt
+ * @returns {{pt: *}}
+ */
+function rotatePtAround(plot, drawObj, angle, worldPt) {
+    var rPt = rotateAround(plot, [drawObj.pt], angle, worldPt);
+
+     return {pt: rPt[0]}; // use rotateAround in shapedataobj
+}
 
 
 function makeDrawParams(pointDataObj,def) {
@@ -171,20 +209,22 @@ function drawPt(ctx, drawTextAry, pt, plot, drawObj, drawParams, renderOptions, 
 
 
 /**
- * get the covered area of the point object in screen pixel coordinate
+ * get the covered area of the point object in screen pixel coordinate, no rotation is considered
  * size means:
  * circle: radius, square, square_x, diamond, cross, x, boxcircle: half of width (height)
  * dot: width, arrow: height, width
+ * rotate: the shape is a stick with a rotation mark at the one end,
+ *         width, height is the size, and pt is located at the other end of the stick
  * @param drawObj
  * @param cc
  * @returns {*} pixel and size in screen pixel
  */
-function getPointDataobjArea(drawObj, cc) {
+export function getPointDataobjArea(drawObj, cc) {
     var {size, symbol, pt} = drawObj;
     var width, height;
     var spt = cc.getScreenCoords(pt);
 
-    if (!spt) return null;
+    if (!spt) return {};
 
     switch(symbol) {
         case DrawSymbol.BOXCIRCLE:
@@ -207,6 +247,10 @@ function getPointDataobjArea(drawObj, cc) {
             width = Math.floor((size+1)/2) * 2;
             spt.x -= width/2;
             spt.y -= width/2;
+            break;
+        case DrawSymbol.ROTATE:
+            width = size;
+            spt.x += width/2;
             break;
         default:
             width = size * 2;
@@ -255,8 +299,9 @@ function makeTextLocationPoint(drawObj, plot, textLoc, fontSize) {
 function drawXY(ctx, drawTextAry, pt, plot, drawObj, drawParams,renderOptions, onlyAddToPath) {
     var {color, textLoc, fontName, fontSize, fontWeight, fontStyle}= drawParams;
     var {text, textOffset} = drawObj;
-    drawSymbolOnPlot(ctx, pt.x, pt.y, drawParams,renderOptions, onlyAddToPath);
 
+
+    drawSymbolOnPlot(ctx, pt.x, pt.y, drawParams,renderOptions, onlyAddToPath);
     if (!text)  return;
 
     if (isNil(color)) {
@@ -314,6 +359,9 @@ function drawSymbolOnPlot(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
         case DrawSymbol.ARROW :
             DrawUtil.drawArrow(ctx, x, y, color, size, renderOptions, onlyAddToPath);
             break;
+        case DrawSymbol.ROTATE:
+            DrawUtil.drawRotate(ctx, x, y, color, size, renderOptions, onlyAddToPath);
+            break;
         default :
             break;
     }
@@ -355,6 +403,9 @@ function toRegion(pt, plot, drawObj, drawParams, renderOptions) {
             break;
         case DrawSymbol.ARROW :
             pointType = 'arrow';
+            break;
+        case DrawSymbol.ROTATE:
+            return retList;   // no region
             break;
         default:
             pointType = 'box';

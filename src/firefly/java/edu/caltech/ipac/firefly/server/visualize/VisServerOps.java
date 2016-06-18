@@ -55,8 +55,11 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.IndexColorModel;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
@@ -1434,9 +1437,66 @@ public class VisServerOps {
             retval = createError("on getDSRegion", null, e);
         }
         return retval;
-
     }
 
+    private static final Map<String, String> footprintMap;
+    static {
+        footprintMap = new HashMap<String, String>();
+        footprintMap.put("HST",         "Footprint_HST.reg");
+        footprintMap.put("HST_NICMOS",  "Footprint_HST.reg");
+        footprintMap.put("HST_WFPC2",   "Footprint_HST.reg");
+        footprintMap.put("HST_ACS/WFC", "Footprint_HST.reg");
+        footprintMap.put("HST_ACS/HRC", "Footprint_HST.reg");
+        footprintMap.put("HST_ACS/SBC", "Footprint_HST.reg");
+        footprintMap.put("HST_WFC3/UVIS","Footprint_HST.reg");
+        footprintMap.put("HST_WFC3/IR", "Footprint_HST.reg");
+        footprintMap.put("JWST",        "Footprint_JWST.reg");
+        footprintMap.put("JWST_FGS",    "Footprint_JWST.reg");
+        footprintMap.put("JWST_MIRI",   "Footprint_JWST.reg");
+        footprintMap.put("JWST_NIRCAM", "Footprint_JWST.reg");
+        footprintMap.put("JWST_NIS",    "Footprint_JWST.reg");
+        footprintMap.put("JWST_NIRSPEC","Footprint_JWST.reg");
+        footprintMap.put("SPITZER",     "Footprint_SPITZER.reg" );
+        footprintMap.put("SPITZER_IRAC36", "Footprint_SPITZER.reg");
+        footprintMap.put("SPITZER_IRAC45", "Footprint_SPITZER.reg");
+        footprintMap.put("WFIRST",      "Footprint_WFIRST.reg");
+    }
+
+    public static WebPlotResult getFootprintRegion(String fpInfo) {
+
+        List<String> rAsStrList =  new ArrayList<String>();
+        List<String> msgList =  new ArrayList<String>();
+        WebPlotResult retval = new WebPlotResult();
+
+        if (footprintMap.containsKey(fpInfo)) {
+            int idx = fpInfo.indexOf('_');
+
+            String tag = idx >= 0 ? fpInfo.substring(idx + 1) : fpInfo;
+            String fileName = "edu/caltech/ipac/visualize/resources/" + footprintMap.get(fpInfo);
+
+            try {
+                InputStream in = VisServerOps.class.getClassLoader().getResourceAsStream(fileName);
+                BufferedReader br = new BufferedReader(new InputStreamReader(in));
+                String tmpLine;
+
+                while ((tmpLine = br.readLine()) != null) {
+                    tmpLine = tmpLine.trim();
+                    if (!tmpLine.startsWith("#") && (tmpLine.contains("tag={" + tag)))
+                        rAsStrList.add(tmpLine);
+                }
+                if (rAsStrList.size() == 0) {
+                    msgList.add("no region is defined in the footprint file");
+                }
+            } catch (Exception e) {
+                retval = createError("on getFootprintRegion", null, e);
+            }
+        }
+        retval.putResult(WebPlotResult.REGION_DATA,
+                new DataEntry.Str(StringUtils.combineStringList(rAsStrList)));
+        retval.putResult(WebPlotResult.REGION_ERRORS,
+                new DataEntry.Str(StringUtils.combineStringList(msgList)));
+        return retval;
+    }
 
     public static synchronized boolean addSavedRequest(String saveKey, WebPlotRequest request) {
         Cache cache = UserCache.getInstance();
