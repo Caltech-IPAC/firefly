@@ -109,8 +109,8 @@ class SuggestBoxInputFieldView extends Component {
         this.state = {
             isOpen: false,
             displayValue: props.value,
-            valid: true,
-            message: '',
+            valid: get(props, 'valid', true),
+            message: get(props.message, ''),
             inputWidth: undefined,
             suggestions: [],
             mouseTrigger: false
@@ -123,6 +123,12 @@ class SuggestBoxInputFieldView extends Component {
         this.updateSuggestions = debounce(this.updateSuggestions.bind(this), 200);
     }
 
+    componentWillReceiveProps(nextProps) {
+        const {valid, message, value} = nextProps;
+        if (valid !== this.state.valid || message !== this.state.message || value !== this.state.displayValue) {
+            this.setState({valid, message, displayValue: value});
+        }
+    }
 
     onValueChange(ev) {
         var displayValue = get(ev, 'target.value');
@@ -230,7 +236,7 @@ class SuggestBoxInputFieldView extends Component {
                     />
                 </div>
 
-                {isOpen && <div className={'SuggestBoxPopup'} style={{left: leftOffset, minWidth: minWidth}} onMouseLeave={() => this.setState({highlightedIdx : undefined})}>
+                {isOpen && <div className={'SuggestBoxPopup'} style={{left: leftOffset, minWidth}} onMouseLeave={() => this.setState({highlightedIdx : undefined})}>
                     <SuggestBox
                         suggestions={suggestions}
                         highlightedIdx={highlightedIdx}
