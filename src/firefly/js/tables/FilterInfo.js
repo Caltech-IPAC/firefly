@@ -6,13 +6,19 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-const op_regex = new RegExp('(<|>|>=|<=|=|!=|like|in)');
+const op_regex = new RegExp('(<|>|>=|<=|=|!=|like|in)', 'i');
 const cond_regex = new RegExp('^' + op_regex.source + '\\s+(.+)', 'i');
 const filter_regex = new RegExp('(\\S+)\\s+' + op_regex.source + '\\s+(.+)', 'i');
 
-export const FILTER_TTIPS = 'Valid values are one of (=, >, <, !=, >=, <=, LIKE) followed by a value separated by a space. \n' +
-    `Or 'IN', followed by a list of values separated by commas. \n` +
-    'Examples:  > 12345; != 3000; IN a,b,c,d';
+export const FILTER_CONDITION_TTIPS =
+`Valid values are one of (=, >, <, !=, >=, <=, LIKE) followed by a value separated by a space.
+Or 'IN', followed by a list of values separated by commas. 
+Examples:  > 12345; != 3000; IN a,b,c,d`;
+
+export const FILTER_TTIPS =
+`Filters are "column_name operator condition" separated by commas.
+${FILTER_CONDITION_TTIPS}`;
+
 
 /**
  * convenience class to handle the table's filter information.
@@ -69,20 +75,80 @@ export class FilterInfo {
     }
 
     /**
+     * given a list of filters separated by semicolon,
+     * transform them into valid filters if they are not already so.
+     * @param filterInfo
+     * @returns {string}
+     */
+    static autoCorrectFilter(filterInfo) {
+        if (filterInfo) {
+            const filters = filterInfo.split(';').map( (v) => {
+                const parts = v.split(op_regex).map( (s) => s.trim());
+                if (parts.length != 3) return v;
+                return `${parts[0]} ${FilterInfo.autoCorrect(parts[1]+parts[2])}`;
+            });
+            return filters.join(';');
+        } else {
+            return filterInfo;
+        }
+    }
+
+    /**
      * validate the conditions
      * @param conditions
      * @returns {boolean}
      */
-    static isValid(conditions) {
+    static isConditionValid(conditions) {
         return !conditions || conditions.split(';').reduce( (rval, v) => {
             return rval && cond_regex.test(v.trim());
         }, true);
     }
 
-    static validator(conditions) {
+    /**
+     * validator for column's filter.  it validates only the condition portion of the filter.
+     * @param conditions
+     * @returns {{valid: boolean, value: (string|*), message: string}}
+     */
+    static conditionValidator(conditions) {
         conditions = FilterInfo.autoCorrect(conditions);
-        const valid = FilterInfo.isValid(conditions);
-        return {valid, value: conditions, message: FILTER_TTIPS};
+        const valid = FilterInfo.isConditionValid(conditions);
+        return {valid, value: conditions, message: FILTER_CONDITION_TTIPS};
+    }
+
+    /**
+     * validate the filterInfo string
+     * @param conditions
+     * @param columns array of column definitions
+     * @returns {[boolean, string]} isValid plus an error message if isValid is false.
+     */
+    static isValid(filterInfo, columns = []) {
+        const rval = [true, ''];
+        const allowCols = columns.concat({name:'ROWID'});
+        if (filterInfo && filterInfo.trim().length > 0) {
+            return filterInfo.split(';').reduce( ([isValid, msg], v) => {
+                    const parts = v.split(op_regex).map( (s) => s.trim());
+                    if (parts.length !== 3) {
+                        msg += `\n"${v}" is not a valid filter.`;
+                    } else if (!allowCols.some( (col) => col.name === parts[0])) {
+                        msg +=`\n"${v}" column not found.\n`;
+                    }
+                    return [!msg, msg];
+                }, rval);
+        } else {
+            return rval;
+        }
+    }
+
+    /**
+     * validator for free-form filters field
+     * @param filterInfo string serialized filter list
+     * @param columns array of column definitions
+     * @returns {{valid: boolean, value: (string|*), message: string}}
+     */
+    static validator(columns, filterInfo) {
+        filterInfo = FilterInfo.autoCorrectFilter(filterInfo);
+        const [valid, message] = FilterInfo.isValid(filterInfo, columns);
+        return {valid, value: filterInfo, message};
     }
 
     serialize() {

@@ -39,6 +39,7 @@ export class TablePanel extends Component {
         this.saveTable = this.saveTable.bind(this);
         this.toggleOptions = this.toggleOptions.bind(this);
         this.expandTable = this.expandTable.bind(this);
+        this.onOptionUpdate = this.onOptionUpdate.bind(this);
     }
 
     componentDidMount() {
@@ -91,11 +92,14 @@ export class TablePanel extends Component {
         dispatchTblExpanded(tbl_ui_id, tbl_id);
         dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.tables);
     }
+    onOptionUpdate(value) {
+        this.tableConnector.onOptionUpdate(value);
+    }
 
     render() {
         const {selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
                 showToolbar, showTitle, showOptionButton, showPaging, showSave, showFilterButton} = this.state;
-        var {totalRows, showLoading, columns, showOptions, showUnits, showFilters, textView, colSortDir} = this.state;
+        var {totalRows, showLoading, columns, showOptions, showUnits, showFilters, textView, optSortInfo} = this.state;
         const {tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
                 filterInfo, filterCount, sortInfo, data} = this.state;
         const {tableConnector} = this;
@@ -158,11 +162,12 @@ export class TablePanel extends Component {
                         {showOptions && <TablePanelOptions
                             columns={columns}
                             origColumns={origColumns}
-                            colSortDir={colSortDir}
+                            optSortInfo={optSortInfo}
+                            filterInfo={filterInfo}
                             pageSize={pageSize}
                             showUnits={showUnits}
                             showFilters={showFilters}
-                            onChange={(v) => tableConnector.onOptionUpdate(v)}
+                            onChange={this.onOptionUpdate}
                         /> }
                     </div>
                 </div>

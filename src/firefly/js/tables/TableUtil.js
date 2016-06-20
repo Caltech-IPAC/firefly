@@ -362,32 +362,44 @@ export function smartMerge(target, source) {
  * @param sortInfoStr
  */
 export function sortTable(origTableModel, sortInfoStr) {
+    var tableModel = cloneDeep(origTableModel);
+    set(tableModel, 'request.sortInfo', sortInfoStr);
+    const {data, columns} = tableModel.tableData;
+    sortTableData(data, columns, sortInfoStr);
+    return tableModel;
+}
+
+/**
+ * sort table data in place.
+ * @param tableData
+ * @param columns
+ * @param sortInfoStr
+ * @returns {*}
+ */
+export function sortTableData(tableData, columns, sortInfoStr) {
     const sortInfoCls = SortInfo.parse(sortInfoStr);
     const colName = get(sortInfoCls, 'sortColumns.0');
     const dir = get(sortInfoCls, 'direction', UNSORTED);
-    if (dir === UNSORTED || get(origTableModel, 'tableData.data.length', 0) === 0) return origTableModel;
+    if (dir === UNSORTED || get(tableData, 'length', 0) === 0) return tableData;
 
     const multiplier = dir === SORT_ASC ? 1 : -1;
-    const colIdx = getColumnIdx(origTableModel, colName);
-    const col = get(origTableModel, ['tableData','columns', colIdx]);
-
-    var tableModel = cloneDeep(origTableModel);
-    set(tableModel, 'request.sortInfo', sortInfoStr);
+    const colIdx = columns.findIndex( (col) => {return col.name === colName;} );
+    const col = columns[colIdx];
 
     var comparator;
     if (!col.type || ['char', 'c'].includes(col.type) ) {
         comparator = (r1, r2) => {
-                const [s1, s2] = [r1[colIdx], r2[colIdx]];
-                return multiplier * (s1 > s2 ? 1 : -1);
-            };
+            const [s1, s2] = [r1[colIdx], r2[colIdx]];
+            return multiplier * (s1 > s2 ? 1 : -1);
+        };
     } else {
         comparator = (r1, r2) => {
-                const [v1, v2] = [r1[colIdx], r2[colIdx]];
-                return multiplier * (Number(v1) - Number(v2));
-            };
+            const [v1, v2] = [r1[colIdx], r2[colIdx]];
+            return multiplier * (Number(v1) - Number(v2));
+        };
     }
-    tableModel.tableData.data.sort(comparator);
-    return tableModel;
+    tableData.sort(comparator);
+    return tableData;
 }
 
 export function getTblInfoById(tbl_id, aPageSize) {

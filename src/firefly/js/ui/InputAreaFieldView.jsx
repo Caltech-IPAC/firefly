@@ -1,7 +1,7 @@
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {PointerPopup} from '../ui/PointerPopup.jsx';
-import InputFieldLabel from './InputFieldLabel.jsx';
+import {InputFieldLabel} from './InputFieldLabel.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import './InputAreaFieldView.css';
 import EXCLAMATION from 'html/images/exclamation16x16.gif';
@@ -89,13 +89,13 @@ export class InputAreaFieldView extends Component {
 
     render() {
         var {hasFocus}= this.state;
-        var {visible,label,tooltip,rows,cols,labelWidth,value,style,wrapperStyle,
+        var {visible,label,tooltip,rows,cols,labelWidth,value,style,wrapperStyle,labelStyle,
              valid,size,onChange, onBlur, onKeyPress, showWarning, message, type}= this.props;
         if (!visible) return null;
         wrapperStyle = Object.assign({whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'}, wrapperStyle);
         return (
             <div style={wrapperStyle}>
-                {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
+                {label && <InputFieldLabel labelStyle={labelStyle} label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
                 <textarea style={Object.assign({display:'inline-block'}, style)}
                           rows={rows}
                           cols={cols}
@@ -127,6 +127,7 @@ InputAreaFieldView.propTypes= {
     inline : PropTypes.bool,
     labelWidth: PropTypes.number,
     style: PropTypes.object,
+    labelStyle: PropTypes.object,
     wrapperStyle: PropTypes.object,
     value   : PropTypes.string.isRequired,
     size : PropTypes.number,

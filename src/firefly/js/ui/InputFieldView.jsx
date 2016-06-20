@@ -89,13 +89,13 @@ export class InputFieldView extends Component {
 
     render() {
         var {hasFocus}= this.state;
-        var {visible,label,tooltip,labelWidth,value,style,wrapperStyle,
+        var {visible,label,tooltip,labelWidth,value,style,wrapperStyle,labelStyle,
              valid,size,onChange, onBlur, onKeyPress, showWarning, message, type}= this.props;
         if (!visible) return null;
         wrapperStyle = Object.assign({whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'}, wrapperStyle);
         return (
             <div style={wrapperStyle}>
-                {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
+                {label && <InputFieldLabel labelStyle={labelStyle} label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
                 <input style={Object.assign({display:'inline-block'}, style)}
                        className={computeStyle(valid,hasFocus)}
                        onChange={(ev) => onChange ? onChange(ev) : null}
@@ -126,6 +126,7 @@ InputFieldView.propTypes= {
     labelWidth: PropTypes.number,
     style: PropTypes.object,
     wrapperStyle: PropTypes.object,
+    labelStyle: PropTypes.object,
     value   : PropTypes.string.isRequired,
     size : PropTypes.number,
     onChange : PropTypes.func.isRequired,
