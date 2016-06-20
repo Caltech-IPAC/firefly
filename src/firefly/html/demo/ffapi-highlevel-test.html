@@ -205,12 +205,12 @@
                 type: 'selectable',
                 Title: 'old api: selectable table',
                 pageSize: 50,
+                rowHeight: 30,
                 tableOptions: "show-filter=true,show-title=true,show-toolbar=true,show-options=true,show-paging=true,show-save=true"
             };
             firefly.showTable(tblParams, 'oldSelectable');
             var tblParams2 = {
                 source: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
-                type: 'basic',
                 Title: 'old api: basic table',
                 pageSize: 1000,
                 tableOptions: "show-toolbar=false"

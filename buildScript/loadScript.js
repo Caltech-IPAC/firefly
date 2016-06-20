@@ -25,7 +25,8 @@ function loadScript(loader, script, callback){
     document.getElementsByTagName('head')[0].appendChild(scriptTag);
 }
 
-function getScriptURL(loader = 'firefly_loader.js') {
+function getScriptURL(loader) {
+    loader = loader || 'firefly_loader.js';
     var scripts = document.getElementsByTagName('script');
     var url = '/';
     for (var i = 0; (i < scripts.length); i++) {
