@@ -44,6 +44,8 @@ export class TableConnector {
      * @param {number[]} selected  array of selected row indices.
      */
     onFilterSelected(selected) {
+        if (isEmpty(selected)) return;
+
         var {tableModel, request} = TblUtil.getTblInfoById(this.tbl_id);
         if (this.origTableModel) {
             // not implemented yet
@@ -133,6 +135,8 @@ export class TableConnector {
 
 
 function getRowIdFor(filePath, selected) {
+    if (isEmpty(selected)) return [];
+
     const params = {id: 'Table__SelectedValues', columnName: 'ROWID', filePath, selectedRows: String(selected)};
 
     return fetchUrl(TblUtil.SEARCH_SRV_PATH, {method: 'post', params}).then( (response) => {

@@ -16,6 +16,7 @@ import {SelectInfo} from '../SelectInfo.js';
 import {PagingBar} from '../../ui/PagingBar.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
+import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 
@@ -92,7 +93,7 @@ export class TablePanel extends Component {
     }
 
     render() {
-        const {selectable, expandable, expandedMode, border, renderers, title, removable,
+        const {selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
                 showToolbar, showTitle, showOptionButton, showPaging, showSave, showFilterButton} = this.state;
         var {totalRows, showLoading, columns, showOptions, showUnits, showFilters, textView, colSortDir} = this.state;
         const {tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
@@ -132,6 +133,7 @@ export class TablePanel extends Component {
                                     <button onClick={this.expandTable}>
                                         <img src={OUTLINE_EXPAND} title='Expand this panel to take up a larger area'/>
                                     </button>}
+                                { help_id && <div style={{marginTop:-10}}> <HelpIcon helpId={help_id} /> </div>}
                             </div>
                         </div>
                     }
@@ -140,6 +142,7 @@ export class TablePanel extends Component {
                             columns={columns}
                             data={data}
                             hlRowIdx={hlRowIdx}
+                            rowHeight = {rowHeight}
                             selectable={selectable}
                             showUnits={showUnits}
                             showFilters={showFilters}
@@ -175,11 +178,13 @@ TablePanel.propTypes = {
     tbl_ui_id: PropTypes.string,
     tableModel: PropTypes.object,
     pageSize: PropTypes.number,
+    rowHeight: PropTypes.number,
     selectable: PropTypes.bool,
     expandedMode: PropTypes.bool,
     expandable: PropTypes.bool,
     border: PropTypes.bool,
     title: PropTypes.string,
+    help_id: PropTypes.string,
     removable: PropTypes.bool,
     showUnits: PropTypes.bool,
     showFilters: PropTypes.bool,

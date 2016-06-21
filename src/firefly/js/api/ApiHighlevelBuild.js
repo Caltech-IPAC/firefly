@@ -72,11 +72,12 @@ function oldApi(llApi, params, options) {
     // options.?? = getBoolean(oldOpts, 'show-popout');
     // options.?? = getBoolean(oldOpts, 'show-table-view');
 
-    var {Title, source, alt_source, type, filters, sortInfo, pageSize, startIdx, fixedLength} = params;
+    var {Title, source, alt_source, type, filters, sortInfo, pageSize, startIdx, fixedLength, expandable, rowHeight} = params;
     var request = makeFileRequest(Title, source, alt_source, {filters, sortInfo, pageSize, startIdx});
-    if (type === 'basic') {
-        options.selectable = false;
-    }
+    options.selectable = type === 'selectable';
+    options.help_id = 'tables';
+    options.expandable = !!expandable;
+    options.rowHeight = rowHeight;
     return request;
 }
 

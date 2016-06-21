@@ -18,6 +18,7 @@ import DESC_ICO from 'html/images/sort_desc.gif';
 import FILTER_SELECTED_ICO from 'html/images/icons-2014/16x16_Filter.png';
 
 const {Cell} = FixedDataTable;
+const  html_regex = /<.+>/;
 
 // the components here are small and used by table only.  not all props are defined.
 /* eslint-disable react/prop-types */
@@ -168,10 +169,11 @@ export class TextCell extends React.Component {
     // }
     //
     render() {
+        var val = getValue(this.props);
+        const lineHeight = this.props.height - 6 + 'px';  // 6 is the top/bottom padding.
+        val = (val.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: val}} /> : val;
         return (
-            <div className='public_fixedDataTableCell_cellContent'>
-                {getValue(this.props)}
-            </div>
+            <div style={{lineHeight}} className='public_fixedDataTableCell_cellContent'>{val}</div>
         );
     }
 }
