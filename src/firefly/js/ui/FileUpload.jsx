@@ -5,10 +5,10 @@ import {get} from 'lodash';
 import {InputFieldView} from './InputFieldView.jsx';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 import {fetchUrl} from '../util/WebUtil.js';
-import {getRootPath} from '../util/BrowserUtil.js';
+import {getRootURL} from '../util/BrowserUtil.js';
 
 import LOADING from 'html/images/gxt/loading.gif';
-const UL_URL = getRootPath() + 'sticky/Firefly_FileUpload';
+const UL_URL = getRootURL() + 'sticky/Firefly_FileUpload';
 
 
 function FileUploadView({fileType, isLoading, label, valid, wrapperStyle, message, onChange, value}) {

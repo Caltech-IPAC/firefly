@@ -7,7 +7,7 @@ import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {flux} from '../Firefly.js';
 import {fetchUrl, encodeServerUrl, encodeParams} from '../util/WebUtil.js';
-import {getRootPath, getRootURL} from '../util/BrowserUtil.js';
+import {getRootURL} from '../util/BrowserUtil.js';
 
 export const SEARCH_SRV_PATH = getRootURL() + 'search/json';
 const SAVE_TABLE_URL = getRootURL() + 'servlet/SaveAsIpacTable';

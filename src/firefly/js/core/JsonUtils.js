@@ -8,7 +8,7 @@
 
 /*eslint prefer-template:0 */
 import {get, has} from 'lodash';
-import { getRootURL, getRootPath} from '../util/BrowserUtil.js';
+import { getRootURL} from '../util/BrowserUtil.js';
 import { encodeServerUrl, toBoolean } from '../util/WebUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {fetchUrl} from '../util/WebUtil.js';
@@ -17,7 +17,6 @@ import {fetchUrl} from '../util/WebUtil.js';
 
 //const TIMEOUT = 10 * 60 * 1000;  // 10 min
 const DEF_BASE_URL = getRootURL() + 'sticky/CmdSrv';
-const DEF_PATH = getRootPath() + 'sticky/CmdSrv';
 
 
 function preparePostParamList(cmd,paramList) {
@@ -112,7 +111,7 @@ export const jsonRequest= function(baseUrl, cmd, paramList, doPost) {
  * @param doPost
  */
 export const doJsonRequest= function(cmd, paramList, doPost=false) {
-    return jsonRequest(DEF_PATH, cmd, paramList, doPost);
+    return jsonRequest(DEF_BASE_URL, cmd, paramList, doPost);
 };
 
 export const doService= function(doJsonP, cmd, paramList) {
