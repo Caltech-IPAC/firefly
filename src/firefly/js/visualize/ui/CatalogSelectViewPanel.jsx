@@ -33,7 +33,7 @@ import './CatalogSelectViewPanel.css';
 /**
  * group key for fieldgroup comp
  */
-const gkey = 'CATALOG_PANEL';
+export const gkey = 'CATALOG_PANEL';
 
 /**define the helpButton*/
 const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height: 40, marginRight: 20};
@@ -213,17 +213,18 @@ function validateSql(sqlTxt) {
 import {FilterInfo} from '../../tables/FilterInfo.js';
 
 function doVoSearch(request) {
-    // tReq = makeIrsaCatalogRequest(title, request.project, request.cattable, null, {
-
-    var tReq = makeIrsaCatalogRequest(request.catalog, request.project, request.cattable,
+    //VO url that work http://vizier.u-strasbg.fr/viz-bin/votable/-A?-source=J/A+A/402/549
+    const radius = convertAngle('deg', 'arcsec', request.conesize);
+    const accessUrl = request.vourl.trim().replace('&', 'URL_PARAM_SEP');
+    const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
+    var tReq = makeTblRequest('ConeSearchByURL', `${wp.getObjName()} (VO SCS ${radius}")`,
         {
             [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
-            SearchMethod: request.spatial,
-            RequestedDataSet: request.catalog,
-            radius: request.conesize,
+            SearchMethod: 'ConeSearchByURL',
+            radius,
+            accessUrl
         });
-    console.log('Does not dispatch yet ' + tReq);
-    //dispatchTableSearch(tReq);
+    dispatchTableSearch(tReq);
 }
 
 function doLoadTable(request) {
@@ -701,6 +702,10 @@ function fieldInit() {
         'ddform': {
             fieldKey: 'ddform',
             value: 'true'
+        },
+        'vourl': {
+            fieldKey: 'vourl',
+            value: ''
         }
 
     }
