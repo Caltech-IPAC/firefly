@@ -64,7 +64,7 @@ export class CatalogSearchMethodType extends Component {
         const {groupKey} = this.props;
 
         return (
-            <div style={{padding: 10, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center'}}>
+            <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
                 {renderTargetPanel(groupKey, searchType)}
                 <div
                     style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
@@ -230,7 +230,7 @@ function renderTargetPanel(groupKey, searchType) {
 
     return (
         visible && <div className="intarget">
-            <TargetPanel groupKey={groupKey}/>
+            <TargetPanel labelWidth={90} groupKey={groupKey}/>
             <ListBoxInputField
                 fieldKey='targettry'
                 options={[{label: 'Try NED then Simbad', value: 'NED'},

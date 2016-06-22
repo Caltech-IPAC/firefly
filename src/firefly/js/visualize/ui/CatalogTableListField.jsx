@@ -50,6 +50,7 @@ export class CatalogTableView extends Component {
             return (
                 <CatalogTableItem
                     key={index}
+                    indexItem={index}
                     onClick={onClick}
                     isClicked={clicked}
                     cols={cols}
@@ -96,10 +97,11 @@ function getProps(params, fireValueChange) {
 }
 
 function handleOnClick(ev, params, fireValueChange) {
-
+    const value = ev.currentTarget.value || ev.currentTarget.attributes['value'].value;
+    const indexClicked = parseInt(ev.currentTarget.attributes['id'].value);
     // the value of this input field is a string
     fireValueChange({
-        value: ev.currentTarget.value || ev.currentTarget.attributes['value'].value
+        value, indexClicked
     });
 }
 
@@ -145,7 +147,7 @@ class CatalogTableItem extends Component {
     }
 
     render() {
-        const {itemData, onClick, isClicked, cols} = this.props;
+        const {itemData, onClick, isClicked, cols, indexItem} = this.props;
 
         const html = '<span class="item-cell-title">' + itemData.cat[2] + '</span></br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + itemMarkupTransform(itemData, cols);
         const v = {__html: html};
@@ -153,7 +155,7 @@ class CatalogTableItem extends Component {
         const catname = itemData.value;
         return (
             <tr>
-                <td title={`Table name: ${catname}`} className="cell" value={itemData.value}
+                <td title={`Table name: ${catname}`} className="cell" id={indexItem} value={itemData.value}
                     onClick={(ev) => onClick ? onClick(ev) : null}
                     style={{backgroundColor: `${color}`}}
                     dangerouslySetInnerHTML={v}>
@@ -167,6 +169,7 @@ CatalogTableItem.propTypes = {
     itemData: PropTypes.object.isRequired,
     isClicked: PropTypes.bool.isRequired,
     cols: PropTypes.array,
+    indexItem: PropTypes.number,
     onClick: PropTypes.func
 };
 

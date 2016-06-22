@@ -1,6 +1,6 @@
 /*right list of table with catalog names to be selected*/
 .catalogtable {
-    height: 250px;
+    height: 200px;
     width: 375px;
     overflow: auto;
     border: 1px solid #a3aeb9;

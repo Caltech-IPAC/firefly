@@ -402,7 +402,7 @@ class CatalogSelectView extends Component {
         );
     }
 }
-
+const currentField = {};
 /**
  * Reducer from field group component, should return updated project and sub-project updated
  * @returns {Function} reducer to change fields when user interact with the dialog
@@ -427,16 +427,15 @@ var userChangeDispatch = function () {
                 const valP = inFields.project.value;
                 let valC = inFields.catalog.value;
                 const optList = getSubProjectOptions(catmaster, valP);
+                let currentIdx = get(inFields, 'cattable.indexClicked', 0);
+
                 if (fieldKey === 'project') {
-                    valC = optList[0].value;//If project has changed, initiialise to the first subproject found
+                    currentIdx = 0;
+                    valC = optList[currentIdx].value;//If project has changed, initialise to the first subproject found
                     inFields = updateMerge(inFields, 'catalog', {
                         value: valC
                     });
                 }
-                //inFields = updateMerge(inFields, 'tableview', {
-                //    selProj: valP,
-                //    selCat: valC
-                //});
 
                 // Reinit the table and catalog value:
                 const catTable = getCatalogOptions(catmaster, valP, valC).option;
@@ -454,38 +453,12 @@ var userChangeDispatch = function () {
                     break;
 
                 }
-                let idx = get(inFields, 'cattable.indexClicked', 0);//Get current value
-                if (fieldKey === 'project'
-                    || fieldKey === 'catalog') {
-                    idx = 0; // reset to first item of the catalog list
-                    cleanFilterRestrictions(inFields);
-                    inFields = updateMerge(inFields, 'ddform', {
-                        value: 'true'
-                    });
-                }
 
-                const currentIdx = get(inFields, 'cattable.indexClicked', 0);
-
-                // User clicked on the table to select a catalog and needs to propagte the index in order
-                // to get the item highlighted
-                if (fieldKey === 'cattable') {
-                    idx = catTable.findIndex((e) => {
-                        return e.value === action.payload.value;
-                    });
-                    //reset table/textarea restrictions
-                    if (idx != currentIdx) {
-                        inFields = cleanFilterRestrictions(inFields);
-                        inFields = updateMerge(inFields, 'ddform', {
-                            value: 'true'
-                        });
-                    }
-
-                }
-                const radius = parseFloat(catTable[idx].cat[7]);
-                const coldef = catTable[idx].cat[9] === 'null' ? catTable[idx].cat[8] : catTable[idx].cat[9];
+                const radius = parseFloat(catTable[currentIdx].cat[7]);
+                const coldef = catTable[currentIdx].cat[9] === 'null' ? catTable[currentIdx].cat[8] : catTable[currentIdx].cat[9];
                 inFields = updateMerge(inFields, 'cattable', {
-                    indexClicked: idx,
-                    value: catTable[idx].value,
+                    indexClicked: currentIdx,
+                    value: catTable[currentIdx].value,
                     coldef
                 });
                 inFields = updateMerge(inFields, 'conesize', {
@@ -499,14 +472,10 @@ var userChangeDispatch = function () {
                     tbl_id: `${catname}-${shortdd}-dd-table-constraint`
                 });
 
-                const formsel = get(inFields, 'ddform.value', 'true');
-                inFields = updateMerge(inFields, 'ddform', {
-                    value: formsel
-                });
-
-                //if(fieldKey === 'ddform'){ //clear when changing to a different constraints form
-                //    inFields = cleanFilterRestrictions(inFields);
-                //}
+                //const formsel = get(inFields, 'ddform.value', 'true');
+                //inFields = updateMerge(inFields, 'ddform', {
+                //    value: formsel
+                //});
 
                 break;
             case FieldGroupCntlr.CHILD_GROUP_CHANGE:
@@ -620,7 +589,7 @@ class CatalogDDList extends Component {
                 <div className='catalogpanel'>
                     <div className='ddselectors'>
                         <ListBoxInputField fieldKey='project'
-                                           wrapperStyle={{margin:'5px 0 5px 0', padding:5}}
+                                           wrapperStyle={{padding:5}}
                                            initialState={{
                                           tooltip: 'Select Project',
                                           value: selProject0
@@ -631,7 +600,7 @@ class CatalogDDList extends Component {
                                            label='Select Project:'
                         />
                         <ListBoxInputField fieldKey='catalog'
-                                           wrapperStyle={{margin:'5px 0 5px 0', padding:5}}
+                                           wrapperStyle={{padding:5}}
                                            initialState={{
                                           tooltip: 'Select Catalog',
                                           value: selCat0
@@ -647,21 +616,21 @@ class CatalogDDList extends Component {
                                                cols={cols}
                         />
                     </div>
-                    <div style={{padding:'10px', margin:'70px 5px 50px 5px', border:'1px solid #a3aeb9'}}>
+                    <div className='spatialsearch'>
                         <CatalogSearchMethodType groupKey={gkey}/>
                     </div>
                 </div>
                 {/*
-                <div style={{display:'flex', flexDirection:'row', padding:'20px', border:'1px solid #a3aeb9'}}>
-                */}
+                 <div style={{display:'flex', flexDirection:'row', padding:'20px', border:'1px solid #a3aeb9'}}>
+                 */}
                 <div className='ddtable'>
-                        <CatalogConstraintsPanel fieldKey={'tableconstraints'}
-                                                 constraintskey={constraintskey}
-                                                 catname={catname0}
-                                                 dd_short={ddform}
-                                                 groupKey={gkey}
-                        />
-                    </div>
+                    <CatalogConstraintsPanel fieldKey={'tableconstraints'}
+                                             constraintskey={constraintskey}
+                                             catname={catname0}
+                                             dd_short={ddform}
+                                             groupKey={gkey}
+                    />
+                </div>
                 {/*</div>*/}
             </div>
         );

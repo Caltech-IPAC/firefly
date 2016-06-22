@@ -50,7 +50,7 @@ export class CatalogConstraintsPanel extends React.Component {
 
     render() {
         const {tableModel} = this.state;
-        const {catname, dd_short} = this.props;
+        const {catname, dd_short, fieldKey} = this.props;
 
         if (isEmpty(tableModel)) {
             return <div></div>;
@@ -61,13 +61,13 @@ export class CatalogConstraintsPanel extends React.Component {
         });
 
         return (
-            <div style={{padding:'0 0 20px 0', margin:'0 80px 0 80px'}}>
+            <div style={{padding:'0 0 5px'}}>
                 <div
                     style={{display:'flex', flexDirection:'column',
-                            margin:'0 50px 0 50px', padding:'0 10px 10px 10px',
+                            margin:'0px 10px 5px 5px', padding:'0 0 0 10px',
                             border:'1px solid #a3aeb9'}}>
                     <div
-                        style={{display:'flex', flexDirection:'row', padding:'10px'}}>
+                        style={{display:'flex', flexDirection:'row', padding:'5px 5px 0'}}>
 
                         <ListBoxInputField fieldKey={'ddform'} inline={true} labelWidth={0}
                                            initialState={{
@@ -86,7 +86,7 @@ export class CatalogConstraintsPanel extends React.Component {
                         </button>
                     </div>
                     <div>
-                        <TablePanelConnected {...{tableModel}} />
+                        <TablePanelConnected {...{tableModel,fieldKey}} />
                         {renderSqlArea()}
                     </div>
                 </div>
@@ -136,30 +136,30 @@ export class CatalogConstraintsPanel extends React.Component {
 
 /**
  * Set true checkboxes column wherever a row should be selected given by column named 'sel'
- * @param tableModel
+ * @param anyTableModel
  */
-function setRowsChecked(tableModel) {
-    const selectInfoCls = SelectInfo.newInstance({rowCount: tableModel.totalRows});
-    const idxColSel = getColumnIdx(tableModel, 'sel');
-    tableModel.tableData.data.forEach((arow, index) => {
+function setRowsChecked(anyTableModel) {
+    const selectInfoCls = SelectInfo.newInstance({rowCount: anyTableModel.totalRows});
+    const idxColSel = getColumnIdx(anyTableModel, 'sel');
+    anyTableModel.tableData.data.forEach((arow, index) => {
         if (arow[idxColSel] === 'y') {
             selectInfoCls.setRowSelect(index, true);
         }
     });
     const selectInfo = selectInfoCls.data;
-    merge(tableModel, {selectInfo});
-    //TblCntlr.dispatchTableSelect(tableModel.tbl_id, selectInfo);
+    merge(anyTableModel, {selectInfo});
+    //TblCntlr.dispatchTableSelect(anyTableModel.tbl_id, selectInfo);
 }
 
 /**
- * Add to tbale columns an extra colDef
+ * Add to table columns an extra colDef
  * original columns from table DD are: name,constraints,description,units,indx,dbtype,tableflg,sel
  * @param tableModelFetched
  * @param urldef
  */
 function addColumnDef(tableModelFetched, urldef) {
     const nCols = tableModelFetched.tableData.columns.length;
-    const u = (urldef === 'null') ? '#' : urldef.match(/href='([^']+)'/)[1] + '#';
+    const u = (urldef && urldef === 'null') ? '#' : urldef.match(/href='([^']+)'/)[1] + '#';
     tableModelFetched.tableData.columns.splice(nCols, 0, {visibility: 'hide', name: 'coldef', type: 'char'});
     tableModelFetched.tableData.data.map((e) => {
         e.splice(nCols, 0, u + e[0]);
@@ -217,8 +217,9 @@ CatalogConstraintsPanel.defaultProps = {
  * @param tableModel
  * @param onChange
  * @param ontablechanged
+ * @param fieldKey
  */
-function ConstraintPanel({tableModel, onChange, ontablechanged}) {
+function ConstraintPanel({tableModel, fieldKey, onChange, ontablechanged}) {
 
     //define the table style only in the table div
     const tableStyle = {
@@ -245,8 +246,8 @@ function ConstraintPanel({tableModel, onChange, ontablechanged}) {
     return (
 
         <div
-            style={{margin: '10px 0 0 0 ', display:'inline-block',
-                    width: '710px', height: '200px', padding: '5px 5px 5px 5px'}}>
+            style={{display:'inline-block',
+                    width: '97%', height: '170px', padding: '5px 5px'}}>
             {
                 /*<div style={popupPanelResizableStyle}>
                  <div style={tableStyle}>*/
@@ -397,7 +398,7 @@ const inputFiledValidator = (filterString) => {
 function renderSqlArea() {
     //m31, cone search 10', w3snr>7 and (w2mpro-w3mpro)>1.5 on wise source catalog = 361
     return (
-        <div style={{margin: '20px 0 0 0 '}}>
+        <div style={{margin: '2px 0'}}>
             <InputAreaFieldConnected fieldKey='txtareasql'
                                      wrapperStyle={{padding: 5}}
                                      style={{
@@ -405,8 +406,8 @@ function renderSqlArea() {
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 height: '20px',
-                                                maxHeight: '150px',
-                                                width: '710px',
+                                                maxHeight: '100px',
+                                                width: '97%',
                                                 maxWidth: '1000px'
                                             }}
                                      initialState={{
@@ -415,14 +416,12 @@ function renderSqlArea() {
                                             }}
                                      label='Additional constraints (SQL):'
             />
-            <div style={{align: 'center'}}>
                 <em>Ex: w3snr&gt;7 and (w2mpro-w3mpro)&gt;1.5 and ra&gt;102.3 and ra&lt;112.3 and dec&lt;-5.5 and
                     dec&gt;
                     -15.5</em><br />
                 (source_id_mf = '1861p075_ac51-002577')
                 <br />
                 <code style={{align: 'center', color: 'red'}}>The format for date type is yyyy-mm-dd</code>
-            </div>
         </div>
     );
 }

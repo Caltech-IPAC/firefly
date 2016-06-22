@@ -205,7 +205,7 @@ export const createLinkCell = ({hrefColIdx, value}) => {
         }else {
         return (
             <Cell {...CellProps}>
-                <a href={href}>{val}</a>
+                <a target='_blank' href={href}>{val}</a>
             </Cell>
         );
         }
