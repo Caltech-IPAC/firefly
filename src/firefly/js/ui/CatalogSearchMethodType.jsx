@@ -31,6 +31,7 @@ import {dispatchAddImages,getAViewFromMultiView} from '../visualize/MultiViewCnt
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage} from '../visualize/ImagePlotCntlr.js';
 import {FileUpload} from '../ui/FileUpload.jsx';
+import {getActiveTarget} from '../core/AppDataCntlr.js';
 
 import './CatalogSearchMethodType.css';
 /*
@@ -61,6 +62,7 @@ export class CatalogSearchMethodType extends Component {
     render() {
         const {fields}= this.state;
         const searchType = get(fields, 'spatial.value', SpatialMethod.Cone.value);
+        const max = get(fields, 'conesize.max', 10);
         const {groupKey} = this.props;
 
         return (
@@ -80,7 +82,7 @@ export class CatalogSearchMethodType extends Component {
                         wrapperStyle={{marginRight:'15px', padding:'10px 0 5px 0'}}
                         multiple={false}
                     />
-                    {sizeArea(searchType)}
+                    {sizeArea(searchType, max)}
                 </div>
             </div>
         );
@@ -119,12 +121,12 @@ const spatialOptions = () => {
  * @param {number} max by default is 1 degree (3600 arcsec)
  * @returns {XML} SizeInputFields component
  */
-function radiusInField(label = 'Radius:', tooltip = 'Enter radius of the search', min = 1 / 3600, max = 1) {
+function radiusInField({label = 'Radius:', tooltip = 'Enter radius of the search', min = 1 / 3600, max = 1}) {
     return (
         <SizeInputFields fieldKey='conesize' showFeedback={true}
                          wrapperStyle={{padding:5, margin: '5px 0 5px 0'}}
                          initialState={{
-                                               value:initRadiusArcSec,
+                                               value:initRadiusArcSec(max),
                                                tooltip: {tooltip},
                                                unit: 'arcsec',
                                                min:  {min},
@@ -134,19 +136,19 @@ function radiusInField(label = 'Radius:', tooltip = 'Enter radius of the search'
                          label={label}/>
     );
 }
-function sizeArea(searchType) {
+function sizeArea(searchType, max) {
 
     if (searchType === SpatialMethod.Cone.value) {
         return (
             <div style={{border: '1px solid #a3aeb9'}}>
-                {radiusInField()}
+                {radiusInField({max})}
             </div>
         );
     } else if (searchType === SpatialMethod.Elliptical.value) {
         return (
             <div
                 style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center', border:'solid #a3aeb9 1px' }}>
-                {radiusInField('Semi-major Axis:', 'Enter the semi-major axis of the search')}
+                {radiusInField({label:'Semi-major Axis:', tooltip:'Enter the semi-major axis of the search'})}
                 <ValidationField fieldKey='posangle'
                                  forceReinit={true}
                                  initialState={{
@@ -173,7 +175,7 @@ function sizeArea(searchType) {
 
         return (
             <div style={{border: '1px solid #a3aeb9'}}>
-                {radiusInField('Side:', 'Enter side size of the box search', 1 / 3600, 7200 / 3600)}
+                {radiusInField({label:'Side:', tooltip:'Enter side size of the box search', min:1 / 3600, max:7200 / 3600})}
             </div>
 
         );
@@ -227,7 +229,6 @@ function sizeArea(searchType) {
 
 function renderTargetPanel(groupKey, searchType) {
     const visible = searchType === SpatialMethod.Cone.value || searchType === SpatialMethod.Box.value || searchType === SpatialMethod.Elliptical.value;
-
     return (
         visible && <div className="intarget">
             <TargetPanel labelWidth={90} groupKey={groupKey}/>
@@ -266,4 +267,10 @@ export const SpatialMethod = new Enum({
     {ignoreCase: true}
 );
 
-const initRadiusArcSec = parseFloat(500 / 3600).toString();
+var initRadiusArcSec = (max) => {
+    if (max >= 10/3600) {
+        return parseFloat(10 / 3600).toString();
+    } else {
+        return parseFloat(1 / 3600).toString();
+    }
+};

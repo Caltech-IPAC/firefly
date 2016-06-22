@@ -17,7 +17,7 @@ import * as TblCntlr from '../../tables/TablesCntlr.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {FilterInfo, FILTER_TTIPS} from '../../tables/FilterInfo.js';
 
-const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char'};
+const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char', width:10};
 
 export class CatalogConstraintsPanel extends React.Component {
 
@@ -123,6 +123,8 @@ export class CatalogConstraintsPanel extends React.Component {
             addColumnDef(tableModelFetched, urldef);
             //hideColumns(tableModelFetched);
             setRowsChecked(tableModelFetched);
+            tableModelFetched.tableData.columns[getColumnIdx(tableModel, 'description')].width=70;
+            tableModelFetched.tableData.columns[getColumnIdx(tableModel, 'name')].width=10;
             if (clearSelections) {
                 TblCntlr.dispatchTableReplace(tableModel);
             }
@@ -172,6 +174,7 @@ function addColumnDef(tableModelFetched, urldef) {
  */
 function addConstraintColumn(tableModelFetched) {
     const idxSqlCol = sqlConstraintsCol.idx; // after 'name' column
+    //tableModelFetched.tableData.columns[idxSqlCol].prefWidth=5;
     tableModelFetched.tableData.columns.splice(idxSqlCol, 0, {...sqlConstraintsCol});
     tableModelFetched.tableData.data.map((e) => {
         e.splice(idxSqlCol, 0, '');
@@ -274,7 +277,8 @@ function ConstraintPanel({tableModel, fieldKey, onChange, ontablechanged}) {
                                                                     {
                                                                          onChange,
                                                                          tooltips: FILTER_TTIPS,
-                                                                         validator: FilterInfo.validator
+                                                                         validator: FilterInfo.validator,
+                                                                         size:15
                                                                     }
                                                                 )
                                                 }

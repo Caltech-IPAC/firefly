@@ -40,7 +40,7 @@ const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height: 40,
 
 const dropdownName = 'IrsaCatalogDropDown';
 
-const initRadiusArcSec = (500 / 3600) + '';
+const initRadiusArcSec = (10 / 3600) + '';
 
 const constraintskey = 'inputconstraint';
 
@@ -435,6 +435,9 @@ var userChangeDispatch = function () {
                     inFields = updateMerge(inFields, 'catalog', {
                         value: valC
                     });
+                }
+                if (fieldKey === 'catalog') {
+                    currentIdx = 0;
                 }
 
                 // Reinit the table and catalog value:
