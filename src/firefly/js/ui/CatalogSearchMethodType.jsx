@@ -190,7 +190,7 @@ function sizeArea(searchType, max) {
                         tooltip: 'Select a  file to upload',
                         label: 'Filename:'}}
                 />
-                {radiusInField()}
+                {radiusInField({})}
             </div>
         );
     } else if (searchType === SpatialMethod.Polygon.value) {
