@@ -11,7 +11,8 @@ import {dispatchAddSaga} from '../core/MasterSaga.js';
 import BrowserCache from '../util/BrowserCache.js';
 import {menuReducer} from './reducers/MenuReducer.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
-import {getModuleName, updateWith, updateSet} from '../util/WebUtil.js';
+import {getModuleName, updateSet} from '../util/WebUtil.js';
+import {getWsChannel} from './messaging/WebSocketClient.js';
 
 export const APP_DATA_PATH = 'app_data';
 export const COMMAND = 'COMMAND';
@@ -274,7 +275,7 @@ export function dispatchOnAppReady(callback) {
 
 /*---------------------------- EXPORTED FUNTIONS -----------------------------*/
 export function isAppReady() {
-    return get(flux.getState(), [APP_DATA_PATH, 'isReady']) &&
+    return getWsChannel() && get(flux.getState(), [APP_DATA_PATH, 'isReady']) &&
         (get(window, 'firefly.noGWT') || get(flux.getState(), [APP_DATA_PATH, 'gwtLoaded']));
 }
 
