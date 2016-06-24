@@ -6,8 +6,9 @@ import React, {PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import FixedDataTable from 'fixed-data-table';
 import Resizable from 'react-component-resizable';
-import {debounce, defer, get, isEmpty, pick, padEnd} from 'lodash';
+import {debounce, defer, get, isEmpty, padEnd} from 'lodash';
 
+import {calcColumnWidths} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
@@ -133,7 +134,7 @@ export class BasicTableView extends React.Component {
     }
 
     render() {
-        const {columns, data, hlRowIdx, showUnits, showFilters, filterInfo, renderers,
+        const {columns, data, hlRowIdx, showUnits, showFilters, filterInfo, renderers, bgColor,
             selectable, selectInfoCls, sortInfo, callbacks, textView, rowHeight, showMask} = this.props;
         const {widthPx, heightPx, columnWidths} = this.state;
         const {onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected} = this;
@@ -143,7 +144,7 @@ export class BasicTableView extends React.Component {
         // const filterInfoCls = FilterInfo.parse(filterInfo);
         // const sortInfoCls = SortInfo.parse(sortInfo);
         //
-        const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers,
+        const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers, bgColor,
                                   columnWidths, filterInfo, sortInfo, showUnits, showFilters,
                                   onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected};
 
@@ -188,6 +189,7 @@ BasicTableView.propTypes = {
     rowHeight: PropTypes.number,
     showMask: PropTypes.bool,
     currentPage: PropTypes.number,
+    bgColor: PropTypes.string,
     renderers: PropTypes.objectOf(
         PropTypes.shape({
             cellRenderer: PropTypes.func,
@@ -240,7 +242,7 @@ function makeColWidth(columns, showUnits) {
     }, {});
 }
 
-function makeColumns ({columns, columnWidths, data, selectable, showUnits, showFilters, renderers,
+function makeColumns ({columns, columnWidths, data, selectable, showUnits, showFilters, renderers, bgColor,
             selectInfoCls, filterInfo, sortInfo, onRowSelect, onSelectAll, onSort, onFilter, onFilterSelected}) {
     if (!columns) return false;
 
@@ -248,14 +250,16 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
         if (col.visibility && col.visibility !== 'show') return false;
         const HeadRenderer = get(renderers, [col.name, 'headRenderer'], HeaderCell);
         const CellRenderer = get(renderers, [col.name, 'cellRenderer'], TextCell);
+        const fixed = col.fixed || false;
+        const style = col.fixed && bgColor && {backgroundColor: bgColor};
 
         return (
             <Column
                 key={col.name}
                 columnKey={col.name}
                 header={<HeadRenderer {...{col, showUnits, showFilters, filterInfo, sortInfo, onSort, onFilter}} />}
-                cell={<CellRenderer data={data} col={idx} />}
-                fixed={false}
+                cell={<CellRenderer style={style} data={data} colIdx={idx} />}
+                fixed={fixed}
                 width={columnWidths[col.name]}
                 isResizable={true}
                 allowCellsRecycling={true}
@@ -268,7 +272,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
             key='selectable-checkbox'
             columnKey='selectable-checkbox'
             header={<SelectableHeader {...{checked, onSelectAll, showUnits, showFilters, onFilterSelected}} />}
-            cell={<SelectableCell selectInfoCls={selectInfoCls} onRowSelect={onRowSelect} />}
+            cell={<SelectableCell style={{backgroundColor: bgColor}} selectInfoCls={selectInfoCls} onRowSelect={onRowSelect} />}
             fixed={true}
             width={25}
             allowCellsRecycling={true}
@@ -280,20 +284,25 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
 
 
 function tableToText(columns, dataAry, showUnits=false) {
-    var textHead = columns.reduce( (pval, cval, idx) => {
-        return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cval.name, columns[idx].width)}|` : '');
+
+    const colWidths = calcColumnWidths(columns, dataAry);
+
+    var textHead = columns.reduce( (pval, col, idx) => {
+        return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.name, colWidths[col.name])}|` : '');
     }, '|');
 
     if (showUnits) {
-        textHead += '\n' + columns.reduce( (pval, cval, idx) => {
-                return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cval.units || '', columns[idx].width)}|` : '');
+        textHead += '\n' + columns.reduce( (pval, col, idx) => {
+                return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.units || '', colWidths[col.name])}|` : '');
             }, '|');
     }
 
     var textData = dataAry.reduce( (pval, row) => {
         return pval +
             row.reduce( (pv, cv, idx) => {
-                return pv + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cv || '', columns[idx].width)} ` : '');
+                const cname = get(columns, [idx, 'name']);
+                if (!cname) return pv;      // not defined in columns.. can ignore
+                return pv + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cv || '', colWidths[cname])} ` : '');
             }, ' ') + '\n';
     }, '');
     return textHead + '\n' + textData;

@@ -82,7 +82,7 @@ export class FireflyViewer extends Component {
 
     render() {
         var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown,
-                searchPanels, views, footer, style} = this.state;
+                searchPanels, views, footer, style, showViewsSwitch} = this.state;
         const {visible, view} = dropDown || {};
         const searches = getDropDownNames();
 
@@ -101,7 +101,7 @@ export class FireflyViewer extends Component {
                             {...{searches, searchPanels} } />
                     </header>
                     <main>
-                        <DynamicResults views={views}/>
+                        <DynamicResults {...{views, showViewsSwitch}}/>
                     </main>
                 </div>
             );
@@ -123,7 +123,8 @@ FireflyViewer.propTypes = {
     footer: PropTypes.element,
     searchPanels: PropTypes.arrayOf(PropTypes.element),
     views: PropTypes.string,     // combination of LO_VIEW separated by ' | '.  ie. 'images | tables'.
-    style: PropTypes.object
+    style: PropTypes.object,
+    showViewsSwitch: PropTypes.bool
 };
 
 FireflyViewer.defaultProps = {
@@ -159,14 +160,18 @@ function BannerSection(props) {
 
 
 function DynamicResults(props) {
-    var {views} = props;
+    var {views, showViewsSwitch} = props;
     if (LO_VIEW.get(views)) {
-        return <TriViewPanel/>;
+        return <TriViewPanel {...{showViewsSwitch}}/>;
     }
 }
 DynamicResults.propTypes = {
     views: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.object])
+                    PropTypes.string,
+                    PropTypes.object]),
+    showViewsSwitch: PropTypes.bool
+};
+DynamicResults.defaultProps = {
+    showViewsSwitch: true
 };
 

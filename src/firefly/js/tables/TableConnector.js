@@ -107,11 +107,14 @@ export class TableConnector {
         TblCntlr.dispatchTableSelect(this.tbl_id, selectInfoCls.data);
     }
 
-    onOptionUpdate({pageSize, columns, showUnits, showFilters, colSortDir}) {
+    onOptionUpdate({pageSize, columns, showUnits, showFilters, sortInfo, filterInfo}) {
         if (pageSize) {
             this.onPageSizeChange(pageSize);
         }
-        const changes = omitBy({columns, showUnits, showFilters, colSortDir}, isUndefined);
+        if (!isUndefined(filterInfo)) {
+            this.onFilter(filterInfo);
+        }
+        const changes = omitBy({columns, showUnits, showFilters, optSortInfo:sortInfo}, isUndefined);
         if (!isEmpty(changes)) {
             changes.tbl_ui_id = this.tbl_ui_id;
             TblCntlr.dispatchTableUiUpdate(changes);

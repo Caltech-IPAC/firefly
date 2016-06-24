@@ -39,6 +39,8 @@ export class TriViewPanel extends Component {
     }
 
     render() {
+        // eslint-disable-next-line
+        const {showViewsSwitch} = this.props;
         const {title, mode, showTables, showImages, showXyPlots, images={}} = this.state;
         const {expanded, standard, closeable} = mode || {};
         const content = {};
@@ -61,7 +63,7 @@ export class TriViewPanel extends Component {
                                                closeable={closeable}
                                                expandedMode={expanded===LO_VIEW.tables}/>);
         }
-        const searchDesc = (showImages && showXyPlots && showTables) ?
+        const searchDesc = (showViewsSwitch && showImages && showXyPlots && showTables) ?
             (<div>
                 <div style={ {display: 'inline-block', float: 'right'} }>
                     <button type='button' className='button std'

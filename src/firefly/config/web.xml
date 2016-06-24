@@ -24,7 +24,7 @@
     </filter>
     <filter-mapping>
         <filter-name>NoCacheFilter</filter-name>
-        <url-pattern>/firefly.nocache.js</url-pattern>
+        <url-pattern>*.nocache.js</url-pattern>
         <url-pattern>/firefly_loader.js</url-pattern>
     </filter-mapping>
 
