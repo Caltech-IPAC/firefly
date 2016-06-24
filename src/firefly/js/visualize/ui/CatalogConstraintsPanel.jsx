@@ -17,7 +17,7 @@ import * as TblCntlr from '../../tables/TablesCntlr.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {FilterInfo, FILTER_TTIPS} from '../../tables/FilterInfo.js';
 
-const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char', width:10};
+const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char', width: 10};
 
 export class CatalogConstraintsPanel extends React.Component {
 
@@ -45,6 +45,11 @@ export class CatalogConstraintsPanel extends React.Component {
     componentWillReceiveProps(np) {
         if (np.catname != this.props.catname || np.dd_short != this.props.dd_short) {
             this.fetchDD(np.catname, np.dd_short);
+        } else if (this.state.tableModel) {
+            if (np.tbl_id != this.state.tableModel.tbl_id) {
+                const tableModel = getTblById(np.tbl_id);
+                this.setState({tableModel});
+            }
         }
     }
 
@@ -55,10 +60,6 @@ export class CatalogConstraintsPanel extends React.Component {
         if (isEmpty(tableModel)) {
             return <div></div>;
         }
-        const colsName = [];
-        tableModel.tableData.columns.forEach((c) => {
-            colsName.push(c.name);
-        });
 
         return (
             <div style={{padding:'0 0 5px'}}>
@@ -86,7 +87,7 @@ export class CatalogConstraintsPanel extends React.Component {
                         </button>
                     </div>
                     <div>
-                        <TablePanelConnected {...{tableModel,fieldKey}} />
+                        <TablePanelConnected {...{tableModel, fieldKey}} />
                         {renderSqlArea()}
                     </div>
                 </div>
@@ -123,11 +124,12 @@ export class CatalogConstraintsPanel extends React.Component {
             addColumnDef(tableModelFetched, urldef);
             //hideColumns(tableModelFetched);
             setRowsChecked(tableModelFetched);
-            tableModelFetched.tableData.columns[getColumnIdx(tableModel, 'description')].width=70;
-            tableModelFetched.tableData.columns[getColumnIdx(tableModel, 'name')].width=10;
-            if (clearSelections) {
-                TblCntlr.dispatchTableReplace(tableModel);
-            }
+            tableModelFetched.tableData.columns[getColumnIdx(tableModel, 'description')].width = 70;
+            tableModelFetched.tableData.columns[getColumnIdx(tableModel, 'name')].width = 10;
+            //if (clearSelections) {
+            //    TblCntlr.dispatchTableReplace(tableModel);
+            //}
+            TblCntlr.dispatchTableReplace(tableModel);
             this.setState({tableModel: tableModelFetched});
         }).catch((reason) => {
                 console.error(reason);
@@ -217,13 +219,12 @@ CatalogConstraintsPanel.defaultProps = {
 /**
  * display the data restrictions into a tabular format
  * @returns {XML}
- * @param tableModel
  * @param onChange
  * @param ontablechanged
  * @param fieldKey
+ * @param tableModel
  */
 function ConstraintPanel({tableModel, fieldKey, onChange, ontablechanged}) {
-
     //define the table style only in the table div
     const tableStyle = {
         boxSizing: 'border-box',
@@ -317,8 +318,7 @@ function handleOnTableChanged(ev, params, fireValueChange) {
         tbl_data = tbl.tableData.data;
         sel_info = tbl.selectInfo;
     } else {
-        tbl_data = get(params, 'tableModel.tableData.data', []);
-        sel_info = get(params, 'tableModel.selectInfo', []);
+        return;
     }
 
     let sqlTxt = '';
@@ -420,12 +420,12 @@ function renderSqlArea() {
                                             }}
                                      label='Additional constraints (SQL):'
             />
-                <em>Ex: w3snr&gt;7 and (w2mpro-w3mpro)&gt;1.5 and ra&gt;102.3 and ra&lt;112.3 and dec&lt;-5.5 and
-                    dec&gt;
-                    -15.5</em><br />
-                (source_id_mf = '1861p075_ac51-002577')
-                <br />
-                <code style={{align: 'center', color: 'red'}}>The format for date type is yyyy-mm-dd</code>
+            <em>Ex: w3snr&gt;7 and (w2mpro-w3mpro)&gt;1.5 and ra&gt;102.3 and ra&lt;112.3 and dec&lt;-5.5 and
+                dec&gt;
+                -15.5</em><br />
+            (source_id_mf = '1861p075_ac51-002577')
+            <br />
+            <code style={{align: 'center', color: 'red'}}>The format for date type is yyyy-mm-dd</code>
         </div>
     );
 }

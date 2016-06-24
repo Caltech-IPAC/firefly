@@ -174,16 +174,17 @@ function doCatalog(request) {
 
     const {tableconstraints} = FieldGroupUtils.getGroupFields(gkey);
     const sql = tableconstraints.value;
+    tReq.constraints = '';
     let addAnd = false;
     if (sql.constraints.length > 0) {
-        tReq.constraints = sql.constraints;
+        tReq.constraints += sql.constraints;
         addAnd = true;
     }
 
     const {txtareasql} = FieldGroupUtils.getGroupFields(gkey);
     const sqlTxt = txtareasql.value.trim();
     if (sqlTxt.length > 0) {
-        tReq.constraints = (addAnd ? ' AND ' : '') + validateSql(sqlTxt);
+        tReq.constraints += (addAnd ? ' AND ' : '') + validateSql(sqlTxt);
     }
 
     const colsSearched = sql.selcols.lastIndexOf(',') > 0 ? sql.selcols.substring(0, sql.selcols.lastIndexOf(',')) : sql.selcols;
@@ -430,15 +431,24 @@ var userChangeDispatch = function () {
                 let currentIdx = get(inFields, 'cattable.indexClicked', 0);
 
                 if (fieldKey === 'project') {
-                    currentIdx = 0;
+                    currentIdx = 0; // reset table to table item clicked index = 0
                     valC = optList[currentIdx].value;//If project has changed, initialise to the first subproject found
                     inFields = updateMerge(inFields, 'catalog', {
                         value: valC
                     });
                 }
+
                 if (fieldKey === 'catalog') {
-                    currentIdx = 0;
+                    currentIdx = 0; // reset table to table item clicked index = 0
                 }
+
+                /*
+                 // reset? or set dd form to standard when switching to ctalago or project or dataset:
+                 if (fieldKey === 'catalog' || fieldKey === 'cattable' || fieldKey ==='project') {
+                 inFields = updateMerge(inFields, 'ddform', {
+                 value: 'true'
+                 });
+                 }*/
 
                 // Reinit the table and catalog value:
                 const catTable = getCatalogOptions(catmaster, valP, valC).option;
@@ -469,16 +479,12 @@ var userChangeDispatch = function () {
                 });
 
                 const catname = get(inFields, 'cattable.value', '');
-
-                const shortdd = get(inFields, 'ddform.value', 'true') == 'true' ? 'short' : 'long';
+                const formsel = get(inFields, 'ddform.value', 'true');
+                const shortdd = formsel == 'true' ? 'short' : 'long';
                 inFields = updateMerge(inFields, 'tableconstraints', {
                     tbl_id: `${catname}-${shortdd}-dd-table-constraint`
                 });
 
-                //const formsel = get(inFields, 'ddform.value', 'true');
-                //inFields = updateMerge(inFields, 'ddform', {
-                //    value: formsel
-                //});
 
                 break;
             case FieldGroupCntlr.CHILD_GROUP_CHANGE:
@@ -585,6 +591,8 @@ class CatalogDDList extends Component {
 
         const catname0 = get(FieldGroupUtils.getGroupFields(gkey), 'cattable.value', catTable[0].value);
         const ddform = get(FieldGroupUtils.getGroupFields(gkey), 'ddform.value', 'true');
+        const shortdd = ddform == 'true' ? 'short' : 'long';
+        const tbl_id = `${catname0}-${shortdd}-dd-table-constraint`;
 
         const {cols} = this.props.master;
         return (
@@ -631,6 +639,7 @@ class CatalogDDList extends Component {
                                              constraintskey={constraintskey}
                                              catname={catname0}
                                              dd_short={ddform}
+                                             tbl_id={tbl_id}
                                              groupKey={gkey}
                     />
                 </div>
