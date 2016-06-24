@@ -20,6 +20,14 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 
+const TT_OPTIONS = 'Edit Table Options';
+const TT_SAVE = 'Save the content as an IPAC table';
+const TT_TEXT_VIEW = 'Text View';
+const TT_TABLE_VIEW = 'Table View';
+const TT_CLEAR_FILTER = 'Remove all filters';
+const TT_SHOW_FILTER = 'The Filter Panel can be used to remove unwanted data from the search results';
+const TT_EXPAND = 'Expand this panel to take up a larger area';
+
 export class TablePanel extends Component {
     constructor(props) {
         super(props);
@@ -110,7 +118,8 @@ export class TablePanel extends Component {
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
         const viewIcoStyle = 'tablepanel ' + (textView ? 'tableView' : 'textView');
         const origColumns = get(TblUtil.getTblById(this.tableConnector.tbl_id), 'tableData.columns');
-        const ttop = showToolbar ? 29 : 0;
+        const tableTopPos = showToolbar ? 29 : 0;
+        const TT_VIEW = textView ? TT_TABLE_VIEW : TT_TEXT_VIEW;
 
         return (
             <div style={{ position: 'relative', width: '100%', height: '100%'}}>
@@ -121,27 +130,38 @@ export class TablePanel extends Component {
                             {showTitle ? <TableTitle {...{tbl_id, title, removable}} /> : <div className='group'/>}
                             {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:tableConnector}} /> }
                             <div className='group'>
-                                {showFilterButton && filterCount > 0 && <button onClick={this.clearFilter} className='tablepanel clearFilters'/>}
-                                {showFilterButton && <ToolbarButton icon={FILTER}
-                                                       tip='The Filter Panel can be used to remove unwanted data from the search results'
-                                                       visible={true}
-                                                       badgeCount={filterCount}
-                                                       onClick={this.toggleFilter}/>
+                                {showFilterButton && filterCount > 0 &&
+                                    <button onClick={this.clearFilter}
+                                            title={TT_CLEAR_FILTER}
+                                            className='tablepanel clearFilters'/>}
+                                {showFilterButton &&
+                                    <ToolbarButton icon={FILTER}
+                                                   tip={TT_SHOW_FILTER}
+                                                   visible={true}
+                                                   badgeCount={filterCount}
+                                                   onClick={this.toggleFilter}/>
                                 }
-                                <button onClick={this.toggleTextView} className={viewIcoStyle}/>
-                                {showSave && <button onClick={this.saveTable}
-                                                className='tablepanel save'/> }
-                                {showOptionButton && <button style={{marginLeft: '4px'}} onClick={this.toggleOptions}
-                                                        className='tablepanel options'/> }
+                                <button onClick={this.toggleTextView}
+                                        title={TT_VIEW}
+                                        className={viewIcoStyle}/>
+                                {showSave &&
+                                    <button onClick={this.saveTable}
+                                            title={TT_SAVE}
+                                            className='tablepanel save'/> }
+                                {showOptionButton &&
+                                    <button style={{marginLeft: '4px'}}
+                                            title={TT_OPTIONS}
+                                            onClick={this.toggleOptions}
+                                            className='tablepanel options'/> }
                                 { expandable && !expandedMode &&
-                                    <button onClick={this.expandTable}>
-                                        <img src={OUTLINE_EXPAND} title='Expand this panel to take up a larger area'/>
+                                    <button onClick={this.expandTable} title={TT_EXPAND}>
+                                        <img src={OUTLINE_EXPAND}/>
                                     </button>}
                                 { help_id && <div style={{marginTop:-10}}> <HelpIcon helpId={help_id} /> </div>}
                             </div>
                         </div>
                     }
-                    <div className='TablePanel__table' style={{top: ttop}}>
+                    <div className='TablePanel__table' style={{top: tableTopPos}}>
                         <BasicTableView
                             columns={columns}
                             data={data}

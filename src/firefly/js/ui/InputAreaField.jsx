@@ -35,8 +35,6 @@ export class InputAreaField extends React.Component {
             has(others, 'value') && (nState.value = others.value);    // allow the validator to modify the value.. useful in auto-correct.
             nState.valid = valid;
             nState.message = valid ? '' : (label + message).replace('::', ':');
-            nState.valid = valid;
-            nState.message = valid ? '' : (label + message).replace('::', ':');
             onChange && onChange(nState);
         }
         this.setState(nState);

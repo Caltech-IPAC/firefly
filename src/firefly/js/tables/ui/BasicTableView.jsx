@@ -6,8 +6,9 @@ import React, {PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import FixedDataTable from 'fixed-data-table';
 import Resizable from 'react-component-resizable';
-import {debounce, defer, get, isEmpty, pick, padEnd} from 'lodash';
+import {debounce, defer, get, isEmpty, padEnd} from 'lodash';
 
+import {calcColumnWidths} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
@@ -283,20 +284,25 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
 
 
 function tableToText(columns, dataAry, showUnits=false) {
-    var textHead = columns.reduce( (pval, cval, idx) => {
-        return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cval.name, columns[idx].width)}|` : '');
+
+    const colWidths = calcColumnWidths(columns, dataAry);
+
+    var textHead = columns.reduce( (pval, col, idx) => {
+        return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.name, colWidths[col.name])}|` : '');
     }, '|');
 
     if (showUnits) {
-        textHead += '\n' + columns.reduce( (pval, cval, idx) => {
-                return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cval.units || '', columns[idx].width)}|` : '');
+        textHead += '\n' + columns.reduce( (pval, col, idx) => {
+                return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.units || '', colWidths[col.name])}|` : '');
             }, '|');
     }
 
     var textData = dataAry.reduce( (pval, row) => {
         return pval +
             row.reduce( (pv, cv, idx) => {
-                return pv + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cv || '', columns[idx].width)} ` : '');
+                const cname = get(columns, [idx, 'name']);
+                if (!cname) return pv;      // not defined in columns.. can ignore
+                return pv + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cv || '', colWidths[cname])} ` : '');
             }, ' ') + '\n';
     }, '');
     return textHead + '\n' + textData;

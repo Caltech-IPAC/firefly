@@ -6,7 +6,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-const op_regex = new RegExp('(<|>|>=|<=|=|!=|like|in)', 'i');
+const op_regex = new RegExp('(!=|>=|<=|<|>|=|like|in)', 'i');
 const cond_regex = new RegExp('^' + op_regex.source + '\\s+(.+)', 'i');
 const filter_regex = new RegExp('(\\S+)\\s+' + op_regex.source + '\\s+(.+)', 'i');
 

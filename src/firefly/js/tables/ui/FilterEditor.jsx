@@ -89,7 +89,7 @@ function prepareOptionData(columns, sortInfo, filterInfo) {
     ];
 
     const filterInfoCls = FilterInfo.parse(filterInfo);
-    columns = columns.filter((c) => c.visibility != 'hidden');
+    columns = columns.filter((c) => c.visibility !== 'hidden');
     var data = columns.map( (v) => {
         const filter = filterInfoCls.getFilter(v.name) || '';
         return [v.name||'', filter, v.units||'', v.desc||'', v.visibility !== 'hide'];
@@ -108,7 +108,7 @@ function prepareOptionData(columns, sortInfo, filterInfo) {
 
 function makeCallbacks(onChange, columns, origColumns, data, orgFilterInfo='') {
     var onSelectAll = (checked) => {
-        const nColumns = cloneDeep(columns).filter((c) => c.visibility != 'hidden');
+        const nColumns = cloneDeep(columns).filter((c) => c.visibility !== 'hidden');
         nColumns.forEach((v) => {
             v.visibility = checked ? 'show' : 'hide';
         });

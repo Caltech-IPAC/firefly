@@ -385,6 +385,7 @@ export function sortTableData(tableData, columns, sortInfoStr) {
     const multiplier = dir === SORT_ASC ? 1 : -1;
     const colIdx = columns.findIndex( (col) => {return col.name === colName;} );
     const col = columns[colIdx];
+    if (!col) return tableData;
 
     var comparator;
     if (!col.type || ['char', 'c'].includes(col.type) ) {
@@ -455,7 +456,24 @@ export function getTableSourceUrl(columns, request, filename) {
     return encodeServerUrl(SAVE_TABLE_URL, {file_name, Request: request});
 }
 
-
+/**
+ * returns a map of cname -> width.  The width is the number of characters needed to display
+ * the header and the data as a table given columns and dataAry.
+ * @param columns  array of column object
+ * @param dataAry  array of array.
+ * @returns {Object} a map of cname -> width
+ */
+export function calcColumnWidths(columns, dataAry) {
+    return columns.reduce( (pv, cv, idx) => {
+        const cname = cv.name;
+        var width = Math.max(cname.length, get(cv, 'units.length', 0));
+        width = dataAry.reduce( (maxWidth, row) => {
+            return Math.max(maxWidth, get(row, [idx, 'length'], 0));
+        }, width);  // max width of data
+        pv[cname] = width;
+        return pv;
+    }, {ROWID: 8});
+}
 
 export function uniqueTblId() {
     const id = uniqueId('tbl_id-');
