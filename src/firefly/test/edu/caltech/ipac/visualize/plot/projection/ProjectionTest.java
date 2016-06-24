@@ -35,12 +35,12 @@ public class ProjectionTest {
 
     private Fits loadFitsFile(String fileName) throws FitsException, URISyntaxException {
         //these two are for running in gradle :firefly:test
-//         File inFile =  new File(PATH+filename);
-//         fits = new Fits(inFile);
+         File inFile =  new File(PATH+filename);
+         fits = new Fits(inFile);
 
         //these are for testing inside IntelliJ
-         URL path = ProjectionTest.class.getResource(fileName);
-         File inFile =  new File(path.getFile());
+//         URL path = ProjectionTest.class.getResource(fileName);
+//         File inFile =  new File(path.getFile());
         return  new Fits(inFile);
 
 
@@ -370,11 +370,11 @@ public class ProjectionTest {
 
 
         //This is to run unit test under command line
-       // String[] jsonHeaderFileNames =  getJsonFiles(PATH);
+         String[] jsonHeaderFileNames =  getJsonFiles(PATH);
 
         //This is to test it in IntelliJ
-        String path = "/Users/zhang/lsstDev/testingData/projectionTestingData/";
-        String[] jsonHeaderFileNames =  getJsonFiles(path);
+//        String path = "/Users/zhang/lsstDev/testingData/projectionTestingData/";
+//        String[] jsonHeaderFileNames =  getJsonFiles(path);
 
 
         JSONParser parser = new JSONParser();
