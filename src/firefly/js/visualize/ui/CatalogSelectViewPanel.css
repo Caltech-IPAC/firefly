@@ -1,5 +1,5 @@
 /*Main parent*/
-div.catalogpanel {
+.catalogpanel {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
@@ -7,9 +7,30 @@ div.catalogpanel {
 }
 
 /*left dropdown list and selectors*/
-div.ddselectors {
+.ddselectors {
     display: flex;
     flex-direction: column;
     flex-wrap: nowrap;
     align-items: flex-start;
+    border: 1px solid #a3aeb9;
+    padding: 10px;
+    margin: 10px 5px 10px 5px;
+    height: 260px;
+    /*width:100%;*/
+}
+
+.spatialsearch {
+    padding: 10px;
+    width: 490px;
+    height: 260px;
+    margin: 10px 10px 0 5px;
+    border: 1px solid #a3aeb9;
+}
+
+.ddtable {
+    max-width: 100%;
+}
+
+.expand-dd-table:hover + .ddtable { /* Uses the adjacent sibling selector */
+    visibility: visible; /* Or display: block */
 }

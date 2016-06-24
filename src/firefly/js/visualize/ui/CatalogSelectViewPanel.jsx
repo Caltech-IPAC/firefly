@@ -8,8 +8,9 @@ import FormPanel from '../../ui/FormPanel.jsx';
 import { get, merge, isEmpty} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
-import {doFetchTable, makeTblRequest, makeIrsaCatalogRequest} from '../../tables/TableUtil.js';
+import {doFetchTable, makeTblRequest, makeIrsaCatalogRequest, getTblById} from '../../tables/TableUtil.js';
 import {CatalogTableListField} from './CatalogTableListField.jsx';
+import {CatalogConstraintsPanel} from './CatalogConstraintsPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {fieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
@@ -39,7 +40,9 @@ const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height: 40,
 
 const dropdownName = 'IrsaCatalogDropDown';
 
-const initRadiusArcSec = (500 / 3600) + '';
+const initRadiusArcSec = (10 / 3600) + '';
+
+const constraintskey = 'inputconstraint';
 
 /**
  * Globally scoped here, master table, columns object
@@ -89,7 +92,7 @@ export class CatalogSelectViewPanel extends Component {
 }
 
 function onSearchSubmit(request) {
-    console.log('request ' + JSON.stringify(request));
+    console.log('original request <br />' + JSON.stringify(request));
 
     if (request.Tabs === 'catalog') {
         const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
@@ -120,19 +123,17 @@ function doCatalog(request) {
     const conesize = convertAngle('deg', 'arcsec', request.conesize);
     var title = `${request.project}-${request.cattable}`;
     var tReq = {};
-    var id = '';
     if (request.spatial === SpatialMethod.get('Multi-Object').value) {
         var filename = request.fileUpload;
-        var radius = conesize;
         // export function makeIrsaCatalogRequest(title, project, catalog, use='catalog_overlay', params={}, options={}, tbl_id=uniqueTblId()) {
         tReq = makeIrsaCatalogRequest(title, request.project, request.cattable, {
             filename,
             radius,
             SearchMethod: request.spatial,
-            RequestedDataSet: request.catalog,
+            RequestedDataSet: request.catalog
         });
     } else {
-        id = 'GatorQuery';
+        const id = 'GatorQuery';
         title += ` (${request.spatial}`;
         if (request.spatial === SpatialMethod.Box.value || request.spatial === SpatialMethod.Cone.value || request.spatial === SpatialMethod.Elliptical.value) {
             title += ':' + conesize + '\'\'';
@@ -140,7 +141,7 @@ function doCatalog(request) {
         title += ')';
         tReq = makeIrsaCatalogRequest(title, request.project, request.cattable, {
             SearchMethod: request.spatial,
-            RequestedDataSet: request.catalog,
+            RequestedDataSet: request.catalog
         });
     }
 
@@ -171,13 +172,50 @@ function doCatalog(request) {
         tReq.polygon = request.polygoncoords;
     }
 
+    const {tableconstraints} = FieldGroupUtils.getGroupFields(gkey);
+    const sql = tableconstraints.value;
+    tReq.constraints = '';
+    let addAnd = false;
+    if (sql.constraints.length > 0) {
+        tReq.constraints += sql.constraints;
+        addAnd = true;
+    }
+
+    const {txtareasql} = FieldGroupUtils.getGroupFields(gkey);
+    const sqlTxt = txtareasql.value.trim();
+    if (sqlTxt.length > 0) {
+        tReq.constraints += (addAnd ? ' AND ' : '') + validateSql(sqlTxt);
+    }
+
+    const colsSearched = sql.selcols.lastIndexOf(',') > 0 ? sql.selcols.substring(0, sql.selcols.lastIndexOf(',')) : sql.selcols;
+    if (colsSearched.length > 0) {
+        tReq.selcols = colsSearched;
+    }
+
+    console.log('final request: ' + JSON.stringify(tReq));
     dispatchTableSearch(tReq);
 }
+
+//TODO parse whatever format and return SQL standard
+function validateSql(sqlTxt) {
+    //const filterInfoCls = FilterInfo.parse(sql);
+    //return filterInfoCls.serialize();//sql.replace(';',' AND ');
+    // Check that text area sql doesn't starts with 'AND', if needed, update the value without
+    if (sqlTxt.toLowerCase().indexOf('and') == 0) { // text sql starts with and, but and will be added if constraints is added to any column already, so remove here if found
+        sqlTxt = sqlTxt.substring(3, sqlTxt.length).trim();
+    }
+    if (sqlTxt.toLowerCase().lastIndexOf('and') == sqlTxt.length - 3) {
+        sqlTxt = sqlTxt.substring(0, sqlTxt.length - 3).trim();
+    }
+    return sqlTxt;
+}
+
+import {FilterInfo} from '../../tables/FilterInfo.js';
 
 function doVoSearch(request) {
     // tReq = makeIrsaCatalogRequest(title, request.project, request.cattable, null, {
 
-    var tReq = makeIrsaCatalogRequest(request.catalog, request.project, request.cattable, 
+    var tReq = makeIrsaCatalogRequest(request.catalog, request.project, request.cattable,
         {
             [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
             SearchMethod: request.spatial,
@@ -335,7 +373,7 @@ class CatalogSelectView extends Component {
                         keepState={true}>
                 <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs'>
                     <Tab name='Search Catalogs' id='catalog'>
-                        <CatalogDDListConnected fieldKey='tableview' {...this.props} {...this.state} />
+                        <CatalogDDList {...this.props} {...this.state} />
                     </Tab>
                     <Tab name='Load Catalog' id='loadcat'>
                         <div
@@ -365,7 +403,7 @@ class CatalogSelectView extends Component {
         );
     }
 }
-
+const currentField = {};
 /**
  * Reducer from field group component, should return updated project and sub-project updated
  * @returns {Function} reducer to change fields when user interact with the dialog
@@ -390,16 +428,27 @@ var userChangeDispatch = function () {
                 const valP = inFields.project.value;
                 let valC = inFields.catalog.value;
                 const optList = getSubProjectOptions(catmaster, valP);
+                let currentIdx = get(inFields, 'cattable.indexClicked', 0);
+
                 if (fieldKey === 'project') {
-                    valC = optList[0].value;//If project has changed, initiialise to the first subproject found
+                    currentIdx = 0; // reset table to table item clicked index = 0
+                    valC = optList[currentIdx].value;//If project has changed, initialise to the first subproject found
                     inFields = updateMerge(inFields, 'catalog', {
                         value: valC
                     });
                 }
-                inFields = updateMerge(inFields, 'tableview', {
-                    selProj: valP,
-                    selCat: valC
-                });
+
+                if (fieldKey === 'catalog') {
+                    currentIdx = 0; // reset table to table item clicked index = 0
+                }
+
+                /*
+                 // reset? or set dd form to standard when switching to ctalago or project or dataset:
+                 if (fieldKey === 'catalog' || fieldKey === 'cattable' || fieldKey ==='project') {
+                 inFields = updateMerge(inFields, 'ddform', {
+                 value: 'true'
+                 });
+                 }*/
 
                 // Reinit the table and catalog value:
                 const catTable = getCatalogOptions(catmaster, valP, valC).option;
@@ -417,29 +466,26 @@ var userChangeDispatch = function () {
                     break;
 
                 }
-                let idx = get(inFields, 'cattable.indexClicked', 0);//Get current value
-                if (fieldKey === 'project'
-                    || fieldKey === 'catalog') {
-                    idx = 0; // reset to first item of the catalog list
-                }
 
-                // User clicked on the table to select a catalog and needs to propagte the index in order
-                // to get the item highlighted
-                if (fieldKey === 'cattable') {
-                    idx = catTable.findIndex((e) => {
-                        return e.value === action.payload.value;
-                    });
-
-                }
-                const radius = parseFloat(catTable[idx].cat[7]);
-
+                const radius = parseFloat(catTable[currentIdx].cat[7]);
+                const coldef = catTable[currentIdx].cat[9] === 'null' ? catTable[currentIdx].cat[8] : catTable[currentIdx].cat[9];
                 inFields = updateMerge(inFields, 'cattable', {
-                    indexClicked: idx,
-                    value: catTable[idx].value
+                    indexClicked: currentIdx,
+                    value: catTable[currentIdx].value,
+                    coldef
                 });
                 inFields = updateMerge(inFields, 'conesize', {
                     max: sizeFactor * radius / 3600
                 });
+
+                const catname = get(inFields, 'cattable.value', '');
+                const formsel = get(inFields, 'ddform.value', 'true');
+                const shortdd = formsel == 'true' ? 'short' : 'long';
+                inFields = updateMerge(inFields, 'tableconstraints', {
+                    tbl_id: `${catname}-${shortdd}-dd-table-constraint`
+                });
+
+
                 break;
             case FieldGroupCntlr.CHILD_GROUP_CHANGE:
                 console.log('Child group change called...');
@@ -450,6 +496,22 @@ var userChangeDispatch = function () {
         return inFields;
     };
 };
+
+function cleanFilterRestrictions(inFields) {
+    //Object.keys(inFields).forEach((k) => {
+    //
+    //        if (k.startsWith(constraintskey)) {
+    //            const v = get(inFields, `${k}.value`, '');
+    //            if (v.length > 0) {
+    //                inFields = updateMerge(inFields, k, {value: ''});
+    //            }
+    //        }
+    //    }
+    //);
+    //reset text area:
+    inFields = updateMerge(inFields, 'txtareasql', {value: ''});
+    return inFields;
+}
 
 /**
  * Return the project elements such as label, value and project is present in each
@@ -503,8 +565,8 @@ class CatalogDDList extends Component {
     }
 
     render() {
-        let selProject0 = catmaster[0].project;
-        let selCat0 = catmaster[0].subproject[0].value;
+        const selProject0 = catmaster[0].project;
+        const selCat0 = catmaster[0].subproject[0].value;
 
         let catTable, optProjects, optList;
         // User interact, coming from field group reducer function
@@ -513,80 +575,86 @@ class CatalogDDList extends Component {
         //let selProj=get(this.state,'tableview.selProj', "");
         //let selCat=get(this.state,'tableview.selCat', "");
 
-        const {selProj, selCat} = this.props;
+        //const {selProj, selCat} = this.props;
 
-        if (!isEmpty(selCat) && !isEmpty(selProj)) {
-            selCat0 = selCat;
-            selProject0 = selProj;
-        }
+        const selProj = get(FieldGroupUtils.getGroupFields(gkey), 'project.value', selProject0);
+        const selCat = get(FieldGroupUtils.getGroupFields(gkey), 'catalog.value', selCat0);
+
+        //if (!isEmpty(selCat) && !isEmpty(selProj)) {
+        //    selCat0 = selCat;
+        //    selProject0 = selProj;
+        //}
         // Build option list for project,  sub-project and catalog table based on the selected or initial value of project and sub-project
         optProjects = getProjectOptions(this.props.master.catmaster);
-        optList = getSubProjectOptions(catmaster, selProject0);
-        catTable = getCatalogOptions(catmaster, selProject0, selCat0).option;
+        optList = getSubProjectOptions(catmaster, selProj);
+        catTable = getCatalogOptions(catmaster, selProj, selCat).option;
+
+        const catname0 = get(FieldGroupUtils.getGroupFields(gkey), 'cattable.value', catTable[0].value);
+        const ddform = get(FieldGroupUtils.getGroupFields(gkey), 'ddform.value', 'true');
+        const shortdd = ddform == 'true' ? 'short' : 'long';
+        const tbl_id = `${catname0}-${shortdd}-dd-table-constraint`;
+
         const {cols} = this.props.master;
         return (
-            <div className='catalogpanel'>
-                <div className='ddselectors'>
-                    <CatalogSearchMethodType groupKey={gkey}/>
-                    <ListBoxInputField fieldKey='project'
-                                       wrapperStyle={{margin:'5px 0 5px 0', padding:5}}
-                                       initialState={{
+            <div>
+                <div className='catalogpanel'>
+                    <div className='ddselectors'>
+                        <ListBoxInputField fieldKey='project'
+                                           wrapperStyle={{padding:5}}
+                                           initialState={{
                                           tooltip: 'Select Project',
                                           value: selProject0
                                       }}
-                                       options={optProjects}
-                                       multiple={false}
-                                       labelWidth={75}
-                                       label="Select Project:"
-                    />
-                    <ListBoxInputField fieldKey='catalog'
-                                       wrapperStyle={{margin:'5px 0 5px 0', padding:5}}
-                                       initialState={{
+                                           options={optProjects}
+                                           multiple={false}
+                                           labelWidth={75}
+                                           label='Select Project:'
+                        />
+                        <ListBoxInputField fieldKey='catalog'
+                                           wrapperStyle={{padding:5}}
+                                           initialState={{
                                           tooltip: 'Select Catalog',
                                           value: selCat0
                                       }}
-                                       options={optList}
-                                       multiple={false}
-                                       labelWidth={75}
-                                       label="Select Catalog:"
-                                       selectStyle={{width:'350px'}}
+                                           options={optList}
+                                           multiple={false}
+                                           labelWidth={75}
+                                           label='Select Catalog:'
+                                           selectStyle={{width:'300px'}}
+                        />
+                        <CatalogTableListField fieldKey='cattable'
+                                               data={catTable}
+                                               cols={cols}
+                        />
+                    </div>
+                    <div className='spatialsearch'>
+                        <CatalogSearchMethodType groupKey={gkey}/>
+                    </div>
+                </div>
+                {/*
+                 <div style={{display:'flex', flexDirection:'row', padding:'20px', border:'1px solid #a3aeb9'}}>
+                 */}
+                <div className='ddtable'>
+                    <CatalogConstraintsPanel fieldKey={'tableconstraints'}
+                                             constraintskey={constraintskey}
+                                             catname={catname0}
+                                             dd_short={ddform}
+                                             tbl_id={tbl_id}
+                                             groupKey={gkey}
                     />
                 </div>
-                <div>
-                    <CatalogTableListField fieldKey='cattable'
-                                           data={catTable}
-                                           cols={cols}
-                    />
-                </div>
+                {/*</div>*/}
             </div>
         );
     }
 }
 
-const CatalogDDListConnected = fieldGroupConnector(CatalogDDList, getProps, CatalogDDList.propTypes, null);
-
-CatalogDDList.propTypes = {
-    selProj: PropTypes.string,
-    selCat: PropTypes.string,
-    master: PropTypes.object
-};
-
-CatalogDDList.defaultProps = {
-    selProj: '',
-    selCat: ''
-};
-
-function getProps(params, fireValueChange) {
-
-    return params;
-}
-
 CatalogSelectViewPanel.propTypes = {
-    name: PropTypes.oneOf([dropdownName]),
+    name: PropTypes.oneOf([dropdownName])
 };
 
 CatalogSelectViewPanel.defaultProps = {
-    name: dropdownName,
+    name: dropdownName
 };
 
 /*
@@ -594,7 +662,6 @@ CatalogSelectViewPanel.defaultProps = {
  */
 function fieldInit() {
     return (
-
     {
         'project': {
             fieldKey: 'project',
@@ -609,15 +676,10 @@ function fieldInit() {
             value: catmaster[0].subproject[0].value,
             labelWidth: '100'
         },
-        'tableview': {
-            fieldKey: 'tableview',
-            selProj: catmaster[0].project,
-            selCat: catmaster[0].subproject[0].value,
-            catName: catmaster[0].catalogs[0].option[0].cat[4]
-        },
         'cattable': {
             fieldKey: 'cattable',
             value: '',
+            coldef: '',
             indexClicked: 0
         },
         'conesize': {
@@ -626,7 +688,21 @@ function fieldInit() {
             unit: 'arcsec',
             min: 1 / 3600,
             max: parseInt(catmaster[0].catalogs[0].option[0].cat[7]) / 3600
+        },
+        'tableconstraints': {
+            fieldKey: 'tableconstraints',
+            value: {constraints: '', selcols: ''},
+            tbl_id: ''
+        },
+        'txtareasql': {
+            fieldKey: 'txtareasql',
+            value: ''
+        },
+        'ddform': {
+            fieldKey: 'ddform',
+            value: 'true'
         }
+
     }
     );
 }

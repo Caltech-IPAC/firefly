@@ -74,6 +74,11 @@ export class BasicTableView extends React.Component {
         this.isUnmounted = true;
     }
 
+    componentDidUpdate(){
+        const {onTableChanged} = this.props;
+        onTableChanged && onTableChanged();
+    }
+
     shouldComponentUpdate(nProps, nState) {
         return sCompare(this, nProps, nState);
     }
@@ -148,6 +153,7 @@ export class BasicTableView extends React.Component {
                                   onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected};
 
         const headerHeight = 22 + (showUnits && 12) + (showFilters && 20);
+
         return (
             <Resizable id='table-resizer' tabIndex='-1' onKeyDown={this.onKeyDown} className='TablePanel__frame' onResize={this.onResize}>
                 {   widthPx === 0 ? <div /> :
@@ -188,6 +194,7 @@ BasicTableView.propTypes = {
     rowHeight: PropTypes.number,
     showMask: PropTypes.bool,
     currentPage: PropTypes.number,
+    onTableChanged: PropTypes.func,
     renderers: PropTypes.objectOf(
         PropTypes.shape({
             cellRenderer: PropTypes.func,
@@ -202,6 +209,7 @@ BasicTableView.propTypes = {
         onFilter: PropTypes.func,
         onGotoPage: PropTypes.func
     })
+
 };
 
 BasicTableView.defaultProps = {
