@@ -102,7 +102,7 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
         super(CommandName+mission.name());
         this.name = mission.name();
         String label = name;
-        if(!mission.equals(FOOTPRINT.HST)){
+        if(mission.equals(FOOTPRINT.JWST) || mission.equals(FOOTPRINT.WFIRST)){
         	label = name+" prelim.";
         }
         this.mission = mission;
@@ -120,7 +120,7 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 		this.name = mission + (mission.equals(FOOTPRINT.HST) ? " " : "/") + inst.getLabel();
         //Yi: For HST, no "prelim."
         String label = name;
-        if(!mission.equals(FOOTPRINT.HST)){
+        if(mission.equals(FOOTPRINT.JWST) || mission.equals(FOOTPRINT.WFIRST)){
             label = name+ " prelim.";
         }
         this.instrument = inst;

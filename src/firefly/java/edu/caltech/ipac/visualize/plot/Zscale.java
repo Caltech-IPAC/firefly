@@ -12,8 +12,6 @@ import nom.tam.util.ArrayFuncs;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 
 /**
@@ -89,7 +87,23 @@ public class Zscale
 	 * values.
 	 */
 	Arrays.sort(sample);
+
+  /* Yi fixes a bug:
+
+    If the array contains multiple elements with the specified value, as NaN, the method, Arrays.binarySearch, has no guarantee which
+      one will be found. So do not use this one:
+
     npix = Arrays.binarySearch(sample, Float.NaN);
+
+    */
+
+      for (int i= 0; i < sample.length; i++){
+          if (Float.isNaN(sample[i])){
+              npix = i;
+              break;
+          }
+      }
+
 	//no NaN found, it returns a negative number thus, the npix should be the sample's length
 	npix= npix>0? npix: sample.length  ;
 	float zmin = sample[0];
