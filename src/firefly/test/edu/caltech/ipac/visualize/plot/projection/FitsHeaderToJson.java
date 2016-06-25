@@ -41,12 +41,49 @@ public class FitsHeaderToJson {
 
         ImageHeader imageHeader = getImageHeader(fits);
 
-        String imageHeaderStr = imageHeader.imageHeaderoString();
+        String imageHeaderStr = imageHeader.imageHeaderToString();
 
         obj.put("headerFileName", outJsonFile );
 
+
+
         //put origin header into json
         obj.put("header",imageHeaderStr.replace("\n", ""));
+
+
+        //TODO need to finish this when I am back in Aug.
+        double[] amd_x_coeff= imageHeader.getCoeffData("amd_x_coeff");
+        double[] amd_y_coeff= imageHeader.getCoeffData("amd_y_coeff");
+        double[] ppo_coeff= imageHeader.getCoeffData("ppo_coeff");
+
+
+
+        if (amd_x_coeff!=null) {
+           String s="[";
+           for (int i=0; i<amd_x_coeff.length; i++){
+             s=s+amd_x_coeff[i]+" ";
+           }
+            s=s+"]";
+            obj.put("amd_x_coeff",s );
+        }
+        if (amd_y_coeff!=null) {
+            String s="[";
+            for (int i=0; i<amd_y_coeff.length; i++){
+                s=s+amd_y_coeff[i]+" ";
+            }
+            s=s+"]";
+            obj.put("amd_y_coeff",s );
+        }
+        if (ppo_coeff!=null) {
+            String s="[";
+            for (int i=0; i<ppo_coeff.length; i++){
+                s=s+ppo_coeff[i]+" ";
+            }
+            s=s+"]";
+            obj.put("po_coeff",s );
+        }
+
+
 
         Projection projection = imageHeader.createProjection(CoordinateSys.EQ_J2000);
         ProjectionPt image_pt = projection.getImageCoords( imageHeader.crval1, imageHeader.crval2);//RA and DEC at the center of the image

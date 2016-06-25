@@ -370,16 +370,17 @@ public class ProjectionTest {
 
 
         //This is to run unit test under command line
-         String[] jsonHeaderFileNames =  getJsonFiles(PATH);
+         //String[] jsonHeaderFileNames =  getJsonFiles(PATH);
 
         //This is to test it in IntelliJ
-//        String path = "/Users/zhang/lsstDev/testingData/projectionTestingData/";
-//        String[] jsonHeaderFileNames =  getJsonFiles(path);
+        String path = "/Users/zhang/lsstDev/testingData/projectionTestingData/";
+        String[] jsonHeaderFileNames =  getJsonFiles(path);
 
 
         JSONParser parser = new JSONParser();
 
-        for (int i=0; i<jsonHeaderFileNames.length; i++){
+
+         for (int i=0; i<jsonHeaderFileNames.length; i++){
             System.out.println("\n The testing file is "+ jsonHeaderFileNames[i] +"\n");
             Object obj = parser.parse(new FileReader(jsonHeaderFileNames[i]));
 

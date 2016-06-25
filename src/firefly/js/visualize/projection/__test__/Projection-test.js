@@ -12,10 +12,7 @@ const precision=10;
 
 var projectionJson={};
 
-/**
- * Found this method online, it explains how to load a json file locally
- * @param callback
- */
+
 
 function getImageHeader( imageHeaderStr){
    // function getImageHeader( jsonHeaderFile){
@@ -25,6 +22,7 @@ function getImageHeader( imageHeaderStr){
    // console.log(fits);
    // var fitsHeader = require(jsonHeaderFile);
     //make the header in json syntax
+    //console.log(imageHeaderStr);
     var header = imageHeaderStr.replace(/\s[=]\s/g, ':');
    // console.log(header);
     //TODO test img should be imageHeader
@@ -33,10 +31,24 @@ function getImageHeader( imageHeaderStr){
     var hArr = header.trim().split(/\s/g);
     var imageHeader = {};
     var  pair=[];
+   // String.prototype.isNumber = function(){return /\d/.test(this);}
     for (let i=0; i<hArr.length; i++){
         pair = hArr[i].split(':');
         if (pair.length==2) {
-            imageHeader[ [pair[0]] ]= pair[1];
+
+          if ( /\d/.test(pair[1]) ) {
+
+              if (pair[1].indexOf('.') > -1) {// integer
+                  imageHeader[[pair[0]]] = parseFloat(pair[1]);
+              }
+              else {
+
+                  imageHeader[[pair[0]]] = parseInt(pair[1]);
+              }
+          }
+          else {
+               imageHeader[ [pair[0]] ]= pair[1];
+           }
         }
     }
     //console.log(imageHeader);
@@ -286,6 +298,7 @@ describe('A test suite for projection.js', function () {
         var imageHeader, imageHeaderStr;
         var expectedProjectPt;
         var expectedWorldPt;
+
         for (let i=0; i<jsonFiles.length; i++){
 
         //for (let i=0; i<1; i++){
@@ -294,12 +307,23 @@ describe('A test suite for projection.js', function () {
                 var jsonStr = require(jsonFiles[i]);
                 imageHeaderStr = jsonStr.header;//.replace(/\s[=]\s/g, ':');
 
-               // console.log(imageHeaderStr);
                 imageHeader = getImageHeader( imageHeaderStr);
-                //console.log(imageHeader);
+               // console.log(imageHeader);
+
+                if (projectionJson['amd_x_coeff']){
+                    imageHeader['amd_x_coeff']=jsonStr['amd_x_coeff'];
+                }
+                if (projectionJson['amd_y_coeff']){
+                    console.log(jsonStr['amd_y_coeff']);
+                    imageHeader['amd_y_coeff']=jsonStr['amd_y_coeff'];
+                }
+                if (projectionJson['ppo_coeff']){
+                    imageHeader['ppo']=jsonStr['ppocoeff'];
+                }
                 projectionJson['header'] = imageHeader;
                 projectionJson['coorindateSys'] = 'EQ_J2000';
-                //console.log(projectionJson);
+                console.log(projectionJson);
+
                 var jsProjection = makeProjection(projectionJson);
                 //console.log(jsProjection.getProjectionName());
 

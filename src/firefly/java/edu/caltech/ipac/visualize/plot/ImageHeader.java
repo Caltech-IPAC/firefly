@@ -867,7 +867,18 @@ public class ImageHeader implements Serializable
 	return sb.toString();
     }
 
-	public String imageHeaderoString()
+	//This method is added to for unit testing in javascript
+
+	/**
+	 * This is no imageHeader in js.  This method produces string, a string translates to json
+	 * string. Thus, js can take it as json header.
+	 * TODO
+	 * Add method to produce an ImageHeader object form array or string.
+	 * Add method to handle the array data
+	 * But the array data does not work.
+	 *
+     */
+	public String imageHeaderToString()
 	{
 		StringBuffer sb = new StringBuffer();
 		sb.append(
@@ -879,23 +890,42 @@ public class ImageHeader implements Serializable
 						"\n  crval1 = " + crval1 + " crval2 = " + crval2 +
 						"\n  cdelt1 = " + cdelt1 + " cdelt2 = " + cdelt2 +
 						" crota2 = " + crota2);
-		if (using_cd)
-		{
+		//if (using_cd)
+		//{
 			sb.append(
 					"\n  cd1_1 = " + cd1_1 + " cd1_2 = " + cd1_2 + " cd2_1 = " +
 							cd2_1 + " cd2_2 = " + cd2_2);
 			sb.append(
 					"\n  dc1_1 = " + dc1_1 + " dc1_2 = " + dc1_2 + " dc2_1 = " +
 							dc2_1 + " dc2_2 = " + dc2_2);
-		}
+		//}
 		sb.append(
 				"\n  file_equinox = " + file_equinox + "  ctype1 = " + ctype1 +
 						" ctype2 = " + ctype2);
 		sb.append("\n  maptype = " + maptype);
+		sb.append(
+				"\n  using_cd = " + using_cd);
+
+		sb.append(
+				"\n x_pixel_size= " + x_pixel_size + " x_pixel_size = " + y_pixel_size +
+				 "\n plate_ra = " + plate_ra + " plate_dec = " + plate_ra);
 
 		return sb.toString();
 	}
+   //LZ add this to pass the array data so it can be included the json string
+	public double[] getCoeffData(String key){
+		if (key.equalsIgnoreCase("amd_x_coeff")){
+			return  amd_x_coeff;
+		}
+		if (key.equalsIgnoreCase("amd_y_coeff")){
+			return  amd_y_coeff;
+		}
 
+		if (key.equalsIgnoreCase("ppo_coeff")){
+			return  ppo_coeff;
+		}
+		return null;
+	}
 
     // main is for testing only
 //    public static void main(String[] args)
