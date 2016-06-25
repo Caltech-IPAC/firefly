@@ -108,11 +108,6 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
 
     @Override
     public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {
-        for (Param p : request.getParams()) {
-            if (request.isInputParam(p.getName())) {
-                defaults.setAttribute(p.getName(), p.getValue());
-            }
-        }
         String type = request.getParam(TBL_TYPE);
         if (type == null || type.equals(TYPE_CATALOG)) {
             UserCatalogQuery.addCatalogMeta(defaults,columns,request);

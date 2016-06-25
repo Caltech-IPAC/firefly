@@ -275,12 +275,10 @@ function ConstraintPanel({tableModel, fieldKey, onChange, ontablechanged}) {
                                             constraints:
                                                 { cellRenderer:
                                                                 createInputCell(
-                                                                    {
-                                                                         onChange,
-                                                                         tooltips: FILTER_TTIPS,
-                                                                         validator: FilterInfo.validator,
-                                                                         size:15
-                                                                    }
+                                                                         15,
+                                                                         FILTER_TTIPS,
+                                                                         FilterInfo.validator,
+                                                                         onChange
                                                                 )
                                                 }
                                         }

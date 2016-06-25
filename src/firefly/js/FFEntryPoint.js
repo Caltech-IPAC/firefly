@@ -10,6 +10,7 @@ import {get} from 'lodash';
 import {firefly} from './Firefly.js';
 import {FireflyViewer} from './core/FireflyViewer.js';
 import {initApi} from './api/ApiBuild.js';
+import {HELP_LOAD} from './core/AppDataCntlr.js';
 
 /**
  * By default, firefly.js will startup in api mode.
@@ -45,7 +46,7 @@ if (app) {
                 {label:'Catalogs CLASSIC', action:'IrsaCatalogDropDown'},
                 {label:'Test Searches', action:'TestSearches'},
                 {label:'Images', action:'ImageSelectDropDownCmd'},
-                {label:'Help', action:'overviewHelp', type:'COMMAND'},
+                {label:'Help', action:HELP_LOAD, type:'COMMAND'},
                 {label:'Example Js Dialog', action:'exampleDialog', type:'COMMAND'}
         ]
     };

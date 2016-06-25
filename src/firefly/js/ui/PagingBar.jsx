@@ -42,10 +42,10 @@ export class PagingBar extends Component {
                     onChange = {onPageChange}
                     actOn={['blur','enter']}
                     showWarning={false}
-                /> <div style={{fontSize: 'smaller'}} >&nbsp; of {totalPages}</div>
+                /> <div style={{fontSize: 'smaller', marginLeft: 3}} > of {totalPages}</div>
                 <button onClick={() => callbacks.onGotoPage(currentPage + 1)} className='paging_bar next'  title='Next Page'/>
                 <button onClick={() => callbacks.onGotoPage(totalPages)} className='paging_bar last'  title='Last Page'/>
-                <div style={{fontSize: 'smaller'}} > &nbsp; ({(startIdx+1).toLocaleString()} - {endIdx.toLocaleString()} of {totalRows.toLocaleString()})</div>
+                <div style={{fontSize: 'smaller', marginLeft: 3}} > ({(startIdx+1).toLocaleString()} - {endIdx.toLocaleString()} of {totalRows.toLocaleString()})</div>
                 {showLoading ? <img style={{width:14,height:14,marginTop: '3px'}} src={LOADING}/> : false}
             </div>
         );

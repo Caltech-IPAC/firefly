@@ -57,13 +57,13 @@ export function initApi() {
     const viewInterface= buildViewerApi();
     const highLevelApi= buildHighLevelApi(lowlevelApi);
     if (!window.firefly) window.firefly= {};
+    window.firefly.ignoreHistory = true;
     Object.assign(window.firefly, lowlevelApi, highLevelApi, viewInterface);
     const firefly= window.firefly;
     dispatchOnAppReady(() => {
         window.onFireflyLoaded && window.onFireflyLoaded(firefly);
     });
     initExpandedView();
-    window.firefly.ignoreHistory = true;
 }
 
 

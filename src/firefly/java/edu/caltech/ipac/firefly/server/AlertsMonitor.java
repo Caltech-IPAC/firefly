@@ -7,8 +7,6 @@ import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.StringUtils;
-import edu.jhu.util.StringUtil;
 
 import java.io.File;
 import java.io.IOException;

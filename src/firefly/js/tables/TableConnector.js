@@ -44,6 +44,8 @@ export class TableConnector {
      * @param {number[]} selected  array of selected row indices.
      */
     onFilterSelected(selected) {
+        if (isEmpty(selected)) return;
+
         var {tableModel, request} = TblUtil.getTblInfoById(this.tbl_id);
         if (this.origTableModel) {
             // not implemented yet
@@ -105,11 +107,14 @@ export class TableConnector {
         TblCntlr.dispatchTableSelect(this.tbl_id, selectInfoCls.data);
     }
 
-    onOptionUpdate({pageSize, columns, showUnits, showFilters, colSortDir}) {
+    onOptionUpdate({pageSize, columns, showUnits, showFilters, sortInfo, filterInfo}) {
         if (pageSize) {
             this.onPageSizeChange(pageSize);
         }
-        const changes = omitBy({columns, showUnits, showFilters, colSortDir}, isUndefined);
+        if (!isUndefined(filterInfo)) {
+            this.onFilter(filterInfo);
+        }
+        const changes = omitBy({columns, showUnits, showFilters, optSortInfo:sortInfo}, isUndefined);
         if (!isEmpty(changes)) {
             changes.tbl_ui_id = this.tbl_ui_id;
             TblCntlr.dispatchTableUiUpdate(changes);
@@ -133,6 +138,8 @@ export class TableConnector {
 
 
 function getRowIdFor(filePath, selected) {
+    if (isEmpty(selected)) return [];
+
     const params = {id: 'Table__SelectedValues', columnName: 'ROWID', filePath, selectedRows: String(selected)};
 
     return fetchUrl(TblUtil.SEARCH_SRV_PATH, {method: 'post', params}).then( (response) => {

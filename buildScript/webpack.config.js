@@ -254,11 +254,11 @@ function firefly_loader(loadScript, outpath, debug=true) {
             if (fs.existsSync(path.resolve(outpath, 'jsinterop.nocache.js'))) {
                 callback = `,
                     function() {
-                        loadScript('/${cxt_name}/jsinterop.nocache.js');
+                        loadScript('firefly_loader.js', 'jsinterop.nocache.js');
                     }`;
             }
             var content = fs.readFileSync(loadScript);
-            content += `\nloadScript('/${cxt_name}/firefly-${hash}.js'${callback});`;
+            content += `\nloadScript('firefly_loader.js', 'firefly-${hash}.js'${callback});`;
             var loader = path.join(outpath, 'firefly_loader.js');
             fs.writeFileSync(loader, content);
         });

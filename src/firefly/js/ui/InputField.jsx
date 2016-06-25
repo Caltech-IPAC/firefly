@@ -46,7 +46,8 @@ export class InputField extends React.Component {
 
     render() {
 
-        var {label, labelWidth, tooltip, visible, inline, size, showWarning, style, wrapperStyle} = this.props;
+        var {label, labelWidth, tooltip, visible, inline, size,
+             showWarning, style, wrapperStyle, labelStyle} = this.props;
         var {valid, value, message} = this.state;
         return (
             <InputFieldView
@@ -65,6 +66,7 @@ export class InputField extends React.Component {
                 size={size}
                 showWarning={showWarning}
                 wrapperStyle={wrapperStyle}
+                labelStyle={labelStyle}
             />
         );
 
@@ -84,6 +86,7 @@ InputField.propTypes = {
     size: PropTypes.number,
     style: PropTypes.object,
     wrapperStyle: PropTypes.object,
+    labelStyle: PropTypes.object,
     value: PropTypes.string,
     onChange: PropTypes.func,
     actOn: PropTypes.arrayOf(PropTypes.oneOf(['blur', 'enter', 'changes'])),

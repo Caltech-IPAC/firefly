@@ -5,6 +5,7 @@
 import {get, pickBy} from 'lodash';
 import {setCookie, parseUrl} from '../../util/WebUtil.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
+import {dispatchUpdateAppData} from '../AppDataCntlr.js';
 
 export const CH_ID = 'channelID';
 
@@ -96,6 +97,7 @@ function onMessage(event) {
             // connection established.. doing handshake.
             [connId, channel] = [eventData.data.connID, eventData.data.channel];
             setCookie('seinfo', `${connId}_${channel}`);
+            dispatchUpdateAppData({channel});
         } else {
             listenters.forEach( (l) => {
                 if (!l.matches || l.matches(eventData)) {

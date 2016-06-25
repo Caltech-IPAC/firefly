@@ -5,9 +5,9 @@
 import React from 'react';
 import FixedDataTable from 'fixed-data-table';
 import sCompare from 'react-addons-shallow-compare';
-import {set, get, isEqual, pick} from 'lodash';
+import {set, get, isEqual, pick, isString} from 'lodash';
 
-import {FilterInfo, FILTER_TTIPS} from '../FilterInfo.js';
+import {FilterInfo, FILTER_CONDITION_TTIPS} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
@@ -18,6 +18,7 @@ import DESC_ICO from 'html/images/sort_desc.gif';
 import FILTER_SELECTED_ICO from 'html/images/icons-2014/16x16_Filter.png';
 
 const {Cell} = FixedDataTable;
+const html_regex = /<.+>/;
 
 // the components here are small and used by table only.  not all props are defined.
 /* eslint-disable react/prop-types */
@@ -29,8 +30,8 @@ function Label({sortable, title, name, sortByCols, sortInfoCls, onSort}) {
 
     if (toBoolean(sortable, true)) {
         return (
-            <div style={{width: '100%', cursor: 'pointer'}} onClick={() => onSort(sortByCols)} >{title || name}
-                { sortDir!==UNSORTED && <SortSymbol sortDir={sortDir}/> }
+            <div style={{width: '100%', cursor: 'pointer'}} onClick={() => onSort(sortByCols)}>{title || name}
+                { sortDir !== UNSORTED && <SortSymbol sortDir={sortDir}/> }
             </div>
         );
     } else {
@@ -58,27 +59,29 @@ export class HeaderCell extends React.Component {
     // }
     //
     render() {
-        const {col, showUnits, showFilters, filterInfo, sortInfo, onSort, onFilter} = this.props;
+        const {col, showUnits, showFilters, filterInfo, sortInfo, onSort, onFilter, style} = this.props;
         const cname = col.name;
         const cdesc = col.desc || col.title || cname;
-        const style = {width: '100%', boxSizing: 'border-box'};
+        const filterStyle = {width: '100%', boxSizing: 'border-box'};
         const filterInfoCls = FilterInfo.parse(filterInfo);
         const sortInfoCls = SortInfo.parse(sortInfo);
-
         return (
-            <div title={cdesc} className='TablePanel__header'>
+            <div style={style} title={cdesc} className='TablePanel__header'>
                 <Label {...{sortInfoCls, onSort}} {...col}/>
-                {showUnits && col.units && <div style={{fontWeight: 'normal'}}>({col.units})</div>}
-                {showFilters && <InputField
-                    validator={FilterInfo.validator}
+                {showUnits && col.units &&
+                <div style={{fontWeight: 'normal'}}>({col.units})</div>
+                }
+                {showFilters && get(col, 'filterable', true) &&
+                <InputField
+                    validator={FilterInfo.conditionValidator}
                     fieldKey={cname}
-                    tooltip = {FILTER_TTIPS}
-                    value = {filterInfoCls.getFilter(cname)}
-                    onChange = {(v) => onFilter(v)}
+                    tooltip={FILTER_CONDITION_TTIPS}
+                    value={filterInfoCls.getFilter(cname)}
+                    onChange={(v) => onFilter(v)}
                     actOn={['blur','enter']}
                     showWarning={false}
-                    style={style}
-                    wrapperStyle={style}
+                    style={filterStyle}
+                    wrapperStyle={filterStyle}
                 />
                 }
             </div>
@@ -103,10 +106,13 @@ export class SelectableHeader extends React.Component {
     // }
     //
     render() {
-        const {checked, onSelectAll, showUnits, showFilters, onFilterSelected} = this.props;
+        const {checked, onSelectAll, showUnits, showFilters, onFilterSelected, style} = this.props;
         return (
-            <div className='TablePanel__header'>
-                <input type='checkbox' checked={checked} onChange ={(e) => onSelectAll(e.target.checked)}/>
+            <div style={style} className='TablePanel__header'>
+                <input type='checkbox'
+                       tabIndex={-1}
+                       checked={checked}
+                       onChange={(e) => onSelectAll(e.target.checked)}/>
                 {showUnits && <div/>}
                 {showFilters && <img className='button'
                                      src={FILTER_SELECTED_ICO}
@@ -134,10 +140,13 @@ export class SelectableCell extends React.Component {
     // }
     //
     render() {
-        const {rowIndex, selectInfoCls, onRowSelect} = this.props;
+        const {rowIndex, selectInfoCls, onRowSelect, style} = this.props;
         return (
-            <div className='tablePanel__checkbox tablePanel__checkbox--cell'>
-                <input type='checkbox' checked={selectInfoCls.isSelected(rowIndex)} onChange={(e) => onRowSelect(e.target.checked, rowIndex)} />
+            <div style={style} className='tablePanel__checkbox tablePanel__checkbox--cell'>
+                <input type='checkbox'
+                       tabIndex={-1}
+                       checked={selectInfoCls.isSelected(rowIndex)}
+                       onChange={(e) => onRowSelect(e.target.checked, rowIndex)}/>
             </div>
         );
     }
@@ -146,8 +155,8 @@ export class SelectableCell extends React.Component {
 /*---------------------------- CELL RENDERERS ----------------------------*/
 
 function getValue(props) {
-    const {rowIndex, data, col} = props;
-    return get(data, [rowIndex, col], 'undef');
+    const {rowIndex, data, colIdx} = props;
+    return get(data, [rowIndex, colIdx], 'undef');
 }
 
 export class TextCell extends React.Component {
@@ -156,9 +165,9 @@ export class TextCell extends React.Component {
     }
 
     shouldComponentUpdate(nProps) {
-        return  nProps.columnKey !== this.props.columnKey ||
-               nProps.rowIndex !== this.props.rowIndex ||
-               getValue(nProps) !== getValue(this.props);
+        return nProps.columnKey !== this.props.columnKey ||
+            nProps.rowIndex !== this.props.rowIndex ||
+            getValue(nProps) !== getValue(this.props);
     }
 
     // componentDidUpdate(prevProps) {
@@ -168,10 +177,12 @@ export class TextCell extends React.Component {
     // }
     //
     render() {
+        const lineHeight = this.props.height - 6 + 'px';  // 6 is the top/bottom padding.
+        const style = Object.assign({lineHeight}, this.props.style || {});
+        var val = getValue(this.props);
+        val = (isString(val) && val.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: val}}/> : val;
         return (
-            <div className='public_fixedDataTableCell_cellContent'>
-                {getValue(this.props)}
-            </div>
+            <div style={style} className='public_fixedDataTableCell_cellContent'>{val}</div>
         );
     }
 }
@@ -180,34 +191,34 @@ export class TextCell extends React.Component {
 /**
  * Image cell renderer.  It will use the cell value as the image source.
  */
-export const ImageCell = ({rowIndex, data, col}) => (
-    <img src={get(data, [rowIndex, col],'undef')}/>
+export const ImageCell = ({rowIndex, data, colIdx}) => (
+    <img src={get(data, [rowIndex, colIdx],'undef')}/>
 );
 
 /**
  * creates a link cell renderer using the cell data as href.
- * @param valFromCol  display the value from this column index.
  * @param value  display this value for every cell.
- * @returns {function()}
+ * @returns {Function}
+ * @param hrefColIdx
  */
 export const createLinkCell = ({hrefColIdx, value}) => {
 
-    return ({rowIndex, data, col, ...CellProps}) => {
-        hrefColIdx = hrefColIdx || col;
-        const href = get(data, [rowIndex, hrefColIdx],'undef');
-        const val = value || get(data, [rowIndex, col], 'undef');
-        if(href ==='undef' || href === '#'){
+    return ({rowIndex, data, colIdx, ...CellProps}) => {
+        hrefColIdx = hrefColIdx || colIdx;
+        const href = get(data, [rowIndex, hrefColIdx], 'undef');
+        const val = value || get(data, [rowIndex, colIdx], 'undef');
+        if (href === 'undef' || href === '#') {
             return (
                 <Cell {...CellProps}>
                     {val}
                 </Cell>
             );
-        }else {
-        return (
-            <Cell {...CellProps}>
-                <a target='_blank' href={href}>{val}</a>
-            </Cell>
-        );
+        } else {
+            return (
+                <Cell {...CellProps}>
+                    <a target='_blank' href={href}>{val}</a>
+                </Cell>
+            );
         }
     };
 };
@@ -220,21 +231,22 @@ export const createLinkCell = ({hrefColIdx, value}) => {
  * @param onChange
  * @returns {function()}
  */
-export const createInputCell = ({tooltips, size=10, validator, onChange}) => {
-    const changeHandler = (rowIndex, data, col, v) => {
-        set(data, [rowIndex, col], v.value);
+export const createInputCell = (tooltips, size = 10, validator, onChange, style) => {
+    const changeHandler = (rowIndex, data, colIdx, v) => {
+        set(data, [rowIndex, colIdx], v.value);
         onChange && onChange(v);
     };
 
-    return ({rowIndex, data, col}) => {
+    return ({rowIndex, data, colIdx}) => {
         return (
             <div style={{margin: 2}}>
                 <InputField
-                    validator = {validator}
-                    tooltip = {tooltips}
-                    size = {size}
-                    value = {get(data, [rowIndex, col],'')}
-                    onChange = {(v) => changeHandler(rowIndex, data, col, v) }
+                    validator={validator}
+                    tooltip={tooltips}
+                    size={size}
+                    style={style}
+                    value={get(data, [rowIndex, colIdx],'')}
+                    onChange={(v) => changeHandler(rowIndex, data, colIdx, v) }
                     actOn={['blur','enter']}
                 />
             </div>
