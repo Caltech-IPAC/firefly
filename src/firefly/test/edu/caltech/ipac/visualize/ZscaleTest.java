@@ -39,9 +39,7 @@ public class ZscaleTest {
         double lowerValue = 1.0;
         int    upperWhich = 91;
         double upperValue = 1.0;
-        double drValue = 1.0;
-        double bpValue = 0.0;
-        double wpValue = 1.0;
+        double betaValue = 1.0;
         double gammaValue = 2.0;
         int    algorithm = 45;
         int    zscale_contrast = 25;
@@ -49,7 +47,7 @@ public class ZscaleTest {
         int    zscale_samples_per_line = 120;
         double bias = 0.5;
         double contrast = 1.0;
-        RangeValues rangeValues = new RangeValues(lowerWhich, lowerValue, upperWhich, upperValue, drValue, bpValue, wpValue, gammaValue, algorithm, zscale_contrast, zscale_samples, zscale_samples_per_line, bias, contrast);
+        RangeValues rangeValues = new RangeValues(lowerWhich, lowerValue, upperWhich, upperValue, betaValue, gammaValue,  algorithm, zscale_contrast, zscale_samples, zscale_samples_per_line, bias, contrast);
 
 
         //Make the method getZscaleValue accessible:
