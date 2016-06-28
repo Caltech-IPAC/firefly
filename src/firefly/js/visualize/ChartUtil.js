@@ -62,9 +62,35 @@ function getExpressionValue(strExpr, tableModel, rowIdx) {
     }
 }
 
+export function hasRelatedCharts(tblId, space) {
+    if (space) {
+        return Boolean(Object.keys(space).find((chartId) => {
+            return space[chartId].tblId === tblId;
+        }));
+    } else {
+        return hasRelatedCharts(tblId, flux.getState()[XYPLOT_DATA_KEY]) ||
+            hasRelatedCharts(tblId, flux.getState()[HISTOGRAM_DATA_KEY]);
+    }
+}
+
 export function getTblIdForChartId(chartId) {
     return  get(flux.getState()[XYPLOT_DATA_KEY], [chartId, 'tblId']) ||
             get(flux.getState()[HISTOGRAM_DATA_KEY], [chartId, 'tblId']);
+}
+
+export function numRelatedCharts(tblId) {
+    let numRelated = 0;
+    let c;
+    const keys = [XYPLOT_DATA_KEY, HISTOGRAM_DATA_KEY];
+    keys.forEach( (key) => {
+        const space = flux.getState()[key];
+        for (c in space) {
+            if (space[c].tblId === tblId) {
+                numRelated++;
+            }
+        }
+    });
+    return numRelated;
 }
 
 export function uniqueChartId(prefix) {

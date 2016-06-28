@@ -3,10 +3,10 @@
  */
 import {flux} from '../Firefly.js';
 
-import {omit} from 'lodash';
+import {has, omit} from 'lodash';
 
 import {updateSet, updateMerge} from '../util/WebUtil.js';
-import * as TableUtil from '../tables/TableUtil.js';
+import {doFetchTable, getTblById, isFullyLoaded, makeTblRequest} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 
 /*
@@ -35,17 +35,26 @@ import * as TablesCntlr from '../tables/TablesCntlr.js';
 export const HISTOGRAM_DATA_KEY = 'histogram';
 export const LOAD_COL_DATA = `${HISTOGRAM_DATA_KEY}/LOAD_COL_DATA`;
 export const UPDATE_COL_DATA = `${HISTOGRAM_DATA_KEY}/UPDATE_COL_DATA`;
+export const DELETE = `${HISTOGRAM_DATA_KEY}/DELETE`;
 
 
 /*
  * Get column histogram data
  * @param {Object} histogramParams - histogram options (column name, etc.)
- * @param {ServerRequest} searchRequest - table search request
+ * @param {string} tblId - table id
  * @param {function} dispatcher only for special dispatching uses such as remote
  */
-export const dispatchLoadColData = function(chartId, histogramParams, searchRequest, dispatcher= flux.process) {
-    dispatcher({type: LOAD_COL_DATA, payload: {chartId, histogramParams, searchRequest}});
+export const dispatchLoadColData = function(chartId, histogramParams, tblId, dispatcher= flux.process) {
+    dispatcher({type: LOAD_COL_DATA, payload: {chartId, histogramParams, tblId}});
 };
+
+/*
+ * Delete chart and related data
+ * @param {String} chartId - chart id
+ */
+export function dispatchDelete(chartId) {
+    flux.process({type: DELETE, payload: {chartId}});
+}
 
 /*
  * Get column histogram data
@@ -65,8 +74,9 @@ const dispatchUpdateColData = function(chartId, isColDataReady, histogramData, h
 export const loadColData = function(rawAction) {
     return (dispatch) => {
         dispatch({ type : LOAD_COL_DATA, payload : rawAction.payload });
-        const {searchRequest, histogramParams, chartId} = rawAction.payload;
-        if (searchRequest && histogramParams) {
+        const {chartId, histogramParams, tblId} = rawAction.payload;
+        if (isFullyLoaded(tblId) && histogramParams) {
+            const searchRequest = getTblById(tblId)['request'];
             fetchColData(dispatch, searchRequest, histogramParams, chartId);
         }
 
@@ -93,10 +103,15 @@ export function reducer(state=getInitState(), action={}) {
             return (chartsToDelete.length > 0) ?
                 Object.assign({}, omit(state, chartsToDelete)) : state;
         }
+        case (DELETE) :
+        {
+            const chartId = action.payload.chartId;
+            return has(state, chartId) ? Object.assign({}, omit(state, [chartId])) : state;
+        }
         case (LOAD_COL_DATA)  :
         {
-            const {chartId, histogramParams, searchRequest} = action.payload;
-            return updateSet(state, chartId, {tblId: searchRequest.tbl_id, isColDataReady: false, histogramParams});
+            const {chartId, histogramParams, tblId} = action.payload;
+            return updateSet(state, chartId, {tblId, isColDataReady: false, histogramParams});
         }
         case (UPDATE_COL_DATA)  :
         {
@@ -138,7 +153,7 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams, chart
     const sreq = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']),
         {'startIdx' : 0, 'pageSize' : 1000000});
 
-    const req = TableUtil.makeTblRequest('HistogramProcessor');
+    const req = makeTblRequest('HistogramProcessor');
     req.searchRequest = JSON.stringify(sreq);
 
     // histogram parameters
@@ -163,7 +178,7 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams, chart
 
     req.tbl_id = 'histogram-'+chartId;
 
-    TableUtil.doFetchTable(req).then(
+    doFetchTable(req).then(
         (tableModel) => {
             if (tableModel.tableData && tableModel.tableData.data) {
                 // if logarithmic values were requested, convert the returned exponents back

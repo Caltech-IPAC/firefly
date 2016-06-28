@@ -407,14 +407,14 @@ function showXYPlot(llApi, targetDiv, params={}) {
             const new_tblId = getActiveTableId(tblGroup);
             if (new_tblId !== tblId) {
                 tblId = new_tblId;
-                dispatchSetupTblTracking(tblId);
                 loadPlotDataForTbl(tblId, chartId, xyPlotParams);
+                dispatchSetupTblTracking(tblId);
             }
         });
     }
     if (tblId) {
-        dispatchSetupTblTracking(tblId);
         loadPlotDataForTbl(tblId, chartId, xyPlotParams);
+        dispatchSetupTblTracking(tblId);
     }
 
 
@@ -424,7 +424,8 @@ function showXYPlot(llApi, targetDiv, params={}) {
             tblId,
             chartId,
             closeable: false,
-            expandedMode: false
+            expandedMode: false,
+            deletable: false
         }
     );
 }

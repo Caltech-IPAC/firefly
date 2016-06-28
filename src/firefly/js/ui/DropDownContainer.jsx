@@ -12,6 +12,7 @@ import {flux, getVersion} from '../Firefly.js';
 import {SearchPanel} from '../ui/SearchPanel.jsx';
 import {TestQueriesPanel} from '../ui/TestQueriesPanel.jsx';
 import {ImageSelectDropdown} from '../ui/ImageSelectDropdown.jsx';
+import {ChartSelectDropdown} from '../ui/ChartSelectDropdown.jsx';
 import {CatalogSelectViewPanel} from '../visualize/ui/CatalogSelectViewPanel.jsx';
 import {getAlerts} from '../core/AppDataCntlr.js';
 
@@ -23,6 +24,7 @@ const dropDownMap = {
     AnyDataSetSearch: <SearchPanel />,
     TestSearches: <TestQueriesPanel />,
     ImageSelectDropDownCmd: <ImageSelectDropdown />,
+    ChartSelectDropDownCmd: <ChartSelectDropdown />,
     IrsaCatalogDropDown: <CatalogSelectViewPanel/>
 };
 
@@ -61,9 +63,11 @@ export class DropDownContainer extends Component {
 
     componentDidMount() {
         this.removeListener= flux.addListener(() => this.storeUpdate());
+        this.iAmMounted = true;
     }
 
     componentWillUnmount() {
+        this.iAmMounted = false;
         this.removeListener && this.removeListener();
     }
     
@@ -79,9 +83,11 @@ export class DropDownContainer extends Component {
     // }
 
     storeUpdate() {
-        const {visible, view} = getDropDownInfo();
-        if (visible!==this.state.visible || view!==this.state.selected) {
-            this.setState({visible, selected: view});
+        if (this.iAmMounted) {
+            const {visible, view} = getDropDownInfo();
+            if (visible !== this.state.visible || view !== this.state.selected) {
+                this.setState({visible, selected: view});
+            }
         }
     }
 
@@ -133,9 +139,11 @@ export class Alerts extends Component {
 
     componentDidMount() {
         this.removeListener= flux.addListener(() => this.storeUpdate());
+        this.iAmMounted = true;
     }
 
     componentWillUnmount() {
+        this.iAmMounted = false;
         this.removeListener && this.removeListener();
     }
 
@@ -144,7 +152,9 @@ export class Alerts extends Component {
     }
 
     storeUpdate() {
-        this.setState(getAlerts());
+        if (this.iAmMounted) {
+            this.setState(getAlerts());
+        }
     }
 
     render() {
@@ -158,7 +168,7 @@ export class Alerts extends Component {
             );
         } else return <div/>;
     }
-};
+}
 
 Alerts.propTypes = {
     msg: PropTypes.string,
