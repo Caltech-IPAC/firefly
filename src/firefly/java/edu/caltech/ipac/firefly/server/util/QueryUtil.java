@@ -650,7 +650,7 @@ public class QueryUtil {
             if (!doDecimation) {
                 DataObject retrow = new DataObject(retval);
                 retrow.setDataElement(columns[0], convertData(xColClass,xval));
-                retrow.setDataElement(columns[1], convertData(xColClass,yval));
+                retrow.setDataElement(columns[1], convertData(yColClass,yval));
                 retrow.setDataElement(columns[2], rIdx); // natural index
                 retval.add(retrow);
             } else if (checkDeciLimits) {

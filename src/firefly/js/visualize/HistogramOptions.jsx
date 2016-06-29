@@ -5,6 +5,7 @@ import ColValuesStatistics from './ColValuesStatistics.js';
 import CompleteButton from '../ui/CompleteButton.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
+import {dispatchMultiValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import {InputGroup} from '../ui/InputGroup.jsx';
 import Validate from '../util/Validate.js';
 import {ValidationField} from '../ui/ValidationField.jsx';
@@ -21,6 +22,27 @@ export const histogramParamsShape = PropTypes.shape({
          maxCutoff : PropTypes.number
       });
 
+
+export function resultsSuccess(callback, histogramParams) {
+    callback(Object.assign({}, histogramParams));
+}
+
+export function resultsFail() {
+    // TODO: do I need to do anything here?
+}
+
+export function setOptions(groupKey, histogramParams) {
+    const flds = [
+        {fieldKey: 'columnOrExpr', value: get(histogramParams, 'columnOrExpr')},
+        {fieldKey: 'x', value: get(histogramParams, 'x', '_none_')},
+        {fieldKey: 'y', value: get(histogramParams, 'y', '_none_')},
+        {fieldKey: 'algorithm', value: get(histogramParams, 'algorithm', 'fixedSizeBins')},
+        {fieldKey: 'falsePositiveRate', value: get(histogramParams, 'falsePositiveRate','0.05')},
+        {fieldKey: 'numBins', value: get(histogramParams, 'numBins','50')}
+    ];
+    dispatchMultiValueChange(groupKey, flds);
+}
+
 var HistogramOptions = React.createClass({
 
     unbinder : null,
@@ -28,7 +50,7 @@ var HistogramOptions = React.createClass({
     propTypes: {
         groupKey: PropTypes.string.isRequired,
         colValStats: PropTypes.arrayOf(React.PropTypes.instanceOf(ColValuesStatistics)).isRequired,
-        onOptionsSelected: PropTypes.func.isRequired,
+        onOptionsSelected: PropTypes.func,
         histogramParams: histogramParamsShape
     },
 
@@ -42,25 +64,26 @@ var HistogramOptions = React.createClass({
         return {fields : FieldGroupUtils.getGroupFields(this.props.groupKey)};
     },
 
+    componentWillReceiveProps(np) {
+        const {groupKey, histogramParams} = np;
+        if (this.props.histogramParams !== histogramParams) {
+            setOptions(groupKey, histogramParams);
+        }
+    },
+
     componentWillUnmount() {
+        this.iAmMounted= false;
         if (this.unbinder) this.unbinder();
     },
 
     componentDidMount() {
         this.unbinder = FieldGroupUtils.bindToStore(this.props.groupKey,
             (fields) => {
-                if (fields != this.state.fields) {
+                if (this.iAmMounted && fields != this.state.fields) {
                     this.setState({fields});
                 }
             });
-    },
-
-    resultsSuccess(histogramParams) {
-        this.props.onOptionsSelected(histogramParams);
-    },
-
-    resultsFail() {
-        // TODO: do I need to do anything here?
+        this.iAmMounted= true;
     },
 
     renderAlgorithmParameters() {
@@ -105,7 +128,7 @@ var HistogramOptions = React.createClass({
     },
 
     render() {
-        const { colValStats, groupKey, histogramParams}= this.props;
+        const { colValStats, groupKey, histogramParams, onOptionsSelected}= this.props;
         return (
             <div style={{padding:'5px'}}>
                 <br/>
@@ -179,10 +202,19 @@ var HistogramOptions = React.createClass({
                     {this.renderAlgorithmParameters()}
 
                     <br/><br/>
-                    <CompleteButton groupKey={groupKey}
-                                    onSuccess={this.resultsSuccess}
-                                    onFail={this.resultsFail}
-                    />
+                    {onOptionsSelected &&
+                     <div style={{paddingTop: 10}}>
+                         <CompleteButton style={{display: 'inline-block', marginRight: 10}}
+                                         groupKey={groupKey}
+                                         onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds)}
+                                         onFail={resultsFail}
+                                         text = 'Apply'
+                         />
+                         <div style={{display: 'inline-block', paddingLeft: 100}}>
+                             <button style={{display: 'inline-block'}} type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
+                             <button style={{display: 'inline-block'}} type='button' className='button std' onClick={() => setOptions(groupKey, histogramParams)}>Reset</button>
+                         </div>
+                     </div>}
                 </FieldGroup>
 
             </div>

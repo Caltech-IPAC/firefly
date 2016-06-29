@@ -4,7 +4,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {isEmpty, get} from 'lodash';
+import {get} from 'lodash';
 import {COMMAND, getMenu} from '../core/AppDataCntlr.js';
 import {flux} from '../Firefly.js';
 import {dispatchShowDropDown} from '../core/LayoutCntlr.js';
@@ -28,7 +28,7 @@ function handleAction (menuItem) {
  * @param isSelected
  * @returns {XML}
  */
-function makeMenuItem(menuItem, isSelected) {
+function  makeMenuItem(menuItem, isSelected) {
     var clsname = 'menu__item' + (isSelected ? ' menu__item-selected' : '');
     return (
         <td key={menuItem.action} align='left' style={{verticalAlign: 'bottom'}} onClick={handleAction.bind(this, menuItem)}>
@@ -96,7 +96,7 @@ export class Menu extends Component {
 }
 
 Menu.propTypes = {
-    menu   : React.PropTypes.object.isRequired
+    menu   : PropTypes.object.isRequired
 };
 
 /**

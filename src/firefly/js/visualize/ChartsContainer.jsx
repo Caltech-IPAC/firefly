@@ -21,9 +21,9 @@ export function getExpandedChartProps() {
 }
 
 function nextState(props) {
-    const {closeable, chartId, tblId, optionsPopup} = props;
+    const {closeable, chartId, tblId, chartType, optionsPopup} = props;
     const expandedMode = props.expandedMode && getExpandedMode() === LO_VIEW.xyPlots;
-    const chartProps = expandedMode ? getExpandedChartProps() : {chartId, tblId, optionsPopup};
+    const chartProps = expandedMode ? getExpandedChartProps() : {chartId, tblId, chartType, optionsPopup};
     return Object.assign({expandedMode,closeable}, chartProps);
 }
 
@@ -63,7 +63,13 @@ export class ChartsContainer extends Component {
 
     render() {
         const {expandedMode, closeable} = this.state;
-        return expandedMode ? <ExpandedView key='chart-expanded' closeable={closeable} {...this.props} {...this.state}/> : <ChartsTableViewPanel {...this.props} {...this.state}/>;
+        return expandedMode ? <ExpandedView key='chart-expanded' closeable={closeable} {...this.props} {...this.state}/> :
+            (
+                <div style={{ display: 'flex',  height: '100%', flexGrow: 1, flexDirection: 'row', overflow: 'hidden'}}>
+                    <ChartsTableViewPanel key='xyplot' {...this.props} {...this.state} chartType='scatter'/>
+                    <ChartsTableViewPanel key='histogram' {...this.props} {...this.state} chartType='histogram'/>
+                </div>
+            );
     }
 }
 

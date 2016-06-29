@@ -3,11 +3,12 @@
  */
 import React, {PropTypes} from 'react';
 
-import {get, isUndefined, omitBy} from 'lodash';
+import {get, isUndefined, omitBy, defer} from 'lodash';
 
 import ColValuesStatistics from './ColValuesStatistics.js';
 import CompleteButton from '../ui/CompleteButton.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
+import {dispatchMultiValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import Validate from '../util/Validate.js';
 import {Expression} from '../util/expr/Expression.js';
 import {ValidationField} from '../ui/ValidationField.jsx';
@@ -39,6 +40,81 @@ function parseSuggestboxContent(text) {
     return {token, priorContent};
 }
 
+/*
+function getUnit(colValStats, colname) {
+    const statrow = colValStats.find((el) => { return el.name===colname; });
+    if (statrow && statrow.unit && statrow.unit !== 'null') { return statrow.unit; }
+    else {return '';}
+}
+*/
+
+export function resultsSuccess(callback, flds) {
+    const xName = get(flds, ['x.columnOrExpr']);
+    const yName = get(flds, ['y.columnOrExpr']);
+
+    const xOptions = get(flds, ['x.options']);
+    const xLabel = get(flds, ['x.label']);
+    const xUnit = get(flds, ['x.unit']);
+
+    const yOptions = get(flds, ['y.options']);
+    const yLabel = get(flds, ['y.label']);
+    const yUnit = get(flds, ['y.unit']);
+
+    const nbinsX = get(flds, ['nbins.x']);
+    const nbinsY = get(flds, ['nbins.y']);
+
+    /*
+      const axisParamsShape = PropTypes.shape({
+         columnOrExpr : PropTypes.string,
+         label : PropTypes.string,
+         unit : PropTypes.string,
+         options : PropTypes.string, // ex. 'grid,log,flip'
+      });
+
+      const xyPlotParamsShape = PropTypes.shape({
+         xyRatio : PropTypes.string,
+         stretch : PropTypes.oneOf(['fit','fill']),
+         nbins : PropTypes.shape({x : PropTypes.number, y : PropTypes.number}),
+         shading : PropTypes.oneOf(['lin', 'log']),
+         x : axisParamsShape,
+         y : axisParamsShape
+      });
+      */
+    const xyPlotParams = omitBy({
+        xyRatio : flds.xyRatio || undefined,
+        stretch : flds.stretch,
+        nbins : (nbinsX && nbinsY) ? {x: Number(nbinsX), y: Number(nbinsY)} : undefined,
+        shading: flds.shading || undefined,
+        x : { columnOrExpr : xName, label : xLabel, unit : xUnit, options : xOptions},
+        y : { columnOrExpr : yName, label : yLabel, unit : yUnit, options : yOptions}
+    }, isUndefined);
+
+    callback(xyPlotParams);
+}
+
+export function resultsFail() {
+    // TODO: do I need to do anything here?
+}
+
+
+export function setOptions(groupKey, xyPlotParams) {
+    const flds = [
+        {fieldKey: 'x.columnOrExpr', value: get(xyPlotParams, 'x.columnOrExpr')},
+        {fieldKey: 'x.label', value: get(xyPlotParams, 'x.label')},
+        {fieldKey: 'x.unit', value: get(xyPlotParams, 'x.unit')},
+        {fieldKey: 'x.options', value: get(xyPlotParams, 'x.options', '_none_')},
+        {fieldKey: 'y.columnOrExpr', value: get(xyPlotParams, 'y.columnOrExpr')},
+        {fieldKey: 'y.label', value: get(xyPlotParams, 'y.label')},
+        {fieldKey: 'y.unit', value: get(xyPlotParams, 'y.unit')},
+        {fieldKey: 'y.options', value: get(xyPlotParams, 'y.options', '_none_')},
+        {fieldKey: 'xyRatio', value: get(xyPlotParams, 'xyRatio')},
+        {fieldKey: 'stretch', value: get(xyPlotParams, 'stretch', 'fit')},
+        {fieldKey: 'nbins.x', value: get(xyPlotParams, 'nbins.x', 100)},
+        {fieldKey: 'nbins.y', value: get(xyPlotParams, 'nbins.y', 100)},
+        {fieldKey: 'shading', value: get(xyPlotParams, 'shading', 'log')}
+    ];
+    dispatchMultiValueChange(groupKey, flds);
+}
 
 var XYPlotOptions = React.createClass({
 
@@ -46,7 +122,7 @@ var XYPlotOptions = React.createClass({
     propTypes: {
         groupKey: PropTypes.string.isRequired,
         colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
-        onOptionsSelected: PropTypes.func.isRequired,
+        onOptionsSelected: PropTypes.func,
         xyPlotParams: plotParamsShape
     },
 
@@ -56,63 +132,13 @@ var XYPlotOptions = React.createClass({
             this.props.xyPlotParams !== np.xyPlotParams;
     },
 
-
-    getUnit(colname) {
-        const statrow = this.props.colValStats.find((el) => { return el.name===colname; });
-        if (statrow && statrow.unit && statrow.unit !== 'null') { return statrow.unit; }
-        else {return '';}
+    componentWillReceiveProps(np) {
+        const {groupKey, xyPlotParams} = np;
+        if (this.props.xyPlotParams !== xyPlotParams) {
+            defer(setOptions, groupKey, xyPlotParams);
+        }
     },
 
-    resultsSuccess(flds) {
-        const xName = get(flds, ['x.columnOrExpr']);
-        const yName = get(flds, ['y.columnOrExpr']);
-
-        const xOptions = get(flds, ['x.options']);
-        let xLabel = get(flds, ['x.label']), xUnit = get(flds, ['x.unit']);
-        if (!xLabel) { xLabel = xName; }
-        if (!xUnit) {xUnit = this.getUnit(xName); }
-
-        const yOptions = get(flds, ['y.options']);
-        let yLabel = get(flds, ['y.label']);
-        let yUnit = get(flds, ['y.unit']);
-        if (!yLabel) { yLabel = yName; }
-        if (!yUnit) {yUnit = this.getUnit(yName); }
-
-        const nbinsX = get(flds, ['nbins.x']);
-        const nbinsY = get(flds, ['nbins.y']);
-
-        /*
-          const axisParamsShape = PropTypes.shape({
-             columnOrExpr : PropTypes.string,
-             label : PropTypes.string,
-             unit : PropTypes.string,
-             options : PropTypes.string, // ex. 'grid,log,flip'
-          });
-
-          const xyPlotParamsShape = PropTypes.shape({
-             xyRatio : PropTypes.string,
-             stretch : PropTypes.oneOf(['fit','fill']),
-             nbins : PropTypes.shape({x : PropTypes.number, y : PropTypes.number}),
-             shading : PropTypes.oneOf(['lin', 'log']),
-             x : axisParamsShape,
-             y : axisParamsShape
-          });
-          */
-        const xyPlotParams = omitBy({
-            xyRatio : flds.xyRatio || undefined,
-            stretch : flds.stretch,
-            nbins : (nbinsX && nbinsY) ? {x: Number(nbinsX), y: Number(nbinsY)} : undefined,
-            shading: flds.shading || undefined,
-            x : { columnOrExpr : xName, label : xLabel, unit : xUnit, options : xOptions},
-            y : { columnOrExpr : yName, label : yLabel, unit : yUnit, options : yOptions}
-        }, isUndefined);
-
-        this.props.onOptionsSelected(xyPlotParams);
-    },
-
-    resultsFail() {
-        // TODO: do I need to do anything here?
-    },
 
     renderBinningOptions() {
         const { colValStats, groupKey, xyPlotParams }= this.props;
@@ -164,7 +190,7 @@ var XYPlotOptions = React.createClass({
     },
 
     render() {
-        const { colValStats, groupKey, xyPlotParams }= this.props;
+        const { colValStats, groupKey, xyPlotParams, onOptionsSelected}= this.props;
         const colNames = colValStats.map((colVal) => {return colVal.name;});
 
         // the suggestions are indexes in the colValStats array - it makes it easier to render then with labels
@@ -341,7 +367,7 @@ var XYPlotOptions = React.createClass({
                     <RadioGroupInputField
                         alignment='horizontal'
                         initialState= {{
-                            value: get(xyPlotParams, 'stretch'),
+                            value: get(xyPlotParams, 'stretch', 'fit'),
                             tooltip: 'Should the plot fit into the available space or fill the available width?',
                             label : 'Stretch to:'
                         }}
@@ -356,10 +382,19 @@ var XYPlotOptions = React.createClass({
                     {this.renderBinningOptions()}
                     <br/>
 
-                    <CompleteButton groupKey={groupKey}
-                                    onSuccess={this.resultsSuccess}
-                                    onFail={this.resultsFail}
+                    {onOptionsSelected &&
+                    <div style={{paddingTop: 10}}>
+                        <CompleteButton style={{display: 'inline-block', marginRight: 10}}
+                                        groupKey={groupKey}
+                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds)}
+                                        onFail={resultsFail}
+                                        text = 'Apply'
                         />
+                        <div style={{display: 'inline-block', paddingLeft: 70}}>
+                            <button style={{display: 'inline-block'}} type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
+                            <button style={{display: 'inline-block'}} type='button' className='button std' onClick={() => setOptions(groupKey, xyPlotParams)}>Reset</button>
+                        </div>
+                    </div>}
                 </FieldGroup>
 
             </div>
