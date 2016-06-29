@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React, {PropTypes} from 'react';
+import React, {PropTypes, Component} from 'react';
 
 import {get, isUndefined, omitBy, defer} from 'lodash';
 
@@ -9,6 +9,7 @@ import ColValuesStatistics from './ColValuesStatistics.js';
 import CompleteButton from '../ui/CompleteButton.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
 import {dispatchMultiValueChange} from '../fieldGroup/FieldGroupCntlr.js';
+import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import Validate from '../util/Validate.js';
 import {Expression} from '../util/expr/Expression.js';
 import {ValidationField} from '../ui/ValidationField.jsx';
@@ -17,10 +18,14 @@ import {RadioGroupInputField} from '../ui/RadioGroupInputField.jsx';
 import {SuggestBoxInputField} from '../ui/SuggestBoxInputField.jsx';
 import {FieldGroupCollapsible} from '../ui/panel/CollapsiblePanel.jsx';
 import {plotParamsShape} from  './XYPlot.jsx';
+import TablePanel from '../tables/ui/TablePanel.jsx';
+import {showXYPlotColPopup} from './XYPlotColView.jsx';
 
 const DECI_ENABLE_SIZE = 5000;
 
 const helpStyle = {fontStyle: 'italic', color: '#808080', paddingBottom: 10};
+import {TextButton} from '../ui/TextButton.jsx';
+import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
 /*
  * Split content into prior content and the last alphanumeric token in the text
@@ -192,6 +197,9 @@ var XYPlotOptions = React.createClass({
     render() {
         const { colValStats, groupKey, xyPlotParams, onOptionsSelected}= this.props;
         const colNames = colValStats.map((colVal) => {return colVal.name;});
+        const colUnit =  colValStats.map((colVal) => {return colVal.unit;});
+        const colDescr =  colValStats.map((colVal) => {return colVal.descr;});
+
 
         // the suggestions are indexes in the colValStats array - it makes it easier to render then with labels
         const allSuggestions = colValStats.map((colVal,idx)=>{return idx;});
@@ -225,6 +233,15 @@ var XYPlotOptions = React.createClass({
             return retval;
         };
 
+        // make a local table for plot column selection panel
+        var columns = [{name: 'Name'},{name: 'Unit'},{name: 'Type'},{name: 'Description'}];
+        var data = [];
+        for (var i = 0; i < colValStats.length; i++) {
+                data[i] = [colValStats[i].name, colValStats[i].unit, colValStats[i].numpoints, colValStats[i].descr];
+        }
+        const request = {pageSize:10000};
+        var tableModel = {totalRows: data.length, request, tbl_id:'selectCol', tableData: {columns,  data }, highlightedRow: '5'};
+
         return (
             <div style={{padding:'5px'}}>
                 <br/>
@@ -233,21 +250,44 @@ var XYPlotOptions = React.createClass({
                         For X and Y, enter a column or an expression<br/>
                         ex. log(col); 100*col1/col2; col1-col2
                     </div>
-                    <SuggestBoxInputField
-                        initialState= {{
-                            value: get(xyPlotParams, 'x.columnOrExpr'),
-                            tooltip: 'Column or expression for X axis',
-                            label: 'X:',
-                            nullAllowed : false,
-                            validator: colValidator
-                        }}
-                        getSuggestions={getSuggestions}
-                        renderSuggestion={renderSuggestion}
-                        valueOnSuggestion={valueOnSuggestion}
-                        fieldKey='x.columnOrExpr'
-                        groupKey={groupKey}
-                        labelWidth={20}
-                    />
+                    <table style={{width:200}}>
+                        <tbody>
+                        <tr>
+                            <td></td>
+                            <td>
+                                <div>
+                                    <SuggestBoxInputField
+                                        initialState= {{
+                                            value: get(xyPlotParams, 'x.columnOrExpr'),
+                                            tooltip: 'Column or expression for X axis',
+                                            label: 'X:',
+                                            nullAllowed : false,
+                                            validator: colValidator
+                                        }}
+                                        getSuggestions={getSuggestions}
+                                        renderSuggestion={renderSuggestion}
+                                        valueOnSuggestion={valueOnSuggestion}
+                                        fieldKey='x.columnOrExpr'
+                                        groupKey={groupKey}
+                                        labelWidth={20}
+                                    />
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <TextButton groupKey={groupKey}
+                                        text="Col"
+                                        tip="Select X column"
+                                        onClick={() => showXYPlotColPopup(tableModel,xyPlotParams,'x.columnOrExpr',groupKey)}
+                                        onSuccess={this.resultsSuccess}
+                                        onFail={this.resultsFail}
+                                    />
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+
                     <FieldGroupCollapsible  header='X Label/Unit/Options'
                                             initialState= {{ value:'closed' }}
                                             fieldKey='xplotoptions'>
@@ -291,21 +331,44 @@ var XYPlotOptions = React.createClass({
                     </FieldGroupCollapsible>
                     <br/>
 
-                    <SuggestBoxInputField
-                        initialState= {{
-                            value: get(xyPlotParams, 'y.columnOrExpr'),
-                            tooltip: 'Column or expression for Y axis',
-                            label : 'Y:',
-                            nullAllowed : false,
-                            validator: colValidator
-                        }}
-                        getSuggestions={getSuggestions}
-                        renderSuggestion={renderSuggestion}
-                        valueOnSuggestion={valueOnSuggestion}
-                        fieldKey='y.columnOrExpr'
-                        groupKey={groupKey}
-                        labelWidth={20}
-                    />
+                    <table style={{width:200}}>
+                        <tbody>
+                        <tr>
+                            <td></td>
+                            <td>
+                                <div>
+                                    <SuggestBoxInputField
+                                        initialState= {{
+                                            value: get(xyPlotParams, 'y.columnOrExpr'),
+                                            tooltip: 'Column or expression for Y axis',
+                                            label: 'Y:',
+                                            nullAllowed : false,
+                                            validator: colValidator
+                                        }}
+                                        getSuggestions={getSuggestions}
+                                        renderSuggestion={renderSuggestion}
+                                        valueOnSuggestion={valueOnSuggestion}
+                                        fieldKey='y.columnOrExpr'
+                                        groupKey={groupKey}
+                                        labelWidth={20}
+                                    />
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <TextButton groupKey={groupKey}
+                                        text="Col"
+                                        tip="Select Y column"
+                                        onClick={() => showXYPlotColPopup(tableModel,xyPlotParams,'y.columnOrExpr',groupKey)}
+                                        onSuccess={this.resultsSuccess}
+                                        onFail={this.resultsFail}
+                                    />
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+
                     <FieldGroupCollapsible  header='Y Label/Unit/Options'
                                             initialState= {{ value:'closed' }}
                                             fieldKey='yplotoptions'>
