@@ -177,12 +177,11 @@ export class TextCell extends React.Component {
     // }
     //
     render() {
-        const lineHeight = this.props.height - 6 + 'px';  // 6 is the top/bottom padding.
-        const style = Object.assign({lineHeight}, this.props.style || {});
         var val = getValue(this.props);
-        val = (isString(val) && val.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: val}}/> : val;
+        const lineHeight = this.props.height - 6 + 'px';  // 6 is the top/bottom padding.
+        val = (val.search && val.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: val}}/> : val;
         return (
-            <div style={style} className='public_fixedDataTableCell_cellContent'>{val}</div>
+            <div style={{lineHeight}} className='public_fixedDataTableCell_cellContent'>{val}</div>
         );
     }
 }

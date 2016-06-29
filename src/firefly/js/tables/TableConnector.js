@@ -87,7 +87,12 @@ export class TableConnector {
         const {hlRowIdx, startIdx} = TblUtil.getTblInfoById(this.tbl_id);
         if (rowIdx !== hlRowIdx) {
             const highlightedRow = startIdx + rowIdx;
-            TblCntlr.dispatchTableHighlight(this.tbl_id, highlightedRow);
+            if (this.origTableModel) {
+                const tableModel = {tbl_id: this.tbl_id, highlightedRow};
+                flux.process({type: TblCntlr.TABLE_UPDATE, payload: tableModel});
+            } else {
+                TblCntlr.dispatchTableHighlight(this.tbl_id, highlightedRow);
+            }
         }
     }
 
