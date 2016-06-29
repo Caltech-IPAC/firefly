@@ -73,13 +73,13 @@ class ChartSelect extends Component {
                        value={SCATTER}
                        defaultChecked={chartType===SCATTER}
                        onChange={this.onChartTypeChange}
-                /> Scatter Plot&nbsp;&nbsp;
+                /><span style={{paddingLeft: 3, paddingRight: 8}}>Scatter Plot</span>
                 <input type='radio'
                        name={fieldKey}
                        value={HISTOGRAM}
                        defaultChecked={chartType===HISTOGRAM}
                        onChange={this.onChartTypeChange}
-                /> Histogram&nbsp;&nbsp;
+                /><span style={{paddingLeft: 3, paddingRight: 8}}>Histogram</span>
             </div>
         );
     }

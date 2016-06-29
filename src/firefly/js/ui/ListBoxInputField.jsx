@@ -35,7 +35,7 @@ export function ListBoxInputFieldView({inline, value, onChange, fieldKey, option
                     return (
                         <option value={option.value}
                                 key={option.value}>
-                            &nbsp;{option.label}&nbsp;
+                            <span style={{paddingLeft: 3, paddingRight: 3}}>{option.label}</span>
                         </option>
                     );
                 }))}

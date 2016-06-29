@@ -29,7 +29,7 @@ export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip,
                                value={option.value}
                                checked={isChecked(option.value,value)}
                                onChange={onChange}
-                        />&nbsp;{option.label}&nbsp;&nbsp;
+                        /><span style={{paddingLeft: 3, paddingRight: 8}}>{option.label}</span>
                     </div>
                 );
             })}

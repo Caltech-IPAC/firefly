@@ -14,7 +14,7 @@ function makeOptions(options,alignment,fieldKey,value,onChange,tooltip) {
                        defaultChecked={value===option.value}
                        checked={value===option.value}
                        onChange={onChange}
-                /> &nbsp;{option.label}&nbsp;&nbsp;
+                /> <span style={{paddingLeft: 3, paddingRight: 8}}>{option.label}</span>
             </div>
             {alignment==='vertical' ? <br/> : ''}
          </span>
