@@ -10,6 +10,7 @@ import {doFetchTable, getTblById, isFullyLoaded} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {serializeDecimateInfo} from '../tables/Decimate.js';
 import {logError} from '../util/WebUtil.js';
+import {getDefaultXYPlotParams} from '../visualize/ChartUtil.js';
 
 export const XYPLOT_DATA_KEY = 'xyplot';
 export const LOAD_PLOT_DATA = `${XYPLOT_DATA_KEY}/LOAD_COL_DATA`;
@@ -143,11 +144,7 @@ export function loadPlotData (rawAction) {
     return (dispatch) => {
         const {chartId, xyPlotParams, tblId} = rawAction.payload;
         dispatch({ type : LOAD_PLOT_DATA, payload : rawAction.payload });
-        if (isFullyLoaded(tblId) && xyPlotParams) {
-            const searchRequest = getTblById(tblId)['request'];
-            fetchPlotData(dispatch, searchRequest, xyPlotParams, chartId);
-        }
-
+        fetchPlotData(dispatch, tblId, xyPlotParams, chartId);
     };
 }
 
@@ -193,7 +190,7 @@ export function reducer(state={}, action={}) {
         case (UPDATE_PLOT_DATA)  :
         {
             const {isPlotDataReady, decimatedUnzoomed, xyPlotParams, xyPlotData, chartId, newParams} = action.payload;
-            if (state[chartId].xyPlotParams === xyPlotParams) {
+            if (!state[chartId].xyPlotParams || state[chartId].xyPlotParams === xyPlotParams) {
                 const decimatedUnzoomedNext = isUndefined(decimatedUnzoomed) ? state[chartId].decimatedUnzoomed : decimatedUnzoomed;
                 return updateMerge(state, chartId,
                     {isPlotDataReady, decimatedUnzoomed: decimatedUnzoomedNext, xyPlotData, xyPlotParams: newParams});
@@ -244,9 +241,13 @@ export function reducer(state={}, action={}) {
  * @param xyPlotParams object, which contains xy plot parameters
  * @param {string} chartId  - chart id
  */
-function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams, chartId) {
+function fetchPlotData(dispatch, tblId, xyPlotParams, chartId) {
 
-    if (!xyPlotParams) { return; }
+    if (!tblId || !isFullyLoaded(tblId)) {return; }
+
+    const activeTableServerRequest = getTblById(tblId)['request'];
+
+    if (!xyPlotParams) { xyPlotParams = getDefaultXYPlotParams(tblId); }
 
     let limits = [];
     if (xyPlotParams.zoom) {

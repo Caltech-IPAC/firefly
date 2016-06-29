@@ -479,7 +479,7 @@ class ChartsPanel extends React.Component {
                          title='Expand this panel to take up a larger area'
                          src={OUTLINE_EXPAND}
                          onClick={() => {
-                            dispatchChartExpanded(chartId, tblId, optionsPopup);
+                            dispatchChartExpanded(chartId, tblId, chartType, optionsPopup);
                             dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.xyPlots);
                          }}
                     />}

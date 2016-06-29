@@ -373,12 +373,13 @@ function showXYPlot(llApi, targetDiv, params={}) {
     }
 
     const {xCol, yCol, xyRatio, stretch, xLabel, yLabel, xUnit, yUnit, xOptions, yOptions} = params;
-    const xyPlotParams = {
+    const xyPlotParams = xCol && yCol ?
+    {
         xyRatio,
         stretch,
-        x : { columnOrExpr : xCol, label : xLabel||xCol, unit : xUnit||'', options : xOptions},
-        y : { columnOrExpr : yCol, label : yLabel||yCol, unit : yUnit||'', options : yOptions}
-    };
+        x : { columnOrExpr : xCol, label : xLabel, unit : xUnit, options : xOptions},
+        y : { columnOrExpr : yCol, label : yLabel, unit : yUnit, options : yOptions}
+    } : undefined;
 
     // it is not quite clear how to handle situation when there are multiple tables in a group
     // for now we are connecting to the currently active table in the group
@@ -386,17 +387,17 @@ function showXYPlot(llApi, targetDiv, params={}) {
     var tblId = params.tbl_id;
     // standalone plot, not connected to an existing table
     if (!tblGroup && !tblId) {
-        tblId = uniqueTblId();
         const searchRequest = makeFileRequest(
             params.chartTitle||'', // title
             params.source,  // source
             null,  // alt_source
             {
                 pageSize: 0 // options
-            },
-            tblId // table id
+            }
         );
+        tblId = searchRequest.tbl_id;
         dispatchTableFetch(searchRequest);
+        dispatchSetupTblTracking(tblId);
     }
 
     const chartId = uniqueChartId(tblId||tblGroup);
@@ -408,23 +409,19 @@ function showXYPlot(llApi, targetDiv, params={}) {
             if (new_tblId !== tblId) {
                 tblId = new_tblId;
                 loadPlotDataForTbl(tblId, chartId, xyPlotParams);
-                dispatchSetupTblTracking(tblId);
             }
         });
     }
-    if (tblId) {
-        loadPlotDataForTbl(tblId, chartId, xyPlotParams);
-        dispatchSetupTblTracking(tblId);
-    }
-
+    loadPlotDataForTbl(tblId, chartId, xyPlotParams);
 
     renderDOM(targetDiv, ChartsTableViewPanel,
         {
-            key: `${targetDiv}-chart`,
+            key: `${targetDiv}-xyplot`,
             tblId,
             chartId,
             closeable: false,
             expandedMode: false,
+            chartType: 'scatter',
             deletable: false
         }
     );

@@ -196,8 +196,8 @@
             firefly.showTable('tables-2', tblReq2, {removable: false, showUnits: true, showFilters: true});
             //-----------------  CHART DEMO ------------------------//
             //--- using QUERY_ID: 'upload' does not work getActiveTableId('upload') returns undefined ---//
-            firefly.addXYPlot('xyPlot1', {tbl_id: tblReq2.tbl_id, xCol: 'w1mpro+w4mpro', yCol: 'w2mpro'});
-            firefly.addXYPlot('xyPlot2', {tbl_id: tblReq2.tbl_id, xCol: 'ra', yCol: 'dec'});
+            firefly.addXYPlot('xyPlot1', {tbl_id: tblReq2.tbl_id, xCol: 'ra', yCol: 'dec'});
+            firefly.addXYPlot('xyPlot2', {tbl_id: tblReq2.tbl_id, xCol: 'w1mpro+w4mpro', yCol: 'w2mpro'});
 
             //-----< old table api ------//
             var tblParams = {
@@ -220,7 +220,7 @@
 
             //-----< old xyplot api ------//
             //--- using QUERY_ID: 'oldSelectable' does not work getActiveTableId('upload') returns undefined ---//
-            firefly.addXYPlot({QUERY_ID: 'oldSelectable', xCol: 'crval1', yCol: 'crval2'}, 'oldXyPlot1');
+            firefly.addXYPlot({QUERY_ID: 'oldSelectable'}, 'oldXyPlot1');
             //-----< old xyplot api ------//
 
             var regionAry = [

@@ -21,9 +21,9 @@ export function getExpandedChartProps() {
 }
 
 function nextState(props) {
-    const {closeable, chartId, tblId, optionsPopup} = props;
+    const {closeable, chartId, tblId, chartType, optionsPopup} = props;
     const expandedMode = props.expandedMode && getExpandedMode() === LO_VIEW.xyPlots;
-    const chartProps = expandedMode ? getExpandedChartProps() : {chartId, tblId, optionsPopup};
+    const chartProps = expandedMode ? getExpandedChartProps() : {chartId, tblId, chartType, optionsPopup};
     return Object.assign({expandedMode,closeable}, chartProps);
 }
 
