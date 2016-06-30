@@ -8,7 +8,7 @@ import FormPanel from '../../ui/FormPanel.jsx';
 import { get, merge, isEmpty} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
-import {doFetchTable, makeTblRequest, makeIrsaCatalogRequest, getTblById} from '../../tables/TableUtil.js';
+import {doFetchTable, makeTblRequest, makeIrsaCatalogRequest, makeVOCatalogRequest, getTblById} from '../../tables/TableUtil.js';
 import {CatalogTableListField} from './CatalogTableListField.jsx';
 import {CatalogConstraintsPanel} from './CatalogConstraintsPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -212,18 +212,33 @@ function validateSql(sqlTxt) {
 
 import {FilterInfo} from '../../tables/FilterInfo.js';
 
+/**
+ * VO search using 'ConeSearchByURL' search processor
+ * N.B.: radius in degree!
+ * TODO: doesn't trigger a coverage default image nor overlay compared to OPS usage of 'ConeSearchByURL' search processor
+ * @param request
+ */
 function doVoSearch(request) {
     //VO url that work http://vizier.u-strasbg.fr/viz-bin/votable/-A?-source=J/A+A/402/549
-    const radius = convertAngle('deg', 'arcsec', request.conesize);
-    const accessUrl = request.vourl.trim().replace('&', 'URL_PARAM_SEP');
+    const radius = convertAngle('deg', 'arcsec', request.conesize);//arcsec
+    const accessUrl = request.vourl.trim();//.replace('&', 'URL_PARAM_SEP');
     const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
-    var tReq = makeTblRequest('ConeSearchByURL', `${wp.getObjName()} (VO SCS ${radius}")`,
+    const nameUsed = wp.getObjName() || wp.toString();
+    const name = `${nameUsed} (VO SCS ${radius}")`;
+    var tReq = makeVOCatalogRequest(name,
         {
             [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
-            SearchMethod: 'ConeSearchByURL',
-            radius,
-            accessUrl
-        });
+            SearchMethod: 'Cone',
+            radius: request.conesize, //degree!
+            accessUrl,
+/*            radunits: 'DEGREE',
+            displayUnits: 'ARCSEC',
+            META_INFO: {
+ POS_EQ_RA_MAIN:'_RA' //Shouldn't be needing this.
+ POS_EQ_DE_MAIN:'_DE'
+            }*/
+        }
+    );
     dispatchTableSearch(tReq);
 }
 

@@ -4,7 +4,7 @@
 
 import React from 'react';
 import {TargetPanel} from '../ui/TargetPanel.jsx';
-import {SizeInputFields, sizeFromDeg} from './SizeInputField.jsx';
+import {SizeInputFields} from './SizeInputField.jsx';
 import {ValidationField} from './ValidationField.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
@@ -56,15 +56,20 @@ export class VoSearchPanel extends React.Component {
 function targetPanelArea() {
     return (
         <div className={'intarget'}>
-            <TargetPanel groupKey={gkey}/>
+            <TargetPanel groupKey={gkey} labelWidth={120}/>
             <ListBoxInputField
                 fieldKey='targettry'
+                initialState={{
+                                  fieldKey:'targettry',
+                                  label : '',
+                                  labelWidth: 0
+                              }}
+                label={''}
                 options={[
                             {label: 'Try NED then Simbad', value: 'NED'},
                             {label: 'Try Simbad then NED', value: 'simbad'}
                          ]}
                 multiple={false}
-                labelWidth={3}
             />
         </div>
     );
@@ -88,14 +93,19 @@ var sizeArea = () => {
 var voSearchArea = () => {
     return (
         <ValidationField
-            fieldKey={'vourl'}
-            /*validator={urlValidator}*/
-            tooltip='Enter the VO cone search URL directly (or use the link below to open external NVO search and find the VO cone search URL)'
-            label='VO URL:'
-            size={75}
+            fieldKey='vourl'
+            initialState={{
+                              fieldKey: 'vourl',
+                              value: '',
+                              tooltip:'Enter the VO cone search URL directly (or use the link below to open external NVO search and find the VO cone search URL)',
+                              label:'Cone Search URL:',
+                              labelWidth : 90,
+                              nullAllowed:false,
+                              /*validator: {urlValidator}*/
+                          }}
+            size={60}
             actOn={['blur','enter']}
             wrapperStyle={{margin: '5px 0'}}
-            labelWidth={50}
         />
     );
 };

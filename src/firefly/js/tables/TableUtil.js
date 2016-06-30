@@ -118,6 +118,20 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
     return omitBy(Object.assign(req, options, params, {id, tbl_id, META_INFO, UserTargetWorldPt, catalogProject, catalog}), isNil);
 }
 
+export function makeVOCatalogRequest(title, params={}, options={}) {
+    var req = {startIdx: 0, pageSize: 100};
+    options.use = options.use || 'catalog_overlay';
+    const tbl_id = options.tbl_id || uniqueTblId();
+    const id = 'ConeSearchByURL';
+    const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
+    var META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
+
+    options = omit(options, 'tbl_id');
+    params = omit(params, 'position');
+
+    return omitBy(Object.assign(req, options, params, {id, tbl_id, META_INFO, UserTargetWorldPt}), isNil);
+}
+
 /*---------------------------- creator functions >----------------------------*/
 
 
@@ -241,7 +255,7 @@ export function getTableUiById(tbl_ui_id) {
 }
 
 /**
- * get table's expanded information. 
+ * get table's expanded information.
  * @returns {object}
  */
 export function getTblExpandedInfo() {

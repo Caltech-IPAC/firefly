@@ -275,8 +275,8 @@ function ConstraintPanel({tableModel, fieldKey, onChange, ontablechanged}) {
                                             constraints:
                                                 { cellRenderer:
                                                                 createInputCell(
-                                                                         15,
                                                                          FILTER_TTIPS,
+                                                                         15,
                                                                          FilterInfo.validator,
                                                                          onChange
                                                                 )
@@ -322,7 +322,7 @@ function handleOnTableChanged(ev, params, fireValueChange) {
     let sqlTxt = '';
 
     tbl_data.forEach((d) => {
-        if (d[1].trim().length > 0) {
+        if (d[1] && d[1].trim().length > 0) {
             const filterString = d[1].trim();
             const colName = d[0];
             //const filterInfoCls = FilterInfo.parse(d[0] + d[1]);

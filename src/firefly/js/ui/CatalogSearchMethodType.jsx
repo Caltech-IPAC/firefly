@@ -131,7 +131,7 @@ function sizeArea(searchType, max) {
         return (
             <div
                 style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center', border:'solid #a3aeb9 1px' }}>
-                {radiusInField({label:'Semi-major Axis:', tooltip:'Enter the semi-major axis of the search'})}
+                {radiusInField({label: 'Semi-major Axis:', tooltip: 'Enter the semi-major axis of the search'})}
                 <ValidationField fieldKey='posangle'
                                  forceReinit={true}
                                  initialState={{
@@ -158,7 +158,12 @@ function sizeArea(searchType, max) {
 
         return (
             <div style={{border: '1px solid #a3aeb9'}}>
-                {radiusInField({label:'Side:', tooltip:'Enter side size of the box search', min:1 / 3600, max:7200 / 3600})}
+                {radiusInField({
+                    label: 'Side:',
+                    tooltip: 'Enter side size of the box search',
+                    min: 1 / 3600,
+                    max: 7200 / 3600
+                })}
             </div>
 
         );
@@ -251,7 +256,7 @@ export const SpatialMethod = new Enum({
 );
 
 var initRadiusArcSec = (max) => {
-    if (max >= 10/3600) {
+    if (max >= 10 / 3600) {
         return parseFloat(10 / 3600).toString();
     } else {
         return parseFloat(1 / 3600).toString();
