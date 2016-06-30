@@ -34,8 +34,9 @@ export function ListBoxInputFieldView({inline, value, onChange, fieldKey, option
                 {options.map(( (option) => {
                     return (
                         <option value={option.value}
-                                key={option.value}>
-                            <span style={{paddingLeft: 3, paddingRight: 3}}>{option.label}</span>
+                                key={option.value}
+                                style={{paddingLeft: 5, paddingRight: 3}}>
+                            {option.label}
                         </option>
                     );
                 }))}
