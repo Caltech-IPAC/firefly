@@ -181,9 +181,26 @@ const getDeciSymbolSize = function(chart, decimateKeyStr) {
     return {xUnitPx, yUnitPx};
 };
 
-/*
- * Get data series
- */
+const calculateChartSize = function(widthPx, heightPx, props) {
+    const {params} = props;
+    let chartWidth = undefined, chartHeight = undefined;
+    if (params.xyRatio) {
+        if (params.stretch === 'fit') {
+            chartHeight = Number(heightPx) - 2;
+            chartWidth = Number(params.xyRatio) * Number(chartHeight) + 20;
+            if (chartWidth > Number(widthPx)) {
+                chartHeight -= 15; // to accommodate scroll bar
+            }
+        } else {
+            chartWidth = Number(widthPx) - 15;
+            chartHeight = Number(widthPx) / Number(params.xyRatio);
+        }
+    } else {
+        chartWidth = Number(widthPx);
+        chartHeight = Number(heightPx);
+    }
+    return {chartWidth, chartHeight};
+};
 
 export class XYPlot extends React.Component {
 
@@ -191,7 +208,6 @@ export class XYPlot extends React.Component {
         super(props);
         this.updateSelectionRect = this.updateSelectionRect.bind(this);
         this.adjustPlotDisplay = this.adjustPlotDisplay.bind(this);
-        this.calculateChartSize=this.calculateChartSize.bind(this);
         this.debouncedResize = this.debouncedResize.bind(this);
         this.onSelectionEvent = this.onSelectionEvent.bind(this);
         this.shouldAnimate = this.shouldAnimate.bind(this);
@@ -243,10 +259,21 @@ export class XYPlot extends React.Component {
                     const newXOptions = getXAxisOptions(newParams);
                     const newYOptions = getYAxisOptions(newParams);
                     if (!shallowequal(getXAxisOptions(params), newXOptions)) {
-                        Object.assign(xoptions, newXOptions);
+                        Object.assign(xoptions, {
+                            title: {text: newXOptions.xTitle},
+                            gridLineWidth: newXOptions.xGrid ? 1 : 0,
+                            reversed: newXOptions.xReversed,
+                            opposite: newYOptions.yReversed,
+                            type: newXOptions.xLog ? 'logarithmic' : 'linear'
+                        });
                     }
                     if (!shallowequal(getYAxisOptions(params), newYOptions)) {
-                        Object.assign(yoptions, newYOptions);
+                        Object.assign(yoptions, {
+                            title: {text: newYOptions.yTitle},
+                            gridLineWidth: newYOptions.yGrid ? 1 : 0,
+                            reversed: newYOptions.yReversed,
+                            type: newYOptions.yLog ? 'logarithmic' : 'linear'
+                        });
                     }
                     if (!shallowequal(params.zoom, newParams.zoom)) {
                         const {xMin, xMax, yMin, yMax} = getZoomSelection(newParams);
@@ -269,8 +296,9 @@ export class XYPlot extends React.Component {
                 }
 
                 // size change
-                if (newWidth !== width || newHeight !== height) {
-                    const {chartWidth, chartHeight} = this.calculateChartSize(newWidth, newHeight);
+                if (newWidth !== width || newHeight !== height ||
+                    newParams.xyRatio !== params.xyRatio ||newParams.stretch != params.stretch) {
+                    const {chartWidth, chartHeight} = calculateChartSize(newWidth, newHeight, nextProps);
                     chart.setSize(chartWidth, chartHeight, false);
 
                     if (this.pendingResize) {
@@ -293,27 +321,6 @@ export class XYPlot extends React.Component {
 
     componentDidUpdate() {
         this.adjustPlotDisplay();
-    }
-
-    calculateChartSize(widthPx, heightPx) {
-        const {params} = this.props;
-        let chartWidth = undefined, chartHeight = undefined;
-        if (params.xyRatio) {
-            if (params.stretch === 'fit') {
-                chartHeight = Number(heightPx) - 2;
-                chartWidth = Number(params.xyRatio) * Number(chartHeight) + 20;
-                if (chartWidth > Number(widthPx)) {
-                    chartHeight -= 15; // to accommodate scroll bar
-                }
-            } else {
-                chartWidth = Number(widthPx) - 15;
-                chartHeight = Number(widthPx) / Number(params.xyRatio);
-            }
-        } else {
-            chartWidth = Number(widthPx);
-            chartHeight = Number(heightPx);
-        }
-        return {chartWidth, chartHeight};
     }
 
     debouncedResize() {
@@ -515,7 +522,7 @@ export class XYPlot extends React.Component {
         const {data, params, width, height, onSelection, desc} = this.props;
         const onSelectionEvent = this.onSelectionEvent;
 
-        const {chartWidth, chartHeight} = this.calculateChartSize(width, height);
+        const {chartWidth, chartHeight} = calculateChartSize(width, height, this.props);
 
         const {xTitle, xGrid, xReversed, xLog} = getXAxisOptions(params);
         const {yTitle, yGrid, yReversed, yLog} = getYAxisOptions(params);

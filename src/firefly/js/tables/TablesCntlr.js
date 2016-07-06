@@ -10,7 +10,6 @@ import shallowequal from 'shallowequal';
 import {dataReducer} from './reducer/TableDataReducer.js';
 import {uiReducer} from './reducer/TableUiReducer.js';
 import {resultsReducer} from './reducer/TableResultsReducer.js';
-import {dispatchSetupTblTracking} from '../visualize/TableStatsCntlr.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 
 export const TABLE_SPACE_PATH = 'table_space';
@@ -48,8 +47,7 @@ export function tableSearch(action) {
             var {request, options, tbl_group} = action.payload;
             const {tbl_id} = request;
             const title = get(request, 'META_INFO.title');
-            
-            dispatchSetupTblTracking(tbl_id);
+
             dispatchTableFetch(request);
             if (!TblUtil.getTableInGroup(tbl_id, tbl_group)) {
                 const {tbl_group, removable} = options || {};

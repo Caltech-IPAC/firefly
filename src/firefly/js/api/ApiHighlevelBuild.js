@@ -357,12 +357,12 @@ function makePlotId() {
 //================================================================
 
 function showXYPlot(llApi, targetDiv, params={}) {
-    const {dispatchSetupTblTracking, dispatchTableFetch}= llApi.action;
+    const {dispatchTableFetch}= llApi.action;
     const {TBL_RESULTS_ACTIVE} = llApi.action.type;
     const {renderDOM} = llApi.util;
     const {makeFileRequest, getActiveTableId, uniqueTblId} = llApi.util.table;
     const {uniqueChartId, loadPlotDataForTbl} = llApi.util.chart;
-    const {ChartsContainer, ChartsTableViewPanel}= llApi.ui;
+    const {ChartsTableViewPanel}= llApi.ui;
     const {addActionListener} = llApi.util;
 
     if ((typeof targetDiv).match(/string|HTMLDivElement/) === null) {
@@ -397,7 +397,6 @@ function showXYPlot(llApi, targetDiv, params={}) {
         );
         tblId = searchRequest.tbl_id;
         dispatchTableFetch(searchRequest);
-        dispatchSetupTblTracking(tblId);
     }
 
     const chartId = uniqueChartId(tblId||tblGroup);
