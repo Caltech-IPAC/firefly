@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.ui.searchui;
 
-import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.*;
 import edu.caltech.ipac.firefly.data.Param;
@@ -77,6 +76,7 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
     public void makeServerRequest(final AsyncCallback<ServerRequest> cb) {
 
         final TableServerRequest req = new TableServerRequest("ConeSearchByURL");
+        req.setParam("use", "catalog_overlay");
         req.setParam("title", getSearchTitle());
         req.setSafeParam("accessUrl", accessUrl.getValue());
         req.setParams(targetPanel.getFieldValues());
@@ -113,21 +113,13 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
         */
 
         final Widget registrySearchBtn = GwtUtil.makeFormButton("Search Registry",
-                new ClickHandler() {
-                    @Override
-                    public void onClick(ClickEvent event) {
-                        queryRegistryAsync();
-                    }
-                });
+                event -> queryRegistryAsync());
         GwtUtil.setStyle(registrySearchBtn, "fontSize", "9pt");
 
         final Widget keywordsResetBtn = GwtUtil.makeFormButton("Clear",
-                new ClickHandler() {
-                    @Override
-                    public void onClick(ClickEvent event) {
-                        clearKeywordSearchResults();
-                        keywordsFld.getField().getFocusWidget().setFocus(true);
-                    }
+                event -> {
+                    clearKeywordSearchResults();
+                    keywordsFld.getField().getFocusWidget().setFocus(true);
                 });
         GwtUtil.setStyle(keywordsResetBtn, "fontSize", "9pt");
 
@@ -252,12 +244,9 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
                         final String shortName = ep.getShortName();
                         final String url = ep.getUrl();
                         grid.setWidget(row, 0, GwtUtil.makeLinkButton("Use", "Use URL for this service "+ep.getDescription(),
-                                new ClickHandler() {
-                                    @Override
-                                    public void onClick(ClickEvent event) {
-                                        accessUrl.setValue(url);
-                                        currentShortName = shortName;
-                                    }
+                                event -> {
+                                    accessUrl.setValue(url);
+                                    currentShortName = shortName;
                                 }));
 
                         grid.setWidget(row, 1, new Label(ep.getTitle()+
