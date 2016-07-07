@@ -67,7 +67,7 @@ class ChartsPanel extends React.Component {
                 var widthPx = size.width;
                 var heightPx = size.height;
                 //console.log('width: '+widthPx+', height: '+heightPx);
-                if (widthPx !== this.state.widthPx || heightPx != this.state.heightPx) {
+                if (widthPx !== this.state.widthPx || heightPx !== this.state.heightPx) {
                     this.setState({widthPx, heightPx, immediateResize: false});
                 }
             }
@@ -136,7 +136,7 @@ class ChartsPanel extends React.Component {
     componentWillReceiveProps(nextProps) {
         const {tblId, chartId, chartType} = nextProps;
         if (!tblId || !chartId) { return; }
-        if (chartId != this.props.chartId || chartType != this.props.chartType || !this.props.tblId) {
+        if (chartId !== this.props.chartId || chartType !== this.props.chartType || !this.props.tblId) {
             dispatchChartUnmounted(this.props.tblId, this.props.chartId, this.props.chartType);
             dispatchChartMounted(tblId,chartId,chartType);
         }
@@ -628,12 +628,12 @@ export class OptionsWrapper extends React.Component {
     }
 
     shouldComponentUpdate(nProps) {
-        return nProps.chartId != this.props.chartId ||
+        return nProps.chartId !== this.props.chartId ||
         get(nProps, 'tblPlotData.xyPlotParams') !== get(this.props, 'tblPlotData.xyPlotParams') ||
         get(nProps, 'tblHistogramData.histogramParams') !== get(this.props, 'tblHistogramData.histogramParams') ||
         get(nProps, 'tableModel.tbl_id') !== get(this.props, 'tableModel.tbl_id') ||
             get(nProps, 'tblStatsData.isColStatsReady') !== get(this.props, 'tblStatsData.isColStatsReady') ||
-            nProps.chartType != this.props.chartType;
+            nProps.chartType !== this.props.chartType;
     }
 
     // componentDidUpdate(prevProps, prevState) {
