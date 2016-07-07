@@ -18,6 +18,8 @@ import {logError} from '../util/WebUtil.js';
 import {XYPLOT_DATA_KEY} from '../visualize/XYPlotCntlr.js';
 import {HISTOGRAM_DATA_KEY} from '../visualize/HistogramCntlr';
 
+export const SCATTER = 'scatter';
+export const HISTOGRAM = 'histogram';
 
 /**
  * This method returns an object with the keys x,y,highlightedRow
@@ -63,20 +65,33 @@ function getExpressionValue(strExpr, tableModel, rowIdx) {
     }
 }
 
+
+export function getChartSpace(chartType) {
+    switch(chartType) {
+        case SCATTER:
+            return flux.getState()[XYPLOT_DATA_KEY];
+        case HISTOGRAM:
+            return flux.getState()[HISTOGRAM_DATA_KEY];
+        default:
+            logError(`Unknown chart type ${chartType}`);
+            return undefined;
+    }
+}
+
 export function hasRelatedCharts(tblId, space) {
     if (space) {
         return Boolean(Object.keys(space).find((chartId) => {
             return space[chartId].tblId === tblId;
         }));
     } else {
-        return hasRelatedCharts(tblId, flux.getState()[XYPLOT_DATA_KEY]) ||
-            hasRelatedCharts(tblId, flux.getState()[HISTOGRAM_DATA_KEY]);
+        return hasRelatedCharts(tblId, getChartSpace(SCATTER)) ||
+            hasRelatedCharts(tblId, getChartSpace(HISTOGRAM));
     }
 }
 
 export function getTblIdForChartId(chartId) {
-    return  get(flux.getState()[XYPLOT_DATA_KEY], [chartId, 'tblId']) ||
-            get(flux.getState()[HISTOGRAM_DATA_KEY], [chartId, 'tblId']);
+    return  get(getChartSpace(SCATTER), [chartId, 'tblId']) ||
+            get(getChartSpace(HISTOGRAM), [chartId, 'tblId']);
 }
 
 export function numRelatedCharts(tblId) {
@@ -86,7 +101,7 @@ export function numRelatedCharts(tblId) {
     keys.forEach( (key) => {
         const space = flux.getState()[key];
         for (c in space) {
-            if (space[c].tblId === tblId) {
+            if (space.hasOwnProperty(c) && space[c].tblId === tblId) {
                 numRelated++;
             }
         }

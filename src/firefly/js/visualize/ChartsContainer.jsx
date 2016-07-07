@@ -8,17 +8,13 @@ import shallowequal from 'shallowequal';
 
 
 import {flux} from '../Firefly.js';
-import {get} from 'lodash';
 
 import {LO_VIEW, LO_MODE, dispatchSetLayoutMode, getExpandedMode} from '../core/LayoutCntlr.js';
 import {CloseButton} from '../ui/CloseButton.jsx';
 
 import {ChartsTableViewPanel} from '../visualize/ChartsTableViewPanel.jsx';
-import {CHART_SPACE_PATH} from '../visualize/ChartsCntlr.js';
+import {getExpandedChartProps} from '../visualize/ChartsCntlr.js';
 
-export function getExpandedChartProps() {
-    return get(flux.getState(),[CHART_SPACE_PATH, 'ui', 'expanded']);
-}
 
 function nextState(props) {
     const {closeable, chartId, tblId, chartType, optionsPopup} = props;
@@ -34,16 +30,18 @@ export class ChartsContainer extends Component {
     }
 
     componentWillReceiveProps(np) {
-        if (!this.isUnmounted && !shallowequal(this.props, np)) {
+        if (this.iAmMounted && !shallowequal(this.props, np)) {
             this.setState(nextState(np));
         }
     }
 
     componentDidMount() {
         this.removeListener= flux.addListener(() => this.storeUpdate());
+        this.iAmMounted = true;
     }
 
     componentWillUnmount() {
+        this.iAmMounted = false;
         this.removeListener && this.removeListener();
     }
 
@@ -53,7 +51,7 @@ export class ChartsContainer extends Component {
 
 
     storeUpdate() {
-        if (!this.isUnmounted) {
+        if (this.iAmMounted) {
             const expandedMode = this.props.expandedMode && getExpandedMode() === LO_VIEW.xyPlots;
             if (expandedMode !== this.state.expandedMode) {
                 this.setState(nextState(this.props));

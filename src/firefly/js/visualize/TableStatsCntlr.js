@@ -21,18 +21,10 @@ import * as TablesCntlr from '../tables/TablesCntlr.js';
 
 
 export const TBLSTATS_DATA_KEY = 'tblstats';
-export const SETUP_TBL_TRACKING = `${TBLSTATS_DATA_KEY}/SETUP_TBL_TRACKING`;
+
 export const LOAD_TBL_STATS = `${TBLSTATS_DATA_KEY}/LOAD_TBL_STATS`;
 export const UPDATE_TBL_STATS = `${TBLSTATS_DATA_KEY}/UPDATE_TBL_STATS`;
 
-/*
- * Set up store, which will reflect the data relevant to the given table
- * @param {string} tblId - table id
- * @param {function} dispatcher only for special dispatching uses such as remote
- */
-export function dispatchSetupTblTracking(tblId, dispatcher= flux.process) {
-    dispatcher({type: SETUP_TBL_TRACKING, payload: {tblId}});
-}
 
 /*
  * Get the number of points, min and max values, units and description for each table column
@@ -74,14 +66,6 @@ function getInitState() {
 
 export function reducer(state=getInitState(), action={}) {
     switch (action.type) {
-        case (SETUP_TBL_TRACKING) :
-        {
-            const {tblId} = action.payload;
-            if (!state[tblId]) {
-                return updateSet(state, tblId, {isColStatsReady: false});
-            }
-            return state;
-        }
         case (TablesCntlr.TABLE_REMOVE)  :
         {
             const {tbl_id} = action.payload;
