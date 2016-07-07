@@ -12,10 +12,10 @@ import {setOptions} from './XYPlotOptions.jsx';
 import CompleteButton from '../ui/CompleteButton.jsx';
 import HelpIcon from '../ui/HelpIcon.jsx';
 import {getTblInfo} from  '../tables/TableUtil.js';
-const popupIdRoot = 'XYplotColOps';
+const popupId = 'XYColSelect';
 
 const popupPanelResizableStyle = {
-    width: 450,
+    width: 600,
     minWidth: 450,
     height: 450,
     minHeight: 300,
@@ -34,24 +34,34 @@ const closeButtonStyle = {'textAlign': 'center', display: 'inline-block', height
 const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginRight: 20};
 
 
-export function showXYPlotColPopup(tableModel,xyPlotParams,fieldKey,groupKey) {
+export function showColSelectPopup(colValStats,xyPlotParams,popupTitle,buttonText,groupKey) {
 
-    var popupId = popupIdRoot;
-    var popTitle = '';
-    var plotCol = '';
-    var buttonText ='';
-    if (fieldKey === 'x.columnOrExpr') {
-        popTitle = 'Select X Col : ';
-        plotCol ='x';
-        buttonText = 'Set X';
-    } else if (fieldKey ==='y.columnOrExpr') {
-        popTitle = 'Select Y Col : ';
-        plotCol ='y';
-        buttonText = 'Set Y';
+    const colNames = colValStats.map((colVal) => {return colVal.name;});
+    const colUnit =  colValStats.map((colVal) => {return colVal.unit;});
+    const colDescr =  colValStats.map((colVal) => {return colVal.descr;});
+
+    // make a local table for plot column selection panel
+    var columns = [
+                    {name: 'Name',visibility: 'show', prefWidth: 12, fixed: true},
+                    {name: 'Unit',visibility: 'show', prefWidth: 8},
+                    {name: 'Type',visibility: 'show', prefWidth: 8},
+                    {name: 'Description',visibility: 'show', prefWidth: 60}
+                ];
+    var data = [];
+    for (var i = 0; i < colValStats.length; i++) {
+            data[i] = [
+                        colValStats[i].name,
+                        colValStats[i].unit,
+                        colValStats[i].type,
+                        colValStats[i].descr
+            ];
     }
+    const request = {pageSize:10000};
+    var tableModel = {totalRows: data.length, request, tbl_id:'selectCol', tableData: {columns,  data }, highlightedRow: '0'};
 
-    var popup = (<PopupPanel title={popTitle}>
-            {popupForm(tableModel,xyPlotParams,plotCol,buttonText,groupKey,popupId)}
+
+    var popup = (<PopupPanel title={popupTitle}>
+            {popupForm(tableModel,xyPlotParams,buttonText,groupKey,popupId)}
         </PopupPanel>
 
     );
@@ -60,12 +70,12 @@ export function showXYPlotColPopup(tableModel,xyPlotParams,fieldKey,groupKey) {
     dispatchShowDialog(popupId);
 }
 
-function popupForm(tableModel, xyPlotParams, plotCol,buttonText,groupKey,popupId) {
+function popupForm(tableModel, xyPlotParams,buttonText,groupKey,popupId) {
     const tblId = tableModel.tbl_id;
     return (
         <div style={ popupPanelResizableStyle}>
             { renderTable(tableModel,popupId)}
-            { renderCloseAndHelpButtons(tblId,xyPlotParams,plotCol,buttonText,groupKey,popupId)}
+            { renderCloseAndHelpButtons(tblId,xyPlotParams,buttonText,groupKey,popupId)}
         </div>
     );
 
@@ -73,7 +83,9 @@ function popupForm(tableModel, xyPlotParams, plotCol,buttonText,groupKey,popupId
 
 /**
  * display the data into a tabular format
- * @param
+ * @param tableModel
+ * @param popupId
+ * @return table section
  */
 function renderTable(tableModel,popupId) {
 
@@ -88,25 +100,27 @@ function renderTable(tableModel,popupId) {
 
 }
 
-function renderCloseAndHelpButtons(tblId,xyPlotParams,plotCol,buttonText,groupKey,popupId) {
+function renderCloseAndHelpButtons(tblId,xyPlotParams,buttonText,groupKey,popupId) {
 
     return(
     <div>
         <div style={closeButtonStyle}>
             < CompleteButton
                 text={buttonText}
-                onSuccess={()=>setXYColumns(tblId,plotCol,xyPlotParams,groupKey)}
+                onSuccess={()=>setXYColumns(tblId,buttonText,xyPlotParams,groupKey)}
                 dialogId={popupId}
             />
         </div>
-        <div style={helpIdStyle}>
-            <HelpIcon helpid={'visualization.setxyplot'}/>
-        </div>
+        {/* comment out the help button for now
+            <div style={helpIdStyle}>
+                <HelpIcon helpid={'visualization.setxyplot'}/>
+            </div>
+         */}
     </div>
 );
 }
 
-function setXYColumns(tblId,plotCol,xyPlotParams,groupKey) {
+function setXYColumns(tblId,buttonText,xyPlotParams,groupKey) {
     const tableModel = getTblById(tblId);
     var hlRow = getTblInfo(tableModel,1).highlightedRow;
     if (hlRow) {
@@ -114,9 +128,9 @@ function setXYColumns(tblId,plotCol,xyPlotParams,groupKey) {
     } else {
         seltopt = tableModel.tableData.data[0];
     }
-    if (plotCol === 'x') {
+    if (buttonText === 'Set X') {
         xyPlotParams.x = {columnOrExpr: seltopt[0], lable: seltopt[0], unit: seltopt[1]};
-    } else if (plotCol === 'y') {
+    } else if (buttonText === 'Set Y') {
         xyPlotParams.y = {columnOrExpr: seltopt[0], lable: seltopt[0], unit: seltopt[1]};
     }
 

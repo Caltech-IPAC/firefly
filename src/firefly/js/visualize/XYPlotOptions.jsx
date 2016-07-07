@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React, {PropTypes, Component} from 'react';
+import React, {PropTypes} from 'react';
 
 import {get, isUndefined, omitBy, defer} from 'lodash';
 
@@ -9,7 +9,6 @@ import ColValuesStatistics from './ColValuesStatistics.js';
 import CompleteButton from '../ui/CompleteButton.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
 import {dispatchMultiValueChange} from '../fieldGroup/FieldGroupCntlr.js';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import Validate from '../util/Validate.js';
 import {Expression} from '../util/expr/Expression.js';
 import {ValidationField} from '../ui/ValidationField.jsx';
@@ -18,14 +17,13 @@ import {RadioGroupInputField} from '../ui/RadioGroupInputField.jsx';
 import {SuggestBoxInputField} from '../ui/SuggestBoxInputField.jsx';
 import {FieldGroupCollapsible} from '../ui/panel/CollapsiblePanel.jsx';
 import {plotParamsShape} from  './XYPlot.jsx';
-import TablePanel from '../tables/ui/TablePanel.jsx';
-import {showXYPlotColPopup} from './XYPlotColView.jsx';
+import {showColSelectPopup} from './ColSelectView.jsx';
+import {updateSet} from '../util/WebUtil.js';
 
 const DECI_ENABLE_SIZE = 5000;
 
 const helpStyle = {fontStyle: 'italic', color: '#808080', paddingBottom: 10};
 import {TextButton} from '../ui/TextButton.jsx';
-import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
 /*
  * Split content into prior content and the last alphanumeric token in the text
@@ -121,6 +119,7 @@ export function setOptions(groupKey, xyPlotParams) {
     dispatchMultiValueChange(groupKey, flds);
 }
 
+
 var XYPlotOptions = React.createClass({
 
 
@@ -197,9 +196,6 @@ var XYPlotOptions = React.createClass({
     render() {
         const { colValStats, groupKey, xyPlotParams, onOptionsSelected}= this.props;
         const colNames = colValStats.map((colVal) => {return colVal.name;});
-        const colUnit =  colValStats.map((colVal) => {return colVal.unit;});
-        const colDescr =  colValStats.map((colVal) => {return colVal.descr;});
-
 
         // the suggestions are indexes in the colValStats array - it makes it easier to render then with labels
         const allSuggestions = colValStats.map((colVal,idx)=>{return idx;});
@@ -232,15 +228,6 @@ var XYPlotOptions = React.createClass({
             }
             return retval;
         };
-
-        // make a local table for plot column selection panel
-        var columns = [{name: 'Name'},{name: 'Unit'},{name: 'Type'},{name: 'Description'}];
-        var data = [];
-        for (var i = 0; i < colValStats.length; i++) {
-                data[i] = [colValStats[i].name, colValStats[i].unit, colValStats[i].numpoints, colValStats[i].descr];
-        }
-        const request = {pageSize:10000};
-        var tableModel = {totalRows: data.length, request, tbl_id:'selectCol', tableData: {columns,  data }, highlightedRow: '5'};
 
         return (
             <div style={{padding:'5px'}}>
@@ -276,9 +263,9 @@ var XYPlotOptions = React.createClass({
                             <td>
                                 <div>
                                     <TextButton groupKey={groupKey}
-                                        text="Col"
-                                        tip="Select X column"
-                                        onClick={() => showXYPlotColPopup(tableModel,xyPlotParams,'x.columnOrExpr',groupKey)}
+                                        text='Col'
+                                        tip='Select X colum'
+                                        onClick={() => showColSelectPopup(colValStats, xyPlotParams,'Choose X','Set X',groupKey)}
                                         onSuccess={this.resultsSuccess}
                                         onFail={this.resultsFail}
                                     />
@@ -357,9 +344,9 @@ var XYPlotOptions = React.createClass({
                             <td>
                                 <div>
                                     <TextButton groupKey={groupKey}
-                                        text="Col"
-                                        tip="Select Y column"
-                                        onClick={() => showXYPlotColPopup(tableModel,xyPlotParams,'y.columnOrExpr',groupKey)}
+                                        text='Col'
+                                        tip='Select Y column'
+                                        onClick={() => showColSelectPopup(colValStats,xyPlotParams,'Choose Y','Set Y',groupKey)}
                                         onSuccess={this.resultsSuccess}
                                         onFail={this.resultsFail}
                                     />
