@@ -4,7 +4,6 @@
 
 
 import React, {PropTypes} from 'react';
-import './TextButton.css';
 
 const labelStyle= {
     display: 'inline-block',
