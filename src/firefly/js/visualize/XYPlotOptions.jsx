@@ -18,7 +18,6 @@ import {SuggestBoxInputField} from '../ui/SuggestBoxInputField.jsx';
 import {FieldGroupCollapsible} from '../ui/panel/CollapsiblePanel.jsx';
 import {plotParamsShape} from  './XYPlot.jsx';
 import {showColSelectPopup} from './ColSelectView.jsx';
-import {updateSet} from '../util/WebUtil.js';
 
 const DECI_ENABLE_SIZE = 5000;
 
@@ -119,6 +118,22 @@ export function setOptions(groupKey, xyPlotParams) {
     dispatchMultiValueChange(groupKey, flds);
 }
 
+export function getColValidator(colValStats) {
+    const colNames = colValStats.map((colVal) => {return colVal.name;});
+    return (val) => {
+        let retval = {valid: true, message: ''};
+        if (!val) {
+            return {valid: false, message: 'Can not be empty. Please provide value or expression'};
+        } else if (colNames.indexOf(val) < 0) {
+            const expr = new Expression(val, colNames);
+            if (!expr.isValid()) {
+                retval = {valid: false, message: `${expr.getError().error}. Unable to parse ${val}.`};
+            }
+        }
+        return retval;
+    };
+}
+
 
 var XYPlotOptions = React.createClass({
 
@@ -130,6 +145,18 @@ var XYPlotOptions = React.createClass({
         xyPlotParams: plotParamsShape
     },
 
+    componentDidMount() {
+        // make sure column validator matches current columns
+        const {colValStats, groupKey} = this.props;
+        if (colValStats) {
+            const colValidator = getColValidator(colValStats);
+            const flds = [
+                {fieldKey: 'x.columnOrExpr', validator: colValidator},
+                {fieldKey: 'y.columnOrExpr', validator: colValidator}
+            ];
+            dispatchMultiValueChange(groupKey, flds);
+        }
+    },
 
     shouldComponentUpdate(np) {
         return this.props.groupKey !== np.groupKey || this.props.colValStats !== np.colValStats ||
@@ -195,7 +222,6 @@ var XYPlotOptions = React.createClass({
 
     render() {
         const { colValStats, groupKey, xyPlotParams, onOptionsSelected}= this.props;
-        const colNames = colValStats.map((colVal) => {return colVal.name;});
 
         // the suggestions are indexes in the colValStats array - it makes it easier to render then with labels
         const allSuggestions = colValStats.map((colVal,idx)=>{return idx;});
@@ -216,23 +242,10 @@ var XYPlotOptions = React.createClass({
             return priorContent+colValStats[idx].name;
         };
 
-        const colValidator = (val) => {
-            let retval = {valid: true, message: ''};
-            if (!val) {
-                return {valid: false, message: 'Can not be empty. Please provide value or expression'};
-            } else if (colNames.indexOf(val)<0) {
-                const expr = new Expression(val,colNames);
-                if (!expr.isValid()) {
-                    retval = {valid: false, message: `${expr.getError().error}. Unable to parse ${val}.`};
-                }
-            }
-            return retval;
-        };
-
-        var x = Object.assign({}, xyPlotParams.x);
-        var y = Object.assign({}, xyPlotParams.y);
+        var x = get(xyPlotParams, 'x.columnOrExpr');
+        var y = get(xyPlotParams, 'y.columnOrExpr');
         const onXColSelected = (colName) => {
-            x = {columnOrExpr: colName};
+            x = colName;
             const flds = [
                 {fieldKey: 'x.columnOrExpr', value: colName},
                 {fieldKey: 'x.label', value: ''},
@@ -241,7 +254,7 @@ var XYPlotOptions = React.createClass({
             dispatchMultiValueChange(groupKey, flds);
         };
         const onYColSelected = (colName) => {
-            y = {columnOrExpr: colName};
+            y = colName;
             const flds = [
                 {fieldKey: 'y.columnOrExpr', value: colName},
                 {fieldKey: 'y.label', value: ''},
@@ -261,7 +274,6 @@ var XYPlotOptions = React.createClass({
                     <table style={{width:200}}>
                         <tbody>
                         <tr>
-                            <td></td>
                             <td>
                                 <div>
                                     <SuggestBoxInputField
@@ -269,8 +281,7 @@ var XYPlotOptions = React.createClass({
                                             value: get(xyPlotParams, 'x.columnOrExpr'),
                                             tooltip: 'Column or expression for X axis',
                                             label: 'X:',
-                                            nullAllowed : false,
-                                            validator: colValidator
+                                            nullAllowed : false
                                         }}
                                         getSuggestions={getSuggestions}
                                         renderSuggestion={renderSuggestion}
@@ -285,8 +296,8 @@ var XYPlotOptions = React.createClass({
                                 <div>
                                     <TextButton groupKey={groupKey}
                                         text='Col'
-                                        tip='Select X colum'
-                                        onClick={() => showColSelectPopup(colValStats, onXColSelected,'Choose X','Set X',x.columnOrExpr)}
+                                        tip='Select X column'
+                                        onClick={() => showColSelectPopup(colValStats, onXColSelected,'Choose X','Set X',x)}
                                         onSuccess={this.resultsSuccess}
                                         onFail={this.resultsFail}
                                     />
@@ -342,7 +353,6 @@ var XYPlotOptions = React.createClass({
                     <table style={{width:200}}>
                         <tbody>
                         <tr>
-                            <td></td>
                             <td>
                                 <div>
                                     <SuggestBoxInputField
@@ -350,8 +360,7 @@ var XYPlotOptions = React.createClass({
                                             value: get(xyPlotParams, 'y.columnOrExpr'),
                                             tooltip: 'Column or expression for Y axis',
                                             label: 'Y:',
-                                            nullAllowed : false,
-                                            validator: colValidator
+                                            nullAllowed : false
                                         }}
                                         getSuggestions={getSuggestions}
                                         renderSuggestion={renderSuggestion}
@@ -367,7 +376,7 @@ var XYPlotOptions = React.createClass({
                                     <TextButton groupKey={groupKey}
                                         text='Col'
                                         tip='Select Y column'
-                                        onClick={() => showColSelectPopup(colValStats,onYColSelected,'Choose Y','Set Y',y.columnOrExpr)}
+                                        onClick={() => showColSelectPopup(colValStats,onYColSelected,'Choose Y','Set Y',y)}
                                         onSuccess={this.resultsSuccess}
                                         onFail={this.resultsFail}
                                     />
