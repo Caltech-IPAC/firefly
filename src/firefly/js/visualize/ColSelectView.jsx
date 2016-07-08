@@ -3,7 +3,7 @@
 import React from 'react';
 import DialogRootContainer from '../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../ui/PopupPanel.jsx';
-
+import {dispatchTableRemove}  from '../tables/TablesCntlr';
 
 import {BasicTable} from '../tables/ui/BasicTable.jsx';
 import {getTblById} from '../tables/TableUtil.js';
@@ -13,6 +13,7 @@ import CompleteButton from '../ui/CompleteButton.jsx';
 import HelpIcon from '../ui/HelpIcon.jsx';
 import {getTblInfo} from  '../tables/TableUtil.js';
 const popupId = 'XYColSelect';
+const TBL_ID ='selectCol';
 
 const popupPanelResizableStyle = {
     width: 600,
@@ -34,11 +35,17 @@ const closeButtonStyle = {'textAlign': 'center', display: 'inline-block', height
 const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginRight: 20};
 
 
-export function showColSelectPopup(colValStats,xyPlotParams,popupTitle,buttonText,groupKey) {
+export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonText,currentVal) {
+
+    if (getTblById(TBL_ID)) {
+        dispatchTableRemove(TBL_ID);
+    }
 
     const colNames = colValStats.map((colVal) => {return colVal.name;});
     const colUnit =  colValStats.map((colVal) => {return colVal.unit;});
     const colDescr =  colValStats.map((colVal) => {return colVal.descr;});
+
+    var hlRowNum = getHlRow(currentVal,colNames);
 
     // make a local table for plot column selection panel
     var columns = [
@@ -57,11 +64,11 @@ export function showColSelectPopup(colValStats,xyPlotParams,popupTitle,buttonTex
             ];
     }
     const request = {pageSize:10000};
-    var tableModel = {totalRows: data.length, request, tbl_id:'selectCol', tableData: {columns,  data }, highlightedRow: '0'};
+    var tableModel = {totalRows: data.length, request, tbl_id:TBL_ID, tableData: {columns,  data }, highlightedRow: hlRowNum};
 
 
     var popup = (<PopupPanel title={popupTitle}>
-            {popupForm(tableModel,xyPlotParams,buttonText,groupKey,popupId)}
+            {popupForm(tableModel,onColSelected,buttonText,popupId)}
         </PopupPanel>
 
     );
@@ -70,12 +77,12 @@ export function showColSelectPopup(colValStats,xyPlotParams,popupTitle,buttonTex
     dispatchShowDialog(popupId);
 }
 
-function popupForm(tableModel, xyPlotParams,buttonText,groupKey,popupId) {
+function popupForm(tableModel, onColSelected,buttonText,popupId) {
     const tblId = tableModel.tbl_id;
     return (
         <div style={ popupPanelResizableStyle}>
             { renderTable(tableModel,popupId)}
-            { renderCloseAndHelpButtons(tblId,xyPlotParams,buttonText,groupKey,popupId)}
+            { renderCloseAndHelpButtons(tblId,onColSelected,buttonText,popupId)}
         </div>
     );
 
@@ -100,14 +107,14 @@ function renderTable(tableModel,popupId) {
 
 }
 
-function renderCloseAndHelpButtons(tblId,xyPlotParams,buttonText,groupKey,popupId) {
+function renderCloseAndHelpButtons(tblId,onColSelected,buttonText,popupId) {
 
     return(
     <div>
         <div style={closeButtonStyle}>
             < CompleteButton
                 text={buttonText}
-                onSuccess={()=>setXYColumns(tblId,buttonText,xyPlotParams,groupKey)}
+                onSuccess={()=>setXYColumns(tblId,onColSelected)}
                 dialogId={popupId}
             />
         </div>
@@ -120,19 +127,20 @@ function renderCloseAndHelpButtons(tblId,xyPlotParams,buttonText,groupKey,popupI
 );
 }
 
-function setXYColumns(tblId,buttonText,xyPlotParams,groupKey) {
+function setXYColumns(tblId,onColSelected) {
     const tableModel = getTblById(tblId);
-    var hlRow = getTblInfo(tableModel,1).highlightedRow;
-    if (hlRow) {
-        var seltopt = tableModel.tableData.data[hlRow];
-    } else {
-        seltopt = tableModel.tableData.data[0];
-    }
-    if (buttonText === 'Set X') {
-        xyPlotParams.x = {columnOrExpr: seltopt[0], lable: seltopt[0], unit: seltopt[1]};
-    } else if (buttonText === 'Set Y') {
-        xyPlotParams.y = {columnOrExpr: seltopt[0], lable: seltopt[0], unit: seltopt[1]};
+    var hlRow = tableModel.highlightedRow || 0;
+    const selectedColName = tableModel.tableData.data[hlRow][0];
+    onColSelected(selectedColName);
+
+}
+
+function getHlRow(currentVal,colNames) {
+    var hLRow = 0;
+    for(var i = 0; i < colNames.length; i++) {
+        if (colNames[i] === currentVal) {
+            return hLRow = i;
+        }
     }
 
-    setOptions(groupKey,xyPlotParams);
 }

@@ -229,6 +229,27 @@ var XYPlotOptions = React.createClass({
             return retval;
         };
 
+        var x = Object.assign({}, xyPlotParams.x);
+        var y = Object.assign({}, xyPlotParams.y);
+        const onXColSelected = (colName) => {
+            x = {columnOrExpr: colName};
+            const flds = [
+                {fieldKey: 'x.columnOrExpr', value: colName},
+                {fieldKey: 'x.label', value: ''},
+                {fieldKey: 'x.unit', value: ''}
+            ];
+            dispatchMultiValueChange(groupKey, flds);
+        };
+        const onYColSelected = (colName) => {
+            y = {columnOrExpr: colName};
+            const flds = [
+                {fieldKey: 'y.columnOrExpr', value: colName},
+                {fieldKey: 'y.label', value: ''},
+                {fieldKey: 'y.unit', value: ''}
+            ];
+            dispatchMultiValueChange(groupKey, flds);
+        };
+                                                
         return (
             <div style={{padding:'5px'}}>
                 <br/>
@@ -265,7 +286,7 @@ var XYPlotOptions = React.createClass({
                                     <TextButton groupKey={groupKey}
                                         text='Col'
                                         tip='Select X colum'
-                                        onClick={() => showColSelectPopup(colValStats, xyPlotParams,'Choose X','Set X',groupKey)}
+                                        onClick={() => showColSelectPopup(colValStats, onXColSelected,'Choose X','Set X',x.columnOrExpr)}
                                         onSuccess={this.resultsSuccess}
                                         onFail={this.resultsFail}
                                     />
@@ -346,7 +367,7 @@ var XYPlotOptions = React.createClass({
                                     <TextButton groupKey={groupKey}
                                         text='Col'
                                         tip='Select Y column'
-                                        onClick={() => showColSelectPopup(colValStats,xyPlotParams,'Choose Y','Set Y',groupKey)}
+                                        onClick={() => showColSelectPopup(colValStats,onYColSelected,'Choose Y','Set Y',y.columnOrExpr)}
                                         onSuccess={this.resultsSuccess}
                                         onFail={this.resultsFail}
                                     />
