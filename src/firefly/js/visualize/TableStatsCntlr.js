@@ -1,6 +1,6 @@
 import {flux} from '../Firefly.js';
 
-import {has, omit} from 'lodash';
+import {get, has, omit} from 'lodash';
 
 import {updateSet, updateMerge} from '../util/WebUtil.js';
 import ColValuesStatistics from './ColValuesStatistics.js';
@@ -113,15 +113,23 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
     const sreq = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']),
         {'startIdx': 0, 'pageSize': 1000000});
 
-    const req = TableUtil.makeTblRequest('StatisticsProcessor', null,
-                            { searchRequest: JSON.stringify(sreq) },
-                            'tblstats-'+tbl_id);
+    const req = TableUtil.makeTblRequest('StatisticsProcessor', `Statistics for ${tbl_id}`,
+        { searchRequest: JSON.stringify(sreq) },
+        {'startIdx': 0, 'pageSize': 1000});
 
     TableUtil.doFetchTable(req).then(
         (tableModel) => {
             if (tableModel.tableData && tableModel.tableData.data) {
+                const columns = get(TableUtil.getTblById(tbl_id), 'tableData.columns', []);
                 const colStats = tableModel.tableData.data.reduce((colstats, arow) => {
-                    colstats.push(new ColValuesStatistics(...arow));
+                    const r = new ColValuesStatistics(...arow);
+                    const col = columns.find((c)=>{return c.name=== r.name;});
+                    if (col) {
+                        r.unit = col.units && col.units !== 'null' ? col.units : '';
+                        r.descr = col.desc ? col.desc: '';
+                        r.type = col.type ? col.type : '';
+                    }
+                    colstats.push(r);
                     return colstats;
                 }, []);
                 dispatch(updateTblStats(
