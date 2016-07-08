@@ -8,10 +8,8 @@ import {dispatchTableRemove}  from '../tables/TablesCntlr';
 import {BasicTable} from '../tables/ui/BasicTable.jsx';
 import {getTblById} from '../tables/TableUtil.js';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
-import {setOptions} from './XYPlotOptions.jsx';
 import CompleteButton from '../ui/CompleteButton.jsx';
 import HelpIcon from '../ui/HelpIcon.jsx';
-import {getTblInfo} from  '../tables/TableUtil.js';
 const popupId = 'XYColSelect';
 const TBL_ID ='selectCol';
 
@@ -42,14 +40,11 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
     }
 
     const colNames = colValStats.map((colVal) => {return colVal.name;});
-    const colUnit =  colValStats.map((colVal) => {return colVal.unit;});
-    const colDescr =  colValStats.map((colVal) => {return colVal.descr;});
-
-    var hlRowNum = getHlRow(currentVal,colNames);
+    var hlRowNum = getHlRow(currentVal,colNames) || 0;
 
     // make a local table for plot column selection panel
     var columns = [
-                    {name: 'Name',visibility: 'show', prefWidth: 12, fixed: true},
+                    {name: 'Name',visibility: 'show', prefWidth: 12},
                     {name: 'Unit',visibility: 'show', prefWidth: 8},
                     {name: 'Type',visibility: 'show', prefWidth: 8},
                     {name: 'Description',visibility: 'show', prefWidth: 60}
@@ -136,11 +131,9 @@ function setXYColumns(tblId,onColSelected) {
 }
 
 function getHlRow(currentVal,colNames) {
-    var hLRow = 0;
     for(var i = 0; i < colNames.length; i++) {
         if (colNames[i] === currentVal) {
-            return hLRow = i;
+            return i;
         }
     }
-
 }

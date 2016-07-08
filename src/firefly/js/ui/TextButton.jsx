@@ -3,20 +3,16 @@
  */
 
 
-import React, {Component, PropTypes} from 'react';
+import React, {PropTypes} from 'react';
 import './TextButton.css';
 
 const labelStyle= {
     display: 'inline-block',
     lineHeight: '30px',
     fontSize: '10pt',
-    color: 'black',
+    fontStyle: 'italic',
+    color: 'blue',
     verticalAlign:'baseline'
-};
-
-const messageStyle={
-    fontSize: '10pt',
-    lineHeight: '14pt'
 };
 
 /**
