@@ -130,8 +130,7 @@ var HistogramOptions = React.createClass({
     render() {
         const { colValStats, groupKey, histogramParams, onOptionsSelected}= this.props;
         return (
-            <div style={{padding:'5px'}}>
-                <br/>
+            <div style={{padding:'7px 5px'}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
                     <ListBoxInputField
                         initialState= {{
@@ -200,21 +199,21 @@ var HistogramOptions = React.createClass({
                     </InputGroup>
                     <br/>
                     {this.renderAlgorithmParameters()}
-
-                    <br/><br/>
+                    <br/>
                     {onOptionsSelected &&
-                     <div style={{paddingTop: 10}}>
-                         <CompleteButton style={{display: 'inline-block', marginRight: 10}}
-                                         groupKey={groupKey}
-                                         onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds)}
-                                         onFail={resultsFail}
-                                         text = 'Apply'
-                         />
-                         <div style={{display: 'inline-block', paddingLeft: 100}}>
-                             <button style={{display: 'inline-block'}} type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
-                             <button style={{display: 'inline-block'}} type='button' className='button std' onClick={() => setOptions(groupKey, histogramParams)}>Reset</button>
-                         </div>
-                     </div>}
+                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0'}}>
+                        <CompleteButton style={{flexGrow: 0}}
+                                        groupKey={groupKey}
+                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds)}
+                                        onFail={resultsFail}
+                                        text = 'Apply'
+                        />
+                        <div style={{flexGrow: 1}}/>
+                        <div style={{flexGrow: 0}}>
+                            <button type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
+                            <button type='button' className='button std' onClick={() => setOptions(groupKey, histogramParams)}>Reset</button>
+                        </div>
+                    </div>}
                 </FieldGroup>
 
             </div>

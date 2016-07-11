@@ -264,48 +264,35 @@ var XYPlotOptions = React.createClass({
         };
                                                 
         return (
-            <div style={{padding:'5px'}}>
-                <br/>
+            <div style={{padding:'7px 5px'}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
                     <div style={helpStyle}>
                         For X and Y, enter a column or an expression<br/>
                         ex. log(col); 100*col1/col2; col1-col2
                     </div>
-                    <table style={{width:200}}>
-                        <tbody>
-                        <tr>
-                            <td>
-                                <div>
-                                    <SuggestBoxInputField
-                                        initialState= {{
+                    <div style={{whiteSpace: 'nowrap'}}>
+                        <SuggestBoxInputField
+                            inline={true}
+                            initialState= {{
                                             value: get(xyPlotParams, 'x.columnOrExpr'),
                                             tooltip: 'Column or expression for X axis',
                                             label: 'X:',
                                             nullAllowed : false
                                         }}
-                                        getSuggestions={getSuggestions}
-                                        renderSuggestion={renderSuggestion}
-                                        valueOnSuggestion={valueOnSuggestion}
-                                        fieldKey='x.columnOrExpr'
-                                        groupKey={groupKey}
-                                        labelWidth={20}
-                                    />
-                                </div>
-                            </td>
-                            <td>
-                                <div>
-                                    <TextButton groupKey={groupKey}
-                                        text='Col'
-                                        tip='Select X column'
-                                        onClick={() => showColSelectPopup(colValStats, onXColSelected,'Choose X','Set X',x)}
-                                        onSuccess={this.resultsSuccess}
-                                        onFail={this.resultsFail}
-                                    />
-                                </div>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+                            getSuggestions={getSuggestions}
+                            renderSuggestion={renderSuggestion}
+                            valueOnSuggestion={valueOnSuggestion}
+                            fieldKey='x.columnOrExpr'
+                            groupKey={groupKey}
+                            labelWidth={20}
+                        />
+                        <TextButton style={{display: 'inline-block', paddingLeft: 3, verticalAlign: 'bottom'}}
+                                    groupKey={groupKey}
+                                    text='Cols'
+                                    tip='Select X column'
+                                    onClick={() => showColSelectPopup(colValStats, onXColSelected,'Choose X','Set X',x)}
+                        />
+                    </div>
 
                     <FieldGroupCollapsible  header='X Label/Unit/Options'
                                             initialState= {{ value:'closed' }}
@@ -350,41 +337,30 @@ var XYPlotOptions = React.createClass({
                     </FieldGroupCollapsible>
                     <br/>
 
-                    <table style={{width:200}}>
-                        <tbody>
-                        <tr>
-                            <td>
-                                <div>
-                                    <SuggestBoxInputField
-                                        initialState= {{
+                    <div style={{whiteSpace: 'nowrap'}}>
+                        <SuggestBoxInputField
+                            inline={true}
+                            initialState= {{
                                             value: get(xyPlotParams, 'y.columnOrExpr'),
                                             tooltip: 'Column or expression for Y axis',
                                             label: 'Y:',
                                             nullAllowed : false
                                         }}
-                                        getSuggestions={getSuggestions}
-                                        renderSuggestion={renderSuggestion}
-                                        valueOnSuggestion={valueOnSuggestion}
-                                        fieldKey='y.columnOrExpr'
-                                        groupKey={groupKey}
-                                        labelWidth={20}
-                                    />
-                                </div>
-                            </td>
-                            <td>
-                                <div>
-                                    <TextButton groupKey={groupKey}
-                                        text='Col'
-                                        tip='Select Y column'
-                                        onClick={() => showColSelectPopup(colValStats,onYColSelected,'Choose Y','Set Y',y)}
-                                        onSuccess={this.resultsSuccess}
-                                        onFail={this.resultsFail}
-                                    />
-                                </div>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+                            getSuggestions={getSuggestions}
+                            renderSuggestion={renderSuggestion}
+                            valueOnSuggestion={valueOnSuggestion}
+                            fieldKey='y.columnOrExpr'
+                            groupKey={groupKey}
+                            labelWidth={20}
+                        />
+
+                        <TextButton style={{display: 'inline-block', paddingLeft: 3, verticalAlign: 'bottom'}}
+                                    groupKey={groupKey}
+                                    text='Cols'
+                                    tip='Select Y column'
+                                    onClick={() => showColSelectPopup(colValStats,onYColSelected,'Choose Y','Set Y',y)}
+                        />
+                    </div>
 
                     <FieldGroupCollapsible  header='Y Label/Unit/Options'
                                             initialState= {{ value:'closed' }}
@@ -463,16 +439,17 @@ var XYPlotOptions = React.createClass({
                     <br/>
 
                     {onOptionsSelected &&
-                    <div style={{paddingTop: 10}}>
-                        <CompleteButton style={{display: 'inline-block', marginRight: 10}}
+                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0'}}>
+                        <CompleteButton style={{flexGrow: 0}}
                                         groupKey={groupKey}
                                         onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds)}
                                         onFail={resultsFail}
                                         text = 'Apply'
                         />
-                        <div style={{display: 'inline-block', paddingLeft: 70}}>
-                            <button style={{display: 'inline-block'}} type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
-                            <button style={{display: 'inline-block'}} type='button' className='button std' onClick={() => setOptions(groupKey, xyPlotParams)}>Reset</button>
+                        <div style={{flexGrow: 1}}/>
+                        <div style={{flexGrow: 0}}>
+                            <button type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
+                            <button type='button' className='button std' onClick={() => setOptions(groupKey, xyPlotParams)}>Reset</button>
                         </div>
                     </div>}
                 </FieldGroup>

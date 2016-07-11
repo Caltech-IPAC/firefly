@@ -30,10 +30,6 @@ import {XYPlot} from '../visualize/XYPlot.jsx';
 import HistogramOptions from '../visualize/HistogramOptions.jsx';
 import Histogram from '../visualize/Histogram.jsx';
 
-import {PopupPanel} from '../ui/PopupPanel.jsx';
-import DialogRootContainer from '../ui/DialogRootContainer.jsx';
-import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
-
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
 import DELETE from 'html/images/blue_delete_10x10.png';
@@ -47,19 +43,34 @@ import FILTER_IN from 'html/images/icons-2014/24x24_FilterAdd.png';
 import CLEAR_FILTERS from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
 import LOADING from 'html/images/gxt/loading.gif';
 
+const selectionBtnStyle = {padding: '0 5px', cursor: 'pointer'};
 
-const OPTIONS_WIDTH = 330;
-
-const selectionBtnStyle = {verticalAlign: 'top', paddingLeft: 20, cursor: 'pointer'};
-
+/*
+ CSS for left positioned options
+ left: 1
+ borderRight: '1px solid #CCC',
+ boxShadow: '2px 0 5px rgba(0,0,0,0.50)'
+ */
+const chartOptionsStyle = {
+    position: 'absolute',
+    padding: '0 5px',
+    top: 1,
+    right: 1,
+    bottom: 2,
+    backgroundColor: 'beige',
+    borderLeft: '1px solid #CCC',
+    zIndex: 100,
+    flex: '0 0 auto',
+    overflow:'auto',
+    boxShadow: '-2px 0 2px 0 rgba(0,0,0,0.50)'
+};
 
 class ChartsPanel extends React.Component {
 
     constructor(props) {
         super(props);
         this.state = {
-            optionsShown: !props.chartId,
-            immediateResize: false
+            optionsShown: !props.chartId
         };
 
         const normal = (size) => {
@@ -68,15 +79,13 @@ class ChartsPanel extends React.Component {
                 var heightPx = size.height;
                 //console.log('width: '+widthPx+', height: '+heightPx);
                 if (widthPx !== this.state.widthPx || heightPx !== this.state.heightPx) {
-                    this.setState({widthPx, heightPx, immediateResize: false});
+                    this.setState({widthPx, heightPx});
                 }
             }
         };
         const debounced = debounce(normal, 100);
         this.onResize =  (size) => {
-            if ( this.state.immediateResize) {
-                normal(size);
-            } else if (this.state.widthPx === 0) {
+            if (this.state.widthPx === 0) {
                 defer(normal, size);
             } else {
                 debounced(size);
@@ -123,22 +132,21 @@ class ChartsPanel extends React.Component {
     }
 
     componentDidMount() {
-        this.handlePopups();
         const {tblId, chartId, chartType} = this.props;
         dispatchChartMounted(tblId,chartId,chartType);
         this.iAmMounted = true;
     }
 
-    componentDidUpdate() {
-        this.handlePopups();
-    }
-
     componentWillReceiveProps(nextProps) {
-        const {tblId, chartId, chartType} = nextProps;
+        const {tblId, chartId, chartType, tblPlotData, tblHistogramData} = nextProps;
         if (!tblId || !chartId) { return; }
         if (chartId !== this.props.chartId || chartType !== this.props.chartType || !this.props.tblId) {
             dispatchChartUnmounted(this.props.tblId, this.props.chartId, this.props.chartType);
             dispatchChartMounted(tblId,chartId,chartType);
+        }
+        if (get(tblPlotData, 'xyPlotData') != get(this.props.tblPlotData, 'xyPlotData') ||
+            get(tblHistogramData, 'histogramData') != get(this.props.tblHistogramData, 'histogramData')) {
+            this.setState({optionsShown: false});
         }
     }
 
@@ -146,40 +154,6 @@ class ChartsPanel extends React.Component {
         this.iAmMounted = false;
         const {tblId, chartId, chartType} = this.props;
         dispatchChartUnmounted(tblId, chartId, chartType);
-        if (isDialogVisible(popupId)) {
-            hideChartOptionsPopup();
-        }
-    }
-
-    handlePopups() {
-        if (this.props.optionsPopup) {
-            const {optionsShown} = this.state;
-            if (optionsShown) {
-                const {tableModel, tblStatsData, tblPlotData, tblHistogramData, chartId, chartType} = this.props;
-                // show options popup
-                let popupTitle = 'Chart Options';
-
-                const reqTitle = get(tableModel, 'tableMeta.title');
-                if (reqTitle) { popupTitle += `: ${chartId} ${reqTitle}`; }
-
-                var popup = (
-                    <PopupPanel title={popupTitle} closeCallback={()=>{this.toggleOptions();}}>
-                        <div
-                            style={{overflow:'auto',width:OPTIONS_WIDTH,height:300,paddingTop:10,paddingLeft:10,verticalAlign:'top'}}>
-                            <OptionsWrapper {...{chartId, tableModel, tblStatsData, tblPlotData, tblHistogramData, chartType}}/>
-                        </div>
-                    </PopupPanel>
-                );
-
-                DialogRootContainer.defineDialog(popupId, popup);
-                dispatchShowDialog(popupId);
-
-            } else if (isDialogVisible(popupId)) {
-                hideChartOptionsPopup();
-            }
-        } else if (isDialogVisible(popupId)) {
-            hideChartOptionsPopup();
-        }
     }
 
     // -------------
@@ -278,8 +252,8 @@ class ChartsPanel extends React.Component {
     // -----------------
 
     toggleOptions() {
-        const {optionsShown, immediateResize, optionsPopup} = this.state;
-        this.setState({optionsShown: !optionsShown, immediateResize: optionsPopup?immediateResize:true});
+        const {optionsShown} = this.state;
+        this.setState({optionsShown: !optionsShown});
     }
 
     displaySelectionOptions() {
@@ -457,28 +431,30 @@ class ChartsPanel extends React.Component {
     }
 
     renderToolbar() {
-        const {expandable, expandedMode, tblId, chartId, chartType, optionsPopup, deletable} = this.props;
+        const {expandable, expandedMode, tblId, chartId, chartType, deletable} = this.props;
         return (
-            <div style={{height: 30, position: 'absolute', top: 0, left: 0, right: 0}}>
-                <img style={{verticalAlign:'top', float: 'left', cursor: 'pointer'}}
-                     title='Plot options and tools'
-                     src={SETTINGS}
-                     onClick={() => this.toggleOptions()}
-                />
-                <div style={{display:'inline-block', float: 'right'}}>
+            <div role='toolbar' style={{height: 29, position: 'absolute', top: 0, left: 0, right: 0}}>
+                <div className='group'>
                     {this.renderSelectionButtons()}
+                </div>
+                <div className='group'>
+                    <img style={{cursor: 'pointer'}}
+                         title='Plot options and tools'
+                         src={SETTINGS}
+                         onClick={() => this.toggleOptions()}
+                    />
                     { expandable && !expandedMode &&
-                    <img style={selectionBtnStyle}
+                    <img style={{paddingLeft: 4, cursor: 'pointer'}}
                          title='Expand this panel to take up a larger area'
                          src={OUTLINE_EXPAND}
                          onClick={() => {
-                            dispatchChartExpanded(chartId, tblId, chartType, optionsPopup);
+                            dispatchChartExpanded(chartId, tblId, chartType);
                             dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.xyPlots);
                          }}
                     />}
                     { expandable && !expandedMode &&
                     (isBoolean(deletable) ? deletable : numRelatedCharts(tblId) > 1) &&  // when deletable is undefined, use related charts criterion
-                    <img style={{verticalAlign: 'top', paddingLeft: 2, paddingRight:5, cursor: 'pointer'}}
+                    <img style={{alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
                          title='Delete this chart'
                          src={DELETE}
                          onClick={() => {dispatchDelete(tblId, chartId, chartType);}}
@@ -490,11 +466,11 @@ class ChartsPanel extends React.Component {
 
 
     renderOptions() {
-        const {optionsShown, heightPx} = this.state;
-        const { tableModel, tblStatsData, tblPlotData, tblHistogramData, optionsPopup, chartId, chartType} = this.props;
-        if (optionsShown && !optionsPopup) {
+        const {optionsShown} = this.state;
+        const { tableModel, tblStatsData, tblPlotData, tblHistogramData, chartId, chartType} = this.props;
+        if (optionsShown) {
             return (
-                <div style={{flex: '0 0 auto',overflow:'auto',width:OPTIONS_WIDTH,height:heightPx,paddingLeft:10,verticalAlign:'top'}}>
+                <div style={Object.assign({},chartOptionsStyle)}>
                     <OptionsWrapper  {...{chartId, tableModel, tblStatsData, tblPlotData, tblHistogramData, chartType}}/>
                 </div>
             );
@@ -523,9 +499,9 @@ class ChartsPanel extends React.Component {
 
             return (
                 <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', height: '100%', overflow: 'hidden'}}>
-                    <div style={{ position: 'relative', flexGrow: 1}}>
+                    <div style={{position: 'relative', flexGrow: 1, backgroundColor: '#c8c8c8', border: '1px solid #b3b3b3', padding: '0 3px 3px 3px'}}>
                         {this.renderToolbar()}
-                        <div style={{display: 'flex', flexDirection: 'row', position: 'absolute', top: 30, bottom: 0, left: 0, right: 0}}>
+                        <div style={{position: 'absolute', top: 29, bottom: 0, left: 1, right: 0}}>
                             {this.renderOptions()}
                             <Resizable id='chart-resizer' onResize={this.onResize} style={{flexGrow: 1, position: 'relative', width: '100%', height: '100%', overflow: 'hidden'}}>
                                 <div style={{overflow:'auto',width:widthPx,height:heightPx}}>
@@ -542,7 +518,6 @@ class ChartsPanel extends React.Component {
 
 ChartsPanel.propTypes = {
     expandedMode: PropTypes.bool,
-    optionsPopup: PropTypes.bool,
     expandable: PropTypes.bool,
     deletable : PropTypes.bool,
     tblId : PropTypes.string,
@@ -687,9 +662,3 @@ OptionsWrapper.propTypes = {
 };
 
 
-
-const popupId = 'chartOptions';
-
-function hideChartOptionsPopup() {
-    dispatchHideDialog(popupId);
-}

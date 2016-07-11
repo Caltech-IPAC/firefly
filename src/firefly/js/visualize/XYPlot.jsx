@@ -542,7 +542,7 @@ export class XYPlot extends React.Component {
                 height: chartHeight,
                 width: chartWidth,
                 borderColor: '#a5a5a5',
-                borderWidth: 3,
+                borderWidth: 1,
                 zoomType: 'xy',
                 events: {
                     click() {

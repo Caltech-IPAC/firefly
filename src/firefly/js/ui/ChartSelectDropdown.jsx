@@ -67,7 +67,7 @@ class ChartSelect extends Component {
         const {chartType} = this.state;
         const fieldKey = 'chartType';
         return (
-            <div style={{display:'block', whiteSpace: 'nowrap'}}>
+            <div style={{display:'block', whiteSpace: 'nowrap', paddingBottom: 10}}>
                 <input type='radio'
                        name={fieldKey}
                        value={SCATTER}

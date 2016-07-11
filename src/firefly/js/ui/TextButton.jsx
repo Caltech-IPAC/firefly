@@ -7,7 +7,6 @@ import React, {PropTypes} from 'react';
 
 const labelStyle= {
     display: 'inline-block',
-    lineHeight: '30px',
     fontSize: '10pt',
     fontStyle: 'italic',
     color: 'blue',
@@ -26,7 +25,6 @@ export function TextButton({text, tip='$text',style={}, onClick}) {
     var s= Object.assign({cursor:'pointer', verticalAlign:'bottom'},style);
     return (
         <div style={s} title={tip} onClick={onClick}>
-
             <div style={labelStyle} title={tip}>
                 <u>{text}</u>
             </div>
@@ -34,10 +32,6 @@ export function TextButton({text, tip='$text',style={}, onClick}) {
         </div>
     );
 }
-
-
-//CloseButton.contextTypes= {
-//};
 
 
 TextButton.propTypes= {
