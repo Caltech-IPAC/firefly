@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import './ChartPanel.css';
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 // import {deepDiff} from '../util/WebUtil.js';
@@ -26,13 +27,8 @@ import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../core/LayoutCntlr.js';
 import {SCATTER, HISTOGRAM, getHighlighted, getTblIdForChartId, numRelatedCharts} from './ChartUtil.js';
 import XYPlotOptions from '../visualize/XYPlotOptions.jsx';
 import {XYPlot} from '../visualize/XYPlot.jsx';
-
 import HistogramOptions from '../visualize/HistogramOptions.jsx';
 import Histogram from '../visualize/Histogram.jsx';
-
-import {PopupPanel} from '../ui/PopupPanel.jsx';
-import DialogRootContainer from '../ui/DialogRootContainer.jsx';
-import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
@@ -48,18 +44,12 @@ import CLEAR_FILTERS from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
 import LOADING from 'html/images/gxt/loading.gif';
 
 
-const OPTIONS_WIDTH = 330;
-
-const selectionBtnStyle = {verticalAlign: 'top', paddingLeft: 20, cursor: 'pointer'};
-
-
 class ChartsPanel extends React.Component {
 
     constructor(props) {
         super(props);
         this.state = {
-            optionsShown: !props.chartId,
-            immediateResize: false
+            optionsShown: !props.chartId
         };
 
         const normal = (size) => {
@@ -68,15 +58,13 @@ class ChartsPanel extends React.Component {
                 var heightPx = size.height;
                 //console.log('width: '+widthPx+', height: '+heightPx);
                 if (widthPx !== this.state.widthPx || heightPx !== this.state.heightPx) {
-                    this.setState({widthPx, heightPx, immediateResize: false});
+                    this.setState({widthPx, heightPx});
                 }
             }
         };
         const debounced = debounce(normal, 100);
         this.onResize =  (size) => {
-            if ( this.state.immediateResize) {
-                normal(size);
-            } else if (this.state.widthPx === 0) {
+            if (this.state.widthPx === 0) {
                 defer(normal, size);
             } else {
                 debounced(size);
@@ -123,22 +111,21 @@ class ChartsPanel extends React.Component {
     }
 
     componentDidMount() {
-        this.handlePopups();
         const {tblId, chartId, chartType} = this.props;
         dispatchChartMounted(tblId,chartId,chartType);
         this.iAmMounted = true;
     }
 
-    componentDidUpdate() {
-        this.handlePopups();
-    }
-
     componentWillReceiveProps(nextProps) {
-        const {tblId, chartId, chartType} = nextProps;
+        const {tblId, chartId, chartType, tblPlotData, tblHistogramData} = nextProps;
         if (!tblId || !chartId) { return; }
         if (chartId !== this.props.chartId || chartType !== this.props.chartType || !this.props.tblId) {
             dispatchChartUnmounted(this.props.tblId, this.props.chartId, this.props.chartType);
             dispatchChartMounted(tblId,chartId,chartType);
+        }
+        if (get(tblPlotData, 'xyPlotData') != get(this.props.tblPlotData, 'xyPlotData') ||
+            get(tblHistogramData, 'histogramData') != get(this.props.tblHistogramData, 'histogramData')) {
+            this.setState({optionsShown: false});
         }
     }
 
@@ -146,40 +133,6 @@ class ChartsPanel extends React.Component {
         this.iAmMounted = false;
         const {tblId, chartId, chartType} = this.props;
         dispatchChartUnmounted(tblId, chartId, chartType);
-        if (isDialogVisible(popupId)) {
-            hideChartOptionsPopup();
-        }
-    }
-
-    handlePopups() {
-        if (this.props.optionsPopup) {
-            const {optionsShown} = this.state;
-            if (optionsShown) {
-                const {tableModel, tblStatsData, tblPlotData, tblHistogramData, chartId, chartType} = this.props;
-                // show options popup
-                let popupTitle = 'Chart Options';
-
-                const reqTitle = get(tableModel, 'tableMeta.title');
-                if (reqTitle) { popupTitle += `: ${chartId} ${reqTitle}`; }
-
-                var popup = (
-                    <PopupPanel title={popupTitle} closeCallback={()=>{this.toggleOptions();}}>
-                        <div
-                            style={{overflow:'auto',width:OPTIONS_WIDTH,height:300,paddingTop:10,paddingLeft:10,verticalAlign:'top'}}>
-                            <OptionsWrapper {...{chartId, tableModel, tblStatsData, tblPlotData, tblHistogramData, chartType}}/>
-                        </div>
-                    </PopupPanel>
-                );
-
-                DialogRootContainer.defineDialog(popupId, popup);
-                dispatchShowDialog(popupId);
-
-            } else if (isDialogVisible(popupId)) {
-                hideChartOptionsPopup();
-            }
-        } else if (isDialogVisible(popupId)) {
-            hideChartOptionsPopup();
-        }
     }
 
     // -------------
@@ -278,8 +231,8 @@ class ChartsPanel extends React.Component {
     // -----------------
 
     toggleOptions() {
-        const {optionsShown, immediateResize, optionsPopup} = this.state;
-        this.setState({optionsShown: !optionsShown, immediateResize: optionsPopup?immediateResize:true});
+        const {optionsShown} = this.state;
+        this.setState({optionsShown: !optionsShown});
     }
 
     displaySelectionOptions() {
@@ -378,7 +331,7 @@ class ChartsPanel extends React.Component {
                 filterInfoCls.setFilter(yCol, '> '+yMin);
                 filterInfoCls.addFilter(yCol, '< '+yMax);
                 const newRequest = Object.assign({}, tableModel.request, {filters: filterInfoCls.serialize()});
-                TablesCntlr.dispatchTableFetch(newRequest);
+                TablesCntlr.dispatchTableFetch(newRequest, 0);
             }
         }
     }
@@ -387,7 +340,7 @@ class ChartsPanel extends React.Component {
         const request = get(this.props, 'tableModel.request');
         if (request && request.filters) {
             const newRequest = Object.assign({}, request, {filters: ''});
-            TablesCntlr.dispatchTableFetch(newRequest);
+            TablesCntlr.dispatchTableFetch(newRequest, 0);
         }
     }
 
@@ -416,17 +369,17 @@ class ChartsPanel extends React.Component {
         if (this.displaySelectionOptions()) {
             return (
                 <div style={{display:'inline-block', whiteSpace: 'nowrap'}}>
-                    <img style={selectionBtnStyle}
+                    <img className='selectionBtn'
                          title='Zoom in the enclosed points'
                          src={ZOOM_IN}
                          onClick={() => this.addZoom()}
                     />
-                    {<img style={selectionBtnStyle}
+                    {<img className='selectionBtn'
                          title='Select enclosed points'
                          src={SELECT_ROWS}
                          onClick={() => this.addSelection()}
                     />}
-                    <img style={selectionBtnStyle}
+                    <img className='selectionBtn'
                          title='Filter in the selected points'
                          src={FILTER_IN}
                          onClick={() => this.addFilter()}
@@ -436,17 +389,17 @@ class ChartsPanel extends React.Component {
         } else {
             return (
                 <div style={{display:'inline-block', whiteSpace: 'nowrap'}}>
-                    {this.displayZoomOriginal() && <img style={selectionBtnStyle}
+                    {this.displayZoomOriginal() && <img className='selectionBtn'
                          title='Zoom out to original chart'
                          src={ZOOM_ORIGINAL}
                          onClick={() => this.resetZoom()}
                     />}
-                    {this.displayUnselectAll() && <img style={selectionBtnStyle}
+                    {this.displayUnselectAll() && <img className='selectionBtn'
                          title='Unselect all selected points'
                          src={UNSELECT_ROWS}
                          onClick={() => this.resetSelection()}
                     />}
-                    {this.displayClearFilters() && <img style={selectionBtnStyle}
+                    {this.displayClearFilters() && <img className='selectionBtn'
                         title='Remove all filters'
                         src={CLEAR_FILTERS}
                         onClick={() => this.clearFilters()}
@@ -457,28 +410,30 @@ class ChartsPanel extends React.Component {
     }
 
     renderToolbar() {
-        const {expandable, expandedMode, tblId, chartId, chartType, optionsPopup, deletable} = this.props;
+        const {expandable, expandedMode, tblId, chartId, chartType, deletable} = this.props;
         return (
-            <div style={{height: 30, position: 'absolute', top: 0, left: 0, right: 0}}>
-                <img style={{verticalAlign:'top', float: 'left', cursor: 'pointer'}}
-                     title='Plot options and tools'
-                     src={SETTINGS}
-                     onClick={() => this.toggleOptions()}
-                />
-                <div style={{display:'inline-block', float: 'right'}}>
+            <div role='toolbar' className='ChartPanel__toolbar'>
+                <div className='group'>
                     {this.renderSelectionButtons()}
+                </div>
+                <div className='group'>
+                    <img style={{cursor: 'pointer'}}
+                         title='Plot options and tools'
+                         src={SETTINGS}
+                         onClick={() => this.toggleOptions()}
+                    />
                     { expandable && !expandedMode &&
-                    <img style={selectionBtnStyle}
+                    <img style={{paddingLeft: 4, cursor: 'pointer'}}
                          title='Expand this panel to take up a larger area'
                          src={OUTLINE_EXPAND}
                          onClick={() => {
-                            dispatchChartExpanded(chartId, tblId, chartType, optionsPopup);
+                            dispatchChartExpanded(chartId, tblId, chartType);
                             dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.xyPlots);
                          }}
                     />}
                     { expandable && !expandedMode &&
                     (isBoolean(deletable) ? deletable : numRelatedCharts(tblId) > 1) &&  // when deletable is undefined, use related charts criterion
-                    <img style={{verticalAlign: 'top', paddingLeft: 2, paddingRight:5, cursor: 'pointer'}}
+                    <img style={{alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
                          title='Delete this chart'
                          src={DELETE}
                          onClick={() => {dispatchDelete(tblId, chartId, chartType);}}
@@ -490,11 +445,11 @@ class ChartsPanel extends React.Component {
 
 
     renderOptions() {
-        const {optionsShown, heightPx} = this.state;
-        const { tableModel, tblStatsData, tblPlotData, tblHistogramData, optionsPopup, chartId, chartType} = this.props;
-        if (optionsShown && !optionsPopup) {
+        const {optionsShown} = this.state;
+        const { tableModel, tblStatsData, tblPlotData, tblHistogramData, chartId, chartType} = this.props;
+        if (optionsShown) {
             return (
-                <div style={{flex: '0 0 auto',overflow:'auto',width:OPTIONS_WIDTH,height:heightPx,paddingLeft:10,verticalAlign:'top'}}>
+                <div className='ChartPanelOptions'>
                     <OptionsWrapper  {...{chartId, tableModel, tblStatsData, tblPlotData, tblHistogramData, chartType}}/>
                 </div>
             );
@@ -508,10 +463,7 @@ class ChartsPanel extends React.Component {
         var {tblStatsData, chartType} = this.props;
 
         if (!(tblStatsData && tblStatsData.isColStatsReady) ) {
-            return (<img style={{verticalAlign:'top', height: 16, padding: 10, float: 'left'}}
-                         title='Loading Table Statistics...'
-                         src={LOADING}/>
-            );
+            return <div style={{position: 'relative', width: '100%', height: '100%'}}><div className='loading-mask'/></div>;
         } else {
             var {widthPx, heightPx} = this.state;
             const knownSize = widthPx && heightPx;
@@ -522,12 +474,12 @@ class ChartsPanel extends React.Component {
             }
 
             return (
-                <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', height: '100%', overflow: 'hidden'}}>
-                    <div style={{ position: 'relative', flexGrow: 1}}>
+                <div className='ChartPanel__container'>
+                    <div className='ChartPanel__wrapper'>
                         {this.renderToolbar()}
-                        <div style={{display: 'flex', flexDirection: 'row', position: 'absolute', top: 30, bottom: 0, left: 0, right: 0}}>
+                        <div className='ChartPanel__chartarea'>
                             {this.renderOptions()}
-                            <Resizable id='chart-resizer' onResize={this.onResize} style={{flexGrow: 1, position: 'relative', width: '100%', height: '100%', overflow: 'hidden'}}>
+                            <Resizable id='chart-resizer' onResize={this.onResize} className='ChartPanel__chartresizer'>
                                 <div style={{overflow:'auto',width:widthPx,height:heightPx}}>
                                     {knownSize ? chartType === SCATTER ? this.renderXYPlot() : this.renderHistogram() : <div/>}
                                 </div>
@@ -542,7 +494,6 @@ class ChartsPanel extends React.Component {
 
 ChartsPanel.propTypes = {
     expandedMode: PropTypes.bool,
-    optionsPopup: PropTypes.bool,
     expandable: PropTypes.bool,
     deletable : PropTypes.bool,
     tblId : PropTypes.string,
@@ -687,9 +638,3 @@ OptionsWrapper.propTypes = {
 };
 
 
-
-const popupId = 'chartOptions';
-
-function hideChartOptionsPopup() {
-    dispatchHideDialog(popupId);
-}

@@ -300,7 +300,7 @@ var Histogram = React.createClass(
                     width: Number(width),
                     height: Number(height),
                     borderColor: '#a5a5a5',
-                    borderWidth: 3
+                    borderWidth: 1
                 },
                 exporting: {
                     enabled: true

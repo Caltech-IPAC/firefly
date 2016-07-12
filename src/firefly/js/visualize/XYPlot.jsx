@@ -542,7 +542,7 @@ export class XYPlot extends React.Component {
                 height: chartHeight,
                 width: chartWidth,
                 borderColor: '#a5a5a5',
-                borderWidth: 3,
+                borderWidth: 1,
                 zoomType: 'xy',
                 events: {
                     click() {
@@ -653,7 +653,7 @@ export class XYPlot extends React.Component {
 
 
         return (
-            <div style={chartWidth<width?{float: 'right'}:{}}>
+            <div style={chartWidth<width?{float: 'left'}:{}}>
                 <ReactHighcharts config={config} isPureConfig={true} ref='chart'/>
             </div>
         );

@@ -22,10 +22,9 @@ export const DELETE = `${UI_PREFIX}/delete`;
  * @param {string} chartId - chart id
  * @param {string} tblId - table id, to which this chart is related. Acts as a group id
  * @param {string} chartType (ex. scatter, histogram)
- * @param {boolean} optionsPopup - true,  if options should be displayed as a popup
  */
-export function dispatchChartExpanded(chartId, tblId, chartType, optionsPopup) {
-    flux.process( {type: CHART_UI_EXPANDED, payload: {chartId, tblId, chartType, optionsPopup}});
+export function dispatchChartExpanded(chartId, tblId, chartType) {
+    flux.process( {type: CHART_UI_EXPANDED, payload: {chartId, tblId, chartType}});
 }
 
 /*
@@ -78,9 +77,8 @@ export function reducer(state={ui:{}}, action={}) {
         switch (action.type) {
 
             case (CHART_UI_EXPANDED) :
-                const {optionsPopup} = action.payload;
                 //return updateSet(root, 'expanded', {chartId, tblId});
-                return updateSet(state, 'ui.expanded', {chartId, tblId, chartType, optionsPopup});
+                return updateSet(state, 'ui.expanded', {chartId, tblId, chartType});
             case (CHART_MOUNTED) :
 
                 if (!has(state, ['tbl', tblId])) {
