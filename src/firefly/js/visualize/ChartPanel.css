@@ -1,0 +1,58 @@
+.ChartPanel__container {
+    display: flex;
+    flex: auto;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.ChartPanel__wrapper {
+    position: relative;
+    background-color: #c8c8c8;
+    flex-grow: 1;
+    border: 1px solid #b3b3b3;
+    padding: 0 3px 3px 3px;
+}
+
+.ChartPanel__toolbar {
+    height: 29px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+}
+
+.ChartPanel__chartarea {
+    position: absolute;
+    top: 29px;
+    bottom: 0;
+    left: 1px;
+    right: 0
+}
+
+.ChartPanel__chartresizer {
+    flex-grow: 1;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.ChartPanelOptions {
+    position: absolute;
+    padding: 0 7px;
+    top: 1px;
+    right: 1px;
+    bottom: 2px;
+    background-color: beige;
+    border-left: 1px solid #CCC;
+    z-index: 100;
+    flex: 0 0 auto;
+    overflow: auto;
+    box-shadow: -2px 0 2px 0 rgba(0,0,0,0.50);
+}
+
+.selectionBtn {
+    padding: 0 5px;
+    cursor: pointer;
+}

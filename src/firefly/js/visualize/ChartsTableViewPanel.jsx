@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import './ChartPanel.css';
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 // import {deepDiff} from '../util/WebUtil.js';
@@ -26,7 +27,6 @@ import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../core/LayoutCntlr.js';
 import {SCATTER, HISTOGRAM, getHighlighted, getTblIdForChartId, numRelatedCharts} from './ChartUtil.js';
 import XYPlotOptions from '../visualize/XYPlotOptions.jsx';
 import {XYPlot} from '../visualize/XYPlot.jsx';
-
 import HistogramOptions from '../visualize/HistogramOptions.jsx';
 import Histogram from '../visualize/Histogram.jsx';
 
@@ -43,27 +43,6 @@ import FILTER_IN from 'html/images/icons-2014/24x24_FilterAdd.png';
 import CLEAR_FILTERS from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
 import LOADING from 'html/images/gxt/loading.gif';
 
-const selectionBtnStyle = {padding: '0 5px', cursor: 'pointer'};
-
-/*
- CSS for left positioned options
- left: 1
- borderRight: '1px solid #CCC',
- boxShadow: '2px 0 5px rgba(0,0,0,0.50)'
- */
-const chartOptionsStyle = {
-    position: 'absolute',
-    padding: '0 5px',
-    top: 1,
-    right: 1,
-    bottom: 2,
-    backgroundColor: 'beige',
-    borderLeft: '1px solid #CCC',
-    zIndex: 100,
-    flex: '0 0 auto',
-    overflow:'auto',
-    boxShadow: '-2px 0 2px 0 rgba(0,0,0,0.50)'
-};
 
 class ChartsPanel extends React.Component {
 
@@ -352,7 +331,7 @@ class ChartsPanel extends React.Component {
                 filterInfoCls.setFilter(yCol, '> '+yMin);
                 filterInfoCls.addFilter(yCol, '< '+yMax);
                 const newRequest = Object.assign({}, tableModel.request, {filters: filterInfoCls.serialize()});
-                TablesCntlr.dispatchTableFetch(newRequest);
+                TablesCntlr.dispatchTableFetch(newRequest, 0);
             }
         }
     }
@@ -361,7 +340,7 @@ class ChartsPanel extends React.Component {
         const request = get(this.props, 'tableModel.request');
         if (request && request.filters) {
             const newRequest = Object.assign({}, request, {filters: ''});
-            TablesCntlr.dispatchTableFetch(newRequest);
+            TablesCntlr.dispatchTableFetch(newRequest, 0);
         }
     }
 
@@ -390,17 +369,17 @@ class ChartsPanel extends React.Component {
         if (this.displaySelectionOptions()) {
             return (
                 <div style={{display:'inline-block', whiteSpace: 'nowrap'}}>
-                    <img style={selectionBtnStyle}
+                    <img className='selectionBtn'
                          title='Zoom in the enclosed points'
                          src={ZOOM_IN}
                          onClick={() => this.addZoom()}
                     />
-                    {<img style={selectionBtnStyle}
+                    {<img className='selectionBtn'
                          title='Select enclosed points'
                          src={SELECT_ROWS}
                          onClick={() => this.addSelection()}
                     />}
-                    <img style={selectionBtnStyle}
+                    <img className='selectionBtn'
                          title='Filter in the selected points'
                          src={FILTER_IN}
                          onClick={() => this.addFilter()}
@@ -410,17 +389,17 @@ class ChartsPanel extends React.Component {
         } else {
             return (
                 <div style={{display:'inline-block', whiteSpace: 'nowrap'}}>
-                    {this.displayZoomOriginal() && <img style={selectionBtnStyle}
+                    {this.displayZoomOriginal() && <img className='selectionBtn'
                          title='Zoom out to original chart'
                          src={ZOOM_ORIGINAL}
                          onClick={() => this.resetZoom()}
                     />}
-                    {this.displayUnselectAll() && <img style={selectionBtnStyle}
+                    {this.displayUnselectAll() && <img className='selectionBtn'
                          title='Unselect all selected points'
                          src={UNSELECT_ROWS}
                          onClick={() => this.resetSelection()}
                     />}
-                    {this.displayClearFilters() && <img style={selectionBtnStyle}
+                    {this.displayClearFilters() && <img className='selectionBtn'
                         title='Remove all filters'
                         src={CLEAR_FILTERS}
                         onClick={() => this.clearFilters()}
@@ -433,7 +412,7 @@ class ChartsPanel extends React.Component {
     renderToolbar() {
         const {expandable, expandedMode, tblId, chartId, chartType, deletable} = this.props;
         return (
-            <div role='toolbar' style={{height: 29, position: 'absolute', top: 0, left: 0, right: 0}}>
+            <div role='toolbar' className='ChartPanel__toolbar'>
                 <div className='group'>
                     {this.renderSelectionButtons()}
                 </div>
@@ -470,7 +449,7 @@ class ChartsPanel extends React.Component {
         const { tableModel, tblStatsData, tblPlotData, tblHistogramData, chartId, chartType} = this.props;
         if (optionsShown) {
             return (
-                <div style={Object.assign({},chartOptionsStyle)}>
+                <div className='ChartPanelOptions'>
                     <OptionsWrapper  {...{chartId, tableModel, tblStatsData, tblPlotData, tblHistogramData, chartType}}/>
                 </div>
             );
@@ -484,10 +463,7 @@ class ChartsPanel extends React.Component {
         var {tblStatsData, chartType} = this.props;
 
         if (!(tblStatsData && tblStatsData.isColStatsReady) ) {
-            return (<img style={{verticalAlign:'top', height: 16, padding: 10, float: 'left'}}
-                         title='Loading Table Statistics...'
-                         src={LOADING}/>
-            );
+            return <div style={{position: 'relative', width: '100%', height: '100%'}}><div className='loading-mask'/></div>;
         } else {
             var {widthPx, heightPx} = this.state;
             const knownSize = widthPx && heightPx;
@@ -498,12 +474,12 @@ class ChartsPanel extends React.Component {
             }
 
             return (
-                <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', height: '100%', overflow: 'hidden'}}>
-                    <div style={{position: 'relative', flexGrow: 1, backgroundColor: '#c8c8c8', border: '1px solid #b3b3b3', padding: '0 3px 3px 3px'}}>
+                <div className='ChartPanel__container'>
+                    <div className='ChartPanel__wrapper'>
                         {this.renderToolbar()}
-                        <div style={{position: 'absolute', top: 29, bottom: 0, left: 1, right: 0}}>
+                        <div className='ChartPanel__chartarea'>
                             {this.renderOptions()}
-                            <Resizable id='chart-resizer' onResize={this.onResize} style={{flexGrow: 1, position: 'relative', width: '100%', height: '100%', overflow: 'hidden'}}>
+                            <Resizable id='chart-resizer' onResize={this.onResize} className='ChartPanel__chartresizer'>
                                 <div style={{overflow:'auto',width:widthPx,height:heightPx}}>
                                     {knownSize ? chartType === SCATTER ? this.renderXYPlot() : this.renderHistogram() : <div/>}
                                 </div>

@@ -653,7 +653,7 @@ export class XYPlot extends React.Component {
 
 
         return (
-            <div style={chartWidth<width?{float: 'right'}:{}}>
+            <div style={chartWidth<width?{float: 'left'}:{}}>
                 <ReactHighcharts config={config} isPureConfig={true} ref='chart'/>
             </div>
         );
