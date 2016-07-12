@@ -452,7 +452,8 @@ class ChartsPanel extends React.Component {
         if (optionsShown) {
             return (
                 <div className='ChartPanelOptions'>
-                    <OptionsWrapper  {...{chartId, tableModel, tblStatsData, tblPlotData, tblHistogramData, chartType}}/>
+                    <OptionsWrapper toggleOptions={this.toggleOptions}
+                        {...{chartId, tableModel, tblStatsData, tblPlotData, tblHistogramData, chartType}}/>
                 </div>
             );
         }
@@ -597,7 +598,7 @@ export class OptionsWrapper extends React.Component {
     // }
 
     render() {
-        const { chartId, tableModel, tblStatsData, chartType, tblPlotData, tblHistogramData} = this.props;
+        const { chartId, tableModel, tblStatsData, chartType, tblPlotData, tblHistogramData, toggleOptions} = this.props;
 
         if (get(tblStatsData,'isColStatsReady')) {
             const formName = 'ChartOpt_' + chartType + chartId;
@@ -606,6 +607,7 @@ export class OptionsWrapper extends React.Component {
                     <XYPlotOptions key={formName} groupKey={formName}
                                    colValStats={tblStatsData.colStats}
                                    xyPlotParams={get(tblPlotData, 'xyPlotParams')}
+                                   toggleOptions={toggleOptions}
                                    onOptionsSelected={(xyPlotParams) => {
                                                 XYPlotCntlr.dispatchLoadPlotData(chartId, xyPlotParams, tableModel.tbl_id);
                                             }
@@ -637,6 +639,7 @@ OptionsWrapper.propTypes = {
     tblStatsData : PropTypes.object,
     tblPlotData : PropTypes.object,
     tblHistogramData: PropTypes.object,
+    toggleOptions: PropTypes.func,
     chartType: PropTypes.string
 };
 

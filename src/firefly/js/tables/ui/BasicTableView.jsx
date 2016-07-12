@@ -250,7 +250,7 @@ function makeColWidth(columns, showUnits) {
     }, {});
 }
 
-function makeColumns ({columns, columnWidths, data, selectable, showUnits, showFilters, renderers, bgColor,
+function makeColumns ({columns, columnWidths, data, selectable, showUnits, showFilters, renderers, bgColor='white',
             selectInfoCls, filterInfo, sortInfo, onRowSelect, onSelectAll, onSort, onFilter, onFilterSelected}) {
     if (!columns) return false;
 
@@ -259,7 +259,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
         const HeadRenderer = get(renderers, [col.name, 'headRenderer'], HeaderCell);
         const CellRenderer = get(renderers, [col.name, 'cellRenderer'], TextCell);
         const fixed = col.fixed || false;
-        const style = col.fixed && bgColor && {backgroundColor: bgColor};
+        const style = col.fixed && {backgroundColor: bgColor};
 
         return (
             <Column

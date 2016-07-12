@@ -32,7 +32,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
             SHOW_DROPDOWN, SET_LAYOUT_MODE
         ]);
 
-        var {hasImages, hasTables, hasXyPlots, mode, ...others} = getLayouInfo();
+        var {hasImages, hasTables, hasXyPlots, mode, dropDown={}, ...others} = getLayouInfo();
         // eslint-disable-next-line
         var {images, tables, xyPlots} = others;     //images, tables, and xyPlots are additional states relevant only to them.
         var {expanded, standard} = mode || {};
@@ -67,26 +67,48 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         if (ignore) continue;  // ignores, don't update layout.
 
         const count = filter([showTables, showXyPlots, showImages]).length;
-        if (count === 1) {
-            // set mode into expanded view when there is only 1 component visible.
-            closeable = false;
-            expanded =  showImages ? LO_VIEW.images :
-                showXyPlots ? LO_VIEW.xyPlots :
-                    showTables ? LO_VIEW.tables :  expanded;
-        } else {
-            expanded = LO_VIEW.none;
+
+        // change mode when new UI elements are added or removed from results
+        switch (action.type) {
+            case TBL_RESULTS_ADDED:
+            case REPLACE_IMAGES :
+            case ImagePlotCntlr.PLOT_IMAGE :
+            case TABLE_REMOVE:
+            case ImagePlotCntlr.DELETE_PLOT_VIEW:
+                if (count === 1) {
+                    // set mode into expanded view when there is only 1 component visible.
+                    closeable = false;
+                    expanded =  showImages ? LO_VIEW.images :
+                        showXyPlots ? LO_VIEW.xyPlots :
+                            showTables ? LO_VIEW.tables :  expanded;
+                } else {
+                    expanded = LO_VIEW.none;
+                }
+                mode = {expanded, standard, closeable};
         }
-        mode = {expanded, standard, closeable};
-        const dropDown = {visible: count === 0};
+
+        // calculate dropDown when new UI elements are added or removed from results
+        switch (action.type) {
+            case TBL_RESULTS_ADDED:
+            case REPLACE_IMAGES :
+            case ImagePlotCntlr.PLOT_IMAGE :
+                dropDown = {visible: count === 0};
+                break;
+            case TABLE_REMOVE:
+            case ImagePlotCntlr.DELETE_PLOT_VIEW:
+                if (!get(dropDown, 'visible', false)) {
+                    dropDown = {visible: count === 0};
+                }
+                break;
+        }
 
         dispatchUpdateLayoutInfo(omitBy({title, views, mode, searchDesc, dropDown, showTables, showImages, showXyPlots, images}, isNil));
     }
 }
 
 function handleLayoutChanges(action) {
-    if (action.type === SHOW_DROPDOWN && get(action, 'payload.visible', true)) {
-        return true;
-    } else if (action.type === SET_LAYOUT_MODE && get(action, 'payload.mode') === LO_MODE.expanded){
+    if ((action.type === SHOW_DROPDOWN && get(action, 'payload.visible', true)) ||
+        (action.type === SET_LAYOUT_MODE && get(action, 'payload.mode') === LO_MODE.expanded)) {
         return true;
     } else {
         return false;

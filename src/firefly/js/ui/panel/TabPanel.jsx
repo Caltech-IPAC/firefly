@@ -202,7 +202,7 @@ export class Tab extends Component {
                      {name}
                 </div>
                 {removable &&
-                        <div style={{right: -4, top: -3}} className='btn-close'
+                        <div style={{right: -4, top: -2}} className='btn-close'
                              title='Remove Tab'
                              onClick={() => onTabRemove && onTabRemove(name)}/>
                 }

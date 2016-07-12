@@ -191,6 +191,7 @@ export class TablePanel extends Component {
                             showUnits={showUnits}
                             showFilters={showFilters}
                             onChange={this.onOptionUpdate}
+                            toggleOptions={this.toggleOptions}
                         /> }
                     </div>
                 </div>
@@ -255,7 +256,7 @@ function TableTitle({tbl_id, title, removable}) {
                 <div style={{display: 'inline-block', marginLeft: 5, marginTop: 2}}
                      title={title}>{truncate(title)}</div>
                 {removable &&
-                <div style={{right: -5, paddingLeft: 3}} className='btn-close'
+                <div style={{right: -5}} className='btn-close'
                      title='Remove Tab'
                      onClick={() => dispatchTableRemove(tbl_id)}/>
                 }
