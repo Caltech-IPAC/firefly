@@ -7,7 +7,7 @@ import sCompare from 'react-addons-shallow-compare';
 
 import {flux} from '../Firefly.js';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
-import {ChartsContainer} from '../visualize/ChartsContainer.jsx';
+import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
 import {dispatchChangeExpandedMode, ExpandType} from '../visualize/ImagePlotCntlr.js';
 import {dispatchSetLayoutMode, getExpandedMode, LO_MODE, LO_VIEW} from '../core/LayoutCntlr.js';

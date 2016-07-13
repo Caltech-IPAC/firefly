@@ -9,14 +9,14 @@ import {get} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from '../tables/TableUtil.js';
-import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
-import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
-import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
-import XYPlotOptions from '../visualize/XYPlotOptions.jsx';
-import {resultsSuccess as onXYPlotOptsSelected} from '../visualize/XYPlotOptions.jsx';
-import HistogramOptions from '../visualize/HistogramOptions.jsx';
-import {resultsSuccess as onHistogramOptsSelected} from '../visualize/HistogramOptions.jsx';
-//import {uniqueChartId} from '../visualize/ChartUtil.js';
+import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
+import * as XYPlotCntlr from '../charts/XYPlotCntlr.js';
+import * as HistogramCntlr from '../charts/HistogramCntlr.js';
+import {XYPlotOptions} from '../charts/ui/XYPlotOptions.jsx';
+import {resultsSuccess as onXYPlotOptsSelected} from '../charts/ui/XYPlotOptions.jsx';
+import {HistogramOptions} from '../charts/ui/HistogramOptions.jsx';
+import {resultsSuccess as onHistogramOptsSelected} from '../charts/ui/HistogramOptions.jsx';
+//import {uniqueChartId} from '../charts/ChartUtil.js';
 
 import FormPanel from './FormPanel.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';

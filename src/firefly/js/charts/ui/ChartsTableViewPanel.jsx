@@ -11,26 +11,26 @@ import {get, debounce, defer, isBoolean} from 'lodash';
 import Resizable from 'react-component-resizable';
 
 
-import {flux} from '../Firefly.js';
-import * as TablesCntlr from '../tables/TablesCntlr.js';
-import * as TblUtil from '../tables/TableUtil.js';
-import {SelectInfo} from '../tables/SelectInfo.js';
-import {FilterInfo} from '../tables/FilterInfo.js';
+import {flux} from '../../Firefly.js';
+import * as TablesCntlr from '../../tables/TablesCntlr.js';
+import * as TblUtil from '../../tables/TableUtil.js';
+import {SelectInfo} from '../../tables/SelectInfo.js';
+import {FilterInfo} from '../../tables/FilterInfo.js';
 
-import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
-import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
-import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
-import {dispatchChartExpanded, dispatchDelete, dispatchChartMounted, dispatchChartUnmounted} from '../visualize/ChartsCntlr.js';
+import * as TableStatsCntlr from '../TableStatsCntlr.js';
+import * as HistogramCntlr from '../HistogramCntlr.js';
+import * as XYPlotCntlr from '../XYPlotCntlr.js';
+import {dispatchChartExpanded, dispatchDelete, dispatchChartMounted, dispatchChartUnmounted} from '../ChartsCntlr.js';
 
-import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../core/LayoutCntlr.js';
+import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 
-import {SCATTER, HISTOGRAM, getHighlighted, getTblIdForChartId, numRelatedCharts} from './ChartUtil.js';
-import XYPlotOptions from '../visualize/XYPlotOptions.jsx';
-import {XYPlot} from '../visualize/XYPlot.jsx';
-import HistogramOptions from '../visualize/HistogramOptions.jsx';
-import Histogram from '../visualize/Histogram.jsx';
+import {SCATTER, HISTOGRAM, getHighlighted, getTblIdForChartId, numRelatedCharts} from '../ChartUtil.js';
+import {XYPlotOptions} from './XYPlotOptions.jsx';
+import {XYPlot} from './XYPlot.jsx';
+import {HistogramOptions} from './HistogramOptions.jsx';
+import {Histogram} from './Histogram.jsx';
 
-import {showInfoPopup} from '../ui/PopupUtil.jsx';
+import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
 import DELETE from 'html/images/blue_delete_10x10.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';

@@ -15,8 +15,8 @@ import {MetaConst} from '../data/MetaConst.js';
 import {getTblById, getColumnIdx, getCellValue} from '../tables/TableUtil.js';
 import {Expression} from '../util/expr/Expression.js';
 import {logError} from '../util/WebUtil.js';
-import {XYPLOT_DATA_KEY} from '../visualize/XYPlotCntlr.js';
-import {HISTOGRAM_DATA_KEY} from '../visualize/HistogramCntlr';
+import {XYPLOT_DATA_KEY} from './XYPlotCntlr.js';
+import {HISTOGRAM_DATA_KEY} from './HistogramCntlr.js';
 
 export const SCATTER = 'scatter';
 export const HISTOGRAM = 'histogram';

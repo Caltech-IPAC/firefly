@@ -6,12 +6,12 @@ import {flux} from '../Firefly.js';
 import {updateSet, updateMerge} from '../util/WebUtil.js';
 import {get, has, omit, omitBy, isUndefined, isString} from 'lodash';
 
-import {doFetchTable, getTblById, isFullyLoaded} from '../tables/TableUtil.js';
+import {doFetchTable, getColumnIdx, getTblById, isFullyLoaded} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {DELETE} from './ChartsCntlr.js';
 import {serializeDecimateInfo} from '../tables/Decimate.js';
 import {logError} from '../util/WebUtil.js';
-import {getDefaultXYPlotParams} from '../visualize/ChartUtil.js';
+import {getDefaultXYPlotParams} from './ChartUtil.js';
 
 export const XYPLOT_DATA_KEY = 'xyplot';
 export const LOAD_PLOT_DATA = `${XYPLOT_DATA_KEY}/LOAD_COL_DATA`;
@@ -135,7 +135,8 @@ function dispatchResetZoom(chartId) {
  */
 export function loadPlotData (rawAction) {
     return (dispatch) => {
-        const {chartId, xyPlotParams, tblId} = rawAction.payload;
+        let xyPlotParams = rawAction.payload.xyPlotParams;
+        const {chartId, tblId} = rawAction.payload;
         const tblSource = get(getTblById(tblId), 'tableMeta.source');
 
         const chartModel = get(flux.getState(), [XYPLOT_DATA_KEY, chartId]);
@@ -146,7 +147,12 @@ export function loadPlotData (rawAction) {
             // we do need to update parameters, but we can reuse the old chart data
             serverCallNeeded = serverCallNeeded || serverParamsChanged(chartModel.xyPlotParams, xyPlotParams);
 
-            dispatch({ type : LOAD_PLOT_DATA, payload : {...rawAction.payload, tblSource, serverCallNeeded}});
+            if (!serverCallNeeded) {
+                const tableModel = getTblById(tblId);
+                xyPlotParams = getUpdatedParams(xyPlotParams, tableModel);
+            }
+
+            dispatch({ type : LOAD_PLOT_DATA, payload : {chartId, tblId, xyPlotParams, tblSource, serverCallNeeded}});
 
             if (serverCallNeeded) {
                 fetchPlotData(dispatch, tblId, xyPlotParams, chartId);
@@ -366,18 +372,24 @@ function getUpdatedParams(xyPlotParams, tableModel) {
         newParams = updateSet(newParams, 'x.label', get(xyPlotParams, 'x.columnOrExpr'));
     }
     if (!get(xyPlotParams, 'x.unit')) {
-        const xUnit = get(tableModel, 'tableData.columns.0.units');
-        if (xUnit) {
-            newParams = updateSet(newParams, 'x.unit', xUnit);
+        const xIdx = getColumnIdx(tableModel, get(xyPlotParams, 'x.columnOrExpr'));
+        if (xIdx >= 0 ) {
+            const xUnit = get(tableModel, `tableData.columns.${xIdx}.units`);
+            if (xUnit) {
+                newParams = updateSet(newParams, 'x.unit', xUnit);
+            }
         }
     }
     if (!get(xyPlotParams, 'y.label')) {
         newParams = updateSet(newParams, 'y.label', get(xyPlotParams, 'y.columnOrExpr'));
     }
     if (!get(xyPlotParams, 'y.unit')) {
-        const yUnit = get(tableModel, 'tableData.columns.1.units');
-        if (yUnit) {
-            newParams = updateSet(newParams, 'y.unit', yUnit);
+        const yIdx = getColumnIdx(tableModel, get(xyPlotParams, 'y.columnOrExpr'));
+        if (yIdx >= 0 ) {
+            const yUnit = get(tableModel, `tableData.columns.${yIdx}.units`);
+            if (yUnit) {
+                newParams = updateSet(newParams, 'y.unit', yUnit);
+            }
         }
     }
     if (get(xyPlotParams, 'selection')) {

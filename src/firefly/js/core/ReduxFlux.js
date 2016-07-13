@@ -22,10 +22,10 @@ import ImagePlotCntlr, {IMAGE_PLOT_KEY,
                         changePointSelectionActionCreator} from '../visualize/ImagePlotCntlr.js';
 
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
-import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
-import * as ChartsCntlr from '../visualize/ChartsCntlr.js';
-import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
-import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
+import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
+import * as ChartsCntlr from '../charts/ChartsCntlr.js';
+import * as HistogramCntlr from '../charts/HistogramCntlr.js';
+import * as XYPlotCntlr from '../charts/XYPlotCntlr.js';
 import * as TablesCntlr from '../tables/TablesCntlr';
 
 import DrawLayer, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
