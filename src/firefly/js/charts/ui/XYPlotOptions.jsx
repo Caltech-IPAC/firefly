@@ -263,6 +263,21 @@ export class XYPlotOptions extends React.Component {
         return (
             <div style={{padding:'7px 5px'}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
+                    {onOptionsSelected &&
+                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
+                        <CompleteButton style={{flexGrow: 0}}
+                                        groupKey={groupKey}
+                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds)}
+                                        onFail={resultsFail}
+                                        text = 'Apply'
+                        />
+                        <div style={{flexGrow: 1}}/>
+                        <div style={{flexGrow: 0}}>
+                            <button type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
+                            <button type='button' className='button std' onClick={() => setOptions(groupKey, xyPlotParams)}>Reset</button>
+                        </div>
+                    </div>}
+
                     <div style={helpStyle}>
                         For X and Y, enter a column or an expression<br/>
                         ex. log(col); 100*col1/col2; col1-col2
@@ -435,20 +450,6 @@ export class XYPlotOptions extends React.Component {
                     {this.renderBinningOptions()}
                     <br/>
 
-                    {onOptionsSelected &&
-                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0'}}>
-                        <CompleteButton style={{flexGrow: 0}}
-                                        groupKey={groupKey}
-                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds)}
-                                        onFail={resultsFail}
-                                        text = 'Apply'
-                        />
-                        <div style={{flexGrow: 1}}/>
-                        <div style={{flexGrow: 0}}>
-                            <button type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
-                            <button type='button' className='button std' onClick={() => setOptions(groupKey, xyPlotParams)}>Reset</button>
-                        </div>
-                    </div>}
                 </FieldGroup>
 
             </div>

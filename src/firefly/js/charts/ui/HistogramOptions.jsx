@@ -126,6 +126,21 @@ export class HistogramOptions extends React.Component {
         return (
             <div style={{padding:'7px 5px'}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
+                    {onOptionsSelected &&
+                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
+                        <CompleteButton style={{flexGrow: 0}}
+                                        groupKey={groupKey}
+                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds)}
+                                        onFail={resultsFail}
+                                        text = 'Apply'
+                        />
+                        <div style={{flexGrow: 1}}/>
+                        <div style={{flexGrow: 0}}>
+                            <button type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
+                            <button type='button' className='button std' onClick={() => setOptions(groupKey, histogramParams)}>Reset</button>
+                        </div>
+                    </div>}
+
                     <ListBoxInputField
                         initialState= {{
                             value: get(histogramParams, 'columnOrExpr'),
@@ -194,20 +209,6 @@ export class HistogramOptions extends React.Component {
                     <br/>
                     {this.renderAlgorithmParameters()}
                     <br/>
-                    {onOptionsSelected &&
-                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0'}}>
-                        <CompleteButton style={{flexGrow: 0}}
-                                        groupKey={groupKey}
-                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds)}
-                                        onFail={resultsFail}
-                                        text = 'Apply'
-                        />
-                        <div style={{flexGrow: 1}}/>
-                        <div style={{flexGrow: 0}}>
-                            <button type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
-                            <button type='button' className='button std' onClick={() => setOptions(groupKey, histogramParams)}>Reset</button>
-                        </div>
-                    </div>}
                 </FieldGroup>
 
             </div>

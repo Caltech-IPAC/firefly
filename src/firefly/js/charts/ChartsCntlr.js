@@ -6,7 +6,7 @@ import {has, get, isUndefined, omit} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
-import {updateSet, updateMerge} from '../util/WebUtil.js';
+import {updateDelete, updateSet, updateMerge} from '../util/WebUtil.js';
 
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {reduceXYPlot} from './XYPlotCntlr.js';
@@ -144,7 +144,7 @@ function reduceByTbl(state={}, action={}) {
     if (action.type === TablesCntlr.TABLE_REMOVE) {
         const {tbl_id} = action.payload;
         if (has(state, tbl_id)) {
-            return Object.assign({}, omit(state, [tbl_id]));
+            return omit(state, [tbl_id]);
         }
         return state;
     } else if (chartActions.indexOf(action.type) > -1) {
@@ -181,9 +181,9 @@ function reduceByTbl(state={}, action={}) {
             case (DELETE) :
                 if (has(state, [tblId, uChartId])) {
                     if (Object.keys(state[tblId]).length > 1) {
-                        return updateSet(state, tblId, omit(state[tblId], [uChartId]));
+                        return updateDelete(state, tblId, uChartId);
                     } else {
-                        return Object.assign({}, omit(state, [tblId]));
+                        return omit(state, [tblId]);
                     }
                 }
                 return state;

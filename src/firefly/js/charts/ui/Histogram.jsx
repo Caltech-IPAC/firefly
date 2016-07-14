@@ -45,19 +45,11 @@ export class Histogram extends React.Component {
                 chart.xAxis[0].setTitle(nextProps.desc, false);
                 doUpdate = true;
             }
-            if (reversed !== nextProps.reversed){
-                const nreversed = nextProps.reversed;
-                const yReversed = (nreversed && nreversed.indexOf('y')>-1 ? true : false);
-                const xReversed = (nreversed && nreversed.indexOf('x')>-1 ? true : false);
-                chart.xAxis[0].update({'reversed' : xReversed}, false);
-                chart.yAxis[0].update({'reversed' : yReversed}, false);
-                doUpdate = true;
-            }
             const nreversed = nextProps.reversed;
             if (reversed !== nreversed){
-                const yReversed = (nreversed && nreversed.indexOf('y')>-1 ? true : false);
-                const xReversed = (nreversed && nreversed.indexOf('x')>-1 ? true : false);
-                chart.xAxis[0].update({reversed : xReversed}, false);
+                const yReversed = Boolean(nreversed && nreversed.indexOf('y')>-1);
+                const xReversed = Boolean(nreversed && nreversed.indexOf('x')>-1);
+                chart.xAxis[0].update({reversed : xReversed, opposite: yReversed}, false);
                 chart.yAxis[0].update({reversed : yReversed}, false);
                 doUpdate = true;
             }

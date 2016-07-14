@@ -6,12 +6,12 @@ import {flux} from '../Firefly.js';
 import {updateSet, updateMerge} from '../util/WebUtil.js';
 import {get, has, omit, omitBy, isUndefined, isString} from 'lodash';
 
-import {doFetchTable, getColumnIdx, getTblById, isFullyLoaded} from '../tables/TableUtil.js';
+import {doFetchTable, getColumn, getTblById, isFullyLoaded} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {DELETE} from './ChartsCntlr.js';
 import {serializeDecimateInfo} from '../tables/Decimate.js';
 import {logError} from '../util/WebUtil.js';
-import {getDefaultXYPlotParams} from './ChartUtil.js';
+import {getDefaultXYPlotParams, SCATTER, getChartSpace} from './ChartUtil.js';
 
 export const XYPLOT_DATA_KEY = 'charts.xyplot';
 export const LOAD_PLOT_DATA = `${XYPLOT_DATA_KEY}/LOAD_COL_DATA`;
@@ -91,7 +91,7 @@ export function dispatchSetSelection(chartId, selection) {
  * @param {Object} selection - {xMin, xMax, yMin, yMax}
  */
 export function dispatchZoom(chartId, tblId, selection) {
-    const {xyPlotData, xyPlotParams, decimatedUnzoomed} = get(flux.getState(), [XYPLOT_DATA_KEY,chartId], {});
+    const {xyPlotData, xyPlotParams, decimatedUnzoomed} = get(getChartSpace(SCATTER), chartId, {});
     if (xyPlotData && xyPlotParams) {
         if (selection) {
             // zoom to selection
@@ -109,7 +109,7 @@ export function dispatchZoom(chartId, tblId, selection) {
             if (decimatedUnzoomed || isUndefined(decimatedUnzoomed)) {
                 const tableModel = getTblById(tblId);
                 if (tableModel) {
-                    const paramsWithoutZoom = Object.assign({}, omit(xyPlotParams, 'zoom'));
+                    const paramsWithoutZoom = omit(xyPlotParams, 'zoom');
                     dispatchLoadPlotData(chartId, paramsWithoutZoom, tblId);
                 }
             } else {
@@ -139,7 +139,7 @@ export function loadPlotData (rawAction) {
         const {chartId, tblId} = rawAction.payload;
         const tblSource = get(getTblById(tblId), 'tableMeta.source');
 
-        const chartModel = get(flux.getState(), [XYPLOT_DATA_KEY, chartId]);
+        const chartModel = get(getChartSpace(SCATTER), chartId);
         let serverCallNeeded = !chartModel || !chartModel.tblSource || chartModel.tblSource !== tblSource;
 
         if (serverCallNeeded || chartModel.xyPlotParams !== xyPlotParams) {
@@ -198,13 +198,13 @@ export function reduceXYPlot(state={}, action={}) {
                 }
             });
             return (chartsToDelete.length > 0) ?
-                Object.assign({}, omit(state, chartsToDelete)) : state;
+                omit(state, chartsToDelete) : state;
         }
         case (DELETE) :
         {
             const {chartId, chartType} = action.payload;
             if (chartType === 'scatter' && has(state, chartId)) {
-                return Object.assign({}, omit(state, [chartId]));
+                return omit(state, [chartId]);
             }
             return state;
         }
@@ -250,7 +250,7 @@ export function reduceXYPlot(state={}, action={}) {
         case (RESET_ZOOM) :
         {
             const chartId = action.payload.chartId;
-            const newParams = Object.assign({}, omit(state[chartId].xyPlotParams, ['selection', 'zoom']));
+            const newParams = omit(state[chartId].xyPlotParams, ['selection', 'zoom']);
             return updateSet(state, [chartId,'xyPlotParams'], newParams);
         }
         case (TablesCntlr.TABLE_SELECT) :
@@ -309,11 +309,11 @@ function fetchPlotData(dispatch, tblId, xyPlotParams, chartId) {
 
 
     const req = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']), {
-        'startIdx' : 0,
-        'pageSize' : 1000000,
-        //'inclCols' : `${xyPlotParams.x.columnOrExpr},${xyPlotParams.y.columnOrExpr}`, // ignored if 'decimate' is present
-        'decimate' : serializeDecimateInfo(...getServerCallParameters(xyPlotParams))
-    });
+            'startIdx' : 0,
+            'pageSize' : 1000000,
+            //'inclCols' : `${xyPlotParams.x.columnOrExpr},${xyPlotParams.y.columnOrExpr}`, // ignored if 'decimate' is present
+            'decimate' : serializeDecimateInfo(...getServerCallParameters(xyPlotParams))
+        });
 
     req.tbl_id = `xy-${chartId}`;
 
@@ -372,24 +372,20 @@ function getUpdatedParams(xyPlotParams, tableModel) {
         newParams = updateSet(newParams, 'x.label', get(xyPlotParams, 'x.columnOrExpr'));
     }
     if (!get(xyPlotParams, 'x.unit')) {
-        const xIdx = getColumnIdx(tableModel, get(xyPlotParams, 'x.columnOrExpr'));
-        if (xIdx >= 0 ) {
-            const xUnit = get(tableModel, `tableData.columns.${xIdx}.units`);
-            if (xUnit) {
-                newParams = updateSet(newParams, 'x.unit', xUnit);
-            }
+        const xColumn = getColumn(tableModel, get(xyPlotParams, 'x.columnOrExpr'));
+        const xUnit = get(xColumn, 'units');
+        if (xUnit) {
+            newParams = updateSet(newParams, 'x.unit', xUnit);
         }
     }
     if (!get(xyPlotParams, 'y.label')) {
         newParams = updateSet(newParams, 'y.label', get(xyPlotParams, 'y.columnOrExpr'));
     }
     if (!get(xyPlotParams, 'y.unit')) {
-        const yIdx = getColumnIdx(tableModel, get(xyPlotParams, 'y.columnOrExpr'));
-        if (yIdx >= 0 ) {
-            const yUnit = get(tableModel, `tableData.columns.${yIdx}.units`);
-            if (yUnit) {
-                newParams = updateSet(newParams, 'y.unit', yUnit);
-            }
+        const yColumn = getColumn(tableModel, get(xyPlotParams, 'y.columnOrExpr'));
+        const yUnit = get(yColumn, 'units');
+        if (yUnit) {
+            newParams = updateSet(newParams, 'y.unit', yUnit);
         }
     }
     if (get(xyPlotParams, 'selection')) {
