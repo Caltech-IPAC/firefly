@@ -3,11 +3,14 @@
  */
 
 import {has, get, isUndefined, omit} from 'lodash';
+import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
 import {updateSet, updateMerge} from '../util/WebUtil.js';
 
 import * as TablesCntlr from '../tables/TablesCntlr.js';
+import {reduceXYPlot} from './XYPlotCntlr.js';
+import {reduceHistogram} from './HistogramCntlr.js';
 
 export const CHART_SPACE_PATH = 'charts';
 export const UI_PREFIX = `${CHART_SPACE_PATH}.ui`;
@@ -62,9 +65,82 @@ export function dispatchDelete(tblId, chartId, chartType, dispatcher= flux.proce
 const uniqueId = (chartId, chartType) => { return `${chartType}|${chartId}`; };
 const isChartType = (uChartId, chartType) => { return uChartId.startsWith(chartType); };
 
+
+/*
+ Possible structure of store:
+  /ui
+    expanded: Object - the information about expanded chart
+    {
+         chartId: string
+         tblId: string
+         chartType: string, ex. 'scatter', 'histogram'
+    }
+  /tbl
+    tblId: Object - the name of this node matches table id
+    {
+        uChartId: Object - the name of this node matches 'chartType|chartId'
+        {
+            mounted: boolean,
+            n: number, undefined means 1
+        }
+    }
+  /xyplot - parameters and data for scatter plot, see XYPlotCntlr
+  /histogram - parameters and data for histogram plot, see HistogramCntlr
+*/
+
+export function reducer(state={ui:{}, tbl: {}, xyplot:{}, histogram:{}}, action={}) {
+
+    if (!action.type.startsWith(TablesCntlr.DATA_PREFIX) && !action.type.startsWith(CHART_SPACE_PATH)){
+        return state;
+    }
+
+    const nstate = {...state};
+
+    nstate.xyplot = reduceXYPlot(state['xyplot'], action);
+    nstate.histogram = reduceHistogram(state['histogram'], action);
+
+    // generic for all chart types
+    nstate.ui = reduceUI(state['ui'], action);
+    // organized by table id
+    nstate.tbl = reduceByTbl(state['tbl'], action);
+
+    if (shallowequal(state, nstate)) {
+        return state;
+    } else {
+        return nstate;
+    }
+}
+
 const chartActions = [CHART_UI_EXPANDED,CHART_MOUNTED,CHART_UNMOUNTED,DELETE];
 
-export function reducer(state={ui:{}}, action={}) {
+/**
+ * @param state - ui part of chart state
+ * @param action - action
+ * @returns {*} - updated ui part of the state
+ */
+function reduceUI(state={}, action={}) {
+    if (chartActions.indexOf(action.type) > -1) {
+        const {chartId, tblId, chartType}  = action.payload;
+        switch (action.type) {
+            case (CHART_UI_EXPANDED) :
+                return updateSet(state, 'expanded', {chartId, tblId, chartType});
+            default:
+                return state;
+        }
+    } else {
+        return state;
+    }
+
+}
+
+
+/**
+ *
+ * @param state - by table part of chart state, stores info which charts are mounted
+ * @param action - action
+ * @returns {*} - new by table part of chart state
+ */
+function reduceByTbl(state={}, action={}) {
     if (action.type === TablesCntlr.TABLE_REMOVE) {
         const {tbl_id} = action.payload;
         if (has(state, tbl_id)) {
@@ -75,44 +151,39 @@ export function reducer(state={ui:{}}, action={}) {
         const {chartId, tblId, chartType}  = action.payload;
         const uChartId = uniqueId(chartId, chartType);
         switch (action.type) {
-
-            case (CHART_UI_EXPANDED) :
-                //return updateSet(root, 'expanded', {chartId, tblId});
-                return updateSet(state, 'ui.expanded', {chartId, tblId, chartType});
             case (CHART_MOUNTED) :
-
-                if (!has(state, ['tbl', tblId])) {
-                    return updateSet(state, ['tbl',tblId], {[uChartId]: {mounted: true}});
+                if (!has(state, tblId)) {
+                    return updateSet(state, tblId, {[uChartId]: {mounted: true}});
                 } else {
-                    if (get(state, ['tbl', tblId, uChartId, 'mounted'])) {
+                    if (get(state, [tblId, uChartId, 'mounted'])) {
                         //other version of the same chart is mounted
-                        let n = get(state, ['tbl', tblId, uChartId, 'n']);
+                        let n = get(state, [tblId, uChartId, 'n']);
                         n = n ? Number(n) : 1;
-                        return updateMerge(state, ['tbl', tblId, uChartId], {upToDate: true, n: n + 1});
+                        return updateMerge(state, [tblId, uChartId], {upToDate: true, n: n + 1});
                     } else {
-                        return updateSet(state, ['tbl', tblId, uChartId], {mounted: true});
+                        return updateSet(state, [tblId, uChartId], {mounted: true});
                     }
                 }
             case (CHART_UNMOUNTED) :
-                if (has(state, ['tbl', tblId])) {
-                    if (get(state, ['tbl', tblId, uChartId, 'mounted'])) {
-                        let n = get(state, ['tbl', tblId, uChartId, 'n']);
+                if (has(state, [tblId])) {
+                    if (get(state, [tblId, uChartId, 'mounted'])) {
+                        let n = get(state, [tblId, uChartId, 'n']);
                         n = n ? Number(n) : 1;
                         if (n > 1) {
                             //multiple versions of the same chart are mounted
-                            return updateMerge(state, ['tbl', tblId, uChartId], {n: n - 1});
+                            return updateMerge(state, [tblId, uChartId], {n: n - 1});
+                        } else {
+                            return updateSet(state, [tblId, uChartId], {mounted: false});
                         }
-                    } else {
-                        return updateSet(state, ['tbl', tblId, uChartId], {mounted: false});
                     }
                 }
                 return state;
             case (DELETE) :
-                if (has(state, ['tbl', tblId, uChartId])) {
-                    if (Object.keys(state['tbl'][tblId]).length > 1) {
-                        return updateSet(state, ['tbl', tblId], omit(state['tbl'][tblId], [uChartId]));
+                if (has(state, [tblId, uChartId])) {
+                    if (Object.keys(state[tblId]).length > 1) {
+                        return updateSet(state, tblId, omit(state[tblId], [uChartId]));
                     } else {
-                        return updateSet(state, 'tbl', omit(state['tbl'], [tblId]));
+                        return Object.assign({}, omit(state, [tblId]));
                     }
                 }
                 return state;
@@ -122,6 +193,7 @@ export function reducer(state={ui:{}}, action={}) {
     } else {
         return state;
     }
+
 }
 
 

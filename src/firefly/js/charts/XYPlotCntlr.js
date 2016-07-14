@@ -13,7 +13,7 @@ import {serializeDecimateInfo} from '../tables/Decimate.js';
 import {logError} from '../util/WebUtil.js';
 import {getDefaultXYPlotParams} from './ChartUtil.js';
 
-export const XYPLOT_DATA_KEY = 'xyplot';
+export const XYPLOT_DATA_KEY = 'charts.xyplot';
 export const LOAD_PLOT_DATA = `${XYPLOT_DATA_KEY}/LOAD_COL_DATA`;
 export const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
 export const SET_SELECTION = `${XYPLOT_DATA_KEY}/SET_SELECTION`;
@@ -186,7 +186,7 @@ function updatePlotData(data) {
     return { type : UPDATE_PLOT_DATA, payload: data };
 }
 
-export function reducer(state={}, action={}) {
+export function reduceXYPlot(state={}, action={}) {
     switch (action.type) {
         case (TablesCntlr.TABLE_REMOVE)  :
         {

@@ -34,7 +34,7 @@ import {DELETE} from './ChartsCntlr.js';
  */
 
 
-export const HISTOGRAM_DATA_KEY = 'histogram';
+export const HISTOGRAM_DATA_KEY = 'charts.histogram';
 export const LOAD_COL_DATA = `${HISTOGRAM_DATA_KEY}/LOAD_COL_DATA`;
 export const UPDATE_COL_DATA = `${HISTOGRAM_DATA_KEY}/UPDATE_COL_DATA`;
 
@@ -110,7 +110,7 @@ function getServerCallParameters(histogramParams) {
     return serverParams;
 }
 
-export function reducer(state={}, action={}) {
+export function reduceHistogram(state={}, action={}) {
     switch (action.type) {
         case (TablesCntlr.TABLE_REMOVE)  :
         {

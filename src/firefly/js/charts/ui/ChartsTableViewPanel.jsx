@@ -24,7 +24,7 @@ import {dispatchChartExpanded, dispatchDelete, dispatchChartMounted, dispatchCha
 
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 
-import {SCATTER, HISTOGRAM, getHighlighted, getTblIdForChartId, numRelatedCharts} from '../ChartUtil.js';
+import {SCATTER, HISTOGRAM, getChartSpace, getHighlighted, getTblIdForChartId, numRelatedCharts} from '../ChartUtil.js';
 import {XYPlotOptions} from './XYPlotOptions.jsx';
 import {XYPlot} from './XYPlot.jsx';
 import {HistogramOptions} from './HistogramOptions.jsx';
@@ -119,7 +119,9 @@ class ChartsPanel extends React.Component {
     componentWillReceiveProps(nextProps) {
         const {tblId, chartId, chartType, tblPlotData, tblHistogramData} = nextProps;
         if (!tblId || !chartId) { return; }
-        if (chartId !== this.props.chartId || chartType !== this.props.chartType || !this.props.tblId) {
+
+        if (chartId !== this.props.chartId || chartType !== this.props.chartType ||
+            (!this.props.tblPlotData && tblPlotData || !this.props.tblHistogramData && tblHistogramData)) {
             dispatchChartUnmounted(this.props.tblId, this.props.chartId, this.props.chartType);
             dispatchChartMounted(tblId,chartId,chartType);
         }
@@ -542,13 +544,13 @@ export class ChartsTableViewPanel extends Component {
     }
 
     getNextState() {
-        var {tblId, chartId, deletable} = this.props;
+        var {tblId, chartId, chartType, deletable} = this.props;
         tblId = tblId || chartId ? getTblIdForChartId(chartId) : TblUtil.getActiveTableId();
         chartId = this.props.chartId || tblId;
         const tableModel = TblUtil.getTblById(tblId);
         const tblStatsData = flux.getState()[TableStatsCntlr.TBLSTATS_DATA_KEY][tblId];
-        const tblHistogramData = chartId ? flux.getState()[HistogramCntlr.HISTOGRAM_DATA_KEY][chartId] : undefined;
-        const tblPlotData = chartId ? flux.getState()[XYPlotCntlr.XYPLOT_DATA_KEY][chartId] : undefined;
+        const tblHistogramData = chartType == HISTOGRAM && chartId ? getChartSpace(HISTOGRAM)[chartId] : undefined;
+        const tblPlotData = chartType == SCATTER && chartId ? getChartSpace(SCATTER)[chartId] : undefined;
         deletable = isBoolean(deletable) ? deletable : numRelatedCharts(tblId) > 1;
         return {chartId, tblId, tableModel, tblStatsData, tblHistogramData, tblPlotData, deletable};
     }
@@ -570,7 +572,8 @@ export class ChartsTableViewPanel extends Component {
 ChartsTableViewPanel.propTypes = {
     tblId: PropTypes.string, // if not present, active table id is used
     chartId: PropTypes.string, // if not present table id is used as a chart id
-    deletable: PropTypes.bool // should the chart be deletable?
+    deletable: PropTypes.bool, // should the chart be deletable?
+    chartType: PropTypes.oneOf(['scatter', 'histogram']).isRequired
 };
 
 export class OptionsWrapper extends React.Component {

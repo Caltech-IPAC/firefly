@@ -94,8 +94,6 @@ const reducers = {
     [IMAGE_PLOT_KEY]: ImagePlotCntlr.reducer,
     [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer,
     [TableStatsCntlr.TBLSTATS_DATA_KEY]: TableStatsCntlr.reducer,
-    [HistogramCntlr.HISTOGRAM_DATA_KEY]: HistogramCntlr.reducer,
-    [XYPlotCntlr.XYPLOT_DATA_KEY]: XYPlotCntlr.reducer,
     [ChartsCntlr.CHART_SPACE_PATH]: ChartsCntlr.reducer,
     [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
     [DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory),
@@ -111,7 +109,7 @@ let redux = null;
 actionCreators.set(AppDataCntlr.APP_LOAD, AppDataCntlr.loadAppData);
 actionCreators.set(AppDataCntlr.GRAB_WINDOW_FOCUS, AppDataCntlr.grabWindowFocus);
 actionCreators.set(AppDataCntlr.HELP_LOAD, AppDataCntlr.onlineHelpLoad);
-actionCreators.set(FieldGroupCntlr.VALUE_CHANGE, FieldGroupCntlr.valueChangeActionCreator);
+actionCreators.set(FieldGroupCntlr.VALUE_CHANGE, valueChangeActionCreator);
 actionCreators.set(FieldGroupCntlr.MULTI_VALUE_CHANGE, multiValueChangeActionCreator);
 actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.extensionActivateActionCreator);
 actionCreators.set(ImagePlotCntlr.PLOT_IMAGE, plotImageActionCreator);

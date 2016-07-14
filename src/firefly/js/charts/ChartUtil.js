@@ -69,9 +69,9 @@ function getExpressionValue(strExpr, tableModel, rowIdx) {
 export function getChartSpace(chartType) {
     switch(chartType) {
         case SCATTER:
-            return flux.getState()[XYPLOT_DATA_KEY];
+            return get(flux.getState(), XYPLOT_DATA_KEY);
         case HISTOGRAM:
-            return flux.getState()[HISTOGRAM_DATA_KEY];
+            return get(flux.getState(), HISTOGRAM_DATA_KEY);
         default:
             logError(`Unknown chart type ${chartType}`);
             return undefined;
@@ -97,9 +97,9 @@ export function getTblIdForChartId(chartId) {
 export function numRelatedCharts(tblId) {
     let numRelated = 0;
     let c;
-    const keys = [XYPLOT_DATA_KEY, HISTOGRAM_DATA_KEY];
+    const keys = [SCATTER, HISTOGRAM];
     keys.forEach( (key) => {
-        const space = flux.getState()[key];
+        const space = getChartSpace(key);
         for (c in space) {
             if (space.hasOwnProperty(c) && space[c].tblId === tblId) {
                 numRelated++;
