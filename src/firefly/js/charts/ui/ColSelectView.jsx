@@ -1,15 +1,15 @@
 /*
  */
 import React from 'react';
-import DialogRootContainer from '../ui/DialogRootContainer.jsx';
-import {PopupPanel} from '../ui/PopupPanel.jsx';
-import {dispatchTableRemove}  from '../tables/TablesCntlr';
+import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
+import {PopupPanel} from '../../ui/PopupPanel.jsx';
+import {dispatchTableRemove}  from '../../tables/TablesCntlr';
 
-import {BasicTable} from '../tables/ui/BasicTable.jsx';
-import {getTblById} from '../tables/TableUtil.js';
-import {dispatchShowDialog} from '../core/ComponentCntlr.js';
-import CompleteButton from '../ui/CompleteButton.jsx';
-import HelpIcon from '../ui/HelpIcon.jsx';
+import {BasicTable} from '../../tables/ui/BasicTable.jsx';
+import {getTblById} from '../../tables/TableUtil.js';
+import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
+import CompleteButton from '../../ui/CompleteButton.jsx';
+//import HelpIcon from '../../ui/HelpIcon.jsx';
 const popupId = 'XYColSelect';
 const TBL_ID ='selectCol';
 
@@ -30,7 +30,7 @@ const tableStyle = {boxSizing: 'border-box', paddingLeft:5,paddingRight:5, width
 //define the complete button
 const closeButtonStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginTop:10, width: '90%'};
 //define the helpButton
-const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginRight: 20};
+//const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginRight: 20};
 
 
 export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonText,currentVal) {

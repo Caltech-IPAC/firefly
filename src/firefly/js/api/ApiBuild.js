@@ -6,9 +6,9 @@ import {isString} from 'lodash';
 import {dispatchOnAppReady} from '../core/AppDataCntlr.js';
 
 // Used for dispatch and action type constants
-import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
-import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
-import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
+import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
+import * as HistogramCntlr from '../charts/HistogramCntlr.js';
+import * as XYPlotCntlr from '../charts/XYPlotCntlr.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import * as ReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
 import * as ImPlotCntlr from '../visualize/ImagePlotCntlr.js';
@@ -33,8 +33,8 @@ import {ExpandedModeDisplay} from '../visualize/iv/ExpandedModeDisplay.jsx';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {TablePanel} from '../tables/ui/TablePanel.jsx';
-import {ChartsContainer} from '../visualize/ChartsContainer.jsx';
-import {ChartsTableViewPanel} from '../visualize/ChartsTableViewPanel.jsx';
+import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
+import {ChartsTableViewPanel} from '../charts/ui/ChartsTableViewPanel.jsx';
 import {PopupMouseReadoutMinimal} from  '../visualize/ui/PopupMouseReadoutMinimal.jsx';
 import {PopupMouseReadoutFull} from  '../visualize/ui/PopupMouseReadoutFull.jsx';
 

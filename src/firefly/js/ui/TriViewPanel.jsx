@@ -10,7 +10,7 @@ import {flux} from '../Firefly.js';
 import {LO_VIEW, LO_MODE, getLayouInfo, dispatchSetLayoutMode} from '../core/LayoutCntlr.js';
 import {ResultsPanel} from '../ui/ResultsPanel.jsx';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
-import {ChartsContainer} from '../visualize/ChartsContainer.jsx';
+import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
 import {VisToolbar} from '../visualize/ui/VisToolbar.jsx';
 import {TriViewImageSection} from '../visualize/ui/TriViewImageSection.jsx';
 

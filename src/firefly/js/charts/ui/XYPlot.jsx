@@ -6,10 +6,9 @@ import shallowequal from 'shallowequal';
 import React, {PropTypes} from 'react';
 import ReactHighcharts from 'react-highcharts/bundle/highcharts';
 
-import {SelectInfo} from '../tables/SelectInfo.js';
-import {parseDecimateKey} from '../tables/Decimate.js';
+import {SelectInfo} from '../../tables/SelectInfo.js';
+import {parseDecimateKey} from '../../tables/Decimate.js';
 
-//import {getFormatString} from '../util/MathUtil.js';
 
 export const axisParamsShape = PropTypes.shape({
     columnOrExpr : PropTypes.string,

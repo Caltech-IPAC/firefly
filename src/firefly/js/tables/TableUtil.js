@@ -145,7 +145,7 @@ export function doFetchTable(tableRequest, hlRowIdx) {
 
     const def = {
         startIdx: 0,
-        pageSize : INT_MAX,
+        pageSize : INT_MAX
     };
     var params = Object.assign(def, tableRequest);
     // encoding for method post
@@ -276,6 +276,13 @@ export function getColumnIdx(tableModel, colName) {
     return cols.findIndex((col) => {
         return col.name === colName;
     });
+}
+
+export function getColumn(tableModel, colName) {
+    const colIdx = getColumnIdx(tableModel, colName);
+    if (colIdx >= 0) {
+        return get(tableModel, `tableData.columns.${colIdx}`);
+    }
 }
 
 export function getActiveTableId(tbl_group='main') {

@@ -11,7 +11,7 @@ import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {SuggestBoxInputField} from './SuggestBoxInputField.jsx';
-import Histogram from '../visualize/Histogram.jsx';
+import Histogram from '../charts/ui/Histogram.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import {dispatchMultiValueChange, dispatchRestoreDefaults} from '../fieldGroup/FieldGroupCntlr.js';
@@ -296,7 +296,7 @@ function FieldGroupTestView ({fields}) {
                     alignment='vertical'
                     initialState= {{
                         tooltip: 'Please select an option',
-                        label: 'Another Group:',
+                        label: 'Another Group:'
                     }}
                     options={[
                         {label: 'Option 2', value: 'opt1'},
@@ -309,7 +309,7 @@ function FieldGroupTestView ({fields}) {
 
                 <ListBoxInputField  initialState= {{
                                           tooltip: 'Please select an option',
-                                          label : 'ListBox Field:',
+                                          label : 'ListBox Field:'
                                       }}
                                     options={
                                           [
