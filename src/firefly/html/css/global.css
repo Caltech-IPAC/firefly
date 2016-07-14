@@ -28,6 +28,7 @@
     border:0 none;
     font-family: tahoma,arial,helvetica,sans-serif;
     font-size: 11px;
+    line-height: 1;
 }
 
 .rootStyle, div.rootStyle>img, div.rootStyle > html {
