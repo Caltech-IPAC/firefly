@@ -255,6 +255,19 @@ export function getTableUiById(tbl_ui_id) {
 }
 
 /**
+ * returns the first table working state for the given tbl_id
+ * @param tbl_id
+ * @returns {*}
+ */
+export function getTableUiByTblId(tbl_id) {
+    const uiRoot = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui'], {});
+    const tbl_ui_id = Object.keys(uiRoot).find( (ui_id) => {
+        return get(uiRoot, [ui_id, 'tbl_id']) === tbl_id;
+    });
+    return tbl_ui_id || uiRoot[tbl_ui_id];
+}
+
+/**
  * get table's expanded information.
  * @returns {object}
  */
@@ -448,12 +461,10 @@ export function getTblInfo(tableModel, aPageSize) {
 
 /**
  *
- * @param columns
- * @param request
- * @param filename
  * @returns {encoded}
  */
-export function getTableSourceUrl(columns, request, filename) {
+export function getTableSourceUrl(tbl_ui_id) {
+    const {columns, request} = getTableUiById(tbl_ui_id) || {};
     const Request = cloneDeep(request);
     const visiCols = columns.filter( (col) => {
                 return isNil(col) || col.visibility === 'show';
@@ -466,7 +477,7 @@ export function getTableSourceUrl(columns, request, filename) {
     Request.startIdx = 0;
     Request.pageSize = Number.MAX_SAFE_INTEGER;
     Reflect.deleteProperty(Request, 'tbl_id');
-    const file_name = filename || Request.file_name;
+    const file_name = Request.file_name;
     return encodeServerUrl(SAVE_TABLE_URL, {file_name, Request: request});
 }
 

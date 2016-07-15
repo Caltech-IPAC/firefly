@@ -89,8 +89,8 @@ export class TablePanel extends Component {
         this.tableConnector.onFilter('');
     }
     saveTable() {
-        const {columns, request} = this.state;
-        download(TblUtil.getTableSourceUrl(columns, request));
+        const {tbl_ui_id} = this.tableConnector;
+        download(TblUtil.getTableSourceUrl(tbl_ui_id));
     }
     toggleOptions() {
         this.tableConnector.onToggleOptions(!this.state.showOptions);
