@@ -188,7 +188,7 @@ export function markerToolMoveActionCreator(rawAction) {
                 wpt = getWorldOrImage(makeImagePt(imageCenter.x + dx, imageCenter.y + dy), cc);
                 move.apt = {x: dx, y: dy, type: ShapeDataObj.UnitType.IMAGE_PIXEL};
                 markerStatus = MarkerStatus.relocate;
-                isHandle = {isOutline: true};
+                isHandle = {isOutline: true, isResize: true};
             }
         }
         // resize (newDize) or relocate (wpt),  status remains the same

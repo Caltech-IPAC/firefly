@@ -187,7 +187,7 @@ export function makeMarker(centerPt, width, height, isHandle, cc, text, textLoc,
     dObj.includeResize = !!(get(dObj, 'isEditable') && isResize && isOutline);
     dObj.includeRotate = !!(get(dObj, 'isRotable') && isRotate && isOutline);
     setHandleIndex(dObj);
-
+    dObj.plotImageId = cc.plotImageId;
     return dObj;
 }
 
@@ -236,6 +236,7 @@ export function makeFootprint(regions, centerPt, isHandle, cc, text, textLoc) {
     dObj.includeResize = !!(get(dObj, 'isEditable') && isResize && isOutline);
     dObj.includeRotate = !!(get(dObj, 'isRotable') && isRotate && isOutline);
     setHandleIndex(dObj);
+    dObj.plotImageId = cc.plotImageId;
     return dObj;
 }
 
@@ -539,31 +540,30 @@ function remakeOutlineBox(drawObj, cc, checkOutline = AllOutline) {
     var {originalOutlineBox:tryOutline} = drawObj;
     var angle = getMarkerAngleInRad(drawObj);
 
-    // try original outline box (the current outline is not 'origina'
+    // try original outline box (the current outline is not 'original)'
     if (checkOutline.includes(OutlineType.original)) {
-        if (!tryOutline) {  // in case no 'original' outlinebox has been created
+        if (!tryOutline && has(drawObj,'regions')) {  // in case no 'original' outlinebox has been created
             var drawObjAry;
 
-            if (has(drawObj, 'regions')) {   // footprint
-                drawObjAry = FootprintFactory.getDrawObjFromOriginalRegion(drawObj.regions, drawObj.pts[0],
-                                    drawObj.regions[0].isInstrument);
-            } else {                        // marker, no rotation involved
-                drawObjAry = drawObj.drawObjAry.slice(0, drawObj.outlineIndex);
-            }
+            drawObjAry = FootprintFactory.getDrawObjFromOriginalRegion(drawObj.regions, drawObj.pts[0],
+                                                                       drawObj.regions[0].isInstrument);
             drawObjAry.forEach( (obj) => obj.isMarker = true);
 
             var {width, height, centerPt, unitType} = getMarkerImageSize(drawObjAry, cc);
-            var w = lengthSizeUnit(cc, width, unitType);
-            var h = lengthSizeUnit(cc, height, unitType);
-            tryOutline = ShapeDataObj.makeRectangleByCenter(centerPt, w.len, h.len, w.unit,
+            //var w = lengthSizeUnit(cc, width, unitType);
+            //var h = lengthSizeUnit(cc, height, unitType);
+
+            var rCenterPt = simpleRotateAroundPt(cc.getImageCoords(centerPt), cc.getImageCoords(drawObj.pts[0]),
+                                                 -angle, Point.IM_PT);
+
+            tryOutline = ShapeDataObj.makeRectangleByCenter(getWorldOrImage(rCenterPt, cc), width, height, unitType,
                                                             0.0, ShapeDataObj.UnitType.ARCSEC, false);
             drawObj.origianlOutlineBox = Object.assign(tryOutline, { outlineType: OutlineType.original,
                                                                      color: HANDLE_COLOR,
                                                                      renderOptions: {lineDash: [8, 5, 2, 5],
                                                                      rotAngle: angle} });
-
         }
-        if (rectCornerInView(tryOutline, cc) > 0) {
+        if (tryOutline && rectCornerInView(tryOutline, cc) > 0) {
             drawObj.originalOutlineBox = null;
             return tryOutline;
         }
@@ -642,8 +642,9 @@ function updateHandle(drawObj, cc, handleList = AllHandle, upgradeOutline = fals
         }
     } else {
         var {width, height, centerPt, unitType} = getMarkerImageSize(collectDrawobjAry(drawObj), cc);
+        var angle = getMarkerAngleInRad(drawObj);
 
-         outlineBox = createOutlineBoxAllSteps(pts[0], centerPt, width, height, unitType, cc);
+         outlineBox = createOutlineBoxAllSteps(pts[0], centerPt, width, height, unitType, cc, angle);
     }
 
     if (!outlineBox) return retval;
@@ -683,6 +684,12 @@ function updateHandle(drawObj, cc, handleList = AllHandle, upgradeOutline = fals
  * @returns {*}
  */
 function createOutlineBoxAllSteps(fpCenter, outlineCenter, width, height, unitType, cc, angle = 0.0, stopAt) {
+
+    if (angle !== 0.0) {  // rotate the center around the footprint center
+        var oCenter  = simpleRotateAroundPt(cc.getImageCoords(outlineCenter),
+                                            cc.getImageCoords(fpCenter), -angle, Point.IM_PT);
+        outlineCenter = getWorldOrImage(oCenter, cc);
+    }
 
     var outlineBox = createOutlineBox(outlineCenter, width, height, unitType, cc, angle);
 
@@ -908,6 +915,11 @@ export function findClosestIndex(screenPt, drawObj, cc) {
     return {index, distance};
 }
 
+/**
+ * update the color based on the setting in def
+ * @param oneDrawObj
+ * @param def
+ */
 function updateColorFromDef(oneDrawObj, def) {
     var {color} = def;
     if (!color) return;
@@ -917,9 +929,64 @@ function updateColorFromDef(oneDrawObj, def) {
         oneDrawObj.drawObjAry.forEach((obj) => obj.color = color);
     }
 }
+
+/**
+ * find the new rotation angle and outline box based on the given plot and region points of other plot
+ * @param drawObj
+ * @param cc
+ */
+function computeRotAngleOnPlot(drawObj, cc) {
+    var crtObjAry = drawObj.drawObjAry.slice(0, drawObj.outlineIndex);
+    var orgObjAry = FootprintFactory.getDrawObjFromOriginalRegion(drawObj.regions, drawObj.pts[0],
+                                                                    drawObj.regions[0].isInstrument);
+    var crtPt = cc.getImageCoords(crtObjAry[0].pts[0]);
+    var orgPt = cc.getImageCoords(orgObjAry[0].pts[0]);
+    var cImg = cc.getImageCoords(drawObj.pts[0]);
+
+    var getRotateAngle = (crtPt, orgPt, cImg) => {
+        var [x_o, y_o, x_c, y_c] = [orgPt.x - cImg.x, orgPt.y - cImg.y, crtPt.x - cImg.x, crtPt.y - cImg.y];
+        var z = (x_o * y_c - y_o * x_c) > 0 ? 1 : -1;
+        var innerProd = (x_o * x_c + y_o * y_c) / (Math.sqrt(x_o * x_o + y_o * y_o) * Math.sqrt(x_c * x_c + y_c * y_c));
+
+        innerProd = innerProd > 1.0 ? 1.0 : innerProd < -1.0 ? -1.0 : innerProd;
+
+        return -Math.acos(innerProd) * z;
+    };
+
+    var angle = getRotateAngle(crtPt, orgPt, cImg);
+
+    drawObj.angle = 0.0;
+
+    // reset the region object to be the original one
+    orgObjAry.forEach( (obj, idx) => {
+        obj.isMarker = true;
+        drawObj.drawObjAry[idx] = obj;
+    });
+
+    // find outline box around the original region objects with the new rotate angle
+    drawObj = Object.assign(drawObj, {angle, angleUnit: ANGLE_UNIT.radian});
+
+    var newOutline = updateHandle(drawObj, cc, [MARKER_HANDLE.outline]);
+
+    if (!isEmpty(newOutline)) {
+        drawObj.drawObjAry[drawObj.outlineIndex] = newOutline[0];
+    }
+
+    // recover the region objects to be the one with the rotation angle
+    crtObjAry.forEach((obj, index) => {
+        if (get(obj, 'isMarker', false)) {
+            drawObj.drawObjAry[index] = obj;
+            if (obj.sType === ShapeDataObj.ShapeType.Rectangle || obj.sType === ShapeDataObj.ShapeType.Ellipse) {
+                set(obj, 'renderOptions.rotAngle', angle);
+            }
+        }
+    });
+
+    drawObj.plotImageId = cc.plotImageId;
+}
 /**
  * draw the object which contains drawObj array
- * @param drawObj
+ * @param drawObjP
  * @param ctx
  * @param drawTextAry
  * @param plot
@@ -927,10 +994,20 @@ function updateColorFromDef(oneDrawObj, def) {
  * @param vpPtM
  * @param onlyAddToPath
  */
-export function drawMarkerObject(drawObj, ctx, drawTextAry, plot, def, vpPtM, onlyAddToPath) {
-    if (has(drawObj, 'drawObjAry')) {
+export function drawMarkerObject(drawObjP, ctx, drawTextAry, plot, def, vpPtM, onlyAddToPath) {
+    if (has(drawObjP, 'drawObjAry')) {
 
         //markerTextOffset(drawObj, plot);
+        //var drawObj = cloneDeep(drawObjP);
+
+        var drawObj = Object.assign({}, drawObjP);
+        drawObj.drawObjAry = drawObjP.drawObjAry.map( (obj) => Object.assign({}, obj) );
+
+        // draw the same objects on multiple plots
+        if (get(drawObj, 'plotImageId') !== plot.plotImageId) {
+            computeRotAngleOnPlot(drawObj, plot);   // chenge footprint object internal plot related numbers
+        }
+
         var newObj = Object.assign({}, drawObj, {drawObjAry: drawObj.drawObjAry.slice(0, drawObj.outlineIndex)});
 
         // add outline box, resize and rotate handle if any is included
@@ -949,7 +1026,7 @@ export function drawMarkerObject(drawObj, ctx, drawTextAry, plot, def, vpPtM, on
             DrawOp.draw(oneDrawObj, ctx, drawTextAry, plot, def, vpPtM, onlyAddToPath);
         });
 
-        drawFootprintText(drawObj, plot, def, drawTextAry);
+        drawFootprintText(newObj, plot, def, drawTextAry);
     }
 }
 
@@ -986,7 +1063,18 @@ function drawFootprintText(drawObj, plot, def, drawTextAry) {
     }
 }
 
+/**
+ * update the footprint outline box once some object is clicked to be selected
+ * @param drawObj
+ * @param cc
+ * @returns {*}
+ */
 export function updateFootprintOutline(drawObj, cc) {
+
+    if (drawObj.plotImageId !== cc.plotImageId) {
+        computeRotAngleOnPlot(drawObj, cc);
+    }
+
     updateOutlineBox(drawObj, cc, true);
 
     return Object.assign({}, drawObj);
@@ -1056,6 +1144,7 @@ export function updateFootprintTranslate(drawObj, cc, apt, isSet = false) {
 export function updateFootprintDrawobjAngle(drawObj, plot, worldPt, angle = 0.0, angleUnit = ANGLE_UNIT.radian,  isSet = false) {
     var newAngle = convertAngle(angleUnit.key, 'radian', angle);
     var deltaAngle;
+
     var crtAngle = getMarkerAngleInRad(drawObj);
 
     // get current angle status
@@ -1241,7 +1330,7 @@ export function updateFootprintDrawobjText(drawObj, text, textLoc) {
 export function toMarkerRegion(drawObj,plot, def) {
     if (!has(drawObj, 'drawObjAry')) return [];
 
-    var dObjs = drawObj.drawObjAry.slice(0, drawObj.outlineIndex-1); // exclude center, outline box, and handles.
+    var dObjs = drawObj.drawObjAry.slice(0, drawObj.outlineIndex); // exclude center, outline box, and handles.
 
     return dObjs.reduce( (prev, dObj) => {
         if (get(dObj, 'isMarker', false)) {      // ignore the drawObj not derived from the defined region

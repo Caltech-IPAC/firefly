@@ -22,7 +22,7 @@ import {clone} from '../util/WebUtil.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {FootprintFactory} from '../visualize/draw/FootprintFactory.js';
 import {makeViewPortPt, makeWorldPt, makeImagePt} from '../visualize/Point.js';
-import {get, set, isArray, has} from 'lodash';
+import {get, set, isArray, has, isNil} from 'lodash';
 import Enum from 'enum';
 
 
@@ -215,7 +215,7 @@ export function footprintMoveActionCreator(rawAction) {
 
             refPt = imagePt;
             footprintStatus = FootprintStatus.relocate;
-            isHandle = {isOutline: true};
+            isHandle = {isOutline: true, isRotate: true};
         }
 
         if (move) {
@@ -297,7 +297,7 @@ function getLayerChanges(drawLayer, action) {
             var {plotIdAry} = action.payload;
 
 
-            if (angleDeg) {
+            if (!isNil(angleDeg)) {
                 return updateFootprintAngle(angleDeg, obj, plotIdAry[0]);
             } else {
                 return updateFootprintText(fpText, fpTextLoc, obj);
@@ -350,16 +350,26 @@ function updateFootprintText(text, textLoc, footprintDrawObj) {
 
 /**
  * set footprint rotate angle
- * @param angleDeg
+ * @param angleDegStr
  * @param footprintDrawObj
  * @param plotId
  * @returns {*}
  */
-function updateFootprintAngle(angleDeg, footprintDrawObj, plotId) {
+function updateFootprintAngle(angleDegStr, footprintDrawObj, plotId) {
     const plot = primePlot(visRoot(), plotId);
     var cc = CsysConverter.make(plot);
+    var angleDeg;
+
+    angleDeg = angleDegStr ? parseFloat(angleDegStr) : 0.0;
+
+    while (angleDeg > 180.0 || angleDeg < -180.0) {
+        angleDeg = angleDeg < 0 ? angleDeg + 360 : angleDeg - 360;
+    }
 
     var angleUpdatedObj = updateFootprintDrawobjAngle(footprintDrawObj, cc, footprintDrawObj.pts[0], angleDeg, ANGLE_UNIT.degree, true);
+    if (angleUpdatedObj) {
+        angleUpdatedObj.angleFromUI = true;
+    }
 
     return angleUpdatedObj ? {drawData: {data: [angleUpdatedObj]}} : {};
 }
@@ -423,6 +433,7 @@ function createFootprintObjs(action, text, textLoc, crtFpObj) {
              } else {
                  footprintObj = updateFootprintDrawobjAngle(crtFpObj, cc, wpt,
                                                             angle, angleUnit);
+                 footprintObj.angleFromUI = false;
              }
          } else {       // start to move or rotate (mouse down) or end the operation (mouse up)
              if (footprintStatus !== FootprintStatus.select ) {
@@ -470,6 +481,7 @@ function centerForRotation(drawObj, wpt) {
     var {outlineIndex, drawObjAry} = drawObj;
     var outlineBox =  (outlineIndex && drawObjAry && drawObjAry.length > outlineIndex ) ? drawObjAry[outlineIndex] : null;
 
+    //return outlineBox.pts[0];
     return (outlineBox && outlineBox.outlineType === OutlineType.plotcenter) ? outlineBox.pts[0] : wpt;
 }
 /**

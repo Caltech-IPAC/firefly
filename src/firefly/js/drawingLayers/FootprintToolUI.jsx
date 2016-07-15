@@ -14,28 +14,30 @@ import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import CoordUtil from '../visualize/CoordUtil.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
-import {isNil, get} from 'lodash';
+import {InputFieldView} from '../ui/InputFieldView.jsx';
+import {isNil, get, isEmpty} from 'lodash';
 import numeral from 'numeral';
+import validator from 'validator';
 
 export const getFootprintToolUIComponent = (drawLayer,pv) => <FootprintToolUI drawLayer={drawLayer} pv={pv}/>;
 export const defaultFootprintTextLoc = TextLocation.REGION_SE;
+
+const precision = '0[.000000]';
 
 class FootprintToolUI extends React.Component {
     constructor(props) {
         super(props);
 
-        var fpText = get(this.props.drawLayer, ['drawData', 'data', '0', 'text'], '');
-        var fpTextLoc = get(this.props.drawLayer, ['drawData', 'data', '0', 'textLoc'], defaultFootprintTextLoc);
-        var angle = get(this.props.drawLayer, ['drawData', 'data', '0', 'angle'], 0.0);
-        var angleUnit = get(this.props.drawLayer, ['drawData', 'data', '0', angleUnit], ANGLE_UNIT.radian);
-        var angleDeg = convertAngle(angleUnit.key, 'deg', angle);
-        var fpInfo = get(this.props.drawLayer, 'fpInfo');
+        var {angle = 0.0, angleUnit = ANGLE_UNIT.radian,
+             text = '', textLoc = defaultFootprintTextLoc} = get(this.props.drawLayer, ['drawData', 'data', '0']) || {};
+
+        var angleDeg = `${formatAngle(convertAngle(angleUnit.key, 'deg', angle))}`;
+        var {fpInfo, currentPt} = this.props.drawLayer;
         const plot= primePlot(visRoot(),this.props.pv.plotId);
-        var {currentPt} = this.props.drawLayer;
 
         this.csys = CsysConverter.make(plot);
-        this.state = {fpText,  fpTextLoc: fpTextLoc.key, angleDeg, fpInfo,
-                      currentPt: this.csys.getWorldCoords(currentPt)};
+        this.state = {fpText: text,  fpTextLoc: textLoc.key, angleDeg, fpInfo,
+                      currentPt: this.csys.getWorldCoords(currentPt), isValidAngle: true};
         this.changeFootprintText = this.changeFootprintText.bind(this);
         this.changeFootprintTextLocation = this.changeFootprintTextLocation.bind(this);
         this.changeFootprintAngle = this.changeFootprintAngle.bind(this);
@@ -63,11 +65,11 @@ class FootprintToolUI extends React.Component {
                 this.setState({currentPt});
             }
 
-            var {angle = 0.0, angleUnit = ANGLE_UNIT.radian} = get(dl, ['drawData', 'data', '0']);
-            var angleDeg = convertAngle(angleUnit.key, 'radian', angle);
+            if (!get(dl, ['drawData', 'data', '0', 'angleFromUI'], false)) {
+                var {angle = 0.0, angleUnit = ANGLE_UNIT.radian} = get(dl, ['drawData', 'data', '0']) || {};
 
-            if (angleDeg !== this.state.angleDeg) {
-                this.setState({angleDeg});
+                angle = convertAngle(angleUnit.key, 'deg', angle);
+                this.setState({angleDeg: `${formatAngle(angle)}`, isValidAngle: true});
             }
         }
     }
@@ -93,9 +95,16 @@ class FootprintToolUI extends React.Component {
 
     changeFootprintAngle(ev) {
         var angleDeg = get(ev, 'target.value');
+        var isValidAngle = true;
 
-        this.setState({angleDeg});
-        dispatchModifyCustomField( this.props.drawLayer.drawLayerId, {angleDeg}, this.props.pv.plotId);
+        if  (isEmpty(angleDeg) || !validator.isFloat(angleDeg)) {
+            if (!angleDeg) angleDeg = '';
+            isValidAngle = false;
+        }
+        this.setState({isValidAngle, angleDeg});
+        if (isValidAngle) {
+            dispatchModifyCustomField(this.props.drawLayer.drawLayerId, {angleDeg}, this.props.pv.plotId);
+        }
     }
 
     render() {
@@ -106,17 +115,18 @@ class FootprintToolUI extends React.Component {
         };
 
         var textOnLink = `Add ${get(this.state.fpInfo, 'footprint')} ${get(this.state.fpInfo, 'instrument')}`;
+        var {isValidAngle, angleDeg, fpText, fpTextLoc} = this.state;
 
         return (
             <div style={{display:'flex', justifyContent:'flex-start', padding:'5px 0 9px 0'}}>
                 <div style={tStyle}>
                     <div> Label:<input style={{width: 60}}
                                        type='text'
-                                       value={this.state.fpText}
+                                       value={fpText}
                                        onChange={this.changeFootprintText}/>
                     </div>
                     <div> Corners:
-                        <select value={this.state.fpTextLoc} onChange={ this.changeFootprintTextLocation }>
+                        <select value={fpTextLoc} onChange={ this.changeFootprintTextLocation }>
                             <option value={TextLocation.REGION_NE.key}> NE </option>
                             <option value={TextLocation.REGION_NW.key}> NW </option>
                             <option value={TextLocation.REGION_SE.key}> SE </option>
@@ -125,11 +135,15 @@ class FootprintToolUI extends React.Component {
                     </div>
                 </div>
                 <div style={tStyle}>
-                    <div> Angle:<input style={{width: 60}}
-                                       type='text'
-                                       value={this.state.angleDeg}
-                                       onChange={this.changeFootprintAngle}/>
-                    </div>
+                    <InputFieldView
+                                valid={isValidAngle}
+                                onChange={this.changeFootprintAngle}
+                                value={angleDeg}
+                                message={'invalid angle value'}
+                                label={'Angle:'}
+                                labelWidth={30}
+
+                    />
                     <div title={textOnLink}>
                         <a className='ff-href' style={{textDecoration: 'underline'}}
                            onClick={()=>addFootprintDrawLayer(this.props.pv, this.state.fpInfo)}>{textOnLink}</a>
@@ -173,6 +187,11 @@ function convertWorldToString(pt) {
     var str = '';
     if (!pt) return str;
 
-    var precision = '0.0000';
     return `${numeral(pt.x).format(precision)} ${numeral(pt.y).format(precision)}`;
+}
+
+function formatAngle(angle) {
+     var anglePre = parseFloat(`${numeral(angle).format(precision)}`);
+
+     return `${anglePre}`;
 }
