@@ -257,11 +257,13 @@ function creator(initPayload) {
         canUserDelete: true,
         destroyWhenAllDetached: true
     };
-    var dl = DrawLayer.makeDrawLayer( get(initPayload, 'drawLayerId', `${ID}-${idCnt}`),
-                                    TYPE_ID, get(initPayload, 'Title', 'Footprint Tool'),
+    var title = get(initPayload, 'Title', 'Footprint Tool');
+    var dl = DrawLayer.makeDrawLayer( get(initPayload, 'drawLayerId', ` ${ID}-${idCnt}`),
+                                    TYPE_ID, title,
                                     options, drawingDef, actionTypes, pairs, exclusiveDef, getCursor);
     dl.regions = get(initPayload, 'regions', null);
     dl.fpInfo = get(initPayload, 'fpInfo', {});
+    dl.defaultTitle = title;
     return dl;
 }
 

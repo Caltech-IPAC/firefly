@@ -65,6 +65,8 @@ function make(sType, style) {
         //obj.textLoc= TextLocation.CIRCLE_SE
         //obj.textOffset= null;   // offsetScreenPt
         //obj.drawObjAry= array of ShapeDataObj
+        //obj.originalOutlineBox  // the 'original' outlinebox, is only recorded if the outline box in
+        //                        // drawObjAry is not the original ('center' or 'plotcenter')
         //obj.isRotable    //rotable
         //obj.isEditable   //resizable
         //obj.isMovable    //movable
@@ -167,8 +169,8 @@ export function makeMarker(centerPt, width, height, isHandle, cc, text, textLoc,
                      textLoc: (isNil(textLoc) ? defaultMarkerTextLoc : textLoc)};
 
     mainCircle.isMarker = true;
-    //dObj = Object.assign(dObj, textProps);
-    mainCircle = Object.assign(mainCircle, textProps);
+    dObj = Object.assign(dObj, textProps);
+    //mainCircle = Object.assign(mainCircle, textProps);
     dObj = Object.assign(dObj, {
         isMovable: true,
         isEditable: true,
@@ -269,7 +271,7 @@ var draw=  {
     usePathOptimization(drawObj,def) {
         // need more investigation
 
-        if (drawObj.sType === MarkerType.marker ) {
+        if (drawObj.sType === MarkerType.Marker ) {
             var dp = makeDrawParams(drawObj, def);
             return dp == Style.STANDARD && (drawObj.sType == MarkerType.Marker);
         } else {
@@ -278,7 +280,7 @@ var draw=  {
     },
 
     getCenterPt(drawObj) {
-        if (drawObj.sType === MarkerType.marker) return drawObj.pts[0];
+        if (drawObj.sType === MarkerType.Marker) return drawObj.pts[0];
 
         var {drawObjAry}= drawObj;
         var xSum = 0;
@@ -542,22 +544,29 @@ function remakeOutlineBox(drawObj, cc, checkOutline = AllOutline) {
 
     // try original outline box (the current outline is not 'original)'
     if (checkOutline.includes(OutlineType.original)) {
-        if (!tryOutline && has(drawObj,'regions')) {  // in case no 'original' outlinebox has been created
-            var drawObjAry;
+        if (!tryOutline) {
+            if (drawObj.sType === MarkerType.Marker) {               // for marker case (assume no rotation)
+                var {radius = 0.0, unitType = ShapeDataObj.ShapeType.ARCSEC} = get(drawObj, ['drawObjAry', '0']) || {};
 
-            drawObjAry = FootprintFactory.getDrawObjFromOriginalRegion(drawObj.regions, drawObj.pts[0],
-                                                                       drawObj.regions[0].isInstrument);
-            drawObjAry.forEach( (obj) => obj.isMarker = true);
+                tryOutline = ShapeDataObj.makeRectangleByCenter(drawObj.pts[0], radius*2, radius*2, unitType,
+                        0.0, ShapeDataObj.UnitType.ARCSEC, false);
+            } else if (!tryOutline && has(drawObj,'regions')) {        // for footprint case
+                var drawObjAry;
 
-            var {width, height, centerPt, unitType} = getMarkerImageSize(drawObjAry, cc);
-            //var w = lengthSizeUnit(cc, width, unitType);
-            //var h = lengthSizeUnit(cc, height, unitType);
+                drawObjAry = FootprintFactory.getDrawObjFromOriginalRegion(drawObj.regions, drawObj.pts[0],
+                    drawObj.regions[0].isInstrument);
+                drawObjAry.forEach((obj) => obj.isMarker = true);
 
-            var rCenterPt = simpleRotateAroundPt(cc.getImageCoords(centerPt), cc.getImageCoords(drawObj.pts[0]),
-                                                 -angle, Point.IM_PT);
+                var {width, height, centerPt, unitType} = getMarkerImageSize(drawObjAry, cc);
+                //var w = lengthSizeUnit(cc, width, unitType);
+                //var h = lengthSizeUnit(cc, height, unitType);
 
-            tryOutline = ShapeDataObj.makeRectangleByCenter(getWorldOrImage(rCenterPt, cc), width, height, unitType,
-                                                            0.0, ShapeDataObj.UnitType.ARCSEC, false);
+                var rCenterPt = simpleRotateAroundPt(cc.getImageCoords(centerPt), cc.getImageCoords(drawObj.pts[0]),
+                    -angle, Point.IM_PT);
+
+                tryOutline = ShapeDataObj.makeRectangleByCenter(getWorldOrImage(rCenterPt, cc), width, height, unitType,
+                    0.0, ShapeDataObj.UnitType.ARCSEC, false);
+            }
             drawObj.origianlOutlineBox = Object.assign(tryOutline, { outlineType: OutlineType.original,
                                                                      color: HANDLE_COLOR,
                                                                      renderOptions: {lineDash: [8, 5, 2, 5],
@@ -1046,9 +1055,10 @@ function drawFootprintText(drawObj, plot, def, drawTextAry) {
     if (isNil(text)) return;
 
     var outlineObj = (drawObj.drawObjAry.length > drawObj.outlineIndex) ?
-                      drawObj.drawObjAry[drawObj.outlineIndex] : null;
+                      drawObj.drawObjAry[drawObj.outlineIndex] :
+                      (updateHandle(drawObj, plot, []))[0];
 
-    if (!outlineObj) return;
+    if (!outlineObj || outlineObj.outlineType === OutlineType.plotcenter) return;
 
     var objArea  = getObjArea(outlineObj, plot); // in image coordinate
 
@@ -1262,10 +1272,7 @@ export function updateMarkerSize(markerObj, cc, newSize) {
         var {size, unitType} = newSize;
         var radius = lengthSizeUnit(cc, Math.min(size[0], size[1])/2, unitType);
 
-        var width = lengthSizeUnit(cc, size[0], unitType);
-        var height = lengthSizeUnit(cc, size[1], unitType);
-
-        newObj = Object.assign(newObj, {width: width.len, height: height.len, unitType: width.unit });
+        newObj = Object.assign(newObj, {width: radius.len, height: radius.len, unitType: radius.unit });
         newObj.drawObjAry = [clone(drawObjAry[0], {radius: radius.len, unitType: radius.unit})];
 
         var outline = updateHandle(newObj, cc, [MARKER_HANDLE.outline]);

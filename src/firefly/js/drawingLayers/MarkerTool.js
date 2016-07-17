@@ -12,7 +12,7 @@ import CsysConverter from '../visualize/CsysConverter.js';
 import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {makeMarker, findClosestIndex,  updateFootprintTranslate, updateMarkerSize,
-        updateMarkerDrawObjText, updateFootprintOutline,
+        updateFootprintDrawobjText, updateFootprintOutline,
         MARKER_DISTANCE, OutlineType} from '../visualize/draw/MarkerFootprintObj.js';
 import {getMarkerToolUIComponent} from './MarkerToolUI.jsx';
 import {getDrawobjArea} from '../visualize/draw/ShapeHighlight.js';
@@ -228,9 +228,13 @@ function creator(initPayload) {
         canUserDelete: true,
         destroyWhenAllDetached: true
     };
-    return  DrawLayer.makeDrawLayer( get(initPayload, 'drawLayerId', `${ID}-${idCnt}`),
-                                    TYPE_ID, get(initPayload, 'Title', 'Marker Tool'),
+
+    var title = get(initPayload, 'Title', 'Marker Tool');
+    var dl = DrawLayer.makeDrawLayer( get(initPayload, 'drawLayerId', `${ID}-${idCnt}`),
+                                    TYPE_ID, title,
                                     options, drawingDef, actionTypes, pairs, exclusiveDef, getCursor);
+    dl.defaultTitle = title;
+    return dl;
 }
 
 
@@ -296,7 +300,8 @@ function getCursor(plotView, screenPt) {
  * @returns {*}
  */
 function updateMarkerText(text, textLoc, markerDrawObj) {
-    var textUpdatedObj = updateMarkerDrawObjText(markerDrawObj[0], text, textLoc);
+    //var textUpdatedObj = updateMarkerDrawObjText(markerDrawObj[0], text, textLoc);
+    var textUpdatedObj = updateFootprintDrawobjText(markerDrawObj[0], text, textLoc);
 
     return textUpdatedObj? {drawData: {data: [textUpdatedObj]}} : {};
 }

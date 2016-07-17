@@ -77,10 +77,15 @@ class FootprintToolUI extends React.Component {
     changeFootprintText(ev) {
         var fpText = get(ev, 'target.value');
 
-        if (isNil(fpText)) fpText = '';
+        if (isNil(fpText) || !fpText) {
+            var dl = getDrawLayerById(flux.getState()[DRAWING_LAYER_KEY], this.props.drawLayer.drawLayerId);
+            fpText = '';
+            this.props.drawLayer.title = get(dl, 'defaultTitle');
+        } else {
+            this.props.drawLayer.title = fpText;
+        }
         this.setState({fpText});
 
-        this.props.drawLayer.title = fpText;
         dispatchModifyCustomField( this.props.drawLayer.drawLayerId,
                     {fpText, fpTextLoc: TextLocation.get(this.state.fpTextLoc)}, this.props.pv.plotId);
     }
@@ -114,18 +119,22 @@ class FootprintToolUI extends React.Component {
             paddingLeft : 10
         };
 
+        const mStyle = {
+            marginTop: 5
+        }
+
         var textOnLink = `Add ${get(this.state.fpInfo, 'footprint')} ${get(this.state.fpInfo, 'instrument')}`;
         var {isValidAngle, angleDeg, fpText, fpTextLoc} = this.state;
 
         return (
             <div style={{display:'flex', justifyContent:'flex-start', padding:'5px 0 9px 0'}}>
                 <div style={tStyle}>
-                    <div> Label:<input style={{width: 60}}
+                    <div title={'Add a lable to this footprint'}> Label:<input style={{width: 60}}
                                        type='text'
                                        value={fpText}
                                        onChange={this.changeFootprintText}/>
                     </div>
-                    <div> Corners:
+                    <div style={mStyle} title={'Choose a corner'}> Corners:
                         <select value={fpTextLoc} onChange={ this.changeFootprintTextLocation }>
                             <option value={TextLocation.REGION_NE.key}> NE </option>
                             <option value={TextLocation.REGION_NW.key}> NW </option>
@@ -142,9 +151,10 @@ class FootprintToolUI extends React.Component {
                                 message={'invalid angle value'}
                                 label={'Angle:'}
                                 labelWidth={30}
+                                tooltip={'Enter the angle you want the footprint rotated'}
 
                     />
-                    <div title={textOnLink}>
+                    <div style={mStyle} title={textOnLink}>
                         <a className='ff-href' style={{textDecoration: 'underline'}}
                            onClick={()=>addFootprintDrawLayer(this.props.pv, this.state.fpInfo)}>{textOnLink}</a>
                     </div>

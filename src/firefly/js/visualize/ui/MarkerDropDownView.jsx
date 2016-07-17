@@ -28,16 +28,18 @@ var getPlotId = (pv) => ( pv ?  pv.plotId : get(visRoot(), 'activePlotId'));
 export function addNewDrawLayer(pv, itemName) {
     if (!has(markerItem, itemName)) return;
     var drawLayerId = `${markerItem[itemName].label}-${idCnt++}`;
+    var title = `Marker #${idCnt}`;
     var plotId = getPlotId(pv);        // pv should be true, otherwise marker is disabled.
 
-    dispatchCreateMarkerLayer(drawLayerId, drawLayerId, plotId, true);
+    dispatchCreateMarkerLayer(drawLayerId, title, plotId, true);
 }
 
 export function addFootprintDrawLayer(pv, {footprint, instrument}) {
     var drawLayerId = `${footprint}` + (instrument ? `_${instrument}` :'') + `_${idCnt++}`;
+    var title = `Footprint #${idCnt}: ${footprint} ` + (instrument ? `${instrument}` :'');
     var plotId =  getPlotId(pv);
 
-    dispatchCreateFootprintLayer(drawLayerId, drawLayerId, footprint, instrument, plotId,  true);
+    dispatchCreateFootprintLayer(drawLayerId, title, footprint, instrument, plotId,  true);
 }
 
 export function MarkerDropDownView({plotView:pv}) {
