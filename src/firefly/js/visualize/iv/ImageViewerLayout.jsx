@@ -287,7 +287,7 @@ function makeMessageArea(pv,plotShowing) {
 function findMouseOwner(dlList, plot, screenPt) {
                     // Step 1
     const exList= dlList.filter((dl) => get(dl,'exclusiveDef.exclusiveOnDown'));
-    if (isEmpty(exList)) return null;
+    if (isEmpty(exList) || ! screenPt) return null;
 
                     // Step 2
     const nowList= exList.filter((dl) => get(dl,'exclusiveDef.type','')==='anywhere');
