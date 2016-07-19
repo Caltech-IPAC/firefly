@@ -51,7 +51,7 @@ export class TableConnector {
             // not implemented yet
         } else {
             const filterInfoCls = FilterInfo.parse(request.filters);
-            const filePath = get(tableModel, 'tableMeta.source');
+            const filePath = get(tableModel, 'tableMeta.tblFilePath');
             if (filePath) {
                 getRowIdFor(filePath, selected).then( (selectedRowIdAry) => {
                     const value = selectedRowIdAry.reduce((rv, val, idx) => {

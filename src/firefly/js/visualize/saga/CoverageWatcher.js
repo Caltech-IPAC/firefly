@@ -189,7 +189,7 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
     const req = Object.assign({}, table.request, params);
     req.tbl_id = tbl_id;
 
-    if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.source===table.tableMeta.source*/) { //todo support decimated data
+    if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.tblFilePath===table.tableMeta.tblFilePath*/) { //todo support decimated data
         updateCoverageWithData(table, options, tbl_id, decimatedTables[tbl_id], decimatedTables);
     }
     else {

@@ -389,14 +389,11 @@ public class IpacTableUtil {
     public static void sendLoadStatusEvents(Map<String,String> meta, File outf, int crows, DataGroupPart.State state) {
         if (meta == null || StringUtils.isEmpty(meta.get("tbl_id"))) return;
 
-        String source = ServerContext.replaceWithPrefix(outf);
         String tblId = String.valueOf( meta.get("tbl_id") );
-
         FluxAction action = new FluxAction("table.update");
         action.setValue(tblId, "tbl_id");
         action.setValue(crows, "totalRows");
         action.setValue(state.name(), "tableMeta", DataGroupPart.LOADING_STATUS);
-        action.setValue(source, "tableMeta", "source");
         ServerEventManager.fireAction(action);
     }
 

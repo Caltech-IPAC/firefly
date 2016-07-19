@@ -69,7 +69,7 @@ export const loadColData = function(rawAction) {
     return (dispatch) => {
 
         const {chartId, histogramParams, tblId} = rawAction.payload;
-        const tblSource = get(getTblById(tblId), 'tableMeta.source');
+        const tblSource = get(getTblById(tblId), 'tableMeta.tblFilePath');
 
         const chartModel = get(getChartSpace(HISTOGRAM), chartId);
         let serverCallNeeded = !chartModel || !chartModel.tblSource || chartModel.tblSource !== tblSource;
@@ -186,7 +186,7 @@ function fetchColData(dispatch, tblId, histogramParams, chartId) {
 
     const activeTableModel = getTblById(tblId);
     const activeTableServerRequest = activeTableModel['request'];
-    const tblSource = get(activeTableModel, 'tableMeta.source');
+    const tblSource = get(activeTableModel, 'tableMeta.tblFilePath');
 
     const sreq = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']),
         {'startIdx' : 0, 'pageSize' : 1000000});

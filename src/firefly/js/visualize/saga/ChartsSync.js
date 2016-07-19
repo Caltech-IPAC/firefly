@@ -93,7 +93,7 @@ export function* syncCharts() {
 
 
 function updateChartDataIfNeeded(tblId, chartId, chartType) {
-    const tblSource = get(TableUtil.getTblById(tblId), 'tableMeta.source');
+    const tblSource = get(TableUtil.getTblById(tblId), 'tableMeta.tblFilePath');
     const chartSpace = getChartSpace(chartType);
     const chartTblSource = get(chartSpace,[chartId,'tblSource']);
     if (tblSource && (!chartTblSource || chartTblSource !== tblSource)) {

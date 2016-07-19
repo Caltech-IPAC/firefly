@@ -36,7 +36,7 @@ public class JsonTableUtil {
      */
     public static JSONObject toJsonTableModel(DataGroupPart page, TableServerRequest request) throws IOException {
 
-        TableDef meta = page.getTableDef();
+        TableDef meta = page.getTableDef().clone();
         if (request != null && request.getMeta() != null) {
             for (String key : request.getMeta().keySet()) {
                 meta.setAttribute(key, request.getMeta(key));

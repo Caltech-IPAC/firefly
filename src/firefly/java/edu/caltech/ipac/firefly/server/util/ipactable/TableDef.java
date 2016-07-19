@@ -124,12 +124,11 @@ public class TableDef {
         if (contains("fileSize")) {
             meta.setFileSize(Long.parseLong(getAttribute("fileSize").getValue()));
         }
-        if (getSource() != null) {
-            meta.setSource(getSource());
-        }
         meta.setIsLoaded(Boolean.parseBoolean(getAttribute("isFullyLoaded").getValue()));
         for (String key : meta.getAttributes().keySet()) {
-            setAttribute(key, meta.getAttribute(key));
+            if (!key.equals("source")) {
+                setAttribute(key, meta.getAttribute(key));
+            }
         }
     }
 
@@ -144,13 +143,22 @@ public class TableDef {
         if (meta.getFileSize() > 0) {
             setAttribute("fileSize", String.valueOf( meta.getFileSize()) );
         }
-        if (meta.getSource() != null) {
-            setSource(meta.getSource());
-        }
         setAttribute("isFullyLoaded", String.valueOf(meta.isLoaded()));
         for (String key : meta.getAttributes().keySet()) {
-            setAttribute(key, meta.getAttribute(key));
+            if (!key.equals("source")) {
+                setAttribute(key, meta.getAttribute(key));
+            }
         }
+    }
+    public TableDef clone() {
+        TableDef copy = new TableDef();
+        copy.cols = new ArrayList<>(cols);
+        copy.attributes = new HashMap<>(attributes);
+        copy.lineWidth = lineWidth;
+        copy.rowCount = rowCount;
+        copy.rowStartOffset = rowStartOffset;
+        copy.lineSepLength = lineSepLength;
+        return copy;
     }
 }
 /*
