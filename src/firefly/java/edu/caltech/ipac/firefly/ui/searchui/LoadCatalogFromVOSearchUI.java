@@ -77,6 +77,7 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
     public void makeServerRequest(final AsyncCallback<ServerRequest> cb) {
 
         final TableServerRequest req = new TableServerRequest("ConeSearchByURL");
+        req.setParam("use", "catalog_overlay");
         req.setParam("title", getSearchTitle());
         req.setSafeParam("accessUrl", accessUrl.getValue());
         req.setParams(targetPanel.getFieldValues());

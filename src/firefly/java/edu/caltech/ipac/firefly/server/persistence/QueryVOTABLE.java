@@ -37,6 +37,9 @@ import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
  */
 public abstract class QueryVOTABLE extends IpacTablePartProcessor {
 
+    public static final String TITLE_KEY = "title";
+    public static final String USE_KEY = "use";
+
     private static final Logger.LoggerImpl _log = Logger.getLogger();
 
 
@@ -81,7 +84,7 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
             File votable = getSearchResult(getQueryString(req), getFilePrefix(req));
             DataGroup[] groups = VoTableUtil.voToDataGroups(votable.getAbsolutePath(), false);
             DataGroup dg;
-            if (groups == null || groups.length<1) {
+            if (groups.length<1) {
                 dg = new DataGroup("empty",new DataType[]{new DataType("empty", String.class)});
                 //throw new EndUserException("cone search query failed", "no results");
             } else {
@@ -89,10 +92,25 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
             }
             DataGroup.Attribute raColAttr = dg.getAttribute("POS_EQ_RA_MAIN");
             DataGroup.Attribute decColAttr = dg.getAttribute("POS_EQ_DEC_MAIN");
+            String use = req.getParam(USE_KEY); // tells how the table will be used - DM-6902
             if (raColAttr != null && decColAttr != null) {
-                TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns((String)raColAttr.getValue(), (String)decColAttr.getValue(), CoordinateSys.EQ_J2000);
+                TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns(raColAttr.getValue(), decColAttr.getValue(), CoordinateSys.EQ_J2000);
                 dg.addAttribute(MetaConst.CENTER_COLUMN, llc.toString());
+
+                if (use != null && use.startsWith("catalog")) {
+                    dg.addAttribute(MetaConst.CATALOG_COORD_COLS, llc.toString());
+                    String title = req.getParam(TITLE_KEY);
+                    dg.addAttribute(MetaConst.CATALOG_OVERLAY_TYPE, title == null ? "VO Catalog" : title);
+                }
             }
+            if (use != null) {
+                if (use.equals("catalog_overlay")) {
+                    dg.addAttribute(MetaConst.DATA_PRIMARY, "False");
+                } else if (use.equals("data_primary") || use.equals("catalog_primary")) {
+                    dg.addAttribute(MetaConst.DATA_PRIMARY, "True");
+                }
+            }
+
             if (dg.getDataDefinitions().length > 0) {
                 String name, desc;
                 for (DataType col : dg.getDataDefinitions()) {
