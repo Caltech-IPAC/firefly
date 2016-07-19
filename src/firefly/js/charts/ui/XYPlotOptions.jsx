@@ -261,7 +261,7 @@ export class XYPlotOptions extends React.Component {
         };
 
         return (
-            <div style={{padding:'7px 5px'}}>
+            <div style={{padding:'0 5px 7px'}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
                     {onOptionsSelected &&
                     <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>

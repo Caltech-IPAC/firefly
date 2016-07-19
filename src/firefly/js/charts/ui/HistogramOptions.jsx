@@ -124,7 +124,7 @@ export class HistogramOptions extends React.Component {
     render() {
         const { colValStats, groupKey, histogramParams, onOptionsSelected}= this.props;
         return (
-            <div style={{padding:'7px 5px'}}>
+            <div style={{padding:'0 5px'}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
                     {onOptionsSelected &&
                     <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>

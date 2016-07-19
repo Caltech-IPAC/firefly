@@ -5,33 +5,24 @@
 import './ChartPanel.css';
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-// import {deepDiff} from '../util/WebUtil.js';
-
 import {get, debounce, defer, isBoolean} from 'lodash';
 import Resizable from 'react-component-resizable';
-
-
 import {flux} from '../../Firefly.js';
 import * as TablesCntlr from '../../tables/TablesCntlr.js';
 import * as TblUtil from '../../tables/TableUtil.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {FilterInfo} from '../../tables/FilterInfo.js';
-
 import * as TableStatsCntlr from '../TableStatsCntlr.js';
 import * as HistogramCntlr from '../HistogramCntlr.js';
 import * as XYPlotCntlr from '../XYPlotCntlr.js';
 import {dispatchChartExpanded, dispatchDelete, dispatchChartMounted, dispatchChartUnmounted} from '../ChartsCntlr.js';
-
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
-
 import {SCATTER, HISTOGRAM, getChartSpace, getHighlighted, getTblIdForChartId, numRelatedCharts} from '../ChartUtil.js';
 import {XYPlotOptions} from './XYPlotOptions.jsx';
 import {XYPlot} from './XYPlot.jsx';
 import {HistogramOptions} from './HistogramOptions.jsx';
 import {Histogram} from './Histogram.jsx';
-
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-
 import DELETE from 'html/images/blue_delete_10x10.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import SETTINGS from 'html/images/icons-2014/24x24_GearsNEW.png';
@@ -42,6 +33,7 @@ import UNSELECT_ROWS from 'html/images/icons-2014/24x24_CheckmarkOff_Circle.png'
 import FILTER_IN from 'html/images/icons-2014/24x24_FilterAdd.png';
 import CLEAR_FILTERS from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
 import LOADING from 'html/images/gxt/loading.gif';
+// import {deepDiff} from '../util/WebUtil.js';
 
 
 class ChartsPanel extends React.Component {
@@ -452,7 +444,8 @@ class ChartsPanel extends React.Component {
         if (optionsShown) {
             return (
                 <div className='ChartPanelOptions'>
-                    <OptionsWrapper  {...{chartId, tableModel, tblStatsData, tblPlotData, tblHistogramData, chartType}}/>
+                    <OptionsWrapper toggleOptions={this.toggleOptions}
+                        {...{chartId, tableModel, tblStatsData, tblPlotData, tblHistogramData, chartType}}/>
                 </div>
             );
         }
@@ -597,37 +590,48 @@ export class OptionsWrapper extends React.Component {
     // }
 
     render() {
-        const { chartId, tableModel, tblStatsData, chartType, tblPlotData, tblHistogramData} = this.props;
+        const { chartId, tableModel, tblStatsData, chartType, tblPlotData, tblHistogramData, toggleOptions} = this.props;
 
-        if (get(tblStatsData,'isColStatsReady')) {
+        var options;
+
+        if (get(tblStatsData, 'isColStatsReady')) {
             const formName = 'ChartOpt_' + chartType + chartId;
             if (chartType === SCATTER) {
-                return (
-                    <XYPlotOptions key={formName} groupKey={formName}
-                                   colValStats={tblStatsData.colStats}
-                                   xyPlotParams={get(tblPlotData, 'xyPlotParams')}
-                                   onOptionsSelected={(xyPlotParams) => {
+                options = (<XYPlotOptions key={formName} groupKey={formName}
+                                          colValStats={tblStatsData.colStats}
+                                          xyPlotParams={get(tblPlotData, 'xyPlotParams')}
+                                          onOptionsSelected={(xyPlotParams) => {
                                                 XYPlotCntlr.dispatchLoadPlotData(chartId, xyPlotParams, tableModel.tbl_id);
                                             }
-                                          }/>
-                );
+                                          }/>);
             } else {
-                return (
-                    <HistogramOptions key={formName} groupKey = {formName}
-                                      colValStats={tblStatsData.colStats}
-                                      histogramParams={get(tblHistogramData, 'histogramParams')}
-                                      onOptionsSelected={(histogramParams) => {
+                options = (<HistogramOptions key={formName} groupKey={formName}
+                                             colValStats={tblStatsData.colStats}
+                                             histogramParams={get(tblHistogramData, 'histogramParams')}
+                                             onOptionsSelected={(histogramParams) => {
                                                 HistogramCntlr.dispatchLoadColData(chartId, histogramParams, tableModel.tbl_id);
                                             }
-                                          }/>
-                );
+                                          }/>);
             }
         } else {
-            return (<img style={{verticalAlign:'top', height: 16, padding: 10, float: 'left'}}
-                         title='Loading Options...'
-                         src={LOADING}
-             />);
+            options = (<img style={{verticalAlign:'top', height: 16, padding: 10, float: 'left'}}
+                            title='Loading Options...'
+                            src={LOADING}/>);
         }
+
+        return (
+            <div>
+                {toggleOptions &&
+                    <div style={{height: 14}}>
+                        <div style={{ right: -6, float: 'right'}}
+                             className='btn-close'
+                             title='Remove Tab'
+                             onClick={() => toggleOptions()}/>
+                    </div>
+                }
+                {options}
+            </div>
+        );
     }
 }
 
@@ -637,6 +641,7 @@ OptionsWrapper.propTypes = {
     tblStatsData : PropTypes.object,
     tblPlotData : PropTypes.object,
     tblHistogramData: PropTypes.object,
+    toggleOptions: PropTypes.func,
     chartType: PropTypes.string
 };
 

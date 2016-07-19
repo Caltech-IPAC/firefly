@@ -137,7 +137,7 @@ export function loadPlotData (rawAction) {
     return (dispatch) => {
         let xyPlotParams = rawAction.payload.xyPlotParams;
         const {chartId, tblId} = rawAction.payload;
-        const tblSource = get(getTblById(tblId), 'tableMeta.source');
+        const tblSource = get(getTblById(tblId), 'tableMeta.tblFilePath');
 
         const chartModel = get(getChartSpace(SCATTER), chartId);
         let serverCallNeeded = !chartModel || !chartModel.tblSource || chartModel.tblSource !== tblSource;
@@ -303,7 +303,7 @@ function fetchPlotData(dispatch, tblId, xyPlotParams, chartId) {
 
     const activeTableModel = getTblById(tblId);
     const activeTableServerRequest = activeTableModel['request'];
-    const tblSource = get(activeTableModel, 'tableMeta.source');
+    const tblSource = get(activeTableModel, 'tableMeta.tblFilePath');
 
     if (!xyPlotParams) { xyPlotParams = getDefaultXYPlotParams(tblId); }
 

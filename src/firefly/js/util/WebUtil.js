@@ -91,6 +91,9 @@ export function decodeParams(queryStr) {
         if (val.includes('&')) {
             val = decodeParams(val);
         }
+        if (isBooleanString(val)) {
+            val = toBoolean(val);
+        }
         rval[parts[0]] = val;
         return rval;
     }, {});
@@ -451,4 +454,14 @@ export function toBoolean(val, def=undefined) {
     return val === undefined ? def :
         typeof val === 'boolean'? val :
         String(val).toLowerCase() === 'true';
+}
+
+/**
+ * return true if val is 'true' or 'fase' case-insensitive
+ * @param val the string value to check.
+ * @returns {*}
+ */
+export function isBooleanString(val) {
+    const s = String(val).toLowerCase();
+    return s === 'true' || s === 'false';
 }

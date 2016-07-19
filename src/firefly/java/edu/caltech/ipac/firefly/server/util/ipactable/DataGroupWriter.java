@@ -80,20 +80,7 @@ public class DataGroupWriter {
 
         writer = new PrintWriter(new BufferedWriter(new FileWriter(this.outf), IpacTableUtil.FILE_IO_BUFFER_SIZE));
 
-        // combine meta with file attributes
         ArrayList<DataGroup.Attribute> attributes = new ArrayList<>(source.getKeywords());
-        if (meta == null) {
-            meta = new HashMap<>(attributes.size());
-        } else {
-            for (String k : meta.keySet()) {
-                attributes.add(new DataGroup.Attribute(k, meta.get(k)));
-            }
-        }
-        for (DataGroup.Attribute at : attributes) {
-            meta.put(at.getKey(), at.getValue());
-        }
-
-
         writeStatus(writer, DataGroupPart.State.INPROGRESS);
         IpacTableUtil.writeAttributes(writer, attributes, DataGroupPart.LOADING_STATUS);
         List<DataType> headers = Arrays.asList(source.getDataDefinitions());
@@ -118,7 +105,9 @@ public class DataGroupWriter {
                 insertStatus(outf, DataGroupPart.State.COMPLETED);
                 writer.flush();
                 writer.close();
-                IpacTableUtil.sendLoadStatusEvents(meta, outf, rowCount, DataGroupPart.State.COMPLETED);
+                if (meta != null) {
+                    IpacTableUtil.sendLoadStatusEvents(meta, outf, rowCount, DataGroupPart.State.COMPLETED);
+                }
             }
         }
     }
@@ -130,8 +119,10 @@ public class DataGroupWriter {
                         while(itr.hasNext()) {
                             DataObject row = itr.next();
                             IpacTableUtil.writeRow(writer, headers, row);
-                            if (++rowCount % 5000 == 0) {
-                                IpacTableUtil.sendLoadStatusEvents(meta, outf, rowCount, DataGroupPart.State.INPROGRESS);
+                            if (meta != null) {
+                                if (++rowCount % 5000 == 0) {
+                                    IpacTableUtil.sendLoadStatusEvents(meta, outf, rowCount, DataGroupPart.State.INPROGRESS);
+                                }
                             }
                         }
                     } finally {
