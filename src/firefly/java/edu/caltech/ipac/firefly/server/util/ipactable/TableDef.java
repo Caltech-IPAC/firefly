@@ -125,9 +125,9 @@ public class TableDef {
             meta.setFileSize(Long.parseLong(getAttribute("fileSize").getValue()));
         }
         meta.setIsLoaded(Boolean.parseBoolean(getAttribute("isFullyLoaded").getValue()));
-        for (String key : meta.getAttributes().keySet()) {
+        for (String key : attributes.keySet()) {
             if (!key.equals("source")) {
-                setAttribute(key, meta.getAttribute(key));
+                meta.setAttribute(key, getAttribute(key).getValue());
             }
         }
     }
