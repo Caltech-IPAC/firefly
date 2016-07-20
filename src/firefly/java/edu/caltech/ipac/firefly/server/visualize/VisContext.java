@@ -16,6 +16,8 @@ import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 /**
  * User: roby
  * Date: Jul 29, 2008
@@ -135,7 +137,35 @@ public class VisContext {
         }
     }
 
+    private static final Map<String, String> footprintMap;
+    static {
+        footprintMap = new HashMap<String, String>();
+        footprintMap.put("HST",         "footprint/Footprint_HST.reg");
+        footprintMap.put("HST_NICMOS",  "footprint/Footprint_HST.reg");
+        footprintMap.put("HST_WFPC2",   "footprint/Footprint_HST.reg");
+        footprintMap.put("HST_ACS/WFC", "footprint/Footprint_HST.reg");
+        footprintMap.put("HST_ACS/HRC", "footprint/Footprint_HST.reg");
+        footprintMap.put("HST_ACS/SBC", "footprint/Footprint_HST.reg");
+        footprintMap.put("HST_WFC3/UVIS","footprint/Footprint_HST.reg");
+        footprintMap.put("HST_WFC3/IR", "footprint/Footprint_HST.reg");
+        footprintMap.put("JWST",        "footprint/Footprint_JWST.reg");
+        footprintMap.put("JWST_FGS",    "footprint/Footprint_JWST.reg");
+        footprintMap.put("JWST_MIRI",   "footprint/Footprint_JWST.reg");
+        footprintMap.put("JWST_NIRCAM", "footprint/Footprint_JWST.reg");
+        footprintMap.put("JWST_NIS",    "footprint/Footprint_JWST.reg");
+        footprintMap.put("JWST_NIRSPEC","footprint/Footprint_JWST.reg");
+        footprintMap.put("SPITZER",     "footprint/Footprint_SPITZER.reg" );
+        footprintMap.put("SPITZER_IRAC36", "footprint/Footprint_SPITZER.reg");
+        footprintMap.put("SPITZER_IRAC45", "footprint/Footprint_SPITZER.reg");
+        footprintMap.put("WFIRST",      "footprint/Footprint_WFIRST.reg");
+    }
 
+    static public void addFootprint(String key, String path) {
+        footprintMap.put(key, path);
+    }
 
+    static public String getFootprint(String key) {
+        return footprintMap.get(key);
+    }
 }
 

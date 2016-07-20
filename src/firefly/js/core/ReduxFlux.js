@@ -39,7 +39,11 @@ import DrawLayerCntlr, {makeDetachLayerActionCreator,
                         markerToolStartActionCreator,
                         markerToolMoveActionCreator,
                         markerToolEndActionCreator,
-                        markerToolCreateLayerActionCreator} from '../visualize/DrawLayerCntlr.js';
+                        markerToolCreateLayerActionCreator,
+                        footprintCreateLayerActionCreator,
+                        footprintStartActionCreator,
+                        footprintMoveActionCreator,
+                        footprintEndActionCreator} from '../visualize/DrawLayerCntlr.js';
 import MultiViewCntlr, {IMAGE_MULTI_VIEW_KEY} from '../visualize/MultiViewCntlr.js';
 import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from '../core/ComponentCntlr.js';
 import {masterSaga} from './MasterSaga.js';
@@ -56,6 +60,7 @@ import WebGrid from '../drawingLayers/WebGrid.js';
 
 import RegionPlot from '../drawingLayers/RegionPlot.js';
 import MarkerTool from '../drawingLayers/MarkerTool.js';
+import FootprintTool from '../drawingLayers/FootprintTool.js';
 import {showExampleDialog} from '../ui/ExampleDialog.jsx';
 
 //==============
@@ -79,7 +84,7 @@ const actionCreators = new Map();
 
 const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,DistanceTool,
                                                      PointSelection, StatsPoint, NorthUpCompass,
-                                                     Catalog, WebGrid, RegionPlot, MarkerTool);
+                                                     Catalog, WebGrid, RegionPlot, MarkerTool, FootprintTool);
 
 
 
@@ -140,6 +145,10 @@ actionCreators.set(DrawLayerCntlr.MARKER_START, markerToolStartActionCreator);
 actionCreators.set(DrawLayerCntlr.MARKER_MOVE, markerToolMoveActionCreator);
 actionCreators.set(DrawLayerCntlr.MARKER_END, markerToolEndActionCreator);
 actionCreators.set(DrawLayerCntlr.MARKER_CREATE, markerToolCreateLayerActionCreator);
+actionCreators.set(DrawLayerCntlr.FOOTPRINT_CREATE, footprintCreateLayerActionCreator);
+actionCreators.set(DrawLayerCntlr.FOOTPRINT_START, footprintStartActionCreator);
+actionCreators.set(DrawLayerCntlr.FOOTPRINT_END, footprintEndActionCreator);
+actionCreators.set(DrawLayerCntlr.FOOTPRINT_MOVE, footprintMoveActionCreator);
 
 actionCreators.set(DrawLayerCntlr.REGION_CREATE_LAYER, regionCreateLayerActionCreator);
 actionCreators.set(DrawLayerCntlr.REGION_DELETE_LAYER, regionDeleteLayerActionCreator);

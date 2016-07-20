@@ -1,7 +1,7 @@
 
 import {makeScreenPt} from '../Point.js';
 import {DrawSymbol} from './PointDataObj.js';
-import {isNil} from 'lodash';
+import {isNil, set} from 'lodash';
 
 
 var FALLBACK_COLOR = 'red';
@@ -10,7 +10,7 @@ export default {getColor, beginPath, stroke, strokeRec, drawLine, drawText, draw
                 drawHandledLine, drawInnerRecWithHandles, rotateAroundScreenPt,
                 drawX, drawSquareX, drawSquare, drawEmpSquareX, drawCross, drawSymbol,
                 drawEmpCross, drawDiamond, drawDot, drawCircle, drawEllipse, drawBoxcircle,
-                drawArrow, clear,clearCanvas, fillRec};
+                drawArrow, drawRotate, clear,clearCanvas, fillRec};
 
 function drawHandledLine(ctx, color, sx, sy, ex, ey, onlyAddToPath= false) {
     var slope= NaN;
@@ -379,6 +379,42 @@ function drawArrow(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
 }
 
 /**
+ * draw rotate symbol in the western location
+ * @param ctx
+ * @param x   (x, y) point to the end of the bar of rotate symbol
+ * @param y
+ * @param color
+ * @param size
+ * @param renderOptions
+ * @param onlyAddToPath
+ * @morePt
+ */
+function drawRotate(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
+    var r = size/4;
+    var aoff = (r/2 < 1) ? 1 : r/2;
+    var xc = 3*r;
+    var yc = 0;
+
+    if (renderOptions) {
+        set(renderOptions, 'translation', {x, y});
+    }
+
+    if (!onlyAddToPath) beginPath(ctx, color, 1, renderOptions);
+    //ctx.translate(x, y);
+    ctx.arc(xc, yc, r, 0, 2*Math.PI);
+    ctx.moveTo(xc+r, yc);
+    ctx.lineTo(xc+r+aoff-1, yc-aoff-1);
+    ctx.moveTo(xc+r, yc);
+    ctx.lineTo(xc+r-aoff-1, yc-aoff+1);
+    ctx.moveTo(xc, yc);
+    ctx.lineTo(0, 0);
+    ctx.moveTo(0, 0);
+    ctx.arc(0, yc, 1, 0, 2*Math.PI);
+    //ctx.moveTo(yc-2*r, 0);
+    //ctx.rect(0, yc-2*r, size, size);
+    if (!onlyAddToPath) stroke(ctx);
+}
+/**
  *
  * @param ctx
  * @param x: center
@@ -432,6 +468,9 @@ function drawSymbol(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
             break;
         case DrawSymbol.ARROW :
             drawArrow(ctx, x, y, color, size, renderOptions, onlyAddToPath);
+            break;
+        case DrawSymbol.ROTATE :
+            drawRotate(ctx, x, y, color, size, renderOptions, onlyAddToPath);
             break;
         default :
             break;

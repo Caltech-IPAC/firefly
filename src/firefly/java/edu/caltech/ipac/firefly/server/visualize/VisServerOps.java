@@ -55,8 +55,11 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.IndexColorModel;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
@@ -71,6 +74,7 @@ import java.util.stream.Collectors;
 import static edu.caltech.ipac.firefly.visualize.Band.NO_BAND;
 import static edu.caltech.ipac.visualize.draw.AreaStatisticsUtil.WhichReadout.LEFT;
 import static edu.caltech.ipac.visualize.draw.AreaStatisticsUtil.WhichReadout.RIGHT;
+
 
 /**
  * User: roby
@@ -1434,9 +1438,46 @@ public class VisServerOps {
             retval = createError("on getDSRegion", null, e);
         }
         return retval;
-
     }
 
+
+    public static WebPlotResult getFootprintRegion(String fpInfo) {
+
+        List<String> rAsStrList =  new ArrayList<String>();
+        List<String> msgList =  new ArrayList<String>();
+        WebPlotResult retval = new WebPlotResult();
+        String fileName;
+
+        if ((fileName = (String)VisContext.getFootprint(fpInfo)) != null) {
+            int idx = fpInfo.indexOf('_');
+
+            String tag = idx >= 0 ? fpInfo.substring(idx + 1) : fpInfo;
+
+            try {
+                InputStream in = VisServerOps.class.getClassLoader().getResourceAsStream(fileName);
+                BufferedReader br = new BufferedReader(new InputStreamReader(in));
+                String tmpLine;
+
+                while ((tmpLine = br.readLine()) != null) {
+                    tmpLine = tmpLine.trim();
+                    if (!tmpLine.startsWith("#") && (tmpLine.contains("tag={" + tag)))
+                        rAsStrList.add(tmpLine);
+                }
+                if (rAsStrList.size() == 0) {
+                    msgList.add("no region is defined in the footprint file");
+                }
+            } catch (Exception e) {
+                retval = createError("on getFootprintRegion", null, e);
+            }
+        } else {
+            msgList.add("no footprint description file is found");
+        }
+        retval.putResult(WebPlotResult.REGION_DATA,
+                new DataEntry.Str(StringUtils.combineStringList(rAsStrList)));
+        retval.putResult(WebPlotResult.REGION_ERRORS,
+                new DataEntry.Str(StringUtils.combineStringList(msgList)));
+        return retval;
+    }
 
     public static synchronized boolean addSavedRequest(String saveKey, WebPlotRequest request) {
         Cache cache = UserCache.getInstance();

@@ -14,11 +14,13 @@ import {RegionType} from './Region.js';
 import {get} from 'lodash';
 
 
-export function getRegionArea(region) {
+export function getRegionArea(region, cc) {
     var rCover = null;
-    var plotId = get(visRoot(), 'activePlotId');
-    var plot =   primePlot(visRoot(),plotId);
-    var cc = CysConverter.make(plot);
+    if (!cc) {
+        var plotId = get(visRoot(), 'activePlotId');
+        var plot = primePlot(visRoot(), plotId);
+        cc = CysConverter.make(plot);
+    }
 
     if (region.type === RegionType.polygon) {
         rCover = getRegionLinesArea(region.wpAry, cc);
