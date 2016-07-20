@@ -4,7 +4,7 @@
 import DrawLayerCntlr, {dlRoot, dispatchAttachLayerToPlot,
                         dispatchCreateDrawLayer, getDlAry} from '../visualize/DrawLayerCntlr.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
-import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
+import {makeDrawingDef, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
@@ -12,7 +12,7 @@ import CsysConverter from '../visualize/CsysConverter.js';
 import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {MARKER_DISTANCE, ANGLE_UNIT, ROTATE_BOX, OutlineType, findClosestIndex, makeFootprint,
-        updateFootprintDrawobjAngle, updateFootprintDrawobjText,
+        lengthSizeUnit, updateFootprintDrawobjAngle, updateFootprintDrawobjText,
         updateFootprintTranslate, updateFootprintOutline} from '../visualize/draw/MarkerFootprintObj.js';
 import {markerInterval, getCC, getWorldOrImage, cancelTimeoutProcess,} from './MarkerTool.js';
 import {getFootprintToolUIComponent} from './FootprintToolUI.jsx';
@@ -50,7 +50,7 @@ export function footprintCreateLayerActionCreator(rawAction) {
         if (footprint)  {
             var footprintDef = '${footprintDef}' + `${footprint}${instrument? '_'+instrument : ''}`;
             var isInstrument = !!instrument;
-            var fpInfo = { footprint, instrument };
+            var fpInfo = { footprint, instrument};
 
             getDS9Region(footprintDef).then((result) => {
                 if (has(result, 'RegionData') && result.RegionData.length > 0) {
@@ -211,7 +211,9 @@ export function footprintMoveActionCreator(rawAction) {
             var imageCenter = cc.getImageCoords(wpt);
 
             wpt = getWorldOrImage(makeImagePt(imageCenter.x + deltaX, imageCenter.y + deltaY), cc);
-            move.apt = {x: deltaX, y: deltaY, type: ShapeDataObj.UnitType.IMAGE_PIXEL};
+            deltaX = lengthSizeUnit(cc, deltaX, ShapeDataObj.UnitType.IMAGE_PIXEL);
+            deltaY = lengthSizeUnit(cc, deltaY, ShapeDataObj.UnitType.IMAGE_PIXEL);
+            move.apt = {x: deltaX.len, y: deltaY.len, type: deltaX.unit};
 
             refPt = imagePt;
             footprintStatus = FootprintStatus.relocate;
@@ -287,8 +289,14 @@ function getLayerChanges(drawLayer, action) {
         case DrawLayerCntlr.FOOTPRINT_MOVE:
         case DrawLayerCntlr.FOOTPRINT_END:
             var data = get(dd, [DataTypes.DATA, '0']);
-            var {text, textLoc} = data || {};
+            var {text = '', textLoc = TextLocation.REGION_SE} = data || {};
             var crtFpObj = data || null;
+            var {footprintStatus} = action.payload;
+
+            if (footprintStatus === FootprintStatus.attached ||
+                footprintStatus === FootprintStatus.attached_relocate) {
+                text = get(drawLayer, 'title', '');    // title is the default text by the footprint
+            }
 
             return createFootprintObjs(action, text, textLoc, crtFpObj);
 
@@ -503,13 +511,15 @@ function getVertexDistance( footprintObj, cc) {
 
         w = lengthToScreenPixel(width, cc, ShapeDataObj.UnitType.IMAGE_PIXEL) / 2;
         h = lengthToScreenPixel(height, cc, ShapeDataObj.UnitType.IMAGE_PIXEL) / 2;
+        dist = ROTATE_BOX;
         centerPt = getWorldOrImage(center, cc);
     } else {
         w = cc.viewPort.dim.width/2;
         h = cc.viewPort.dim.height/2;
         centerPt = getWorldOrImage(makeViewPortPt(w, h), cc);
+        dist = 0;
     }
-    dist = Math.sqrt(Math.pow(w, 2) + Math.pow(h, 2)) + ROTATE_BOX*2;
+    dist += Math.sqrt(Math.pow(w, 2) + Math.pow(h, 2));
 
     return {dist, centerPt};
 }

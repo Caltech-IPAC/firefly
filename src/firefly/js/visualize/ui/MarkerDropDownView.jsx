@@ -11,10 +11,11 @@ import {visRoot} from '../ImagePlotCntlr.js';
 import {FootprintFactory, FootprintList} from '../draw/FootprintFactory.js';
 import {has, get} from 'lodash';
 
-var idCnt=0;
+var idCntM = 0;
+var idCntF = 0;
 
 const markerItem = {
-    marker: {label: 'Marker'}     // TODO: add more items for footprint cases
+    marker: {label: 'Marker'}     // TODO: add more items for marker
 };
 
 function displayItemText(itemName) {
@@ -27,16 +28,16 @@ var getPlotId = (pv) => ( pv ?  pv.plotId : get(visRoot(), 'activePlotId'));
 
 export function addNewDrawLayer(pv, itemName) {
     if (!has(markerItem, itemName)) return;
-    var drawLayerId = `${markerItem[itemName].label}-${idCnt++}`;
-    var title = `Marker #${idCnt}`;
+    var drawLayerId = `${markerItem[itemName].label}-${idCntM++}`;
+    var title = `Marker #${idCntM}`;
     var plotId = getPlotId(pv);        // pv should be true, otherwise marker is disabled.
 
     dispatchCreateMarkerLayer(drawLayerId, title, plotId, true);
 }
 
 export function addFootprintDrawLayer(pv, {footprint, instrument}) {
-    var drawLayerId = `${footprint}` + (instrument ? `_${instrument}` :'') + `_${idCnt++}`;
-    var title = `Footprint #${idCnt}: ${footprint} ` + (instrument ? `${instrument}` :'');
+    var drawLayerId = `${footprint}` + (instrument ? `_${instrument}` :'') + `_${idCntF++}`;
+    var title = `Footprint: ${footprint} ` + (instrument ? `${instrument}` :'');
     var plotId =  getPlotId(pv);
 
     dispatchCreateFootprintLayer(drawLayerId, title, footprint, instrument, plotId,  true);

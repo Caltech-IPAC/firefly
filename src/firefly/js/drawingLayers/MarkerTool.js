@@ -4,7 +4,7 @@
 import DrawLayerCntlr, {dlRoot, dispatchAttachLayerToPlot,
                         dispatchCreateDrawLayer, getDlAry} from '../visualize/DrawLayerCntlr.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
-import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
+import {makeDrawingDef, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
@@ -12,7 +12,7 @@ import CsysConverter from '../visualize/CsysConverter.js';
 import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {makeMarker, findClosestIndex,  updateFootprintTranslate, updateMarkerSize,
-        updateFootprintDrawobjText, updateFootprintOutline,
+        updateFootprintDrawobjText, updateFootprintOutline,  lengthSizeUnit,
         MARKER_DISTANCE, OutlineType} from '../visualize/draw/MarkerFootprintObj.js';
 import {getMarkerToolUIComponent} from './MarkerToolUI.jsx';
 import {getDrawobjArea} from '../visualize/draw/ShapeHighlight.js';
@@ -186,7 +186,11 @@ export function markerToolMoveActionCreator(rawAction) {
                 dy = imagePt.y - refPt.y;
                 refPt = imagePt;
                 wpt = getWorldOrImage(makeImagePt(imageCenter.x + dx, imageCenter.y + dy), cc);
-                move.apt = {x: dx, y: dy, type: ShapeDataObj.UnitType.IMAGE_PIXEL};
+
+                dx = lengthSizeUnit(cc, dx, ShapeDataObj.UnitType.IMAGE_PIXEL);
+                dy = lengthSizeUnit(cc, dy, ShapeDataObj.UnitType.IMAGE_PIXEL);
+                move.apt = {x: dx.len, y: dy.len, type: dx.unit};
+
                 markerStatus = MarkerStatus.relocate;
                 isHandle = {isOutline: true, isResize: true};
             }
@@ -256,8 +260,14 @@ function getLayerChanges(drawLayer, action) {
         case DrawLayerCntlr.MARKER_MOVE:
         case DrawLayerCntlr.MARKER_END:
             var data = get(dd, [DataTypes.DATA, '0']);
-            var {text, textLoc} = data || {};
+            var {text = '', textLoc = TextLocation.REGION_SE} = data || {};
             var crtMarkerObj = data || null;
+            var {markerStatus} = action.payload;
+
+            if (markerStatus === MarkerStatus.attached ||
+                markerStatus === MarkerStatus.attached_relocate) {
+                text = get(drawLayer, 'title', '');    // title is the default text by the footprint
+            }
 
             return createMarkerObjs(action, text, textLoc, crtMarkerObj);
 

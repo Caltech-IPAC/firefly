@@ -75,6 +75,7 @@ import static edu.caltech.ipac.firefly.visualize.Band.NO_BAND;
 import static edu.caltech.ipac.visualize.draw.AreaStatisticsUtil.WhichReadout.LEFT;
 import static edu.caltech.ipac.visualize.draw.AreaStatisticsUtil.WhichReadout.RIGHT;
 
+
 /**
  * User: roby
  * Date: Aug 7, 2008
@@ -1439,40 +1440,18 @@ public class VisServerOps {
         return retval;
     }
 
-    private static final Map<String, String> footprintMap;
-    static {
-        footprintMap = new HashMap<String, String>();
-        footprintMap.put("HST",         "Footprint_HST.reg");
-        footprintMap.put("HST_NICMOS",  "Footprint_HST.reg");
-        footprintMap.put("HST_WFPC2",   "Footprint_HST.reg");
-        footprintMap.put("HST_ACS/WFC", "Footprint_HST.reg");
-        footprintMap.put("HST_ACS/HRC", "Footprint_HST.reg");
-        footprintMap.put("HST_ACS/SBC", "Footprint_HST.reg");
-        footprintMap.put("HST_WFC3/UVIS","Footprint_HST.reg");
-        footprintMap.put("HST_WFC3/IR", "Footprint_HST.reg");
-        footprintMap.put("JWST",        "Footprint_JWST.reg");
-        footprintMap.put("JWST_FGS",    "Footprint_JWST.reg");
-        footprintMap.put("JWST_MIRI",   "Footprint_JWST.reg");
-        footprintMap.put("JWST_NIRCAM", "Footprint_JWST.reg");
-        footprintMap.put("JWST_NIS",    "Footprint_JWST.reg");
-        footprintMap.put("JWST_NIRSPEC","Footprint_JWST.reg");
-        footprintMap.put("SPITZER",     "Footprint_SPITZER.reg" );
-        footprintMap.put("SPITZER_IRAC36", "Footprint_SPITZER.reg");
-        footprintMap.put("SPITZER_IRAC45", "Footprint_SPITZER.reg");
-        footprintMap.put("WFIRST",      "Footprint_WFIRST.reg");
-    }
 
     public static WebPlotResult getFootprintRegion(String fpInfo) {
 
         List<String> rAsStrList =  new ArrayList<String>();
         List<String> msgList =  new ArrayList<String>();
         WebPlotResult retval = new WebPlotResult();
+        String fileName;
 
-        if (footprintMap.containsKey(fpInfo)) {
+        if ((fileName = (String)VisContext.getFootprint(fpInfo)) != null) {
             int idx = fpInfo.indexOf('_');
 
             String tag = idx >= 0 ? fpInfo.substring(idx + 1) : fpInfo;
-            String fileName = "edu/caltech/ipac/visualize/resources/" + footprintMap.get(fpInfo);
 
             try {
                 InputStream in = VisServerOps.class.getClassLoader().getResourceAsStream(fileName);
@@ -1490,6 +1469,8 @@ public class VisServerOps {
             } catch (Exception e) {
                 retval = createError("on getFootprintRegion", null, e);
             }
+        } else {
+            msgList.add("no footprint description file is found");
         }
         retval.putResult(WebPlotResult.REGION_DATA,
                 new DataEntry.Str(StringUtils.combineStringList(rAsStrList)));

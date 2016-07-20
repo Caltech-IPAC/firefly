@@ -1125,13 +1125,13 @@ function makeTextLocationEllipse(plot, textLoc, fontSize, centerPt, radius1, rad
  */
 export function makeTextLocationComposite(cc, textLoc, fontSize, width, height, centerPt, lineWidth = 1) {
     var w = width/2;
-    var h = height/2;
+    var h = height/2 + lineWidth + 2;   // leave space for highlight box
     var scrCenterPt = cc.getScreenCoords(centerPt);
 
     if (!scrCenterPt || width < 1 || height < 1) return null;
 
     var opt;
-    var offy = fontHeight(fontSize) + lineWidth;
+    var offy = fontHeight(fontSize);
 
     switch (textLoc) {
         case TextLocation.REGION_NE:

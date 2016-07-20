@@ -88,7 +88,7 @@ const screenUnit = ShapeDataObj.UnitType.PIXEL;
  * @param unitType
  * @returns {{length: *, unit: *}}
  */
-function lengthSizeUnit(cc, size, unitType) {
+export function lengthSizeUnit(cc, size, unitType) {
     var len, unit;
 
     if (cc.projection.isSpecified()) {
@@ -341,7 +341,7 @@ export default {
 };
 
 
-var getMarkerAngleInRad = (obj) => {
+export var getMarkerAngleInRad = (obj) => {
     var {angle = 0.0, angleUnit = ANGLE_UNIT.radian} = obj;
 
     return convertAngle(angleUnit.key, 'radian', angle);
@@ -945,9 +945,15 @@ function updateColorFromDef(oneDrawObj, def) {
  * @param cc
  */
 function computeRotAngleOnPlot(drawObj, cc) {
+    if (!get(drawObj, 'isRotable', false)) {
+        drawObj.plotImageId = cc.plotImageId;
+        return;
+    }
+
     var crtObjAry = drawObj.drawObjAry.slice(0, drawObj.outlineIndex);
     var orgObjAry = FootprintFactory.getDrawObjFromOriginalRegion(drawObj.regions, drawObj.pts[0],
-                                                                    drawObj.regions[0].isInstrument);
+        drawObj.regions[0].isInstrument);
+
     var crtPt = cc.getImageCoords(crtObjAry[0].pts[0]);
     var orgPt = cc.getImageCoords(orgObjAry[0].pts[0]);
     var cImg = cc.getImageCoords(drawObj.pts[0]);
@@ -1013,7 +1019,7 @@ export function drawMarkerObject(drawObjP, ctx, drawTextAry, plot, def, vpPtM, o
         drawObj.drawObjAry = drawObjP.drawObjAry.map( (obj) => Object.assign({}, obj) );
 
         // draw the same objects on multiple plots
-        if (get(drawObj, 'plotImageId') !== plot.plotImageId) {
+        if (get(drawObj, 'plotImageId') !== plot.plotImageId && get(drawObj, 'isRotable', false)) {
             computeRotAngleOnPlot(drawObj, plot);   // chenge footprint object internal plot related numbers
         }
 
@@ -1058,7 +1064,9 @@ function drawFootprintText(drawObj, plot, def, drawTextAry) {
                       drawObj.drawObjAry[drawObj.outlineIndex] :
                       (updateHandle(drawObj, plot, []))[0];
 
-    if (!outlineObj || outlineObj.outlineType === OutlineType.plotcenter) return;
+   // if (!outlineObj || outlineObj.outlineType === OutlineType.plotcenter) return;
+
+    if (!outlineObj) return;
 
     var objArea  = getObjArea(outlineObj, plot); // in image coordinate
 

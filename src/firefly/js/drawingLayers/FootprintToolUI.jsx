@@ -22,7 +22,7 @@ import validator from 'validator';
 export const getFootprintToolUIComponent = (drawLayer,pv) => <FootprintToolUI drawLayer={drawLayer} pv={pv}/>;
 export const defaultFootprintTextLoc = TextLocation.REGION_SE;
 
-const precision = '0[.000000]';
+const precision = '0.0';
 
 class FootprintToolUI extends React.Component {
     constructor(props) {
@@ -79,7 +79,7 @@ class FootprintToolUI extends React.Component {
 
         if (isNil(fpText) || !fpText) {
             var dl = getDrawLayerById(flux.getState()[DRAWING_LAYER_KEY], this.props.drawLayer.drawLayerId);
-            fpText = '';
+            fpText = get(dl, '');
             this.props.drawLayer.title = get(dl, 'defaultTitle');
         } else {
             this.props.drawLayer.title = fpText;
@@ -121,7 +121,7 @@ class FootprintToolUI extends React.Component {
 
         const mStyle = {
             marginTop: 5
-        }
+        };
 
         var textOnLink = `Add ${get(this.state.fpInfo, 'footprint')} ${get(this.state.fpInfo, 'instrument')}`;
         var {isValidAngle, angleDeg, fpText, fpTextLoc} = this.state;
@@ -151,7 +151,8 @@ class FootprintToolUI extends React.Component {
                                 message={'invalid angle value'}
                                 label={'Angle:'}
                                 labelWidth={30}
-                                tooltip={'Enter the angle you want the footprint rotated'}
+                                style={{width: 50}}
+                                tooltip={'Enter the angle in degree you want the footprint rotated'}
 
                     />
                     <div style={mStyle} title={textOnLink}>
@@ -159,11 +160,11 @@ class FootprintToolUI extends React.Component {
                            onClick={()=>addFootprintDrawLayer(this.props.pv, this.state.fpInfo)}>{textOnLink}</a>
                     </div>
                 </div>
-                <div style={{display:'flex', justifyContent: 'flex-start'}}>
-                    <div style={{width:30, paddingLeft:10}}> Center:</div>
+                <div style={{display:'flex', justifyContent: 'flex-start', paddingLeft:10}}>
+                    <div> Center:</div>
                     <div style={tStyle}>
-                        {convertWorldLonToString(this.state.currentPt, this.csys)}
-                        {convertWorldLatToString(this.state.currentPt, this.csys)}
+                        {convertWorldLonToString(this.state.currentPt, this.csys) + ', ' +
+                         convertWorldLatToString(this.state.currentPt, this.csys)}
                         {convertWorldToString(this.state.currentPt, this.csys)}
                     </div>
                 </div>
@@ -197,7 +198,7 @@ function convertWorldToString(pt) {
     var str = '';
     if (!pt) return str;
 
-    return `${numeral(pt.x).format(precision)} ${numeral(pt.y).format(precision)}`;
+    return `${numeral(pt.x).format(precision)}, ${numeral(pt.y).format(precision)}`;
 }
 
 function formatAngle(angle) {

@@ -1,9 +1,10 @@
 rootProject.name = 'firefly_root'
 
-include 'simbad', 'xstream', 'firefly', 'fftools'
+include 'simbad', 'xstream', 'firefly', 'fftools', 'firefly_data'
 
 project(":simbad").projectDir   = file('src/external/simbad')
 project(":xstream").projectDir  = file('src/external/xstream')
 project(":firefly").projectDir  = file('src/firefly')
 project(":fftools").projectDir  = file('src/fftools')
+project(":firefly_data").projectDir = file('src/firefly_data')
 
