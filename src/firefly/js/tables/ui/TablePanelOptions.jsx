@@ -50,7 +50,7 @@ export class TablePanelOptions extends React.Component {
                         </div>
                     </div>
                     <div style={{display: 'inline-block'}}>
-                        <div style={{float: 'left'}}>
+                        <div style={{marginTop: 17}}>
                             <InputField
                                 validator={intValidator(1,10000)}
                                 tooltip='Set page size'
@@ -66,6 +66,7 @@ export class TablePanelOptions extends React.Component {
                     <span>
                         <div style={{ position: 'relative',
                                       display: 'block',
+                                      height: 16,
                                       right: -42,
                                       top: -4}}
                              className='btn-close'

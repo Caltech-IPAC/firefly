@@ -468,13 +468,13 @@ export function getTableSourceUrl(columns, request, filename) {
                 return col.name;
             } );
     if (visiCols.length !== columns.length) {
-        request['inclCols'] = visiCols.toString();
+        Request['inclCols'] = visiCols.toString();
     }
     Request.startIdx = 0;
     Request.pageSize = Number.MAX_SAFE_INTEGER;
     Reflect.deleteProperty(Request, 'tbl_id');
     const file_name = filename || Request.file_name;
-    return encodeServerUrl(SAVE_TABLE_URL, {file_name, Request: request});
+    return encodeServerUrl(SAVE_TABLE_URL, {file_name, Request});
 }
 
 /**
