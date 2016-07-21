@@ -1,4 +1,5 @@
 
+import {isString} from 'lodash';
 import CoordinateSys from './CoordSys.js';
 import Resolver, {parseResolver} from '../astro/net/Resolver.js';
 import validator from 'validator';
@@ -225,7 +226,7 @@ export const parseScreenPt= (inStr) => parsePt(SPT,inStr);
  * @return {WorldPt}
  */
 export const parseWorldPt = function (serializedWP) {
-    if (!serializedWP) return null;
+    if (!serializedWP || !isString(serializedWP)) return null;
 
     var sAry= serializedWP.split(';');
     if (sAry.length<2 || sAry.length>5) {

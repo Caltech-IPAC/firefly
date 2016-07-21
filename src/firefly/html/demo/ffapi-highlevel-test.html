@@ -26,7 +26,7 @@
 <div>
     <!--<a href='javascript:firefly.getViewer("testChannel").showImage({url:"http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits"})'>test open</a>-->
     <a href='javascript:firefly.getViewer().plotURL("http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits")'>test open</a>
-    <a href="javascript:firefly.getViewer().showImage({plotId: 'xxq', Service: 'TWOMASS', Title     : '2mass from service', SurveyKey  : 'k', WorldPt    : '10.68479;41.26906;EQ_J2000', SizeInDeg  : '.12', })">test again</a>
+    <a href="javascript:plotRemote()">test again</a>
     <a href="javascript:firefly.getViewer().showImage(window.threeC)">3 C</a>
     <a href="javascript:firefly.action.dispatchZoom({plotId: 'xxq',userZoomType:'UP' ,dispatcher:window.ffViewer.dispatch})">up</a>
     <a href="javascript:firefly.action.dispatchZoom({plotId: 'xxq',userZoomType:'DOWN' ,dispatcher:window.ffViewer.dispatch})">down</a>
@@ -98,6 +98,12 @@
 
             firefly.debug= true;
 
+            var util= firefly.util;
+            var ui= firefly.ui;
+            // ----------------- to use minimal readout, do the following
+            //  util.image.initAutoReadout(ui.DefaultApiReadout,
+            //         {MouseReadoutComponent:ui.PopupMouseReadoutMinimal, showThumb:false,showMag:false});
+            // -----------------
 
             var req= {
                 plotId: 'xxq',
@@ -106,6 +112,7 @@
                 Service   : 'TWOMASS',
                 Title     : '2mass from service',
                 GridOn     : true,
+//                GridOn     : 'TRUE_LABELS_FALSE',
                 SurveyKey  : 'k',
                 WorldPt    : '10.68479;41.26906;EQ_J2000',
                 SizeInDeg  : '.12',
@@ -118,6 +125,7 @@
                 Service  : 'WISE',
                 Title     : 'Wise',
                 GridOn     : true,
+//                GridOn     : 'TRUE_LABELS_FALSE',
                 SurveyKey  : 'Atlas',
                 bad1  : 'hello',
                 bad2  : 'bye',
@@ -347,6 +355,17 @@
             selectBox.getElementsByTagName('option')[0].selected = 'selected';
             firefly.action.dispatchRemoveRegionEntry(selectedLayerId, removeRegions);
             firefly.action.dispatchRemoveRegionEntry(selectedLayerId, removeRegions, window.ffViewer.dispatch);
+        }
+
+        plotRemote= function() {
+            firefly.getViewer().showImage({plotId: 'xxq',
+                Service: 'TWOMASS',
+                Title  : '2mass from service',
+                SurveyKey  : 'k',
+                WorldPt    : '10.68479;41.26906;EQ_J2000',
+                RangeValues : firefly.util.image.serializeSimpleRangeValues("Sigma",-1,2,"Linear"),
+                SizeInDeg  : '.12'
+            })
         }
    }
    

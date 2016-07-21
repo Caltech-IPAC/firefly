@@ -10,6 +10,7 @@ import {fetchUrl} from '../util/WebUtil.js';
 import {parseWorldPt} from '../visualize/Point';
 
 
+export {formatPosForTextField} from '../data/form/PositionFieldDef.js';
 
 
 // return an object with:
@@ -120,6 +121,11 @@ export var parseTarget= function(inStr, lastResults) {
             valid, resolvePromise, wpt, aborter  };
 };
 
+
+export function getFeedback(wpt) {
+    var posFieldDef= PositionFieldDef.makePositionFieldDef();
+    return posFieldDef.formatTargetForHelp(wpt);
+}
 
 var resolveObject = function(posFieldDef) {
     var objName= posFieldDef.getObjectName();

@@ -10,7 +10,7 @@ import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-75x75.png';
 function menu(menuComp) {
     if (menuComp) {
         return (
-            <div id='menu-bar' style={{height: '30px', width: '100%', whiteSpace: 'nowrap', position:'relative'}}>
+            <div id='menu-bar' style={{height: '30px', display: 'inline-block', whiteSpace: 'nowrap', position:'relative'}}>
                 {menuComp}
             </div>
         );

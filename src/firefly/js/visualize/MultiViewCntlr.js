@@ -36,6 +36,7 @@ export default {
 
 export const SINGLE='single';
 export const GRID='grid';
+export const DEFAULT_FITS_VIEWER_ID= 'DEFAULT_FITS_VIEWER_ID';
 export const EXPANDED_MODE_RESERVED= 'EXPANDED_MODE_RESERVED';
 export const ANY_VIEWER_RESERVED= 'ANY_VIEWER_RESERVED';
 
@@ -45,11 +46,21 @@ export const GRID_FULL='gridFull';
 function initState() {
 
     return [
-        { viewerId:EXPANDED_MODE_RESERVED,  
+        {
+            viewerId:EXPANDED_MODE_RESERVED,
             plotIdAry:[], 
-            viewType:'single', 
+            viewType:SINGLE,
             canReceiveNewPlots: true,
             reservedContainer:true,
+            customData: {}
+        },
+        {
+            viewerId:DEFAULT_FITS_VIEWER_ID,
+            plotIdAry:[],
+            viewType:GRID,
+            canReceiveNewPlots: true,
+            reservedContainer:true,
+            mounted: false,
             customData: {}
         }
     ];

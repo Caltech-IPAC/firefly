@@ -261,7 +261,8 @@ function addDrawLayers(request, plotId ) {
 
     if (request.getGridOn()!==GridOnStatus.FALSE) {
         const dl = getDrawLayerByType(dlRoot(), WebGrid.TYPE_ID);
-        if (!dl) dispatchCreateDrawLayer(WebGrid.TYPE_ID);
+        const useLabels= request.getGridOn()===GridOnStatus.TRUE;
+        if (!dl) dispatchCreateDrawLayer(WebGrid.TYPE_ID, {useLabels});
         dispatchAttachLayerToPlot(WebGrid.TYPE_ID, plotId, true);
     }
 }

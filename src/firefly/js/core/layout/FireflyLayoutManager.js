@@ -10,8 +10,8 @@ import {clone} from '../../util/WebUtil.js';
 import {TBL_RESULTS_ADDED, TABLE_NEW, TABLE_REMOVE} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
 import {isMetaDataTable, isCatalogTable} from '../../metaConvert/converterUtils.js';
-import {META_VIEWER_ID, FITS_VIEWER_ID} from '../../visualize/ui/TriViewImageSection.jsx';
-import {REPLACE_IMAGES, getViewerPlotIds, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
+import {META_VIEWER_ID} from '../../visualize/ui/TriViewImageSection.jsx';
+import {REPLACE_IMAGES, DEFAULT_FITS_VIEWER_ID, getViewerPlotIds, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 
 /**
  * this manager manages what main components get display on the screen.
@@ -44,7 +44,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         const showXyPlots = hasXyPlots && views.has(LO_VIEW.xyPlots);
         const showTables = hasTables && views.has(LO_VIEW.tables);
 
-        const ids = getViewerPlotIds(getMultiViewRoot(), FITS_VIEWER_ID);
+        const ids = getViewerPlotIds(getMultiViewRoot(), DEFAULT_FITS_VIEWER_ID);
         images = clone(images, {showFits: ids && ids.length > 0});
 
         // special cases which could affect the layout..
@@ -138,8 +138,7 @@ function handleNewImage(action, images) {
     if (viewerId === META_VIEWER_ID) {
         // select image meta tab when new images are added.
         images = clone(images, {selectedTab: 'meta', showMeta: true});
-    } else if (viewerId === FITS_VIEWER_ID ||
-        (!viewerId && plotGroupId === 'remoteGroup') ) {    // only way to pick up external viewer api images
+    } else if (viewerId === DEFAULT_FITS_VIEWER_ID) {
         // select image tab when new images are added.
         images = clone(images, {selectedTab: 'fits', showFits: true});
     } else {

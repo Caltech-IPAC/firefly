@@ -3,11 +3,13 @@
  */
 
 import React, {Component,PropTypes} from 'react';
-import {get} from 'lodash';
-import {parseTarget} from './TargetPanelWorker.js';
+import {get, isString} from 'lodash';
+import {parseTarget, getFeedback, formatPosForTextField} from './TargetPanelWorker.js';
 import TargetFeedback from './TargetFeedback.jsx';
 import {InputFieldView} from './InputFieldView.jsx';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
+import {dispatchActiveTarget, getActiveTarget} from '../core/AppDataCntlr.js';
+import {isValidPoint, parseWorldPt} from '../visualize/Point.js';
 
 
 
@@ -45,15 +47,28 @@ TargetPanelView.propTypes = {
 
 
 function getProps(params, fireValueChange) {
+
+    var feedback= params.feedback|| '';
+    var value= params.displayValue;
+    var showHelp= get(params,'showHelp', true);
+    const wpStr= params.value;
+    const wp= parseWorldPt(wpStr);
+
+    if (isValidPoint(wp)) {
+        feedback= getFeedback(wp);
+        value= wp.objName || formatPosForTextField(wp);
+        showHelp= false;
+    }
+
     return Object.assign({}, params,
         {
             visible: true,
             onChange: (ev) => handleOnChange(ev,params, fireValueChange),
             label: 'Name or Position:',
             tooltip: 'Enter a target',
-            value: params.displayValue,
-            showHelp : get(params,'showHelp', true),
-            feedback : params.feedback|| ''
+            value,
+            feedback,
+            showHelp
         });
 }
 
@@ -69,20 +84,31 @@ function handleOnChange(ev, params, fireValueChange) {
     var {resolvePromise}= parseResults;
 
     const targetResolve= (asyncParseResults) => {
-        return asyncParseResults ? makePayload(displayValue, asyncParseResults) : null;
+        return asyncParseResults ? makePayloadAndUpdateActive(displayValue, asyncParseResults) : null;
     };
 
     resolvePromise= resolvePromise ? resolvePromise.then(targetResolve) : null;
 
-    fireValueChange(makePayload(displayValue,parseResults, resolvePromise));
+    fireValueChange(makePayloadAndUpdateActive(displayValue,parseResults, resolvePromise));
 }
 
-function makePayload(displayValue, parseResults, resolvePromise) {
-    const wpStr= parseResults && parseResults.wpt ? parseResults.wpt.toString() : null;
+/**
+ * make a payload and update the active target
+ * Note- this function has as side effect to fires an action to update the active target
+ * @param displayValue
+ * @param parseResults
+ * @param resolvePromise
+ * @return {{message: string, displayValue: *, wpt: (*|null), value: null, valid: *, showHelp: (*|boolean), feedback: (string|*|string), parseResults: *}}
+ */
+function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise) {
+    const {wpt}= parseResults;
+    const wpStr= parseResults && wpt ? wpt.toString() : null;
+    if (wpt) dispatchActiveTarget(wpt);
+
     return {
         message : 'Could not resolve object: Enter valid object',
         displayValue,
-        wpt : parseResults.wpt,
+        wpt,
         value : resolvePromise ? resolvePromise  : wpStr,
         valid : parseResults.valid,
         showHelp : parseResults.showHelp,
@@ -98,6 +124,16 @@ const connectorDefaultProps = {
     }
 };
 
+function replaceValue(v,props) {
+    const t= getActiveTarget();
+    var retVal= v;
+    if (t && t.worldPt) {
+       console.log(`value: ${v}, but I could use: ${t.worldPt}`);
+       if (get(t,'worldPt')) retVal= t.worldPt.toString();
+    }
+    return retVal;
+}
 
-export const TargetPanel= fieldGroupConnector(TargetPanelView,getProps,null,connectorDefaultProps);
+
+export const TargetPanel= fieldGroupConnector(TargetPanelView,getProps,null,connectorDefaultProps, replaceValue);
 

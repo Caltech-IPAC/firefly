@@ -42,7 +42,7 @@ import {watchImageMetaData} from '../visualize/saga/ImageMetaDataWatcher.js';
  */
 export function initAutoReadout(ReadoutComponent= DefaultApiReadout,
          //   props={MouseReadoutComponent:PopupMouseReadoutMinimal, showThumb:false,showMag:false}){
-      props={MouseReadoutComponent:PopupMouseReadoutFull, showThumb:false,showMag:false } ){
+      props={MouseReadoutComponent:PopupMouseReadoutFull, showThumb:true,showMag:true } ){
 
 
     dispatchAddSaga(autoReadoutVisibility, {ReadoutComponent,props});
@@ -58,7 +58,7 @@ export function initAutoReadout(ReadoutComponent= DefaultApiReadout,
  */
 export function serializeSimpleRangeValues(stretchType,lowerValue,upperValue,algorithm) {
     const rv= RangeValues.makeSimple(stretchType,lowerValue,upperValue,algorithm);
-    return rv.serialize();
+    return rv.toJSON();
 }
 
 

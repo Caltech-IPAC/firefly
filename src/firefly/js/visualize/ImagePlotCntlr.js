@@ -37,8 +37,11 @@ export {colorChangeActionCreator,
         rotateActionCreator} from './PlotChangeTask.js';
 
 
-
+/** can the 'COLLAPSE', 'GRID', 'SINGLE' */
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
+
+
+/** can the 'NorthAndCenter', 'ByUserPositionAndZoom' */
 const WcsMatchMode= new Enum (['NorthAndCenter', 'ByUserPositionAndZoom']);
 
 
@@ -128,22 +131,42 @@ const API_TOOLS_VIEW= `${PLOTS_PREFIX}.apiToolsView`;
 export const IMAGE_PLOT_KEY= 'allPlots';
 
 export const ActionScope= new Enum(['GROUP','SINGLE', 'LIST']);
+
+/** @return {VisRoot} */
 export function visRoot() { return flux.getState()[IMAGE_PLOT_KEY]; }
 
+
+
+
 /**
- * The state is best thought of at the following:
- * The state contains an array of PlotView each have a plotId and tie to an Image Viewer,
- * one might be active (PlotView.js)
- * A PlotView has an array of WebPlots, one is primary (WebPlot.js)
- * An ImageViewer shows the primary plot of a plotView. (ImageView.js)
+ *
+ * @return {VisRoot}
  */
 const initState= function() {
 
+    /**
+     * @typedef {Object} VisRoot
+     *
+     * The state of the Image visualization
+     * The state contains an array of PlotView each have a plotId and tie to an Image Viewer,
+     * one might be active (PlotView.js)
+     * A PlotView has an array of WebPlots, one is primary (WebPlot.js)
+     * An ImageViewer shows the primary plot of a plotView. (ImageView.js)
+     *
+     * @prop {String} activePlotId the id of the active plot
+     * @prop {PlotView[]} plotViewAry view array
+     * @prop {PlotGroupAry[]} plotGroupAry view array
+     * @prop {object} plotRequestDefaults - can have multiple values
+     * @prop {ExpandType} expandedMode status of expand mode
+     * @prop {ExpandType} previousExpandedMode the value last time it was expanded
+     * @prop {boolean} singleAutoPlay true if auto play on in expanded mode
+     * @prop {boolean} apiToolsView true if working in api mode
+     */
     return {
+        activePlotId: null,
         plotViewAry : [],  //there is one plot view for every ImageViewer, a plotView will have a plotId
         plotGroupAry : [], // there is one for each group, a plot group may have multiple plotViews
-        plotHistoryRequest: [], //todo
-        activePlotId: null,
+        // plotHistoryRequest: [], //todo
 
         plotRequestDefaults : {}, // object: if normal request;
         //                                         {plotId : {threeColor:boolean, wpRequest : object, }
@@ -167,13 +190,6 @@ const initState= function() {
         wcsMatchCenterWP: null, //todo
         wcsMatchMode: WcsMatchMode.ByUserPositionAndZoom, //todo
         mpwWcsPrimId: null,//todo
-
-        //-- mouse readout settings - todo move to MouseReadoutCntlr
-        mouseReadout1:'eqj2000hms',
-        mouseReadout2: 'fitsIP',
-        pixelSize: 'pixelSize'
-
-
     };
 
 };
@@ -686,6 +702,12 @@ export function changePointSelectionActionCreator(rawAction) {
 //======================================== Reducer =============================
 //======================================== Reducer =============================
 
+/**
+ *
+ * @param state
+ * @param action
+ * @return {VisRoot}
+ */
 function reducer(state=initState(), action={}) {
 
     if (!action.payload || !action.type) return state;

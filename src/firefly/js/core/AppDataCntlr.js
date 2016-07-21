@@ -322,8 +322,8 @@ function fetchAppData(dispatch) {
 
 /*---------------------------- REDUCING FUNTIONS -----------------------------*/
 const updateActiveTarget= function(state,action) {
-    var {worldPt,corners}= action;
-    if (!worldPt || !corners) return state;
+    var {worldPt,corners}= action.payload;
+    if (!worldPt && !corners) return state;
     return Object.assign({}, state, {activeTarget:{worldPt,corners}});
 };
 

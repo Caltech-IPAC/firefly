@@ -38,7 +38,7 @@ export function VisHeaderView({visRoot,currMouseState, readout}) {
         <div style={{display:'inline-block', float:'right', whiteSpace:'nowrap'}}>
             <div style={rS}>
                 <div style={{position:'absolute', color:'white'}}>
-                    <MouseReadout  readout={readout}/>
+                    <MouseReadout readout={readout}/>
                 </div>
             </div>
 

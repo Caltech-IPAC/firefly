@@ -17,7 +17,7 @@ import {DropDownContainer} from '../ui/DropDownContainer.jsx';
 import {TriViewPanel} from '../ui/TriViewPanel.jsx';
 import {VisHeader} from '../visualize/ui/VisHeader.jsx';
 import {getActionFromUrl} from '../core/History.js';
-import {launchImageMetaDataSega, FITS_VIEWER_ID} from '../visualize/ui/TriViewImageSection.jsx';
+import {launchImageMetaDataSega} from '../visualize/ui/TriViewImageSection.jsx';
 import {dispatchAddViewer} from '../visualize/MultiViewCntlr.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 
@@ -137,7 +137,6 @@ function onReady({menu, views}) {
         dispatchSetMenu({menuItems: menu});
     }
     if (views.has(LO_VIEW.images) ) {
-        dispatchAddViewer(FITS_VIEWER_ID, true, true);
         launchImageMetaDataSega();
     }
     const {hasImages, hasTables, hasXyPlots} = getLayouInfo();
