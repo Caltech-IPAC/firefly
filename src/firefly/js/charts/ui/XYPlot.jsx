@@ -9,6 +9,7 @@ import ReactHighcharts from 'react-highcharts/bundle/highcharts';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {parseDecimateKey} from '../../tables/Decimate.js';
 
+const defaultShading = 'lin';
 
 export const axisParamsShape = PropTypes.shape({
     columnOrExpr : PropTypes.string,
@@ -66,7 +67,7 @@ const toNumber = (val)=>Number(val);
  @param {boolean} returnNum - if true return group number rather than group description
  @return {number|string} from 1 to 6, 1 for 1 pt series
  */
-const getWeightBasedGroup = function(weight, minWeight, maxWeight, logShading=true, returnNum=true) {
+const getWeightBasedGroup = function(weight, minWeight, maxWeight, logShading=false, returnNum=true) {
     if (weight == 1) return returnNum ? 1 : '1pt';
     else {
         if (logShading) {
@@ -216,7 +217,7 @@ export class XYPlot extends React.Component {
     shouldComponentUpdate(nextProps) {
         const {data, width, height, params, highlighted, selectInfo, desc} = this.props;
         // only rerender when plot data change
-        if (nextProps.data !== data) {
+        if (nextProps.data !== data || get(params, 'shading', defaultShading) !== get(nextProps.params, 'shading', defaultShading)) {
             return true;
         } else {
             const chart = this.refs.chart && this.refs.chart.getChart();

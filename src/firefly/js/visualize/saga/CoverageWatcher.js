@@ -4,7 +4,7 @@
 
 import {take} from 'redux-saga/effects';
 import Enum from 'enum';
-import {get,isEmpty,flattenDeep,values} from 'lodash';
+import {get,isEmpty,flattenDeep,values, omit} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
 import {TitleOptions} from '../WebPlotRequest.js';
 import {CoordinateSys} from '../CoordSys.js';
@@ -162,7 +162,6 @@ function removeCoverage(tbl_id, decimatedTables) {
     }
 }
 
-
 /**
  * 
  * @param tbl_id
@@ -186,8 +185,9 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
         inclCols : getCovColumnsForQuery(options, table)
     };
 
-    const req = Object.assign({}, table.request, params);
-    req.tbl_id = tbl_id;
+
+    const req = Object.assign(omit(table.request, ['tbl_id', 'META_INFO']), params);
+    req.tbl_id = `cov-${tbl_id}`;
 
     if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.tblFilePath===table.tableMeta.tblFilePath*/) { //todo support decimated data
         updateCoverageWithData(table, options, tbl_id, decimatedTables[tbl_id], decimatedTables);
@@ -367,7 +367,7 @@ function defaultCanDoCorners(table) {// eslint-disable-line no-unused-vars
 
 function getCovColumnsForQuery(options, table) {
     const cAry= [...options.getCornersColumns(table), options.getCenterColumns(table)];
-    return cAry.reduce( (s,c,idx)=> s+`${idx>0?',':''}${c.latCol},${c.lonCol}`,'');
+    return cAry.reduce( (s,c,idx)=> s+`${idx>0?',':''}${c.lonCol},${c.latCol}`,'');
 }
 
 function getCornersColumns(table) {
