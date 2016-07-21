@@ -242,6 +242,12 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
     }
 
+    /**
+     * return the unique ID for the original data set of this request.  This means parameters related
+     * to paging, filtering, sorting, decimating, etc or ignored.
+     * @param request
+     * @return
+     */
     public String getUniqueID(ServerRequest request) {
         // parameters to get original data (before filter, sort, etc.)
         List<Param> srvParams = new ArrayList<>();
@@ -253,13 +259,17 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         return createUniqueId(request.getRequestId(), srvParams);
     }
 
-    // unique key without page info
+    /**
+     * return the unique ID of this request ignoring only the paging parameters.
+     * This is used to identify a unique data set returned to the client.
+     * @param request
+     * @return
+     */
     public String getDataKey(ServerRequest request) {
 
         List<Param> srvParams = new ArrayList<>();
         for (Param p : request.getParams()) {
-            if (!SYS_PARAMS.contains("|" + p.getName() + "|") &&
-                !PAGE_PARAMS.contains(p.getName())) {
+            if (!PAGE_PARAMS.contains(p.getName())) {
                 srvParams.add(p);
             }
         }
