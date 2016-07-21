@@ -9,6 +9,8 @@ import {ValidationField} from './ValidationField.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {gkey} from '../visualize/ui/CatalogSelectViewPanel.jsx';
+import {HelpIcon} from '../ui/HelpIcon.jsx';
+
 import './VoSearchPanel.css';
 
 export class VoSearchPanel extends React.Component {
@@ -32,19 +34,25 @@ export class VoSearchPanel extends React.Component {
     render() {
         const fields = this.state;
         return (
-            <div className={'vopanel'}>
-                <div className={'section'}>
-                    {targetPanelArea()}
-                </div>
-                <div className={'size'}>
-                    { sizeArea()}
-                </div>
-                <div className={'voarea'}>
-                    { voSearchArea() }
-                    <div style={{padding:'20px 0 20px 0'}}>
-                        <a target='_blank' href='http://nvo.stsci.edu/vor10/index.aspx'>Find Astronomical Data
-                            Resources </a>
+            <div>
+                <div className={'vopanel'}>
+                    <div className={'section'}>
+                        {targetPanelArea()}
                     </div>
+                    <div className={'size'}>
+                        { sizeArea()}
+                    </div>
+                    <div className={'voarea'}>
+                        { voSearchArea() }
+                        <div style={{padding:'20px 0 20px 0'}}>
+                            <a target='_blank' href='http://nvo.stsci.edu/vor10/index.aspx'>Find Astronomical Data
+                                Resources </a>
+                        </div>
+                    </div>
+                </div>
+                <div style={{display:'flex',flexDirection:'column', alignItems:'flex-end'}}>
+                    <HelpIcon
+                        helpId={'catalogs.vo'}/>
                 </div>
             </div>
         );

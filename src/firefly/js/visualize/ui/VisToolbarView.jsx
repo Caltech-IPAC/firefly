@@ -23,6 +23,7 @@ import {ColorTableDropDownView} from './ColorTableDropDownView.jsx';
 
 import {showFitsDownloadDialog} from '../../ui/FitsDownloadDialog.jsx';
 import {showFitsRotationDialog} from '../../ui/FitsRotationDialog.jsx';
+import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 import NorthUpCompass from '../../drawingLayers/NorthUpCompass.js';
@@ -166,7 +167,7 @@ export class VisToolbarView extends Component {
         return (
             <div style={rS}>
                 <ToolbarButton icon={SAVE}
-                               tip='Save the Fits file, PNG file, or save the overlays as a region'
+                               tip='Save the FITS file, PNG file, or save the overlays as a region'
                                enabled={enabled}
                                horizontal={true}
                                visible={mi.fitsDownload}
@@ -194,6 +195,23 @@ export class VisToolbarView extends Component {
                                        visible={mi.stretchQuick}
                                        dropDown={<StretchDropDownView plotView={pv}/>} />
 
+
+                <ToolbarHorizontalSeparator/>
+                
+                <ToolbarButton icon={ROTATE}
+                               tip='Rotate the image to any angle'
+                               enabled={enabled}
+                               horizontal={true}
+                               visible={mi.rotate}
+                               onClick={showFitsRotationDialog}/>
+                <SimpleLayerOnOffButton plotView={pv}
+                                        isIconOn={pv&&plot ? pv.plotViewCtx.rotateNorthLock : false }
+                                        tip='Rotate this image so that North is up'
+                                        iconOn={ROTATE_NORTH_ON}
+                                        iconOff={ROTATE_NORTH_OFF}
+                                        visible={mi.rotateNorth}
+                                        onClick={doRotateNorth}
+                />
                 <ToolbarButton icon={FLIP_Y} tip='Flip the image on the Y Axis'
                                enabled={enabled} horizontal={true}
                                visible={mi.flipImageY}
@@ -203,27 +221,6 @@ export class VisToolbarView extends Component {
                                enabled={enabled} horizontal={true}
                                visible={mi.recenter}
                                onClick={() => recenter(pv)}/>
-
-
-                <ToolbarHorizontalSeparator/>
-
-                <SimpleLayerOnOffButton plotView={pv}
-                                        isIconOn={pv&&plot ? pv.plotViewCtx.rotateNorthLock : false }
-                                        tip='Rotate this image so that North is up'
-                                        iconOn={ROTATE_NORTH_ON}
-                                        iconOff={ROTATE_NORTH_OFF}
-                                        visible={mi.rotateNorth}
-                                        onClick={doRotateNorth}
-                />
-
-                <ToolbarButton icon={ROTATE}
-                               tip='Rotate the image to any angle'
-                               enabled={enabled}
-                               horizontal={true}
-                               visible={mi.rotate}
-                               onClick={showFitsRotationDialog}/>
-
-
 
                 <ToolbarHorizontalSeparator/>
 
@@ -323,6 +320,10 @@ export class VisToolbarView extends Component {
 
 
 
+                <div style={{display:'inline-block', height:'100%', flex:'0 0 auto', marginLeft:'10px'}}>
+                    <HelpIcon
+                        helpId={'visualization.fitsViewer'}/>
+                </div>
 
             </div>
         );

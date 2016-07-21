@@ -74,7 +74,7 @@ export class TablePanelOptions extends React.Component {
                              onClick={() => toggleOptions()}/>
 
                         <button className='TablePanelOptions__button' onClick={onReset}
-                                title='Reset all options to defauls'>Reset</button>
+                                title='Reset all options to defaults'>Reset</button>
                     </span>
                 </div>
                 <div style={{height: 'calc(100% - 40px)'}}>

@@ -21,8 +21,16 @@ function getDialogBuilder() {
     var popup= null;
     return () => {
         if (!popup) {
+            var title = 'Drawing Layers';
+            //try {
+            //    if(visRoot()){
+            //        title += ': '+getActivePlotView(visRoot()).plots[0].title;
+            //    }
+            //}catch (E){
+            //    //
+            //}
             const popup= (
-                <PopupPanel title={'Drawing Layers'} >
+                <PopupPanel title={title} >
                     <DrawLayerPanel/>
                 </PopupPanel>
             );
