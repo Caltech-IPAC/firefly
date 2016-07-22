@@ -19,6 +19,7 @@ import {WebPlot} from '../WebPlot.js';
 import {EventLayer} from './../iv/EventLayer.jsx';
 import {MouseState} from '../VisMouseSync.js';
 import {dispatchProcessScroll} from '../ImagePlotCntlr.js';
+import {makeMouseStatePayload,fireMouseCtxChange} from '../VisMouseSync.js';
 
 
 
@@ -101,11 +102,25 @@ function eventCB(mouseState,pt,pv,width,height) {
             case MouseState.DOWN :
             case MouseState.DRAG :
                 scrollPlot(pt,pv,width,height);
-                //console.log(`sx:${pt.x}, sy:${pt.y}`);
                 break;
+            default:
+                updateMove(mouseState,pt,pv,width,height);
         }
     }
 }
+
+
+function updateMove(mouseState, pt,pv,width,height) {
+    var plot= primePlot(pv);
+    var fact= getThumbZoomFact(plot,width,height);
+    var cc= CysConverter.make(plot);
+    var ipt= cc.getImageWorkSpaceCoords(pt,fact);
+    var spt= cc.getScreenCoords(ipt);
+    const payload= makeMouseStatePayload(pv.plotId, mouseState,spt,spt.x,spt.y);
+    fireMouseCtxChange(payload);
+}
+
+
 
 function scrollPlot(pt,pv,width,height) {
 

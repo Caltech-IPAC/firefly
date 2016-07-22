@@ -10,13 +10,14 @@ import {VisHeaderView} from './VisHeaderView.jsx';
 import {ExpandedModeDisplay} from '../iv/ExpandedModeDisplay.jsx';
 // import {currMouseState} from '../VisMouseCntlr.js';
 import {addMouseListener, lastMouseCtx} from '../VisMouseSync.js';
+import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
 
 
 
 export class ApiExpandedDisplay extends Component {
     constructor(props) {
         super(props);
-        this.state= {visRoot:visRoot(), currMouseState:lastMouseCtx()};
+        this.state= {visRoot:visRoot(), currMouseState:lastMouseCtx(), readout:readoutRoot()};
     }
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
@@ -33,8 +34,10 @@ export class ApiExpandedDisplay extends Component {
     }
 
     storeUpdate() {
-        if (visRoot()!==this.state.visRoot || lastMouseCtx() !==this.state.currMouseState) {
-            this.setState({visRoot:visRoot(), currMouseState:lastMouseCtx()});
+        if (visRoot()!==this.state.visRoot || 
+            lastMouseCtx() !==this.state.currMouseState || 
+            readoutRoot()!==this.state.readout) {
+            this.setState({visRoot:visRoot(), currMouseState:lastMouseCtx(), readout:readoutRoot()});
         }
     }
 
@@ -44,12 +47,12 @@ export class ApiExpandedDisplay extends Component {
      */
     render() {
         const {closeFunc}= this.props;
-        var {visRoot,currMouseState}= this.state;
+        var {visRoot,currMouseState, readout}= this.state;
         return (
             <div style={{width:'100%', height:'100%', display:'flex', flexWrap:'nowrap',
                          alignItems:'stretch', flexDirection:'column'}}>
                 <div style={{position: 'relative', marginBottom:'6px'}} className='banner-background'>
-                    <VisHeaderView visRoot={visRoot} currMouseState={currMouseState}/>
+                    <VisHeaderView visRoot={visRoot} currMouseState={currMouseState} readout={readout}/>
                 </div>
                 <div style={{flex: '1 1 auto', display:'flex'}}>
                     <ExpandedModeDisplay   {...{key:'results-plots-expanded', closeFunc, insideFlex:true}}/>

@@ -55,7 +55,12 @@ const column1 = {
     color: 'DarkGray',
     display: 'inline-block'
 };
-const column2 = {width: 90, display: 'inline-block'};
+const column2 = {
+    width: 90,
+    display: 'inline-block',
+    overflow:'hidden',
+    textOverflow: 'ellipsis'
+};
 
 const column3 = {
     width: 80,
@@ -68,7 +73,7 @@ const column3 = {
 };
 const column3_r2 = {width: 80, paddingRight: 1, textAlign: 'right', color: 'DarkGray', display: 'inline-block'};
 
-const column4 = {width: 88, paddingLeft:4, display: 'inline-block'};
+const column4 = {width: 88, paddingLeft:4, display: 'inline-block', textOverflow: 'ellipsis', overflow:'hidden'};
 const column5 = {
     width: 74,
     paddingRight: 1,
@@ -87,15 +92,16 @@ const column7_r2 = {width: 90, paddingLeft: 3, display: 'inline-block'};
 const precision7Digit = '0.0000000';
 const precision1Digit = '0.0';
 
-const myFormat= (v,precision) => numeral(v).format(padEnd('0.',precision+1,'0') );
+const myFormat= (v,precision) => !isNaN(v) ? numeral(v).format(padEnd('0.',precision+1,'0')) : '';
 export function MouseReadout({readout}){
 
 
    //get the standard readouts
-    const sndReadout= readout[STANDARD_READOUT];
-    if (!get(sndReadout,'readoutItems')) return EMPTY;
+   //  const sndReadout= readout[STANDARD_READOUT];
+    if (!get(readout,[STANDARD_READOUT, 'readoutItems'])) return EMPTY;
 
-
+    const sndReadout= get(readout, STANDARD_READOUT);
+    
     const title = sndReadout.readoutItems.title?sndReadout.readoutItems.title.value:'';
 
     var objList={};
@@ -191,10 +197,12 @@ export function getFluxInfo(sndReadout){
     var fluxValue,  formatStr;
 
     for (let i = 0; i < fluxObj.length; i++) {
-
+        if (!isNaN(fluxObj[i].value )) {
             fluxValue = (fluxObj[i].value < 1000) ? `${myFormat(fluxObj[i].value, fluxObj[i].precision)}` : fluxObj[i].value.toExponential(6).replace('e+', 'E');
+            if (fluxObj[i].unit && !isNaN(fluxObj[i].value)) fluxValue+= ` ${fluxObj[i].unit}`;
             fluxValueArrays.push(fluxValue);
             fluxLabelArrays.push(fluxObj[i].title);
+        }
      }
 
     if (fluxLabelArrays.length<3) { //fill with empty

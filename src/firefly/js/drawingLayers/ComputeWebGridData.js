@@ -19,7 +19,7 @@ const RANGE_THRESHOLD = 1.02;
 const minUserDistance= 0.25;   // user defined max dist. (deg)
 const maxUserDistance= 3.00;   // user defined min dist. (deg)
 
-var useLabels= true;
+// var useLabels= true;
 var userDefinedDistance = false;
 
 
@@ -27,9 +27,10 @@ var userDefinedDistance = false;
  * This method does the calculation for drawing data array
  * @param plot - primePlot object
  * @param cc - the CoordinateSys object
+ * @param useLabels - use Labels
  * @return a DrawData object
  */
-export function makeGridDrawData (plot,  cc){
+export function makeGridDrawData (plot,  cc, useLabels){
 
     const {width, height, screenWidth, csys,labelFormat} = getDrawLayerParameters(plot);
     if (width > 0 && height >0) {
@@ -42,7 +43,8 @@ export function makeGridDrawData (plot,  cc){
         var {xLines, yLines} = computeLines(cc, csys, range, levels, screenWidth);
         var wpt = cc.getWorldCoords(makeImageWorkSpacePt(1, 1), csys);
         var aitoff = (!wpt);
-        return  drawLines(csys, bounds, labels, xLines, yLines, levels[0].length, levels[1].length, aitoff, screenWidth);
+        return  drawLines(csys, bounds, labels, xLines, yLines, levels[0].length, levels[1].length, 
+                          aitoff, screenWidth, useLabels);
     }
 }
 
@@ -726,7 +728,7 @@ function getLabelPoints(bounds, csys, xLines, yLines, nLevel0, nLevel1) {
 }
 
 
-function drawLabeledPolyLine (drawData, bounds, nLevel0,  label, labelLocations, x, y, count, aitoff,screenWidth){
+function drawLabeledPolyLine (drawData, bounds, nLevel0,  label, labelLocations, x, y, count, aitoff,screenWidth, useLabels){
 
 
     //add the  draw line data to the drawData
@@ -762,7 +764,7 @@ function drawLabeledPolyLine (drawData, bounds, nLevel0,  label, labelLocations,
     }
 }
 
-function drawLines(csys,bounds, labels, xLines,yLines, nLevel0, nLevel1, aitoff,screenWidth) {
+function drawLines(csys,bounds, labels, xLines,yLines, nLevel0, nLevel1, aitoff,screenWidth, useLabels) {
     // Draw the lines previously computed.
     //get the locations where to put the labels
     var labelLocations =getLabelPoints(bounds, csys, xLines, yLines, nLevel0, nLevel1);
@@ -770,7 +772,7 @@ function drawLines(csys,bounds, labels, xLines,yLines, nLevel0, nLevel1, aitoff,
     var  lineCount = xLines.length;
     for (let i=0; i<lineCount; i+=1) {
         drawLabeledPolyLine(drawData, bounds,nLevel0, labels[i],labelLocations ,
-            xLines[i], yLines[i], i, aitoff,screenWidth);
+            xLines[i], yLines[i], i, aitoff,screenWidth, useLabels);
     }
     return drawData;
 

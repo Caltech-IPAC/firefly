@@ -16,7 +16,7 @@ class FireflyClient(WebSocketClient):
     #                 'data': ['channel']
     #                 }
 
-    fftoolsCmd = '/fftools/sticky/CmdSrv'
+    fftoolsCmd = '/firefly/sticky/CmdSrv'
     myLocalhost = 'localhost:8080'
     ALL = 'ALL_EVENTS_ENABLED'
 
@@ -30,12 +30,12 @@ class FireflyClient(WebSocketClient):
         if host.startswith('http://'):
             host = host[7:]
         self.thisHost = host
-        url = 'ws://%s/fftools/sticky/firefly/events' % host #web socket url
+        url = 'ws://%s/firefly/sticky/firefly/events' % host #web socket url
         if channel:
             url+= '?channelID=%s' % channel
         WebSocketClient.__init__(self, url)
         self.urlRoot = 'http://' + host + self.fftoolsCmd
-        self.urlBW = 'http://' + self.thisHost + '/fftools/app.html?id=Loader&channelID='
+        self.urlBW = 'http://' + self.thisHost + '/firefly/firefly.html;wsch='
         self.listeners = {}
         self.channel = channel
         self.session = requests.Session()
@@ -176,7 +176,7 @@ class FireflyClient(WebSocketClient):
         if not channel:
             channel = self.channel
 
-        url = 'http://' + self.thisHost + '/fftools/minimal.html?id=Loader&channelID='
+        url = 'http://' + self.thisHost + '/firefly/firefly.html?id=Loader&channelID='
         if mode == "full" :
             url = self.urlBW
         return url + channel
@@ -211,7 +211,7 @@ class FireflyClient(WebSocketClient):
         """ Upload a file to the Firefly Server
         :param path: uploaded file can be fits, region, and various types of table files
         """
-        url = 'http://' + self.thisHost + '/fftools/sticky/Firefly_FileUpload?preload=%s' % preLoad
+        url = 'http://' + self.thisHost + '/firefly/sticky/Firefly_FileUpload?preload=%s' % preLoad
         files = {'file': open(path, 'rb')}
         result = self.session.post(url, files=files)
         index = result.text.find('$')
@@ -250,7 +250,7 @@ class FireflyClient(WebSocketClient):
         return result.text[index:]
 
 
-    def showFits(self, fileOnServer=None, plotId=None, additionalParams=None):
+    def showFitsOLD(self, fileOnServer=None, plotId=None, additionalParams=None):
         """ Show a fits image
         :param: fileOnServer: the is the name of the file on the server.  If you used uploadFile()
                           then it is the return value of the method. Otherwise it is a file that
@@ -269,6 +269,35 @@ class FireflyClient(WebSocketClient):
             url+= '&file=%s' % fileOnServer
         return self.sendURLAsGet(url)
 
+    def showFits(self, fileOnServer=None, plotId=None, additionalParams=None):
+        """ Show a fits image
+        :param: fileOnServer: the is the name of the file on the server.  If you used uploadFile()
+                          then it is the return value of the method. Otherwise it is a file that
+                          firefly has direct read access to.
+        :param: plotId: the id you assigned to the plot. This is necessary to further control the plot
+        :param: additionalParam: dictionary of any valid fits viewer plotting parameters,
+                          see firefly/docs/fits-plotting-parameters.md
+        :return: status of call
+        """
+        wpRequest= {'plotGroupId':'groupFromPython',
+                    'GroupLocked':False}
+        payload= {'wpRequest': wpRequest,
+                  'useContextModifications':True,
+                  'viewerId':'DEFAULT_FITS_VIEWER_ID'}
+        if plotId:
+            payload['wpRequest'].update({ 'plotId': plotId})
+        if fileOnServer:
+            payload['wpRequest'].update({ 'file': fileOnServer})
+        if additionalParams:
+            payload['wpRequest'].update(additionalParams)
+        return self.dispatchRemoteAction(self.channel,'ImagePlotCntlr.PlotImage', payload)
+
+    def dispatchRemoteAction(self, channel, actionType, payload):
+
+        action= {'type':actionType, 'payload':payload}
+        url = self.urlRoot + '?channelID=' + channel + '&cmd=pushAction&action='
+        url+= json.dumps(action)
+        return self.sendURLAsGet(url)
 
     def showTable(self, fileOnServer, title=None, pageSize=None, isCatalog=True):
         """
