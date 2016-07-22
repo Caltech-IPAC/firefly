@@ -66,7 +66,7 @@ export function markerToolCreateLayerActionCreator(rawAction) {
             var plot = primePlot(visRoot(), pId);
             if (plot) {
                 var cc = CsysConverter.make(plot);
-                var wpt = plot.attributes[PlotAttribute.FIXED_TARGET];
+                var wpt = getWorldOrImage(plot.attributes[PlotAttribute.FIXED_TARGET], cc);
                 var size = lengthToArcsec(MARKER_SIZE, cc, ShapeDataObj.UnitType.PIXEL);
 
                 showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_CREATE, [size, size], wpt, pId,

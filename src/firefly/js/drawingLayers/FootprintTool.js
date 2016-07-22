@@ -21,7 +21,7 @@ import {getDrawobjArea} from '../visualize/draw/ShapeHighlight.js';
 import {clone} from '../util/WebUtil.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {FootprintFactory} from '../visualize/draw/FootprintFactory.js';
-import {makeViewPortPt, makeWorldPt, makeImagePt} from '../visualize/Point.js';
+import {makeViewPortPt, makeImagePt} from '../visualize/Point.js';
 import {get, set, isArray, has, isNil} from 'lodash';
 import Enum from 'enum';
 
@@ -72,8 +72,8 @@ export function footprintCreateLayerActionCreator(rawAction) {
 
                             var plot = primePlot(visRoot(), pId);
                             if (plot) {
-                                var {x, y} = plot.attributes[PlotAttribute.FIXED_TARGET];
-                                var wpt = makeWorldPt(x, y);
+                                var cc = CsysConverter.make(plot);
+                                var wpt = getWorldOrImage(plot.attributes[PlotAttribute.FIXED_TARGET], cc);
 
                                 showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_CREATE, wpt, regions, pId,
                                     FootprintStatus.attached, footprintInterval, drawLayerId,

@@ -380,10 +380,11 @@ export function dispatchProcessScroll({plotId,scrollPt, dispatcher= flux.process
  *
  * Note - function parameter is a single object
  * @param {string} plotId
+ * @param {
  * @param {function} dispatcher only for special dispatching uses such as remote
  */
-export function dispatchRecenter({plotId, dispatcher= flux.process}) {
-    dispatcher({type: RECENTER, payload: {plotId} });
+export function dispatchRecenter({plotId, centerPt, dispatcher= flux.process}) {
+    dispatcher({type: RECENTER, payload: {plotId, centerPt} });
 }
 
 /**

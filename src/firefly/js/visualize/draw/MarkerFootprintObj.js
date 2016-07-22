@@ -4,6 +4,7 @@
  */
 
 import Point, {makeImagePt, makeScreenPt, makeViewPortPt, makeWorldPt, SimplePt} from '../Point.js';
+import {CoordinateSys} from '../CoordSys.js';
 import ShapeDataObj, {lengthToImagePixel, lengthToScreenPixel,
        lengthToArcsec, makePoint, drawText, makeTextLocationComposite} from './ShapeDataObj.js';
 import {POINT_DATA_OBJ, getPointDataobjArea, makePointDataObj, DrawSymbol} from './PointDataObj.js';
@@ -40,7 +41,8 @@ export const OutlineType = new Enum(['original', 'center', 'plotcenter']);
 const AllHandle = [MARKER_HANDLE.outline, MARKER_HANDLE.resize, MARKER_HANDLE.rotate];
 const AllOutline = [OutlineType.original, OutlineType.center, OutlineType.plotcenter];
 
-export var getWorldOrImage = (pt, cc) => (cc.projection.isSpecified() ? cc.getWorldCoords(pt) : cc.getImageCoords(pt));
+export var getWorldOrImage = (pt, cc) => (cc.projection.isSpecified() ?
+                             cc.getWorldCoords(pt, CoordinateSys.EQ_J2000) : cc.getImageCoords(pt));
 
 function make(sType, style) {
     const obj= DrawObj.makeDrawObj();

@@ -195,14 +195,14 @@ function crop(pv) {
 
 function makeExtensionButtons(extensionAry,pv,dlAry) {
     if (!extensionAry) return false;
-    return extensionAry.map( (ext,idx) => (
-            <ToolbarButton icon={ext.imageUrl} text={ext.title}
+    return extensionAry.map( (ext,idx) => {
+            return <ToolbarButton icon={ext.imageUrl} text={ext.title}
                            tip={ext.toolTip} key={ext.id}
                            horizontal={true} enabled={true}
                            visible={true}
                            lastTextItem={idx===(extensionAry.length-1)}
                            onClick={() => dispatchExtensionActivate(ext,makeExtActivateData(ext,pv,dlAry))}/>
-        )
+        }
     );
 }
 

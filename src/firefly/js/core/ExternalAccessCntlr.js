@@ -14,8 +14,7 @@ import {flux} from '../Firefly.js';
 const ALL_MPW= 'AllMpw';
 
 const initState= {
-    extensionList : [],
-    remoteChannel : null
+    extensionList : []
 };
 
 export function extensionRoot() { return flux.getState()[EXTERNAL_ACCESS_KEY]; }
@@ -64,9 +63,11 @@ function reducer(state=initState, action={}) {
         case EXTENSION_ACTIVATE  :
             retState= state;// todo something
             break;
+
         case CHANNEL_ACTIVATE  :
             retState= updateChannel(state,action);
             break;
+
     }
     return retState;
 }
