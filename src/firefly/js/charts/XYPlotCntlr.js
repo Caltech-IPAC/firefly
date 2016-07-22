@@ -314,14 +314,17 @@ function fetchPlotData(dispatch, tblId, xyPlotParams, chartId) {
             //'inclCols' : `${xyPlotParams.x.columnOrExpr},${xyPlotParams.y.columnOrExpr}`, // ignored if 'decimate' is present
             'decimate' : serializeDecimateInfo(...getServerCallParameters(xyPlotParams))
         });
-
     req.tbl_id = `xy-${chartId}`;
 
     doFetchTable(req).then(
         (tableModel) => {
+            let xyPlotData = {rows: []};
+            // when zoomed, we don't know if the unzoomed data are decimated or not
+            let decimatedUnzoomed = xyPlotParams.zoom ? undefined : false;
+
             if (tableModel.tableData && tableModel.tableData.data) {
                 const {tableMeta} = tableModel;
-                const xyPlotData = omitBy({
+                xyPlotData = omitBy({
                     rows: tableModel.tableData.data,
                     decimateKey: tableMeta['decimate_key'],
                     xMin: tableMeta['decimate.X-MIN'],
@@ -339,18 +342,18 @@ function fetchPlotData(dispatch, tblId, xyPlotParams, chartId) {
                     if (isString(val) && isFinite(val)) { xyPlotData[prop] = Number(val); }
                 });
 
-                dispatch(updatePlotData(
-                    {
-                        isPlotDataReady : true,
-                        tblSource,
-                        // when zoomed, we don't know if the unzoomed data are decimated or not
-                        decimatedUnzoomed: Boolean(tableMeta['decimate_key']) || (xyPlotParams.zoom ? undefined : false),
-                        xyPlotParams,
-                        xyPlotData,
-                        chartId,
-                        newParams: getUpdatedParams(xyPlotParams, tableModel)
-                    }));
+                decimatedUnzoomed = Boolean(tableMeta['decimate_key']) || decimatedUnzoomed;
             }
+            dispatch(updatePlotData(
+                {
+                    isPlotDataReady : true,
+                    tblSource,
+                    decimatedUnzoomed,
+                    xyPlotParams,
+                    xyPlotData,
+                    chartId,
+                    newParams: getUpdatedParams(xyPlotParams, tableModel)
+                }));
         }
     ).catch(
         (reason) => {

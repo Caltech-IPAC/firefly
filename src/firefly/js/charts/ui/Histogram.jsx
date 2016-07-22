@@ -351,7 +351,9 @@ export class Histogram extends React.Component {
             }
         };
 
-        this.setChartConfig(config);
+        if (data.length > 0) {
+            this.setChartConfig(config);
+        }
 
         return (
             <div>

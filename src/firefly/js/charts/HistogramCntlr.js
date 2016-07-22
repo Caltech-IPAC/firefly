@@ -218,6 +218,7 @@ function fetchColData(dispatch, tblId, histogramParams, chartId) {
 
     doFetchTable(req).then(
         (tableModel) => {
+            let histogramData = [];
             if (tableModel.tableData && tableModel.tableData.data) {
                 // if logarithmic values were requested, convert the returned exponents back
                 var toNumber = histogramParams.x.includes('log') ?
@@ -229,20 +230,20 @@ function fetchColData(dispatch, tblId, histogramParams, chartId) {
                             return Math.pow(10,Number(val));
                         }
                     } : (val)=>Number(val);
-                const histogramData = tableModel.tableData.data.reduce((data, arow) => {
+                histogramData = tableModel.tableData.data.reduce((data, arow) => {
                     data.push(arow.map(toNumber));
                     return data;
                 }, []);
 
-                dispatch(updateColData(
-                    {
-                        chartId,
-                        isColDataReady : true,
-                        tblSource,
-                        histogramParams,
-                        histogramData
-                    }));
             }
+            dispatch(updateColData(
+                {
+                    chartId,
+                    isColDataReady : true,
+                    tblSource,
+                    histogramParams,
+                    histogramData
+                }));
         }
     ).catch(
         (reason) => {

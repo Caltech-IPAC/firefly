@@ -3,12 +3,12 @@
  */
 import React, {PropTypes} from 'react';
 
-import {get, isUndefined, omitBy, defer} from 'lodash';
+import {get, isUndefined, omitBy, defer, set} from 'lodash';
 
 import ColValuesStatistics from './../ColValuesStatistics.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {dispatchValueChange, dispatchMultiValueChange, VALUE_CHANGE} from '../../fieldGroup/FieldGroupCntlr.js';
 import Validate from '../../util/Validate.js';
 import {Expression} from '../../util/expr/Expression.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
@@ -113,7 +113,7 @@ export function setOptions(groupKey, xyPlotParams) {
         {fieldKey: 'stretch', value: get(xyPlotParams, 'stretch', 'fit')},
         {fieldKey: 'nbins.x', value: get(xyPlotParams, 'nbins.x', 100)},
         {fieldKey: 'nbins.y', value: get(xyPlotParams, 'nbins.y', 100)},
-        {fieldKey: 'shading', value: get(xyPlotParams, 'shading', 'log')}
+        {fieldKey: 'shading', value: get(xyPlotParams, 'shading', 'lin')}
     ];
     dispatchMultiValueChange(groupKey, flds);
 }
@@ -133,6 +133,26 @@ export function getColValidator(colValStats) {
         return retval;
     };
 }
+
+/**
+ * Reducer from field group component,
+ * @returns {*} reducer, which clears label and unit whenever x or y field changes
+ */
+function fldChangeReducer(inFields, action) {
+    if (!inFields) { return {}; }
+    if (action.type === VALUE_CHANGE) {
+        // when field changes, clear the label and unit
+        if (get(action.payload, 'fieldKey') === 'x.columnOrExpr') {
+            set(inFields, ['x.label', 'value'], undefined);
+            set(inFields, ['x.unit', 'value'], undefined);
+        } else if (get(action.payload, 'fieldKey') === 'y.columnOrExpr') {
+            set(inFields, ['y.label', 'value'], undefined);
+            set(inFields, ['y.unit', 'value'], undefined);
+        }
+    }
+    return inFields;
+}
+
 
 export class XYPlotOptions extends React.Component {
 
@@ -201,7 +221,7 @@ export class XYPlotOptions extends React.Component {
                 <RadioGroupInputField
                     alignment='horizontal'
                     initialState= {{
-                        value: get(xyPlotParams, 'shading', 'log'),
+                        value: get(xyPlotParams, 'shading', 'lin'),
                         tooltip: 'When assigning shades to the number of bins, should we use linear or logarithmic scale?',
                         label : 'Shading:'
                     }}
@@ -243,26 +263,17 @@ export class XYPlotOptions extends React.Component {
         var y = get(xyPlotParams, 'y.columnOrExpr');
         const onXColSelected = (colName) => {
             x = colName;
-            const flds = [
-                {fieldKey: 'x.columnOrExpr', value: colName},
-                {fieldKey: 'x.label', value: ''},
-                {fieldKey: 'x.unit', value: ''}
-            ];
-            dispatchMultiValueChange(groupKey, flds);
+            dispatchValueChange({fieldKey: 'x.columnOrExpr', groupKey, value: colName, valid: true});
         };
         const onYColSelected = (colName) => {
             y = colName;
-            const flds = [
-                {fieldKey: 'y.columnOrExpr', value: colName},
-                {fieldKey: 'y.label', value: ''},
-                {fieldKey: 'y.unit', value: ''}
-            ];
-            dispatchMultiValueChange(groupKey, flds);
+            dispatchValueChange({fieldKey: 'y.columnOrExpr', groupKey, value: colName, valid: true});
         };
 
         return (
             <div style={{padding:'0 5px 7px'}}>
-                <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
+                <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}
+                    reducerFunc={fldChangeReducer}>
                     {onOptionsSelected &&
                     <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
                         <CompleteButton style={{flexGrow: 0}}

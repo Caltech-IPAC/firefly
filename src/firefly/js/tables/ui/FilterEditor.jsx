@@ -33,11 +33,11 @@ export class FilterEditor extends React.Component {
     // }
 
     render() {
-        const {columns, origColumns, onChange, sortInfo, filterInfo= ''} = this.props;
+        const {columns, selectable, onChange, sortInfo, filterInfo= ''} = this.props;
         if (isEmpty(columns)) return false;
 
         const {cols, data, selectInfoCls} = prepareOptionData(columns, sortInfo, filterInfo);
-        const callbacks = makeCallbacks(onChange, columns, origColumns, data, filterInfo);
+        const callbacks = makeCallbacks(onChange, columns, data, filterInfo);
         const renderers = makeRenderers(callbacks.onFilter);
         return (
             <div style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
@@ -47,7 +47,7 @@ export class FilterEditor extends React.Component {
                             bgColor='beige'
                             columns={cols}
                             rowHeight={24}
-                            selectable={true}
+                            selectable={selectable}
                             {...{data, selectInfoCls, sortInfo, callbacks, renderers}}
                         />
                     </div>
@@ -68,14 +68,18 @@ export class FilterEditor extends React.Component {
             </div>
         );
     }
-};
+}
 
 FilterEditor.propTypes = {
     columns: PropTypes.arrayOf(React.PropTypes.object),
-    origColumns: PropTypes.arrayOf(PropTypes.object),
+    selectable: PropTypes.bool,
     sortInfo: PropTypes.string,
     filterInfo: PropTypes.string,
     onChange: PropTypes.func
+};
+
+FilterEditor.defaultProps = {
+    selectable: true
 };
 
 function prepareOptionData(columns, sortInfo, filterInfo) {
@@ -85,7 +89,7 @@ function prepareOptionData(columns, sortInfo, filterInfo) {
         {name: 'Filter', visibility: 'show', prefWidth: 12},
         {name: 'Units', visibility: 'show', prefWidth: 6},
         {name: 'Description', visibility: 'show', prefWidth: 60},
-        {name: 'Selected', visibility: 'hidden'},
+        {name: 'Selected', visibility: 'hidden'}
     ];
 
     const filterInfoCls = FilterInfo.parse(filterInfo);
@@ -106,7 +110,7 @@ function prepareOptionData(columns, sortInfo, filterInfo) {
     return {cols, data, tableRowCount, selectInfoCls};
 }
 
-function makeCallbacks(onChange, columns, origColumns, data, orgFilterInfo='') {
+function makeCallbacks(onChange, columns, data, orgFilterInfo='') {
     var onSelectAll = (checked) => {
         const nColumns = cloneDeep(columns).filter((c) => c.visibility !== 'hidden');
         nColumns.forEach((v) => {
