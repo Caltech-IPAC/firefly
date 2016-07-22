@@ -47,8 +47,6 @@ export function* syncCharts() {
             case TablesCntlr.TABLE_SORT:
             case TablesCntlr.TABLE_NEW_LOADED:
                 const {tbl_id} = action.payload;
-                console.log(TableUtil.getTblById(tblId));
-                //console.log(get(TableUtil.getTblById(tblId), 'request'));
 
                 // check if there are any mounted charts related to this table
                 if (ChartsCntlr.getNumRelatedCharts(tbl_id, true) > 0) {

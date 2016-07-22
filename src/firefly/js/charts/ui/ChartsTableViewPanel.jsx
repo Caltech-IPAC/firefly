@@ -6,7 +6,7 @@ import './ChartPanel.css';
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 // import {deepDiff} from '../util/WebUtil.js';
-import {get, debounce, defer, isBoolean} from 'lodash';
+import {get, debounce, defer, isBoolean, isUndefined} from 'lodash';
 import Resizable from 'react-component-resizable';
 import {flux} from '../../Firefly.js';
 import * as TablesCntlr from '../../tables/TablesCntlr.js';
@@ -140,7 +140,7 @@ class ChartsPanel extends React.Component {
 
     renderXYPlot() {
         const {chartId, tblId, tableModel, tblPlotData} = this.props;
-        if (!tblPlotData) {
+        if (!TblUtil.isFullyLoaded(tblId) || !tblPlotData) {
             return null;
         }
         const { isPlotDataReady, xyPlotData, xyPlotParams } = tblPlotData;
@@ -184,8 +184,8 @@ class ChartsPanel extends React.Component {
 
 
     renderHistogram() {
-        if (!this.props.tblHistogramData) {
-            return 'Select Histogram Parameters...';
+        if (!TblUtil.isFullyLoaded(this.props.tblId) || !this.props.tblHistogramData) {
+            return null;
         }
         const { isColDataReady, histogramData, histogramParams } = this.props.tblHistogramData;
         var {widthPx, heightPx} = this.state;
@@ -390,9 +390,17 @@ class ChartsPanel extends React.Component {
                     />
                 </div>
             );
-        } else {
-            return (
-                <div style={{display:'inline-block', whiteSpace: 'nowrap'}}>
+        }
+    }
+
+    renderToolbar() {
+        const {expandable, expandedMode, tblId, chartId, chartType, deletable} = this.props;
+        return (
+            <div role='toolbar' className='ChartPanel__toolbar'>
+                <div className='group'>
+                    {this.renderSelectionButtons()}
+                </div>
+                <div className='group'>
                     {this.displayZoomOriginal() && <img className='selectionBtn'
                          title='Zoom out to original chart'
                          src={ZOOM_ORIGINAL}
@@ -408,25 +416,12 @@ class ChartsPanel extends React.Component {
                                                    src={CLEAR_FILTERS}
                                                    onClick={() => this.clearFilters()}
                     />}
-                </div>
-            );
-        }
-    }
-
-    renderToolbar() {
-        const {expandable, expandedMode, tblId, chartId, chartType, deletable} = this.props;
-        return (
-            <div role='toolbar' className='ChartPanel__toolbar'>
-                <div className='group'>
-                    {this.renderSelectionButtons()}
-                </div>
-                <div className='group'>
                     <ToolbarButton icon={FILTER}
                                    tip='Show/edit filters'
                                    visible={true}
                                    badgeCount={this.getFilterCount()}
                                    onClick={this.toggleFilters}/>
-                    <img style={{paddingLeft: 4, cursor: 'pointer'}}
+                    <img style={{paddingLeft: 5, cursor: 'pointer'}}
                          title='Plot options and tools'
                          src={SETTINGS}
                          onClick={() => this.toggleOptions()}
@@ -458,34 +453,13 @@ class ChartsPanel extends React.Component {
         const { tableModel, tblStatsData, tblPlotData, tblHistogramData, chartId, chartType} = this.props;
         if (optionsShown) {
             return (
-                <div className='ChartPanelOptions'>
-                    <OptionsWrapper toggleOptions={this.toggleOptions}
-                        {...{chartId, tableModel, tblStatsData, tblPlotData, tblHistogramData, chartType}}/>
-                </div>
+                <OptionsWrapper toggleOptions={this.toggleOptions}
+                    {...{chartId, tableModel, tblStatsData, tblPlotData, tblHistogramData, chartType}}/>
             );
         }
         if (filtersShown) {
             return (
-                <div className='ChartPanelOptions'>
-                    <div style={{height: 14}}>
-                        <div style={{ right: -6, float: 'right'}}
-                             className='btn-close'
-                             title='Remove Panel'
-                             onClick={() => this.toggleFilters()}/>
-                    </div>
-                    <div style={{width: 350, height: 'calc(100% - 20px)'}}>
-                        <FilterEditor
-                            columns={get(tableModel, 'tableData.columns', [])}
-                            selectable={false}
-                            filterInfo={get(tableModel, 'request.filters')}
-                            onChange={(obj) => {
-                                    if (obj.filterInfo) {
-                                        const newRequest = Object.assign({}, tableModel.request, {filters: obj.filterInfo});
-                                        TablesCntlr.dispatchTableFetch(newRequest, 0);
-                                    }
-                                  } }/>
-                    </div>
-                </div>
+                <FilterEditorWrapper toggleFilters={this.toggleFilters} tableModel={tableModel}/>
             );
         }
         return false;
@@ -494,14 +468,12 @@ class ChartsPanel extends React.Component {
 
 
     render() {
-        var {tblId, chartType} = this.props;
+        var {chartType} = this.props;
 
         var {widthPx, heightPx} = this.state;
         const knownSize = widthPx && heightPx;
 
-        if ((!TblUtil.isFullyLoaded(tblId)) ||
-            (chartType === SCATTER && !this.props.tblPlotData) ||
-            (chartType === HISTOGRAM && !this.props.tblHistogramData)) {
+        if (chartType === HISTOGRAM && !this.props.tblHistogramData) {
             return null;
         }
 
@@ -656,7 +628,7 @@ export class OptionsWrapper extends React.Component {
         }
 
         return (
-            <div>
+            <div className='ChartPanelOptions'>
                 {toggleOptions &&
                     <div style={{height: 14}}>
                         <div style={{ right: -6, float: 'right'}}
@@ -682,3 +654,52 @@ OptionsWrapper.propTypes = {
 };
 
 
+export class FilterEditorWrapper extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            sortInfo: ''
+        };
+    }
+
+    shouldComponentUpdate(np, ns) {
+        const tblId = get(np.tableModel, 'tbl_id');
+        return ns.sortInfo !== this.state.sortInfo || tblId !== get(this.props.tableModel, 'tbl_id') ||
+            (TblUtil.isFullyLoaded(tblId) && np.tableModel !== this.props.tableModel); // to avoid flickering when changing the filter
+    }
+
+    render() {
+        const {tableModel, toggleFilters} = this.props;
+        const {sortInfo} = this.state;
+        return (
+            <div className='ChartPanelOptions'>
+                <div style={{height: 14}}>
+                    <div style={{ right: -6, float: 'right'}}
+                         className='btn-close'
+                         title='Remove Panel'
+                         onClick={() => toggleFilters()}/>
+                </div>
+                <div style={{width: 350, height: 'calc(100% - 20px)'}}>
+                    <FilterEditor
+                        columns={get(tableModel, 'tableData.columns', [])}
+                        selectable={false}
+                        filterInfo={get(tableModel, 'request.filters')}
+                        sortInfo={sortInfo}
+                        onChange={(obj) => {
+                            if (!isUndefined(obj.filterInfo)) {
+                                const newRequest = Object.assign({}, tableModel.request, {filters: obj.filterInfo});
+                                TablesCntlr.dispatchTableFetch(newRequest, 0);
+                            } else if (!isUndefined(obj.sortInfo)) {
+                                this.setState({sortInfo: obj.sortInfo});
+                            }
+                          } }/>
+                </div>
+            </div>
+        );
+    }
+}
+
+FilterEditorWrapper.propTypes = {
+    toggleFilters : PropTypes.func,
+    tableModel : PropTypes.object
+};
