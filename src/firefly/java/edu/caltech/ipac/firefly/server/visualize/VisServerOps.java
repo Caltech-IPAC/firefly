@@ -341,6 +341,7 @@ public class VisServerOps {
                 ctx= CtxControl.prepare(state);
                 ImagePlot plot= ctx.getPlot();
                 retval= plot.getFlux(ctx.getFitsReadGroup(), band, plot.getImageWorkSpaceCoords(ipt));
+                CtxControl.updateCachedPlot(ctx);
             } catch (FailedRequestException e) {
                 throw new IOException(e);
             } catch (PixelValueException e) {
@@ -380,6 +381,7 @@ public class VisServerOps {
             ctx= CtxControl.prepare(state);
             InsertBandInitializer init;
             init= WebPlotFactory.addBand(ctx.getPlot(),state,bandRequest,band, ctx.getFitsReadGroup());
+            CtxControl.updateCachedPlot(ctx);
             retval= new WebPlotResult(ctx.getKey());
             retval.putResult(WebPlotResult.INSERT_BAND_INIT,init);
             counters.incrementVis("3 Color Band");
@@ -404,6 +406,7 @@ public class VisServerOps {
             retval= new WebPlotResult(ctx.getKey());
             retval.putResult(WebPlotResult.PLOT_IMAGES,images);
             retval.putResult(WebPlotResult.PLOT_STATE,state);
+            CtxControl.updateCachedPlot(ctx);
         } catch (Exception e) {
             retval= createError("on deleteColorBand", state, e);
         }
@@ -424,6 +427,7 @@ public class VisServerOps {
             retval.putResult(WebPlotResult.PLOT_STATE,state);
             counters.incrementVis("Color change");
             PlotServUtils.createThumbnail(plot,ctx.getFitsReadGroup(),images,false,state.getThumbnailSize());
+            CtxControl.updateCachedPlot(ctx);
         } catch (Exception e) {
             retval= createError("on changeColor", state, e);
         }
@@ -486,6 +490,7 @@ public class VisServerOps {
                 retval= createError("on recomputeStretch", state, fe);
             }
             if (images!=null) PlotServUtils.createThumbnail(plot,ctx.getFitsReadGroup(),images,false,state.getThumbnailSize());
+            CtxControl.updateCachedPlot(ctx);
             counters.incrementVis("Stretch change");
         } catch (Exception e) {
             retval= createError("on recomputeStretch", state, e);
@@ -589,6 +594,7 @@ public class VisServerOps {
 
 
             cropResult= makeNewPlotResult(wpInitAry);
+            CtxControl.updateCachedPlot(cropResult.getContextStr());
 
             counters.incrementVis("Crop");
             PlotServUtils.statsLog("crop");
@@ -737,6 +743,7 @@ public class VisServerOps {
                 flippedState.setImageIdx(0, bands[i]) ;
             }
             flipResult= recreatePlot(flippedState);
+            CtxControl.updateCachedPlot(flipResult.getContextStr());
 
             for (Band band : bands) { // mark this request as flipped so recreate works
                 flippedState.getWebPlotRequest(band).setFlipY(flipped);
@@ -869,6 +876,7 @@ public class VisServerOps {
                     }
                 }
                 rotateResult= recreatePlot(rotateState);
+                CtxControl.updateCachedPlot(rotateResult.getContextStr());
 
                 for (int i= 0; (i<bands.length); i++) { // mark this request as rotate north so recreate works
                     rotateState.getWebPlotRequest(bands[i]).setRotateNorth(true);
@@ -901,6 +909,7 @@ public class VisServerOps {
                     unrotateState.setOriginalImageIdx(state.getOriginalImageIdx(band),band);
                 }
                 rotateResult= recreatePlot(unrotateState);
+                CtxControl.updateCachedPlot(rotateResult.getContextStr());
             }
 
         } catch (Exception e) {
@@ -1239,6 +1248,7 @@ public class VisServerOps {
             plot.getPlotGroup().setZoomTo(oldLevel);
         }
         PlotServUtils.createThumbnail(plot,ctx.getFitsReadGroup(), images,false,state.getThumbnailSize());
+        CtxControl.updateCachedPlot(ctx);
         ctx.getPlotClientCtx().addZoomLevel(level);
         return retval;
     }
@@ -1348,6 +1358,7 @@ public class VisServerOps {
             String pngFile= PlotPngCreator.createImagePng(ctx.getPlot(),ctx.getFitsReadGroup(), drawInfoList);
             retval = new WebPlotResult(ctx.getKey());
             retval.putResult(WebPlotResult.IMAGE_FILE_NAME,  new DataEntry.Str(pngFile));
+            CtxControl.updateCachedPlot(ctx);
         } catch (Exception e) {
             retval= createError("on getImagePng", state, e);
         }

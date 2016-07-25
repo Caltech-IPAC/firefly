@@ -76,6 +76,7 @@ public class ImageDownload extends BaseHttpServlet {
                         Logger.info("frGroup "+ state.firstBand()+ " is null after recreate");
                     }
                     File outputFile= PlotServUtils.createImageFile(ctx.getPlot(),ctx.getFitsReadGroup(),fname,x,y,width,height);
+                    CtxControl.updateCachedPlot(ctx);
                     insertCacheHeaders(res,outputFile.lastModified()+"");
                     FileUtil.writeFileToStream(outputFile,out);
                 }
@@ -88,6 +89,7 @@ public class ImageDownload extends BaseHttpServlet {
                     ctx= CtxControl.prepare(state);
                     File outputFile= PlotServUtils.createImageThumbnail(fname,ctx.getPlot(),ctx.getFitsReadGroup(), state.getThumbnailSize());
                     insertCacheHeaders(res,outputFile.lastModified()+"");
+                    CtxControl.updateCachedPlot(ctx);
                     FileUtil.writeFileToStream(outputFile,out);
                 }
                 else {
@@ -98,6 +100,7 @@ public class ImageDownload extends BaseHttpServlet {
                 res.setHeader("Content-Disposition", "attachment; filename=fits-image.png");
                 ctx= CtxControl.prepare(state);
                 PlotServUtils.writeFullImageFileToStream(out,ctx.getPlot(),ctx.getFitsReadGroup());
+                CtxControl.updateCachedPlot(ctx);
             }
             else {
                 File f= ServerContext.convertToFile(fname);

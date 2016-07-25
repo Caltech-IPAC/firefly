@@ -261,6 +261,15 @@ public class CtxControl {
 
     static Cache getCache() { return CacheManager.getCache(Cache.TYPE_VISUALIZE); }
 
+    public static void updateCachedPlot(ActiveCallCtx ctx) { if (ctx!=null) updateCachedPlot(ctx.getKey()); }
+
+    public static void updateCachedPlot(String ctxStr) {
+        PlotClientCtx ctx= getPlotCtx(ctxStr);
+        if (ctx==null) return;
+        ImagePlot p= ctx.getCachedPlot();
+        if (p!=null) ctx.setPlot(p);
+    }
+
     private static void cleanupOldDirs() {
         long now= System.currentTimeMillis();
         long lastDelta= now-_lastDirCheck.get();
