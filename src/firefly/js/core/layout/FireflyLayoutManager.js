@@ -94,6 +94,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
             case ImagePlotCntlr.PLOT_IMAGE :
                 dropDown = {visible: count === 0};
                 break;
+            case SHOW_DROPDOWN:
             case TABLE_REMOVE:
             case ImagePlotCntlr.DELETE_PLOT_VIEW:
                 if (!get(dropDown, 'visible', false)) {

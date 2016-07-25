@@ -21,12 +21,6 @@ import {doConv} from '../astro/conv/CoordConv.js';
 
 var {AllPlots} = window.ffgwt ? window.ffgwt.Visualize : {AllPlots:null};
 
-export const USE_GWT= false;
-
-const doCoordConversion= USE_GWT ? window.ffgwt.astro.CoordConv.doConv : doConv;
-
-
-
 export const DtoR = Math.PI / 180.0;
 export const RtoD = 180.0 / Math.PI;
 
@@ -101,7 +95,7 @@ export function convert(wpt, to= CoordinateSys.EQ_J2000) {
     if (!to || from==to) return wpt;
 
     const tobs=  (from===CoordinateSys.EQ_B1950) ? 1983.5 : 0;
-    const ll = doCoordConversion(
+    const ll = doConv(
                           from.getJsys(), from.getEquinox(),
                           wpt.getLon(), wpt.getLat(),
                           to.getJsys(), to.getEquinox(), tobs);

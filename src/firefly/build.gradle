@@ -22,11 +22,6 @@ jar {
   includes = ['edu/caltech/ipac/**/*']
 }
 
-gwt {
-  modules = 'edu.caltech.ipac.jsinterop'
-  module_name = 'jsinterop'
-}
-
 ext.appConfig = {
   BuildMajor  = "1"
   BuildMinor  = "0"
