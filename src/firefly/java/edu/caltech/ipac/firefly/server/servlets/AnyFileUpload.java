@@ -9,13 +9,10 @@ import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
-import edu.caltech.ipac.firefly.server.visualize.FitsCacher;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.StringKey;
-import edu.caltech.ipac.visualize.plot.FitsRead;
-import nom.tam.fits.Fits;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
@@ -23,7 +20,6 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 
 /**
@@ -77,7 +73,7 @@ public class AnyFileUpload extends BaseHttpServlet {
             String ext = resolveExt(fileName);
             FileType fType = resolveType(fileType, ext, file.getContentType());
             File destDir = resolveDestDir(dest, fType);
-            boolean doPreload = resolvePreload(preload, fType);
+//            boolean doPreload = resolvePreload(preload, fType);   // we are no longer pre-loading fits files.  performance gain was not significant.
 
             File uf = File.createTempFile("upload_", ext, destDir); // other parts of system depend on file name starting with "upload_"
             String rPathInfo = ServerContext.replaceWithPrefix(uf);
@@ -85,29 +81,7 @@ public class AnyFileUpload extends BaseHttpServlet {
             UploadFileInfo fi= new UploadFileInfo(rPathInfo,uf,fileName,file.getContentType());
             String fileCacheKey= overrideCacheKey!=null ? overrideCacheKey : rPathInfo;
             UserCache.getInstance().put(new StringKey(fileCacheKey), fi);
-
-            if (doPreload && fType == FileType.FITS) {
-
-                BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(uf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
-                ByteArrayOutputStream pipe = new ByteArrayOutputStream();
-                try {
-                    byte[] buffer = new byte[IpacTableUtil.FILE_IO_BUFFER_SIZE];
-                    int read;
-                    while ((read = inStream.read(buffer)) != -1) {
-                        bos.write(buffer, 0, read);
-                        pipe.write(buffer, 0, read);
-                    }
-
-                    final Fits fits = new Fits(new ByteArrayInputStream(pipe.toByteArray()));
-                    FitsRead[] frAry = FitsRead.createFitsReadArray(fits);
-                    FitsCacher.addFitsReadToCache(uf, frAry);
-
-                } finally {
-                    FileUtil.silentClose(bos);
-                }
-            } else {
-                FileUtil.writeToFile(inStream, uf);
-            }
+            FileUtil.writeToFile(inStream, uf);
             sendReturnMsg(res, 200, null, fileCacheKey);
             Counters.getInstance().increment(Counters.Category.Upload, fi.getContentType());
 

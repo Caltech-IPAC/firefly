@@ -9,7 +9,7 @@ import 'isomorphic-fetch';
 import React from 'react';
 import 'styles/global.css';
 
-import {APP_LOAD, dispatchUpdateAppData} from './core/AppDataCntlr.js';
+import {APP_LOAD} from './core/AppDataCntlr.js';
 import {ExtensionJavaInterface } from './gwtinterface/ExtensionJavaInterface.js';
 import {ExtensionResult } from './gwtinterface/ExtensionResult.js';
 import {PlotCmdExtension } from './visualize/PlotCmdExtension.js';
@@ -46,12 +46,6 @@ const appFlux= {
 
 
 function fireflyInit() {
-
-    if (! window.ffgwt ) {
-        window.ffgwt = {
-            onLoaded: () => dispatchUpdateAppData({gwtLoaded: true})
-        };
-    }
 
     if (! (window.firefly && window.firefly.initialized) ) {
         flux.bootstrap();

@@ -876,20 +876,3 @@ function deletePlotView(state,action) {
 //============ end private functions =================================
 //============ end private functions =================================
 
-
-
-
-//============ TEMPORARY interface with GWT=================================
-
-/*globals ffgwt*/
-
-if (window.ffgwt) {
-    const allPlots= ffgwt.Visualize.AllPlots.getInstance();
-    allPlots.addListener({
-        eventNotify(ev) {
-            if (ev.getName().getName()==='Replot') {
-                flux.process({type: ANY_CHANGE, payload: { } });
-            }
-        }
-    });
-}
