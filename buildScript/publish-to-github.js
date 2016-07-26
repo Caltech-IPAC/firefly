@@ -54,7 +54,7 @@ if (args.tag && args.assets) {
 
 function getChangeLog(rel_config, lastRel) {
     lastRel = lastRel || 'master';
-    var cmd = 'git log --pretty=format:"%h - %s [%cd]" --date=short ' + lastRel + '..HEAD';
+    var cmd = 'git log --pretty=format:"%h - %s [%cd]" --date=short --max-count 100 ' + lastRel + '..HEAD';
 
     console.log( 'CMD: ' + cmd);
 
