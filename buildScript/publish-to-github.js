@@ -8,8 +8,8 @@ var request = require('request');
 var ffdesc = 'This standalone release enable Firefly to run without additional dependencies beside Java 1.8. \n' +
              'It comes with an embedded Tomcat 7. \n\n' +
              'To start Firefly: \n' +
-             'java -jar fftools-exec.war \n\n' +
-             'By default, it will start up on port 8080. Goto to http://localhost:8080/fftools/ after it has started. \n' +
+             'java -jar firefly-exec.war \n\n' +
+             'By default, it will start up on port 8080. Goto to http://localhost:8080/firefly/ after it has started. \n' +
              'To start it on a different port, add -httpPort to the java command. \n\n' +
              'This will extract the content of the war file into a directory called ".extract" in your current directory. \n' +
              'To change this, add -extractDirectory to the java command. \n\n';
@@ -27,7 +27,7 @@ if (args.tag && args.assets) {
 
     var rel_config = {
         token: '',
-        owner: 'lsst',
+        owner: 'Caltech-IPAC',
         repo: 'firefly',
         tag: '',
         name: args.tag,
@@ -52,8 +52,11 @@ if (args.tag && args.assets) {
     process.exit(1);
 }
 
-function getChangeLog(rel_config, lastdate) {
-    var cmd = 'git log --pretty=format:"%h - %s [%cd]" --date=short --after="' + lastdate +'"';
+function getChangeLog(rel_config, lastRel) {
+    lastRel = lastRel || 'master';
+    var cmd = 'git log --pretty=format:"%h - %s [%cd]" --date=short ' + lastRel + '..HEAD';
+
+    console.log( 'CMD: ' + cmd);
 
     // push changes to github..
     exec(cmd, function (error, stdout, stderr) {
@@ -68,7 +71,7 @@ function getChangeLog(rel_config, lastdate) {
 function checkGitHub(rel_config, callback) {
 
     request({
-        uri: rel_config.apiUrl + '/repos/' + rel_config.owner + '/' + rel_config.repo + '/commits/master',
+        uri: rel_config.apiUrl + '/repos/' + rel_config.owner + '/' + rel_config.repo + '/releases',
         method: 'GET',
         headers: {
             'Authorization': 'token ' + rel_config.token,
@@ -77,17 +80,14 @@ function checkGitHub(rel_config, callback) {
     }, function (err, res, body) {
         if (err) return callback(err);
         var result = JSON.parse(body);
-        console.log( 'github latest commit: ' + result.sha );
-        callback(rel_config, result.commit.author.date);
+        console.log( 'github latest release: ' + result.tag_name );
+        callback(rel_config, result.tag_name);
     });
 }
 
 function doPublish(rel_config) {
 
     rel_config.notes = ffdesc + rel_config.notes;
-    execSync('git remote add lsst https://' + rel_config.token +'@github.com/lsst/firefly.git');
-    execSync('git push --tags -f lsst HEAD:master');
-    execSync('git remote rm lsst');
 
     publishRelease(rel_config,
         function (err, release) {
