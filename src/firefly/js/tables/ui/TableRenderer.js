@@ -24,18 +24,18 @@ const html_regex = /<.+>/;
 /* eslint-disable react/prop-types */
 
 /*---------------------------- COLUMN HEADER RENDERERS ----------------------------*/
-function Label({sortable, title, name, sortByCols, sortInfoCls, onSort}) {
+function Label({sortable, label, name, sortByCols, sortInfoCls, onSort}) {
     const sortDir = sortInfoCls.getDirection(name);
     sortByCols = sortByCols || name;
 
     if (toBoolean(sortable, true)) {
         return (
-            <div style={{width: '100%', cursor: 'pointer'}} onClick={() => onSort(sortByCols)}>{title || name}
+            <div style={{width: '100%', cursor: 'pointer'}} onClick={() => onSort(sortByCols)}>{label || name}
                 { sortDir !== UNSORTED && <SortSymbol sortDir={sortDir}/> }
             </div>
         );
     } else {
-        return <div>{title || name}</div>;
+        return <div>{label || name}</div>;
     }
 }
 

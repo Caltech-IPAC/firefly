@@ -10,7 +10,7 @@ import {BasicTableView} from './BasicTableView.jsx';
 import {SelectInfo} from '../SelectInfo.js';
 import {createInputCell} from './TableRenderer.js';
 import {FILTER_CONDITION_TTIPS, FILTER_TTIPS, FilterInfo} from '../FilterInfo.js';
-import {sortTableData} from  '../TableUtil.js';
+import {sortTableData, calcColumnWidths} from  '../TableUtil.js';
 import {InputAreaField} from '../../ui/InputAreaField.jsx';
 // import {deepDiff} from '../../util/WebUtil.js';
 
@@ -85,9 +85,9 @@ FilterEditor.defaultProps = {
 function prepareOptionData(columns, sortInfo, filterInfo) {
 
     var cols = [
-        {name: 'Column', visibility: 'show', prefWidth: 12, fixed: true},
+        {name: 'Column', visibility: 'show', fixed: true},
         {name: 'Filter', visibility: 'show', prefWidth: 12},
-        {name: 'Units', visibility: 'show', prefWidth: 6},
+        {name: 'Units', visibility: 'show'},
         {name: 'Description', visibility: 'show', prefWidth: 60},
         {name: 'Selected', visibility: 'hidden'}
     ];
@@ -98,6 +98,9 @@ function prepareOptionData(columns, sortInfo, filterInfo) {
         const filter = filterInfoCls.getFilter(v.name) || '';
         return [v.name||'', filter, v.units||'', v.desc||'', v.visibility !== 'hide'];
     } );
+    const widths = calcColumnWidths(cols, data);
+    cols[0].prefWidth = Math.min(widths['Columns'], 12);  // adjust width of column for optimum display.
+    cols[2].prefWidth = Math.min(widths['Units'], 12);
     sortTableData(data, cols, sortInfo);
 
     var selectInfoCls = SelectInfo.newInstance({rowCount: data.length});

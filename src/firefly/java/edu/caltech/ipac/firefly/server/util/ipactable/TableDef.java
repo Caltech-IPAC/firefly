@@ -18,6 +18,7 @@ import java.util.List;
 */
 public class TableDef {
     private List<DataType> cols = new ArrayList<DataType>();
+    private ArrayList<DataGroup.Attribute> allAttributes = new ArrayList<>();
     private HashMap<String, DataGroup.Attribute> attributes = new HashMap<>();
     private int lineWidth;
     private int rowCount;
@@ -27,28 +28,47 @@ public class TableDef {
     public void addAttributes(DataGroup.Attribute... attributes) {
         if (attributes != null) {
             for(DataGroup.Attribute a : attributes) {
-                this.attributes.put(a.getKey(), a);
+                if (contains(a.getKey())) {
+                    removeAttribute(a.getKey());
+                }
+                allAttributes.add(a);
+                if (!a.isComment()) {
+                    this.attributes.put(a.getKey(), a);
+                }
             }
         }
     }
+
     public void setCols(List<DataType> cols) { this.cols = cols; }
 
     public List<DataType> getCols() {
         return cols;
     }
 
+    /**
+     * returns all of the attributes including comments.  This function returns the attributes
+     * in the order it was added.
+     * @return
+     */
+    public List<DataGroup.Attribute> getAllAttributes() { return  allAttributes; }
+
+    /**
+     * return non-comment attributes.
+     * @return
+     */
     public List<DataGroup.Attribute> getAttributes() {
         return  new ArrayList<>(attributes.values());
     }
 
     public boolean contains(String name) { return attributes.containsKey(name);};
 
-    public void setAttribute(String name, String value) {
-        attributes.put(name, new DataGroup.Attribute(name, value));
-    }
+    public void setAttribute(String name, String value) { addAttributes(new DataGroup.Attribute(name, value)); }
 
     public void removeAttribute(String name) {
-        attributes.remove(name);
+        DataGroup.Attribute removed = attributes.remove(name);
+        if (removed != null) {
+            allAttributes.remove(removed);
+        }
     }
 
     public void setStatus(DataGroupPart.State status) {
@@ -154,6 +174,7 @@ public class TableDef {
         TableDef copy = new TableDef();
         copy.cols = new ArrayList<>(cols);
         copy.attributes = new HashMap<>(attributes);
+        copy.allAttributes = new ArrayList<>(allAttributes);
         copy.lineWidth = lineWidth;
         copy.rowCount = rowCount;
         copy.rowStartOffset = rowStartOffset;

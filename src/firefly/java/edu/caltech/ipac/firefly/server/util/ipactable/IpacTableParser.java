@@ -82,15 +82,15 @@ public class IpacTableParser {
 
 
     public static DataGroupPart getData(File inf, int start, int rows) throws IOException {
-        TableDef meta = IpacTableUtil.getMetaInfo(inf);
+        TableDef tableDef = IpacTableUtil.getMetaInfo(inf);
 
-        DataGroup dg = new DataGroup(null, meta.getCols());
+        DataGroup dg = new DataGroup(null, tableDef.getCols());
         dg.setRowIdxOffset(start);
 
-        dg.setAttributes(meta.getAttributes());
+        dg.setAttributes(tableDef.getAllAttributes());
 
         RandomAccessFile reader = new RandomAccessFile(inf, "r");
-        long skip = ((long)start * (long)meta.getLineWidth()) + (long)meta.getRowStartOffset();
+        long skip = ((long)start * (long)tableDef.getLineWidth()) + (long)tableDef.getRowStartOffset();
         int count = 0;
         try {
             reader.seek(skip);
@@ -108,9 +108,9 @@ public class IpacTableParser {
             reader.close();
         }
 
-        long totalRow = meta.getLineWidth() == 0 ? 0 :
-                        (inf.length() - meta.getRowStartOffset())/meta.getLineWidth();
-        return new DataGroupPart(meta, dg, start, (int) totalRow);
+        long totalRow = tableDef.getLineWidth() == 0 ? 0 :
+                        (inf.length() - tableDef.getRowStartOffset())/tableDef.getLineWidth();
+        return new DataGroupPart(tableDef, dg, start, (int) totalRow);
     }
 
 //====================================================================
