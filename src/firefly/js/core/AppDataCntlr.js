@@ -275,8 +275,10 @@ export function dispatchOnAppReady(callback) {
 
 /*---------------------------- EXPORTED FUNTIONS -----------------------------*/
 export function isAppReady() {
-    return getWsChannel() && get(flux.getState(), [APP_DATA_PATH, 'isReady']) &&
-        (!window.ffgwt || get(flux.getState(), [APP_DATA_PATH, 'gwtLoaded']));
+    const gwtReady = !get(window, 'firefly.use_gwt', false) ||
+                      get(flux.getState(), [APP_DATA_PATH, 'gwtLoaded']);
+    
+    return getWsChannel() && get(flux.getState(), [APP_DATA_PATH, 'isReady']) && gwtReady;
 }
 
 export function getMenu() {
