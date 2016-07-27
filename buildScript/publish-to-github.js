@@ -32,7 +32,7 @@ if (args.tag && args.assets) {
         tag: '',
         name: args.tag,
         draft: false,
-        prerelease: true,
+        prerelease: false,
         assets: [],
         apiUrl: 'https://api.github.com'
     };
@@ -53,7 +53,7 @@ if (args.tag && args.assets) {
 }
 
 function getChangeLog(rel_config, lastRel) {
-    lastRel = lastRel || 'master';
+    lastRel = lastRel || 'origin/master';
     var cmd = 'git log --pretty=format:"%h - %s [%cd]" --date=short --max-count 100 ' + lastRel + '..HEAD';
 
     console.log( 'CMD: ' + cmd);
@@ -71,7 +71,7 @@ function getChangeLog(rel_config, lastRel) {
 function checkGitHub(rel_config, callback) {
 
     request({
-        uri: rel_config.apiUrl + '/repos/' + rel_config.owner + '/' + rel_config.repo + '/releases',
+        uri: rel_config.apiUrl + '/repos/' + rel_config.owner + '/' + rel_config.repo + '/releases/latest',
         method: 'GET',
         headers: {
             'Authorization': 'token ' + rel_config.token,
