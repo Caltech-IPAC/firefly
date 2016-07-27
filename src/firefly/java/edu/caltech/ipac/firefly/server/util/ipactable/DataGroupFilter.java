@@ -94,7 +94,7 @@ public class DataGroupFilter {
         StopWatch.getInstance().start("DataGroupFilter");
 
         TableDef tableMeta = IpacTableUtil.getMetaInfo(source);
-        List<DataGroup.Attribute> attributes = tableMeta.getAttributes();
+        List<DataGroup.Attribute> attributes = tableMeta.getAllAttributes();
         List<DataType> headers = tableMeta.getCols();
 
         writer = new PrintWriter(new BufferedWriter(new FileWriter(this.outf), IpacTableUtil.FILE_IO_BUFFER_SIZE));

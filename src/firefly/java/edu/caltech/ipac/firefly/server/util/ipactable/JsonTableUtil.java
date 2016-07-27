@@ -123,15 +123,13 @@ public class JsonTableUtil {
     /**
      * convert to JSON TableMeta
      *
-     * @param meta
+     * @param tableDef
      * @return
      */
-    public static JSONObject toJsonTableMeta(TableDef meta) {
+    public static JSONObject toJsonTableMeta(TableDef tableDef) {
         JSONObject tmeta = new JSONObject();
-        for (DataGroup.Attribute att : meta.getAttributes()) {
-            if (!att.isComment()) {
-                tmeta.put(att.getKey(), att.getValue());
-            }
+        for (DataGroup.Attribute att : tableDef.getAttributes()) {
+            tmeta.put(att.getKey(), att.getValue());
         }
         return tmeta;
     }
@@ -140,9 +138,9 @@ public class JsonTableUtil {
 //
 //====================================================================
 
-    private static List<JSONObject> toJsonTableColumn(DataGroup dataGroup, TableDef meta) {
+    private static List<JSONObject> toJsonTableColumn(DataGroup dataGroup, TableDef tableDef) {
 
-        DataType[] dataTypes = meta.getCols().size() > 0 ? meta.getCols().toArray(new DataType[0]) : dataGroup.getDataDefinitions();
+        DataType[] dataTypes = tableDef.getCols().size() > 0 ? tableDef.getCols().toArray(new DataType[0]) : dataGroup.getDataDefinitions();
 
         ArrayList<JSONObject> cols = new ArrayList<JSONObject>();
         for (DataType dt :dataTypes) {
@@ -162,48 +160,48 @@ public class JsonTableUtil {
             }
 
             // modify column's attributes based on meta
-            String label = getColAttr(meta, LABEL_TAG, cname);
+            String label = getColAttr(tableDef, LABEL_TAG, cname);
             if (!StringUtils.isEmpty(label)) {
                 c.put("label", label);
             }
-            String desc = getColAttr(meta, DESC_TAG, cname);
+            String desc = getColAttr(tableDef, DESC_TAG, cname);
             if (!StringUtils.isEmpty(desc)) {
                 c.put("desc", desc);
             }
-            String visibility = getColAttr(meta, VISI_TAG, cname);
+            String visibility = getColAttr(tableDef, VISI_TAG, cname);
             if (!StringUtils.isEmpty(visibility)) {
                 c.put("visibility", visibility);
             }
-            String width = getColAttr(meta, WIDTH_TAG, cname);
+            String width = getColAttr(tableDef, WIDTH_TAG, cname);
             if (!StringUtils.isEmpty(width)) {
                 c.put("width", width);
             }
-            String prefWidth = getColAttr(meta, PREF_WIDTH_TAG, cname);
+            String prefWidth = getColAttr(tableDef, PREF_WIDTH_TAG, cname);
             if (!StringUtils.isEmpty(prefWidth)) {
                 c.put("prefWidth", prefWidth);
             }
-            String sortable = getColAttr(meta, SORTABLE_TAG, cname);
+            String sortable = getColAttr(tableDef, SORTABLE_TAG, cname);
             if (!StringUtils.isEmpty(sortable)) {
                 c.put("sortable", sortable);
             }
-            String units = getColAttr(meta, UNIT_TAG, cname);
+            String units = getColAttr(tableDef, UNIT_TAG, cname);
             if (!StringUtils.isEmpty(units)) {
                 c.put("units", units);
             }
-            String items = getColAttr(meta, ITEMS_TAG, cname);
+            String items = getColAttr(tableDef, ITEMS_TAG, cname);
             if (!StringUtils.isEmpty(items)) {
                 c.put("items", items);
             }
-            String sortBy = getColAttr(meta, SORT_BY_TAG, cname);
+            String sortBy = getColAttr(tableDef, SORT_BY_TAG, cname);
             if (!StringUtils.isEmpty(sortBy)) {
                 c.put("sortByCols", sortBy);
             }
             cols.add(c);
         }
-        for (DataGroup.Attribute att :  meta.getAttributes()) {
+        for (DataGroup.Attribute att :  tableDef.getAttributes()) {
             // clean up all of the column's attributes since we already set it to the columns
             if (att.getKey().startsWith("col.")) {
-                meta.removeAttribute(att.getKey());
+                tableDef.removeAttribute(att.getKey());
             }
         }
         return cols;

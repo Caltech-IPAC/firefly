@@ -40,10 +40,20 @@ public class IpacTableUtil {
 
     public static void writeAttributes(PrintWriter writer, Collection<DataGroup.Attribute> attribs, String... ignoreList) {
         if (attribs == null) return;
-
+        // write attributes first
         for (DataGroup.Attribute kw : attribs) {
             if (ignoreList == null || !CollectionUtil.exists(ignoreList, kw.getKey())) {
-                writer.println(kw.toString());
+                if (!kw.isComment()) {
+                    writer.println(kw.toString());
+                }
+            }
+        }
+        // then write comments
+        for (DataGroup.Attribute kw : attribs) {
+            if (ignoreList == null || !CollectionUtil.exists(ignoreList, kw.getKey())) {
+                if (kw.isComment()) {
+                    writer.println(kw.toString());
+                }
             }
         }
     }
@@ -306,10 +316,6 @@ public class IpacTableUtil {
 
     public static TableDef getMetaInfo(BufferedReader reader, File src) throws IOException {
         TableDef meta = new TableDef();
-        if (src != null) {
-            meta.setSource(src.getAbsolutePath());
-        }
-
         int nlchar = findLineSepLength(reader);
         meta.setLineSepLength(nlchar);
 
@@ -375,6 +381,9 @@ public class IpacTableUtil {
             long totalRow = meta.getLineWidth() == 0 ? 0 :
                     (src.length() - (long) meta.getRowStartOffset()) / meta.getLineWidth();
             meta.setRowCount((int) totalRow);
+        }
+        if (src != null) {
+            meta.setSource(src.getAbsolutePath());
         }
         return meta;
     }
