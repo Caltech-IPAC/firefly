@@ -84,7 +84,7 @@ function creator() {
                       DrawLayerCntlr.SELECT_AREA_MOVE,
                       DrawLayerCntlr.SELECT_AREA_END,
                       DrawLayerCntlr.SELECT_MOUSE_LOC];
-    
+
     var exclusiveDef= { exclusiveOnDown: true, type : 'anywhere' };
 
 
@@ -259,7 +259,7 @@ function drag(drawLayer,action) {
     var plot= primePlot(visRoot(),plotId);
     if (!plot) return;
     var drawSel= makeSelectObj(drawLayer.firstPt, imagePt, CsysConverter.make(plot));
-    var exclusiveDef= { exclusiveOnDown: true, type : 'vertexOnly' };
+    var exclusiveDef= { exclusiveOnDown: true, type : 'vertexThenAnywhere' };
     return {currentPt:imagePt,
             drawData:{data:drawSel},
             exclusiveDef,
