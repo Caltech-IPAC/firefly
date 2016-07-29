@@ -3,8 +3,7 @@
  */
 
 import React from 'react';
-import difference from 'lodash/difference';
-import isEqual from 'lodash/isEqual';
+import {xor,isEqual} from 'lodash';
 import sCompare from 'react-addons-shallow-compare';
 import CanvasWrapper from './CanvasWrapper.jsx';
 import TextDrawer from './TextDrawer.jsx';
@@ -80,7 +79,8 @@ export class DrawerComponent extends React.Component {
     textUpdateCallback(textDrawAry) {
         var {textDrawAry:old}= this.state;
         //if ((!textDrawAry && !old)  || !textDrawAry.length && !old.length) return;
-        if (!difference(textDrawAry,old).length) return;
+        // if (!difference(textDrawAry,old).length && !difference(old,textDrawAry).length) return;
+        if (!xor(textDrawAry,old).length) return;
 
         var doUpdate=
             old.length!=textDrawAry.length ||

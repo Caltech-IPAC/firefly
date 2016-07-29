@@ -31,6 +31,10 @@ export {RangeValues} from '../visualize/RangeValues.js';
 export {WPConst, WebPlotRequest, findInvalidWPRKeys, confirmPlotRequest} from '../visualize/WebPlotRequest.js';
 export {RequestType} from '../visualize/RequestType';
 export {ExpandType, dispatchApiToolsView} from '../visualize/ImagePlotCntlr.js';
+export {CsysConverter} from '../visualize/CsysConverter.js';
+export {CCUtil} from '../visualize/CsysConverter.js';
+export {primePlot} from '../visualize/PlotViewUtil.js';
+export {visRoot} from '../visualize/ImagePlotCntlr.js';
 export {watchCoverage} from '../visualize/saga/CoverageWatcher.js';
 import {watchImageMetaData} from '../visualize/saga/ImageMetaDataWatcher.js';
 

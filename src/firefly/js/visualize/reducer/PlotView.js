@@ -403,14 +403,19 @@ function getNewAttributes(plot) {
         worldPt= circle.center;
     }
     else if (getActiveTarget()) {
-        worldPt= getActiveTarget();
+        worldPt= getActiveTarget().worldPt;
     }
     else {
         worldPt= VisUtil.getCenterPtOfPlot(plot);
     }
 
-    if (worldPt) attributes[PlotAttribute.FIXED_TARGET]= worldPt;
-    if (circle) attributes[PlotAttribute.REQUESTED_SIZE]= circle.radius;  // says radius but really size
+    if (worldPt) {
+        const cc= CysConverter.make(plot);
+        if (cc.pointInPlot(worldPt)) {
+            attributes[PlotAttribute.FIXED_TARGET]= worldPt;
+            if (circle) attributes[PlotAttribute.REQUESTED_SIZE]= circle.radius;  // says radius but really size
+        }
+    }
     if (req.getUniqueKey())     attributes[PlotAttribute.UNIQUE_KEY]= req.getUniqueKey();
     if (req.isMinimalReadout()) attributes[PlotAttribute.MINIMAL_READOUT]=true;
 

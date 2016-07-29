@@ -309,9 +309,9 @@ function findMouseOwner(dlList, plot, screenPt) {
             const y= screenPt.y- dist;
             const w= dist*2;
             const h= dist*2;
-            return vertexDef.points.find( (p) => {
-                const spt= cc.getScreenCoords(p);
-                return contains(x,y,w,h,spt.x,spt.y);
+            return vertexDef.points.find( (pt) => {
+                const spt= cc.getScreenCoords(pt);
+                return spt && contains(x,y,w,h,spt.x,spt.y);
             } );
         });
 
