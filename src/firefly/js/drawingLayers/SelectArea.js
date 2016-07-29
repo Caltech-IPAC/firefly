@@ -93,7 +93,7 @@ function creator() {
     var options= {
         canUseMouse:true,
         canUserChangeColor: ColorChangeType.DISABLE,
-        canUserDelete: false,
+        canUserDelete: true,
         destroyWhenAllDetached: true
     };
     return DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, 'Selection Tool',
