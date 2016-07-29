@@ -39,7 +39,6 @@ export var EventLayer= React.createClass(
         var {screenX, screenY, offsetX, offsetY}= ev.nativeEvent;
         if (ev.clientX && ev.clientY && offsetX && offsetY) {
             spt= makeScreenPt( viewPortX+offsetX, viewPortY+offsetY);
-            console.log(`fireEvent: ${spt.toString()}`);
         }
         this.props.eventCallback(plotId,mouseState,spt,screenX,screenY);
     },
@@ -56,7 +55,6 @@ export var EventLayer= React.createClass(
         var compOffX= x-getAbsoluteLeft(e);
         var compOffY= y-getAbsoluteTop(e);
         spt= makeScreenPt( viewPortX+compOffX, viewPortY+compOffY);
-        console.log(`fireDocEvent: ${spt.toString()}`);
         this.props.eventCallback(plotId,mouseState,spt,screenX,screenY);
     },
 
