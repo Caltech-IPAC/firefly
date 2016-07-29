@@ -131,10 +131,10 @@ export function ExpandedTools({visRoot,closeFunc}) {
     }
     return (
         <div>
-            <div style={{display: 'flex', paddingBottom: 2, borderBottom: '1px solid rgba(0,0,0,.2)' }}>
+            <div style={{display: 'flex', flexWrap:'wrap',paddingBottom: 2, borderBottom: '1px solid rgba(0,0,0,.2)' }}>
                 {closeFunc && <CloseButton style={closeButtonStyle} onClick={closeFunc}/>}
                 <div style={{'flex': '1 1 auto'}}>
-                    <VisToolbar/>
+                    <VisToolbar messageUnder={Boolean(closeFunc)}/>
                 </div>
             </div>
             <div style={{width:'100%', height:70, marginTop: 7}} className='disable-select'>

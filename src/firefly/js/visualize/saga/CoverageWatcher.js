@@ -248,7 +248,7 @@ function updateCoverageWithData(table, options, tbl_id, allRowsTable, decimatedT
 
 function computeSize(options, decimatedTables,allRowsTable) {
     const ary= options.multiCoverage ? values(decimatedTables) : [allRowsTable];
-    const testAry= ary
+    var testAry= ary
         .filter( (t) => t && t!=='WORKING')
         .map( (t) => {
             var ptAry= [];
@@ -264,9 +264,19 @@ function computeSize(options, decimatedTables,allRowsTable) {
             }
             return flattenDeep(ptAry);
     } );
-    return computeCentralPointAndRadius(flattenDeep(testAry));
+    testAry= flattenDeep(testAry);
+    if (isOnePoint(testAry)) {
+        return {centralPoint:testAry[0], maxRadius: .05};
+    }
+    else {
+        return computeCentralPointAndRadius(testAry);
+    }
 }
 
+function isOnePoint(wpList) {
+    if (isEmpty(wpList)) return false;
+    return !wpList.some( (wp) => !pointEquals(wp,wpList[0]));
+}
 
 
 

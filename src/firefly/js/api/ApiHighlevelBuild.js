@@ -319,6 +319,7 @@ function initCoverage(llApi, targetDiv,options= {}) {
     const {dispatchAddSaga}= llApi.action;
     const {renderDOM,debug}= llApi.util;
     const {watchImageMetaData,watchCoverage}= llApi.util.image;
+    highlevelImageInit(llApi);
 
 
     renderDOM(targetDiv, MultiImageViewer,
