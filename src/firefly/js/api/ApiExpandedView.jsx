@@ -60,12 +60,20 @@ export class ApiExpandedView extends Component {
         const view = expanded === LO_VIEW.tables ? tables
             : expanded === LO_VIEW.xyPlots ? xyPlots
             : images;
-        return expanded !== LO_VIEW.none &&
-            (
+        if (expanded === LO_VIEW.none) {
+            document.body.style.overflow= this.saveOverflow;
+            return false;
+        }
+        else {
+            this.saveOverflow= document.body.style.overflow;
+            document.body.style.overflow= 'hidden';
+            return (
                 <div className='api-expanded rootStyle'>
                     {view}
                 </div>
             );
+
+        }
     }
 }
 

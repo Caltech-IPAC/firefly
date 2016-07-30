@@ -46,8 +46,10 @@ export var PopupPanel= React.createClass(
         var e= ReactDOM.findDOMNode(this);
 
         var activeLayoutType = this.props.layoutPosition;
-        var r= getPopupPosition(e,activeLayoutType);
-        this.setState({activeLayoutType, posX:r.left, posY:r.top });
+        setTimeout( () => {
+            var r= getPopupPosition(e,activeLayoutType);
+            this.setState({activeLayoutType, posX:r.left, posY:r.top });
+        },10);
 
     },
 
