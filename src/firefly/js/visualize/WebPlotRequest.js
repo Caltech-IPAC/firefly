@@ -337,7 +337,7 @@ export class WebPlotRequest extends ServerRequest {
      */
     static make2MASSRequest(wp, survey, sizeInDeg) {
         var req= this.makePlotServiceReq(ServiceType.TWOMASS, wp, survey, sizeInDeg);
-        req.setTitle('2MASS '+survey);
+        req.setTitle('2MASS '+survey.toUpperCase());
         return req;
     }
 

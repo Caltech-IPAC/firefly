@@ -47,9 +47,9 @@ export const panelCatalogs = [
         'types': {
             'Title': 'WISE Level:',
             'Items': [
-                {'item':'1b', 'id': 0, 'name': '4 Band level 1'},
-                {'item':'3a', 'id': 1, 'name': '4 Band Atlas'}],
-            'Default': '1b'
+                {'item':'3a', 'id': 1, 'name': '4 Band Atlas'},
+                {'item':'1b', 'id': 0, 'name': '4 Band level 1'},],
+            'Default': '3a'
         },
         'bands': {
             'Title': 'WISE Bands:',
