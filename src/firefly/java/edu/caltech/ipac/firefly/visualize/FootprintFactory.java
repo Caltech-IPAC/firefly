@@ -122,11 +122,11 @@ public class FootprintFactory  {
                 "POLYGON  360.00175833  -0.02767222 359.97505000  -0.00110278 359.99865556   0.02345556 360.02604444  -0.00377500 360.00175833  -0.02767222 "),
 
         // Spitzer IRAC3.6/5.8um; FOV data are from SPOT Spitzer focal plane overlay SPOT when the telescope center is at (0, 0):
-        IRAC36(FOOTPRINT.SPITZER,
+        IRAC36("IRAC 3.6 micron", FOOTPRINT.SPITZER,
                 "POLYGON 359.98239  -0.00474  359.89576  -0.00408  359.89513  -0.09074  359.98176  -0.09140 "),
 
         // Spitzer IRAC4.5/8.0um; FOV data are from Spitzer focal plane overlay in SPOT when the telescope center is at (0, 0):
-        IRAC45(FOOTPRINT.SPITZER,
+        IRAC45("IRAC 4.5 micron", FOOTPRINT.SPITZER,
                 "POLYGON 0.09444  -0.00272  0.00778  -0.00215  0.00725  -0.08881  0.09393  -0.08938 ") ;
 		
 		private String stc;
@@ -139,10 +139,11 @@ public class FootprintFactory  {
 			this.label = this.name();
 		}
 		
-		INSTRUMENTS(String prefix, FOOTPRINT fp, String stcDef) {
+		INSTRUMENTS(String label, FOOTPRINT fp, String stcDef) {
 			this.stc = stcDef;
 			this.mission = fp;
-			this.label = prefix+this.name();
+			// Label is a prefix if contains '/' (HST)
+			this.label = label.trim() + (label.trim().endsWith("/") ? this.name() : "");
 		}
 		public String getStc() {
 			return this.stc;
