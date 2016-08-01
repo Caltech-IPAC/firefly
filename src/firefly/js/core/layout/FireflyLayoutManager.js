@@ -27,7 +27,8 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
 
     while (true) {
         const action = yield take([
-            ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_IMAGES,
+            ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE,
+            ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_IMAGES,
             TBL_RESULTS_ADDED, TABLE_REMOVE, TABLE_NEW,
             SHOW_DROPDOWN, SET_LAYOUT_MODE
         ]);
@@ -60,6 +61,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
 
             case REPLACE_IMAGES :
             case ImagePlotCntlr.PLOT_IMAGE :
+            case ImagePlotCntlr.PLOT_IMAGE_START :
                 [showImages, images, ignore] = handleNewImage(action, images);
                 break;
         }
@@ -73,6 +75,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
             case TBL_RESULTS_ADDED:
             case REPLACE_IMAGES :
             case ImagePlotCntlr.PLOT_IMAGE :
+            case ImagePlotCntlr.PLOT_IMAGE_START :
             case TABLE_REMOVE:
             case ImagePlotCntlr.DELETE_PLOT_VIEW:
                 if (count === 1) {
@@ -92,6 +95,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
             case TBL_RESULTS_ADDED:
             case REPLACE_IMAGES :
             case ImagePlotCntlr.PLOT_IMAGE :
+            case ImagePlotCntlr.PLOT_IMAGE_START :
                 dropDown = {visible: count === 0};
                 break;
             case SHOW_DROPDOWN:
