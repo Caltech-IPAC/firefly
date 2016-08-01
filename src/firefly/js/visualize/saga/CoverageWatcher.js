@@ -8,8 +8,8 @@ import {get,isEmpty,flattenDeep,values, omit} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
 import {TitleOptions} from '../WebPlotRequest.js';
 import {CoordinateSys} from '../CoordSys.js';
-import {TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT,
-        TABLE_REMOVE,TABLE_UPDATE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
+import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,
+        TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
@@ -84,7 +84,7 @@ export function* watchCoverage({viewerId, options= {}}) {
     var previousDisplayedTableId;
     while (true) {
         previousDisplayedTableId= displayedTableId;
-        const action= yield take([TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE,
+        const action= yield take([TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,
                                   TBL_RESULTS_ACTIVE, REINIT_RESULT_VIEW,
                                   DrawLayerCntlr.ATTACH_LAYER_TO_PLOT,
                                   ImagePlotCntlr.PLOT_IMAGE,
@@ -111,7 +111,7 @@ export function* watchCoverage({viewerId, options= {}}) {
 
         switch (action.type) {
 
-            case TABLE_NEW:
+            case TABLE_LOADED:
                 if (!getTableInGroup(tbl_id)) continue;
                 decimatedTables[tbl_id]= null;
                 displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);

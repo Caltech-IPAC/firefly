@@ -4,7 +4,7 @@
 
 import {take} from 'redux-saga/effects';
 import {isEmpty, get, omit} from 'lodash';
-import {TABLE_NEW_LOADED,TABLE_SORT, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE} from '../../tables/TablesCntlr.js';
+import {TABLE_LOADED, TABLE_SORT, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE} from '../../tables/TablesCntlr.js';
 import {dispatchCreateDrawLayer,dispatchAttachLayerToPlot,dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById, doFetchTable, getTableGroup} from '../../tables/TableUtil.js';
@@ -42,13 +42,15 @@ export function* watchCatalogs() {
 
 
     while (true) {
-        const action= yield take([TABLE_NEW_LOADED, TABLE_SORT, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE,
+        const action= yield take([TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE,
                                   TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE]);
         const {tbl_id}= action.payload;
         switch (action.type) {
-            case TABLE_SORT:
-            case TABLE_NEW_LOADED:
-                handleCatalogUpdate(tbl_id);
+            case TABLE_LOADED:
+                const {invokedBy} = action.payload;
+                if (invokedBy !== TABLE_SORT) {
+                    handleCatalogUpdate(tbl_id);
+                }
                 break;
             
             case TABLE_SELECT:

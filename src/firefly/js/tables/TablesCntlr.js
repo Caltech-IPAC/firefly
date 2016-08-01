@@ -11,6 +11,7 @@ import {dataReducer} from './reducer/TableDataReducer.js';
 import {uiReducer} from './reducer/TableUiReducer.js';
 import {resultsReducer} from './reducer/TableResultsReducer.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
+import {updateMerge} from '../util/WebUtil.js';
 
 export const TABLE_SPACE_PATH = 'table_space';
 export const TABLE_RESULTS_PATH = 'table_space.results.tables';
@@ -19,24 +20,87 @@ export const RESULTS_PREFIX = 'tableResults';
 export const UI_PREFIX = 'tableUi';
 
 /*---------------------------- ACTIONS -----------------------------*/
-export const TABLE_SEARCH         = `${DATA_PREFIX}.search`;
-export const TABLE_NEW            = `${DATA_PREFIX}.new`;
-export const TABLE_NEW_LOADED     = `${DATA_PREFIX}.newLoaded`;
-export const TABLE_SORT           = `${DATA_PREFIX}.sort`;
-export const TABLE_REMOVE         = `${DATA_PREFIX}.remove`;
+/**
+ * Fetch table data.  If tbl_id exists, data will be cleared.
+ * Sequence of actions:  TABLE_FETCH -> TABLE_UPDATE(+) -> TABLE_LOADED, with invokedBy = TABLE_FETCH
+ */
+export const TABLE_FETCH = `${DATA_PREFIX}.fetch`;
 
-export const TABLE_FETCH          = `${DATA_PREFIX}.fetch`;
-export const TABLE_SELECT         = `${DATA_PREFIX}.select`;
-export const TABLE_HIGHLIGHT      = `${DATA_PREFIX}.highlight`;
-export const TABLE_UPDATE         = `${DATA_PREFIX}.update`;
-export const TABLE_REPLACE        = `${DATA_PREFIX}.replace`;
+/**
+ * Fired when table is completely loaded on the server.
+ * Payload contains getTblInfo() + invokedBy.
+ * invokedBy is the action that invoke this table load. ie, fetch, sort, filter, etc.
+ */
+export const TABLE_LOADED = `${DATA_PREFIX}.loaded`;
 
-export const TBL_RESULTS_ADDED    = `${RESULTS_PREFIX}.added`;
-export const TBL_RESULTS_UPDATE   = `${RESULTS_PREFIX}.update`;
-export const TBL_RESULTS_ACTIVE   = `${RESULTS_PREFIX}.active`;
+/**
+ * Removes table data and all UI elements associated with the data.
+ */
+export const TABLE_REMOVE = `${DATA_PREFIX}.remove`;
 
-export const TBL_UI_UPDATE        = `${UI_PREFIX}.update`;
-export const TBL_UI_EXPANDED      = `${UI_PREFIX}.expanded`;
+/**
+ * Sort table data.  Sequence of actions:  TABLE_SORT -> TABLE_UPDATE(+) -> TABLE_LOADED, with invokedBy = TABLE_SORT
+ */
+export const TABLE_SORT = `${DATA_PREFIX}.sort`;
+
+/**
+ * Filter table data.   Sequence of actions:  TABLE_FILTER -> TABLE_UPDATE(+) -> TABLE_LOADED, with invokedBy = TABLE_FILTER
+ */
+export const TABLE_FILTER = `${DATA_PREFIX}.filter`;
+
+/**
+ * Fired when table selection changes.
+ */
+export const TABLE_SELECT = `${DATA_PREFIX}.select`;
+
+/**
+ * Fired when highlighted row changes.
+ * @type {string}
+ */
+export const TABLE_HIGHLIGHT = `${DATA_PREFIX}.highlight`;
+
+/**
+ * This action does a fetch and then add the results into the UI.
+ * Sequence of actions:  TABLE_FETCH -> TABLE_UPDATE -> TABLE_LOADED -> TBL_RESULTS_ADDED -> TBL_RESULTS_ACTIVE
+ */
+export const TABLE_SEARCH = `${DATA_PREFIX}.search`;
+
+/**
+ * Add the table into the UI given information from the payload.
+ */
+export const TBL_RESULTS_ADDED = `${RESULTS_PREFIX}.added`;
+
+/**
+ * Add the table into the UI given information from the payload.
+ */
+export const TBL_RESULTS_UPDATE = `${RESULTS_PREFIX}.update`;
+
+/**
+ * Active table changes.  There is only one active table per table group.
+ */
+export const TBL_RESULTS_ACTIVE = `${RESULTS_PREFIX}.active`;
+
+
+/**
+ * Fired when UI information have changed.  Used mainly by UI elements.
+ */
+export const TBL_UI_UPDATE = `${UI_PREFIX}.update`;
+
+/**
+ * Fired when table expanded/collapsed state changes.
+ */
+export const TBL_UI_EXPANDED = `${UI_PREFIX}.expanded`;
+
+/**
+ * Fired when partial table data is updated.  Used internally to maintain state.
+ */
+export const TABLE_UPDATE = `${DATA_PREFIX}.update`;
+
+/**
+ * Fired when full table data is updated.  Used internally to maintain state.
+ */
+export const TABLE_REPLACE = `${DATA_PREFIX}.replace`;
+
 
 /*---------------------------- CREATORS ----------------------------*/
 
@@ -71,9 +135,9 @@ export function highlightRow(action) {
             set(request, 'META_INFO.padResults', true);
             Object.assign(request, {startIdx, pageSize});
             TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
-                dispatch( {type:TABLE_UPDATE, payload: tableModel} );
+                dispatch( {type:TABLE_HIGHLIGHT, payload: tableModel} );
             }).catch( (error) => {
-                dispatch({type: TABLE_UPDATE, payload: {tbl_id, error: `Fail to load table. \n   ${error}`}});
+                dispatch({type: TABLE_HIGHLIGHT, payload: createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
             });
         }
     };
@@ -84,18 +148,14 @@ export function tableFetch(action) {
         if (!action.err) {
             var {request, hlRowIdx} = action.payload;
             const {tbl_id} = request;
-            var actionType = action.type;
-            if (action.type === TABLE_FETCH) {
-                    actionType = TABLE_NEW;
-                    dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:() => dispatchTableLoaded(TblUtil.getTblInfoById(tbl_id))});
-            }
-            
+
+            dispatchAddSaga( doOnTblLoaded, {tbl_id, callback:() => dispatchTableLoaded( Object.assign(TblUtil.getTblInfoById(tbl_id)), {invokedBy: action.type}) });
+            dispatch( updateMerge(action, 'payload', {tbl_id, isFetching: true}) );
             request.startIdx = 0;
-            dispatch({type: TABLE_REPLACE, payload: {tbl_id, isFetching: true}});
             TblUtil.doFetchTable(request, hlRowIdx).then ( (tableModel) => {
-                dispatch( {type: actionType, payload: tableModel} );
+                dispatch( {type: TABLE_UPDATE, payload: tableModel} );
             }).catch( (error) => {
-                dispatch({type: TABLE_UPDATE, payload: {tbl_id, error: `Fail to load table. \n   ${error}`}});
+                dispatch({type: TABLE_UPDATE, payload: createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
             });
         }
     };
@@ -150,11 +210,21 @@ export function dispatchTableSort(request, hlRowIdx, dispatcher= flux.process) {
 }
 
 /**
+ * Filter the table given the request.
+ * @param request a table request params object.
+ * @param hlRowIdx set the highlightedRow.  default to startIdx.
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchTableFilter(request, hlRowIdx, dispatcher= flux.process) {
+    dispatcher( {type: TABLE_FILTER, payload: {request, hlRowIdx} });
+}
+
+/**
  * Notify that a new table has been added and it is fully loaded.
  * @param tbl_info table info.  see TableUtil.getTblInfo for details.
  */
 export function dispatchTableLoaded(tbl_info) {
-    flux.process( {type: TABLE_NEW_LOADED, payload: tbl_info });
+    flux.process( {type: TABLE_LOADED, payload: tbl_info });
 }
 
 /**
@@ -186,7 +256,7 @@ export function dispatchTableRemove(tbl_id) {
 
 /**
  * replace the tableModel matching the given tableModel.tbl_id.
- * If one does not exists, it will be added.  This add does not dispatch TABLE_NEW.
+ * If one does not exists, it will be added.  This add does not dispatch TABLE_FETCH.
  * @param tableModel  the tableModel to replace with
  */
 export function dispatchTableReplace(tableModel) {
@@ -263,7 +333,7 @@ export function* doOnTblLoaded({tbl_id, callback}) {
 
     var isLoaded = false, hasData = false;
     while (!(isLoaded && hasData)) {
-        const action = yield take([TABLE_NEW, TABLE_UPDATE]);
+        const action = yield take([TABLE_UPDATE]);
         const a_id = get(action, 'payload.tbl_id');
         if (tbl_id === a_id) {
             isLoaded = isLoaded || TblUtil.isTableLoaded(action.payload);
@@ -271,10 +341,14 @@ export function* doOnTblLoaded({tbl_id, callback}) {
             hasData = hasData || get(tableModel, 'tableData.columns.length');
             if (get(tableModel, 'error')) {
                 // there was an error loading this table.
-                // exit without callback
+                callback(createErrorTbl(tbl_id, tableModel.error));
                 return;
             }
         }
     }
     callback && callback(TblUtil.getTblInfoById(tbl_id));
+}
+
+function createErrorTbl(tbl_id, error) {
+    return {tbl_id, error};
 }

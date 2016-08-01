@@ -478,7 +478,8 @@ export function getTableSourceUrl(columns, request, filename) {
 }
 
 /**
- * returns a map of cname -> width.  The width is the number of characters needed to display
+ * returns an array of width indexed corresponding to the given columns.  
+ * The width is the number of characters needed to display
  * the header and the data as a table given columns and dataAry.
  * @param columns  array of column object
  * @param dataAry  array of array.
@@ -491,7 +492,7 @@ export function calcColumnWidths(columns, dataAry) {
         width = dataAry.reduce( (maxWidth, row) => {
             return Math.max(maxWidth, get(row, [idx, 'length'], 0));
         }, width);  // max width of data
-        pv[cname] = width;
+        pv[idx] = width;
         return pv;
     }, {ROWID: 8});
 }
