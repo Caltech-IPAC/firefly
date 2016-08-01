@@ -290,7 +290,8 @@ function reducer(state=initState(), action={}) {
         case ImagePlotCntlr.PLOT_IMAGE_START:
             if (payload.viewerId) {
                 if (payload.plotId) {
-                    retState= addImages(state,payload.viewerId,[payload.plotId]);
+                    state= addImages(state,payload.viewerId,[payload.plotId]);
+                    retState= addImages(state,EXPANDED_MODE_RESERVED,[payload.plotId]);
                 }
             }
             break;
