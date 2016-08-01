@@ -236,12 +236,13 @@ function updateCoverageWithData(table, options, tbl_id, allRowsTable, decimatedT
     }
     else {
         dispatchPlotImage({
-            wpRequest,
-            attributes:{
-                [COVERAGE_TARGET]: centralPoint,
-                [COVERAGE_RADIUS]: maxRadius,
-                [COVERAGE_TABLE]:  tbl_id
-            }}
+                wpRequest,
+                attributes: {
+                    [COVERAGE_TARGET]: centralPoint,
+                    [COVERAGE_RADIUS]: maxRadius,
+                    [COVERAGE_TABLE]: tbl_id
+                }
+            }
         );
     }
 }

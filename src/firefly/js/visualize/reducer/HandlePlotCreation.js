@@ -143,7 +143,7 @@ function preNewPlotPrep(plotViewAry,action) {
         return pv ? clone(pv, { plottingStatus:'Plotting...', 
                                 plots:[],  
                                 primeIdx:-1
-                              }) : makePlotView(plotId, req,null);
+                              }) : makePlotView(plotId, req,action.payload.pvOptions);
     });
 
     return unionBy(pvChangeAry,plotViewAry, 'plotId');

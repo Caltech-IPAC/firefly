@@ -84,7 +84,7 @@ export default {replacePlots,
  * @param {object} pvOptions options for this plot view todo- define what pvOptions is, somewhere
  * @return  {PlotView} 
  */
-export function makePlotView(plotId, req, pvOptions) {
+export function makePlotView(plotId, req, pvOptions= {}) {
     var pv= {
         plotId, // should never change
         plotGroupId: req.getPlotGroupId(), //should never change
@@ -155,7 +155,7 @@ function createPlotViewContextData(req) {
 //todo - this function should determine which menuItem are visible and which are hidden
 // for now just return the default
 function makeMenuItemKeys(req,pvOptions,defMenuItemKeys) {
-    return defMenuItemKeys;
+    return Object.assign({},defMenuItemKeys, pvOptions.menuItemKeys);
 }
 
 export const initScrollCenterPoint= (pv) => updatePlotViewScrollXY(pv,findScrollPtForCenter(pv));

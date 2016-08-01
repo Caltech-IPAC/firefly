@@ -207,7 +207,7 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
 
     // prepare stand plot
     const wpRequestAry= makePlottingList(reqAry);
-    if (!isEmpty(wpRequestAry)) dispatchPlotGroup({wpRequestAry});
+    if (!isEmpty(wpRequestAry)) dispatchPlotGroup({wpRequestAry, pvOptions: {menuItemKeys:{imageSelect : false}}});
     if (activeId) dispatchChangeActivePlotView(activeId);
 
 
@@ -215,7 +215,11 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
     if (plottingThree)  {
         const plotThreeReqAry= make3ColorPlottingList(threeReqAry);
         if (!isEmpty(plotThreeReqAry)) {
-            dispatchPlotImage({plotId:threeCPlotId, wpRequest:plotThreeReqAry, threeColor:true});
+            dispatchPlotImage(
+                {
+                    plotId:threeCPlotId, wpRequest:plotThreeReqAry, threeColor:true,
+                               pvOptions: {menuItemKeys:{imageSelect : false}}
+                });
         }
     }
     
