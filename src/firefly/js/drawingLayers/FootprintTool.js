@@ -11,10 +11,10 @@ import {PlotAttribute} from '../visualize/WebPlot.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
-import {MARKER_DISTANCE, ANGLE_UNIT, ROTATE_BOX, OutlineType, findClosestIndex, makeFootprint,
+import {MARKER_DISTANCE, ANGLE_UNIT, ROTATE_BOX, OutlineType, getWorldOrImage, findClosestIndex, makeFootprint,
         lengthSizeUnit, updateFootprintDrawobjAngle, updateFootprintDrawobjText,
         updateFootprintTranslate, updateFootprintOutline} from '../visualize/draw/MarkerFootprintObj.js';
-import {markerInterval, getCC, getWorldOrImage, cancelTimeoutProcess,} from './MarkerTool.js';
+import {markerInterval, getCC, cancelTimeoutProcess, initMarkerPos} from './MarkerTool.js';
 import {getFootprintToolUIComponent} from './FootprintToolUI.jsx';
 import ShapeDataObj, {lengthToScreenPixel} from '../visualize/draw/ShapeDataObj.js';
 import {getDrawobjArea} from '../visualize/draw/ShapeHighlight.js';
@@ -72,8 +72,7 @@ export function footprintCreateLayerActionCreator(rawAction) {
 
                             var plot = primePlot(visRoot(), pId);
                             if (plot) {
-                                var cc = CsysConverter.make(plot);
-                                var wpt = getWorldOrImage(plot.attributes[PlotAttribute.FIXED_TARGET], cc);
+                                var wpt = initMarkerPos(plot);
 
                                 showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_CREATE, wpt, regions, pId,
                                     FootprintStatus.attached, footprintInterval, drawLayerId,

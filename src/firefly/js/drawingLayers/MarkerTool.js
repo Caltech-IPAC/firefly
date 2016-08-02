@@ -11,7 +11,7 @@ import {PlotAttribute} from '../visualize/WebPlot.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
-import {makeMarker, findClosestIndex,  updateFootprintTranslate, updateMarkerSize,
+import {getWorldOrImage, makeMarker, findClosestIndex,  updateFootprintTranslate, updateMarkerSize,
         updateFootprintDrawobjText, updateFootprintOutline,  lengthSizeUnit,
         MARKER_DISTANCE, OutlineType} from '../visualize/draw/MarkerFootprintObj.js';
 import {getMarkerToolUIComponent} from './MarkerToolUI.jsx';
@@ -39,8 +39,16 @@ export var getCC = (plotId) => {
     return CsysConverter.make(plot);
 };
 
-export var getWorldOrImage = (pt, cc) => (isWorld(cc) ? cc.getWorldCoords(pt) : cc.getImageCoords(pt));
-var isWorld = (cc) => (cc.projection.isSpecified());
+export var initMarkerPos = (plot, cc) => {
+    var pos = plot.attributes[PlotAttribute.FIXED_TARGET];
+
+    if (!cc) cc = CsysConverter.make(plot);
+
+    if (!pos) {
+        pos = makeViewPortPt(cc.viewPort.dim.width / 2, cc.viewPort.dim.height / 2);
+    }
+    return getWorldOrImage(pos, cc);
+};
 
 var idCnt=0;
 
@@ -66,7 +74,7 @@ export function markerToolCreateLayerActionCreator(rawAction) {
             var plot = primePlot(visRoot(), pId);
             if (plot) {
                 var cc = CsysConverter.make(plot);
-                var wpt = getWorldOrImage(plot.attributes[PlotAttribute.FIXED_TARGET], cc);
+                var wpt = initMarkerPos(plot, cc);
                 var size = lengthToArcsec(MARKER_SIZE, cc, ShapeDataObj.UnitType.PIXEL);
 
                 showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_CREATE, [size, size], wpt, pId,
