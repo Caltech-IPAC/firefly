@@ -315,12 +315,13 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
             }
         }
 
-        if (!groupId || !nPlotId) {
+        //if (!groupId || !nPlotId) {
+        if (!nPlotId) {
             return outputMessage(loadErrorMsg['noplotid']);
         } else {
             wpSet.forEach((item) => {
                 if (item) {
-                    item.setPlotGroupId(groupId);
+                    if (groupId) item.setPlotGroupId(groupId);
                     if (plotInfo.isThreeColor) {
                         item.setTitle('3-Color Image');
                     }
@@ -333,10 +334,11 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
             dispatchHideDropDown();
         }
 
+        // for fits viewer, groupId is the same as groupId, for coverage, groupId is null, viewerId exists
         if (plotInfo.isThreeColor) {
-            dispatchPlotImage({plotId:nPlotId, wpRequest:wpSet, viewerId:groupId});
+            dispatchPlotImage({plotId:nPlotId, wpRequest:wpSet, viewerId:(groupId || plotInfo.viewerId)});
         } else {
-            dispatchPlotImage({plotId:nPlotId, wpRequest:wpSet[0], viewerId:groupId});
+            dispatchPlotImage({plotId:nPlotId, wpRequest:wpSet[0], viewerId: (groupId || plotInfo.viewerId)});
         }
 
     };

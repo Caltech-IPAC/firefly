@@ -1,10 +1,11 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {without,union,difference} from 'lodash';
+import {without,union,difference, get} from 'lodash';
 import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
 import ImagePlotCntlr from './ImagePlotCntlr.js';
+import Enum from 'enum';
 
 
 export const IMAGE_MULTI_VIEW_KEY= 'imageMultiView';
@@ -43,6 +44,8 @@ export const ANY_VIEWER_RESERVED= 'ANY_VIEWER_RESERVED';
 export const GRID_RELATED='gridRelated';
 export const GRID_FULL='gridFull';
 
+export const NewPlotMode = new Enum(['create_replace', 'replace_only', 'none']);
+
 function initState() {
 
     return [
@@ -50,7 +53,7 @@ function initState() {
             viewerId:EXPANDED_MODE_RESERVED,
             plotIdAry:[], 
             viewType:SINGLE,
-            canReceiveNewPlots: true,
+            canReceiveNewPlots: NewPlotMode.create_replace.key,
             reservedContainer:true,
             customData: {}
         },
@@ -58,7 +61,7 @@ function initState() {
             viewerId:DEFAULT_FITS_VIEWER_ID,
             plotIdAry:[],
             viewType:GRID,
-            canReceiveNewPlots: true,
+            canReceiveNewPlots: NewPlotMode.create_replace.key,
             reservedContainer:true,
             mounted: false,
             customData: {}
@@ -173,7 +176,7 @@ export function dispatchUpdateCustom(viewerId, customData) {
 
 export function hasViewerId(multiViewRoot, viewerId) {
     if (!multiViewRoot || !viewerId) return false;
-    return multiViewRoot.find((entry) => entry.viewerId === viewerId) ? true : false;
+    return multiViewRoot.find((entry) => entry.viewerId === viewerId);
 }
 
 export function getLayoutType(multiViewRoot, viewerId) {
@@ -227,7 +230,8 @@ export function findViewerWithPlotId(multiViewRoot, plotId) {
 // get an available view from multiple views
 
 export function getAViewFromMultiView(multiViewRoot) {
-    return  multiViewRoot.find((entry) => (!entry.viewerId.includes('RESERVED')&&entry.canReceiveNewPlots));
+    return  multiViewRoot.find((entry) => (!entry.viewerId.includes('RESERVED')&&
+                                          (get(entry, 'canReceiveNewPlots') === NewPlotMode.create_replace.key)));
 }
 
 
@@ -306,11 +310,16 @@ function reducer(state=initState(), action={}) {
 
 function addViewer(state,payload) {
 
-    const {viewerId,layout=GRID,canReceiveNewPlots=false,mounted=false}= payload;
-    if (hasViewerId(state,viewerId)) return state;
+    const {viewerId,layout=GRID,canReceiveNewPlots=NewPlotMode.replace_only.key, mounted=false}= payload;
+    var entryInState = hasViewerId(state,viewerId);
 
-    const entry= { viewerId, canReceiveNewPlots, layout, mounted, plotIdAry: [], customData:{} };
-    return [...state,entry];
+    if (entryInState) {
+        entryInState = Object.assign(entryInState, {canReceiveNewPlots, mounted});
+        return [...state];
+    } else {
+        const entry = {viewerId, canReceiveNewPlots, layout, mounted, plotIdAry: [], customData: {}};
+        return [...state, entry];
+    }
 }
 
 
@@ -372,7 +381,7 @@ function replaceImages(state,viewerId,plotIdAry) {
 function addToAutoReceiver(state,action) {
     const {imageAry}= action.payload;
     return state.map( (entry) => 
-              entry.canReceiveNewPlots ? clone(entry, {plotIdAry: union(entry.plotIdAry,imageAry)}) : entry);
+              entry.canReceiveNewPlots === NewPlotMode.create_replace.key ? clone(entry, {plotIdAry: union(entry.plotIdAry,imageAry)}) : entry);
 }
 
 

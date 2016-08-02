@@ -7,11 +7,13 @@ import PointDataObj, {POINT_DATA_OBJ} from './PointDataObj.js';
 import SelectBox from './SelectBox.js';
 import ShapeDataObj from './ShapeDataObj.js';
 import DirectionArrowDrawObj from './DirectionArrowDrawObj.js';
+import FootprintObj from './FootprintObj.js'
 import MarkerFootprintObj from './MarkerFootprintObj.js';
 
 export var drawTypes= {
     [POINT_DATA_OBJ] : PointDataObj.draw,
     [SelectBox.SELECT_BOX] : SelectBox.draw,
+    [FootprintObj.FOOTPRINT_OBJ] : FootprintObj.draw,
     [DirectionArrowDrawObj.DIR_ARROW_DRAW_OBJ] : DirectionArrowDrawObj.draw,
     [ShapeDataObj.SHAPE_DATA_OBJ] : ShapeDataObj.draw,
     [MarkerFootprintObj.MARKER_DATA_OBJ] : MarkerFootprintObj.draw

@@ -307,10 +307,10 @@ function showImageInMultiViewer(llApi, targetDiv, request) {
     request= confirmPlotRequest(request,globalImageViewDefParams,targetDiv,makePlotId);
 
     const plotId= !Array.isArray(request) ? request.plotId : request.find( (r) => r.plotId).plotId;
-    dispatchAddViewer(targetDiv,true);
+    dispatchAddViewer(targetDiv,'create_replace');
     dispatchPlotImage({plotId, wpRequest:request, viewerId:targetDiv});
     renderDOM(targetDiv, MultiImageViewer,
-        {viewerId:targetDiv, canReceiveNewPlots:true, Toolbar:MultiViewStandardToolbar });
+        {viewerId:targetDiv, canReceiveNewPlots:'create_replace', Toolbar:MultiViewStandardToolbar });
 
 }
 
@@ -323,7 +323,7 @@ function initCoverage(llApi, targetDiv,options= {}) {
 
 
     renderDOM(targetDiv, MultiImageViewer,
-        {viewerId:targetDiv, canReceiveNewPlots:false, canDelete:false, Toolbar:MultiViewStandardToolbar });
+        {viewerId:targetDiv, canReceiveNewPlots:'replace_only', canDelete:false, Toolbar:MultiViewStandardToolbar });
     dispatchAddSaga(watchCoverage, {viewerId:targetDiv, options});
 }
 
