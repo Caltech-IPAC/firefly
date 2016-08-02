@@ -10,15 +10,14 @@ import './DropDownMenu.css';
 const computePosition= (tgtX,tgtY)  => ({x:tgtX,y:tgtY+18});
 
 function placeDropDown(e,x,y) {
-    var {scrollX,scrollY}= window;
     var pos= computePosition(x,y);
 
-    var left= pos.x - 10 - scrollX;
+    var left= pos.x - 10;
     if (left<5) {
         left= 5;
     }
     e.style.left= left +'px';
-    e.style.top= (pos.y + 10  - scrollY)+'px';
+    e.style.top= (pos.y + 10)+'px';
     e.style.visibility='visible';
 }
 

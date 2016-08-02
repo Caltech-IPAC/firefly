@@ -32,6 +32,8 @@ import { getDlAry } from '../DrawLayerCntlr.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
 import {showRegionFileUploadPanel} from '../region/RegionFileUploadView.jsx';
 import {MarkerDropDownView} from './MarkerDropDownView.jsx';
+import {dispatchShowDropDown} from '../../core/LayoutCntlr.js';
+import {showImageSelPanel} from './ImageSelectPanel.jsx';
 
 
 //===================================================
@@ -61,6 +63,7 @@ import FLIP_Y from 'html/images/icons-2014/Mirror.png';
 import RECENTER from 'html/images/icons-2014/RecenterImage.png';
 import LOCKED from 'html/images/icons-2014/BkgLocked.png';
 import UNLOCKED from 'html/images/icons-2014/BkgUnlocked.png';
+import NEW_IMAGE from 'html/images/icons-2014/28x28_FITS_NewImage.png';
 
 import COLOR from 'html/images/icons-2014/28x28_ColorPalette.png';
 import STRETCH from 'html/images/icons-2014/28x28_Log.png';
@@ -121,6 +124,10 @@ export function VisToolbarViewWrapper({visRoot,toolTip,dlCount, messageUnder}) {
 
 }
 
+
+
+//onClick={dispatchShowDropDown.bind(null, {view: 'ImageSelectDropDownCmd'})}/>}
+
 VisToolbarViewWrapper.propTypes= {
     visRoot : PropTypes.object.isRequired,
     toolTip : PropTypes.string,
@@ -154,6 +161,7 @@ export class VisToolbarView extends Component {
             verticalAlign: 'top',
             whiteSpace: 'nowrap'
         };
+        const {apiToolsView}= visRoot;
 
         var pv= getActivePlotView(visRoot);
         var plot= primePlot(pv);
@@ -171,6 +179,16 @@ export class VisToolbarView extends Component {
                                horizontal={true}
                                visible={mi.fitsDownload}
                                onClick={showFitsDownloadDialog.bind(null, 'Load Region')}/>
+
+
+                {apiToolsView && <ToolbarButton icon={NEW_IMAGE}
+                                             tip='Select a new image'
+                                             enabled={enabled}
+                                             horizontal={true}
+                                             visible={mi.imageSelect}
+                                             onClick={showImagePopup}/>}
+
+
 
                 <ToolbarHorizontalSeparator/>
 
@@ -361,6 +379,10 @@ function isGroupLocked(pv,plotGroupAry){
 function toggleLockRelated(pv,plotGroupAry){
     var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
     dispatchGroupLocking(pv.plotId,!hasGroupLock(pv,plotGroup));
+}
+
+function showImagePopup() {
+    showImageSelPanel('Images');
 }
 
 //==================================================================================

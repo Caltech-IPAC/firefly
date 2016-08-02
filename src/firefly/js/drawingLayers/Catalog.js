@@ -114,15 +114,17 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
     var done= false;
     var idx= 0;
     const maxChunk= 1000;
-    var minDist = Number.MAX_SAFE_INTEGER;
+    var minDist = 20;
     const {data}= drawLayer.drawData;
     const {tableRequest}= drawLayer;
-    var closestIdx;
+    var closestIdx= -1;
     const plot= primePlot(visRoot(),plotId);
     const id= window.setInterval( () => {
         if (done) {
             window.clearInterval(id);
-            dispatchTableHighlight(drawLayer.drawLayerId,closestIdx,tableRequest);
+            if (closestIdx > -1) {
+                dispatchTableHighlight(drawLayer.drawLayerId,closestIdx,tableRequest);
+            }
         }
 
         var dist;
