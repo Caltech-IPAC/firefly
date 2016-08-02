@@ -15,6 +15,7 @@ import java.util.Map;
 public class TableServerRequest extends ServerRequest implements Serializable, DataEntry, Cloneable {
 
     public static final String DECIMATE_INFO = "decimate";
+    public static final String TBL_FILE_PATH = "tblFilePath";
     public static final String TBL_ID = "tbl_id";
     public static final String TITLE = "tbl_table";
     public static final String FILTERS = "filters";

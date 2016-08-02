@@ -10,7 +10,7 @@ import {BasicTableView} from './BasicTableView.jsx';
 import {SelectInfo} from '../SelectInfo.js';
 import {createInputCell} from './TableRenderer.js';
 import {FILTER_CONDITION_TTIPS, FILTER_TTIPS, FilterInfo} from '../FilterInfo.js';
-import {sortTableData} from  '../TableUtil.js';
+import {sortTableData, calcColumnWidths} from  '../TableUtil.js';
 import {InputAreaField} from '../../ui/InputAreaField.jsx';
 // import {deepDiff} from '../../util/WebUtil.js';
 
@@ -33,11 +33,11 @@ export class FilterEditor extends React.Component {
     // }
 
     render() {
-        const {columns, origColumns, onChange, sortInfo, filterInfo= ''} = this.props;
+        const {columns, selectable, onChange, sortInfo, filterInfo= ''} = this.props;
         if (isEmpty(columns)) return false;
 
         const {cols, data, selectInfoCls} = prepareOptionData(columns, sortInfo, filterInfo);
-        const callbacks = makeCallbacks(onChange, columns, origColumns, data, filterInfo);
+        const callbacks = makeCallbacks(onChange, columns, data, filterInfo);
         const renderers = makeRenderers(callbacks.onFilter);
         return (
             <div style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
@@ -47,7 +47,7 @@ export class FilterEditor extends React.Component {
                             bgColor='beige'
                             columns={cols}
                             rowHeight={24}
-                            selectable={true}
+                            selectable={selectable}
                             {...{data, selectInfoCls, sortInfo, callbacks, renderers}}
                         />
                     </div>
@@ -68,24 +68,28 @@ export class FilterEditor extends React.Component {
             </div>
         );
     }
-};
+}
 
 FilterEditor.propTypes = {
     columns: PropTypes.arrayOf(React.PropTypes.object),
-    origColumns: PropTypes.arrayOf(PropTypes.object),
+    selectable: PropTypes.bool,
     sortInfo: PropTypes.string,
     filterInfo: PropTypes.string,
     onChange: PropTypes.func
 };
 
+FilterEditor.defaultProps = {
+    selectable: true
+};
+
 function prepareOptionData(columns, sortInfo, filterInfo) {
 
     var cols = [
-        {name: 'Column', visibility: 'show', prefWidth: 12, fixed: true},
+        {name: 'Column', visibility: 'show', fixed: true},
         {name: 'Filter', visibility: 'show', prefWidth: 12},
-        {name: 'Units', visibility: 'show', prefWidth: 6},
+        {name: 'Units', visibility: 'show'},
         {name: 'Description', visibility: 'show', prefWidth: 60},
-        {name: 'Selected', visibility: 'hidden'},
+        {name: 'Selected', visibility: 'hidden'}
     ];
 
     const filterInfoCls = FilterInfo.parse(filterInfo);
@@ -94,6 +98,9 @@ function prepareOptionData(columns, sortInfo, filterInfo) {
         const filter = filterInfoCls.getFilter(v.name) || '';
         return [v.name||'', filter, v.units||'', v.desc||'', v.visibility !== 'hide'];
     } );
+    const widths = calcColumnWidths(cols, data);
+    cols[0].prefWidth = Math.min(widths['Columns'], 12);  // adjust width of column for optimum display.
+    cols[2].prefWidth = Math.min(widths['Units'], 12);
     sortTableData(data, cols, sortInfo);
 
     var selectInfoCls = SelectInfo.newInstance({rowCount: data.length});
@@ -106,7 +113,7 @@ function prepareOptionData(columns, sortInfo, filterInfo) {
     return {cols, data, tableRowCount, selectInfoCls};
 }
 
-function makeCallbacks(onChange, columns, origColumns, data, orgFilterInfo='') {
+function makeCallbacks(onChange, columns, data, orgFilterInfo='') {
     var onSelectAll = (checked) => {
         const nColumns = cloneDeep(columns).filter((c) => c.visibility !== 'hidden');
         nColumns.forEach((v) => {

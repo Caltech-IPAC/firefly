@@ -12,7 +12,7 @@ import CsysConverter from './CsysConverter.js';
 import {dispatchActiveTarget, getActiveTarget} from '../core/AppDataCntlr.js';
 import VisUtils from './VisUtil.js';
 import {PlotState} from './PlotState.js';
-import {makeImagePt} from './Point.js';
+import Point, {makeImagePt} from './Point.js';
 import {WPConst, DEFAULT_THUMBNAIL_SIZE} from './WebPlotRequest.js';
 import {Band} from './Band.js';
 import {PlotPref} from './PlotPref.js';
@@ -230,7 +230,7 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
 
         pvNewPlotInfoAry
             .forEach((info) => info.plotAry
-                .forEach( (p)  => addDrawLayers(p.plotState.getWebPlotRequest(), p.plotId) ));
+                .forEach( (p)  => addDrawLayers(p.plotState.getWebPlotRequest(), p) ));
 
 
 
@@ -253,15 +253,27 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
 }
 
 
-function addDrawLayers(request, plotId ) {
+function addDrawLayers(request, plot ) {
+    const {plotId}= plot;
     request.getOverlayIds().forEach((drawLayerTypeId)=> {
         const dl = getDrawLayerByType(dlRoot(), drawLayerTypeId);
-        if (dl) DrawLayerCntlr.dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
+        if (dl) {
+            if (dl.drawLayerTypeId===ActiveTarget.TYPE_ID) {
+                const pt= plot.attributes[PlotAttribute.FIXED_TARGET];
+                if (pt && pt.type===Point.W_PT) {
+                    DrawLayerCntlr.dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
+                }
+            }
+            else {
+                DrawLayerCntlr.dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
+            }
+        }
     });
 
     if (request.getGridOn()!==GridOnStatus.FALSE) {
         const dl = getDrawLayerByType(dlRoot(), WebGrid.TYPE_ID);
-        if (!dl) dispatchCreateDrawLayer(WebGrid.TYPE_ID);
+        const useLabels= request.getGridOn()===GridOnStatus.TRUE;
+        if (!dl) dispatchCreateDrawLayer(WebGrid.TYPE_ID, {useLabels});
         dispatchAttachLayerToPlot(WebGrid.TYPE_ID, plotId, true);
     }
 }

@@ -240,7 +240,7 @@
     display: inline-block;
     position: relative;
     text-shadow: 0 1px 0 #fff;
-    width: 12px;
+    width: 14px;
     height: 14px;
 }
 .btn-close:hover {
@@ -250,24 +250,10 @@
 }
 .btn-close:after {
     content: '×'; /* UTF-8 symbol */
-}
-
-.btn-close {
-    color: #666;
-    font-size: 10px;
-    display: inline-block;
-    position: relative;
-    text-shadow: 0 1px 0 #fff;
-    width: 12px;
-    height: 14px;
-}
-.btn-close:hover {
-    background-color: #949494;
-    border-radius: 50%;
-    cursor: pointer;
-}
-.btn-close:after {
-    content: '×'; /* UTF-8 symbol */
+    left: 50%;
+    position: absolute;
+    transform: translate(-50%, 0);
+    font-weight: bold;
 }
 
 /*-------------------< loading mask ---------------------*/

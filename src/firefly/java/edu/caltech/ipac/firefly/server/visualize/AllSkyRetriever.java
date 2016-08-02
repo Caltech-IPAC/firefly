@@ -23,13 +23,13 @@ import java.net.URL;
 public class AllSkyRetriever implements FileRetriever {
 
      private static final ReservedImage RESERVED_IMAGES[] = {
-                  new ReservedImage("e90gal07.fits",
+                  new ReservedImage("allsky/e90gal07.fits",
                                     "All Sky Image -- DIRBE 60 micron", "sky"),
-                  new ReservedImage("e90gal09.fits",
+                  new ReservedImage("allsky/e90gal09.fits",
                                     "All Sky Image -- DIRBE 140 micron", "sky"),
-                  new ReservedImage("e90gal04.fits",
+                  new ReservedImage("allsky/e90gal04.fits",
                                     "All Sky Image -- DIRBE 4.9 micron", "sky"),
-                  new ReservedImage("allsky.fits",
+                  new ReservedImage("allsky/allsky.fits",
                                     "ISSA All Sky Image", "sky")
             };
 

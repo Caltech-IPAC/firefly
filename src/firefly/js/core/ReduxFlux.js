@@ -22,10 +22,10 @@ import ImagePlotCntlr, {IMAGE_PLOT_KEY,
                         changePointSelectionActionCreator} from '../visualize/ImagePlotCntlr.js';
 
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
-import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
-import * as ChartsCntlr from '../visualize/ChartsCntlr.js';
-import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
-import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
+import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
+import * as ChartsCntlr from '../charts/ChartsCntlr.js';
+import * as HistogramCntlr from '../charts/HistogramCntlr.js';
+import * as XYPlotCntlr from '../charts/XYPlotCntlr.js';
 import * as TablesCntlr from '../tables/TablesCntlr';
 
 import DrawLayer, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
@@ -39,7 +39,11 @@ import DrawLayerCntlr, {makeDetachLayerActionCreator,
                         markerToolStartActionCreator,
                         markerToolMoveActionCreator,
                         markerToolEndActionCreator,
-                        markerToolCreateLayerActionCreator} from '../visualize/DrawLayerCntlr.js';
+                        markerToolCreateLayerActionCreator,
+                        footprintCreateLayerActionCreator,
+                        footprintStartActionCreator,
+                        footprintMoveActionCreator,
+                        footprintEndActionCreator} from '../visualize/DrawLayerCntlr.js';
 import MultiViewCntlr, {IMAGE_MULTI_VIEW_KEY} from '../visualize/MultiViewCntlr.js';
 import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from '../core/ComponentCntlr.js';
 import {masterSaga} from './MasterSaga.js';
@@ -56,6 +60,7 @@ import WebGrid from '../drawingLayers/WebGrid.js';
 
 import RegionPlot from '../drawingLayers/RegionPlot.js';
 import MarkerTool from '../drawingLayers/MarkerTool.js';
+import FootprintTool from '../drawingLayers/FootprintTool.js';
 import {showExampleDialog} from '../ui/ExampleDialog.jsx';
 
 //==============
@@ -79,7 +84,7 @@ const actionCreators = new Map();
 
 const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,DistanceTool,
                                                      PointSelection, StatsPoint, NorthUpCompass,
-                                                     Catalog, WebGrid, RegionPlot, MarkerTool);
+                                                     Catalog, WebGrid, RegionPlot, MarkerTool, FootprintTool);
 
 
 
@@ -94,8 +99,6 @@ const reducers = {
     [IMAGE_PLOT_KEY]: ImagePlotCntlr.reducer,
     [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer,
     [TableStatsCntlr.TBLSTATS_DATA_KEY]: TableStatsCntlr.reducer,
-    [HistogramCntlr.HISTOGRAM_DATA_KEY]: HistogramCntlr.reducer,
-    [XYPlotCntlr.XYPLOT_DATA_KEY]: XYPlotCntlr.reducer,
     [ChartsCntlr.CHART_SPACE_PATH]: ChartsCntlr.reducer,
     [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
     [DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory),
@@ -111,7 +114,7 @@ let redux = null;
 actionCreators.set(AppDataCntlr.APP_LOAD, AppDataCntlr.loadAppData);
 actionCreators.set(AppDataCntlr.GRAB_WINDOW_FOCUS, AppDataCntlr.grabWindowFocus);
 actionCreators.set(AppDataCntlr.HELP_LOAD, AppDataCntlr.onlineHelpLoad);
-actionCreators.set(FieldGroupCntlr.VALUE_CHANGE, FieldGroupCntlr.valueChangeActionCreator);
+actionCreators.set(FieldGroupCntlr.VALUE_CHANGE, valueChangeActionCreator);
 actionCreators.set(FieldGroupCntlr.MULTI_VALUE_CHANGE, multiValueChangeActionCreator);
 actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.extensionActivateActionCreator);
 actionCreators.set(ImagePlotCntlr.PLOT_IMAGE, plotImageActionCreator);
@@ -142,6 +145,10 @@ actionCreators.set(DrawLayerCntlr.MARKER_START, markerToolStartActionCreator);
 actionCreators.set(DrawLayerCntlr.MARKER_MOVE, markerToolMoveActionCreator);
 actionCreators.set(DrawLayerCntlr.MARKER_END, markerToolEndActionCreator);
 actionCreators.set(DrawLayerCntlr.MARKER_CREATE, markerToolCreateLayerActionCreator);
+actionCreators.set(DrawLayerCntlr.FOOTPRINT_CREATE, footprintCreateLayerActionCreator);
+actionCreators.set(DrawLayerCntlr.FOOTPRINT_START, footprintStartActionCreator);
+actionCreators.set(DrawLayerCntlr.FOOTPRINT_END, footprintEndActionCreator);
+actionCreators.set(DrawLayerCntlr.FOOTPRINT_MOVE, footprintMoveActionCreator);
 
 actionCreators.set(DrawLayerCntlr.REGION_CREATE_LAYER, regionCreateLayerActionCreator);
 actionCreators.set(DrawLayerCntlr.REGION_DELETE_LAYER, regionDeleteLayerActionCreator);

@@ -7,6 +7,7 @@ import {get, has, omit} from 'lodash';
 
 import {updateSet, updateMerge} from '../util/WebUtil.js';
 import {doFetchTable, getTblById, isFullyLoaded, makeTblRequest} from '../tables/TableUtil.js';
+import {HISTOGRAM, getChartSpace} from './ChartUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {DELETE} from './ChartsCntlr.js';
 
@@ -34,7 +35,7 @@ import {DELETE} from './ChartsCntlr.js';
  */
 
 
-export const HISTOGRAM_DATA_KEY = 'histogram';
+export const HISTOGRAM_DATA_KEY = 'charts.histogram';
 export const LOAD_COL_DATA = `${HISTOGRAM_DATA_KEY}/LOAD_COL_DATA`;
 export const UPDATE_COL_DATA = `${HISTOGRAM_DATA_KEY}/UPDATE_COL_DATA`;
 
@@ -68,9 +69,9 @@ export const loadColData = function(rawAction) {
     return (dispatch) => {
 
         const {chartId, histogramParams, tblId} = rawAction.payload;
-        const tblSource = get(getTblById(tblId), 'tableMeta.source');
+        const tblSource = get(getTblById(tblId), 'tableMeta.tblFilePath');
 
-        const chartModel = get(flux.getState(), [HISTOGRAM_DATA_KEY, chartId]);
+        const chartModel = get(getChartSpace(HISTOGRAM), chartId);
         let serverCallNeeded = !chartModel || !chartModel.tblSource || chartModel.tblSource !== tblSource;
 
         if (serverCallNeeded || chartModel.histogramParams !== histogramParams) {
@@ -110,7 +111,7 @@ function getServerCallParameters(histogramParams) {
     return serverParams;
 }
 
-export function reducer(state={}, action={}) {
+export function reduceHistogram(state={}, action={}) {
     switch (action.type) {
         case (TablesCntlr.TABLE_REMOVE)  :
         {
@@ -122,13 +123,13 @@ export function reducer(state={}, action={}) {
                 }
             });
             return (chartsToDelete.length > 0) ?
-                Object.assign({}, omit(state, chartsToDelete)) : state;
+                omit(state, chartsToDelete) : state;
         }
         case (DELETE) :
         {
             const {chartId, chartType} = action.payload;
             if (chartType === 'histogram' && has(state, chartId)) {
-                return Object.assign({}, omit(state, [chartId]));
+                return omit(state, [chartId]);
             }
             return state;
         }
@@ -185,7 +186,7 @@ function fetchColData(dispatch, tblId, histogramParams, chartId) {
 
     const activeTableModel = getTblById(tblId);
     const activeTableServerRequest = activeTableModel['request'];
-    const tblSource = get(activeTableModel, 'tableMeta.source');
+    const tblSource = get(activeTableModel, 'tableMeta.tblFilePath');
 
     const sreq = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']),
         {'startIdx' : 0, 'pageSize' : 1000000});
@@ -217,6 +218,7 @@ function fetchColData(dispatch, tblId, histogramParams, chartId) {
 
     doFetchTable(req).then(
         (tableModel) => {
+            let histogramData = [];
             if (tableModel.tableData && tableModel.tableData.data) {
                 // if logarithmic values were requested, convert the returned exponents back
                 var toNumber = histogramParams.x.includes('log') ?
@@ -228,20 +230,20 @@ function fetchColData(dispatch, tblId, histogramParams, chartId) {
                             return Math.pow(10,Number(val));
                         }
                     } : (val)=>Number(val);
-                const histogramData = tableModel.tableData.data.reduce((data, arow) => {
+                histogramData = tableModel.tableData.data.reduce((data, arow) => {
                     data.push(arow.map(toNumber));
                     return data;
                 }, []);
 
-                dispatch(updateColData(
-                    {
-                        chartId,
-                        isColDataReady : true,
-                        tblSource,
-                        histogramParams,
-                        histogramData
-                    }));
             }
+            dispatch(updateColData(
+                {
+                    chartId,
+                    isColDataReady : true,
+                    tblSource,
+                    histogramParams,
+                    histogramData
+                }));
         }
     ).catch(
         (reason) => {

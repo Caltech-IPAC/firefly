@@ -23,6 +23,7 @@ import {DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import SimpleMemCache from '../../util/SimpleMemCache.js';
 import {CCUtil, CysConverter} from './../CsysConverter.js';
 import {defMenuItemKeys} from '../MenuItemKeys.js';
+import {ExpandType} from '../ImagePlotCntlr.js';
 
 // export const DATASET_INFO_CONVERTER = 'DATASET_INFO_CONVERTER';
 
@@ -185,12 +186,12 @@ export function changePrimePlot(pv, nextIdx) {
  *
  * @param pv
  * @param plotAry
- * @param expanded
  * @param overlayPlotViews
+ * @param expandedMode
  * @param keepPrimeIdx
  * @return {Object|*}
  */
-function replacePlots(pv, plotAry, overlayPlotViews=null,keepPrimeIdx=false) {
+function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, keepPrimeIdx=false) {
 
     pv= Object.assign({},pv);
     pv.plotViewCtx= Object.assign({},pv.plotViewCtx);
@@ -228,7 +229,7 @@ function replacePlots(pv, plotAry, overlayPlotViews=null,keepPrimeIdx=false) {
     pv.plotViewCtx.containsMultiImageFits= pv.plots.every( (p) => p.plotState.isMultiImageFile());
     pv.plotViewCtx.containsMultipleCubes= pv.plots.every( (p) => p.plotState.getCubeCnt()>1);
     pv.plotViewCtx.rotateNorthLock= pv.plots[pv.primeIdx].plotState.getRotateType()===RotateType.NORTH;  // todo, study this more, understand why
-    pv.plotViewCtx.lastCollapsedZoomLevel= pv.plots[pv.primeIdx].zoomFactor;
+    if (expandedMode===ExpandType.COLLAPSE) pv.plotViewCtx.lastCollapsedZoomLevel= pv.plots[pv.primeIdx].zoomFactor;
 
     pv= initScrollCenterPoint(pv);
 
@@ -403,14 +404,19 @@ function getNewAttributes(plot) {
         worldPt= circle.center;
     }
     else if (getActiveTarget()) {
-        worldPt= getActiveTarget();
+        worldPt= getActiveTarget().worldPt;
     }
     else {
         worldPt= VisUtil.getCenterPtOfPlot(plot);
     }
 
-    if (worldPt) attributes[PlotAttribute.FIXED_TARGET]= worldPt;
-    if (circle) attributes[PlotAttribute.REQUESTED_SIZE]= circle.radius;  // says radius but really size
+    if (worldPt) {
+        const cc= CysConverter.make(plot);
+        if (cc.pointInPlot(worldPt)) {
+            attributes[PlotAttribute.FIXED_TARGET]= worldPt;
+            if (circle) attributes[PlotAttribute.REQUESTED_SIZE]= circle.radius;  // says radius but really size
+        }
+    }
     if (req.getUniqueKey())     attributes[PlotAttribute.UNIQUE_KEY]= req.getUniqueKey();
     if (req.isMinimalReadout()) attributes[PlotAttribute.MINIMAL_READOUT]=true;
 

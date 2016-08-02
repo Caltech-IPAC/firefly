@@ -40,10 +40,20 @@ public class IpacTableUtil {
 
     public static void writeAttributes(PrintWriter writer, Collection<DataGroup.Attribute> attribs, String... ignoreList) {
         if (attribs == null) return;
-
+        // write attributes first
         for (DataGroup.Attribute kw : attribs) {
             if (ignoreList == null || !CollectionUtil.exists(ignoreList, kw.getKey())) {
-                writer.println(kw.toString());
+                if (!kw.isComment()) {
+                    writer.println(kw.toString());
+                }
+            }
+        }
+        // then write comments
+        for (DataGroup.Attribute kw : attribs) {
+            if (ignoreList == null || !CollectionUtil.exists(ignoreList, kw.getKey())) {
+                if (kw.isComment()) {
+                    writer.println(kw.toString());
+                }
             }
         }
     }
@@ -306,10 +316,6 @@ public class IpacTableUtil {
 
     public static TableDef getMetaInfo(BufferedReader reader, File src) throws IOException {
         TableDef meta = new TableDef();
-        if (src != null) {
-            meta.setSource(src.getAbsolutePath());
-        }
-
         int nlchar = findLineSepLength(reader);
         meta.setLineSepLength(nlchar);
 
@@ -376,6 +382,9 @@ public class IpacTableUtil {
                     (src.length() - (long) meta.getRowStartOffset()) / meta.getLineWidth();
             meta.setRowCount((int) totalRow);
         }
+        if (src != null) {
+            meta.setSource(src.getAbsolutePath());
+        }
         return meta;
     }
 
@@ -389,14 +398,11 @@ public class IpacTableUtil {
     public static void sendLoadStatusEvents(Map<String,String> meta, File outf, int crows, DataGroupPart.State state) {
         if (meta == null || StringUtils.isEmpty(meta.get("tbl_id"))) return;
 
-        String source = ServerContext.replaceWithPrefix(outf);
         String tblId = String.valueOf( meta.get("tbl_id") );
-
         FluxAction action = new FluxAction("table.update");
         action.setValue(tblId, "tbl_id");
         action.setValue(crows, "totalRows");
         action.setValue(state.name(), "tableMeta", DataGroupPart.LOADING_STATUS);
-        action.setValue(source, "tableMeta", "source");
         ServerEventManager.fireAction(action);
     }
 

@@ -5,7 +5,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {get} from 'lodash';
+import {get, set} from 'lodash';
 
 import {firefly} from 'firefly/Firefly.js';
 import {FireflyViewer} from 'firefly/core/FireflyViewer.js';
@@ -35,6 +35,7 @@ import {initApi} from 'firefly/api/ApiBuild.js';
 
 firefly.bootstrap();
 
+set(window, 'firefly.use_gwt', true);
 const app = get(window, 'firefly.app');
 
 if (app) {

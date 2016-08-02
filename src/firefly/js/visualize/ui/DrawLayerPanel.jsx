@@ -4,9 +4,9 @@
 
 
 import React from 'react';
-import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
+import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import sCompare from 'react-addons-shallow-compare';
-import {getActivePlotView} from '../PlotViewUtil.js';
+import {getActivePlotView, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {getDlAry} from '../DrawLayerCntlr.js';
@@ -39,6 +39,9 @@ export function showDrawingLayerPopup() {
     dispatchShowDialog(DRAW_LAYER_POPUP);
 }
 
+export function hideDrawingLayerPopup() {
+    dispatchHideDialog(DRAW_LAYER_POPUP);
+}
 
 
 class DrawLayerPanel extends React.Component {
@@ -65,7 +68,14 @@ class DrawLayerPanel extends React.Component {
         var activePv= getActivePlotView(visRoot());
 
         if (activePv!==state.activePv  || getDlAry()!==state.dlAry) {
-            this.setState({dlAry:getDlAry(),activePv});
+            const dlAry= getDlAry();
+            var layers= getAllDrawLayersForPlot(dlAry,activePv.plotId);
+            if (layers.length) {
+                this.setState({dlAry,activePv});
+            }
+            else {
+                setTimeout(() => hideDrawingLayerPopup(),0)
+            }
         }
     }
 

@@ -50,8 +50,10 @@ export var EventLayer= React.createClass(
         var {x:viewPortX,y:viewPortY} = viewPort;
         var {screenX, screenY, pageX:x, pageY:y}= nativeEv;
         var e= ReactDOM.findDOMNode(this);
-        var compOffX= x-getAbsoluteLeft(e)+window.scrollX-1;
-        var compOffY= y-getAbsoluteTop(e)+window.scrollY-1;
+        // var compOffX= x-getAbsoluteLeft(e)+window.scrollX-1;
+        // var compOffY= y-getAbsoluteTop(e)+window.scrollY-1;
+        var compOffX= x-getAbsoluteLeft(e);
+        var compOffY= y-getAbsoluteTop(e);
         spt= makeScreenPt( viewPortX+compOffX, viewPortY+compOffY);
         this.props.eventCallback(plotId,mouseState,spt,screenX,screenY);
     },
@@ -96,6 +98,14 @@ export var EventLayer= React.createClass(
 
     },
 
+
+    onMouseMove(ev) {
+        if (!this.mouseDown) {
+            var {viewPort,plotId}= this.props;
+            this.fireEvent(ev,plotId,viewPort,this.mouseDown?MouseState.DRAG_COMPONENT : MouseState.MOVE);
+        }
+    },
+
     onDocumentMouseMove(nativeEv) {
         if (this.mouseDown) {
             var {viewPort,plotId}= this.props;
@@ -123,11 +133,6 @@ export var EventLayer= React.createClass(
         this.fireEvent(ev,plotId,viewPort,MouseState.ENTER);
     },
 
-
-    onMouseMove(ev) {
-        var {viewPort,plotId}= this.props;
-        this.fireEvent(ev,plotId,viewPort,this.mouseDown?MouseState.DRAG_COMPONENT : MouseState.MOVE);
-    },
 
 
     onTouchCancel(ev) {

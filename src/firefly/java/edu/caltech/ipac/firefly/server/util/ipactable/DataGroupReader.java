@@ -75,9 +75,9 @@ public class DataGroupReader {
 
     public static DataGroup read(File inf, boolean isFixedLength, boolean readAsString, boolean saveFormattedData, String... onlyColumns) throws IOException {
 
-        TableDef tableMeta = IpacTableUtil.getMetaInfo(inf);
-        List<DataGroup.Attribute> attributes = tableMeta.getAttributes();
-        List<DataType> cols = tableMeta.getCols();
+        TableDef tableDef = IpacTableUtil.getMetaInfo(inf);
+        List<DataGroup.Attribute> attributes = tableDef.getAllAttributes();
+        List<DataType> cols = tableDef.getCols();
 
         if (readAsString) {
             for (DataType dt : cols) {

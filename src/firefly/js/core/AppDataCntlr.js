@@ -275,8 +275,10 @@ export function dispatchOnAppReady(callback) {
 
 /*---------------------------- EXPORTED FUNTIONS -----------------------------*/
 export function isAppReady() {
-    return getWsChannel() && get(flux.getState(), [APP_DATA_PATH, 'isReady']) &&
-        (get(window, 'firefly.noGWT') || get(flux.getState(), [APP_DATA_PATH, 'gwtLoaded']));
+    const gwtReady = !get(window, 'firefly.use_gwt', false) ||
+                      get(flux.getState(), [APP_DATA_PATH, 'gwtLoaded']);
+    
+    return getWsChannel() && get(flux.getState(), [APP_DATA_PATH, 'isReady']) && gwtReady;
 }
 
 export function getMenu() {
@@ -322,8 +324,8 @@ function fetchAppData(dispatch) {
 
 /*---------------------------- REDUCING FUNTIONS -----------------------------*/
 const updateActiveTarget= function(state,action) {
-    var {worldPt,corners}= action;
-    if (!worldPt || !corners) return state;
+    var {worldPt,corners}= action.payload;
+    if (!worldPt && !corners) return state;
     return Object.assign({}, state, {activeTarget:{worldPt,corners}});
 };
 

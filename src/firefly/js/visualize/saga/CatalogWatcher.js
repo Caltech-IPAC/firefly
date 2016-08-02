@@ -3,7 +3,7 @@
  */
 
 import {take} from 'redux-saga/effects';
-import {isEmpty, get} from 'lodash';
+import {isEmpty, get, omit} from 'lodash';
 import {TABLE_NEW_LOADED,TABLE_SORT, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE} from '../../tables/TablesCntlr.js';
 import {dispatchCreateDrawLayer,dispatchAttachLayerToPlot,dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
@@ -112,8 +112,8 @@ function handleCatalogUpdate(tbl_id) {
         dataTooBigForSelection= true;
     }
 
-    const req = Object.assign({}, sourceTable.request, params);
-    req.tbl_id = tbl_id;
+    const req = Object.assign(omit(sourceTable.request, ['tbl_id', 'META_INFO']), params);
+    req.tbl_id = `cat-${tbl_id}`;
 
     doFetchTable(req).then(
         (tableModel) => {

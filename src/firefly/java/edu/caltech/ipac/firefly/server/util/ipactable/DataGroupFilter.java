@@ -20,7 +20,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -94,7 +93,7 @@ public class DataGroupFilter {
         StopWatch.getInstance().start("DataGroupFilter");
 
         TableDef tableMeta = IpacTableUtil.getMetaInfo(source);
-        List<DataGroup.Attribute> attributes = tableMeta.getAttributes();
+        List<DataGroup.Attribute> attributes = tableMeta.getAllAttributes();
         List<DataType> headers = tableMeta.getCols();
 
         writer = new PrintWriter(new BufferedWriter(new FileWriter(this.outf), IpacTableUtil.FILE_IO_BUFFER_SIZE));
@@ -121,15 +120,17 @@ public class DataGroupFilter {
                         rowIdx = row.getRowIdx();
                         rowIdx = rowIdx < 0 ? cRowNum : rowIdx;
                     }
+
+                    if (needToWriteHeader) {
+                        needToWriteHeader = false;
+                        DataGroupWriter.writeStatus(writer, DataGroupPart.State.INPROGRESS);
+                        IpacTableUtil.writeAttributes(writer, attributes, DataGroupPart.LOADING_STATUS);
+                        IpacTableUtil.writeHeader(writer, headers);
+                    }
+
                     if (CollectionUtil.matches(rowIdx, row, filters)) {
                         row.setRowIdx(rowIdx);
 
-                        if (needToWriteHeader) {
-                            needToWriteHeader = false;
-                            DataGroupWriter.writeStatus(writer, DataGroupPart.State.INPROGRESS);
-                            IpacTableUtil.writeAttributes(writer, attributes, DataGroupPart.LOADING_STATUS);
-                            IpacTableUtil.writeHeader(writer, headers);
-                        }
                         IpacTableUtil.writeRow(writer, headers, row);
                         if (++rowsFound == prefetchSize) {
                             processInBackground(dg);

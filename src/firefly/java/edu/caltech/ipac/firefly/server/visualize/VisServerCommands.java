@@ -8,7 +8,7 @@ package edu.caltech.ipac.firefly.server.visualize;
  * Time: 1:27 PM
  */
 
-
+import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
@@ -23,13 +23,17 @@ import edu.caltech.ipac.firefly.visualize.StretchData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.visualize.plot.ImagePt;
+
 import nom.tam.fits.FitsException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 
 /**
@@ -432,15 +436,21 @@ public class VisServerCommands {
     }
 
     public static class DS9Region extends ServerCommandAccess.ServCommand {
+        private static final String footprintKey = "${footprintDef}";
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            SrvParam sp= new SrvParam(paramMap);
+        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException, IOException {
+            SrvParam sp = new SrvParam(paramMap);
             String fileKey = sp.getRequired(ServerParams.FILE_KEY);
-            WebPlotResult result= VisServerOps.getDS9Region(fileKey);
+            WebPlotResult result;
+
+            if (fileKey.contains(footprintKey)) {
+                result = VisServerOps.getFootprintRegion(fileKey.substring(footprintKey.length()));
+            } else {
+                result = VisServerOps.getDS9Region(fileKey);
+            }
             return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
-
 
     public static class SaveDS9Region extends ServerCommandAccess.ServCommand {
 
@@ -472,9 +482,6 @@ public class VisServerCommands {
             return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
-
-
-
 
     //=============================================
     //-------------- Utility Methods --------------

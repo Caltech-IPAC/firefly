@@ -4,6 +4,8 @@
  * 4/14/16
  */
 
+
+import  {isBoolean} from 'lodash';
 import  {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
@@ -15,7 +17,7 @@ import { makeGridDrawData } from './ComputeWebGridData.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {getPreference} from '../core/AppDataCntlr.js';
 import CoordinateSys from '../visualize/CoordSys.js';
- import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
+import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 
  import {get} from 'lodash';
 
@@ -49,16 +51,19 @@ var idCnt=0;
  *
  * @return {Function}
  */
-function creator() {
+function creator(params) {
 
     var drawingDef= makeDrawingDef( DEF_GRID_COLOR);
+    const useLabels= isBoolean(params.useLabels) ? params.useLabels : true;
+    const id= params.drawLayerId || `${ID}-${idCnt}`;
     var options= {
         hasPerPlotData:true,
         isPointData:false,
+        useLabels,
         canUserChangeColor: ColorChangeType.DYNAMIC
     };
     
-    return DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, 'grid', options , drawingDef);
+    return DrawLayer.makeDrawLayer( id, TYPE_ID, 'grid', options , drawingDef);
 }
 
  /**
@@ -80,7 +85,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
      var cc= CsysConverter.make(plot);
      if (!cc) return null;
 
-     return lastDataRet ||makeGridDrawData(plot, cc) ;
+     return lastDataRet ||makeGridDrawData(plot, cc, drawLayer.useLabels) ;
 
  }
 

@@ -15,6 +15,7 @@ import {dispatchTableSearch, dispatchTableFetch}  from '../tables/TablesCntlr.js
 import {getWsChannel} from '../core/messaging/WebSocketClient.js';
 import {getConnectionCount, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS} from '../core/AppDataCntlr.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
+import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js'
 
 const VIEWER_ID = '__viewer';
 var viewerWindow;
@@ -186,7 +187,7 @@ function plotRemoteImage(request, dispatch) {
     });
 
     request= confirmPlotRequest(request,{},'remoteGroup',makePlotId);
-    dispatchPlotImage({wpRequest:request, dispatcher:dispatch});
+    dispatchPlotImage({wpRequest:request, viewerId:DEFAULT_FITS_VIEWER_ID, dispatcher:dispatch});
 }
 
 

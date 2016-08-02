@@ -1,18 +1,18 @@
 import React, {PropTypes} from 'react';
 
 import {get} from 'lodash';
-import ColValuesStatistics from './ColValuesStatistics.js';
-import CompleteButton from '../ui/CompleteButton.jsx';
-import {FieldGroup} from '../ui/FieldGroup.jsx';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
-import {dispatchMultiValueChange} from '../fieldGroup/FieldGroupCntlr.js';
-import {InputGroup} from '../ui/InputGroup.jsx';
-import Validate from '../util/Validate.js';
-import {ValidationField} from '../ui/ValidationField.jsx';
-import {CheckboxGroupInputField} from '../ui/CheckboxGroupInputField.jsx';
-import {ListBoxInputField} from '../ui/ListBoxInputField.jsx';
-import {RadioGroupInputField} from '../ui/RadioGroupInputField.jsx';
-import {FieldGroupCollapsible} from '../ui/panel/CollapsiblePanel.jsx';
+import ColValuesStatistics from './../ColValuesStatistics.js';
+import CompleteButton from '../../ui/CompleteButton.jsx';
+import {FieldGroup} from '../../ui/FieldGroup.jsx';
+import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
+import {dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {InputGroup} from '../../ui/InputGroup.jsx';
+import Validate from '../../util/Validate.js';
+import {ValidationField} from '../../ui/ValidationField.jsx';
+import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
+import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
+import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
+import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 
 export const histogramParamsShape = PropTypes.shape({
          algorithm : PropTypes.oneOf(['fixedSizeBins','byesianBlocks']),
@@ -43,38 +43,32 @@ export function setOptions(groupKey, histogramParams) {
     dispatchMultiValueChange(groupKey, flds);
 }
 
-var HistogramOptions = React.createClass({
+export class HistogramOptions extends React.Component {
 
-    unbinder : null,
+        constructor(props) {
+            super(props);
+            this.state = {
+                fields : FieldGroupUtils.getGroupFields(this.props.groupKey)
+            };
+        }
 
-    propTypes: {
-        groupKey: PropTypes.string.isRequired,
-        colValStats: PropTypes.arrayOf(React.PropTypes.instanceOf(ColValuesStatistics)).isRequired,
-        onOptionsSelected: PropTypes.func,
-        histogramParams: histogramParamsShape
-    },
 
     shouldComponentUpdate(np, ns) {
         return this.props.groupKey !== np.groupKey || this.props.colValStats !== np.colValStats ||
             this.props.histogramParams !== np.histogramParams ||
             FieldGroupUtils.getFldValue(this.state.fields, 'algorithm') !== FieldGroupUtils.getFldValue(ns.fields, 'algorithm');
-    },
-
-    getInitialState() {
-        return {fields : FieldGroupUtils.getGroupFields(this.props.groupKey)};
-    },
+    }
 
     componentWillReceiveProps(np) {
-        const {groupKey, histogramParams} = np;
-        if (this.props.histogramParams !== histogramParams) {
-            setOptions(groupKey, histogramParams);
+        if (this.props.histogramParams !== np.histogramParams) {
+            setOptions(np.groupKey, np.histogramParams);
         }
-    },
+    }
 
     componentWillUnmount() {
         this.iAmMounted= false;
         if (this.unbinder) this.unbinder();
-    },
+    }
 
     componentDidMount() {
         this.unbinder = FieldGroupUtils.bindToStore(this.props.groupKey,
@@ -84,7 +78,7 @@ var HistogramOptions = React.createClass({
                 }
             });
         this.iAmMounted= true;
-    },
+    }
 
     renderAlgorithmParameters() {
         const {groupKey, histogramParams} = this.props;
@@ -125,13 +119,28 @@ var HistogramOptions = React.createClass({
                 />
             );
         }
-    },
+    }
 
     render() {
         const { colValStats, groupKey, histogramParams, onOptionsSelected}= this.props;
         return (
-            <div style={{padding:'7px 5px'}}>
+            <div style={{padding:'0 5px'}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
+                    {onOptionsSelected &&
+                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
+                        <CompleteButton style={{flexGrow: 0}}
+                                        groupKey={groupKey}
+                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds)}
+                                        onFail={resultsFail}
+                                        text = 'Apply'
+                        />
+                        <div style={{flexGrow: 1}}/>
+                        <div style={{flexGrow: 0}}>
+                            <button type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
+                            <button type='button' className='button std' onClick={() => setOptions(groupKey, histogramParams)}>Reset</button>
+                        </div>
+                    </div>}
+
                     <ListBoxInputField
                         initialState= {{
                             value: get(histogramParams, 'columnOrExpr'),
@@ -200,25 +209,16 @@ var HistogramOptions = React.createClass({
                     <br/>
                     {this.renderAlgorithmParameters()}
                     <br/>
-                    {onOptionsSelected &&
-                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0'}}>
-                        <CompleteButton style={{flexGrow: 0}}
-                                        groupKey={groupKey}
-                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds)}
-                                        onFail={resultsFail}
-                                        text = 'Apply'
-                        />
-                        <div style={{flexGrow: 1}}/>
-                        <div style={{flexGrow: 0}}>
-                            <button type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
-                            <button type='button' className='button std' onClick={() => setOptions(groupKey, histogramParams)}>Reset</button>
-                        </div>
-                    </div>}
                 </FieldGroup>
 
             </div>
         );
     }
-});
+}
 
-export default HistogramOptions;
+HistogramOptions.propTypes = {
+    groupKey: PropTypes.string.isRequired,
+    colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
+    onOptionsSelected: PropTypes.func,
+    histogramParams: histogramParamsShape
+};

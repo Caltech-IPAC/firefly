@@ -11,9 +11,9 @@ import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {watchImageMetaData} from '../saga/ImageMetaDataWatcher.js';
 import {watchCoverage} from '../saga/CoverageWatcher.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
+import {DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode, dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 
-export const FITS_VIEWER_ID = 'triViewImages';
 export const META_VIEWER_ID = 'triViewImageMetaData';
 export const COVERAGE_VIEWER_ID = 'TBD';
 
@@ -48,7 +48,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
             <Tabs onTabSelect={onTabSelect} defaultSelected={selectedTab} useFlex={true}>
                 { showFits &&
                     <Tab name='Fits Data' removable={false} id='fits'>
-                        <MultiImageViewer viewerId= {FITS_VIEWER_ID}
+                        <MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID}
                                           insideFlex={true}
                                           canReceiveNewPlots={true}
                                           canDelete={true}

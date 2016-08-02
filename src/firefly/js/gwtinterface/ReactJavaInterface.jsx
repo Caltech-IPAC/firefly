@@ -4,7 +4,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Histogram from '../visualize/Histogram.jsx';
+import Histogram from '../charts/ui/Histogram.jsx';
 
 export class ReactJavaInterface {
     constructor() {}

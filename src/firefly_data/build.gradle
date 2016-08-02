@@ -1,0 +1,15 @@
+
+sourceSets {
+  main.java.srcDir '.'
+  main.resources {
+    srcDirs "."
+    exclude "**/*.gradle"
+  }
+}
+
+jar {
+  baseName = 'firefly_data'
+  includes = ['**']
+  from sourceSets.main.allJava
+}
+

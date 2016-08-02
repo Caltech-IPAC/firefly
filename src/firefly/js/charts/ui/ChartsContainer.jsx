@@ -7,13 +7,13 @@ import sCompare from 'react-addons-shallow-compare';
 import shallowequal from 'shallowequal';
 
 
-import {flux} from '../Firefly.js';
+import {flux} from '../../Firefly.js';
 
-import {LO_VIEW, LO_MODE, dispatchSetLayoutMode, getExpandedMode} from '../core/LayoutCntlr.js';
-import {CloseButton} from '../ui/CloseButton.jsx';
+import {LO_VIEW, LO_MODE, dispatchSetLayoutMode, getExpandedMode} from '../../core/LayoutCntlr.js';
+import {CloseButton} from '../../ui/CloseButton.jsx';
 
-import {ChartsTableViewPanel} from '../visualize/ChartsTableViewPanel.jsx';
-import {getExpandedChartProps} from '../visualize/ChartsCntlr.js';
+import {ChartsTableViewPanel} from './ChartsTableViewPanel.jsx';
+import {getExpandedChartProps} from '../ChartsCntlr.js';
 
 
 function nextState(props) {

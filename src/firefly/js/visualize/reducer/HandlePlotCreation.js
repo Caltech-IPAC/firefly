@@ -102,7 +102,7 @@ function addPlot(state,action, replace, setActive) {
             if (!info) return pv;
             const {plotAry, overlayPlotViews}= info;
             if (setActive) activePlotId= pv.plotId;
-            return PlotView.replacePlots(pv,plotAry,overlayPlotViews,replace);
+            return PlotView.replacePlots(pv,plotAry,overlayPlotViews, state.expandedMode, replace);
         });
     }
     else {// used for single plot update
@@ -111,7 +111,7 @@ function addPlot(state,action, replace, setActive) {
         plotViewAry= plotViewAry.map( (pv) => { // map has side effect of setting active plotId
             if (pv.plotId!==plotId ) return pv;
             if (setActive) activePlotId= plotId;
-            return PlotView.replacePlots(pv,plotAry,overlayPlotViews, replace);
+            return PlotView.replacePlots(pv,plotAry,overlayPlotViews, state.expandedMode, replace);
          });
     }
     return clone(state, {plotViewAry,activePlotId});

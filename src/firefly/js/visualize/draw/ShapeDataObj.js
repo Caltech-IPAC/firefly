@@ -9,11 +9,11 @@ import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil';
 import VisUtil, {convertAngle} from '../VisUtil.js';
 import {TextLocation, Style, DEFAULT_FONT_SIZE} from './DrawingDef.js';
-import {makeScreenPt, makeViewPortPt, makeOffsetPt, makeWorldPt, makeImagePt} from '../Point.js';
+import Point, {makeScreenPt, makeViewPortPt, makeOffsetPt, makeWorldPt, makeImagePt} from '../Point.js';
 import {toRegion} from './ShapeToRegion.js';
 import {getDrawobjArea,  isScreenPtInRegion, makeHighlightShapeDataObj} from './ShapeHighlight.js';
 import CsysConverter from '../CsysConverter.js';
-import {has, isNil} from 'lodash';
+import {has, isNil, get, set} from 'lodash';
 
 const FONT_FALLBACK= ',sans-serif';
 
@@ -22,6 +22,20 @@ var ShapeType= new Enum(['Line', 'Text','Circle', 'Rectangle', 'Ellipse',
                          'Annulus', 'BoxAnnulus', 'EllipseAnnulus', 'Polygon']);
 const SHAPE_DATA_OBJ= 'ShapeDataObj';
 const DEF_WIDTH = 1;
+
+const compositeObj = [ShapeType.Annulus, ShapeType.BoxAnnulus, ShapeType.EllipseAnnulus, ShapeType.Polygon];
+
+export var makePoint = (pt, plot, toType) => {
+    if (toType === Point.W_PT) {
+        return plot.getWorldCoords(pt);
+    } else if (toType === Point.SPT) {
+        return plot.getScreenCoords(pt);
+    } else if (toType === Point.IM_PT) {
+        return plot.getImageCoords(pt);
+    } else {
+        return plot.getWorldCoords(pt);
+    }
+};
 
 function make(sType) {
     const obj= DrawObj.makeDrawObj();
@@ -229,11 +243,11 @@ var draw=  {
     },
 
     translateTo(drawObj,plot, apt) {
-        return translateTo(plot,drawObj.pts,apt);
+        return translateShapeTo(drawObj, plot, apt);
     },
 
     rotateAround(drawObj, plot, angle, worldPt) {
-        return rotateAround(plot,drawObj.pts,angle,worldPt);
+        return rotateShapeAround(drawObj, plot, angle, worldPt);
     },
 
     makeHighlight(drawObj, plot, def) {
@@ -721,6 +735,13 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
                 }
 
                 angle += rectAngle;
+                if (has(renderOptions, 'rotAngle')) {
+                    angle += renderOptions.rotAngle;
+                }
+                if (has(renderOptions, 'translation')) {
+                    x += renderOptions.translation.x;
+                    y += renderOptions.translation.y;
+                }
                 // move the rotation point to the center, drawing position[0, 0] is visually at {x, y}
                 renderOptions = Object.assign({}, renderOptions,
                         {
@@ -1102,25 +1123,25 @@ function makeTextLocationEllipse(plot, textLoc, fontSize, centerPt, radius1, rad
  * @param lineWidth
  * @returns {null}
  */
-function makeTextLocationComposite(cc, textLoc, fontSize, width, height, centerPt, lineWidth = 1) {
+export function makeTextLocationComposite(cc, textLoc, fontSize, width, height, centerPt, lineWidth = 1) {
     var w = width/2;
-    var h = height/2;
+    var h = height/2 + lineWidth + 2;   // leave space for highlight box
     var scrCenterPt = cc.getScreenCoords(centerPt);
 
     if (!scrCenterPt || width < 1 || height < 1) return null;
 
     var opt;
-    var offy = fontHeight(fontSize) + lineWidth;
+    var offy = fontHeight(fontSize);
 
     switch (textLoc) {
         case TextLocation.REGION_NE:
-            opt= makeOffsetPt(-w, -(h + offy));
+            opt= makeOffsetPt(-w, -(h+offy));
             break;
         case TextLocation.REGION_NW:
-            opt= makeOffsetPt(w, -h);
+            opt= makeOffsetPt(w, -(h+offy));
             break;
         case TextLocation.REGION_SE:
-            opt= makeOffsetPt(-w, h + offy) ;
+            opt= makeOffsetPt(-w, h) ;
             break;
         case TextLocation.REGION_SW:
             opt= makeOffsetPt(w, h);
@@ -1131,31 +1152,110 @@ function makeTextLocationComposite(cc, textLoc, fontSize, width, height, centerP
     return makeScreenPt(scrCenterPt.x+opt.x, scrCenterPt.y+opt.y);
 }
 
-function translateTo(plot, pts, apt) {
-    var pt= plot.getScreenCoords(apt);
+export var convertPt = (pt, plot, toType) => {
+  if (toType === Point.W_PT) {
+      return plot.getWorldCoords(pt);
+  } else if (toType === Point.SPT) {
+      return plot.getScreenCoords(pt);
+  } else {
+      return plot.getImageCoords(pt);
+  }
+};
+
+/**
+ * apt could be image or screen coordinate
+ * @param plot
+ * @param pts
+ * @param apt
+ * @returns {*}
+ */
+export function translateTo(plot, pts, apt) {
+    var pt_x = lengthToImagePixel(apt.x, plot, apt.type);
+    var pt_y = lengthToImagePixel(apt.y, plot, apt.type);
 
     return pts.map( (inPt) => {
-        var pti= plot.getScreenCoords(inPt);
-        return plot.getWorldCoords(makeScreenPt(pt.x+pti.x,pt.y+pti.y));
+        var pti= plot.getImageCoords(inPt);
+        return makePoint(makeImagePt(pt_x+pti.x, pt_y+pti.y), plot, inPt.type);
     });
 }
 
+export function translateShapeTo(drawObj, plot, apt) {
+    if (!has(drawObj, 'pts')) return drawObj;
 
-function rotateAround(plot, pts, angle, wc) {
+    var newPts = translateTo(plot, drawObj.pts, apt);
+    var newObj = Object.assign({}, drawObj, {pts: newPts});
+
+    // handle composite object
+    if (compositeObj.includes(drawObj.sType)) {
+        // translate each object included
+        newObj.drawObjAry = drawObj.drawObjAry.map( (obj) => {
+            return translateShapeTo(obj, plot, apt);
+        });
+    }
+
+    return newObj;
+}
+
+/**
+ * rotate the obj around a center pt
+ * @param drawObj
+ * @param plot
+ * @param angle in screen coordinate direction, radian
+ * @param worldPt
+ * @returns {*}
+ */
+export function rotateShapeAround(drawObj, plot, angle, worldPt) {
+    if (!has(drawObj, 'pts')) return drawObj;
+
+    var newPts = rotateAround(plot, drawObj.pts, angle, worldPt);
+    var newObj = Object.assign({}, drawObj, {pts: newPts});
+
+    var addRotAngle = (obj) => {
+        if (obj.sType === ShapeType.Rectangle || obj.sType === ShapeType.Ellipse) {
+            var rotAngle = angle;
+
+            rotAngle += get(obj, 'renderOptions.rotAngle', 0.0);
+            set(obj, 'renderOptions.rotAngle', rotAngle);
+        }
+    };
+
+    addRotAngle(newObj);
+
+    // handle composite object
+    if (compositeObj.includes(newObj.sType)) {
+        // rotate each object included
+        newObj.drawObjAry = drawObj.drawObjAry.map( (obj) => {
+            return rotateShapeAround(obj, plot, angle, worldPt);
+        });
+    }
+
+    return newObj;
+}
+
+/**
+ * rotate an array of points around a center on image coordinate
+ * @param plot
+ * @param pts
+ * @param angle in screen coordinate direction, radian
+ * @param wc
+ * @returns {*}
+ */
+export function rotateAround(plot, pts, angle, wc) {
+    var center = plot.getImageCoords(wc);
+
     return pts.map( (p1) => {
-        var pti= plot.getScreenCoords(p1);
-        var center= plot.getScreenCoords(wc);
-        var xc = center.x;
-        var x1 = pti.x - xc;
-        var yc = center.y;
-        var y1 = pti.y - yc;
+        var pti= plot.getImageCoords(p1);
+        var x1 = pti.x - center.x;
+        var y1 = pti.y - center.y;
+        var sin = Math.sin(-angle);
+        var cos = Math.cos(-angle);
 
         // APPLY ROTATION
-        var temp_x1 = x1 * Math.cos(angle) - y1 * Math.sin(angle);
-        var temp_y1 = x1 * Math.sin(angle) + y1 * Math.cos(angle);
+        var temp_x1 = x1 * cos - y1 * sin;
+        var temp_y1 = x1 * sin + y1 * cos;
 
         // TRANSLATE BACK
-        return plot.getWorldCoords(makeScreenPt(temp_x1 + xc, temp_y1 + yc));
+        return makePoint(makeImagePt(temp_x1 + center.x, temp_y1 + center.y), plot, p1.type);
     });
 }
 
@@ -1229,7 +1329,7 @@ export function lengthToScreenPixel(r, plot, unitType) {
             screenRadius = r * plot.zoomFactor;
             break;
         case UnitType.ARCSEC:
-            screenRadius = r * plot.zoomFactor/(plot.projection.getPixelScaleArcSec());
+            screenRadius =  getValueInScreenPixel(plot, r);
             break;
         default:
             screenRadius = r;

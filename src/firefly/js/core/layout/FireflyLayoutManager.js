@@ -10,8 +10,8 @@ import {clone} from '../../util/WebUtil.js';
 import {TBL_RESULTS_ADDED, TABLE_NEW, TABLE_REMOVE} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
 import {isMetaDataTable, isCatalogTable} from '../../metaConvert/converterUtils.js';
-import {META_VIEWER_ID, FITS_VIEWER_ID} from '../../visualize/ui/TriViewImageSection.jsx';
-import {REPLACE_IMAGES, getViewerPlotIds, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
+import {META_VIEWER_ID} from '../../visualize/ui/TriViewImageSection.jsx';
+import {REPLACE_IMAGES, DEFAULT_FITS_VIEWER_ID, getViewerPlotIds, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 
 /**
  * this manager manages what main components get display on the screen.
@@ -27,12 +27,13 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
 
     while (true) {
         const action = yield take([
-            ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_IMAGES,
+            ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE,
+            ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_IMAGES,
             TBL_RESULTS_ADDED, TABLE_REMOVE, TABLE_NEW,
             SHOW_DROPDOWN, SET_LAYOUT_MODE
         ]);
 
-        var {hasImages, hasTables, hasXyPlots, mode, ...others} = getLayouInfo();
+        var {hasImages, hasTables, hasXyPlots, mode, dropDown={}, ...others} = getLayouInfo();
         // eslint-disable-next-line
         var {images, tables, xyPlots} = others;     //images, tables, and xyPlots are additional states relevant only to them.
         var {expanded, standard} = mode || {};
@@ -44,7 +45,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         const showXyPlots = hasXyPlots && views.has(LO_VIEW.xyPlots);
         const showTables = hasTables && views.has(LO_VIEW.tables);
 
-        const ids = getViewerPlotIds(getMultiViewRoot(), FITS_VIEWER_ID);
+        const ids = getViewerPlotIds(getMultiViewRoot(), DEFAULT_FITS_VIEWER_ID);
         images = clone(images, {showFits: ids && ids.length > 0});
 
         // special cases which could affect the layout..
@@ -60,6 +61,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
 
             case REPLACE_IMAGES :
             case ImagePlotCntlr.PLOT_IMAGE :
+            case ImagePlotCntlr.PLOT_IMAGE_START :
                 [showImages, images, ignore] = handleNewImage(action, images);
                 break;
         }
@@ -67,26 +69,51 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         if (ignore) continue;  // ignores, don't update layout.
 
         const count = filter([showTables, showXyPlots, showImages]).length;
-        if (count === 1) {
-            // set mode into expanded view when there is only 1 component visible.
-            closeable = false;
-            expanded =  showImages ? LO_VIEW.images :
-                showXyPlots ? LO_VIEW.xyPlots :
-                    showTables ? LO_VIEW.tables :  expanded;
-        } else {
-            expanded = LO_VIEW.none;
+
+        // change mode when new UI elements are added or removed from results
+        switch (action.type) {
+            case TBL_RESULTS_ADDED:
+            case REPLACE_IMAGES :
+            case ImagePlotCntlr.PLOT_IMAGE :
+            case ImagePlotCntlr.PLOT_IMAGE_START :
+            case TABLE_REMOVE:
+            case ImagePlotCntlr.DELETE_PLOT_VIEW:
+                if (count === 1) {
+                    // set mode into expanded view when there is only 1 component visible.
+                    closeable = false;
+                    expanded =  showImages ? LO_VIEW.images :
+                        showXyPlots ? LO_VIEW.xyPlots :
+                            showTables ? LO_VIEW.tables :  expanded;
+                } else {
+                    expanded = LO_VIEW.none;
+                }
+                mode = {expanded, standard, closeable};
         }
-        mode = {expanded, standard, closeable};
-        const dropDown = {visible: count === 0};
+
+        // calculate dropDown when new UI elements are added or removed from results
+        switch (action.type) {
+            case TBL_RESULTS_ADDED:
+            case REPLACE_IMAGES :
+            case ImagePlotCntlr.PLOT_IMAGE :
+            case ImagePlotCntlr.PLOT_IMAGE_START :
+                dropDown = {visible: count === 0};
+                break;
+            case SHOW_DROPDOWN:
+            case TABLE_REMOVE:
+            case ImagePlotCntlr.DELETE_PLOT_VIEW:
+                if (!get(dropDown, 'visible', false)) {
+                    dropDown = {visible: count === 0};
+                }
+                break;
+        }
 
         dispatchUpdateLayoutInfo(omitBy({title, views, mode, searchDesc, dropDown, showTables, showImages, showXyPlots, images}, isNil));
     }
 }
 
 function handleLayoutChanges(action) {
-    if (action.type === SHOW_DROPDOWN && get(action, 'payload.visible', true)) {
-        return true;
-    } else if (action.type === SET_LAYOUT_MODE && get(action, 'payload.mode') === LO_MODE.expanded){
+    if ((action.type === SHOW_DROPDOWN && get(action, 'payload.visible', true)) ||
+        (action.type === SET_LAYOUT_MODE && get(action, 'payload.mode') === LO_MODE.expanded)) {
         return true;
     } else {
         return false;
@@ -116,8 +143,7 @@ function handleNewImage(action, images) {
     if (viewerId === META_VIEWER_ID) {
         // select image meta tab when new images are added.
         images = clone(images, {selectedTab: 'meta', showMeta: true});
-    } else if (viewerId === FITS_VIEWER_ID ||
-        (!viewerId && plotGroupId === 'remoteGroup') ) {    // only way to pick up external viewer api images
+    } else if (viewerId === DEFAULT_FITS_VIEWER_ID) {
         // select image tab when new images are added.
         images = clone(images, {selectedTab: 'fits', showFits: true});
     } else {

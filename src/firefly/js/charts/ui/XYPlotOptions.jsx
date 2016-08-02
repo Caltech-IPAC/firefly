@@ -3,26 +3,26 @@
  */
 import React, {PropTypes} from 'react';
 
-import {get, isUndefined, omitBy, defer} from 'lodash';
+import {get, isUndefined, omitBy, defer, set} from 'lodash';
 
-import ColValuesStatistics from './ColValuesStatistics.js';
-import CompleteButton from '../ui/CompleteButton.jsx';
-import {FieldGroup} from '../ui/FieldGroup.jsx';
-import {dispatchMultiValueChange} from '../fieldGroup/FieldGroupCntlr.js';
-import Validate from '../util/Validate.js';
-import {Expression} from '../util/expr/Expression.js';
-import {ValidationField} from '../ui/ValidationField.jsx';
-import {CheckboxGroupInputField} from '../ui/CheckboxGroupInputField.jsx';
-import {RadioGroupInputField} from '../ui/RadioGroupInputField.jsx';
-import {SuggestBoxInputField} from '../ui/SuggestBoxInputField.jsx';
-import {FieldGroupCollapsible} from '../ui/panel/CollapsiblePanel.jsx';
+import ColValuesStatistics from './../ColValuesStatistics.js';
+import CompleteButton from '../../ui/CompleteButton.jsx';
+import {FieldGroup} from '../../ui/FieldGroup.jsx';
+import {dispatchValueChange, dispatchMultiValueChange, VALUE_CHANGE} from '../../fieldGroup/FieldGroupCntlr.js';
+import Validate from '../../util/Validate.js';
+import {Expression} from '../../util/expr/Expression.js';
+import {ValidationField} from '../../ui/ValidationField.jsx';
+import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
+import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
+import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
+import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 import {plotParamsShape} from  './XYPlot.jsx';
 import {showColSelectPopup} from './ColSelectView.jsx';
 
 const DECI_ENABLE_SIZE = 5000;
 
 const helpStyle = {fontStyle: 'italic', color: '#808080', paddingBottom: 10};
-import {TextButton} from '../ui/TextButton.jsx';
+import {TextButton} from '../../ui/TextButton.jsx';
 
 /*
  * Split content into prior content and the last alphanumeric token in the text
@@ -108,12 +108,12 @@ export function setOptions(groupKey, xyPlotParams) {
         {fieldKey: 'y.columnOrExpr', value: get(xyPlotParams, 'y.columnOrExpr')},
         {fieldKey: 'y.label', value: get(xyPlotParams, 'y.label')},
         {fieldKey: 'y.unit', value: get(xyPlotParams, 'y.unit')},
-        {fieldKey: 'y.options', value: get(xyPlotParams, 'y.options', '_none_')},
+        {fieldKey: 'y.options', value: get(xyPlotParams, 'y.options', 'grid')},
         {fieldKey: 'xyRatio', value: get(xyPlotParams, 'xyRatio')},
         {fieldKey: 'stretch', value: get(xyPlotParams, 'stretch', 'fit')},
         {fieldKey: 'nbins.x', value: get(xyPlotParams, 'nbins.x', 100)},
         {fieldKey: 'nbins.y', value: get(xyPlotParams, 'nbins.y', 100)},
-        {fieldKey: 'shading', value: get(xyPlotParams, 'shading', 'log')}
+        {fieldKey: 'shading', value: get(xyPlotParams, 'shading', 'lin')}
     ];
     dispatchMultiValueChange(groupKey, flds);
 }
@@ -134,20 +134,35 @@ export function getColValidator(colValStats) {
     };
 }
 
+/**
+ * Reducer from field group component,
+ * @returns {*} reducer, which clears label and unit whenever x or y field changes
+ */
+function fldChangeReducer(inFields, action) {
+    if (!inFields) { return {}; }
+    if (action.type === VALUE_CHANGE) {
+        // when field changes, clear the label and unit
+        if (get(action.payload, 'fieldKey') === 'x.columnOrExpr') {
+            set(inFields, ['x.label', 'value'], undefined);
+            set(inFields, ['x.unit', 'value'], undefined);
+        } else if (get(action.payload, 'fieldKey') === 'y.columnOrExpr') {
+            set(inFields, ['y.label', 'value'], undefined);
+            set(inFields, ['y.unit', 'value'], undefined);
+        }
+    }
+    return inFields;
+}
 
-var XYPlotOptions = React.createClass({
 
+export class XYPlotOptions extends React.Component {
 
-    propTypes: {
-        groupKey: PropTypes.string.isRequired,
-        colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
-        onOptionsSelected: PropTypes.func,
-        xyPlotParams: plotParamsShape
-    },
+    constructor(props) {
+        super(props);
+    }
 
     componentDidMount() {
         // make sure column validator matches current columns
-        const {colValStats, groupKey} = this.props;
+        const {colValStats, groupKey, xyPlotParams} = this.props;
         if (colValStats) {
             const colValidator = getColValidator(colValStats);
             const flds = [
@@ -155,20 +170,22 @@ var XYPlotOptions = React.createClass({
                 {fieldKey: 'y.columnOrExpr', validator: colValidator}
             ];
             dispatchMultiValueChange(groupKey, flds);
+            if (xyPlotParams) {
+                defer(setOptions, groupKey, xyPlotParams);
+            }
         }
-    },
+    }
 
     shouldComponentUpdate(np) {
         return this.props.groupKey !== np.groupKey || this.props.colValStats !== np.colValStats ||
             this.props.xyPlotParams !== np.xyPlotParams;
-    },
+    }
 
     componentWillReceiveProps(np) {
-        const {groupKey, xyPlotParams} = np;
-        if (this.props.xyPlotParams !== xyPlotParams) {
-            defer(setOptions, groupKey, xyPlotParams);
+        if (this.props.xyPlotParams !== np.xyPlotParams) {
+            defer(setOptions, np.groupKey, np.xyPlotParams);
         }
-    },
+    }
 
 
     renderBinningOptions() {
@@ -176,35 +193,35 @@ var XYPlotOptions = React.createClass({
         const displayBinningOptions = Boolean(colValStats.find((el) => { return el.numpoints>DECI_ENABLE_SIZE; }));
         if (displayBinningOptions) {
             return ( <FieldGroupCollapsible  header='Binning Options'
-                                    initialState= {{ value:'closed' }}
-                                    fieldKey='binningOptions'>
+                                             initialState= {{ value:'closed' }}
+                                             fieldKey='binningOptions'>
                 <ValidationField style={{width:50}}
-                    initialState= {{
+                                 initialState= {{
                         value: get(xyPlotParams, 'nbins.x', 100),
                         nullAllowed : false,
                         validator: Validate.intRange.bind(null, 1, 300, 'X-Bins'),
                         tooltip: 'Number of bins along X axis',
                         label : 'X-Bins:'
                     }}
-                    fieldKey='nbins.x'
-                    groupKey={groupKey}
-                    labelWidth={60}/>
+                                 fieldKey='nbins.x'
+                                 groupKey={groupKey}
+                                 labelWidth={60}/>
                 <ValidationField style={{width:50}}
-                    initialState= {{
+                                 initialState= {{
                         value: get(xyPlotParams, 'nbins.y', 100),
                         nullAllowed : false,
                         validator: Validate.intRange.bind(null, 1, 300, 'Y-Bins'),
                         tooltip: 'Number of bins along Y axis',
                         label : 'Y-Bins:'
                     }}
-                    fieldKey='nbins.y'
-                    groupKey={groupKey}
-                    labelWidth={60}/>
+                                 fieldKey='nbins.y'
+                                 groupKey={groupKey}
+                                 labelWidth={60}/>
                 <br/>
                 <RadioGroupInputField
                     alignment='horizontal'
                     initialState= {{
-                        value: get(xyPlotParams, 'shading', 'log'),
+                        value: get(xyPlotParams, 'shading', 'lin'),
                         tooltip: 'When assigning shades to the number of bins, should we use linear or logarithmic scale?',
                         label : 'Shading:'
                     }}
@@ -218,7 +235,7 @@ var XYPlotOptions = React.createClass({
                 />
             </FieldGroupCollapsible> );
         } else { return null; }
-    },
+    }
 
     render() {
         const { colValStats, groupKey, xyPlotParams, onOptionsSelected}= this.props;
@@ -243,29 +260,35 @@ var XYPlotOptions = React.createClass({
         };
 
         var x = get(xyPlotParams, 'x.columnOrExpr');
-        var y = get(xyPlotParams, 'y.columnOrExpr');
+        var y = get(xyPlotParams, 'y.columnOrExpr');
         const onXColSelected = (colName) => {
-            x = colName;
-            const flds = [
-                {fieldKey: 'x.columnOrExpr', value: colName},
-                {fieldKey: 'x.label', value: ''},
-                {fieldKey: 'x.unit', value: ''}
-            ];
-            dispatchMultiValueChange(groupKey, flds);
-        };
-        const onYColSelected = (colName) => {
+            x = colName;
+            dispatchValueChange({fieldKey: 'x.columnOrExpr', groupKey, value: colName, valid: true});
+        };
+        const onYColSelected = (colName) => {
             y = colName;
-            const flds = [
-                {fieldKey: 'y.columnOrExpr', value: colName},
-                {fieldKey: 'y.label', value: ''},
-                {fieldKey: 'y.unit', value: ''}
-            ];
-            dispatchMultiValueChange(groupKey, flds);
-        };
-                                                
+            dispatchValueChange({fieldKey: 'y.columnOrExpr', groupKey, value: colName, valid: true});
+        };
+
         return (
-            <div style={{padding:'7px 5px'}}>
-                <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
+            <div style={{padding:'0 5px 7px'}}>
+                <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}
+                    reducerFunc={fldChangeReducer}>
+                    {onOptionsSelected &&
+                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
+                        <CompleteButton style={{flexGrow: 0}}
+                                        groupKey={groupKey}
+                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds)}
+                                        onFail={resultsFail}
+                                        text = 'Apply'
+                        />
+                        <div style={{flexGrow: 1}}/>
+                        <div style={{flexGrow: 0}}>
+                            <button type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
+                            <button type='button' className='button std' onClick={() => setOptions(groupKey, xyPlotParams)}>Reset</button>
+                        </div>
+                    </div>}
+
                     <div style={helpStyle}>
                         For X and Y, enter a column or an expression<br/>
                         ex. log(col); 100*col1/col2; col1-col2
@@ -410,15 +433,15 @@ var XYPlotOptions = React.createClass({
                         Leave it blank to use all available space.<br/>
                     </div>
                     <ValidationField style={{width:50}}
-                        initialState= {{
+                                     initialState= {{
                             value: get(xyPlotParams, 'xyRatio'),
                             validator: Validate.floatRange.bind(null, 1, 10, 1, 'X/Y ratio'),
                             tooltip: 'X/Y ratio',
                             label : 'X/Y ratio:'
                         }}
-                        fieldKey='xyRatio'
-                        groupKey={groupKey}
-                        labelWidth={60}/>
+                                     fieldKey='xyRatio'
+                                     groupKey={groupKey}
+                                     labelWidth={60}/>
                     <br/>
                     <RadioGroupInputField
                         alignment='horizontal'
@@ -438,25 +461,16 @@ var XYPlotOptions = React.createClass({
                     {this.renderBinningOptions()}
                     <br/>
 
-                    {onOptionsSelected &&
-                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0'}}>
-                        <CompleteButton style={{flexGrow: 0}}
-                                        groupKey={groupKey}
-                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds)}
-                                        onFail={resultsFail}
-                                        text = 'Apply'
-                        />
-                        <div style={{flexGrow: 1}}/>
-                        <div style={{flexGrow: 0}}>
-                            <button type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
-                            <button type='button' className='button std' onClick={() => setOptions(groupKey, xyPlotParams)}>Reset</button>
-                        </div>
-                    </div>}
                 </FieldGroup>
 
             </div>
         );
     }
-});
+}
 
-export default XYPlotOptions;
+XYPlotOptions.propTypes = {
+    groupKey: PropTypes.string.isRequired,
+    colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
+    onOptionsSelected: PropTypes.func,
+    xyPlotParams: plotParamsShape
+};

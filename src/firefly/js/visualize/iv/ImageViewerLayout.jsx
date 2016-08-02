@@ -287,7 +287,7 @@ function makeMessageArea(pv,plotShowing) {
 function findMouseOwner(dlList, plot, screenPt) {
                     // Step 1
     const exList= dlList.filter((dl) => get(dl,'exclusiveDef.exclusiveOnDown'));
-    if (isEmpty(exList)) return null;
+    if (isEmpty(exList) || ! screenPt) return null;
 
                     // Step 2
     const nowList= exList.filter((dl) => get(dl,'exclusiveDef.type','')==='anywhere');
@@ -309,9 +309,9 @@ function findMouseOwner(dlList, plot, screenPt) {
             const y= screenPt.y- dist;
             const w= dist*2;
             const h= dist*2;
-            return vertexDef.points.find( (p) => {
-                const spt= cc.getScreenCoords(p);
-                return contains(x,y,w,h,spt.x,spt.y);
+            return vertexDef.points.find( (pt) => {
+                const spt= cc.getScreenCoords(pt);
+                return spt && contains(x,y,w,h,spt.x,spt.y);
             } );
         });
 

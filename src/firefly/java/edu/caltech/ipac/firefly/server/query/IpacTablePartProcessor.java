@@ -200,7 +200,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                     dgFile = postProcessData(dgFile, request);
                     page = IpacTableParser.getData(dgFile, request.getStartIndex(), request.getPageSize());
                     page.getTableDef().ensureStatus();      // make sure there's a status line so
-                    page.getTableDef().setSource(ServerContext.replaceWithPrefix(dgFile));  // set table meta source to file it came from.
+                    page.getTableDef().setAttribute(TableServerRequest.TBL_FILE_PATH, ServerContext.replaceWithPrefix(dgFile));  // set table's meta tblFilePath to the file it came from.
                 } catch (Exception e) {
                     LOGGER.error(e, "Fail to parse ipac table file: " + dgFile);
                     throw e;
@@ -242,14 +242,13 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
     }
 
+    /**
+     * return the unique ID for the original data set of this request.  This means parameters related
+     * to paging, filtering, sorting, decimating, etc or ignored.
+     * @param request
+     * @return
+     */
     public String getUniqueID(ServerRequest request) {
-
-        String uid = request.getRequestId() + "-";
-        if ( useWorkspace || (isSecurityAware() &&
-                ServerContext.getRequestOwner().isAuthUser()) ) {
-            uid = uid + ServerContext.getRequestOwner().getUserKey();
-        }
-
         // parameters to get original data (before filter, sort, etc.)
         List<Param> srvParams = new ArrayList<>();
         for (Param p : request.getParams()) {
@@ -257,40 +256,40 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                  srvParams.add(p);
              }
         }
-
-        // sort by parameter name
-        Collections.sort(srvParams, (p1, p2) -> p1.getName().compareTo(p2.getName()));
-
-        for (Param p : srvParams) {
-            uid += "|" + p.toString();
-        }
-
-        return uid;
+        return createUniqueId(request.getRequestId(), srvParams);
     }
 
-    // unique key without page info
+    /**
+     * return the unique ID of this request ignoring only the paging parameters.
+     * This is used to identify a unique data set returned to the client.
+     * @param request
+     * @return
+     */
     public String getDataKey(ServerRequest request) {
 
-        String uid = request.getRequestId() + "-";
+        List<Param> srvParams = new ArrayList<>();
+        for (Param p : request.getParams()) {
+            if (!PAGE_PARAMS.contains(p.getName())) {
+                srvParams.add(p);
+            }
+        }
+        return createUniqueId(request.getRequestId(), srvParams);
+    }
+
+    private String createUniqueId(String reqId, List<Param> params) {
+        String uid = reqId + "-";
         if ( useWorkspace || (isSecurityAware() &&
                 ServerContext.getRequestOwner().isAuthUser()) ) {
             uid = uid + ServerContext.getRequestOwner().getUserKey();
         }
 
-        /*
-        java.util.Collections.sort(request.getParams(), new Comparator<Param>(){
-            @Override
-            public int compare(Param o1, Param o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
-        */
+        // sort by parameter name
+        Collections.sort(params, (p1, p2) -> p1.getName().compareTo(p2.getName()));
 
-        for (Param p : request.getParams()) {
-            if (!PAGE_PARAMS.contains(p.getName())) {
-                uid += "|" + p.toString();
-            }
+        for (Param p : params) {
+            uid += "|" + p.toString();
         }
+
         return uid;
     }
 

@@ -29,7 +29,7 @@ export class TablePanelOptions extends React.Component {
     // }
 
     render() {
-        const {columns, origColumns, pageSize, showUnits, showFilters, onChange, optSortInfo, filterInfo} = this.props;
+        const {columns, origColumns, pageSize, showUnits, showFilters, onChange, optSortInfo, filterInfo, toggleOptions} = this.props;
         if (isEmpty(columns)) return false;
 
         const {onPageSize, onPropChanged, onReset} = makeCallbacks(onChange, columns, origColumns);
@@ -50,7 +50,7 @@ export class TablePanelOptions extends React.Component {
                         </div>
                     </div>
                     <div style={{display: 'inline-block'}}>
-                        <div style={{float: 'left'}}>
+                        <div style={{marginTop: 17}}>
                             <InputField
                                 validator={intValidator(1,10000)}
                                 tooltip='Set page size'
@@ -64,6 +64,15 @@ export class TablePanelOptions extends React.Component {
                         </div>
                     </div>
                     <span>
+                        <div style={{ position: 'relative',
+                                      display: 'block',
+                                      height: 16,
+                                      right: -42,
+                                      top: -4}}
+                             className='btn-close'
+                             title='Remove Tab'
+                             onClick={() => toggleOptions()}/>
+
                         <button className='TablePanelOptions__button' onClick={onReset}
                                 title='Reset all options to defauls'>Reset</button>
                     </span>
@@ -89,7 +98,8 @@ TablePanelOptions.propTypes = {
     pageSize: React.PropTypes.number,
     showUnits: React.PropTypes.bool,
     showFilters: React.PropTypes.bool,
-    onChange: React.PropTypes.func
+    onChange: React.PropTypes.func,
+    toggleOptions: React.PropTypes.func
 };
 
 function makeCallbacks(onChange, columns, origColumns, data) {

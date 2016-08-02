@@ -12,6 +12,7 @@ import {parseWorldPt} from '../Point.js';
 import {panelCatalogs} from './ImageSelectPanelProp.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {sizeFromDeg} from '../../ui/SizeInputField.jsx';
+import {ZoomType} from '../ZoomType.js';
 import {get} from 'lodash';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {getPlotViewById} from '../PlotViewUtil.js';
@@ -262,6 +263,7 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
                 default:
                     wpr = imagePlotOnSurvey(cId, rq);
             }
+            wpr.setZoomType(ZoomType.TO_WIDTH);
             return wpr;
         };
 

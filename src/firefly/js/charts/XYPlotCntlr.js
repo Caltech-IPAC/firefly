@@ -6,14 +6,14 @@ import {flux} from '../Firefly.js';
 import {updateSet, updateMerge} from '../util/WebUtil.js';
 import {get, has, omit, omitBy, isUndefined, isString} from 'lodash';
 
-import {doFetchTable, getTblById, isFullyLoaded} from '../tables/TableUtil.js';
+import {doFetchTable, getColumn, getTblById, isFullyLoaded} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {DELETE} from './ChartsCntlr.js';
 import {serializeDecimateInfo} from '../tables/Decimate.js';
 import {logError} from '../util/WebUtil.js';
-import {getDefaultXYPlotParams} from '../visualize/ChartUtil.js';
+import {getDefaultXYPlotParams, SCATTER, getChartSpace} from './ChartUtil.js';
 
-export const XYPLOT_DATA_KEY = 'xyplot';
+export const XYPLOT_DATA_KEY = 'charts.xyplot';
 export const LOAD_PLOT_DATA = `${XYPLOT_DATA_KEY}/LOAD_COL_DATA`;
 export const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
 export const SET_SELECTION = `${XYPLOT_DATA_KEY}/SET_SELECTION`;
@@ -91,7 +91,7 @@ export function dispatchSetSelection(chartId, selection) {
  * @param {Object} selection - {xMin, xMax, yMin, yMax}
  */
 export function dispatchZoom(chartId, tblId, selection) {
-    const {xyPlotData, xyPlotParams, decimatedUnzoomed} = get(flux.getState(), [XYPLOT_DATA_KEY,chartId], {});
+    const {xyPlotData, xyPlotParams, decimatedUnzoomed} = get(getChartSpace(SCATTER), chartId, {});
     if (xyPlotData && xyPlotParams) {
         if (selection) {
             // zoom to selection
@@ -109,7 +109,7 @@ export function dispatchZoom(chartId, tblId, selection) {
             if (decimatedUnzoomed || isUndefined(decimatedUnzoomed)) {
                 const tableModel = getTblById(tblId);
                 if (tableModel) {
-                    const paramsWithoutZoom = Object.assign({}, omit(xyPlotParams, 'zoom'));
+                    const paramsWithoutZoom = omit(xyPlotParams, 'zoom');
                     dispatchLoadPlotData(chartId, paramsWithoutZoom, tblId);
                 }
             } else {
@@ -135,10 +135,11 @@ function dispatchResetZoom(chartId) {
  */
 export function loadPlotData (rawAction) {
     return (dispatch) => {
-        const {chartId, xyPlotParams, tblId} = rawAction.payload;
-        const tblSource = get(getTblById(tblId), 'tableMeta.source');
+        let xyPlotParams = rawAction.payload.xyPlotParams;
+        const {chartId, tblId} = rawAction.payload;
+        const tblSource = get(getTblById(tblId), 'tableMeta.tblFilePath');
 
-        const chartModel = get(flux.getState(), [XYPLOT_DATA_KEY, chartId]);
+        const chartModel = get(getChartSpace(SCATTER), chartId);
         let serverCallNeeded = !chartModel || !chartModel.tblSource || chartModel.tblSource !== tblSource;
 
         if (serverCallNeeded || chartModel.xyPlotParams !== xyPlotParams) {
@@ -146,7 +147,12 @@ export function loadPlotData (rawAction) {
             // we do need to update parameters, but we can reuse the old chart data
             serverCallNeeded = serverCallNeeded || serverParamsChanged(chartModel.xyPlotParams, xyPlotParams);
 
-            dispatch({ type : LOAD_PLOT_DATA, payload : {...rawAction.payload, tblSource, serverCallNeeded}});
+            if (!serverCallNeeded) {
+                const tableModel = getTblById(tblId);
+                xyPlotParams = getUpdatedParams(xyPlotParams, tableModel);
+            }
+
+            dispatch({ type : LOAD_PLOT_DATA, payload : {chartId, tblId, xyPlotParams, tblSource, serverCallNeeded}});
 
             if (serverCallNeeded) {
                 fetchPlotData(dispatch, tblId, xyPlotParams, chartId);
@@ -180,7 +186,7 @@ function updatePlotData(data) {
     return { type : UPDATE_PLOT_DATA, payload: data };
 }
 
-export function reducer(state={}, action={}) {
+export function reduceXYPlot(state={}, action={}) {
     switch (action.type) {
         case (TablesCntlr.TABLE_REMOVE)  :
         {
@@ -192,13 +198,13 @@ export function reducer(state={}, action={}) {
                 }
             });
             return (chartsToDelete.length > 0) ?
-                Object.assign({}, omit(state, chartsToDelete)) : state;
+                omit(state, chartsToDelete) : state;
         }
         case (DELETE) :
         {
             const {chartId, chartType} = action.payload;
             if (chartType === 'scatter' && has(state, chartId)) {
-                return Object.assign({}, omit(state, [chartId]));
+                return omit(state, [chartId]);
             }
             return state;
         }
@@ -244,7 +250,7 @@ export function reducer(state={}, action={}) {
         case (RESET_ZOOM) :
         {
             const chartId = action.payload.chartId;
-            const newParams = Object.assign({}, omit(state[chartId].xyPlotParams, ['selection', 'zoom']));
+            const newParams = omit(state[chartId].xyPlotParams, ['selection', 'zoom']);
             return updateSet(state, [chartId,'xyPlotParams'], newParams);
         }
         case (TablesCntlr.TABLE_SELECT) :
@@ -297,25 +303,28 @@ function fetchPlotData(dispatch, tblId, xyPlotParams, chartId) {
 
     const activeTableModel = getTblById(tblId);
     const activeTableServerRequest = activeTableModel['request'];
-    const tblSource = get(activeTableModel, 'tableMeta.source');
+    const tblSource = get(activeTableModel, 'tableMeta.tblFilePath');
 
     if (!xyPlotParams) { xyPlotParams = getDefaultXYPlotParams(tblId); }
 
 
     const req = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']), {
-        'startIdx' : 0,
-        'pageSize' : 1000000,
-        //'inclCols' : `${xyPlotParams.x.columnOrExpr},${xyPlotParams.y.columnOrExpr}`, // ignored if 'decimate' is present
-        'decimate' : serializeDecimateInfo(...getServerCallParameters(xyPlotParams))
-    });
-
+            'startIdx' : 0,
+            'pageSize' : 1000000,
+            //'inclCols' : `${xyPlotParams.x.columnOrExpr},${xyPlotParams.y.columnOrExpr}`, // ignored if 'decimate' is present
+            'decimate' : serializeDecimateInfo(...getServerCallParameters(xyPlotParams))
+        });
     req.tbl_id = `xy-${chartId}`;
 
     doFetchTable(req).then(
         (tableModel) => {
+            let xyPlotData = {rows: []};
+            // when zoomed, we don't know if the unzoomed data are decimated or not
+            let decimatedUnzoomed = xyPlotParams.zoom ? undefined : false;
+
             if (tableModel.tableData && tableModel.tableData.data) {
                 const {tableMeta} = tableModel;
-                const xyPlotData = omitBy({
+                xyPlotData = omitBy({
                     rows: tableModel.tableData.data,
                     decimateKey: tableMeta['decimate_key'],
                     xMin: tableMeta['decimate.X-MIN'],
@@ -333,18 +342,18 @@ function fetchPlotData(dispatch, tblId, xyPlotParams, chartId) {
                     if (isString(val) && isFinite(val)) { xyPlotData[prop] = Number(val); }
                 });
 
-                dispatch(updatePlotData(
-                    {
-                        isPlotDataReady : true,
-                        tblSource,
-                        // when zoomed, we don't know if the unzoomed data are decimated or not
-                        decimatedUnzoomed: Boolean(tableMeta['decimate_key']) || (xyPlotParams.zoom ? undefined : false),
-                        xyPlotParams,
-                        xyPlotData,
-                        chartId,
-                        newParams: getUpdatedParams(xyPlotParams, tableModel)
-                    }));
+                decimatedUnzoomed = Boolean(tableMeta['decimate_key']) || decimatedUnzoomed;
             }
+            dispatch(updatePlotData(
+                {
+                    isPlotDataReady : true,
+                    tblSource,
+                    decimatedUnzoomed,
+                    xyPlotParams,
+                    xyPlotData,
+                    chartId,
+                    newParams: getUpdatedParams(xyPlotParams, tableModel)
+                }));
         }
     ).catch(
         (reason) => {
@@ -366,7 +375,8 @@ function getUpdatedParams(xyPlotParams, tableModel) {
         newParams = updateSet(newParams, 'x.label', get(xyPlotParams, 'x.columnOrExpr'));
     }
     if (!get(xyPlotParams, 'x.unit')) {
-        const xUnit = get(tableModel, 'tableData.columns.0.units');
+        const xColumn = getColumn(tableModel, get(xyPlotParams, 'x.columnOrExpr'));
+        const xUnit = get(xColumn, 'units');
         if (xUnit) {
             newParams = updateSet(newParams, 'x.unit', xUnit);
         }
@@ -375,7 +385,8 @@ function getUpdatedParams(xyPlotParams, tableModel) {
         newParams = updateSet(newParams, 'y.label', get(xyPlotParams, 'y.columnOrExpr'));
     }
     if (!get(xyPlotParams, 'y.unit')) {
-        const yUnit = get(tableModel, 'tableData.columns.1.units');
+        const yColumn = getColumn(tableModel, get(xyPlotParams, 'y.columnOrExpr'));
+        const yUnit = get(yColumn, 'units');
         if (yUnit) {
             newParams = updateSet(newParams, 'y.unit', yUnit);
         }

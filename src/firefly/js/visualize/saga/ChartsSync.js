@@ -5,23 +5,22 @@ import {take} from 'redux-saga/effects';
 
 import {get} from 'lodash';
 
-import {flux} from '../../Firefly.js';
 import {logError} from '../../util/WebUtil.js';
 
 import * as TablesCntlr from '../../tables/TablesCntlr.js';
-import * as TableStatsCntlr from '../TableStatsCntlr.js';
+import * as TableStatsCntlr from '../../charts/TableStatsCntlr.js';
 import * as TableUtil from '../../tables/TableUtil.js';
 
-import * as XYPlotCntlr from '../XYPlotCntlr.js';
-import * as ChartsCntlr from '../ChartsCntlr.js';
-import * as HistogramCntlr from '../HistogramCntlr.js';
-import {SCATTER, HISTOGRAM, getChartSpace, hasRelatedCharts, getDefaultXYPlotParams} from '../ChartUtil.js';
+import * as XYPlotCntlr from '../../charts/XYPlotCntlr.js';
+import * as ChartsCntlr from '../../charts/ChartsCntlr.js';
+import * as HistogramCntlr from '../../charts/HistogramCntlr.js';
+import {SCATTER, HISTOGRAM, getChartSpace, hasRelatedCharts, getDefaultXYPlotParams} from '../../charts/ChartUtil.js';
 
 /**
  * this saga handles chart related side effects
  */
 export function* syncCharts() {
-    var tableStatsState, xyPlotState, histogramState;
+    var xyPlotState, histogramState;
 
     while (true) {
         const action= yield take([ChartsCntlr.CHART_MOUNTED, TablesCntlr.TABLE_NEW_LOADED, TablesCntlr.TABLE_SORT]);
@@ -76,7 +75,6 @@ export function* syncCharts() {
                             }
                         });
 
-                        tableStatsState = flux.getState()[TableStatsCntlr.TBLSTATS_DATA_KEY];
                         TableStatsCntlr.dispatchLoadTblStats(request);
                         if (!hasRelated) {
                             // default chart is xy plot of coordinate columns or first two numeric columns
@@ -95,7 +93,7 @@ export function* syncCharts() {
 
 
 function updateChartDataIfNeeded(tblId, chartId, chartType) {
-    const tblSource = get(TableUtil.getTblById(tblId), 'tableMeta.source');
+    const tblSource = get(TableUtil.getTblById(tblId), 'tableMeta.tblFilePath');
     const chartSpace = getChartSpace(chartType);
     const chartTblSource = get(chartSpace,[chartId,'tblSource']);
     if (tblSource && (!chartTblSource || chartTblSource !== tblSource)) {

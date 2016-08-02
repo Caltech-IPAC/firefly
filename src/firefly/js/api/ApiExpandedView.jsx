@@ -7,7 +7,7 @@ import sCompare from 'react-addons-shallow-compare';
 
 import {flux} from '../Firefly.js';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
-import {ChartsContainer} from '../visualize/ChartsContainer.jsx';
+import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
 import {dispatchChangeExpandedMode, ExpandType} from '../visualize/ImagePlotCntlr.js';
 import {dispatchSetLayoutMode, getExpandedMode, LO_MODE, LO_VIEW} from '../core/LayoutCntlr.js';
@@ -60,12 +60,20 @@ export class ApiExpandedView extends Component {
         const view = expanded === LO_VIEW.tables ? tables
             : expanded === LO_VIEW.xyPlots ? xyPlots
             : images;
-        return expanded !== LO_VIEW.none &&
-            (
+        if (expanded === LO_VIEW.none) {
+            document.body.style.overflow= this.saveOverflow;
+            return false;
+        }
+        else {
+            this.saveOverflow= document.body.style.overflow;
+            document.body.style.overflow= 'hidden';
+            return (
                 <div className='api-expanded rootStyle'>
                     {view}
                 </div>
             );
+
+        }
     }
 }
 
