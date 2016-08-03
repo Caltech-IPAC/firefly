@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, unset, isEmpty, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray} from 'lodash';
+import {get, set, unset, has, isEmpty, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {flux} from '../Firefly.js';
@@ -245,6 +245,30 @@ export function getTblById(id) {
  */
 export function getTableGroup(tbl_group='main') {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group]);
+}
+
+/**
+ * returns the table group name given a tbl_id.  it will return undefined if
+ * the given tbl_id is not in a group.
+ * @param {string} tbl_id    table id
+ * @returns {Object}
+ */
+export function findGroupByTblId(tbl_id) {
+    const resultsRoot = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results'], {});
+    const groupName = Object.keys(resultsRoot).find( (tbl_grp_id) => {
+        return has(resultsRoot, [tbl_grp_id, 'tables', tbl_id]);
+    });
+    return groupName;
+}
+
+/**
+ * returns an array of tbl_id for the given tbl_group_id
+ * @param {string} tbl_group_id    tbl_group_id
+ * @returns {Array} array of tbl_id
+ */
+export function getTblIdsByGroup(tbl_group_id = 'main') {
+    const tableGroup = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group_id]);
+    return Object.keys(get(tableGroup, 'tables', {}));
 }
 
 /**
