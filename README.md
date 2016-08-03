@@ -58,7 +58,7 @@ There are several branches the this repository.  Here are the ones that you shou
     Javascript interpreter for command line environment, used for development tools
 
 #### Prepare before the build
- - Make sure you have  <GRADLE>/bin, <JAVA>/bin, and <NODE>/bin in your PATH.
+ - Make sure you have  `<GRADLE>/bin`, `<JAVA>/bin`, and `<NODE>/bin` in your PATH.
 
 
 #### How to build Firefly:

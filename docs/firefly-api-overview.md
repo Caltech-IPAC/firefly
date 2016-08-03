@@ -10,7 +10,7 @@ The main Firefly components are:
    
 These components can be setup to share the same data model.  Therefore you can do the following combinations:
  
- - [Connect FITS viewer coverage plot to a table](#connecting-coverage-plot-to-table)
+ - [Connect FITS viewer coverage image to a table](#connecting-coverage-image-to-table)
  - [Connect XY plot to a table](#connecting-xy-viewers-to-table). A Table with any data and a XY Plot showing plots from any two columns of that table.
  - Tri-view: Table, FITS coverage, and XY Plot together showing the same data.
  
@@ -36,7 +36,7 @@ Getting started with firefly tools involves three basic steps.
  2. Define some divs in the html document where you will load the viewer widgets.
  3. Define `onFireflyLoaded()` function. When `firefly_loader.js` loads it will call this function.
  
-This is all best explained with a code example. This examples creates a div with id `myID`, loads firefly, and plots a fits fiIe in the `onFireflyLoaded` function.
+This is all best explained with a code example. This examples creates a div with id `myID`, loads firefly, and plots a FITS file in the `onFireflyLoaded` function.
 
 ```html
 <!doctype html>
@@ -269,7 +269,7 @@ function getImagePt(pt) {
 firefly.getViewer().showImage('imageDiv', {
     plotId: 'p1',
     Service: 'TWOMASS',
-    Title  : '2mass from service',
+    Title  : '2MASS from service',
     SurveyKey  : 'k',
     WorldPt    : '10.68479;41.26906;EQ_J2000',
     RangeValues : firefly.util.image.serializeSimpleRangeValues("Sigma",-1,2,"Linear"),
@@ -303,9 +303,9 @@ To use minimal readout, do the following:
 | regionId | string | region layer id |
 | layerTitle | string | title for the layer, displaying regions |
 | fileOnServer | string | region file on the server |
-| regionAry | array | an array of strings, each describing a ds9 region |
-| regionLayerId | string | region layer id |
-| plotId | string or array | a plot id or an array plot ids |
+| plotId | string or array | a plot id or an array of plot ids |
+
+Note: if no plotId is given, the region layer is created on all plots.
 
 
 #####**firefly.action.dispatchDeleteRegionLayer** method
@@ -315,12 +315,14 @@ To use minimal readout, do the following:
 | Parameter  | Type | Description |
 | ---------- | ---- | ----------- |
 | regionId | string | region layer id |
-| plotId | string or array | a plot id or an array plot ids |
+| plotId | string or array | a plot id or an array of plot ids |
+
+Note: if no plotId is given, the region layer is removed from all plots.
 
 
 #####**firefly.action.dispatchAddRegionEntry** method
 
-`firefly.action.dispatchAddRegionEntry(regionId, regionChanges)` - add region data to the given region
+`firefly.action.dispatchAddRegionEntry(regionId, regionChanges)` - add region data to the given region layer
 
 | Parameter  | Type | Description |
 | ---------- | ---- | ----------- |
@@ -329,7 +331,7 @@ To use minimal readout, do the following:
 
 #####**firefly.action.dispatchRemoveRegionEntry** method
 
-`firefly.action.dispatchRemoveRegionEntry(regionId, regionChanges)` - remove region data from the given region
+`firefly.action.dispatchRemoveRegionEntry(regionId, regionChanges)` - remove region data from the given region layer
 
 | Parameter  | Type | Description |
 | ---------- | ---- | ----------- |
@@ -342,7 +344,7 @@ function onFireflyLoaded() {
     const req = {
         plotId: 'image1',
         URL: 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits',
-        Title: 'Wise m51'
+        Title: 'WISE m51'
     };
     firefly.showImage('image1_div', req);
     setTimeout(function() {
@@ -427,7 +429,7 @@ The Table tools currently supports the following file formats:
 
 ###XY Plot Visualization
 
-- `firefly.showPlot(targetDiv, parameters)`
+- `firefly.showXYPlot(targetDiv, parameters)`
 
 | Parameter  | Type | Description |
 | ---------- | ---- | ----------- |
@@ -451,7 +453,7 @@ chartParams = {
     xCol: 'ra1',
     yCol: 'dec1'
 };
-firefly.showPlot('chart_div', chartParams);
+firefly.showXYPlot('chart_div', chartParams);
 ```
 
 XY Plot supports the same table formats as Table does:
@@ -462,9 +464,9 @@ XY Plot supports the same table formats as Table does:
  - FITS Tables
 
 
-###Connecting Coverage plot to table
+###Connecting Coverage image to table
 
-`firefly.showCoverage= (div,options)` - add a coverage plot to a div
+`firefly.showCoverage= (div,options)` - add a coverage image to a div
 
 | Parameters | Type        |
 | ---------- | ----------- |
@@ -472,7 +474,7 @@ XY Plot supports the same table formats as Table does:
 |params      | object literal, plotting parameters for FITS Viewer |
  
                             
-Coverage is is a an image, which includes all points of a catalog. Coverage is computed by looking at columns in the tables. If you use the default column names you do not have to specify how to determine the center or the four corners.
+Coverage is a an image, which includes all points of a catalog. Coverage image size is computed by looking at columns in the tables. If you use the default column names you do not have to specify how to determine the center or the four corners.
 
  - **ALL_CORNERS**:   Determines if the coverage will use the box style and what corners will be used.
                         Should be specified as a string with the values comma separated. For example-
@@ -496,7 +498,7 @@ firefly.showTable('table_div', tblReq);
 firefly.showCoverage('coverage_div', {gridOn:true})
 ``` 
                                    
-You can show point sources on your coverage plot by telling Firefly that the table should be used as a catalog overlay and which columns define RA and Dec. When `CatalogCoordColumns` attribute is present, `CENTER_COLUMN` is optional.
+You can show point sources on your coverage image by telling Firefly that the table should be used as a catalog overlay and which columns define RA and Dec. When `CatalogCoordColumns` attribute is present, `CENTER_COLUMN` is optional.
 
 ```js
 const tblReq = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,

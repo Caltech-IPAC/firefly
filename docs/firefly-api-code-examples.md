@@ -1,9 +1,9 @@
 ## Code Examples Using Firefly Tools
 
-- [Image FITS Viewer](image-fits-viewer)
-- [FITS Viewers in a group](fits-viewers-in-a-group)
-- [Tracking the mouse](tracking-the-mouse)
-- [Tracking the selection](tracking-the-selection)
+- [Image FITS Viewer](#image-fits-viewer)
+- [FITS Viewers in a group](#fits-viewers-in-a-group)
+- [Tracking the mouse](#tracking-the-mouse)
+- [Tracking the selection](#tracking-the-selection)
 
 ###Starting Firefly Tools in JavaScript
 Firefly Tools are loaded when you load`firefly_loader.js` from a server of your choice. For example, to load Firefly Tools from your local server, include the following declaration in your HTML file:
@@ -55,19 +55,19 @@ In this example, we create four image viewers. Each belong to the same group `wi
                                     ColorTable  : 8,
                                     ZoomToWidth : 250 });   
    w1.showImage('w1', { URL  : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band1.fits',
-             Title: 'Wise band 1', plotGroupId : 'wise-group' });
+             Title: 'WISE band 1', plotGroupId : 'wise-group' });
    w2.showImage('w2', { URL  : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits',
-             Title: 'Wise band 2', plotGroupId : 'wise-group' });
+             Title: 'WISE band 2', plotGroupId : 'wise-group' });
    w3.showImage('w3', { URL  : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band3.fits',
-             Title: 'Wise band 3', plotGroupId : 'wise-group' });
+             Title: 'WISE band 3', plotGroupId : 'wise-group' });
    w4.showImage('w4', { URL  : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band4.fits',
-             Title: 'Wise band 4', plotGroupId : 'wise-group' });
+             Title: 'WISE band 4', plotGroupId : 'wise-group' });
  }
 ```
 
 ###Tracking the mouse 
 
-The following example will plot a fits image then add a callback to get the mouse readout and log it to the console.
+The following example will plot FITS image then add a callback to get the mouse readout and log it to the console.
 
 ```html
 <div id="plotHere" style="width: 500px; height: 500px;"></div>
@@ -85,7 +85,7 @@ function onFireflyLoaded() {
     const imageRequest = {
         plotId: 'plotHere',
         URL: 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits',
-        Title: 'Wise m51'
+        Title: 'WISE m51'
     };
     firefly.showImage('image_div', imageRequest);
     // add a callback, which will be called for every READOUT_DATA action
@@ -102,7 +102,7 @@ Firefly viewer allows to make the following selections:
   - Point Select
   - Circle Select (*coming soon*)
 
-The following example will plot a fits image then add a callback to get selection information and log it to the console.
+The following example will plot a FITS image then add a callback to get selection information and log it to the console.
 
 ```html
 <div id="plotHere" style="width: 500px; height: 500px;"></div>
@@ -120,7 +120,7 @@ function onFireflyLoaded() {
     const imageRequest = {
         plotId: 'plotHere',
         URL: 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits',
-        Title: 'Wise m51'
+        Title: 'WISE m51'
     };
     firefly.showImage('image_div', imageRequest);
     // turn on point selection
