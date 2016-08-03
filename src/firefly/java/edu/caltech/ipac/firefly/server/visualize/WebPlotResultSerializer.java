@@ -163,6 +163,7 @@ public class WebPlotResultSerializer {
             map.put( "userFailReason", res.getUserFailReason());
             map.put( "detailFailReason", res.getDetailFailReason());
             map.put( "progressKey", pKey);
+            map.put( "plotId", res.getPlotId());
         }
 
         JSONObject wraperObj= new JSONObject();

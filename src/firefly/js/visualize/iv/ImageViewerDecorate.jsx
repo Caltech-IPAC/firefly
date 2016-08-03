@@ -273,10 +273,11 @@ export class ImageViewerDecorate extends Component {
 
     render() {
         const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId,
-               handleInlineTools,showDelete,width,height}= this.props;
+               handleInlineTools,width,height}= this.props;
 
         if (!width || !height) return false;
 
+        const showDelete= pv.plotViewCtx.userCanDeletePlots;
         const ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList);
         const top= ctxToolbar?32:0;
         var title, zoomFactor;
@@ -360,7 +361,6 @@ ImageViewerDecorate.propTypes= {
     width : PropTypes.number.isRequired,
     height : PropTypes.number.isRequired,
     handleInlineTools : PropTypes.bool,
-    showDelete : PropTypes.bool 
 };
 
 

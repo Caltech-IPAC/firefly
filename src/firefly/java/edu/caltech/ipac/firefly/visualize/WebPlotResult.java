@@ -49,32 +49,35 @@ public class WebPlotResult implements Serializable, DataEntry, Iterable<Map.Entr
     private String _userFailReason;
     private String _detailFailReason;
     private String _progressKey;
+    private String _plotId;
     private HashMap<String, DataEntry> _map= new HashMap<String, DataEntry>(3);
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
     
-    public WebPlotResult()  { this(null, true,"", "","",""); }
-    public WebPlotResult(String ctxStr)  { this(ctxStr, true,"", "","",""); }
+    public WebPlotResult()  { this(null, true,"", "","","",null); }
+    public WebPlotResult(String ctxStr)  { this(ctxStr, true,"", "","","",null); }
     protected WebPlotResult(String briefFailReason,
                             String userFailReason,
                             String detailFailReason,
-                            String progressKey)  {
-        this(null, false, briefFailReason, userFailReason, detailFailReason,progressKey);
+                            String progressKey,
+                            String plotId)  {
+        this(null, false, briefFailReason, userFailReason, detailFailReason,progressKey,plotId);
     }
 
     public static WebPlotResult makeFail(String briefFailReason,
                                          String userFailReason,
                                          String detailFailReason)  {
-        return new WebPlotResult(briefFailReason, userFailReason,detailFailReason,"");
+        return new WebPlotResult(briefFailReason, userFailReason,detailFailReason,"",null);
     }
 
     public static WebPlotResult makeFail(String briefFailReason,
                                          String userFailReason,
                                          String detailFailReason,
-                                         String progressKey)  {
-        return new WebPlotResult(briefFailReason, userFailReason,detailFailReason,progressKey);
+                                         String progressKey,
+                                         String plotId)  {
+        return new WebPlotResult(briefFailReason, userFailReason,detailFailReason,progressKey, plotId);
     }
 
     private WebPlotResult(String ctxStr,
@@ -82,13 +85,15 @@ public class WebPlotResult implements Serializable, DataEntry, Iterable<Map.Entr
                           String briefFailReason,
                           String userFailReason,
                           String detailFailReason,
-                          String progressKey)  {
+                          String progressKey,
+                          String plotId)  {
         _ctxStr= ctxStr;
         _success= success;
         _briefFailReason= briefFailReason;
         _userFailReason= userFailReason;
         _detailFailReason= detailFailReason;
         _progressKey= progressKey;
+        _plotId= plotId;
     }
 //======================================================================
 //----------------------- Public Methods -------------------------------
@@ -116,6 +121,7 @@ public class WebPlotResult implements Serializable, DataEntry, Iterable<Map.Entr
     public String getUserFailReason() { return _userFailReason; }
     public String getDetailFailReason() { return _detailFailReason; }
     public String getProgressKey() { return _progressKey; }
+    public String getPlotId() { return _plotId; }
     public String getContextStr() { return _ctxStr; }
 
     public Iterator<Map.Entry<String,DataEntry>> iterator() {

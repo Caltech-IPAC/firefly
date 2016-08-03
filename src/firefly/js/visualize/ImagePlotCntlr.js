@@ -432,8 +432,8 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
  * @param wpRequestAry
  * @param {function} dispatcher only for special dispatching uses such as remote
  */
-export function dispatchPlotGroup({wpRequestAry, pvOptions= {}, dispatcher= flux.process}) {
-    dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry} });
+export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {}, dispatcher= flux.process}) {
+    dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry, pvOptions, viewerId} });
 }
 
 

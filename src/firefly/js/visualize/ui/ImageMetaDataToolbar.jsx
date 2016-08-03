@@ -16,7 +16,7 @@ export class ImageMetaDataToolbar extends Component {
 
     constructor(props) {
         super(props);
-        this.state= {activeTable : null};
+        this.state= {activeTable : getTblById(this.props.tableId)};
     }
 
     shouldComponentUpdate(np,ns) {
@@ -41,8 +41,9 @@ export class ImageMetaDataToolbar extends Component {
 
     storeUpdate() {
         if (!this.iAmMounted) return;
-        const activeTable= getTblById(getActiveTableId());
-        if (isMetaDataTable(getActiveTableId()) && activeTable!==this.state.activeTable) {
+        const {tableId}= this.props;
+        const activeTable= getTblById(tableId);
+        if (activeTable!==this.state.activeTable) {
             this.setState({activeTable});
         }
     }
@@ -50,7 +51,7 @@ export class ImageMetaDataToolbar extends Component {
     render() {
         const {activeTable}= this.state;
         
-        const {visRoot, viewerId, viewerPlotIds, layoutType, dlAry}= this.props;
+        const {visRoot, viewerId, viewerPlotIds, layoutType, dlAry, tableId}= this.props;
         return (
             <ImageMetaDataToolbarView activePlotId={visRoot.activePlotId} viewerId={viewerId}
                                       viewerPlotIds={viewerPlotIds} layoutType={layoutType} dlAry={dlAry}
@@ -65,5 +66,6 @@ ImageMetaDataToolbar.propTypes= {
     visRoot : PropTypes.object,
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string.isRequired,
-    viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired
+    viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
+    tableId: PropTypes.string
 };

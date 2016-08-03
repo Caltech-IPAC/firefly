@@ -34,7 +34,7 @@ export function MultiImageViewerView(props) {
     const {Toolbar, layoutType, visRoot,
            viewerPlotIds, forceRowSize, forceColSize, gridDefFunc,
            showWhenExpanded=false, additionalStyle,
-           defaultDecoration=true, insideFlex=false, canDelete=true}= props;
+           defaultDecoration=true, insideFlex=false}= props;
     var wrapperStyle; 
     if (insideFlex) {
         wrapperStyle= Object.assign({}, flexContainerStyle, {flex:'1 1 auto'});
@@ -48,22 +48,22 @@ export function MultiImageViewerView(props) {
     }
     else if (layoutType==='single' || viewerPlotIds.length===1) {  // SINGLE VIEW
         var id= viewerPlotIds.includes(visRoot.activePlotId) ? visRoot.activePlotId : viewerPlotIds[0];
-        container= makeImageViewerFull(id,showWhenExpanded,canDelete, viewerPlotIds.length===1);
+        container= makeImageViewerFull(id,showWhenExpanded,viewerPlotIds.length===1);
     }
     else if (gridDefFunc) {  // GRID computed by a function
-        container= makeSparseGrid(viewerPlotIds, gridDefFunc(viewerPlotIds),showWhenExpanded,canDelete);
+        container= makeSparseGrid(viewerPlotIds, gridDefFunc(viewerPlotIds),showWhenExpanded);
     }
     else if (forceRowSize) {  // GRID with row size
         var col = viewerPlotIds.length / forceRowSize + (viewerPlotIds.length % forceRowSize);
-        container= makePackedGrid(viewerPlotIds,forceRowSize,col,false,showWhenExpanded,canDelete);
+        container= makePackedGrid(viewerPlotIds,forceRowSize,col,false,showWhenExpanded);
     }
     else if (forceColSize) { // GRID with column size
         var rows = viewerPlotIds.length / forceColSize + (viewerPlotIds.length % forceColSize);
-        container= makePackedGrid(viewerPlotIds,rows,forceColSize,true,showWhenExpanded,canDelete);
+        container= makePackedGrid(viewerPlotIds,rows,forceColSize,true,showWhenExpanded);
     }
     else {                   // GRID automatic
         const dim= findAutoGridDim(viewerPlotIds.length);
-        container= makePackedGrid(viewerPlotIds,dim.rows,dim.cols,true,showWhenExpanded,canDelete);
+        container= makePackedGrid(viewerPlotIds,dim.rows,dim.cols,true,showWhenExpanded);
     }
     
     var s= Object.assign({}, additionalStyle, wrapperStyle, defaultDecoration? defDecStyle: {});
@@ -96,13 +96,12 @@ MultiImageViewerView.propTypes= {
     gridDefFunc : PropTypes.func,  // optional - a function to return the grid definition
     gridComponent : PropTypes.object,  // a react element to define the grid - not implemented, just an idea
     showWhenExpanded : PropTypes.bool,
-    canDelete :  PropTypes.bool,
     insideFlex :  PropTypes.bool
 };
 
 
 
-function makePackedGrid(viewerPlotIds,rows,cols, columnBased,showWhenExpanded,canDelete) {
+function makePackedGrid(viewerPlotIds,rows,cols, columnBased,showWhenExpanded) {
     const percentWidth= 100/cols;
     const percentHeight= 100/rows;
 
@@ -110,12 +109,12 @@ function makePackedGrid(viewerPlotIds,rows,cols, columnBased,showWhenExpanded,ca
     const height= `calc(${percentHeight}% - 2px)`;
 
     return columnBased ?
-        columnBasedIvAry(viewerPlotIds,cols,percentWidth,percentHeight,width,height, showWhenExpanded,canDelete)  :
-        rowBasedIvAry(viewerPlotIds,rows,percentWidth,percentHeight,width,height,showWhenExpanded,canDelete);
+        columnBasedIvAry(viewerPlotIds,cols,percentWidth,percentHeight,width,height, showWhenExpanded)  :
+        rowBasedIvAry(viewerPlotIds,rows,percentWidth,percentHeight,width,height,showWhenExpanded);
 }
 
 
-function rowBasedIvAry(viewerPlotIds,rows,percentWidth,percentHeight,width,height,showWhenExpanded,canDelete) {
+function rowBasedIvAry(viewerPlotIds,rows,percentWidth,percentHeight,width,height,showWhenExpanded) {
     var col = 0;
     var row = 0;
     return viewerPlotIds.map( (plotId) => {
@@ -123,13 +122,13 @@ function rowBasedIvAry(viewerPlotIds,rows,percentWidth,percentHeight,width,heigh
         var top= `calc(${row*percentHeight}% + 1px)`;
         row = (row < rows - 1) ? row + 1 : 0;
         if (row===0) col++;
-        return makeImageViewer(plotId,top,left,width,height, showWhenExpanded,canDelete);
+        return makeImageViewer(plotId,top,left,width,height, showWhenExpanded);
     });
 
 }
 
 
-function columnBasedIvAry(viewerPlotIds,cols,percentWidth,percentHeight,width,height,showWhenExpanded,canDelete) {
+function columnBasedIvAry(viewerPlotIds,cols,percentWidth,percentHeight,width,height,showWhenExpanded) {
     var col = 0;
     var row = 0;
     return viewerPlotIds.map( (plotId) => {
@@ -137,15 +136,15 @@ function columnBasedIvAry(viewerPlotIds,cols,percentWidth,percentHeight,width,he
         var top= `calc(${row*percentHeight}% + 1px)`;
         col = (col < cols - 1) ? col + 1 : 0;
         if (col===0) row++;
-        return makeImageViewer(plotId,top,left,width,height, showWhenExpanded,canDelete);
+        return makeImageViewer(plotId,top,left,width,height, showWhenExpanded);
     });
 }
 
 
-const makeImageViewer = (plotId,top,left,width,height,showWhenExpanded,canDelete) => (
+const makeImageViewer = (plotId,top,left,width,height,showWhenExpanded) => (
                       <div style={{position:'absolute', top,left,width,height}} key={plotId}>
                           <ImageViewer plotId={plotId} key={plotId} 
-                                       showWhenExpanded={showWhenExpanded} showDelete={canDelete}
+                                       showWhenExpanded={showWhenExpanded}
                                        handleInlineTools={false}/>
                       </div>
                                         );
@@ -154,13 +153,12 @@ const makeImageViewer = (plotId,top,left,width,height,showWhenExpanded,canDelete
  * 
  * @param plotId
  * @param showWhenExpanded
- * @param canDelete
  * @param handleInlineTools
  */
-const makeImageViewerFull = (plotId, showWhenExpanded, canDelete, handleInlineTools) => (
+const makeImageViewerFull = (plotId, showWhenExpanded, handleInlineTools) => (
     <div style={{position:'absolute', top:0,left:0,bottom:0,right:0}} key={plotId}>
         <ImageViewer plotId={plotId} key={plotId}  showWhenExpanded={showWhenExpanded}
-                      showDelete={canDelete} handleInlineTools={handleInlineTools} />
+                      handleInlineTools={handleInlineTools} />
     </div>
 );
 

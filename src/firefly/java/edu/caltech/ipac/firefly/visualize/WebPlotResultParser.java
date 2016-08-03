@@ -103,7 +103,7 @@ public class WebPlotResultParser {
             retval= WebPlotResult.makeFail(res.getBriefFailReason(),
                                            res.getUserFailReason(),
                                            res.getDetailFailReason(),
-                                           res.getProgressKey());
+                                           res.getProgressKey(),null);
 
         }
         return retval;
