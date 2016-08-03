@@ -219,16 +219,18 @@ function renderTargetPanel(groupKey, searchType) {
     const visible = searchType === SpatialMethod.Cone.value || searchType === SpatialMethod.Box.value || searchType === SpatialMethod.Elliptical.value;
     return (
         visible && <div className='intarget'>
-            <TargetPanel wrapperStyle={{width:'200px'}} labelWidth={90} groupKey={groupKey}/>
-            <ListBoxInputField
-                fieldKey='targettry'
-                options={[{label: 'Try NED then Simbad', value: 'NED'},
+            <TargetPanel labelWidth={100} groupKey={groupKey}>
+                <ListBoxInputField
+                    fieldKey='targettry'
+                    options={[{label: 'Try NED then Simbad', value: 'NED'},
                                    {label: 'Try Simbad then NED', value: 'simbad'}
                               ]}
-                multiple={false}
-                label=''
-                labelWidth={3}
-            />
+                    multiple={false}
+                    label=''
+                    labelWidth={3}
+                    wrapperStyle={{display: 'inline-block'}}
+                />
+            </TargetPanel>
         </div>
     );
 
