@@ -4,12 +4,13 @@
 
 import {take} from 'redux-saga/effects';
 import Enum from 'enum';
-import {get,isEmpty,flattenDeep,values, omit} from 'lodash';
+import {get,isEmpty,flattenDeep,values} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
 import {TitleOptions} from '../WebPlotRequest.js';
 import {CoordinateSys} from '../CoordSys.js';
-import {TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT,
-        TABLE_REMOVE,TABLE_UPDATE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
+import {cloneRequest} from '../../tables/TableUtil.js';
+import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,
+        TABLE_REMOVE, TBL_RESULTS_ACTIVE, TABLE_SORT} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
@@ -84,7 +85,7 @@ export function* watchCoverage({viewerId, options= {}}) {
     var previousDisplayedTableId;
     while (true) {
         previousDisplayedTableId= displayedTableId;
-        const action= yield take([TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE,
+        const action= yield take([TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,
                                   TBL_RESULTS_ACTIVE, REINIT_RESULT_VIEW,
                                   DrawLayerCntlr.ATTACH_LAYER_TO_PLOT,
                                   ImagePlotCntlr.PLOT_IMAGE,
@@ -111,11 +112,14 @@ export function* watchCoverage({viewerId, options= {}}) {
 
         switch (action.type) {
 
-            case TABLE_NEW:
+            case TABLE_LOADED:
                 if (!getTableInGroup(tbl_id)) continue;
-                decimatedTables[tbl_id]= null;
-                displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
-                break;
+                if (get(action, 'payload.invokedBy') !== TABLE_SORT) {
+                    // no need to update coverage on table sort.. data have not changed.
+                    decimatedTables[tbl_id]= null;
+                    displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
+                    break;
+                }
 
             case TBL_RESULTS_ACTIVE:
                 if (!getTableInGroup(tbl_id)) continue;
@@ -186,7 +190,7 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
     };
 
 
-    const req = Object.assign(omit(table.request, ['tbl_id', 'META_INFO']), params);
+    const req = cloneRequest(table.request, params);
     req.tbl_id = `cov-${tbl_id}`;
 
     if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.tblFilePath===table.tableMeta.tblFilePath*/) { //todo support decimated data
@@ -324,7 +328,7 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, color) {
     const columns = boxData ? options.getCornersColumns(table) : options.getCenterColumns(table);
     dispatchCreateDrawLayer(Catalog.TYPE_ID, {
         catalogId: table.tbl_id,
-        title: `Coverage: ${tableMeta.title || table.tbl_id}`,
+        title: `Coverage: ${table.title || table.tbl_id}`,
         color,
         tableData,
         tableMeta,

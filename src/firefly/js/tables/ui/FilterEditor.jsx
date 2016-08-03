@@ -36,7 +36,7 @@ export class FilterEditor extends React.Component {
         const {columns, selectable, onChange, sortInfo, filterInfo= ''} = this.props;
         if (isEmpty(columns)) return false;
 
-        const {cols, data, selectInfoCls} = prepareOptionData(columns, sortInfo, filterInfo);
+        const {cols, data, selectInfoCls} = prepareOptionData(columns, sortInfo, filterInfo, selectable);
         const callbacks = makeCallbacks(onChange, columns, data, filterInfo);
         const renderers = makeRenderers(callbacks.onFilter);
         return (
@@ -82,13 +82,13 @@ FilterEditor.defaultProps = {
     selectable: true
 };
 
-function prepareOptionData(columns, sortInfo, filterInfo) {
+function prepareOptionData(columns, sortInfo, filterInfo, selectable) {
 
     var cols = [
         {name: 'Column', visibility: 'show', fixed: true},
-        {name: 'Filter', visibility: 'show', prefWidth: 12},
+        {name: 'Filter', visibility: 'show'},
         {name: 'Units', visibility: 'show'},
-        {name: 'Description', visibility: 'show', prefWidth: 60},
+        {name: '', visibility: 'hidden'},
         {name: 'Selected', visibility: 'hidden'}
     ];
 
@@ -98,10 +98,15 @@ function prepareOptionData(columns, sortInfo, filterInfo) {
         const filter = filterInfoCls.getFilter(v.name) || '';
         return [v.name||'', filter, v.units||'', v.desc||'', v.visibility !== 'hide'];
     } );
-    const widths = calcColumnWidths(cols, data);
-    cols[0].prefWidth = Math.min(widths['Columns'], 12);  // adjust width of column for optimum display.
-    cols[2].prefWidth = Math.min(widths['Units'], 12);
     sortTableData(data, cols, sortInfo);
+
+    const widths = calcColumnWidths(cols, data);
+    cols[0].prefWidth = Math.min(widths[0], 20);  // adjust width of column for optimum display.
+    cols[1].prefWidth = Math.max(46 - widths[0] - widths[2] - widths[3] - (selectable? 3 : 0), 12);  // expand filter field to fill in empty space.
+    cols[2].prefWidth = Math.min(widths[2], 12);
+    if (widths[3]) {
+        cols[3] = {name: 'Description', prefWidth: widths[3], visibility: 'show'};
+    }
 
     var selectInfoCls = SelectInfo.newInstance({rowCount: data.length});
     selectInfoCls.data.rowCount = data.length;

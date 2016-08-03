@@ -110,8 +110,7 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
     const {tbl_id} = activeTableServerRequest;
 
     // searchRequest
-    const sreq = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']),
-        {'startIdx': 0, 'pageSize': 1000000});
+    const sreq = TableUtil.cloneRequest(activeTableServerRequest, {'startIdx': 0, 'pageSize': 1000000});
 
     const req = TableUtil.makeTblRequest('StatisticsProcessor', `Statistics for ${tbl_id}`,
         { searchRequest: JSON.stringify(sreq) },

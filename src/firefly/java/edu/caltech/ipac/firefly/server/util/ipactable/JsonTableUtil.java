@@ -182,7 +182,7 @@ public class JsonTableUtil {
             }
             String sortable = getColAttr(tableDef, SORTABLE_TAG, cname);
             if (!StringUtils.isEmpty(sortable)) {
-                c.put("sortable", sortable);
+                c.put("sortable", Boolean.parseBoolean(sortable));
             }
             String units = getColAttr(tableDef, UNIT_TAG, cname);
             if (!StringUtils.isEmpty(units)) {

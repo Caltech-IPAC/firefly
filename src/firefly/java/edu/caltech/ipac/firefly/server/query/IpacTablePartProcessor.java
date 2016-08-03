@@ -199,8 +199,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 try {
                     dgFile = postProcessData(dgFile, request);
                     page = IpacTableParser.getData(dgFile, request.getStartIndex(), request.getPageSize());
-                    page.getTableDef().ensureStatus();      // make sure there's a status line so
-                    page.getTableDef().setAttribute(TableServerRequest.TBL_FILE_PATH, ServerContext.replaceWithPrefix(dgFile));  // set table's meta tblFilePath to the file it came from.
+                    ensureTableMeta(page, request, dgFile);  // inspect/edit meta info needed by client.
                 } catch (Exception e) {
                     LOGGER.error(e, "Fail to parse ipac table file: " + dgFile);
                     throw e;
@@ -216,15 +215,14 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             LOGGER.error(e, "Error while processing request:" + StringUtils.truncate(sr, 512));
             throw new DataAccessException("Unexpected error", e);
         }
-//        finally {
-//            if (!doCache()) {
-// do not delete file even if it's not to be cached.  download still relies on it.
-//                if (dgFile != null) {
-//                    dgFile.delete();
-//                }
-//            }
-//        }
+    }
 
+    private void ensureTableMeta(DataGroupPart page, TableServerRequest request, File dgFile) {
+        page.getTableDef().ensureStatus();      // make sure there's a status line so
+        page.getTableDef().setAttribute(TableServerRequest.TBL_FILE_PATH, ServerContext.replaceWithPrefix(dgFile));  // set table's meta tblFilePath to the file it came from.
+        if (!StringUtils.isEmpty(request.getTblTitle())) {
+            page.getData().setTitle(request.getTblTitle());  // set the datagroup's title to the request title.
+        }
     }
 
     protected File postProcessData(File dgFile, TableServerRequest request) throws Exception {
@@ -648,3 +646,4 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
 }
 
+// some random comments

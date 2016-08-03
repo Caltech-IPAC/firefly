@@ -3,11 +3,11 @@
  */
 
 import {take} from 'redux-saga/effects';
-import {isEmpty, get, omit} from 'lodash';
-import {TABLE_NEW_LOADED,TABLE_SORT, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE} from '../../tables/TablesCntlr.js';
+import {isEmpty, get} from 'lodash';
+import {TABLE_LOADED, TABLE_SORT, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE} from '../../tables/TablesCntlr.js';
 import {dispatchCreateDrawLayer,dispatchAttachLayerToPlot,dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
-import {getTblById, doFetchTable, getTableGroup} from '../../tables/TableUtil.js';
+import {getTblById, doFetchTable, getTableGroup, cloneRequest} from '../../tables/TableUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {getDrawLayerById} from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
@@ -42,12 +42,11 @@ export function* watchCatalogs() {
 
 
     while (true) {
-        const action= yield take([TABLE_NEW_LOADED, TABLE_SORT, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE,
+        const action= yield take([TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE,
                                   TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE]);
         const {tbl_id}= action.payload;
         switch (action.type) {
-            case TABLE_SORT:
-            case TABLE_NEW_LOADED:
+            case TABLE_LOADED:
                 handleCatalogUpdate(tbl_id);
                 break;
             
@@ -112,13 +111,13 @@ function handleCatalogUpdate(tbl_id) {
         dataTooBigForSelection= true;
     }
 
-    const req = Object.assign(omit(sourceTable.request, ['tbl_id', 'META_INFO']), params);
+    const req = cloneRequest(sourceTable.request, params);
     req.tbl_id = `cat-${tbl_id}`;
 
     doFetchTable(req).then(
         (tableModel) => {
             if (tableModel.tableData && tableModel.tableData.data) {
-                updateDrawingLayer(tbl_id,
+                updateDrawingLayer(tbl_id, tableModel.title,
                     tableModel.tableData, tableModel.tableMeta,
                     request, highlightedRow, selectInfo, columns, dataTooBigForSelection);
             }
@@ -130,7 +129,7 @@ function handleCatalogUpdate(tbl_id) {
     );
 }
 
-function updateDrawingLayer(tbl_id, tableData, tableMeta, tableRequest, 
+function updateDrawingLayer(tbl_id, title, tableData, tableMeta, tableRequest,
                             highlightedRow, selectInfo, columns, dataTooBigForSelection) {
 
     const plotIdAry= visRoot().plotViewAry
@@ -139,13 +138,13 @@ function updateDrawingLayer(tbl_id, tableData, tableMeta, tableRequest,
 
     const dl= getDrawLayerById(dlRoot(),tbl_id);
     if (dl) { // update drawing layer
-        dispatchModifyCustomField(tbl_id, {tableData, tableMeta, tableRequest, 
+        dispatchModifyCustomField(tbl_id, {title, tableData, tableMeta, tableRequest,
                                            highlightedRow, selectInfo, columns,
                                            dataTooBigForSelection});
     }
     else { // new drawing layer
         dispatchCreateDrawLayer(Catalog.TYPE_ID,
-            {catalogId:tbl_id, tableData, tableMeta, tableRequest, highlightedRow, 
+            {catalogId:tbl_id, title, tableData, tableMeta, tableRequest, highlightedRow,
                                 selectInfo, columns, dataTooBigForSelection, catalog:true});
         dispatchAttachLayerToPlot(tbl_id, plotIdAry);
     }

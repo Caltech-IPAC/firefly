@@ -7,7 +7,7 @@ import {get, filter, omitBy, isNil} from 'lodash';
 
 import {LO_VIEW, LO_MODE, SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo, dispatchUpdateLayoutInfo} from '../LayoutCntlr.js';
 import {clone} from '../../util/WebUtil.js';
-import {TBL_RESULTS_ADDED, TABLE_NEW, TABLE_REMOVE} from '../../tables/TablesCntlr.js';
+import {TBL_RESULTS_ADDED, TABLE_LOADED, TABLE_REMOVE} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
 import {isMetaDataTable, isCatalogTable} from '../../metaConvert/converterUtils.js';
 import {META_VIEWER_ID} from '../../visualize/ui/TriViewImageSection.jsx';
@@ -29,7 +29,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         const action = yield take([
             ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE,
             ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_IMAGES,
-            TBL_RESULTS_ADDED, TABLE_REMOVE, TABLE_NEW,
+            TBL_RESULTS_ADDED, TABLE_REMOVE, TABLE_LOADED,
             SHOW_DROPDOWN, SET_LAYOUT_MODE
         ]);
 
@@ -55,7 +55,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
                 ignore = handleLayoutChanges(action);
                 break;
 
-            case TABLE_NEW :
+            case TABLE_LOADED :
                 [showImages, images] = handleNewTable(action, images, showImages);
                 break;
 
