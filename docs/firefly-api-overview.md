@@ -303,6 +303,7 @@ To use minimal readout, do the following:
 | regionId | string | region layer id |
 | layerTitle | string | title for the layer, displaying regions |
 | fileOnServer | string | region file on the server |
+| regionAry | array | an array of strings, each describing a ds9 region |
 | plotId | string or array | a plot id or an array of plot ids |
 
 Note: if no plotId is given, the region layer is created on all plots.
