@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, isEmpty, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray} from 'lodash';
+import {get, set, unset, isEmpty, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {flux} from '../Firefly.js';
@@ -130,6 +130,18 @@ export function makeVOCatalogRequest(title, params={}, options={}) {
     params = omit(params, 'position');
 
     return omitBy(Object.assign(req, options, params, {id, tbl_id, META_INFO, UserTargetWorldPt}), isNil);
+}
+
+/**
+ * create a deep clone of the given request.  tbl_id is removed from the cloned request.
+ * @param {Object} request  the original request to clone
+ * @param {Object} params   additional parameters to add to the cloned request
+ * @returns {object}
+ */
+export function cloneRequest(request, params = {}) {
+    const req = cloneDeep(omit(request, 'tbl_id'));
+    unset(req, 'META_INFO.tbl_id');
+    return Object.assign(req, params);
 }
 
 /*---------------------------- creator functions >----------------------------*/
