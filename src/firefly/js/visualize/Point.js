@@ -1,5 +1,5 @@
 
-import {isString} from 'lodash';
+import {isString, isNil} from 'lodash';
 import CoordinateSys from './CoordSys.js';
 import Resolver, {parseResolver} from '../astro/net/Resolver.js';
 import validator from 'validator';
@@ -199,6 +199,9 @@ export const makeOffsetPt= function(x,y) {
 };
 
 export const pointEquals= function(p1,p2)  {
+    if (isNil(p1) && isNil(p2)) return true;
+    else if (isNil(p1) || isNil(p2)) return false;
+
     return (p1.x===p2.x && p1.y===p2.y && p1.type===p2.type && p1.csys===p2.csys);
 };
 
