@@ -102,6 +102,7 @@
     font-family: tahoma,arial,helvetica,sans-serif;
     font-style: italic;
     cursor: pointer;
+    text-decoration: underline;
 }
 
 .ff-href:hover {

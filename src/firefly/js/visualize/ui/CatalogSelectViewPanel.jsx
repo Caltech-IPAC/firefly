@@ -35,9 +35,6 @@ import './CatalogSelectViewPanel.css';
  */
 export const gkey = 'CATALOG_PANEL';
 
-/**define the helpButton*/
-const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height: 40, marginRight: 20};
-
 const dropdownName = 'IrsaCatalogDropDown';
 
 const initRadiusArcSec = (10 / 3600) + '';
@@ -78,7 +75,7 @@ export class CatalogSelectViewPanel extends Component {
     render() {
         var {fields}= this.state;
         return (
-            <div style={{padding: 10}}>
+            <div>
                 <FormPanel
                     width='auto' height='auto'
                     groupKey={gkey}
@@ -87,6 +84,7 @@ export class CatalogSelectViewPanel extends Component {
                     <CatalogSelectView fields={fields}/>
                 </FormPanel>
             </div>
+
         );
     }
 }
@@ -401,10 +399,10 @@ class CatalogSelectView extends Component {
                                             tooltip: 'Select an IPAC catalog table file to upload',
                                             label: 'File:'}}
                             />
-                            <div style={helpIdStyle}>
+                            <div>
                                 <em style={{color:'gray'}}>Custom catalog in IPAC table format</em>
                                 <HelpIcon
-                                    helpid={'basics.loadcatalog'}/>
+                                    helpId={'basics.loadcatalog'}/>
                             </div>
                         </div>
                     </Tab>
@@ -660,6 +658,10 @@ class CatalogDDList extends Component {
                     />
                 </div>
                 {/*</div>*/}
+                <div style={{display:'flex',flexDirection:'column', alignItems:'flex-end'}}>
+                    <HelpIcon
+                        helpId={'basics.catalogs'}/>
+                </div>
             </div>
         );
     }

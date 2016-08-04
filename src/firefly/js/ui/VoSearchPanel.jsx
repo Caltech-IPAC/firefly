@@ -9,6 +9,8 @@ import {ValidationField} from './ValidationField.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {gkey} from '../visualize/ui/CatalogSelectViewPanel.jsx';
+import {HelpIcon} from '../ui/HelpIcon.jsx';
+
 import './VoSearchPanel.css';
 
 export class VoSearchPanel extends React.Component {
@@ -47,6 +49,10 @@ export class VoSearchPanel extends React.Component {
                                 Resources </a>
                         </div>
                     </div>
+                </div>
+                <div style={{display:'flex',flexDirection:'column', alignItems:'flex-end'}}>
+                    <HelpIcon
+                        helpId={'catalogs.vo'}/>
                 </div>
             </div>
         );

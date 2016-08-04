@@ -115,7 +115,7 @@ function renderCloseAndHelpButtons(tblId,onColSelected,buttonText,popupId) {
         </div>
         {/* comment out the help button for now
             <div style={helpIdStyle}>
-                <HelpIcon helpid={'visualization.setxyplot'}/>
+                <HelpIcon helpId={'catalogs.xyplots'}/>
             </div>
          */}
     </div>

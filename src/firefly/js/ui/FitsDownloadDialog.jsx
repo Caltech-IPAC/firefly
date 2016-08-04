@@ -287,7 +287,7 @@ function FitsDownloadDialogForm() {
                         </td>
                         <td>
                             <div style={{ textAlign:'center', marginBottom: 20}}>
-                               <HelpIcon helpid={'visualization.fitsDownloadOptions'} />
+                               <HelpIcon helpId={'visualization.fitsViewer'} />
                             </div>
                         </td>
                     </tr>

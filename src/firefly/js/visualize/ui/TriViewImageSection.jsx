@@ -47,7 +47,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
         return (
             <Tabs onTabSelect={onTabSelect} defaultSelected={selectedTab} useFlex={true}>
                 { showFits &&
-                    <Tab name='Fits Data' removable={false} id='fits'>
+                    <Tab name='FITS Data' removable={false} id='fits'>
                         <MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID}
                                           insideFlex={true}
                                           canReceiveNewPlots={true}
@@ -56,7 +56,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
                     </Tab>
                 }
                 { showMeta &&
-                    <Tab name='Image Meta Data' removable={false} id='meta'>
+                    <Tab name='Images' removable={false} id='meta'>
                         <MultiImageViewer viewerId= {META_VIEWER_ID}
                                           insideFlex={true}
                                           canReceiveNewPlots={false}
