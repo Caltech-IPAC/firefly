@@ -35,7 +35,7 @@ export class TableConnector {
             // not implemented yet
         } else {
             request = Object.assign({}, request, {filters: filterIntoString});
-            TblCntlr.dispatchTableFetch(request);
+            TblCntlr.dispatchTableFilter(request);
         }
     }
 
@@ -59,7 +59,7 @@ export class TableConnector {
                         }, 'IN (') + ')';
                     filterInfoCls.addFilter('ROWID', value);
                     request = Object.assign({}, request, {filters: filterInfoCls.serialize()});
-                    TblCntlr.dispatchTableFetch(request);
+                    TblCntlr.dispatchTableFilter(request);
                 });
             }
         }

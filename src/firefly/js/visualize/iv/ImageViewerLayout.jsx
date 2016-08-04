@@ -92,6 +92,7 @@ export class ImageViewerLayout extends Component {
             const ownerCandidate= findMouseOwner(list,primePlot(plotView),screenPt);         // see if anyone can own that mouse
             this.mouseOwnerLayerId = DOWN.is(mouseState) && ownerCandidate ? ownerCandidate.drawLayerId : null;   // can only happen on mouseDown
             if (this.mouseOwnerLayerId) {
+                if (DOWN.is(mouseState)) dispatchChangeActivePlotView(plotId);
                 const dl= getLayer(drawLayersAry,this.mouseOwnerLayerId);
                 fireMouseEvent(dl,mouseState,mouseStatePayload);
             }

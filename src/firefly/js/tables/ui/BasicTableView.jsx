@@ -245,7 +245,7 @@ function makeColWidth(columns, showUnits) {
         if (!nchar) {
             nchar = Math.max(label.length+2, unitLength+2, get(col,'width', 0)); // 2 is for padding and sort symbol
         }
-        widths[col.name] = nchar * 8;
+        widths[col.name] = nchar * 7;
         return widths;
     }, {});
 }
@@ -296,12 +296,12 @@ function tableToText(columns, dataAry, showUnits=false) {
     const colWidths = calcColumnWidths(columns, dataAry);
 
     var textHead = columns.reduce( (pval, col, idx) => {
-        return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.name, colWidths[col.name])}|` : '');
+        return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.name, colWidths[idx])}|` : '');
     }, '|');
 
     if (showUnits) {
         textHead += '\n' + columns.reduce( (pval, col, idx) => {
-                return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.units || '', colWidths[col.name])}|` : '');
+                return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.units || '', colWidths[idx])}|` : '');
             }, '|');
     }
 
@@ -310,7 +310,7 @@ function tableToText(columns, dataAry, showUnits=false) {
             row.reduce( (pv, cv, idx) => {
                 const cname = get(columns, [idx, 'name']);
                 if (!cname) return pv;      // not defined in columns.. can ignore
-                return pv + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cv || '', colWidths[cname])} ` : '');
+                return pv + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cv || '', colWidths[idx])} ` : '');
             }, ' ') + '\n';
     }, '');
     return textHead + '\n' + textData;

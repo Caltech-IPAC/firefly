@@ -58,7 +58,7 @@ There are several branches the this repository.  Here are the ones that you shou
     Javascript interpreter for command line environment, used for development tools
 
 #### Prepare before the build
- - Make sure you have  <GRADLE>/bin, <JAVA>/bin, and <NODE>/bin in your PATH.
+ - Make sure you have  `<GRADLE>/bin`, `<JAVA>/bin`, and `<NODE>/bin` in your PATH.
 
 
 #### How to build Firefly:
@@ -77,32 +77,34 @@ You may include this jar into your project to build advanced astronomy web appli
 
 In a terminal, cd into the `firefly` directory, then run:
 
-    $ gradle :fftools:war
+    $ gradle :firefly:war
 
-This generates fftools.war located at ./build/lib/.
+This generates firefly.war located at ./build/lib/.
 Simply drop this file into your $CATALINA_HOME/webapps/ directory to deploy it.
 $CATALINA_HOME is your Tomcat server installation directory.
 
-Goto http://localhost:8080/fftools/ to launch Firefly Viewer.
+Goto http://localhost:8080/firefly/ to launch Firefly Viewer.
 
 
 ## More Docs
 
 ####Firefly Tools JavaScript API overview
-[see fftools-api-overview.md](docs/fftools-api-overview.md)
+See [firefly-api-overview.md](docs/firefly-api-overview.md)
+ (Deprecated [docs/fftools-api-overview.md](docs/fftools-api-overview.md))
 
 ####Firefly Tools Remote API using Python overview
-[see firefly-python-wrapper.md](docs/firefly-python-wrapper.md)
+See [firefly-python-wrapper.md](docs/firefly-python-wrapper.md)
 
 ####Code Examples Using Firefly Tools
-[see fftools-api-code-examples.md](docs/fftools-api-code-examples.md)
+See [firefly-api-code-examples.md](docs/firefly-api-code-examples.md)
+ (Deprecated [docs/fftools-api-code-examples.md](docs/fftools-api-code-examples.md))
 
 ####Setting up the Server correctly for FITS files
-[see server-settings-for-fits-files.md](docs/server-settings-for-fits-files.md)
+See [server-settings-for-fits-files.md](docs/server-settings-for-fits-files.md)
 
 ####Changing the Firefly runtime environment
-[see firefly-environment.md](docs/firefly-environment.md)
+See [firefly-environment.md](docs/firefly-environment.md)
 
 ####Adding external task launcher or Python Launcher to Firefly
-[see firefly-python-launcher.md](docs/firefly-external-task-launcher.md)
+See [firefly-python-launcher.md](docs/firefly-external-task-launcher.md)
 

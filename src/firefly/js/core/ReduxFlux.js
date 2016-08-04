@@ -133,6 +133,7 @@ actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionC
 actionCreators.set(TablesCntlr.TABLE_SEARCH, TablesCntlr.tableSearch);
 actionCreators.set(TablesCntlr.TABLE_FETCH, TablesCntlr.tableFetch);
 actionCreators.set(TablesCntlr.TABLE_SORT, TablesCntlr.tableFetch);
+actionCreators.set(TablesCntlr.TABLE_FILTER, TablesCntlr.tableFetch);
 actionCreators.set(TablesCntlr.TABLE_HIGHLIGHT, TablesCntlr.highlightRow);
 
 actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);

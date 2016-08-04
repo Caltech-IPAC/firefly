@@ -34,15 +34,15 @@ export class VoSearchPanel extends React.Component {
     render() {
         const fields = this.state;
         return (
-            <div>
-                <div className={'vopanel'}>
-                    <div className={'section'}>
+            <div className='vopanel__wrapper'>
+                <div className='vopanel'>
+                    <div>
                         {targetPanelArea()}
                     </div>
-                    <div className={'size'}>
+                    <div style={{height: 60}}>
                         { sizeArea()}
                     </div>
-                    <div className={'voarea'}>
+                    <div style={{marginTop: 20}}>
                         { voSearchArea() }
                         <div style={{padding:'20px 0 20px 0'}}>
                             <a target='_blank' href='http://nvo.stsci.edu/vor10/index.aspx'>Find Astronomical Data
@@ -63,22 +63,23 @@ export class VoSearchPanel extends React.Component {
 
 function targetPanelArea() {
     return (
-        <div className={'intarget'}>
-            <TargetPanel groupKey={gkey} labelWidth={120}/>
-            <ListBoxInputField
-                fieldKey='targettry'
-                initialState={{
+        <div >
+            <TargetPanel groupKey={gkey} labelWidth={100}>
+                <ListBoxInputField
+                    fieldKey='targettry'
+                    initialState={{
                                   fieldKey:'targettry',
                                   label : '',
                                   labelWidth: 0
                               }}
-                label={''}
-                options={[
+                    label={''}
+                    options={[
                             {label: 'Try NED then Simbad', value: 'NED'},
                             {label: 'Try Simbad then NED', value: 'simbad'}
                          ]}
-                multiple={false}
-            />
+                    multiple={false}
+                />
+            </TargetPanel>
         </div>
     );
 }
@@ -107,7 +108,7 @@ var voSearchArea = () => {
                               value: '',
                               tooltip:'Enter the VO cone search URL directly (or use the link below to open external NVO search and find the VO cone search URL)',
                               label:'Cone Search URL:',
-                              labelWidth : 90,
+                              labelWidth : 100,
                               nullAllowed:false,
                               /*validator: {urlValidator}*/
                           }}

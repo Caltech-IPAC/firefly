@@ -23,7 +23,7 @@ export function* syncCharts() {
     var xyPlotState, histogramState;
 
     while (true) {
-        const action= yield take([ChartsCntlr.CHART_MOUNTED, TablesCntlr.TABLE_NEW_LOADED, TablesCntlr.TABLE_SORT]);
+        const action= yield take([ChartsCntlr.CHART_MOUNTED, TablesCntlr.TABLE_LOADED]);
         if (!ChartsCntlr.getNumRelatedCharts()) { continue; }
         const request= action.payload.request;
         switch (action.type) {
@@ -44,8 +44,7 @@ export function* syncCharts() {
                 }
 
                 break;
-            case TablesCntlr.TABLE_SORT:
-            case TablesCntlr.TABLE_NEW_LOADED:
+            case TablesCntlr.TABLE_LOADED:
                 const {tbl_id} = action.payload;
 
                 // check if there are any mounted charts related to this table
@@ -63,7 +62,8 @@ export function* syncCharts() {
                     });
 
                     // table statistics and histogram data do not change on table sort
-                    if (action.type !== TablesCntlr.TABLE_SORT) {
+                    const {invokedBy} = action.payload;
+                    if (invokedBy !== TablesCntlr.TABLE_SORT) {
                         histogramState = getChartSpace(HISTOGRAM);
                         Object.keys(histogramState).forEach((cid) => {
                             if (histogramState[cid].tblId === tbl_id) {

@@ -6,6 +6,7 @@ import React from 'react';
 import {take,race,call} from 'redux-saga/effects';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import ImagePlotCntlr, {visRoot, ExpandType} from '../visualize/ImagePlotCntlr.js';
+import {primePlot} from '../visualize/PlotViewUtil.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import  {DefaultApiReadout} from '../visualize/ui/DefaultApiReadout.jsx';
 //import  {PopupMouseReadoutMinimal} from '../visualize/ui/PopupMouseReadoutMinimal.jsx';
@@ -33,11 +34,18 @@ export {RequestType} from '../visualize/RequestType';
 export {ExpandType, dispatchApiToolsView} from '../visualize/ImagePlotCntlr.js';
 export {CsysConverter} from '../visualize/CsysConverter.js';
 export {CCUtil} from '../visualize/CsysConverter.js';
-export {primePlot} from '../visualize/PlotViewUtil.js';
-export {visRoot} from '../visualize/ImagePlotCntlr.js';
 export {watchCoverage} from '../visualize/saga/CoverageWatcher.js';
-import {watchImageMetaData} from '../visualize/saga/ImageMetaDataWatcher.js';
+export {watchImageMetaData} from '../visualize/saga/ImageMetaDataWatcher.js';
 
+
+/**
+ * Get plot object with the given plot id.
+ * When plotId is not included, active plot is returned.
+ * @param {string} [plotId] the plotId, optional
+ */
+export function getPrimePlot(plotId) {
+    return primePlot(visRoot(), plotId);
+}
 
 /**
  * initialize the auto readout. Must be call once at the begging to get the popup readout running.

@@ -183,6 +183,7 @@ public class DataGroup implements Serializable,
      */
     public void addAttribute(String key, String value) {
         _attributes.add(new Attribute(key, value));
+        _cachedAttributesMap = null;
     }
 
     /**

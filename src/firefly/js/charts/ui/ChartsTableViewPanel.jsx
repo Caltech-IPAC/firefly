@@ -335,7 +335,7 @@ class ChartsPanel extends React.Component {
                 filterInfoCls.setFilter(yCol, '> '+yMin);
                 filterInfoCls.addFilter(yCol, '< '+yMax);
                 const newRequest = Object.assign({}, tableModel.request, {filters: filterInfoCls.serialize()});
-                TablesCntlr.dispatchTableFetch(newRequest, 0);
+                TablesCntlr.dispatchTableFilter(newRequest, 0);
             }
         }
     }
@@ -344,7 +344,7 @@ class ChartsPanel extends React.Component {
         const request = get(this.props, 'tableModel.request');
         if (request && request.filters) {
             const newRequest = Object.assign({}, request, {filters: ''});
-            TablesCntlr.dispatchTableFetch(newRequest, 0);
+            TablesCntlr.dispatchTableFilter(newRequest, 0);
         }
     }
 
@@ -688,7 +688,7 @@ export class FilterEditorWrapper extends React.Component {
                         onChange={(obj) => {
                             if (!isUndefined(obj.filterInfo)) {
                                 const newRequest = Object.assign({}, tableModel.request, {filters: obj.filterInfo});
-                                TablesCntlr.dispatchTableFetch(newRequest, 0);
+                                TablesCntlr.dispatchTableFilter(newRequest, 0);
                             } else if (!isUndefined(obj.sortInfo)) {
                                 this.setState({sortInfo: obj.sortInfo});
                             }

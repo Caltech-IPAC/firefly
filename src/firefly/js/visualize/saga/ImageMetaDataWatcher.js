@@ -5,7 +5,7 @@
 import {take} from 'redux-saga/effects';
 import {union,get,isEmpty,difference} from 'lodash';
 import {Band,allBandAry} from '../Band.js';
-import {TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT,
+import {TABLE_SELECT,TABLE_HIGHLIGHT,
         TABLE_REMOVE,TABLE_UPDATE, TBL_RESULTS_ACTIVE, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView,
                         dispatchPlotGroup, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
@@ -37,7 +37,7 @@ export function* watchImageMetaData({viewerId}) {
     var tbl_id;
     var paused= true;
     while (true) {
-        const action= yield take([TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE,
+        const action= yield take([TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE,
                                   TBL_RESULTS_ACTIVE,
                                   MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED,
                                   MultiViewCntlr.VIEWER_UNMOUNTED,
@@ -59,7 +59,6 @@ export function* watchImageMetaData({viewerId}) {
 
         switch (action.type) {
 
-            case TABLE_NEW:
             case TABLE_REMOVE:
             case TABLE_HIGHLIGHT:
             case TABLE_UPDATE:
@@ -207,7 +206,7 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
 
     // prepare stand plot
     const wpRequestAry= makePlottingList(reqAry);
-    if (!isEmpty(wpRequestAry)) dispatchPlotGroup({wpRequestAry});
+    if (!isEmpty(wpRequestAry)) dispatchPlotGroup({wpRequestAry, pvOptions: {menuItemKeys:{imageSelect : false}}});
     if (activeId) dispatchChangeActivePlotView(activeId);
 
 
@@ -215,7 +214,11 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
     if (plottingThree)  {
         const plotThreeReqAry= make3ColorPlottingList(threeReqAry);
         if (!isEmpty(plotThreeReqAry)) {
-            dispatchPlotImage({plotId:threeCPlotId, wpRequest:plotThreeReqAry, threeColor:true});
+            dispatchPlotImage(
+                {
+                    plotId:threeCPlotId, wpRequest:plotThreeReqAry, threeColor:true,
+                               pvOptions: {menuItemKeys:{imageSelect : false}}
+                });
         }
     }
     

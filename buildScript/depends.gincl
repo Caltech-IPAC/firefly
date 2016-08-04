@@ -104,7 +104,9 @@ jar.destinationDir = file ("$rootDir/jars/build")
 
 task buildClient (dependsOn: loadConfig) {
 
-  outputs.upToDateWhen { false }
+  outputs.dir "${buildDir}/gwt/${project['app-name']}"
+  inputs.dir "${projectDir}/js"
+  inputs.dir "${fireflyPath}/src/firefly/js"
 
   doLast {
     def res = project.ext.NPM 'run', 'build'
