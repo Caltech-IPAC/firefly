@@ -20,7 +20,7 @@ import {primePlot,
         findPlotGroup,
         hasGroupLock,
         getPlotViewById} from '../PlotViewUtil.js';
-import {makeImagePt} from '../Point.js';
+import {makeImagePt, makeWorldPt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import CsysConverter from '../CsysConverter.js'
 
@@ -243,7 +243,11 @@ function recenterPv(centerPt) {
         var centerImagePt;
 
         if (centerPt) {
-            centerImagePt = CCUtil.getImageCoords(plot, centerPt);
+            if (centerPt.type === Point.IM_PT) {
+                centerImagePt = makeImagePt(centerPt.x, centerPt.y);
+            } else {
+                centerImagePt = makeWorldPt(centetPt.x, centerPt.y);
+            }
         } else {
             var wp = plot.attributes[PlotAttribute.FIXED_TARGET];
             if (wp) {

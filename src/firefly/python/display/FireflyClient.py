@@ -9,22 +9,25 @@ import time
 import socket
 import urlparse
 
+
 class FireflyClient(WebSocketClient):
     # class variables
-    # serverEvents = {'name': ['EVT_CONN_EST', 'SvrBackgroundReport', 'WindowResize'],
-    #                 'scope': ['SELF', 'CHANNEL'],
-    #                 'dataType': ['STRING', 'JSON', 'BG_STATUS'],
-    #                 'data': ['channel']
-    #                 }
+    # serverEvents = {
+    #       'name': ['EVT_CONN_EST', 'SvrBackgroundReport', 'WindowResize'],
+    #       'scope': ['SELF', 'CHANNEL'],
+    #       'dataType': ['STRING', 'JSON', 'BG_STATUS'],
+    #       'data': ['channel']
+    # }
 
     fftoolsCmd = '/firefly/sticky/CmdSrv'
     myLocalhost = 'localhost:8080'
     ALL = 'ALL_EVENTS_ENABLED'
 
-    # for serializing the RangeValues object - modify when new stretch types added
-    stretchTypeDict={'percent':88, 'maxmin': 89, 'absolute':90,'zscale':91,'sigma':92}
+    # for serializing the RangeValues object
+    stretchTypeDict={'percent':88, 'maxmin': 89, 'absolute':90,  'zscale':91,'sigma':92}
     stretchAlgorithmDict={'linear':44, 'log':45,'loglog':46,'equal':47,
-                          'squared':48, 'sqrt':49, 'asinh':50, 'powerlaw_gamma':51}
+                          'squared':48, 'sqrt':49, 'asinh':50,
+                          'powerlaw_gamma':51}
 
     # extension type
     extensionType = ['AREA_SELECT', 'LINE_SELECT', 'POINT']
@@ -73,7 +76,7 @@ class FireflyClient(WebSocketClient):
     #     print ("Closed down", code, reason)
 
 
-    def handleEvent(self, ev):
+    def _handleEvent(self, ev):
         for callback, eventIDList  in self.listeners.items():
             if ev['name'] in eventIDList or FireflyClient.ALL in eventIDList:
                 callback(ev)
@@ -100,9 +103,9 @@ class FireflyClient(WebSocketClient):
                 print ('from callback exception: ')
                 print (m)
         else:
-            self.handleEvent(ev)
+            self._handleEvent(ev)
 
-    def sendURLAsGet(self,url):
+    def _sendURLAsGet(self,url):
         """
         send URL in 'GET' request
         :param url:
@@ -113,7 +116,7 @@ class FireflyClient(WebSocketClient):
         status = json.loads(response.text)
         return status[0]
 
-    def sendURLAsPost(self, data):
+    def _sendURLAsPost(self, data):
         """
         send URL in 'POST' request
         :param data
@@ -123,10 +126,10 @@ class FireflyClient(WebSocketClient):
         status = json.loads(response.text)
         return status[0]
 
-    def isPageConnected(self):
+    def _isPageConnected(self):
         ip=socket.gethostbyname(socket.gethostname())
         url = self.urlRoot + '?cmd=pushAliveCheck&ipAddress=%s' % ip
-        retval= self.sendURLAsGet(url)
+        retval= self._sendURLAsGet(url)
         return retval['active']
 
     # def onConnected(self, channel):
@@ -136,26 +139,8 @@ class FireflyClient(WebSocketClient):
     #     webbrowser.open(url)
 
 
-    @staticmethod
-    def createRV(stretchType, lowerValue, upperValue, algorithm,
-                 zscaleContrast=25, zscaleSamples=600, zscaleSamplesPerLine=120,
-                 betaValue = 0.1, gammaValue = 2.0):
-        retval= None
-        ffc= FireflyClient
-        st= stretchType.lower()
-        a= algorithm.lower()
-        if st in ffc.stretchTypeDict and a in ffc.stretchAlgorithmDict:
-            retval='%d,%f,%d,%f,%f,%f,%d,%d,%d,%d' % \
-                   (ffc.stretchTypeDict[st], lowerValue,
-                    ffc.stretchTypeDict[st], upperValue,
-                    betaValue, gammaValue,
-                    ffc.stretchAlgorithmDict[a],
-                    zscaleContrast, zscaleSamples, zscaleSamplesPerLine)
-        return retval
-
-
-    def makePidParam(self,plotId):
-        return ','.join(plotId) if type(plotId) is list else plotId
+    def _makePidParam(self,plotId):
+        return ','.join(plotId) if isinstance(plotId, list) else plotId
 
 
 #-----------------------------------------------------------------
@@ -229,7 +214,7 @@ class FireflyClient(WebSocketClient):
             channel = self.channel
         if not url :
             url=self.urlBW
-        doOpen= True if force else not self.isPageConnected()
+        doOpen= True if force else not self._isPageConnected()
         if doOpen:
             webbrowser.open(self.getFireflyUrl(url,channel))
         time.sleep(5) # todo: find something better to do than sleeping
@@ -297,7 +282,7 @@ class FireflyClient(WebSocketClient):
         action= {'type':actionType, 'payload':payload}
         url = self.urlRoot + '?channelID=' + channel + '&cmd=pushAction&action='
         url+= json.dumps(action)
-        return self.sendURLAsGet(url)
+        return self._sendURLAsGet(url)
 
 
     def dispatchRemoteActionByPost(self, channel, actionType, payload):
@@ -310,7 +295,7 @@ class FireflyClient(WebSocketClient):
         action={'type': actionType, 'payload': payload}
         data = {'channelID': channel, 'cmd':'pushAction', 'action': json.dumps(action)}
 
-        return self.sendURLAsPost(data)
+        return self._sendURLAsPost(data)
 
 
     #-------------------------
@@ -321,7 +306,7 @@ class FireflyClient(WebSocketClient):
     # action on showing fits, tables, XYPlot and adding extension
     #----------------------------------------------------------------
 
-    def showFits(self, fileOnServer=None, plotId=None, additionalParams=None):
+    def showFits(self, fileOnServer=None, plotId=None, **additionalParams):
         """
         Show a fits image
         :param: fileOnServer: the is the name of the file on the server.  If you used uploadFile()
@@ -360,7 +345,7 @@ class FireflyClient(WebSocketClient):
     
     
         if not tblId:
-            tblId = FireflyClient.genItemId('Table')
+            tblId = FireflyClient._genItemId('Table')
         if not title:
             title = tblId
         tblType='table' if not isCatalog else 'catalog'
@@ -374,7 +359,7 @@ class FireflyClient(WebSocketClient):
         return self.dispatchRemoteAction(self.channel, FireflyClient.actionDict['ShowTable'], payload)
 
 
-    def showXYPlot(self, fileOnServer, additionalParams=None):
+    def showXYPlot(self, fileOnServer, **additionalParams):
         """
         TODO
         Show a table in Firefly
@@ -386,9 +371,9 @@ class FireflyClient(WebSocketClient):
         """
         url = self.urlRoot + "?cmd=pushXYPlot"
         if additionalParams:
-            url+= '&' + '&'.join(['%s=%s' % (k, v) for (k, v) in additionalParams.items()])
+            url += '&' + '&'.join(['%s=%s' % (k, v) for k, v in additionalParams.items()])
         url += '&file=%s' % fileOnServer
-        return self.sendURLAsGet(url)
+        return self._sendURLAsGet(url)
 
 
     def addExtension(self, extType, plotId = None, title='', toolTip='', extensionId=None, imageSrc=None):
@@ -408,7 +393,7 @@ class FireflyClient(WebSocketClient):
             extType = 'NONE'
 
         if not extensionId:
-            extensionId = FireflyClient.genItemId('Extension')
+            extensionId = FireflyClient._genItemId('Extension')
 
         imageUrl = FireflyClient.createImageURL(imageSrc) if imageSrc else None
 
@@ -421,7 +406,7 @@ class FireflyClient(WebSocketClient):
     # actions on image
     #----------------------------
 
-    def zoom(self, plotId, factor = 1.0):
+    def setZoom(self, plotId, factor = 1.0):
         """
         Zoom the image
         :param plotId: plotId to which this region should be added, parameter may be string or a list of strings.
@@ -433,36 +418,50 @@ class FireflyClient(WebSocketClient):
             payload = {'plotId': plotId, 'userZoomType':'LEVEL', 'level': factor, 'actionScope':'SINGLE'}
             return  self.dispatchRemoteAction(self.channel, FireflyClient.actionDict['ZoomImage'], payload)
 
-        if type(plotId) in (tuple, list):
+        if isinstance(plotId, tuple) or isinstance(plotId, list):
             return [zoomOnePlot(x, factor) for x in plotId]
         else:
             return zoomOnePlot(plotId, factor)
 
 
-    def pan(self, plotId, x=None, y=None):
+    def setPan(self, plotId, x=None, y=None, coord='image'):
         """
         Pan or scroll the image to center on the image coordinates passed
         if no (x, y) is given, the image is recentered at the center of the image
         :param plotId: plotId to which this region should be added, parameter may be string or a list of strings.
         :param x: number, new center x position to scroll to
         :param y: number, new center y position to scroll to
+        :param coord: coordinate system, if coord == 'image', then x, y is for image pixel,
+        :                                if coord == 'J2000', then x, y is ra, dec on EQ_J2000.
         :return:
         """
 
         payload = {'plotId': plotId}
         if x and y :
-            payload.update({'centerPt': {'x': x, 'y': y, 'type': 'ImagePt'}})
+            if coord.startswith('image'):
+                payload.update({'centerPt': {'x': x, 'y': y, 'type': 'ImagePt'}})
+            else:
+                payload.update({'centerPt': {'x': x, 'y': y, 'type': 'J2000'}})
 
         return self.dispatchRemoteAction(self.channel, FireflyClient.actionDict['PanImage'], payload)
 
 
-    def stretch(self, plotId, serializedRV):
+    def setStretch(self, plotId, type=None, algorithm=None, **additionParams):
         """
         Change the stretch of the image (no band case)
+        :param type: 'percent','maxmin','absolute','zscale', or 'sigma'
+        :param algorithm: 'linear', 'log','loglog','equal', 'squared', 'sqrt', 'asinh', 'powerlaw_gamma'
         :param plotId: plotId to which this range should be added, parameter may be string or a list of strings.
-        :param serializedRV: the range values parameter
+        :param additionParams:
+                  for type == 'zscale', optional keyword arguments: zscaleContrast, zscaleSamples, zscaleSamplesPerLine
+                      other type,       optional keyword arguments: lowerValue, upperValue
         :return: status of call
         """
+
+        if type and type.lower() == 'zscale':
+            serializedRV = FireflyClient._createRangeValuesZScale(algorithm, **additionParams)
+        else:
+            serializedRV = FireflyClient._createRangeValuesStandard(algorithm, type, **additionParams)
 
         stData = [{ 'band': 'NO_BAND', 'rv': serializedRV, 'bandVisible': True}]
         payload = {'stretchData': stData, 'plotId': plotId}
@@ -474,7 +473,7 @@ class FireflyClient(WebSocketClient):
     # Region Stuff
     #-----------------------------------------------------------------
 
-    def overlayRegion(self, fileOnServer=None, regionData=None, title=None, regionLayerId=None, plotId=None, ):
+    def overlayRegionLayer(self, fileOnServer=None, regionData=None, title=None, regionLayerId=None, plotId=None ):
         """
         Overlay a region layer on the loaded FITS images, the regions are defiend either by a file or by some text description
         :param fileOnServer: the is the name of the file on the server.  If you used uploadFile()
@@ -489,7 +488,7 @@ class FireflyClient(WebSocketClient):
         """
 
         if not regionLayerId:
-            regionLayerId = FireflyClient.genItemId('RegionLayer')
+            regionLayerId = FireflyClient._genItemId('RegionLayer')
         payload = {'regionId': regionLayerId}
 
         if title:
@@ -507,7 +506,7 @@ class FireflyClient(WebSocketClient):
 
 
 
-    def deleteRegion(self, regionLayerId, plotId=None):
+    def deleteRegionLayer(self, regionLayerId, plotId=None):
         """
         Delete region layer on the loaded FITS images
         :param regionLayerId: regionLayer to remove
@@ -575,7 +574,6 @@ class FireflyClient(WebSocketClient):
         response = self.session.post(url, data=params)
         status = json.loads(response.text)
         return status[0]
-        # return self.sendURLAsGet(url)
 
 
     def removeMask(self, maskId):
@@ -586,15 +584,33 @@ class FireflyClient(WebSocketClient):
         :return: status of call
         """
         url = self.urlRoot + "?cmd=pushRemoveMask&id=%s" % maskId
-        return self.sendURLAsGet(url)
+        return self._sendURLAsGet(url)
 
 
     #-----------------------------------------------------------------
     # Range Values
     #-----------------------------------------------------------------
 
-    @staticmethod
-    def createRangeValuesStandard(algorithm, stretchType='Percent', lowerValue=1, upperValue=99):
+    @classmethod
+    def _createRV(cls, stretchType, lowerValue, upperValue, algorithm,
+                 zscaleContrast=25, zscaleSamples=600, zscaleSamplesPerLine=120,
+                 betaValue = 0.1, gammaValue = 2.0):
+        retval= None
+        st= stretchType.lower()
+        a= algorithm.lower()
+        if st in cls.stretchTypeDict and a in cls.stretchAlgorithmDict:
+            retval='%d,%f,%d,%f,%f,%f,%d,%d,%d,%d' % \
+                   (cls.stretchTypeDict[st], lowerValue,
+                    cls.stretchTypeDict[st], upperValue,
+                    betaValue, gammaValue,
+                    cls.stretchAlgorithmDict[a],
+                    zscaleContrast, zscaleSamples, zscaleSamplesPerLine)
+        return retval
+
+
+
+    @classmethod
+    def _createRangeValuesStandard(cls, algorithm, stretchType='Percent', lowerValue=1, upperValue=99):
         """
         :param algorithm: must be 'Linear', 'Log','LogLog','Equal','Squared', 'Sqrt'
         :param stretchType: must be 'Percent','Absolute','Sigma'
@@ -603,17 +619,16 @@ class FireflyClient(WebSocketClient):
         :return: a serialized range values string
         """
 
-        retval= FireflyClient.createRV(stretchType,lowerValue,upperValue,algorithm)
-        ffc= FireflyClient
+        retval= cls._createRV(stretchType,lowerValue,upperValue,algorithm)
         if not retval:
-            t= stretchType if stretchType.lower() in ffc.stretchAlgorithmDict else 'percent'
-            a= algorithm if algorithm.lower() in ffc.stretchAlgorithmDict else 'linear'
-            retval= FireflyClient.createRV(t,1,99,a)
+            t= stretchType if stretchType.lower() in cls.stretchAlgorithmDict else 'percent'
+            a= algorithm if algorithm.lower() in cls.stretchAlgorithmDict else 'linear'
+            retval= FireflyClient._createRV(t,1,99,a)
         return retval
 
 
-    @staticmethod
-    def createRangeValuesZScale(algorithm, zscaleContrast=25, zscaleSamples=600, zscaleSamplesPerLine=120):
+    @classmethod
+    def _createRangeValuesZScale(cls, algorithm, zscaleContrast=25, zscaleSamples=600, zscaleSamplesPerLine=120):
         """
         :param algorithm: must be 'Linear', 'Log','LogLog','Equal','Squared', 'Sqrt'
         :param zscaleContrast: zscale contrast
@@ -621,24 +636,24 @@ class FireflyClient(WebSocketClient):
         :param zscaleSamplesPerLine: zscale sample per line
         :return: a serialized range values string
         """
-        retval= FireflyClient.createRV('zscale',1,1,algorithm,zscaleContrast, zscaleSamples, zscaleSamplesPerLine)
+        retval= cls._createRV('zscale',1,1,algorithm,zscaleContrast, zscaleSamples, zscaleSamplesPerLine)
         if not retval:
-            a= algorithm if algorithm.lower() in FireflyClient.stretchAlgorithmDict else 'linear'
-            retval= FireflyClient.createRV('zscale',1,2,a,25,600,120)
+            a= algorithm if algorithm.lower() in cls.stretchAlgorithmDict else 'linear'
+            retval= cls._createRV('zscale',1,2,a,25,600,120)
         return retval
 
 
-    @staticmethod
-    def genItemId(item):
+    @classmethod
+    def _genItemId(cls, item):
         """
         generate an ID for some entity like 'Table', 'RegionLayer', 'Extension'
         :param item: entity type
         :return: an ID string
         """
 
-        if item in FireflyClient.itemID:
-            FireflyClient.itemID[item] += 1
-            return item + '-' + str(FireflyClient.itemID[item])
+        if item in cls.itemID:
+            cls.itemID[item] += 1
+            return item + '-' + str(cls.itemID[item])
         else:
             return None
 
@@ -650,12 +665,12 @@ class FireflyClient(WebSocketClient):
         :return:
         """
 
-        if not imageSource.startswith('data:image') and not FireflyClient.is_url(imageSource):
+        def is_url(url):
+            return urlparse.urlparse(url).scheme != ''
+
+        if not imageSource.startswith('data:image') and not is_url(imageSource):
             data_uri = open(imageSource, 'rb').read().encode('base64').replace('\n', '')
             return 'data:image/png;base64,%s' % data_uri
 
         return imageSource
 
-    @staticmethod
-    def is_url(url):
-        return urlparse.urlparse(url).scheme != ''

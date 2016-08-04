@@ -75,26 +75,27 @@ function createRegionLayer(regionAry, title, regionId, plotId, dataFrom = 'ds9')
     // convert region description array to Region object array
 
     if (regionAry && regionAry.length > 0) {
-
+/*
         var rgAry = dataFrom === 'json' ? RegionFactory.parseRegionJson(regionAry) :
                                           RegionFactory.parseRegionDS9(regionAry);
+*/
 
-        if (rgAry && rgAry.length > 0) {
+        //  if (rgAry && rgAry.length > 0) {
             var dl = getDrawLayerById(getDlAry(), regionId);
 
             if (!dl) {
-                dispatchCreateDrawLayer(regionDrawLayerId, {title, drawLayerId: regionId, regions: rgAry});
+                dispatchCreateDrawLayer(regionDrawLayerId, {title, drawLayerId: regionId, regionAry, dataFrom});
             }
 
             var pId = getPlotId(plotId);
             if (pId) {
                 dispatchAttachLayerToPlot(regionId, pId, true);
             }
-        } else {
-            reportError(DrawObjErr);
-        }
+      //  } else {
+      //      reportError(DrawObjErr);
+      //  }
     } else {
-        reportError(`${RegionIdErr} for creating region layer`);
+        reportError(`${RegionErr} for creating region layer`);
     }
 }
 
