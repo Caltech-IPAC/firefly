@@ -161,7 +161,7 @@ function buildChartPart(llApi) {
      * @param {XYPlotOptions} parameters the request object literal with the chart parameters
      * @namespace firefly
      */
-    const showPlot= (targetDiv, parameters)  => showXYPlot(llApi, targetDiv, parameters);
+    const showXYPlot= (targetDiv, parameters)  => doShowXYPlot(llApi, targetDiv, parameters);
 
     /**
      * Add XY Plot view of an existing table.
@@ -169,9 +169,9 @@ function buildChartPart(llApi) {
      * @param {XYPlotOptions} parameters the request object literal with the chart parameters
      * @namespace firefly
      */
-    const addXYPlot= (targetDiv, parameters) => showXYPlot(llApi, targetDiv, parameters);
+    const addXYPlot= (targetDiv, parameters) => doShowXYPlot(llApi, targetDiv, parameters);
 
-    return {showPlot, addXYPlot};
+    return {showXYPlot, addXYPlot};
 }
 
 function buildCommon(llApi) {
@@ -357,11 +357,11 @@ function makePlotId() {
 //---------- Private XYPlot or Histogram functions
 //================================================================
 
-function showXYPlot(llApi, targetDiv, params={}) {
+function doShowXYPlot(llApi, targetDiv, params={}) {
     const {dispatchTableFetch}= llApi.action;
     const {TBL_RESULTS_ACTIVE} = llApi.action.type;
     const {renderDOM} = llApi.util;
-    const {makeFileRequest, getActiveTableId, uniqueTblId} = llApi.util.table;
+    const {makeFileRequest, getActiveTableId} = llApi.util.table;
     const {uniqueChartId, loadPlotDataForTbl} = llApi.util.chart;
     const {ChartsTableViewPanel}= llApi.ui;
     const {addActionListener} = llApi.util;
@@ -404,7 +404,7 @@ function showXYPlot(llApi, targetDiv, params={}) {
 
     if (tblGroup) {
         tblId = getActiveTableId(tblGroup);
-        addActionListener(TBL_RESULTS_ACTIVE, (action, state) => {
+        addActionListener(TBL_RESULTS_ACTIVE, () => {
             const new_tblId = getActiveTableId(tblGroup);
             if (new_tblId !== tblId) {
                 tblId = new_tblId;

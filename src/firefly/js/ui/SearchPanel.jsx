@@ -82,7 +82,10 @@ function hideSearchPanel() {
 }
 
 function onSearchSubmit(request) {
-    if (request.srcTable) {
+    if (request.fileUpload) {
+        const treq = TblUtil.makeFileRequest(null, request.fileUpload, null, {filters: request.filters});
+        dispatchTableSearch(treq);
+    } else if (request.srcTable) {
         const treq = TblUtil.makeFileRequest(null, request.srcTable, null, {filters: request.filters});
         dispatchTableSearch(treq);
     }

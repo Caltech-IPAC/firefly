@@ -9,6 +9,8 @@ import {ValidationField} from './ValidationField.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {gkey} from '../visualize/ui/CatalogSelectViewPanel.jsx';
+import {HelpIcon} from '../ui/HelpIcon.jsx';
+
 import './VoSearchPanel.css';
 
 export class VoSearchPanel extends React.Component {
@@ -32,19 +34,25 @@ export class VoSearchPanel extends React.Component {
     render() {
         const fields = this.state;
         return (
-            <div className={'vopanel'}>
-                <div className={'section'}>
-                    {targetPanelArea()}
-                </div>
-                <div className={'size'}>
-                    { sizeArea()}
-                </div>
-                <div className={'voarea'}>
-                    { voSearchArea() }
-                    <div style={{padding:'20px 0 20px 0'}}>
-                        <a target='_blank' href='http://nvo.stsci.edu/vor10/index.aspx'>Find Astronomical Data
-                            Resources </a>
+            <div className='vopanel__wrapper'>
+                <div className='vopanel'>
+                    <div>
+                        {targetPanelArea()}
                     </div>
+                    <div style={{height: 60}}>
+                        { sizeArea()}
+                    </div>
+                    <div style={{marginTop: 20}}>
+                        { voSearchArea() }
+                        <div style={{padding:'20px 0 20px 0'}}>
+                            <a target='_blank' href='http://nvo.stsci.edu/vor10/index.aspx'>Find Astronomical Data
+                                Resources </a>
+                        </div>
+                    </div>
+                </div>
+                <div style={{display:'flex',flexDirection:'column', alignItems:'flex-end'}}>
+                    <HelpIcon
+                        helpId={'catalogs.vo'}/>
                 </div>
             </div>
         );
@@ -55,22 +63,23 @@ export class VoSearchPanel extends React.Component {
 
 function targetPanelArea() {
     return (
-        <div className={'intarget'}>
-            <TargetPanel groupKey={gkey} labelWidth={120}/>
-            <ListBoxInputField
-                fieldKey='targettry'
-                initialState={{
+        <div >
+            <TargetPanel groupKey={gkey} labelWidth={100}>
+                <ListBoxInputField
+                    fieldKey='targettry'
+                    initialState={{
                                   fieldKey:'targettry',
                                   label : '',
                                   labelWidth: 0
                               }}
-                label={''}
-                options={[
+                    label={''}
+                    options={[
                             {label: 'Try NED then Simbad', value: 'NED'},
                             {label: 'Try Simbad then NED', value: 'simbad'}
                          ]}
-                multiple={false}
-            />
+                    multiple={false}
+                />
+            </TargetPanel>
         </div>
     );
 }
@@ -99,7 +108,7 @@ var voSearchArea = () => {
                               value: '',
                               tooltip:'Enter the VO cone search URL directly (or use the link below to open external NVO search and find the VO cone search URL)',
                               label:'Cone Search URL:',
-                              labelWidth : 90,
+                              labelWidth : 100,
                               nullAllowed:false,
                               /*validator: {urlValidator}*/
                           }}

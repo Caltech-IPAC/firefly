@@ -6,7 +6,7 @@ import {flux} from '../Firefly.js';
 import {get, has, omit} from 'lodash';
 
 import {updateSet, updateMerge} from '../util/WebUtil.js';
-import {doFetchTable, getTblById, isFullyLoaded, makeTblRequest} from '../tables/TableUtil.js';
+import {doFetchTable, getTblById, isFullyLoaded, makeTblRequest, cloneRequest} from '../tables/TableUtil.js';
 import {HISTOGRAM, getChartSpace} from './ChartUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {DELETE} from './ChartsCntlr.js';
@@ -188,8 +188,7 @@ function fetchColData(dispatch, tblId, histogramParams, chartId) {
     const activeTableServerRequest = activeTableModel['request'];
     const tblSource = get(activeTableModel, 'tableMeta.tblFilePath');
 
-    const sreq = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']),
-        {'startIdx' : 0, 'pageSize' : 1000000});
+    const sreq = cloneRequest(activeTableServerRequest, {'startIdx' : 0, 'pageSize' : 1000000});
 
     const req = makeTblRequest('HistogramProcessor');
     req.searchRequest = JSON.stringify(sreq);

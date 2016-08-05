@@ -474,6 +474,9 @@ class ImageSelectionView extends Component {
                     </div>
                     { loadButtonArea() }
                 </div>
+                <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end'}}>
+                    <HelpIcon helpId={'basics.searching'}/>
+                </div>
             </FieldGroup>
         );
     }

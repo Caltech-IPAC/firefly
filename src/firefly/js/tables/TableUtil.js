@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, isEmpty, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray} from 'lodash';
+import {get, set, unset, has, isEmpty, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {flux} from '../Firefly.js';
@@ -132,6 +132,18 @@ export function makeVOCatalogRequest(title, params={}, options={}) {
     return omitBy(Object.assign(req, options, params, {id, tbl_id, META_INFO, UserTargetWorldPt}), isNil);
 }
 
+/**
+ * create a deep clone of the given request.  tbl_id is removed from the cloned request.
+ * @param {Object} request  the original request to clone
+ * @param {Object} params   additional parameters to add to the cloned request
+ * @returns {object}
+ */
+export function cloneRequest(request, params = {}) {
+    const req = cloneDeep(omit(request, 'tbl_id'));
+    unset(req, 'META_INFO.tbl_id');
+    return Object.assign(req, params);
+}
+
 /*---------------------------- creator functions >----------------------------*/
 
 
@@ -236,6 +248,30 @@ export function getTableGroup(tbl_group='main') {
 }
 
 /**
+ * returns the table group name given a tbl_id.  it will return undefined if
+ * the given tbl_id is not in a group.
+ * @param {string} tbl_id    table id
+ * @returns {Object}
+ */
+export function findGroupByTblId(tbl_id) {
+    const resultsRoot = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results'], {});
+    const groupName = Object.keys(resultsRoot).find( (tbl_grp_id) => {
+        return has(resultsRoot, [tbl_grp_id, 'tables', tbl_id]);
+    });
+    return groupName;
+}
+
+/**
+ * returns an array of tbl_id for the given tbl_group_id
+ * @param {string} tbl_group_id    tbl_group_id
+ * @returns {Array} array of tbl_id
+ */
+export function getTblIdsByGroup(tbl_group_id = 'main') {
+    const tableGroup = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group_id]);
+    return Object.keys(get(tableGroup, 'tables', {}));
+}
+
+/**
  * returns the table information for the given id and group.
  * @param tbl_id
  * @param tbl_group
@@ -252,6 +288,19 @@ export function getTableInGroup(tbl_id, tbl_group='main') {
  */
 export function getTableUiById(tbl_ui_id) {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui', tbl_ui_id]);
+}
+
+/**
+ * returns the first table working state for the given tbl_id
+ * @param tbl_id
+ * @returns {*}
+ */
+export function getTableUiByTblId(tbl_id) {
+    const uiRoot = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui'], {});
+    const tbl_ui_id = Object.keys(uiRoot).find( (ui_id) => {
+        return get(uiRoot, [ui_id, 'tbl_id']) === tbl_id;
+    });
+    return tbl_ui_id || uiRoot[tbl_ui_id];
 }
 
 /**
@@ -455,12 +504,10 @@ export function getTblInfo(tableModel, aPageSize) {
 
 /**
  *
- * @param columns
- * @param request
- * @param filename
  * @returns {encoded}
  */
-export function getTableSourceUrl(columns, request, filename) {
+export function getTableSourceUrl(tbl_ui_id) {
+    const {columns, request} = getTableUiById(tbl_ui_id) || {};
     const Request = cloneDeep(request);
     const visiCols = columns.filter( (col) => {
                 return isNil(col) || col.visibility === 'show';
@@ -473,12 +520,13 @@ export function getTableSourceUrl(columns, request, filename) {
     Request.startIdx = 0;
     Request.pageSize = Number.MAX_SAFE_INTEGER;
     Reflect.deleteProperty(Request, 'tbl_id');
-    const file_name = filename || Request.file_name;
+    const file_name = Request.file_name;
     return encodeServerUrl(SAVE_TABLE_URL, {file_name, Request});
 }
 
 /**
- * returns a map of cname -> width.  The width is the number of characters needed to display
+ * returns an array of width indexed corresponding to the given columns.  
+ * The width is the number of characters needed to display
  * the header and the data as a table given columns and dataAry.
  * @param columns  array of column object
  * @param dataAry  array of array.
@@ -491,7 +539,7 @@ export function calcColumnWidths(columns, dataAry) {
         width = dataAry.reduce( (maxWidth, row) => {
             return Math.max(maxWidth, get(row, [idx, 'length'], 0));
         }, width);  // max width of data
-        pv[cname] = width;
+        pv[idx] = width;
         return pv;
     }, {ROWID: 8});
 }

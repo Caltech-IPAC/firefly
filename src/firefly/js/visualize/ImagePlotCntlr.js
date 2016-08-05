@@ -409,6 +409,7 @@ export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
  * @param {boolean} useContextModifications it true the request will be modified to use preferences, rotation, etc
  *                                 should only be false when it is doing a 'restore to defaults' type plot
  * @param {boolean} attributes the are added to the plot
+ * @param {object} pvOptions parameter specific to the  plotView, only read the first time per plot id
  * @param {function} dispatcher only for special dispatching uses such as remote
  * @param viewerId
  */
@@ -417,10 +418,11 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
                                   useContextModifications= true,
                                   dispatcher= flux.process,
                                   attributes={},
+                                  pvOptions= {},
                                   viewerId} ) {
 
     dispatcher({ type: PLOT_IMAGE,
-                   payload: {plotId,wpRequest, threeColor, addToHistory, 
+                   payload: {plotId,wpRequest, threeColor, addToHistory, pvOptions,
                              attributes, useContextModifications,viewerId}});
 }
 
@@ -430,8 +432,8 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
  * @param wpRequestAry
  * @param {function} dispatcher only for special dispatching uses such as remote
  */
-export function dispatchPlotGroup({wpRequestAry, dispatcher= flux.process}) {
-    dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry} });
+export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {}, dispatcher= flux.process}) {
+    dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry, pvOptions, viewerId} });
 }
 
 

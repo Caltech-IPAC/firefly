@@ -3,11 +3,12 @@
  */
 
 import {take} from 'redux-saga/effects';
-import {get, filter, omitBy, isNil} from 'lodash';
+import {get, filter, omitBy, isNil, isEmpty} from 'lodash';
 
 import {LO_VIEW, LO_MODE, SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo, dispatchUpdateLayoutInfo} from '../LayoutCntlr.js';
 import {clone} from '../../util/WebUtil.js';
-import {TBL_RESULTS_ADDED, TABLE_NEW, TABLE_REMOVE} from '../../tables/TablesCntlr.js';
+import {findGroupByTblId, getTblIdsByGroup,getActiveTableId} from '../../tables/TableUtil.js';
+import {TBL_RESULTS_ADDED, TABLE_LOADED, TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
 import {isMetaDataTable, isCatalogTable} from '../../metaConvert/converterUtils.js';
 import {META_VIEWER_ID} from '../../visualize/ui/TriViewImageSection.jsx';
@@ -29,8 +30,9 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         const action = yield take([
             ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE,
             ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_IMAGES,
-            TBL_RESULTS_ADDED, TABLE_REMOVE, TABLE_NEW,
-            SHOW_DROPDOWN, SET_LAYOUT_MODE
+            TBL_RESULTS_ADDED, TABLE_REMOVE, TABLE_LOADED,
+            SHOW_DROPDOWN, SET_LAYOUT_MODE,
+            TBL_RESULTS_ACTIVE
         ]);
 
         var {hasImages, hasTables, hasXyPlots, mode, dropDown={}, ...others} = getLayouInfo();
@@ -55,7 +57,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
                 ignore = handleLayoutChanges(action);
                 break;
 
-            case TABLE_NEW :
+            case TABLE_LOADED :
                 [showImages, images] = handleNewTable(action, images, showImages);
                 break;
 
@@ -64,6 +66,13 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
             case ImagePlotCntlr.PLOT_IMAGE_START :
                 [showImages, images, ignore] = handleNewImage(action, images);
                 break;
+            case TBL_RESULTS_ACTIVE:
+                [showImages, images] = handleActiveTableChange(action.payload.tbl_id, images);
+                break;
+            case TABLE_REMOVE:
+                [showImages, images] = handleActiveTableChange(getActiveTableId(findGroupByTblId(action.payload.tbl_id)), images);
+                break;
+
         }
 
         if (ignore) continue;  // ignores, don't update layout.
@@ -88,7 +97,9 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
                     expanded = LO_VIEW.none;
                 }
                 mode = {expanded, standard, closeable};
+                break;
         }
+
 
         // calculate dropDown when new UI elements are added or removed from results
         switch (action.type) {
@@ -131,11 +142,61 @@ function handleNewTable(action, images, showImages) {
         }
     }
     if (isMeta) {
-        images = clone(images, {selectedTab: 'meta', showMeta: true});
+        images = clone(images, {selectedTab: 'meta', showMeta: true, metaDataTableId: tbl_id});
         showImages = true;
     }
     return [showImages, images];
 }
+
+function handleActiveTableChange (tbl_id, images) {
+    // check for catalog or meta images
+
+    const showFits= shouldShowFits();
+    var showImages= showFits;
+
+    if (!tbl_id) {
+        images = clone(images, {showMeta: false, showCoverage: false, showFits, metaDataTableId: null});
+        return [showFits, images];
+    }
+
+    const tblGroup= findGroupByTblId(tbl_id);
+    if (!tblGroup) return [showImages, images];
+    const tblList= getTblIdsByGroup(tblGroup);
+    if (isEmpty(tblList)) return [showImages, images];
+
+    const anyHasCatalog= hasCatalogTable(tblList);
+    const anyHasMeta= hasMetaTable(tblList);
+
+
+    if (!anyHasCatalog && !anyHasMeta) {
+        images = clone(images, {showMeta: false, showCoverage: false, showFits, metaDataTableId: null});
+        return [showFits, images];
+    }
+
+
+
+    if (hasCatalogTable(tblList)) {
+        images = clone(images, {showCoverage: true, showFits});
+        showImages = true;
+    }
+
+    if (hasMetaTable(tblList)) {
+        const metaTableId= isMetaDataTable(tbl_id) ? tbl_id : findFirstMetaTable(tblList);
+        images = clone(images, {showMeta: true, showFits, metaDataTableId:metaTableId});
+        showImages = true;
+    }
+    else {
+        images = clone(images, {showMeta: false, showFits, metaTableId:null});
+    }
+    return [showImages, images];
+}
+
+const hasCatalogTable= (tblList) => tblList.some( (id) => isCatalogTable(id) );
+const hasMetaTable= (tblList) => tblList.some( (id) => isMetaDataTable(id) );
+const findFirstMetaTable= (tblList) => tblList.find( (id) => isMetaDataTable(id) );
+const shouldShowFits= () => !isEmpty(getViewerPlotIds(getMultiViewRoot(), DEFAULT_FITS_VIEWER_ID));
+
+
 
 function handleNewImage(action, images) {
     var ignore = false;

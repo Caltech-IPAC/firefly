@@ -121,10 +121,13 @@ const projTypes= {
 	}
 };
 
+const getProjTypeInfo= (header) => projTypes[get(header,'maptype', UNRECOGNIZED)];
 
-const translateProjectionName= (maptype) => get(projTypes, [maptype,'name'],'UNRECOGNIZED');
-const isImplemented= (header) => get(header, ['maptype.implemented'],false);
-const isWrappingProjection= (header) => get(header, ['maptype.wrapping'],false);
+
+const translateProjectionName= (header) => getProjTypeInfo(header).name;
+const isImplemented= (header) => getProjTypeInfo(header).implemented;
+const isWrappingProjection= (header) => getProjTypeInfo(header).wrapping;
+
 
 
 

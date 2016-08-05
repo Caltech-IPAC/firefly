@@ -3,7 +3,7 @@
  */
 
 import React, {Component,PropTypes} from 'react';
-import {isEmpty} from 'lodash';
+import {isEmpty,omit} from 'lodash';
 import sCompare from 'react-addons-shallow-compare';
 import {flux} from '../../Firefly.js';
 import {NewPlotMode, dispatchAddViewer, dispatchViewerMounted, dispatchViewerUnmounted,
@@ -52,24 +52,18 @@ export class MultiImageViewer extends Component {
     }
 
     render() {
-        const {forceRowSize, forceColSize, gridDefFunc,Toolbar,viewerId, insideFlex, closeFunc, canDelete}= this.props;
+        const {viewerId}= this.props;
         const {viewer,visRoot,dlAry}= this.state;
         const layoutType= getLayoutType(getMultiViewRoot(),viewerId);
         if (!viewer || isEmpty(viewer.plotIdAry)) return false;
+        const newProps= omit(this.props, ['viewerPlotIds', 'showWhenExpanded']);
         return (
-            <MultiImageViewerView viewerPlotIds={viewer.plotIdAry}
-                                  forceRowSize={forceRowSize}
-                                  forceColSize={forceColSize}
-                                  gridDefFunc={gridDefFunc}
+            <MultiImageViewerView {...newProps}
+                                  viewerPlotIds={viewer.plotIdAry}
                                   layoutType={layoutType}
-                                  Toolbar={Toolbar}
-                                  viewerId={viewerId}
+                                  showWhenExpanded={false}
                                   visRoot={visRoot}
                                   dlAry={dlAry}
-                                  showWhenExpanded={false}
-                                  insideFlex={insideFlex}
-                                  closeFunc={closeFunc}
-                                  canDelete={canDelete}
             />
         );
     }
@@ -84,7 +78,6 @@ MultiImageViewer.propTypes= {
     gridDefFunc : PropTypes.func,
     insideFlex : PropTypes.bool,
     closeFunc : PropTypes.func,
-    canDelete :  PropTypes.bool
 };
 
 // function gridDefFunc(plotIdAry) : [ {title :string, [plotId:string]}]
@@ -100,5 +93,4 @@ MultiImageViewer.propTypes= {
 
 MultiImageViewer.defaultProps= {
     canReceiveNewPlots : NewPlotMode.create_replace.key,
-    canDelete : true
 };

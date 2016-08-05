@@ -22,19 +22,22 @@ class TargetPanelView extends Component {
     }
 
     render() {
-        const {showHelp, feedback, valid, message, onChange, value, labelWidth}= this.props;
+        const {showHelp, feedback, valid, message, onChange, value, labelWidth, children}= this.props;
+        var positionField = (<InputFieldView
+                                valid={valid}
+                                visible= {true}
+                                message={message}
+                                onChange={onChange}
+                                label='Name or Position:'
+                                value={value}
+                                tooltip='Enter a target'
+                                labelWidth={labelWidth}
+                            />);
+        positionField = children ? (<div style={{display: 'flex'}}>{positionField} {children}</div>) : positionField;
+
         return (
             <div>
-                <InputFieldView
-                    valid={valid}
-                    visible= {true}
-                    message={message}
-                    onChange={onChange}
-                    label='Name or Position:'
-                    value={value}
-                    tooltip='Enter a target'
-                    labelWidth={labelWidth}
-                />
+                {positionField}
                 <TargetFeedback showHelp={showHelp} feedback={feedback}/>
             </div>
         );

@@ -63,7 +63,6 @@ export class ExpandedModeDisplay extends Component {
                                   additionalStyle={{flex:'1 1 auto'}}
                                   closeFunc={closeFunc}
                                   defaultDecoration={false} 
-                                  canDelete={true}
                                   showWhenExpanded={true}
                                   insideFlex={insideFlex}
             />

@@ -9,7 +9,7 @@
  */
 
 import update from 'react-addons-update';
-import {isEqual,unionBy} from 'lodash';
+import {isEqual,unionBy, get} from 'lodash';
 import {WebPlot, PlotAttribute} from './../WebPlot.js';
 import {WPConst} from './../WebPlotRequest.js';
 import {RotateType} from './../PlotState.js';
@@ -84,7 +84,7 @@ export default {replacePlots,
  * @param {object} pvOptions options for this plot view todo- define what pvOptions is, somewhere
  * @return  {PlotView} 
  */
-export function makePlotView(plotId, req, pvOptions) {
+export function makePlotView(plotId, req, pvOptions= {}) {
     var pv= {
         plotId, // should never change
         plotGroupId: req.getPlotGroupId(), //should never change
@@ -101,7 +101,7 @@ export function makePlotView(plotId, req, pvOptions) {
         overlayPlotViews: [], //todo
         attributes: {}, //todo, i hope to remove this an only hold attributes on web plot
         menuItemKeys: makeMenuItemKeys(req,pvOptions,defMenuItemKeys), // normally wil not change
-        plotViewCtx: createPlotViewContextData(req),
+        plotViewCtx: createPlotViewContextData(req, pvOptions),
 
 
         options : {
@@ -133,8 +133,9 @@ export function makePlotView(plotId, req, pvOptions) {
 
 
 
-function createPlotViewContextData(req) {
+function createPlotViewContextData(req, pvOptions) {
     return {
+        userCanDeletePlots: get(pvOptions, 'userCanDeletePlots', true),
         rotateNorthLock : false,// todo MAYBE!!! // rotate this plot north when plotting,
         userModifiedRotate: false, // the user modified the rotate status, todo
         zoomLockingEnabled : false,
@@ -155,7 +156,7 @@ function createPlotViewContextData(req) {
 //todo - this function should determine which menuItem are visible and which are hidden
 // for now just return the default
 function makeMenuItemKeys(req,pvOptions,defMenuItemKeys) {
-    return defMenuItemKeys;
+    return Object.assign({},defMenuItemKeys, pvOptions.menuItemKeys);
 }
 
 export const initScrollCenterPoint= (pv) => updatePlotViewScrollXY(pv,findScrollPtForCenter(pv));
@@ -466,9 +467,12 @@ function findCurrentCenterPoint(plotView,scrollX,scrollY) {
  */
 function isRecomputeViewPortNecessary(scrollX,scrollY,scrollWidth,scrollHeight, viewPort) {
     var {x,y,dim} = viewPort;
-    var contains= VisUtil.containsRec(x,y, dim.width,dim.height,
+    var needsRecompute= !VisUtil.containsRec(x,y, dim.width,dim.height,
                                       scrollX,scrollY,scrollWidth-1,scrollHeight-1);
-    return !contains;
+    if (!needsRecompute) {
+        needsRecompute= (!x && !scrollX && dim.width>scrollWidth) || (!y && !scrollY && dim.width>scrollHeight);
+    }
+    return needsRecompute;
 }
 
 

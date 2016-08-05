@@ -5,7 +5,7 @@
 import {take} from 'redux-saga/effects';
 import {union,get,isEmpty,difference} from 'lodash';
 import {Band,allBandAry} from '../Band.js';
-import {TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT,
+import {TABLE_SELECT,TABLE_HIGHLIGHT,
         TABLE_REMOVE,TABLE_UPDATE, TBL_RESULTS_ACTIVE, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView,
                         dispatchPlotGroup, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
@@ -37,7 +37,7 @@ export function* watchImageMetaData({viewerId}) {
     var tbl_id;
     var paused= true;
     while (true) {
-        const action= yield take([TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE,
+        const action= yield take([TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE,
                                   TBL_RESULTS_ACTIVE,
                                   MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED,
                                   MultiViewCntlr.VIEWER_UNMOUNTED,
@@ -50,6 +50,7 @@ export function* watchImageMetaData({viewerId}) {
 
         if (action.type===TABLE_REMOVE) {
             tbl_id= getActiveTableId();
+            if (!tbl_id) removeAllPlotsInViewer(viewerId);
         }
         else if (payload.tbl_id) {
             if (!isMetaDataTable(payload.tbl_id)) continue;
@@ -59,7 +60,6 @@ export function* watchImageMetaData({viewerId}) {
 
         switch (action.type) {
 
-            case TABLE_NEW:
             case TABLE_REMOVE:
             case TABLE_HIGHLIGHT:
             case TABLE_UPDATE:
@@ -113,15 +113,17 @@ const getKey= (threeOp, band) => Object.keys(threeOp).find( (k) => threeOp[k].co
  */
 function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
 
-    if (!tbl_id) return [];
-    var reqRet;
+    const viewer= getViewer(getMultiViewRoot(),viewerId);
     const table= getTblById(tbl_id);
     // check to see if tableData is available in this range.
-    if (!isTblDataAvail(table.highlightedRow, table.highlightedRow+1, table)) return [];
-    const viewer= getViewer(getMultiViewRoot(),viewerId);
-    if (!table) return [];
+    if (!table || !isTblDataAvail(table.highlightedRow, table.highlightedRow+1, table)) {
+        removeAllPlotsInViewer(viewerId);
+        return [];
+    }
 
+    var reqRet;
     const converterData= converterFactory(table);
+    if (!converterData) return [];
     const {dataId,converter}= converterData;
     var highlightPlotId;
     var threeColorOps;
@@ -175,6 +177,13 @@ function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
 }
 
 
+function removeAllPlotsInViewer(viewerId) {
+    if (!viewerId) return;
+    const inViewerIds= getViewerPlotIds(getMultiViewRoot(), viewerId);
+    dispatchReplaceImages(viewerId,[]);
+    inViewerIds.forEach( (plotId) => dispatchDeletePlotView({plotId}));
+}
+
 function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
     const groupId= `${viewerId}-${dataId}-standard`;
     var plottingIds= reqAry.map( (r) =>  r.getPlotId());
@@ -207,7 +216,11 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
 
     // prepare stand plot
     const wpRequestAry= makePlottingList(reqAry);
-    if (!isEmpty(wpRequestAry)) dispatchPlotGroup({wpRequestAry});
+    if (!isEmpty(wpRequestAry)) {
+        dispatchPlotGroup({wpRequestAry, viewerId,
+                           pvOptions: { userCanDeletePlots: false, menuItemKeys:{imageSelect : false} }
+        });
+    }
     if (activeId) dispatchChangeActivePlotView(activeId);
 
 
@@ -215,7 +228,11 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
     if (plottingThree)  {
         const plotThreeReqAry= make3ColorPlottingList(threeReqAry);
         if (!isEmpty(plotThreeReqAry)) {
-            dispatchPlotImage({plotId:threeCPlotId, wpRequest:plotThreeReqAry, threeColor:true});
+            dispatchPlotImage(
+                {
+                    plotId:threeCPlotId, wpRequest:plotThreeReqAry, threeColor:true,
+                               pvOptions: {userCanDeletePlots: true, menuItemKeys:{imageSelect : false}}
+                });
         }
     }
     

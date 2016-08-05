@@ -49,7 +49,7 @@ function ensureWPR(inVal) {
 const getFirstReq= (wpRAry) => isArray(wpRAry) ? wpRAry.find( (r) => r?true:false) : wpRAry;
 
 
-function makeSinglePlotPayload({wpRequest,plotId, threeColor, viewerId, attributes,
+function makeSinglePlotPayload({wpRequest,plotId, threeColor, viewerId, attributes, pvOptions= {},
                                 addToHistory= false,useContextModifications= true}  ) {
     wpRequest= ensureWPR(wpRequest);
 
@@ -68,7 +68,7 @@ function makeSinglePlotPayload({wpRequest,plotId, threeColor, viewerId, attribut
     const payload= { plotId:req.getPlotId(),
                      plotGroupId:req.getPlotGroupId(),
                      groupLocked:req.isGroupLocked(),
-                     attributes, viewerId, addToHistory, useContextModifications, threeColor};
+                     attributes, viewerId, pvOptions, addToHistory, useContextModifications, threeColor};
 
     if (threeColor) {
         if (isArray(wpRequest)) {
@@ -107,6 +107,7 @@ function makePlotImageAction(rawAction) {
                 wpRequestAry:ensureWPR(wpRequestAry),
                 viewerId:rawAction.payload.viewerId,
                 attributes:rawAction.payload.attributes,
+                pvOptions: rawAction.payload.pvOptions,
                 threeColor:false,
                 addToHistory:false,
                 useContextModifications:true,
@@ -202,8 +203,8 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
     var failAry= [];
 
     if (result.success && Array.isArray(result.data)) {
-        successAry= result.data.filter( (d) => d.success);
-        failAry= result.data.filter( (d) => !d.success);
+        successAry= result.data.filter( (d) => d.data.success);
+        failAry= result.data.filter( (d) => !d.data.success);
     }
     else {
         if (result.success) successAry= [{data:result}];
@@ -247,6 +248,7 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
         resultPayload.briefDescription= data.briefFailReason;
         resultPayload.description= 'Plot Failed- ' + data.userFailReason;
         resultPayload.detailFailReason= data.detailFailReason;
+        resultPayload.plotId= data.plotId;
         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload:resultPayload} );
     });
 

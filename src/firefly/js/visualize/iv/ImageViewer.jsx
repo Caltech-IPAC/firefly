@@ -92,7 +92,7 @@ export class ImageViewer extends Component {
 
     render() {
         var {plotView,allPlots,drawLayersAry,mousePlotId}= this.state;
-        var {showWhenExpanded, plotId, handleInlineTools, showDelete}= this.props;
+        var {showWhenExpanded, plotId, handleInlineTools}= this.props;
         if (!showWhenExpanded  && allPlots.expandedMode!==ExpandType.COLLAPSE) return false;
         if (!plotView) return false;
 
@@ -109,7 +109,6 @@ export class ImageViewer extends Component {
                              visRoot={allPlots}
                              mousePlotId={mousePlotId}
                              handleInlineTools={handleInlineTools}
-                             showDelete={showDelete}
                              extensionList={getExtensionList(plotId)} />
         );
     }
@@ -119,13 +118,11 @@ ImageViewer.propTypes= {
     plotId : PropTypes.string.isRequired,
     showWhenExpanded : PropTypes.bool,
     handleInlineTools : PropTypes.bool,
-    showDelete : PropTypes.bool 
 };
 
 ImageViewer.defaultProps = {
     handleInlineTools : true,
     showWhenExpanded : false,
-    showDelete : false
 };
 
 

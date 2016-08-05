@@ -6,6 +6,7 @@
 import PointDataObj, {POINT_DATA_OBJ} from './PointDataObj.js';
 import SelectBox from './SelectBox.js';
 import ShapeDataObj from './ShapeDataObj.js';
+import FootprintObj from './FootprintObj.js';
 import DirectionArrowDrawObj from './DirectionArrowDrawObj.js';
 import FootprintObj from './FootprintObj.js'
 import MarkerFootprintObj from './MarkerFootprintObj.js';

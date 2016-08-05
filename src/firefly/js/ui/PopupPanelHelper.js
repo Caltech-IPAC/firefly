@@ -33,10 +33,10 @@ const inRangeCheck = function(x, y, xIncrease, yIncrease) {
 
 var getAbsoluteX= function(ev) {
     if (ev.type===MOUSE_EV) {
-        return  ev.clientX+document.scrollLeft;
+        return  ev.clientX+window.scrollX;
     }
     if (ev.type===TOUCH_EV) {
-        return  ev.targetTouches[0].clientX+document.scrollLeft;
+        return  ev.targetTouches[0].clientX+window.scrollX;
     }
     return 0;
 };
@@ -44,10 +44,10 @@ var getAbsoluteX= function(ev) {
 
 var getAbsoluteY= function(ev) {
     if (ev.type===MOUSE_EV) {
-        return  ev.clientY+document.scrollLeft;
+        return  ev.clientY+window.scrollY;
     }
     if (ev.type===TOUCH_EV) {
-        return  ev.targetTouches[0].clientY+window.scrollLeft;
+        return  ev.targetTouches[0].clientY+window.scrollY;
     }
     return 0;
 };
@@ -74,12 +74,12 @@ const doMove= function(ctx, x, y) {
         var yDiff= y-ctx.originalMouseY;
         var newX=ctx.originalX+xDiff;
         var newY=ctx.originalY+yDiff;
-        if (newX+ctx.popup.offsetWidth>window.innerWidth ) {
-            newX= window.innerWidth-ctx.popup.offsetWidth;
+        if (newX+ctx.popup.offsetWidth>window.innerWidth+ window.scrollX ) {
+            newX= window.innerWidth+window.scrollX-ctx.popup.offsetWidth;
         }
         if (newX<2) newX=2;
-        if (newY+ctx.popup.offsetHeight>window.innerHeight ) {
-            newY= window.innerHeight-ctx.popup.offsetHeight;
+        if (newY+ctx.popup.offsetHeight>window.innerHeight + window.scrollY ) {
+            newY= window.innerHeight+window.scrollY-ctx.popup.offsetHeight;
         }
         if (newY<2) newY=2;
 
@@ -117,7 +117,7 @@ export const getPopupPosition= function(e,layoutType) {
             break;
         case 'TOP_LEFT' :
             left= 2 + window.scrollX;
-            top= document.scrollY+ 3;
+            top= window.scrollY+ 3;
             break;
 
         case 'TOP_EDGE_CENTER' :
@@ -340,6 +340,8 @@ function findRegion(popup,titleBar,mx, my) {
 
     var retval= PopupRegion.NONE;
 
+    mx+= window.scrollX;
+    my+= window.scrollY;
     var x= getAbsoluteLeft(popup);
     var y= getAbsoluteTop(popup);
     var w= popup.offsetWidth;

@@ -350,7 +350,7 @@ export class XYPlotOptions extends React.Component {
                             }}
                             options={[
                                 {label: 'grid', value: 'grid'},
-                                {label: 'flip', value: 'flip'},
+                                {label: 'reverse', value: 'flip'},
                                 {label: 'log', value: 'log'}
                             ]}
                             fieldKey='x.options'
@@ -419,7 +419,7 @@ export class XYPlotOptions extends React.Component {
                             }}
                             options={[
                                 {label: 'grid', value: 'grid'},
-                                {label: 'flip', value: 'flip'},
+                                {label: 'reverse', value: 'flip'},
                                 {label: 'log', value: 'log'}
                             ]}
                             fieldKey='y.options'

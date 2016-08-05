@@ -15,7 +15,7 @@ import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
 import {makeWorldPt} from '../visualize/Point.js';
-import {dispatchTableHighlight,dispatchTableFetch} from '../tables/TablesCntlr.js';
+import {dispatchTableHighlight,dispatchTableFilter} from '../tables/TablesCntlr.js';
 import {COLOR_HIGHLIGHTED_PT} from '../visualize/draw/DrawingDef.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
@@ -114,15 +114,17 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
     var done= false;
     var idx= 0;
     const maxChunk= 1000;
-    var minDist = Number.MAX_SAFE_INTEGER;
+    var minDist = 20;
     const {data}= drawLayer.drawData;
     const {tableRequest}= drawLayer;
-    var closestIdx;
+    var closestIdx= -1;
     const plot= primePlot(visRoot(),plotId);
     const id= window.setInterval( () => {
         if (done) {
             window.clearInterval(id);
-            dispatchTableHighlight(drawLayer.drawLayerId,closestIdx,tableRequest);
+            if (closestIdx > -1) {
+                dispatchTableHighlight(drawLayer.drawLayerId,closestIdx,tableRequest);
+            }
         }
 
         var dist;
@@ -338,7 +340,7 @@ function doClearFilter(dl) {
     const tbl= getTblById(dl.drawLayerId);
     if (!tbl) return;
     const newRequest = Object.assign({}, tbl.request, {filters: ''});
-    dispatchTableFetch(newRequest);
+    dispatchTableFilter(newRequest);
 }
 
 
@@ -358,7 +360,7 @@ function doFilter(dl,p,sel) {
         filter= `IN (${idxs.toString()})`;
         filterInfoCls.addFilter(dl.tableMeta['decimate_key'], filter);
         newRequest = Object.assign({}, tbl.request, {filters: filterInfoCls.serialize()});
-        dispatchTableFetch(newRequest);
+        dispatchTableFilter(newRequest);
         console.log(newRequest);
         console.log(idxs);
     }
@@ -368,7 +370,7 @@ function doFilter(dl,p,sel) {
         // filterInfoCls.setFilter(filter);
         filterInfoCls.setFilter('ROWID', filter);
         newRequest = Object.assign({}, tbl.request, {filters: filterInfoCls.serialize()});
-        dispatchTableFetch(newRequest);
+        dispatchTableFilter(newRequest);
     }
 
 }

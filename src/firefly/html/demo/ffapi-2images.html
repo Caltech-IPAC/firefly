@@ -1,0 +1,244 @@
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Demo of Firefly Tools</title>
+</head>
+
+<body>
+
+
+<div style="width: 500px; padding: 50px 0 0 20px;">
+    <h3>Firefly - new API demo</h3>
+</div>
+
+<div>
+    <div id="image1_div" style="display: inline-block; width: 550px; height: 550px; margin: 10px;"></div>
+    <div id="image2_div" style="display: inline-block; width: 550px; height: 550px; margin: 10px;"></div>
+</div>
+
+<div id="container" style="white-space: nowrap; padding: 5px">
+    <input id="selectionCallbackTrigger" type="button" onclick="ffTrackSelections()" value="Track selections"/>
+    &nbsp;
+    <input id="readoutCallbackTrigger" type="button" onclick="ffTrackReadout()" value="Track mouse readout"/>
+    &nbsp;
+    <input id="regionsToggle" type="button" onclick="ffToggleRegions()" value="Show regions"/>
+    &nbsp;
+    <input id="regionAddDelete" type="button" onclick="ffAddDeleteRegion()" value="Add Region"/>
+</div>
+
+
+<script type="text/javascript">
+    {
+
+        var trackSelectionRemover;
+        var doTrackSelection = false;
+
+        var trackReadoutRemover;
+        var doTrackReadout = false;
+
+        const regionAry1 = [
+            'image; box 51 40 100 80 0 # color=red',
+            'image; box 51 120 100 80 0 # color=red',
+            'image; box 151 120 100 80 0 # color=red',
+            'image; box 151 40 100 80 0 # color=red'
+        ];
+        var regionsShown = false;
+
+        var regionAdd = true;
+        var regionIdx = 0;
+
+        const regionToAdd = 'image; box 400 400 72 72 0 # color=green';
+
+        function ffTrackSelections() {
+            doTrackSelection = !doTrackSelection;
+            const btn = document.getElementById('selectionCallbackTrigger');
+            if (!btn) {
+                console.log('Internal error: can not find selectionCallbackTrigger button');
+                return;
+            }
+            // turn on/off point selection
+            firefly.action.dispatchChangePointSelection('requester', doTrackSelection);
+            if (doTrackSelection) {
+                // add a callback, which will be called for every CHANGE_PLOT_ATTRIBUTE action
+                // returned is the function to remove listener
+                trackSelectionRemover = firefly.util.addActionListener(firefly.action.type.CHANGE_PLOT_ATTRIBUTE, onPlotAttributeChange);
+                btn.value = 'Stop Selection Tracking';
+            } else {
+                if (trackSelectionRemover) {
+                    trackSelectionRemover();
+                }
+                btn.value = 'Track selections';
+            }
+        }
+
+        function ffTrackReadout() {
+            doTrackReadout = !doTrackReadout;
+            const btn = document.getElementById('readoutCallbackTrigger');
+            if (!btn) {
+                console.log('Internal error: can not find readoutCallbackTrigger button');
+                return;
+            }
+            if (doTrackReadout) {
+                // add a callback, which will be called for every READOUT_DATA action
+                // returned is the function to remove listener
+                trackReadoutRemover = firefly.util.addActionListener(firefly.action.type.READOUT_DATA, onReadoutData);
+                btn.value = 'Stop Readout Tracking';
+            } else {
+                if (trackReadoutRemover) {
+                    trackReadoutRemover();
+                }
+                btn.value = 'Track mouse readout';
+            }
+        }
+
+        function ffToggleRegions() {
+            regionsShown = !regionsShown;
+            const btn = document.getElementById('regionsToggle');
+            if (!btn) {
+                console.log('Internal error: can not find regionsToggle button');
+                return;
+            }
+            if (regionsShown) {
+                firefly.action.dispatchCreateRegionLayer('region1', 'Region Layer 1', null, regionAry1, ['image1', 'image2']);
+                btn.value = 'Hide regions';
+            } else {
+                firefly.action.dispatchDeleteRegionLayer('region1', ['image1', 'image2']);
+
+                btn.value = 'Show regions';
+            }
+        }
+
+        function ffAddDeleteRegion() {
+            const btn = document.getElementById('regionAddDelete');
+            if (!btn) {
+                console.log('Internal error: can not find regionAddDelete button');
+                return;
+            }
+            if (regionAdd) {
+                // issue1: empty region array does not work - there should be at least 1 region
+                // issue2: if color=green (same color as the color of regionToAdd) it's not possible to add the region,
+                //    because the original and added regions will be perceived the same
+                // issue3: when region1 is present, it's not possible to select regions in region2
+                firefly.action.dispatchCreateRegionLayer('region2', 'Region Layer 2', null, ['image; box 40 400 72 72 0 # color=blue'], ['image1', 'image2']);
+                firefly.action.dispatchAddRegionEntry('region2', regionToAdd);
+                regionAdd = false;
+                btn.value = 'Delete region';
+            } else {
+                firefly.action.dispatchRemoveRegionEntry('region2', regionToAdd);
+                firefly.action.dispatchDeleteRegionLayer('region2', ['image1', 'image2']);
+                regionAdd = true;
+                btn.value = 'Add region';
+            }
+        }
+
+
+
+        /**
+         * @typedef {object} ChangePlotAttrAction action object
+         * @prop {string} type   action type
+         * @prop {ChangePlotAttrPayload} payload action payload
+         */
+
+        /**
+         * @typedef {object} ChangePlotAttrPayload  payload of CHANGE_PLOT_ATTRIBUTE action (derived from dispatchAttributeChange params)
+         * @prop {string} plotId         plot id
+         * @prop {boolean} applyToGroup  defaults to true
+         * @prop {string} attKey         attribute key: 'ACTIVE_POINT','ACTIVE_DISTANCE', or 'SELECTION'
+         * @prop {object} attValue       object, which defines the selection
+         * @prop {boolean} toAll         if a multiImageFits apply to all the images, defaults to false
+         */
+
+        /*
+         * Action listener for CHANGE_PLOT_ATTRIBUTE action
+         * Callback function should accept action object, which has type and payload properties:
+         * @param {ChangePlotAttrAction}
+         */
+        function onPlotAttributeChange(action) {
+            console.log('Action object:');
+            console.log(action);
+            if (!action.payload.attValue) { return; }
+            if (action.payload.attValue.pt) {
+                console.log(action.payload.plotId+' '+action.payload.attKey+' pt:');
+                console.log(getImagePt(action.payload.attValue.pt));
+            } else if (action.payload.attValue.pt0) {
+                console.log(action.payload.plotId+' '+action.payload.attKey+' pt0:');
+                console.log(getImagePt(action.payload.attValue.pt0));
+            } else if (action.payload.attValue.pt1) {
+                console.log('pt1:');
+                console.log(getImagePt(action.payload.attValue.pt1));
+            }
+        }
+
+        function getImagePt(pt) {
+            const activePlot = firefly.util.image.getPrimePlot();
+            return pt ? firefly.util.image.CCUtil.getImageCoords(activePlot, pt) : undefined;
+        }
+        /**
+         * @typedef {object} ReadoutDataAction action object
+         * @prop {string} type   action type
+         * @prop {ReadoutDataPayload} payload action payload
+         */
+
+        /**
+         * @typedef {object} ReadoutDataPayload  payload of READOUT_DATA action (derived from dispatchReadoutData params)
+         * @prop {boolean} plotId       plot id
+         * @prop {object} readoutItems  object with imagePt, worldPt and other properties, which identify current mouse location
+         * @prop {boolean} hasValues    true, is readoutItems are not empty
+         * @prop {string} readoutKey    defaults to 'standardReadout',
+         * @prop {boolean} threeColor   true for three color images, defaults to false
+         */
+
+        /*
+         * Action listener for READOUT_DATA action
+         * Callback function should accept action object, which has type and payload properties:
+         * @param {ReadoutDataAction}
+         */
+        function onReadoutData(action) {
+            console.clear();
+            console.log(action);
+            if (action.payload.hasValues) {
+                console.count(action.payload.plotId);
+                console.log(action.payload.readoutItems.imagePt);
+                console.log(action.payload.readoutItems.imagePt.value);
+            }
+        }
+
+        function onFireflyLoaded() {
+
+            firefly.setGlobalImageDef({
+                ZoomType: 'TO_WIDTH'
+            });
+
+            firefly.debug = true;
+
+            const req1 = {
+                plotId: 'image1',
+                URL: 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits',
+                Title: 'Wise m51'
+            };
+
+            firefly.showImage('image1_div', req1);
+
+
+            const req2 = {
+                plotId: 'image2',
+                URL: 'http://web.ipac.caltech.edu/staff/roby/demo/dss-m31.fits',
+                Title: 'DSS m31'
+            };
+            firefly.showImage('image2_div', req2);
+
+        }
+    }
+</script>
+
+<script  type="text/javascript" src="http://localhost:8080/firefly/firefly_loader.js"></script>

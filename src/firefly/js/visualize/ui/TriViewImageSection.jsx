@@ -3,6 +3,7 @@
  */
 
 import React, {PropTypes} from 'react';
+import {get} from 'lodash';
 import {ExpandedModeDisplay} from '../iv/ExpandedModeDisplay.jsx';
 import {Tab, Tabs} from '../../ui/panel/TabPanel.jsx';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
@@ -12,6 +13,7 @@ import {watchImageMetaData} from '../saga/ImageMetaDataWatcher.js';
 import {watchCoverage} from '../saga/CoverageWatcher.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {DEFAULT_FITS_VIEWER_ID, NewPlotMode} from '../MultiViewCntlr.js';
+import {getTblById} from '../../tables/TableUtil.js';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode, dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 
 export const META_VIEWER_ID = 'triViewImageMetaData';
@@ -25,11 +27,13 @@ export const COVERAGE_VIEWER_ID = 'TBD';
  * @param showMeta
  * @param imageExpandedMode if true, then imageExpandedMode overrides everything else
  * @param closeable expanded mode should have a close button
+ * @param metaDataTableId
  * @return {XML}
  * @constructor
  */
 export function TriViewImageSection({showCoverage=false, showFits=false, selectedTab='fits',
-                                     showMeta=false, imageExpandedMode=false, closeable=true}) {
+                                     showMeta=false, imageExpandedMode=false, closeable=true,
+                                     metaDataTableId}) {
     
     if (imageExpandedMode) {
         return  ( <ExpandedModeDisplay
@@ -39,6 +43,8 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
                 );
     }
     const onTabSelect = (idx, id) => dispatchUpdateLayoutInfo({images:{selectedTab:id}});
+    const table= getTblById(metaDataTableId);
+    const metaTitle= get(table,'tableMeta.title')  || 'Image Meta Data';
 
 
     // showCoverage= true; // todo - let the application control is coverage is visible
@@ -47,20 +53,19 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
         return (
             <Tabs onTabSelect={onTabSelect} defaultSelected={selectedTab} useFlex={true}>
                 { showFits &&
-                    <Tab name='Fits Data' removable={false} id='fits'>
+                    <Tab name='FITS Data' removable={false} id='fits'>
                         <MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID}
                                           insideFlex={true}
                                           canReceiveNewPlots={NewPlotMode.create_replace.key}
-                                          canDelete={true}
                                           Toolbar={MultiViewStandardToolbar}/>
                     </Tab>
                 }
                 { showMeta &&
-                    <Tab name='Image Meta Data' removable={false} id='meta'>
+                    <Tab name={metaTitle} removable={false} id='meta'>
                         <MultiImageViewer viewerId= {META_VIEWER_ID}
                                           insideFlex={true}
                                           canReceiveNewPlots={NewPlotMode.none.key}
-                                          canDelete={false}
+                                          tableId={metaDataTableId}
                                           Toolbar={ImageMetaDataToolbar}/>
                     </Tab>
                 }
@@ -69,7 +74,6 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
                         <MultiImageViewer viewerId='coverageImages'
                                           insideFlex={true}
                                           canReceiveNewPlots={NewPlotMode.replace_only.key}
-                                          canDelete={false}
                                           Toolbar={MultiViewStandardToolbar}/>
                     </Tab>
                 }

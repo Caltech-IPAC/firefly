@@ -246,7 +246,7 @@ function FitsRotationDialogForm() {
                             </td>
                             <td>
                                 <div style={{ textAlign:'center', marginBottom: 20}}>
-                                    <HelpIcon helpid={'visualization.Rotate'} />
+                                    <HelpIcon helpId={'visualization.imageoptions'} />
                                 </div>
                             </td>
                          </tr>

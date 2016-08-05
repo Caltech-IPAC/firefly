@@ -23,6 +23,7 @@ import {ColorTableDropDownView} from './ColorTableDropDownView.jsx';
 
 import {showFitsDownloadDialog} from '../../ui/FitsDownloadDialog.jsx';
 import {showFitsRotationDialog} from '../../ui/FitsRotationDialog.jsx';
+import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 import NorthUpCompass from '../../drawingLayers/NorthUpCompass.js';
@@ -32,6 +33,8 @@ import { getDlAry } from '../DrawLayerCntlr.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
 import {showRegionFileUploadPanel} from '../region/RegionFileUploadView.jsx';
 import {MarkerDropDownView} from './MarkerDropDownView.jsx';
+import {dispatchShowDropDown} from '../../core/LayoutCntlr.js';
+import {showImageSelPanel} from './ImageSelectPanel.jsx';
 
 
 //===================================================
@@ -61,6 +64,7 @@ import FLIP_Y from 'html/images/icons-2014/Mirror.png';
 import RECENTER from 'html/images/icons-2014/RecenterImage.png';
 import LOCKED from 'html/images/icons-2014/BkgLocked.png';
 import UNLOCKED from 'html/images/icons-2014/BkgUnlocked.png';
+import NEW_IMAGE from 'html/images/icons-2014/28x28_FITS_NewImage.png';
 
 import COLOR from 'html/images/icons-2014/28x28_ColorPalette.png';
 import STRETCH from 'html/images/icons-2014/28x28_Log.png';
@@ -121,6 +125,10 @@ export function VisToolbarViewWrapper({visRoot,toolTip,dlCount, messageUnder}) {
 
 }
 
+
+
+//onClick={dispatchShowDropDown.bind(null, {view: 'ImageSelectDropDownCmd'})}/>}
+
 VisToolbarViewWrapper.propTypes= {
     visRoot : PropTypes.object.isRequired,
     toolTip : PropTypes.string,
@@ -154,6 +162,7 @@ export class VisToolbarView extends Component {
             verticalAlign: 'top',
             whiteSpace: 'nowrap'
         };
+        const {apiToolsView}= visRoot;
 
         var pv= getActivePlotView(visRoot);
         var plot= primePlot(pv);
@@ -166,11 +175,21 @@ export class VisToolbarView extends Component {
         return (
             <div style={rS}>
                 <ToolbarButton icon={SAVE}
-                               tip='Save the Fits file, PNG file, or save the overlays as a region'
+                               tip='Save the FITS file, PNG file, or save the overlays as a region'
                                enabled={enabled}
                                horizontal={true}
                                visible={mi.fitsDownload}
                                onClick={showFitsDownloadDialog.bind(null, 'Load Region')}/>
+
+
+                {apiToolsView && <ToolbarButton icon={NEW_IMAGE}
+                                             tip='Select a new image'
+                                             enabled={enabled}
+                                             horizontal={true}
+                                             visible={mi.imageSelect}
+                                             onClick={showImagePopup}/>}
+
+
 
                 <ToolbarHorizontalSeparator/>
 
@@ -194,6 +213,23 @@ export class VisToolbarView extends Component {
                                        visible={mi.stretchQuick}
                                        dropDown={<StretchDropDownView plotView={pv}/>} />
 
+
+                <ToolbarHorizontalSeparator/>
+                
+                <ToolbarButton icon={ROTATE}
+                               tip='Rotate the image to any angle'
+                               enabled={enabled}
+                               horizontal={true}
+                               visible={mi.rotate}
+                               onClick={showFitsRotationDialog}/>
+                <SimpleLayerOnOffButton plotView={pv}
+                                        isIconOn={pv&&plot ? pv.plotViewCtx.rotateNorthLock : false }
+                                        tip='Rotate this image so that North is up'
+                                        iconOn={ROTATE_NORTH_ON}
+                                        iconOff={ROTATE_NORTH_OFF}
+                                        visible={mi.rotateNorth}
+                                        onClick={doRotateNorth}
+                />
                 <ToolbarButton icon={FLIP_Y} tip='Flip the image on the Y Axis'
                                enabled={enabled} horizontal={true}
                                visible={mi.flipImageY}
@@ -203,27 +239,6 @@ export class VisToolbarView extends Component {
                                enabled={enabled} horizontal={true}
                                visible={mi.recenter}
                                onClick={() => recenter(pv)}/>
-
-
-                <ToolbarHorizontalSeparator/>
-
-                <SimpleLayerOnOffButton plotView={pv}
-                                        isIconOn={pv&&plot ? pv.plotViewCtx.rotateNorthLock : false }
-                                        tip='Rotate this image so that North is up'
-                                        iconOn={ROTATE_NORTH_ON}
-                                        iconOff={ROTATE_NORTH_OFF}
-                                        visible={mi.rotateNorth}
-                                        onClick={doRotateNorth}
-                />
-
-                <ToolbarButton icon={ROTATE}
-                               tip='Rotate the image to any angle'
-                               enabled={enabled}
-                               horizontal={true}
-                               visible={mi.rotate}
-                               onClick={showFitsRotationDialog}/>
-
-
 
                 <ToolbarHorizontalSeparator/>
 
@@ -323,6 +338,10 @@ export class VisToolbarView extends Component {
 
 
 
+                <div style={{display:'inline-block', height:'100%', flex:'0 0 auto', marginLeft:'10px'}}>
+                    <HelpIcon
+                        helpId={'visualization.fitsViewer'}/>
+                </div>
 
             </div>
         );
@@ -361,6 +380,10 @@ function isGroupLocked(pv,plotGroupAry){
 function toggleLockRelated(pv,plotGroupAry){
     var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
     dispatchGroupLocking(pv.plotId,!hasGroupLock(pv,plotGroup));
+}
+
+function showImagePopup() {
+    showImageSelPanel('Images');
 }
 
 //==================================================================================

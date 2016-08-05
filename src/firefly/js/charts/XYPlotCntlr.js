@@ -6,7 +6,7 @@ import {flux} from '../Firefly.js';
 import {updateSet, updateMerge} from '../util/WebUtil.js';
 import {get, has, omit, omitBy, isUndefined, isString} from 'lodash';
 
-import {doFetchTable, getColumn, getTblById, isFullyLoaded} from '../tables/TableUtil.js';
+import {doFetchTable, getColumn, getTblById, isFullyLoaded, cloneRequest} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {DELETE} from './ChartsCntlr.js';
 import {serializeDecimateInfo} from '../tables/Decimate.js';
@@ -308,7 +308,7 @@ function fetchPlotData(dispatch, tblId, xyPlotParams, chartId) {
     if (!xyPlotParams) { xyPlotParams = getDefaultXYPlotParams(tblId); }
 
 
-    const req = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']), {
+    const req = cloneRequest(activeTableServerRequest, {
             'startIdx' : 0,
             'pageSize' : 1000000,
             //'inclCols' : `${xyPlotParams.x.columnOrExpr},${xyPlotParams.y.columnOrExpr}`, // ignored if 'decimate' is present

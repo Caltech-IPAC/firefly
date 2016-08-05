@@ -133,6 +133,7 @@ actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionC
 actionCreators.set(TablesCntlr.TABLE_SEARCH, TablesCntlr.tableSearch);
 actionCreators.set(TablesCntlr.TABLE_FETCH, TablesCntlr.tableFetch);
 actionCreators.set(TablesCntlr.TABLE_SORT, TablesCntlr.tableFetch);
+actionCreators.set(TablesCntlr.TABLE_FILTER, TablesCntlr.tableFetch);
 actionCreators.set(TablesCntlr.TABLE_HIGHLIGHT, TablesCntlr.highlightRow);
 
 actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);
@@ -213,7 +214,7 @@ var logger= loggerMiddleware({duration:true, predicate:logFilter, collapsed:coll
 function createRedux() {
     // create a rootReducer from all of the registered reducers
     const rootReducer = combineReducers(reducers);
-    const middleWare=  applyMiddleware(thunkMiddleware, createSagaMiddleware(masterSaga));
+    const middleWare=  applyMiddleware(thunkMiddleware, /*logger,*/ createSagaMiddleware(masterSaga));
     
     return createStore(rootReducer, middleWare);
 }
