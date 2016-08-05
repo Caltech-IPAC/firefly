@@ -114,10 +114,11 @@ export const WebPlot= {
      *
      * @param plotId
      * @param wpInit init data returned from server
+     * @param attributes any attributes to initialize
      * @param asOverlay
      * @return {WebPlot}
      */
-    makeWebPlotData(plotId, wpInit, asOverlay= false) {
+    makeWebPlotData(plotId, wpInit, attributes= {}, asOverlay= false, ) {
 
         const projection= makeProjection(wpInit.projectionJson);
         var plotState= PlotState.makePlotStateWithJson(wpInit.plotState);
@@ -136,6 +137,7 @@ export const WebPlot= {
             dataWidth       : wpInit.dataWidth,
             dataHeight      : wpInit.dataHeight,
             imageScaleFactor: wpInit.imageScaleFactor,
+
             title : '',
             plotDesc        : wpInit.desc,
             dataDesc        : wpInit.dataDesc,
@@ -143,9 +145,9 @@ export const WebPlot= {
             //=== Mutable =====================
             screenSize: {width:wpInit.dataWidth*zf, height:wpInit.dataHeight*zf},
             zoomFactor: zf,
-            percentOpaque   : 1.0,
+            // percentOpaque   : 1.0,
             alive    : true,
-            attributes: {},
+            attributes,
             viewPort: WebPlot.makeViewPort(0,0,0,0),
             //=== End Mutable =====================
             asOverlay

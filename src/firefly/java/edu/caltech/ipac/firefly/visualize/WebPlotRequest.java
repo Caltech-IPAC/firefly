@@ -1149,7 +1149,12 @@ public class WebPlotRequest extends ServerRequest {
     public List<String> getMaskColors() {
         if (containsParam(MASK_COLORS)) {
             String data= getParam(MASK_COLORS);
-            return StringUtils.parseStringList(data,";");
+            List<String> retval= StringUtils.parseStringList(data,";");
+            if (retval.size()==0 && data.length()>0) {
+                retval= new ArrayList<>(1);
+                retval.add(data);
+            }
+            return retval;
         }
         else {
             return Collections.emptyList();

@@ -52,17 +52,6 @@ const rS= {
 
 
 
-/**
- *
- * @param plotId
- * @param dlAry
- * @param showLayer
- * @param showExpand
- * @param showDelete
- * @return {XML}
- * @constructor
- */
-
 export class VisInlineToolbarView extends Component {
     constructor(props) {
         super(props);
@@ -75,16 +64,16 @@ export class VisInlineToolbarView extends Component {
         return sCompare(this, np, ns);
     }
 
-    deleteClick() {dispatchDeletePlotView({plotId:this.props.plotId});}
-    expandClick() {expand(this.props.plotId);}
+    deleteClick() {dispatchDeletePlotView({plotId:this.props.pv && this.props.pv.plotId});}
+    expandClick() {expand(this.props.pv && this.props.pv.plotId);}
     // showToolsClick() {showTools();}
 
     render() {
-        const {plotId, dlAry, showLayer, showExpand, showDelete, showToolbarButton}= this.props;
+        const {pv, dlAry, showLayer, showExpand, showDelete, showToolbarButton}= this.props;
 
         return (
             <div style={rS}>
-                <LayerButton plotId={plotId} dlCount={dlAry.length} visible={showLayer && showExpand}/>
+                <LayerButton pv={pv} dlCount={dlAry.length} visible={showLayer && showExpand}/>
 
                 <ToolbarButton icon={WRENCH}
                                tip='Show tools'
@@ -113,7 +102,7 @@ export class VisInlineToolbarView extends Component {
 }
 
 VisInlineToolbarView.propTypes= {
-    plotId : PropTypes.string.isRequired,
+    pv : PropTypes.object,
     dlAry : PropTypes.arrayOf(React.PropTypes.object),
     extensionAry : PropTypes.arrayOf(React.PropTypes.object),
     showLayer : PropTypes.bool,

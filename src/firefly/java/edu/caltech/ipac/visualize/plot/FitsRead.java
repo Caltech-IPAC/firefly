@@ -68,7 +68,7 @@ public class FitsRead implements Serializable {
     private final int extension_number;
     private final BasicHDU hdu;
     private float[] float1d;
-    private Fits fits;
+//    private Fits fits;
     private ImageHeader imageHeader;
     private Header header;
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
@@ -89,8 +89,8 @@ public class FitsRead implements Serializable {
     private FitsRead(Fits fits, ImageHDU imageHdu) throws FitsException {
 
         //assign some instant variables
-        this.fits = fits;
-        hdu = imageHdu;
+//        this.fits = fits;
+        this.hdu = imageHdu;
         header = imageHdu.getHeader();
 
         planeNumber = header.getIntValue("SPOT_PL", 0);
@@ -132,8 +132,8 @@ public class FitsRead implements Serializable {
      private FitsRead(Fits fits, ImageHDU imageHdu, int maskExtension) throws FitsException {
 
         //assign some instant variables
-        this.fits = fits;
-        hdu = imageHdu;
+//        this.fits = fits;
+        this.hdu = imageHdu;
         header = imageHdu.getHeader();
         planeNumber = header.getIntValue("SPOT_PL", 0);
         extension_number = header.getIntValue("SPOT_EXT", -1);
@@ -146,7 +146,7 @@ public class FitsRead implements Serializable {
         }
         //get the data and store into float array
         float1d = getImageHDUDataInFloatArray(imageHdu);
-        masks = getMasksInFits(maskExtension);
+        masks = getMasksInFits(fits, maskExtension);
 
         hist= computeHistogram();
 
@@ -162,7 +162,7 @@ public class FitsRead implements Serializable {
 
      }
 
-    private short[] getMasksInFits(int maskExtension) throws FitsException {
+    private short[] getMasksInFits(Fits fits, int maskExtension) throws FitsException {
 
         //get all the Header Data Unit from the fits file
         BasicHDU[] HDUs = fits.read();
@@ -281,8 +281,10 @@ public class FitsRead implements Serializable {
 
     public static FitsRead createFitsReadFlipLR(FitsRead aFitsReader)
             throws FitsException, GeomException {
-        FlipLR flipLr = new FlipLR();
-        return (flipLr.do_flip(aFitsReader));
+
+        return new FlipXY(aFitsReader,"yAxis").doFlip();
+//        FlipLR flipLr = new FlipLR();
+//        return (flipLr.do_flip(aFitsReader));
     }
 
     /**
@@ -1653,9 +1655,9 @@ public class FitsRead implements Serializable {
     }
 
 
-    public Fits getFits() {
-        return (fits);
-    }
+//    public Fits getFits() {
+//        return (fits);
+//    }
 
     public BasicHDU getHDU() {
         return hdu;
@@ -1838,7 +1840,7 @@ public class FitsRead implements Serializable {
 
     public void freeResources() {
         float1d = null;
-        fits = null;
+//        fits = null;
         imageHeader = null;
         header = null;
 

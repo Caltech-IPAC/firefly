@@ -12,7 +12,7 @@ import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
 import {Band} from '../Band.js';
 import {MouseState} from '../VisMouseSync.js';
 import {isBlankImage} from '../WebPlot.js';
-import {primePlot} from '../PlotViewUtil.js';
+import {primePlot, getPlotStateAry, getActivePlotView} from '../PlotViewUtil.js';
 import {mouseUpdatePromise} from '../VisMouseSync.js';
 
 
@@ -43,7 +43,9 @@ export function* watchReadout() {
             continue;
         }
 
-        var plot= primePlot(visRoot(),plotId);
+        const plotView= getActivePlotView(visRoot());
+        var plot= primePlot(plotView);
+
         var readout= makeReadout(plot,worldPt,screenPt,imagePt);
         const threeColor= plot.plotState.isThreeColor();
         dispatchReadoutData(plotId,readout, threeColor);
@@ -53,17 +55,17 @@ export function* watchReadout() {
             continue;
         }
 
-        mouseCtx= lockByClick ? yield call(processImmediateFlux,readout,plot,imagePt,threeColor) :
-                                yield call(processDelayedFlux,readout,plot,imagePt,threeColor);
+        mouseCtx= lockByClick ? yield call(processImmediateFlux,readout,plotView,imagePt,threeColor) :
+                                yield call(processDelayedFlux,readout,plotView,imagePt,threeColor);
     }
 }
 
-function* processImmediateFlux(noFluxReadout,plot,imagePt, threeColor) {
+function* processImmediateFlux(noFluxReadout,plotView,imagePt, threeColor) {
     try {
-        const fluxResult= yield call(doFluxCall, plot, imagePt);
+        const fluxResult= yield call(doFluxCall, plotView, imagePt);
         if (fluxResult) {
-            const readout= makeReadoutWithFlux(noFluxReadout,plot, fluxResult, threeColor);
-            dispatchReadoutData(plot.plotId,readout, threeColor);
+            const readout= makeReadoutWithFlux(noFluxReadout,primePlot(plotView), fluxResult, threeColor);
+            dispatchReadoutData(plotView.plotId,readout, threeColor);
             const mouseCtx = yield call(mouseUpdatePromise);
             return mouseCtx;
         }
@@ -76,7 +78,7 @@ function* processImmediateFlux(noFluxReadout,plot,imagePt, threeColor) {
 }
 
 
-function* processDelayedFlux(noFluxReadout,plot,imagePt, threeColor) {
+function* processDelayedFlux(noFluxReadout,plotView,imagePt, threeColor) {
     var raceWinner = yield race({
         mouseCtx: call(mouseUpdatePromise),
         timer: call(delay, 200)
@@ -88,13 +90,13 @@ function* processDelayedFlux(noFluxReadout,plot,imagePt, threeColor) {
     try {
         raceWinner = yield race({
             mouseCtx: call(mouseUpdatePromise),
-            fluxResult: call(doFluxCall, plot, imagePt,200)
+            fluxResult: call(doFluxCall, plotView, imagePt,200)
         });
         if (raceWinner.mouseCtx) return raceWinner.mouseCtx;
 
         if (raceWinner.fluxResult) {
-            const readout= makeReadoutWithFlux(noFluxReadout,plot, raceWinner.fluxResult, threeColor);
-            dispatchReadoutData(plot.plotId,readout, threeColor);
+            const readout= makeReadoutWithFlux(noFluxReadout,primePlot(plotView), raceWinner.fluxResult, threeColor);
+            dispatchReadoutData(plotView.plotId,readout, threeColor);
             const mouseCtx = yield call(mouseUpdatePromise);
             return mouseCtx;
         }
@@ -158,7 +160,11 @@ function makeReadoutWithFlux(readout, plot, fluxResult,threeColor) {
             makeValueReadoutItem(labels[idx], fluxData[idx].value,fluxData[idx].unit, 6));
     }
     else {
-        readout['nobandFlux']= makeValueReadoutItem(labels[0], fluxData[0].value,fluxData[0].unit, 6);
+        readout.nobandFlux= makeValueReadoutItem(labels[0], fluxData[0].value,fluxData[0].unit, 6);
+    }
+    const oIdx= fluxData.findIndex( (d) => d.imageOverlay);
+    if (oIdx>-1) {
+        readout.imageOverlay= makeValueReadoutItem('mask', fluxData[oIdx].value, fluxData[oIdx].unit, 0);
     }
     return readout;
 }
@@ -220,8 +226,9 @@ function showSingleBandFluxLabel(plot, band) {
 
 
 
-function doFluxCall(plot,iPt) {
-    return callGetFileFlux(plot.plotState, iPt)
+function doFluxCall(plotView,iPt) {
+    const plotStateAry= getPlotStateAry(plotView);
+    return callGetFileFlux(plotStateAry, iPt)
         .then((result) => {
             return result;
         })
@@ -237,7 +244,7 @@ function getFlux(result, plot) {
     if (result.NO_BAND) {
         var fluxUnitStr = plot.webFitsData[Band.NO_BAND.value].fluxUnits;
         var fValue = parseFloat(result.NO_BAND);
-        return [{value: fValue, unit: fluxUnitStr}];
+        fluxArray[0]= {value: fValue, unit: fluxUnitStr};
     }
     else {
         const bands = plot.plotState.getBands();
@@ -258,7 +265,10 @@ function getFlux(result, plot) {
             fnum = parseFloat(result[bandName]);
             fluxArray[i]= {bandName, value:fnum, unit:unitStr};
         }
-        return fluxArray;
     }
+    Object.keys(result)
+        .filter((k) => k.startsWith('overlay'))
+        .forEach( (k) => {fluxArray.push({ imageOverlay : true, value : parseFloat(result[k]), unit : 'mask' });});
+    return fluxArray;
 }
 

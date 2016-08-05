@@ -122,8 +122,15 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
     const id= window.setInterval( () => {
         if (done) {
             window.clearInterval(id);
+            const {tableMeta, tableData}= drawLayer;
             if (closestIdx > -1) {
-                dispatchTableHighlight(drawLayer.drawLayerId,closestIdx,tableRequest);
+                if (tableMeta.decimate_key) {
+                    const colIdx= tableData.columns.findIndex((c) => c.name==='rowidx');
+                    dispatchTableHighlight(drawLayer.drawLayerId,tableData.data[closestIdx][colIdx],tableRequest);
+                }
+                else {
+                    dispatchTableHighlight(drawLayer.drawLayerId,closestIdx,tableRequest);
+                }
             }
         }
 

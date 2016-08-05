@@ -166,8 +166,9 @@ public class ImagePlotCreator {
             if (plot.getImageDataWidth()!=rWidth || plot.getImageDataWidth()!=rHeight) {
                 String primDim= rWidth+"x"+rHeight;
                 String overDim= plot.getImageDataWidth()+"x"+plot.getImageDataHeight();
-                throw new FitsException("Mask Overlay does not match the primary plot dimensions ("+
-                                         overDim+" vs "+primDim+")");
+//                throw new FitsException("Mask Overlay does not match the primary plot dimensions ("+
+//                                         overDim+" vs "+primDim+")");
+                _log.warn( "Mask Overlay does not match the primary plot dimensions ("+ overDim+" vs "+primDim+")");
             }
         }
         else { // standard

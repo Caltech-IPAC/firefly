@@ -189,7 +189,7 @@ export class PlotState {
     getPrimaryWebPlotRequest() { return this.get(this.firstBand()).getWebPlotRequest(); }
 
 
-    setBandVisible(band, visible) { this.get(band).setBandVisible(visible); }
+    //setBandVisible(band, visible) { this.get(band).setBandVisible(visible); }
     isBandVisible(band) { return  this.get(band).isBandVisible(); }
 
 

@@ -94,7 +94,7 @@ function makeInlineRightToolbar(visRoot,pv,dlAry){
     return (
         <div>
             <VisInlineToolbarView
-                plotId={pv.plotId} dlAry={dlAry}
+                pv={pv} dlAry={dlAry}
                 showLayer={lVis}
                 showExpand={true}
                 showToolbarButton={tb}

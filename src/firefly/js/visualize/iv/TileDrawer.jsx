@@ -43,11 +43,10 @@ export class TileDrawer extends Component {
     // }
 
     render() {
-        const { x, y, width, height, plot}= this.props;
+        const { x, y, width, height, plot, opacity}= this.props;
         var tileData=plot.serverImages;
         var tileZoomFactor=plot.plotState.getZoomLevel();
         var zoomFactor=plot.zoomFactor;
-        var opacity=plot.percentOpaque;
 
         const scale= zoomFactor / tileZoomFactor;
         const style=Object.assign({},containerStyle, {width,height});
@@ -71,7 +70,8 @@ TileDrawer.propTypes= {
     y : PropTypes.number.isRequired,
     width : PropTypes.number.isRequired,
     height : PropTypes.number.isRequired,
-    plot : PropTypes.object.isRequired
+    plot : PropTypes.object.isRequired,
+    opacity : PropTypes.number.isRequired,
 };
 
 

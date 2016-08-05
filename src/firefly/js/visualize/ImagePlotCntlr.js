@@ -29,6 +29,7 @@ import {dispatchReplaceImages, getExpandedViewerPlotIds,
          getMultiViewRoot, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
 
 export {zoomActionCreator} from './ZoomUtil.js';
+export {plotImageMaskActionCreator, overlayPlotChangeAttributeActionCreator} from './ImageOverlayTask.js';
 
 export {colorChangeActionCreator,
         stretchChangeActionCreator,
@@ -125,6 +126,15 @@ const CHANGE_MOUSE_READOUT_MODE=`${PLOTS_PREFIX}.changeMouseReadoutMode`;
 /** Action Type: delete a plotView */
 const DELETE_PLOT_VIEW=`${PLOTS_PREFIX}.deletePlotView`;
 
+
+const PLOT_MASK_START= `${PLOTS_PREFIX}.plotMaskStart`;
+/** Action Type: add a mask image*/
+const PLOT_MASK=`${PLOTS_PREFIX}.plotMask`;
+const PLOT_MASK_FAIL= `${PLOTS_PREFIX}.plotMaskFail`;
+const DELETE_OVERLAY_PLOT=`${PLOTS_PREFIX}.deleteOverlayPlot`;
+const OVERLAY_PLOT_CHANGE_ATTRIBUTES=`${PLOTS_PREFIX}.overlayPlotChangeAttributes`;
+
+
 const PLOT_PROGRESS_UPDATE= `${PLOTS_PREFIX}.PlotProgressUpdate`;
 const API_TOOLS_VIEW= `${PLOTS_PREFIX}.apiToolsView`;
 
@@ -211,7 +221,9 @@ export default {
     CHANGE_POINT_SELECTION, CHANGE_EXPANDED_MODE,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER, GROUP_LOCKING,
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
-    DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT
+    DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT,
+    PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, DELETE_OVERLAY_PLOT,
+    OVERLAY_PLOT_CHANGE_ATTRIBUTES
 };
 
 
@@ -380,7 +392,7 @@ export function dispatchProcessScroll({plotId,scrollPt, dispatcher= flux.process
  *
  * Note - function parameter is a single object
  * @param {string} plotId
- * @param {
+ * @param centerPt
  * @param {function} dispatcher only for special dispatching uses such as remote
  */
 export function dispatchRecenter({plotId, centerPt, dispatcher= flux.process}) {
@@ -431,6 +443,8 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
  *
  * Note - function parameter is a single object
  * @param wpRequestAry
+ * @param viewerId
+ * @param pvOptions PlotView init Options
  * @param {function} dispatcher only for special dispatching uses such as remote
  */
 export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {}, dispatcher= flux.process}) {
@@ -438,6 +452,44 @@ export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {}, dispat
 }
 
 
+/**
+ * Add a mask
+ * @param plotId
+ * @param maskValue power of 2, e.g 4, 8, 32, 128, etc
+ * @param maskNumber 2, e.g 4, 8, 32, 128, etc
+ * @param imageOverlayId
+ * @param imageNumber hdu number of fits
+ * @param {string} color - color is optional, if not specified, one is chosen
+ * @param title
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchPlotMask({plotId,imageOverlayId, maskValue, imageNumber, maskNumber=-1, color, title, dispatcher= flux.process}) {
+    dispatcher( { type: PLOT_MASK, payload: { plotId,imageOverlayId, maskValue, imageNumber, maskNumber, color, title} });
+}
+
+/**
+ *
+ *
+ * @param plotId
+ * @param imageOverlayId
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchDeleteOverlayPlot({plotId,imageOverlayId, dispatcher= flux.process}) {
+    dispatcher( { type: DELETE_OVERLAY_PLOT, payload: { plotId,imageOverlayId} });
+}
+
+
+/**
+ *
+ * @param plotId
+ * @param imageOverlayId
+ * @param attributes any attribute in OverlayPlotView
+ * @param doReplot if false don't do a replot just change attributes
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchOverlayPlotChangeAttributes({plotId,imageOverlayId, attributes, doReplot=false, dispatcher= flux.process}) {
+    dispatcher( { type: OVERLAY_PLOT_CHANGE_ATTRIBUTES, payload: { plotId,imageOverlayId, attributes, doReplot} });
+}
 
 
 
@@ -570,15 +622,6 @@ export function dispatchChangeExpandedMode(expandedMode) {
 
 /**
  * 
- * @param readoutType
- * @param newRadioValue
- */
-export function dispatchChangeMouseReadout(readoutType, newRadioValue) {
-    flux.process({ type: CHANGE_MOUSE_READOUT_MODE, payload: {readoutType, newRadioValue} });
-}
-
-/**
- * 
  * @param autoPlayOn
  */
 export function dispatchExpandedAutoPlay(autoPlayOn) {
@@ -605,6 +648,7 @@ export function changePrimeActionCreator(rawAction) {
 export function plotImageActionCreator(rawAction) {
     return PlotImageTask.makePlotImageAction(rawAction);
 }
+
 
 export function restoreDefaultsActionCreator(rawAction) {
     return (dispatcher, getState) => {
@@ -729,6 +773,10 @@ function reducer(state=initState(), action={}) {
         case CROP_START:
         case CROP_FAIL:
         case CROP:
+        case PLOT_MASK:
+        case PLOT_MASK_START:
+        case PLOT_MASK_FAIL:
+        case DELETE_OVERLAY_PLOT:
             retState= plotCreationReducer(state,action);
             break;
 
@@ -749,6 +797,7 @@ function reducer(state=initState(), action={}) {
         case RECENTER:
         case GROUP_LOCKING:
         case PLOT_PROGRESS_UPDATE  :
+        case OVERLAY_PLOT_CHANGE_ATTRIBUTES :
         case CHANGE_PRIME_PLOT  :
             retState= plotChangeReducer(state,action);
             break;

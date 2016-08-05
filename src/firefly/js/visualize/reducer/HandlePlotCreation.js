@@ -2,10 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, uniqBy,unionBy} from 'lodash';
+import {get, uniqBy,unionBy, isEmpty} from 'lodash';
 import Cntlr, {ExpandType} from '../ImagePlotCntlr.js';
 import PlotView, {makePlotView} from './PlotView.js';
-import {getPlotViewById, clonePvAry} from '../PlotViewUtil.js';
+import {makeOverlayPlotView, replaceOverlayPlots} from './OverlayPlotView.js';
+import {getPlotViewById, clonePvAry, getOverlayById} from '../PlotViewUtil.js';
 import PlotGroup from '../PlotGroup.js';
 
 
@@ -41,8 +42,24 @@ export function reducer(state, action) {
             break;
         case Cntlr.PLOT_IMAGE  :
             retState= addPlot(state,action, true, true);
-            // activePlotId= action.payload.plotId;
             // todo: also process adding to history
+            break;
+
+        case Cntlr.PLOT_MASK_START:
+            retState= newOverlayPrep(state,action);
+            break;
+
+        case Cntlr.PLOT_MASK:
+            retState= addOverlay(state,action);
+            break;
+
+        case Cntlr.DELETE_OVERLAY_PLOT:
+            retState= removeOverlay(state,action);
+            break;
+
+
+        case Cntlr.PLOT_MASK_FAIL:
+            retState= plotOverlayFail(state,action);
             break;
 
         case Cntlr.ROTATE_START  :
@@ -57,12 +74,9 @@ export function reducer(state, action) {
         case Cntlr.CROP_FAIL:
             retState= endServerCallFail(state,action);
             break;
+
         case Cntlr.ROTATE  :
-            retState= addPlot(state,action, true, false);
-            break;
         case Cntlr.FLIP:
-            retState= addPlot(state,action, true, false);
-            break;
         case Cntlr.CROP:
             retState= addPlot(state,action, true, false);
             break;
@@ -117,6 +131,66 @@ function addPlot(state,action, replace, setActive) {
     return clone(state, {plotViewAry,activePlotId});
 }
 
+function newOverlayPrep(state, action) {
+    const {plotId, imageOverlayId, imageNumber, maskValue, maskNumber, color, title, drawingDef}= action.payload;
+
+    const pv= getPlotViewById(state, plotId);
+    if (!pv) return state;
+
+    const overlayPv= getOverlayById(pv, imageOverlayId);
+    var oPvArray;
+    if (!overlayPv) {
+        oPvArray= isEmpty(pv.overlayPlotViews) ? [] : pv.overlayPlotViews.slice(0);
+        oPvArray.push(makeOverlayPlotView(imageOverlayId, plotId, title, imageNumber,
+                                           maskNumber, maskValue, color, drawingDef));
+    }
+    else {
+        oPvArray= pv.overlayPlotViews.map( (opv) => opv.imageOverlayId===imageOverlayId ?
+                             clone(overlayPv, {imageNumber, maskValue, color, drawingDef, plot:null} ) : opv);
+    }
+
+    return clone(state, {plotViewAry:clonePvAry(state, plotId, {overlayPlotViews:oPvArray}) } );
+}
+
+
+function addOverlay(state, action) {
+    const {plotId, imageOverlayId, plot, imageNumber, maskValue, color, drawingDef}= action.payload;
+
+    const plotViewAry= state.plotViewAry.map( (pv) => {
+        if (pv.plotId!== plotId) return pv;
+        const overlayPlotViews= pv.overlayPlotViews.map( (opv) => {
+            if (opv.imageOverlayId!== imageOverlayId) return opv;
+            return replaceOverlayPlots(opv,plot);
+        });
+        return clone(pv, {overlayPlotViews});
+    });
+    return clone(state, {plotViewAry});
+}
+
+
+function removeOverlay(state, action) {
+    const {plotId, imageOverlayId}= action.payload;
+    const plotViewAry= state.plotViewAry.map( (pv) => {
+        if (pv.plotId!== plotId) return pv;
+        const overlayPlotViews= pv.overlayPlotViews.filter( (opv) => opv.imageOverlayId!== imageOverlayId);
+        return clone(pv, {overlayPlotViews});
+    });
+    return clone(state, {plotViewAry});
+}
+
+
+
+function plotOverlayFail(state,action) {
+    const {plotId, imageOverlayId, detailFailReason}= action.payload;
+
+    const plotViewAry= state.plotViewAry.map( (pv) => {
+        if (pv.plotId!==plotId) return pv;
+        const overlayPlotViews= pv.overlayPlotViews.filter( (opv) => imageOverlayId!==opv.imageOverlayId);
+        return clone(pv, {overlayPlotViews, plottingStatus:'Overlay failed: '+detailFailReason, serverCall:'fail' });
+    });
+
+    return clone(state, {plotViewAry});
+}
 
 function plotFail(state,action) {
     const {description, plotId}= action.payload;
@@ -165,7 +239,8 @@ function preNewPlotPrep(plotViewAry,action) {
         var pv= getPlotViewById(plotViewAry,plotId);
         return pv ? clone(pv, { plottingStatus:'Plotting...', 
                                 plots:[],  
-                                primeIdx:-1
+                                primeIdx:-1,
+                                request: req
                               }) : makePlotView(plotId, req,action.payload.pvOptions);
     });
 

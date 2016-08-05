@@ -5,7 +5,7 @@
 import {get,isPlainObject,isArray} from 'lodash';
 import {logError} from '../util/WebUtil.js';
 import {WebPlotRequest, GridOnStatus} from './WebPlotRequest.js';
-import ImagePlotCntlr, {visRoot, makeUniqueRequestKey} from './ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot, makeUniqueRequestKey, IMAGE_PLOT_KEY} from './ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from './DrawLayerCntlr.js';
 import {WebPlot,PlotAttribute} from './WebPlot.js';
 import CsysConverter from './CsysConverter.js';
@@ -20,7 +20,7 @@ import ActiveTarget  from '../drawingLayers/ActiveTarget.js';
 import * as DrawLayerCntlr from './DrawLayerCntlr.js';
 import {makePostPlotTitle} from './reducer/PlotTitle.js';
 import {dispatchAddImages, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
-import {getDrawLayerByType, getConnectedPlotsIds} from './PlotViewUtil.js';
+import {getDrawLayerByType, getConnectedPlotsIds, getActivePlotView} from './PlotViewUtil.js';
 import WebGrid from '../drawingLayers/WebGrid.js';
 
 const INIT_STATUS_UPDATE_DELAY= 7000;
@@ -131,10 +131,6 @@ function makePlotImageAction(rawAction) {
 
 
 
-
-
-
-
 //======================================== Private ======================================
 //======================================== Private ======================================
 //======================================== Private ======================================
@@ -185,7 +181,7 @@ export function modifyRequest(pvCtx, r, band) {
         retval.setInitialZoomLevel(zPref.zooomLevel);
     }
 
-    //for(Map.Entry<String,String> entry : _reqMods.entrySet()) { //todo, I don't think I need this any more, use for defered loading
+    //for(Map.Entry<String,String> entry : _reqMods.entrySet()) { //todo, I don't think I need this any more, use for deferred loading
     //    retval.setParam(new Param(entry.getKey(), entry.getValue()));
     //}
     return retval;
@@ -287,7 +283,7 @@ function getRequest(payload) {
 }
 
 
-const handleSuccess= function(plotCreate, payload) { //TODO: finish
+const handleSuccess= function(plotCreate, payload) {
     const plotState= PlotState.makePlotStateWithJson(plotCreate[0].plotState);
     const plotId= plotState.getWebPlotRequest().getPlotId();
 

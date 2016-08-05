@@ -14,11 +14,11 @@ import FieldGroupCntlr, {valueChangeActionCreator,multiValueChangeActionCreator}
                                       from '../fieldGroup/FieldGroupCntlr.js';
 import * as MouseReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
 import ImagePlotCntlr, {IMAGE_PLOT_KEY,
-                        plotImageActionCreator, zoomActionCreator,
+                        plotImageActionCreator, plotImageMaskActionCreator, zoomActionCreator,
                         colorChangeActionCreator, stretchChangeActionCreator,
                         rotateActionCreator, flipActionCreator,
                         cropActionCreator, autoPlayActionCreator, changePrimeActionCreator,
-                        restoreDefaultsActionCreator,
+                        restoreDefaultsActionCreator, overlayPlotChangeAttributeActionCreator,
                         changePointSelectionActionCreator} from '../visualize/ImagePlotCntlr.js';
 
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
@@ -118,6 +118,8 @@ actionCreators.set(FieldGroupCntlr.VALUE_CHANGE, valueChangeActionCreator);
 actionCreators.set(FieldGroupCntlr.MULTI_VALUE_CHANGE, multiValueChangeActionCreator);
 actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.extensionActivateActionCreator);
 actionCreators.set(ImagePlotCntlr.PLOT_IMAGE, plotImageActionCreator);
+actionCreators.set(ImagePlotCntlr.PLOT_MASK, plotImageMaskActionCreator);
+actionCreators.set(ImagePlotCntlr.OVERLAY_PLOT_CHANGE_ATTRIBUTES, overlayPlotChangeAttributeActionCreator);
 actionCreators.set(ImagePlotCntlr.ZOOM_IMAGE, zoomActionCreator);
 actionCreators.set(ImagePlotCntlr.COLOR_CHANGE, colorChangeActionCreator);
 actionCreators.set(ImagePlotCntlr.STRETCH_CHANGE, stretchChangeActionCreator);

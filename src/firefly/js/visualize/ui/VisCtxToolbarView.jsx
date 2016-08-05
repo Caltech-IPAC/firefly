@@ -184,7 +184,7 @@ function crop(pv) {
     var ip1=  cc.getImageCoords(sel.pt1);
 
 
-    var cropMultiAll= p.plotState.isMultiImageFile() && isMultiImageFitsWithSameArea(pv);
+    var cropMultiAll= pv.plotViewCtx.containsMultiImageFits && isMultiImageFitsWithSameArea(pv);
 
     dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,pv.plotId,true);
     dispatchCrop({plotId:pv.plotId, imagePt1:ip0, imagePt2:ip1, cropMultiAll});

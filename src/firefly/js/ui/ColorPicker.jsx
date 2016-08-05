@@ -11,10 +11,10 @@ import ColorPicker from 'react-color';
 
 
 
-export function showColorPickerDialog(color,callbackOnOK,cb) {
+export function showColorPickerDialog(color,callbackOnOKOnly, callbackOnBoth, cb ) {
     const popup= (
         <PopupPanel title={'Color Picker'} >
-            <ColorPickerWrapper callback={cb} color={color} callbackOnOK={callbackOnOK}/>
+            <ColorPickerWrapper callback={cb} color={color} callbackOnOKOnly={callbackOnOKOnly} callbackOnBoth={callbackOnBoth}/>
         </PopupPanel>
     );
     DialogRootContainer.defineDialog('ColorPickerDialog', popup);
@@ -23,13 +23,16 @@ export function showColorPickerDialog(color,callbackOnOK,cb) {
 
 var lastEv;
 
-function ColorPickerWrapper ({callback,color,callbackOnOK}) {
+function ColorPickerWrapper ({callback,color,callbackOnOKOnly, callbackOnBoth}) {
     return (
         <div>
             <ColorPicker type='sketch'
-                         onChangeComplete={ (ev) => callbackOnOK ? lastEv=ev : callback(ev) }
+                         onChangeComplete={ (ev) => {
+                             lastEv=ev;
+                             if (!callbackOnOKOnly) callback(ev, false);
+                         } }
                          color={color} />
-            <CompleteButton onSuccess={() => callbackOnOK ? callback(lastEv): null}
+            <CompleteButton onSuccess={() => callbackOnOKOnly||callbackOnBoth ? callback(lastEv,true): null}
                             dialogId='ColorPickerDialog'/>
         </div>
     );
@@ -38,5 +41,6 @@ function ColorPickerWrapper ({callback,color,callbackOnOK}) {
 ColorPickerWrapper.propTypes= {
     callback: React.PropTypes.func.isRequired,
     color: React.PropTypes.string.isRequired,
-    callbackOnOK: React.PropTypes.bool.isRequired
+    callbackOnOKOnly: React.PropTypes.bool.isRequired,
+    callbackOnBoth: React.PropTypes.bool.isRequired
 };

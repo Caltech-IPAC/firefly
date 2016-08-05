@@ -4,12 +4,8 @@
 import {difference,isArray,has,isString,omit,isEmpty} from 'lodash';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeImagePt, pointEquals} from './Point.js';
-import {CsysConverter} from './CsysConverter.js';
-
-
-
-
-const clone = (obj,params={}) => Object.assign({},obj,params);
+import {CysConverter} from './CsysConverter.js';
+import {clone} from '../util/WebUtil.js';
 
 
 /**
@@ -154,6 +150,27 @@ export function operateOnOthersInGroup(visRoot,sourcePv,operationFunc, ignoreThr
             }
         });
     }
+}
+
+/**
+ *
+ * @param {PlotView} plotView
+ * @param {String} imageOverlayId
+ * @return {OverlayPlotView}
+ */
+export function getOverlayById(plotView, imageOverlayId) {
+    return plotView.overlayPlotViews.find( (opv) => opv.imageOverlayId===imageOverlayId);
+}
+
+/**
+ *
+ * @param ref
+ * @param plotId
+ * @param imageOverlayId
+ * @return {OverlayPlotView}
+ */
+export function getOverlayByPvAndId(ref,plotId,imageOverlayId) {
+    return getOverlayById(getPlotViewById(ref,plotId),imageOverlayId);
 }
 
 
@@ -374,7 +391,8 @@ export function getOnePvOrGroup(plotViewAry, plotId,plotGroup) {
 
 
 /**
- * make a new copy of the plotview array with an object set on a cloned copy of the matched plotview.
+ * First fine the PlotView with the plotId, then clone the PlotView with the changes specified in the object.
+ * Then return a new PlotView array with the changes.
  * @param ref visRoot or plotViewAry
  * @param {string} plotId
  * @param {{}} obj fields to replace
@@ -417,7 +435,7 @@ export function isMultiImageFitsWithSameArea(pv) {
     var ic4= makeImagePt(w,h);
 
     var projName= plot.projection.getProjectionName();
-    var cc= CsysConverter.make(plot);
+    var cc= CysConverter.make(plot);
 
     var c1= cc.getWorldCoords(ic1);
     var c2= cc.getWorldCoords(ic2);
@@ -429,7 +447,7 @@ export function isMultiImageFitsWithSameArea(pv) {
         if (w!==p.dataWidth || h!==p.dataHeight) return false;
         if (projName!==p.projection.getProjectionName()) return false;
 
-        var pCC= CsysConverter.make(p);
+        var pCC= CysConverter.make(p);
         var iwc1= pCC.getWorldCoords(ic1);
         var iwc2= pCC.getWorldCoords(ic2);
         var iwc3= pCC.getWorldCoords(ic3);

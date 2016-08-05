@@ -11,8 +11,12 @@ import edu.caltech.ipac.visualize.plot.projection.Projection;
 import edu.caltech.ipac.visualize.plot.projection.ProjectionParams;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
+import nom.tam.fits.HeaderCard;
+import nom.tam.util.Cursor;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class ImageHeader implements Serializable
@@ -73,6 +77,7 @@ public class ImageHeader implements Serializable
     public double bp[][] = new double[ProjectionParams.MAX_SIP_LENGTH][ProjectionParams.MAX_SIP_LENGTH];
     public boolean map_distortion = false;
     public String keyword;
+	public Map<String,String> additionalHeaders= new HashMap<>(77);
 
 
     public ImageHeader()
@@ -101,6 +106,18 @@ public class ImageHeader implements Serializable
 	String ctype1_trim = null;
 
 	long header_size = header.getOriginalSize();
+
+	Cursor extraIter= header.iterator();
+	for(;extraIter.hasNext();) {
+		HeaderCard hc= (HeaderCard)extraIter.next();
+		if (hc.getKey().startsWith("MP")) {
+			additionalHeaders.put(hc.getKey(), hc.getValue());
+		}
+	}
+
+
+
+
 	data_offset = HDU_offset + header_size;
 	plane_number = _plane_number;
 
@@ -709,6 +726,7 @@ public class ImageHeader implements Serializable
     public static ProjectionParams createProjectionParams(ImageHeader hdr) {
         ProjectionParams params= new ProjectionParams();
 
+		params.additionalHeaders= hdr.additionalHeaders;
         params.bitpix= hdr.bitpix;
         params.naxis = hdr.naxis;
         params.naxis1= hdr.naxis1;
@@ -764,6 +782,8 @@ public class ImageHeader implements Serializable
         params.bp= hdr.bp;
         params.map_distortion= hdr.map_distortion;
         params.keyword= hdr.keyword;
+
+
 
         return params;
 

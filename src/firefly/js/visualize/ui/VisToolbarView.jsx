@@ -3,7 +3,6 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-import {get,isEmpty} from 'lodash';
 import {getActivePlotView,
     primePlot,
     hasGroupLock,
@@ -35,6 +34,7 @@ import {showRegionFileUploadPanel} from '../region/RegionFileUploadView.jsx';
 import {MarkerDropDownView} from './MarkerDropDownView.jsx';
 import {dispatchShowDropDown} from '../../core/LayoutCntlr.js';
 import {showImageSelPanel} from './ImageSelectPanel.jsx';
+import {showMaskDialog} from './MaskAddPanel.jsx';
 
 
 //===================================================
@@ -280,7 +280,6 @@ export class VisToolbarView extends Component {
 
 
 
-
                 <ToolbarButton icon={DS9_REGION}
                                tip='Load a DS9 Region File'
                                enabled={enabled}
@@ -289,16 +288,15 @@ export class VisToolbarView extends Component {
                                onClick={showRegionFileUploadPanel}/>
 
                 <ToolbarButton icon={MASK}
-                               tip='Overlay a mask Image'
+                               tip='Add mask to image'
                                enabled={enabled}
                                horizontal={true}
                                visible={mi.maskOverlay}
-                               todo={true}
-                               onClick={() => console.log('todo- mask dialog')}/>
+                               onClick={showMaskDialog}/>
 
 
 
-                <LayerButton plotId={get(pv,'plotId')}  dlCount={dlCount} visible={mi.layer}/>
+                <LayerButton pv={pv} dlCount={dlCount} visible={mi.layer}/>
 
                 <ToolbarHorizontalSeparator/>
 
@@ -391,15 +389,13 @@ function showImagePopup() {
 //==================================================================================
 //==================================================================================
 
-export function LayerButton({plotId,visible}) {
-    const plotLayers= getAllDrawLayersForPlot(getDlAry(),plotId);
-    const enabled= !isEmpty(plotLayers);
-
+export function LayerButton({pv,visible}) {
+    const layerCnt=  pv ? (getAllDrawLayersForPlot(getDlAry(),pv.plotId).length + pv.overlayPlotViews.length) : 0;
     return (
         <ToolbarButton icon={LAYER_ICON}
                        tip='Manipulate overlay display: Control color, visibility, and advanced options'
-                       enabled={enabled}
-                       badgeCount={plotLayers.length}
+                       enabled={Boolean(layerCnt)}
+                       badgeCount={layerCnt}
                        horizontal={true}
                        visible={visible}
                        onClick={showDrawingLayerPopup}/>
@@ -407,7 +403,7 @@ export function LayerButton({plotId,visible}) {
 }
 
 LayerButton.propTypes= {
-    plotId : PropTypes.string,
+    pv : PropTypes.object,
     visible : PropTypes.bool.isRequired,
     dlCount : PropTypes.number.isRequired // must be here. We don't use directly but it forces an update
 };
