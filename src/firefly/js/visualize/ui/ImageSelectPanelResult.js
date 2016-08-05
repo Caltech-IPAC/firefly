@@ -7,7 +7,7 @@ import {keyMap, panelKey, computeCurrentCatalogId, rgbFieldGroup,
         PLOT_NO, RED, GREEN, BLUE, PLOT_CREATE, PLOT_CREATE3COLOR, rgb} from './ImageSelectPanel.jsx';
 import WebPlotRequest from '../WebPlotRequest.js';
 import {dispatchPlotImage, visRoot } from '../ImagePlotCntlr.js';
-import {dispatchAddImages} from '../MultiViewCntlr.js';
+import {dispatchAddImages, findViewerWithPlotId, getMultiViewRoot} from '../MultiViewCntlr.js';
 import {parseWorldPt} from '../Point.js';
 import {panelCatalogs} from './ImageSelectPanelProp.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
@@ -303,19 +303,20 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
         const create = (PLOT_CREATE|PLOT_CREATE3COLOR);
         var nPlotId = null;
         var groupId = null;
+        var viewerIdOnPlot;
 
-        if ((plotInfo.addPlot&create) && plotInfo.viewerId) { // create & with viewerId
+        if ((plotInfo.addPlot&create) && plotInfo.viewerId) { // create plot case: only for fits viewer
             groupId = plotInfo.viewerId;
             nPlotId = plotidGen.next().value;
-            // dispatchAddImages(plotInfo.viewerId, [nPlotId]);
+            viewerIdOnPlot = plotInfo.viewerId;
         } else {                                            // replace and with plotId
             nPlotId = plotInfo.plotId;
             if (nPlotId) {
                 groupId = getPlotViewById(visRoot(), nPlotId).plotGroupId;
             }
+            viewerIdOnPlot = findViewerWithPlotId(getMultiViewRoot(), nPlotId);
         }
 
-        //if (!groupId || !nPlotId) {
         if (!nPlotId) {
             return outputMessage(loadErrorMsg['noplotid']);
         } else {
@@ -334,12 +335,8 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
             dispatchHideDropDown();
         }
 
-        // for fits viewer, groupId is the same as groupId, for coverage, groupId is null, viewerId exists
-        if (plotInfo.isThreeColor) {
-            dispatchPlotImage({plotId:nPlotId, wpRequest:wpSet, viewerId:(groupId || plotInfo.viewerId)});
-        } else {
-            dispatchPlotImage({plotId:nPlotId, wpRequest:wpSet[0], viewerId: (groupId || plotInfo.viewerId)});
-        }
-
+        dispatchPlotImage({plotId:nPlotId,
+                          wpRequest:(plotInfo.isThreeColor) ? wpSet : wpSet[0],
+                          viewerId: viewerIdOnPlot});
     };
 }

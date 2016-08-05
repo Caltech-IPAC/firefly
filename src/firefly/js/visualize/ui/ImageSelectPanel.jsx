@@ -109,6 +109,7 @@ var getAViewId = (mvroot) => {
 };
 
 var canAddNewPlot = (viewer) => (!viewer.viewerId.includes('RESERVED') && (viewer.canReceiveNewPlots === NewPlotMode.create_replace.key));
+var canOnlyReplacePlot = (viewer) => (!viewer.viewerId.includes('RESERVED') && (viewer.canReceiveNewPlots === NewPlotMode.replace_only.key));
 var canNotUpdatePlot = (viewer) => (viewer.viewerId.includes('RESERVED') || (viewer.canReceiveNewPlots === NewPlotMode.none.key));
 
 // if there is plotID, find the viewer (plotId & viewerId => replace or create)
@@ -120,10 +121,11 @@ export function getPlotInfo( vr ) {
     var plotId = get(visroot, 'activePlotId');
     var viewerId = plotId ?  findViewerWithPlotId(getMultiViewRoot(), plotId) : null;
     var plotMode = PlotSelectMode.NoPlot;
+    var viewer;
 
     // check if viewer can receive new plots or replace plot and not reserved
     if (viewerId ) {
-        var viewer = getViewer(mvroot, viewerId);
+        viewer = getViewer(mvroot, viewerId);
 
         // find another viwer which can not either receive new plots or replace the plot
         if (!viewer || canNotUpdatePlot(viewer)) {
@@ -131,20 +133,16 @@ export function getPlotInfo( vr ) {
         }
     }
 
-    if (!plotId) {
+    if (!plotId || (viewer && canOnlyReplacePlot(viewer))) {
         viewerId = getAViewId(mvroot);   // get a new viewer if no plot, plotId: no, viewerId: yes (create)
+                                         // get a new viewer (create_replace) if plot's view container is replace_only
+                                         //  -> plot for replace, viewer for create new plot
     }                                    // there is plot and no viewer, plotId: yes, vieweId: no (replace)
 
     if (viewerId) {
-        if (plotId) {   // check if replace or create
-            plotMode = canAddNewPlot(getViewer(mvroot, viewerId)) ?  PlotSelectMode.ReplaceOrCreate : PlotSelectMode.ReplacePlot;
-        } else {
-            plotMode = PlotSelectMode.CreatePlot;
-        }
-    } else {
-        if (plotId) {
-            plotMode = PlotSelectMode.ReplacePlot;
-        }
+        plotMode = (plotId) ? PlotSelectMode.ReplaceOrCreate : PlotSelectMode.CreatePlot;
+    } else if (plotId) {
+        plotMode = PlotSelectMode.ReplacePlot;
     }
 
     return {plotId, plotMode, viewerId};
