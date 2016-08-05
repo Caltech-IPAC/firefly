@@ -5,7 +5,7 @@
 import React, {Component, PropTypes} from 'react';
 import {flux} from '../../Firefly.js';
 import {visRoot } from '../ImagePlotCntlr.js';
-import {getAViewFromMultiView, findViewerWithPlotId, getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
+import {NewPlotMode, getAViewFromMultiView, findViewerWithPlotId, getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
@@ -102,12 +102,15 @@ export const PlotSelectMode = {
                             'ReplacePlot':PLOT_REPLACE,
                             'ReplaceOrCreate': PLOT_REPLACE|PLOT_CREATE|PLOT_CREATE3COLOR};
 
+// get a view which can add new plot
 var getAViewId = (mvroot) => {
     var aView = getAViewFromMultiView(mvroot);
     return aView ? aView.viewerId : '';
 };
 
-var canAddNewPlot = (viewer) => (!viewer.viewerId.includes('RESERVED')&&viewer.canReceiveNewPlots);
+var canAddNewPlot = (viewer) => (!viewer.viewerId.includes('RESERVED') && (viewer.canReceiveNewPlots === NewPlotMode.create_replace.key));
+var canOnlyReplacePlot = (viewer) => (!viewer.viewerId.includes('RESERVED') && (viewer.canReceiveNewPlots === NewPlotMode.replace_only.key));
+var canNotUpdatePlot = (viewer) => (viewer.viewerId.includes('RESERVED') || (viewer.canReceiveNewPlots === NewPlotMode.none.key));
 
 // if there is plotID, find the viewer (plotId & viewerId => replace or create)
 //                                     (plotId & no viewerid => replace)
@@ -118,30 +121,28 @@ export function getPlotInfo( vr ) {
     var plotId = get(visroot, 'activePlotId');
     var viewerId = plotId ?  findViewerWithPlotId(getMultiViewRoot(), plotId) : null;
     var plotMode = PlotSelectMode.NoPlot;
+    var viewer;
 
-    // check if viewer can receive new plots and not reserved
+    // check if viewer can receive new plots or replace plot and not reserved
     if (viewerId ) {
-        var viewer = getViewer(mvroot, viewerId);
+        viewer = getViewer(mvroot, viewerId);
 
-        // find another viwer which can receive new plots
-        if (!viewer || !canAddNewPlot(viewer)) {
+        // find another viwer which can not either receive new plots or replace the plot
+        if (!viewer || canNotUpdatePlot(viewer)) {
             plotId = null;
         }
     }
-    if (!plotId) {
+
+    if (!plotId || (viewer && canOnlyReplacePlot(viewer))) {
         viewerId = getAViewId(mvroot);   // get a new viewer if no plot, plotId: no, viewerId: yes (create)
+                                         // get a new viewer (create_replace) if plot's view container is replace_only
+                                         //  -> plot for replace, viewer for create new plot
     }                                    // there is plot and no viewer, plotId: yes, vieweId: no (replace)
 
     if (viewerId) {
-        if (plotId) {
-            plotMode = PlotSelectMode.ReplaceOrCreate;
-        } else {
-            plotMode = PlotSelectMode.CreatePlot;
-        }
-    } else {
-        if (plotId) {
-            plotMode = PlotSelectMode.ReplacePlot;
-        }
+        plotMode = (plotId) ? PlotSelectMode.ReplaceOrCreate : PlotSelectMode.CreatePlot;
+    } else if (plotId) {
+        plotMode = PlotSelectMode.ReplacePlot;
     }
 
     return {plotId, plotMode, viewerId};

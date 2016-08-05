@@ -11,7 +11,7 @@ import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {watchImageMetaData} from '../saga/ImageMetaDataWatcher.js';
 import {watchCoverage} from '../saga/CoverageWatcher.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
-import {DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
+import {DEFAULT_FITS_VIEWER_ID, NewPlotMode} from '../MultiViewCntlr.js';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode, dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 
 export const META_VIEWER_ID = 'triViewImageMetaData';
@@ -50,7 +50,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
                     <Tab name='Fits Data' removable={false} id='fits'>
                         <MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID}
                                           insideFlex={true}
-                                          canReceiveNewPlots={true}
+                                          canReceiveNewPlots={NewPlotMode.create_replace.key}
                                           canDelete={true}
                                           Toolbar={MultiViewStandardToolbar}/>
                     </Tab>
@@ -59,7 +59,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
                     <Tab name='Image Meta Data' removable={false} id='meta'>
                         <MultiImageViewer viewerId= {META_VIEWER_ID}
                                           insideFlex={true}
-                                          canReceiveNewPlots={false}
+                                          canReceiveNewPlots={NewPlotMode.none.key}
                                           canDelete={false}
                                           Toolbar={ImageMetaDataToolbar}/>
                     </Tab>
@@ -68,7 +68,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
                     <Tab name='Coverage' removable={false} id='coverage'>
                         <MultiImageViewer viewerId='coverageImages'
                                           insideFlex={true}
-                                          canReceiveNewPlots={false}
+                                          canReceiveNewPlots={NewPlotMode.replace_only.key}
                                           canDelete={false}
                                           Toolbar={MultiViewStandardToolbar}/>
                     </Tab>
