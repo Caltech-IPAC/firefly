@@ -127,6 +127,29 @@ function plotFail(state,action) {
     return clone(state,  {plotViewAry:clonePvAry(plotViewAry,plotId,changes)});
 }
 
+
+// function plotFail(state,action) {
+//     const {description, plotId, wpRequestAry}= action.payload;
+//     var {plotViewAry}= state;
+//     if (plotId) {
+//         const plotView=  getPlotViewById(state,plotId);
+//         if (!plotView) return state;
+//         const changes= {plottingStatus:description,serverCall:'fail' };
+//         return clone(state,  {plotViewAry:clonePvAry(plotViewAry,plotId,changes)});
+//     }
+//     else if (wpRequestAry) {
+//         const pvChangeAry= wpRequestAry.map( (r) => {
+//             const pv=  getPlotViewById(state,plotId);
+//             if (!pv) return null;
+//             return clone(pv,{plottingStatus:description,serverCall:'fail' } );
+//         });
+//         const newPlotViewAry= unionBy(pvChangeAry,plotViewAry, 'plotId');
+//         return clone(state,  {plotViewAry:newPlotViewAry});
+//     }
+// }
+
+
+
 /**
  /**
  *

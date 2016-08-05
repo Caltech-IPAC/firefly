@@ -32,7 +32,7 @@ const toolsStyle= {
 
 
 
-export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, layoutType, dlAry, handleInlineTools=true }) {
+export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, layoutType= 'grid', dlAry, handleInlineTools=true }) {
     
     var cIdx= viewerPlotIds.findIndex( (plotId) => plotId===visRoot.activePlotId);
     const pv= getPlotViewById(visRoot, visRoot.activePlotId);
@@ -111,7 +111,7 @@ MultiViewStandardToolbar.propTypes= {
     dlAry : PropTypes.arrayOf(React.PropTypes.object),
     visRoot : PropTypes.object,
     viewerId : PropTypes.string.isRequired,
-    layoutType : PropTypes.string.isRequired,
+    layoutType : PropTypes.string,
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
     handleInlineTools : PropTypes.bool
 };

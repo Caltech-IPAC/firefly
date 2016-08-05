@@ -1632,7 +1632,9 @@ public class VisServerOps {
         WebPlotResult retval;
         boolean userAbort = false;
         String progressKey = "";
-        if (reqAry != null) {
+        String plotId= null;
+        if (reqAry != null && reqAry.length>0) {
+            plotId= reqAry[0].getPlotId();
             for (int i = 0; (i < reqAry.length); i++) {
                 if (reqAry[i] != null) {
                     progressKey = reqAry[i].getProgressKey();
@@ -1643,17 +1645,17 @@ public class VisServerOps {
 
         if (e instanceof FileRetrieveException) {
             FileRetrieveException fe = (FileRetrieveException) e;
-            retval = WebPlotResult.makeFail("Retrieve failed", "Could not retrieve fits file", fe.getDetailMessage(), progressKey);
+            retval = WebPlotResult.makeFail("Retrieve failed", "Could not retrieve fits file", fe.getDetailMessage(), progressKey, plotId);
             fe.setSimpleToString(true);
         } else if (e instanceof FailedRequestException) {
             FailedRequestException fe = (FailedRequestException) e;
-            retval = WebPlotResult.makeFail(fe.getUserMessage(), fe.getUserMessage(), fe.getDetailMessage(), progressKey);
+            retval = WebPlotResult.makeFail(fe.getUserMessage(), fe.getUserMessage(), fe.getDetailMessage(), progressKey, plotId);
             fe.setSimpleToString(true);
             userAbort = VisContext.PLOT_ABORTED.equals(fe.getDetailMessage());
         } else if (e instanceof SecurityException) {
-            retval = WebPlotResult.makeFail("No Access", "You do not have access to this data,", e.getMessage(), progressKey);
+            retval = WebPlotResult.makeFail("No Access", "You do not have access to this data,", e.getMessage(), progressKey, plotId);
         } else {
-            retval = WebPlotResult.makeFail("Server Error, Please Report", e.getMessage(), null, progressKey);
+            retval = WebPlotResult.makeFail("Server Error, Please Report", e.getMessage(), null, progressKey, plotId);
         }
         List<String> messages = new ArrayList<String>(8);
         messages.add(logMsg);

@@ -50,6 +50,7 @@ export function* watchImageMetaData({viewerId}) {
 
         if (action.type===TABLE_REMOVE) {
             tbl_id= getActiveTableId();
+            if (!tbl_id) removeAllPlotsInViewer(viewerId);
         }
         else if (payload.tbl_id) {
             if (!isMetaDataTable(payload.tbl_id)) continue;
@@ -112,15 +113,17 @@ const getKey= (threeOp, band) => Object.keys(threeOp).find( (k) => threeOp[k].co
  */
 function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
 
-    if (!tbl_id) return [];
-    var reqRet;
+    const viewer= getViewer(getMultiViewRoot(),viewerId);
     const table= getTblById(tbl_id);
     // check to see if tableData is available in this range.
-    if (!isTblDataAvail(table.highlightedRow, table.highlightedRow+1, table)) return [];
-    const viewer= getViewer(getMultiViewRoot(),viewerId);
-    if (!table) return [];
+    if (!table || !isTblDataAvail(table.highlightedRow, table.highlightedRow+1, table)) {
+        removeAllPlotsInViewer(viewerId);
+        return [];
+    }
 
+    var reqRet;
     const converterData= converterFactory(table);
+    if (!converterData) return [];
     const {dataId,converter}= converterData;
     var highlightPlotId;
     var threeColorOps;
@@ -174,6 +177,13 @@ function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
 }
 
 
+function removeAllPlotsInViewer(viewerId) {
+    if (!viewerId) return;
+    const inViewerIds= getViewerPlotIds(getMultiViewRoot(), viewerId);
+    dispatchReplaceImages(viewerId,[]);
+    inViewerIds.forEach( (plotId) => dispatchDeletePlotView({plotId}));
+}
+
 function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
     const groupId= `${viewerId}-${dataId}-standard`;
     var plottingIds= reqAry.map( (r) =>  r.getPlotId());
@@ -206,7 +216,11 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
 
     // prepare stand plot
     const wpRequestAry= makePlottingList(reqAry);
-    if (!isEmpty(wpRequestAry)) dispatchPlotGroup({wpRequestAry, pvOptions: {menuItemKeys:{imageSelect : false}}});
+    if (!isEmpty(wpRequestAry)) {
+        dispatchPlotGroup({wpRequestAry, viewerId,
+                           pvOptions: { userCanDeletePlots: false, menuItemKeys:{imageSelect : false} }
+        });
+    }
     if (activeId) dispatchChangeActivePlotView(activeId);
 
 
@@ -217,7 +231,7 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
             dispatchPlotImage(
                 {
                     plotId:threeCPlotId, wpRequest:plotThreeReqAry, threeColor:true,
-                               pvOptions: {menuItemKeys:{imageSelect : false}}
+                               pvOptions: {userCanDeletePlots: true, menuItemKeys:{imageSelect : false}}
                 });
         }
     }
