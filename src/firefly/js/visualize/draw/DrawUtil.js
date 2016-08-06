@@ -116,14 +116,15 @@ function drawText(drawTextAry,text, x,y,color,
         color,
         left:x,
         top:y,
+        //padding:'1px 3px 1px 3px',
         fontFamily,
         'fontSize': size,
         fontWeight,
         fontStyle,
-        'backgroundColor': 'white',
-        'MozBorderRadius': '5px',
-        'borderRadius': '5px',
-        'WebkitBorderRadius': '5px'
+        //'backgroundColor': 'white',
+        'MozBorderRadius': '1px',
+        'borderRadius': '1px',
+        'WebkitBorderRadius': '1px'
     };
     drawTextAry.push({text,style});
 }

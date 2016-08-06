@@ -127,7 +127,8 @@ function drawDirectionArrow(ctx,drawTextAry,startPt,endPt,drawParams,renderOptio
 
     //FIXME:color text black on white background - yellow on white background is not readable
     //TODO: better solution would be to adapt text color with background
-    DrawUtil.drawText(drawTextAry, text, ret.textX, ret.textY,'black', renderOptions);
+    // DM-6950
+    DrawUtil.drawText(drawTextAry, text, ret.textX, ret.textY, color, renderOptions);
 }
 
 function toRegion(startPt,endPt,plot,drawParams,renderOptions) {
