@@ -7,7 +7,7 @@ import {dispatchTableRemove}  from '../../tables/TablesCntlr';
 
 import {BasicTable} from '../../tables/ui/BasicTable.jsx';
 import {getTblById} from '../../tables/TableUtil.js';
-import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
+import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 //import HelpIcon from '../../ui/HelpIcon.jsx';
 const popupId = 'XYColSelect';
@@ -35,8 +35,9 @@ const closeButtonStyle = {'textAlign': 'center', display: 'inline-block', height
 
 export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonText,currentVal) {
 
-    if (getTblById(TBL_ID)) {
-        dispatchTableRemove(TBL_ID);
+   if (getTblById(TBL_ID)) {
+       hideColSelectPopup();
+       dispatchTableRemove(TBL_ID);
     }
 
     const colNames = colValStats.map((colVal) => {return colVal.name;});
@@ -70,6 +71,12 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
 
     DialogRootContainer.defineDialog(popupId, popup);
     dispatchShowDialog(popupId);
+}
+
+export function hideColSelectPopup() {
+    if (isDialogVisible(popupId)) {
+        dispatchHideDialog(popupId);
+    }
 }
 
 function popupForm(tableModel, onColSelected,buttonText,popupId) {
