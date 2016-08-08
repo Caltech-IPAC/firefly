@@ -3,8 +3,8 @@
  */
 import {flux} from '../Firefly.js';
 
-import {updateSet, updateMerge} from '../util/WebUtil.js';
-import {get, has, omit, omitBy, isUndefined, isString} from 'lodash';
+import {updateSet, updateMerge, updateDelete} from '../util/WebUtil.js';
+import {get, has, omit, omitBy, isEmpty, isUndefined, isString} from 'lodash';
 
 import {doFetchTable, getColumn, getTblById, isFullyLoaded, cloneRequest} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
@@ -149,7 +149,8 @@ export function loadPlotData (rawAction) {
 
             if (!serverCallNeeded) {
                 const tableModel = getTblById(tblId);
-                xyPlotParams = getUpdatedParams(xyPlotParams, tableModel);
+                const dataBoundaries = getDataBoundaries(chartModel.xyPlotData);
+                xyPlotParams = getUpdatedParams(xyPlotParams, tableModel, dataBoundaries);
             }
 
             dispatch({ type : LOAD_PLOT_DATA, payload : {chartId, tblId, xyPlotParams, tblSource, serverCallNeeded}});
@@ -188,6 +189,20 @@ function updatePlotData(data) {
 
 export function reduceXYPlot(state={}, action={}) {
     switch (action.type) {
+        case (TablesCntlr.TABLE_LOADED)  :
+        {
+            const {tbl_id, invokedBy} = action.payload;
+            let updatedState = state;
+            if (invokedBy !== TablesCntlr.TABLE_SORT) {
+                Object.keys(state).forEach((cid) => {
+                    if (state[cid].tblId === tbl_id && get(state, [cid, 'xyPlotParams', 'boundaries'])) {
+                        // do we need hard boundaries, which do not go away on new table data?
+                        updatedState = updateDelete(updatedState, [cid, 'xyPlotParams'], 'boundaries');
+                    }
+                });
+            }
+            return updatedState;
+        }
         case (TablesCntlr.TABLE_REMOVE)  :
         {
             const tbl_id = action.payload.tbl_id;
@@ -287,7 +302,45 @@ function getServerCallParameters(xyPlotParams) {
     return [xyPlotParams.x.columnOrExpr, xyPlotParams.y.columnOrExpr, maxBins, xyRatio, xMin, xMax, yMin, yMax];
 }
 
+function getDataBoundaries(xyPlotData) {
+    if (!isEmpty(xyPlotData)) {
+        return omitBy({
+            xMin: xyPlotData.xMin,
+            xMax: xyPlotData.xMax,
+            yMin: xyPlotData.yMin,
+            yMax: xyPlotData.yMax
+        }, isUndefined);
+    }
+}
 
+
+/**
+ * Pad and round data boundaries
+ * @param {Object} boundaries - object with xMin, xMax, yMin, yMax props
+ * @param {Number} factor - part of the range to add on both sides
+ */
+function getPaddedBoundaries(boundaries, factor=100) {
+    if (!isEmpty(boundaries)) {
+        let {xMin, xMax, yMin, yMax} = boundaries;
+        const xRange = xMax - xMin;
+
+        if (xRange > 0) {
+            const xPad = xRange/factor;
+            xMin = xMin - xPad;
+            xMax = xMax + xPad;
+        }
+        const yRange = yMax - yMin;
+        if (yRange > 0) {
+            const yPad = yRange/factor;
+            yMin = yMin - yPad;
+            yMax = yMax + yPad;
+        }
+        if (xRange > 0 || yRange > 0) {
+            return {xMin, xMax, yMin, yMax};
+        }
+    }
+    return boundaries;
+}
 
 /**
  * fetches xy plot data
@@ -352,7 +405,7 @@ function fetchPlotData(dispatch, tblId, xyPlotParams, chartId) {
                     xyPlotParams,
                     xyPlotData,
                     chartId,
-                    newParams: getUpdatedParams(xyPlotParams, tableModel)
+                    newParams: getUpdatedParams(xyPlotParams, tableModel, getDataBoundaries(xyPlotData))
                 }));
         }
     ).catch(
@@ -368,7 +421,7 @@ function fetchPlotData(dispatch, tblId, xyPlotParams, chartId) {
  * derive them from existing parameters or tableModel.
  * No selection should be present in updated parameters
  */
-function getUpdatedParams(xyPlotParams, tableModel) {
+function getUpdatedParams(xyPlotParams, tableModel, dataBoundaries) {
     let newParams = xyPlotParams;
 
     if (!get(xyPlotParams, 'x.label')) {
@@ -376,24 +429,36 @@ function getUpdatedParams(xyPlotParams, tableModel) {
     }
     if (!get(xyPlotParams, 'x.unit')) {
         const xColumn = getColumn(tableModel, get(xyPlotParams, 'x.columnOrExpr'));
-        const xUnit = get(xColumn, 'units');
-        if (xUnit) {
-            newParams = updateSet(newParams, 'x.unit', xUnit);
-        }
+        const xUnit = get(xColumn, 'units', '');
+        newParams = updateSet(newParams, 'x.unit', xUnit);
     }
     if (!get(xyPlotParams, 'y.label')) {
         newParams = updateSet(newParams, 'y.label', get(xyPlotParams, 'y.columnOrExpr'));
     }
     if (!get(xyPlotParams, 'y.unit')) {
         const yColumn = getColumn(tableModel, get(xyPlotParams, 'y.columnOrExpr'));
-        const yUnit = get(yColumn, 'units');
-        if (yUnit) {
-            newParams = updateSet(newParams, 'y.unit', yUnit);
-        }
+        const yUnit = get(yColumn, 'units', '');
+        newParams = updateSet(newParams, 'y.unit', yUnit);
     }
     if (get(xyPlotParams, 'selection')) {
         newParams = updateSet(newParams, 'selection', undefined);
     }
+
+    // set plot boundaries,
+    // if user set boundaries are undefined, use data boundaries
+    const userSetBoundaries = get(xyPlotParams, 'userSetBoundaries', {});
+    const boundaries = Object.assign({}, userSetBoundaries);
+    if (Object.keys(boundaries).length < 4 && !isEmpty(dataBoundaries)) {
+        const paddedDataBoundaries = getPaddedBoundaries(dataBoundaries);
+        const [xMin, xMax, yMin, yMax] = ['xMin', 'xMax', 'yMin', 'yMax'].map( (v) => {
+            return  (Number.isFinite(boundaries[v]) ? boundaries[v] : paddedDataBoundaries[v]);
+        });
+        const newBoundaries = omitBy({xMin, xMax, yMin, yMax}, isUndefined);
+        if (!isEmpty(newBoundaries)) {
+            newParams = updateSet(newParams, 'boundaries', newBoundaries);
+        }
+    }
+
     return newParams;
 }
 

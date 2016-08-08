@@ -30,6 +30,8 @@ export const plotParamsShape = PropTypes.shape({
     stretch : PropTypes.oneOf(['fit','fill']),
     selection : selectionShape,
     zoom : selectionShape,
+    boundaries : selectionShape,
+    userSetBoundaries : selectionShape,
     nbins : PropTypes.shape({x : PropTypes.number, y : PropTypes.number}),
     shading : PropTypes.oneOf(['lin', 'log']),
     x : axisParamsShape,
@@ -107,7 +109,7 @@ const getWeightedDataDescr = function(defaultDescr, numericData, minWeight, maxW
 };
 
 const getXAxisOptions = function(params) {
-    const xTitle = params.x.label + (params.x.unit ? ', ' + params.x.unit : '');
+    const xTitle = params.x.label + (params.x.unit ? ` (${params.x.unit})` : '');
     let xGrid = false, xReversed = false, xLog = false;
     const {options:xOptions} = params.x;
     if (xOptions) {
@@ -119,7 +121,7 @@ const getXAxisOptions = function(params) {
 };
 
 const getYAxisOptions = function(params) {
-    const yTitle = params.y.label + (params.y.unit ? ', ' + params.y.unit : '');
+    const yTitle = params.y.label + (params.y.unit ? ` (${params.y.unit})` : '');
 
     let yGrid = false, yReversed = false, yLog = false;
     const {options:yOptions} = params.y;
@@ -275,9 +277,16 @@ export class XYPlot extends React.Component {
                             type: newYOptions.yLog ? 'logarithmic' : 'linear'
                         });
                     }
-                    if (!shallowequal(params.zoom, newParams.zoom)) {
+                    if (!shallowequal(params.boundaries, newParams.boundaries)) {
                         const {xMin, xMax, yMin, yMax} = getZoomSelection(newParams);
                         const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = nextProps.data;
+                        Object.assign(xoptions, {min: selFinite(xMin,xDataMin), max: selFinite(xMax, xDataMax)});
+                        Object.assign(yoptions, {min: selFinite(yMin, yDataMin), max: selFinite(yMax, yDataMax)});
+                    }
+                    if (!shallowequal(params.zoom, newParams.zoom) ||
+                        !shallowequal(params.boundaries, newParams.boundaries)) {
+                        const {xMin, xMax, yMin, yMax} = getZoomSelection(newParams);
+                        const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = get(newParams, 'boundaries', {});
                         Object.assign(xoptions, {min: selFinite(xMin,xDataMin), max: selFinite(xMax, xDataMax)});
                         Object.assign(yoptions, {min: selFinite(yMin, yDataMin), max: selFinite(yMax, yDataMax)});
                     }
@@ -439,7 +448,7 @@ export class XYPlot extends React.Component {
                 }, {selected: [], all: []});
 
 
-                marker = {symbol: 'circle'};
+                marker = {symbol: 'circle', radius: 3};
                 allSeries = [
                     {
                         id: DATAPOINTS,
@@ -510,7 +519,7 @@ export class XYPlot extends React.Component {
                 id: HIGHLIGHTED,
                 name: HIGHLIGHTED,
                 color: highlightedColor,
-                marker: {symbol: 'circle', lineColor: '#404040', lineWidth: 1, radius: 5},
+                marker: {symbol: 'circle', lineColor: '#404040', lineWidth: 1, radius: 4},
                 data: highlightedData,
                 showInLegend: false
             }, true, false);
@@ -527,7 +536,8 @@ export class XYPlot extends React.Component {
         const {xTitle, xGrid, xReversed, xLog} = getXAxisOptions(params);
         const {yTitle, yGrid, yReversed, yLog} = getYAxisOptions(params);
         const {xMin, xMax, yMin, yMax} = getZoomSelection(params);
-        const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax, decimateKey} = data;
+        const {decimateKey} = data;
+        const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = get(params, 'boundaries', {});
 
         const makeSeries = this.makeSeries;
 
@@ -635,16 +645,22 @@ export class XYPlot extends React.Component {
                 type: yLog ? 'logarithmic' : 'linear'
             },
             series: [{
-                // this series is to make sure the axis are created
-                // without actual series xAxis creation is deferred
+                // This series is to make sure the axis are created.
+                // Without actual series, xAxis creation is deferred
                 // and there is no way to get value to pixel conversion
                 // for sizing the symbol
                 id: 'minmax',
                 name: 'minmax',
-                color: '#f0f0f0',
-                marker: {radius: 2},
+                color: 'rgba(240, 240, 240, 0.1)',
+                marker: {radius: 1},
                 data: [[selFinite(xMin, xDataMin), selFinite(yMin,yDataMin)], [selFinite(xMax, xDataMax), selFinite(yMax,yDataMax)]],
-                showInLegend: false
+                showInLegend: false,
+                enableMouseTracking: false,
+                states: {
+                    hover: {
+                        enabled: false
+                    }
+                }
             }],
             credits: {
                 enabled: false // removes a reference to Highcharts.com from the chart

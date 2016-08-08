@@ -3,11 +3,12 @@
  */
 import React, {PropTypes} from 'react';
 
-import {get, isUndefined, omitBy, defer, set} from 'lodash';
+import {get, isEmpty, isUndefined, omitBy, defer, set} from 'lodash';
 
 import ColValuesStatistics from './../ColValuesStatistics.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
+import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange, dispatchMultiValueChange, VALUE_CHANGE} from '../../fieldGroup/FieldGroupCntlr.js';
 import Validate from '../../util/Validate.js';
 import {Expression} from '../../util/expr/Expression.js';
@@ -17,7 +18,7 @@ import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 import {plotParamsShape} from  './XYPlot.jsx';
-import {showColSelectPopup} from './ColSelectView.jsx';
+import {showColSelectPopup, hideColSelectPopup} from './ColSelectView.jsx';
 
 const DECI_ENABLE_SIZE = 5000;
 
@@ -65,6 +66,11 @@ export function resultsSuccess(callback, flds) {
     const nbinsX = get(flds, ['nbins.x']);
     const nbinsY = get(flds, ['nbins.y']);
 
+    let {xMin, xMax, yMin, yMax} = flds;  // string values
+    [xMin, xMax, yMin, yMax] = [xMin, xMax, yMin, yMax].map((v) => { return (v && isFinite(v)) ? Number(v) : undefined; });
+    let userSetBoundaries = omitBy({xMin, xMax, yMin, yMax}, isUndefined);
+    userSetBoundaries = isEmpty(userSetBoundaries) ? undefined : userSetBoundaries;
+
     /*
       const axisParamsShape = PropTypes.shape({
          columnOrExpr : PropTypes.string,
@@ -74,6 +80,7 @@ export function resultsSuccess(callback, flds) {
       });
 
       const xyPlotParamsShape = PropTypes.shape({
+         userSetBoundaries : PropTypes.selection,
          xyRatio : PropTypes.string,
          stretch : PropTypes.oneOf(['fit','fill']),
          nbins : PropTypes.shape({x : PropTypes.number, y : PropTypes.number}),
@@ -83,6 +90,7 @@ export function resultsSuccess(callback, flds) {
       });
       */
     const xyPlotParams = omitBy({
+        userSetBoundaries,
         xyRatio : flds.xyRatio || undefined,
         stretch : flds.stretch,
         nbins : (nbinsX && nbinsY) ? {x: Number(nbinsX), y: Number(nbinsY)} : undefined,
@@ -109,6 +117,10 @@ export function setOptions(groupKey, xyPlotParams) {
         {fieldKey: 'y.label', value: get(xyPlotParams, 'y.label')},
         {fieldKey: 'y.unit', value: get(xyPlotParams, 'y.unit')},
         {fieldKey: 'y.options', value: get(xyPlotParams, 'y.options', 'grid')},
+        {fieldKey: 'xMin', value: get(xyPlotParams, 'userSetBoundaries.xMin')},
+        {fieldKey: 'xMax', value: get(xyPlotParams, 'userSetBoundaries.xMax')},
+        {fieldKey: 'yMin', value: get(xyPlotParams, 'userSetBoundaries.yMin')},
+        {fieldKey: 'yMax', value: get(xyPlotParams, 'userSetBoundaries.yMax')},
         {fieldKey: 'xyRatio', value: get(xyPlotParams, 'xyRatio')},
         {fieldKey: 'stretch', value: get(xyPlotParams, 'stretch', 'fit')},
         {fieldKey: 'nbins.x', value: get(xyPlotParams, 'nbins.x', 100)},
@@ -136,18 +148,37 @@ export function getColValidator(colValStats) {
 
 /**
  * Reducer from field group component,
+ *   clears label, unit, and userSetBoundaries whenever x or y field changes,
+ *   validates min-max field relationship
  * @returns {*} reducer, which clears label and unit whenever x or y field changes
  */
 function fldChangeReducer(inFields, action) {
     if (!inFields) { return {}; }
     if (action.type === VALUE_CHANGE) {
         // when field changes, clear the label and unit
-        if (get(action.payload, 'fieldKey') === 'x.columnOrExpr') {
+        const fieldKey = get(action.payload, 'fieldKey');
+        if (fieldKey === 'x.columnOrExpr') {
             set(inFields, ['x.label', 'value'], undefined);
             set(inFields, ['x.unit', 'value'], undefined);
-        } else if (get(action.payload, 'fieldKey') === 'y.columnOrExpr') {
+            set(inFields, ['xMin', 'value'], undefined);
+            set(inFields, ['xMax', 'value'], undefined);
+        } else if (fieldKey === 'y.columnOrExpr') {
             set(inFields, ['y.label', 'value'], undefined);
             set(inFields, ['y.unit', 'value'], undefined);
+            set(inFields, ['yMin', 'value'], undefined);
+            set(inFields, ['yMax', 'value'], undefined);
+        } else {
+            [{min: 'xMin', max: 'xMax'}, {min: 'yMin', max: 'yMax'}].forEach(
+                (v) => {
+                    if (fieldKey === v.min || fieldKey === v.max) {
+                        const valMin = Number.parseFloat(get(inFields, [v.min, 'value']));
+                        const valMax = Number.parseFloat(get(inFields, [v.max, 'value']));
+                        if (Number.isFinite(valMin) && Number.isFinite(valMax) && valMin > valMax) {
+                            set(inFields, [fieldKey, 'valid'], false);
+                            set(inFields, [fieldKey, 'message'], 'Min value greater than max');
+                        }
+                    }
+                });
         }
     }
     return inFields;
@@ -158,9 +189,24 @@ export class XYPlotOptions extends React.Component {
 
     constructor(props) {
         super(props);
+        this.state = {
+            displayStretchOptions : Boolean(get(props, ['xyPlotParams', 'xyRatio']))
+        };
+        this.setStretchOptionsVisibility = this.setStretchOptionsVisibility.bind(this);
+    }
+
+    componentWillUnmount() {
+        this.iAmMounted= false;
+        if (this.unbinder) this.unbinder();
+        hideColSelectPopup();
     }
 
     componentDidMount() {
+        this.unbinder = FieldGroupUtils.bindToStore(this.props.groupKey,
+            (fields) => {
+                this.setStretchOptionsVisibility(Boolean(get(fields, ['xyRatio', 'value']) && get(fields, ['xyRatio', 'valid'])));
+            });
+
         // make sure column validator matches current columns
         const {colValStats, groupKey, xyPlotParams} = this.props;
         if (colValStats) {
@@ -174,19 +220,26 @@ export class XYPlotOptions extends React.Component {
                 defer(setOptions, groupKey, xyPlotParams);
             }
         }
+        this.iAmMounted= true;
     }
 
-    shouldComponentUpdate(np) {
+    shouldComponentUpdate(np, ns) {
         return this.props.groupKey !== np.groupKey || this.props.colValStats !== np.colValStats ||
-            this.props.xyPlotParams !== np.xyPlotParams;
+            this.props.xyPlotParams !== np.xyPlotParams || this.state !== ns;
     }
 
     componentWillReceiveProps(np) {
         if (this.props.xyPlotParams !== np.xyPlotParams) {
             defer(setOptions, np.groupKey, np.xyPlotParams);
+            this.setStretchOptionsVisibility(Boolean(get(np, ['xyPlotParams', 'xyRatio'])));
         }
     }
 
+    setStretchOptionsVisibility(displayStretchOptions) {
+        if (this.iAmMounted && displayStretchOptions  !== this.state.displayStretchOptions) {
+            this.setState({displayStretchOptions});
+        }
+    }
 
     renderBinningOptions() {
         const { colValStats, groupKey, xyPlotParams }= this.props;
@@ -201,22 +254,22 @@ export class XYPlotOptions extends React.Component {
                         nullAllowed : false,
                         validator: Validate.intRange.bind(null, 1, 300, 'X-Bins'),
                         tooltip: 'Number of bins along X axis',
-                        label : 'X-Bins:'
+                        label : 'Number of X-Bins:'
                     }}
                                  fieldKey='nbins.x'
                                  groupKey={groupKey}
-                                 labelWidth={60}/>
+                                 labelWidth={90}/>
                 <ValidationField style={{width:50}}
                                  initialState= {{
                         value: get(xyPlotParams, 'nbins.y', 100),
                         nullAllowed : false,
                         validator: Validate.intRange.bind(null, 1, 300, 'Y-Bins'),
                         tooltip: 'Number of bins along Y axis',
-                        label : 'Y-Bins:'
+                        label : 'Number of Y-Bins:'
                     }}
                                  fieldKey='nbins.y'
                                  groupKey={groupKey}
-                                 labelWidth={60}/>
+                                 labelWidth={90}/>
                 <br/>
                 <RadioGroupInputField
                     alignment='horizontal'
@@ -235,6 +288,103 @@ export class XYPlotOptions extends React.Component {
                 />
             </FieldGroupCollapsible> );
         } else { return null; }
+    }
+
+
+    renderMoreOptions() {
+        const { groupKey, xyPlotParams } = this.props;
+        const labelWidth = 35;
+        //<FieldGroupCollapsible  header='More Options'
+        //                        initialState= {{ value:'closed' }}
+        //                        fieldKey='moreoptions'>
+        return (
+            <div>
+                <div style={helpStyle}>
+                    Set plot boundaries if different from data range.
+                </div>
+                <div style={{display: 'flex', flexDirection: 'row', padding: '5px 15px 15px'}}>
+                    <div style={{paddingRight: 5}}>
+                        <ValidationField
+                            style={{width:55}}
+                            initialState= {{
+                                value: get(xyPlotParams, ['userSetBoundaries','xMin']),
+                                validator: (val)=>Validate.isFloat('X Min', val),
+                                tooltip: 'Minimum X value',
+                                label : 'X Min:'
+                            }}
+                            fieldKey='xMin'
+                            groupKey={groupKey}
+                            labelWidth={labelWidth}/>
+                        <ValidationField
+                            style={{width:55}}
+                            initialState= {{
+                                value: get(xyPlotParams, ['userSetBoundaries','yMin']),
+                                validator: (val)=>Validate.isFloat('Y Min', val),
+                                tooltip: 'Minimum Y value',
+                                label : 'Y Min:'
+                            }}
+                            fieldKey='yMin'
+                            groupKey={groupKey}
+                            labelWidth={labelWidth}/>
+                    </div>
+                    <div style={{paddingRight: 5}}>
+                        <ValidationField
+                            style={{width:55}}
+                            initialState= {{
+                                value: get(xyPlotParams, ['userSetBoundaries','xMax']),
+                                validator: (val)=>Validate.isFloat('X Max', val),
+                                tooltip: 'Maximum X value',
+                                label : 'X Max:'
+                            }}
+                            fieldKey='xMax'
+                            groupKey={groupKey}
+                            labelWidth={labelWidth}/>
+                        <ValidationField
+                            style={{width:55}}
+                            initialState= {{
+                                value: get(xyPlotParams, ['userSetBoundaries','yMax']),
+                                validator: (val)=>Validate.isFloat('Y Max', val),
+                                tooltip: 'Maximum Y value',
+                                label : 'Y Max:'
+                            }}
+                            fieldKey='yMax'
+                            groupKey={groupKey}
+                            labelWidth={labelWidth}/>
+                    </div>
+                </div>
+                <div style={helpStyle}>
+                    Enter display aspect ratio below.<br/>
+                    Leave it blank to use all available space.<br/>
+                </div>
+                <ValidationField style={{width:30}}
+                                 initialState= {{
+                        value: get(xyPlotParams, 'xyRatio'),
+                        validator: Validate.floatRange.bind(null, 1, 10, 1, 'X/Y ratio'),
+                        tooltip: 'X/Y ratio',
+                        label : 'X/Y ratio:'
+                    }}
+                                 fieldKey='xyRatio'
+                                 groupKey={groupKey}
+                                 labelWidth={60}/>
+                <br/>
+                {this.state.displayStretchOptions && <RadioGroupInputField
+                    alignment='horizontal'
+                    initialState= {{
+                        value: get(xyPlotParams, 'stretch', 'fit'),
+                        tooltip: 'Should the plot fit into the available space or fill the available width?',
+                        label : 'Stretch to:'
+                    }}
+                    options={[
+                        {label: 'Fit', value: 'fit'},
+                        {label: 'Fill', value: 'fill'}
+                    ]}
+                    fieldKey='stretch'
+                    groupKey={groupKey}
+                    labelWidth={60}
+                />}
+            </div>
+        );
+        //</FieldGroupCollapsible>
     }
 
     render() {
@@ -329,7 +479,7 @@ export class XYPlotOptions extends React.Component {
                             }}
                             fieldKey='x.label'
                             groupKey={groupKey}
-                            labelWidth={50}/>
+                            labelWidth={35}/>
                         <ValidationField
                             initialState= {{
                                 value: get(xyPlotParams, 'x.unit'),
@@ -339,7 +489,7 @@ export class XYPlotOptions extends React.Component {
                                 }}
                             fieldKey='x.unit'
                             groupKey={groupKey}
-                            labelWidth={50}/>
+                            labelWidth={35}/>
 
                         <br/>
                         <CheckboxGroupInputField
@@ -397,7 +547,7 @@ export class XYPlotOptions extends React.Component {
                             }}
                             fieldKey='y.label'
                             groupKey={groupKey}
-                            labelWidth={50}/>
+                            labelWidth={35}/>
                         <ValidationField
                             initialState= {{
                                 value: get(xyPlotParams, 'y.unit'),
@@ -407,7 +557,7 @@ export class XYPlotOptions extends React.Component {
                                 }}
                             fieldKey='y.unit'
                             groupKey={groupKey}
-                            labelWidth={50}/>
+                            labelWidth={35}/>
 
                         <br/>
                         <CheckboxGroupInputField
@@ -428,36 +578,8 @@ export class XYPlotOptions extends React.Component {
                         />
                         <br/>
                     </FieldGroupCollapsible>
-                    <div style={helpStyle}>
-                        Enter display aspect ratio below.<br/>
-                        Leave it blank to use all available space.<br/>
-                    </div>
-                    <ValidationField style={{width:50}}
-                                     initialState= {{
-                            value: get(xyPlotParams, 'xyRatio'),
-                            validator: Validate.floatRange.bind(null, 1, 10, 1, 'X/Y ratio'),
-                            tooltip: 'X/Y ratio',
-                            label : 'X/Y ratio:'
-                        }}
-                                     fieldKey='xyRatio'
-                                     groupKey={groupKey}
-                                     labelWidth={60}/>
                     <br/>
-                    <RadioGroupInputField
-                        alignment='horizontal'
-                        initialState= {{
-                            value: get(xyPlotParams, 'stretch', 'fit'),
-                            tooltip: 'Should the plot fit into the available space or fill the available width?',
-                            label : 'Stretch to:'
-                        }}
-                        options={[
-                            {label: 'Fit', value: 'fit'},
-                            {label: 'Fill', value: 'fill'}
-                        ]}
-                        fieldKey='stretch'
-                        groupKey={groupKey}
-                        labelWidth={60}
-                    />
+                    {this.renderMoreOptions()}
                     {this.renderBinningOptions()}
                     <br/>
 
