@@ -18,23 +18,20 @@ class FireflyClient(WebSocketClient):
     #       'data': ['channel']
     # }
 
-    fftoolsCmd = '/firefly/sticky/CmdSrv'
-    myLocalhost = 'localhost:8080'
+    fftools_cmd = '/firefly/sticky/CmdSrv'
+    my_localhost = 'localhost:8080'
     ALL = 'ALL_EVENTS_ENABLED'
 
     # for serializing the RangeValues object
-    stretchTypeDict = {'percent': 88, 'maxmin': 89, 'absolute': 90,  'zscale': 91, 'sigma': 92}
-    stretchAlgorithmDict = {'linear': 44, 'log': 45, 'loglog': 46, 'equal': 47, 'squared': 48, 'sqrt': 49,
-                            'asinh': 50, 'powerlaw_gamma': 51}
+    STRETCH_TYPE_DICT = {'percent': 88, 'maxmin': 89, 'absolute': 90,  'zscale': 91, 'sigma': 92}
+    STRETCH_ALGORITHM_DICT = {'linear': 44, 'log': 45, 'loglog': 46, 'equal': 47, 'squared': 48, 'sqrt': 49,
+                              'asinh': 50, 'powerlaw_gamma': 51}
 
     # extension type
-    extensionType = ['AREA_SELECT', 'LINE_SELECT', 'POINT']
-
-    # id for table, region layer, extension
-    itemID = {'Table': 0, 'RegionLayer': 0, 'Extension': 0}
+    EXTENSION_TYPE = ['AREA_SELECT', 'LINE_SELECT', 'POINT']
 
     # actions from Firefly
-    actionDict = {
+    ACTION_DICT = {
        'ShowFits': 'ImagePlotCntlr.PlotImage',
        'AddExtension': 'ExternalAccessCntlr/extensionAdd',
        'ShowTable': 'table.search',
@@ -46,17 +43,20 @@ class FireflyClient(WebSocketClient):
        'AddRegionData': 'DrawLayerCntlr.RegionPlot.addRegion',
        'RemoveRegionData': 'DrawLayerCntlr.RegionPlot.removeRegion'}
 
+    # id for table, region layer, extension
+    _item_id = {'Table': 0, 'RegionLayer': 0, 'Extension': 0}
+
     # the constructor, define instance variables for the object
-    def __init__(self, host=myLocalhost, channel=None):
+    def __init__(self, host=my_localhost, channel=None):
         if host.startswith('http://'):
             host = host[7:]
-        self.thisHost = host
+        self.this_host = host
         url = 'ws://%s/firefly/sticky/firefly/events' % host  # web socket url
         if channel:
             url += '?channelID=%s' % channel
         WebSocketClient.__init__(self, url)
-        self.urlRoot = 'http://' + host + self.fftoolsCmd
-        self.urlBW = 'http://' + self.thisHost + '/firefly/firefly.html;wsch='
+        self.url_root = 'http://' + host + self.fftools_cmd
+        self.url_bw = 'http://' + self.this_host + '/firefly/firefly.html;wsch='
         self.listeners = {}
         self.channel = channel
         self.session = requests.Session()
@@ -115,19 +115,19 @@ class FireflyClient(WebSocketClient):
         :param data
         :return:
         """
-        response = self.session.post(self.urlRoot, data=data)
+        response = self.session.post(self.url_root, data=data)
         status = json.loads(response.text)
         return status[0]
 
     def _is_page_connected(self):
         ip = socket.gethostbyname(socket.gethostname())
-        url = self.urlRoot + '?cmd=pushAliveCheck&ipAddress=%s' % ip
+        url = self.url_root + '?cmd=pushAliveCheck&ipAddress=%s' % ip
         retval = self._send_url_as_get(url)
         return retval['active']
 
     # def onConnected(self, channel):
     #     #open the browser
-    #     url = 'http://' + self.thisHost + '/fftools/app.html?id=Loader&channelID=' + channel
+    #     url = 'http://' + self.this_host + '/fftools/app.html?id=Loader&channelID=' + channel
     #     webbrowser.open('http://localhost:8080/fftools/app.html?id=Loader&channelID=' + channel)
     #     webbrowser.open(url)
 
@@ -173,7 +173,7 @@ class FireflyClient(WebSocketClient):
         """
         WebSocketClient.run_forever(self)
 
-    def getFireflyUrl(self, mode=None, channel=None):
+    def get_firefly_url(self, mode=None, channel=None):
         """
         Get URL to Firefly Tools viewer and the channel set. Normally this method
         will be call without any parameters.
@@ -184,12 +184,12 @@ class FireflyClient(WebSocketClient):
         if not channel:
             channel = self.channel
 
-        url = 'http://' + self.thisHost + '/firefly/firefly.html?id=Loader&channelID='
+        url = 'http://' + self.this_host + '/firefly/firefly.html?id=Loader&channelID='
         if mode == "full":
-            url = self.urlBW
+            url = self.url_bw
         return url + channel
 
-    def launchBrowser(self, url=None, channel=None, force=False):
+    def launch_browser(self, url=None, channel=None, force=False):
         """
         Launch a browsers with the Firefly Tools viewer and the channel set. Normally this method
         will be call without any parameters.
@@ -200,60 +200,60 @@ class FireflyClient(WebSocketClient):
         if not channel:
             channel = self.channel
         if not url:
-            url = self.urlBW
-        doOpen = True if force else not self._is_page_connected()
-        if doOpen:
-            webbrowser.open(self.getFireflyUrl(url, channel))
+            url = self.url_bw
+        do_open = True if force else not self._is_page_connected()
+        if do_open:
+            webbrowser.open(self.get_firefly_url(url, channel))
         time.sleep(5)  # todo: find something better to do than sleeping
         return channel
 
-    def stayConnected(self):
+    def stay_connected(self):
         self.ws.run()
 
     def disconnect(self):
         self.close()
 
-    def uploadFile(self, path, preLoad=True):
+    def upload_file(self, path, pre_load=True):
         """ Upload a file to the Firefly Server
         :param path: uploaded file can be fits, region, and various types of table files
         """
-        url = 'http://' + self.thisHost + '/firefly/sticky/Firefly_FileUpload?preload=%s' % preLoad
+        url = 'http://' + self.this_host + '/firefly/sticky/Firefly_FileUpload?preload=%s' % pre_load
         files = {'file': open(path, 'rb')}
         result = self.session.post(url, files=files)
         index = result.text.find('$')
         return result.text[index:]
 
-    def uploadFitsData(self, stream):
+    def upload_fits_data(self, stream):
         """
         Upload a FITS file like object to the Firefly server. The method should allows file like data
         to be streamed without using a actual file.
         :param stream: a file like object
         :return: status
         """
-        url = 'http://' + self.thisHost + '/firefly/sticky/Firefly_FileUpload?preload=true'
-        dataPack = {'data': stream}
-        result = self.session.post(url, files=dataPack)
+        url = 'http://' + self.this_host + '/firefly/sticky/Firefly_FileUpload?preload=true'
+        data_pack = {'data': stream}
+        result = self.session.post(url, files=data_pack)
         index = result.text.find('$')
         return result.text[index:]
 
-    def uploadTextData(self, stream):
+    def upload_text_data(self, stream):
         """
         Upload a Text file like object to the Firefly server. The method should allows file like data
         to be streamed without using a actual file.
         :param stream: a file like object
         :return: status
         """
-        return self.uploadData(stream, 'UNKNOWN')
+        return self.upload_data(stream, 'UNKNOWN')
 
-    def uploadData(self, stream, dataType):
-        url = 'http://' + self.thisHost + '/firefly/sticky/Firefly_FileUpload?preload='
-        url += 'true&type=FITS' if dataType == 'FITS' else 'false&type=UNKNOWN'
-        dataPack = {'data': stream}
-        result = self.session.post(url, files=dataPack)
+    def upload_data(self, stream, data_type):
+        url = 'http://' + self.this_host + '/firefly/sticky/Firefly_FileUpload?preload='
+        url += 'true&type=FITS' if data_type == 'FITS' else 'false&type=UNKNOWN'
+        data_pack = {'data': stream}
+        result = self.session.post(url, files=data_pack)
         index = result.text.find('$')
         return result.text[index:]
 
-    def dispatchRemoteAction(self, channel, actionType, payload):
+    def dispatch_remote_action(self, channel, action_type, payload):
         """
         dispatch the action to the server by using 'GET' request
         :param: channel
@@ -261,19 +261,19 @@ class FireflyClient(WebSocketClient):
         :param: payload: payload for the action
         """
 
-        action = {'type': actionType, 'payload': payload}
-        url = self.urlRoot + '?channelID=' + channel + '&cmd=pushAction&action='
+        action = {'type': action_type, 'payload': payload}
+        url = self.url_root + '?channelID=' + channel + '&cmd=pushAction&action='
         url += json.dumps(action)
         return self._send_url_as_get(url)
 
-    def dispatchRemoteActionByPost(self, channel, actionType, payload):
+    def dispatch_remote_action_by_post(self, channel, action_type, payload):
         """
         dispatch the action to the server by using 'POST' request
         :param: channel
         :param: actionType
         :param: payload: payload for the action
         """
-        action = {'type': actionType, 'payload': payload}
+        action = {'type': action_type, 'payload': payload}
         data = {'channelID': channel, 'cmd': 'pushAction', 'action': json.dumps(action)}
 
         return self._send_url_as_post(data)
@@ -286,10 +286,10 @@ class FireflyClient(WebSocketClient):
     # action on showing fits, tables, XYPlot and adding extension
     # ----------------------------------------------------------------
 
-    def showFits(self, fileOnServer=None, plot_id=None, **additionalParams):
+    def show_fits(self, file_on_server=None, plot_id=None, **additional_params):
         """
         Show a fits image
-        :param: fileOnServer: the is the name of the file on the server.  If you used uploadFile()
+        :param: file_on_server: the is the name of the file on the server.  If you used upload_file()
                           then it is the return value of the method. Otherwise it is a file that
                           firefly has direct read access to.
         :param: plot_id: the id you assigned to the plot. This is necessary to further control the plot
@@ -297,93 +297,95 @@ class FireflyClient(WebSocketClient):
                           see firefly/docs/fits-plotting-parameters.md
         :return: status of call
         """
-        wpRequest = {'plotGroupId': 'groupFromPython',
-                     'GroupLocked': False}
-        payload = {'wpRequest': wpRequest,
+        wp_request = {'plotGroupId': 'groupFromPython',
+                      'GroupLocked': False}
+        payload = {'wpRequest': wp_request,
                    'useContextModifications': True,
                    'viewerId': 'DEFAULT_FITS_VIEWER_ID'}
         if plot_id:
             payload['wpRequest'].update({'plotId': plot_id})
-        if fileOnServer:
-            payload['wpRequest'].update({'file': fileOnServer})
-        if additionalParams:
-            payload['wpRequest'].update(additionalParams)
-        return self.dispatchRemoteAction(self.channel, FireflyClient.actionDict['ShowFits'], payload)
+        if file_on_server:
+            payload['wpRequest'].update({'file': file_on_server})
+        if additional_params:
+            payload['wpRequest'].update(additional_params)
+        return self.dispatch_remote_action(self.channel, FireflyClient.ACTION_DICT['ShowFits'], payload)
 
-    def showTable(self, fileOnServer, tblId=None, title=None, pageSize=100, isCatalog=True):
+    def show_table(self, file_on_server, tbl_id=None, title=None, page_size=100, is_catalog=True):
         """
         Show a table in Firefly
-        :param fileOnServer: the is the name of the file on the server.  If you used uploadFile()
+        :param file_on_server: the is the name of the file on the server.  If you used upload_file()
                        then it is the return value of the method. Otherwise it is a file that
                        firefly has direct read access to.
+        :param tbl_id: table Id
         :param title: title on table
-        :param pageSize: how many rows are shown.
-        :param isCatalog: catalog or table
+        :param page_size: how many rows are shown.
+        :param is_catalog: catalog or table
         :return: status of call
         """
 
-        if not tblId:
-            tblId = FireflyClient._genItemId('Table')
+        if not tbl_id:
+            tbl_id = FireflyClient._gen_item_id('Table')
         if not title:
-            title = tblId
-        tblType = 'table' if not isCatalog else 'catalog'
+            title = tbl_id
+        tbl_type = 'table' if not is_catalog else 'catalog'
 
-        tblReq = {'startIdx': 0, 'pageSize': pageSize, 'source': fileOnServer, 'tblType': tblType,
-                  'id': 'IpacTableFromSource', 'tbl_id': tblId}
-        metaInfo = {'title': title, 'tbl_id': tblId}
-        tblReq.update({'META_INFO': metaInfo})
-        payload = {'request': tblReq}
+        tbl_req = {'startIdx': 0, 'pageSize': page_size, 'source': file_on_server, 'tblType': tbl_type,
+                   'id': 'IpacTableFromSource', 'tbl_id': tbl_id}
+        meta_info = {'title': title, 'tbl_id': tbl_id}
+        tbl_req.update({'META_INFO': meta_info})
+        payload = {'request': tbl_req}
 
-        return self.dispatchRemoteAction(self.channel, FireflyClient.actionDict['ShowTable'], payload)
+        return self.dispatch_remote_action(self.channel, FireflyClient.ACTION_DICT['ShowTable'], payload)
 
-    def showXYPlot(self, fileOnServer, **additionalParams):
+    def show_xyplot(self, file_on_server, **additional_params):
         """
         TODO
         Show a table in Firefly
-        :param fileOnServer: the is the name of the file on the server.  If you used uploadFile()
+        :param file_on_server: the is the name of the file on the server.  If you used upload_file()
                        then it is the return value of the method. Otherwise it is a file that
                        firefly has direct read access to.
-        :param additionalParams: XY Plot Viewer parameters
+        :param additional_params: XY Plot Viewer parameters
         :return: status of call
         """
-        url = self.urlRoot + "?cmd=pushXYPlot"
-        if additionalParams:
-            url += '&' + '&'.join(['%s=%s' % (k, v) for k, v in additionalParams.items()])
-        url += '&file=%s' % fileOnServer
+        url = self.url_root + "?cmd=pushXYPlot"
+        if additional_params:
+            url += '&' + '&'.join(['%s=%s' % (k, v) for k, v in additional_params.items()])
+        url += '&file=%s' % file_on_server
         return self._send_url_as_get(url)
 
-    def addExtension(self, extType, plot_id=None, title='', toolTip='', extensionId=None, imageSrc=None):
+    def add_extension(self, ext_type, plot_id=None, title='', tool_tip='',
+                      extension_id=None, image_src=None):
         """
         TODO: callback
         Add an extension to the plot.  Extensions are context menus that allows you to extend
         what firefly can so when certain actions happen
-        :param extType: May be 'AREA_SELECT', 'LINE_SELECT', or 'POINT'. todo: 'CIRCLE_SELECT'
+        :param ext_type: May be 'AREA_SELECT', 'LINE_SELECT', or 'POINT'. todo: 'CIRCLE_SELECT'
         :param title: The title that the user sees
         :param plot_id: The it of the plot to put the extension on
-        :param extensionId: The id of the extension
-        :param imageSrc: image source of an icon to display the toolbar instead of title
+        :param extension_id: The id of the extension
+        :param image_src: image source of an icon to display the toolbar instead of title
         :return: status of call
         """
 
-        if extType not in FireflyClient.extensionType:
-            extType = 'NONE'
+        if ext_type not in FireflyClient.EXTENSION_TYPE:
+            ext_type = 'NONE'
 
-        if not extensionId:
-            extensionId = FireflyClient._genItemId('Extension')
+        if not extension_id:
+            extension_id = FireflyClient._gen_item_id('Extension')
 
-        imageUrl = FireflyClient.createImageURL(imageSrc) if imageSrc else None
+        image_url = FireflyClient.create_image_url(image_src) if image_src else None
 
-        extension = {'id': extensionId, 'plotId': plot_id, 'imageUrl': imageUrl,
-                     'title': title, 'extType': extType, 'toolTip': toolTip}
+        extension = {'id': extension_id, 'plotId': plot_id, 'imageUrl': image_url,
+                     'title': title, 'extType': ext_type, 'toolTip': tool_tip}
         payload = {'extension': extension}
-        return self.dispatchRemoteActionByPost(self.channel,
-                                               FireflyClient.actionDict['AddExtension'], payload)
+        return self.dispatch_remote_action_by_post(self.channel, FireflyClient.ACTION_DICT['AddExtension'],
+                                                   payload)
 
     # ----------------------------
     # actions on image
     # ----------------------------
 
-    def setZoom(self, plot_id, factor=1.0):
+    def set_zoom(self, plot_id, factor=1.0):
         """
         Zoom the image
         :param plot_id: plotId to which the region is added, parameter may be string or a list of strings.
@@ -391,16 +393,16 @@ class FireflyClient(WebSocketClient):
         :return:
         """
 
-        def zoomOnePlot(plot_id, factor):
+        def zoom_oneplot(plot_id, factor):
             payload = {'plotId': plot_id, 'userZoomType': 'LEVEL', 'level': factor, 'actionScope': 'SINGLE'}
-            return self.dispatchRemoteAction(self.channel, FireflyClient.actionDict['ZoomImage'], payload)
+            return self.dispatch_remote_action(self.channel, FireflyClient.ACTION_DICT['ZoomImage'], payload)
 
         if isinstance(plot_id, tuple) or isinstance(plot_id, list):
-            return [zoomOnePlot(x, factor) for x in plot_id]
+            return [zoom_oneplot(x, factor) for x in plot_id]
         else:
-            return zoomOnePlot(plot_id, factor)
+            return zoom_oneplot(plot_id, factor)
 
-    def setPan(self, plot_id, x=None, y=None, coord='image'):
+    def set_pan(self, plot_id, x=None, y=None, coord='image'):
         """
         Pan or scroll the image to center on the image coordinates passed
         if no (x, y) is given, the image is recentered at the center of the image
@@ -419,229 +421,228 @@ class FireflyClient(WebSocketClient):
             else:
                 payload.update({'centerPt': {'x': x, 'y': y, 'type': 'J2000'}})
 
-        return self.dispatchRemoteAction(self.channel, FireflyClient.actionDict['PanImage'], payload)
+        return self.dispatch_remote_action(self.channel, FireflyClient.ACTION_DICT['PanImage'], payload)
 
-    def setStretch(self, plot_id, type=None, algorithm=None, **additionParams):
+    def set_stretch(self, plot_id, type=None, algorithm=None, **additional_params):
         """
         Change the stretch of the image (no band case)
         :param type: 'percent','maxmin','absolute','zscale', or 'sigma'
         :param algorithm: 'linear', 'log','loglog','equal', 'squared', 'sqrt', 'asinh', 'powerlaw_gamma'
         :param plot_id: plotId to which the range is added, parameter may be string or a list of strings.
-        :param additionParams:
-                for type is 'zscale', keyword arguments: zscaleContrast, zscaleSamples, zscaleSamplesPerLine
-                for type is others,   keyword arguments: lowerValue, upperValue
+        :param additional_params:
+                for type is 'zscale', kwargs: zscale_contrast, zscale_samples, zscale_samples_perline
+                for type is others,   kwargs: lower_value, upper_value
         :return: status of call
         """
 
         if type and type.lower() == 'zscale':
-            serializedRV = FireflyClient._createRangeValuesZScale(algorithm, **additionParams)
+            serialized_rv = self._create_rangevalues_zscale(algorithm, **additional_params)
         else:
-            serializedRV = FireflyClient._createRangeValuesStandard(algorithm, type, **additionParams)
+            serialized_rv = self._create_rangevalues_standard(algorithm, type, **additional_params)
 
-        stData = [{'band': 'NO_BAND', 'rv': serializedRV, 'bandVisible': True}]
-        payload = {'stretchData': stData, 'plotId': plot_id}
+        st_data = [{'band': 'NO_BAND', 'rv': serialized_rv, 'bandVisible': True}]
+        payload = {'stretchData': st_data, 'plotId': plot_id}
 
-        return self.dispatchRemoteAction(self.channel, FireflyClient.actionDict['StretchImage'], payload)
+        return self.dispatch_remote_action(self.channel, FireflyClient.ACTION_DICT['StretchImage'], payload)
 
     # -----------------------------------------------------------------
     # Region Stuff
     # -----------------------------------------------------------------
 
-    def overlayRegionLayer(self, fileOnServer=None, regionData=None, title=None,
-                           regionLayerId=None, plot_id=None):
+    def overlay_region_layer(self, file_on_server=None, region_data=None, title=None,
+                             region_layer_id=None, plot_id=None):
         """
         Overlay a region layer on the loaded FITS images, the regions are defiend either by a file or
         by some text description
-        :param fileOnServer: the is the name of the file on the server.  If you used uploadFile()
+        :param file_on_server: the is the name of the file on the server.  If you used upload_file()
                                             then it is the return value of the method. Otherwise it
                                             is a file that firefly has direct read access to.
-        :param regionData: region description, either a list of strings or a string
+        :param region_data: region description, either a list of strings or a string
         :param title: title of the region file
-        :param regionLayerId: id of layer to add
+        :param region_layer_id: id of layer to add
         :param plot_id: plotId to which this region should be added, parameter may be string or
                         a list of strings. If None then overlay region on all plots
         :return: status of call
         """
 
-        if not regionLayerId:
-            regionLayerId = FireflyClient._genItemId('RegionLayer')
-        payload = {'regionId': regionLayerId}
+        if not region_layer_id:
+            region_layer_id = FireflyClient._gen_item_id('RegionLayer')
+        payload = {'regionId': region_layer_id}
 
         if title:
             payload.update({'layerTitle': title})
         if plot_id:
             payload.update({'plotId': plot_id})
 
-        if fileOnServer:
-            payload.update({'fileOnServer': fileOnServer})
-            return self.dispatchRemoteAction(self.channel,
-                                             FireflyClient.actionDict['CreateRegionLayer'], payload)
-        elif regionData:
-            payload.update({'regionAry': regionData})
-            return self.dispatchRemoteActionByPost(self.channel,
-                                                   FireflyClient.actionDict['CreateRegionLayer'], payload)
+        if file_on_server:
+            payload.update({'fileOnServer': file_on_server})
+            return self.dispatch_remote_action(self.channel,
+                                               FireflyClient.ACTION_DICT['CreateRegionLayer'], payload)
+        elif region_data:
+            payload.update({'regionAry': region_data})
+            return self.dispatch_remote_action_by_post(
+                    self.channel, FireflyClient.ACTION_DICT['CreateRegionLayer'], payload)
 
-    def deleteRegionLayer(self, regionLayerId, plot_id=None):
+    def delete_region_layer(self, region_layer_id, plot_id=None):
         """
         Delete region layer on the loaded FITS images
-        :param regionLayerId: regionLayer to remove
+        :param region_layer_id: regionLayer to remove
         :param plot_id: plotId to which the region layer should be removed, if None,
                         then remove region layer from all plots
         :return: status of call
         """
 
-        payload = {'regionId': regionLayerId}
+        payload = {'regionId': region_layer_id}
         if plot_id:
             payload.update({'plotId': plot_id})
 
-        return self.dispatchRemoteAction(self.channel,
-                                         FireflyClient.actionDict['DeleteRegionLayer'], payload)
+        return self.dispatch_remote_action(self.channel,
+                                           FireflyClient.ACTION_DICT['DeleteRegionLayer'], payload)
 
-    def addRegionData(self, regionData, regionLayerId):
+    def add_region_data(self, region_data, region_layer_id):
         """
         Add the specified region entries
-        :param regionData: a list of region entries
-        :param regionLayerId: id of region to remove entries from
+        :param region_data: a list of region entries
+        :param region_layer_id: id of region to remove entries from
         :return: status of call
         """
-        payload = {'regionChanges': regionData, 'regionId': regionLayerId}
+        payload = {'regionChanges': region_data, 'regionId': region_layer_id}
 
-        return self.dispatchRemoteActionByPost(self.channel,
-                                               FireflyClient.actionDict['AddRegionData'], payload)
+        return self.dispatch_remote_action_by_post(self.channel,
+                                                   FireflyClient.ACTION_DICT['AddRegionData'], payload)
 
-    def removeRegionData(self, regionData, regionLayerId):
+    def remove_region_data(self, region_data, region_layer_id):
         """
         Remove the specified region entries
-        :param regionData: a list of region entries
-        :param regionLayerId: id of region to remove entries from
+        :param region_data: a list of region entries
+        :param region_layer_id: id of region to remove entries from
         :return: status of call
         """
-        payload = {'regionChanges': regionData, 'regionId': regionLayerId}
+        payload = {'regionChanges': region_data, 'regionId': region_layer_id}
 
-        return self.dispatchRemoteActionByPost(self.channel,
-                                               FireflyClient.actionDict['RemoveRegionData'], payload)
+        return self.dispatch_remote_action_by_post(self.channel,
+                                                   FireflyClient.ACTION_DICT['RemoveRegionData'], payload)
 
-    def addMask(self, maskId, bitNumber, imageNumber, color, plot_id, bitDesc=None, fileOnServer=None):
+    def add_mask(self, mask_id, bit_number, image_number, color, plot_id,
+                 bit_desc=None, file_on_server=None):
         """
         Add a mask layer
         TODO
-        :param maskId: id of mask
-        :param bitNumber: bitNumber of the mask to overlay
-        :param imageNumber: imageNumber of the mask layer
+        :param mask_id: id of mask
+        :param bit_number: bitNumber of the mask to overlay
+        :param image_number: imageNumber of the mask layer
         :param color: color as an html color (eg. #FF0000 (red) #00FF00 (green)
         :param plot_id: plot id to overlay the mask on
-        :param bitDesc: (optional) description of the mask layer
-        :param fileOnServer: (optional) file to get the mask from, if None then get it from the original file
+        :param bit_desc: (optional) description of the mask layer
+        :param file_on_server: (optional) file to get the mask from,
+                                if None then get it from the original file
         :return: status of call
         """
-        url = self.urlRoot + "?cmd=pushAddMask"
+        url = self.url_root + "?cmd=pushAddMask"
 
         params = {
-           'id': maskId,
-           'bitNumber': bitNumber,
+           'id': mask_id,
+           'bitNumber': bit_number,
            'color': color,
            'plotId': plot_id,
-           'imageNumber': imageNumber}
+           'imageNumber': image_number}
 
-        if bitDesc:
-            params['bitDesc'] = bitDesc
-        if fileOnServer:
-            params['fileKey'] = fileOnServer
+        if bit_desc:
+            params['bitDesc'] = bit_desc
+        if file_on_server:
+            params['fileKey'] = file_on_server
         response = self.session.post(url, data=params)
         status = json.loads(response.text)
         return status[0]
 
-    def removeMask(self, maskId):
+    def remove_mask(self, mask_id):
         """
         TODO
         Remove a mask layer
-        :param maskId: id of mask
+        :param mask_id: id of mask
         :return: status of call
         """
-        url = self.urlRoot + "?cmd=pushRemoveMask&id=%s" % maskId
+        url = self.url_root + "?cmd=pushRemoveMask&id=%s" % mask_id
         return self._send_url_as_get(url)
 
     # -----------------------------------------------------------------
     # Range Values
     # -----------------------------------------------------------------
 
-    @classmethod
-    def _createRV(cls, stretchType, lowerValue, upperValue, algorithm,
-                  zscaleContrast=25, zscaleSamples=600, zscaleSamplesPerLine=120,
-                  betaValue=0.1, gammaValue=2.0):
+    def _create_rv(self, stretch_type, lower_value, upper_value, algorithm,
+                   zscale_contrast=25, zscale_samples=600, zscale_samples_perline=120,
+                   beta_value=0.1, gamma_value=2.0):
         retval = None
-        st = stretchType.lower()
+        st = stretch_type.lower()
         a = algorithm.lower()
-        if st in cls.stretchTypeDict and a in cls.stretchAlgorithmDict:
+        if st in FireflyClient.STRETCH_TYPE_DICT and a in FireflyClient.STRETCH_ALGORITHM_DICT:
             retval = '%d,%f,%d,%f,%f,%f,%d,%d,%d,%d' % \
-                   (cls.stretchTypeDict[st], lowerValue,
-                    cls.stretchTypeDict[st], upperValue,
-                    betaValue, gammaValue,
-                    cls.stretchAlgorithmDict[a],
-                    zscaleContrast, zscaleSamples, zscaleSamplesPerLine)
+                   (FireflyClient.STRETCH_TYPE_DICT[st], lower_value,
+                    FireflyClient.STRETCH_TYPE_DICT[st], upper_value,
+                    beta_value, gamma_value,
+                    FireflyClient.STRETCH_ALGORITHM_DICT[a],
+                    zscale_contrast, zscale_samples, zscale_samples_perline)
         return retval
 
-    @classmethod
-    def _createRangeValuesStandard(cls, algorithm, stretchType='Percent', lowerValue=1, upperValue=99):
+    def _create_rangevalues_standard(self, algorithm, stretch_type='Percent', lower_value=1, upper_value=99):
         """
         :param algorithm: must be 'Linear', 'Log','LogLog','Equal','Squared', 'Sqrt'
-        :param stretchType: must be 'Percent','Absolute','Sigma'
-        :param lowerValue: number, lower end of stretch
-        :param upperValue: number, upper end of stretch
+        :param stretch_type: must be 'Percent','Absolute','Sigma'
+        :param lower_value: number, lower end of stretch
+        :param upper_value: number, upper end of stretch
         :return: a serialized range values string
         """
 
-        retval = cls._createRV(stretchType, lowerValue, upperValue, algorithm)
+        retval = self._create_rv(stretch_type, lower_value, upper_value, algorithm)
         if not retval:
-            t = stretchType if stretchType.lower() in cls.stretchAlgorithmDict else 'percent'
-            a = algorithm if algorithm.lower() in cls.stretchAlgorithmDict else 'linear'
-            retval = FireflyClient._createRV(t, 1, 99, a)
+            t = stretch_type if stretch_type.lower() in FireflyClient.STRETCH_ALGORITHM_DICT else 'percent'
+            a = algorithm if algorithm.lower() in FireflyClient.STRETCH_ALGORITHM_DICT else 'linear'
+            retval = self._create_rv(t, 1, 99, a)
         return retval
 
-    @classmethod
-    def _createRangeValuesZScale(cls, algorithm, zscaleContrast=25,
-                                 zscaleSamples=600, zscaleSamplesPerLine=120):
+    def _create_rangevalues_zscale(self, algorithm, zscale_contrast=25,
+                                   zscale_samples=600, zscale_samples_perline=120):
         """
         :param algorithm: must be 'Linear', 'Log','LogLog','Equal','Squared', 'Sqrt'
-        :param zscaleContrast: zscale contrast
-        :param zscaleSamples: zscale samples
-        :param zscaleSamplesPerLine: zscale sample per line
+        :param zscale_contrast: zscale contrast
+        :param zscale_samples: zscale samples
+        :param zscale_samples_perline: zscale sample per line
         :return: a serialized range values string
         """
-        retval = cls._createRV('zscale', 1, 1, algorithm,
-                               zscaleContrast, zscaleSamples, zscaleSamplesPerLine)
+        retval = self._create_rv('zscale', 1, 1, algorithm,
+                                 zscale_contrast, zscale_samples, zscale_samples_perline)
         if not retval:
-            a = algorithm if algorithm.lower() in cls.stretchAlgorithmDict else 'linear'
-            retval = cls._createRV('zscale', 1, 2, a, 25, 600, 120)
+            a = algorithm if algorithm.lower() in FireflyClient.STRETCH_ALGORITHM_DICT else 'linear'
+            retval = self._create_rv('zscale', 1, 2, a, 25, 600, 120)
         return retval
 
     @classmethod
-    def _genItemId(cls, item):
+    def _gen_item_id(cls, item):
         """
         generate an ID for some entity like 'Table', 'RegionLayer', 'Extension'
         :param item: entity type
         :return: an ID string
         """
 
-        if item in cls.itemID:
-            cls.itemID[item] += 1
-            return item + '-' + str(cls.itemID[item])
+        if item in cls._item_id:
+            cls._item_id[item] += 1
+            return item + '-' + str(cls._item_id[item])
         else:
             return None
 
     @staticmethod
-    def createImageURL(imageSource):
+    def create_image_url(image_source):
         """
         create image url according to image source
-        :param imageSource: an image path or image url
+        :param image_source: an image path or image url
         :return:
         """
 
         def is_url(url):
             return urlparse.urlparse(url).scheme != ''
 
-        if not imageSource.startswith('data:image') and not is_url(imageSource):
-            data_uri = open(imageSource, 'rb').read().encode('base64').replace('\n', '')
+        if not image_source.startswith('data:image') and not is_url(image_source):
+            data_uri = open(image_source, 'rb').read().encode('base64').replace('\n', '')
             return 'data:image/png;base64,%s' % data_uri
 
-        return imageSource
+        return image_source
