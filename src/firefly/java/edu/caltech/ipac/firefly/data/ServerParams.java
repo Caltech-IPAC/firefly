@@ -144,24 +144,8 @@ public class ServerParams {
     public static final String JSON_DEEP= "jsonDeep";
     public static final String ACTION= "action";
 
-    public static final String VIS_PUSH_CREATE_ID= "createID";
-    public static final String VIS_PUSH_FITS= "pushFits";
-    public static final String VIS_PUSH_REG= "pushRegion";
-    public static final String VIS_PUSH_REMOVE_REG= "pushRemoveRegion";
-    public static final String VIS_PUSH_REG_DATA= "pushRegionData";
-    public static final String VIS_PUSH_REMOVE_REG_DATA= "pushRemoveRegionData";
-    public static final String VIS_PUSH_TABLE= "pushTable";
-    public static final String VIS_PUSH_XYPLOT= "pushXYPlot";
-    public static final String VIS_PUSH_EXT= "pushExt";
-    public static final String VIS_QUERY_ACTION= "queryAction";
-    public static final String VIS_PUSH_WPR= "pushWPR";
     public static final String VIS_PUSH_ALIVE_CHECK= "pushAliveCheck";
     public static final String VIS_PUSH_ALIVE_COUNT= "pushAliveCount";
-    public static final String VIS_PUSH_PAN= "pushPan";
-    public static final String VIS_PUSH_ZOOM= "pushZoom";
-    public static final String VIS_PUSH_RANGE_VALUES= "pushRangeValues";
-    public static final String VIS_PUSH_ADD_MASK= "pushAddMask";
-    public static final String VIS_PUSH_REMOVE_MASK= "pushRemoveMask";
     public static final String VIS_PUSH_ACTION= "pushAction";
 
 
