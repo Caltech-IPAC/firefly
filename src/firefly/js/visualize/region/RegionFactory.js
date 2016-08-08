@@ -65,7 +65,7 @@ export class RegionFactory {
             }, []);
         var globalOptions = Object.assign({}, makeRegionOptions({}));
 
-        set(globalOptions, regionPropsList.COORD, 'J2000');
+        set(globalOptions, regionPropsList.COORD, 'PHYSICAL');
 
         return regionLines.length > 0 ? regionLines.reduce ( (prev, region, index) => {
             const rg = RegionFactory.parsePart(region.trim(), index+1, globalOptions, bAllowHeader);

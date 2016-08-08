@@ -16,24 +16,9 @@ export const LINE_SELECT= 'LINE_SELECT';
 export const POINT= 'POINT';
 export const NONE= 'NONE';
 
-export class PlotCmdExtension {
-    constructor(id, plotId, extType, imageUrl, title, toolTip, callback=null) {
-        this.id = id;
-        this.plotId = plotId;
-        this.imageUrl = imageUrl;
-        this.title = title;
-        this.toolTip = toolTip;
-        this.extType= extType;
-        this.callback= callback;
-    }
-
-    //getId() { return this.id; }
-    //getImageUrl() { return this.imageUrl; }
-    //getTitle() { return this.title; }
-    //getToolTip() { return this.toolTip; }
-    //getExtType() { return extType; }
-}
-
+export var PlotCmdExtension = ({id, plotId, extType, imageUrl, title, toolTip, callback=null}) => {
+    return {id, plotId, imageUrl, title, toolTip, extType, callback};
+};
 
 export function makeExtActivateData(ext,pv,dlAry) {
     var plot= primePlot(pv);
@@ -41,7 +26,7 @@ export function makeExtActivateData(ext,pv,dlAry) {
     var data= {
         id : ext.id,
         plotId : pv.plotId,
-        extType : ext.extType,
+        type: ext.extType,
         plotState: PlotState.convertToJSON(plot.plotState)
     };
 

@@ -11,17 +11,17 @@ import {PlotAttribute} from '../visualize/WebPlot.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
-import {MARKER_DISTANCE, ANGLE_UNIT, ROTATE_BOX, OutlineType, findClosestIndex, makeFootprint,
+import {MARKER_DISTANCE, ANGLE_UNIT, ROTATE_BOX, OutlineType, getWorldOrImage, findClosestIndex, makeFootprint,
         lengthSizeUnit, updateFootprintDrawobjAngle, updateFootprintDrawobjText,
         updateFootprintTranslate, updateFootprintOutline} from '../visualize/draw/MarkerFootprintObj.js';
-import {markerInterval, getCC, getWorldOrImage, cancelTimeoutProcess,} from './MarkerTool.js';
+import {markerInterval, getCC, cancelTimeoutProcess, initMarkerPos} from './MarkerTool.js';
 import {getFootprintToolUIComponent} from './FootprintToolUI.jsx';
 import ShapeDataObj, {lengthToScreenPixel} from '../visualize/draw/ShapeDataObj.js';
 import {getDrawobjArea} from '../visualize/draw/ShapeHighlight.js';
 import {clone} from '../util/WebUtil.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {FootprintFactory} from '../visualize/draw/FootprintFactory.js';
-import {makeViewPortPt, makeWorldPt, makeImagePt} from '../visualize/Point.js';
+import {makeViewPortPt, makeImagePt} from '../visualize/Point.js';
 import {get, set, isArray, has, isNil} from 'lodash';
 import Enum from 'enum';
 
@@ -72,8 +72,7 @@ export function footprintCreateLayerActionCreator(rawAction) {
 
                             var plot = primePlot(visRoot(), pId);
                             if (plot) {
-                                var {x, y} = plot.attributes[PlotAttribute.FIXED_TARGET];
-                                var wpt = makeWorldPt(x, y);
+                                var wpt = initMarkerPos(plot);
 
                                 showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_CREATE, wpt, regions, pId,
                                     FootprintStatus.attached, footprintInterval, drawLayerId,

@@ -249,7 +249,7 @@ export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
 }
 
 
-export function dispatchCreateRegionLayer(regionId, layerTitle, fileOnServer ='', regionAry=[], plotId = [], dispatcher = flux.process) {
+export function dispatchCreateRegionLayer(regionId, layerTitle, fileOnServer='', regionAry=[], plotId = [], dispatcher = flux.process) {
     dispatcher({type: REGION_CREATE_LAYER, payload: {regionId, fileOnServer, plotId, layerTitle, regionAry}});
 }
 

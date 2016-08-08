@@ -1475,7 +1475,8 @@ public class VisServerOps {
 
                 while ((tmpLine = br.readLine()) != null) {
                     tmpLine = tmpLine.trim();
-                    if (!tmpLine.startsWith("#") && (tmpLine.contains("tag={" + tag)))
+                    if (!tmpLine.startsWith("#") && ((tmpLine.contains("tag={" + tag)) ||
+                            (!tmpLine.contains("tag"))))
                         rAsStrList.add(tmpLine);
                 }
                 if (rAsStrList.size() == 0) {

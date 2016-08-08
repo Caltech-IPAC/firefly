@@ -7,7 +7,7 @@ import {getDS9Region} from '../../rpc/PlotServicesJson.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {dispatchCreateDrawLayer, dispatchDetachLayerFromPlot,
         dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
-import {getDrawLayerById} from '../PlotViewUtil.js';
+import {getDrawLayerById, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
 import RegionPlot from '../../drawingLayers/RegionPlot.js';
 import {getPlotViewAry} from '../PlotViewUtil.js';
 import {visRoot } from '../ImagePlotCntlr.js';
@@ -23,8 +23,14 @@ var [RegionIdErr, RegionErr, DrawObjErr, JSONErr] = [
     'get region json error'];
 
 var getPlotId = (plotId) => {
-    return (!plotId || (isArray(plotId)&&plotId.length === 0)) ? get(visRoot(), 'activePlotId') : plotId;
+    //return (!plotId || (isArray(plotId)&&plotId.length === 0)) ? get(visRoot(), 'activePlotId') : plotId;
+    if (!plotId || (isArray(plotId)&&plotId.length === 0)) {
+        var pid = get(visRoot(), 'activePlotId');
 
+        return getPlotViewIdListInGroup(visRoot(), pid, false);
+    } else {
+        return plotId;
+    }
 };
 
 /**
@@ -69,26 +75,27 @@ function createRegionLayer(regionAry, title, regionId, plotId, dataFrom = 'ds9')
     // convert region description array to Region object array
 
     if (regionAry && regionAry.length > 0) {
-
+/*
         var rgAry = dataFrom === 'json' ? RegionFactory.parseRegionJson(regionAry) :
                                           RegionFactory.parseRegionDS9(regionAry);
+*/
 
-        if (rgAry && rgAry.length > 0) {
+        //  if (rgAry && rgAry.length > 0) {
             var dl = getDrawLayerById(getDlAry(), regionId);
 
             if (!dl) {
-                dispatchCreateDrawLayer(regionDrawLayerId, {title, drawLayerId: regionId, regions: rgAry});
+                dispatchCreateDrawLayer(regionDrawLayerId, {title, drawLayerId: regionId, regionAry, dataFrom});
             }
 
             var pId = getPlotId(plotId);
             if (pId) {
                 dispatchAttachLayerToPlot(regionId, pId, true);
             }
-        } else {
-            reportError(DrawObjErr);
-        }
+      //  } else {
+      //      reportError(DrawObjErr);
+      //  }
     } else {
-        reportError(`${RegionIdErr} for creating region layer`);
+        reportError(`${RegionErr} for creating region layer`);
     }
 }
 

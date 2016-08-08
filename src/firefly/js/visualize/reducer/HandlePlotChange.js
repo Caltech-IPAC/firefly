@@ -20,8 +20,9 @@ import {primePlot,
         findPlotGroup,
         hasGroupLock,
         getPlotViewById} from '../PlotViewUtil.js';
-import {makeImagePt} from '../Point.js';
+import {makeImagePt, makeWorldPt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
+import CsysConverter from '../CsysConverter.js'
 
 
 //============ EXPORTS ===========
@@ -220,32 +221,44 @@ function updateViewSize(state,action) {
 }
 
 function recenter(state,action) {
-    const {plotId}= action.payload;
+    const {plotId, centerPt}= action.payload;
     var {plotGroupAry,plotViewAry}= state;
     const pv= getPlotViewById(state,plotId);
     var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
 
-    plotViewAry= applyToOnePvOrGroup(plotViewAry,plotId,plotGroup,recenterPv);
+    plotViewAry= applyToOnePvOrGroup(plotViewAry,plotId,plotGroup, recenterPv(centerPt));
     return clone(state,{plotViewAry});
 }
 
 /**
- * Center on the FIXED_TARGET attribute or the center of the plot
- * @param pv a plot view
+ * Center on the FIXED_TARGET attribute or the center of the plot or specified center point
+ * @param centerPt center point
  * @return {{}} a new plot view
  */
-function recenterPv(pv) {
-    const plot= primePlot(pv);
-    if (!plot) return pv;
-    var centerImagePt;
-    var wp= plot.attributes[PlotAttribute.FIXED_TARGET];
-    if (wp) {
-        centerImagePt= CCUtil.getImageCoords(plot,wp);
-    }
-    else {
-        centerImagePt= makeImagePt(plot.dataWidth/2, plot.dataHeight/2);
-    }
-    return PlotView.updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv,centerImagePt));
+
+function recenterPv(centerPt) {
+    return (pv) => {
+        const plot = primePlot(pv);
+        if (!plot) return pv;
+        var centerImagePt;
+
+        if (centerPt) {
+            if (centerPt.type === Point.IM_PT) {
+                centerImagePt = makeImagePt(centerPt.x, centerPt.y);
+            } else {
+                centerImagePt = makeWorldPt(centetPt.x, centerPt.y);
+            }
+        } else {
+            var wp = plot.attributes[PlotAttribute.FIXED_TARGET];
+            if (wp) {
+                centerImagePt = CCUtil.getImageCoords(plot, wp);
+            }
+            else {
+                centerImagePt = makeImagePt(plot.dataWidth / 2, plot.dataHeight / 2);
+            }
+        }
+        return PlotView.updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv, centerImagePt));
+    };
 }
 
 function makeNewPrimePlot(state,action) {
@@ -259,8 +272,7 @@ function makeNewPrimePlot(state,action) {
 function changeGroupLocking(state,action) {
     var {plotGroupAry}= state;
     var {plotId,groupLocked}=  action.payload;
-    const pv= getPlotViewById(state,plotId);
-    const {plotGroupId} = pv;
+    const {plotGroupId} = getPlotViewById(state,plotId);
 
     const pgIdx= getPlotGroupIdxById(state,plotGroupId);
 

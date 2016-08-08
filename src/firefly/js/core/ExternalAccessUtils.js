@@ -7,6 +7,7 @@ import {flux} from '../Firefly.js';
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import {reportUserAction} from '../rpc/SearchServicesJson.js';
 import { parseImagePt, parseWorldPt, parseScreenPt } from '../visualize/Point.js';
+import {getWsChannel} from './messaging/WebSocketClient.js'
 
 const EMPTY_ARRAY=[];
 
@@ -37,7 +38,8 @@ const activate= function(remoteChannel, extension, resultData) {
 };
 
 export const getRemoteChannel= function() {
-    return flux.getState()[ExternalAccessCntlr.EXTERNAL_ACCESS_KEY].remoteChannel ;
+    //return flux.getState()[ExternalAccessCntlr.EXTERNAL_ACCESS_KEY].remoteChannel ;
+    return getWsChannel();
 };
 
 export const getExtensionList= function(testPlotId) {

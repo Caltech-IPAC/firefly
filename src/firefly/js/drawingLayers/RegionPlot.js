@@ -53,7 +53,18 @@ function creator(initPayload) {
     var dl = DrawLayer.makeDrawLayer( get(initPayload, 'drawLayerId', `${ID}-${idCnt}`),
                                       TYPE_ID, get(initPayload, 'title', 'Region Plot'),
                                       options, drawingDef, actionTypes, pairs );
-    dl.regions = get(initPayload, 'regions', null);
+
+    dl.regionAry = get(initPayload, 'regionAry', null);
+    dl.dataFrom = get(initPayload, 'dataFrom', 'ds9');
+
+    /*
+    if (regionAry) {
+        dl.regions =  get(initPayload, 'dataFrom', 'ds9') === 'json' ? RegionFactory.parseRegionJson(regionAry) :
+                                                                       RegionFactory.parseRegionDS9(regionAry);
+    } else {
+        dl.regions = null;
+    }
+    */
     dl.highlightedRegion = get(initPayload, 'highlightedRegion', null);
 
     idCnt++;
@@ -151,11 +162,13 @@ function getLayerChanges(drawLayer, action) {
 
     switch (action.type) {
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
-            if (changes && changes.regions) {
+            /*
+            if (changes && changes.regions) {  // this should not happen
                 dd[DataTypes.HIGHLIGHT_DATA] = null;
                 dd[DataTypes.DATA] = null;
                 if (drawLayer.highlightedRegion) drawLayer.highlightedRegion = null;
-            } else if (changes && changes.highlightedRegion) {
+            } else */
+             if (changes && changes.highlightedRegion) {
                 dd[DataTypes.HIGHLIGHT_DATA] = null;
                 if (drawLayer.highlightedRegion) drawLayer.highlightedRegion.highlight = 0;
                 changes.highlightedRegion.highlight = 1;
@@ -187,11 +200,11 @@ function getLayerChanges(drawLayer, action) {
 }
 
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
-    const {regions, highlightedRegion} = drawLayer;
+    const {highlightedRegion, regionAry, dataFrom} = drawLayer;
 
     switch (dataType) {
         case DataTypes.DATA:
-            return isEmpty(lastDataRet) ? plotAllRegions(regions) : lastDataRet;
+            return isEmpty(lastDataRet) ? plotAllRegions(regionAry, dataFrom, drawLayer) : lastDataRet;
         case DataTypes.HIGHLIGHT_DATA:
             return isEmpty(lastDataRet) ? plotHighlightRegion(highlightedRegion) : lastDataRet;
     }
@@ -199,15 +212,20 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 }
 /**
  * create DrawingObj for all regions
- * @param regionAry
+ * @param regionAry array of region strings
+ * @param dataFrom from 'json' (server) or 'ds9' (original ds9 description)
+ * @param dl    drawing layer
  * @returns {*}
  */
-function plotAllRegions(regionAry) {
+function plotAllRegions(regionAry, dataFrom, dl) {
     if (!regionAry) {
         return [];
     }
 
-    return drawRegions(regionAry);
+    dl.regions =  (dataFrom === 'json') ? RegionFactory.parseRegionJson(regionAry) :
+                                              RegionFactory.parseRegionDS9(regionAry);
+
+    return drawRegions(dl.regions);
 
 }
 
