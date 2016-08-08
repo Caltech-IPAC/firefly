@@ -16,6 +16,7 @@ import {convertAngle} from '../VisUtil.js';
 import CsysConverter from '../CsysConverter.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {visRoot } from '../ImagePlotCntlr.js';
+import {logError} from '../../util/WebUtil.js'
 
 import {set, unset, has, get, isEmpty} from 'lodash';
 import Enum from 'enum';
@@ -31,6 +32,15 @@ var RegionParseError = {
     NotImplemented: 'region type is not yet implemented'
 };
 
+function outputError(rg, rgStr) {
+    if (rg.type === RegionType.message) {
+        logError(rg.message);
+    } else if (!rg.options) {
+        logError(`[invalid region: no options created]: '${rgStr}'`);
+    } else if (rg.type === RegionType.undefined ) {
+        logError(`[invalid region: undefined region type] '${rgStr}'`);
+    }
+}
 
 export class RegionFactory {
 
@@ -45,6 +55,7 @@ export class RegionFactory {
 
             if (rg) {            // skip comment line and no good line
                 prev.push(rg);
+                outputError(rg, region);
             }
             return prev;
         }, []) : null;
@@ -80,6 +91,7 @@ export class RegionFactory {
                 } else {
                     prev.push(rg);
                 }
+                outputError(rg, region);
             }
             return prev;
         }, []) : null;
@@ -146,9 +158,9 @@ export class RegionFactory {
             regionCoord = tmpAry[0].trim();
             tmpAry =  tmpAry[1].split('#');
         } else {
-            // default coordinate is J2000 in case not specified
+            // default coordinate is PHYSICAL in case not specified
             regionCoord = globalOptions && has(globalOptions, regionPropsList.COORD)  ?
-                          globalOptions[regionPropsList.COORD] : 'J2000';
+                          globalOptions[regionPropsList.COORD] : 'PHYSICAL';
             tmpAry = tmpAry[0].split('#');
         }
 
@@ -178,7 +190,11 @@ export class RegionFactory {
         var regionCsys = getRegionCoordSys(regionCoord);
         if (regionCsys === RegionCsys.UNDEFINED) {
             return makeRegionMsg(`[${RegionParseError.InvalidCoord}] ${rgMsg}`);
+        } else if (regionCsys === RegionCsys.PHYSICAL) {    // PHYSICAL is treated the same as IMAGE, more detail
+                                                            // transformation will be investigated furteher.
+            regionCsys = RegionCsys.IMAGE;
         }
+
 
 
         // check region description syntax and region type
@@ -672,13 +688,14 @@ export class RegionFactory {
                     unit = RegionValueUnit.RADIAN;
                     break;
                 case 'p':
-                    unit = RegionValueUnit.SCREEN_PIXEL;
+                    //unit = RegionValueUnit.SCREEN_PIXEL;
+                    unit = RegionValueUnit.IMAGE_PIXEL; // treat 'p' same as 'i' (more detail transformation will be
+                                                        // further investigated)
                     break;
                 case 'i':
                     unit = RegionValueUnit.IMAGE_PIXEL;
                     break;
                 case 's':
-
                 default:
                     unit = RegionValueUnit.CONTEXT;
             }
