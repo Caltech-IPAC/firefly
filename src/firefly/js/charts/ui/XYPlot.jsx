@@ -9,6 +9,9 @@ import ReactHighcharts from 'react-highcharts/bundle/highcharts';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {parseDecimateKey} from '../../tables/Decimate.js';
 
+import numeral from 'numeral';
+import {getFormatString} from '../../util/MathUtil.js';
+
 const defaultShading = 'lin';
 
 export const axisParamsShape = PropTypes.shape({
@@ -538,6 +541,8 @@ export class XYPlot extends React.Component {
         const {xMin, xMax, yMin, yMax} = getZoomSelection(params);
         const {decimateKey} = data;
         const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = get(params, 'boundaries', {});
+        const xFormat = decimateKey ? getFormatString(Math.abs(xDataMax-xDataMin), 4) : undefined;
+        const yFormat = decimateKey ? getFormatString(Math.abs(yDataMax-yDataMin), 4) : undefined;
 
         const makeSeries = this.makeSeries;
 
@@ -602,8 +607,10 @@ export class XYPlot extends React.Component {
                 borderWidth: 1,
                 formatter() {
                     const weight = this.point.weight ? `represents ${this.point.weight} points <br/>` : '';
-                    return '<span> ' + `${params.x.label} = ${this.point.x} ${params.x.unit} <br/>` +
-                        `${params.y.label} = ${this.point.y} ${params.y.unit} <br/> ` +
+                    const xval = xFormat ? numeral(this.point.x).format(xFormat) : this.point.x;
+                    const yval = yFormat ? numeral(this.point.y).format(yFormat) : this.point.y;
+                    return '<span> ' + `${params.x.label} = ${xval} ${params.x.unit} <br/>` +
+                        `${params.y.label} = ${yval} ${params.y.unit} <br/> ` +
                         `${weight}</span>`;
                 },
                 shadow: !(decimateKey),

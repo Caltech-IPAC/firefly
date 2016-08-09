@@ -580,9 +580,9 @@ public class QueryUtil {
     private static final int DECI_ENABLE_SIZE = AppProperties.getIntProperty("decimation.enable.size", 5000);
     /**
      * returns 4 columns; x-column, y-column, rowidx, weight, decimate_key
-     * @param dg
-     * @param decimateInfo
-     * @return
+     * @param dg input data group
+     * @param decimateInfo DecimateInfo object
+     * @return decimated data group
      */
     public static DataGroup doDecimation(DataGroup dg, DecimateInfo decimateInfo) {
 
@@ -649,8 +649,18 @@ public class QueryUtil {
 
             if (!doDecimation) {
                 DataObject retrow = new DataObject(retval);
-                retrow.setDataElement(columns[0], convertData(xColClass,xval));
-                retrow.setDataElement(columns[1], convertData(yColClass,yval));
+                String xvalFormatted = xValGetter.getFormattedValue(row);
+                if (xvalFormatted == null) {
+                    retrow.setDataElement(columns[0], convertData(xColClass, xval));
+                } else {
+                    retrow.setFormattedData(columns[0], xvalFormatted);
+                }
+                String yvalFormatted = yValGetter.getFormattedValue(row);
+                if (yvalFormatted == null) {
+                    retrow.setDataElement(columns[1], convertData(yColClass, yval));
+                } else {
+                    retrow.setFormattedData(columns[1], yvalFormatted);
+                }
                 retrow.setDataElement(columns[2], rIdx); // natural index
                 retval.add(retrow);
             } else if (checkDeciLimits) {
@@ -682,7 +692,9 @@ public class QueryUtil {
                 // because the number of rows in the output
                 // is less than decimation limit
 
+                List<DataGroup.Attribute> attributes = retval.getKeywords();
                 retval = new DataGroup("decimated results", new DataType[]{columns[0],columns[1],columns[2]});
+                retval.setAttributes(attributes);
 
                 for (int rIdx = 0; rIdx < dg.size(); rIdx++) {
                     DataObject row = dg.get(rIdx);
@@ -697,8 +709,18 @@ public class QueryUtil {
 
                     if (checkLimits && (xval<xMin || xval>xMax || yval<yMin || yval>yMax)) { continue; }
                     DataObject retrow = new DataObject(retval);
-                    retrow.setDataElement(columns[0], convertData(xColClass, xval));
-                    retrow.setDataElement(columns[1], convertData(yColClass, yval));
+                    String xvalFormatted = xValGetter.getFormattedValue(row);
+                    if (xvalFormatted == null) {
+                        retrow.setDataElement(columns[0], convertData(xColClass, xval));
+                    } else {
+                        retrow.setFormattedData(columns[0], xvalFormatted);
+                    }
+                    String yvalFormatted = yValGetter.getFormattedValue(row);
+                    if (yvalFormatted == null) {
+                        retrow.setDataElement(columns[1], convertData(yColClass, yval));
+                    } else {
+                        retrow.setFormattedData(columns[1], yvalFormatted);
+                    }
                     retrow.setDataElement(columns[2], rIdx);
                     retval.add(retrow);
                 }
@@ -719,10 +741,9 @@ public class QueryUtil {
 
                 DecimateKey decimateKey = new DecimateKey(xMin, yMin, nXs, nYs, xUnit, yUnit);
 
-                HashMap<String, SamplePoint> samples = new HashMap<String, SamplePoint>();
+                HashMap<String, SamplePoint> samples = new HashMap<>();
                 // decimating the data now....
                 for (int idx = 0; idx < dg.size(); idx++) {
-
                     DataObject row = dg.get(idx);
 
                     double xval = xValGetter.getValue(row);
@@ -739,13 +760,17 @@ public class QueryUtil {
                         // representative sample point is a random point from the bin
                         int numRepRows = pt.getRepresentedRows()+1;
                         if (Math.random() < 1d/(double)numRepRows) {
-                            SamplePoint replacePt = new SamplePoint(xval, yval, idx, numRepRows);
+                            String xvalFormatted = xValGetter.getFormattedValue(row);
+                            String yvalFormatted = yValGetter.getFormattedValue(row);
+                            SamplePoint replacePt = new SamplePoint(xval, xvalFormatted, yval, yvalFormatted, idx, numRepRows);
                             samples.put(key, replacePt);
                         } else {
                             pt.addRepresentedRow();
                         }
                     } else {
-                        SamplePoint pt = new SamplePoint(xval, yval, idx);
+                        String xvalFormatted = xValGetter.getFormattedValue(row);
+                        String yvalFormatted = yValGetter.getFormattedValue(row);
+                        SamplePoint pt = new SamplePoint(xval, xvalFormatted, yval, yvalFormatted, idx);
                         samples.put(key, pt);
                     }
                 }
@@ -757,8 +782,17 @@ public class QueryUtil {
                     weight = pt.getRepresentedRows();
                     if (weight<minWeight) minWeight = weight;
                     if (weight>maxWeight) maxWeight = weight;
-                    row.setDataElement(columns[0], convertData(xColClass, pt.getX()));
-                    row.setDataElement(columns[1], convertData(yColClass, pt.getY()));
+
+                    if (pt.getFormattedX() == null) {
+                        row.setDataElement(columns[0], convertData(xColClass, pt.getX()));
+                    } else {
+                        row.setFormattedData(columns[0], pt.getFormattedX());
+                    }
+                    if (pt.getFormattedY() == null) {
+                        row.setDataElement(columns[1], convertData(yColClass, pt.getY()));
+                    } else {
+                        row.setFormattedData(columns[1],pt.getFormattedY());
+                    }
                     row.setDataElement(columns[2], pt.getRowIdx());
                     row.setDataElement(columns[3], weight);
                     row.setDataElement(columns[4], key);
@@ -783,7 +817,7 @@ public class QueryUtil {
 
         if (xValGetter.isExpression()) {
             DataType.FormatInfo fi = columns[0].getFormatInfo();
-            fi.setDataFormat("%.6f");
+            fi.setDataFormat(getFormatterString(xMin, xMax, 6));
             columns[0].setFormatInfo(fi);
             retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".X-EXPR", decimateInfo.getxColumnName());
             retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".X-COL", "x");
@@ -791,7 +825,7 @@ public class QueryUtil {
 
         if (yValGetter.isExpression()) {
             DataType.FormatInfo fi = columns[1].getFormatInfo();
-            fi.setDataFormat("%.6f");
+            fi.setDataFormat(getFormatterString(xMin, xMax, 6));
             columns[1].setFormatInfo(fi);
             retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".Y-EXPR", decimateInfo.getyColumnName());
             retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".Y-COL", "y");
@@ -800,6 +834,33 @@ public class QueryUtil {
         retval.shrinkToFitData();
 
         return retval;
+    }
+
+    private static int getFirstSigDigitPos(double num) {
+        return (int)Math.floor(Math.log10(num))+1;
+    }
+
+    /*
+     * Get printf-style format string, which would preserve certain number of significant digits
+     * in the difference between two numbers.
+     * @param min - minimum number
+     * @param max - maximum number
+     * @param numSigDigits - number of the significant digits to preserve in the difference
+     */
+    private static String getFormatterString(double min, double max, int numSigDigits) {
+        if (!Double.isFinite(min)||!Double.isFinite(max)) {
+            return "%."+numSigDigits+"g";
+        }
+        double range = Math.abs(max-min);
+        int firstSigDigitPos = 0;
+        if (range == 0) {
+            if (min == 0) { return "%d"; }
+        } else {
+            firstSigDigitPos = getFirstSigDigitPos(range);
+        }
+        int firstSigDigitPosN = getFirstSigDigitPos(Math.max(Math.abs(min), Math.abs(max)));
+        int needSigDigits = numSigDigits+(Math.abs(firstSigDigitPosN-firstSigDigitPos));
+        return "%."+needSigDigits+"g";
     }
 
     private static Object convertData(Class dataType, double x) {
@@ -819,17 +880,21 @@ public class QueryUtil {
     private static class SamplePoint {
         double x;
         double y;
+        String formattedX;
+        String formattedY;
         int rowIdx;
         int representedRows;
 
-        public SamplePoint(double x, double y, int rowIdx) {
-            this(x, y, rowIdx, 1);
+        public SamplePoint(double x, String formattedX, double y, String formattedY, int rowIdx) {
+            this(x, formattedX, y, formattedY, rowIdx, 1);
         }
 
 
-        public SamplePoint(double x, double y, int rowIdx, int representedRows) {
+        public SamplePoint(double x, String formattedX, double y, String formattedY, int rowIdx, int representedRows) {
             this.x = x;
             this.y = y;
+            this.formattedX = formattedX;
+            this.formattedY = formattedY;
             this.rowIdx = rowIdx;
             this.representedRows = representedRows;
         }
@@ -840,6 +905,8 @@ public class QueryUtil {
         public int getRowIdx() { return rowIdx; }
         public double getX() { return x; }
         public double getY() { return y; }
+        public String getFormattedX() { return formattedX; }
+        public String getFormattedY() { return formattedY; }
 
     }
 
