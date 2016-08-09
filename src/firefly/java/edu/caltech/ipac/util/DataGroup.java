@@ -140,7 +140,12 @@ public class DataGroup implements Serializable,
             int maxDataWidth = dt.getMaxDataWidth();
             if (force || maxDataWidth == 0) {
                 for (DataObject row : this) {
-                    int vlength = Number.class.isAssignableFrom(dt.getDataType()) ? row.getFormatedData(dt).length() : String.valueOf(row.getDataElement(dt)).length();
+                    int vlength = 0;
+                    if (Number.class.isAssignableFrom(dt.getDataType())) {
+                        vlength = dt.getFormatInfo().formatDataOnly(row.getDataElement(dt)).length();
+                    } else {
+                        vlength = String.valueOf(row.getDataElement(dt)).length();
+                    }
                     maxDataWidth = Math.max(maxDataWidth, vlength);
                 }
             }

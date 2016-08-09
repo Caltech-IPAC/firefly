@@ -34,6 +34,10 @@ public class DataGroupReader {
     }
 
     public static DataGroup readAnyFormat(File inf) throws IOException {
+        return readAnyFormat(inf, 0);
+    }
+
+    public static DataGroup readAnyFormat(File inf, int tableIndex) throws IOException {
         Format format = guessFormat(inf);
         if (format == Format.IPACTABLE) {
             return read(inf, false, false);
@@ -42,10 +46,9 @@ public class DataGroupReader {
         } else if (format == Format.FITS ) {
             try {
                 // Switch to the new function:
-                //List<DataGroup> retval = FITSTableReader.convertFITSToDataGroup(inf.getAbsolutePath(), null);
-                List<DataGroup> retval = FITSTableReader.convertFitsToDataGroup(inf.getAbsolutePath(), null, null, "TOP_MOST");
+                List<DataGroup> retval = FITSTableReader.convertFitsToDataGroup(inf.getAbsolutePath(), null, null, FITSTableReader.DEFAULT);
                 if (retval != null && retval.size() > 0) {
-                    return retval.get(0);
+                    return retval.get(tableIndex);
                 } else {
                     return null;
                 }

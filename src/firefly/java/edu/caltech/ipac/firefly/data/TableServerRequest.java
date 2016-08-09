@@ -27,6 +27,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     public static final String META_INFO = "META_INFO";
     public static final String SYS_PARAMS = "|" + StringUtils.toString(new String[]{FILTERS,SORT_INFO,PAGE_SIZE,START_IDX,INCL_COLUMNS,FIXED_LENGTH,META_INFO,TBL_ID,DECIMATE_INFO}, "|") + "|";
 
+    public static final String TBL_INDEX = "tbl_index";     // the table to show if it's a multi-table file.
 
     private int pageSize;
     private int startIdx;

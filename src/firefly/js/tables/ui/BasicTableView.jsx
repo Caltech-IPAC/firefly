@@ -295,9 +295,15 @@ function tableToText(columns, dataAry, showUnits=false) {
 
     const colWidths = calcColumnWidths(columns, dataAry);
 
+    // column's name
     var textHead = columns.reduce( (pval, col, idx) => {
         return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.name, colWidths[idx])}|` : '');
     }, '|');
+
+    // column's type
+    textHead += '\n' + columns.reduce( (pval, col, idx) => {
+            return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.type || '', colWidths[idx])}|` : '');
+        }, '|');
 
     if (showUnits) {
         textHead += '\n' + columns.reduce( (pval, col, idx) => {

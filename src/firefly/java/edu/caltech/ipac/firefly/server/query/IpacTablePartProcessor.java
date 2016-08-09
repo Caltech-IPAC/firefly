@@ -619,6 +619,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     protected static File convertToIpacTable(File tblFile, TableServerRequest request) throws IOException, DataAccessException{
         // if the file is not in IPAC table format - convert
         DataGroupReader.Format format = DataGroupReader.guessFormat(tblFile);
+        int tblIdx = request.getIntParam(TableServerRequest.TBL_INDEX, 0);
         boolean isFixedLength = request.getBooleanParam(TableServerRequest.FIXED_LENGTH, true);
         if (format == DataGroupReader.Format.IPACTABLE && isFixedLength) {
             // file is already in ipac table format
@@ -626,7 +627,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         } else {
             if ( format != DataGroupReader.Format.UNKNOWN) {
                 // format is unknown.. convert it into ipac table format
-                DataGroup dg = DataGroupReader.readAnyFormat(tblFile);
+                DataGroup dg = DataGroupReader.readAnyFormat(tblFile, tblIdx);
                 File convertedFile; //= createFile(request, ".tbl");
                 if (format == DataGroupReader.Format.IPACTABLE) {
                     convertedFile = FileUtil.createUniqueFileFromFile(tblFile);
@@ -636,7 +637,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                         convertedFile = FileUtil.createUniqueFileFromFile(convertedFile);
                 }
 
-                DataGroupWriter.write(convertedFile, dg, 0);
+                DataGroupWriter.write(convertedFile, dg, 0, request.getMeta());
                 return convertedFile;
             } else {
                 throw new DataAccessException("Source file has an unknown format:" + ServerContext.replaceWithPrefix(tblFile));
