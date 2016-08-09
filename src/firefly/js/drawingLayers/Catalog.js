@@ -365,7 +365,9 @@ function doFilter(dl,p,sel) {
         console.log(idxs);
     }
     else {
-        const idxs= getSelectedPts(sel, p, dl.drawData.data);
+        const rowidIdx= findColIdx(dl.tableData.columns,'ROWID');
+        var idxs= getSelectedPts(sel, p, dl.drawData.data);
+        idxs = rowidIdx < 0 ? idxs : idxs.map( (idx) => get(dl,`tableData.data[${idx}][${rowidIdx}]`) );
         filter= `IN (${idxs.toString()})`;
         // filterInfoCls.setFilter(filter);
         filterInfoCls.setFilter('ROWID', filter);

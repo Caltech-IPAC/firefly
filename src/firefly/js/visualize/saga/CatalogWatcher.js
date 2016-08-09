@@ -102,7 +102,7 @@ function handleCatalogUpdate(tbl_id) {
     const params= {
         startIdx : 0,
         pageSize : 1000000,
-        inclCols : `${columns.lonCol},${columns.latCol}`
+        inclCols : `${columns.lonCol},${columns.latCol},ROWID`
     };
 
     var dataTooBigForSelection= false;
