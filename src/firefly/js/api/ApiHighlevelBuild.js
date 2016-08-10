@@ -239,7 +239,7 @@ function buildDeprecated(llApi) {
     const {RequestType}= llApi.util.image;
 
     dApi.makeImageViewer= (plotId) => {
-        llApi.util.debug('makeImageViewer is deprecated, use firefly.showImagePlot() instead');
+        llApi.util.debug('makeImageViewer is deprecated, use firefly.showImage() instead');
         highlevelImageInit(llApi);
         const plotSimple= makePlotSimple(llApi,plotId);
         return {

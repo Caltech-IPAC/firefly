@@ -189,7 +189,7 @@ firefly.showImage('myDiv', {
 
 ###Deprecated ImageViewer interface
 
-The following `ImageViewer` interface is deprecated. Please use `firefly.showImagePlot()` instead
+The following `ImageViewer` interface is deprecated. Please use `firefly.showImage()` instead
 
  - `firefly.makeImageViewer()`  - makes an inline image viewer for a html document
  - `firefly.getExpandedViewer()`  - makes an image viewer to fill the screen in a browser tab or window, little used feature.
