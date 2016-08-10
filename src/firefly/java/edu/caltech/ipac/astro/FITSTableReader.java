@@ -3,6 +3,8 @@
  */
 package edu.caltech.ipac.astro;
 
+import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
@@ -13,24 +15,32 @@ import uk.ac.starlink.table.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
 * Convert an FITS file or FITS binary table(s) to list of DataGroup.
 */
 public final class FITSTableReader
 {
+    private static final Logger.LoggerImpl logger = Logger.getLogger();
+
     public static boolean debug = true;
 
     /**
-     * Declare the strategies to handle the FITS data:
+     * Strategies to handle FITS data with column-repeat-count greater than 1(TFORMn = rT):
+     *  where n = column index, T = data type, r = repeat count
+     *
+     * DEFAULT: Set DataType to 'ary'.  Store the full array in DataGroup as an object.
+     * When DataGroup is written out into IPAC format, it should only describe the data
+     * as type = 'char' and value as type[length].  This is the default strategy if not given.
      *
      * TOP_MOST: Ignore the repeat count portion of the TFORMn Keyword
      * returning only the first datum of the field, even if repeat count is more than 1.
-     * This should produce exactly one DataGroup per table. This is the default strategy if not given.
+     * This should produce exactly one DataGroup per table.
      *
+     *
+     *
+     * ( experiemental.. not sure how it would be use )
      * FULLY_FLATTEN: Generates one DataGroup row for each value of an HDU field.
      * Because each field may have different repeat count (dimension), insert blank
      * when no data is available. This should produce exactly one DataGroup per table.
@@ -39,10 +49,11 @@ public final class FITSTableReader
      * EXPAND_BEST_FIT: Expands each HDU row into one DataGroup. Fields with lesser count (dimension) will be filled with blanks.
      * EXPAND_REPEAT: Expands each HDU row into one DataGroup. Fields with lesser dimension will be filled with previous values.
      */
-    private static final String TOP_MOST = "TOP_MOST";
-    private static final String EXPAND_BEST_FIT = "EXPAND_BEST_FIT";
-    private static final String EXPAND_REPEAT = "EXPAND_REPEAT";
-    private static final String FULLY_FLATTEN = "FULLY_FLATTEN";
+    public static final String DEFAULT = "DEFAULT";
+    public static final String TOP_MOST = "TOP_MOST";
+    public static final String FULLY_FLATTEN = "FULLY_FLATTEN";
+    public static final String EXPAND_BEST_FIT = "EXPAND_BEST_FIT";
+    public static final String EXPAND_REPEAT = "EXPAND_REPEAT";
 
     private static final int maxNumAttributeValues = 80;
 
@@ -140,7 +151,7 @@ public final class FITSTableReader
         try
         {
             //List<DataGroup> dgList = fits_to_ipac.convertFITSToDataGroup(fits_filename, null);
-            List<DataGroup> dgList = fits_to_ipac.convertFitsToDataGroup(fits_filename, null, null, "TOP_MOST");
+            List<DataGroup> dgList = fits_to_ipac.convertFitsToDataGroup(fits_filename, null, null, TOP_MOST);
 
             File output_file = new File(ipac_filename);
             DataGroup dg = dgList.get(0);
@@ -185,8 +196,8 @@ public final class FITSTableReader
         //for (int i = 4; i < tList.size(); i++) {
         for (int i = 0; i < tList.size(); i++) {
             StarTable table = (StarTable) tList.get(i);
-            List<DataGroup> dgList = convertFitsToDataGroup(table, dataCols, headerCols, strategy);
-            dgListTotal.addAll(dgList);
+            DataGroup dataGroup = convertStarTableToDataGroup(table, dataCols, headerCols, strategy);
+            dgListTotal.add(dataGroup);
         }
         return dgListTotal;
     }
@@ -226,150 +237,116 @@ public final class FITSTableReader
 
      */
 
-    /** Convert a binary table (StarTable) into a list of DataGroup.
+    /**
+     * Convert a StarTable into DataGroup(s).  Depending on the strategy, this function may return
+     * more then one DataGroup.
      * @param table input StarTable from one HDU
-     * @param dataCols: The names of the columns which will be copied to the data section of the DataGroups.
-     *                If dataCols = null, get all the columns into the data group.
-     * @param headerCols: The names of the columns which will be copied to the header section of the DataGroups.
-     *                If headerCols = null, get none of the columns into the header of the data group.
-     * @param strategy A list of strategies used to deal with the repeat count (dimension) of the data in the given dataCols columns.
+     * @param inclCols: The names of the columns to include in the DataGroups.
+     *                If inclCols = null, includes all the columns into the DataGroup.
+     * @param inclHeaders: The names of the headers to include in the DataGroups.
+     *                If inclHeaders = null, includes all headers into the DataGroup.
+     * @param strategy The strategy used to deal with column(s) with repeat count (dimension) > 1.
      * @return List<DataGroup> A list of DataGroups
      */
-    public static List<DataGroup> convertFitsToDataGroup(StarTable table,
-                                                         String[] dataCols,
-                                                         String[] headerCols,
-                                                         String strategy)
-            throws FitsException, TableFormatException, IllegalArgumentException, IOException {
 
-        if ((strategy == null) ||
-                (!(strategy.equals(FULLY_FLATTEN)) && !(strategy.equals(EXPAND_BEST_FIT)) && !(strategy.equals(EXPAND_REPEAT)))){
-            strategy = TOP_MOST;
+    /**
+     *
+     * @param table
+     * @param inclCols
+     * @param inclHeaders
+     * @param strategy
+     * @return
+     * @throws FitsException
+     * @throws IllegalArgumentException
+     * @throws IOException
+     */
+    public static DataGroup convertStarTableToDataGroup(StarTable table,
+                                                        String[] inclCols,
+                                                        String[] inclHeaders,
+                                                        String strategy)
+            throws FitsException, IllegalArgumentException, IOException {
+
+        if (strategy == null) {
+            strategy = DEFAULT;
         }
 
-        int nColumns = table.getColumnCount();
-        long nRows = table.getRowCount();
-        String tableName = table.getName();
+        //creating DataType list ... column info
+        ArrayList<DataType> dataTypes = new ArrayList<>();
+        LinkedHashMap<ColumnInfo, Integer> colIdxMap = new LinkedHashMap<>();
+        List<String> colList = inclCols == null ? null : Arrays.asList(inclCols);
 
-        //Handle the data types:
-        List<ColumnInfo> columnInfoList = new ArrayList(nColumns);
-        String colName[] = new String[nColumns];
-        int[] repeats = new int[nColumns];
-        int maxRepeat = 0;
-        List<DataType> dataTypeList = new ArrayList();
-
-        for (int col = 0; col < nColumns; col++) {
+        for (int col = 0; col < table.getColumnCount(); col++) {
             ColumnInfo colInfo = table.getColumnInfo(col);
-            colName[col] = colInfo.getName();
-            columnInfoList.add(colInfo);
-            if (colInfo.getShape() != null) {
-                repeats[col] = colInfo.getShape()[0];
-            } else {
-                repeats[col] = 1;
-            }
-            if ((dataCols == null) || (Arrays.asList(dataCols).contains(colName[col]))){
-                if (repeats[col] > maxRepeat) {
-                    maxRepeat = repeats[col];
-                }
-                dataTypeList.add(convertToDataType(colInfo));
-            }
-        }
-
-        //Build the data objects and put them into the data groups:
-        List<DataGroup> dataGroupList = new ArrayList();
-        if (strategy.equals(TOP_MOST)) {
-            /**
-             * "TOP_MOST": Ignore the repeat count portion of the TFORMn Keyword
-             * returning only the first datum of the field, even if repeat count is more than 1.
-             * This should produce exactly one DataGroup per table. This is the default strategy if not given.
-             */
-
-            // One data group per table:
-            DataGroup dataGroup = new DataGroup(tableName, dataTypeList);
-            for (long row = 0; row < nRows; row++){
-                dataGroup = fillDataGroup(table, dataTypeList, maxRepeat, row, dataCols, strategy, dataGroup);
-            }
-
-            // Add attributes to dataGroup:
-            for (int col = 0; col < nColumns; col++) {
-                if ((headerCols != null) && (Arrays.asList(headerCols).contains(colName[col]))) {
-                    ColumnInfo colInfo = columnInfoList.get(col);
-                    boolean isArray = colInfo.isArray();
-                    String classType = DefaultValueInfo.formatClass(colInfo.getContentClass()); //Q: need it?
-                    String originalType = (String)((DescribedValue)colInfo.getAuxData().get(0)).getValue();
-                    List data = new ArrayList();
-                    for (long row = 0; row < nRows; row ++) {
-                        Object cell = table.getCell(row, col);
-                        if (isArray){
-                            data.add(Array.get(cell, 0));
-                        }
-                        else {
-                            data.add(cell);
-                        }
-                    }
-                    String attributeValue = getAttributeValue(data.toArray(), true, classType, originalType);
-                    dataGroup.addAttribute(colName[col], attributeValue);
-                }
-            }
-
-            // Add the dataGroup to the dataGroupList:
-            dataGroupList.add(dataGroup);
-
-        } else if (strategy.equals(FULLY_FLATTEN)) {
-            /**
-             * FULLY_FLATTEN: Generates one DataGroup row for each value of an HDU field.
-             * Because each field may have different repeat count (dimension), insert blank
-             * when no data is available. This should produce exactly one DataGroup per table.
-             *
-             * No attribute data added to DataGroup for FULLY_FLATTEN.
-             */
-
-            if (!(headerCols == null)) {
-                throw new IllegalArgumentException("If the strategy is FULLY_FLATTEN, please define headerCols as null, as no attribute data will be written out.");
-            }
-
-            // define one whole data group per table:
-            DataGroup dataGroup = new DataGroup(tableName, dataTypeList);
-
-            for (long row = 0; row < nRows; row++) {
-                // Fill the data into the dataGroup:
-                dataGroup = fillDataGroup(table, dataTypeList, maxRepeat, row, dataCols, strategy, dataGroup);
-            }
-
-            //Only one dataGroup for each table:
-            dataGroupList.add(dataGroup);
-
-        } else if ((strategy.equals(EXPAND_BEST_FIT)) || strategy.equals(EXPAND_REPEAT)) {
-            /**
-             * EXPAND_BEST_FIT: Expands each HDU row into one DataGroup. Fields with lesser count (dimension) will be filled with blanks.
-             * EXPAND_REPEAT: Expands each HDU row into one DataGroup. Fields with lesser dimension will be filled with previous values.
-             */
-
-            for (int row = 0; row < nRows; row++) {
-                // define dataGroup per row:
-                String dgTitle = tableName + " Row #: " + row;
-
-                //One data group per row:
-                DataGroup dataGroup = new DataGroup(dgTitle, dataTypeList);
-                dataGroup = fillDataGroup(table, dataTypeList, maxRepeat, row, dataCols, strategy, dataGroup);
-
-                // Add attributes to dataGroup:
-                for (int col = 0; col < nColumns; col++) {
-                    if ((headerCols != null) && (Arrays.asList(headerCols).contains(colName[col]))) {
-                        ColumnInfo colInfo = columnInfoList.get(col);
-                        boolean isArray = colInfo.isArray();
-                        String classType = DefaultValueInfo.formatClass(colInfo.getContentClass()); //Q: need it?
-                        String originalType = (String)((DescribedValue)colInfo.getAuxData().get(0)).getValue();
-                        Object cell = table.getCell(row, col);
-                        String attributeValue = getAttributeValue(cell, isArray, classType, originalType);
-                        dataGroup.addAttribute(colName[col], attributeValue);
+            if ( colList == null || colList.contains(colInfo.getName() ) ) {
+                DataType dt = convertToDataType(colInfo, strategy);
+                if ( StringUtils.isEmpty(dt.getShortDesc()) ) {
+                    // fill in column's description if not given
+                    DescribedValue p = table.getParameterByName("TDOC" + (col+1));  // this is for LSST.. not sure it applies to others.
+                    if (p != null) {
+                        dt.setShortDesc(p.getValueAsString(200));
+                        table.getParameters().remove(p);
                     }
                 }
 
-                //one data group per row; add to the list.
-                dataGroupList.add(dataGroup);
+                dataTypes.add(dt);
+                colIdxMap.put(colInfo, col);
             }
         }
-        return dataGroupList;
+
+        // creating DataGroup rows.
+        DataGroup dataGroup = new DataGroup(table.getName(), dataTypes);
+        for (long row = 0; row < table.getRowCount(); row++){
+            addRowToDataGroup(table, dataGroup, colIdxMap, row, strategy);
+        }
+
+        // setting DataGroup meta info
+        for(DataType dt : dataTypes) {
+            if (!StringUtils.isEmpty(dt.getShortDesc())) {
+                dataGroup.addAttribute(DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, dt.getKeyName()), dt.getShortDesc());
+            }
+        }
+
+        List<String> hdList = inclHeaders == null ? null : Arrays.asList(inclHeaders);
+        List params = table.getParameters();
+        if (params != null) {
+            for (Object p : params) {
+                if (p instanceof DescribedValue) {
+                    DescribedValue dv = (DescribedValue) p;
+                    String n = dv.getInfo().getName();
+                    String v = dv.getValueAsString(200);
+                    if (hdList == null || hdList.contains(n)) {
+                        dataGroup.addAttribute(n, v);
+                    }
+                }
+            }
+        }
+        dataGroup.shrinkToFitData();
+        return dataGroup;
+    }
+
+    private static void addRowToDataGroup(StarTable table, DataGroup dataGroup, LinkedHashMap<ColumnInfo, Integer> colIdxMap, long rowIdx, String strategy) {
+        DataObject aRow = new DataObject(dataGroup);
+        ColumnInfo[] colAry = colIdxMap.keySet().toArray(new ColumnInfo[colIdxMap.size()]);
+        try {
+            for (int dtIdx = 0; dtIdx < dataGroup.getDataDefinitions().length; dtIdx++) {
+                DataType dt = dataGroup.getDataDefinitions()[dtIdx];
+                ColumnInfo colInfo = colAry[dtIdx];
+                int colIdx = colIdxMap.get(colInfo);
+                Object data = table.getCell(rowIdx, colIdx);
+                if (colInfo.isArray()) {
+                    if (Objects.equals(strategy, DEFAULT)) {
+                        String desc = DefaultValueInfo.formatClass(colInfo.getContentClass());
+                        data = desc.replace("[]", "[" + Array.getLength(data) + "]");
+                    } else  if (Objects.equals(strategy, TOP_MOST)) {
+                        data = Array.get(data, 0);
+                    }
+                }
+                aRow.setDataElement(dt, data);
+            }
+            dataGroup.add(aRow);
+        } catch (IOException e) {
+            logger.error("Unable to read StarTable row:" + rowIdx + "   msg:" + e.getMessage());
+        }
     }
 
     /**
@@ -384,28 +361,24 @@ public final class FITSTableReader
      * Set unit.
      *
      * @param colInfo
+     * @param strategy
      * @return dataType
      * @throws FitsException
      */
-    public static DataType convertToDataType (ColumnInfo colInfo)
+    public static DataType convertToDataType(ColumnInfo colInfo, String strategy)
             throws FitsException{
 
         String colName = colInfo.getName();
         String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
         String originalType = (String)((DescribedValue)colInfo.getAuxData().get(0)).getValue();
         String unit = colInfo.getUnitString();
+        String nullString = null;
 
         DataType dataType = new DataType(colName, null);
         Class java_class = null;
 
         if ((classType.contains("boolean")) || (classType.contains("Boolean"))) {
-            if (originalType.contains("L")) {
-                //Logical:
-                java_class = String.class;
-            } else if (originalType.contains("X")) {
-                //Bits:
-                java_class = Integer.class;
-            }
+            java_class = Boolean.class;
         } else if ((classType.contains("byte")) || (classType.contains("Byte"))) {
             java_class = Integer.class;
         } else if ((classType.contains("short")) || (classType.contains("Short"))) {
@@ -416,16 +389,26 @@ public final class FITSTableReader
             java_class = Long.class;
         } else if ((classType.contains("float")) || (classType.contains("Float"))) {
             java_class = Float.class;
+            nullString = "NaN";
         } else if ((classType.contains("double")) || (classType.contains("Double"))) {
             java_class = Double.class;
+            nullString = "NaN";
         } else if ((classType.contains("char")) || (classType.contains("String"))) {
             java_class = String.class;
         } else {
             throw new FitsException(
                     "Unrecognized format character in FITS table file: " + classType);
         }
+
+        if (Objects.equals(strategy, DEFAULT) && colInfo.isArray()) {
+            java_class = String.class;
+        }
+
         dataType.setDataType(java_class);
         dataType.setUnits(unit);
+        dataType.setNullString(nullString);
+        dataType.setShortDesc(colInfo.getDescription());
+
         return dataType;
     }
 

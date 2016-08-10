@@ -28,6 +28,7 @@ import java.util.List;
 public class IpacTableFromSource extends IpacTablePartProcessor {
     public static final String TBL_TYPE = "tblType";
     public static final String TYPE_CATALOG = "catalog";
+    public static final String TBL_INDEX = TableServerRequest.TBL_INDEX;     // the table to show if it's a multi-table file.
 
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 

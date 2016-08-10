@@ -120,7 +120,7 @@ function colWithName(cols, name) {
 function getNumericCols(cols) {
     const ncols = [];
     cols.forEach((c) => {
-        if (c.type !== 'char') {
+        if (c.type.match(/^[dfil]/) != null) {      // int, float, double, long .. or their short form.
             ncols.push(c);
         }
     });

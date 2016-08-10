@@ -54,9 +54,21 @@ export const SearchPanel = (props) => {
                     <FileUpload
                         wrapperStyle = {{margin: '5px 0'}}
                         fieldKey = 'fileUpload'
+                        groupKey='TBL_BY_URL_PANEL'
                         initialState= {{
-                        tooltip: 'Select a file to upload',
-                        label: 'Upload File:'}}
+                                tooltip: 'Select a file to upload',
+                                label: 'Upload File:'
+                            }}
+                    />
+                    <ValidationField fieldKey='tbl_index'
+                                     groupKey='TBL_BY_URL_PANEL'
+                                     initialState= {{
+                                            value: 0,
+                                            size: 4,
+                                            validator: Validate.intRange.bind(null, 0, 100000),
+                                            label : 'Table Index:',
+                                            labelWidth : 60
+                                         }}
                     />
                 </FieldGroup>
             </FormPanel>
@@ -83,7 +95,7 @@ function hideSearchPanel() {
 
 function onSearchSubmit(request) {
     if (request.fileUpload) {
-        const treq = TblUtil.makeFileRequest(null, request.fileUpload, null, {filters: request.filters});
+        const treq = TblUtil.makeFileRequest(null, request.fileUpload, null, {...request});
         dispatchTableSearch(treq);
     } else if (request.srcTable) {
         const treq = TblUtil.makeFileRequest(null, request.srcTable, null, {filters: request.filters});

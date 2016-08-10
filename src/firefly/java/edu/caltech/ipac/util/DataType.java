@@ -17,11 +17,13 @@ public class DataType implements Serializable, Cloneable {
     private static final String INTEGER = "int";
     private static final String LONG = "long";
     private static final String CHAR = "char";
+    private static final String BOOL = "bool";
     private static final String S_DOUBLE = "d";
     private static final String S_FLOAT = "f";
     private static final String S_INTEGER = "i";
     private static final String S_LONG = "l";
     private static final String S_CHAR = "c";
+    private static final String S_BOOL = "b";
 
     private       Class      _type;
     private       String     _units;
@@ -221,6 +223,8 @@ public class DataType implements Serializable, Cloneable {
                 _typeDesc = useShortType ? S_INTEGER : INTEGER;
             else if (dt.equals(Long.class))
                 _typeDesc = useShortType ? S_LONG : LONG;
+            else if (dt.equals(Boolean.class))
+                _typeDesc = useShortType ? S_BOOL : BOOL;
             else
                 _typeDesc = useShortType ? S_CHAR : CHAR;
         }

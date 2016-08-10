@@ -44,6 +44,7 @@ public final class IpacTableReader {
                                                  "r", "float", "f"};
     private static final String INT_TYPE[]= { "int.*", "i"} ;
     private static final String LONG_TYPE[]= { "long", "l"} ;
+    private static final String BOOL_TYPE[]= { "bool", "b"} ;
     private static final String STRING_TYPE[]= {"cha.*", "str.*", "s", "c"};
 
     private String      _line;      // to keep the line read from file
@@ -513,6 +514,10 @@ public final class IpacTableReader {
                      ServerStringUtil.matchesRegExpList(itc._type, LONG_TYPE, true)) {
                    itc._foundType= Long.class;
                }
+               else  if (itc._type!=null &&
+                       ServerStringUtil.matchesRegExpList(itc._type, BOOL_TYPE, true)) {
+                   itc._foundType= Boolean.class;
+               }
                else {
                    itc._foundType= String.class;
                }
@@ -665,6 +670,7 @@ public final class IpacTableReader {
         return ServerStringUtil.matchesRegExpList(type, DOUBLE_TYPE, true) ||
                 ServerStringUtil.matchesRegExpList(type, INT_TYPE, true) ||
                 ServerStringUtil.matchesRegExpList(type, LONG_TYPE, true) ||
+                ServerStringUtil.matchesRegExpList(type, BOOL_TYPE, true) ||
                 ServerStringUtil.matchesRegExpList(type, STRING_TYPE, true);
     }
 
@@ -675,6 +681,8 @@ public final class IpacTableReader {
             return Integer.class;
         } else if ( ServerStringUtil.matchesRegExpList(type, LONG_TYPE, true) ) {
             return Long.class;
+        } else if ( ServerStringUtil.matchesRegExpList(type, BOOL_TYPE, true) ) {
+            return Boolean.class;
         }
         return String.class;
     }
