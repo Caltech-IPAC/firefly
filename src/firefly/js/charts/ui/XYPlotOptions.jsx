@@ -22,6 +22,14 @@ import {showColSelectPopup, hideColSelectPopup} from './ColSelectView.jsx';
 
 const DECI_ENABLE_SIZE = 5000;
 
+const AXIS_OPTIONS = [
+    {label: 'grid', value: 'grid'},
+    {label: 'reverse', value: 'flip'},
+    {label: 'log', value: 'log'}
+];
+
+const AXIS_OPTIONS_NOLOG = AXIS_OPTIONS.filter((el) => {return el.label !== 'log';});
+
 const helpStyle = {fontStyle: 'italic', color: '#808080', paddingBottom: 10};
 import {TextButton} from '../../ui/TextButton.jsx';
 
@@ -70,6 +78,7 @@ export function resultsSuccess(callback, flds) {
     [xMin, xMax, yMin, yMax] = [xMin, xMax, yMin, yMax].map((v) => { return (v && isFinite(v)) ? Number(v) : undefined; });
     let userSetBoundaries = omitBy({xMin, xMax, yMin, yMax}, isUndefined);
     userSetBoundaries = isEmpty(userSetBoundaries) ? undefined : userSetBoundaries;
+    const xyRatio = parseFloat(flds.xyRatio);
 
     /*
       const axisParamsShape = PropTypes.shape({
@@ -91,7 +100,7 @@ export function resultsSuccess(callback, flds) {
       */
     const xyPlotParams = omitBy({
         userSetBoundaries,
-        xyRatio : flds.xyRatio || undefined,
+        xyRatio : Number.isFinite(xyRatio) ? xyRatio : undefined,
         stretch : flds.stretch,
         nbins : (nbinsX && nbinsY) ? {x: Number(nbinsX), y: Number(nbinsY)} : undefined,
         shading: flds.shading || undefined,
@@ -116,15 +125,15 @@ export function setOptions(groupKey, xyPlotParams) {
         {fieldKey: 'y.columnOrExpr', value: get(xyPlotParams, 'y.columnOrExpr')},
         {fieldKey: 'y.label', value: get(xyPlotParams, 'y.label')},
         {fieldKey: 'y.unit', value: get(xyPlotParams, 'y.unit')},
-        {fieldKey: 'y.options', value: get(xyPlotParams, 'y.options', 'grid')},
+        {fieldKey: 'y.options', value: get(xyPlotParams, 'y.options', '_none_')},
         {fieldKey: 'xMin', value: get(xyPlotParams, 'userSetBoundaries.xMin')},
         {fieldKey: 'xMax', value: get(xyPlotParams, 'userSetBoundaries.xMax')},
         {fieldKey: 'yMin', value: get(xyPlotParams, 'userSetBoundaries.yMin')},
         {fieldKey: 'yMax', value: get(xyPlotParams, 'userSetBoundaries.yMax')},
         {fieldKey: 'xyRatio', value: get(xyPlotParams, 'xyRatio')},
         {fieldKey: 'stretch', value: get(xyPlotParams, 'stretch', 'fit')},
-        {fieldKey: 'nbins.x', value: get(xyPlotParams, 'nbins.x', 100)},
-        {fieldKey: 'nbins.y', value: get(xyPlotParams, 'nbins.y', 100)},
+        {fieldKey: 'nbins.x', value: get(xyPlotParams, 'nbins.x')},
+        {fieldKey: 'nbins.y', value: get(xyPlotParams, 'nbins.y')},
         {fieldKey: 'shading', value: get(xyPlotParams, 'shading', 'lin')}
     ];
     dispatchMultiValueChange(groupKey, flds);
@@ -167,7 +176,13 @@ function fldChangeReducer(inFields, action) {
             set(inFields, ['y.unit', 'value'], undefined);
             set(inFields, ['yMin', 'value'], undefined);
             set(inFields, ['yMax', 'value'], undefined);
+        } else if (fieldKey === 'xyRatio') {
+            if (get(inFields, 'nbins.x')) {
+                set(inFields, ['nbins.x', 'value'], undefined);
+                set(inFields, ['nbins.y', 'value'], undefined);
+            }
         } else {
+            // validate min/max relationship
             [{min: 'xMin', max: 'xMax'}, {min: 'yMin', max: 'yMax'}].forEach(
                 (v) => {
                     if (fieldKey === v.min || fieldKey === v.max) {
@@ -182,6 +197,10 @@ function fldChangeReducer(inFields, action) {
         }
     }
     return inFields;
+}
+
+function possibleDecimatedTable(colValStats) {
+    return Boolean(colValStats.find((el) => { return el.numpoints>DECI_ENABLE_SIZE; }));
 }
 
 
@@ -243,15 +262,15 @@ export class XYPlotOptions extends React.Component {
 
     renderBinningOptions() {
         const { colValStats, groupKey, xyPlotParams }= this.props;
-        const displayBinningOptions = Boolean(colValStats.find((el) => { return el.numpoints>DECI_ENABLE_SIZE; }));
+        const displayBinningOptions = possibleDecimatedTable(colValStats);
         if (displayBinningOptions) {
             return ( <FieldGroupCollapsible  header='Binning Options'
                                              initialState= {{ value:'closed' }}
                                              fieldKey='binningOptions'>
                 <ValidationField style={{width:50}}
                                  initialState= {{
-                        value: get(xyPlotParams, 'nbins.x', 100),
-                        nullAllowed : false,
+                        value: get(xyPlotParams, 'nbins.x'),
+                        nullAllowed : true,
                         validator: Validate.intRange.bind(null, 1, 300, 'X-Bins'),
                         tooltip: 'Number of bins along X axis',
                         label : 'Number of X-Bins:'
@@ -261,8 +280,8 @@ export class XYPlotOptions extends React.Component {
                                  labelWidth={90}/>
                 <ValidationField style={{width:50}}
                                  initialState= {{
-                        value: get(xyPlotParams, 'nbins.y', 100),
-                        nullAllowed : false,
+                        value: get(xyPlotParams, 'nbins.y'),
+                        nullAllowed : true,
                         validator: Validate.intRange.bind(null, 1, 300, 'Y-Bins'),
                         tooltip: 'Number of bins along Y axis',
                         label : 'Number of Y-Bins:'
@@ -420,6 +439,8 @@ export class XYPlotOptions extends React.Component {
             dispatchValueChange({fieldKey: 'y.columnOrExpr', groupKey, value: colName, valid: true});
         };
 
+        const noLogOption = possibleDecimatedTable(colValStats);
+
         return (
             <div style={{padding:'0 5px 7px'}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}
@@ -498,11 +519,7 @@ export class XYPlotOptions extends React.Component {
                                 tooltip: 'Check if you would like to plot grid',
                                 label : 'Options:'
                             }}
-                            options={[
-                                {label: 'grid', value: 'grid'},
-                                {label: 'reverse', value: 'flip'},
-                                {label: 'log', value: 'log'}
-                            ]}
+                            options={noLogOption ? AXIS_OPTIONS_NOLOG : AXIS_OPTIONS}
                             fieldKey='x.options'
                             groupKey={groupKey}
                             labelWidth={50}
@@ -562,16 +579,12 @@ export class XYPlotOptions extends React.Component {
                         <br/>
                         <CheckboxGroupInputField
                             initialState= {{
-                                value: get(xyPlotParams, 'y.options', 'grid'),
+                                value: get(xyPlotParams, 'y.options', '_none_'),
                                 tooltip: 'Check if you would like to plot grid',
                                 label : 'Options:'
 
                             }}
-                            options={[
-                                {label: 'grid', value: 'grid'},
-                                {label: 'reverse', value: 'flip'},
-                                {label: 'log', value: 'log'}
-                            ]}
+                            options={noLogOption ? AXIS_OPTIONS_NOLOG : AXIS_OPTIONS}
                             fieldKey='y.options'
                             groupKey={groupKey}
                             labelWidth={50}

@@ -16,8 +16,8 @@ public class DataObjectUtil {
 
     /**
     * return Double.NaN if val is null or not a double
-    * @param val
-    * @return
+    * @param val value
+    * @return double
     */
    public static double getDouble(Object val) {
        if (val != null) {
@@ -102,11 +102,21 @@ public class DataObjectUtil {
             if (colExpr == null) {
                 val = getDouble(row.getDataElement(col));
             } else {
-                // x is an expression
+                // col is an expression
                 for (DataType dt : colDataTypes) {
                     colExpr.setVariableValue(dt.getKeyName(), getDouble(row.getDataElement(dt)));
                 }
                 val = colExpr.getValue();
+            }
+            return val;
+        }
+
+        public String getFormattedValue(DataObject row) {
+            String val;
+            if (colExpr == null) {
+                val = row.getFormatedData(col);
+            } else {
+                val = null;
             }
             return val;
         }

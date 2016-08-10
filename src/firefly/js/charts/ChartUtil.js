@@ -164,8 +164,8 @@ export function getDefaultXYPlotParams(tbl_id) {
 
     return (xCol && yCol) ?
     {
-        x: {columnOrExpr: xCol.name, label: xCol.name, unit: xCol.units?xCol.units:''},
-        y: {columnOrExpr: yCol.name, label: yCol.name, unit: yCol.units?yCol.units:''}
+        x: {columnOrExpr: xCol.name, options: isCatalog ? 'flip' : '_none_'},
+        y: {columnOrExpr: yCol.name}
     } : undefined;
 }
 
