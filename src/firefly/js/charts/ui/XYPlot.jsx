@@ -11,6 +11,7 @@ import {parseDecimateKey} from '../../tables/Decimate.js';
 
 import numeral from 'numeral';
 import {getFormatString} from '../../util/MathUtil.js';
+import {logError} from '../../util/WebUtil.js';
 
 const defaultShading = 'lin';
 
@@ -29,7 +30,7 @@ export const selectionShape = PropTypes.shape({
 });
 
 export const plotParamsShape = PropTypes.shape({
-    xyRatio : PropTypes.string,
+    xyRatio : PropTypes.number,
     stretch : PropTypes.oneOf(['fit','fill']),
     selection : selectionShape,
     zoom : selectionShape,
@@ -111,6 +112,10 @@ const getWeightedDataDescr = function(defaultDescr, numericData, minWeight, maxW
     return getWeightBasedGroup(numericData[0].weight, minWeight, maxWeight, logShading, false);
 };
 
+const isDataSeries = function(name) {
+    return (name === '1pt' || name.endsWith('pts'));
+};
+
 const getXAxisOptions = function(params) {
     const xTitle = params.x.label + (params.x.unit ? ` (${params.x.unit})` : '');
     let xGrid = false, xReversed = false, xLog = false;
@@ -121,6 +126,28 @@ const getXAxisOptions = function(params) {
         xLog = xOptions.includes('log');
     }
     return {xTitle, xGrid, xReversed, xLog};
+};
+
+const canUseXLog = function(data) {
+    const min = get(data,'xMin');
+    if (Number.isFinite(min)) {
+        if (min > 0) { return true; }
+        else {
+            logError('XYPlot: logarithmic scale can not be used for minimum X value '+min);
+        }
+    }
+    return false;
+};
+
+const canUseYLog = function(data) {
+    const min = get(data,'yMin');
+    if (Number.isFinite(min)) {
+        if (min > 0) { return true; }
+        else {
+            logError('XYPlot: logarithmic scale can not be used for minimum Y value '+min);
+        }
+    }
+    return false;
 };
 
 const getYAxisOptions = function(params) {
@@ -269,7 +296,7 @@ export class XYPlot extends React.Component {
                             gridLineWidth: newXOptions.xGrid ? 1 : 0,
                             reversed: newXOptions.xReversed,
                             opposite: newYOptions.yReversed,
-                            type: newXOptions.xLog ? 'logarithmic' : 'linear'
+                            type: newXOptions.xLog && canUseXLog(nextProps.data) ? 'logarithmic' : 'linear'
                         });
                     }
                     if (!shallowequal(getYAxisOptions(params), newYOptions)) {
@@ -277,7 +304,7 @@ export class XYPlot extends React.Component {
                             title: {text: newYOptions.yTitle},
                             gridLineWidth: newYOptions.yGrid ? 1 : 0,
                             reversed: newYOptions.yReversed,
-                            type: newYOptions.yLog ? 'logarithmic' : 'linear'
+                            type: newYOptions.yLog && canUseYLog(nextProps.data) ? 'logarithmic' : 'linear'
                         });
                     }
                     if (!shallowequal(params.boundaries, newParams.boundaries)) {
@@ -311,14 +338,24 @@ export class XYPlot extends React.Component {
                 if (newWidth !== width || newHeight !== height ||
                     newParams.xyRatio !== params.xyRatio ||newParams.stretch != params.stretch) {
                     const {chartWidth, chartHeight} = calculateChartSize(newWidth, newHeight, nextProps);
-                    chart.setSize(chartWidth, chartHeight, false);
+                    if (Math.abs(chart.chartWidth - chartWidth) > 20 || Math.abs(chart.chartHeight - chartHeight) > 20) {
 
-                    if (this.pendingResize) {
-                        // if resize is slow, we want to do it only once
-                        this.pendingResize.cancel();
+                        if (get(nextProps, ['data', 'decimateKey'])) {
+                            // hide all series for resize
+                            chart.series.forEach((series) => {
+                                series.setVisible(false, false);
+                            });
+                            chart.showLoading('Resizing');
+                        }
+                        chart.setSize(chartWidth, chartHeight, false);
+
+                        if (this.pendingResize) {
+                            // if resize is slow, we want to do it only once
+                            this.pendingResize.cancel();
+                        }
+                        this.pendingResize = this.debouncedResize();
+                        this.pendingResize();
                     }
-                    this.pendingResize = this.debouncedResize();
-                    this.pendingResize();
                 }
 
                 return false;
@@ -344,10 +381,12 @@ export class XYPlot extends React.Component {
                     // update marker's size
                     const {xUnitPx, yUnitPx} = getDeciSymbolSize(chart, data.decimateKey);
                     chart.series.forEach((series) => {
-                        series.name.includes(DATAPOINTS) && series.update({
+                        isDataSeries(series.name) && series.update({
                             marker: {radius: xUnitPx/2.0, hD: (xUnitPx-yUnitPx)/2.0}}, false);
+                        series.setVisible(true, false);
                     });
                     chart.redraw();
+                    chart.hideLoading();
                 }
             }
             this.pendingResize = null;
@@ -634,7 +673,7 @@ export class XYPlot extends React.Component {
                 opposite: yReversed,
                 reversed: xReversed,
                 title: {text: xTitle},
-                type: xLog ? 'logarithmic' : 'linear'
+                type: xLog && canUseXLog(data) ? 'logarithmic' : 'linear'
             },
             yAxis: {
                 min: selFinite(yMin,yDataMin),
@@ -649,7 +688,7 @@ export class XYPlot extends React.Component {
                 endOnTick: false,
                 reversed: yReversed,
                 title: {text: yTitle},
-                type: yLog ? 'logarithmic' : 'linear'
+                type: yLog && canUseYLog(data) ? 'logarithmic' : 'linear'
             },
             series: [{
                 // This series is to make sure the axis are created.
