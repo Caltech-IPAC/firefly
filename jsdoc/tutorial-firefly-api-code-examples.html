@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Tutorial: firefly-api-code-examples - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="module-lowLevelApi.CysConverter.CysConverter.html">CysConverter</a></li></ul><h3>Modules</h3><ul><li><a href="module-highLevelApi.html">highLevelApi</a><ul class='methods'><li data-type='method'><a href="module-highLevelApi.html#~addXYPlot">addXYPlot</a></li><li data-type='method'><a href="module-highLevelApi.html#~getViewer">getViewer</a></li><li data-type='method'><a href="module-highLevelApi.html#~setGlobalImageDef">setGlobalImageDef</a></li><li data-type='method'><a href="module-highLevelApi.html#~showCoverage">showCoverage</a></li><li data-type='method'><a href="module-highLevelApi.html#~showImage">showImage</a></li><li data-type='method'><a href="module-highLevelApi.html#~showImageFileOrUrl">showImageFileOrUrl</a></li><li data-type='method'><a href="module-highLevelApi.html#~showTable">showTable</a></li><li data-type='method'><a href="module-highLevelApi.html#~showXYPlot">showXYPlot</a></li></ul></li><li><a href="module-lowLevelApi.html">lowLevelApi</a><ul class='methods'><li data-type='method'><a href="module-lowLevelApi.html#.addActionListener">addActionListener</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchAddRegionEntry">dispatchAddRegionEntry</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchCreateRegionLayer">dispatchCreateRegionLayer</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchDeleteRegionLayer">dispatchDeleteRegionLayer</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchLoadPlotData">dispatchLoadPlotData</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchRemoveRegionEntry">dispatchRemoveRegionEntry</a></li><li data-type='method'><a href="module-lowLevelApi.html#.getPrimePlot">getPrimePlot</a></li><li data-type='method'><a href="module-lowLevelApi.html#.initAutoReadout">initAutoReadout</a></li><li data-type='method'><a href="module-lowLevelApi.html#.makeFileRequest">makeFileRequest</a></li><li data-type='method'><a href="module-lowLevelApi.html#.makeIrsaCatalogRequest">makeIrsaCatalogRequest</a></li><li data-type='method'><a href="module-lowLevelApi.html#.makeTblRequest">makeTblRequest</a></li><li data-type='method'><a href="module-lowLevelApi.html#.serializeSimpleRangeValues">serializeSimpleRangeValues</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getImageCoords">getImageCoords</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getScreenCoords">getScreenCoords</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getViewPortCoords">getViewPortCoords</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getWorldCoords">getWorldCoords</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getWorldPtRepresentation">getWorldPtRepresentation</a></li><li data-type='method'><a href="module-lowLevelApi.html#~renderDOM">renderDOM</a></li><li data-type='method'><a href="module-lowLevelApi.html#~unrenderDOM">unrenderDOM</a></li></ul></li></ul><h3>Namespaces</h3><ul><li><a href="module-lowLevelApi-firefly.html">firefly</a></li><li><a href="module-lowLevelApi-firefly_action.html">firefly/action</a></li><li><a href="module-lowLevelApi-firefly_ui.html">firefly/ui</a></li><li><a href="module-lowLevelApi-firefly_util.html">firefly/util</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-firefly-api-code-examples.html">firefly-api-code-examples</a></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">Tutorial: firefly-api-code-examples</h1>
+    
+
+    <section>
+
+<header>
+    
+
+    <h2>firefly-api-code-examples</h2>
+</header>
+
+<article>
+    <h2>Code Examples Using Firefly Tools</h2><ul>
+<li><a href="#image-fits-viewer">Image FITS Viewer</a></li>
+<li><a href="#fits-viewers-in-a-group">FITS Viewers in a group</a></li>
+<li><a href="#tracking-the-mouse">Tracking the mouse</a></li>
+<li><a href="#tracking-the-selection">Tracking the selection</a></li>
+</ul>
+<p>###Starting Firefly Tools in JavaScript
+Firefly Tools are loaded when you load<code>firefly_loader.js</code> from a server of your choice. For example, to load Firefly Tools from your local server, include the following declaration in your HTML file:</p>
+<pre class="prettyprint source lang-html"><code> &lt;script type=&quot;text/javascript&quot; language=&quot;javascript&quot; src=&quot;http://localhost:8080/fftools/firefly_loader.js&quot;></code></pre><p>Your html document must define some divs, where you will load the viewer widgets, and <code>onFireflyLoaded()</code> function.</p>
+<p>When Firefly Tools completes loading, it calls <code>onFireflyLoaded()</code> JavaScript function. This is where you create Firefly components and place them into HTML <code>&lt;div&gt;</code> elements with specified IDs. </p>
+<p>The following are several examples of what can be done in the <code>onFireflyLoaded()</code> function. All test data can be found at <code>http://web.ipac.caltech.edu/staff/roby/demo</code>. </p>
+<p>###Image FITS Viewer
+Create an image viewer and place it into the <code>&lt;div&gt;</code> id <code>plotHere</code>.</p>
+<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;plotHere&quot; style=&quot;width: 350px; height: 350px;&quot;>&lt;/div></code></pre><pre class="prettyprint source lang-js"><code>function onFireflyLoaded() {
+    firefly.showImage('plotHere', {
+        URL      : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m31-level1-3.fits',
+        Title    : 'Example FITS Image',
+        ColorTable : 16,
+        RangeValues : firefly.util.image.RangeValues.serializeSimple('Sigma',-2,8,'Linear')
+    });</code></pre><p>###FITS Viewers in a group
+In this example, we create four image viewers. Each belong to the same group <code>wise-group</code>. We then set some global parameters so all the plots display the same. Now we plot each of the four images by specifying the URL of the FITS file. By doing this, all the plotting controls will work on all four images simultaneously. </p>
+<pre class="prettyprint source lang-html"><code>  &lt;div style=&quot;white-space: nowrap;&quot;>
+    &lt;div id=&quot;w1&quot; style=&quot;display:inline-block; width: 250px; height: 250px; border: solid 1px;&quot;>&lt;/div>
+    &lt;div id=&quot;w2&quot; style=&quot;display:inline-block; width: 250px; height: 250px; border: solid 1px;&quot;>&lt;/div>
+    &lt;div id=&quot;w3&quot; style=&quot;display:inline-block; width: 250px; height: 250px; border: solid 1px;&quot;>&lt;/div>
+    &lt;div id=&quot;w4&quot; style=&quot;display:inline-block; width: 250px; height: 250px; border: solid 1px;&quot;>&lt;/div>
+  &lt;/div></code></pre><pre class="prettyprint source lang-js"><code> function onFireflyLoaded() {
+   firefly.setGlobalImageDef({ ZoomType    : 'TO_WIDTH',
+                                    ColorTable  : 8,
+                                    ZoomToWidth : 250 });   
+   w1.showImage('w1', { URL  : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band1.fits',
+             Title: 'WISE band 1', plotGroupId : 'wise-group' });
+   w2.showImage('w2', { URL  : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits',
+             Title: 'WISE band 2', plotGroupId : 'wise-group' });
+   w3.showImage('w3', { URL  : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band3.fits',
+             Title: 'WISE band 3', plotGroupId : 'wise-group' });
+   w4.showImage('w4', { URL  : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band4.fits',
+             Title: 'WISE band 4', plotGroupId : 'wise-group' });
+ }</code></pre><p>###Tracking the mouse </p>
+<p>The following example will plot FITS image then add a callback to get the mouse readout and log it to the console.</p>
+<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;plotHere&quot; style=&quot;width: 500px; height: 500px;&quot;>&lt;/div></code></pre><pre class="prettyprint source lang-js"><code>// callback on mouse readout
+function onReadoutData(action) {
+    if (action.payload.hasValues) {
+        // readoutItems contain j2000, image, screen points and other info
+        console.log(action.payload.readoutItems.imagePt);
+    }
+}
+function onFireflyLoaded() {
+    const imageRequest = {
+        plotId: 'plotHere',
+        URL: 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits',
+        Title: 'WISE m51'
+    };
+    firefly.showImage('image_div', imageRequest);
+    // add a callback, which will be called for every READOUT_DATA action
+    // returned is the function to remove listener
+    const trackReadoutRemover = firefly.util.addActionListener(firefly.action.type.READOUT_DATA, onReadoutData);
+}</code></pre><p>###Tracking the selection </p>
+<p>Firefly viewer allows to make the following selections:</p>
+<ul>
+<li>Area Select (square)</li>
+<li>Line Select</li>
+<li>Point Select</li>
+<li>Circle Select (<em>coming soon</em>)</li>
+</ul>
+<p>The following example will plot a FITS image then add a callback to get selection information and log it to the console.</p>
+<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;plotHere&quot; style=&quot;width: 500px; height: 500px;&quot;>&lt;/div></code></pre><pre class="prettyprint source lang-js"><code>const onPlotAttributeChange = function(action) {
+    console.log(action.payload.plotId);
+    // attribute key: 'ACTIVE_POINT','ACTIVE_DISTANCE', or 'SELECTION'
+    console.log(action.payload.attKey);
+    // value that defines the selection
+    console.log(action.payload.attValue);
+}
+function onFireflyLoaded() {
+    const imageRequest = {
+        plotId: 'plotHere',
+        URL: 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits',
+        Title: 'WISE m51'
+    };
+    firefly.showImage('image_div', imageRequest);
+    // turn on point selection
+    firefly.action.dispatchChangePointSelection('requester', true);
+    // add a callback, which will be called for every CHANGE_PLOT_ATTRIBUTE action
+    // returned is the function to remove listener
+    const trackSelectionRemover = firefly.util.addActionListener(firefly.action.type.CHANGE_PLOT_ATTRIBUTE, onPlotAttributeChange);
+}</code></pre>
+</article>
+
+</section>
+
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.0-dev</a> on Thu Aug 11 2016 13:54:38 GMT-0700 (PDT) using the Minami theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>

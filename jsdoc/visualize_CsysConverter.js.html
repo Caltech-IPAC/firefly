@@ -1,4 +1,44 @@
-/*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>visualize/CsysConverter.js - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="module-lowLevelApi.CysConverter.CysConverter.html">CysConverter</a></li></ul><h3>Modules</h3><ul><li><a href="module-highLevelApi.html">highLevelApi</a><ul class='methods'><li data-type='method'><a href="module-highLevelApi.html#~addXYPlot">addXYPlot</a></li><li data-type='method'><a href="module-highLevelApi.html#~getViewer">getViewer</a></li><li data-type='method'><a href="module-highLevelApi.html#~setGlobalImageDef">setGlobalImageDef</a></li><li data-type='method'><a href="module-highLevelApi.html#~showCoverage">showCoverage</a></li><li data-type='method'><a href="module-highLevelApi.html#~showImage">showImage</a></li><li data-type='method'><a href="module-highLevelApi.html#~showImageFileOrUrl">showImageFileOrUrl</a></li><li data-type='method'><a href="module-highLevelApi.html#~showTable">showTable</a></li><li data-type='method'><a href="module-highLevelApi.html#~showXYPlot">showXYPlot</a></li></ul></li><li><a href="module-lowLevelApi.html">lowLevelApi</a><ul class='methods'><li data-type='method'><a href="module-lowLevelApi.html#.addActionListener">addActionListener</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchAddRegionEntry">dispatchAddRegionEntry</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchCreateRegionLayer">dispatchCreateRegionLayer</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchDeleteRegionLayer">dispatchDeleteRegionLayer</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchLoadPlotData">dispatchLoadPlotData</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchRemoveRegionEntry">dispatchRemoveRegionEntry</a></li><li data-type='method'><a href="module-lowLevelApi.html#.getPrimePlot">getPrimePlot</a></li><li data-type='method'><a href="module-lowLevelApi.html#.initAutoReadout">initAutoReadout</a></li><li data-type='method'><a href="module-lowLevelApi.html#.makeFileRequest">makeFileRequest</a></li><li data-type='method'><a href="module-lowLevelApi.html#.makeIrsaCatalogRequest">makeIrsaCatalogRequest</a></li><li data-type='method'><a href="module-lowLevelApi.html#.makeTblRequest">makeTblRequest</a></li><li data-type='method'><a href="module-lowLevelApi.html#.serializeSimpleRangeValues">serializeSimpleRangeValues</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getImageCoords">getImageCoords</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getScreenCoords">getScreenCoords</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getViewPortCoords">getViewPortCoords</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getWorldCoords">getWorldCoords</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getWorldPtRepresentation">getWorldPtRepresentation</a></li><li data-type='method'><a href="module-lowLevelApi.html#~renderDOM">renderDOM</a></li><li data-type='method'><a href="module-lowLevelApi.html#~unrenderDOM">unrenderDOM</a></li></ul></li></ul><h3>Namespaces</h3><ul><li><a href="module-lowLevelApi-firefly.html">firefly</a></li><li><a href="module-lowLevelApi-firefly_action.html">firefly/action</a></li><li><a href="module-lowLevelApi-firefly_ui.html">firefly/ui</a></li><li><a href="module-lowLevelApi-firefly_util.html">firefly/util</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-firefly-api-code-examples.html">firefly-api-code-examples</a></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">visualize/CsysConverter.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import CoordinateSys from './CoordSys.js';
@@ -29,12 +69,12 @@ const MAX_CACHE_ENTRIES = 38000; // set to never allows the cache array over 480
  * This class is for conversion
  * Some include a Image coordinate system, a world coordinate system, and a screen
  * coordinate system.
- * <ul>
- * <li>The image coordinate system is the coordinate system of the data. 
- * <li>The world coordinate system is the system that the data represents
+ * &lt;ul>
+ * &lt;li>The image coordinate system is the coordinate system of the data. 
+ * &lt;li>The world coordinate system is the system that the data represents
  *        (i.e. the coordinate system of the sky)
- * <li>Screen coordinates are the pixel values of the screen.
- * </ul>
+ * &lt;li>Screen coordinates are the pixel values of the screen.
+ * &lt;/ul>
  *
  */
 
@@ -67,7 +107,7 @@ export class CysConverter {
      * @param imp Image Point
      */
     putInConversionCache(wp, imp) {
-        if (SimpleMemCache.size(this.plotImageId)<MAX_CACHE_ENTRIES) {
+        if (SimpleMemCache.size(this.plotImageId)&lt;MAX_CACHE_ENTRIES) {
             SimpleMemCache.set(this.plotImageId, wp.toString(), imp);
         }
     }
@@ -83,11 +123,11 @@ export class CysConverter {
      */
     imagePointInData(iwPt) {
         var retval= false;
-        if (iwPt && this.pointInPlot(iwPt)) {
+        if (iwPt &amp;&amp; this.pointInPlot(iwPt)) {
             var ipt= this.getImageCoords(iwPt);
             var x= ipt.x;
             var y= ipt.y;
-            retval= (x >= 0 && x <= this.dataWidth && y >= 0 && y <= this.dataHeight );
+            retval= (x >= 0 &amp;&amp; x &lt;= this.dataWidth &amp;&amp; y >= 0 &amp;&amp; y &lt;= this.dataHeight );
         }
         return retval;
     }
@@ -129,7 +169,7 @@ export class CysConverter {
     imageWorkSpacePtInPlot(ipt) {
         if (!ipt) return false;
         const {x,y}= ipt;
-        return (x >= 0 && x <= this.dataWidth && y >= 0 && y <= this.dataHeight );
+        return (x >= 0 &amp;&amp; x &lt;= this.dataWidth &amp;&amp; y >= 0 &amp;&amp; y &lt;= this.dataHeight );
     }
 
     /**
@@ -163,7 +203,7 @@ export class CysConverter {
         if (!vpt || !vpt.type || vpt.type!==Point.VP_PT) return false;
         const {x,y}= vpt;
         const {width,height}= this.viewPort.dim;
-        return (x>=0 && y>=0 && x<=width && y<=height);
+        return (x>=0 &amp;&amp; y>=0 &amp;&amp; x&lt;=width &amp;&amp; y&lt;=height);
     }
 
 
@@ -529,7 +569,7 @@ export class CysConverter {
     makeWorldPtFromIPt( ipt, outputCoordSys) {
         if (ipt==null) return null;
         var wpt = this.projection.getWorldCoords(ipt.x - .5 ,ipt.y - .5);
-        if (wpt && outputCoordSys!==wpt.getCoordSys()) {
+        if (wpt &amp;&amp; outputCoordSys!==wpt.getCoordSys()) {
             wpt= VisUtil.convert(wpt, outputCoordSys);
         }
         return wpt;
@@ -553,7 +593,7 @@ export class CysConverter {
 
             var ip1= this.getImageWorkSpaceCoords(wp1);
             var ip2= this.getImageWorkSpaceCoords(wp2);
-            if (ip1 && ip2) {
+            if (ip1 &amp;&amp; ip2) {
                 var xDiff= ip1.x-ip2.x;
                 var yDiff= ip1.y-ip2.y;
                 var imageDist= Math.sqrt(xDiff*xDiff + yDiff*yDiff);
@@ -654,3 +694,22 @@ export default CysConverter;
 
 
 
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.0-dev</a> on Thu Aug 11 2016 13:54:38 GMT-0700 (PDT) using the Minami theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>

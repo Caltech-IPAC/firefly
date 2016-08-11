@@ -23,7 +23,10 @@ export const HISTOGRAM = 'histogram';
 
 /**
  * This method returns an object with the keys x,y,highlightedRow
+ * @module lowLevelApi
+ *
  */
+
 export const getHighlighted = function(xyPlotParams, tblId) {
 
     const tableModel = getTblById(tblId);
@@ -108,7 +111,11 @@ export function numRelatedCharts(tblId) {
     });
     return numRelated;
 }
-
+/**
+ * @param prefix
+ * @returns {*}
+ * @memeberof lowLevelApi
+ */
 export function uniqueChartId(prefix) {
     return uniqueId(prefix?prefix+'-c':'c');
 }

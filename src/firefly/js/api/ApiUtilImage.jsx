@@ -32,16 +32,28 @@ export {RangeValues} from '../visualize/RangeValues.js';
 export {WPConst, WebPlotRequest, findInvalidWPRKeys, confirmPlotRequest} from '../visualize/WebPlotRequest.js';
 export {RequestType} from '../visualize/RequestType';
 export {ExpandType, dispatchApiToolsView} from '../visualize/ImagePlotCntlr.js';
+/**
+ * @module lowLevelApi
+ *
+ */
 export {CsysConverter} from '../visualize/CsysConverter.js';
 export {CCUtil} from '../visualize/CsysConverter.js';
 export {watchCoverage} from '../visualize/saga/CoverageWatcher.js';
 export {watchImageMetaData} from '../visualize/saga/ImageMetaDataWatcher.js';
 
 
-/**
+/*
+ *
+ *
+ *
  * Get plot object with the given plot id.
  * When plotId is not included, active plot is returned.
+ */
+/**
+ *
  * @param {string} [plotId] the plotId, optional
+ * @returns {WebPlot}
+ *
  */
 export function getPrimePlot(plotId) {
     return primePlot(visRoot(), plotId);
@@ -49,8 +61,11 @@ export function getPrimePlot(plotId) {
 
 /**
  * initialize the auto readout. Must be call once at the begging to get the popup readout running.
- * @param ReadoutComponent
- * @param props
+ *
+ */
+/**
+ * @param {object} ReadoutComponent - either a PopupMouseReadoutMinimal or PopupMouseReadoutFull
+ * @param {object} props - a list of the properties
  */
 export function initAutoReadout(ReadoutComponent= DefaultApiReadout,
          //   props={MouseReadoutComponent:PopupMouseReadoutMinimal, showThumb:false,showMag:false}){

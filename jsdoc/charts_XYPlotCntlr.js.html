@@ -1,4 +1,44 @@
-/*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>charts/XYPlotCntlr.js - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="module-lowLevelApi.CysConverter.CysConverter.html">CysConverter</a></li></ul><h3>Modules</h3><ul><li><a href="module-highLevelApi.html">highLevelApi</a><ul class='methods'><li data-type='method'><a href="module-highLevelApi.html#~addXYPlot">addXYPlot</a></li><li data-type='method'><a href="module-highLevelApi.html#~getViewer">getViewer</a></li><li data-type='method'><a href="module-highLevelApi.html#~setGlobalImageDef">setGlobalImageDef</a></li><li data-type='method'><a href="module-highLevelApi.html#~showCoverage">showCoverage</a></li><li data-type='method'><a href="module-highLevelApi.html#~showImage">showImage</a></li><li data-type='method'><a href="module-highLevelApi.html#~showImageFileOrUrl">showImageFileOrUrl</a></li><li data-type='method'><a href="module-highLevelApi.html#~showTable">showTable</a></li><li data-type='method'><a href="module-highLevelApi.html#~showXYPlot">showXYPlot</a></li></ul></li><li><a href="module-lowLevelApi.html">lowLevelApi</a><ul class='methods'><li data-type='method'><a href="module-lowLevelApi.html#.addActionListener">addActionListener</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchAddRegionEntry">dispatchAddRegionEntry</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchCreateRegionLayer">dispatchCreateRegionLayer</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchDeleteRegionLayer">dispatchDeleteRegionLayer</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchLoadPlotData">dispatchLoadPlotData</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchRemoveRegionEntry">dispatchRemoveRegionEntry</a></li><li data-type='method'><a href="module-lowLevelApi.html#.getPrimePlot">getPrimePlot</a></li><li data-type='method'><a href="module-lowLevelApi.html#.initAutoReadout">initAutoReadout</a></li><li data-type='method'><a href="module-lowLevelApi.html#.makeFileRequest">makeFileRequest</a></li><li data-type='method'><a href="module-lowLevelApi.html#.makeIrsaCatalogRequest">makeIrsaCatalogRequest</a></li><li data-type='method'><a href="module-lowLevelApi.html#.makeTblRequest">makeTblRequest</a></li><li data-type='method'><a href="module-lowLevelApi.html#.serializeSimpleRangeValues">serializeSimpleRangeValues</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getImageCoords">getImageCoords</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getScreenCoords">getScreenCoords</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getViewPortCoords">getViewPortCoords</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getWorldCoords">getWorldCoords</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getWorldPtRepresentation">getWorldPtRepresentation</a></li><li data-type='method'><a href="module-lowLevelApi.html#~renderDOM">renderDOM</a></li><li data-type='method'><a href="module-lowLevelApi.html#~unrenderDOM">unrenderDOM</a></li></ul></li></ul><h3>Namespaces</h3><ul><li><a href="module-lowLevelApi-firefly.html">firefly</a></li><li><a href="module-lowLevelApi-firefly_action.html">firefly/action</a></li><li><a href="module-lowLevelApi-firefly_ui.html">firefly/ui</a></li><li><a href="module-lowLevelApi-firefly_util.html">firefly/util</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-firefly-api-code-examples.html">firefly-api-code-examples</a></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">charts/XYPlotCntlr.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
@@ -102,7 +142,7 @@ export function dispatchSetSelection(chartId, selection) {
  */
 export function dispatchZoom(chartId, tblId, selection) {
     const {xyPlotData, xyPlotParams, decimatedUnzoomed} = get(getChartSpace(SCATTER), chartId, {});
-    if (xyPlotData && xyPlotParams) {
+    if (xyPlotData &amp;&amp; xyPlotParams) {
         if (selection) {
             // zoom to selection
             if (xyPlotData.decimateKey) {
@@ -205,7 +245,7 @@ export function reduceXYPlot(state={}, action={}) {
             let updatedState = state;
             if (invokedBy !== TablesCntlr.TABLE_SORT) {
                 Object.keys(state).forEach((cid) => {
-                    if (state[cid].tblId === tbl_id && get(state, [cid, 'xyPlotParams', 'boundaries'])) {
+                    if (state[cid].tblId === tbl_id &amp;&amp; get(state, [cid, 'xyPlotParams', 'boundaries'])) {
                         // do we need hard boundaries, which do not go away on new table data?
                         updatedState = updateDelete(updatedState, [cid, 'xyPlotParams'], 'boundaries');
                     }
@@ -228,7 +268,7 @@ export function reduceXYPlot(state={}, action={}) {
         case (DELETE) :
         {
             const {chartId, chartType} = action.payload;
-            if (chartType === 'scatter' && has(state, chartId)) {
+            if (chartType === 'scatter' &amp;&amp; has(state, chartId)) {
                 return omit(state, [chartId]);
             }
             return state;
@@ -385,7 +425,7 @@ function fetchPlotData(dispatch, tblId, xyPlotParams, chartId) {
             // when zoomed, we don't know if the unzoomed data are decimated or not
             let decimatedUnzoomed = xyPlotParams.zoom ? undefined : false;
 
-            if (tableModel.tableData && tableModel.tableData.data) {
+            if (tableModel.tableData &amp;&amp; tableModel.tableData.data) {
                 const {tableMeta} = tableModel;
                 xyPlotData = omitBy({
                     rows: tableModel.tableData.data,
@@ -402,7 +442,7 @@ function fetchPlotData(dispatch, tblId, xyPlotParams, chartId) {
                 // convert strings with numbers into numbers
                 Object.keys(xyPlotData).forEach( (prop) => {
                     const val = xyPlotData[prop];
-                    if (isString(val) && isFinite(val)) { xyPlotData[prop] = Number(val); }
+                    if (isString(val) &amp;&amp; isFinite(val)) { xyPlotData[prop] = Number(val); }
                 });
 
                 decimatedUnzoomed = Boolean(tableMeta['decimate_key']) || decimatedUnzoomed;
@@ -458,7 +498,7 @@ function getUpdatedParams(xyPlotParams, tableModel, dataBoundaries) {
     // if user set boundaries are undefined, use data boundaries
     const userSetBoundaries = get(xyPlotParams, 'userSetBoundaries', {});
     const boundaries = Object.assign({}, userSetBoundaries);
-    if (Object.keys(boundaries).length < 4 && !isEmpty(dataBoundaries)) {
+    if (Object.keys(boundaries).length &lt; 4 &amp;&amp; !isEmpty(dataBoundaries)) {
         const paddedDataBoundaries = getPaddedBoundaries(dataBoundaries);
         const [xMin, xMax, yMin, yMax] = ['xMin', 'xMax', 'yMin', 'yMax'].map( (v) => {
             return  (Number.isFinite(boundaries[v]) ? boundaries[v] : paddedDataBoundaries[v]);
@@ -473,3 +513,22 @@ function getUpdatedParams(xyPlotParams, tableModel, dataBoundaries) {
 }
 
 
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.0-dev</a> on Thu Aug 11 2016 13:54:38 GMT-0700 (PDT) using the Minami theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>

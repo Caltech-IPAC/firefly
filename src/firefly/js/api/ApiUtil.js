@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import {get,isEmpty} from 'lodash';
@@ -18,19 +19,22 @@ import {take,race,call} from 'redux-saga/effects';
 //------------------------------------------------------------------------------------------
 // NOTE 
 // NOTE
-
+/**
+ * @module lowLevelApi
+ */
 export {getBoolean} from '../util/WebUtil.js';
 export {toBoolean} from '../util/WebUtil.js';
 
 
-/**
+/*
  * Is in debug mode
- * @namespace firefly
- * @Function
+ * @Function isDebug
  */
+
+
 export const isDebug = () => get(window, 'firefly.debug', false);
 
-/**
+/*
  * show a debug message if debugging is enabled
  * @param {String|Error} msg any number of messages
  */
@@ -42,15 +46,12 @@ export function debug(...msg) {
 
 
 
-
-
-
 /**
  *
  * @param {string|Object} div a div element or a string id of the div element
  * @param {Object} Component a react component
  * @param {Object} [props] props for the react component
- * @namespace firefly
+ * @memeberof lowLevelApi
  * @Function renderDOM
  */
 export function renderDOM(div, Component, props) {
@@ -69,9 +70,13 @@ export function renderDOM(div, Component, props) {
 
 
 /**
+ *
  * removed the rendered element
+ */
+/**
  * @param {string|Object} div a div element or a string id of the div element
- * @namespace firefly
+ * @Function unrenderDOM
+ * @memeberof lowLevelApi
  */
 export function unrenderDOM(div) {
     const divElement= isString(div) ? document.getElementById(div) : div;
@@ -80,8 +85,10 @@ export function unrenderDOM(div) {
 
 
 
+/* LZ the description field below appeared twice when it is added to the jsdoc.
+ * @description Add a listener to any action type
+ * */
 /**
- * Add a listener to any action type
  * @param {string} actionType a string or and array of strings. Each string is an action constant from firefly.action.type
  * @param {function} callBack the call back will be call with two parameters: action object and state object
  *                 If it returns true the listener will be removed.
@@ -98,7 +105,7 @@ export function addActionListener(actionType,callBack) {
 //------------------ Private ----------------------------------------------
 //=========================================================================
 
-/**
+/*
  * This saga call a user callback when when one of the actionTypes are dispatched
  * This saga does the following:
  * <ul>
@@ -106,7 +113,7 @@ export function addActionListener(actionType,callBack) {
  *     <li>if an action call the callback
  *     <li>if the call back returns true or the cancel promise is resolved then exit
  * </ul>
- * @param {string|[]} actionType 
+ * @param {string | string[]} actionType
  * @param callBack the user callback
  * @param cancelPromise a promise to cancel the callback
  * @param dispatch

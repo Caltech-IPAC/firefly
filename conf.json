@@ -1,0 +1,70 @@
+{
+    "tags": {
+        "allowUnknownTags| ": true,
+        "dictionaries": ["jsdoc","closure"]
+    },
+    "source": {
+        "include": [
+           "src/firefly/js/api/",
+           "src/firefly/js/tables/TableUtil.js",
+           "src/firefly/js/charts/XYPlotCntlr.js",
+           "src/firefly/js//visualize/CsysConverter.js",
+           "src/firefly/js/visualize/DrawLayerCntlr.js"
+            ,"./docs/fireflyOverView.md"
+
+        ],
+      "exclude": [
+          //"src/firefly/js/api/ApiBuild.js"
+       ],
+        //include .js, .jsdoc and jsx files
+        "includePattern": ".+\\.js(doc)?|(x)$",
+         //Any file starting with an underscore or in a directory starting with an underscore will be ignored
+        "excludePattern": "(^|\\/|\\\\)_"
+    },
+
+    "plugins": [
+        "plugins/markdown",
+        "plugins/summarize"
+    ],
+    "jsx": {
+        "extensions": ["js", "jsx"]
+    },
+   /* "staticFiles": {
+        "include": ["./docs"],
+        "exclude": ["./docs/firefly-api-code-examples.md"],
+        "includePattern": ".+\\.md?$",
+       // "excludePattern": "(^|\\/|\\\\)_",
+        "recursive": true//,
+        //"recursiveLevel": 2,
+    },*/
+
+    "templates": {
+        "minami": {
+            "staticFiles": {
+                "include": ["./docs/"],
+                "exclude": ["./docs/firefly-api-code-examples.md"],
+               // "includePattern": ".+\\.md?$",
+                // "excludePattern": "(^|\\/|\\\\)_",
+                "recursive": true//,
+                //"recursiveLevel": 2,
+            },
+            "useLongnameInNav" :false
+        }
+    },
+    "opts": {
+        "template": "templates/minami",//default",  // same as -t templates/default
+        "encoding": "utf8",               // same as -e utf8
+        "destination": "./jsdoc/",          // same as -d ./out/
+        "recurse": true , //,             // same as -r
+        "tutorials": "./tutorial/" // same as -u path/to/tutorials
+
+    },
+    "templates": {
+        "cleverLinks": false,
+        "monospaceLinks": false,
+        "default": {
+            "outputSourceFiles": true
+        }
+    }
+}
+

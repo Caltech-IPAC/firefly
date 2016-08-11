@@ -1,4 +1,44 @@
-/*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>tables/TableUtil.js - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="module-lowLevelApi.CysConverter.CysConverter.html">CysConverter</a></li></ul><h3>Modules</h3><ul><li><a href="module-highLevelApi.html">highLevelApi</a><ul class='methods'><li data-type='method'><a href="module-highLevelApi.html#~addXYPlot">addXYPlot</a></li><li data-type='method'><a href="module-highLevelApi.html#~getViewer">getViewer</a></li><li data-type='method'><a href="module-highLevelApi.html#~setGlobalImageDef">setGlobalImageDef</a></li><li data-type='method'><a href="module-highLevelApi.html#~showCoverage">showCoverage</a></li><li data-type='method'><a href="module-highLevelApi.html#~showImage">showImage</a></li><li data-type='method'><a href="module-highLevelApi.html#~showImageFileOrUrl">showImageFileOrUrl</a></li><li data-type='method'><a href="module-highLevelApi.html#~showTable">showTable</a></li><li data-type='method'><a href="module-highLevelApi.html#~showXYPlot">showXYPlot</a></li></ul></li><li><a href="module-lowLevelApi.html">lowLevelApi</a><ul class='methods'><li data-type='method'><a href="module-lowLevelApi.html#.addActionListener">addActionListener</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchAddRegionEntry">dispatchAddRegionEntry</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchCreateRegionLayer">dispatchCreateRegionLayer</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchDeleteRegionLayer">dispatchDeleteRegionLayer</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchLoadPlotData">dispatchLoadPlotData</a></li><li data-type='method'><a href="module-lowLevelApi.html#.dispatchRemoveRegionEntry">dispatchRemoveRegionEntry</a></li><li data-type='method'><a href="module-lowLevelApi.html#.getPrimePlot">getPrimePlot</a></li><li data-type='method'><a href="module-lowLevelApi.html#.initAutoReadout">initAutoReadout</a></li><li data-type='method'><a href="module-lowLevelApi.html#.makeFileRequest">makeFileRequest</a></li><li data-type='method'><a href="module-lowLevelApi.html#.makeIrsaCatalogRequest">makeIrsaCatalogRequest</a></li><li data-type='method'><a href="module-lowLevelApi.html#.makeTblRequest">makeTblRequest</a></li><li data-type='method'><a href="module-lowLevelApi.html#.serializeSimpleRangeValues">serializeSimpleRangeValues</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getImageCoords">getImageCoords</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getScreenCoords">getScreenCoords</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getViewPortCoords">getViewPortCoords</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getWorldCoords">getWorldCoords</a></li><li data-type='method'><a href="module-lowLevelApi.html#~getWorldPtRepresentation">getWorldPtRepresentation</a></li><li data-type='method'><a href="module-lowLevelApi.html#~renderDOM">renderDOM</a></li><li data-type='method'><a href="module-lowLevelApi.html#~unrenderDOM">unrenderDOM</a></li></ul></li></ul><h3>Namespaces</h3><ul><li><a href="module-lowLevelApi-firefly.html">firefly</a></li><li><a href="module-lowLevelApi-firefly_action.html">firefly/action</a></li><li><a href="module-lowLevelApi-firefly_ui.html">firefly/ui</a></li><li><a href="module-lowLevelApi-firefly_util.html">firefly/util</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-firefly-api-code-examples.html">firefly-api-code-examples</a></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">tables/TableUtil.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
@@ -13,7 +53,7 @@ export const SEARCH_SRV_PATH = getRootURL() + 'search/json';
 const SAVE_TABLE_URL = getRootURL() + 'servlet/SaveAsIpacTable';
 const INT_MAX = Math.pow(2,31) - 1;
 
-/*----------------------------< creator functions ----------------------------*/
+/*----------------------------&lt; creator functions ----------------------------*/
 
 /*
  * Table options.  All of the options are optional.  These options let you control
@@ -22,7 +62,7 @@ const INT_MAX = Math.pow(2,31) - 1;
  * @prop {number} startIdx  the starting index to fetch.  defaults to zero.
  * @prop {number} pageSize  the number of rows per page.  defaults to 100.
  * @prop {string} filters   list of conditions separted by comma(,). Format:  (col_name|index) operator value.
- *                  operator is one of '> < = ! >= <= IN'.  See DataGroupQueryStatement.java doc for more details.
+ *                  operator is one of '> &lt; = ! >= &lt;= IN'.  See DataGroupQueryStatement.java doc for more details.
  * @prop {string} sortInfo  sort information.  Format:  (ASC|DESC),col_name[,col_name]*
  * @prop {string} inclCols  list of columns to select.  Column names separted by comma(,)
  * @prop {string} decimate  decimation information.
@@ -157,7 +197,7 @@ export function cloneRequest(request, params = {}) {
  *
  * @param tableRequest is a table request params object
  * @param hlRowIdx set the highlightedRow.  default to startIdx.
- * @returns {Promise.<T>}
+ * @returns {Promise.&lt;T>}
  */
 export function doFetchTable(tableRequest, hlRowIdx) {
 
@@ -204,7 +244,7 @@ export function doValidate(type, action) {
         }
     } else if(type === TblCntlr.TABLE_HIGHLIGHT) {
         const idx = action.payload.highlightedRow;
-        if (!idx || idx<0) {
+        if (!idx || idx&lt;0) {
             error(action, 'highlightedRow must be a positive number.');
         }
     }
@@ -232,7 +272,7 @@ export function error(action, cause) {
 export function isTblDataAvail(startIdx, endIdx, tableModel) {
     if (!tableModel) return false;
     endIdx =  endIdx >0 ? Math.min( endIdx, tableModel.totalRows) : startIdx;
-    if (startIdx >=0 && endIdx > startIdx) {
+    if (startIdx >=0 &amp;&amp; endIdx > startIdx) {
         const data = get(tableModel, 'tableData.data', []);
         const dataCount = Object.keys(data.slice(startIdx, endIdx)).length;
         return dataCount === (endIdx-startIdx);
@@ -366,7 +406,7 @@ export function getCellValue(tableModel, rowIdx, colName) {
  * @returns {boolean}
  */
 export function isTableLoaded(tableModel) {
-    const status = tableModel && !tableModel.isFetching && get(tableModel, 'tableMeta.Loading-Status', 'COMPLETED');
+    const status = tableModel &amp;&amp; !tableModel.isFetching &amp;&amp; get(tableModel, 'tableMeta.Loading-Status', 'COMPLETED');
     return status === 'COMPLETED';
 }
 
@@ -379,7 +419,7 @@ export function isTableLoaded(tableModel) {
  */
 export function transform(tableModel) {
 
-    if (tableModel.tableData && tableModel.tableData.data) {
+    if (tableModel.tableData &amp;&amp; tableModel.tableData.data) {
         const cols = tableModel.tableData.columns;
         // change row data from [ [val] ] to [ {cname:val} ]
         tableModel.tableData.data = tableModel.tableData.data.map( (row) => {
@@ -495,7 +535,7 @@ export function getTblInfo(tableModel, aPageSize) {
     var {tbl_id, request, highlightedRow=0, totalRows=0, tableMeta={}, selectInfo, error} = tableModel;
     const {title} = tableMeta;
     const pageSize = aPageSize || get(request, 'pageSize', 1);  // there should be a pageSize.. default to 1 in case of error.  pageSize cannot be 0 because it'll overflow.
-    if (highlightedRow < 0 ) {
+    if (highlightedRow &lt; 0 ) {
         highlightedRow = 0;
     } else  if (highlightedRow >= totalRows-1) {
         highlightedRow = totalRows-1;
@@ -561,4 +601,22 @@ export function uniqueTblId() {
 
 export function uniqueTblUiId() {
     return uniqueId('tbl_ui_id-');
-}
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.0-dev</a> on Thu Aug 11 2016 13:54:38 GMT-0700 (PDT) using the Minami theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>

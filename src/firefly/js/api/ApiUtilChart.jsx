@@ -8,6 +8,15 @@ import * as XYPlotCntlr from '../charts/XYPlotCntlr.js';
 
 export {uniqueChartId} from '../charts/ChartUtil.js';
 
+
+/*
+ * @desc  build  lowLevelApi
+ * @module lowLevelApi
+ * @param tblId
+ * @param chartId
+ * @param xyPlotParams
+ * @memeberof lowLevelApi
+ */
 export function loadPlotDataForTbl(tblId, chartId, xyPlotParams) {
     XYPlotCntlr.dispatchLoadPlotData(chartId, xyPlotParams, tblId);
 }
