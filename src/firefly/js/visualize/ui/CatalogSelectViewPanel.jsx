@@ -123,7 +123,7 @@ function doCatalog(request) {
     var tReq = {};
     if (request.spatial === SpatialMethod.get('Multi-Object').value) {
         var filename = request.fileUpload;
-        // export function makeIrsaCatalogRequest(title, project, catalog, use='catalog_overlay', params={}, options={}, tbl_id=uniqueTblId()) {
+        var radius = conesize;
         tReq = makeIrsaCatalogRequest(title, request.project, request.cattable, {
             filename,
             radius,
@@ -131,7 +131,6 @@ function doCatalog(request) {
             RequestedDataSet: request.catalog
         });
     } else {
-        const id = 'GatorQuery';
         title += ` (${request.spatial}`;
         if (request.spatial === SpatialMethod.Box.value || request.spatial === SpatialMethod.Cone.value || request.spatial === SpatialMethod.Elliptical.value) {
             title += ':' + conesize + '\'\'';
@@ -242,8 +241,7 @@ function doVoSearch(request) {
 
 function doLoadTable(request) {
     var tReq = makeTblRequest('userCatalogFromFile', 'Table Upload', {
-        filePath: request.fileUpload,
-        use: 'catalog_overlay'
+        filePath: request.fileUpload
     });
     dispatchTableSearch(tReq);
 }

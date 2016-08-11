@@ -15,6 +15,7 @@ import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author tatianag
@@ -33,6 +34,9 @@ public class UserCatalogQuery extends DynQueryProcessor {
             "objid",        // SPITZER
             "starid"        // PCRS
     };
+
+    private static Pattern raP = Pattern.compile("(^|[-_ ])ra($|[^\\p{Alpha}])");
+    private static Pattern decP = Pattern.compile("(^|[-_ ])dec($|[^\\p{Alpha}])");
 
 
 
@@ -56,28 +60,37 @@ public class UserCatalogQuery extends DynQueryProcessor {
 
 
     public static void addCatalogMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
-        TableMeta.LonLatColumns llc;
-
-        String lonCol = null, latCol = null;
-        for (DataType col : columns) {
-            if (col.getKeyName().equalsIgnoreCase(RA)) lonCol = col.getKeyName();
-            if (col.getKeyName().equalsIgnoreCase(DEC)) latCol = col.getKeyName();
 
 
-            if (!StringUtils.isEmpty(lonCol) && !StringUtils.isEmpty(latCol)) {
-                llc = new TableMeta.LonLatColumns(lonCol, latCol, CoordinateSys.EQ_J2000);
-                meta.setLonLatColumnAttr(MetaConst.CATALOG_COORD_COLS, llc);
-                break;
-            }
-        }
-        boolean catalogDataFound= (lonCol!=null && latCol!=null);
-        if (catalogDataFound) {
+        TableMeta.LonLatColumns llc = findLonLatCols(columns, (TableServerRequest) request);
+        if (llc != null) {
+            meta.setLonLatColumnAttr(MetaConst.CATALOG_COORD_COLS, llc);
             meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "USER");
             meta.setAttribute(MetaConst.DATA_PRIMARY, "False");
         }
 
         String name = findTargetName(columns);
         if (name != null) meta.setAttribute(MetaConst.CATALOG_TARGET_COL_NAME, name);
+    }
+
+    private static TableMeta.LonLatColumns findLonLatCols(List<DataType> columns, TableServerRequest request) {
+        String lonCol = null, latCol = null;
+        TableMeta.LonLatColumns llc = TableMeta.LonLatColumns.parse(request.getMeta(MetaConst.CATALOG_COORD_COLS));
+        if (llc == null) {
+            // guess best ra/dec columns
+            for (DataType col : columns) {
+                String cname = col.getKeyName();
+                if (cname.equalsIgnoreCase(RA)) lonCol = cname;
+                if (cname.equalsIgnoreCase(DEC)) latCol = cname;
+
+                if (lonCol == null && raP.matcher(cname).find()) lonCol = cname;
+                if (latCol == null && decP.matcher(cname).find()) latCol = cname;
+            }
+            if (lonCol != null && latCol != null) {
+                llc = new TableMeta.LonLatColumns(lonCol, latCol, CoordinateSys.EQ_J2000);
+            }
+        }
+        return llc;
     }
 
     private static String findTargetName(List<DataType> columns) {
