@@ -14,7 +14,7 @@ import {MouseState} from '../visualize/VisMouseSync.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
 import DrawLayerCntrl, {dispatchModifyCustomField,
                         dispatchAddRegionEntry,
-                        dispatchRemoveRegionEntry} from '../visualize/DrawLayerCntlr.js';
+                        dispatchRemoveRegionEntry, dlRoot} from '../visualize/DrawLayerCntlr.js';
 
 import {get, isEmpty} from 'lodash';
 
@@ -125,7 +125,17 @@ function highlightChange(mouseStatePayload) {
     const sId = window.setInterval( () => {
         if (done) {
             window.clearInterval(sId);
-            dispatchModifyCustomField(TYPE_ID, {highlightedRegion: closestObj}, false);
+
+            // set the highlight region on current drawLayer,
+            // unset the highlight on other drawLayer if a highlight is found for current layer
+
+            dlRoot().drawLayerAry.forEach( (dl) => {
+                if (dl.drawLayerId === drawLayer.drawLayerId) {
+                    dispatchModifyCustomField(dl.drawLayerId, {highlightedRegion: closestObj}, plotId, false);
+                } else if (closestObj) {
+                    dispatchModifyCustomField(dl.drawLayerId, {highlightedRegion: null}, plotId, false);
+                }
+            });
         }
 
         for (let i = 0; i < maxChunk; i++ ) {
@@ -157,30 +167,27 @@ function highlightChange(mouseStatePayload) {
  * @returns {*}
  */
 function getLayerChanges(drawLayer, action) {
-    const {changes, regionId, regionChanges } = action.payload;
+    const {changes, regionId, regionChanges, drawLayerId } = action.payload;
+
+    if (drawLayerId && drawLayerId !== drawLayer.drawLayerId) return null;
     var dd = Object.assign({}, drawLayer.drawData);
 
     switch (action.type) {
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
-            /*
-            if (changes && changes.regions) {  // this should not happen
-                dd[DataTypes.HIGHLIGHT_DATA] = null;
-                dd[DataTypes.DATA] = null;
-                if (drawLayer.highlightedRegion) drawLayer.highlightedRegion = null;
-            } else */
-             if (changes && changes.highlightedRegion) {
-                dd[DataTypes.HIGHLIGHT_DATA] = null;
-                if (drawLayer.highlightedRegion) drawLayer.highlightedRegion.highlight = 0;
-                changes.highlightedRegion.highlight = 1;
-            } else if (changes) {
-                dd[DataTypes.HIGHLIGHT_DATA] = null;
-                if (drawLayer.highlightedRegion) {
-                    drawLayer.highlightedRegion.highlight = 0; // un-highlight the last one
-                    drawLayer.highlightedRegion = null;
-                }
-            }
+             if (changes) {
+                 dd[DataTypes.HIGHLIGHT_DATA] = null;
+                 if (!changes.highlightedRegion) {
+                     if (drawLayer.highlightedRegion) {
+                         drawLayer.highlightedRegion.highlight = 0; // un-highlight the last selected region
+                         drawLayer.highlightedRegion = null;
+                     }
+                 } else {
+                     if (drawLayer.highlightedRegion) drawLayer.highlightedRegion.highlight = 0;
+                     changes.highlightedRegion.highlight = 1;
 
-            return Object.assign({}, changes, {drawData: dd});
+                 }
+             }
+             return Object.assign({}, changes, {drawData: dd});
         case DrawLayerCntrl.REGION_ADD_ENTRY:
             if (regionId === drawLayer.drawLayerId && regionChanges) {
                 dd[DataTypes.DATA] = addRegionsToData(drawLayer, dd[DataTypes.DATA], regionChanges);

@@ -1,0 +1,21 @@
+J2000
+point    202.58   47.262 # color=pink text="pt circle 1" point=circle 
+line(202.414796 47.281999 202.423758 47.247072) # color=orange width=10 select=1 text='line 2'
+text 30p 40p # color=pink text={text test 3} edit=0 highlite=0 font="BRAGGADOCIO 10 normal roman"
+text 202.437691 47.234228{more text testing 4} # color=purple move=0
+point    202.43    47.270 # point=x 15 color=green text="pt x 5" rotate=0
+point    202.45    47.262 # color=red text="pt boxcircle 6" delete=1 point=boxcircle 10
+physical;circle   80 140  20       # color=red offsetx=25  offsety=2 width=5 edit=0 text="circle 7"
+annulus   13h30m16.41s +47d14m43.9s  20p 30p 40p       # color=green text="hello" include=0 text="annulus 8"
+physical;point 180 140 # color=yellow point=cross 20 text="pt cross 9" offsetx=10
+physical;point 13h29m52.73s, +47d11m40.9s # color=purple point=diamond 15 text="pt diamond 10"
+#circle(202.55556, 47.188286 , 20p)  # color=blue text="text 11"
+physical;box(186.55556, 47.188286 ,20p,40p, 30p, 50p, 0)  # color=red width=5 text="boxann 11"
+physical;box(186.52556,47.226286,0.0240,0.006,0)  # color=green width=5 text="box 11-2"
+image;box(100, 150, 50p, 20p, 2r) # color=magenta width=6 text="slanted box 12"  
+image;box(190.564796, 47.281999, 50p, 20p, 0) # color=red width=6 offsety=-15 text="box 12-1"
+j2000;box(47.247072i, 180.445347i, 50p, 20p, 0) # color=blue width=6 text="box 12-3"
+physical;-box point 12 12 # text="pt box 13"
+J2000;polygon(202.564796, 47.281999,202.553758, 47.247072, 202.445347, 47.244296, 202.479687, 47.264027, 202.492153, 47.290841) # color=blue text="polygon 14" width=1 font="helvetica 16 bold" 
+point    202.45   47.2879 # color=cyan text="pt arrow 15" delete=1 point=arrow 20
+

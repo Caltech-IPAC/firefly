@@ -231,9 +231,12 @@
             firefly.addXYPlot({QUERY_ID: 'oldSelectable'}, 'oldXyPlot1');
             //-----< old xyplot api ------//
 
-            var regionAry = [
+            window.regionAry = [
+                 /*
                 'global color=green dashlist=8 3 width=1 font="helvetica 10 normal normal" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 rotate=0 source=1',
                 'J2000;point    202.41   47.262 # color=pink text="pt circle 1" point=circle',
+                'box (100p, 70p, 20p, 20p, 0) #color=red text={Physical coordinate - 1}',
+                'box (100i, 70i, 30i, 30i, 0) #color=orange text={Image coordinate -2}',
                 'line(202.414796 47.281999 202.423758 47.247072) # color=orange width=10 select=0 text={line 2}',
                 'text 30p 40p # color=pink text={text test 3} edit=0 highlite=0 font="BRAGGADOCIO 10 normal roman"',
                 'text 202.437691 47.234228{more text testing 4} # color=purple move=0',
@@ -252,7 +255,38 @@
                 'j2000;box(47.247072i, 180.445347i, 50p, 20p, 0) # color=blue width=6 text="box 12-3"',
                 'physical;-box point 12 12 # text="pt box 13"',
                 'j2000;polygon(202.564796, 47.281999,202.553758, 47.247072, 202.445347, 47.244296, 202.479687, 47.264027, 202.492153, 47.290841) # color=blue text="polygon 14" offsety=10 width=10 font="helvetica 16 bold"',
-                'point    202.45   47.2879 # color=cyan text="pt arrow 15" delete=0 point=arrow 20'
+                'point    202.45   47.2879 # color=cyan text="pt arrow 15" delete=0 point=arrow 20',
+                'IMAGE;box (160, 70, 20, 20, 0) #color=red text={IMAGE test - 1}',
+                'PHYSICAL;box (160, 70, 30, 30, 0) #color=orange text={PHYSICAL test -2}'
+                */
+                'box (240, 220, 20, 20, 0) #color=red text={     ph1}',
+                'box (240i, 220i, 60i, 60i, 0) #color=orange text={ph2}',
+                'J2000;point    202.41   47.262 # color=pink text="pt circle 1" point=circle',
+                'IMAGE;box (360, 220, 20, 20, 0) #color=red text={     im1}',
+                'PHYSICAL;box (360, 220, 60, 60, 0) #color=orange text={ph3}'
+            ];
+
+            window.regionAry2 = [
+                'J2000',
+                'boxcircle point    202.45    47.262 # color=red text="pt boxcircle 6" delete=0',
+                'physical;circle   80 140  20       # color=red offsetx=25  offsety=2 width=5 edit=0 text="circle 7"',
+                'annulus   13h30m16.41s +47d14m43.9s  30p 40p 50p       # color=green text="hello" include=0 text="annulus 8"',
+                'physical;point 200 140 # color=yellow point=cross 20 text="pt cross 9" offsetx=10',
+                'physical;point 13h29m52.73s, +47d11m40.9s # color=purple point=diamond 15 text="pt diamond 10"',
+                '#circle(202.55556, 47.188286 , 20p)  # color=blue text="text 11"',
+                'box(202.55556, 47.188286 ,20p,40p, 30p, 50p, 0)  # color=red width=5 text="boxann 11"',
+                'box(202.52556,47.226286,0.0240,0.006,0)  # color=green width=5 text="box 11-2"',
+                'image;box(100, 150, 50p, 20p, 2r) # color=magenta width=6 text="slanted box 12"',
+                'image;box(190.564796, 47.281999, 50p, 20p, 0) # color=red width=6 offsety=-15 text="box 12-1"',
+                'j2000;box(47.247072i, 180.445347i, 50p, 20p, 0) # color=blue width=6 text="box 12-3"',
+                'physical;-box point 12 12 # text="pt box 13"',
+                'j2000;polygon(202.564796, 47.281999,202.553758, 47.247072, 202.445347, 47.244296, 202.479687, 47.264027, 202.492153, 47.290841) # color=blue text="polygon 14" offsety=10 width=10 font="helvetica 16 bold"',
+                'point    202.45   47.2879 # color=cyan text="pt arrow 15" delete=0 point=arrow 20',
+            ];
+
+            window.regionWithError = [
+                'image; box 280 200 72 72 # color=blue text={wrong syntax}',
+                'image; box 280 200 72 72 0 # color=cyan text={right syntax}'
             ];
 
             var moreRegionAry =  [
@@ -264,7 +298,7 @@
             window.regions = [];
             window.regionId = window.regions.length;
 
-            document.getElementById('regionLayerContent').value = regionAry.join('\n');
+            document.getElementById('regionLayerContent').value = window.regionAry.join('\n');
             document.getElementById('moreRegionContent').value = moreRegionAry.join('\n');
             //document.getElementById('createRegionId').placeholder = "Region_Plot_" + (window.regionId+1);
             updateRegionLayerList();
@@ -277,6 +311,14 @@
                 window.regionId++;
                 layerId = "Region_Plot_" + window.regionId;
                 document.getElementById('createRegionId').value = layerId;
+            }
+
+            if (window.regionId === 3) {
+                document.getElementById('regionLayerContent').value = window.regionWithError.join('\n');
+            } else if (window.regionId > 1) {
+                document.getElementById('regionLayerContent').value = window.regionAry2.join('\n');
+            } else {
+                document.getElementById('regionLayerContent').value = window.regionAry.join('\n');
             }
 
             var regionAry = document.getElementById('regionLayerContent').value.split('\n').filter(function(r) { return (r.length !== 0);});
@@ -355,7 +397,7 @@
             selectBox.getElementsByTagName('option')[0].selected = 'selected';
             firefly.action.dispatchRemoveRegionEntry(selectedLayerId, removeRegions);
             firefly.action.dispatchRemoveRegionEntry(selectedLayerId, removeRegions, window.ffViewer.dispatch);
-        }
+        };
 
         plotRemote= function() {
             firefly.getViewer().showImage({plotId: 'xxq',

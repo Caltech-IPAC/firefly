@@ -11,11 +11,12 @@ import { RegionType, RegionCsys, RegionValueUnit, regionPropsList,
 import validator from 'validator';
 import CoordUtil from '../CoordUtil.js';
 import {CoordinateSys} from '../CoordSys.js';
-import {makeWorldPt, makeImagePt, makeScreenPt} from '../Point.js';
+import {makeWorldPt, makeImagePt} from '../Point.js';
 import {convertAngle} from '../VisUtil.js';
 import CsysConverter from '../CsysConverter.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {visRoot } from '../ImagePlotCntlr.js';
+import {logError} from '../../util/WebUtil.js'
 
 import {set, unset, has, get, isEmpty} from 'lodash';
 import Enum from 'enum';
@@ -31,6 +32,16 @@ var RegionParseError = {
     NotImplemented: 'region type is not yet implemented'
 };
 
+function outputError(rg, rgStr) {
+    if (rg.type === RegionType.message) {
+        logError(rg.message);
+    } else if (!rg.options) {
+        logError(`[invalid region: no options created]: '${rgStr}'`);
+    } else if (rg.type === RegionType.undefined ) {
+        logError(`[invalid region: undefined region
+         type] '${rgStr}'`);
+    }
+}
 
 export class RegionFactory {
 
@@ -45,6 +56,7 @@ export class RegionFactory {
 
             if (rg) {            // skip comment line and no good line
                 prev.push(rg);
+                outputError(rg, region);
             }
             return prev;
         }, []) : null;
@@ -80,6 +92,7 @@ export class RegionFactory {
                 } else {
                     prev.push(rg);
                 }
+                outputError(rg, region);
             }
             return prev;
         }, []) : null;
@@ -146,9 +159,9 @@ export class RegionFactory {
             regionCoord = tmpAry[0].trim();
             tmpAry =  tmpAry[1].split('#');
         } else {
-            // default coordinate is J2000 in case not specified
+            // default coordinate is PHYSICAL in case not specified
             regionCoord = globalOptions && has(globalOptions, regionPropsList.COORD)  ?
-                          globalOptions[regionPropsList.COORD] : 'J2000';
+                          globalOptions[regionPropsList.COORD] : 'PHYSICAL';
             tmpAry = tmpAry[0].split('#');
         }
 
@@ -179,7 +192,6 @@ export class RegionFactory {
         if (regionCsys === RegionCsys.UNDEFINED) {
             return makeRegionMsg(`[${RegionParseError.InvalidCoord}] ${rgMsg}`);
         }
-
 
         // check region description syntax and region type
         // [ RegionType, wp.x, wp.y, ...], at least 3 items
@@ -363,7 +375,7 @@ export class RegionFactory {
                 if (params.length < 2) break;
 
                 if (wp1 = this.parseXY(regionCsys, params[n], params[++n])) {
-                    region = makeRegionText(wp1);
+                    region = makeRegionText(wp1.pt);
                 }
                 if (params.length >= 3) {
                     region.options = makeRegionOptions({text: params[2]});
@@ -374,7 +386,7 @@ export class RegionFactory {
                 if (params.length < 2) break;
 
                 if (wp1 = this.parseXY(regionCsys, params[n], params[++n])) {
-                    region = makeRegionPoint(wp1);
+                    region = makeRegionPoint(wp1.pt);
                 }
                 if (pointType) {
                     region.options = makeRegionOptions({pointType});
@@ -395,8 +407,8 @@ export class RegionFactory {
 
                 // width & height
                 while (params.length > (n + 3)) {
-                    w = this.convertToRegionValue(params[++n], regionCsys);
-                    h = this.convertToRegionValue(params[++n], regionCsys);
+                    w = this.convertToRegionValueForDim(params[++n], regionCsys);
+                    h = this.convertToRegionValueForDim(params[++n], regionCsys);
                     if (!h || !w) {
                         isAnnulus = -1;    // width or height error
                         break;
@@ -414,9 +426,9 @@ export class RegionFactory {
                 }
 
                 if (isAnnulus) {   // boxannulus
-                    region = makeRegionBoxAnnulus(wp1, dimAry, angle);
+                    region = makeRegionBoxAnnulus(wp1.pt, dimAry, angle);
                 } else {
-                    region = makeRegionBox(wp1, dimAry[0], angle);
+                    region = makeRegionBox(wp1.pt, dimAry[0], angle);
                 }
                 break;
 
@@ -432,7 +444,7 @@ export class RegionFactory {
                 radAry = [];
 
                 while (params.length > (n + 1)) {
-                    r = this.convertToRegionValue(params[++n], regionCsys);
+                    r = this.convertToRegionValueForDim(params[++n], regionCsys);
                     if (!r) {
                         radAry = [];
                         break;
@@ -441,7 +453,7 @@ export class RegionFactory {
                     }
                 }
                 if (radAry.length >= 2) {
-                    region = makeRegionAnnulus(wp1, radAry);
+                    region = makeRegionAnnulus(wp1.pt, radAry);
                 }
                 break;
 
@@ -454,11 +466,11 @@ export class RegionFactory {
                     break;
                 }
 
-                if (!(r = this.convertToRegionValue(params[++n], regionCsys))) {
+                if (!(r = this.convertToRegionValueForDim(params[++n], regionCsys))) {
                     break;
                 }
 
-                region = makeRegionCircle(wp1, r);
+                region = makeRegionCircle(wp1.pt, r);
                 break;
 
             case RegionType.ellipse:  // 4 params x, y, r1, r2, r3, r4,.. angle
@@ -474,8 +486,8 @@ export class RegionFactory {
                 dimAry = [];
 
                 while (params.length > (n + 3)) {
-                    const r1 = this.convertToRegionValue(params[++n], regionCsys);
-                    const r2 = this.convertToRegionValue(params[++n], regionCsys);
+                    const r1 = this.convertToRegionValueForDim(params[++n], regionCsys);
+                    const r2 = this.convertToRegionValueForDim(params[++n], regionCsys);
                     if (!r1 || !r2) {
                         isAnnulus = -1;    // width or height error
                         break;
@@ -494,9 +506,9 @@ export class RegionFactory {
                 }
 
                 if (isAnnulus) {
-                    region = makeRegionEllipseAnnulus(wp1, dimAry, angle);
+                    region = makeRegionEllipseAnnulus(wp1.pt, dimAry, angle);
                 } else {
-                    region = makeRegionEllipse(wp1, dimAry[0], angle);
+                    region = makeRegionEllipse(wp1.pt, dimAry[0], angle);
                 }
                 break;
 
@@ -511,7 +523,7 @@ export class RegionFactory {
                 if (!(wp2 = this.parseXY(regionCsys, params[++n], params[++n]))) {
                     break;
                 }
-                region = makeRegionLine(wp1, wp2);
+                region = makeRegionLine(wp1.pt, wp2.pt);
                 break;
 
             case RegionType.polygon:  // at least 6 params x1, y1, x2, y2, x3, y3, ...
@@ -527,7 +539,7 @@ export class RegionFactory {
                         wpAry = [];
                         break;
                     }
-                    wpAry.push(wp1);
+                    wpAry.push(wp1.pt);
                     n++;
                 }
                 if (wpAry.length >= 3) {
@@ -538,6 +550,9 @@ export class RegionFactory {
                 region = null;
         }
 
+        if (region) {
+            region.isOnWorld = wp1.isOnWorld;
+        }
         return region;
     }
 
@@ -551,31 +566,24 @@ export class RegionFactory {
      */
     parseXY(coordSys, xStr, yStr) {
 
-        var rgValX = xStr && this.convertToRegionValue(xStr, coordSys, CoordType.lon);
-        var rgValY = yStr && this.convertToRegionValue(yStr, coordSys, CoordType.lat);
-
+        var {rgValX, rgValY} = xStr && yStr && this.convertToRegionValueForPt(xStr, yStr, coordSys);
 
         if (!rgValX || !rgValY || rgValX.unit !== rgValY.unit) {
             return null;
         }
 
-        var plotId = get(visRoot(), 'activePlotId');
-        var plot =   primePlot(visRoot(),plotId);
-        var cc = CsysConverter.make(plot);
-
         // the coordinate values are refactored based on the coordinate system it works on.
-        return this.refactorRegionValueUnit( rgValX, rgValY, cc, coordSys);
+        return this.refactorRegionValueUnit(  rgValX, rgValY, coordSys);
     }
 
     /**
      * refactor the region coordinate value based on the coordinate system the region is defined at
      * @param rvX
      * @param rvY
-     * @param cc
      * @param coordsys
      * @returns {*}
      */
-    refactorRegionValueUnit(rvX, rvY, cc, coordsys) {
+    refactorRegionValueUnit(rvX, rvY, coordsys) {
 
         var isWorldUnit = (c) => (  (c !== RegionCsys.PHYSICAL) &&
                                     (c !== RegionCsys.UNDEFINED) &&
@@ -588,14 +596,13 @@ export class RegionFactory {
         var makePt = (vx, vy, cs) => {
             if (vx.unit === RegionValueUnit.IMAGE_PIXEL) {
                 return makeImagePt(vx.value, vy.value);
-            } else if (vx.unit === RegionValueUnit.SCREEN_PIXEL) {
-                return makeScreenPt(vx.value, vy.value);
             } else {
                 return makeWorldPt(vx.value, vy.value, this.parse_coordinate(cs));
             }
         };
 
-        var pt;
+        return {pt: makePt(rvX, rvY, coordsys), isOnWorld: isWorldUnit(coordsys)};
+        /*
         if (isWorldUnit(coordsys)) {
             pt = cc.getWorldCoords(makePt(rvX, rvY, coordsys));
         } else if (coordsys === RegionCsys.IMAGE ) {
@@ -606,6 +613,7 @@ export class RegionFactory {
             pt = null;
         }
         return pt;
+        */
     }
 
 
@@ -656,6 +664,7 @@ export class RegionFactory {
         var unit_char = vstr.charAt(vstr.length-1);
         var unit = RegionValueUnit.CONTEXT;
         var nstr;
+        var isTransformationChecked = false;
 
         if (!validator.isInt(unit_char) && (unit_char !== 's')) {
             switch(unit_char) {
@@ -672,13 +681,13 @@ export class RegionFactory {
                     unit = RegionValueUnit.RADIAN;
                     break;
                 case 'p':
-                    unit = RegionValueUnit.SCREEN_PIXEL;
+                    unit = RegionValueUnit.IMAGE_PIXEL; // treat 'p' same as 'i' (more detail transformation will be
+                                                        // further investigated)
+                    isTransformationChecked = true;
                     break;
                 case 'i':
                     unit = RegionValueUnit.IMAGE_PIXEL;
                     break;
-                case 's':
-
                 default:
                     unit = RegionValueUnit.CONTEXT;
             }
@@ -689,8 +698,11 @@ export class RegionFactory {
 
         // check if the string is a valid float number (including integer)
         if (!validator.isFloat(nstr)) {
-            var ret = this.parseCoordinates(nstr, coordSys, vType);
+            var ret;
 
+            if (vType) {
+                ret = this.parseCoordinates(nstr, coordSys, vType);
+            }
             if (ret) {
                 nstr = ret.toString();
                 unit = RegionValueUnit.DEGREE;
@@ -700,8 +712,7 @@ export class RegionFactory {
         }
 
         var val = parseFloat(nstr);
-
-        return {unit, val};
+        return {unit, val, isTransformationChecked};
     }
 
     // coordinate: image or pixel coordinate will convert sexagesimal to be in J2000 first (in degree)
@@ -741,39 +752,103 @@ export class RegionFactory {
         return RegionValue(val, unit);
     }
 
-    // vType: lon or lat
-    /**
-     * convert value of position and dimension based on the relevant unit
-     * @param vstr
+     /**
+     * convert value of position based on the relevant unit
+     * @param xStr
+     * @param yStr
      * @param coordSys
-     * @param vType
-     * @returns {null}
+     * @returns {Array}
      */
-    convertToRegionValue(vstr, coordSys, vType) {
-        var {unit, val} = this.textToValueAndUnit(vstr, coordSys, vType);
+    convertToRegionValueForPt(xStr, yStr, coordSys) {
+        var {unit: xUnit, val: xVal, isTransformationChecked} = this.textToValueAndUnit(xStr, coordSys, CoordType.lon);
+        var {unit: yUnit, val: yVal} = this.textToValueAndUnit(yStr, coordSys, CoordType.lat);
+
+        if (xUnit !== yUnit) {
+            return null;
+        }
+
+        var unit = xUnit;
 
         // keep the unit as origianlly indicated if there is
         if (unit === RegionValueUnit.CONTEXT) {
             if (coordSys === RegionCsys.IMAGE) {
                 unit = RegionValueUnit.IMAGE_PIXEL;
             } else if (coordSys === RegionCsys.PHYSICAL) {
-                unit = RegionValueUnit.SCREEN_PIXEL;
+                unit = RegionValueUnit.IMAGE_PIXEL;
+                isTransformationChecked = true;
             } else {
                 unit = RegionValueUnit.DEGREE;
             }
         } else if (unit === RegionValueUnit.ARCMIN ||
-            unit === RegionValueUnit.ARCSEC ||
-            unit === RegionValueUnit.RADIAN) {
+                   unit === RegionValueUnit.ARCSEC ||
+                   unit === RegionValueUnit.RADIAN) {
+            xVal = convertAngle(unit.key, 'degree', xVal);
+            yVal = convertAngle(unit.key, 'degree', yVal);
+            unit = RegionValueUnit.DEGREE;
+        } else if (!unit) {
+            return null;
+        }
+
+        if (isTransformationChecked) {
+            var pt = this.transformPhytoImage(xVal, yVal);
+
+            xVal = pt.imgX;
+            yVal = pt.imgY;
+        }
+
+        return { rgValX: RegionValue(xVal, unit), rgValY: RegionValue(yVal, unit)};
+    }
+
+    /**
+     * convert value of dimension based on the relevant unit
+     * @param vStr
+     * @param coordSys
+     * @returns RegionValue
+     */
+    convertToRegionValueForDim(vStr, coordSys) {
+        var {unit, val, isTransformationChecked} = this.textToValueAndUnit(vStr, coordSys);
+
+        // keep the unit as origianlly indicated if there is
+        if (unit === RegionValueUnit.CONTEXT) {
+            if (coordSys === RegionCsys.IMAGE) {
+                unit = RegionValueUnit.IMAGE_PIXEL;
+            } else if (coordSys === RegionCsys.PHYSICAL) {
+                unit = RegionValueUnit.IMAGE_PIXEL;
+                isTransformationChecked = true;
+            } else {
+                unit = RegionValueUnit.DEGREE;
+            }
+        } else if (unit === RegionValueUnit.ARCMIN ||
+                   unit === RegionValueUnit.ARCSEC ||
+                   unit === RegionValueUnit.RADIAN) {
             val = convertAngle(unit.key, 'degree', val);
             unit = RegionValueUnit.DEGREE;
         } else if (!unit) {
             return null;
         }
 
+        if (isTransformationChecked) {
+            var pt = this.transformPhytoImage(val, 0.0, true);
+
+            val = pt.imgX;
+        }
 
         return RegionValue(val, unit);
     }
 
+    transformPhytoImage(x, y, forDimension = false) {
+        var [LTM1_1, LTM1_2, LTM2_1, LTM2_2] = [1, 0, 0, 1];
+        var [LTV1, LTV2] = [0, 0];
+
+        var img_x = LTM1_1 * x + LTM1_2 * y;
+        var img_y = LTM2_1 * x + LTM2_2 * y;
+
+        if (forDimension) {
+            return {imgX: img_x, imgY: img_y};
+        } else {
+            return {imgX : img_x + LTV1, imgY: img_y + LTV2};
+        }
+    }
 
     /**
      * parse the region options
