@@ -4,7 +4,6 @@
 
 import './TabPanel.css';
 import React, {Component, PropTypes} from 'react';
-import ReactDOM from 'react-dom';
 import sCompare from 'react-addons-shallow-compare';
 import Resizable from 'react-component-resizable';
 import {debounce} from 'lodash';
@@ -29,48 +28,15 @@ function tabsStateFromProps(props) {
 }
 
 
-function adjustTabsWidth(c) {
-    const el = ReactDOM.findDOMNode(c); //DOMElement
-    // el is <ul>, it's children are <li> for tabs, gradchildren <div> for name and <div> for close button
-    if (el && el.childNodes && el.childNodes.length>0) {
-        var i;
-        const numTabs = el.childNodes.length;
-
-        // 2*5px - border, 6px - left margin
-        const availableWidth = el.offsetWidth-10-6*numTabs;
-
-        let totalNameLengthPx = 0;
-        for (i=0; i<el.childNodes.length; i++) {
-            // name div is el.childNodes[i].childNodes[0] or el.childNodes[i].querySelector('.ellipsis')
-            totalNameLengthPx += el.childNodes[i].childNodes[0].scrollWidth;
-        }
-        for (i=0; i<el.childNodes.length; i++) {
-            const nameDivEl = el.childNodes[i].childNodes[0];
-            const nameLengthPx = nameDivEl.scrollWidth;
-            const maxTabWidth = availableWidth*nameLengthPx/totalNameLengthPx;
-            const maxNameWidth = maxTabWidth - (el.childNodes[i].offsetWidth-nameDivEl.offsetWidth);
-            // set the width of the tab
-            el.childNodes[i].style.maxWidth = Math.trunc(maxTabWidth)+'px';
-            // set the width of the name div
-            nameDivEl.style.maxWidth = Math.trunc(maxNameWidth)+'px';
-        }
-    }
-}
-
 class TabsHeader extends Component {
     constructor(props) {
         super(props);
-        this.state = {};
+        this.state = {widthPx: 0};
         this.onResize = debounce((size) => {
             if (size && size.width !== this.state.widthPx) {
                 this.setState({widthPx: size.width});
             }
-        }, 100);
-
-        this.adjustTabsWidth = ((c) => {
-            // update only when size is available
-            this.state.widthPx && adjustTabsWidth(c);
-        }).bind(this);
+        }, 100).bind(this);
     }
 
     shouldComponentUpdate(np, ns) {
@@ -78,17 +44,34 @@ class TabsHeader extends Component {
     }
 
     render() {
+        const {widthPx} = this.state;
+        const {children, resizable} = this.props;
+        const numTabs = children.length;
+        let maxTitleWidth = undefined;
+        let sizedChildren = children;
+        if (widthPx && resizable) {
+            // 2*5px - border, for each tab: 2x1px - border, 2x6px - padding, 6px - left margin
+            const availableWidth = widthPx - 5 - 20 * numTabs;
+            maxTitleWidth = Math.min(200, Math.trunc(availableWidth / numTabs));
+            if (maxTitleWidth < 0) { maxTitleWidth = 1; }
+            sizedChildren = React.Children.toArray(children).map((child) => {
+                return React.cloneElement(child, {maxTitleWidth});
+            });
+        }
         return (
             <div style={{flexGrow: 0, height: 18}}>
-                <ul className='TabPanel__Tabs'
-                    ref={(c)=>{this.adjustTabsWidth(c);}}>
-                    {this.props.children}
-                </ul>
-                <Resizable id='tabs-resizer' style={{position: 'relative', top: '18px', width: '100%', height: '100%'}} onResize={this.onResize}/>
+                {(widthPx||!resizable) ? <ul className='TabPanel__Tabs'>
+                    {sizedChildren}
+                </ul> : <div/>}
+                {resizable && <Resizable id='tabs-resizer' style={{position: 'relative', top: '18px', width: '100%', height: '100%'}} onResize={this.onResize}/>}
             </div>
         );
     }
 }
+
+TabsHeader.propTypes= {
+    resizable: PropTypes.bool
+};
 
 export class Tabs extends Component {
 
@@ -123,31 +106,31 @@ export class Tabs extends Component {
 
     render () {
         var { selectedIdx}= this.state;
-        const {children, useFlex} = this.props;
+        const {children, useFlex, resizable} = this.props;
         const numTabs = React.Children.count(children);
 
         var content;
         selectedIdx = Math.min(selectedIdx, numTabs-1);
         var newChildren = React.Children.toArray(children).filter((el) => !!el).map((child, index) => {
-                if (index === selectedIdx) {
-                    content = React.Children.only(child.props.children);
-                }
+            if (index === selectedIdx) {
+                content = React.Children.only(child.props.children);
+            }
 
-                return React.cloneElement(child, {
-                    selected: (index == selectedIdx),
-                    onSelect: this.onSelect.bind(this, index),
-                    ref: 'tab-' + (index)
-                });
+            return React.cloneElement(child, {
+                selected: (index == selectedIdx),
+                onSelect: this.onSelect.bind(this, index),
+                ref: 'tab-' + (index)
             });
+        });
         const contentDiv = useFlex ? content :
-                        (   <div style={{display: 'block', position: 'absolute', top:0, bottom:0, left:0, right:0}}>
-                                {content}
-                            </div>
-                        );
+            (   <div style={{display: 'block', position: 'absolute', top:0, bottom:0, left:0, right:0}}>
+                    {content}
+                </div>
+            );
 
         return (
             <div style={{display: 'flex', height: '100%', flexDirection: 'column', flexGrow: 1, overflow: 'hidden'}}>
-                <TabsHeader>{newChildren}</TabsHeader>
+                <TabsHeader {...{resizable}}>{newChildren}</TabsHeader>
                 <div ref='contentRef' className='TabPanel__Content'>
                     {(content)?contentDiv:''}
                 </div>
@@ -163,11 +146,13 @@ Tabs.propTypes= {
     defaultSelected:  PropTypes.any,
     onTabSelect: PropTypes.func,
     useFlex: PropTypes.bool,
+    resizable: PropTypes.bool
 };
 
 Tabs.defaultProps= {
     defaultSelected: 0,
-    useFlex: false
+    useFlex: false,
+    resizable: false
 };
 
 
@@ -189,16 +174,19 @@ export class Tab extends Component {
     }
 
     render () {
-        const {name, selected, onSelect, removable, onTabRemove, id} = this.props;
+        const {name, selected, onSelect, removable, onTabRemove, id, maxTitleWidth} = this.props;
 
         var tabClassName = 'TabPanel__Tab' ;
         if (selected) {
             tabClassName += ' TabPanel__Tab--selected';
         }
 
+        // removable width: 14px
+        const textStyle = maxTitleWidth ? {width: maxTitleWidth-(removable?14:0)} : {};
+
         return (
             <li className={tabClassName}>
-                <div className='text-ellipsis' title={name} onClick={() => onSelect(id,name)}>
+                <div style={textStyle} className='text-ellipsis' title={name} onClick={() => onSelect(id,name)}>
                      {name}
                 </div>
                 {removable &&
@@ -206,9 +194,7 @@ export class Tab extends Component {
                              title='Remove Tab'
                              onClick={() => onTabRemove && onTabRemove(name)}/>
                 }
-            </li>
-        );
-
+            </li>);
     }
 }
 
@@ -219,7 +205,8 @@ Tab.propTypes= {
     selected:  PropTypes.bool.isRequired, // private - true is the tab is currently selected
     onSelect: PropTypes.func, // private - called whenever the tab is clicked
     removable: PropTypes.bool,
-    onTabRemove: PropTypes.func
+    onTabRemove: PropTypes.func,
+    maxTitleWidth: PropTypes.number
 };
 
 Tab.defaultProps= { selected: false };

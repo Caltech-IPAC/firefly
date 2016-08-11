@@ -109,10 +109,10 @@ function StandardView(props) {
     };
     const keys = Object.keys(tables);
     if (keys.length === 1) {
-        return <SingleTable table={get(tables, [keys[0]])} expandedMode={expandedMode}/>
+        return <SingleTable table={get(tables, [keys[0]])} expandedMode={expandedMode}/>;
     } else {
         return (
-            <Tabs defaultSelected={activeIdx} onTabSelect={onTabSelect}>
+            <Tabs defaultSelected={activeIdx} onTabSelect={onTabSelect} resizable={true}>
                 {tablesAsTab(tables, expandedMode)}
             </Tabs>
         );
