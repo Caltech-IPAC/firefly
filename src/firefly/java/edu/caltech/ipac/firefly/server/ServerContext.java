@@ -48,7 +48,7 @@ public class ServerContext {
     private static final int PFX_START_LEN= PFX_START.length();
     public static final String PFX_END= "}";
     private static final int PFX_TOTAL_CHAR= 3;
-    public static final boolean FITS_SECURITY = AppProperties.getBooleanProperty("visualize.fits.Security", true);
+    public static boolean FITS_SECURITY;
     public static final String VIS_SEARCH_PATH= "visualize.fits.search.path";
     public final static Map<File, Long> _visSessionDirs= new ConcurrentHashMap<File, Long>(617);
     public static boolean DEBUG_MODE;
@@ -145,6 +145,10 @@ public class ServerContext {
 
         // disable caching is it's a preference
         CacheManager.setDisabled(AppProperties.getBooleanProperty(CACHEMANAGER_DISABLED_PROP, false));
+
+
+        // Must be done after property init
+        FITS_SECURITY = AppProperties.getBooleanProperty("visualize.fits.Security", true);
 
         // use EhCache for caching.
         CacheManager.setCacheProvider(EhcacheProvider.class.getName());
