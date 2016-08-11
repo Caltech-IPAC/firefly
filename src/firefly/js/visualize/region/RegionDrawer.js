@@ -337,9 +337,10 @@ function drawRegionAnnulus(regionObj) {
  * @param options region properties
  * @param propChkAry property cheeck list
  * @param a rotation angle
+ * @param isOnWorld
  * @returns {*}
  */
-function drawOneBox(w, h, a, wp, options, propChkAry) {
+function drawOneBox(w, h, a, wp, options, propChkAry, isOnWorld) {
     var unit = regionUnitToDrawObj(w.unit);
     var angleUnit = regionUnitToDrawObj(a.unit);
     var width, height, angle;
@@ -368,7 +369,7 @@ function drawOneBox(w, h, a, wp, options, propChkAry) {
         angleUnit = ShapeDataObj.UnitType.ARCSEC;
     }
 
-    var dObj = ShapeDataObj.makeRectangleByCenter(wp, width, height, unit, angle, angleUnit, wp.type === Point.W_PT);
+    var dObj = ShapeDataObj.makeRectangleByCenter(wp, width, height, unit, angle, angleUnit, isOnWorld);
 
     updateDrawobjProp(propChkAry, options, dObj);
     return dObj;
@@ -387,7 +388,7 @@ function drawRegionBox(regionObj) {
                           regionObj.angle,
                           regionObj.wpAry[0],
                           regionObj.options,
-                          allProps);
+                          allProps, regionObj.isOnWorld);
 
     dObj.textLoc = DEFAULT_TEXTLOC[RegionType.box.key];
     return [dObj];
@@ -406,7 +407,7 @@ function drawRegionBoxAnnulus(regionObj) {
                               regionObj.angle,
                               regionObj.wpAry[0],
                               regionObj.options,
-                              commonProps);
+                              commonProps, regionObj.isOnWorld);
     var boxannulusObj = ShapeDataObj.makeBoxAnnulus(regionObj.wpAry[0],
                                                     dimAry(regionObj.dimensionAry, firstObj.unitType),
                                                     firstObj.unitType,
@@ -419,7 +420,7 @@ function drawRegionBoxAnnulus(regionObj) {
     boxannulusObj = Object.assign(boxannulusObj, pick(firstObj, commonProps));
 
     var moreObj = regionObj.dimensionAry.reverse().slice(1).map((d) => {
-        var nextObj = drawOneBox(d.width, d.height, regionObj.angle, regionObj.wpAry[0], regionObj.options, []);
+        var nextObj = drawOneBox(d.width, d.height, regionObj.angle, regionObj.wpAry[0], regionObj.options, [], regionObj.isOnWorld);
 
         return Object.assign(nextObj, pick(firstObj, commonProps));
     });
@@ -488,9 +489,10 @@ function drawRegionPolygon(regionObj) {
  * @param options region properties
  * @param propChkAry property cheeck list
  * @param a rotation angle
+ * @param isOnWorld
  * @returns {*}
  */
-function drawOneEllipse(r1, r2, a, wp, options, propChkAry) {
+function drawOneEllipse(r1, r2, a, wp, options, propChkAry, isOnWorld) {
     var unit = regionUnitToDrawObj(r1.unit);
     var angleUnit = regionUnitToDrawObj(a.unit);
     var radius1, radius2, angle;
@@ -508,7 +510,6 @@ function drawOneEllipse(r1, r2, a, wp, options, propChkAry) {
     } else {
         radius1 = r1.value;
         radius2 = r2.value;
-//        angle = 0.0;
     }
 
     // DS9 angle is counterclockwise, canvas angle is clockwise
@@ -519,7 +520,7 @@ function drawOneEllipse(r1, r2, a, wp, options, propChkAry) {
         angleUnit = ShapeDataObj.UnitType.ARCSEC;
     }
 
-    var dObj = ShapeDataObj.makeEllipse(wp, radius1, radius2, unit, angle, angleUnit, wp.type === Point.W_PT);
+    var dObj = ShapeDataObj.makeEllipse(wp, radius1, radius2, unit, angle, angleUnit, isOnWorld);
 
     updateDrawobjProp(propChkAry, options, dObj);
     return dObj;
@@ -538,7 +539,7 @@ function drawRegionEllipse(regionObj) {
         regionObj.angle,
         regionObj.wpAry[0],
         regionObj.options,
-        allProps);
+        allProps, regionObj.isOnWorld);
 
     dObj.textLoc =  DEFAULT_TEXTLOC[RegionType.ellipse.key];
     return [dObj];
@@ -556,7 +557,7 @@ function drawRegionEllipseAnnulus(regionObj) {
                                   regionObj.angle,
                                   regionObj.wpAry[0],
                                   regionObj.options,
-                                  commonProps);
+                                  commonProps, regionObj.isOnWorld);
     var ellipseannObj = ShapeDataObj.makeEllipseAnnulus(regionObj.wpAry[0],
                                                         dimAry(regionObj.dimensionAry, firstObj.unitType),
                                                         firstObj.unitType,
@@ -569,7 +570,7 @@ function drawRegionEllipseAnnulus(regionObj) {
     ellipseannObj = Object.assign(ellipseannObj, pick(firstObj, commonProps));
 
     var moreObj = regionObj.dimensionAry.reverse().slice(1).map((d) => {
-        var nextObj = drawOneEllipse(d.width, d.height, regionObj.angle, regionObj.wpAry[0], regionObj.options, []);
+        var nextObj = drawOneEllipse(d.width, d.height, regionObj.angle, regionObj.wpAry[0], regionObj.options, [], regionObj.isOnWorld);
 
         return Object.assign(nextObj, pick(firstObj, commonProps));
     });

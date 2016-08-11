@@ -443,6 +443,7 @@ export function makeHighlightPointDataObj(drawObj, cc) {
                                                                     0.0, ShapeDataObj.UnitType.ARCSEC, false);
 
     makeShapeHighlightRenderOptions( rectObj );
+    rectObj.isAHighlight = { from: drawObj, plotImageId: cc.plotImageId};
     return rectObj;
 }
 

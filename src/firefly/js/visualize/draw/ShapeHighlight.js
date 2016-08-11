@@ -663,6 +663,8 @@ export function makeHighlightShapeDataObj(drawObj, cc, def = {}) {
     var rectObj = ShapeDataObj.makeRectangleByCenter(wcenter, w, h, ShapeDataObj.UnitType.PIXEL, 0.0, ShapeDataObj.UnitType.ARCSEC, false);
 
     makeShapeHighlightRenderOptions( rectObj );
+
+    rectObj.isAHighlight = { from: drawObj, plotImageId: cc.plotImageId, def};
     return rectObj;
 }
 

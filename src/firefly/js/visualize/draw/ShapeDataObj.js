@@ -12,6 +12,7 @@ import {TextLocation, Style, DEFAULT_FONT_SIZE} from './DrawingDef.js';
 import Point, {makeScreenPt, makeViewPortPt, makeOffsetPt, makeWorldPt, makeImagePt} from '../Point.js';
 import {toRegion} from './ShapeToRegion.js';
 import {getDrawobjArea,  isScreenPtInRegion, makeHighlightShapeDataObj} from './ShapeHighlight.js';
+import {makeHighlightPointDataObj, POINT_DATA_OBJ} from './PointDataObj.js';
 import CsysConverter from '../CsysConverter.js';
 import {has, isNil, get, set} from 'lodash';
 
@@ -233,6 +234,14 @@ var draw=  {
     },
 
     draw(drawObj,ctx,drawTextAry,plot,def,vpPtM,onlyAddToPath) {
+        if (has(drawObj, 'isAHighlight') && drawObj.isAHighlight.plotImageId !== plot.plotImageId) {
+            var fromObj = get(drawObj.isAHighlight, 'from');
+
+            if (fromObj) {
+                drawObj = (fromObj.type === POINT_DATA_OBJ) ? makeHighlightPointDataObj(fromObj, plot):
+                          makeHighlightShapeDataObj(fromObj, plot, drawObj.isAHighlight.def);
+            }
+        }
         var drawParams= makeDrawParams(drawObj,def);
         drawShape(drawObj,ctx,drawTextAry,plot,drawParams,onlyAddToPath);
     },
