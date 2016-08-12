@@ -96,11 +96,14 @@ function drawInnerRecWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2) 
  * @param size
  * @param fontWeight
  * @param fontStyle
+ * @param backGroundColor
+ * @param padDing
  */
 function drawText(drawTextAry,text, x,y,color,
                   renderOptions,
                   fontFamily='helvetica', size='9px',
-                  fontWeight='normal', fontStyle='normal') {
+                  fontWeight='normal', fontStyle='normal',
+                  backGroundColor, padDing) {
 
 
     //todo
@@ -120,11 +123,14 @@ function drawText(drawTextAry,text, x,y,color,
         'fontSize': size,
         fontWeight,
         fontStyle,
-        'backgroundColor': 'white',
-        'MozBorderRadius': '5px',
-        'borderRadius': '5px',
-        'WebkitBorderRadius': '5px'
+        'MozBorderRadius': '1px',
+        'borderRadius': '1px',
+        'WebkitBorderRadius': '1px'
     };
+
+    if (backGroundColor) style.backgroundColor = backGroundColor;
+    if (padDing) style.padding = padDing;
+
     drawTextAry.push({text,style});
 }
 

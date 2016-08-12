@@ -638,11 +638,7 @@ export function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
         if (y > south)y = south;
         else if (y<height) y= height;
 
-        //FIXME:color text black on white background - yellow on white background is not readable
-        //TODO: better solution would be to adapt text color with background
-
-        // in case shape 'text' defines the color of its own
-        var color = has(drawObj, 'color') ? drawObj.color : 'black';
+        var color = drawParams.color || drawObj.color || 'black';
         DrawUtil.drawText(drawTextAry, text, x, y, color, renderOptions,
                 fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle);
         drawObj.textWorldLoc = plot.getImageCoords(makeViewPortPt(x, y));

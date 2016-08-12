@@ -96,11 +96,5 @@ function makeCompass(plotId, action){
 
     //return Arrays.asList(new DrawObj[]{dataN, dataE});
     //
-    var arrows = VisUtil.getArrowCoords();
-
-    var pt = makeWorldPt(10.68479, 41.26906);//cc.getWorldCoords(makeImagePt(0, 0));
-    var obj = ShapeDataObj.makeCircleWithRadius(pt,50);
-    var txt = ShapeDataObj.makeText(pt,"Text");
-    obj.color = 'yellow';
     return [dataE, dataN];
 }
