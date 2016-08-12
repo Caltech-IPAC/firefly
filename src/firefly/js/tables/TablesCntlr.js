@@ -102,6 +102,99 @@ export const TABLE_UPDATE = `${DATA_PREFIX}.update`;
 export const TABLE_REPLACE = `${DATA_PREFIX}.replace`;
 
 
+/**
+ * Top level store for table related data.  It's mounted as 'table_space' under the application state
+ * @typedef {object} TableSpace
+ * @prop {Object.<string, TableModel>}  data    repository for table model; keyed by tbl_id
+ * @prop {Object.<string, TableGroup>}  results repository for table group information; keyed by tbl_group name
+ * @prop {Object.<string, Object>}      ui      repository for table UI state; keyed by tbl_ui_id
+ */
+
+
+/**
+ * Table model.  The top level table data object with meta info.
+ * @typedef {object} TableModel
+ * @prop {string}   tbl_id    unique ID of this table.
+ * @prop {string}   title     title, used on label.
+ * @prop {TableRequest} request  the request used to create this table
+ * @prop {TableMeta} tableMeta   table's meta information stored as key/value pair.
+ * @prop {TableData} tableData  table's meta information stored as key/value pair.
+ * @prop {number}   totalRows   total number of rows.
+ * @prop {number}   highlightedRow  the current highlighted row index.  index is natural order starting from 0.
+ * @prop {object}   selectInfo  selection information.  use SelectInfo.newInstance take advantage of helper's functions.
+ * @prop {boolean}  isFetching  true if data is being fetched and not ready for display.
+ * @prop {string}   error       error message if the request fail to create a table.
+ */
+
+/**
+ * Table data.  Table data object.
+ * @typedef {object} TableData
+ * @prop {TableColumn[]} columns    table column definition.
+ * @prop {string[][]} data          2D array containing the table data
+ */
+
+/**
+ * Table column information.
+ * @typedef {object} TableColumn
+ * @prop {string} name      name of the column
+ * @prop {string} label     display name of the column
+ * @prop {string} type      data type
+ * @prop {string} units     data units
+ * @prop {string} desc      description of the column
+ * @prop {number} width     column display width
+ * @prop {number} prefWidth preferred width.  if width is not defined
+ * @prop {boolean} sortable true if undefined
+ * @prop {string} visibility    show, hide, or hidden.  hidden columns are not viewable by users.
+ * @prop {string} sortByCols    for multi-columns sorting.  column names separated by comma(',').
+ * @prop {string} related       highlight related rows based on this column's value.
+ */
+
+/**
+ * Table meta information.  Below is only a small set of predefined meta used by table.
+ * The meta information in this object are used by many components for many reasons.  ie catalog overlay.
+ * @typedef {object} TableMeta
+ * @prop {string} Loading-Status COMPLETED or INPROGRESS
+ * @prop {string} tblFilePath   path of the source of this table on the server-side.
+ * @prop {string} isFullyLoaded 'true' when table is completely loaded on the server-side.
+ * @prop {string} source    path of the original table source before any operations were performed. ie sort, filter, etc.  this may not be fully supported.
+ */
+
+/**
+ * Table request.  Below is a list of predefined parameters available for table request.  All of the options are optional.  
+ * These parameters let you control what data and how it will be returned.
+ * @typedef {object} TableRequest
+ * @prop {number} startIdx  the starting index to fetch.  defaults to zero.
+ * @prop {number} pageSize  the number of rows per page.  defaults to 100.
+ * @prop {string} filters   list of conditions separted by comma(,). Format:  (col_name|index) operator value.
+ *                  operator is one of '> < = ! >= <= IN'.  See DataGroupQueryStatement.java doc for more details.
+ * @prop {string} sortInfo  sort information.  Format:  (ASC|DESC),col_name[,col_name]*
+ * @prop {string} inclCols  list of columns to select.  Column names separted by comma(,)
+ * @prop {string} decimate  decimation information.
+ * @prop {object} META_INFO meta information passed as key/value pair to server then returned as tableMeta.
+ * @prop {string} use       one of 'catalog_overlay', 'catalog_primary', 'data_primary'.
+ * @prop {string} tbl_id    a unique id of a table. auto-create if not given.
+ */
+
+/**
+ * Table group.  Define a group of tables used by the UI.
+ * @typedef {Object} TableGroup
+ * @prop {string}   name     unique name of this group
+ * @prop {string}   active   tbl_id of the active table in this group
+ * @prop {Object.<string, TableGroupItem>}   tables     a map of TableGroupItem(s) keyed by tbl_id
+ */
+
+/**
+ * Table group item.  Contains enough key information to identify the table data as well as the UI data associate with this item.
+ * @typedef {Object} TableGroupItem
+ * @prop {string}   tbl_group  table group name
+ * @prop {string}   tbl_id     unique id of the table data
+ * @prop {string}   tbl_ui_id  unique id of the table's UI data
+ * @prop {string}   title      title or label of the table
+ * @prop {boolean}  removable  true if this item can be removed from group.
+ * @prop {Object.<string, *>}   options   table options, ie.  selectable, expandable
+ */
+
+
 /*---------------------------- CREATORS ----------------------------*/
 
 export function tableSearch(action) {

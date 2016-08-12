@@ -5,8 +5,8 @@ import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {dispatchTableRemove}  from '../../tables/TablesCntlr';
 
-import {BasicTable} from '../../tables/ui/BasicTable.jsx';
-import {getTblById} from '../../tables/TableUtil.js';
+import {TablePanel} from '../../tables/ui/TablePanel.jsx';
+import {getTblById, calcColumnWidths} from '../../tables/TableUtil.js';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 //import HelpIcon from '../../ui/HelpIcon.jsx';
@@ -25,7 +25,7 @@ const popupPanelResizableStyle = {
 
 
 //define the table style only in the table div
-const tableStyle = {boxSizing: 'border-box', paddingLeft:5,paddingRight:5, width: '100%', height: 'calc(100% - 70px)', overflow: 'hidden', flexGrow: 1, display: 'flex', resize:'none'};
+const tableStyle = {boxSizing: 'border-box', width: '100%', height: 'calc(100% - 40px)', overflow: 'hidden', resize:'none'};
 
 //define the complete button
 const closeButtonStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginTop:10, width: '90%'};
@@ -45,10 +45,10 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
 
     // make a local table for plot column selection panel
     var columns = [
-                    {name: 'Name',visibility: 'show', prefWidth: 12},
-                    {name: 'Unit',visibility: 'show', prefWidth: 8},
-                    {name: 'Type',visibility: 'show', prefWidth: 8},
-                    {name: 'Description',visibility: 'show', prefWidth: 60}
+                    {name: 'Name'},
+                    {name: 'Unit'},
+                    {name: 'Type'},
+                    {name: 'Description'}
                 ];
     var data = [];
     for (var i = 0; i < colValStats.length; i++) {
@@ -59,6 +59,14 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
                         colValStats[i].descr
             ];
     }
+
+    const widths = calcColumnWidths(columns, data);
+    columns[0].prefWidth = Math.min(widths[0], 30);  // adjust width of column for optimum display.
+    columns[1].prefWidth = Math.min(widths[1], 15);
+    columns[2].prefWidth = Math.min(widths[2], 15);
+    columns[3].prefWidth = Math.min(widths[3], 100);
+
+
     const request = {pageSize:10000};
     var tableModel = {totalRows: data.length, request, tbl_id:TBL_ID, tableData: {columns,  data }, highlightedRow: hlRowNum};
 
@@ -100,9 +108,12 @@ function renderTable(tableModel,popupId) {
 
     return (
         <div style={tableStyle}>
-           <BasicTable
+           <TablePanel
                key={popupId}
                tableModel={tableModel}
+               showToolbar={false}
+               selectable={false}
+               border={false}
            />
         </div>
     );

@@ -140,6 +140,20 @@ button.tablepanel.clearFilters {
     background-image: url("/images/icons-2014/24x24_FilterOff_Circle.png");
 }
 
+.TablePanel__options--small {
+    z-index: 1;
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 20px;
+    height: 20px;
+}
+.TablePanel__options--small:hover {
+    background-color: #c3c3c3;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
 .TablePanelOptions {
     position: absolute;
     padding: 5px 7px;

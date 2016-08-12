@@ -22,7 +22,7 @@ export class TableConnector {
         var {tableModel, request} = TblUtil.getTblInfoById(this.tbl_id);
         if (this.origTableModel) {
             tableModel = TblUtil.sortTable(this.origTableModel, sortInfoString);
-            flux.process({type: TblCntlr.TABLE_REPLACE, payload: tableModel});
+            TblCntlr.dispatchTableReplace(tableModel);
         } else {
             request = Object.assign({}, request, {sortInfo: sortInfoString});
             TblCntlr.dispatchTableSort(request);
@@ -32,7 +32,8 @@ export class TableConnector {
     onFilter(filterIntoString) {
         var {tableModel, request} = TblUtil.getTblInfoById(this.tbl_id);
         if (this.origTableModel) {
-            // not implemented yet
+            tableModel = filterIntoString ? TblUtil.filterTable(this.origTableModel, filterIntoString) : this.origTableModel;
+            TblCntlr.dispatchTableReplace(tableModel);
         } else {
             request = Object.assign({}, request, {filters: filterIntoString});
             TblCntlr.dispatchTableFilter(request);

@@ -19,6 +19,7 @@ export function resultsReducer(state={results:{}}, action={}) {
         case (Cntlr.TBL_RESULTS_UPDATE)    :
             if (tbl_id ) {
                 const changes = set({}, [tbl_group, 'tables', tbl_id], action.payload);
+                set(changes, [tbl_group, 'name'], tbl_group);
                 return TblUtil.smartMerge(root, changes);
             } else return root;
 
