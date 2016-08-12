@@ -35,7 +35,8 @@ const INT_MAX = Math.pow(2,31) - 1;
  * Creates a table request object for the given id.
  */
 /**
- * @module lowLevelApi
+ * part of lowLevelApi
+ * @module firefly/util/table
  *
  */
 /**
@@ -72,7 +73,7 @@ export function makeFileRequest(title, source, alt_source, options={}) {
 }
 
 
-/*
+/**
  * Parameters for cone search
  * @typedef {object} ConeParams
  * @prop {string} SearchMethod  'Cone'.
@@ -80,7 +81,7 @@ export function makeFileRequest(title, source, alt_source, options={}) {
  * @prop {string} radius    radius of the search in arcsec
  */
 
-/*
+/**
  * Parameters for eliptical search
  * @typedef {object} ElipParams
  * @prop {string} SearchMethod  'Eliptical'.
@@ -91,7 +92,7 @@ export function makeFileRequest(title, source, alt_source, options={}) {
  * @prop {string} posang    pa for elliptical request
  */
 
-/*
+/**
  * Parameters for box search
  * @typedef {object} BoxParams
  * @prop {string} SearchMethod 'Eliptical'.
@@ -138,7 +139,7 @@ export function makeVOCatalogRequest(title, params={}, options={}) {
     return omitBy(Object.assign(req, options, params, {id, tbl_id, META_INFO, UserTargetWorldPt}), isNil);
 }
 
-/*
+/**
  * create a deep clone of the given request.  tbl_id is removed from the cloned request.
  * @param {Object} request  the original request to clone
  * @param {Object} params   additional parameters to add to the cloned request
@@ -153,7 +154,7 @@ export function cloneRequest(request, params = {}) {
 /*---------------------------- creator functions >----------------------------*/
 
 
-/*
+/**
  *
  * @param tableRequest is a table request params object
  * @param hlRowIdx set the highlightedRow.  default to startIdx.
@@ -211,7 +212,7 @@ export function doValidate(type, action) {
     return action;
 }
 
-/*
+/**
  * update the given action with a new error given by cause.
  * action.err is stored as an array of errors.  Errors may be a String or an Error type.
  * @param action  the actoin to update
@@ -221,7 +222,7 @@ export function error(action, cause) {
     (action.err = action.err || []).push(cause);
 }
 
-/*
+/**
  * return true is there is data within the given range.  this is needed because
  * of paging table not loading the full table.
  * @param startIdx
@@ -244,7 +245,7 @@ export function getTblById(id) {
     return get(flux.getState(),[TblCntlr.TABLE_SPACE_PATH, 'data', id]);
 }
 
-/*
+/**
  * returns the group information
  * @param {string} tbl_group    the group to look for
  * @returns {Object}
@@ -253,7 +254,7 @@ export function getTableGroup(tbl_group='main') {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group]);
 }
 
-/*
+/**
  * returns the table group name given a tbl_id.  it will return undefined if
  * the given tbl_id is not in a group.
  * @param {string} tbl_id    table id
@@ -267,7 +268,7 @@ export function findGroupByTblId(tbl_id) {
     return groupName;
 }
 
-/*
+/**
  * returns an array of tbl_id for the given tbl_group_id
  * @param {string} tbl_group_id    tbl_group_id
  * @returns {Array} array of tbl_id
@@ -277,7 +278,7 @@ export function getTblIdsByGroup(tbl_group_id = 'main') {
     return Object.keys(get(tableGroup, 'tables', {}));
 }
 
-/*
+/**
  * returns the table information for the given id and group.
  * @param tbl_id
  * @param tbl_group
@@ -287,7 +288,7 @@ export function getTableInGroup(tbl_id, tbl_group='main') {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group, 'tables',  tbl_id]);
 }
 
-/*
+/**
  * get the table working state by tbl_ui_id
  * @param tbl_ui_id
  * @returns {*}
@@ -296,7 +297,7 @@ export function getTableUiById(tbl_ui_id) {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui', tbl_ui_id]);
 }
 
-/*
+/**
  * returns the first table working state for the given tbl_id
  * @param tbl_id
  * @returns {*}
@@ -309,7 +310,7 @@ export function getTableUiByTblId(tbl_id) {
     return tbl_ui_id || uiRoot[tbl_ui_id];
 }
 
-/*
+/**
  * get table's expanded information.
  * @returns {object}
  */
@@ -317,7 +318,7 @@ export function getTblExpandedInfo() {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui', 'expanded'], {});
 }
 
-/*
+/**
  * return true if the table referenced by the given tbl_id is fully loaded.
  * @param tbl_id
  * @returns {boolean}
@@ -344,7 +345,7 @@ export function getActiveTableId(tbl_group='main') {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH,'results',tbl_group,'active']);
 }
 
-/*
+/**
  *
  * @param tableModel
  * @param rowIdx
@@ -360,7 +361,7 @@ export function getCellValue(tableModel, rowIdx, colName) {
 }
 
 
-/*
+/**
  * return true if the given table is fully loaded.
  * @param tableModel
  * @returns {boolean}
@@ -370,7 +371,7 @@ export function isTableLoaded(tableModel) {
     return status === 'COMPLETED';
 }
 
-/*
+/**
  * This function transform the json data from the server to fit the need of the UI.
  * For instance, the column's name is repeated after transform.  This is good for the UI.
  * But, it's more efficient to not include it during data transfer from the server.
@@ -391,7 +392,7 @@ export function transform(tableModel) {
     }
 }
 
-/*
+/**
  * This function merges the source object into the target object
  * by traversing and comparing every like path.  If a value was
  * merged at any data node in the data graph, the node and all of its
@@ -432,7 +433,7 @@ export function smartMerge(target, source) {
     }
 }
 
-/*
+/**
  * sort the given tableModel based on the given request
  * @param origTableModel original table model.  this is returned when direction is UNSORTED.
  * @param sortInfoStr
@@ -445,7 +446,7 @@ export function sortTable(origTableModel, sortInfoStr) {
     return tableModel;
 }
 
-/*
+/**
  * sort table data in place.
  * @param tableData
  * @param columns
@@ -484,7 +485,7 @@ export function getTblInfoById(tbl_id, aPageSize) {
     return getTblInfo(tableModel, aPageSize);
 }
 
-/*
+/**
  * collects all available table information given the tableModel.
  * @param tableModel
  * @param aPageSize  use this pageSize instead of the one in the request.
@@ -508,7 +509,7 @@ export function getTblInfo(tableModel, aPageSize) {
     return { tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow, selectInfo, error};
 }
 
-/*
+/**
  *
  * @returns {encoded}
  */
@@ -530,7 +531,7 @@ export function getTableSourceUrl(tbl_ui_id) {
     return encodeServerUrl(SAVE_TABLE_URL, {file_name, Request});
 }
 
-/*
+/**
  * returns an array of width indexed corresponding to the given columns.  
  * The width is the number of characters needed to display
  * the header and the data as a table given columns and dataAry.

@@ -17,7 +17,6 @@ import {getDlAry} from '../DrawLayerCntlr.js';
 import {flux} from '../../Firefly.js';
 
 
-
 export class ImageViewer extends Component {
 
 

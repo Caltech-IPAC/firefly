@@ -25,7 +25,7 @@ export const SET_SELECTION = `${XYPLOT_DATA_KEY}/SET_SELECTION`;
 const SET_ZOOM = `${XYPLOT_DATA_KEY}/SET_ZOOM`;
 const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
 /**
- * @module lowLevelApi
+ * @module firefly/action
  */
 
 /*
@@ -183,7 +183,7 @@ function serverParamsChanged(oldParams, newParams) {
     });
 }
 
-/*
+/**
  * The data is an object with
  * chartId - string, chart id,
  * isPlotDataReady - boolean, flags that xy plot data are available
@@ -324,7 +324,7 @@ function getDataBoundaries(xyPlotData) {
 }
 
 
-/*
+/**
  * Pad and round data boundaries
  * @param {Object} boundaries - object with xMin, xMax, yMin, yMax props
  * @param {Number} factor - part of the range to add on both sides
@@ -352,7 +352,7 @@ function getPaddedBoundaries(boundaries, factor=100) {
     return boundaries;
 }
 
-/*
+/**
  * fetches xy plot data
  * set isColStatsReady to true once done.
  * @param dispatch

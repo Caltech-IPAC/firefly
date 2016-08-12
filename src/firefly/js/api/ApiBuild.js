@@ -55,7 +55,7 @@ import './ApiStyle.css';
 export function initApi() {
     /**
      * @desc  build lowLevelApi
-     * @module lowLevelApi
+     *
      * @type {{action, ui, util}|{action: {}, ui: {}, util: {}}}
      */
     const lowlevelApi= buildLowlevelAPI();
@@ -66,10 +66,11 @@ export function initApi() {
     window.firefly.ignoreHistory = true;
     Object.assign(window.firefly, lowlevelApi, highLevelApi, viewInterface);
     /**
-     * @namespace firefly
+     *
      * @desc Eefine the firefly object that includes highLevelApi and lowLevelApi and the viewInterface
      * @type {{}|*}
      */
+    //@namespace firefly
     const firefly= window.firefly;
     dispatchOnAppReady(() => {
         window.onFireflyLoaded && window.onFireflyLoaded(firefly);
@@ -125,10 +126,11 @@ export function buildLowlevelAPI() {
 
     /**
      * @desc loweverApi firefly.action
-     * @namespace firefly/action
+
      * @memeberof lowLevelApi
      * @type {*}
      */
+    //  * @namespace firefly/action
     const action= Object.assign({},
         {type},
         findDispatch(TableStatsCntlr),
@@ -145,10 +147,10 @@ export function buildLowlevelAPI() {
 
     /**
      * @desc lowLevelApi
-     * @namespace firefly/ui
      * @memeberof lowLevelApi
      * @type {{ImageViewer: ImageViewer, MultiImageViewer: MultiImageViewer, MultiViewStandardToolbar: MultiViewStandardToolbar, ApiExpandedDisplay: ApiExpandedDisplay, ExpandedModeDisplay: ExpandedModeDisplay, ImageMetaDataToolbar: ImageMetaDataToolbar, TablesContainer: TablesContainer, TablePanel: TablePanel, ChartsContainer: ChartsContainer, ChartsTableViewPanel: ChartsTableViewPanel, PopupMouseReadoutMinimal: PopupMouseReadoutMinimal, PopupMouseReadoutFull: PopupMouseReadoutFull}}
      */
+    //  * @namespace firefly/ui
     const ui= {
         ImageViewer,
         MultiImageViewer,
@@ -165,10 +167,11 @@ export function buildLowlevelAPI() {
     };
     /**
      * @desc lowLevelApi
-     * @namespace firefly/util
+     *
      * @memeberof lowLevelApi
      * @type {*}
      */
+    //@namespace firefly/util
     const util= Object.assign({}, ApiUtil, {image:ApiUtilImage}, {chart:ApiUtilChart}, {table:ApiUtilTable}, {data:{}} );
 
     return { action, ui, util };

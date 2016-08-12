@@ -234,6 +234,9 @@ export function makeUniqueRequestKey() {
 //======================================== Dispatch Functions =============================
 
 /**
+ * @module firefly/action
+ */
+/**
  * 
  * @param apiToolsView
  */

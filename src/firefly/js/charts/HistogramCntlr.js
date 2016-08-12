@@ -10,7 +10,9 @@ import {doFetchTable, getTblById, isFullyLoaded, makeTblRequest, cloneRequest} f
 import {HISTOGRAM, getChartSpace} from './ChartUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {DELETE} from './ChartsCntlr.js';
-
+/**
+ * @module firefly/action
+ */
 /*
  Possible structure of store:
  /histogram
@@ -165,6 +167,7 @@ export function reduceHistogram(state={}, action={}) {
  *
  * @param data {Object} the data to merge with the histogram branch under root
  * @returns {{type: string, payload: object}}
+ *
  */
 function updateColData(data) {
     return { type : UPDATE_COL_DATA, payload: data };

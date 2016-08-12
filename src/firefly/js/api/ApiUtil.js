@@ -20,7 +20,8 @@ import {take,race,call} from 'redux-saga/effects';
 // NOTE 
 // NOTE
 /**
- * @module lowLevelApi
+ *
+ * @module firefly/util
  */
 export {getBoolean} from '../util/WebUtil.js';
 export {toBoolean} from '../util/WebUtil.js';
@@ -34,9 +35,11 @@ export {toBoolean} from '../util/WebUtil.js';
 
 export const isDebug = () => get(window, 'firefly.debug', false);
 
-/*
+/**
  * show a debug message if debugging is enabled
  * @param {String|Error} msg any number of messages
+ *
+ *
  */
 export function debug(...msg) {
     if (isDebug() && !isEmpty(msg)) {
@@ -51,7 +54,6 @@ export function debug(...msg) {
  * @param {string|Object} div a div element or a string id of the div element
  * @param {Object} Component a react component
  * @param {Object} [props] props for the react component
- * @memeberof lowLevelApi
  * @Function renderDOM
  */
 export function renderDOM(div, Component, props) {
@@ -76,7 +78,7 @@ export function renderDOM(div, Component, props) {
 /**
  * @param {string|Object} div a div element or a string id of the div element
  * @Function unrenderDOM
- * @memeberof lowLevelApi
+ * @memeberof lrenderDOM
  */
 export function unrenderDOM(div) {
     const divElement= isString(div) ? document.getElementById(div) : div;

@@ -38,8 +38,8 @@ const MAX_CACHE_ENTRIES = 38000; // set to never allows the cache array over 480
  *
  */
 
-/**
- *  @module lowLevelApi
+/** part of lowLevelApi
+ *  @module   firefly/util/image/CCUtil
  */
 
 export class CysConverter {

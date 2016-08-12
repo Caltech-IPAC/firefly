@@ -78,7 +78,7 @@ export function dlRoot() { return flux.getState()[DRAWING_LAYER_KEY]; }
 export function getDlAry() { return flux.getState()[DRAWING_LAYER_KEY].drawLayerAry; }
 
 /**
- * @module lowLevelApi
+ * @module firefly/action
  */
 export default {
     CHANGE_VISIBILITY, RETRIEVE_DATA,
@@ -99,7 +99,7 @@ export default {
     dispatchCreateMarkerLayer, dispatchCreateFootprintLayer
 };
 
-/*
+/**
  *
  * @param drawLayerId
  */
@@ -109,7 +109,7 @@ export function dispatchRetrieveData(drawLayerId) {
 }
 
 
-/*
+/**
  *
  * @param drawLayerTypeId
  * @param params
@@ -125,9 +125,9 @@ export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
 }
 
 
-/*
+/**
  *
- * @param {string|[]} id make the drawLayerId or drawLayerTypeId, this may be an array
+ * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param visible
  * @param plotId
  * @param useGroup
@@ -141,9 +141,9 @@ export function dispatchChangeVisibility(id,visible, plotId, useGroup= true) {
         });
 }
 
-/*
+/**
  *
- * @param {string|[]} id make the drawLayerId or drawLayerTypeId, this may be an array
+ * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param drawingDef
  * @param plotId
  * @param useGroup
@@ -158,9 +158,9 @@ export function dispatchChangeDrawingDef(id,drawingDef, plotId, useGroup= true) 
 }
 
 
-/*
+/**
  *
- * @param {string|[]} id make the drawLayerId or drawLayerTypeId, this may be an array
+ * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param changes
  * @param plotId
  * @param useGroup
@@ -175,6 +175,7 @@ export function dispatchModifyCustomField(id,changes, plotId, useGroup= true) {
         });
 }
 
+
 export function dispatchForceDrawLayerUpdate(id,plotId, useGroup= true) {
 
     var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
@@ -187,7 +188,7 @@ export function dispatchForceDrawLayerUpdate(id,plotId, useGroup= true) {
 
 
 
-/*
+/**
  *
  * @param {string} id make the drawLayerId or drawLayerTypeId
  */
@@ -198,10 +199,10 @@ export function dispatchDestroyDrawLayer(id) {
     }
 }
 
-/*
+/**
  *
- * @param {string|[]} id make the drawLayerId or drawLayerTypeId, this may be an array
- * @param {string|[]} plotId to attach this may by a string or an array of strings
+ * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
+ * @param {string|string[]} plotId to attach this may by a string or an array of strings
  * @param attachPlotGroup
  */
 export function dispatchAttachLayerToPlot(id,plotId, attachPlotGroup=false) {
@@ -221,10 +222,10 @@ export function dispatchAttachLayerToPlot(id,plotId, attachPlotGroup=false) {
 }
 
 
-/*
+/**
  *
- * @param {string|[]} id make the drawLayerId or drawLayerTypeId, this may be an array
- * @param {string|[]} plotId to attach this may by a string or an array of strings
+ * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
+ * @param {string|string[]} plotId to attach this may by a string or an array of strings
  * @param detachPlotGroup
  * @param useLayerGroup
  * @param destroyWhenAllDetached if all plots are detached then destroy this plot
@@ -254,9 +255,7 @@ export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
  * @param fileOnServer
  * @param regionAry
  * @param plotId
- * @param dispatcher
- * @nmemberof firefly.action
- * @example firefly.action.dispatchCreateRegionLayer
+ * @param dispatcherr
  */
 export function dispatchCreateRegionLayer(regionId, layerTitle, fileOnServer='', regionAry=[], plotId = [], dispatcher = flux.process) {
     dispatcher({type: REGION_CREATE_LAYER, payload: {regionId, fileOnServer, plotId, layerTitle, regionAry}});
@@ -347,7 +346,7 @@ export function makeDetachLayerActionCreator(factory) {
 //=============================================
 //=============================================
 //=============================================
-/*
+/**
  *
  * @param factory
  */
@@ -405,7 +404,7 @@ function makeReducer(factory) {
 }
 
 
-/*
+/**
  * Create a drawing layer
  * @param state
  * @param {{type:string,payload:object}} action
@@ -419,7 +418,7 @@ function createDrawLayer(state,action) {
         {allowedActions, drawLayerAry: [...state.drawLayerAry, drawLayer] });
 }
 
-/*
+/**
  * Destroy the drawing layer
  * @param state
  * @param {{type:string,payload:object}} action
@@ -431,11 +430,11 @@ function destroyDrawLayer(state,action) {
         {drawLayerAry: state.drawLayerAry.filter( (c) => c.drawLayerId!==drawLayerId) });
 }
 
-/*
+/**
  * Call the reducer for the drawing layer defined by the action
  * @param state
  * @param {{type:string,payload:object}} action
- * @param dlReducer drawinglayer subreducer{string|[]}
+ * @param dlReducer drawinglayer subreducer{string|string[]}
  * @return {object} the new state;
  */
 function deferToLayerReducer(state,action,dlReducer) {
@@ -453,7 +452,7 @@ function deferToLayerReducer(state,action,dlReducer) {
 }
 
 
-/*
+/**
  * Call all the drawing layers that are interested in the action.  Since this function will be called often it does
  *  a lot of checking for change.
  *  If nothing has changed it returns the original state.

@@ -33,7 +33,7 @@ export {WPConst, WebPlotRequest, findInvalidWPRKeys, confirmPlotRequest} from '.
 export {RequestType} from '../visualize/RequestType';
 export {ExpandType, dispatchApiToolsView} from '../visualize/ImagePlotCntlr.js';
 /**
- * @module lowLevelApi
+ * @module firefly/util/image
  *
  */
 export {CsysConverter} from '../visualize/CsysConverter.js';
@@ -50,9 +50,10 @@ export {watchImageMetaData} from '../visualize/saga/ImageMetaDataWatcher.js';
  * When plotId is not included, active plot is returned.
  */
 /**
- *
  * @param {string} [plotId] the plotId, optional
+ *
  * @returns {WebPlot}
+ * @memberof firefly/util/image
  *
  */
 export function getPrimePlot(plotId) {
