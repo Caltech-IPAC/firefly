@@ -15,6 +15,7 @@ import {makeDrawingDef} from './DrawingDef.js';
 
 function updateDrawer(drawer,plot, width, height, drawLayer) {
     var data, highlightData, selectIdxs;
+    if (!drawLayer) return;
     var {drawData}= drawLayer;
     drawer.decimate= drawLayer.decimate;
     var plotId= plot? plot.plotId : null;
@@ -66,7 +67,7 @@ function makeCanvasLayers(drawLayer,drawer,w,h) {
     return retAry;
 }
 
-const isVisible= (drawLayer,plotId) => drawLayer.visiblePlotIdAry.includes(plotId);
+const isVisible= (drawLayer,plotId) => drawLayer && drawLayer.visiblePlotIdAry.includes(plotId);
 
 
 const getDataForPlot= (data,plotId) => {
@@ -146,6 +147,7 @@ class CanvasWrapper extends React.Component {
         this.lastDrawLayer= getDrawLayer ? getDrawLayer() : drawLayer;
         var dl= this.lastDrawLayer;
         if (plot && !isVisible(dl,plot.plotId)) return false;
+        if (!dl) return false;
 
         if (Array.isArray(dl)) dl= makeDummyDrawLayer(this.lastDrawLayer);
 

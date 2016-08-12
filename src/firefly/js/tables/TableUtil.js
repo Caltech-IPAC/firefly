@@ -556,3 +556,13 @@ export function uniqueTblId() {
 export function uniqueTblUiId() {
     return uniqueId('tbl_ui_id-');
 }
+
+/**
+ *  This function provides a patch until we can reliably determine that the ra/dec columns use radians or degrees.
+ * @param tableOrMeta the table object or the tableMeta object
+ */
+export function isTableUsingRadians(tableOrMeta) {
+    if (!tableOrMeta) return false;
+    const tableMeta= tableOrMeta.tableMeta || tableOrMeta;
+    return has(tableMeta, 'HIERARCH.AFW_TABLE_VERSION');
+}

@@ -233,7 +233,7 @@ function doFluxCall(plotView,iPt) {
             return result;
         })
         .catch((e) => {
-            console.log(`flux error: ${plot.plotId}`, e);
+            console.log(`flux error: ${plotView.plotId}`, e);
             return ['', '', ''];
         });
 }

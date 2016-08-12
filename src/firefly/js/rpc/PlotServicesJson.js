@@ -24,7 +24,7 @@ export const callGetColorHistogram= function(state,band,width,height) {
     paramList.push({name:ServerParams.BAND, value: band.key});
     paramList.push({name:ServerParams.JSON_DEEP,value:'true'});
 
-    return doJsonRequest(ServerParams.HISTOGRAM, paramList);
+    return doJsonRequest(ServerParams.HISTOGRAM, paramList, true);
 };
 
 /**
@@ -39,7 +39,7 @@ export function callGetWebPlot3Color(redRequest, greenRequest, blueRequest) {
     if (greenRequest) paramList.push({name:ServerParams.GREEN_REQUEST, value:greenRequest.toString()});
     if (blueRequest) paramList.push({name:ServerParams.BLUE_REQUEST, value:blueRequest.toString()});
     paramList.push({name:ServerParams.JSON_DEEP,value:'true'});
-    return doJsonRequest(ServerParams.CREATE_PLOT, paramList);
+    return doJsonRequest(ServerParams.CREATE_PLOT, paramList, true);
 };
 
 /**
@@ -75,7 +75,7 @@ export function callRotateNorth(stateAry, north, newZoomLevel) {
                    {name: ServerParams.NORTH, value: north + ''},
                    {name: ServerParams.ZOOM, value: newZoomLevel + ''},
                  ]);
-    return doJsonRequest(ServerParams.ROTATE_NORTH, params);
+    return doJsonRequest(ServerParams.ROTATE_NORTH, params, true);
 }
 
 /**
@@ -91,7 +91,7 @@ export function callRotateToAngle(stateAry, rotate, angle, newZoomLevel) {
                        {name: ServerParams.ANGLE, value: angle + ''},
                        {name: ServerParams.ZOOM, value: newZoomLevel + ''},
                    ]);
-    return doJsonRequest(ServerParams.ROTATE_ANGLE, params);
+    return doJsonRequest(ServerParams.ROTATE_ANGLE, params, true);
 }
 
 
@@ -104,7 +104,7 @@ export function callGetAreaStatistics(state, ipt1, ipt2, ipt3, ipt4) {
         [ServerParams.PT3]: ipt3.toString(),
         [ServerParams.PT4]: ipt4.toString()
     };
-    return doJsonRequest(ServerParams.STAT, params);
+    return doJsonRequest(ServerParams.STAT, params, true);
 }
 
 
@@ -119,7 +119,7 @@ export function callSetZoomLevel(stateAry, level, isFullScreen) {
         {name:ServerParams.LEVEL, value:level},
         {name:ServerParams.FULL_SCREEN, value : isFullScreen},
     ]);
-    return doJsonRequest(ServerParams.ZOOM, params);
+    return doJsonRequest(ServerParams.ZOOM, params, true);
 }
 
 
@@ -129,7 +129,7 @@ export function callChangeColor(state, colorTableId) {
         {name:ServerParams.JSON_DEEP,value:'true'},
         {name:ServerParams.COLOR_IDX, value:colorTableId}
     ];
-    return doJsonRequest(ServerParams.CHANGE_COLOR, params);
+    return doJsonRequest(ServerParams.CHANGE_COLOR, params, true);
 }
 
 export function callRecomputeStretch(state, stretchDataAry) {
@@ -138,7 +138,7 @@ export function callRecomputeStretch(state, stretchDataAry) {
         [ServerParams.JSON_DEEP]: true
     };
     stretchDataAry.forEach( (sd,idx) => params[ServerParams.STRETCH_DATA+idx]=  JSON.stringify(sd));
-    return doJsonRequest(ServerParams.STRETCH, params);
+    return doJsonRequest(ServerParams.STRETCH, params, true);
 }
 
 
@@ -151,7 +151,7 @@ export function callCrop(stateAry, corner1ImagePt, corner2ImagePt, cropMultiAll)
         {name:ServerParams.CRO_MULTI_ALL, value: cropMultiAll +''}
     ]);
     
-    return doJsonRequest(ServerParams.CROP, params);
+    return doJsonRequest(ServerParams.CROP, params, true);
     
 }
 //LZ 3/22/16 DM-4494
@@ -162,7 +162,7 @@ export  function  callGetFitsHeaderInfo(plotState, tableId) {
         tableId
     };
 
-    var result = doJsonRequest(ServerParams.FITS_HEADER, params);
+    var result = doJsonRequest(ServerParams.FITS_HEADER, params, true);
     return result;//doJsonRequest(ServerParams.FITS_HEADER, params);
 }
 
@@ -170,7 +170,7 @@ export  function  callGetFitsHeaderInfo(plotState, tableId) {
 export function callFlipImageOnY(stateAry) {
 
     var params =  makeParamsWithStateAry(stateAry);
-    return doJsonRequest(ServerParams.FLIP_Y, params);
+    return doJsonRequest(ServerParams.FLIP_Y, params, true);
 }
 
 
@@ -181,7 +181,7 @@ export function callGetFileFlux(stateAry, pt) {
         {name: [ServerParams.PT], value: pt.toString()}
     ]);
 
-    return doJsonRequest(ServerParams.FILE_FLUX_JSON, params);
+    return doJsonRequest(ServerParams.FILE_FLUX_JSON, params,true);
 }
 
 export function getDS9Region(fileKey) {
@@ -190,7 +190,7 @@ export function getDS9Region(fileKey) {
         [ServerParams.FILE_KEY]: fileKey,
         [ServerParams.JSON_DEEP]: true
     };
-    return doJsonRequest(ServerParams.DS9_REGION, params);
+    return doJsonRequest(ServerParams.DS9_REGION, params, true);
 }
 
 

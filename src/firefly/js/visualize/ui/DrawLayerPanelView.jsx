@@ -99,10 +99,13 @@ function makeOverlayTitle(opv,mouseOn) {
     if (opv.plot) {
         const {header}= opv.plot.projection;
         const titleKey= Object.keys(header)
-            .filter( (k) => k.startsWith('MP'))
-            .find( (k) => parseInt(header[k])+1===maskNumber);
-        const maskDesc= titleKey;
-        if (maskDesc) title= `${title} - ${maskDesc}`;
+            .filter( (k) => k.includes('MP'))
+            .find( (k) => parseInt(header[k])===maskNumber);
+        var maskDesc= titleKey;
+        if (maskDesc) {
+            if (maskDesc.startsWith('HIERARCH')) maskDesc= maskDesc.substring(9);
+            title= `${title} - ${maskDesc}`;
+        }
     }
 
     mouseOn= Boolean(mouseOn);

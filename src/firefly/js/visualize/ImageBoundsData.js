@@ -45,6 +45,9 @@ export const makeRoughGuesser= function(cc) {
     var minDec=5000;
     var maxDec= -5000;
 
+                    // if I can find the corners then rough guess will not work
+    if (!topLeft ||  !topRight || !bottomLeft || !bottomRight) return () => true;
+
     [topLeft, topRight, bottomLeft, bottomRight].forEach( (wp) => {
         if (wp.getLon() < minRa) minRa= wp.getLon();
         if (wp.getLon() > maxRa) maxRa= wp.getLon();

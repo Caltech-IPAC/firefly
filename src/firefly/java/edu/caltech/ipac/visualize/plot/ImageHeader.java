@@ -110,7 +110,7 @@ public class ImageHeader implements Serializable
 	Cursor extraIter= header.iterator();
 	for(;extraIter.hasNext();) {
 		HeaderCard hc= (HeaderCard)extraIter.next();
-		if (hc.getKey().startsWith("MP")) {
+		if (hc.getKey().startsWith("MP") || hc.getKey().startsWith("HIERARCH.MP")) {
 			additionalHeaders.put(hc.getKey(), hc.getValue());
 		}
 	}

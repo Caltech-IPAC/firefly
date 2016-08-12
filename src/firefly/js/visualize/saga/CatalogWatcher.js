@@ -3,11 +3,11 @@
  */
 
 import {take} from 'redux-saga/effects';
-import {isEmpty, get} from 'lodash';
+import {isEmpty, get, has} from 'lodash';
 import {TABLE_LOADED, TABLE_SORT, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE} from '../../tables/TablesCntlr.js';
 import {dispatchCreateDrawLayer,dispatchAttachLayerToPlot,dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
-import {getTblById, doFetchTable, getTableGroup, cloneRequest} from '../../tables/TableUtil.js';
+import {getTblById, doFetchTable, getTableGroup, cloneRequest, isTableUsingRadians} from '../../tables/TableUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {getDrawLayerById} from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
@@ -143,9 +143,11 @@ function updateDrawingLayer(tbl_id, title, tableData, tableMeta, tableRequest,
                                            dataTooBigForSelection});
     }
     else { // new drawing layer
+        const angleInRadian= isTableUsingRadians(tableMeta);
         dispatchCreateDrawLayer(Catalog.TYPE_ID,
             {catalogId:tbl_id, title, tableData, tableMeta, tableRequest, highlightedRow,
-                                selectInfo, columns, dataTooBigForSelection, catalog:true});
+                                selectInfo, columns, dataTooBigForSelection, catalog:true,
+                                angleInRadian});
         dispatchAttachLayerToPlot(tbl_id, plotIdAry);
     }
 }
