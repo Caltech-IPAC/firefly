@@ -8,10 +8,8 @@ package edu.caltech.ipac.firefly.server.visualize;
  * Time: 1:27 PM
  */
 
-import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.servlets.CommandService;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -23,18 +21,18 @@ import edu.caltech.ipac.firefly.visualize.StretchData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
-import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.visualize.plot.ImagePt;
-
 import nom.tam.fits.FitsException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Trey Roby
@@ -77,7 +75,9 @@ public class VisServerCommands {
 
 
             SrvParam sp= new SrvParam(paramMap);
-            PlotState state= sp.getState();
+//            PlotState state= sp.getState();
+            PlotState stateAry[]= sp.getStateAry();
+            PlotState state= stateAry[0];
             ImagePt pt = sp.getRequiredImagePt("pt");
 
             FileAndHeaderInfo fahAry[];
@@ -85,7 +85,17 @@ public class VisServerCommands {
             for(Band b : state.getBands()) {
                 list.add(state.getFileAndHeaderInfo(b));
             }
+
+            if (stateAry.length>1) {
+                for(int i=1; (i<stateAry.length);i++) {
+                    list.add(stateAry[i].getFileAndHeaderInfo(Band.NO_BAND) );
+                }
+            }
+
+
+
             fahAry = list.toArray(new FileAndHeaderInfo[list.size()]);
+
 
             String[] res = VisServerOps.getFileFlux(fahAry, pt);
 
@@ -96,9 +106,19 @@ public class VisServerCommands {
 
             JSONObject data= new JSONObject();
             Band[] bands = state.getBands();
-            for (int i=0; i<res.length; i++){
-                data.put(bands[i].toString(), res[i]);
+            int resultCnt=0;
+            for (;resultCnt<res.length && resultCnt<bands.length; resultCnt++){
+                data.put(bands[resultCnt].toString(), res[resultCnt]);
             }
+
+
+            if (stateAry.length>1) {
+                for(int i=1; (i<stateAry.length);i++) {
+                    data.put("overlay-"+(i-1), res[resultCnt++]);
+                }
+            }
+
+
             data.put("success", true);
 
             JSONArray wrapperAry= new JSONArray();
@@ -392,8 +412,9 @@ public class VisServerCommands {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);
-            PlotState state= sp.getState();
-            WebPlotResult result = VisServerOps.flipImageOnY(state);
+            PlotState stateAry[]= sp.getStateAry();
+//            PlotState state= sp.getState();
+            WebPlotResult result = VisServerOps.flipImageOnY(stateAry);
             return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }

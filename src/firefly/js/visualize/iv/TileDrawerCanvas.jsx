@@ -59,11 +59,10 @@ export class TileDrawerCanvas extends Component {
             var {canvas}= this;
             if (!canvas) return;
 
-            var { x, y, width, height, plot}= this.props;
+            var { x, y, width, height, plot, opacity}= this.props;
             var tileData = plot.serverImages;
             var tileZoomFactor = plot.plotState.getZoomLevel();
             var zoomFactor = plot.zoomFactor;
-            var opacity = plot.percentOpaque;
             const scale = zoomFactor / tileZoomFactor;
 
             if (this.loadedImages.serverData!==tileData.images) {
@@ -158,7 +157,8 @@ TileDrawerCanvas.propTypes= {
     y : PropTypes.number.isRequired,
     width : PropTypes.number.isRequired,
     height : PropTypes.number.isRequired,
-    plot : PropTypes.object.isRequired
+    plot : PropTypes.object.isRequired,
+    opacity : PropTypes.number.isRequired,
 };
 
 function makeScreenToVPConverter(plot) {

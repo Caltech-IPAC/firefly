@@ -34,6 +34,7 @@ public class WebPlotInitializer implements Serializable, DataEntry {
     private WebFitsData   _fitsData[];
     private String        _desc;
     private String        _dataDesc;
+    private transient Projection _projection;
 
 
 
@@ -55,6 +56,7 @@ public class WebPlotInitializer implements Serializable, DataEntry {
         _initImages= images;
         _imageCoordSys= imageCoordSys;
         _projectionSerialized= ProjectionSerializer.serializeProjection(projection);
+        _projection= projection;
         _dataWidth= dataWidth;
         _dataHeight= dataHeight;
         _imageScaleFactor= imageScaleFactor;
@@ -73,7 +75,7 @@ public class WebPlotInitializer implements Serializable, DataEntry {
 
     public Projection getProjection() {
 //        return _projection;
-        return ProjectionSerializer.deserializeProjection(_projectionSerialized);
+        return _projection!=null ? _projection : ProjectionSerializer.deserializeProjection(_projectionSerialized);
     }
 
     public String getProjectionSerialized() { return _projectionSerialized; }

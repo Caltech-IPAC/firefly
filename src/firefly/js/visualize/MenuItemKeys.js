@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {get} from 'lodash';
 
 export const MenuItemKeys= {
     fitsDownload : 'fitsDownload',
@@ -32,11 +33,14 @@ export const MenuItemKeys= {
     fitsHeader: 'fitsHeader'
 };
 
-const defaultOff = [MenuItemKeys.lockImage, MenuItemKeys.irsaCatalog];
+const defaultOff = [MenuItemKeys.lockImage, MenuItemKeys.irsaCatalog, MenuItemKeys.maskOverlay];
 
 
-export const defMenuItemKeys= Object.keys(MenuItemKeys).reduce((obj,k) => {
+const tempMiKeys= Object.keys(MenuItemKeys).reduce((obj,k) => {
     obj[k]= !defaultOff.includes(k);
     return obj;
 },{});
+
+
+export const defMenuItemKeys= Object.assign({}, tempMiKeys, get(window.firefly, 'MenuItemKeys', {}));
 

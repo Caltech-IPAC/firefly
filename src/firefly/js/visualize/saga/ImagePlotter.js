@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {take} from 'redux-saga/effects';
-import {unionWith, isEmpty} from 'lodash';
+import {unionWith} from 'lodash';
 import ImagePlotCntlr, {visRoot, makeUniqueRequestKey} from '../ImagePlotCntlr.js';
 import {modifyRequest, processPlotImageSuccessResponse} from '../PlotImageTask.js';
 import {callGetWebPlot, callGetWebPlotGroup, callGetWebPlot3Color} from '../../rpc/PlotServicesJson.js';

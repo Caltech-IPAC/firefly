@@ -4,6 +4,7 @@
 
 
 import React from 'react';
+import {get} from 'lodash';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import sCompare from 'react-addons-shallow-compare';
 import {getActivePlotView, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
@@ -13,6 +14,7 @@ import {getDlAry} from '../DrawLayerCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import DrawLayerPanelView from './DrawLayerPanelView.jsx';
 import {flux} from '../../Firefly.js';
+import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
 
 
 export const DRAW_LAYER_POPUP= 'DrawLayerPopup';
@@ -57,7 +59,7 @@ class DrawLayerPanel extends React.Component {
     constructor(props) {
         super(props);
         var activePv= getActivePlotView(visRoot());
-        this.state= {dlAry:getDlAry(),activePv};
+        this.state= {dlAry:getDlAry(),activePv, mouseOverMaskValue:0};
     }
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
@@ -74,15 +76,17 @@ class DrawLayerPanel extends React.Component {
     storeUpdate() {
         var state= this.state;
         var activePv= getActivePlotView(visRoot());
+        const mouseOverMaskValue= get(readoutRoot(), 'standardReadout.readoutItems.imageOverlay.value',0);
 
-        if (activePv!==state.activePv  || getDlAry()!==state.dlAry) {
+        if (activePv!==state.activePv  || getDlAry()!==state.dlAry  || mouseOverMaskValue!==this.state.mouseOverMaskValue) {
             const dlAry= getDlAry();
-            var layers= getAllDrawLayersForPlot(dlAry,activePv.plotId);
-            if (layers.length) {
-                this.setState({dlAry,activePv});
+            const imageOverlayLength= activePv ? activePv.overlayPlotViews.length : 0;
+            var layers= activePv ? getAllDrawLayersForPlot(dlAry,activePv.plotId) : [];
+            if ((layers.length + imageOverlayLength)>0) {
+                this.setState({dlAry,activePv, mouseOverMaskValue});
             }
             else {
-                setTimeout(() => hideDrawingLayerPopup(),0)
+                setTimeout(() => hideDrawingLayerPopup(),0);
             }
         }
     }
@@ -94,6 +98,7 @@ class DrawLayerPanel extends React.Component {
             <DrawLayerPanelView dlAry={this.state.dlAry}
                                 drawLayerFactory={flux.getDrawLayerFactory()}
                                 plotView={activePv}
+                                mouseOverMaskValue={this.state.mouseOverMaskValue}
                                 dialogId={DRAW_LAYER_POPUP}/>
         );
     }

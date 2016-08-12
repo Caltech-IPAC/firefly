@@ -3,7 +3,7 @@
  */
 
 import update from 'react-addons-update';
-import {get,isEmpty} from 'lodash';
+import {isEmpty} from 'lodash';
 import Cntlr, {ExpandType} from '../ImagePlotCntlr.js';
 import PlotView, {replacePlotView, replacePrimaryPlot, changePrimePlot} from './PlotView.js';
 import {WebPlot, clonePlotWithZoom, PlotAttribute} from '../WebPlot.js';
@@ -13,12 +13,10 @@ import {PlotPref} from './../PlotPref.js';
 import {primePlot,
         clonePvAry,
         clonePvAryWithPv,
-        matchPlotView,
         applyToOnePvOrGroup,
         getPlotViewIdxById,
         getPlotGroupIdxById,
         findPlotGroup,
-        hasGroupLock,
         getPlotViewById} from '../PlotViewUtil.js';
 import {makeImagePt, makeWorldPt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
@@ -100,6 +98,11 @@ export function reducer(state, action) {
         case Cntlr.CHANGE_PRIME_PLOT  :
             retState= makeNewPrimePlot(state,action);
             break;
+
+        case Cntlr.OVERLAY_PLOT_CHANGE_ATTRIBUTES :
+            retState= changeOverlayPlotAttributes(state,action);
+            break;
+
         default:
             break;
     }
@@ -270,7 +273,6 @@ function makeNewPrimePlot(state,action) {
 }
 
 function changeGroupLocking(state,action) {
-    var {plotGroupAry}= state;
     var {plotId,groupLocked}=  action.payload;
     const {plotGroupId} = getPlotViewById(state,plotId);
 
@@ -293,6 +295,18 @@ function workingServerCall(state,action) {
                            {serverCall:'working', plottingStatus:message})});
 }
 
+
+function changeOverlayPlotAttributes(state,action) {
+    const {plotId, imageOverlayId, attributes}= action.payload;
+    const plotViewAry= state.plotViewAry
+        .map( (pv) => {
+            if (pv.plotId!==plotId) return pv;
+            const overlayPlotViews = pv.overlayPlotViews
+                 .map( (opv) => opv.imageOverlayId!==imageOverlayId ? opv : clone(opv,attributes));
+            return clone(pv, {overlayPlotViews});
+        });
+    return clone(state,{plotViewAry});
+}
 
 function updatePlotProgress(state,action) {
     const {plotId, message:plottingStatus, done}= action.payload;

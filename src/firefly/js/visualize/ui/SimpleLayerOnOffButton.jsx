@@ -15,7 +15,7 @@ import {dispatchCreateDrawLayer,
 export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,visible,todo, isIconOn, onClick}) {
     var enabled= pv ? true : false;
     var isOn= isIconOn;
-    if (typeId) {
+    if (typeId && pv) {
         const distLayer= getDrawLayerByType(getDlAry(),typeId);
         isOn=  distLayer && isDrawLayerAttached(distLayer,pv.plotId);
     }

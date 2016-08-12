@@ -287,6 +287,7 @@ public class ImagePlotBuilder {
                 VisContext.purgeOtherPlots(state);
                 state.setOriginalImageIdx(idx, NO_BAND);
                 state.setImageIdx(idx, NO_BAND);
+                state.setMultiImageFile(true,Band.NO_BAND);
                 //todo: here
                 plotInfo[0] = ImagePlotCreator.makeOneImagePerBand(workingCtxStr, state, readInfoMap, zoomChoice);
                 break;

@@ -139,7 +139,13 @@ const C= {
     EXPANDED_TITLE_OPTIONS : 'ExpandedTitleOptions',
     EXPANDED_TITLE : 'ExpandedTitle',
     POST_TITLE: 'PostTitle',
-    PRE_TITLE: 'PreTitle'
+    PRE_TITLE: 'PreTitle',
+
+    MASK_BITS: 'MaskBits',
+    PLOT_AS_MASK: 'PlotAsMask',
+    MASK_COLORS: 'MaskColors',
+    MASK_REQUIRED_WIDTH: 'MaskRequiredWidth',
+    MASK_REQUIRED_HEIGHT: 'MaskRequiredHeight'
 
 };
 
@@ -1228,6 +1234,42 @@ export class WebPlotRequest extends ServerRequest {
         }
         return retList;
     }
+
+
+    setMaskBits(idx) { this.setParam(C.MASK_BITS,idx+''); }
+    getMaskBits() { return this.containsParam(C.MASK_BITS) ? this.getIntParam(C.MASK_BITS) : 0;}
+
+    setPlotAsMask(plotAsMask) { this.setParam(C.PLOT_AS_MASK, plotAsMask+''); }
+    isPlotAsMask() { return this.getBooleanParam(C.PLOT_AS_MASK); }
+
+
+    setMaskColors(colors) {
+        if (isArray(colors)) {
+            this.setParam(C.MASK_COLORS, join(';',...colors));
+        }
+        else {
+            this.setParam(C.MASK_COLORS, colors);
+        }
+    }
+
+    getMaskColors() {
+        var retList= [];
+        if (this.containsParam(C.MASK_COLORS)) {
+            return this.getParam(C.MASK_COLORS).split(';');
+        }
+        return retList;
+    }
+
+    setMaskRequiredWidth(width) { this.setParam(C.MASK_REQUIRED_WIDTH, width+''); }
+
+    getMaskRequiredWidth() { return this.getIntParam(C.MASK_REQUIRED_WIDTH,0); }
+
+    setMaskRequiredHeight(height) { this.setParam(C.MASK_REQUIRED_HEIGHT, height+''); }
+
+    getMaskRequiredHeight() { return this.getIntParam(C.ASK_REQUIRED_HEIGHT,0); }
+
+
+
 
 
     /**

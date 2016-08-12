@@ -50,7 +50,7 @@ var createCnt= 0;
 
 function creator(initPayload) {
     const {catalogId, tableData, tableMeta, title,
-           selectInfo, columns, tableRequest, highlightedRow, color,
+           selectInfo, columns, tableRequest, highlightedRow, color, angleInRadian=false,
            dataTooBigForSelection=false, catalog=true,boxData=false }= initPayload;
     var drawingDef= makeDrawingDef();
     drawingDef.symbol= DrawSymbol.SQUARE;
@@ -86,6 +86,7 @@ function creator(initPayload) {
     dl.columns= columns;
     dl.catalog= catalog;
     dl.boxData= boxData;
+    dl.angleInRadian= angleInRadian;
 
     createCnt++;
     return dl;
@@ -122,8 +123,15 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
     const id= window.setInterval( () => {
         if (done) {
             window.clearInterval(id);
+            const {tableMeta, tableData}= drawLayer;
             if (closestIdx > -1) {
-                dispatchTableHighlight(drawLayer.drawLayerId,closestIdx,tableRequest);
+                if (tableMeta.decimate_key) {
+                    const colIdx= tableData.columns.findIndex((c) => c.name==='rowidx');
+                    dispatchTableHighlight(drawLayer.drawLayerId,tableData.data[closestIdx][colIdx],tableRequest);
+                }
+                else {
+                    dispatchTableHighlight(drawLayer.drawLayerId,closestIdx,tableRequest);
+                }
             }
         }
 
@@ -195,35 +203,42 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
  * @return {[]} build and return an array of PointDataObj for drawing.
  */
 function computeDrawLayer(drawLayer, tableData, columns) {
-    return drawLayer.boxData ? computeBoxDrawLayer(tableData,columns) : computePointDrawLayer(tableData,columns);
+    return drawLayer.boxData ? computeBoxDrawLayer(drawLayer, tableData,columns) : computePointDrawLayer(drawLayer, tableData,columns);
 
 }
 
 
-function computePointDrawLayer(tableData, columns) {
+function toAngle(d, radianToDegree)  {
+    const v= Number(d);
+    return (!isNaN(v) && radianToDegree) ? v*180/Math.PI : v;
+}
+
+function computePointDrawLayer(drawLayer, tableData, columns) {
 
     const lonIdx= findColIdx(tableData.columns, columns.lonCol);
     const latIdx= findColIdx(tableData.columns, columns.latCol);
+    const {angleInRadian:rad}= drawLayer;
     if (lonIdx<0 || latIdx<0) return null;
 
     return tableData.data.map( (d) => {
-        const wp= makeWorldPt( d[lonIdx], d[latIdx], columns.csys);
+        const wp= makeWorldPt( toAngle(d[lonIdx],rad), toAngle(d[latIdx],rad), columns.csys);
         return PointDataObj.make(wp, 5, DrawSymbol.SQUARE);
     });
 }
 
-function computeBoxDrawLayer(tableData, columns) {
+function computeBoxDrawLayer(drawLayer, tableData, columns) {
 
     // const lonIdx= findColIdx(tableData.columns, columns.lonCol);
     // const latIdx= findColIdx(tableData.columns, columns.latCol);
     // if (lonIdx<0 || latIdx<0) return null;
-    
-    
+
+    const {angleInRadian:rad}= drawLayer;
+
     return tableData.data.map( (d) => {
         const fp= columns.map( (c) => {
             const lonIdx= findColIdx(tableData.columns, c.lonCol);
             const latIdx= findColIdx(tableData.columns, c.latCol);
-            return makeWorldPt( d[lonIdx], d[latIdx], c.csys);
+            return makeWorldPt( toAngle(d[lonIdx],rad), toAngle(d[latIdx],rad), c.csys);
         });
         return FootprintObj.make([fp]);
     });

@@ -4,7 +4,7 @@
 
 import {take} from 'redux-saga/effects';
 import Enum from 'enum';
-import {get,isEmpty,flattenDeep,values} from 'lodash';
+import {has,get,isEmpty,flattenDeep,values} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
 import {TitleOptions} from '../WebPlotRequest.js';
 import {CoordinateSys} from '../CoordSys.js';
@@ -14,7 +14,7 @@ import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
-import {doFetchTable, getTblById, getActiveTableId, getColumnIdx, getTableInGroup} from '../../tables/TableUtil.js';
+import {doFetchTable, getTblById, getActiveTableId, getColumnIdx, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
 import MultiViewCntlr, {getViewerPlotIds, dispatchAddImages, getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 // import {serializeDecimateInfo} from '../../tables/Decimate.js'; //todo need to support
 import {DrawSymbol} from '../draw/PointDataObj.js';
@@ -194,7 +194,7 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
     req.tbl_id = `cov-${tbl_id}`;
 
     if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.tblFilePath===table.tableMeta.tblFilePath*/) { //todo support decimated data
-        updateCoverageWithData(table, options, tbl_id, decimatedTables[tbl_id], decimatedTables);
+        updateCoverageWithData(table, options, tbl_id, decimatedTables[tbl_id], decimatedTables, isTableUsingRadians(table));
     }
     else {
         decimatedTables[tbl_id]= 'WORKING';
@@ -202,7 +202,7 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
             (allRowsTable) => {
                 if (get(allRowsTable, ['tableData', 'data'],[]).length>0) {
                     decimatedTables[tbl_id]= allRowsTable;
-                    updateCoverageWithData(table, options, tbl_id, allRowsTable, decimatedTables);
+                    updateCoverageWithData(table, options, tbl_id, allRowsTable, decimatedTables, isTableUsingRadians(table));
                 }
             }
         ).catch(
@@ -218,8 +218,8 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
 
 
 
-function updateCoverageWithData(table, options, tbl_id, allRowsTable, decimatedTables) {
-    const {centralPoint, maxRadius}= computeSize(options, decimatedTables, allRowsTable);
+function updateCoverageWithData(table, options, tbl_id, allRowsTable, decimatedTables, usesRadians) {
+    const {centralPoint, maxRadius}= computeSize(options, decimatedTables, allRowsTable, usesRadians);
 
     if (!centralPoint || maxRadius<=0) return;
 
@@ -252,7 +252,7 @@ function updateCoverageWithData(table, options, tbl_id, allRowsTable, decimatedT
     }
 }
 
-function computeSize(options, decimatedTables,allRowsTable) {
+function computeSize(options, decimatedTables,allRowsTable, usesRadians) {
     const ary= options.multiCoverage ? values(decimatedTables) : [allRowsTable];
     var testAry= ary
         .filter( (t) => t && t!=='WORKING')
@@ -261,10 +261,10 @@ function computeSize(options, decimatedTables,allRowsTable) {
             const covType= getCoverageType(options,t);
             switch (covType) {
                 case CoverageType.X:
-                    ptAry= getPtAryFromTable(options,t);
+                    ptAry= getPtAryFromTable(options,t, usesRadians);
                     break;
                 case CoverageType.BOX:
-                    ptAry= getBoxAryFromTable(options,t);
+                    ptAry= getBoxAryFromTable(options,t, usesRadians);
                     break;
 
             }
@@ -327,6 +327,7 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, color) {
     const boxData= covType===CoverageType.BOTH || covType===CoverageType.BOX;
     const {tableMeta, tableData}= allRowsTable;
     const columns = boxData ? options.getCornersColumns(table) : options.getCenterColumns(table);
+    const angleInRadian= isTableUsingRadians(tableMeta);
     dispatchCreateDrawLayer(Catalog.TYPE_ID, {
         catalogId: table.tbl_id,
         title: `Coverage: ${table.title || table.tbl_id}`,
@@ -337,7 +338,8 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, color) {
         highlightedRow: table.highlightedRow,
         catalog: false,
         columns,
-        boxData
+        boxData,
+        angleInRadian
     });
     dispatchAttachLayerToPlot(table.tbl_id, plotId);
 }
@@ -354,14 +356,22 @@ function getCoverageType(options,table) {
 
 const hasCorners= (options, table) =>!isEmpty(options.getCornersColumns(table));
 
-
-function getPtAryFromTable(options,table){
-    const cDef= options.getCenterColumns(table);
-    const {lonIdx,latIdx,csys}= cDef;
-    return table.tableData.data.map( (row) => makeWorldPt(row[lonIdx], row[latIdx], csys) );
+function toAngle(d, radianToDegree)  {
+    const v= Number(d);
+    return (!isNaN(v) && radianToDegree) ? v*180/Math.PI : v;
 }
 
-function getBoxAryFromTable(options,table){
+function makePt(lonStr,latStr, csys, radianToDegree) {
+    return makeWorldPt(toAngle(lonStr,radianToDegree), toAngle(latStr, radianToDegree), csys);
+}
+
+function getPtAryFromTable(options,table, usesRadians){
+    const cDef= options.getCenterColumns(table);
+    const {lonIdx,latIdx,csys}= cDef;
+    return table.tableData.data.map( (row) => makePt(row[lonIdx], row[latIdx], csys, usesRadians) );
+}
+
+function getBoxAryFromTable(options,table, usesRadians){
     const cDefAry= options.getCornersColumns(table);
     return table.tableData.data
         .map( (row) => cDefAry

@@ -461,7 +461,8 @@ public class VisServerOps {
 
                 File workingFilsFile = PlotStateUtil.getWorkingFitsFile(state, bands[i]);
                 String fName = workingFilsFile.getName();
-                File cropFile = File.createTempFile(FileUtil.getBase(fName) + "-crop",
+                String multiStr= state.isMultiImageFile(bands[i]) ? "-multi" : "-"+state.getImageIdx(bands[i]);
+                File cropFile = File.createTempFile(FileUtil.getBase(fName) + multiStr + "-crop",
                         "." + FileUtil.FITS,
                         ServerContext.getVisSessionDir());
 

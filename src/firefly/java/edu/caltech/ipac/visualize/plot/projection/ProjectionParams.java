@@ -4,8 +4,9 @@
 package edu.caltech.ipac.visualize.plot.projection;
 
 
-
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class ProjectionParams implements Serializable {
@@ -47,6 +48,7 @@ public class ProjectionParams implements Serializable {
     public double bp[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
     public boolean map_distortion = false;
     public String keyword;
+    public Map<String,String> additionalHeaders= new HashMap<>();
 
     public ProjectionParams() {}
 }

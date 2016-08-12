@@ -170,6 +170,7 @@ function makeDrawLayer(drawLayerId,
         canUserDelete: true,
         destroyWhenAllDetached : false, // hint to controller, when all plots have been detached, destroy this layer
         helpLine : '',
+        decimate: false, // enable decimation
 
            // drawData contains the components that may be drawn.
            // Three keys are supported data, highlightData, selectedIdxAry

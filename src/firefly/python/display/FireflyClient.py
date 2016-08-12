@@ -5,6 +5,7 @@ import json
 import time
 import socket
 import urlparse
+import math
 
 __author__ = 'zhang' + ' Cindy Wang'
 
@@ -32,19 +33,21 @@ class FireflyClient(WebSocketClient):
 
     # actions from Firefly
     ACTION_DICT = {
-       'ShowFits': 'ImagePlotCntlr.PlotImage',
-       'AddExtension': 'ExternalAccessCntlr/extensionAdd',
-       'ShowTable': 'table.search',
-       'ZoomImage': 'ImagePlotCntlr.ZoomImage',
-       'PanImage': 'ImagePlotCntlr.recenter',
-       'StretchImage': 'ImagePlotCntlr.StretchChange',
-       'CreateRegionLayer': 'DrawLayerCntlr.RegionPlot.createLayer',
-       'DeleteRegionLayer': 'DrawLayerCntlr.RegionPlot.deleteLayer',
-       'AddRegionData': 'DrawLayerCntlr.RegionPlot.addRegion',
-       'RemoveRegionData': 'DrawLayerCntlr.RegionPlot.removeRegion'}
+        'ShowFits': 'ImagePlotCntlr.PlotImage',
+        'AddExtension': 'ExternalAccessCntlr/extensionAdd',
+        'ShowTable': 'table.search',
+        'ZoomImage': 'ImagePlotCntlr.ZoomImage',
+        'PanImage': 'ImagePlotCntlr.recenter',
+        'StretchImage': 'ImagePlotCntlr.StretchChange',
+        'CreateRegionLayer': 'DrawLayerCntlr.RegionPlot.createLayer',
+        'DeleteRegionLayer': 'DrawLayerCntlr.RegionPlot.deleteLayer',
+        'AddRegionData': 'DrawLayerCntlr.RegionPlot.addRegion',
+        'RemoveRegionData': 'DrawLayerCntlr.RegionPlot.removeRegion',
+        'PlotMask': 'ImagePlotCntlr.plotMask',
+        'DeleteOverlayMask': 'ImagePlotCntlr.deleteOverlayPlot'}
 
     # id for table, region layer, extension
-    _item_id = {'Table': 0, 'RegionLayer': 0, 'Extension': 0}
+    _item_id = {'Table': 0, 'RegionLayer': 0, 'Extension': 0, 'MaskLayer': 0}
 
     # the constructor, define instance variables for the object
     def __init__(self, host=my_localhost, channel=None):
@@ -60,6 +63,7 @@ class FireflyClient(WebSocketClient):
         self.listeners = {}
         self.channel = channel
         self.session = requests.Session()
+
         # print 'websocket url:%s' % url
         self.connect()
 
@@ -523,47 +527,47 @@ class FireflyClient(WebSocketClient):
         return self.dispatch_remote_action_by_post(self.channel,
                                                    FireflyClient.ACTION_DICT['RemoveRegionData'], payload)
 
-    def add_mask(self, mask_id, bit_number, image_number, color, plot_id,
-                 bit_desc=None, file_on_server=None):
+    def add_mask(self,  bit_number, image_number, plot_id, mask_id=None, color=None, title=None,
+                 file_on_server=None):
         """
         Add a mask layer
-        TODO
-        :param mask_id: id of mask
-        :param bit_number: bitNumber of the mask to overlay
         :param image_number: imageNumber of the mask layer
-        :param color: color as an html color (eg. #FF0000 (red) #00FF00 (green)
+        :param bit_number: bitNumber of the mask to overlay
         :param plot_id: plot id to overlay the mask on
-        :param bit_desc: (optional) description of the mask layer
+        :param mask_id: id of mask
+        :param color: color as an html color (eg. #FF0000 (red) #00FF00 (green)
+        :param title: title of the mask layer
         :param file_on_server: (optional) file to get the mask from,
                                 if None then get it from the original file
         :return: status of call
         """
-        url = self.url_root + "?cmd=pushAddMask"
 
-        params = {
-           'id': mask_id,
-           'bitNumber': bit_number,
-           'color': color,
-           'plotId': plot_id,
-           'imageNumber': image_number}
+        if not mask_id:
+            mask_id = FireflyClient._gen_item_id('MaskLayer')
+        if not title:
+            title = 'bit %23 ' + str(bit_number)
 
-        if bit_desc:
-            params['bitDesc'] = bit_desc
+        payload = {'plotId': plot_id, 'imageOverlayId': mask_id, 'imageNumber': image_number,
+                   'maskNumber': bit_number, 'maskValue': int(math.pow(2, bit_number)), 'title': title}
+        if color:
+            payload.update({'color': color})
         if file_on_server:
-            params['fileKey'] = file_on_server
-        response = self.session.post(url, data=params)
-        status = json.loads(response.text)
-        return status[0]
+            payload.update({'fileKey': file_on_server})
 
-    def remove_mask(self, mask_id):
+        return self.dispatch_remote_action(self.channel,
+                                           FireflyClient.ACTION_DICT['PlotMask'], payload)
+
+    def remove_mask(self, plot_id, mask_id):
         """
-        TODO
         Remove a mask layer
+        :param plot_id: plot id of the overlay the mask is on
         :param mask_id: id of mask
         :return: status of call
         """
-        url = self.url_root + "?cmd=pushRemoveMask&id=%s" % mask_id
-        return self._send_url_as_get(url)
+
+        payload = {'plotId': plot_id, 'imageOverlayId': mask_id}
+        return self.dispatch_remote_action(self.channel,
+                                           FireflyClient.ACTION_DICT['DeleteOverlayMask'], payload)
 
     # -----------------------------------------------------------------
     # Range Values

@@ -21,7 +21,7 @@ import {dispatchAddSaga} from '../../core/MasterSaga.js';
 // import {deepDiff} from '../../util/WebUtil.js';
 
 const omList= ['plotViewAry'];
-const pvPickList= ['plotViewCtx'];
+const pvPickList= ['plotViewCtx','primeIdx'];
 
 export class VisToolbar extends Component {
     constructor(props) {
@@ -68,8 +68,12 @@ export class VisToolbar extends Component {
      */
     storeUpdate() {
         const vr= visRoot();
-        const dlCount= getAllDrawLayersForPlot(getDlAry(),vr.activePlotId).length;
-        
+        var dlCount= 0;
+        const newPv= getActivePlotView(vr);
+        if (vr.activePlotId) {
+            dlCount= getAllDrawLayersForPlot(getDlAry(),vr.activePlotId).length + newPv.overlayPlotViews.length;
+        }
+
         if (vr===this.state.visRoot && dlCount===this.state.dlCount) return;
 
         var needsUpdate= dlCount!==this.state.dlCount;
@@ -78,7 +82,6 @@ export class VisToolbar extends Component {
         if (!needsUpdate) needsUpdate= !shallowequal(omit(vr,omList),omit(this.state.visRoot,omList));
 
         if (!needsUpdate) {
-            const newPv= getActivePlotView(vr);
             const oldPv= getActivePlotView(this.state.visRoot);
             if (oldPv===newPv) return;
             needsUpdate= !shallowequal(pick(oldPv,pvPickList),pick(newPv,pvPickList));

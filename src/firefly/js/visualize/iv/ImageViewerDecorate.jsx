@@ -172,7 +172,7 @@ function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId, handleInlineTools,
 
                 <div className='iv-decorate-inline-toolbar-container'>
                     <VisInlineToolbarView
-                        plotId={pv.plotId} dlAry={dlAry}
+                        pv={pv} dlAry={dlAry}
                         showLayer={false} showExpand={false} showToolbarButton={false} showDelete ={true} />
                 </div>
             );
@@ -188,7 +188,7 @@ function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId, handleInlineTools,
     return (
         <div style={style} className='iv-decorate-inline-toolbar-container'>
             <VisInlineToolbarView
-                plotId={pv.plotId} dlAry={dlAry}
+                pv={pv} dlAry={dlAry}
                 showLayer={lVis && handleInlineTools}
                 showExpand={exVis && handleInlineTools}
                 showToolbarButton={tb && handleInlineTools}

@@ -3,13 +3,8 @@
  */
 
 import React from 'react';
-import {isDrawLayerVisible, getLayerTitle}  from '../PlotViewUtil.js';
 import {SimpleCanvas} from '../draw/SimpleCanvas.jsx';
 import DrawUtil from '../draw/DrawUtil.js';
-import {ColorChangeType} from '../draw/DrawLayer.js';
-import {dispatchChangeDrawingDef, dispatchChangeVisibility,
-                         dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
-import {showColorPickerDialog} from '../../ui/ColorPicker.jsx';
 
 
 
@@ -18,7 +13,10 @@ const bSty= {
     whiteSpace: 'nowrap'
 };
 
-function DrawLayerItemView({drawLayer,pv, maxTitleChars, lastItem, getUIComponent}) {
+function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
+                            color, canUserChangeColor, canUserDelete, title, helpLine,
+                            isPointData, drawingDef,
+                            visible, changeVisible, modifyColor, UIComponent}) {
     var style= {
         width:'100%',
         height:'100%',
@@ -38,7 +36,6 @@ function DrawLayerItemView({drawLayer,pv, maxTitleChars, lastItem, getUIComponen
         style.paddingBottom= 5;
     }
 
-    var plotId= pv.plotId;
     return (
         <div style={style} className='draw-layer-item'>
             <div style={{lineHeight:'1em', position: 'relative', display:'inline-flex',
@@ -48,37 +45,43 @@ function DrawLayerItemView({drawLayer,pv, maxTitleChars, lastItem, getUIComponen
                          width:'100%'
                          }} >
                 <div>
-                    <input type='checkbox'
-                           checked={isDrawLayerVisible(drawLayer,plotId)}
-                           onChange={(ev) => changeVisible(drawLayer, plotId)}
-                    />
-                    {getTitleTag(drawLayer,pv,maxTitleChars)}
+                    <input type='checkbox' checked={visible} onChange={() => changeVisible()} />
+                    {getTitleTag(title,maxTitleChars)}
                 </div>
                 <div style={{padding:'0 4px 0 5px'}}>
-                    {makeColorChange(drawLayer,pv)}
-                    {makeShape(drawLayer,pv)}
-                    {makeDelete(drawLayer,pv)}
+                    {makeColorChange(color, canUserChangeColor,modifyColor)}
+                    {makeShape(isPointData,drawingDef)}
+                    {makeDelete(canUserDelete,deleteLayer)}
                 </div>
             </div>
             <div style={{paddingTop:5, marginLeft:'2em'}}>
-                {getUIComponent ? getUIComponent(drawLayer,pv) : ''}
+                {UIComponent || ''}
             </div>
-            {makeHelpLine(drawLayer.helpLine)}
+            {makeHelpLine(helpLine)}
         </div>
     );
 }
 
 
 DrawLayerItemView.propTypes= {
-    drawLayer     : React.PropTypes.object.isRequired,
-    pv            : React.PropTypes.object.isRequired,
     maxTitleChars : React.PropTypes.number.isRequired,
     lastItem      : React.PropTypes.bool.isRequired,
-    getUIComponent: React.PropTypes.func
+    visible       : React.PropTypes.bool.isRequired,
+    canUserChangeColor : React.PropTypes.any.isRequired,
+    color         : React.PropTypes.string.isRequired,
+    title         : React.PropTypes.any.isRequired,
+    helpLine      : React.PropTypes.string.isRequired,
+    canUserDelete : React.PropTypes.bool.isRequired,
+    isPointData   : React.PropTypes.bool.isRequired,
+    drawingDef    : React.PropTypes.object,
+    deleteLayer   : React.PropTypes.func,
+    changeVisible : React.PropTypes.func,
+    modifyColor   : React.PropTypes.func,
+    UIComponent   : React.PropTypes.object
 };
 
 
-function getTitleTag(drawLayer,pv,maxTitleChars) {
+function getTitleTag(title, maxTitleChars) {
     const tStyle= {
         display:'inline-block',
         whiteSpace: 'nowrap',
@@ -87,25 +90,25 @@ function getTitleTag(drawLayer,pv,maxTitleChars) {
     };
 
     return (
-        <div style={tStyle}>{`Show: ${getLayerTitle(pv.plotId,drawLayer)}`}</div>
+        <div style={tStyle}>{title}</div>
         );
 }
 
 
-function makeColorChange(drawLayer,pv) {
+function makeColorChange(color, canUserChangeColor, modifyColor) {
     const feedBackStyle= {
         width:10,
         height:10,
-        backgroundColor: drawLayer.drawingDef.color,
+        backgroundColor: color,
         display:'inline-block',
         marginLeft:5
     };
-    if (drawLayer.canUserChangeColor) {
+    if (canUserChangeColor) {
         return (
             <div style={bSty}>
-                <div style={feedBackStyle} onClick={() => modifyColor(drawLayer,pv.plotId)}  />
+                <div style={feedBackStyle} onClick={() => modifyColor()}  />
                 <a className='ff-href'
-                   onClick={() => modifyColor(drawLayer)}
+                   onClick={() => modifyColor()}
                    style={Object.assign({},bSty,{marginLeft:5})}>Color</a>
             </div>
         );
@@ -116,14 +119,10 @@ function makeColorChange(drawLayer,pv) {
 
 }
 
-function makeShape(drawLayer,pv) {
-    const shapeStyle= {
-        display:'inline-block',
-        whiteSpace: 'nowrap'
-    };
-    if (drawLayer.isPointData) {
+function makeShape(isPointData, drawingDef) {
+    if (isPointData) {
         return (
-            <SimpleCanvas width={20} height={12} drawIt={ (c) => drawOnCanvas(c,drawLayer)}/>
+            <SimpleCanvas width={20} height={12} drawIt={ (c) => drawOnCanvas(c,drawingDef)}/>
         );
     }
     else {
@@ -131,6 +130,12 @@ function makeShape(drawLayer,pv) {
     }
 
 }
+
+function drawOnCanvas(c,drawingDef) {
+    if (!c) return;
+    DrawUtil.drawSymbol(c.getContext('2d'), 10,5,drawingDef,null,false);
+}
+
 
 function makeHelpLine(helpLine) {
     if (helpLine) {
@@ -143,19 +148,14 @@ function makeHelpLine(helpLine) {
     }
 }
 
-function drawOnCanvas(c,drawLayer) {
-    if (!c) return;
-    DrawUtil.drawSymbol(c.getContext('2d'), 10,5,drawLayer.drawingDef,null,false);
-}
-
-function makeDelete(drawLayer,pv) {
+function makeDelete(canUserDelete,deleteLayer) {
     const deleteStyle= {
         display:'inline-block',
         whiteSpace: 'nowrap'
     };
-    if (drawLayer.canUserDelete) {
+    if (canUserDelete) {
         return (
-            <a className='ff-href' onClick={() => deleteLayer(drawLayer,pv.plotId)} style={deleteStyle}>Delete</a>
+            <a className='ff-href' onClick={() => deleteLayer()} style={deleteStyle}>Delete</a>
         );
     }
     else {
@@ -165,21 +165,5 @@ function makeDelete(drawLayer,pv) {
 }
 
 
-function modifyColor(dl,plotId) {
-    showColorPickerDialog(dl.drawingDef.color, dl.canUserChangeColor===ColorChangeType.STATIC,
-        (ev) => {
-            var {r,g,b,a}= ev.rgb;
-            var rgbStr= `rgba(${r},${g},${b},${a})`;
-            dispatchChangeDrawingDef(dl.displayGroupId, Object.assign({},dl.drawingDef,{color:rgbStr}),plotId);
-        });
-}
-
-function deleteLayer(dl,plotId) {
-    dispatchDetachLayerFromPlot(dl.displayGroupId,plotId,true, true, dl.destroyWhenAllDetached);
-}
-
-function changeVisible(dl, plotId) {
-    dispatchChangeVisibility(dl.displayGroupId, !isDrawLayerVisible(dl,plotId),plotId );
-}
 
 export default DrawLayerItemView;

@@ -9,8 +9,9 @@
  */
 
 import update from 'react-addons-update';
-import {isEqual,unionBy, get} from 'lodash';
+import {isEqual, get} from 'lodash';
 import {WebPlot, PlotAttribute} from './../WebPlot.js';
+import {clone} from '../../util/WebUtil.js';
 import {WPConst} from './../WebPlotRequest.js';
 import {RotateType} from './../PlotState.js';
 import {makeScreenPt} from './../Point.js';
@@ -24,8 +25,6 @@ import SimpleMemCache from '../../util/SimpleMemCache.js';
 import {CCUtil, CysConverter} from './../CsysConverter.js';
 import {defMenuItemKeys} from '../MenuItemKeys.js';
 import {ExpandType} from '../ImagePlotCntlr.js';
-
-// export const DATASET_INFO_CONVERTER = 'DATASET_INFO_CONVERTER';
 
 const DEF_WORKING_MSG= 'Plotting ';
 
@@ -90,6 +89,7 @@ export function makePlotView(plotId, req, pvOptions= {}) {
         plotGroupId: req.getPlotGroupId(), //should never change
         drawingSubGroupId: req.getDrawingSubGroupId(), //todo, string, this is an id, should never change
         plots:[],
+        request: req,
         plottingStatus:'Plotting...',
         serverCall:'success', // one of 'success', 'working', 'fail'
         primeIdx:-1,
@@ -98,8 +98,7 @@ export function makePlotView(plotId, req, pvOptions= {}) {
         scrollX : -1,
         scrollY : -1,
         viewDim : {width:0, height:0}, // size of viewable area  (div size: offsetWidth & offsetHeight)
-        overlayPlotViews: [], //todo
-        attributes: {}, //todo, i hope to remove this an only hold attributes on web plot
+        overlayPlotViews: [],
         menuItemKeys: makeMenuItemKeys(req,pvOptions,defMenuItemKeys), // normally wil not change
         plotViewCtx: createPlotViewContextData(req, pvOptions),
 
@@ -111,7 +110,6 @@ export function makePlotView(plotId, req, pvOptions= {}) {
             workingMsg      : DEF_WORKING_MSG,
             hasNewPlotContainer: req.getHasNewPlotContainer(), // if image selection dialog come up, allow to create a new MiniPlotWidth, todo control with MenuItemKeys
             saveCorners     : req.getSaveCorners(), // save the four corners of the plot to the ActiveTarget singleton, todo
-            turnOnGridAfterPlot: req.getGridOn(), // turn on the grid after plot, todo
             expandedTitleOptions: req.getExpandedTitleOptions(),
             annotationOps : req.getAnnotationOps(), // how titles are drawn
 
@@ -122,7 +120,7 @@ export function makePlotView(plotId, req, pvOptions= {}) {
 
               // todo- the follow should be removed when implemented, menuItemKeys will now control option visibility
             allowImageLock  : false, // show the image lock button in the toolbar, todo
-            allowImageSelect: req.isAllowImageSelection(), // show the image selection button in the toolbar, user can change image, todo
+            allowImageSelect: req.isAllowImageSelection(), // i think i can remove, show the image selection button in the toolbar, user can change image, todo
             catalogButton   : false // show the catalog select button, todo
 
         }
@@ -136,7 +134,7 @@ export function makePlotView(plotId, req, pvOptions= {}) {
 function createPlotViewContextData(req, pvOptions) {
     return {
         userCanDeletePlots: get(pvOptions, 'userCanDeletePlots', true),
-        rotateNorthLock : false,// todo MAYBE!!! // rotate this plot north when plotting,
+        rotateNorthLock : false,
         userModifiedRotate: false, // the user modified the rotate status, todo
         zoomLockingEnabled : false,
         zoomLockingType: UserZoomTypes.FIT, // can be FIT or FILL
@@ -194,8 +192,8 @@ export function changePrimePlot(pv, nextIdx) {
  */
 function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, keepPrimeIdx=false) {
 
-    pv= Object.assign({},pv);
-    pv.plotViewCtx= Object.assign({},pv.plotViewCtx);
+    pv= clone(pv);
+    pv.plotViewCtx= clone(pv.plotViewCtx);
 
     if (pv.plots && pv.plots.length) {
         pv.plots.forEach( (plot) => {
@@ -206,7 +204,14 @@ function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, keepPrimeIdx=
     }
 
 
-    if (overlayPlotViews) pv.overlayPlotViews= overlayPlotViews;
+    if (overlayPlotViews) {
+        const oPlotAry= overlayPlotViews.map( (opv) => opv.plot);
+        pv.overlayPlotViews= pv.overlayPlotViews.map( (opv) => {
+            const plot= oPlotAry.find( (p) => p.plotId===opv.imageOverlayId);
+            return plot ? clone(opv, {plot}) : opv;
+        });
+    }
+
 
     pv.plots= plotAry;
 
@@ -227,7 +232,9 @@ function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, keepPrimeIdx=
 
     setClientSideRequestOptions(pv,pv.plots[pv.primeIdx].plotState.getWebPlotRequest());
 
-    pv.plotViewCtx.containsMultiImageFits= pv.plots.every( (p) => p.plotState.isMultiImageFile());
+    if (pv.plots.length>1) {
+        pv.plotViewCtx.containsMultiImageFits= pv.plots.every( (p) => p.plotState.isMultiImageFile());
+    }
     pv.plotViewCtx.containsMultipleCubes= pv.plots.every( (p) => p.plotState.getCubeCnt()>1);
     pv.plotViewCtx.rotateNorthLock= pv.plots[pv.primeIdx].plotState.getRotateType()===RotateType.NORTH;  // todo, study this more, understand why
     if (expandedMode===ExpandType.COLLAPSE) pv.plotViewCtx.lastCollapsedZoomLevel= pv.plots[pv.primeIdx].zoomFactor;
@@ -236,17 +243,6 @@ function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, keepPrimeIdx=
 
     return pv;
 }
-
-/**
- * update the offset with and height of the primary div
- * @param {object} pv
- * @param {{width : number, height : number}} viewDim
- * @return {object} the PlotView with the new viewDim
- */
-//function updateViewDim(pv,viewDim) {
-//    return Object.assign({}, pv, {viewDim});
-//}
-
 
 /**
  * create a copy of the PlotView with a new scroll position and a new view port if necessary
@@ -266,7 +262,7 @@ function updatePlotViewScrollXY(plotView,newScrollPt) {
     const cc= CysConverter.make(plot);
     newScrollPt= cc.getScreenCoords(newScrollPt);
     var {x:newSx,y:newSy}= newScrollPt;
-    var {width:oldVPW, height:oldVPH} = plot.viewPort.dim;
+    // var {width:oldVPW, height:oldVPH} = plot.viewPort.dim;
     //if (newSx===oldSx && newSy===oldSy && oldVPW && oldVPH) return plotView;
 
     newSx= checkBounds(newSx,plot.screenSize.width,scrollWidth);

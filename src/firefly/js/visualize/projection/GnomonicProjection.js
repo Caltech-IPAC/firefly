@@ -110,7 +110,7 @@ export const GnomonicProjection= {
 		if (map_distortion) {
 			// apply SIRTF distortion corrections
 			fsamp_correction = 0.0;
-			var len= Math.fllor(Math.min(hdr.a_order+1, MAX_SIP_LENGTH));
+			var len= Math.floor(Math.min(hdr.a_order+1, MAX_SIP_LENGTH));
 			for (i = 0; i < len; i++) {
 				for (j = 0; j < len; j++) {
 					if (i + j <= hdr.a_order) {

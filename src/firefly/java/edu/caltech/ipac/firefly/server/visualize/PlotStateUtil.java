@@ -73,6 +73,12 @@ public class PlotStateUtil {
         req.setInitialRangeValues(oldState.getRangeValues(band));
         req.setInitialColorTable(oldState.getColorTableId());
         req.setInitialZoomLevel(oldState.getZoomLevel());
+        WebPlotRequest oldReq= oldState.getPrimaryRequest();
+        if (oldReq.isPlotAsMask()) {
+            req.setPlotAsMask(true);
+            req.setMaskBits(req.getMaskBits());
+            req.setMaskColors(req.getMaskColors().toArray(new String[3]));
+        }
     }
 
 

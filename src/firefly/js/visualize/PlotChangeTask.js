@@ -322,7 +322,8 @@ function processPlotReplace(dispatcher, result, pv, makeSuccessAction, makeFailA
             var overlayPlotViews = [];
             resultAry.forEach((r, i) => {
                 if (i === 0) return;
-                var plot = WebPlot.makeWebPlotData(pv.plotId, r.data[WebPlotResult.PLOT_CREATE], true);
+                const {imageOverlayId}= pv.overlayPlotViews[i-1];
+                var plot = WebPlot.makeWebPlotData(imageOverlayId, r.data[WebPlotResult.PLOT_CREATE][0], {}, true);
                 overlayPlotViews[i - 1] = {plot};
             });
 
@@ -349,9 +350,8 @@ function getResultAry(result) {
 
 
 function makePlot(wpInit,pv) {
-    var plot= WebPlot.makeWebPlotData(pv.plotId, wpInit);
+    var plot= WebPlot.makeWebPlotData(pv.plotId, wpInit, primePlot(pv).attributes);
     plot.title= primePlot(pv).title;
-    plot.attributes= primePlot(pv).attributes;
     return plot;
 }
 

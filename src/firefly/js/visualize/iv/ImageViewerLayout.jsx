@@ -4,7 +4,7 @@
 
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {xor,isEmpty,get, isString, isObject, isFunction, has, findLast} from 'lodash';
+import {concat, xor,isEmpty,get, isString, isObject, isFunction, has, findLast} from 'lodash';
 import {TileDrawer} from './TileDrawer.jsx';
 import {EventLayer} from './EventLayer.jsx';
 import {ImageViewerStatus} from './ImageViewerStatus.jsx';
@@ -133,6 +133,7 @@ export class ImageViewerLayout extends Component {
     }
 
 
+
     renderInside() {
         var {plotView,drawLayersAry}= this.props;
         var {plotId,scrollX,scrollY}= plotView;
@@ -162,11 +163,7 @@ export class ImageViewerLayout extends Component {
                 <div className='plot-view-master-panel'
                      style={{width:viewPortWidth,height:viewPortHeight,
                                  left:0,right:0,position:'absolute', cursor}}>
-                    <TileDrawer
-                        key={'TileDrawer:'+plotId}
-                                x={scrollX} y={scrollY}
-                                width={viewPortWidth} height={viewPortHeight}
-                                plot={plot} />
+                    {makeTileDrawers(plotView,viewPortWidth,viewPortHeight,scrollX,scrollY)}
                     <DrawingLayers
                         key={'DrawingLayers:'+plotId}
                         plot={plot} drawLayersIdAry={drawLayersIdAry} />
@@ -218,6 +215,43 @@ ImageViewerLayout.propTypes= {
     externalWidth: PropTypes.number.isRequired,
     externalHeight: PropTypes.number.isRequired
 };
+
+
+/**
+ *
+ * @param pv
+ * @param viewPortWidth
+ * @param viewPortHeight
+ * @param scrollX
+ * @param scrollY
+ * @return {Array}
+ */
+function makeTileDrawers(pv,viewPortWidth, viewPortHeight, scrollX, scrollY ) {
+
+
+    var plot= primePlot(pv);
+    const rootDrawer= (
+        <TileDrawer
+            opacity={1}
+            key={'TileDrawer:'+pv.plotId}
+            x={scrollX} y={scrollY}
+            width={viewPortWidth} height={viewPortHeight}
+            plot={plot} />
+
+        );
+    const drawers= pv.overlayPlotViews.filter( (opv) => opv.visible && opv.plot).map( (opv) => {
+        return (
+            <TileDrawer
+                opacity={opv.opacity}
+                key={'TileDrawer-overlay:'+opv.imageOverlayId}
+                x={scrollX} y={scrollY}
+                width={viewPortWidth} height={viewPortHeight}
+                plot={opv.plot} />
+        );
+    });
+    drawers.unshift(rootDrawer);
+    return drawers;
+}
 
 
 function makePrevDim(props) {

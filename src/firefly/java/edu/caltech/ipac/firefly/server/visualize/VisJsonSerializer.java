@@ -16,7 +16,6 @@ import edu.caltech.ipac.firefly.visualize.ClientFitsHeader;
 import edu.caltech.ipac.firefly.visualize.InsertBandInitializer;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.PlotState;
-import edu.caltech.ipac.firefly.visualize.ProjectionSerializer;
 import edu.caltech.ipac.firefly.visualize.StretchData;
 import edu.caltech.ipac.firefly.visualize.WebFitsData;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
@@ -71,7 +70,8 @@ public class VisJsonSerializer {
     }
 
     public static JSONObject serializeProjection(WebPlotInitializer wpInit) {
-        Projection proj= ProjectionSerializer.deserializeProjection(wpInit.getProjectionSerialized());
+//        Projection proj= ProjectionSerializer.deserializeProjection(wpInit.getProjectionSerialized());
+        Projection proj= wpInit.getProjection();
         if (proj==null) return null;
         JSONObject map = new JSONObject();
         map.put("coorindateSys", proj.getCoordinateSys().toString());
@@ -132,6 +132,10 @@ public class VisJsonSerializer {
         map.put("bp", makeJAry2d(p.bp));
         map.put("map_distortion", p.map_distortion);
         map.put("keyword", p.keyword);
+
+        for(Map.Entry<String,String> e : p.additionalHeaders.entrySet() ) {
+            map.put(e.getKey(),e.getValue());
+        }
 
         return map;
 
