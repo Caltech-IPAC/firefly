@@ -123,11 +123,6 @@ function drawDirectionArrow(ctx,drawTextAry,startPt,endPt,drawParams,renderOptio
 
     DrawUtil.drawPath(ctx, color,2,drawList,false, renderOptions);
 
-    //DrawUtil.drawText(ctx,ret.textX, ret.textY, color, '9px serif',  text, renderOptions);
-
-    //FIXME:color text black on white background - yellow on white background is not readable
-    //TODO: better solution would be to adapt text color with background
-    // DM-6950
     DrawUtil.drawText(drawTextAry, text, ret.textX, ret.textY, color, renderOptions);
 }
 
