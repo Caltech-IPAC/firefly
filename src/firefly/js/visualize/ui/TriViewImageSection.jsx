@@ -51,7 +51,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
 
     if (showCoverage || showFits || showMeta) {
         return (
-            <Tabs onTabSelect={onTabSelect} defaultSelected={selectedTab} useFlex={true}>
+            <Tabs onTabSelect={onTabSelect} defaultSelected={selectedTab} useFlex={true} resizable={true}>
                 { showFits &&
                     <Tab name='FITS Data' removable={false} id='fits'>
                         <MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID}

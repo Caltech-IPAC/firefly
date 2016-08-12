@@ -383,7 +383,7 @@ class CatalogSelectView extends Component {
             <FieldGroup groupKey={gkey}
                         reducerFunc={userChangeDispatch()}
                         keepState={true}>
-                <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs'>
+                <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs' resizable={true}>
                     <Tab name='Search Catalogs' id='catalog'>
                         <CatalogDDList {...this.props} {...this.state} />
                     </Tab>
