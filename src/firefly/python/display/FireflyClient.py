@@ -480,12 +480,11 @@ class FireflyClient(WebSocketClient):
 
         if file_on_server:
             payload.update({'fileOnServer': file_on_server})
-            return self.dispatch_remote_action(self.channel,
-                                               FireflyClient.ACTION_DICT['CreateRegionLayer'], payload)
         elif region_data:
             payload.update({'regionAry': region_data})
-            return self.dispatch_remote_action_by_post(
-                    self.channel, FireflyClient.ACTION_DICT['CreateRegionLayer'], payload)
+
+        return self.dispatch_remote_action_by_post(
+                self.channel, FireflyClient.ACTION_DICT['CreateRegionLayer'], payload)
 
     def delete_region_layer(self, region_layer_id, plot_id=None):
         """
@@ -503,7 +502,7 @@ class FireflyClient(WebSocketClient):
         return self.dispatch_remote_action(self.channel,
                                            FireflyClient.ACTION_DICT['DeleteRegionLayer'], payload)
 
-    def add_region_data(self, region_data, region_layer_id):
+    def add_region_data(self, region_data, region_layer_id, title=None, plot_id=None):
         """
         Add the specified region entries
         :param region_data: a list of region entries
@@ -511,6 +510,10 @@ class FireflyClient(WebSocketClient):
         :return: status of call
         """
         payload = {'regionChanges': region_data, 'regionId': region_layer_id}
+        if plot_id:
+            payload.update({'plotId': plot_id})
+        if title:
+            payload.update({'layerTitle': title})
 
         return self.dispatch_remote_action_by_post(self.channel,
                                                    FireflyClient.ACTION_DICT['AddRegionData'], payload)

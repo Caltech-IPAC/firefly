@@ -105,7 +105,7 @@ function isSamePosition(region1, region2) {
     region1.wpAry.forEach((r1Pos, index) => {
         var r2Index = region2.wpAry.findIndex((r2Pos, index) => (!p2Set.has(index) && r2Pos.type === r1Pos.type && r2Pos.x === r1Pos.x && r2Pos.y === r1Pos.y));
 
-        if (!isNil(r2Index)) {
+        if (!isNil(r2Index) && r2Index !== -1 ) {
             p2Set.add(r2Index);
         }
 
@@ -130,7 +130,7 @@ function isSameSize(region1, region2) {
         region1.radiusAry.forEach((radius1, index) => {
             r2Index = region2.radiusAry.findIndex((radius2, index) => (!p2Set.has(index) && isSameRegionValue(radius1, radius2)));
 
-            if (!isNil(r2Index)) {
+            if (!isNil(r2Index) && r2Index !== -1) {
                 p2Set.add(r2Index);
             }
             p1Set.add(index);
@@ -139,7 +139,7 @@ function isSameSize(region1, region2) {
         region1.dimensionAry.forEach((dim1, index) => {
             r2Index = region2.dimensionAry.findIndex((dim2, index) => (!p2Set.has(index) && isSameRegionDimension(dim1, dim2)));
 
-            if (!isNil(r2Index)) {
+            if (!isNil(r2Index) && r2Index !== -1) {
                 p2Set.add(r2Index);
             }
             p1Set.add(index);

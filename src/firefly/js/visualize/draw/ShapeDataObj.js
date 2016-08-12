@@ -234,14 +234,6 @@ var draw=  {
     },
 
     draw(drawObj,ctx,drawTextAry,plot,def,vpPtM,onlyAddToPath) {
-        if (has(drawObj, 'isAHighlight') && drawObj.isAHighlight.plotImageId !== plot.plotImageId) {
-            var fromObj = get(drawObj.isAHighlight, 'from');
-
-            if (fromObj) {
-                drawObj = (fromObj.type === POINT_DATA_OBJ) ? makeHighlightPointDataObj(fromObj, plot):
-                          makeHighlightShapeDataObj(fromObj, plot, drawObj.isAHighlight.def);
-            }
-        }
         var drawParams= makeDrawParams(drawObj,def);
         drawShape(drawObj,ctx,drawTextAry,plot,drawParams,onlyAddToPath);
     },

@@ -6,7 +6,7 @@ import {flux} from '../Firefly.js';
 import {getPlotViewIdListInGroup, getDrawLayerById, getConnectedPlotsIds} from './PlotViewUtil.js';
 import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
-import {without,union,omit,isEmpty} from 'lodash';
+import {without,union,omit,isEmpty,get} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 
 
@@ -249,21 +249,32 @@ export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
 }
 
 
-export function dispatchCreateRegionLayer(regionId, layerTitle, fileOnServer='', regionAry=[], plotId = [], dispatcher = flux.process) {
-    dispatcher({type: REGION_CREATE_LAYER, payload: {regionId, fileOnServer, plotId, layerTitle, regionAry}});
+export function dispatchCreateRegionLayer(drawLayerId, layerTitle, fileOnServer='', regionAry=[], plotId=[],
+                                           dispatcher = flux.process ) {
+    dispatcher({type: REGION_CREATE_LAYER, payload: {drawLayerId, fileOnServer, plotId, layerTitle, regionAry}});
 }
 
 
-export function dispatchDeleteRegionLayer(regionId, plotId, dispatcher = flux.process) {
-    dispatcher({type: REGION_DELETE_LAYER, payload: {regionId, plotId}});
+export function dispatchDeleteRegionLayer(drawLayerId, plotId, dispatcher = flux.process) {
+    dispatcher({type: REGION_DELETE_LAYER, payload: {drawLayerId, plotId}});
 }
 
-export function dispatchAddRegionEntry(regionId, regionChanges, dispatcher = flux.process) {
-    dispatcher({type: REGION_ADD_ENTRY, payload: {regionId, regionChanges}});
+/**
+ * add regions to plot layer, if the layer doesn't exist, a new one is created
+ * the layer title is replaced if the layer exists
+ * the layer id is created in the layer doesn't exist and id is not set
+ * @param drawLayerId
+ * @param regionChanges
+ * @param plotId
+ * @param layerTitle
+ * @param dispatcher
+ */
+export function dispatchAddRegionEntry(drawLayerId, regionChanges, plotId=[], layerTitle='', dispatcher = flux.process) {
+    dispatcher({type: REGION_ADD_ENTRY, payload: {drawLayerId, regionChanges, plotId, layerTitle}});
 }
 
-export function dispatchRemoveRegionEntry(regionId, regionChanges, dispatcher = flux.process) {
-    dispatcher({type: REGION_REMOVE_ENTRY, payload: {regionId, regionChanges}});
+export function dispatchRemoveRegionEntry(drawLayerId, regionChanges, dispatcher = flux.process) {
+    dispatcher({type: REGION_REMOVE_ENTRY, payload: {drawLayerId, regionChanges}});
 }
 
 export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], attachPlotGroup=true, dispatcher = flux.process) {
@@ -369,6 +380,9 @@ function makeReducer(factory) {
                 // todo: for async data:
                 // todo: get the data in action creator, update the retrieved data here
                 // todo: the action creator will have to defer to the layer somehow
+                break;
+            case REGION_REMOVE_ENTRY:
+                retState = destroyDrawLayerNoRegion(state, action, dlReducer);
                 break;
             default:
                 retState = determineAndCallLayerReducer(state, action, dlReducer);
@@ -487,6 +501,22 @@ function deletePlotView(state,action, dlReducer) {
     return Object.assign({},state, {drawLayerAry});
 }
 
+/**
+ * destroy draw layer in case no region left after region removal
+ * @param state
+ * @param action
+ * @param dlReducer
+ * @returns {Object}
+ */
+function destroyDrawLayerNoRegion(state, action, dlReducer) {
+    var retState = determineAndCallLayerReducer(state, action, dlReducer);
+    var dl = retState.drawLayerAry.find((dl) => dl.drawLayerId === action.payload.drawLayerId);
+
+    if (dl && isEmpty(get(dl, 'drawObjAry', null))) {
+        retState = destroyDrawLayer(retState, action);
+    }
+    return retState;
+}
 
 //function mouseStateChange(state,action) {
 //    var {drawLayerId, plotId}= action.payload;
@@ -510,6 +540,5 @@ const initState= function() {
     };
 
 };
-
 
 

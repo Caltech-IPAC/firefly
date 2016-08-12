@@ -77,7 +77,7 @@
 </div>
 <div>
     <a href='javascript:addRegionEntry()'>Add Region Entry </a>
-    <select id='regionEntry_add'><option selected disabled>Regiion Layers:</option></select>
+    <select id='regionEntry_add'><option selected disabled>Region Layers:</option></select>
     <a href='javascript:removeRegionEntry()'>Remove Region Entry</a>
     <select id='regionEntry_remove'><option selected disabled>Regiion Layers:</option></select>
     <div>
@@ -266,6 +266,7 @@
                 'PHYSICAL;box (360, 220, 60, 60, 0) #color=orange text={ph3}'
             ];
 
+            window.emptyRegion = '';
             window.regionAry2 = [
                 'J2000',
                 'boxcircle point    202.45    47.262 # color=red text="pt boxcircle 6" delete=0',
@@ -289,17 +290,19 @@
                 'image; box 280 200 72 72 0 # color=cyan text={right syntax}'
             ];
 
-            var moreRegionAry =  [
+
+            window.moreRegionAry =  [
                 'image;ellipse 100 100 20p 40p 30p 60p 40p 80p 20 # color=green text={ellipseannulus 2}',
                 'J2000;ellipse 202.55556, 47.188286 20p 40p 0i # color=#48f text={ellipse 1} width=10',
-                'image;box 130 100 20p 40p 30p 50p 70p 100p 30 # color=red text={slanted box annulus 3}'
+                'image;box 130 100 20p 40p 30p 50p 70p 100p 30 # color=red text={slanted box annulus 3}',
+                'j2000;box(47.247072i, 180.445347i, 50p, 20p, 0) # color=cyan width=6 text="box 12-3"'
             ];
 
             window.regions = [];
             window.regionId = window.regions.length;
 
             document.getElementById('regionLayerContent').value = window.regionAry.join('\n');
-            document.getElementById('moreRegionContent').value = moreRegionAry.join('\n');
+            document.getElementById('moreRegionContent').value = window.moreRegionAry.join('\n');
             //document.getElementById('createRegionId').placeholder = "Region_Plot_" + (window.regionId+1);
             updateRegionLayerList();
         };
@@ -311,14 +314,19 @@
                 window.regionId++;
                 layerId = "Region_Plot_" + window.regionId;
                 document.getElementById('createRegionId').value = layerId;
+
             }
 
-            if (window.regionId === 3) {
+            if (window.regionId === 0) {
+                document.getElementById('regionLayerContent').value = window.emptyRegion;
+            } else if (window.regionId === 3) {  // region with error
                 document.getElementById('regionLayerContent').value = window.regionWithError.join('\n');
-            } else if (window.regionId > 1) {
-                document.getElementById('regionLayerContent').value = window.regionAry2.join('\n');
-            } else {
+            } else if (window.regionId === 1) {  // short region list
                 document.getElementById('regionLayerContent').value = window.regionAry.join('\n');
+            } else if (window.regionId === 2) {  // short region list for removing all
+                document.getElementById('regionLayerContent').value = window.moreRegionAry.join('\n');
+            } else if (window.regionId > 3) {    // longer region list
+                document.getElementById('regionLayerContent').value = window.regionAry2.join('\n');
             }
 
             var regionAry = document.getElementById('regionLayerContent').value.split('\n').filter(function(r) { return (r.length !== 0);});
@@ -385,8 +393,12 @@
 
             selectBox.getElementsByTagName('option')[0].selected = 'selected';
 
-            firefly.action.dispatchAddRegionEntry(selectedLayerId, addRegions);
-            firefly.action.dispatchAddRegionEntry(selectedLayerId, addRegions, window.ffViewer.dispatch);
+            firefly.action.dispatchAddRegionEntry(selectedLayerId, addRegions, 'regiontest');
+            if (selectedLayerId === 'Region Layers:') {
+                firefly.action.dispatchAddRegionEntry(null, addRegions, null, null, dispatcher = window.ffViewer.dispatch);
+            } else {
+                firefly.action.dispatchAddRegionEntry(selectedLayerId, addRegions, null, null, dispatcher = window.ffViewer.dispatch);
+            }
         };
 
         removeRegionEntry = function() {

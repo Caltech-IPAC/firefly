@@ -5,21 +5,22 @@
 import {RegionFactory} from './RegionFactory.js';
 import {getDS9Region} from '../../rpc/PlotServicesJson.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
-import {dispatchCreateDrawLayer, dispatchDetachLayerFromPlot,
+import DrawLayerCntrl, {dispatchCreateDrawLayer, dispatchDetachLayerFromPlot,
         dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {getDrawLayerById, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
 import RegionPlot from '../../drawingLayers/RegionPlot.js';
 import {getPlotViewAry} from '../PlotViewUtil.js';
-import {visRoot } from '../ImagePlotCntlr.js';
-import {has, isArray, get} from 'lodash';
+import {visRoot} from '../ImagePlotCntlr.js';
+import {logError} from '../../util/WebUtil.js'
+import {has, isArray, isEmpty, get, isNil} from 'lodash';
 
 const regionDrawLayerId = RegionPlot.TYPE_ID;
 
 var cnt = 0;
-var [RegionIdErr, RegionErr, DrawObjErr, JSONErr] = [
+var [RegionIdErr, RegionErr, NoRegionErr, JSONErr] = [
     'region id is not specified',
     'invalid description in region file',
-    'create drawing object error',
+    'no region is specified',
     'get region json error'];
 
 var getPlotId = (plotId) => {
@@ -33,6 +34,15 @@ var getPlotId = (plotId) => {
     }
 };
 
+
+var layerId = (drawLayerId, title) => {
+    return isNil(drawLayerId) ? title.slice() : drawLayerId;
+};
+
+var getLayerTitle = (layerTitle, titleRef) => {
+    return layerTitle ? layerTitle : (titleRef ? titleRef : `Region Plot - ${cnt++}`);
+};
+
 /**
  * action creator of REGION_CREATE_LAYER, create drawing layer based on region file or array of region description
  * @param rawAction
@@ -40,25 +50,25 @@ var getPlotId = (plotId) => {
  */
 export function regionCreateLayerActionCreator(rawAction) {
     return (dispatcher) => {
-        var {regionId, fileOnServer, layerTitle, regionAry, plotId} = rawAction.payload;
+        var {drawLayerId, fileOnServer, layerTitle, regionAry, plotId} = rawAction.payload;
+        var title;
 
-        if (regionId && fileOnServer) {   // region file is given, get region description array
+        if (!drawLayerId) {
+            reportError(RegionIdErr)
+        } else if (fileOnServer) {   // region file is given, get region description array
             getDS9Region(fileOnServer).then((result) => {
                 if (has(result, 'RegionData')) {
-                    createRegionLayer(result.RegionData, result.Title, regionId, plotId, 'json');
+                    title = getLayerTitle(layerTitle, (result.Title || drawLayerId));
+                    createRegionLayer(result.RegionData, title, drawLayerId, plotId, 'json');
                 } else {
                     reportError(RegionErr);
                 }
             }, () => { reportError(JSONErr); } );
-        } else if (regionId && regionAry) {              // region description array or a string is given
-            if (!isArray(regionAry)) {
-                regionAry = [regionAry];
-            }
-            var title = layerTitle ? layerTitle : `Region Plot - ${cnt++}`;
-
-            createRegionLayer(regionAry, title, regionId, plotId);
+        } else if (!isEmpty(regionAry)) {
+            title = getLayerTitle(layerTitle, drawLayerId);
+            createRegionLayer(regionAry, title, drawLayerId, plotId);
         } else {
-            regionId ? reportError(RegionErr) : reportError(RegionIdErr);
+            reportError(NoRegionErr)
         }
     };
 }
@@ -67,35 +77,32 @@ export function regionCreateLayerActionCreator(rawAction) {
  * parse array of region description in json or ds9 format and create drawing layer based on parsed results
  * @param regionAry
  * @param title
- * @param regionId
+ * @param drawLayerId
  * @param plotId
  * @param dataFrom
  */
-function createRegionLayer(regionAry, title, regionId, plotId, dataFrom = 'ds9') {
+function createRegionLayer(regionAry, title, drawLayerId, plotId, dataFrom = 'ds9') {
     // convert region description array to Region object array
 
-    if (regionAry && regionAry.length > 0) {
-/*
-        var rgAry = dataFrom === 'json' ? RegionFactory.parseRegionJson(regionAry) :
-                                          RegionFactory.parseRegionDS9(regionAry);
-*/
+    if (isEmpty(regionAry)) {
+        return reportError(NoRegionErr);
+    }
+    if (!isArray(regionAry)) {
+        regionAry = [regionAry];
+    }
 
-        //  if (rgAry && rgAry.length > 0) {
-            var dl = getDrawLayerById(getDlAry(), regionId);
+    var pId = getPlotId(plotId);
 
-            if (!dl) {
-                dispatchCreateDrawLayer(regionDrawLayerId, {title, drawLayerId: regionId, regionAry, dataFrom});
-            }
+    drawLayerId = layerId(drawLayerId, title);
+    var dl = getDrawLayerById(getDlAry(), drawLayerId);
 
-            var pId = getPlotId(plotId);
-            if (pId) {
-                dispatchAttachLayerToPlot(regionId, pId, true);
-            }
-      //  } else {
-      //      reportError(DrawObjErr);
-      //  }
-    } else {
-        reportError(`${RegionErr} for creating region layer`);
+    if (!dl) {
+        dispatchCreateDrawLayer(regionDrawLayerId, {title, drawLayerId,
+                                                    regionAry, dataFrom, plotId: pId});
+    }
+
+    if (pId) {
+        dispatchAttachLayerToPlot(drawLayerId, pId, true);
     }
 }
 
@@ -107,12 +114,13 @@ function createRegionLayer(regionAry, title, regionId, plotId, dataFrom = 'ds9')
  */
 export function regionDeleteLayerActionCreator(rawAction) {
     return (dispatcher) => {
-        var {plotId, regionId} = rawAction.payload;
+        var {plotId, drawLayerId} = rawAction.payload;
 
         var pId = getPlotId(plotId);
+        var dl = getDrawLayerById(getDlAry(), drawLayerId);
 
-        if (regionId && pId) {
-            dispatchDetachLayerFromPlot(regionId, pId, true, false);
+        if (dl && drawLayerId && pId) {
+            dispatchDetachLayerFromPlot(drawLayerId, pId, true, false, dl.destroyWhenAllDetached);
         } else {
             reportError(`${RegionIdErr} for deleting region layer`);
         }
@@ -126,23 +134,32 @@ export function regionDeleteLayerActionCreator(rawAction) {
  */
 export function regionUpdateEntryActionCreator(rawAction) {
     return (dispatcher) => {
-        var {regionId, regionChanges} = rawAction.payload || {};
-        var changes = [];
+        var {drawLayerId, regionChanges, layerTitle, plotId} = rawAction.payload || {};
 
-        if (regionChanges) {
-            changes = isArray(regionChanges) ? regionChanges : [regionChanges];
+        if (isEmpty(regionChanges)) {
+            return;
         }
 
-        var payload = Object.assign(rawAction.payload, {regionChanges: changes});
+        var changes = isArray(regionChanges) ? regionChanges : [regionChanges];
+        var dl = drawLayerId ? getDrawLayerById(getDlAry(), drawLayerId) : null;
 
-        if (regionId) {
-            dispatcher(Object.assign(rawAction, {payload})); // add and remove entries
+        // if drawlayer doesn't exist, create a new one
+        if (!dl && rawAction.type === DrawLayerCntrl.REGION_ADD_ENTRY) {
+            var title = getLayerTitle(layerTitle, drawLayerId);
+
+            createRegionLayer(changes, title, drawLayerId, plotId);
         } else {
-            reportError(`${RegionIdErr} for ${rawAction.type}`);
+            var payload = Object.assign(rawAction.payload, {regionChanges: changes});
+
+            if (drawLayerId) {
+                dispatcher(Object.assign(rawAction, {payload})); // add and remove entries
+            } else {
+                reportError(`${RegionIdErr} for ${rawAction.type}`);
+            }
         }
     };
 }
 
 function reportError(errMsg) {
-    console.log(errMsg);
+    logError(errMsg);
 }

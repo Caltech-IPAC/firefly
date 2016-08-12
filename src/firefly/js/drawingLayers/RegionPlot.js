@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
+import DrawLayerCntlr, {dispatchDeleteRegionLayer} from '../visualize/DrawLayerCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
@@ -16,7 +16,7 @@ import DrawLayerCntrl, {dispatchModifyCustomField,
                         dispatchAddRegionEntry,
                         dispatchRemoveRegionEntry, dlRoot} from '../visualize/DrawLayerCntlr.js';
 
-import {get, isEmpty} from 'lodash';
+import {get, set, isEmpty} from 'lodash';
 
 const ID= 'REGION_PLOT';
 const TYPE_ID= 'REGION_PLOT_TYPE';
@@ -27,6 +27,12 @@ var idCnt=0;
 
 /**
  * create region plot layer
+ * in region plot layer, attribute regionAry: region description array
+ *                                 dataFrom: regionAry is from 'json' object or 'ds9' string
+ *                                 regions:   array of region object constructed by parsing regionAry
+ *                                 regionObjAry: array of drawing object constructed from regions
+ *                                 => regions and regionObjAry are updated as adding or removing regions occurs
+ *                                 highlightedRegion: selected region
  * @return {Function}
  */
 function creator(initPayload) {
@@ -43,59 +49,23 @@ function creator(initPayload) {
         canHighlight:true,
         canUserChangeColor: ColorChangeType.DISABLE,
         isPointData:false,
-        hasPerPlotData: false,
+        hasPerPlotData: true,
         destroyWhenAllDetached: true
     };
 
     var actionTypes = [DrawLayerCntrl.REGION_ADD_ENTRY,
                        DrawLayerCntlr.REGION_REMOVE_ENTRY];
 
-    var dl = DrawLayer.makeDrawLayer( get(initPayload, 'drawLayerId', `${ID}-${idCnt}`),
-                                      TYPE_ID, get(initPayload, 'title', 'Region Plot'),
+    var id = get(initPayload, 'drawLayerId', `${ID}-${idCnt}`);
+    var dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', 'Region Plot'),
                                       options, drawingDef, actionTypes, pairs );
 
     dl.regionAry = get(initPayload, 'regionAry', null);
     dl.dataFrom = get(initPayload, 'dataFrom', 'ds9');
-
-    /*
-    if (regionAry) {
-        dl.regions =  get(initPayload, 'dataFrom', 'ds9') === 'json' ? RegionFactory.parseRegionJson(regionAry) :
-                                                                       RegionFactory.parseRegionDS9(regionAry);
-    } else {
-        dl.regions = null;
-    }
-    */
     dl.highlightedRegion = get(initPayload, 'highlightedRegion', null);
 
     idCnt++;
     return dl;
-}
-
-// for testing
-function removeRegionDescription(mouseStatePayload) {
-    //const {drawLayerId} = mouseStatePayload.drawLayer;
-
-    const id= TYPE_ID + '-0';
-
-    var removeRegionAry =  [
-        'image;ellipse 100 100 20p 40p 30p 60p 40p 80p 20 # color=green text={ellipseannulus 2}',
-        'J2000;ellipse 202.55556, 47.188286 20p 40p 0i # color=#48f text={ellipse 1} width=10',
-        'image;box 130 100 20p 40p 30p 50p 70p 100p 30 # color=red text={slanted box annulus 3}'];
-      dispatchRemoveRegionEntry(id, removeRegionAry);
-}
-
-// for testing
-function addRegionDescription(mouseStatePayload) {
-    //const {drawLayerId} = mouseStatePayload.drawLayer;
-
-    const id= TYPE_ID + '-0';
-
-    var regionAry =  [
-        'image;ellipse 100 100 20p 40p 30p 60p 40p 80p 20 # color=green text={ellipseannulus 2}',
-        'J2000;ellipse 202.55556, 47.188286 20p 40p 0i # color=#48f text={ellipse 1} width=10',
-        'image;box 130 100 20p 40p 30p 50p 70p 100p 30 # color=red text={slanted box annulus 3}'];
-
-    dispatchAddRegionEntry(id, regionAry);
 }
 
 /**
@@ -115,9 +85,10 @@ function highlightChange(mouseStatePayload) {
 
     function* getDrawObj() {
         var index = 0;
+        var dataPlot = get(data, plotId);
 
-        while (index < data.length) {
-            yield data[index++];
+        while (index < dataPlot.length) {
+            yield dataPlot[index++];
         }
     }
     var gen = getDrawObj();
@@ -167,7 +138,7 @@ function highlightChange(mouseStatePayload) {
  * @returns {*}
  */
 function getLayerChanges(drawLayer, action) {
-    const {changes, regionId, regionChanges, drawLayerId } = action.payload;
+    const {changes, regionChanges, drawLayerId } = action.payload;
 
     if (drawLayerId && drawLayerId !== drawLayer.drawLayerId) return null;
     var dd = Object.assign({}, drawLayer.drawData);
@@ -189,14 +160,25 @@ function getLayerChanges(drawLayer, action) {
              }
              return Object.assign({}, changes, {drawData: dd});
         case DrawLayerCntrl.REGION_ADD_ENTRY:
-            if (regionId === drawLayer.drawLayerId && regionChanges) {
-                dd[DataTypes.DATA] = addRegionsToData(drawLayer, dd[DataTypes.DATA], regionChanges);
+            if (regionChanges) {
+                var {layerTitle} = action.payload;
+
+                if (layerTitle) {
+                    drawLayer.title = layerTitle.slice();  // update title of the layer
+                }
+                addRegionsToData(drawLayer, regionChanges);
+                Object.keys(dd[DataTypes.DATA]).forEach((plotId) => {
+                    set(dd[DataTypes.DATA], plotId, drawLayer.drawObjAry)
+                });
             }
             return {drawData: dd};
 
         case DrawLayerCntrl.REGION_REMOVE_ENTRY:
-            if (regionId === drawLayer.drawLayerId && regionChanges) {
-                dd[DataTypes.DATA] = removeRegionsFromData(drawLayer, dd[DataTypes.DATA], regionChanges);
+            if (regionChanges) {
+                removeRegionsFromData(drawLayer, regionChanges);
+                Object.keys(dd[DataTypes.DATA]).forEach((plotId) => {
+                    set(dd[DataTypes.DATA], plotId, drawLayer.drawObjAry)
+                });
             }
 
             return {drawData: dd};
@@ -207,58 +189,59 @@ function getLayerChanges(drawLayer, action) {
 }
 
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
-    const {highlightedRegion, regionAry, dataFrom} = drawLayer;
+    const {highlightedRegion, drawObjAry} = drawLayer;
+    var preData = get(lastDataRet, plotId, null) || lastDataRet;
 
     switch (dataType) {
         case DataTypes.DATA:
-            return isEmpty(lastDataRet) ? plotAllRegions(regionAry, dataFrom, drawLayer) : lastDataRet;
+            return isEmpty(preData) ? drawObjAry || plotAllRegions(drawLayer) : preData;
         case DataTypes.HIGHLIGHT_DATA:
-            return isEmpty(lastDataRet) ? plotHighlightRegion(highlightedRegion) : lastDataRet;
+            return isEmpty(preData) ? plotHighlightRegion(highlightedRegion, plotId) : preData;
     }
     return null;
 }
 /**
  * create DrawingObj for all regions
- * @param regionAry array of region strings
- * @param dataFrom from 'json' (server) or 'ds9' (original ds9 description)
  * @param dl    drawing layer
  * @returns {*}
  */
-function plotAllRegions(regionAry, dataFrom, dl) {
+function plotAllRegions(dl) {
+    var {dataFrom, regionAry} = dl; //regionAry: array of region strings
+                                    //dataFrom: from 'json' (server) or 'ds9' (original ds9 description)
     if (!regionAry) {
         return [];
     }
 
     dl.regions =  (dataFrom === 'json') ? RegionFactory.parseRegionJson(regionAry) :
-                                              RegionFactory.parseRegionDS9(regionAry);
+                                          RegionFactory.parseRegionDS9(regionAry);
 
-    return drawRegions(dl.regions);
-
+    dl.drawObjAry = drawRegions(dl.regions);   //no need regionAry anymore
+    return dl.drawObjAry;
 }
 
 /**
  * create DrawingObj for highlighted region
  * @param highlightedObj
+ * @param plotId
  * @returns {*}
  */
-function plotHighlightRegion(highlightedObj) {
+function plotHighlightRegion(highlightedObj, plotId) {
     if (!highlightedObj) {
         return [];
     }
 
     if (highlightedObj.region) highlightedObj.region.highlighted = 1;
-    return [DrawOp.makeHighlight(highlightedObj, primePlot(visRoot()))];
+    return [DrawOp.makeHighlight(highlightedObj, primePlot(visRoot(), plotId))];
 }
 
 /**
  * add new DrawingObj into originally displayed DrawingObj set
  * @param drawLayer
- * @param lastData
  * @param addedRegions
  * @returns {Array}
  */
-function addRegionsToData(drawLayer, lastData, addedRegions) {
-    var {regions} = drawLayer;
+function addRegionsToData(drawLayer, addedRegions) {
+    var {regions, drawObjAry: lastData} = drawLayer;
     var resultRegions = regions ? regions.slice() : [];
     var allDrawobjs = lastData ? lastData.slice() : [];
 
@@ -276,24 +259,20 @@ function addRegionsToData(drawLayer, lastData, addedRegions) {
     }
 
     drawLayer.regions = resultRegions;
+    drawLayer.drawObjAry = allDrawobjs;
     return allDrawobjs;
 }
 
 /**
  * remove DrawingObj from originally displayed DrawingObj set
  * @param drawLayer
- * @param lastData
  * @param removedRegions
  * @returns {Array}
  */
-function removeRegionsFromData(drawLayer, lastData, removedRegions) {
-    var resultRegions;
+function removeRegionsFromData(drawLayer, removedRegions) {
+    var {regions, drawObjAry: lastData} = drawLayer;
+    var resultRegions = regions ? regions.slice() : [];
     var allDrawObjs = lastData ? lastData.slice() : [];
-
-    resultRegions = allDrawObjs.reduce( (prev, drawObj) => {
-        prev.push(drawObj.region);
-        return prev;
-    }, []);
 
     if (resultRegions.length === 0) {
         return [];     // no region to be removed
@@ -313,5 +292,6 @@ function removeRegionsFromData(drawLayer, lastData, removedRegions) {
     }
 
     drawLayer.regions = resultRegions;
+    drawLayer.drawObjAry = allDrawObjs;
     return allDrawObjs;
 }
