@@ -10,6 +10,7 @@
            "src/firefly/js/charts/XYPlotCntlr.js",
            "src/firefly/js//visualize/CsysConverter.js",
            "src/firefly/js/visualize/DrawLayerCntlr.js"
+          // ,"src/firefly/js/charts/HistogramCntlr.js"
             ,"./docs/fireflyOverView.md"
 
         ],
@@ -48,11 +49,11 @@
                 "recursive": true//,
                 //"recursiveLevel": 2,
             },
-            "useLongnameInNav" :false
+            "useLongnameInNav" :true
         }
     },
     "opts": {
-        "template": "templates/minami",//default",  // same as -t templates/default
+        "template": "templates/minamiLZ",//default",  // same as -t templates/default
         "encoding": "utf8",               // same as -e utf8
         "destination": "./jsdoc/",          // same as -d ./out/
         "recurse": true , //,             // same as -r

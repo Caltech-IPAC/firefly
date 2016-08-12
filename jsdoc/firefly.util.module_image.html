@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>firefly/ui - Documentation</title>
+    <title>image - Documentation</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -28,7 +28,7 @@
 
 <div id="main">
     
-    <h1 class="page-title">firefly/ui</h1>
+    <h1 class="page-title">image</h1>
     
 
     
@@ -40,20 +40,11 @@
 
 <header>
     
-        <h2>
-            <span class="ancestors"><a href="module-lowLevelApi.html">lowLevelApi</a>~</span>
-        
-        firefly/ui
-        </h2>
-        
-    
 </header>
 
 <article>
     <div class="container-overview">
     
-        
-            <div class="description"><p>lowLevelApi</p></div>
         
 
         
@@ -88,7 +79,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="api_ApiBuild.js.html">api/ApiBuild.js</a>, <a href="api_ApiBuild.js.html#line146">line 146</a>
+        <a href="api_ApiUtilImage.jsx.html">api/ApiUtilImage.jsx</a>, <a href="api_ApiUtilImage.jsx.html#line35">line 35</a>
     </li></ul></dd>
     
 
@@ -116,6 +107,336 @@
 
     
 
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id=".initAutoReadout"><span class="type-signature">(static) </span>initAutoReadout<span class="signature">(ReadoutComponent, props)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>ReadoutComponent</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>either a PopupMouseReadoutMinimal or PopupMouseReadoutFull</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>props</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>a list of the properties</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="api_ApiUtilImage.jsx.html">api/ApiUtilImage.jsx</a>, <a href="api_ApiUtilImage.jsx.html#line72">line 72</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".serializeSimpleRangeValues"><span class="type-signature">(static) </span>serializeSimpleRangeValues<span class="signature">(stretchType, lowerValue, upperValue, algorithm)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>stretchType</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the type of stretch may be 'Percent', 'Absolute', 'Sigma'</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>lowerValue</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>lower value of stretch, based on stretchType</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>upperValue</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>upper value of stretch, based on stretchType</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>algorithm</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the stretch algorithm to use, may be 'Linear', 'Log', 'LogLog', 'Equal', 'Squared', 'Sqrt'</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="api_ApiUtilImage.jsx.html">api/ApiUtilImage.jsx</a>, <a href="api_ApiUtilImage.jsx.html#line88">line 88</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
     
 
     

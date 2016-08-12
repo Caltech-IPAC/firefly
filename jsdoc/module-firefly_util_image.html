@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Tutorial: firefly-api-code-examples - Documentation</title>
+    <title>firefly/util/image - Documentation</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -28,107 +28,384 @@
 
 <div id="main">
     
-    <h1 class="page-title">Tutorial: firefly-api-code-examples</h1>
+    <h1 class="page-title">firefly/util/image</h1>
     
 
-    <section>
+    
+
+
+
+
+<section>
 
 <header>
     
-
-    <h2>firefly-api-code-examples</h2>
+        
+    
 </header>
 
 <article>
-    <h2>Code Examples Using Firefly Tools</h2><ul>
-<li><a href="#image-fits-viewer">Image FITS Viewer</a></li>
-<li><a href="#fits-viewers-in-a-group">FITS Viewers in a group</a></li>
-<li><a href="#tracking-the-mouse">Tracking the mouse</a></li>
-<li><a href="#tracking-the-selection">Tracking the selection</a></li>
-</ul>
-<p>###Starting Firefly Tools in JavaScript
-Firefly Tools are loaded when you load<code>firefly_loader.js</code> from a server of your choice. For example, to load Firefly Tools from your local server, include the following declaration in your HTML file:</p>
-<pre class="prettyprint source lang-html"><code> &lt;script type=&quot;text/javascript&quot; language=&quot;javascript&quot; src=&quot;http://localhost:8080/fftools/firefly_loader.js&quot;></code></pre><p>Your html document must define some divs, where you will load the viewer widgets, and <code>onFireflyLoaded()</code> function.</p>
-<p>When Firefly Tools completes loading, it calls <code>onFireflyLoaded()</code> JavaScript function. This is where you create Firefly components and place them into HTML <code>&lt;div&gt;</code> elements with specified IDs. </p>
-<p>The following are several examples of what can be done in the <code>onFireflyLoaded()</code> function. All test data can be found at <code>http://web.ipac.caltech.edu/staff/roby/demo</code>. </p>
-<p>###Image FITS Viewer
-Create an image viewer and place it into the <code>&lt;div&gt;</code> id <code>plotHere</code>.</p>
-<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;plotHere&quot; style=&quot;width: 350px; height: 350px;&quot;>&lt;/div></code></pre><pre class="prettyprint source lang-js"><code>function onFireflyLoaded() {
-    firefly.showImage('plotHere', {
-        URL      : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m31-level1-3.fits',
-        Title    : 'Example FITS Image',
-        ColorTable : 16,
-        RangeValues : firefly.util.image.RangeValues.serializeSimple('Sigma',-2,8,'Linear')
-    });</code></pre><p>###FITS Viewers in a group
-In this example, we create four image viewers. Each belong to the same group <code>wise-group</code>. We then set some global parameters so all the plots display the same. Now we plot each of the four images by specifying the URL of the FITS file. By doing this, all the plotting controls will work on all four images simultaneously. </p>
-<pre class="prettyprint source lang-html"><code>  &lt;div style=&quot;white-space: nowrap;&quot;>
-    &lt;div id=&quot;w1&quot; style=&quot;display:inline-block; width: 250px; height: 250px; border: solid 1px;&quot;>&lt;/div>
-    &lt;div id=&quot;w2&quot; style=&quot;display:inline-block; width: 250px; height: 250px; border: solid 1px;&quot;>&lt;/div>
-    &lt;div id=&quot;w3&quot; style=&quot;display:inline-block; width: 250px; height: 250px; border: solid 1px;&quot;>&lt;/div>
-    &lt;div id=&quot;w4&quot; style=&quot;display:inline-block; width: 250px; height: 250px; border: solid 1px;&quot;>&lt;/div>
-  &lt;/div></code></pre><pre class="prettyprint source lang-js"><code> function onFireflyLoaded() {
-   firefly.setGlobalImageDef({ ZoomType    : 'TO_WIDTH',
-                                    ColorTable  : 8,
-                                    ZoomToWidth : 250 });   
-   w1.showImage('w1', { URL  : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band1.fits',
-             Title: 'WISE band 1', plotGroupId : 'wise-group' });
-   w2.showImage('w2', { URL  : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits',
-             Title: 'WISE band 2', plotGroupId : 'wise-group' });
-   w3.showImage('w3', { URL  : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band3.fits',
-             Title: 'WISE band 3', plotGroupId : 'wise-group' });
-   w4.showImage('w4', { URL  : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band4.fits',
-             Title: 'WISE band 4', plotGroupId : 'wise-group' });
- }</code></pre><p>###Tracking the mouse </p>
-<p>The following example will plot FITS image then add a callback to get the mouse readout and log it to the console.</p>
-<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;plotHere&quot; style=&quot;width: 500px; height: 500px;&quot;>&lt;/div></code></pre><pre class="prettyprint source lang-js"><code>// callback on mouse readout
-function onReadoutData(action) {
-    if (action.payload.hasValues) {
-        // readoutItems contain j2000, image, screen points and other info
-        console.log(action.payload.readoutItems.imagePt);
-    }
-}
-function onFireflyLoaded() {
-    const imageRequest = {
-        plotId: 'plotHere',
-        URL: 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits',
-        Title: 'WISE m51'
-    };
-    firefly.showImage('image_div', imageRequest);
-    // add a callback, which will be called for every READOUT_DATA action
-    // returned is the function to remove listener
-    const trackReadoutRemover = firefly.util.addActionListener(firefly.action.type.READOUT_DATA, onReadoutData);
-}</code></pre><p>###Tracking the selection </p>
-<p>Firefly viewer allows to make the following selections:</p>
-<ul>
-<li>Area Select (square)</li>
-<li>Line Select</li>
-<li>Point Select</li>
-<li>Circle Select (<em>coming soon</em>)</li>
-</ul>
-<p>The following example will plot a FITS image then add a callback to get selection information and log it to the console.</p>
-<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;plotHere&quot; style=&quot;width: 500px; height: 500px;&quot;>&lt;/div></code></pre><pre class="prettyprint source lang-js"><code>const onPlotAttributeChange = function(action) {
-    console.log(action.payload.plotId);
-    // attribute key: 'ACTIVE_POINT','ACTIVE_DISTANCE', or 'SELECTION'
-    console.log(action.payload.attKey);
-    // value that defines the selection
-    console.log(action.payload.attValue);
-}
-function onFireflyLoaded() {
-    const imageRequest = {
-        plotId: 'plotHere',
-        URL: 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits',
-        Title: 'WISE m51'
-    };
-    firefly.showImage('image_div', imageRequest);
-    // turn on point selection
-    firefly.action.dispatchChangePointSelection('requester', true);
-    // add a callback, which will be called for every CHANGE_PLOT_ATTRIBUTE action
-    // returned is the function to remove listener
-    const trackSelectionRemover = firefly.util.addActionListener(firefly.action.type.CHANGE_PLOT_ATTRIBUTE, onPlotAttributeChange);
-}</code></pre>
+    <div class="container-overview">
+    
+        
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id=".initAutoReadout"><span class="type-signature">(static) </span>initAutoReadout<span class="signature">(ReadoutComponent, props)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>ReadoutComponent</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>either a PopupMouseReadoutMinimal or PopupMouseReadoutFull</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>props</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>a list of the properties</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="api_ApiUtilImage.jsx.html">api/ApiUtilImage.jsx</a>, <a href="api_ApiUtilImage.jsx.html#line71">line 71</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".serializeSimpleRangeValues"><span class="type-signature">(static) </span>serializeSimpleRangeValues<span class="signature">(stretchType, lowerValue, upperValue, algorithm)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>stretchType</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the type of stretch may be 'Percent', 'Absolute', 'Sigma'</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>lowerValue</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>lower value of stretch, based on stretchType</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>upperValue</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>upper value of stretch, based on stretchType</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>algorithm</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the stretch algorithm to use, may be 'Linear', 'Log', 'LogLog', 'Equal', 'Squared', 'Sqrt'</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="api_ApiUtilImage.jsx.html">api/ApiUtilImage.jsx</a>, <a href="api_ApiUtilImage.jsx.html#line87">line 87</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+    
+
+    
+
+    
 </article>
 
 </section>
+
+
+
 
 </div>
 
