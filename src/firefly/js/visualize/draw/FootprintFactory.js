@@ -14,9 +14,8 @@ const NoPRELIM = '';
 const FPCMD = 'footprint';
 
 // SPITZER is not included  06/24/2016
-//export const FootprintList = ['HST', 'JWST', 'WFIRST', 'SPITZER'];
-export const FootprintList = ['HST', 'JWST', 'WFIRST'];
-export const FOOTPRINT = new Enum({HST: NoPRELIM, JWST: PRELIM, WFIRST: NoPRELIM});
+export const FootprintList = ['HST', 'JWST', 'WFIRST', 'SPITZER'];
+export const FOOTPRINT = new Enum({HST: NoPRELIM, SPITZER: NoPRELIM, JWST: PRELIM, WFIRST: NoPRELIM});
 const JWST_INST = new Enum(['FGS', 'MIRI', 'NIRCAM', 'NIS', 'NIRSPEC']);
 const HST_INST = new Enum(['NICMOS', 'WFPC2', 'ACS/WFC', 'ACS/HRC', 'ACS/SBC', 'WFC3/UVIS', 'WFC3/IR']);
 const SPITZER_INST = new Enum(['IRAC36', 'IRAC45']);
@@ -24,6 +23,7 @@ const SPITZER_INST = new Enum(['IRAC36', 'IRAC45']);
 
 export const INSTRUMENTS = {
     [FOOTPRINT.HST.key]: HST_INST,
+    [FOOTPRINT.SPITZER.key]: SPITZER_INST,
     [FOOTPRINT.JWST.key]: JWST_INST
 };
 

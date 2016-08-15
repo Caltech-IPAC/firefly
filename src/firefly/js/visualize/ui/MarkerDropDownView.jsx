@@ -63,7 +63,8 @@ export function MarkerDropDownView({plotView:pv}) {
         return FootprintList.reduce((prev, fp) => {
             var cmd = FootprintFactory.footprintCommand(fp);
 
-            if (cmd) prev.push(footprintCmdJSX(cmd, fp));
+            //SPITZER doesn't have any full footprint to overlay, skip
+            if (cmd && fp != 'SPITZER') prev.push(footprintCmdJSX(cmd, fp));
             FootprintFactory.getInstruments(fp).reduce((cmdList, inst) => {
                     cmd = FootprintFactory.instrumentCommand(fp, inst);
                     if (cmd) cmdList.push(footprintCmdJSX(cmd, fp, inst));
