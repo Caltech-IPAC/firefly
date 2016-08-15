@@ -12,15 +12,15 @@
 //      way we know that the lowlevel is complete.
 //-----------------------------------------------------------------------------------
 //===================================================================================
-/*
- * @desc using the lowerLeverApi to build the highLevelApi. The high levelApi is referred directly by firefly.xxx, where xxx
- * is the memeber's name
+
+/**
+ *
  * @param llApi the lowlevel api
  * @return {Object}
  */
 /**
  * @desc build highLevelApi using the lowLevelApi as an input
- * @module highLevelApi
+ * @module firefly
  */
 export function buildHighLevelApi(llApi) {
     const current= build(llApi);
@@ -32,7 +32,7 @@ export function buildHighLevelApi(llApi) {
 
 var globalImageViewDefParams= {};
 
-/*
+/**
  * Build the deprecated API
  * @param llApi
  * @return {Object}
@@ -111,12 +111,11 @@ function doShowTable(llApi, targetDiv, request, options={}) {
     renderDOM(targetDiv, TablesContainer, contProps);
 }
 
-
 function buildTablePart(llApi) {
     const {dispatchTableFetch}= llApi.action;
 
-    /*
-     * @typedef {object} TblOptions - table options
+    /**
+     * @typedef {object} TblOptions    table options
      * @prop {string}  tbl_group    the group this table belongs to.  Defaults to 'main'.
      * @prop {boolean} removable    true if this table can be removed from view.  Defaults to true.
      * @prop {boolean} showUnits    defaults to false
@@ -145,7 +144,7 @@ function buildTablePart(llApi) {
 
 function buildChartPart(llApi) {
 
-    /*
+    /**
      * @typedef {object} XYPlotOptions  xy plot options
      * @prop {string}  source       location of the ipac table, url or file path; ignored when XY plot view is added to table
      * @prop {string}  QUERY_ID     required when XY plot view is added to the table. It connects this XY Plot to the table and should be the same string that you specified as the div parameter when you created the table.
@@ -187,11 +186,11 @@ function buildChartPart(llApi) {
      */
     const addXYPlot= (targetDiv, parameters) => doShowXYPlot(llApi, targetDiv, parameters);
 
-    return {showXYPlot, addXYPlot};
+    return {showPlot, addXYPlot};
 }
 
 function buildCommon(llApi) {
-    /*
+    /**
      * Sets the root path for any relative URL. If this method has not been called then relative URLs use the page's root.
      * @param {String} rootUrlPath
      *
@@ -264,7 +263,7 @@ function buildImagePart(llApi) {
     return {showImage, showImageFileOrUrl, setGlobalImageDef, showCoverage};
 }
 
-/*
+/**
  * Build the deprecated API
  * @param llApi
  * @return {Object}

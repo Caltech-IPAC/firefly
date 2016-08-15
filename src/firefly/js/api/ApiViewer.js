@@ -21,7 +21,7 @@ import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 const VIEWER_ID = '__viewer';
 var viewerWindow;
 
-/*
+/**
  * Build the interface to remotely communicate to the firefly viewer
  * @return {{getViewer: getViewer, getExternalViewer: getExternalViewer}}
  */
@@ -53,7 +53,7 @@ function getViewer(channel= getWsChannel(),file='') {
     );
 }
 
-/*
+/**
  *
  * @deprecated
  */

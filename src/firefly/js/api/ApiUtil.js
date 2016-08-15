@@ -27,7 +27,7 @@ export {getBoolean} from '../util/WebUtil.js';
 export {toBoolean} from '../util/WebUtil.js';
 
 
-/*
+/**
  * Is in debug mode
  * @Function isDebug
  */
@@ -78,7 +78,6 @@ export function renderDOM(div, Component, props) {
 /**
  * @param {string|Object} div a div element or a string id of the div element
  * @Function unrenderDOM
- * @memeberof lrenderDOM
  */
 export function unrenderDOM(div) {
     const divElement= isString(div) ? document.getElementById(div) : div;
@@ -107,7 +106,7 @@ export function addActionListener(actionType,callBack) {
 //------------------ Private ----------------------------------------------
 //=========================================================================
 
-/*
+/**
  * This saga call a user callback when when one of the actionTypes are dispatched
  * This saga does the following:
  * <ul>
