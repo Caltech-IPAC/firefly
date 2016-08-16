@@ -8,7 +8,7 @@ import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {primePlot} from '../PlotViewUtil.js';
 import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {callGetFitsHeaderInfo} from '../../rpc/PlotServicesJson.js';
-import {BasicTable} from '../../tables/ui/BasicTable.jsx';
+import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {logError} from '../../util/WebUtil.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
@@ -205,10 +205,13 @@ function renderTable(band, fitsHeaderInfo, isPlacedOnTab) {
     var myTableStyle= isPlacedOnTab?tableOnTabStyle:tableStyle;
     return (
         <div style={ myTableStyle}>
-           <BasicTable
+           <TablePanel
                key={tableModel.tbl_id}
                tableModel={tableModel}
                height='calc(100% - 42px)'
+               showToolbar={false}
+               selectable={false}
+               showOptionButton={true}
            />
 
         </div>

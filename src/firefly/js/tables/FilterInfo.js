@@ -1,14 +1,11 @@
-/**
- * Created by loi on 1/15/16.
- */
-
-
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-const op_regex = new RegExp('(!=|>=|<=|<|>|=|like|in)', 'i');
-const cond_regex = new RegExp('^' + op_regex.source + '\\s+(.+)', 'i');
-const filter_regex = new RegExp('(\\S+)\\s+' + op_regex.source + '\\s+(.+)', 'i');
+
+import {getColumnIdx, getColumn} from './TableUtil.js';
+const cond_regex = new RegExp('(!=|>=|<=|<|>|=|like|in)\\s*(.+)');
+const cond_only_regex = new RegExp('^' + cond_regex.source, 'i');
+const filter_regex = new RegExp('(\\S+)\\s*' + cond_regex.source, 'i');
 
 export const FILTER_CONDITION_TTIPS =
 `Valid values are one of (=, >, <, !=, >=, <=, LIKE) followed by a value separated by a space.
@@ -47,8 +44,8 @@ export class FilterInfo {
         var filterInfo = new FilterInfo();
         if (filterString) {
             filterString && filterString.split(';').forEach( (v) => {
-                    const parts = v.trim().match(filter_regex);
-                    if (parts.length > 3) filterInfo.addFilter(parts[1], `${parts[2]} ${parts[3]}`);
+                    const [, cname, op, val] = v.trim().match(filter_regex) || [];
+                    if (cname) filterInfo.addFilter(cname, `${op} ${val}`);
                 });
         }
         return filterInfo;
@@ -63,8 +60,8 @@ export class FilterInfo {
     static autoCorrect(conditions) {
         if (conditions) {
             const parts = conditions.split(';').map( (v) => {
-                const opVal = v.replace(/\(|\)| /g, '').split(op_regex);
-                var [op, val] = opVal.length > 1 ? [ opVal[1], opVal[2] ] : [ 'like', opVal[0] ];  // defualt to 'like' if no operators found
+                var [, op, val] = v.trim().replace(/[()]/g, '').match(cond_only_regex) || [];
+                [op, val] = op ? [op, val] : [ 'like', v.trim() ];  // defualt to 'like' if no operators found
                 val = op.toLowerCase() === 'in' ? `(${val})` : val;     // add parentheses when 'in' is used.
                 return `${op} ${val}`;
            });
@@ -83,9 +80,9 @@ export class FilterInfo {
     static autoCorrectFilter(filterInfo) {
         if (filterInfo) {
             const filters = filterInfo.split(';').map( (v) => {
-                const parts = v.split(op_regex).map( (s) => s.trim());
-                if (parts.length != 3) return v;
-                return `${parts[0]} ${FilterInfo.autoCorrect(parts[1]+parts[2])}`;
+                const [, cname, op, val] = v.trim().match(filter_regex) || [];
+                if (!cname) return v;
+                return `${cname} ${FilterInfo.autoCorrect(op + ' ' + val)}`;
             });
             return filters.join(';');
         } else {
@@ -100,7 +97,7 @@ export class FilterInfo {
      */
     static isConditionValid(conditions) {
         return !conditions || conditions.split(';').reduce( (rval, v) => {
-            return rval && cond_regex.test(v.trim());
+            return rval && cond_only_regex.test(v.trim());
         }, true);
     }
 
@@ -117,8 +114,8 @@ export class FilterInfo {
 
     /**
      * validate the filterInfo string
-     * @param conditions
-     * @param columns array of column definitions
+     * @param {string} filterInfo
+     * @param {TableColumn[]} columns array of column definitions
      * @returns {[boolean, string]} isValid plus an error message if isValid is false.
      */
     static isValid(filterInfo, columns = []) {
@@ -126,10 +123,10 @@ export class FilterInfo {
         const allowCols = columns.concat({name:'ROWID'});
         if (filterInfo && filterInfo.trim().length > 0) {
             return filterInfo.split(';').reduce( ([isValid, msg], v) => {
-                    const parts = v.split(op_regex).map( (s) => s.trim());
-                    if (parts.length !== 3) {
+                const [, cname] = v.trim().match(filter_regex) || [];
+                if (!cname) {
                         msg += `\n"${v}" is not a valid filter.`;
-                    } else if (!allowCols.some( (col) => col.name === parts[0])) {
+                    } else if (!allowCols.some( (c) => c.name === cname)) {
                         msg +=`\n"${v}" column not found.\n`;
                     }
                     return [!msg, msg];
@@ -141,14 +138,57 @@ export class FilterInfo {
 
     /**
      * validator for free-form filters field
-     * @param filterInfo string serialized filter list
-     * @param columns array of column definitions
+     * @param {TableColumn[]} columns array of column definitions
+     * @param {string} filterInfo
      * @returns {{valid: boolean, value: (string|*), message: string}}
      */
     static validator(columns, filterInfo) {
         filterInfo = FilterInfo.autoCorrectFilter(filterInfo);
         const [valid, message] = FilterInfo.isValid(filterInfo, columns);
         return {valid, value: filterInfo, message};
+    }
+
+    /**
+     * returns a comparator function that takes a row(string[]) as parameter.
+     * This comparator will returns true if the given row passes the given filterStr.
+     * @param {string} filterStr
+     * @param {TableModel} tableModel
+     * @returns {function(): boolean}
+     */
+    static createComparator(filterStr, tableModel) {
+        var [ , cname, op, val] =filterStr.match(filter_regex) || [];
+        if (!cname) return () => false;       // bad filter.. returns nothing.
+    
+        op = op.toLowerCase();
+        val = val.toLowerCase();
+        const cidx = getColumnIdx(tableModel, cname);
+        const col = getColumn(tableModel, cname);
+        val = op === 'in' ? val.replace(/[()]/g, '').split(',').map((s) => s.trim()) : val;
+        return (row) => {
+            var compareTo = row[cidx].toLowerCase();
+            if (!['in','like'].includes(op) && col.type.match(/^[dfil]/)) {      // int, float, double, long .. or their short form.
+                val = Number(val);
+                compareTo = Number(compareTo);
+            }
+            switch (op) {
+                case '!='  :
+                    return compareTo !== val;
+                case '>='  :
+                    return compareTo >= val;
+                case '<='  :
+                    return compareTo <= val;
+                case '>'  :
+                    return compareTo > val;
+                case '='  :
+                    return compareTo === val;
+                case 'like'  :
+                    return compareTo.includes(val);
+                case 'in'  :
+                    return val.includes(compareTo);
+                default :
+                    return false;
+            }
+        };
     }
 
     serialize() {
@@ -174,8 +214,8 @@ export class FilterInfo {
         Reflect.deleteProperty(this, colName);
         if (conditions) {
             conditions.split(';').forEach( (v) => {
-                const parts = v.trim().match(cond_regex);
-                if (parts.length > 2) this.addFilter(colName, `${parts[1]} ${parts[2]}`);
+                const [, op, val] = v.trim().match(cond_only_regex) || [];
+                if (op) this.addFilter(colName, `${op} ${val}`);
             });
         }
     }

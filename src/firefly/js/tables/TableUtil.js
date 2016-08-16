@@ -5,6 +5,7 @@
 import {get, set, unset, has, isEmpty, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
+import {FilterInfo} from './FilterInfo.js';
 import {flux} from '../Firefly.js';
 import {fetchUrl, encodeServerUrl, encodeParams} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
@@ -15,29 +16,14 @@ const INT_MAX = Math.pow(2,31) - 1;
 
 /*----------------------------< creator functions ----------------------------*/
 
-/**
- * Table options.  All of the options are optional.  These options let you control
- * what data and how it will be returned from the request.
- * @typedef {object} TblReqOptions
- * @prop {number} startIdx  the starting index to fetch.  defaults to zero.
- * @prop {number} pageSize  the number of rows per page.  defaults to 100.
- * @prop {string} filters   list of conditions separted by comma(,). Format:  (col_name|index) operator value.
- *                  operator is one of '> < = ! >= <= IN'.  See DataGroupQueryStatement.java doc for more details.
- * @prop {string} sortInfo  sort information.  Format:  (ASC|DESC),col_name[,col_name]*
- * @prop {string} inclCols  list of columns to select.  Column names separted by comma(,)
- * @prop {string} decimate  decimation information.
- * @prop {object} META_INFO meta information passed as key/value pair to server then returned as tableMeta.
- * @prop {string} use       one of 'catalog_overlay', 'catalog_primary', 'data_primary'.
- * @prop {string} tbl_id    a unique id of a table. auto-create if not given.
- */
 
 /**
  * Creates a table request object for the given id.
  * @param {string} id       required.  SearchProcessor ID.
  * @param {string} [title]  title to display with this table.
  * @param {object} [params] the parameters to include with this request.
- * @param {TblReqOptions} [options] more options.  see TblReqOptions for details.
- * @returns {*}
+ * @param {TableRequest} [options] more options.  see TableRequest for details.
+ * @returns {TableRequest}
  */
 export function makeTblRequest(id, title, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
@@ -49,11 +35,13 @@ export function makeTblRequest(id, title, params={}, options={}) {
 }
 
 /**
+ * Creates a table requst for tabular data from a file.  Source of file may be
+ * from a url or an absolute path on the server.
  * @param {string} [title]      title to display with this table.
  * @param {string} source       required; location of the ipac table. url or file path.
  * @param {string} [alt_source] use this if source does not exists.
- * @param {TblReqOptions} [options]  more options.  see TblReqOptions for details.
- * @returns {object}
+ * @param {TableRequest} [options]  more options.  see TableRequest for details.
+ * @returns {TableRequest}
  */
 export function makeFileRequest(title, source, alt_source, options={}) {
     const id = 'IpacTableFromSource';
@@ -99,8 +87,8 @@ export function makeFileRequest(title, source, alt_source, options={}) {
  * @param {string} project
  * @param {string} catalog  the catalog name to search
  * @param {(ConeParams|BoxParams|ElipParams)} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
- * @param {TblReqOptions} [options]
- * @returns {object}
+ * @param {TableRequest} [options]
+ * @returns {TableRequest}
  */
 export function makeIrsaCatalogRequest(title, project, catalog, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
@@ -118,6 +106,13 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
     return omitBy(Object.assign(req, options, params, {id, tbl_id, META_INFO, UserTargetWorldPt, catalogProject, catalog}), isNil);
 }
 
+/**
+ * creates the request to query VO catalog
+ * @param {string} title    title to be displayed with this table result
+ * @param {(ConeParams|BoxParams|ElipParams)} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
+ * @param {TableRequest} [options]
+ * @returns {TableRequest}
+ */
 export function makeVOCatalogRequest(title, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
     options.use = options.use || 'catalog_overlay';
@@ -134,9 +129,9 @@ export function makeVOCatalogRequest(title, params={}, options={}) {
 
 /**
  * create a deep clone of the given request.  tbl_id is removed from the cloned request.
- * @param {Object} request  the original request to clone
+ * @param {TblRequest} request  the original request to clone
  * @param {Object} params   additional parameters to add to the cloned request
- * @returns {object}
+ * @returns {TblRequest}
  */
 export function cloneRequest(request, params = {}) {
     const req = cloneDeep(omit(request, 'tbl_id'));
@@ -149,9 +144,9 @@ export function cloneRequest(request, params = {}) {
 
 /**
  *
- * @param tableRequest is a table request params object
- * @param hlRowIdx set the highlightedRow.  default to startIdx.
- * @returns {Promise.<T>}
+ * @param {TableRequest} tableRequest is a table request params object
+ * @param {number} [hlRowIdx] set the highlightedRow.  default to startIdx.
+ * @returns {Promise.<TableModel>}
  */
 export function doFetchTable(tableRequest, hlRowIdx) {
 
@@ -206,7 +201,7 @@ export function doValidate(type, action) {
 }
 
 /**
- * update the given action with a new error given by cause.
+ * updates the given action with a new error given by cause.
  * action.err is stored as an array of errors.  Errors may be a String or an Error type.
  * @param action  the actoin to update
  * @param cause  the error to be added.
@@ -216,11 +211,11 @@ export function error(action, cause) {
 }
 
 /**
- * return true is there is data within the given range.  this is needed because
+ * returns true is there is data within the given range.  this is needed because
  * of paging table not loading the full table.
- * @param startIdx
- * @param endIdx
- * @param tableModel
+ * @param {number} startIdx
+ * @param {number} endIdx
+ * @param {TableModel} tableModel
  * @returns {boolean}
  */
 export function isTblDataAvail(startIdx, endIdx, tableModel) {
@@ -233,15 +228,19 @@ export function isTblDataAvail(startIdx, endIdx, tableModel) {
     } else return false;
 }
 
-
-export function getTblById(id) {
-    return get(flux.getState(),[TblCntlr.TABLE_SPACE_PATH, 'data', id]);
+/**
+ * returns the table model with the given tbl_id
+ * @param tbl_id
+ * @returns {TableModel}
+ */
+export function getTblById(tbl_id) {
+    return get(flux.getState(),[TblCntlr.TABLE_SPACE_PATH, 'data', tbl_id]);
 }
 
 /**
- * returns the group information
- * @param {string} tbl_group    the group to look for
- * @returns {Object}
+ * returns the table group information
+ * @param {string} tbl_group    the group name to look for
+ * @returns {TableGroup}
  */
 export function getTableGroup(tbl_group='main') {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group]);
@@ -251,7 +250,7 @@ export function getTableGroup(tbl_group='main') {
  * returns the table group name given a tbl_id.  it will return undefined if
  * the given tbl_id is not in a group.
  * @param {string} tbl_id    table id
- * @returns {Object}
+ * @returns {TableGroup}
  */
 export function findGroupByTblId(tbl_id) {
     const resultsRoot = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results'], {});
@@ -263,8 +262,8 @@ export function findGroupByTblId(tbl_id) {
 
 /**
  * returns an array of tbl_id for the given tbl_group_id
- * @param {string} tbl_group_id    tbl_group_id
- * @returns {Array} array of tbl_id
+ * @param {string} tbl_group_id    table group name.  defaults to 'main' if not given
+ * @returns {String[]} array of tbl_id
  */
 export function getTblIdsByGroup(tbl_group_id = 'main') {
     const tableGroup = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group_id]);
@@ -273,9 +272,9 @@ export function getTblIdsByGroup(tbl_group_id = 'main') {
 
 /**
  * returns the table information for the given id and group.
- * @param tbl_id
- * @param tbl_group
- * @returns {Object}
+ * @param {string} tbl_id       table id.
+ * @param {string} tbl_group    table group name.  defaults to 'main' if not given
+ * @returns {TableModel}
  */
 export function getTableInGroup(tbl_id, tbl_group='main') {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group, 'tables',  tbl_id]);
@@ -283,8 +282,8 @@ export function getTableInGroup(tbl_id, tbl_group='main') {
 
 /**
  * get the table working state by tbl_ui_id
- * @param tbl_ui_id
- * @returns {*}
+ * @param {string} tbl_ui_id     table UI id.
+ * @returns {Object}
  */
 export function getTableUiById(tbl_ui_id) {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui', tbl_ui_id]);
@@ -292,8 +291,8 @@ export function getTableUiById(tbl_ui_id) {
 
 /**
  * returns the first table working state for the given tbl_id
- * @param tbl_id
- * @returns {*}
+ * @param {string} tbl_id
+ * @returns {Object}
  */
 export function getTableUiByTblId(tbl_id) {
     const uiRoot = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui'], {});
@@ -304,22 +303,28 @@ export function getTableUiByTblId(tbl_id) {
 }
 
 /**
- * get table's expanded information.
- * @returns {object}
+ * returns the working state of the currently expanded table.
+ * @returns {Object}
  */
 export function getTblExpandedInfo() {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui', 'expanded'], {});
 }
 
 /**
- * return true if the table referenced by the given tbl_id is fully loaded.
- * @param tbl_id
+ * returns true if the table referenced by the given tbl_id is fully loaded.
+ * @param {string} tbl_id
  * @returns {boolean}
  */
 export function isFullyLoaded(tbl_id) {
     return isTableLoaded(getTblById(tbl_id));
 }
 
+/**
+ * Returns the column index with the given name; otherwise, -1.
+ * @param {TableModel} tableModel
+ * @param {string} colName
+ * @returns {number}
+ */
 export function getColumnIdx(tableModel, colName) {
     const cols = get(tableModel, 'tableData.columns', []);
     return cols.findIndex((col) => {
@@ -327,6 +332,12 @@ export function getColumnIdx(tableModel, colName) {
     });
 }
 
+/**
+ * returns column information for the given name.
+ * @param {TableModel} tableModel
+ * @param {string} colName
+ * @returns {TableColumn}
+ */
 export function getColumn(tableModel, colName) {
     const colIdx = getColumnIdx(tableModel, colName);
     if (colIdx >= 0) {
@@ -334,16 +345,21 @@ export function getColumn(tableModel, colName) {
     }
 }
 
+/**
+ * return the tbl_id of the active table for the given group.
+ * @param {string} tbl_group group name; defaults to 'main' if not given.
+ * @returns {string}
+ */
 export function getActiveTableId(tbl_group='main') {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH,'results',tbl_group,'active']);
 }
 
 /**
  *
- * @param tableModel
- * @param rowIdx
- * @param colName
- * @return {*}
+ * @param {TableModel} tableModel
+ * @param {number} rowIdx
+ * @param {string} colName
+ * @return {string}
  */
 export function getCellValue(tableModel, rowIdx, colName) {
     if (get(tableModel, 'tableData.data.length', 0) > 0) {
@@ -356,7 +372,7 @@ export function getCellValue(tableModel, rowIdx, colName) {
 
 /**
  * return true if the given table is fully loaded.
- * @param tableModel
+ * @param {TableModel} tableModel
  * @returns {boolean}
  */
 export function isTableLoaded(tableModel) {
@@ -391,9 +407,9 @@ export function transform(tableModel) {
  * merged at any data node in the data graph, the node and all of its
  * parent nodes will be shallow cloned and returned.  Otherwise, the target's value
  * will be returned.
- * @param target
- * @param source
- * @returns {*}
+ * @param {Object} target
+ * @param {Object} source
+ * @returns {Object}
  */
 export function smartMerge(target, source) {
     if (!target) return source;
@@ -428,11 +444,12 @@ export function smartMerge(target, source) {
 
 /**
  * sort the given tableModel based on the given request
- * @param origTableModel original table model.  this is returned when direction is UNSORTED.
- * @param sortInfoStr
+ * @param {TableModel} origTableModel original table model.  this is returned when direction is UNSORTED.
+ * @param {string} sortInfoStr
+ * @returns {TableModel}
  */
 export function sortTable(origTableModel, sortInfoStr) {
-    var tableModel = cloneDeep(origTableModel);
+    const tableModel = cloneDeep(origTableModel);
     set(tableModel, 'request.sortInfo', sortInfoStr);
     const {data, columns} = tableModel.tableData;
     sortTableData(data, columns, sortInfoStr);
@@ -441,10 +458,10 @@ export function sortTable(origTableModel, sortInfoStr) {
 
 /**
  * sort table data in place.
- * @param tableData
- * @param columns
- * @param sortInfoStr
- * @returns {*}
+ * @param {TableData} tableData
+ * @param {TableColumn[]} columns
+ * @param {string} sortInfoStr
+ * @returns {TableData}
  */
 export function sortTableData(tableData, columns, sortInfoStr) {
     const sortInfoCls = SortInfo.parse(sortInfoStr);
@@ -473,6 +490,29 @@ export function sortTableData(tableData, columns, sortInfoStr) {
     return tableData;
 }
 
+/**
+ * return a new table after applying the given filters.
+ * @param {TableModel} tableModel
+ * @param {string} filterInfoStr filters are separated by comma(',').
+ * @returns {TableModel}
+ */
+export function filterTable(tableModel, filterInfoStr) {
+    const filtered = cloneDeep(tableModel);
+    set(filtered, 'request.filters', filterInfoStr);
+    const comparators = filterInfoStr.split(';').map((s) => s.trim()).map((s) => FilterInfo.createComparator(s, tableModel));
+    filtered.tableData.data = tableModel.tableData.data.filter((row) => {
+        return comparators.reduce( (rval, match) => rval && match(row), true);
+    } );
+    filtered.totalRows = tableModel.tableData.data.length;
+    return filtered;
+}
+
+/**
+ * collects all available table information given the tbl_id
+ * @param {string} tbl_id
+ * @param {number} aPageSize  use this pageSize instead of the one in the request.
+ * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error}}
+ */
 export function getTblInfoById(tbl_id, aPageSize) {
     const tableModel = getTblById(tbl_id);
     return getTblInfo(tableModel, aPageSize);
@@ -480,9 +520,9 @@ export function getTblInfoById(tbl_id, aPageSize) {
 
 /**
  * collects all available table information given the tableModel.
- * @param tableModel
- * @param aPageSize  use this pageSize instead of the one in the request.
- * @returns {*}
+ * @param {TableModel} tableModel
+ * @param {number} aPageSize  use this pageSize instead of the one in the request.
+ * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error}}
  */
 export function getTblInfo(tableModel, aPageSize) {
     if (!tableModel) return {};
@@ -503,8 +543,9 @@ export function getTblInfo(tableModel, aPageSize) {
 }
 
 /**
- *
- * @returns {encoded}
+ * returns the url to download a snapshot of the current table data.
+ * @param {string} tbl_ui_id  UI id of the table
+ * @returns {string}
  */
 export function getTableSourceUrl(tbl_ui_id) {
     const {columns, request} = getTableUiById(tbl_ui_id) || {};
@@ -525,12 +566,12 @@ export function getTableSourceUrl(tbl_ui_id) {
 }
 
 /**
- * returns an array of width indexed corresponding to the given columns.  
+ * returns an object map of the column name and its width.
  * The width is the number of characters needed to display
- * the header and the data as a table given columns and dataAry.
- * @param columns  array of column object
- * @param dataAry  array of array.
- * @returns {Object} a map of cname -> width
+ * the header and the data in a table given columns and dataAry.
+ * @param {TableColumn[]} columns  array of column object
+ * @param {TableData} dataAry  array of array.
+ * @returns {Object.<string,number>} a map of cname -> width
  */
 export function calcColumnWidths(columns, dataAry) {
     return columns.reduce( (pv, cv, idx) => {
@@ -544,6 +585,10 @@ export function calcColumnWidths(columns, dataAry) {
     }, {ROWID: 8});
 }
 
+/**
+ * create a unique table id (tbl_id)
+ * @returns {string}
+ */
 export function uniqueTblId() {
     const id = uniqueId('tbl_id-');
     if (getTblById(id)) {
@@ -553,10 +598,13 @@ export function uniqueTblId() {
     }
 }
 
+/**
+ * create a unique table UI id (tbl_ui_id)
+ * @returns {string}
+ */
 export function uniqueTblUiId() {
     return uniqueId('tbl_ui_id-');
 }
-
 /**
  *  This function provides a patch until we can reliably determine that the ra/dec columns use radians or degrees.
  * @param tableOrMeta the table object or the tableMeta object

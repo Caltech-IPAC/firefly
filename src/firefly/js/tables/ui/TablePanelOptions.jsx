@@ -29,7 +29,7 @@ export class TablePanelOptions extends React.Component {
     // }
 
     render() {
-        const {columns, origColumns, pageSize, showUnits, showFilters, onChange, optSortInfo, filterInfo, toggleOptions} = this.props;
+        const {columns, origColumns, pageSize, showUnits, showFilters, showToolbar=true, onChange, optSortInfo, filterInfo, toggleOptions} = this.props;
         if (isEmpty(columns)) return false;
 
         const {onPageSize, onPropChanged, onReset} = makeCallbacks(onChange, columns, origColumns);
@@ -49,20 +49,22 @@ export class TablePanelOptions extends React.Component {
                                    checked={showFilters}/>
                         </div>
                     </div>
-                    <div style={{display: 'inline-block'}}>
-                        <div style={{marginTop: 17}}>
-                            <InputField
-                                validator={intValidator(1,10000)}
-                                tooltip='Set page size'
-                                label='Page Size:'
-                                labelStyle={{...labelStyle, width: 60}}
-                                size={3}
-                                value={pageSize+''}
-                                onChange={onPageSize}
-                                actOn={['blur','enter']}
-                            />
+                    {showToolbar &&
+                        <div style={{display: 'inline-block'}}>
+                            <div style={{marginTop: 17}}>
+                                <InputField
+                                    validator={intValidator(1,10000)}
+                                    tooltip='Set page size'
+                                    label='Page Size:'
+                                    labelStyle={{...labelStyle, width: 60}}
+                                    size={3}
+                                    value={pageSize+''}
+                                    onChange={onPageSize}
+                                    actOn={['blur','enter']}
+                                />
+                            </div>
                         </div>
-                    </div>
+                    }
                     <span>
                         <div style={{ position: 'relative',
                                       display: 'block',
@@ -98,6 +100,7 @@ TablePanelOptions.propTypes = {
     pageSize: React.PropTypes.number,
     showUnits: React.PropTypes.bool,
     showFilters: React.PropTypes.bool,
+    showToolbar: React.PropTypes.bool,
     onChange: React.PropTypes.func,
     toggleOptions: React.PropTypes.func
 };

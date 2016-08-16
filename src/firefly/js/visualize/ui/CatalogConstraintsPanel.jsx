@@ -8,7 +8,6 @@ import {isEmpty, get, merge} from 'lodash';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {fieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
 import {doFetchTable, getColumnIdx, getTblById} from '../../tables/TableUtil.js';
-import {BasicTable} from '../../tables/ui/BasicTable.jsx';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {InputAreaFieldConnected} from '../../ui/InputAreaField.jsx';
@@ -202,7 +201,7 @@ function hideColumns(tableModelFetched) {
  * @type {{onChange: (func|any), catname: (isRequired|any), constraintskey: (string|any), tbl_id: (string|any), fieldKey: (string|any), groupKey: (string|any)}}
  */
 CatalogConstraintsPanel.propTypes = {
-    ...BasicTable.propTypes,
+    ...TablePanel.propTypes,
     onChange: PropTypes.func,
     onBlur: PropTypes.func,
     catname: PropTypes.string.isRequired,
@@ -260,6 +259,7 @@ function ConstraintPanel({tableModel, fieldKey, onChange, ontablechanged}) {
                 onTableChanged={ontablechanged}
                 //onBlur={ (e) => {console.log('onChange called from table '+e.value);}}
                 showToolbar={false}
+                showOptionButton={false}
                 key={tableModel.tbl_id}
                 tableModel={tableModel}
                 renderers={

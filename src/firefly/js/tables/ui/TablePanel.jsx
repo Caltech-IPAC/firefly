@@ -19,6 +19,7 @@ import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
+import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
 
 const TT_OPTIONS = 'Edit Table Options';
 const TT_SAVE = 'Save the content as an IPAC table';
@@ -165,34 +166,23 @@ export class TablePanel extends Component {
                     }
                     <div className='TablePanel__table' style={{top: tableTopPos}}>
                         <BasicTableView
-                            columns={columns}
-                            data={data}
-                            hlRowIdx={hlRowIdx}
-                            rowHeight = {rowHeight}
-                            selectable={selectable}
-                            showUnits={showUnits}
-                            showFilters={showFilters}
-                            selectInfoCls={selectInfoCls}
-                            filterInfo={filterInfo}
-                            sortInfo={sortInfo}
-                            textView={textView}
-                            showMask={showMask}
-                            currentPage={currentPage}
                             callbacks={tableConnector}
-                            renderers={renderers}
-                            onTableChanged={onTableChanged}
+                            { ...{columns, data, hlRowIdx, rowHeight, selectable, showUnits, showFilters,
+                                  selectInfoCls, filterInfo, sortInfo, textView, showMask, currentPage,
+                                  tableConnector, renderers, onTableChanged} }
                         />
-                        {showOptions && <TablePanelOptions
-                            columns={columns}
-                            origColumns={origColumns}
-                            optSortInfo={optSortInfo}
-                            filterInfo={filterInfo}
-                            pageSize={pageSize}
-                            showUnits={showUnits}
-                            showFilters={showFilters}
-                            onChange={this.onOptionUpdate}
-                            toggleOptions={this.toggleOptions}
-                        /> }
+                        {showOptionButton && !showToolbar &&
+                            <img className='TablePanel__options--small'
+                                 src={OPTIONS}
+                                 title={TT_OPTIONS}
+                                 onClick={this.toggleOptions}/>
+                        }
+                        {showOptions &&
+                            <TablePanelOptions
+                                onChange={this.onOptionUpdate}
+                                toggleOptions={this.toggleOptions}
+                                { ...{columns, origColumns, optSortInfo, filterInfo, pageSize, showUnits, showFilters, showToolbar}}
+                            /> }
                     </div>
                 </div>
             </div>
