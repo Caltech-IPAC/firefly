@@ -370,7 +370,6 @@ public final class FITSTableReader
 
         String colName = colInfo.getName();
         String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
-        String originalType = (String)((DescribedValue)colInfo.getAuxData().get(0)).getValue();
         String unit = colInfo.getUnitString();
         String nullString = null;
 
