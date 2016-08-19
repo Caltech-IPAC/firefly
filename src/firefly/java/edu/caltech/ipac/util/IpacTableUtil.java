@@ -22,11 +22,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Date: Jun 25, 2009
@@ -136,7 +132,7 @@ public class IpacTableUtil {
             String[] types = parseHeadings(line.trim());
             for (int i = 0; i < types.length; i++) {
                 String typeDesc = types[i].trim();
-                cols.get(i).setDataType(IpacTableReader.resolveClass(typeDesc));
+                cols.get(i).setDataType(DataType.parseDataType(typeDesc));
             }
         }
     }
@@ -262,7 +258,12 @@ public class IpacTableUtil {
                     }
                     offset = endoffset;
                     if (type.getFormatInfo().isDefault()) {
-                        IpacTableUtil.guessFormatInfo(type, rval);
+                        DataGroup.Attribute format = source.getAttribute(DataSetParser.makeAttribKey(DataSetParser.FORMAT_TAG, type.getKeyName()));
+                        if (format == null || Objects.equals(format.getValue(), "AUTO")) {
+                            IpacTableUtil.guessFormatInfo(type, rval);
+                        } else if (!Objects.equals(format.getValue(), "NONE")){
+                            type.getFormatInfo().setDataFormat(format.getValue());
+                        }
 
                         // disable sorting if value is HTML, or unit is 'html'
                         // this block should only be executed once, when formatInfo is not set.

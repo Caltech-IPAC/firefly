@@ -32,6 +32,8 @@ public class DataSetParser {
     public static final String PREF_WIDTH_TAG = "col.@.PrefWidth";
     public static final String DESC_TAG = "col.@.ShortDescription";
     public static final String UNIT_TAG = "col.@.Unit";
+    public static final String FORMAT_TAG = "col.@.Fmt";     // can be AUTO, NONE or a valid java format string.  defaults to AUTO.
+    public static final String FORMAT_DISP_TAG = "col.@.FmtDisp";
     public static final String SORTABLE_TAG = "col.@.Sortable";
     public static final String ITEMS_TAG = "col.@.Items";
     public static final String SORT_BY_TAG = "col.@.SortByCols";

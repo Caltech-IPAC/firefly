@@ -3,20 +3,20 @@
  */
 package edu.caltech.ipac.firefly.server.util.ipactable;
 
-import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.visualize.Band;
-import edu.caltech.ipac.util.*;
-import edu.jhu.util.StringUtil;
+import edu.caltech.ipac.firefly.util.DataSetParser;
+import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static edu.caltech.ipac.firefly.util.DataSetParser.*;
 
@@ -104,11 +104,38 @@ public class JsonTableUtil {
      * @return
      */
     public static JSONObject toJsonTableData(DataGroup data, TableDef tableDef) {
-        List<List<String>> tableData = new ArrayList<List<String>>();
+
+        // set display format if exists.  this modifies DataType directly because it assumes it will no longer be used.
+        // if that is not the case, DataType will have to be cloned.
+        // also set flag to recalculate the max width of column's data
+        boolean formatChanged = false;
+        DataType[] columns = data.getDataDefinitions();
+        for (int colIdx = 0; colIdx < columns.length; colIdx++) {
+            DataType dt = columns[colIdx];
+            String fkey = DataSetParser.makeAttribKey(DataSetParser.FORMAT_DISP_TAG, dt.getKeyName());
+            if (tableDef.contains(fkey)) {
+                dt.getFormatInfo().setDataFormat(tableDef.getAttribute(fkey).getValue());
+                dt.getFormatInfo().setWidth(Arrays.stream(new int[]{
+                                dt.getKeyName().length(),
+                                dt.getDataUnit().length(),
+                                dt.getTypeDesc().length()}).max().getAsInt());
+                formatChanged = true;
+            }
+        }
+
+
+        List<List<String>> tableData = new ArrayList<>();
         for (int i = 0; i < data.size(); i++) {
-            List<String> row = new ArrayList<String>();
-            for (Object o : data.get(i).getData()) {
-                row.add(String.valueOf(o));
+            List<String> row = new ArrayList<>();
+            String[] rowData = data.get(i).getFormatedData();
+            for (int colIdx = 0; colIdx < rowData.length; colIdx++) {
+                row.add(rowData[colIdx]);
+                if (formatChanged) {
+                    DataType.FormatInfo fi = columns[colIdx].getFormatInfo();
+                    int dlength = rowData[colIdx].length();
+                    if (fi.getWidth() < dlength) fi.setWidth(dlength);
+                }
+
             }
             tableData.add(row);
         }
