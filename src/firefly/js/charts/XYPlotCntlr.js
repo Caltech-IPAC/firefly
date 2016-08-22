@@ -1,6 +1,11 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+
+/*
+ * Added by LZ when generate doc, it is for testing only.  When module is used, it is list under module
+ *
+ */
 import {flux} from '../Firefly.js';
 
 import {updateSet, updateMerge, updateDelete} from '../util/WebUtil.js';
@@ -19,6 +24,10 @@ export const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
 export const SET_SELECTION = `${XYPLOT_DATA_KEY}/SET_SELECTION`;
 const SET_ZOOM = `${XYPLOT_DATA_KEY}/SET_ZOOM`;
 const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
+/**
+ * @public
+ * @module firefly/action
+ */
 
 /*
  Possible structure of store:
@@ -65,30 +74,35 @@ const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
  */
 
 /*
- * Load xy plot data
+ * Load xy plot data Load xy plot data
+ * */
+/**
  * @param {string} chartId - if no chart id is specified table id is used as chart id
  * @param {Object} xyPlotParams - XY plot options (column names, etc.)
  * @param {string} tblId - table id
  * @param {function} dispatcher only for special dispatching uses such as remote
+ * @public
  */
 export function dispatchLoadPlotData(chartId, xyPlotParams, tblId, dispatcher= flux.process) {
     dispatcher({type: LOAD_PLOT_DATA, payload: {chartId: (chartId||tblId), xyPlotParams, tblId}});
 }
 
-/*
+/**
  * Set selection to give user choice of actions on selection (zoom, filter, or select points)
  * @param {String} chartId - chart id
  * @param {Object} selection - {xMin, xMax, yMin, yMax}
+ * @public
  */
 export function dispatchSetSelection(chartId, selection) {
     flux.process({type: SET_SELECTION, payload: {chartId, selection}});
 }
 
-/*
+/**
  * Zoom XY plot to a given selection or reset zoom if no selection is given
  * @param {String} chartId - chart id
  * @param {String} tblId - table id
  * @param {Object} selection - {xMin, xMax, yMin, yMax}
+ * @public
  */
 export function dispatchZoom(chartId, tblId, selection) {
     const {xyPlotData, xyPlotParams, decimatedUnzoomed} = get(getChartSpace(SCATTER), chartId, {});
@@ -129,9 +143,10 @@ function dispatchResetZoom(chartId) {
 }
 
 
-/*
+/**
  * @param rawAction (its payload should contain searchRequest to get source table and histogram parameters)
  * @returns function which loads plot data (x, y, rowIdx, etc.)
+ * @public
  */
 export function loadPlotData (rawAction) {
     return (dispatch) => {
@@ -182,6 +197,8 @@ function serverParamsChanged(oldParams, newParams) {
  * decimatedUnzoomed - tells if unzoomed data are decimated
  * @param data {Object} the data to merge with the xyplot branch
  * @returns {{type: string, payload: object}}
+ * @memberof module:firefly/action
+ * @public
  */
 function updatePlotData(data) {
     return { type : UPDATE_PLOT_DATA, payload: data };
@@ -318,6 +335,7 @@ function getDataBoundaries(xyPlotData) {
  * Pad and round data boundaries
  * @param {Object} boundaries - object with xMin, xMax, yMin, yMax props
  * @param {Number} factor - part of the range to add on both sides
+ * @ignore
  */
 function getPaddedBoundaries(boundaries, factor=100) {
     if (!isEmpty(boundaries)) {
@@ -349,6 +367,7 @@ function getPaddedBoundaries(boundaries, factor=100) {
  * @param tblId table search request to obtain source table
  * @param xyPlotParams object, which contains xy plot parameters
  * @param {string} chartId  - chart id
+ * @ignore
  */
 function fetchPlotData(dispatch, tblId, xyPlotParams, chartId) {
 

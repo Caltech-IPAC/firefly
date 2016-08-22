@@ -1,0 +1,79 @@
+{
+    "tags": {
+        "allowUnknownTags| ": true,
+        "dictionaries": ["jsdoc","closure"]
+    },
+    "source": {
+        "include": [
+           "src/firefly/js/api/",
+           "src/firefly/js/tables/TableUtil.js",
+           "src/firefly/js/charts/XYPlotCntlr.js",
+           "src/firefly/js//visualize/CsysConverter.js",
+           "src/firefly/js/visualize/DrawLayerCntlr.js"
+          // ,"src/firefly/js/charts/HistogramCntlr.js"
+            ,"README.md"
+
+        ],
+      "exclude": [
+          //"src/firefly/js/api/ApiBuild.js"
+       ],
+        //include .js, .jsdoc and jsx files
+        "includePattern": ".+\\.js(doc)?|(x)$",
+         //Any file starting with an underscore or in a directory starting with an underscore will be ignored
+        "excludePattern": "(^|\\/|\\\\)_"
+    },
+
+    "plugins": [
+       "plugins/markdown",
+       "plugins/summarize"
+    ],
+
+   "markdown" : {
+    "idInHeadings" : true
+   },
+
+  "jsx": {
+        "extensions": ["js", "jsx"]
+    },
+   "staticFiles": {
+        "include": ["./docs"],
+        "exclude": ["./docs/firefly-api-code-examples.md"],
+        "includePattern": ".+\\.md?$",
+       // "excludePattern": "(^|\\/|\\\\)_",
+        "recursive": true//,
+        //"recursiveLevel": 2,
+    },
+
+    "templates": {
+          "minami": {
+         // "default": {
+            "staticFiles": {
+                "include": ["./docs/"],
+                "exclude": ["./docs/firefly-api-code-examples.md"],
+               // "includePattern": ".+\\.md?$",
+                // "excludePattern": "(^|\\/|\\\\)_",
+                "recursive": true//,
+                //"recursiveLevel": 2,
+            }
+
+        }
+    },
+    "opts": {
+        "template": "node_modules/minami", //use the minami template insetad of the default
+       // "template":  "templates/default",//default",  // same as -t templates/default
+       "encoding": "utf8",               // same as -e utf8
+        "destination": "./jsdoc/",          // same as -d ./out/
+        "recurse": true , //,             // same as -r
+        "tutorials": "./tutorial/",// same as -u path/to/tutorials
+        "access": "all"   //same as -a  <value>, values are all, public, private etc
+
+    },
+    "templates": {
+        "cleverLinks": false,
+        "monospaceLinks": false,
+        "default": {
+            "outputSourceFiles": false
+        }
+    }
+}
+

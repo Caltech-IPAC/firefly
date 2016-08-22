@@ -51,10 +51,12 @@ import './ApiStyle.css';
 
 /**
  * Start in api mode. Will create the api and call window.onFireflyLoaded(firefly)
+ * @ignore
  */
 export function initApi() {
     const lowlevelApi= buildLowlevelAPI();
     const viewInterface= buildViewerApi();
+
     const highLevelApi= buildHighLevelApi(lowlevelApi);
     if (!window.firefly) window.firefly= {};
     window.firefly.ignoreHistory = true;
@@ -69,7 +71,8 @@ export function initApi() {
 
 
 /**
-Structure of API
+
+  Structure of API
    {
               //--- High level API , all high level api are in the root
      all high level functions....
@@ -92,9 +95,8 @@ Structure of API
 
 /**
  * Return the api object.
- * 
  * @return {{action:{},ui:{},util:{}}}
- *
+ * @ignore
  */
 export function buildLowlevelAPI() {
 
@@ -142,7 +144,7 @@ export function buildLowlevelAPI() {
         PopupMouseReadoutMinimal,
         PopupMouseReadoutFull
     };
-    
+
     const util= Object.assign({}, ApiUtil, {image:ApiUtilImage}, {chart:ApiUtilChart}, {table:ApiUtilTable}, {data:{}} );
 
     return { action, ui, util };
@@ -153,6 +155,7 @@ export function buildLowlevelAPI() {
  * pull all the dispatch functions out of the object
  * @param obj
  * @return {*}
+ * @ignore
  */
 function findDispatch(obj) {
    return Object.keys(obj).reduce( (res,key) => {
@@ -167,6 +170,7 @@ function findDispatch(obj) {
  * @param obj
  * @param prefix
  * @return {*}
+ * @ignore
  */
 function findActionType(obj,prefix) {
     return Object.keys(obj).reduce( (res,key) => {

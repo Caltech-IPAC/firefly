@@ -22,7 +22,6 @@ function convertToCorrect(wp) {
     return retPt;
 }
 
-
 const MAX_CACHE_ENTRIES = 38000; // set to never allows the cache array over 48000 with a 80% load factor
 
 
@@ -153,7 +152,7 @@ export class CysConverter {
     /**
      * test to see if the input is in the view port and is not null
      * @param vpt
-     * @return
+     * @return {boolean}
      */
     viewPortPointInViewPort(vpt) {
         if (!vpt || !vpt.type || vpt.type!==Point.VP_PT) return false;
@@ -187,7 +186,9 @@ export class CysConverter {
      * @param {object} pt the point to translate
      * @param {number} [altZoomLevel], only use this parameter it you want to compute the point for a zoom level that
      *                 if different than what the plotted zoom level
-     * @return ImageWorkSpacePt the image workspace coordinates
+     * @return getImageWorkSpaceCoords
+     * @@function  module:firefly/util/image/CCUtil
+     * @static
      */
     getImageWorkSpaceCoords(pt, altZoomLevel) {
         if (!isValidPoint(pt)) return null;
@@ -237,13 +238,11 @@ export class CysConverter {
 
 
     /**
-     * Return the ImagePt coordinates given Pt
      * @param {object} pt the point to translate
      * @return ImagePt the image coordinates
      */
     getImageCoords(pt) {
         if (!isValidPoint(pt)) return null;
-
         let retval = null;
 
         switch (pt.type) {
@@ -489,6 +488,8 @@ export class CysConverter {
     /**
      * Return the sky coordinates given a image x (fsamp) and  y (fline)
      * package in a ImageWorkSpacePt class
+     */
+    /**
      * @param pt  the point to convert
      * @param outputCoordSys (optional) The coordinate system to return, default to coordinate system of image
      * @return WorldPt the translated coordinates
@@ -563,18 +564,22 @@ export class CysConverter {
 
     /**
      *
-     * @param {object} plot
+     * @param {object} plot - the image
      * @return {CysConverter}
      */
     static make(plot) {
         return plot ? new CysConverter(plot) : null;
     }
-}
+} //end of class definition
+
+
 
 /**
- * 
+ *
  * @param pt
  * @return {*}
+ * @memberof module:firefly/util/image/CCUtil
+ * @public
  */
 function getWorldPtRepresentation(pt) {
     if (!isValidPoint(pt)) return null;
@@ -586,52 +591,74 @@ function getWorldPtRepresentation(pt) {
     else if (pt.type=== Point.VP_PT)    return makeWorldPt(pt.x,pt.y, CoordinateSys.SCREEN_PIXEL);
 }
 
-
-
+/** part of lowLevelApi
+ * @public
+ * @module   firefly/util/image/CCUtil/
+ * @type {{getImageWorkSpaceCoords: CCUtil.getImageWorkSpaceCoords, getImageCoords: CCUtil.getImageCoords, getViewPortCoords: CCUtil.getViewPortCoords, getScreenCoords: CCUtil.getScreenCoords, getWorldCoords: CCUtil.getWorldCoords, getWorldPtRepresentation: getWorldPtRepresentation}}
+ */
 export const CCUtil = {
     /**
      * Convert to ImageWorkSpace Point
-     * @param plot
-     * @param pt
+     * @param {object} plot - the image
+     * @function getImageWorkSpaceCoords
+     * @static
+     * @public
+     *
      */
+
     getImageWorkSpaceCoords : (plot,pt) => CysConverter.make(plot).getImageWorkSpaceCoords(pt),
     
     /**
      *
      * Convert to Image Point
-     * @param plot
-     * @param pt
+     * @param {object} plot - the image
+     * @param {object} pt - the point to convert
+     * @function getImageCoords
+     * @static
+     * @public
      */
     getImageCoords: (plot,pt) => CysConverter.make(plot).getImageCoords(pt),
     
     /**
      *
      * Convert to ViewPoint point
-     * @param plot
-     * @param pt
+     */
+    /**
+     * @param {object} plot - the image
+     * @param {object} pt - the point to convert
+     * @function getViewPortCoords
+     * @public
+     * @static
      */
     getViewPortCoords: (plot,pt) => CysConverter.make(plot).getViewPortCoords(pt),
     
-    /**
+    /*
      *
      * Convert to Screen Point
-     * @param plot
-     * @param pt
+     * */
+    /**
+     * @param {object} plot - the image
+     * @param {object} pt - the point to convert
+     * @function  getScreenCoords
+     * @static
      */
     getScreenCoords: (plot,pt) => CysConverter.make(plot).getScreenCoords(pt),
     
     /**
      *
      * Convert to World Point
-     * @param plot
-     * @param pt
+     * @param {object} plot - the image
+     * @param {object} pt - the point to convert
+     * @function getWorldCoords
+     * @static
+     * @public
      */
     getWorldCoords: (plot,pt) => CysConverter.make(plot).getWorldCoords(pt),
-    
+
     /**
      *
-     * @param pt
-     * @return {*}
+     * @ignore
+     *
      */
     getWorldPtRepresentation
 };

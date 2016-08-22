@@ -74,13 +74,13 @@ export const DRAWING_LAYER_KEY= 'drawLayers';
 
 export function dlRoot() { return flux.getState()[DRAWING_LAYER_KEY]; }
 
-/**
- * Return, from the store, the master array of all the drawing layers on all the plots
- * @return {Array<Object>}
- */
+
 export function getDlAry() { return flux.getState()[DRAWING_LAYER_KEY].drawLayerAry; }
 
-
+/**
+ * @public
+ * @module firefly/action
+ */
 export default {
     CHANGE_VISIBILITY, RETRIEVE_DATA,
     ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT,CHANGE_DRAWING_DEF,
@@ -103,6 +103,7 @@ export default {
 /**
  *
  * @param drawLayerId
+ * @public
  */
 export function dispatchRetrieveData(drawLayerId) {
     flux.process({type: RETRIEVE_DATA , payload: {drawLayerId} });
@@ -114,6 +115,7 @@ export function dispatchRetrieveData(drawLayerId) {
  *
  * @param drawLayerTypeId
  * @param params
+ * @public
  */
 export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
     var drawLayer= flux.createDrawLayer(drawLayerTypeId,params);
@@ -128,10 +130,11 @@ export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
 
 /**
  *
- * @param {string|[]} id make the drawLayerId or drawLayerTypeId, this may be an array
+ * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param visible
  * @param plotId
  * @param useGroup
+ *  @public
  */
 export function dispatchChangeVisibility(id,visible, plotId, useGroup= true) {
     var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
@@ -144,10 +147,11 @@ export function dispatchChangeVisibility(id,visible, plotId, useGroup= true) {
 
 /**
  *
- * @param {string|[]} id make the drawLayerId or drawLayerTypeId, this may be an array
+ * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param drawingDef
  * @param plotId
  * @param useGroup
+ *  @public
  */
 export function dispatchChangeDrawingDef(id,drawingDef, plotId, useGroup= true) {
     var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
@@ -161,10 +165,11 @@ export function dispatchChangeDrawingDef(id,drawingDef, plotId, useGroup= true) 
 
 /**
  *
- * @param {string|[]} id make the drawLayerId or drawLayerTypeId, this may be an array
+ * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param changes
  * @param plotId
  * @param useGroup
+ *  @public
  */
 export function dispatchModifyCustomField(id,changes, plotId, useGroup= true) {
 
@@ -176,6 +181,14 @@ export function dispatchModifyCustomField(id,changes, plotId, useGroup= true) {
         });
 }
 
+/**
+ *
+ *
+ * @param id
+ * @param plotId
+ * @param useGroup
+ *  @public
+ */
 export function dispatchForceDrawLayerUpdate(id,plotId, useGroup= true) {
 
     var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
@@ -191,6 +204,7 @@ export function dispatchForceDrawLayerUpdate(id,plotId, useGroup= true) {
 /**
  *
  * @param {string} id make the drawLayerId or drawLayerTypeId
+ *  @public
  */
 export function dispatchDestroyDrawLayer(id) {
     var drawLayerId= getDrawLayerId(dlRoot(),id);
@@ -201,9 +215,10 @@ export function dispatchDestroyDrawLayer(id) {
 
 /**
  *
- * @param {string|[]} id make the drawLayerId or drawLayerTypeId, this may be an array
- * @param {string|[]} plotId to attach this may by a string or an array of strings
+ * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
+ * @param {string|string[]} plotId to attach this may by a string or an array of strings
  * @param attachPlotGroup
+ *  @public
  */
 export function dispatchAttachLayerToPlot(id,plotId, attachPlotGroup=false) {
     var plotIdAry;
@@ -224,13 +239,14 @@ export function dispatchAttachLayerToPlot(id,plotId, attachPlotGroup=false) {
 
 /**
  *
- * @param {string|[]} id make the drawLayerId or drawLayerTypeId, this may be an array
- * @param {string|[]} plotId to attach this may by a string or an array of strings
+ * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
+ * @param {string|string[]} plotId to attach this may by a string or an array of strings
  * @param detachPlotGroup
  * @param useLayerGroup
  * @param destroyWhenAllDetached if all plots are detached then destroy this plot
+ *  @public
  */
-export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false, 
+export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
                                             useLayerGroup=true, destroyWhenAllDetached=false) {
     var plotIdAry;
 
@@ -248,28 +264,73 @@ export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
 
 }
 
-
+/**
+ *
+ * @param regionId
+ * @param layerTitle
+ * @param fileOnServer
+ * @param regionAry
+ * @param plotId
+ * @param dispatcherr
+ *  @public
+ */
 export function dispatchCreateRegionLayer(regionId, layerTitle, fileOnServer='', regionAry=[], plotId = [], dispatcher = flux.process) {
     dispatcher({type: REGION_CREATE_LAYER, payload: {regionId, fileOnServer, plotId, layerTitle, regionAry}});
 }
 
-
+/**
+ *
+ * @param regionId
+ * @param plotId
+ * @param dispatcher
+ *  @public
+ */
 export function dispatchDeleteRegionLayer(regionId, plotId, dispatcher = flux.process) {
     dispatcher({type: REGION_DELETE_LAYER, payload: {regionId, plotId}});
 }
 
+/**
+ *
+ * @param {string} regionId - an identify for the region
+ * @param {object} regionChanges
+ * @param (function) dispatcher
+ *  @public
+ */
 export function dispatchAddRegionEntry(regionId, regionChanges, dispatcher = flux.process) {
     dispatcher({type: REGION_ADD_ENTRY, payload: {regionId, regionChanges}});
 }
-
+/**
+ *
+ * @param {string} regionId - an identify for the region
+ * @param {object} regionChanges - the changes
+ * @param (function) dispatcher
+ *  @public
+ */
 export function dispatchRemoveRegionEntry(regionId, regionChanges, dispatcher = flux.process) {
     dispatcher({type: REGION_REMOVE_ENTRY, payload: {regionId, regionChanges}});
 }
-
+/**
+ *
+ * @param markerId
+ * @param layerTitle
+ * @param plotId
+ * @param attachPlotGroup
+ * @param dispatcher
+ * @public
+ */
 export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], attachPlotGroup=true, dispatcher = flux.process) {
     dispatcher({type: MARKER_CREATE, payload: {plotId, markerId, layerTitle, attachPlotGroup}});
 }
-
+/**
+ * @public
+ * @param footprintId
+ * @param layerTitle
+ * @param footprint
+ * @param instrument
+ * @param plotId
+ * @param attachPlotGroup
+ * @param dispatcher
+ */
 export function dispatchCreateFootprintLayer(footprintId, layerTitle, footprint, instrument, plotId = [],
                                                                       attachPlotGroup=true, dispatcher = flux.process) {
     dispatcher({type: FOOTPRINT_CREATE, payload: {plotId, footprintId, layerTitle, footprint, instrument, attachPlotGroup}});
@@ -324,6 +385,7 @@ export function makeDetachLayerActionCreator(factory) {
 /**
  *
  * @param factory
+ * @ignore
  */
 function makeReducer(factory) {
     const dlReducer= DrawLayerReducer.makeReducer(factory);
@@ -351,7 +413,7 @@ function makeReducer(factory) {
             case DETACH_LAYER_FROM_PLOT:
                 retState = deferToLayerReducer(state, action, dlReducer);
                 const {payload}= action;
-                if (payload.destroyWhenAllDetached &&  
+                if (payload.destroyWhenAllDetached &&
                     isEmpty(getConnectedPlotsIds(retState,payload.drawLayerId))) {
                     retState = destroyDrawLayer(retState, action);
                 }
@@ -384,6 +446,7 @@ function makeReducer(factory) {
  * @param state
  * @param {{type:string,payload:object}} action
  * @return {object} the new state;
+ * @ignore
  */
 function createDrawLayer(state,action) {
     var {drawLayer}= action.payload;
@@ -398,6 +461,7 @@ function createDrawLayer(state,action) {
  * @param state
  * @param {{type:string,payload:object}} action
  * @return {object} the new state;
+ * @ignore
  */
 function destroyDrawLayer(state,action) {
     var {drawLayerId}= action.payload;
@@ -409,8 +473,9 @@ function destroyDrawLayer(state,action) {
  * Call the reducer for the drawing layer defined by the action
  * @param state
  * @param {{type:string,payload:object}} action
- * @param dlReducer drawinglayer subreducer
+ * @param dlReducer drawinglayer subreducer{string|string[]}
  * @return {object} the new state;
+ * @ignore
  */
 function deferToLayerReducer(state,action,dlReducer) {
     var {drawLayerId}= action.payload;
@@ -436,6 +501,7 @@ function deferToLayerReducer(state,action,dlReducer) {
  * @param dlReducer drawinglayer subreducer
  * @param force
  * @return {object} the new state;
+ * @ignore
  */
 function determineAndCallLayerReducer(state,action,dlReducer,force) {
     var newAry= state.drawLayerAry.map( (dl) => {
