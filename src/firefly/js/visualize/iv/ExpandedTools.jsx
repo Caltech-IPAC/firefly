@@ -184,7 +184,7 @@ function WhichView({visRoot}) {
                                   imageStyle={{width:24,height:24}}
                                   onClick={() => dispatchChangeExpandedMode(ExpandType.GRID)}/>
             }
-            {plotViewAry>1 &&
+            {plotViewAry.length>1 &&
                    <ToolbarButton icon={LIST} tip={'Choose which plots to show'}
                                   imageStyle={{width:24,height:24}}
                                   enabled={true} visible={true} horizontal={true}
