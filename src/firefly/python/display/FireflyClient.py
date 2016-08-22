@@ -471,7 +471,7 @@ class FireflyClient(WebSocketClient):
 
         if not region_layer_id:
             region_layer_id = FireflyClient._gen_item_id('RegionLayer')
-        payload = {'regionId': region_layer_id}
+        payload = {'drawLayerId': region_layer_id}
 
         if title:
             payload.update({'layerTitle': title})
@@ -495,7 +495,7 @@ class FireflyClient(WebSocketClient):
         :return: status of call
         """
 
-        payload = {'regionId': region_layer_id}
+        payload = {'drawLayerId': region_layer_id}
         if plot_id:
             payload.update({'plotId': plot_id})
 
@@ -509,7 +509,7 @@ class FireflyClient(WebSocketClient):
         :param region_layer_id: id of region to remove entries from
         :return: status of call
         """
-        payload = {'regionChanges': region_data, 'regionId': region_layer_id}
+        payload = {'regionChanges': region_data, 'drawLayerId': region_layer_id}
         if plot_id:
             payload.update({'plotId': plot_id})
         if title:
@@ -525,7 +525,7 @@ class FireflyClient(WebSocketClient):
         :param region_layer_id: id of region to remove entries from
         :return: status of call
         """
-        payload = {'regionChanges': region_data, 'regionId': region_layer_id}
+        payload = {'regionChanges': region_data, 'drawLayerId': region_layer_id}
 
         return self.dispatch_remote_action_by_post(self.channel,
                                                    FireflyClient.ACTION_DICT['RemoveRegionData'], payload)
