@@ -26,6 +26,9 @@ import java.util.Map;
  * @version $Id: DataSetParser.java,v 1.18 2011/11/11 20:51:10 loi Exp $
  */
 public class DataSetParser {
+    public static final String FMT_AUTO = "AUTO";     // guess format from data
+    public static final String FMT_NONE = "NONE";     // do not format data
+
     public static final String LABEL_TAG = "col.@.Label";
     public static final String VISI_TAG = "col.@.Visibility";
     public static final String WIDTH_TAG = "col.@.Width";

@@ -325,14 +325,11 @@ public class DataType implements Serializable, Cloneable {
         private static final Align DEF_DATA_ALIGN = Align.LEFT;
 
 
-        private static final String DEF_FMT_STR = "%s";
-
         private static final int DEF_WIDTH = 30;
         private static final String NULL_STR = "";
         private Align _headerAlign;
         private Align _dataAlign;
         private int _width;
-        private String _headerFormat;
         private String _dataFormat;
         private boolean _isDefault;
 
@@ -402,14 +399,6 @@ public class DataType implements Serializable, Cloneable {
             _width = width;
         }
 
-        public String getHeaderFormatStr() {
-            return _headerFormat == null ? DEF_FMT_STR : _headerFormat;
-        }
-
-        public void setHeaderFormatStr(String headerFormatStr) {
-            _headerFormat = headerFormatStr;
-        }
-
         public String getDataFormatStr() {
             return _dataFormat;
         }
@@ -473,9 +462,7 @@ public class DataType implements Serializable, Cloneable {
          * @return a string
          */
         public String formatHeader(String value) {
-            String v = value == null ? "" :
-                       getHeaderFormatStr() == null ? String.valueOf(value) :
-                       String.format(getHeaderFormatStr(), value);
+            String v = value == null ? "" : value;
             String fmtStr = (getHeaderAlign() == Align.LEFT ? "%-" : "%") + getWidth() + "." + getWidth() + "s";
             return String.format(fmtStr, v);
         }

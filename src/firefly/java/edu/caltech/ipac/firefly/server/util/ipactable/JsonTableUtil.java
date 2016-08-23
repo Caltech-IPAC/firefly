@@ -116,9 +116,9 @@ public class JsonTableUtil {
             if (tableDef.contains(fkey)) {
                 dt.getFormatInfo().setDataFormat(tableDef.getAttribute(fkey).getValue());
                 dt.getFormatInfo().setWidth(Arrays.stream(new int[]{
-                                dt.getKeyName().length(),
-                                dt.getDataUnit().length(),
-                                dt.getTypeDesc().length()}).max().getAsInt());
+                        String.valueOf(dt.getKeyName()).length(),
+                        String.valueOf(dt.getDataUnit()).length(),
+                        String.valueOf(dt.getTypeDesc()).length()}).max().getAsInt());
                 formatChanged = true;
             }
         }

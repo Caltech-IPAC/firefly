@@ -25,14 +25,7 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
-import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataGroupQuery;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataObjectUtil;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.decimate.DecimateKey;
 
 import javax.servlet.http.HttpServletRequest;
@@ -605,9 +598,22 @@ public class QueryUtil {
         Class xColClass = Double.class;
         Class yColClass = Double.class;
 
+        ArrayList<DataGroup.Attribute> colMeta = new ArrayList<>();
         try {
-            columns[0] = (!xValGetter.isExpression() ? dg.getDataDefintion(decimateInfo.getxColumnName()).copyWithNoColumnIdx(0) : new DataType("x", "x", xColClass, DataType.Importance.HIGH, "", false));
-            columns[1] = (!yValGetter.isExpression() ? dg.getDataDefintion(decimateInfo.getyColumnName()).copyWithNoColumnIdx(1) : new DataType("y", "y", yColClass, DataType.Importance.HIGH, "", false));
+            if (xValGetter.isExpression()) {
+                columns[0] = new DataType("x", "x", xColClass, DataType.Importance.HIGH, "", false);
+            } else {
+                columns[0] = dg.getDataDefintion(decimateInfo.getxColumnName()).copyWithNoColumnIdx(0);
+                colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), decimateInfo.getxColumnName()));
+            }
+
+            if (yValGetter.isExpression()) {
+                columns[1] = new DataType("y", "y", yColClass, DataType.Importance.HIGH, "", false);
+            } else {
+                columns[1] = dg.getDataDefintion(decimateInfo.getyColumnName()).copyWithNoColumnIdx(1);
+                colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), decimateInfo.getyColumnName()));
+            }
+
             columns[2] = new DataType("rowidx", Integer.class); // need it to tie highlighted and selected to table
             if (doDecimation) {
                 columns[3] = new DataType("weight", Integer.class);
@@ -621,7 +627,7 @@ public class QueryUtil {
 
 
         DataGroup retval = new DataGroup("decimated results", columns);
-
+        retval.setAttributes(colMeta);
 
         // determine min/max values of x and y
         boolean checkDeciLimits = false;
