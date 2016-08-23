@@ -1,22 +1,24 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import DrawLayerCntlr, {dispatchDeleteRegionLayer} from '../visualize/DrawLayerCntlr.js';
+import {take} from 'redux-saga/effects';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {drawRegions} from '../visualize/region/RegionDrawer.js';
 import {addNewRegion, removeRegion} from '../visualize/region/RegionUtil.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
-import {primePlot} from '../visualize/PlotViewUtil.js';
-import {visRoot} from '../visualize/ImagePlotCntlr.js';
+import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
+import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
-import DrawLayerCntrl, {dispatchModifyCustomField,
+import DrawLayerCntlr, {DRAWING_LAYER_KEY,
+                        dispatchModifyCustomField,
                         dispatchAddRegionEntry,
+                        dispatchDeleteRegionLayer,
                         dispatchRemoveRegionEntry, dlRoot} from '../visualize/DrawLayerCntlr.js';
-
 import {get, set, isEmpty} from 'lodash';
+import {dispatchAddSaga} from '../core/MasterSaga.js';
 
 const ID= 'REGION_PLOT';
 const TYPE_ID= 'REGION_PLOT_TYPE';
@@ -24,6 +26,32 @@ const factoryDef= makeFactoryDef(TYPE_ID, creator, getDrawData, getLayerChanges,
 export default {factoryDef, TYPE_ID};
 
 var idCnt=0;
+
+function* regionsRemoveSaga({id, plotId, drawLayer}, dispatch, getState) {
+        while (true) {
+            var action = yield take([DrawLayerCntlr.REGION_REMOVE_ENTRY,
+                                     DrawLayerCntlr.REGION_DELETE_LAYER,
+                                     DrawLayerCntlr.DETACH_LAYER_FROM_PLOT]);
+
+            if (action.payload.drawLayerId === id) {
+console.log('payload id = ' + action.payload.drawLayerId + '    id = ' + id);
+console.log('DrawLayerCntlr.REGION_REMOVE_ENTRY = ' + DrawLayerCntlr.REGION_REMOVE_ENTRY);
+console.log('action.type = DrawLayerCntlr.REGION_REMOVE_ENTRY: ' + DrawLayerCntlr.REGION_REMOVE_ENTRY===action.type);
+                switch (action.type) {
+                    case  DrawLayerCntlr.REGION_REMOVE_ENTRY :
+                        var dl = getDrawLayerById(getState()[DRAWING_LAYER_KEY], id);
+                        if (dl && isEmpty(get(dl, 'drawObjAry'))) {
+                            dispatchDeleteRegionLayer(id, plotId, dispatch);
+                        }
+                        break;
+                    case DrawLayerCntlr.REGION_DELETE_LAYER:
+                    case DrawLayerCntlr.DETACH_LAYER_FROM_PLOT:
+                        return;
+                        break;
+                }
+            }
+        }
+}
 
 /**
  * create region plot layer
@@ -53,7 +81,7 @@ function creator(initPayload) {
         destroyWhenAllDetached: true
     };
 
-    var actionTypes = [DrawLayerCntrl.REGION_ADD_ENTRY,
+    var actionTypes = [DrawLayerCntlr.REGION_ADD_ENTRY,
                        DrawLayerCntlr.REGION_REMOVE_ENTRY];
 
     var id = get(initPayload, 'drawLayerId', `${ID}-${idCnt}`);
@@ -64,6 +92,7 @@ function creator(initPayload) {
     dl.dataFrom = get(initPayload, 'dataFrom', 'ds9');
     dl.highlightedRegion = get(initPayload, 'highlightedRegion', null);
 
+    dispatchAddSaga(regionsRemoveSaga, {id, drawLayer: dl, plotId: get(initPayload, 'plotId')});
     idCnt++;
     return dl;
 }
@@ -159,7 +188,8 @@ function getLayerChanges(drawLayer, action) {
                  }
              }
              return Object.assign({}, changes, {drawData: dd});
-        case DrawLayerCntrl.REGION_ADD_ENTRY:
+
+        case DrawLayerCntlr.REGION_ADD_ENTRY:
             if (regionChanges) {
                 var {layerTitle} = action.payload;
 
@@ -173,7 +203,7 @@ function getLayerChanges(drawLayer, action) {
             }
             return {drawData: dd};
 
-        case DrawLayerCntrl.REGION_REMOVE_ENTRY:
+        case DrawLayerCntlr.REGION_REMOVE_ENTRY:
             if (regionChanges) {
                 removeRegionsFromData(drawLayer, regionChanges);
                 Object.keys(dd[DataTypes.DATA]).forEach((plotId) => {

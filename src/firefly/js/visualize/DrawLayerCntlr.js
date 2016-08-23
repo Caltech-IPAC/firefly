@@ -223,7 +223,7 @@ export function dispatchAttachLayerToPlot(id,plotId, attachPlotGroup=false) {
 
 
 /**
- *
+ * Detatch drawing layer from the plot
  * @param {string|[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param {string|[]} plotId to attach this may by a string or an array of strings
  * @param detachPlotGroup
@@ -248,24 +248,38 @@ export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
 
 }
 
-
+/**
+ * Create plot layer containing the regions based on region file or region description
+ * @param drawLayerId required
+ * @param layerTitle  layerTitle is set based on drawLayerId or default setting it is unset
+ * @param fileOnServer
+ * @param regionAry
+ * @param plotId The region layer is created on all plots of the active plot group in plotId is empty
+ * @param dispatcher
+ */
 export function dispatchCreateRegionLayer(drawLayerId, layerTitle, fileOnServer='', regionAry=[], plotId=[],
                                            dispatcher = flux.process ) {
     dispatcher({type: REGION_CREATE_LAYER, payload: {drawLayerId, fileOnServer, plotId, layerTitle, regionAry}});
 }
 
-
+/**
+ * delete drawing layer with regions
+ * @param drawLayerId
+ * @param plotId
+ * @param dispatcher
+ */
 export function dispatchDeleteRegionLayer(drawLayerId, plotId, dispatcher = flux.process) {
     dispatcher({type: REGION_DELETE_LAYER, payload: {drawLayerId, plotId}});
 }
 
 /**
- * add regions to plot layer, if the layer doesn't exist, a new one is created
+ * Add regions to plot layer, if the layer doesn't exist, a new one is created
  * the layer title is replaced if the layer exists
- * the layer id is created in the layer doesn't exist and id is not set
+ * the layer id is created in the layer doesn't exist or id is not set, the creation of new id is
+ * based on layerTitle which is set based on some reference or default setting if it is unset.
  * @param drawLayerId
  * @param regionChanges
- * @param plotId
+ * @param plotId  The region layer is created on all plots of the active plot group in plotId is empty
  * @param layerTitle
  * @param dispatcher
  */
@@ -273,6 +287,12 @@ export function dispatchAddRegionEntry(drawLayerId, regionChanges, plotId=[], la
     dispatcher({type: REGION_ADD_ENTRY, payload: {drawLayerId, regionChanges, plotId, layerTitle}});
 }
 
+/**
+ * remove the region entry from the plot layer with drawLayerId
+ * @param drawLayerId
+ * @param regionChanges
+ * @param dispatcher
+ */
 export function dispatchRemoveRegionEntry(drawLayerId, regionChanges, dispatcher = flux.process) {
     dispatcher({type: REGION_REMOVE_ENTRY, payload: {drawLayerId, regionChanges}});
 }
@@ -380,9 +400,6 @@ function makeReducer(factory) {
                 // todo: for async data:
                 // todo: get the data in action creator, update the retrieved data here
                 // todo: the action creator will have to defer to the layer somehow
-                break;
-            case REGION_REMOVE_ENTRY:
-                retState = destroyDrawLayerNoRegion(state, action, dlReducer);
                 break;
             default:
                 retState = determineAndCallLayerReducer(state, action, dlReducer);

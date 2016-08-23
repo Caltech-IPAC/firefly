@@ -748,6 +748,11 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
 
                 centerPt = makeViewPortPt(x, y);
 
+                if (get(drawObj, 'inc')) {   // adjustment for highlight box
+                    w = Math.floor(w + drawObj.inc);
+                    h = Math.floor(h + drawObj.inc);
+                }
+
                 // draw the rect from {-w/2, -h/2} relative to the new origin
                 x = -w/2;
                 y = -h/2;
