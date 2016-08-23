@@ -4,7 +4,7 @@
 
 import React from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {isEmpty, cloneDeep} from 'lodash';
+import {isEmpty} from 'lodash';
 
 import {FilterEditor} from './FilterEditor.jsx';
 import {InputField} from '../../ui/InputField.jsx';
@@ -29,10 +29,10 @@ export class TablePanelOptions extends React.Component {
     // }
 
     render() {
-        const {columns, origColumns, pageSize, showUnits, showFilters, showToolbar=true, onChange, optSortInfo, filterInfo, toggleOptions} = this.props;
+        const {columns, pageSize, showUnits, showFilters, showToolbar=true, onChange, onOptionReset, optSortInfo, filterInfo, toggleOptions} = this.props;
         if (isEmpty(columns)) return false;
 
-        const {onPageSize, onPropChanged, onReset} = makeCallbacks(onChange, columns, origColumns);
+        const {onPageSize, onPropChanged} = makeCallbacks(onChange, columns);
         return (
             <div className='TablePanelOptions'>
                 <div
@@ -75,7 +75,7 @@ export class TablePanelOptions extends React.Component {
                              title='Remove Tab'
                              onClick={() => toggleOptions()}/>
 
-                        <button className='TablePanelOptions__button' onClick={onReset}
+                        <button className='TablePanelOptions__button' onClick={onOptionReset}
                                 title='Reset all options to defaults'>Reset</button>
                     </span>
                 </div>
@@ -94,7 +94,6 @@ export class TablePanelOptions extends React.Component {
 
 TablePanelOptions.propTypes = {
     columns: React.PropTypes.arrayOf(React.PropTypes.object),
-    origColumns: React.PropTypes.arrayOf(React.PropTypes.object),
     optSortInfo: React.PropTypes.string,
     filterInfo: React.PropTypes.string,
     pageSize: React.PropTypes.number,
@@ -102,10 +101,11 @@ TablePanelOptions.propTypes = {
     showFilters: React.PropTypes.bool,
     showToolbar: React.PropTypes.bool,
     onChange: React.PropTypes.func,
+    onOptionReset: React.PropTypes.func,
     toggleOptions: React.PropTypes.func
 };
 
-function makeCallbacks(onChange, columns, origColumns, data) {
+function makeCallbacks(onChange) {
     var onPageSize = (pageSize) => {
         if (pageSize.valid) {
             onChange && onChange({pageSize: pageSize.value});
@@ -116,9 +116,5 @@ function makeCallbacks(onChange, columns, origColumns, data) {
         onChange && onChange({[prop]: v});
     };
 
-    var onReset = () => {
-        onChange && onChange({pageSize: 100, showUnits: false, showFilters: false, filterInfo: '', columns: cloneDeep(origColumns)});
-    };
-
-    return {onPageSize, onPropChanged, onReset};
+    return {onPageSize, onPropChanged};
 }
