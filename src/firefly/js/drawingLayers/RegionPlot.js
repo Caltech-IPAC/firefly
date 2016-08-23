@@ -41,7 +41,7 @@ console.log('action.type = DrawLayerCntlr.REGION_REMOVE_ENTRY: ' + DrawLayerCntl
                     case  DrawLayerCntlr.REGION_REMOVE_ENTRY :
                         var dl = getDrawLayerById(getState()[DRAWING_LAYER_KEY], id);
                         if (dl && isEmpty(get(dl, 'drawObjAry'))) {
-                            dispatchDeleteRegionLayer(id, plotId, dispatch);
+                            dispatchDeleteRegionLayer(id, plotId);
                         }
                         break;
                     case DrawLayerCntlr.REGION_DELETE_LAYER:
@@ -224,6 +224,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 
     switch (dataType) {
         case DataTypes.DATA:
+            //return drawObjAry || plotAllRegions(drawLayer) || preData;
             return isEmpty(preData) ? drawObjAry || plotAllRegions(drawLayer) : preData;
         case DataTypes.HIGHLIGHT_DATA:
             return isEmpty(preData) ? plotHighlightRegion(highlightedRegion, plotId) : preData;
