@@ -436,14 +436,14 @@ function toRegion(pt, plot, drawObj, drawParams, renderOptions) {
  */
 export function makeHighlightPointDataObj(drawObj, cc) {
     var area = getPointDataobjArea(drawObj, cc);
-    var w = (DELTA + 1) * 2 + area.width;
-    var h = (DELTA + 1) * 2 + area.height;
+    var w = ((DELTA + 1) * 2 + area.width);
+    var h = ((DELTA + 1) * 2 + area.height);
+    var wcenter = cc.getWorldCoords(area.centerPt);
 
-    var rectObj = ShapeDataObj.makeRectangleByCenter(area.centerPt, w, h, ShapeDataObj.UnitType.PIXEL,
-                                                                    0.0, ShapeDataObj.UnitType.ARCSEC, false);
+    var rectObj = ShapeDataObj.makeRectangleByCenter(wcenter, w, h, ShapeDataObj.UnitType.PIXEL,
+                                                     0.0, ShapeDataObj.UnitType.ARCSEC, false);
 
     makeShapeHighlightRenderOptions( rectObj );
-    rectObj.isAHighlight = { from: drawObj, plotImageId: cc.plotImageId};
     return rectObj;
 }
 

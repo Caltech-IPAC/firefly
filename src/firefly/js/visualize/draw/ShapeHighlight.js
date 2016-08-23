@@ -656,15 +656,13 @@ export function makeHighlightShapeDataObj(drawObj, cc, def = {}) {
 
     var {lineWidth} = drawObj;
     var {width, height, center} = area;
-    var inc = lineWidth ? Math.floor((lineWidth+1)/2)*2 + DELTA*2 : DELTA*2;
-    var w = Math.floor(width * cc.zoomFactor + inc);
-    var h = Math.floor(height * cc.zoomFactor + inc);
-    var wcenter = cc.getWorldCoords(center);
-    var rectObj = ShapeDataObj.makeRectangleByCenter(wcenter, w, h, ShapeDataObj.UnitType.PIXEL, 0.0, ShapeDataObj.UnitType.ARCSEC, false);
+    var inc = lineWidth ? (lineWidth+1)*2 : DELTA*2;
+    var rectObj = ShapeDataObj.makeRectangleByCenter(cc.getWorldCoords(center), width, height,
+                                                     ShapeDataObj.UnitType.IMAGE_PIXEL,
+                                                     0.0, ShapeDataObj.UnitType.ARCSEC, false);
 
+    rectObj.inc = inc;
     makeShapeHighlightRenderOptions( rectObj );
-
-    rectObj.isAHighlight = { from: drawObj, plotImageId: cc.plotImageId, def};
     return rectObj;
 }
 
