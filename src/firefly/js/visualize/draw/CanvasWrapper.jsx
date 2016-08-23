@@ -13,7 +13,7 @@ import {makeDrawingDef} from './DrawingDef.js';
 
 
 
-function updateDrawer(drawer,plot, width, height, drawLayer) {
+function updateDrawer(drawer,plot, width, height, drawLayer,force=false) {
     var data, highlightData, selectIdxs;
     if (!drawLayer) return;
     var {drawData}= drawLayer;
@@ -30,7 +30,7 @@ function updateDrawer(drawer,plot, width, height, drawLayer) {
         selectIdxs= drawData.selectIdxs;
     }
     drawer.isPointData= drawLayer.isPointData;
-    drawer.setData(data,selectIdxs,plot,width,height,drawLayer.drawingDef);
+    drawer.setData(data,selectIdxs,plot,width,height,drawLayer.drawingDef,force);
     if (highlightData) {
         drawer.updateDataHighlightLayer(getDataForPlot(highlightData,plotId),width,height);
     }
@@ -103,10 +103,12 @@ class CanvasWrapper extends React.Component {
 
     shouldComponentUpdate(nProps) {
 
-        var {plot,drawLayer,width,height}= nProps;
+        var {plot,width,height}= nProps;
         const p= this.props;
 
-        const update= (width!==p.width || height!==p.height || plot!==p.plot);
+        const update= (Math.floor(width)!==Math.floor(p.width) ||
+                       Math.floor(height)!==Math.floor(p.height) ||
+                       plot!==p.plot);
 
         if (!update) {
             this.updateDrawLayer(nProps);
@@ -123,7 +125,7 @@ class CanvasWrapper extends React.Component {
         if (Array.isArray(dl)) dl= makeDummyDrawLayer(dl);
 
         window.requestAnimationFrame(() => {
-            if (this.drawer) updateDrawer(this.drawer,plot,width,height,dl);
+            if (this.drawer) updateDrawer(this.drawer,plot,width,height,dl,force);
         });
     }
 
