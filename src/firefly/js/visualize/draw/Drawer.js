@@ -104,7 +104,7 @@ class Drawer {
      * @param height
      * @param drawingDef
      */
-    setData(data,selectedIndexes,plot,width,height,drawingDef) {
+    setData(data,selectedIndexes,plot,width,height,drawingDef,forceUpdate= false) {
         if (data && !Array.isArray(data)) data= [data];
         var cWidth, cHeight, oldvpX, oldvpY, vpX, vpY, dWidth, oldDWidth, dHeight;
         var oldDHeight, zfact, oldZfact, oldTestPtStr, testPtStr, pt;
@@ -156,7 +156,7 @@ class Drawer {
             this.decimatedData= null;
         }
 
-        if (!primaryUpdated && !selectedUpdated) return;
+        if (!primaryUpdated && !selectedUpdated  && !forceUpdate) return;
 
         this.plot= plot;
         this.data = data;
@@ -164,11 +164,11 @@ class Drawer {
         this.drawingDef = drawingDef;
         
 
-        if (primaryUpdated) {
+        if (primaryUpdated || forceUpdate) {
             this.dataUpdated(width,height);
         }
 
-        if (selectedUpdated) {
+        if (selectedUpdated || forceUpdate) {
             this.updateDataSelectLayer();
         }
 
