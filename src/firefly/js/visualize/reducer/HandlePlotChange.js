@@ -20,7 +20,7 @@ import {primePlot,
         getPlotViewById} from '../PlotViewUtil.js';
 import {makeImagePt, makeWorldPt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
-import CsysConverter from '../CsysConverter.js'
+import Point from '../Point.js';
 
 
 //============ EXPORTS ===========
@@ -178,10 +178,12 @@ function installTiles(state, action) {
     var centerImagePt= PlotView.findCurrentCenterPoint(pv,pv.scrollX,pv.scrollY);
     pv= replacePrimaryPlot(pv,WebPlot.setPlotState(plot,primaryStateJson,primaryTiles));
     pv.serverCall='success';
-    pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv,idx) => {
-        var p= WebPlot.setPlotState(oPv.plot,overlayStateJsonAry[idx],overlayTilesAry[idx]);
-        return clone(oPv, {plot:p});
-    });
+    if (!isEmpty(overlayStateJsonAry) && overlayStateJsonAry.length===pv.overlayPlotViews.length) {
+        pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv,idx) => {
+            var p= WebPlot.setPlotState(oPv.plot,overlayStateJsonAry[idx],overlayTilesAry[idx]);
+            return clone(oPv, {plot:p});
+        });
+    }
     pv= PlotView.updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv,centerImagePt));
 
     plot= primePlot(pv); // get the updated on
@@ -249,7 +251,7 @@ function recenterPv(centerPt) {
             if (centerPt.type === Point.IM_PT) {
                 centerImagePt = makeImagePt(centerPt.x, centerPt.y);
             } else {
-                centerImagePt = makeWorldPt(centetPt.x, centerPt.y);
+                centerImagePt = makeWorldPt(centerPt.x, centerPt.y);
             }
         } else {
             var wp = plot.attributes[PlotAttribute.FIXED_TARGET];

@@ -196,7 +196,7 @@ export function getExpandedViewerPlotIds(multiViewRoot) {
  * @return {*}
  */
 export function getViewerPlotIds(multiViewRoot,viewerId) {
-    if (!multiViewRoot || !viewerId) return null;
+    if (!multiViewRoot || !viewerId) return [];
     var viewerObj= multiViewRoot.find( (entry) => entry.viewerId===viewerId);
     return (viewerObj) ? viewerObj.plotIdAry : [];
 }

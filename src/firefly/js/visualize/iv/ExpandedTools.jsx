@@ -12,7 +12,6 @@ import {CloseButton} from '../../ui/CloseButton.jsx';
 import {showExpandedOptionsPopup} from '../ui/ExpandedOptionsPopup.jsx';
 import { dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {VisToolbar} from '../ui/VisToolbar.jsx';
-import {VIS_TOOLBAR_HEIGHT} from '../ui/VisToolbarView.jsx';
 import {getMultiViewRoot, getExpandedViewerPlotIds} from '../MultiViewCntlr.js';
 
 import './ExpandedTools.css';
@@ -33,12 +32,11 @@ const tStyle= {
 };
 
 
-export const EXPANDED_TOOL_HEIGHT= 60 +VIS_TOOLBAR_HEIGHT;
-
-
-function createOptions(expandedMode,singleAutoPlay) {
+function createOptions(expandedMode,singleAutoPlay, plotIdAry) {
     var autoPlay= false;
-    if (expandedMode===ExpandType.SINGLE) {
+    var wcsSTMatch= false;
+    var wcsMatch= false;
+    if (expandedMode===ExpandType.SINGLE && plotIdAry.length>1) {
         autoPlay= (
             <div>
                 <div style={{display:'inline-block'}}>
@@ -53,8 +51,8 @@ function createOptions(expandedMode,singleAutoPlay) {
         );
     }
 
-    return (
-        <div style={{display:'inline-block', paddingLeft:15}}>
+    if (plotIdAry.length>1) {
+        wcsSTMatch= (
             <div>
                 <div style={{display:'inline-block'}}>
                     <input style={{margin: 0}}
@@ -65,6 +63,8 @@ function createOptions(expandedMode,singleAutoPlay) {
                 </div>
                 <div style={tStyle}>TODO: WCS Search Target Match</div>
             </div>
+        );
+        wcsMatch= (
             <div>
                 <div style={{display:'inline-block'}}>
                     <input style={{margin: 0}}
@@ -75,6 +75,13 @@ function createOptions(expandedMode,singleAutoPlay) {
                 </div>
                 <div style={tStyle}>TODO: WCS Match</div>
             </div>
+        );
+    }
+
+    return (
+        <div style={{display:'inline-block', paddingLeft:15}}>
+            {wcsSTMatch}
+            {wcsMatch}
             {autoPlay}
         </div>
     );
@@ -88,27 +95,23 @@ const closeButtonStyle= {
 };
 
 const singlePlotTitleStyle= {
-    display: 'inline-block',
-    paddingLeft: 10,
-    position: 'relative',
-    top: 12
+    paddingLeft: 2,
+    alignSelf : 'center'
 };
 
 const gridPlotTitleStyle= {
-    display: 'inline-block',
-    paddingLeft: 10,
-    position: 'relative',
-    top: 12,
+    paddingLeft: 3,
     lineHeight: '2em',
     fontSize: '10pt',
     fontWeight: 'bold',
-    verticalAlign: 'middle'
+    alignSelf : 'center'
 };
 
 
 export function ExpandedTools({visRoot,closeFunc}) {
-    var {expandedMode,plotViewAry,activePlotId, singleAutoPlay}= visRoot;
-    var single= expandedMode===ExpandType.SINGLE;
+    var {expandedMode,activePlotId, singleAutoPlay}= visRoot;
+    const plotIdAry= getExpandedViewerPlotIds(getMultiViewRoot());
+    var single= expandedMode===ExpandType.SINGLE || plotIdAry.length===1;
     var plot= primePlot(visRoot);
 
     var plotTitle;
@@ -137,14 +140,13 @@ export function ExpandedTools({visRoot,closeFunc}) {
                     <VisToolbar messageUnder={Boolean(closeFunc)}/>
                 </div>
             </div>
-            <div style={{width:'100%', height:70, marginTop: 7}} className='disable-select'>
+            <div style={{width:'100%', minHeight:25, margin: '7px 0 5px 0',
+                         display: 'flex', justifyContent:'space-between'}} className='disable-select'>
                 {plotTitle}
-                <div style={{ display: 'inline-block', paddingLeft: 10}}></div>
-                <div style={{display: 'inline-block', float:'right'}}>
+                <div style={{paddingBottom:5, alignSelf:'flex-end'}}>
                     <WhichView  visRoot={visRoot}/>
-                    {createOptions(expandedMode,singleAutoPlay)}
-                    <PagingControl plotViewAry={plotViewAry}
-                                   activePlotId={activePlotId}
+                    {createOptions(expandedMode,singleAutoPlay, plotIdAry)}
+                    <PagingControl activePlotId={activePlotId}
                                    visRoot={visRoot}
                                    expandedMode={expandedMode} />
                 </div>
@@ -153,6 +155,7 @@ export function ExpandedTools({visRoot,closeFunc}) {
     );
 }
 
+//<div style={{ display: 'inline-block', paddingLeft: 10}}></div>
 //<div style={s}>checkboxes: wcs target match, wcs match, auto play (single only)</div>
 //{makeInlineTitle(visRoot,pv)}
 
@@ -165,21 +168,28 @@ ExpandedTools.propTypes= {
 
 
 function WhichView({visRoot}) {
+    var {plotViewAry}= visRoot;
+    const showViewButtons= getExpandedViewerPlotIds(getMultiViewRoot()).length>1;
     return (
         <div style={{display: 'inline-block', verticalAlign:'top'}}>
-            <ToolbarButton icon={ONE} tip={'Show single image at full size'}
-                           imageStyle={{width:24,height:24}}
-                           enabled={true} visible={true}
-                           horizontal={true}
-                           onClick={() => dispatchChangeExpandedMode(ExpandType.SINGLE)}/>
-            <ToolbarButton icon={GRID} tip={'Show all as tiles'}
-                           enabled={true} visible={true} horizontal={true}
-                           imageStyle={{width:24,height:24}}
-                           onClick={() => dispatchChangeExpandedMode(ExpandType.GRID)}/>
-            <ToolbarButton icon={LIST} tip={'Choose which plots to show'}
-                           imageStyle={{width:24,height:24}}
-                           enabled={true} visible={true} horizontal={true}
-                           onClick={() =>showExpandedOptionsPopup(visRoot.plotViewAry) }/>
+            {showViewButtons &&
+                   <ToolbarButton icon={ONE} tip={'Show single image at full size'}
+                                  imageStyle={{width:24,height:24}}
+                                  enabled={true} visible={true}
+                                  horizontal={true}
+                                  onClick={() => dispatchChangeExpandedMode(ExpandType.SINGLE)}/>}
+            {showViewButtons &&
+                   <ToolbarButton icon={GRID} tip={'Show all as tiles'}
+                                  enabled={true} visible={true} horizontal={true}
+                                  imageStyle={{width:24,height:24}}
+                                  onClick={() => dispatchChangeExpandedMode(ExpandType.GRID)}/>
+            }
+            {plotViewAry.length>1 &&
+                   <ToolbarButton icon={LIST} tip={'Choose which plots to show'}
+                                  imageStyle={{width:24,height:24}}
+                                  enabled={true} visible={true} horizontal={true}
+                                  onClick={() =>showExpandedOptionsPopup(visRoot.plotViewAry) }/>
+            }
         </div>
     );
 }
@@ -211,7 +221,7 @@ function pTitle(begin,visRoot,plotId) {
 
 
 
-function PagingControl({plotViewAry, visRoot,activePlotId, expandedMode}) {
+function PagingControl({visRoot,activePlotId, expandedMode}) {
 
     const plotIdAry= getExpandedViewerPlotIds(getMultiViewRoot());
 
@@ -283,7 +293,6 @@ function PagingControl({plotViewAry, visRoot,activePlotId, expandedMode}) {
 }
 
 PagingControl.propTypes= {
-    plotViewAry : PropTypes.array.isRequired,
     activePlotId: PropTypes.string,
     expandedMode: PropTypes.object.isRequired,
     visRoot : PropTypes.object.isRequired

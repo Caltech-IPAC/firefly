@@ -108,7 +108,7 @@
             var req= {
                 plotId: 'xxq',
                 Type      : 'SERVICE',
-//                plotGroupId : 'myGroup',
+                plotGroupId : 'myGroup',
                 Service   : 'TWOMASS',
                 Title     : '2mass from service',
                 GridOn     : true,
@@ -121,7 +121,7 @@
 
             var req2= {
                 Type      : 'SERVICE',
-//                plotGroupId : 'myGroup',
+                plotGroupId : 'myGroup',
                 Service  : 'WISE',
                 Title     : 'Wise',
                 GridOn     : true,
@@ -179,7 +179,8 @@
 
             var v1= firefly.makeImageViewer('old1');
             var v2= firefly.makeImageViewer('old2');
-            v1.plot(req);
+
+            v1.plot(Object.assign({},req, {title:'old1 example'}));
             v2.plotURL('http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits');
 
 
