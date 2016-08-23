@@ -6,8 +6,6 @@
 const SPLIT_TOKEN= '--ClientFitHead--';
 
 import {parseInt} from '../util/StringUtils.js';
-import join from 'underscore.string/join';
-import words from 'underscore.string/words';
 
 export const C = {
     PLANE_NUMBER: 'planeNumber',
@@ -46,19 +44,6 @@ class ClientFitsHeader {
 
     setHeader(key, value) { this.header[key]= value; }
 
-    //toString() {
-    //    return join(SPLIT_TOKEN, Object.keys(this.headers).map( (key) => key+'='+this.headers[key]));
-    //}
-    //
-    //static parse(s) {
-    //    if (!s) return null;
-    //    var headers= words(s,SPLIT_TOKEN).reduce( (obj,str) =>  {
-    //                           var vStr= words(str,'=');
-    //                           if (vStr.length===2) obj[vStr[0]]=vStr[1];
-    //                           return obj;
-    //                       },{});
-    //    return Object.keys(headers).length ? new ClientFitsHeader(headers) : null;
-    //}
 }
 
 export default ClientFitsHeader;

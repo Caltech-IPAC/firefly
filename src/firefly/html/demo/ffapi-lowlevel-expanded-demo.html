@@ -50,10 +50,10 @@
             var ui= firefly.ui;
             var util= firefly.util;
             var action= firefly.action;
-            util.image.initImageViewExpanded(ui.ApiExpandedDisplay, {closeFunc:null}, 'imageViewHere');
+//            util.image.initImageViewExpanded(ui.ApiExpandedDisplay, {closeFunc:null}, 'imageViewHere');
             action.dispatchChangeExpandedMode(util.image.ExpandType.SINGLE);
 //            util.renderDOM("imageViewHere", ui.ImageViewer, {plotId:"imageViewHere"});
-            action.dispatchPlotImage('imageViewHere', req);
+            action.dispatchPlotImage({plotId:'imageViewHere', wpRequest:req});
 
 
             var cnt=0;

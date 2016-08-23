@@ -4,7 +4,8 @@
 
 
 import React, {PropTypes} from 'react';
-import {ExpandType, dispatchChangeExpandedMode, dispatchExpandedAutoPlay} from '../ImagePlotCntlr.js';
+import {ExpandType, WcsMatchType, dispatchChangeExpandedMode,
+         dispatchExpandedAutoPlay, dispatchWcsMatch} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
@@ -32,7 +33,7 @@ const tStyle= {
 };
 
 
-function createOptions(expandedMode,singleAutoPlay, plotIdAry) {
+function createOptions(expandedMode, singleAutoPlay, visRoot, plotIdAry) {
     var autoPlay= false;
     var wcsSTMatch= false;
     var wcsMatch= false;
@@ -52,28 +53,16 @@ function createOptions(expandedMode,singleAutoPlay, plotIdAry) {
     }
 
     if (plotIdAry.length>1) {
-        wcsSTMatch= (
-            <div>
-                <div style={{display:'inline-block'}}>
-                    <input style={{margin: 0}}
-                           type='checkbox'
-                           checked={false}
-                           onChange={() => console.log('WCS Search Target Match') }
-                    />
-                </div>
-                <div style={tStyle}>TODO: WCS Search Target Match</div>
-            </div>
-        );
         wcsMatch= (
             <div>
                 <div style={{display:'inline-block'}}>
                     <input style={{margin: 0}}
                            type='checkbox'
-                           checked={false}
-                           onChange={() => console.log('WCS Match') }
+                           checked={visRoot.wcsMatchType===WcsMatchType.Standard}
+                           onChange={(ev) => wcsMatchStandard(ev.target.checked, visRoot.activePlotId) }
                     />
                 </div>
-                <div style={tStyle}>TODO: WCS Match</div>
+                <div style={tStyle}>WCS Match</div>
             </div>
         );
     }
@@ -87,6 +76,28 @@ function createOptions(expandedMode,singleAutoPlay, plotIdAry) {
     );
 }
 
+
+// wcsSTMatch= (
+//     <div>
+//         <div style={{display:'inline-block'}}>
+//             <input style={{margin: 0}}
+//                    type='checkbox'
+//                    checked={visRoot.wcsMatchType===WcsMatchType.NorthCenOnPt}
+//                    onChange={(ev) =>  wcsMatchNorth(ev.target.checked, visRoot.activePlotId) }
+//             />
+//         </div>
+//         <div style={tStyle}>WCS Search Target Match</div>
+//     </div>
+// );
+
+// function wcsMatchNorth(doWcsNorth, plotId) {
+//     dispatchWcsMatch({matchType:doWcsNorth?WcsMatchType.NorthCenOnPt:false, plotId});
+//     // console.log(`doWcsNorth: ${doWcsNorth}`);
+// }
+
+function wcsMatchStandard(doWcsStandard, plotId) {
+    dispatchWcsMatch({matchType:doWcsStandard?WcsMatchType.Standard:false, plotId});
+}
 
 
 const closeButtonStyle= {
@@ -143,9 +154,9 @@ export function ExpandedTools({visRoot,closeFunc}) {
             <div style={{width:'100%', minHeight:25, margin: '7px 0 5px 0',
                          display: 'flex', justifyContent:'space-between'}} className='disable-select'>
                 {plotTitle}
-                <div style={{paddingBottom:5, alignSelf:'flex-end'}}>
+                <div style={{paddingBottom:5, alignSelf:'flex-end', whiteSpace:'nowrap'}}>
                     <WhichView  visRoot={visRoot}/>
-                    {createOptions(expandedMode,singleAutoPlay, plotIdAry)}
+                    {createOptions(expandedMode,singleAutoPlay, visRoot, plotIdAry)}
                     <PagingControl activePlotId={activePlotId}
                                    visRoot={visRoot}
                                    expandedMode={expandedMode} />

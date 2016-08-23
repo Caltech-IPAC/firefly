@@ -2,21 +2,25 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {logError} from '../util/WebUtil.js';
-import ImagePlotCntlr, {ActionScope,IMAGE_PLOT_KEY} from './ImagePlotCntlr.js';
-import {primePlot, getPlotViewById, operateOnOthersInGroup,getPlotStateAry} from './PlotViewUtil.js';
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+
+import {logError} from '../../util/WebUtil.js';
+import ImagePlotCntlr, {ActionScope,IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
+import {primePlot, getPlotViewById, operateOnOthersInGroup,getPlotStateAry} from '../PlotViewUtil.js';
 import {
     callCrop,
     callChangeColor,
     callRotateNorth,
     callRotateToAngle,
     callFlipImageOnY,
-    callRecomputeStretch} from '../rpc/PlotServicesJson.js';
-import WebPlotResult from './WebPlotResult.js';
-import {RangeValues} from './RangeValues.js';
-import {isPlotNorth} from './VisUtil.js';
-import {RotateType} from './PlotState.js';
-import {WebPlot} from './WebPlot.js';
+    callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
+import WebPlotResult from '../WebPlotResult.js';
+import {RangeValues} from '../RangeValues.js';
+import {isPlotNorth} from '../VisUtil.js';
+import {RotateType} from '../PlotState.js';
+import {WebPlot} from '../WebPlot.js';
 
 
 

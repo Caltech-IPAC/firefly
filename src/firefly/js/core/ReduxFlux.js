@@ -1,3 +1,4 @@
+
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
@@ -19,7 +20,8 @@ import ImagePlotCntlr, {IMAGE_PLOT_KEY,
                         rotateActionCreator, flipActionCreator,
                         cropActionCreator, autoPlayActionCreator, changePrimeActionCreator,
                         restoreDefaultsActionCreator, overlayPlotChangeAttributeActionCreator,
-                        changePointSelectionActionCreator} from '../visualize/ImagePlotCntlr.js';
+                        changePointSelectionActionCreator, wcsMatchActionCreator}
+                        from '../visualize/ImagePlotCntlr.js';
 
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
@@ -130,6 +132,7 @@ actionCreators.set(ImagePlotCntlr.CHANGE_PRIME_PLOT , changePrimeActionCreator);
 actionCreators.set(ImagePlotCntlr.CHANGE_POINT_SELECTION, changePointSelectionActionCreator);
 actionCreators.set(ImagePlotCntlr.RESTORE_DEFAULTS, restoreDefaultsActionCreator);
 actionCreators.set(ImagePlotCntlr.EXPANDED_AUTO_PLAY, autoPlayActionCreator);
+actionCreators.set(ImagePlotCntlr.WCS_MATCH, wcsMatchActionCreator);
 actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionCreator(drawLayerFactory));
 
 actionCreators.set(TablesCntlr.TABLE_SEARCH, TablesCntlr.tableSearch);
@@ -254,11 +257,10 @@ function bootstrap() {
  * is exported from the ImagePlotCntlr module.  The the name should be <code>processPlotImage</code>.
  *
  *
- * @param rawAction
- * @param condition
+ * @param {Action} rawAction
  * @returns {Promise}
  */
-function process(rawAction, condition) {
+function process(rawAction) {
     if (!redux) throw Error('firefly has not been bootstrapped');
 
     var ac = actionCreators.get(rawAction.type);
@@ -268,7 +270,6 @@ function process(rawAction, condition) {
     } else {
         redux.dispatch( rawAction );
     }
-
     recordHistory(rawAction);
 }
 

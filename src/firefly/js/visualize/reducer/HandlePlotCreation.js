@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, uniqBy,unionBy, isEmpty} from 'lodash';
-import Cntlr, {ExpandType} from '../ImagePlotCntlr.js';
+import {uniqBy,unionBy, isEmpty} from 'lodash';
+import Cntlr from '../ImagePlotCntlr.js';
 import PlotView, {makePlotView} from './PlotView.js';
 import {makeOverlayPlotView, replaceOverlayPlots} from './OverlayPlotView.js';
 import {getPlotViewById, clonePvAry, getOverlayById} from '../PlotViewUtil.js';
@@ -24,14 +24,13 @@ export function reducer(state, action) {
     var plotViewAry;
     var plotGroupAry;
     var plotRequestDefaults;
-    var activePlotId= state.activePlotId;
     switch (action.type) {
         case Cntlr.PLOT_IMAGE_START  :
             plotRequestDefaults= updateDefaults(state.plotRequestDefaults,action);
             plotGroupAry= confirmPlotGroup(state.plotGroupAry,action);
             plotViewAry= preNewPlotPrep(state.plotViewAry,action);
             if (plotGroupAry || plotViewAry || plotRequestDefaults) {
-                retState= clone(state, {activePlotId});
+                retState= clone(state);
                 if (plotViewAry) retState.plotViewAry= plotViewAry;
                 if (plotGroupAry) retState.plotGroupAry= plotGroupAry;
                 if (plotRequestDefaults) retState.plotRequestDefaults= plotRequestDefaults;
@@ -107,7 +106,7 @@ const updateDefaults= function(plotRequestDefaults, action) {
 };
 
 function addPlot(state,action, replace, setActive) {
-    var {plotViewAry, activePlotId}= state;
+    var {plotViewAry, activePlotId, prevActivePlotId, wcsMatchCenterWP}= state;
     const {pvNewPlotInfoAry}= action.payload;
 
     if (pvNewPlotInfoAry) { // used for doing groups
@@ -115,8 +114,12 @@ function addPlot(state,action, replace, setActive) {
             const info= pvNewPlotInfoAry.find( (i) => i.plotId===pv.plotId);
             if (!info) return pv;
             const {plotAry, overlayPlotViews}= info;
-            if (setActive) activePlotId= pv.plotId;
-            return PlotView.replacePlots(pv,plotAry,overlayPlotViews, state.expandedMode, replace);
+            if (setActive) {
+                prevActivePlotId= state.activePlotId;
+                activePlotId= pv.plotId;
+            }
+
+            return PlotView.replacePlots(pv,plotAry,overlayPlotViews, state.expandedMode, wcsMatchCenterWP, replace);
         });
     }
     else {// used for single plot update
@@ -124,11 +127,14 @@ function addPlot(state,action, replace, setActive) {
         const {plotAry, overlayPlotViews, plotId}= action.payload;
         plotViewAry= plotViewAry.map( (pv) => { // map has side effect of setting active plotId
             if (pv.plotId!==plotId ) return pv;
-            if (setActive) activePlotId= plotId;
-            return PlotView.replacePlots(pv,plotAry,overlayPlotViews, state.expandedMode, replace);
+            if (setActive) {
+                prevActivePlotId= state.activePlotId;
+                activePlotId= plotId;
+            }
+            return PlotView.replacePlots(pv,plotAry,overlayPlotViews, state.expandedMode, wcsMatchCenterWP, replace);
          });
     }
-    return clone(state, {plotViewAry,activePlotId});
+    return clone(state, {prevActivePlotId, plotViewAry,activePlotId});
 }
 
 function newOverlayPrep(state, action) {

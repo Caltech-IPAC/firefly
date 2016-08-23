@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {difference,isArray,has,isString,omit,isEmpty} from 'lodash';
+import {difference,isArray,has,isString,get, isEmpty} from 'lodash';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeImagePt, pointEquals} from './Point.js';
 import {CysConverter} from './CsysConverter.js';
@@ -11,7 +11,7 @@ import {clone} from '../util/WebUtil.js';
 /**
  * 
  * @param {Object | PlotView[]} ref
- * @return {PlotView[]}
+ * @returns {PlotView[]}
  */
 export function getPlotViewAry(ref) {
     if (ref.plotViewAry && has(ref,'activePlotId')) { // I was passed the visRoot
@@ -27,9 +27,9 @@ export function getPlotViewAry(ref) {
  * a plotViewAry. plotId is ignored when passing a plotView.  It is optional when passed a visRoot. 
  * When plotId is not included with visRoot it uses the activePlotId.
  *
- * @param {{} |PlotView[]|PlotView} ref this can be the visRoot or the plotViewAry, or a plotView Object.  
+ * @param {PlotView[]|PlotView|VisRoot} ref this can be the visRoot or the plotViewAry, or a plotView Object.
  * @param {string} [plotId] the plotId, required with plotViewAry, ignored for  plotView, optional with visRoot
- * @return {WebPlot} the plot
+ * @returns {WebPlot} the plot
  */
 export function primePlot(ref,plotId) {
     var pv;
@@ -49,9 +49,9 @@ export function primePlot(ref,plotId) {
 
 
 /**
- * @param {{} | PlotView[] } ref this can be the visRoot object or a plotViewAry array.
+ * @param {VisRoot | PlotView[] } ref this can be the visRoot object or a plotViewAry array.
  * @param {string} plotId
- * @return {object} the plot view object
+ * @returns {PlotView} the plot view object
  */
 export function getPlotViewById(ref,plotId) {
     if (!plotId) return null;
@@ -77,7 +77,7 @@ export function getPlotGroupIdxById(ref,plotGroupId) {
  *
  * @param {Object | PlotView[]} ref visRoot or plotViewAry
  * @param [activePlotId]
- * @return {PlotView[]}
+ * @returns {PlotView[]}
  */
 export function expandedPlotViewAry(ref,activePlotId=null) {
     var plotViewAry= getPlotViewAry(ref);
@@ -90,7 +90,7 @@ export function expandedPlotViewAry(ref,activePlotId=null) {
  * @param visRoot - root of the visualization object in store
  * @param pvOrId this parameter will take the plotId string or a plotView object
  * @param onlyIfGroupLocked
- * @return {*}
+ * @returns {*}
  */
 export function getPlotViewIdListInGroup(visRoot,pvOrId,onlyIfGroupLocked=true) {
     if (!pvOrId) return [];
@@ -105,9 +105,9 @@ export function getPlotViewIdListInGroup(visRoot,pvOrId,onlyIfGroupLocked=true) 
 
 /**
  * Is this plotview the active one
- * @param visRoot - root of the visualization object in store
+ * @param {VisRoot} visRoot - root of the visualization object in store
  * @param plotId
- * @return {boolean} is active, there will be only one active at a time
+ * @returns {boolean} is active, there will be only one active at a time
  */
 export function isActivePlotView(visRoot,plotId) { return visRoot.activePlotId===plotId; }
 
@@ -182,6 +182,7 @@ export function getOverlayByPvAndId(ref,plotId,imageOverlayId) {
 
 /**
  * Get all drawing layers container from the store
+ * @param dlRoot
  * @return {Array}
  */
 export function getAllDrawLayers(dlRoot) { return dlRoot.drawLayerAry; }
@@ -229,7 +230,7 @@ export function getDrawLayerByType(ref,typeId) {
  *
  * @param ref - the root of the drawing layer controller or the master array of all drawing layers
  * @param id draw layer id
- * @return {object} the draw layer
+ * @returns {Array} the draw layer
  */
 export function getDrawLayerById(ref,id) {
     var dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
@@ -238,9 +239,9 @@ export function getDrawLayerById(ref,id) {
 
 /**
  * UNTESTED - I think I will need this eventually
- * @param ref - the root of the drawing layer controller or the master array of all drawing layers
- * @param displayGroupId
- * @return {object} the draw layer
+ * @param {Object} ref - the root of the drawing layer controller or the master array of all drawing layers
+ * @param {string} displayGroupId
+ * @return {Array} the draw layer
  */
 export function getDrawLayersByDisplayGroup(ref,displayGroupId) {
     var dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
@@ -260,10 +261,10 @@ export function drawLayersDiffer(dl1Ary,dl2Ary) {
 }
 
 /**
- *
+ * True is the drawing layer is visible
  * @param {Object} dl the drawLayer
- * @param plotId
- * @return {boolean}
+ * @param {string} plotId
+ * @returns {boolean}
  */
 export function isDrawLayerVisible(dl, plotId) { return dl ? dl.visiblePlotIdAry.includes(plotId) : false; }
 
@@ -284,6 +285,17 @@ export function getLayerTitle(plotId,dl) { return (typeof dl.title === 'string')
 //--------------------------------------------------------------
 
 
+/**
+ *
+ * @param {visRoot} visRoot
+ * @param plotId
+ */
+export function plotInActiveGroup(visRoot, plotId) {
+    if (!get(visRoot, 'activePlotId')) return false;
+    const pv= getPlotViewById(visRoot, plotId);
+    const activePv= getPlotViewById(visRoot, visRoot.activePlotId);
+    return (pv.plotGroupId===activePv.plotGroupId);
+}
 
 /**
  * make an array of plot starts from the primary plot and all its image overlays
@@ -308,6 +320,22 @@ export function hasGroupLock(pv,plotGroup) {
                     pv && pv.plotGroupId===plotGroup.plotGroupId);
 }
 
+
+/**
+ * Check it two plot ids are in the same group
+ * @param {VisRoot | PlotView[] } ref this can be the visRoot object or a plotViewAry array.
+ * @param {string} plotId1 first plotId
+ * @param {string} plotId2 second plotId
+ * @return {boolean} true if in same group`
+ */
+export function isInSameGroup(ref, plotId1, plotId2) {
+    const pv1= getPlotViewById(ref,plotId1);
+    const pv2= getPlotViewById(ref,plotId2);
+    return pv1.plotGroupId===pv2.plotGroupId;
+}
+
+
+
 //--------------------------------------------------------------
 //--------------------------------------------------------------
 //--------- Inside reducer functions
@@ -323,9 +351,9 @@ export function findPlotViewIdx(plotId, plotViewAry) {
 
 
 
+
 /**
  * find the plot group from the array
- * USE INSIDE REDUCER ONLY
  * @param plotGroupId
  * @param plotGroupAry
  * @return {*}
@@ -343,7 +371,8 @@ export function findPlotGroup(plotGroupId, plotGroupAry) {
  * @param sourcePv
  * @param plotViewAry
  * @param plotGroup
- * @param operationFunc
+ * @param {Function} operationFunc the function to operate on the other plot views
+ * @param {PlotView} operationFunc.param pv the PlotView to operate on
  * @return {Array} new plotView array after the operation
  */
 export function matchPlotView(sourcePv,plotViewAry,plotGroup,operationFunc) {
@@ -358,13 +387,15 @@ export function matchPlotView(sourcePv,plotViewAry,plotGroup,operationFunc) {
 
 
 /**
- * perform an operation or a plotView or its related group depending on the lock state.
+ * perform an operation on a plotView or its related group depending on the lock state.
  * @param plotViewAry plotViewAry
  * @param plotId the that is primary.
  * @param plotGroup the group to check against
- * @param operationFunc the function to operate on the other plot views
+ * @param {Function} operationFunc the function to operate on the other plot views
+ * @param {PlotView} operationFunc.param pv the PlotView to operate on
  * @return {Array} new plotViewAry
  */
+
 export function applyToOnePvOrGroup(plotViewAry, plotId,plotGroup,operationFunc) {
     var groupLock= hasGroupLock(getPlotViewById(plotViewAry,plotId),plotGroup);
     return plotViewAry.map( (pv) => {
@@ -377,9 +408,9 @@ export function applyToOnePvOrGroup(plotViewAry, plotId,plotGroup,operationFunc)
 
 /**
  * based on groupLock return an array which will either contain one plotView or the whole group 
- * @param plotViewAry
- * @param plotId
- * @param plotGroup
+ * @param {PlotView[]} plotViewAry
+ * @param {string} plotId
+ * @param {PlotGroup} plotGroup
  * @return {*}
  */
 export function getOnePvOrGroup(plotViewAry, plotId,plotGroup) {
@@ -393,7 +424,7 @@ export function getOnePvOrGroup(plotViewAry, plotId,plotGroup) {
 /**
  * First fine the PlotView with the plotId, then clone the PlotView with the changes specified in the object.
  * Then return a new PlotView array with the changes.
- * @param ref visRoot or plotViewAry
+ * @param {PlotView[]|VisRoot}ref visRoot or plotViewAry
  * @param {string} plotId
  * @param {{}} obj fields to replace
  * @return {[]}

@@ -4,7 +4,7 @@
 import {take} from 'redux-saga/effects';
 import {unionWith} from 'lodash';
 import ImagePlotCntlr, {visRoot, makeUniqueRequestKey} from '../ImagePlotCntlr.js';
-import {modifyRequest, processPlotImageSuccessResponse} from '../PlotImageTask.js';
+import {modifyRequest, processPlotImageSuccessResponse} from '../task/PlotImageTask.js';
 import {callGetWebPlot, callGetWebPlotGroup, callGetWebPlot3Color} from '../../rpc/PlotServicesJson.js';
 import {getPlotViewById} from '../PlotViewUtil.js';
 import {Band} from '../Band.js';

@@ -10,7 +10,10 @@ import CoordinateSys from './CoordSys.js';
 import Enum from 'enum';
 
 
+/** can be 'NORTH', 'ANGLE', 'UNROTATE' */
 export const RotateType= new Enum(['NORTH', 'ANGLE', 'UNROTATE']);
+
+/** can be 'ROTATE', 'CROP', 'FLIP_Y' */
 export const Operation= new Enum(['ROTATE', 'CROP', 'FLIP_Y']);
 
 
@@ -291,81 +294,9 @@ export class PlotState {
         return this.getBands().every( (band) => this.get(band).isFileOriginal());
     }
 
-    //toPrettyString() {
-    //    s= "PlotState: ";
-    //    var pr;
-    //    for(Band band : getBands() ) {
-    //        pr= get(band).getWebPlotRequest();
-    //        if (pr!=null) s+= pr.prettyString() + ", ";
-    //    }
-    //    s+= "ctxStr: " + this.ctxStr +
-    //        ", zoom: " + this.zoomLevel +
-    //        ", color id: " + _colorTableId +
-    //        ", 3 color: " + this.threeColor;
-    //    return s;
-    //
-    //}
 
     serialize() { return this.toString(); }
 
-    //toString() {
-    //
-    //    var part1= join(SPLIT_TOKEN,
-    //            this.multiImage,
-    //            this.ctxStr,
-    //            this.newPlot,
-    //            this.zoomLevel,
-    //            this.threeColor,
-    //            this.colorTableId,
-    //            this.rotationType,
-    //            this.rotationAngle,
-    //            this.flippedY,
-    //            this.rotaNorthType.toString());
-    //
-    //    var part2= this.bandStateAry.map( (bandState) => bandState ? bandState.serialize() : 'null').join(SPLIT_TOKEN);
-    //
-    //    return join(SPLIT_TOKEN,part1,part2);
-    //
-    //}
-    //
-    //static parse(s) {
-    //    if (!s) return null;
-    //
-    //    var sAry= s.split(SPLIT_TOKEN,13);
-    //    if (sAry.length<13) return null;
-    //
-    //    var i= 0;
-    //    var multiImage= MultiImageAction.get(sAry[i++]);
-    //    var ctxStr= getStringWithNull(sAry[i++]);
-    //    var newPlot= parseBoolean(sAry[i++]);
-    //    var zoomLevel= parseFloat(sAry[i++], 1);
-    //    var threeColor = parseBoolean(sAry[i++],false);
-    //    var colorTableId= parseInt(sAry[i++], 0);
-    //    var rotationType= RotateType.get(sAry[i++]);
-    //    var rotationAngle= parseFloat(sAry[i++]);
-    //    var flippedY= parseBoolean(sAry[i++],false);
-    //    var rotaNorthType= CoordinateSys.parse(getStringWithNull(sAry[i++]));
-    //
-    //    var bandStateAry= [undefined,undefined,undefined];
-    //    for(let j= 0; (j<MAX_BANDS);j++) {
-    //        bandStateAry[j]= BandState.parse(getStringWithNull(sAry[i++]));
-    //    }
-    //
-    //    var retval= new PlotState();
-    //    retval.multiImage= multiImage;
-    //    retval.ctxStr= ctxStr;
-    //    retval.newPlot= newPlot;
-    //    retval.zoomLevel= zoomLevel;
-    //    retval.threeColor= threeColor;
-    //    retval.colorTableId= colorTableId;
-    //    retval.rotationType= rotationType;
-    //    retval.rotaNorthType= rotaNorthType;
-    //    retval.rotationAngle= rotationAngle;
-    //    retval.flippedY = flippedY;
-    //    retval.bandStateAry= bandStateAry;
-    //
-    //    return retval;
-    //}
 
     equals(obj) {
         return (obj instanceof PlotState) ? this.toJson()===obj.toJson() : false;

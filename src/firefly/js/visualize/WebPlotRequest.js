@@ -4,7 +4,7 @@
  * Time: 9:18:47 AM
  */
 /* eslint prefer-template:0 */
-import {isString, isPlainObject, isArray, isBoolean} from 'lodash';
+import {isString, isPlainObject, isArray, join} from 'lodash';
 import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
 import {RequestType} from './RequestType.js';
 import {ZoomType} from './ZoomType.js';
@@ -12,7 +12,6 @@ import Enum from 'enum';
 import CoordinateSys from './CoordSys.js';
 import Point, {parseImagePt} from './Point.js';
 import {parseResolver} from '../astro/net/Resolver.js';
-import join from 'underscore.string/join';
 import {RangeValues} from './RangeValues.js';
 
 
@@ -1220,7 +1219,7 @@ export class WebPlotRequest extends ServerRequest {
      * @param orderList array of Order enums, the order of the pipeline
      */
     setPipelineOrder(orderList) {
-        this.setParam(C.PIPELINE_ORDER, join(';',...orderList));
+        this.setParam(C.PIPELINE_ORDER, join(orderList,';'));
     }
 
     /**
@@ -1245,7 +1244,7 @@ export class WebPlotRequest extends ServerRequest {
 
     setMaskColors(colors) {
         if (isArray(colors)) {
-            this.setParam(C.MASK_COLORS, join(';',...colors));
+            this.setParam(C.MASK_COLORS, join(colors, ';'));
         }
         else {
             this.setParam(C.MASK_COLORS, colors);
@@ -1277,7 +1276,7 @@ export class WebPlotRequest extends ServerRequest {
      * @param overlayIdList
      */
     setOverlayIds(overlayIdList) {
-        this.setParam(C.OVERLAY_IDS, join(';', ...overlayIdList));
+        this.setParam(C.OVERLAY_IDS, join(overlayIdList, ';'));
     }
 
     /**

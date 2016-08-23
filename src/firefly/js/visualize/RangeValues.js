@@ -173,7 +173,7 @@ export class RangeValues {
      * @param boundsType one of 'percent', 'absolute', 'sigma'
      * @param lowerValue lower value of stretch, based on stretchType
      * @param upperValue upper value of stretch, based on stretchType
-     * @param algorithm one of 'log', 'loglog', 'equal', 'squared', 'sqrt', 'asinh', powerlaw_gamma'
+     * @param algorithm one of 'linear', 'log', 'loglog', 'equal', 'squared', 'sqrt', 'asinh', powerlaw_gamma'
      * @return {*}
      */
     static makeSimple(boundsType= PERCENTAGE_STR,

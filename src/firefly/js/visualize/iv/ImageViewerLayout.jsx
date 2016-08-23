@@ -4,18 +4,21 @@
 
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {concat, xor,isEmpty,get, isString, isObject, isFunction, has, findLast} from 'lodash';
+import {xor,isEmpty,get, isString, isFunction} from 'lodash';
 import {TileDrawer} from './TileDrawer.jsx';
 import {EventLayer} from './EventLayer.jsx';
 import {ImageViewerStatus} from './ImageViewerStatus.jsx';
 import {makeScreenPt} from '../Point.js';
-import {logError} from '../../util/WebUtil.js';
 import {flux} from '../../Firefly.js';
 import {DrawerComponent}  from '../draw/DrawerComponent.jsx';
-import {CysConverter}  from '../CsysConverter.js';
-import {primePlot} from '../PlotViewUtil.js';
+import {CysConverter, CCUtil}  from '../CsysConverter.js';
+import {UserZoomTypes}  from '../ZoomUtil.js';
+import {primePlot, plotInActiveGroup} from '../PlotViewUtil.js';
+import {isViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js';
 import {contains} from '../VisUtil.js';
 import {
+    visRoot,
+    ActionScope,
     dispatchPlotProgressUpdate,
     dispatchZoom,
     dispatchProcessScroll,
@@ -28,6 +31,38 @@ const DEFAULT_CURSOR= 'crosshair';
 const {MOVE,DOWN,DRAG,UP, DRAG_COMPONENT, EXIT, ENTER}= MouseState;
 
 const draggingOrReleasing = (ms) => ms==DRAG || ms===DRAG_COMPONENT || ms===UP || ms===EXIT || ms===ENTER;
+
+
+
+function updateZoom(pv, paging) {
+    if (!primePlot(pv)) return;
+    const vr= visRoot();
+    var doZoom= false;
+    var actionScope= ActionScope.GROUP;
+    if (isViewerSingleLayout(getMultiViewRoot(), visRoot(), pv.plotId)) {
+        doZoom= true;
+        actionScope= ActionScope.SINGLE;
+    }
+    else {  // case: not expanded or expand as grid
+            // if plot are in the group that is active then only the prime plot will do the zooming for all the group.
+            // otherwise if we are not in the active group each plot will do a zoom
+        const inActive= plotInActiveGroup(vr,pv.plotId);
+        const isActive= vr.activePlotId===pv.plotId;
+        doZoom= (isActive || !inActive);
+        actionScope= inActive ? ActionScope.GROUP : ActionScope.SINGLE;
+    }
+    if (doZoom) {
+        dispatchZoom({
+            plotId: pv.plotId,
+            userZoomType: (paging && vr.wcsMatchType) ? UserZoomTypes.WCS_MATCH_PREV : pv.plotViewCtx.zoomLockingType,
+            zoomLockingEnabled: true,
+            forceDelay: true,
+            actionScope
+        });
+    }
+}
+
+
 
 export class ImageViewerLayout extends Component {
 
@@ -46,32 +81,22 @@ export class ImageViewerLayout extends Component {
         var {plotView:pv}= this.props;
         this.previousDim= makePrevDim(this.props);
         dispatchUpdateViewSize(pv.plotId,width,height);
-        if (pv && pv.plotViewCtx.zoomLockingEnabled && primePlot(pv)) {
-            // dispatchZoom(pv.plotId,pv.plotViewCtx.zoomLockingType,true,true, true);
-            dispatchZoom({
-                plotId:pv.plotId,
-                userZoomType:pv.plotViewCtx.zoomLockingType,
-                zoomLockingEnabled:true, 
-                forceDelay:true
-            });
+        if (pv.plotViewCtx.zoomLockingEnabled && primePlot(pv)) {
+            const paging= isViewerSingleLayout(getMultiViewRoot(), visRoot(), pv.plotId);
+            updateZoom(pv,paging);
         }
     }
 
     componentDidUpdate() {
-        var {width,height,externalWidth,externalHeight, plotView:pv}= this.props;
-        var {prevWidth,prevHeight, prevExternalWidth, prevExternalHeight, prevPlotId}= this.previousDim;
+        const {width,height,externalWidth,externalHeight, plotView:pv}= this.props;
+        const {prevWidth,prevHeight, prevExternalWidth, prevExternalHeight, prevPlotId}= this.previousDim;
+        if (!pv) return;
+
         if (prevWidth!==width || prevHeight!==height || prevPlotId!==pv.plotId) {
             dispatchUpdateViewSize(pv.plotId,width,height);
-            //console.log('dispatchUpdateViewSize');
-            if (pv && pv.plotViewCtx.zoomLockingEnabled && primePlot(pv)) {
+            if (pv.plotViewCtx.zoomLockingEnabled && primePlot(pv)) {
                 if (prevExternalWidth!==externalWidth || prevExternalHeight!==externalHeight) {
-                    //console.log('dispatchZoom');
-                    dispatchZoom({
-                        plotId:pv.plotId,
-                        userZoomType:pv.plotViewCtx.zoomLockingType,
-                        zoomLockingEnabled:true,
-                        forceDelay:true
-                    });
+                    updateZoom(pv,false);
                 }
             }
             this.previousDim= makePrevDim(this.props);
@@ -136,23 +161,35 @@ export class ImageViewerLayout extends Component {
 
     renderInside() {
         var {plotView,drawLayersAry}= this.props;
-        var {plotId,scrollX,scrollY}= plotView;
+        var {plotId,scrollX,scrollY, viewDim}= plotView;
         var plot= primePlot(plotView);
+        const vr= visRoot();
+
         var {dim:{width:viewPortWidth,height:viewPortHeight},x:vpX,y:vpY}= plot.viewPort;
         var {width:sw,height:sh}= plot.screenSize;
         var scrollViewWidth= Math.min(viewPortWidth,sw);
         var scrollViewHeight= Math.min(viewPortHeight,sh);
-        var left= vpX-scrollX;
-        var top= vpY-scrollY;
+        var left= vpX-scrollX; //+offPt.x;
+        var top= vpY-scrollY; //+offPt.y;
         var rootStyle= {left, top,
                         position:'relative',
                         width:scrollViewWidth,
                         height:scrollViewHeight,
-                        marginLeft: 'auto',
-                        marginRight: 'auto'
-
+                        marginRight: 'auto',
+                        marginLeft: 0
         };
-        
+
+        if (vr.wcsMatchType) {
+            rootStyle.marginLeft = 0; // todo: could I do some sort of center computation so the active wcs was centered
+        }
+        else {
+            if (viewDim.width>plot.screenSize.width) {
+                rootStyle.marginLeft = (viewDim.width-plot.screenSize.width)/2;
+            }
+         }
+
+
+
         const drawLayersIdAry= drawLayersAry ? drawLayersAry.map( (dl) => dl.drawLayerId) : null;
 
 
@@ -217,6 +254,8 @@ ImageViewerLayout.propTypes= {
 };
 
 
+
+// eslint-disable-next-line valid-jsdoc
 /**
  *
  * @param pv
@@ -253,7 +292,11 @@ function makeTileDrawers(pv,viewPortWidth, viewPortHeight, scrollX, scrollY ) {
     return drawers;
 }
 
-
+/**
+ *
+ * @param {object} props
+ * @return {{prevWidth, prevHeight, prevExternalWidth, prevExternalHeight, prevPlotId: *}}
+ */
 function makePrevDim(props) {
     var {width,height,externalWidth,externalHeight,plotView}= props;
     return {

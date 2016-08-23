@@ -11,7 +11,6 @@ import Color from '../../util/Color.js';
 import CsysConverter, {CCUtil} from '../CsysConverter.js';
 import {POINT_DATA_OBJ} from './PointDataObj.js';
 import DrawOp from './DrawOp.js';
-import join from 'underscore.string/join';
 import {get} from 'lodash';
 
 

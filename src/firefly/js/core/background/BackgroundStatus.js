@@ -15,7 +15,6 @@ import BackgroundState from './BackgroundState.js';
 import PackageProgress from './PackageProgress.js';
 import ServerRequest from '../../data/ServerRequest.js';
 import replaceAll from 'underscore.string/replaceAll';
-import words from 'underscore.string/words';
 import validator from 'validator';
 
 export const BgType = new Enum(['SEARCH', 'PACKAGE', 'UNKNOWN', 'PERSISTENT']);
@@ -518,7 +517,7 @@ export class BackgroundStatus {
     /**
      * Parses the string argument into a ServerRequest object.
      * This method is reciprocal to serialize().
-     * @param {string } the serialized string
+     * @param {string} str the serialized string
      * @return {BackgroundStatus}
      */
     parse(str) {
@@ -526,8 +525,8 @@ export class BackgroundStatus {
         const bgStat= new BackgroundStatus();
         const params = str.split(PARAM_SEP);
         if (params.length>0) {
-            words(str, PARAM_SEP).forEach((p) => {
-                var outParam= words(p,KW_VAL_SEP);
+            params.forEach((p) => {
+                var outParam= p.split(KW_VAL_SEP);
                 if (outParam.length===2) bgStat.setParam(outParam[0], outParam[1]);
             });
             return bgStat;
