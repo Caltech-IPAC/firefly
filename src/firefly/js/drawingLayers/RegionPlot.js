@@ -27,16 +27,13 @@ export default {factoryDef, TYPE_ID};
 
 var idCnt=0;
 
-function* regionsRemoveSaga({id, plotId, drawLayer}, dispatch, getState) {
+function* regionsRemoveSaga({id, plotId}, dispatch, getState) {
         while (true) {
             var action = yield take([DrawLayerCntlr.REGION_REMOVE_ENTRY,
                                      DrawLayerCntlr.REGION_DELETE_LAYER,
                                      DrawLayerCntlr.DETACH_LAYER_FROM_PLOT]);
 
             if (action.payload.drawLayerId === id) {
-console.log('payload id = ' + action.payload.drawLayerId + '    id = ' + id);
-console.log('DrawLayerCntlr.REGION_REMOVE_ENTRY = ' + DrawLayerCntlr.REGION_REMOVE_ENTRY);
-console.log('action.type = DrawLayerCntlr.REGION_REMOVE_ENTRY: ' + DrawLayerCntlr.REGION_REMOVE_ENTRY===action.type);
                 switch (action.type) {
                     case  DrawLayerCntlr.REGION_REMOVE_ENTRY :
                         var dl = getDrawLayerById(getState()[DRAWING_LAYER_KEY], id);
@@ -68,7 +65,6 @@ function creator(initPayload) {
     var drawingDef= makeDrawingDef('green');
     var pairs = {
         [MouseState.DOWN.key]: highlightChange
-        //[MouseState.DOWN.key]: removeRegionDescription
     };
 
     idCnt++;
@@ -84,15 +80,15 @@ function creator(initPayload) {
     var actionTypes = [DrawLayerCntlr.REGION_ADD_ENTRY,
                        DrawLayerCntlr.REGION_REMOVE_ENTRY];
 
-    var id = get(initPayload, 'drawLayerId', `${ID}-${idCnt}`);
-    var dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', 'Region Plot'),
+    const id = get(initPayload, 'drawLayerId', `${ID}-${idCnt}`);
+    var   dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', 'Region Plot'),
                                       options, drawingDef, actionTypes, pairs );
 
     dl.regionAry = get(initPayload, 'regionAry', null);
     dl.dataFrom = get(initPayload, 'dataFrom', 'ds9');
     dl.highlightedRegion = get(initPayload, 'highlightedRegion', null);
 
-    dispatchAddSaga(regionsRemoveSaga, {id, drawLayer: dl, plotId: get(initPayload, 'plotId')});
+    dispatchAddSaga(regionsRemoveSaga, {id, plotId: get(initPayload, 'plotId')});
     idCnt++;
     return dl;
 }
@@ -220,14 +216,12 @@ function getLayerChanges(drawLayer, action) {
 
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
     const {highlightedRegion, drawObjAry} = drawLayer;
-    var preData = get(lastDataRet, plotId, null) || lastDataRet;
 
     switch (dataType) {
         case DataTypes.DATA:
-            //return drawObjAry || plotAllRegions(drawLayer) || preData;
-            return isEmpty(preData) ? drawObjAry || plotAllRegions(drawLayer) : preData;
+            return isEmpty(lastDataRet) ? drawObjAry || plotAllRegions(drawLayer) : lastDataRet;
         case DataTypes.HIGHLIGHT_DATA:
-            return isEmpty(preData) ? plotHighlightRegion(highlightedRegion, plotId) : preData;
+            return isEmpty(lastDataRet) ? plotHighlightRegion(highlightedRegion, plotId) : lastDataRet;
     }
     return null;
 }
