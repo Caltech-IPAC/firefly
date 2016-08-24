@@ -405,6 +405,7 @@ public class DataType implements Serializable, Cloneable {
 
         public void setDataFormat(String dataFormatStr) {
             _dataFormat = dataFormatStr;
+            setIsDefault(false);
         }
 
         /**

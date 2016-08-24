@@ -123,6 +123,10 @@ public class DataGroupReader {
                         DataObject arow = new DataObject(data);
                         for (DataType dt : data.getDataDefinitions()) {
                             arow.setDataElement(dt, row.getDataElement(dt.getKeyName()));
+                            if (dt.getFormatInfo().isDefault()) {
+                                dt.getFormatInfo().setDataFormat(
+                                        headers.getDataDefintion(dt.getKeyName()).getFormatInfo().getDataFormatStr());
+                            }
                         }
                         data.add(arow);
                     } else {

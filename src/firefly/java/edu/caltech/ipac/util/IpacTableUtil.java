@@ -182,7 +182,6 @@ public class IpacTableUtil {
             DataType.FormatInfo fi = dataType.getFormatInfo();
             fi.setDataFormat(formatStr);
             fi.setDataAlign(align);
-            fi.setIsDefault(false);
         }
     }
 
