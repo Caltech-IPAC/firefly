@@ -3,18 +3,8 @@
  */
 package edu.caltech.ipac.util;
 
-import edu.jhu.util.StringUtil;
-
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class is the data class for any set of objects that we show on plots.  <i>This class need more
@@ -140,12 +130,7 @@ public class DataGroup implements Serializable,
             int maxDataWidth = dt.getMaxDataWidth();
             if (force || maxDataWidth == 0) {
                 for (DataObject row : this) {
-                    int vlength = 0;
-                    if (Number.class.isAssignableFrom(dt.getDataType())) {
-                        vlength = dt.getFormatInfo().formatDataOnly(row.getDataElement(dt)).length();
-                    } else {
-                        vlength = String.valueOf(row.getDataElement(dt)).length();
-                    }
+                    int vlength = row.getDataWidth(dt);
                     maxDataWidth = Math.max(maxDataWidth, vlength);
                 }
             }

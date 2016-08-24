@@ -4,17 +4,11 @@
 package edu.caltech.ipac.util;
 
 import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.firefly.data.ServerEvent;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.util.DataSetParser;
-import edu.caltech.ipac.firefly.util.event.Name;
-import edu.jhu.util.StringUtil;
-import org.json.simple.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,11 +16,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Date: Jun 25, 2009
@@ -131,12 +122,36 @@ public class IpacTableUtil {
         return cols;
     }
 
+    /**
+     * return the meta info for the given cname column if it exists.
+     * @param metas  a list of meta from the table
+     * @param cname  the column name to search
+     * @param tag    the column tag to search.  see DataSetParser.java for a list of tags.
+     * @return
+     */
+    public static String getColMeta(Collection<DataGroup.Attribute> metas, String cname, String tag) {
+        String mkey = DataSetParser.makeAttribKey(tag, cname);
+        Optional<DataGroup.Attribute> att = metas.stream().filter(m -> Objects.equals(m.getKey(), mkey)).findFirst();
+        return att.isPresent() ? att.get().getValue() : null;
+
+    }
+
+    /**
+     * return the all meta info for the given cname column if it exists.
+     * @param metas  a list of meta from the table
+     * @param cname  the column name to search
+     * @return
+     */
+    public static List<DataGroup.Attribute> getAllColMeta(Collection<DataGroup.Attribute> metas, String cname) {
+        return metas.stream().filter(m -> String.valueOf(m.getKey()).startsWith("col." + cname)).collect(Collectors.toList());
+    }
+
     public static  void setDataType(List<DataType> cols, String line) {
         if (line != null && line.startsWith("|")) {
             String[] types = parseHeadings(line.trim());
             for (int i = 0; i < types.length; i++) {
                 String typeDesc = types[i].trim();
-                cols.get(i).setDataType(IpacTableReader.resolveClass(typeDesc));
+                cols.get(i).setDataType(DataType.parseDataType(typeDesc));
             }
         }
     }
@@ -167,7 +182,6 @@ public class IpacTableUtil {
             DataType.FormatInfo fi = dataType.getFormatInfo();
             fi.setDataFormat(formatStr);
             fi.setDataAlign(align);
-            fi.setIsDefault(false);
         }
     }
 
@@ -175,20 +189,8 @@ public class IpacTableUtil {
         if (StringUtils.isEmpty(rval)) return;
 
         try {
-            Integer.parseInt(rval);
-            type.setDataType(Integer.class);
-            return;
-        }catch (Exception e){}
-
-        try {
             Long.parseLong(rval);
             type.setDataType(Long.class);
-            return;
-        }catch (Exception e){}
-
-        try {
-            Float.parseFloat(rval);
-            type.setDataType(Float.class);
             return;
         }catch (Exception e){}
 
@@ -262,7 +264,12 @@ public class IpacTableUtil {
                     }
                     offset = endoffset;
                     if (type.getFormatInfo().isDefault()) {
-                        IpacTableUtil.guessFormatInfo(type, rval);
+                        DataGroup.Attribute format = source.getAttribute(DataSetParser.makeAttribKey(DataSetParser.FORMAT_TAG, type.getKeyName()));
+                        if (format == null || Objects.equals(format.getValue(), DataSetParser.FMT_AUTO)) {
+                            IpacTableUtil.guessFormatInfo(type, rval);
+                        } else if (!Objects.equals(format.getValue(), DataSetParser.FMT_NONE)){
+                            type.getFormatInfo().setDataFormat(format.getValue());
+                        }
 
                         // disable sorting if value is HTML, or unit is 'html'
                         // this block should only be executed once, when formatInfo is not set.

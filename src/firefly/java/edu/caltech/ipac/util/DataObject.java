@@ -121,6 +121,23 @@ public class DataObject implements Serializable, Cloneable {
         return val;
     }
 
+    /**
+     * returns the the length of the formatted string representation of the data.
+     * @param dt  column info
+     * @return
+     */
+    public int getDataWidth(DataType dt) {
+        int idx = dt.getColumnIdx();
+        String val;
+        if (_formattedData != null && _formattedData.length > idx && _formattedData[idx] != null) {
+            val = _formattedData[idx];
+        } else {
+            Object v = getDataElement(dt);
+            val = dt.getFormatInfo().formatDataOnly(v);
+        }
+        return val == null ? 0 : val.length();
+    }
+
     public Object getDataElement(String name) {
         checkSize();
         DataType dtype = getDataType(name);

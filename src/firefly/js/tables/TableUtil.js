@@ -576,7 +576,7 @@ export function getTableSourceUrl(tbl_ui_id) {
 export function calcColumnWidths(columns, dataAry) {
     return columns.reduce( (pv, cv, idx) => {
         const cname = cv.name;
-        var width = Math.max(cname.length, get(cv, 'units.length', 0));
+        var width = Math.max(cname.length, get(cv, 'units.length', 0),  get(cv, 'type.length', 0));
         width = dataAry.reduce( (maxWidth, row) => {
             return Math.max(maxWidth, get(row, [idx, 'length'], 0));
         }, width);  // max width of data

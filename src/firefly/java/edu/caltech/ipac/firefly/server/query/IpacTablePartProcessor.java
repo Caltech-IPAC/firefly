@@ -622,7 +622,12 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         int tblIdx = request.getIntParam(TableServerRequest.TBL_INDEX, 0);
         boolean isFixedLength = request.getBooleanParam(TableServerRequest.FIXED_LENGTH, true);
         if (format == DataGroupReader.Format.IPACTABLE && isFixedLength) {
-            // file is already in ipac table format
+            TableDef tableDef = IpacTableUtil.getMetaInfo(tblFile);
+            if (tableDef.getCols().stream().anyMatch(c -> !c.isKnownType())) {
+                // if file missing types.. rewrite the file.
+                DataGroup dg = DataGroupReader.read(tblFile, true, false, true);
+                DataGroupWriter.write(tblFile, dg, 0);
+            }
             return tblFile;
         } else {
             if ( format != DataGroupReader.Format.UNKNOWN) {

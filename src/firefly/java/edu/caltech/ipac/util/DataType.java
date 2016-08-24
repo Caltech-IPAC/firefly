@@ -232,6 +232,28 @@ public class DataType implements Serializable, Cloneable {
         return _typeDesc;
     }
 
+    public static Class parseDataType(String type) {
+        switch (type) {
+            case DOUBLE:
+            case S_DOUBLE:
+                return Double.class;
+            case FLOAT:
+            case S_FLOAT:
+                return Float.class;
+            case LONG:
+            case S_LONG:
+                return Long.class;
+            case INTEGER:
+            case S_INTEGER:
+                return Integer.class;
+            case BOOL:
+            case S_BOOL:
+                return Boolean.class;
+            default:
+                return String.class;
+        }
+    }
+
     public void setShortDesc(String shortDesc) {
         _shortDesc = shortDesc;
     }
@@ -303,14 +325,11 @@ public class DataType implements Serializable, Cloneable {
         private static final Align DEF_DATA_ALIGN = Align.LEFT;
 
 
-        private static final String DEF_FMT_STR = "%s";
-
         private static final int DEF_WIDTH = 30;
         private static final String NULL_STR = "";
         private Align _headerAlign;
         private Align _dataAlign;
         private int _width;
-        private String _headerFormat;
         private String _dataFormat;
         private boolean _isDefault;
 
@@ -380,20 +399,13 @@ public class DataType implements Serializable, Cloneable {
             _width = width;
         }
 
-        public String getHeaderFormatStr() {
-            return _headerFormat == null ? DEF_FMT_STR : _headerFormat;
-        }
-
-        public void setHeaderFormatStr(String headerFormatStr) {
-            _headerFormat = headerFormatStr;
-        }
-
         public String getDataFormatStr() {
-            return _dataFormat == null ? DEF_FMT_STR : _dataFormat;
+            return _dataFormat;
         }
 
         public void setDataFormat(String dataFormatStr) {
             _dataFormat = dataFormatStr;
+            setIsDefault(false);
         }
 
         /**
@@ -412,11 +424,7 @@ public class DataType implements Serializable, Cloneable {
          */
         public String formatDataOnly(Locale locale, Object value) {
             if (value == null) return NULL_STR;
-            String s = String.format(locale, getDataFormatStr(), value);
-            if (s.length() > getWidth()) {
-                s = s.substring(0, getWidth());
-            }
-            return s;
+            return getDataFormatStr() == null ? String.valueOf(value) : String.format(locale, getDataFormatStr(), value);
         }
 
         /**
@@ -444,7 +452,7 @@ public class DataType implements Serializable, Cloneable {
         }
 
         public String formatData(Locale locale, Object value, String strForNull) {
-            String fmtStr = (getDataAlign() == Align.LEFT ? "%-" : "%") + getWidth() + "s";
+            String fmtStr = (getDataAlign() == Align.LEFT ? "%-" : "%") + getWidth() + "." + getWidth()+ "s";
             return String.format(locale, fmtStr, (value == null) ? strForNull : formatDataOnly(locale, value));
 
         }
@@ -455,20 +463,14 @@ public class DataType implements Serializable, Cloneable {
          * @return a string
          */
         public String formatHeader(String value) {
-            String v = value == null ? "" : String.format(getHeaderFormatStr(), value);
-            String fmtStr = (getHeaderAlign() == Align.LEFT ? "%-" : "%") + getWidth() + "s";
+            String v = value == null ? "" : value;
+            String fmtStr = (getHeaderAlign() == Align.LEFT ? "%-" : "%") + getWidth() + "." + getWidth() + "s";
             return String.format(fmtStr, v);
         }
 
         public Object clone() throws CloneNotSupportedException {
             return super.clone();
         }
-
-        private static boolean isFloatingPoint(Class dt) {
-            return Double.class.isAssignableFrom(dt) ||
-                   Float.class.isAssignableFrom(dt);
-        }
-
 
 
         //=========================================================================
@@ -482,18 +484,11 @@ public class DataType implements Serializable, Cloneable {
          */
         public static FormatInfo createDefaultFormat(Class dt) {
 
-            FormatInfo fi = null;
             dt = dt == null ? String.class : dt;
-            if (isFloatingPoint(dt)) {
-                fi = createFloatFormat();
-            } else if (Date.class.isAssignableFrom(dt)) {
+            FormatInfo fi = new FormatInfo();
+            fi.setDataAlign(Align.LEFT);
+            if  (Date.class.isAssignableFrom(dt)) {
                 fi = createDateFormat();
-            } else if (Integer.class.isAssignableFrom(dt)) {
-                fi = new FormatInfo();
-                fi.setDataFormat("%d");
-            } else {
-                fi = new FormatInfo();
-                fi.setDataAlign(Align.LEFT);
             }
             fi.setIsDefault(true);
             return fi;
