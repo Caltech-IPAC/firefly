@@ -189,20 +189,8 @@ public class IpacTableUtil {
         if (StringUtils.isEmpty(rval)) return;
 
         try {
-            Integer.parseInt(rval);
-            type.setDataType(Integer.class);
-            return;
-        }catch (Exception e){}
-
-        try {
             Long.parseLong(rval);
             type.setDataType(Long.class);
-            return;
-        }catch (Exception e){}
-
-        try {
-            Float.parseFloat(rval);
-            type.setDataType(Float.class);
             return;
         }catch (Exception e){}
 
