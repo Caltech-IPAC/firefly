@@ -4,7 +4,7 @@
 
 import {flux} from '../Firefly.js';
 import {take} from 'redux-saga/effects';
-import {omit,get,has} from 'lodash';
+import {omit,get} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import {revalidateFields} from './FieldGroupUtils.js';
 
@@ -356,7 +356,7 @@ const fireFieldsReducer= function(fg, action) {
 };
 
 const valueChange= function(state,action) {
-    var {fieldKey, groupKey,message='', valid=true}= action.payload;
+    var {fieldKey, groupKey,message='', valid=true, fireReducer=true}= action.payload;
 
     if (!getFieldGroup(state,groupKey)) {
         state = initFieldGroup(state,action);
@@ -371,33 +371,49 @@ const valueChange= function(state,action) {
                                   action.payload,
                                   {message, valid});
 
-    fg.fields= fireFieldsReducer(fg, action);
+    if (fireReducer) fg.fields= fireFieldsReducer(fg, action);
     if (addToInit) fg.initFields= [...fg.initFields,fg.fields[fieldKey]];
-    const mods= {[groupKey]:fg};
 
+    var mods= {[groupKey]:fg};
    //============== Experimental parent group get notified
-    if (get(state, [fg.wrapperGroupKey,'mounted'],false)) {
-        var wrapperFg= findAndCloneFieldGroup(state, fg.wrapperGroupKey);
-        const childGroups= makeChildGroups(fg.wrapperGroupKey, state);
-        childGroups[groupKey]= fg.fields;
-        const wrapperAction= {
-            type: CHILD_GROUP_CHANGE,
-            payload: { changedGroupKey: groupKey, sourceAction:action, childGroups }
-        };
-        wrapperFg.fields= fireFieldsReducer(wrapperFg, wrapperAction);
-        mods[wrapperFg.groupKey]= wrapperFg;
+    if (fireReducer) {
+        const modAddition= updateWrapperGroup(state,fg,groupKey,action);
+        mods= clone(mods,modAddition);
     }
     //==============
 
     return clone(state,mods);
 };
 
+function updateWrapperGroup(state, fg, groupKey, action) {
+    if (!get(state, [fg.wrapperGroupKey,'mounted'],false)) return {};
+
+    var wrapperFg= findAndCloneFieldGroup(state, fg.wrapperGroupKey);
+    const childGroups= makeChildGroups(fg.wrapperGroupKey, state);
+    childGroups[groupKey]= fg.fields;
+    const wrapperAction= {
+        type: CHILD_GROUP_CHANGE,
+        payload: { changedGroupKey: groupKey, sourceAction:action, childGroups }
+    };
+    wrapperFg.fields= fireFieldsReducer(wrapperFg, wrapperAction);
+    return {[wrapperFg.groupKey]: wrapperFg};
+}
+
 function multiValueChange(state,action) {
     const {fieldAry,groupKey}= action.payload;
 
-    fieldAry.forEach( (f) => state= valueChange(state,{type:VALUE_CHANGE, payload:clone(f,{groupKey})}) );
+    fieldAry.forEach( (f) => state= valueChange(state,{type:VALUE_CHANGE, payload:clone(f,{groupKey,fireReducer:false})}) );
 
-    return state;
+    var fg= findAndCloneFieldGroup(state, groupKey);
+    fg.fields= fireFieldsReducer(fg, action);
+
+    var mods= {[groupKey]:fg};
+    //============== Experimental parent group get notified
+    const modAddition= updateWrapperGroup(state,fg,groupKey,action);
+    mods= clone(mods,modAddition);
+    //==============
+
+    return clone(state,mods);
 }
 
 function restoreDefaults(state,action) {
@@ -537,4 +553,3 @@ export default FieldGroupCntlr;
 
 //============ EXPORTS ===========
 //============ EXPORTS ===========
-

@@ -313,27 +313,48 @@ function getDataBoundaries(xyPlotData) {
     }
 }
 
+function getPaddedRange(min, max, isLog, factor) {
+    const range = max - min;
+    let paddedMin = min;
+    let paddedMax = max;
+
+    if (range > 0) {
+        if (isLog) {
+            const minLog = Math.log10(min);
+            const maxLog = Math.log10(max);
+            const padLog = (maxLog - minLog) / factor;
+            paddedMin = Math.pow(10, (minLog-padLog));
+            paddedMax = Math.pow(10, (maxLog+padLog));
+        } else {
+            const pad = range / factor;
+            paddedMin = min - pad;
+            paddedMax = max + pad;
+        }
+    }
+    return {paddedMin, paddedMax};
+}
 
 /**
  * Pad and round data boundaries
+ * @param {Object} xyPlotParams - object with XY plot params
  * @param {Object} boundaries - object with xMin, xMax, yMin, yMax props
  * @param {Number} factor - part of the range to add on both sides
  */
-function getPaddedBoundaries(boundaries, factor=100) {
+function getPaddedBoundaries(xyPlotParams, boundaries, factor=100) {
     if (!isEmpty(boundaries)) {
         let {xMin, xMax, yMin, yMax} = boundaries;
-        const xRange = xMax - xMin;
 
+        const xRange = xMax - xMin;
         if (xRange > 0) {
-            const xPad = xRange/factor;
-            xMin = xMin - xPad;
-            xMax = xMax + xPad;
+            const xOptions = get(xyPlotParams, 'x.options');
+            const xLog = xOptions && xOptions.includes('log') && xMin>0;
+            ({paddedMin:xMin, paddedMax:xMax} = getPaddedRange(xMin, xMax, xLog, factor));
         }
         const yRange = yMax - yMin;
         if (yRange > 0) {
-            const yPad = yRange/factor;
-            yMin = yMin - yPad;
-            yMax = yMax + yPad;
+            const yOptions = get(xyPlotParams, 'y.options');
+            const yLog = yOptions && yOptions.includes('log') && yMin>0;
+            ({paddedMin:yMin, paddedMax:yMax} = getPaddedRange(yMin, yMax, yLog, factor));
         }
         if (xRange > 0 || yRange > 0) {
             return {xMin, xMax, yMin, yMax};
@@ -449,7 +470,7 @@ function getUpdatedParams(xyPlotParams, tableModel, dataBoundaries) {
     const userSetBoundaries = get(xyPlotParams, 'userSetBoundaries', {});
     const boundaries = Object.assign({}, userSetBoundaries);
     if (Object.keys(boundaries).length < 4 && !isEmpty(dataBoundaries)) {
-        const paddedDataBoundaries = getPaddedBoundaries(dataBoundaries);
+        const paddedDataBoundaries = getPaddedBoundaries(xyPlotParams, dataBoundaries);
         const [xMin, xMax, yMin, yMax] = ['xMin', 'xMax', 'yMin', 'yMax'].map( (v) => {
             return  (Number.isFinite(boundaries[v]) ? boundaries[v] : paddedDataBoundaries[v]);
         });
