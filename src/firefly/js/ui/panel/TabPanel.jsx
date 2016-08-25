@@ -182,18 +182,20 @@ export class Tab extends Component {
         }
 
         // removable width: 14px
-        const textStyle = maxTitleWidth ? {width: maxTitleWidth-(removable?14:0)} : {};
+        const textStyle = maxTitleWidth ? {float: 'left', width: maxTitleWidth-(removable?14:0)} : {};
 
         return (
-            <li className={tabClassName}>
-                <div style={textStyle} className='text-ellipsis' title={name} onClick={() => onSelect(id,name)}>
-                     {name}
+            <li className={tabClassName} onClick={() => onSelect(id,name)}>
+                <div>
+                    <div style={textStyle} className='text-ellipsis' title={name}>
+                         {name}
+                    </div>
+                    {removable &&
+                            <div style={{right: -4, top: -2}} className='btn-close'
+                                 title='Remove Tab'
+                                 onClick={() => onTabRemove && onTabRemove(name)}/>
+                    }
                 </div>
-                {removable &&
-                        <div style={{right: -4, top: -2}} className='btn-close'
-                             title='Remove Tab'
-                             onClick={() => onTabRemove && onTabRemove(name)}/>
-                }
             </li>);
     }
 }

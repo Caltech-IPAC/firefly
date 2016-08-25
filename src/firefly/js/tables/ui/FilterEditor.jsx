@@ -85,9 +85,9 @@ FilterEditor.defaultProps = {
 function prepareOptionData(columns, sortInfo, filterInfo, selectable) {
 
     var cols = [
-        {name: 'Column', visibility: 'show', fixed: true},
-        {name: 'Filter', visibility: 'show'},
-        {name: 'Units', visibility: 'show'},
+        {name: 'Column', fixed: true},
+        {name: 'Filter'},
+        {name: 'Units'},
         {name: '', visibility: 'hidden'},
         {name: 'Selected', visibility: 'hidden'}
     ];
@@ -120,9 +120,12 @@ function prepareOptionData(columns, sortInfo, filterInfo, selectable) {
 
 function makeCallbacks(onChange, columns, data, orgFilterInfo='') {
     var onSelectAll = (checked) => {
-        const nColumns = cloneDeep(columns).filter((c) => c.visibility !== 'hidden');
-        nColumns.forEach((v) => {
-            v.visibility = checked ? 'show' : 'hide';
+        const nColumns = columns.map((c) => {
+            var col = cloneDeep(c);
+            if (col.visibility !== 'hidden') {
+                col.visibility = checked ? 'show' : 'hide';
+            }
+            return col;
         });
         onChange && onChange({columns: nColumns});
     };
