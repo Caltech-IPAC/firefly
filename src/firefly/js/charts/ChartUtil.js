@@ -120,7 +120,7 @@ function colWithName(cols, name) {
 function getNumericCols(cols) {
     const ncols = [];
     cols.forEach((c) => {
-        if (c.type.match(/^[dfil]/) != null) {      // int, float, double, long .. or their short form.
+        if (c.type.match(/^[dfil]/) !== null) {      // int, float, double, long .. or their short form.
             ncols.push(c);
         }
     });
@@ -153,7 +153,7 @@ export function getDefaultXYPlotParams(tbl_id) {
     // otherwise use the first one-two numeric columns
     if (!isCatalog) {
         const numericCols = getNumericCols(tableData.columns);
-        if (numericCols.length > 2) {
+        if (numericCols.length >= 2) {
             xCol = numericCols[0];
             yCol = numericCols[1];
         } else if (numericCols.length > 1) {

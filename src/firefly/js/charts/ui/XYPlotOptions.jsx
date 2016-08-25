@@ -9,7 +9,7 @@ import ColValuesStatistics from './../ColValuesStatistics.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import {dispatchValueChange, dispatchMultiValueChange, VALUE_CHANGE} from '../../fieldGroup/FieldGroupCntlr.js';
+import {dispatchValueChange, dispatchMultiValueChange, VALUE_CHANGE, MULTI_VALUE_CHANGE} from '../../fieldGroup/FieldGroupCntlr.js';
 import Validate from '../../util/Validate.js';
 import {Expression} from '../../util/expr/Expression.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
@@ -158,14 +158,15 @@ export function getColValidator(colValStats) {
 /**
  * Reducer from field group component,
  *   clears label, unit, and userSetBoundaries whenever x or y field changes,
- *   validates min-max field relationship
+ *   validates min-max-log field relationship
  * @returns {*} reducer, which clears label and unit whenever x or y field changes
  */
 function fldChangeReducer(inFields, action) {
     if (!inFields) { return {}; }
+    let fieldKey = undefined;
     if (action.type === VALUE_CHANGE) {
         // when field changes, clear the label and unit
-        const fieldKey = get(action.payload, 'fieldKey');
+        fieldKey = get(action.payload, 'fieldKey');
         if (fieldKey === 'x.columnOrExpr') {
             set(inFields, ['x.label', 'value'], undefined);
             set(inFields, ['x.unit', 'value'], undefined);
@@ -181,20 +182,34 @@ function fldChangeReducer(inFields, action) {
                 set(inFields, ['nbins.x', 'value'], undefined);
                 set(inFields, ['nbins.y', 'value'], undefined);
             }
-        } else {
-            // validate min/max relationship
-            [{min: 'xMin', max: 'xMax'}, {min: 'yMin', max: 'yMax'}].forEach(
-                (v) => {
-                    if (fieldKey === v.min || fieldKey === v.max) {
-                        const valMin = Number.parseFloat(get(inFields, [v.min, 'value']));
-                        const valMax = Number.parseFloat(get(inFields, [v.max, 'value']));
-                        if (Number.isFinite(valMin) && Number.isFinite(valMax) && valMin > valMax) {
-                            set(inFields, [fieldKey, 'valid'], false);
-                            set(inFields, [fieldKey, 'message'], 'Min value greater than max');
+        }
+    }
+    if (action.type === MULTI_VALUE_CHANGE || action.type === VALUE_CHANGE) {
+        // validate min/max/log relationship
+        const fldsets =[
+            {min: 'xMin', max: 'xMax', options: 'x.options'},
+            {min: 'yMin', max: 'yMax', options: 'y.options'}
+        ];
+        fldsets.forEach(
+            (v) => {
+                if (!fieldKey || fieldKey === v.min || fieldKey === v.max || fieldKey === v.options) {
+                    const valMin = Number.parseFloat(get(inFields, [v.min, 'value']));
+                    const options = get(inFields, [v.options, 'value']);
+                    const logVal = Boolean(options && options.includes('log'));
+                    if (Number.isFinite(valMin)) {
+                        if (logVal && valMin <= 0) {
+                            set(inFields, [v.min, 'valid'], false);
+                            set(inFields, [v.min, 'message'], 'The minimum of a log axis can not be 0 or less');
+                        } else {
+                            const valMax = Number.parseFloat(get(inFields, [v.max, 'value']));
+                            if (Number.isFinite(valMax) && valMin > valMax) {
+                                set(inFields, [fieldKey||v.min, 'valid'], false);
+                                set(inFields, [fieldKey||v.min , 'message'], 'Min value greater than max');
+                            }
                         }
                     }
-                });
-        }
+                }
+            });
     }
     return inFields;
 }

@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isUndefined, debounce, get} from 'lodash';
+import {isUndefined, debounce, get, omit} from 'lodash';
 import shallowequal from 'shallowequal';
 import React, {PropTypes} from 'react';
 import ReactHighcharts from 'react-highcharts/bundle/highcharts';
@@ -57,6 +57,7 @@ const plotDataShape = PropTypes.shape({
 const DATAPOINTS = 'data';
 const SELECTED = 'selected';
 const HIGHLIGHTED = 'highlighted';
+const MINMAX = 'minmax';
 
 const datapointsColor = 'rgba(63, 127, 191, 0.5)';
 const selectedColor = 'rgba(21, 138, 15, 0.5)';
@@ -247,115 +248,125 @@ export class XYPlot extends React.Component {
     }
 
     shouldComponentUpdate(nextProps) {
+
+        const propsToOmit = ['onHighlightChange', 'onSelection', 'highlighted'];
+
+        // no update is needed if properties did ot change
+        if (shallowequal(omit(this.props, propsToOmit), omit(nextProps, propsToOmit)) &&
+            get(this.props,'highlighted.rowIdx') == get(nextProps,'highlighted.rowIdx')) {
+            return false;
+        }
+
         const {data, width, height, params, highlighted, selectInfo, desc} = this.props;
-        // only rerender when plot data change
+
+        // only re-render when the plot data change or an error occurs
+        // shading change for density plot changes series
         if (nextProps.data !== data || get(params, 'shading', defaultShading) !== get(nextProps.params, 'shading', defaultShading)) {
             return true;
         } else {
             const chart = this.refs.chart && this.refs.chart.getChart();
-            if (chart) {
-                const {params:newParams, highlighted:newHighlighted, width:newWidth, height:newHeight, desc:newDesc } = nextProps;
-                if (newDesc !== desc) {
-                    chart.setTitle(newDesc, undefined, false);
-                }
-
-                // selection change (selection is not supported for decimated data)
-                if (data && data.rows && !data.decimateKey && nextProps.selectInfo !== selectInfo) {
-                    const selectedData = [];
-                    if (nextProps.selectInfo) {
-                        const selectInfoCls = SelectInfo.newInstance(nextProps.selectInfo, 0);
-                        data.rows.forEach((arow) => {
-                            if (selectInfoCls.isSelected(Number(arow[2]))) {
-                                const nrow = arow.map(toNumber);
-                                selectedData.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
-                            }
-                        });
-                    }
-                    chart.get(SELECTED).setData(selectedData);
-                }
-
-                // highlight change
-                if (!shallowequal(highlighted, newHighlighted)) {
-                    const highlightedData = [];
-                    if (!isUndefined(newHighlighted)) {
-                        highlightedData.push(newHighlighted);
-                    }
-                    chart.get(HIGHLIGHTED).setData(highlightedData);
-                }
-
-
-                // plot parameters change
-                if (params !== newParams) {
-                    const xoptions = {};
-                    const yoptions = {};
-                    const newXOptions = getXAxisOptions(newParams);
-                    const newYOptions = getYAxisOptions(newParams);
-                    if (!shallowequal(getXAxisOptions(params), newXOptions)) {
-                        Object.assign(xoptions, {
-                            title: {text: newXOptions.xTitle},
-                            gridLineWidth: newXOptions.xGrid ? 1 : 0,
-                            reversed: newXOptions.xReversed,
-                            opposite: newYOptions.yReversed,
-                            type: newXOptions.xLog && canUseXLog(nextProps.data) ? 'logarithmic' : 'linear'
-                        });
-                    }
-                    if (!shallowequal(getYAxisOptions(params), newYOptions)) {
-                        Object.assign(yoptions, {
-                            title: {text: newYOptions.yTitle},
-                            gridLineWidth: newYOptions.yGrid ? 1 : 0,
-                            reversed: newYOptions.yReversed,
-                            type: newYOptions.yLog && canUseYLog(nextProps.data) ? 'logarithmic' : 'linear'
-                        });
-                    }
-                    if (!shallowequal(params.boundaries, newParams.boundaries)) {
-                        const {xMin, xMax, yMin, yMax} = getZoomSelection(newParams);
-                        const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = nextProps.data;
-                        Object.assign(xoptions, {min: selFinite(xMin,xDataMin), max: selFinite(xMax, xDataMax)});
-                        Object.assign(yoptions, {min: selFinite(yMin, yDataMin), max: selFinite(yMax, yDataMax)});
-                    }
-                    if (!shallowequal(params.zoom, newParams.zoom) ||
-                        !shallowequal(params.boundaries, newParams.boundaries)) {
-                        const {xMin, xMax, yMin, yMax} = getZoomSelection(newParams);
-                        const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = get(newParams, 'boundaries', {});
-                        Object.assign(xoptions, {min: selFinite(xMin,xDataMin), max: selFinite(xMax, xDataMax)});
-                        Object.assign(yoptions, {min: selFinite(yMin, yDataMin), max: selFinite(yMax, yDataMax)});
-                    }
-                    const xUpdate = Reflect.ownKeys(xoptions).length > 0;
-                    const yUpdate = Reflect.ownKeys(yoptions).length > 0;
-                    if (xUpdate || yUpdate) {
-                        const animate = this.shouldAnimate();
-                        xUpdate && chart.xAxis[0].update(xoptions, !yUpdate, animate);
-                        yUpdate && chart.yAxis[0].update(yoptions, true, animate);
+            if (chart && chart.container && !this.error) {
+                const {params:newParams, width:newWidth, height:newHeight, highlighted:newHighlighted, selectInfo:newSelectInfo, desc:newDesc } = nextProps;
+                try {
+                    if (newDesc !== desc) {
+                        chart.setTitle(newDesc, undefined, false);
                     }
 
-                    if (!shallowequal(params.selection, newParams.selection)) {
-                        this.updateSelectionRect(newParams.selection);
-                    }
-
-                }
-
-                // size change
-                if (newWidth !== width || newHeight !== height ||
-                    newParams.xyRatio !== params.xyRatio ||newParams.stretch != params.stretch) {
-                    const {chartWidth, chartHeight} = calculateChartSize(newWidth, newHeight, nextProps);
-                    if (Math.abs(chart.chartWidth - chartWidth) > 20 || Math.abs(chart.chartHeight - chartHeight) > 20) {
-
-                        if (get(nextProps, ['data', 'decimateKey'])) {
-                            // hide all series for resize
-                            chart.series.forEach((series) => {
-                                series.setVisible(false, false);
+                    // selection change (selection is not supported for decimated data)
+                    if (data && data.rows && !data.decimateKey && newSelectInfo !== selectInfo) {
+                        const selectedData = [];
+                        if (newSelectInfo) {
+                            const selectInfoCls = SelectInfo.newInstance(newSelectInfo, 0);
+                            data.rows.forEach((arow) => {
+                                if (selectInfoCls.isSelected(Number(arow[2]))) {
+                                    const nrow = arow.map(toNumber);
+                                    selectedData.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
+                                }
                             });
-                            chart.showLoading('Resizing');
                         }
-                        chart.setSize(chartWidth, chartHeight, false);
-
-                        if (this.pendingResize) {
-                            // if resize is slow, we want to do it only once
-                            this.pendingResize.cancel();
-                        }
-                        this.pendingResize = this.debouncedResize();
-                        this.pendingResize();
+                        chart.get(SELECTED).setData(selectedData);
                     }
+
+                    // highlight change
+                    if (!shallowequal(highlighted, newHighlighted)) {
+                        const highlightedData = [];
+                        if (!isUndefined(newHighlighted)) {
+                            highlightedData.push(newHighlighted);
+                        }
+                        chart.get(HIGHLIGHTED).setData(highlightedData);
+                    }
+
+
+                    // plot parameters change
+                    if (params !== newParams) {
+                        const xoptions = {};
+                        const yoptions = {};
+                        const newXOptions = getXAxisOptions(newParams);
+                        const newYOptions = getYAxisOptions(newParams);
+                        if (!shallowequal(getXAxisOptions(params), newXOptions)) {
+                            Object.assign(xoptions, {
+                                title: {text: newXOptions.xTitle},
+                                gridLineWidth: newXOptions.xGrid ? 1 : 0,
+                                reversed: newXOptions.xReversed,
+                                opposite: newYOptions.yReversed,
+                                type: newXOptions.xLog && canUseXLog(nextProps.data) ? 'logarithmic' : 'linear'
+                            });
+                        }
+                        if (!shallowequal(getYAxisOptions(params), newYOptions)) {
+                            Object.assign(yoptions, {
+                                title: {text: newYOptions.yTitle},
+                                gridLineWidth: newYOptions.yGrid ? 1 : 0,
+                                reversed: newYOptions.yReversed,
+                                type: newYOptions.yLog && canUseYLog(nextProps.data) ? 'logarithmic' : 'linear'
+                            });
+                        }
+                        if (!shallowequal(params.zoom, newParams.zoom) || !shallowequal(params.boundaries, newParams.boundaries)) {
+                            const {xMin, xMax, yMin, yMax} = getZoomSelection(newParams);
+                            const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = get(newParams, 'boundaries', {});
+                            Object.assign(xoptions, {min: selFinite(xMin, xDataMin), max: selFinite(xMax, xDataMax)});
+                            Object.assign(yoptions, {min: selFinite(yMin, yDataMin), max: selFinite(yMax, yDataMax)});
+                            chart.get(MINMAX).setData([[xoptions.min, yoptions.min], [xoptions.max, yoptions.max]]);
+                        }
+                        const xUpdate = Reflect.ownKeys(xoptions).length > 0;
+                        const yUpdate = Reflect.ownKeys(yoptions).length > 0;
+                        if (xUpdate || yUpdate) {
+                            const animate = this.shouldAnimate();
+                            xUpdate && chart.xAxis[0].update(xoptions, !yUpdate, animate);
+                            yUpdate && chart.yAxis[0].update(yoptions, true, animate);
+                        }
+
+                        if (!shallowequal(params.selection, newParams.selection)) {
+                            this.updateSelectionRect(newParams.selection);
+                        }
+
+                    }
+
+                    // size change
+                    if (newWidth !== width || newHeight !== height ||
+                        newParams.xyRatio !== params.xyRatio || newParams.stretch != params.stretch) {
+                        const {chartWidth, chartHeight} = calculateChartSize(newWidth, newHeight, nextProps);
+                        if (Math.abs(chart.chartWidth - chartWidth) > 20 || Math.abs(chart.chartHeight - chartHeight) > 20) {
+
+                            if (get(nextProps, ['data', 'decimateKey'])) {
+                                // hide all series for resize
+                                chart.series.forEach((series) => {
+                                    series.setVisible(false, false);
+                                });
+                                chart.showLoading('Resizing');
+                            }
+                            chart.setSize(chartWidth, chartHeight, false);
+
+                            if (this.pendingResize) {
+                                // if resize is slow, we want to do it only once
+                                this.pendingResize.cancel();
+                            }
+                            this.pendingResize = this.debouncedResize();
+                            this.pendingResize();
+                        }
+                    }
+                } catch (error) {
+                    this.error = error;
+                    chart.showLoading(error);
                 }
 
                 return false;
@@ -375,7 +386,7 @@ export class XYPlot extends React.Component {
     debouncedResize() {
         return debounce(() => {
             const chart = this.refs.chart && this.refs.chart.getChart();
-            if (chart) {
+            if (chart && chart.container) {
                 const {data} = this.props;
                 if (data.decimateKey) {
                     // update marker's size
@@ -438,12 +449,14 @@ export class XYPlot extends React.Component {
         const xAxis = event.xAxis[0];
         const yAxis = event.yAxis[0];
 
-        this.props.onSelection({xMin: xAxis.min, xMax: xAxis.max, yMin: yAxis.min, yMax: yAxis.max});
+        if (xAxis && yAxis) {
+            this.props.onSelection({xMin: xAxis.min, xMax: xAxis.max, yMin: yAxis.min, yMax: yAxis.max});
+        }
     }
 
     makeSeries(chart) {
         //const chart = this.refs.chart && this.refs.chart.getChart();
-        if (chart) {
+        if (chart && chart.container) {
             const {data, params, selectInfo, highlighted, onHighlightChange} = this.props;
             const {rows, decimateKey, weightMin, weightMax} = data;
 
@@ -555,20 +568,30 @@ export class XYPlot extends React.Component {
 
 
             }
-            allSeries.forEach((series) => {chart.addSeries(series,false, false);});
 
-            chart.addSeries({
-                id: HIGHLIGHTED,
-                name: HIGHLIGHTED,
-                color: highlightedColor,
-                marker: {symbol: 'circle', lineColor: '#404040', lineWidth: 1, radius: 4},
-                data: highlightedData,
-                showInLegend: false
-            }, true, false);
+            try {
+                allSeries.forEach((series) => {
+                    chart.addSeries(series, false, false);
+                });
+
+                chart.addSeries({
+                    id: HIGHLIGHTED,
+                    name: HIGHLIGHTED,
+                    color: highlightedColor,
+                    marker: {symbol: 'circle', lineColor: '#404040', lineWidth: 1, radius: 4},
+                    data: highlightedData,
+                    showInLegend: false
+                }, true, false);
+            } catch (error) {
+                this.error = error;
+                chart.showLoading(error);
+            }
         }
     }
 
     render() {
+
+        this.error = undefined;
 
         const {data, params, width, height, onSelection, desc} = this.props;
         const onSelectionEvent = this.onSelectionEvent;
@@ -691,12 +714,12 @@ export class XYPlot extends React.Component {
                 type: yLog && canUseYLog(data) ? 'logarithmic' : 'linear'
             },
             series: [{
-                // This series is to make sure the axis are created.
+                // This series is to make sure the axes are created.
                 // Without actual series, xAxis creation is deferred
                 // and there is no way to get value to pixel conversion
                 // for sizing the symbol
-                id: 'minmax',
-                name: 'minmax',
+                id: MINMAX,
+                name: MINMAX,
                 color: 'rgba(240, 240, 240, 0.1)',
                 marker: {radius: 1},
                 data: [[selFinite(xMin, xDataMin), selFinite(yMin,yDataMin)], [selFinite(xMax, xDataMax), selFinite(yMax,yDataMax)]],
@@ -712,7 +735,6 @@ export class XYPlot extends React.Component {
                 enabled: false // removes a reference to Highcharts.com from the chart
             }
         };
-
 
         return (
             <div style={chartWidth<width?{float: 'left'}:{}}>
