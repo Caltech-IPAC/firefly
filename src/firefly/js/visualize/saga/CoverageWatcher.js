@@ -118,8 +118,8 @@ export function* watchCoverage({viewerId, options= {}}) {
                     // no need to update coverage on table sort.. data have not changed.
                     decimatedTables[tbl_id]= null;
                     displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
-                    break;
                 }
+                break;
 
             case TBL_RESULTS_ACTIVE:
                 if (!getTableInGroup(tbl_id)) continue;

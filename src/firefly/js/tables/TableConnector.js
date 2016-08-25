@@ -12,16 +12,21 @@ import {fetchUrl} from '../util/WebUtil.js';
 
 export class TableConnector {
     
-    constructor(tbl_id, tbl_ui_id, tableModel) {
+    constructor(tbl_id, tbl_ui_id, tableModel, showUnits=true, showFilters=false) {
         this.tbl_id = tbl_id;
         this.tbl_ui_id = tbl_ui_id;
-        this.origTableModel = tableModel;
+        this.localTableModel = tableModel;
+
+        this.origPageSize = get(this.tableModel, 'request.pageSize', 100);
+        this.origShowUnits = showUnits;
+        this.origShowFilters = showFilters;
+        this.origColumns = cloneDeep(get(tableModel, 'tableData.columns', []));
     }
 
     onSort(sortInfoString) {
         var {tableModel, request} = TblUtil.getTblInfoById(this.tbl_id);
-        if (this.origTableModel) {
-            tableModel = TblUtil.sortTable(this.origTableModel, sortInfoString);
+        if (this.localTableModel) {
+            tableModel = TblUtil.sortTable(this.localTableModel, sortInfoString);
             TblCntlr.dispatchTableReplace(tableModel);
         } else {
             request = Object.assign({}, request, {sortInfo: sortInfoString});
@@ -31,8 +36,8 @@ export class TableConnector {
 
     onFilter(filterIntoString) {
         var {tableModel, request} = TblUtil.getTblInfoById(this.tbl_id);
-        if (this.origTableModel) {
-            tableModel = filterIntoString ? TblUtil.filterTable(this.origTableModel, filterIntoString) : this.origTableModel;
+        if (this.localTableModel) {
+            tableModel = filterIntoString ? TblUtil.filterTable(this.localTableModel, filterIntoString) : this.localTableModel;
             TblCntlr.dispatchTableReplace(tableModel);
         } else {
             request = Object.assign({}, request, {filters: filterIntoString});
@@ -48,7 +53,7 @@ export class TableConnector {
         if (isEmpty(selected)) return;
 
         var {tableModel, request} = TblUtil.getTblInfoById(this.tbl_id);
-        if (this.origTableModel) {
+        if (this.localTableModel) {
             // not implemented yet
         } else {
             const filterInfoCls = FilterInfo.parse(request.filters);
@@ -88,7 +93,7 @@ export class TableConnector {
         const {hlRowIdx, startIdx} = TblUtil.getTblInfoById(this.tbl_id);
         if (rowIdx !== hlRowIdx) {
             const highlightedRow = startIdx + rowIdx;
-            if (this.origTableModel) {
+            if (this.localTableModel) {
                 const tableModel = {tbl_id: this.tbl_id, highlightedRow};
                 flux.process({type: TblCntlr.TABLE_UPDATE, payload: tableModel});
             } else {
@@ -113,6 +118,16 @@ export class TableConnector {
         TblCntlr.dispatchTableSelect(this.tbl_id, selectInfoCls.data);
     }
 
+    onToggleTextView(textView) {
+        const changes = {tbl_ui_id:this.tbl_ui_id, textView};
+        TblCntlr.dispatchTableUiUpdate(changes);
+    }
+
+    onToggleOptions(showOptions) {
+        const changes = {tbl_ui_id:this.tbl_ui_id, showOptions};
+        TblCntlr.dispatchTableUiUpdate(changes);
+    }
+
     onOptionUpdate({pageSize, columns, showUnits, showFilters, sortInfo, filterInfo}) {
         if (pageSize) {
             this.onPageSizeChange(pageSize);
@@ -127,18 +142,19 @@ export class TableConnector {
         }
     }
 
-    onToggleTextView(textView) {
-        const changes = {tbl_ui_id:this.tbl_ui_id, textView};
-        TblCntlr.dispatchTableUiUpdate(changes);
+    onOptionReset() {
+        const ctable = this.localTableModel || TblUtil.getTblById(this.tbl_id);
+        var filterInfo = get(ctable, 'request.filters', '').trim();
+        filterInfo = filterInfo !== '' ? '' : undefined;
+        const pageSize = get(ctable, 'request.pageSize') !== this.origPageSize ? this.origPageSize : undefined;
+        this.onOptionUpdate({filterInfo, pageSize,
+                        columns: cloneDeep(get(ctable, 'tableData.columns', [])),
+                        showUnits: this.origShowUnits,
+                        showFilters: this.origShowFilters});
     }
 
-    onToggleOptions(showOptions) {
-        const changes = {tbl_ui_id:this.tbl_ui_id, showOptions};
-        TblCntlr.dispatchTableUiUpdate(changes);
-    }
-
-    static newInstance(tbl_id, tbl_ui_id, tableModel) {
-        return new TableConnector(tbl_id, tbl_ui_id, tableModel);
+    static newInstance(tbl_id, tbl_ui_id, tableModel, showUnits, showFilters) {
+        return new TableConnector(tbl_id, tbl_ui_id, tableModel, showUnits, showFilters);
     }
 }
 

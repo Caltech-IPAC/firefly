@@ -38,7 +38,7 @@ export class TablePanel extends Component {
             tbl_id = get(tableModel, 'tbl_id', TblUtil.uniqueTblId());
         }
         tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
-        this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, tableModel);
+        this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, tableModel, this.props.showUnits, this.props.showFilters);
         const uiState = TblUtil.getTableUiById(tbl_ui_id);
         this.state = Object.assign({}, this.props, uiState);
 
@@ -49,6 +49,7 @@ export class TablePanel extends Component {
         this.toggleOptions = this.toggleOptions.bind(this);
         this.expandTable = this.expandTable.bind(this);
         this.onOptionUpdate = this.onOptionUpdate.bind(this);
+        this.onOptionReset = this.onOptionReset.bind(this);
     }
 
     componentDidMount() {
@@ -104,6 +105,9 @@ export class TablePanel extends Component {
     onOptionUpdate(value) {
         this.tableConnector.onOptionUpdate(value);
     }
+    onOptionReset() {
+        this.tableConnector.onOptionReset();
+    }
 
     render() {
         const {selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
@@ -120,7 +124,6 @@ export class TablePanel extends Component {
 
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
         const viewIcoStyle = 'tablepanel ' + (textView ? 'tableView' : 'textView');
-        const origColumns = get(TblUtil.getTblById(this.tableConnector.tbl_id), 'tableData.columns');
         const tableTopPos = showToolbar ? 29 : 0;
         const TT_VIEW = textView ? TT_TABLE_VIEW : TT_TEXT_VIEW;
 
@@ -180,8 +183,9 @@ export class TablePanel extends Component {
                         {showOptions &&
                             <TablePanelOptions
                                 onChange={this.onOptionUpdate}
+                                onOptionReset={this.onOptionReset}
                                 toggleOptions={this.toggleOptions}
-                                { ...{columns, origColumns, optSortInfo, filterInfo, pageSize, showUnits, showFilters, showToolbar}}
+                                { ...{columns, optSortInfo, filterInfo, pageSize, showUnits, showFilters, showToolbar}}
                             /> }
                     </div>
                 </div>
