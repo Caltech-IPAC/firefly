@@ -153,7 +153,7 @@ export class BasicTableView extends React.Component {
                                   columnWidths, filterInfo, sortInfo, showUnits, showFilters,
                                   onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected};
 
-        const headerHeight = 22 + (showUnits && 12) + (showFilters && 20);
+        const headerHeight = 22 + (showUnits && 8) + (showFilters && 22);
 
         return (
             <Resizable id='table-resizer' tabIndex='-1' onKeyDown={this.onKeyDown} className='TablePanel__frame' onResize={this.onResize}>
@@ -264,7 +264,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
         return (
             <Column
                 key={col.name}
-                columnKey={col.name}
+                columnKey={idx}
                 header={<HeadRenderer {...{col, showUnits, showFilters, filterInfo, sortInfo, onSort, onFilter}} />}
                 cell={<CellRenderer style={style} data={data} colIdx={idx} />}
                 fixed={fixed}
@@ -287,7 +287,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
         />);
         colsEl.splice(0, 0, cbox);
     }
-    return colsEl;
+    return colsEl.filter((c) => c);
 }
 
 
