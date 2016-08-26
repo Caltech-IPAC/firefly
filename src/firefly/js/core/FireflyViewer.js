@@ -11,8 +11,8 @@ import {flux, firefly} from '../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../core/AppDataCntlr.js';
 import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../core/LayoutCntlr.js';
 import {layoutManager} from '../core/layout/FireflyLayoutManager.js';
-import {Menu, getDropDownNames} from '../ui/Menu.jsx';
-import Banner from '../ui/Banner.jsx';
+import {Menu} from '../ui/Menu.jsx';
+import {Banner} from '../ui/Banner.jsx';
 import {DropDownContainer} from '../ui/DropDownContainer.jsx';
 import {TriViewPanel} from '../ui/TriViewPanel.jsx';
 import {VisHeader} from '../visualize/ui/VisHeader.jsx';
@@ -34,7 +34,7 @@ import {dispatchAddSaga} from '../core/MasterSaga.js';
  * <li><b>appTitle</b>:  The title of the FireflyViewer.  It will appears at top left of the banner. Defaults to 'Firefly'. </li>
  * <li><b>appIcon</b>:  A url string to the icon to appear on the banner. </li>
  * <li><b>footer</b>:   A react elements to place on the footer when the menu drop down. </li>
- * <li><b>searchPanels</b>:  An array of additional react elements which are mapped to a menu item's action. </li>
+ * <li><b>dropdownPanels</b>:  An array of additional react elements which are mapped to a menu item's action. </li>
  * <li><b>views</b>:  The type of result view.  Choices are 'images', 'tables', and 'xyPlots'.  They can be combined with ' | ', i.e.  'images | tables'</li>
  *
  */
@@ -82,9 +82,8 @@ export class FireflyViewer extends Component {
 
     render() {
         var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown,
-                searchPanels, views, footer, style, showViewsSwitch} = this.state;
+                dropdownPanels, views, footer, style, showViewsSwitch} = this.state;
         const {visible, view} = dropDown || {};
-        const searches = getDropDownNames();
 
         if (!isReady) {
             return (<div style={{top: 0}} className='loading-mask'/>);
@@ -98,7 +97,7 @@ export class FireflyViewer extends Component {
                             footer={footer}
                             visible={!!visible}
                             selected={view}
-                            {...{searches, searchPanels} } />
+                            {...{dropdownPanels} } />
                     </header>
                     <main>
                         <DynamicResults {...{views, showViewsSwitch}}/>
@@ -111,8 +110,8 @@ export class FireflyViewer extends Component {
 
 /**
  * menu is an array of menu items {label, action, icon, desc, type}.
- * searchPanels is an array of additional react elements which are mapped to a menu item's action.
- * @type {{title: *, menu: *, appTitle: *, appIcon: *, altAppIcon: *, searchPanels: *, views: *}}
+ * dropdownPanels is an array of additional react elements which are mapped to a menu item's action.
+ * @type {{title: *, menu: *, appTitle: *, appIcon: *, altAppIcon: *, dropdownPanels: *, views: *}}
  */
 FireflyViewer.propTypes = {
     title: PropTypes.string,
@@ -121,14 +120,15 @@ FireflyViewer.propTypes = {
     appIcon: PropTypes.string,
     altAppIcon: PropTypes.string,
     footer: PropTypes.element,
-    searchPanels: PropTypes.arrayOf(PropTypes.element),
+    dropdownPanels: PropTypes.arrayOf(PropTypes.element),
     views: PropTypes.string,     // combination of LO_VIEW separated by ' | '.  ie. 'images | tables'.
     style: PropTypes.object,
     showViewsSwitch: PropTypes.bool
 };
 
 FireflyViewer.defaultProps = {
-    views: 'tri_view'
+    appTitle: 'Firefly',
+    views: 'images | tables | xyPlots'
 };
 
 function onReady({menu, views}) {
