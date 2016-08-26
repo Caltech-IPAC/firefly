@@ -122,7 +122,7 @@ export class HistogramOptions extends React.Component {
     }
 
     render() {
-        const { colValStats, groupKey, histogramParams, onOptionsSelected}= this.props;
+        const { colValStats, groupKey, histogramParams, defaultParams, onOptionsSelected}= this.props;
         return (
             <div style={{padding:'0 5px'}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
@@ -137,7 +137,7 @@ export class HistogramOptions extends React.Component {
                         <div style={{flexGrow: 1}}/>
                         <div style={{flexGrow: 0}}>
                             <button type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
-                            <button type='button' className='button std' onClick={() => setOptions(groupKey, histogramParams)}>Reset</button>
+                            <button type='button' className='button std' onClick={() => setOptions(groupKey, defaultParams)}>Reset</button>
                         </div>
                     </div>}
 
@@ -220,5 +220,6 @@ HistogramOptions.propTypes = {
     groupKey: PropTypes.string.isRequired,
     colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
     onOptionsSelected: PropTypes.func,
-    histogramParams: histogramParamsShape
+    histogramParams: histogramParamsShape,
+    defaultParams: histogramParamsShape
 };

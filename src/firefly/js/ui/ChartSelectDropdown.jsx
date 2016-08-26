@@ -95,12 +95,12 @@ class ChartSelect extends Component {
             switch (chartType) {
                 case SCATTER:
                     onXYPlotOptsSelected((xyPlotParams) => {
-                        XYPlotCntlr.dispatchLoadPlotData(chartId, xyPlotParams, tblId);
+                        XYPlotCntlr.dispatchLoadPlotData({chartId, xyPlotParams, markAsDefault: true, tblId});
                     }, flds);
                     break;
                 case HISTOGRAM:
                     onHistogramOptsSelected((histogramParams) => {
-                        HistogramCntlr.dispatchLoadColData(chartId, histogramParams, tblId);
+                        HistogramCntlr.dispatchLoadColData({chartId, histogramParams, markAsDefault: true, tblId});
                     }, flds);
                     break;
             }
@@ -108,7 +108,7 @@ class ChartSelect extends Component {
         };
 
         return (
-            <div style={{padding:10, overflow:'auto', maxWidth:350, maxheight:500}}>
+            <div style={{padding:10, overflow:'auto', maxWidth:600, maxHeight:600}}>
                 <FormPanel
                     groupKey={formName}
                     onSubmit={resultSuccess}

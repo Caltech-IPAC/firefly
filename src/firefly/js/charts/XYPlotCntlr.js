@@ -4,7 +4,7 @@
 import {flux} from '../Firefly.js';
 
 import {updateSet, updateMerge, updateDelete} from '../util/WebUtil.js';
-import {get, has, omit, omitBy, isEmpty, isUndefined, isString} from 'lodash';
+import {cloneDeep, get, has, omit, omitBy, isEmpty, isString, isUndefined} from 'lodash';
 
 import {doFetchTable, getColumn, getTblById, isFullyLoaded, cloneRequest} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
@@ -66,13 +66,16 @@ const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
 
 /*
  * Load xy plot data
- * @param {string} chartId - if no chart id is specified table id is used as chart id
- * @param {Object} xyPlotParams - XY plot options (column names, etc.)
- * @param {string} tblId - table id
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Object} params - dispatch parameters
+ * @param {string} params.chartId - if no chart id is specified table id is used as chart id
+ * @param {Object} params.xyPlotParams - XY plot options (column names, etc.)
+ * @param {boolean} params.markAsDefault - are the options considered to be "the default" to reset to
+ * @param {string} params.tblId - table id
+ * @param {function} params.dispatcher only for special dispatching uses such as remote
  */
-export function dispatchLoadPlotData(chartId, xyPlotParams, tblId, dispatcher= flux.process) {
-    dispatcher({type: LOAD_PLOT_DATA, payload: {chartId: (chartId||tblId), xyPlotParams, tblId}});
+export function dispatchLoadPlotData(params) {
+    const {chartId, xyPlotParams, markAsDefault=false, tblId, dispatcher=flux.process} = params;
+    dispatcher({type: LOAD_PLOT_DATA, payload: {chartId: (chartId||tblId), xyPlotParams, markAsDefault, tblId}});
 }
 
 /*
@@ -99,7 +102,7 @@ export function dispatchZoom(chartId, tblId, selection) {
                 const tableModel = getTblById(tblId);
                 if (tableModel) {
                     const paramsWithZoom = Object.assign({}, xyPlotParams, {zoom: xyPlotParams.selection});
-                    dispatchLoadPlotData(chartId, paramsWithZoom, tblId);
+                    dispatchLoadPlotData({chartId, xyPlotParams: paramsWithZoom, tblId});
                 }
             } else {
                 dispatchSetZoom(chartId, selection);
@@ -110,7 +113,7 @@ export function dispatchZoom(chartId, tblId, selection) {
                 const tableModel = getTblById(tblId);
                 if (tableModel) {
                     const paramsWithoutZoom = omit(xyPlotParams, 'zoom');
-                    dispatchLoadPlotData(chartId, paramsWithoutZoom, tblId);
+                    dispatchLoadPlotData({chartId, xyPlotParams: paramsWithoutZoom, tblId});
                 }
             } else {
                 dispatchResetZoom(chartId);
@@ -136,7 +139,7 @@ function dispatchResetZoom(chartId) {
 export function loadPlotData (rawAction) {
     return (dispatch) => {
         let xyPlotParams = rawAction.payload.xyPlotParams;
-        const {chartId, tblId} = rawAction.payload;
+        const {chartId, tblId, markAsDefault} = rawAction.payload;
         const tblSource = get(getTblById(tblId), 'tableMeta.tblFilePath');
 
         const chartModel = get(getChartSpace(SCATTER), chartId);
@@ -153,7 +156,7 @@ export function loadPlotData (rawAction) {
                 xyPlotParams = getUpdatedParams(xyPlotParams, tableModel, dataBoundaries);
             }
 
-            dispatch({ type : LOAD_PLOT_DATA, payload : {chartId, tblId, xyPlotParams, tblSource, serverCallNeeded}});
+            dispatch({ type : LOAD_PLOT_DATA, payload : {chartId, tblId, xyPlotParams, markAsDefault, tblSource, serverCallNeeded}});
 
             if (serverCallNeeded) {
                 fetchPlotData(dispatch, tblId, xyPlotParams, chartId);
@@ -225,14 +228,16 @@ export function reduceXYPlot(state={}, action={}) {
         }
         case (LOAD_PLOT_DATA)  :
         {
-            const {chartId, xyPlotParams, tblId, tblSource, serverCallNeeded} = action.payload;
+            const {chartId, xyPlotParams, markAsDefault, tblId, tblSource, serverCallNeeded} = action.payload;
             if (serverCallNeeded) {
+                const defaultParams = markAsDefault ? cloneDeep(xyPlotParams) : get(state, [chartId, 'defaultParams']);
                 return updateSet(state, chartId,
                     {
                         tblId,
                         isPlotDataReady: false,
                         tblSource,
                         xyPlotParams,
+                        defaultParams,
                         decimatedUnzoomed: get(state, [chartId, 'decimatedUnzoomed'])
                     });
             } else {

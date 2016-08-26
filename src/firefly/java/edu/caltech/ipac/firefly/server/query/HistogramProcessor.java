@@ -37,6 +37,13 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         new DataType("binMin", Double.class),
         new DataType("binMax", Double.class)
     };
+    static {
+        // set default precision to 9 significant digits
+        DataType.FormatInfo fi = DataType.FormatInfo.createDefaultFormat(Double.class);
+        fi.setDataFormat("%.9g");
+        columns[1].setFormatInfo(fi);
+        columns[2].setFormatInfo(fi);
+    }
     private final String FIXED_SIZE_ALGORITHM = "fixedSizeBins";
     private final String NUMBER_BINS = "numBins";
     private final String COLUMN = "columnExpression";
@@ -91,9 +98,11 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         getParameters(request);
         DataGroup sourceDataGroup = DataGroupReader.readAnyFormat(new File(fi.getInternalFilename()));
         double[] columnData = getColumnData(sourceDataGroup);
-        DataGroup HistogramDataGroup = createHistogramTable(columnData);
+        DataGroup histogramDataGroup = createHistogramTable(columnData);
+        histogramDataGroup.addAttribute("column", columnExpression);
+        histogramDataGroup.addAttribute("searchRequest", sReq.toString());
         File histogramFile = createFile(request);
-        DataGroupWriter.write(histogramFile, HistogramDataGroup, 0);
+        DataGroupWriter.write(histogramFile, histogramDataGroup, 0);
         return histogramFile;
     }
 
@@ -151,22 +160,6 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             double[] binMin = (double[]) obj[1];
             double[] binMax = (double[]) obj[2];
             int nPoints = numPointsInBin.length;
-
-            if (nPoints > 1) {
-                double firstBinRange = binMax[0] - binMin[0];
-                int firstSigDigitPos = (int) Math.floor(Math.log10(Math.abs(firstBinRange))) + 1;
-                if (firstSigDigitPos < -2) {
-                    // increase precision
-                    DataType.FormatInfo fi = DataType.FormatInfo.createFloatFormat(20, 3 - firstSigDigitPos);
-                    tblcolumns = new DataType[]{
-                            new DataType("numInBin", Integer.class),
-                            new DataType("binMin", Double.class),
-                            new DataType("binMax", Double.class)
-                    };
-                    tblcolumns[1].setFormatInfo(fi);
-                    tblcolumns[2].setFormatInfo(fi);
-                }
-            }
 
             //add each row to the DataGroup
             HistogramTable = new DataGroup("histogramTable", tblcolumns);
@@ -277,63 +270,6 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         return false;
     }
 
-
-    /**
-     * This method checks all the DataType contained in the input DataGroup to see if the required ColumnName is
-     * in it.  If a DataType's columnName is the same as the input columnName, the corresponding DataType is found and
-     * is returned.
-     *
-     * @param dg
-     * @return
-     */
-    private DataType[] getColumn(DataGroup dg) {
-        DataType[] inColumns = dg.getDataDefinitions();
-        ArrayList<DataType> colDataTypeList = new ArrayList<DataType>();
-        for (int i = 0; i < inColumns.length; i++) {
-            if (columnExpression.contains(inColumns[i].getKeyName())) {
-                colDataTypeList.add(inColumns[i]);
-            }
-
-        }
-        return colDataTypeList.toArray(new DataType[0]);
-    }
-
-    /**
-     * This method convert the numerical data of Object type to the type of Double, return a primitive double value.
-     *
-     * @param data
-     * @param numericColumn
-     * @return
-     */
-    private double convertToADoubleValue(Object data, DataType numericColumn) {
-        Class type = numericColumn.getDataType();
-
-        if (type == Double.class) {
-
-            Double doubleData = (Double) data;
-
-            return doubleData.doubleValue();
-        } else if (type == Float.class) {
-            Float floatData = (Float) data;
-            return floatData.doubleValue();
-        } else if (type == Integer.class) {
-            Integer integerData = (Integer) data;
-            return integerData.doubleValue();
-
-        } else if (type == Short.class) {
-            Short shortData = (Short) data;
-            return shortData.doubleValue();
-        } else if (type == Long.class) {
-            Long longData = (Long) data;
-            return longData.doubleValue();
-
-        } else if (type == Byte.class) {
-            Byte byteData = (Byte) data;
-            return byteData.doubleValue();
-        }
-        return Double.NaN;
-    }
-
     private double[] getColumnData(DataGroup dg) {
         List<DataObject> objList = dg.values();
         int nRow = objList.size();
@@ -345,8 +281,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             DataObject row = objList.get(i);
             data[i] = dGetter.getValue(row);
         }
-
-        return data;
+        return Arrays.stream(data).filter(d -> !Double.isNaN(d)).toArray();
     }
 
     private static String[] getInputFilePath(String inputFileName) {

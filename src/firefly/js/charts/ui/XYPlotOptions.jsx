@@ -422,7 +422,7 @@ export class XYPlotOptions extends React.Component {
     }
 
     render() {
-        const { colValStats, groupKey, xyPlotParams, onOptionsSelected}= this.props;
+        const { colValStats, groupKey, xyPlotParams, defaultParams, onOptionsSelected}= this.props;
 
         // the suggestions are indexes in the colValStats array - it makes it easier to render then with labels
         const allSuggestions = colValStats.map((colVal,idx)=>{return idx;});
@@ -471,7 +471,7 @@ export class XYPlotOptions extends React.Component {
                         <div style={{flexGrow: 1}}/>
                         <div style={{flexGrow: 0}}>
                             <button type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
-                            <button type='button' className='button std' onClick={() => setOptions(groupKey, xyPlotParams)}>Reset</button>
+                            <button type='button' className='button std' onClick={() => setOptions(groupKey, defaultParams)}>Reset</button>
                         </div>
                     </div>}
 
@@ -622,5 +622,6 @@ XYPlotOptions.propTypes = {
     groupKey: PropTypes.string.isRequired,
     colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
     onOptionsSelected: PropTypes.func,
-    xyPlotParams: plotParamsShape
+    xyPlotParams: plotParamsShape,
+    defaultParams: plotParamsShape
 };

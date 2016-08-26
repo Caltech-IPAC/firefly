@@ -36,7 +36,7 @@ export function* syncCharts() {
                             // default chart is xy plot of coordinate columns or first two numeric columns
                             const defaultParams = getDefaultXYPlotParams(tblId);
                             if (defaultParams) {
-                                XYPlotCntlr.dispatchLoadPlotData(tblId, defaultParams, tblId);
+                                XYPlotCntlr.dispatchLoadPlotData({chartId, xyPlotParams: defaultParams, markAsDefault: true, tblId});
                             }
                         }
                     }
@@ -56,7 +56,7 @@ export function* syncCharts() {
                             hasRelated = true;
                             if (ChartsCntlr.isChartMounted(tbl_id, cid, SCATTER)) {
                                 const xyPlotParams = xyPlotState[cid].xyPlotParams;
-                                XYPlotCntlr.dispatchLoadPlotData(cid, xyPlotParams, tbl_id);
+                                XYPlotCntlr.dispatchLoadPlotData({chartId: cid, xyPlotParams, tblId: tbl_id});
                             }
                         }
                     });
@@ -70,7 +70,7 @@ export function* syncCharts() {
                                 hasRelated = true;
                                 if (ChartsCntlr.isChartMounted(tbl_id, cid, 'histogram')) {
                                     const histogramParams = histogramState[cid].histogramParams;
-                                    HistogramCntlr.dispatchLoadColData(cid, histogramParams, tbl_id);
+                                    HistogramCntlr.dispatchLoadColData({chartId: cid, histogramParams, tblId: tbl_id});
                                 }
                             }
                         });
@@ -80,7 +80,7 @@ export function* syncCharts() {
                             // default chart is xy plot of coordinate columns or first two numeric columns
                             const defaultParams = getDefaultXYPlotParams(tbl_id);
                             if (defaultParams) {
-                                XYPlotCntlr.dispatchLoadPlotData(tbl_id, defaultParams, tbl_id);
+                                XYPlotCntlr.dispatchLoadPlotData({chartId: tbl_id, xyPlotParams: defaultParams, markAsDefault: true, tblId: tbl_id});
                             }
                         }
                     }
@@ -101,13 +101,13 @@ function updateChartDataIfNeeded(tblId, chartId, chartType) {
             case SCATTER:
                 const xyPlotParams = get(chartSpace, [chartId, 'xyPlotParams']);
                 if (xyPlotParams) {
-                    XYPlotCntlr.dispatchLoadPlotData(chartId, xyPlotParams, tblId);
+                    XYPlotCntlr.dispatchLoadPlotData({chartId, xyPlotParams, tblId});
                 }
                 break;
             case HISTOGRAM:
                 const histogramParams = get(chartSpace, [chartId, 'histogramParams']);
                 if (histogramParams) {
-                    HistogramCntlr.dispatchLoadColData(chartId, histogramParams, tblId);
+                    HistogramCntlr.dispatchLoadColData({chartId, histogramParams, tblId});
                 }
                 break;
             default:

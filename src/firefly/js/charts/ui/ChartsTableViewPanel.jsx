@@ -608,16 +608,18 @@ export class OptionsWrapper extends React.Component {
                 options = (<XYPlotOptions key={formName} groupKey={formName}
                                    colValStats={tblStatsData.colStats}
                                    xyPlotParams={get(tblPlotData, 'xyPlotParams')}
+                                   defaultParams={get(tblPlotData, 'defaultParams')}
                                    onOptionsSelected={(xyPlotParams) => {
-                                                XYPlotCntlr.dispatchLoadPlotData(chartId, xyPlotParams, tableModel.tbl_id);
+                                                XYPlotCntlr.dispatchLoadPlotData({chartId, xyPlotParams, tblId: tableModel.tbl_id});
                                             }
                                           }/>);
             } else {
                 options = (<HistogramOptions key={formName} groupKey={formName}
                                       colValStats={tblStatsData.colStats}
                                       histogramParams={get(tblHistogramData, 'histogramParams')}
+                                      defaultParams={get(tblHistogramData, 'defaultParams')}
                                       onOptionsSelected={(histogramParams) => {
-                                                HistogramCntlr.dispatchLoadColData(chartId, histogramParams, tableModel.tbl_id);
+                                                HistogramCntlr.dispatchLoadColData({chartId, histogramParams, tblId: tableModel.tbl_id});
                                             }
                                           }/>);
             }
