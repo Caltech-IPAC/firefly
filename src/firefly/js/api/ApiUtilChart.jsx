@@ -9,5 +9,5 @@ import * as XYPlotCntlr from '../charts/XYPlotCntlr.js';
 export {uniqueChartId} from '../charts/ChartUtil.js';
 
 export function loadPlotDataForTbl(tblId, chartId, xyPlotParams) {
-    XYPlotCntlr.dispatchLoadPlotData(chartId, xyPlotParams, tblId);
+    XYPlotCntlr.dispatchLoadPlotData({chartId, xyPlotParams, markAsDefault:true, tblId});
 }

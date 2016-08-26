@@ -86,6 +86,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
         }
         DataGroup sourceDataGroup = DataGroupReader.readAnyFormat(new File(fi.getInternalFilename()));
         DataGroup statisticsDataGroup = createTableStatistic(sourceDataGroup);
+        statisticsDataGroup.addAttribute("searchRequest", sReq.toString());
         File statisticsFile = createFile(request);
         DataGroupWriter.write(statisticsFile, statisticsDataGroup, 0);
         return statisticsFile;
@@ -102,9 +103,12 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
         DataType[] inColumns =inDataGroup.getDataDefinitions();
         DataType[] numericColumns = getNumericColumns(inColumns);
 
-        String[] columnNames = getDataTypeField(numericColumns, "name");
-        String[] columnDescription = getDataTypeField(numericColumns, "description");
-        String[] unit = getDataTypeField(numericColumns, "unit");
+        String[] columnNames = new String[numericColumns.length];
+        String[] unit = new String[numericColumns.length];
+        for (int i=0; i<numericColumns.length; i++){
+            columnNames[i]=numericColumns[i].getKeyName();
+            unit[i]=numericColumns[i].getDataUnit();
+        }
 
         Object[] retArrays = getDataArrays (dgjList,numericColumns );
         double[] minArray = (double[]) retArrays[0];
@@ -114,7 +118,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
         for (int i=0; i<minArray.length; i++){
             DataObject row = new DataObject(statisticsTable);
             row.setDataElement(columns[0], columnNames[i]);
-            row.setDataElement(columns[1], columnDescription[i]);
+            row.setDataElement(columns[1], ""); // description not available
             row.setDataElement(columns[2], unit[i]);
             row.setDataElement(columns[3], minArray[i]);
             row.setDataElement(columns[4], maxArray[i]);
@@ -122,6 +126,8 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
             statisticsTable.add(row);
         }
 
+        // adjust the width of all columns to fit the data
+        statisticsTable.shrinkToFitData(true);
         return statisticsTable;
     }
     /**
