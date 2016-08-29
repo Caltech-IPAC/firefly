@@ -162,7 +162,7 @@ function setRowsChecked(anyTableModel) {
  */
 function addColumnDef(tableModelFetched, urldef) {
     const nCols = tableModelFetched.tableData.columns.length;
-    const u = (urldef && urldef === 'null') ? '#' : urldef.match(/href='([^']+)'/)[1] + '#';
+    const u = (isEmpty(urldef) || urldef === 'null') ? '#' : urldef.match(/href='([^']+)'/)[1] + '#';
     tableModelFetched.tableData.columns.splice(nCols, 0, {visibility: 'hide', name: 'coldef', type: 'char'});
     tableModelFetched.tableData.data.map((e) => {
         e.splice(nCols, 0, u + e[0]);

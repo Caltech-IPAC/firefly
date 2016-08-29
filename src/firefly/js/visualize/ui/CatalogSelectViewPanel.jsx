@@ -601,7 +601,10 @@ class CatalogDDList extends Component {
         optList = getSubProjectOptions(catmaster, selProj);
         catTable = getCatalogOptions(catmaster, selProj, selCat).option;
 
-        const catname0 = get(FieldGroupUtils.getGroupFields(gkey), 'cattable.value', catTable[0].value);
+        let catname0 = get(FieldGroupUtils.getGroupFields(gkey), 'cattable.value', catTable[0].value);
+        if(isEmpty(catname0)){
+            catname0 = catTable[0].value;
+        }
         const ddform = get(FieldGroupUtils.getGroupFields(gkey), 'ddform.value', 'true');
         const shortdd = ddform == 'true' ? 'short' : 'long';
         const tbl_id = `${catname0}-${shortdd}-dd-table-constraint`;
@@ -695,7 +698,7 @@ function fieldInit() {
         'cattable': {
             fieldKey: 'cattable',
             value: '',
-            coldef: '',
+            coldef: catmaster[0].catalogs[0].option[0].cat[9],
             indexClicked: 0
         },
         'conesize': {
