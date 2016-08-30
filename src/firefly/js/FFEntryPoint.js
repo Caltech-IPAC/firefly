@@ -8,7 +8,7 @@ import ReactDOM from 'react-dom';
 import {get} from 'lodash';
 
 import {firefly} from './Firefly.js';
-import {FireflyViewer} from './core/FireflyViewer.js';
+import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
 import {initApi} from './api/ApiBuild.js';
 import {HELP_LOAD} from './core/AppDataCntlr.js';
@@ -20,14 +20,13 @@ firefly.bootstrap();
  * A list of available templates
  * @enum {string}
  */
-// eslint-disable-next-line
-const Template = {
+const Templates = {
     /**
      * This templates has multiple views:  'images', 'tables', and 'xyPlots'.
      * They can be combined with ' | ', i.e.  'images | tables'
      */
-    FFV: 'FireflyViewer',
-    LCV: 'LightCurveViewer'
+    FireflyViewer: FireflyViewer,
+    LightCurveViewer : LcViewer
 };
 
 
@@ -36,7 +35,7 @@ const Template = {
  * what this application should do
  * @namespace firefly
  * @type {object}
- * @prop {Template} template  the name of the template to use. defaults to 'FireflyViewer'
+ * @prop {Templates} template  the name of the template to use. defaults to 'FireflyViewer'
  * @prop {string}   appTitle  title of this application.
  * @prop {string}   div       the div to load this application into.  defaults to 'app'
  * @prop {Object}   menu         custom menu bar
@@ -57,6 +56,7 @@ const app = get(window, 'firefly.app');
 if (app) {
     const defaults = {
         div: 'app',
+        template: 'FireflyViewer',
         menu: [ {label:'Data Sets: Catalogs & Images', action:'AnyDataSetSearch'},
                 {label:'Catalogs CLASSIC', action:'IrsaCatalogDropDown'},
                 {label:'Test Searches', action:'TestSearches'},
@@ -67,7 +67,7 @@ if (app) {
         ]
     };
     const props = Object.assign(defaults, app);
-    const viewer = app.template === Template.LCV ? LcViewer : FireflyViewer;
+    const viewer = Templates[props.template];
 
     ReactDOM.render(React.createElement(viewer, props),
         document.getElementById(props.div));

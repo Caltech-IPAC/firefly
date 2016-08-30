@@ -6,8 +6,8 @@ import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {pick, filter} from 'lodash';
 
-import DockLayoutPanel from './panel/DockLayoutPanel.jsx';
-import {LO_VIEW} from '../core/LayoutCntlr.js';
+import DockLayoutPanel from '../../ui/panel/DockLayoutPanel.jsx';
+import {LO_VIEW} from '../../core/LayoutCntlr.js';
 // import {deepDiff} from '../util/WebUtil.js';
 
 const wrapperStyle = { flex: 'auto', display: 'flex', flexFlow: 'column', overflow: 'hidden'};

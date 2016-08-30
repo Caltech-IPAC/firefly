@@ -7,19 +7,19 @@ import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {pickBy} from 'lodash';
 
-import {flux, firefly} from '../Firefly.js';
-import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../core/AppDataCntlr.js';
-import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../core/LayoutCntlr.js';
-import {layoutManager} from '../core/layout/FireflyLayoutManager.js';
-import {Menu} from '../ui/Menu.jsx';
-import {Banner} from '../ui/Banner.jsx';
-import {DropDownContainer} from '../ui/DropDownContainer.jsx';
-import {TriViewPanel} from '../ui/TriViewPanel.jsx';
-import {VisHeader} from '../visualize/ui/VisHeader.jsx';
-import {getActionFromUrl} from '../core/History.js';
-import {launchImageMetaDataSega} from '../visualize/ui/TriViewImageSection.jsx';
-import {dispatchAddViewer} from '../visualize/MultiViewCntlr.js';
-import {dispatchAddSaga} from '../core/MasterSaga.js';
+import {flux, firefly} from '../../Firefly.js';
+import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
+import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
+import {layoutManager} from './FireflyLayoutManager.js';
+import {Menu} from '../../ui/Menu.jsx';
+import {Banner} from '../../ui/Banner.jsx';
+import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
+import {TriViewPanel} from './TriViewPanel.jsx';
+import {VisHeader} from '../../visualize/ui/VisHeader.jsx';
+import {getActionFromUrl} from '../../core/History.js';
+import {launchImageMetaDataSega} from '../../visualize/ui/TriViewImageSection.jsx';
+import {dispatchAddViewer} from '../../visualize/MultiViewCntlr.js';
+import {dispatchAddSaga} from '../../core/MasterSaga.js';
 
 // import {deepDiff} from '../util/WebUtil.js';
 
