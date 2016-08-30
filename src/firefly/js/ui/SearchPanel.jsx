@@ -4,7 +4,7 @@
 
 import React, {Component, PropTypes} from 'react';
 
-import FormPanel from './FormPanel.jsx';
+import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
 import {ValidationField} from '../ui/ValidationField.jsx';
 import Validate from '../util/Validate.js';

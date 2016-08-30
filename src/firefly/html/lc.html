@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="icon" type="image/x-icon" href="images/fftools-logo-16x16.png">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>Light Curve Viewer</title>
+
+    <script>
+        window.firefly = {
+            app: {
+                template: 'LightCurveViewer',
+                menu: [
+                    {label:'Upload', action:'LCUpload'},
+                    {label:'Catalogs', action:'IrsaCatalogDropDown'},
+                    {label:'Help', action:'app_data.helpLoad', type:'COMMAND'},
+                    ]
+            },
+        };
+    </script>
+    <script  type="text/javascript" src="firefly_loader.js"></script>
+</head>
+
+<body style="margin: 0; background-color: rgb(200,200,200)">
+<!-- attached loaction for firefly app -->
+<div id='app'/>
+
+
+
+
+</body>
+
+</html>
+
+

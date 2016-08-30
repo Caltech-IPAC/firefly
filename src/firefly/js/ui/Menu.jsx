@@ -100,7 +100,7 @@ Menu.propTypes = {
 };
 
 /**
- * returns an array of drop down actions from the given menu items
+ * returns an array of drop down actions from menu items
  * @returns {*}
  */
 export function getDropDownNames() {

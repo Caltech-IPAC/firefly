@@ -4,7 +4,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import FormPanel from '../../ui/FormPanel.jsx';
+import {FormPanel} from '../../ui/FormPanel.jsx';
 import { get, merge, isEmpty} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';

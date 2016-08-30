@@ -18,7 +18,7 @@ import {HistogramOptions} from '../charts/ui/HistogramOptions.jsx';
 import {resultsSuccess as onHistogramOptsSelected} from '../charts/ui/HistogramOptions.jsx';
 //import {uniqueChartId} from '../charts/ChartUtil.js';
 
-import FormPanel from './FormPanel.jsx';
+import {FormPanel} from './FormPanel.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 
 import LOADING from 'html/images/gxt/loading.gif';

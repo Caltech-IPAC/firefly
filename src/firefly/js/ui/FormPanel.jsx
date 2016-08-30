@@ -27,7 +27,7 @@ function createSuccessHandler(action, params, onSubmit) {
     };
 }
 
-var FormPanel = function (props) {
+export const FormPanel = function (props) {
     var {children, onSubmit, onCancel, onError, groupKey, action, params, width, height} = props;
 
     const style = { width, height,
@@ -62,4 +62,3 @@ FormPanel.propTypes = {
 };
 
 
-export default FormPanel;
