@@ -14,8 +14,8 @@ const popupId = 'XYColSelect';
 const TBL_ID ='selectCol';
 
 const popupPanelResizableStyle = {
-    width: 600,
-    minWidth: 450,
+    width: 300,
+    minWidth: 560,
     height: 450,
     minHeight: 300,
     resize: 'both',
@@ -45,11 +45,11 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
 
     // make a local table for plot column selection panel
     var columns = [
-                    {name: 'Name'},
-                    {name: 'Unit'},
-                    {name: 'Type'},
-                    {name: 'Description'}
-                ];
+        {name: 'Name'},
+        {name: 'Unit'},
+        {name: 'Type'},
+        {name: '', visibility: 'hidden'}
+    ];
     var data = [];
     for (var i = 0; i < colValStats.length; i++) {
             data[i] = [
@@ -64,8 +64,9 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
     columns[0].prefWidth = Math.min(widths[0], 30);  // adjust width of column for optimum display.
     columns[1].prefWidth = Math.min(widths[1], 15);
     columns[2].prefWidth = Math.min(widths[2], 15);
-    columns[3].prefWidth = Math.min(widths[3], 100);
-
+    if (widths[3]) {
+        columns[3] = {name: 'Description', prefWidth: widths[3], visibility: 'show'};
+    }
 
     const request = {pageSize:10000};
     var tableModel = {totalRows: data.length, request, tbl_id:TBL_ID, tableData: {columns,  data }, highlightedRow: hlRowNum};
