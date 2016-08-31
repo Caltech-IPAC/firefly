@@ -3,14 +3,14 @@
 import {expect} from 'chai';
 import {assert} from 'chai';
 
-import { makeTblRequest} from '../TableUtil.js';
+//mport { makeTblRequest} from '../TableUtil.js';
 
 describe('A test suite for tables/TablesCntlr.js', function () {
     var request;
 
     /* run once before testing */
     before(() => {
-            request = makeTblRequest('IpacTableFromSource');
+           // request = makeTblRequest('IpacTableFromSource');
         }
     );
     /* run once testing is done */
