@@ -4,14 +4,13 @@ import {Projection, makeProjection} from '../Projection.js';
 import CoordinateSys from '../../CoordSys.js';
 
 /**
- * LZ
+ * LZ finalized on 8/30/16
  * The javascript unit test uses the same data in the java unit test tree.
  *
  */
 var fs = require('fs');
 
 const JAVA_TEST_DATA_PATH='firefly_test_data/edu/caltech/ipac/visualize/plot/projection/';
-//const JAVA_TEST_DATA_PATH='/test/edu/caltech/ipac/visualize/plot/projection/';
 
 const precision=10;
 
@@ -41,6 +40,7 @@ describe('A test suite for projection.js', function () {
         var path = require('path');
         //__filename returns absolute path to file where it is placed
         var scriptDirString = path.dirname(fs.realpathSync(__filename));
+
        //the abosolute root path to js/ not include js
        // var rootPath = scriptDirString.split('js')[0];
         var rootPath = scriptDirString.split('firefly')[0];
@@ -84,10 +84,10 @@ describe('A test suite for projection.js', function () {
                 expect( expectedImagePt.x.toFixed(precision)).to.equals(imagePt.x.toFixed(precision));
                 expect( expectedImagePt.y.toFixed(precision)).to.equals(imagePt.y.toFixed(precision));
 
-               // assert.equal(expectedImagePt ,image_pt );
+                // assert.equal(expectedImagePt ,image_pt );
                 expectedWorldPt = jsonStr['expectedWorldPt'];//.replace(/[=]/g, ':');
 
-               // console.log(expectedWorldPt);
+                // console.log(expectedWorldPt);
                 //var expectedWorldPt = JSON.parse(expectedWorldPtStr);
                 worldPt = jsProjection.getWorldCoords(imagePt.x, imagePt.y);
                 expect( expectedWorldPt.x.toFixed(precision)).to.equals(worldPt.x.toFixed(precision));
