@@ -121,10 +121,10 @@ function StandardView(props) {
 
 // eslint-disable-next-line
 function SingleTable({table, expandedMode}) {
-    var {tbl_id, title, removable, tbl_ui_id} = table;
+    var {tbl_id, title, removable, tbl_ui_id, options={}} = table;
 
     return  (
-        <TablePanel key={tbl_id} border={true} {...{title, removable, tbl_id, tbl_ui_id, expandedMode}} />
+        <TablePanel key={tbl_id} border={true} {...{title, removable, tbl_id, tbl_ui_id, ...options, expandedMode}} />
     );
 }
 
@@ -132,13 +132,13 @@ function tablesAsTab(tables, expandedMode) {
 
     return tables &&
         Object.keys(tables).map( (key) => {
-            var {tbl_id, title, removable, tbl_ui_id} = tables[key];
+            var {tbl_id, title, removable, tbl_ui_id, options={}} = tables[key];
             const onTabRemove = () => {
                 dispatchTableRemove(tbl_id);
             };
             return  (
                 <Tab key={tbl_ui_id} name={title} removable={removable} onTabRemove={onTabRemove}>
-                    <TablePanel key={tbl_id} border={false} showTitle={false} {...{tbl_id, tbl_ui_id, expandedMode}} />
+                    <TablePanel key={tbl_id} border={false} showTitle={false} {...{tbl_id, tbl_ui_id, ...options, expandedMode}} />
                 </Tab>
             );
         } );
