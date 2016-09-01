@@ -56,8 +56,8 @@ export class CatalogConstraintsPanel extends React.Component {
         const {tableModel} = this.state;
         const {catname, dd_short, fieldKey} = this.props;
 
-        if (isEmpty(tableModel)) {
-            return <div></div>;
+        if (isEmpty(tableModel) || !tableModel.tbl_id.startsWith(catname)) {
+            return <div style={{top: 0}} className='loading-mask'/>;
         }
 
         return (
@@ -259,6 +259,7 @@ function ConstraintPanel({tableModel, fieldKey, onChange, ontablechanged}) {
                 onTableChanged={ontablechanged}
                 //onBlur={ (e) => {console.log('onChange called from table '+e.value);}}
                 showToolbar={false}
+                showMask={true}
                 showOptionButton={false}
                 key={tableModel.tbl_id}
                 tableModel={tableModel}
