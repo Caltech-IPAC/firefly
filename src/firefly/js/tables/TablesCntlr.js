@@ -201,9 +201,10 @@ export function tableSearch(action) {
     return (dispatch) => {
         //dispatch(validate(FETCH_TABLE, action));
         if (!action.err) {
-            var {request, options, tbl_group} = action.payload;
+            var {request={}, options={}, tbl_group} = action.payload;
             const {tbl_id} = request;
             const title = get(request, 'META_INFO.title');
+            request.pageSize = options.pageSize = options.pageSize || request.pageSize || 100;
 
             dispatchTableFetch(request);
             if (!TblUtil.getTableInGroup(tbl_id, tbl_group)) {
