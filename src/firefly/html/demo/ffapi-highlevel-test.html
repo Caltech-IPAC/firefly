@@ -205,7 +205,7 @@
             firefly.showTable('tables-2', tblReq2, {removable: false, showUnits: true, showFilters: true});
             //-----------------  CHART DEMO ------------------------//
             //--- using QUERY_ID: 'upload' does not work getActiveTableId('upload') returns undefined ---//
-            firefly.addXYPlot('xyPlot1', {tbl_id: tblReq2.tbl_id, xCol: 'ra', yCol: 'dec'});
+            firefly.addXYPlot('xyPlot1', {tbl_id: tblReq2.tbl_id, xCol: 'ra', yCol: 'dec', help_id: 'visualization.xyplotViewer'});
             firefly.addXYPlot('xyPlot2', {tbl_id: tblReq2.tbl_id, xCol: 'w1mpro+w4mpro', yCol: 'w2mpro'});
 
             //-----< old table api ------//
