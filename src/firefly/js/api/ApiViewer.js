@@ -6,7 +6,7 @@
 /**
  * @public
  * @summary Build the interface to remotely communicate to the firefly viewer
- * @module firefly
+ * @namespace firefly
  */
 import {take} from 'redux-saga/effects';
 import {isArray, get} from 'lodash';
@@ -42,7 +42,7 @@ export function buildViewerApi() {
  * @param {string} [channel] the channel id string, if not specified then one will be generated
  * @param file the html of the viewer to launch. In time there will be several
  * @return {object} viewer interface
- * @memberof module:firefly
+ * @memberof firefly
  *
  */
 function getViewer(channel= getWsChannel(),file='') {
@@ -59,7 +59,7 @@ function getViewer(channel= getWsChannel(),file='') {
 /**
  *
  * @deprecated
- * @memberof module:firefly
+ * @memberof firefly
  * @ignore
  */
 function getExternalViewer() {
@@ -76,7 +76,7 @@ function buildImagePart(channel,file,dispatch) {
     /**
      * @summary set the default params the will be add to image plot request
      * @param params
-     * @memberof module:firefly
+     * @memberof firefly
      * @public
      */
     const setDefaultParams= (params)=> defP= params;
@@ -84,7 +84,7 @@ function buildImagePart(channel,file,dispatch) {
     /**
      * @summary show a image in the firefly viewer in another tab
      * @param request Web plot request
-     * @memberof module:firefly
+     * @memberof firefly
      * @public
      */
     const showImage= (request) => {
@@ -103,7 +103,7 @@ function buildImagePart(channel,file,dispatch) {
      * @summary show a image in the firefly viewer in another tab, the the file first then the url
      * @param file a file on the server
      * @param url a url to a fits file
-     * @memberof module:firefly
+     * @memberof firefly
      * @public
      */
     const showImageFileOrUrl= (file,url) => showImage({file, url, Type : RequestType.TRY_FILE_THEN_URL});

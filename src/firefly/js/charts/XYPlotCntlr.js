@@ -26,7 +26,7 @@ const SET_ZOOM = `${XYPLOT_DATA_KEY}/SET_ZOOM`;
 const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
 /**
  * @public
- * @module firefly/action
+ * @namespace firefly/action
  */
 
 /*
@@ -82,6 +82,9 @@ const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
  * @param {string} tblId - table id
  * @param {function} dispatcher only for special dispatching uses such as remote
  * @public
+ * @function dispatchLoadPlotData
+ * @memberof firefly/action
+ *
  */
 export function dispatchLoadPlotData(chartId, xyPlotParams, tblId, dispatcher= flux.process) {
     dispatcher({type: LOAD_PLOT_DATA, payload: {chartId: (chartId||tblId), xyPlotParams, tblId}});
@@ -92,6 +95,8 @@ export function dispatchLoadPlotData(chartId, xyPlotParams, tblId, dispatcher= f
  * @param {String} chartId - chart id
  * @param {Object} selection - {xMin, xMax, yMin, yMax}
  * @public
+ * @func dispatchSetSelection
+ * @memberof firefly/action
  */
 export function dispatchSetSelection(chartId, selection) {
     flux.process({type: SET_SELECTION, payload: {chartId, selection}});
@@ -103,6 +108,8 @@ export function dispatchSetSelection(chartId, selection) {
  * @param {String} tblId - table id
  * @param {Object} selection - {xMin, xMax, yMin, yMax}
  * @public
+ * @func dispatchZoom
+ * @memberof firefly/action
  */
 export function dispatchZoom(chartId, tblId, selection) {
     const {xyPlotData, xyPlotParams, decimatedUnzoomed} = get(getChartSpace(SCATTER), chartId, {});
@@ -147,6 +154,8 @@ function dispatchResetZoom(chartId) {
  * @param rawAction (its payload should contain searchRequest to get source table and histogram parameters)
  * @returns function which loads plot data (x, y, rowIdx, etc.)
  * @public
+ * @func loadPlotData
+ * @memberof firefly/action
  */
 export function loadPlotData (rawAction) {
     return (dispatch) => {
@@ -197,8 +206,9 @@ function serverParamsChanged(oldParams, newParams) {
  * decimatedUnzoomed - tells if unzoomed data are decimated
  * @param data {Object} the data to merge with the xyplot branch
  * @returns {{type: string, payload: object}}
- * @memberof module:firefly/action
+ * @memberof firefly/action
  * @public
+ * @func updatePlotData
  */
 function updatePlotData(data) {
     return { type : UPDATE_PLOT_DATA, payload: data };

@@ -306,11 +306,13 @@ export function dispatchChangePrimePlot({plotId, primeIdx, dispatcher= flux.proc
 /**
  * Show image with new color table loaded
  * Note - function parameter is a single object
- * @param {string} plotId
- * @param {number} cbarId
- * @param {ActionScope} actionScope
+ * @param {Object }  obj
+ * @param {string} obj.plotId
+ * @param {number} obj.cbarId
+ * @param {ActionScope} obj.actionScope
  * @param {function} dispatcher only for special dispatching uses such as remote
  */
+
 export function dispatchColorChange({plotId, cbarId, actionScope=ActionScope.GROUP, dispatcher= flux.process} ) {
     dispatcher({ type: COLOR_CHANGE, payload: { plotId, cbarId, actionScope }});
 }

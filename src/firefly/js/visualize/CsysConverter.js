@@ -187,7 +187,7 @@ export class CysConverter {
      * @param {number} [altZoomLevel], only use this parameter it you want to compute the point for a zoom level that
      *                 if different than what the plotted zoom level
      * @return getImageWorkSpaceCoords
-     * @@function  module:firefly/util/image/CCUtil
+     * @function  getImageWorkSpaceCoords
      * @static
      */
     getImageWorkSpaceCoords(pt, altZoomLevel) {
@@ -578,7 +578,7 @@ export class CysConverter {
  *
  * @param pt
  * @return {*}
- * @memberof module:firefly/util/image/CCUtil
+ * @memberof firefly/util/image/CCUtil
  * @public
  */
 function getWorldPtRepresentation(pt) {
@@ -593,15 +593,15 @@ function getWorldPtRepresentation(pt) {
 
 /** part of lowLevelApi
  * @public
- * @module   firefly/util/image/CCUtil/
+ * @namespace  firefly/util/image/CCUtil/
  * @type {{getImageWorkSpaceCoords: CCUtil.getImageWorkSpaceCoords, getImageCoords: CCUtil.getImageCoords, getViewPortCoords: CCUtil.getViewPortCoords, getScreenCoords: CCUtil.getScreenCoords, getWorldCoords: CCUtil.getWorldCoords, getWorldPtRepresentation: getWorldPtRepresentation}}
  */
 export const CCUtil = {
     /**
      * Convert to ImageWorkSpace Point
      * @param {object} plot - the image
-     * @function getImageWorkSpaceCoords
-     * @static
+     * @func  getImageWorkSpaceCoords
+     * @memberof   firefly/util/image/CCUtil/
      * @public
      *
      */
@@ -614,7 +614,7 @@ export const CCUtil = {
      * @param {object} plot - the image
      * @param {object} pt - the point to convert
      * @function getImageCoords
-     * @static
+     * @memberof  firefly/util/image/CCUtil/
      * @public
      */
     getImageCoords: (plot,pt) => CysConverter.make(plot).getImageCoords(pt),
@@ -628,7 +628,7 @@ export const CCUtil = {
      * @param {object} pt - the point to convert
      * @function getViewPortCoords
      * @public
-     * @static
+     * @memberof  firefly/util/image/CCUtil/
      */
     getViewPortCoords: (plot,pt) => CysConverter.make(plot).getViewPortCoords(pt),
     
@@ -640,7 +640,7 @@ export const CCUtil = {
      * @param {object} plot - the image
      * @param {object} pt - the point to convert
      * @function  getScreenCoords
-     * @static
+     * @memberof  firefly/util/image/CCUtil/
      */
     getScreenCoords: (plot,pt) => CysConverter.make(plot).getScreenCoords(pt),
     
@@ -650,7 +650,7 @@ export const CCUtil = {
      * @param {object} plot - the image
      * @param {object} pt - the point to convert
      * @function getWorldCoords
-     * @static
+     * @memberof  firefly/util/image/CCUtil/
      * @public
      */
     getWorldCoords: (plot,pt) => CysConverter.make(plot).getWorldCoords(pt),

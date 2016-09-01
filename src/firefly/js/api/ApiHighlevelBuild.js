@@ -16,7 +16,7 @@
 /**
  * @public
  * @desc build highLevelApi using the lowLevelApi as an input
- * @module firefly
+ * @namespace firefly
  */
 
 /**
@@ -136,7 +136,7 @@ function buildTablePart(llApi) {
      * @param {string|HTMLDivElement} targetDiv to put the table in.
      * @param {Object} request         request object created from
      * @param {TblOptions} options     table options.
-     * @memberof module:firefly
+     * @memberof firefly
      * @public
      * @example fierfly.showTable
      */
@@ -175,7 +175,7 @@ function buildChartPart(llApi) {
      * @summary The general plotting function to plot an XY Plot.
      * @param {string|HTMLDivElement} targetDiv to put the chart in.
      * @param {XYPlotOptions} parameters the request object literal with the chart parameters
-     * @memberof module:firefly
+     * @memberof firefly
      * @example firefly.showXYPlot
      * @public
      */
@@ -183,8 +183,8 @@ function buildChartPart(llApi) {
     /**
      * @summary  It appears twice when it is added in the above jsdoc block
      * @param {string|HTMLDivElement} targetDiv to put the chart in.
-     * @param {module:firefly.XYPlotOptions} parameters the request object literal with the chart parameters
-     * @memberof module:firefly
+     * @param {XYPlotOptions} parameters the request object literal with the chart parameters
+     * @memberof firefly
      * @public
      * @example firefly.addXYPlot
      */
@@ -198,7 +198,7 @@ function buildCommon(llApi) {
     /**
      * @summary Sets the root path for any relative URL. If this method has not been called then relative URLs use the page's root.
      * @param {String} rootUrlPath
-     * @memberof module:firefly
+     * @memberof firefly
      * @public
      */
     const setRootPath= (rootUrlPath) => llApi.action.dispatchRootUrlPath(rootUrlPath);
@@ -215,7 +215,7 @@ function buildImagePart(llApi) {
       * @summary The general plotting function to plot a FITS image.
       * @param {String|div} targetDiv to put the image in.
       * @param {Object} request the request object literal with the plotting parameters
-      * @memberof module:firefly
+      * @memberof firefly
       * @public
       * @ignore
       * @example firefly.showImage
@@ -229,7 +229,7 @@ function buildImagePart(llApi) {
      * @param {String|div} targetDiv to put the image in.
      * @param {String} file file on server
      * @param {String} url url reference to a fits file
-     * @memberof module:firefly
+     * @memberof firefly
      * @public
      * @ignore
      * @example firefly.showImageFileOrUrl
@@ -246,7 +246,7 @@ function buildImagePart(llApi) {
     /**
      * @summary set global fallback params for every image plotting call
      * @param {Object} params a object literal such as any image plot or showImage uses
-     * @memberof module:firefly
+     * @memberof irefly
      * @public
      * @ignore
      * @example firefly.setGlobalImageDef
@@ -258,7 +258,7 @@ function buildImagePart(llApi) {
      *
      * @param {div} targetDiv to put the coverage in.
      * @param options  an object literal containing a list of the coverage options
-     * @memberof module:firefly
+     * @memberof firefly
      * @public
      * @example firefly.showCoverage
      */
