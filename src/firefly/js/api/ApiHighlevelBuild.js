@@ -113,6 +113,7 @@ function buildTablePart(llApi) {
     /**
      * @typedef {object} TblOptions    table options
      * @prop {string}  tbl_group    the group this table belongs to.  Defaults to 'main'.
+     * @prop {number}  pageSize     the starting page size.  Will use the request's pageSize if not given.
      * @prop {boolean} removable    true if this table can be removed from view.  Defaults to true.
      * @prop {boolean} showUnits    defaults to false
      * @prop {boolean} showFilters  defaults to false

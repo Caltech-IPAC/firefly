@@ -238,14 +238,14 @@ const TextView = ({columns, data, showUnits, widthPx, heightPx}) => {
 };
 
 function makeColWidth(columns, showUnits) {
-    return !columns ? {} : columns.reduce((widths, col) => {
+    return !columns ? {} : columns.reduce((widths, col, idx) => {
         const label = col.name;
         var nchar = col.prefWidth;
         const unitLength = showUnits ? get(col, 'units.length', 0) : 0;
         if (!nchar) {
             nchar = Math.max(label.length+2, unitLength+2, get(col,'width', 0)); // 2 is for padding and sort symbol
         }
-        widths[col.name] = nchar * 7;
+        widths[idx] = nchar * 7;
         return widths;
     }, {});
 }
@@ -268,7 +268,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
                 header={<HeadRenderer {...{col, showUnits, showFilters, filterInfo, sortInfo, onSort, onFilter}} />}
                 cell={<CellRenderer style={style} data={data} colIdx={idx} />}
                 fixed={fixed}
-                width={columnWidths[col.name]}
+                width={columnWidths[idx]}
                 isResizable={true}
                 allowCellsRecycling={true}
             />

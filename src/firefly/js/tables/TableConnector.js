@@ -12,15 +12,14 @@ import {fetchUrl} from '../util/WebUtil.js';
 
 export class TableConnector {
     
-    constructor(tbl_id, tbl_ui_id, tableModel, showUnits=true, showFilters=false) {
+    constructor(tbl_id, tbl_ui_id, tableModel, showUnits=true, showFilters=false, pageSize) {
         this.tbl_id = tbl_id;
         this.tbl_ui_id = tbl_ui_id;
         this.localTableModel = tableModel;
 
-        this.origPageSize = get(this.tableModel, 'request.pageSize', 100);
+        this.origPageSize = pageSize;
         this.origShowUnits = showUnits;
         this.origShowFilters = showFilters;
-        this.origColumns = cloneDeep(get(tableModel, 'tableData.columns', []));
     }
 
     onSort(sortInfoString) {
@@ -153,8 +152,8 @@ export class TableConnector {
                         showFilters: this.origShowFilters});
     }
 
-    static newInstance(tbl_id, tbl_ui_id, tableModel, showUnits, showFilters) {
-        return new TableConnector(tbl_id, tbl_ui_id, tableModel, showUnits, showFilters);
+    static newInstance(tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize) {
+        return new TableConnector(tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize);
     }
 }
 

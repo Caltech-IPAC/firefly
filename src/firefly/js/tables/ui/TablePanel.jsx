@@ -32,13 +32,13 @@ const TT_EXPAND = 'Expand this panel to take up a larger area';
 export class TablePanel extends Component {
     constructor(props) {
         super(props);
-        var {tbl_id, tbl_ui_id, tableModel} = props;
+        var {tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize} = props;
 
         if (!tbl_id && tableModel) {
             tbl_id = get(tableModel, 'tbl_id', TblUtil.uniqueTblId());
         }
         tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
-        this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, tableModel, this.props.showUnits, this.props.showFilters);
+        this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize);
         const uiState = TblUtil.getTableUiById(tbl_ui_id);
         this.state = Object.assign({}, this.props, uiState);
 
