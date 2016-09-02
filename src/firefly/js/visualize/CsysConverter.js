@@ -8,7 +8,6 @@ import {makeRoughGuesser} from './ImageBoundsData.js';
 import Point, {makeImageWorkSpacePt, makeViewPortPt, makeImagePt,
                makeScreenPt, makeWorldPt, isValidPoint} from './Point.js';
 
-
 function convertToCorrect(wp) {
     if (!wp) return null;
     var csys= wp.getCoordSys();
