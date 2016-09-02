@@ -13,19 +13,22 @@ import * as TblUtil from '../TableUtil.js';
 export function resultsReducer(state={results:{}}, action={}) {
     var root = state.results;
     if (!action || !action.payload) return root;
-    const {tbl_id, tbl_group} = action.payload;
     switch (action.type) {
         case (Cntlr.TBL_RESULTS_ADDED)     :
         case (Cntlr.TBL_RESULTS_UPDATE)    :
+        {
+            const {tbl_id, tbl_group} = action.payload;
             if (tbl_id ) {
                 const changes = set({}, [tbl_group, 'tables', tbl_id], action.payload);
                 set(changes, [tbl_group, 'name'], tbl_group);
                 return TblUtil.smartMerge(root, changes);
             } else return root;
-
+        }
         case Cntlr.TBL_RESULTS_ACTIVE :
+        {
+            const {tbl_id, tbl_group} = action.payload;
             return updateSet(root, [tbl_group,'active'], tbl_id);
-            
+        }
         case (Cntlr.TABLE_REMOVE)    :
             return removeTable(root, action);
         

@@ -11,7 +11,6 @@ function makeOptions(options,alignment,fieldKey,value,onChange,tooltip) {
                        title={tooltip}
                        name={fieldKey}
                        value={option.value}
-                       defaultChecked={value===option.value}
                        checked={value===option.value}
                        onChange={onChange}
                 /> <span style={{paddingLeft: 3, paddingRight: 8}}>{option.label}</span>

@@ -22,11 +22,11 @@ export class ExpandedModeDisplay extends Component {
 
     componentWillUnmount() {
         if (this.removeListener) this.removeListener();
+        this.isUnmounted = true;
         if (this.props.forceExpandedMode) {
             dispatchChangeExpandedMode(ExpandType.COLLAPSE);
         }
     }
-
 
     componentDidMount() {
         this.removeListener= flux.addListener(() => this.storeUpdate());
@@ -36,12 +36,14 @@ export class ExpandedModeDisplay extends Component {
     }
 
     storeUpdate() {
-        const {state}= this;
-        const vr= visRoot();
-        const mvR= getMultiViewRoot();
+        if (!this.isUnmounted) {
+            const {state}= this;
+            const vr= visRoot();
+            const mvR= getMultiViewRoot();
 
-        if (vr!==state.visRoot || mvR!=state.multiViewRoot) {
-            this.setState({visRoot:vr, multiViewRoot:mvR});
+            if (vr!==state.visRoot || mvR!=state.multiViewRoot) {
+                this.setState({visRoot:vr, multiViewRoot:mvR});
+            }
         }
     }
 

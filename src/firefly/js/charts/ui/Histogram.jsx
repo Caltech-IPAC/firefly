@@ -3,7 +3,7 @@
  */
 
 import React, {PropTypes} from 'react';
-import ReactHighcharts from 'react-highcharts/bundle/highcharts';
+import ReactHighcharts from 'react-highcharts';
 import numeral from 'numeral';
 import {getFormatString} from '../../util/MathUtil.js';
 import {logError} from '../../util/WebUtil.js';

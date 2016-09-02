@@ -3,19 +3,18 @@
  */
 
 import React, {PropTypes} from 'react';
+import {get} from 'lodash';
 
 export function InputGroup({labelWidth,children, verticalSpace=5 }) {
+    const elements =  React.Children.map(children,function(inChild) {
+                if (get(inChild, 'type.propTypes.labelWidth')) {
+                    return React.cloneElement(inChild, {labelWidth});
+                } else {
+                    return inChild;
+                }
+            });
     return (
-        <div>
-            {React.Children.map(children,function(inChild) {
-                return (
-                    <div style={{paddingBottom:verticalSpace }}>
-                        { inChild && React.cloneElement(inChild, {labelWidth})}
-                    </div>
-                );
-            })}
-        </div>
-
+        <div>{elements}</div>
     );
 }
 

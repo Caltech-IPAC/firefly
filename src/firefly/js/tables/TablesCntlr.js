@@ -370,6 +370,10 @@ export function dispatchTblResultsAdded(tbl_id, title, options, removable, tbl_g
     title = title || tbl_id;
     tbl_group = tbl_group || 'main';
     removable = isNil(removable) ? true : removable;
+    const pageSize = get(options, 'pageSize');
+    if ( pageSize && !Number.isInteger(pageSize)) {
+        options.pageSize = parseInt(pageSize);
+    }
     flux.process( {type: TBL_RESULTS_ADDED, payload: {tbl_id, tbl_group, title, removable, tbl_ui_id, options}});
 }
 

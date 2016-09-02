@@ -11,7 +11,7 @@ import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {SuggestBoxInputField} from './SuggestBoxInputField.jsx';
-import Histogram from '../charts/ui/Histogram.jsx';
+import {Histogram} from '../charts/ui/Histogram.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import {dispatchMultiValueChange, dispatchRestoreDefaults} from '../fieldGroup/FieldGroupCntlr.js';
@@ -138,7 +138,7 @@ var AllTest = React.createClass({
                             <FieldGroupTest />
                         </Tab>
                         <Tab name='Second'>
-                            <div style={{'minWidth': '300', 'minHeight': '150'}}>
+                            <div style={{minWidth: 300, minHeight: 150}}>
                                 <CollapsiblePanel componentKey='exampleHistogramCollapsible' isOpen={true} header='Sample Histogram'>
                                     <Histogram data={[
                                      [1,-2.5138013781265,-2.0943590644815],

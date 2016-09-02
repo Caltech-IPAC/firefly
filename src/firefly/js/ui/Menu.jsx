@@ -31,15 +31,15 @@ function handleAction (menuItem) {
 function  makeMenuItem(menuItem, isSelected) {
     var clsname = 'menu__item' + (isSelected ? ' menu__item-selected' : '');
     return (
-        <td key={menuItem.action} align='left' style={{verticalAlign: 'bottom'}} onClick={handleAction.bind(this, menuItem)}>
+        <td key={menuItem.action} style={{verticalAlign: 'bottom'}} onClick={handleAction.bind(this, menuItem)}>
             <div tabIndex='0' className={clsname} role='tab'>
-                <input type='text' tabIndex='-1' role='presentation' style={{opacity: '0', height: '1px', width: '1px', zIndex: '-1', overflow: 'hidden', position: 'absolute'}}></input>
+                <input type='text' tabIndex='-1' role='presentation' style={{opacity: '0', height: '1px', width: '1px', zIndex: '-1', overflow: 'hidden', position: 'absolute'}}/>
                 <div style={{minWidth: '75px'}}>
                     <table cellSpacing='0' cellPadding='0' style={{margin: '0px auto'}}>
                         <tbody>
                         <tr>
-                            <td align='left' style={{marginRight: '3px', display: 'none'}} />
-                            <td align='left' style={{verticalAlign: 'top'}}>
+                            <td style={{marginRight: '3px', display: 'none'}} />
+                            <td style={{verticalAlign: 'top'}}>
                                 <div className='menu__item-label' title={menuItem.desc}
                                      style={{whiteSpace: 'nowrap', padding: '6px 0px'}}>{menuItem.label}
                                 </div>
