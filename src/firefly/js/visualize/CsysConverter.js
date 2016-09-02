@@ -187,8 +187,6 @@ export class CysConverter {
      * @param {number} [altZoomLevel], only use this parameter it you want to compute the point for a zoom level that
      *                 if different than what the plotted zoom level
      * @return getImageWorkSpaceCoords
-     * @function  getImageWorkSpaceCoords
-     * @static
      */
     getImageWorkSpaceCoords(pt, altZoomLevel) {
         if (!isValidPoint(pt)) return null;
@@ -579,6 +577,7 @@ export class CysConverter {
  * @param pt
  * @return {*}
  * @memberof firefly/util/image/CCUtil
+ * @func getWorldPtRepresentation
  * @public
  */
 function getWorldPtRepresentation(pt) {
