@@ -17,9 +17,9 @@ import {getExpandedChartProps} from '../ChartsCntlr.js';
 
 
 function nextState(props) {
-    const {closeable, chartId, tblId, chartType, optionsPopup} = props;
+    const {closeable, chartId, tblId, chartType, help_id} = props;
     const expandedMode = props.expandedMode && getExpandedMode() === LO_VIEW.xyPlots;
-    const chartProps = expandedMode ? getExpandedChartProps() : {chartId, tblId, chartType, optionsPopup};
+    const chartProps = expandedMode ? getExpandedChartProps() : {chartId, tblId, chartType, help_id};
     return Object.assign({expandedMode,closeable}, chartProps);
 }
 

@@ -20,6 +20,7 @@ import * as HistogramCntlr from '../HistogramCntlr.js';
 import * as XYPlotCntlr from '../XYPlotCntlr.js';
 import {dispatchChartExpanded, dispatchDelete, dispatchChartMounted, dispatchChartUnmounted} from '../ChartsCntlr.js';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
+import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {SCATTER, HISTOGRAM, getChartSpace, getHighlighted, getTblIdForChartId, numRelatedCharts} from '../ChartUtil.js';
 import {XYPlotOptions} from './XYPlotOptions.jsx';
 import {XYPlot} from './XYPlot.jsx';
@@ -394,7 +395,7 @@ class ChartsPanel extends React.Component {
     }
 
     renderToolbar() {
-        const {expandable, expandedMode, tblId, chartId, chartType, deletable} = this.props;
+        const {expandable, expandedMode, tblId, chartId, chartType, deletable, help_id} = this.props;
         return (
             <div role='toolbar' className='ChartPanel__toolbar'>
                 <div className='group'>
@@ -431,10 +432,11 @@ class ChartsPanel extends React.Component {
                          title='Expand this panel to take up a larger area'
                          src={OUTLINE_EXPAND}
                          onClick={() => {
-                            dispatchChartExpanded(chartId, tblId, chartType);
+                            dispatchChartExpanded(chartId, tblId, chartType, help_id);
                             dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.xyPlots);
                          }}
                     />}
+                    { help_id && <div style={{paddingLeft: 4, marginTop: -10}}> <HelpIcon helpId={help_id} /> </div>}
                     { expandable && !expandedMode &&
                     (isBoolean(deletable) ? deletable : numRelatedCharts(tblId) > 1) &&  // when deletable is undefined, use related charts criterion
                     <img style={{alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
@@ -499,6 +501,7 @@ ChartsPanel.propTypes = {
     expandedMode: PropTypes.bool,
     expandable: PropTypes.bool,
     deletable : PropTypes.bool,
+    help_id: PropTypes.string, // anchor to the documentation
     tblId : PropTypes.string,
     tableModel : PropTypes.object,
     tblStatsData : PropTypes.object,

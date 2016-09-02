@@ -374,7 +374,7 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
         params = oldApiParams;
     }
 
-    const {xCol, yCol, xyRatio, stretch, xLabel, yLabel, xUnit, yUnit, xOptions, yOptions} = params;
+    const {xCol, yCol, xyRatio, stretch, xLabel, yLabel, xUnit, yUnit, xOptions, yOptions, help_id} = params;
     const xyPlotParams = xCol && yCol ?
     {
         xyRatio,
@@ -423,7 +423,8 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
             closeable: false,
             expandedMode: false,
             chartType: 'scatter',
-            deletable: false
+            deletable: false,
+            help_id
         }
     );
 }
