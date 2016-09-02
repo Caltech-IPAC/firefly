@@ -234,14 +234,6 @@ var draw=  {
     },
 
     draw(drawObj,ctx,drawTextAry,plot,def,vpPtM,onlyAddToPath) {
-        if (has(drawObj, 'isAHighlight') && drawObj.isAHighlight.plotImageId !== plot.plotImageId) {
-            var fromObj = get(drawObj.isAHighlight, 'from');
-
-            if (fromObj) {
-                drawObj = (fromObj.type === POINT_DATA_OBJ) ? makeHighlightPointDataObj(fromObj, plot):
-                          makeHighlightShapeDataObj(fromObj, plot, drawObj.isAHighlight.def);
-            }
-        }
         var drawParams= makeDrawParams(drawObj,def);
         drawShape(drawObj,ctx,drawTextAry,plot,drawParams,onlyAddToPath);
     },
@@ -755,6 +747,11 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
                         });
 
                 centerPt = makeViewPortPt(x, y);
+
+                if (get(drawObj, 'inc')) {   // adjustment for highlight box
+                    w = Math.floor(w + drawObj.inc);
+                    h = Math.floor(h + drawObj.inc);
+                }
 
                 // draw the rect from {-w/2, -h/2} relative to the new origin
                 x = -w/2;

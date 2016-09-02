@@ -57,6 +57,7 @@ export var makeRegion = (
                 type = RegionType.undefined,
                 options,
                 highlighted,
+                desc,
                 message}) => (
                 cloneArg({
                     wpAry,
@@ -66,6 +67,7 @@ export var makeRegion = (
                     type,
                     options,
                     highlighted,
+                    desc,
                     message
                 })
 );
@@ -93,6 +95,7 @@ export var makeRegion = (
  * @param offsetX       number   default: 0
  * @param offsetY       number   default: 0
  * @param message       string,  default: '', containing parsing (error) message
+ * @param tag           string,  default: ''
  * @param coordSys      string
  * @constructor
  */
@@ -122,7 +125,7 @@ export var makeRegionOptions = (
                 coordSys} )  => (
                 cloneArg({color, text, font, pointType, pointSize,
                           editable, movable, rotatable, highlightable, deletable, fixedSize, include,
-                          lineWidth, dashable, dashlist, source, offsetX, offsetY, message, coordSys })
+                          lineWidth, dashable, dashlist, source, offsetX, offsetY, message, tag, coordSys})
                 );
 
 

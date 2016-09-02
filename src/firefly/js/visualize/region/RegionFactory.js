@@ -79,7 +79,7 @@ export class RegionFactory {
 
         set(globalOptions, regionPropsList.COORD, 'PHYSICAL');
 
-        return regionLines.length > 0 ? regionLines.reduce ( (prev, region, index) => {
+        return regionLines.reduce ( (prev, region, index) => {
             const rg = RegionFactory.parsePart(region.trim(), index+1, globalOptions, bAllowHeader);
 
             if (rg) {            // skip comment line and no good line
@@ -95,7 +95,7 @@ export class RegionFactory {
                 outputError(rg, region);
             }
             return prev;
-        }, []) : null;
+        }, []);
     }
     /**
      * parsePart parses the region data of JSON result (one item from RegionData array)
@@ -243,6 +243,7 @@ export class RegionFactory {
         }
 
         rg.options = rgProps;
+        rg.desc = regionStr;
         return rg;
     }
 

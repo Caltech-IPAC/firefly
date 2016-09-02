@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
 * Convert an FITS file or FITS binary table(s) to list of DataGroup.
@@ -23,6 +25,8 @@ import java.util.*;
 public final class FITSTableReader
 {
     private static final Logger.LoggerImpl logger = Logger.getLogger();
+    private static Pattern TDISP = Pattern.compile("([ALIBOZFEGD])[NS]?(\\d+)?(\\.\\d+)?");
+
 
     public static boolean debug = true;
 
@@ -275,21 +279,12 @@ public final class FITSTableReader
         LinkedHashMap<ColumnInfo, Integer> colIdxMap = new LinkedHashMap<>();
         List<String> colList = inclCols == null ? null : Arrays.asList(inclCols);
 
-        for (int col = 0; col < table.getColumnCount(); col++) {
-            ColumnInfo colInfo = table.getColumnInfo(col);
+        for (int colIdx = 0; colIdx < table.getColumnCount(); colIdx++) {
+            ColumnInfo colInfo = table.getColumnInfo(colIdx);
             if ( colList == null || colList.contains(colInfo.getName() ) ) {
-                DataType dt = convertToDataType(colInfo, strategy);
-                if ( StringUtils.isEmpty(dt.getShortDesc()) ) {
-                    // fill in column's description if not given
-                    DescribedValue p = table.getParameterByName("TDOC" + (col+1));  // this is for LSST.. not sure it applies to others.
-                    if (p != null) {
-                        dt.setShortDesc(p.getValueAsString(200));
-                        table.getParameters().remove(p);
-                    }
-                }
-
+                DataType dt = convertToDataType(table, colIdx, strategy);
                 dataTypes.add(dt);
-                colIdxMap.put(colInfo, col);
+                colIdxMap.put(colInfo, colIdx);
             }
         }
 
@@ -300,9 +295,20 @@ public final class FITSTableReader
         }
 
         // setting DataGroup meta info
-        for(DataType dt : dataTypes) {
+        for(int colIdx = 0; colIdx < dataTypes.size(); colIdx++) {
+            DataType dt = dataTypes.get(colIdx);
             if (!StringUtils.isEmpty(dt.getShortDesc())) {
                 dataGroup.addAttribute(DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, dt.getKeyName()), dt.getShortDesc());
+            }
+            String format = getParam(table, "TDISP" + (colIdx + 1), 20);
+            format = format == null ? null : convertFormat(format);
+            if (Double.class.isAssignableFrom(dt.getDataType()) ||
+                Float.class.isAssignableFrom(dt.getDataType())) {
+                format = format == null && Double.class.isAssignableFrom(dt.getDataType()) ? "%.9g" : format;
+                dataGroup.addAttribute(DataSetParser.makeAttribKey(DataSetParser.FORMAT_TAG, dt.getKeyName()), "NONE");
+            }
+            if (!StringUtils.isEmpty(format)) {
+                dataGroup.addAttribute(DataSetParser.makeAttribKey(DataSetParser.FORMAT_DISP_TAG, dt.getKeyName()), format);
             }
         }
 
@@ -360,18 +366,23 @@ public final class FITSTableReader
      *  (4)No change for other types
      * Set unit.
      *
-     * @param colInfo
+     *
+     * @param table
+     * @param colIdx
      * @param strategy
      * @return dataType
      * @throws FitsException
      */
-    public static DataType convertToDataType(ColumnInfo colInfo, String strategy)
+    public static DataType convertToDataType(StarTable table, int colIdx, String strategy)
             throws FitsException{
 
+        ColumnInfo colInfo = table.getColumnInfo(colIdx);
         String colName = colInfo.getName();
         String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
         String unit = colInfo.getUnitString();
         String nullString = null;
+        String desc = colInfo.getDescription();
+        desc = desc == null ? getParam(table, "TDOC" + (colIdx+1), 200) : desc; // this is for LSST.. not sure it applies to others.
 
         DataType dataType = new DataType(colName, null);
         Class java_class = null;
@@ -406,9 +417,41 @@ public final class FITSTableReader
         dataType.setDataType(java_class);
         dataType.setUnits(unit);
         dataType.setNullString(nullString);
-        dataType.setShortDesc(colInfo.getDescription());
+        dataType.setShortDesc(desc);
 
         return dataType;
+    }
+
+    private static String getParam(StarTable table, String key, int maxWidth) {
+        DescribedValue p = table.getParameterByName(key);
+        return p == null ? null : p.getValueAsString(maxWidth);
+    }
+
+    /**
+     * converts FITS table keyword TDISPn into java format
+     * see http://archive.stsci.edu/fits/fits_standard/node69.html#SECTION001232060000000000000
+     * @param format
+     * @return
+     */
+    private static String convertFormat(String format) {
+        Matcher m = TDISP.matcher(format);
+        if (m.find()) {
+            int count = m.groupCount();
+            String conv = String.valueOf(m.group(1));
+            String width = "";  // count > 1 ? m.group(2) : "";     ignores width for now.
+            String prec = count > 2 ? m.group(3) : "";
+            width = width == null ? "" : width;
+            prec = prec == null ? "" : prec;
+            if (conv.matches("D|E")) {
+                return "%" + width + prec + "e";
+            } else if (conv.equals("G")) {
+                return "%" + width + prec + "g";
+            } else if (conv.equals("F")) {
+                return "%" + width + prec + "f";
+            }
+        }
+        // not implemented or supported.. will print
+        return null;
     }
 
     /**

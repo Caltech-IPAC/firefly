@@ -6,13 +6,13 @@ import React, {Component} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 
 import {pick} from 'lodash';
-import {flux} from '../Firefly.js';
-import {LO_VIEW, LO_MODE, getLayouInfo, dispatchSetLayoutMode} from '../core/LayoutCntlr.js';
-import {ResultsPanel} from '../ui/ResultsPanel.jsx';
-import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
-import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
-import {VisToolbar} from '../visualize/ui/VisToolbar.jsx';
-import {TriViewImageSection} from '../visualize/ui/TriViewImageSection.jsx';
+import {flux} from '../../Firefly.js';
+import {LO_VIEW, LO_MODE, getLayouInfo, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
+import {ResultsPanel} from './ResultsPanel.jsx';
+import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
+import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
+import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
+import {TriViewImageSection} from '../../visualize/ui/TriViewImageSection.jsx';
 
 export class TriViewPanel extends Component {
 

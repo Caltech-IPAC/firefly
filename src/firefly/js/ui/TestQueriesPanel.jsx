@@ -16,7 +16,7 @@
 import React, {Component, PropTypes} from 'react';
 import {get,omit} from 'lodash';
 
-import FormPanel from './FormPanel.jsx';
+import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
 import {ValidationField} from '../ui/ValidationField.jsx';
 import {IbeSpacialType} from './IbeSpacialType.jsx';

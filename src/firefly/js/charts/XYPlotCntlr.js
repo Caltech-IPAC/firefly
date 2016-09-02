@@ -9,7 +9,7 @@
 import {flux} from '../Firefly.js';
 
 import {updateSet, updateMerge, updateDelete} from '../util/WebUtil.js';
-import {get, has, omit, omitBy, isEmpty, isUndefined, isString} from 'lodash';
+import {cloneDeep, get, has, omit, omitBy, isEmpty, isString, isUndefined} from 'lodash';
 
 import {doFetchTable, getColumn, getTblById, isFullyLoaded, cloneRequest} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
@@ -72,21 +72,23 @@ const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
      }
  */
 
-/*
- * Load xy plot data Load xy plot data
- * */
+
 /**
- * @param {string} chartId - if no chart id is specified table id is used as chart id
- * @param {Object} xyPlotParams - XY plot options (column names, etc.)
- * @param {string} tblId - table id
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @desc Load xy plot data Load xy plot data
+ *
  * @public
  * @function dispatchLoadPlotData
  * @memberof firefly.action
- *
+ * @param {Object} params - dispatch parameters
+ * @param {string} params.chartId - if no chart id is specified table id is used as chart id
+ * @param {Object} params.xyPlotParams - XY plot options (column names, etc.)
+ * @param {boolean} params.markAsDefault - are the options considered to be "the default" to reset to
+ * @param {string} params.tblId - table id
+ * @param {function} params.dispatcher only for special dispatching uses such as remote
  */
-export function dispatchLoadPlotData(chartId, xyPlotParams, tblId, dispatcher= flux.process) {
-    dispatcher({type: LOAD_PLOT_DATA, payload: {chartId: (chartId||tblId), xyPlotParams, tblId}});
+export function dispatchLoadPlotData(params) {
+    const {chartId, xyPlotParams, markAsDefault=false, tblId, dispatcher=flux.process} = params;
+    dispatcher({type: LOAD_PLOT_DATA, payload: {chartId: (chartId||tblId), xyPlotParams, markAsDefault, tblId}});
 }
 
 /**
@@ -119,7 +121,7 @@ export function dispatchZoom(chartId, tblId, selection) {
                 const tableModel = getTblById(tblId);
                 if (tableModel) {
                     const paramsWithZoom = Object.assign({}, xyPlotParams, {zoom: xyPlotParams.selection});
-                    dispatchLoadPlotData(chartId, paramsWithZoom, tblId);
+                    dispatchLoadPlotData({chartId, xyPlotParams: paramsWithZoom, tblId});
                 }
             } else {
                 dispatchSetZoom(chartId, selection);
@@ -130,7 +132,7 @@ export function dispatchZoom(chartId, tblId, selection) {
                 const tableModel = getTblById(tblId);
                 if (tableModel) {
                     const paramsWithoutZoom = omit(xyPlotParams, 'zoom');
-                    dispatchLoadPlotData(chartId, paramsWithoutZoom, tblId);
+                    dispatchLoadPlotData({chartId, xyPlotParams: paramsWithoutZoom, tblId});
                 }
             } else {
                 dispatchResetZoom(chartId);
@@ -159,7 +161,7 @@ function dispatchResetZoom(chartId) {
 export function loadPlotData (rawAction) {
     return (dispatch) => {
         let xyPlotParams = rawAction.payload.xyPlotParams;
-        const {chartId, tblId} = rawAction.payload;
+        const {chartId, tblId, markAsDefault} = rawAction.payload;
         const tblSource = get(getTblById(tblId), 'tableMeta.tblFilePath');
 
         const chartModel = get(getChartSpace(SCATTER), chartId);
@@ -176,7 +178,7 @@ export function loadPlotData (rawAction) {
                 xyPlotParams = getUpdatedParams(xyPlotParams, tableModel, dataBoundaries);
             }
 
-            dispatch({ type : LOAD_PLOT_DATA, payload : {chartId, tblId, xyPlotParams, tblSource, serverCallNeeded}});
+            dispatch({ type : LOAD_PLOT_DATA, payload : {chartId, tblId, xyPlotParams, markAsDefault, tblSource, serverCallNeeded}});
 
             if (serverCallNeeded) {
                 fetchPlotData(dispatch, tblId, xyPlotParams, chartId);
@@ -251,14 +253,16 @@ export function reduceXYPlot(state={}, action={}) {
         }
         case (LOAD_PLOT_DATA)  :
         {
-            const {chartId, xyPlotParams, tblId, tblSource, serverCallNeeded} = action.payload;
+            const {chartId, xyPlotParams, markAsDefault, tblId, tblSource, serverCallNeeded} = action.payload;
             if (serverCallNeeded) {
+                const defaultParams = markAsDefault ? cloneDeep(xyPlotParams) : get(state, [chartId, 'defaultParams']);
                 return updateSet(state, chartId,
                     {
                         tblId,
                         isPlotDataReady: false,
                         tblSource,
                         xyPlotParams,
+                        defaultParams,
                         decimatedUnzoomed: get(state, [chartId, 'decimatedUnzoomed'])
                     });
             } else {
@@ -339,28 +343,49 @@ function getDataBoundaries(xyPlotData) {
     }
 }
 
+function getPaddedRange(min, max, isLog, factor) {
+    const range = max - min;
+    let paddedMin = min;
+    let paddedMax = max;
+
+    if (range > 0) {
+        if (isLog) {
+            const minLog = Math.log10(min);
+            const maxLog = Math.log10(max);
+            const padLog = (maxLog - minLog) / factor;
+            paddedMin = Math.pow(10, (minLog-padLog));
+            paddedMax = Math.pow(10, (maxLog+padLog));
+        } else {
+            const pad = range / factor;
+            paddedMin = min - pad;
+            paddedMax = max + pad;
+        }
+    }
+    return {paddedMin, paddedMax};
+}
 
 /**
  * Pad and round data boundaries
+ * @param {Object} xyPlotParams - object with XY plot params
  * @param {Object} boundaries - object with xMin, xMax, yMin, yMax props
  * @param {Number} factor - part of the range to add on both sides
  * @ignore
  */
-function getPaddedBoundaries(boundaries, factor=100) {
+function getPaddedBoundaries(xyPlotParams, boundaries, factor=100) {
     if (!isEmpty(boundaries)) {
         let {xMin, xMax, yMin, yMax} = boundaries;
-        const xRange = xMax - xMin;
 
+        const xRange = xMax - xMin;
         if (xRange > 0) {
-            const xPad = xRange/factor;
-            xMin = xMin - xPad;
-            xMax = xMax + xPad;
+            const xOptions = get(xyPlotParams, 'x.options');
+            const xLog = xOptions && xOptions.includes('log') && xMin>0;
+            ({paddedMin:xMin, paddedMax:xMax} = getPaddedRange(xMin, xMax, xLog, factor));
         }
         const yRange = yMax - yMin;
         if (yRange > 0) {
-            const yPad = yRange/factor;
-            yMin = yMin - yPad;
-            yMax = yMax + yPad;
+            const yOptions = get(xyPlotParams, 'y.options');
+            const yLog = yOptions && yOptions.includes('log') && yMin>0;
+            ({paddedMin:yMin, paddedMax:yMax} = getPaddedRange(yMin, yMax, yLog, factor));
         }
         if (xRange > 0 || yRange > 0) {
             return {xMin, xMax, yMin, yMax};
@@ -477,7 +502,7 @@ function getUpdatedParams(xyPlotParams, tableModel, dataBoundaries) {
     const userSetBoundaries = get(xyPlotParams, 'userSetBoundaries', {});
     const boundaries = Object.assign({}, userSetBoundaries);
     if (Object.keys(boundaries).length < 4 && !isEmpty(dataBoundaries)) {
-        const paddedDataBoundaries = getPaddedBoundaries(dataBoundaries);
+        const paddedDataBoundaries = getPaddedBoundaries(xyPlotParams, dataBoundaries);
         const [xMin, xMax, yMin, yMax] = ['xMin', 'xMax', 'yMin', 'yMax'].map( (v) => {
             return  (Number.isFinite(boundaries[v]) ? boundaries[v] : paddedDataBoundaries[v]);
         });

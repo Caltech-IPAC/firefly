@@ -5,7 +5,7 @@
 import React from 'react';
 import FixedDataTable from 'fixed-data-table';
 import sCompare from 'react-addons-shallow-compare';
-import {set, get, isEqual, pick, isString} from 'lodash';
+import {set, get, isEqual, pick} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
@@ -108,13 +108,13 @@ export class SelectableHeader extends React.Component {
     render() {
         const {checked, onSelectAll, showUnits, showFilters, onFilterSelected, style} = this.props;
         return (
-            <div style={style} className='TablePanel__header'>
+            <div style={{padding: 0, ...style}} className='TablePanel__header'>
                 <input type='checkbox'
                        tabIndex={-1}
                        checked={checked}
                        onChange={(e) => onSelectAll(e.target.checked)}/>
                 {showUnits && <div/>}
-                {showFilters && <img className='button'
+                {showFilters && <img className='clickable'
                                      src={FILTER_SELECTED_ICO}
                                      onClick={onFilterSelected}
                                      title='Filter on selected rows'/>}
@@ -155,8 +155,8 @@ export class SelectableCell extends React.Component {
 /*---------------------------- CELL RENDERERS ----------------------------*/
 
 function getValue(props) {
-    const {rowIndex, data, colIdx} = props;
-    return get(data, [rowIndex, colIdx], 'undef');
+    const {rowIndex, data, columnKey} = props;
+    return get(data, [rowIndex, columnKey], 'undef');
 }
 
 export class TextCell extends React.Component {

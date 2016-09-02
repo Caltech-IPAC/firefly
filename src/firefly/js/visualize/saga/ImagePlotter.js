@@ -45,7 +45,9 @@ export function* imagePlotter(params, dispatch, getState) {
                     const {requestKey}= waitAction.payload;
                     if (canContinue(waitAction)) {
                         continuePlotting(makeContinueAction(waitAction),dispatch);
-                        waitingPlotActions= waitingPlotActions.filter( (a) => a.payload.requestKey!==requestKey);
+                        waitingPlotActions= waitingPlotActions
+                            .filter( (a) => a.payload.requestKey!==requestKey) // filter out this request
+                            .filter( (a) => !actionMatches(a,plotId));         // filter out any duplicates
                     }
                 }
                 break;
@@ -60,7 +62,7 @@ function actionMatches(a,plotId) {
         return wpRequestAry.some( (req) => req.getPlotId()===plotId);
     }
     else {
-       return a.payload.plotId= plotId;
+       return a.payload.plotId===plotId;
     }
 }
 
@@ -72,6 +74,11 @@ function getRequestAry(payload) {
 }
 
 
+/**
+ * The action can continue if the width and height for every plot id has been set in the store
+ * @param {Action} rawAction
+ * @return {boolean}
+ */
 function canContinue(rawAction) {
     return getRequestAry(rawAction.payload).every( (req) => {
         return canContinueRequest(req,getPlotViewById(visRoot(),req.getPlotId()));
@@ -79,6 +86,12 @@ function canContinue(rawAction) {
 }
 
 
+/**
+ * Check one PlotView and determine if the width and height has been set
+ * @param {WebPlotRequest} req
+ * @param {PlotView} pv
+ * @return {boolean}
+ */
 function canContinueRequest(req, pv) {
     if (!pv) return false;
     var requiresWH= requiresWidthHeight(req.getZoomType());

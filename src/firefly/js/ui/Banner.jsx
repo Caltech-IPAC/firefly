@@ -50,7 +50,7 @@ function appTitle(title) {
     }
 }
 
-const Banner = React.createClass({
+export const Banner = React.createClass({
 
     propTypes: {
         menu        : React.PropTypes.object,
@@ -76,5 +76,3 @@ const Banner = React.createClass({
         );
     }
 });
-
-export default Banner;

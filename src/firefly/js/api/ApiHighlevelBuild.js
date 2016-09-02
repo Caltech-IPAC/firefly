@@ -122,6 +122,7 @@ function buildTablePart(llApi) {
      * @public
      * @typedef {object} TblOptions
      * @prop {string}  tbl_group    the group this table belongs to.  Defaults to 'main'.
+     * @prop {number}  pageSize     the starting page size.  Will use the request's pageSize if not given.
      * @prop {boolean} removable    true if this table can be removed from view.  Defaults to true.
      * @prop {boolean} showUnits    defaults to false
      * @prop {boolean} showFilters  defaults to false
@@ -413,7 +414,7 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
         params = oldApiParams;
     }
 
-    const {xCol, yCol, xyRatio, stretch, xLabel, yLabel, xUnit, yUnit, xOptions, yOptions} = params;
+    const {xCol, yCol, xyRatio, stretch, xLabel, yLabel, xUnit, yUnit, xOptions, yOptions, help_id} = params;
     const xyPlotParams = xCol && yCol ?
     {
         xyRatio,
@@ -462,7 +463,8 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
             closeable: false,
             expandedMode: false,
             chartType: 'scatter',
-            deletable: false
+            deletable: false,
+            help_id
         }
     );
 }

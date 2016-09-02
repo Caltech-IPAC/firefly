@@ -96,6 +96,9 @@
     cursor: pointer;
 }
 
+.clickable:hover {
+    cursor: pointer;
+}
 
 .ff-href {
     color: #005da4; /*highlightColor*/

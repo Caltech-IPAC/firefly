@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {has, get, isUndefined, omit} from 'lodash';
+import {has, get, isUndefined, omit, omitBy} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
@@ -24,10 +24,11 @@ export const DELETE = `${UI_PREFIX}/delete`;
  * request to put a chart into an expanded mode.
  * @param {string} chartId - chart id
  * @param {string} tblId - table id, to which this chart is related. Acts as a group id
- * @param {string} chartType (ex. scatter, histogram)
+ * @param {string} chartType - chart type (ex. scatter, histogram)
+ * @param {string} [help_id] - help anchor string
  */
-export function dispatchChartExpanded(chartId, tblId, chartType) {
-    flux.process( {type: CHART_UI_EXPANDED, payload: {chartId, tblId, chartType}});
+export function dispatchChartExpanded(chartId, tblId, chartType, help_id) {
+    flux.process( {type: CHART_UI_EXPANDED, payload: {chartId, tblId, chartType, help_id}});
 }
 
 /*
@@ -120,10 +121,10 @@ const chartActions = [CHART_UI_EXPANDED,CHART_MOUNTED,CHART_UNMOUNTED,DELETE];
  */
 function reduceUI(state={}, action={}) {
     if (chartActions.indexOf(action.type) > -1) {
-        const {chartId, tblId, chartType}  = action.payload;
+        const {chartId, tblId, chartType, help_id}  = action.payload;
         switch (action.type) {
             case (CHART_UI_EXPANDED) :
-                return updateSet(state, 'expanded', {chartId, tblId, chartType});
+                return updateSet(state, 'expanded', omitBy({chartId, tblId, chartType, help_id}, isUndefined));
             default:
                 return state;
         }

@@ -47,8 +47,8 @@ export class DropDownContainer extends Component {
             if (key) dropDownMap[key] = el;
         });
 
-        if (props.searchPanels) {
-            props.searchPanels.forEach( (el) => {
+        if (props.dropdownPanels) {
+            props.dropdownPanels.forEach( (el) => {
                 const key = get(el, 'props.name');
                 if (key) dropDownMap[key] = el;
             } );
@@ -56,8 +56,7 @@ export class DropDownContainer extends Component {
 
         this.state = {
                 visible: props.visible,
-                selected: props.selected,
-                searches: props.searches
+                selected: props.selected
             };
     }
 
@@ -121,8 +120,7 @@ export class DropDownContainer extends Component {
 DropDownContainer.propTypes = {
     visible: PropTypes.bool,
     selected: PropTypes.string,
-    searches: PropTypes.arrayOf(PropTypes.string),
-    searchPanels: PropTypes.arrayOf(PropTypes.element),
+    dropdownPanels: PropTypes.arrayOf(PropTypes.element),
     footer: PropTypes.node,
     alerts: PropTypes.node
 };

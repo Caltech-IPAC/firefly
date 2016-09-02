@@ -16,7 +16,7 @@
 import React, { Component, PropTypes} from 'react';
 import {flux} from '../Firefly.js';
 import {visRoot } from '../visualize/ImagePlotCntlr.js';
-import FormPanel from './FormPanel.jsx';
+import {FormPanel} from './FormPanel.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
 import {ImageSelection, getPlotInfo, panelKey, isCreatePlot, PLOT_NO,

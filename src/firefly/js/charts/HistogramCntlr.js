@@ -3,7 +3,7 @@
  */
 import {flux} from '../Firefly.js';
 
-import {get, has, omit} from 'lodash';
+import {cloneDeep, get, has, omit} from 'lodash';
 
 import {updateSet, updateMerge} from '../util/WebUtil.js';
 import {doFetchTable, getTblById, isFullyLoaded, makeTblRequest, cloneRequest} from '../tables/TableUtil.js';
@@ -42,12 +42,16 @@ export const UPDATE_COL_DATA = `${HISTOGRAM_DATA_KEY}/UPDATE_COL_DATA`;
 
 /*
  * Get column histogram data
- * @param {Object} histogramParams - histogram options (column name, etc.)
- * @param {string} tblId - table id
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Object} params - dispatch parameters
+ * @param {string} params.chartId - if no chart id is specified table id is used as chart id
+ * @param {Object} params.histogramParams - histogram options (column name, etc.)
+ * @param {boolean} params.markAsDefault - are the options considered to be "the default" to reset to
+ * @param {string} params.tblId - table id
+ * @param {function} params.dispatcher only for special dispatching uses such as remote
  */
-export const dispatchLoadColData = function(chartId, histogramParams, tblId, dispatcher= flux.process) {
-    dispatcher({type: LOAD_COL_DATA, payload: {chartId, histogramParams, tblId}});
+export const dispatchLoadColData = function(params) {
+    const {chartId, histogramParams, markAsDefault=false, tblId, dispatcher= flux.process} = params;
+    dispatcher({type: LOAD_COL_DATA, payload: {chartId: (chartId||tblId), histogramParams, markAsDefault, tblId}});
 };
 
 /*
@@ -135,9 +139,10 @@ export function reduceHistogram(state={}, action={}) {
         }
         case (LOAD_COL_DATA)  :
         {
-            const {chartId, tblId, histogramParams, tblSource, serverCallNeeded} = action.payload;
+            const {chartId, tblId, histogramParams, markAsDefault, tblSource, serverCallNeeded} = action.payload;
             if (serverCallNeeded) {
-                return updateSet(state, chartId, {tblId, isColDataReady: false, tblSource, histogramParams});
+                const defaultParams = markAsDefault ? cloneDeep(histogramParams) : get(state, [chartId, 'defaultParams']);
+                return updateSet(state, chartId, {tblId, isColDataReady: false, tblSource, histogramParams, defaultParams});
             } else {
                 // only histogram parameters changed
                 return updateSet(state, [chartId, 'histogramParams'], histogramParams);

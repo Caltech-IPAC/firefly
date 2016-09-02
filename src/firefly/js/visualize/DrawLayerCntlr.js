@@ -6,7 +6,7 @@ import {flux} from '../Firefly.js';
 import {getPlotViewIdListInGroup, getDrawLayerById, getConnectedPlotsIds} from './PlotViewUtil.js';
 import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
-import {without,union,omit,isEmpty} from 'lodash';
+import {without,union,omit,isEmpty,get} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 
 
@@ -75,12 +75,16 @@ export const DRAWING_LAYER_KEY= 'drawLayers';
 export function dlRoot() { return flux.getState()[DRAWING_LAYER_KEY]; }
 
 
+/**
+ * Return, from the store, the master array of all the drawing layers on all the plots
+ * @return {Array<Object>}
+ * @memberof firefly.action
+ * @func  getDlAry
+ */
+
 export function getDlAry() { return flux.getState()[DRAWING_LAYER_KEY].drawLayerAry; }
 
-/**
- * @public
- *
- */
+
 export default {
     CHANGE_VISIBILITY, RETRIEVE_DATA,
     ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT,CHANGE_DRAWING_DEF,
@@ -254,14 +258,14 @@ export function dispatchAttachLayerToPlot(id,plotId, attachPlotGroup=false) {
 
 
 /**
- *
+ * @summary Detatch drawing layer from the plot
  * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
- * @param {string|string[]} plotId to attach this may by a string or an array of strings
+ * @param {string|string[]} plotId to attach this may by a string or an array of string
  * @param detachPlotGroup
  * @param useLayerGroup
  * @param destroyWhenAllDetached if all plots are detached then destroy this plot
- *  @public
- *  @memberof firefly.action
+ * @public
+ * @memberof firefly.action
  *  @func dispatchDetachLayerFromPlot
  */
 export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
@@ -283,57 +287,55 @@ export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
 }
 
 /**
- *
- * @param regionId
- * @param layerTitle
+ * @summary Create plot layer containing the regions based on region file or region description
+ * @param drawLayerId required
+ * @param layerTitle  layerTitle is set based on drawLayerId or default setting it is unset
  * @param fileOnServer
  * @param regionAry
- * @param plotId
- * @param dispatcherr
- *  @public
- * @memberof firefly.action
- * @func dispatchCreateRegionLayer
- */
-export function dispatchCreateRegionLayer(regionId, layerTitle, fileOnServer='', regionAry=[], plotId = [], dispatcher = flux.process) {
-    dispatcher({type: REGION_CREATE_LAYER, payload: {regionId, fileOnServer, plotId, layerTitle, regionAry}});
-}
-
-/**
- *
- * @param regionId
- * @param plotId
+ * @param plotId The region layer is created on all plots of the active plot group in plotId is empty
  * @param dispatcher
  * @public
  * @memberof firefly.action
- * @func dispatchDeleteRegionLayer
+ * @func dispatchCreateRegionLayer
  */
-export function dispatchDeleteRegionLayer(regionId, plotId, dispatcher = flux.process) {
-    dispatcher({type: REGION_DELETE_LAYER, payload: {regionId, plotId}});
+export function dispatchCreateRegionLayer(drawLayerId, layerTitle, fileOnServer='', regionAry=[], plotId=[],
+                                           dispatcher = flux.process ) {
+    dispatcher({type: REGION_CREATE_LAYER, payload: {drawLayerId, fileOnServer, plotId, layerTitle, regionAry}});
 }
 
 /**
- *
- * @param {string} regionId - an identify for the region
- * @param {object} regionChanges
- * @param (function) dispatcher
- *  @public
- * @memberof firefly.action
- * @func dispatchAddRegionEntry
+ * delete drawing layer with regions
+ * @param drawLayerId
+ * @param plotId
+ * @param dispatcher
  */
-export function dispatchAddRegionEntry(regionId, regionChanges, dispatcher = flux.process) {
-    dispatcher({type: REGION_ADD_ENTRY, payload: {regionId, regionChanges}});
+export function dispatchDeleteRegionLayer(drawLayerId, plotId, dispatcher = flux.process) {
+    dispatcher({type: REGION_DELETE_LAYER, payload: {drawLayerId, plotId}});
 }
+
 /**
- *
- * @param {string} regionId - an identify for the region
- * @param {object} regionChanges - the changes
- * @param (function) dispatcher
- * @public
- * @memberof firefly.action
- * @func dispatchRemoveRegionEntry
+ * Add regions to plot layer, if the layer doesn't exist, a new one is created
+ * the layer title is replaced if the layer exists
+ * the layer id is created in the layer doesn't exist or id is not set, the creation of new id is
+ * based on layerTitle which is set based on some reference or default setting if it is unset.
+ * @param drawLayerId
+ * @param regionChanges
+ * @param plotId  The region layer is created on all plots of the active plot group in plotId is empty
+ * @param layerTitle
+ * @param dispatcher
  */
-export function dispatchRemoveRegionEntry(regionId, regionChanges, dispatcher = flux.process) {
-    dispatcher({type: REGION_REMOVE_ENTRY, payload: {regionId, regionChanges}});
+export function dispatchAddRegionEntry(drawLayerId, regionChanges, plotId=[], layerTitle='', dispatcher = flux.process) {
+    dispatcher({type: REGION_ADD_ENTRY, payload: {drawLayerId, regionChanges, plotId, layerTitle}});
+}
+
+/**
+ * remove the region entry from the plot layer with drawLayerId
+ * @param drawLayerId
+ * @param regionChanges
+ * @param dispatcher
+ */
+export function dispatchRemoveRegionEntry(drawLayerId, regionChanges, dispatcher = flux.process) {
+    dispatcher({type: REGION_REMOVE_ENTRY, payload: {drawLayerId, regionChanges}});
 }
 /**
  *
@@ -583,6 +585,22 @@ function deletePlotView(state,action, dlReducer) {
     return Object.assign({},state, {drawLayerAry});
 }
 
+/**
+ * destroy draw layer in case no region left after region removal
+ * @param state
+ * @param action
+ * @param dlReducer
+ * @returns {Object}
+ */
+function destroyDrawLayerNoRegion(state, action, dlReducer) {
+    var retState = determineAndCallLayerReducer(state, action, dlReducer);
+    var dl = retState.drawLayerAry.find((dl) => dl.drawLayerId === action.payload.drawLayerId);
+
+    if (dl && isEmpty(get(dl, 'drawObjAry', null))) {
+        retState = destroyDrawLayer(retState, action);
+    }
+    return retState;
+}
 
 //function mouseStateChange(state,action) {
 //    var {drawLayerId, plotId}= action.payload;
@@ -606,6 +624,5 @@ const initState= function() {
     };
 
 };
-
 
 

@@ -70,6 +70,21 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         return convertToIpacTable(inf, request);
     }
 
+    @Override
+    public String getUniqueID(ServerRequest request) {
+        String uid = super.getUniqueID(request);
+        String source = request.getParam(ServerParams.SOURCE);
+        URL url = makeUrl(source);
+        if (url == null) {
+            File f = ServerContext.convertToFile(source);
+            if (f != null && f.exists()) {
+                // if this is a local file, watch for changes.
+                uid += f.lastModified();
+            }
+        }
+        return uid;
+    }
+
     /**
      * resolve the file given a 'source' string.  it could be a local path, or a url.
      * if it's a url, download it into the application's workarea

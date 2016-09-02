@@ -101,9 +101,14 @@ public class AnyFileUpload extends BaseHttpServlet {
 
     private File resolveDestDir(String dest, FileType fType) throws FileNotFoundException {
         File destDir = ServerContext.getTempWorkDir();
+/*
+        removed.. this writes temp file into the source directory.  may be readonly.  why was it needed before?
+        not sure of its history.  leaving comment as a reminder in case it breaks something else.
         if (!StringUtils.isEmpty(dest)) {
             destDir = ServerContext.convertToFile(dest);
-        } else if (fType == FileType.FITS) {
+        } else
+*/
+        if (fType == FileType.FITS) {
             destDir = ServerContext.getVisCacheDir();
         }
         if (!destDir.exists()) {
