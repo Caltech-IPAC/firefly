@@ -1,6 +1,12 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+
+
+/**
+ * @public
+ * @summary Build the interface to remotely communicate to the firefly viewer
+ */
 import {take} from 'redux-saga/effects';
 import {isArray, get} from 'lodash';
 
@@ -15,14 +21,15 @@ import {dispatchTableSearch, dispatchTableFetch}  from '../tables/TablesCntlr.js
 import {getWsChannel} from '../core/messaging/WebSocketClient.js';
 import {getConnectionCount, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS} from '../core/AppDataCntlr.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
-import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js'
+import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 
 const VIEWER_ID = '__viewer';
 var viewerWindow;
 
 /**
- * Build the interface to remotely communicate to the firefly viewer
+ *
  * @return {{getViewer: getViewer, getExternalViewer: getExternalViewer}}
+ * @ignore
  */
 export function buildViewerApi() {
     return {getViewer,getExternalViewer};
@@ -30,9 +37,12 @@ export function buildViewerApi() {
 
 /**
  *
+ * @public
  * @param {string} [channel] the channel id string, if not specified then one will be generated
  * @param file the html of the viewer to launch. In time there will be several
  * @return {object} viewer interface
+ * @memberof firefly
+ *
  */
 function getViewer(channel= getWsChannel(),file='') {
     channel += VIEWER_ID;
@@ -48,6 +58,8 @@ function getViewer(channel= getWsChannel(),file='') {
 /**
  *
  * @deprecated
+ * @memberof firefly
+ * @ignore
  */
 function getExternalViewer() {
     debug('getExternalViewer is deprecated, use firefly.getViewer() instead');
@@ -61,14 +73,18 @@ function buildImagePart(channel,file,dispatch) {
     var defP= {};
 
     /**
-     * set the default params the will be add to image plot request
+     * @summary set the default params the will be add to image plot request
      * @param params
+     * @memberof firefly
+     * @public
      */
     const setDefaultParams= (params)=> defP= params;
 
     /**
-     * show a image in the firefly viewer in another tab
+     * @summary show a image in the firefly viewer in another tab
      * @param request Web plot request
+     * @memberof firefly
+     * @public
      */
     const showImage= (request) => {
         doViewerOperation(channel,file, () => {
@@ -83,9 +99,11 @@ function buildImagePart(channel,file,dispatch) {
     };
 
     /**
-     * show a image in the firefly viewer in another tab, the the file first then the url
+     * @summary show a image in the firefly viewer in another tab, the the file first then the url
      * @param file a file on the server
      * @param url a url to a fits file
+     * @memberof firefly
+     * @public
      */
     const showImageFileOrUrl= (file,url) => showImage({file, url, Type : RequestType.TRY_FILE_THEN_URL});
 

@@ -14,9 +14,15 @@
 //===================================================================================
 
 /**
- * 
+ * @public
+ * @desc build highLevelApi using the lowLevelApi as an input
+ */
+
+/**
  * @param llApi the lowlevel api
  * @return {Object}
+ * @ignore
+ *
  */
 export function buildHighLevelApi(llApi) {
     const current= build(llApi);
@@ -32,6 +38,7 @@ var globalImageViewDefParams= {};
  * Build the deprecated API
  * @param llApi
  * @return {Object}
+ * @ignore
  */
 function build(llApi) {
 
@@ -111,7 +118,9 @@ function buildTablePart(llApi) {
     const {dispatchTableFetch}= llApi.action;
 
     /**
-     * @typedef {object} TblOptions    table options
+     * @global
+     * @public
+     * @typedef {object} TblOptions
      * @prop {string}  tbl_group    the group this table belongs to.  Defaults to 'main'.
      * @prop {number}  pageSize     the starting page size.  Will use the request's pageSize if not given.
      * @prop {boolean} removable    true if this table can be removed from view.  Defaults to true.
@@ -124,11 +133,14 @@ function buildTablePart(llApi) {
      */
 
     /**
-     * The general plotting function to plot a table.
      * @param {string|HTMLDivElement} targetDiv to put the table in.
      * @param {Object} request         request object created from
      * @param {TblOptions} options     table options.
+     * @memberof firefly
+     * @public
+     * @example fierfly.showTable
      */
+    // @param {module:firefly.TblOptions} options     table options.
     const showTable= (targetDiv, request, options)  => doShowTable(llApi, targetDiv, request, options);
 
     return {showTable};
@@ -140,7 +152,9 @@ function buildTablePart(llApi) {
 function buildChartPart(llApi) {
 
     /**
-     * @typedef {object} XYPlotOptions  xy plot options
+     * @global
+     * @public
+     * @typedef {object} XYPlotOptions
      * @prop {string}  source       location of the ipac table, url or file path; ignored when XY plot view is added to table
      * @prop {string}  QUERY_ID     required when XY plot view is added to the table. It connects this XY Plot to the table and should be the same string that you specified as the div parameter when you created the table.
      * @prop {string}  chartTitle   title of the chart
@@ -156,20 +170,25 @@ function buildChartPart(llApi) {
      * @prop {string}  yOptions     comma separated list of y axis options: grid,flip,log
      */
 
-    /**
-     * The general plotting function to plot an XY Plot.
-     * @param {string|HTMLDivElement} targetDiv to put the chart in.
-     * @param {XYPlotOptions} parameters the request object literal with the chart parameters
-     * @namespace firefly
-     */
-    const showXYPlot= (targetDiv, parameters)  => doShowXYPlot(llApi, targetDiv, parameters);
 
     /**
-     * Add XY Plot view of an existing table.
+     * @summary The general plotting function to plot an XY Plot.
      * @param {string|HTMLDivElement} targetDiv to put the chart in.
      * @param {XYPlotOptions} parameters the request object literal with the chart parameters
-     * @namespace firefly
+     * @memberof firefly
+     * @example firefly.showXYPlot
+     * @public
      */
+    const showXYPlot= (targetDiv, parameters)  => doShowXYPlot(llApi, targetDiv, parameters);
+    /**
+     * @summary  It appears twice when it is added in the above jsdoc block
+     * @param {string|HTMLDivElement} targetDiv to put the chart in.
+     * @param {XYPlotOptions} parameters the request object literal with the chart parameters
+     * @memberof firefly
+     * @public
+     * @example firefly.addXYPlot
+     */
+
     const addXYPlot= (targetDiv, parameters) => doShowXYPlot(llApi, targetDiv, parameters);
 
     return {showXYPlot, addXYPlot};
@@ -177,9 +196,10 @@ function buildChartPart(llApi) {
 
 function buildCommon(llApi) {
     /**
-     * Sets the root path for any relative URL. If this method has not been called then relative URLs use the page's root.
+     * @summary Sets the root path for any relative URL. If this method has not been called then relative URLs use the page's root.
      * @param {String} rootUrlPath
-     * @namespace firefly
+     * @memberof firefly
+     * @public
      */
     const setRootPath= (rootUrlPath) => llApi.action.dispatchRootUrlPath(rootUrlPath);
 
@@ -188,25 +208,33 @@ function buildCommon(llApi) {
 
 function buildImagePart(llApi) {
 
+
     const {RequestType}= llApi.util.image;
 
-    /**
-     * The general plotting function to plot a FITS image.
-     * @param {String|div} targetDiv to put the image in.
-     * @param {Object} request the request object literal with the plotting parameters
-     * @namespace firefly
+     /**
+      * @summary The general plotting function to plot a FITS image.
+      * @param {String|div} targetDiv to put the image in.
+      * @param {Object} request the request object literal with the plotting parameters
+      * @memberof firefly
+      * @public
+      * @ignore
+      * @example firefly.showImage
+      *
      */
     const showImage= (targetDiv, request)  => showImageInMultiViewer(llApi, targetDiv, request);
 
-
     /**
-     * a convenience plotting function to plot a file on the server or a url.  If first looks for the file then
+     * @summary a convenience plotting function to plot a file on the server or a url.  If first looks for the file then
      * the url is the fallback
      * @param {String|div} targetDiv to put the image in.
      * @param {String} file file on server
      * @param {String} url url reference to a fits file
-     * @namespace firefly
+     * @memberof firefly
+     * @public
+     * @ignore
+     * @example firefly.showImageFileOrUrl
      */
+
     const showImageFileOrUrl= (targetDiv, file,url) =>
               showImageInMultiViewer(llApi, targetDiv,
                                            {'File' : file,
@@ -214,15 +242,26 @@ function buildImagePart(llApi) {
                                             'Type' : RequestType.TRY_FILE_THEN_URL
                                            });
 
+
     /**
-     * set global fallback params for every image plotting call
+     * @summary set global fallback params for every image plotting call
      * @param {Object} params a object literal such as any image plot or showImage uses
-     * @namespace firefly
+     * @memberof irefly
+     * @public
+     * @ignore
+     * @example firefly.setGlobalImageDef
      */
     const setGlobalImageDef= (params) => globalImageViewDefParams= params;
 
 
-
+    /**
+     *
+     * @param {div} targetDiv to put the coverage in.
+     * @param options  an object literal containing a list of the coverage options
+     * @memberof firefly
+     * @public
+     * @example firefly.showCoverage
+     */
     const showCoverage= (div,options) => initCoverage(llApi,div,options);
 
     return {showImage, showImageFileOrUrl, setGlobalImageDef, showCoverage};
@@ -233,6 +272,7 @@ function buildImagePart(llApi) {
  * @param llApi
  * @return {Object}
  * @Deprecated
+ * @ignore
  */
 function buildDeprecated(llApi) {
 

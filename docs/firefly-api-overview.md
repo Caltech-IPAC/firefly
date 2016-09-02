@@ -29,7 +29,7 @@ More information about lower level API can be found here:
  - [Region Support](#region-support)
 
 
-###Starting Firefly Tools in JavaScript
+### Starting Firefly Tools in JavaScript
 Getting started with firefly tools involves three basic steps.
 
  1. Load the javascript file `firefly_loader.js`
@@ -62,7 +62,7 @@ This is all best explained with a code example. This examples creates a div with
 </html>
 ```
 
-###Remote Firefly Tools Interface
+### Remote Firefly Tools Interface
  
 The interface to remotely communicate to the firefly viewer:
 
@@ -75,7 +75,7 @@ The interface to remotely communicate to the firefly viewer:
 | *return*  | object | viewer interface |
 
 
-###Rendering UI components
+### Rendering UI components
 
 Firefly React components can be found in `firefly.ui` module.
 
@@ -94,7 +94,7 @@ Firefly React components can be found in `firefly.ui` module.
 | div | string or Object | a div element or a string id of the div element |
 
 
-###Dispatching and watching actions
+### Dispatching and watching actions
 
 Firefly is built around [React](https://facebook.github.io/react/docs/why-react.html)/[Redux](http://redux.js.org) paradigm. The idea of React is that it will always render the state of your component. 
 Redux manages that state of your application. The data in the state is immutable. It cannot change directly. 
@@ -123,7 +123,7 @@ For example, action with type `READOUT_DATA` is dispatched with a function named
 | *return* | function | a function that will remove the listener |
 
 
-###Other Utility Methods 
+### Other Utility Methods 
 
 The rest of Firefly utilities are split into the following modules by function:
 
@@ -133,7 +133,7 @@ The rest of Firefly utilities are split into the following modules by function:
 
 
 
-###FITS Visualization
+### FITS Visualization
 
 A FITS image viewer is created by calling the following method:
 
@@ -187,7 +187,7 @@ firefly.showImage('myDiv', {
 })
 ```
 
-###Deprecated ImageViewer interface
+### Deprecated ImageViewer interface
 
 The following `ImageViewer` interface is deprecated. Please use `firefly.showImage()` instead
 
@@ -207,7 +207,7 @@ Deprecated `ImageViewer` methods:
 
 
 
-###Utility methods for FITS visualization 
+### Utility methods for FITS visualization 
 
 #####**firefly.util.image.getPrimePlot** method
 
@@ -292,7 +292,7 @@ To use minimal readout, do the following:
     );
 ```
 
-###Region Support
+### Region Support
 
 #####**firefly.action.dispatchCreateRegionLayer** method
 
@@ -360,7 +360,7 @@ function onFireflyLoaded() {
 ```
 
 
-###Table Visualization
+### Table Visualization
 
 Creating table request
 
@@ -428,7 +428,7 @@ The Table tools currently supports the following file formats:
 
 
 
-###XY Plot Visualization
+### XY Plot Visualization
 
 - `firefly.showXYPlot(targetDiv, parameters)`
 
@@ -465,7 +465,7 @@ XY Plot supports the same table formats as Table does:
  - FITS Tables
 
 
-###Connecting Coverage image to table
+### Connecting Coverage image to table
 
 `firefly.showCoverage= (div,options)` - add a coverage image to a div
 
@@ -515,7 +515,7 @@ firefly.showCoverage('coverage_div', {gridOn:true})
 
 
 
-###Connecting XY Viewers to table
+### Connecting XY Viewers to table
 
 `firefly.addXYPlot(targetDiv, parameters)` - add an XY Plot to a div
 
@@ -549,6 +549,6 @@ tblReq = firefly.util.table.makeIrsaCatalogRequest('wise catalog', 'WISE', 'wise
 firefly.addXYPlot('xyplot_div', {tbl_id: tblReq.tbl_id, xCol: 'w1mpro+w4mpro', yCol: 'w2mpro'});
 ```
 
-###More Code Examples
+### More Code Examples
 
 [see firefly-api-code-examples.md](firefly-api-code-examples.md)

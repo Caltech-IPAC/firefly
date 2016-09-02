@@ -14,6 +14,9 @@ export const SEARCH_SRV_PATH = getRootURL() + 'search/json';
 const SAVE_TABLE_URL = getRootURL() + 'servlet/SaveAsIpacTable';
 const INT_MAX = Math.pow(2,31) - 1;
 
+/**
+ *  @public
+ */
 /*----------------------------< creator functions ----------------------------*/
 
 
@@ -24,6 +27,9 @@ const INT_MAX = Math.pow(2,31) - 1;
  * @param {object} [params] the parameters to include with this request.
  * @param {TableRequest} [options] more options.  see TableRequest for details.
  * @returns {TableRequest}
+ * @pubic
+ * @func  makeTblRequest
+ * @memberof firefly.util.table
  */
 export function makeTblRequest(id, title, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
@@ -35,13 +41,16 @@ export function makeTblRequest(id, title, params={}, options={}) {
 }
 
 /**
- * Creates a table requst for tabular data from a file.  Source of file may be
+ * Creates a table request for tabular data from a file.  Source of file may be
  * from a url or an absolute path on the server.
  * @param {string} [title]      title to display with this table.
  * @param {string} source       required; location of the ipac table. url or file path.
  * @param {string} [alt_source] use this if source does not exists.
  * @param {TableRequest} [options]  more options.  see TableRequest for details.
  * @returns {TableRequest}
+ * @pubic
+ * @func makeFileRequest
+ * @memberof firefly.util.table
  */
 export function makeFileRequest(title, source, alt_source, options={}) {
     const id = 'IpacTableFromSource';
@@ -57,28 +66,34 @@ export function makeFileRequest(title, source, alt_source, options={}) {
 /**
  * Parameters for cone search
  * @typedef {object} ConeParams
+ * @global
  * @prop {string} SearchMethod  'Cone'.
  * @prop {string} position  name or coordinates of the search
  * @prop {string} radius    radius of the search in arcsec
+ *
  */
 
 /**
  * Parameters for eliptical search
  * @typedef {object} ElipParams
+ * @global
  * @prop {string} SearchMethod  'Eliptical'.
  * @prop {string} position  name or coordinates of the search
  * @prop {string} radius    radius of the search in arcsec
  * @prop {string} radunits  the units for the radius or side, must be arcsec,arcmin,degree, default arcsec
  * @prop {string} ratio     ratio for elliptical request
  * @prop {string} posang    pa for elliptical request
+ *
  */
 
 /**
  * Parameters for box search
  * @typedef {object} BoxParams
+ * @global
  * @prop {string} SearchMethod 'Eliptical'.
  * @prop {string} position  name or coordinates of the search
  * @prop {string} size      the length of a side for a box search
+ *
  */
 
 /**
@@ -86,9 +101,12 @@ export function makeFileRequest(title, source, alt_source, options={}) {
  * @param {string} title    title to be displayed with this table result
  * @param {string} project
  * @param {string} catalog  the catalog name to search
- * @param {(ConeParams|BoxParams|ElipParams)} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
+ * @param {ConeParams|BoxParams|ElipParams} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
  * @param {TableRequest} [options]
  * @returns {TableRequest}
+ * @access public
+ * @func makeIrsaCatalogRequest
+ *  @memberof firefly.util.table
  */
 export function makeIrsaCatalogRequest(title, project, catalog, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
@@ -105,13 +123,15 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
 
     return omitBy(Object.assign(req, options, params, {id, tbl_id, META_INFO, UserTargetWorldPt, catalogProject, catalog}), isNil);
 }
-
 /**
  * creates the request to query VO catalog
  * @param {string} title    title to be displayed with this table result
- * @param {(ConeParams|BoxParams|ElipParams)} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
+ * @param {ConeParams|BoxParams|ElipParams} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
  * @param {TableRequest} [options]
  * @returns {TableRequest}
+ * @public
+ * @func makeVOCatalogRequest
+ *  @memberof firefly.util.table
  */
 export function makeVOCatalogRequest(title, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
@@ -132,6 +152,9 @@ export function makeVOCatalogRequest(title, params={}, options={}) {
  * @param {TblRequest} request  the original request to clone
  * @param {Object} params   additional parameters to add to the cloned request
  * @returns {TblRequest}
+ * @public
+ * @func cloneRequest
+ * @memberof firefly.util.table
  */
 export function cloneRequest(request, params = {}) {
     const req = cloneDeep(omit(request, 'tbl_id'));
@@ -147,6 +170,9 @@ export function cloneRequest(request, params = {}) {
  * @param {TableRequest} tableRequest is a table request params object
  * @param {number} [hlRowIdx] set the highlightedRow.  default to startIdx.
  * @returns {Promise.<TableModel>}
+ * @public
+ * @func doFetchTable
+ * @memberof firefly.util.table
  */
 export function doFetchTable(tableRequest, hlRowIdx) {
 
@@ -205,6 +231,9 @@ export function doValidate(type, action) {
  * action.err is stored as an array of errors.  Errors may be a String or an Error type.
  * @param action  the actoin to update
  * @param cause  the error to be added.
+ * @public
+ * @func error
+ * @memberof firefly.util.table
  */
 export function error(action, cause) {
     (action.err = action.err || []).push(cause);
@@ -217,6 +246,9 @@ export function error(action, cause) {
  * @param {number} endIdx
  * @param {TableModel} tableModel
  * @returns {boolean}
+ * @public
+ * @func isTblDataAvail
+ * @memberof firefly.util.table
  */
 export function isTblDataAvail(startIdx, endIdx, tableModel) {
     if (!tableModel) return false;
@@ -232,6 +264,8 @@ export function isTblDataAvail(startIdx, endIdx, tableModel) {
  * returns the table model with the given tbl_id
  * @param tbl_id
  * @returns {TableModel}
+ * @func getTblById
+ * @memberof firefly.util.table
  */
 export function getTblById(tbl_id) {
     return get(flux.getState(),[TblCntlr.TABLE_SPACE_PATH, 'data', tbl_id]);
@@ -241,6 +275,9 @@ export function getTblById(tbl_id) {
  * returns the table group information
  * @param {string} tbl_group    the group name to look for
  * @returns {TableGroup}
+ * @public
+ * @memberof firefly.util.table
+ * @func getTableGroup
  */
 export function getTableGroup(tbl_group='main') {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group]);
@@ -251,6 +288,9 @@ export function getTableGroup(tbl_group='main') {
  * the given tbl_id is not in a group.
  * @param {string} tbl_id    table id
  * @returns {TableGroup}
+ * @public
+ * @memberof firefly.util.table
+ * @func findGroupByTblId
  */
 export function findGroupByTblId(tbl_id) {
     const resultsRoot = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results'], {});
@@ -264,6 +304,9 @@ export function findGroupByTblId(tbl_id) {
  * returns an array of tbl_id for the given tbl_group_id
  * @param {string} tbl_group_id    table group name.  defaults to 'main' if not given
  * @returns {String[]} array of tbl_id
+ * @public
+ * @func getTblIdsByGroup
+ * @memberof firefly.util.table
  */
 export function getTblIdsByGroup(tbl_group_id = 'main') {
     const tableGroup = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group_id]);
@@ -275,6 +318,9 @@ export function getTblIdsByGroup(tbl_group_id = 'main') {
  * @param {string} tbl_id       table id.
  * @param {string} tbl_group    table group name.  defaults to 'main' if not given
  * @returns {TableModel}
+ * @public
+ * @func getTableInGroup
+ * @memberof firefly/util/table
  */
 export function getTableInGroup(tbl_id, tbl_group='main') {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group, 'tables',  tbl_id]);
@@ -284,6 +330,9 @@ export function getTableInGroup(tbl_id, tbl_group='main') {
  * get the table working state by tbl_ui_id
  * @param {string} tbl_ui_id     table UI id.
  * @returns {Object}
+ * @public
+ *  @memberof firefly.util.table
+ *  @func  getTableUiById
  */
 export function getTableUiById(tbl_ui_id) {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui', tbl_ui_id]);
@@ -293,6 +342,8 @@ export function getTableUiById(tbl_ui_id) {
  * returns the first table working state for the given tbl_id
  * @param {string} tbl_id
  * @returns {Object}
+ * @memberof firefly.util.table
+ * @func getTableUiByTblId
  */
 export function getTableUiByTblId(tbl_id) {
     const uiRoot = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui'], {});
@@ -305,6 +356,9 @@ export function getTableUiByTblId(tbl_id) {
 /**
  * returns the working state of the currently expanded table.
  * @returns {Object}
+ * @public
+ * @memberof firefly.util.table
+ * @func getTblExpandedInfo
  */
 export function getTblExpandedInfo() {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui', 'expanded'], {});
@@ -314,6 +368,9 @@ export function getTblExpandedInfo() {
  * returns true if the table referenced by the given tbl_id is fully loaded.
  * @param {string} tbl_id
  * @returns {boolean}
+ * @public
+ * @memberof firefly.util.table
+ * @func  isFullyLoaded
  */
 export function isFullyLoaded(tbl_id) {
     return isTableLoaded(getTblById(tbl_id));
@@ -324,6 +381,8 @@ export function isFullyLoaded(tbl_id) {
  * @param {TableModel} tableModel
  * @param {string} colName
  * @returns {number}
+ * @memberof firefly.util.table
+ * @func getColumnIdx
  */
 export function getColumnIdx(tableModel, colName) {
     const cols = get(tableModel, 'tableData.columns', []);
@@ -337,6 +396,8 @@ export function getColumnIdx(tableModel, colName) {
  * @param {TableModel} tableModel
  * @param {string} colName
  * @returns {TableColumn}
+ * @memberof firefly.util.table
+ * @func etColumn
  */
 export function getColumn(tableModel, colName) {
     const colIdx = getColumnIdx(tableModel, colName);
@@ -349,6 +410,9 @@ export function getColumn(tableModel, colName) {
  * return the tbl_id of the active table for the given group.
  * @param {string} tbl_group group name; defaults to 'main' if not given.
  * @returns {string}
+ * @public
+ * @memberof firefly.util.table
+ * @func getActiveTableId
  */
 export function getActiveTableId(tbl_group='main') {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH,'results',tbl_group,'active']);
@@ -360,6 +424,8 @@ export function getActiveTableId(tbl_group='main') {
  * @param {number} rowIdx
  * @param {string} colName
  * @return {string}
+ * @memberof firefly.util.table
+ * @func getCellValue
  */
 export function getCellValue(tableModel, rowIdx, colName) {
     if (get(tableModel, 'tableData.data.length', 0) > 0) {
@@ -374,6 +440,9 @@ export function getCellValue(tableModel, rowIdx, colName) {
  * return true if the given table is fully loaded.
  * @param {TableModel} tableModel
  * @returns {boolean}
+ * @public
+ *  @memberof ffirefly.util.table
+ * @func isTableLoaded
  */
 export function isTableLoaded(tableModel) {
     const status = tableModel && !tableModel.isFetching && get(tableModel, 'tableMeta.Loading-Status', 'COMPLETED');
@@ -384,8 +453,11 @@ export function isTableLoaded(tableModel) {
  * This function transform the json data from the server to fit the need of the UI.
  * For instance, the column's name is repeated after transform.  This is good for the UI.
  * But, it's more efficient to not include it during data transfer from the server.
- * @param tableModel
+ * @param {TableModel}
  * @returns {*}
+ * @public
+ * @memberof firefly.util.table
+ * @func transform
  */
 export function transform(tableModel) {
 
@@ -410,6 +482,9 @@ export function transform(tableModel) {
  * @param {Object} target
  * @param {Object} source
  * @returns {Object}
+ * @public
+ * @memberof firefly.util.table
+ * @func smartMerge
  */
 export function smartMerge(target, source) {
     if (!target) return source;
@@ -447,6 +522,9 @@ export function smartMerge(target, source) {
  * @param {TableModel} origTableModel original table model.  this is returned when direction is UNSORTED.
  * @param {string} sortInfoStr
  * @returns {TableModel}
+ * @public
+ * @func sortTable
+ * @memberof firefly.util.table
  */
 export function sortTable(origTableModel, sortInfoStr) {
     const tableModel = cloneDeep(origTableModel);
@@ -462,6 +540,9 @@ export function sortTable(origTableModel, sortInfoStr) {
  * @param {TableColumn[]} columns
  * @param {string} sortInfoStr
  * @returns {TableData}
+ * @public
+ * @memberof firefly.util.table
+ * @func sortTableData
  */
 export function sortTableData(tableData, columns, sortInfoStr) {
     const sortInfoCls = SortInfo.parse(sortInfoStr);
@@ -495,6 +576,8 @@ export function sortTableData(tableData, columns, sortInfoStr) {
  * @param {TableModel} tableModel
  * @param {string} filterInfoStr filters are separated by comma(',').
  * @returns {TableModel}
+ * @memberof firefly.util.table
+ * @func filterTable
  */
 export function filterTable(tableModel, filterInfoStr) {
     const filtered = cloneDeep(tableModel);
@@ -512,6 +595,9 @@ export function filterTable(tableModel, filterInfoStr) {
  * @param {string} tbl_id
  * @param {number} aPageSize  use this pageSize instead of the one in the request.
  * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error}}
+ * @public
+ * @memberof firefly.util.table
+ * @func getTblInfoById
  */
 export function getTblInfoById(tbl_id, aPageSize) {
     const tableModel = getTblById(tbl_id);
@@ -523,6 +609,9 @@ export function getTblInfoById(tbl_id, aPageSize) {
  * @param {TableModel} tableModel
  * @param {number} aPageSize  use this pageSize instead of the one in the request.
  * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error}}
+ * @public
+ * @memberof firefly.util.table
+ * @func getTblInfo
  */
 export function getTblInfo(tableModel, aPageSize) {
     if (!tableModel) return {};
@@ -546,6 +635,9 @@ export function getTblInfo(tableModel, aPageSize) {
  * returns the url to download a snapshot of the current table data.
  * @param {string} tbl_ui_id  UI id of the table
  * @returns {string}
+ * @public
+ * @memberof firefly.util.table
+ * @func getTableSourceUrl
  */
 export function getTableSourceUrl(tbl_ui_id) {
     const {columns, request} = getTableUiById(tbl_ui_id) || {};
@@ -572,6 +664,9 @@ export function getTableSourceUrl(tbl_ui_id) {
  * @param {TableColumn[]} columns  array of column object
  * @param {TableData} dataAry  array of array.
  * @returns {Object.<string,number>} a map of cname -> width
+ * @public
+ * @memberof firefly.util.table
+ * @func calcColumnWidths
  */
 export function calcColumnWidths(columns, dataAry) {
     return columns.reduce( (pv, cv, idx) => {
@@ -588,6 +683,9 @@ export function calcColumnWidths(columns, dataAry) {
 /**
  * create a unique table id (tbl_id)
  * @returns {string}
+ * @public
+ * @memberof firefly.util.table
+ * @func uniqueTblId
  */
 export function uniqueTblId() {
     const id = uniqueId('tbl_id-');
@@ -601,6 +699,9 @@ export function uniqueTblId() {
 /**
  * create a unique table UI id (tbl_ui_id)
  * @returns {string}
+ * @public
+ * @memberof firefly.util.table
+ * @func uniqueTblUiId
  */
 export function uniqueTblUiId() {
     return uniqueId('tbl_ui_id-');
@@ -608,6 +709,10 @@ export function uniqueTblUiId() {
 /**
  *  This function provides a patch until we can reliably determine that the ra/dec columns use radians or degrees.
  * @param tableOrMeta the table object or the tableMeta object
+ * @public
+ * @memberof firefly.util.table
+ * @func isTableUsingRadians
+ *
  */
 export function isTableUsingRadians(tableOrMeta) {
     if (!tableOrMeta) return false;

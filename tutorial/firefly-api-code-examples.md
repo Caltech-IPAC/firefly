@@ -5,7 +5,7 @@
 - [Tracking the mouse](#tracking-the-mouse)
 - [Tracking the selection](#tracking-the-selection)
 
-###Starting Firefly Tools in JavaScript
+### Starting Firefly Tools in JavaScript
 Firefly Tools are loaded when you load`firefly_loader.js` from a server of your choice. For example, to load Firefly Tools from your local server, include the following declaration in your HTML file:
 
 ```html
@@ -18,7 +18,7 @@ When Firefly Tools completes loading, it calls `onFireflyLoaded()` JavaScript fu
 
 The following are several examples of what can be done in the `onFireflyLoaded()` function. All test data can be found at `http://web.ipac.caltech.edu/staff/roby/demo`. 
 
-###Image FITS Viewer
+### Image FITS Viewer
 Create an image viewer and place it into the `<div>` id `plotHere`.
 
 ```html
@@ -36,7 +36,7 @@ function onFireflyLoaded() {
 ```
 
 
-###FITS Viewers in a group
+### FITS Viewers in a group
 In this example, we create four image viewers. Each belong to the same group `wise-group`. We then set some global parameters so all the plots display the same. Now we plot each of the four images by specifying the URL of the FITS file. By doing this, all the plotting controls will work on all four images simultaneously. 
 
 
@@ -65,7 +65,7 @@ In this example, we create four image viewers. Each belong to the same group `wi
  }
 ```
 
-###Tracking the mouse 
+### Tracking the mouse 
 
 The following example will plot FITS image then add a callback to get the mouse readout and log it to the console.
 
@@ -94,7 +94,7 @@ function onFireflyLoaded() {
 }
 ```
 
-###Tracking the selection 
+### Tracking the selection 
 
 Firefly viewer allows to make the following selections:
   - Area Select (square)
