@@ -50,6 +50,38 @@ import './ApiStyle.css';
 
 
 /**
+ * @namespace firefly
+ */
+/**
+ * @namespace firefly.action
+ * */
+/**
+ * @namespace firefly.ui
+ *
+ */
+/**
+ * @namespace firefly.util
+ *
+ */
+/**
+ * @namespace firefly.util.chat
+ *
+ */
+
+/**
+ * @namespace firefly.util.data
+ *
+ */
+
+/**
+ * @namespace firefly.util.image
+ * */
+
+/**
+ * @namespace firefly.util.table
+ */
+
+/**
  * Start in api mode. Will create the api and call window.onFireflyLoaded(firefly)
  * @ignore
  */
@@ -90,8 +122,6 @@ export function initApi() {
      }
    }
 */
-
-
 
 /**
  * Return the api object.

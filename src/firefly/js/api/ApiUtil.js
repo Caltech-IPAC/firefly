@@ -21,7 +21,6 @@ import {take,race,call} from 'redux-saga/effects';
 // NOTE
 /**
  * @public
- * @namespace firefly/util
  */
 export {getBoolean} from '../util/WebUtil.js';
 export {toBoolean} from '../util/WebUtil.js';
@@ -32,7 +31,7 @@ export {toBoolean} from '../util/WebUtil.js';
  * @func isDebug
  * @static
  * @public
- * @memberof firefly/util
+ * @memberof firefly.util
  *
  */
 export const isDebug = () => get(window, 'firefly.debug', false);
@@ -42,7 +41,7 @@ export const isDebug = () => get(window, 'firefly.debug', false);
  * @param {String|Error} msg any number of messages
  * @public
  * @func debug
- * @memberof firefly/util
+ * @memberof firefly.util
  *
  */
 export function debug(...msg) {
@@ -57,7 +56,7 @@ export function debug(...msg) {
  * @param {Object} [props] props for the react component
  * @public
  * @function renderDOM
- * @memberof firefly/util
+ * @memberof firefly.util
  */
 
 export function renderDOM(div, Component, props) {
@@ -83,7 +82,7 @@ export function renderDOM(div, Component, props) {
  * @param {string|Object} div a div element or a string id of the div element
  * @public
  * @function unrenderDOM
- * @memberof firefly/util
+ * @memberof firefly.util
  */
 
 export function unrenderDOM(div) {
@@ -100,7 +99,7 @@ export function unrenderDOM(div) {
  * @return {function} a function that will remove the listener
  * @public
  * @func addActionListener
- * @memberof firefly/util
+ * @memberof firefly.util
  */
 export function addActionListener(actionType,callBack) {
     var pResolve;
@@ -128,7 +127,7 @@ export function addActionListener(actionType,callBack) {
  * @param getState a function get the application state
  * @private
  * @func actionReport
- *  @memberof firefly/util
+ *  @memberof firefly.util
  *
  */
 function *actionReport({actionType,callBack, cancelPromise},dispatch,getState) {

@@ -16,7 +16,6 @@
 /**
  * @public
  * @desc build highLevelApi using the lowLevelApi as an input
- * @namespace firefly
  */
 
 /**

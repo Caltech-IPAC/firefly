@@ -16,7 +16,6 @@ const INT_MAX = Math.pow(2,31) - 1;
 
 /**
  *  @public
- *  @namespace  firefly/util/table
  */
 /*----------------------------< creator functions ----------------------------*/
 
@@ -30,7 +29,7 @@ const INT_MAX = Math.pow(2,31) - 1;
  * @returns {TableRequest}
  * @pubic
  * @func  makeTblRequest
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  */
 export function makeTblRequest(id, title, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
@@ -51,7 +50,7 @@ export function makeTblRequest(id, title, params={}, options={}) {
  * @returns {TableRequest}
  * @pubic
  * @func makeFileRequest
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  */
 export function makeFileRequest(title, source, alt_source, options={}) {
     const id = 'IpacTableFromSource';
@@ -107,7 +106,7 @@ export function makeFileRequest(title, source, alt_source, options={}) {
  * @returns {TableRequest}
  * @access public
  * @func makeIrsaCatalogRequest
- *  @memberof firefly/util/table
+ *  @memberof firefly.util.table
  */
 export function makeIrsaCatalogRequest(title, project, catalog, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
@@ -132,7 +131,7 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
  * @returns {TableRequest}
  * @public
  * @func makeVOCatalogRequest
- *  @memberof firefly/util/table
+ *  @memberof firefly.util.table
  */
 export function makeVOCatalogRequest(title, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
@@ -155,7 +154,7 @@ export function makeVOCatalogRequest(title, params={}, options={}) {
  * @returns {TblRequest}
  * @public
  * @func cloneRequest
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  */
 export function cloneRequest(request, params = {}) {
     const req = cloneDeep(omit(request, 'tbl_id'));
@@ -173,7 +172,7 @@ export function cloneRequest(request, params = {}) {
  * @returns {Promise.<TableModel>}
  * @public
  * @func doFetchTable
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  */
 export function doFetchTable(tableRequest, hlRowIdx) {
 
@@ -234,7 +233,7 @@ export function doValidate(type, action) {
  * @param cause  the error to be added.
  * @public
  * @func error
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  */
 export function error(action, cause) {
     (action.err = action.err || []).push(cause);
@@ -249,7 +248,7 @@ export function error(action, cause) {
  * @returns {boolean}
  * @public
  * @func isTblDataAvail
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  */
 export function isTblDataAvail(startIdx, endIdx, tableModel) {
     if (!tableModel) return false;
@@ -266,7 +265,7 @@ export function isTblDataAvail(startIdx, endIdx, tableModel) {
  * @param tbl_id
  * @returns {TableModel}
  * @func getTblById
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  */
 export function getTblById(tbl_id) {
     return get(flux.getState(),[TblCntlr.TABLE_SPACE_PATH, 'data', tbl_id]);
@@ -277,7 +276,7 @@ export function getTblById(tbl_id) {
  * @param {string} tbl_group    the group name to look for
  * @returns {TableGroup}
  * @public
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func getTableGroup
  */
 export function getTableGroup(tbl_group='main') {
@@ -290,7 +289,7 @@ export function getTableGroup(tbl_group='main') {
  * @param {string} tbl_id    table id
  * @returns {TableGroup}
  * @public
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func findGroupByTblId
  */
 export function findGroupByTblId(tbl_id) {
@@ -307,7 +306,7 @@ export function findGroupByTblId(tbl_id) {
  * @returns {String[]} array of tbl_id
  * @public
  * @func getTblIdsByGroup
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  */
 export function getTblIdsByGroup(tbl_group_id = 'main') {
     const tableGroup = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group_id]);
@@ -332,7 +331,7 @@ export function getTableInGroup(tbl_id, tbl_group='main') {
  * @param {string} tbl_ui_id     table UI id.
  * @returns {Object}
  * @public
- *  @memberof firefly/util/table
+ *  @memberof firefly.util.table
  *  @func  getTableUiById
  */
 export function getTableUiById(tbl_ui_id) {
@@ -343,7 +342,7 @@ export function getTableUiById(tbl_ui_id) {
  * returns the first table working state for the given tbl_id
  * @param {string} tbl_id
  * @returns {Object}
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func getTableUiByTblId
  */
 export function getTableUiByTblId(tbl_id) {
@@ -358,7 +357,7 @@ export function getTableUiByTblId(tbl_id) {
  * returns the working state of the currently expanded table.
  * @returns {Object}
  * @public
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func getTblExpandedInfo
  */
 export function getTblExpandedInfo() {
@@ -370,7 +369,7 @@ export function getTblExpandedInfo() {
  * @param {string} tbl_id
  * @returns {boolean}
  * @public
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func  isFullyLoaded
  */
 export function isFullyLoaded(tbl_id) {
@@ -382,7 +381,7 @@ export function isFullyLoaded(tbl_id) {
  * @param {TableModel} tableModel
  * @param {string} colName
  * @returns {number}
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func getColumnIdx
  */
 export function getColumnIdx(tableModel, colName) {
@@ -397,7 +396,7 @@ export function getColumnIdx(tableModel, colName) {
  * @param {TableModel} tableModel
  * @param {string} colName
  * @returns {TableColumn}
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func etColumn
  */
 export function getColumn(tableModel, colName) {
@@ -412,7 +411,7 @@ export function getColumn(tableModel, colName) {
  * @param {string} tbl_group group name; defaults to 'main' if not given.
  * @returns {string}
  * @public
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func getActiveTableId
  */
 export function getActiveTableId(tbl_group='main') {
@@ -425,7 +424,7 @@ export function getActiveTableId(tbl_group='main') {
  * @param {number} rowIdx
  * @param {string} colName
  * @return {string}
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func getCellValue
  */
 export function getCellValue(tableModel, rowIdx, colName) {
@@ -442,7 +441,7 @@ export function getCellValue(tableModel, rowIdx, colName) {
  * @param {TableModel} tableModel
  * @returns {boolean}
  * @public
- *  @memberof firefly/util/table
+ *  @memberof ffirefly.util.table
  * @func isTableLoaded
  */
 export function isTableLoaded(tableModel) {
@@ -457,7 +456,7 @@ export function isTableLoaded(tableModel) {
  * @param {TableModel}
  * @returns {*}
  * @public
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func transform
  */
 export function transform(tableModel) {
@@ -484,7 +483,7 @@ export function transform(tableModel) {
  * @param {Object} source
  * @returns {Object}
  * @public
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func smartMerge
  */
 export function smartMerge(target, source) {
@@ -525,7 +524,7 @@ export function smartMerge(target, source) {
  * @returns {TableModel}
  * @public
  * @func sortTable
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  */
 export function sortTable(origTableModel, sortInfoStr) {
     const tableModel = cloneDeep(origTableModel);
@@ -542,7 +541,7 @@ export function sortTable(origTableModel, sortInfoStr) {
  * @param {string} sortInfoStr
  * @returns {TableData}
  * @public
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func sortTableData
  */
 export function sortTableData(tableData, columns, sortInfoStr) {
@@ -577,7 +576,7 @@ export function sortTableData(tableData, columns, sortInfoStr) {
  * @param {TableModel} tableModel
  * @param {string} filterInfoStr filters are separated by comma(',').
  * @returns {TableModel}
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func filterTable
  */
 export function filterTable(tableModel, filterInfoStr) {
@@ -597,7 +596,7 @@ export function filterTable(tableModel, filterInfoStr) {
  * @param {number} aPageSize  use this pageSize instead of the one in the request.
  * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error}}
  * @public
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func getTblInfoById
  */
 export function getTblInfoById(tbl_id, aPageSize) {
@@ -611,7 +610,7 @@ export function getTblInfoById(tbl_id, aPageSize) {
  * @param {number} aPageSize  use this pageSize instead of the one in the request.
  * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error}}
  * @public
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func getTblInfo
  */
 export function getTblInfo(tableModel, aPageSize) {
@@ -637,7 +636,7 @@ export function getTblInfo(tableModel, aPageSize) {
  * @param {string} tbl_ui_id  UI id of the table
  * @returns {string}
  * @public
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func getTableSourceUrl
  */
 export function getTableSourceUrl(tbl_ui_id) {
@@ -666,7 +665,7 @@ export function getTableSourceUrl(tbl_ui_id) {
  * @param {TableData} dataAry  array of array.
  * @returns {Object.<string,number>} a map of cname -> width
  * @public
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func calcColumnWidths
  */
 export function calcColumnWidths(columns, dataAry) {
@@ -685,7 +684,7 @@ export function calcColumnWidths(columns, dataAry) {
  * create a unique table id (tbl_id)
  * @returns {string}
  * @public
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func uniqueTblId
  */
 export function uniqueTblId() {
@@ -701,7 +700,7 @@ export function uniqueTblId() {
  * create a unique table UI id (tbl_ui_id)
  * @returns {string}
  * @public
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func uniqueTblUiId
  */
 export function uniqueTblUiId() {
@@ -711,7 +710,7 @@ export function uniqueTblUiId() {
  *  This function provides a patch until we can reliably determine that the ra/dec columns use radians or degrees.
  * @param tableOrMeta the table object or the tableMeta object
  * @public
- * @memberof firefly/util/table
+ * @memberof firefly.util.table
  * @func isTableUsingRadians
  *
  */

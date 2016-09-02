@@ -9,17 +9,14 @@
            "src/firefly/js/tables/TableUtil.js",
            "src/firefly/js/charts/XYPlotCntlr.js",
            "src/firefly/js//visualize/CsysConverter.js",
-           "src/firefly/js/visualize/DrawLayerCntlr.js"
-          // ,"src/firefly/js/charts/HistogramCntlr.js"
-            ,"README.md"
+           "src/firefly/js/visualize/DrawLayerCntlr.js",
+           "docs/firefly-api-overview.md"
 
         ],
       "exclude": [
-          //"src/firefly/js/api/ApiBuild.js"
+          // enter the excluded files here as an array
        ],
-        //include .js, .jsdoc and jsx files
         "includePattern": ".+\\.js(doc)?|(x)$",
-         //Any file starting with an underscore or in a directory starting with an underscore will be ignored
         "excludePattern": "(^|\\/|\\\\)_"
     },
 
@@ -39,41 +36,34 @@
         "include": ["./docs"],
         "exclude": ["./docs/firefly-api-code-examples.md"],
         "includePattern": ".+\\.md?$",
-       // "excludePattern": "(^|\\/|\\\\)_",
-        "recursive": true//,
-        //"recursiveLevel": 2,
+        "recursive": true
+
     },
 
-    "templates": {
-          "minami": {
-         // "default": {
-            "staticFiles": {
-                "include": ["./docs/"],
-                "exclude": ["./docs/firefly-api-code-examples.md"],
-               // "includePattern": ".+\\.md?$",
-                // "excludePattern": "(^|\\/|\\\\)_",
-                "recursive": true//,
-                //"recursiveLevel": 2,
-            }
 
-        }
-    },
     "opts": {
-        "template": "node_modules/minami", //use the minami template insetad of the default
-       // "template":  "templates/default",//default",  // same as -t templates/default
-       "encoding": "utf8",               // same as -e utf8
-        "destination": "src/firefly/jsdoc/",          // same as -d ./out/
-        "recurse": true , //,             // same as -r
-        "tutorials": "./tutorial/",// same as -u path/to/tutorials
-        "access": "all"   //same as -a  <value>, values are all, public, private etc
+        "template": "node_modules/ink-docstrap/template", //use the minami template insetad of the default
+        "encoding": "utf8",                               // same as -e utf8
+        "destination": "src/firefly/jsdoc/",              // same as -d ./out/
+        "recurse": true ,                                 // same as -r
+        "tutorials": "./tutorial/",                      // same as -u path/to/tutorials
+        "access": "all"                                  //same as -a  <value>, values are all, public, private etc
 
     },
     "templates": {
         "cleverLinks": false,
         "monospaceLinks": false,
-        "default": {
-            "outputSourceFiles": true
-        }
+        "useLongnameInNav": true,
+        "include": ["./docs/"],
+        "exclude": ["./docs/firefly-api-code-examples.md"],
+        "recursive": true,
+        "outputSourceFiles":true,
+        "includeDate":true,
+        "navType"               : "vertical",
+        "linenums":true,
+        "collapseSymbols": true,
+        "systemName" : "Firefly"
     }
+
 }
 

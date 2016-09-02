@@ -29,8 +29,11 @@ const API_READOUT= 'apiReadout';
 // NOTE 
 
 /**
+ * @namespace firefly.util.image.CCUtil
+ **/
+
+/**
  * @public
- * @namespace firefly/util/image
  *
  */
 export {RangeValues} from '../visualize/RangeValues.js';
@@ -56,7 +59,7 @@ export {watchImageMetaData} from '../visualize/saga/ImageMetaDataWatcher.js';
  * @returns {WebPlot}
  * @public
  * @function getPrimePlot
- * @memberof firefly/util/image
+ * @memberof firefly.util.image
  *
  */
 export function getPrimePlot(plotId) {
@@ -69,7 +72,7 @@ export function getPrimePlot(plotId) {
  * @param {object} props - a list of the properties
  * @public
  * @function initAutoReadout
- * @memberof firefly/util/image
+ * @memberof firefly.util.image
  */
 export function initAutoReadout(ReadoutComponent= DefaultApiReadout,
          //   props={MouseReadoutComponent:PopupMouseReadoutMinimal, showThumb:false,showMag:false}){
@@ -88,7 +91,7 @@ export function initAutoReadout(ReadoutComponent= DefaultApiReadout,
  * @param algorithm the stretch algorithm to use, may be 'Linear', 'Log', 'LogLog', 'Equal', 'Squared', 'Sqrt'
  * @public
  * @function serializeSimpleRangeValues
- *  @memberof firefly/util/image
+ *  @memberof firefly.util.image
  */
 export function serializeSimpleRangeValues(stretchType,lowerValue,upperValue,algorithm) {
     const rv= RangeValues.makeSimple(stretchType,lowerValue,upperValue,algorithm);

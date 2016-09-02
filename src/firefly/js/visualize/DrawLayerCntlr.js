@@ -79,7 +79,6 @@ export function getDlAry() { return flux.getState()[DRAWING_LAYER_KEY].drawLayer
 
 /**
  * @public
- * @namespace firefly/action
  *
  */
 export default {
@@ -105,7 +104,7 @@ export default {
  *
  * @param drawLayerId
  * @public
- * @memberof firefly/action
+ * @memberof firefly.action
  * @func dispatchRetrieveData
  */
 export function dispatchRetrieveData(drawLayerId) {
@@ -119,7 +118,7 @@ export function dispatchRetrieveData(drawLayerId) {
  * @param drawLayerTypeId
  * @param params
  * @public
- * @memberof firefly/action
+ * @memberof firefly.action
  * @func  dispatchCreateDrawLayer
  */
 export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
@@ -140,7 +139,7 @@ export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
  * @param plotId
  * @param useGroup
  *  @public
- *  @memberof firefly/action
+ *  @memberof firefly.action
  *  @func dispatchChangeVisibility
  */
 export function dispatchChangeVisibility(id,visible, plotId, useGroup= true) {
@@ -159,7 +158,7 @@ export function dispatchChangeVisibility(id,visible, plotId, useGroup= true) {
  * @param plotId
  * @param useGroup
  *  @public
- *  @memberof firefly/action
+ *  @memberof firefly.action
  *  @func dispatchChangeDrawingDef
  */
 export function dispatchChangeDrawingDef(id,drawingDef, plotId, useGroup= true) {
@@ -179,7 +178,7 @@ export function dispatchChangeDrawingDef(id,drawingDef, plotId, useGroup= true) 
  * @param plotId
  * @param useGroup
  * @public
- * @memberof firefly/action
+ * @memberof firefly.action
  * @func dispatchModifyCustomField
  */
 export function dispatchModifyCustomField(id,changes, plotId, useGroup= true) {
@@ -199,7 +198,7 @@ export function dispatchModifyCustomField(id,changes, plotId, useGroup= true) {
  * @param plotId
  * @param useGroup
  *  @public
- * @memberof firefly/action
+ * @memberof firefly.action
  * @func dispatchForceDrawLayerUpdate
  */
 export function dispatchForceDrawLayerUpdate(id,plotId, useGroup= true) {
@@ -218,7 +217,7 @@ export function dispatchForceDrawLayerUpdate(id,plotId, useGroup= true) {
  *
  * @param {string} id make the drawLayerId or drawLayerTypeId
  * @public
- * @memberof firefly/action
+ * @memberof firefly.action
  * @func dispatchDestroyDrawLayer
  */
 export function dispatchDestroyDrawLayer(id) {
@@ -233,7 +232,7 @@ export function dispatchDestroyDrawLayer(id) {
  * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param {string|string[]} plotId to attach this may by a string or an array of strings
  * @param attachPlotGroup
- * @memberof firefly/action
+ * @memberof firefly.action
  * @public
  * @func  dispatchAttachLayerToPlot
  */
@@ -262,7 +261,7 @@ export function dispatchAttachLayerToPlot(id,plotId, attachPlotGroup=false) {
  * @param useLayerGroup
  * @param destroyWhenAllDetached if all plots are detached then destroy this plot
  *  @public
- *  @memberof firefly/action
+ *  @memberof firefly.action
  *  @func dispatchDetachLayerFromPlot
  */
 export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
@@ -292,7 +291,7 @@ export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
  * @param plotId
  * @param dispatcherr
  *  @public
- * @memberof firefly/action
+ * @memberof firefly.action
  * @func dispatchCreateRegionLayer
  */
 export function dispatchCreateRegionLayer(regionId, layerTitle, fileOnServer='', regionAry=[], plotId = [], dispatcher = flux.process) {
@@ -305,7 +304,7 @@ export function dispatchCreateRegionLayer(regionId, layerTitle, fileOnServer='',
  * @param plotId
  * @param dispatcher
  * @public
- * @memberof firefly/action
+ * @memberof firefly.action
  * @func dispatchDeleteRegionLayer
  */
 export function dispatchDeleteRegionLayer(regionId, plotId, dispatcher = flux.process) {
@@ -318,7 +317,7 @@ export function dispatchDeleteRegionLayer(regionId, plotId, dispatcher = flux.pr
  * @param {object} regionChanges
  * @param (function) dispatcher
  *  @public
- * @memberof firefly/action
+ * @memberof firefly.action
  * @func dispatchAddRegionEntry
  */
 export function dispatchAddRegionEntry(regionId, regionChanges, dispatcher = flux.process) {
@@ -330,7 +329,7 @@ export function dispatchAddRegionEntry(regionId, regionChanges, dispatcher = flu
  * @param {object} regionChanges - the changes
  * @param (function) dispatcher
  * @public
- * @memberof firefly/action
+ * @memberof firefly.action
  * @func dispatchRemoveRegionEntry
  */
 export function dispatchRemoveRegionEntry(regionId, regionChanges, dispatcher = flux.process) {
@@ -344,7 +343,7 @@ export function dispatchRemoveRegionEntry(regionId, regionChanges, dispatcher = 
  * @param attachPlotGroup
  * @param dispatcher
  * @public
- * @memberof firefly/action
+ * @memberof firefly.action
  * @func dispatchCreateMarkerLayer
  */
 export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], attachPlotGroup=true, dispatcher = flux.process) {
@@ -359,7 +358,7 @@ export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], att
  * @param plotId
  * @param attachPlotGroup
  * @param dispatcher
- * @memberof firefly/action
+ * @memberof firefly.action
  * @func dispatchCreateFootprintLayer
  */
 export function dispatchCreateFootprintLayer(footprintId, layerTitle, footprint, instrument, plotId = [],

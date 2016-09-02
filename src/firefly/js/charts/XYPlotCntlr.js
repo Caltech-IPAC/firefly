@@ -26,7 +26,6 @@ const SET_ZOOM = `${XYPLOT_DATA_KEY}/SET_ZOOM`;
 const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
 /**
  * @public
- * @namespace firefly/action
  */
 
 /*
@@ -83,7 +82,7 @@ const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
  * @param {function} dispatcher only for special dispatching uses such as remote
  * @public
  * @function dispatchLoadPlotData
- * @memberof firefly/action
+ * @memberof firefly.action
  *
  */
 export function dispatchLoadPlotData(chartId, xyPlotParams, tblId, dispatcher= flux.process) {
@@ -96,7 +95,7 @@ export function dispatchLoadPlotData(chartId, xyPlotParams, tblId, dispatcher= f
  * @param {Object} selection - {xMin, xMax, yMin, yMax}
  * @public
  * @func dispatchSetSelection
- * @memberof firefly/action
+ * @memberof firefly.action
  */
 export function dispatchSetSelection(chartId, selection) {
     flux.process({type: SET_SELECTION, payload: {chartId, selection}});
@@ -109,7 +108,7 @@ export function dispatchSetSelection(chartId, selection) {
  * @param {Object} selection - {xMin, xMax, yMin, yMax}
  * @public
  * @func dispatchZoom
- * @memberof firefly/action
+ * @memberof firefly.action
  */
 export function dispatchZoom(chartId, tblId, selection) {
     const {xyPlotData, xyPlotParams, decimatedUnzoomed} = get(getChartSpace(SCATTER), chartId, {});
@@ -155,7 +154,7 @@ function dispatchResetZoom(chartId) {
  * @returns function which loads plot data (x, y, rowIdx, etc.)
  * @public
  * @func loadPlotData
- * @memberof firefly/action
+ * @memberof firefly.action
  */
 export function loadPlotData (rawAction) {
     return (dispatch) => {
@@ -206,7 +205,7 @@ function serverParamsChanged(oldParams, newParams) {
  * decimatedUnzoomed - tells if unzoomed data are decimated
  * @param data {Object} the data to merge with the xyplot branch
  * @returns {{type: string, payload: object}}
- * @memberof firefly/action
+ * @memberof firefly.action
  * @public
  * @func updatePlotData
  */

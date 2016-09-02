@@ -6,7 +6,6 @@
 /**
  * @public
  * @summary Build the interface to remotely communicate to the firefly viewer
- * @namespace firefly
  */
 import {take} from 'redux-saga/effects';
 import {isArray, get} from 'lodash';
