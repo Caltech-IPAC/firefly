@@ -2,20 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef,Style, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
-import {MouseState} from '../visualize/VisMouseSync.js';
-import {PlotAttribute} from '../visualize/WebPlot.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import { makeOffsetPt, makeWorldPt, makeImagePt, makeViewPortPt,makeScreenPt} from '../visualize/Point.js';
-import BrowserInfo from '../util/BrowserInfo.js';
-import VisUtil from '../visualize/VisUtil.js';
-import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
+import { makeWorldPt, makeScreenPt} from '../visualize/Point.js';
 import {primePlot, getPlotViewById} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
-import {flux} from '../Firefly.js';
 import {makeDirectionArrowDrawObj} from '../visualize/draw/DirectionArrowDrawObj.js';
 
 const ID= 'NORTH_UP_COMPASS_TOOL';
@@ -91,8 +84,8 @@ function makeCompass(plotId, action){
         return null;
     }
 
-    var dataN= makeDirectionArrowDrawObj(sptStart, spt2,"N");
-    var dataE= makeDirectionArrowDrawObj(sptStart, sptE2,"E");
+    var dataN= makeDirectionArrowDrawObj(sptStart, spt2,'N');
+    var dataE= makeDirectionArrowDrawObj(sptStart, sptE2,'E');
 
     //return Arrays.asList(new DrawObj[]{dataN, dataE});
     //
