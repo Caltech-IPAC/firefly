@@ -207,6 +207,7 @@
     </mime-mapping>
 
     <welcome-file-list>
+        <welcome-file>index.html</welcome-file>
         <welcome-file>@launch.page@</welcome-file>
     </welcome-file-list>
 

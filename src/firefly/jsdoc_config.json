@@ -5,12 +5,12 @@
     },
     "source": {
         "include": [
-           "src/firefly/js/api/",
-           "src/firefly/js/tables/TableUtil.js",
-           "src/firefly/js/charts/XYPlotCntlr.js",
-           "src/firefly/js//visualize/CsysConverter.js",
-           "src/firefly/js/visualize/DrawLayerCntlr.js",
-           "docs/firefly-api-overview.md"
+           "./js/api/",
+           "./js/tables/TableUtil.js",
+           "./js/charts/XYPlotCntlr.js",
+           "./js//visualize/CsysConverter.js",
+           "./js/visualize/DrawLayerCntlr.js",
+           "../../docs/firefly-api-overview.md"
 
         ],
       "exclude": [
@@ -33,8 +33,8 @@
         "extensions": ["js", "jsx"]
     },
    "staticFiles": {
-        "include": ["./docs"],
-        "exclude": ["./docs/firefly-api-code-examples.md"],
+        "include": ["../../docs"],
+        "exclude": ["../../docs/firefly-api-code-examples.md"],
         "includePattern": ".+\\.md?$",
         "recursive": true
 
@@ -42,27 +42,26 @@
 
 
     "opts": {
-        "template": "node_modules/ink-docstrap/template", //use the minami template insetad of the default
+        "template": "../../node_modules/ink-docstrap/template", //use the docstrap template insetad of the default
         "encoding": "utf8",                               // same as -e utf8
-        "destination": "src/firefly/jsdoc/",              // same as -d ./out/
         "recurse": true ,                                 // same as -r
-        "tutorials": "./tutorial/",                      // same as -u path/to/tutorials
+        "tutorials": "../../tutorial/",                      // same as -u path/to/tutorials
         "access": "all"                                  //same as -a  <value>, values are all, public, private etc
 
     },
     "templates": {
-        "cleverLinks": false,
-        "monospaceLinks": false,
-        "useLongnameInNav": true,
-        "include": ["./docs/"],
-        "exclude": ["./docs/firefly-api-code-examples.md"],
-        "recursive": true,
-        "outputSourceFiles":true,
-        "includeDate":true,
-        "navType"               : "vertical",
-        "linenums":true,
-        "collapseSymbols": true,
-        "systemName" : "Firefly"
+        "cleverLinks" : false,
+        "monospaceLinks" : false,
+        "useLongnameInNav" : true,
+        "recursive" : true,
+        "outputSourceFiles" :true,
+        "includeDate" :true,
+        "navType" : "vertical",
+        "inverseNav" : true,
+        "linenums" :true,
+        "collapseSymbols" : false,
+        "systemName" : "Firefly",
+        "theme" : "spacelab"
     }
 
 }
