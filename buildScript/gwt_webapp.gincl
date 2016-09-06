@@ -167,7 +167,7 @@ task deploy (dependsOn: [loadConfig, webapp]) << {
 }
 
 task buildAndDeploy( dependsOn:[war, deploy] )
-
+task buildAllAndDeploy( dependsOn:[war, buildJsDoc, deploy] )
 
 task buildAndPublish( dependsOn: war ) << {
   description= 'Build the war file and then publish it to a remote host. Property ${publish_host} is required'
@@ -248,6 +248,7 @@ task publishToGithub (dependsOn: loadConfig) {
 //-------------------------
 loadConfig.mustRunAfter gwt
 buildClient.mustRunAfter prepareWebapp
+buildJsDoc.mustRunAfter prepareWebapp
 prepareWebapp.mustRunAfter gwtCompile
 gwtCompile.mustRunAfter jar
 deploy.mustRunAfter war

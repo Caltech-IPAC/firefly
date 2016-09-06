@@ -168,7 +168,7 @@ task devMode (dependsOn: loadConfig) {
   outputs.upToDateWhen { false }
 
   doLast {
-    def res = project.ext.NPM 'run', 'dev'
+    def res = project.ext.NODE 'npm', 'run', 'dev'
     if (res.getExitValue() == 0) {
       throw new GradleException("Fail to run dev mode")
     }
