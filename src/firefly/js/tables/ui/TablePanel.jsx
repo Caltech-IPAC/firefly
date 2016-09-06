@@ -120,7 +120,7 @@ export class TablePanel extends Component {
         const {onTableChanged} = this.props;
 
         if (error) return <div className='TablePanel__error'>{error}</div>;
-        if (isEmpty(columns)) return <div style={{position: 'relative', width: '100%', height: '100%'}}><div msg='loading...' className='loading-mask'/></div>;
+        if (isEmpty(columns)) return <div style={{position: 'relative', width: '100%', height: '100%'}}><div className='loading-mask'/></div>;
 
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
         const viewIcoStyle = 'tablepanel ' + (textView ? 'tableView' : 'textView');

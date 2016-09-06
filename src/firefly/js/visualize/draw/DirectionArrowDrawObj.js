@@ -30,7 +30,7 @@ const DIR_ARROW_DRAW_OBJ= 'DirectionArrayDrawObj';
  * @param text
  * @return {object}
  */
-function makeDirectionArrowDrawObj(startPt, endPt, text) {
+export function makeDirectionArrowDrawObj(startPt, endPt, text) {
     if (!startPt || !endPt) return null;
 
     var obj= DrawObj.makeDrawObj();

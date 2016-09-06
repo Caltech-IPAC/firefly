@@ -4,7 +4,7 @@
 /*global __$version_tag*/
 
 
-import 'babel/polyfill';
+import 'babel-polyfill';
 import 'isomorphic-fetch';
 import React from 'react';
 import 'styles/global.css';

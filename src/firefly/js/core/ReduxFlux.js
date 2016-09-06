@@ -216,9 +216,11 @@ var logger= loggerMiddleware({duration:true, predicate:logFilter, collapsed:coll
 function createRedux() {
     // create a rootReducer from all of the registered reducers
     const rootReducer = combineReducers(reducers);
-    const middleWare=  applyMiddleware(thunkMiddleware, /*logger,*/ createSagaMiddleware(masterSaga));
-    
-    return createStore(rootReducer, middleWare);
+    const sagaMiddleware = createSagaMiddleware();
+    const middleWare=  applyMiddleware(thunkMiddleware, /*logger,*/ sagaMiddleware);
+    const store = createStore(rootReducer, middleWare);
+    sagaMiddleware.run(masterSaga);
+    return store;
 }
 
 function bootstrap() {

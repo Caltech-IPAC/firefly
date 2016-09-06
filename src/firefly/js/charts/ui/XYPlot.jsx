@@ -4,7 +4,7 @@
 import {isUndefined, debounce, get, omit} from 'lodash';
 import shallowequal from 'shallowequal';
 import React, {PropTypes} from 'react';
-import ReactHighcharts from 'react-highcharts/bundle/highcharts';
+import ReactHighcharts from 'react-highcharts';
 
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {parseDecimateKey} from '../../tables/Decimate.js';

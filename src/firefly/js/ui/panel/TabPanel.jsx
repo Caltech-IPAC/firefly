@@ -33,7 +33,7 @@ class TabsHeader extends Component {
         super(props);
         this.state = {widthPx: 0};
         this.onResize = debounce((size) => {
-            if (size && size.width !== this.state.widthPx) {
+            if (size && size.width !== this.state.widthPx && !this.isUnmounted) {
                 this.setState({widthPx: size.width});
             }
         }, 100).bind(this);
@@ -41,6 +41,10 @@ class TabsHeader extends Component {
 
     shouldComponentUpdate(np, ns) {
         return sCompare(this, np, ns);
+    }
+
+    componentWillUnmount() {
+        this.isUnmounted = true;
     }
 
     render() {
@@ -89,9 +93,14 @@ export class Tabs extends Component {
         return sCompare(this, np, ns);
     }
 
+    componentWillUnmount() {
+        this.isUnmounted = true;
+    }
+
+
     onSelect(index,id,name) {
         const {onTabSelect, componentKey} = this.props;
-        if (this.state.selectedIdx !== index) {
+        if (this.state.selectedIdx !== index && !this.isUnmounted) {
             if (componentKey) {
                 dispatchComponentStateChange(componentKey, {selectedIdx: index});
             }

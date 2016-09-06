@@ -13,17 +13,20 @@ import * as TblUtil from '../TableUtil.js';
 export function uiReducer(state={ui:{}}, action={}) {
     var root = state.ui;
     if (!action || !action.payload) return root;
-    const {tbl_ui_id, tbl_id} = action.payload;
     switch (action.type) {
         case (Cntlr.TBL_UI_UPDATE)    :
+        {
+            const {tbl_ui_id, tbl_id} = action.payload;
             return updateAllUi(root, tbl_id, tbl_ui_id, action.payload);
+        }
         case (Cntlr.TABLE_REMOVE)    :
             return removeTable(root, action);
 
         case (Cntlr.TBL_RESULTS_ADDED) :
-            const {options} = action.payload || {}; 
+        {
+            const {tbl_ui_id, tbl_id, options} = action.payload;
             return Object.assign(root, {[tbl_ui_id]:{tbl_ui_id, tbl_id, ...options}});
-
+        }
         case (Cntlr.TABLE_FETCH)      :
         case (Cntlr.TABLE_FILTER)      :
         case (Cntlr.TABLE_SORT)     :
@@ -32,16 +35,19 @@ export function uiReducer(state={ui:{}}, action={}) {
         case (Cntlr.TABLE_SELECT)   :
         case (Cntlr.TABLE_LOADED) :
         case (Cntlr.TABLE_HIGHLIGHT)  :
+        {
             // state is in-progress(fresh) data.. use it to reduce ui state.
+            const {tbl_id} = action.payload;
             return uiStateReducer(root, get(state, ['data', tbl_id]));
-
+        }
         case (Cntlr.TBL_UI_EXPANDED) :
+        {
             const {tbl_ui_id, tbl_id} = action.payload;
             const tbl_group = findKey(get(state, 'results'), (o) => {
                 return has(o, ['tables', tbl_id]);
             });
             return updateSet(root, 'expanded', {tbl_group, tbl_id, tbl_ui_id});
-
+        }
         default:
             return root;
     }
@@ -69,7 +75,7 @@ function uiStateReducer(ui, tableModel) {
     const filterCount = filterInfo ? filterInfo.split(';').length : 0;
     const sortInfo = get(tableModel, 'request.sortInfo');
     const showLoading = !TblUtil.isTableLoaded(tableModel);
-    const showMask = tableModel.isFetching;
+    const showMask = tableModel && tableModel.isFetching;
 
     var data = has(tableModel, 'tableData.data') ? tableModel.tableData.data.slice(startIdx, endIdx) : [];
     var tableRowCount = data.length;

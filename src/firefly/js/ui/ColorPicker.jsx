@@ -7,7 +7,7 @@ import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {PopupPanel} from './PopupPanel.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
-import ColorPicker from 'react-color';
+import {SketchPicker} from 'react-color';
 
 
 
@@ -26,7 +26,7 @@ var lastEv;
 function ColorPickerWrapper ({callback,color,callbackOnOKOnly, callbackOnBoth}) {
     return (
         <div>
-            <ColorPicker type='sketch'
+            <SketchPicker
                          onChangeComplete={ (ev) => {
                              lastEv=ev;
                              if (!callbackOnOKOnly) callback(ev, false);

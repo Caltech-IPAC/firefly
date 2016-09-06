@@ -8,7 +8,7 @@ import path from 'path';
 import fs from 'fs';
 
 
-var exclude_dirs = [/node_modules/, /java/, /python/, /config/, /test/];
+var exclude_dirs = /(node_modules|java|python|config|test)/;
 
 /**
  * A helper function to create the webpack config object to be sent to webpack module bundler. 
@@ -23,9 +23,9 @@ var exclude_dirs = [/node_modules/, /java/, /python/, /config/, /test/];
  * @returns {Object} a webpack config object.
  */
 export default function makeWebpackConfig(config) {
-    
+
     // setting defaults
-    config.src = config.src || __dirname;
+    config.src = config.src || process.cwd();
     config.firefly_root = config.firefly_root || path.resolve(config.src, '../..');
     config.firefly_dir = config.firefly_dir || path.resolve(config.firefly_root, 'src/firefly');
     config.project = config.project || path.resolve(config.src, '../../');
@@ -135,15 +135,19 @@ export default function makeWebpackConfig(config) {
     /*------------------------ MODULE -----------------------------*/
     var loaders = [
                     {   test : /\.(js|jsx)$/,
-                        exclude: exclude_dirs,
-                        loaders : ['babel-loader']
+                        include: [config.src, config.firefly_dir,
+                                 `${config.firefly_root}/node_modules/react-component-resizable/`],
+                        loader: 'babel',
+                        query: {
+                            presets: ['es2015', 'react', 'stage-2']
+                        }
                     },
                     {   test    : /\.css$/,
                         exclude: exclude_dirs,
                         loaders : [
                             'style-loader',
                             `css-loader?root=${path.resolve(config.firefly_dir, 'html')}`,
-                            'autoprefixer?browsers=last 2 version'
+                            'postcss-loader'
                         ]
                     },
                     {   test: /\.(png|jpg|gif)$/,

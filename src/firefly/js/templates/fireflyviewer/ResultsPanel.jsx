@@ -13,7 +13,7 @@ import {LO_VIEW} from '../../core/LayoutCntlr.js';
 const wrapperStyle = { flex: 'auto', display: 'flex', flexFlow: 'column', overflow: 'hidden'};
 const eastWest = {east: {index: 0,  defaultSize: '50%'}, west: {index: 1} };
 const northSouth = {north: {index: 0,  defaultSize: '50%'}, south: {index: 1} };
-const triView = {east: {index: 0}, west: {index: 1}, south: {index: 2, defaultSize: 'calc(100% - 300px)'}};
+const triView = {east: {index: 0, defaultSize: '50%'}, west: {index: 1}, south: {index: 2, defaultSize: 'calc(100% - 300px)'}};
 const singleView = {center: {index: 0,  defaultSize: '100%',  resize: false}};
 
 

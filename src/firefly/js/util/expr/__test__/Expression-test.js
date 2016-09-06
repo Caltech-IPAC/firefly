@@ -1,7 +1,7 @@
 /*eslint-env node, mocha */
 
 // to run: from firefly/src/firefly
-// node ../../node_modules/mocha/bin/mocha js/util/expr/__test__/*test.js --compilers js:babel/register --requires ignore-styles
+// node ../../node_modules/mocha/bin/mocha js/util/expr/__test__/*test.js --compilers js:babel-core/register --requires ignore-styles
 
 
 import {expect} from 'chai';

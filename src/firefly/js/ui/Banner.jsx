@@ -24,8 +24,8 @@ function menu(menuComp) {
 function appIcon(icoSrc) {
     const src = icoSrc || FFTOOLS_ICO;
     return (
-        <div id='app-icon' align='left' style={{width: '100%', height: '100%', float: 'left'}}>
-            <img src={src} className='gwt-Image' style={{width: '75px', height: '75px'}}></img>
+        <div id='app-icon' style={{width: '100%', height: '100%', float: 'left'}}>
+            <img src={src} className='gwt-Image' style={{width: '75px', height: '75px'}}/>
         </div>
     );
 }
