@@ -266,7 +266,7 @@ export function dispatchAttachLayerToPlot(id,plotId, attachPlotGroup=false) {
  * @param destroyWhenAllDetached if all plots are detached then destroy this plot
  * @public
  * @memberof firefly.action
- *  @func dispatchDetachLayerFromPlot
+ * @func dispatchDetachLayerFromPlot
  */
 export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
                                             useLayerGroup=true, destroyWhenAllDetached=false) {
@@ -308,6 +308,8 @@ export function dispatchCreateRegionLayer(drawLayerId, layerTitle, fileOnServer=
  * @param drawLayerId
  * @param plotId
  * @param dispatcher
+ * @func dispatchDeleteRegionLayer
+ * @memberof firefly.action
  */
 export function dispatchDeleteRegionLayer(drawLayerId, plotId, dispatcher = flux.process) {
     dispatcher({type: REGION_DELETE_LAYER, payload: {drawLayerId, plotId}});
@@ -323,6 +325,9 @@ export function dispatchDeleteRegionLayer(drawLayerId, plotId, dispatcher = flux
  * @param plotId  The region layer is created on all plots of the active plot group in plotId is empty
  * @param layerTitle
  * @param dispatcher
+ * @func dispatchAddRegionEntry
+ * @memberof firefly.action
+
  */
 export function dispatchAddRegionEntry(drawLayerId, regionChanges, plotId=[], layerTitle='', dispatcher = flux.process) {
     dispatcher({type: REGION_ADD_ENTRY, payload: {drawLayerId, regionChanges, plotId, layerTitle}});
@@ -333,6 +338,9 @@ export function dispatchAddRegionEntry(drawLayerId, regionChanges, plotId=[], la
  * @param drawLayerId
  * @param regionChanges
  * @param dispatcher
+ * @func dispatchRemoveRegionEntry
+ * @memberof firefly.action
+
  */
 export function dispatchRemoveRegionEntry(drawLayerId, regionChanges, dispatcher = flux.process) {
     dispatcher({type: REGION_REMOVE_ENTRY, payload: {drawLayerId, regionChanges}});
@@ -590,6 +598,7 @@ function deletePlotView(state,action, dlReducer) {
  * @param state
  * @param action
  * @param dlReducer
+ * @memberof firefly.action
  * @returns {Object}
  */
 function destroyDrawLayerNoRegion(state, action, dlReducer) {

@@ -49,37 +49,22 @@ import {buildViewerApi} from './ApiViewer.js';
 import './ApiStyle.css';
 
 
-/**
- * @namespace firefly
- */
-/**
- * @namespace firefly.action
- * */
-/**
- * @namespace firefly.ui
- *
- */
-/**
- * @namespace firefly.util
- *
- */
-/**
- * @namespace firefly.util.chat
- *
- */
+/**@namespace firefly*/
 
-/**
- * @namespace firefly.util.data
- *
- */
+/**@namespace firefly.action*/
 
-/**
- * @namespace firefly.util.image
- * */
+/**@namespace firefly.ui*/
 
-/**
- * @namespace firefly.util.table
- */
+/**@namespace firefly.util*/
+
+/** @namespace firefly.util.chat*/
+
+/** @namespace firefly.util.data*/
+
+/**@namespace firefly.util.image*/
+
+/** @namespace firefly.util.table*/
+
 
 /**
  * Start in api mode. Will create the api and call window.onFireflyLoaded(firefly)

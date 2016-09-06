@@ -576,7 +576,6 @@ export class CysConverter {
  * @param pt
  * @return {*}
  * @memberof firefly.util.image.CCUtil
- * @func getWorldPtRepresentation
  * @public
  */
 function getWorldPtRepresentation(pt) {
@@ -597,8 +596,7 @@ export const CCUtil = {
     /**
      * Convert to ImageWorkSpace Point
      * @param {object} plot - the image
-     * @func  getImageWorkSpaceCoords
-     * @memberof   firefly.util.image.CCUtil
+     * @memberof  firefly.util.image.CCUtil
      * @public
      *
      */
@@ -610,7 +608,6 @@ export const CCUtil = {
      * Convert to Image Point
      * @param {object} plot - the image
      * @param {object} pt - the point to convert
-     * @function getImageCoords
      * @memberof  firefly.util.image.CCUtil
      * @public
      */
@@ -623,7 +620,6 @@ export const CCUtil = {
     /**
      * @param {object} plot - the image
      * @param {object} pt - the point to convert
-     * @function getViewPortCoords
      * @public
      * @memberof firefly.util.image.CCUtil
      */
@@ -646,7 +642,6 @@ export const CCUtil = {
      * Convert to World Point
      * @param {object} plot - the image
      * @param {object} pt - the point to convert
-     * @function getWorldCoords
      * @memberof  firefly.util.image.CCUtil
      * @public
      */
