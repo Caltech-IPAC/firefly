@@ -1,10 +1,10 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-import ExternalAccessUtils, {extensionActivate} from './ExternalAccessUtils.js';
+import ExternalAccessUtils from './ExternalAccessUtils.js';
 
 const EXTENSION_ADD= 'ExternalAccessCntlr/extensionAdd';
+const EXTENSION_REMOVE= 'ExternalAccessCntlr/extensionRemove';
 const EXTENSION_ACTIVATE= 'ExternalAccessCntlr/extensionActivate';
 const CHANNEL_ACTIVATE= 'ExternalAccessCntlr/channelActivate';
 
@@ -25,6 +25,10 @@ export function dispatchExtensionAdd(extension) {
     flux.process({type: ExternalAccessCntlr.EXTENSION_ADD, payload: {extension}});
 }
 
+export function dispatchExtensionRemove(extensionId) {
+    flux.process({type: ExternalAccessCntlr.EXTENSION_REMOVE, payload: {id: extensionId}});
+}
+
 export function dispatchExtensionActivate(extension, resultData) {
     flux.process({type: ExternalAccessCntlr.EXTENSION_ACTIVATE, payload: {extension, resultData}});
 }
@@ -32,7 +36,6 @@ export function dispatchExtensionActivate(extension, resultData) {
 export function dispatchChannelActivate(channelId) {
     flux.process({type: ExternalAccessCntlr.CHANNEL_ACTIVATE, payload: {channelId}});
 }
-
 
 
 
@@ -60,6 +63,9 @@ function reducer(state=initState, action={}) {
         case EXTENSION_ADD  :
             retState= addExtension(state,action);
             break;
+        case EXTENSION_REMOVE  :
+            retState= removeExtension(state,action);
+            break;
         case EXTENSION_ACTIVATE  :
             retState= state;// todo something
             break;
@@ -78,6 +84,11 @@ const addExtension= function(state, action) {
     return Object.assign({}, state, {extensionList:newAry});
 };
 
+const removeExtension= function(state, action) {
+    var {id}= action.payload;
+    var newAry= state.extensionList.filter((extension) => {return (extension.id !== id);});
+    return Object.assign({}, state, {extensionList:newAry});
+};
 
 const updateChannel= function(state, action) {
     var {channelId}= action.payload;
@@ -90,7 +101,7 @@ const updateChannel= function(state, action) {
 //============ EXPORTS ===========
 
 var ExternalAccessCntlr = {
-    reducer, extensionActivateActionCreator, EXTENSION_ADD,
+    reducer, extensionActivateActionCreator, EXTENSION_ADD, EXTENSION_REMOVE,
     EXTENSION_ACTIVATE, CHANNEL_ACTIVATE, EXTERNAL_ACCESS_KEY,
     ALL_MPW
     };

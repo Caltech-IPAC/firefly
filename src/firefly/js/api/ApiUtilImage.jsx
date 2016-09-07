@@ -26,11 +26,7 @@ const API_READOUT= 'apiReadout';
 // It should have a jsdoc
 //----------------------------------------------------------------
 // NOTE 
-// NOTE 
-
-/**
- * @namespace firefly.util.image.CCUtil
- **/
+// NOTE
 
 /**
  * @public
@@ -41,18 +37,14 @@ export {WPConst, WebPlotRequest, findInvalidWPRKeys, confirmPlotRequest} from '.
 export {RequestType} from '../visualize/RequestType';
 export {ExpandType, dispatchApiToolsView} from '../visualize/ImagePlotCntlr.js';
 
-export {CsysConverter} from '../visualize/CsysConverter.js';
+export {CysConverter} from '../visualize/CsysConverter.js';
 export {CCUtil} from '../visualize/CsysConverter.js';
 export {watchCoverage} from '../visualize/saga/CoverageWatcher.js';
 export {watchImageMetaData} from '../visualize/saga/ImageMetaDataWatcher.js';
 
+export {extensionAdd, extensionRemove} from '../core/ExternalAccessUtils.js';
 
-/*
- *
- *
- *
- *
- */
+
 /**
  * @summary  Get plot object with the given plot id, when plotId is not included, active plot is returned.
  * @param {string} [plotId] the plotId, optional
@@ -91,7 +83,7 @@ export function initAutoReadout(ReadoutComponent= DefaultApiReadout,
  * @param algorithm the stretch algorithm to use, may be 'Linear', 'Log', 'LogLog', 'Equal', 'Squared', 'Sqrt'
  * @public
  * @function serializeSimpleRangeValues
- *  @memberof firefly.util.image
+ * @memberof firefly.util.image
  */
 export function serializeSimpleRangeValues(stretchType,lowerValue,upperValue,algorithm) {
     const rv= RangeValues.makeSimple(stretchType,lowerValue,upperValue,algorithm);

@@ -7,7 +7,7 @@ import {flux} from '../Firefly.js';
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import {reportUserAction} from '../rpc/SearchServicesJson.js';
 import { parseImagePt, parseWorldPt, parseScreenPt } from '../visualize/Point.js';
-import {getWsChannel} from './messaging/WebSocketClient.js'
+import {getWsChannel} from './messaging/WebSocketClient.js';
 
 const EMPTY_ARRAY=[];
 
@@ -56,6 +56,10 @@ export const extensionAdd= function(extension) {
     flux.process({type: ExternalAccessCntlr.EXTENSION_ADD, payload: {extension}});
 };
 
+export const extensionRemove= function(extensionId) {
+    flux.process({type: ExternalAccessCntlr.EXTENSION_REMOVE, payload: {id: extensionId}});
+};
+
 export const extensionActivate= function(extension, resultData) {
     flux.process({type: ExternalAccessCntlr.EXTENSION_ACTIVATE, payload: {extension, resultData}});
 };
@@ -66,6 +70,6 @@ export const channelActivate= function(channelId) {
 };
 
 
-var ExternalAccessUtils= { doExtensionActivate, extensionAdd, extensionActivate, channelActivate,
+var ExternalAccessUtils= { doExtensionActivate, extensionAdd, extensionRemove, extensionActivate, channelActivate,
     getRemoteChannel, getExtensionList };
 export default ExternalAccessUtils;

@@ -185,7 +185,7 @@ export class CysConverter {
      * @param {object} pt the point to translate
      * @param {number} [altZoomLevel], only use this parameter it you want to compute the point for a zoom level that
      *                 if different than what the plotted zoom level
-     * @return getImageWorkSpaceCoords
+     * @return ImageWorkSpacePt the image workspace coordinates
      */
     getImageWorkSpaceCoords(pt, altZoomLevel) {
         if (!isValidPoint(pt)) return null;
@@ -235,6 +235,7 @@ export class CysConverter {
 
 
     /**
+     * Return the ImagePt coordinates given Pt
      * @param {object} pt the point to translate
      * @return ImagePt the image coordinates
      */
@@ -485,8 +486,6 @@ export class CysConverter {
     /**
      * Return the sky coordinates given a image x (fsamp) and  y (fline)
      * package in a ImageWorkSpacePt class
-     */
-    /**
      * @param pt  the point to convert
      * @param outputCoordSys (optional) The coordinate system to return, default to coordinate system of image
      * @return WorldPt the translated coordinates
@@ -575,7 +574,6 @@ export class CysConverter {
  *
  * @param pt
  * @return {*}
- * @memberof firefly.util.image.CCUtil
  * @public
  */
 function getWorldPtRepresentation(pt) {
@@ -589,6 +587,7 @@ function getWorldPtRepresentation(pt) {
 }
 
 /** part of lowLevelApi
+ * @namespace firefly.util.image.CCUtil
  * @public
  * @type {{getImageWorkSpaceCoords: CCUtil.getImageWorkSpaceCoords, getImageCoords: CCUtil.getImageCoords, getViewPortCoords: CCUtil.getViewPortCoords, getScreenCoords: CCUtil.getScreenCoords, getWorldCoords: CCUtil.getWorldCoords, getWorldPtRepresentation: getWorldPtRepresentation}}
  */
@@ -596,7 +595,7 @@ export const CCUtil = {
     /**
      * Convert to ImageWorkSpace Point
      * @param {object} plot - the image
-     * @memberof  firefly.util.image.CCUtil
+     * @memberof   firefly.util.image.CCUtil
      * @public
      *
      */

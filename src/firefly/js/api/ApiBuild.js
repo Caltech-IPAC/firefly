@@ -57,7 +57,7 @@ import './ApiStyle.css';
 
 /**@namespace firefly.util*/
 
-/** @namespace firefly.util.chat*/
+/** @namespace firefly.util.chart*/
 
 /** @namespace firefly.util.data*/
 
@@ -89,24 +89,24 @@ export function initApi() {
 
 /**
 
-  Structure of API
-   {
-              //--- High level API , all high level api are in the root
-     all high level functions....
-     
-            //--- Low level API, lowlevel api are under action, ui, util
-     action : { all dispatch functions...
-               type: {all action type constants}
-              }
-     ui: { high level react components }
-     util { renderDom, unrenderDom, isDebug, debug       // built by ApiUtil.js
-            image : {image utility routines}                // imported from ApiUtilImage.js
-            xyplot : {xyplot utility routines}               // imported from ApiUtilXYPlot.js //todo
-            table : {table utility routines}                // imported from ApiUtilTable.js //todo
-            data : {data utility routines???? }            // //todo do we need this?????
+ Structure of API
+     {
+                //--- High level API , all high level api are in the root
+       all high level functions....
+
+              //--- Low level API, lowlevel api are under action, ui, util
+       action : { all dispatch functions...
+                 type: {all action type constants}
+                }
+       ui: { high level react components }
+       util { renderDom, unrenderDom, isDebug, debug       // built by ApiUtil.js
+              image : {image utility routines}             // imported from ApiUtilImage.js
+              chart : {chart utility routines}             // imported from ApiUtilChart.js
+              table : {table utility routines}             // imported from ApiUtilTable.js
+              data : {data utility routines???? }          //todo do we need this?????
+       }
      }
-   }
-*/
+ */
 
 /**
  * Return the api object.

@@ -29,6 +29,8 @@
 <div id="container" style="white-space: nowrap; padding: 5px">
     <input id="selectionCallbackTrigger" type="button" onclick="ffTrackSelections()" value="Track selections"/>
     &nbsp;
+    <input id="selectionExtensions" type="button" onclick="ffSelectionExtensions()" value="Add selection extensions"/>
+    &nbsp;
     <input id="readoutCallbackTrigger" type="button" onclick="ffTrackReadout()" value="Track mouse readout"/>
     &nbsp;
     <input id="regionsToggle" type="button" onclick="ffToggleRegions()" value="Show regions"/>
@@ -42,6 +44,7 @@
 
         var trackSelectionRemover;
         var doTrackSelection = false;
+        var hasSelectionExtensions = false;
 
         var trackReadoutRemover;
         var doTrackReadout = false;
@@ -54,10 +57,17 @@
         ];
         var regionsShown = false;
 
+        const regionsToAdd = [
+            'image; box 400 400 72 72 0 # color=green',
+            'image; box 328 400 72 72 0 # color=green',
+            'image; box 256 400 72 72 0 # color=green',
+            'image; box 184 400 72 72 0 # color=green',
+            'image; box 112 400 72 72 0 # color=green'
+        ];
         var regionAdd = true;
         var regionIdx = 0;
 
-        const regionToAdd = 'image; box 400 400 72 72 0 # color=green';
+
 
         function ffTrackSelections() {
             doTrackSelection = !doTrackSelection;
@@ -78,6 +88,61 @@
                     trackSelectionRemover();
                 }
                 btn.value = 'Track selections';
+            }
+        }
+
+        const extensionCallback= function(data) {
+            // do something when the extension is selected called.
+            console.log('Callback for '+data.type+' extension '+data.id);
+            console.log(data);
+        };
+
+        const extensions = [
+            {   // point selection extension: object literal to create extension definition
+                id : 'PointExtension',     // extension id
+                plotId : 'image1',         // plot to put extension on
+                title : 'Point operation description', // title user sees
+                imageUrl : 'http://localhost:8080/firefly/images/catalog_28x28.png', // url to the icon
+                toolTip : 'Custom operation on point selection',    // tooltip
+                extType: 'POINT',          // type of extension
+                callback: extensionCallback          // function (defined above) for callback
+            },
+            {   // area selection extension: object literal to create extension definition
+                id : 'AreaExtension',     // extension id
+                plotId : 'image1',         // plot to put extension on
+                title : 'Area operation description', // title user sees
+                imageUrl : 'http://localhost:8080/firefly/images/mask_28x28.png', // url to the icon
+                toolTip : 'Custom operation on area selection', // tooltip
+                extType: 'AREA_SELECT',    // type of extension
+                callback: extensionCallback          // function (defined above) for callback
+            },
+            {   // line selection extension: object literal to create extension definition
+                id : 'LineExtension',     // extension id
+                plotId : 'image1',         // plot to put extension on
+                title : 'Do something', // title user sees
+                toolTip : 'Custom operation on line selection', // tooltip
+                extType: 'LINE_SELECT',    // type of extension
+                callback: extensionCallback          // function (defined above) for callback
+            }];
+
+        function ffSelectionExtensions() {
+            hasSelectionExtensions = !hasSelectionExtensions;
+            const btn = document.getElementById('selectionExtensions');
+            if (!btn) {
+                console.log('Internal error: can not find selectionExtensions button');
+                return;
+            }
+            // add/remove a button in image context menu, which appears on selection
+            //   and triggers user defined callback, when pressed
+            if (hasSelectionExtensions) {
+                extensions.forEach(firefly.util.image.extensionAdd);
+                btn.value = 'Remove selection extensions';
+            } else {
+                const removeExtension = function(extension) {
+                    firefly.util.image.extensionRemove(extension.id);
+                };
+                extensions.forEach(removeExtension);
+                btn.value = 'Add selection extensions';
             }
         }
 
@@ -125,22 +190,23 @@
                 return;
             }
             if (regionAdd) {
-                // issue1: empty region array does not work - there should be at least 1 region
-                // issue2: if color=green (same color as the color of regionToAdd) it's not possible to add the region,
-                //    because the original and added regions will be perceived the same
-                // issue3: when region1 is present, it's not possible to select regions in region2
-                firefly.action.dispatchCreateRegionLayer('region2', 'Region Layer 2', null, ['image; box 40 400 72 72 0 # color=blue'], ['image1', 'image2']);
-                firefly.action.dispatchAddRegionEntry('region2', regionToAdd);
-                regionAdd = false;
-                btn.value = 'Delete region';
+                firefly.action.dispatchAddRegionEntry('dynregions', regionsToAdd[regionIdx], ['image1', 'image2'], 'Dynamic Regions');
+                regionIdx++;
+                if (regionIdx === regionsToAdd.length) {
+                    regionAdd = false;
+                    btn.value = 'Delete region';
+                    regionIdx--;
+                }
             } else {
-                firefly.action.dispatchRemoveRegionEntry('region2', regionToAdd);
-                firefly.action.dispatchDeleteRegionLayer('region2', ['image1', 'image2']);
-                regionAdd = true;
-                btn.value = 'Add region';
+                firefly.action.dispatchRemoveRegionEntry('dynregions', regionsToAdd[regionIdx]);
+                regionIdx--;
+                if (regionIdx < 0) {
+                    regionAdd = true;
+                    btn.value = 'Add region';
+                    regionIdx++;
+                }
             }
         }
-
 
 
         /**
@@ -160,7 +226,9 @@
 
         /*
          * Action listener for CHANGE_PLOT_ATTRIBUTE action
-         * Callback function should accept action object, which has type and payload properties:
+         * Callback function should accept action object, which has type and payload properties.
+         * Please, note, that the coordinate system of a point in the action payload
+         * depends on the user selection. To make sure we always get image coordinates, we need to convert.
          * @param {ChangePlotAttrAction}
          */
         function onPlotAttributeChange(action) {
@@ -170,10 +238,12 @@
             if (action.payload.attValue.pt) {
                 console.log(action.payload.plotId+' '+action.payload.attKey+' pt:');
                 console.log(getImagePt(action.payload.attValue.pt));
-            } else if (action.payload.attValue.pt0) {
+            }
+            if (action.payload.attValue.pt0) {
                 console.log(action.payload.plotId+' '+action.payload.attKey+' pt0:');
                 console.log(getImagePt(action.payload.attValue.pt0));
-            } else if (action.payload.attValue.pt1) {
+            }
+            if (action.payload.attValue.pt1) {
                 console.log('pt1:');
                 console.log(getImagePt(action.payload.attValue.pt1));
             }
@@ -237,9 +307,7 @@
             };
             firefly.showImage('image2_div', req2);
 
-            firefly.action.dispatchCreateRegionLayer('region2', 'Region Layer 2', null, ['image; box 200 200 72 72 0 # color=red'], ['image1', 'image2']);
-
-
+            firefly.action.dispatchCreateRegionLayer('statregion', 'Static region', null, ['image; box 220 220 20 80 45 # color=#0CB5ED'], ['image1', 'image2']);
         }
     }
 </script>
