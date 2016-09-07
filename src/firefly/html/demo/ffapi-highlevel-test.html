@@ -81,6 +81,15 @@
     <input type='text' placeholder='' list='regionCreated' id='createRegionId' name='createRegionLayer' onChange='updateDatalist()'>
     <datalist id='regionCreated'>
     </datalist>
+    color: <input type='text' id='selectColor' value='#DAA520' style="width: 60px">
+    lineWidth: <input type='text' id='lineWidth' value='0' style="width: 30px">
+    <select id='selectStyle'>
+        <option value='UprightBox'>Upright box</option>
+        <option value='DottedOverlay'>Overlay with dotted border</option>
+        <option value='SolidOverlay'>Overlay with differet color</option>
+        <option value='DottedReplace'>Replace with dotted border</option>
+        <option value='SolidReplace'>Replace with differnt color</option>
+    </select>
     <a href='javascript:deleteRegionLayer()'>Delete Region Layer</a>
     <select id='regionList_delete'><option selected disabled>Region Layer:</option></select>
     <div>
@@ -94,6 +103,11 @@
     <select id='regionEntry_remove'><option selected disabled>Regiion Layers:</option></select>
     <div>
         <textarea id="moreRegionContent" style="width: 800px; height: 300px; margin: 10px;"> </textarea>
+    </div>
+    <a href='javascript:selectRegion()'>Select the following region(s):</a>
+    <select id='regionEntry_select'><option selected disabled>Region Layers:</option></select>
+    <div>
+        <textarea id='selectRegionContent' style='width: 800px; height: 300px; margin: 10px;'></textarea>
     </div>
 </div>
 
@@ -322,6 +336,7 @@
 
             document.getElementById('regionLayerContent').value = window.regionAry.join('\n');
             document.getElementById('moreRegionContent').value = window.moreRegionAry.join('\n');
+            document.getElementById('selectRegionContent').value = window.regionAry2[13];
             //document.getElementById('createRegionId').placeholder = "Region_Plot_" + (window.regionId+1);
             updateRegionLayerList();
         };
@@ -335,7 +350,8 @@
                 document.getElementById('createRegionId').value = layerId;
 
             }
-
+            document.getElementById('regionLayerContent').value = window.regionAry2.join('\n');
+/*
             if (window.regionId === 0) {
                 document.getElementById('regionLayerContent').value = window.emptyRegion;
             } else if (window.regionId === 3) {  // region with error
@@ -347,13 +363,19 @@
             } else if (window.regionId > 3) {    // longer region list
                 document.getElementById('regionLayerContent').value = window.regionAry2.join('\n');
             }
-
+*/
             var regionAry = document.getElementById('regionLayerContent').value.split('\n').filter(function(r) { return (r.length !== 0);});
             window.regions.push(layerId);
             updateRegionLayerList();
 
-            firefly.action.dispatchCreateRegionLayer(layerId, layerId, null, regionAry, 'regiontest');
-            firefly.action.dispatchCreateRegionLayer(layerId, layerId, null, regionAry, null, window.ffViewer.dispatch);
+            var st = document.getElementById('selectStyle').value;
+            var lw = parseInt(document.getElementById('lineWidth').value);
+            var sc = document.getElementById('selectColor').value;
+            var selectMode = {selectStyle: st, selectColor: sc, lineWidth: lw};
+            //var selectMode = {selectStyle: style};
+
+            firefly.action.dispatchCreateRegionLayer(layerId, layerId, null, regionAry, 'regiontest', selectMode);
+            firefly.action.dispatchCreateRegionLayer(layerId, layerId, null, regionAry, null, selectMode, dispatcher = window.ffViewer.dispatch);
         };
 
         updateDataList = function() {
@@ -370,7 +392,7 @@
         };
 
         updateRegionLayerList = function() {
-            var selectListIds = ['regionList_delete', 'regionEntry_add', 'regionEntry_remove'];
+            var selectListIds = ['regionList_delete', 'regionEntry_add', 'regionEntry_remove', 'regionEntry_select'];
 
             selectListIds.forEach( function(selectId) {
                 var selectBox = document.getElementById(selectId);
@@ -401,7 +423,7 @@
                 updateRegionLayerList();
 
                 firefly.action.dispatchDeleteRegionLayer(selectedLayerId, 'regiontest');
-                firefly.action.dispatchDeleteRegionLayer(selectedLayerId, null, window.ffViewer.dispatch);
+                firefly.action.dispatchDeleteRegionLayer(selectedLayerId, null, dispatcher = window.ffViewer.dispatch);
             }
         };
 
@@ -412,11 +434,22 @@
 
             selectBox.getElementsByTagName('option')[0].selected = 'selected';
 
-            firefly.action.dispatchAddRegionEntry(selectedLayerId, addRegions, 'regiontest');
+            firefly.action.dispatchAddRegionEntry(selectedLayerId, addRegions, 'regiontest', null, {});
             if (selectedLayerId === 'Region Layers:') {
-                firefly.action.dispatchAddRegionEntry(null, addRegions, null, null, dispatcher = window.ffViewer.dispatch);
+                firefly.action.dispatchAddRegionEntry(null, addRegions, null, null, {}, dispatcher = window.ffViewer.dispatch);
             } else {
-                firefly.action.dispatchAddRegionEntry(selectedLayerId, addRegions, null, null, dispatcher = window.ffViewer.dispatch);
+                firefly.action.dispatchAddRegionEntry(selectedLayerId, addRegions, null, null, {}, dispatcher = window.ffViewer.dispatch);
+            }
+        };
+
+        selectRegion = function() {
+            var selectBox=document.getElementById('regionEntry_select');
+            var selectedLayerId = selectBox.options[selectBox.selectedIndex].value;
+            var selRegions = document.getElementById('selectRegionContent').value.split('\n').filter(function(r) { return (r.length !== 0);});
+
+            if (selectedLayerId) {
+                firefly.action.dispatchSelectRegion(selectedLayerId, selRegions);
+                firefly.action.dispatchSelectRegion(selectedLayerId, selRegions, dispatcher = window.ffViewer.dispatch);
             }
         };
 

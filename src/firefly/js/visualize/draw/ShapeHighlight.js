@@ -6,9 +6,13 @@
 import VisUtil, {convertAngle} from '../VisUtil.js';
 import ShapeDataObj, {rectOnImage, lengthToImagePixel, widthAfterRotation, heightAfterRotation } from './ShapeDataObj.js';
 import {makeScreenPt, makeImagePt} from '../Point.js';
-import {get, isNil, set} from 'lodash';
+import {clone} from '../../util/WebUtil.js';
+import {get, isNil, set, has, cloneDeep} from 'lodash';
+import {defaultRegionSelectColor, defaultRegionSelectStyle} from '../DrawLayerCntlr.js';
+import {TextLocation} from './DrawingDef.js';
 
 const doAry = 'drawObjAry';
+export const defaultDashline = [8, 5, 2, 5];
 
 // in image coordinate or screen coordinate
 var areaObj = (min_x, max_x, min_y, max_y, unit = ShapeDataObj.UnitType.IMAGE_PIXEL) => {
@@ -461,9 +465,8 @@ function isInDrawobjCircle(drawObj, sPt, cc, def) {
 
     var {lineWidth} = drawObj;
     var lw = lineWidth ? Math.floor((lineWidth+1)/2) : 1;
-    var {width, center} = area;
-    var scrRadius = width * cc.zoomFactor/2;
-    var scrCenter = cc.getScreenCoords(center);
+    var scrRadius = area.width * cc.zoomFactor/2;
+    var scrCenter = cc.getScreenCoords(area.center);
     var dist = VisUtil.computeScreenDistance(sPt.x, sPt.y, scrCenter.x, scrCenter.y);
 
     inside = (dist < (scrRadius + DELTA + lw ));
@@ -634,14 +637,67 @@ function isInDrawobjPolygon(drawObj, sPt, cc) {
 /**
  * rendering option for highlight box
  * @param dObj
+ * @param color
  */
-export function makeShapeHighlightRenderOptions( dObj ) {
-    set(dObj, 'color', '#DAA520' );
+export function makeShapeHighlightRenderOptions( dObj, color ) {
+    set(dObj, 'color', color );
     set(dObj, 'lineWidth', 2);
 
-    set(dObj, 'renderOptions', { lineDash: [8, 5, 2, 5]});
+    set(dObj, 'renderOptions', { lineDash: defaultDashline });
 }
 
+
+/**
+ * @summary render highlight on top of region
+ * @param drawObj
+ * @param color
+ * @param style
+ * @param lineW
+ * @returns {*}
+ */
+function makeHighlightOnRegion(drawObj, color, style, lineW) {
+    var newDrawObj = cloneDeep(drawObj);
+    var setRenderOptions = (style, color, oneObj, idx = -1) => {
+        if (style.includes('Dotted')) {
+            set(oneObj, 'renderOptions', { lineDash: defaultDashline });
+        }
+
+        set(oneObj, 'color', color );
+        set(oneObj, 'lineWidth', (lineW <= 0 ? get(oneObj, 'lineWidth', 1) : lineW) );
+
+        var st, ut, at, tl;
+        if (idx < 0 ) {
+            st = drawObj.sType.key;
+            ut = get(drawObj, 'unitType.key', null);
+            at = get(drawObj, 'angleUnit.key', null);
+            tl = get(drawObj, 'textLoc.key', null);      // keep text location for parent drawObj
+        } else {
+            st = drawObj.drawObjAry[idx].sType.key;
+            ut = get(drawObj.drawObjAry[idx], 'unitType.key', null);
+            at = get(drawObj.drawObjAry[idx], 'angleUnit.key', null);
+        }
+        oneObj.sType = ShapeDataObj.ShapeType.get(st);
+        if (ut) {
+            oneObj.unitType = ShapeDataObj.UnitType.get(ut);
+        }
+        if (at) {
+            oneObj.angleUnit = ShapeDataObj.UnitType.get(at);
+        }
+        if (tl) {
+            oneObj.textLoc = TextLocation.get(tl);
+        }
+    };
+
+    if (newDrawObj.drawObjAry) {
+        newDrawObj.drawObjAry.forEach((oneObj, index) => {
+            setRenderOptions(style, color, oneObj, index);
+        });
+    }
+    setRenderOptions(style, color, newDrawObj);
+    newDrawObj.isRendered = 1;
+
+    return newDrawObj;
+}
 /**
  * generate rectangle drawObj to wrap around the highlighted object
  * @param drawObj
@@ -649,7 +705,14 @@ export function makeShapeHighlightRenderOptions( dObj ) {
  * @param def
  * @returns {*}
  */
-export function makeHighlightShapeDataObj(drawObj, cc, def = {}) {
+export function makeHighlightShapeDataObj(drawObj, cc, def) {
+    var color = def && has(def, 'selectColor') ? def.selectColor : defaultRegionSelectColor;
+    var style = def && has(def, 'selectStyle') ? def.selectStyle : defaultRegionSelectStyle;
+
+    if (style !== defaultRegionSelectStyle) {
+        return makeHighlightOnRegion(drawObj, color, style, (def&&has(def, 'lineWidth') ? def.lineWidth : 0));
+    }
+
     var area = getDrawobjArea(drawObj, cc, def);
 
     if (!area) return null;
@@ -662,7 +725,7 @@ export function makeHighlightShapeDataObj(drawObj, cc, def = {}) {
                                                      0.0, ShapeDataObj.UnitType.ARCSEC, false);
 
     rectObj.inc = inc;
-    makeShapeHighlightRenderOptions( rectObj );
+    makeShapeHighlightRenderOptions( rectObj, color );
     return rectObj;
 }
 

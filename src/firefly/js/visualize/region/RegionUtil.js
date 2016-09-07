@@ -17,7 +17,7 @@ export function getRegionIndex(regions, aRegionObj) {
 }
 
 /**
- * create region DrawObj if not exist in Region array per Region object
+ * create region DrawObj if not exist in region object array
  * @param crtRegions
  * @param aRegionObj
  * @returns {null}
@@ -213,11 +213,30 @@ function mergeOptionProps(optionSet1, optionSet2) {
  * @returns {boolean}
  */
 function isSameOptions(region1, region2) {
+
+    var isEqualObject = (a, b) => {
+        var aProps = Object.keys(a);
+        var bProps = Object.keys(b);
+
+        if (aProps.length != bProps.length) {
+            return false;
+        }
+
+        var notSameIdx = aProps.findIndex((prop) => {
+            return (prop === '_options') ? false : ((!has(b, prop)) || (a[prop] !== b[prop]));
+        });
+
+        return (notSameIdx < 0);
+    };
+
     var keys = mergeOptionProps(Object.keys(region1.options), Object.keys(region2.options));
     var notSameProp =  keys.findIndex( (prop) => {
         var v1 = getOptionValue(region1.options, prop);
         var v2 = getOptionValue(region2.options, prop);
 
+        if (typeof(v1) === 'object' && typeof(v2) === 'object') {
+            return !isEqualObject(v1, v2);
+        }
         return (v1 !== v2);
     });
 

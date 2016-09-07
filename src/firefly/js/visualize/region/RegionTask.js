@@ -4,7 +4,7 @@
 
 import {RegionFactory} from './RegionFactory.js';
 import {getDS9Region} from '../../rpc/PlotServicesJson.js';
-import {getDlAry} from '../DrawLayerCntlr.js';
+import {getDlAry, defaultRegionSelectColor, getRegionSelectStyle} from '../DrawLayerCntlr.js';
 import DrawLayerCntrl, {dispatchCreateDrawLayer, dispatchDetachLayerFromPlot,
         dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {getDrawLayerById, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
@@ -50,7 +50,8 @@ var getLayerTitle = (layerTitle, titleRef) => {
  */
 export function regionCreateLayerActionCreator(rawAction) {
     return (dispatcher) => {
-        var {drawLayerId, fileOnServer, layerTitle, regionAry, plotId} = rawAction.payload;
+        var {drawLayerId, fileOnServer, layerTitle, regionAry, plotId,
+            selectMode} = rawAction.payload;
         var title;
 
         if (!drawLayerId) {
@@ -59,14 +60,15 @@ export function regionCreateLayerActionCreator(rawAction) {
             getDS9Region(fileOnServer).then((result) => {
                 if (has(result, 'RegionData')) {
                     title = getLayerTitle(layerTitle, (result.Title || drawLayerId));
-                    createRegionLayer(result.RegionData, title, drawLayerId, plotId, 'json');
+                    createRegionLayer(result.RegionData, title, drawLayerId, plotId,
+                                      selectMode, 'json');
                 } else {
                     reportError(RegionErr);
                 }
             }, () => { reportError(JSONErr); } );
         } else if (!isEmpty(regionAry)) {
             title = getLayerTitle(layerTitle, drawLayerId);
-            createRegionLayer(regionAry, title, drawLayerId, plotId);
+            createRegionLayer(regionAry, title, drawLayerId, plotId, selectMode);
         } else {
             reportError(NoRegionErr)
         }
@@ -79,9 +81,12 @@ export function regionCreateLayerActionCreator(rawAction) {
  * @param title
  * @param drawLayerId
  * @param plotId
+ * @param selectMode
  * @param dataFrom
  */
-function createRegionLayer(regionAry, title, drawLayerId, plotId, dataFrom = 'ds9') {
+function createRegionLayer(regionAry, title, drawLayerId, plotId,
+                           selectMode,
+                           dataFrom = 'ds9') {
     // convert region description array to Region object array
 
     if (isEmpty(regionAry)) {
@@ -98,7 +103,8 @@ function createRegionLayer(regionAry, title, drawLayerId, plotId, dataFrom = 'ds
 
     if (!dl) {
         dispatchCreateDrawLayer(regionDrawLayerId, {title, drawLayerId,
-                                                    regionAry, dataFrom, plotId: pId});
+                                                    regionAry, dataFrom, plotId: pId,
+                                                    selectMode});
     }
 
     if (pId) {
@@ -134,7 +140,8 @@ export function regionDeleteLayerActionCreator(rawAction) {
  */
 export function regionUpdateEntryActionCreator(rawAction) {
     return (dispatcher) => {
-        var {drawLayerId, regionChanges, layerTitle, plotId} = rawAction.payload || {};
+        var {drawLayerId, regionChanges, layerTitle, plotId,
+             selectMode} = rawAction.payload || {};
 
         if (isEmpty(regionChanges)) {
             return;
@@ -147,7 +154,7 @@ export function regionUpdateEntryActionCreator(rawAction) {
         if (!dl && rawAction.type === DrawLayerCntrl.REGION_ADD_ENTRY) {
             var title = getLayerTitle(layerTitle, drawLayerId);
 
-            createRegionLayer(changes, title, drawLayerId, plotId);
+            createRegionLayer(changes, title, drawLayerId, plotId, selectMode);
         } else {
             var payload = Object.assign(rawAction.payload, {regionChanges: changes});
 

@@ -11,10 +11,11 @@ import CsysConverter, {CCUtil} from '../CsysConverter.js';
 import {RegionType, regionPropsList} from '../region/Region.js';
 import {startRegionDes, setRegionPropertyDes} from '../region/RegionDescription.js';
 import ShapeDataObj, {fontHeight, drawText, translateTo, rotateAround} from './ShapeDataObj.js';
-import {isWithinPolygon, makeShapeHighlightRenderOptions, DELTA} from './ShapeHighlight.js';
+import {isWithinPolygon, makeShapeHighlightRenderOptions, DELTA, defaultDashline} from './ShapeHighlight.js';
 import { handleTextFromRegion } from './ShapeToRegion.js';
 import VisUtil from '../VisUtil.js';
-import {isNil, isEmpty} from 'lodash';
+import {isNil, isEmpty, has, set, cloneDeep} from 'lodash';
+import {defaultRegionSelectColor, defaultRegionSelectStyle} from '../DrawLayerCntlr.js';
 
 
 
@@ -107,7 +108,7 @@ var draw=  {
     },
 
     makeHighlight(drawObj, plot, def = {}) {
-        return makeHighlightPointDataObj(drawObj,  CsysConverter.make(plot));
+        return makeHighlightPointDataObj(drawObj,  CsysConverter.make(plot), def);
     },
 
     isScreenPointInside(screenPt, drawObj, plot, def = {}) {
@@ -429,18 +430,50 @@ function toRegion(pt, plot, drawObj, drawParams, renderOptions) {
 }
 
 /**
- * make drawobj to highlight PointDataObj
+ * @summary render highlight on top of region
  * @param drawObj
- * @param cc
- * @returns {*} inside or not and the distance to the point center
+ * @param color
+ * @param style
+ * @param lineW
+ * @returns {*}
  */
-export function makeHighlightPointDataObj(drawObj, cc) {
+function makeHighlightOnPoint(drawObj, color, style, lineW) {
+    var newDrawObj = cloneDeep(drawObj);
+
+    if (style.includes('Dotted')) {
+        set(newDrawObj, 'renderOptions', { lineDash: defaultDashline });
+    }
+    set(newDrawObj, 'color', color );
+    set(newDrawObj, 'lineWidth', (lineW <= 0 ? get(oneObj, 'lineWidth', 1) : lineW) );
+
+    newDrawObj.symbol = DrawSymbol.get(drawObj.symbol.key);
+    newDrawObj.isRendered = 1;
+
+    return newDrawObj;
+}
+
+
+/**
+ * @summary make drawobj to highlight PointDataObj
+ * @param {Object} drawObj
+ * @param {Object} cc
+ * @param {Object} def
+ * @returns {Object} inside or not and the distance to the point center
+ */
+export function makeHighlightPointDataObj(drawObj, cc, def) {
+    var color = def && has(def, 'selectColor') ? def.selectColor : defaultRegionSelectColor;
+    var style = def && has(def, 'selectStyle') ? def.selectStyle : defaultRegionSelectStyle;
+
+    if (style !== defaultRegionSelectStyle) {
+        return makeHighlightOnPoint(drawObj, color, style, (def&&has(def, 'lineWidth') ? def.lineWidth : 0));
+    }
+
     var area = getPointDataobjArea(drawObj, cc);
     var w = ((DELTA + 1) * 2 + area.width);
     var h = ((DELTA + 1) * 2 + area.height);
-    var wcenter = cc.getWorldCoords(area.centerPt);
+    var wCenter = cc.getWorldCoords(area.centerPt);
 
-    var rectObj = ShapeDataObj.makeRectangleByCenter(wcenter, w, h, ShapeDataObj.UnitType.PIXEL,
+    var rectObj = ShapeDataObj.makeRectangleByCenter(wCenter, w, h, ShapeDataObj.UnitType.PIXEL,
                                                      0.0, ShapeDataObj.UnitType.ARCSEC, false);
 
     makeShapeHighlightRenderOptions( rectObj );
