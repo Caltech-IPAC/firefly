@@ -1,0 +1,25 @@
+/**
+ * @global
+ */
+
+
+/**
+ * @typedef {Object} Action
+ * @prop {string} type      a unique string identifying this action
+ * @prop {Object} payload   the data
+ */
+
+
+/**
+ * Common Layout information used to control generic behavior, ie drop-down panel, expanded/collapsed state, etc
+ * The intention here is to allow additional layout attributes to be added to handle specific layout needs of a
+ * particular component or application.  Use dispatchUpdateLayoutInfo to update this object.
+ * @typedef {Object} LayoutInfo
+ * @prop {Object}   dropDown    information used by the drop-down menu component
+ * @prop {boolean}  dropDown.visible    true to show the drop-down panel;  collapse the panel otherwise
+ * @prop {string}   dropDown.view       the selected menuItem to be shown.
+ * @prop {Object}   mode        information used to control expanded or standard mode.
+ *                              In this context, view a string to denote what to show, ie.  'tables', 'images', or 'tables | images' ( tables and images).
+ * @prop {string}   mode.expanded   if not nil/empty, show this view in expanded mode
+ * @prop {string}   mode.standard   the current standard view.
+ */

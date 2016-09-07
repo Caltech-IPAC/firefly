@@ -5,12 +5,12 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {pickBy} from 'lodash';
+import {get, pickBy} from 'lodash';
 
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
 import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
-import {lcManager} from './LcManager.js';
+import {lcManager, PERIODOGRAM, PHASE_FOLDED, RAW_TABLE, PEAK_TABLE} from './LcManager.js';
 import {LcResult} from './LcResult.jsx';
 import {Menu} from '../../ui/Menu.jsx';
 import {Banner} from '../../ui/Banner.jsx';
@@ -21,11 +21,11 @@ import {dispatchAddSaga} from '../../core/MasterSaga.js';
 
 import {FormPanel} from './../../ui/FormPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {ValidationField} from '../../ui/ValidationField.jsx';
-import Validate from '../../util/Validate.js';
+import {dispatchInitFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
+import {dispatchLoadPlotData} from '../../charts/XYPlotCntlr.js';
 import * as TblUtil from '../../tables/TableUtil.js';
 
 // import {deepDiff} from '../util/WebUtil.js';
@@ -38,7 +38,7 @@ export class LcViewer extends Component {
     constructor(props) {
         super(props);
         this.state = this.getNextState();
-        dispatchAddSaga(lcManager,{views: props.views});
+        dispatchAddSaga(lcManager);
     }
 
     getNextState() {
@@ -56,7 +56,7 @@ export class LcViewer extends Component {
 
     componentDidMount() {
         dispatchOnAppReady((state) => {
-            onReady({state, menu: this.props.menu, views: this.props.views});
+            onReady({state, menu: this.props.menu});
         });
         this.removeListener = flux.addListener(() => this.storeUpdate());
     }
@@ -97,7 +97,7 @@ export class LcViewer extends Component {
                             {...{dropdownPanels} } />
                     </header>
                     <main>
-                        <LcResult {...{views}}/>
+                        <LcResult/>
                     </main>
                 </div>
             );
@@ -124,8 +124,7 @@ LcViewer.defaultProps = {
     appTitle: 'Light Curve'
 };
 
-function onReady({menu, views}) {
-    views = LO_VIEW.get(views) || LO_VIEW.none;
+function onReady({menu}) {
     if (menu) {
         dispatchSetMenu({menuItems: menu});
     }
@@ -155,29 +154,46 @@ export const UploadPanel = () => {
     return (
         <div style={{padding: 10}}>
             <FormPanel
-                width='640px' height='100px'
-                groupKey='TBL_BY_URL_PANEL'
+                width='640px' height='200px'
+                groupKey='LC_FORM'
                 onSubmit={(request) => onSearchSubmit(request)}
-                onCancel={hideSearchPanel}>
-                <FieldGroup groupKey='TBL_BY_URL_PANEL' validatorFunc={null} keepState={true}>
+                onCancel={dispatchHideDropDown}>
+                <FieldGroup groupKey='LC_FORM' validatorFunc={null} keepState={true}>
                     <FileUpload
                         wrapperStyle = {{margin: '5px 0'}}
-                        fieldKey = 'fileUpload'
-                        groupKey='TBL_BY_URL_PANEL'
+                        fieldKey = {RAW_TABLE}
+                        groupKey='LC_FORM'
                         initialState= {{
                                 tooltip: 'Select a file to upload',
-                                label: 'Upload File:'
+                                label: 'Raw Table:'
                             }}
                     />
-                    <ValidationField fieldKey='tbl_index'
-                                     groupKey='TBL_BY_URL_PANEL'
-                                     initialState= {{
-                                            value: 0,
-                                            size: 4,
-                                            validator: Validate.intRange.bind(null, 0, 100000),
-                                            label : 'Table Index:',
-                                            labelWidth : 60
-                                         }}
+                    <FileUpload
+                        wrapperStyle = {{margin: '5px 0'}}
+                        fieldKey = {PEAK_TABLE}
+                        groupKey='LC_FORM'
+                        initialState= {{
+                                tooltip: 'Select a file to upload',
+                                label: 'Peak Table:'
+                            }}
+                    />
+                    <FileUpload
+                        wrapperStyle = {{margin: '5px 0'}}
+                        fieldKey = {PHASE_FOLDED}
+                        groupKey='LC_FORM'
+                        initialState= {{
+                                tooltip: 'Select a file to upload',
+                                label: 'Phase Folded:'
+                            }}
+                    />
+                    <FileUpload
+                        wrapperStyle = {{margin: '5px 0'}}
+                        fieldKey = {PERIODOGRAM}
+                        groupKey='LC_FORM'
+                        initialState= {{
+                                tooltip: 'Select a file to upload',
+                                label: 'Periodogram:'
+                            }}
                     />
                 </FieldGroup>
             </FormPanel>
@@ -192,14 +208,26 @@ UploadPanel.defaultProps = {
     name: 'LCUpload',
 };
 
-
-function hideSearchPanel() {
-    dispatchHideDropDown();
-}
-
 function onSearchSubmit(request) {
-    if (request.fileUpload) {
-        const treq = TblUtil.makeFileRequest('Raw Table', request.fileUpload, null, {tbl_id:'raw_table', ...request});
-        dispatchTableSearch(treq);
+    var treq, xyPlotParams;
+    if ( get(request, RAW_TABLE) ){
+        treq = TblUtil.makeFileRequest('Raw Table', request[RAW_TABLE], null, {tbl_id:RAW_TABLE});
+        xyPlotParams = {x: {columnOrExpr: 'mjd'}, y: {columnOrExpr: 'w1mpro_ep'}};
+    } else if ( get(request, PHASE_FOLDED) ) {
+        treq = TblUtil.makeFileRequest('Phase Folded', request[PHASE_FOLDED], null, {tbl_id:PHASE_FOLDED});
+        xyPlotParams = {x: {columnOrExpr: 'mjd'}, y: {columnOrExpr: 'w2mpro_ep'}};
+    } else if ( get(request, PERIODOGRAM) ) {
+        treq = TblUtil.makeFileRequest('Periodogram', request[PERIODOGRAM], null, {tbl_id:PERIODOGRAM});
+        xyPlotParams = {x: {columnOrExpr: 'log(PERIOD)'}, y: {columnOrExpr: 'POWER'}};
+    } else if ( get(request, PEAK_TABLE) ) {
+        treq = TblUtil.makeFileRequest('Peak Table', request[PEAK_TABLE], null, {tbl_id:PEAK_TABLE});
+    }
+    if (treq != null) {
+        dispatchTableSearch(treq, {removable: false});
+        dispatchHideDropDown();
+        dispatchInitFieldGroup('LC_FORM');
+    }
+    if (xyPlotParams) {
+        dispatchLoadPlotData({chartId:treq.tbl_id, tblId:treq.tbl_id, markAsDefault:true, xyPlotParams});
     }
 }

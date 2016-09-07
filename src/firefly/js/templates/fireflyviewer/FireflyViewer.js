@@ -10,7 +10,7 @@ import {pickBy} from 'lodash';
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
 import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
-import {layoutManager} from './FireflyLayoutManager.js';
+import {layoutManager} from './FireflyViewerManager.js';
 import {Menu} from '../../ui/Menu.jsx';
 import {Banner} from '../../ui/Banner.jsx';
 import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
