@@ -1,21 +1,25 @@
 """
-Module of FireflyClient.py
+Module of firefly_client.py
 --------------------------
 This module defines class 'FireflyClient' and methods to remotely communicate to Firefly viewer
 by dispatching remote actions.
 """
-
-__docformat__ = 'restructuredtext'
-
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 from ws4py.client.threadedclient import WebSocketClient
 import requests
 import webbrowser
 import json
 import time
 import socket
-import urlparse
+import urllib.parse
 import math
 import mimetypes
+import base64
+
+__docformat__ = 'restructuredtext'
 
 
 class FireflyClient(WebSocketClient):
@@ -157,7 +161,7 @@ class FireflyClient(WebSocketClient):
         self.connect()
 
     def _handle_event(self, ev):
-        for callback, eventIDList in self.listeners.items():
+        for callback, eventIDList in list(self.listeners.items()):
             if ev['name'] in eventIDList or FireflyClient.ALL in eventIDList:
                 callback(ev)
 
@@ -187,8 +191,8 @@ class FireflyClient(WebSocketClient):
 
                 self.session.cookies['seinfo'] = seinfo
             except:
-                print ('from callback exception: ')
-                print (m)
+                print('from callback exception: ')
+                print(m)
         else:
             self._handle_event(ev)
 
@@ -196,7 +200,6 @@ class FireflyClient(WebSocketClient):
         """Send URL in 'GET' request and return status."""
 
         response = self.session.get(url)
-        # print response.text
         status = json.loads(response.text)
         return status[0]
 
@@ -213,7 +216,6 @@ class FireflyClient(WebSocketClient):
         ip = socket.gethostbyname(socket.gethostname())
         url = self.url_root + '?cmd=pushAliveCheck&ipAddress=%s' % ip
         retval = self._send_url_as_get(url)
-
         return retval['active']
 
     @staticmethod
@@ -239,7 +241,7 @@ class FireflyClient(WebSocketClient):
 
         """
 
-        if callback not in self.listeners.keys():
+        if callback not in list(self.listeners.keys()):
             self.listeners[callback] = []
         if name not in self.listeners[callback]:
             self.listeners[callback].append(name)
@@ -262,7 +264,7 @@ class FireflyClient(WebSocketClient):
         The callback listener is removed if all events are removed from the callback.
         """
 
-        if callback in self.listeners.keys():
+        if callback in list(self.listeners.keys()):
             if name in self.listeners[callback]:
                 self.listeners[callback].remove(name)
             if len(self.listeners[callback]) == 0:
@@ -453,12 +455,14 @@ class FireflyClient(WebSocketClient):
         """
 
         def is_url(url):
-            return urlparse.urlparse(url).scheme != ''
+            return urllib.parse.urlparse(url).scheme != ''
 
         if not image_source.startswith('data:image') and not is_url(image_source):
             mime, _ = mimetypes.guess_type(image_source)
-            data_uri = open(image_source, 'rb').read().encode('base64').replace('\n', '')
-            return 'data:%s;base64,%s' % (mime, data_uri)
+            with open(image_source, 'rb') as fp:
+                data = fp.read()
+                data_uri = b''.join(base64.encodestring(data).splitlines())
+                return 'data:%s;base64,%s' % (mime, data_uri)
 
         return image_source
 
@@ -533,7 +537,8 @@ class FireflyClient(WebSocketClient):
 
         additional_params : dict, optional
             Dictionary of any valid fits viewer plotting parameters,
-            see `fits plotting parameters<https://github.com/Caltech-IPAC/firefly/blob/dev/docs/fits-plotting-parameters.md>`_.
+            see `fits plotting
+            parameters<https://github.com/Caltech-IPAC/firefly/blob/dev/docs/fits-plotting-parameters.md>`_.
 
         Returns
         -------
@@ -648,7 +653,7 @@ class FireflyClient(WebSocketClient):
 
         url = self.url_root + "?cmd=pushXYPlot"
         if additional_params:
-            url += '&' + '&'.join(['%s=%s' % (k, v) for k, v in additional_params.items()])
+            url += '&' + '&'.join(['%s=%s' % (k, v) for k, v in list(additional_params.items())])
         url += '&file=%s' % file_on_server
         return self._send_url_as_get(url)
 
@@ -793,8 +798,8 @@ class FireflyClient(WebSocketClient):
 
         Notes
         -----
-            `zscale_contrast`, `zscale_samples`, and `zscale_samples_perline` are for `stype = 'zscale'` case, and
-            `lower_value`, and `upper_value` are for other type cases.
+            `zscale_contrast`, `zscale_samples`, and `zscale_samples_perline` are for
+            `stype = 'zscale'` case, and `lower_value`, and `upper_value` are for other type cases.
 
         Returns
         -------
@@ -1113,4 +1118,3 @@ class FireflyClient(WebSocketClient):
             return item + '-' + str(cls._item_id[item])
         else:
             return None
-
