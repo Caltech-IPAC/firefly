@@ -219,7 +219,7 @@ export class CysConverter {
     }
 
     /**
-     * @desc Return a ImageWorkspacePt from the screen point.
+     * @description  Return a ImageWorkspacePt from the screen point.
      * @param {ScreenPt} screenPt
      * @param {number} [altZoomLevel]
      */
@@ -352,7 +352,7 @@ export class CysConverter {
 
 
     /**
-     * An optimized conversion of WorldPt to viewport point.
+     * @desc An optimized conversion of WorldPt to viewport point.
      * @param {Object} wpt a world pt
      * @param {Object} retPt mutable returned ViewPort Point, this object will be written to
      * @return {boolean} success or failure
@@ -481,7 +481,7 @@ export class CysConverter {
 //----------------------------- Conversion to WorldPt Methods  ---------------------------
 //========================================================================================
 
-    
+
     /**
      * @desc Return the sky coordinates given a image x (fsamp) and  y (fline)
      * @param {PointPt} pt  the point to convert
@@ -573,6 +573,8 @@ export class CysConverter {
  * @param {PointPt} pt
  * @return {*}
  * @public
+ * @memberof firefly.util.image.CCUtil
+ *
  */
 function getWorldPtRepresentation(pt) {
     if (!isValidPoint(pt)) return null;
@@ -593,11 +595,7 @@ export const CCUtil = {
     /**
      * Convert to ImageWorkSpace Point
      * @param {object} plot - the image
-<<<<<<< b903790cf8c8f0aa927fce32f5dbe688666272ee
      * @memberof   firefly.util.image.CCUtil
-=======
-     * @memberof firefly.util.image.CCUtil
->>>>>>> DM-7508:add eslint jsdoc rules
      * @public
      *
      */
