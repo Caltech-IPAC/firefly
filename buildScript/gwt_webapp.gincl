@@ -166,8 +166,9 @@ task deploy (dependsOn: [loadConfig, webapp]) << {
   }
 }
 
+task warAll( dependsOn:[war, buildJsDoc] )
 task buildAndDeploy( dependsOn:[war, deploy] )
-task buildAllAndDeploy( dependsOn:[war, buildJsDoc, deploy] )
+task buildAllAndDeploy( dependsOn:[warAll, deploy] )
 
 task buildAndPublish( dependsOn: war ) << {
   description= 'Build the war file and then publish it to a remote host. Property ${publish_host} is required'
