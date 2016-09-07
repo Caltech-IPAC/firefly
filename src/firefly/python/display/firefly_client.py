@@ -161,7 +161,7 @@ class FireflyClient(WebSocketClient):
         self.connect()
 
     def _handle_event(self, ev):
-        for callback, eventIDList in list(self.listeners.items()):
+        for callback, eventIDList in self.listeners.items():
             if ev['name'] in eventIDList or FireflyClient.ALL in eventIDList:
                 callback(ev)
 
@@ -241,7 +241,7 @@ class FireflyClient(WebSocketClient):
 
         """
 
-        if callback not in list(self.listeners.keys()):
+        if callback not in self.listeners.keys():
             self.listeners[callback] = []
         if name not in self.listeners[callback]:
             self.listeners[callback].append(name)
@@ -264,7 +264,7 @@ class FireflyClient(WebSocketClient):
         The callback listener is removed if all events are removed from the callback.
         """
 
-        if callback in list(self.listeners.keys()):
+        if callback in self.listeners.keys():
             if name in self.listeners[callback]:
                 self.listeners[callback].remove(name)
             if len(self.listeners[callback]) == 0:
@@ -653,7 +653,7 @@ class FireflyClient(WebSocketClient):
 
         url = self.url_root + "?cmd=pushXYPlot"
         if additional_params:
-            url += '&' + '&'.join(['%s=%s' % (k, v) for k, v in list(additional_params.items())])
+            url += '&' + '&'.join(['%s=%s' % (k, v) for k, v in additional_params.items()])
         url += '&file=%s' % file_on_server
         return self._send_url_as_get(url)
 
