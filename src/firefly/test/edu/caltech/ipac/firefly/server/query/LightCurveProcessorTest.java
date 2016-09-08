@@ -5,6 +5,9 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.firefly.server.query.lc.IrsaLightCurveHandler;
+import edu.caltech.ipac.firefly.server.query.lc.LightCurveHandler;
+import edu.caltech.ipac.firefly.server.query.lc.PeriodogramAPIRequest;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
@@ -217,4 +220,76 @@ public class LightCurveProcessorTest {
             return "http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml";
         }
     }
+
+    /**
+     * Could be useful to define algorithm with default parameter and use them by mapping an enum from the request to ease the URL API building
+     * Example of classes below
+     */
+
+    class LombScargle implements Periodogram {
+
+
+        @Override
+        public AlgorithmDefinition getAlgoDef() {
+            return AlgorithmDefinition.LS;
+        }
+
+        @Override
+        public int getNPeaks() {
+            return 50;
+        }
+
+        @Override
+        public Period getPeriod() {
+            return new PeriodSample();
+        }
+
+        @Override
+        public double[] getAlgoValues() {
+            return new double[0];
+        }
+
+        @Override
+        public StepMethod getStepMethod(StepMethod.STEPMETHOD_NAME sName) {
+            return new FixedPeriodMethod(0.1f);
+        }
+    }
+
+    class FixedPeriodMethod implements StepMethod {
+
+        private final float val;
+
+        FixedPeriodMethod(float step) {
+            this.val = step;
+        }
+
+        @Override
+        public String getName() {
+            return STEPMETHOD_NAME.FIXED_PERIOD.name();
+        }
+
+        @Override
+        public float getValue() {
+            return val;
+        }
+    }
+
+    protected class PeriodSample implements Period {
+
+        @Override
+        public float getMin() {
+            return 0;
+        }
+
+        @Override
+        public float getMax() {
+            return 10;
+        }
+
+        @Override
+        public float getPeakValue() {
+            return 2;
+        }
+    }
 }
+
