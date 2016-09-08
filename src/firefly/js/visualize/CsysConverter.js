@@ -39,7 +39,6 @@ const MAX_CACHE_ENTRIES = 38000; // set to never allows the cache array over 480
 export class CysConverter {
 
     /**
-     *
      * @param {object} plot
      */
     constructor(plot)  {
@@ -57,8 +56,8 @@ export class CysConverter {
 
     /**
      *
-     * @param wp world point
-     * @param imp Image Point
+     * @param {WorldPt} wp world point
+     * @param {ImagePt} imp Image Point
      */
     putInConversionCache(wp, imp) {
         if (SimpleMemCache.size(this.plotImageId)<MAX_CACHE_ENTRIES) {
@@ -72,8 +71,8 @@ export class CysConverter {
 
     /**
      * Determine if a world point is in data Area of the plot and is not null
-     * @param iwPt the point to test.
-     * @return {boolean} true if it is in the data boundaries, false if not.
+     * @param {WorldPt} iwPt the point to test.
+     * @returns {boolean} true if it is in the data boundaries, false if not.
      */
     imagePointInData(iwPt) {
         var retval= false;
@@ -89,8 +88,8 @@ export class CysConverter {
 
     /**
      * Determine if a image point is in the plot boundaries and is not null.
-     * @param pt the point to test.
-     * @return {boolean} true if it is in the boundaries, false if not.
+     * @param {Point} pt the point to test.
+     * @returns {boolean} true if it is in the boundaries, false if not.
      */
     pointInData(pt) {
         if (!isValidPoint(pt)) return false;
@@ -101,6 +100,7 @@ export class CysConverter {
     /**
      * This method returns false it the point is definitely not in plot.  It returns true if the point might be in the plot.
      * Used for tossing out points that we know that are not in plot without having to do all the math.  It is much faster.
+     * @param {WorldPt} wp
      * @return {boolean} true in we guess it might be in the bounds, false if we know that it is not in the bounds
      */
     pointInPlotRoughGuess(wp) {
@@ -117,8 +117,8 @@ export class CysConverter {
 
     /**
      * Determine if a image point is in the plot boundaries and is not null.
-     * @param ipt the point to test.
-     * @return boolean true if it is in the boundaries, false if not.
+     * @param {ImagePt} ipt the point to test.
+     * @returns boolean true if it is in the boundaries, false if not.
      */
     imageWorkSpacePtInPlot(ipt) {
         if (!ipt) return false;
@@ -128,7 +128,7 @@ export class CysConverter {
 
     /**
      * Determine if a image point is in the plot boundaries and is not null
-     * @param pt the point to test.
+     * @param {Point} pt the point to test.
      * @return {boolean} true if it is in the boundaries, false if not.
      */
     pointInPlot(pt) {
@@ -149,9 +149,9 @@ export class CysConverter {
     }
 
     /**
-     * test to see if the input is in the view port and is not null
-     * @param vpt
-     * @return {boolean}
+     * @desc Test to see if the input is in the view port and is not null.
+     * @param {Object} vpt
+     * @returns {boolean}
      */
     viewPortPointInViewPort(vpt) {
         if (!vpt || !vpt.type || vpt.type!==Point.VP_PT) return false;
@@ -162,9 +162,9 @@ export class CysConverter {
 
 
     /**
-     * Determine if a point is in the view port boundaries and is not null.
-     * @param pt the point to test.
-     * @return {boolean} true if it is in the boundaries, false if not.
+     * @desc Determine if a point is in the view port boundaries and is not null.
+     * @param {Point} pt the point to test.
+     * @returns {boolean} true if it is in the boundaries, false if not.
      */
     pointInViewPort(pt) {
         if (!isValidPoint(pt)) return false;
@@ -219,8 +219,8 @@ export class CysConverter {
     }
 
     /**
-     * return a ImageWorkspacePt from the screen point
-     * @param screenPt
+     * @description  Return a ImageWorkspacePt from the screen point.
+     * @param {ScreenPt} screenPt
      * @param {number} [altZoomLevel]
      */
     makeIWPtFromSPt(screenPt, altZoomLevel) {
@@ -235,7 +235,6 @@ export class CysConverter {
 
 
     /**
-     * Return the ImagePt coordinates given Pt
      * @param {object} pt the point to translate
      * @return ImagePt the image coordinates
      */
@@ -266,7 +265,8 @@ export class CysConverter {
 
     /**
      * return a ImagePoint from a ImageWorkspace point
-     * @param iwPt
+     * @param {ImageWpt} iwPt
+     * returns ImagePt
      */
     static makeIPtFromIWPt(iwPt) {
         if (!iwPt) return null;
@@ -275,9 +275,9 @@ export class CysConverter {
 
 
     /**
-     * Return the image coordinates given a WorldPt class
-     * @param wpt the class containing the point in sky coordinates
-     * @return ImagePt the translated coordinates
+     * @desc Return the image coordinates given a WorldPt class.
+     * @param {WorldPt} wpt the class containing the point in sky coordinates
+     * @returns ImagePt the translated coordinates
      */
     getImageCoordsFromWorldPt(wpt) {
         if (!wpt) return null;
@@ -308,11 +308,11 @@ export class CysConverter {
 
 
     /**
-     * Return the ViewPortCoords coordinates given for Pt
-     * @param pt the point to translate
+     * @desc Return the ViewPortCoords coordinates given for Pt.
+     * @param {Point} pt the point to translate
      * @param {number} [altZoomLevel], only use this parameter it you want to compute the point for a zoom level that
      *                 if different than what the plotted zoom level
-     * @return WorldPt the world coordinates
+     * @returns WorldPt the world coordinates
      */
     getViewPortCoords(pt, altZoomLevel) {
         if (!isValidPoint(pt)) return null;
@@ -341,8 +341,8 @@ export class CysConverter {
 
 
     /**
-     * return a ViewPort Point from a ScreenPt
-     * @param pt
+     * @desc Return a ViewPort Point from a ScreenPt.
+     * @param {PointPt}  pt
      */
     makeVPtFromSPt(pt) {
         if (!pt) return null;
@@ -352,9 +352,9 @@ export class CysConverter {
 
 
     /**
-     * An optimized conversion of WorldPt to viewport point.
-     * @param {object} wpt a world pt
-     * @param {object} retPt mutable returned ViewPort Point, this object will be written to
+     * @desc An optimized conversion of WorldPt to viewport point.
+     * @param {Object} wpt a world pt
+     * @param {Object} retPt mutable returned ViewPort Point, this object will be written to
      * @return {boolean} success or failure
      */
     getViewPortCoordsOptimize(wpt, retPt) {
@@ -425,7 +425,7 @@ export class CysConverter {
 
     /**
      * Return the screen coordinates given Pt
-     * @param pt the point to translate
+     * @param {PointPt} pt the point to translate
      * @param {number} [altZoomLevel], only use this parameter it you want to compute the point for a zoom level that
      *                 if different than what the plotted zoom level
      * @return ScreenPt the screen coordinates
@@ -466,7 +466,7 @@ export class CysConverter {
 
     /**
      *
-     * @param {object} iwpt ImageWorkspacePt
+     * @param {Object} iwpt ImageWorkspacePt
      * @param {number} [altZoomLevel]
      */
     makeSPtFromIWPt(iwpt, altZoomLevel) {
@@ -482,13 +482,11 @@ export class CysConverter {
 //========================================================================================
 
 
-
     /**
-     * Return the sky coordinates given a image x (fsamp) and  y (fline)
-     * package in a ImageWorkSpacePt class
-     * @param pt  the point to convert
-     * @param outputCoordSys (optional) The coordinate system to return, default to coordinate system of image
-     * @return WorldPt the translated coordinates
+     * @desc Return the sky coordinates given a image x (fsamp) and  y (fline)
+     * @param {PointPt} pt  the point to convert
+     * @param  {CoordinateSys} outputCoordSys (optional) The coordinate system to return, default to coordinate system of image
+     * @returns WorldPt the translated coordinates
      */
     getWorldCoords(pt, outputCoordSys) {
         if (!isValidPoint(pt)) return null;
@@ -560,8 +558,8 @@ export class CysConverter {
 
     /**
      *
-     * @param {object} plot - the image
-     * @return {CysConverter}
+     * @param {Object} plot - the image
+     * @returns {CysConverter}
      */
     static make(plot) {
         return plot ? new CysConverter(plot) : null;
@@ -572,9 +570,11 @@ export class CysConverter {
 
 /**
  *
- * @param pt
+ * @param {PointPt} pt
  * @return {*}
  * @public
+ * @memberof firefly.util.image.CCUtil
+ *
  */
 function getWorldPtRepresentation(pt) {
     if (!isValidPoint(pt)) return null;

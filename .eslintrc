@@ -1,14 +1,25 @@
 {
   "plugins": [
-     "react"
+     "react",
+    "jsdoc"
+
    ],
+  "settings": {
+    "jsdoc": {
+      "tagNamePreference": {
+        "param": "param",
+        "returns": "returns"
+      }
+    }
+  },
+
   "env": {
     "es6": true,
     "browser": true
   },
   "parserOptions": {
-    "ecmaVersion": 7,
-    "ecmaFeatures": {
+     "ecmaVersion": 7,
+     "ecmaFeatures": {
       "arrowFunctions" : true,
       "binaryLiterals" : true,
       "blockBindings": true,
@@ -64,7 +75,20 @@
     "react/wrap-multilines": 1,
     "semi": [2, "always"],
     "space-infix-ops": 0,
-    "quotes": [2, "single", "avoid-escape"]
+    "quotes": [2, "single", "avoid-escape"],
+    "eqeqeq": 1,
+    //jsdoc rules
+    "jsdoc/check-param-names": 2,
+    "jsdoc/check-tag-names": 1,
+    "jsdoc/check-types": 1,
+    "jsdoc/newline-after-description": 0,
+    "jsdoc/require-description-complete-sentence": 0,
+    "jsdoc/require-hyphen-before-param-description": 0,
+    "jsdoc/require-param": 2,
+    "jsdoc/require-param-description": 0,
+    "jsdoc/require-param-type": 0,
+    "jsdoc/require-returns-description": 0,
+    "jsdoc/require-returns-type": 1
 
 //    "react/display-name": 1,
 //    "react/forbid-prop-types": 1,
