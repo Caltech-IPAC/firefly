@@ -327,7 +327,6 @@ export function dispatchDeleteRegionLayer(drawLayerId, plotId, dispatcher = flux
  * @param dispatcher
  * @func dispatchAddRegionEntry
  * @memberof firefly.action
-
  */
 export function dispatchAddRegionEntry(drawLayerId, regionChanges, plotId=[], layerTitle='', dispatcher = flux.process) {
     dispatcher({type: REGION_ADD_ENTRY, payload: {drawLayerId, regionChanges, plotId, layerTitle}});
@@ -340,7 +339,6 @@ export function dispatchAddRegionEntry(drawLayerId, regionChanges, plotId=[], la
  * @param dispatcher
  * @func dispatchRemoveRegionEntry
  * @memberof firefly.action
-
  */
 export function dispatchRemoveRegionEntry(drawLayerId, regionChanges, dispatcher = flux.process) {
     dispatcher({type: REGION_REMOVE_ENTRY, payload: {drawLayerId, regionChanges}});
