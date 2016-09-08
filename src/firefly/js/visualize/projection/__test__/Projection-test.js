@@ -14,8 +14,23 @@ const JAVA_TEST_DATA_PATH='firefly_test_data/edu/caltech/ipac/visualize/plot/pro
 
 const precision=10;
 
-
 var projectionJson={};
+
+
+const projTypes = {
+    GNOMONIC   : 1001,
+    ORTHOGRAPHIC : 1002,
+    NCP          : 1003,
+    AITOFF       : 1004,
+    CAR          : 1005,
+    LINEAR       : 1006,
+    PLATE        : 1007,
+    ARC          : 1008,
+    SFL          : 1009,
+    CEA          : 1010,
+    UNSPECIFIED  : 1998,
+    UNRECOGNIZED : 1999
+};
 
 function getJsonFiles(dir){
     var fileList = [];
@@ -30,6 +45,7 @@ function getJsonFiles(dir){
     }
     return fileList;
 }
+
 describe('A test suite for projection.js', function () {
 
 
@@ -68,6 +84,10 @@ describe('A test suite for projection.js', function () {
 
                 if (jsProjection){
                     console.log('the jsProject is:'+jsProjection.getProjectionName());
+                    var projectionName = jsProjection.getProjectionName();
+                    var maptype = imageHeader.maptype;
+                    expect(projTypes[projectionName]).to.equals(maptype);
+
                 }
                 else {
                     console.log('jsProject is null');
