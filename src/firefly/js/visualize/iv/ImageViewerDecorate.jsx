@@ -158,7 +158,7 @@ function contextToolbar(pv,dlAry,extensionList) {
 
 
 const bgSlightGray= {background: 'rgba(255,255,255,.2)'};
-
+const bgFFGray= {background: '#e3e3e3'};
 
 function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId, handleInlineTools, showDelete) {
     if (!pv) return false;
@@ -184,7 +184,7 @@ function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId, handleInlineTools,
     var lVis= BrowserInfo.isTouchInput() || (visRoot.apiToolsView && mousePlotId===pv.plotId);
     var exVis= BrowserInfo.isTouchInput() || mousePlotId===pv.plotId;
     var tb= !isExpanded && visRoot.apiToolsView;
-    const style= (lVis || tb) && handleInlineTools ? bgSlightGray : {};
+    const style= (lVis || tb) && handleInlineTools ? bgFFGray : bgSlightGray;
     return (
         <div style={style} className='iv-decorate-inline-toolbar-container'>
             <VisInlineToolbarView

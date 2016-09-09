@@ -8,10 +8,10 @@
     position : absolute;
     left : 0;
     top : 0;
-    padding : 2px 0 0 2px;
-    color : white;
-    background : rgba(0,0,255,.5);
-    whiteSpace : nowrap;
+    padding : 0 5px 0 2px;
+    /*color : white;*/
+    background : #e3e3e3;/*rgba(255,255,255,.2);*/
+    white-space : nowrap;
     font-size : 9pt;
     border-radius : 0 0 5px 0;
 }
@@ -22,7 +22,7 @@
     padding : 1px 0 0 2px;
     color : black;
     /*background : white;*/
-    whiteSpace : nowrap;
+    white-space : nowrap;
     font-size : 9pt;
 }
 
