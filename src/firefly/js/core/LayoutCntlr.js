@@ -2,12 +2,16 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, isEmpty} from 'lodash';
+import {get, isEmpty, filter, pick} from 'lodash';
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
 import {smartMerge} from '../tables/TableUtil.js';
 import {getDropDownNames} from '../ui/Menu.jsx';
+import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
+import {TBL_RESULTS_ADDED, TABLE_REMOVE} from '../tables/TablesCntlr.js';
+import {REPLACE_IMAGES} from '../visualize/MultiViewCntlr.js';
+import {updateSet} from '../util/WebUtil.js';
 
 export const LAYOUT_PATH = 'layout';
 
@@ -95,6 +99,9 @@ export function getDropDownInfo() {
     return get(flux.getState(), 'layout.dropDown', {visible: false});
 }
 
+/**
+ * @returns {LayoutInfo} returns the layout information of the application
+ */
 export function getLayouInfo() {
     const layout = get(flux.getState(), 'layout', {});
     const hasImages = get(flux.getState(), 'allPlots.plotViewAry.length') > 0;
@@ -112,3 +119,34 @@ function getSelView(state, dropDown) {
 }
 
 
+/**
+ * This handles the general use case of the drop-down panel.
+ * It will collapse the drop-down panel when new tables or images are added.
+ * It will expand the drop-down panel when there is no results to be shown.
+ * @param {LayoutInfo} layoutInfo
+ * @param {Action} action
+ * @returns {LayoutInfo}  return new LayoutInfo if layout was affected.  Otherwise, return the given layoutInfo.
+ */
+export function dropDownHandler(layoutInfo, action) {
+    // calculate dropDown when new UI elements are added or removed from results
+    const count = filter(pick(layoutInfo, ['showTables', 'showXyPlots', 'showImages'])).length;
+    switch (action.type) {
+        case TBL_RESULTS_ADDED:
+        case REPLACE_IMAGES :
+        case ImagePlotCntlr.PLOT_IMAGE :
+        case ImagePlotCntlr.PLOT_IMAGE_START :
+            return updateSet(layoutInfo, 'dropDown.visible', false);
+            break;
+
+        case SHOW_DROPDOWN:
+        case TABLE_REMOVE:
+        case ImagePlotCntlr.DELETE_PLOT_VIEW:
+            if (!get(layoutInfo, 'dropDown.visible', false)) {
+                if (count===0) {
+                    return updateSet(layoutInfo, 'dropDown.visible', true);
+                }
+            }
+            break;
+    }
+    return layoutInfo;
+}

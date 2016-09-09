@@ -12,8 +12,9 @@ import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
-import {TriViewImageSection} from '../../visualize/ui/TriViewImageSection.jsx';
+import {MultiImageViewerContainer} from '../../visualize/ui/MultiImageViewerContainer.jsx';
 import {createContentWrapper} from '../../ui/panel/DockLayoutPanel.jsx';
+import {IMG_VIEWER_ID} from './LcManager.js';
 
 export class LcResult extends Component {
 
@@ -41,32 +42,33 @@ export class LcResult extends Component {
 
     render() {
         const {title, mode, showTables, showImages, showXyPlots, showForm=true, searchDesc, images} = this.state;
-        var {expanded, standard, closeable} = mode || {};
+        var {expanded, standard} = mode || {};
         const content = {};
         var visToolbar;
         if (showImages) {
             visToolbar = <VisToolbar key='res-vis-tb'/>;
-            content.imagePlot = (<TriViewImageSection key='res-tri-img'
-                                        closeable={closeable}
+            content.imagePlot = (<MultiImageViewerContainer key='res-images'
+                                        viewerId={IMG_VIEWER_ID}
+                                        closeable={true}
                                         imageExpandedMode={expanded===LO_VIEW.images}
                                         {...images}  />);
         }
         if (showXyPlots) {
-            content.xyPlot = (<ChartsContainer key='res-xyplots'
-                                        closeable={closeable}
+            content.xyPlot = (<ChartsContainer key='res-charts'
+                                        closeable={true}
                                         expandedMode={expanded===LO_VIEW.xyPlots}/>);
         }
         if (showTables) {
             content.tables = (<TablesContainer key='res-tables'
                                         mode='both'
-                                        closeable={closeable}
+                                        closeable={true}
                                         expandedMode={expanded===LO_VIEW.tables}/>);
         }
         if (showForm) {
             content.form = (<div>Put your input fields here!</div>);
         }
 
-        expanded = LO_VIEW.get(expanded);
+        expanded = LO_VIEW.get(expanded) || LO_VIEW.none;
         const expandedProps =  {expanded, ...content};
         const standardProps =  {visToolbar, title, searchDesc, standard, ...content};
         
@@ -100,12 +102,12 @@ const StandardView = ({visToolbar, title, searchDesc, standard, imagePlot, xyPlo
             {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
             <div style={{flexGrow: 1, position: 'relative'}}>
             <div style={{position: 'absolute', top: 0, right: 0, bottom: 0, left: 0}}>
-                <SplitPane split='vertical' minSize={20} defaultSize={435}>
+                <SplitPane split='vertical' minSize={20}  defaultSize={435}>
                     <SplitPane split='horizontal' minSize={20} defaultSize={300}>
                         {createContentWrapper(form)}
                         {createContentWrapper(tables)}
                     </SplitPane>
-                    <SplitPane split='horizontal' minSize={20}>
+                    <SplitPane split='horizontal' minSize={20} defaultSize={435}>
                         {createContentWrapper(xyPlot)}
                         {createContentWrapper(imagePlot)}
                     </SplitPane>
