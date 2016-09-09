@@ -26,6 +26,7 @@ More information about lower level API can be found here:
  - [Dispatching and Watching Actions](#dispatching-and-watching-actions)
  - [Other utilities](#other-utility-methods)
  - [Utility methods for FITS visualization](#utility-methods-for-fits-visualization)
+ - [Adding Context Extensions to FITS viewer](#adding-context-extensions-to-fits-viewer)
  - [Region Support](#region-support)
 
 
@@ -266,7 +267,7 @@ function getImagePt(pt) {
 
 *Example:*                               
 ```js
-firefly.getViewer().showImage('imageDiv', {
+firefly.showImage('imageDiv', {
     plotId: 'p1',
     Service: 'TWOMASS',
     Title  : '2MASS from service',
@@ -292,9 +293,61 @@ To use minimal readout, do the following:
     );
 ```
 
+
+### Adding Context Extensions to FITS viewer
+
+Context extensions make it possible to add user-defined actions on certain operations. When an extension is added, FITS viewer will present an extra menu item in the context menu of the operation, on which the extension is defined. These are the operations on which context extensions can be added:
+
+  - Area Select (square)
+  - Line Select
+  - Point Select
+  - Circle Select (*coming soon*)
+
+The best way to describe how to add an extension, is to see the code.
+
+```js
+  var extFunc= function(data) {
+      // do something when the extension is selected called.
+  }  
+ var extension= {  // object literal to create extension definition
+                id : 'MySpecialExt',       // extension id
+                plotId : 'primaryID',      // plot to put extension on
+                title : 'My Op',           // title use sees 
+                toolTip : "a tool tip",    // tooltip
+                extType: "POINT",          // type of extension
+                callback: extFunc          // function (defined above) for callback
+            };
+ firefly.util.image.extensionAdd(extension);
+ // to remove the extension added above, use firefly.util.image.extensionRemove('MySpecialExt') 
+```
+
+
+To add an extension to a fits viewer create a object literal with the following fields:
+
+| name | type | description |
+| ---- | ---- | ----- |
+| id   | string | any string id that you want to give the extension |
+| plotId | string | the plot ID to put the extension on.  (will be the same as the div name)|
+| imageUrl | string, url |url of an image icon (icon should be 24x24) to show in the context menu | 
+| title | string | title that the user will see if not image icon is supplied |
+| toolTip | string | tooltip the viewer will use for your extension |
+| extType | string | extension type, must be 'AREA_SELECT', 'LINE_SELECT', 'POINT', or 'CIRCLE_SELECT' (*details below*) |
+| callback | function | the function to call when the extension is selected (*details below*) |
+
+ extType details:
+ 
+  - 'AREA_SELECT' - When the user draws a square this menu will be activate
+  - 'LINE_SELECT' - When the user draw a line this menu will be activated. 
+  - 'POINT' - When any point on the plot is clicked 
+  - 'CIRCLE_SELECT' - When the user draws a circle (*not yet supported, coming soon*)
+
+callback function takes one parameter,  an object literal, the fields vary depend on the extension type -
+ *todo - need to document callback object literal parameters*
+
+
 ### Region Support
 
-#####**firefly.action.dispatchCreateRegionLayer** method
+##### **firefly.action.dispatchCreateRegionLayer** method
 
 `firefly.action.dispatchCreateRegionLayer(regionId, layerTitle, fileOnServer ='', regionAry=[], plotId = [])` - overlay region data on an image plots with the given ids
 
@@ -309,7 +362,7 @@ To use minimal readout, do the following:
 Note: if no plotId is given, the region layer is created on all plots.
 
 
-#####**firefly.action.dispatchDeleteRegionLayer** method
+##### **firefly.action.dispatchDeleteRegionLayer** method
 
 `firefly.action.dispatchDeleteRegionLayer(regionId, plotId)` - remove region layer from the given plot
 
@@ -321,7 +374,7 @@ Note: if no plotId is given, the region layer is created on all plots.
 Note: if no plotId is given, the region layer is removed from all plots.
 
 
-#####**firefly.action.dispatchAddRegionEntry** method
+##### **firefly.action.dispatchAddRegionEntry** method
 
 `firefly.action.dispatchAddRegionEntry(regionId, regionChanges)` - add region data to the given region layer
 
@@ -330,7 +383,7 @@ Note: if no plotId is given, the region layer is removed from all plots.
 | regionId | string | region layer id |
 | regionChanges | array | an array of strings, each describing a ds9 region |
 
-#####**firefly.action.dispatchRemoveRegionEntry** method
+##### **firefly.action.dispatchRemoveRegionEntry** method
 
 `firefly.action.dispatchRemoveRegionEntry(regionId, regionChanges)` - remove region data from the given region layer
 
@@ -551,4 +604,4 @@ firefly.addXYPlot('xyplot_div', {tbl_id: tblReq.tbl_id, xCol: 'w1mpro+w4mpro', y
 
 ### More Code Examples
 
-[see firefly-api-code-examples.md](firefly-api-code-examples.md)
+[see firefly-api-code-examples.md](../tutorial/firefly-api-code-examples.md)
