@@ -86,12 +86,19 @@ ChartsContainer.propTypes = {
 };
 
 function ExpandedView(props) {
+    const {defaultCharts, closeable} = props;
     return (
         <div style={{ display: 'flex', height: '100%', flexGrow: 1, flexDirection: 'column', overflow: 'hidden'}}>
             <div style={{marginBottom: 3}}>
-                {props.closeable && <CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
+                {closeable && <CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
             </div>
-            <ChartsTableViewPanel expandedMode={true} expandable={false} {...props} />
+            <ChartsTableViewPanel expandedMode={true} expandable={false} chartType={'scatter'} {...props} />
+            {defaultCharts.map((c) => {
+                const type = c.includes('xyplot') ? 'scatter' : 'histogram';
+                return (
+                    <ChartsTableViewPanel key={'default-expanded-xyplot-'+c} expandedMode={true} expandable={false} chartType={type} chartId={c} {...props} />
+                );
+            })}
         </div>
     );
 
