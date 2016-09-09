@@ -1,9 +1,9 @@
 {
   "plugins": [
-     "react",
+    "react",
     "jsdoc"
 
-   ],
+  ],
   /* "settings": {
      "jsdoc": {
        "tagNamePreference": {
@@ -92,7 +92,8 @@
     "jsdoc/require-returns-description": 0,
     "jsdoc/require-returns-type": 1
 
-//    "react/display-name": 1,
+
+    //    "react/display-name": 1,
 //    "react/forbid-prop-types": 1,
 //    "react/jsx-closing-bracket-location": 1,
 //    "react/jsx-curly-spacing": 1,
