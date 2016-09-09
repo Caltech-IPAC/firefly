@@ -146,6 +146,10 @@ war {
   }
 }
 
+clean {
+  delete "${war.destinationDir}/${webapp.baseWarName}.war"
+}
+
 task deploy (dependsOn: [loadConfig, webapp]) << {
   description= 'Deploy webapp(war file) to Tomcat.  Require ${tomcat_home} property'
   group = WEBAPP_GROUP
@@ -247,10 +251,12 @@ task publishToGithub (dependsOn: loadConfig) {
 // ------------------------
 // define task order
 //-------------------------
-loadConfig.mustRunAfter gwt
-buildClient.mustRunAfter prepareWebapp
-buildJsDoc.mustRunAfter prepareWebapp
+gwt.mustRunAfter          jar
+loadConfig.mustRunAfter   gwt
+gwtCompile.mustRunAfter   loadConfig
 prepareWebapp.mustRunAfter gwtCompile
-gwtCompile.mustRunAfter jar
-deploy.mustRunAfter war
+buildClient.mustRunAfter  prepareWebapp
+buildJsDoc.mustRunAfter   buildClient
+war.mustRunAfter          buildJsDoc
+deploy.mustRunAfter       war
 

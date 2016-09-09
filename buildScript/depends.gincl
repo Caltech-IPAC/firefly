@@ -101,6 +101,9 @@ repositories {
 
 jar.destinationDir = file ("$rootDir/jars/build")
 
+clean {
+  delete "${jar.destinationDir}/${jar.baseName}.jar"
+}
 
 task buildClient (dependsOn: loadConfig) {
 
