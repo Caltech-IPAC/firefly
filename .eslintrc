@@ -4,14 +4,15 @@
     "jsdoc"
 
    ],
-  "settings": {
+ /* "settings": {
     "jsdoc": {
       "tagNamePreference": {
         "param": "param",
-        "returns": "returns"
+        "returns": ["returns", "return"],
+        "description":"desc"
       }
     }
-  },
+  },*/
 
   "env": {
     "es6": true,
@@ -78,13 +79,13 @@
     "quotes": [2, "single", "avoid-escape"],
     "eqeqeq": 1,
     //jsdoc rules
-    "jsdoc/check-param-names": 2,
-    "jsdoc/check-tag-names": 1,
+    "jsdoc/check-param-names": 0,
+    "jsdoc/check-tag-names": 0,
     "jsdoc/check-types": 1,
     "jsdoc/newline-after-description": 0,
     "jsdoc/require-description-complete-sentence": 0,
     "jsdoc/require-hyphen-before-param-description": 0,
-    "jsdoc/require-param": 2,
+    "jsdoc/require-param": 0,
     "jsdoc/require-param-description": 0,
     "jsdoc/require-param-type": 0,
     "jsdoc/require-returns-description": 0,

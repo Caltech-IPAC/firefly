@@ -206,7 +206,7 @@ function serverParamsChanged(oldParams, newParams) {
  * xyPlotParams - plot parameters
  * decimatedUnzoomed - tells if unzoomed data are decimated
  * @param data {Object} the data to merge with the xyplot branch
- * @returns {{type: string, payload: object}}
+ * @return {{type: string, payload: object}}
  * @memberof firefly.action
  * @public
  * @func updatePlotData
