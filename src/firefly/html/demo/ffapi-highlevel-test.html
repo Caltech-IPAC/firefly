@@ -44,8 +44,20 @@
     <div id="tables-2" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
     <div id="tables-1" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white; position: absolute"></div>
 </div>
-<div id="xyPlot1" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
-<div id="xyPlot2" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white; position: absolute"></div>
+<div>XYPlot from API calls:
+    <a href='javascript:firefly.getViewer().showXYPlot(xyPlotOpsReq3)'>Show XY Plot</a>
+</div>
+<div>
+    <div id="xyPlot1" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
+    <div id="xyPlot2" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white; position: absolute"></div>
+</div>
+<div>XYPlot from API calls:
+    <a href='javascript:firefly.getViewer().showHistogram(histogramOpsReq3)'>Show Histogram</a>
+</div>
+<div>
+    <div id="histogram1" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
+    <div id="histogram2" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white; position: absolute"></div>
+</div>
 <div>Tables from deprecated API calls:</div>
 <div>
     <div id="oldSelectable" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
@@ -200,13 +212,19 @@
                         META_INFO: {CENTER_COLUMN: 'crval1;crval2;EQJ2000'}
                     });
 
+
             firefly.showTable('tables-1', tblReq1);
             firefly.showTable('tables-1', tblReq3);
             firefly.showTable('tables-2', tblReq2, {removable: false, showUnits: true, showFilters: true});
             //-----------------  CHART DEMO ------------------------//
             //--- using QUERY_ID: 'upload' does not work getActiveTableId('upload') returns undefined ---//
-            firefly.addXYPlot('xyPlot1', {tbl_id: tblReq2.tbl_id, xCol: 'ra', yCol: 'dec', help_id: 'visualization.xyplotViewer'});
-            firefly.addXYPlot('xyPlot2', {tbl_id: tblReq2.tbl_id, xCol: 'w1mpro+w4mpro', yCol: 'w2mpro'});
+            xyPlotOpsReq3 = {source: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl', xCol: 'ra1', yCol: 'dec1'};
+            firefly.showXYPlot('xyPlot1', {tbl_id: tblReq2.tbl_id, xCol: 'ra', yCol: 'dec', help_id: 'visualization.xyplotViewer'});
+            firefly.showXYPlot('xyPlot2', {tbl_id: tblReq2.tbl_id, xCol: 'w1mpro+w4mpro', yCol: 'w2mpro'});
+            histogramOpsReq3 = {source: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl', col: 'modeint', xOptions: 'log'};
+            firefly.showHistogram('histogram1', {tbl_id: tblReq2.tbl_id, col: 'w1mpro'});
+            firefly.showHistogram('histogram2', {tbl_id: tblReq2.tbl_id, col: 'w2mpro+w3mpro', falsePositiveRate: 0.05});
+
 
             //-----< old table api ------//
             var tblParams = {
@@ -427,6 +445,6 @@
 </script>
 
 
-<script  type="text/javascript" src="../firefly_loader.js"></script>
+<script  type="text/javascript" src="http://localhost:8080/firefly/firefly_loader.js"></script>
 
 

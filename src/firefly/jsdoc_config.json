@@ -8,6 +8,7 @@
            "./js/api/",
            "./js/tables/TableUtil.js",
            "./js/charts/XYPlotCntlr.js",
+           "./js/charts/ChartUtil.js",
            "./js//visualize/CsysConverter.js",
            "./js/visualize/DrawLayerCntlr.js",
            "../../docs/firefly-api-overview.md"
@@ -46,7 +47,7 @@
         "encoding": "utf8",                               // same as -e utf8
         "recurse": true ,                                 // same as -r
         "tutorials": "../../tutorial/",                      // same as -u path/to/tutorials
-        "access": "all"                                  //same as -a  <value>, values are all, public, private etc
+        "access": "public"                                  //same as -a  <value>, values are all, public, private etc
 
     },
     "templates": {

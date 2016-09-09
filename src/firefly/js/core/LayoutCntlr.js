@@ -7,6 +7,7 @@ import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
 import {smartMerge} from '../tables/TableUtil.js';
+import {hasDefaultCharts} from '../charts/ChartUtil.js';
 import {getDropDownNames} from '../ui/Menu.jsx';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import {TBL_RESULTS_ADDED, TABLE_REMOVE} from '../tables/TablesCntlr.js';
@@ -74,7 +75,7 @@ export function dispatchUpdateLayoutInfo(layoutInfo) {
  * show the drop down container
  * @param view name of the component to display in the drop-down container
  */
-export function dispatchShowDropDown({view}={}) {
+export function dispatchShowDropDown({view}) {
     flux.process({type: SHOW_DROPDOWN, payload: {visible: true, view}});
 }
 
@@ -106,7 +107,7 @@ export function getLayouInfo() {
     const layout = get(flux.getState(), 'layout', {});
     const hasImages = get(flux.getState(), 'allPlots.plotViewAry.length') > 0;
     const hasTables = !isEmpty(get(flux.getState(), 'table_space.results.main.tables', {}));
-    const hasXyPlots = hasTables;
+    const hasXyPlots = hasTables || hasDefaultCharts();
     return clone(layout, {hasImages, hasTables, hasXyPlots});
 }
 

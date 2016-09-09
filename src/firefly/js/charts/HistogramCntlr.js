@@ -23,11 +23,11 @@ import {DELETE} from './ChartsCntlr.js';
          histogramData: [[numInBin: int, min: double, max: double]*]
          histogramParams: {
            columnOrExpr: column name or column expression
-           algorithm: 'fixedSizeBins' or 'byesianBlocks'
+           algorithm: 'fixedSizeBins' or 'bayesianBlocks'
            numBins: int - for 'fixedSizeBins' algorithm
            x: [log,flip] x (domain) axis options
            y: [log,flip] y (counts) axis options
-           falsePositiveRate: double - for 'byesianBlocks' algorithm (default 0.05)
+           falsePositiveRate: double - for 'bayesianBlocks' algorithm (default 0.05)
            minCutoff: double
            maxCutoff: double
          }
@@ -40,17 +40,30 @@ export const LOAD_COL_DATA = `${HISTOGRAM_DATA_KEY}/LOAD_COL_DATA`;
 export const UPDATE_COL_DATA = `${HISTOGRAM_DATA_KEY}/UPDATE_COL_DATA`;
 
 
+/**
+ * @global
+ * @public
+ * @typedef {Object} HistogramParams - histogram parameters
+ * @prop {string}  col          column or expression to use for histogram, can contain multiple column names ex. log(col) or (col1-col2)/col3
+ * @prop {string}  algorithm    'fixedSizeBins' or 'bayesianBlocks'
+ * @prop {number}  numBins      number of bins for fixed bins algorithm (default)
+ * @prop {number}  falsePositiveRate false positive rate for bayesian blocks algorithm
+ * @prop {string}  [x]   comma separated list of x axis options: flip,log
+ * @prop {string}  [y]   comma separated list of y axis options: flip,log
+ */
+
 /*
- * Get column histogram data
+ * Get column histogram data.
  * @param {Object} params - dispatch parameters
  * @param {string} params.chartId - if no chart id is specified table id is used as chart id
  * @param {Object} params.histogramParams - histogram options (column name, etc.)
  * @param {boolean} params.markAsDefault - are the options considered to be "the default" to reset to
  * @param {string} params.tblId - table id
  * @param {function} params.dispatcher only for special dispatching uses such as remote
+ * @memberof firefly.action
+ * @public
  */
-export const dispatchLoadColData = function(params) {
-    const {chartId, histogramParams, markAsDefault=false, tblId, dispatcher= flux.process} = params;
+export const dispatchLoadColData = function({chartId, histogramParams, markAsDefault=false, tblId, dispatcher= flux.process}) {
     dispatcher({type: LOAD_COL_DATA, payload: {chartId: (chartId||tblId), histogramParams, markAsDefault, tblId}});
 };
 
