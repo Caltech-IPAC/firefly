@@ -36,7 +36,7 @@ import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {FileUpload} from '../ui/FileUpload.jsx';
 import {parseWorldPt} from '../visualize/Point.js';
-import {makeTblRequest, makeIrsaCatalogRequest} from '../tables/TableUtil.js';
+import {makeTblRequest, makeFileRequest, makeIrsaCatalogRequest} from '../tables/TableUtil.js';
 import {dispatchAddImages,getAViewFromMultiView,getMultiViewRoot} from '../visualize/MultiViewCntlr.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage} from '../visualize/ImagePlotCntlr.js';
@@ -44,10 +44,10 @@ import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {Region} from '../visualize/region/Region.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
 
-const options= [
-    {label: 'AllWISE Source Catalog', value:'wise_allwise_p3as_psd', proj:'WISE'},
-    {label: '2MASS All-Sky Point Source Catalog (PSC)', value:'fp_psc', proj:'2MASS'},
-    {label: 'IRAS Point Source Catalog v2.1 (PSC)', value:'iraspsc', proj: 'IRAS'}
+const options = [
+    {label: 'AllWISE Source Catalog', value: 'wise_allwise_p3as_psd', proj: 'WISE'},
+    {label: '2MASS All-Sky Point Source Catalog (PSC)', value: 'fp_psc', proj: '2MASS'},
+    {label: 'IRAS Point Source Catalog v2.1 (PSC)', value: 'iraspsc', proj: 'IRAS'}
 ];
 
 
@@ -59,18 +59,18 @@ export class TestQueriesPanel extends Component {
 
     componentWillUnmount() {
         if (this.removeListener) this.removeListener();
-        this.iAmMounted= false;
+        this.iAmMounted = false;
     }
 
     componentDidMount() {
-        this.iAmMounted= true;
-        this.removeListener= FieldGroupUtils.bindToStore('TEST_CAT_PANEL', (fields) => {
+        this.iAmMounted = true;
+        this.removeListener = FieldGroupUtils.bindToStore('TEST_CAT_PANEL', (fields) => {
             if (this.iAmMounted) this.setState(fields);
         });
     }
 
     render() {
-        const fields= this.state;
+        const fields = this.state;
         return (
             <div style={{padding: 10}}>
                 <FormPanel
@@ -82,13 +82,21 @@ export class TestQueriesPanel extends Component {
                         <div style={{padding:'5px 0 5px 0'}}>
                             <TargetPanel/>
                         </div>
-                        <FieldGroupTabs initialState= {{ value:'catalog' }} fieldKey='Tabs'>
+                        <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs'>
                             <Tab name='Test Catalog' id='catalog'>{renderCatalogTab()}</Tab>
                             <Tab name='Images' id='images'>{renderImagesTab()}</Tab>
-                            <Tab name='Wise Search' id='wiseImage'><div>{renderWiseSearch(fields)}</div></Tab>
-                            <Tab name='2Mass Search' id='2massImage'><div>{render2MassSearch(fields)}</div></Tab>
-                            <Tab name='Load Region' id='loadRegion'><div>{renderLoadRegion(fields)}</div></Tab>
-
+                            <Tab name='Wise Search' id='wiseImage'>
+                                <div>{renderWiseSearch(fields)}</div>
+                            </Tab>
+                            <Tab name='2Mass Search' id='2massImage'>
+                                <div>{render2MassSearch(fields)}</div>
+                            </Tab>
+                            <Tab name='Load Region' id='loadRegion'>
+                                <div>{renderLoadRegion(fields)}</div>
+                            </Tab>
+                            <Tab name='Compute Periodogram' id='periodogram'>
+                                <div>{renderPeriodogram()}</div>
+                            </Tab>
                         </FieldGroupTabs>
 
                     </FieldGroup>
@@ -100,9 +108,6 @@ export class TestQueriesPanel extends Component {
 
 
 }
-
-
-
 
 TestQueriesPanel.propTypes = {
     name: PropTypes.oneOf(['TestSearches']),
@@ -117,51 +122,103 @@ function hideSearchPanel() {
     dispatchHideDropDown();
 }
 
+function renderPeriodogram() {
+
+    /**
+     *
+     * @param isPeriodogram
+     */
+    function lightCurveSubmit(isPeriodogram) {
+        console.log('periodogram...');
+        let tReq;
+        //var tReq = makeTblRequest('PhaseFoldedProcessor', 'Phase folded', { period: '1', 'table_name':'folded_table','original_table':});
+        if (isPeriodogram) {
+            tReq = makeTblRequest('LightCurveProcessor', 'Periodogram', {
+                'table_name': 'periodogram',
+                'result_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml'
+            });
+        } else {
+            tReq = makeTblRequest('PhaseFoldedProcessor', 'Phase folded', {
+                'period_days': '1',
+                'table_name': 'folded_table',
+                //'original_table': 'file:///Users/ejoliet/Documents/IPAC/ipac_samples/AllWISE-MEP-m82-2targets-10arsecs.tbl'
+                'original_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/AllWISE-MEP-m82-2targets-10arsecs.tbl'
+            });
+        }
+
+        dispatchTableSearch(tReq);
+    }
+
+    return (
+        <div style={{padding:5}}>
+
+            <button type='button' className='button std hl' onClick={() => lightCurveSubmit(true)}>
+                <b>Compute Periodogram [fake call]</b>
+            </button>
+            <br/>
+            <button type='button' className='button std hl' onClick={() => lightCurveSubmit(true)}>
+                <b> Get peaks table [fake call]</b>
+            </button>
+            <br/>
+            <ValidationField fieldKey='period'
+                             initialState={{
+                                          fieldKey: 'period',
+                                          value: '0.0',
+                                          tooltip: 'period',
+                                          label : 'period:',
+                                          labelWidth : 100
+                                      }}/>
+            <button type='button' className='button std hl' onClick={() => lightCurveSubmit(false)}>
+                <b>Phase folded (period value not used yet)</b>
+            </button>
+        </div>
+    );
+}
+
 
 function renderCatalogTab() {
     return (
         <div style={{padding:5}}>
 
             <InputGroup labelWidth={110}>
-                <ListBoxInputField  initialState= {{
+                <ListBoxInputField initialState={{
                                           tooltip: 'Select Catalog',
                                           label : 'Select Catalog:'
                                       }}
-                                    options={options }
-                                    multiple={false}
-                                    fieldKey='catalog'
+                                   options={options }
+                                   multiple={false}
+                                   fieldKey='catalog'
                 />
 
 
                 <ValidationField fieldKey='radius'
-                                 initialState= {{
+                                 initialState={{
                                           fieldKey: 'radius',
                                           value: '300',
                                           validator: Validate.floatRange.bind(null, 0, 2000, 3,'field 3'),
                                           tooltip: 'radius',
                                           label : 'radius:',
                                           labelWidth : 100
-                                      }} />
+                                      }}/>
             </InputGroup>
         </div>
-        );
+    );
 }
 
 
-
-const wiseBandMap= {
-    'allwise-multiband' : ['1','2','3','4'],
-    'allsky_4band-1b' :['1','2','3','4'],
-    'allsky_4band-3a' :['1','2','3','4'],
-    'cryo_3band-1b' :['1','2','3'],
-    'cryo_3band-1b-3a' :['1','2','3'],
-    'postcryo-1b' :['1','2']
+const wiseBandMap = {
+    'allwise-multiband': ['1', '2', '3', '4'],
+    'allsky_4band-1b': ['1', '2', '3', '4'],
+    'allsky_4band-3a': ['1', '2', '3', '4'],
+    'cryo_3band-1b': ['1', '2', '3'],
+    'cryo_3band-1b-3a': ['1', '2', '3'],
+    'postcryo-1b': ['1', '2']
 };
 
 
 function renderWiseSearch(fields) {
-    const ds= get(fields,'wiseDataSet.value', 'allwise-multiband');
-    const options= wiseBandMap[ds].map( (w) =>  ({label:'W'+w, value:w }));
+    const ds = get(fields, 'wiseDataSet.value', 'allwise-multiband');
+    const options = wiseBandMap[ds].map((w) => ({label: 'W' + w, value: w}));
     return (
         <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
             <IbeSpacialType groupKey='TEST_CAT_PANEL'/>
@@ -188,7 +245,7 @@ function renderWiseSearch(fields) {
                 <div style={{display:'inline-block', paddingLeft:50}}>
                     <CheckboxGroupInputField
                         fieldKey='wiseBands'
-                        initialState= {{
+                        initialState={{
                                     value: '1,2,3,4',   // workaround for _all_ for now
                                     tooltip: 'Please select some boxes',
                                     label : 'Bands:' }}
@@ -241,18 +298,17 @@ function render2MassSearch(fields) {
             />
         </div>
     );
-    
-}
 
+}
 
 
 function renderLoadRegion(fields) {
     return (
         <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
             <FileUpload
-                wrapperStyle = {{margin: '5px 0'}}
-                fieldKey = 'fileUpload'
-                initialState= {{
+                wrapperStyle={{margin: '5px 0'}}
+                fieldKey='fileUpload'
+                initialState={{
                         tooltip: 'Select a region file to upload',
                         label: 'Upload File:'}}
             />
@@ -261,7 +317,20 @@ function renderLoadRegion(fields) {
 
 }
 
+function renderCatalogFromSource(fields) {
+    return (
+        <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
+            <FileUpload
+                wrapperStyle={{margin: '5px 0'}}
+                fieldKey='urlSource'
+                initialState={{
+                        tooltip: 'Select a region file to upload',
+                        label: 'Upload File:'}}
+            />
+        </div>
+    );
 
+}
 
 
 function renderImagesTab() {
@@ -284,24 +353,24 @@ function renderImagesTab() {
 
 function onSearchSubmit(request) {
     console.log(request);
-    const wp= parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
+    const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
     if (!wp) {
         showInfoPopup('Target is required');
         return;
     }
-    if (request.Tabs==='catalog') {
+    if (request.Tabs === 'catalog') {
         doCatalog(request);
     }
-    else if (request.Tabs==='images') {
+    else if (request.Tabs === 'images') {
         doImages(request);
     }
-    else if (request.Tabs==='wiseImage') {
+    else if (request.Tabs === 'wiseImage') {
         doWise(request);
     }
-    else if (request.Tabs==='2massImage') {
+    else if (request.Tabs === '2massImage') {
         do2Mass(request);
     }
-    else if (request.Tabs==='loadRegion') {
+    else if (request.Tabs === 'loadRegion') {
         doRegionLoad(request);
     }
     else {
@@ -311,32 +380,31 @@ function onSearchSubmit(request) {
 
 function doCatalog(request) {
     var tReq = makeIrsaCatalogRequest(
-                request.catalog,
-                options.find( (op) => request.catalog===op.value).proj,
-                request.catalog,
-                {
-                    [ServerParams.USER_TARGET_WORLD_PT] : request[ServerParams.USER_TARGET_WORLD_PT],
-                    SearchMethod: 'Cone',
-                    radius : request.radius,
-                });
+        request.catalog,
+        options.find((op) => request.catalog === op.value).proj,
+        request.catalog,
+        {
+            [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
+            SearchMethod: 'Cone',
+            radius: request.radius,
+        });
     dispatchTableSearch(tReq);
 }
 
 
 function doImages(request) {
-    var wp= parseWorldPt(request.UserTargetWorldPt);
+    var wp = parseWorldPt(request.UserTargetWorldPt);
 
     // -example call to 2mass
     //var wpr1= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'h',.1 );
     //var wpr2= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'k',.1 );
 
 
-
     // -example call to wise
-    var wpr1= WebPlotRequest.makeWiseRequest(wp,'1b','1',.4 );
-    var wpr2= WebPlotRequest.makeWiseRequest(wp,'1b','2',.4 );
-    var wpr3= WebPlotRequest.makeWiseRequest(wp,'1b','3',.4 );
-    var wpr4= WebPlotRequest.makeWiseRequest(wp,'1b','4',.4 );
+    var wpr1 = WebPlotRequest.makeWiseRequest(wp, '1b', '1', .4);
+    var wpr2 = WebPlotRequest.makeWiseRequest(wp, '1b', '2', .4);
+    var wpr3 = WebPlotRequest.makeWiseRequest(wp, '1b', '3', .4);
+    var wpr4 = WebPlotRequest.makeWiseRequest(wp, '1b', '4', .4);
 
 
     // -example call to IRIS
@@ -363,8 +431,6 @@ function doImages(request) {
     wpr4.setGroupLocked(true);
 
 
-
-
     wpr1.setInitialZoomLevel(parseFloat(request.zoom));
     wpr2.setInitialZoomLevel(parseFloat(request.zoom));
     wpr3.setInitialZoomLevel(parseFloat(request.zoom));
@@ -374,9 +440,9 @@ function doImages(request) {
 
 
     //=========== 3 color
-    var cWpr1= WebPlotRequest.makeWiseRequest(wp,'3a','1',.4 );
-    var cWpr2= WebPlotRequest.makeWiseRequest(wp,'3a','2',.4 );
-    var cWpr3= WebPlotRequest.makeWiseRequest(wp,'3a','3',.4 );
+    var cWpr1 = WebPlotRequest.makeWiseRequest(wp, '3a', '1', .4);
+    var cWpr2 = WebPlotRequest.makeWiseRequest(wp, '3a', '2', .4);
+    var cWpr3 = WebPlotRequest.makeWiseRequest(wp, '3a', '3', .4);
     cWpr1.setPlotGroupId('test-group');
     cWpr2.setPlotGroupId('test-group');
     cWpr3.setPlotGroupId('test-group');
@@ -386,70 +452,67 @@ function doImages(request) {
     cWpr3.setInitialZoomLevel(parseFloat(request.zoom));
 
 
-
-
     //wpr1.setAnnotationOps(AnnotationOps.TITLE_BAR);
-    dispatchPlotImage({plotId:'TestImage1', wpRequest:wpr1});
-    dispatchPlotImage({plotId:'TestImage2', wpRequest:wpr2});
-    dispatchPlotImage({plotId:'TestImage3', wpRequest:wpr3});
-    dispatchPlotImage({plotId:'TestImage4', wpRequest:wpr4});
+    dispatchPlotImage({plotId: 'TestImage1', wpRequest: wpr1});
+    dispatchPlotImage({plotId: 'TestImage2', wpRequest: wpr2});
+    dispatchPlotImage({plotId: 'TestImage3', wpRequest: wpr3});
+    dispatchPlotImage({plotId: 'TestImage4', wpRequest: wpr4});
 
-    dispatchPlotImage({plotId:'TestImage3Color', wpRequest:[cWpr1,cWpr2,cWpr3]});
-    
-    var viewer= getAViewFromMultiView(getMultiViewRoot());
+    dispatchPlotImage({plotId: 'TestImage3Color', wpRequest: [cWpr1, cWpr2, cWpr3]});
+
+    var viewer = getAViewFromMultiView(getMultiViewRoot());
     dispatchAddImages(viewer.viewerId, ['TestImage1', 'TestImage2', 'TestImage3', 'TestImage4', 'TestImage3Color']);
     dispatchHideDropDown();
 
 }
 
 
-const schemaParams= {
-    'allwise-multiband':  {ImageSet:'allwise-multiband', ProductLevel:'3a', title:'AllWISE' } ,
-    'allsky_4band-1b':  {ImageSet:'allsky-4band', ProductLevel:'1b', title:'AllSky - Single' },
-    'allsky_4band-3a':  {ImageSet:'allsky-4band', ProductLevel:'3a', title:'AllSky - Atlas' },
-    'cryo_3band-1b':  {ImageSet:'cryo_3band', ProductLevel:'1b' , title:'3-Band Single'},
-    'cryo_3band-1b-3a': {ImageSet:'cryo_3band', ProductLevel:'3a', title:'3-Band Atlas' },
-    'postcryo-1b':  {ImageSet:'postcryo', ProductLevel:'1b' , title:'Post-Cryo'},
-    'neowiser-1b':  {ImageSet:'neowiser', ProductLevel:'1b', title:'NeoWISER'  }
+const schemaParams = {
+    'allwise-multiband': {ImageSet: 'allwise-multiband', ProductLevel: '3a', title: 'AllWISE'},
+    'allsky_4band-1b': {ImageSet: 'allsky-4band', ProductLevel: '1b', title: 'AllSky - Single'},
+    'allsky_4band-3a': {ImageSet: 'allsky-4band', ProductLevel: '3a', title: 'AllSky - Atlas'},
+    'cryo_3band-1b': {ImageSet: 'cryo_3band', ProductLevel: '1b', title: '3-Band Single'},
+    'cryo_3band-1b-3a': {ImageSet: 'cryo_3band', ProductLevel: '3a', title: '3-Band Atlas'},
+    'postcryo-1b': {ImageSet: 'postcryo', ProductLevel: '1b', title: 'Post-Cryo'},
+    'neowiser-1b': {ImageSet: 'neowiser', ProductLevel: '1b', title: 'NeoWISER'}
 };
 
 
 function doWise(request) {
-    console.log('wise',request);
-    var tgtName= '';
-    const wp= parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
-    if (wp.getObjName()) tgtName= ', ' +wp.getObjName();
+    console.log('wise', request);
+    var tgtName = '';
+    const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
+    if (wp.getObjName()) tgtName = ', ' + wp.getObjName();
     const params = Object.assign(schemaParams[request.wiseDataSet],
-            {
-                [ServerParams.USER_TARGET_WORLD_PT] : request[ServerParams.USER_TARGET_WORLD_PT],
-                mission: 'wise',
-                intersect: request.intersect,
-                mcenter:  (request.intersect==='CENTER' || request.intersect==='COVERS') ? request.mcenter : 'all',
-                size: request.size,
-                subsize: request.subsize,
-                band : request.wisebands
-            });
-    const reqParams= makeTblRequest('ibe_processor', `${schemaParams[request.wiseDataSet].title}${tgtName}`, params);
+        {
+            [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
+            mission: 'wise',
+            intersect: request.intersect,
+            mcenter: (request.intersect === 'CENTER' || request.intersect === 'COVERS') ? request.mcenter : 'all',
+            size: request.size,
+            subsize: request.subsize,
+            band: request.wisebands
+        });
+    const reqParams = makeTblRequest('ibe_processor', `${schemaParams[request.wiseDataSet].title}${tgtName}`, params);
     dispatchTableSearch(reqParams);
 }
 
 function do2Mass(request) {
-    console.log('wmass',request);
-    const reqParams= makeTblRequest('ibe_processor', '2MASS-' + request[ServerParams.USER_TARGET_WORLD_PT],
-                        {
-                            [ServerParams.USER_TARGET_WORLD_PT] : request[ServerParams.USER_TARGET_WORLD_PT],
-                            mission: 'twomass',
-                            ds : request.ds,
-                            band : request.band
-                        });
+    console.log('wmass', request);
+    const reqParams = makeTblRequest('ibe_processor', '2MASS-' + request[ServerParams.USER_TARGET_WORLD_PT],
+        {
+            [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
+            mission: 'twomass',
+            ds: request.ds,
+            band: request.band
+        });
     dispatchTableSearch(reqParams);
 }
 
 
-
 function doRegionLoad(request) {
     getDS9Region(request.fileUpload)
-        .then( (result) => {
+        .then((result) => {
             //console.log(result);
 
             if (result.RegionData) {
