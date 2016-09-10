@@ -240,11 +240,23 @@ export function LcCurveOptionsPanel ({fields}) {
                               label : 'Flux Error:',
                               labelWidth : 100
                      }} />
+                <br/>
+
+                <ValidationField fieldKey='period'
+                     forceReinit={true}
+                     initialState= {{
+                              fieldKey: 'period',
+                              value: '',
+                              validator: Validate.floatRange.bind(null, 0.55555, 1.22222, 3,'period'),
+                              tooltip: 'Period',
+                              label : 'Period:',
+                              labelWidth : 100
+                     }} />
 
                 <br/>
 
                 <button type='button' className='button std hl'  onClick={(request) => onSearchSubmit(request)}>
-                    <b>Search</b>
+                    <b>Phase Folded</b>
                 </button>
                 <button type='button' className='button std hl'  onClick={() => resetDefaults()}>
                     <b>Reset</b>
