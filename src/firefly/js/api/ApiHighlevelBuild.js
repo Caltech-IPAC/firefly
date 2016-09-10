@@ -20,7 +20,7 @@
 
 /**
  * @param llApi the lowlevel api
- * @return {Object}
+ * @returns {Object}
  * @ignore
  *
  */
@@ -37,7 +37,7 @@ var globalImageViewDefParams= {};
 /**
  * Build the deprecated API
  * @param llApi
- * @return {Object}
+ * @returns {Object}
  * @ignore
  */
 function build(llApi) {
@@ -115,7 +115,6 @@ function doShowTable(llApi, targetDiv, request, options={}) {
 }
 
 function buildTablePart(llApi) {
-    const {dispatchTableFetch}= llApi.action;
 
     /**
      * @global
@@ -138,7 +137,7 @@ function buildTablePart(llApi) {
      * @param {TblOptions} options     table options.
      * @memberof firefly
      * @public
-     * @example fierfly.showTable
+     * @example firefly.showTable
      */
     // @param {module:firefly.TblOptions} options     table options.
     const showTable= (targetDiv, request, options)  => doShowTable(llApi, targetDiv, request, options);
@@ -152,52 +151,43 @@ function buildTablePart(llApi) {
 function buildChartPart(llApi) {
 
     /**
-     * @global
-     * @public
-     * @typedef {object} XYPlotOptions
-     * @prop {string}  source       location of the ipac table, url or file path; ignored when XY plot view is added to table
-     * @prop {string}  QUERY_ID     required when XY plot view is added to the table. It connects this XY Plot to the table and should be the same string that you specified as the div parameter when you created the table.
-     * @prop {string}  chartTitle   title of the chart
-     * @prop {string}  xCol         column or expression to use for x values, can contain multiple column names ex. log(col) or (col1-col2)/col3
-     * @prop {string}  yCol         column or expression to use for y values, can contain multiple column names ex. sin(col) or (col1-col2)/col3
-     * @prop {number}  xyRatio      aspect ratio (must be between 1 and 10)
-     * @prop {string}  stretch      fit or fill
-     * @prop {string}  xLabel       label to use with x axis
-     * @prop {string}  yLabel       label to use with y axis
-     * @prop {string}  xUnit        unit for x axis
-     * @prop {string}  yUnit        unit for y axis
-     * @prop {string}  xOptions     comma separated list of x axis options: grid,flip,log
-     * @prop {string}  yOptions     comma separated list of y axis options: grid,flip,log
-     */
-
-
-    /**
      * @summary The general plotting function to plot an XY Plot.
-     * @param {string|HTMLDivElement} targetDiv to put the chart in.
-     * @param {XYPlotOptions} parameters the request object literal with the chart parameters
+     * @param {string|HTMLDivElement} targetDiv - div to put the chart in.
+     * @param {XYPlotOptions} parameters - object literal with the chart parameters
      * @memberof firefly
-     * @example firefly.showXYPlot
      * @public
+     * @example firefly.showXYPlot('myDiv', {source: 'mySourceFile', {xCol: 'ra', yCol: 'dec'})
      */
     const showXYPlot= (targetDiv, parameters)  => doShowXYPlot(llApi, targetDiv, parameters);
-    /**
-     * @summary  It appears twice when it is added in the above jsdoc block
-     * @param {string|HTMLDivElement} targetDiv to put the chart in.
-     * @param {XYPlotOptions} parameters the request object literal with the chart parameters
-     * @memberof firefly
-     * @public
-     * @example firefly.addXYPlot
-     */
 
+    /**
+     * @summary  Add XYPlot view of a table. Deprecated: use showXYPlot with tbl_id in @link{XYPlotOptions} instead.
+     * @param {string|HTMLDivElement} targetDiv - div to put the chart in.
+     * @param {XYPlotOptions} parameters - object literal with the chart parameters
+     * @memberof firefly
+     * @deprecated
+     * @example firefly.addXYPlot('myDiv', {tbl_id: <tbl_id>, {xCol: 'ra', yCol: 'dec'})
+     */
     const addXYPlot= (targetDiv, parameters) => doShowXYPlot(llApi, targetDiv, parameters);
 
-    return {showXYPlot, addXYPlot};
+    /**
+     * @summary The general plotting function to plot Histogram.
+     * @param {string|HTMLDivElement} targetDiv - div to put the chart in.
+     * @param {HistogramOptions} parameters - object literal with the chart parameters
+     * @memberof firefly
+     * @public
+     * @example firefly.showHistogram
+     */
+    const showHistogram= (targetDiv, parameters)  => doShowHistogram(llApi, targetDiv, parameters);
+
+
+    return {showXYPlot, addXYPlot, showHistogram};
 }
 
 function buildCommon(llApi) {
     /**
      * @summary Sets the root path for any relative URL. If this method has not been called then relative URLs use the page's root.
-     * @param {String} rootUrlPath
+     * @param {string} rootUrlPath
      * @memberof firefly
      * @public
      */
@@ -211,30 +201,28 @@ function buildImagePart(llApi) {
 
     const {RequestType}= llApi.util.image;
 
-     /**
-      * @summary The general plotting function to plot a FITS image.
-      * @param {String|div} targetDiv to put the image in.
-      * @param {Object} request the request object literal with the plotting parameters
-      * @memberof firefly
-      * @public
-      * @ignore
-      * @example firefly.showImage
-      *
+    /**
+     * @summary The general plotting function to plot a FITS image.
+     * @param {String|div} targetDiv to put the image in.
+     * @param {Object} request the request object literal with the plotting parameters
+     * @memberof firefly
+     * @public
+     * @example firefly.showImage
+     *
      */
     const showImage= (targetDiv, request)  => showImageInMultiViewer(llApi, targetDiv, request);
 
     /**
-     * @summary a convenience plotting function to plot a file on the server or a url.  If first looks for the file then
+     * @summary A convenience plotting function to plot a file on the server or a url.  If first looks for the file then
      * the url is the fallback
-     * @param {String|div} targetDiv to put the image in.
-     * @param {String} file file on server
-     * @param {String} url url reference to a fits file
+     * @param {string|div} targetDiv to put the image in.
+     * @param {string} file file on server
+     * @param {string} url url reference to a fits file
      * @memberof firefly
      * @public
      * @ignore
      * @example firefly.showImageFileOrUrl
      */
-
     const showImageFileOrUrl= (targetDiv, file,url) =>
               showImageInMultiViewer(llApi, targetDiv,
                                            {'File' : file,
@@ -256,8 +244,8 @@ function buildImagePart(llApi) {
 
     /**
      *
-     * @param {div} targetDiv to put the coverage in.
-     * @param options  an object literal containing a list of the coverage options
+     * @param div - targetDiv to put the coverage in.
+     * @param options - an object literal containing a list of the coverage options
      * @memberof firefly
      * @public
      * @example firefly.showCoverage
@@ -270,8 +258,8 @@ function buildImagePart(llApi) {
 /**
  * Build the deprecated API
  * @param llApi
- * @return {Object}
- * @Deprecated
+ * @returns {Object}
+ * @deprecated
  * @ignore
  */
 function buildDeprecated(llApi) {
@@ -399,11 +387,11 @@ function makePlotId() {
 //================================================================
 
 function doShowXYPlot(llApi, targetDiv, params={}) {
-    const {dispatchTableFetch}= llApi.action;
+    const {dispatchTableFetch, dispatchLoadPlotData}= llApi.action;
     const {TBL_RESULTS_ACTIVE} = llApi.action.type;
     const {renderDOM} = llApi.util;
     const {makeFileRequest, getActiveTableId} = llApi.util.table;
-    const {uniqueChartId, loadPlotDataForTbl} = llApi.util.chart;
+    const {makeXYPlotParams, uniqueChartId} = llApi.util.chart;
     const {ChartsTableViewPanel}= llApi.ui;
     const {addActionListener} = llApi.util;
 
@@ -414,18 +402,11 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
         params = oldApiParams;
     }
 
-    const {xCol, yCol, xyRatio, stretch, xLabel, yLabel, xUnit, yUnit, xOptions, yOptions, help_id} = params;
-    const xyPlotParams = xCol && yCol ?
-    {
-        xyRatio,
-        stretch,
-        x : { columnOrExpr : xCol, label : xLabel, unit : xUnit, options : xOptions},
-        y : { columnOrExpr : yCol, label : yLabel, unit : yUnit, options : yOptions}
-    } : undefined;
+    const xyPlotParams = makeXYPlotParams(params);
 
     // it is not quite clear how to handle situation when there are multiple tables in a group
     // for now we are connecting to the currently active table in the group
-    const tblGroup = params.QUERY_ID || params.tbl_group;
+    const tblGroup = params.QUERY_ID || params.tbl_group; // QUERY_ID is deprecated, should be removed at some point
     var tblId = params.tbl_id;
     // standalone plot, not connected to an existing table
     if (!tblGroup && !tblId) {
@@ -433,9 +414,7 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
             params.chartTitle||'', // title
             params.source,  // source
             null,  // alt_source
-            {
-                pageSize: 0 // options
-            }
+            {pageSize: 0} // options
         );
         tblId = searchRequest.tbl_id;
         dispatchTableFetch(searchRequest);
@@ -449,12 +428,13 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
             const new_tblId = getActiveTableId(tblGroup);
             if (new_tblId !== tblId) {
                 tblId = new_tblId;
-                loadPlotDataForTbl(tblId, chartId, xyPlotParams);
+                dispatchLoadPlotData({chartId, xyPlotParams, markAsDefault:true, tblId});
             }
         });
     }
-    loadPlotDataForTbl(tblId, chartId, xyPlotParams);
+    dispatchLoadPlotData({chartId, xyPlotParams, markAsDefault:true, tblId});
 
+    const help_id = params.help_id;
     renderDOM(targetDiv, ChartsTableViewPanel,
         {
             key: `${targetDiv}-xyplot`,
@@ -463,6 +443,62 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
             closeable: false,
             expandedMode: false,
             chartType: 'scatter',
+            deletable: false,
+            help_id
+        }
+    );
+}
+
+function doShowHistogram(llApi, targetDiv, params={}) {
+    const {dispatchTableFetch, dispatchLoadColData}= llApi.action;
+    const {TBL_RESULTS_ACTIVE} = llApi.action.type;
+    const {renderDOM} = llApi.util;
+    const {makeFileRequest, getActiveTableId} = llApi.util.table;
+    const {makeHistogramParams, uniqueChartId} = llApi.util.chart;
+    const {ChartsTableViewPanel}= llApi.ui;
+    const {addActionListener} = llApi.util;
+
+    const histogramParams = makeHistogramParams(params);
+
+    // it is not quite clear how to handle situation when there are multiple tables in a group
+    // for now we are connecting to the currently active table in the group
+    const tblGroup = params.tbl_group;
+    var tblId = params.tbl_id;
+    // standalone plot, not connected to an existing table
+    if (!tblGroup && !tblId) {
+        const searchRequest = makeFileRequest(
+            params.chartTitle||'', // title
+            params.source,  // source
+            null,  // alt_source
+            {pageSize: 0} // options
+        );
+        tblId = searchRequest.tbl_id;
+        dispatchTableFetch(searchRequest);
+    }
+
+    const chartId = uniqueChartId(tblId||tblGroup);
+
+    if (tblGroup) {
+        tblId = getActiveTableId(tblGroup);
+        addActionListener(TBL_RESULTS_ACTIVE, () => {
+            const new_tblId = getActiveTableId(tblGroup);
+            if (new_tblId !== tblId) {
+                tblId = new_tblId;
+                dispatchLoadColData({chartId, histogramParams, markAsDefault: true, tblId});
+            }
+        });
+    }
+    dispatchLoadColData({chartId, histogramParams, markAsDefault: true, tblId});
+
+    const help_id = params.help_id;
+    renderDOM(targetDiv, ChartsTableViewPanel,
+        {
+            key: `${targetDiv}-histogram`,
+            tblId,
+            chartId,
+            closeable: false,
+            expandedMode: false,
+            chartType: 'histogram',
             deletable: false,
             help_id
         }

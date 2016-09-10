@@ -15,9 +15,13 @@ import {getRootURL}  from '../util/BrowserUtil.js';
 import {dispatchRemoteAction}  from '../rpc/PushServices.js';
 import {dispatchPlotImage}  from '../visualize/ImagePlotCntlr.js';
 import {RequestType}  from '../visualize/RequestType.js';
-import {clone}  from '../util/WebUtil.js';
+import {clone, logError}  from '../util/WebUtil.js';
 import {confirmPlotRequest,findInvalidWPRKeys}  from '../visualize/WebPlotRequest.js';
 import {dispatchTableSearch, dispatchTableFetch}  from '../tables/TablesCntlr.js';
+import {dispatchLoadPlotData} from '../charts/XYPlotCntlr.js';
+import {dispatchLoadColData} from '../charts/HistogramCntlr.js';
+import {makeFileRequest}  from '../tables/TableUtil.js';
+import {makeXYPlotParams, makeHistogramParams, uniqueChartId} from '../charts/ChartUtil.js';
 import {getWsChannel} from '../core/messaging/WebSocketClient.js';
 import {getConnectionCount, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS} from '../core/AppDataCntlr.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
@@ -27,8 +31,7 @@ const VIEWER_ID = '__viewer';
 var viewerWindow;
 
 /**
- *
- * @return {{getViewer: getViewer, getExternalViewer: getExternalViewer}}
+ * @returns {{getViewer: getViewer, getExternalViewer: getExternalViewer}}
  * @ignore
  */
 export function buildViewerApi() {
@@ -40,7 +43,7 @@ export function buildViewerApi() {
  * @public
  * @param {string} [channel] the channel id string, if not specified then one will be generated
  * @param file the html of the viewer to launch. In time there will be several
- * @return {object} viewer interface
+ * @return {object} viewer interface @link{firefly.ApiViewer}
  * @memberof firefly
  *
  */
@@ -48,10 +51,15 @@ function getViewer(channel= getWsChannel(),file='') {
     channel += VIEWER_ID;
     const dispatch= (action) => dispatchRemoteAction(channel,action);
 
+    /**
+     * The interface to remotely communicate to the firefly viewer.
+     * @public
+     * @namespace firefly.ApiViewer
+     */
     return Object.assign({dispatch, channel},
                           buildImagePart(channel,file,dispatch),
                           buildTablePart(channel,file,dispatch),
-                          buildXYPlotPart(channel,file,dispatch)
+                          buildChartPart(channel,file,dispatch)
     );
 }
 
@@ -75,7 +83,7 @@ function buildImagePart(channel,file,dispatch) {
     /**
      * @summary set the default params the will be add to image plot request
      * @param params
-     * @memberof firefly
+     * @memberof firefly.ApiViewer
      * @public
      */
     const setDefaultParams= (params)=> defP= params;
@@ -83,7 +91,7 @@ function buildImagePart(channel,file,dispatch) {
     /**
      * @summary show a image in the firefly viewer in another tab
      * @param request Web plot request
-     * @memberof firefly
+     * @memberof firefly.ApiViewer
      * @public
      */
     const showImage= (request) => {
@@ -102,7 +110,7 @@ function buildImagePart(channel,file,dispatch) {
      * @summary show a image in the firefly viewer in another tab, the the file first then the url
      * @param file a file on the server
      * @param url a url to a fits file
-     * @memberof firefly
+     * @memberof firefly.ApiViewer
      * @public
      */
     const showImageFileOrUrl= (file,url) => showImage({file, url, Type : RequestType.TRY_FILE_THEN_URL});
@@ -131,7 +139,14 @@ function buildImagePart(channel,file,dispatch) {
 
 
 function buildTablePart(channel,file,dispatch) {
-    
+
+    /**
+     *
+     * @param {Object} request
+     * @param {TblOptions} options
+     * @memberof firefly.ApiViewer
+     * @public
+     */
     const showTable= (request, options)  => {
         doViewerOperation(channel,file, () => {
             dispatchTableSearch(request, options, dispatch);
@@ -147,9 +162,33 @@ function buildTablePart(channel,file,dispatch) {
     return {showTable, fetchTable};
 }
 
-function buildXYPlotPart(channel,file,dispatch) {
-    // todo
-    return {};
+function buildChartPart(channel,file,dispatch) {
+
+    /**
+     * @summary Show XY Plot
+     * @param {XYPlotOptions} xyPlotOptions
+     * @memberof firefly.ApiViewer
+     * @public
+     */
+    const showXYPlot= (xyPlotOptions) => {
+        doViewerOperation(channel, file, () => {
+            plotRemoteXYPlot(xyPlotOptions, dispatch);
+        });
+    };
+
+    /**
+     * @summary Show Histogram
+     * @param {HistogramOptions} histogramOptions
+     * @memberof firefly.ApiViewer
+     * @public
+     */
+    const showHistogram= (histogramOptions) => {
+        doViewerOperation(channel, file, () => {
+            plotRemoteHistogram(histogramOptions, dispatch);
+        });
+    };
+
+    return {showXYPlot, showHistogram};
 }
 
 
@@ -184,6 +223,59 @@ export function* doOnWindowConnected({channel, f}) {
 //---------- Private XYPlot functions
 //================================================================
 
+/**
+ * @param {XYPlotOptions} params - XY plot parameters
+ * @param {Function} dispatch - dispatch function
+ */
+function plotRemoteXYPlot(params, dispatch) {
+    const xyPlotParams = makeXYPlotParams(params);
+    let tblId = params.tbl_id;
+    if (!tblId) {
+        const source = params.source;
+        if (source) {
+            const searchRequest = makeFileRequest(
+                params.chartTitle||'', // title
+                params.source,  // source
+                null,  // alt_source
+                {pageSize: 0} // table options
+            );
+            tblId = searchRequest.tbl_id;
+            dispatchTableFetch(searchRequest, 0, dispatch);
+        } else {
+            logError('Either tbl_id or source must be specified in the parameters');
+            return;
+        }
+    }
+    const chartId = uniqueChartId('default_xyplot');
+    dispatchLoadPlotData({chartId, xyPlotParams, tblId, dispatcher: dispatch});
+}
+
+/**
+ * @param {HistogramOptions} params - histogram parameters
+ * @param {Function} dispatch - dispatch function
+ */
+function plotRemoteHistogram(params, dispatch) {
+    const histogramParams = makeHistogramParams(params);
+    let tblId = params.tbl_id;
+    if (!tblId) {
+        const source = params.source;
+        if (source) {
+            const searchRequest = makeFileRequest(
+                params.chartTitle||'', // title
+                params.source,  // source
+                null,  // alt_source
+                {pageSize: 0} // table options
+            );
+            tblId = searchRequest.tbl_id;
+            dispatchTableFetch(searchRequest, 0, dispatch);
+        } else {
+            logError('Either tbl_id or source must be specified in the parameters');
+            return;
+        }
+    }
+    const chartId = uniqueChartId('default_histogram');
+    dispatchLoadColData({chartId, histogramParams, tblId, dispatcher: dispatch});
+}
 
 //================================================================
 //---------- Private Table functions
@@ -207,7 +299,6 @@ function plotRemoteImage(request, dispatch) {
     request= confirmPlotRequest(request,{},'remoteGroup',makePlotId);
     dispatchPlotImage({wpRequest:request, viewerId:DEFAULT_FITS_VIEWER_ID, dispatcher:dispatch});
 }
-
 
 var plotCnt= 0;
 

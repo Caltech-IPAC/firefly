@@ -58,7 +58,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
                 break;
 
             case TABLE_LOADED :
-                [showImages, images] = handleNewTable(action, images, showImages);
+                [showImages, images] = handleNewTable(action, images, showImages, showTables);
                 break;
 
             case REPLACE_IMAGES :
@@ -82,6 +82,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         // change mode when new UI elements are added or removed from results
         switch (action.type) {
             case TBL_RESULTS_ADDED:
+            case TABLE_LOADED:
             case REPLACE_IMAGES :
             case ImagePlotCntlr.PLOT_IMAGE :
             case ImagePlotCntlr.PLOT_IMAGE_START :
@@ -104,6 +105,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         // calculate dropDown when new UI elements are added or removed from results
         switch (action.type) {
             case TBL_RESULTS_ADDED:
+            case TABLE_LOADED:
             case REPLACE_IMAGES :
             case ImagePlotCntlr.PLOT_IMAGE :
             case ImagePlotCntlr.PLOT_IMAGE_START :
@@ -131,8 +133,9 @@ function handleLayoutChanges(action) {
     }
 }
 
-function handleNewTable(action, images, showImages) {
+function handleNewTable(action, images, showImages, showTables) {
     // check for catalog or meta images
+    if (!showTables) return [showImages, images];        // ignores this if table is not visible
     const {tbl_id} = action.payload;
     const isMeta = isMetaDataTable(tbl_id);
     if (isMeta || isCatalogTable(tbl_id)) {

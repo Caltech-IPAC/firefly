@@ -2,10 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*
- * Added by LZ when generate doc, it is for testing only.  When module is used, it is list under module
- *
- */
 import {flux} from '../Firefly.js';
 
 import {updateSet, updateMerge, updateDelete} from '../util/WebUtil.js';
@@ -24,9 +20,6 @@ export const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
 export const SET_SELECTION = `${XYPLOT_DATA_KEY}/SET_SELECTION`;
 const SET_ZOOM = `${XYPLOT_DATA_KEY}/SET_ZOOM`;
 const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
-/**
- * @public
- */
 
 /*
  Possible structure of store:
@@ -49,54 +42,68 @@ const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
                     weightMax: string,
                     idStr: string
          }
-         xyPlotParams: {
-           title: string
-           xyRatio: number
-           nbins {x,y}
-           shading: string (lin|log)
-           selection: {xMin, xMax, yMin, yMax} // currently selected rectangle
-           zoom: {xMin, xMax, yMin, yMax} // currently zoomed rectangle
-           stretch: string (fit|fill)
-           x: {
-                columnOrExpr
-                label
-                unit
-                options: [grid,log,flip]
-              }
-           y: {
-                columnOrExpr
-                label
-                unit
-                options: [grid,log,flip]
-           }
+         xyPlotParams: XYPlotParams
      }
  */
 
+/**
+ * @global
+ * @public
+ * @typedef {Object} XYBoundaries - object with X and Y limits
+ * @prop {number} xMin - minimum X
+ * @prop {number} xMax - maximum X
+ * @prop {number} yMin - minimum Y
+ * @prop {number} yMax - maximum Y
+ */
 
 /**
- * @desc Load xy plot data Load xy plot data
+ * @global
+ * @public
+ * @typedef {Object} XYPlotParams - scatter plot parameters
+ * @prop {string}  [title] - chart title
+ * @prop {number}  [xyRatio] - x/y ratio (aspect ratio of the plot), when not defined, all the available space is used
+ * @prop {{x: number, y: number}}  [nbins] - number of bins along X and Y axis (applied to decimated plots only)
+ * @prop {string}  [shading] - color scale: 'lin' for linear, log - for log scale (applied to decimated plots only)
+ * @prop {XYBoundaries}  [userSetBoundaries] - user set axes limits
+ * @prop {XYBoundaries}  [selection] - currently selected rectangle
+ * @prop {XYBoundaries}  [zoom] -  currently zoomed rectangle
+ * @prop {string}  [stretch] - 'fit' to fit plot into available space or 'fill' to fill the available width (applied when xyPlotRatio is defined)
+ * @prop {Object}  x - X axis options
+ * @prop {string}  x.columnOrExpr - column name or expression, constructed from column names
+ * @prop {string}  [x.label] - X axis label, if not defined x.columnOrExpr is used as the label
+ * @prop {string}  [x.unit] - X axis unit (if defined, it will be a part of X axis title)
+ * @prop {string}  [x.options] - comma separated X axis options: grid, log, and flip
+ * @prop {Object}  y - Y axis options
+ * @prop {string}  y.columnOrExpr - column name or expression, constructed from column names
+ * @prop {string}  [y.label] - Y axis label, if not defined y.columnOrExpr is used as the label
+ * @prop {string}  [y.unit] - Y axis unit (if defined, it will be a part of Y axis title)
+ * @prop {string}  [y.options] - comma separated Y axis options: grid, log, and flip
+ */
+
+/**
+ * Load xy plot data Load xy plot data.
  *
+ * @param {Object} params - dispatch parameters
+ * @param {string} params.chartId - if no chart id is specified table id is used as chart id
+ * @param {XYPlotParams} params.xyPlotParams - XY plot options (column names, etc.)
+ * @param {boolean} [params.markAsDefault=false] - are the options considered to be "the default" to reset to
+ * @param {string} params.tblId - table id
+ * @param {Function} [params.dispatcher] - only for special dispatching uses such as remote
  * @public
  * @function dispatchLoadPlotData
  * @memberof firefly.action
- * @param {Object} params - dispatch parameters
- * @param {string} params.chartId - if no chart id is specified table id is used as chart id
- * @param {Object} params.xyPlotParams - XY plot options (column names, etc.)
- * @param {boolean} params.markAsDefault - are the options considered to be "the default" to reset to
- * @param {string} params.tblId - table id
- * @param {function} params.dispatcher only for special dispatching uses such as remote
  */
-export function dispatchLoadPlotData(params) {
-    const {chartId, xyPlotParams, markAsDefault=false, tblId, dispatcher=flux.process} = params;
+export function dispatchLoadPlotData({chartId, xyPlotParams, markAsDefault=false, tblId, dispatcher=flux.process}) {
     dispatcher({type: LOAD_PLOT_DATA, payload: {chartId: (chartId||tblId), xyPlotParams, markAsDefault, tblId}});
 }
 
 /**
- * Set selection to give user choice of actions on selection (zoom, filter, or select points)
- * @param {String} chartId - chart id
- * @param {Object} selection - {xMin, xMax, yMin, yMax}
+ * Set selection to give user choice of actions on selection (zoom, filter, or select points).
+ *
+ * @param {string} chartId - chart id
+ * @param {XYBoundaries} [selection] - {xMin, xMax, yMin, yMax}, remove selection when not defined
  * @public
- * @func dispatchSetSelection
+ * @function dispatchSetSelection
  * @memberof firefly.action
  */
 export function dispatchSetSelection(chartId, selection) {
@@ -104,12 +111,13 @@ export function dispatchSetSelection(chartId, selection) {
 }
 
 /**
- * Zoom XY plot to a given selection or reset zoom if no selection is given
- * @param {String} chartId - chart id
- * @param {String} tblId - table id
- * @param {Object} selection - {xMin, xMax, yMin, yMax}
+ * Zoom XY plot to a given selection or reset zoom if no selection is given.
+ *
+ * @param {string} chartId - chart id
+ * @param {string} tblId - table id
+ * @param {XYBoundaries} selection
  * @public
- * @func dispatchZoom
+ * @function dispatchZoom
  * @memberof firefly.action
  */
 export function dispatchZoom(chartId, tblId, selection) {
@@ -152,11 +160,9 @@ function dispatchResetZoom(chartId) {
 
 
 /**
- * @param rawAction (its payload should contain searchRequest to get source table and histogram parameters)
- * @returns function which loads plot data (x, y, rowIdx, etc.)
- * @public
- * @func loadPlotData
- * @memberof firefly.action
+ * @param {Object} rawAction - its payload should contain tblId of the source table and xyPlotParameters
+ * @returns {Function} - function which loads plot data (x, y, rowIdx, etc.)
+ * @function loadPlotData
  */
 export function loadPlotData (rawAction) {
     return (dispatch) => {
@@ -204,12 +210,10 @@ function serverParamsChanged(oldParams, newParams) {
  * isPlotDataReady - boolean, flags that xy plot data are available
  * xyPlotData - an array of data rows
  * xyPlotParams - plot parameters
- * decimatedUnzoomed - tells if unzoomed data are decimated
- * @param data {Object} the data to merge with the xyplot branch
- * @return {{type: string, payload: object}}
- * @memberof firefly.action
- * @public
- * @func updatePlotData
+ * decimatedUnzoomed - tells if unzoomed data are decimated.
+ *
+ * @param {Object} data - the data to merge with the xyplot branch
+ * @returns {{type: string, payload: object}} - action
  */
 function updatePlotData(data) {
     return { type : UPDATE_PLOT_DATA, payload: data };
@@ -366,9 +370,11 @@ function getPaddedRange(min, max, isLog, factor) {
 
 /**
  * Pad and round data boundaries
+ *
  * @param {Object} xyPlotParams - object with XY plot params
- * @param {Object} boundaries - object with xMin, xMax, yMin, yMax props
- * @param {Number} factor - part of the range to add on both sides
+ * @param {XYBoundaries} boundaries - object with xMin, xMax, yMin, yMax props
+ * @param {number} factor - part of the range to add on both sides
+ * @returns {XYBoundaries} - padded boundaries
  * @ignore
  */
 function getPaddedBoundaries(xyPlotParams, boundaries, factor=100) {
@@ -395,11 +401,12 @@ function getPaddedBoundaries(xyPlotParams, boundaries, factor=100) {
 }
 
 /**
- * fetches xy plot data
+ * Fetches xy plot data,
  * set isColStatsReady to true once done.
- * @param dispatch
- * @param tblId table search request to obtain source table
- * @param xyPlotParams object, which contains xy plot parameters
+ *
+ * @param {Function} dispatch
+ * @param {string} tblId - table search request to obtain source table
+ * @param {XYPlotParams} xyPlotParams - object, which contains xy plot parameters
  * @param {string} chartId  - chart id
  * @ignore
  */

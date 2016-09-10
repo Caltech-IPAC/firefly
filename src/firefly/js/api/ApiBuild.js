@@ -49,21 +49,51 @@ import {buildViewerApi} from './ApiViewer.js';
 import './ApiStyle.css';
 
 
-/**@namespace firefly*/
+/**
+ * High-level API.
+ * @public
+ * @namespace firefly
+ */
 
-/**@namespace firefly.action*/
+/**
+ * Actions and action dispatchers.
+ * @public
+ * @namespace firefly.action
+ */
 
-/**@namespace firefly.ui*/
+/**
+ * React components.
+ * @public
+ * @namespace firefly.ui
+ */
 
-/**@namespace firefly.util*/
+/**
+ * Utilities.
+ * @public
+ * @namespace firefly.util
+ */
 
-/** @namespace firefly.util.chart*/
+/**
+ * Chart utilities.
+ * @public
+ * @namespace firefly.util.chart
+ */
 
-/** @namespace firefly.util.data*/
+/**
+ * @namespace firefly.util.data
+ */
 
-/**@namespace firefly.util.image*/
+/**
+ * Image utilities.
+ * @public
+ * @namespace firefly.util.image
+ */
 
-/** @namespace firefly.util.table*/
+/**
+ * Table utilities.
+ * @public
+ * @namespace firefly.util.table
+ */
 
 
 /**
@@ -168,7 +198,7 @@ export function buildLowlevelAPI() {
 
 /**
  * pull all the dispatch functions out of the object
- * @param obj
+ * @param {Object} obj
  * @return {*}
  * @ignore
  */
@@ -182,8 +212,8 @@ function findDispatch(obj) {
 
 /**
  * pull all the action type constants out of the object
- * @param obj
- * @param prefix
+ * @param {Object} obj
+ * @param {string} prefix
  * @return {*}
  * @ignore
  */

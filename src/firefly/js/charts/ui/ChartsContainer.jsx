@@ -14,13 +14,15 @@ import {CloseButton} from '../../ui/CloseButton.jsx';
 
 import {ChartsTableViewPanel} from './ChartsTableViewPanel.jsx';
 import {getExpandedChartProps} from '../ChartsCntlr.js';
+import {getChartIdsWithPrefix} from '../ChartUtil.js';
 
 
 function nextState(props) {
     const {closeable, chartId, tblId, chartType, help_id} = props;
     const expandedMode = props.expandedMode && getExpandedMode() === LO_VIEW.xyPlots;
     const chartProps = expandedMode ? getExpandedChartProps() : {chartId, tblId, chartType, help_id};
-    return Object.assign({expandedMode,closeable}, chartProps);
+    const defaultCharts = getChartIdsWithPrefix('default');
+    return Object.assign({expandedMode,closeable, defaultCharts}, chartProps);
 }
 
 export class ChartsContainer extends Component {
@@ -53,19 +55,26 @@ export class ChartsContainer extends Component {
     storeUpdate() {
         if (this.iAmMounted) {
             const expandedMode = this.props.expandedMode && getExpandedMode() === LO_VIEW.xyPlots;
-            if (expandedMode !== this.state.expandedMode) {
+            if (expandedMode !== this.state.expandedMode ||
+                getChartIdsWithPrefix('default').length !== this.state.defaultCharts.length) {
                 this.setState(nextState(this.props));
             }
         }
     }
 
     render() {
-        const {expandedMode, closeable} = this.state;
+        const {defaultCharts, expandedMode, closeable} = this.state;
         return expandedMode ? <ExpandedView key='chart-expanded' closeable={closeable} {...this.props} {...this.state}/> :
             (
                 <div style={{ display: 'flex',  height: '100%', flexGrow: 1, flexDirection: 'row', overflow: 'hidden'}}>
                     <ChartsTableViewPanel key='xyplot' {...this.props} {...this.state} chartType='scatter'/>
                     <ChartsTableViewPanel key='histogram' {...this.props} {...this.state} chartType='histogram'/>
+                    {defaultCharts.map((c) => {
+                        const type = c.includes('xyplot') ? 'scatter' : 'histogram';
+                        return (
+                            <ChartsTableViewPanel key={'default-'+c} {...this.props} {...this.state} deletable={true} chartType={type} chartId={c}/>
+                        );
+                    })}
                 </div>
             );
     }
@@ -77,12 +86,22 @@ ChartsContainer.propTypes = {
 };
 
 function ExpandedView(props) {
+    const {defaultCharts, closeable} = props;
     return (
         <div style={{ display: 'flex', height: '100%', flexGrow: 1, flexDirection: 'column', overflow: 'hidden'}}>
             <div style={{marginBottom: 3}}>
-                {props.closeable && <CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
+                {closeable && <CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
             </div>
-            <ChartsTableViewPanel expandedMode={true} expandable={false} {...props} />
+            <ChartsTableViewPanel expandedMode={true} expandable={false} chartType={'scatter'} {...props} />
+            {defaultCharts.map((c) => {
+                if (props.chartId !== c) {
+                    const type = c.includes('xyplot') ? 'scatter' : 'histogram';
+                    return (
+                        <ChartsTableViewPanel key={'default-expanded-'+c} {...props} expandedMode={true}
+                                              expandable={false} chartType={type} chartId={c}/>
+                    );
+                }
+            })}
         </div>
     );
 

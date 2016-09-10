@@ -15,7 +15,7 @@ import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 
 export const histogramParamsShape = PropTypes.shape({
-         algorithm : PropTypes.oneOf(['fixedSizeBins','byesianBlocks']),
+         algorithm : PropTypes.oneOf(['fixedSizeBins','bayesianBlocks']),
          numBins : PropTypes.string,
          falsePositiveRate : PropTypes.string,
          minCutoff : PropTypes.number,
@@ -73,7 +73,7 @@ export class HistogramOptions extends React.Component {
     componentDidMount() {
         this.unbinder = FieldGroupUtils.bindToStore(this.props.groupKey,
             (fields) => {
-                if (this.iAmMounted && fields != this.state.fields) {
+                if (this.iAmMounted && fields !== this.state.fields) {
                     this.setState({fields});
                 }
             });
@@ -86,7 +86,7 @@ export class HistogramOptions extends React.Component {
 
         var algorithm =  FieldGroupUtils.getFldValue(fields, 'algorithm', 'fixedSizeBins');
 
-        if (algorithm === 'byesianBlocks') {
+        if (algorithm === 'bayesianBlocks') {
             return (
                 <div>
                 <ValidationField
@@ -199,7 +199,7 @@ export class HistogramOptions extends React.Component {
                                 label: 'Algorithm:'
                             }}
                             options={[
-                                {label: 'Byesian blocks', value: 'byesianBlocks'},
+                                {label: 'Bayesian blocks', value: 'bayesianBlocks'},
                                 {label: 'Fixed size', value: 'fixedSizeBins'}
                             ]}
                             alignment='horizontal'

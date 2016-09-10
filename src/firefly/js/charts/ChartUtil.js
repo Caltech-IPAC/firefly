@@ -21,8 +21,13 @@ import {HISTOGRAM_DATA_KEY} from './HistogramCntlr.js';
 export const SCATTER = 'scatter';
 export const HISTOGRAM = 'histogram';
 
+
 /**
  * This method returns an object with the keys x,y,highlightedRow
+ *
+ * @param {XYPlotParams} xyPlotParams
+ * @param {string} tblId
+ * @returns {{x: number, y: number, rowIdx}}
  */
 export const getHighlighted = function(xyPlotParams, tblId) {
 
@@ -89,6 +94,21 @@ export function hasRelatedCharts(tblId, space) {
     }
 }
 
+export function getChartIdsWithPrefix(prefix, space) {
+    if (space) {
+        return Object.keys(space).filter((c)=>{ return c.startsWith(prefix); });
+    } else {
+        const chartIds = [];
+        chartIds.push(...getChartIdsWithPrefix(prefix, getChartSpace(SCATTER)));
+        chartIds.push(...getChartIdsWithPrefix(prefix, getChartSpace(HISTOGRAM)));
+        return chartIds;
+    }
+}
+
+export function hasDefaultCharts() {
+    return (getChartIdsWithPrefix('default').length > 0);
+}
+
 export function getTblIdForChartId(chartId) {
     return  get(getChartSpace(SCATTER), [chartId, 'tblId']) ||
             get(getChartSpace(HISTOGRAM), [chartId, 'tblId']);
@@ -109,6 +129,14 @@ export function numRelatedCharts(tblId) {
     return numRelated;
 }
 
+/**
+ * @summary Get unique chart id
+ * @param {string} [prefix] - prefix
+ * @returns {string} unique chart id
+ * @public
+ * @function uniqueChartId
+ * @memberof firefly.util.chart
+ */
 export function uniqueChartId(prefix) {
     return uniqueId(prefix?prefix+'-c':'c');
 }
@@ -169,5 +197,84 @@ export function getDefaultXYPlotParams(tbl_id) {
     } : undefined;
 }
 
+/**
+ * @global
+ * @public
+ * @typedef {Object} XYPlotOptions - shallow object with XYPlot parameters
+ * @prop {string}  [source]     location of the ipac table, url or file path; ignored when XY plot view is added to table
+ * @prop {string}  [tbl_id]     table id of the table this plot is connected to
+ * @prop {string}  [chartTitle] title of the chart
+ * @prop {string}  xCol         column or expression to use for x values, can contain multiple column names ex. log(col) or (col1-col2)/col3
+ * @prop {string}  yCol         column or expression to use for y values, can contain multiple column names ex. sin(col) or (col1-col2)/col3
+ * @prop {number}  [xyRatio]    aspect ratio (must be between 1 and 10), if not defined the chart will fill all available space
+ * @prop {string}  [stretch]    'fit' to fit plot into available space or 'fill' to fill the available width (applied when xyPlotRatio is defined)
+ * @prop {string}  [xLabel]     label to use with x axis
+ * @prop {string}  [yLabel]     label to use with y axis
+ * @prop {string}  [xUnit]      unit for x axis
+ * @prop {string}  [yUnit]      unit for y axis
+ * @prop {string}  [xOptions]   comma separated list of x axis options: grid,flip,log
+ * @prop {string}  [yOptions]   comma separated list of y axis options: grid,flip,log
+ */
+
+/**
+ * @summary Convert shallow object with XYPlot parameters to scatter plot parameters object.
+ * @param {XYPlotOptions} params - shallow object with XYPlot parameters
+ * @returns {XYPlotParams} - object, used to create XYPlot chart
+ * @public
+ * @function makeXYPlotParams
+ * @memberof firefly.util.chart
+ */
+export function makeXYPlotParams(params) {
+    const {xCol, yCol, xyRatio, stretch, xLabel, yLabel, xUnit, yUnit, xOptions, yOptions} = params;
+    const xyPlotParams = xCol && yCol ?
+    {
+        xyRatio,
+        stretch,
+        x : { columnOrExpr : xCol, label : xLabel, unit : xUnit, options : xOptions},
+        y : { columnOrExpr : yCol, label : yLabel, unit : yUnit, options : yOptions}
+    } : undefined;
+    return xyPlotParams;
+}
 
 
+/**
+ * @global
+ * @public
+ * @typedef {Object} HistogramOptions - shallow object with histogram parameters
+ * @prop {string}  [source]     location of the ipac table, url or file path; ignored when histogram view is added to table
+ * @prop {string}  [tbl_id]     table id of the table this plot is connected to
+ * @prop {string}  [chartTitle] title of the chart
+ * @prop {string}  col          column or expression to use for histogram, can contain multiple column names ex. log(col) or (col1-col2)/col3
+ * @prop {number}  [numBins=50] number of bins' for fixed bins algorithm (default)
+ * @prop {number}  [falsePositiveRate] false positive rate for bayesian blocks algorithm
+ * @prop {string}  [xOptions]   comma separated list of x axis options: flip,log
+ * @prop {string}  [yOptions]   comma separated list of y axis options: flip,log
+ */
+
+/**
+ * @summary Convert shallow object with Histogram parameters to histogram plot parameters object.
+ * @param {HistogramOptions} params - shallow object with Histogram parameters
+ * @returns {HistogramParams} - object, used to create Histogram chart
+ * @public
+ * @function makeHistogramParams
+ * @memberof firefly.util.chart
+ */
+export function makeHistogramParams(params) {
+    const {col, xOptions, yOptions, falsePositiveRate} = params;
+    let numBins = params.numBins;
+    if (!falsePositiveRate && !numBins) {numBins = 50;}
+    const algorithm = numBins ? 'fixedSizeBins' : 'bayesianBlocks';
+
+    if (col) {
+        const histogramParams =
+        {
+            columnOrExpr: col,
+            algorithm,
+            numBins,
+            falsePositiveRate,
+            x: xOptions||'',
+            y: yOptions||''
+        };
+        return histogramParams;
+    }
+}
