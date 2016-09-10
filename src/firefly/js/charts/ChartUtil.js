@@ -217,7 +217,7 @@ export function getDefaultXYPlotParams(tbl_id) {
  */
 
 /**
- * @summary Convert shallow object with XYPlot parameters to scatter plot parameters object
+ * @summary Convert shallow object with XYPlot parameters to scatter plot parameters object.
  * @param {XYPlotOptions} params - shallow object with XYPlot parameters
  * @returns {XYPlotParams} - object, used to create XYPlot chart
  * @public
@@ -252,9 +252,9 @@ export function makeXYPlotParams(params) {
  */
 
 /**
- * @summary Convert shallow object with Histogram parameters to histogram plot parameters object
+ * @summary Convert shallow object with Histogram parameters to histogram plot parameters object.
  * @param {HistogramOptions} params - shallow object with Histogram parameters
- * @returns {Object} - object, used to create Histogram chart
+ * @returns {HistogramParams} - object, used to create Histogram chart
  * @public
  * @function makeHistogramParams
  * @memberof firefly.util.chart

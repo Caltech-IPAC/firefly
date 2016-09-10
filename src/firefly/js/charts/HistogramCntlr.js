@@ -44,28 +44,30 @@ export const UPDATE_COL_DATA = `${HISTOGRAM_DATA_KEY}/UPDATE_COL_DATA`;
  * @global
  * @public
  * @typedef {Object} HistogramParams - histogram parameters
- * @prop {string}  col          column or expression to use for histogram, can contain multiple column names ex. log(col) or (col1-col2)/col3
- * @prop {string}  algorithm    'fixedSizeBins' or 'bayesianBlocks'
- * @prop {number}  numBins      number of bins for fixed bins algorithm (default)
- * @prop {number}  falsePositiveRate false positive rate for bayesian blocks algorithm
- * @prop {string}  [x]   comma separated list of x axis options: flip,log
- * @prop {string}  [y]   comma separated list of y axis options: flip,log
+ * @prop {string} columnOrExpr - column or expression to use for histogram, can contain multiple column names ex. log(col) or (col1-col2)/col3
+ * @prop {string} algorithm - 'fixedSizeBins' or 'bayesianBlocks'
+ * @prop {number} [numBins] - number of bins for fixed bins algorithm (default)
+ * @prop {number} [falsePositiveRate] false positive rate for bayesian blocks algorithm
+ * @prop {string} [x]   comma separated list of x axis options: flip,log
+ * @prop {string} [y]   comma separated list of y axis options: flip,log
  */
 
-/*
- * Get column histogram data.
+/**
+ * Load histogram data.
+ *
  * @param {Object} params - dispatch parameters
  * @param {string} params.chartId - if no chart id is specified table id is used as chart id
- * @param {Object} params.histogramParams - histogram options (column name, etc.)
- * @param {boolean} params.markAsDefault - are the options considered to be "the default" to reset to
+ * @param {HistogramParams} params.histogramParams - histogram options (column name, etc.)
+ * @param {boolean} [params.markAsDefault=false] - are the options considered to be "the default" to reset to
  * @param {string} params.tblId - table id
- * @param {function} params.dispatcher only for special dispatching uses such as remote
- * @memberof firefly.action
+ * @param {Function} [params.dispatcher] - only for special dispatching uses such as remote
  * @public
+ * @function dispatchLoadColData
+ * @memberof firefly.action
  */
-export const dispatchLoadColData = function({chartId, histogramParams, markAsDefault=false, tblId, dispatcher= flux.process}) {
+export function dispatchLoadColData({chartId, histogramParams, markAsDefault=false, tblId, dispatcher=flux.process}) {
     dispatcher({type: LOAD_COL_DATA, payload: {chartId: (chartId||tblId), histogramParams, markAsDefault, tblId}});
-};
+}
 
 /*
  * Get column histogram data
@@ -82,7 +84,7 @@ const dispatchUpdateColData = function(chartId, isColDataReady, histogramData, h
  * @param rawAction (its payload should contain searchRequest to get source table and histogram parameters)
  * @returns function which loads statistics (column name, num. values, range of values) for a source table
  */
-export const loadColData = function(rawAction) {
+export function loadColData(rawAction) {
     return (dispatch) => {
 
         const {chartId, histogramParams, tblId} = rawAction.payload;
@@ -102,7 +104,7 @@ export const loadColData = function(rawAction) {
             }
         }
     };
-};
+}
 
 function serverParamsChanged(oldParams, newParams) {
     if (oldParams === newParams) { return false; }
@@ -189,11 +191,10 @@ function updateColData(data) {
 }
 
 /**
- * fetches active table statistics data
- * set isColStatsReady to true once done.
+ * Fetches histogram data.
  * @param {function} dispatch
- * @param {Object} tblId table id of the source table
- * @param {Object} histogramParams object, which contains histogram parameters
+ * @param {string} tblId table id of the source table
+ * @param {HistogramParams} histogramParams object, which contains histogram parameters
  * @param {string} chartId - chart id
  */
 function fetchColData(dispatch, tblId, histogramParams, chartId) {

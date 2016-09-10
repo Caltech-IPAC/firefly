@@ -72,7 +72,7 @@ export class ChartsContainer extends Component {
                     {defaultCharts.map((c) => {
                         const type = c.includes('xyplot') ? 'scatter' : 'histogram';
                         return (
-                            <ChartsTableViewPanel key={'default-xyplot-'+c} {...this.props} {...this.state} deletable={true} chartType={type} chartId={c}/>
+                            <ChartsTableViewPanel key={'default-'+c} {...this.props} {...this.state} deletable={true} chartType={type} chartId={c}/>
                         );
                     })}
                 </div>
@@ -94,10 +94,13 @@ function ExpandedView(props) {
             </div>
             <ChartsTableViewPanel expandedMode={true} expandable={false} chartType={'scatter'} {...props} />
             {defaultCharts.map((c) => {
-                const type = c.includes('xyplot') ? 'scatter' : 'histogram';
-                return (
-                    <ChartsTableViewPanel key={'default-expanded-xyplot-'+c} expandedMode={true} expandable={false} chartType={type} chartId={c} {...props} />
-                );
+                if (props.chartId !== c) {
+                    const type = c.includes('xyplot') ? 'scatter' : 'histogram';
+                    return (
+                        <ChartsTableViewPanel key={'default-expanded-'+c} {...props} expandedMode={true}
+                                              expandable={false} chartType={type} chartId={c}/>
+                    );
+                }
             })}
         </div>
     );

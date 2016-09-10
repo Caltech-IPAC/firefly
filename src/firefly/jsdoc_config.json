@@ -8,6 +8,7 @@
            "./js/api/",
            "./js/tables/TableUtil.js",
            "./js/charts/XYPlotCntlr.js",
+           "./js/charts/HistogramCntlr.js",
            "./js/charts/ChartUtil.js",
            "./js//visualize/CsysConverter.js",
            "./js/visualize/DrawLayerCntlr.js",
