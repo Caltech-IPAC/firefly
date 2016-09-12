@@ -1,0 +1,111 @@
+\                                                                               
+\fixlen = T
+\RowsRetrieved =                79   
+\QueryTime     =  00:00:00.63558               
+\ORIGIN  = 'IPAC Infrared Science Archive (IRSA), Caltech/JPL'
+\DATETIME= '2016-08-19 16:20:20'
+\DataTag = 'ADS/IRSA.Gator#2016/0819/162020_3880'
+\DATABASE= 'AllWISE Multiepoch Photometry Table (wise_allwise_p3as_mep)'
+\EQUINOX = 'J2000'
+\SKYAREA = 'within 10 arcsec of  ra=148.96969 dec=+69.67938 Eq J2000 '
+\StatusFile = '/workspace/TMP_xy7pi4_12093/Gator/irsa/3880/log.3880.html'
+\SQL     = 'WHERE (no constraints) 
+\SQL     = 'SELECT (26 column names follow in next row.)'
+\
+\ source_id_mf
+\ ___ Source id from Multiframe (coadd id and source number)
+\ ra (deg) 
+\ ___ right ascension (J2000)
+\ dec (deg) 
+\ ___ declination (J2000)
+\ nb
+\ ___ number of PSF components used in profile fit for source
+\ na
+\ ___ active deblend flag (=1 if actively deblended)
+\ cc_flags
+\ ___ contamination and confusion flags affecting the source in each band
+\ cat
+\ ___ flag indicating whether source will be in catalog  1= in ALLWISE Catalog
+\ frame_id
+\ ___ frameset identifier
+\ mjd (day) 
+\ ___ modified Julian date of the mid-point of the observation of the frame
+\ w1mpro_ep (mag) 
+\ ___ Single-exposure profile-fit  magnitude, band 1
+\ w1sigmpro_ep (mag) 
+\ ___ Single-exposure profile-fit photometric measurement uncertainty, band 1
+\ w1rchi2_ep
+\ ___ Reduced chi^2 of single-exposure profile-fit, band 1
+\ w2mpro_ep (mag) 
+\ ___ Single-exposure profile-fit  magnitude, band 2
+\ w2sigmpro_ep (mag) 
+\ ___ Single-exposure profile-fit photometric measurement uncertainty, band 2
+\ w2rchi2_ep
+\ ___ Reduced chi^2 of single-exposure profile-fit, band 2
+\ w3mpro_ep (mag) 
+\ ___ Single-exposure profile-fit  magnitude, band 3
+\ w3sigmpro_ep (mag) 
+\ ___ Single-exposure profile-fit photometric measurement uncertainty, band 3
+\ w3rchi2_ep
+\ ___ Reduced chi^2 of single-exposure profile-fit, band 3
+\ w4mpro_ep (mag) 
+\ ___ Single-exposure profile-fit  magnitude, band 4
+\ w4sigmpro_ep (mag) 
+\ ___ Single-exposure profile-fit photometric measurement uncertainty, band 4
+\ w4rchi2_ep
+\ ___ Reduced chi^2 of single-exposure profile-fit, band 4
+\ qi_fact
+\ ___ Frame image quality score
+\ saa_sep (deg) 
+\ ___ SAA separation. Distance from frame center to SAA boundary
+\ moon_masked
+\ ___ flag (0/1) indicating whether frame is within the moon-mask area in each band
+\ angle (deg) 
+\ ___ Position Angle in degree.
+\ dist (arcsec) 
+\ ___ Distance between the target position and each source in arcsec.
+\
+|                source_id_mf|         ra|        dec| nb| na|cc_flags|cat| frame_id|           mjd|w1mpro_ep|w1sigmpro_ep|w1rchi2_ep|w2mpro_ep|w2sigmpro_ep|w2rchi2_ep|w3mpro_ep|w3sigmpro_ep|w3rchi2_ep|w4mpro_ep|w4sigmpro_ep|w4rchi2_ep|qi_fact|saa_sep|moon_masked|             dist|           angle|
+|                        char|     double|     double|int|int|    char|int|     char|        double|   double|      double|    double|   double|      double|    double|   double|      double|    double|   double|      double|    double| double|    int|       char|           double|          double|
+|                            |        deg|        deg|   |   |        |   |         |           day|      mag|         mag|          |      mag|         mag|          |      mag|         mag|          |      mag|         mag|          |       |    deg|           |           arcsec|             deg|
+|                        null|       null|       null|nul|nul|    null|nul|     null|          null|     null|        null|      null|     null|        null|      null|     null|        null|      null|     null|        null|      null|   null|   null|       null|             null|            null|
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03606a232 55298.87043300     3.689        0.054  1.356e+00     4.172        0.003  9.383e+02    -1.348        0.095  2.570e-01    -3.676        0.001  4.690e+04     1.0      80        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03606a233 55298.87056040     4.054        0.031  1.264e+00     3.593        0.004  1.040e+03    -1.362        0.061  2.570e-01    -3.843        0.002  4.760e+04     1.0      81        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03610a233 55299.00286450     3.804        0.055  1.283e+00     4.324        0.004  9.493e+02    -1.313        0.118  2.560e-01    -4.064        0.002  4.945e+04     1.0      90        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03615a157 55299.13516860     4.068        0.088  1.267e+00     4.101        0.007  9.363e+02    -1.336        0.061  2.570e-01    -4.552        0.003  6.093e+04     1.0     104        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03618a233 55299.26747270     3.822        0.048  1.276e+00     4.045        0.004  9.366e+02    -1.300        0.075  2.560e-01    -4.075        0.001  4.958e+04     1.0     113        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03621a208 55299.33356110     3.755        0.022  1.307e+00     4.165        0.002  9.380e+02    -1.344        0.066  2.570e-01    -4.120        0.001  5.015e+04     1.0     111        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03622a233 55299.39977680     3.305        0.038  2.149e+00     4.232        0.004  9.417e+02    -1.279        0.060  2.560e-01    -3.871        0.002  4.776e+04     1.0     105        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03625a156 55299.46586520     4.065        0.207  1.266e+00     7.089        0.229  1.220e+03    -1.307        0.060  2.560e-01    -4.325        0.001  5.387e+04     1.0      99        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03627a171 55299.53208100     3.958        0.059  1.254e+00     4.065        0.005  9.363e+02      null         null       null      null         null       null     1.0      92        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03629a208 55299.59816940     6.262        0.435  2.294e+00     5.889        0.074  1.149e+03     0.044        0.452  4.670e-01     1.995         null       null     1.0      85        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03629a209 55299.59829670     3.749        0.050  1.311e+00     3.931        0.008  9.433e+02    -1.422        0.032  2.620e-01    -4.418        0.001  5.630e+04     1.0      86        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03630a233 55299.66438510     3.733        0.067  1.321e+00     3.287        0.004  1.311e+03    -1.288        0.108  2.560e-01    -4.233        0.001  5.196e+04     1.0      81        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03633a208 55299.73047350     4.603        0.242  1.526e+00     6.724        0.185  1.205e+03     0.036        0.454  4.650e-01     1.102         null       null     1.0      78        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03633a209 55299.73060090     4.024        0.055  1.259e+00     4.239        0.005  9.422e+02    -1.310        0.120  2.560e-01    -4.261        0.001  5.249e+04     1.0      79        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03634a233 55299.79668920     3.604        0.064  1.447e+00     4.086        0.004  9.362e+02    -1.325        0.099  2.560e-01    -4.402        0.001  5.585e+04     1.0      79        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03637a209 55299.86290490     3.533        0.025  1.553e+00     3.891        0.004  9.480e+02    -1.296        0.062  2.560e-01    -4.245        0.002  5.218e+04     1.0      81        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03638a232 55299.92899330     4.133        0.058  1.285e+00     3.918        0.002  9.447e+02    -1.353        0.175  2.570e-01    -4.464        0.001  5.772e+04     1.0      84        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03641a209 55299.99520910     3.922        0.059  1.255e+00     4.315        0.004  9.485e+02    -1.292        0.070  2.560e-01    -4.001        0.001  4.878e+04     1.0      90        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03645a167 55300.12751320     3.134        0.031  2.958e+00     3.714        0.006  9.883e+02    -1.295        0.072  2.560e-01    -4.328        0.001  5.393e+04     1.0     103        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03649a209 55300.25981730     3.968        0.056  1.254e+00     4.283        0.006  9.456e+02    -1.349        0.150  2.570e-01    -4.385        0.001  5.538e+04     1.0     113        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 03653a209 55300.39212140     4.171        0.056  1.298e+00     3.477        0.003  1.115e+03    -1.330        0.087  2.560e-01    -4.054        0.002  4.934e+04     1.0     106        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09397b071 55490.37654830     3.538        0.343  1.544e+00     3.439        0.050  1.146e+03      null         null       null      null         null       null     0.5      78        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09401b071 55490.50885100     3.049         null  1.254e+00     4.215        0.165  9.406e+02      null         null       null      null         null       null     0.5      80        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09405b071 55490.64115500     4.191        0.448  1.305e+00     3.266        0.082  1.341e+03      null         null       null      null         null       null     1.0      90        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09408a046 55490.70724330     4.664         null  2.161e+00     4.291        0.185  9.462e+02      null         null       null      null         null       null     1.0      97        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09409b071 55490.77333160     3.727        0.113  1.326e+00     3.182        0.006  1.473e+03      null         null       null      null         null       null     1.0     105        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09412a046 55490.83954730     4.117        0.543  1.280e+00     3.325        0.037  1.264e+03      null         null       null      null         null       null     1.0     111        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09413b071 55490.90563560     3.508        0.094  1.598e+00     3.193        0.006  1.454e+03      null         null       null      null         null       null     1.0     114        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09416a046 55490.97172390     4.410        0.501  1.412e+00     3.762        0.116  9.739e+02      null         null       null      null         null       null     1.0     111        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09417b071 55491.03793960     3.854        0.078  1.266e+00     3.403        0.006  1.179e+03      null         null       null      null         null       null     1.0     106        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09420a046 55491.10402790     3.318        0.072  2.103e+00     2.967        0.005  1.971e+03      null         null       null      null         null       null     1.0      98        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09421b070 55491.17011620     3.536        0.048  1.548e+00     2.620        0.003  3.545e+03      null         null       null      null         null       null     1.0      91        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09421b071 55491.17024350     3.860         null  1.700e+00     3.682        0.080  9.997e+02      null         null       null      null         null       null     0.5      91        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09424a046 55491.23633180     3.134        0.087  2.956e+00     2.933        0.003  2.076e+03      null         null       null      null         null       null     1.0      84        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09425b071 55491.30242010     3.351        0.089  1.992e+00     2.611        0.002  3.604e+03      null         null       null      null         null       null     1.0      80        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09428a045 55491.36850840     3.369        0.128  1.936e+00     2.902        0.006  2.181e+03      null         null       null      null         null       null     1.0      78        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09428a046 55491.36863580     4.361        0.539  1.385e+00     3.135        0.036  1.561e+03      null         null       null      null         null       null     1.0      77        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09432a046 55491.50081240     3.443        0.104  1.735e+00     3.431        0.006  1.153e+03      null         null       null      null         null       null     1.0      79        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09436a046 55491.63311630     3.581        0.069  1.478e+00     3.157        0.005  1.519e+03      null         null       null      null         null       null     1.0      89        0000          3.117961       359.960947 
+         1507p696_ac51-034127 148.9696883  69.6802461   1   0     dddH   1 09440a046 55491.76542030     3.218        0.064  2.513e+00     2.946        0.006  2.036e+03      null         null       null      null         null       null     1.0     104        0000          3.117961       359.960947 
