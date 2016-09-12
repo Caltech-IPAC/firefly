@@ -194,7 +194,7 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
     req.tbl_id = `cov-${tbl_id}`;
 
     if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.tblFilePath===table.tableMeta.tblFilePath*/) { //todo support decimated data
-        updateCoverageWithData(table, options, tbl_id, decimatedTables[tbl_id], decimatedTables, isTableUsingRadians(table));
+        updateCoverageWithData(viewerId, table, options, tbl_id, decimatedTables[tbl_id], decimatedTables, isTableUsingRadians(table));
     }
     else {
         decimatedTables[tbl_id]= 'WORKING';
@@ -202,7 +202,7 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
             (allRowsTable) => {
                 if (get(allRowsTable, ['tableData', 'data'],[]).length>0) {
                     decimatedTables[tbl_id]= allRowsTable;
-                    updateCoverageWithData(table, options, tbl_id, allRowsTable, decimatedTables, isTableUsingRadians(table));
+                    updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, decimatedTables, isTableUsingRadians(table));
                 }
             }
         ).catch(
@@ -218,7 +218,7 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
 
 
 
-function updateCoverageWithData(table, options, tbl_id, allRowsTable, decimatedTables, usesRadians) {
+function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, decimatedTables, usesRadians) {
     const {centralPoint, maxRadius}= computeSize(options, decimatedTables, allRowsTable, usesRadians);
 
     if (!centralPoint || maxRadius<=0) return;
@@ -227,6 +227,7 @@ function updateCoverageWithData(table, options, tbl_id, allRowsTable, decimatedT
                                         options.getCoverageBaseTitle(allRowsTable), 
                                         false, options.gridOn);
     wpRequest.setPlotId(PLOT_ID);
+    wpRequest.setPlotGroupId(viewerId);
     if (options.title) {
         wpRequest.setTitleOptions(TitleOptions.NONE);
         wpRequest.setTitle(options.title);
