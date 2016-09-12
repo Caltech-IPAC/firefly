@@ -108,6 +108,8 @@ export function rotateActionCreator(rawAction) {
         if (rotateType===RotateType.UNROTATE && !p.plotState.isRotated()) {
             firstRotate= false;
         }
+        const vr= getState()[IMAGE_PLOT_KEY];
+        if (vr.wcsMatchType) dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
 
         if (firstRotate) doRotate(dispatcher,plotView,rotateType,angle,newZoomLevel);
 
@@ -136,6 +138,8 @@ export function cropActionCreator(rawAction) {
         if (!plotView || !imagePt1 || !imagePt2) return;
         var p= primePlot(plotView);
         if (!p) return;
+        const vr= getState()[IMAGE_PLOT_KEY];
+        if (vr.wcsMatchType) dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
 
         doCrop(dispatcher,plotView,imagePt1, imagePt2, cropMultiAll);
     };
@@ -161,6 +165,8 @@ export function flipActionCreator(rawAction) {
         var p= primePlot(plotView);
         if (!p) return;
 
+        const vr= getState()[IMAGE_PLOT_KEY];
+        if (vr.wcsMatchType) dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
         doFlip(dispatcher,plotView,isY);
         operateOnOthersInGroup(store,plotView, (pv) =>
             doFlip(dispatcher,pv,isY));
