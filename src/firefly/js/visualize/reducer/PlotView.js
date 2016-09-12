@@ -345,6 +345,7 @@ export function findWCSMatchOffset(vr, masterPlotOrId, matchPlotOrToId) {
     const masterP=  isString(masterPlotOrId) ? primePlot(vr, masterPlotOrId) : masterPlotOrId;
     const matchToP = isString(matchPlotOrToId) ? primePlot(vr, matchPlotOrToId) : matchPlotOrToId;
 
+    if (!masterP || !matchToP) return makeScreenPt(0,0);
     if (masterP.plotId===matchToP.plotId) return makeScreenPt(0,0);
 
     const masterPt = CCUtil.getScreenCoords(masterP, vr.wcsMatchCenterWP);

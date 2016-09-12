@@ -211,7 +211,7 @@ WhichView.propTypes= {
 
 
 const rightTitleStyle= {
-    display:'inline-block',
+    // display:'inline-block',
     paddingLeft : 5,
     cursor : 'pointer',
     float : 'right'
@@ -255,7 +255,7 @@ function PagingControl({visRoot,activePlotId, expandedMode}) {
                   onClick={() => dispatchChangeActivePlotView(plotId)}/>);
 
     const leftTitleStyle= {
-        display:'inline-block',
+        // display:'inline-block',
         cursor : 'pointer',
         textAlign : 'left'
     };
@@ -271,7 +271,7 @@ function PagingControl({visRoot,activePlotId, expandedMode}) {
 
     return (
         <div style={controlStyle} >
-            <div>
+            <div style= {{display: 'flex', flexDirection: 'row', alignItems:'center'}}>
                 <img style={leftImageStyle} src={PAGE_LEFT}
                      title={pTitle('Previous: ',visRoot,plotIdAry[prevIdx])}
                      onClick={() => dispatchChangeActivePlotView(plotIdAry[prevIdx])}
@@ -281,17 +281,18 @@ function PagingControl({visRoot,activePlotId, expandedMode}) {
                      onClick={() => dispatchChangeActivePlotView(plotIdAry[prevIdx])} >
                     {pTitle('',visRoot,plotIdAry[prevIdx])}
                 </a>
+                <div style={{flex: '1 1 auto'}}> </div>
 
-                <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right'}}
-                     title={pTitle('Next: ', visRoot,plotIdAry[nextIdx])}
-                     src={PAGE_RIGHT}
-                     onClick={() => dispatchChangeActivePlotView(plotIdAry[nextIdx])}
-                />
                 <a style={rightTitleStyle} className='ff-href text-nav-controls'
                    title={pTitle('Next: ', visRoot,plotIdAry[nextIdx])}
                    onClick={() => dispatchChangeActivePlotView(plotIdAry[nextIdx])} >
                     {pTitle('',visRoot,plotIdAry[nextIdx])}
                 </a>
+                <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right'}}
+                     title={pTitle('Next: ', visRoot,plotIdAry[nextIdx])}
+                     src={PAGE_RIGHT}
+                     onClick={() => dispatchChangeActivePlotView(plotIdAry[nextIdx])}
+                />
             </div>
             <div style={{textAlign:'center'}}>
                 {dots}

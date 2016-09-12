@@ -216,8 +216,6 @@ function installTiles(state, action) {
             return clone(oPv, {plot:p});
         });
     }
-    const boundsCheck= !Boolean(state.wcsMatchType) || state.activePlotId===plotId;
-    pv= updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv,centerImagePt,boundsCheck), boundsCheck);
 
     plot= primePlot(pv); // get the updated on
     PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, plot.plotState);

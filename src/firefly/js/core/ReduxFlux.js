@@ -20,6 +20,7 @@ import ImagePlotCntlr, {IMAGE_PLOT_KEY,
                         rotateActionCreator, flipActionCreator,
                         cropActionCreator, autoPlayActionCreator, changePrimeActionCreator,
                         restoreDefaultsActionCreator, overlayPlotChangeAttributeActionCreator,
+                        deletePlotViewActionCreator,
                         changePointSelectionActionCreator, wcsMatchActionCreator}
                         from '../visualize/ImagePlotCntlr.js';
 
@@ -112,7 +113,7 @@ const reducers = {
 let redux = null;
 
 
-// pre-map a set of action => creator prior to boostraping.
+// pre-map a set of action => creator prior to bootstrapping.
 actionCreators.set(AppDataCntlr.APP_LOAD, AppDataCntlr.loadAppData);
 actionCreators.set(AppDataCntlr.GRAB_WINDOW_FOCUS, AppDataCntlr.grabWindowFocus);
 actionCreators.set(AppDataCntlr.HELP_LOAD, AppDataCntlr.onlineHelpLoad);
@@ -133,6 +134,7 @@ actionCreators.set(ImagePlotCntlr.CHANGE_POINT_SELECTION, changePointSelectionAc
 actionCreators.set(ImagePlotCntlr.RESTORE_DEFAULTS, restoreDefaultsActionCreator);
 actionCreators.set(ImagePlotCntlr.EXPANDED_AUTO_PLAY, autoPlayActionCreator);
 actionCreators.set(ImagePlotCntlr.WCS_MATCH, wcsMatchActionCreator);
+actionCreators.set(ImagePlotCntlr.DELETE_PLOT_VIEW, deletePlotViewActionCreator);
 actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionCreator(drawLayerFactory));
 
 actionCreators.set(TablesCntlr.TABLE_SEARCH, TablesCntlr.tableSearch);
@@ -172,6 +174,7 @@ actionCreators.set('exampleDialog', (rawAction) => {
 /**
  * object with a key that can be filtered out, value should be a boolean or a function that returns a boolean
  */
+// eslint-disable-next-line
 var filterOutOfLogging= {
     [ExternalAccessCntlr.EXTENSION_ACTIVATE]: (action) => !action.payload.extension || action.payload.extension.extType!=='PLOT_MOUSE_READ_OUT',
     [FieldGroupCntlr.MOUNT_COMPONENT]: false
@@ -213,6 +216,7 @@ function collapsedFilter(getState,action) {
 }
 
 
+// eslint-disable-next-line
 var logger= loggerMiddleware({duration:true, predicate:logFilter, collapsed:collapsedFilter}); // developer can add for debugging
 
 

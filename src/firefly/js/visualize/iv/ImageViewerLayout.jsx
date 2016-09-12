@@ -49,7 +49,7 @@ function updateZoom(pv, paging) {
         const inActive= plotInActiveGroup(vr,pv.plotId);
         const isActive= vr.activePlotId===pv.plotId;
         doZoom= (isActive || !inActive);
-        actionScope= inActive ? ActionScope.GROUP : ActionScope.SINGLE;
+        actionScope= isActive ? ActionScope.GROUP : ActionScope.SINGLE;
     }
     if (doZoom) {
         dispatchZoom({

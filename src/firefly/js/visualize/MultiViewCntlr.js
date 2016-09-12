@@ -18,7 +18,6 @@ export const VIEWER_UNMOUNTED= `${IMAGE_MULTI_VIEW_PREFIX}.viewUnmounted`;
 export const ADD_IMAGES= `${IMAGE_MULTI_VIEW_PREFIX}.addImages`;
 export const REMOVE_IMAGES= `${IMAGE_MULTI_VIEW_PREFIX}.removeImages`;
 export const REPLACE_IMAGES= `${IMAGE_MULTI_VIEW_PREFIX}.replaceImages`;
-export const IMAGE_VIEW_TYPE= `${IMAGE_MULTI_VIEW_PREFIX}.imageViewType`;
 export const CHANGE_LAYOUT= `${IMAGE_MULTI_VIEW_PREFIX}.changeLayout`;
 export const UPDATE_CUSTOM_DATA= `${IMAGE_MULTI_VIEW_PREFIX}.updateCustomData`;
 export const ADD_TO_AUTO_RECEIVER = `${IMAGE_MULTI_VIEW_PREFIX}.addToAutoReceiver`;
@@ -186,7 +185,7 @@ export function dispatchViewerUnmounted(viewerId) {
 /**
  *
  * @param {string} viewerId
- * @param {object} customData
+ * @param {Object} customData
  */
 export function dispatchUpdateCustom(viewerId, customData) {
     flux.process({type: UPDATE_CUSTOM_DATA , payload: {viewerId,customData} });
@@ -282,14 +281,13 @@ export function getAViewFromMultiView(multiViewRoot) {
  *
  * @param {MultiViewRoot} multiViewRoot
  * @param {VisRoot} visRoot
- * @param {String} plotId
+ * @param {string} plotId
  * @return {boolean}
  */
 export function isViewerSingleLayout(multiViewRoot, visRoot, plotId) {
     var viewer;
     if (visRoot.expandedMode!==ExpandType.COLLAPSE) {
-        viewer= getViewer(multiViewRoot, EXPANDED_MODE_RESERVED);
-        return viewer.viewType===SINGLE;
+        return visRoot.expandedMode!==ExpandType.GRID;
     }
     else {
         const viewerId= findViewerWithPlotId(multiViewRoot, plotId);
@@ -302,8 +300,9 @@ export function isViewerSingleLayout(multiViewRoot, visRoot, plotId) {
 //======================================== Action Creator =============================
 //======================================== Action Creator =============================
 
+// eslint-disable-next-line
 function xxPLACEHOLDERxxxxxActionCreator(rawAction) {  // remember to export
-    return (dispatcher) => {
+    return (dispatcher) => { // eslint-disable-line
     };
 }
 

@@ -689,19 +689,38 @@ export function dispatchExpandedAutoPlay(autoPlayOn) {
 
 
 /**
- * @param rawAction
+ * @param {Action} rawAction
  * @returns {Function}
  */
 export function changePrimeActionCreator(rawAction) {
     return (dispatcher, getState) => changePrime(rawAction,dispatcher,getState);
 }
 
+/**
+ * @param {Action} rawAction
+ * @returns {Function}
+ */
+export function deletePlotViewActionCreator(rawAction) {
+    return (dispatcher, getState) => {
+        const vr= getState()[IMAGE_PLOT_KEY];
+        if (vr.wcsMatchType) dispatcher({ type: WCS_MATCH, payload: {wcsMatchType:false} });
+        dispatcher(rawAction);
+    };
+}
 
+/**
+ * @param {Action} rawAction
+ * @returns {Function}
+ */
 export function plotImageActionCreator(rawAction) {
     return PlotImageTask.makePlotImageAction(rawAction);
 }
 
 
+/**
+ * @param {Action} rawAction
+ * @returns {Function}
+ */
 export function restoreDefaultsActionCreator(rawAction) {
     return (dispatcher, getState) => {
         const vr= getState()[IMAGE_PLOT_KEY];
