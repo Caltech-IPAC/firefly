@@ -1,4 +1,4 @@
-package firefly.test.edu.caltech.ipac.firefly.server.query;
+package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.server.query.PhaseFoldedLightCurve;
@@ -18,8 +18,9 @@ import java.io.IOException;
 public class PhaseFoldedLightCurveTest {
 
     private static final String TEST_ROOT = "test"+ File.separatorChar;
-    private static String inFileName = "/hydra/cm/firefly/src/firefly/test/edu/caltech/ipac/firefly/server/query/AllWISE-MEP-m82-2targets-10arsecs-oneTarget.tbl";
-    //private static String inFileFullName =  TEST_ROOT + inFileName;
+    //private static String inFileName = "/hydra/cm/firefly/src/firefly/test/edu/caltech/ipac/firefly/server/query/AllWISE-MEP-m82-2targets-10arsecs-oneTarget.tbl";
+    private static final String inFileName = "edu/caltech/ipac/firefly/server/query/AllWISE-MEP-m82-2targets-10arsecs-oneTarget.tbl";
+    private static String inFileFullName =  TEST_ROOT + inFileName;
 
     private static final float period = 0.140630f;
     private static final String timeColName = "mjd";
@@ -28,10 +29,10 @@ public class PhaseFoldedLightCurveTest {
     private static final double delta = 0.001;
 
     @Test
-    public void PhaseFoldedLCTest() {
+    public void testPhaseFoldedLC() {
 
         try {
-            File inFile = new File(inFileName);
+            File inFile = new File(inFileFullName);
 
             //Get a datagroup from the IPAC table file:
             DataGroup dataGroup = DataGroupReader.readAnyFormat(inFile);

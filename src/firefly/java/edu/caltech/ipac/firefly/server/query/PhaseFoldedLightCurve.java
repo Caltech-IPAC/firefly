@@ -49,7 +49,7 @@ public class PhaseFoldedLightCurve {
         for (int i = 0; i < dg.size(); i++) {
             double mjd = (double)dg.get(i).getDataElement(timeColName);
             double phaseC = (mjd-tzero)/period - Math.floor((mjd-tzero)/period);
-            System.out.println(phaseC);
+            //System.out.println(phaseC);
             DataObject row = dg.get(i);
             row.setDataElement(phaseType, phaseC);
         }
@@ -92,7 +92,7 @@ public class PhaseFoldedLightCurve {
                 for (int i = 0; i < dataGroup.size(); i++) {
                     sum += (double)dataGroup.get(i).getDataElement(phaseColName);
                 }
-                System.out.println("sum = " + sum);
+                //System.out.println("sum = " + sum);
 
                 //Write out:
                 String outFileName = path+"phaseFolded_output_"+inFileName;
