@@ -350,9 +350,11 @@ function initCoverage(llApi, targetDiv,options= {}) {
     const {watchImageMetaData,watchCoverage}= llApi.util.image;
     highlevelImageInit(llApi);
 
+    const {canReceiveNewPlots='create_replace'}= options;
+
 
     renderDOM(targetDiv, MultiImageViewer,
-        {viewerId:targetDiv, canReceiveNewPlots:'replace_only', canDelete:false, Toolbar:MultiViewStandardToolbar });
+        {viewerId:targetDiv, canReceiveNewPlots, canDelete:false, Toolbar:MultiViewStandardToolbar });
     dispatchAddSaga(watchCoverage, {viewerId:targetDiv, options});
 }
 
