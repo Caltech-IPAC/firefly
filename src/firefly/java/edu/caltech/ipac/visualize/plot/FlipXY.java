@@ -28,6 +28,7 @@ public class FlipXY {
 
 
 
+
     /**c
      * constructor
      * @param inFitsRead - a FitsRead object
@@ -40,6 +41,7 @@ public class FlipXY {
         inImageHeader = inFitsRead.getImageHeader();
         inNaxis1 = inImageHeader.naxis1;
         inNaxis2 = inImageHeader.naxis2;
+
 
     }
 
@@ -63,8 +65,9 @@ public class FlipXY {
         int dim = getDataDimension(hdu);
         //convert data to float
         Object inData = ArrayFuncs.convertArray(hdu.getData().getData(), Float.TYPE);
-
+        short[]   masks =fitsRead.getMasks();
         Object newData=null;
+        short[] newMasks = null;
         if (direction.equalsIgnoreCase("yAxis")) {
             newData = doFlipInY(inData, dim);
         } else if (direction.equalsIgnoreCase("xAxis")) {
@@ -74,14 +77,32 @@ public class FlipXY {
                     "Cannot flip a PLATE projection image");
         }
 
-        ImageData newImageData =  new ImageData(newData);;
-        Header outFitsHeader = getOutFitsHeader();
+        if (masks!=null) {
+            Object newMaskData=null;
+            //flip masks
+            //convert mask array to two dimension
+            int[] dims = {inNaxis2,inNaxis1};
+            Object mask2D =  ArrayFuncs.curl(masks, dims);
+            if (direction.equalsIgnoreCase("yAxis")) {
+                newMaskData = doFlipInY(mask2D, dim);
+            } else if (direction.equalsIgnoreCase("xAxis")) {
+                newMaskData = doFlipInX(mask2D, dim);
+            } else {
+                throw new FitsException(
+                        "Cannot flip a PLATE projection image");
+            }
+            newMasks = (short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(newMaskData, Short.TYPE, true));
+        }
+
+        ImageData newImageData =  new ImageData(newData);
+          Header outFitsHeader = getOutFitsHeader();
         ImageHDU outHDU = new ImageHDU(outFitsHeader, newImageData);
         Fits newFits = new Fits();
         newFits.addHDU(outHDU);
 
         FitsRead[] outFitsRead = FitsRead.createFitsReadArray(newFits);
         FitsRead fr = outFitsRead[0];
+        fr.setMasks(newMasks);
         return fr;
     }
 
@@ -106,12 +127,7 @@ public class FlipXY {
 
     }
 
-    /**
-     * Do the flip along yAxis (naxis1)
-     * @param inData
-     * @param dim
-     * @return
-     */
+
     private Object doFlipInY(Object inData, int dim) {
 
         Object obj = null;
@@ -245,60 +261,38 @@ public class FlipXY {
 
             // negate all even coefficients
             if (inImageHeader.a_order >= 0) {
-                addAXOrderCards(outFitsHeader, "A_", inImageHeader.a_order, inImageHeader.a);
+                addABXOrderCards(outFitsHeader, "A_", inImageHeader.a_order, inImageHeader.a);
 
             }
 
             if (inImageHeader.b_order >= 0) {
 
-                addBXOrderCards(outFitsHeader, "B_", inImageHeader.b_order, inImageHeader.b);
+                addABXOrderCards(outFitsHeader, "B_", inImageHeader.b_order, inImageHeader.b);
             }
 
             if (inImageHeader.ap_order >= 0) {
 
-                addAXOrderCards(outFitsHeader, "AP_", inImageHeader.ap_order, inImageHeader.ap);
+                addABXOrderCards(outFitsHeader, "AP_", inImageHeader.ap_order, inImageHeader.ap);
             }
 
             if (inImageHeader.bp_order >= 0) {
-                addBXOrderCards(outFitsHeader, "BP_", inImageHeader.bp_order, inImageHeader.bp);
+                addABXOrderCards(outFitsHeader, "BP_", inImageHeader.bp_order, inImageHeader.bp);
             }
         }
         return outFitsHeader;
     }
 
     /**
-     * Add a_order and ap_order
+     *
      * @param outFitsHeader
      * @param xOrder
      * @param length
      * @param values
      * @throws HeaderCardException
      */
-    private void addAXOrderCards( Header outFitsHeader, String xOrder, double length, double[][] values) throws HeaderCardException {
+    private void addABXOrderCards( Header outFitsHeader, String xOrder, double length, double[][] values) throws HeaderCardException {
 
         for (int i = 0; i <= length; i += 2) {// do only odd i values
-           for (int j = 0; j <= length; j++) {
-                if (i + j <= length) {
-                    String  keyword = xOrder + i + "_" + j;
-                    outFitsHeader.addValue(keyword, - values[i][j], null);
-
-                }
-            }
-        }
-        return;
-    }
-
-    /**
-     * Add b_order and bp_order
-     * @param outFitsHeader
-     * @param xOrder
-     * @param length
-     * @param values
-     * @throws HeaderCardException
-     */
-    private void addBXOrderCards( Header outFitsHeader, String xOrder, double length, double[][] values) throws HeaderCardException {
-
-        for (int i = 1; i <= length; i += 2) {// do only odd i values
             for (int j = 0; j <= length; j++) {
                 if (i + j <= length) {
                     String  keyword = xOrder + i + "_" + j;
@@ -309,6 +303,8 @@ public class FlipXY {
         }
         return;
     }
+
+
 
     /**
      * Add the cd1 and cd2 cards if they exist in the inFitsHeader

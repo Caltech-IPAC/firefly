@@ -283,8 +283,6 @@ public class FitsRead implements Serializable {
             throws FitsException, GeomException {
 
         return new FlipXY(aFitsReader,"yAxis").doFlip();
-//        FlipLR flipLr = new FlipLR();
-//        return (flipLr.do_flip(aFitsReader));
     }
 
     /**
@@ -1780,6 +1778,9 @@ public class FitsRead implements Serializable {
      */
     public short[] getMasks(){
         return masks;
+    }
+    public void setMasks(short[] inMasks){
+        masks=inMasks;
     }
     /**
      * return the physical data value
