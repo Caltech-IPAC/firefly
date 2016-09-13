@@ -22,7 +22,7 @@ export {formatPosForTextField} from '../data/form/PositionFieldDef.js';
 //     showHelp, boolean
 //     return parse results
 
-var makeResolverPromise= function(objName) {
+var makeResolverPromise= function(objName, resolver) {
     var ignoreSearchResults= null;
     var aborted= false;
 
@@ -38,7 +38,7 @@ var makeResolverPromise= function(objName) {
                     reject();
                 }
                 else {
-                    var {p, rejectFunc}= makeSearchPromise(objName);
+                    var {p, rejectFunc}= makeSearchPromise(objName, resolver);
                     ignoreSearchResults= rejectFunc;
                     resolve(p);
                 }
@@ -53,9 +53,9 @@ var makeResolverPromise= function(objName) {
 
 
 
-function makeSearchPromise(objName) {
+function makeSearchPromise(objName, resolver= 'nedthensimbad') {
     var rejectFunc= null;
-    var url= `sticky/CmdSrv?objName=${objName}&resolver=nedthensimbad&cmd=CmdResolveName`;
+    var url= `sticky/CmdSrv?objName=${objName}&resolver=${resolver}&cmd=CmdResolveName`;
     var searchPromise= new Promise(
         function(resolve, reject) {
             fetchUrl(url).then( (response) => {
@@ -75,7 +75,7 @@ function makeSearchPromise(objName) {
 
 
 
-export var parseTarget= function(inStr, lastResults) {
+export var parseTarget= function(inStr, lastResults, resolver) {
     var wpt= null;
     var valid= false;
     var targetInput= inStr;
@@ -103,7 +103,7 @@ export var parseTarget= function(inStr, lastResults) {
                 if (posFieldDef.getObjectName()) {
                     showHelp= false;
                     feedback= `<i>Resolving:</i>  ${posFieldDef.getObjectName()}`;
-                    resolveData= resolveObject(posFieldDef);
+                    resolveData= resolveObject(posFieldDef, resolver);
                 }
                 else {
                     showHelp= true;
@@ -127,7 +127,7 @@ export function getFeedback(wpt) {
     return posFieldDef.formatTargetForHelp(wpt);
 }
 
-var resolveObject = function(posFieldDef) {
+var resolveObject = function(posFieldDef, resolver) {
     var objName= posFieldDef.getObjectName();
     if (!objName) {
         return {
@@ -137,7 +137,7 @@ var resolveObject = function(posFieldDef) {
         };
     }
 
-    var {p,aborter}= makeResolverPromise(objName);
+    var {p,aborter}= makeResolverPromise(objName, resolver);
     p= p.then( (results) =>
         {
             if (results) {
