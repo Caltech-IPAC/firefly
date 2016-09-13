@@ -19,12 +19,13 @@ import {REPLACE_IMAGES, DEFAULT_FITS_VIEWER_ID, getViewerPlotIds, getMultiViewRo
  * These main components are image plots, charts, tables, dropdown panel, etc.
  * This manager implements the default firefly viewer's requirements.
  * Because it may differs between applications, it is okay to have a custom layout manager if needed.
- * @param [title] title to display.
- * @param views defaults to tri-view if not given.
- * @param callback
+ * @param {object} p
+ * @param [p.title] title to display. p
+ * @param p.views defaults to tri-view if not given.
  */
 export function* layoutManager({title, views='tables | images | xyPlots'}) {
     views = LO_VIEW.get(views) || LO_VIEW.none;
+    var coverageLockedOn= false;
 
     while (true) {
         const action = yield take([
@@ -58,7 +59,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
                 break;
 
             case TABLE_LOADED :
-                [showImages, images] = handleNewTable(action, images, showImages, showTables);
+                [showImages, images, coverageLockedOn] = handleNewTable(action, images, showImages, showTables, coverageLockedOn);
                 break;
 
             case REPLACE_IMAGES :
@@ -67,10 +68,10 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
                 [showImages, images, ignore] = handleNewImage(action, images);
                 break;
             case TBL_RESULTS_ACTIVE:
-                [showImages, images] = handleActiveTableChange(action.payload.tbl_id, images);
+                [showImages, images, coverageLockedOn] = handleActiveTableChange(action.payload.tbl_id, images, coverageLockedOn);
                 break;
             case TABLE_REMOVE:
-                [showImages, images] = handleActiveTableChange(getActiveTableId(findGroupByTblId(action.payload.tbl_id)), images);
+                [showImages, images, coverageLockedOn] = handleActiveTableChange(getActiveTableId(findGroupByTblId(action.payload.tbl_id)), images, coverageLockedOn);
                 break;
 
         }
@@ -133,14 +134,17 @@ function handleLayoutChanges(action) {
     }
 }
 
-function handleNewTable(action, images, showImages, showTables) {
+function handleNewTable(action, images, showImages, showTables, coverageLockedOn) {
     // check for catalog or meta images
-    if (!showTables) return [showImages, images];        // ignores this if table is not visible
+    if (!showTables) return [showImages, images, coverageLockedOn];        // ignores this if table is not visible
     const {tbl_id} = action.payload;
     const isMeta = isMetaDataTable(tbl_id);
     if (isMeta || isCatalogTable(tbl_id)) {
         if (!get(images, 'showFits')) {
-            images = clone(images, {selectedTab: 'coverage', showCoverage: true});
+                          // only show coverage if there are not images or coverage is showing
+            const showFits= shouldShowFits();
+            coverageLockedOn= !showFits||coverageLockedOn;
+            images = clone(images, {selectedTab: 'coverage', showCoverage: coverageLockedOn});
             showImages = true;
         }
     }
@@ -148,38 +152,45 @@ function handleNewTable(action, images, showImages, showTables) {
         images = clone(images, {selectedTab: 'meta', showMeta: true, metaDataTableId: tbl_id});
         showImages = true;
     }
-    return [showImages, images];
+    return [showImages, images, coverageLockedOn];
 }
 
-function handleActiveTableChange (tbl_id, images) {
+function handleActiveTableChange (tbl_id, images, coverageLockedOn) {
     // check for catalog or meta images
 
     const showFits= shouldShowFits();
-    var showImages= showFits;
+
+    var showImages= showFits||coverageLockedOn;
 
     if (!tbl_id) {
         images = clone(images, {showMeta: false, showCoverage: false, showFits, metaDataTableId: null});
-        return [showFits, images];
+        return [showFits, images, false];
     }
 
     const tblGroup= findGroupByTblId(tbl_id);
-    if (!tblGroup) return [showImages, images];
+    if (!tblGroup) return [showImages, images, coverageLockedOn];
     const tblList= getTblIdsByGroup(tblGroup);
-    if (isEmpty(tblList)) return [showImages, images];
+    if (isEmpty(tblList)) return [showImages, images, coverageLockedOn];
 
     const anyHasCatalog= hasCatalogTable(tblList);
     const anyHasMeta= hasMetaTable(tblList);
 
+    if (coverageLockedOn) {
+        coverageLockedOn= anyHasCatalog || anyHasMeta;
+        showImages= showFits || coverageLockedOn;
+    }
 
     if (!anyHasCatalog && !anyHasMeta) {
+        coverageLockedOn= false;
+        showImages= showFits || coverageLockedOn;
         images = clone(images, {showMeta: false, showCoverage: false, showFits, metaDataTableId: null});
-        return [showFits, images];
+        return [showFits, images, coverageLockedOn];
     }
 
 
 
     if (hasCatalogTable(tblList)) {
-        images = clone(images, {showCoverage: true, showFits});
+        images = clone(images, {showCoverage: coverageLockedOn, showFits});
         showImages = true;
     }
 
@@ -191,7 +202,7 @@ function handleActiveTableChange (tbl_id, images) {
     else {
         images = clone(images, {showMeta: false, showFits, metaTableId:null});
     }
-    return [showImages, images];
+    return [showImages, images, coverageLockedOn];
 }
 
 const hasCatalogTable= (tblList) => tblList.some( (id) => isCatalogTable(id) );
@@ -212,7 +223,7 @@ function handleNewImage(action, images) {
         images = clone(images, {selectedTab: 'fits', showFits: true});
     } else {
         ignore = true;
-    };
+    }
 
     return [true, images, ignore];
 }
