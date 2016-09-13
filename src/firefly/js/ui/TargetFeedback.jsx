@@ -8,9 +8,10 @@ var TargetFeedback = React.createClass(
 
   render() {
       var topDivStyle= {
-          paddingTop: '5px',
+          paddingTop: 5,
           position: 'relative',
-          height : '50px'
+          height : 50,
+          textAlign : 'center'
       };
       var exDivStyle= {
           display : 'inline-block'

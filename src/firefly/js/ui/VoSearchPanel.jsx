@@ -64,22 +64,7 @@ export class VoSearchPanel extends React.Component {
 function targetPanelArea() {
     return (
         <div >
-            <TargetPanel groupKey={gkey} labelWidth={100}>
-                <ListBoxInputField
-                    fieldKey='targettry'
-                    initialState={{
-                                  fieldKey:'targettry',
-                                  label : '',
-                                  labelWidth: 0
-                              }}
-                    label={''}
-                    options={[
-                            {label: 'Try NED then Simbad', value: 'NED'},
-                            {label: 'Try Simbad then NED', value: 'simbad'}
-                         ]}
-                    multiple={false}
-                />
-            </TargetPanel>
+            <TargetPanel groupKey={gkey} labelWidth={100}/>
         </div>
     );
 }

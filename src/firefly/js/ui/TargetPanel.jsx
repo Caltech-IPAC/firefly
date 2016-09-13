@@ -8,11 +8,17 @@ import {parseTarget, getFeedback, formatPosForTextField} from './TargetPanelWork
 import TargetFeedback from './TargetFeedback.jsx';
 import {InputFieldView} from './InputFieldView.jsx';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
+import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
 import FieldGroupUtils, {getFieldGroupState} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchActiveTarget, getActiveTarget} from '../core/AppDataCntlr.js';
 import {isValidPoint, parseWorldPt} from '../visualize/Point.js';
 
 
+const TARGET= 'targetSource';
+const RESOLVER= 'resolverSource';
+
+const nedThenSimbad= 'nedthensimbad';
+const simbadThenNed= 'simbadthenned';
 
 class TargetPanelView extends Component {
 
@@ -22,12 +28,12 @@ class TargetPanelView extends Component {
     }
 
     render() {
-        const {showHelp, feedback, valid, message, onChange, value, labelWidth, children}= this.props;
+        const {showHelp, feedback, valid, message, onChange, value, labelWidth, children, resolver}= this.props;
         var positionField = (<InputFieldView
                                 valid={valid}
                                 visible= {true}
                                 message={message}
-                                onChange={onChange}
+                                onChange={(ev) => onChange(ev.target.value, TARGET)}
                                 label='Name or Position:'
                                 value={value}
                                 tooltip='Enter a target'
@@ -37,7 +43,20 @@ class TargetPanelView extends Component {
 
         return (
             <div>
-                {positionField}
+                <div style= {{display: 'flex'}}>
+                    {positionField}
+                    <ListBoxInputFieldView
+                        options={[{label: 'Try NED then Simbad', value: nedThenSimbad},
+                               {label: 'Try Simbad then NED', value: simbadThenNed}
+                              ]}
+                        value={resolver}
+                        onChange={(ev) => onChange(ev.target.value, RESOLVER)}
+                        multiple={false}
+                        label=''
+                        labelWidth={3}
+                        wrapperStyle={{}}
+                    />
+                </div>
                 <TargetFeedback showHelp={showHelp} feedback={feedback}/>
             </div>
         );
@@ -49,6 +68,7 @@ TargetPanelView.propTypes = {
     valid   : PropTypes.bool.isRequired,
     showHelp   : PropTypes.bool.isRequired,
     feedback: PropTypes.string.isRequired,
+    resolver: PropTypes.string.isRequired,
     message: PropTypes.string.isRequired,
     onChange: PropTypes.func.isRequired,
     value : PropTypes.string.isRequired,
@@ -74,6 +94,7 @@ function getProps(params, fireValueChange) {
 
     var feedback= params.feedback|| '';
     var value= params.displayValue;
+    var resolver= params.resolver || nedThenSimbad;
     var showHelp= get(params,'showHelp', true);
     const wpStr= params.value;
     const wp= parseWorldPt(wpStr);
@@ -87,11 +108,12 @@ function getProps(params, fireValueChange) {
     return Object.assign({}, params,
         {
             visible: true,
-            onChange: (ev) => handleOnChange(ev,params, fireValueChange),
+            onChange: (value,source) => handleOnChange(value,source,params, fireValueChange),
             label: 'Name or Position:',
             tooltip: 'Enter a target',
             value,
             feedback,
+            resolver,
             showHelp,
             onUnmountCB: didUnmount
         });
@@ -100,21 +122,36 @@ function getProps(params, fireValueChange) {
 
 
 
-function handleOnChange(ev, params, fireValueChange) {
-    var displayValue= ev.target.value;
+function handleOnChange(value, source, params, fireValueChange) {
+    console.log({value,source});
     var {parseResults={}}= params;
 
+    var displayValue;
+    var resolver;
 
-    parseResults= parseTarget(displayValue, parseResults);
+    if (source===TARGET) {
+        resolver= params.resolver || nedThenSimbad;
+        displayValue= value;
+    }
+    else if (source===RESOLVER) {
+        resolver= value;
+        displayValue= params.displayValue || '';
+    }
+    else {
+        console.error('should never be here');
+    }
+
+    parseResults= parseTarget(displayValue, parseResults, resolver);
     var {resolvePromise}= parseResults;
 
     const targetResolve= (asyncParseResults) => {
-        return asyncParseResults ? makePayloadAndUpdateActive(displayValue, asyncParseResults) : null;
+        return asyncParseResults ? makePayloadAndUpdateActive(displayValue, asyncParseResults, null, resolver) : null;
     };
 
     resolvePromise= resolvePromise ? resolvePromise.then(targetResolve) : null;
 
-    fireValueChange(makePayloadAndUpdateActive(displayValue,parseResults, resolvePromise));
+    fireValueChange(makePayloadAndUpdateActive(displayValue,parseResults, resolvePromise, resolver));
+
 }
 
 /**
@@ -125,11 +162,11 @@ function handleOnChange(ev, params, fireValueChange) {
  * @param resolvePromise
  * @return {{message: string, displayValue: *, wpt: (*|null), value: null, valid: *, showHelp: (*|boolean), feedback: (string|*|string), parseResults: *}}
  */
-function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise) {
+function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise, resolver) {
     const {wpt}= parseResults;
     const wpStr= parseResults && wpt ? wpt.toString() : null;
 
-    return {
+    const payload= {
         message : 'Could not resolve object: Enter valid object',
         displayValue,
         wpt,
@@ -139,6 +176,8 @@ function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise) 
         feedback : parseResults.feedback,
         parseResults
     };
+    if (resolver) payload.resolver= resolver;
+    return payload;
 }
 
 const connectorDefaultProps = {

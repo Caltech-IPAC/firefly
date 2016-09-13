@@ -513,14 +513,6 @@ function TargetPanelSetView({plotMode, displayEntry}) {
              return (
                  <div className={'intarget'}>
                      <TargetPanel groupKey={panelKey}/>
-                     <ListBoxInputField
-                         fieldKey={keyMap['targettry']}
-                         options={[{label: 'Try NED then Simbad', value: 'NED'},
-                                   {label: 'Try Simbad then NED', value: 'simbad'}
-                              ]}
-                         multiple={false}
-                         labelWidth={3}
-                     />
                  </div>
              );
          }
