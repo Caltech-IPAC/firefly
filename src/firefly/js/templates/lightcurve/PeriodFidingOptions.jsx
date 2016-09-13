@@ -8,18 +8,46 @@ import {get,omit} from 'lodash';
 import {FormPanel} from '../../ui/FormPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {InputGroup} from '../../ui/InputGroup.jsx';
+import {InputField} from '../../ui/InputField.jsx';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {FieldGroupUtils} from '../../fieldGroup/FieldGroupUtils';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
+import Validate from '../../util/Validate.js';
+import {ValidationField} from '../../ui/ValidationField.jsx';
 
 const options= [
-    {label: 'Lomb Scarble', value:'LombScarble', proj:'LC'},
-    {label: 'Phase Dispersion Minimization', value:'PhaseDispersionMinimization', proj:'LC'},
+    {label: 'Lomb Scarble', value:'LombScarble', proj:'LCViewer'},
+    {label: 'Phase Dispersion Minimization', value:'PhaseDispersionMinimization', proj:'LCViewer'},
 
 ];
+const stepoptions= [
+    {label: 'Fixed Frequency', value:'fixedfreq', proj:'LCViewer'},
+    {label: 'Adaptive Frequency', value:'adaptivefreq', proj:'LCViewer'},
+];
 
+
+const defValues= {
+    periodMin: {
+        fieldKey: 'periodMin',
+        value: '1',
+        forceReinit: true,
+        validator: Validate.intRange.bind(null, 1, 100, 'low field'),
+        tooltip: 'this is a tip for low field',
+        label: 'Minimum Period:',
+        labelWidth: 150
+    },
+    periodMax: {
+        fieldKey: 'periodMax',
+        value: '3',
+        forceReinit: true,
+        validator: Validate.intRange.bind(null, 1, 100, 'periodMax field'),
+        tooltip: 'this is a tip for periodMax field',
+        label: 'Maximum Period:',
+        labelWidth: 150
+    }
+};
 
 export class PeriodFidingOptionsPanel extends Component {
 
@@ -64,7 +92,7 @@ export const LCPFOPanel = () =>  {
                 groupKey='PFO_PANEL'
                 onSubmit={(request) => onSearchSubmit(request)}
                 onCancel={hideSearchPanel}>
-                <FieldGroup groupKey='PFO_PANEL' validatorFunc={null} keepState={true}>
+                <FieldGroup groupKey='PFO_PANEL' reducerFunc={periodRangeReducer} keepState={true}>
                     <InputGroup labelWidth={150}>
                         <ListBoxInputField  initialState= {{
                               tooltip: 'Select Period Finding Algorithm',
@@ -72,14 +100,36 @@ export const LCPFOPanel = () =>  {
                        }}
                         options={options }
                         multiple={false}
-                        fieldKey='periodfinding'
+                        fieldKey='periodAlgor'
                         />
+                        <br/>
+                        <span> <b>Period Range: </b> </span>
+                        <br/><br/>
+                        <ValidationField fieldKey='periodMin'  />
+                        <br/>
+                        <ValidationField fieldKey='periodMax'  />
+                        <br/>
+                        <span> <b>Period Step Method: </b></span>
+                        <br/> <br/>
+                        <ListBoxInputField  initialState= {{
+                              tooltip: 'Period Step Method',
+                              label : 'Select Method:'
+                           }}
+                            options={stepoptions }
+                            multiple={false}
+                            fieldKey='stepMethod'
+                            />
+                        <br/>
+                        <InputField fieldKey='stepSize'
+                              tooltip='Enter Step Size'
+                              label='Step Size:'
+                        />
+                        <br/>
+
                     </InputGroup>
                 </FieldGroup>
-                <br/><br/>
-                <div>
-                 Parameter Panel changes with the selected Algorithm
-                </div>
+                <br/>
+
             </FormPanel>
         </div>
 
@@ -92,6 +142,36 @@ LCPFOPanel.propTypes = {
 
 LCPFOPanel.defaultProps = {
     name: 'LCPFO',
+};
+
+
+/**
+ *
+ * @param {object} inFields
+ * @param {object} action
+ * @return {object}
+ */
+var periodRangeReducer= function(inFields, action) {
+    if (!inFields)  {
+        return defValues;
+    }
+    else {
+        var {periodMin,periodMax}= inFields;
+        // inFields= revalidateFields(inFields);
+        if (!periodMin.valid || !periodMax.valid) {
+            return inFields;
+        }
+        if (parseFloat(periodMin.value)> parseFloat(periodMax.value)) {
+            periodMin= Object.assign({},periodMin, {valid:false, message:' periodMin must be lower than periodMax'});
+            periodMax= Object.assign({},periodMax, {valid:false, message:'periodMaxer must be higher than periodMin'});
+            return Object.assign({},inFields,{periodMin,periodMax});
+        }
+        else {
+            periodMin= Object.assign({},periodMin, periodMin.validator(periodMin.value));
+            periodMax= Object.assign({},periodMax, periodMax.validator(periodMax.value));
+            return Object.assign({},inFields,{periodMin,periodMax});
+        }
+    }
 };
 
 
