@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {set, has, get, isEmpty, cloneDeep, findKey} from 'lodash';
+import {set, has, get, isEmpty, cloneDeep, findKey, omit} from 'lodash';
 
 import {updateSet, updateMerge} from '../../util/WebUtil.js';
 import * as Cntlr from '../TablesCntlr.js';
@@ -58,8 +58,7 @@ function removeTable(root, action) {
     Object.keys(root).filter( (ui_id) => {
         return get(root, [ui_id, 'tbl_id']) === tbl_id;
     }).forEach( (ui_id) => {
-        root = Object.assign({}, root);
-        Reflect.deleteProperty(root, [ui_id]);
+        root = omit(root, [ui_id]);
     });
     return root;
 }

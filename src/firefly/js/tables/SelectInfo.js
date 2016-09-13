@@ -1,11 +1,7 @@
-/**
- * Created by loi on 1/15/16.
- */
-
-
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+
 import {isEmpty} from 'lodash';
 
 import {getTblById} from './TableUtil.js';
@@ -35,7 +31,7 @@ export class SelectInfo {
                 exceptions.delete(idx);
             } else {
                 exceptions.add(idx);
-                if (exceptions.size == rowCount) {
+                if (exceptions.size === rowCount) {
                     this.setSelectAll(true);
                 }
             }
@@ -85,7 +81,7 @@ export class SelectInfo {
     }
 
     isSelectAll() {
-        return this.data.selectAll && (this.data.exceptions.size == 0);
+        return this.data.selectAll && (this.data.exceptions.size === 0);
     }
 
     toString() {
@@ -95,7 +91,7 @@ export class SelectInfo {
     parse(s) {
         var selecInfo = {};
         var parts = s.split('-');
-        if (parts.length == 3) {
+        if (parts.length === 3) {
             selecInfo.selectAll = Boolean(parts[0]);
             if (!isEmpty(parts[1])) {
                 selecInfo.exceptions =  parts[1].reduce( (res, cval) => {
@@ -109,10 +105,11 @@ export class SelectInfo {
 
     /**
      * Destructing of the SelectInfo's data.
-     * @param {number=0} rowCount   IMPORTANT!!. Total number of rows in the table. defaults to zero.
-     * @param {boolean} [selectAll] boolean. Indicates selectAll mode. defaults to false.
-     * @param {Set} [exceptions]    A set of exceptions based on selectAll mode.
-     * @param {number} [offset]     All indices passed into this class's funtion will be offsetted by this given value.
+     * @param {Object}  p
+     * @param {number}  p.rowCount   IMPORTANT!!. Total number of rows in the table. defaults to zero.
+     * @param {boolean} p.selectAll boolean. Indicates selectAll mode. defaults to false.
+     * @param {Set}     p.exceptions    A set of exceptions based on selectAll mode.
+     * @param {number} offset     All indices passed into this class's funtion will be offsetted by this given value.
      * @returns {SelectInfo}
      */
     static newInstance({selectAll=false, exceptions=(new Set()), rowCount=0}, offset) {

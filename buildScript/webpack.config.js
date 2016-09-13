@@ -139,7 +139,8 @@ export default function makeWebpackConfig(config) {
                                  `${config.firefly_root}/node_modules/react-component-resizable/`],
                         loader: 'babel',
                         query: {
-                            presets: ['es2015', 'react', 'stage-2']
+                            presets: ['es2015', 'react', 'stage-2'],
+                            plugins: ['transform-runtime']
                         }
                     },
                     {   test    : /\.css$/,

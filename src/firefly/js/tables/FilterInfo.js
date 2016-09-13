@@ -116,7 +116,7 @@ export class FilterInfo {
      * validate the filterInfo string
      * @param {string} filterInfo
      * @param {TableColumn[]} columns array of column definitions
-     * @returns {[boolean, string]} isValid plus an error message if isValid is false.
+     * @returns {Array.<boolean, string>} isValid plus an error message if isValid is false.
      */
     static isValid(filterInfo, columns = []) {
         const rval = [true, ''];
