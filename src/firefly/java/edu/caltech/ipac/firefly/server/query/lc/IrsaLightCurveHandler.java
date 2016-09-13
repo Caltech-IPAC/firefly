@@ -3,8 +3,10 @@
  */
 package edu.caltech.ipac.firefly.server.query.lc;
 
+import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.VoTableUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
@@ -51,15 +53,33 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
     /**
      * Return a phase folded curve form original light-curve
      *
-     * @param tbl    orginal lc table
-     * @param period period for phase folding the lc curve
+     * @param tbl         orginal lc table
+     * @param period      period for phase folding the lc curve
+     * @param timeColName
      * @return phase folded curve (x2 original input table 0,2 phase)
      */
-    public File toPhaseFoldedTable(File tbl, float period) {
+    public File toPhaseFoldedTable(File tbl, float period, String timeColName) {
         //get raw lcTable and phase fold on time/period
         //for now, return same table.
-        //TODO change it with the implementation DM-7165
-        return tbl;
+        File tempFile = null;
+
+        try {
+            DataGroup dg = DataGroupReader.readAnyFormat(tbl);
+            PhaseFoldedLightCurve plc = new PhaseFoldedLightCurve();
+            plc.addPhaseCol(dg, period, timeColName);
+            tempFile = createPhaseFoldedTempFile();
+            IpacTableWriter.save(tempFile, dg);
+        } catch (IpacTableException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return tempFile;
+    }
+
+    protected File createPhaseFoldedTempFile() throws IOException {
+        return File.createTempFile("phase-folded", ".tbl", ServerContext.getTempWorkDir());
     }
 
     /**

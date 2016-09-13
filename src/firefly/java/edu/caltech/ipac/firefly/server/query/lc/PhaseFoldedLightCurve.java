@@ -1,11 +1,12 @@
-package edu.caltech.ipac.firefly.server.query;
+package edu.caltech.ipac.firefly.server.query.lc;
 
 import edu.caltech.ipac.astro.IpacTableException;
+import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.astro.IpacTableWriter;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -32,10 +33,17 @@ public class PhaseFoldedLightCurve {
         if (!dg.containsKey(timeColName)) {
             throw new IpacTableException("The data does not contain the column: " + timeColName);
         }
+        if (period<=0) {
+            throw new IpacTableException("Period should be positive, but value passed = " + period);
+        }
 
         //Add a new data type and colunm: phase
         DataType phaseType = new DataType("phase", "phase", Double.class, DataType.Importance.HIGH, null, false);
         //DataType phaseType = new DataType("phase", Double.class);
+
+        // TODO DM-7594 / DM-7595:
+        // phaseType.setFormatInfo... and attribute to appear as description in ipac table header.
+
         dg.addDataDefinition(phaseType);
 
         //Find the minimum time:

@@ -95,7 +95,7 @@ export class TestQueriesPanel extends Component {
                                 <div>{renderLoadRegion(fields)}</div>
                             </Tab>
                             <Tab name='Compute Periodogram' id='periodogram'>
-                                <div>{renderPeriodogram()}</div>
+                                <div>{renderPeriodogram(fields)}</div>
                             </Tab>
                         </FieldGroupTabs>
 
@@ -122,7 +122,7 @@ function hideSearchPanel() {
     dispatchHideDropDown();
 }
 
-function renderPeriodogram() {
+function renderPeriodogram(fields) {
 
     /**
      *
@@ -131,6 +131,7 @@ function renderPeriodogram() {
     function lightCurveSubmit(isPeriodogram) {
         console.log('periodogram...');
         let tReq;
+        const ds = get(fields, 'period.value', 1);
         //var tReq = makeTblRequest('PhaseFoldedProcessor', 'Phase folded', { period: '1', 'table_name':'folded_table','original_table':});
         if (isPeriodogram) {
             tReq = makeTblRequest('LightCurveProcessor', 'Periodogram', {
@@ -139,13 +140,15 @@ function renderPeriodogram() {
             });
         } else {
             tReq = makeTblRequest('PhaseFoldedProcessor', 'Phase folded', {
-                'period_days': '1',
+                'period_days': ds,
                 'table_name': 'folded_table',
+                'time_col_name':'mjd',
                 //'original_table': 'file:///Users/ejoliet/Documents/IPAC/ipac_samples/AllWISE-MEP-m82-2targets-10arsecs.tbl'
-                'original_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/AllWISE-MEP-m82-2targets-10arsecs.tbl'
+                'original_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/OneTarget-27-AllWISE-MEP-m82-2targets-10arsecs.tbl'
             });
         }
-
+        console.log(ds);
+        console.log('tReq ' +tReq);
         dispatchTableSearch(tReq);
     }
 
@@ -163,7 +166,7 @@ function renderPeriodogram() {
             <ValidationField fieldKey='period'
                              initialState={{
                                           fieldKey: 'period',
-                                          value: '0.0',
+                                          value: '1.0',
                                           tooltip: 'period',
                                           label : 'period:',
                                           labelWidth : 100

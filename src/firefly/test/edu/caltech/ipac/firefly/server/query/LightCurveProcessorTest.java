@@ -138,15 +138,14 @@ public class LightCurveProcessorTest {
         if(deleteOnExit){
             rawTable.deleteOnExit();
         }
-        IrsaLightCurveHandler t = new IrsaLightCurveHandler() {
-
-            private File getUnchangedTable(File tbl){
-                return tbl;
-            }
+        IrsaLightCurveHandler t = new IrsaLightCurveHandler(){
             @Override
-            public File toPhaseFoldedTable(File tbl, float period) {
-                //return same table for now, once implemented, plug the right code here
-                return getUnchangedTable(tbl);
+            protected File createPhaseFoldedTempFile() throws IOException {
+                File tmpFile = File.createTempFile("phase-folded-test-", ".tbl", new File("."));
+                if (deleteOnExit) {
+                    tmpFile.deleteOnExit();
+                }
+                return tmpFile;
             }
         };
 
@@ -159,15 +158,25 @@ public class LightCurveProcessorTest {
         List<DataObject> dgjListOrigin = inDataGroup.values();
         DataType[] inColumns = inDataGroup.getDataDefinitions();
 
-        File p = t.toPhaseFoldedTable(new File(req.getLcSource()), req.getPeriod());
+        File p = t.toPhaseFoldedTable(new File(req.getLcSource()), req.getPeriod(), req.getTimeColName());
 
         try {
             inDataGroup = IpacTableReader.readIpacTable(p, "phasefolded");
             List<DataObject> dgjList = inDataGroup.values();
             DataType[] inColumnsPhaseFolded = inDataGroup.getDataDefinitions();
             //should be one more extra column (Phase)
-            Assert.assertTrue(inColumns.length + " is not correct", inColumns.length == inColumnsPhaseFolded.length); //-1 when phasefold is introduced, test it
+            Assert.assertTrue(inColumns.length + " is not correct", inColumns.length == inColumnsPhaseFolded.length-1);
             Assert.assertTrue("expected " + dgjList.size(), dgjList.size() == dgjListOrigin.size());
+            double period = req.getPeriod();
+            double tzero = (Double)dgjListOrigin.get(0).getDataElement("mjd");
+
+            int iTest = 3;
+            double mjdTest = (Double) dgjListOrigin.get(iTest).getDataElement("mjd");
+
+            double phaseTested = (Double) inDataGroup.get(iTest).getDataElement("phase");
+            double phaseExpected = (mjdTest-tzero)/period - Math.floor((mjdTest-tzero)/period);
+
+            Assert.assertEquals(phaseExpected ,phaseTested,0.0001);
         } catch (IpacTableException e) {
             e.printStackTrace();
         }
@@ -181,7 +190,7 @@ public class LightCurveProcessorTest {
 
         @Override
         public float getPeriod() {
-            return 0.5f;
+            return 1.345f;
         }
 
         @Override
@@ -204,6 +213,11 @@ public class LightCurveProcessorTest {
         @Override
         public int getNumberPeaks() {
             return 50;
+        }
+
+        @Override
+        public String getTimeColName() {
+            return "mjd";
         }
 
         /**
