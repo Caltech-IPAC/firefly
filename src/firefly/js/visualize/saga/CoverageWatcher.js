@@ -127,8 +127,8 @@ export function* watchCoverage({viewerId, options= {}}) {
                 break;
 
             case TABLE_REMOVE:
-                if (!getTableInGroup(payload.tbl_id)) continue;
                 removeCoverage(payload.tbl_id, decimatedTables);
+                if (!getTableInGroup(payload.tbl_id)) continue;
                 displayedTableId = null;
                 previousDisplayedTableId = null;
                 tbl_id = getActiveTableId();
@@ -160,9 +160,9 @@ export function* watchCoverage({viewerId, options= {}}) {
 
 
 function removeCoverage(tbl_id, decimatedTables) {
-    Reflect.deleteProperty(decimatedTables, tbl_id);
-    if (!Object.keys(decimatedTables)) {
-        dispatchDeletePlotView(PLOT_ID);
+    if (tbl_id) Reflect.deleteProperty(decimatedTables, tbl_id);
+    if (isEmpty(Object.keys(decimatedTables))) {
+        dispatchDeletePlotView({plotId:PLOT_ID});
     }
 }
 
