@@ -196,6 +196,8 @@ function installTiles(state, action) {
         return state;
     }
 
+    pv.serverCall='success';
+    pv= replacePrimaryPlot(pv,WebPlot.setPlotState(plot,primaryStateJson,primaryTiles));
 
     if (state.wcsMatchType && mpwWcsPrimId!==plotId) {
         const masterPV= getPlotViewById(state, mpwWcsPrimId);
@@ -209,7 +211,6 @@ function installTiles(state, action) {
     }
 
 
-    pv.serverCall='success';
     if (!isEmpty(overlayStateJsonAry) && overlayStateJsonAry.length===pv.overlayPlotViews.length) {
         pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv,idx) => {
             var p= WebPlot.setPlotState(oPv.plot,overlayStateJsonAry[idx],overlayTilesAry[idx]);
