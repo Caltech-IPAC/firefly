@@ -82,6 +82,7 @@
     border-bottom-right-radius: 4px;
     padding-right: 7px;
     background-color: #E3E3E3;
+    display: inline-block;
 }
 
 .TablePanel__header {
@@ -92,7 +93,9 @@
     align-items: center;
     justify-content: space-between;
     padding: 2px;
-    box-sizing: border-box;}
+    box-sizing: border-box;
+    background-image: linear-gradient(#fff, #dcdcdc);
+}
 
 button.paging_bar {
     height: 16px;
@@ -145,8 +148,8 @@ button.tablepanel.clearFilters {
 .TablePanel__options--small {
     z-index: 1;
     position: absolute;
-    top: -2px;
-    right: -2px;
+    top: 0;
+    right: 0;
     width: 20px;
     height: 20px;
 }
@@ -230,8 +233,6 @@ button.tablepanel.clearFilters {
 
 .public_fixedDataTable_header, .public_fixedDataTable_header .public_fixedDataTableCell_main {
     background-color: #f6f7f8;
-    background-image: -webkit-linear-gradient(#fff, #dcdcdc);
-    background-image: linear-gradient(#fff, #dcdcdc);
     text-align: center;
 }
 

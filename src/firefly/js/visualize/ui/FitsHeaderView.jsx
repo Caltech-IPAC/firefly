@@ -203,10 +203,12 @@ function renderTable(band, fitsHeaderInfo, isPlacedOnTab) {
 
     const tableModel = fitsHeaderInfo[band];
     var myTableStyle= isPlacedOnTab?tableOnTabStyle:tableStyle;
+    const tbl_ui_id = tableModel.tbl_id + '-ui';
     return (
         <div style={ myTableStyle}>
            <TablePanel
                key={tableModel.tbl_id}
+               tbl_ui_id = {tbl_ui_id}
                tableModel={tableModel}
                height='calc(100% - 42px)'
                showToolbar={false}

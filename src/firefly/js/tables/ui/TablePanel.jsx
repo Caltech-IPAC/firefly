@@ -120,7 +120,7 @@ export class TablePanel extends Component {
         const {onTableChanged} = this.props;
 
         if (error) return <div className='TablePanel__error'>{error}</div>;
-        if (isEmpty(columns)) return <div style={{position: 'relative', width: '100%', height: '100%'}}><div className='loading-mask'/></div>;
+        if (isEmpty(columns)) return <Loading {...{showTitle, tbl_id, title, removable}}/>;
 
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
         const viewIcoStyle = 'tablepanel ' + (textView ? 'tableView' : 'textView');
@@ -257,4 +257,14 @@ function TableTitle({tbl_id, title, removable}) {
             </div>
         );
     } else return <div/>;
+}
+
+// eslint-disable-next-line
+function Loading({showTitle, tbl_id, title, removable}) {
+    return (
+        <div style={{position: 'relative', width: '100%', height: '100%'}}>
+            <div className='loading-mask'/>
+            {showTitle ? <TableTitle {...{tbl_id, title, removable}} /> : <div className='group'/>}
+        </div>
+    );
 }

@@ -68,12 +68,11 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
         columns[3] = {name: 'Description', prefWidth: widths[3], visibility: 'show'};
     }
 
-    const request = {pageSize:10000};
-    var tableModel = {totalRows: data.length, request, tbl_id:TBL_ID, tableData: {columns,  data }, highlightedRow: hlRowNum};
+    var tableModel = {totalRows: data.length, tbl_id:TBL_ID, tableData: {columns,  data }, highlightedRow: hlRowNum};
 
-
+    const minWidth = columns.reduce((rval, c) => rval + c.prefWidth, 0) * 7;
     var popup = (<PopupPanel title={popupTitle}>
-            {popupForm(tableModel,onColSelected,buttonText,popupId)}
+            {popupForm(tableModel,onColSelected,buttonText,popupId, minWidth)}
         </PopupPanel>
 
     );
@@ -88,8 +87,9 @@ export function hideColSelectPopup() {
     }
 }
 
-function popupForm(tableModel, onColSelected,buttonText,popupId) {
+function popupForm(tableModel, onColSelected,buttonText,popupId, minWidth) {
     const tblId = tableModel.tbl_id;
+    popupPanelResizableStyle.minWidth = Math.min(minWidth, 560);
     return (
         <div style={ popupPanelResizableStyle}>
             { renderTable(tableModel,popupId)}
@@ -106,11 +106,12 @@ function popupForm(tableModel, onColSelected,buttonText,popupId) {
  * @return table section
  */
 function renderTable(tableModel,popupId) {
-
+    const tbl_ui_id = (tableModel.tbl_id || 'ColSelectView') + '-ui'; 
     return (
         <div style={tableStyle}>
            <TablePanel
                key={popupId}
+               tbl_ui_id = {tbl_ui_id}
                tableModel={tableModel}
                showToolbar={false}
                selectable={false}

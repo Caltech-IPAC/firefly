@@ -11,8 +11,8 @@ import {fetchUrl, encodeServerUrl, encodeParams} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
 
 export const SEARCH_SRV_PATH = getRootURL() + 'search/json';
+export const MAX_ROW = Math.pow(2,31) - 1;
 const SAVE_TABLE_URL = getRootURL() + 'servlet/SaveAsIpacTable';
-const INT_MAX = Math.pow(2,31) - 1;
 
 /**
  *  @public
@@ -178,7 +178,7 @@ export function doFetchTable(tableRequest, hlRowIdx) {
 
     const def = {
         startIdx: 0,
-        pageSize : INT_MAX
+        pageSize : MAX_ROW
     };
     var params = Object.assign(def, tableRequest);
     // encoding for method post
@@ -617,7 +617,7 @@ export function getTblInfo(tableModel, aPageSize) {
     if (!tableModel) return {};
     var {tbl_id, request, highlightedRow=0, totalRows=0, tableMeta={}, selectInfo, error} = tableModel;
     const {title} = tableMeta;
-    const pageSize = aPageSize || get(request, 'pageSize', 1);  // there should be a pageSize.. default to 1 in case of error.  pageSize cannot be 0 because it'll overflow.
+    const pageSize = aPageSize || get(request, 'pageSize', MAX_ROW);  // there should be a pageSize.. default to 1 in case of error.  pageSize cannot be 0 because it'll overflow.
     if (highlightedRow < 0 ) {
         highlightedRow = 0;
     } else  if (highlightedRow >= totalRows-1) {
