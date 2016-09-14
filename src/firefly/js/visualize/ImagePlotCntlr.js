@@ -362,14 +362,16 @@ export function dispatchWcsMatch({plotId, matchType, dispatcher= flux.process} )
  * @param {Enum} p.rotateType enum RotateType
  * @param {number} p.angle
  * @param {number} p.newZoomLevel after rotating
+ * @param {boolean} p.keepWcsLock it wcs lock is on then keep is on, the default is to unlock wcs
  * @param {ActionScope} p.pactionScope enum ActionScope
  * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
 export function dispatchRotate({plotId, rotateType, angle=-1, newZoomLevel=0,
+                                keepWcsLock= false,
                                 actionScope=ActionScope.GROUP,
                                 dispatcher= flux.process} ) {
     dispatcher({ type: ROTATE,
-        payload: { plotId, angle, rotateType, actionScope, newZoomLevel }});
+        payload: { plotId, angle, rotateType, actionScope, newZoomLevel, keepWcsLock}});
 }
 
 

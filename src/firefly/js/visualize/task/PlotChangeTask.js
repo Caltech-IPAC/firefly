@@ -93,7 +93,7 @@ export function stretchChangeActionCreator(rawAction) {
 export function rotateActionCreator(rawAction) {
     return (dispatcher,getState) => {
         var store= getState()[IMAGE_PLOT_KEY];
-        var { plotId, angle, rotateType, newZoomLevel, actionScope }= rawAction.payload;
+        var { plotId, angle, rotateType, newZoomLevel, keepWcsLock, actionScope }= rawAction.payload;
         actionScope= ActionScope.get(actionScope);
         rotateType= RotateType.get(rotateType);
         var plotView= getPlotViewById(store,plotId);
@@ -109,7 +109,7 @@ export function rotateActionCreator(rawAction) {
             firstRotate= false;
         }
         const vr= getState()[IMAGE_PLOT_KEY];
-        if (vr.wcsMatchType) dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
+        if (vr.wcsMatchType && !keepWcsLock) dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
 
         if (firstRotate) doRotate(dispatcher,plotView,rotateType,angle,newZoomLevel);
 

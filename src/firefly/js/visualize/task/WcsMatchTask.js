@@ -113,6 +113,7 @@ function rotateNorth(plot, newZoomLevel) {
         plotId: plot.plotId,
         rotateType: RotateType.NORTH,
         newZoomLevel,
+        keepWcsLock : true,
         actionScope: ActionScope.SINGLE,
     });
 }
@@ -124,6 +125,7 @@ function rotateToMatch(plot, masterPlot, newZoomLevel) {
         plotId: plot.plotId,
         rotateType: RotateType.ANGLE,
         angle: targetRotation,
+        keepWcsLock : true,
         newZoomLevel,
         actionScope: ActionScope.SINGLE,
     });
