@@ -269,13 +269,11 @@ export class WebPlotRequest extends ServerRequest {
         return req;
     }
 
-    static makeProcessorRequest(serverRequest, desc) {
+    static makeProcessorRequest(obj, desc) {
         var req = new WebPlotRequest(RequestType.PROCESSOR, desc);
-        // req.setParams(serverRequest.getParams());
-        req.setParams(serverRequest.getParams());
+        req.setParams(obj);
         return req;
     }
-
 
     static makeURLPlotRequest(url, userDesc) {
         var req = new WebPlotRequest(RequestType.URL, userDesc||'Fits from URL: ' + url);
