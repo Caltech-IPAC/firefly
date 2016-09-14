@@ -6,19 +6,25 @@ import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {drawRegions} from '../visualize/region/RegionDrawer.js';
-import {addNewRegion, removeRegion} from '../visualize/region/RegionUtil.js';
+import {getRegionIndex, addNewRegion, removeRegion} from '../visualize/region/RegionUtil.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
 import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY,
+                        defaultRegionSelectColor,
+                        RegionSelectStyle,
+                        getRegionSelectStyle,
                         dispatchModifyCustomField,
                         dispatchAddRegionEntry,
                         dispatchDeleteRegionLayer,
-                        dispatchRemoveRegionEntry, dlRoot} from '../visualize/DrawLayerCntlr.js';
-import {get, set, isEmpty} from 'lodash';
+                        dispatchRemoveRegionEntry,
+                        dispatchSelectRegion,
+                        dlRoot} from '../visualize/DrawLayerCntlr.js';
+import {get, set, has, isEmpty, isString, isArray} from 'lodash';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
+import {flux} from '../Firefly.js';
 
 const ID= 'REGION_PLOT';
 const TYPE_ID= 'REGION_PLOT_TYPE';
@@ -34,9 +40,10 @@ function* regionsRemoveSaga({id, plotId}, dispatch, getState) {
                                      DrawLayerCntlr.DETACH_LAYER_FROM_PLOT]);
 
             if (action.payload.drawLayerId === id) {
+                var dl;
                 switch (action.type) {
                     case  DrawLayerCntlr.REGION_REMOVE_ENTRY :
-                        var dl = getDrawLayerById(getState()[DRAWING_LAYER_KEY], id);
+                        dl = getDrawLayerById(getState()[DRAWING_LAYER_KEY], id);
                         if (dl && isEmpty(get(dl, 'drawObjAry'))) {
                             dispatchDeleteRegionLayer(id, plotId);
                         }
@@ -59,6 +66,7 @@ function* regionsRemoveSaga({id, plotId}, dispatch, getState) {
  *                                 => regions and regionObjAry are updated as adding or removing regions occurs
  *                                 highlightedRegion: selected region
  * @return {Function}
+ * @ignore
  */
 function creator(initPayload) {
 
@@ -78,7 +86,8 @@ function creator(initPayload) {
     };
 
     var actionTypes = [DrawLayerCntlr.REGION_ADD_ENTRY,
-                       DrawLayerCntlr.REGION_REMOVE_ENTRY];
+                       DrawLayerCntlr.REGION_REMOVE_ENTRY,
+                       DrawLayerCntlr.REGION_SELECT];
 
     const id = get(initPayload, 'drawLayerId', `${ID}-${idCnt}`);
     var   dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', 'Region Plot'),
@@ -87,6 +96,7 @@ function creator(initPayload) {
     dl.regionAry = get(initPayload, 'regionAry', null);
     dl.dataFrom = get(initPayload, 'dataFrom', 'ds9');
     dl.highlightedRegion = get(initPayload, 'highlightedRegion', null);
+    dl.selectMode = get(initPayload, 'selectMode');
 
     dispatchAddSaga(regionsRemoveSaga, {id, plotId: get(initPayload, 'plotId')});
     idCnt++;
@@ -97,6 +107,7 @@ function creator(initPayload) {
  * find the drawObj which is selected for highlight
  * @param mouseStatePayload
  * @returns {Function}
+ * @ignore
  */
 function highlightChange(mouseStatePayload) {
     const {drawLayer,plotId,screenPt} = mouseStatePayload;
@@ -127,9 +138,9 @@ function highlightChange(mouseStatePayload) {
 
             dlRoot().drawLayerAry.forEach( (dl) => {
                 if (dl.drawLayerId === drawLayer.drawLayerId) {
-                    dispatchModifyCustomField(dl.drawLayerId, {highlightedRegion: closestObj}, plotId, false);
+                    dispatchSelectRegion(dl.drawLayerId, closestObj);
                 } else if (closestObj) {
-                    dispatchModifyCustomField(dl.drawLayerId, {highlightedRegion: null}, plotId, false);
+                    dispatchSelectRegion(dl.drawLayerId, null);
                 }
             });
         }
@@ -161,29 +172,74 @@ function highlightChange(mouseStatePayload) {
  * @param drawLayer
  * @param action
  * @returns {*}
+ * @ignore
  */
 function getLayerChanges(drawLayer, action) {
-    const {changes, regionChanges, drawLayerId } = action.payload;
+    const {regionChanges, drawLayerId } = action.payload;
 
     if (drawLayerId && drawLayerId !== drawLayer.drawLayerId) return null;
     var dd = Object.assign({}, drawLayer.drawData);
 
-    switch (action.type) {
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
-             if (changes) {
-                 dd[DataTypes.HIGHLIGHT_DATA] = null;
-                 if (!changes.highlightedRegion) {
-                     if (drawLayer.highlightedRegion) {
-                         drawLayer.highlightedRegion.highlight = 0; // un-highlight the last selected region
-                         drawLayer.highlightedRegion = null;
-                     }
-                 } else {
-                     if (drawLayer.highlightedRegion) drawLayer.highlightedRegion.highlight = 0;
-                     changes.highlightedRegion.highlight = 1;
+    var deHighlight = (obj) => {
+        //obj.highlight = 0;
+        obj.isRendered = 1;
+    };
 
-                 }
-             }
-             return Object.assign({}, changes, {drawData: dd});
+    //  re-render data in case  border 'replace' style is used for region selected
+    var reDrawData = (hiRegion) => {
+        if (has(drawLayer, 'selectMode.selectStyle') && drawLayer.selectMode.selectStyle.includes('Replace')) {
+            if (hiRegion) {
+                hiRegion.isRendered = 0;  // de-render the selected region
+            }
+
+            drawLayer.drawObjAry = drawLayer.drawObjAry.slice();
+            Object.keys(dd[DataTypes.DATA]).forEach((plotId) => {
+                set(dd[DataTypes.DATA], plotId, null);
+            });
+        }
+     };
+
+    switch (action.type) {
+        case DrawLayerCntlr.REGION_SELECT:
+            const {selectedRegion} = action.payload;
+
+            Object.keys(dd[DataTypes.HIGHLIGHT_DATA]).forEach((plotId) => {
+                set(dd[DataTypes.HIGHLIGHT_DATA], plotId, null)
+            });
+
+            var highlightedRegion = null;
+            var selectRegionDesc = null;
+
+            // no region is selected
+            if (isEmpty(selectedRegion)) {        // nothing is selected, empty string, empty array or null
+                if (drawLayer.highlightedRegion) {
+                    deHighlight(drawLayer.highlightedRegion); // de-highlight the highlighted region if there is
+                    drawLayer.highlightedRegion = null;
+                    reDrawData();
+                }
+            } else {
+                // test if selected region is string or array of string description
+                if (isString(selectedRegion) || isArray(selectedRegion)) {    // region description in string or array of string
+                    highlightedRegion = getSelectedRegionDrawObj(drawLayer, selectedRegion);
+                    highlightedRegion = isEmpty(highlightedRegion) ? null : highlightedRegion[0];
+                } else {    // a region drawObj
+                    highlightedRegion = selectedRegion;
+                }
+
+                // selected region is valid
+                if (highlightedRegion) {
+                    if (drawLayer.highlightedRegion) {
+                        deHighlight(drawLayer.highlightedRegion); // de-highlight the highlighted region if there is
+                    }
+
+                    reDrawData(highlightedRegion);
+
+                    //highlightedRegion.highlight = 1;
+                    selectRegionDesc = get(highlightedRegion, 'region.desc', null);
+                }
+            }
+            return Object.assign({}, {highlightedRegion}, {drawData: dd},
+                                     {selectRegionDesc});
 
         case DrawLayerCntlr.REGION_ADD_ENTRY:
             if (regionChanges) {
@@ -193,18 +249,22 @@ function getLayerChanges(drawLayer, action) {
                     drawLayer.title = layerTitle.slice();  // update title of the layer
                 }
                 addRegionsToData(drawLayer, regionChanges);
+
                 Object.keys(dd[DataTypes.DATA]).forEach((plotId) => {
                     set(dd[DataTypes.DATA], plotId, drawLayer.drawObjAry)
                 });
+
             }
             return {drawData: dd};
 
         case DrawLayerCntlr.REGION_REMOVE_ENTRY:
             if (regionChanges) {
                 removeRegionsFromData(drawLayer, regionChanges);
+
                 Object.keys(dd[DataTypes.DATA]).forEach((plotId) => {
                     set(dd[DataTypes.DATA], plotId, drawLayer.drawObjAry)
                 });
+
             }
 
             return {drawData: dd};
@@ -215,20 +275,22 @@ function getLayerChanges(drawLayer, action) {
 }
 
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
-    const {highlightedRegion, drawObjAry} = drawLayer;
+    const {highlightedRegion, drawObjAry, selectMode} = drawLayer;
 
     switch (dataType) {
-        case DataTypes.DATA:
+        case DataTypes.DATA:    // based on the same drawObjAry to draw the region on each plot
             return isEmpty(lastDataRet) ? drawObjAry || plotAllRegions(drawLayer) : lastDataRet;
-        case DataTypes.HIGHLIGHT_DATA:
-            return isEmpty(lastDataRet) ? plotHighlightRegion(highlightedRegion, plotId) : lastDataRet;
+        case DataTypes.HIGHLIGHT_DATA:      // create the region drawObj based on the original region for upright case.
+            return isEmpty(lastDataRet) ?
+                   plotHighlightRegion(highlightedRegion, plotId, selectMode) : lastDataRet;
     }
     return null;
 }
 /**
- * create DrawingObj for all regions
- * @param dl    drawing layer
- * @returns {*}
+ * @summary create DrawingObj for all regions
+ * @param {Object} dl    drawing layer
+ * @returns {Object[]}
+ * @ignore
  */
 function plotAllRegions(dl) {
     var {dataFrom, regionAry} = dl; //regionAry: array of region strings
@@ -245,34 +307,45 @@ function plotAllRegions(dl) {
 }
 
 /**
- * create DrawingObj for highlighted region
- * @param highlightedObj
- * @param plotId
- * @returns {*}
+ * @summary create DrawingObj for highlighted region
+ * @param {Object} highlightedObj
+ * @param {string} plotId
+ * @param {Object} selectMode
+ * @returns {Object[]}
+ * @ignore
  */
-function plotHighlightRegion(highlightedObj, plotId) {
+function plotHighlightRegion(highlightedObj, plotId, selectMode) {
     if (!highlightedObj) {
         return [];
     }
 
     if (highlightedObj.region) highlightedObj.region.highlighted = 1;
-    return [DrawOp.makeHighlight(highlightedObj, primePlot(visRoot(), plotId))];
+    var hObj = [DrawOp.makeHighlight(highlightedObj, primePlot(visRoot(), plotId), selectMode)];
+
+    hObj.forEach((oneObj) => {
+        oneObj.highlight = 1;
+    });
+
+    return hObj;
 }
 
 /**
- * add new DrawingObj into originally displayed DrawingObj set
- * @param drawLayer
- * @param addedRegions
- * @returns {Array}
+ * @summary add new DrawingObj into originally displayed DrawingObj set
+ * @param {Object} drawLayer
+ * @param {string|string[]} addedRegions
+ * @returns {Object[]}
+ * @ignore
  */
 function addRegionsToData(drawLayer, addedRegions) {
     var {regions, drawObjAry: lastData} = drawLayer;
     var resultRegions = regions ? regions.slice() : [];
     var allDrawobjs = lastData ? lastData.slice() : [];
 
-    if (addedRegions) {
-        resultRegions = addedRegions.reduce ( (prev, aRegionDes) => {
-            var aRegion = RegionFactory.parsePart(aRegionDes);
+    if (!isEmpty(addedRegions)) {
+        var allRegions = isString(addedRegions) ? [addedRegions] : addedRegions;
+        var rgObj = RegionFactory.parseRegionDS9(allRegions);
+
+        resultRegions = rgObj.reduce ( (prev, aRegion) => {
             var newDrawobj = addNewRegion(prev, aRegion);
 
             if (newDrawobj) {
@@ -290,9 +363,10 @@ function addRegionsToData(drawLayer, addedRegions) {
 
 /**
  * remove DrawingObj from originally displayed DrawingObj set
- * @param drawLayer
- * @param removedRegions
- * @returns {Array}
+ * @param {Object} drawLayer
+ * @param {string|string[]} removedRegions
+ * @returns {Object[]}
+ * @ignore
  */
 function removeRegionsFromData(drawLayer, removedRegions) {
     var {regions, drawObjAry: lastData} = drawLayer;
@@ -303,9 +377,11 @@ function removeRegionsFromData(drawLayer, removedRegions) {
         return [];     // no region to be removed
     }
 
-    if (removedRegions) {
-        resultRegions = removedRegions.reduce((prev, aRegionDes) => {
-            var rmRegion = RegionFactory.parsePart(aRegionDes);
+    if (!isEmpty(removedRegions)) {
+        var allRegions = isString(removedRegions) ? [removedRegions] : removedRegions;
+        var rgObj = RegionFactory.parseRegionDS9(allRegions);
+
+        resultRegions = rgObj.reduce((prev, rmRegion) => {
             var {index, regions} = removeRegion( prev, rmRegion );
 
             if (index >= 0) {
@@ -319,4 +395,48 @@ function removeRegionsFromData(drawLayer, removedRegions) {
     drawLayer.regions = resultRegions;
     drawLayer.drawObjAry = allDrawObjs;
     return allDrawObjs;
+}
+
+/**
+ * @summary find the region drawObj based on region description
+ * @param {object} drawLayer
+ * @param {string|string[]} regionDes
+ * @param {int} stopIndex maximum number of regions to be selected
+ * @return {Object[]} if no region is found, an empty array is return.
+ * @ignore
+ */
+function getSelectedRegionDrawObj(drawLayer, regionDes, stopIndex = 1) {
+    var {regions, drawObjAry} = drawLayer;
+
+    var regs = RegionFactory.parseRegionDS9((isString(regionDes) ? [regionDes] : regionDes),
+                                            true, stopIndex);
+    var selDrawObj = [];
+
+    if (!isEmpty(regs)) {
+        selDrawObj = regs.reduce((prev, aRegion, index) => {
+            if (index < stopIndex) {
+                var idx = getRegionIndex(regions, aRegion);
+
+                if (idx >= 0) {
+                    prev.push(drawObjAry[idx]);
+                }
+            }
+            return prev;
+        }, []);
+    }
+    return selDrawObj.slice(0, stopIndex);
+}
+
+/**
+ * @summary get the region description of the selected region from the specified drawing layer
+ * @param {string} drawLayerId id of the drawing layer
+ * @return {string} description of the selected region
+ * @public
+ * @function getSelectedRegion
+ * @memberof firefly.util.image
+ */
+export function getSelectedRegion(drawLayerId) {
+    var drawLayer = getDrawLayerById(flux.getState()[DRAWING_LAYER_KEY], drawLayerId);
+
+    return get(drawLayer, 'selectRegionDesc', '');
 }

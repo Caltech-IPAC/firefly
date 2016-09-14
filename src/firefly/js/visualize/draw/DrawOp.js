@@ -9,6 +9,7 @@ import ShapeDataObj from './ShapeDataObj.js';
 import FootprintObj from './FootprintObj.js';
 import DirectionArrowDrawObj from './DirectionArrowDrawObj.js';
 import MarkerFootprintObj from './MarkerFootprintObj.js';
+import {has} from 'lodash';
 
 export var drawTypes= {
     [POINT_DATA_OBJ] : PointDataObj.draw,
@@ -57,7 +58,9 @@ class DrawOp {
      * @param onlyAddToPath
      */
     static draw(drawObj,ctx,drawTextAry,csysConv,def,vpPtM,onlyAddToPath) {
-        op(drawObj,'draw')(drawObj, ctx, drawTextAry, csysConv, def, vpPtM,onlyAddToPath);
+        if (!has(drawObj, 'isRendered') || drawObj.isRendered ) {
+            op(drawObj, 'draw')(drawObj, ctx, drawTextAry, csysConv, def, vpPtM, onlyAddToPath);
+        }
     }
 
     /**

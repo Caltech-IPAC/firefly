@@ -12,6 +12,7 @@
            "./js/charts/ChartUtil.js",
            "./js//visualize/CsysConverter.js",
            "./js/visualize/DrawLayerCntlr.js",
+	   "./js/drawingLayers/RegionPlot.js",
            "../../docs/firefly-api-overview.md"
 
         ],

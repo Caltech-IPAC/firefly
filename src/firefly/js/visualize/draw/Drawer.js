@@ -335,7 +335,7 @@ class Drawer {
 
         if (canDraw(ctx,highlightData)) {
             var vpPtM= makeViewPortPt(0,0);
-            highlightData.forEach( (pt) => drawObj(ctx, null, drawingDef, cc, pt, vpPtM, false) );
+            highlightData.forEach( (pt) => drawObj(ctx, [], drawingDef, cc, pt, vpPtM, false) );
         }
     }
 

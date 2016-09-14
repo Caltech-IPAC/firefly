@@ -19,7 +19,7 @@ import {has, isNil, get, set} from 'lodash';
 const FONT_FALLBACK= ',sans-serif';
 
 var UnitType= new Enum(['PIXEL','ARCSEC','IMAGE_PIXEL']);
-var ShapeType= new Enum(['Line', 'Text','Circle', 'Rectangle', 'Ellipse',
+export var ShapeType= new Enum(['Line', 'Text','Circle', 'Rectangle', 'Ellipse',
                          'Annulus', 'BoxAnnulus', 'EllipseAnnulus', 'Polygon']);
 const SHAPE_DATA_OBJ= 'ShapeDataObj';
 const DEF_WIDTH = 1;
