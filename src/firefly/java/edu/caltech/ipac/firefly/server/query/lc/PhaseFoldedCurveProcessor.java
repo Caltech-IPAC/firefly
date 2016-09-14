@@ -73,12 +73,8 @@ public class PhaseFoldedCurveProcessor extends IpacTablePartProcessor {
     }
 
     protected File phaseFoldedTable(PeriodogramAPIRequest req) throws InterruptedException {
-        //Fake building phase folded
-        Thread.sleep(5000);
 
-
-        File phaseFoldedTable = irsaLcHandler.toPhaseFoldedTable(getSourceFile(req.getLcSource(), req), req.getPeriod());
-
+        File phaseFoldedTable = irsaLcHandler.toPhaseFoldedTable(getSourceFile(req.getLcSource(), req), req.getPeriod(), req.getTimeColName());
 
         return phaseFoldedTable;
     }
