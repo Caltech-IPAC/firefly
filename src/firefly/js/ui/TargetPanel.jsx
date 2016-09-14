@@ -3,13 +3,13 @@
  */
 
 import React, {Component,PropTypes} from 'react';
-import {get, isString} from 'lodash';
+import {get} from 'lodash';
 import {parseTarget, getFeedback, formatPosForTextField} from './TargetPanelWorker.js';
 import TargetFeedback from './TargetFeedback.jsx';
 import {InputFieldView} from './InputFieldView.jsx';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
-import FieldGroupUtils, {getFieldGroupState} from '../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchActiveTarget, getActiveTarget} from '../core/AppDataCntlr.js';
 import {isValidPoint, parseWorldPt} from '../visualize/Point.js';
 
@@ -52,6 +52,7 @@ class TargetPanelView extends Component {
                         value={resolver}
                         onChange={(ev) => onChange(ev.target.value, RESOLVER)}
                         multiple={false}
+                        tooltip='Select which name resolver'
                         label=''
                         labelWidth={3}
                         wrapperStyle={{}}
@@ -65,6 +66,8 @@ class TargetPanelView extends Component {
 
 
 TargetPanelView.propTypes = {
+    fieldKey : PropTypes.string,
+    groupKey : PropTypes.string,
     valid   : PropTypes.bool.isRequired,
     showHelp   : PropTypes.bool.isRequired,
     feedback: PropTypes.string.isRequired,
@@ -78,9 +81,6 @@ TargetPanelView.propTypes = {
 
 
 function didUnmount(fieldKey,groupKey) {
-   // console.log(`did unmount: ${fieldKey}, ${groupKey}`);
-   //  console.log(`value: ${FieldGroupUtils.getFldValue(FieldGroupUtils.getGroupFields(groupKey),fieldKey)}`);
-
     const wp= parseWorldPt(FieldGroupUtils.getFldValue(FieldGroupUtils.getGroupFields(groupKey),fieldKey));
 
     if (isValidPoint(wp)) {
@@ -123,7 +123,6 @@ function getProps(params, fireValueChange) {
 
 
 function handleOnChange(value, source, params, fireValueChange) {
-    console.log({value,source});
     var {parseResults={}}= params;
 
     var displayValue;
@@ -160,6 +159,7 @@ function handleOnChange(value, source, params, fireValueChange) {
  * @param displayValue
  * @param parseResults
  * @param resolvePromise
+ * @param {string} resolver the key to specify the resolver
  * @return {{message: string, displayValue: *, wpt: (*|null), value: null, valid: *, showHelp: (*|boolean), feedback: (string|*|string), parseResults: *}}
  */
 function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise, resolver) {
@@ -191,7 +191,6 @@ function replaceValue(v,props) {
     const t= getActiveTarget();
     var retVal= v;
     if (t && t.worldPt) {
-       // console.log(`value: ${v}, but I could use: ${t.worldPt}`);
        if (get(t,'worldPt')) retVal= t.worldPt.toString();
     }
     return retVal;

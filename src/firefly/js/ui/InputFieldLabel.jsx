@@ -9,7 +9,7 @@ import React from 'react';
  * @return {XML}
  * @constructor
  */
-export const InputFieldLabel= function( { label, tooltip, labelStyle, labelWidth=200, } ) {
+export const InputFieldLabel= function( { label= '', tooltip= '', labelStyle, labelWidth=200, } ) {
 
     var currStyle = labelStyle || { display:'inline-block', paddingRight:'4px' };
     if (labelWidth > 0) {
@@ -28,7 +28,7 @@ InputFieldLabel.propTypes= {
     label : React.PropTypes.string.isRequired,
     labelStyle : React.PropTypes.object,
     labelWidth : React.PropTypes.number,
-    tooltip : React.PropTypes.string.isRequired,
+    tooltip : React.PropTypes.string,
 };
 
 export default InputFieldLabel;

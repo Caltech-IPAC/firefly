@@ -169,7 +169,7 @@ var resolveObject = function(posFieldDef, resolver) {
             }
         }
     ).catch(function(e) {
-            console.log(`aborted: ${objName}`);
+            // console.log(`aborted: ${objName}`);
             if (e) console.error(e);
         });
 
