@@ -476,7 +476,7 @@ export function makeHighlightPointDataObj(drawObj, cc, def) {
     var rectObj = ShapeDataObj.makeRectangleByCenter(wCenter, w, h, ShapeDataObj.UnitType.PIXEL,
                                                      0.0, ShapeDataObj.UnitType.ARCSEC, false);
 
-    makeShapeHighlightRenderOptions( rectObj );
+    makeShapeHighlightRenderOptions( rectObj, color );
     return rectObj;
 }
 
