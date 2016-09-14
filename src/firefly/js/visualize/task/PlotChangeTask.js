@@ -2,21 +2,25 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {logError} from '../util/WebUtil.js';
-import ImagePlotCntlr, {ActionScope,IMAGE_PLOT_KEY} from './ImagePlotCntlr.js';
-import {primePlot, getPlotViewById, operateOnOthersInGroup,getPlotStateAry} from './PlotViewUtil.js';
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+
+import {logError} from '../../util/WebUtil.js';
+import ImagePlotCntlr, {ActionScope,IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
+import {primePlot, getPlotViewById, operateOnOthersInGroup,getPlotStateAry} from '../PlotViewUtil.js';
 import {
     callCrop,
     callChangeColor,
     callRotateNorth,
     callRotateToAngle,
     callFlipImageOnY,
-    callRecomputeStretch} from '../rpc/PlotServicesJson.js';
-import WebPlotResult from './WebPlotResult.js';
-import {RangeValues} from './RangeValues.js';
-import {isPlotNorth} from './VisUtil.js';
-import {RotateType} from './PlotState.js';
-import {WebPlot} from './WebPlot.js';
+    callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
+import WebPlotResult from '../WebPlotResult.js';
+import {RangeValues} from '../RangeValues.js';
+import {isPlotNorth} from '../VisUtil.js';
+import {RotateType} from '../PlotState.js';
+import {WebPlot} from '../WebPlot.js';
 
 
 
@@ -89,7 +93,7 @@ export function stretchChangeActionCreator(rawAction) {
 export function rotateActionCreator(rawAction) {
     return (dispatcher,getState) => {
         var store= getState()[IMAGE_PLOT_KEY];
-        var { plotId, angle, rotateType, newZoomLevel, actionScope }= rawAction.payload;
+        var { plotId, angle, rotateType, newZoomLevel, keepWcsLock, actionScope }= rawAction.payload;
         actionScope= ActionScope.get(actionScope);
         rotateType= RotateType.get(rotateType);
         var plotView= getPlotViewById(store,plotId);
@@ -104,6 +108,8 @@ export function rotateActionCreator(rawAction) {
         if (rotateType===RotateType.UNROTATE && !p.plotState.isRotated()) {
             firstRotate= false;
         }
+        const vr= getState()[IMAGE_PLOT_KEY];
+        if (vr.wcsMatchType && !keepWcsLock) dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
 
         if (firstRotate) doRotate(dispatcher,plotView,rotateType,angle,newZoomLevel);
 
@@ -132,6 +138,8 @@ export function cropActionCreator(rawAction) {
         if (!plotView || !imagePt1 || !imagePt2) return;
         var p= primePlot(plotView);
         if (!p) return;
+        const vr= getState()[IMAGE_PLOT_KEY];
+        if (vr.wcsMatchType) dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
 
         doCrop(dispatcher,plotView,imagePt1, imagePt2, cropMultiAll);
     };
@@ -157,6 +165,8 @@ export function flipActionCreator(rawAction) {
         var p= primePlot(plotView);
         if (!p) return;
 
+        const vr= getState()[IMAGE_PLOT_KEY];
+        if (vr.wcsMatchType) dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
         doFlip(dispatcher,plotView,isY);
         operateOnOthersInGroup(store,plotView, (pv) =>
             doFlip(dispatcher,pv,isY));

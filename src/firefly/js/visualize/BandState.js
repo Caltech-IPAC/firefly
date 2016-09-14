@@ -3,12 +3,10 @@
  */
 
 
+import {join} from 'lodash';
 import WebPlotRequest from './WebPlotRequest.js';
 import {RangeValues} from './RangeValues.js';
 import {makeClientFitsHeader} from './ClientFitsHeader.js';
-import join from 'underscore.string/join';
-import toBoolean from 'underscore.string/toBoolean';
-import {parseInt,checkNull} from '../util/StringUtils.js';
 
 const SPLIT_TOKEN= '--BandState--';
 
@@ -193,8 +191,8 @@ export class BandState {
     getUploadedFileName() { return this.uploadFileNameStr; }
 
     toString() {
-        return join(SPLIT_TOKEN,
-            this.workingFitsFileStr,
+        return join(
+            [this.workingFitsFileStr,
             this.originalFitsFileStr,
             this.uploadFileNameStr,
             this.imageIdx,
@@ -205,47 +203,12 @@ export class BandState {
             this.bandVisible,
             this.multiImageFile,
             this.cubeCnt,
-            this.cubePlaneNumber);
+            this.cubePlaneNumber],
+            SPLIT_TOKEN);
     }
 
     serialize() { return this.toString(); }
 
-    static parse(s) {
-        if (!s) return null;
-        var sAry= s.split(SPLIT_TOKEN,12);
-        if (!sAry || sAry<12) return null;
-
-        var i= 0;
-        var workingFileStr=  checkNull(sAry[i++]);
-        var originalFileStr= checkNull(sAry[i++]);
-        var uploadFileStr=   checkNull(sAry[i++]);
-        var imageIdx=        parseInt(sAry[i++],0);
-        var originalImageIdx=parseInt(sAry[i++],0);
-        var req=             WebPlotRequest.parse(sAry[i++]);
-        var rv=              RangeValues.parse(sAry[i++]);
-        var header=          ClientFitsHeader.parse(sAry[i++]);
-        var bandVisible=     toBoolean(sAry[i++]);
-        var multiImageFile=  toBoolean(sAry[i++]);
-        var cubeCnt=         parseInt(sAry[i++],0);
-        var cubePlaneNumber= parseInt(sAry[i++],0);
-        var retval= null;
-        if (req!=null && header!=null) {
-            retval= new BandState();
-            retval.setWorkingFitsFileStr(workingFileStr);
-            retval.setOriginalFitsFileStr(originalFileStr);
-            retval.setUploadedFileName(uploadFileStr);
-            if (imageIdx) retval.setImageIdx(imageIdx);
-            if (originalImageIdx)retval.setOriginalImageIdx(originalImageIdx);
-            retval.setWebPlotRequest(req);
-            retval.setRangeValues(rv);
-            retval.setFitsHeader(header);
-            retval.setBandVisible(bandVisible);
-            retval.setMultiImageFile(multiImageFile);
-            if (cubeCnt) retval.setCubeCnt(cubeCnt);
-            if (cubePlaneNumber) retval.setCubePlaneNumber(cubePlaneNumber);
-        }
-        return retval;
-    }
 
     equals(obj) {
         return (obj instanceof BandState) ? this.toString()===obj.toString() : false;

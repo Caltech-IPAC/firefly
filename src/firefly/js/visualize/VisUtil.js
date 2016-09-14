@@ -28,7 +28,7 @@ function toDegrees (angle) { return angle * (180 / Math.PI); }
 function toRadians(angle) { return angle * Math.PI / 180; }
 
 
-const FullType= new Enum(['ONLY_WIDTH', 'WIDTH_HEIGHT', 'ONLY_HEIGHT', 'SMART']);
+export const FullType= new Enum(['ONLY_WIDTH', 'WIDTH_HEIGHT', 'ONLY_HEIGHT', 'SMART']);
 
 
 //======================================================================
@@ -343,7 +343,7 @@ const getBestTitle= function(plot) {
 };
 
 
-const getRotationAngle= function(plot) {
+export const getRotationAngle= function(plot) {
     var retval = 0;
     var iWidth = plot.dataWidth;
     var iHeight = plot.dataHeight;
@@ -545,7 +545,12 @@ export function getSelectedPts(selection, plot, objList) {
     return selectedList;
 }
 
-const getCenterPtOfPlot= function(plot) {
+/**
+ *
+ * @param plot
+ * @return {WorldPt}
+ */
+export const getCenterPtOfPlot= function(plot) {
     var dw = plot.dataWidth;
     var dh = plot.dataHeight;
     var ip= makeImagePt(dw/2,dh/2);

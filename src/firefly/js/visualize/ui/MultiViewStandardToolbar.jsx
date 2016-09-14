@@ -5,7 +5,7 @@
 
 import React, {PropTypes} from 'react';
 import {dispatchChangeLayout} from '../MultiViewCntlr.js';
-import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
+import {dispatchChangeActivePlotView, WcsMatchType, dispatchWcsMatch} from '../ImagePlotCntlr.js';
 import {VisInlineToolbarView} from './VisInlineToolbarView.jsx';
 import {getPlotViewById, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
@@ -30,6 +30,12 @@ const toolsStyle= {
     justifyContent: 'space-between'
 };
 
+const tStyle= {
+    display:'inline-block',
+    whiteSpace: 'nowrap',
+    minWidth: '3em',
+    paddingLeft : 5
+};
 
 
 export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, layoutType= 'grid', dlAry, handleInlineTools=true }) {
@@ -57,6 +63,25 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, layo
 
     const nextIdx= cIdx===viewerPlotIds.length-1 ? 0 : cIdx+1;
     const prevIdx= cIdx ? cIdx-1 : viewerPlotIds.length-1;
+    var wcsMatch= false;
+
+    if (viewerPlotIds.length>1) {
+        wcsMatch= (
+            <div style={{alignSelf:'center', paddingLeft:25}}>
+                <div style={{display:'inline-block'}}>
+                    <input style={{margin: 0}}
+                           type='checkbox'
+                           checked={visRoot.wcsMatchType===WcsMatchType.Standard}
+                           onChange={(ev) => wcsMatchStandard(ev.target.checked, visRoot.activePlotId) }
+                    />
+                </div>
+                <div style={tStyle}>WCS Match</div>
+            </div>
+        );
+    }
+
+
+
 
     return (
         <div style={toolsStyle}>
@@ -79,12 +104,16 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, layo
                      src={PAGE_RIGHT}
                      onClick={() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])} />
                 }
+                {wcsMatch}
             </div>
             {handleInlineTools && makeInlineRightToolbar(visRoot,pv,pvDlAry)}
         </div>
     );
 }
 
+function wcsMatchStandard(doWcsStandard, plotId) {
+    dispatchWcsMatch({matchType:doWcsStandard?WcsMatchType.Standard:false, plotId});
+}
 
 function makeInlineRightToolbar(visRoot,pv,dlAry){
     if (!pv) return false;

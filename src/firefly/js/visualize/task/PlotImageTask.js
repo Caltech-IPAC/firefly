@@ -2,28 +2,31 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get,isPlainObject,isArray} from 'lodash';
-import {logError} from '../util/WebUtil.js';
-import {WebPlotRequest, GridOnStatus} from './WebPlotRequest.js';
-import ImagePlotCntlr, {visRoot, makeUniqueRequestKey, IMAGE_PLOT_KEY} from './ImagePlotCntlr.js';
-import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from './DrawLayerCntlr.js';
-import {WebPlot,PlotAttribute} from './WebPlot.js';
-import CsysConverter from './CsysConverter.js';
-import {dispatchActiveTarget, getActiveTarget} from '../core/AppDataCntlr.js';
-import VisUtils from './VisUtil.js';
-import {PlotState} from './PlotState.js';
-import Point, {makeImagePt} from './Point.js';
-import {WPConst, DEFAULT_THUMBNAIL_SIZE} from './WebPlotRequest.js';
-import {Band} from './Band.js';
-import {PlotPref} from './PlotPref.js';
-import ActiveTarget  from '../drawingLayers/ActiveTarget.js';
-import * as DrawLayerCntlr from './DrawLayerCntlr.js';
-import {makePostPlotTitle} from './reducer/PlotTitle.js';
-import {dispatchAddImages, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
-import {getDrawLayerByType, getConnectedPlotsIds, getActivePlotView} from './PlotViewUtil.js';
-import WebGrid from '../drawingLayers/WebGrid.js';
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 
-const INIT_STATUS_UPDATE_DELAY= 7000;
+import {isArray} from 'lodash';
+import {WebPlotRequest, GridOnStatus} from '../WebPlotRequest.js';
+import ImagePlotCntlr, {makeUniqueRequestKey, dispatchWcsMatch, IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
+import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
+import {WebPlot,PlotAttribute} from '../WebPlot.js';
+import CsysConverter from '../CsysConverter.js';
+import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
+import VisUtils from '../VisUtil.js';
+import {PlotState} from '../PlotState.js';
+import Point, {makeImagePt} from '../Point.js';
+import {WPConst, DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
+import {Band} from '../Band.js';
+import {PlotPref} from '../PlotPref.js';
+import ActiveTarget  from '../../drawingLayers/ActiveTarget.js';
+import * as DrawLayerCntlr from '../DrawLayerCntlr.js';
+import {makePostPlotTitle} from '../reducer/PlotTitle.js';
+import {dispatchAddImages, EXPANDED_MODE_RESERVED} from '../MultiViewCntlr.js';
+import {getDrawLayerByType} from '../PlotViewUtil.js';
+import WebGrid from '../../drawingLayers/WebGrid.js';
+
+//const INIT_STATUS_UPDATE_DELAY= 7000;
 
 export default {makePlotImageAction};
 
@@ -94,7 +97,7 @@ function makeSinglePlotPayload({wpRequest,plotId, threeColor, viewerId, attribut
  * @return {Function}
  */
 function makePlotImageAction(rawAction) {
-    return (dispatcher) => {
+    return (dispatcher, getState) => {
 
         var {wpRequestAry}= rawAction.payload;
         var payload;
@@ -122,6 +125,8 @@ function makePlotImageAction(rawAction) {
 
         payload.requestKey= makeUniqueRequestKey();
 
+        const vr= getState()[IMAGE_PLOT_KEY];
+        if (vr.wcsMatchType) dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,payload});
         // NOTE - sega ImagePlotter handles next step
         // NOTE - sega ImagePlotter handles next step

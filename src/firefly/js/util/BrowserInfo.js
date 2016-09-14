@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {padStart} from 'lodash';
 import Enum from 'enum';
-import pad from 'underscore.string/pad';
 import validator from 'validator';
 
 
@@ -158,10 +158,10 @@ function getVersionString() {
 
 function getBrowserDesc() {
     if (BrowserInfo.minorVersion!==UNKNOWN_VER) {
-        return pad(12, getBrowserString())+ 'Version: ' + pad(BrowserInfo.majorVersion + '.' +BrowserInfo.minorVersion,15);
+        return padStart(getBrowserString(),12)+ 'Version: ' + padStart(BrowserInfo.majorVersion + '.' +BrowserInfo.minorVersion,15);
     }
     else {
-        return pad(getBrowserString(),12)+ 'Version: ' + pad(BrowserInfo.majorVersion+'',15);
+        return padStart(getBrowserString(),12)+ 'Version: ' + padStart(BrowserInfo.majorVersion+'',15);
     }
 }
 

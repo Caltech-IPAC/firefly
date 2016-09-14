@@ -48,12 +48,36 @@
             var ui= firefly.ui;
             var util= firefly.util;
             var action= firefly.action;
-            util.image.initImageViewExpanded(ui.ApiExpandedDisplay);
+            //util.image.initImageViewExpanded(ui.ApiExpandedDisplay);
 //           util.initImageViewExpanded(ui.ExpandedModeDisplay, {closeFunc:null});
 //            action.dispatchChangeExpandedMode(firefly.enum.ExpandType.SINGLE);
             util.renderDOM("imageViewHere", ui.ImageViewer, {plotId:"imageViewHere"});
             util.image.initAutoReadout();
-            action.dispatchPlotImage('imageViewHere', req);
+            action.dispatchPlotImage({plotId:'imageViewHere', wpRequest:req});
+
+
+
+            var cnt=0;
+            var cntZ=0;
+            var f= function(a,state, data) {
+                console.log(data.name);
+                console.log(a);
+                cnt++;
+                if (cnt>1000) {
+                    console.log('ALL DONE');
+                    return true;
+                }
+            };
+
+
+//            const stopListener= util.addActionListener([action.type.READOUT_DATA,action.type.ZOOM_IMAGE], f);
+            const stopListener= util.addActionListener([action.type.ANY_REPLOT], f, {name:'one'});
+            util.addActionListener([action.type.ANY_REPLOT], f, {name:'two'});
+            window.setTimeout(function () {
+                console.log('times up, one will stop');
+                stopListener();
+            }, 10000)
+
         }
    }
    

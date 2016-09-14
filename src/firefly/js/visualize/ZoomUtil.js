@@ -7,9 +7,11 @@ import Enum from 'enum';
 import numeral from 'numeral';
 import {logError} from '../util/WebUtil.js';
 import {PlotAttribute} from './WebPlot.js';
-import ImagePlotCntlr, {visRoot,ActionScope} from './ImagePlotCntlr.js';
-import {getPlotViewById,primePlot,getPlotStateAry, operateOnOthersInGroup} from './PlotViewUtil.js';
+import ImagePlotCntlr, {ActionScope, IMAGE_PLOT_KEY, dispatchUpdateViewSize} from './ImagePlotCntlr.js';
+import {getPlotViewById,primePlot,getPlotStateAry,
+        operateOnOthersInGroup, applyToOnePvOrGroup, findPlotGroup} from './PlotViewUtil.js';
 import {callSetZoomLevel} from '../rpc/PlotServicesJson.js';
+import {isViewerSingleLayout, getMultiViewRoot} from './MultiViewCntlr.js';
 import WebPlotResult from './WebPlotResult.js';
 import VisUtil from './VisUtil.js';
 
@@ -19,7 +21,9 @@ export const levels= [ .03125, .0625, .125,.25,.5, .75, 1,2,3, 4,5, 6,
 
 const zoomMax= levels[levels.length-1];
 
-export const UserZoomTypes= new Enum(['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL'], { ignoreCase: true });
+/** 'UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV' */
+export const UserZoomTypes= new Enum(['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV'], { ignoreCase: true });
+
 const ZOOM_WAIT_MS= 2000; // 2 seconds
 
 var zoomTimers= []; // todo: should I use a map? should it be in the redux store?
@@ -35,12 +39,13 @@ var zoomTimers= []; // todo: should I use a map? should it be in the redux store
  * @return {Function}
  */
 export function zoomActionCreator(rawAction) {
-    return (dispatcher) => {
+    return (dispatcher, getState) => {
         var {plotId,userZoomType,zoomLockingEnabled= false,
              forceDelay=false, level= 1, actionScope= ActionScope.GROUP}= rawAction.payload;
         userZoomType= UserZoomTypes.get(userZoomType);
         actionScope= ActionScope.get(actionScope);
-        var pv= getPlotViewById(visRoot(),plotId);
+        var visRoot= getState()[IMAGE_PLOT_KEY];
+        var pv= getPlotViewById(visRoot,plotId);
         if (!pv) return;
 
 
@@ -64,12 +69,23 @@ export function zoomActionCreator(rawAction) {
             isFullScreen= true;
             useDelay= forceDelay ? true : false; //todo
 
+
             if (dim.width && dim.height) {
                 if (userZoomType===UserZoomTypes.FIT) {
                     level = getEstimatedFullZoomFactor(plot, dim, VisUtil.FullType.WIDTH_HEIGHT);
                 }
                 else if (userZoomType===UserZoomTypes.FILL) {
                     level = getEstimatedFullZoomFactor(plot, dim, VisUtil.FullType.ONLY_WIDTH);
+                }
+                else if (userZoomType===UserZoomTypes.WCS_MATCH_PREV) {
+                    if (visRoot.prevActivePlotId) {
+                        const masterPlot= primePlot(visRoot,visRoot.prevActivePlotId);
+                        const asPerPix= getArcSecPerPix(masterPlot,masterPlot.zoomFactor);
+                        level= getZoomLevelForScale(plot, asPerPix);
+                    }
+                    else { // just to a fit
+                        level = getEstimatedFullZoomFactor(plot, dim, VisUtil.FullType.WIDTH_HEIGHT);
+                    }
                 }
                 goodParams= true;
             }
@@ -83,11 +99,14 @@ export function zoomActionCreator(rawAction) {
 
 
         if (goodParams) {
-            doZoom(dispatcher,plotId,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
-            var matchFunc= makeZoomLevelMatcher(dispatcher, pv,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
+            visRoot= getState()[IMAGE_PLOT_KEY];
+            doZoom(dispatcher,visRoot, plotId,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
+            var matchFunc= makeZoomLevelMatcher(dispatcher, visRoot,pv,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
             if (actionScope===ActionScope.GROUP) {
-                operateOnOthersInGroup(visRoot(),pv, matchFunc);
+                operateOnOthersInGroup(getState()[IMAGE_PLOT_KEY],pv, matchFunc);
             }
+            visRoot= getState()[IMAGE_PLOT_KEY];
+            alignWCS(visRoot,pv);
         }
         else {
             dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_FAIL,
@@ -98,9 +117,23 @@ export function zoomActionCreator(rawAction) {
 }
 
 
+function alignWCS(visRoot, pv) {
+    if (visRoot.wcsMatchType) {
+        if (isViewerSingleLayout(getMultiViewRoot(), visRoot, pv.plotId)) {
+            dispatchUpdateViewSize(pv.plotId);
+        }
+        else {
+            const pg= findPlotGroup(pv.plotGroupId, visRoot.plotGroupAry);
+            applyToOnePvOrGroup(visRoot.plotViewAry, pv.plotId, pg,
+                                               (pv) => dispatchUpdateViewSize(pv.plotId) );
+        }
+
+    }
+
+}
 
 
-function makeZoomLevelMatcher(dispatcher, sourcePv,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay) {
+function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay) {
     const selectedPlot= primePlot(sourcePv);
     const targetArcSecPix= getArcSecPerPix(selectedPlot, level);
 
@@ -115,7 +148,7 @@ function makeZoomLevelMatcher(dispatcher, sourcePv,level,isFullScreen,zoomLockin
             // if the new level is only slightly different then use the target level
            newZoomLevel= (Math.abs(plotLevel-level)<.01) ? level : plotLevel;
         }
-        doZoom(dispatcher,pv.plotId,newZoomLevel,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
+        doZoom(dispatcher,visRoot,pv.plotId,newZoomLevel,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
     };
 }
 
@@ -123,6 +156,7 @@ function makeZoomLevelMatcher(dispatcher, sourcePv,level,isFullScreen,zoomLockin
 /**
  *
  * @param dispatcher
+ * @param visRoot
  * @param plotId
  * @param zoomLevel
  * @param zoomLockingEnabled
@@ -130,7 +164,7 @@ function makeZoomLevelMatcher(dispatcher, sourcePv,level,isFullScreen,zoomLockin
  * @param isFullScreen
  * @param useDelay
  */
-function doZoom(dispatcher,plotId,zoomLevel,isFullScreen, zoomLockingEnabled, userZoomType,useDelay) {
+function doZoom(dispatcher,visRoot,plotId,zoomLevel,isFullScreen, zoomLockingEnabled, userZoomType,useDelay) {
     dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_START,
                   payload:{plotId,zoomLevel, zoomLockingEnabled,userZoomType} } );
 
@@ -147,20 +181,20 @@ function doZoom(dispatcher,plotId,zoomLevel,isFullScreen, zoomLockingEnabled, us
     var zoomWait= useDelay ? ZOOM_WAIT_MS : 5;
 
     if (true) {
-        var timerId= setTimeout(zoomPlotIdNow, zoomWait, dispatcher,plotId,zoomLevel,isFullScreen);
+        var timerId= setTimeout(zoomPlotIdNow, zoomWait, dispatcher,visRoot,plotId,zoomLevel,isFullScreen);
         zoomTimers.push({plotId,timerId});
     }
     else {
-        zoomPlotIdNow(dispatcher,plotId,zoomLevel,isFullScreen);
+        zoomPlotIdNow(dispatcher,visRoot,plotId,zoomLevel,isFullScreen);
     }
 }
 
 
 
-function zoomPlotIdNow(dispatcher,plotId,zoomLevel,isFullScreen) {
+function zoomPlotIdNow(dispatcher,visRoot,plotId,zoomLevel,isFullScreen) {
     zoomTimers= zoomTimers.filter((t) => t.plotId!==plotId);
 
-    var pv= getPlotViewById(visRoot(),plotId);
+    var pv= getPlotViewById(visRoot,plotId);
     if (!primePlot(pv)) return;  // the plot what changed, abort zoom
     callSetZoomLevel(getPlotStateAry(pv),zoomLevel,isFullScreen)
         .then( (wpResult) => processZoomSuccess(dispatcher,plotId,zoomLevel,wpResult) )
@@ -245,7 +279,7 @@ export function getNextZoomLevel(currLevel, zoomType) {
  * @param fullType
  * @param tryMinFactor
  */
-function getEstimatedFullZoomFactor(plot, screenDim, fullType, tryMinFactor=-1) {
+export function getEstimatedFullZoomFactor(plot, screenDim, fullType, tryMinFactor=-1) {
     var {width,height} = screenDim;
     var overrideFullType= fullType;
 
@@ -274,7 +308,7 @@ function getOnePlusLevelDesc(level) {
     return retval;
 }
 
-function getArcSecPerPix(plot, zoomFact) {
+export function getArcSecPerPix(plot, zoomFact) {
     return plot.projection.getPixelScaleArcSec() / zoomFact;
 }
 

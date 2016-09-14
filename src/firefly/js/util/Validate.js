@@ -1,11 +1,8 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-/* eslint prefer-template:0 */
-//var validator= require('validator');
-//var sprintf= require('underscore.string/sprintf');
 import validator from 'validator';
-import sprintf from 'underscore.string/sprintf';
+import {isNil} from 'lodash';
 
 var isInRange= function(val,min,max) {
     var retval= !(min !== undefined && min!==null && val<min);
@@ -28,9 +25,10 @@ var typeInject= {
 
 
 var makePrecisionStr= function(value,precision) {
-    if (value !== undefined && value!==null) {
-        return (precision) ? sprintf('%.'+precision+'f',value) : value;
-    } else return '';
+    if (!isNil(value)) {
+        return (precision>-1) ? value.toFixed(precision) : value;
+    }
+    else return '';
 };
 
 var makeErrorMessage= function(description,min,max,precision) {

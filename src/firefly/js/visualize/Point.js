@@ -17,7 +17,7 @@ var Point = {  SPT, IM_PT, IM_WS_PT, VP_PT, PROJ_PT, W_PT, OFFSET_PT};
 
 
 /**
- * @typedef {Object} Pt
+ * @typedef {Object} Point
  * a Point
  *
  * @prop {Number} x
@@ -25,6 +25,19 @@ var Point = {  SPT, IM_PT, IM_WS_PT, VP_PT, PROJ_PT, W_PT, OFFSET_PT};
  * @prop {String} type one of 'ScreenPt', 'ImagePt', 'ImageWorkSpacePt', 'WorldPt', 'ViewPortPt', 'ProjectionPt', 'OffsetPt'
  */
 
+/**
+ * @typedef {Object} ScreenPt
+ * @prop {Number} x
+ * @prop {Number} y
+ * @prop {String} type constant must bel'ScreenPt'
+ */
+
+/**
+ * @typedef {Object} ImagePt
+ * @prop {Number} x
+ * @prop {Number} y
+ * @prop {String} type constant must bel'ImagePt'
+ */
 
 var ptTypes= Object.values(Point);
 

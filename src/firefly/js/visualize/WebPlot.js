@@ -108,6 +108,21 @@ export const PlotAttribute= {
 
 
 
+/**
+ * @typedef {Object} WebPlot
+ *
+ * This class contains plot information.
+ * Publicly this class operations in many coordinate system.
+ * Some include a Image coordinate system, a world coordinate system, and a screen
+ * coordinate system.
+ *
+ * @prop {String} plotId, immutable
+ * @prop {String} plotImageId, immutable
+ * @prop {Object} serverImage, immutable
+ * @prop {String} title the title
+ * @prop {PlotState} the plot state, immutable
+ *
+ */
 export const WebPlot= {
 
     /**
@@ -242,20 +257,4 @@ export function getNonRotatableReason(plot) {
         }
     }
 }
-
-/**
- *
- * This class contains plot information.
- * Publicly this class operations in many coordinate system.
- * Some include a Image coordinate system, a world coordinate system, and a screen
- * coordinate system.
- * 
- * @typedef {Object} WebPlot
- * @prop {String} plotId, immutable
- * @prop {String} plotImageId, immutable
- * @prop {Object} serverImage, immutable
- *
- */
-
-
 

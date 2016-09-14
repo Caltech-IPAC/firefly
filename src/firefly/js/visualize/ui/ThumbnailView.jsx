@@ -22,8 +22,6 @@ import {dispatchProcessScroll} from '../ImagePlotCntlr.js';
 import {makeMouseStatePayload,fireMouseCtxChange} from '../VisMouseSync.js';
 
 
-
-
 export class ThumbnailView extends Component {
 
     constructor(props) {
@@ -173,36 +171,16 @@ function getThumbZoomFact(plot, thumbW, thumbH) {
 function getScrollBoxInfo(pv, thumbW, thumbH) {
     var plot= primePlot(pv);
     var fact= getThumbZoomFact(plot,thumbW,thumbH)/ plot.zoomFactor;
-
-    var mx= pv.wcsMarginX;
-    var my= pv.wcsMarginY;
     var ss= getScrollSize(pv);
 
     return {
-        tsX: (pv.scrollX-mx)*fact,
-        tsY: (pv.scrollY-my)*fact,
+        tsX: (pv.scrollX)*fact,
+        tsY: (pv.scrollY)*fact,
         tsWidth: ss.scrollWidth*fact,
         tsHeight: ss.scrollHeight*fact
     };
 
 }
-
-
-
-//function drawOnCanvas(c,ary,width,height) {
-//    if (!c || !ary) return;
-//
-//    var [dataN,dataE,scrollBox]= ary;
-//    var textDrawAry=[];
-//    var drawDef= makeDrawingDef(COLOR_DRAW_1);
-//    var ctx= c.getContext('2d');
-//    DrawUtil.clear(ctx,width,height);
-//    DirectionArrowDrawObj.draw.draw(dataN,ctx,textDrawAry,null,drawDef,null,null);
-//    DirectionArrowDrawObj.draw.draw(dataE,ctx,textDrawAry,null,drawDef,null,null);
-//    ShapeDataObj.draw.draw(scrollBox,ctx,textDrawAry,null,drawDef,null,null);
-//}
-
-
 
 function makeDrawing(pv,width,height) {
     var plot= primePlot(pv);

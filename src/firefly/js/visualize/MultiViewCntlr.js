@@ -4,7 +4,7 @@
 import {without,union,difference, get} from 'lodash';
 import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
-import ImagePlotCntlr from './ImagePlotCntlr.js';
+import ImagePlotCntlr, {ExpandType} from './ImagePlotCntlr.js';
 import Enum from 'enum';
 
 
@@ -18,7 +18,6 @@ export const VIEWER_UNMOUNTED= `${IMAGE_MULTI_VIEW_PREFIX}.viewUnmounted`;
 export const ADD_IMAGES= `${IMAGE_MULTI_VIEW_PREFIX}.addImages`;
 export const REMOVE_IMAGES= `${IMAGE_MULTI_VIEW_PREFIX}.removeImages`;
 export const REPLACE_IMAGES= `${IMAGE_MULTI_VIEW_PREFIX}.replaceImages`;
-export const IMAGE_VIEW_TYPE= `${IMAGE_MULTI_VIEW_PREFIX}.imageViewType`;
 export const CHANGE_LAYOUT= `${IMAGE_MULTI_VIEW_PREFIX}.changeLayout`;
 export const UPDATE_CUSTOM_DATA= `${IMAGE_MULTI_VIEW_PREFIX}.updateCustomData`;
 export const ADD_TO_AUTO_RECEIVER = `${IMAGE_MULTI_VIEW_PREFIX}.addToAutoReceiver`;
@@ -48,6 +47,20 @@ export const NewPlotMode = new Enum(['create_replace', 'replace_only', 'none']);
 
 function initState() {
 
+    /**
+     *
+     * @typedef {Object} Viewer
+     * @prop {string} viewerId:EXPANDED_MODE_RESERVED,
+     * @prop {string[]} plotIdAry
+     * @prop {string} must be 'single' or 'grid'
+     * @prop {boolean} canReceiveNewPlots: NewPlotMode.create_replace.key,
+     * @prop {boolean} reservedContainer:true,
+     * @prop {object} customData: {}
+     *
+     */
+    /**
+     * @typedef {Viewer[]} MultiViewerRoot
+     */
     return [
         {
             viewerId:EXPANDED_MODE_RESERVED,
@@ -89,9 +102,9 @@ function initState() {
 
 /**
  *
- * @param viewerId
- * @param canReceiveNewPlots
- * @param mounted
+ * @param {string} viewerId
+ * @param {boolean} canReceiveNewPlots
+ * @param {boolean} mounted
  */
 export function dispatchAddViewer(viewerId, canReceiveNewPlots, mounted=false) {
     flux.process({type: ADD_VIEWER , payload: {viewerId, canReceiveNewPlots,mounted} });
@@ -99,7 +112,7 @@ export function dispatchAddViewer(viewerId, canReceiveNewPlots, mounted=false) {
 
 /**
  *
- * @param viewerId
+ * @param {string} viewerId
  */
 export function dispatchRemoveViewer(viewerId) {
     flux.process({type: REMOVE_VIEWER , payload: {viewerId} });
@@ -107,8 +120,8 @@ export function dispatchRemoveViewer(viewerId) {
 
 /**
  *
- * @param viewerId
- * @param {[]} plotIdAry  array of plotIds
+ * @param {string} viewerId
+ * @param {string[]} plotIdAry  array of plotIds
  *
  */
 export function dispatchAddImages(viewerId, plotIdAry) {
@@ -126,9 +139,9 @@ export function dispatchAddToAutoReceiver(imageAry) {
 
 /**
  * 
- * @param viewerId
- * @param layout single or grid
- * @param layoutDetail more detail about the type of layout, hint to UI
+ * @param {string} viewerId
+ * @param {string} layout single or grid
+ * @param {string} layoutDetail more detail about the type of layout, hint to UI
  */
 export function dispatchChangeLayout(viewerId, layout, layoutDetail) {
     flux.process({type: CHANGE_LAYOUT , payload: {viewerId, layout, layoutDetail} });
@@ -137,7 +150,7 @@ export function dispatchChangeLayout(viewerId, layout, layoutDetail) {
 
 /**
  *
- * @param viewerId
+ * @param {string} viewerId
  * @param {[]} plotIdAry array of string of plotId
  */
 export function dispatchRemoveImages(viewerId, plotIdAry) {
@@ -146,25 +159,33 @@ export function dispatchRemoveImages(viewerId, plotIdAry) {
 
 /**
  *
- * @param viewerId
- * @param {[]} plotIdAry  array of {plotId : string, requestAry : array of WebPlotRequest}
+ * @param {string} viewerId
+ * @param {string[]} plotIdAry  array of {plotId : string, requestAry : array of WebPlotRequest}
  */
 export function dispatchReplaceImages(viewerId, plotIdAry) {
     flux.process({type: REPLACE_IMAGES , payload: {viewerId, plotIdAry} });
 }
 
+/**
+ *
+ * @param {string} viewerId
+ */
 export function dispatchViewerMounted(viewerId) {
     flux.process({type: VIEWER_MOUNTED , payload: {viewerId} });
 }
 
+/**
+ *
+ * @param {string} viewerId
+ */
 export function dispatchViewerUnmounted(viewerId) {
     flux.process({type: VIEWER_UNMOUNTED , payload: {viewerId} });
 }
 
 /**
  *
- * @param viewerId
- * @param customData
+ * @param {string} viewerId
+ * @param {Object} customData
  */
 export function dispatchUpdateCustom(viewerId, customData) {
     flux.process({type: UPDATE_CUSTOM_DATA , payload: {viewerId,customData} });
@@ -174,26 +195,43 @@ export function dispatchUpdateCustom(viewerId, customData) {
 //======================================== Utilities =============================
 //======================================== Utilities =============================
 
+/**
+ *
+ * @param {MultiViewerRoot} multiViewRoot
+ * @param {string} viewerId
+ * @return {boolean}
+ */
 export function hasViewerId(multiViewRoot, viewerId) {
     if (!multiViewRoot || !viewerId) return false;
     return multiViewRoot.find((entry) => entry.viewerId === viewerId);
 }
 
+/**
+ *
+ * @param {MultiViewerRoot} multiViewRoot
+ * @param {string} viewerId
+ * @return {string} will be 'single' or 'grid'
+ */
 export function getLayoutType(multiViewRoot, viewerId) {
     if (!multiViewRoot || !viewerId) return GRID;
     const v= multiViewRoot.find((entry) => entry.viewerId === viewerId);
     return v ? v.layout : GRID;
 }
 
+/**
+ *
+ * @param {MultiViewerRoot} multiViewRoot
+ * @return {string[]} an array of plot ids
+ */
 export function getExpandedViewerPlotIds(multiViewRoot) {
     return getViewerPlotIds(multiViewRoot,EXPANDED_MODE_RESERVED);
 }
 
 /**
- * 
- * @param multiViewRoot
- * @param viewerId
- * @return {*}
+ *
+ * @param {MultiViewerRoot} multiViewRoot
+ * @param {string} viewerId
+ * @return {string[]} an array of plot ids
  */
 export function getViewerPlotIds(multiViewRoot,viewerId) {
     if (!multiViewRoot || !viewerId) return [];
@@ -203,9 +241,9 @@ export function getViewerPlotIds(multiViewRoot,viewerId) {
 
 /**
  * get the viewer for an id
- * @param multiViewRoot
- * @param viewerId
- * @return {*}
+ * @param {MultiViewerRoot} multiViewRoot
+ * @param {string} viewerId
+ * @return {Viewer}
  */
 export function getViewer(multiViewRoot,viewerId) {
     if (!multiViewRoot || !viewerId) return null;
@@ -229,9 +267,32 @@ export function findViewerWithPlotId(multiViewRoot, plotId) {
 
 // get an available view from multiple views
 
+/**
+ *
+ * @param {MultiViewRoot} multiViewRoot
+ * @return {Viewer}
+ */
 export function getAViewFromMultiView(multiViewRoot) {
     return  multiViewRoot.find((entry) => (!entry.viewerId.includes('RESERVED')&&
                                           (get(entry, 'canReceiveNewPlots') === NewPlotMode.create_replace.key)));
+}
+
+/**
+ *
+ * @param {MultiViewRoot} multiViewRoot
+ * @param {VisRoot} visRoot
+ * @param {string} plotId
+ * @return {boolean}
+ */
+export function isViewerSingleLayout(multiViewRoot, visRoot, plotId) {
+    var viewer;
+    if (visRoot.expandedMode!==ExpandType.COLLAPSE) {
+        return visRoot.expandedMode!==ExpandType.GRID;
+    }
+    else {
+        const viewerId= findViewerWithPlotId(multiViewRoot, plotId);
+        return viewer ? getViewer(multiViewRoot,viewerId).viewType===SINGLE : true;
+    }
 }
 
 
@@ -239,8 +300,9 @@ export function getAViewFromMultiView(multiViewRoot) {
 //======================================== Action Creator =============================
 //======================================== Action Creator =============================
 
+// eslint-disable-next-line
 function xxPLACEHOLDERxxxxxActionCreator(rawAction) {  // remember to export
-    return (dispatcher) => {
+    return (dispatcher) => { // eslint-disable-line
     };
 }
 
@@ -331,10 +393,10 @@ function removeViewer(state,action) {
 
 /**
  *
- * @param state
- * @param viewerId
- * @param plotIdAry
- * @return {*}
+ * @param {MultiViewerRoot} state
+ * @param {string} viewerId
+ * @param {string[]} plotIdAry
+ * @return {MultiViewerRoot}
  */
 function addImages(state,viewerId,plotIdAry) {
     var viewer;
@@ -355,10 +417,10 @@ function addImages(state,viewerId,plotIdAry) {
 
 /**
  *
- * @param state
- * @param viewerId
- * @param plotIdAry
- * @return {*}
+ * @param {MultiViewerRoot} state
+ * @param {string} viewerId
+ * @param {string[]} plotIdAry
+ * @return {MultiViewerRoot}
  */
 function replaceImages(state,viewerId,plotIdAry) {
     var viewer;

@@ -2,11 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get,isArray} from 'lodash';
+import {get,has,isArray} from 'lodash';
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
-import PlotImageTask from './PlotImageTask.js';
+import PlotImageTask from './task/PlotImageTask.js';
 import {UserZoomTypes} from './ZoomUtil.js';
 import {reducer as plotChangeReducer} from './reducer/HandlePlotChange.js';
 import {reducer as plotCreationReducer} from './reducer/HandlePlotCreation.js';
@@ -35,16 +35,18 @@ export {colorChangeActionCreator,
         stretchChangeActionCreator,
         flipActionCreator,
         cropActionCreator,
-        rotateActionCreator} from './PlotChangeTask.js';
+        rotateActionCreator} from './task/PlotChangeTask.js';
 
+export {wcsMatchActionCreator} from './task/WcsMatchTask.js';
 
 /** can the 'COLLAPSE', 'GRID', 'SINGLE' */
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
 
+/** can the 'NorthCenOnPt', 'NorthCenOnMoving', 'Standard', 'Off' */
+export const WcsMatchType= new Enum(['NorthCenOnPt', 'NorthCenOnMoving', 'StandCenOnPt', 'StandCenOnMoving', 'Standard']);
 
-/** can the 'NorthAndCenter', 'ByUserPositionAndZoom' */
-const WcsMatchMode= new Enum (['NorthAndCenter', 'ByUserPositionAndZoom']);
-
+/** can the 'GROUP', 'SINGLE', 'LIST' */
+export const ActionScope= new Enum(['GROUP','SINGLE', 'LIST']);
 
 export const PLOTS_PREFIX= 'ImagePlotCntlr';
 
@@ -134,15 +136,16 @@ const PLOT_MASK_FAIL= `${PLOTS_PREFIX}.plotMaskFail`;
 const DELETE_OVERLAY_PLOT=`${PLOTS_PREFIX}.deleteOverlayPlot`;
 const OVERLAY_PLOT_CHANGE_ATTRIBUTES=`${PLOTS_PREFIX}.overlayPlotChangeAttributes`;
 
+const WCS_MATCH=`${PLOTS_PREFIX}.wcsMatch`;
 
 const PLOT_PROGRESS_UPDATE= `${PLOTS_PREFIX}.PlotProgressUpdate`;
 const API_TOOLS_VIEW= `${PLOTS_PREFIX}.apiToolsView`;
 
+/** Action Type: enable/disable wcs matching*/
 export const IMAGE_PLOT_KEY= 'allPlots';
 
-export const ActionScope= new Enum(['GROUP','SINGLE', 'LIST']);
 
-/** @return {VisRoot} */
+/** @returns {VisRoot} */
 export function visRoot() { return flux.getState()[IMAGE_PLOT_KEY]; }
 
 
@@ -150,7 +153,7 @@ export function visRoot() { return flux.getState()[IMAGE_PLOT_KEY]; }
 
 /**
  *
- * @return {VisRoot}
+ * @returns {VisRoot}
  */
 const initState= function() {
 
@@ -165,7 +168,7 @@ const initState= function() {
      *
      * @prop {String} activePlotId the id of the active plot
      * @prop {PlotView[]} plotViewAry view array
-     * @prop {PlotGroupAry[]} plotGroupAry view array
+     * @prop {PlotGroup[]} plotGroupAry view array
      * @prop {object} plotRequestDefaults - can have multiple values
      * @prop {ExpandType} expandedMode status of expand mode
      * @prop {ExpandType} previousExpandedMode the value last time it was expanded
@@ -178,6 +181,7 @@ const initState= function() {
         plotGroupAry : [], // there is one for each group, a plot group may have multiple plotViews
         // plotHistoryRequest: [], //todo
 
+        prevActivePlotId: null,
         plotRequestDefaults : {}, // object: if normal request;
         //                                         {plotId : {threeColor:boolean, wpRequest : object, }
         //                                   if 3 color:
@@ -196,10 +200,9 @@ const initState= function() {
         apiToolsView: false,
 
         //-- wcs match parameters //todo this might have to be in a plotGroup, not sure at this point
-        matchWCS: false, //todo
-        wcsMatchCenterWP: null, //todo
-        wcsMatchMode: WcsMatchMode.ByUserPositionAndZoom, //todo
-        mpwWcsPrimId: null,//todo
+        wcsMatchCenterWP: null,
+        wcsMatchType: false,
+        mpwWcsPrimId: null,
     };
 
 };
@@ -223,7 +226,7 @@ export default {
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
     DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT,
     PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, DELETE_OVERLAY_PLOT,
-    OVERLAY_PLOT_CHANGE_ATTRIBUTES
+    OVERLAY_PLOT_CHANGE_ATTRIBUTES, WCS_MATCH
 };
 
 
@@ -268,12 +271,10 @@ export function dispatchPlotProgressUpdate(plotId, message, done ) {
  * @param {string} plotId
  * @param {number} width  this parameter should be the offsetWidth of the dom element
  * @param {number} height this parameter should be the offsetHeight of the dom element
- * @param {boolean} [updateScroll]
- * @param {object} [centerImagePt] image point to center on
  */
-export function dispatchUpdateViewSize(plotId,width,height,updateScroll=true,centerImagePt=null) {
+export function dispatchUpdateViewSize(plotId,width,height) {
     flux.process({type: UPDATE_VIEW_SIZE,
-        payload: {plotId, width, height,updateScroll,centerImagePt}
+        payload: {plotId, width, height}
     });
 }
 
@@ -281,7 +282,7 @@ export function dispatchUpdateViewSize(plotId,width,height,updateScroll=true,cen
  * change group lock for zoom and scrolling
  *
  * @param {string} plotId is required
- * @param {boolean} groupLocked,  true to set group lockRelated on
+ * @param {boolean} groupLocked  true to set group lockRelated on
  */
 export function dispatchGroupLocking(plotId,groupLocked) {
     flux.process({ type: GROUP_LOCKING, payload :{ plotId, groupLocked }});
@@ -293,9 +294,10 @@ export function dispatchGroupLocking(plotId,groupLocked) {
 /**
  * Change the primary plot for a multi image fits display 
  * Note - function parameter is a single object
- * @param {string} plotId
- * @param {number} primeIdx
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Object} p
+ * @param {string} p.plotId
+ * @param {number} p.primeIdx
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
 export function dispatchChangePrimePlot({plotId, primeIdx, dispatcher= flux.process}) {
     dispatcher({ type: CHANGE_PRIME_PLOT , payload: { plotId, primeIdx }});
@@ -306,13 +308,12 @@ export function dispatchChangePrimePlot({plotId, primeIdx, dispatcher= flux.proc
 /**
  * Show image with new color table loaded
  * Note - function parameter is a single object
- * @param {Object }  obj
+ * @param {Object}  obj
  * @param {string} obj.plotId
- * @param {number} obj.cbarId
+ * @param {number} obj.cbarId must be in the range, 0 - 21, each number represents different colorbar
  * @param {ActionScope} obj.actionScope
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Function} obj.dispatcher only for special dispatching uses such as remote
  */
-
 export function dispatchColorChange({plotId, cbarId, actionScope=ActionScope.GROUP, dispatcher= flux.process} ) {
     dispatcher({ type: COLOR_CHANGE, payload: { plotId, cbarId, actionScope }});
 }
@@ -321,31 +322,56 @@ export function dispatchColorChange({plotId, cbarId, actionScope=ActionScope.GRO
  *
  * Change the image stretch
  * Note - function parameter is a single object
- * @param {string} plotId
- * @param {[{band:object,rv:object,bandVisible:boolean}]} stretchData
- * @param {ActionScope} actionScope
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Object}  p
+ * @param {string} p.plotId
+ * @param {[{band:object,rv:object,bandVisible:boolean}]} p.stretchData
+ * @param {ActionScope} p.actionScope
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ * @example
+ * // Example of stretch 2 - 98 percent, log stretch
+ * var rv= RangeValues.makeSimple(‘percent’, 2, 98, ‘log’);
+ * action.dispatchStretchChange({plotId:’myplot’, strechData:rv });
+ * @example
+ * // Example of stretch -2 - 5 sigma, linear stretch
+ * var rv= RangeValues.makeSimple(’sigma’, -2, 5, 'linear’);
+ * action.dispatchStretchChange({plotId:’myplot’, strechData:rv });
+ *
  */
 export function dispatchStretchChange({plotId, stretchData, 
                                        actionScope=ActionScope.GROUP, dispatcher= flux.process} ) {
     dispatcher({ type: STRETCH_CHANGE, payload: { plotId, stretchData, actionScope }});
 }
 
+/**
+ * Enable / Disable WCS Match
+ * @param {Object}  p
+ * @param {string} p.plotId
+ * @param {Enum|string} p.matchType one of 'NorthCenOnPt', 'NorthCenOnMoving', 'Standard', 'Off'
+ * @param {Function} p.dispatcher
+ */
+export function dispatchWcsMatch({plotId, matchType, dispatcher= flux.process} ) {
+    dispatcher({ type: WCS_MATCH, payload: { plotId, matchType}});
+}
 
 /**
  * Rotate image
  *
  * Note - function parameter is a single object
- * @param {string} plotId
- * @param {object} rotateType enum RotateType
- * @param {number} angle
- * @param actionScope enum ActionScope
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Object}  p
+ * @param {string} p.plotId
+ * @param {Enum} p.rotateType enum RotateType
+ * @param {number} p.angle
+ * @param {number} p.newZoomLevel after rotating
+ * @param {boolean} p.keepWcsLock it wcs lock is on then keep is on, the default is to unlock wcs
+ * @param {ActionScope} p.pactionScope enum ActionScope
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
-export function dispatchRotate({plotId, rotateType, angle=-1, actionScope=ActionScope.GROUP,
+export function dispatchRotate({plotId, rotateType, angle=-1, newZoomLevel=0,
+                                keepWcsLock= false,
+                                actionScope=ActionScope.GROUP,
                                 dispatcher= flux.process} ) {
     dispatcher({ type: ROTATE,
-        payload: { plotId, angle, rotateType, actionScope, newZoomLevel:0 }});
+        payload: { plotId, angle, rotateType, actionScope, newZoomLevel, keepWcsLock}});
 }
 
 
@@ -353,9 +379,10 @@ export function dispatchRotate({plotId, rotateType, angle=-1, actionScope=Action
  * Flip
  *
  * Note - function parameter is a single object
- * @param {string} plotId
- * @param {boolean} isY
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Object}  p
+ * @param {string} p.plotId
+ * @param {boolean} p.isY
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
 export function dispatchFlip({plotId, isY=true, dispatcher= flux.process}) {
     dispatcher({ type: FLIP, payload: { plotId, isY}});
@@ -365,11 +392,12 @@ export function dispatchFlip({plotId, isY=true, dispatcher= flux.process}) {
  * Crop
  *
  * Note - function parameter is a single object
- * @param {string} plotId
- * @param {Object} imagePt1 image point of corner 1
- * @param {Object} imagePt2 image point of corner 2
- * @param {boolean} cropMultiAll
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Object}  p
+ * @param {string} p.plotId
+ * @param {Object} p.imagePt1 image point of corner 1
+ * @param {Object} p.imagePt2 image point of corner 2
+ * @param {boolean} p.cropMultiAll
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
 export function dispatchCrop({plotId, imagePt1, imagePt2, cropMultiAll, dispatcher= flux.process}) {
     dispatcher({ type: CROP, payload: { plotId, imagePt1, imagePt2, cropMultiAll}});
@@ -380,9 +408,10 @@ export function dispatchCrop({plotId, imagePt1, imagePt2, cropMultiAll, dispatch
  * Move the scroll point on this plotId and possible others if it is grouped.
  *
  * Note - function parameter is a single object
- * @param {string} plotId
- * @param {object} scrollPt a new point to scroll
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Object}  p
+ * @param {string} p.plotId
+ * @param {Object} p.scrollPt a new point to scroll
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
 export function dispatchProcessScroll({plotId,scrollPt, dispatcher= flux.process}) {
     dispatcher({type: PROCESS_SCROLL, payload: {plotId, scrollPt} });
@@ -393,9 +422,10 @@ export function dispatchProcessScroll({plotId,scrollPt, dispatcher= flux.process
  * recenter the images on the plot center or the ACTIVE_TARGET
  *
  * Note - function parameter is a single object
- * @param {string} plotId
- * @param centerPt
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Object}  p
+ * @param {string} p.plotId
+ * @param {Point} p.centerPt
+ * @param {function} p.dispatcher only for special dispatching uses such as remote
  */
 export function dispatchRecenter({plotId, centerPt, dispatcher= flux.process}) {
     dispatcher({type: RECENTER, payload: {plotId, centerPt} });
@@ -405,8 +435,9 @@ export function dispatchRecenter({plotId, centerPt, dispatcher= flux.process}) {
  * replot the image with the original plot parameters
  *
  * Note - function parameter is a single object
- * @param {string} plotId
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Object}  p this function take a single parameter
+ * @param {string} p.plotId
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
 export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
     dispatcher({type: RESTORE_DEFAULTS, payload: {plotId} });
@@ -417,16 +448,17 @@ export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
  *
  * Plot an image.  Note this dispatch function only takes an object with the parameters
  * Note - function parameter is a single object
- * @param {string} plotId is required unless defined in the WebPlotRequest
- * @param {WebPlotRequest|Array} wpRequest, plotting parameters, required or for 3 color pass an array of WebPlotRequest
- * @param {boolean} threeColor is a three color request, if true the wpRequest should be an array
- * @param {boolean} addToHistory add this request to global history of plots, may be deprecated in the future
- * @param {boolean} useContextModifications it true the request will be modified to use preferences, rotation, etc
+ * @param {Object}  p
+ * @param {string} p.plotId is required unless defined in the WebPlotRequest
+ * @param {WebPlotRequest|Array} p.wpRequest, plotting parameters, required or for 3 color pass an array of WebPlotRequest
+ * @param {boolean} p.threeColor is a three color request, if true the wpRequest should be an array
+ * @param {boolean} p.addToHistory add this request to global history of plots, may be deprecated in the future
+ * @param {boolean} p.useContextModifications it true the request will be modified to use preferences, rotation, etc
  *                                 should only be false when it is doing a 'restore to defaults' type plot
- * @param {boolean} attributes the are added to the plot
- * @param {object} pvOptions parameter specific to the  plotView, only read the first time per plot id
- * @param {function} dispatcher only for special dispatching uses such as remote
- * @param viewerId
+ * @param {boolean} p.attributes the are added to the plot
+ * @param {Object} p.pvOptions parameter specific to the  plotView, only read the first time per plot id
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ * @param {string} p.viewerId
  */
 export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpRequest),
                                   addToHistory=false,
@@ -444,10 +476,11 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
 /**
  *
  * Note - function parameter is a single object
- * @param wpRequestAry
- * @param viewerId
- * @param pvOptions PlotView init Options
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Object}  p this function take a single parameter
+ * @param {WebPlotRequest[]} p.wpRequestAry
+ * @param {string} p.viewerId
+ * @param {Object} p.pvOptions PlotView init Options
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
 export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {}, dispatcher= flux.process}) {
     dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry, pvOptions, viewerId} });
@@ -456,14 +489,15 @@ export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {}, dispat
 
 /**
  * Add a mask
- * @param plotId
- * @param maskValue power of 2, e.g 4, 8, 32, 128, etc
- * @param maskNumber 2, e.g 4, 8, 32, 128, etc
- * @param imageOverlayId
- * @param imageNumber hdu number of fits
- * @param {string} color - color is optional, if not specified, one is chosen
- * @param title
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Object}  p this function take a single parameter
+ * @param {string} p.plotId
+ * @param {number} p.maskValue power of 2, e.g 4, 8, 32, 128, etc
+ * @param {number} p.maskNumber 2, e.g 4, 8, 32, 128, etc
+ * @param {string} p.imageOverlayId
+ * @param {number} p.imageNumber hdu number of fits
+ * @param {string} p.color - color is optional, if not specified, one is chosen
+ * @param {string} p.title
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
 export function dispatchPlotMask({plotId,imageOverlayId, maskValue, imageNumber, maskNumber=-1, color, title, dispatcher= flux.process}) {
     dispatcher( { type: PLOT_MASK, payload: { plotId,imageOverlayId, maskValue, imageNumber, maskNumber, color, title} });
@@ -472,9 +506,10 @@ export function dispatchPlotMask({plotId,imageOverlayId, maskValue, imageNumber,
 /**
  *
  *
- * @param plotId
- * @param imageOverlayId
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Object}  p this function take a single parameter
+ * @param {string} p.plotId
+ * @param {string} p.imageOverlayId
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
 export function dispatchDeleteOverlayPlot({plotId,imageOverlayId, dispatcher= flux.process}) {
     dispatcher( { type: DELETE_OVERLAY_PLOT, payload: { plotId,imageOverlayId} });
@@ -483,11 +518,12 @@ export function dispatchDeleteOverlayPlot({plotId,imageOverlayId, dispatcher= fl
 
 /**
  *
- * @param plotId
- * @param imageOverlayId
- * @param attributes any attribute in OverlayPlotView
- * @param doReplot if false don't do a replot just change attributes
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Object}  p this function take a single parameter
+ * @param {string} p.plotId
+ * @param {string} p.imageOverlayId
+ * @param {Object} p.attributes any attribute in OverlayPlotView
+ * @param {boolean} p.doReplot if false don't do a replot just change attributes
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
 export function dispatchOverlayPlotChangeAttributes({plotId,imageOverlayId, attributes, doReplot=false, dispatcher= flux.process}) {
     dispatcher( { type: OVERLAY_PLOT_CHANGE_ATTRIBUTES, payload: { plotId,imageOverlayId, attributes, doReplot} });
@@ -498,14 +534,29 @@ export function dispatchOverlayPlotChangeAttributes({plotId,imageOverlayId, attr
 /**
  * Zoom a image
  * Note - function parameter is a single object
- * @param {string} plotId
- * @param {UserZoomTypes} userZoomType
- * @param {boolean} maxCheck
- * @param {boolean} zoomLockingEnabled
- * @param {boolean} forceDelay
- * @param {number} level
- * @param {ActionScope} actionScope
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Object}  p this function take a single parameter
+ * @param {string} p.plotId
+ * @param {UserZoomTypes} p.userZoomType (one of ['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV')
+ * @param {boolean} p.maxCheck
+ * @param {boolean} p.zoomLockingEnabled
+ * @param {boolean} p.forceDelay
+ * @param {number} p.level the level to zoom to, used only userZoomType 'LEVEL'
+ * @param {ActionScope} p.actionScope
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ *
+ * @example
+ * // Example of zoom to level
+ *  action.dispatchZoom({plotId:’myplot’, userZoomType:’LEVEL’, level: .75 });
+ *
+ * @example
+ * // Example of zoom up
+ * action.dispatchZoom({plotId:’myplot’, userZoomType:’UP’ }};
+ * @example
+ * // Example of zoom to fit
+ * action.dispatchZoom({plotId:’myplot’, userZoomType:’FIT’ }};
+ * @example
+ * // Example of zoom to level, if you are connected to a widget that is changing  the level fast, zlevel is the varible with the zoom level
+ * action.dispatchZoom({plotId:’myplot’, userZoomType:’LEVEL’, level: zlevel, forceDelay: true }};
  */
 export function dispatchZoom({plotId, userZoomType, maxCheck= true,
                              zoomLockingEnabled=false, forceDelay=false, level,
@@ -521,8 +572,9 @@ export function dispatchZoom({plotId, userZoomType, maxCheck= true,
 /**
  *
  * Note - function parameter is a single object
- * @param plotId
- * @param {function} dispatcher only for special dispatching uses such as remote
+ * @param {Object}  p this function take a single parameter
+ * @param {string} p.plotId
+ * @param {Function} p. dispatcher only for special dispatching uses such as remote
  */
 export function dispatchDeletePlotView({plotId, dispatcher= flux.process}) {
     dispatcher({ type: DELETE_PLOT_VIEW, payload: {plotId} });
@@ -532,9 +584,9 @@ export function dispatchDeletePlotView({plotId, dispatcher= flux.process}) {
 
 /**
  *
- * @param plotId
- * @param zoomLockingEnabled
- * @param zoomLockingType
+ * @param {string} plotId
+ * @param {boolean} zoomLockingEnabled
+ * @param {UserZoomTypes|string} zoomLockingType should be 'FIT' or 'FILL'
  */
 export function dispatchZoomLocking(plotId,zoomLockingEnabled, zoomLockingType) {
     flux.process({
@@ -639,19 +691,38 @@ export function dispatchExpandedAutoPlay(autoPlayOn) {
 
 
 /**
- * @param rawAction
- * @return {Function}
+ * @param {Action} rawAction
+ * @returns {Function}
  */
 export function changePrimeActionCreator(rawAction) {
     return (dispatcher, getState) => changePrime(rawAction,dispatcher,getState);
 }
 
+/**
+ * @param {Action} rawAction
+ * @returns {Function}
+ */
+export function deletePlotViewActionCreator(rawAction) {
+    return (dispatcher, getState) => {
+        const vr= getState()[IMAGE_PLOT_KEY];
+        if (vr.wcsMatchType) dispatcher({ type: WCS_MATCH, payload: {wcsMatchType:false} });
+        dispatcher(rawAction);
+    };
+}
 
+/**
+ * @param {Action} rawAction
+ * @returns {Function}
+ */
 export function plotImageActionCreator(rawAction) {
     return PlotImageTask.makePlotImageAction(rawAction);
 }
 
 
+/**
+ * @param {Action} rawAction
+ * @returns {Function}
+ */
 export function restoreDefaultsActionCreator(rawAction) {
     return (dispatcher, getState) => {
         const vr= getState()[IMAGE_PLOT_KEY];
@@ -753,9 +824,9 @@ export function changePointSelectionActionCreator(rawAction) {
 
 /**
  *
- * @param state
- * @param action
- * @return {VisRoot}
+ * @param {VisRoot} state
+ * @param {Action} action
+ * @returns {VisRoot}
  */
 function reducer(state=initState(), action={}) {
 
@@ -830,12 +901,17 @@ function reducer(state=initState(), action={}) {
             retState= deletePlotView(state,action);
             break;
 
+        case WCS_MATCH:
+            const {wcsMatchCenterWP,wcsMatchType,mpwWcsPrimId}= action.payload;
+            retState= clone(state,{wcsMatchCenterWP,wcsMatchType,mpwWcsPrimId});
+            break;
 
 
         default:
             break;
 
     }
+    validateState(retState,state,action);
     return retState;
 }
 
@@ -843,6 +919,19 @@ function reducer(state=initState(), action={}) {
 //============ private functions =================================
 //============ private functions =================================
 //============ private functions =================================
+
+
+function validateState(state,originalState,action) {
+    if (has(state,'activePlotId') && has(state,'plotViewAry') && has(state,'plotGroupAry')) {
+        return state;
+    }
+    if (console.group) console.group('state invalid after: ' + action.type);
+    console.log(action.type);
+    console.log('originalState',originalState);
+    console.log('new (bad) state',state);
+    console.log('action', action);
+    if (console.groupEnd) console.groupEnd();
+}
 
 
 function changePointSelection(state,action) {
@@ -854,7 +943,7 @@ function changePointSelection(state,action) {
     }
     else {
         if (!pointSelEnableAry.includes(requester)) return state;
-        return clone(state,{pointSelEnableAry: pointSelEnableAry.filter( (e) => e!=requester)});
+        return clone(state,{pointSelEnableAry: pointSelEnableAry.filter( (e) => e!==requester)});
     }
 }
 
@@ -872,9 +961,10 @@ function changeMouseReadout(state, action) {
 function changeActivePlotView(state,action) {
     const {plotId}= action.payload;
     if (plotId===state.activePlotId) return state;
+    const prevActivePlotId= state.activePlotId;
     if (!getPlotViewById(state,plotId)) return state;
 
-    return clone(state, {activePlotId:action.payload.plotId});
+    return clone(state, {prevActivePlotId, activePlotId:action.payload.plotId});
 }
 
 
@@ -892,8 +982,12 @@ function changeExpandedMode(state,action) {
 
     const changes= {expandedMode,singleAutoPlay:false};
 
+
     if (isExpanded(expandedMode)) { // we are currently expanded, just changing modes, e.g. grid to single
         changes.previousExpandedMode= expandedMode;
+        if (state.wcsMatchType) {
+            changes.mpwWcsPrimId= state.activePlotId;
+        }
     }
 
     return clone(state, changes);
@@ -904,15 +998,17 @@ function deletePlotView(state,action) {
     const {plotId}= action.payload;
     if (!state.plotViewAry.find( (pv) => pv.plotId===plotId)) return state;
     
-    state= clone(state, {plotViewAry:state.plotViewAry.filter( (pv) => pv.plotId!=plotId)});
-    if (state.activePlotId===plotId) state.activePlotId= get(state,'plotViewAry.0.plotId',null);
+    state= clone(state, {plotViewAry:state.plotViewAry.filter( (pv) => pv.plotId!==plotId)});
+    if (state.activePlotId===plotId) {
+        state.activePlotId= get(state,'plotViewAry.0.plotId',null);
+    }
+    if (state.prevActivePlotId===plotId || state.prevActivePlotId===state.activePlotId) {
+        state.prevActivePlotId= null;
+    }
     return state;
 }
 
 
-//todo
-//todo
-//todo
 //function updateHistory(plotHistoryRequest, action) {
 //
 //    var {addToHistory}= action;

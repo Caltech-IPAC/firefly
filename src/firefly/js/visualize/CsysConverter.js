@@ -8,6 +8,7 @@ import {makeRoughGuesser} from './ImageBoundsData.js';
 import Point, {makeImageWorkSpacePt, makeViewPortPt, makeImagePt,
                makeScreenPt, makeWorldPt, isValidPoint} from './Point.js';
 
+
 function convertToCorrect(wp) {
     if (!wp) return null;
     var csys= wp.getCoordSys();
@@ -20,6 +21,7 @@ function convertToCorrect(wp) {
     }
     return retPt;
 }
+
 
 const MAX_CACHE_ENTRIES = 38000; // set to never allows the cache array over 48000 with a 80% load factor
 
@@ -162,9 +164,9 @@ export class CysConverter {
 
 
     /**
-     * @desc Determine if a point is in the view port boundaries and is not null.
-     * @param {Point} pt the point to test.
-     * @returns {boolean} true if it is in the boundaries, false if not.
+     * Determine if a point is in the view port boundaries and is not null.
+     * @param pt the point to test.
+     * @return {boolean} true if it is in the boundaries, false if not.
      */
     pointInViewPort(pt) {
         if (!isValidPoint(pt)) return false;
@@ -235,11 +237,13 @@ export class CysConverter {
 
 
     /**
+     * Return the ImagePt coordinates given Pt
      * @param {object} pt the point to translate
      * @return ImagePt the image coordinates
      */
     getImageCoords(pt) {
         if (!isValidPoint(pt)) return null;
+
         let retval = null;
 
         switch (pt.type) {
@@ -425,7 +429,7 @@ export class CysConverter {
 
     /**
      * Return the screen coordinates given Pt
-     * @param {PointPt} pt the point to translate
+     * @param pt the point to translate
      * @param {number} [altZoomLevel], only use this parameter it you want to compute the point for a zoom level that
      *                 if different than what the plotted zoom level
      * @return ScreenPt the screen coordinates
@@ -570,7 +574,7 @@ export class CysConverter {
 
 /**
  *
- * @param {PointPt} pt
+ * @param pt
  * @return {*}
  * @public
  * @memberof firefly.util.image.CCUtil
@@ -594,19 +598,21 @@ function getWorldPtRepresentation(pt) {
 export const CCUtil = {
     /**
      * Convert to ImageWorkSpace Point
-     * @param {object} plot - the image
+     * @param {WebPlot} plot - the image
+     * @func  getImageWorkSpaceCoords
      * @memberof   firefly.util.image.CCUtil
      * @public
      *
      */
-
     getImageWorkSpaceCoords : (plot,pt) => CysConverter.make(plot).getImageWorkSpaceCoords(pt),
     
     /**
      *
      * Convert to Image Point
-     * @param {object} plot - the image
+     * @param {WebPlot} plot - the image
      * @param {object} pt - the point to convert
+     * @return {ImagePt}
+     * @function getImageCoords
      * @memberof  firefly.util.image.CCUtil
      * @public
      */
@@ -617,7 +623,7 @@ export const CCUtil = {
      * Convert to ViewPoint point
      */
     /**
-     * @param {object} plot - the image
+     * @param {WebPlot} plot - the image
      * @param {object} pt - the point to convert
      * @public
      * @memberof firefly.util.image.CCUtil
@@ -629,7 +635,7 @@ export const CCUtil = {
      * Convert to Screen Point
      * */
     /**
-     * @param {object} plot - the image
+     * @param {WebPlot} plot - the image
      * @param {object} pt - the point to convert
      * @function  getScreenCoords
      * @memberof  firefly.util.image.CCUtil
@@ -639,8 +645,10 @@ export const CCUtil = {
     /**
      *
      * Convert to World Point
-     * @param {object} plot - the image
-     * @param {object} pt - the point to convert
+     * @param {WebPlot} plot - the image
+     * @param  pt - the point to convert
+     * @return {WorldPt}
+     * @function getWorldCoords
      * @memberof  firefly.util.image.CCUtil
      * @public
      */

@@ -1,3 +1,4 @@
+
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
@@ -19,7 +20,9 @@ import ImagePlotCntlr, {IMAGE_PLOT_KEY,
                         rotateActionCreator, flipActionCreator,
                         cropActionCreator, autoPlayActionCreator, changePrimeActionCreator,
                         restoreDefaultsActionCreator, overlayPlotChangeAttributeActionCreator,
-                        changePointSelectionActionCreator} from '../visualize/ImagePlotCntlr.js';
+                        deletePlotViewActionCreator,
+                        changePointSelectionActionCreator, wcsMatchActionCreator}
+                        from '../visualize/ImagePlotCntlr.js';
 
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
@@ -110,7 +113,7 @@ const reducers = {
 let redux = null;
 
 
-// pre-map a set of action => creator prior to boostraping.
+// pre-map a set of action => creator prior to bootstrapping.
 actionCreators.set(AppDataCntlr.APP_LOAD, AppDataCntlr.loadAppData);
 actionCreators.set(AppDataCntlr.GRAB_WINDOW_FOCUS, AppDataCntlr.grabWindowFocus);
 actionCreators.set(AppDataCntlr.HELP_LOAD, AppDataCntlr.onlineHelpLoad);
@@ -130,6 +133,8 @@ actionCreators.set(ImagePlotCntlr.CHANGE_PRIME_PLOT , changePrimeActionCreator);
 actionCreators.set(ImagePlotCntlr.CHANGE_POINT_SELECTION, changePointSelectionActionCreator);
 actionCreators.set(ImagePlotCntlr.RESTORE_DEFAULTS, restoreDefaultsActionCreator);
 actionCreators.set(ImagePlotCntlr.EXPANDED_AUTO_PLAY, autoPlayActionCreator);
+actionCreators.set(ImagePlotCntlr.WCS_MATCH, wcsMatchActionCreator);
+actionCreators.set(ImagePlotCntlr.DELETE_PLOT_VIEW, deletePlotViewActionCreator);
 actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionCreator(drawLayerFactory));
 
 actionCreators.set(TablesCntlr.TABLE_SEARCH, TablesCntlr.tableSearch);
@@ -169,6 +174,7 @@ actionCreators.set('exampleDialog', (rawAction) => {
 /**
  * object with a key that can be filtered out, value should be a boolean or a function that returns a boolean
  */
+// eslint-disable-next-line
 var filterOutOfLogging= {
     [ExternalAccessCntlr.EXTENSION_ACTIVATE]: (action) => !action.payload.extension || action.payload.extension.extType!=='PLOT_MOUSE_READ_OUT',
     [FieldGroupCntlr.MOUNT_COMPONENT]: false
@@ -210,6 +216,7 @@ function collapsedFilter(getState,action) {
 }
 
 
+// eslint-disable-next-line
 var logger= loggerMiddleware({duration:true, predicate:logFilter, collapsed:collapsedFilter}); // developer can add for debugging
 
 
@@ -254,11 +261,10 @@ function bootstrap() {
  * is exported from the ImagePlotCntlr module.  The the name should be <code>processPlotImage</code>.
  *
  *
- * @param rawAction
- * @param condition
+ * @param {Action} rawAction
  * @returns {Promise}
  */
-function process(rawAction, condition) {
+function process(rawAction) {
     if (!redux) throw Error('firefly has not been bootstrapped');
 
     var ac = actionCreators.get(rawAction.type);
@@ -268,7 +274,6 @@ function process(rawAction, condition) {
     } else {
         redux.dispatch( rawAction );
     }
-
     recordHistory(rawAction);
 }
 

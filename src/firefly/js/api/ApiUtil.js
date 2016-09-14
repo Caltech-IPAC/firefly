@@ -96,15 +96,17 @@ export function unrenderDOM(div) {
  * @param {string} actionType a string or and array of strings. Each string is an action constant from firefly.action.type
  * @param {function} callBack the call back will be call with two parameters: action object and state object
  *                 If it returns true the listener will be removed.
+ * @param {object} extraData, an object with data to send to the callback, can be anything
+ *
  * @return {function} a function that will remove the listener
  * @public
  * @func addActionListener
  * @memberof firefly.util
  */
-export function addActionListener(actionType,callBack) {
+export function addActionListener(actionType,callBack, extraData) {
     var pResolve;
     const cancelPromise= new Promise((resolve) => pResolve= resolve);
-    dispatchAddSaga(actionReport,{actionType,callBack, cancelPromise});
+    dispatchAddSaga(actionReport,{actionType,callBack, cancelPromise,extraData});
     return () => pResolve();
 }
 
@@ -123,6 +125,7 @@ export function addActionListener(actionType,callBack) {
  * @param {string | string[]} actionType
  * @param callBack the user callback
  * @param cancelPromise a promise to cancel the callback
+ * @param extraData
  * @param dispatch
  * @param getState a function get the application state
  * @private
@@ -130,7 +133,7 @@ export function addActionListener(actionType,callBack) {
  *  @memberof firefly.util
  *
  */
-function *actionReport({actionType,callBack, cancelPromise},dispatch,getState) {
+function *actionReport({actionType,callBack, cancelPromise, extraData},dispatch,getState) {
     if (!actionType && !callBack) return;
     var stopListening= false;
     while (!stopListening) {
@@ -138,6 +141,6 @@ function *actionReport({actionType,callBack, cancelPromise},dispatch,getState) {
             action: take(actionType),
             cancel: call(() => cancelPromise)
         });
-        stopListening= raceWinner.action ? callBack(raceWinner.action,getState()) : true;
+        stopListening= raceWinner.action ? callBack(raceWinner.action,getState(),extraData) : true;
     }
 }
