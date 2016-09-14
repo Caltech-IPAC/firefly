@@ -62,8 +62,7 @@ function uploadAndProcessRegion(request, rgComp, drawLayerId) {
                 if (isEmpty(drawLayerId)) {
                     drawLayerId = drawLayerIdGen.next().value;
                 }
-                dispatchCreateRegionLayer(drawLayerId, drawLayerId, file, regionAry, undefined,
-                    {selectStyle: 'UprightBox', lineWidth: 1});
+                dispatchCreateRegionLayer(drawLayerId, drawLayerId, file, regionAry);
                 dispatchHideDialog(popupId);
             }
     };

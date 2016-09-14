@@ -66,6 +66,7 @@ function* regionsRemoveSaga({id, plotId}, dispatch, getState) {
  *                                 => regions and regionObjAry are updated as adding or removing regions occurs
  *                                 highlightedRegion: selected region
  * @return {Function}
+ * @ignore
  */
 function creator(initPayload) {
 
@@ -106,6 +107,7 @@ function creator(initPayload) {
  * find the drawObj which is selected for highlight
  * @param mouseStatePayload
  * @returns {Function}
+ * @ignore
  */
 function highlightChange(mouseStatePayload) {
     const {drawLayer,plotId,screenPt} = mouseStatePayload;
@@ -170,6 +172,7 @@ function highlightChange(mouseStatePayload) {
  * @param drawLayer
  * @param action
  * @returns {*}
+ * @ignore
  */
 function getLayerChanges(drawLayer, action) {
     const {regionChanges, drawLayerId } = action.payload;
@@ -399,7 +402,7 @@ function removeRegionsFromData(drawLayer, removedRegions) {
  * @param {object} drawLayer
  * @param {string|string[]} regionDes
  * @param {int} stopIndex maximum number of regions to be selected
- * @return {Object}
+ * @return {Object[]} if no region is found, an empty array is return.
  * @ignore
  */
 function getSelectedRegionDrawObj(drawLayer, regionDes, stopIndex = 1) {
@@ -425,9 +428,12 @@ function getSelectedRegionDrawObj(drawLayer, regionDes, stopIndex = 1) {
 }
 
 /**
- * @summary get the region description of the selected region from the specified region layer
+ * @summary get the region description of the selected region from the specified drawing layer
  * @param {string} drawLayerId id of the drawing layer
- * @return {string}
+ * @return {string} description of the selected region
+ * @public
+ * @function getSelectedRegion
+ * @memberof firefly.util.image
  */
 export function getSelectedRegion(drawLayerId) {
     var drawLayer = getDrawLayerById(flux.getState()[DRAWING_LAYER_KEY], drawLayerId);

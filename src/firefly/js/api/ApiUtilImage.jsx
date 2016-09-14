@@ -41,6 +41,7 @@ export {CysConverter} from '../visualize/CsysConverter.js';
 export {CCUtil} from '../visualize/CsysConverter.js';
 export {watchCoverage} from '../visualize/saga/CoverageWatcher.js';
 export {watchImageMetaData} from '../visualize/saga/ImageMetaDataWatcher.js';
+export {getSelectedRegion} from '../drawingLayers/RegionPlot.js';
 
 export {extensionAdd, extensionRemove} from '../core/ExternalAccessUtils.js';
 

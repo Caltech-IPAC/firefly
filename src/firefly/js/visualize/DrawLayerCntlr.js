@@ -301,37 +301,56 @@ export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
 }
 
 /**
- * @summary Create drawing layer based on region file or region description
- * @param {string} drawLayerId id of the drawing layer to be created, required
- * @param {string} layerTitle  if it is empty, it will be created internally
- * @param {string} fileOnServer region file name on server
- * @param {string[]|string} regionAry  array or string of region description
- * @param {string[]|string} plotId  array or string of plot id. If plotId is empty, all plots of the active group are applied.
- * @param {function} dispatcher
- * @param {Object} selectMode    redndering features for the selected region
- * @param {string} selectMode.selectStyle   rendering style for the selected region including 'UprightBox', 'DottedOverlay',
+ * check and create selectMode with valid property and value.
+ * @param selectMode
+ * @returns {{selectStyle, selectColor, lineWidth}}
+ * @ignore
+ */
+function validateSelectMode(selectMode) {
+    var {selectStyle = defaultRegionSelectStyle, selectColor = defaultRegionSelectColor, lineWidth = 0 } = selectMode;
+
+    selectStyle = getRegionSelectStyle(selectStyle);
+
+    return {selectStyle, selectColor, lineWidth};
+}
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} regionSelectMode
+ * @summary shallow object with the rendering parameters for selected region
+ * @prop {string}  [selectStyle] - rendering style for the selected region including 'UprightBox' (default), 'DottedOverlay',
  * 'SolidOverlay', 'DottedReplace', and 'SolidReplace'
- * @param {string} selectMode.selectColor   rendering color for the selected region, ex: 'red', '#DAA520'
- * @param {int}    selectMode.lineWidth     rendering line width for the selected region. 0 or less means the line width
+ * @prop {string}  [selectColor] - rendering color for the selected region, ex: '#DAA520'(default), 'red'
+ * @prop {int}     [lineWidth] - rendering line width for the selected region. 0 (default) or less means the line width
  * is the same as that of the selected region
+ */
+
+/**
+ * @summary Create drawing layer based on region file or region description
+ * @param {string} drawLayerId - id of the drawing layer to be created, required
+ * @param {string} layerTitle - if it is empty, it will be created internally
+ * @param {string} fileOnServer - region file name on server
+ * @param {string[]|string} regionAry - array or string of region description
+ * @param {string[]|string} plotId - array or string of plot id. If plotId is empty, all plots of the active group are applied
+ * @param {regionSelectMode} selectMode - rendering features for the selected region
+ * @param {function} dispatcher
  * @public
  * @func dispatchCreateRegionLayer
  * @memberof firefly.action
  */
 export function dispatchCreateRegionLayer(drawLayerId, layerTitle, fileOnServer='', regionAry=[], plotId='',
-                                           {selectStyle = defaultRegionSelectStyle, selectColor = defaultRegionSelectColor,
-                                            lineWidth = 0  },     // lineWidth = 0, as original region
-                                            dispatcher = flux.process) {
+                                           selectMode = {},
+                                           dispatcher = flux.process) {
 
     dispatcher({type: REGION_CREATE_LAYER, payload: {drawLayerId, fileOnServer, plotId, layerTitle, regionAry,
-                                                     selectMode: {selectStyle: getRegionSelectStyle(selectStyle),
-                                                                  selectColor, lineWidth}}});
+                                                     selectMode: validateSelectMode(selectMode)}});
 }
 
 /**
  * @summary Delete the region drawing layer
- * @param {string} drawLayerId id of the drawing layer to be deleted, required
- * @param {string[]|string} plotId  array or string of plot id. If plotId is empty, all plots of the active group are applied.
+ * @param {string} drawLayerId - id of the drawing layer to be deleted, required
+ * @param {string[]|string} plotId - array or string of plot id. If plotId is empty, all plots of the active group are applied
  * @param {function} dispatcher
  * @public
  * @func dispatchDeleteRegionLayer
@@ -341,38 +360,33 @@ export function dispatchDeleteRegionLayer(drawLayerId, plotId, dispatcher = flux
     dispatcher({type: REGION_DELETE_LAYER, payload: {drawLayerId, plotId}});
 }
 
+
 /**
- * @summay Add regions to drawing layer,
- * @param {string} drawLayerId   id of the drawing layer where the region(s) are added to.
+ * @summary Add regions to drawing layer
+ * @param {string} drawLayerId - id of the drawing layer where the region(s) are added to
  * if the layer doesn't exist, a new drawing layer is created by either using the specified drawLayerId or
- * creating a new id based on the setting of 'layerTitle' in case drawLayerId is undefined.
- * @param {string[]|string} regionChanges  array or string of region description
- * @param {string[]|string} plotId  array or string of plot id. If plotId is empty, all plots of the active group are applied.
- * @param {string} layerTitle    will replace the original title if the drawing layer exists and layerTitle is non-empty.
- * @param {Object} selectMode    redndering features for the selected region
- * @param {string} selectMode.selectStyle   rendering style for the selected region including 'UprightBox', 'DottedOverlay',
- * 'SolidOverlay', 'DottedReplace', and 'SolidReplace'
- * @param {string} selectMode.selectColor   rendering color for the selected region, ex: 'red', '#DAA520'
- * @param {int}    selectMode.lineWidth     rendering line width for the selected region. 0 or less means the line width
- * is the same as that of the selected region
+ * creating a new id based on the setting of 'layerTitle' in case drawLayerId is undefined
+ * @param {string[]|string} regionChanges - array or string of region description
+ * @param {string[]|string} plotId - array or string of plot id. If plotId is empty, all plots of the active group are applied
+ * @param {string} layerTitle - will replace the original title if the drawing layer exists and layerTitle is non-empty
+ * @param {regionSelectMode} selectMode - rendering features for the selected region
  * @param {function} dispatcher
  * @public
  * @func dispatchAddRegionEntry
  * @memberof firefly.action
  */
 export function dispatchAddRegionEntry(drawLayerId, regionChanges, plotId=[], layerTitle='',
-                                        {selectStyle = defaultRegionSelectStyle, selectColor = defaultRegionSelectColor,
-                                        lineWidth = 0 },     // lineWidth <= 0, as original region
+                                       selectMode = {},
                                        dispatcher = flux.process) {
+
     dispatcher({type: REGION_ADD_ENTRY, payload: {drawLayerId, regionChanges, plotId, layerTitle,
-                                                  selectMode: {selectStyle: getRegionSelectStyle(selectStyle),
-                                                               selectColor, lineWidth}}});
+                                                  selectMode: validateSelectMode(selectMode)}});
 }
 
 /**
  * @summary remove region(s) from the drawing layer
- * @param {string} drawLayerId id of the drawing layer where the region(s) are removed from, required.
- * @param {string[]|string} regionChanges array or string of region description.
+ * @param {string} drawLayerId - id of the drawing layer where the region(s) are removed from, required
+ * @param {string[]|string} regionChanges - array or string of region description
  * @param {function} dispatcher
  * @public
  * @func dispatchRemoveRegionEntry
@@ -385,9 +399,10 @@ export function dispatchRemoveRegionEntry(drawLayerId, regionChanges, dispatcher
 
 /**
  * @summary select region from a drawing layer containing regions
- * @param {string} drawLayerId  id of drawing layer where the region is selected from, required.
- * @param {string[]|string} selectedRegion array or string of region description, currently only single region is allowed
- * to be selected if the array contains the description of multiple regions.
+ * @param {string} drawLayerId - id of drawing layer where the region is selected from, required
+ * @param {string[]|string|Object} selectedRegion - array or string of region description or region object (drawObj)
+ * currently only single region is allowed to be selected if the array contains the description of multiple regions.
+ * If 'null' or empty array is passed, the function works as de-select the region.
  * @param {function} dispatcher
  * @public
  * @func dispatchSelectRegion
@@ -401,30 +416,31 @@ export function dispatchSelectRegion(drawLayerId, selectedRegion, dispatcher = f
  *
  */
 /**
- *
- * @param markerId
- * @param layerTitle
- * @param plotId
- * @param attachPlotGroup
+ * @summary create drawing layer with marker
+ * @param {string} markerId - id of the drawing layer
+ * @param {string} layerTitle - title of the drawing layer
+ * @param {string[]|string} plotId - array or string of plot id. If plotId is empty, all plots of the active group are applied
+ * @param {bool} attachPlotGroup - attach all plots of the same plot group
  * @param dispatcher
  * @public
- * @memberof firefly.action
  * @func dispatchCreateMarkerLayer
+ * @memberof firefly.action
  */
 export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], attachPlotGroup=true, dispatcher = flux.process) {
     dispatcher({type: MARKER_CREATE, payload: {plotId, markerId, layerTitle, attachPlotGroup}});
 }
 /**
- * @public
- * @param footprintId
- * @param layerTitle
- * @param footprint
- * @param instrument
- * @param plotId
- * @param attachPlotGroup
+ * @summary create drawing layer with footprint
+ * @param {string} footprintId - id of the drawing layer
+ * @param {string} layerTitle - title of the drawiing layer
+ * @param {string} footprint - name of footprint project, such as 'HST', 'WFIRST', etc.
+ * @param {string} instrument - name of instrument for the footprint
+ * @param {string[]|string} plotId - array or string of plot id. If plotId is empty, all plots of the active group are applied
+ * @param {bool} attachPlotGroup - - attach all plots of the same plot group
  * @param dispatcher
- * @memberof firefly.action
+ * @public
  * @func dispatchCreateFootprintLayer
+ * @memberof firefly.action
  */
 export function dispatchCreateFootprintLayer(footprintId, layerTitle, footprint, instrument, plotId = [],
                                                                       attachPlotGroup=true, dispatcher = flux.process) {
@@ -439,12 +455,6 @@ function getDrawLayerId(dlRoot,id) {
     }
     return drawLayer ? drawLayer.drawLayerId : null;
 }
-
-//function getDrawLayerIdAry(dlRoot,id,useGroup) {
-//    return dlRoot.drawLayerAry
-//            .filter( (dl) => id===dl.drawLayerId || id===dl.drawLayerTypeId || (useGroup && id===dl.drawLayerGroupId)
-//            .map(  (dl) => dl.drawLayerId);
-//}
 
 function getDrawLayerIdAry(dlRoot,id,useGroup) {
     const idAry= Array.isArray(id) ? id: [id];
@@ -617,7 +627,7 @@ function determineAndCallLayerReducer(state,action,dlReducer,force) {
     }
 }
 
-
+/*
 function clearPreattachLayer(state,action) {
     var {drawLayerId}= action.payload;
     var drawLayer= state.drawLayerAry.find( (dl) => drawLayerId===dl.drawLayerId);
@@ -626,7 +636,7 @@ function clearPreattachLayer(state,action) {
     const preAttachedTypes= omit(state.preAttachedTypes,drawLayer.drawLayerTypeId);
     return clone(state, {preAttachedTypes});
 }
-
+*/
 
 function preattachLayerToPlot(state,action) {
     const {drawLayerTypeId,plotIdAry}= action.payload;
