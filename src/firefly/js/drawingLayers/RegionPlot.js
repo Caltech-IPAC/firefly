@@ -9,17 +9,17 @@ import {drawRegions} from '../visualize/region/RegionDrawer.js';
 import {getRegionIndex, addNewRegion, removeRegion} from '../visualize/region/RegionUtil.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
 import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
-import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
+import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY,
-                        defaultRegionSelectColor,
-                        RegionSelectStyle,
-                        getRegionSelectStyle,
-                        dispatchModifyCustomField,
-                        dispatchAddRegionEntry,
+                        //defaultRegionSelectColor,
+                        //RegionSelectStyle,
+                        //getRegionSelectStyle,
+                        //dispatchModifyCustomField,
+                        //dispatchAddRegionEntry,
                         dispatchDeleteRegionLayer,
-                        dispatchRemoveRegionEntry,
+                        //dispatchRemoveRegionEntry,
                         dispatchSelectRegion,
                         dlRoot} from '../visualize/DrawLayerCntlr.js';
 import {get, set, has, isEmpty, isString, isArray} from 'lodash';
@@ -59,14 +59,13 @@ function* regionsRemoveSaga({id, plotId}, dispatch, getState) {
 
 /**
  * create region plot layer
- * in region plot layer, attribute regionAry: region description array
+ * @param initPayload in region plot layer, attribute regionAry: region description array
  *                                 dataFrom: regionAry is from 'json' object or 'ds9' string
  *                                 regions:   array of region object constructed by parsing regionAry
  *                                 regionObjAry: array of drawing object constructed from regions
  *                                 => regions and regionObjAry are updated as adding or removing regions occurs
  *                                 highlightedRegion: selected region
- * @return {Function}
- * @ignore
+ * @return {DrawLayer}
  */
 function creator(initPayload) {
 
@@ -107,7 +106,6 @@ function creator(initPayload) {
  * find the drawObj which is selected for highlight
  * @param mouseStatePayload
  * @returns {Function}
- * @ignore
  */
 function highlightChange(mouseStatePayload) {
     const {drawLayer,plotId,screenPt} = mouseStatePayload;
@@ -172,7 +170,6 @@ function highlightChange(mouseStatePayload) {
  * @param drawLayer
  * @param action
  * @returns {*}
- * @ignore
  */
 function getLayerChanges(drawLayer, action) {
     const {regionChanges, drawLayerId } = action.payload;
@@ -204,7 +201,7 @@ function getLayerChanges(drawLayer, action) {
             const {selectedRegion} = action.payload;
 
             Object.keys(dd[DataTypes.HIGHLIGHT_DATA]).forEach((plotId) => {
-                set(dd[DataTypes.HIGHLIGHT_DATA], plotId, null)
+                set(dd[DataTypes.HIGHLIGHT_DATA], plotId, null);
             });
 
             var highlightedRegion = null;
@@ -251,7 +248,7 @@ function getLayerChanges(drawLayer, action) {
                 addRegionsToData(drawLayer, regionChanges);
 
                 Object.keys(dd[DataTypes.DATA]).forEach((plotId) => {
-                    set(dd[DataTypes.DATA], plotId, drawLayer.drawObjAry)
+                    set(dd[DataTypes.DATA], plotId, drawLayer.drawObjAry);
                 });
 
             }
@@ -262,7 +259,7 @@ function getLayerChanges(drawLayer, action) {
                 removeRegionsFromData(drawLayer, regionChanges);
 
                 Object.keys(dd[DataTypes.DATA]).forEach((plotId) => {
-                    set(dd[DataTypes.DATA], plotId, drawLayer.drawObjAry)
+                    set(dd[DataTypes.DATA], plotId, drawLayer.drawObjAry);
                 });
 
             }
@@ -290,7 +287,6 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
  * @summary create DrawingObj for all regions
  * @param {Object} dl    drawing layer
  * @returns {Object[]}
- * @ignore
  */
 function plotAllRegions(dl) {
     var {dataFrom, regionAry} = dl; //regionAry: array of region strings
@@ -312,7 +308,6 @@ function plotAllRegions(dl) {
  * @param {string} plotId
  * @param {Object} selectMode
  * @returns {Object[]}
- * @ignore
  */
 function plotHighlightRegion(highlightedObj, plotId, selectMode) {
     if (!highlightedObj) {
@@ -334,7 +329,6 @@ function plotHighlightRegion(highlightedObj, plotId, selectMode) {
  * @param {Object} drawLayer
  * @param {string|string[]} addedRegions
  * @returns {Object[]}
- * @ignore
  */
 function addRegionsToData(drawLayer, addedRegions) {
     var {regions, drawObjAry: lastData} = drawLayer;
@@ -366,7 +360,6 @@ function addRegionsToData(drawLayer, addedRegions) {
  * @param {Object} drawLayer
  * @param {string|string[]} removedRegions
  * @returns {Object[]}
- * @ignore
  */
 function removeRegionsFromData(drawLayer, removedRegions) {
     var {regions, drawObjAry: lastData} = drawLayer;
@@ -403,7 +396,6 @@ function removeRegionsFromData(drawLayer, removedRegions) {
  * @param {string|string[]} regionDes
  * @param {int} stopIndex maximum number of regions to be selected
  * @return {Object[]} if no region is found, an empty array is return.
- * @ignore
  */
 function getSelectedRegionDrawObj(drawLayer, regionDes, stopIndex = 1) {
     var {regions, drawObjAry} = drawLayer;

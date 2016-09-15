@@ -6,10 +6,8 @@ import {flux} from '../Firefly.js';
 import {getPlotViewIdListInGroup, getDrawLayerById, getConnectedPlotsIds} from './PlotViewUtil.js';
 import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
-import {without,union,omit,isEmpty,get} from 'lodash';
+import {without,union,isEmpty} from 'lodash';
 import {clone} from '../util/WebUtil.js';
-import Enum from 'enum';
-
 
 export {selectAreaEndActionCreator} from '../drawingLayers/SelectArea.js';
 export {distanceToolEndActionCreator} from '../drawingLayers/DistanceTool.js';
@@ -90,9 +88,9 @@ export function getRegionSelectStyle(style = defaultRegionSelectStyle) {
 
 /**
  * Return, from the store, the master array of all the drawing layers on all the plots
- * @return {Array<Object>}
+ * @returns {Array<Object>}
  * @memberof firefly.action
- * @func  getDlAry
+ * @function  getDlAry
  */
 
 export function getDlAry() { return flux.getState()[DRAWING_LAYER_KEY].drawLayerAry; }
@@ -123,7 +121,7 @@ export default {
  * @param drawLayerId
  * @public
  * @memberof firefly.action
- * @func dispatchRetrieveData
+ * @function dispatchRetrieveData
  */
 export function dispatchRetrieveData(drawLayerId) {
     flux.process({type: RETRIEVE_DATA , payload: {drawLayerId} });
@@ -137,7 +135,7 @@ export function dispatchRetrieveData(drawLayerId) {
  * @param params
  * @public
  * @memberof firefly.action
- * @func  dispatchCreateDrawLayer
+ * @function  dispatchCreateDrawLayer
  */
 export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
     var drawLayer= flux.createDrawLayer(drawLayerTypeId,params);
@@ -158,7 +156,7 @@ export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
  * @param useGroup
  *  @public
  *  @memberof firefly.action
- *  @func dispatchChangeVisibility
+ *  @function dispatchChangeVisibility
  */
 export function dispatchChangeVisibility(id,visible, plotId, useGroup= true) {
     var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
@@ -177,7 +175,7 @@ export function dispatchChangeVisibility(id,visible, plotId, useGroup= true) {
  * @param useGroup
  *  @public
  *  @memberof firefly.action
- *  @func dispatchChangeDrawingDef
+ *  @function dispatchChangeDrawingDef
  */
 export function dispatchChangeDrawingDef(id,drawingDef, plotId, useGroup= true) {
     var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
@@ -197,7 +195,7 @@ export function dispatchChangeDrawingDef(id,drawingDef, plotId, useGroup= true) 
  * @param useGroup
  * @public
  * @memberof firefly.action
- * @func dispatchModifyCustomField
+ * @function dispatchModifyCustomField
  */
 export function dispatchModifyCustomField(id,changes, plotId, useGroup= true) {
 
@@ -217,7 +215,7 @@ export function dispatchModifyCustomField(id,changes, plotId, useGroup= true) {
  * @param useGroup
  *  @public
  * @memberof firefly.action
- * @func dispatchForceDrawLayerUpdate
+ * @function dispatchForceDrawLayerUpdate
  */
 export function dispatchForceDrawLayerUpdate(id,plotId, useGroup= true) {
 
@@ -236,7 +234,7 @@ export function dispatchForceDrawLayerUpdate(id,plotId, useGroup= true) {
  * @param {string} id make the drawLayerId or drawLayerTypeId
  * @public
  * @memberof firefly.action
- * @func dispatchDestroyDrawLayer
+ * @function dispatchDestroyDrawLayer
  */
 export function dispatchDestroyDrawLayer(id) {
     var drawLayerId= getDrawLayerId(dlRoot(),id);
@@ -252,7 +250,7 @@ export function dispatchDestroyDrawLayer(id) {
  * @param attachPlotGroup
  * @memberof firefly.action
  * @public
- * @func  dispatchAttachLayerToPlot
+ * @function  dispatchAttachLayerToPlot
  */
 export function dispatchAttachLayerToPlot(id,plotId, attachPlotGroup=false) {
     var plotIdAry;
@@ -280,7 +278,7 @@ export function dispatchAttachLayerToPlot(id,plotId, attachPlotGroup=false) {
  * @param destroyWhenAllDetached if all plots are detached then destroy this plot
  * @public
  * @memberof firefly.action
- * @func dispatchDetachLayerFromPlot
+ * @function dispatchDetachLayerFromPlot
  */
 export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
                                             useLayerGroup=true, destroyWhenAllDetached=false) {
@@ -304,7 +302,6 @@ export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
  * check and create selectMode with valid property and value.
  * @param selectMode
  * @returns {{selectStyle, selectColor, lineWidth}}
- * @ignore
  */
 function validateSelectMode(selectMode) {
     var {selectStyle = defaultRegionSelectStyle, selectColor = defaultRegionSelectColor, lineWidth = 0 } = selectMode;
@@ -317,12 +314,12 @@ function validateSelectMode(selectMode) {
 /**
  * @global
  * @public
- * @typedef {Object} regionSelectMode
+ * @typedef {Object} RegionSelectMode
  * @summary shallow object with the rendering parameters for selected region
- * @prop {string}  [selectStyle] - rendering style for the selected region including 'UprightBox' (default), 'DottedOverlay',
+ * @prop {string}  [selectStyle='UprightBox'] - rendering style for the selected region including 'UprightBox', 'DottedOverlay',
  * 'SolidOverlay', 'DottedReplace', and 'SolidReplace'
- * @prop {string}  [selectColor] - rendering color for the selected region, ex: '#DAA520'(default), 'red'
- * @prop {int}     [lineWidth] - rendering line width for the selected region. 0 (default) or less means the line width
+ * @prop {string}  [selectColor='#DAA520'] - rendering color for the selected region, ex: '#DAA520' 'red'
+ * @prop {int}     [lineWidth=0] - rendering line width for the selected region. 0 or less means the line width
  * is the same as that of the selected region
  */
 
@@ -333,10 +330,10 @@ function validateSelectMode(selectMode) {
  * @param {string} fileOnServer - region file name on server
  * @param {string[]|string} regionAry - array or string of region description
  * @param {string[]|string} plotId - array or string of plot id. If plotId is empty, all plots of the active group are applied
- * @param {regionSelectMode} selectMode - rendering features for the selected region
- * @param {function} dispatcher
+ * @param {RegionSelectMode} selectMode - rendering features for the selected region
+ * @param {Function} dispatcher
  * @public
- * @func dispatchCreateRegionLayer
+ * @function dispatchCreateRegionLayer
  * @memberof firefly.action
  */
 export function dispatchCreateRegionLayer(drawLayerId, layerTitle, fileOnServer='', regionAry=[], plotId='',
@@ -351,9 +348,9 @@ export function dispatchCreateRegionLayer(drawLayerId, layerTitle, fileOnServer=
  * @summary Delete the region drawing layer
  * @param {string} drawLayerId - id of the drawing layer to be deleted, required
  * @param {string[]|string} plotId - array or string of plot id. If plotId is empty, all plots of the active group are applied
- * @param {function} dispatcher
+ * @param {Function} dispatcher
  * @public
- * @func dispatchDeleteRegionLayer
+ * @function dispatchDeleteRegionLayer
  * @memberof firefly.action
  */
 export function dispatchDeleteRegionLayer(drawLayerId, plotId, dispatcher = flux.process) {
@@ -369,10 +366,10 @@ export function dispatchDeleteRegionLayer(drawLayerId, plotId, dispatcher = flux
  * @param {string[]|string} regionChanges - array or string of region description
  * @param {string[]|string} plotId - array or string of plot id. If plotId is empty, all plots of the active group are applied
  * @param {string} layerTitle - will replace the original title if the drawing layer exists and layerTitle is non-empty
- * @param {regionSelectMode} selectMode - rendering features for the selected region
- * @param {function} dispatcher
+ * @param {RegionSelectMode} selectMode - rendering features for the selected region
+ * @param {Function} dispatcher
  * @public
- * @func dispatchAddRegionEntry
+ * @function dispatchAddRegionEntry
  * @memberof firefly.action
  */
 export function dispatchAddRegionEntry(drawLayerId, regionChanges, plotId=[], layerTitle='',
@@ -387,9 +384,9 @@ export function dispatchAddRegionEntry(drawLayerId, regionChanges, plotId=[], la
  * @summary remove region(s) from the drawing layer
  * @param {string} drawLayerId - id of the drawing layer where the region(s) are removed from, required
  * @param {string[]|string} regionChanges - array or string of region description
- * @param {function} dispatcher
+ * @param {Function} dispatcher
  * @public
- * @func dispatchRemoveRegionEntry
+ * @function dispatchRemoveRegionEntry
  * @memberof firefly.action
  */
 export function dispatchRemoveRegionEntry(drawLayerId, regionChanges, dispatcher = flux.process) {
@@ -403,10 +400,11 @@ export function dispatchRemoveRegionEntry(drawLayerId, regionChanges, dispatcher
  * @param {string[]|string|Object} selectedRegion - array or string of region description or region object (drawObj)
  * currently only single region is allowed to be selected if the array contains the description of multiple regions.
  * If 'null' or empty array is passed, the function works as de-select the region.
- * @param {function} dispatcher
+ * @param {Function} dispatcher
  * @public
- * @func dispatchSelectRegion
+ * @function dispatchSelectRegion
  * @memberof firefly.action
+ * @see {@link firefly.util.image.getSelectedRegion} to get the string describing the selected region
  */
 export function dispatchSelectRegion(drawLayerId, selectedRegion, dispatcher = flux.process) {
     dispatcher({type: REGION_SELECT, payload: {drawLayerId, selectedRegion}});
@@ -423,7 +421,7 @@ export function dispatchSelectRegion(drawLayerId, selectedRegion, dispatcher = f
  * @param {bool} attachPlotGroup - attach all plots of the same plot group
  * @param dispatcher
  * @public
- * @func dispatchCreateMarkerLayer
+ * @function dispatchCreateMarkerLayer
  * @memberof firefly.action
  */
 export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], attachPlotGroup=true, dispatcher = flux.process) {
@@ -439,7 +437,7 @@ export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], att
  * @param {bool} attachPlotGroup - - attach all plots of the same plot group
  * @param dispatcher
  * @public
- * @func dispatchCreateFootprintLayer
+ * @function dispatchCreateFootprintLayer
  * @memberof firefly.action
  */
 export function dispatchCreateFootprintLayer(footprintId, layerTitle, footprint, instrument, plotId = [],
@@ -550,7 +548,7 @@ function makeReducer(factory) {
  * Create a drawing layer
  * @param state
  * @param {{type:string,payload:object}} action
- * @return {object} the new state;
+ * @returns {Object} the new state;
  * @ignore
  */
 function createDrawLayer(state,action) {
@@ -565,7 +563,7 @@ function createDrawLayer(state,action) {
  * Destroy the drawing layer
  * @param state
  * @param {{type:string,payload:object}} action
- * @return {object} the new state;
+ * @returns {Object} the new state;
  * @ignore
  */
 function destroyDrawLayer(state,action) {
@@ -579,7 +577,7 @@ function destroyDrawLayer(state,action) {
  * @param state
  * @param {{type:string,payload:object}} action
  * @param dlReducer drawinglayer subreducer{string|string[]}
- * @return {object} the new state;
+ * @returns {Object} the new state;
  * @ignore
  */
 function deferToLayerReducer(state,action,dlReducer) {
@@ -605,7 +603,7 @@ function deferToLayerReducer(state,action,dlReducer) {
  * @param {{type:string,payload:object}} action
  * @param dlReducer drawinglayer subreducer
  * @param force
- * @return {object} the new state;
+ * @returns {Object} the new state;
  * @ignore
  */
 function determineAndCallLayerReducer(state,action,dlReducer,force) {

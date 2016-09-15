@@ -50,19 +50,19 @@
         var doTrackReadout = false;
 
         const regionAry1 = [
-            'image; box 51 40 100 80 0 # color=red',
-            'image; box 51 120 100 80 0 # color=red',
-            'image; box 151 120 100 80 0 # color=red',
-            'image; box 151 40 100 80 0 # color=red'
+            'image;box 51 40 100 80 0 # color=red',
+            'image;box 51 120 100 80 0 # color=red',
+            'image;box 151 120 100 80 0 # color=red',
+            'image;box 151 40 100 80 0 # color=red'
         ];
         var regionsShown = false;
 
         const regionsToAdd = [
-            'image; box 400 400 72 72 0 # color=green',
-            'image; box 328 400 72 72 0 # color=green',
-            'image; box 256 400 72 72 0 # color=green',
-            'image; box 184 400 72 72 0 # color=green',
-            'image; box 112 400 72 72 0 # color=green'
+            'image;box 400 400 72 72 0 # color=green',
+            'image;box 328 400 72 72 0 # color=green',
+            'image;box 256 400 72 72 0 # color=green',
+            'image;box 184 400 72 72 0 # color=green',
+            'image;box 112 400 72 72 0 # color=green'
         ];
         var regionAdd = true;
         var regionIdx = 0;
@@ -283,6 +283,14 @@
             }
         }
 
+        function onRegionSelect(action) {
+            if (action.payload.selectedRegion !== null) {
+                // use firefly.util.image.getSelectedRegion to get region string from REGION_SELECT action
+                const regionStr = firefly.util.image.getSelectedRegion(action.payload.drawLayerId);
+                console.log('Selected region string: '+regionStr);
+            }
+        }
+
         function onFireflyLoaded() {
 
             firefly.setGlobalImageDef({
@@ -307,7 +315,15 @@
             };
             firefly.showImage('image2_div', req2);
 
-            firefly.action.dispatchCreateRegionLayer('statregion', 'Static region', null, ['image; box 220 220 20 80 45 # color=#0CB5ED'], ['image1', 'image2']);
+            // add one static region
+            firefly.action.dispatchCreateRegionLayer('staticregion', 'Static region', null, ['image;box 220 220 20 80 45 # color=#0CB5ED'], ['image1', 'image2'], {selectStyle:'DottedReplace', selectColor: 'red'});
+            // make it selected
+            firefly.action.dispatchSelectRegion('staticregion', 'image;box 220 220 20 80  45 # color=#0CB5ED');
+            // add a listener to detect region selection changes
+            firefly.util.addActionListener(firefly.action.type.REGION_SELECT, onRegionSelect);
+
+
+
         }
     }
 </script>

@@ -88,7 +88,7 @@ const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
  * @param {XYPlotParams} params.xyPlotParams - XY plot options (column names, etc.)
  * @param {boolean} [params.markAsDefault=false] - are the options considered to be "the default" to reset to
  * @param {string} params.tblId - table id
- * @param {Function} [params.dispatcher] - only for special dispatching uses such as remote
+ * @param {Function} [params.dispatcher=flux.process] - only for special dispatching uses such as remote
  * @public
  * @function dispatchLoadPlotData
  * @memberof firefly.action
@@ -408,7 +408,6 @@ function getPaddedBoundaries(xyPlotParams, boundaries, factor=100) {
  * @param {string} tblId - table search request to obtain source table
  * @param {XYPlotParams} xyPlotParams - object, which contains xy plot parameters
  * @param {string} chartId  - chart id
- * @ignore
  */
 function fetchPlotData(dispatch, tblId, xyPlotParams, chartId) {
 
