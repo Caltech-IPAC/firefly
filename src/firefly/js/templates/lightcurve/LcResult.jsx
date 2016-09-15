@@ -4,8 +4,10 @@
 
 import React, {Component} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {pick} from 'lodash';
+import {pick,get} from 'lodash';
 import SplitPane from 'react-split-pane';
+
+import ColValuesStatistics from '../../charts/ColValuesStatistics.js';
 
 import {flux} from '../../Firefly.js';
 import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
@@ -15,6 +17,31 @@ import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {MultiImageViewerContainer} from '../../visualize/ui/MultiImageViewerContainer.jsx';
 import {createContentWrapper} from '../../ui/panel/DockLayoutPanel.jsx';
 import {IMG_VIEWER_ID} from './LcManager.js';
+import {FormPanel} from '../../ui/FormPanel.jsx';
+import {Tabs, Tab,FieldGroupTabs} from '../../ui/panel/TabPanel.jsx';
+import {CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
+import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
+import {ValidationField} from '../../ui/ValidationField.jsx';
+import Validate from '../../util/Validate.js';
+import {FieldGroup} from '../../ui/FieldGroup.jsx';
+import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
+import {InputGroup} from '../../ui/InputGroup.jsx';
+import {UploadPanel} from './LcViewer.jsx';
+import {showLcParamForm, LcPFOptionsPanel} from './LcPhaseFoldingPanel.jsx';
+import {LCPFOPanel} from './PeriodogramOptionsPanel.jsx';
+import {LcPlotOptionsPanel} from './LcPlotOptions.jsx';
+
+const PanelResizableStyle = {
+    width: 400,
+    minWidth: 450,
+    height: 300,
+    minHeight: 760,
+    resize: 'both',
+    position: 'relative',
+    backgroundColor: '#e6ffff',
+    overflow: 'auto'
+};
+
 
 export class LcResult extends Component {
 
@@ -65,7 +92,31 @@ export class LcResult extends Component {
                                         expandedMode={expanded===LO_VIEW.tables}/>);
         }
         if (showForm) {
-            content.form = (<div>Put your input fields here!</div>);
+            const fields= this.state;
+            content.form = (
+                <div>
+                    <div>
+                        <Tabs componentKey='OuterTabs' defaultSelected={0} useFlex={true}>
+                            <Tab name="Phase Folding">
+                                <div>
+                                    {LcPFOptionsPanel(fields)}
+                                </div>
+                            </Tab>
+                            <Tab name="Peiodogram">
+                                <div>
+                                   <LCPFOPanel />
+                                </div>
+                            </Tab>
+                            <Tab name='Upload'>
+                                <div>
+                                    <UploadPanel />
+                                </div>
+                            </Tab>
+                        </Tabs>
+                    </div>
+                </div> );
+
+
         }
 
         expanded = LO_VIEW.get(expanded) || LO_VIEW.none;
