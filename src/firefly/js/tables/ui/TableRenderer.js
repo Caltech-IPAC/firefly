@@ -142,7 +142,7 @@ export class SelectableCell extends React.Component {
     render() {
         const {rowIndex, selectInfoCls, onRowSelect, style} = this.props;
         return (
-            <div style={style} className='tablePanel__checkbox tablePanel__checkbox--cell'>
+            <div style={style} className='TablePanel__checkbox'>
                 <input type='checkbox'
                        tabIndex={-1}
                        checked={selectInfoCls.isSelected(rowIndex)}

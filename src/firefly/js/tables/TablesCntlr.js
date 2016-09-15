@@ -152,7 +152,7 @@ export function tableFetch(action) {
             const {tbl_id} = request;
 
             dispatchAddSaga( doOnTblLoaded, {tbl_id, callback:() => dispatchTableLoaded( Object.assign(TblUtil.getTblInfoById(tbl_id), {invokedBy: action.type}) )});
-            dispatch( updateMerge(action, 'payload', {tbl_id, isFetching: true}) );
+            dispatch( updateMerge(action, 'payload', {tbl_id}) );
             request.startIdx = 0;
             TblUtil.doFetchTable(request, hlRowIdx).then ( (tableModel) => {
                 dispatch( {type: TABLE_UPDATE, payload: tableModel} );

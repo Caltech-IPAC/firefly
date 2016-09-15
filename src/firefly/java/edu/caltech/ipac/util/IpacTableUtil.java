@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 public class IpacTableUtil {
 
     public static final int FILE_IO_BUFFER_SIZE = FileUtil.BUFFER_SIZE;
+    private static final String STRING_TYPE[]= {"cha.*", "str.*", "s", "c"};
 
     public static void writeAttributes(PrintWriter writer, Collection<DataGroup.Attribute> attribs, String... ignoreList) {
         if (attribs == null) return;
@@ -169,13 +170,14 @@ public class IpacTableUtil {
         if (line != null && line.startsWith("|")) {
             String[] nullables = parseHeadings(line.trim());
             for(int i = 0; i < nullables.length; i++) {
-                cols.get(i).setNullString(nullables[i].trim());
+                String nullString = nullables[i].trim();
+                cols.get(i).setNullString(nullString);
             }
         }
     }
     public static void guessFormatInfo(DataType dataType, String value) {
 
-        String formatStr = IpacTableReader.guessFormatStr(dataType, value.trim());
+        String formatStr = guessFormatStr(dataType, value.trim());
         if (formatStr != null) {
             DataType.FormatInfo.Align align = value.startsWith(" ") ? DataType.FormatInfo.Align.RIGHT
                                                 : DataType.FormatInfo.Align.LEFT;
@@ -310,18 +312,20 @@ public class IpacTableUtil {
     }
 
     public static TableDef getMetaInfo(File inf) throws IOException {
-        FileReader infReader = null;
+        BufferedReader reader = null;
         try {
-            infReader = new FileReader(inf);
-            return getMetaInfo(new BufferedReader(infReader,FILE_IO_BUFFER_SIZE), inf);
-
+            reader = new BufferedReader(new FileReader(inf), FILE_IO_BUFFER_SIZE);
+            return doGetMetaInfo(reader, inf);
         } finally {
-            FileUtil.silentClose(infReader);
+            FileUtil.silentClose(reader);
         }
-
     }
 
-    public static TableDef getMetaInfo(BufferedReader reader, File src) throws IOException {
+    public static TableDef getMetaInfo(BufferedReader reader) throws IOException {
+        return doGetMetaInfo(reader, null);
+    }
+
+    private static TableDef doGetMetaInfo(BufferedReader reader, File src) throws IOException {
         TableDef meta = new TableDef();
         int nlchar = findLineSepLength(reader);
         meta.setLineSepLength(nlchar);
@@ -330,9 +334,12 @@ public class IpacTableUtil {
         List<DataType> cols = null;
         int dataStartOffset = 0;
 
+        int lineNum = 0;
+
         String line = reader.readLine();
         // skip to column desc
         while (line != null) {
+            lineNum++;
             if (line.length() == 0) {
                 //  skip empty line
                 dataStartOffset += line.length() + nlchar;
@@ -373,6 +380,10 @@ public class IpacTableUtil {
             } else {
                 // data row begins.
                 meta.setLineWidth(line.length() + nlchar);
+                if (src == null) {
+                    // reading from stream, store the line read for later processing.
+                    meta.setExtras(lineNum-1, line);
+                }
                 break;
             }
         }
@@ -411,6 +422,49 @@ public class IpacTableUtil {
         action.setValue(crows, "totalRows");
         action.setValue(state.name(), "tableMeta", DataGroupPart.LOADING_STATUS);
         ServerEventManager.fireAction(action);
+    }
+
+    public static String guessFormatStr(DataType type, String val) {
+        if (type.getTypeDesc() != null &&
+                ServerStringUtil.matchesRegExpList(type.getTypeDesc(), STRING_TYPE, true)) {
+            return "%s";
+        } else {
+            return guessFormatStr(val, type.getDataType());
+        }
+    }
+
+    private static String guessFormatStr(String val, Class cls) {
+
+        String formatStr = null;
+        try {
+            //first check to see if it's numeric
+            double numval = Double.parseDouble(val);
+
+            if (Double.isNaN(numval)) {
+                return null;
+            } else {
+                if (val.matches(".+[e|E].+")) {
+                    // scientific notation
+                    String convStr = val.indexOf("E") >= 0 ? "E" : "e";
+                    String[] ary = val.split("e|E");
+                    if (ary.length == 2) {
+                        int prec = ary[0].length() - ary[0].indexOf(".") - 1;
+                        return "%." + prec + convStr;
+                    }
+                } else  if (val.indexOf(".") >= 0) {
+                    // decimal format
+                    int idx = val.indexOf(".");
+                    int prec = val.length() - idx - 1;
+                    return "%." + prec + "f";
+                } else {
+                    boolean isFloat= (cls==Float.class || cls==Double.class);
+                    formatStr = isFloat ?  "%.0f" : "%d";
+                }
+            }
+        } catch (NumberFormatException e) {
+            formatStr = "%s";
+        }
+        return formatStr;
     }
 
     //====================================================================

@@ -1,25 +1,24 @@
-.tablePanel__checkbox {
+.TablePanel {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.TablePanel__checkbox {
     display: flex;
     height: 100%;
     align-items: center;
     justify-content: center;
 }
 
-.tablePanel__checkbox--cell {
-    background-color: inherit;
-}
-
-.tablePanel_NoData {
+.TablePanel_NoData {
     position: absolute;
     top: 50%;
     left: 42%;
     z-index: 1;
     color: gray;
     font-size: large;
-}
-
-.fixedDataTableRowLayout_rowWrapper .tablePanel__Row_highlighted {
-    background-color: #d3fad1
 }
 
 .TablePanel__wrapper {
@@ -97,51 +96,55 @@
     background-image: linear-gradient(#fff, #dcdcdc);
 }
 
-button.paging_bar {
+.PagingBar__button {
     height: 16px;
     width: 16px;
     margin-top: 1px;
 }
 
-button.tablepanel {
+.PagingBar__button:hover {
+    cursor: pointer;
+}
+
+.PagingBar__button.first {
+    background-image: url("/images/icons-2014/16x16_BackwardToEnd.png");
+}
+
+.PagingBar__button.last {
+    background-image: url("/images/icons-2014/16x16_ForwardToEnd.png");
+}
+
+.PagingBar__button.next {
+    background-image: url("/images/icons-2014/16x16_Forward.png");
+}
+
+.PagingBar__button.previous {
+    background-image: url("/images/icons-2014/16x16_Backward.png");
+}
+
+.TablePanel__button {
     height: 24px;
     width: 24px;
     margin: 0 2px;
 }
 
-button.paging_bar.first {
-    background-image: url("/images/icons-2014/16x16_BackwardToEnd.png");
-}
-
-button.paging_bar.last {
-    background-image: url("/images/icons-2014/16x16_ForwardToEnd.png");
-}
-
-button.paging_bar.next {
-    background-image: url("/images/icons-2014/16x16_Forward.png");
-}
-
-button.paging_bar.previous {
-    background-image: url("/images/icons-2014/16x16_Backward.png");
-}
-
-button.tablepanel.options {
+.TablePanel__button.options {
     background-image: url("/images/icons-2014/24x24_GearsNEW.png");
 }
 
-button.tablepanel.textView {
+.TablePanel__button.textView {
     background-image: url("/images/icons-2014/24x24_TextView.png");
 }
 
-button.tablepanel.tableView {
+.TablePanel__button.tableView {
     background-image: url("/images/icons-2014/24x24_TableView.png");
 }
 
-button.tablepanel.save {
+.TablePanel__button.save {
     background-image: url("/images/icons-2014/24x24_Save.png");
 }
 
-button.tablepanel.clearFilters {
+.TablePanel__button.clearFilters {
     background-image: url("/images/icons-2014/24x24_FilterOff_Circle.png");
 }
 
@@ -546,3 +549,8 @@ body[dir="rtl"] .fixedDataTableColumnResizerLineLayout_main, .fixedDataTableColu
     position: absolute;
     top: 0
 }
+
+.fixedDataTableRowLayout_rowWrapper .tablePanel__Row_highlighted {
+    background-color: #d3fad1
+}
+

@@ -4,6 +4,7 @@ import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import javafx.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,6 +25,7 @@ public class TableDef {
     private int rowCount;
     private int rowStartOffset;
     private int lineSepLength;
+    private transient Pair<Integer, String> extras;     // used by IpacTableUtil to store extras data while parsing an ipac table via input stream
 
     public void addAttributes(DataGroup.Attribute... attributes) {
         if (attributes != null) {
@@ -39,11 +41,19 @@ public class TableDef {
         }
     }
 
-    public void setCols(List<DataType> cols) { this.cols = cols; }
+    public Pair<Integer, String> getExtras() {
+        return extras;
+    }
+
+    public void setExtras(Integer numHeaderLines, String unreadLine) {
+        this.extras = new Pair<>(numHeaderLines, unreadLine);
+    }
 
     public List<DataType> getCols() {
         return cols;
     }
+
+    public void setCols(List<DataType> cols) { this.cols = cols; }
 
     /**
      * returns all of the attributes including comments.  This function returns the attributes
@@ -71,10 +81,6 @@ public class TableDef {
         }
     }
 
-    public void setStatus(DataGroupPart.State status) {
-        addAttributes(new DataGroup.Attribute(DataGroupPart.LOADING_STATUS, status.name()));
-    }
-
     DataGroup.Attribute getAttribute(String key) {
         return attributes.get(key);
     }
@@ -90,6 +96,10 @@ public class TableDef {
         ensureStatus();
         DataGroup.Attribute a = getAttribute(DataGroupPart.LOADING_STATUS);
         return DataGroupPart.State.valueOf(String.valueOf(a.getValue()));
+    }
+
+    public void setStatus(DataGroupPart.State status) {
+        addAttributes(new DataGroup.Attribute(DataGroupPart.LOADING_STATUS, status.name()));
     }
 
     public int getLineSepLength() {
