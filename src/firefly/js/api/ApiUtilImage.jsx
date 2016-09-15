@@ -4,6 +4,7 @@
 
 import React from 'react';
 import {take,race,call} from 'redux-saga/effects';
+import {has} from 'lodash';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import ImagePlotCntlr, {visRoot, ExpandType} from '../visualize/ImagePlotCntlr.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
@@ -59,8 +60,12 @@ export function getPrimePlot(plotId) {
     return primePlot(visRoot(), plotId);
 }
 
+
+
+var isInit= false;
 /**
- * @summary  initialize the auto readout. Must be call once at the begging to get the popup readout running.
+ * @summary  initialize the auto readout. Can only be called once at the begging to get the popup readout running.
+ * Called internally during first image plot.
  * @param {object} ReadoutComponent - either a PopupMouseReadoutMinimal or PopupMouseReadoutFull
  * @param {object} props - a list of the properties
  * @public
@@ -68,11 +73,10 @@ export function getPrimePlot(plotId) {
  * @memberof firefly.util.image
  */
 export function initAutoReadout(ReadoutComponent= DefaultApiReadout,
-         //   props={MouseReadoutComponent:PopupMouseReadoutMinimal, showThumb:false,showMag:false}){
       props={MouseReadoutComponent:PopupMouseReadoutFull, showThumb:true,showMag:true } ){
-
-
+    if (isInit) return;
     dispatchAddSaga(autoReadoutVisibility, {ReadoutComponent,props});
+    isInit= true;
 }
 
 
@@ -138,7 +142,7 @@ function *autoReadoutVisibility({ReadoutComponent,props}) {
                            mouse: call(mouseUpdatePromise),
                            timer: call(delay, 3000)
                          });
-            if ((!winner.expandedChange || !winner.mouse) && !inDialog && !isLockByClick(readoutRoot()) && !isAutoReadIsLocked(readoutRoot())) {
+            if ((has(winner,'timer')) && !inDialog && !isLockByClick(readoutRoot()) && !isAutoReadIsLocked(readoutRoot())) {
                 hideReadout();
             }
             else {

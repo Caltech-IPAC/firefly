@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {take,race,call} from 'redux-saga/effects';
-import {isEmpty, get, debounce} from 'lodash';
-import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
+import {race,call} from 'redux-saga/effects';
+import {get} from 'lodash';
+import {visRoot} from '../ImagePlotCntlr.js';
 import {clone} from '../../util/WebUtil.js';
 import {readoutRoot, dispatchReadoutData, makeValueReadoutItem, makePointReadoutItem,
         makeDescriptionItem, isLockByClick} from '../MouseReadoutCntlr.js';
@@ -12,7 +12,7 @@ import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
 import {Band} from '../Band.js';
 import {MouseState} from '../VisMouseSync.js';
 import {isBlankImage} from '../WebPlot.js';
-import {primePlot, getPlotStateAry, getActivePlotView} from '../PlotViewUtil.js';
+import {primePlot, getPlotStateAry, getPlotViewById} from '../PlotViewUtil.js';
 import {mouseUpdatePromise} from '../VisMouseSync.js';
 
 
@@ -22,41 +22,47 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export function* watchReadout() {
 
-    var lockByClick= false;
+    var lockByClick;
     var mouseCtx;
     yield call(mouseUpdatePromise);
 
     mouseCtx = yield call(mouseUpdatePromise);
 
+    var getNextWithFlux;
+    var threeColor= false;
+    var plotView;
 
 
     while (true) {
 
+        getNextWithFlux= false;
         lockByClick= isLockByClick(readoutRoot());
-        var {plotId,worldPt,screenPt,imagePt,mouseState}= mouseCtx;
+        const {plotId,worldPt,screenPt,imagePt,mouseState}= mouseCtx;
 
-        if (!usePayload(mouseState,lockByClick)) {
-            if (!lockByClick) {
-                dispatchReadoutData(plotId, {});
+        if (usePayload(mouseState,lockByClick)) {
+            plotView= getPlotViewById(visRoot(), plotId);
+            var plot= primePlot(plotView);
+
+            if (plot) {
+                var readout= makeReadoutWithFlux(makeReadout(plot,worldPt,screenPt,imagePt), plot, null, plot.plotState.threeColor);
+                threeColor= plot.plotState.isThreeColor();
+                dispatchReadoutData(plotId,readout, threeColor);
+
+                getNextWithFlux= !isBlankImage(plot);
             }
-            mouseCtx = yield call(mouseUpdatePromise);
-            continue;
+        }
+        else if (!lockByClick) {
+            dispatchReadoutData(plotId, {});
         }
 
-        const plotView= getActivePlotView(visRoot());
-        var plot= primePlot(plotView);
-
-        var readout= makeReadout(plot,worldPt,screenPt,imagePt);
-        const threeColor= plot.plotState.isThreeColor();
-        dispatchReadoutData(plotId,readout, threeColor);
-
-        if (isBlankImage(plot)) {
+        if (getNextWithFlux) { // get the next mouse event or the flux
+            mouseCtx= lockByClick ? yield call(processImmediateFlux,readout,plotView,imagePt,threeColor) :
+                                    yield call(processDelayedFlux,readout,plotView,imagePt,threeColor);
+        }
+        else { // get the next mouse event
             mouseCtx = yield call(mouseUpdatePromise);
-            continue;
         }
 
-        mouseCtx= lockByClick ? yield call(processImmediateFlux,readout,plotView,imagePt,threeColor) :
-                                yield call(processDelayedFlux,readout,plotView,imagePt,threeColor);
     }
 }
 
@@ -123,11 +129,11 @@ function usePayload(mouseState, lockByClick) {
 
 /**
  *
- * @param plot
- * @param worldPt
- * @param screenPt
- * @param imagePt
- * @return {{worldPt: *, screenPt: *, imagePt: *, threeColor: (*|boolean), title: *, pixel: ({title, value, unit, precision}|{title: *, value: *, unit: *, precision: *})}}
+ * @param {WebPlot} plot
+ * @param {WorldPt} worldPt
+ * @param {ScreenPt} screenPt
+ * @param {ImagePt} imagePt
+ * @return {{worldPt: *, screenPt: *, imagePt: *, threeColor: (boolean), title: *, pixel: ({title, value, unit, precision}|{title: *, value: *, unit: *, precision: *})}}
  */
 function makeReadout(plot, worldPt, screenPt, imagePt) {
     return {
@@ -145,26 +151,28 @@ function makeReadout(plot, worldPt, screenPt, imagePt) {
 /**
  * 
  * @param readout
- * @param plot
+ * @param {WebPlot} plot
  * @param fluxResult
  * @param threeColor
  * @return {*}
  */
 function makeReadoutWithFlux(readout, plot, fluxResult,threeColor) {
     readout= clone(readout);
-    const fluxData= getFlux(fluxResult,plot);
+    const fluxData= fluxResult ? getFlux(fluxResult,plot) : null;
     const labels= getFluxLabels(plot);
     if (threeColor) {
         const bands = plot.plotState.getBands();
         bands.forEach( (b,idx) => readout[b.key+'Flux']=
-            makeValueReadoutItem(labels[idx], fluxData[idx].value,fluxData[idx].unit, 6));
+            makeValueReadoutItem(labels[idx], get(fluxData,[idx,'value']),get(fluxData,[idx,'unit']), 6 ));
     }
     else {
-        readout.nobandFlux= makeValueReadoutItem(labels[0], fluxData[0].value,fluxData[0].unit, 6);
+        readout.nobandFlux= makeValueReadoutItem(labels[0], get(fluxData,[0,'value']),get(fluxData,[0,'unit']), 6);
     }
-    const oIdx= fluxData.findIndex( (d) => d.imageOverlay);
-    if (oIdx>-1) {
-        readout.imageOverlay= makeValueReadoutItem('mask', fluxData[oIdx].value, fluxData[oIdx].unit, 0);
+    if (fluxData) {
+        const oIdx= fluxData.findIndex( (d) => d.imageOverlay);
+        if (oIdx>-1) {
+            readout.imageOverlay= makeValueReadoutItem('mask', fluxData[oIdx].value, fluxData[oIdx].unit, 0);
+        }
     }
     return readout;
 }

@@ -8,6 +8,7 @@
  */
 import React, {PropTypes} from 'react';
 import {get} from 'lodash';
+import {clone} from '../../util/WebUtil.js';
 import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
 import {STANDARD_READOUT, dispatchChangeLockByClick, dispatchChangeLockUnlockByClick} from '../../visualize/MouseReadoutCntlr.js';
@@ -17,17 +18,15 @@ import {getMouseReadout, labelMap, getFluxInfo} from './MouseReadout.jsx';
 import LOCKED from    'html/images/icons-2014/lock_20x20.png';
 import UNLOCKED from  'html/images/icons-2014/unlock_20x20.png';
 
-const rS = {
-    padding : 10,
-    cursor: 'pointer'
 
 
+const linkLook = {
+    textDecoration: 'underline',
+    fontStyle: 'italic',
 };
-const EMPTY = <div style={rS}></div>;
-
 
 const column1 = {
-    width: 60,
+    width: 80,
     paddingRight: 1,
     textAlign: 'right',
     color: 'DarkGray',
@@ -39,9 +38,7 @@ const column3 = {
     width: 80,
     paddingRight: 2,
     textAlign: 'right',
-    textDecoration: 'underline',
     color: 'DarkGray',
-    fontStyle: 'italic',
     display: 'inline-block'
 };
 const column3_r2 = {width: 80, paddingRight: 1, textAlign: 'right', color: 'DarkGray', display: 'inline-block'};
@@ -51,22 +48,30 @@ const column5 = {
     width: 74,
     paddingRight: 1,
     textAlign: 'right',
-    textDecoration: 'underline',
     color: 'DarkGray',
-    fontStyle: 'italic',
     display: 'inline-block'
 };
 
 const column6 = {width: 170,addingLeft: 2, textAlign: 'left', display: 'inline-block'};
-const column7 = {width: 109, paddingLeft: 6, display: 'inline-block'};
+const lockByClickStyle = {width: 100, display: 'inline-block', float: 'right', margin: '-10px 24px 0 0 '};
+
 
 export function PopupMouseReadoutFull({readout}){
 
 
     //get the standard readouts
     const sndReadout= readout[STANDARD_READOUT];
-    if (!get(sndReadout,'readoutItems')) return EMPTY;
+    const {threeColor}= readout.standardReadout;
 
+    const rS = {
+        cursor: 'pointer',
+        width: 485,
+        display: 'inline-block',
+        position: 'relative',
+    };
+
+
+    if (!get(sndReadout,'readoutItems')) return <div style={rS}/>;
 
     const lock = readout.isLocked ? LOCKED:UNLOCKED;
     var objList={};
@@ -74,7 +79,7 @@ export function PopupMouseReadoutFull({readout}){
         objList[key]=getMouseReadout(sndReadout.readoutItems,  readout.readoutPref[key] );
     });
 
-    if (!objList)return EMPTY;
+    if (!objList)return <div style={rS}/>;
 
     const {mouseReadout1, mouseReadout2, pixelSize} = objList;
 
@@ -83,41 +88,44 @@ export function PopupMouseReadoutFull({readout}){
 
     return (
 
-        <div style={ rS}>
-
-            {/*row1*/}
-            <div  >
-                <div style={ column1}>{fluxLabels[1]} </div>
-                <div style={ column2}>  {fluxValues[1]}  </div>
-                <div style={ column3} onClick={ () => showDialog('pixelSize', readout.readoutPref.pixelSize)}>
-                    {labelMap[readout.readoutPref.pixelSize] }
-                </div>
-                <div style={column4}>{pixelSize} </div>
-
-                <div style={ column5} onClick={ () => showDialog('mouseReadout1', readout.readoutPref.mouseReadout1)}>
-                    { labelMap[readout.readoutPref.mouseReadout1] }
-                </div>
-                <div style={column6}> {mouseReadout1} </div>
-
-
-                <div style={column7}>  < img  src= {lock}  onClick ={() =>{
+        <div style={{display:'flex', height: '100%', alignItems:'center'}}>
+            <div>
+                <img  src= {lock}  title= 'Lock the readout panel visible' onClick ={() =>{
                       dispatchChangeLockUnlockByClick(!readout.isLocked);
                    }}
                 />
-                </div>
             </div>
-            <div>{/* row2*/}
-                <div style={ column1}>{fluxLabels[2]} </div>
-                <div style={ column2}> { fluxValues[2]} </div>
+            <div style={ rS}>
 
-                <div style={ column3_r2}>{fluxLabels[0]}</div>
-                <div style={ column4}> {fluxValues[0]}</div>
+                {/*row1*/}
+                <div>
+                    <div style={ clone(column3,linkLook)} onClick={ () => showDialog('pixelSize', readout.readoutPref.pixelSize)}>
+                        {labelMap[readout.readoutPref.pixelSize] }
+                    </div>
+                    <div style={column4}>{pixelSize} </div>
 
-                <div style={ column5} onClick={ () => showDialog('mouseReadout2' ,readout.readoutPref.mouseReadout2 )}>
-                    {labelMap[readout.readoutPref.mouseReadout2] } </div>
+                    <div style={ clone(column5,linkLook)} onClick={ () => showDialog('mouseReadout1', readout.readoutPref.mouseReadout1)}>
+                        { labelMap[readout.readoutPref.mouseReadout1] }
+                    </div>
+                    <div style={column6}> {mouseReadout1} </div>
 
-                <div style={column6}>  {mouseReadout2}  </div>
-                <div style={column7} title='Click on an image to lock the display at that point.'>
+                </div>
+                <div style={{paddingTop: 3}}>{/* row2*/}
+                    <div style={ column3_r2}>{fluxLabels[0]}</div>
+                    <div style={ column4}> {fluxValues[0]}</div>
+
+                    <div style={ clone(column5,linkLook)} onClick={ () => showDialog('mouseReadout2' ,readout.readoutPref.mouseReadout2 )}>
+                        {labelMap[readout.readoutPref.mouseReadout2] } </div>
+
+                    <div style={column6}>  {mouseReadout2}  </div>
+                </div>
+                 <div style={{height: 13, width:'100%', paddingTop:3}}>{/* row3*/}
+                     {threeColor && <div style={ column3}>{fluxLabels[1]}</div>}
+                     {threeColor && <div style={ column4}>{fluxValues[1]}</div>}
+                     {threeColor && <div style={ column5}>{fluxLabels[2]}</div>}
+                     {threeColor && <div style={ column6}>{fluxValues[2]}</div>}
+                </div>
+                <div style={lockByClickStyle} title='Click on an image to lock the display at that point.'>
                     <input type='checkbox' name='aLock' value='lock'
                            onChange={() => {
                            dispatchChangePointSelection('mouseReadout', !readout.lockByClick);
