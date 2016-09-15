@@ -246,6 +246,7 @@ function ConstraintPanel({tableModel, fieldKey, onChange, ontablechanged}) {
         overflow: 'hidden',
         position: 'relative'
     };
+    const tbl_ui_id = tableModel.tbl_id + '-ui';
     return (
 
         <div
@@ -262,6 +263,7 @@ function ConstraintPanel({tableModel, fieldKey, onChange, ontablechanged}) {
                 showMask={true}
                 showOptionButton={false}
                 key={tableModel.tbl_id}
+                tbl_ui_id = {tbl_ui_id}
                 tableModel={tableModel}
                 renderers={
                                         {
