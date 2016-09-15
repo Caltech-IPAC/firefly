@@ -89,6 +89,7 @@ class DrawLayerFactory {
 
     constructor(factoryDefsAry) {
         this.registry=  {};
+        this.defaults= {};
         factoryDefsAry.forEach( (fd) => {
             if (fd.create && fd.drawLayerTypeId) {
                 this.register(fd);
@@ -111,7 +112,7 @@ class DrawLayerFactory {
             console.warn(`DrawingLayerType: ${drawLayerTypeId} does not exist in the registry, did you forget to add it?`);
             return null;
         }
-        return this.registry[drawLayerTypeId].create(initPayload);
+        return this.registry[drawLayerTypeId].create(initPayload, this.defaults[drawLayerTypeId]);
     }
 
     hasGetDrawData(drawLayer) {
@@ -148,6 +149,11 @@ class DrawLayerFactory {
         return this.registry[drawLayer.drawLayerTypeId].getUIComponent;
     }
 
+    setDrawLayerDefaults(drawLayerTypeId, def) {
+        if (this.defaults[drawLayerTypeId]) {
+            this.defaults[drawLayerTypeId]= Object.assign(this.defaults[drawLayerTypeId], def);
+        }
+    }
 
 
     /**
@@ -156,6 +162,7 @@ class DrawLayerFactory {
      */
     register(factoryDef) {
         this.registry[factoryDef.drawLayerTypeId]= factoryDef;
+        this.defaults[factoryDef.drawLayerTypeId]= {};
     }
 
     static makeFactory(...factoryDefs) {

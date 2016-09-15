@@ -25,9 +25,11 @@ export default {factoryDef, TYPE_ID}; // every draw layer must default export wi
 var idCnt=0;
 
 
-function creator(initPayload) {
+function creator(initPayload, presetDefaults) {
     var drawingDef= makeDrawingDef('blue');
     drawingDef.symbol= DrawSymbol.SQUARE;
+    drawingDef= Object.assign(drawingDef,presetDefaults);
+
     idCnt++;
 
     var options= {

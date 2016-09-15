@@ -9,6 +9,7 @@ import ImagePlotCntlr, {visRoot, ExpandType} from '../visualize/ImagePlotCntlr.j
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import  {DefaultApiReadout} from '../visualize/ui/DefaultApiReadout.jsx';
+import  {reduxFlux} from '../core/ReduxFlux.js';
 //import  {PopupMouseReadoutMinimal} from '../visualize/ui/PopupMouseReadoutMinimal.jsx';
 import  {PopupMouseReadoutFull} from '../visualize/ui/PopupMouseReadoutFull.jsx';
 import DialogRootContainer from '../ui/DialogRootContainer.jsx';
@@ -47,7 +48,7 @@ export {extensionAdd, extensionRemove} from '../core/ExternalAccessUtils.js';
 
 
 /**
- * @summary  Get plot object with the given plot id, when plotId is not included, active plot is returned.
+ * Get plot object with the given plot id, when plotId is not included, active plot is returned.
  * @param {string} [plotId] the plotId, optional
  * @returns {WebPlot}
  * @public
@@ -57,6 +58,27 @@ export {extensionAdd, extensionRemove} from '../core/ExternalAccessUtils.js';
  */
 export function getPrimePlot(plotId) {
     return primePlot(visRoot(), plotId);
+}
+
+/**
+ * Set a defaults object on for a draw layer type.
+ * The following draw layers are supported: 'ACTIVE_TARGET_TYPE', 'CATALOG_TYPE'
+ * @param {string} drawLayerTypeId
+ * @param {DrawingDef} defaults
+ * @public
+ * @function setDrawLayerDefaults
+ * @memberof firefly.util.image
+ *
+ * @example
+ * firefly.util.image.setDrawLayerDefaults('ACTIVE_TARGET_TYPE', {symbol:'x', color:'pink', size:15});
+ * or
+ * firefly util.image.setDrawLayerDefaults('CATALOG_TYPE', {symbol:'cross', color:'red'});
+ *
+ * @see DrawingDef
+ * @see DrawSymbol
+ */
+export function setDrawLayerDefaults(drawLayerTypeId, defaults) {
+    reduxFlux.setDrawLayerDefaults(drawLayerTypeId, defaults);
 }
 
 /**

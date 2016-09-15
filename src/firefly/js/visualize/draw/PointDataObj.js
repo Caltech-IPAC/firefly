@@ -21,13 +21,12 @@ import {defaultRegionSelectColor, defaultRegionSelectStyle} from '../DrawLayerCn
 
 /**
  *  enum
- *  ROTATE is the symbol mainly used as an indication for rotation in drawing layer
  *  one of 'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE', 'SQUARE_X', 'EMP_CROSS','EMP_SQUARE_X', 'BOXCIRCLE', 'ARROW'
  * */
 export const DrawSymbol = new Enum([
     'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE', 'SQUARE_X', 'EMP_CROSS','EMP_SQUARE_X',
     'BOXCIRCLE', 'ARROW', 'ROTATE'
-]);
+], { ignoreCase: true });
 
 export const POINT_DATA_OBJ= 'PointDataObj';
 const DEFAULT_SIZE= 4;
@@ -70,7 +69,8 @@ var draw=  {
 
     usePathOptimization(drawObj) {
         if (!drawObj.symbol) return true;
-        return drawObj.symbol!=DrawSymbol.EMP_CROSS && drawObj.symbol!=DrawSymbol.EMP_SQUARE_X;
+        const s= DrawSymbol.get(drawObj.symbol);
+        return s!==DrawSymbol.EMP_CROSS && s!==DrawSymbol.EMP_SQUARE_X;
     },
 
     getCenterPt(drawObj) {return drawObj.pt; },
@@ -125,7 +125,7 @@ export default {make,draw};
 
 /**
  * translate the point symbol
- * @param plot
+ * @param {WebPlot} plot
  * @param drawObj
  * @param apt
  * @returns {{pt: *}}
@@ -139,10 +139,10 @@ function translatePtTo(plot, drawObj, apt) {
 /**
  * rotate the point symbol (rotate the point defined for the point, not the entire symbol)
  * if the entire symbol needs to be rotated, set the angle to renderOptions.rotAngle externally
- * @param plot
+ * @param {WebPlot} plot
  * @param drawObj
- * @param angle in screen coodinate direction, radian
- * @param worldPt
+ * @param {number} angle in screen coodinate direction, radian
+ * @param {WorldPt} worldPt
  * @returns {{pt: *}}
  */
 function rotatePtAround(plot, drawObj, angle, worldPt) {
@@ -153,14 +153,14 @@ function rotatePtAround(plot, drawObj, angle, worldPt) {
 
 
 function makeDrawParams(pointDataObj,def) {
-    var symbol= pointDataObj.symbol || def.symbol || DEFAULT_SYMBOL;
-    var size= (symbol===DrawSymbol.DOT) ? pointDataObj.size || def.size || DOT_DEFAULT_SIZE :
+    const symbol= DrawSymbol.get(pointDataObj.symbol || def.symbol || DEFAULT_SYMBOL);
+    const size= (symbol===DrawSymbol.DOT) ? pointDataObj.size || def.size || DOT_DEFAULT_SIZE :
                                           pointDataObj.size || def.size || DEFAULT_SIZE;
-    var fontName= pointDataObj.fontName || def.fontName || 'helvetica';
-    var fontSize= pointDataObj.fontSize || def.fontSize || DEFAULT_FONT_SIZE;
-    var fontWeight= pointDataObj.fontWeight || def.fontWeight || 'normal';
-    var fontStyle= pointDataObj.fontStyle || def.fontStyle || 'normal';
-    var textLoc= pointDataObj.textLoc || def.textLoc || TextLocation.DEFAULT;
+    const fontName= pointDataObj.fontName || def.fontName || 'helvetica';
+    const fontSize= pointDataObj.fontSize || def.fontSize || DEFAULT_FONT_SIZE;
+    const fontWeight= pointDataObj.fontWeight || def.fontWeight || 'normal';
+    const fontStyle= pointDataObj.fontStyle || def.fontStyle || 'normal';
+    const textLoc= pointDataObj.textLoc || def.textLoc || TextLocation.DEFAULT;
 
     return {
         color: DrawUtil.getColor(pointDataObj.color,def.color),
@@ -179,7 +179,7 @@ function makeDrawParams(pointDataObj,def) {
  * @param ctx
  * @param drawTextAry
  * @param pt
- * @param plot
+ * @param {WebPlot} plot
  * @param drawObj
  * @param drawParams
  * @param renderOptions
