@@ -18,11 +18,8 @@ import {MultiImageViewerContainer} from '../../visualize/ui/MultiImageViewerCont
 import {createContentWrapper} from '../../ui/panel/DockLayoutPanel.jsx';
 import {IMG_VIEWER_ID} from './LcManager.js';
 import {FormPanel} from '../../ui/FormPanel.jsx';
-import {showLcForm, LcCurveOptionsPanel} from './LcInputForm.jsx';
 import {Tabs, Tab,FieldGroupTabs} from '../../ui/panel/TabPanel.jsx';
 import {CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
-import Histogram from '../../charts/ui/Histogram.jsx';
-import ChartTableViewPanel from '../../charts/ui/ChartsTableViewPanel.jsx';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import Validate from '../../util/Validate.js';
@@ -30,7 +27,8 @@ import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {InputGroup} from '../../ui/InputGroup.jsx';
 import {UploadPanel} from './LcViewer.jsx';
-import {LCPFOPanel} from './PeriodFidingOptions.jsx';
+import {showLcParamForm, LcPFOptionsPanel} from './LcPhaseFoldingPanel.jsx';
+import {LCPFOPanel} from './PeriodogramOptionsPanel.jsx';
 import {LcPlotOptionsPanel} from './LcPlotOptions.jsx';
 
 const PanelResizableStyle = {
@@ -99,19 +97,14 @@ export class LcResult extends Component {
                 <div>
                     <div>
                         <Tabs componentKey='OuterTabs' defaultSelected={0} useFlex={true}>
-                            <Tab name="LC Param">
+                            <Tab name="Phase Folding">
                                 <div>
-                                    {LcCurveOptionsPanel(fields)}
+                                    {LcPFOptionsPanel(fields)}
                                 </div>
                             </Tab>
-                            <Tab name="Period Finding">
+                            <Tab name="Peiodogram">
                                 <div>
                                    <LCPFOPanel />
-                                </div>
-                            </Tab>
-                            <Tab name="Plotting Options">
-                                <div>
-                                    <LcPlotOptionsPanel />
                                 </div>
                             </Tab>
                             <Tab name='Upload'>
@@ -121,8 +114,6 @@ export class LcResult extends Component {
                             </Tab>
                         </Tabs>
                     </div>
-
-
                 </div> );
 
 

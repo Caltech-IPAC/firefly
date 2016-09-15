@@ -1,4 +1,4 @@
-.PanelResizableStyle {
+.LCPanels__PanelResizableStyle {
     width: 400px;
     min-width: 400px;
     height: 300px;
@@ -9,7 +9,7 @@
     position: relative
 }
 
-.Header {
+.LCPanels__Header {
     white-space: nowrap;
     height: calc(100% - 1px);
     display: flex;
@@ -20,7 +20,7 @@
     font-size: large
 }
 
-.selectionBtn {
+.LCPanels__selectionBtn {
     padding: 0 5px;
     cursor: pointer;
 }

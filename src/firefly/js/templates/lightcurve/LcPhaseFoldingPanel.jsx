@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import './LCPanels.css';
 import React, {Component, PropTypes} from 'react';
 import {TargetPanel} from '../../ui/TargetPanel.jsx';
 import {InputGroup} from '../../ui/InputGroup.jsx';
@@ -25,7 +26,6 @@ import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 
 
-
 function getDialogBuilder() {
     var popup= null;
     return () => {
@@ -43,6 +43,7 @@ function getDialogBuilder() {
 
 const dialogBuilder= getDialogBuilder();
 
+// Could be a popup form
 export function showLcParamForm() {
     dialogBuilder();
     dispatchShowDialog('LcParamForm');
@@ -130,7 +131,7 @@ var LCInput = React.createClass({
             <div style={{padding:'5px', minWidth: 480}}>
                 <div>
                     <Tabs componentKey='LCInputTabs' defaultSelected={0} useFlex={true}>
-                        <Tab name='LC Param'>
+                        <Tab name='Phase Folding'>
                             <LcParamForm />
                         </Tab>
                     </Tabs>
@@ -173,7 +174,7 @@ export class LcParamForm extends Component {
 
 }
 
-export function LcCurveOptionsPanel ({fields}) {
+export function LcPFOptionsPanel ({fields}) {
 
     var hide= true;
     if (fields) {
@@ -188,88 +189,90 @@ export function LcCurveOptionsPanel ({fields}) {
     for (var i=1; i<100; i++) { validSuggestions.push(...[`mjd${i}`, `w${i}`, `w${i}mprosig`, `w${i}snr`]); }
 
     return (
-        <FieldGroup style= {PanelResizableStyle} groupKey={'LC_FORM'} initValues={{timeCol:'mjd1',field1:'4'}}
-                          reducerFunc={DialogReducer} keepState={true}>
-            <InputGroup labelWidth={110}>
 
-                <span style={Header}>Light Curve Parameters</span>
-                <br/><br/>
-                <SuggestBoxInputField
-                    fieldKey='timeCol'
-                    initialState= {{
-                        fieldKey: 'timeCol',
-                        value: '',
-                        validator:  (val) => {
-                            let retval = {valid: true, message: ''};
-                            if (!validSuggestions.includes(val)) {
-                                retval = {valid: false, message: `${val} is not a valid column`};
-                            }
-                            return retval;
-                        },
-                        tooltip: 'Start typing and the list of suggestions will appear',
-                        label : 'Time Column:',
-                        labelWidth : 100
-                    }}
-                    getSuggestions = {(val)=>{
-                        const suggestions = validSuggestions.filter((el)=>{return el.startsWith(val);});
-                        return suggestions.length > 0 ? suggestions : validSuggestions;
-                    }}
-                />
+            <FieldGroup style= {PanelResizableStyle} groupKey={'LC_FORM'} initValues={{timeCol:'mjd1',field1:'4'}}
+                              reducerFunc={DialogReducer} keepState={true}>
+                <InputGroup labelWidth={110}>
 
-                <br/>
-                <ValidationField fieldKey='flux'
-                     forceReinit={true}
-                     initialState= {{
-                              fieldKey: 'flux',
-                              value: '',
-                              validator: Validate.floatRange.bind(null, 0.55555, 1.22222, 3,'Flux Column'),
-                              tooltip: 'Flux Column',
-                              label : 'Flux Column:',
-                              labelWidth : 100
-                      }} />
+                    <span style={Header}>Light Curve Parameters</span>
+                    <br/><br/>
+                    <SuggestBoxInputField
+                        fieldKey='timeCol'
+                        initialState= {{
+                            fieldKey: 'timeCol',
+                            value: '',
+                            validator:  (val) => {
+                                let retval = {valid: true, message: ''};
+                                if (!validSuggestions.includes(val)) {
+                                    retval = {valid: false, message: `${val} is not a valid column`};
+                                }
+                                return retval;
+                            },
+                            tooltip: 'Start typing and the list of suggestions will appear',
+                            label : 'Time Column:',
+                            labelWidth : 100
+                        }}
+                        getSuggestions = {(val)=>{
+                            const suggestions = validSuggestions.filter((el)=>{return el.startsWith(val);});
+                            return suggestions.length > 0 ? suggestions : validSuggestions;
+                        }}
+                    />
 
-                <br/>
+                    <br/>
+                    <ValidationField fieldKey='flux'
+                         forceReinit={true}
+                         initialState= {{
+                                  fieldKey: 'flux',
+                                  value: '',
+                                  validator: Validate.floatRange.bind(null, 0.55555, 1.22222, 3,'Flux Column'),
+                                  tooltip: 'Flux Column',
+                                  label : 'Flux Column:',
+                                  labelWidth : 100
+                          }} />
 
-                <ValidationField fieldKey='fluxerror'
-                     forceReinit={true}
-                     initialState= {{
-                              fieldKey: 'fluxerrorl',
-                              value: '',
-                              validator: Validate.floatRange.bind(null, 0.55555, 1.22222, 3,'fluxerror'),
-                              tooltip: 'Flux Error Column',
-                              label : 'Flux Error:',
-                              labelWidth : 100
-                     }} />
-                <br/>
+                    <br/>
 
-                <ValidationField fieldKey='period'
-                     forceReinit={true}
-                     initialState= {{
-                              fieldKey: 'period',
-                              value: '',
-                              validator: Validate.floatRange.bind(null, 0.55555, 1.22222, 3,'period'),
-                              tooltip: 'Period',
-                              label : 'Period:',
-                              labelWidth : 100
-                     }} />
+                    <ValidationField fieldKey='fluxerror'
+                         forceReinit={true}
+                         initialState= {{
+                                  fieldKey: 'fluxerrorl',
+                                  value: '',
+                                  validator: Validate.floatRange.bind(null, 0.55555, 1.22222, 3,'fluxerror'),
+                                  tooltip: 'Flux Error Column',
+                                  label : 'Flux Error:',
+                                  labelWidth : 100
+                         }} />
+                    <br/>
 
-                <br/>
+                    <ValidationField fieldKey='period'
+                         forceReinit={true}
+                         initialState= {{
+                                  fieldKey: 'period',
+                                  value: '',
+                                  validator: Validate.floatRange.bind(null, 0.55555, 1.22222, 3,'period'),
+                                  tooltip: 'Period',
+                                  label : 'Period:',
+                                  labelWidth : 100
+                         }} />
 
-                <button type='button' className='button std hl'  onClick={(request) => onSearchSubmit(request)}>
-                    <b>Phase Folded</b>
-                </button>
-                <button type='button' className='button std hl'  onClick={() => resetDefaults()}>
-                    <b>Reset</b>
-                </button>
+                    <br/> <br/>
 
-                <br/>
-            </InputGroup>
-        </FieldGroup>
+                    <button type='button' className='button std hl'  onClick={(request) => onSearchSubmit(request)}>
+                        <b>Phase Folded</b>
+                    </button>
+                    <button type='button' className='button std hl'  onClick={() => resetDefaults()}>
+                        <b>Reset</b>
+                    </button>
+
+                    <br/>
+                </InputGroup>
+            </FieldGroup>
+
     );
 }
 
 
-LcCurveOptionsPanel.propTypes= {
+LcPFOptionsPanel.propTypes= {
     fields: PropTypes.object
 };
 
@@ -326,7 +329,7 @@ function showResults(success, request) {
     });
 
     var results= (
-        <PopupPanel title={'Example Dialog Results'} closePromise={closePromise} >
+        <PopupPanel title={'LC Parameters'} closePromise={closePromise} >
             {makeResultInfoContent(statStr,s,resolver)}
         </PopupPanel>
     );
@@ -360,14 +363,15 @@ function resultsSuccess(request) {
 function onSearchSubmit(request) {
     console.log(request);
     if (request.Tabs==='LC Param') {
-        doLCSearch(request);
+        doPhaseFolding(request);
     }
     else {
         console.log('request no supported');
     }
 }
 
-function doLCSearch(request) {
+//here to plug in the phase folding processor
+function doPhaseFolding(request) {
     var tReq;
     if (tReq !== null) {
         dispatchTableSearch(tReq, {removable: false});
