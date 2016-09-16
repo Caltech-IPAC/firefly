@@ -32,7 +32,7 @@ function getDialogBuilder() {
         if (!popup) {
             const popup= (
                 <PopupPanel title={'Light Curve'} >
-                    <LCInput  groupKey={'LC_FORM'} />
+                    <LCInput  groupKey={'LC_FORM_Panel'} />
                 </PopupPanel>
             );
             DialogRootContainer.defineDialog('LcParamForm', popup);
@@ -148,7 +148,7 @@ export class LcParamForm extends Component {
 
     constructor(props)  {
         super(props);
-        this.state = {fields:FieldGroupUtils.getGroupFields('LC_FORM')};
+        this.state = {fields:FieldGroupUtils.getGroupFields('LC_FORM_Panel')};
     }
 
     componentWillUnmount() {
@@ -159,7 +159,7 @@ export class LcParamForm extends Component {
 
     componentDidMount() {
         this.iAmMounted= true;
-        this.unbinder= FieldGroupUtils.bindToStore('LC_FORM', (fields) => {
+        this.unbinder= FieldGroupUtils.bindToStore('LC_FORM_Panel', (fields) => {
             if (fields!==this.state.fields && this.iAmMounted) {
                 this.setState({fields});
             }
@@ -190,7 +190,7 @@ export function LcPFOptionsPanel ({fields}) {
 
     return (
 
-            <FieldGroup style= {PanelResizableStyle} groupKey={'LC_FORM'} initValues={{timeCol:'mjd1',field1:'4'}}
+            <FieldGroup style= {PanelResizableStyle} groupKey={'LC_FORM_Panel'} initValues={{timeCol:'mjd1',field1:'4'}}
                               reducerFunc={DialogReducer} keepState={true}>
                 <InputGroup labelWidth={110}>
 
@@ -223,9 +223,9 @@ export function LcPFOptionsPanel ({fields}) {
                          forceReinit={true}
                          initialState= {{
                                   fieldKey: 'flux',
-                                  value: '',
-                                  validator: Validate.floatRange.bind(null, 0.55555, 1.22222, 3,'Flux Column'),
-                                  tooltip: 'Flux Column',
+                                  value: '2.0',
+                                  validator: Validate.floatRange.bind(null, 2.0, 5.5, 3,'Flux Column'),
+                                  tooltip: 'Flux Column, value between 2.0 to 5.5',
                                   label : 'Flux Column:',
                                   labelWidth : 100
                           }} />
@@ -235,10 +235,10 @@ export function LcPFOptionsPanel ({fields}) {
                     <ValidationField fieldKey='fluxerror'
                          forceReinit={true}
                          initialState= {{
-                                  fieldKey: 'fluxerrorl',
-                                  value: '',
-                                  validator: Validate.floatRange.bind(null, 0.55555, 1.22222, 3,'fluxerror'),
-                                  tooltip: 'Flux Error Column',
+                                  fieldKey: 'fluxerror',
+                                  value: '0.02',
+                                  validator: Validate.floatRange.bind(null, 0.01, 0.5, 3,'Flux Error'),
+                                  tooltip: 'Flux Error, value is between 0.01 to 0.5',
                                   label : 'Flux Error:',
                                   labelWidth : 100
                          }} />
@@ -248,8 +248,8 @@ export function LcPFOptionsPanel ({fields}) {
                          forceReinit={true}
                          initialState= {{
                                   fieldKey: 'period',
-                                  value: '',
-                                  validator: Validate.floatRange.bind(null, 0.55555, 1.22222, 3,'period'),
+                                  value: '0.5',
+                                  validator: Validate.floatRange.bind(null, 0.5, 1.5, 3,'period'),
                                   tooltip: 'Period',
                                   label : 'Period:',
                                   labelWidth : 100
@@ -307,7 +307,7 @@ var DialogReducer= function(inFields, action) {
 
 
 function resetDefaults() {
-    dispatchRestoreDefaults('LC_FORM');
+    dispatchRestoreDefaults('LC_FORM_Panel');
 
 }
 
