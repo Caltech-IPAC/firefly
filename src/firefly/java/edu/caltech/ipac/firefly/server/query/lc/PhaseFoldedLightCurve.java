@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.server.query.lc;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
@@ -15,6 +16,7 @@ import java.io.IOException;
  * To convert a Light Curve DataGroup into a phase folded Light Curve DataGroup.
  */
 public class PhaseFoldedLightCurve {
+    private static final String PHASE_COL = "phase";
 
     //Empty constructor
     public PhaseFoldedLightCurve(){};
@@ -38,13 +40,17 @@ public class PhaseFoldedLightCurve {
         }
 
         //Add a new data type and colunm: phase
-        DataType phaseType = new DataType("phase", "phase", Double.class, DataType.Importance.HIGH, null, false);
+        DataType phaseType = new DataType(PHASE_COL, PHASE_COL, Double.class, DataType.Importance.HIGH, null, false);
         //DataType phaseType = new DataType("phase", Double.class);
-
-        // TODO DM-7594 / DM-7595:
-        // phaseType.setFormatInfo... and attribute to appear as description in ipac table header.
-
         dg.addDataDefinition(phaseType);
+        phaseType.getFormatInfo().setDataFormat("%.8f");
+        phaseType.getFormatInfo().setWidth(15);
+
+        // add meta info for the added phase column
+        String desc = "number of period elapsed since starting time.";
+        dg.addAttribute(null, PHASE_COL);
+        dg.addAttribute(null, "___ " + desc);
+        dg.addAttribute(DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, PHASE_COL), desc);
 
         //Find the minimum time:
         double tzero = Double.MAX_VALUE;
