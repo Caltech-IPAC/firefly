@@ -264,11 +264,12 @@ function computePointHighlightLayer(drawLayer, columns) {
 
     const tbl= getTblById(drawLayer.drawLayerId);
     if (!tbl) return null;
+    const {angleInRadian:rad}= drawLayer;
     const raStr= getCellValue(tbl,drawLayer.highlightedRow, columns.lonCol);
     const decStr= getCellValue(tbl,drawLayer.highlightedRow, columns.latCol);
     if (!raStr || !decStr) return null;
 
-    const wp= makeWorldPt( raStr, decStr, columns.csys);
+    const wp= makeWorldPt( toAngle(raStr,rad), toAngle(decStr, rad), columns.csys);
     const obj= PointDataObj.make(wp, 5, drawLayer.drawingDef.symbol);
     const obj2= PointDataObj.make(wp, 5, DrawSymbol.X);
     obj.color= COLOR_HIGHLIGHTED_PT;
