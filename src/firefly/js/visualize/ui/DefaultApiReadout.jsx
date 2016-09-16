@@ -14,10 +14,10 @@ import {ThumbnailView} from './ThumbnailView.jsx';
 import {MagnifiedView} from './MagnifiedView.jsx';
 
 var fullStyle= {
-    width: 680,
-    height: 70,
-    minWidth: 680,
-    minHeight:70,
+    // width: 680,
+    // height: 70,
+    // minWidth: 680,
+    // minHeight:70,
     display: 'inline-block',
     position: 'relative',
     verticalAlign: 'top',
@@ -27,10 +27,10 @@ var fullStyle= {
 };
 
 var minimalStyle= {
-    width: 360,
-    height: 70,
-    minWidth: 360,
-    minHeight:70,
+    // width: 360,
+    // height: 70,
+    // minWidth: 360,
+    // minHeight:70,
     display: 'inline-block',
     position: 'relative',
     verticalAlign: 'top',
@@ -86,9 +86,9 @@ export class DefaultApiReadout extends Component {
             const style = MouseReadoutComponent &&  MouseReadoutComponent.name==='PopupMouseReadoutMinimal'?minimalStyle:fullStyle;
             return (
 
-                <div style={{display:'inline-block', float:'right', whiteSpace:'nowrap'}}>
+                <div style={{display:'flex',flexWrap:'nowrap'}}>
                     <div style={style}>
-                        <div style={{position:'absolute', color:'black'}}>
+                        <div style={{position:'relative', color:'black', height:'100%'}}>
                             <MouseReadoutComponent readout={readout} showMag={ showMag} showThumb={showThumb}/>
                         </div>
                     </div>

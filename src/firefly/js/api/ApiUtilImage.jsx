@@ -4,20 +4,23 @@
 
 import React from 'react';
 import {take,race,call} from 'redux-saga/effects';
+import {has} from 'lodash';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import ImagePlotCntlr, {visRoot, ExpandType} from '../visualize/ImagePlotCntlr.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
-import  {DefaultApiReadout} from '../visualize/ui/DefaultApiReadout.jsx';
-import  {reduxFlux} from '../core/ReduxFlux.js';
-//import  {PopupMouseReadoutMinimal} from '../visualize/ui/PopupMouseReadoutMinimal.jsx';
-import  {PopupMouseReadoutFull} from '../visualize/ui/PopupMouseReadoutFull.jsx';
+import {DefaultApiReadout} from '../visualize/ui/DefaultApiReadout.jsx';
+import {reduxFlux} from '../core/ReduxFlux.js';
+import {PopupMouseReadoutFull} from '../visualize/ui/PopupMouseReadoutFull.jsx';
 import DialogRootContainer from '../ui/DialogRootContainer.jsx';
 import {PopupPanel, LayoutType} from '../ui/PopupPanel.jsx';
 import {dispatchShowDialog,dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {readoutRoot,isAutoReadIsLocked, isLockByClick,STANDARD_READOUT} from '../visualize/MouseReadoutCntlr.js';
 import {mouseUpdatePromise} from '../visualize/VisMouseSync.js';
 import {RangeValues} from '../visualize/RangeValues.js';
+
+
+
 const API_READOUT= 'apiReadout';
 
 // NOTE 
@@ -60,6 +63,9 @@ export function getPrimePlot(plotId) {
     return primePlot(visRoot(), plotId);
 }
 
+
+
+var isInit= false;
 /**
  * Set a defaults object on for a draw layer type.
  * The following draw layers are supported: 'ACTIVE_TARGET_TYPE', 'CATALOG_TYPE'
@@ -90,11 +96,10 @@ export function setDrawLayerDefaults(drawLayerTypeId, defaults) {
  * @memberof firefly.util.image
  */
 export function initAutoReadout(ReadoutComponent= DefaultApiReadout,
-         //   props={MouseReadoutComponent:PopupMouseReadoutMinimal, showThumb:false,showMag:false}){
       props={MouseReadoutComponent:PopupMouseReadoutFull, showThumb:true,showMag:true } ){
-
-
+    if (isInit) return;
     dispatchAddSaga(autoReadoutVisibility, {ReadoutComponent,props});
+    isInit= true;
 }
 
 
@@ -160,7 +165,7 @@ function *autoReadoutVisibility({ReadoutComponent,props}) {
                            mouse: call(mouseUpdatePromise),
                            timer: call(delay, 3000)
                          });
-            if ((!winner.expandedChange || !winner.mouse) && !inDialog && !isLockByClick(readoutRoot()) && !isAutoReadIsLocked(readoutRoot())) {
+            if ((has(winner,'timer')) && !inDialog && !isLockByClick(readoutRoot()) && !isAutoReadIsLocked(readoutRoot())) {
                 hideReadout();
             }
             else {

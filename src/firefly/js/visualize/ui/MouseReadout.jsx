@@ -30,7 +30,7 @@ const rS = {
     whiteSpace: 'nowrap',
     overflow: 'hidden'
 };
-const EMPTY = <div style={rS}></div>;
+const EMPTY = <div style={rS}/>;
 const EMPTY_READOUT = '';
 const coordinateMap = {
     galactic: CoordinateSys.GALACTIC,
@@ -194,15 +194,15 @@ export function getFluxInfo(sndReadout){
     }
     var fluxValueArrays=[];
     var fluxLabelArrays=[];
-    var fluxValue,  formatStr;
+    var fluxValue;
 
     for (let i = 0; i < fluxObj.length; i++) {
         if (!isNaN(fluxObj[i].value )) {
             fluxValue = (fluxObj[i].value < 1000) ? `${myFormat(fluxObj[i].value, fluxObj[i].precision)}` : fluxObj[i].value.toExponential(6).replace('e+', 'E');
             if (fluxObj[i].unit && !isNaN(fluxObj[i].value)) fluxValue+= ` ${fluxObj[i].unit}`;
             fluxValueArrays.push(fluxValue);
-            fluxLabelArrays.push(fluxObj[i].title);
         }
+        fluxLabelArrays.push(fluxObj[i].title);
      }
 
     if (fluxLabelArrays.length<3) { //fill with empty
@@ -231,7 +231,7 @@ export function  getMouseReadout(readoutItems, toCoordinateName) {
     var wpt = readoutItems.worldPt;
     if (!wpt.value) return;
 
-    var result,fStr, obj;
+    var result, obj;
     var {coordinate, type} = getCoordinateMap(toCoordinateName);
     if (coordinate) {
         var ptInCoord = VisUtil.convert(wpt.value, coordinate);
