@@ -110,6 +110,7 @@ public class RegionFactory {
             Region region = null;
             String region_type= null;
             boolean include= true;
+            boolean isWorldCoord = false;
 
             try
             {
@@ -138,6 +139,8 @@ public class RegionFactory {
                     }
                 }
                 if (st.hasMoreToken()) {
+                    isWorldCoord = isWorldCoords(coordSys);
+
                     if (region_type.equals("vector")      ||
                         region_type.equals("ruler")       ||
                         region_type.equals("compass")     ||
@@ -188,23 +191,24 @@ public class RegionFactory {
                         boolean isBoxAnaulus= false;
                         WorldPt wp= parseWorldPt(coordSys, st.nextToken(), st.nextToken());
                         String width_string = st.nextToken();
-                        RegionValue width= convertToRegionValue(width_string,ValueType.VALUE, false);
+                        RegionValue width= convertToRegionValue(width_string,ValueType.VALUE, isWorldCoord);
                         String height_string = st.nextToken();
-                        RegionValue height= convertToRegionValue(height_string, ValueType.VALUE, false);
+                        RegionValue height= convertToRegionValue(height_string, ValueType.VALUE, isWorldCoord);
                         String angle_string = st.nextToken();
                         RegionValue angle= convertToRegionValue(angle_string,ValueType.VALUE, false);
 
-		    /* now check for box annulus */
+		                /* now check for box annulus */
                         RegionValue width1 = null;
                         RegionValue height1 = null;
 
                         if (st.hasMoreToken())
                         {
                             String token = st.nextToken();
-			    /* its a box_annulus */
-                            width1 = angle;            //already fetched
+                            /* its a box_annulus */
+                            //width1 = angle;            //already fetched
+                            width1 = convertToRegionValue(angle_string,ValueType.VALUE, isWorldCoord);
                             height_string = token;
-                            height1= convertToRegionValue(height_string, ValueType.VALUE, false);
+                            height1= convertToRegionValue(height_string, ValueType.VALUE, isWorldCoord);
                             angle_string = st.nextToken();
                             angle= convertToRegionValue(angle_string, ValueType.VALUE, false);
                             isBoxAnaulus= true;
@@ -223,9 +227,9 @@ public class RegionFactory {
                     else if (region_type.equals("annulus")) {
                         WorldPt wp= parseWorldPt(coordSys, st.nextToken(), st.nextToken());
                         String radius_string = st.nextToken();
-                        RegionValue radius= convertToRegionValue(radius_string, ValueType.VALUE, false);
+                        RegionValue radius= convertToRegionValue(radius_string, ValueType.VALUE, isWorldCoord);
                         radius_string = st.nextToken();
-                        RegionValue radius2= convertToRegionValue(radius_string, ValueType.VALUE, false);
+                        RegionValue radius2= convertToRegionValue(radius_string, ValueType.VALUE, isWorldCoord);
                         if (options!=null) ops= parseRegionOption(options,globalOps,include);
                         region = new RegionAnnulus(wp,radius,radius2);
                         region.setOptions(ops);
@@ -233,7 +237,7 @@ public class RegionFactory {
                     else if (region_type.equals("circle")) {
                         WorldPt wp= parseWorldPt(coordSys, st.nextToken(), st.nextToken());
                         String radius_string = st.nextToken();
-                        RegionValue radius= convertToRegionValue(radius_string, ValueType.VALUE, false);
+                        RegionValue radius= convertToRegionValue(radius_string, ValueType.VALUE, isWorldCoord);
                         if (options!=null) ops= parseRegionOption(options,globalOps,include);
                         region = new RegionAnnulus(wp, radius);
                         region.setOptions(ops);
@@ -243,9 +247,9 @@ public class RegionFactory {
                         boolean isEllipseAnnulus= false;
                         WorldPt wp= parseWorldPt(coordSys, st.nextToken(), st.nextToken());
                         String radius_string = st.nextToken();
-                        RegionValue radius1= convertToRegionValue(radius_string, ValueType.VALUE, false);
+                        RegionValue radius1= convertToRegionValue(radius_string, ValueType.VALUE, isWorldCoord);
                         radius_string = st.nextToken();
-                        RegionValue radius2= convertToRegionValue(radius_string, ValueType.VALUE, false);
+                        RegionValue radius2= convertToRegionValue(radius_string, ValueType.VALUE, isWorldCoord);
                         String angle_string = st.nextToken();
                         RegionValue angle= convertToRegionValue(angle_string, ValueType.VALUE, false);
 
@@ -258,9 +262,10 @@ public class RegionFactory {
                         {
                             String token = st.nextToken();
 			    /* its a box_annulus */
-                            radius3 = angle;            //already fetched
+                            //radius3 = angle;            //already fetched
+                            radius3 = convertToRegionValue(angle_string, ValueType.VALUE, isWorldCoord);
                             radius_string = token;
-                            radius4 = convertToRegionValue(radius_string, ValueType.VALUE, false);
+                            radius4 = convertToRegionValue(radius_string, ValueType.VALUE, isWorldCoord);
                             angle_string = st.nextToken();
                             angle= convertToRegionValue(angle_string, ValueType.VALUE, false);
                             isEllipseAnnulus= true;
