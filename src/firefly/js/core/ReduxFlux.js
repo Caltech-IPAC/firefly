@@ -314,6 +314,10 @@ function registerDrawLayer(factoryDef) {
     drawLayerFactory.register(factoryDef);
 }
 
+function setDrawLayerDefaults(typeId,defaults) {
+    drawLayerFactory.setDrawLayerDefaults(typeId,defaults);
+}
+
 function createDrawLayer(drawLayerTypeId, params) {
     return drawLayerFactory.create(drawLayerTypeId,params);
 }
@@ -329,6 +333,7 @@ export var reduxFlux = {
     registerDrawLayer,
     createDrawLayer,
     getDrawLayerFactory,
+    setDrawLayerDefaults,
     getRedux
 };
 

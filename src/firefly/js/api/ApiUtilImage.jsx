@@ -9,15 +9,18 @@ import {MouseState} from '../visualize/VisMouseSync.js';
 import ImagePlotCntlr, {visRoot, ExpandType} from '../visualize/ImagePlotCntlr.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
-import  {DefaultApiReadout} from '../visualize/ui/DefaultApiReadout.jsx';
-//import  {PopupMouseReadoutMinimal} from '../visualize/ui/PopupMouseReadoutMinimal.jsx';
-import  {PopupMouseReadoutFull} from '../visualize/ui/PopupMouseReadoutFull.jsx';
+import {DefaultApiReadout} from '../visualize/ui/DefaultApiReadout.jsx';
+import {reduxFlux} from '../core/ReduxFlux.js';
+import {PopupMouseReadoutFull} from '../visualize/ui/PopupMouseReadoutFull.jsx';
 import DialogRootContainer from '../ui/DialogRootContainer.jsx';
 import {PopupPanel, LayoutType} from '../ui/PopupPanel.jsx';
 import {dispatchShowDialog,dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {readoutRoot,isAutoReadIsLocked, isLockByClick,STANDARD_READOUT} from '../visualize/MouseReadoutCntlr.js';
 import {mouseUpdatePromise} from '../visualize/VisMouseSync.js';
 import {RangeValues} from '../visualize/RangeValues.js';
+
+
+
 const API_READOUT= 'apiReadout';
 
 // NOTE 
@@ -48,7 +51,7 @@ export {extensionAdd, extensionRemove} from '../core/ExternalAccessUtils.js';
 
 
 /**
- * @summary  Get plot object with the given plot id, when plotId is not included, active plot is returned.
+ * Get plot object with the given plot id, when plotId is not included, active plot is returned.
  * @param {string} [plotId] the plotId, optional
  * @returns {WebPlot}
  * @public
@@ -64,8 +67,28 @@ export function getPrimePlot(plotId) {
 
 var isInit= false;
 /**
- * @summary  initialize the auto readout. Can only be called once at the begging to get the popup readout running.
- * Called internally during first image plot.
+ * Set a defaults object on for a draw layer type.
+ * The following draw layers are supported: 'ACTIVE_TARGET_TYPE', 'CATALOG_TYPE'
+ * @param {string} drawLayerTypeId
+ * @param {DrawingDef} defaults
+ * @public
+ * @function setDrawLayerDefaults
+ * @memberof firefly.util.image
+ *
+ * @example
+ * firefly.util.image.setDrawLayerDefaults('ACTIVE_TARGET_TYPE', {symbol:'x', color:'pink', size:15});
+ * or
+ * firefly util.image.setDrawLayerDefaults('CATALOG_TYPE', {symbol:'cross', color:'red'});
+ *
+ * @see DrawingDef
+ * @see DrawSymbol
+ */
+export function setDrawLayerDefaults(drawLayerTypeId, defaults) {
+    reduxFlux.setDrawLayerDefaults(drawLayerTypeId, defaults);
+}
+
+/**
+ * @summary  initialize the auto readout. Must be call once at the begging to get the popup readout running.
  * @param {object} ReadoutComponent - either a PopupMouseReadoutMinimal or PopupMouseReadoutFull
  * @param {object} props - a list of the properties
  * @public

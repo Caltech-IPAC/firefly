@@ -48,12 +48,14 @@ var createCnt= 0;
 //---------------------------------------------------------------------
 
 
-function creator(initPayload) {
+function creator(initPayload, presetDefaults) {
     const {catalogId, tableData, tableMeta, title,
            selectInfo, columns, tableRequest, highlightedRow, color, angleInRadian=false,
            dataTooBigForSelection=false, catalog=true,boxData=false }= initPayload;
     var drawingDef= makeDrawingDef();
+    drawingDef.size= 5;
     drawingDef.symbol= DrawSymbol.SQUARE;
+    drawingDef= Object.assign(drawingDef,presetDefaults);
 
     var pairs= {
         [MouseState.DOWN.key]: highlightChange
@@ -220,9 +222,10 @@ function computePointDrawLayer(drawLayer, tableData, columns) {
     const {angleInRadian:rad}= drawLayer;
     if (lonIdx<0 || latIdx<0) return null;
 
+    const {size,symbol}= drawLayer.drawingDef;
     return tableData.data.map( (d) => {
         const wp= makeWorldPt( toAngle(d[lonIdx],rad), toAngle(d[latIdx],rad), columns.csys);
-        return PointDataObj.make(wp, 5, DrawSymbol.SQUARE);
+        return PointDataObj.make(wp, size, symbol);
     });
 }
 
@@ -266,7 +269,7 @@ function computePointHighlightLayer(drawLayer, columns) {
     if (!raStr || !decStr) return null;
 
     const wp= makeWorldPt( raStr, decStr, columns.csys);
-    const obj= PointDataObj.make(wp, 5, DrawSymbol.SQUARE);
+    const obj= PointDataObj.make(wp, 5, drawLayer.drawingDef.symbol);
     const obj2= PointDataObj.make(wp, 5, DrawSymbol.X);
     obj.color= COLOR_HIGHLIGHTED_PT;
     obj2.color= COLOR_HIGHLIGHTED_PT;

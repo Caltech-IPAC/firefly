@@ -54,6 +54,9 @@ export const DEFAULT_FONT_SIZE = '9pt';
 /**
  * @typedef {Object} DrawingDef
  *
+ * The defaults that a drawing layer might use. Note that all the properties of this object are optional.
+ * It can be created with any subset.
+ *
  * @prop {String} color color css style
  * @prop {DrawSymbol} symbol default: DrawSymbol.X,
  * @prop {Number} lineWidth default:1,
@@ -77,12 +80,12 @@ export const DEFAULT_FONT_SIZE = '9pt';
  * @param pointData
  * @return {DrawingDef}
  */
-export function makeDrawingDef(color= 'red') {
+export function makeDrawingDef(color= 'red', presetDefaults= {}) {
 
 	// FIXME: those are not DS9 colors, hence problem when saved in DS9 regions format file
 
 
-    return {
+    const def= {
         color,
         symbol: DrawSymbol.X,
         lineWidth:1,
@@ -95,6 +98,7 @@ export function makeDrawingDef(color= 'red') {
         fontStyle: 'normal',
         selectedColor: COLOR_SELECTED_PT
     };
+    return Object.assign({}, def, presetDefaults);
 }
 
 
