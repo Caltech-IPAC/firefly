@@ -180,28 +180,27 @@ export class RegionFactory {
         if (tmpAry.length <= 1) {
             var csys = getRegionCoordSys(tmpAry[0]);
 
-            // reset the coordinate system in case the string contains coordinate only
             if (csys !== RegionCsys.UNDEFINED && globalOptions) {
                 globalOptions.coordSys = tmpAry[0].toLowerCase();
                 return null;
             }
         }
 
-        // split string into region coordinate, description and property portions
+        // check if string contains  coordinate, description and property portions
         // -- regionCoord --
         if (tmpAry.length > 1) {
             regionCoord = tmpAry[0].trim();
-            tmpAry =  tmpAry[1].split('#');
-
+            tmpAry.shift();
             bCoord = true;           // coordinate is defined in this line
         } else {
             // default coordinate is PHYSICAL in case not specified
             regionCoord = globalOptions && has(globalOptions, regionPropsList.COORD)  ?
-                          globalOptions[regionPropsList.COORD] : defaultCoord;
-            tmpAry = tmpAry[0].split('#');
+                globalOptions[regionPropsList.COORD] : defaultCoord;
         }
 
-        if (tmpAry.length > 2) {     // in case '#' occurs in the options, like color=#ffffff
+        // separate the region description and property part
+        tmpAry = tmpAry[0].split('#');
+        if (tmpAry.length > 2) {     // in case '#' occurs in property part, like color=#ffffff
             tmpAry[1] = tmpAry.slice(1).join('#');
         }
 

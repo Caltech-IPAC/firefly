@@ -100,9 +100,15 @@ public class RegionFactory {
             String virtualLineNoInclude= virtualLine.trim();
 
             String virualLinePart[]= virtualLineNoInclude.split("#");
+
+            // test if more than one '#' exists: all parts except the first one should belong to region property part
+            if (virualLinePart.length > 2) {
+                for (int i = 2; i < virualLinePart.length; i++)
+                    virualLinePart[1] += "#" + virualLinePart[i];
+            }
+
             String regionParams= virualLinePart[0];
             String options= virualLinePart.length>1 ? virualLinePart[1] : null;
-
 
             StringTokenizer st = new StringTokenizer(virualLinePart[0], DELIM);
             RegionOptions ops= (globalOps!=null) ? globalOps.copy() : new RegionOptions();

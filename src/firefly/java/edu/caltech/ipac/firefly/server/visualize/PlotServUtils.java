@@ -694,13 +694,50 @@ public class PlotServUtils {
         return retval;
     }
 
+    private static Color parseRGB(String color) {
+        String rgb = "rgb";
+        String rgba = "rgba";
+        Color c = null;
+
+        if ((color.startsWith(rgb) || color.startsWith(rgba)) && color.endsWith(")")) {
+            int s = color.indexOf('(');
+            int e = color.lastIndexOf(')');
+
+            String   rgbStr = color.substring(s+1, e);
+            String[] rgbVal = rgbStr.split(",");
+
+            if ((color.startsWith(rgba)&&rgbVal.length == 4) || (rgbVal.length == 3)) {
+                int i;
+                int[] v = new int[3];
+
+                for (i = 0; i < 3; i++) {
+                    try {
+                        v[i] = Integer.parseInt(rgbVal[i]);
+                    } catch (NumberFormatException ex) {
+                        break;
+                    }
+                }
+                if (i == 3) {
+                    c = new Color(v[0], v[1], v[2]);  // rgb only
+                }
+            }
+        }
+        if (c == null) {
+            c = Color.lightGray;
+            _log.debug("parseRGB(String color) does not understand " + color + ".  Color.lightGray is assigned.");
+        }
+        return c;
+    }
+
     public static Color convertColorHtmlToJava(String color) {
         Color c;
         if (edu.caltech.ipac.firefly.visualize.ui.color.Color.isHexColor(color)) {
             int rgb[]=  edu.caltech.ipac.firefly.visualize.ui.color.Color.toRGB(color);
             c= new Color(rgb[0],rgb[1],rgb[2]);
         }
-        else {
+        else if (color.startsWith("rgb")) {
+            c = parseRGB(color);
+        } else {
             if      (color.equals("black"))   c= Color.black;
             else if (color.equals("aqua"))    c= new Color(0,255,255);
             else if (color.equals("blue"))    c= Color.blue;
