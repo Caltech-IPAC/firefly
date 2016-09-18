@@ -51,7 +51,9 @@ function brighter(colorStr,factor= .7) {
  * <code>darker</code> are inverse operations, the results of a series
  * of invocations of these two methods might be inconsistent because
  * of rounding errors.
- * @return  a new <code>Color</code> object that is
+ * @param colorStr
+ * @param [factor]
+ * @return {*} a new <code>Color</code> object that is
  *                    a darker version of this <code>Color</code>.
  * @since      JDK1.0
  */
@@ -69,7 +71,7 @@ function darker(colorStr, factor=.7) {
  * @param baseColor
  * @param mapSize
  * @param reverse
- * @return
+ * @return {*}
  */
 function makeSimpleColorMap(baseColor, mapSize, reverse=false) {
     var c=[];

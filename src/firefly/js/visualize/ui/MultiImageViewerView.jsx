@@ -193,16 +193,12 @@ function findAutoGridDim(size) {
 
 
 /**
- *
- *
  *  gridDef parameter is an array of objects that contain an optional title and an array of plotIds
  *  each element of the array should represent a row and each plotId a plot in that row,
  *  an empty element will act as a place holder in the row.
  *
- *
  * @param {Array} viewerPlotIds
- * @param {[ {string,[string]}]} gridDef
- //
+ * @param {Array.<{string,string[]}>} gridDef
  */
 function makeSparseGrid(viewerPlotIds,gridDef) {
     //todo

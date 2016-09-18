@@ -41,11 +41,11 @@ export function wsConnect(baseUrl=getRootURL()) {
 }
 
 /**
- *
- * @param name  Event's name.  See edu.caltech.ipac.firefly.util.event.Name for a full list.
- * @param scope One of 'SELF', 'CHANNEL', 'SERVER'.
- * @param dataType One of 'JSON', 'BG_STATUS', 'STRING'.
- * @param data String.
+ * @param {Object} p
+ * @param p.name  - Event's name.  See edu.caltech.ipac.firefly.util.event.Name for a full list.
+ * @param p.scope - One of 'SELF', 'CHANNEL', 'SERVER'.
+ * @param p.dataType - One of 'JSON', 'BG_STATUS', 'STRING'.
+ * @param p.data - String.
  */
 function wsSend({name='ping', scope, dataType, data}) {
     if (name === 'ping') {
@@ -59,10 +59,11 @@ function wsSend({name='ping', scope, dataType, data}) {
 
 /**
  * add an event listener to this websocket client.
- * @param matches a function that takes an event({name, data}) as its parameter.  return true if this
- *                listener will handle the event.
- * @param onEvent a function that takes an event({name, data}) as its parameter.  this function is called
- *                whenever an event matches its listener.
+ * @param {Object} obj
+ * @param {Function} obj.matches - matches a function that takes an event({name, data}) as its parameter.  return true if this
+ *                    listener will handle the event.
+ * @param {Function} obj.onEvent - a function that takes an event({name, data}) as its parameter.  this function is called
+ *                    whenever an event matches its listener.
  */
 function addListener( {matches, onEvent} ) {
     listenters.push({matches, onEvent});

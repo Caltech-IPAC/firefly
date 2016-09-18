@@ -1,4 +1,3 @@
-
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
@@ -262,7 +261,7 @@ function makeLineRegion(pts, cc, drawObj, drawParams) {
  * ONLY VALID FOR CIRCLE!
  * @param plot
  * @param pts
- * @return
+ * @return {*}
  */
 function getCircleCenter(plot,pts) {
     const pt0= plot.getScreenCoords(pts[0]);

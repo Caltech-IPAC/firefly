@@ -5,19 +5,14 @@
     },
     "source": {
         "include": [
-           "./js/api/",
-           "./js/tables/TableUtil.js",
-           "./js/charts/XYPlotCntlr.js",
-           "./js/charts/HistogramCntlr.js",
-           "./js/charts/ChartUtil.js",
-           "./js//visualize/CsysConverter.js",
-           "./js/visualize/DrawLayerCntlr.js",
-	   "./js/drawingLayers/RegionPlot.js",
-           "../../docs/firefly-api-overview.md"
-
+          "./js/",
+          "../../docs/firefly-api-overview.md"
         ],
       "exclude": [
           // enter the excluded files here as an array
+          // object spread operator crashes jsdoc, should be fixed in 3.4.2
+          // see https://github.com/jsdoc3/jsdoc/issues/1258
+          "./js/tables/ui/TableRenderer.js"
        ],
         "includePattern": ".+\\.js(doc)?|(x)$",
         "excludePattern": "(^|\\/|\\\\)_"

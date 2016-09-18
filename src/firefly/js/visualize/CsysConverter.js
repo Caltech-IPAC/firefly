@@ -36,12 +36,13 @@ const MAX_CACHE_ENTRIES = 38000; // set to never allows the cache array over 480
  *        (i.e. the coordinate system of the sky)
  * <li>Screen coordinates are the pixel values of the screen.
  * </ul>
- *
+ * @public
  */
 export class CysConverter {
 
     /**
      * @param {object} plot
+     * @public
      */
     constructor(plot)  {
         this.plotImageId= plot.plotImageId;
@@ -185,7 +186,7 @@ export class CysConverter {
     /**
      * Return the ImageWorkSpacePt coordinates for a given Pt
      * @param {object} pt the point to translate
-     * @param {number} [altZoomLevel], only use this parameter it you want to compute the point for a zoom level that
+     * @param {number} [altZoomLevel] only use this parameter it you want to compute the point for a zoom level that
      *                 if different than what the plotted zoom level
      * @return ImageWorkSpacePt the image workspace coordinates
      */
@@ -314,7 +315,7 @@ export class CysConverter {
     /**
      * @desc Return the ViewPortCoords coordinates given for Pt.
      * @param {Point} pt the point to translate
-     * @param {number} [altZoomLevel], only use this parameter it you want to compute the point for a zoom level that
+     * @param {number} [altZoomLevel] only use this parameter it you want to compute the point for a zoom level that
      *                 if different than what the plotted zoom level
      * @returns WorldPt the world coordinates
      */
@@ -430,7 +431,7 @@ export class CysConverter {
     /**
      * Return the screen coordinates given Pt
      * @param pt the point to translate
-     * @param {number} [altZoomLevel], only use this parameter it you want to compute the point for a zoom level that
+     * @param {number} [altZoomLevel] only use this parameter it you want to compute the point for a zoom level that
      *                 if different than what the plotted zoom level
      * @return ScreenPt the screen coordinates
      */
@@ -599,10 +600,10 @@ export const CCUtil = {
     /**
      * Convert to ImageWorkSpace Point
      * @param {WebPlot} plot - the image
+     * @param pt
      * @func  getImageWorkSpaceCoords
      * @memberof   firefly.util.image.CCUtil
      * @public
-     *
      */
     getImageWorkSpaceCoords : (plot,pt) => CysConverter.make(plot).getImageWorkSpaceCoords(pt),
     

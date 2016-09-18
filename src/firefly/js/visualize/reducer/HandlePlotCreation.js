@@ -235,7 +235,7 @@ function plotFail(state,action) {
  *
  * @param plotViewAry
  * @param action
- * @return {[]|null} new PlotViewAry or null it nothing is created.
+ * @return {Array|null} new PlotViewAry or null it nothing is created.
  */
 function preNewPlotPrep(plotViewAry,action) {
     const wpRequestAry= getRequestAry(action.payload);
@@ -271,7 +271,7 @@ function workingServerCall(state,action) {
  *
  * @param plotGroupAry
  * @param action
- * @return {[]|null} new PlotGroupAry or null if nothing is created.
+ * @return {Array|null} new PlotGroupAry or null if nothing is created.
  */
 function confirmPlotGroup(plotGroupAry,action) {
     const wpRequestAry= getRequestAry(action.payload);

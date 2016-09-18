@@ -78,12 +78,17 @@ You may include this jar into your project to build advanced astronomy web appli
 In a terminal, cd into the `firefly` directory, then run:
 
     $ gradle :firefly:war
+    
+To include the API documentation and tutorial into the war archive run:
+    
+    $ gradle :firefly:warAll    
 
 This generates firefly.war located at ./build/lib/.
 Simply drop this file into your $CATALINA_HOME/webapps/ directory to deploy it.
 $CATALINA_HOME is your Tomcat server installation directory.
 
-Goto http://localhost:8080/firefly/ to launch Firefly Viewer.
+Goto http://localhost:8080/firefly to launch Firefly Viewer.
+The documentation is accessible via http://localhost:8080/firefly/jsdoc/index.html
 
 
 ## More Docs

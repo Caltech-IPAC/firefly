@@ -1,4 +1,3 @@
-
 import Enum from 'enum';
 import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil';
@@ -22,7 +21,7 @@ const DEF_WIDTH = 1;
  * @author tatianag, Trey
  * @version $Id: FootprintObj.java,v 1.14 2012/11/30 23:17:01 roby Exp $
  *
- * @param {[[]]} footprintAry an array of arrays of WorldPt, each array represents 1 footprint
+ * @param {Array.<WorldPt[]>} footprintAry an array of arrays of WorldPt, each array represents 1 footprint
  * @param {Enum} style
  * @return {object}
  */

@@ -1,4 +1,3 @@
-
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
@@ -77,7 +76,7 @@ export function getDrawobjArea(drawObj, cc, def={}) {
  * get covered area for drawobj on line
  * @param drawObj
  * @param cc
- * @returns
+ * @returns {*}
  */
 function getDrawobjLineArea(drawObj, cc ) {
     var {pts} = drawObj;

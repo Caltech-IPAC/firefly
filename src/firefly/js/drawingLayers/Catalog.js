@@ -111,7 +111,7 @@ function highlightChange(mouseStatePayload) {
  * @param drawLayer
  * @param plotId
  * @param screenPt
- * @return {function()}
+ * @returns {function()}
  */
 function makeHighlightDeferred(drawLayer,plotId,screenPt) {
     var done= false;
@@ -177,7 +177,7 @@ function getLayerChanges(drawLayer, action) {
  * @param drawLayer
  * @param action
  * @param lastDataRet
- * @return {*}
+ * @returns {*}
  */
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 
@@ -202,7 +202,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
  * @param drawLayer
  * @param tableData
  * @param columns
- * @return {[]} build and return an array of PointDataObj for drawing.
+ * @returns {Array} build and return an array of PointDataObj for drawing.
  */
 function computeDrawLayer(drawLayer, tableData, columns) {
     return drawLayer.boxData ? computeBoxDrawLayer(drawLayer, tableData,columns) : computePointDrawLayer(drawLayer, tableData,columns);
@@ -257,7 +257,7 @@ function computeHighlightLayer(drawLayer, columns) {
  *
  * @param drawLayer
  * @param columns
- * @return {[]} return a array of PointDataObj that represents the highlighted object
+ * @returns {Object[]} return a array of PointDataObj that represents the highlighted object
  */
 function computePointHighlightLayer(drawLayer, columns) {
 

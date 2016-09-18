@@ -245,7 +245,7 @@ export function makeXYPlotParams(params) {
  * @prop {string}  [tbl_id]     table id of the table this plot is connected to
  * @prop {string}  [chartTitle] title of the chart
  * @prop {string}  col          column or expression to use for histogram, can contain multiple column names ex. log(col) or (col1-col2)/col3
- * @prop {number}  [numBins=50] number of bins' for fixed bins algorithm (default)
+ * @prop {number}  [numBins=50] number of bins for fixed bins algorithm (default)
  * @prop {number}  [falsePositiveRate] false positive rate for bayesian blocks algorithm
  * @prop {string}  [xOptions]   comma separated list of x axis options: flip,log
  * @prop {string}  [yOptions]   comma separated list of y axis options: flip,log

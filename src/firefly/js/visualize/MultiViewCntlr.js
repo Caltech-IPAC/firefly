@@ -130,7 +130,7 @@ export function dispatchAddImages(viewerId, plotIdAry) {
 
 /**
  *
- * @param {[]} imageAry  array of {plotId : string, requestAry : array of WebPlotRequest}
+ * @param {Array.<{plotId:string, requestAry:WebPlotRequest[]}>} imageAry
  *
  */
 export function dispatchAddToAutoReceiver(imageAry) {
@@ -151,7 +151,7 @@ export function dispatchChangeLayout(viewerId, layout, layoutDetail) {
 /**
  *
  * @param {string} viewerId
- * @param {[]} plotIdAry array of string of plotId
+ * @param {string[]} plotIdAry array of string of plotId
  */
 export function dispatchRemoveImages(viewerId, plotIdAry) {
     flux.process({type: REMOVE_IMAGES , payload: {viewerId, plotIdAry} });

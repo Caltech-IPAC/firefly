@@ -10,6 +10,23 @@ import {makeClientFitsHeader} from './ClientFitsHeader.js';
 
 const SPLIT_TOKEN= '--BandState--';
 
+/**
+ * @global
+ * @public
+ * @typedef {Object} BandState
+ * @prop workingFitsFileStr
+ * @prop originalFitsFileStr
+ * @prop uploadFileNameStr
+ * @prop imageIdx
+ * @prop originalImageIdx
+ * @prop plotRequestSerialize
+ * @prop rangeValuesSerialize
+ * @prop fitsHeader
+ * @prop bandVisible
+ * @prop multiImageFile
+ * @prop cubeCnt
+ * @prop cubePlaneNumber
+ */
 export class BandState {
     constructor() {
         this.workingFitsFileStr = null;
@@ -219,7 +236,7 @@ export class BandState {
 
     /**
      * make a BandState from a pure json representation
-     * @param {object} bsJson, parsed json object
+     * @param {object} bsJson parsed json object
      * @return {BandState}
      */
     static makeBandStateWithJson(bsJson) {

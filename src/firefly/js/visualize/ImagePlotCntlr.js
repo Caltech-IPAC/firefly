@@ -319,14 +319,13 @@ export function dispatchColorChange({plotId, cbarId, actionScope=ActionScope.GRO
 }
 
 /**
- *
  * Change the image stretch
  * Note - function parameter is a single object
- * @param {Object}  p
- * @param {string} p.plotId
- * @param {[{band:object,rv:object,bandVisible:boolean}]} p.stretchData
- * @param {ActionScope} p.actionScope
- * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ * @param {Object} obj - object literal with dispatcher parameters
+ * @param {string} obj.plotId
+ * @param {Array.<{band:Object,rv:Object,bandVisible:boolean}>} obj.stretchData
+ * @param {ActionScope} obj.actionScope
+ * @param {Function} obj.dispatcher only for special dispatching uses such as remote
  * @example
  * // Example of stretch 2 - 98 percent, log stretch
  * var rv= RangeValues.makeSimple(‘percent’, 2, 98, ‘log’);
@@ -425,7 +424,7 @@ export function dispatchProcessScroll({plotId,scrollPt, dispatcher= flux.process
  * @param {Object}  p
  * @param {string} p.plotId
  * @param {Point} p.centerPt
- * @param {function} p.dispatcher only for special dispatching uses such as remote
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
 export function dispatchRecenter({plotId, centerPt, dispatcher= flux.process}) {
     dispatcher({type: RECENTER, payload: {plotId, centerPt} });

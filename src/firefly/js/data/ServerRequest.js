@@ -179,7 +179,7 @@ export class ServerRequest {
      * Parameters are separated by '&'.  Keyword and value are separated
      * by '='.  If the keyword contains a '/' char, then the left side is
      * the keyword, and the right side is its description.
-     * @return
+     * @return {string}
      */
     toString() {
         var idStr= (ID_KEY+KW_VAL_SEP+this.params[ID_KEY]);

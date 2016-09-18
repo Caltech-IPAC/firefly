@@ -30,7 +30,7 @@ export function* lcManager() {
         /**
          * This is the current state of the application.  Depending on what action is yielded, modify
          * this object accordingly then update it via dispatch.
-         * @type {LayoutInfo} layoutInfo
+         * @type {LayoutInfo}
          * @prop {boolean}  layoutInfo.showForm    show form panel
          * @prop {boolean}  layoutInfo.showTables  show tables panel
          * @prop {boolean}  layoutInfo.showCharts  show charts panel

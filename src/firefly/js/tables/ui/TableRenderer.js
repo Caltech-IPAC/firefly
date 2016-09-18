@@ -188,6 +188,7 @@ export class TextCell extends React.Component {
 
 
 /**
+ * @param {{rowIndex,data,colIdx}}
  * Image cell renderer.  It will use the cell value as the image source.
  */
 export const ImageCell = ({rowIndex, data, colIdx}) => (
@@ -196,9 +197,10 @@ export const ImageCell = ({rowIndex, data, colIdx}) => (
 
 /**
  * creates a link cell renderer using the cell data as href.
- * @param value  display this value for every cell.
+ * @param obj
+ * @param obj.hrefColIdx
+ * @param obj.value  display this value for every cell.
  * @returns {Function}
- * @param hrefColIdx
  */
 export const createLinkCell = ({hrefColIdx, value}) => {
 
@@ -228,7 +230,8 @@ export const createLinkCell = ({hrefColIdx, value}) => {
  * @param size
  * @param validator
  * @param onChange
- * @returns {function()}
+ * @param style
+ * @returns {Function}
  */
 export const createInputCell = (tooltips, size = 10, validator, onChange, style) => {
     const changeHandler = (rowIndex, data, colIdx, v) => {

@@ -300,7 +300,7 @@ export function plotInActiveGroup(visRoot, plotId) {
 /**
  * make an array of plot starts from the primary plot and all its image overlays
  * @param pv
- * @return {*[]}
+ * @return {Array}
  */
 export function getPlotStateAry(pv) {
     var overlayStates= pv.overlayPlotViews.map( (opv) => opv.plot.plotState);
@@ -424,10 +424,10 @@ export function getOnePvOrGroup(plotViewAry, plotId,plotGroup) {
 /**
  * First fine the PlotView with the plotId, then clone the PlotView with the changes specified in the object.
  * Then return a new PlotView array with the changes.
- * @param {PlotView[]|VisRoot}ref visRoot or plotViewAry
+ * @param {PlotView[]|VisRoot} ref visRoot or plotViewAry
  * @param {string} plotId
- * @param {{}} obj fields to replace
- * @return {[]}
+ * @param {Object} obj fields to replace
+ * @return {Array}
  */
 export function clonePvAry(ref, plotId, obj) {
     var plotViewAry= getPlotViewAry(ref);
@@ -439,8 +439,8 @@ export function clonePvAry(ref, plotId, obj) {
 /**
  * make a new copy of the plotview array with the passed plotView replacing the old one
  * @param ref visRoot or plotViewAry
- * @param {obj} plotView
- * @return {[]}
+ * @param {Object} plotView
+ * @return {Array}
  */
 export function clonePvAryWithPv(ref, plotView) {
     var plotViewAry= getPlotViewAry(ref);

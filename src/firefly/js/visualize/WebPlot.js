@@ -109,6 +109,8 @@ export const PlotAttribute= {
 
 
 /**
+ * @global
+ * @public
  * @typedef {Object} WebPlot
  *
  * This class contains plot information.
@@ -116,11 +118,11 @@ export const PlotAttribute= {
  * Some include a Image coordinate system, a world coordinate system, and a screen
  * coordinate system.
  *
- * @prop {String} plotId, immutable
- * @prop {String} plotImageId, immutable
- * @prop {Object} serverImage, immutable
- * @prop {String} title the title
- * @prop {PlotState} the plot state, immutable
+ * @prop {String} plotId - immutable
+ * @prop {String} plotImageId - immutable
+ * @prop {Object} serverImage - immutable
+ * @prop {String} title - the title
+ * @prop {PlotState} plotsState - the plot state, immutable
  *
  */
 export const WebPlot= {
@@ -133,7 +135,7 @@ export const WebPlot= {
      * @param asOverlay
      * @return {WebPlot}
      */
-    makeWebPlotData(plotId, wpInit, attributes= {}, asOverlay= false, ) {
+    makeWebPlotData(plotId, wpInit, attributes= {}, asOverlay= false) {
 
         const projection= makeProjection(wpInit.projectionJson);
         var plotState= PlotState.makePlotStateWithJson(wpInit.plotState);
@@ -213,7 +215,7 @@ export const WebPlot= {
 
 
 /**
- *
+ * @param plot
  * @return {boolean}
  */
 export function isBlankImage(plot) {

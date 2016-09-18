@@ -54,7 +54,7 @@ const computeScreenDistance= function (x1, y1, x2, y2) {
  * compute the distance on the sky between two world points
  * @param p1 WorldPt
  * @param p2 WorldPt
- * @return
+ * @return {number}
  */
 const computeDistance= function(p1, p2) {
     var lon1Radius = p1.getLon() * DtoR;

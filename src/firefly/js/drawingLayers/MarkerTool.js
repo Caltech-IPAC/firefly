@@ -212,7 +212,8 @@ export function markerToolMoveActionCreator(rawAction) {
 
 /**
  * create drawing layer for a new marker
- * @return {Function}
+ * @param initPayload
+ * @returns {Function}
  */
 function creator(initPayload) {
 
@@ -327,7 +328,7 @@ function updateMarkerText(text, textLoc, markerDrawObj) {
 /**
  * make rectangle with the same width and height
  * @param size
- * @returns {*[]}
+ * @returns {Array}
  */
 function evenSize(size = 0) {
     var s = (isArray(size) && size.length > 1) ? Math.min(size[0], size[1]): size;
@@ -344,8 +345,8 @@ function evenSize(size = 0) {
  * @param wpt    marker location world coordinate
  * @param plotId
  * @param doneStatus
- * @param drawLayerId
  * @param timer  milliseconds
+ * @param drawLayerId
  * @param isHandle
  * @param refPt
  * @param move

@@ -6,12 +6,12 @@ The main Firefly components are:
 
  - [FITS Visualizer](#fits-visualization)
  - [Table](#table-visualization)
- - [XY Plotter](#xy-plot-visualization)
+ - [Charts](#xy-plot-and-histogram-visualization)
    
 These components can be setup to share the same data model.  Therefore you can do the following combinations:
  
  - [Connect FITS viewer coverage image to a table](#connecting-coverage-image-to-table)
- - [Connect XY plot to a table](#connecting-xy-viewers-to-table). A Table with any data and a XY Plot showing plots from any two columns of that table.
+ - [Connect XY plot to a table](#connecting-charts-to-table). A Table with any data and a XY Plot showing plots from any two columns of that table.
  - Tri-view: Table, FITS coverage, and XY Plot together showing the same data.
  
 Lower level API is built around the following modules:
@@ -67,7 +67,7 @@ This is all best explained with a code example. This examples creates a div with
  
 The interface to remotely communicate to the firefly viewer:
 
- - `firefly.getViewer()` - gives a handle to launch the firefly tools in another browser window or tab
+`firefly.getViewer()` - gives a handle to launch the firefly tools in another browser window or tab
  
 | Parameter  | type | Description |
 | ---------- | ---- | ----------- |
@@ -104,9 +104,11 @@ Then React re-renders the parts that are different. Therefore, application goes 
 
 ![diagram](https://cask.scotch.io/2014/10/V70cSEC.png) 
 
-Being able to dispatch and listen to Firefly actions makes it possible to write new code, which could control or interact with Firefly widgets.
+Being able to dispatch Firefly actions and listen to them makes it possible to write new code, which could control Firefly widgets or interact with them. 
+
+An external script would trigger UI change by calling an action dispatcher and react to UI action by adding a listener to this action.
  
-#####**firefly.util.addActionListener(actionType,callBack)**
+##### **firefly.util.addActionListener(actionType,callBack)**
 
 `firefly.action.type` object is a handle to Firefly action types. Action types are its properties.
 `firefly.actions` object contains action dispatchers.
@@ -210,7 +212,7 @@ Deprecated `ImageViewer` methods:
 
 ### Utility methods for FITS visualization 
 
-#####**firefly.util.image.getPrimePlot** method
+##### **firefly.util.image.getPrimePlot** method
 
 `firefly.util.image.getPrimePlot(plotId)` - get the plot object by its plot id
 
@@ -231,7 +233,7 @@ function getWorkingFitsFile(pt) {
 }
 ```
 
-#####**firefly.util.image.CCUtil**
+##### **firefly.util.image.CCUtil**
 
 `firefly.util.image.CCUtil` - coordinate conversion utilities
 
@@ -253,7 +255,7 @@ function getImagePt(pt) {
 }
 ```
 
-#####**firefly.util.image.serializeSimpleRangeValues** method
+##### **firefly.util.image.serializeSimpleRangeValues** method
 
 `firefly.util.image.serializeSimpleRangeValues(stretchType,lowerValue,upperValue,algorithm)` - serialize a stretch request into a string, for use with the "RangeValues" parameter
 
@@ -349,7 +351,7 @@ callback function takes one parameter,  an object literal, the fields vary depen
 
 ##### **firefly.action.dispatchCreateRegionLayer** method
 
-`firefly.action.dispatchCreateRegionLayer(regionId, layerTitle, fileOnServer ='', regionAry=[], plotId = [])` - overlay region data on an image plots with the given ids
+`firefly.action.dispatchCreateRegionLayer(regionId, layerTitle, fileOnServer ='', regionAry=[], plotId = [], selectMode)` - overlay region data on an image plots with the given ids
 
 | Parameter  | Type | Description |
 | ---------- | ---- | ----------- |
@@ -358,6 +360,7 @@ callback function takes one parameter,  an object literal, the fields vary depen
 | fileOnServer | string | region file on the server |
 | regionAry | array | an array of strings, each describing a ds9 region |
 | plotId | string or array | a plot id or an array of plot ids |
+| selectMode | object | rendering features for the selected region |
 
 Note: if no plotId is given, the region layer is created on all plots.
 
@@ -376,12 +379,17 @@ Note: if no plotId is given, the region layer is removed from all plots.
 
 ##### **firefly.action.dispatchAddRegionEntry** method
 
-`firefly.action.dispatchAddRegionEntry(regionId, regionChanges)` - add region data to the given region layer
+`firefly.action.dispatchAddRegionEntry(regionId, regionChanges, plotId=[], layerTitle='', selectMode = {})` - add region data to the given region layer
 
 | Parameter  | Type | Description |
 | ---------- | ---- | ----------- |
 | regionId | string | region layer id |
 | regionChanges | array | an array of strings, each describing a ds9 region |
+
+Other parameters are optional drawing layer creation parameters, similar to those of `firefly.action.dispatchCreateRegionLayer`.
+It is possible to create region layer by adding the first region to it.
+
+
 
 ##### **firefly.action.dispatchRemoveRegionEntry** method
 
@@ -391,9 +399,36 @@ Note: if no plotId is given, the region layer is removed from all plots.
 | ---------- | ---- | ----------- |
 | regionId | string | region layer id |
 | regionChanges | array | an array of strings, each describing a ds9 region |
+
+When the last region of the drawing layer is removed, the drawing layer is automatically deleted.
  
+ 
+##### **firefly.action.dispatchSelectRegion** method
+
+`firefly.action.dispatchSelectRegion(drawLayerId, selectedRegion)` - select region from a drawing layer
+
+| Parameter  | Type | Description |
+| ---------- | ---- | ----------- |
+| drawLayerId | string | region layer id |
+| selectedRegion | string | string describing ds9 region |
+
+
+##### **firefly.util.image.getSelectedRegion** method
+
+`firefly.util.image.getSelectedRegion(drawLayerId)` - get ds9 string for the selected region in the given drawing layer. The returned string will always have coordinate system (image, physical, j2000, ...) in the front.
+
+| Parameter  | Type | Description |
+| ---------- | ---- | ----------- |
+| drawLayerId | string | region layer id |
+
 *Example:*                               
 ```js
+function onRegionSelect(action) {
+    if (action.payload.selectedRegion !== null) {
+        const regionStr = firefly.util.image.getSelectedRegion(action.payload.drawLayerId);
+        console.log('Selected region string: '+regionStr);
+    }
+}
 function onFireflyLoaded() {
     const req = {
         plotId: 'image1',
@@ -401,14 +436,14 @@ function onFireflyLoaded() {
         Title: 'WISE m51'
     };
     firefly.showImage('image1_div', req);
-    setTimeout(function() {
-        // parameters to dispatchCreateRegionLayer: regionId, layerTitle, fileOnServer ='', regionAry=[], plotId = []
-        const regionAry = [
-            'image; box 250 250 100 80 0 # color=red',
-            'image; box 250 250 50 40 0 # color=red'
-        ];
-        firefly.action.dispatchCreateRegionLayer('region1', 'Region Layer 1', null, regionAry, ['image1', 'image2']);
-    }, 3000);
+    // parameters to dispatchCreateRegionLayer: regionId, layerTitle, fileOnServer ='', regionAry=[], plotId = []
+    const regionAry = [
+        'image; box 250 250 100 80 0 # color=red',
+        'image; box 250 250 50 40 0 # color=red'
+    ];
+    firefly.action.dispatchCreateRegionLayer('region1', 'Region Layer 1', null, regionAry, ['image1', 'image2']);
+    // add a listener to detect region selection changes
+    firefly.util.addActionListener(firefly.action.type.REGION_SELECT, onRegionSelect);
 }
 ```
 
@@ -481,9 +516,10 @@ The Table tools currently supports the following file formats:
 
 
 
-### XY Plot Visualization
+### XY Plot and Histogram Visualization
 
 - `firefly.showXYPlot(targetDiv, parameters)`
+- `firefly.showHistogram(targetDiv, parameters)`
 
 | Parameter  | Type | Description |
 | ---------- | ---- | ----------- |
@@ -491,14 +527,34 @@ The Table tools currently supports the following file formats:
 | parameters  | object | XY plot parameters |
 
 
-Parameters object literal can contain the following values
+XYPlot parameters object literal can contain the following values.
 
 | Parameter | Description |
 | ------------ | ------------- |
-| source | required; location of the ipac table.  url or file path.|
+| source | location of the ipac table: url or file path.|
 | xCol | column or expression to use for x values, can contain multiple column names ex. log(col) or (col1-col2)/col3 |
 | yCol | column or expression to use for y values, can contain multiple column names ex. log(col) or (col1-col2)/col3 |
+| xyRatio | optional; aspect ratio between 1 and 10, if not defined the chart will fill all available space |
+| stretch | 'fit' to fit plot into available space or 'fill' to fill the available width; applied when xyPlotRatio is defined |
+| xLabel | label to use with x axis |
+| yLabel | label to use with y axis |
+| xUnit | unit for x axis |
+| yUnit | unit for y axis |
+| xOptions | comma separated list of x axis options: grid,flip,log |
+| yOptions | comma separated list of y axis options: grid,flip,log |
 
+
+Histogram parameters object literal can contain the following values.
+
+| Parameter | Description |
+| ------------ | ------------- |
+| source | location of the ipac table: url or file path.|
+| col | column or expression to use for histogram, can contain multiple column names ex. log(col) or (col1-col2)/col3 |
+| xyRatio | optional; aspect ratio between 1 and 10, if not defined the chart will fill all available space |
+| numBins | number of bins for fixed bins algorithm (default) |
+| falsePositiveRate | false positive rate for bayesian blocks algorithm |
+| xOptions | comma separated list of x axis options: flip,log |
+| yOptions | comma separated list of y axis options: flip,log |
 
 *Example:*
 ```js
@@ -510,7 +566,7 @@ chartParams = {
 firefly.showXYPlot('chart_div', chartParams);
 ```
 
-XY Plot supports the same table formats as Table does:
+XY Plot and Histogram support the same table formats as Table:
 
  - IPAC Table file format
  - CSV - first row should be column headers
@@ -566,30 +622,26 @@ firefly.showTable('table_div', tblReq);
 firefly.showCoverage('coverage_div', {gridOn:true})
 ``` 
 
+### Connecting Charts to table
 
+`firefly.showXYPlot(targetDiv, parameters)` - add an XY Plot to a div
+`firefly.showHistogram(targetDiv, parameters)` - add a Histogram to a div
 
-### Connecting XY Viewers to table
-
-`firefly.addXYPlot(targetDiv, parameters)` - add an XY Plot to a div
-
+Multiple charts can be connected to the same table.
 
 | parameters | type        |
 | ---------- | ----------- |
 |targetDiv   | string, the div to put the XY plot into |
 |parameters  | object literal |
 
+The most important parameters, relevant to all charts, connected to a table are:
 
-
-Most important parameters are:
-
- - **`xCol`**:     The name of x column, can be an expression based on multiple columns. 
-                     If no column is specified, the first numeric column is used as an x column.
- - **`yCol`**:     The name of y column, can be an expression based on multiple columns. 
-                      If no column is specified, the first numeric non-x column is used as a y column.
  - **`tbl_id`**:   Table ID, the string that connects this XY Plot to the table data.
- - **`tbl_group`**: Table group, the plot will reflect the data in the active table of the group.                    
+ - **`tbl_group`**: Table group, when specified instead of `tbl_id`, the plot will reflect the data in the active table of the group.                    
                       
 If both `tbl_id` and `tbl_group` are missing, the XY viewer will be connected to the active table in the main group.
+
+Please, see `firefly.showXYPlot` and `firefly.showHistogram` for the list of other parameters.
 
 *Example:*
 ```js
@@ -599,8 +651,11 @@ tblReq = firefly.util.table.makeIrsaCatalogRequest('wise catalog', 'WISE', 'wise
         SearchMethod: 'Cone',
         radius: 300
     });
-firefly.addXYPlot('xyplot_div', {tbl_id: tblReq.tbl_id, xCol: 'w1mpro+w4mpro', yCol: 'w2mpro'});
+firefly.showXYPlot('xyplot_div', {tbl_id: tblReq.tbl_id, xCol: 'w1mpro+w4mpro', yCol: 'w2mpro'});
+firefly.showHistogram('histogram1_div', {tbl_id: tblReq.tbl_id, col: 'w1mpro+w4mpro'});
+firefly.showHistogram('histogram2_div', {tbl_id: tblReq.tbl_id, col: 'w2mpro'});
 ```
+
 
 ### More Code Examples
 

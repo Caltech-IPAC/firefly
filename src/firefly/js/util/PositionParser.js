@@ -34,7 +34,7 @@ var makePositionParser = function(helper) {
      * parse the given string into the resolver.
      * Returns true if the string is a valid position.
      * @param s
-     * @return
+     * @return {*}
      */
     retPP.parse= function(s) {
 
@@ -93,7 +93,7 @@ var makePositionParser = function(helper) {
 
     /**
      * returns CoordinateSys.UNDEFINED if it's a bad coordinate system.
-     * @return  CoordinateSys object
+     * @return {CoordinateSys} - CoordinateSys object
      */
     retPP.getCoordSys= function() {
         return _coordSys === null ? CoordinateSys.UNDEFINED : _coordSys;

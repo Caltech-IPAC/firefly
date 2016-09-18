@@ -27,6 +27,23 @@ const MultiImageAction = new Enum([ 'GUESS',      // Default, guess between load
                                     'USE_ALL' // only valid in non three color, make a array of WebPlots
                                     ]);
 
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} PlotState
+ * @prop {Array.<BandState>} bandStateAry
+ * @prop multiImage
+ * @prop rotationType
+ * @prop ops
+ * @prop ctxStr
+ * @prop newPlot
+ * @prop zoomLevel
+ * @prop threeColor
+ * @prop colorTableId
+ * @prop flippedY
+ * @prop rotationAngle
+ */
 export class PlotState {
 
     /**
@@ -82,6 +99,7 @@ export class PlotState {
     }
 
     /**
+     * @param band
      * @return {boolean}
      */
     isBandUsed(band) {
@@ -216,8 +234,9 @@ export class PlotState {
      * @param {Band} band
      */
     setRangeValues(rangeValues, band) { this.get(band).setRangeValues(rangeValues); }
+
     /**
-     *
+     * @param band
      * @return {RangeValues}
      */
     getRangeValues(band) { return this.get(band || this.firstBand()).getRangeValues(); }
@@ -255,11 +274,13 @@ export class PlotState {
 
 
     /**
+     * @param band
      * @return {string}
      */
     getWorkingFitsFileStr(band) { return band ? this.get(band).getWorkingFitsFileStr() : null; }
 
     /**
+     * @param band
      * @return {string}
      */
     getOriginalFitsFileStr(band) { return band ? this.get(band).getOriginalFitsFileStr() : null; }
@@ -353,7 +374,6 @@ export class PlotState {
 
         return state;
     }
-
 
     /**
      * convert his PlotState to something can be used with JSON.stringify

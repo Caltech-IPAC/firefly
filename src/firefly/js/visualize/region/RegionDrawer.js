@@ -378,7 +378,7 @@ function drawOneBox(w, h, a, wp, options, propChkAry, isOnWorld) {
 /**
  * make DrawObj for one box with angle
  * @param regionObj
- * @returns {*[]}
+ * @returns {Object[]}
  */
 
 function drawRegionBox(regionObj) {
@@ -529,7 +529,7 @@ function drawOneEllipse(r1, r2, a, wp, options, propChkAry, isOnWorld) {
 /**
  * make DrawObj for one ellipse with angle
  * @param regionObj
- * @returns {*[]}
+ * @returns {Object[]}
  */
 
 function drawRegionEllipse(regionObj) {
@@ -584,7 +584,7 @@ function drawRegionEllipseAnnulus(regionObj) {
 /**
  * make DrawObj for region point
  * @param regionObj
- * @returns {*[]}
+ * @returns {Object[]}
  */
 function drawRegionPoint(regionObj) {
     var pObj = makePoint(regionObj.wpAry[0]);
@@ -601,7 +601,7 @@ function drawRegionPoint(regionObj) {
 /**
  * make DrawObj for region text
  * @param regionObj
- * @returns {*[]}
+ * @returns {Object[]}
  */
 function drawRegionText(regionObj) {
     var text = get(regionObj, 'options.text');

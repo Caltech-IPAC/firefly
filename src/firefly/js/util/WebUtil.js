@@ -53,7 +53,7 @@ export const encodeUrl= function(url, params) {
  * convert a params object to an encoded url fragment.
  * this function supports nested object.  if the value of a param is an object
  * or an array of {name, value}, it will encode the child, and then encode the parent as well.
- * @param params key/value object or an array of {name,value}.
+ * @param {Object|Object[]} params key/value object or an array of {name,value}.
  * @returns {*}
  */
 export function encodeParams(params) {
