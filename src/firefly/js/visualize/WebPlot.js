@@ -12,6 +12,7 @@ import PlotState from './PlotState.js';
 
 
 
+
 export const PlotAttribute= {
 
 
@@ -107,33 +108,115 @@ export const PlotAttribute= {
 };
 
 
+/**
+ * @global
+ * @public
+ * @typedef {Object} Dimension
+ *
+ * @prop {number} width
+ * @prop {number} height
+ *
+ */
+
+
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} ViewPort
+ * @summary Make a viewport object
+ * @prop {number} x  - x location that the viewport begins
+ * @prop {number} y - y location that the viewport begins
+ * @prop {Dimension} dim - dimensions of the viewport
+ */
 
 /**
  * @global
  * @public
  * @typedef {Object} WebPlot
  *
- * This class contains plot information.
+ * @summary This class contains plot information.
  * Publicly this class operations in many coordinate system.
  * Some include a Image coordinate system, a world coordinate system, and a screen
  * coordinate system.
  *
- * @prop {String} plotId - immutable
- * @prop {String} plotImageId - immutable
- * @prop {Object} serverImage - immutable
+ * @prop {String} plotId - plot id, id of the plotView, immutable
+ * @prop {String} plotImageId,  - plot image id, id of this WebPlot , immutable
+ * @prop {Object} serverImage, immutable
  * @prop {String} title - the title
- * @prop {PlotState} plotsState - the plot state, immutable
+ * @prop {PlotState} plotState - the plot state, immutable
+ * @prop {number} dataWidth - the width of the image data
+ * @prop {number} dataHeight - the height of the image data
+ * @prop {number} zoomFactor - the zoom factor
+ * @prop {string} title - title of the plot
+ * @prop {object} webFitsData -  needs documentation
+ * @prop {ImageTileData} serverImages -  object contains the image tile information (todo: needs typedef)
+ * @prop {ViewPort} viewPort -  needs documentation
+ * @prop {CoordinateSys} imageCoordSys - the image coordinate system
+ * @prop {Dimension} screenSize - width/height in screen pixels
+ * @prop {Projection} projection - projection routines for this projections
+ *
+ * @see PlotView
+ */
+
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} ThumbnailImage
+ * @summary the thumbnail information
+ *
+ * @prop {number} width - width of thumbnail
+ * @prop {number} height - height of thumbnail
+ * @prop {string} url - file key to use in the service to retrieve this tile
+ *
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} ImageTile
+ * @summary a single image tile
+ *
+ * @prop {number} width - width of this tile
+ * @prop {number} height - height of this tile
+ * @prop {number} index - index of this tile
+ * @prop {string} url - file key to use in the service to retrieve this tile
+ * @prop {number} xoff - pixel offset of this tile
+ * @prop {number} yoff - pixel offset of this tile
+ *
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} ImageTileData
+ * @summary The information about all the image tiles
+ *
+ * @prop {Array.<ImageTile>} images
+ * @prop {number} screenWidth - width of all the tiles
+ * @prop {number} screenHeight - height of all the tiles
+ * @prop {String} templateName - template name (not used)
+ * @prop {number} zfact - zoom factor
+ * @prop {ThumbnailImage} thumbnailImage - information about the thumbnail
+ *
+ */
+
+
+
+
+/**
  *
  */
 export const WebPlot= {
 
     /**
      *
-     * @param plotId
+     * @param {string} plotId
      * @param wpInit init data returned from server
-     * @param attributes any attributes to initialize
-     * @param asOverlay
-     * @return {WebPlot}
+     * @param {object} attributes any attributes to initialize
+     * @param {boolean} asOverlay
+     * @return {WebPlot} the plot
      */
     makeWebPlotData(plotId, wpInit, attributes= {}, asOverlay= false) {
 
@@ -175,9 +258,9 @@ export const WebPlot= {
 
     /**
      *
-     * @param wpData
-     * @param {{dim: {width: *, height: *}, x: *, y: *}} viewPort
-     * @return {object} new webplot data
+     * @param {WebPlot} wpData
+     * @param {ViewPort} viewPort
+     * @return {WebPlot} new webplot data
      */
     setWPViewPort(wpData,viewPort) {
         return Object.assign({},wpData,{viewPort});
@@ -186,7 +269,7 @@ export const WebPlot= {
 
     /**
      *
-     * @param wpData
+     * @param {WebPlot} wpData
      * @param {object} stateJson
      * @param {object} serverImages
      * @return {*}
@@ -207,7 +290,7 @@ export const WebPlot= {
      * @param {number} y
      * @param {number} width
      * @param {number} height
-     * @return {{dim: {width: number, height: number}, x: number, y: number}}
+     * @return {ViewPort} the viewport
      */
     makeViewPort(x,y,width,height) { return  {dim:{width,height},x,y}; }
 
@@ -215,7 +298,8 @@ export const WebPlot= {
 
 
 /**
- * @param plot
+ * Check if the plot is is a blank image
+ * @param {WebPlot} plot - the plot
  * @return {boolean}
  */
 export function isBlankImage(plot) {
@@ -226,9 +310,9 @@ export function isBlankImage(plot) {
 
 /**
  *
- * @param wpData
+ * @param {WebPlot} wpData
  * @param {number} zoomFactor
- * @return {*}
+ * @return {WebPlot}
  */
 export function clonePlotWithZoom(wpData,zoomFactor) {
     var screenSize= {width:wpData.dataWidth*zoomFactor, height:wpData.dataHeight*zoomFactor};
@@ -248,14 +332,14 @@ export function getNonRotatableReason(plot) {
     var p= plot.projetion;
     var reason= plot.attributes[PlotAttribute.DISABLE_ROTATE_REASON];
     if (reason) {
-        return isString(reason) ? reason : `FITS image can\'t be rotated`;
+        return isString(reason) ? reason : `FITS image can't be rotated`; // eslint-disable-line
     }
     else {
         if (p.isWrappingProjection()) {
             return `FITS image with projection of type ${p.getProjectionName()} can't be rotated`;
         }
         else {
-            return `FITS image can't be rotated`;
+            return `FITS image can't be rotated`;// eslint-disable-line
         }
     }
 }

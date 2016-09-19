@@ -8,6 +8,9 @@
  * @prop {Object.<string, TableModel>}  data    repository for table model; keyed by tbl_id
  * @prop {Object.<string, TableGroup>}  results repository for table group information; keyed by tbl_group name
  * @prop {Object.<string, Object>}      ui      repository for table UI state; keyed by tbl_ui_id
+ *
+ * @global
+ * @public
  */
 
 
@@ -24,6 +27,9 @@
  * @prop {object}   selectInfo  selection information.  use SelectInfo.newInstance take advantage of helper's functions.
  * @prop {boolean}  isFetching  true if data is being fetched and not ready for display.
  * @prop {string}   error       error message if the request fail to create a table.
+ *
+ * @global
+ * @public
  */
 
 /**
@@ -47,6 +53,9 @@
  * @prop {string} visibility    show, hide, or hidden.  hidden columns are not viewable by users.
  * @prop {string} sortByCols    for multi-columns sorting.  column names separated by comma(',').
  * @prop {string} related       highlight related rows based on this column's value.
+ *
+ * @global
+ * @public
  */
 
 /**
@@ -57,6 +66,9 @@
  * @prop {string} tblFilePath   path of the source of this table on the server-side.
  * @prop {string} isFullyLoaded 'true' when table is completely loaded on the server-side.
  * @prop {string} source    path of the original table source before any operations were performed. ie sort, filter, etc.  this may not be fully supported.
+ *
+ * @global
+ * @public
  */
 
 /**
@@ -81,6 +93,9 @@
  * @prop {string}   name     unique name of this group
  * @prop {string}   active   tbl_id of the active table in this group
  * @prop {Object.<string, TableGroupItem>}   tables     a map of TableGroupItem(s) keyed by tbl_id
+ *
+ * @global
+ * @public
  */
 
 /**
@@ -92,5 +107,8 @@
  * @prop {string}   title      title or label of the table
  * @prop {boolean}  removable  true if this item can be removed from group.
  * @prop {Object.<string, *>}   options   table options, ie.  selectable, expandable
+ *
+ * @global
+ * @public
  */
 

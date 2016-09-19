@@ -57,9 +57,13 @@ function initState() {
      * @prop {boolean} reservedContainer:true,
      * @prop {object} customData: {}
      *
+     * @global
+     * @public
      */
     /**
      * @typedef {Viewer[]} MultiViewerRoot
+     * @global
+     * @public
      */
     return [
         {

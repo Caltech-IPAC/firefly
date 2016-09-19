@@ -21,7 +21,11 @@ export const levels= [ .03125, .0625, .125,.25,.5, .75, 1,2,3, 4,5, 6,
 
 const zoomMax= levels[levels.length-1];
 
-/** 'UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV' */
+/**
+ * can be 'UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV'
+ * @public
+ * @global
+ */
 export const UserZoomTypes= new Enum(['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV'], { ignoreCase: true });
 
 const ZOOM_WAIT_MS= 2000; // 2 seconds

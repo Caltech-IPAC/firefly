@@ -47,8 +47,6 @@ export class BandState {
         this.rangeValues   = null;
     }
 
-    setImageIdx(idx) { this.imageIdx= idx; }
-
     /**
      *
      * @return {number}
@@ -61,10 +59,11 @@ export class BandState {
      * @return {boolean}
      */
     isMultiImageFile() { return this.multiImageFile; }
-    setMultiImageFile(multiImageFile) { this.multiImageFile = multiImageFile; }
 
+    /**
+     *
+     */
     getCubePlaneNumber() { return this.cubePlaneNumber; }
-    setCubePlaneNumber(cubePlaneNumber) { this.cubePlaneNumber = cubePlaneNumber; }
 
     /**
      *
@@ -74,30 +73,9 @@ export class BandState {
 
     /**
      *
-     * @param cubeCnt
-     */
-    setCubeCnt(cubeCnt) { this.cubeCnt = cubeCnt; }
-
-    /**
-     *
-     * @param idx
-     */
-    setOriginalImageIdx(idx) { this.originalImageIdx= idx; }
-    /**
-     *
      * @return {number|*}
      */
     getOriginalImageIdx() { return this.originalImageIdx; }
-
-    /**
-     * this method will make a copy of WebPlotRequest. Any changes to the WebPlotRequest object
-     * after the set will not be reflected here.
-     * @param {WebPlotRequest} plotRequests copy this request
-     */
-    setWebPlotRequest(plotRequests) {
-        this.plotRequestTmp = null;
-        this.plotRequestSerialize = (plotRequests) ? null : plotRequests.toString();
-    }
 
     /**
      * get a copy of the WebPlotRequest for this BandState.  Any changes to the object will not be reflected in
@@ -113,12 +91,6 @@ export class BandState {
 
     /**
      *
-     * @param {boolean} visible
-     */
-    setBandVisible(visible) { this.bandVisible= visible; }
-
-    /**
-     *
      * @return {boolean}
      */
     isBandVisible() { return this.bandVisible; }
@@ -126,30 +98,13 @@ export class BandState {
 
     /**
      *
-     * @param {RangeValues} rangeValues
-     */
-    setRangeValues(rangeValues) {
-        this.rangeValues= null;
-        this.rangeValuesSerialize= (rangeValues==null) ? null : rangeValues.toJSON();
-    }
-
-    /**
-     *
      * @return {RangeValues}
      */
     getRangeValues() {
-        if (this.rangeValues==null) this.rangeValues= RangeValues.parse(this.rangeValuesSerialize);
+        if (!this.rangeValues) this.rangeValues= RangeValues.parse(this.rangeValuesSerialize);
         return this.rangeValues;
     }
 
-    /**
-     * this method will make a copy of ClientFitsHeader. Any changes to the ClientFitsHeader object
-     * after the set will not be reflected here.
-     * @param {ClientFitsHeader} header
-     */
-    setFitsHeader(header) {
-        this.fitsHeader= header;
-    }
 
    /**
      *
@@ -169,11 +124,6 @@ export class BandState {
      */
     getWorkingFitsFileStr() { return this.workingFitsFileStr; }
 
-    /**
-     *
-     * @param {string} fileStr
-     */
-    setWorkingFitsFileStr(fileStr) { this.workingFitsFileStr = fileStr; }
 
     /**
      *
@@ -181,11 +131,6 @@ export class BandState {
      */
     getOriginalFitsFileStr() { return this.originalFitsFileStr; }
 
-    /**
-     *
-     * @param {string} fileStr
-     */
-    setOriginalFitsFileStr(fileStr) {this.originalFitsFileStr= fileStr; }
 
 
     /**
@@ -193,13 +138,6 @@ export class BandState {
      * @return {boolean}
      */
     isFileOriginal() { return this.originalFitsFileStr===this.workingFitsFileStr; }
-
-
-    /**
-     *
-     * @param {string} uploadFile
-     */
-    setUploadedFileName(uploadFile) { this.uploadFileNameStr= uploadFile; }
 
     /**
      *
