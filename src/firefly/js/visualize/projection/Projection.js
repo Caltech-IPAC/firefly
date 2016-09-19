@@ -166,6 +166,21 @@ function getImageCoordsInternal(ra, dec, header) {
 
 export class Projection {
 
+	/**
+	 * @summary Contains data about the state of a plot.
+	 * This object is never created directly if is always instantiated from the json sent from the server.
+	 * @param {Object} header data from the fits file
+	 * @param {CoordinateSys} coordSys
+	 * Note - constructor should never be call directly
+	 *
+     *
+	 * @prop {object} header
+	 * @prop {number} scale1
+	 * @prop {number} scale2
+	 * @prop {number} pixelScaleArcSec
+	 * @prop {CoordinateSys} coordSys
+	 * @public
+	 */
     constructor(header, coordSys)  {
         this.header= header;
         this.scale1= 1/header.cdelt1;
@@ -175,32 +190,80 @@ export class Projection {
 		// console.log('Projection: '+translateProjectionName(header.maptype));
     }
 
-    getPixelWidthDegree() { return Math.abs(this.header.cdelt1); }
+	/**
+	 *
+	 * @return {number}
+	 * @public
+	 */
+	getPixelWidthDegree() { return Math.abs(this.header.cdelt1); }
+
+	/**
+	 *
+	 * @return {number}
+	 * @public
+	 */
     getPixelHeightDegree() { return Math.abs(this.header.cdelt2); }
+
+	/**
+	 * @summary the scale of an image pixel in arcsec
+	 * @return {number}
+	 * @public
+	 */
 	getPixelScaleArcSec() { return this.pixelScaleArcSec; }
 
     /**
-     * Return a point the represents the passed point with a distance in
+     * @summary Return a point the represents the passed point with a distance in
      * World coordinates added to it.
      * @param pt the x and y coordinate in image coordinates
      * @param x the x distance away from the point in world coordinates
      * @param y the y distance away from the point in world coordinates
      * @return ImagePt the new point
+     * @public
      */
     getDistanceCoords(pt, x, y) {
         return makeImagePt ( pt.x+(x * this.scale1), pt.y+(y * this.scale2) );
     }
 
+	/**
+	 * @summary convert from a world point to a image point
+	 * @param ra
+	 * @param dec
+	 * @return {ImagePt}
+	 * @public
+	 */
     getImageCoords(ra, dec) { return getImageCoordsInternal(ra, dec, this.header, false); }
 
-    getWorldCoords( x, y) { return getWorldCoordsInternal(x, y, this.header, this.coordSys, false); }
+	/**
+	 * @summary convert from a image point to a world point
+	 * @param x
+	 * @param y
+	 * @return {WorldPt}
+	 * @public
+	 */
+	getWorldCoords( x, y) { return getWorldCoordsInternal(x, y, this.header, this.coordSys, false); }
 
+	/**
+	 * @return {boolean} true, if this projection is implemented
+	 * @public
+	 */
 	isImplemented() { isImplemented(this.header); }
 
+	/**
+	 * @return {boolean} true, if this projection is specified
+	 * @public
+	 */
 	isSpecified() { return this.header.maptype!==UNSPECIFIED; }
 
+	/**
+	 * @return {boolean} true, if this projection is wrapping, e.g. AITOFF
+	 * @public
+	 */
 	isWrappingProjection() { return isWrappingProjection(this.header); }
 
+	/**
+	 * @return true, if this projection is wrapping, e.g. AITOFF
+	 * @public
+	 */
     getProjectionName() { return translateProjectionName(this.header.maptype); }
 }
 

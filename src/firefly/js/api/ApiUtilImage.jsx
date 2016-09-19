@@ -48,14 +48,15 @@ export {watchImageMetaData} from '../visualize/saga/ImageMetaDataWatcher.js';
 export {getSelectedRegion} from '../drawingLayers/RegionPlot.js';
 
 export {extensionAdd, extensionRemove} from '../core/ExternalAccessUtils.js';
+export {makeWorldPt, makeScreenPt, makeImagePt, makeViewPortPt, parsePt} from '../visualize/Point.js';
 
 
 /**
  * Get plot object with the given plot id, when plotId is not included, active plot is returned.
  * @param {string} [plotId] the plotId, optional
  * @returns {WebPlot}
- * @public
  * @function getPrimePlot
+ * @public
  * @memberof firefly.util.image
  *
  */

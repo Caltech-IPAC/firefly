@@ -45,7 +45,13 @@ export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
 /** can the 'NorthCenOnPt', 'NorthCenOnMoving', 'Standard', 'Off' */
 export const WcsMatchType= new Enum(['NorthCenOnPt', 'NorthCenOnMoving', 'StandCenOnPt', 'StandCenOnMoving', 'Standard']);
 
-/** can the 'GROUP', 'SINGLE', 'LIST' */
+
+
+/**
+ * can the 'GROUP', 'SINGLE', 'LIST'
+ * @public
+ * @global
+ */
 export const ActionScope= new Enum(['GROUP','SINGLE', 'LIST']);
 
 export const PLOTS_PREFIX= 'ImagePlotCntlr';
@@ -158,9 +164,11 @@ export function visRoot() { return flux.getState()[IMAGE_PLOT_KEY]; }
 const initState= function() {
 
     /**
+     * @global
+     * @public
      * @typedef {Object} VisRoot
      *
-     * The state of the Image visualization
+     * @summary The state of the Image visualization.
      * The state contains an array of PlotView each have a plotId and tie to an Image Viewer,
      * one might be active (PlotView.js)
      * A PlotView has an array of WebPlots, one is primary (WebPlot.js)
@@ -308,11 +316,18 @@ export function dispatchChangePrimePlot({plotId, primeIdx, dispatcher= flux.proc
 /**
  * Show image with new color table loaded
  * Note - function parameter is a single object
+ *
+ *
  * @param {Object}  obj
  * @param {string} obj.plotId
  * @param {number} obj.cbarId must be in the range, 0 - 21, each number represents different colorbar
- * @param {ActionScope} obj.actionScope
- * @param {Function} obj.dispatcher only for special dispatching uses such as remote
+ * @param {ActionScope} [obj.actionScope] default to group
+ * @param {Function} [obj.dispatcher] only for special dispatching uses such as remote
+ *
+ *
+ * @public
+ * @function dispatchColorChange
+ * @memberof firefly.action
  */
 export function dispatchColorChange({plotId, cbarId, actionScope=ActionScope.GROUP, dispatcher= flux.process} ) {
     dispatcher({ type: COLOR_CHANGE, payload: { plotId, cbarId, actionScope }});
@@ -323,17 +338,24 @@ export function dispatchColorChange({plotId, cbarId, actionScope=ActionScope.GRO
  * Note - function parameter is a single object
  * @param {Object} obj - object literal with dispatcher parameters
  * @param {string} obj.plotId
- * @param {Array.<{band:Object,rv:Object,bandVisible:boolean}>} obj.stretchData
- * @param {ActionScope} obj.actionScope
- * @param {Function} obj.dispatcher only for special dispatching uses such as remote
+ * @param {Array.<Object.<band:Band,rv:RangeValues,bandVisible:boolean>>} obj.stretchData
+ * @param {ActionScope} [obj.actionScope] default to group
+ * @param {Function} [obj.dispatcher] only for special dispatching uses such as remote
+ *
+ * @public
+ * @function dispatchStretchChange
+ * @memberof firefly.action
+ *
  * @example
  * // Example of stretch 2 - 98 percent, log stretch
  * var rv= RangeValues.makeSimple(‘percent’, 2, 98, ‘log’);
- * action.dispatchStretchChange({plotId:’myplot’, strechData:rv });
+ * const stretchData= [{ band : 'NO_BAND', rv :  rv, bandVisible: true }];
+ * action.dispatchStretchChange({plotId:’myplot’, strechData:stretchData });
  * @example
  * // Example of stretch -2 - 5 sigma, linear stretch
  * var rv= RangeValues.makeSimple(’sigma’, -2, 5, 'linear’);
- * action.dispatchStretchChange({plotId:’myplot’, strechData:rv });
+ * const stretchData= [{ band : 'NO_BAND', rv :  rv, bandVisible: true }];
+ * action.dispatchStretchChange({plotId:’myplot’, strechData:stretchData });
  *
  */
 export function dispatchStretchChange({plotId, stretchData, 
@@ -364,6 +386,10 @@ export function dispatchWcsMatch({plotId, matchType, dispatcher= flux.process} )
  * @param {boolean} p.keepWcsLock it wcs lock is on then keep is on, the default is to unlock wcs
  * @param {ActionScope} p.pactionScope enum ActionScope
  * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ *
+ * @public
+ * @function dispatchRotate
+ * @memberof firefly.action
  */
 export function dispatchRotate({plotId, rotateType, angle=-1, newZoomLevel=0,
                                 keepWcsLock= false,
@@ -381,14 +407,18 @@ export function dispatchRotate({plotId, rotateType, angle=-1, newZoomLevel=0,
  * @param {Object}  p
  * @param {string} p.plotId
  * @param {boolean} p.isY
- * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
+ *
+ * @public
+ * @function dispatchFlip
+ * @memberof firefly.action
  */
 export function dispatchFlip({plotId, isY=true, dispatcher= flux.process}) {
     dispatcher({ type: FLIP, payload: { plotId, isY}});
 }
 
 /**
- * Crop
+ * @summary Crop
  *
  * Note - function parameter is a single object
  * @param {Object}  p
@@ -396,7 +426,11 @@ export function dispatchFlip({plotId, isY=true, dispatcher= flux.process}) {
  * @param {Object} p.imagePt1 image point of corner 1
  * @param {Object} p.imagePt2 image point of corner 2
  * @param {boolean} p.cropMultiAll
- * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
+ *
+ * @public
+ * @function dispatchCrop
+ * @memberof firefly.action
  */
 export function dispatchCrop({plotId, imagePt1, imagePt2, cropMultiAll, dispatcher= flux.process}) {
     dispatcher({ type: CROP, payload: { plotId, imagePt1, imagePt2, cropMultiAll}});
@@ -404,7 +438,7 @@ export function dispatchCrop({plotId, imagePt1, imagePt2, cropMultiAll, dispatch
 
 
 /**
- * Move the scroll point on this plotId and possible others if it is grouped.
+ * @summary Move the scroll point on this plotId and possible others if it is grouped.
  *
  * Note - function parameter is a single object
  * @param {Object}  p
@@ -418,13 +452,17 @@ export function dispatchProcessScroll({plotId,scrollPt, dispatcher= flux.process
 
 
 /**
- * recenter the images on the plot center or the ACTIVE_TARGET
+ * @summary recenter the images on the plot center or the ACTIVE_TARGET
  *
  * Note - function parameter is a single object
  * @param {Object}  p
  * @param {string} p.plotId
  * @param {Point} p.centerPt
- * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
+ *
+ * @public
+ * @function dispatchRecenter
+ * @memberof firefly.action
  */
 export function dispatchRecenter({plotId, centerPt, dispatcher= flux.process}) {
     dispatcher({type: RECENTER, payload: {plotId, centerPt} });
@@ -436,7 +474,7 @@ export function dispatchRecenter({plotId, centerPt, dispatcher= flux.process}) {
  * Note - function parameter is a single object
  * @param {Object}  p this function take a single parameter
  * @param {string} p.plotId
- * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
 export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
     dispatcher({type: RESTORE_DEFAULTS, payload: {plotId} });
@@ -445,19 +483,24 @@ export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
 
 /**
  *
- * Plot an image.  Note this dispatch function only takes an object with the parameters
+ * @summary Plot an image.
+ * Note this dispatch function only takes an object with the parameters
  * Note - function parameter is a single object
  * @param {Object}  p
- * @param {string} p.plotId is required unless defined in the WebPlotRequest
- * @param {WebPlotRequest|Array} p.wpRequest, plotting parameters, required or for 3 color pass an array of WebPlotRequest
- * @param {boolean} p.threeColor is a three color request, if true the wpRequest should be an array
- * @param {boolean} p.addToHistory add this request to global history of plots, may be deprecated in the future
- * @param {boolean} p.useContextModifications it true the request will be modified to use preferences, rotation, etc
+ * @param {string} [p.plotId] is required unless defined in the WebPlotRequest
+ * @param {WebPlotRequest|Array} p.wpRequest -  plotting parameters, required or for 3 color pass an array of WebPlotRequest
+ * @param {boolean} [p.threeColor] is a three color request, if true the wpRequest should be an array
+ * @param {boolean} [p.addToHistory] add this request to global history of plots, may be deprecated in the future
+ * @param {boolean} [p.useContextModifications] it true the request will be modified to use preferences, rotation, etc
  *                                 should only be false when it is doing a 'restore to defaults' type plot
- * @param {boolean} p.attributes the are added to the plot
- * @param {Object} p.pvOptions parameter specific to the  plotView, only read the first time per plot id
- * @param {Function} p.dispatcher only for special dispatching uses such as remote
- * @param {string} p.viewerId
+ * @param {boolean} [p.attributes] the are added to the plot
+ * @param {Object} [p.pvOptions] parameter specific to the  plotView, only read the first time per plot id
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
+ * @param {string} [p.viewerId] - viewer that this plot should be put into, only optional if using the default viewer id
+ *                                normally you need to specify the viewer
+ * @public
+ * @function dispatchPlotImage
+ * @memberof firefly.action
  */
 export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpRequest),
                                   addToHistory=false,
@@ -487,7 +530,7 @@ export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {}, dispat
 
 
 /**
- * Add a mask
+ * @summary Add a mask
  * @param {Object}  p this function take a single parameter
  * @param {string} p.plotId
  * @param {number} p.maskValue power of 2, e.g 4, 8, 32, 128, etc
@@ -496,7 +539,11 @@ export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {}, dispat
  * @param {number} p.imageNumber hdu number of fits
  * @param {string} p.color - color is optional, if not specified, one is chosen
  * @param {string} p.title
- * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
+ *
+ * @public
+ * @function dispatchPlotImage
+ * @memberof firefly.action
  */
 export function dispatchPlotMask({plotId,imageOverlayId, maskValue, imageNumber, maskNumber=-1, color, title, dispatcher= flux.process}) {
     dispatcher( { type: PLOT_MASK, payload: { plotId,imageOverlayId, maskValue, imageNumber, maskNumber, color, title} });
@@ -508,7 +555,7 @@ export function dispatchPlotMask({plotId,imageOverlayId, maskValue, imageNumber,
  * @param {Object}  p this function take a single parameter
  * @param {string} p.plotId
  * @param {string} p.imageOverlayId
- * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
 export function dispatchDeleteOverlayPlot({plotId,imageOverlayId, dispatcher= flux.process}) {
     dispatcher( { type: DELETE_OVERLAY_PLOT, payload: { plotId,imageOverlayId} });
@@ -522,7 +569,7 @@ export function dispatchDeleteOverlayPlot({plotId,imageOverlayId, dispatcher= fl
  * @param {string} p.imageOverlayId
  * @param {Object} p.attributes any attribute in OverlayPlotView
  * @param {boolean} p.doReplot if false don't do a replot just change attributes
- * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
 export function dispatchOverlayPlotChangeAttributes({plotId,imageOverlayId, attributes, doReplot=false, dispatcher= flux.process}) {
     dispatcher( { type: OVERLAY_PLOT_CHANGE_ATTRIBUTES, payload: { plotId,imageOverlayId, attributes, doReplot} });
@@ -536,12 +583,16 @@ export function dispatchOverlayPlotChangeAttributes({plotId,imageOverlayId, attr
  * @param {Object}  p this function take a single parameter
  * @param {string} p.plotId
  * @param {UserZoomTypes} p.userZoomType (one of ['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV')
- * @param {boolean} p.maxCheck
- * @param {boolean} p.zoomLockingEnabled
- * @param {boolean} p.forceDelay
- * @param {number} p.level the level to zoom to, used only userZoomType 'LEVEL'
- * @param {ActionScope} p.actionScope
- * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ * @param {boolean} [p.maxCheck]
+ * @param {boolean} [p.zoomLockingEnabled]
+ * @param {boolean} [p.forceDelay]
+ * @param {number} [p.level] the level to zoom to, used only userZoomType 'LEVEL'
+ * @param {ActionScope} [p.actionScope] default to group
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
+ *
+ * @public
+ * @function dispatchZoom
+ * @memberof firefly.action
  *
  * @example
  * // Example of zoom to level
@@ -573,13 +624,12 @@ export function dispatchZoom({plotId, userZoomType, maxCheck= true,
  * Note - function parameter is a single object
  * @param {Object}  p this function take a single parameter
  * @param {string} p.plotId
- * @param {Function} p. dispatcher only for special dispatching uses such as remote
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
 export function dispatchDeletePlotView({plotId, dispatcher= flux.process}) {
     dispatcher({ type: DELETE_PLOT_VIEW, payload: {plotId} });
 }
 
-//--------------
 
 /**
  *

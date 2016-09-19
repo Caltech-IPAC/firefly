@@ -5,53 +5,46 @@
 
 import {Band} from './Band.js';
 import {BandState} from './BandState.js';
-import {RangeValues} from './RangeValues.js';
 import CoordinateSys from './CoordSys.js';
 import Enum from 'enum';
 
 
-/** can be 'NORTH', 'ANGLE', 'UNROTATE' */
+/**
+ * The type of rotation
+ * can be 'NORTH', 'ANGLE', 'UNROTATE'
+ * @public
+ * @global
+ * */
 export const RotateType= new Enum(['NORTH', 'ANGLE', 'UNROTATE']);
 
-/** can be 'ROTATE', 'CROP', 'FLIP_Y' */
+/**
+ * can be 'ROTATE', 'CROP', 'FLIP_Y'
+ *
+ */
 export const Operation= new Enum(['ROTATE', 'CROP', 'FLIP_Y']);
 
 
-/**
- * private enum, just for consistency with server
- */
-const MultiImageAction = new Enum([ 'GUESS',      // Default, guess between load first, and use all, depending on three color params
-                                    'USE_FIRST',   // only valid option if loading a three color with multiple Request
-                                    'USE_IDX',   // use a specific image from the fits read Array
-                                    'MAKE_THREE_COLOR', // make a three color out of the first three images, not yet implemented
-                                    'USE_ALL' // only valid in non three color, make a array of WebPlots
-                                    ]);
 
 
-/**
- * @global
- * @public
- * @typedef {Object} PlotState
- * @prop {Array.<BandState>} bandStateAry
- * @prop multiImage
- * @prop rotationType
- * @prop ops
- * @prop ctxStr
- * @prop newPlot
- * @prop zoomLevel
- * @prop threeColor
- * @prop colorTableId
- * @prop flippedY
- * @prop rotationAngle
- */
+
+
+
 export class PlotState {
 
     /**
-     * new plot state
+     * @summary Contains data about the state of a plot.
+     * This object is never created directly if is always instantiated from the json sent from the server.
+     * @prop {number} zoomLevel - the zoomlevel of the image
+     * @prop {boolean} threeColor - is a three color plot
+     * @prop {number} colorTableId - the id of the color table in use
+     * @prop {boolean} flippedY - fliped on the y axis
+     * @prop {number} rotationAngle - if rotated by angle, then the angle  of the rotation
+     * @prop {RotateType} rotationType the type of rotations
+     * @public
      */
     constructor() {
+
         this.bandStateAry= [null,null,null];
-        this.multiImage= MultiImageAction.GUESS;
         this.ctxStr=null;
         this.newPlot= true;
         this.zoomLevel= 1;
@@ -71,8 +64,9 @@ export class PlotState {
 //======================================================================
 
     /**
-     * returns the first used band. It is possible that this method will return null.  You should always check.
+     * @summary returns the first used band. It is possible that this method will return null.  You should always check.
      * @return {Band} the first name used.
+     * @public
      */
     firstBand() {
         var bandAry= this.getBands();
@@ -80,8 +74,9 @@ export class PlotState {
     }
 
     /**
-     * Get an array of used band.  It is possible that this routine will return a array of length 0
+     * @summary Get an array of used band.  It is possible that this routine will return a array of length 0
      * @return {Array} the bands in use
+     * @public
      */
     getBands() {
         if (!this.usedBands) {
@@ -99,8 +94,9 @@ export class PlotState {
     }
 
     /**
-     * @param band
+     * @param {String|Band} [band] the bad to test
      * @return {boolean}
+     * @public
      */
     isBandUsed(band) {
         return this.getBands().indexOf(band)>-1;
@@ -112,21 +108,9 @@ export class PlotState {
      */
     getContextString() { return this.ctxStr; }
 
-    /**
-     *
-     * @param {string} ctxStr
-     */
-    setContextString(ctxStr) { this.ctxStr= ctxStr; }
 
     /**
-     *
-     * @return {boolean}
-     */
-    isNewPlot() { return this.newPlot; }
-
-
-    /**
-     *
+     * Get the number of the color table
      * @return {number}
      */
     getColorTableId() { return this.colorTableId; }
@@ -159,25 +143,18 @@ export class PlotState {
      */
     getRotateType() {return this.rotationType; }
 
-    isRotated() {return this.rotationType!==RotateType.UNROTATE;}
-
     /**
-     *
-     * @param {boolean} flippedY
+     * @summary check to see it the image is rotated
+     * @return {boolean}
+     * @public
      */
-    setFlippedY(flippedY) { this.flippedY= flippedY; }
+    isRotated() {return this.rotationType!==RotateType.UNROTATE;}
 
     /**
      *
      * @return {boolean}
      */
     isFlippedY() { return this.flippedY; }
-
-    /**
-     *
-     * @param {Number} angle
-     */
-    setRotationAngle(angle) { this.rotationAngle= angle; }
 
     /**
      *
@@ -195,31 +172,34 @@ export class PlotState {
     }
 
     /**
-     * this method will make a copy of WebPlotRequest. Any changes to the WebPlotRequest object
+     * @summary this method will make a copy of WebPlotRequest. Any changes to the WebPlotRequest object
      * after the set will not be reflected here.
-     * @param [band] the band to get the request for
+     * @param {Band} [band] the band to get the request for, if not passed the used the primary band
      * @return {WebPlotRequest} the WebPlotRequest
+     * @public
      */
     getWebPlotRequest(band) { return this.get(band || this.firstBand()).getWebPlotRequest(); }
 
-    /**
-     * this method will make a copy of the primary WebPlotRequest. Any changes to the WebPlotRequest object
-     * after the set will not be reflected here.
-     * @return {WebPlotRequest} the WebPlotRequest
-     */
-    getPrimaryWebPlotRequest() { return this.get(this.firstBand()).getWebPlotRequest(); }
 
-
-    //setBandVisible(band, visible) { this.get(band).setBandVisible(visible); }
     isBandVisible(band) { return  this.get(band).isBandVisible(); }
 
 
+    /**
+     * @summary Check to see it this plot is from a multi image file
+     * @param {Band} [band] the band check for, if not passed the used the primary band
+     * @return {boolean} the WebPlotRequest
+     * @public
+     */
     isMultiImageFile(band) { return this.get(band || this.firstBand()).isMultiImageFile(); }
-    isPrimaryMultiImageFile() { return this.get(this.firstBand()).isMultiImageFile(); }
 
 
+    /**
+     * @summary if a cube, checkout how many images it contains
+     * @param {Band} [band] the band check for, if not passed the used the primary band
+     * @return {number} the WebPlotRequest
+     * @public
+     */
     getCubeCnt(band) { return this.get(band || this.firstBand()).getCubeCnt(); }
-    getPrimaryCubeCnt() { return this.get(this.firstBand()).getCubeCnt(); }
 
 
     getCubePlaneNumber(band) {
@@ -227,32 +207,11 @@ export class PlotState {
     }
     getPrimaryCubePlaneNumber() { return this.get(this.firstBand()).getCubePlaneNumber(); }
 
-
-    /**
-     *
-     * @param {RangeValues} rangeValues
-     * @param {Band} band
-     */
-    setRangeValues(rangeValues, band) { this.get(band).setRangeValues(rangeValues); }
-
-    /**
-     * @param band
-     * @return {RangeValues}
-     */
-    getRangeValues(band) { return this.get(band || this.firstBand()).getRangeValues(); }
-
     /**
      *
      * @return {RangeValues}
      */
     getPrimaryRangeValues() { return this.get(this.firstBand()).getRangeValues(); }
-
-
-    /**
-     * @param {ClientFitsHeader} header
-     * @param {Band} band
-     */
-   setFitsHeader(header, band) { this.get(band).setFitsHeader(header); }
 
 
     /**
@@ -360,7 +319,7 @@ export class PlotState {
 
         state.bandStateAry= psJson.bandStateAry.map( (bJ) => BandState.makeBandStateWithJson(bJ));
 
-        state.multiImage= MultiImageAction.get(psJson.multiImage);
+        state.multiImage= psJson.multiImage;
         state.rotationType= RotateType.get(psJson.rotationType);
         state.rotaNorthType= CoordinateSys.parse(psJson.rotaNorthType);
         state.ops= psJson.ops.map( (op) => Operation.get(op) );
@@ -376,7 +335,7 @@ export class PlotState {
     }
 
     /**
-     * convert his PlotState to something can be used with JSON.stringify
+     * @summary convert his PlotState to something can be used with JSON.stringify
      * @param {PlotState} s
      */
     static convertToJSON(s) {
@@ -384,7 +343,7 @@ export class PlotState {
         var json= {};
         json.JSON=true;
         json.bandStateAry= s.bandStateAry.map( (bJ) => BandState.convertToJSON(bJ));
-        json.multiImage= s.multiImage.key;
+        json.multiImage= s.multiImage;
         json.rotationType= s.rotationType.key;
         json.rotaNorthType= s.rotaNorthType.toString();
         json.ops= s.ops.map( (op) => op.key );

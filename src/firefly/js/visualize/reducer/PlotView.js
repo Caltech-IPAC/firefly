@@ -48,10 +48,15 @@ export default {replacePlots,
 //======================================== Exported Functions =============================
 
 
+
+
+
+
 /**
  * @global
  * @public
  * @typedef {Object} PlotView
+ *
  * There is one PlotView object for each react ImageViewer.  A PlotView is uniquely identified by the plotId. The
  * plot id will not change for the life time of the plotView. A plot view can be connected to a plot group.  That is done
  * by the plotGroupId. There will be several plotViews in a plot group.
@@ -63,7 +68,7 @@ export default {replacePlots,
  * @prop {String} plotId, immutable
  * @prop {String} plotGroupId, immutable
  * @prop {String} drawingSubGroupId, immutable
- * @prop {Array} plots all the plots that this plotView can show, usually the image in the fits file
+ * @prop {WebPlot[]} plots all the plots that this plotView can show, usually the image in the fits file
  * @prop {String} plottingStatus, end user description of the what is doing on
  * @prop {String} serverCall, one of 'success', 'working', 'fail'
  * @prop {number} primeIdx, which of the plots array is active
@@ -74,6 +79,20 @@ export default {replacePlots,
  * @prop {Object} overlayPlotViews
  * @prop {Object} options
  * @prop {PlotViewContextData} plotViewCtx
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} PlotViewContextData
+ * Various properties about this PlotView
+ *
+ * @prop {boolean} userCanDeletePlots true if this plotView can be deleted by the user
+ * @prop {boolean} zoomLockingEnabled the plot will automaticly adjust the zoom when resized
+ * @prop {UserZoomTypes} zoomLockingType the type of zoom lockeing
+ * @prop {number} lastCollapsedZoomLevel used for returning from expanded mode, keeps recode of the level before expanded
+ * @prop {boolean} containsMultiImageFits is a multi image fits file
+ * @prop {boolean} containsMultipleCubes  is a multi cube
  */
 
 
@@ -120,20 +139,6 @@ export function makePlotView(plotId, req, pvOptions= {}) {
     return pv;
 }
 
-
-/**
- * @global
- * @public
- * @typedef {Object} PlotViewContextData
- * Various properties about this PlotView
- *
- * @prop {boolean} userCanDeletePlots true if this plotView can be deleted by the user
- * @prop {boolean} zoomLockingEnabled the plot will automaticly adjust the zoom when resized
- * @prop {UserZoomTypes} zoomLockingType the type of zoom lockeing
- * @prop {number} lastCollapsedZoomLevel used for returning from expanded mode, keeps recode of the level before expanded
- * @prop {boolean} containsMultiImageFits is a multi image fits file
- * @prop {boolean} containsMultipleCubes  is a multi cube
- */
 
 
 /**
@@ -431,7 +436,7 @@ function getNewAttributes(plot) {
 
     //todo: figure out active target and how to set it
     var attributes= {};
-    var req= plot.plotState.getPrimaryWebPlotRequest();
+    var req= plot.plotState.getWebPlotRequest();
 
     var worldPt;
     var circle = req.getRequestArea();

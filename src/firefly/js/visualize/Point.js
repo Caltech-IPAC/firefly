@@ -18,25 +18,47 @@ var Point = {  SPT, IM_PT, IM_WS_PT, VP_PT, PROJ_PT, W_PT, OFFSET_PT};
 
 /**
  * @typedef {Object} Point
- * a Point
+ * @summary a Point
  *
  * @prop {Number} x
  * @prop {Number} y
  * @prop {String} type one of 'ScreenPt', 'ImagePt', 'ImageWorkSpacePt', 'WorldPt', 'ViewPortPt', 'ProjectionPt', 'OffsetPt'
+ * @public
+ * @global
  */
 
 /**
  * @typedef {Object} ScreenPt
+ * @summary a point on the image screen
  * @prop {Number} x
  * @prop {Number} y
- * @prop {String} type constant must bel'ScreenPt'
+ * @prop {String} type constant must be 'ScreenPt'
+ * @public
+ * @global
  */
 
 /**
  * @typedef {Object} ImagePt
+ * @summary a point in image file coordinates
  * @prop {Number} x
  * @prop {Number} y
- * @prop {String} type constant must bel'ImagePt'
+ * @prop {String} type constant must be 'ImagePt'
+ * @public
+ * @global
+ */
+
+/**
+ * @typedef {Object} WorldPt
+ * @summary a point on the sky
+ * @prop {Number} x
+ * @prop {Number} y
+ * @prop {String} type constant must be 'WorldPt'
+ * @prop {CoordinateSys} cSys - the coordinate system constant
+ * @prop {String} objName - the object name the was used for name resolution, may not be defined
+ * @prop {Resolver} objName - the resolver used to create this worldPt, may not be defined
+ *
+ * @public
+ * @global
  */
 
 var ptTypes= Object.values(Point);
@@ -71,6 +93,8 @@ export class SimplePt {
  * @param {CoordinateSys} [coordSys=CoordinateSys.EQ_J2000]- the coordinate system constant
  * @param {string} [objName] - the object name the was used for name resolution
  * @param {Resolver} [resolver] - the resolver use to return this point
+ * @public
+ * @global
  */
 export class WorldPt {
     constructor(lon,lat,coordSys,objName,resolver) {
@@ -166,6 +190,21 @@ function stringAryToWorldPt(wpParts) {
     return retval;
 }
 
+/**
+ * @summary A point on the sky with a coordinate system
+ * @param {number} lon - longitude in degrees
+ * @param {number} lat - latitude in degrees
+ * @param {CoordinateSys} coordSys - The coordinate system of this worldPt
+ *
+ * @param {String} [objName] -  object name used to create this worldPt
+ * @param resolver - the resolver used to create this worldPt
+ * @return {WorldPt}
+ *
+ *
+ * @function makeWorldPt
+ * @public
+ * @global
+ */
 export const makeWorldPt= function (lon,lat,coordSys,objName,resolver) {
     if (typeof lon === 'string') lon= Number(lon);
     if (typeof lat === 'string') lat= Number(lat);
@@ -173,6 +212,18 @@ export const makeWorldPt= function (lon,lat,coordSys,objName,resolver) {
 };
 
 
+/**
+ * @summary A point in the image file
+ * @param {number} x - the x
+ * @param {number} y - the y
+ *
+ * @return {ImagePt}
+ *
+ * @function makeImagePt
+ * @memberof firefly.util.image
+ * @public
+ * @global
+ */
 export const makeImagePt= function(x,y) {
     if (typeof x === 'string') x= Number(x);
     if (typeof y === 'string') y= Number(y);
@@ -183,6 +234,7 @@ export const makeImagePt= function(x,y) {
  *
  * @param x
  * @param y
+ * @memberof firefly.util.image
  * @return {Pt}
  */
 export const makeImageWorkSpacePt= function(x,y) {
@@ -190,6 +242,21 @@ export const makeImageWorkSpacePt= function(x,y) {
     if (typeof y === 'string') y= Number(y);
     return Object.assign(new SimplePt(x,y), {type:IM_WS_PT});
 };
+
+
+
+/**
+ * @summary A point of the display image
+ * @param {number} x - the x
+ * @param {number} y - the y
+ *
+ * @return {ScreenPt}
+ *
+ * @function makeScreenPt
+ * @memberof firefly.util.image
+ * @public
+ * @global
+ */
 export const makeScreenPt= function(x,y) {
     if (typeof x === 'string') x= Number(x);
     if (typeof y === 'string') y= Number(y);
@@ -219,6 +286,15 @@ export const pointEquals= function(p1,p2)  {
 };
 
 
+/**
+ * @summary Parse a point
+ * @param type
+ * @param inStr
+ * @return {Point}
+ * @memberof firefly.util.image
+ * @public
+ * @global
+ */
 export const parsePt= function(type, inStr) {
     if (!inStr) return null;
     var parts= inStr.split(';');

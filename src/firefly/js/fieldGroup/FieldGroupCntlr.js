@@ -12,6 +12,12 @@ import {revalidateFields} from './FieldGroupUtils.js';
  * Reducer for 'fieldGroup' key
  */
 
+/**
+ * @typedef {Object.<String,FieldGroup>} FieldGroupStore
+ *
+ * @global
+ * @public
+ */
 
 /**
  * @typedef {Object} FieldGroupField
@@ -23,6 +29,9 @@ import {revalidateFields} from './FieldGroupUtils.js';
  * @prop {Function} validator
  * @prop {boolean} mounted field is mounted
  * @prop {boolean} nullAllowed, default to true
+ *
+ * @global
+ * @public
  */
 
 /**
@@ -36,6 +45,9 @@ import {revalidateFields} from './FieldGroupUtils.js';
  * @prop {boolean} mounted field is mounted
  * @prop {String} wrapperGroupKey
  * @prop {boolean} fieldGroupValid
+ *
+ * @global
+ * @public
  */
 
 
