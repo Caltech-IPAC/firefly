@@ -16,6 +16,11 @@ import {SizeInputFields} from './SizeInputField.jsx';
 import {InputAreaFieldConnected} from './InputAreaField.jsx';
 import {FileUpload} from '../ui/FileUpload.jsx';
 
+import CsysConverter from '../visualize/CsysConverter.js';
+import {getActivePlotView} from '../visualize/PlotViewUtil.js';
+import { makeImagePt} from '../visualize/Point.js';
+import {visRoot} from '../visualize/ImagePlotCntlr.js';
+
 import './CatalogSearchMethodType.css';
 /*
  Component which suppose to handle the catalog method search such as cone, elliptical,etc.
@@ -44,7 +49,9 @@ export class CatalogSearchMethodType extends Component {
 
     render() {
         const {fields}= this.state;
-        const searchType = get(fields, 'spatial.value', SpatialMethod.Cone.value);
+
+
+        let searchType = get(fields, 'spatial.value', SpatialMethod.Cone.value);
         const max = get(fields, 'conesize.max', 10);
         const {groupKey} = this.props;
 
@@ -182,16 +189,29 @@ function sizeArea(searchType, max) {
             </div>
         );
     } else if (searchType === SpatialMethod.Polygon.value) {
-
+        let val = '';
+        var pv = getActivePlotView(visRoot());
+        if (pv) {
+            var plot = pv.plots[0];
+            var w = plot.dataWidth;
+            var h = plot.dataHeight;
+            var cc = CsysConverter.make(plot);
+            var pt1 = cc.getWorldCoords(makeImagePt(w/4,h/4));
+            var pt2 = cc.getWorldCoords(makeImagePt(3*w/4, h/4));
+            var pt3 = cc.getWorldCoords(makeImagePt(3*w/4, 3*h/4));
+            var pt4 = cc.getWorldCoords(makeImagePt(w/4, 3*h/4));
+            val = `${pt1.x} ${pt1.y}, ${pt2.x} ${pt2.y},${pt3.x} ${pt3.y},${pt4.x} ${pt4.y}`;
+        }
         return (
             <div
                 style={{padding:5, border:'solid #a3aeb9 1px' }}>
-                <InputAreaFieldConnected fieldKey='polygoncoords'
+                <InputAreaFieldConnected forceReinit={true} fieldKey='polygoncoords'
                                          wrapperStyle={{padding:5}}
                                          style={{overflow:'auto',height:'65px', maxHeight:'200px', width:'220px', maxWidth:'300px'}}
                                          initialState={{
                                                tooltip:'Enter polygon coordinates search',
-                                               labelWidth:70
+                                               labelWidth:70,
+                                               value: val
                                             }}
                                          label='Coordinates:'
                                          tooltip='Enter polygon coordinates search'
