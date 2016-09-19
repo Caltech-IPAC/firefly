@@ -160,7 +160,7 @@ function toRegion(startPt,endPt,plot,drawParams,renderOptions) {
     des = startRegionDes(RegionType.text, cc, [textPt]);
     if (isEmpty(des)) return [];
 
-    des += setRegionPropertyDes(regionPropsList.COLOR, 'black');
+    des += setRegionPropertyDes(regionPropsList.COLOR, color);
 
     if (text) {
         des += setRegionPropertyDes(regionPropsList.TEXT, text) +
