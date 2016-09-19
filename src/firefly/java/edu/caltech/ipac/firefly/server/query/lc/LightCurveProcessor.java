@@ -58,7 +58,7 @@ public class LightCurveProcessor extends IpacTablePartProcessor {
 
         PeriodogramAPIRequest req = QueryUtil.assureType(PeriodogramAPIRequest.class, request);
         String tblType = req.getParam(PeriodogramAPIRequest.TABLE_NAME);
-        String tblName = (tblType != null && tblType.equalsIgnoreCase(PeriodogramAPIRequest.RESULT_TABLE))
+        String tblName = (tblType != null && tblType.equalsIgnoreCase(LightCurveHandler.RESULT_TABLES_IDX.PERIODOGRAM.name()))
                 ? PERIODOGRAM_TABLE_NAME : PEAKS_TABLE_NAME;
 
         //In order to get any of those tables, computing the periodogram need to happen:

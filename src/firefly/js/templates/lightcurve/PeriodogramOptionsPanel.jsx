@@ -16,7 +16,10 @@ import {FieldGroupUtils} from '../../fieldGroup/FieldGroupUtils';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 import Validate from '../../util/Validate.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
+import {makeTblRequest,getTblById} from '../../tables/TableUtil.js';
+import {RAW_TABLE,PERIODOGRAM, PEAK_TABLE} from '../../templates/lightcurve/LcManager.js';
 
+const gkey = 'PFO_PANEL';
 const options= [
     {label: 'Lomb Scarble', value:'LombScarble', proj:'LCViewer'},
     {label: 'Phase Dispersion Minimization', value:'PhaseDispersionMinimization', proj:'LCViewer'},
@@ -49,7 +52,7 @@ const defValues= {
     }
 };
 
-export class PeriodFidingOptionsPanel extends Component {
+export class PeriodogramOptionsPanel extends Component {
 
     constructor(props) {
         super(props);
@@ -62,7 +65,7 @@ export class PeriodFidingOptionsPanel extends Component {
 
     componentDidMount() {
         this.iAmMounted= true;
-        this.removeListener= FieldGroupUtils.bindToStore('PFO_PANEL', (fields) => {
+        this.removeListener= FieldGroupUtils.bindToStore(gkey, (fields) => {
             if (this.iAmMounted) this.setState(fields);
         });
     }
@@ -89,14 +92,14 @@ export const LCPFOPanel = () =>  {
         <div style={{padding:5}}>
             <FormPanel
                 width='400px' height='200px'
-                groupKey='PFO_PANEL'
+                groupKey={gkey}
                 onSubmit={(request) => onSearchSubmit(request)}
                 onCancel={hideSearchPanel}>
-                <FieldGroup groupKey='PFO_PANEL' reducerFunc={periodRangeReducer} keepState={true}>
+                <FieldGroup groupKey={gkey} reducerFunc={periodogramRangeReducer} keepState={true}>
                     <InputGroup labelWidth={150}>
                         <ListBoxInputField  initialState= {{
-                              tooltip: 'Select Period Finding Algorithm',
-                              label : 'Period Finding Algorithm:'
+                              tooltip: 'Select Algorithm',
+                              label : 'Algorithm:'
                        }}
                         options={options }
                         multiple={false}
@@ -151,7 +154,7 @@ LCPFOPanel.defaultProps = {
  * @param {object} action
  * @return {object}
  */
-var periodRangeReducer= function(inFields, action) {
+var periodogramRangeReducer= function(inFields, action) {
     if (!inFields)  {
         return defValues;
     }
@@ -177,18 +180,34 @@ var periodRangeReducer= function(inFields, action) {
 
 function onSearchSubmit(request) {
     console.log(request);
-    if (request.Tabs==='periodfinding') {
+    //if (request.Tabs==='periodfinding') {
         doPeriodFinding(request);
-    }
-    else {
-        console.log('request no supported');
-    }
+    //}
+    //else {
+    //    console.log('request no supported');
+    //}
 }
 
 function doPeriodFinding(request) {
-    var tReq;
+    //let tbl = getTblById(RAW_TABLE);
+    console.log(request);
+
+    var tReq = makeTblRequest('LightCurveProcessor',PERIODOGRAM , {
+        'result_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml', //For now return result table for non-existing API
+        'table_name': PERIODOGRAM
+    },  {tbl_id:PERIODOGRAM});
+
     if (tReq != null) {
         dispatchTableSearch(tReq, {removable: false});
+    }
+
+    var tReq2 = makeTblRequest('LightCurveProcessor',PEAK_TABLE , {
+        'result_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml', //For now return result table for non-existing API
+        'table_name': PEAK_TABLE
+    },  {tbl_id:PEAK_TABLE});
+
+    if (tReq2 != null) {
+        dispatchTableSearch(tReq2, {removable: false});
     }
 }
 

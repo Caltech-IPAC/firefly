@@ -19,12 +19,14 @@ import {dispatchMultiValueChange, dispatchRestoreDefaults} from '../../fieldGrou
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import FieldGroupUtils, {revalidateFields} from '../../fieldGroup/FieldGroupUtils';
+import {makeTblRequest,getTblById} from '../../tables/TableUtil.js';
 
 import {CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
 import {Tabs, Tab,FieldGroupTabs} from '../../ui/panel/TabPanel.jsx';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 
+import {RAW_TABLE, PHASE_FOLDED} from '../../templates/lightcurve/LcManager.js';
 
 function getDialogBuilder() {
     var popup= null;
@@ -55,7 +57,6 @@ const PanelResizableStyle = {
     height: 300,
     minHeight: 300,
     overflow: 'auto',
-    backgroundColor: '#b3edff',
     padding: '2px',
     position: 'relative'
 };
@@ -185,16 +186,16 @@ export function LcPFOptionsPanel ({fields}) {
 
     //Todo: get valication Suggestion from table
 
-    const validSuggestions = [];
-    for (var i=1; i<100; i++) { validSuggestions.push(...[`mjd${i}`, `w${i}`, `w${i}mprosig`, `w${i}snr`]); }
+    const validSuggestions = ['mjd','col1','col2'];
+    //for (var i=1; i<100; i++) { validSuggestions.push(...[`mjd${i}`, `w${i}`, `w${i}mprosig`, `w${i}snr`]); }
 
     return (
 
-            <FieldGroup style= {PanelResizableStyle} groupKey={'LC_FORM_Panel'} initValues={{timeCol:'mjd1',field1:'4'}}
+            <FieldGroup style= {PanelResizableStyle} groupKey={'LC_FORM_Panel'} initValues={{timeCol:'mjd',field1:'4'}}
                               reducerFunc={DialogReducer} keepState={true}>
                 <InputGroup labelWidth={110}>
 
-                    <span style={Header}>Light Curve Parameters</span>
+                    <span style={Header}>Phase Folding</span>
                     <br/><br/>
                     <SuggestBoxInputField
                         fieldKey='timeCol'
@@ -248,8 +249,8 @@ export function LcPFOptionsPanel ({fields}) {
                          forceReinit={true}
                          initialState= {{
                                   fieldKey: 'period',
-                                  value: '0.5',
-                                  validator: Validate.floatRange.bind(null, 0.5, 1.5, 3,'period'),
+                                  value: '1.0',
+                                  //validator: Validate.floatRange.bind(null, 0.5, 1.5, 3,'period'),
                                   tooltip: 'Period',
                                   label : 'Period:',
                                   labelWidth : 100
@@ -361,18 +362,29 @@ function resultsSuccess(request) {
 }
 
 function onSearchSubmit(request) {
-    console.log(request);
-    if (request.Tabs==='LC Param') {
-        doPhaseFolding(request);
-    }
-    else {
-        console.log('request no supported');
-    }
+    let fieldState = FieldGroupUtils.getGroupFields('LC_FORM_Panel');
+
+    // TODO Fix: request doesn't contain 'Tabs'...
+    //if (request.Tabs==='LC Param') {
+        doPhaseFolding(fieldState);
+    //}
+    //else {
+    //    console.log('request no supported');
+    //}
 }
 
 //here to plug in the phase folding processor
-function doPhaseFolding(request) {
-    var tReq;
+function doPhaseFolding(fields) {
+    let tbl = getTblById(RAW_TABLE);
+
+    console.log(fields);
+
+    var tReq = makeTblRequest('PhaseFoldedProcessor', PHASE_FOLDED, {
+        'period_days': fields.period.value,
+        'table_name': 'folded_table',
+        'time_col_name':fields.timeCol.value,
+        'original_table': tbl.tableMeta.tblFilePath
+    },  {tbl_id:PHASE_FOLDED});
     if (tReq !== null) {
         dispatchTableSearch(tReq, {removable: false});
     }
