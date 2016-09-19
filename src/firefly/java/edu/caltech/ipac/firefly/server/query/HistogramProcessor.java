@@ -39,10 +39,8 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     };
     static {
         // set default precision to 9 significant digits
-        DataType.FormatInfo fi = DataType.FormatInfo.createDefaultFormat(Double.class);
-        fi.setDataFormat("%.9g");
-        columns[1].setFormatInfo(fi);
-        columns[2].setFormatInfo(fi);
+        columns[1].getFormatInfo().setDataFormat("%.9g");
+        columns[2].getFormatInfo().setDataFormat("%.9g");
     }
     private final String FIXED_SIZE_ALGORITHM = "fixedSizeBins";
     private final String NUMBER_BINS = "numBins";

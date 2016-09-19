@@ -129,6 +129,8 @@ public class DataGroup implements Serializable,
         for (DataType dt : getDataDefinitions()) {
             int maxDataWidth = dt.getMaxDataWidth();
             if (force || maxDataWidth == 0) {
+                String[] headers = new String[] {dt.getKeyName(), dt.getTypeDesc(), dt.getDataUnit(), dt.getNullString()};
+                maxDataWidth =  Arrays.stream(headers).mapToInt(s -> s == null ? 0 : s.length()).max().getAsInt();
                 for (DataObject row : this) {
                     int vlength = row.getDataWidth(dt);
                     maxDataWidth = Math.max(maxDataWidth, vlength);

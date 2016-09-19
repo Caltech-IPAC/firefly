@@ -123,23 +123,23 @@ export class TablePanel extends Component {
         if (isEmpty(columns)) return <Loading {...{showTitle, tbl_id, title, removable}}/>;
 
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
-        const viewIcoStyle = 'tablepanel ' + (textView ? 'tableView' : 'textView');
+        const viewIcoStyle = 'TablePanel__button ' + (textView ? 'tableView' : 'textView');
         const tableTopPos = showToolbar ? 29 : 0;
         const TT_VIEW = textView ? TT_TABLE_VIEW : TT_TEXT_VIEW;
 
         return (
             <div style={{ position: 'relative', width: '100%', height: '100%'}}>
-            <div style={{ display: 'flex', height: '100%', flexDirection: 'column', overflow: 'hidden'}}>
+            <div className='TablePanel'>
                 <div className={'TablePanel__wrapper' + (border ? '--border' : '')}>
                     {showToolbar &&
                         <div role='toolbar' className='TablePanel__toolbar'>
-                            {showTitle ? <TableTitle {...{tbl_id, title, removable}} /> : <div className='group'/>}
+                            {showTitle ? <TableTitle {...{tbl_id, title, removable}} /> : <div/>}
                             {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:tableConnector}} /> }
                             <div className='group'>
                                 {showFilterButton && filterCount > 0 &&
                                     <button onClick={this.clearFilter}
                                             title={TT_CLEAR_FILTER}
-                                            className='tablepanel clearFilters'/>}
+                                            className='TablePanel__button clearFilters'/>}
                                 {showFilterButton &&
                                     <ToolbarButton icon={FILTER}
                                                    tip={TT_SHOW_FILTER}
@@ -153,12 +153,12 @@ export class TablePanel extends Component {
                                 {showSave &&
                                     <button onClick={this.saveTable}
                                             title={TT_SAVE}
-                                            className='tablepanel save'/> }
+                                            className='TablePanel__button save'/> }
                                 {showOptionButton &&
                                     <button style={{marginLeft: '4px'}}
                                             title={TT_OPTIONS}
                                             onClick={this.toggleOptions}
-                                            className='tablepanel options'/> }
+                                            className='TablePanel__button options'/> }
                                 { expandable && !expandedMode &&
                                     <button onClick={this.expandTable} title={TT_EXPAND}>
                                         <img src={OUTLINE_EXPAND}/>
@@ -264,7 +264,7 @@ function Loading({showTitle, tbl_id, title, removable}) {
     return (
         <div style={{position: 'relative', width: '100%', height: '100%'}}>
             <div className='loading-mask'/>
-            {showTitle ? <TableTitle {...{tbl_id, title, removable}} /> : <div className='group'/>}
+            {showTitle ? <TableTitle {...{tbl_id, title, removable}} /> : <div/>}
         </div>
     );
 }

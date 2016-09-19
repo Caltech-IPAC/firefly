@@ -174,7 +174,7 @@ export class BasicTableView extends React.Component {
                     </Table>
                 }
                 {showMask && <div style={{top: 0}} className='loading-mask'/>}
-                {!showMask && isEmpty(data) && <div className='tablePanel_NoData'> No Data Found </div>}
+                {!showMask && isEmpty(data) && <div className='TablePanel_NoData'> No Data Found </div>}
             </Resizable>
         );
     }

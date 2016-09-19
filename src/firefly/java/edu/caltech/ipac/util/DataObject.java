@@ -115,8 +115,7 @@ public class DataObject implements Serializable, Cloneable {
             val = _formattedData[idx];
         } else {
             Object v = getDataElement(dt);
-            String strForNull = StringUtils.isEmpty(dt.getNullString()) ? "" : dt.getNullString();
-            val = dt.getFormatInfo().formatData(v, strForNull);
+            val = dt.getFormatInfo().formatData(v);
         }
         return val;
     }

@@ -38,8 +38,8 @@ export class PagingBar extends Component {
         } else {
             return (
                 <div className='group'>
-                    <button onClick={() => callbacks.onGotoPage(1)} className='paging_bar first' title='First Page'/>
-                    <button onClick={() => callbacks.onGotoPage(currentPage - 1)} className='paging_bar previous'  title='Previous Page'/>
+                    <div onClick={() => callbacks.onGotoPage(1)} className='PagingBar__button first' title='First Page'/>
+                    <div onClick={() => callbacks.onGotoPage(currentPage - 1)} className='PagingBar__button previous'  title='Previous Page'/>
                     <InputField
                         style={{textAlign: 'right'}}
                         validator = {intValidator(1,totalPages, 'Page Number')}
@@ -50,8 +50,8 @@ export class PagingBar extends Component {
                         actOn={['blur','enter']}
                         showWarning={false}
                     /> <div style={{fontSize: 'smaller', marginLeft: 3}} > of {totalPages}</div>
-                    <button onClick={() => callbacks.onGotoPage(currentPage + 1)} className='paging_bar next'  title='Next Page'/>
-                    <button onClick={() => callbacks.onGotoPage(totalPages)} className='paging_bar last'  title='Last Page'/>
+                    <div onClick={() => callbacks.onGotoPage(currentPage + 1)} className='PagingBar__button next'  title='Next Page'/>
+                    <div onClick={() => callbacks.onGotoPage(totalPages)} className='PagingBar__button last'  title='Last Page'/>
                     {showingLabel}
                     {showLoading ? <img style={{width:14,height:14,marginTop: '3px'}} src={LOADING}/> : false}
                 </div>

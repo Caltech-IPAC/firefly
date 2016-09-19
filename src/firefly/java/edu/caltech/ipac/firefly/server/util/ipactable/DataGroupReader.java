@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.util.ipactable;
 
 import edu.caltech.ipac.astro.FITSTableReader;
+import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.db.spring.mapper.DataGroupUtil;
 import edu.caltech.ipac.firefly.server.query.TemplateGenerator;
 import edu.caltech.ipac.firefly.server.util.DsvToDataGroup;
@@ -26,12 +27,6 @@ public class DataGroupReader {
     public static final int MIN_PREFETCH_SIZE = AppProperties.getIntProperty("IpacTable.min.prefetch.size", 500);
     public static final String LINE_SEP = System.getProperty("line.separator");
     private static final Logger.LoggerImpl logger = Logger.getLogger();
-
-    public static enum Format { TSV(CSVFormat.TDF), CSV(CSVFormat.DEFAULT), IPACTABLE(), UNKNOWN(), FIXEDTARGETS(), FITS(), JSON();
-        CSVFormat type;
-        Format() {}
-        Format(CSVFormat type) {this.type = type;}
-    }
 
     public static DataGroup readAnyFormat(File inf) throws IOException {
         return readAnyFormat(inf, 0);
@@ -62,10 +57,10 @@ public class DataGroupReader {
             throw new IOException("Unsupported format, file:" + inf);
         }
     }
-    
+
     public static DataGroup read(File inf, String... onlyColumns) throws IOException {
         return read(inf, false, onlyColumns);
-        
+
     }
 
     public static DataGroup read(File inf, boolean readAsString, String... onlyColumns) throws IOException {
@@ -77,78 +72,15 @@ public class DataGroupReader {
     }
 
     public static DataGroup read(File inf, boolean isFixedLength, boolean readAsString, boolean saveFormattedData, String... onlyColumns) throws IOException {
-
         TableDef tableDef = IpacTableUtil.getMetaInfo(inf);
-        List<DataGroup.Attribute> attributes = tableDef.getAllAttributes();
-        List<DataType> cols = tableDef.getCols();
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
+        return doRead(bufferedReader, tableDef, isFixedLength, readAsString, saveFormattedData, onlyColumns);
+    }
 
-        if (readAsString) {
-            for (DataType dt : cols) {
-                dt.setDataType(String.class);
-            }
-        }
-
-        DataGroup headers = new DataGroup(null, cols);
-        DataGroup data = null;
-        boolean isSelectedColumns = onlyColumns != null && onlyColumns.length > 0;
-
-        if (isSelectedColumns) {
-            List<DataType> selCols = new ArrayList<DataType>();
-            for (String c : onlyColumns) {
-                DataType dt = headers.getDataDefintion(c);
-                if (dt != null) {
-                    try {
-                        selCols.add((DataType) dt.clone());
-                    } catch (CloneNotSupportedException e) {}       // shouldn't happen
-                }
-            }
-            data = new DataGroup(null, selCols);
-        } else {
-            data = headers;
-        }
-
-        data.setAttributes(attributes);
-
-        String line = null;
-        int lineNum = 0;
-
-        BufferedReader reader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
-        try {
-            line = reader.readLine();
-            lineNum++;
-            while (line != null) {
-                DataObject row = IpacTableUtil.parseRow(headers, line, isFixedLength, saveFormattedData);
-                if (row != null) {
-                    if (isSelectedColumns) {
-                        DataObject arow = new DataObject(data);
-                        for (DataType dt : data.getDataDefinitions()) {
-                            arow.setDataElement(dt, row.getDataElement(dt.getKeyName()));
-                            if (dt.getFormatInfo().isDefault()) {
-                                dt.getFormatInfo().setDataFormat(
-                                        headers.getDataDefintion(dt.getKeyName()).getFormatInfo().getDataFormatStr());
-                            }
-                        }
-                        data.add(arow);
-                    } else {
-                        data.add(row);
-                    }
-                }
-                line = reader.readLine();
-                lineNum++;
-            }
-        } catch(Exception e) {
-            String msg = e.getMessage()+"<br>on line "+lineNum+": " + line;
-            if (msg.length()>128) msg = msg.substring(0,128)+"...";
-            logger.error(e, "on line "+lineNum+": " + line);
-            throw new IOException(msg);
-        } finally {
-            reader.close();
-        }
-
-        if (!saveFormattedData) {
-            data.shrinkToFitData();
-        }
-        return data;
+    public static DataGroup read(Reader  reader, boolean isFixedLength, boolean readAsString, boolean saveFormattedData, String... onlyColumns) throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(reader, IpacTableUtil.FILE_IO_BUFFER_SIZE);
+        TableDef tableDef = IpacTableUtil.getMetaInfo(bufferedReader);
+        return  doRead(bufferedReader, tableDef, isFixedLength, readAsString, saveFormattedData, onlyColumns);
     }
 
     public static DataGroup getEnumValues(File inf, int cutoffPoint)  throws IOException {
@@ -236,7 +168,7 @@ public class DataGroupReader {
         }
 
         int readAhead = 10;
-        
+
         int row = 0;
         BufferedReader reader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         try {
@@ -297,11 +229,91 @@ public class DataGroupReader {
 
     }
 
+    private static DataGroup doRead(BufferedReader bufferedReader, TableDef tableDef, boolean isFixedLength, boolean readAsString, boolean saveFormattedData, String... onlyColumns) throws IOException {
+
+        List<DataGroup.Attribute> attributes = tableDef.getAllAttributes();
+        List<DataType> cols = tableDef.getCols();
+
+        if (readAsString) {
+            for (DataType dt : cols) {
+                dt.setDataType(String.class);
+            }
+        }
+
+        DataGroup inData = new DataGroup(null, cols);
+        DataGroup outData = null;
+        boolean isSelectedColumns = onlyColumns != null && onlyColumns.length > 0;
+
+        if (isSelectedColumns) {
+            List<DataType> selCols = new ArrayList<DataType>();
+            for (String c : onlyColumns) {
+                DataType dt = inData.getDataDefintion(c);
+                if (dt != null) {
+                    try {
+                        selCols.add((DataType) dt.clone());
+                    } catch (CloneNotSupportedException e) {}       // shouldn't happen
+                }
+            }
+            outData = new DataGroup(null, selCols);
+        } else {
+            outData = inData;
+        }
+
+        outData.setAttributes(attributes);
+
+        String line = null;
+        int lineNum = tableDef.getExtras() == null ? 0 : tableDef.getExtras().getKey();
+
+        try {
+            line = tableDef.getExtras() == null ? bufferedReader.readLine() : tableDef.getExtras().getValue();
+            lineNum++;
+            while (line != null) {
+                DataObject row = IpacTableUtil.parseRow(inData, line, isFixedLength, saveFormattedData);
+                if (row != null) {
+                    if (isSelectedColumns) {
+                        DataObject arow = new DataObject(outData);
+                        for (DataType dt : outData.getDataDefinitions()) {
+                            arow.setDataElement(dt, row.getDataElement(dt.getKeyName()));
+                            if (dt.getFormatInfo().isDefault()) {
+                                dt.getFormatInfo().setDataFormat(
+                                        inData.getDataDefintion(dt.getKeyName()).getFormatInfo().getDataFormatStr());
+                            }
+                        }
+                        outData.add(arow);
+                    } else {
+                        outData.add(row);
+                    }
+                }
+                line = bufferedReader.readLine();
+                lineNum++;
+            }
+        } catch(Exception e) {
+            String msg = e.getMessage()+"<br>on line "+lineNum+": " + line;
+            if (msg.length()>128) msg = msg.substring(0,128)+"...";
+            logger.error(e, "on line "+lineNum+": " + line);
+            throw new IOException(msg);
+        } finally {
+            bufferedReader.close();
+        }
+
+        if (!saveFormattedData) {
+            outData.shrinkToFitData();
+        }
+        return outData;
+
+    }
+
 
 
 //====================================================================
 //
 //====================================================================
+
+    public static enum Format { TSV(CSVFormat.TDF), CSV(CSVFormat.DEFAULT), IPACTABLE(), UNKNOWN(), FIXEDTARGETS(), FITS(), JSON();
+        CSVFormat type;
+        Format() {}
+        Format(CSVFormat type) {this.type = type;}
+    }
 
 }
 

@@ -115,10 +115,9 @@ public class JsonTableUtil {
             String fkey = DataSetParser.makeAttribKey(DataSetParser.FORMAT_DISP_TAG, dt.getKeyName());
             if (tableDef.contains(fkey)) {
                 dt.getFormatInfo().setDataFormat(tableDef.getAttribute(fkey).getValue());
-                dt.getFormatInfo().setWidth(Arrays.stream(new int[]{
-                        String.valueOf(dt.getKeyName()).length(),
-                        String.valueOf(dt.getDataUnit()).length(),
-                        String.valueOf(dt.getTypeDesc()).length()}).max().getAsInt());
+                String[] headers = new String[] {dt.getKeyName(), dt.getTypeDesc(), dt.getDataUnit(), dt.getNullString()};
+                int maxLength =  Arrays.stream(headers).mapToInt(s -> s == null ? 0 : s.length()).max().getAsInt();
+                dt.getFormatInfo().setWidth(maxLength);
                 formatChanged = true;
             }
         }

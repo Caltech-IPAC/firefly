@@ -37,6 +37,13 @@ public class StatisticsProcessorTest {
 
     }
 
+    public static void main(String args[]) throws IpacTableException, IOException, DataAccessException {
+        StatisticsProcessorTest myTest = new StatisticsProcessorTest();
+        setup();
+        myTest.testCreateStatisticTable();
+        myTest.testStatisticDataArray();
+    }
+
     @Test
     public void testCreateStatisticTable(){
 
@@ -90,16 +97,10 @@ public class StatisticsProcessorTest {
         Assert.assertArrayEquals(expectedColumnNames, colNames);
         Assert.assertArrayEquals(expectedUnits, unitNames );
 
-        Assert.assertArrayEquals(expectedMin, min, 10e-10);
-        Assert.assertArrayEquals(expectedMax, max, 10e-10);
+        Assert.assertArrayEquals(expectedMin, min, 10e-5);
+        Assert.assertArrayEquals(expectedMax, max, 10e-5);
         Assert.assertArrayEquals(expectedNumPoints, numPoints);
 
 
-    }
-    public static void main(String args[]) throws IpacTableException, IOException, DataAccessException {
-        StatisticsProcessorTest myTest = new StatisticsProcessorTest();
-        setup();
-        myTest.testCreateStatisticTable();
-        myTest.testStatisticDataArray();
     }
 }

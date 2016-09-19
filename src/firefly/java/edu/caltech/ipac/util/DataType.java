@@ -24,6 +24,7 @@ public class DataType implements Serializable, Cloneable {
     private static final String S_LONG = "l";
     private static final String S_CHAR = "c";
     private static final String S_BOOL = "b";
+    private static final String DEF_NULL_STR = "";
 
     private       Class      _type;
     private       String     _units;
@@ -129,6 +130,7 @@ public class DataType implements Serializable, Cloneable {
 
     public void setNullString(String nullString) {
         _nullString = nullString;
+        getFormatInfo().setNullString(_nullString);
     }
 
     public void setDataType(Class type)     { _type= type;       }
@@ -269,12 +271,14 @@ public class DataType implements Serializable, Cloneable {
     public FormatInfo getFormatInfo() {
         if ( _formatInfo == null ) {
             _formatInfo = FormatInfo.createDefaultFormat(getDataType());
+            _formatInfo.setNullString(getNullString());
         }
         return _formatInfo;
     }
 
     public void setFormatInfo(FormatInfo info) {
         _formatInfo = info;
+        _formatInfo.setNullString(_nullString);
     }
 
     private String importanceAsString() {
@@ -326,12 +330,12 @@ public class DataType implements Serializable, Cloneable {
 
 
         private static final int DEF_WIDTH = 30;
-        private static final String NULL_STR = "";
         private Align _headerAlign;
         private Align _dataAlign;
         private int _width;
         private String _dataFormat;
         private boolean _isDefault;
+        private String _nullString;
 
         /**
          * Creates a new FormatInfo good for formatting String.
@@ -364,6 +368,10 @@ public class DataType implements Serializable, Cloneable {
             _headerAlign = headerAlign;
             _dataAlign = dataAlign;
 
+        }
+
+        public void setNullString(String nullString) {
+            _nullString = nullString == null ? DEF_NULL_STR : nullString;
         }
 
         void setIsDefault(boolean aDefault) {
@@ -423,7 +431,7 @@ public class DataType implements Serializable, Cloneable {
          * @param value
          */
         public String formatDataOnly(Locale locale, Object value) {
-            if (value == null) return NULL_STR;
+            if (value == null) return _nullString;
             return getDataFormatStr() == null ? String.valueOf(value) : String.format(locale, getDataFormatStr(), value);
         }
 
@@ -438,23 +446,14 @@ public class DataType implements Serializable, Cloneable {
             return formatData(Locale.getDefault(), value);
         }
 
-        public String formatData(Object value, String strForNull) {
-            return formatData(Locale.getDefault(), value, strForNull);
-        }
-
         /**
          * Overloaded to format the data using a given locale.
          * @param locale
          * @param value
          */
         public String formatData(Locale locale, Object value) {
-            return formatData(locale, value, "");
-        }
-
-        public String formatData(Locale locale, Object value, String strForNull) {
             String fmtStr = (getDataAlign() == Align.LEFT ? "%-" : "%") + getWidth() + "." + getWidth()+ "s";
-            return String.format(locale, fmtStr, (value == null) ? strForNull : formatDataOnly(locale, value));
-
+            return String.format(locale, fmtStr, formatDataOnly(locale, value));
         }
 
         /**
@@ -463,7 +462,7 @@ public class DataType implements Serializable, Cloneable {
          * @return a string
          */
         public String formatHeader(String value) {
-            String v = value == null ? "" : value;
+            String v = value == null ? _nullString : value;
             String fmtStr = (getHeaderAlign() == Align.LEFT ? "%-" : "%") + getWidth() + "." + getWidth() + "s";
             return String.format(fmtStr, v);
         }

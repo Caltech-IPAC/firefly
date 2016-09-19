@@ -32,12 +32,23 @@ export function dataReducer(state={data:{}}, action={}) {
         case (Cntlr.TABLE_HIGHLIGHT)  :
         case (Cntlr.TABLE_UPDATE)  :
         {
-            const {tbl_id} = action.payload;
-            return TblUtil.smartMerge(root, {[tbl_id] : {isFetching:false, ...action.payload}});
+            var {tbl_id, totalRows} = action.payload;
+            const updates = {[tbl_id] : {isFetching:false, ...action.payload}};
+            if (totalRows) {     // update selectInfo.rowCount
+                var selectInfo = get(TblUtil.getTblById(tbl_id), 'selectInfo');
+                selectInfo = selectInfo ? {...selectInfo, rowCount: totalRows} : SelectInfo.newInstance({rowCount: totalRows}).data;
+                updates[tbl_id].selectInfo = selectInfo;
+            }
+            return TblUtil.smartMerge(root, updates);
         }
         case (Cntlr.TABLE_FETCH)      :
         case (Cntlr.TABLE_FILTER)      :
         case (Cntlr.TABLE_SORT)     :
+        {
+            const {tbl_id} = action.payload || {};
+            const nTable = Object.assign({isFetching:true, selectInfo: SelectInfo.newInstance({rowCount:0}).data}, action.payload);
+            return updateSet(root, [tbl_id], nTable);
+        }
         case (Cntlr.TABLE_REPLACE)  :
         {
             const {tbl_id} = action.payload || {};
