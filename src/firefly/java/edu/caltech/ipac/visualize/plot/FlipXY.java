@@ -28,7 +28,6 @@ public class FlipXY {
 
 
 
-
     /**c
      * constructor
      * @param inFitsRead - a FitsRead object
@@ -42,16 +41,40 @@ public class FlipXY {
         inNaxis1 = inImageHeader.naxis1;
         inNaxis2 = inImageHeader.naxis2;
 
-
     }
 
-    private int getDataDimension(BasicHDU hdu ){
+    private int getDataDimension( ){
 
 
         int naxis3 = inImageHeader.naxis > 2 ? inFitsHeader.getIntValue("NAXIS3", 0) : 0;
         int naxis4 = inImageHeader.naxis > 3 ? inFitsHeader.getIntValue("NAXIS4", 0) : 0;
         return ( naxis4 != 0 ? 4: ( naxis3 != 0 ? 3:2 ) ) ;
 
+    }
+
+    private Class getDataType(int bitPix){
+       Class type=null;
+       switch (bitPix){
+           case 8:
+              type = Byte.TYPE;
+              break;
+           case 16:
+               type = Short.TYPE;
+               break;
+           case 32:
+               type =Integer.TYPE;
+               break;
+           case 64:
+               type =Long.TYPE;
+               break;
+           case -32:
+               type = Float.TYPE;
+               break;
+           case -64:
+               type = Double.TYPE;
+               break;
+       }
+        return type;
     }
     /**
      * This method does the flip according to the flip  direction.
@@ -62,47 +85,33 @@ public class FlipXY {
 
         validate();
         BasicHDU hdu = fitsRead.getHDU();
-        int dim = getDataDimension(hdu);
-        //convert data to float
+
+
+        int dim = getDataDimension();
+        //convert data to float to do the calculation
         Object inData = ArrayFuncs.convertArray(hdu.getData().getData(), Float.TYPE);
-        short[]   masks =fitsRead.getMasks();
-        Object newData=null;
-        short[] newMasks = null;
+
+        Object fdata=null;
         if (direction.equalsIgnoreCase("yAxis")) {
-            newData = doFlipInY(inData, dim);
+            fdata = doFlipInY(inData, dim);
         } else if (direction.equalsIgnoreCase("xAxis")) {
-            newData = doFlipInX(inData, dim);
+            fdata = doFlipInX(inData, dim);
         } else {
             throw new FitsException(
                     "Cannot flip a PLATE projection image");
         }
-
-        if (masks!=null) {
-            Object newMaskData=null;
-            //flip masks
-            //convert mask array to two dimension
-            int[] dims = {inNaxis2,inNaxis1};
-            Object mask2D =  ArrayFuncs.curl(masks, dims);
-            if (direction.equalsIgnoreCase("yAxis")) {
-                newMaskData = doFlipInY(mask2D, dim);
-            } else if (direction.equalsIgnoreCase("xAxis")) {
-                newMaskData = doFlipInX(mask2D, dim);
-            } else {
-                throw new FitsException(
-                        "Cannot flip a PLATE projection image");
-            }
-            newMasks = (short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(newMaskData, Short.TYPE, true));
-        }
-
-        ImageData newImageData =  new ImageData(newData);
-          Header outFitsHeader = getOutFitsHeader();
+        //convert to the type to the same type as in the hdu
+        Object data =  ArrayFuncs.convertArray(fdata, getDataType(hdu.getBitPix()), true);
+        ImageData newImageData =  new ImageData(data);
+        //clone the inFitsRead header and then modify it
+        Header outFitsHeader = getOutFitsHeader();
         ImageHDU outHDU = new ImageHDU(outFitsHeader, newImageData);
         Fits newFits = new Fits();
         newFits.addHDU(outHDU);
 
         FitsRead[] outFitsRead = FitsRead.createFitsReadArray(newFits);
         FitsRead fr = outFitsRead[0];
-        fr.setMasks(newMasks);
+
         return fr;
     }
 
@@ -127,57 +136,64 @@ public class FlipXY {
 
     }
 
-
+    /**
+     * Do the flip along yAxis (naxis1)
+     * @param inData
+     * @param dim
+     * @return
+     */
     private Object doFlipInY(Object inData, int dim) {
 
         Object obj = null;
 
-        switch (dim) {
-            case 2:
-                float[][] newData2D = new float[inNaxis2][inNaxis1];
-                float[][] inData2D = (float[][]) inData;
+            switch (dim) {
+                case 2:
 
-                for (int line = 0; line < inNaxis2; line++) {
-                    int in_index = inNaxis1 - 1;
-                    for (int out_index = 0; out_index < inNaxis1; out_index++) {
-                        newData2D[line][out_index] = inData2D[line][in_index];
-                        in_index--;
+                     float[][] newData2D = new float[inNaxis2][inNaxis1];
+                     float[][] inData2D = (float[][]) inData;
+
+                     for (int line = 0; line < inNaxis2; line++) {
+                         int in_index = inNaxis1 - 1;
+                         for (int out_index = 0; out_index < inNaxis1; out_index++) {
+                             newData2D[line][out_index] = inData2D[line][in_index];
+                             in_index--;
+                         }
+                     }
+                     obj = newData2D;
+                    break;
+
+                case 3:
+                    float[][][] newData3D = new float[1][inNaxis2][inNaxis1];
+                    float[][][] inData3D = (float[][][]) inData;
+
+                    for (int line = 0; line < inNaxis2; line++) {
+
+                        int in_index = inNaxis1 - 1;
+                        for (int out_index = 0; out_index < inNaxis1; out_index++) {
+
+                            newData3D[0][line][out_index] =
+                                    inData3D[0][line][in_index];
+                            in_index--;
+                        }
                     }
-                }
-                obj = newData2D;
-                break;
-
-            case 3:
-                float[][][] newData3D = new float[1][inNaxis2][inNaxis1];
-                float[][][] inData3D = (float[][][]) inData;
-
-                for (int line = 0; line < inNaxis2; line++) {
-
-                    int in_index = inNaxis1 - 1;
-                    for (int out_index = 0; out_index < inNaxis1; out_index++) {
-
-                        newData3D[0][line][out_index] =
-                                inData3D[0][line][in_index];
-                        in_index--;
+                    obj = newData3D;
+                    break;
+                case 4:
+                    float[][][][] newData4D = new float[1][1][inNaxis2][inNaxis1];
+                    float[][][][] inData4D = (float[][][][]) inData;
+                    for (int line = 0; line < inNaxis2; line++) {
+                        int in_index = inNaxis1 - 1;
+                        for (int out_index = 0; out_index < inNaxis1; out_index++) {
+                            newData4D[0][0][line][out_index] =
+                                    inData4D[0][0][line][in_index];
+                            in_index--;
+                        }
                     }
-                }
-                obj = newData3D;
-                break;
-            case 4:
-                float[][][][] newData4D = new float[1][1][inNaxis2][inNaxis1];
-                float[][][][] inData4D = (float[][][][]) inData;
-                for (int line = 0; line < inNaxis2; line++) {
-                    int in_index = inNaxis1 - 1;
-                    for (int out_index = 0; out_index < inNaxis1; out_index++) {
-                        newData4D[0][0][line][out_index] =
-                                inData4D[0][0][line][in_index];
-                        in_index--;
-                    }
-                }
-                obj = newData4D;
-                break;
+                    obj = newData4D;
+                    break;
 
-        }
+            }
+
         return obj;
     }
 
@@ -189,53 +205,55 @@ public class FlipXY {
      */
     private Object doFlipInX(Object inData, int dim) {
 
+
         Object obj = null;
 
-        switch (dim) {
-            case 2:
-                float[][] newData2D = new float[inNaxis2][inNaxis1];
-                float[][] inData2D = (float[][]) inData;
+            switch (dim) {
+                case 2:
+                    float[][] newData2D = new float[inNaxis2][inNaxis1];
+                    float[][] inData2D = (float[][]) inData;
 
-                for (int line = 0; line < inNaxis1; line++) {
-                    int in_index = inNaxis2 - 1;
-                    for (int out_index = 0; out_index < inNaxis2; out_index++) {
-                        newData2D[out_index][line] = inData2D[in_index][line];
-                        in_index--;
+                    for (int line = 0; line < inNaxis1; line++) {
+                        int in_index = inNaxis2 - 1;
+                        for (int out_index = 0; out_index < inNaxis2; out_index++) {
+                            newData2D[out_index][line] = inData2D[in_index][line];
+                            in_index--;
+                        }
                     }
-                }
-                obj = newData2D;
-                break;
+                    obj = newData2D;
+                    break;
 
-            case 3:
-                float[][][] newData3D = new float[1][inNaxis2][inNaxis1];
-                float[][][] inData3D = (float[][][]) inData;
+                case 3:
+                    float[][][] newData3D = new float[1][inNaxis2][inNaxis1];
+                    float[][][] inData3D = (float[][][]) inData;
 
-                for (int line = 0; line < inNaxis1; line++) {
+                    for (int line = 0; line < inNaxis1; line++) {
 
-                    int in_index = inNaxis2 - 1;
-                    for (int out_index = 0; out_index < inNaxis2; out_index++) {
-                        newData3D[0][out_index][line] =
-                                inData3D[0][in_index][line];
-                        in_index--;
+                        int in_index = inNaxis2 - 1;
+                        for (int out_index = 0; out_index < inNaxis2; out_index++) {
+                            newData3D[0][out_index][line] =
+                                    inData3D[0][in_index][line];
+                            in_index--;
+                        }
                     }
-                }
-                obj = newData3D;
-                break;
-            case 4:
-                float[][][][] newData4D = new float[1][1][inNaxis2][inNaxis1];
-                float[][][][] inData4D = (float[][][][]) inData;
-                for (int line = 0; line < inNaxis1; line++) {
-                    int in_index = inNaxis2 - 1;
-                    for (int out_index = 0; out_index < inNaxis2; out_index++) {
-                        newData4D[0][0][out_index][line] =
-                                inData4D[0][0][in_index][line];
-                        in_index--;
+                    obj = newData3D;
+                    break;
+                case 4:
+                    float[][][][] newData4D = new float[1][1][inNaxis2][inNaxis1];
+                    float[][][][] inData4D = (float[][][][]) inData;
+                    for (int line = 0; line < inNaxis1; line++) {
+                        int in_index = inNaxis2 - 1;
+                        for (int out_index = 0; out_index < inNaxis2; out_index++) {
+                            newData4D[0][0][out_index][line] =
+                                    inData4D[0][0][in_index][line];
+                            in_index--;
+                        }
                     }
-                }
-                obj = newData4D;
-                break;
+                    obj = newData4D;
+                    break;
 
-        }
+            }
+
         return obj;
     }
     /**
@@ -303,8 +321,6 @@ public class FlipXY {
         }
         return;
     }
-
-
 
     /**
      * Add the cd1 and cd2 cards if they exist in the inFitsHeader
