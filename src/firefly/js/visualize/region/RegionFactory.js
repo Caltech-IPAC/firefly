@@ -54,8 +54,11 @@ export class RegionFactory {
      * @returns {null}
      */
     static parseRegionJson(regionData) {
+
+        var globalOptions = Object.assign({}, makeRegionOptions({[regionPropsList.COORD]: defaultCoord}));
+
         return regionData? regionData.reduce ( (prev, region, index) => {
-            const rg = RegionFactory.parsePart(region, index);
+            const rg = RegionFactory.parsePart(region, index, globalOptions);
 
             if (rg) {            // skip comment line and no good line
                 if (outputError(rg, region) ===  0) prev.push(rg);
@@ -74,36 +77,79 @@ export class RegionFactory {
      * @returns {array} an array of Region object
      */
     static parseRegionDS9(regionData, bAllowHeader = true, stopAt) {
-        var regionLines = regionData.reduce ((prev, oneLine) => {
-                var resRegions = oneLine.split(';');
+        const sep = ';';
+        const dLeft = ['{', '"', '\''];
+        const dRight = ['}', '"', '\''];
 
-                var crtCsys = null;
-                var preCsys = null;
-                var lastIdx = resRegions.length - 1;
+        // collect region lines and each line may contain coordinate, region description or both
+        var regionLines = regionData.reduce( (rLines, oneLine) => {
 
-                // combine coordinate and region definition of the same line
-                resRegions.forEach( (crtVal, index)  => {
-                    crtCsys = getRegionCoordSys(crtVal);
+            // split each string into a set of units which are separated by ';' with the consideration that the semicolon
+            // contained in the text or tag string is not counted as separator.
+            // Each unit could contain a coordinate string or a region description string
+            var getStringUnits = (oneLine) => {
+                var isInText = false;   // check if sep is inside a text string enclosed by a pair of delimiter
+                var crtSeg = '';        // current string unit
+                var dLimitIdx = -1;
+                var isLeftDelimiter = (c) => dLeft.findIndex((t) => (t === c));
 
-                    if (crtCsys !== RegionCsys.UNDEFINED) {  // coordinate string
-                        if (index === lastIdx) {
-                            prev = [...prev, crtVal];
-                        } else {
-                            preCsys = crtCsys;
-                        }
-                    } else {
-                        // region string or the last one is coordinate
-                        if (!preCsys) {
-                            prev = [...prev, crtVal];        // no coordinate prior to current string
-                        } else {
-                            prev = [...prev, `${resRegions[index - 1]};${crtVal}`]; // combine with coordinate
-                        }
-                        preCsys = null;
+                var addNewUnitTo = (prev) => {
+                    if (crtSeg.length > 0) {
+                        prev.push(crtSeg.slice(0));
+                        crtSeg = '';
                     }
-                });
+                };
 
-                return prev;
+                var incUnit = (v) => {
+                    crtSeg = crtSeg.concat(v);
+                };
+
+                var lUnits = oneLine.split('').reduce((oneLineUnits, v) => {
+                                if (v === sep) {
+                                    isInText ? incUnit(v) : addNewUnitTo(oneLineUnits);
+                                } else {
+                                    if (isInText) {
+                                        if (v === dRight[dLimitIdx]) {
+                                            isInText = false;
+                                        }
+                                    } else {
+                                        dLimitIdx = isLeftDelimiter(v);
+                                        isInText = dLimitIdx >= 0;
+                                    }
+                                    incUnit(v);
+                                }
+                                return oneLineUnits;
+                            }, []);
+
+                if (crtSeg.length > 0) {
+                    lUnits.push(crtSeg.slice());
+                }
+                return lUnits;
+            };
+
+            var units = getStringUnits(oneLine);
+            var lastIdx = units.length - 1;
+            var preCsys = null;                   // coordinate status of previous unit
+
+            // combine the coordinate unit and region description unit into one string line
+            var lines = units.reduce((unitSet, crtVal, index) => {
+                var crtCsys = getRegionCoordSys(crtVal);
+
+                if (crtCsys !== RegionCsys.UNDEFINED) {    // current string is coordinate unit
+                    if (index === lastIdx) {
+                        unitSet = [...unitSet, crtVal];
+                    } else {
+                        preCsys = crtCsys;
+                    }
+                } else {
+                    unitSet = [...unitSet, (preCsys ? `${units[index - 1]};${crtVal}` : crtVal)];
+                    preCsys = null;
+                }
+                return unitSet;
             }, []);
+
+            return [...rLines,...lines];
+        }, []);
 
         var globalOptions = Object.assign({}, makeRegionOptions({[regionPropsList.COORD]: defaultCoord}));
 
@@ -131,7 +177,7 @@ export class RegionFactory {
     }
     /**
      * parsePart parses the region data of JSON result (one item from RegionData array)
-     * @param regionStr
+     * @param regionStr each string is either like coordinate;region_description or region_descrption
      * @param index  line number shown in message
      * @param globalOptions
      * @param bAllowHeader
@@ -176,23 +222,28 @@ export class RegionFactory {
 
         // check if coordination system (from RegionDS9)
         tmpAry = regionStr.split(';');
+        var csys = getRegionCoordSys(tmpAry[0]);  // test the split first string
 
-        if (tmpAry.length <= 1) {
-            var csys = getRegionCoordSys(tmpAry[0]);
+        if (csys !== RegionCsys.UNDEFINED) {
+            if (globalOptions) globalOptions.coordSys = tmpAry[0].toLowerCase();
 
-            if (csys !== RegionCsys.UNDEFINED && globalOptions) {
-                globalOptions.coordSys = tmpAry[0].toLowerCase();
+            if (tmpAry.length <= 1) {    // pure coordinate string
                 return null;
             }
+            if (tmpAry.length > 2) {     // description contain ';'
+                tmpAry = [tmpAry[0], tmpAry.slice(1).join(';')];     // coordinate and description
+            }
+        } else if (tmpAry.length >= 2) {  // no coordinate and description contain ';'
+            tmpAry = [tmpAry.join(';')];
         }
 
-        // check if string contains  coordinate, description and property portions
-        // -- regionCoord --
-        if (tmpAry.length > 1) {
+
+        if (tmpAry.length > 1) {         // coordinate and description
             regionCoord = tmpAry[0].trim();
-            tmpAry.shift();
-            bCoord = true;           // coordinate is defined in this line
-        } else {
+            tmpAry.shift();              // remove the coordinate element
+
+            bCoord = true;
+        } else {                        // description only
             // default coordinate is PHYSICAL in case not specified
             regionCoord = globalOptions && has(globalOptions, regionPropsList.COORD)  ?
                 globalOptions[regionPropsList.COORD] : defaultCoord;
@@ -630,7 +681,7 @@ export class RegionFactory {
                                     (c !== RegionCsys.DETECTOR) );
 
         var makePt = (vx, vy, cs) => {
-            if (vx.unit === RegionValueUnit.IMAGE_PIXEL) {
+            if (vx.unit === RegionValueUnit.IMAGE_PIXEL || vx.unit === RegionValueUnit.P) {
                 return makeImagePt(vx.value, vy.value);
             } else {
                 return makeWorldPt(vx.value, vy.value, this.parse_coordinate(cs));

@@ -332,6 +332,19 @@
                 'image; box 280 200 72 72 0 # color=cyan text={right syntax}'
             ];
 
+            /*
+            window.regionWithSpecialChars = [
+                'circle  202.4844693750341 47.23118060364845 13.9268922364868 # color=blue text={j2000 ; circle on ; J2000}',
+                'J2000;box 202.4844693750341 47.23118060364845 0.0069268922364 0.0069268922364  0 # color=red text={box on # J2000 with radius ## 0.00198268922364868}',
+                'circle  100.4844693750341 147.23118060364845 0.0239268922364868 # color=purple text="j2000 ; circle on # J2000"'
+            ];
+            */
+            window.regionWithSpecialChars = [
+                'circle  202.4844693750341 47.23118060364845 13.9268922364868 # color=cyan text={physical;circle ;; color=cyan}',
+                'J2000;box 202.4844693750341 47.23118060364845 0.0069268922364 0.0069268922364  0 # color=red text={box on # J2000 with size ## 0.0069268922364}',
+                'image;circle  100.4844693750341 147.23118060364845 10.0239268922364868 # color=#B8E986 text="image ; circle # color=#B8E986"'
+            ];
+
 
             window.moreRegionAry =  [
                 'image;ellipse 100 100 20p 40p 30p 60p 40p 80p 20 # color=green text={ellipseannulus 2}',
@@ -359,7 +372,8 @@
                 document.getElementById('createRegionId').value = layerId;
 
             }
-            document.getElementById('regionLayerContent').value = window.smallregion.join('\n');
+            document.getElementById('regionLayerContent').value = window.regionWithSpecialChars.join('\n');
+
 /*
             if (window.regionId === 0) {
                 document.getElementById('regionLayerContent').value = window.emptyRegion;
