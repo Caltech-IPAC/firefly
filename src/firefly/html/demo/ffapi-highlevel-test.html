@@ -317,8 +317,15 @@
                 'j2000;box(47.247072i, 180.445347i, 50p, 20p, 0) # color=blue width=6 text="box 12-3"',
                 'physical;-box point 12 12 # text="pt box 13"',
                 'j2000;polygon(202.564796, 47.281999,202.553758, 47.247072, 202.445347, 47.244296, 202.479687, 47.264027, 202.492153, 47.290841) # color=blue text="polygon 14" offsety=10 width=10 font="helvetica 16 bold"',
-                'point    202.45   47.2879 # color=cyan text="pt arrow 15" delete=0 point=arrow 20',
+                'point    202.45   47.2879 # color=cyan text="pt arrow 15" delete=0 point=arrow 20'
             ];
+
+
+            window.smallregion = [
+                'J2000;circle  202.4844693750341 47.23118060364845 0.0139268922364868 # color=blue text="circle on J2000"',
+            'J2000;annulus 202.4844693750341 47.23118060364845 0.00198268922364868 0.00198268922364868 # color=red text="circle on J2000 with radius 0.00198"',
+            'J2000;box 202.4844693750341 47.23118060364845 0.00658268922364868 0.00658268922364868 0 # color=green text="box on J2000"',
+            'image;box 50 50 0.00578268922364868 0.00578268922364868 0 # color=yellow text="box on image"'];
 
             window.regionWithError = [
                 'image; box 280 200 72 72 # color=blue text={wrong syntax}',
@@ -352,7 +359,7 @@
                 document.getElementById('createRegionId').value = layerId;
 
             }
-            document.getElementById('regionLayerContent').value = window.regionAry2.join('\n');
+            document.getElementById('regionLayerContent').value = window.smallregion.join('\n');
 /*
             if (window.regionId === 0) {
                 document.getElementById('regionLayerContent').value = window.emptyRegion;

@@ -246,7 +246,7 @@ export function makeFootprint(regions, centerPt, isHandle, cc, text, textLoc) {
 
 
 function makeDrawParams(drawObj,def={}) {
-    var color= DrawUtil.getColor(drawObj.color,def.color);
+    var color= def.color || drawObj.color || 'green';
     var style= drawObj.style || def.style || Style.STANDARD;
     var lineWidth= drawObj.lineWidth || def.lineWidth || DEF_WIDTH;
     var textLoc= drawObj.textLoc || def.textLoc || TextLocation.DEFAULT;
@@ -927,18 +927,26 @@ export function findClosestIndex(screenPt, drawObj, cc) {
 }
 
 /**
- * update the color based on the setting in def
- * @param oneDrawObj
+ * update the color based on the setting in def for all drawing objects except center, resize & rotate handles
+ * @param drawObj
  * @param def
  */
-function updateColorFromDef(oneDrawObj, def) {
-    var {color} = def;
-    if (!color) return;
+function updateColorFromDef(drawObj, def) {
+    var getColor = (obj) => (get(def, 'color') || drawObj.color || 'green'); // def color overide the original color
 
-    oneDrawObj.color = color;
-    if (has(oneDrawObj, 'drawObjAry')) {
-        oneDrawObj.drawObjAry.forEach((obj) => obj.color = color);
-    }
+    drawObj.color = getColor(drawObj);
+    if (!drawObj.drawObjAry) return;
+
+    drawObj.drawObjAry.forEach((oneDrawObj) => {
+        if (oneDrawObj && get(oneDrawObj, 'isMarker', false)) {  // drawing object contained in footprint
+            oneDrawObj.color = getColor(oneDrawObj);
+            if (has(oneDrawObj, 'drawObjAry')) {      // a composite drawing object, like polygon
+                oneDrawObj.drawObjAry.forEach((oneShape) => {
+                    oneShape.color = getColor(oneShape);
+                });
+            }
+        }
+    });
 }
 
 /**
@@ -1022,7 +1030,7 @@ export function drawMarkerObject(drawObjP, ctx, drawTextAry, plot, def, vpPtM, o
 
         // draw the same objects on multiple plots
         if (get(drawObj, 'plotImageId') !== plot.plotImageId && get(drawObj, 'isRotable', false)) {
-            computeRotAngleOnPlot(drawObj, plot);   // chenge footprint object internal plot related numbers
+            computeRotAngleOnPlot(drawObj, plot);   // update the rotate angle of outline box depending on the plot
         }
 
         var newObj = Object.assign({}, drawObj, {drawObjAry: drawObj.drawObjAry.slice(0, drawObj.outlineIndex)});
@@ -1035,15 +1043,14 @@ export function drawMarkerObject(drawObjP, ctx, drawTextAry, plot, def, vpPtM, o
                                                          [MARKER_HANDLE.resize, MARKER_HANDLE.rotate]));
         }
 
-        // draw the child drawObj
+        // newObj is made for display
+        updateColorFromDef(newObj, def);
         newObj.drawObjAry.forEach((oneDrawObj) => {
-            if (oneDrawObj && get(oneDrawObj, 'isMarker', false)) {
-                updateColorFromDef(oneDrawObj, def);
-            }
             DrawOp.draw(oneDrawObj, ctx, drawTextAry, plot, def, vpPtM, onlyAddToPath);
         });
 
         drawFootprintText(newObj, plot, def, drawTextAry);
+        set(drawObjP, ['textWorldLoc', plot.plotImageId], newObj.textWorldLoc);
     }
 }
 
@@ -1279,8 +1286,8 @@ export function updateMarkerSize(markerObj, cc, newSize) {
     var newObj = clone(markerObj);
 
     if (drawObjAry && drawObjAry.length > 0) {
-        var {size, unitType} = newSize;
-        var radius = lengthSizeUnit(cc, Math.min(size[0], size[1])/2, unitType);
+        var {size} = newSize;
+        var radius = lengthSizeUnit(cc, Math.min(size[0], size[1])/2, newSize.unitType);
 
         newObj = Object.assign(newObj, {width: radius.len, height: radius.len, unitType: radius.unit });
         newObj.drawObjAry = [clone(drawObjAry[0], {radius: radius.len, unitType: radius.unit})];
@@ -1294,32 +1301,6 @@ export function updateMarkerSize(markerObj, cc, newSize) {
     return newObj;
 }
 
-/**
- * update the text attached to the marker object
- * @param drawObj
- * @param text
- * @param textLoc
- * @returns {*}
- */
-export function updateMarkerDrawObjText(drawObj, text, textLoc) {
-    if (!has(drawObj, 'drawObjAry')) return null;
-
-    var mainIndex = drawObj.drawObjAry.findIndex( (dObj) => (dObj.sType === ShapeDataObj.ShapeType.Circle));
-
-    if (!text)  text = '';
-    if (!textLoc)  textLoc = defaultMarkerTextLoc;
-    var textInfo = {text, textLoc};
-
-    if ( mainIndex >= 0 ) {
-        var newMain = Object.assign({}, drawObj.drawObjAry[mainIndex], textInfo);
-        var newDrawObj = Object.assign({}, drawObj);
-
-        newDrawObj.drawObjAry[mainIndex] = newMain;
-
-        return newDrawObj;
-    }
-    return null;
-}
 
 /**
  * update the text attached to the footprint object
@@ -1349,9 +1330,28 @@ export function toMarkerRegion(drawObj,plot, def) {
 
     var dObjs = drawObj.drawObjAry.slice(0, drawObj.outlineIndex); // exclude center, outline box, and handles.
 
+    updateColorFromDef(drawObj, def);
+    var resRegions = [];
+    var {text} = drawObj;
+
+    if (text) {
+        var textImgLoc = get(drawObj, ['textWorldLoc', plot.plotImageId], null);
+
+        if (textImgLoc) {
+            var fontName= drawObj.fontName || def.fontName || 'helvetica';
+            var fontSize= drawObj.fontSize || def.fontSize || DEFAULT_FONT_SIZE;
+            var fontWeight= drawObj.fontWeight || def.fontWeight || 'normal';
+            var fontStyle= drawObj.fontStyle || def.fontStyle || 'normal';
+
+            fontSize = fontSize.slice(0, fontSize.indexOf('pt'));
+
+            var textReg = `text ${textImgLoc.x}i ${textImgLoc.y}i # color=${drawObj.color} text={${text}}` +
+                          ` font="${fontName} ${fontSize} ${fontWeight} ${fontStyle}"`;
+            resRegions = [textReg];
+        }
+    }
     return dObjs.reduce( (prev, dObj) => {
         if (get(dObj, 'isMarker', false)) {      // ignore the drawObj not derived from the defined region
-            updateColorFromDef(dObj, def);
             var regList = DrawOp.toRegion(dObj, plot, def);
 
             if (!isEmpty(regList)) {
@@ -1359,7 +1359,7 @@ export function toMarkerRegion(drawObj,plot, def) {
             }
         }
         return prev;
-    }, []);
+    }, resRegions);
 }
 
 

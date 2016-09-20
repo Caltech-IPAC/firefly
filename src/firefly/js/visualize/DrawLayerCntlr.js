@@ -130,9 +130,9 @@ export function dispatchRetrieveData(drawLayerId) {
 
 
 /**
- *
- * @param drawLayerTypeId
- * @param params
+ * @summary create drawing layer
+ * @param {string} drawLayerTypeId - id of drawing layer
+ * @param {Object} params
  * @public
  * @memberof firefly.action
  * @function  dispatchCreateDrawLayer
@@ -149,7 +149,7 @@ export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
 
 
 /**
- *
+ * @summary change the visibility of the drawing layer
  * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param visible
  * @param plotId
@@ -168,7 +168,7 @@ export function dispatchChangeVisibility(id,visible, plotId, useGroup= true) {
 }
 
 /**
- *
+ * @summary change the drawing definition of the drawing layer
  * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param drawingDef
  * @param plotId
@@ -188,7 +188,7 @@ export function dispatchChangeDrawingDef(id,drawingDef, plotId, useGroup= true) 
 
 
 /**
- *
+ * @summary create custom changes to the drawing layer
  * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param changes
  * @param plotId
@@ -208,12 +208,11 @@ export function dispatchModifyCustomField(id,changes, plotId, useGroup= true) {
 }
 
 /**
- *
- *
+ * @summary force to update the drawing layer
  * @param id
  * @param plotId
  * @param useGroup
- *  @public
+ * @public
  * @memberof firefly.action
  * @function dispatchForceDrawLayerUpdate
  */
@@ -230,7 +229,7 @@ export function dispatchForceDrawLayerUpdate(id,plotId, useGroup= true) {
 
 
 /**
- *
+ * @summary destroy the drawing layer
  * @param {string} id make the drawLayerId or drawLayerTypeId
  * @public
  * @memberof firefly.action
@@ -244,7 +243,7 @@ export function dispatchDestroyDrawLayer(id) {
 }
 
 /**
- *
+ * @summary attach drawing layer to plot
  * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param {string|string[]} plotId to attach this may by a string or an array of strings
  * @param attachPlotGroup
@@ -318,7 +317,8 @@ function validateSelectMode(selectMode) {
  * @summary shallow object with the rendering parameters for selected region
  * @prop {string}  [selectStyle='UprightBox'] - rendering style for the selected region including 'UprightBox', 'DottedOverlay',
  * 'SolidOverlay', 'DottedReplace', and 'SolidReplace'
- * @prop {string}  [selectColor='#DAA520'] - rendering color for the selected region, ex: '#DAA520' 'red'
+ * @prop {string}  [selectColor='#DAA520'] - rendering color for the selected region, CSS color values, such as '#DAA520' 'red'.
+ * are valid for rendering.
  * @prop {int}     [lineWidth=0] - rendering line width for the selected region. 0 or less means the line width
  * is the same as that of the selected region
  */
@@ -411,9 +411,6 @@ export function dispatchSelectRegion(drawLayerId, selectedRegion, dispatcher = f
 }
 
 /**
- *
- */
-/**
  * @summary create drawing layer with marker
  * @param {string} markerId - id of the drawing layer
  * @param {string} layerTitle - title of the drawing layer
@@ -434,7 +431,7 @@ export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], att
  * @param {string} footprint - name of footprint project, such as 'HST', 'WFIRST', etc.
  * @param {string} instrument - name of instrument for the footprint
  * @param {string[]|string} plotId - array or string of plot id. If plotId is empty, all plots of the active group are applied
- * @param {bool} attachPlotGroup - - attach all plots of the same plot group
+ * @param {bool} attachPlotGroup - attach all plots of the same plot group
  * @param dispatcher
  * @public
  * @function dispatchCreateFootprintLayer
