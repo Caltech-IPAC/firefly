@@ -21,16 +21,12 @@ export const DRAW_LAYER_POPUP= 'DrawLayerPopup';
 
 function getDialogBuilder() {
     var popup= null;
+    const defaultTitle = 'Drawing Layers';
     return () => {
         if (!popup) {
-            var title = 'Drawing Layers';
-            //try {
-            //    if(visRoot()){
-            //        title += ': '+getActivePlotView(visRoot()).plots[0].title;
-            //    }
-            //}catch (E){
-            //    //
-            //}
+            var title = get( getActivePlotView(visRoot()), ['plots', '0', 'title']);
+            title = title ? `Layers- ${title}` : defaultTitle;
+
             const popup= (
                 <PopupPanel title={title} >
                     <DrawLayerPanel/>
