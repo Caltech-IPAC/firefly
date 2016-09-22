@@ -17,7 +17,7 @@ import {InputAreaFieldConnected} from './InputAreaField.jsx';
 import {FileUpload} from '../ui/FileUpload.jsx';
 
 import CsysConverter from '../visualize/CsysConverter.js';
-import {getActivePlotView} from '../visualize/PlotViewUtil.js';
+import {primePlot} from '../visualize/PlotViewUtil.js';
 import { makeImagePt} from '../visualize/Point.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 
@@ -190,9 +190,9 @@ function sizeArea(searchType, max) {
         );
     } else if (searchType === SpatialMethod.Polygon.value) {
         let val = '';
-        var pv = getActivePlotView(visRoot());
+        var pv = primePlot(visRoot());
         if (pv) {
-            var plot = pv.plots[0];
+            var plot = pv;
             var w = plot.dataWidth;
             var h = plot.dataHeight;
             var cc = CsysConverter.make(plot);
