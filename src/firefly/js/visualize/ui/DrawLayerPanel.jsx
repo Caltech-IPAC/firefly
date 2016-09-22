@@ -7,7 +7,7 @@ import React from 'react';
 import {get} from 'lodash';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import sCompare from 'react-addons-shallow-compare';
-import {getActivePlotView, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
+import {getActivePlotView, getAllDrawLayersForPlot, primePlot} from '../PlotViewUtil.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {getDlAry} from '../DrawLayerCntlr.js';
@@ -21,11 +21,11 @@ export const DRAW_LAYER_POPUP= 'DrawLayerPopup';
 
 function getDialogBuilder() {
     var popup= null;
-    const defaultTitle = 'Drawing Layers';
+    const defaultTitle = 'Layers- ';
     return () => {
         if (!popup) {
-            var title = get( getActivePlotView(visRoot()), ['plots', '0', 'title']);
-            title = title ? `Layers- ${title}` : defaultTitle;
+            const plot = primePlot(visRoot());
+            var title = plot ? `${defaultTitle}${plot.title}` : defaultTitle;
 
             const popup= (
                 <PopupPanel title={title} >
