@@ -90,10 +90,12 @@ function stretchByType(pv,currRV,sType,min,max) {
 }
 
 
-
+/*
+ *  LZ 9/21/16  DM-7695
+ */
 export function StretchDropDownView({plotView:pv}) {
     var enabled= pv ? true : false;
-    var rv= primePlot(pv).plotState.getRangeValues();
+    var rv= primePlot(pv).plotState.getPrimaryRangeValues();//getRangeValues();//LZ 9/21/16
     return (
         <SingleColumnMenu>
             <ToolbarButton text='Color stretch...'
