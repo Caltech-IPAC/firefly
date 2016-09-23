@@ -681,7 +681,7 @@ export class RegionFactory {
                                     (c !== RegionCsys.DETECTOR) );
 
         var makePt = (vx, vy, cs) => {
-            if (vx.unit === RegionValueUnit.IMAGE_PIXEL || vx.unit === RegionValueUnit.P) {
+            if (vx.unit === RegionValueUnit.IMAGE_PIXEL || vx.unit === RegionValueUnit.SCREEN_PIXEL) {
                 return makeImagePt(vx.value, vy.value);
             } else {
                 return makeWorldPt(vx.value, vy.value, this.parse_coordinate(cs));
