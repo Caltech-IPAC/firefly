@@ -179,7 +179,9 @@ public class RegionFactory {
                     }
                     if (isCoordSys(lineBegin)) {
                         coordSys = getCoordSys(lineBegin);
-                        retList.add(coordSys);    // a new coordinate setting
+                        if (allowHeader) {
+                            retList.add(coordSys);    // a new coordinate setting
+                        }
                         continue;
                     }
                     else {
