@@ -36,6 +36,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 
 /**
  * @author Trey Roby
@@ -62,9 +65,11 @@ public class RegionFactory {
                 try {
                     List<RegionFileElement> resultList= RegionFactory.parsePart(s, coordSys, g, allowHeader);
                     if (allowHeader) {
-                        g= RegionFactory.getGlobal(resultList, g);
-                        coordSys= RegionFactory.getCsys(resultList, coordSys);
+                        g = RegionFactory.getGlobal(resultList, g);
                     }
+                    coordSys= RegionFactory.getCsys(resultList, coordSys);  //current coordinate applies to next region
+                                                                            //which has no coordinate set in front.
+
                     if (RegionFactory.containsRegion(resultList)) {
                         allowHeader= false;
                         RegionFactory.addAllRegions(resultList, regList);
@@ -78,9 +83,54 @@ public class RegionFactory {
         return new ParseRet(regList,msgList);
     }
 
+    private static Boolean isInText;
+    private static String  crtSeg;
+    private static int     dLimitIdx;
+    private static List<String> oneLineUnits;
+    private static String[] dLeft = {"{", "\"", "\'"};
+    private static String[] dRight = {"}", "\"", "\'"};
 
 
+    private static String[] splitStringBySeparator(String inString, String sep) {
+        List<String> charsInString = Arrays.asList(inString.split(""));
 
+        dLimitIdx = -1;
+        isInText = false;
+        crtSeg = "";
+        oneLineUnits = new ArrayList<String>();
+
+        charsInString
+            .stream()
+            .forEach( (c) -> {
+                if (c.equals(sep)) {
+                    if (isInText) {
+                        crtSeg += c;
+                    } else {
+                        if (crtSeg.length() > 0) {
+                            oneLineUnits.add(crtSeg);
+                            crtSeg = "";
+                        }
+                    }
+                } else {
+                    if (isInText) {
+                        if (c.equals(dRight[dLimitIdx])) {
+                            isInText = false;
+                        }
+                    } else {
+                        dLimitIdx = Arrays.asList(dLeft).indexOf(c.toString());
+                        isInText = dLimitIdx >= 0;
+                    }
+                    crtSeg += c;
+
+                }
+            });
+
+        if (crtSeg.length() > 0) {
+            oneLineUnits.add(crtSeg);
+            crtSeg = "";
+        }
+        return oneLineUnits.toArray(new String[oneLineUnits.size()]);
+    }
 
     public static List<RegionFileElement> parsePart(String inString) throws RegParseException {
         return parsePart(inString, RegionCsys.IMAGE, new Global(new RegionOptions()),false);
@@ -91,7 +141,7 @@ public class RegionFactory {
 
         if (coordSys==null) coordSys= RegionCsys.IMAGE;
         RegionOptions globalOps= global!=null ? global.getOptions() : null;
-        String sAry[]= inString.split(";");
+        String sAry[]= splitStringBySeparator(inString, ";"); // inString.split(";");
         List<RegionFileElement> retList= new ArrayList<RegionFileElement>(4);
 
         for (String virtualLine: sAry) {
@@ -116,7 +166,7 @@ public class RegionFactory {
             Region region = null;
             String region_type= null;
             boolean include= true;
-            boolean isWorldCoord = false;
+
 
             try
             {
@@ -129,9 +179,7 @@ public class RegionFactory {
                     }
                     if (isCoordSys(lineBegin)) {
                         coordSys = getCoordSys(lineBegin);
-                        if (allowHeader) {
-                            retList.add(coordSys);
-                        }
+                        retList.add(coordSys);    // a new coordinate setting
                         continue;
                     }
                     else {
@@ -144,8 +192,9 @@ public class RegionFactory {
                         }
                     }
                 }
+
+                boolean isWorldCoord = isWorldCoords(coordSys);
                 if (st.hasMoreToken()) {
-                    isWorldCoord = isWorldCoords(coordSys);
 
                     if (region_type.equals("vector")      ||
                         region_type.equals("ruler")       ||
@@ -589,6 +638,7 @@ public class RegionFactory {
         StringTokenizer st= new StringTokenizer(s, " ");
         String workStr= s;
         retval.ops.setInclude(include);
+
         while (st.hasMoreToken())
         {
             String token = st.nextToken();
@@ -618,39 +668,45 @@ public class RegionFactory {
                 retval.ops.setOffsetY(parseInt(token, 0));
             }
             else if (token.toLowerCase().startsWith("text=")) {
-                int endIdx= 5;
+                int endIdx= 0;
                 String textPlus= workStr.substring(workStr.indexOf("text=")+5);
                 String start= getStartCharOfString(textPlus);
                 if (start!=null && textPlus.startsWith(start)) {
                     String end=  (start.equals("{")) ? "}" : start;
-                    textPlus= textPlus.substring(1);
-                    endIdx= textPlus.indexOf(end);
-                    if (endIdx>-1) {
-                        String textString= textPlus.substring(0,endIdx);
+                    endIdx= textPlus.indexOf(end, 1);
+                    if (endIdx > 0) { // end is found
+                        String textString= textPlus.substring(1,endIdx);
                         retval.ops.setText(textString);
-                    }
-                    else {
-                        endIdx= 5;
+                        endIdx++;
+                    } else {            // end is not found
+                        endIdx = 1;
                     }
                 }
-                workStr= workStr.substring(endIdx+1).trim();
+
+                workStr = textPlus.substring(endIdx).trim();
+                if (workStr.length() == 0) {
+                    break;
+                }
                 st= new StringTokenizer(workStr, " ");
             }
             else if (token.toLowerCase().startsWith("font=")) {
-                int endIdx= 5;
+                int endIdx= 0;
                 String textPlus= workStr.substring(workStr.indexOf("font=")+5);
                 if (textPlus.startsWith("\"")) {
-                    textPlus= textPlus.substring(1);
-                    endIdx= textPlus.indexOf("\"");
-                    if (endIdx>-1) {
-                        String fontString= textPlus.substring(0,endIdx);
+                    endIdx = textPlus.indexOf("\"", 1);
+                    if (endIdx > 0) {
+                        String fontString = textPlus.substring(1, endIdx);
                         retval.ops.setFont(new RegionFont(fontString));
-                    }
-                    else {
-                        endIdx= 5;
+                        endIdx++;
+                    } else {
+                        endIdx = 1;
                     }
                 }
-                workStr= workStr.substring(endIdx+1).trim();
+                workStr = textPlus.substring(endIdx).trim();
+                if (workStr.length() == 0) {
+                    break;
+                }
+
                 st= new StringTokenizer(workStr, " ");
             }
             else if (token.toLowerCase().startsWith("point=")) {
