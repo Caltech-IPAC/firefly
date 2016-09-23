@@ -81,57 +81,57 @@ export class RegionFactory {
         const dLeft = ['{', '"', '\''];
         const dRight = ['}', '"', '\''];
 
-        // collect region lines and each line may contain coordinate, region description or both
-        var regionLines = regionData.reduce( (rLines, oneLine) => {
+        // split each string into a set of units which are separated by ';' with the consideration that the semicolon
+        // contained in the text or tag string is not counted as separator.
+        // Each unit could contain a coordinate string or a region description string
 
-            // split each string into a set of units which are separated by ';' with the consideration that the semicolon
-            // contained in the text or tag string is not counted as separator.
-            // Each unit could contain a coordinate string or a region description string
-            var getStringUnits = (oneLine) => {
-                var isInText = false;   // check if sep is inside a text string enclosed by a pair of delimiter
-                var crtSeg = '';        // current string unit
-                var dLimitIdx = -1;
-                var isLeftDelimiter = (c) => dLeft.findIndex((t) => (t === c));
+        var getStringUnits = (oneLine) => {
+            var isInText = false;   // check if sep is inside a text string enclosed by a pair of delimiter
+            var crtSeg = '';        // current string unit
+            var dLimitIdx = -1;
+            var isLeftDelimiter = (c) => dLeft.findIndex((t) => (t === c));
 
-                var addNewUnitTo = (prev) => {
-                    if (crtSeg.length > 0) {
-                        prev.push(crtSeg.slice(0));
-                        crtSeg = '';
-                    }
-                };
-
-                var incUnit = (v) => {
-                    crtSeg = crtSeg.concat(v);
-                };
-
-                var lUnits = oneLine.split('').reduce((oneLineUnits, v) => {
-                                if (v === sep) {
-                                    isInText ? incUnit(v) : addNewUnitTo(oneLineUnits);
-                                } else {
-                                    if (isInText) {
-                                        if (v === dRight[dLimitIdx]) {
-                                            isInText = false;
-                                        }
-                                    } else {
-                                        dLimitIdx = isLeftDelimiter(v);
-                                        isInText = dLimitIdx >= 0;
-                                    }
-                                    incUnit(v);
-                                }
-                                return oneLineUnits;
-                            }, []);
-
+            var addNewUnitTo = (prev) => {
                 if (crtSeg.length > 0) {
-                    lUnits.push(crtSeg.slice());
+                    prev.push(crtSeg.slice(0));
+                    crtSeg = '';
                 }
-                return lUnits;
             };
 
+            var incUnit = (v) => {
+                crtSeg = crtSeg.concat(v);
+            };
+
+            var lUnits = oneLine.split('').reduce((oneLineUnits, v) => {
+                if (v === sep) {
+                    isInText ? incUnit(v) : addNewUnitTo(oneLineUnits);
+                } else {
+                    if (isInText) {
+                        if (v === dRight[dLimitIdx]) {
+                            isInText = false;
+                        }
+                    } else {
+                        dLimitIdx = isLeftDelimiter(v);
+                        isInText = dLimitIdx >= 0;
+                    }
+                    incUnit(v);
+                }
+                return oneLineUnits;
+            }, []);
+
+            if (crtSeg.length > 0) {
+                lUnits.push(crtSeg.slice());
+            }
+            return lUnits;
+        };
+
+        // collect region lines and each line may contain coordinate, region description or both
+        var regionLines = regionData.reduce( (rLines, oneLine) => {
             var units = getStringUnits(oneLine);
             var lastIdx = units.length - 1;
             var preCsys = null;                   // coordinate status of previous unit
 
-            // combine the coordinate unit and region description unit into one string line
+            // combine the coordinate unit and region description unit from the same line into one string
             var lines = units.reduce((unitSet, crtVal, index) => {
                 var crtCsys = getRegionCoordSys(crtVal);
 
