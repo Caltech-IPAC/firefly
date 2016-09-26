@@ -123,7 +123,7 @@ export class TablePanel extends Component {
         if (isEmpty(columns)) return <Loading {...{showTitle, tbl_id, title, removable}}/>;
 
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
-        const viewIcoStyle = 'TablePanel__button ' + (textView ? 'tableView' : 'textView');
+        const viewIcoStyle = 'PanelToolbar__button TablePanel__button ' + (textView ? 'tableView' : 'textView');
         const tableTopPos = showToolbar ? 29 : 0;
         const TT_VIEW = textView ? TT_TABLE_VIEW : TT_TEXT_VIEW;
 
@@ -132,14 +132,14 @@ export class TablePanel extends Component {
             <div className='TablePanel'>
                 <div className={'TablePanel__wrapper' + (border ? '--border' : '')}>
                     {showToolbar &&
-                        <div role='toolbar' className='TablePanel__toolbar'>
+                        <div className='PanelToolbar TablePanel__toolbar'>
                             {showTitle ? <TableTitle {...{tbl_id, title, removable}} /> : <div/>}
                             {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:tableConnector}} /> }
-                            <div className='group'>
+                            <div className='PanelToolbar__group'>
                                 {showFilterButton && filterCount > 0 &&
-                                    <button onClick={this.clearFilter}
+                                    <div onClick={this.clearFilter}
                                             title={TT_CLEAR_FILTER}
-                                            className='TablePanel__button clearFilters'/>}
+                                            className='PanelToolbar__button TablePanel__button clearFilters'/>}
                                 {showFilterButton &&
                                     <ToolbarButton icon={FILTER}
                                                    tip={TT_SHOW_FILTER}
@@ -147,22 +147,22 @@ export class TablePanel extends Component {
                                                    badgeCount={filterCount}
                                                    onClick={this.toggleFilter}/>
                                 }
-                                <button onClick={this.toggleTextView}
+                                <div onClick={this.toggleTextView}
                                         title={TT_VIEW}
                                         className={viewIcoStyle}/>
                                 {showSave &&
-                                    <button onClick={this.saveTable}
+                                    <div onClick={this.saveTable}
                                             title={TT_SAVE}
-                                            className='TablePanel__button save'/> }
+                                            className='PanelToolbar__button TablePanel__button save'/> }
                                 {showOptionButton &&
-                                    <button style={{marginLeft: '4px'}}
+                                    <div style={{marginLeft: '4px'}}
                                             title={TT_OPTIONS}
                                             onClick={this.toggleOptions}
-                                            className='TablePanel__button options'/> }
+                                            className='PanelToolbar__button TablePanel__button options'/> }
                                 { expandable && !expandedMode &&
-                                    <button onClick={this.expandTable} title={TT_EXPAND}>
+                                    <div className='PanelToolbar__button' onClick={this.expandTable} title={TT_EXPAND}>
                                         <img src={OUTLINE_EXPAND}/>
-                                    </button>}
+                                    </div>}
                                 { help_id && <div style={{marginTop:-10}}> <HelpIcon helpId={help_id} /> </div>}
                             </div>
                         </div>

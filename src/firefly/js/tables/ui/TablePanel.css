@@ -103,6 +103,7 @@
 }
 
 .PagingBar__button:hover {
+    background-color: rgba(0,0,0,.15);
     cursor: pointer;
 }
 

@@ -206,19 +206,19 @@
 }
 /* react-split-pane style <END> */
 
-[role="toolbar"] {
+.PanelToolbar {
     display: flex;
     justify-content: space-between;
     height:30px;
 }
 
-[role="toolbar"] .group {
+.PanelToolbar__group {
     background-color: #c8c8c8;
     display: flex;
     align-items: center;
 }
 
-[role="toolbar"] button {
+.PanelToolbar__button {
     width: 24px;
     height: 24px;
     border: none;
@@ -229,11 +229,11 @@
     background: none;
 }
 
-[role="toolbar"] button:active {
+.PanelToolbar__button:active {
     background-color: #ffffff;
 }
 
-[role="toolbar"] button:hover {
+.PanelToolbar__button:hover {
     background-color: rgba(0,0,0,.15);
     cursor: pointer;
 }

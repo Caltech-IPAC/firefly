@@ -397,11 +397,11 @@ class ChartsPanel extends React.Component {
     renderToolbar() {
         const {expandable, expandedMode, tblId, chartId, chartType, deletable, help_id} = this.props;
         return (
-            <div role='toolbar' className='ChartPanel__toolbar'>
-                <div className='group'>
+            <div className='PanelToolbar ChartPanel__toolbar'>
+                <div className='PanelToolbar_group'>
                     {this.renderSelectionButtons()}
                 </div>
-                <div className='group'>
+                <div className='PanelToolbar_group'>
                     {this.displayZoomOriginal() && <img className='selectionBtn'
                          title='Zoom out to original chart'
                          src={ZOOM_ORIGINAL}
