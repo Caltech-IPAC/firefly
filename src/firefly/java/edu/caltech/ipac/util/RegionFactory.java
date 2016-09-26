@@ -63,7 +63,7 @@ public class RegionFactory {
         for (String s= lineGetter.getLine();(s!=null);s= lineGetter.getLine()) {
             if (!StringUtils.isEmpty(s)) {
                 try {
-                    List<RegionFileElement> resultList= RegionFactory.parsePart(s, coordSys, g, allowHeader);
+                    List<RegionFileElement> resultList= RegionFactory.parsePart(s, coordSys, g, true);
                     if (allowHeader) {
                         g = RegionFactory.getGlobal(resultList, g);
                     }
@@ -83,51 +83,39 @@ public class RegionFactory {
         return new ParseRet(regList,msgList);
     }
 
-    private static Boolean isInText;
-    private static String  crtSeg;
-    private static int     dLimitIdx;
-    private static List<String> oneLineUnits;
-    private static String[] dLeft = {"{", "\"", "\'"};
-    private static String[] dRight = {"}", "\"", "\'"};
+    private static String[] splitStringBySeparator(String inString, char sep) {
+        Character[] dLeft = {'{', '"', '\''};
+        Character[] dRight = {'}', '"', '\''};
+        Boolean isInText = false;
+        int     dLimitIdx = -1;
+        String  crtSeg = "";
+        List<String> oneLineUnits = new ArrayList<String>();
 
-
-    private static String[] splitStringBySeparator(String inString, String sep) {
-        List<String> charsInString = Arrays.asList(inString.split(""));
-
-        dLimitIdx = -1;
-        isInText = false;
-        crtSeg = "";
-        oneLineUnits = new ArrayList<String>();
-
-        charsInString
-            .stream()
-            .forEach( (c) -> {
-                if (c.equals(sep)) {
-                    if (isInText) {
-                        crtSeg += c;
-                    } else {
-                        if (crtSeg.length() > 0) {
-                            oneLineUnits.add(crtSeg);
-                            crtSeg = "";
-                        }
+        for (char c: inString.toCharArray()) {
+            if (c == sep) {
+                if (isInText) {
+                    crtSeg += c;
+                } else {
+                    if (crtSeg.length() > 0) {
+                        oneLineUnits.add(crtSeg);
+                        crtSeg = "";
+                    }
+                }
+            } else {
+                if (isInText) {
+                    if (c == dRight[dLimitIdx]) {
+                        isInText = false;
                     }
                 } else {
-                    if (isInText) {
-                        if (c.equals(dRight[dLimitIdx])) {
-                            isInText = false;
-                        }
-                    } else {
-                        dLimitIdx = Arrays.asList(dLeft).indexOf(c.toString());
-                        isInText = dLimitIdx >= 0;
-                    }
-                    crtSeg += c;
-
+                    dLimitIdx = Arrays.asList(dLeft).indexOf(c);
+                    isInText = dLimitIdx >= 0;
                 }
-            });
+                crtSeg += c;
+            }
+        }
 
         if (crtSeg.length() > 0) {
             oneLineUnits.add(crtSeg);
-            crtSeg = "";
         }
         return oneLineUnits.toArray(new String[oneLineUnits.size()]);
     }
@@ -141,7 +129,7 @@ public class RegionFactory {
 
         if (coordSys==null) coordSys= RegionCsys.IMAGE;
         RegionOptions globalOps= global!=null ? global.getOptions() : null;
-        String sAry[]= splitStringBySeparator(inString, ";"); // inString.split(";");
+        String sAry[]= splitStringBySeparator(inString, ';'); // inString.split(";");
         List<RegionFileElement> retList= new ArrayList<RegionFileElement>(4);
 
         for (String virtualLine: sAry) {
