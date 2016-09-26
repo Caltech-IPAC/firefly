@@ -1,0 +1,66 @@
+
+NOT FITS format:
+   file7.fits
+   file7Downloaded.fits
+   lsstsample1.fits 
+
+
+TAN  GNOMONIC
+    f3.fits
+	location 21h41m43s 65d52m41s B1950 is in center of the center pixel of 
+	a 5x5 bright area in upper right part of image.
+
+TAN--SIP  GNOMONIC with corrections
+    SIP.fits
+
+SIN  ORTHOGRAPHIC
+    c1632b1
+    m51.sin.fits
+    field1.fits
+	location 4h30m38.61s 18d31m13.2s B1950  near lower left corner of image
+	Image coordinate system: 67.661 18.520  (Skyview's XY system)
+	Image Pixel system: 17.00 11.00 (index from first pixel in file, which 
+	is 0,0)
+	(for reference: Skyview's IM coords = -103 -109)
+
+	location 4h30m44.36s 17d37m43.0s B1950  near upper left corner of image
+	Image coordinate system: 67.684 17.628  (Skyview's XY system)
+	Image Pixel system: 11.00 225.00 (index from first pixel in file, which 
+	is 0,0)
+	(for reference: Skyview's IM coords = -100 105)
+
+
+NCP  NORTH CELESTIAL POLE (special case of SIN)
+    file7.fits 
+    This file is not readable, it is not FITS format error
+
+AIT (ATF is deprecated)   AITOFF
+    allsky.fits  
+	location 16h31m30s -17d54m48s B1950 should be in center of a pixel
+	one left and one down from a single blank pixel.  If the coordinate
+	is in lower part of the pixel, that is a bug:  a LINEAR projection is 
+	being applied.
+
+ARC  ZENITH EQUIDISTANT
+    cong_12_smo.fits
+    NED_M31.fits
+
+CAR  CARTESIAN
+    GLM_01050+0000_mosaic_I2.fits
+    m51.car.fits
+
+CEA  CYLINDRICAL EQUAL AREA
+    lsstsample1.fits
+
+SFL or GLS  SANSON-FLAMSTEED
+    1904-66_SFL.fits
+
+
+----  LINEAR
+    bird_2ha3-Booth.fits
+
+PLATE
+    DssImage-10.68470841.26902815.015.0poss2ukstu_red.fits
+
+
+

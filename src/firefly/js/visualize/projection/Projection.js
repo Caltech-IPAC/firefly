@@ -156,7 +156,11 @@ function getWorldCoordsInternal(x, y, header, coordSys)  {
  * @return ImagePt with X,Y in 'Skyview Screen' coordinates
  */
 function getImageCoordsInternal(ra, dec, header) {
+	//console.log('in Project.js');
+	//console.log(header);
+	//console.log(header.maptype);
 	if (!projTypes[header.maptype]) return null;
+	//console.log(projTypes[header.maptype]);
 	const image_pt = projTypes[header.maptype].revProject( ra, dec, header);
 	return image_pt;
 }
