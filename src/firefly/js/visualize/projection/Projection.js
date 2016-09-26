@@ -121,13 +121,10 @@ const projTypes= {
 	}
 };
 
-const getProjTypeInfo= (header) => projTypes[get(header,'maptype', UNRECOGNIZED)];
 
-
-const translateProjectionName= (header) => getProjTypeInfo(header).name;
-const isImplemented= (header) => getProjTypeInfo(header).implemented;
-const isWrappingProjection= (header) => getProjTypeInfo(header).wrapping;
-
+const translateProjectionName= (maptype) => get(projTypes, [maptype,'name'],'UNRECOGNIZED');
+const isImplemented= (header) => get(header, ['maptype.implemented'],false);
+const isWrappingProjection= (header) => get(header, ['maptype.wrapping'],false);
 
 
 
@@ -156,7 +153,11 @@ function getWorldCoordsInternal(x, y, header, coordSys)  {
  * @return ImagePt with X,Y in 'Skyview Screen' coordinates
  */
 function getImageCoordsInternal(ra, dec, header) {
+	//console.log('in Project.js');
+	//console.log(header);
+	//console.log(header.maptype);
 	if (!projTypes[header.maptype]) return null;
+	//console.log(projTypes[header.maptype]);
 	const image_pt = projTypes[header.maptype].revProject( ra, dec, header);
 	return image_pt;
 }
