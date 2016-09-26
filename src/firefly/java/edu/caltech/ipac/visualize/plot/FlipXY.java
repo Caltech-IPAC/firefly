@@ -52,30 +52,7 @@ public class FlipXY {
 
     }
 
-    private Class getDataType(int bitPix){
-       Class type=null;
-       switch (bitPix){
-           case 8:
-              type = Byte.TYPE;
-              break;
-           case 16:
-               type = Short.TYPE;
-               break;
-           case 32:
-               type =Integer.TYPE;
-               break;
-           case 64:
-               type =Long.TYPE;
-               break;
-           case -32:
-               type = Float.TYPE;
-               break;
-           case -64:
-               type = Double.TYPE;
-               break;
-       }
-        return type;
-    }
+
     /**
      * This method does the flip according to the flip  direction.
      * @return
@@ -101,7 +78,7 @@ public class FlipXY {
                     "Cannot flip a PLATE projection image");
         }
         //convert to the type to the same type as in the hdu
-        Object data =  ArrayFuncs.convertArray(fdata, getDataType(hdu.getBitPix()), true);
+        Object data =  ArrayFuncs.convertArray(fdata, FitsRead.getDataType(hdu.getBitPix()), true);
         ImageData newImageData =  new ImageData(data);
         //clone the inFitsRead header and then modify it
         Header outFitsHeader = getOutFitsHeader();

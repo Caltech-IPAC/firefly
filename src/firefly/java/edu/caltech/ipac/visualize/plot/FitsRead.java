@@ -1,7 +1,4 @@
 package edu.caltech.ipac.visualize.plot;
-
-
-
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.SUTDebug;
@@ -16,8 +13,6 @@ import nom.tam.fits.ImageData;
 import nom.tam.fits.ImageHDU;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.Cursor;
-import org.apache.commons.lang.ArrayUtils;
-
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -55,6 +50,8 @@ import java.util.Arrays;
  *
  * 9/24/15
  *  remove the mask testing codes since the mask is done in the mask branch.
+ * 9/26/16
+ *  DM-4127
  */
 public class FitsRead implements Serializable {
     //class variable
@@ -74,8 +71,6 @@ public class FitsRead implements Serializable {
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
     private Histogram hist;
     private  double betaValue;
-    public BasicHDU fitsHDU=null;
-    public boolean isMaskData=false;
 
     private static ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<Integer>(Arrays.asList(8, 16, 32, -32, -64));
 
@@ -102,23 +97,10 @@ public class FitsRead implements Serializable {
         if (!SUPPORTED_BIT_PIXS.contains(new Integer(imageHeader.bitpix))) {
             System.out.println("Unimplemented bitpix = " + imageHeader.bitpix);
         }
-        //get the data and store into float array
-       if ( header.containsKey("EXTTYPE")  &&  header.getStringValue("EXTTYPE").equalsIgnoreCase("mask") ){
-            isMaskData=true;
-        }
 
-
-        short[] short1d =   (short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(imageHdu.getData().getData(), Short.TYPE, true));
+        //convert the data to float to do all the calculations
         float1d = getImageHDUDataInFloatArray(imageHdu);
 
-        int count =0;
-        for (int i=0; i<short1d.length;i++){
-            if (float1d[i]!=(float) short1d[i]){
-                count++;
-            }
-        }
-
-        System.out.println("not equals number is "+ count);
         hist= computeHistogram();
         /* The error in asinh algorithm is
          *  V(mu) = [ a * sigma^2)/(4b^2+f^2)] where f is a flux
@@ -144,7 +126,7 @@ public class FitsRead implements Serializable {
 
         //get all the Header Data Unit from the fits file
         BasicHDU[] HDUs = fits.read();
-        // boolean hasExtension = HDUs.length>1? true:false;
+
 
         if (HDUs == null) {
             // Error: file doesn't seem to have any HDUs!
@@ -745,9 +727,6 @@ public class FitsRead implements Serializable {
 
         double slow = getSlow(rangeValues, float1d, imageHeader, hist);
         double shigh = getShigh(rangeValues, float1d, imageHeader, hist);
-        if (SUTDebug.isDebug()) {
-            printInfo(slow, shigh, imageHeader.bitpix, rangeValues);
-        }
 
         byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
 
@@ -912,52 +891,33 @@ public class FitsRead implements Serializable {
 
     /**
      * Add the mask layer to the existing image
-     * @param rangeValues
      * @param
-     * @param mapBlankToZero
      * @param startPixel
      * @param lastPixel
      * @param startLine
      * @param lastLine
      * @param lsstMasks
      */
-    public synchronized void doStretch(RangeValues rangeValues,
+    public synchronized void doStretchMask(
                                        byte[] pixelData,
-                                       boolean mapBlankToZero,
                                        int startPixel,
                                        int lastPixel,
                                        int startLine,
                                        int lastLine, ImageMask[] lsstMasks)  {
 
-        byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
+        byte blank_pixel_value = (byte) 255;
 
         int[] pixelhist = new int[256];
 
-        //covert the row mask to real mask
+        //covert the raw mask data to real mask : rawMask * imageHeader.bscale + imageHeader.bzero;
         float[] fMasks = getDataFloat();
-        ArrayList <Float>  noneZerorData= new ArrayList<Float>();
-        for (int i=0; i<fMasks.length; i++){
-            if (fMasks[i]!=0){
-                noneZerorData.add(fMasks[i]) ;
-            }
-        }
 
-        float[] fdata = new float[noneZerorData.size()];
-        for (int i=0; i<noneZerorData.size(); i++){
-            fdata[i]=noneZerorData.get(i).floatValue();
-        }
+        //convert to its original type
+        short[] masks= (short[]) ArrayFuncs.convertArray(fMasks, Short.TYPE, true);
 
-
-        short[] masks= (short[]) ArrayFuncs.convertArray(float1d, Short.TYPE, true);
-        for (int i=0; i<fMasks.length; i++){
-            masks[i] = (short) fMasks[i];
-        }
 
         stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1,
                         blank_pixel_value, float1d, masks, pixelData, pixelhist, lsstMasks);
-
-
-
 
 
     }
@@ -969,7 +929,6 @@ public class FitsRead implements Serializable {
      * @param startLine
      * @param lastLine
      * @param naxis1
-
      * @param blank_pixel_value
      * @param float1dArray
      * @param masks
@@ -989,11 +948,8 @@ public class FitsRead implements Serializable {
                                       ImageMask[] lsstMasks) {
 
 
-
-
         int pixelCount = 0;
         ImageMask combinedMask = ImageMask.combineWithAnd(lsstMasks);  //mask=33, index=0 and 6 are set
-        // ImageMask combinedMask = ImageMask.combineWithOr(lsstMasks);
 
         for (int line = startLine; line <= lastLine; line++) {
             int start_index = line * naxis1 + startPixel;
@@ -1737,7 +1693,7 @@ public class FitsRead implements Serializable {
         return outputFits;
     }
 
-   private static Class getDataType(int bitPix){
+   static Class getDataType(int bitPix){
         Class type=null;
         switch (bitPix){
             case 8:

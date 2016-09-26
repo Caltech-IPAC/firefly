@@ -285,7 +285,7 @@ public class ImageData implements Serializable {
             if (imageMasks!=null && imageMasks.length!=0){
 
                _bufferedImage = new BufferedImage(_width, _height, BufferedImage.TYPE_BYTE_INDEXED, _cm);
-               fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine, imageMasks);
+               fitsReadAry[0].doStretchMask( getDataArray(0),  _x, _lastPixel, _y, _lastLine, imageMasks);
 
             }
             else {
