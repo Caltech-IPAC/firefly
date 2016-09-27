@@ -102,7 +102,7 @@ export class LcResult extends Component {
                                     {LcPFOptionsPanel(fields)}
                                 </div>
                             </Tab>
-                            <Tab name="Peiodogram">
+                            <Tab name="Periodogram">
                                 <div>
                                    <LCPFOPanel />
                                 </div>

@@ -11,9 +11,9 @@ import {getCellValue, getTblById, makeTblRequest} from '../../tables/TableUtil.j
 import {updateSet} from '../../util/WebUtil.js';
 import {dispatchPlotImage} from '../../visualize/ImagePlotCntlr.js';
 import {WebPlotRequest,TitleOptions} from '../../visualize/WebPlotRequest.js';
-import {makeWiseLcPlotRequest} from '../../metaConvert/WiseLcViewRequestList';
 import {converters, converterFactory} from '../../metaConvert/ConverterFactory.js';
 import {ServerRequest} from '../../data/ServerRequest.js';
+import {dispatchLoadPlotData} from '../../charts/XYPlotCntlr.js';
 
 export const RAW_TABLE = 'raw_table';
 export const PHASE_FOLDED = 'phase_folded';
@@ -58,6 +58,7 @@ export function* lcManager() {
 
         if (newLayoutInfo !== layoutInfo) {
             dispatchUpdateLayoutInfo(newLayoutInfo);
+
         }
     }
 }

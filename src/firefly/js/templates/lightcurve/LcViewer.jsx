@@ -215,10 +215,10 @@ function onSearchSubmit(request) {
         xyPlotParams = {x: {columnOrExpr: 'mjd'}, y: {columnOrExpr: 'w1mpro_ep'}};
     } else if ( get(request, PHASE_FOLDED) ) {
         treq = TblUtil.makeFileRequest('Phase Folded', request[PHASE_FOLDED], null, {tbl_id:PHASE_FOLDED});
-        xyPlotParams = {x: {columnOrExpr: 'mjd'}, y: {columnOrExpr: 'w2mpro_ep'}};
+        xyPlotParams = {x: {columnOrExpr: 'phase'}, y: {columnOrExpr: 'w1mpro_ep'}};
     } else if ( get(request, PERIODOGRAM) ) {
         treq = TblUtil.makeFileRequest('Periodogram', request[PERIODOGRAM], null, {tbl_id:PERIODOGRAM});
-        xyPlotParams = {x: {columnOrExpr: 'log(PERIOD)'}, y: {columnOrExpr: 'POWER'}};
+        xyPlotParams = {x: {columnOrExpr: 'PERIOD', options: 'log'}, y: {columnOrExpr: 'POWER'}};
     } else if ( get(request, PEAK_TABLE) ) {
         treq = TblUtil.makeFileRequest('Peak Table', request[PEAK_TABLE], null, {tbl_id:PEAK_TABLE});
     }
