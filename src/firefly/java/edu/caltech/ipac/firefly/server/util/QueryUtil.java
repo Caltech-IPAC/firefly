@@ -643,7 +643,7 @@ public class QueryUtil {
             double xval = xValGetter.getValue(row);
             double yval = yValGetter.getValue(row);
 
-            if (xval==Double.NaN || yval==Double.NaN) {
+            if (Double.isNaN(xval) || Double.isNaN(yval)) {
                 outRows--;
                 continue;
             }
@@ -708,7 +708,7 @@ public class QueryUtil {
                     double xval = xValGetter.getValue(row);
                     double yval = yValGetter.getValue(row);
 
-                    if (xval==Double.NaN || yval==Double.NaN) {
+                    if (Double.isNaN(xval) || Double.isNaN(yval)) {
                         outRows--;
                         continue;
                     }
