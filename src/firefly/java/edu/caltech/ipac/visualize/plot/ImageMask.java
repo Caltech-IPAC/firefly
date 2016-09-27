@@ -10,14 +10,14 @@ public class ImageMask {
 
 
     private Color color; // name of this mask item
-    private int index; // i.e. bit offset
-    private int bit; // the bit mask itself
+    private int index; // i.e. bit offset counting start from 0 to 32
+    private int bit; // the bit mask itself, ie. the number of the mask
     private int inv; // the complement of _bit
     private int check; // bit with ignore removed
     public static final int MASK32 = 0xffffffff;
 
     /**
-     * contructor to create a new ImageMask
+     * constructor to create a new ImageMask
      * Example:
      *   ImageMask m = new ImageMask(0, Color.RED)
      *   it creates a new ImageMask object which the bit (bitoffste=0) set, the Color is read

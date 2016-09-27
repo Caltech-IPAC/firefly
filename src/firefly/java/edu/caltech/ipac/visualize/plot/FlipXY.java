@@ -43,7 +43,7 @@ public class FlipXY {
 
     }
 
-    private int getDataDimension(BasicHDU hdu ){
+    private int getDataDimension( ){
 
 
         int naxis3 = inImageHeader.naxis > 2 ? inFitsHeader.getIntValue("NAXIS3", 0) : 0;
@@ -51,6 +51,8 @@ public class FlipXY {
         return ( naxis4 != 0 ? 4: ( naxis3 != 0 ? 3:2 ) ) ;
 
     }
+
+
     /**
      * This method does the flip according to the flip  direction.
      * @return
@@ -60,21 +62,25 @@ public class FlipXY {
 
         validate();
         BasicHDU hdu = fitsRead.getHDU();
-        int dim = getDataDimension(hdu);
-        //convert data to float
+
+
+        int dim = getDataDimension();
+        //convert data to float to do the calculation
         Object inData = ArrayFuncs.convertArray(hdu.getData().getData(), Float.TYPE);
 
-        Object newData=null;
+        Object fdata=null;
         if (direction.equalsIgnoreCase("yAxis")) {
-            newData = doFlipInY(inData, dim);
+            fdata = doFlipInY(inData, dim);
         } else if (direction.equalsIgnoreCase("xAxis")) {
-            newData = doFlipInX(inData, dim);
+            fdata = doFlipInX(inData, dim);
         } else {
             throw new FitsException(
                     "Cannot flip a PLATE projection image");
         }
-
-        ImageData newImageData =  new ImageData(newData);;
+        //convert to the type to the same type as in the hdu
+        Object data =  ArrayFuncs.convertArray(fdata, FitsRead.getDataType(hdu.getBitPix()), true);
+        ImageData newImageData =  new ImageData(data);
+        //clone the inFitsRead header and then modify it
         Header outFitsHeader = getOutFitsHeader();
         ImageHDU outHDU = new ImageHDU(outFitsHeader, newImageData);
         Fits newFits = new Fits();
@@ -82,6 +88,7 @@ public class FlipXY {
 
         FitsRead[] outFitsRead = FitsRead.createFitsReadArray(newFits);
         FitsRead fr = outFitsRead[0];
+
         return fr;
     }
 
@@ -116,52 +123,54 @@ public class FlipXY {
 
         Object obj = null;
 
-        switch (dim) {
-            case 2:
-                float[][] newData2D = new float[inNaxis2][inNaxis1];
-                float[][] inData2D = (float[][]) inData;
+            switch (dim) {
+                case 2:
 
-                for (int line = 0; line < inNaxis2; line++) {
-                    int in_index = inNaxis1 - 1;
-                    for (int out_index = 0; out_index < inNaxis1; out_index++) {
-                        newData2D[line][out_index] = inData2D[line][in_index];
-                        in_index--;
+                     float[][] newData2D = new float[inNaxis2][inNaxis1];
+                     float[][] inData2D = (float[][]) inData;
+
+                     for (int line = 0; line < inNaxis2; line++) {
+                         int in_index = inNaxis1 - 1;
+                         for (int out_index = 0; out_index < inNaxis1; out_index++) {
+                             newData2D[line][out_index] = inData2D[line][in_index];
+                             in_index--;
+                         }
+                     }
+                     obj = newData2D;
+                    break;
+
+                case 3:
+                    float[][][] newData3D = new float[1][inNaxis2][inNaxis1];
+                    float[][][] inData3D = (float[][][]) inData;
+
+                    for (int line = 0; line < inNaxis2; line++) {
+
+                        int in_index = inNaxis1 - 1;
+                        for (int out_index = 0; out_index < inNaxis1; out_index++) {
+
+                            newData3D[0][line][out_index] =
+                                    inData3D[0][line][in_index];
+                            in_index--;
+                        }
                     }
-                }
-                obj = newData2D;
-                break;
-
-            case 3:
-                float[][][] newData3D = new float[1][inNaxis2][inNaxis1];
-                float[][][] inData3D = (float[][][]) inData;
-
-                for (int line = 0; line < inNaxis2; line++) {
-
-                    int in_index = inNaxis1 - 1;
-                    for (int out_index = 0; out_index < inNaxis1; out_index++) {
-
-                        newData3D[0][line][out_index] =
-                                inData3D[0][line][in_index];
-                        in_index--;
+                    obj = newData3D;
+                    break;
+                case 4:
+                    float[][][][] newData4D = new float[1][1][inNaxis2][inNaxis1];
+                    float[][][][] inData4D = (float[][][][]) inData;
+                    for (int line = 0; line < inNaxis2; line++) {
+                        int in_index = inNaxis1 - 1;
+                        for (int out_index = 0; out_index < inNaxis1; out_index++) {
+                            newData4D[0][0][line][out_index] =
+                                    inData4D[0][0][line][in_index];
+                            in_index--;
+                        }
                     }
-                }
-                obj = newData3D;
-                break;
-            case 4:
-                float[][][][] newData4D = new float[1][1][inNaxis2][inNaxis1];
-                float[][][][] inData4D = (float[][][][]) inData;
-                for (int line = 0; line < inNaxis2; line++) {
-                    int in_index = inNaxis1 - 1;
-                    for (int out_index = 0; out_index < inNaxis1; out_index++) {
-                        newData4D[0][0][line][out_index] =
-                                inData4D[0][0][line][in_index];
-                        in_index--;
-                    }
-                }
-                obj = newData4D;
-                break;
+                    obj = newData4D;
+                    break;
 
-        }
+            }
+
         return obj;
     }
 
@@ -173,53 +182,55 @@ public class FlipXY {
      */
     private Object doFlipInX(Object inData, int dim) {
 
+
         Object obj = null;
 
-        switch (dim) {
-            case 2:
-                float[][] newData2D = new float[inNaxis2][inNaxis1];
-                float[][] inData2D = (float[][]) inData;
+            switch (dim) {
+                case 2:
+                    float[][] newData2D = new float[inNaxis2][inNaxis1];
+                    float[][] inData2D = (float[][]) inData;
 
-                for (int line = 0; line < inNaxis1; line++) {
-                    int in_index = inNaxis2 - 1;
-                    for (int out_index = 0; out_index < inNaxis2; out_index++) {
-                        newData2D[out_index][line] = inData2D[in_index][line];
-                        in_index--;
+                    for (int line = 0; line < inNaxis1; line++) {
+                        int in_index = inNaxis2 - 1;
+                        for (int out_index = 0; out_index < inNaxis2; out_index++) {
+                            newData2D[out_index][line] = inData2D[in_index][line];
+                            in_index--;
+                        }
                     }
-                }
-                obj = newData2D;
-                break;
+                    obj = newData2D;
+                    break;
 
-            case 3:
-                float[][][] newData3D = new float[1][inNaxis2][inNaxis1];
-                float[][][] inData3D = (float[][][]) inData;
+                case 3:
+                    float[][][] newData3D = new float[1][inNaxis2][inNaxis1];
+                    float[][][] inData3D = (float[][][]) inData;
 
-                for (int line = 0; line < inNaxis1; line++) {
+                    for (int line = 0; line < inNaxis1; line++) {
 
-                    int in_index = inNaxis2 - 1;
-                    for (int out_index = 0; out_index < inNaxis2; out_index++) {
-                        newData3D[0][out_index][line] =
-                                inData3D[0][in_index][line];
-                        in_index--;
+                        int in_index = inNaxis2 - 1;
+                        for (int out_index = 0; out_index < inNaxis2; out_index++) {
+                            newData3D[0][out_index][line] =
+                                    inData3D[0][in_index][line];
+                            in_index--;
+                        }
                     }
-                }
-                obj = newData3D;
-                break;
-            case 4:
-                float[][][][] newData4D = new float[1][1][inNaxis2][inNaxis1];
-                float[][][][] inData4D = (float[][][][]) inData;
-                for (int line = 0; line < inNaxis1; line++) {
-                    int in_index = inNaxis2 - 1;
-                    for (int out_index = 0; out_index < inNaxis2; out_index++) {
-                        newData4D[0][0][out_index][line] =
-                                inData4D[0][0][in_index][line];
-                        in_index--;
+                    obj = newData3D;
+                    break;
+                case 4:
+                    float[][][][] newData4D = new float[1][1][inNaxis2][inNaxis1];
+                    float[][][][] inData4D = (float[][][][]) inData;
+                    for (int line = 0; line < inNaxis1; line++) {
+                        int in_index = inNaxis2 - 1;
+                        for (int out_index = 0; out_index < inNaxis2; out_index++) {
+                            newData4D[0][0][out_index][line] =
+                                    inData4D[0][0][in_index][line];
+                            in_index--;
+                        }
                     }
-                }
-                obj = newData4D;
-                break;
+                    obj = newData4D;
+                    break;
 
-        }
+            }
+
         return obj;
     }
     /**
@@ -245,60 +256,38 @@ public class FlipXY {
 
             // negate all even coefficients
             if (inImageHeader.a_order >= 0) {
-                addAXOrderCards(outFitsHeader, "A_", inImageHeader.a_order, inImageHeader.a);
+                addABXOrderCards(outFitsHeader, "A_", inImageHeader.a_order, inImageHeader.a);
 
             }
 
             if (inImageHeader.b_order >= 0) {
 
-                addBXOrderCards(outFitsHeader, "B_", inImageHeader.b_order, inImageHeader.b);
+                addABXOrderCards(outFitsHeader, "B_", inImageHeader.b_order, inImageHeader.b);
             }
 
             if (inImageHeader.ap_order >= 0) {
 
-                addAXOrderCards(outFitsHeader, "AP_", inImageHeader.ap_order, inImageHeader.ap);
+                addABXOrderCards(outFitsHeader, "AP_", inImageHeader.ap_order, inImageHeader.ap);
             }
 
             if (inImageHeader.bp_order >= 0) {
-                addBXOrderCards(outFitsHeader, "BP_", inImageHeader.bp_order, inImageHeader.bp);
+                addABXOrderCards(outFitsHeader, "BP_", inImageHeader.bp_order, inImageHeader.bp);
             }
         }
         return outFitsHeader;
     }
 
     /**
-     * Add a_order and ap_order
+     *
      * @param outFitsHeader
      * @param xOrder
      * @param length
      * @param values
      * @throws HeaderCardException
      */
-    private void addAXOrderCards( Header outFitsHeader, String xOrder, double length, double[][] values) throws HeaderCardException {
+    private void addABXOrderCards( Header outFitsHeader, String xOrder, double length, double[][] values) throws HeaderCardException {
 
         for (int i = 0; i <= length; i += 2) {// do only odd i values
-           for (int j = 0; j <= length; j++) {
-                if (i + j <= length) {
-                    String  keyword = xOrder + i + "_" + j;
-                    outFitsHeader.addValue(keyword, - values[i][j], null);
-
-                }
-            }
-        }
-        return;
-    }
-
-    /**
-     * Add b_order and bp_order
-     * @param outFitsHeader
-     * @param xOrder
-     * @param length
-     * @param values
-     * @throws HeaderCardException
-     */
-    private void addBXOrderCards( Header outFitsHeader, String xOrder, double length, double[][] values) throws HeaderCardException {
-
-        for (int i = 1; i <= length; i += 2) {// do only odd i values
             for (int j = 0; j <= length; j++) {
                 if (i + j <= length) {
                     String  keyword = xOrder + i + "_" + j;

@@ -1,7 +1,4 @@
 package edu.caltech.ipac.visualize.plot;
-
-
-
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.SUTDebug;
@@ -16,7 +13,6 @@ import nom.tam.fits.ImageData;
 import nom.tam.fits.ImageHDU;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.Cursor;
-
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -54,6 +50,8 @@ import java.util.Arrays;
  *
  * 9/24/15
  *  remove the mask testing codes since the mask is done in the mask branch.
+ * 9/26/16
+ *  DM-4127
  */
 public class FitsRead implements Serializable {
     //class variable
@@ -68,29 +66,25 @@ public class FitsRead implements Serializable {
     private final int extension_number;
     private final BasicHDU hdu;
     private float[] float1d;
-//    private Fits fits;
     private ImageHeader imageHeader;
     private Header header;
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
-    private  short[] masks=null;
     private Histogram hist;
     private  double betaValue;
-
 
     private static ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<Integer>(Arrays.asList(8, 16, 32, -32, -64));
 
     /**
      * a private constructor for image Fits file
      *
-     * @param fits
+     *
      * @param imageHdu
      * @throws FitsException
      */
-    private FitsRead(Fits fits, ImageHDU imageHdu) throws FitsException {
+    private FitsRead( ImageHDU imageHdu) throws FitsException {
 
-        //assign some instant variables
-//        this.fits = fits;
-        this.hdu = imageHdu;
+
+        hdu = imageHdu;
         header = imageHdu.getHeader();
 
         planeNumber = header.getIntValue("SPOT_PL", 0);
@@ -99,18 +93,15 @@ public class FitsRead implements Serializable {
         long HDUOffset = getHDUOffset(imageHdu);
         imageHeader = new ImageHeader(header, HDUOffset, planeNumber);
 
+
         if (!SUPPORTED_BIT_PIXS.contains(new Integer(imageHeader.bitpix))) {
             System.out.println("Unimplemented bitpix = " + imageHeader.bitpix);
         }
-        //get the data and store into float array
 
+        //convert the data to float to do all the calculations
         float1d = getImageHDUDataInFloatArray(imageHdu);
 
-        //mask in the Fits file, each FitsRead in the Fits file has the same mask data
-        masks =getMasksInFits(fits);
         hist= computeHistogram();
-
-
         /* The error in asinh algorithm is
          *  V(mu) = [ a * sigma^2)/(4b^2+f^2)] where f is a flux
          *  When f=0, the error reaches it maximum, if we choose beta = 2b = sigma,
@@ -121,79 +112,7 @@ public class FitsRead implements Serializable {
         betaValue = computeSigma(float1d, imageHeader);
     }
 
-
     public double getBeta() {return betaValue;}
-    /**
-     * This constructor may not be needed it.
-     * @param fits
-     * @param imageHdu
-     * @throws FitsException
-     */
-     private FitsRead(Fits fits, ImageHDU imageHdu, int maskExtension) throws FitsException {
-
-        //assign some instant variables
-//        this.fits = fits;
-        this.hdu = imageHdu;
-        header = imageHdu.getHeader();
-        planeNumber = header.getIntValue("SPOT_PL", 0);
-        extension_number = header.getIntValue("SPOT_EXT", -1);
-        checkHeader();
-        long HDUOffset = getHDUOffset(imageHdu);
-        imageHeader = new ImageHeader(header, HDUOffset, planeNumber);
-
-        if (!SUPPORTED_BIT_PIXS.contains(new Integer(imageHeader.bitpix))) {
-            System.out.println("Unimplemented bitpix = " + imageHeader.bitpix);
-        }
-        //get the data and store into float array
-        float1d = getImageHDUDataInFloatArray(imageHdu);
-        masks = getMasksInFits(fits, maskExtension);
-
-        hist= computeHistogram();
-
-
-        /* The error in asinh algorithm is
-         *  V(mu) = [ a * sigma^2)/(4b^2+f^2)] where f is a flux
-         *  When f=0, the error reaches it maximum, if we choose beta = 2b = sigma,
-         *  the error:
-         *  V(mu) = a *simga^2/beta^2 = a
-         *  Thus, we use sigma as a default beta value
-         */
-         betaValue = computeSigma(float1d, imageHeader);
-
-     }
-
-    private short[] getMasksInFits(Fits fits, int maskExtension) throws FitsException {
-
-        //get all the Header Data Unit from the fits file
-        BasicHDU[] HDUs = fits.read();
-        short[] sMask=   (short[]) ArrayFuncs.flatten(HDUs[maskExtension].getData().getData());
-        return getMasks(HDUs[maskExtension].getHeader(), sMask);
-
-    }
-
-
-    private short[] getMasksInFits(Fits fits) throws FitsException {
-
-        //get all the Header Data Unit from the fits file
-        BasicHDU[] HDUs = fits.read();
-
-        for (int j = 0; j < HDUs.length; j++) {
-            if (!(HDUs[j] instanceof ImageHDU)) {
-                continue;   //ignor non-image extensions
-            }
-            Header header =  HDUs[j].getHeader();
-            if (header == null) {
-                throw new FitsException("Missing header in FITS file");
-            }
-             else  if ( header.containsKey("EXTTYPE")  &&  header.getStringValue("EXTTYPE").equalsIgnoreCase("mask") ){
-                short[] mArray=(short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUs[j].getData().getData(), Short.TYPE, true));
-                return getMasks(header, mArray);
-           }
-        }
-        return null;
-
-
-     }
 
     /**
      * read a fits with extensions or cube data to create a list of the FistRead object
@@ -207,7 +126,7 @@ public class FitsRead implements Serializable {
 
         //get all the Header Data Unit from the fits file
         BasicHDU[] HDUs = fits.read();
-        // boolean hasExtension = HDUs.length>1? true:false;
+
 
         if (HDUs == null) {
             // Error: file doesn't seem to have any HDUs!
@@ -222,7 +141,7 @@ public class FitsRead implements Serializable {
 
         FitsRead[] fitsReadAry = new FitsRead[HDUList.size()];
         for (int i = 0; i < HDUList.size(); i++) {
-            fitsReadAry[i] = new FitsRead(fits, (ImageHDU) HDUList.get(i));
+            fitsReadAry[i] = new FitsRead((ImageHDU) HDUList.get(i));
             fitsReadAry[i].indexInFile = i;
         }
 
@@ -254,9 +173,11 @@ public class FitsRead implements Serializable {
 
         FitsRead[] fitsReadAry = new FitsRead[HDUList.size()];
         for (int i = 0; i < HDUList.size(); i++) {
-            fitsReadAry[i] = new FitsRead(fits, (ImageHDU) HDUList.get(i));
+            fitsReadAry[i] = new FitsRead( (ImageHDU) HDUList.get(i));
             fitsReadAry[i].indexInFile = i;
+
         }
+
 
         return fitsReadAry;
     }
@@ -283,8 +204,8 @@ public class FitsRead implements Serializable {
             throws FitsException, GeomException {
 
         return new FlipXY(aFitsReader,"yAxis").doFlip();
-//        FlipLR flipLr = new FlipLR();
-//        return (flipLr.do_flip(aFitsReader));
+
+
     }
 
     /**
@@ -806,9 +727,6 @@ public class FitsRead implements Serializable {
 
         double slow = getSlow(rangeValues, float1d, imageHeader, hist);
         double shigh = getShigh(rangeValues, float1d, imageHeader, hist);
-        if (SUTDebug.isDebug()) {
-            printInfo(slow, shigh, imageHeader.bitpix, rangeValues);
-        }
 
         byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
 
@@ -973,48 +891,33 @@ public class FitsRead implements Serializable {
 
     /**
      * Add the mask layer to the existing image
-     * @param rangeValues
      * @param
-     * @param mapBlankToZero
      * @param startPixel
      * @param lastPixel
      * @param startLine
      * @param lastLine
      * @param lsstMasks
      */
-    public synchronized void doStretch(RangeValues rangeValues,
+    public synchronized void doStretchMask(
                                        byte[] pixelData,
-                                       boolean mapBlankToZero,
                                        int startPixel,
                                        int lastPixel,
                                        int startLine,
-                                       int lastLine, ImageMask[] lsstMasks){
+                                       int lastLine, ImageMask[] lsstMasks)  {
 
-
-
-
-        Histogram hist= getHistogram();
-
-
-        double slow = getSlow(rangeValues, float1d, imageHeader, hist);
-        double shigh = getShigh(rangeValues, float1d, imageHeader, hist);
-        if (SUTDebug.isDebug()) {
-            printInfo(slow, shigh, imageHeader.bitpix, rangeValues);
-        }
-
-        byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
+        byte blank_pixel_value = (byte) 255;
 
         int[] pixelhist = new int[256];
 
+        //covert the raw mask data to real mask : rawMask * imageHeader.bscale + imageHeader.bzero;
+        float[] fMasks = getDataFloat();
 
+        //convert to its original type
+        short[] masks= (short[]) ArrayFuncs.convertArray(fMasks, Short.TYPE, true);
 
 
         stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1,
-                blank_pixel_value, float1d, masks, pixelData, pixelhist,  lsstMasks);
-
-
-
-
+                        blank_pixel_value, float1d, masks, pixelData, pixelhist, lsstMasks);
 
 
     }
@@ -1026,7 +929,6 @@ public class FitsRead implements Serializable {
      * @param startLine
      * @param lastLine
      * @param naxis1
-
      * @param blank_pixel_value
      * @param float1dArray
      * @param masks
@@ -1046,11 +948,8 @@ public class FitsRead implements Serializable {
                                       ImageMask[] lsstMasks) {
 
 
-
-
         int pixelCount = 0;
         ImageMask combinedMask = ImageMask.combineWithAnd(lsstMasks);  //mask=33, index=0 and 6 are set
-        // ImageMask combinedMask = ImageMask.combineWithOr(lsstMasks);
 
         for (int line = startLine; line <= lastLine; line++) {
             int start_index = line * naxis1 + startPixel;
@@ -1655,10 +1554,6 @@ public class FitsRead implements Serializable {
     }
 
 
-//    public Fits getFits() {
-//        return (fits);
-//    }
-
     public BasicHDU getHDU() {
         return hdu;
     }
@@ -1674,19 +1569,6 @@ public class FitsRead implements Serializable {
     }
 
 
-    /**LZ 05/09/16
-    * Modified to use calculated sigma value as beta in asinh stretch
-     */
-   /*
-    public static RangeValues getDefaultRangeValues() {
-        // return (RangeValues) DEFAULT_RANGE_VALUE.clone();
-        RangeValues rv = (RangeValues) DEFAULT_RANGE_VALUE.clone();
-
-        rv.setBetaValue(betaValue);
-        return rv;
-
-    }
-    */
     public static RangeValues getDefaultRangeValues() {
         return (RangeValues) DEFAULT_RANGE_VALUE.clone();
 
@@ -1774,73 +1656,10 @@ public class FitsRead implements Serializable {
         return fData;
     }
 
-    /**
-     * get the masks data in the Fits file, null if there is no mask data
-     * @return
-     */
-    public short[] getMasks(){
-        return masks;
-    }
-    /**
-     * return the physical data value
-     * @param mask
-     * @return
-     */
-   private  short[] getMasks(Header header, short[] mask){
-
-        short[] sMask = new short[mask.length];
-
-        double bscale = header.getDoubleValue("BSCALE", 1.0);
-        double bzero = header.getDoubleValue("BZERO", 0.0);
-        for (int i = 0; i < mask.length; i++) {
-            sMask[i] = (short) (mask[i] * bscale + bzero);
-        }
-        return sMask;
-    }
-    /**
-     * This method seemed not being used.
-     * Takes an open FITS file and returns a 2-dim float array of the pixels
-     * Works for all 5 FITS data types and all FITS array dimensionality
-     * Observes BLANK value for integer data
-     * Applies BSCALE and BZERO
-     *
-     * @param imageHDU ImageHDU for the open FITS file
-     * @return 2-dim float array of pixels
-     *
-     * This method returns the physical pixel values in the given imageHDU as a two dimensional array
-     */
-    
-    //LZ 6/16/15 this method seems not used.  I comment it out.
-    /**
-    public static float[][] getDataFloat(ImageHDU imageHDU)
-            throws FitsException {
-        Header header = imageHDU.getHeader();
-        int naxis1 = header.getIntValue("NAXIS1");
-        int naxis2 = header.getIntValue("NAXIS2");
-        double bscale = header.getDoubleValue("BSCALE", 1.0);
-        double bzero = header.getDoubleValue("BZERO", 0.0);
-
-        float[][] floatData = new float[naxis2][naxis1];
-        float[] float32 =
-                (float[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(imageHDU.getData().getData(), Float.TYPE));
-
-        int i = 0;
-        for (int line = 0; line < naxis2; line++) {
-          for (int sample = 0; sample < naxis1; sample++) {
-                floatData[line][sample] = (float)
-                        (float32[i] * bscale + bzero);
-                i++;
-            }
-        }
-
-        return floatData;
-    }
-    */
 
 
     public void freeResources() {
         float1d = null;
-//        fits = null;
         imageHeader = null;
         header = null;
 
@@ -1869,30 +1688,50 @@ public class FitsRead implements Serializable {
 
     public Fits createNewFits() throws FitsException, IOException {
 
-        ImageHDU newHDU =  new ImageHDU(header, getImageData(header, float1d));
         Fits outputFits = new Fits();
-        outputFits.addHDU(newHDU);
+        outputFits.addHDU(hdu);
         return outputFits;
     }
 
-
-    private ImageData getImageData(Header header, float[] float1d){
+   static Class getDataType(int bitPix){
+        Class type=null;
+        switch (bitPix){
+            case 8:
+                type = Byte.TYPE;
+                break;
+            case 16:
+                type = Short.TYPE;
+                break;
+            case 32:
+                type =Integer.TYPE;
+                break;
+            case 64:
+                type =Long.TYPE;
+                break;
+            case -32:
+                type = Float.TYPE;
+                break;
+            case -64:
+                type = Double.TYPE;
+                break;
+        }
+        return type;
+    }
+    private ImageData getImageData(BasicHDU refHdu, float[] float1d) throws FitsException {
+        Header header = refHdu.getHeader();
         int naxis1 = header.getIntValue("NAXIS1");
         int naxis2 = header.getIntValue("NAXIS2");
         int dims2[] = new int[]{naxis1, naxis2};
-        float [][]  data =  (float[][]) ArrayFuncs.curl(float1d,dims2);
+        float [][]  fdata =  (float[][]) ArrayFuncs.curl(float1d,dims2);
+        Object data =ArrayFuncs.convertArray(fdata, getDataType(refHdu.getBitPix()), true);
         ImageData imageData= new ImageData(data);
         return imageData;
     }
     public static void writeFitsFile(OutputStream stream, FitsRead[] fitsReadAry, Fits refFits) throws FitsException, IOException{
         Fits output_fits = new Fits();
         for(FitsRead fr : fitsReadAry) {
-            BasicHDU one_image_hdu = refFits.getHDU(0);
-            Header header = one_image_hdu.getHeader();
-            //Data data = one_image_hdu.getData();
-            //ImageHDU image_hdu = new ImageHDU(header, data);
-
-            ImageHDU imageHDU = new ImageHDU(header,  fr.getImageData(header, fr.float1d));
+             BasicHDU  refHdu = refFits.getHDU(0);
+             ImageHDU imageHDU = new ImageHDU(refHdu.getHeader(),  fr.getImageData(refHdu, fr.float1d) );
             output_fits.addHDU(imageHDU);
         }
         output_fits.write(new DataOutputStream(stream));
