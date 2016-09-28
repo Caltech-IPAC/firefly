@@ -279,6 +279,7 @@ public class IpacTableUtil {
                             if (String.valueOf(type.getDataUnit()).equalsIgnoreCase("html") ||
                                     rval.trim().matches("<[^>]+>.*")) {
                                 source.addAttribute(DataSetParser.makeAttribKey(DataSetParser.SORTABLE_TAG, type.getKeyName()), "false");
+                                source.addAttribute(DataSetParser.makeAttribKey(DataSetParser.FILTERABLE_TAG, type.getKeyName()), "false");
                             }
                         }
                     }

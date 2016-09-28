@@ -48,8 +48,9 @@
  * @prop {string} units     data units
  * @prop {string} desc      description of the column
  * @prop {number} width     column display width
- * @prop {number} prefWidth preferred width.  if width is not defined
- * @prop {boolean} sortable true if undefined
+ * @prop {number} prefWidth     preferred width.  if width is not defined
+ * @prop {boolean} sortable     true if undefined
+ * @prop {boolean} filterable   true if undefined
  * @prop {string} visibility    show, hide, or hidden.  hidden columns are not viewable by users.
  * @prop {string} sortByCols    for multi-columns sorting.  column names separated by comma(',').
  * @prop {string} related       highlight related rows based on this column's value.

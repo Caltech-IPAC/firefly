@@ -38,6 +38,7 @@ public class DataSetParser {
     public static final String FORMAT_TAG = "col.@.Fmt";     // can be AUTO, NONE or a valid java format string.  defaults to AUTO.
     public static final String FORMAT_DISP_TAG = "col.@.FmtDisp";
     public static final String SORTABLE_TAG = "col.@.Sortable";
+    public static final String FILTERABLE_TAG = "col.@.Filterable";
     public static final String ITEMS_TAG = "col.@.Items";
     public static final String SORT_BY_TAG = "col.@.SortByCols";
     public static final String ENUM_VALS_TAG = "col.@.EnumVals";
