@@ -103,6 +103,7 @@
 }
 
 .PagingBar__button:hover {
+    background-color: rgba(0,0,0,.15);
     cursor: pointer;
 }
 
@@ -122,29 +123,23 @@
     background-image: url("/images/icons-2014/16x16_Backward.png");
 }
 
-.TablePanel__button {
-    height: 24px;
-    width: 24px;
-    margin: 0 2px;
-}
-
-.TablePanel__button.options {
+.PanelToolbar__button.options {
     background-image: url("/images/icons-2014/24x24_GearsNEW.png");
 }
 
-.TablePanel__button.textView {
+.PanelToolbar__button.textView {
     background-image: url("/images/icons-2014/24x24_TextView.png");
 }
 
-.TablePanel__button.tableView {
+.PanelToolbar__button.tableView {
     background-image: url("/images/icons-2014/24x24_TableView.png");
 }
 
-.TablePanel__button.save {
+.PanelToolbar__button.save {
     background-image: url("/images/icons-2014/24x24_Save.png");
 }
 
-.TablePanel__button.clearFilters {
+.PanelToolbar__button.clearFilters {
     background-image: url("/images/icons-2014/24x24_FilterOff_Circle.png");
 }
 

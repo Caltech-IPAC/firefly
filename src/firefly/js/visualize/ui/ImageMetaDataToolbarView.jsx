@@ -158,7 +158,7 @@ function ImagePager({pageSize, tbl_id}) {
     };
     
     return (
-        <div role='toolbar'>
+        <div className='PanelToolbar'>
             <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:{onGotoPage}}} />
         </div>
     );

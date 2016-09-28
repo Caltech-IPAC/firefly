@@ -37,7 +37,7 @@ export class PagingBar extends Component {
             return showingLabel;
         } else {
             return (
-                <div className='group'>
+                <div className='PanelToolbar__group'>
                     <div onClick={() => callbacks.onGotoPage(1)} className='PagingBar__button first' title='First Page'/>
                     <div onClick={() => callbacks.onGotoPage(currentPage - 1)} className='PagingBar__button previous'  title='Previous Page'/>
                     <InputField
