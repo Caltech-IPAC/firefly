@@ -45,7 +45,7 @@ export class VoSearchPanel extends React.Component {
                     <div style={{marginTop: 20}}>
                         { voSearchArea() }
                         <div style={{padding:'20px 0 20px 0'}}>
-                            <a target='_blank' href='http://nvo.stsci.edu/vor10/index.aspx'>Find Astronomical Data
+                            <a target='_blank' href='http://vao.stsci.edu/directory/'>Find Astronomical Data
                                 Resources </a>
                         </div>
                     </div>
