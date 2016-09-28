@@ -342,10 +342,10 @@ function resultsSuccess(request, plot) {
         plotState.getWorkingFitsFileStr(band) :
         plotState.getOriginalFitsFileStr(band);
 
-    var getRegionsDes = () => {
+    var getRegionsDes = (bSeperateText) => {
         var regionDes;
 
-        regionDes = makeRegionsFromPlot(plot);
+        regionDes = makeRegionsFromPlot(plot, bSeperateText);
         return `[${regionDes.join(STRING_SPLIT_TOKEN)}]`;
     };
 
@@ -356,7 +356,7 @@ function resultsSuccess(request, plot) {
         download(url);
     } else if (ext && ext.toLowerCase() === 'png') {
 
-        getImagePng(plotState, getRegionsDes()).then((result) => {
+        getImagePng(plotState, getRegionsDes(true)).then((result) => {
             var imgFile = get(result, 'ImageFileName');
 
             if (imgFile) {
@@ -371,7 +371,7 @@ function resultsSuccess(request, plot) {
 
     } else if (ext && ext.toLowerCase() === 'reg') {
 
-        saveDS9RegionFile(getRegionsDes()).then( (result ) => {
+        saveDS9RegionFile(getRegionsDes(false)).then( (result ) => {
             var rgFile = get(result, 'RegionFileName');
 
             if (rgFile) {

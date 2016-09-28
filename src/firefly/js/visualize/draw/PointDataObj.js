@@ -273,7 +273,7 @@ function makeTextLocationPoint(drawObj, plot, textLoc, fontSize) {
     if (!area) return null;
 
     var {centerPt, width, height} = area;
-    var fHeight = fontHeight(fontSize) + 4;
+    var fHeight = fontHeight(fontSize);
     var opt;
 
     switch(textLoc) {
@@ -319,6 +319,7 @@ function drawXY(ctx, drawTextAry, pt, plot, drawObj, drawParams,renderOptions, o
     if (textOffset && (textOffset.x !== 0.0 || textOffset.y !== 0.0)) {
         drawText(drawObj, drawTextAry, plot, vpt, drawParams);
     } else {
+        drawObj.textWorldLoc = plot.getImageCoords(vpt);
         DrawUtil.drawText(drawTextAry, text, vpt.x, vpt.y, color, renderOptions,
                           fontName, fontSize, fontWeight, fontStyle);
     }

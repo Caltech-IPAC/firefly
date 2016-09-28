@@ -75,6 +75,8 @@ public class StringShape {
    public void setOffsetDistance(int offsetDist) { _offsetDist= offsetDist; }
    public void  setColor(Color c)                 { _color= c; }
    public Color getColor()                        { return _color; }
+   public Font  getFont()                         { return _font; }
+   public void  setFont(Font f)                   { _font = f; }
 
     public void draw(Graphics2D   g2,
                     ImageWorkSpacePt      ipt,

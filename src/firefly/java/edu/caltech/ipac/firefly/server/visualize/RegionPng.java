@@ -45,6 +45,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.Font;
 import java.util.List;
 
 /**
@@ -302,6 +303,19 @@ public class RegionPng {
         fo.setShowPoint(false);
         fo.setTargetName(rt.getOptions().getText());
         StringShape ss= fo.getDrawer().getStringShape();
+        int  fStyle = Font.PLAIN;
+        if (rt.getOptions().getFont().isBold()) {
+            if (rt.getOptions().getFont().isItalic()) {
+                fStyle = Font.BOLD + Font.ITALIC;
+            } else {
+                fStyle = Font.BOLD;
+            }
+        } else if (rt.getOptions().getFont().isItalic()) {
+            fStyle = Font.ITALIC;
+        }
+
+        ss.setFont(new Font(rt.getOptions().getFont().getName(),
+                            fStyle, (int)rt.getOptions().getFont().getPt()));
         ss.setDrawWithBackground(false);
         ss.setUseRegionCalc(true);
         ss.setOffsetDirection(StringShape.CENTER);

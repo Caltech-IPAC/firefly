@@ -248,10 +248,10 @@ export var getRegionCoordSys = (coordStr) => (RegionCsys.get(coordStr) || Region
 
 /**
  *
- * @param name string
- * @param point string (font size)
- * @param weight string
- * @param slant string
+ * @param name string - ex: Arieal, Courier, Ties, Helvetica, sans-serif, BRAGGADOCIO
+ * @param point string (font size) ex: 10, 12, 14, 16
+ * @param weight string ex: normal, bold
+ * @param slant string ex: normal, italic
  */
 export var makeRegionFont = (name = 'helvetica', point = '10', weight = 'normal', slant = 'normal') => (
         {name, point, weight, slant});
