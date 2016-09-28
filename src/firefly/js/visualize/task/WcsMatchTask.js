@@ -28,7 +28,7 @@ export function wcsMatchActionCreator(action) {
         const width= get(masterPv,'viewDim.width',false);
         const height= get(masterPv,'viewDim.height',false);
 
-        const group= findPlotGroup(masterPv.plotGroupId, visRoot.plotGroupAry);
+        var group= findPlotGroup(masterPv.plotGroupId, visRoot.plotGroupAry);
 
         if (!matchType || matchType.Off || !width  || !height) {
             dispatcher({
@@ -48,6 +48,7 @@ export function wcsMatchActionCreator(action) {
         dispatchGroupLocking(masterPv.plotId,true);
 
         visRoot= getState()[IMAGE_PLOT_KEY];
+        group= findPlotGroup(masterPv.plotGroupId, visRoot.plotGroupAry);
         masterPv= getPlotViewById(visRoot, plotId);
         const masterPlot= primePlot(masterPv);
 
@@ -96,7 +97,7 @@ function syncPlotToLevel(plot, masterPlot, targetASpix, northUp) {
 
 
 function zoomToLevel(plot, newZoomLevel) {
-    if (newZoomLevel!==plot.zoomLevel) {
+    if (newZoomLevel!==plot.zoomFactor) {
         dispatchZoom({
             plotId: plot.plotId,
             userZoomType: UserZoomTypes.LEVEL,
