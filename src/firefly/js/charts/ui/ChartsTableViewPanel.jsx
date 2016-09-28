@@ -374,17 +374,17 @@ class ChartsPanel extends React.Component {
         if (this.displaySelectionOptions()) {
             return (
                 <div style={{display:'inline-block', whiteSpace: 'nowrap'}}>
-                    <img className='selectionBtn'
+                    <img className='PanelToolbar__button'
                          title='Zoom in the enclosed points'
                          src={ZOOM_IN}
                          onClick={() => this.addZoom()}
                     />
-                    {<img className='selectionBtn'
+                    {<img className='PanelToolbar__button'
                          title='Select enclosed points'
                          src={SELECT_ROWS}
                          onClick={() => this.addSelection()}
                     />}
-                    <img className='selectionBtn'
+                    <img className='PanelToolbar__button'
                          title='Filter in the selected points'
                          src={FILTER_IN}
                          onClick={() => this.addFilter()}
@@ -402,17 +402,17 @@ class ChartsPanel extends React.Component {
                     {this.renderSelectionButtons()}
                 </div>
                 <div className='PanelToolbar_group'>
-                    {this.displayZoomOriginal() && <img className='selectionBtn'
+                    {this.displayZoomOriginal() && <img className='PanelToolbar__button'
                          title='Zoom out to original chart'
                          src={ZOOM_ORIGINAL}
                          onClick={() => this.resetZoom()}
                     />}
-                    {this.displayUnselectAll() && <img className='selectionBtn'
+                    {this.displayUnselectAll() && <img className='PanelToolbar__button'
                          title='Unselect all selected points'
                          src={UNSELECT_ROWS}
                          onClick={() => this.resetSelection()}
                     />}
-                    {this.getFilterCount()>0 && <img className='selectionBtn'
+                    {this.getFilterCount()>0 && <img className='PanelToolbar__button'
                                                    title='Remove all filters'
                                                    src={CLEAR_FILTERS}
                                                    onClick={() => this.clearFilters()}
@@ -422,13 +422,13 @@ class ChartsPanel extends React.Component {
                                    visible={true}
                                    badgeCount={this.getFilterCount()}
                                    onClick={this.toggleFilters}/>
-                    <img style={{paddingLeft: 5, cursor: 'pointer'}}
+                    <img className='PanelToolbar__button'
                          title='Plot options and tools'
                          src={SETTINGS}
                          onClick={() => this.toggleOptions()}
                     />
                     { expandable && !expandedMode &&
-                    <img style={{paddingLeft: 4, cursor: 'pointer'}}
+                    <img className='PanelToolbar__button'
                          title='Expand this panel to take up a larger area'
                          src={OUTLINE_EXPAND}
                          onClick={() => {
@@ -436,10 +436,11 @@ class ChartsPanel extends React.Component {
                             dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.xyPlots);
                          }}
                     />}
-                    { help_id && <div style={{paddingLeft: 4, marginTop: -10}}> <HelpIcon helpId={help_id} /> </div>}
+
+                    { help_id && <div style={{display: 'inline-block', position: 'relative', top: -9}}> <HelpIcon helpId={help_id} /> </div>}
                     { expandable && !expandedMode &&
                     (isBoolean(deletable) ? deletable : numRelatedCharts(tblId) > 1) &&  // when deletable is undefined, use related charts criterion
-                    <img style={{alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
+                    <img style={{display: 'inline-block', position: 'relative', top: -9, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
                          title='Delete this chart'
                          src={DELETE}
                          onClick={() => {dispatchDelete(tblId, chartId, chartType);}}

@@ -123,7 +123,7 @@ export class TablePanel extends Component {
         if (isEmpty(columns)) return <Loading {...{showTitle, tbl_id, title, removable}}/>;
 
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
-        const viewIcoStyle = 'PanelToolbar__button TablePanel__button ' + (textView ? 'tableView' : 'textView');
+        const viewIcoStyle = 'PanelToolbar__button ' + (textView ? 'tableView' : 'textView');
         const tableTopPos = showToolbar ? 29 : 0;
         const TT_VIEW = textView ? TT_TABLE_VIEW : TT_TEXT_VIEW;
 
@@ -139,7 +139,7 @@ export class TablePanel extends Component {
                                 {showFilterButton && filterCount > 0 &&
                                     <div onClick={this.clearFilter}
                                             title={TT_CLEAR_FILTER}
-                                            className='PanelToolbar__button TablePanel__button clearFilters'/>}
+                                            className='PanelToolbar__button clearFilters'/>}
                                 {showFilterButton &&
                                     <ToolbarButton icon={FILTER}
                                                    tip={TT_SHOW_FILTER}
@@ -153,12 +153,12 @@ export class TablePanel extends Component {
                                 {showSave &&
                                     <div onClick={this.saveTable}
                                             title={TT_SAVE}
-                                            className='PanelToolbar__button TablePanel__button save'/> }
+                                            className='PanelToolbar__button save'/> }
                                 {showOptionButton &&
                                     <div style={{marginLeft: '4px'}}
                                             title={TT_OPTIONS}
                                             onClick={this.toggleOptions}
-                                            className='PanelToolbar__button TablePanel__button options'/> }
+                                            className='PanelToolbar__button options'/> }
                                 { expandable && !expandedMode &&
                                     <div className='PanelToolbar__button' onClick={this.expandTable} title={TT_EXPAND}>
                                         <img src={OUTLINE_EXPAND}/>
