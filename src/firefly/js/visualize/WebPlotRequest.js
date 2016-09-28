@@ -269,9 +269,10 @@ export class WebPlotRequest extends ServerRequest {
         return req;
     }
 
-    static makeProcessorRequest(obj, desc) {
+    static makeProcessorRequest(serverRequest, desc) {
         var req = new WebPlotRequest(RequestType.PROCESSOR, desc);
-        req.setParams(obj);
+        // req.setParams(serverRequest.getParams());
+        req.setParams(serverRequest.getParams());
         return req;
     }
 
@@ -333,7 +334,7 @@ export class WebPlotRequest extends ServerRequest {
 
     /**
      *
-     * @param worldPt
+     * @param wp
      * @param {string} survey  must be one of 'j','h','k'
      * @param sizeInDeg less then .138 degreess (500 arcsec)
      * @return {WebPlotRequest}
@@ -703,7 +704,7 @@ export class WebPlotRequest extends ServerRequest {
     /**
      * Plot should come up rotated north
      *
-     * @param {boolean} rotateNorth, true to rotate
+     * @param {boolean} rotateNorth true to rotate
      */
     setRotateNorth(rotateNorth) { this.setParam(C.ROTATE_NORTH, rotateNorth + ''); }
 
@@ -996,7 +997,8 @@ export class WebPlotRequest extends ServerRequest {
 //======================================================================
 
     /**
-     * @return objectName, string, astronomical object to search
+     * @return objectName string astronomical object to search
+     * @param objectName
      */
     setObjectName(objectName) { this.setParam(C.OBJECT_NAME, objectName); }
 

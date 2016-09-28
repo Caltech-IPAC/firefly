@@ -17,6 +17,9 @@ import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 import Validate from '../../util/Validate.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {makeTblRequest,getTblById} from '../../tables/TableUtil.js';
+
+import {dispatchLoadPlotData} from '../../charts/XYPlotCntlr.js';
+
 import {RAW_TABLE,PERIODOGRAM, PEAK_TABLE} from '../../templates/lightcurve/LcManager.js';
 
 const gkey = 'PFO_PANEL';
@@ -192,22 +195,33 @@ function doPeriodFinding(request) {
     //let tbl = getTblById(RAW_TABLE);
     console.log(request);
 
-    var tReq = makeTblRequest('LightCurveProcessor',PERIODOGRAM , {
-        'result_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml', //For now return result table for non-existing API
-        'table_name': PERIODOGRAM
-    },  {tbl_id:PERIODOGRAM});
-
-    if (tReq != null) {
-        dispatchTableSearch(tReq, {removable: false});
-    }
-
     var tReq2 = makeTblRequest('LightCurveProcessor',PEAK_TABLE , {
         'result_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml', //For now return result table for non-existing API
         'table_name': PEAK_TABLE
     },  {tbl_id:PEAK_TABLE});
 
     if (tReq2 != null) {
-        dispatchTableSearch(tReq2, {removable: false});
+        let xyPlotParams = {
+            x: {columnOrExpr: 'Peak', options: 'grid'},
+            y: {columnOrExpr: 'Power', options: 'grid'}
+        };
+        dispatchLoadPlotData({chartId:PEAK_TABLE, tblId:PEAK_TABLE, markAsDefault:true, xyPlotParams});
+        dispatchTableSearch(tReq2, {removable: true});
+    }
+
+    var tReq = makeTblRequest('LightCurveProcessor',PERIODOGRAM , {
+        'result_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml', //For now return result table for non-existing API
+        'table_name': PERIODOGRAM
+    },  {tbl_id:PERIODOGRAM});
+
+    if (tReq != null) {
+        dispatchTableSearch(tReq, {removable: true});
+        let xyPlotParams = {
+            userSetBoundaries: {yMin: 0},
+            x: {columnOrExpr: 'PERIOD', options: 'grid, log'},
+            y: {columnOrExpr: 'POWER', options: 'grid'}
+        };
+        dispatchLoadPlotData({chartId:PERIODOGRAM, tblId:PERIODOGRAM, markAsDefault:true, xyPlotParams});
     }
 }
 
