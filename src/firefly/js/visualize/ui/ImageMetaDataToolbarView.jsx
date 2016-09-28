@@ -8,13 +8,10 @@ import BrowserInfo from '../../util/BrowserInfo.js';
 import {getPlotViewById, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {dispatchChangeActivePlotView, visRoot} from '../ImagePlotCntlr.js';
 import {VisInlineToolbarView} from './VisInlineToolbarView.jsx';
-import {getDlAry} from '../DrawLayerCntlr.js';
-import {dispatchChangeLayout, dispatchUpdateCustom, getViewer, getMultiViewRoot,
+import {dispatchChangeLayout, getViewer, getMultiViewRoot,
         GRID, GRID_FULL, GRID_RELATED, SINGLE} from '../MultiViewCntlr.js';
 import {showColorBandChooserPopup} from './ColorBandChooserPopup.jsx';
-import {getTblInfoById} from '../../tables/TableUtil.js';
-import {dispatchTableHighlight} from '../../tables/TablesCntlr.js';
-import {PagingBar} from '../../ui/PagingBar.jsx';
+import {ImagePager} from './ImagePager.jsx';
 
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import ONE from 'html/images/icons-2014/Images-One.png';
@@ -150,17 +147,4 @@ function showThreeColorOps(viewer,dataId) {
     showColorBandChooserPopup(viewer.viewerId,newCustom,dataId);
 }
 
-function ImagePager({pageSize, tbl_id}) {
-    const {totalRows, showLoading, currentPage} = getTblInfoById(tbl_id, pageSize);
-    const onGotoPage = (pageNum) => {
-        const hlRowIdx = Math.max( pageSize * (pageNum-1), 0 );
-        dispatchTableHighlight(tbl_id, hlRowIdx);
-    };
-    
-    return (
-        <div className='PanelToolbar'>
-            <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:{onGotoPage}}} />
-        </div>
-    );
-}
 

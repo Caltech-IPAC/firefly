@@ -199,16 +199,15 @@ export function changePrimePlot(pv, nextIdx) {
 
 
 /**
- *
+ * Replace the plotAry and overlayPlotViews into the PlotView, return a new PlotView
  * @param {PlotView} pv
  * @param {WebPlot[]} plotAry
  * @param {Array} overlayPlotViews
  * @param {ExpandType} expandedMode
- * @param {WorldPt} wcsMatchCenterWP
  * @param {boolean} keepPrimeIdx
  * @return {PlotView}
  */
-function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, wcsMatchCenterWP, keepPrimeIdx=false) {
+function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, keepPrimeIdx=false) {
 
     pv= clone(pv);
     pv.plotViewCtx= clone(pv.plotViewCtx);

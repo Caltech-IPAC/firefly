@@ -220,7 +220,7 @@ public class PlotServUtils {
     public static File createRotatedFile(File originalFile, FitsRead originalFR, double angle) throws FitsException,
                                                                                                       IOException,
                                                                                                       GeomException {
-        FitsRead rotateFR= FitsRead.createFitsReadRotated(originalFR, angle);
+        FitsRead rotateFR= FitsRead.createFitsReadRotated(originalFR, angle, false);
         String fname= originalFile.getName();
         String angleStr= String.format("%2f", angle);
         File f= File.createTempFile(FileUtil.getBase(fname)+"-rot-"+angleStr,

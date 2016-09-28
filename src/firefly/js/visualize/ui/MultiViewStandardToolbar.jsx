@@ -50,6 +50,16 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, layo
         return <div></div>;
     }
 
+    // single mode stuff
+    // if (layoutType===SINGLE) {
+    //     leftImageStyle= {
+    //         cursor:'pointer',
+    //         flex: '0 0 auto',
+    //         paddingLeft: 10,
+    //         visibility : viewerPlotIds.length===2 ? 'hidden' : 'visible'// hide left arrow when single mode and 2 images
+    //     };
+    // }
+
     const leftImageStyle= {
         verticalAlign:'bottom',
         cursor:'pointer',

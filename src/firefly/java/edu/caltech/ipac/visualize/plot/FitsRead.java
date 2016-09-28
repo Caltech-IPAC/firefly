@@ -13,6 +13,7 @@ import nom.tam.fits.ImageData;
 import nom.tam.fits.ImageHDU;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.Cursor;
+
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -237,9 +238,10 @@ public class FitsRead implements Serializable {
      *
      * @param fitsReader    FitsReadLZ object for the input image
      * @param rotationAngle number of degrees to rotate the image counter-clockwise
+     * @param fromNorth if true that the rotation angle is from the north
      * @return FitsReadLZ object for the new, rotated image
      */
-    public static FitsRead createFitsReadRotated(FitsRead fitsReader, double rotationAngle)
+    public static FitsRead createFitsReadRotated(FitsRead fitsReader, double rotationAngle, boolean fromNorth)
             throws FitsException, IOException, GeomException {
 
         ImageHeader imageHeader = fitsReader.getImageHeader();
@@ -254,11 +256,20 @@ public class FitsRead implements Serializable {
         try {
             WorldPt worldPt1 = projection.getWorldCoords(centerX, centerY - 1);
             WorldPt worldPt2 = projection.getWorldCoords(centerX, centerY);
-            double positionAngle = -VisUtil.getPositionAngle(worldPt1.getX(),
+            double positionAngle = VisUtil.getPositionAngle(worldPt1.getX(),
                     worldPt1.getY(), worldPt2.getX(), worldPt2.getY());
-
-            positionAngle += rotationAngle;
-            return (createFitsReadPositionAngle(fitsReader, positionAngle, CoordinateSys.EQ_J2000));
+            if (fromNorth) {
+                long angleToRotate= Math.round((180+ rotationAngle) % 360);
+                if (angleToRotate==Math.round(positionAngle)) {
+                    return fitsReader;
+                }
+                else {
+                    return createFitsReadPositionAngle(fitsReader, -angleToRotate, CoordinateSys.EQ_J2000);
+                }
+            }
+            else {
+                return createFitsReadPositionAngle(fitsReader, -positionAngle+ rotationAngle, CoordinateSys.EQ_J2000);
+            }
         } catch (ProjectionException pe) {
             if (SUTDebug.isDebug()) {
                 System.out.println("got ProjectionException: " + pe.getMessage());

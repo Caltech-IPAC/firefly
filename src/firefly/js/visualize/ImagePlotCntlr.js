@@ -490,11 +490,13 @@ export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
  * @param {string} [p.plotId] is required unless defined in the WebPlotRequest
  * @param {WebPlotRequest|Array} p.wpRequest -  plotting parameters, required or for 3 color pass an array of WebPlotRequest
  * @param {boolean} [p.threeColor] is a three color request, if true the wpRequest should be an array
- * @param {boolean} [p.addToHistory] add this request to global history of plots, may be deprecated in the future
- * @param {boolean} [p.useContextModifications] it true the request will be modified to use preferences, rotation, etc
+ * @param {boolean} [p.addToHistory=true] add this request to global history of plots, may be deprecated in the future
+ * @param {boolean} [p.useContextModifications=true] it true the request will be modified to use preferences, rotation, etc
  *                                 should only be false when it is doing a 'restore to defaults' type plot
  * @param {boolean} [p.attributes] the are added to the plot
  * @param {Object} [p.pvOptions] parameter specific to the  plotView, only read the first time per plot id
+ * @param {boolean} [p.setNewPlotAsActive= true] the new plot will be active
+ * @param {boolean} [p.holdWcsMatch= false] if wcs match is on, then modify the request to hold the wcs match
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  * @param {string} [p.viewerId] - viewer that this plot should be put into, only optional if using the default viewer id
  *                                normally you need to specify the viewer
@@ -508,11 +510,13 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
                                   dispatcher= flux.process,
                                   attributes={},
                                   pvOptions= {},
+                                  setNewPlotAsActive= true,
+                                  holdWcsMatch= false,
                                   viewerId} ) {
 
     dispatcher({ type: PLOT_IMAGE,
                    payload: {plotId,wpRequest, threeColor, addToHistory, pvOptions,
-                             attributes, useContextModifications,viewerId}});
+                             attributes, holdWcsMatch, setNewPlotAsActive, useContextModifications,viewerId}});
 }
 
 /**
@@ -522,10 +526,13 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
  * @param {WebPlotRequest[]} p.wpRequestAry
  * @param {string} p.viewerId
  * @param {Object} p.pvOptions PlotView init Options
+ * @param {boolean} [p.setNewPlotAsActive] the last completed plot will be active
  * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
-export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {}, dispatcher= flux.process}) {
-    dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry, pvOptions, viewerId} });
+export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
+                                   setNewPlotAsActive= true,
+                                   dispatcher= flux.process}) {
+    dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry, pvOptions, setNewPlotAsActive, viewerId} });
 }
 
 
@@ -624,10 +631,11 @@ export function dispatchZoom({plotId, userZoomType, maxCheck= true,
  * Note - function parameter is a single object
  * @param {Object}  p this function take a single parameter
  * @param {string} p.plotId
+ * @param {boolean} [p.holdWcsMatch= false] if wcs match is on, then modify the request to hold the wcs match
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
-export function dispatchDeletePlotView({plotId, dispatcher= flux.process}) {
-    dispatcher({ type: DELETE_PLOT_VIEW, payload: {plotId} });
+export function dispatchDeletePlotView({plotId, holdWcsMatch= false, dispatcher= flux.process}) {
+    dispatcher({ type: DELETE_PLOT_VIEW, payload: {plotId, holdWcsMatch} });
 }
 
 
@@ -754,7 +762,9 @@ export function changePrimeActionCreator(rawAction) {
 export function deletePlotViewActionCreator(rawAction) {
     return (dispatcher, getState) => {
         const vr= getState()[IMAGE_PLOT_KEY];
-        if (vr.wcsMatchType) dispatcher({ type: WCS_MATCH, payload: {wcsMatchType:false} });
+        if (vr.wcsMatchType && !rawAction.payload.holdWcsMatch) {
+            dispatcher({ type: WCS_MATCH, payload: {wcsMatchType:false} });
+        }
         dispatcher(rawAction);
     };
 }
@@ -1053,6 +1063,9 @@ function deletePlotView(state,action) {
     }
     if (state.prevActivePlotId===plotId || state.prevActivePlotId===state.activePlotId) {
         state.prevActivePlotId= null;
+    }
+    if (state.mpwWcsPrimId===plotId) {
+        state.mpwWcsPrimId= state.prevActivePlotId;
     }
     return state;
 }
