@@ -297,7 +297,7 @@ function tableToText(columns, dataAry, showUnits=false) {
 
     // column's name
     var textHead = columns.reduce( (pval, col, idx) => {
-        return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.name, colWidths[idx])}|` : '');
+        return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.label || col.name, colWidths[idx])}|` : '');
     }, '|');
 
     // column's type

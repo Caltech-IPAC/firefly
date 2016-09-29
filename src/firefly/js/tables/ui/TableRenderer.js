@@ -240,19 +240,24 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
     };
 
     return ({rowIndex, data, colIdx}) => {
-        return (
-            <div style={{margin: 2}}>
-                <InputField
-                    validator={validator}
-                    tooltip={tooltips}
-                    size={size}
-                    style={style}
-                    value={get(data, [rowIndex, colIdx],'')}
-                    onChange={(v) => changeHandler(rowIndex, data, colIdx, v) }
-                    actOn={['blur','enter']}
-                />
-            </div>
-        );
+        const val = get(data, [rowIndex, colIdx]);
+        if (val === undefined) {
+            return null;
+        } else {
+            return (
+                <div style={{margin: 2}}>
+                    <InputField
+                        validator={validator}
+                        tooltip={tooltips}
+                        size={size}
+                        style={style}
+                        value={val}
+                        onChange={(v) => changeHandler(rowIndex, data, colIdx, v) }
+                        actOn={['blur','enter']}
+                    />
+                </div>
+            );
+        }
     };
 };
 

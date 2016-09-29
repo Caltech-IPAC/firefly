@@ -12,7 +12,7 @@ import {createInputCell} from './TableRenderer.js';
 import {FILTER_CONDITION_TTIPS, FILTER_TTIPS, FilterInfo} from '../FilterInfo.js';
 import {sortTableData, calcColumnWidths} from  '../TableUtil.js';
 import {InputAreaField} from '../../ui/InputAreaField.jsx';
-// import {deepDiff} from '../../util/WebUtil.js';
+import {toBoolean} from '../../util/WebUtil.js';
 
 const wrapperStyle = {display: 'block', flexGrow: 0};
 const style = {display: 'block', width: '100%', resize: 'none', boxSizing: 'border-box', backgroundColor: 'white'};
@@ -95,8 +95,8 @@ function prepareOptionData(columns, sortInfo, filterInfo, selectable) {
     const filterInfoCls = FilterInfo.parse(filterInfo);
     columns = columns.filter((c) => c.visibility !== 'hidden');
     var data = columns.map( (v) => {
-        const filter = filterInfoCls.getFilter(v.name) || '';
-        return [v.name||'', filter, v.units||'', v.desc||'', v.visibility !== 'hide'];
+        const filter = toBoolean(v.filterable, true) ? filterInfoCls.getFilter(v.name) || '' : undefined;
+        return [v.label||v.name||'', filter, v.units||'', v.desc||'', v.visibility !== 'hide'];
     } );
     sortTableData(data, cols, sortInfo);
 
