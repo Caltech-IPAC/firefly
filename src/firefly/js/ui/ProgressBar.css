@@ -1,0 +1,35 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+
+.ProgressBar {
+    width: 100%;
+    height:calc(100% - 4px);
+}
+
+.ProgressBar__shell {
+    border:1px solid #6593cf;
+    background-color: #AAAAAA;
+    height: 100%;
+    width: 100%;
+    position: relative;
+}
+
+
+.ProgressBar__bar {
+    background:#9CBFEE url(/images/progress-bg.gif) repeat-x left center;
+    width: 50%;
+    height: 100%;
+}
+
+.ProgressBar__text {
+    padding: 0;
+    color: white;
+    font-size: 9pt;
+    width: 90%;
+    position: absolute;
+    top: 0;
+    white-space: nowrap;
+    margin: 2px;
+}
+

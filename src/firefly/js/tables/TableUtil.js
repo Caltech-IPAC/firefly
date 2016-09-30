@@ -7,12 +7,13 @@ import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {FilterInfo} from './FilterInfo.js';
 import {flux} from '../Firefly.js';
-import {fetchUrl, encodeServerUrl, encodeParams} from '../util/WebUtil.js';
-import {getRootURL} from '../util/BrowserUtil.js';
+import {encodeServerUrl} from '../util/WebUtil.js';
+import {fetchTable} from '../rpc/SearchServicesJson.js';
+import {DEF_BASE_URL} from '../core/JsonUtils.js';
+import {ServerParams} from '../data/ServerParams.js';
 
-export const SEARCH_SRV_PATH = getRootURL() + 'search/json';
 export const MAX_ROW = Math.pow(2,31) - 1;
-const SAVE_TABLE_URL = getRootURL() + 'servlet/SaveAsIpacTable';
+/* TABLE_REQUEST should match QueryUtil on the server-side */
 
 /**
  *  @public
@@ -166,40 +167,17 @@ export function cloneRequest(request, params = {}) {
 
 
 /**
- *
+ * tableRequest will be sent to the server as a json string.
  * @param {TableRequest} tableRequest is a table request params object
  * @param {number} [hlRowIdx] set the highlightedRow.  default to startIdx.
  * @returns {Promise.<TableModel>}
  * @public
  * @func doFetchTable
  * @memberof firefly.util.table
+ * @deprecated  use firefly.util.table.fetchTable instead
  */
 export function doFetchTable(tableRequest, hlRowIdx) {
-
-    const def = {
-        startIdx: 0,
-        pageSize : MAX_ROW
-    };
-    var params = Object.assign(def, tableRequest);
-    // encoding for method post
-    if (!isEmpty(params.META_INFO)) {
-         params.META_INFO = encodeParams(params.META_INFO);
-    }
-
-    return fetchUrl(SEARCH_SRV_PATH, {method: 'post', params}).then( (response) => {
-        return response.json().then( (tableModel) => {
-            const startIdx = get(tableModel, 'request.startIdx', 0);
-            if (startIdx > 0) {
-                // shift data arrays indices to match partial fetch
-                tableModel.tableData.data = tableModel.tableData.data.reduce( (nAry, v, idx) => {
-                    nAry[idx+startIdx] = v;
-                    return nAry;
-                }, []);
-            }
-            tableModel.highlightedRow = hlRowIdx || startIdx;
-            return tableModel;
-        });
-    });
+    return fetchTable(tableRequest, hlRowIdx);
 }
 
 export function doValidate(type, action) {
@@ -640,21 +618,27 @@ export function getTblInfo(tableModel, aPageSize) {
  * @func getTableSourceUrl
  */
 export function getTableSourceUrl(tbl_ui_id) {
+    const def = {
+        startIdx: 0,
+        pageSize : MAX_ROW
+    };
     const {columns, request} = getTableUiById(tbl_ui_id) || {};
-    const Request = cloneDeep(request);
+    const tableRequest = Object.assign(def, cloneDeep(request));
     const visiCols = columns.filter( (col) => {
                 return isNil(col) || col.visibility === 'show';
             }).map( (col) => {
                 return col.name;
             } );
     if (visiCols.length !== columns.length) {
-        Request['inclCols'] = visiCols.toString();
+        tableRequest['inclCols'] = visiCols.toString();
     }
-    Request.startIdx = 0;
-    Request.pageSize = Number.MAX_SAFE_INTEGER;
-    Reflect.deleteProperty(Request, 'tbl_id');
-    const file_name = Request.file_name;
-    return encodeServerUrl(SAVE_TABLE_URL, {file_name, Request});
+    Reflect.deleteProperty(tableRequest, 'tbl_id');
+    const params = {
+        [ServerParams.COMMAND]: ServerParams.TABLE_SAVE,
+        [ServerParams.REQUEST]: JSON.stringify(tableRequest),
+        file_name: tableRequest.file_name
+    };
+    return encodeServerUrl(DEF_BASE_URL, params);
 }
 
 /**

@@ -6,9 +6,10 @@
 
 import Enum from 'enum';
 import update from 'react-addons-update';
-import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil, last} from 'lodash';
+import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil, last, isObjectLike} from 'lodash';
 import { getRootURL } from './BrowserUtil.js';
 import {getWsConnId, getWsChannel} from '../core/messaging/WebSocketClient.js';
+import {getDownloadProgress, DownloadProgress} from '../rpc/SearchServicesJson.js';
 
 const  MEG          = 1048576;
 const GIG          = 1048576 * 1024;
@@ -16,6 +17,8 @@ const MEG_TENTH    = MEG / 10;
 const GIG_HUNDREDTH= GIG / 100;
 const K            = 1024;
 
+export const WS_CHANNEL_HD = 'FF-channel';
+export const WS_CONNID_HD  = 'FF-connID';
 export const ParamType= new Enum(['POUND', 'QUESTION_MARK']);
 
 
@@ -120,18 +123,18 @@ export const encodeServerUrl= function(url, params) {
  * see https://github.com/github/fetch for usage.
  * see https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API for current status on the API
  * see https://fetch.spec.whatwg.org/ for official standard
-
- * This function applies default behaviors before fetching.
- * options.params is a custom property used to carry a set of parameters.  It does not need to
- *                be encoded.  Base on the method used, it will be handled internally.
- * options.method can be one of get, post, or multipart
- *                when 'multipart', it will post with 'multipart/form-data' encoding.
  *
- * @param url
- * @param options
- * @return a promise of the response when successful, or reject with an Error.
+ * This function applies default behaviors before fetching.
+ *
+ * @param {string} url the URL to connect
+ * @param {Object} options
+ * @param {Object} options.params a parameter map to send along with the request.  It does not need to
+ *                                  be encoded.  Base on the method used, it will be handled internally.
+ * @param {string} options.method can be one of get, post, or multipart
+ *                                when 'multipart', it will post with 'multipart/form-data' encoding.
+ * @return {Promise} a promise of the response when successful, or reject with an Error.
  */
-export function fetchUrl(url, options, returnAllResponses= false) {
+export function fetchUrl(url, options, doValidation= true) {
 
     if (!url) return;
 
@@ -145,8 +148,8 @@ export function fetchUrl(url, options, returnAllResponses= false) {
     options = Object.assign(req, options);
 
     const headers = {
-        'FF-channel': getWsChannel(),
-        'FF-connID': getWsConnId()
+        [WS_CHANNEL_HD]: getWsChannel(),
+        [WS_CONNID_HD]: getWsConnId()
     };
     options.headers = Object.assign(headers, options.headers);
 
@@ -159,7 +162,9 @@ export function fetchUrl(url, options, returnAllResponses= false) {
                 // if 'post' but, body is not provided, add the parameters into the body.
                 if (options.method.toLowerCase() === 'post') {
                     options.headers['Content-type'] = 'application/x-www-form-urlencoded';
-                    options.body = encodeParams(options.params);
+                    options.body = Object.keys(options.params).map((key) => {
+                                        return encodeURIComponent(key) + '=' + encodeURIComponent(options.params[key]);
+                                    }).join('&');
                 } else if (options.method.toLowerCase() === 'multipart') {
                     options.method = 'post';
                     var data = new FormData();
@@ -176,9 +181,9 @@ export function fetchUrl(url, options, returnAllResponses= false) {
     // do the actually fetch, then return a promise.
     return fetch(url, options)
         .then( (response) => {
-            if (returnAllResponses) return response;
+            if (!doValidation) return response;
             if (response.ok) {
-                return response;
+                return response; 
             } else {
                 return new Error(`${url} failed with status: ${response}.statusText`);
             }
@@ -211,6 +216,39 @@ export function logErrorWithPrefix(prefix, ...message) {
     }
 }
 
+/**
+ * @param {string} url  the url to download.  It should be based on AnyFileDownload
+ * @param {number} [numTries=1000]  number of time to check for progress until giving up
+ * @returns {Promise}  resolve is called on DONE and reject when FAIL.
+ */
+export function downloadWithProgress(url, numTries=1000) {
+    return new Promise(function(resolve, reject) {
+        const {search} = parseUrl(url);
+        var cnt = 0;
+        const doIt = () => {
+            const interval = Math.min(5000, Math.pow(2, 2*cnt/10)*1000);  //gradually increase between 1 and 5 secs
+            console.log('Interval: ' + interval);
+            setTimeout(function () {
+                cnt++;
+                getDownloadProgress(search).then((v) => {
+                    if (DownloadProgress.DONE.is(v)) {
+                        resolve(v);
+                    } else if (DownloadProgress.FAIL.is(v)) {
+                        reject(v);
+                    } else {
+                        if (cnt < numTries) {
+                            doIt();
+                        } else {
+                            reject(`Number of tries(${numTries}) exceeded without results`);
+                        }
+                    }
+                });
+            }, interval);
+        };
+        doIt();
+        download(url);
+    });
+}
 
 export function download(url) {
     var nullFrame = document.getElementById('null_frame');
@@ -255,7 +293,7 @@ export function parseUrl(url) {
         hostname: parser.hostname,
         port: parser.port,
         path: parser.pathname,
-        search: parser.search,
+        search: parser.search.replace(/^\?/, ''),
         hash: parser.hash,
         searchObject,
         filename,
@@ -469,3 +507,4 @@ export function isBooleanString(val) {
     const s = String(val).toLowerCase();
     return s === 'true' || s === 'false';
 }
+

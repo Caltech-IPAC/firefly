@@ -104,6 +104,54 @@ public class ZipHandler {
 
     }
 
+    /**
+     * @param filename (filename can be url)
+     * @param fi       file info pbject
+     * @return input stream handle
+     * @throws IOException on error
+     */
+    private static InputStream getInputStream(String filename, FileInfo fi, File baseDir) throws IOException {
+        InputStream is;
+        if (filename.contains("://")) {
+            try {
+                URL url = new URL(filename);
+                URLConnection uc = URLDownload.makeConnection(url, fi.getCookies());
+                uc.setRequestProperty("Accept", "text/plain");
+
+                if (fi.hasFileNameResolver()) {
+                    String suggestedFilename = URLDownload.getSugestedFileName(uc);
+                    fi.setExternalName(fi.resolveFileName(suggestedFilename));
+                }
+
+                is = uc.getInputStream();
+
+            } catch (MalformedURLException e) {
+                log.error(e);
+
+                File fileToRead;
+                if (baseDir == null) {
+                    fileToRead = new File(filename);
+                } else {
+                    fileToRead = new File(baseDir, filename);
+                }
+
+                is = new FileInputStream(fileToRead);
+            }
+
+        } else {
+            File fileToRead;
+            if (baseDir == null) {
+                fileToRead = new File(filename);
+            } else {
+                fileToRead = new File(baseDir, filename);
+            }
+
+            is = new FileInputStream(fileToRead);
+        }
+
+        return is;
+    }
+
     public void zip() {
         if (_backgroundInfoCacher.isCanceled()) {
             _bundle.cancel();
@@ -165,7 +213,6 @@ public class ZipHandler {
             cleanup();
         }
     }
-
 
     public long getNumFailed() {
         if (_failed == null) return 0;
@@ -275,55 +322,6 @@ public class ZipHandler {
         }
     }
 
-    /**
-     * @param filename (filename can be url)
-     * @param fi       file info pbject
-     * @return input stream handle
-     * @throws IOException on error
-     */
-    private static InputStream getInputStream(String filename, FileInfo fi, File baseDir) throws IOException {
-        InputStream is;
-        if (filename.contains("://")) {
-            try {
-                URL url = new URL(filename);
-                URLConnection uc = URLDownload.makeConnection(url, fi.getCookies());
-                uc.setRequestProperty("Accept", "text/plain");
-
-                if (fi.hasFileNameResolver()) {
-                    String suggestedFilename = URLDownload.getSugestedFileName(uc);
-                    fi.setExternalName(fi.resolveFileName(suggestedFilename));
-                }
-
-                is = uc.getInputStream();
-
-            } catch (MalformedURLException e) {
-                log.error(e);
-
-                File fileToRead;
-                if (baseDir == null) {
-                    fileToRead = new File(filename);
-                } else {
-                    fileToRead = new File(baseDir, filename);
-                }
-
-                is = new FileInputStream(fileToRead);
-            }
-
-        } else {
-            File fileToRead;
-            if (baseDir == null) {
-                fileToRead = new File(filename);
-            } else {
-                fileToRead = new File(baseDir, filename);
-            }
-
-            is = new FileInputStream(fileToRead);
-        }
-
-        return is;
-    }
-
-
     private void updatebundle(int sizeInFiles, long sizeInByte, long szUncompressed, long szCompressed) {
         _bundle.addProcessedBytes(sizeInFiles, sizeInByte, szUncompressed, szCompressed);
         long total = _bundle.getProcessedBytes();
@@ -331,6 +329,7 @@ public class ZipHandler {
             _lastTotal = total;
             BackgroundStatus bgStat=_backgroundInfoCacher.getStatus();
             bgStat.setPartProgress(_bundle.makePackageProgress(),_bundle.getPackageIdx());
+            bgStat.setState(_bundle.getState());
             _backgroundInfoCacher.setStatus(bgStat); // should force cache to update
         }
 

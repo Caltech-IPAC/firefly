@@ -16,19 +16,21 @@ import edu.caltech.ipac.astro.target.Target;
 import edu.caltech.ipac.astro.target.TargetFixedSingle;
 import edu.caltech.ipac.astro.target.TargetList;
 import edu.caltech.ipac.firefly.core.EndUserException;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.PackageProgress;
 import edu.caltech.ipac.firefly.data.*;
-import edu.caltech.ipac.firefly.data.table.BaseTableColumn;
-import edu.caltech.ipac.firefly.data.table.BaseTableData;
-import edu.caltech.ipac.firefly.data.table.DataSet;
-import edu.caltech.ipac.firefly.data.table.RawDataSet;
+import edu.caltech.ipac.firefly.data.table.*;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.decimate.DecimateKey;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +40,10 @@ import java.net.URLEncoder;
 import java.sql.Date;
 import java.util.*;
 
+import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.*;
+import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.ACTIVE_REQUEST_CNT;
+import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.RESPONSE_CNT;
+
 /**
  * Date: Jul 14, 2008
  *
@@ -45,17 +51,10 @@ import java.util.*;
  * @version $Id: QueryUtil.java,v 1.32 2012/11/03 02:20:23 tlau Exp $
  */
 public class QueryUtil {
+    public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
-    public static String makeKey(Object... ids) {
-        StringBuffer sb = new StringBuffer();
-        for(int i=0; i < ids.length; i++) {
-            if(i!=0) {
-                sb.append("|");
-            }
-            sb.append(ids[i]);
-        }
-        return sb.toString();
-    }
+    private static final int DECI_DEF_MAX_POINTS = AppProperties.getIntProperty("decimation.def.max.points", 100000);
+    private static final int DECI_ENABLE_SIZE = AppProperties.getIntProperty("decimation.enable.size", 5000);
 
     public static String makeUrlBase(String url) {
 
@@ -68,57 +67,109 @@ public class QueryUtil {
         }
     }
 
-    public static TableServerRequest convertToServerRequest(HttpServletRequest req) {
-        TableServerRequest retval = new TableServerRequest();
-        for (Enumeration<String> names = req.getParameterNames(); names.hasMoreElements(); ) {
-            String key = names.nextElement();
-            if (!StringUtils.isEmpty(key) && req.getParameterValues(key) != null) {
-                String values = StringUtils.toString(req.getParameterValues(key), ",");
-                if (key.equals(TableServerRequest.META_INFO)) {
-                    Map<String, String> meta = encodedStringToMap(values);
-                    if (meta != null && meta.size() > 0) {
-                        for (String k : meta.keySet()) {
-                            retval.setMeta(k, meta.get(k));
-                        }
-                    }
-                } else {
-                    retval.setTrueParam(key, values);
+    public static DownloadRequest convertToDownloadRequest(String dlReqStr, String searchReqStr, String selInfoStr) {
+        DownloadRequest retval = new DownloadRequest(convertToServerRequest(searchReqStr), null, null);
+        retval.setSelectionInfo(SelectionInfo.parse(selInfoStr));
+
+        if (!StringUtils.isEmpty(dlReqStr)) {
+            try {
+                JSONObject jsonReq = (JSONObject) new JSONParser().parse(dlReqStr);
+                for (Object key : jsonReq.keySet()) {
+                    Object val = jsonReq.get(key);
+                    retval.setParam(String.valueOf(key), String.valueOf(val));
                 }
+            } catch (ParseException e) {
+                LOGGER.error(e);
             }
         }
         return retval;
     }
 
-    public static TableServerRequest convertToServerRequest(String str) {
-        if (StringUtils.isEmpty(str)) return null;
-        TableServerRequest treq = new TableServerRequest();
-        Map<String, Object> map = convertToMap(str);
-        for (String k : map.keySet()) {
-            if (k.equals(TableServerRequest.META_INFO)) {
-                Map<String, Object> meta = (Map<String, Object>) map.get(k);
-                for (String m : meta.keySet()) {
-                    treq.setMeta(m, String.valueOf(meta.get(m)));
+    public static TableServerRequest convertToServerRequest(String searchReqStr) {
+        TableServerRequest retval = new TableServerRequest();
+        if (!StringUtils.isEmpty(searchReqStr)) {
+            try {
+                JSONObject jsonReq = (JSONObject) new JSONParser().parse(searchReqStr);
+                for (Object key : jsonReq.keySet()) {
+                    Object val = jsonReq.get(key);
+                    String skey = String.valueOf(key);
+                    if (skey.equals(TableServerRequest.META_INFO)) {
+                        Map meta = (Map) val;
+                        for (Object mk : meta.keySet()) {
+                            retval.setMeta(String.valueOf(mk), String.valueOf(meta.get(mk)));
+                        }
+                    } else {
+                        retval.setTrueParam(skey, String.valueOf(val));
+                    }
+
                 }
-            } else {
-                treq.setTrueParam(k, String.valueOf(map.get(k)));
+            } catch (ParseException e) {
+                LOGGER.error(e);
             }
         }
-        return treq;
+        return retval;
     }
 
-    public static Map<String, Object> convertToMap(String str) {
-        HashMap<String, Object> map = new HashMap<>();
-        String[] parts = str.split("&");
-        for (String part : parts) {
-            String[] kv = part.split("=");
-            String val = kv.length > 1 ? decode(kv[1].trim()) : "";
-            if (val.length() > 0 && val.contains("&")) {
-                map.put(kv[0], convertToMap(val));
-            } else {
-                map.put(kv[0], val);
+    public static JSONObject convertToJsonObject(BackgroundStatus bgStat) {
+        List<String> intParams = Arrays.asList(MESSAGE_CNT, PACKAGE_CNT, TOTAL_BYTES, RESPONSE_CNT, ACTIVE_REQUEST_CNT);
+
+        JSONObject rval = new JSONObject();
+        Map<String, String> params = bgStat.getParams();
+        if (params != null && params.size() > 0) {
+            for(Map.Entry<String,String> p :  Collections.unmodifiableSet(params.entrySet())) {
+                String key = p.getKey();
+                Object val = p.getValue();
+                if (key.startsWith(PACKAGE_PROGRESS_BASE)) {
+                    val = convertToJsonObject(PackageProgress.parse(p.getValue()));
+                } else if (intParams.contains(key)) {
+                    val = bgStat.getIntParam(key);
+                }
+                rval.put(key, val);
             }
         }
-        return map;
+        return rval;
+    }
+
+    public static JSONArray toJsonArray(List values) {
+        JSONArray jAry = new JSONArray();
+        for (Object v : values) {
+            if (v instanceof List) {
+
+            } else if(v instanceof Map) {
+                jAry.add(toJsonObject((Map) v));
+            } else {
+                jAry.add(v);
+            }
+        }
+        return jAry;
+    }
+
+    public static JSONObject toJsonObject(Map values) {
+
+        JSONObject jObj = new JSONObject();
+        for (Object k : values.keySet()) {
+            String name = String.valueOf(k);
+            Object v = values.get(k);
+            if (v instanceof List) {
+                jObj.put(name, toJsonArray((List) v));
+            } else if(v instanceof Map) {
+                jObj.put(name, toJsonObject((Map) v));
+            } else {
+                jObj.put(name, v);
+            }
+        }
+        return jObj;
+    }
+
+    public static JSONObject convertToJsonObject(PackageProgress progress) {
+        JSONObject rval = new JSONObject();
+        rval.put("totalFiles", progress.getTotalFiles());
+        rval.put("totalBytes", progress.getTotalByes());
+        rval.put("processedFiles", progress.getProcessedFiles());
+        rval.put("processedBytes", progress.getProcessedBytes());
+        rval.put("finalCompressedBytes", progress.getFinalCompressedBytes());
+        rval.put("url", progress.getURL());
+        return rval;
     }
 
     public static String encodeUrl(ServerRequest req) {
@@ -151,7 +202,6 @@ public class QueryUtil {
     public static RawDataSet getRawDataSet(DataGroup dg) {
         return convertToRawDataset(dg,0,20000);
     }
-
 
     public static DataSet getDataSet(DataGroup dg, int startIndex, int pageSize) {
         return convertToDataset(dg, startIndex, pageSize);
@@ -186,7 +236,7 @@ public class QueryUtil {
      */
     public static CollectionUtil.Filter<DataObject>[] convertToDataFilter(List<String> filters) {
         if (filters == null) return null;
-        
+
         List<CollectionUtil.Filter<DataObject>> filterList = new ArrayList<CollectionUtil.Filter<DataObject>>();
         for(String cond : filters) {
             CollectionUtil.Filter<DataObject> filter = DataGroupQueryStatement.parseFilter(cond.replaceAll("!=", "!"));
@@ -385,7 +435,6 @@ public class QueryUtil {
         return rds;
     }
 
-
     public static <T extends ServerRequest> T assureType(Class<T> s, ServerRequest req) {
         if(s.isAssignableFrom(req.getClass())) {
             return (T)req;
@@ -568,9 +617,6 @@ public class QueryUtil {
         return new DataAccessException(new EndUserException(msg, details) );
     }
 
-
-    private static final int DECI_DEF_MAX_POINTS = AppProperties.getIntProperty("decimation.def.max.points", 100000);
-    private static final int DECI_ENABLE_SIZE = AppProperties.getIntProperty("decimation.enable.size", 5000);
     /**
      * returns 4 columns; x-column, y-column, rowidx, weight, decimate_key
      * @param dg input data group
@@ -883,39 +929,6 @@ public class QueryUtil {
         }
     }
 
-    private static class SamplePoint {
-        double x;
-        double y;
-        String formattedX;
-        String formattedY;
-        int rowIdx;
-        int representedRows;
-
-        public SamplePoint(double x, String formattedX, double y, String formattedY, int rowIdx) {
-            this(x, formattedX, y, formattedY, rowIdx, 1);
-        }
-
-
-        public SamplePoint(double x, String formattedX, double y, String formattedY, int rowIdx, int representedRows) {
-            this.x = x;
-            this.y = y;
-            this.formattedX = formattedX;
-            this.formattedY = formattedY;
-            this.rowIdx = rowIdx;
-            this.representedRows = representedRows;
-        }
-
-        public void addRepresentedRow() { representedRows++; }
-        public int getRepresentedRows() { return representedRows; }
-
-        public int getRowIdx() { return rowIdx; }
-        public double getX() { return x; }
-        public double getY() { return y; }
-        public String getFormattedX() { return formattedX; }
-        public String getFormattedY() { return formattedY; }
-
-    }
-
     /**
      * given a column name, it will return a new column name based on IRSA's uploaded column naming convention.
      * @param cname
@@ -964,5 +977,38 @@ public class QueryUtil {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static class SamplePoint {
+        double x;
+        double y;
+        String formattedX;
+        String formattedY;
+        int rowIdx;
+        int representedRows;
+
+        public SamplePoint(double x, String formattedX, double y, String formattedY, int rowIdx) {
+            this(x, formattedX, y, formattedY, rowIdx, 1);
+        }
+
+
+        public SamplePoint(double x, String formattedX, double y, String formattedY, int rowIdx, int representedRows) {
+            this.x = x;
+            this.y = y;
+            this.formattedX = formattedX;
+            this.formattedY = formattedY;
+            this.rowIdx = rowIdx;
+            this.representedRows = representedRows;
+        }
+
+        public void addRepresentedRow() { representedRows++; }
+        public int getRepresentedRows() { return representedRows; }
+
+        public int getRowIdx() { return rowIdx; }
+        public double getX() { return x; }
+        public double getY() { return y; }
+        public String getFormattedX() { return formattedX; }
+        public String getFormattedY() { return formattedY; }
+
     }
 }

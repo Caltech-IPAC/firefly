@@ -18,28 +18,16 @@ import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Trey Roby
  */
 public class BackgroundStatus implements Serializable {
-
-    public enum BgType {SEARCH, PACKAGE, UNKNOWN, PERSISTENT}
-    public enum PushType {WEB_PLOT_REQUEST, REGION_FILE_NAME, TABLE_FILE_NAME, FITS_COMMAND_EXT }
-
+    public static final String BG_STATUS_ACTION = "background.bgStatus";
     public static final String PARAM_SEP = "<<BGSEP>>";
-    protected static final String URL_SUB = "URL_PARAM_SEP";
     public static final String KW_VAL_SEP = "==>>";
-    private LinkedHashMap<String, String> params = new LinkedHashMap<String, String>();     // a map of Param keyed by name
     public final static String NO_ID = "WARNING:_UNKNOWN_PACKAGE_ID";
-
-
-
     // --------Keys -------------------
     public static final String TYPE = "TYPE";
     public static final String ID = "ID";
@@ -55,7 +43,6 @@ public class BackgroundStatus implements Serializable {
     public static final String WEB_PLOT_REQ = "WEB_PLOT_REQ";
     public static final String FILE_PATH = "FILE_PATH";
     public static final String TOTAL_BYTES = "TOTAL_BYTES";
-
     public static final String PUSH_DATA_BASE = "PUSH_DATA_#";
     public static final String PUSH_TYPE_BASE = "PUSH_TYPE_#";
     public static final String PUSH_CNT =       "PUSH_CNT";
@@ -63,20 +50,17 @@ public class BackgroundStatus implements Serializable {
     public static final String USER_DESC     =  "USER_DESC_#";
     public static final String RESPONSE_CNT =   "RESPONSE_CNT";
     public static final String ACTIVE_REQUEST_CNT ="ACTIVE_REQUEST_CNT";
-    // --------End Keys -------------------
+
+    protected static final String URL_SUB = "URL_PARAM_SEP";
+    private LinkedHashMap<String, String> params = new LinkedHashMap<String, String>();     // a map of Param keyed by name
 
 
     public BackgroundStatus() { this(NO_ID, BackgroundState.STARTING, BgType.UNKNOWN, null ); }
-
     public BackgroundStatus(String id, BackgroundState state) {  this(id, state, BgType.UNKNOWN, null); }
+    // --------End Keys -------------------
+
 
     public BackgroundStatus(String id, BackgroundState state, BgType type) {  this(id, state, type, null); }
-
-//    public BackgroundStatus(BackgroundState state, BackgroundStatus copyFromReq) {
-//        if (copyFromReq!=null) this.copyFrom(copyFromReq);
-//        setState(state);
-//    }
-
 
     public BackgroundStatus(String id, BackgroundState state, BgType type, List<Param> paramList) {
         if (paramList!=null) setParams(paramList);
@@ -106,9 +90,46 @@ public class BackgroundStatus implements Serializable {
         retval.setState(state);
         return retval;
     }
+
+//    public BackgroundStatus(BackgroundState state, BackgroundStatus copyFromReq) {
+//        if (copyFromReq!=null) this.copyFrom(copyFromReq);
+//        setState(state);
+//    }
+
+    public static BackgroundStatus createUnknownFailStat() {
+        return new BackgroundStatus(NO_ID, BackgroundState.FAIL, BgType.UNKNOWN);
+    }
+
+    /**
+     * Parses the string argument into a ServerRequest object.
+     * This method is reciprocal to serialize().
+     * @param str
+     * @return
+     */
+    public static BackgroundStatus parse(String str) {
+        if (str==null) return null;
+        BackgroundStatus bgStat= new BackgroundStatus();
+        String[] params = str.split(PARAM_SEP);
+        if (params.length>0) {
+            for(String param : params) {
+                String[] kv = param.split(KW_VAL_SEP, 2);
+                if (kv.length == 2) {
+                    bgStat.setParam(kv[0], kv[1]);
+                }
+            }
+            return bgStat;
+        }
+        return null;
+    }
 //====================================================================
 //====================================================================
 //====================================================================
+
+    protected static void addParam(StringBuffer str, String key, String value) {
+        if (value != null) {
+            str.append(PARAM_SEP).append(key).append(KW_VAL_SEP).append(value);
+        }
+    }
 
     public boolean containsParam(String param) {
         return params.containsKey(param);
@@ -116,6 +137,16 @@ public class BackgroundStatus implements Serializable {
 
     public String getParam(String param) {
         return params.get(param);
+    }
+
+    public Map<String, String> getParams() {
+        return Collections.unmodifiableMap(params);
+    }
+
+    public void setParams(List<Param> params) {
+        for(Param p : params) {
+            setParam(p);
+        }
     }
 
     public void setParam(String name, String val) {
@@ -126,22 +157,13 @@ public class BackgroundStatus implements Serializable {
         setParam(new Param(name, StringUtils.toString(values, ",")));
     }
 
-
     private void setParam(Param param) {
         if (param!=null) params.put(param.getName(), param.getValue());
     }
 
-    public void setParams(List<Param> params) {
-        for(Param p : params) {
-            setParam(p);
-        }
-    }
-
-
     public void setParam(String name, WorldPt wpt) {
         setParam(name,wpt==null ? null : wpt.toString());
     }
-
 
     public void setSafeParam(String name,String val) {
         String newVal= null;
@@ -156,14 +178,12 @@ public class BackgroundStatus implements Serializable {
         return newVal;
     }
 
+//====================================================================
+//====================================================================
 
     public void removeParam(String name) {
         params.remove(name);
     }
-
-//====================================================================
-//====================================================================
-
 
     public BgType getBackgroundType() {
         return StringUtils.getEnum(getParam(TYPE), BgType.UNKNOWN);
@@ -172,7 +192,6 @@ public class BackgroundStatus implements Serializable {
     public void setBackgroundType(BgType type) {
         setParam(TYPE, type.toString());
     }
-
 
     public boolean hasAttribute(JobAttributes a) {
         String attributes= getParam(ATTRIBUTE);
@@ -190,16 +209,12 @@ public class BackgroundStatus implements Serializable {
         setParam(ATTRIBUTE, attributes);
     }
 
-    public void setState(BackgroundState state) {
-        setParam(STATE,state.toString());
-    }
-
     public BackgroundState getState() {
         return StringUtils.getEnum(getParam(STATE), BackgroundState.STARTING);
     }
 
-    public void setDataSource(String dataSource) {
-        setParam(DATA_SOURCE,dataSource);
+    public void setState(BackgroundState state) {
+        setParam(STATE,state.toString());
     }
 
     public String getDataSource() {
@@ -207,9 +222,13 @@ public class BackgroundStatus implements Serializable {
         return s!=null ? s : "";
     }
 
-    public void setID(String id) { setParam(ID,id); }
+    public void setDataSource(String dataSource) {
+        setParam(DATA_SOURCE,dataSource);
+    }
+
     public String getID() { return getParam(ID); }
 
+    public void setID(String id) { setParam(ID,id); }
 
     public boolean isDone() {
         BackgroundState state= getState();
@@ -233,16 +252,16 @@ public class BackgroundStatus implements Serializable {
         return (state == BackgroundState.SUCCESS);
     }
 
+    //------------------------------------------
+    //---- Request browser load data -----------
+    //------------------------------------------
+
     public boolean isActive() {
         BackgroundState state= getState();
         return (state == BackgroundState.WAITING ||
                 state == BackgroundState.WORKING ||
                 state == BackgroundState.STARTING);
     }
-
-    //------------------------------------------
-    //---- Request browser load data -----------
-    //------------------------------------------
 
     public int getNumPushData() {
         return getIntParam(PUSH_CNT,0);
@@ -260,13 +279,13 @@ public class BackgroundStatus implements Serializable {
         return getParam(PUSH_DATA_BASE +idx);
     }
 
-    public PushType getPushType(int idx) {
-        return StringUtils.getEnum(getParam(PUSH_TYPE_BASE + idx), PushType.WEB_PLOT_REQUEST);
-    }
-
     //------------------------------------------
     //---- Contains responses from User --------
     //------------------------------------------
+
+    public PushType getPushType(int idx) {
+        return StringUtils.getEnum(getParam(PUSH_TYPE_BASE + idx), PushType.WEB_PLOT_REQUEST);
+    }
 
     public int getNumResponseData() {
         return getIntParam(RESPONSE_CNT,0);
@@ -280,13 +299,14 @@ public class BackgroundStatus implements Serializable {
         setParam(RESPONSE_CNT,total+"");
     }
 
-
     public String getResponseData(int idx) {
         return getParam(USER_RESPONSE +idx);
     }
+
     public String getResponseDesc(int idx) {
         return getParam(USER_DESC +idx);
     }
+
     public int getRequestedCnt() {
         return getIntParam(ACTIVE_REQUEST_CNT,0);
     }
@@ -297,6 +317,10 @@ public class BackgroundStatus implements Serializable {
         setParam(ACTIVE_REQUEST_CNT,cnt+"");
     }
 
+    //------------------------------------------
+    //------------------------------------------
+    //------------------------------------------
+
     public void decRequestCnt() {
         int cnt= getRequestedCnt();
         if (cnt>0) {
@@ -304,10 +328,6 @@ public class BackgroundStatus implements Serializable {
             setParam(ACTIVE_REQUEST_CNT,cnt+"");
         }
     }
-
-    //------------------------------------------
-    //------------------------------------------
-    //------------------------------------------
 
     public void addMessage(String message) {
         int total= getNumMessages();
@@ -323,6 +343,9 @@ public class BackgroundStatus implements Serializable {
     public String getMessage(int idx) {
         return getParam(MESSAGE_BASE +idx);
     }
+    //------------------------------------------
+    //------------------------------------------
+    //------------------------------------------
 
     public List<String> getMessageList() {
         int cnt= getNumMessages();
@@ -335,9 +358,6 @@ public class BackgroundStatus implements Serializable {
         }
         return list;
     }
-    //------------------------------------------
-    //------------------------------------------
-    //------------------------------------------
 
     public PackageProgress getPartProgress(int i) {
         String s= getParam(PACKAGE_PROGRESS_BASE+i);
@@ -365,6 +385,7 @@ public class BackgroundStatus implements Serializable {
     public int getPackageCount() {
         return getIntParam(PACKAGE_CNT,0);
     }
+
     public void setPackageCount(int cnt) { setParam(PACKAGE_CNT,cnt+""); }
 
     public void addPackageProgress(PackageProgress progress) {
@@ -377,7 +398,6 @@ public class BackgroundStatus implements Serializable {
     public void setPartProgress(PackageProgress progress, int i) {
         setParam(PACKAGE_PROGRESS_BASE+i,progress.serialize());
     }
-
 
     public Request getClientRequest() {
         return Request.parse(getParam(CLIENT_REQ));
@@ -395,22 +415,17 @@ public class BackgroundStatus implements Serializable {
         if (request!=null) setParam(SERVER_REQ,request.toString());
     }
 
-    public void setWebPlotRequest(WebPlotRequest wpr) {
-        if (wpr!=null) setParam(WEB_PLOT_REQ,wpr.toString());
-    }
-
     public WebPlotRequest getWebPlotRequest() {
         return WebPlotRequest.parse(getParam(WEB_PLOT_REQ));
     }
 
-    public static BackgroundStatus createUnknownFailStat() {
-        return new BackgroundStatus(NO_ID, BackgroundState.FAIL, BgType.UNKNOWN);
+    public void setWebPlotRequest(WebPlotRequest wpr) {
+        if (wpr!=null) setParam(WEB_PLOT_REQ,wpr.toString());
     }
 
+    public String getFilePath() { return getParam(FILE_PATH); }
 
     public void setFilePath(String filePath) { setParam(FILE_PATH,filePath); }
-
-    public String getFilePath() { return getParam(FILE_PATH); }
 
     /**
      * @return processed bytes if all bundles were processed successfully, otherwise previously estimated size in bytes
@@ -436,31 +451,6 @@ public class BackgroundStatus implements Serializable {
 
     public void copyFrom(BackgroundStatus s) {
         params.putAll(s.params);
-    }
-
-
-
-
-    /**
-     * Parses the string argument into a ServerRequest object.
-     * This method is reciprocal to serialize().
-     * @param str
-     * @return
-     */
-    public static BackgroundStatus parse(String str) {
-        if (str==null) return null;
-        BackgroundStatus bgStat= new BackgroundStatus();
-        String[] params = str.split(PARAM_SEP);
-        if (params.length>0) {
-            for(String param : params) {
-                String[] kv = param.split(KW_VAL_SEP, 2);
-                if (kv.length == 2) {
-                    bgStat.setParam(kv[0], kv[1]);
-                }
-            }
-            return bgStat;
-        }
-        return null;
     }
 
     /**
@@ -496,8 +486,6 @@ public class BackgroundStatus implements Serializable {
     public BackgroundStatus newInstance() {
         return new BackgroundStatus();
     }
-
-
 
     //====================================================================
 //  overriding equals
@@ -562,6 +550,8 @@ public class BackgroundStatus implements Serializable {
         return wpt;
     }
 
+    public enum BgType {SEARCH, PACKAGE, UNKNOWN, PERSISTENT}
+
 //====================================================================
 //
 //====================================================================
@@ -571,11 +561,7 @@ public class BackgroundStatus implements Serializable {
 //====================================================================
 
 
-    protected static void addParam(StringBuffer str, String key, String value) {
-        if (value != null) {
-            str.append(PARAM_SEP).append(key).append(KW_VAL_SEP).append(value);
-        }
-    }
+    public enum PushType {WEB_PLOT_REQUEST, REGION_FILE_NAME, TABLE_FILE_NAME, FITS_COMMAND_EXT }
 
 
 

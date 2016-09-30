@@ -75,6 +75,8 @@ export const ServerParams = {
         IMAGE: 'image',
         TOOL_TIP:  'toolTip',
         DS9_REGION_DATA: 'ds9RegionData',
+        DOWNLOAD_REQUEST: 'downloadRequest',
+        SELECTION_INFO: 'selectionInfo',
 
 
 
@@ -129,6 +131,11 @@ export const ServerParams = {
         TITLE: 'Title',
         JSON_DEEP: 'jsonDeep',
         ACTION: 'action',
+        PACKAGE_REQUEST: 'packageRequest',
+        TABLE_SEARCH: 'tableSearch',
+        SELECTED_VALUES: 'selectedValues',
+        TABLE_SAVE: 'tableSave',
+        JSON_SEARCH: 'jsonSearch',
 
         VIS_PUSH_ALIVE_CHECK: 'pushAliveCheck',
         VIS_PUSH_ALIVE_COUNT: 'pushAliveCount',

@@ -1,8 +1,30 @@
-.banner__Title {
-    /*float: left;*/
-    position : absolute;
-    left : 0;
-    top : 0;
+
+.banner__main {
+    display: inline-flex;
+    width: 100%;
+    height: 75px;
+    position: relative;
+    background: url("/images/ipac_bar.jpg");
+}
+
+.banner__left {
+    flex-grow: 0;
+    width: 75px;
+    height: 75px;
+}
+
+.banner__middle {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: baseline;
+}
+
+.banner__right {
+    flex-grow: 0;
+}
+
+.banner__middle--title {
     letter-spacing: 1px;
     margin-left: 10px;
     color: white;
@@ -12,9 +34,16 @@
     text-shadow: 1px 1px 3px rgba(195,235,234, 0.79);
 }
 
-.banner__wrap {
+.banner__middle--readout {
+    display: inline-flex;
+    flex-grow: 1;
+    justify-content: space-between;
     width: 100%;
-    height: 75px;
-    background: url("/images/ipac_bar.jpg");
-    position: relative;
+}
+
+.banner__middle--menu {
+    flex-grow: 0;
+    width: 100%;
+    padding-right: 10px;
+    box-sizing: border-box;
 }

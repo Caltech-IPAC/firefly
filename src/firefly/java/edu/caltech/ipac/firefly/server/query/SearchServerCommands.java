@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.server.visualize;
+package edu.caltech.ipac.firefly.server.query;
 /**
  * User: roby
  * Date: 3/5/12
@@ -12,21 +12,26 @@ package edu.caltech.ipac.firefly.server.visualize;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.JobAttributes;
 import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
-import edu.caltech.ipac.firefly.data.FileStatus;
-import edu.caltech.ipac.firefly.data.Request;
-import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
-import edu.caltech.ipac.firefly.server.query.SearchManager;
+import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.query.*;
 import edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
+import edu.caltech.ipac.firefly.server.visualize.SrvParam;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,21 +40,55 @@ import java.util.Map;
  */
 public class SearchServerCommands {
 
+
+
+
     public static abstract class BaseSearchServerCommand extends ServerCommandAccess.ServCommand {
-        public boolean getCanCreateJson() { return false; }
+        public boolean getCanCreateJson() { return true; }
     }
 
-    public static class GetRawDataSet extends BaseSearchServerCommand {
+    public static class TableSearch extends BaseSearchServerCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
-
             SrvParam sp= new SrvParam(paramMap);
-            String reqString = sp.getRequired(ServerParams.REQUEST);
-            TableServerRequest request = TableServerRequest.parse(reqString);
-            RawDataSet dataSet = new SearchManager().getRawDataSet(request);
-            return dataSet.serialize();
+            TableServerRequest tsr = sp.getTableServerRequest();
+            DataGroupPart dgp = new SearchManager().getDataGroup(tsr);
+            JSONObject json = JsonTableUtil.toJsonTableModel(dgp, tsr);
+            return json.toJSONString();
         }
+    }
 
+    public static class SelectedValues extends BaseSearchServerCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+            SrvParam sp= new SrvParam(paramMap);
+            String filePath = sp.getRequired("filePath");
+            try {
+                String selRows = sp.getRequired("selectedRows");
+                String columnName = sp.getRequired("columnName");
+                List<Integer> rows = StringUtils.convertToListInteger(selRows, ",");
+                List<String> values =  new SearchManager().getDataFileValues(ServerContext.convertToFile(filePath), rows, columnName);
+                Map<String, List<String>> rval = new HashMap<>(1);
+                rval.put("values", values);
+                return QueryUtil.toJsonObject(rval).toJSONString();
+            } catch (IOException e) {
+                throw new DataAccessException("Unable to resolve a search processor for this request.  SelectedValues aborted.");
+            }
+        }
+    }
+
+    public static class JsonSearch extends BaseSearchServerCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+            SrvParam sp= new SrvParam(paramMap);
+            TableServerRequest tsr = sp.getTableServerRequest();
+            SearchProcessor processor = new SearchManager().getProcessor(tsr.getRequestId());
+            if (processor instanceof JsonDataProcessor) {
+                return  ((JsonDataProcessor)processor).getData(tsr);
+            } else {
+                throw new DataAccessException("Unable to resolve a search processor for this request.  Operation aborted:" + tsr.getRequestId());
+            }
+        }
     }
 
     public static class GetJSONData extends BaseSearchServerCommand {
@@ -59,10 +98,30 @@ public class SearchServerCommands {
             SrvParam sp= new SrvParam(paramMap);
             String reqString = sp.getRequired(ServerParams.REQUEST);
             ServerRequest request = ServerRequest.parse(reqString, new ServerRequest());
-            String data = new SearchManager().getJSONData(request);
-            return data;
+            return new SearchManager().getJSONData(request);
         }
 
+    }
+
+    public static class PackageRequest extends BaseSearchServerCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+            SrvParam sp= new SrvParam(paramMap);
+            String tableReqStr = sp.getRequired(ServerParams.REQUEST);
+            String selInfoStr = sp.getOptional(ServerParams.SELECTION_INFO);
+            String dlReqStr = sp.getOptional(ServerParams.DOWNLOAD_REQUEST);
+
+            DownloadRequest dlreq = QueryUtil.convertToDownloadRequest(dlReqStr, tableReqStr, selInfoStr);
+            SearchManager sman = new SearchManager();
+            SearchProcessor processor = sman.getProcessor(dlreq.getRequestId());
+            if (processor instanceof FileGroupsProcessor) {
+                BackgroundStatus bgStatus = sman.packageRequest(dlreq);
+                bgStatus.setParam(ServerParams.TITLE, dlreq.getTitle());
+                return QueryUtil.convertToJsonObject(bgStatus).toJSONString();
+            } else {
+                throw new DataAccessException("Unable to resolve a search processor for this request.  Operation aborted:" + dlreq.getRequestId());
+            }
+        }
     }
 
     public static class ChkFileStatus extends BaseSearchServerCommand {
@@ -130,7 +189,7 @@ public class SearchServerCommands {
         @Override
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
             SrvParam sp= new SrvParam(paramMap);
-            new SearchServicesImpl().cancel(sp.getID());
+            BackgroundEnv.cancel(sp.getID());
             return "true";
         }
     }
@@ -145,14 +204,14 @@ public class SearchServerCommands {
     }
 
     public static class DownloadProgress extends BaseSearchServerCommand {
-        @Override
+        public boolean getCanCreateJson() { return false; }
+
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
             SrvParam sp= new SrvParam(paramMap);
             String file= sp.getRequired(ServerParams.FILE);
             SearchServices.DownloadProgress dp= new SearchServicesImpl().getDownloadProgress(file);
             return dp.toString();
         }
-        public boolean getCanCreateJson() { return false; }
     }
 
     public static class SetEmail extends BaseSearchServerCommand {
@@ -161,7 +220,7 @@ public class SearchServerCommands {
             SrvParam sp= new SrvParam(paramMap);
             List<String> idList = sp.getIDList();
             String email = sp.getRequired(ServerParams.EMAIL);
-            new SearchServicesImpl().setEmail(idList,email);
+            BackgroundEnv.setEmail(idList,email);
             return "true";
         }
     }
@@ -173,7 +232,7 @@ public class SearchServerCommands {
             List<String> idList= sp.getIDList();
             String attStr= sp.getRequired(ServerParams.ATTRIBUTE);
             JobAttributes att= StringUtils.getEnum(attStr, JobAttributes.Unknown);
-            new SearchServicesImpl().setAttribute(idList, att);
+            BackgroundEnv.setAttribute(idList,att);
             return "true";
         }
     }
@@ -182,7 +241,7 @@ public class SearchServerCommands {
         @Override
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
             String id = new SrvParam(paramMap).getID();
-            return new SearchServicesImpl().getEmail(id);
+            return BackgroundEnv.getEmail(id);
         }
     }
 
@@ -192,7 +251,7 @@ public class SearchServerCommands {
             SrvParam sp= new SrvParam(paramMap);
             List<String> idList = sp.getIDList();
             String email= sp.getRequired(ServerParams.EMAIL);
-            new SearchServicesImpl().resendEmail(idList, email);
+            BackgroundEnv.resendEmail(idList,email);
             return "true";
         }
     }
@@ -221,6 +280,8 @@ public class SearchServerCommands {
     }
 
     public static class CreateDownloadScript extends BaseSearchServerCommand  {
+        public boolean getCanCreateJson() { return false; }
+
         @Override
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
             SrvParam sp= new SrvParam(paramMap);
@@ -232,7 +293,8 @@ public class SearchServerCommands {
             for(String a : attStrList) {
                 attList.add(Enum.valueOf(ScriptAttributes.class,a));
             }
-            return new SearchServicesImpl().createDownloadScript(id,file,source,attList);
+            BackgroundEnv.ScriptRet retval= BackgroundEnv.createDownloadScript(id, file, source, attList);
+            return retval!=null ? retval.getServlet() : null;
         }
     }
 
@@ -252,5 +314,21 @@ public class SearchServerCommands {
             return CollectionUtil.toString(result);
         }
     }
+
+    @Deprecated
+    public static class GetRawDataSet extends BaseSearchServerCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+
+            SrvParam sp= new SrvParam(paramMap);
+            String reqString = sp.getRequired(ServerParams.REQUEST);
+            TableServerRequest request = TableServerRequest.parse(reqString);
+            RawDataSet dataSet = new SearchManager().getRawDataSet(request);
+            return dataSet.serialize();
+        }
+
+    }
+
+
 }
 

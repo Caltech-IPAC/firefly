@@ -85,7 +85,7 @@ export class SelectInfo {
     }
 
     toString() {
-        return this.data.selectAll + '-' + this.data.exceptions.toString() + '-' + this.data.rowCount;
+        return this.data.selectAll + '-' + Array.from(this.data.exceptions).join(',') + '-' + this.data.rowCount;
     }
 
     parse(s) {

@@ -10,6 +10,8 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.visualize.plot.ImagePt;
@@ -31,7 +33,16 @@ public class SrvParam {
         this.paramMap=paramMap;
     }
 
+
+    public Map<String, String[]> getParamMap() {
+        return paramMap;
+    }
+
     public boolean contains(String key) { return paramMap.containsKey(key); }
+
+    public String getCommandKey() {
+        return getRequired(ServerParams.COMMAND);
+    }
 
     /**
      * Look for the ServerParams.STATE key and parse the value into a PlotState Object
@@ -223,5 +234,15 @@ public class SrvParam {
     public WebPlotRequest getRequiredWebPlotRequest(String key) {
         return WebPlotRequest.parse(getRequired(key));
     }
+
+
+//====================================================================
+//  Table related convenience methods
+//====================================================================
+    public TableServerRequest getTableServerRequest() {
+        String reqString = getRequired(ServerParams.REQUEST);
+        return QueryUtil.convertToServerRequest(reqString);
+    }
+
 }
 

@@ -89,6 +89,10 @@ public class ServerParams {
     public static final String IMAGE_NUMBER= "imageNumber";
     public static final String BIT_DESC= "bitDesc";
 
+    public static final String DOWNLOAD_REQUEST = "downloadRequest";
+    public static final String SELECTION_INFO = "selectionInfo";
+
+
 
 
 
@@ -150,5 +154,11 @@ public class ServerParams {
 
 
     public static final String USER_TARGET_WORLD_PT = "UserTargetWorldPt";
+
+    public static final String PACKAGE_REQUEST = "packageRequest";
+    public static final String TABLE_SEARCH = "tableSearch";
+    public static final String SELECTED_VALUES = "selectedValues";
+    public static final String TABLE_SAVE = "tableSave";
+    public static final String JSON_SEARCH = "jsonSearch";
 }
 

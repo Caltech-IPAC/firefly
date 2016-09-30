@@ -41,7 +41,7 @@ export function RadioGroupInputFieldView({options,alignment,fieldKey,value,
 RadioGroupInputFieldView.propTypes= {
     options: PropTypes.array.isRequired,
     fieldKey: PropTypes.string.isRequired,
-    value: PropTypes.string.isRequired,
+    value: PropTypes.number.isRequired,
     alignment:  PropTypes.string,
     onChange: PropTypes.func,
     label : PropTypes.string,

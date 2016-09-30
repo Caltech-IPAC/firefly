@@ -33,6 +33,7 @@ import {ImageMetaDataToolbar} from '../../visualize/ui/ImageMetaDataToolbar.jsx'
 import {LcPFOptionsPanel} from './LcPhaseFoldingPanel.jsx';
 import {LcPeriodFindingPanel} from './PeriodogramOptionsPanel.jsx';
 
+
 const PanelResizableStyle = {
     width: 400,
     minWidth: 450,
@@ -152,7 +153,12 @@ const StandardView = ({visToolbar, title, searchDesc, standard, imagePlot, xyPlo
 
     return (
         <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, position: 'relative'}}>
-            {visToolbar}
+            { visToolbar &&
+                <div style={{display: 'inline-flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <div>{visToolbar}</div>
+                    <div><DownloadButton/></div>
+                </div>
+            }
             {searchDesc}
             {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
             <div style={{flexGrow: 1, position: 'relative'}}>
@@ -169,6 +175,109 @@ const StandardView = ({visToolbar, title, searchDesc, standard, imagePlot, xyPlo
                 </SplitPane>
             </div>
             </div>
+        </div>
+    );
+};
+
+
+
+
+
+//*-------------------------------- TEST CODE FOR BACKGROUND MONITOR -------------------------------*/
+import * as TblUtil from '../../tables/TableUtil.js';
+import {dispatchPackage, doOnPackage} from '../../core/background/BackgroundCntlr.js';
+import {SelectInfo} from '../../tables/SelectInfo.js';
+import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
+import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
+import {PopupPanel} from '../../ui/PopupPanel.jsx';
+import {dispatchAddSaga} from '../../core/MasterSaga.js';
+
+
+const showDownloadDialog = (show=true, mask) => {
+    const content= (
+        <PopupPanel title={'Download Dialog'} >
+            <DownloadDialog mask= {mask}/>
+        </PopupPanel>
+    );
+    DialogRootContainer.defineDialog('Download Dialog', content);
+    if (show) {
+        dispatchShowDialog('Download Dialog');
+    } else {
+        dispatchHideDialog('Download Dialog');
+    }
+};
+
+function DownloadDialog({mask=false}) {
+
+    const onSearchSubmit = (request) => {
+        const options = {};
+
+        const searchParams = {
+            no_args: 'this is just a test processor.  no parameter is needed'
+        };
+        const dlparams = {
+            MaxBundleSize: 1024*1024*1024,
+            FilePrefix: 'WISE_Files',
+            BaseFileName: 'WISE_Files',
+            Title: request.Title
+        };
+        const rowCount = request.rowCount || 2;
+        const sreq = TblUtil.makeTblRequest(searchParams.id, 'search request', searchParams, options);
+        const dreq = TblUtil.makeTblRequest('LightCurveFileGroupsProcessor', request.Title, dlparams);
+        const selectionInfo = SelectInfo.newInstance({selectAll: true, rowCount}).toString();
+        dispatchPackage(dreq, sreq, selectionInfo);
+        showDownloadDialog(true, true);
+        dispatchAddSaga(doOnPackage, {title: request.Title, callback:() => {
+            showDownloadDialog(false);
+        }});
+    };
+
+    const labelWidth = 150;
+    return (
+        <div style={{position: 'relative'}}>
+            {mask && <div style={{width: '100%', height: '100%'}} className='loading-mask'/>}
+            <FormPanel
+                width='300px' height='100px'
+                groupKey='LC_DOWNLOAD'
+                onSubmit={(request) => onSearchSubmit(request)}
+                onCancel={() => showDownloadDialog(false)}>
+                <FieldGroup groupKey='LC_DOWNLOAD' keepState={true}>
+                    <InputGroup labelWidth={150}>
+                        <ValidationField
+                            initialState= {{
+                                       value: '2',
+                                       validator: Validate.intRange.bind(null, 1, 248, 'Number of images'),
+                                       groupKey: 'LC_DOWNLOAD',
+                                       label : 'Number of images:'
+                                           }}
+                            fieldKey='rowCount'
+                            labelWidth={labelWidth}/>
+                        <ValidationField
+                            initialState= {{
+                                       value: 'A sample download',
+                                       groupKey: 'LC_DOWNLOAD',
+                                       label : 'Title for this download:'
+                                           }}
+                            fieldKey='Title'
+                            labelWidth={labelWidth}/>
+                    </InputGroup>
+                </FieldGroup>
+            </FormPanel>
+        </div>
+    );
+
+}
+
+
+
+const DownloadButton = ({}) => {
+    return (
+        <div>
+            <button type='button'
+                    className='button std hl'
+                    onClick={showDownloadDialog}
+                    title='Download lighcurve images'
+            >Download</button>
         </div>
     );
 };

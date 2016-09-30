@@ -16,7 +16,7 @@ import {fetchUrl} from '../util/WebUtil.js';
 //var http= require('http');
 
 //const TIMEOUT = 10 * 60 * 1000;  // 10 min
-const DEF_BASE_URL = getRootURL() + 'sticky/CmdSrv';
+export const DEF_BASE_URL = getRootURL() + 'sticky/CmdSrv';
 
 
 function preparePostParamList(cmd,paramList) {
@@ -77,7 +77,7 @@ export const jsonRequest= function(baseUrl, cmd, paramList, doPost) {
 
 
     return new Promise(function(resolve, reject) {
-        fetchUrl(url,options,true ).then( (response) => {
+        fetchUrl(url,options,false ).then( (response) => {
             if (!response.ok) {
                 reject(new Error(`Error from Server for command ${cmd}: code: ${response.status}, text: ${response.statusText}`));
                 return;

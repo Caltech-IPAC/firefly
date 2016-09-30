@@ -24,16 +24,14 @@ function menu(menuComp) {
 function appIcon(icoSrc) {
     const src = icoSrc || FFTOOLS_ICO;
     return (
-        <div id='app-icon' style={{width: '100%', height: '100%', float: 'left'}}>
             <img src={src} className='gwt-Image' style={{width: '75px', height: '75px'}}/>
-        </div>
     );
 }
 
 function visPreview(visPreviewComp) {
     if (visPreviewComp) {
         return (
-            <div id='visPreview' style={{height: '100%', top: 0, right : 0, position: 'absolute'}}>
+            <div id='visPreview'>
                 {visPreviewComp}
             </div>
         );
@@ -61,16 +59,25 @@ export const Banner = React.createClass({
     },
 
     render() {
+        const {menu, readout, appIcon, visPreview, appTitle} = this.props;
+        const iconSrc = appIcon || FFTOOLS_ICO;
 
         return (
-            <div className='banner__wrap'>
-                {appIcon(this.props.appIcon)}
-                <div style={{position: 'absolute', left: 75, right: 3, minWidth: 820}}>
-                    <div id='readout' style={{height: '45px', width: '100%', position : 'relative'}}>
-                        {appTitle(this.props.appTitle)}
-                        {visPreview(this.props.visPreview)}
+            <div className='banner__main'>
+                <div className='banner__left'>
+                    <img src={iconSrc} className='gwt-Image'/>
+                </div>
+                <div className='banner__middle'>
+                    <div className='banner__middle--readout'>
+                        <div className='banner__middle--title'>{appTitle}</div>
+                        {readout}
                     </div>
-                    {menu(this.props.menu)}
+                    <div className='banner__middle--menu'>
+                        {menu}
+                    </div>
+                </div>
+                <div  className='banner__right'>
+                    {visPreview}
                 </div>
             </div>
         );

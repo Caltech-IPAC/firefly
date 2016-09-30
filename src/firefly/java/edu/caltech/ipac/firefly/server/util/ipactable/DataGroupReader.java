@@ -36,6 +36,11 @@ public class DataGroupReader {
         Format format = guessFormat(inf);
         if (format == Format.IPACTABLE) {
             return read(inf, false, false);
+        } else if (format == Format.VO_TABLE) {
+            DataGroup[] tables = VoTableUtil.voToDataGroups(inf.getAbsolutePath());
+            if (tables.length > tableIndex -1) {
+                return tables[tableIndex];
+            } else return null;
         } else if (format == Format.CSV || format == Format.TSV) {
             return DsvToDataGroup.parse(inf, format.type);
         } else if (format == Format.FITS ) {
@@ -156,6 +161,8 @@ public class DataGroupReader {
         if (fileExt != null) {
             if (fileExt.equalsIgnoreCase("tbl")) {
                 return Format.IPACTABLE;
+            } else if (fileExt.matches("xml|vot")) {
+                return Format.VO_TABLE;
             } else if (fileExt.equalsIgnoreCase("csv")) {
                 return Format.CSV;
             } else if (fileExt.equalsIgnoreCase("tsv")) {
@@ -309,7 +316,7 @@ public class DataGroupReader {
 //
 //====================================================================
 
-    public static enum Format { TSV(CSVFormat.TDF), CSV(CSVFormat.DEFAULT), IPACTABLE(), UNKNOWN(), FIXEDTARGETS(), FITS(), JSON();
+    public static enum Format { TSV(CSVFormat.TDF), CSV(CSVFormat.DEFAULT), IPACTABLE(), UNKNOWN(), FIXEDTARGETS(), FITS(), JSON(), VO_TABLE();
         CSVFormat type;
         Format() {}
         Format(CSVFormat type) {this.type = type;}

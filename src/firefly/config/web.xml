@@ -39,7 +39,7 @@
         <url-pattern>*.css</url-pattern>
         <url-pattern>*.js</url-pattern>
         <url-pattern>/servlet/FireFly_PropertyDownload</url-pattern>
-        <url-pattern>/search/json</url-pattern>
+        <url-pattern>/search/*</url-pattern>
     </filter-mapping>
 
 
@@ -107,15 +107,6 @@
     </servlet-mapping>
 
     <servlet>
-        <servlet-class>edu.caltech.ipac.firefly.server.servlets.SaveAsIpacTable</servlet-class>
-        <servlet-name>Firefly SaveAsIpacTable</servlet-name>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>Firefly SaveAsIpacTable</servlet-name>
-        <url-pattern>/servlet/SaveAsIpacTable</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
         <servlet-class>edu.caltech.ipac.firefly.server.servlets.ServerStatus</servlet-class>
         <servlet-name>status</servlet-name>
     </servlet>
@@ -133,14 +124,7 @@
         <url-pattern>/sticky/CmdSrv</url-pattern>
     </servlet-mapping>
 
-    <servlet>
-        <servlet-class>edu.caltech.ipac.firefly.server.servlets.JsonSearchServices</servlet-class>
-        <servlet-name>FireFly SearchService</servlet-name>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>FireFly SearchService</servlet-name>
-        <url-pattern>/search/json</url-pattern>
-    </servlet-mapping>
+
 
 
 <!--    Heritage servlet and its mappings -->
@@ -162,7 +146,7 @@
     </resource-ref>
 
     <resource-ref>
-        <description>Hydra Mail Session</description>
+        <description>Firefly Mail Session</description>
         <res-ref-name>MailSession</res-ref-name>
         <res-type>javax.mail.Session</res-type>
         <res-auth>Container</res-auth>

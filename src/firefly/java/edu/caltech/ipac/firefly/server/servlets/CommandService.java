@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.servlets;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.visualize.SrvParam;
 import edu.caltech.ipac.firefly.util.BrowserInfo;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -24,91 +25,93 @@ import java.util.Map;
  */
 public class CommandService extends BaseHttpServlet {
 
-    private ServerCommandAccess commandAccess = new ServerCommandAccess();
-    private static final Logger.LoggerImpl _statsLog= Logger.getLogger(Logger.VIS_LOGGER);
     public static final boolean DEBUG= true;
+    private static final Logger.LoggerImpl _statsLog= Logger.getLogger(Logger.VIS_LOGGER);
+    private ServerCommandAccess commandAccess = new ServerCommandAccess();
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
         long start = System.currentTimeMillis();
-        String callback = req.getParameter("callback");
-        String doJsonPStr = req.getParameter(ServerParams.DO_JSONP);
+        SrvParam sp = new SrvParam(req.getParameterMap());
+        String cmd = sp.getCommandKey();
+        ServerCommandAccess.ServCommand servCommand = ServerCommandAccess.getServCommand(cmd);
+        if (servCommand instanceof ServerCommandAccess.HttpCommand) {
+            ((ServerCommandAccess.HttpCommand)servCommand).processRequest(req, res, sp);
+        } else {
+            String callback = sp.getOptional("callback");
+            boolean doJsonp = sp.getOptionalBoolean(ServerParams.DO_JSONP, false);
+            if (doJsonp) res.setContentType("application/javascript");
 
-
-        boolean doJsonp = Boolean.parseBoolean(doJsonPStr);
-        if (doJsonp) res.setContentType("application/javascript");
-
-        Map<String, String[]> map = req.getParameterMap();
-
-        String jsonData;
-        try {
-            if (DEBUG) {
-                List<String> sList= new ArrayList<String>();
-                for(Map.Entry<String,String[]> entry : map.entrySet()) {
-                    sList.add(""+ entry.getKey()+ " : "+ entry.getValue()[0]);
+            String jsonData;
+            try {
+                if (DEBUG) {
+                    List<String> sList= new ArrayList<String>();
+                    for(Map.Entry<String,String[]> entry : sp.getParamMap().entrySet()) {
+                        sList.add(""+ entry.getKey()+ " : "+ entry.getValue()[0]);
+                    }
+                    Logger.debug(sList.toArray(new String[sList.size()]));
                 }
-                Logger.debug(sList.toArray(new String[sList.size()]));
-            }
-            String result = commandAccess.doCommand(map);
+                String result = servCommand.doCommand(sp.getParamMap());
 
-            if (commandAccess.getCanCreateJson(map)) {
-                jsonData = result;
-            } else {
-                jsonData = "[{" +
-                        "\"success\" :  \"" + true + "\"," +
-                        "\"data\" :  \"" + StringUtils.escapeQuotes(result) + "\"" +
-                        "}]";
-            }
-
-            StringBuilder sb= new StringBuilder(jsonData.length()+10);
-            for(char c : jsonData.toCharArray()) {
-                if (!Character.isISOControl(c) && c>31 && c<127 ) {
-                    sb.append(c);
+                if (servCommand.getCanCreateJson()) {
+                    jsonData = result;
+                } else {
+                    jsonData = "[{" +
+                            "\"success\" :  \"" + true + "\"," +
+                            "\"data\" :  \"" + StringUtils.escapeQuotes(result) + "\"" +
+                            "}]";
                 }
-            }
 
-            jsonData= sb.toString();
+                StringBuilder sb= new StringBuilder(jsonData.length()+10);
+                for(char c : jsonData.toCharArray()) {
+                    if (!Character.isISOControl(c) && c>31 && c<127 ) {
+                        sb.append(c);
+                    }
+                }
+
+                jsonData= sb.toString();
 
 //            res.setContentType("text/plain");
-        } catch (Exception e) {
-            e.printStackTrace();
-            StringBuilder sb = new StringBuilder(500);
-            sb.append("[{");
-            sb.append("\"success\" :  \"").append(false).append("\",");
+            } catch (Exception e) {
+                e.printStackTrace();
+                StringBuilder sb = new StringBuilder(500);
+                sb.append("[{");
+                sb.append("\"success\" :  \"").append(false).append("\",");
 
-            // need to escape double quotes - otherwise JSON will be messed
-            sb.append("\"error\" : \"").append(e.toString().replace("\"", "\\\"")).append("\"");
+                // need to escape double quotes - otherwise JSON will be messed
+                sb.append("\"error\" : \"").append(e.toString().replace("\"", "\\\"")).append("\"");
 
-            int cnt = 1;
-            for (Throwable t = e.getCause(); (t != null); t = t.getCause()) {
-                sb.append(", ").append("\"cause").append(cnt).append("\" :  \"").append(t.toString().replace("\"", "\\\"")).append("\"");
-                cnt++;
+                int cnt = 1;
+                for (Throwable t = e.getCause(); (t != null); t = t.getCause()) {
+                    sb.append(", ").append("\"cause").append(cnt).append("\" :  \"").append(t.toString().replace("\"", "\\\"")).append("\"");
+                    cnt++;
+                }
+                sb.append("}]");
+                jsonData = sb.toString();
             }
-            sb.append("}]");
-            jsonData = sb.toString();
-        }
 
-        String retval;
-        if (doJsonp && callback != null) {
-            retval = callback + "(" + jsonData + ");";
-        } else {
-            retval = jsonData;
-        }
-
-        BrowserInfo b= new BrowserInfo(req.getHeader("user-agent"));
-        if ((b.isIE() && b.getMajorVersion()<=9)) {
-            res.setContentType("text/html");
-        }
-        else {
-            if (doJsonp) {
-                res.setContentType("application/javascript");
+            String retval;
+            if (doJsonp && callback != null) {
+                retval = callback + "(" + jsonData + ");";
             } else {
-                res.setContentType("application/json");
+                retval = jsonData;
             }
+
+            BrowserInfo b= new BrowserInfo(req.getHeader("user-agent"));
+            if ((b.isIE() && b.getMajorVersion()<=9)) {
+                res.setContentType("text/html");
+            }
+            else {
+                if (doJsonp) {
+                    res.setContentType("application/javascript");
+                } else {
+                    res.setContentType("application/json");
+                }
+            }
+            res.setContentLength(retval.length());
+            ServletOutputStream out = res.getOutputStream();
+            out.write(retval.getBytes());
+            out.close();
         }
-        res.setContentLength(retval.length());
-        ServletOutputStream out = res.getOutputStream();
-        out.write(retval.getBytes());
-        out.close();
         Logger.briefDebug("CommandService time took: " + (System.currentTimeMillis() - start));
     }
 

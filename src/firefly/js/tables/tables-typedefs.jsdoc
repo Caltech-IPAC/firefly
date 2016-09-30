@@ -113,3 +113,18 @@
  * @public
  */
 
+
+/**
+ * Download request.  Below is a list of predefined parameters available for a download request.  All of the options are optional.
+ * These parameters let you control what data and how it will be returned.
+ * @typedef {object} DownloadRequest
+ * @prop {number} FilePrefix  
+ * @prop {number} BaseFileName
+ * @prop {string} Title   
+ * @prop {string} TitlePrefix
+ * @prop {string} Email
+ * @prop {string} MaxBundleSize
+ * @prop {object} DataSource
+ * @prop {TableRequest} tableRequest 
+ * @prop {string} selectionInfo
+ */

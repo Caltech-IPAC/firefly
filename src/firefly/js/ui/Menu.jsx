@@ -8,9 +8,12 @@ import {get} from 'lodash';
 import {COMMAND, getMenu} from '../core/AppDataCntlr.js';
 import {flux} from '../Firefly.js';
 import {dispatchShowDropDown} from '../core/LayoutCntlr.js';
+import {BgMonitorButton} from '../core/background/BgMonitorButton.jsx';
+import {makeBadge} from './ToolbarButton.jsx';
 // import {deepDiff} from '../util/WebUtil.js';
 import './Menu.css';
 
+import LOADING from 'html/images/gxt/loading.gif';
 
 function handleAction (menuItem) {
 
@@ -28,32 +31,21 @@ function handleAction (menuItem) {
  * @param isSelected
  * @returns {XML}
  */
-function  makeMenuItem(menuItem, isSelected) {
+export function  makeMenuItem(menuItem, isSelected, isWorking, badgeCount) {
     var clsname = 'menu__item' + (isSelected ? ' menu__item-selected' : '');
     return (
-        <td key={menuItem.action} style={{verticalAlign: 'bottom'}} onClick={handleAction.bind(this, menuItem)}>
-            <div tabIndex='0' className={clsname} role='tab'>
-                <input type='text' tabIndex='-1' role='presentation' style={{opacity: '0', height: '1px', width: '1px', zIndex: '-1', overflow: 'hidden', position: 'absolute'}}/>
-                <div style={{minWidth: '75px'}}>
-                    <table cellSpacing='0' cellPadding='0' style={{margin: '0px auto'}}>
-                        <tbody>
-                        <tr>
-                            <td style={{marginRight: '3px', display: 'none'}} />
-                            <td style={{verticalAlign: 'top'}}>
-                                <div className='menu__item-label' title={menuItem.desc}
-                                     style={{whiteSpace: 'nowrap', padding: '6px 0px'}}>{menuItem.label}
-                                </div>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </td>
+        <div className={clsname}
+             key={menuItem.action}
+             title={menuItem.desc}
+             onClick={handleAction.bind(this, menuItem)}>
+
+            {isWorking && <img style={{height: 13, marginRight: 3}} src={LOADING}/>}
+            {menuItem.label}
+            {!!badgeCount && <div className='menu__item--badge'>{makeBadge(badgeCount)}</div> }
+
+        </div>
     );
 }
-
-
 
 export class Menu extends Component {
 
@@ -72,24 +64,20 @@ export class Menu extends Component {
     // }
 
     render() {
-        var {menu} = this.props;
-        if (get(menu, 'menuItems',[]).length === 0) return <div/>;
+        const {menu} = this.props;
+        const {menuItems=[], showBgMonitor=true} = menu || {};
+        if (menuItems.length === 0) return <div/>;
 
-        var items = [];
-        menu.menuItems.forEach( (item) => {
-            items.push(makeMenuItem(item, item.action === menu.selected));
+        var items = menuItems.map( (item) => {
+            return makeMenuItem(item, item.action === menu.selected);
         });
 
         return (
-            <div id='leftBar' style={{display: 'inline-block'}}>
-                <table cellSpacing='0' cellPadding='0' style={{width: '1px'}}>
-                    <tbody>
-                    <tr>
-                        <td style={{width: '5px'}} />
-                        {items}
-                    </tr>
-                    </tbody>
-                </table>
+            <div className='menu__main'>
+                <div className='menu__item--holder'> {items} </div>
+                <div className='menu__item--holder'>
+                    {showBgMonitor && <BgMonitorButton/>}
+                </div>
             </div>
         );
     }

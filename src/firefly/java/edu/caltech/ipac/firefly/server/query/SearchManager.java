@@ -18,7 +18,6 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.*;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.IpacTableUtil;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -50,30 +49,10 @@ public class SearchManager {
         return ds;
     }
 
-//====================================================================
-//  JSON.. top level handler, return JSON string.
-//====================================================================
-    public String handleJsonRequest(TableServerRequest request) throws DataAccessException {
-        SearchProcessor processor = getProcessor(request.getRequestId());
-        if (processor instanceof IpacTablePartProcessor) {
-            return jsonTablePartRequest(request);
-        } else if (processor instanceof JsonDataProcessor) {
-            return (String)processor.getData(request);
-        }
-        throw new DataAccessException("Unable to resolve a search processor for this request.  Operation aborted:" + request.getRequestId());
-    }
-
-    private String jsonTablePartRequest(TableServerRequest request) throws DataAccessException {
-        try {
-            DataGroupPart dgp = getDataGroup(request);
-            JSONObject json = JsonTableUtil.toJsonTableModel(dgp, request);
-            return json.toJSONString();
-        } catch (IOException ex) {
-            LOGGER.error(ex);
-            throw new DataAccessException("Fail convert data to JSON.", ex);
-        }
-    }
-
+    /**
+     * This search function is to support the CommandServices interface
+     * For SearchProcessor's interface, see JsonSearchServices.
+     */
     public String getJSONData(ServerRequest request) throws DataAccessException {
         SearchProcessor processor = getProcessor(request.getRequestId());
         ServerRequest req = processor.inspectRequest(request);
