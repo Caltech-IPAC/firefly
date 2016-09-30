@@ -35,6 +35,7 @@ import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {TablePanel} from '../tables/ui/TablePanel.jsx';
 import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
 import {ChartsTableViewPanel} from '../charts/ui/ChartsTableViewPanel.jsx';
+import {Histogram} from '../charts/ui/Histogram.jsx';
 import {PopupMouseReadoutMinimal} from  '../visualize/ui/PopupMouseReadoutMinimal.jsx';
 import {PopupMouseReadoutFull} from  '../visualize/ui/PopupMouseReadoutFull.jsx';
 
@@ -186,6 +187,7 @@ export function buildLowlevelAPI() {
         TablePanel,
         ChartsContainer,
         ChartsTableViewPanel,
+        Histogram,
         PopupMouseReadoutMinimal,
         PopupMouseReadoutFull
     };

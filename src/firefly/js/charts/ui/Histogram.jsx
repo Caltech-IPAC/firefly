@@ -19,9 +19,30 @@ function shadeColor(color, percent) {
     return `#${(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1)}`;
 }
 
+function padRight(num) {
+    return num+Math.abs(num*Math.pow(10,-9));
+}
+
+function padLeft(num) {
+    return num-Math.abs(num*Math.pow(10,-9));
+}
+
 
 export class Histogram extends React.Component {
 
+    /**
+     * @summary React Component to display histogram.
+     *
+     * @param {Object} props
+     * @param {Array.number[]} props.data - array of numbers [0] - nInBin, [1] - binMin, [2] - binMax
+     * @param {number} props.width - width of the chart in pixels
+     * @param {number} props.height - height of the chart in pixels
+     * @param {string} [props.logs] - can have values 'x', 'y', or 'xy'
+     * @param {string} [props.binColor='#d1d1d1'] - darker bin color
+     * @param {string} props.desc - description
+     * @public
+     * @memberof firefly.ui
+     */
     constructor(props) {
         super(props);
         this.setChartConfig = this.setChartConfig.bind(this);
@@ -32,7 +53,7 @@ export class Histogram extends React.Component {
         const {data, width, height, logs, reversed, desc, binColor} = this.props;
         // should rerender only if data or bin color has changed
         // otherwise just change the existing chart
-        if (data != nextProps.data || binColor !== nextProps.binColor) { return true; }
+        if (data !== nextProps.data || binColor !== nextProps.binColor) { return true; }
         const chart = this.refs.chart && this.refs.chart.getChart();
         if (chart) {
             let doUpdate = false;
@@ -112,9 +133,12 @@ export class Histogram extends React.Component {
      * @return {Boolean} f data points are set, false if no points are present
      */
     setChartConfig(config) {
+
+        // how many significant digits should we preserve? ~12?
+        // EPSILON 2^(-52)
         const TINY_OFFSET = 100*Number.EPSILON;
 
-        const {binColor, data}= this.props;
+        const {binColor, logs, data}= this.props;
 
         if (!data || data.length < 1) {
             return false;
@@ -145,14 +169,24 @@ export class Histogram extends React.Component {
         }
 
         try {
+
+            // what should be the minimum y value?
+            let minY = 0;
+            if (logs && logs.includes('y') && data.length>0) {
+                const minYData = data.reduce((minVal, row) => {
+                    return Math.min(minVal, row[0]);
+                }, data[0][0]);
+                minY = minYData/10;
+            }
             let lastBinMax = data[0][1];
             if (areaPlot) {
+
                 // point before the first one
                 points.push({
                     name: '',
                     range: '',
-                    x: lastBinMax - 2*TINY_OFFSET,
-                    y: 0
+                    x: padLeft(lastBinMax),
+                    y: minY
                 });
             }
             data.forEach(function (value, index) {
@@ -172,14 +206,14 @@ export class Histogram extends React.Component {
                         points.push({
                             name: gapCenterStr,
                             range: gapRangeStr,
-                            x: lastBinMax + TINY_OFFSET,
-                            y: 0
+                            x: padRight(lastBinMax),
+                            y: minY
                         });
                         points.push({
                             name: gapCenterStr,
                             range: gapRangeStr,
-                            x: data[index][1] - TINY_OFFSET,
-                            y: 0
+                            x: padLeft(data[index][1]),
+                            y: minY
                         });
                     }
                     lastBinMax = data[index][2];
@@ -203,7 +237,7 @@ export class Histogram extends React.Component {
                             name: centerStr,
                             range: rangeStr,
                             // x - binmax
-                            x: (xrange > TINY_OFFSET) ? (data[index][2] - TINY_OFFSET) : (data[index][1] + TINY_OFFSET),
+                            x: (xrange > TINY_OFFSET) ? padLeft(data[index][2]) : padRight(data[index][1]),
                             // y - number of points in the bin
                             y: data[index][0]
                         });
@@ -234,10 +268,11 @@ export class Histogram extends React.Component {
                 points.push({
                     name: '',
                     range: '',
-                    x: lastBinMax + 2*TINY_OFFSET,
-                    y: 0
+                    x: padRight(lastBinMax),
+                    y: minY
                 });
             }
+            config.yAxis.min = minY;
         }
         catch(e) {
             error = e;
@@ -270,8 +305,8 @@ export class Histogram extends React.Component {
                 renderTo: 'container',
                 type: chartType,
                 alignTicks: false,
-                width: Number(width),
-                height: Number(height),
+                width: width? Number(width) : undefined,
+                height: height? Number(height) : undefined,
                 borderColor: '#a5a5a5',
                 borderWidth: 1
             },

@@ -94,6 +94,32 @@ Firefly React components can be found in `firefly.ui` module.
 | ---------- | ---- | ----------- |
 | div | string or Object | a div element or a string id of the div element |
 
+<br>
+*Example:* 
+```js
+const props = {
+    // data is an array of rows,
+    // first col - nPoints or number of points in the bin, second col - binMin, third col - binMax
+    // supports variable length bins
+    data : [
+        [1,1,10],
+        [10,10,100],
+        [100,100,1000],
+        [1000,1000,10000],
+        [100,10000,100000],
+        [10,100000,1000000],
+        [1,1000000,10000000]
+    ],
+    width: 400,
+    height: 200,
+    logs: 'xy',
+    desc: 'Both X and Y are using log scale',
+    binColor: '#336699'
+};
+// render Histogram component in the div with 'histogramHere' id
+firefly.util.renderDOM('histogramHere', firefly.ui.Histogram, props);
+```
+
 
 ### Dispatching and watching actions
 
