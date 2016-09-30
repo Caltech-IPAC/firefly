@@ -36,17 +36,17 @@ var cloneArg = (arg) => Object.keys(arg).reduce((prev, key) =>
                         }, {});
 
 /**
- *
- * @param wpAry WorldPt array, items contained: line, annulus, ellipse, box: 1, line: 2, polygon: >= 3
- * @param radiusAry RegionValue array, items contained: annulus: at least 2 radii.
- * @param dimensionAry RegionDimension array, each item contains w, h for box and box annulus
+ * @summary make region object
+ * @param {Object[]} wpAry WorldPt array, items contained: line, annulus, ellipse, box: 1, line: 2, polygon: >= 3
+ * @param {Object[]} radiusAry RegionValue array, items contained: annulus: at least 2 radii.
+ * @param {Object[]} dimensionAry RegionDimension array, each item contains w, h for box and box annulus
  *                                            or 2 radii for ellipse and ellipse annulus
- * @param angle RegionValue
- * @param type  RegionType
- * @param options   RegionOptions, properties of region
- * @param highlighted bool
- * @param message parsing message
- * @constructor
+ * @param {Object} angle RegionValue
+ * @param {Object} type  RegionType
+ * @param {Object} options   RegionOptions, properties of region
+ * @param {boolean} highlighted bool
+ * @param {string} message parsing message
+ * @function makeRegion
  */
 export var makeRegion = (
             {
@@ -74,30 +74,29 @@ export var makeRegion = (
 
 
 /**
- *
- * @param color         string, 'white', 'black', 'red', 'green', 'blue', 'cyan', 'magenta', 'yellow'
- *                      default: 'green'
- * @param text          string,  default: ''
- * @param font          makeRegionFont,  default: 'helvetica 10 normal normal'
- * @param pointType     RegionPointType, default:
- * @param pointSize     number   default: 5
- * @param editable      bool     default: 1
- * @param movable       bool     default: 1
- * @param rotatable     bool     default: 0
- * @param highlightable bool     default: 1
- * @param deletable     bool     default: 1
- * @param fixedSize     bool     default: 0
- * @param include       bool     default: 1
- * @param lineWidth     number   default: 0
- * @param dashlist      string   default: "8 3"
- * @param source        bool     default: 1
- * @param dashable      bool     default: 0
- * @param offsetX       number   default: 0
- * @param offsetY       number   default: 0
- * @param message       string,  default: '', containing parsing (error) message
- * @param tag           string,  default: ''
- * @param coordSys      string
- * @constructor
+ * @summary make object for region properties
+ * @param {string} color 'white', 'black', 'red', 'green' (default), 'blue', 'cyan', 'magenta', 'yellow'
+ * @param {string} text default: ''
+ * @param {Object} font from makeRegionFont, default is from 'helvetica 10 normal normal'
+ * @param {Object} pointType  RegionPointType,
+ * @param {number} pointSize  default: 5
+ * @param {boolean} editable  default: 1
+ * @param {boolean} movable   default: 1
+ * @param {boolean} rotatable default: 0
+ * @param {boolean} highlightable default: 1
+ * @param {boolean} deletable default: 1
+ * @param {boolean} fixedSize default: 0
+ * @param {boolean} include default: 1
+ * @param {number} lineWidth default: 0
+ * @param {string} dashlist default: "8 3"
+ * @param {boolean} source  default: 1
+ * @param {boolean} dashable default: 0
+ * @param {number} offsetX default: 0
+ * @param {number} offsetY default: 0
+ * @param {string} message default: '', containing parsing (error) message
+ * @param {string} tag default: ''
+ * @param {string} coordSys default: 'PHYSICAL'
+ * @function makeRegionOptions
  */
 
 export var makeRegionOptions = (
@@ -180,7 +179,7 @@ export var defaultRegionProperty = {
     source: 1,
     offsetX: 0,
     offsetY: 0,
-    coordSys: 'J2000',
+    coordSys: 'PHYSICAL',
     textLoc: 'DEFAULT',
 
     message: ''
@@ -195,20 +194,20 @@ export var setRegionPropDefault = (prop, value) => {
 
 
 /**
- *
- * @param value value for radius and dimension
- * @param unit  DEGREE, SCREEN_PIXEL and IMAGE_PIXEL
- * @constructor
+ * @summary region value object
+ * @param {number} value value for radius and dimension
+ * @param {Object} unit  DEGREE, SCREEN_PIXEL and IMAGE_PIXEL
+ * @function RegionValue
  */
 
 export var RegionValue =
     (value = 0.0, unit = RegionValueUnit.CONTEXT) => ({value, unit});
 
 /**
- *
- * @param width  RegionValue width of box or first radius of ellipse
- * @param height RegionValue height of box or second radius of ellipse
- * @constructor
+ * @summary region value object for dimension
+ * @param {Object} width  RegionValue width of box or first radius of ellipse
+ * @param {Object} height RegionValue height of box or second radius of ellipse
+ * @function RegionDimension
  */
 export var RegionDimension = (width, height) => ({width, height});
 
@@ -226,110 +225,117 @@ export class RegParseException extends Error {
 export var makeRegionMsg = (msg) => makeRegion({type: RegionType.message, message: msg});
 
 /**
- *
- * @param rgTypeStr
- * @returns {RegionType}
+ * @summary get region type
+ * @param {string} rgTypeStr
+ * @returns {Object} RegionType
  */
 export var getRegionType = (rgTypeStr) => (RegionType.get(rgTypeStr) || RegionType.undefined);
 
 /**
- *
- * @param typeStr
- * @returns {RegionPointType}
+ * $summary get region point type
+ * @param {string} typeStr
+ * @returns {Object} RegionPointType
  */
 export var getRegionPointType = (typeStr) => (RegionPointType.get(typeStr) || RegionPointType.undefined);
 
 /**
- * parse font string set in region property
- * @param coordStr
- * @returns {RegionCsys}
+ * @summary get coordinate system
+ * @param {string} coordStr
+ * @returns {Object} RegionCsys
  */
 export var getRegionCoordSys = (coordStr) => (RegionCsys.get(coordStr) || RegionCsys.UNDEFINED);
 
 /**
- *
- * @param name string - ex: Arieal, Courier, Ties, Helvetica, sans-serif, BRAGGADOCIO
- * @param point string (font size) ex: 10, 12, 14, 16
- * @param weight string ex: normal, bold
- * @param slant string ex: normal, italic
+ * @summary get region font object
+ * @param {string} name ex: Arieal, Courier, Ties, Helvetica, sans-serif, BRAGGADOCIO
+ * @param {string} point font size,  ex: 10, 12, 14, 16
+ * @param {string} weight ex: normal, bold
+ * @param {string} slant ex: normal, italic
+ * @returns {Object}
  */
 export var makeRegionFont = (name = 'helvetica', point = '10', weight = 'normal', slant = 'normal') => (
         {name, point, weight, slant});
 
 /**
- * create region on point
- * @param worldPoint
- * @param options
- * @param highlighted
+ * @summary create region on point
+ * @param {Object} worldPoint
+ * @param {Object} options
+ * @param {boolean} highlighted
+ * @returns {Object}
  */
 export function makeRegionPoint(worldPoint, options, highlighted) {
     return  makeRegion({type: RegionType.point, wpAry: [worldPoint],  options, highlighted});
 }
 
 /**
- * create region on text
- * @param worldPoint
- * @param options
- * @param highlighted
+ * @summary create region on text
+ * @param {Object} worldPoint
+ * @param {Object} options
+ * @param {boolean} highlighted
+ * @returns {Object}
  */
 export function makeRegionText(worldPoint, options, highlighted) {
     return makeRegion({type: RegionType.text, wpAry: [worldPoint], options, highlighted});
 }
 
 /**
- * create region on box
- * @param worldPoint
- * @param angle RegionValue
- * @param dim   ReginDimension
- * @param options
- * @param highlighted
+ * @summary create region on box
+ * @param {Object} worldPoint
+ * @param {Object} angle RegionValue
+ * @param {Object} dim   ReginDimension containing width and height
+ * @param {Object} options
+ * @param {boolean} highlighted
+ * @returns {Object}
  */
 export function makeRegionBox(worldPoint, dim, angle, options, highlighted) {
     return makeRegion({type: RegionType.box, wpAry: [worldPoint], dimensionAry: [dim], angle, options, highlighted});
 }
 
 /**
- * create region on boxannulus
- * @param worldPoint
- * @param angle  RegionValue
- * @param dimAry array of RegionDimension, [w, h]
- * @param options
- * @param highlighted
- *
+ * @summary create region on boxannulus
+ * @param {Object} worldPoint
+ * @param {Object} angle  RegionValue
+ * @param {Object[]} dimAry array of RegionDimension containing width and height
+ * @param {Object} options
+ * @param {boolean} highlighted
+ * @returns {Object}
  */
 export function makeRegionBoxAnnulus(worldPoint, dimAry,  angle, options, highlighted) {
     return makeRegion({type: RegionType.boxannulus, wpAry: [worldPoint], dimensionAry: dimAry, angle, options, highlighted});
 }
 
 /**
- * create region on annulus
- * @param worldPoint
- * @param radAry array of RegionValue (radius)
- * @param options
- * @param highlighted
+ * @summary create region on annulus
+ * @param {Object} worldPoint
+ * @param {Object[]} radAry array of RegionValue (radius)
+ * @param {Object} options
+ * @param {boolean} highlighted
+ * @returns {Object}
  */
 export function makeRegionAnnulus(worldPoint, radAry,  options, highlighted) {
     return makeRegion({type: RegionType.annulus, wpAry: [worldPoint], radiusAry: radAry, options, highlighted});
 }
 
 /**
- * create region on circle
- * @param worldPoint
- * @param radius  RegionValue
- * @param options
- * @param highlighted
+ * @summary create region on circle
+ * @param {Object} worldPoint
+ * @param {Object} radius  RegionValue
+ * @param {Object} options
+ * @param {boolean} highlighted
+ * @returns {Object}
  */
 export function makeRegionCircle(worldPoint, radius,  options, highlighted) {
     return makeRegion({type: RegionType.circle, wpAry: [worldPoint], radiusAry: [radius], options, highlighted});
 }
 
 /**
- * create region on ellipse
- * @param worldPoint
- * @param angle  RegionValue
- * @param dim    RegionDimension [radius1, radius2]
- * @param options
- * @param highlighted
+ * @summary create region on ellipse
+ * @param {Object} worldPoint
+ * @param {Object} angle  RegionValue
+ * @param {Object} dim    RegionDimension containing radius 1 and radius 2
+ * @param {Object} options
+ * @param {boolean} highlighted
+ * @returns {Object}
  */
 export function makeRegionEllipse(worldPoint, dim, angle, options, highlighted) {
     return makeRegion({type: RegionType.ellipse, wpAry: [worldPoint],
@@ -338,12 +344,13 @@ export function makeRegionEllipse(worldPoint, dim, angle, options, highlighted) 
 
 
 /**
- * create region on ellipseannulus
- * @param worldPoint
- * @param angle  RegionValue
- * @param dimAry array of RegionDimension [radius1, radius2]
- * @param options
- * @param highlighted
+ * @summary create region on ellipseannulus
+ * @param {Object} worldPoint
+ * @param {Object} angle  RegionValue
+ * @param {Object[]} dimAry array of RegionDimension containing radius 1 and radius  2
+ * @param {Object} options
+ * @param {boolean} highlighted
+ * @returns {Object}
  */
 export function makeRegionEllipseAnnulus(worldPoint, dimAry, angle, options, highlighted ) {
     return makeRegion({type: RegionType.ellipseannulus, wpAry: [worldPoint],
@@ -351,21 +358,23 @@ export function makeRegionEllipseAnnulus(worldPoint, dimAry, angle, options, hig
 }
 
 /**
- * create region on line
- * @param worldPoint1
- * @param worldPoint2
- * @param options
- * @param highlight
+ * @summary create region on line
+ * @param {Object} worldPoint1
+ * @param {Object} worldPoint2
+ * @param {Object} options
+ * @param {boolean} highlight
+ * @returns {Object}
  */
 export function makeRegionLine(worldPoint1, worldPoint2, options, highlight ) {
     return makeRegion({ type: RegionType.line, wpAry: [worldPoint1, worldPoint2], options, highlight});
 }
 
 /**
- * create region on polygon
- * @param wpAry array of WorldPt
- * @param options
- * @param highlight
+ * @summary create region on polygon
+ * @param {Object[]} wpAry array of WorldPt
+ * @param {Object} options
+ * @param {boolean} highlight
+ * @returns {Object}
  */
 export function makeRegionPolygon(wpAry, options, highlight) {
     return makeRegion({type: RegionType.polygon, wpAry, options, highlight});
