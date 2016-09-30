@@ -3,7 +3,7 @@
  */
 import React, {PropTypes} from 'react';
 
-import {get, isEmpty, isUndefined, omitBy, defer, set} from 'lodash';
+import {get, isEmpty, isUndefined, omitBy, defer} from 'lodash';
 
 import ColValuesStatistics from './../ColValuesStatistics.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
@@ -19,6 +19,7 @@ import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 import {plotParamsShape} from  './XYPlot.jsx';
 import {showColSelectPopup, hideColSelectPopup} from './ColSelectView.jsx';
+import {updateSet} from '../../util/WebUtil.js';
 
 const DECI_ENABLE_SIZE = 5000;
 
@@ -43,7 +44,7 @@ function parseSuggestboxContent(text) {
     if (text && text.length) {
         // [entireMatch, firstCature, secondCapture] or null
         const match =  text.match(/^(.*[^A-Za-z\d_]|)([A-Za-z\d_]*)$/);
-        if (match && match.length == 3) {
+        if (match && match.length === 3) {
             priorContent = match[1];
             token = match[2];
         }
@@ -159,7 +160,10 @@ export function getColValidator(colValStats) {
  * Reducer from field group component,
  *   clears label, unit, and userSetBoundaries whenever x or y field changes,
  *   validates min-max-log field relationship
+ *   @param {Object} inFields
+ *   @param {Object} action
  * @returns {*} reducer, which clears label and unit whenever x or y field changes
+ *
  */
 function fldChangeReducer(inFields, action) {
     if (!inFields) { return {}; }
@@ -168,19 +172,25 @@ function fldChangeReducer(inFields, action) {
         // when field changes, clear the label and unit
         fieldKey = get(action.payload, 'fieldKey');
         if (fieldKey === 'x.columnOrExpr') {
-            set(inFields, ['x.label', 'value'], undefined);
-            set(inFields, ['x.unit', 'value'], undefined);
-            set(inFields, ['xMin', 'value'], undefined);
-            set(inFields, ['xMax', 'value'], undefined);
+            inFields = updateSet(inFields, ['x.label', 'value'], undefined);
+            inFields = updateSet(inFields, ['x.unit', 'value'], undefined);
+            inFields = updateSet(inFields, ['xMin', 'value'], undefined);
+            inFields = updateSet(inFields, ['xMax', 'value'], undefined);
+            const currOptions = get(inFields, ['x.options', 'value']);
+            // do not reset grid selection
+            inFields = updateSet(inFields, ['x.options', 'value'], getOption(currOptions, 'grid'));
         } else if (fieldKey === 'y.columnOrExpr') {
-            set(inFields, ['y.label', 'value'], undefined);
-            set(inFields, ['y.unit', 'value'], undefined);
-            set(inFields, ['yMin', 'value'], undefined);
-            set(inFields, ['yMax', 'value'], undefined);
+            inFields = updateSet(inFields, ['y.label', 'value'], undefined);
+            inFields = updateSet(inFields, ['y.unit', 'value'], undefined);
+            inFields = updateSet(inFields, ['yMin', 'value'], undefined);
+            inFields = updateSet(inFields, ['yMax', 'value'], undefined);
+            const currOptions = get(inFields, ['y.options', 'value']);
+            // do not reset grid selection
+            inFields = updateSet(inFields, ['y.options', 'value'], getOption(currOptions, 'grid'));
         } else if (fieldKey === 'xyRatio') {
             if (get(inFields, 'nbins.x')) {
-                set(inFields, ['nbins.x', 'value'], undefined);
-                set(inFields, ['nbins.y', 'value'], undefined);
+                inFields = updateSet(inFields, ['nbins.x', 'value'], undefined);
+                inFields = updateSet(inFields, ['nbins.y', 'value'], undefined);
             }
         }
     }
@@ -198,13 +208,13 @@ function fldChangeReducer(inFields, action) {
                     const logVal = Boolean(options && options.includes('log'));
                     if (Number.isFinite(valMin)) {
                         if (logVal && valMin <= 0) {
-                            set(inFields, [v.min, 'valid'], false);
-                            set(inFields, [v.min, 'message'], 'The minimum of a log axis can not be 0 or less');
+                            inFields = updateSet(inFields, [v.min, 'valid'], false);
+                            inFields = updateSet(inFields, [v.min, 'message'], 'The minimum of a log axis can not be 0 or less');
                         } else {
                             const valMax = Number.parseFloat(get(inFields, [v.max, 'value']));
                             if (Number.isFinite(valMax) && valMin > valMax) {
-                                set(inFields, [fieldKey||v.min, 'valid'], false);
-                                set(inFields, [fieldKey||v.min , 'message'], 'Min value greater than max');
+                                inFields = updateSet(inFields, [fieldKey||v.min, 'valid'], false);
+                                inFields = updateSet(inFields, [fieldKey||v.min , 'message'], 'Min value greater than max');
                             }
                         }
                     }
@@ -216,6 +226,11 @@ function fldChangeReducer(inFields, action) {
 
 function possibleDecimatedTable(colValStats) {
     return Boolean(colValStats.find((el) => { return el.numpoints>DECI_ENABLE_SIZE; }));
+}
+
+function getOption(options, opt) {
+    // returns opt if it is included into options
+    return (options && (options.includes(opt)||options.includes('_all_'))) ? opt : undefined;
 }
 
 
