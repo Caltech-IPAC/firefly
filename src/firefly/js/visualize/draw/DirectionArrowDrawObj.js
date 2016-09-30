@@ -164,7 +164,7 @@ function toRegion(startPt,endPt,plot,drawParams,renderOptions) {
 
     if (text) {
         des += setRegionPropertyDes(regionPropsList.TEXT, text) +
-               setRegionPropertyDes(regionPropsList.FONT, {name: 'helvetica', size: 9, weight: 'normal', style: 'normal'} );
+               setRegionPropertyDes(regionPropsList.FONT, {name: 'helvetica', size: 9, weight: 'normal', slant: 'normal'} );
     }
     des = endRegionDes(des);
 

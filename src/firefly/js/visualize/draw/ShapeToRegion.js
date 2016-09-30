@@ -160,7 +160,8 @@ export function addTextRelatedProps(drawObj, drawParams) {
 
 
 /**
- * create text region seperate from the region of any shape in case there exit non default textloc or textoffset
+ * create text region seperate from the region of any shape in case there exists non default textloc or textoffset or
+ * a seperate request.
  * @param drawObj
  * @param drawParams
  * @param regionType
@@ -169,7 +170,7 @@ export function addTextRelatedProps(drawObj, drawParams) {
  */
 export function createTextRegionFromShape(drawObj, drawParams, regionType, cc) {
     var {textLoc}= drawParams;
-    var {text, textOffset}= drawObj;
+    var {text, textOffset, bSeperateText = false}= drawObj;
 
     var des = '';
     var searchTextLoc = () => {
@@ -186,14 +187,20 @@ export function createTextRegionFromShape(drawObj, drawParams, regionType, cc) {
     if (!text) return des;
 
     // check if text location is default as defined and no offset involved
-    if ((!textLoc || textLoc === DEFAULT_TEXTLOC[regionType.key]) &&
+    if ((!bSeperateText) &&
+        (!textLoc || textLoc === DEFAULT_TEXTLOC[regionType.key]) &&
         (!textOffset || (textOffset.x === 0.0 && textOffset.y === 0.0)))  return des;
 
     // adapt the computed text location if there is or recompute the text location
     var textWorldLoc = get(drawObj, 'textWorldLoc', searchTextLoc());
     if (!textWorldLoc) return des;
 
-    return makeTextRegion(cc.getWorldCoords(textWorldLoc), cc, drawObj, drawParams);
+    var textReg = makeTextRegion(cc.getWorldCoords(textWorldLoc), cc, drawObj, drawParams);
+    if (isEmpty(textReg)) {
+        return des;
+    } else {
+        return textReg[0];
+    }
 }
 
 /**

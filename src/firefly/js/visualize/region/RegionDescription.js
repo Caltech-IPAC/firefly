@@ -53,7 +53,7 @@ var fontObjToStr = (v) => (`"${v.name} ${v.point} ${v.weight} ${v.slant}"` );
  * make region descript array from plot DrawObj of all visible DrawLayer
  * @param plot
  */
-export function makeRegionsFromPlot(plot)
+export function makeRegionsFromPlot(plot, bSeperateText = false)
 {
     var plotId = plot? plot.plotId : get(visRoot(), 'avtivePlotId');
     var dlAry = getAllDrawLayersForPlot(getDlAry(), plotId, true );
@@ -85,10 +85,12 @@ export function makeRegionsFromPlot(plot)
 
 
         drawObjs.forEach( (dObj) => {
+            dObj.bSeperateText = bSeperateText;
             oneRegionDes = DrawOp.toRegion(dObj, plot, dl.drawingDef);
             if (!isEmpty(oneRegionDes)) {
                 rgDesAry.push(...oneRegionDes);
             }
+            dObj.bSeperateText = null;
          } );
     });
     return rgDesAry;
@@ -240,7 +242,7 @@ export function setRegionPropertyDes(prop, value) {
             pval =  `"${get(value, 'name', v.name).toLowerCase()} ` +
                     `${get(value, 'size', v.point)} ` +
                     `${get(value, 'weight', v.weight).toLowerCase()} ` +
-                    `${get(value, 'style', v.slant)}"`;
+                    `${get(value, 'slant', v.slant)}"`;
 
             if (pval !== fontstr) {
                 des = `${pname}${pval}`;
