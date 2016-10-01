@@ -32,11 +32,10 @@ import java.util.UUID;
  */
 public class RequestOwner implements Cloneable {
 
+    private static final Logger.LoggerImpl LOG = Logger.getLogger();
     public static String USER_KEY = "usrkey";
 //    private static final String[] ID_COOKIE_NAMES = new String[]{WebAuthModule.AUTH_KEY, "ISIS"};
     private static boolean ignoreAuth = AppProperties.getBooleanProperty("ignore.auth", false);
-    private static final Logger.LoggerImpl LOG = Logger.getLogger();
-
     private RequestAgent requestAgent;
     private Date startTime;
     private File workingDir;
@@ -67,15 +66,8 @@ public class RequestOwner implements Cloneable {
         if (requestAgent != null) {
             host = requestAgent.getHeader("host");
             referrer = requestAgent.getHeader("Referer");
-
-            String sei = requestAgent.getCookie("seinfo");
-            if (!StringUtils.isEmpty(sei)) {
-                String [] parts =  sei.split("_");
-                if (parts.length > 1) {
-                    eventConnID = parts[0];
-                    eventChannel = parts[1];
-                }
-            }
+            eventChannel = requestAgent.getHeader("FF-channel");
+            eventConnID = requestAgent.getHeader("FF-connID");
         }
     }
 
@@ -149,11 +141,6 @@ public class RequestOwner implements Cloneable {
         return !StringUtils.isEmpty(getAuthToken());
     }
 
-    // should only use this as a way to bypass the web-based access.
-    public void setUserInfo(UserInfo userInfo) {
-        this.userInfo = userInfo;
-    }
-
     public UserInfo getUserInfo() {
         if (userInfo == null) {
             if (isAuthUser() && !ignoreAuth) {
@@ -175,6 +162,11 @@ public class RequestOwner implements Cloneable {
             }
         }
         return userInfo;
+    }
+
+    // should only use this as a way to bypass the web-based access.
+    public void setUserInfo(UserInfo userInfo) {
+        this.userInfo = userInfo;
     }
 
     @Override

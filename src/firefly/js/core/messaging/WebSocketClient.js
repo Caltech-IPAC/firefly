@@ -3,7 +3,7 @@
  */
 
 import {get, pickBy} from 'lodash';
-import {setCookie, parseUrl} from '../../util/WebUtil.js';
+import {setCookie, parseUrl, getModuleName} from '../../util/WebUtil.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
 import {dispatchUpdateAppData} from '../AppDataCntlr.js';
 
@@ -70,8 +70,6 @@ function addListener( {matches, onEvent} ) {
 }
 
 function onOpen() {
-    console.log('WS open: WebSocketClient started');
-
     if (pinger) clearInterval(pinger);
     pinger = setInterval(() => wsSend({}), 5000);
 }
@@ -97,8 +95,8 @@ function onMessage(event) {
         if (eventData.name === 'EVT_CONN_EST') {
             // connection established.. doing handshake.
             [connId, channel] = [eventData.data.connID, eventData.data.channel];
-            setCookie('seinfo', `${connId}_${channel}`);
             dispatchUpdateAppData({channel});
+            console.log(`WebSocket connected.  connId:${connId} channel:${channel}`); 
         } else {
             listenters.forEach( (l) => {
                 if (!l.matches || l.matches(eventData)) {

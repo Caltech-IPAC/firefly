@@ -50,7 +50,6 @@ public class ClientEventQueue {
             if (name.equals(Name.EVT_CONN_EST)) {
                 JSONObject dataJ = JSONParser.parseStrict(sEvent.getData().toString()).isObject();
                 String sEventInfo = dataJ.get("connID").isString().stringValue() + "_" + dataJ.get("channel").isString().stringValue();
-                Cookies.setCookie("seinfo", sEventInfo);
                 GwtUtil.getClientLogger().log(Level.INFO, "Websocket connection established: " + sEventInfo );
             } else if (data instanceof BackgroundStatus) {
                 WebEvent<String> ev= new WebEvent<String>(ClientEventQueue.class,name,((BackgroundStatus)data).serialize());
@@ -84,10 +83,6 @@ public class ClientEventQueue {
         } catch(ex) {
             console.log("Exception sending message: " + msg);
         }
-    }-*/;
-
-    private native void closeConnection() /*-{
-        $wnd.firefly.ClientEventQueue.close();
     }-*/;
 
     public static native void start(String baseurl) /*-{
@@ -138,10 +133,6 @@ public class ClientEventQueue {
         doWSConnect();
     }-*/;
 
-//====================================================================
-//
-//====================================================================
-
     private static ServerEvent parseJsonEvent(String msg) {
         try {
             JSONObject eventJ = JSONParser.parseStrict(msg).isObject();
@@ -167,4 +158,12 @@ public class ClientEventQueue {
             return null;
         }
     }
+
+//====================================================================
+//
+//====================================================================
+
+    private native void closeConnection() /*-{
+        $wnd.firefly.ClientEventQueue.close();
+    }-*/;
 }
