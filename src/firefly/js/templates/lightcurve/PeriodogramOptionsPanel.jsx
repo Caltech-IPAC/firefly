@@ -24,7 +24,7 @@ import {RAW_TABLE,PERIODOGRAM, PEAK_TABLE} from '../../templates/lightcurve/LcMa
 
 const gkey = 'PFO_PANEL';
 const options= [
-    {label: 'Lomb Scarble', value:'LombScarble', proj:'LCViewer'},
+    {label: 'Lomb‑Scargle ', value:'LombScargle', proj:'LCViewer'},
     {label: 'Phase Dispersion Minimization', value:'PhaseDispersionMinimization', proj:'LCViewer'},
 
 ];

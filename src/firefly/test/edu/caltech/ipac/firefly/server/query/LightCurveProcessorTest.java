@@ -231,7 +231,7 @@ public class LightCurveProcessorTest {
 
         @Override
         public String getResultTable() {
-            return "http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml";
+            return "http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample-old.xml";
         }
     }
 
