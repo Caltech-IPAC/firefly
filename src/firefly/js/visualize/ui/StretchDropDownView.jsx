@@ -92,7 +92,7 @@ function stretchByType(pv,currRV,sType,min,max) {
 
 export function StretchDropDownView({plotView:pv}) {
     var enabled= pv ? true : false;
-    var rv= primePlot(pv).getRangeValues();
+    var rv= primePlot(pv).plotState.getRangeValues();
     return (
         <SingleColumnMenu>
             <ToolbarButton text='Color stretch...'
