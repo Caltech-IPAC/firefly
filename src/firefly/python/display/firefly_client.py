@@ -182,14 +182,11 @@ class FireflyClient(WebSocketClient):
                 conn_info = ev['data']
                 if self.channel is None:
                     self.channel = conn_info['channel']
-                conn_id = ''
-                if 'conn_id' in conn_info:
-                    conn_id = conn_info['conn_id']
-                seinfo = self.channel
-                if (len(conn_id)) > 0:
-                    seinfo = conn_id + '_' + seinfo
+                if 'connID' in conn_info:
+                    self.conn_id = conn_info['connID']
 
-                self.session.cookies['seinfo'] = seinfo
+                self.headers = {'FF_FF-channel': self.channel,
+                                'FF-connID': self.conn_id}
             except:
                 print('from callback exception: ')
                 print(m)
@@ -199,14 +196,14 @@ class FireflyClient(WebSocketClient):
     def _send_url_as_get(self, url):
         """Send URL in 'GET' request and return status."""
 
-        response = self.session.get(url)
+        response = self.session.get(url, headers=self.headers)
         status = json.loads(response.text)
         return status[0]
 
     def _send_url_as_post(self, data):
         """Send URL in 'POST' request and return status."""
 
-        response = self.session.post(self.url_root, data=data)
+        response = self.session.post(self.url_root, data=data, headers=self.headers)
         status = json.loads(response.text)
         return status[0]
 
@@ -367,7 +364,7 @@ class FireflyClient(WebSocketClient):
 
         url = 'http://' + self.this_host + '/firefly/sticky/Firefly_FileUpload?preload=%s' % pre_load
         files = {'file': open(path, 'rb')}
-        result = self.session.post(url, files=files)
+        result = self.session.post(url, files=files, headers=self.headers)
         index = result.text.find('$')
         return result.text[index:]
 
@@ -390,7 +387,7 @@ class FireflyClient(WebSocketClient):
 
         url = 'http://' + self.this_host + '/firefly/sticky/Firefly_FileUpload?preload=true'
         data_pack = {'data': stream}
-        result = self.session.post(url, files=data_pack)
+        result = self.session.post(url, files=data_pack, headers=self.headers)
         index = result.text.find('$')
         return result.text[index:]
 
@@ -434,7 +431,7 @@ class FireflyClient(WebSocketClient):
         url = 'http://' + self.this_host + '/firefly/sticky/Firefly_FileUpload?preload='
         url += 'true&type=FITS' if data_type.upper() == 'FITS' else 'false&type=UNKNOWN'
         data_pack = {'data': stream}
-        result = self.session.post(url, files=data_pack)
+        result = self.session.post(url, files=data_pack, headers=self.headers)
         index = result.text.find('$')
         return result.text[index:]
 

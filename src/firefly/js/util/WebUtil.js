@@ -8,6 +8,7 @@ import Enum from 'enum';
 import update from 'react-addons-update';
 import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil, last} from 'lodash';
 import { getRootURL } from './BrowserUtil.js';
+import {getWsConnId, getWsChannel} from '../core/messaging/WebSocketClient.js';
 
 const  MEG          = 1048576;
 const GIG          = 1048576 * 1024;
@@ -143,7 +144,10 @@ export function fetchUrl(url, options, returnAllResponses= false) {
         };
     options = Object.assign(req, options);
 
-    const headers = {};
+    const headers = {
+        'FF-channel': getWsChannel(),
+        'FF-connID': getWsConnId()
+    };
     options.headers = Object.assign(headers, options.headers);
 
     if (options.params) {
