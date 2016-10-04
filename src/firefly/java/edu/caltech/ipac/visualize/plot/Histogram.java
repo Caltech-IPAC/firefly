@@ -25,7 +25,7 @@ public class Histogram {
 
     private int[] hist;
     private double histMin;
-    private double histBinsiz;
+    private double histBinsize;
     private double irafMin;
     private double irafMax;
 
@@ -62,7 +62,7 @@ public class Histogram {
         while (true) {
 
             boolean redo_flag = false;
-            histBinsiz =getHistBinSize(histMax );
+            histBinsize =getHistBinSize(histMax );
              //reintialize the hist to 0
             Arrays.fill(hist, 0);
             int underflowCount = 0;
@@ -71,7 +71,7 @@ public class Histogram {
             {
                 if (!Double.isNaN(float1dArray[k]))
                 {
-                   int i = (int) ((float1dArray[k] - histMin) / histBinsiz);
+                   int i = (int) ((float1dArray[k] - histMin) / histBinsize);
                       if (i<0)
                     {
                         //redo_flag = true;   /* hist_min was bad */
@@ -123,8 +123,8 @@ public class Histogram {
 
                 if ((histMaxIndex - histMinIndex) < HISTSIZ) {
 
-                    histMax = (histMaxIndex * histBinsiz) + histMin;
-                    histMin = (histMinIndex * histBinsiz) + histMin;
+                    histMax = (histMaxIndex * histBinsize) + histMin;
+                    histMin = (histMinIndex * histBinsize) + histMin;
                     redo_flag = true;   /* we can spread it out by factor of 2 */
                 }
             } else {
@@ -203,7 +203,7 @@ public class Histogram {
         if (SUTDebug.isDebug()) {
             System.out.println("histMin = " + histMin);
             System.out.println("hist_max = " + hist_max);
-            System.out.println("histBinsiz = " + histBinsiz);
+            System.out.println("histBinsize = " + histBinsize);
 
 
             System.out.println("underFlowCount = " + underFlowCount +
@@ -261,12 +261,12 @@ public class Histogram {
             System.out.println("goodpix = " + goodpix
                     + "   goal = " + goal
                     + "   i = " + i
-                    + "   histBinsiz = " + histBinsiz);
+                    + "   histBinsize = " + histBinsize);
         }
         if (round_up)
-            return ((i + 1.0) * histBinsiz + histMin);
+            return ((i + 1.0) * histBinsize + histMin);
         else
-            return ((i) * histBinsiz + histMin);
+            return ((i) * histBinsize + histMin);
     }
 
     /**
@@ -298,7 +298,7 @@ public class Histogram {
      * @return The DN value in the image corresponding to the specified bin
      */
     public double getDNfromBin(int bin) {
-        return (bin * histBinsiz + histMin);
+        return (bin * histBinsize + histMin);
     }
 
     /**
@@ -306,7 +306,7 @@ public class Histogram {
      * @return The histogram index corresponding to the DN value
      */
     public int getBinfromDN(double dn) {
-        int bin = (int) ((dn - histMin) / histBinsiz);
+        int bin = (int) ((dn - histMin) / histBinsize);
         if (bin >= HISTSIZ2)
             bin = HISTSIZ2 - 1;
         if (bin < 0)
@@ -321,7 +321,7 @@ public class Histogram {
      */
     public int getBINfromPercentile(double pct, boolean round_up) {
         double dn = get_pct(pct, round_up);
-        int bin = (int) ((dn - histMin) / histBinsiz);
+        int bin = (int) ((dn - histMin) / histBinsize);
         if (bin >= HISTSIZ2)
             bin = HISTSIZ2 - 1;
         if (bin < 0)
@@ -336,7 +336,7 @@ public class Histogram {
      */
     public int getBINfromSigma(double sigma, boolean round_up) {
         double dn = get_sigma(sigma, round_up);
-        int bin = (int) ((dn - histMin) / histBinsiz);
+        int bin = (int) ((dn - histMin) / histBinsize);
         if (bin >= HISTSIZ2)
             bin = HISTSIZ2 - 1;
         if (bin < 0)
@@ -361,14 +361,14 @@ public class Histogram {
         while (hist_index < HISTSIZ2 && tblindex < 255) {
 
             if (accum >= next_goal) {
-                tbl[tblindex++] = (hist_index * histBinsiz + histMin);
+                tbl[tblindex++] = (hist_index * histBinsize + histMin);
                 next_goal += goodpix_255;
             } else {
                 accum += hist[hist_index++];
             }
         }
         while (tblindex < 255)
-            tbl[tblindex++] = hist_index * histBinsiz + histMin;
+            tbl[tblindex++] = hist_index * histBinsize + histMin;
         tbl[255] = Double.MAX_VALUE;
         return tbl;
     }
