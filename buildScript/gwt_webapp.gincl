@@ -26,8 +26,24 @@ sourceSets {
   test.java.srcDir  "test/"
 }
 
-test {
+configurations {
+  webappLib {
+    description = 'web app runtime dependencies.'
+  }
+}
 
+task jsTest (dependsOn: [loadConfig]) << {
+  if (file("package.json").exists()) {
+    println ">> running JavaScript test..."
+    def res = project.ext.NODE 'npm', 'run', 'test-unit'
+    if (res.getExitValue() != 0) {
+      throw new GradleException("JavaScript test fail.")
+    }
+  }
+}
+
+test {
+  dependsOn jsTest
   // set a system property for the test JVM(s)
   systemProperty 'some.prop', 'value'
 
@@ -49,13 +65,6 @@ test {
   // listen to standard out and standard error of the test JVM(s)
   onOutput { descriptor, event ->
     logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message )
-  }
-
-}
-
-configurations {
-  webappLib {
-    description = 'web app runtime dependencies.'
   }
 }
 
