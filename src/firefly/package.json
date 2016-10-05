@@ -4,7 +4,6 @@
       "build" : "../../node_modules/webpack/bin/webpack.js",
       "lint"  : "DO_LINT=true npm run build",
       "dev"   : "DEBUG=true npm run build -- -w -d --no-color",
-      "test-watch": "npm run build && node ../../node_modules/karma/bin/karma start --singleRun=false",
       "test-unit": "node ../../node_modules/mocha/bin/mocha --require ../../buildScript/mocha-init.js **/__test__/*test.js"
     }
 }
