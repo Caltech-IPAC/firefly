@@ -14,6 +14,8 @@ import {dispatchPlotImage, visRoot, dispatchDeletePlotView,
 import {getPlotViewById} from '../../visualize/PlotViewUtil.js';
 import {getMultiViewRoot, dispatchReplaceImages, getViewer} from '../../visualize/MultiViewCntlr.js';
 import {WebPlotRequest} from '../../visualize/WebPlotRequest.js';
+import {dispatchTableToIgnore} from '../../visualize/DrawLayerCntlr.js';
+import Catlog from '../../drawingLayers/Catalog.js';
 import {ServerRequest} from '../../data/ServerRequest.js';
 import {CHANGE_LAYOUT} from '../../visualize/MultiViewCntlr.js';
 
@@ -30,6 +32,7 @@ const plotIdRoot= 'LC_FRAME-';
  *  This event manager is custom made for light curve viewer.
  */
 export function* lcManager() {
+
     while (true) {
         const action = yield take([
             TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, SHOW_DROPDOWN, SET_LAYOUT_MODE,
@@ -56,10 +59,10 @@ export function* lcManager() {
                 newLayoutInfo = handleTableLoad(newLayoutInfo, action);
                 break;
             case TABLE_HIGHLIGHT:
-                handleTableHighlight(newLayoutInfo, action);
+                handleTableHighlight(PHASE_FOLDED, action);
                 break;
             case CHANGE_LAYOUT:
-                handleChangeMultiViewLayout(action);
+                handleChangeMultiViewLayout(PHASE_FOLDED);
                 break;
             case TBL_RESULTS_ACTIVE :
                 newLayoutInfo = handleTableActive(newLayoutInfo, action);
@@ -82,7 +85,7 @@ function handleTableLoad(layoutInfo, action) {
     }
     if ( [PHASE_FOLDED].includes(tbl_id) ){
         layoutInfo = updateSet(layoutInfo, 'showImages', true);
-        handleTableHighlight(layoutInfo, action);
+        handleTableHighlight(PHASE_FOLDED, action);
     }
     return layoutInfo;
 }
@@ -93,9 +96,14 @@ function handleTableActive(layoutInfo, action) {
     return layoutInfo;
 }
 
-function handleTableHighlight(layoutInfo, action) {
+/**
+ *
+ * @param {string} activePhaseFoldedTableId last active phase folded table id
+ * @param {Action} action
+ */
+function handleTableHighlight(activePhaseFoldedTableId, action) {
     const {tbl_id} = action.payload;
-    if (tbl_id === PHASE_FOLDED) {
+    if (tbl_id === activePhaseFoldedTableId) {
         try {
             setupImages(tbl_id);
         } catch (E){
@@ -105,9 +113,13 @@ function handleTableHighlight(layoutInfo, action) {
     }
 }
 
-function handleChangeMultiViewLayout() {
-    const tbl= getTblById(PHASE_FOLDED);
-    if (get(tbl, 'totalRows',0)>0) setupImages(PHASE_FOLDED);
+/**
+ *
+ * @param {string} activePhaseFoldedTableId last active phase folded table id
+ */
+function handleChangeMultiViewLayout(activePhaseFoldedTableId) {
+    const tbl= getTblById(activePhaseFoldedTableId);
+    if (get(tbl, 'totalRows',0)>0) setupImages(activePhaseFoldedTableId);
 }
 
 function getWebPlotRequest(tableModel, hlrow) {

@@ -633,6 +633,9 @@ export function dispatchZoom({plotId, userZoomType, maxCheck= true,
  * @param {string} p.plotId
  * @param {boolean} [p.holdWcsMatch= false] if wcs match is on, then modify the request to hold the wcs match
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
+ * @public
+ * @function dispatchDeletePlotView
+ * @memberof firefly.action
  */
 export function dispatchDeletePlotView({plotId, holdWcsMatch= false, dispatcher= flux.process}) {
     dispatcher({ type: DELETE_PLOT_VIEW, payload: {plotId, holdWcsMatch} });

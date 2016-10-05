@@ -142,7 +142,7 @@ const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
         : expanded === LO_VIEW.xyPlots ? xyPlot
         : imagePlot;
     return (
-        <div style={{width: '100%'}}>{view}</div>
+        <div style={{ flex: 'auto', display: 'flex', flexFlow: 'column', overflow: 'hidden'}}>{view}</div>
     );
 };
 
