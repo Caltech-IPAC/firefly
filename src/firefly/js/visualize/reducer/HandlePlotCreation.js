@@ -4,9 +4,10 @@
 
 import {uniqBy,unionBy, isEmpty} from 'lodash';
 import Cntlr from '../ImagePlotCntlr.js';
-import PlotView, {makePlotView} from './PlotView.js';
+import PlotView, {makePlotView,findWCSMatchOffset, updatePlotViewScrollXY} from './PlotView.js';
 import {makeOverlayPlotView, replaceOverlayPlots} from './OverlayPlotView.js';
-import {getPlotViewById, clonePvAry, getOverlayById} from '../PlotViewUtil.js';
+import {primePlot, getPlotViewById, clonePvAry, getOverlayById} from '../PlotViewUtil.js';
+import {makeScreenPt} from '../Point.js';
 import PlotGroup from '../PlotGroup.js';
 
 
@@ -40,7 +41,7 @@ export function reducer(state, action) {
             retState= plotFail(state,action);
             break;
         case Cntlr.PLOT_IMAGE  :
-            retState= addPlot(state,action, true, true);
+            retState= addPlot(state,action, true, action.payload.setNewPlotAsActive);
             // todo: also process adding to history
             break;
 
@@ -106,35 +107,37 @@ const updateDefaults= function(plotRequestDefaults, action) {
 };
 
 function addPlot(state,action, replace, setActive) {
-    var {plotViewAry, activePlotId, prevActivePlotId, wcsMatchCenterWP}= state;
+    var {plotViewAry, activePlotId, prevActivePlotId, mpwWcsPrimId, wcsMatchType }= state;
     const {pvNewPlotInfoAry}= action.payload;
 
-    if (pvNewPlotInfoAry) { // used for doing groups
-        plotViewAry= plotViewAry.map( (pv) => { // map has side effect of setting active plotId
-            const info= pvNewPlotInfoAry.find( (i) => i.plotId===pv.plotId);
-            if (!info) return pv;
-            const {plotAry, overlayPlotViews}= info;
-            if (setActive) {
-                prevActivePlotId= state.activePlotId;
-                activePlotId= pv.plotId;
-            }
+    if (!pvNewPlotInfoAry) {
+        console.error(new Error(
+                         `Deprecated payload send to handPlotChange.addPlot: type:${action.type}, plot not updated`));
+        return state;
+    }
 
-            return PlotView.replacePlots(pv,plotAry,overlayPlotViews, state.expandedMode, wcsMatchCenterWP, replace);
-        });
-    }
-    else {// used for single plot update
-        console.error(`Deprecated payload send to handPlotChange.addPlot: type:${action.type}`);
-        const {plotAry, overlayPlotViews, plotId}= action.payload;
-        plotViewAry= plotViewAry.map( (pv) => { // map has side effect of setting active plotId
-            if (pv.plotId!==plotId ) return pv;
-            if (setActive) {
-                prevActivePlotId= state.activePlotId;
-                activePlotId= plotId;
+    plotViewAry= plotViewAry.map( (pv) => { // map has side effect of setting active plotId
+        const info= pvNewPlotInfoAry.find( (i) => i.plotId===pv.plotId);
+        if (!info) return pv;
+        const {plotAry, overlayPlotViews}= info;
+        if (setActive) {
+            prevActivePlotId= state.activePlotId;
+            activePlotId= pv.plotId;
+        }
+        pv= PlotView.replacePlots(pv,plotAry,overlayPlotViews, state.expandedMode, replace);
+
+        if (wcsMatchType && mpwWcsPrimId!==pv.plotId) {
+            const offPt= findWCSMatchOffset(state, mpwWcsPrimId, primePlot(pv));
+            const masterPv=getPlotViewById(state,mpwWcsPrimId);
+            if (masterPv) {
+                pv= updatePlotViewScrollXY(pv, makeScreenPt(masterPv.scrollX-offPt.x, masterPv.scrollY-offPt.y), false);
             }
-            return PlotView.replacePlots(pv,plotAry,overlayPlotViews, state.expandedMode, wcsMatchCenterWP, replace);
-         });
-    }
-    return clone(state, {prevActivePlotId, plotViewAry,activePlotId});
+        }
+        return pv;
+    });
+
+    if (!mpwWcsPrimId) mpwWcsPrimId= activePlotId;
+    return clone(state, {prevActivePlotId, plotViewAry,activePlotId, mpwWcsPrimId});
 }
 
 function newOverlayPrep(state, action) {
@@ -160,7 +163,7 @@ function newOverlayPrep(state, action) {
 
 
 function addOverlay(state, action) {
-    const {plotId, imageOverlayId, plot, imageNumber, maskValue, color, drawingDef}= action.payload;
+    const {plotId, imageOverlayId, plot}= action.payload;
 
     const plotViewAry= state.plotViewAry.map( (pv) => {
         if (pv.plotId!== plotId) return pv;

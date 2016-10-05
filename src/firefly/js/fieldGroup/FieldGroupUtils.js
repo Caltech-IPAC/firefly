@@ -5,6 +5,7 @@
 import {get,isFunction,hasIn,isBoolean} from 'lodash';
 import {flux} from '../Firefly.js';
 import {logError,clone} from '../util/WebUtil.js';
+import {smartMerge} from '../tables/TableUtil.js';
 import FieldGroupCntlr, {dispatchValueChange,dispatchMultiValueChange} from './FieldGroupCntlr.js';
 
 
@@ -171,8 +172,9 @@ export function revalidateFields(fields) {
     Object.keys(fields).forEach( (key) => {
         const f= fields[key];
         if (f.validator && !isFunction(f.value) && f.value && !f.value.then) {
-            const {valid,message} = f.validator(f.value);
-            newfields[key]= Object.assign({},f, {valid,message});
+            // const {valid,message} = f.validator(f.value);
+            newfields[key]= smartMerge(f,f.validator(f.value));
+            // newfields[key]= (valid!==f.valid || message!==f.message) ? clone(f,{valid,message}) : f;
         }
     } );
     return newfields;

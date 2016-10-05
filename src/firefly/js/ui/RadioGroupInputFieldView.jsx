@@ -1,9 +1,13 @@
 import React, {PropTypes}  from 'react';
 import InputFieldLabel from './InputFieldLabel.jsx';
 
+const vStyle={paddingLeft: 3, paddingRight: 8};
+const hStyle={paddingLeft: 0, paddingRight: 12};
 
 
 function makeOptions(options,alignment,fieldKey,value,onChange,tooltip) {
+
+    const labelStyle= alignment==='vertical' ? vStyle : hStyle;
     return options.map((option) => (
         <span key={option.value}>
             <div style={{display:'inline-block'}} title={tooltip}>
@@ -13,7 +17,7 @@ function makeOptions(options,alignment,fieldKey,value,onChange,tooltip) {
                        value={option.value}
                        checked={value===option.value}
                        onChange={onChange}
-                /> <span style={{paddingLeft: 3, paddingRight: 8}}>{option.label}</span>
+                /> <span style={labelStyle}>{option.label}</span>
             </div>
             {alignment==='vertical' ? <br/> : ''}
          </span>

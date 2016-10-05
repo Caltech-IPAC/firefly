@@ -2,32 +2,41 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isUndefined, get} from 'lodash';
+import {isUndefined, get,isNil} from 'lodash';
 import {take} from 'redux-saga/effects';
 
 import {LO_VIEW, LO_MODE, SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo, dispatchUpdateLayoutInfo, dropDownHandler} from '../../core/LayoutCntlr.js';
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT} from '../../tables/TablesCntlr.js';
 import {getCellValue, getTblById, makeTblRequest} from '../../tables/TableUtil.js';
 import {updateSet} from '../../util/WebUtil.js';
-import {dispatchPlotImage} from '../../visualize/ImagePlotCntlr.js';
-import {WebPlotRequest,TitleOptions} from '../../visualize/WebPlotRequest.js';
-import {converters, converterFactory} from '../../metaConvert/ConverterFactory.js';
+import {dispatchPlotImage, visRoot, dispatchDeletePlotView,
+        dispatchChangeActivePlotView} from '../../visualize/ImagePlotCntlr.js';
+import {getPlotViewById} from '../../visualize/PlotViewUtil.js';
+import {getMultiViewRoot, dispatchReplaceImages, getViewer} from '../../visualize/MultiViewCntlr.js';
+import {WebPlotRequest} from '../../visualize/WebPlotRequest.js';
+import {dispatchTableToIgnore} from '../../visualize/DrawLayerCntlr.js';
+import Catlog from '../../drawingLayers/Catalog.js';
 import {ServerRequest} from '../../data/ServerRequest.js';
-import {dispatchLoadPlotData} from '../../charts/XYPlotCntlr.js';
+import {CHANGE_LAYOUT} from '../../visualize/MultiViewCntlr.js';
 
 export const RAW_TABLE = 'raw_table';
 export const PHASE_FOLDED = 'phase_folded';
 export const PERIODOGRAM = 'periodogram';
 export const PEAK_TABLE = 'peak_table';
 export const IMG_VIEWER_ID = 'lc_image_viewer';
+export const DEF_IMAGE_CNT= 5;
+export const MAX_IMAGE_CNT= 7;
+const plotIdRoot= 'LC_FRAME-';
 
 /**
  *  This event manager is custom made for light curve viewer.
  */
 export function* lcManager() {
+
     while (true) {
         const action = yield take([
-            TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, SHOW_DROPDOWN, SET_LAYOUT_MODE
+            TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, SHOW_DROPDOWN, SET_LAYOUT_MODE,
+            CHANGE_LAYOUT
         ]);
 
         /**
@@ -50,7 +59,11 @@ export function* lcManager() {
                 newLayoutInfo = handleTableLoad(newLayoutInfo, action);
                 break;
             case TABLE_HIGHLIGHT:
-                handleTableHighlight(newLayoutInfo, action);
+                handleTableHighlight(PHASE_FOLDED, action);
+                break;
+            case CHANGE_LAYOUT:
+                handleChangeMultiViewLayout(PHASE_FOLDED);
+                break;
             case TBL_RESULTS_ACTIVE :
                 newLayoutInfo = handleTableActive(newLayoutInfo, action);
                 break;
@@ -72,22 +85,27 @@ function handleTableLoad(layoutInfo, action) {
     }
     if ( [PHASE_FOLDED].includes(tbl_id) ){
         layoutInfo = updateSet(layoutInfo, 'showImages', true);
-        handleTableHighlight(layoutInfo, action);
+        handleTableHighlight(PHASE_FOLDED, action);
     }
     return layoutInfo;
 }
+
+
 
 function handleTableActive(layoutInfo, action) {
     return layoutInfo;
 }
 
-function handleTableHighlight(layoutInfo, action) {
+/**
+ *
+ * @param {string} activePhaseFoldedTableId last active phase folded table id
+ * @param {Action} action
+ */
+function handleTableHighlight(activePhaseFoldedTableId, action) {
     const {tbl_id} = action.payload;
-    if (tbl_id === PHASE_FOLDED) {
+    if (tbl_id === activePhaseFoldedTableId) {
         try {
-            const webPlotReq = getWebPlotRequest(tbl_id);
-            const plotId = get(webPlotReq, plotId, 'lc_images');
-            dispatchPlotImage({plotId, wpRequest:webPlotReq, viewerId:IMG_VIEWER_ID});
+            setupImages(tbl_id);
         } catch (E){
             console.log(E.toString());
         }
@@ -95,9 +113,16 @@ function handleTableHighlight(layoutInfo, action) {
     }
 }
 
-function getWebPlotRequest(tbl_id) {
-    const tableModel = getTblById(tbl_id);
-    const hlrow = tableModel.highlightedRow || 0;
+/**
+ *
+ * @param {string} activePhaseFoldedTableId last active phase folded table id
+ */
+function handleChangeMultiViewLayout(activePhaseFoldedTableId) {
+    const tbl= getTblById(activePhaseFoldedTableId);
+    if (get(tbl, 'totalRows',0)>0) setupImages(activePhaseFoldedTableId);
+}
+
+function getWebPlotRequest(tableModel, hlrow) {
     const ra = getCellValue(tableModel, hlrow, 'ra');
     const dec = getCellValue(tableModel, hlrow, 'dec');
     const frameId = getCellValue(tableModel, hlrow, 'frame_id');
@@ -109,7 +134,6 @@ function getWebPlotRequest(tbl_id) {
 
     const sr= new ServerRequest('ibe_file_retrieve');
     sr.setParam('mission', 'wise');
-    sr.setParam('plotId', 'lc_images');
     sr.setParam('PROC_ID', 'ibe_file_retrieve');
     sr.setParam('ProductLevel',  '1b');
     sr.setParam('ImageSet', 'allsky-4band');
@@ -125,7 +149,9 @@ function getWebPlotRequest(tbl_id) {
 
     const reqParams = WebPlotRequest.makeProcessorRequest(sr, 'wise');
     reqParams.setTitle('WISE-'+ frameId);
-//    reqParams.setInitialZoomLevel(0.5);
+    reqParams.setGroupLocked(true);
+    reqParams.setPlotGroupId('LightCurveGroup');
+    reqParams.setPreferenceColorKey('light-curve-color-pref');
     return reqParams;
 
 
@@ -133,7 +159,52 @@ function getWebPlotRequest(tbl_id) {
 }
 
 
-function makeWebPlotRequest(tbl_id) {
-//todo make grid plotting with hlrow+1, hlrow, hlrow-1
-    // for WISE, should convert gwt code from here: edu.caltech.ipac.hydra.server.query.WiseGrid.makeRequest;
+function setupImages(tbl_id) {
+    const viewer=  getViewer(getMultiViewRoot(),IMG_VIEWER_ID);
+    const count= get(viewer, 'layoutDetail.count',DEF_IMAGE_CNT);
+    const tableModel = getTblById(tbl_id);
+    if (!tableModel || isNil(tableModel.highlightedRow)) return;
+    var vr= visRoot();
+    const newPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,count);
+    const maxPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,MAX_IMAGE_CNT);
+
+
+    newPlotIdAry.forEach( (plotId) => {
+        if (!getPlotViewById(vr,plotId)) {
+            const rowNum= Number(plotId.substring(plotIdRoot.length));
+            const webPlotReq = getWebPlotRequest(tableModel,rowNum );
+            dispatchPlotImage({plotId, wpRequest:webPlotReq,
+                                       setNewPlotAsActive:false,
+                                       holdWcsMatch:true,
+                                       pvOptions: { userCanDeletePlots: false}});
+        }
+    });
+
+
+    dispatchReplaceImages(IMG_VIEWER_ID, newPlotIdAry);
+    dispatchChangeActivePlotView(plotIdRoot+tableModel.highlightedRow);
+
+    vr= visRoot();
+
+    vr.plotViewAry
+        .filter( (pv) => pv.plotId.startsWith(plotIdRoot))
+        .filter( (pv) => pv.plotId!==vr.mpwWcsPrimId)
+        .filter( (pv) => !maxPlotIdAry.includes(pv.plotId))
+        .forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId, holdWcsMatch:true}));
 }
+
+
+function makePlotIds(highlightedRow, totalRows, totalPlots)  {
+    const plotIds= [];
+    const beforeCnt= totalPlots%2===0 ? totalPlots/2-1 : (totalPlots-1)/2;
+    const afterCnt= totalPlots%2===0 ? totalPlots/2    : (totalPlots-1)/2;
+    var j=0;
+    var endRow= Math.min(totalRows-1, highlightedRow+afterCnt);
+    var startRow= Math.max(0,highlightedRow-beforeCnt);
+    if (startRow===0) endRow= Math.min(totalRows-1, totalPlots-1);
+    if (endRow===totalRows-1) startRow= Math.max(0, totalRows-totalPlots);
+
+    for(var i= startRow; i<=endRow; i++) plotIds[j++]= plotIdRoot+i;
+    return plotIds;
+}
+

@@ -5,7 +5,7 @@
 import {take} from 'redux-saga/effects';
 import {isEmpty, get, has} from 'lodash';
 import {TABLE_LOADED, TABLE_SORT, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE} from '../../tables/TablesCntlr.js';
-import {dispatchCreateDrawLayer,dispatchAttachLayerToPlot,dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
+import {getDlRoot, dispatchCreateDrawLayer,dispatchAttachLayerToPlot,dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById, doFetchTable, getTableGroup, cloneRequest, isTableUsingRadians} from '../../tables/TableUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
@@ -15,7 +15,6 @@ import {MetaConst} from '../../data/MetaConst.js';
 import Catalog from '../../drawingLayers/Catalog.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {logError} from '../../util/WebUtil.js';
-import {flux} from '../../Firefly.js';
 
 
 /**
@@ -81,10 +80,16 @@ function handleCatalogUpdate(tbl_id) {
     
 
 
+
     if (!totalRows ||
         !tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] ||
         !tableMeta[MetaConst.CATALOG_COORD_COLS]) {
         return; 
+    }
+
+    const {ignoreTables}=  getDlRoot();
+    if (ignoreTables.some( (obj) => obj.tableId===tbl_id && obj.drawLayerTypeId===Catalog.TYPE_ID)) {
+        return;
     }
 
     const s = tableMeta[MetaConst.CATALOG_COORD_COLS].split(';');

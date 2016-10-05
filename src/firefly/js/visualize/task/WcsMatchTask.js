@@ -13,6 +13,7 @@ import {getCenterPtOfPlot, FullType, isPlotNorth, getRotationAngle} from '../Vis
 import {getEstimatedFullZoomFactor, getArcSecPerPix, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import {CCUtil} from '../CsysConverter.js';
+import {ZoomType} from '../ZoomType.js';
 import {makeScreenPt} from '../Point.js';
 
 
@@ -59,19 +60,43 @@ export function wcsMatchActionCreator(action) {
 
 
 
+        dispatchUpdateViewSize(masterPv.plotId);
         applyToOnePvOrGroup(visRoot.plotViewAry, masterPv.plotId, group,
                      (pv) => {
-                         syncPlotToLevel(primePlot(pv), masterPlot, asPerPix, northUp);
-                         dispatchUpdateViewSize(pv.plotId);
+                         if (masterPv.plotId!= pv.plotId) {
+                             syncPlotToLevel(primePlot(pv), masterPlot, asPerPix, northUp);
+                             dispatchUpdateViewSize(pv.plotId);
+                         }
                      }
             );
     };
+}
+
+export function modifyRequestForWcsMatch(pv, wpr) {
+    const plot= primePlot(pv);
+    if (!plot) return wpr;
+    const newWpr= wpr.makeCopy();
+    const asPerPix= getArcSecPerPix(plot,plot.zoomFactor);
+    newWpr.setRotateNorth(false);
+    newWpr.setRotate(false);
+    if (isPlotNorth(plot)) {
+        newWpr.setRotateNorth(true);
+    }
+    else {
+        const targetRotation= getRotationAngle(plot);
+        newWpr.setRotate(true);
+        newWpr.setRotationAngle(targetRotation);
+    }
+    newWpr.setZoomType(ZoomType.ARCSEC_PER_SCREEN_PIX);
+    newWpr.setZoomArcsecPerScreenPix(asPerPix);
+    return newWpr;
 }
 
 
 function syncPlotToLevel(plot, masterPlot, targetASpix, northUp) {
     if (!plot) return;
     const currZoomLevel= plot.zoomFactor;
+
     const targetLevel= getZoomLevelForScale(plot, targetASpix);
     // we want each plot to have the same arcsec / pixel as the target level
     // if the new level is only slightly different then use the target level
@@ -174,3 +199,4 @@ function findWcsMatchPoint(pv, plotId, matchType) {
     }
     return null;
 }
+

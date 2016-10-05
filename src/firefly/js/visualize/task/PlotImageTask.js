@@ -23,7 +23,8 @@ import ActiveTarget  from '../../drawingLayers/ActiveTarget.js';
 import * as DrawLayerCntlr from '../DrawLayerCntlr.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddImages, EXPANDED_MODE_RESERVED} from '../MultiViewCntlr.js';
-import {getDrawLayerByType} from '../PlotViewUtil.js';
+import {getDrawLayerByType, getPlotViewById} from '../PlotViewUtil.js';
+import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
 
 //const INIT_STATUS_UPDATE_DELAY= 7000;
@@ -52,8 +53,12 @@ function ensureWPR(inVal) {
 const getFirstReq= (wpRAry) => isArray(wpRAry) ? wpRAry.find( (r) => r?true:false) : wpRAry;
 
 
-function makeSinglePlotPayload({wpRequest,plotId, threeColor, viewerId, attributes, pvOptions= {},
-                                addToHistory= false,useContextModifications= true}  ) {
+function makeSinglePlotPayload(vr, rawPayload ) {
+
+
+    var {wpRequest,plotId, threeColor, viewerId, attributes,
+         holdWcsMatch= false, pvOptions= {}, addToHistory= false,useContextModifications= true}= rawPayload;
+
     wpRequest= ensureWPR(wpRequest);
 
     const req= getFirstReq(wpRequest);
@@ -67,11 +72,19 @@ function makeSinglePlotPayload({wpRequest,plotId, threeColor, viewerId, attribut
         if (plotId) wpRequest.setPlotId(plotId);
     }
 
+    if (vr.wcsMatchType && vr.mpwWcsPrimId && holdWcsMatch) {
+        const wcsPrim= getPlotViewById(vr,vr.mpwWcsPrimId);
+        wpRequest= isArray(wpRequest) ?
+            wpRequest.map( (r) => modifyRequestForWcsMatch(wcsPrim, r)) :
+            modifyRequestForWcsMatch(wcsPrim, wpRequest);
+    }
+
 
     const payload= { plotId:req.getPlotId(),
                      plotGroupId:req.getPlotGroupId(),
                      groupLocked:req.isGroupLocked(),
-                     attributes, viewerId, pvOptions, addToHistory, useContextModifications, threeColor};
+                     attributes, viewerId, pvOptions, addToHistory,
+                     useContextModifications, threeColor};
 
     if (threeColor) {
         if (isArray(wpRequest)) {
@@ -99,11 +112,12 @@ function makeSinglePlotPayload({wpRequest,plotId, threeColor, viewerId, attribut
 function makePlotImageAction(rawAction) {
     return (dispatcher, getState) => {
 
+        var vr= getState()[IMAGE_PLOT_KEY];
         var {wpRequestAry}= rawAction.payload;
         var payload;
 
         if (!wpRequestAry) {
-            payload= makeSinglePlotPayload(rawAction.payload);
+            payload= makeSinglePlotPayload(vr, rawAction.payload);
         }
         else {
             payload= {
@@ -125,8 +139,14 @@ function makePlotImageAction(rawAction) {
 
         payload.requestKey= makeUniqueRequestKey();
 
-        const vr= getState()[IMAGE_PLOT_KEY];
-        if (vr.wcsMatchType) dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
+        vr= getState()[IMAGE_PLOT_KEY];
+
+        if (vr.wcsMatchType && !rawAction.payload.holdWcsMatch) {
+            dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
+        }
+
+
+
         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,payload});
         // NOTE - sega ImagePlotter handles next step
         // NOTE - sega ImagePlotter handles next step

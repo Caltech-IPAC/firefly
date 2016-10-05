@@ -248,7 +248,7 @@ public class WebPlotReader {
                                                              req.getRotateNorthType().toString());
                 }
             } else if (req.getRotate()) {
-                retval = FitsRead.createFitsReadRotated(fr, req.getRotationAngle());
+                retval = FitsRead.createFitsReadRotated(fr, req.getRotationAngle(), true);
             }
             File rotFile= ModFileWriter.makeRotFileName(originalFile,imageIdx,req.getRotationAngle());
             modFileWriter = new ModFileWriter.GeomFileWriter(rotFile, retval, band);

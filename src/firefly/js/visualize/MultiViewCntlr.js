@@ -52,9 +52,10 @@ function initState() {
      * @typedef {Object} Viewer
      * @prop {string} viewerId:EXPANDED_MODE_RESERVED,
      * @prop {string[]} plotIdAry
-     * @prop {string} must be 'single' or 'grid'
+     * @prop {string} layout must be 'single' or 'grid'
      * @prop {boolean} canReceiveNewPlots: NewPlotMode.create_replace.key,
      * @prop {boolean} reservedContainer:true,
+     * @prop {Object|String} layoutDetail may be any object, string, etc
      * @prop {object} customData: {}
      *
      * @global

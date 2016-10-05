@@ -7,6 +7,7 @@ import {take} from 'redux-saga/effects';
 import {omit,get} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import {revalidateFields} from './FieldGroupUtils.js';
+import {smartMerge} from '../tables/TableUtil.js';
 
 /**
  * Reducer for 'fieldGroup' key
@@ -361,10 +362,18 @@ const updateFieldGroupMount= function(state,action) {
 /**
  * @param {object} fg the field group
  * @param {Action} action - the action to fire
+ * @return {Object} the fields
  * fire the reducer for field group if it has been defined
  */
 const fireFieldsReducer= function(fg, action) {
-    return  fg.reducerFunc ? fg.reducerFunc(revalidateFields(fg.fields), action) : fg.fields;
+    // return  fg.reducerFunc ? fg.reducerFunc(revalidateFields(fg.fields), action) : fg.fields;
+    if (fg.reducerFunc ) {
+        const newFields= fg.reducerFunc(revalidateFields(fg.fields), action);
+        return smartMerge(fg.fields,newFields);
+    }
+    else {
+        return fg.fields;
+    }
 };
 
 const valueChange= function(state,action) {

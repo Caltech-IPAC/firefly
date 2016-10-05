@@ -212,15 +212,19 @@ function onSearchSubmit(request) {
     var treq, xyPlotParams;
     if ( get(request, RAW_TABLE) ){
         treq = TblUtil.makeFileRequest('Raw Table', request[RAW_TABLE], null, {tbl_id:RAW_TABLE});
+        treq.tblType='notACatalog';
         xyPlotParams = {x: {columnOrExpr: 'mjd'}, y: {columnOrExpr: 'w1mpro_ep'}};
     } else if ( get(request, PHASE_FOLDED) ) {
         treq = TblUtil.makeFileRequest('Phase Folded', request[PHASE_FOLDED], null, {tbl_id:PHASE_FOLDED});
+        treq.tblType='notACatalog';
         xyPlotParams = {x: {columnOrExpr: 'phase'}, y: {columnOrExpr: 'w1mpro_ep'}};
     } else if ( get(request, PERIODOGRAM) ) {
         treq = TblUtil.makeFileRequest('Periodogram', request[PERIODOGRAM], null, {tbl_id:PERIODOGRAM});
+        treq.tblType='notACatalog';
         xyPlotParams = {x: {columnOrExpr: 'PERIOD', options: 'log'}, y: {columnOrExpr: 'POWER'}};
     } else if ( get(request, PEAK_TABLE) ) {
         treq = TblUtil.makeFileRequest('Peak Table', request[PEAK_TABLE], null, {tbl_id:PEAK_TABLE});
+        treq.tblType='notACatalog';
     }
     if (treq != null) {
         dispatchTableSearch(treq, {removable: false});

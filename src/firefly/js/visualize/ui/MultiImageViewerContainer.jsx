@@ -11,14 +11,17 @@ import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js
 
 /**
  * A wrapper component for MultiImageViewer where expended mode is supported.
- * @param viewerId  MultiImageViewer's viewerId.
- * @param imageExpandedMode  if true, then imageExpandedMode overrides everything else
- * @param {boolean} closeable    if true, expanded view can be closed.
- * @param {boolean} insideFlex  true if it's used inside a css flex box.  Defaults to false.
+ * @param obj
+ * @param obj.viewerId  MultiImageViewer's viewerId.
+ * @param obj.imageExpandedMode  if true, then imageExpandedMode overrides everything else
+ * @param {boolean} obj.closeable    if true, expanded view can be closed.
+ * @param {boolean} obj.insideFlex  true if it's used inside a css flex box.  Defaults to false.
+ * @param {Object} obj.Toolbar  the toolbar for the image multi viewer
  * @returns {Object}
  * @constructor
  */
-export function MultiImageViewerContainer({viewerId, imageExpandedMode=false, closeable=true, insideFlex=false}) {
+export function MultiImageViewerContainer({viewerId, imageExpandedMode=false, closeable=true, insideFlex=false,
+                                           forceRowSize, Toolbar= MultiViewStandardToolbar}) {
     
     if (imageExpandedMode) {
         return  ( <ExpandedModeDisplay
@@ -28,9 +31,9 @@ export function MultiImageViewerContainer({viewerId, imageExpandedMode=false, cl
                 );
     } else {
         return ( <MultiImageViewer viewerId = {viewerId}
-                        insideFlex = {insideFlex}
+                        insideFlex = {insideFlex} forceRowSize={forceRowSize}
                         canReceiveNewPlots = {NewPlotMode.create_replace.key}
-                        Toolbar = {MultiViewStandardToolbar}/>
+                        Toolbar = {Toolbar}/>
         );
     }
 }

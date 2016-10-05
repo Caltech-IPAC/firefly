@@ -30,6 +30,8 @@ import {UploadPanel} from './LcViewer.jsx';
 import {showLcParamForm, LcPFOptionsPanel} from './LcPhaseFoldingPanel.jsx';
 import {LCPFOPanel} from './PeriodogramOptionsPanel.jsx';
 import {LcPlotOptionsPanel} from './LcPlotOptions.jsx';
+import {LcImageToolbar} from './LcImageToolbar.jsx';
+import {ImageMetaDataToolbar} from '../../visualize/ui/ImageMetaDataToolbar.jsx';
 
 const PanelResizableStyle = {
     width: 400,
@@ -77,7 +79,9 @@ export class LcResult extends Component {
             content.imagePlot = (<MultiImageViewerContainer key='res-images'
                                         viewerId={IMG_VIEWER_ID}
                                         closeable={true}
+                                        forceRowSize={1}
                                         imageExpandedMode={expanded===LO_VIEW.images}
+                                        Toolbar={LcImageToolbar}
                                         {...images}  />);
         }
         if (showXyPlots) {
@@ -138,7 +142,7 @@ const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
         : expanded === LO_VIEW.xyPlots ? xyPlot
         : imagePlot;
     return (
-        <div style={{width: '100%'}}>{view}</div>
+        <div style={{ flex: 'auto', display: 'flex', flexFlow: 'column', overflow: 'hidden'}}>{view}</div>
     );
 };
 
