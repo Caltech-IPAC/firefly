@@ -3,7 +3,6 @@
 import webpack from 'webpack';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
-import RewireWebpackPlugin from 'rewire-webpack';
 import path from 'path';
 import fs from 'fs';
 
@@ -88,8 +87,7 @@ export default function makeWebpackConfig(config) {
 
     /*------------------------ PLUGIINS -----------------------------*/
     const plugins = [ new webpack.DefinePlugin(globals),
-                      new ExtractTextPlugin(`${config.name}.css`),
-                      new RewireWebpackPlugin()
+                      new ExtractTextPlugin(`${config.name}.css`)
                     ];
     if (DEBUG) {
         plugins.push(
