@@ -1501,3 +1501,22 @@ export function confirmPlotRequest(request,global,fallbackGroupId,makePlotId) {
 }
 
 
+function makeDataOnlyRequestString(r) {
+    if (!r) return '';
+    r= r.makeCopy();
+    r.setZoomToWidth(1);
+    r.setZoomToHeight(1);
+    r.setProgressKey('');
+    r.setInitialRangeValues();
+    r.setInitialColorTable(0);
+    return r.toString();
+}
+
+/**
+ * Make simplified versions of the WebPlotRequest and compare them.
+ * This function takes out a lot of parameters that are not related to resolving the fits file.  It attempts see
+ * if we are requesting the same fits file or fits file services.
+ * @param {WebPlotRequest} r1
+ * @param {WebPlotRequest} r2
+ */
+export const isImageDataRequeestedEqual= (r1,r2) => makeDataOnlyRequestString(r1)===makeDataOnlyRequestString(r2);

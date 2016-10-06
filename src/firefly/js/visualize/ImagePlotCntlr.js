@@ -25,7 +25,7 @@ import {dispatchAttachLayerToPlot,
         dispatchCreateDrawLayer,
         dispatchDetachLayerFromPlot,
         DRAWING_LAYER_KEY} from './DrawLayerCntlr.js';
-import {dispatchReplaceImages, getExpandedViewerPlotIds,
+import {dispatchReplaceViewerImages, getExpandedViewerItemIds,
          getMultiViewRoot, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
 
 export {zoomActionCreator} from './ZoomUtil.js';
@@ -706,7 +706,7 @@ export function dispatchChangeExpandedMode(expandedMode) {
         if (pv) {
             const group= getPlotGroupById(vr,pv.plotGroupId);
             const plotIdAry= getOnePvOrGroup(vr.plotViewAry,plotId,group).map( (pv) => pv.plotId);
-            dispatchReplaceImages(EXPANDED_MODE_RESERVED,plotIdAry);
+            dispatchReplaceViewerImages(EXPANDED_MODE_RESERVED,plotIdAry);
         }
     }
 
@@ -822,7 +822,7 @@ export function autoPlayActionCreator(rawAction) {
                     var {singleAutoPlay,activePlotId}= visRoot();
                     if (singleAutoPlay) {
 
-                        const plotIdAry= getExpandedViewerPlotIds(getMultiViewRoot());
+                        const plotIdAry= getExpandedViewerItemIds(getMultiViewRoot());
                         const cIdx= plotIdAry.indexOf(activePlotId);
                         const nextIdx= cIdx===plotIdAry.length-1 ? 0 : cIdx+1;
                         dispatchChangeActivePlotView(plotIdAry[nextIdx]);

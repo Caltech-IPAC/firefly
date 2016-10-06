@@ -12,12 +12,13 @@ import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView,
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
 import {getTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../../tables/TableUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
-import MultiViewCntlr, {dispatchReplaceImages, dispatchUpdateCustom, getViewerPlotIds,
+import MultiViewCntlr, {dispatchReplaceViewerImages, dispatchUpdateCustom, getViewerItemIds,
                         getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE} from '../MultiViewCntlr.js';
 import {converterFactory, converters} from '../../metaConvert/ConverterFactory.js';
 import {findGridTableRows,isMetaDataTable} from '../../metaConvert/converterUtils.js';
 // import {getActiveTableId} from '../../core/LayoutCntlr.js';
 import {PlotAttribute} from '../WebPlot.js';
+import {isImageDataRequeestedEqual} from '../WebPlotRequest.js';
 
 const MAX_GRID_SIZE= 10; //todo when post is working, increase to 16 or 24
 
@@ -41,7 +42,7 @@ export function* watchImageMetaData({viewerId}) {
                                   TBL_RESULTS_ACTIVE,
                                   MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED,
                                   MultiViewCntlr.VIEWER_UNMOUNTED,
-                                  MultiViewCntlr.CHANGE_LAYOUT, MultiViewCntlr.UPDATE_CUSTOM_DATA,
+                                  MultiViewCntlr.CHANGE_VIEWER_LAYOUT, MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA,
                                   ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW,
                                   REINIT_RESULT_VIEW]);
         const {payload}= action;
@@ -67,8 +68,8 @@ export function* watchImageMetaData({viewerId}) {
                 if (!paused) updateImagePlots(tbl_id, viewerId);
                 break;
 
-            case MultiViewCntlr.CHANGE_LAYOUT:
-            case MultiViewCntlr.UPDATE_CUSTOM_DATA:
+            case MultiViewCntlr.CHANGE_VIEWER_LAYOUT:
+            case MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA:
                 if (!paused) updateImagePlots(tbl_id, viewerId, true);
                 break;
 
@@ -143,7 +144,7 @@ function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
     const tabState= getTblInfo(table);
     const {highlightedRow}= tabState;
 
-    if (layoutChange && viewer.layout===SINGLE && !isEmpty(viewer.plotIdAry)) {
+    if (layoutChange && viewer.layout===SINGLE && !isEmpty(viewer.itemIdAry)) {
         return;
     }
     
@@ -179,8 +180,8 @@ function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
 
 function removeAllPlotsInViewer(viewerId) {
     if (!viewerId) return;
-    const inViewerIds= getViewerPlotIds(getMultiViewRoot(), viewerId);
-    dispatchReplaceImages(viewerId,[]);
+    const inViewerIds= getViewerItemIds(getMultiViewRoot(), viewerId);
+    dispatchReplaceViewerImages(viewerId,[]);
     inViewerIds.forEach( (plotId) => dispatchDeletePlotView({plotId}));
 }
 
@@ -202,10 +203,10 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
     
     
     // setup view for these plotting ids
-    const inViewerIds= getViewerPlotIds(getMultiViewRoot(), viewerId);
+    const inViewerIds= getViewerItemIds(getMultiViewRoot(), viewerId);
     const idUnionLen= union(plottingIds,inViewerIds).length;
     if (idUnionLen!== inViewerIds.length || plottingIds.length<inViewerIds.length) {
-        dispatchReplaceImages(viewerId,plottingIds);
+        dispatchReplaceViewerImages(viewerId,plottingIds);
     }
 
 
@@ -238,25 +239,12 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
     
 }
 
-function copyAndCleanReqString(r) {
-    if (!r) return '';
-    r= r.makeCopy();
-    r.setZoomToWidth(1);
-    r.setZoomToHeight(1);
-    r.setProgressKey('');
-    r.setInitialRangeValues();
-    r.setInitialColorTable(0);
-    return r.toString();
-}
-
-const isCleanReqEqual= (r1,r2) => copyAndCleanReqString(r1)===copyAndCleanReqString(r2);
-
 
 function makePlottingList(reqAry) {
     return reqAry.filter( (r) => {
         const plot= primePlot(visRoot(),r.getPlotId());
         if (!plot) return true;
-        return !isCleanReqEqual(plot.plotState.getWebPlotRequest(),r);
+        return !isImageDataRequeestedEqual(plot.plotState.getWebPlotRequest(),r);
     });
 }
 
@@ -267,7 +255,7 @@ function make3ColorPlottingList(req3cAry) {
     if (!p) return req3cAry;
     const plotState= p.plotState;
     if (!plotState) return req3cAry;
-    const match= allBandAry.every( (b) => isCleanReqEqual(plotState.getWebPlotRequest(b),req3cAry[b.value]));
+    const match= allBandAry.every( (b) => isImageDataRequeestedEqual(plotState.getWebPlotRequest(b),req3cAry[b.value]));
     return match ? [] : req3cAry;
 }
 

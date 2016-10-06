@@ -14,7 +14,7 @@ import {DrawerComponent}  from '../draw/DrawerComponent.jsx';
 import {CysConverter, CCUtil}  from '../CsysConverter.js';
 import {UserZoomTypes}  from '../ZoomUtil.js';
 import {primePlot, plotInActiveGroup} from '../PlotViewUtil.js';
-import {isViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js';
+import {isImageViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js';
 import {contains} from '../VisUtil.js';
 import {
     visRoot,
@@ -39,7 +39,7 @@ function updateZoom(pv, paging) {
     const vr= visRoot();
     var doZoom= false;
     var actionScope= ActionScope.GROUP;
-    if (isViewerSingleLayout(getMultiViewRoot(), visRoot(), pv.plotId)) {
+    if (isImageViewerSingleLayout(getMultiViewRoot(), visRoot(), pv.plotId)) {
         doZoom= true;
         actionScope= ActionScope.SINGLE;
     }
@@ -82,7 +82,7 @@ export class ImageViewerLayout extends Component {
         this.previousDim= makePrevDim(this.props);
         dispatchUpdateViewSize(pv.plotId,width,height);
         if (pv.plotViewCtx.zoomLockingEnabled && primePlot(pv)) {
-            const paging= isViewerSingleLayout(getMultiViewRoot(), visRoot(), pv.plotId);
+            const paging= isImageViewerSingleLayout(getMultiViewRoot(), visRoot(), pv.plotId);
             updateZoom(pv,paging);
         }
     }

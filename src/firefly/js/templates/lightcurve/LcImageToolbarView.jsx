@@ -10,7 +10,7 @@ import {getPlotViewById, getAllDrawLayersForPlot} from '../../visualize/PlotView
 import {WcsMatchType, visRoot, dispatchWcsMatch} from '../../visualize/ImagePlotCntlr.js';
 import {VisInlineToolbarView} from '../../visualize/ui/VisInlineToolbarView.jsx';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
-import {dispatchChangeLayout, getViewer, getMultiViewRoot, GRID, SINGLE} from '../../visualize/MultiViewCntlr.js';
+import {dispatchChangeViewerLayout, getViewer, getMultiViewRoot, GRID, SINGLE} from '../../visualize/MultiViewCntlr.js';
 import {DEF_IMAGE_CNT, MAX_IMAGE_CNT} from './LcManager.js';
 
 
@@ -77,7 +77,7 @@ export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layou
 
 function changeSize(viewerId, value) {
     value= Number(value);
-    dispatchChangeLayout(viewerId, value === 1 ? SINGLE : GRID, {count:value});
+    dispatchChangeViewerLayout(viewerId, value === 1 ? SINGLE : GRID, {count:value});
 }
 
 // <ImagePager pageSize={10} tbl_id={tableId} />
@@ -85,11 +85,11 @@ function changeSize(viewerId, value) {
 //                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
 //                enabled={true} visible={true}
 //                horizontal={true}
-//                onClick={() => dispatchChangeLayout(viewerId,SINGLE)}/>
+//                onClick={() => dispatchChangeViewerLayout(viewerId,SINGLE)}/>
 // <ToolbarButton icon={FULL_GRID} tip={'show before and after images'}
 // enabled={true} visible={true} horizontal={true}
 // imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
-// onClick={() => dispatchChangeLayout(viewerId,'grid',GRID_FULL)}/>
+// onClick={() => dispatchChangeViewerLayout(viewerId,'grid',GRID_FULL)}/>
 
 LcImageToolbarView.propTypes= {
     dlAry : PropTypes.arrayOf(React.PropTypes.object),

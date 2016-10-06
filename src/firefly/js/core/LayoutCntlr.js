@@ -11,7 +11,7 @@ import {hasDefaultCharts} from '../charts/ChartUtil.js';
 import {getDropDownNames} from '../ui/Menu.jsx';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import {TBL_RESULTS_ADDED, TABLE_REMOVE} from '../tables/TablesCntlr.js';
-import {REPLACE_IMAGES} from '../visualize/MultiViewCntlr.js';
+import {REPLACE_VIEWER_ITEMS} from '../visualize/MultiViewCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
 
 export const LAYOUT_PATH = 'layout';
@@ -133,7 +133,7 @@ export function dropDownHandler(layoutInfo, action) {
     const count = filter(pick(layoutInfo, ['showTables', 'showXyPlots', 'showImages'])).length;
     switch (action.type) {
         case TBL_RESULTS_ADDED:
-        case REPLACE_IMAGES :
+        case REPLACE_VIEWER_ITEMS :
         case ImagePlotCntlr.PLOT_IMAGE :
         case ImagePlotCntlr.PLOT_IMAGE_START :
             return updateSet(layoutInfo, 'dropDown.visible', false);

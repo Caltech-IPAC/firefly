@@ -11,7 +11,7 @@ import ImagePlotCntlr, {ActionScope, IMAGE_PLOT_KEY, dispatchUpdateViewSize} fro
 import {getPlotViewById,primePlot,getPlotStateAry,
         operateOnOthersInGroup, applyToOnePvOrGroup, findPlotGroup} from './PlotViewUtil.js';
 import {callSetZoomLevel} from '../rpc/PlotServicesJson.js';
-import {isViewerSingleLayout, getMultiViewRoot} from './MultiViewCntlr.js';
+import {isImageViewerSingleLayout, getMultiViewRoot} from './MultiViewCntlr.js';
 import WebPlotResult from './WebPlotResult.js';
 import VisUtil from './VisUtil.js';
 
@@ -123,7 +123,7 @@ export function zoomActionCreator(rawAction) {
 
 function alignWCS(visRoot, pv) {
     if (visRoot.wcsMatchType) {
-        if (isViewerSingleLayout(getMultiViewRoot(), visRoot, pv.plotId)) {
+        if (isImageViewerSingleLayout(getMultiViewRoot(), visRoot, pv.plotId)) {
             dispatchUpdateViewSize(pv.plotId);
         }
         else {

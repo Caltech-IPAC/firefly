@@ -12,12 +12,12 @@ import {updateSet} from '../../util/WebUtil.js';
 import {dispatchPlotImage, visRoot, dispatchDeletePlotView,
         dispatchChangeActivePlotView} from '../../visualize/ImagePlotCntlr.js';
 import {getPlotViewById} from '../../visualize/PlotViewUtil.js';
-import {getMultiViewRoot, dispatchReplaceImages, getViewer} from '../../visualize/MultiViewCntlr.js';
+import {getMultiViewRoot, dispatchReplaceViewerImages, getViewer} from '../../visualize/MultiViewCntlr.js';
 import {WebPlotRequest} from '../../visualize/WebPlotRequest.js';
 import {dispatchTableToIgnore} from '../../visualize/DrawLayerCntlr.js';
 import Catlog from '../../drawingLayers/Catalog.js';
 import {ServerRequest} from '../../data/ServerRequest.js';
-import {CHANGE_LAYOUT} from '../../visualize/MultiViewCntlr.js';
+import {CHANGE_VIEWER_LAYOUT} from '../../visualize/MultiViewCntlr.js';
 
 export const RAW_TABLE = 'raw_table';
 export const PHASE_FOLDED = 'phase_folded';
@@ -36,7 +36,7 @@ export function* lcManager() {
     while (true) {
         const action = yield take([
             TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, SHOW_DROPDOWN, SET_LAYOUT_MODE,
-            CHANGE_LAYOUT
+            CHANGE_VIEWER_LAYOUT
         ]);
 
         /**
@@ -61,7 +61,7 @@ export function* lcManager() {
             case TABLE_HIGHLIGHT:
                 handleTableHighlight(PHASE_FOLDED, action);
                 break;
-            case CHANGE_LAYOUT:
+            case CHANGE_VIEWER_LAYOUT:
                 handleChangeMultiViewLayout(PHASE_FOLDED);
                 break;
             case TBL_RESULTS_ACTIVE :
@@ -181,7 +181,7 @@ function setupImages(tbl_id) {
     });
 
 
-    dispatchReplaceImages(IMG_VIEWER_ID, newPlotIdAry);
+    dispatchReplaceViewerImages(IMG_VIEWER_ID, newPlotIdAry);
     dispatchChangeActivePlotView(plotIdRoot+tableModel.highlightedRow);
 
     vr= visRoot();

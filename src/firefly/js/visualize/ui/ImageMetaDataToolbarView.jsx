@@ -8,7 +8,7 @@ import BrowserInfo from '../../util/BrowserInfo.js';
 import {getPlotViewById, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {dispatchChangeActivePlotView, visRoot} from '../ImagePlotCntlr.js';
 import {VisInlineToolbarView} from './VisInlineToolbarView.jsx';
-import {dispatchChangeLayout, getViewer, getMultiViewRoot,
+import {dispatchChangeViewerLayout, getViewer, getMultiViewRoot,
         GRID, GRID_FULL, GRID_RELATED, SINGLE} from '../MultiViewCntlr.js';
 import {showColorBandChooserPopup} from './ColorBandChooserPopup.jsx';
 import {ImagePager} from './ImagePager.jsx';
@@ -71,17 +71,17 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds,
                                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                                enabled={true} visible={true}
                                horizontal={true}
-                               onClick={() => dispatchChangeLayout(viewerId,SINGLE)}/>
+                               onClick={() => dispatchChangeViewerLayout(viewerId,SINGLE)}/>
                 {converter.hasRelatedBands  &&
                             <ToolbarButton icon={GRID_GROUP} tip={'Show all as tiles'}
                                            enabled={true} visible={true} horizontal={true}
                                            imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
-                                           onClick={() => dispatchChangeLayout(viewerId,'grid',GRID_RELATED)}/>
+                                           onClick={() => dispatchChangeViewerLayout(viewerId,'grid',GRID_RELATED)}/>
                 }
                 <ToolbarButton icon={FULL_GRID} tip={'Show full grid'}
                                enabled={true} visible={true} horizontal={true}
                                imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
-                               onClick={() => dispatchChangeLayout(viewerId,'grid',GRID_FULL)}/>
+                               onClick={() => dispatchChangeViewerLayout(viewerId,'grid',GRID_FULL)}/>
                 {showThreeColorButton &&
                              <ToolbarButton icon={THREE_COLOR} tip={'Show three color image'}
                                          enabled={true} visible={true} horizontal={true}

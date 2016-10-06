@@ -4,7 +4,7 @@
 
 
 import React, {PropTypes} from 'react';
-import {dispatchChangeLayout} from '../MultiViewCntlr.js';
+import {dispatchChangeViewerLayout} from '../MultiViewCntlr.js';
 import {dispatchChangeActivePlotView, WcsMatchType, dispatchWcsMatch} from '../ImagePlotCntlr.js';
 import {VisInlineToolbarView} from './VisInlineToolbarView.jsx';
 import {getPlotViewById, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
@@ -100,11 +100,11 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, layo
                                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                                enabled={true} visible={true}
                                horizontal={true}
-                               onClick={() => dispatchChangeLayout(viewerId,'single')}/>
+                               onClick={() => dispatchChangeViewerLayout(viewerId,'single')}/>
                 <ToolbarButton icon={GRID} tip={'Show all as tiles'}
                                enabled={true} visible={true} horizontal={true}
                                imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
-                               onClick={() => dispatchChangeLayout(viewerId,'grid')}/>
+                               onClick={() => dispatchChangeViewerLayout(viewerId,'grid')}/>
                 {layoutType==='single' && viewerPlotIds.length>1 &&
                 <img style={leftImageStyle} src={PAGE_LEFT}
                      onClick={() => dispatchChangeActivePlotView(viewerPlotIds[prevIdx])} />

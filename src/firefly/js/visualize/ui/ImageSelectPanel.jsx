@@ -5,7 +5,8 @@
 import React, {Component, PropTypes} from 'react';
 import {flux} from '../../Firefly.js';
 import {visRoot } from '../ImagePlotCntlr.js';
-import {NewPlotMode, getAViewFromMultiView, findViewerWithPlotId, getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
+import {NewPlotMode, getAViewFromMultiView, findViewerWithItemId,
+        getMultiViewRoot, getViewer, IMAGE} from '../MultiViewCntlr.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
@@ -104,7 +105,7 @@ export const PlotSelectMode = {
 
 // get a view which can add new plot
 var getAViewId = (mvroot) => {
-    var aView = getAViewFromMultiView(mvroot);
+    var aView = getAViewFromMultiView(mvroot, IMAGE);
     return aView ? aView.viewerId : '';
 };
 
@@ -119,7 +120,7 @@ export function getPlotInfo( vr ) {
     var visroot = !vr ? visRoot() : vr;
     var mvroot = getMultiViewRoot();
     var plotId = get(visroot, 'activePlotId');
-    var viewerId = plotId ?  findViewerWithPlotId(getMultiViewRoot(), plotId) : null;
+    var viewerId = plotId ?  findViewerWithItemId(getMultiViewRoot(), plotId, IMAGE) : null;
     var plotMode = PlotSelectMode.NoPlot;
     var viewer;
 
