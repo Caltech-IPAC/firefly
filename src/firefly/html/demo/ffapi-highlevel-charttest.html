@@ -32,10 +32,38 @@
         onFireflyLoaded= function(firefly) {
 
             // show histogram data  no options, no connection to the table)
+            // data is an array of rows,
+            // first col - nPoints or number of points in the bin, second col - binMin, third col - binMax
+            // (supports variable length bins)
+            // define overlapping histograms in series array
             const props = {
-                // data is an array of rows,
-                // first col - nPoints or number of points in the bin, second col - binMin, third col - binMax
-                // (supports variable length bins
+                series: [
+                    {data : [
+                        [1,1,10],
+                        [10,10,100],
+                        [100,100,1000],
+                        [1000,1000,10000],
+                        [100,10000,100000],
+                        [10,100000,1000000],
+                        [1,1000000,10000000]],
+                        binColor:'#336699',
+                        name:'sample1'},
+                    {data : [
+                        [6, 50,150],
+                        [80,150,1200],
+                        [15,1200,30400]],
+                        binColor:'#CB3515',
+                        name:'sample2'}
+                ],
+                width: 800,
+                height: 550,
+                logs: 'xy',
+                desc: 'Both X and Y are using log scale'
+            };
+
+            /**
+             // one histogram
+             const props = {
                 data : [
                  [1,1,10],
                  [10,10,100],
@@ -50,7 +78,8 @@
                 logs: 'xy',
                 desc: 'Both X and Y are using log scale',
                 binColor: '#336699'
-            };
+             };
+             **/
             firefly.util.renderDOM('histogramHere', firefly.ui.Histogram, props);
 
             // show scatter chart
