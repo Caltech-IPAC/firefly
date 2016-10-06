@@ -4,13 +4,6 @@
 
 
 /**
- * @typedef {Object} Action
- * @prop {string} type      a unique string identifying this action
- * @prop {Object} payload   the data
- */
-
-
-/**
  * Common Layout information used to control generic behavior, ie drop-down panel, expanded/collapsed state, etc
  * The intention here is to allow additional layout attributes to be added to handle specific layout needs of a
  * particular component or application.  Use dispatchUpdateLayoutInfo to update this object.

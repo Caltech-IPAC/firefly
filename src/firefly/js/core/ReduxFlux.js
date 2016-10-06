@@ -95,8 +95,10 @@ import {showExampleDialog} from '../ui/ExampleDialog.jsx';
 
 /**
  * @typedef {Object} Action
- * @prop {String} type the action constant
- * @prop {Object} payload object with anything
+ * @prop {String} type - the action constant, a unique string identifying this action
+ * @prop {Object} payload - object with anything, the data
+ * @global
+ * @public
  */
 
 

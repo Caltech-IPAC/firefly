@@ -675,6 +675,7 @@ function deletePlotView(state,action, dlReducer) {
     return Object.assign({},state, {drawLayerAry});
 }
 
+
 function addTableToIgnore(state,action) {
     const {drawLayerTypeId,tableId}= action.payload;
     const {ignoreTables}= state;
@@ -697,9 +698,10 @@ const initState= function() {
      * @typedef {Object} DrawLayerRoot
      *
      * @summary The state of the Drawing layers store.
-     * @prop drawLayerAry {DrawLayer[]} the array of all the drawing layers
-     * @prop allowedActions {string[]} the actions the go to the drawing layers by default
-     * @prop {{tableId:string, drawLayerTypeId:string}[]} ignoreTables, an array of object that are tableId and
+     * @prop {DrawLayer[]} drawLayerAry the array of all the drawing layers
+     * @prop {string[]} allowedActions the actions the go to the drawing layers by default
+     * @prop {Array.<{tableId:string, drawLayerTypeId:string}>} ignoreTables -  an array of object that
+     *                              are tableId and a draw layer
      */
     return {
         allowedActions: [ RETRIEVE_DATA, CREATE_DRAWING_LAYER, DESTROY_DRAWING_LAYER, CHANGE_VISIBILITY,
