@@ -43,9 +43,10 @@ export class CatalogConstraintsPanel extends React.Component {
     }
 
     componentWillReceiveProps(np) {
-        if (np.catname !== this.props.catname || np.dd_short !== this.props.dd_short ||
-            np.processId !== this.props.processId) {
-            this.fetchDD(np.catname,  np.dd_short, np.props.processId);
+        if (np.processId !== this.props.processId) {
+            this.fetchDD(np.catname,  np.dd_short, np.processId, true);
+        } else if (np.catname !== this.props.catname || np.dd_short !== this.props.dd_short) {
+            this.fetchDD(np.catname,  np.dd_short, np.processId);
         } else if (this.state.tableModel) {
             if (np.tbl_id != this.state.tableModel.tbl_id) {
                 const tableModel = getTblById(np.tbl_id);
@@ -58,27 +59,28 @@ export class CatalogConstraintsPanel extends React.Component {
         const {tableModel} = this.state;
         const {catname, dd_short, fieldKey, showFormType=true, processId} = this.props;
 
-
+        var resetButton = () => {
+            return (
+                <button style={{padding: '0 5px 0 5px', margin: showFormType ? '0 10px 0 10px' : '0'}}
+                        onClick={ () => this.fetchDD(catname,  dd_short, processId, true)}>Reset
+                </button>
+            );
+        };
         var formTypeList = () => {
                 return (
-                    <div style={{display:'flex', flexDirection:'row', padding:'5px 5px 0'}}>
-                        <ListBoxInputField fieldKey={'ddform'} inline={true} labelWidth={0}
-                           initialState={{
-                                tooltip: 'Select form',
-                                value: 'false'
-                           }}
-                           options={[
-                                {label: 'Standard', value: 'true'},
-                                {label: 'Long form', value: 'false'}
-                           ]}
-                           labelWidth={75}
-                           label='Table Selection:'
-                           multiple={false}
-                        />
-                        <button style={{padding: '0 5px 0 5px', margin: showFormType ? '0 10px 0 10px' : '0'}}
-                                onClick={ () => this.fetchDD(catname, processId, dd_short, true)}>Reset
-                        </button>
-                    </div>
+                   <ListBoxInputField fieldKey={'ddform'} inline={true} labelWidth={0}
+                       initialState={{
+                            tooltip: 'Select form',
+                            value: 'false'
+                       }}
+                       options={[
+                            {label: 'Standard', value: 'true'},
+                            {label: 'Long form', value: 'false'}
+                       ]}
+                       labelWidth={75}
+                       label='Table Selection:'
+                       multiple={false}
+                   />
                 );
         };
 
@@ -92,7 +94,10 @@ export class CatalogConstraintsPanel extends React.Component {
                     style={{display:'flex', flexDirection:'column',
                             margin:'0px 10px 5px 5px', padding:'0 0 0 10px',
                             border:'1px solid #a3aeb9'}}>
-                    {showFormType && formTypeList()}
+                    <div style={{display:'flex', flexDirection:'row', padding:'5px 5px 0'}}>
+                        {showFormType && formTypeList()}
+                        {resetButton()}
+                    </div>
                     <div>
                         <TablePanelConnected {...{tableModel, fieldKey}} />
                         {renderSqlArea()}
@@ -109,7 +114,7 @@ export class CatalogConstraintsPanel extends React.Component {
      * @param clearSelections
      */
     fetchDD(catName, dd_short, processId, clearSelections = false) {
-        const shortdd = isNil(dd_short) ? '' : (dd_short == 'true') ? 'short' : 'long';
+        const shortdd = isNil(dd_short) ? '' : (dd_short === 'true') ? 'short' : 'long';
         const tblid = `${catName}-${shortdd}-dd-table-constraint`;
 
         //// Check if it exists already - fieldgroup has a keepState property but
@@ -379,7 +384,7 @@ const inputFieldValidator = (filterString) => {
     if (filterString) {
         filterString && filterString.split(';').forEach((v) => {
             const parts = v.trim().match(extract_regex) || [];
-            if (parts.length == 0) {
+            if (parts.length === 0) {
                 retval = {valid: false, message: `${v} not valid: ${FILTER_TTIPS}`};
                 return retval;
             }
