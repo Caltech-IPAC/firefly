@@ -113,6 +113,16 @@ export class FilterInfo {
     }
 
     /**
+     * validator for column's filter.  it validates only the condition portion of the filter.
+     * @param conditions
+     * @returns {{valid: boolean, value: (string|*), message: string}}
+     */
+    static conditionValidatorNoAutoCorrect(conditions) {
+        const valid = FilterInfo.isConditionValid(conditions);
+        return {valid, value: conditions, message: FILTER_CONDITION_TTIPS};
+    }
+
+    /**
      * validate the filterInfo string
      * @param {string} filterInfo
      * @param {TableColumn[]} columns array of column definitions
@@ -145,7 +155,7 @@ export class FilterInfo {
     static validator(columns, filterInfo) {
         filterInfo = FilterInfo.autoCorrectFilter(filterInfo);
         const [valid, message] = FilterInfo.isValid(filterInfo, columns);
-        return {valid, value: filterInfo, message};
+        return  {valid, value: filterInfo, message};
     }
 
     /**

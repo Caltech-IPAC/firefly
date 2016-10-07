@@ -89,6 +89,18 @@ export class CatalogSelectViewPanel extends Component {
     }
 }
 
+function validConstraints(groupKey) {
+    const {tableconstraints} = FieldGroupUtils.getGroupFields(groupKey);
+
+    var errMsg = get(tableconstraints, ['value', 'errorConstraints']);
+
+    if (!isEmpty(errMsg)) {
+        showInfoPopup('Invalid constraints: ' + errMsg);
+        return false;
+    }
+    return true;
+}
+
 function onSearchSubmit(request) {
     console.log('original request <br />' + JSON.stringify(request));
 
@@ -100,7 +112,9 @@ function onSearchSubmit(request) {
             showInfoPopup('Target is required');
             return;
         }
-        doCatalog(request);
+        if (validConstraints(gkey)) {
+            doCatalog(request);
+        }
     }
     else if (request.Tabs === 'loadcat') {
         doLoadTable(request);
@@ -710,7 +724,7 @@ function fieldInit() {
         },
         'tableconstraints': {
             fieldKey: 'tableconstraints',
-            value: {constraints: '', selcols: ''},
+            value: {constraints: '', selcols: '', errorConstraints: ''},
             tbl_id: ''
         },
         'txtareasql': {

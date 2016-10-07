@@ -5,7 +5,7 @@
 import React from 'react';
 import FixedDataTable from 'fixed-data-table';
 import sCompare from 'react-addons-shallow-compare';
-import {set, get, isEqual, pick} from 'lodash';
+import {set, get, isEmpty, isEqual, pick} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
@@ -224,6 +224,7 @@ export const createLinkCell = ({hrefColIdx, value}) => {
     };
 };
 
+export const NOT_CELL_DATA = '__NOT_A_VALID_DATA___';
 /**
  * creates an input field cell renderer.
  * @param tooltips
@@ -236,12 +237,12 @@ export const createLinkCell = ({hrefColIdx, value}) => {
 export const createInputCell = (tooltips, size = 10, validator, onChange, style) => {
     const changeHandler = (rowIndex, data, colIdx, v) => {
         set(data, [rowIndex, colIdx], v.value);
-        onChange && onChange(v);
+        onChange && onChange();
     };
 
     return ({rowIndex, data, colIdx}) => {
         const val = get(data, [rowIndex, colIdx]);
-        if (val === undefined) {
+        if (val === NOT_CELL_DATA) {
             return null;
         } else {
             return (
