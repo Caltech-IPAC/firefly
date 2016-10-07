@@ -11,7 +11,7 @@ import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
-import {getMultiViewRoot,getExpandedViewerItemIds,dispatchReplaceViewerImages,
+import {getMultiViewRoot,getExpandedViewerItemIds,dispatchReplaceViewerItems,
                              EXPANDED_MODE_RESERVED, IMAGE} from '../MultiViewCntlr.js';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 
@@ -72,7 +72,7 @@ function updateView(request) {
             if (!plotIdAry.includes(visRoot().activePlotId)) {
                 dispatchChangeActivePlotView(plotIdAry[0]);
             }
-            dispatchReplaceViewerImages(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
+            dispatchReplaceViewerItems(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
         }
     }
 }

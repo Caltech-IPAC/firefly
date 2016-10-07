@@ -24,11 +24,11 @@ import SimpleMemCache from '../../util/SimpleMemCache.js';
  *
  * @param imageOverlayId
  * @param plotId plot id of image that is overlayed
- * @param imageNumber
- * @param maskValue
- * @param maskNumber
- * @param color the color, if overlay is a mask
  * @param {String} title
+ * @param imageNumber
+ * @param maskNumber
+ * @param maskValue
+ * @param {string} color the color, if overlay is a mask
  * @param drawingDef
  * @return {OverlayPlotView}
  */

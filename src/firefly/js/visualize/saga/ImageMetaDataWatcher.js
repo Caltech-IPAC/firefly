@@ -12,7 +12,7 @@ import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView,
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
 import {getTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../../tables/TableUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
-import MultiViewCntlr, {dispatchReplaceViewerImages, dispatchUpdateCustom, getViewerItemIds,
+import MultiViewCntlr, {dispatchReplaceViewerItems, dispatchUpdateCustom, getViewerItemIds,
                         getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE} from '../MultiViewCntlr.js';
 import {converterFactory, converters} from '../../metaConvert/ConverterFactory.js';
 import {findGridTableRows,isMetaDataTable} from '../../metaConvert/converterUtils.js';
@@ -181,7 +181,7 @@ function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
 function removeAllPlotsInViewer(viewerId) {
     if (!viewerId) return;
     const inViewerIds= getViewerItemIds(getMultiViewRoot(), viewerId);
-    dispatchReplaceViewerImages(viewerId,[]);
+    dispatchReplaceViewerItems(viewerId,[]);
     inViewerIds.forEach( (plotId) => dispatchDeletePlotView({plotId}));
 }
 
@@ -206,7 +206,7 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
     const inViewerIds= getViewerItemIds(getMultiViewRoot(), viewerId);
     const idUnionLen= union(plottingIds,inViewerIds).length;
     if (idUnionLen!== inViewerIds.length || plottingIds.length<inViewerIds.length) {
-        dispatchReplaceViewerImages(viewerId,plottingIds);
+        dispatchReplaceViewerItems(viewerId,plottingIds);
     }
 
 

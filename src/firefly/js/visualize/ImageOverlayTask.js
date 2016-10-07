@@ -80,7 +80,14 @@ export function overlayPlotChangeAttributeActionCreator(rawAction) {
             const opv= getOverlayByPvAndId(vr,plotId, imageOverlayId);
             if (!opv) return;
             const {imageNumber,color, maskValue, title}= opv;
-            dispatchPlotMask({plotId,imageOverlayId, maskValue, imageNumber, color, title});
+            var fileKey;
+            if (opv.plot) {
+                const wpr= opv.plot.plotState.getWebPlotRequest();
+                if (wpr.getRequestType()===RequestType.FILE || wpr.getFileName()) {
+                    fileKey= wpr.getFileName();
+                }
+            }
+            dispatchPlotMask({plotId,imageOverlayId, fileKey, maskValue, imageNumber, color, title});
         }
     };
 }

@@ -173,7 +173,7 @@ export function dispatchRemoveViewerItems(viewerId, itemIdAry) {
  * @param {string[]} itemIdAry array of string of itemId
  * @param {string} containerType a string with container type, IMAGE and PLOT2D are predefined
  */
-export function dispatchReplaceViewerImages(viewerId, itemIdAry, containerType) {
+export function dispatchReplaceViewerItems(viewerId, itemIdAry, containerType) {
     flux.process({type: REPLACE_VIEWER_ITEMS , payload: {viewerId, itemIdAry, containerType} });
 }
 

@@ -25,7 +25,7 @@ import {dispatchAttachLayerToPlot,
         dispatchCreateDrawLayer,
         dispatchDetachLayerFromPlot,
         DRAWING_LAYER_KEY} from './DrawLayerCntlr.js';
-import {dispatchReplaceViewerImages, getExpandedViewerItemIds,
+import {dispatchReplaceViewerItems, getExpandedViewerItemIds,
          getMultiViewRoot, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
 
 export {zoomActionCreator} from './ZoomUtil.js';
@@ -544,6 +544,7 @@ export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
  * @param {number} p.maskNumber 2, e.g 4, 8, 32, 128, etc
  * @param {string} p.imageOverlayId
  * @param {number} p.imageNumber hdu number of fits
+ * @param {string} p.fileKey file on the server
  * @param {string} p.color - color is optional, if not specified, one is chosen
  * @param {string} p.title
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
@@ -552,8 +553,8 @@ export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
  * @function dispatchPlotImage
  * @memberof firefly.action
  */
-export function dispatchPlotMask({plotId,imageOverlayId, maskValue, imageNumber, maskNumber=-1, color, title, dispatcher= flux.process}) {
-    dispatcher( { type: PLOT_MASK, payload: { plotId,imageOverlayId, maskValue, imageNumber, maskNumber, color, title} });
+export function dispatchPlotMask({plotId,imageOverlayId, maskValue, fileKey, imageNumber, maskNumber=-1, color, title, dispatcher= flux.process}) {
+    dispatcher( { type: PLOT_MASK, payload: { plotId,imageOverlayId, fileKey, maskValue, imageNumber, maskNumber, color, title} });
 }
 
 /**
@@ -706,7 +707,7 @@ export function dispatchChangeExpandedMode(expandedMode) {
         if (pv) {
             const group= getPlotGroupById(vr,pv.plotGroupId);
             const plotIdAry= getOnePvOrGroup(vr.plotViewAry,plotId,group).map( (pv) => pv.plotId);
-            dispatchReplaceViewerImages(EXPANDED_MODE_RESERVED,plotIdAry);
+            dispatchReplaceViewerItems(EXPANDED_MODE_RESERVED,plotIdAry);
         }
     }
 

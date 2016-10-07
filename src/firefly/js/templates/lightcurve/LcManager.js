@@ -12,7 +12,7 @@ import {updateSet} from '../../util/WebUtil.js';
 import {dispatchPlotImage, visRoot, dispatchDeletePlotView,
         dispatchChangeActivePlotView} from '../../visualize/ImagePlotCntlr.js';
 import {getPlotViewById} from '../../visualize/PlotViewUtil.js';
-import {getMultiViewRoot, dispatchReplaceViewerImages, getViewer} from '../../visualize/MultiViewCntlr.js';
+import {getMultiViewRoot, dispatchReplaceViewerItems, getViewer} from '../../visualize/MultiViewCntlr.js';
 import {WebPlotRequest} from '../../visualize/WebPlotRequest.js';
 import {dispatchTableToIgnore} from '../../visualize/DrawLayerCntlr.js';
 import Catlog from '../../drawingLayers/Catalog.js';
@@ -181,7 +181,7 @@ function setupImages(tbl_id) {
     });
 
 
-    dispatchReplaceViewerImages(IMG_VIEWER_ID, newPlotIdAry);
+    dispatchReplaceViewerItems(IMG_VIEWER_ID, newPlotIdAry);
     dispatchChangeActivePlotView(plotIdRoot+tableModel.highlightedRow);
 
     vr= visRoot();
