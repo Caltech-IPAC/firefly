@@ -12,7 +12,7 @@ import {TBL_RESULTS_ADDED, TABLE_LOADED, TABLE_REMOVE, TBL_RESULTS_ACTIVE} from 
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
 import {isMetaDataTable, isCatalogTable} from '../../metaConvert/converterUtils.js';
 import {META_VIEWER_ID} from '../../visualize/ui/TriViewImageSection.jsx';
-import {REPLACE_IMAGES, DEFAULT_FITS_VIEWER_ID, getViewerPlotIds, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
+import {REPLACE_VIEWER_ITEMS, DEFAULT_FITS_VIEWER_ID, getViewerItemIds, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 
 /**
  * this manager manages what main components get display on the screen.
@@ -30,7 +30,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
     while (true) {
         const action = yield take([
             ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE,
-            ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_IMAGES,
+            ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS,
             TBL_RESULTS_ADDED, TABLE_REMOVE, TABLE_LOADED,
             SHOW_DROPDOWN, SET_LAYOUT_MODE,
             TBL_RESULTS_ACTIVE
@@ -48,7 +48,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         const showXyPlots = hasXyPlots && views.has(LO_VIEW.xyPlots);
         const showTables = hasTables && views.has(LO_VIEW.tables);
 
-        const ids = getViewerPlotIds(getMultiViewRoot(), DEFAULT_FITS_VIEWER_ID);
+        const ids = getViewerItemIds(getMultiViewRoot(), DEFAULT_FITS_VIEWER_ID);
         images = clone(images, {showFits: ids && ids.length > 0});
 
         // special cases which could affect the layout..
@@ -62,7 +62,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
                 [showImages, images, coverageLockedOn] = handleNewTable(action, images, showImages, showTables, coverageLockedOn);
                 break;
 
-            case REPLACE_IMAGES :
+            case REPLACE_VIEWER_ITEMS :
             case ImagePlotCntlr.PLOT_IMAGE :
             case ImagePlotCntlr.PLOT_IMAGE_START :
                 [showImages, images, ignore] = handleNewImage(action, images);
@@ -84,7 +84,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         switch (action.type) {
             case TBL_RESULTS_ADDED:
             case TABLE_LOADED:
-            case REPLACE_IMAGES :
+            case REPLACE_VIEWER_ITEMS :
             case ImagePlotCntlr.PLOT_IMAGE :
             case ImagePlotCntlr.PLOT_IMAGE_START :
             case TABLE_REMOVE:
@@ -107,7 +107,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         switch (action.type) {
             case TBL_RESULTS_ADDED:
             case TABLE_LOADED:
-            case REPLACE_IMAGES :
+            case REPLACE_VIEWER_ITEMS :
             case ImagePlotCntlr.PLOT_IMAGE :
             case ImagePlotCntlr.PLOT_IMAGE_START :
                 dropDown = {visible: count === 0};
@@ -208,7 +208,7 @@ function handleActiveTableChange (tbl_id, images, coverageLockedOn) {
 const hasCatalogTable= (tblList) => tblList.some( (id) => isCatalogTable(id) );
 const hasMetaTable= (tblList) => tblList.some( (id) => isMetaDataTable(id) );
 const findFirstMetaTable= (tblList) => tblList.find( (id) => isMetaDataTable(id) );
-const shouldShowFits= () => !isEmpty(getViewerPlotIds(getMultiViewRoot(), DEFAULT_FITS_VIEWER_ID));
+const shouldShowFits= () => !isEmpty(getViewerItemIds(getMultiViewRoot(), DEFAULT_FITS_VIEWER_ID));
 
 
 

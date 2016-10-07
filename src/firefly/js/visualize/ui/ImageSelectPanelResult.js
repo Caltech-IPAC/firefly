@@ -7,7 +7,7 @@ import {keyMap, panelKey, computeCurrentCatalogId, rgbFieldGroup,
         PLOT_NO, RED, GREEN, BLUE, PLOT_CREATE, PLOT_CREATE3COLOR, rgb} from './ImageSelectPanel.jsx';
 import WebPlotRequest from '../WebPlotRequest.js';
 import {dispatchPlotImage, visRoot } from '../ImagePlotCntlr.js';
-import {dispatchAddImages, findViewerWithPlotId, getMultiViewRoot} from '../MultiViewCntlr.js';
+import {findViewerWithItemId, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
 import {parseWorldPt} from '../Point.js';
 import {panelCatalogs} from './ImageSelectPanelProp.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
@@ -314,7 +314,7 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
             if (nPlotId) {
                 groupId = getPlotViewById(visRoot(), nPlotId).plotGroupId;
             }
-            viewerIdOnPlot = findViewerWithPlotId(getMultiViewRoot(), nPlotId);
+            viewerIdOnPlot = findViewerWithItemId(getMultiViewRoot(), nPlotId, IMAGE);
         }
 
         if (!nPlotId) {

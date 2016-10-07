@@ -37,7 +37,7 @@ import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {FileUpload} from '../ui/FileUpload.jsx';
 import {parseWorldPt} from '../visualize/Point.js';
 import {makeTblRequest, makeFileRequest, makeIrsaCatalogRequest} from '../tables/TableUtil.js';
-import {dispatchAddImages,getAViewFromMultiView,getMultiViewRoot} from '../visualize/MultiViewCntlr.js';
+import {dispatchAddViewerItems,getAViewFromMultiView,getMultiViewRoot, IMAGE} from '../visualize/MultiViewCntlr.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage} from '../visualize/ImagePlotCntlr.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
@@ -463,8 +463,8 @@ function doImages(request) {
 
     dispatchPlotImage({plotId: 'TestImage3Color', wpRequest: [cWpr1, cWpr2, cWpr3]});
 
-    var viewer = getAViewFromMultiView(getMultiViewRoot());
-    dispatchAddImages(viewer.viewerId, ['TestImage1', 'TestImage2', 'TestImage3', 'TestImage4', 'TestImage3Color']);
+    var viewer = getAViewFromMultiView(getMultiViewRoot(), IMAGE);
+    dispatchAddViewerItems(viewer.viewerId, ['TestImage1', 'TestImage2', 'TestImage3', 'TestImage4', 'TestImage3Color'], IMAGE);
     dispatchHideDropDown();
 
 }

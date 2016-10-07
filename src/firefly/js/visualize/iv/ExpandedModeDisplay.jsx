@@ -5,7 +5,7 @@
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {visRoot, dispatchChangeExpandedMode, ExpandType} from '../ImagePlotCntlr.js';
-import {getMultiViewRoot, getExpandedViewerPlotIds} from '../MultiViewCntlr.js';
+import {getMultiViewRoot, getExpandedViewerItemIds} from '../MultiViewCntlr.js';
 import {flux} from '../../Firefly.js';
 import {ExpandedTools} from './ExpandedTools.jsx';
 import {MultiImageViewerView} from '../ui/MultiImageViewerView.jsx';
@@ -57,7 +57,7 @@ export class ExpandedModeDisplay extends Component {
         const layoutType= vr.expandedMode===ExpandType.GRID ? 'grid' : 'single';
 
         return (
-            <MultiImageViewerView viewerPlotIds={getExpandedViewerPlotIds(multiViewRoot)}
+            <MultiImageViewerView viewerPlotIds={getExpandedViewerItemIds(multiViewRoot)}
                                   layoutType={layoutType}
                                   Toolbar={ExpandedTools}
                                   viewerId={'EXPANDED_VIEW'}

@@ -11,7 +11,8 @@ import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
-import {getMultiViewRoot,getExpandedViewerPlotIds,dispatchReplaceImages,EXPANDED_MODE_RESERVED} from '../MultiViewCntlr.js';
+import {getMultiViewRoot,getExpandedViewerItemIds,dispatchReplaceViewerItems,
+                             EXPANDED_MODE_RESERVED, IMAGE} from '../MultiViewCntlr.js';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 
 
@@ -30,7 +31,7 @@ export function showExpandedOptionsPopup(plotViewAry) {
 function ExpandedOptionsPanel ({plotViewAry}) {
     var loadedPv= plotViewAry.filter( (pv) => primePlot(pv)?true:false );
     var options= loadedPv.map( (pv) => ({label: primePlot(pv).title, value:pv.plotId}));
-    const expandedIds= getExpandedViewerPlotIds(getMultiViewRoot());
+    const expandedIds= getExpandedViewerItemIds(getMultiViewRoot());
     var enabledStr= loadedPv.reduce( (s,pv) => {
         if (!expandedIds.includes(pv.plotId)) return s;
         return s ? `${s},${pv.plotId}` : pv.plotId;
@@ -71,7 +72,7 @@ function updateView(request) {
             if (!plotIdAry.includes(visRoot().activePlotId)) {
                 dispatchChangeActivePlotView(plotIdAry[0]);
             }
-            dispatchReplaceImages(EXPANDED_MODE_RESERVED, plotIdAry);
+            dispatchReplaceViewerItems(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
         }
     }
 }

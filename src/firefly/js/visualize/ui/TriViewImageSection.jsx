@@ -34,7 +34,7 @@ export const COVERAGE_VIEWER_ID = 'TBD';
 export function TriViewImageSection({showCoverage=false, showFits=false, selectedTab='fits',
                                      showMeta=false, imageExpandedMode=false, closeable=true,
                                      metaDataTableId}) {
-    
+
     if (imageExpandedMode) {
         return  ( <ExpandedModeDisplay
                         key='results-plots-expanded'

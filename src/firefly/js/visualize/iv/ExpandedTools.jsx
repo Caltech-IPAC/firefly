@@ -13,7 +13,7 @@ import {CloseButton} from '../../ui/CloseButton.jsx';
 import {showExpandedOptionsPopup} from '../ui/ExpandedOptionsPopup.jsx';
 import { dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {VisToolbar} from '../ui/VisToolbar.jsx';
-import {getMultiViewRoot, getExpandedViewerPlotIds} from '../MultiViewCntlr.js';
+import {getMultiViewRoot, getExpandedViewerItemIds} from '../MultiViewCntlr.js';
 
 import './ExpandedTools.css';
 
@@ -121,7 +121,7 @@ const gridPlotTitleStyle= {
 
 export function ExpandedTools({visRoot,closeFunc}) {
     var {expandedMode,activePlotId, singleAutoPlay}= visRoot;
-    const plotIdAry= getExpandedViewerPlotIds(getMultiViewRoot());
+    const plotIdAry= getExpandedViewerItemIds(getMultiViewRoot());
     var single= expandedMode===ExpandType.SINGLE || plotIdAry.length===1;
     var plot= primePlot(visRoot);
 
@@ -180,7 +180,7 @@ ExpandedTools.propTypes= {
 
 function WhichView({visRoot}) {
     var {plotViewAry}= visRoot;
-    const showViewButtons= getExpandedViewerPlotIds(getMultiViewRoot()).length>1;
+    const showViewButtons= getExpandedViewerItemIds(getMultiViewRoot()).length>1;
     return (
         <div style={{display: 'inline-block', verticalAlign:'top'}}>
             {showViewButtons &&
@@ -234,7 +234,7 @@ function pTitle(begin,visRoot,plotId) {
 
 function PagingControl({visRoot,activePlotId, expandedMode}) {
 
-    const plotIdAry= getExpandedViewerPlotIds(getMultiViewRoot());
+    const plotIdAry= getExpandedViewerItemIds(getMultiViewRoot());
 
     if (!activePlotId || plotIdAry.length<2 || expandedMode!==ExpandType.SINGLE) return <div style={controlStyle}></div>;
 

@@ -1,4 +1,5 @@
 
+import React from 'react';
 import {dispatchTableHighlight} from '../../tables/TablesCntlr.js';
 import {PagingBar} from '../../ui/PagingBar.jsx';
 import {getTblInfoById} from '../../tables/TableUtil.js';

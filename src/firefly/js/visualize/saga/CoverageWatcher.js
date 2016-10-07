@@ -15,7 +15,7 @@ import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView} from
 import {primePlot} from '../PlotViewUtil.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
 import {doFetchTable, getTblById, getActiveTableId, getColumnIdx, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
-import MultiViewCntlr, {getViewerPlotIds, dispatchAddImages, getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
+import MultiViewCntlr, {getViewerItemIds, dispatchAddViewerItems, getMultiViewRoot, getViewer, IMAGE} from '../MultiViewCntlr.js';
 // import {serializeDecimateInfo} from '../../tables/Decimate.js'; //todo need to support
 import {DrawSymbol} from '../draw/PointDataObj.js';
 import {computeCentralPointAndRadius} from '../VisUtil.js';
@@ -92,8 +92,8 @@ export function* watchCoverage({viewerId, options= {}}) {
                                   MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED, 
                                   MultiViewCntlr.VIEWER_UNMOUNTED]);
         
-        if (!getViewerPlotIds(getMultiViewRoot(),viewerId).includes(PLOT_ID))  {
-            dispatchAddImages(viewerId,[PLOT_ID]);
+        if (!getViewerItemIds(getMultiViewRoot(),viewerId).includes(PLOT_ID))  {
+            dispatchAddViewerItems(viewerId,[PLOT_ID],IMAGE);
         }
 
         if (paused && (action.type!==MultiViewCntlr.VIEWER_MOUNTED && action.type!==MultiViewCntlr.ADD_VIEWER) )  {
@@ -236,7 +236,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     const plot= primePlot(visRoot(), PLOT_ID);
     if (plot &&
         pointEquals(centralPoint,plot.attributes[COVERAGE_TARGET]) &&
-        plot.attributes[COVERAGE_RADIUS]===centralPoint ) {
+        plot.attributes[COVERAGE_RADIUS]===maxRadius ) {
         overlayCoverageDrawing(decimatedTables, options);
     }
     else {

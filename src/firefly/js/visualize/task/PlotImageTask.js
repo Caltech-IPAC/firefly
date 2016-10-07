@@ -22,7 +22,7 @@ import {PlotPref} from '../PlotPref.js';
 import ActiveTarget  from '../../drawingLayers/ActiveTarget.js';
 import * as DrawLayerCntlr from '../DrawLayerCntlr.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
-import {dispatchAddImages, EXPANDED_MODE_RESERVED} from '../MultiViewCntlr.js';
+import {dispatchAddViewerItems, EXPANDED_MODE_RESERVED, IMAGE} from '../MultiViewCntlr.js';
 import {getDrawLayerByType, getPlotViewById} from '../PlotViewUtil.js';
 import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
@@ -257,13 +257,13 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
 
 
         //todo- this this plot is in a group and locked, make a unique list of all the drawing layers in the group and add to new
-        dispatchAddImages(EXPANDED_MODE_RESERVED, plotIdAry);
+        dispatchAddViewerItems(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
     }
 
 
     failAry.forEach( (r) => {
         const {data}= r;
-        if (payload.plotId) dispatchAddImages(EXPANDED_MODE_RESERVED, [payload.plotId]);
+        if (payload.plotId) dispatchAddViewerItems(EXPANDED_MODE_RESERVED, [payload.plotId], IMAGE);
         resultPayload= Object.assign({},payload);
         // todo: add failure stuff to resultPayload here
         resultPayload.briefDescription= data.briefFailReason;
