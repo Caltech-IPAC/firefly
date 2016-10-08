@@ -5,12 +5,13 @@
 import React, {PropTypes} from 'react';
 import ReactHighcharts from 'react-highcharts';
 import numeral from 'numeral';
+import {set} from 'lodash';
 import {getFormatString} from '../../util/MathUtil.js';
 import {logError} from '../../util/WebUtil.js';
 
 /*
  * @param {String} color - hex color, exactly seven characters log, starting with '#'
- * @param {Number} persentage (0.1 means 10 percent lighter, -0.1 - 10 percent darker)
+ * @param {Number} percentage (0.1 means 10 percent lighter, -0.1 - 10 percent darker)
  * @return {String} lighter or darker shade of the given hex color
  * from http://stackoverflow.com/questions/5560248/programmatically-lighten-or-darken-a-hex-color-or-rgb-and-blend-colors
  */
@@ -27,6 +28,13 @@ function padLeft(num) {
     return num-Math.abs(num*Math.pow(10,-9));
 }
 
+function getMinY(data) {
+    if (data.length > 0) {
+        return data.reduce((minVal, row) => {
+            return Math.min(minVal, row[0]);
+        }, data[0][0]);
+    }
+}
 
 export class Histogram extends React.Component {
 
@@ -45,15 +53,15 @@ export class Histogram extends React.Component {
      */
     constructor(props) {
         super(props);
-        this.setChartConfig = this.setChartConfig.bind(this);
+        this.addDataSeries = this.addDataSeries.bind(this);
         this.validateData = this.validateData.bind(this);
     }
 
     shouldComponentUpdate(nextProps) {
-        const {data, width, height, logs, reversed, desc, binColor} = this.props;
+        const {series, data, width, height, logs, reversed, desc, binColor} = this.props;
         // should rerender only if data or bin color has changed
         // otherwise just change the existing chart
-        if (data !== nextProps.data || binColor !== nextProps.binColor) { return true; }
+        if (series !== nextProps.series || data !== nextProps.data || binColor !== nextProps.binColor) { return true; }
         const chart = this.refs.chart && this.refs.chart.getChart();
         if (chart) {
             let doUpdate = false;
@@ -130,15 +138,21 @@ export class Histogram extends React.Component {
 
     /*
      * @param config
+     * @param {Object} seriesOptions
+     * @param {Array.number[]} seriesOptions.data
+     * @param {string} seriesOptions.binColor
+     * @param {string} seriesOptions.name
+     * @param {number} minY - minimum plot Y
+     * @param {number} seriesIdx - index of the series
      * @return {Boolean} f data points are set, false if no points are present
      */
-    setChartConfig(config) {
+    addDataSeries(config, seriesOptions, minY, seriesIdx=0) {
 
         // how many significant digits should we preserve? ~12?
         // EPSILON 2^(-52)
         const TINY_OFFSET = 100*Number.EPSILON;
 
-        const {binColor, logs, data}= this.props;
+        const {name, binColor, data}= seriesOptions;
 
         if (!data || data.length < 1) {
             return false;
@@ -149,35 +163,28 @@ export class Histogram extends React.Component {
             return false;
         }
 
-        var points = [], zones=[];
-        var lighterColor = shadeColor(binColor, 0.1);
+        const points = [], zones=[];
+        const lighterColor = shadeColor(binColor, 0.1);
         var error;
 
         // use column chart for only one point
         var areaPlot = (data.length > 1);
 
-        // zones mess up log scale - do not do them
-        var doZones = (areaPlot); // && (!logs || logs.indexOf('x')===-1));
+        // zones - color ajacent bins slightly differently
+        var doZones = (areaPlot);
+
 
         if (!areaPlot && data.length === 1) {
             const xrange = data[0][2] - data[0][1];
             if (xrange <= TINY_OFFSET) {
                 config.plotOptions.column.maxPointWidth = 10;
             } else {
-                config.plotOptions.column.maxPointWidth = 50;
+                areaPlot = true;
             }
         }
 
         try {
 
-            // what should be the minimum y value?
-            let minY = 0;
-            if (logs && logs.includes('y') && data.length>0) {
-                const minYData = data.reduce((minVal, row) => {
-                    return Math.min(minVal, row[0]);
-                }, data[0][0]);
-                minY = minYData/10;
-            }
             let lastBinMax = data[0][1];
             if (areaPlot) {
 
@@ -280,30 +287,48 @@ export class Histogram extends React.Component {
         if (error) {
             return false;
         } else {
-            config.series[0].data = points;
+            const dataSeries = {
+                name,
+                type: areaPlot ? 'area' : 'column',
+                turboThreshold: 0,
+                //fillOpacity: 0.9,
+                //color: binColor,
+                data: points
+            };
             if (doZones) {
-                config.plotOptions.area.zones = zones;
+                dataSeries.zones = zones;
             }
+            set(config, ['series',seriesIdx], dataSeries);
         }
     }
 
     render() {
 
-        const { binColor, data, desc, width, height, logs, reversed }= this.props;
+        const { binColor, data, desc, width, height, logs, reversed}= this.props;
+        let series = this.props.series;
+        if (!series) {
+            series = [{data, binColor, name: 'data points'}];
+        }
         const yReversed = (reversed && reversed.indexOf('y')>-1 ? true : false);
 
-        var chartType;
-        if (data.length < 2) {
-            chartType = 'column';
-        } else {
-            chartType = 'area';
-        }
 
+        let minY = 0;
+        // what should be the minimum y value be?
+        if (logs && logs.includes('y')) {
+            let minYData = Number.MAX_VALUE;
+            for (let i=0; i< series.length; i++) {
+                const data = series.data;
+                if (data && data.length>0) {
+                    const seriesMinY = getMinY(data);
+                    if (seriesMinY < minYData) { minYData = seriesMinY; }
+                }
+            }
+            minY = (minYData === Number.MAX_VALUE) ? 0.1 : minYData/10;
+        }
 
         var config = {
             chart: {
                 renderTo: 'container',
-                type: chartType,
                 alignTicks: false,
                 width: width? Number(width) : undefined,
                 height: height? Number(height) : undefined,
@@ -320,9 +345,11 @@ export class Histogram extends React.Component {
                 text: ''
             },
             tooltip: {
+                split: true,
                 followPointer: true,
                 borderWidth: 1,
                 formatter() {
+                    if (this.y === minY) {return false;} // don't display tooltip
                     return '<span>'+(this.point.name ? `<b>Bin center:</b> ${this.point.name}<br/>` : '')+
                         (this.point.range ? `<b>Range:</b> ${this.point.range}<br/>` : '')+
                         `<b>Count:</b> ${this.y}</span>`;
@@ -346,12 +373,13 @@ export class Histogram extends React.Component {
                         }
                     },
                     zoneAxis: 'x',
-                    zones: [] // color ajacent bins slightly different by defining zones
+                    zones: [] // color adjacent bins slightly different by defining zones
                 },
                 column: {
                     pointPadding: 0.2
                 }
             },
+            series: [],
             xAxis: {
                 lineColor: '#999',
                 tickColor: '#ccc',
@@ -368,6 +396,7 @@ export class Histogram extends React.Component {
                 tickLength: 3,
                 tickColor: '#ccc',
                 lineColor: '#ccc',
+                min: minY,
                 endOnTick: false,
                 title: {
                     text: ''
@@ -375,20 +404,14 @@ export class Histogram extends React.Component {
                 reversed: yReversed,
                 type: (logs && logs.indexOf('y')>-1 ? 'logarithmic' : 'linear')
             },
-            series: [{
-                name: 'data points',
-                turboThreshold: 0,
-                color: binColor,
-                data: []
-            }],
             credits: {
                 enabled: false // removes a reference to Highcharts.com from the chart
             }
         };
 
-        if (data.length > 0) {
-            this.setChartConfig(config);
-        }
+        series.forEach((s, idx) => {
+            this.addDataSeries(config, s, minY, idx);
+        });
 
         return (
             <div>
@@ -403,13 +426,16 @@ Histogram.defaultProps = {
     binColor: '#d1d1d1'
 };
 
+
+// when more than one histogram is defined use series
 Histogram.propTypes = {
-    data: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.number)), // array of numbers [0] - nInBin, [1] - binMin, [2] - binMax
+    series: PropTypes.arrayOf(PropTypes.object), // array of objects with data, binColor, and name properties
     width: PropTypes.number,
     height: PropTypes.number,
     logs: PropTypes.oneOf(['x','y','xy']),
     reversed: PropTypes.oneOf(['x','y','xy']),
     desc: PropTypes.string,
+    data: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.number)), // array of numbers [0] - nInBin, [1] - binMin, [2] - binMax
     binColor(props, propName, componentName) {
         if (props[propName] && !/^#[0-9a-f]{6}/.test(props[propName])) {
             return new Error(`Invalid bin color in ${componentName}, should be hex with exactly 7 characters long.`);
