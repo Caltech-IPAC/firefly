@@ -19,6 +19,17 @@ import {isNil} from 'lodash';
 
 const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char', width: 10};
 
+
+/**
+ * regenerate short_dd to be one of ['short', 'long', '']
+ */
+function makeFormType(showForm, short_dd) {
+    var ddShort = !showForm ? '' : (isNil(short_dd) ? 'short' : (short_dd === 'true' ? 'short' : 'long'));
+
+    return ddShort;
+}
+
+
 export class CatalogConstraintsPanel extends React.Component {
 
     /**
@@ -38,18 +49,21 @@ export class CatalogConstraintsPanel extends React.Component {
     }
 
     componentDidMount() {
-        const {catname, processId, dd_short} = this.props;
-        this.fetchDD(catname, dd_short, processId,   'true'); //short form as default
+        const {catname, processId, dd_short, showFormType = true} = this.props;
+        this.fetchDD(catname, makeFormType(showFormType, dd_short), processId,  'true'); //short form as default
     }
 
     componentWillReceiveProps(np) {
+        var ddShort = makeFormType(np.showFormType, np.dd_short);
+
         if (np.processId !== this.props.processId) {
-            this.fetchDD(np.catname,  np.dd_short, np.processId, true);
+            this.fetchDD(np.catnam, ddShort, np.processId, true);
         } else if (np.catname !== this.props.catname || np.dd_short !== this.props.dd_short) {
-            this.fetchDD(np.catname,  np.dd_short, np.processId);
+            this.fetchDD(np.catname, ddShort, np.processId);   //TODO: should add 'true'?
         } else if (this.state.tableModel) {
-            if (np.tbl_id != this.state.tableModel.tbl_id) {
-                const tableModel = getTblById(np.tbl_id);
+            var tblid = np.tbl_id ? np.tbl_id : `${np.catname}-${ddShort}-dd-table-constraint`;
+            if (tblid !== this.state.tableModel.tbl_id) {
+                const tableModel = getTblById(tblid);
                 this.setState({tableModel});
             }
         }
@@ -60,9 +74,11 @@ export class CatalogConstraintsPanel extends React.Component {
         const {catname, dd_short, fieldKey, showFormType=true, processId} = this.props;
 
         var resetButton = () => {
+            var ddShort = makeFormType(showFormType, dd_short);
+
             return (
                 <button style={{padding: '0 5px 0 5px', margin: showFormType ? '0 10px 0 10px' : '0'}}
-                        onClick={ () => this.fetchDD(catname,  dd_short, processId, true)}>Reset
+                        onClick={ () => this.fetchDD(catname,  ddShort, processId, true)}>Reset
                 </button>
             );
         };
@@ -114,8 +130,8 @@ export class CatalogConstraintsPanel extends React.Component {
      * @param clearSelections
      */
     fetchDD(catName, dd_short, processId, clearSelections = false) {
-        const shortdd = isNil(dd_short) ? '' : (dd_short === 'true') ? 'short' : 'long';
-        const tblid = `${catName}-${shortdd}-dd-table-constraint`;
+
+        var tblid = `${catName}-${dd_short}-dd-table-constraint`;
 
         //// Check if it exists already - fieldgroup has a keepState property but
         //// here we are not using the table as a fieldgroup per se so we need to cache the column restrictions changes
@@ -125,12 +141,8 @@ export class CatalogConstraintsPanel extends React.Component {
             return;
         }
 
-        //const catName = get(FieldGroupUtils.getGroupFields(gkey), 'cattable.value', '');
         const request = {id: processId, 'catalog': catName, short: dd_short}; //Fetch DD master table
         const urldef = get(FieldGroupUtils.getGroupFields(this.props.groupKey), 'cattable.coldef', 'null');
-        //if (dd_short) {
-        //    request['short'] = dd_short;
-        // }
 
         doFetchTable(request).then((tableModel) => {
             const tableModelFetched = tableModel;
@@ -231,7 +243,8 @@ CatalogConstraintsPanel.propTypes = {
 
 CatalogConstraintsPanel.defaultProps = {
     catname: '',
-    processId: 'GatorDD'
+    processId: 'GatorDD',
+    showFormType: true
 };
 
 /**
@@ -370,7 +383,7 @@ function handleOnTableChanged(params, fireValueChange) {
     // CAN BECOME AN ENDLESS LOOP IF IT FIRES AGAIN WITHOUT CHECKING
     // BASICALLY IMPLEMENTING HERE THE 'ONCHANGE' OF THE TABLEVIEW USED IN A FORM
 
-    if (val.constraints !== sqlTxt || val.selcols !== selCols) {
+    if (val.constraints !== sqlTxt || val.selcols !== selCols || errors !== val.errorConstraints) {
         fireValueChange({
             value: {constraints: sqlTxt, selcols: selCols, errorConstraints: errors}
         });
