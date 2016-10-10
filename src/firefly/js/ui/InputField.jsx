@@ -46,7 +46,7 @@ export class InputField extends React.Component {
     }
 
     componentWillReceiveProps(nProps) {
-        this.setState(newState({value: nProps.value}));
+        this.setState(newState({value: nProps.value, valid: nProps.valid}));
     }
 
     render() {
@@ -93,6 +93,7 @@ InputField.propTypes = {
     wrapperStyle: PropTypes.object,
     labelStyle: PropTypes.object,
     value: PropTypes.string,
+    valid: PropTypes.bool,
     onChange: PropTypes.func,
     actOn: PropTypes.arrayOf(PropTypes.oneOf(['blur', 'enter', 'changes'])),
     showWarning : PropTypes.bool,

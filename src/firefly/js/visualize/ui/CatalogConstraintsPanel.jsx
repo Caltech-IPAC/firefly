@@ -15,7 +15,7 @@ import {createLinkCell, createInputCell} from '../../tables/ui/TableRenderer.js'
 import * as TblCntlr from '../../tables/TablesCntlr.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {FilterInfo, FILTER_TTIPS} from '../../tables/FilterInfo.js';
-import {isNil} from 'lodash';
+import {isNil, isArray} from 'lodash';
 
 const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char', width: 10};
 
@@ -305,8 +305,8 @@ function ConstraintPanel({tableModel, onTableChanged}) {
                                 createInputCell(
                                          FILTER_TTIPS,
                                          15,
-                                         //FilterInfo.conditionValidatorNoAutoCorrect,
-                                         null,
+                                         FilterInfo.conditionValidatorNoAutoCorrect,
+                                         //null,
                                          onTableChanged
                                 )
                             }
@@ -345,10 +345,18 @@ function handleOnTableChanged(params, fireValueChange) {
     let errors = '';
 
     tbl_data.forEach((d) => {
-        if (d[1] && d[1].trim().length > 0) {
-            const filterString = d[1].trim();
-            const colName = d[0];
-            const parts = filterString && filterString.split(';');
+        var filterStrings, valid = true;
+        const colName = d[0];
+
+        if (isArray(d[1])) {
+            filterStrings = d[1][0].trim();
+            valid = get(d[1], '1', true);
+        } else {
+            filterStrings = d[1].trim();
+        }
+
+        if (filterStrings && filterStrings.length > 0) {
+            const parts = filterStrings && filterStrings.split(';');
 
             parts.forEach((v, idx) => {
                 // const parts = v.trim().match(extract_regex);
