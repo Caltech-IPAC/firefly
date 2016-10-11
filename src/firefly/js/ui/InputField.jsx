@@ -1,7 +1,8 @@
 import React, {PropTypes} from 'react';
-import {has} from 'lodash';
+import {has, get} from 'lodash';
 
 import {InputFieldView} from './InputFieldView.jsx';
+import {NOT_CELL_DATA} from '../tables/ui/TableRenderer.js';
 
 
 function shouldAct(e, actOn) {
@@ -32,7 +33,11 @@ export class InputField extends React.Component {
         const nState = {fieldKey, value};
         if (shouldAct(e, actOn)) {
             var {valid, message, ...others} = validator ? validator(value) : {valid:true, message:''};
-            has(others, 'value') && (nState.value = others.value);    // allow the validator to modify the value.. useful in auto-correct.
+            var vadVal = get(others, 'value');  // vadVal has value as undefined in case no validator exists.
+            if (vadVal && vadVal !== NOT_CELL_DATA) {
+                nState.value = others.value;
+            }
+            //has(others, 'value') && (nState.value = others.value);    // allow the validator to modify the value.. useful in auto-correct.
             nState.valid = valid;
             nState.message = valid ? '' : (label + message).replace('::', ':');
             onChange && onChange(nState);
@@ -41,7 +46,7 @@ export class InputField extends React.Component {
     }
 
     componentWillReceiveProps(nProps) {
-        this.setState(newState({value: nProps.value}));
+        this.setState(newState({value: nProps.value, valid: nProps.valid}));
     }
 
     render() {
@@ -88,6 +93,7 @@ InputField.propTypes = {
     wrapperStyle: PropTypes.object,
     labelStyle: PropTypes.object,
     value: PropTypes.string,
+    valid: PropTypes.bool,
     onChange: PropTypes.func,
     actOn: PropTypes.arrayOf(PropTypes.oneOf(['blur', 'enter', 'changes'])),
     showWarning : PropTypes.bool,

@@ -15,8 +15,20 @@ import {createLinkCell, createInputCell} from '../../tables/ui/TableRenderer.js'
 import * as TblCntlr from '../../tables/TablesCntlr.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {FilterInfo, FILTER_TTIPS} from '../../tables/FilterInfo.js';
+import {isNil, isArray} from 'lodash';
 
 const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char', width: 10};
+
+
+/**
+ * regenerate short_dd to be one of ['short', 'long', '']
+ */
+function makeFormType(showForm, short_dd) {
+    var ddShort = !showForm ? '' : (isNil(short_dd) ? 'short' : (short_dd === 'true' ? 'short' : 'long'));
+
+    return ddShort;
+}
+
 
 export class CatalogConstraintsPanel extends React.Component {
 
@@ -37,16 +49,21 @@ export class CatalogConstraintsPanel extends React.Component {
     }
 
     componentDidMount() {
-        const {catname} = this.props;
-        this.fetchDD(catname, 'true'); //short form as default
+        const {catname, processId, dd_short, showFormType = true} = this.props;
+        this.fetchDD(catname, makeFormType(showFormType, dd_short), processId,  'true'); //short form as default
     }
 
     componentWillReceiveProps(np) {
-        if (np.catname != this.props.catname || np.dd_short != this.props.dd_short) {
-            this.fetchDD(np.catname, np.dd_short);
+        var ddShort = makeFormType(np.showFormType, np.dd_short);
+
+        if (np.processId !== this.props.processId) {
+            this.fetchDD(np.catnam, ddShort, np.processId, true);
+        } else if (np.catname !== this.props.catname || np.dd_short !== this.props.dd_short) {
+            this.fetchDD(np.catname, ddShort, np.processId);   //TODO: should add 'true'?
         } else if (this.state.tableModel) {
-            if (np.tbl_id != this.state.tableModel.tbl_id) {
-                const tableModel = getTblById(np.tbl_id);
+            var tblid = np.tbl_id ? np.tbl_id : `${np.catname}-${ddShort}-dd-table-constraint`;
+            if (tblid !== this.state.tableModel.tbl_id) {
+                const tableModel = getTblById(tblid);
                 this.setState({tableModel});
             }
         }
@@ -54,7 +71,34 @@ export class CatalogConstraintsPanel extends React.Component {
 
     render() {
         const {tableModel} = this.state;
-        const {catname, dd_short, fieldKey} = this.props;
+        const {catname, dd_short, fieldKey, showFormType=true, processId} = this.props;
+
+        var resetButton = () => {
+            var ddShort = makeFormType(showFormType, dd_short);
+
+            return (
+                <button style={{padding: '0 5px 0 5px', margin: showFormType ? '0 10px 0 10px' : '0'}}
+                        onClick={ () => this.fetchDD(catname,  ddShort, processId, true)}>Reset
+                </button>
+            );
+        };
+        var formTypeList = () => {
+                return (
+                   <ListBoxInputField fieldKey={'ddform'} inline={true} labelWidth={0}
+                       initialState={{
+                            tooltip: 'Select form',
+                            value: 'false'
+                       }}
+                       options={[
+                            {label: 'Standard', value: 'true'},
+                            {label: 'Long form', value: 'false'}
+                       ]}
+                       labelWidth={75}
+                       label='Table Selection:'
+                       multiple={false}
+                   />
+                );
+        };
 
         if (isEmpty(tableModel) || !tableModel.tbl_id.startsWith(catname)) {
             return <div style={{top: 0}} className='loading-mask'/>;
@@ -66,24 +110,9 @@ export class CatalogConstraintsPanel extends React.Component {
                     style={{display:'flex', flexDirection:'column',
                             margin:'0px 10px 5px 5px', padding:'0 0 0 10px',
                             border:'1px solid #a3aeb9'}}>
-                    <div
-                        style={{display:'flex', flexDirection:'row', padding:'5px 5px 0'}}>
-
-                        <ListBoxInputField fieldKey={'ddform'} inline={true} labelWidth={0}
-                                           initialState={{
-                                          tooltip: 'Select form',
-                                          value: 'false'
-                                      }}
-                                           options={ [ {label: 'Standard', value: 'true'},
-                                                   {label: 'Long form', value: 'false'}
-                                                 ]}
-                                           labelWidth={75}
-                                           label='Table Selection:'
-                                           multiple={false}
-                        />
-                        <button style={{padding:'0 5px 0 5px', margin:'0 10px 0 10px'}}
-                                onClick={ () => this.fetchDD(catname, dd_short, true)}>Reset
-                        </button>
+                    <div style={{display:'flex', flexDirection:'row', padding:'5px 5px 0'}}>
+                        {showFormType && formTypeList()}
+                        {resetButton()}
                     </div>
                     <div>
                         <TablePanelConnected {...{tableModel, fieldKey}} />
@@ -100,9 +129,9 @@ export class CatalogConstraintsPanel extends React.Component {
      * @param dd_short
      * @param clearSelections
      */
-    fetchDD(catName, dd_short, clearSelections = false) {
-        const shortdd = (dd_short == 'true') ? 'short' : 'long';
-        const tblid = `${catName}-${shortdd}-dd-table-constraint`;
+    fetchDD(catName, dd_short, processId, clearSelections = false) {
+
+        var tblid = `${catName}-${dd_short}-dd-table-constraint`;
 
         //// Check if it exists already - fieldgroup has a keepState property but
         //// here we are not using the table as a fieldgroup per se so we need to cache the column restrictions changes
@@ -112,8 +141,7 @@ export class CatalogConstraintsPanel extends React.Component {
             return;
         }
 
-        //const catName = get(FieldGroupUtils.getGroupFields(gkey), 'cattable.value', '');
-        const request = {id: 'GatorDD', 'catalog': catName, 'short': dd_short}; //Fetch DD master table
+        const request = {id: processId, 'catalog': catName, short: dd_short}; //Fetch DD master table
         const urldef = get(FieldGroupUtils.getGroupFields(this.props.groupKey), 'cattable.coldef', 'null');
 
         doFetchTable(request).then((tableModel) => {
@@ -208,22 +236,24 @@ CatalogConstraintsPanel.propTypes = {
     dd_short: PropTypes.string,
     constraintskey: PropTypes.string,
     fieldKey: PropTypes.string,
-    groupKey: PropTypes.string
+    groupKey: PropTypes.string,
+    showFormType: PropTypes.bool,
+    processId: PropTypes.string
 };
 
 CatalogConstraintsPanel.defaultProps = {
-    catname: ''
+    catname: '',
+    processId: 'GatorDD',
+    showFormType: true
 };
 
 /**
  * display the data restrictions into a tabular format
- * @returns {XML}
- * @param onChange
- * @param ontablechanged
- * @param fieldKey
- * @param tableModel
+ * @param {func} ontTableChanged
+ * @param {Object} tableModel
+ * @returns {Object} constraint table
  */
-function ConstraintPanel({tableModel, fieldKey, onChange, ontablechanged}) {
+function ConstraintPanel({tableModel, onTableChanged}) {
     //define the table style only in the table div
     const tableStyle = {
         boxSizing: 'border-box',
@@ -249,15 +279,10 @@ function ConstraintPanel({tableModel, fieldKey, onChange, ontablechanged}) {
     const tbl_ui_id = tableModel.tbl_id + '-ui';
     return (
 
-        <div
-            style={{display:'inline-block',
-                    width: '97%', height: '170px', padding: '5px 5px'}}>
-            {
-                /*<div style={popupPanelResizableStyle}>
-                 <div style={tableStyle}>*/
-            }
+        <div style={{display:'inline-block',
+                     width: '97%', height: '170px', padding: '5px 5px'}}>
             <TablePanel
-                onTableChanged={ontablechanged}
+                onTableChanged={onTableChanged}
                 //onBlur={ (e) => {console.log('onChange called from table '+e.value);}}
                 showToolbar={false}
                 showMask={true}
@@ -266,26 +291,27 @@ function ConstraintPanel({tableModel, fieldKey, onChange, ontablechanged}) {
                 tbl_ui_id = {tbl_ui_id}
                 tableModel={tableModel}
                 renderers={
-                                        {
-                                            name:
-                                                { cellRenderer:
-                                                                createLinkCell(
-                                                                    {
-                                                                        hrefColIdx: tableModel.tableData.columns.length-1
-                                                                    }
-                                                                )
-                                                },
-                                            constraints:
-                                                { cellRenderer:
-                                                                createInputCell(
-                                                                         FILTER_TTIPS,
-                                                                         15,
-                                                                         FilterInfo.validator,
-                                                                         onChange
-                                                                )
-                                                }
-                                        }
-                               }
+                    {
+                        name:
+                            { cellRenderer:
+                                createLinkCell(
+                                    {
+                                        hrefColIdx: tableModel.tableData.columns.length-1
+                                    }
+                                )
+                            },
+                        constraints:
+                            { cellRenderer:
+                                createInputCell(
+                                         FILTER_TTIPS,
+                                         15,
+                                         FilterInfo.conditionValidatorNoAutoCorrect,
+                                         //null,
+                                         onTableChanged
+                                )
+                            }
+                    }
+                }
             />
         </div>
     );
@@ -293,25 +319,18 @@ function ConstraintPanel({tableModel, fieldKey, onChange, ontablechanged}) {
 
 export const TablePanelConnected = fieldGroupConnector(ConstraintPanel, getProps, null, null);
 
-const mypropTypes = {
-    onTableChanged: PropTypes.func,
-    fieldKey: PropTypes.string,
-    groupKey: PropTypes.string
-};
-
 function getProps(params, fireValueChange) {
 
     return Object.assign({}, params,
         {
-            //onBlur: (ev) => handleOnBlur(ev, params, fireValueChange)
-            ontablechanged: (ev) => handleOnTableChanged(ev, params, fireValueChange)
+            onTableChanged: () => handleOnTableChanged(params, fireValueChange)
         });
 }
 
-function handleOnTableChanged(ev, params, fireValueChange) {
+function handleOnTableChanged(params, fireValueChange) {
     //var {sql, selCol} = functionGetNewVal(params.tablemodel);
     //sql != params.sql;
-    const {tbl_id} = params;
+    const {tbl_id} = params.tableModel;
     const tbl = getTblById(tbl_id);
     let tbl_data = {};
     let sel_info = {};
@@ -323,25 +342,33 @@ function handleOnTableChanged(ev, params, fireValueChange) {
     }
 
     let sqlTxt = '';
+    let errors = '';
 
     tbl_data.forEach((d) => {
-        if (d[1] && d[1].trim().length > 0) {
-            const filterString = d[1].trim();
-            const colName = d[0];
-            //const filterInfoCls = FilterInfo.parse(d[0] + d[1]);
-            //const val = filterInfoCls.serialize();
-            const parts = filterString && filterString.split(';');
-            const nparts = parts.length;
+        var filterStrings, valid = true;
+        const colName = d[0];
+
+        if (isArray(d[1])) {
+            filterStrings = d[1][0].trim();
+            valid = get(d[1], '1', true);
+        } else {
+            filterStrings = d[1].trim();
+        }
+
+        if (filterStrings && filterStrings.length > 0) {
+            const parts = filterStrings && filterStrings.split(';');
+
             parts.forEach((v, idx) => {
                 // const parts = v.trim().match(extract_regex);
+                var {valid, value} = FilterInfo.conditionValidatorNoAutoCorrect(v);  // TODO: need more detail syntax check
 
-                sqlTxt += `${colName} ${v} `;
-
-                if (idx < nparts - 1) {
-                    sqlTxt += ' AND ';
+                if (!valid) {
+                    errors += (errors.length > 0 ? ` ${value}` : value);
+                } else {
+                    var oneSql = `${colName} ${v}`;
+                    sqlTxt += (sqlTxt.length > 0 ? ` AND ${oneSql}` : oneSql);
                 }
             });
-
         }
     });
 
@@ -352,7 +379,6 @@ function handleOnTableChanged(ev, params, fireValueChange) {
             selCols += tbl_data[colIdxSelected][0] + ',';
         }
     }
-
 
     // the value of this input field is a string
     const val = get(params, 'value', '');
@@ -365,21 +391,21 @@ function handleOnTableChanged(ev, params, fireValueChange) {
     // CAN BECOME AN ENDLESS LOOP IF IT FIRES AGAIN WITHOUT CHECKING
     // BASICALLY IMPLEMENTING HERE THE 'ONCHANGE' OF THE TABLEVIEW USED IN A FORM
 
-    if (val.constraints != sqlTxt || val.selcols != selCols) {
+    if (val.constraints !== sqlTxt || val.selcols !== selCols || errors !== val.errorConstraints) {
         fireValueChange({
-            value: {constraints: sqlTxt, selcols: selCols}
+            value: {constraints: sqlTxt, selcols: selCols, errorConstraints: errors}
         });
     }
 }
 
 const extract_regex = new RegExp('(<|>|>=|<=|=|!=|like|in)(.+)', 'i');
 
-const inputFiledValidator = (filterString) => {
+const inputFieldValidator = (filterString) => {
     let retval = {valid: true, message: ''};
     if (filterString) {
         filterString && filterString.split(';').forEach((v) => {
             const parts = v.trim().match(extract_regex) || [];
-            if (parts.length == 0) {
+            if (parts.length === 0) {
                 retval = {valid: false, message: `${v} not valid: ${FILTER_TTIPS}`};
                 return retval;
             }
