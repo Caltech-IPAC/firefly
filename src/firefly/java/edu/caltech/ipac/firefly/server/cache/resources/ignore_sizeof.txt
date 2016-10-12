@@ -1,3 +1,2 @@
 # ignore these classes/packages when calculating object's size.
 # edu.caltech.ipac.visualize.plot.PlotView
-java.io.BufferedInputStream

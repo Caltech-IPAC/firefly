@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.util.multipart;
 
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.StringUtils;
@@ -22,10 +23,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Date: Jul 27, 2010
@@ -42,6 +45,7 @@ public class MultiPartPostBuilder {
     private List<Param> headers = new ArrayList<Param>();
     private String userId;
     private String passwd;
+    private Map<String, String> cookies;
 
     public MultiPartPostBuilder() {}
 
@@ -75,6 +79,11 @@ public class MultiPartPostBuilder {
         headers.add(new Param(name,value));
     }
 
+
+    public void setCookie(Map<String, String> Cookies) {
+        cookies = Cookies;
+    }
+
     public void addFile(String name, File file) {
         try {
             parts.add(new FilePart(name, file));
@@ -102,6 +111,7 @@ public class MultiPartPostBuilder {
 
         for(Param p : headers) {
             filePost.addRequestHeader(p.getName(), p.getValue());
+
         }
 
         try {
@@ -111,7 +121,11 @@ public class MultiPartPostBuilder {
                             filePost.getParams())
             );
 
-            HttpServices.executeMethod(filePost, userId, passwd);
+            if (cookies != null)  {
+                HttpServices.executeMethod(filePost,userId,passwd,cookies);
+            } else {
+                HttpServices.executeMethod(filePost, userId, passwd);
+            }
 
             MultiPartRespnse resp = new MultiPartRespnse(filePost.getResponseHeaders(),
                                                 filePost.getStatusCode(),
