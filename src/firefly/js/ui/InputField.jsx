@@ -32,7 +32,7 @@ export class InputField extends React.Component {
         const value = e.target.value;
         const nState = {fieldKey, value};
         if (shouldAct(e, actOn)) {
-            var {valid, message, ...others} = validator ? validator(value) : {valid:true, message:''};
+            var {valid, message, ...others} = validator ? validator(value) : {valid: true, message: ''};
             var vadVal = get(others, 'value');  // vadVal has value as undefined in case no validator exists.
             if (vadVal && vadVal !== NOT_CELL_DATA) {
                 nState.value = others.value;
@@ -40,20 +40,26 @@ export class InputField extends React.Component {
             //has(others, 'value') && (nState.value = others.value);    // allow the validator to modify the value.. useful in auto-correct.
             nState.valid = valid;
             nState.message = valid ? '' : (label + message).replace('::', ':');
+            nState.isAct = true;
             onChange && onChange(nState);
+        } else {
+            nState.isAct = false;
         }
+
         this.setState(nState);
     }
 
     componentWillReceiveProps(nProps) {
-        this.setState(newState({value: nProps.value, valid: nProps.valid}));
+        this.setState(newState({value: nProps.value}));
     }
 
     render() {
 
         var {label, labelWidth, tooltip, visible, inline, size,
-             showWarning, style, wrapperStyle, labelStyle} = this.props;
-        var {valid, value, message} = this.state;
+             showWarning, style, wrapperStyle, labelStyle, validator} = this.props;
+        var {value} = this.state;
+        var {valid, message} = get(this.state, 'isAct', false)&&validator ? validator(value) : {valid:true, message: ''};
+
         return (
             <InputFieldView
                 valid={valid}

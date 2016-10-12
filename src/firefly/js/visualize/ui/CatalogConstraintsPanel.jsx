@@ -348,12 +348,7 @@ function handleOnTableChanged(params, fireValueChange) {
         var filterStrings, valid = true;
         const colName = d[0];
 
-        if (isArray(d[1])) {
-            filterStrings = d[1][0].trim();
-            valid = get(d[1], '1', true);
-        } else {
-            filterStrings = d[1].trim();
-        }
+        filterStrings = d[1].trim();
 
         if (filterStrings && filterStrings.length > 0) {
             const parts = filterStrings && filterStrings.split(';');
