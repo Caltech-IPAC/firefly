@@ -3,13 +3,21 @@
  */
 import {flux} from '../Firefly.js';
 
-import {cloneDeep, get, has, omit} from 'lodash';
+import {get} from 'lodash';
 
-import {updateSet, updateMerge} from '../util/WebUtil.js';
 import {doFetchTable, getTblById, isFullyLoaded, makeTblRequest, cloneRequest} from '../tables/TableUtil.js';
-import {HISTOGRAM, getChartSpace} from './ChartUtil.js';
-import * as TablesCntlr from '../tables/TablesCntlr.js';
-import {DELETE} from './ChartsCntlr.js';
+import {getChartDataElement, chartDataLoaded, dispatchChartAdd} from './ChartsCntlr.js';
+import {logError} from '../util/WebUtil.js';
+
+/**
+ * Returns chart data type based
+ * @returns {ChartDataType}
+ */
+export const DATATYPE_HISTOGRAM = {
+        id: 'histogram',
+        fetchData: fetchColData,
+        fetchParamsChanged: serverParamsChanged
+};
 
 /*
  Possible structure of store:
@@ -35,9 +43,6 @@ import {DELETE} from './ChartsCntlr.js';
  */
 
 
-export const HISTOGRAM_DATA_KEY = 'charts.histogram';
-export const LOAD_COL_DATA = `${HISTOGRAM_DATA_KEY}/LOAD_COL_DATA`;
-export const UPDATE_COL_DATA = `${HISTOGRAM_DATA_KEY}/UPDATE_COL_DATA`;
 
 
 /**
@@ -66,7 +71,15 @@ export const UPDATE_COL_DATA = `${HISTOGRAM_DATA_KEY}/UPDATE_COL_DATA`;
  * @memberof firefly.action
  */
 export function dispatchLoadColData({chartId, histogramParams, markAsDefault=false, tblId, dispatcher=flux.process}) {
-    dispatcher({type: LOAD_COL_DATA, payload: {chartId: (chartId||tblId), histogramParams, markAsDefault, tblId}});
+    // HISTOGRAM
+    dispatchChartAdd({chartId, chartType: 'histogram', groupId: tblId,
+        chartDataElements: [
+            {
+                type: 'histogram', //DATA_TYPE_HISTOGRAM.id
+                options: histogramParams,
+                tblId
+            }
+        ], dispatcher});
 }
 
 /*
@@ -80,31 +93,7 @@ const dispatchUpdateColData = function(chartId, isColDataReady, histogramData, h
 };
 */
 
-/*
- * @param rawAction (its payload should contain searchRequest to get source table and histogram parameters)
- * @returns function which loads statistics (column name, num. values, range of values) for a source table
- */
-export function loadColData(rawAction) {
-    return (dispatch) => {
 
-        const {chartId, histogramParams, tblId} = rawAction.payload;
-        const tblSource = get(getTblById(tblId), 'tableMeta.tblFilePath');
-
-        const chartModel = get(getChartSpace(HISTOGRAM), chartId);
-        let serverCallNeeded = !chartModel || !chartModel.tblSource || chartModel.tblSource !== tblSource;
-
-        if (serverCallNeeded || chartModel.histogramParams !== histogramParams) {
-            // when server call parameters do not change but chart parameters change,
-            // we do need to update parameters, but we can reuse the old chart data
-            serverCallNeeded = serverCallNeeded || serverParamsChanged(chartModel.histogramParams, histogramParams);
-
-            dispatch({type: LOAD_COL_DATA, payload: {...rawAction.payload, tblSource, serverCallNeeded}});
-            if (serverCallNeeded) {
-                fetchColData(dispatch, tblId, histogramParams, chartId);
-            }
-        }
-    };
-}
 
 function serverParamsChanged(oldParams, newParams) {
     if (oldParams === newParams) { return false; }
@@ -130,74 +119,20 @@ function getServerCallParameters(histogramParams) {
     return serverParams;
 }
 
-export function reduceHistogram(state={}, action={}) {
-    switch (action.type) {
-        case (TablesCntlr.TABLE_REMOVE)  :
-        {
-            const tbl_id = action.payload.tbl_id;
-            const chartsToDelete = [];
-            Object.keys(state).forEach((cid) => {
-                if (state[cid].tblId === tbl_id) {
-                    chartsToDelete.push(cid);
-                }
-            });
-            return (chartsToDelete.length > 0) ?
-                omit(state, chartsToDelete) : state;
-        }
-        case (DELETE) :
-        {
-            const {chartId, chartType} = action.payload;
-            if (chartType === 'histogram' && has(state, chartId)) {
-                return omit(state, [chartId]);
-            }
-            return state;
-        }
-        case (LOAD_COL_DATA)  :
-        {
-            const {chartId, tblId, histogramParams, markAsDefault, tblSource, serverCallNeeded} = action.payload;
-            if (serverCallNeeded) {
-                const defaultParams = markAsDefault ? cloneDeep(histogramParams) : get(state, [chartId, 'defaultParams']);
-                return updateSet(state, chartId, {tblId, isColDataReady: false, tblSource, histogramParams, defaultParams});
-            } else {
-                // only histogram parameters changed
-                return updateSet(state, [chartId, 'histogramParams'], histogramParams);
-            }
-        }
-        case (UPDATE_COL_DATA)  :
-        {
-            const {chartId, isColDataReady, tblSource, histogramData, histogramParams} = action.payload;
-            if (state[chartId].histogramParams === histogramParams) {
-                return updateMerge(state, chartId, {
-                    isColDataReady,
-                    tblSource,
-                    histogramData
-                });
-            } else {
-                return state;
-            }
-        }
-        default:
-            return state;
-    }
-}
-
-/**
- *
- * @param data {Object} the data to merge with the histogram branch under root
- * @returns {{type: string, payload: object}}
- */
-function updateColData(data) {
-    return { type : UPDATE_COL_DATA, payload: data };
-}
 
 /**
  * Fetches histogram data.
- * @param {function} dispatch
- * @param {string} tblId table id of the source table
- * @param {HistogramParams} histogramParams object, which contains histogram parameters
- * @param {string} chartId - chart id
+ *
+ * @param {Function} dispatch
+ * @param {string} chartId  - chart id
+ * @param {string} chartDataElementId - chart data element id
  */
-function fetchColData(dispatch, tblId, histogramParams, chartId) {
+function fetchColData(dispatch, chartId, chartDataElementId) {
+
+    const chartDataElement = getChartDataElement(chartId, chartDataElementId);
+    if (!chartDataElement) { logError(`[Histogram] Chart data element is not found: ${chartId}, ${chartDataElementId}` ); return; }
+
+    const {tblId, options:histogramParams} = chartDataElement;
 
     if (!isFullyLoaded(tblId) || !histogramParams) {
         return;
@@ -236,6 +171,13 @@ function fetchColData(dispatch, tblId, histogramParams, chartId) {
 
     doFetchTable(req).then(
         (tableModel) => {
+
+            // make sure the data are coming from the latest search
+            const currentChartDataElement = getChartDataElement(chartId, chartDataElementId);
+            if (!currentChartDataElement || serverParamsChanged(histogramParams,currentChartDataElement.options)) {
+                return;
+            }
+
             let histogramData = [];
             if (tableModel.tableData && tableModel.tableData.data) {
                 // if logarithmic values were requested, convert the returned exponents back
@@ -254,13 +196,13 @@ function fetchColData(dispatch, tblId, histogramParams, chartId) {
                 }, []);
 
             }
-            dispatch(updateColData(
+            dispatch(chartDataLoaded(
                 {
                     chartId,
-                    isColDataReady : true,
-                    tblSource,
-                    histogramParams,
-                    histogramData
+                    chartDataElementId,
+                    options : histogramParams,
+                    data: histogramData,
+                    meta: {tblSource}
                 }));
         }
     ).catch(

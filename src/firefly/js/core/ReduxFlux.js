@@ -1,4 +1,3 @@
-
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
@@ -27,8 +26,6 @@ import ImagePlotCntlr, {IMAGE_PLOT_KEY,
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
 import * as ChartsCntlr from '../charts/ChartsCntlr.js';
-import * as HistogramCntlr from '../charts/HistogramCntlr.js';
-import * as XYPlotCntlr from '../charts/XYPlotCntlr.js';
 import * as TablesCntlr from '../tables/TablesCntlr';
 
 import DrawLayer, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
@@ -169,8 +166,9 @@ actionCreators.set(TablesCntlr.TABLE_FILTER, TablesCntlr.tableFetch);
 actionCreators.set(TablesCntlr.TABLE_HIGHLIGHT, TablesCntlr.highlightRow);
 
 actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);
-actionCreators.set(HistogramCntlr.LOAD_COL_DATA, HistogramCntlr.loadColData);
-actionCreators.set(XYPlotCntlr.LOAD_PLOT_DATA, XYPlotCntlr.loadPlotData);
+actionCreators.set(ChartsCntlr.CHART_DATA_FETCH, ChartsCntlr.chartDataFetch);
+actionCreators.set(ChartsCntlr.CHART_OPTIONS_REPLACE, ChartsCntlr.chartOptionsReplace);
+actionCreators.set(ChartsCntlr.CHART_OPTIONS_UPDATE, ChartsCntlr.chartOptionsUpdate);
 
 actionCreators.set(DrawLayerCntlr.SELECT_AREA_END, selectAreaEndActionCreator);
 actionCreators.set(DrawLayerCntlr.DT_END, distanceToolEndActionCreator);

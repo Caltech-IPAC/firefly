@@ -10,8 +10,8 @@ import {get} from 'lodash';
 import {flux} from '../Firefly.js';
 import * as TblUtil from '../tables/TableUtil.js';
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
-import * as XYPlotCntlr from '../charts/XYPlotCntlr.js';
-import * as HistogramCntlr from '../charts/HistogramCntlr.js';
+import * as ChartsCntlr from '../charts/ChartsCntlr.js';
+import {uniqueChartId} from '../charts/ChartUtil.js';
 import {XYPlotOptions} from '../charts/ui/XYPlotOptions.jsx';
 import {resultsSuccess as onXYPlotOptsSelected} from '../charts/ui/XYPlotOptions.jsx';
 import {HistogramOptions} from '../charts/ui/HistogramOptions.jsx';
@@ -91,18 +91,24 @@ class ChartSelect extends Component {
 
         const resultSuccess = (flds) => {
             //const chartId = uniqueChartId(chartType);
-            const chartId = tblId; // before chart container is available we support one chart per table
+            const chartId = uniqueChartId(chartType); // before chart container is available we support one chart per table
+            let onOptionsSelected = undefined;
+            let type = undefined;
             switch (chartType) {
                 case SCATTER:
-                    onXYPlotOptsSelected((xyPlotParams) => {
-                        XYPlotCntlr.dispatchLoadPlotData({chartId, xyPlotParams, markAsDefault: true, tblId});
-                    }, flds);
+                    onOptionsSelected = onXYPlotOptsSelected;
+                    type = 'xycols'; //DATATYPE_XCOLS.id
                     break;
                 case HISTOGRAM:
-                    onHistogramOptsSelected((histogramParams) => {
-                        HistogramCntlr.dispatchLoadColData({chartId, histogramParams, markAsDefault: true, tblId});
-                    }, flds);
+                    onOptionsSelected = onHistogramOptsSelected;
+                    type = 'histogram'; //DATATYPE_HISTOGRAM.id
                     break;
+            }
+            if (onOptionsSelected) {
+                onOptionsSelected((options) => {
+                    ChartsCntlr.dispatchChartAdd({chartId, chartType, groupId: tblId, deletable: true,
+                        chartDataElements: [{type, options, tblId}]});
+                }, flds, tblId);
             }
             hideSearchPanel();
         };

@@ -7,8 +7,7 @@ import {dispatchOnAppReady} from '../core/AppDataCntlr.js';
 
 // Used for dispatch and action type constants
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
-import * as HistogramCntlr from '../charts/HistogramCntlr.js';
-import * as XYPlotCntlr from '../charts/XYPlotCntlr.js';
+import * as ChartsCntlr from '../charts/ChartsCntlr.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import * as ReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
 import * as ImPlotCntlr from '../visualize/ImagePlotCntlr.js';
@@ -149,8 +148,7 @@ export function buildLowlevelAPI() {
 
     const type= Object.assign({},
         findActionType(TableStatsCntlr,TableStatsCntlr.TBLSTATS_DATA_KEY),
-        findActionType(HistogramCntlr, HistogramCntlr.HISTOGRAM_DATA_KEY),
-        findActionType(XYPlotCntlr, XYPlotCntlr.XYPLOT_DATA_KEY ),
+        findActionType(ChartsCntlr, ChartsCntlr.DATA_PREFIX ),
         findActionType(TablesCntlr, TablesCntlr.DATA_PREFIX),
         findActionType(TablesCntlr, TablesCntlr.RESULTS_PREFIX),
         findActionType(TablesCntlr, TablesCntlr.UI_PREFIX),
@@ -165,8 +163,7 @@ export function buildLowlevelAPI() {
     const action= Object.assign({},
         {type},
         findDispatch(TableStatsCntlr),
-        findDispatch(HistogramCntlr),
-        findDispatch(XYPlotCntlr),
+        findDispatch(ChartsCntlr),
         findDispatch(TablesCntlr),
         findDispatch(ReadoutCntlr),
         findDispatch(MultiViewCntlr),

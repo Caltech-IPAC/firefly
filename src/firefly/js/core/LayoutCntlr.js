@@ -7,7 +7,6 @@ import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
 import {smartMerge} from '../tables/TableUtil.js';
-import {hasDefaultCharts} from '../charts/ChartUtil.js';
 import {getDropDownNames} from '../ui/Menu.jsx';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import {TBL_RESULTS_ADDED, TABLE_REMOVE} from '../tables/TablesCntlr.js';
@@ -107,7 +106,7 @@ export function getLayouInfo() {
     const layout = get(flux.getState(), 'layout', {});
     const hasImages = get(flux.getState(), 'allPlots.plotViewAry.length') > 0;
     const hasTables = !isEmpty(get(flux.getState(), 'table_space.results.main.tables', {}));
-    const hasXyPlots = hasTables || hasDefaultCharts();
+    const hasXyPlots = !isEmpty(get(flux.getState(), 'charts.data', {}));
     return clone(layout, {hasImages, hasTables, hasXyPlots});
 }
 

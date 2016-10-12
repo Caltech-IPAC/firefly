@@ -16,12 +16,11 @@ import {FilterInfo} from '../../tables/FilterInfo.js';
 import {FilterEditor} from '../../tables/ui/FilterEditor.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import * as TableStatsCntlr from '../TableStatsCntlr.js';
-import * as HistogramCntlr from '../HistogramCntlr.js';
 import * as XYPlotCntlr from '../XYPlotCntlr.js';
-import {dispatchChartExpanded, dispatchDelete, dispatchChartMounted, dispatchChartUnmounted} from '../ChartsCntlr.js';
+import * as ChartsCntlr from '../ChartsCntlr.js';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
-import {SCATTER, HISTOGRAM, getChartSpace, getHighlighted, getTblIdForChartId, numRelatedCharts} from '../ChartUtil.js';
+import {SCATTER, HISTOGRAM, getHighlighted} from '../ChartUtil.js';
 import {XYPlotOptions} from './XYPlotOptions.jsx';
 import {XYPlot} from './XYPlot.jsx';
 import {HistogramOptions} from './HistogramOptions.jsx';
@@ -38,7 +37,6 @@ import FILTER_IN from 'html/images/icons-2014/24x24_FilterAdd.png';
 import CLEAR_FILTERS from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import LOADING from 'html/images/gxt/loading.gif';
-
 
 class ChartsPanel extends React.Component {
 
@@ -96,43 +94,41 @@ class ChartsPanel extends React.Component {
             if (chartType === SCATTER) {
                 // scatter plot
                 doUpdate =
-                    nextProps.tblPlotData !== this.props.tblPlotData ||
+                    nextProps.chartData !== this.props.chartData ||
                     (nextProps.tableModel &&
                     (nextProps.tableModel.highlightedRow !== get(this.props, 'tableModel.highlightedRow') ||
                      nextProps.tableModel.selectInfo !== get(this.props, 'tableModel.selectInfo') ));
             } else if (chartType === HISTOGRAM){
                 // histogram
-                doUpdate = nextProps.tblHistogramData !== this.props.tblHistogramData;
+                doUpdate = nextProps.chartData !== this.props.chartData;
             }
         }
         return Boolean(doUpdate);
     }
 
     componentDidMount() {
-        const {tblId, chartId, chartType} = this.props;
-        dispatchChartMounted(tblId,chartId,chartType);
+        const {chartId} = this.props;
+        ChartsCntlr.dispatchChartMounted(chartId);
         this.iAmMounted = true;
     }
 
     componentWillReceiveProps(nextProps) {
-        const {tblId, chartId, chartType, tblPlotData, tblHistogramData} = nextProps;
+        const {tblId, chartId} = nextProps;
         if (!tblId || !chartId) { return; }
 
-        if (chartId !== this.props.chartId || chartType !== this.props.chartType ||
-            (!this.props.tblPlotData && tblPlotData || !this.props.tblHistogramData && tblHistogramData)) {
-            dispatchChartUnmounted(this.props.tblId, this.props.chartId, this.props.chartType);
-            dispatchChartMounted(tblId,chartId,chartType);
+        if (chartId !== this.props.chartId) {
+            ChartsCntlr.dispatchChartUnmounted(this.props.chartId);
+            ChartsCntlr.dispatchChartMounted(chartId);
         }
-        if (get(tblPlotData, 'xyPlotData') != get(this.props.tblPlotData, 'xyPlotData') ||
-            get(tblHistogramData, 'histogramData') != get(this.props.tblHistogramData, 'histogramData')) {
+        if (get(ChartsCntlr.getChartDataElement(chartId), 'data') !== get(ChartsCntlr.getChartDataElement(this.props.chartId), 'data')) {
             this.setState({optionsShown: false});
         }
     }
 
     componentWillUnmount() {
         this.iAmMounted = false;
-        const {tblId, chartId, chartType} = this.props;
-        dispatchChartUnmounted(tblId, chartId, chartType);
+        const {chartId} = this.props;
+        ChartsCntlr.dispatchChartUnmounted(chartId);
     }
 
     // -------------
@@ -140,11 +136,11 @@ class ChartsPanel extends React.Component {
     // -------------
 
     renderXYPlot() {
-        const {chartId, tblId, tableModel, tblPlotData} = this.props;
-        if (!TblUtil.isFullyLoaded(tblId) || !tblPlotData) {
+        const {chartId, tblId, tableModel, chartData} = this.props;
+        if (!TblUtil.isFullyLoaded(tblId) || !chartData) {
             return null;
         }
-        const { isPlotDataReady, xyPlotData, xyPlotParams } = tblPlotData;
+        const { isDataReady:isPlotDataReady, data:xyPlotData, options:xyPlotParams} = ChartsCntlr.getChartDataElement(chartId);
         var {widthPx, heightPx} = this.state;
 
         const hRow = getHighlighted(xyPlotParams, tblId);
@@ -165,7 +161,7 @@ class ChartsPanel extends React.Component {
                            }
                         selectInfo={sInfo}
                         onSelection={(selection) => {
-                            if (this.selectionNotEmpty(selection)) {defer(XYPlotCntlr.dispatchSetSelection, chartId, selection);}
+                            if (this.selectionNotEmpty(selection)) {defer(XYPlotCntlr.setXYSelection, chartId, undefined, selection);}
                         }}
                 />
             );
@@ -185,10 +181,12 @@ class ChartsPanel extends React.Component {
 
 
     renderHistogram() {
-        if (!TblUtil.isFullyLoaded(this.props.tblId) || !this.props.tblHistogramData) {
+        const {chartId, tblId, chartData} = this.props;
+        if (!TblUtil.isFullyLoaded(tblId) || !chartData) {
             return null;
         }
-        const { isColDataReady, histogramData, histogramParams } = this.props.tblHistogramData;
+        const { isDataReady:isColDataReady, data:histogramData, options:histogramParams} = ChartsCntlr.getChartDataElement(chartId);
+
         var {widthPx, heightPx} = this.state;
 
         if (isColDataReady) {
@@ -242,7 +240,8 @@ class ChartsPanel extends React.Component {
 
     displaySelectionOptions() {
         if (this.props.chartType === SCATTER) {
-            const selection = get(this.props, 'tblPlotData.xyPlotParams.selection');
+            const chartDataElement = ChartsCntlr.getChartDataElement(this.props.chartId);
+            const selection = get(chartDataElement, 'options.selection');
             return Boolean(selection);
         }
         // for now selection is supported for scatter only
@@ -251,7 +250,8 @@ class ChartsPanel extends React.Component {
 
     displayZoomOriginal() {
         if (this.props.chartType === SCATTER) {
-            const zoom = get(this.props, 'tblPlotData.xyPlotParams.zoom');
+            const chartDataElement = ChartsCntlr.getChartDataElement(this.props.chartId);
+            const zoom = get(chartDataElement, 'options.zoom');
             return Boolean(zoom);
         }
         // for now zoom is supported for scatter only
@@ -260,13 +260,17 @@ class ChartsPanel extends React.Component {
 
     addZoom() {
         if (this.props.chartType === SCATTER) {
-            XYPlotCntlr.dispatchZoom(this.props.chartId, this.props.tblId, get(this.props, 'tblPlotData.xyPlotParams.selection'));
+            const chartDataElement = ChartsCntlr.getChartDataElement(this.props.chartId);
+            const chartDataElementId = chartDataElement.id;
+            XYPlotCntlr.setZoom(this.props.chartId, chartDataElementId, get(chartDataElement, 'options.selection'));
         }
     }
 
     resetZoom() {
         if (this.props.chartType === SCATTER) {
-            XYPlotCntlr.dispatchZoom(this.props.chartId, this.props.tblId);
+            const chartDataElement = ChartsCntlr.getChartDataElement(this.props.chartId);
+            const chartDataElementId = chartDataElement.id;
+            XYPlotCntlr.setZoom(this.props.chartId, chartDataElementId);
         }
     }
 
@@ -279,13 +283,14 @@ class ChartsPanel extends React.Component {
 
     addSelection() {
         if (this.props.chartType === SCATTER) {
-            if (get(this.props, 'tblPlotData.xyPlotData.decimateKey')) {
+            const chartDataElement = ChartsCntlr.getChartDataElement(this.props.chartId);
+            if (get(chartDataElement,'data.decimateKey')) {
                 showInfoPopup('Your data set is too large to select. You must filter it down first.',
                                 `Can't Select`); // eslint-disable-line quotes
             } else {
                 const {tblId, tableModel} = this.props;
-                const selection = get(this.props, 'tblPlotData.xyPlotParams.selection');
-                const rows = get(this.props, 'tblPlotData.xyPlotData.rows');
+                const selection = get(chartDataElement, 'options.selection');
+                const rows = get(chartDataElement,'data.rows');
                 if (tableModel && rows && selection) {
                     const {xMin, xMax, yMin, yMax} = selection;
                     const selectInfoCls = SelectInfo.newInstance({rowCount: tableModel.totalRows});
@@ -323,10 +328,13 @@ class ChartsPanel extends React.Component {
 
     addFilter() {
         if (this.props.chartType === SCATTER) {
-            const {tblPlotData, tableModel} = this.props;
-            const selection = get(tblPlotData, 'xyPlotParams.selection');
-            const xCol = get(tblPlotData, 'xyPlotParams.x.columnOrExpr');
-            const yCol = get(tblPlotData, 'xyPlotParams.y.columnOrExpr');
+            const {chartId, tableModel} = this.props;
+            const chartDataElement = ChartsCntlr.getChartDataElement(chartId);
+
+            const options = get(chartDataElement, 'options');
+            const selection = get(options, 'selection');
+            const xCol = get(options, 'x.columnOrExpr');
+            const yCol = get(options, 'y.columnOrExpr');
             if (selection && xCol && yCol) {
                 const {xMin, xMax, yMin, yMax} = selection;
                 const filterInfo = get(this.props, 'tableModel.request.filters');
@@ -350,7 +358,8 @@ class ChartsPanel extends React.Component {
     }
 
     selectionNotEmpty(selection) {
-        const rows = get(this.props, 'tblPlotData.xyPlotData.rows');
+        const chartDataElement = ChartsCntlr.getChartDataElement(this.props.chartId);
+        const rows = get(chartDataElement, 'data.rows');
         if (rows) {
             if (selection) {
                 const {xMin, xMax, yMin, yMax} = selection;
@@ -395,7 +404,7 @@ class ChartsPanel extends React.Component {
     }
 
     renderToolbar() {
-        const {expandable, expandedMode, tblId, chartId, chartType, deletable, help_id} = this.props;
+        const {expandable, expandedMode, tblId, chartId, deletable, help_id} = this.props;
         return (
             <div className='PanelToolbar ChartPanel__toolbar'>
                 <div className='PanelToolbar_group'>
@@ -432,18 +441,18 @@ class ChartsPanel extends React.Component {
                          title='Expand this panel to take up a larger area'
                          src={OUTLINE_EXPAND}
                          onClick={() => {
-                            dispatchChartExpanded(chartId, tblId, chartType, help_id);
+                            ChartsCntlr.dispatchChartExpanded(chartId);
                             dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.xyPlots);
                          }}
                     />}
 
                     { help_id && <div style={{display: 'inline-block', position: 'relative', top: -9}}> <HelpIcon helpId={help_id} /> </div>}
                     { expandable && !expandedMode &&
-                    (isBoolean(deletable) ? deletable : numRelatedCharts(tblId) > 1) &&  // when deletable is undefined, use related charts criterion
+                    (isBoolean(deletable) ? deletable : ChartsCntlr.getNumCharts(tblId) > 1) &&  // when deletable is undefined, use related charts criterion
                     <img style={{display: 'inline-block', position: 'relative', top: -9, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
                          title='Delete this chart'
                          src={DELETE}
-                         onClick={() => {dispatchDelete(tblId, chartId, chartType);}}
+                         onClick={() => {ChartsCntlr.dispatchChartRemove(chartId);}}
                     />}
                 </div>
             </div>
@@ -453,11 +462,11 @@ class ChartsPanel extends React.Component {
 
     renderOptions() {
         const {optionsShown, filtersShown} = this.state;
-        const { tableModel, tblStatsData, tblPlotData, tblHistogramData, chartId, chartType} = this.props;
+        const { tableModel, tblStatsData, chartData, chartId, chartType} = this.props;
         if (optionsShown) {
             return (
                 <OptionsWrapper toggleOptions={this.toggleOptions}
-                    {...{chartId, tableModel, tblStatsData, tblPlotData, tblHistogramData, chartType}}/>
+                    {...{chartId, tableModel, tblStatsData, chartData, chartType}}/>
             );
         }
         if (filtersShown) {
@@ -471,14 +480,14 @@ class ChartsPanel extends React.Component {
 
 
     render() {
-        var {chartType} = this.props;
+        var {chartData, chartType} = this.props;
+
+        if (!chartData) {
+            return (<div/>);
+        }
 
         var {widthPx, heightPx} = this.state;
         const knownSize = widthPx && heightPx;
-
-        if (chartType === HISTOGRAM && !this.props.tblHistogramData) {
-            return null;
-        }
 
         return (
             <div className='ChartPanel__container'>
@@ -508,8 +517,7 @@ ChartsPanel.propTypes = {
     tblStatsData : PropTypes.object,
     chartId: PropTypes.string,
     chartType: PropTypes.oneOf(['scatter', 'histogram']),
-    tblPlotData : PropTypes.object,
-    tblHistogramData : PropTypes.object,
+    chartData : PropTypes.object,
     width : PropTypes.string,
     height : PropTypes.string
 };
@@ -549,15 +557,14 @@ export class ChartsTableViewPanel extends Component {
     }
 
     getNextState() {
-        var {tblId, chartId, chartType, deletable} = this.props;
-        tblId = tblId || chartId ? getTblIdForChartId(chartId) : TblUtil.getActiveTableId();
-        chartId = this.props.chartId || tblId;
+        const {chartId} = this.props;
+        const chartData =  ChartsCntlr.getChartData(chartId);
+        // one data element - one related tbl id at this time
+        const tblId = ChartsCntlr.getRelatedTblIds(chartId)[0];
         const tableModel = TblUtil.getTblById(tblId);
         const tblStatsData = flux.getState()[TableStatsCntlr.TBLSTATS_DATA_KEY][tblId];
-        const tblHistogramData = chartType == HISTOGRAM && chartId ? getChartSpace(HISTOGRAM)[chartId] : undefined;
-        const tblPlotData = chartType == SCATTER && chartId ? getChartSpace(SCATTER)[chartId] : undefined;
-        deletable = isBoolean(deletable) ? deletable : numRelatedCharts(tblId) > 1;
-        return {chartId, tblId, tableModel, tblStatsData, tblHistogramData, tblPlotData, deletable};
+        const deletable = isBoolean(deletable) ? deletable : ChartsCntlr.getNumCharts(tblId) > 1;
+        return {chartId, tblId, tableModel, tblStatsData, chartData, deletable};
     }
 
     storeUpdate() {
@@ -567,18 +574,18 @@ export class ChartsTableViewPanel extends Component {
     }
 
     render() {
-        const {chartId, tblId, tableModel, tblStatsData, tblHistogramData, tblPlotData} = this.state;
-        return tblId ? (
-            <ChartsPanel {...this.props} {...{chartId, tblId, tableModel, tblStatsData, tblHistogramData, tblPlotData}}/>
-        ) : (<div/>);
+        const {chartId, tblId, tableModel, tblStatsData, chartData} = this.state;
+
+        return (
+            <ChartsPanel {...this.props} {...{chartId, tblId, tableModel, tblStatsData, chartData, chartType : get(chartData, 'chartType')}}/>
+        );
     }
 }
 
 ChartsTableViewPanel.propTypes = {
-    tblId: PropTypes.string, // if not present, active table id is used
-    chartId: PropTypes.string, // if not present table id is used as a chart id
+    chartId: PropTypes.string.isRequired,
     deletable: PropTypes.bool, // should the chart be deletable?
-    chartType: PropTypes.oneOf(['scatter', 'histogram']).isRequired
+    chartType: PropTypes.oneOf(['scatter', 'histogram'])
 };
 
 export class OptionsWrapper extends React.Component {
@@ -588,8 +595,7 @@ export class OptionsWrapper extends React.Component {
 
     shouldComponentUpdate(nProps) {
         return nProps.chartId !== this.props.chartId ||
-        get(nProps, 'tblPlotData.xyPlotParams') !== get(this.props, 'tblPlotData.xyPlotParams') ||
-        get(nProps, 'tblHistogramData.histogramParams') !== get(this.props, 'tblHistogramData.histogramParams') ||
+        get(ChartsCntlr.getChartDataElement(nProps.chartId), 'options') !== get(ChartsCntlr.getChartDataElement(this.props.chartId), 'options') ||
         get(nProps, 'tableModel.tbl_id') !== get(this.props, 'tableModel.tbl_id') ||
             get(nProps, 'tblStatsData.isColStatsReady') !== get(this.props, 'tblStatsData.isColStatsReady') ||
             nProps.chartType !== this.props.chartType;
@@ -602,7 +608,9 @@ export class OptionsWrapper extends React.Component {
     // }
 
     render() {
-        const { chartId, tableModel, tblStatsData, chartType, tblPlotData, tblHistogramData, toggleOptions} = this.props;
+        const { chartId, tblStatsData, chartType, toggleOptions} = this.props;
+        const chartDataElement = ChartsCntlr.getChartDataElement(chartId);
+        const chartDataElementId = chartDataElement.id;
 
         var options;
 
@@ -611,19 +619,19 @@ export class OptionsWrapper extends React.Component {
             if (chartType === SCATTER) {
                 options = (<XYPlotOptions key={formName} groupKey={formName}
                                    colValStats={tblStatsData.colStats}
-                                   xyPlotParams={get(tblPlotData, 'xyPlotParams')}
-                                   defaultParams={get(tblPlotData, 'defaultParams')}
-                                   onOptionsSelected={(xyPlotParams) => {
-                                                XYPlotCntlr.dispatchLoadPlotData({chartId, xyPlotParams, tblId: tableModel.tbl_id});
+                                   xyPlotParams={get(chartDataElement, 'options')}
+                                   defaultParams={get(chartDataElement, 'defaultOptions')}
+                                   onOptionsSelected={(options) => {
+                                                ChartsCntlr.dispatchChartOptionsReplace({chartId, chartDataElementId, newOptions: options});
                                             }
                                           }/>);
             } else {
                 options = (<HistogramOptions key={formName} groupKey={formName}
                                       colValStats={tblStatsData.colStats}
-                                      histogramParams={get(tblHistogramData, 'histogramParams')}
-                                      defaultParams={get(tblHistogramData, 'defaultParams')}
-                                      onOptionsSelected={(histogramParams) => {
-                                                HistogramCntlr.dispatchLoadColData({chartId, histogramParams, tblId: tableModel.tbl_id});
+                                      histogramParams={get(chartDataElement, 'options')}
+                                      defaultParams={get(chartDataElement, 'defaultOptions')}
+                                      onOptionsSelected={(options) => {
+                                                ChartsCntlr.dispatchChartOptionsReplace({chartId, chartDataElementId, newOptions: options});
                                             }
                                           }/>);
             }
@@ -653,8 +661,7 @@ OptionsWrapper.propTypes = {
     chartId : PropTypes.string,
     tableModel : PropTypes.object,
     tblStatsData : PropTypes.object,
-    tblPlotData : PropTypes.object,
-    tblHistogramData: PropTypes.object,
+    chartData : PropTypes.object,
     toggleOptions: PropTypes.func,
     chartType: PropTypes.string
 };

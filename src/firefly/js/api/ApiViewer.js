@@ -18,8 +18,7 @@ import {RequestType}  from '../visualize/RequestType.js';
 import {clone, logError}  from '../util/WebUtil.js';
 import {confirmPlotRequest,findInvalidWPRKeys}  from '../visualize/WebPlotRequest.js';
 import {dispatchTableSearch, dispatchTableFetch}  from '../tables/TablesCntlr.js';
-import {dispatchLoadPlotData} from '../charts/XYPlotCntlr.js';
-import {dispatchLoadColData} from '../charts/HistogramCntlr.js';
+import {dispatchChartAdd} from '../charts/ChartsCntlr.js';
 import {makeFileRequest}  from '../tables/TableUtil.js';
 import {makeXYPlotParams, makeHistogramParams, uniqueChartId} from '../charts/ChartUtil.js';
 import {getWsChannel} from '../core/messaging/WebSocketClient.js';
@@ -246,8 +245,17 @@ function plotRemoteXYPlot(params, dispatch) {
             return;
         }
     }
-    const chartId = uniqueChartId('default_xyplot');
-    dispatchLoadPlotData({chartId, xyPlotParams, tblId, dispatcher: dispatch});
+    const chartId = uniqueChartId();
+    // SCATTER
+    dispatchChartAdd({chartId, chartType: 'scatter', groupId: 'default',
+        chartDataElements: [
+            {
+                type: 'xycols', // DATATYPE_XYCOLS.id
+                options: xyPlotParams,
+                tblId
+            }
+        ],
+        dispatcher: dispatch});
 }
 
 /**
@@ -273,8 +281,17 @@ function plotRemoteHistogram(params, dispatch) {
             return;
         }
     }
-    const chartId = uniqueChartId('default_histogram');
-    dispatchLoadColData({chartId, histogramParams, tblId, dispatcher: dispatch});
+    const chartId = uniqueChartId();
+    // HISTOGRAM
+    dispatchChartAdd({chartId, chartType: 'histogram', groupId: 'default',
+        chartDataElements: [
+            {
+                type: 'histogram', //DATATYPE_HISTOGRAM.id
+                options: histogramParams,
+                tblId
+            }
+        ],
+        dispatcher: dispatch});
 }
 
 //================================================================

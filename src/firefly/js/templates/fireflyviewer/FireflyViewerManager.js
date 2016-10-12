@@ -9,6 +9,7 @@ import {LO_VIEW, LO_MODE, SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo, dispatch
 import {clone} from '../../util/WebUtil.js';
 import {findGroupByTblId, getTblIdsByGroup,getActiveTableId} from '../../tables/TableUtil.js';
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
+import {CHART_ADD, CHART_REMOVE} from '../../charts/ChartsCntlr.js';
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
 import {isMetaDataTable, isCatalogTable} from '../../metaConvert/converterUtils.js';
 import {META_VIEWER_ID} from '../../visualize/ui/TriViewImageSection.jsx';
@@ -31,7 +32,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         const action = yield take([
             ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE,
             ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS,
-            TBL_RESULTS_ADDED, TABLE_REMOVE, TABLE_LOADED,
+            TBL_RESULTS_ADDED, TABLE_REMOVE, TABLE_LOADED, CHART_ADD, CHART_REMOVE,
             SHOW_DROPDOWN, SET_LAYOUT_MODE,
             TBL_RESULTS_ACTIVE
         ]);
@@ -82,11 +83,13 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
 
         // change mode when new UI elements are added or removed from results
         switch (action.type) {
+            case CHART_ADD:
             case TBL_RESULTS_ADDED:
             case TABLE_LOADED:
             case REPLACE_VIEWER_ITEMS :
             case ImagePlotCntlr.PLOT_IMAGE :
             case ImagePlotCntlr.PLOT_IMAGE_START :
+            case CHART_REMOVE:
             case TABLE_REMOVE:
             case ImagePlotCntlr.DELETE_PLOT_VIEW:
                 if (count === 1) {
@@ -105,6 +108,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
 
         // calculate dropDown when new UI elements are added or removed from results
         switch (action.type) {
+            case CHART_ADD:
             case TBL_RESULTS_ADDED:
             case TABLE_LOADED:
             case REPLACE_VIEWER_ITEMS :
@@ -113,6 +117,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
                 dropDown = {visible: count === 0};
                 break;
             case SHOW_DROPDOWN:
+            case CHART_REMOVE:
             case TABLE_REMOVE:
             case ImagePlotCntlr.DELETE_PLOT_VIEW:
                 if (!get(dropDown, 'visible', false)) {
