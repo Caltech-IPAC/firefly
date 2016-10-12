@@ -6,7 +6,7 @@ import React, {PropTypes} from 'react';
 import {get, isEmpty, isUndefined, omitBy, defer} from 'lodash';
 
 import ColValuesStatistics from '../ColValuesStatistics.js';
-import {DATATYPE_XYCOLS} from '../XYPlotCntlr.js';
+import {DATATYPE_XYCOLS} from '../ChartDataTypeXYCols.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';

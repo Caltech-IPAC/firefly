@@ -2,7 +2,7 @@ import React, {PropTypes} from 'react';
 
 import {get} from 'lodash';
 import ColValuesStatistics from './../ColValuesStatistics.js';
-import {DATATYPE_HISTOGRAM} from '../HistogramCntlr.js';
+import {DATATYPE_HISTOGRAM} from '../ChartDataTypeHistogram.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';

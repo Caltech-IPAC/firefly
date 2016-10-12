@@ -16,8 +16,9 @@ import {serializeDecimateInfo} from '../tables/Decimate.js';
 
 
 /**
- * Returns chart data type based
- * @returns {ChartDataType}
+ * Chart data type for XY columns
+ * @constant
+ * @type {ChartDataType}
  */
 export const DATATYPE_XYCOLS = {
         id: 'xycols',
@@ -27,28 +28,31 @@ export const DATATYPE_XYCOLS = {
 };
 
 /*
- Possible structure of store:
-  /xyplot
-    chartId: Object - the name of this node matches chart id
-    {
-         // tblXYPlotData
-         tblId: string // table id
-         tblSource: string // source of the table
-         isPlotDataReady: boolean
-         decimatedUnzoomed: boolean // tells that unzoomed data are decimated
-         xyPlotData: {
-                    rows: [[x: string, y: string, rowIdx: string]*] ,
-                    decimateKey: string,
-                    xMin: string,
-                    xMax: string,
-                    yMin: string,
-                    yMax: string,
-                    weightMin: string,
-                    weightMax: string,
-                    idStr: string
-         }
-         xyPlotParams: XYPlotParams
-     }
+ Possible structure of store with xy data:
+ /data
+   chartId: Object - the name of this node matches chart id
+   {
+      chartDataElements: [
+        tblId
+        isDataReady
+        data: {
+            rows: [[x: string, y: string, rowIdx: string]*] ,
+            decimateKey: string,
+            xMin: string,
+            xMax: string,
+            yMin: string,
+            yMax: string,
+            weightMin: string,
+            weightMax: string,
+            idStr: string
+        }
+        meta: {
+            tblSource,
+            decimatedUnzoomed: boolean // tells that unzoomed data are decimated
+        }
+        options: XYPlotParams
+     ]
+   }
  */
 
 /**
@@ -128,16 +132,15 @@ export function getDefaultXYPlotOptions(tbl_id) {
 }
 
 /**
- * Load xy plot data Load xy plot data.
+ * Load xy plot data Load xy plot data - left for backward compatibility
  *
  * @param {Object} params - dispatch parameters
  * @param {string} params.chartId - if no chart id is specified table id is used as chart id
  * @param {XYPlotParams} params.xyPlotParams - XY plot options (column names, etc.)
- * @param {boolean} [params.markAsDefault=false] - are the options considered to be "the default" to reset to
  * @param {string} params.tblId - table id
  * @param {Function} [params.dispatcher=flux.process] - only for special dispatching uses such as remote
  */
-export function dispatchLoadPlotData({chartId, xyPlotParams, markAsDefault=false, tblId, dispatcher=flux.process}) {
+export function loadXYPlot({chartId, xyPlotParams, tblId, dispatcher=flux.process}) {
     //SCATTER
     dispatchChartAdd({chartId, chartType: 'scatter', groupId: tblId,
         chartDataElements: [
@@ -167,9 +170,6 @@ export function setXYSelection(chartId, chartDataElementId, selection) {
  * @param {string} chartId - chart id
  * @param {string} chartDataElementId - chart data element id
  * @param {XYBoundaries} [selection]
- * @public
- * @function dispatchZoom
- * @memberof firefly.action
  */
 export function setZoom(chartId, chartDataElementId, selection=undefined) {
     const chartDataElement = getChartDataElement(chartId, chartDataElementId);

@@ -467,7 +467,7 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
 }
 
 function doShowHistogram(llApi, targetDiv, params={}) {
-    const {dispatchTableFetch, dispatchChartAdd, dispatchChartOptionsReplace}= llApi.action;
+    const {dispatchTableFetch, dispatchChartAdd, dispatchChartRemove}= llApi.action;
     const {TBL_RESULTS_ACTIVE} = llApi.action.type;
     const {renderDOM} = llApi.util;
     const {makeFileRequest, getActiveTableId} = llApi.util.table;
@@ -502,13 +502,16 @@ function doShowHistogram(llApi, targetDiv, params={}) {
             const new_tblId = getActiveTableId(tblGroup);
             if (new_tblId !== tblId) {
                 tblId = new_tblId;
-                dispatchChartOptionsReplace({chartId,
-                        newOptions: {
-                            type: 'histogram', // DATATYPE_HISTOGRAM.id
+                dispatchChartRemove(chartId);
+                dispatchChartAdd({chartId, chartType: 'histogram', help_id, deletable: false,
+                    mounted: 1,
+                    chartDataElements: [
+                        {
+                            type: 'histogram', //DATATYPE_XYCOLS.id
                             options: histogramParams,
                             tblId
                         }
-                    });
+                    ]});
             }
         });
     }

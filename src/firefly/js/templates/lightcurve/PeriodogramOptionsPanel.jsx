@@ -18,7 +18,7 @@ import Validate from '../../util/Validate.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {makeTblRequest,getTblById} from '../../tables/TableUtil.js';
 
-import {dispatchLoadPlotData} from '../../charts/XYPlotCntlr.js';
+import {loadXYPlot} from '../../charts/ChartDataTypeXYCols.js';
 
 import {RAW_TABLE,PERIODOGRAM, PEAK_TABLE} from '../../templates/lightcurve/LcManager.js';
 
@@ -205,7 +205,7 @@ function doPeriodFinding(request) {
             x: {columnOrExpr: 'Peak', options: 'grid'},
             y: {columnOrExpr: 'Power', options: 'grid'}
         };
-        dispatchLoadPlotData({chartId:PEAK_TABLE, tblId:PEAK_TABLE, markAsDefault:true, xyPlotParams});
+        loadXYPlot({chartId:PEAK_TABLE, tblId:PEAK_TABLE, xyPlotParams});
         dispatchTableSearch(tReq2, {removable: true});
     }
 
@@ -221,7 +221,7 @@ function doPeriodFinding(request) {
             x: {columnOrExpr: 'PERIOD', options: 'grid, log'},
             y: {columnOrExpr: 'POWER', options: 'grid'}
         };
-        dispatchLoadPlotData({chartId:PERIODOGRAM, tblId:PERIODOGRAM, markAsDefault:true, xyPlotParams});
+        loadXYPlot({chartId:PERIODOGRAM, tblId:PERIODOGRAM, markAsDefault:true, xyPlotParams});
     }
 }
 

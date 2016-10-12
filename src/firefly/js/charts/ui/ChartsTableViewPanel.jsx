@@ -16,11 +16,11 @@ import {FilterInfo} from '../../tables/FilterInfo.js';
 import {FilterEditor} from '../../tables/ui/FilterEditor.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import * as TableStatsCntlr from '../TableStatsCntlr.js';
-import * as XYPlotCntlr from '../XYPlotCntlr.js';
+import * as XYPlotCntlr from '../ChartDataTypeXYCols.js';
 import * as ChartsCntlr from '../ChartsCntlr.js';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
-import {SCATTER, HISTOGRAM, getHighlighted} from '../ChartUtil.js';
+import {SCATTER, getHighlighted} from '../ChartUtil.js';
 import {XYPlotOptions} from './XYPlotOptions.jsx';
 import {XYPlot} from './XYPlot.jsx';
 import {HistogramOptions} from './HistogramOptions.jsx';
@@ -85,7 +85,7 @@ class ChartsPanel extends React.Component {
 
     shouldComponentUpdate(nextProps, nextState) {
         let doUpdate = nextState !== this.state ||
-            nextProps.chartId !== this.props.chartId ||
+            nextProps.chartData !== this.props.chartData ||
             nextProps.tblStatsData !== this.props.tblStatsData ||
             nextProps.expandedMode !== this.props.expandedMode ||
             nextProps.deletable !== this.props.deletable;
@@ -94,13 +94,9 @@ class ChartsPanel extends React.Component {
             if (chartType === SCATTER) {
                 // scatter plot
                 doUpdate =
-                    nextProps.chartData !== this.props.chartData ||
                     (nextProps.tableModel &&
                     (nextProps.tableModel.highlightedRow !== get(this.props, 'tableModel.highlightedRow') ||
                      nextProps.tableModel.selectInfo !== get(this.props, 'tableModel.selectInfo') ));
-            } else if (chartType === HISTOGRAM){
-                // histogram
-                doUpdate = nextProps.chartData !== this.props.chartData;
             }
         }
         return Boolean(doUpdate);

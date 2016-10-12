@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {DATATYPE_XYCOLS} from './XYPlotCntlr.js';
-import {DATATYPE_HISTOGRAM} from './HistogramCntlr.js';
+import {DATATYPE_XYCOLS} from './ChartDataTypeXYCols.js';
+import {DATATYPE_HISTOGRAM} from './ChartDataTypeHistogram.js';
 import {logError} from '../util/WebUtil.js';
 
 /**

@@ -9,7 +9,7 @@ import {flux} from '../Firefly.js';
 import {updateSet, updateMerge} from '../util/WebUtil.js';
 import {getTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
-import {getChartDataType} from './ChartDataTypes.js';
+import {getChartDataType} from './ChartDataType.js';
 import {logError} from '../util/WebUtil.js';
 
 export const CHART_SPACE_PATH = 'charts';
@@ -319,9 +319,9 @@ export function reducer(state={ui:{}, data:{}}, action={}) {
     }
 }
 
-const chartActions = [CHART_UI_EXPANDED,CHART_MOUNTED,CHART_UNMOUNTED,
-    CHART_ADD,CHART_REMOVE,CHART_DATA_FETCH,CHART_DATA_LOADED, CHART_OPTIONS_UPDATE,
-    TablesCntlr.TABLE_REMOVE, TablesCntlr.TABLE_SELECT];
+//const chartActions = [CHART_UI_EXPANDED,CHART_MOUNTED,CHART_UNMOUNTED,
+//    CHART_ADD,CHART_REMOVE,CHART_DATA_FETCH,CHART_DATA_LOADED, CHART_OPTIONS_UPDATE,
+//    TablesCntlr.TABLE_REMOVE, TablesCntlr.TABLE_SELECT];
 
 
 /**
@@ -330,118 +330,114 @@ const chartActions = [CHART_UI_EXPANDED,CHART_MOUNTED,CHART_UNMOUNTED,
  * @returns {*} - updated ui part of the state
  */
 function reduceData(state={}, action={}) {
-    if (chartActions.indexOf(action.type) > -1) {
-        switch (action.type) {
-            case (CHART_ADD) :
-                const {chartId, chartType, groupId, deletable, help_id, chartDataElements}  = action.payload;
+    //if (chartActions.indexOf(action.type) < 0) { return state; } // useful when debugging
+    switch (action.type) {
+        case (CHART_ADD) :
+            const {chartId, chartType, groupId, deletable, help_id, chartDataElements}  = action.payload;
 
-                state = updateSet(state, chartId,
-                    omitBy({chartType, chartDataElements: chartDataElementsToObj(chartDataElements), groupId, deletable, help_id}, isUndefined));
-                return state;
-            case (CHART_REMOVE)  :
-            {   const {chartId} = action.payload;
-                return omit(state, chartId);
-            }
-            case (CHART_DATA_FETCH)  :
-            {
-                const {chartId, chartDataElementId, options, tblId, meta} = action.payload;
-                if (has(state, [chartId, 'chartDataElements', chartDataElementId])) {
-                    state = updateMerge(state, [chartId, 'chartDataElements', chartDataElementId],
-                        {
-                            chartDataElementId,
-                            isDataReady: false,
-                            data: undefined,
-                            meta,
-                            tblId,
-                            options
-                        });
-                }
-                return state;
-            }
-            case (CHART_DATA_LOADED) :
-            {
-                const {chartId, chartDataElementId, ...rest} = action.payload;
-                if (has(state, [chartId, 'chartDataElements', chartDataElementId])) {
-                    state = updateMerge(state, [chartId, 'chartDataElements', chartDataElementId], {isDataReady: true, ...rest});
-                }
-                return state;
-            }
-            case (CHART_OPTIONS_UPDATE) :
-            {
-                const {chartId, chartDataElementId, updates} = action.payload;
-                let options = get(state, [chartId, 'chartDataElements', chartDataElementId, 'options']);
-                if (!options) {
-                    logError(`[CHART_OPTIONS_UPDATE] Chart data element optionsis not found: ${chartId}, ${chartDataElementId}`);
-                    return state;
-                }
-                Object.keys(updates).forEach((path) => {
-                    options = updateSet(options, path, updates[path]);
-                });
-                return updateSet(state, [chartId, 'chartDataElements', chartDataElementId, 'options'], options);
-            }
-            case (CHART_MOUNTED) :
-            {
-                const {chartId} = action.payload;
-                if (has(state, chartId)) {
-                    const n = get(state, [chartId,'mounted'], 0);
-                    state = updateSet(state, [chartId,'mounted'], Number(n) + 1);
-                }
-                return state;
-            }
-            case (CHART_UNMOUNTED) :
-            {
-                const {chartId} = action.payload;
-                if (has(state, chartId)) {
-                    const n = get(state, [chartId,'mounted'], 0);
-                    if (n > 0) {
-                        state = updateSet(state, [chartId, 'mounted'], Number(n) - 1);
-                    } else {
-                        logError(`CHART_UNMOUNT on unmounted chartId ${chartId}`);
-                    }
-                }
-                return state;
-            }
-            case (TablesCntlr.TABLE_SELECT) :
-            {
-                // TODO: allow to register chartType dependent sagas to take care of some specific cleanup like this?
-                const tbl_id = action.payload.tbl_id; //also has selectInfo
-                let newState = state;
-                Object.keys(state).forEach((cid) => {
-                    const chartDataElements = state[cid].chartDataElements;
-                    Object.keys(chartDataElements).forEach( (id) => {
-                        if (chartDataElements[id].tblId === tbl_id && has(chartDataElements[id], 'options.selection')) {
-                            newState = updateSet(newState, [cid, 'chartDataElements', id, 'options', 'selection'], undefined);
-                        }
-                    });
-                });
-                return newState;
-            }
-            case (TablesCntlr.TABLE_REMOVE) :
-            {
-                const tbl_id = action.payload.tbl_id;
-                const chartsToDelete = [];
-                let newState=state;
-                Object.keys(state).forEach((cid) => {
-                    let chartDataElements = state[cid].chartDataElements;
-                    Object.keys(state[cid].chartDataElements).forEach( (id) => {
-                        if (chartDataElements[id].tblId === tbl_id) {
-                            chartDataElements = omit(chartDataElements, id);
-                            newState = updateSet(newState, [cid, 'chartDataElements'], chartDataElements);
-                            if (isEmpty(chartDataElements)) {
-                                chartsToDelete.push(cid);
-                            }
-                        }
-                    });
-                });
-                return chartsToDelete.length > 0 ? omit(newState, chartsToDelete) : newState;
-            }
-            default:
-                return state;
+            state = updateSet(state, chartId,
+                omitBy({chartType, chartDataElements: chartDataElementsToObj(chartDataElements), groupId, deletable, help_id}, isUndefined));
+            return state;
+        case (CHART_REMOVE)  :
+        {   const {chartId} = action.payload;
+            return omit(state, chartId);
         }
-    } else {
-        return state;
+        case (CHART_DATA_FETCH)  :
+        {
+            const {chartId, chartDataElementId, options, tblId, meta} = action.payload;
+            if (has(state, [chartId, 'chartDataElements', chartDataElementId])) {
+                state = updateMerge(state, [chartId, 'chartDataElements', chartDataElementId],
+                    {
+                        chartDataElementId,
+                        isDataReady: false,
+                        data: undefined,
+                        meta,
+                        tblId,
+                        options
+                    });
+            }
+            return state;
+        }
+        case (CHART_DATA_LOADED) :
+        {
+            const {chartId, chartDataElementId, ...rest} = action.payload;
+            if (has(state, [chartId, 'chartDataElements', chartDataElementId])) {
+                state = updateMerge(state, [chartId, 'chartDataElements', chartDataElementId], {isDataReady: true, ...rest});
+            }
+            return state;
+        }
+        case (CHART_OPTIONS_UPDATE) :
+        {
+            const {chartId, chartDataElementId, updates} = action.payload;
+            let options = get(state, [chartId, 'chartDataElements', chartDataElementId, 'options']);
+            if (!options) {
+                logError(`[CHART_OPTIONS_UPDATE] Chart data element optionsis not found: ${chartId}, ${chartDataElementId}`);
+                return state;
+            }
+            Object.keys(updates).forEach((path) => {
+                options = updateSet(options, path, updates[path]);
+            });
+            return updateSet(state, [chartId, 'chartDataElements', chartDataElementId, 'options'], options);
+        }
+        case (CHART_MOUNTED) :
+        {
+            const {chartId} = action.payload;
+            if (has(state, chartId)) {
+                const n = get(state, [chartId,'mounted'], 0);
+                state = updateSet(state, [chartId,'mounted'], Number(n) + 1);
+            }
+            return state;
+        }
+        case (CHART_UNMOUNTED) :
+        {
+            const {chartId} = action.payload;
+            if (has(state, chartId)) {
+                const n = get(state, [chartId,'mounted'], 0);
+                if (n > 0) {
+                    state = updateSet(state, [chartId, 'mounted'], Number(n) - 1);
+                } else {
+                    logError(`CHART_UNMOUNT on unmounted chartId ${chartId}`);
+                }
+            }
+            return state;
+        }
+        case (TablesCntlr.TABLE_SELECT) :
+        {
+            // TODO: allow to register chartType dependent sagas to take care of some specific cleanup like this?
+            const tbl_id = action.payload.tbl_id; //also has selectInfo
+            let newState = state;
+            Object.keys(state).forEach((cid) => {
+                const chartDataElements = state[cid].chartDataElements;
+                Object.keys(chartDataElements).forEach( (id) => {
+                    if (chartDataElements[id].tblId === tbl_id && has(chartDataElements[id], 'options.selection')) {
+                        newState = updateSet(newState, [cid, 'chartDataElements', id, 'options', 'selection'], undefined);
+                    }
+                });
+            });
+            return newState;
+        }
+        case (TablesCntlr.TABLE_REMOVE) :
+        {
+            const tbl_id = action.payload.tbl_id;
+            const chartsToDelete = [];
+            let newState=state;
+            Object.keys(state).forEach((cid) => {
+                let chartDataElements = state[cid].chartDataElements;
+                Object.keys(state[cid].chartDataElements).forEach( (id) => {
+                    if (chartDataElements[id].tblId === tbl_id) {
+                        chartDataElements = omit(chartDataElements, id);
+                        newState = updateSet(newState, [cid, 'chartDataElements'], chartDataElements);
+                        if (isEmpty(chartDataElements)) {
+                            chartsToDelete.push(cid);
+                        }
+                    }
+                });
+            });
+            return chartsToDelete.length > 0 ? omit(newState, chartsToDelete) : newState;
+        }
+        default:
+            return state;
     }
-
 }
 
 function chartDataElementsToObj(chartDataElementsArr) {
@@ -465,18 +461,13 @@ function chartDataElementsToObj(chartDataElementsArr) {
  * @returns {*} - updated ui part of the state
  */
 function reduceUI(state={}, action={}) {
-    if (chartActions.indexOf(action.type) > -1) {
-        const {chartId}  = action.payload;
-        switch (action.type) {
-            case (CHART_UI_EXPANDED) :
-                return updateSet(state, 'expanded', chartId);
-            default:
-                return state;
-        }
-    } else {
-        return state;
+    switch (action.type) {
+        case (CHART_UI_EXPANDED) :
+            const {chartId}  = action.payload;
+            return updateSet(state, 'expanded', chartId);
+        default:
+            return state;
     }
-
 }
 
 

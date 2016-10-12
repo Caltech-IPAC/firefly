@@ -137,7 +137,7 @@ export function makeXYPlotParams(params) {
  * @global
  * @public
  * @typedef {Object} HistogramOptions - shallow object with histogram parameters
- * @prop {string}  [sourc    w332e]     location of the ipac table, url or file path; ignored when histogram view is added to table
+ * @prop {string}  [source]     location of the ipac table, url or file path; ignored when histogram view is added to table
  * @prop {string}  [tbl_id]     table id of the table this plot is connected to
  * @prop {string}  [chartTitle] title of the chart
  * @prop {string}  col          column or expression to use for histogram, can contain multiple column names ex. log(col) or (col1-col2)/col3

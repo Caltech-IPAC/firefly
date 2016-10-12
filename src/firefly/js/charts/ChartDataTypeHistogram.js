@@ -1,17 +1,17 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {flux} from '../Firefly.js';
 
 import {get} from 'lodash';
 
 import {doFetchTable, getTblById, isFullyLoaded, makeTblRequest, cloneRequest} from '../tables/TableUtil.js';
-import {getChartDataElement, chartDataLoaded, dispatchChartAdd} from './ChartsCntlr.js';
+import {getChartDataElement, chartDataLoaded} from './ChartsCntlr.js';
 import {logError} from '../util/WebUtil.js';
 
 /**
- * Returns chart data type based
- * @returns {ChartDataType}
+ * Chart data type for histogram data
+ * @constant
+ * @type {ChartDataType}
  */
 export const DATATYPE_HISTOGRAM = {
         id: 'histogram',
@@ -20,30 +20,19 @@ export const DATATYPE_HISTOGRAM = {
 };
 
 /*
- Possible structure of store:
- /histogram
+ Possible structure of store with histogram data:
+ /data
    chartId: Object - the name of this node matches chart id
    {
-         // tblHistogramData
-         tblId: string // table id
-         tblSource: string // source of the table
-         isColDataReady: boolean
-         histogramData: [[numInBin: int, min: double, max: double]*]
-         histogramParams: {
-           columnOrExpr: column name or column expression
-           algorithm: 'fixedSizeBins' or 'bayesianBlocks'
-           numBins: int - for 'fixedSizeBins' algorithm
-           x: [log,flip] x (domain) axis options
-           y: [log,flip] y (counts) axis options
-           falsePositiveRate: double - for 'bayesianBlocks' algorithm (default 0.05)
-           minCutoff: double
-           maxCutoff: double
-         }
+      chartDataElements: [
+        tblId
+        isDataReady
+        data: [[numInBin: int, min: double, max: double]*]
+        meta: {tblSource}
+        options: HistogramParams
+      ]
    }
  */
-
-
-
 
 /**
  * @global
@@ -56,44 +45,6 @@ export const DATATYPE_HISTOGRAM = {
  * @prop {string} [x]   comma separated list of x axis options: flip,log
  * @prop {string} [y]   comma separated list of y axis options: flip,log
  */
-
-/**
- * Load histogram data.
- *
- * @param {Object} params - dispatch parameters
- * @param {string} params.chartId - if no chart id is specified table id is used as chart id
- * @param {HistogramParams} params.histogramParams - histogram options (column name, etc.)
- * @param {boolean} [params.markAsDefault=false] - are the options considered to be "the default" to reset to
- * @param {string} params.tblId - table id
- * @param {Function} [params.dispatcher] - only for special dispatching uses such as remote
- * @public
- * @function dispatchLoadColData
- * @memberof firefly.action
- */
-export function dispatchLoadColData({chartId, histogramParams, markAsDefault=false, tblId, dispatcher=flux.process}) {
-    // HISTOGRAM
-    dispatchChartAdd({chartId, chartType: 'histogram', groupId: tblId,
-        chartDataElements: [
-            {
-                type: 'histogram', //DATA_TYPE_HISTOGRAM.id
-                options: histogramParams,
-                tblId
-            }
-        ], dispatcher});
-}
-
-/*
- * Get column histogram data
- * @param {string} chartId - chart id
- * @param {boolean} isColDataReady - flags that column histogram data are available
- * @param {number[][]} histogramData - an array of the number arrays with npoints, binmin, binmax
- * @param {Object} histogramParams - histogram options (column name, etc.)
-const dispatchUpdateColData = function(chartId, isColDataReady, histogramData, histogramParams) {
-    flux.process({type: UPDATE_COL_DATA, payload: {chartId,isColDataReady,histogramData,histogramParams}});
-};
-*/
-
-
 
 function serverParamsChanged(oldParams, newParams) {
     if (oldParams === newParams) { return false; }
