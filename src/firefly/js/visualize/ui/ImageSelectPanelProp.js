@@ -1,8 +1,12 @@
 /**
  * Created by cwang on 3/10/16.
  */
-export const panelCatalogs = [
+
+import {get} from 'lodash';
+
+export const initPanelCatalogs = [
     {
+        'id':'iras',
         'Title':'IRAS',
         'Symbol': 'IRAS',
         'CatalogId': 0,
@@ -24,6 +28,7 @@ export const panelCatalogs = [
         'size': 5
     },
     {
+        'id':'2mass',
         'Title':'2MASS',
         'Symbol': 'TWOMASS',
         'CatalogId': 1,
@@ -40,6 +45,7 @@ export const panelCatalogs = [
         'size':.139
     },
     {
+        'id': 'wise',
         'Title': 'WISE',
         'Symbol': 'WISE',
         'CatalogId': 2,
@@ -64,6 +70,7 @@ export const panelCatalogs = [
         'size':.15
     },
     {
+        'id': 'msx',
         'Title': 'MSX',
         'Symbol': 'MSX',
         'CatalogId': 3,
@@ -82,6 +89,7 @@ export const panelCatalogs = [
         'size': 1.0
     },
     {
+        'id': 'dss',
         'Title': 'DSS',
         'Symbol': 'DSS',
         'CatalogId': 4,
@@ -105,6 +113,7 @@ export const panelCatalogs = [
         'size':.25
     },
     {
+        'id': 'sdss',
         'Title': 'SDSS',
         'Symbol': 'SDSS',
         'CatalogId': 5,
@@ -124,6 +133,7 @@ export const panelCatalogs = [
         'size':.25
     },
     {
+        'id': 'fileUpload',
         'Title': 'FITS File',
         'Symbol': 'FITS',
         'CatalogId': 6,
@@ -151,6 +161,7 @@ export const panelCatalogs = [
         }
     },
     {
+        'id': 'url',
         'Title': 'URL',
         'Symbol': 'URL',
         'CatalogId': 7,
@@ -175,6 +186,28 @@ export const panelCatalogs = [
         }
     }
 ];
+
+
+const defaultOrder= [
+    'iras',
+    '2mass',
+    'wise',
+    'msx',
+    'dss',
+    'sdss',
+    'fileUpload',
+    'url'
+];
+
+const order= get(window.firefly, 'imageTabs', defaultOrder);
+
+
+export const panelCatalogs = order
+    .map( (id) => initPanelCatalogs.find( (p) => p.id===id))
+    .filter( (e) => e)
+    .map ( (e,idx) => Object.assign({},e,{CatalogId:idx}));
+
+
 
 /*
   blank

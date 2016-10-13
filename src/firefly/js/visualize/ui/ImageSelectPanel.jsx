@@ -3,6 +3,7 @@
  */
 
 import React, {Component, PropTypes} from 'react';
+import {get} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {visRoot } from '../ImagePlotCntlr.js';
 import {NewPlotMode, getAViewFromMultiView, findViewerWithItemId,
@@ -26,7 +27,6 @@ import {resultSuccess, resultFail} from './ImageSelectPanelResult.js';
 import {getActivePlotView, primePlot} from '../PlotViewUtil.js';
 import {FieldGroupCollapsible, CollapseBorder, CollapseHeaderCorner} from '../../ui/panel/CollapsiblePanel.jsx';
 import {ImageSelPanelChangeOneColor, ImageSelPanelChange} from './ImageSelectPanelReducer.js';
-import {get} from 'lodash';
 
 import './ImageSelectPanel.css';
 
@@ -56,7 +56,23 @@ export const keyMap = {
     'plotmode':    'SELECTIMAGEPANEL_targetplot'
 };
 
-export const [IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, NONE] = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+const findCatId = (ary, id) => get(ary.find( (p) => p.id===id), 'CatalogId',-1);
+
+
+export const IRAS= findCatId(panelCatalogs,'iras');
+export const TWOMASS= findCatId(panelCatalogs,'2mass');
+export const WISE= findCatId(panelCatalogs,'wise');
+export const MSX= findCatId(panelCatalogs,'msx');
+export const DSS= findCatId(panelCatalogs,'dss');
+export const SDSS= findCatId(panelCatalogs,'sdss');
+export const FITS= findCatId(panelCatalogs,'fileUpload');
+export const URL= findCatId(panelCatalogs,'url');
+export const NONE= -1;
+
+
+const defCurrCatalogId= [panelCatalogs[0].CatalogId, panelCatalogs[0].CatalogId, panelCatalogs[0].CatalogId];
+
+
 export const rgb = ['red', 'green', 'blue'];
 
 export function completeButtonKey( isThreeColor = false ) {
@@ -68,7 +84,8 @@ export function completeButtonKey( isThreeColor = false ) {
  *
  */
 
-export function computeCurrentCatalogId( fields, colorFields, catalogId = [IRAS, IRAS, IRAS] ) {
+
+export function computeCurrentCatalogId( fields, colorFields, catalogId = defCurrCatalogId ) {
 
     const keytab = keyMap['catalogtab'];
     var   newId = catalogId.slice();
@@ -196,7 +213,7 @@ export class ImageSelection extends Component {
          this.allfields = getAllGroupFields(panelKey,...rgbFieldGroup);
 
          this.state = {
-             initCatalogId: props.catalogId ? props.catalogId : [IRAS, IRAS, IRAS],
+             initCatalogId: props.catalogId ? props.catalogId : defCurrCatalogId,
              fields: this.allfields[panelKey],
              [rgbFieldGroup[RED]]: this.allfields[rgbFieldGroup[RED]],
              [rgbFieldGroup[GREEN]]: this.allfields[rgbFieldGroup[GREEN]],
@@ -585,8 +602,9 @@ TargetPanelSetView.defaultProps={
 /**
  * component inside each catalog tab at middle row
  *
- * @param {Object} catalog
- * @param {Object} fields
+ * @param {Object} p
+ * @param {Object} p.catalog
+ * @param {Object} p.fields
  * @returns {XML}
  * @constructor
  */

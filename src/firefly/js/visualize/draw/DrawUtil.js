@@ -497,9 +497,13 @@ function drawSymbol(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
  * @param onlyAddToPath
  */
 function drawCircle(ctx, x, y, color, lineWidth, size, renderOptions= null, onlyAddToPath= false) {
-    if (!onlyAddToPath) beginPath(ctx,color,lineWidth, renderOptions);
     var radius= size+2;
-
+    if (onlyAddToPath) {
+        ctx.moveTo(x+radius,y);
+    }
+    else {
+        beginPath(ctx, color, lineWidth, renderOptions);
+    }
     ctx.arc(x, y, radius, 0, 2 * Math.PI);
     if (!onlyAddToPath) stroke(ctx);
 }
