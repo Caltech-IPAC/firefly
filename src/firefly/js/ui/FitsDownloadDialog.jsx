@@ -287,7 +287,7 @@ function FitsDownloadDialogForm() {
                         </td>
                         <td>
                             <div style={{ textAlign:'center', marginBottom: 20}}>
-                               <HelpIcon helpId={'visualization.fitsViewer'} />
+                               <HelpIcon helpId={'visualization.imageoptions'} />
                             </div>
                         </td>
                     </tr>
@@ -489,7 +489,7 @@ function  makeTitleFileName(plot, band) {
  * After the str is spitted to an array, reconnect the array to a string
  * using '-'.
  *
- * @param str: input string
+ * @param str input string
  * @returns {T} a string by replace ':' and white spaces by '-' in the input str.
  */
 function getHyphenatedName(str){
