@@ -9,7 +9,7 @@ import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {keyMap, computeLabelWidth, rgbFieldGroup, isTargetNeeded,
         IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, NONE} from './ImageSelectPanel.jsx';
 import {sizeFromDeg} from '../../ui/SizeInputField.jsx';
-import {get} from 'lodash';
+import {get, isUndefined} from 'lodash';
 
 // get unit (string), min (float) and max (float) from the data file
 var getRangeItem = (crtCatalogId, rangeItem) => {
@@ -34,6 +34,18 @@ var getSize = (crtCatalogId) => {
     }
 };
 
+
+
+function getTypeData(keyMapId, key, id,value) {
+    return {
+        fieldKey: keyMap[keyMapId],
+        label: get(panelCatalogs[id],[key,'Title'],'Unused'),
+        value: isUndefined(value) ? get(panelCatalogs[id],[key,'Default'],'') : value,
+        labelWidth: computeLabelWidth(get(panelCatalogs[id],[key,'Title'],'Unused'))
+    };
+}
+
+
 // tab fields initialization
 function initTabFields(crtCatalogId) {
     return (
@@ -42,60 +54,15 @@ function initTabFields(crtCatalogId) {
             fieldKey: keyMap['catalogtab'],
             value: panelCatalogs[crtCatalogId].CatalogId.toString()
         },
-        [keyMap['irastypes']]: {
-            fieldKey: keyMap['irastypes'],
-            label: panelCatalogs[IRAS].types.Title,
-            value: panelCatalogs[IRAS].types.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[IRAS].types.Title)
-        },
-        [keyMap['twomasstypes']]: {
-            fieldKey: keyMap['twomasstypes'],
-            label: panelCatalogs[TWOMASS].types.Title,
-            value: panelCatalogs[TWOMASS].types.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[TWOMASS].types.Title)
-        },
-        [keyMap['wisetypes']]: {
-            fieldKey: keyMap['wisetypes'],
-            label: panelCatalogs[WISE].types.Title,
-            value: panelCatalogs[WISE].types.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[WISE].types.Title)
-        },
-        [keyMap['wisebands']]: {
-            fieldKey: keyMap['wisebands'],
-            label: panelCatalogs[WISE].bands.Title,
-            value: panelCatalogs[WISE].bands.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[WISE].bands.Title)
-        },
-        [keyMap['msxtypes']]: {
-            fieldKey: keyMap['msxtypes'],
-            label: panelCatalogs[MSX].types.Title,
-            value: panelCatalogs[MSX].types.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[MSX].types.Title)
-        },
-        [keyMap['dsstypes']]: {
-            fieldKey: keyMap['dsstypes'],
-            label: panelCatalogs[DSS].types.Title,
-            value: panelCatalogs[DSS].types.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[DSS].types.Title)
-        },
-        [keyMap['sdsstypes']]: {
-            fieldKey: keyMap['sdsstypes'],
-            label: panelCatalogs[SDSS].types.Title,
-            value: panelCatalogs[SDSS].types.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[SDSS].types.Title)
-        },
-        [keyMap['fitslist']]: {
-            fieldKey: keyMap['fitslist'],
-            label: panelCatalogs[FITS].list.Title,
-            value: panelCatalogs[FITS].list.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[FITS].list.Title)
-        },
-        [keyMap['fitsextinput']]: {
-            fieldKey: keyMap['fitsextinput'],
-            label: panelCatalogs[FITS].extinput.Title,
-            value: '0',
-            labelWidth: computeLabelWidth(panelCatalogs[FITS].extinput.Title)
-        },
+        [keyMap['irastypes']]: getTypeData('irastypes', 'types', IRAS),
+        [keyMap['twomasstypes']]: getTypeData('twomasstypes', 'types', TWOMASS),
+        [keyMap['wisetypes']]: getTypeData('wisetypes', 'types', WISE),
+        [keyMap['wisebands']]: getTypeData('wisebands', 'bands', WISE),
+        [keyMap['msxtypes']]: getTypeData('msxtypes', 'types', MSX),
+        [keyMap['dsstypes']]: getTypeData('dsstypes', 'types', DSS),
+        [keyMap['sdsstypes']]: getTypeData('sdsstypes', 'types', SDSS),
+        [keyMap['fitslist']]: getTypeData('fitslist', 'list', FITS),
+        [keyMap['fitsextinput']]: getTypeData('fitsextinput', 'extinput', FITS, '0'),
         /*
         [keyMap['blankinput']]: {
             fieldKey: keyMap['blankinput'],
@@ -107,26 +74,11 @@ function initTabFields(crtCatalogId) {
             labelWidth: computeLabelWidth(panelCatalogs[BLANK].input.Title)
         },
         */
-        [keyMap['urlinput']]: {
-            fieldKey: keyMap['urlinput'],
-            label: panelCatalogs[URL].input.Title,
-            validator: Validate.validateUrl.bind(null, 'a url field'),
-            value: '',
-            labelWidth: computeLabelWidth(panelCatalogs[URL].input.Title)
-        },
-        [keyMap['urllist']]: {
-            fieldKey: keyMap['urllist'],
-            label: panelCatalogs[URL].list.Title,
-            value: panelCatalogs[URL].list.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[URL].list.Title)
-
-        },
-        [keyMap['urlextinput']]: {
-            fieldKey: keyMap['urlextinput'],
-            label: panelCatalogs[URL].extinput.Title,
-            value: '0',
-            labelWidth: computeLabelWidth(panelCatalogs[URL].extinput.Title)
-        }
+        [keyMap['urlinput']]: Object.assign(
+                        getTypeData('urlinput', 'input', URL,''),
+                        {validator: Validate.validateUrl.bind(null, 'a url field')}),
+        [keyMap['urllist']]: getTypeData('urllist', 'list', FITS),
+        [keyMap['urlextinput']]: getTypeData('urlextinput', 'extinput', URL, '0'),
     });
 }
 
@@ -188,7 +140,7 @@ var initTargetSize = (crtCatalogId) => {
 // reducer for the child field group (fieldgrouptabs for r, g, b)
 export var ImageSelPanelChangeOneColor = (inFields, action) => {
     if (!inFields) {
-        return initTabFields(IRAS);
+        return initTabFields(panelCatalogs[0].CatalogId);
     } else {
         return inFields;
     }
