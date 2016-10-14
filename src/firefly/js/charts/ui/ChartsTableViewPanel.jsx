@@ -94,7 +94,7 @@ class ChartsPanel extends React.Component {
             if (chartType === SCATTER) {
                 // scatter plot
                 doUpdate =
-                    (nextProps.tableModel &&
+                    (nextProps.tableModel && TblUtil.isFullyLoaded(nextProps.tableModel.tblId) &&
                     (nextProps.tableModel.highlightedRow !== get(this.props, 'tableModel.highlightedRow') ||
                      nextProps.tableModel.selectInfo !== get(this.props, 'tableModel.selectInfo') ));
             }
