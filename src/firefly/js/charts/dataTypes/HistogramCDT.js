@@ -4,9 +4,11 @@
 
 import {get} from 'lodash';
 
-import {doFetchTable, getTblById, isFullyLoaded, makeTblRequest, cloneRequest} from '../tables/TableUtil.js';
-import {getChartDataElement, chartDataLoaded} from './ChartsCntlr.js';
-import {logError} from '../util/WebUtil.js';
+import {doFetchTable, getTblById, isFullyLoaded, makeTblRequest, cloneRequest} from '../../tables/TableUtil.js';
+import {getChartDataElement, chartDataUpdate} from './../ChartsCntlr.js';
+import {logError} from '../../util/WebUtil.js';
+
+export const DT_HISTOGRAM = 'histogram';
 
 /**
  * Chart data type for histogram data
@@ -14,9 +16,10 @@ import {logError} from '../util/WebUtil.js';
  * @type {ChartDataType}
  */
 export const DATATYPE_HISTOGRAM = {
-        id: 'histogram',
+        id: DT_HISTOGRAM,
         fetchData: fetchColData,
-        fetchParamsChanged: serverParamsChanged
+        fetchParamsChanged: serverParamsChanged,
+        fetchOnTblSort: false
 };
 
 /*
@@ -59,15 +62,12 @@ function serverParamsChanged(oldParams, newParams) {
 
 function getServerCallParameters(histogramParams) {
     if (!histogramParams) { return []; }
-
-    const serverParams = [];
-    serverParams.push(histogramParams.columnOrExpr);
-    serverParams.push(histogramParams.x && histogramParams.x.includes('log'));
-    serverParams.push(histogramParams.numBins);
-    serverParams.push(histogramParams.falsePositiveRate);
-    //serverParams.push(histogramParams.minCutoff);
-    //serverParams.push(histogramParams.maxCutoff);
-    return serverParams;
+    return [
+        histogramParams.columnOrExpr,
+        histogramParams.x && histogramParams.x.includes('log'),
+        histogramParams.numBins,
+        histogramParams.falsePositiveRate
+    ];
 }
 
 
@@ -147,10 +147,11 @@ function fetchColData(dispatch, chartId, chartDataElementId) {
                 }, []);
 
             }
-            dispatch(chartDataLoaded(
+            dispatch(chartDataUpdate(
                 {
                     chartId,
                     chartDataElementId,
+                    isDataReady: true,
                     options : histogramParams,
                     data: histogramData,
                     meta: {tblSource}

@@ -28,6 +28,10 @@ import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
 import * as ChartsCntlr from '../charts/ChartsCntlr.js';
 import * as TablesCntlr from '../tables/TablesCntlr';
 
+import {chartDataTypeFactory} from '../charts/ChartDataType.js';
+import {DATATYPE_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
+import {DATATYPE_HISTOGRAM} from '../charts/dataTypes/HistogramCDT.js';
+
 import DrawLayer, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr, {makeDetachLayerActionCreator,
@@ -111,7 +115,7 @@ const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,Dis
                                                      PointSelection, StatsPoint, NorthUpCompass,
                                                      Catalog, WebGrid, RegionPlot, MarkerTool, FootprintTool);
 
-
+const cdtFactory= chartDataTypeFactory([DATATYPE_XYCOLS, DATATYPE_HISTOGRAM]);
 
 /**
  * A collection of reducers keyed by the node's name under the root.
@@ -166,9 +170,9 @@ actionCreators.set(TablesCntlr.TABLE_FILTER, TablesCntlr.tableFetch);
 actionCreators.set(TablesCntlr.TABLE_HIGHLIGHT, TablesCntlr.highlightRow);
 
 actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);
-actionCreators.set(ChartsCntlr.CHART_DATA_FETCH, ChartsCntlr.chartDataFetch);
-actionCreators.set(ChartsCntlr.CHART_OPTIONS_REPLACE, ChartsCntlr.chartOptionsReplace);
-actionCreators.set(ChartsCntlr.CHART_OPTIONS_UPDATE, ChartsCntlr.chartOptionsUpdate);
+actionCreators.set(ChartsCntlr.CHART_DATA_FETCH, ChartsCntlr.makeChartDataFetch(cdtFactory.getChartDataType));
+actionCreators.set(ChartsCntlr.CHART_OPTIONS_REPLACE, ChartsCntlr.makeChartOptionsReplace(cdtFactory.getChartDataType));
+actionCreators.set(ChartsCntlr.CHART_OPTIONS_UPDATE, ChartsCntlr.makeChartOptionsUpdate(cdtFactory.getChartDataType));
 
 actionCreators.set(DrawLayerCntlr.SELECT_AREA_END, selectAreaEndActionCreator);
 actionCreators.set(DrawLayerCntlr.DT_END, distanceToolEndActionCreator);
@@ -345,6 +349,14 @@ function createDrawLayer(drawLayerTypeId, params) {
     return drawLayerFactory.create(drawLayerTypeId,params);
 }
 
+/**
+ *
+ * @param {ChartDataType} chartDataType
+ */
+function registerChartDataType(chartDataType) {
+    cdtFactory.addChartDataType(chartDataType);
+}
+
 
 export var reduxFlux = {
     registerCreator,
@@ -353,6 +365,7 @@ export var reduxFlux = {
     getState,
     process,
     addListener,
+    registerChartDataType,
     registerDrawLayer,
     createDrawLayer,
     getDrawLayerFactory,

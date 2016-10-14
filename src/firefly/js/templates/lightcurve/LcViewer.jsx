@@ -25,7 +25,7 @@ import {dispatchInitFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {loadXYPlot} from '../../charts/ChartDataTypeXYCols.js';
+import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import * as TblUtil from '../../tables/TableUtil.js';
 
 // import {deepDiff} from '../util/WebUtil.js';

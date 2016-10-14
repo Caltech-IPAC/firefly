@@ -16,7 +16,7 @@ import {FilterInfo} from '../../tables/FilterInfo.js';
 import {FilterEditor} from '../../tables/ui/FilterEditor.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import * as TableStatsCntlr from '../TableStatsCntlr.js';
-import * as XYPlotCntlr from '../ChartDataTypeXYCols.js';
+import * as XYPlotCntlr from '../dataTypes/XYColsCDT.js';
 import * as ChartsCntlr from '../ChartsCntlr.js';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';

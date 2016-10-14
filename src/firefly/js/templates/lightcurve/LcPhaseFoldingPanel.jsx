@@ -26,7 +26,7 @@ import {Tabs, Tab,FieldGroupTabs} from '../../ui/panel/TabPanel.jsx';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 
-import {loadXYPlot} from '../../charts/ChartDataTypeXYCols.js';
+import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 
 
 import {RAW_TABLE, PHASE_FOLDED} from '../../templates/lightcurve/LcManager.js';

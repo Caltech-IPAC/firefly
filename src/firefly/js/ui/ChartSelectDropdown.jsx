@@ -13,8 +13,10 @@ import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
 import * as ChartsCntlr from '../charts/ChartsCntlr.js';
 import {uniqueChartId} from '../charts/ChartUtil.js';
 import {XYPlotOptions} from '../charts/ui/XYPlotOptions.jsx';
+import {DT_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
 import {resultsSuccess as onXYPlotOptsSelected} from '../charts/ui/XYPlotOptions.jsx';
 import {HistogramOptions} from '../charts/ui/HistogramOptions.jsx';
+import {DT_HISTOGRAM} from '../charts/dataTypes/HistogramCDT.js';
 import {resultsSuccess as onHistogramOptsSelected} from '../charts/ui/HistogramOptions.jsx';
 //import {uniqueChartId} from '../charts/ChartUtil.js';
 
@@ -97,11 +99,11 @@ class ChartSelect extends Component {
             switch (chartType) {
                 case SCATTER:
                     onOptionsSelected = onXYPlotOptsSelected;
-                    type = 'xycols'; //DATATYPE_XCOLS.id
+                    type = DT_XYCOLS;
                     break;
                 case HISTOGRAM:
                     onOptionsSelected = onHistogramOptsSelected;
-                    type = 'histogram'; //DATATYPE_HISTOGRAM.id
+                    type = DT_HISTOGRAM;
                     break;
             }
             if (onOptionsSelected) {

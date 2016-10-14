@@ -18,7 +18,7 @@ import Validate from '../../util/Validate.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {makeTblRequest,getTblById} from '../../tables/TableUtil.js';
 
-import {loadXYPlot} from '../../charts/ChartDataTypeXYCols.js';
+import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 
 import {RAW_TABLE,PERIODOGRAM, PEAK_TABLE} from '../../templates/lightcurve/LcManager.js';
 

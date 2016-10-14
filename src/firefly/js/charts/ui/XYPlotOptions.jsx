@@ -6,7 +6,7 @@ import React, {PropTypes} from 'react';
 import {get, isEmpty, isUndefined, omitBy, defer} from 'lodash';
 
 import ColValuesStatistics from '../ColValuesStatistics.js';
-import {DATATYPE_XYCOLS} from '../ChartDataTypeXYCols.js';
+import {DT_XYCOLS} from '../dataTypes/XYColsCDT.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
@@ -108,7 +108,7 @@ export function resultsSuccess(callback, flds, tblId) {
         shading: flds.shading || undefined,
         x : { columnOrExpr : xName, label : xLabel, unit : xUnit, options : xOptions},
         y : { columnOrExpr : yName, label : yLabel, unit : yUnit, options : yOptions},
-        type : DATATYPE_XYCOLS.id,
+        type : DT_XYCOLS,
         tblId
     }, isUndefined);
 

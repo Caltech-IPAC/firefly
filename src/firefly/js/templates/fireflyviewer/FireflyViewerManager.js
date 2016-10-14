@@ -10,7 +10,8 @@ import {clone} from '../../util/WebUtil.js';
 import {findGroupByTblId, getTblIdsByGroup,getActiveTableId, getTableInGroup} from '../../tables/TableUtil.js';
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import {CHART_ADD, CHART_REMOVE, getNumCharts, dispatchChartAdd} from '../../charts/ChartsCntlr.js';
-import {getDefaultXYPlotOptions} from '../../charts/ChartDataTypeXYCols.js';
+import {getDefaultXYPlotOptions, DT_XYCOLS} from '../../charts/dataTypes/XYColsCDT.js';
+import {SCATTER} from '../../charts/ChartUtil.js';
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
 import {isMetaDataTable, isCatalogTable} from '../../metaConvert/converterUtils.js';
 import {META_VIEWER_ID} from '../../visualize/ui/TriViewImageSection.jsx';
@@ -154,10 +155,10 @@ function handleNewTable(action, images, showImages, showTables, coverageLockedOn
             if (defaultOptions) {
                 dispatchChartAdd({
                     chartId: 'xyplot-' + tbl_id,
-                    chartType: 'scatter',
+                    chartType: SCATTER,
                     groupId: tbl_id,
                     deletable: false,
-                    chartDataElements: [{tblId: tbl_id, type: 'xycols', options: defaultOptions}]
+                    chartDataElements: [{tblId: tbl_id, type: DT_XYCOLS, options: defaultOptions}]
                 });
             }
         }

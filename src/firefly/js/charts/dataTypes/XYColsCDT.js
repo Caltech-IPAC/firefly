@@ -2,18 +2,19 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {flux} from '../Firefly.js';
+import {flux} from '../../Firefly.js';
 
-import {updateSet, logError} from '../util/WebUtil.js';
+import {updateSet, logError} from '../../util/WebUtil.js';
 import {get, omitBy, isEmpty, isString, isUndefined} from 'lodash';
 
-import {MetaConst} from '../data/MetaConst.js';
-import {doFetchTable, getColumn, getTblById, isFullyLoaded, cloneRequest} from '../tables/TableUtil.js';
+import {MetaConst} from '../../data/MetaConst.js';
+import {doFetchTable, getColumn, getTblById, isFullyLoaded, cloneRequest} from '../../tables/TableUtil.js';
 
-import {getChartDataElement, dispatchChartAdd, dispatchChartOptionsUpdate, chartDataLoaded} from './ChartsCntlr.js';
-import {colWithName, getNumericCols} from './ChartUtil.js';
-import {serializeDecimateInfo} from '../tables/Decimate.js';
+import {getChartDataElement, dispatchChartAdd, dispatchChartOptionsUpdate, chartDataUpdate} from './../ChartsCntlr.js';
+import {colWithName, getNumericCols, SCATTER} from './../ChartUtil.js';
+import {serializeDecimateInfo} from '../../tables/Decimate.js';
 
+export const DT_XYCOLS = 'xycols';
 
 /**
  * Chart data type for XY columns
@@ -21,7 +22,7 @@ import {serializeDecimateInfo} from '../tables/Decimate.js';
  * @type {ChartDataType}
  */
 export const DATATYPE_XYCOLS = {
-        id: 'xycols',
+        id: DT_XYCOLS,
         fetchData: fetchPlotData,
         fetchParamsChanged: serverParamsChanged,
         getUpdatedOptions: getUpdatedParams
@@ -142,10 +143,10 @@ export function getDefaultXYPlotOptions(tbl_id) {
  */
 export function loadXYPlot({chartId, xyPlotParams, tblId, dispatcher=flux.process}) {
     //SCATTER
-    dispatchChartAdd({chartId, chartType: 'scatter', groupId: tblId,
+    dispatchChartAdd({chartId, chartType: SCATTER, groupId: tblId,
         chartDataElements: [
             {
-                type: 'xycols', //DATATYPE_XYCOLS.id,
+                type: DT_XYCOLS,
                 options: xyPlotParams,
                 tblId
             }
@@ -363,11 +364,15 @@ function fetchPlotData(dispatch, chartId, chartDataElementId) {
             // need to preserve original decimatedUnzoomed for zoomed plots
             decimatedUnzoomed = isUndefined(decimatedUnzoomed) ? get(meta,'decimatedUnzoomed') : decimatedUnzoomed;
 
-            dispatch(chartDataLoaded({chartId, chartDataElementId,
-                options:getUpdatedParams(xyPlotParams, tblId, xyPlotData),
-                data: xyPlotData,
-                meta: {tblSource, decimatedUnzoomed}
-            }));
+            dispatch(chartDataUpdate(
+                {
+                    chartId,
+                    chartDataElementId,
+                    isDataReady: true,
+                    options: getUpdatedParams(xyPlotParams, tblId, xyPlotData),
+                    data: xyPlotData,
+                    meta: {tblSource, decimatedUnzoomed}
+                }));
         }
     ).catch(
         (reason) => {

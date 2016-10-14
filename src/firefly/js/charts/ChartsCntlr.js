@@ -9,7 +9,6 @@ import {flux} from '../Firefly.js';
 import {updateSet, updateMerge} from '../util/WebUtil.js';
 import {getTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
-import {getChartDataType} from './ChartDataType.js';
 import {logError} from '../util/WebUtil.js';
 
 export const CHART_SPACE_PATH = 'charts';
@@ -21,7 +20,7 @@ export const DATA_PREFIX = `${CHART_SPACE_PATH}.data`;
 export const CHART_ADD = `${DATA_PREFIX}/chartAdd`;
 export const CHART_REMOVE = `${DATA_PREFIX}/chartRemove`;
 export const CHART_DATA_FETCH = `${DATA_PREFIX}/chartDataFetch`;
-export const CHART_DATA_LOADED = `${DATA_PREFIX}/chartDataLoaded`;
+export const CHART_DATA_UPDATE = `${DATA_PREFIX}/chartDataUpdate`;
 export const CHART_OPTIONS_UPDATE = `${DATA_PREFIX}/chartOptionsUpdate`;
 export const CHART_OPTIONS_REPLACE = `${DATA_PREFIX}/chartOptionsReplace`;
 
@@ -53,7 +52,8 @@ const FIRST_CDEL_ID = '0'; // first data element id (if missing)
  *  @param {string} p.chartType - chart type, ex. 'scatter', 'histogram'
  *  @param {Array<ChartDataElement>} p.chartDataElements array
  *  @param {string} [p.groupId] - chart group for grouping charts together
- *  @param {string} [p.help_id] - help id
+ *  @param {boolean} [p.deletable] - is the chart deletable, if undefined: single chart in a group is not deletable, multiple are deletable
+ *  @param {string} [p.help_id] - help id, if undefined, no help icon shows up
  *  @param {Function} [p.dispatcher=flux.process] - only for special dispatching uses such as remote
  *  @public
  *  @function dispatchChartAdd
@@ -84,18 +84,20 @@ export function dispatchChartRemove(chartId, dispatcher= flux.process) {
  *  @param {string} p.chartId - chart id
  *  @param {ChartDataElement} p.chartDataElement - chart data element id
  *  @param {Object} [p.newOptions] - options to use for data fetching
+ *  @param {string} [p.invokedBy] - if defined, table action, which triggered the dispatch
  *  @param {Function} [p.dispatcher=flux.process] - only for special dispatching uses such as remote
  *  @public
  *  @function dispatchChartDataFetch
  *  @memberof firefly.action
  */
-export function dispatchChartDataFetch({chartId, chartDataElement, newOptions, dispatcher=flux.process}) {
-    dispatcher({type: CHART_DATA_FETCH, payload: {chartId, chartDataElement, newOptions}});
+export function dispatchChartDataFetch({chartId, chartDataElement, newOptions, invokedBy, dispatcher=flux.process}) {
+    dispatcher({type: CHART_DATA_FETCH, payload: {chartId, chartDataElement, newOptions, invokedBy}});
 }
 
 /*
-export function dispatchChartDataLoaded({chartId, chartDataElementId, options, newOptions, data, meta, dispatcher=flux.process}) {
-    dispatcher({type: CHART_DATA_LOADED, payload: {chartId, chartDataElementId, options, newOptions, data, meta}});
+// this dispatcher can be used to replace any of the chartDataElement's field
+export function dispatchChartDataUpdate({chartId, chartDataElementId, tblId, options, isDataReady, data, meta, dispatcher=flux.process}) {
+    dispatcher({type: CHART_DATA_UPDATE, payload: {chartId, chartDataElementId, options, data, meta, tblId}});
 }
 */
 
@@ -164,66 +166,75 @@ export function dispatchChartUnmounted(chartId, dispatcher= flux.process) {
 
 
 // action creator for CHART_OPTIONS_UPDATE
-export function chartOptionsUpdate(rawAction) {
-    return (dispatch) => {
-        const {chartId, chartDataElementId, updates, noFetch} = rawAction.payload;
-        const chartDataElement = getChartDataElement(chartId, chartDataElementId);
-        if (!chartDataElement) {
-            logError(`[chartOptionsUpdate] Chart data element is not found: ${chartId}, ${chartDataElementId}`);
-            return;
-        }
-        if (noFetch) {
-            dispatch({ type : CHART_OPTIONS_UPDATE, payload : {chartId, chartDataElementId, updates}});
-        } else {
-            // create a new copy, since the options will be compared to decide if fetch is needed
-            const newOptions = cloneDeep(chartDataElement.options);
-            Object.keys(updates).forEach((path) => {
-                set(newOptions, path, updates[path]);
-            });
-            doChartDataFetch(dispatch, {chartId, chartDataElement, newOptions});
-        }
+export function makeChartOptionsUpdate(getChartDataType) {
+    return (rawAction) => {
+        return (dispatch) => {
+            const {chartId, chartDataElementId, updates, noFetch} = rawAction.payload;
+            const chartDataElement = getChartDataElement(chartId, chartDataElementId);
+            if (!chartDataElement) {
+                logError(`[chartOptionsUpdate] Chart data element is not found: ${chartId}, ${chartDataElementId}`);
+                return;
+            }
+            if (noFetch) {
+                dispatch({type: CHART_OPTIONS_UPDATE, payload: {chartId, chartDataElementId, updates}});
+            } else {
+                // create a new copy, since the options will be compared to decide if fetch is needed
+                const newOptions = cloneDeep(chartDataElement.options);
+                Object.keys(updates).forEach((path) => {
+                    set(newOptions, path, updates[path]);
+                });
+                doChartDataFetch(dispatch, {chartId, chartDataElement, newOptions}, getChartDataType);
+            }
+        };
     };
 }
 
 // action creator for CHART_OPTIONS_REPLACE
-export function chartOptionsReplace(rawAction) {
-    return (dispatch) => {
-        const {chartId, chartDataElementId, newOptions} = rawAction.payload;
-        const chartDataElement = getChartDataElement(chartId, chartDataElementId);
-        if (!chartDataElement) {
-            logError(`[chartOptionsReplace] Chart data element is not found: ${chartId}, ${chartDataElementId}`);
-        } else {
-            doChartDataFetch(dispatch, {chartId, chartDataElement, newOptions});
-        }
+export function makeChartOptionsReplace(getChartDataType) {
+    return (rawAction) => {
+        return (dispatch) => {
+            const {chartId, chartDataElementId, newOptions} = rawAction.payload;
+            const chartDataElement = getChartDataElement(chartId, chartDataElementId);
+            if (!chartDataElement) {
+                logError(`[chartOptionsReplace] Chart data element is not found: ${chartId}, ${chartDataElementId}`);
+            } else {
+                doChartDataFetch(dispatch, {chartId, chartDataElement, newOptions}, getChartDataType);
+            }
+        };
     };
 }
 
 
 // action creator for CHART_DATA_FETCH
-export function chartDataFetch (rawAction) {
-    return (dispatch) => {
-        doChartDataFetch(dispatch, rawAction.payload);
+export function makeChartDataFetch (getChartDataType) {
+    return (rawAction) => {
+        return (dispatch) => {
+            doChartDataFetch(dispatch, rawAction.payload, getChartDataType);
+        };
     };
 }
 
-// payload : chartId, chartDataElemen, newOptions
-function doChartDataFetch(dispatch, payload) {
-    const {chartId, chartDataElement} = payload;
+/**
+ *
+ * @param dispatch
+ * @param payload
+ * @param payload.chartId
+ * @param payload.chartDataElement
+ * @param [payload.newOptions] - new options, if undefined, current chartDataElement's options are used
+ * @param [payload.invokedBy] - if defined, table action type, which triggered the fetch
+ * @param {Function} getChartDataType - function, which returns @link{ChartDataType} for a given chartDataElement's type
+ */
+function doChartDataFetch(dispatch, payload, getChartDataType) {
+    const {chartId, chartDataElement, invokedBy} = payload;
     const oldOptions = chartDataElement.options;
     let {newOptions=oldOptions} = payload;
 
-    const cdt = getChartDataType(chartDataElement.type);
+    const dataTypeId = chartDataElement.type;
+    const cdt = dataTypeId ? getChartDataType(dataTypeId) : {};
     if (!cdt) {
-        logError('No chart data type is found for '+chartDataElement.type);
+        logError('No chart data type is found for '+dataTypeId);
         return;
     }
-
-    const {
-        // function to get the updated options
-        getUpdatedOptions = ( cdt.getUpdatedOptions || ((opts) => {return opts;}) ),
-        fetchData=cdt.fetchData,
-        fetchParamsChanged = ( cdt.fetchParamsChanged || (() => {return !isUndefined(fetchData);}) ),
-        } = chartDataElement;
 
     const {id:chartDataElementId, tblId, data, meta={}} = chartDataElement;
 
@@ -231,15 +242,38 @@ function doChartDataFetch(dispatch, payload) {
     let newMeta = meta;
 
     if (tblId) {
-        // need to fetch data if the source table has changed
         const tblSource = get(getTblById(tblId), 'tableMeta.tblFilePath');
-        dataFetchNeeded = !meta || !meta.tblSource || meta.tblSource !== tblSource;
-        if (dataFetchNeeded) {
+        const tblSourceChart = get(meta, 'tblSource');
+
+        if (tblSourceChart !== tblSource) {
             newMeta = Object.assign({}, meta, {tblSource});
+
+            // if the sort is invoked by table sort no fetch might be necessary, but the table source needs to be updated
+            if (invokedBy === TablesCntlr.TABLE_SORT) {
+                const fetchOnTblSort = !isUndefined(chartDataElement.fetchOnTblSort) ? chartDataElement.fetchOnTblSort :
+                    !isUndefined(cdt.fetchOnTblSort) ? cdt.fetchOnTblSort : true;
+                if (!fetchOnTblSort) {
+                    dispatch({
+                        type: CHART_DATA_UPDATE,
+                        payload: {
+                            chartId,
+                            chartDataElementId,
+                            meta: newMeta
+                        }
+                    });
+                    return;
+                }
+            }
+
+            dataFetchNeeded = true;
         }
     }
 
-    if (dataFetchNeeded || !oldOptions || (oldOptions !== newOptions)) {
+    if (dataFetchNeeded || (oldOptions !== newOptions)) {
+
+        const getUpdatedOptions = chartDataElement.getUpdatedOptions || cdt.getUpdatedOptions || ((opts) => opts);
+        const fetchData= chartDataElement.fetchData || cdt.fetchData;
+        const fetchParamsChanged = chartDataElement.fetchParamsChanged  || cdt.fetchParamsChanged || (() => !isUndefined(fetchData));
 
         // need to fetch data if fetch parameters have changed
         dataFetchNeeded = dataFetchNeeded || !oldOptions || fetchParamsChanged(oldOptions, newOptions);
@@ -247,8 +281,8 @@ function doChartDataFetch(dispatch, payload) {
         if (!dataFetchNeeded) {
             // when server call (fetch) parameters do not change but chart options change,
             // we do need to update options, but we can reuse the old chart data
-            newOptions = getUpdatedOptions(newOptions, tblId, data);
-            dispatch({type: CHART_DATA_LOADED,
+            newOptions = getUpdatedOptions(newOptions, tblId, data, meta);
+            dispatch({type: CHART_DATA_UPDATE,
                 payload: {
                     chartId,
                     chartDataElementId,
@@ -271,17 +305,18 @@ function doChartDataFetch(dispatch, payload) {
 }
 
 /**
- * The data is an object with
- * @param chartDataElement
- * @param chartDataElement.chartId
- * @param chartDataElement.chartDataElementId
- * @param chartDataElement.options
- * @param [chartDataElement.data]
- * @param [chartDataElement.meta]
- * @returns {{type: string, payload: object}} - chart data loaded action
+ * Update data (and possibly other chartDataElement's fields)
+ * @param payload
+ * @param payload.chartId
+ * @param payload.chartDataElementId
+ * @param payload.isDataReady
+ * @param payload.data
+ * @param [payload.options]
+ * @param [payload.meta]
+ * @returns {{type: string, payload: object}} - chart data update action
  */
-export function chartDataLoaded(chartDataElement) {
-    return { type : CHART_DATA_LOADED, payload: chartDataElement };
+export function chartDataUpdate(payload) {
+    return { type : CHART_DATA_UPDATE, payload };
 }
 
 
@@ -344,25 +379,23 @@ function reduceData(state={}, action={}) {
         }
         case (CHART_DATA_FETCH)  :
         {
-            const {chartId, chartDataElementId, options, tblId, meta} = action.payload;
+            const {chartId, chartDataElementId, ...rest} = action.payload;
             if (has(state, [chartId, 'chartDataElements', chartDataElementId])) {
                 state = updateMerge(state, [chartId, 'chartDataElements', chartDataElementId],
                     {
                         chartDataElementId,
                         isDataReady: false,
                         data: undefined,
-                        meta,
-                        tblId,
-                        options
+                        ...rest
                     });
             }
             return state;
         }
-        case (CHART_DATA_LOADED) :
+        case (CHART_DATA_UPDATE) :
         {
             const {chartId, chartDataElementId, ...rest} = action.payload;
             if (has(state, [chartId, 'chartDataElements', chartDataElementId])) {
-                state = updateMerge(state, [chartId, 'chartDataElements', chartDataElementId], {isDataReady: true, ...rest});
+                state = updateMerge(state, [chartId, 'chartDataElements', chartDataElementId], {...rest});
             }
             return state;
         }
@@ -512,7 +545,11 @@ export function getChartIdsInGroup(groupId) {
     return chartIds;
 }
 
-// TODO: histogram data should not be updated if invokedBy = TablesCntlr.TABLE_SORT
+/**
+ *
+ * @param {string} tblId - table id
+ * @param {string} invokedBy - table action, which triggered the update
+ */
 export function updateRelatedData(tblId, invokedBy) {
     const state = get(flux.getState(), [CHART_SPACE_PATH, 'data']);
     Object.keys(state).forEach((cid) => {
@@ -520,7 +557,7 @@ export function updateRelatedData(tblId, invokedBy) {
             const chartDataElements = state[cid].chartDataElements;
             Object.keys(chartDataElements).forEach((id) => {
                 if (chartDataElements[id].tblId === tblId) {
-                    dispatchChartDataFetch({chartId: cid, chartDataElement: chartDataElements[id]});
+                    dispatchChartDataFetch({chartId: cid, chartDataElement: chartDataElements[id], invokedBy});
                 }
             });
         }

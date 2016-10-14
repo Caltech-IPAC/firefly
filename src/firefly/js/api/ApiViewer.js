@@ -19,6 +19,9 @@ import {clone, logError}  from '../util/WebUtil.js';
 import {confirmPlotRequest,findInvalidWPRKeys}  from '../visualize/WebPlotRequest.js';
 import {dispatchTableSearch, dispatchTableFetch}  from '../tables/TablesCntlr.js';
 import {dispatchChartAdd} from '../charts/ChartsCntlr.js';
+import {SCATTER, HISTOGRAM} from '../charts/ChartUtil.js';
+import {DT_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
+import {DT_HISTOGRAM} from '../charts/dataTypes/HistogramCDT.js';
 import {makeFileRequest}  from '../tables/TableUtil.js';
 import {makeXYPlotParams, makeHistogramParams, uniqueChartId} from '../charts/ChartUtil.js';
 import {getWsChannel} from '../core/messaging/WebSocketClient.js';
@@ -247,10 +250,10 @@ function plotRemoteXYPlot(params, dispatch) {
     }
     const chartId = uniqueChartId();
     // SCATTER
-    dispatchChartAdd({chartId, chartType: 'scatter', groupId: 'default',
+    dispatchChartAdd({chartId, chartType: SCATTER, groupId: 'default',
         chartDataElements: [
             {
-                type: 'xycols', // DATATYPE_XYCOLS.id
+                type: DT_XYCOLS,
                 options: xyPlotParams,
                 tblId
             }
@@ -283,10 +286,10 @@ function plotRemoteHistogram(params, dispatch) {
     }
     const chartId = uniqueChartId();
     // HISTOGRAM
-    dispatchChartAdd({chartId, chartType: 'histogram', groupId: 'default',
+    dispatchChartAdd({chartId, chartType: HISTOGRAM, groupId: 'default',
         chartDataElements: [
             {
-                type: 'histogram', //DATATYPE_HISTOGRAM.id
+                type: DT_HISTOGRAM,
                 options: histogramParams,
                 tblId
             }
