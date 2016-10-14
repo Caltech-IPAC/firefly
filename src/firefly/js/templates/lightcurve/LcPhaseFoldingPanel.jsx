@@ -31,16 +31,18 @@ import {dispatchLoadPlotData} from '../../charts/XYPlotCntlr.js';
 
 import {RAW_TABLE, PHASE_FOLDED} from '../../templates/lightcurve/LcManager.js';
 
+const grpkey = 'LC_FORM_Panel';
+
 function getDialogBuilder() {
     var popup= null;
     return () => {
         if (!popup) {
             const popup= (
                 <PopupPanel title={'Light Curve'} >
-                    <LCInput  groupKey={'LC_FORM_Panel'} />
+                    <LcPhaseFoldingDialog  groupKey={grpkey} />
                 </PopupPanel>
             );
-            DialogRootContainer.defineDialog('LcParamForm', popup);
+            DialogRootContainer.defineDialog('LcPhaseFoldingForm', popup);
         }
         return popup;
     };
@@ -49,9 +51,9 @@ function getDialogBuilder() {
 const dialogBuilder= getDialogBuilder();
 
 // Could be a popup form
-export function showLcParamForm() {
+export function showLcPhaseFoldingForm() {
     dialogBuilder();
-    dispatchShowDialog('LcParamForm');
+    dispatchShowDialog('LcPhaseFoldingForm');
 }
 
 const PanelResizableStyle = {
@@ -126,7 +128,7 @@ const defValues= {
 };
 
 
-var LCInput = React.createClass({
+var LcPhaseFoldingDialog = React.createClass({
 
 
 
@@ -136,7 +138,7 @@ var LCInput = React.createClass({
                 <div>
                     <Tabs componentKey='LCInputTabs' defaultSelected={0} useFlex={true}>
                         <Tab name='Phase Folding'>
-                            <LcParamForm />
+                            <LcPhaseFoldingForm />
                         </Tab>
                     </Tabs>
                 </div>
@@ -148,11 +150,11 @@ var LCInput = React.createClass({
 });
 
 
-export class LcParamForm extends Component {
+export class LcPhaseFoldingForm extends Component {
 
     constructor(props)  {
         super(props);
-        this.state = {fields:FieldGroupUtils.getGroupFields('LC_FORM_Panel')};
+        this.state = {fields:FieldGroupUtils.getGroupFields(grpkey)};
     }
 
     componentWillUnmount() {
@@ -163,7 +165,7 @@ export class LcParamForm extends Component {
 
     componentDidMount() {
         this.iAmMounted= true;
-        this.unbinder= FieldGroupUtils.bindToStore('LC_FORM_Panel', (fields) => {
+        this.unbinder= FieldGroupUtils.bindToStore(grpkey, (fields) => {
             if (fields!==this.state.fields && this.iAmMounted) {
                 this.setState({fields});
             }
@@ -173,7 +175,7 @@ export class LcParamForm extends Component {
     render() {
         var {fields}= this.state;
         // if (!fields) return false;
-        return <LcCurveOptionsPanel fields={fields} />;
+        return <LcPFOptionsPanell fields={fields} />;
     }
 
 }
@@ -194,7 +196,7 @@ export function LcPFOptionsPanel ({fields}) {
 
     return (
 
-            <FieldGroup style= {PanelResizableStyle} groupKey={'LC_FORM_Panel'} initValues={{timeCol:'mjd',field1:'4'}}
+            <FieldGroup style= {PanelResizableStyle} groupKey={grpkey} initValues={{timeCol:'mjd',field1:'4'}}
                               reducerFunc={DialogReducer} keepState={true}>
                 <InputGroup labelWidth={110}>
 
@@ -311,7 +313,7 @@ var DialogReducer= function(inFields, action) {
 
 
 function resetDefaults() {
-    dispatchRestoreDefaults('LC_FORM_Panel');
+    dispatchRestoreDefaults(grpkey);
 
 }
 
@@ -338,8 +340,8 @@ function showResults(success, request) {
         </PopupPanel>
     );
 
-    DialogRootContainer.defineDialog('ResultsFromLcParamForm', results);
-    dispatchShowDialog('ResultsFromLcParamForm');
+    DialogRootContainer.defineDialog('ResultsFromLcPhaseFoldingForm', results);
+    dispatchShowDialog('ResultsFromLcPhaseFoldingForm');
 
 }
 
@@ -349,7 +351,7 @@ function makeResultInfoContent(statStr,s,closePromiseClick) {
         <div style={{padding:'5px'}}>
             <br/>{statStr}<br/><br/>{s}
             <button type='button' onClick={closePromiseClick}>Another Close</button>
-            <CompleteButton dialogId='ResultsFromLcParamForm' />
+            <CompleteButton dialogId='ResultsFromLcPhaseFoldingForm' />
         </div>
     );
 }
@@ -365,7 +367,7 @@ function resultsSuccess(request) {
 }
 
 function onSearchSubmit(request) {
-    let fieldState = FieldGroupUtils.getGroupFields('LC_FORM_Panel');
+    let fieldState = FieldGroupUtils.getGroupFields(grpkey);
 
     // TODO Fix: request doesn't contain 'Tabs'...
     //if (request.Tabs==='LC Param') {
@@ -405,4 +407,4 @@ function makeField1(hide) {
 
 
 
-//export default LcParamForm;
+//export default LcPhaseFoldingForm;

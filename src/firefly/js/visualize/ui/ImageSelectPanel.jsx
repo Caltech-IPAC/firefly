@@ -446,13 +446,26 @@ class ImageSelectionView extends Component {
                                 text={'Load'} />
                         </div>
                         <div className={'padding'}>
-                            <HelpIcon helpId={helpId}/>
+                            <HelpIcon helpId={'visualizationCST'}/>
                         </div>
                     </div>);
             }
         };
 
-        var helpId = 'basics.catalog';
+        var helpId = 'basics.searching';
+
+        var panelHelpIcon = () => {
+            if (!this.props.loadButton) {
+                return (
+                    <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end'}}>
+                        <HelpIcon helpId={helpId}/>
+                    </div>
+
+                );
+            } else {
+                return <div></div>;
+                }
+        };
 
         /*
          * top: target panel
@@ -475,9 +488,7 @@ class ImageSelectionView extends Component {
                     </div>
                     { loadButtonArea() }
                 </div>
-                <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end'}}>
-                    <HelpIcon helpId={'basics.searching'}/>
-                </div>
+                { panelHelpIcon() }
             </FieldGroup>
         );
     }
@@ -504,6 +515,8 @@ ImageSelectionView.defaultProps={
  *
  * @returns {XML}
  * @constructor
+ * @param plotMode
+ * @param displayEntry
  */
 function TargetPanelSetView({plotMode, displayEntry}) {
 

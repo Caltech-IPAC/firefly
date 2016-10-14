@@ -90,14 +90,12 @@ const tipStyle= {
 };
 
 
-
-
 /**
  * Vis Toolbar
  * @param visRoot visualization store root
  * @param toolTip tool tip to show
  * @param dlCount drawing layer count
- * @param messageUnder put the help message under 
+ * @param messageUnder put the help message under
  * @return {XML}
  */
 export function VisToolbarViewWrapper({visRoot,toolTip,dlCount, messageUnder}) {
@@ -338,7 +336,7 @@ export class VisToolbarView extends Component {
 
                 <div style={{display:'inline-block', height:'100%', flex:'0 0 auto', marginLeft:'10px'}}>
                     <HelpIcon
-                        helpId={'visualization.fitsViewer'}/>
+                        helpId={'visualization.imageoptions'}/>
                 </div>
 
             </div>

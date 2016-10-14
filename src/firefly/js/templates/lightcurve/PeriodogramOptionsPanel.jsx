@@ -20,6 +20,7 @@ import {makeTblRequest,getTblById} from '../../tables/TableUtil.js';
 
 import {dispatchLoadPlotData} from '../../charts/XYPlotCntlr.js';
 
+import {dispatchMultiValueChange, dispatchRestoreDefaults} from '../../fieldGroup/FieldGroupCntlr.js';
 import {RAW_TABLE,PERIODOGRAM, PEAK_TABLE} from '../../templates/lightcurve/LcManager.js';
 
 const gkey = 'PFO_PANEL';
@@ -59,45 +60,46 @@ export class PeriodogramOptionsPanel extends Component {
 
     constructor(props) {
         super(props);
+        this.state = {fields:FieldGroupUtils.getGroupFields(gkey)};
     }
 
     componentWillUnmount() {
-        if (this.removeListener) this.removeListener();
         this.iAmMounted= false;
+        if (this.unbinder) this.unbinder();
+        //if (this.removeListener) this.removeListener();
+        //this.iAmMounted= false;
     }
 
     componentDidMount() {
         this.iAmMounted= true;
-        this.removeListener= FieldGroupUtils.bindToStore(gkey, (fields) => {
-            if (this.iAmMounted) this.setState(fields);
+        this.unbinder= FieldGroupUtils.bindToStore(gkey, (fields) => {
+            if (fields!==this.state.fields && this.iAmMounted) {
+                this.setState({fields});
+            }
+        //this.iAmMounted= true;
+        //this.removeListener= FieldGroupUtils.bindToStore(gkey, (fields) => {
+        //    if (this.iAmMounted) this.setState(fields);
         });
     }
 
     render() {
-        const fields= this.state;
+        var fields= this.state;
         return (
-            <LCPFOPanel />
+            <LcPeriodFindingPanel />
         );
-
     }
 
 
 }
 
-
-function hideSearchPanel() {
-    dispatchHideDropDown();
-}
-
-
-export const LCPFOPanel = () =>  {
+/**
+ *
+ * @returns {XML}
+ * @constructor
+ */
+export function LcPeriodFindingPanel () {
     return (
         <div style={{padding:5}}>
-            <FormPanel
-                width='400px' height='200px'
-                groupKey={gkey}
-                onSubmit={(request) => onSearchSubmit(request)}
-                onCancel={hideSearchPanel}>
                 <FieldGroup groupKey={gkey} reducerFunc={periodogramRangeReducer} keepState={true}>
                     <InputGroup labelWidth={150}>
                         <ListBoxInputField  initialState= {{
@@ -131,25 +133,22 @@ export const LCPFOPanel = () =>  {
                               label='Step Size:'
                         />
                         <br/>
+                        <button type='button' className='button std hl'  onClick={(request) => onSearchSubmit(request)}>
+                            <b>Period Finding</b>
+                        </button>
+                        <button type='button' className='button std hl'  onClick={() => resetDefaults()}>
+                            <b>Reset</b>
+                        </button>
 
                     </InputGroup>
                 </FieldGroup>
                 <br/>
 
-            </FormPanel>
+
         </div>
 
     );
 };
-
-LCPFOPanel.propTypes = {
-    name: PropTypes.oneOf(['LCPFO'])
-};
-
-LCPFOPanel.defaultProps = {
-    name: 'LCPFO',
-};
-
 
 /**
  *
@@ -225,4 +224,7 @@ function doPeriodFinding(request) {
     }
 }
 
+function resetDefaults() {
+    dispatchRestoreDefaults(gkey);
 
+}

@@ -27,11 +27,11 @@ import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {InputGroup} from '../../ui/InputGroup.jsx';
 import {UploadPanel} from './LcViewer.jsx';
-import {showLcParamForm, LcPFOptionsPanel} from './LcPhaseFoldingPanel.jsx';
-import {LCPFOPanel} from './PeriodogramOptionsPanel.jsx';
 import {LcPlotOptionsPanel} from './LcPlotOptions.jsx';
 import {LcImageToolbar} from './LcImageToolbar.jsx';
 import {ImageMetaDataToolbar} from '../../visualize/ui/ImageMetaDataToolbar.jsx';
+import {LcPFOptionsPanel} from './LcPhaseFoldingPanel.jsx';
+import {LcPeriodFindingPanel} from './PeriodogramOptionsPanel.jsx';
 
 const PanelResizableStyle = {
     width: 400,
@@ -108,7 +108,7 @@ export class LcResult extends Component {
                             </Tab>
                             <Tab name="Periodogram">
                                 <div>
-                                   <LCPFOPanel />
+                                    <LcPeriodFindingPanel />
                                 </div>
                             </Tab>
                             <Tab name='Upload'>

@@ -229,7 +229,7 @@ function sizeArea(searchType, max) {
         return (
 
             <div style={{border: '1px solid #a3aeb9', padding:'30px 30px'}}>
-                Search the catalog with no spacial constraints
+                Search the catalog with no spatial constraints
             </div>
         );
     }
