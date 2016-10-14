@@ -6,19 +6,24 @@ import React, {Component, PropTypes} from 'react';
 import {get} from 'lodash';
 
 import {ValidationField} from '../ui/ValidationField.jsx';
+import {VALUE_CHANGE, dispatchValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import {TargetPanel} from '../ui/TargetPanel.jsx';
 
+import {PlotAttribute} from '../visualize/WebPlot.js';
 import Validate from '../util/Validate.js';
 import Enum from 'enum';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
+import {clone} from '../util/WebUtil.js';
+import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {SizeInputFields} from './SizeInputField.jsx';
 import {InputAreaFieldConnected} from './InputAreaField.jsx';
 import {FileUpload} from '../ui/FileUpload.jsx';
+import {FieldGroup} from './FieldGroup.jsx';
 
 import CsysConverter from '../visualize/CsysConverter.js';
-import {primePlot} from '../visualize/PlotViewUtil.js';
-import { makeImagePt} from '../visualize/Point.js';
+import {primePlot, getActivePlotView} from '../visualize/PlotViewUtil.js';
+import { makeImagePt, makeWorldPt, makeScreenPt} from '../visualize/Point.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 
 import './CatalogSearchMethodType.css';
@@ -47,16 +52,33 @@ export class CatalogSearchMethodType extends Component {
         });
     }
 
+    componentWillReceiveProps(nextProps) {
+        // const fields= FieldGroupUtils.getGroupFields(this.nextProps.groupKey);
+        const {coneMax, boxMax, groupKey}= nextProps;
+        if (coneMax && groupKey) {
+            const fields= FieldGroupUtils.getGroupFields(this.props.groupKey);
+            if (this.iAmMounted) this.setState({fields});
+            const searchType = get(fields, 'spatial.value', SpatialMethod.Cone.value);
+            const max= searchType===SpatialMethod.Box.value ? boxMax : coneMax;
+
+            if (fields.conesize.max!==max) {
+                dispatchValueChange({fieldKey:'conesize', groupKey, max, min:1/3600});
+            }
+        }
+    }
+
     render() {
         const {fields}= this.state;
+        const {groupKey, polygonDefWhenPlot}= this.props;
+
+        const polyIsDef= polygonDefWhenPlot && primePlot(visRoot());
 
 
-        let searchType = get(fields, 'spatial.value', SpatialMethod.Cone.value);
-        const max = get(fields, 'conesize.max', 10);
-        const {groupKey} = this.props;
+        const searchType = get(fields, 'spatial.value', SpatialMethod.Cone.value);
 
         return (
-            <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
+            <FieldGroup groupKey={groupKey} reducerFunc={searchMethodTypeReducer} keepState={true}
+                style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
                 {renderTargetPanel(groupKey, searchType)}
                 <div
                     style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
@@ -66,15 +88,15 @@ export class CatalogSearchMethodType extends Component {
                                           tooltip: 'Enter a search method',
                                           label : 'Method Search:',
                                           labelWidth: 80,
-                                          value:SpatialMethod.Cone.value
+                                          value: polyIsDef ? SpatialMethod.Polygon.value : SpatialMethod.Cone.value
                                       }}
                         options={ spatialOptions() }
                         wrapperStyle={{marginRight:'15px', padding:'10px 0 5px 0'}}
                         multiple={false}
                     />
-                    {sizeArea(searchType, max)}
+                    {sizeArea(searchType, get(fields, 'imageCornerCalc.value', 'image'))}
                 </div>
-            </div>
+            </FieldGroup>
         );
 
     }
@@ -102,36 +124,87 @@ const spatialOptions = () => {
     return l;
 };
 
+
+
+function calcCornerString(pv, method) {
+    if (method==='clear' || !pv) return '';
+    const f5 = (v) => v.toFixed(5);
+
+    var pt1, pt2, pt3, pt4;
+    const plot = primePlot(pv);
+    const sel= plot.attributes[PlotAttribute.SELECTION];
+    var w = plot.dataWidth;
+    var h = plot.dataHeight;
+    var cc = CsysConverter.make(plot);
+    if (method==='image' || (!sel && method==='area-selection') ) {
+        pt1 = cc.getWorldCoords(makeImagePt(w/4,h/4));
+        pt2 = cc.getWorldCoords(makeImagePt(3*w/4, h/4));
+        pt3 = cc.getWorldCoords(makeImagePt(3*w/4, 3*h/4));
+        pt4 = cc.getWorldCoords(makeImagePt(w/4, 3*h/4));
+    }
+    else if (method==='viewport') {
+        const {viewDim, scrollX, scrollY}= pv;
+        const {screenSize}= plot;
+        var sx1, sx3, sy1, sy3;
+        if (viewDim.width>screenSize.width) {
+            sx1= scrollX;
+            sx3= scrollX+ (screenSize.width-viewDim.width);
+        }
+        else {
+            sx1= 0;
+            sx3= screenSize.width;
+        }
+        if (viewDim.height>screenSize.height) {
+            sy1= scrollY;
+            sy3= scrollY+ (screenSize.height-viewDim.height);
+        }
+        else {
+            sy1= 0;
+            sy3= screenSize.height;
+        }
+        pt1= cc.getWorldCoords(makeScreenPt(sx1,sy1));
+        pt2= cc.getWorldCoords(makeScreenPt(sx3,sy1));
+        pt3= cc.getWorldCoords(makeScreenPt(sx3,sy3));
+        pt4= cc.getWorldCoords(makeScreenPt(sx1,sy3));
+    }
+    else if (method==='area-selection') {
+        pt1 = cc.getWorldCoords(sel.pt0);
+        pt3 = cc.getWorldCoords(sel.pt1);
+        pt2 = makeWorldPt( pt1.x, pt3.y, pt1.cSys );
+        pt4 = makeWorldPt( pt3.x, pt1.y, pt1.cSys );
+    }
+    return `${f5(pt1.x)} ${f5(pt1.y)}, ${f5(pt2.x)} ${f5(pt2.y)}, ${f5(pt3.x)} ${f5(pt3.y)}, ${f5(pt4.x)} ${f5(pt4.y)}`;
+}
+
+
+
 /**
  * Return a {SizeInputFields} component by passing in the few paramters needed only.
  * labelwidth = 100 is fixed.
- * @param {string} label by default is 'Radius'
- * @param {string} tooltip by default is the radius size tooltip
- * @param {number} min by default 1 arcsec
- * @param {number} max by default is 1 degree (3600 arcsec)
- * @returns {XML} SizeInputFields component
+ * @param {Object} p
+ * @param {string} p.label by default is 'Radius'
+ * @param {string} p.tooltip by default is the radius size tooltip
+ * @param {number} p.min by default 1 arcsec
+ * @param {number} p.max by default is 1 degree (3600 arcsec)
+ * @returns {Object} SizeInputFields component
  */
-function radiusInField({label = 'Radius:', tooltip = 'Enter radius of the search', min = 1 / 3600, max = 1}) {
+function radiusInField({label = 'Radius:'}) {
     return (
         <SizeInputFields fieldKey='conesize' showFeedback={true}
                          wrapperStyle={{padding:5, margin: '5px 0 5px 0'}}
                          initialState={{
-                                               value:initRadiusArcSec(max),
-                                               tooltip: {tooltip},
                                                unit: 'arcsec',
-                                               min:  {min},
-                                               max:  {max},
                                                labelWidth : 100
                                            }}
                          label={label}/>
     );
 }
-function sizeArea(searchType, max) {
+function sizeArea(searchType, imageCornerCalc) {
 
     if (searchType === SpatialMethod.Cone.value) {
         return (
             <div style={{border: '1px solid #a3aeb9'}}>
-                {radiusInField({max})}
+                {radiusInField({})}
             </div>
         );
     } else if (searchType === SpatialMethod.Elliptical.value) {
@@ -165,12 +238,7 @@ function sizeArea(searchType, max) {
 
         return (
             <div style={{border: '1px solid #a3aeb9'}}>
-                {radiusInField({
-                    label: 'Side:',
-                    tooltip: 'Enter side size of the box search',
-                    min: 1 / 3600,
-                    max: 7200 / 3600
-                })}
+                {radiusInField({ label: 'Side:' })}
             </div>
 
         );
@@ -189,29 +257,33 @@ function sizeArea(searchType, max) {
             </div>
         );
     } else if (searchType === SpatialMethod.Polygon.value) {
-        let val = '';
-        var pv = primePlot(visRoot());
-        if (pv) {
-            var plot = pv;
-            var w = plot.dataWidth;
-            var h = plot.dataHeight;
-            var cc = CsysConverter.make(plot);
-            var pt1 = cc.getWorldCoords(makeImagePt(w/4,h/4));
-            var pt2 = cc.getWorldCoords(makeImagePt(3*w/4, h/4));
-            var pt3 = cc.getWorldCoords(makeImagePt(3*w/4, 3*h/4));
-            var pt4 = cc.getWorldCoords(makeImagePt(w/4, 3*h/4));
-            val = `${pt1.x} ${pt1.y}, ${pt2.x} ${pt2.y},${pt3.x} ${pt3.y},${pt4.x} ${pt4.y}`;
+        const cornerTypeOps=
+            [
+                {label: 'Image', value: 'image'},
+                {label: 'ViewPort', value: 'viewport'},
+                {label: 'User', value: 'user'}
+            ];
+
+
+
+        const pv= getActivePlotView(visRoot());
+        var plot = primePlot(pv);
+
+        if (imageCornerCalc!=='clear' && plot) {
+            const sel= plot.attributes[PlotAttribute.SELECTION];
+            if (sel) {
+                cornerTypeOps.splice(cornerTypeOps.length-1, 0, {label: 'Selection', value: 'area-selection'});
+            }
         }
         return (
             <div
                 style={{padding:5, border:'solid #a3aeb9 1px' }}>
-                <InputAreaFieldConnected forceReinit={true} fieldKey='polygoncoords'
+                <InputAreaFieldConnected fieldKey='polygoncoords'
                                          wrapperStyle={{padding:5}}
                                          style={{overflow:'auto',height:'65px', maxHeight:'200px', width:'220px', maxWidth:'300px'}}
                                          initialState={{
                                                tooltip:'Enter polygon coordinates search',
                                                labelWidth:70,
-                                               value: val
                                             }}
                                          label='Coordinates:'
                                          tooltip='Enter polygon coordinates search'
@@ -222,6 +294,21 @@ function sizeArea(searchType, max) {
                     <li>- Vertices must be separated by a comma (,)</li>
                     <li>- Example: 20.7 21.5, 20.5 20.5, 21.5 20.5, 21.5 21.5</li>
                 </ul>
+                <div style={{paddingTop: 10}}>
+                    {pv && <RadioGroupInputField
+                        inline={false}
+                        labelWidth={80}
+                        alignment='horizontal'
+                        initialState= {{
+                        tooltip: 'Choose how to init corners',
+                        label : 'Corners: ',
+                        value: 'image'
+                    }}
+                        options={cornerTypeOps}
+                        fieldKey='imageCornerCalc'
+                    />
+                    }
+                </div>
             </div>
         );
 
@@ -247,7 +334,8 @@ function renderTargetPanel(groupKey, searchType) {
 }
 
 CatalogSearchMethodType.propTypes = {
-    groupKey: PropTypes.string.isRequired
+    groupKey: PropTypes.string.isRequired,
+    polygonDefWhenPlot: PropTypes.bool,
 };
 
 /*CatalogSearchMethodType.contextTypes = {
@@ -273,3 +361,55 @@ var initRadiusArcSec = (max) => {
         return parseFloat(1 / 3600).toString();
     }
 };
+
+
+
+function searchMethodTypeReducer(inFields, action) {
+    if (!inFields)  {
+        return fieldInit();
+    }
+    else {
+        const {fieldKey}= action.payload;
+        const rFields= clone(inFields);
+        if (action.type===VALUE_CHANGE && fieldKey==='polygoncoords') {
+            rFields.imageCornerCalc= clone(inFields.imageCornerCalc, {value:'user'});
+        }
+        else {
+            const {value:cornerCalcV}= inFields.imageCornerCalc||'user';
+            const pv= getActivePlotView(visRoot());
+
+
+            if (pv && (cornerCalcV==='image' || cornerCalcV==='viewport' || cornerCalcV==='area-selection')) {
+                const plot = primePlot(pv);
+                const sel= plot.attributes[PlotAttribute.SELECTION];
+                if (!sel && cornerCalcV==='area-selection') {
+                    rFields.imageCornerCalc= clone(inFields.imageCornerCalc, {value:'image'});
+                }
+                const {value:cornerCalcV}= rFields.imageCornerCalc;
+                const v= calcCornerString(pv,cornerCalcV);
+                rFields.polygoncoords= clone(inFields.polygoncoords, {value:v});
+            }
+        }
+        rFields && rFields.polygoncoords && console.log(rFields.polygoncoords.value);
+        return rFields;
+    }
+}
+
+function fieldInit() {
+    return (
+    {
+        conesize: {
+            fieldKey: 'conesize',
+            value: initRadiusArcSec(3600),
+            unit: 'arcsec',
+            min: 1 / 3600,
+            max: 100,
+        },
+        imageCornerCalc: {
+            fieldKey: 'imageCornerCalc',
+            value: 'image'
+        }
+
+    }
+    );
+}

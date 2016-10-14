@@ -5,7 +5,7 @@
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {FormPanel} from '../../ui/FormPanel.jsx';
-import { get, merge, isEmpty} from 'lodash';
+import { get, merge, isEmpty, isFunction} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {doFetchTable, makeTblRequest, makeIrsaCatalogRequest, makeVOCatalogRequest, getTblById} from '../../tables/TableUtil.js';
@@ -13,7 +13,6 @@ import {CatalogTableListField} from './CatalogTableListField.jsx';
 import {CatalogConstraintsPanel} from './CatalogConstraintsPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
-import {fieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
@@ -26,6 +25,7 @@ import {parseWorldPt} from '../../visualize/Point.js';
 import {VoSearchPanel} from '../../ui/VoSearchPanel.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {convertAngle} from '../VisUtil.js';
+import {masterTableFilter} from './IrsaMasterTableFilters.js';
 
 import './CatalogTableListField.css';
 import './CatalogSelectViewPanel.css';
@@ -34,6 +34,7 @@ import './CatalogSelectViewPanel.css';
  * group key for fieldgroup comp
  */
 export const gkey = 'CATALOG_PANEL';
+export const gkeySpacial = 'CATALOG_PANEL_spacial';
 
 const dropdownName = 'IrsaCatalogDropDown';
 
@@ -78,7 +79,7 @@ export class CatalogSelectViewPanel extends Component {
             <div>
                 <FormPanel
                     width='auto' height='auto'
-                    groupKey={gkey}
+                    groupKey={[gkey, gkeySpacial]}
                     onSubmit={(request) => onSearchSubmit(request)}
                     onCancel={hideSearchPanel}>
                     <CatalogSelectView fields={fields}/>
@@ -104,11 +105,12 @@ function validConstraints(groupKey) {
 function onSearchSubmit(request) {
     console.log('original request <br />' + JSON.stringify(request));
 
-    if (request.Tabs === 'catalog') {
-        const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
-        if (!wp && (request.spatial === SpatialMethod.Cone.value
-            || request.spatial === SpatialMethod.Box.value
-            || request.spatial === SpatialMethod.Elliptical.value)) {
+    if (request[gkey].Tabs === 'catalog') {
+        const {spatial} = request[gkeySpacial];
+        const wp = parseWorldPt(request[gkeySpacial][ServerParams.USER_TARGET_WORLD_PT]);
+        if (!wp && (spatial === SpatialMethod.Cone.value
+            || spatial === SpatialMethod.Box.value
+            || spatial === SpatialMethod.Elliptical.value)) {
             showInfoPopup('Target is required');
             return;
         }
@@ -116,11 +118,11 @@ function onSearchSubmit(request) {
             doCatalog(request);
         }
     }
-    else if (request.Tabs === 'loadcat') {
-        doLoadTable(request);
+    else if (request[gkey].Tabs === 'loadcat') {
+        doLoadTable(request[gkey]);
     }
-    else if (request.Tabs === 'vosearch') {
-        doVoSearch(request);
+    else if (request[gkey].Tabs === 'vosearch') {
+        doVoSearch(request[gkey]);
     }
     else {
         console.log('request no supported');
@@ -132,55 +134,60 @@ function hideSearchPanel() {
 
 function doCatalog(request) {
 
-    const conesize = convertAngle('deg', 'arcsec', request.conesize);
-    var title = `${request.project}-${request.cattable}`;
+    const catPart= request[gkey];
+    const spacPart= request[gkeySpacial];
+    const {catalog, project, cattable}= catPart;
+    const {spatial}= spacPart;
+
+    const conesize = convertAngle('deg', 'arcsec', spacPart.conesize);
+    var title = `${catPart.project}-${catPart.cattable}`;
     var tReq = {};
-    if (request.spatial === SpatialMethod.get('Multi-Object').value) {
-        var filename = request.fileUpload;
+    if (spatial === SpatialMethod.get('Multi-Object').value) {
+        var filename = catPart.fileUpload;
         var radius = conesize;
-        tReq = makeIrsaCatalogRequest(title, request.project, request.cattable, {
+        tReq = makeIrsaCatalogRequest(title, catPart.project, catPart.cattable, {
             filename,
             radius,
-            SearchMethod: request.spatial,
-            RequestedDataSet: request.catalog
+            SearchMethod: spacPart.spatial,
+            RequestedDataSet: catalog
         });
     } else {
-        title += ` (${request.spatial}`;
-        if (request.spatial === SpatialMethod.Box.value || request.spatial === SpatialMethod.Cone.value || request.spatial === SpatialMethod.Elliptical.value) {
+        title += ` (${spatial}`;
+        if (spatial === SpatialMethod.Box.value || spatial === SpatialMethod.Cone.value || spatial === SpatialMethod.Elliptical.value) {
             title += ':' + conesize + '\'\'';
         }
         title += ')';
-        tReq = makeIrsaCatalogRequest(title, request.project, request.cattable, {
-            SearchMethod: request.spatial,
-            RequestedDataSet: request.catalog
+        tReq = makeIrsaCatalogRequest(title, project, cattable, {
+            SearchMethod: spatial,
+            RequestedDataSet: catalog
         });
     }
 
     // change and merge others parameters in request if elliptical
     // plus change spatial name to cone
     // (Gator search method for elliptical is cone)
-    if (request.spatial === SpatialMethod.Elliptical.value) {
+    if (spatial === SpatialMethod.Elliptical.value) {
 
-        const pa = get(request, 'posangle', 0);
-        const ar = get(request, 'axialratio', 0.26);
+        const pa = get(spacPart, 'posangle', 0);
+        const ar = get(spacPart, 'axialratio', 0.26);
 
         // see PA and RATIO string values in edu.caltech.ipac.firefly.server.catquery.GatorQuery
         merge(tReq, {'posang': pa, 'ratio': ar});
     }
 
-    if (request.spatial === SpatialMethod.Cone.value
-        || request.spatial === SpatialMethod.Box.value
-        || request.spatial === SpatialMethod.Elliptical.value) {
-        merge(tReq, {[ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT]});
-        if (request.spatial === SpatialMethod.Box.value) {
+    if (spatial === SpatialMethod.Cone.value
+        || spatial === SpatialMethod.Box.value
+        || spatial === SpatialMethod.Elliptical.value) {
+        merge(tReq, {[ServerParams.USER_TARGET_WORLD_PT]: spacPart[ServerParams.USER_TARGET_WORLD_PT]});
+        if (spatial === SpatialMethod.Box.value) {
             tReq.size = conesize;
         } else {
             tReq.radius = conesize;
         }
     }
 
-    if (request.spatial === SpatialMethod.Polygon.value) {
-        tReq.polygon = request.polygoncoords;
+    if (spatial === SpatialMethod.Polygon.value) {
+        tReq.polygon = spacPart.polygoncoords;
     }
 
     const {tableconstraints} = FieldGroupUtils.getGroupFields(gkey);
@@ -292,7 +299,10 @@ class CatalogSelectView extends Component {
     loadMasterCatalogTable() {
 
         const request = {id: 'irsaCatalogMasterTable'}; //Fetch master table
-        doFetchTable(request).then((tableModel) => {
+        doFetchTable(request).then((originalTableModel) => {
+
+            const filter= get(window.firefly, 'irsaCatalogFilter', 'defaultFilter');
+            const tableModel= isFunction(filter) ? filter(tableModel) : masterTableFilter[filter](originalTableModel);
 
             var data = tableModel.tableData.data;
 
@@ -486,12 +496,12 @@ var userChangeDispatch = function () {
                 }
 
                 //No need to act on other fields if user change user wpt or spatial method
-                if (fieldKey === 'UserTargetWorldPt'
-                    || fieldKey === 'conesize') {
-
-                    break;
-
-                }
+                // if (fieldKey === 'UserTargetWorldPt'
+                //     || fieldKey === 'conesize') {
+                //
+                //     break;
+                //
+                // }
 
                 const radius = parseFloat(catTable[currentIdx].cat[7]);
                 const coldef = catTable[currentIdx].cat[9] === 'null' ? catTable[currentIdx].cat[8] : catTable[currentIdx].cat[9];
@@ -514,7 +524,7 @@ var userChangeDispatch = function () {
 
                 break;
             case FieldGroupCntlr.CHILD_GROUP_CHANGE:
-                console.log('Child group change called...');
+                // console.log('Child group change called...');
                 break;
             default:
                 break;
@@ -611,9 +621,20 @@ class CatalogDDList extends Component {
         //    selProject0 = selProj;
         //}
         // Build option list for project,  sub-project and catalog table based on the selected or initial value of project and sub-project
+
+
+
+
         optProjects = getProjectOptions(this.props.master.catmaster);
         optList = getSubProjectOptions(catmaster, selProj);
         catTable = getCatalogOptions(catmaster, selProj, selCat).option;
+
+        //HERE HERE HERE
+        const currentIdx = get(this.props.fields, 'cattable.indexClicked', 0);
+        const radius = parseFloat(catTable[currentIdx].cat[7]);
+        const coneMax= radius / 3600;
+        const boxMax= coneMax*2;
+        //HERE HERE HERE
 
         let catname0 = get(FieldGroupUtils.getGroupFields(gkey), 'cattable.value', catTable[0].value);
         if(isEmpty(catname0)){
@@ -624,6 +645,11 @@ class CatalogDDList extends Component {
         const tbl_id = `${catname0}-${shortdd}-dd-table-constraint`;
 
         const {cols} = this.props.master;
+
+
+        const polygonDefWhenPlot= get(window.firefly, 'catalogSpacialOp')==='polygonWhenPlotExist';
+
+
         return (
             <div>
                 <div className='catalogpanel'>
@@ -657,7 +683,7 @@ class CatalogDDList extends Component {
                         />
                     </div>
                     <div className='spatialsearch'>
-                        <CatalogSearchMethodType groupKey={gkey}/>
+                        <CatalogSearchMethodType groupKey={gkeySpacial} polygonDefWhenPlot={polygonDefWhenPlot} />
                     </div>
                 </div>
                 {/*
@@ -683,7 +709,8 @@ class CatalogDDList extends Component {
 }
 
 CatalogSelectViewPanel.propTypes = {
-    name: PropTypes.oneOf([dropdownName])
+    name: PropTypes.oneOf([dropdownName]),
+    fields: PropTypes.object
 };
 
 CatalogSelectViewPanel.defaultProps = {

@@ -258,7 +258,7 @@ export function getNextZoomLevel(currLevel, zoomType) {
     else if (zoomType===UserZoomTypes.ONE) {
         newLevel= 1;
     }
-    else if (zoomType==UserZoomTypes.DOWN) {
+    else if (zoomType===UserZoomTypes.DOWN) {
         newLevel= levels[0];
         let found= false;
         for(let i= levels.length-1; (i>=0); i--) {

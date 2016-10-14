@@ -8,18 +8,19 @@ import sCompare from 'react-addons-shallow-compare';
 import {primePlot,isMultiImageFitsWithSameArea,getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {CysConverter} from '../CsysConverter.js';
 import {PlotAttribute} from '../WebPlot.js';
-import {makeImagePt} from '../Point.js';
+import {makeImagePt, makeScreenPt} from '../Point.js';
 import {callGetAreaStatistics} from '../../rpc/PlotServicesJson.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {logError} from '../../util/WebUtil.js';
-import SelectArea from '../../drawingLayers/SelectArea.js';
 import {showImageAreaStatsPopup} from './ImageStatsPopup.jsx';
 
 import {dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
-import {dispatchCrop, dispatchChangePrimePlot} from '../ImagePlotCntlr.js';
+import {dispatchCrop, dispatchChangePrimePlot, dispatchZoom, dispatchProcessScroll} from '../ImagePlotCntlr.js';
 import {makeExtActivateData} from '../PlotCmdExtension.js';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 import {selectCatalog,unselectCatalog,filterCatalog,clearFilterCatalog} from '../../drawingLayers/Catalog.js';
+import {UserZoomTypes} from '../ZoomUtil.js';
+import SelectArea from '../../drawingLayers/SelectArea.js';
 
 import CROP from 'html/images/icons-2014/24x24_Crop.png';
 import STATISTICS from 'html/images/icons-2014/24x24_Statistics.png';
@@ -29,6 +30,8 @@ import FILTER from 'html/images/icons-2014/24x24_FilterAdd.png';
 import CLEAR_FILTER from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
 import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
 import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
+import SELECTED_ZOOM from 'html/images/icons-2014/zoomFitToSelectedSpace.png';
+import SELECTED_RECENTER from 'html/images/icons-2014/RecenterImage-selection.png';
 
 import CoordUtil from '../CoordUtil.js';
 import { parseImagePt } from '../Point.js';
@@ -196,14 +199,58 @@ function crop(pv) {
 function makeExtensionButtons(extensionAry,pv,dlAry) {
     if (!extensionAry) return false;
     return extensionAry.map( (ext,idx) => {
-            return <ToolbarButton icon={ext.imageUrl} text={ext.title}
-                           tip={ext.toolTip} key={ext.id}
-                           horizontal={true} enabled={true}
-                           visible={true}
-                           lastTextItem={idx===(extensionAry.length-1)}
-                           onClick={() => dispatchExtensionActivate(ext,makeExtActivateData(ext,pv,dlAry))}/>
+            return (
+                <ToolbarButton icon={ext.imageUrl} text={ext.title}
+                               tip={ext.toolTip} key={ext.id}
+                               horizontal={true} enabled={true}
+                               visible={true}
+                               lastTextItem={idx===(extensionAry.length-1)}
+                               onClick={() => dispatchExtensionActivate(ext,makeExtActivateData(ext,pv,dlAry))}/>
+                );
         }
     );
+}
+
+
+function recenterToSelection(pv) {
+    const p= primePlot(pv);
+    if (!p) return;
+    const {viewDim,plotId}= pv;
+    const cc= CysConverter.make(p);
+    const sel= p.attributes[PlotAttribute.SELECTION];
+    if (!sel) return;
+
+    const sp0=  cc.getScreenCoords(sel.pt0);
+    const sp2=  cc.getScreenCoords(sel.pt1);
+
+
+    const centerPt= makeScreenPt( Math.abs(sp0.x-sp2.x)/2+ Math.min(sp0.x,sp2.x),
+                                  Math.abs(sp0.y-sp2.y)/2 + Math.min(sp0.y,sp2.y));
+
+    const newScrollPt= makeScreenPt(centerPt.x - viewDim.width/2, centerPt.y - viewDim.height/2);
+
+    dispatchProcessScroll({plotId,scrollPt:newScrollPt});
+}
+
+
+function zoomIntoSelection(pv) {
+
+    const p= primePlot(pv);
+    if (!p) return;
+    const {viewDim,plotId}= pv;
+    const cc= CysConverter.make(p);
+    const sel= p.attributes[PlotAttribute.SELECTION];
+    if (!sel) return;
+
+    const sp0=  cc.getScreenCoords(sel.pt0);
+    const sp2=  cc.getScreenCoords(sel.pt1);
+    const newScrollPt= cc.getImageCoords(makeScreenPt(Math.min(sp0.x,sp2.x), Math.min(sp0.y,sp2.y)));
+
+    const level= (viewDim.width / Math.abs(sp0.x-sp2.x)) * p.zoomFactor;
+
+    dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level });
+    dispatchProcessScroll({plotId,scrollPt:newScrollPt});
+    dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,pv.plotId,true);
 }
 
 
@@ -300,6 +347,17 @@ export class VisCtxToolbarView extends Component {
                                horizontal={true}
                                visible={showClearFilter}
                                onClick={() => clearFilterCatalog(pv,dlAry)}/>
+
+                <ToolbarButton icon={SELECTED_ZOOM}
+                               tip='Zoom to fit selected area'
+                               horizontal={true}
+                               visible={true}
+                               onClick={() => zoomIntoSelection(pv)}/>
+                <ToolbarButton icon={SELECTED_RECENTER}
+                               tip='Recenter image to selected area'
+                               horizontal={true}
+                               visible={true}
+                               onClick={() => recenterToSelection(pv)}/>
 
 
                 {makeExtensionButtons(extensionAry,pv,dlAry)}
