@@ -149,9 +149,9 @@ export function makeVOCatalogRequest(title, params={}, options={}) {
 
 /**
  * create a deep clone of the given request.  tbl_id is removed from the cloned request.
- * @param {TblRequest} request  the original request to clone
+ * @param {TableRequest} request  the original request to clone
  * @param {Object} params   additional parameters to add to the cloned request
- * @returns {TblRequest}
+ * @returns {TableRequest}
  * @public
  * @func cloneRequest
  * @memberof firefly.util.table
@@ -453,7 +453,7 @@ export function isTableLoaded(tableModel) {
  * This function transform the json data from the server to fit the need of the UI.
  * For instance, the column's name is repeated after transform.  This is good for the UI.
  * But, it's more efficient to not include it during data transfer from the server.
- * @param {TableModel}
+ * @param {TableModel} tableModel
  * @returns {*}
  * @public
  * @memberof firefly.util.table

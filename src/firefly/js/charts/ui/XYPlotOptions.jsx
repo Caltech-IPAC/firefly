@@ -5,7 +5,8 @@ import React, {PropTypes} from 'react';
 
 import {get, isEmpty, isUndefined, omitBy, defer} from 'lodash';
 
-import ColValuesStatistics from './../ColValuesStatistics.js';
+import ColValuesStatistics from '../ColValuesStatistics.js';
+import {DT_XYCOLS} from '../dataTypes/XYColsCDT.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
@@ -60,7 +61,7 @@ function getUnit(colValStats, colname) {
 }
 */
 
-export function resultsSuccess(callback, flds) {
+export function resultsSuccess(callback, flds, tblId) {
     const xName = get(flds, ['x.columnOrExpr']);
     const yName = get(flds, ['y.columnOrExpr']);
 
@@ -106,7 +107,9 @@ export function resultsSuccess(callback, flds) {
         nbins : (nbinsX && nbinsY) ? {x: Number(nbinsX), y: Number(nbinsY)} : undefined,
         shading: flds.shading || undefined,
         x : { columnOrExpr : xName, label : xLabel, unit : xUnit, options : xOptions},
-        y : { columnOrExpr : yName, label : yLabel, unit : yUnit, options : yOptions}
+        y : { columnOrExpr : yName, label : yLabel, unit : yUnit, options : yOptions},
+        type : DT_XYCOLS,
+        tblId
     }, isUndefined);
 
     callback(xyPlotParams);
@@ -479,7 +482,7 @@ export class XYPlotOptions extends React.Component {
                     <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
                         <CompleteButton style={{flexGrow: 0}}
                                         groupKey={groupKey}
-                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds)}
+                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds, xyPlotParams.tblId)}
                                         onFail={resultsFail}
                                         text = 'Apply'
                         />

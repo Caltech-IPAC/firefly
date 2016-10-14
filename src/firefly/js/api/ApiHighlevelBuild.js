@@ -389,7 +389,7 @@ function makePlotId() {
 //================================================================
 
 function doShowXYPlot(llApi, targetDiv, params={}) {
-    const {dispatchTableFetch, dispatchLoadPlotData}= llApi.action;
+    const {dispatchTableFetch, dispatchChartAdd, dispatchChartRemove}= llApi.action;
     const {TBL_RESULTS_ACTIVE} = llApi.action.type;
     const {renderDOM} = llApi.util;
     const {makeFileRequest, getActiveTableId} = llApi.util.table;
@@ -405,6 +405,7 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
     }
 
     const xyPlotParams = makeXYPlotParams(params);
+    const help_id = params.help_id;
 
     // it is not quite clear how to handle situation when there are multiple tables in a group
     // for now we are connecting to the currently active table in the group
@@ -416,13 +417,13 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
             params.chartTitle||'', // title
             params.source,  // source
             null,  // alt_source
-            {pageSize: 0} // options
+            {pageSize: 1} // options
         );
         tblId = searchRequest.tbl_id;
         dispatchTableFetch(searchRequest);
     }
 
-    const chartId = uniqueChartId(tblId||tblGroup);
+    const chartId = uniqueChartId();
 
     if (tblGroup) {
         tblId = getActiveTableId(tblGroup);
@@ -430,29 +431,43 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
             const new_tblId = getActiveTableId(tblGroup);
             if (new_tblId !== tblId) {
                 tblId = new_tblId;
-                dispatchLoadPlotData({chartId, xyPlotParams, markAsDefault:true, tblId});
+                dispatchChartRemove(chartId);
+                dispatchChartAdd({chartId, chartType: 'scatter', help_id, deletable: false,
+                    mounted: 1,
+                    chartDataElements: [
+                        {
+                            type: 'xycols', //DATATYPE_XYCOLS.id
+                            options: xyPlotParams,
+                            tblId
+                        }
+                    ]});
             }
         });
     }
-    dispatchLoadPlotData({chartId, xyPlotParams, markAsDefault:true, tblId});
 
-    const help_id = params.help_id;
+    // SCATTER
+    dispatchChartAdd({chartId, chartType: 'scatter', help_id, deletable: false,
+        chartDataElements: [
+            {
+                type: 'xycols', //DATATYPE_XYCOLS.id
+                options: xyPlotParams,
+                tblId
+            }
+        ]});
+
     renderDOM(targetDiv, ChartsTableViewPanel,
         {
             key: `${targetDiv}-xyplot`,
             tblId,
             chartId,
             closeable: false,
-            expandedMode: false,
-            chartType: 'scatter',
-            deletable: false,
-            help_id
+            expandedMode: false
         }
     );
 }
 
 function doShowHistogram(llApi, targetDiv, params={}) {
-    const {dispatchTableFetch, dispatchLoadColData}= llApi.action;
+    const {dispatchTableFetch, dispatchChartAdd, dispatchChartRemove}= llApi.action;
     const {TBL_RESULTS_ACTIVE} = llApi.action.type;
     const {renderDOM} = llApi.util;
     const {makeFileRequest, getActiveTableId} = llApi.util.table;
@@ -461,6 +476,7 @@ function doShowHistogram(llApi, targetDiv, params={}) {
     const {addActionListener} = llApi.util;
 
     const histogramParams = makeHistogramParams(params);
+    const help_id = params.help_id;
 
     // it is not quite clear how to handle situation when there are multiple tables in a group
     // for now we are connecting to the currently active table in the group
@@ -472,13 +488,13 @@ function doShowHistogram(llApi, targetDiv, params={}) {
             params.chartTitle||'', // title
             params.source,  // source
             null,  // alt_source
-            {pageSize: 0} // options
+            {pageSize: 1} // options
         );
         tblId = searchRequest.tbl_id;
         dispatchTableFetch(searchRequest);
     }
 
-    const chartId = uniqueChartId(tblId||tblGroup);
+    const chartId = uniqueChartId();
 
     if (tblGroup) {
         tblId = getActiveTableId(tblGroup);
@@ -486,23 +502,36 @@ function doShowHistogram(llApi, targetDiv, params={}) {
             const new_tblId = getActiveTableId(tblGroup);
             if (new_tblId !== tblId) {
                 tblId = new_tblId;
-                dispatchLoadColData({chartId, histogramParams, markAsDefault: true, tblId});
+                dispatchChartRemove(chartId);
+                dispatchChartAdd({chartId, chartType: 'histogram', help_id, deletable: false,
+                    mounted: 1,
+                    chartDataElements: [
+                        {
+                            type: 'histogram', //DATATYPE_XYCOLS.id
+                            options: histogramParams,
+                            tblId
+                        }
+                    ]});
             }
         });
     }
-    dispatchLoadColData({chartId, histogramParams, markAsDefault: true, tblId});
+    // HISTOGRAM, DATA_TYPE_HISTOGRAM
+    dispatchChartAdd({chartId, chartType: 'histogram', help_id, deletable: false,
+        chartDataElements: [
+            {
+                type: 'histogram',
+                options: histogramParams,
+                tblId
+            }
+        ]});
 
-    const help_id = params.help_id;
     renderDOM(targetDiv, ChartsTableViewPanel,
         {
             key: `${targetDiv}-histogram`,
             tblId,
             chartId,
             closeable: false,
-            expandedMode: false,
-            chartType: 'histogram',
-            deletable: false,
-            help_id
+            expandedMode: false
         }
     );
 }

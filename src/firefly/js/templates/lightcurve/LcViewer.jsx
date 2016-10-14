@@ -25,7 +25,7 @@ import {dispatchInitFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {dispatchLoadPlotData} from '../../charts/XYPlotCntlr.js';
+import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import * as TblUtil from '../../tables/TableUtil.js';
 
 // import {deepDiff} from '../util/WebUtil.js';
@@ -232,6 +232,6 @@ function onSearchSubmit(request) {
         dispatchInitFieldGroup('LC_FORM');
     }
     if (xyPlotParams) {
-        dispatchLoadPlotData({chartId:treq.tbl_id, tblId:treq.tbl_id, markAsDefault:true, xyPlotParams});
+        loadXYPlot({chartId:treq.tbl_id, tblId:treq.tbl_id, xyPlotParams});
     }
 }

@@ -7,8 +7,11 @@ import {get, filter, omitBy, isNil, isEmpty} from 'lodash';
 
 import {LO_VIEW, LO_MODE, SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo, dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 import {clone} from '../../util/WebUtil.js';
-import {findGroupByTblId, getTblIdsByGroup,getActiveTableId} from '../../tables/TableUtil.js';
+import {findGroupByTblId, getTblIdsByGroup,getActiveTableId, getTableInGroup} from '../../tables/TableUtil.js';
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
+import {CHART_ADD, CHART_REMOVE, getNumCharts, dispatchChartAdd} from '../../charts/ChartsCntlr.js';
+import {getDefaultXYPlotOptions, DT_XYCOLS} from '../../charts/dataTypes/XYColsCDT.js';
+import {SCATTER} from '../../charts/ChartUtil.js';
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
 import {isMetaDataTable, isCatalogTable} from '../../metaConvert/converterUtils.js';
 import {META_VIEWER_ID} from '../../visualize/ui/TriViewImageSection.jsx';
@@ -31,7 +34,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         const action = yield take([
             ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE,
             ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS,
-            TBL_RESULTS_ADDED, TABLE_REMOVE, TABLE_LOADED,
+            TBL_RESULTS_ADDED, TABLE_REMOVE, TABLE_LOADED, CHART_ADD, CHART_REMOVE,
             SHOW_DROPDOWN, SET_LAYOUT_MODE,
             TBL_RESULTS_ACTIVE
         ]);
@@ -82,11 +85,13 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
 
         // change mode when new UI elements are added or removed from results
         switch (action.type) {
+            case CHART_ADD:
             case TBL_RESULTS_ADDED:
             case TABLE_LOADED:
             case REPLACE_VIEWER_ITEMS :
             case ImagePlotCntlr.PLOT_IMAGE :
             case ImagePlotCntlr.PLOT_IMAGE_START :
+            case CHART_REMOVE:
             case TABLE_REMOVE:
             case ImagePlotCntlr.DELETE_PLOT_VIEW:
                 if (count === 1) {
@@ -105,6 +110,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
 
         // calculate dropDown when new UI elements are added or removed from results
         switch (action.type) {
+            case CHART_ADD:
             case TBL_RESULTS_ADDED:
             case TABLE_LOADED:
             case REPLACE_VIEWER_ITEMS :
@@ -113,6 +119,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
                 dropDown = {visible: count === 0};
                 break;
             case SHOW_DROPDOWN:
+            case CHART_REMOVE:
             case TABLE_REMOVE:
             case ImagePlotCntlr.DELETE_PLOT_VIEW:
                 if (!get(dropDown, 'visible', false)) {
@@ -135,9 +142,31 @@ function handleLayoutChanges(action) {
 }
 
 function handleNewTable(action, images, showImages, showTables, coverageLockedOn) {
+
+    const {tbl_id} = action.payload;
+
+    // check if a default chart needs to be added
+    if (getNumCharts(tbl_id) === 0) {
+        // how do I know the default chart should be added?
+        // add a default chart if the group is main
+        if (getTableInGroup(tbl_id, 'main')) {
+            // default chart is xy plot of coordinate columns or first two numeric columns
+            const defaultOptions = getDefaultXYPlotOptions(tbl_id);
+            if (defaultOptions) {
+                dispatchChartAdd({
+                    chartId: 'xyplot-' + tbl_id,
+                    chartType: SCATTER,
+                    groupId: tbl_id,
+                    deletable: false,
+                    chartDataElements: [{tblId: tbl_id, type: DT_XYCOLS, options: defaultOptions}]
+                });
+            }
+        }
+    }
+
     // check for catalog or meta images
     if (!showTables) return [showImages, images, coverageLockedOn];        // ignores this if table is not visible
-    const {tbl_id} = action.payload;
+
     const isMeta = isMetaDataTable(tbl_id);
     if (isMeta || isCatalogTable(tbl_id)) {
         if (!get(images, 'showFits')) {

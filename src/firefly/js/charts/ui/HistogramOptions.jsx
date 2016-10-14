@@ -2,6 +2,7 @@ import React, {PropTypes} from 'react';
 
 import {get} from 'lodash';
 import ColValuesStatistics from './../ColValuesStatistics.js';
+import {DATATYPE_HISTOGRAM} from '../dataTypes/HistogramCDT.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
@@ -23,8 +24,9 @@ export const histogramParamsShape = PropTypes.shape({
       });
 
 
-export function resultsSuccess(callback, histogramParams) {
-    callback(Object.assign({}, histogramParams));
+export function resultsSuccess(callback, flds, tblId) {
+    const options = Object.assign({}, flds, {tblId, type: DATATYPE_HISTOGRAM.id});
+    callback(options);
 }
 
 export function resultsFail() {

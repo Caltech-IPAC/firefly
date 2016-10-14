@@ -26,7 +26,7 @@ import {Tabs, Tab,FieldGroupTabs} from '../../ui/panel/TabPanel.jsx';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 
-import {dispatchLoadPlotData} from '../../charts/XYPlotCntlr.js';
+import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 
 
 import {RAW_TABLE, PHASE_FOLDED} from '../../templates/lightcurve/LcManager.js';
@@ -393,7 +393,7 @@ function doPhaseFolding(fields) {
     if (tReq !== null) {
         dispatchTableSearch(tReq, {removable: false});
         let xyPlotParams = {x: {columnOrExpr: 'phase', options: 'grid'}, y: {columnOrExpr: 'w1mpro_ep', options:'grid'}};
-        dispatchLoadPlotData({chartId:PHASE_FOLDED, tblId:PHASE_FOLDED, markAsDefault:true, xyPlotParams});
+        loadXYPlot({chartId:PHASE_FOLDED, tblId:PHASE_FOLDED, xyPlotParams});
     }
 }
 
