@@ -41,9 +41,9 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
 
         //File file = createFile(request, ".json");
-        File dataFile = new File(request.getParam("table_path")+request.getParam("table_name")+".cvs");
+        File dataFile = new File(request.getParam("table_path")+request.getParam("table_name")+".csv");
        // File dataFile = new File(request.getParam("table_path")+request.getParam("table_name")+".json");
-        File metaFile = new File(request.getParam("table_path")+request.getParam("meta_table")+".json");
+        File metaFile = new File(request.getParam("table_path")+request.getParam("meta_table")+".tbl");
 
 
 
@@ -56,6 +56,7 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
              e.printStackTrace();
          }
          File outFile = createFile(request, ".tbl");
+         dg.shrinkToFitData();
          DataGroupWriter.write(outFile, dg, 0);
          return  outFile;
    }
@@ -63,19 +64,25 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
     private File loadDataFileDummy(TableServerRequest request) throws IOException, DataAccessException {
         //File file = createFile(request, ".json");
-        File file = new File(request.getParam("inFileName")+".json");
-        try {
-            //TableDef tableDef= getMeta(requestMeta);
-            DataGroup dg = getTableDataFromJson(file);
-            File outFile = createFile(request, ".tbl");
-            DataGroupWriter.write(outFile, dg, 0);
-            return outFile;
-        }
-        catch (ParseException e){
-            e.getStackTrace();
-        }
+        File dataFile = new File(request.getParam("table_path")+request.getParam("table_name")+".csv");
+        // File dataFile = new File(request.getParam("table_path")+request.getParam("table_name")+".json");
+        File metaFile = new File(request.getParam("table_path")+request.getParam("meta_table")+".tbl");
 
-       return null;
+
+
+        TableDef tableDef= IpacTableUtil.getMetaInfo(metaFile);// getMeta(request);
+        // DataGroup dg = getTableDataFromJson(dataFile,tableDef);
+        DataGroup dg = null;
+        try {
+            dg = getTableDataFromCsv(dataFile,tableDef);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+       // File outFile = createFile(request, ".tbl");
+        File outFile = new File(request.getParam("table_path")+ "out_"+request.getParam("table_name")+".json");
+        dg.shrinkToFitData();
+        DataGroupWriter.write(outFile, dg, 0);
+        return  outFile;
     }
 
     private DataGroup getTableDataFromJson(File jsonFile) throws IOException, ParseException {
@@ -183,34 +190,54 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
     private DataObject getRow(DataType[] dataType, String[] cols,  String csvLine, DataGroup dg ) throws Exception {
 
         String[] strVaues = csvLine.split(",");
+        if (strVaues.length!=cols.length){
+            throw new Exception("data length does not match");
+        }
         DataObject row = new DataObject(dg);
         for (int i=0; i<strVaues.length; i++){
             DataType type = getDataType(cols[i], dataType);
+            //truncate the column name to 30 character due to the DataGroupWrite can only write up to 30 characters
+
+            if (cols[i].equalsIgnoreCase("flags_pixel_interpolated_center")){
+                System.out.println("debug");
+            }
             if (type==null){
+                System.out.println("****name="+cols[i]);
+
                 throw new Exception("no data type define");
+
             }
 
+
+            String tname = type.getDataType().getTypeName();
+            String pkg="java.lang.";
             if (strVaues[i].equalsIgnoreCase("null")) {
                 type.setMayBeNull(true);
                 row.setDataElement(type, null);
             }
             else{
-                if (type.getDataType().getTypeName().equalsIgnoreCase("double")){
+                if (tname.equalsIgnoreCase(pkg+"double")){
                     row.setDataElement(type, new Double(strVaues[i]));
                 }
-                else  if (type.getDataType().getTypeName().equalsIgnoreCase("float")){
+                else  if (tname.equalsIgnoreCase(pkg+"float")){
                     row.setDataElement(type, new Float(strVaues[i]));
-                }  if (type.getDataType().getTypeName().equalsIgnoreCase("bit(1)")){
-                    row.setDataElement(type, new Boolean(strVaues[i]));
-                } if (type.getDataType().getTypeName().equalsIgnoreCase("bigint")){
+                }
+                else if (tname.equalsIgnoreCase(pkg+"long")){
                     row.setDataElement(type, new Long(strVaues[i]));
-                } if (type.getDataType().getTypeName().equalsIgnoreCase("int(11")){
-                    row.setDataElement(type, new Integer(strVaues[i]));
-                } if (type.getDataType().getTypeName().equalsIgnoreCase("SMALLINT")){
-                    row.setDataElement(type, new Short(strVaues[i]));
-                } if (type.getDataType().getTypeName().equalsIgnoreCase("TINYINT")){
+                }
+                else if (tname.equalsIgnoreCase(pkg+"byte")){
                     row.setDataElement(type, new Byte(strVaues[i]));
-                }  if (type.getDataType().getTypeName().equalsIgnoreCase("string")){
+                }
+                else if (tname.equalsIgnoreCase(pkg+"short")){
+                    row.setDataElement(type, new Short(strVaues[i]));
+                }
+                else if (tname.equalsIgnoreCase(pkg+"int")){
+                    row.setDataElement(type, new Integer(strVaues[i]));
+                }
+                else if (tname.equalsIgnoreCase(pkg+"boolean")){
+                    row.setDataElement(type, new Boolean(strVaues[i]));
+                }
+                else if (tname.equalsIgnoreCase(pkg+"string")){
                     row.setDataElement(type, strVaues[i]);
                 }
                 else {
@@ -223,6 +250,7 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
 
         }
+
         return row;
 
     }
@@ -232,13 +260,23 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
         DataGroup dg = new DataGroup("result", dataType);
         BufferedReader reader = new BufferedReader(new FileReader(csvFile));
-       //get the first line and then convert to column names
-        String line = reader.readLine();
-        String[] cols = line.split(",");
-        while ((line = reader.readLine()) != null) {
-              dg.add(getRow(dataType, cols, line,dg));
+        try {
 
+            //get the first line and then convert to column names
+            String line = reader.readLine();
+            String[] cols = line.split(",");
+            while ((line = reader.readLine()) != null) {
+               // System.out.println(line+"\n");
+                DataObject row = getRow(dataType, cols, line, dg);
+                dg.add(row);
+
+            }
         }
+        finally {
+            // Free up file descriptor resources
+            reader.close();
+        }
+
         return dg;
     }
 
@@ -349,15 +387,12 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         String jsonFileName = "RunDeepSource_ra_btw";
 
         TableServerRequest request = new TableServerRequest("DummyTable");
+        request.setParam("table_name","RunDeepSource_ra_btw");
+        request.setParam("table_path", "/hydra/cm/firefly_test_data/DAXTestData/");
+        request.setParam("meta_table","output_RunDeepSourceDD");
         request.setParam("inFileName",dataPath +jsonFileName );
         request.setParam(ServerRequest.ID_KEY, "RunDeepSource_ra_btw");
-       /* String outFileName = dataPath + "output_" + jsonFileName;
-        request.setParam("outFileName", outFileName);
-        request.setParam("MetaID", "DummyDD");
 
-        TableServerRequest requestMeta = new TableServerRequest("DummyDD");
-        requestMeta.setParam(ServerRequest.ID_KEY, "LSSTMetaSearch");
-*/
         LSSTCataLogSearch lssCat = new LSSTCataLogSearch();
         File file = lssCat.loadDataFileDummy(request);
 

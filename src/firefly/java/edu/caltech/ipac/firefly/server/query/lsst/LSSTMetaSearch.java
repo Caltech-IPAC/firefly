@@ -56,6 +56,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         try {
             DataGroup dg = getMetaData(file);
             File outFile = createFile(request, ".tbl");
+            dg.shrinkToFitData();
             DataGroupWriter.write(outFile, dg, 0);
             return outFile;
 
@@ -78,6 +79,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
             DataGroup dg = getMetaData(file);
            // File outFile = createFile(request, ".json");
             File oFile = new File(request.getParam("outFileName"));
+            dg.shrinkToFitData();
             DataGroupWriter.write(oFile, dg, 0);
             return oFile;
         }
@@ -102,6 +104,12 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         DataType[] dataTypes = new DataType[len];
         for (int i=0; i<len; i++){
             JSONObject value = (JSONObject) metaData.get(i);
+            if (value.get("Field").toString().equalsIgnoreCase("flags_pixel_interpolated_center")){
+
+                String name = value.get("Field").toString();
+                System.out.println("debug");
+            }
+
             dataTypes[i] = new DataType(value.get("Field").toString(), getDataClass(value.get("Type").toString()) );
             if (value.get("Null").toString().equalsIgnoreCase("yes")){
                 dataTypes[i].setMayBeNull(true);
@@ -146,11 +154,15 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         else if (classType.equalsIgnoreCase("SMALLINT")){
             return Short.class;
         }
-        else {
+        else if (classType.equalsIgnoreCase("string") ) {
 
             return String.class;
 
         }
+        else {
+            System.out.println(classType + "is not supported");
+        }
+        return null;
 
     }
 
@@ -195,20 +207,19 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
     public static void main(String[] args) throws IOException, ParseException, DataAccessException {
 
 
-     /*   String jsonFileName = "RunDeepSourceDD.json";
+        String jsonFileName = "RunDeepSourceDD";
 
         TableServerRequest request = new TableServerRequest("DummyDD");
-        request.setParam("inFileName",dataPath +jsonFileName );
-        String outFileName = dataPath + "output_" + jsonFileName;
+        request.setParam("inFileName",dataPath +jsonFileName+".json" );
+        String outFileName = dataPath + "output_" + jsonFileName+".tbl";
         request.setParam("outFileName", outFileName);
         LSSTMetaSearch lsstMeta = new LSSTMetaSearch();
 
 
         File file = lsstMeta.loadDataFileDummy(request);
-        System.out.println("done" + file.getAbsolutePath());*/
+        System.out.println("done" + file.getAbsolutePath());
 
 
-        String jsonFileName ="RunDeepSourceDD.json";
 
        /* TableServerRequest request = new TableServerRequest("DummyDD");
         request.setParam("inFileName",dataPath +jsonFileName );
@@ -224,7 +235,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
       //  BufferedWriter writer = new BufferedWriter(new FileWriter(dataPath+"deepSourceDD.txt"));
 
-        JSONParser parser = new JSONParser();
+     /*   JSONParser parser = new JSONParser();
         File file = new File(dataPath+jsonFileName);
         Object obj = parser.parse(new FileReader(file )); //meta json file
         JSONArray metaData = (JSONArray) obj;
@@ -265,7 +276,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         }
 
 
-        writer.close();
+        writer.close();*/
 
        /* String[] keys = (String[]) rowTblData.keySet().toArray(new String[0]);
         for (int i=0; i<len; i++){
