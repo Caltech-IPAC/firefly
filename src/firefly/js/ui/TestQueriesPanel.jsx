@@ -190,7 +190,7 @@ function renderLSSTDummy() {
                 <b>Test LSST DD search processor</b>
             </button>
             <br/>
-            <button type='button' className='button std hl' onClick={() => lsstSearchSubmit(true)}>
+            <button type='button' className='button std hl' onClick={() => lsstSearchSubmit(false)}>
                 <b> Test LSST Catalog processor</b>
             </button>
             <br/>
@@ -202,11 +202,14 @@ function lsstSearchSubmit(isDD) {
     var tReq;
     if (isDD) { //Meta Search
         tReq = makeTblRequest('LSSTMetaSearch', 'RunDeepSourceDD', {
-            'table_name': 'RunDeepSourceDD'
+            'table_name': 'RunDeepSourceDD',
+            'table_path': '/hydra/cm/firefly_test_data/DAXTestData/'
         });
     } else {//Catalog Search
-        tReq = makeTblRequest('LSSTCatalogSearch', 'RunDeepSource_ra_btw', {
-            'table_name': 'RunDeepSource_ra_btw'
+        tReq = makeTblRequest('LSSTCataLogSearch', 'RunDeepSource_ra_btw', {
+            'table_name': 'RunDeepSource_ra_btw',
+            'table_path': '/hydra/cm/firefly_test_data/DAXTestData/',
+            'meta_table': 'output_RunDeepSourceDD'
         });
     }
 

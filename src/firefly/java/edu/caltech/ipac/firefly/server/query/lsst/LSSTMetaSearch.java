@@ -17,9 +17,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+
+import java.io.*;
 import java.util.List;
 
 /**
@@ -35,7 +34,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
      private static final String TEST_DATA_ROOT = "firefly_test_data/";
      private static final String TEST_DATA_PATH= TEST_DATA_ROOT+"/DAXTestData/";
 
-    private static String classPath =LSSTCatagLogSearch.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+    private static String classPath =LSSTCataLogSearch.class.getProtectionDomain().getCodeSource().getLocation().getPath();
     private static String rootPath = classPath.split("firefly")[0];
     private static  String dataPath = rootPath+TEST_DATA_PATH;
 
@@ -52,7 +51,8 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         //String ddTable = request.getParam(CatalogRequest.CATALOG);
         // output file will be in json format
 
-        File file = createFile(request, ".json");
+       // File file = createFile(request, ".json");
+        File file = new File(request.getParam("table_path")+request.getParam("table_name")+".json");
         try {
             DataGroup dg = getMetaData(file);
             File outFile = createFile(request, ".tbl");
@@ -71,12 +71,15 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
         //String ddTable = request.getParam(CatalogRequest.CATALOG);
         // output file will be in json format
-        File file = new File(request.getParam("outFileName"));
+       // File file = new File(request.getParam("outFileName"));
+
         try {
+            File file = new File(request.getParam("inFileName"));
             DataGroup dg = getMetaData(file);
-            File outFile = createFile(request, ".tbl");
-            DataGroupWriter.write(outFile, dg, 0);
-            return outFile;
+           // File outFile = createFile(request, ".json");
+            File oFile = new File(request.getParam("outFileName"));
+            DataGroupWriter.write(oFile, dg, 0);
+            return oFile;
         }
         catch (ParseException e){
             e.getStackTrace();
@@ -120,7 +123,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         return dg;
     }
 
-    private static Class getDataClass(String classType){
+    static Class getDataClass(String classType){
 
         if (classType.equalsIgnoreCase("double")){
             return Double.class;
@@ -131,7 +134,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         else if (classType.equalsIgnoreCase("int(11)")){
             return Integer.class;
         }
-        else if (classType.equalsIgnoreCase("BigInt(20)")){
+        else if (classType.equalsIgnoreCase("BigInt(20)") ){//|| classType.equalsIgnoreCase("int(11)") ){
             return Long.class;
         }
         else if (classType.equalsIgnoreCase("bit(1)")){
@@ -168,10 +171,31 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
     }
 
 
+    private static Object getValue(String colName,JSONObject rowTblData){
+
+        for (Object key : rowTblData.keySet()) {
+            //based on you key types
+            String keyStr = (String)key;
+            if (keyStr.equalsIgnoreCase(colName) ) {
+                return rowTblData.get(keyStr);
+
+            }
+        }
+        return null;
+    }
+
+    private static String getTypeInMeta(String key, String[] names, String[] types){
+        for (int i=0; i<names.length; i++){
+            if (names[i].equalsIgnoreCase(key)){
+                return types[i];
+            }
+        }
+        return null;
+    }
     public static void main(String[] args) throws IOException, ParseException, DataAccessException {
 
 
-        String jsonFileName = "RunDeepSourceDD";
+     /*   String jsonFileName = "RunDeepSourceDD.json";
 
         TableServerRequest request = new TableServerRequest("DummyDD");
         request.setParam("inFileName",dataPath +jsonFileName );
@@ -181,9 +205,98 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
 
         File file = lsstMeta.loadDataFileDummy(request);
+        System.out.println("done" + file.getAbsolutePath());*/
+
+
+        String jsonFileName ="RunDeepSourceDD.json";
+
+       /* TableServerRequest request = new TableServerRequest("DummyDD");
+        request.setParam("inFileName",dataPath +jsonFileName );
+        String outFileName = dataPath + "output_" + jsonFileName;
+        request.setParam("outFileName", outFileName);
+        LSSTMetaSearch lsstMeta = new LSSTMetaSearch();
+
+
+        File file = lsstMeta.loadDataFileDummy(request);
         System.out.println("done" + file.getAbsolutePath());
+*/
 
 
+      //  BufferedWriter writer = new BufferedWriter(new FileWriter(dataPath+"deepSourceDD.txt"));
+
+        JSONParser parser = new JSONParser();
+        File file = new File(dataPath+jsonFileName);
+        Object obj = parser.parse(new FileReader(file )); //meta json file
+        JSONArray metaData = (JSONArray) obj;
+        int len =metaData.size();
+        String[] types = new String[len];
+        String[] fields = new String[len];
+
+        //Testing the data here
+        for (int i=0; i<len; i++){
+
+            JSONObject value = (JSONObject) metaData.get(i);
+            types[i]=value.get("Type").toString();
+            fields[i]=value.get("Field").toString();
+            String line = value.get("Field").toString() + ":"+ types[i];
+           // writer.write(line+"\n");
+            //System.out.println(line);
+        }
+       // writer.close();
+
+
+
+        String dataFile = "RunDeepSource_ra_btw.json";
+        file = new File(dataPath+dataFile);
+        obj = parser.parse(new FileReader(file )); //meta json file
+        BufferedWriter  writer = new BufferedWriter(new FileWriter(dataPath+"RunDeepSource_ra_btw.txt"));
+        JSONArray tableData = (JSONArray) obj;
+        //Testing the data here
+        JSONObject rowTblData = (JSONObject) tableData.get(0);
+        for (int i=0; i<fields.length; i++){
+
+            Object value = getValue(fields[i], rowTblData);
+            String type=value!=null?value.getClass().getTypeName():"null";
+
+            String line =fields[i] + "\t:" + type;
+
+            writer.write(line+"\n");
+            System.out.println(line);
+        }
+
+
+        writer.close();
+
+       /* String[] keys = (String[]) rowTblData.keySet().toArray(new String[0]);
+        for (int i=0; i<len; i++){
+            rowTblData = (JSONObject)tableData.get(i);
+
+            writer.write("============row"+i+"=========\n");
+            for (int j=0; j<keys.length; j++){
+                Object value = getValue(keys[j], rowTblData);
+                String type=value!=null?value.getClass().getTypeName():"null";
+
+                String line = keys[j] + "\t:" + type;
+
+                String ddInMeta = getTypeInMeta(keys[j],fields, types);
+
+                if (ddInMeta==null){
+                    line=line+" \t DD does no have this field";
+                }
+                else {
+                    if (value != null) {
+                      if (!ddInMeta.equalsIgnoreCase(value.getClass().getTypeName())) {
+                            line = line + " \t the data type does not match what is in DD";
+                        }
+                    }
+                }
+                writer.write(line+"\n");
+                System.out.println(line);
+            }
+
+        }
+        writer.close();
+*/
 
     }
 }
