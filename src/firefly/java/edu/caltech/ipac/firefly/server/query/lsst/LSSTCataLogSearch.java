@@ -5,10 +5,8 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
-import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.*;
@@ -17,7 +15,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -29,12 +26,7 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
 
     private static String DATA_ACCESS_URI = AppProperties.getProperty("lsst.dataAccess.uri", "lsst.dataAccess.uri");
-    private static final String TEST_DATA_ROOT = "firefly_test_data/";
-    private static final String TEST_DATA_PATH= TEST_DATA_ROOT+"/DAXTestData/";
 
-    private static String testTreePath =LSSTCataLogSearch.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-    private static String  rootPath = testTreePath.split("firefly")[0];
-    private static  String dataPath = rootPath+TEST_DATA_PATH;
 
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
@@ -53,131 +45,16 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
          try {
              dg = getTableDataFromCsv(dataFile,tableDef);
          } catch (Exception e) {
+             _log.error("load table failed");
              e.printStackTrace();
          }
          File outFile = createFile(request, ".tbl");
          dg.shrinkToFitData();
          DataGroupWriter.write(outFile, dg, 0);
+        _log.info("table loaded");
          return  outFile;
    }
 
-
-    private File loadDataFileDummy(TableServerRequest request) throws IOException, DataAccessException {
-        //File file = createFile(request, ".json");
-        File dataFile = new File(request.getParam("table_path")+request.getParam("table_name")+".csv");
-        // File dataFile = new File(request.getParam("table_path")+request.getParam("table_name")+".json");
-        File metaFile = new File(request.getParam("table_path")+request.getParam("meta_table")+".tbl");
-
-
-
-        TableDef tableDef= IpacTableUtil.getMetaInfo(metaFile);// getMeta(request);
-        // DataGroup dg = getTableDataFromJson(dataFile,tableDef);
-        DataGroup dg = null;
-        try {
-            dg = getTableDataFromCsv(dataFile,tableDef);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-       // File outFile = createFile(request, ".tbl");
-        File outFile = new File(request.getParam("table_path")+ "out_"+request.getParam("table_name")+".json");
-        dg.shrinkToFitData();
-        DataGroupWriter.write(outFile, dg, 0);
-        return  outFile;
-    }
-
-    private DataGroup getTableDataFromJson(File jsonFile) throws IOException, ParseException {
-
-
-        JSONArray tableData = getData( jsonFile);
-
-
-        JSONObject object = (JSONObject) tableData.get(0);
-        String[] colsName = (String[]) object.keySet().toArray(new String[0]);
-        DataType[]  dataTypes  = new DataType[colsName.length];
-        for (int i=0; i<colsName.length;  i++){
-            Object keyvalue = object.get(colsName[i]);
-            Class cls= new Object().getClass();
-            if (keyvalue!=null){
-                cls = keyvalue.getClass();
-            }
-            dataTypes [i]= new DataType(colsName[i], cls);
-
-        }
-
-
-
-        // DataType[]  dataType =  tableDef.getCols().toArray(new DataType[0]);
-
-
-        DataGroup dg = new DataGroup("result", dataTypes  );
-
-        for (int i=0; i<tableData.size(); i++){
-            JSONObject rowTblData = (JSONObject) tableData.get(i);
-            DataObject row = new DataObject(dg);
-            for (int j=0; j<dataTypes.length; j++){
-                Object value = rowTblData.get(colsName[j]);
-                row.setDataElement(dataTypes[j],value);
-
-            }
-            dg.add(row);
-        }
-
-
-        return null;//dg;
-    }
-
-
-    private DataType[] getDataTypes(JSONArray tableData){
-
-
-
-        //Object value=null;
-        int lineCount=0;
-        //using the first row to get all the column names
-        JSONObject rowData = (JSONObject) tableData.get(0);
-        String[] keys = (String[]) rowData.keySet().toArray(new String[0]);
-        DataType[] types = new DataType[keys.length];
-
-        for (int i=0; i<keys.length; i++) {
-
-            Object value = getValue(keys[i], rowData);
-
-           /* while (value == null && lineCount < tableData.size()) {
-                lineCount++;
-                rowData = (JSONObject) tableData.get(lineCount);
-                value = getValue(keys[i], rowData);
-            }*/
-            Class cls = value == null ? (new String("s")).getClass() :value.getClass();
-                    //LSSTMetaSearch.getDataClass(value.getClass().getTypeName());
-            types[i]=new DataType(keys[i],cls );
-
-        }
-
-     /*   String[] keys = (String[]) rowData.keySet().toArray(new String[0]);
-        DataType[] types = new DataType[keys.length];
-        for (int i=0; i<keys.length; i++){
-            Object value = getValue(keys[i], rowData);
-            if (value!=null){
-                types[i]=new DataType(keys[i], value.getClass());
-            }
-            else {
-                Class cls = (new String()).getClass();
-                *//*int j=1;
-                while(value==null){
-                    JSONObject row = (JSONObject) tableData.get(j);
-                    value = getValue(keys[i], row);
-                    j++;
-                }
-                if (value!=null){
-                    cls = value.getClass();
-                }*//*
-
-                types[i]=new DataType(keys[i],cls );
-
-            }
-        }*/
-       return types;
-    }
 
     private DataType getDataType(String colName, DataType[] dataType){
         for (int i=0; i<dataType.length; i++){
@@ -196,19 +73,10 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         DataObject row = new DataObject(dg);
         for (int i=0; i<strVaues.length; i++){
             DataType type = getDataType(cols[i], dataType);
-            //truncate the column name to 30 character due to the DataGroupWrite can only write up to 30 characters
-
-            if (cols[i].equalsIgnoreCase("flags_pixel_interpolated_center")){
-                System.out.println("debug");
-            }
             if (type==null){
                 System.out.println("****name="+cols[i]);
-
                 throw new Exception("no data type define");
-
             }
-
-
             String tname = type.getDataType().getTypeName();
             String pkg="java.lang.";
             if (strVaues[i].equalsIgnoreCase("null")) {
@@ -246,9 +114,6 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
             }
 
-
-
-
         }
 
         return row;
@@ -261,12 +126,11 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         DataGroup dg = new DataGroup("result", dataType);
         BufferedReader reader = new BufferedReader(new FileReader(csvFile));
         try {
-
             //get the first line and then convert to column names
             String line = reader.readLine();
             String[] cols = line.split(",");
             while ((line = reader.readLine()) != null) {
-               // System.out.println(line+"\n");
+
                 DataObject row = getRow(dataType, cols, line, dg);
                 dg.add(row);
 
@@ -289,49 +153,35 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
      * @throws ParseException
      */
     private DataGroup getTableDataFromJson(File jsonFile, TableDef tableDef) throws IOException, ParseException {
-        JSONArray tableData = getData( jsonFile);
-       // DataType[]  dataType =  tableDef.getCols().toArray(new DataType[0]);
 
-        DataType[] dataType = getDataTypes( tableData);
+
+         JSONArray tableData = getArrayData( jsonFile);
+         DataType[]  dataType =  tableDef.getCols().toArray(new DataType[0]);
 
         DataGroup dg = new DataGroup("result", dataType  );
 
-        //TODO database has issue with bit value is false.  It has '\0' instead of 0
         for (int i=0; i<tableData.size(); i++){
             JSONObject rowTblData = (JSONObject) tableData.get(i);
             DataObject row = new DataObject(dg);
             for (int j=0; j<dataType.length; j++){
                 Object value = getValue(dataType[j].getKeyName(), rowTblData);
-                if (j>59){//row 2 and col 65, value is double, but the first row is double
-                    System.out.println(dataType[j]);
-                    if (value!=null) System.out.println(value.getClass());
-
-                }
-               /* if (dataType[j].getDataType()==Boolean.class){
-                    boolean b =  ((String) value ).equalsIgnoreCase("\0")? false:true;
-                    row.setDataElement(dataType[j],b);
-               }
-                else {*/
-
-                    if (value==null){
+                 if (value==null){
                         dataType[j].setMayBeNull(true);
                         row.setDataElement(dataType[j], null);
-                    }
-                else {
-                        row.setDataElement(dataType[j], value);
-
-                    }
-               // }
+                 }
+                 else {
+                       //data stored in the cell should be the correct type as defined
+                       row.setDataElement(dataType[j], value);
+                  }
 
             }
-            System.out.println(row.size());
             dg.add(row);
         }
 
 
         return dg;
     }
-    private TableDef getMeta(TableServerRequest request){
+   /* private TableDef getMeta(TableServerRequest request){
         SearchManager sm = new SearchManager();
 
         try {
@@ -342,9 +192,9 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         }
         return null;
     }
+*/
 
-
-    private static JSONArray getData(File jsonFile) throws IOException, ParseException {
+    private  JSONArray getArrayData(File jsonFile) throws IOException, ParseException {
 
 
         JSONParser parser = new JSONParser();
@@ -369,7 +219,7 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         super.prepareTableMeta(meta, columns, request);
     }
 
-    private static Object getValue(String colName,JSONObject rowTblData){
+    private  Object getValue(String colName,JSONObject rowTblData){
 
         for (Object key : rowTblData.keySet()) {
             //based on you key types
@@ -380,6 +230,29 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
             }
         }
         return null;
+    }
+
+  /*  private File loadDataFileDummy(TableServerRequest request) throws IOException, DataAccessException {
+        //File file = createFile(request, ".json");
+        File dataFile = new File(request.getParam("table_path")+request.getParam("table_name")+".csv");
+        // File dataFile = new File(request.getParam("table_path")+request.getParam("table_name")+".json");
+        File metaFile = new File(request.getParam("table_path")+request.getParam("meta_table")+".tbl");
+
+
+
+        TableDef tableDef= IpacTableUtil.getMetaInfo(metaFile);// getMeta(request);
+        // DataGroup dg = getTableDataFromJson(dataFile,tableDef);
+        DataGroup dg = null;
+        try {
+            dg = getTableDataFromCsv(dataFile,tableDef);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // File outFile = createFile(request, ".tbl");
+        File outFile = new File(request.getParam("table_path")+ "out_"+request.getParam("table_name")+".json");
+        dg.shrinkToFitData();
+        DataGroupWriter.write(outFile, dg, 0);
+        return  outFile;
     }
 
     public static void main(String[] args) throws IOException, ParseException, DataAccessException {
@@ -400,5 +273,5 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
 
 
-    }
+    }*/
 }
