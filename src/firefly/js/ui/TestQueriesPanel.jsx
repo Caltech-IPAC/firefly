@@ -97,6 +97,9 @@ export class TestQueriesPanel extends Component {
                             <Tab name='Compute Periodogram' id='periodogram'>
                                 <div>{renderPeriodogram(fields)}</div>
                             </Tab>
+                            <Tab name='LSST DAX Dummy' id='lsstDummy'>
+                                <div>{renderLSSTDummy(fields)}</div>
+                            </Tab>
                         </FieldGroupTabs>
 
                     </FieldGroup>
@@ -178,6 +181,41 @@ function renderPeriodogram(fields) {
     );
 }
 
+function renderLSSTDummy() {
+
+    return (
+        <div style={{padding:5}}>
+
+            <button type='button' className='button std hl' onClick={() => lsstSearchSubmit(true)}>
+                <b>Test LSST DD search processor</b>
+            </button>
+            <br/>
+            <button type='button' className='button std hl' onClick={() => lsstSearchSubmit(false)}>
+                <b> Test LSST Catalog processor</b>
+            </button>
+            <br/>
+        </div>
+    );
+}
+function lsstSearchSubmit(isDD) {
+
+    var tReq;
+    if (isDD) { //Meta Search
+        tReq = makeTblRequest('LSSTMetaSearch', 'RunDeepForcedSourceDD', {
+            'table_name':  'RunDeepForcedSourceDD',//'RunDeepSourceDD',
+            'table_path': '/hydra/cm/firefly_test_data/DAXTestData/'
+        });
+    } else {//Catalog Search
+        tReq = makeTblRequest('LSSTCataLogSearch', 'RunDeepForcedSource_limit100', {
+            'table_name': 'RunDeepForcedSource_limit100',//'RunDeepSource_ra_btw',
+            'table_path': '/hydra/cm/firefly_test_data/DAXTestData/',
+            'meta_table':  'RunDeepForcedSourceDD'//'RunDeepSourceDD'
+        });
+    }
+
+    console.log('tReq ' +tReq);
+    dispatchTableSearch(tReq);
+}
 
 function renderCatalogTab() {
     return (
@@ -376,6 +414,9 @@ function onSearchSubmit(request) {
     else if (request.Tabs === 'loadRegion') {
         doRegionLoad(request);
     }
+    else if (request.Tabs === 'lsstDummy') {
+        doLSSTDummyLoad(request);
+    }
     else {
         console.log('request no supported');
     }
@@ -512,6 +553,17 @@ function do2Mass(request) {
     dispatchTableSearch(reqParams);
 }
 
+function doLSSTDummyLoad(request) {
+    console.log('wmass', request);
+    const reqParams = makeTblRequest('ibe_processor', '2MASS-' + request[ServerParams.USER_TARGET_WORLD_PT],
+        {
+            [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
+            mission: 'twomass',
+            ds: request.ds,
+            band: request.band
+        });
+    dispatchTableSearch(reqParams);
+}
 
 function doRegionLoad(request) {
     getDS9Region(request.fileUpload)
