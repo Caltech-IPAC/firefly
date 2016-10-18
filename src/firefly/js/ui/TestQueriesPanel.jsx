@@ -209,7 +209,7 @@ function lsstSearchSubmit(isDD) {
         tReq = makeTblRequest('LSSTCataLogSearch', 'RunDeepSource_ra_btw', {
             'table_name': 'RunDeepSource_ra_btw',
             'table_path': '/hydra/cm/firefly_test_data/DAXTestData/',
-            'meta_table': 'output_RunDeepSourceDD'
+            'meta_table': 'RunDeepSourceDD'
         });
     }
 

@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -62,6 +63,19 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
     }
 
 
+     private DataType[] getDataType(JSONObject firstRow){
+         String[] colNames = (String[]) firstRow.keySet().toArray(new String[0]);
+         DataType[] dataTypes = new DataType[colNames.length+2];//add unit and descriptions
+         for (int i=0; i<colNames.length; i++){
+             dataTypes[i] = new DataType(colNames[i],  (new String()).getClass());
+
+         }
+
+         dataTypes[colNames.length] =new DataType("unit",  (new String()).getClass());
+         dataTypes[colNames.length+1] =new DataType("description",  (new String()).getClass());
+         return dataTypes;
+
+     }
     /**
      * This method reads the json file from DAX and process it. The output is a DataGroup of the Meta data
      * @param file
@@ -77,62 +91,25 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         Object obj = parser.parse(new FileReader(file ));
         JSONArray metaData = (JSONArray) obj;
 
-        DataType[] dataTypes = new DataType[metaData.size()];
+
+        DataType[] dataTypes = getDataType( (JSONObject) metaData.get(0) );
+        DataGroup dg = new DataGroup(file.getName(), dataTypes);
+
         for (int i=0; i<metaData.size(); i++){
             JSONObject value = (JSONObject) metaData.get(i);
-            dataTypes[i] = new DataType(value.get("Field").toString(), getDataClass(value.get("Type").toString()) );
-            if (value.get("Null").toString().equalsIgnoreCase("yes")){
-                dataTypes[i].setMayBeNull(true);
+            DataObject row = new DataObject(dg);
+            for (int j=0; j<dataTypes.length-2; j++){
+                row.setDataElement(dataTypes[j], value.get(dataTypes[j].getKeyName()));
             }
-            else {
-                dataTypes[i].setMayBeNull(false);
-            }
+            row.setDataElement(dataTypes[dataTypes.length-2], "dummyUnit1");
+            row.setDataElement(dataTypes[dataTypes.length-1], "description of "+value.get(dataTypes[0].getKeyName() ) );
+            dg.add(row);
         }
-
-        DataGroup dg = new DataGroup(file.getName(), dataTypes);
 
         return dg;
     }
 
-    /**
-     * This method translates the mySql data type to corresponding java data type
-     * @param classType
-     * @return
-     */
-    private Class getDataClass(String classType){
 
-        if (classType.equalsIgnoreCase("double")){
-            return Double.class;
-        }
-        else if (classType.equalsIgnoreCase("float") || classType.equalsIgnoreCase("real") ){
-            return Float.class;
-        }
-        else if (classType.equalsIgnoreCase("int(11)")){
-            return Integer.class;
-        }
-        else if (classType.equalsIgnoreCase("BigInt(20)") ){
-            return Long.class;
-        }
-        else if (classType.equalsIgnoreCase("bit(1)")){
-            return Boolean.class;
-        }
-        else if (classType.equalsIgnoreCase("TINYINT")){
-            return Byte.class;
-        }
-        else if (classType.equalsIgnoreCase("SMALLINT")){
-            return Short.class;
-        }
-        else if (classType.equalsIgnoreCase("string") ) {
-
-            return String.class;
-
-        }
-        else {
-            System.out.println(classType + "is not supported");
-        }
-        return null;
-
-    }
 
     @Override
     protected String getFilePrefix(TableServerRequest request) {
@@ -150,7 +127,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
     }
 
-    /*File loadDataFileDummy(TableServerRequest request) throws IOException, DataAccessException {
+   File loadDataFileDummy(TableServerRequest request) throws IOException, DataAccessException {
 
 
            //String ddTable = request.getParam(CatalogRequest.CATALOG);
@@ -171,11 +148,14 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
            }
 
            return null;
-       }*/
+   }
+
+
     public static void main(String[] args) throws IOException, ParseException, DataAccessException {
 
-/*
         String jsonFileName = "RunDeepSourceDD";
+
+        String dataPath = "/hydra/cm/firefly_test_data/DAXTestData/";
 
         TableServerRequest request = new TableServerRequest("DummyDD");
         request.setParam("inFileName",dataPath +jsonFileName+".json" );
@@ -185,7 +165,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
 
         File file = lsstMeta.loadDataFileDummy(request);
-        System.out.println("done" + file.getAbsolutePath());*/
+        System.out.println("done" + file.getAbsolutePath());
 
 
 

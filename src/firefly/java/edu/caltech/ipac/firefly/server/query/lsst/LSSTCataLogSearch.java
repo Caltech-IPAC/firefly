@@ -3,10 +3,14 @@ import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
+import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.*;
@@ -35,15 +39,20 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         //File file = createFile(request, ".json");
         File dataFile = new File(request.getParam("table_path")+request.getParam("table_name")+".csv");
        // File dataFile = new File(request.getParam("table_path")+request.getParam("table_name")+".json");
-        File metaFile = new File(request.getParam("table_path")+request.getParam("meta_table")+".tbl");
 
+       // File metaFile = new File(request.getParam("table_path")+request.getParam("meta_table")+".tbl");
 
+        TableServerRequest metaRequest = new TableServerRequest("LSSTMetaSearch");
+        metaRequest.setParam("table_path",request.getParam("table_path") );
+        metaRequest.setParam("table_name",request.getParam("meta_table") );
 
-         TableDef tableDef= IpacTableUtil.getMetaInfo(metaFile);// getMeta(request);
+       // TableDef tableDef=getMeta(metaRequest);
+
+        // TableDef tableDef= IpacTableUtil.getMetaInfo(metaFile);// getMeta(request);
         // DataGroup dg = getTableDataFromJson(dataFile,tableDef);
          DataGroup dg = null;
          try {
-             dg = getTableDataFromCsv(dataFile,tableDef);
+             dg = getTableDataFromCsv(dataFile,getMeta(metaRequest));//tableDef);
          } catch (Exception e) {
              _log.error("load table failed");
              e.printStackTrace();
@@ -119,9 +128,9 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         return row;
 
     }
-    private DataGroup getTableDataFromCsv(File  csvFile, TableDef tableDef) throws Exception {
+    private DataGroup getTableDataFromCsv(File  csvFile, DataType[] dataType ) throws Exception {////TableDef tableDef)
 
-        DataType[] dataType = tableDef.getCols().toArray(new DataType[0]);
+       // DataType[] dataType = tableDef.getCols().toArray(new DataType[0]);
 
         DataGroup dg = new DataGroup("result", dataType);
         BufferedReader reader = new BufferedReader(new FileReader(csvFile));
@@ -181,18 +190,88 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
         return dg;
     }
-   /* private TableDef getMeta(TableServerRequest request){
+    /**
+     * This method translates the mySql data type to corresponding java data type
+     * @param classType
+     * @return
+     */
+    private Class getDataClass(String classType){
+
+        if (classType.equalsIgnoreCase("double")){
+            return Double.class;
+        }
+        else if (classType.equalsIgnoreCase("float") || classType.equalsIgnoreCase("real") ){
+            return Float.class;
+        }
+        else if (classType.equalsIgnoreCase("int(11)")){
+            return Integer.class;
+        }
+        else if (classType.equalsIgnoreCase("BigInt(20)") ){
+            return Long.class;
+        }
+        else if (classType.equalsIgnoreCase("bit(1)")){
+            return Boolean.class;
+        }
+        else if (classType.equalsIgnoreCase("TINYINT")){
+            return Byte.class;
+        }
+        else if (classType.equalsIgnoreCase("SMALLINT")){
+            return Short.class;
+        }
+        else if (classType.equalsIgnoreCase("string") ) {
+
+            return String.class;
+
+        }
+        else {
+            System.out.println(classType + "is not supported");
+        }
+        return null;
+
+    }
+    private  DataType[] getMetaFromMetatable(DataGroup dataGroup){
+
+        DataType[] dataTypes = new DataType[dataGroup.size()];
+        DataObject[] dataObjects=dataGroup.values().toArray(new DataObject[0]);
+        for (int i=0; i<dataObjects.length; i++){
+            dataTypes[i] = new DataType((String) dataObjects[i].getDataElement("Field"),
+                    getDataClass( (String) dataObjects[i].getDataElement("Type") ) );
+            boolean maybeNull = dataObjects[i].getDataElement("Null").toString().equalsIgnoreCase("yes")?true:false;
+            dataTypes[i] = new DataType( (String) dataObjects[i].getDataElement("Field"),
+                    (String) dataObjects[i].getDataElement("description"),
+                    getDataClass( (String) dataObjects[i].getDataElement("Type")),
+                    DataType.Importance.HIGH,
+                    (String) dataObjects[i].getDataElement("unit"),
+                    maybeNull
+            );
+
+        }
+
+        return dataTypes;
+    }
+    private DataType[] getMeta(TableServerRequest request){
         SearchManager sm = new SearchManager();
 
         try {
-            DataGroupPart dgp = sm.getDataGroup(request);
-            return dgp.getTableDef();
+            FileInfo fi = sm.getFileInfo(request);
+            if (fi == null) {
+                throw new DataAccessException("Unable to get file location info");
+            }
+            if (fi.getInternalFilename() == null) {
+                throw new DataAccessException("File not available");
+            }
+            if (!fi.hasAccess()) {
+                throw new SecurityException("Access is not permitted.");
+            }
+            DataGroup sourceDataGroup = DataGroupReader.readAnyFormat(new File(fi.getInternalFilename()));
+            return getMetaFromMetatable(sourceDataGroup);
+
         } catch (Exception e) {
             e.getStackTrace();
         }
         return null;
     }
-*/
+
 
     private  JSONArray getArrayData(File jsonFile) throws IOException, ParseException {
 
