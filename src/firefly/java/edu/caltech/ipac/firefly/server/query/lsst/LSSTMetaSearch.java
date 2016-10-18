@@ -71,8 +71,8 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
          }
 
-         dataTypes[colNames.length] =new DataType("unit",  (new String()).getClass());
-         dataTypes[colNames.length+1] =new DataType("description",  (new String()).getClass());
+         dataTypes[colNames.length] =new DataType("Unit",  (new String()).getClass());
+         dataTypes[colNames.length+1] =new DataType("Description",  (new String()).getClass());
          return dataTypes;
 
      }
@@ -129,10 +129,6 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
    File loadDataFileDummy(TableServerRequest request) throws IOException, DataAccessException {
 
-
-           //String ddTable = request.getParam(CatalogRequest.CATALOG);
-           // output file will be in json format
-          // File file = new File(request.getParam("outFileName"));
 
            try {
                File file = new File(request.getParam("inFileName"));
