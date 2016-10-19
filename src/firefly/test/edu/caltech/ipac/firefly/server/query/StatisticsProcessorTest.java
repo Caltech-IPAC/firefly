@@ -1,47 +1,45 @@
 package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.*;
+import nom.tam.fits.FitsException;
+import org.junit.*;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
 /**
  * Created by zhang on 10/29/15.
+ *  10/19/16
+ *  DM-8028
+ *    Use teh UnitTestUtility to load file
  */
 public class StatisticsProcessorTest {
 
-     private static final String TEST_ROOT = "test"+File.separatorChar;
-     private static String filename = StatisticsProcessorTest.class.getCanonicalName().replaceAll("\\.", "/")
-                                                 .replace(StatisticsProcessorTest.class.getSimpleName(), "") + File.separatorChar + "ipacTableTestFile.tbl";
     private static StatisticsProcessor sp;
     private static DataGroup inDg;
     private DataGroup outDg;
+    private String fileName = "ipacTableTestFile.tbl";
 
+    @Before
+    public void setup()  {
 
-     @BeforeClass
-    public static void setup() throws IpacTableException, IOException, DataAccessException{
-
-        sp = new StatisticsProcessor();
-
-
-        File inFile =  new File(TEST_ROOT+filename);
-        inDg = IpacTableReader.readIpacTable(inFile, null, false, "inputTable" );
-
+         sp = new StatisticsProcessor();
+         inDg = FileLoader.loadIpacTable(StatisticsProcessor.class, fileName );
 
     }
 
-    public static void main(String args[]) throws IpacTableException, IOException, DataAccessException {
-        StatisticsProcessorTest myTest = new StatisticsProcessorTest();
-        setup();
-        myTest.testCreateStatisticTable();
-        myTest.testStatisticDataArray();
+    @After
+    /**
+     * Release the memories
+     */
+    public void tearDown() {
+        sp=null;
+        inDg=null;
+        outDg=null;
     }
 
     @Test
@@ -103,4 +101,14 @@ public class StatisticsProcessorTest {
 
 
     }
+
+    public static void main(String args[]) throws IpacTableException, IOException, DataAccessException, FitsException, ClassNotFoundException {
+        String fileName = "ipacTableTestFile.tbl";
+        StatisticsProcessorTest myTest = new StatisticsProcessorTest();
+        sp = new StatisticsProcessor();
+        inDg = FileLoader.loadIpacTable(StatisticsProcessor.class, fileName );
+        myTest.testCreateStatisticTable();
+        myTest.testStatisticDataArray();
+    }
+
 }
