@@ -12,6 +12,8 @@ import {uiReducer} from './reducer/TableUiReducer.js';
 import {resultsReducer} from './reducer/TableResultsReducer.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {updateMerge} from '../util/WebUtil.js';
+import {FilterInfo} from './FilterInfo.js';
+import {selectedValues} from '../rpc/SearchServicesJson.js';
 
 export const TABLE_SPACE_PATH = 'table_space';
 export const TABLE_RESULTS_PATH = 'table_space.results.tables';
@@ -25,6 +27,12 @@ export const UI_PREFIX = 'tableUi';
  * Sequence of actions:  TABLE_FETCH -> TABLE_UPDATE(+) -> TABLE_LOADED, with invokedBy = TABLE_FETCH
  */
 export const TABLE_FETCH = `${DATA_PREFIX}.fetch`;
+
+/**
+ * Insert a full TableModel into the sytem.  If tbl_id exists, data will be replaced.
+ * Sequence of actions:  TABLE_REPLACE -> TABLE_LOADED, with invokedBy = TABLE_FETCH
+ */
+export const TABLE_INSERT = `${DATA_PREFIX}.insert`;
 
 /**
  * Fired when table is completely loaded on the server.
@@ -47,6 +55,11 @@ export const TABLE_SORT = `${DATA_PREFIX}.sort`;
  * Filter table data.   Sequence of actions:  TABLE_FILTER -> TABLE_UPDATE(+) -> TABLE_LOADED, with invokedBy = TABLE_FILTER
  */
 export const TABLE_FILTER = `${DATA_PREFIX}.filter`;
+
+/**
+ * Filter table data on selected rows.   Sequence of actions:  TABLE_FILTER -> TABLE_UPDATE(+) -> TABLE_LOADED, with invokedBy = TABLE_FILTER
+ */
+export const TABLE_FILTER_SELROW = `${DATA_PREFIX}.filterSelrow`;
 
 /**
  * Fired when table selection changes.
@@ -103,92 +116,52 @@ export const TABLE_REPLACE = `${DATA_PREFIX}.replace`;
 
 
 
-/*---------------------------- CREATORS ----------------------------*/
+export default {actionCreators, reducers};
 
-export function tableSearch(action) {
-    return (dispatch) => {
-        //dispatch(validate(FETCH_TABLE, action));
-        if (!action.err) {
-            var {request={}, options={}, tbl_group} = action.payload;
-            const {tbl_id} = request;
-            const title = get(request, 'META_INFO.title');
-            request.pageSize = options.pageSize = options.pageSize || request.pageSize || 100;
-
-            dispatchTableFetch(request);
-            if (!TblUtil.getTableInGroup(tbl_id, tbl_group)) {
-                const {tbl_group, removable} = options || {};
-                dispatchTblResultsAdded(tbl_id, title, options, removable, tbl_group);
-                dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:() => dispatchActiveTableChanged(tbl_id, tbl_group)});
-            }
-        }
+function actionCreators() {
+    return {
+        [TABLE_SEARCH]:     tableSearch,
+        [TABLE_INSERT]:     tableInsert,
+        [TABLE_HIGHLIGHT]:  highlightRow,
+        [TABLE_FETCH]:      tableFetch,
+        [TABLE_SORT]:       tableFetch,
+        [TABLE_FILTER]:     tableFetch,
+        [TABLE_FILTER_SELROW]:  tableFilterSelrow,
+        [TBL_RESULTS_ADDED]:    tblResultsAdded
     };
 }
 
-export function highlightRow(action) {
-    return (dispatch) => {
-        const {tbl_id} = action.payload;
-        var tableModel = TblUtil.getTblById(tbl_id);
-        var tmpModel = TblUtil.smartMerge(tableModel, action.payload);
-        const {hlRowIdx, startIdx, endIdx, pageSize} = TblUtil.getTblInfo(tmpModel);
-        if (TblUtil.isTblDataAvail(startIdx, endIdx, tableModel)) {
-            dispatch(action);
-        } else {
-            const request = cloneDeep(tableModel.request);
-            set(request, 'META_INFO.padResults', true);
-            Object.assign(request, {startIdx, pageSize});
-            TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
-                dispatch( {type:TABLE_HIGHLIGHT, payload: tableModel} );
-            }).catch( (error) => {
-                dispatch({type: TABLE_HIGHLIGHT, payload: createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
-            });
-        }
+function reducers() {
+    return {
+        [TABLE_SPACE_PATH]: reducer
     };
 }
 
-export function tableFetch(action) {
-    return (dispatch) => {
-        if (!action.err) {
-            var {request, hlRowIdx} = action.payload;
-            const {tbl_id} = request;
-
-            dispatchAddSaga( doOnTblLoaded, {tbl_id, callback:() => dispatchTableLoaded( Object.assign(TblUtil.getTblInfoById(tbl_id), {invokedBy: action.type}) )});
-            dispatch( updateMerge(action, 'payload', {tbl_id}) );
-            request.startIdx = 0;
-            TblUtil.doFetchTable(request, hlRowIdx).then ( (tableModel) => {
-                dispatch( {type: TABLE_UPDATE, payload: tableModel} );
-            }).catch( (error) => {
-                dispatch({type: TABLE_UPDATE, payload: createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
-            });
-        }
-    };
-}
-
-
-/*---------------------------- REDUCERS -----------------------------*/
-export function reducer(state={data:{}, results: {}, ui:{}}, action={}) {
-    
-    var nstate = {...state};
-    nstate.results = resultsReducer(nstate, action);
-    nstate.data = dataReducer(nstate, action);
-    nstate.ui   = uiReducer(nstate, action);
-    
-    if (shallowequal(state, nstate)) {
-        return state;
-    } else {
-        return nstate;
-    }
-}
 
 /*---------------------------- DISPATCHERS -----------------------------*/
 
 /**
  * Initiate a search that returns a table which will be added to result view.
- * @param request
+ * @param {TableRequest} request
  * @param {TblOptions} options  table options
  * @param {function} dispatcher only for special dispatching uses such as remote
  */
 export function dispatchTableSearch(request, options, dispatcher= flux.process) {
     dispatcher( {type: TABLE_SEARCH, payload: pickBy({request, options}) });
+}
+
+/**
+ * insert this tableModel into the system and then add it to the result view.
+ * If one exists, it will be replaced.
+ * This is similar to dispatchTableSearch except fetching is not needed.  The given tableModel is a full
+ * data set, and does not need server fetching.
+ * @param {TableModel} tableModel  the tableModel to insert
+ * @param {TblOptions} options  table options
+ * @param {boolean}    [addUI=true]  add this table to the UI
+ * @param {function}   dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchTableInsert(tableModel, options, addUI=true, dispatcher= flux.process) {
+    dispatcher( {type: TABLE_INSERT, payload: {tableModel, options, addUI}});
 }
 
 /**
@@ -219,6 +192,17 @@ export function dispatchTableSort(request, hlRowIdx, dispatcher= flux.process) {
  */
 export function dispatchTableFilter(request, hlRowIdx, dispatcher= flux.process) {
     dispatcher( {type: TABLE_FILTER, payload: {request, hlRowIdx} });
+}
+
+/**
+ * Filter the table given the request.
+ * @param {TableRequest} request a table request params object.
+ * @param {number[]} selected row indices
+ * @param {number} hlRowIdx set the highlightedRow.  default to startIdx.
+ * @param {function} dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchTableFilterSelrow(request, selected, hlRowIdx, dispatcher= flux.process) {
+    dispatcher( {type: TABLE_FILTER_SELROW, payload: {request, selected, hlRowIdx} });
 }
 
 /**
@@ -270,19 +254,10 @@ export function dispatchTableReplace(tableModel) {
  * @param {string} tbl_id        table id
  * @param {string} title         title to be displayed with the table.
  * @param {TblOptions} options   table options.
- * @param {boolean} removable    true if this table can be removed from view.
- * @param {string} tbl_group     table group.  defaults to 'main'
  * @param {string} tbl_ui_id     table ui id
  */
-export function dispatchTblResultsAdded(tbl_id, title, options, removable, tbl_group, tbl_ui_id=TblUtil.uniqueTblUiId()) {
-    title = title || tbl_id;
-    tbl_group = tbl_group || 'main';
-    removable = isNil(removable) ? true : removable;
-    const pageSize = get(options, 'pageSize');
-    if ( pageSize && !Number.isInteger(pageSize)) {
-        options.pageSize = parseInt(pageSize);
-    }
-    flux.process( {type: TBL_RESULTS_ADDED, payload: {tbl_id, tbl_group, title, removable, tbl_ui_id, options}});
+export function dispatchTblResultsAdded(tbl_id, title, options, tbl_ui_id) {
+    flux.process( {type: TBL_RESULTS_ADDED, payload: {tbl_id, title, tbl_ui_id, options}});
 }
 
 /**
@@ -313,6 +288,162 @@ export function dispatchActiveTableChanged(tbl_id, tbl_group='main') {
 
 /*---------------------------- PRIVATE -----------------------------*/
 
+/*---------------------------- CREATORS ----------------------------*/
+
+function tableSearch(action) {
+    return (dispatch) => {
+        //dispatch(validate(FETCH_TABLE, action));
+        if (!action.err) {
+            var {request={}, options={}} = action.payload;
+            const {tbl_group} = options;
+            const {tbl_id} = request;
+            const title = get(request, 'META_INFO.title');
+            request.pageSize = options.pageSize = options.pageSize || request.pageSize || 100;
+
+            dispatchTableFetch(request);
+            dispatchTblResultsAdded(tbl_id, title, options, tbl_group);
+        }
+    };
+}
+
+function tableInsert(action) {
+    return (dispatch) => {
+        const {tableModel={}, options={}, addUI=true} = action.payload || {};
+        const {tbl_group} = options;
+        const title = tableModel.title || get(tableModel, 'request.META_INFO.title') || 'untitled';
+        const tbl_id = tableModel.tbl_id || get(tableModel, 'request.tbl_id');
+
+        Object.assign(tableModel, {isFetching: false});
+        set(tableModel, 'tableMeta.Loading-Status', 'COMPLETED');
+        if (!tableModel.origTableModel) tableModel.origTableModel = tableModel;
+        if (addUI) dispatchTblResultsAdded(tbl_id, title, options, tbl_group);
+        dispatch( {type: TABLE_REPLACE, payload: tableModel} );
+        dispatchTableLoaded(Object.assign( TblUtil.getTblInfo(tableModel), {invokedBy: TABLE_FETCH}));
+    };
+}
+
+function tblResultsAdded(action) {
+    return (dispatch) => {
+        //dispatch(validate(FETCH_TABLE, action));
+        if (!action.err) {
+            var {tbl_id, title, options={}, tbl_ui_id} = action.payload;
+
+            title = title || tbl_id;
+            options = Object.assign({tbl_group: 'main', removable: true}, options);
+            const pageSize = get(options, 'pageSize');
+            if ( pageSize && !Number.isInteger(pageSize)) {
+                options.pageSize = parseInt(pageSize);
+            }
+            if (!TblUtil.getTableInGroup(tbl_id, options.tbl_group)) {
+                tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
+                dispatch({type: TBL_RESULTS_ADDED, payload: {tbl_id, title, tbl_ui_id, options}});
+                dispatchActiveTableChanged(tbl_id, options.tbl_group);
+            }
+        }
+    };
+}
+
+function highlightRow(action) {
+    return (dispatch) => {
+        const {tbl_id} = action.payload;
+        var tableModel = TblUtil.getTblById(tbl_id);
+        var tmpModel = TblUtil.smartMerge(tableModel, action.payload);
+        const {hlRowIdx, startIdx, endIdx, pageSize} = TblUtil.getTblInfo(tmpModel);
+        if (TblUtil.isTblDataAvail(startIdx, endIdx, tableModel)) {
+            dispatch(action);
+        } else {
+            const request = cloneDeep(tableModel.request);
+            set(request, 'META_INFO.padResults', true);
+            Object.assign(request, {startIdx, pageSize});
+            TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
+                dispatch( {type:TABLE_HIGHLIGHT, payload: tableModel} );
+            }).catch( (error) => {
+                dispatch({type: TABLE_HIGHLIGHT, payload: createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
+            });
+        }
+    };
+}
+
+function tableFetch(action) {
+    return (dispatch) => {
+        if (!action.err) {
+            var {request, hlRowIdx} = action.payload;
+            const {tbl_id} = request;
+
+            dispatchAddSaga( doOnTblLoaded, {tbl_id, callback:() => dispatchTableLoaded( Object.assign(TblUtil.getTblInfoById(tbl_id), {invokedBy: action.type}) )});
+            dispatch( updateMerge(action, 'payload', {tbl_id}) );
+            request.startIdx = 0;
+            TblUtil.doFetchTable(request, hlRowIdx).then ( (tableModel) => {
+                const type = tableModel.origTableModel ? TABLE_REPLACE : TABLE_UPDATE;
+                dispatch( {type, payload: tableModel} );
+            }).catch( (error) => {
+                dispatch({type: TABLE_UPDATE, payload: createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
+            });
+        }
+    };
+}
+
+/**
+ * This function convert the selected rows into its associated ROWID, add it as a filter, then
+ * dispatch it to tableFilter for processing.
+ * @param {Action} action
+ * @returns {function}
+ */
+function tableFilterSelrow(action) {
+    return (dispatch) => {
+        var {request={}, hlRowIdx, selected=[]} = action.payload || {};
+        const {tbl_id, filters} = request;
+        const tableModel = TblUtil.getTblById(tbl_id);
+        const filterInfoCls = FilterInfo.parse(filters);
+
+        if (tableModel.origTableModel) {
+            const selRowIds = selected.map((idx) => TblUtil.getCellValue(tableModel, idx, 'ROWID') || idx).toString();
+            filterInfoCls.addFilter('ROWID', `IN (${selRowIds})`);
+            request = Object.assign({}, request, {filters: filterInfoCls.serialize()});
+            dispatchTableFilter(request, hlRowIdx);
+        } else {
+            const filePath = get(tableModel, 'tableMeta.tblFilePath');
+            if (filePath) {
+                getRowIdFor(filePath, selected).then( (selectedRowIdAry) => {
+                    const value = selectedRowIdAry.reduce((rv, val, idx) => {
+                            return rv + (idx ? ',':'') + val;
+                        }, 'IN (') + ')';
+                    filterInfoCls.addFilter('ROWID', value);
+                    request = Object.assign({}, request, {filters: filterInfoCls.serialize()});
+                    dispatchTableFilter(request, hlRowIdx);
+                });
+            }
+        }
+    };
+}
+/*-----------------------------------------------------------------------------------------*/
+
+/*---------------------------- REDUCERS -----------------------------*/
+
+function reducer(state={data:{}, results: {}, ui:{}}, action={}) {
+
+    var nstate = {...state};
+    nstate.results = resultsReducer(nstate, action);
+    nstate.data = dataReducer(nstate, action);
+    nstate.ui   = uiReducer(nstate, action);
+
+    if (shallowequal(state, nstate)) {
+        return state;
+    } else {
+        return nstate;
+    }
+}
+
+/*-----------------------------------------------------------------------------------------*/
+
+
+
+
+function getRowIdFor(filePath, selected) {
+    const params = {columnName: 'ROWID', filePath, selectedRows: String(selected)};
+    return selectedValues(params);
+}
+
 /**
  * validates the action object based on the given type.
  * In case when a validation error occurs, the action's err property will be
@@ -327,23 +458,21 @@ function validate(type, action) {
 
 
 /**
- * this saga does the following:
- * <ul>
- *     <li>watches to table load
- *     <li>when table is completely loaded, it will execute the given callback with loaded table info
- * </ul>
- * @param tbl_id  table id to watch
- * @param callback  callback to execute when table is loaded.
+ * this saga watches for table update and invoke the given callback when
+ * the table given by tbl_id is fully loaded.
+ * @param {Object}   p  parameters object
+ * @param {string}   p.tbl_id  table id to watch
+ * @param {function} p.callback  callback to execute when table is loaded.
  */
-export function* doOnTblLoaded({tbl_id, callback}) {
+function* doOnTblLoaded({tbl_id, callback}) {
 
     var isLoaded = false, hasData = false;
     while (!(isLoaded && hasData)) {
-        const action = yield take([TABLE_UPDATE]);
+        const action = yield take([TABLE_UPDATE, TABLE_REPLACE]);
         const a_id = get(action, 'payload.tbl_id');
         if (tbl_id === a_id) {
-            isLoaded = isLoaded || TblUtil.isTableLoaded(action.payload);
             const tableModel = TblUtil.getTblById(tbl_id);
+            isLoaded = isLoaded || TblUtil.isTableLoaded(tableModel);
             hasData = hasData || get(tableModel, 'tableData.columns.length');
             if (get(tableModel, 'error')) {
                 // there was an error loading this table.

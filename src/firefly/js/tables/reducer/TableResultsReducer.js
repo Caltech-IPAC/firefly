@@ -17,7 +17,8 @@ export function resultsReducer(state={results:{}}, action={}) {
         case (Cntlr.TBL_RESULTS_ADDED)     :
         case (Cntlr.TBL_RESULTS_UPDATE)    :
         {
-            const {tbl_id, tbl_group} = action.payload;
+            const {tbl_id, options={}} = action.payload;
+            const {tbl_group} = options;
             if (tbl_id ) {
                 const changes = set({}, [tbl_group, 'tables', tbl_id], action.payload);
                 set(changes, [tbl_group, 'name'], tbl_group);

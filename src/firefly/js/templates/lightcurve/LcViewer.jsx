@@ -27,6 +27,7 @@ import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import * as TblUtil from '../../tables/TableUtil.js';
+import {showPhaseFoldingPopup} from './LcPhaseFoldingPopup.jsx';
 
 // import {deepDiff} from '../util/WebUtil.js';
 
@@ -118,8 +119,9 @@ LcViewer.propTypes = {
     altAppIcon: PropTypes.string,
     footer: PropTypes.element,
     dropdownPanels: PropTypes.arrayOf(PropTypes.element),
-    style: PropTypes.object,
+    style: PropTypes.object
 };
+
 LcViewer.defaultProps = {
     appTitle: 'Light Curve'
 };
@@ -151,7 +153,8 @@ function BannerSection(props) {
 /**
  *  A temporary upload panel for use during development phase.  This should be removed or replaced with something else.
  */
-export const UploadPanel = () => {
+export const UploadPanel = ({phaseButton}) => {
+
     return (
         <div style={{padding: 10}}>
             <FormPanel
@@ -196,7 +199,9 @@ export const UploadPanel = () => {
                                 label: 'Periodogram:'
                             }}
                     />
+
                 </FieldGroup>
+                {phaseButton ? <button type='button' onClick={() => showPhaseFoldingPopup('Phase Folding', RAW_TABLE)}>Phase Folding</button> : null}
             </FormPanel>
         </div>
     );
@@ -206,8 +211,9 @@ UploadPanel.propTypes = {
 };
 
 UploadPanel.defaultProps = {
-    name: 'LCUpload',
+    name: 'LCUpload'
 };
+
 
 function onSearchSubmit(request) {
     var treq, xyPlotParams;

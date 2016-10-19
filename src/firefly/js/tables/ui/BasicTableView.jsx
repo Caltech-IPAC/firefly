@@ -6,9 +6,9 @@ import React, {PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import FixedDataTable from 'fixed-data-table';
 import Resizable from 'react-component-resizable';
-import {debounce, defer, get, isEmpty, padEnd} from 'lodash';
+import {debounce, defer, get, isEmpty} from 'lodash';
 
-import {calcColumnWidths} from '../TableUtil.js';
+import {tableToText} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
@@ -291,35 +291,4 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
     return colsEl.filter((c) => c);
 }
 
-
-function tableToText(columns, dataAry, showUnits=false) {
-
-    const colWidths = calcColumnWidths(columns, dataAry);
-
-    // column's name
-    var textHead = columns.reduce( (pval, col, idx) => {
-        return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.label || col.name, colWidths[idx])}|` : '');
-    }, '|');
-
-    // column's type
-    textHead += '\n' + columns.reduce( (pval, col, idx) => {
-            return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.type || '', colWidths[idx])}|` : '');
-        }, '|');
-
-    if (showUnits) {
-        textHead += '\n' + columns.reduce( (pval, col, idx) => {
-                return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.units || '', colWidths[idx])}|` : '');
-            }, '|');
-    }
-
-    var textData = dataAry.reduce( (pval, row) => {
-        return pval +
-            row.reduce( (pv, cv, idx) => {
-                const cname = get(columns, [idx, 'name']);
-                if (!cname) return pv;      // not defined in columns.. can ignore
-                return pv + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cv || '', colWidths[idx])} ` : '');
-            }, ' ') + '\n';
-    }, '');
-    return textHead + '\n' + textData;
-}
 
