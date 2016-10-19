@@ -4,9 +4,7 @@ import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -41,9 +39,6 @@ public class HistogramProcessorTest {
                 8.50000,
                 12.000,
         };
-        double max=12.0;
-        double min=0.0;
-        int nBin=6;
 
 
         int[] expectedNumPointsInBin={1, 2, 1, 6, 2,  3};

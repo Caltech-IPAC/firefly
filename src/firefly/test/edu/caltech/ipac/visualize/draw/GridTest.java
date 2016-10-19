@@ -2,9 +2,8 @@ package edu.caltech.ipac.visualize.draw;
 
 import java.io.File;
 
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import edu.caltech.ipac.firefly.util.FileLoader;
+import org.junit.*;
 
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
@@ -18,23 +17,16 @@ import nom.tam.fits.Fits;
 
 public class GridTest {
 
-//	private static Component grid = null;
-	private static final String TEST_ROOT = "test"+File.separatorChar;
-//	private static String filename = TEST_ROOT+GridTest.class.getCanonicalName().replaceAll("\\.", "/")
-//			.replace(GridTest.class.getSimpleName(), "") + File.separatorChar +  "bad.fits";
-	static CoordinateSys csys = CoordinateSys.SUPERGALACTIC;
 	private static ImagePlot plot;
 	private static Fits fits;
 
-	@BeforeClass
-	public static void buildPlot() throws Exception {
-		String name = TEST_ROOT+GridTest.class.getCanonicalName().replaceAll("\\.", "/")
-				.replace(GridTest.class.getSimpleName(), "") + File.separatorChar +  "bad.fits";
-		//		grid = new GridLayer(csys).getGrid();
-		File file = new File(name);
+
+	@Before
+	public void setup()  throws Exception {
+
+		File file = FileLoader.resolveFile(GridTest.class, "bad.fits");
 		Assert.assertTrue(file.exists()&&file.canRead());
-		fits = new Fits(file);//(resourceAsStream);
-//		fits = new Fits("/Users/ejoliet/devspace/branch/dev/firefly/src/firefly/bin/edu/caltech/ipac/visualize/draw/bad.fits");
+		fits = FileLoader.loadFits(GridTest.class, "bad.fits");// new Fits(file);//(resourceAsStream);
 
 		FitsRead[] frAry = FitsRead.createFitsReadArray(fits);
 		ActiveFitsReadGroup fg = new ActiveFitsReadGroup();
@@ -43,6 +35,15 @@ public class GridTest {
 		// plot.preProcessImageTiles(fg);
 //		((Grid) grid).setPlot(plot);
 
+	}
+
+	@After
+	/**
+	 * Release the memories
+	 */
+	public void tearDown() {
+		fits=null;
+		plot=null;
 	}
 
 	@Test

@@ -64,12 +64,12 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
         String searchRequestJson = request.getParam(SEARCH_REQUEST);
         if (searchRequestJson == null) {
-            throw new DataAccessException("Unable to get statistics: " + SEARCH_REQUEST + " is missing");
+            throw new DataAccessException("Unable to get histogram: " + SEARCH_REQUEST + " is missing");
         }
         JSONObject searchRequestJSON = (JSONObject) JSONValue.parse(request.getParam(SEARCH_REQUEST));
         String searchId = (String) searchRequestJSON.get(ServerParams.ID);
         if (searchId == null) {
-            throw new DataAccessException("Unable to get statistics: " + SEARCH_REQUEST + " must contain " + ServerParams.ID);
+            throw new DataAccessException("Unable to get histogram: " + SEARCH_REQUEST + " must contain " + ServerParams.ID);
         }
         TableServerRequest sReq = new TableServerRequest(searchId);
 
