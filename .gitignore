@@ -45,3 +45,7 @@ node_modules/
 .classpath
 .project
 .settings/
+
+# ignore build and dist directories made by pip
+src/firefly/python/display/dist
+src/firefly/python/display/firefly_client.egg-info
