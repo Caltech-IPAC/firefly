@@ -1,7 +1,7 @@
 package edu.caltech.ipac.visualize.plot.projection;
+import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.visualize.plot.*;
 import nom.tam.fits.*;
-import nom.tam.util.Cursor;
 import org.json.simple.JSONArray;
 import org.junit.*;
 
@@ -11,11 +11,9 @@ import java.lang.reflect.Type;
 import java.net.URISyntaxException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -24,14 +22,13 @@ import org.json.simple.parser.ParseException;
  * Created by zhang on 6/15/16.
  * We use the CoordinateSys defined in the FITS header, and also use the RA and DEC in the center of the image
  * defined in the header
+ * 10/19/16
+ *  DM-8028
+ *    Use teh UnitTestUtility to load file
  */
 public class ProjectionTest {
 
     private  double delta = 0.0000000001;
-    private static final String TEST_DATA_ROOT = "firefly_test_data/";//edu/caltech/ipac/visualize/plot/projection/
-    private static final String TEST_DATA_PATH= TEST_DATA_ROOT+ProjectionTest.class.getCanonicalName().replaceAll("\\.", "/")
-      .replace(ProjectionTest.class.getSimpleName(), "") + File.separatorChar;
-
     /**
      * This method gets the .json files in the given directory
      * @param path - the directory that has the testing data
@@ -183,22 +180,18 @@ public class ProjectionTest {
 
     }
     @Test
-    public void testAllProjections() throws IOException, ParseException, FitsException, ProjectionException, IllegalAccessException, URISyntaxException {
+    public void testAllProjections() throws IOException, ParseException, FitsException, ProjectionException, IllegalAccessException, URISyntaxException, ClassNotFoundException {
 
 
 
-        //This is to run unit test under command line
-        String testTreePath = ProjectionTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        String  rootPath = testTreePath.split("firefly")[0];
-        String dataPath = rootPath+TEST_DATA_PATH;
+        String dataPath = FileLoader.getDataPath(ProjectionTest.class);
         String[] jsonHeaderFileNames =  getJsonFiles(dataPath);
-
 
         JSONParser parser = new JSONParser();
 
 
          for (int i=0; i<jsonHeaderFileNames.length; i++){
-            //System.out.println("\n The testing file is "+ jsonHeaderFileNames[i] +"\n");
+
             Object obj = parser.parse(new FileReader(jsonHeaderFileNames[i]));
 
             JSONObject jsonObject = (JSONObject) obj;

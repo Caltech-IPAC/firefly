@@ -6,7 +6,7 @@ package edu.caltech.ipac.firefly.server.util.ipactable;
 import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.IpacTableUtil;
@@ -25,11 +25,8 @@ import java.util.Arrays;
  */
 public class IpacTableTest {
 
-    private static final String TEST_ROOT = "test" + File.separatorChar;
-    private static final String TEST_RES_PATH = IpacTableTest.class.getCanonicalName().replaceAll("\\.", "/").replace(IpacTableTest.class.getSimpleName(), "") + File.separatorChar;
-
-    private static final File ipacTable = new File(TEST_ROOT, TEST_RES_PATH + "test_data.tbl");
-    private static final File jsonResults = new File(TEST_ROOT + TEST_RES_PATH + "test_data.json");
+    private static final File ipacTable = FileLoader.resolveFile(IpacTableTest.class,  "test_data.tbl");
+    private static final File jsonResults = FileLoader.resolveFile(IpacTableTest.class,"test_data.json");
     private static TableServerRequest request;
 
     @BeforeClass

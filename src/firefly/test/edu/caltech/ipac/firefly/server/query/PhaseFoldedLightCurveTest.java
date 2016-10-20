@@ -2,38 +2,34 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.server.query.lc.PhaseFoldedLightCurve;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.util.DataGroup;
+import nom.tam.fits.FitsException;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Created by ymei on 8/25/16.
+ * 10/19/16
+ *  DM-8028
+ *    Use teh UnitTestUtility to load file
  */
 public class PhaseFoldedLightCurveTest {
-
-    private static final String TEST_ROOT = "test"+ File.separatorChar;
-    //private static String inFileName = "/hydra/cm/firefly/src/firefly/test/edu/caltech/ipac/firefly/server/query/AllWISE-MEP-m82-2targets-10arsecs-oneTarget.tbl";
-    private static final String inFileName = "edu/caltech/ipac/firefly/server/query/AllWISE-MEP-m82-2targets-10arsecs-oneTarget.tbl";
-    private static String inFileFullName =  TEST_ROOT + inFileName;
 
     private static final float period = 0.140630f;
     private static final String timeColName = "mjd";
     private static final String phaseColName = "phase";
     private static final double sumExpected = 21.4209;
     private static final double delta = 0.001;
+    private String fileName = "/AllWISE-MEP-m82-2targets-10arsecs-oneTarget.tbl";
 
     @Test
-    public void testPhaseFoldedLC() {
+    public void testPhaseFoldedLC() throws FitsException, ClassNotFoundException {
 
         try {
-            File inFile = new File(inFileFullName);
 
-            //Get a datagroup from the IPAC table file:
-            DataGroup dataGroup = DataGroupReader.readAnyFormat(inFile);
+            DataGroup dataGroup = FileLoader.loadIpacTable( PhaseFoldedLightCurveTest.class, fileName );
 
             //Add the new phase column:
             PhaseFoldedLightCurve pflc = new PhaseFoldedLightCurve();
@@ -48,8 +44,6 @@ public class PhaseFoldedLightCurveTest {
 
         } catch (IpacTableException e) {
             e.printStackTrace();
-        } catch (IOException i) {
-            i.printStackTrace();
         }
     }
 }
