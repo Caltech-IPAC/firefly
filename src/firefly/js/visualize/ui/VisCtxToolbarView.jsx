@@ -30,7 +30,7 @@ import FILTER from 'html/images/icons-2014/24x24_FilterAdd.png';
 import CLEAR_FILTER from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
 import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
 import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
-import SELECTED_ZOOM from 'html/images/icons-2014/zoomFitToSelectedSpace.png';
+import SELECTED_ZOOM from 'html/images/icons-2014/ZoomFitToSelectedSpace.png';
 import SELECTED_RECENTER from 'html/images/icons-2014/RecenterImage-selection.png';
 
 import CoordUtil from '../CoordUtil.js';
