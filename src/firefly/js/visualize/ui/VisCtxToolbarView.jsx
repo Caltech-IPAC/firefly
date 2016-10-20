@@ -259,10 +259,9 @@ function zoomIntoSelection(pv) {
  * @param pv
  * @param dlAry
  * @param extensionAry
- * @param showCrop
- * @param showStats
- * @param showSelect
- * @param showUnSelect
+ * @param showSelectionTools
+ * @param showCatSelect
+ * @param showCatUnSelect
  * @param showFilter
  * @param showClearFilter
  * @param showMultiImageController
@@ -283,8 +282,8 @@ export class VisCtxToolbarView extends Component {
 
     render() {
         const {
-            plotView:pv, dlAry, extensionAry, showCrop=false,
-            showStats=false, showSelect=false, showUnSelect=false,
+            plotView:pv, dlAry, extensionAry, showSelectionTools=false,
+            showCatSelect=false, showCatUnSelect=false,
             showFilter=false, showClearFilter=false,
             showMultiImageController=false }= this.props;
 
@@ -301,7 +300,7 @@ export class VisCtxToolbarView extends Component {
 
         };
 
-        var showOptions= showCrop|| showStats|| showSelect|| showUnSelect ||
+        var showOptions= showSelectionTools|| showCatSelect|| showCatUnSelect ||
             showFilter || showClearFilter || !isEmpty(extensionAry);
 
         return (
@@ -315,25 +314,25 @@ export class VisCtxToolbarView extends Component {
                 <ToolbarButton icon={CROP}
                                tip='Crop the image to the selected area'
                                horizontal={true}
-                               visible={showCrop}
+                               visible={showSelectionTools}
                                onClick={() => crop(pv)}/>
 
                 <ToolbarButton icon={STATISTICS}
                                tip='Show statistics for the selected area'
                                horizontal={true}
-                               visible={showStats}
+                               visible={showSelectionTools}
                                onClick={() => stats(pv)}/>
 
                 <ToolbarButton icon={SELECTED}
                                tip='Mark data in area as selected'
                                horizontal={true}
-                               visible={showSelect}
+                               visible={showCatSelect}
                                onClick={() => selectCatalog(pv,dlAry)}/>
 
                 <ToolbarButton icon={UNSELECTED}
                                tip='Mark all data unselected'
                                horizontal={true}
-                               visible={showUnSelect}
+                               visible={showCatUnSelect}
                                onClick={() => unselectCatalog(pv,dlAry)}/>
 
                 <ToolbarButton icon={FILTER}
@@ -342,21 +341,15 @@ export class VisCtxToolbarView extends Component {
                                visible={showFilter}
                                onClick={() => filterCatalog(pv,dlAry)}/>
 
-                <ToolbarButton icon={CLEAR_FILTER}
-                               tip='Clear all the Filters'
-                               horizontal={true}
-                               visible={showClearFilter}
+                <ToolbarButton icon={CLEAR_FILTER} tip='Clear all the Filters'
+                               horizontal={true} visible={showClearFilter}
                                onClick={() => clearFilterCatalog(pv,dlAry)}/>
 
-                <ToolbarButton icon={SELECTED_ZOOM}
-                               tip='Zoom to fit selected area'
-                               horizontal={true}
-                               visible={true}
+                <ToolbarButton icon={SELECTED_ZOOM} tip='Zoom to fit selected area'
+                               horizontal={true} visible={showSelectionTools}
                                onClick={() => zoomIntoSelection(pv)}/>
-                <ToolbarButton icon={SELECTED_RECENTER}
-                               tip='Recenter image to selected area'
-                               horizontal={true}
-                               visible={true}
+                <ToolbarButton icon={SELECTED_RECENTER} tip='Recenter image to selected area'
+                               horizontal={true} visible={showSelectionTools}
                                onClick={() => recenterToSelection(pv)}/>
 
 
@@ -376,10 +369,9 @@ VisCtxToolbarView.propTypes= {
     plotView : PropTypes.object.isRequired,
     dlAry : PropTypes.arrayOf(React.PropTypes.object),
     extensionAry : PropTypes.arrayOf(React.PropTypes.object),
-    showCrop : PropTypes.bool,
-    showStats : PropTypes.bool,
-    showSelect : PropTypes.bool,
-    showUnSelect : PropTypes.bool,
+    showSelectionTools : PropTypes.bool,
+    showCatSelect : PropTypes.bool,
+    showCatUnSelect : PropTypes.bool,
     showFilter : PropTypes.bool,
     showClearFilter : PropTypes.bool,
     showMultiImageController : PropTypes.bool
@@ -388,10 +380,9 @@ VisCtxToolbarView.propTypes= {
 
 
 ToolbarButton.defaultProps= {
-    showCrop : false,
-    showStats : false,
-    showSelect : false,
-    showUnSelect : false,
+    showSelectionTools : false,
+    showCatSelect : false,
+    showCatUnSelect : false,
     showFilter : false,
     extensionAry : null
 };

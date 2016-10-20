@@ -103,7 +103,7 @@ function validConstraints(groupKey) {
 }
 
 function onSearchSubmit(request) {
-    console.log('original request <br />' + JSON.stringify(request));
+    // console.log('original request <br />' + JSON.stringify(request));
 
     if (request[gkey].Tabs === 'catalog') {
         const {spatial} = request[gkeySpacial];
@@ -210,7 +210,7 @@ function doCatalog(request) {
         tReq.selcols = colsSearched;
     }
 
-    console.log('final request: ' + JSON.stringify(tReq));
+    // console.log('final request: ' + JSON.stringify(tReq));
     dispatchTableSearch(tReq);
 }
 

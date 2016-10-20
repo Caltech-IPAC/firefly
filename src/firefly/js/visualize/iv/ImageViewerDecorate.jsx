@@ -124,8 +124,8 @@ function contextToolbar(pv,dlAry,extensionList) {
         const extensionAry= isEmpty(selAry) ? EMPTY_ARRAY : selAry;
         return (
             <VisCtxToolbarView {...{plotView:pv, dlAry,  extensionAry,
-                                    showCrop:true, showStats:true, showSelect:select,
-                                    showUnSelect:unselect,
+                                    showSelectionTools:true, showCatSelect:select,
+                                    showCatUnSelect:unselect,
                                     showFilter:filter, showClearFilter:clearFilter,
                                     showMultiImageController:showMulti}}
             />

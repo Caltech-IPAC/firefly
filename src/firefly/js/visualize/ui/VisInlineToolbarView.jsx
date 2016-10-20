@@ -47,7 +47,8 @@ const rS= {
     display:'inline-flex',
     flexDirection:'row',
     flexWrap:'nowrap',
-    alignItems: 'center'
+    alignItems: 'center',
+    zIndex : 1
 };
 
 

@@ -146,17 +146,17 @@ function calcCornerString(pv, method) {
         const {viewDim, scrollX, scrollY}= pv;
         const {screenSize}= plot;
         var sx1, sx3, sy1, sy3;
-        if (viewDim.width>screenSize.width) {
+        if (viewDim.width<screenSize.width) {
             sx1= scrollX;
-            sx3= scrollX+ (screenSize.width-viewDim.width);
+            sx3= scrollX+ viewDim.width;
         }
         else {
             sx1= 0;
             sx3= screenSize.width;
         }
-        if (viewDim.height>screenSize.height) {
+        if (viewDim.height<screenSize.height) {
             sy1= scrollY;
-            sy3= scrollY+ (screenSize.height-viewDim.height);
+            sy3= scrollY+ viewDim.height;
         }
         else {
             sy1= 0;
@@ -170,8 +170,8 @@ function calcCornerString(pv, method) {
     else if (method==='area-selection') {
         pt1 = cc.getWorldCoords(sel.pt0);
         pt3 = cc.getWorldCoords(sel.pt1);
-        pt2 = makeWorldPt( pt1.x, pt3.y, pt1.cSys );
-        pt4 = makeWorldPt( pt3.x, pt1.y, pt1.cSys );
+        pt2 = makeWorldPt( pt3.x, pt1.y, pt1.cSys );
+        pt4 = makeWorldPt( pt1.x, pt3.y, pt1.cSys );
     }
     return `${f5(pt1.x)} ${f5(pt1.y)}, ${f5(pt2.x)} ${f5(pt2.y)}, ${f5(pt3.x)} ${f5(pt3.y)}, ${f5(pt4.x)} ${f5(pt4.y)}`;
 }
@@ -259,7 +259,7 @@ function sizeArea(searchType, imageCornerCalc) {
     } else if (searchType === SpatialMethod.Polygon.value) {
         const cornerTypeOps=
             [
-                {label: 'Image', value: 'image'},
+                {label: 'Image Center', value: 'image'},
                 {label: 'ViewPort', value: 'viewport'},
                 {label: 'User', value: 'user'}
             ];
@@ -297,7 +297,7 @@ function sizeArea(searchType, imageCornerCalc) {
                 <div style={{paddingTop: 10}}>
                     {pv && <RadioGroupInputField
                         inline={false}
-                        labelWidth={80}
+                        labelWidth={60}
                         alignment='horizontal'
                         initialState= {{
                         tooltip: 'Choose how to init corners',
@@ -390,7 +390,6 @@ function searchMethodTypeReducer(inFields, action) {
                 rFields.polygoncoords= clone(inFields.polygoncoords, {value:v});
             }
         }
-        rFields && rFields.polygoncoords && console.log(rFields.polygoncoords.value);
         return rFields;
     }
 }
