@@ -55,7 +55,7 @@ export class CatalogSearchMethodType extends Component {
     componentWillReceiveProps(nextProps) {
         // const fields= FieldGroupUtils.getGroupFields(this.nextProps.groupKey);
         const {coneMax, boxMax, groupKey}= nextProps;
-        if (coneMax && groupKey) {
+        if (coneMax && boxMax && groupKey) {
             const fields= FieldGroupUtils.getGroupFields(this.props.groupKey);
             if (this.iAmMounted) this.setState({fields});
             const searchType = get(fields, 'spatial.value', SpatialMethod.Cone.value);
@@ -375,7 +375,7 @@ function searchMethodTypeReducer(inFields, action) {
             rFields.imageCornerCalc= clone(inFields.imageCornerCalc, {value:'user'});
         }
         else {
-            const {value:cornerCalcV}= inFields.imageCornerCalc||'user';
+            const cornerCalcV= get(inFields.imageCornerCalc, 'value', 'user');
             const pv= getActivePlotView(visRoot());
 
 

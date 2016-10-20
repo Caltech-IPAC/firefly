@@ -683,7 +683,8 @@ class CatalogDDList extends Component {
                         />
                     </div>
                     <div className='spatialsearch'>
-                        <CatalogSearchMethodType groupKey={gkeySpacial} polygonDefWhenPlot={polygonDefWhenPlot} />
+                        <CatalogSearchMethodType groupKey={gkeySpacial} polygonDefWhenPlot={polygonDefWhenPlot}
+                                                 coneMax={coneMax} boxMax={boxMax} />
                     </div>
                 </div>
                 {/*
