@@ -52,6 +52,7 @@ public class HistogramTest {
         dataMax = 1000.0;
         hbinSize = (dataMax - dataMin)/HISTSIZ2;
         histArray = buildHistArray(data, 0, hbinSize);
+
         expectedTblArray = getExpectedTblArray( histArray, dataMin, hbinSize);
         hist = new Histogram(data, dataMin, dataMax);
 
@@ -123,7 +124,9 @@ public class HistogramTest {
      * @param histBinsize
      * @return
      */
+
    private double[] getExpectedTblArray(int[] histArray, double histMin, double histBinsize) {
+
         double[] tbl = new double[256];
 
         int goodpix = 0;
@@ -182,6 +185,7 @@ public class HistogramTest {
         int goodpix = 0;
         for (int i = 0; i < HISTSIZ2; i++)
             goodpix += histArray[i];
+
         int goal = (int) (goodpix * (ra_value) / 100);
         int sum=0;
         int count=0;
@@ -196,6 +200,7 @@ public class HistogramTest {
             return ((count + 1.0) * histBinsize + histMin);
         else
             return ((count) * histBinsize + histMin);
+
     }
 
     /**
