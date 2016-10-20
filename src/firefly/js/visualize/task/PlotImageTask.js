@@ -56,7 +56,7 @@ const getFirstReq= (wpRAry) => isArray(wpRAry) ? wpRAry.find( (r) => r?true:fals
 function makeSinglePlotPayload(vr, rawPayload ) {
 
 
-    var {wpRequest,plotId, threeColor, viewerId, attributes,
+    var {wpRequest,plotId, threeColor, viewerId, attributes, setNewPlotAsActive,
          holdWcsMatch= false, pvOptions= {}, addToHistory= false,useContextModifications= true}= rawPayload;
 
     wpRequest= ensureWPR(wpRequest);
@@ -84,7 +84,7 @@ function makeSinglePlotPayload(vr, rawPayload ) {
                      plotGroupId:req.getPlotGroupId(),
                      groupLocked:req.isGroupLocked(),
                      attributes, viewerId, pvOptions, addToHistory,
-                     useContextModifications, threeColor};
+                     useContextModifications, threeColor, setNewPlotAsActive};
 
     if (threeColor) {
         if (isArray(wpRequest)) {

@@ -346,8 +346,8 @@ const updateFieldGroupMount= function(state,action) {
         else {
             retState= initFieldGroup(state,action);
             retState[groupKey].mounted= true;
-            retState[groupKey].fields= fireFieldsReducer(retState[groupKey], action);
         }
+        retState[groupKey].fields= fireFieldsReducer(retState[groupKey], action);
     }
     else {
         if (isFieldGroupDefined(state,groupKey)) {
