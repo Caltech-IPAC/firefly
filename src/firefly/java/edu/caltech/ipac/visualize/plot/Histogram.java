@@ -344,7 +344,10 @@ public class Histogram {
         return bin;
     }
 
-
+    /**
+     *
+     * @return  tbl An int array [256] to be filled with the histogram equalized values
+     */
     public double[] getTblArray() {
         double[] tbl = new double[256];
 

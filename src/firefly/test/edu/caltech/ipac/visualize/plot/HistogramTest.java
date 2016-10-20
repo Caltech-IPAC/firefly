@@ -31,9 +31,9 @@ public class HistogramTest {
     private double dataMax=Double.MIN_VALUE;
     private double delta = 1.010E-10;
     double hbinSize;
-    private static int[] histArray = new int[HISTSIZ2 + 1];
     private int len = 5000;
     private float[] data = new float[len];
+    private static int[] histArray = new int[HISTSIZ2 + 1];
     private static  double[] expectedTblArray;
 
 
@@ -52,8 +52,8 @@ public class HistogramTest {
         dataMax = 1000.0;
         hbinSize = (dataMax - dataMin)/HISTSIZ2;
         histArray = buildHistArray(data, 0, hbinSize);
-        expectedTblArray = getTblArray( histArray, dataMin, hbinSize);
 
+        expectedTblArray = getExpectedTblArray( histArray, dataMin, hbinSize);
         hist = new Histogram(data, dataMin, dataMax);
 
     }
@@ -93,6 +93,7 @@ public class HistogramTest {
      * Calculated the tbl array differently here and then compare with the Histogram's result
      */
     public void testGetTblArray(){
+
         double[] tbl = hist.getTblArray();
         Assert.assertArrayEquals(expectedTblArray, tbl, delta);
         System.out.println("test getTbl array is pass") ;
@@ -123,7 +124,9 @@ public class HistogramTest {
      * @param histBinsize
      * @return
      */
-   private double[] getTblArray(int[] histArray, double histMin, double histBinsize) {
+
+   private double[] getExpectedTblArray(int[] histArray, double histMin, double histBinsize) {
+
         double[] tbl = new double[256];
 
         int goodpix = 0;
@@ -185,15 +188,19 @@ public class HistogramTest {
 
         int goal = (int) (goodpix * (ra_value) / 100);
         int sum=0;
-        int i=-1;
-        do {
-            i++;
-            sum+=histArray[i];
-        } while(sum<goal);
+        int count=0;
+        for (int i=0; i<histArray.length; i++){
+            sum +=histArray[i];
+            if (sum>=goal){
+                count=i;
+                break;
+            }
+        }
         if (round_up)
-            return ((i + 1.0) * histBinsize + histMin);
+            return ((count + 1.0) * histBinsize + histMin);
         else
-            return ((i) * histBinsize + histMin);
+            return ((count) * histBinsize + histMin);
+
     }
 
     /**
