@@ -90,7 +90,7 @@ export class CatalogSearchMethodType extends Component {
                                           labelWidth: 80,
                                           value: polyIsDef ? SpatialMethod.Polygon.value : SpatialMethod.Cone.value
                                       }}
-                        options={ spatialOptions() }
+                        options={ spatialOptions(this.props.searchOption) }
                         wrapperStyle={{marginRight:'15px', padding:'10px 0 5px 0'}}
                         multiple={false}
                     />
@@ -104,6 +104,7 @@ export class CatalogSearchMethodType extends Component {
 
 }
 /*
+Display the speicified options in case a list of options is given, otherwise display all options.
  [
  {value: 'Cone', label: 'Cone' },
  {value: 'Elliptical', label: 'Elliptical' },
@@ -112,13 +113,15 @@ export class CatalogSearchMethodType extends Component {
  {value: 'Multi-Object', label: 'Multi-Object' },
  {value: 'All-Sky', label: 'All Sky' }
  ]*/
-const spatialOptions = () => {
+const spatialOptions = (searchTypes) => {
     var l = [];
     SpatialMethod.enums.forEach(function (enumItem) {
-            var o = {};
-            o.label = enumItem.key;
-            o.value = enumItem.value;
-            l.push(o);
+            if (!searchTypes || searchTypes.includes(enumItem.value)) {
+                var o = {};
+                o.label = enumItem.key;
+                o.value = enumItem.value;
+                l.push(o);
+            }
         }
     );
     return l;
@@ -325,8 +328,8 @@ function sizeArea(searchType, imageCornerCalc) {
 function renderTargetPanel(groupKey, searchType) {
     const visible = searchType === SpatialMethod.Cone.value || searchType === SpatialMethod.Box.value || searchType === SpatialMethod.Elliptical.value;
     return (
-        visible && <div className='intarget'>
-            <TargetPanel labelWidth={100} groupKey={groupKey}/>
+        <div className='intarget'>
+            {visible && <TargetPanel labelWidth={100} groupKey={groupKey}/>}
         </div>
     );
 
@@ -336,6 +339,7 @@ function renderTargetPanel(groupKey, searchType) {
 CatalogSearchMethodType.propTypes = {
     groupKey: PropTypes.string.isRequired,
     polygonDefWhenPlot: PropTypes.bool,
+    searchOption: PropTypes.arrayOf(PropTypes.string)
 };
 
 /*CatalogSearchMethodType.contextTypes = {
@@ -402,7 +406,7 @@ function fieldInit() {
             value: initRadiusArcSec(3600),
             unit: 'arcsec',
             min: 1 / 3600,
-            max: 100,
+            max: 100
         },
         imageCornerCalc: {
             fieldKey: 'imageCornerCalc',

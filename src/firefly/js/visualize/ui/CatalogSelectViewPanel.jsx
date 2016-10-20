@@ -27,6 +27,7 @@ import {FileUpload} from '../../ui/FileUpload.jsx';
 import {convertAngle} from '../VisUtil.js';
 import {masterTableFilter} from './IrsaMasterTableFilters.js';
 
+
 import './CatalogTableListField.css';
 import './CatalogSelectViewPanel.css';
 
@@ -35,11 +36,9 @@ import './CatalogSelectViewPanel.css';
  */
 export const gkey = 'CATALOG_PANEL';
 export const gkeySpacial = 'CATALOG_PANEL_spacial';
+export const initRadiusArcSec = (10 / 3600) + '';
 
 const dropdownName = 'IrsaCatalogDropDown';
-
-const initRadiusArcSec = (10 / 3600) + '';
-
 const constraintskey = 'inputconstraint';
 
 /**
@@ -90,13 +89,13 @@ export class CatalogSelectViewPanel extends Component {
     }
 }
 
-function validConstraints(groupKey) {
+export function validateConstraints(groupKey) {
     const {tableconstraints} = FieldGroupUtils.getGroupFields(groupKey);
 
-    var errMsg = get(tableconstraints, ['value', 'errorConstraints']);
+    var errMsg = get(tableconstraints, ['value', 'errorConstraints'], '');
 
     if (!isEmpty(errMsg)) {
-        showInfoPopup('Invalid constraints: ' + errMsg);
+        showInfoPopup(errMsg);
         return false;
     }
     return true;
@@ -114,7 +113,7 @@ function onSearchSubmit(request) {
             showInfoPopup('Target is required');
             return;
         }
-        if (validConstraints(gkey)) {
+        if (validateConstraints(gkey)) {
             doCatalog(request);
         }
     }
@@ -215,7 +214,7 @@ function doCatalog(request) {
 }
 
 //TODO parse whatever format and return SQL standard
-function validateSql(sqlTxt) {
+export function validateSql(sqlTxt) {
     //const filterInfoCls = FilterInfo.parse(sql);
     //return filterInfoCls.serialize();//sql.replace(';',' AND ');
     // Check that text area sql doesn't starts with 'AND', if needed, update the value without
@@ -228,7 +227,7 @@ function validateSql(sqlTxt) {
     return sqlTxt;
 }
 
-import {FilterInfo} from '../../tables/FilterInfo.js';
+//import {FilterInfo} from '../../tables/FilterInfo.js';
 
 /**
  * VO search using 'ConeSearchByURL' search processor
@@ -248,13 +247,7 @@ function doVoSearch(request) {
             [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
             SearchMethod: 'Cone',
             radius: request.conesize, //degree!
-            accessUrl,
-/*            radunits: 'DEGREE',
-            displayUnits: 'ARCSEC',
-            META_INFO: {
- POS_EQ_RA_MAIN:'_RA' //Shouldn't be needing this.
- POS_EQ_DE_MAIN:'_DE'
-            }*/
+            accessUrl
         }
     );
     dispatchTableSearch(tReq);
@@ -645,7 +638,7 @@ class CatalogDDList extends Component {
         const tbl_id = `${catname0}-${shortdd}-dd-table-constraint`;
 
         const {cols} = this.props.master;
-
+        const catPanelStyle = {height: 350};
 
         const polygonDefWhenPlot= get(window.firefly, 'catalogSpacialOp')==='polygonWhenPlotExist';
 
@@ -653,7 +646,7 @@ class CatalogDDList extends Component {
         return (
             <div>
                 <div className='catalogpanel'>
-                    <div className='ddselectors'>
+                    <div className='ddselectors' style={catPanelStyle}>
                         <ListBoxInputField fieldKey='project'
                                            wrapperStyle={{padding:5}}
                                            initialState={{
@@ -682,7 +675,7 @@ class CatalogDDList extends Component {
                                                cols={cols}
                         />
                     </div>
-                    <div className='spatialsearch'>
+                    <div className='spatialsearch' style={catPanelStyle}>
                         <CatalogSearchMethodType groupKey={gkeySpacial} polygonDefWhenPlot={polygonDefWhenPlot}
                                                  coneMax={coneMax} boxMax={boxMax} />
                     </div>

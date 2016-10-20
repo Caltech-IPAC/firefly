@@ -117,7 +117,6 @@ export class TablePanel extends Component {
                 filterInfo, filterCount, sortInfo, data} = this.state;
         const {tableConnector} = this;
 
-        const {onTableChanged} = this.props;
 
         if (error) return <div className='TablePanel__error'>{error}</div>;
         if (isEmpty(columns)) return <Loading {...{showTitle, tbl_id, title, removable}}/>;
@@ -172,7 +171,7 @@ export class TablePanel extends Component {
                             callbacks={tableConnector}
                             { ...{columns, data, hlRowIdx, rowHeight, selectable, showUnits, showFilters,
                                   selectInfoCls, filterInfo, sortInfo, textView, showMask, currentPage,
-                                  tableConnector, renderers, onTableChanged} }
+                                  tableConnector, renderers} }
                         />
                         {showOptionButton && !showToolbar &&
                             <img className='TablePanel__options--small'
@@ -217,7 +216,6 @@ TablePanel.propTypes = {
     showSave: PropTypes.bool,
     showOptionButton: PropTypes.bool,
     showFilterButton: PropTypes.bool,
-    onTableChanged: PropTypes.func,
     renderers: PropTypes.objectOf(
         PropTypes.shape({
             cellRenderer: PropTypes.func,

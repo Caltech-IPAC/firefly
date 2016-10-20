@@ -14,6 +14,7 @@ export const SEARCH_SRV_PATH = getRootURL() + 'search/json';
 export const MAX_ROW = Math.pow(2,31) - 1;
 const SAVE_TABLE_URL = getRootURL() + 'servlet/SaveAsIpacTable';
 
+const LSSTQueryPID = 'LSSTCataLogSearch';
 /**
  *  @public
  */
@@ -123,6 +124,39 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
 
     return omitBy(Object.assign(req, options, params, {id, tbl_id, META_INFO, UserTargetWorldPt, catalogProject, catalog}), isNil);
 }
+
+/**
+ * creates the request to query LSST catalogs.  // TODO: more detail to be updated based on the LSST catalog DD content
+ * @param {string} title    title to be displayed with this table result
+ * @param {string} project
+ * @param {string} catalog  the catalog name to search
+ * @param {ConeParams|BoxParams|ElipParams} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
+ * @param {TableRequest} [options]
+ * @returns {TableRequest}
+ * @access public
+ * @func makeLsstCatalogRequest
+ *  @memberof firefly.util.table
+ */
+export function makeLsstCatalogRequest(title, project, catalog, params={}, options={}) {
+    var req = {startIdx: 0, pageSize: 100};
+
+    title = title || catalog;
+    options.use = options.use || 'lsst_catalog_overlay';
+    const tbl_id = options.tbl_id || uniqueTblId();
+    const id = LSSTQueryPID;
+    const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
+    const table_name = 'RunDeepForcedSource_limit100';    //catalog+'_queryresult';
+    const meta_table = catalog;
+    var META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
+
+
+    options = omit(options, 'tbl_id');
+    params = omit(params, 'position');
+
+    return omitBy(Object.assign(req, options, params,
+                                {id, tbl_id, META_INFO, UserTargetWorldPt, table_name, meta_table, project}), isNil);
+}
+
 /**
  * creates the request to query VO catalog
  * @param {string} title    title to be displayed with this table result
@@ -229,8 +263,8 @@ export function doValidate(type, action) {
 /**
  * updates the given action with a new error given by cause.
  * action.err is stored as an array of errors.  Errors may be a String or an Error type.
- * @param action  the actoin to update
- * @param cause  the error to be added.
+ * @param {Object} action  the action to update
+ * @param {string} cause  the error to be added.
  * @public
  * @func error
  * @memberof firefly.util.table

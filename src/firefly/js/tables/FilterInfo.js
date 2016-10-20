@@ -97,7 +97,7 @@ export class FilterInfo {
      */
     static isConditionValid(conditions) {
         return !conditions || conditions.split(';').reduce( (rval, v) => {
-            return rval && cond_only_regex.test(v.trim());
+            return rval && (!v || cond_only_regex.test(v.trim()));
         }, true);
     }
 

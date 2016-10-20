@@ -19,7 +19,7 @@ export class PagingBar extends Component {
     render() {
         const {currentPage, totalRows, pageSize, showLoading, callbacks} = this.props;
 
-        const showAll = pageSize === MAX_ROW;
+        const showAll = (totalRows === 0) || (pageSize === MAX_ROW);
         const startIdx = (currentPage-1) * pageSize;
         const endIdx = Math.min(startIdx+pageSize, totalRows);
         var totalPages = Math.ceil((totalRows || 0)/pageSize);
@@ -29,8 +29,10 @@ export class PagingBar extends Component {
                 callbacks.onGotoPage(pageNum.value);
             }
         };
-        const showingLabel = (  <div style={{fontSize: 'smaller', marginLeft: 3}} >
-                                    ({(startIdx+1).toLocaleString()} - {endIdx.toLocaleString()} of {totalRows.toLocaleString()})
+        const pagestr = (totalRows === 0) ? '(No Data Found)' :
+                        `(${(startIdx+1).toLocaleString()} - ${endIdx.toLocaleString()} of ${totalRows.toLocaleString()})`;
+        const showingLabel = (  <div style={{fontSize: 'smaller', marginLeft: 3, display: 'inline-flex', alignItems: 'center' }} >
+                                    {pagestr}
                                 </div>
                             );
         if (showAll) {
