@@ -28,16 +28,16 @@ import {dispatchAttachLayerToPlot,
 import {dispatchReplaceViewerItems, getExpandedViewerItemIds,
          getMultiViewRoot, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
 
-export {zoomActionCreator} from './ZoomUtil.js';
-export {plotImageMaskActionCreator, overlayPlotChangeAttributeActionCreator} from './ImageOverlayTask.js';
+import {zoomActionCreator} from './ZoomUtil.js';
+import {plotImageMaskActionCreator, overlayPlotChangeAttributeActionCreator} from './ImageOverlayTask.js';
 
-export {colorChangeActionCreator,
+import {colorChangeActionCreator,
         stretchChangeActionCreator,
         flipActionCreator,
         cropActionCreator,
         rotateActionCreator} from './task/PlotChangeTask.js';
 
-export {wcsMatchActionCreator} from './task/WcsMatchTask.js';
+import {wcsMatchActionCreator} from './task/WcsMatchTask.js';
 
 /** can the 'COLLAPSE', 'GRID', 'SINGLE' */
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
@@ -218,8 +218,40 @@ const initState= function() {
 //============ EXPORTS ===========
 //============ EXPORTS ===========
 
+
+
+/*---------------------------- REDUCERS -----------------------------*/
+
+function reducers() {
+    return {
+        [IMAGE_PLOT_KEY]: reducer,
+    };
+}
+
+function actionCreators() {
+    return {
+        [PLOT_IMAGE]: plotImageActionCreator,
+        [PLOT_MASK]: plotImageMaskActionCreator,
+        [OVERLAY_PLOT_CHANGE_ATTRIBUTES]: overlayPlotChangeAttributeActionCreator,
+        [ZOOM_IMAGE]: zoomActionCreator,
+        [COLOR_CHANGE]: colorChangeActionCreator,
+        [STRETCH_CHANGE]: stretchChangeActionCreator,
+        [ROTATE]: rotateActionCreator,
+        [FLIP]: flipActionCreator,
+        [CROP]: cropActionCreator,
+        [CHANGE_PRIME_PLOT] : changePrimeActionCreator,
+        [CHANGE_POINT_SELECTION]: changePointSelectionActionCreator,
+        [RESTORE_DEFAULTS]: restoreDefaultsActionCreator,
+        [EXPANDED_AUTO_PLAY]: autoPlayActionCreator,
+        [WCS_MATCH]: wcsMatchActionCreator,
+        [DELETE_PLOT_VIEW]: deletePlotViewActionCreator,
+    };
+}
+
+
 export default {
     reducer,
+    reducers, actionCreators,
     ANY_CHANGE,  // todo remove soon- only for interface with GWT
     ANY_REPLOT,
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,

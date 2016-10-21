@@ -28,7 +28,7 @@ const zoomMax= levels[levels.length-1];
  */
 export const UserZoomTypes= new Enum(['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV'], { ignoreCase: true });
 
-const ZOOM_WAIT_MS= 2000; // 2 seconds
+const ZOOM_WAIT_MS= 1500; // 1.5 seconds
 
 var zoomTimers= []; // todo: should I use a map? should it be in the redux store?
 
