@@ -6,7 +6,7 @@ import {get,isFunction,hasIn,isBoolean} from 'lodash';
 import {flux} from '../Firefly.js';
 import {logError,clone} from '../util/WebUtil.js';
 import {smartMerge} from '../tables/TableUtil.js';
-import FieldGroupCntlr, {dispatchValueChange,dispatchMultiValueChange} from './FieldGroupCntlr.js';
+import {FIELD_GROUP_KEY,dispatchValueChange,dispatchMultiValueChange} from './FieldGroupCntlr.js';
 
 
 const includeForValidation= (f,includeUnmounted) => f.valid !== undefined && (f.mounted||includeUnmounted);
@@ -129,7 +129,7 @@ export function getFieldGroupResults(groupKey,includeUnmounted=false) {
  * @return {object}
  */
 export const getFieldGroupState= function(groupKey) {
-    var fieldGroupMap= flux.getState()[FieldGroupCntlr.FIELD_GROUP_KEY];
+    var fieldGroupMap= flux.getState()[FIELD_GROUP_KEY];
     return fieldGroupMap[groupKey] ? fieldGroupMap[groupKey] : null;
 };
 

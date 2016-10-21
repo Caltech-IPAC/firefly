@@ -7,22 +7,14 @@ import createSagaMiddleware from 'redux-saga';
 import thunkMiddleware from 'redux-thunk';
 import loggerMiddleware from 'redux-logger';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
+import {dispatchAddSaga} from './MasterSaga.js';
 import * as AppDataCntlr  from './AppDataCntlr.js';
 import BackgroundCntlr from './background/BackgroundCntlr.js';
 import * as LayoutCntlr  from './LayoutCntlr.js';
 import {recordHistory} from './History.js';
-import FieldGroupCntlr, {valueChangeActionCreator,multiValueChangeActionCreator}
-                                      from '../fieldGroup/FieldGroupCntlr.js';
-import * as MouseReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
-import ImagePlotCntlr, {IMAGE_PLOT_KEY,
-                        plotImageActionCreator, plotImageMaskActionCreator, zoomActionCreator,
-                        colorChangeActionCreator, stretchChangeActionCreator,
-                        rotateActionCreator, flipActionCreator,
-                        cropActionCreator, autoPlayActionCreator, changePrimeActionCreator,
-                        restoreDefaultsActionCreator, overlayPlotChangeAttributeActionCreator,
-                        deletePlotViewActionCreator,
-                        changePointSelectionActionCreator, wcsMatchActionCreator}
-                        from '../visualize/ImagePlotCntlr.js';
+import FieldGroupCntlr, {MOUNT_COMPONENT} from '../fieldGroup/FieldGroupCntlr.js';
+import MouseReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
+import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
@@ -33,25 +25,22 @@ import {chartDataTypeFactory} from '../charts/ChartDataType.js';
 import {DATATYPE_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
 import {DATATYPE_HISTOGRAM} from '../charts/dataTypes/HistogramCDT.js';
 
-import DrawLayer, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
-import DrawLayerCntlr, {makeDetachLayerActionCreator,
-                        selectAreaEndActionCreator,
-                        distanceToolEndActionCreator,
-                        regionCreateLayerActionCreator,
-                        regionDeleteLayerActionCreator,
-                        regionUpdateEntryActionCreator,
-                        markerToolStartActionCreator,
-                        markerToolMoveActionCreator,
-                        markerToolEndActionCreator,
-                        markerToolCreateLayerActionCreator,
-                        footprintCreateLayerActionCreator,
-                        footprintStartActionCreator,
-                        footprintMoveActionCreator,
-                        footprintEndActionCreator} from '../visualize/DrawLayerCntlr.js';
+import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import MultiViewCntlr, {IMAGE_MULTI_VIEW_KEY} from '../visualize/MultiViewCntlr.js';
 import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from '../core/ComponentCntlr.js';
 import {masterSaga} from './MasterSaga.js';
+
+
+
+//--- import Sagas
+import {watchCatalogs} from '../visualize/saga/CatalogWatcher.js';
+import {syncCharts} from '../visualize/saga/ChartsSync.js';
+import {imagePlotter} from '../visualize/saga/ImagePlotter.js';
+import {watchReadout} from '../visualize/saga/MouseReadoutWatch.js';
+import {watchForRelatedActions} from '../fieldGroup/FieldGroupCntlr.js';
+
+
 
 //--- import drawing Layers
 import ActiveTarget from '../drawingLayers/ActiveTarget.js';
@@ -125,15 +114,11 @@ const cdtFactory= chartDataTypeFactory([DATATYPE_XYCOLS, DATATYPE_HISTOGRAM]);
 const reducers = {
     [AppDataCntlr.APP_DATA_PATH]: AppDataCntlr.reducer,
     [LayoutCntlr.LAYOUT_PATH]: LayoutCntlr.reducer,
-    [FieldGroupCntlr.FIELD_GROUP_KEY]: FieldGroupCntlr.reducer,
-    [IMAGE_PLOT_KEY]: ImagePlotCntlr.reducer,
     [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer,
     [TableStatsCntlr.TBLSTATS_DATA_KEY]: TableStatsCntlr.reducer,
     [ChartsCntlr.CHART_SPACE_PATH]: ChartsCntlr.reducer,
     [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
-    [DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory),
     [IMAGE_MULTI_VIEW_KEY]: MultiViewCntlr.reducer,
-    [MouseReadoutCntlr.READOUT_KEY]: MouseReadoutCntlr.reducer,
     [DIALOG_OR_COMPONENT_KEY]: ComponentCntlr.reducer
 };
 
@@ -144,6 +129,10 @@ function registerCntlr(cntlr={}) {
 
 // registering controllers...
 registerCntlr(BackgroundCntlr);
+registerCntlr(ImagePlotCntlr);
+registerCntlr(FieldGroupCntlr);
+registerCntlr(MouseReadoutCntlr);
+registerCntlr(DrawLayerCntlr.getDrawLayerCntlrDef(drawLayerFactory));
 
 
 let redux = null;
@@ -152,25 +141,7 @@ let redux = null;
 actionCreators.set(AppDataCntlr.APP_LOAD, AppDataCntlr.loadAppData);
 actionCreators.set(AppDataCntlr.GRAB_WINDOW_FOCUS, AppDataCntlr.grabWindowFocus);
 actionCreators.set(AppDataCntlr.HELP_LOAD, AppDataCntlr.onlineHelpLoad);
-actionCreators.set(FieldGroupCntlr.VALUE_CHANGE, valueChangeActionCreator);
-actionCreators.set(FieldGroupCntlr.MULTI_VALUE_CHANGE, multiValueChangeActionCreator);
 actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.extensionActivateActionCreator);
-actionCreators.set(ImagePlotCntlr.PLOT_IMAGE, plotImageActionCreator);
-actionCreators.set(ImagePlotCntlr.PLOT_MASK, plotImageMaskActionCreator);
-actionCreators.set(ImagePlotCntlr.OVERLAY_PLOT_CHANGE_ATTRIBUTES, overlayPlotChangeAttributeActionCreator);
-actionCreators.set(ImagePlotCntlr.ZOOM_IMAGE, zoomActionCreator);
-actionCreators.set(ImagePlotCntlr.COLOR_CHANGE, colorChangeActionCreator);
-actionCreators.set(ImagePlotCntlr.STRETCH_CHANGE, stretchChangeActionCreator);
-actionCreators.set(ImagePlotCntlr.ROTATE, rotateActionCreator);
-actionCreators.set(ImagePlotCntlr.FLIP, flipActionCreator);
-actionCreators.set(ImagePlotCntlr.CROP, cropActionCreator);
-actionCreators.set(ImagePlotCntlr.CHANGE_PRIME_PLOT , changePrimeActionCreator);
-actionCreators.set(ImagePlotCntlr.CHANGE_POINT_SELECTION, changePointSelectionActionCreator);
-actionCreators.set(ImagePlotCntlr.RESTORE_DEFAULTS, restoreDefaultsActionCreator);
-actionCreators.set(ImagePlotCntlr.EXPANDED_AUTO_PLAY, autoPlayActionCreator);
-actionCreators.set(ImagePlotCntlr.WCS_MATCH, wcsMatchActionCreator);
-actionCreators.set(ImagePlotCntlr.DELETE_PLOT_VIEW, deletePlotViewActionCreator);
-actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionCreator(drawLayerFactory));
 
 actionCreators.set(TablesCntlr.TABLE_SEARCH, TablesCntlr.tableSearch);
 actionCreators.set(TablesCntlr.TABLE_FETCH, TablesCntlr.tableFetch);
@@ -183,21 +154,6 @@ actionCreators.set(ChartsCntlr.CHART_DATA_FETCH, ChartsCntlr.makeChartDataFetch(
 actionCreators.set(ChartsCntlr.CHART_OPTIONS_REPLACE, ChartsCntlr.makeChartOptionsReplace(cdtFactory.getChartDataType));
 actionCreators.set(ChartsCntlr.CHART_OPTIONS_UPDATE, ChartsCntlr.makeChartOptionsUpdate(cdtFactory.getChartDataType));
 
-actionCreators.set(DrawLayerCntlr.SELECT_AREA_END, selectAreaEndActionCreator);
-actionCreators.set(DrawLayerCntlr.DT_END, distanceToolEndActionCreator);
-actionCreators.set(DrawLayerCntlr.MARKER_START, markerToolStartActionCreator);
-actionCreators.set(DrawLayerCntlr.MARKER_MOVE, markerToolMoveActionCreator);
-actionCreators.set(DrawLayerCntlr.MARKER_END, markerToolEndActionCreator);
-actionCreators.set(DrawLayerCntlr.MARKER_CREATE, markerToolCreateLayerActionCreator);
-actionCreators.set(DrawLayerCntlr.FOOTPRINT_CREATE, footprintCreateLayerActionCreator);
-actionCreators.set(DrawLayerCntlr.FOOTPRINT_START, footprintStartActionCreator);
-actionCreators.set(DrawLayerCntlr.FOOTPRINT_END, footprintEndActionCreator);
-actionCreators.set(DrawLayerCntlr.FOOTPRINT_MOVE, footprintMoveActionCreator);
-
-actionCreators.set(DrawLayerCntlr.REGION_CREATE_LAYER, regionCreateLayerActionCreator);
-actionCreators.set(DrawLayerCntlr.REGION_DELETE_LAYER, regionDeleteLayerActionCreator);
-actionCreators.set(DrawLayerCntlr.REGION_ADD_ENTRY, regionUpdateEntryActionCreator);
-actionCreators.set(DrawLayerCntlr.REGION_REMOVE_ENTRY, regionUpdateEntryActionCreator);
 
 
 actionCreators.set('exampleDialog', (rawAction) => {
@@ -213,7 +169,7 @@ actionCreators.set('exampleDialog', (rawAction) => {
 // eslint-disable-next-line
 var filterOutOfLogging= {
     [ExternalAccessCntlr.EXTENSION_ACTIVATE]: (action) => !action.payload.extension || action.payload.extension.extType!=='PLOT_MOUSE_READ_OUT',
-    [FieldGroupCntlr.MOUNT_COMPONENT]: false
+    [MOUNT_COMPONENT]: false
 };
 
 /**
@@ -266,9 +222,18 @@ function createRedux() {
     return store;
 }
 
+function startCoreSagas() {
+    dispatchAddSaga(watchCatalogs);
+    dispatchAddSaga( imagePlotter);
+    dispatchAddSaga( syncCharts);
+    dispatchAddSaga( watchReadout);
+    dispatchAddSaga( watchForRelatedActions);
+}
+
 function bootstrap() {
     if (redux === null) {
         redux = createRedux();
+        startCoreSagas();
     }
     return new Promise(
         function (resolve, reject) {
