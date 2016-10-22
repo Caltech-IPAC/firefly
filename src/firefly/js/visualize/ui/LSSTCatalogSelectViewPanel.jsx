@@ -41,8 +41,12 @@ const  gkeySpatial = 'LSST_CATALOG_PANEL_spatial';
 const dropdownName = 'LsstCatalogDropDown';
 const constraintskey = 'inputconstraint';
 const projectName = 'Lsst';
+const RADIUS_COL = '7';
+const COLDEF1 = '9';
+const COLDEF2 = '8';
 
 export const LSSTDDPID = 'LSSTMetaSearch';
+
 
 /**
  * Globally scoped here, master table, columns object
@@ -363,8 +367,8 @@ var userChangeLsstDispatch = function () {
                     }
 
                     // TODO: wait until catalog table is set
-                    const radius = get(catTable[currentIdx], ['cat', '7'], 100);
-                    const coldef = get(catTable[currentIdx], ['cat', '9']) || get(catTable[currentIdx], ['cat', '8']) || "";
+                    const radius = get(catTable[currentIdx], ['cat', RADIUS_COL], 100);
+                    const coldef = get(catTable[currentIdx], ['cat', COLDEF1]) || get(catTable[currentIdx], ['cat', COLDEF2]) || "";
 
                     inFields = updateMerge(inFields, 'cattable', {
                         value: currentCatValue,
@@ -436,7 +440,7 @@ class LsstCatalogDDList extends Component {
         const selCat =  get(FieldGroupUtils.getGroupFields(gkey), 'cattable.value', catmaster[0].catalogs[0].value);
         const catTable = getCatalogs(catmaster, selProj);
         const currentIdx = getCatalogIndex(catTable, selCat);
-        const radius = parseFloat(get(catTable[currentIdx], ['cat', '7'], '100'));
+        const radius = parseFloat(get(catTable[currentIdx], ['cat', RADIUS_COL], '100'));
         const catPanelStyle = {height: 350};
 
         //TODO: re-examine the setting
@@ -482,6 +486,9 @@ class LsstCatalogDDList extends Component {
                                              showFormType={false}
                                              processId={LSSTDDPID}
                                              groupKey={gkey}
+                                             createDDRequest={()=>{
+                                                return {id: LSSTDDPID, table_name: selCat, table_path: '/hydra/cm/firefly_test_data/DAXTestData/'};
+                                             }}
                     />
                 </div>
                 <div style={{display:'flex',flexDirection:'column', alignItems:'flex-end'}}>

@@ -38,6 +38,9 @@ export const gkey = 'CATALOG_PANEL';
 export const gkeySpacial = 'CATALOG_PANEL_spacial';
 export const initRadiusArcSec = (10 / 3600) + '';
 
+const RADIUS_COL = '7';
+const COLDEF1 = 9;
+const COLDEF2 = 8;
 const dropdownName = 'IrsaCatalogDropDown';
 const constraintskey = 'inputconstraint';
 
@@ -496,8 +499,8 @@ var userChangeDispatch = function () {
                 //
                 // }
 
-                const radius = parseFloat(catTable[currentIdx].cat[7]);
-                const coldef = catTable[currentIdx].cat[9] === 'null' ? catTable[currentIdx].cat[8] : catTable[currentIdx].cat[9];
+                const radius = parseFloat(catTable[currentIdx].cat[RADIUS_COL]);
+                const coldef = catTable[currentIdx].cat[COLDEF1] === 'null' ? catTable[currentIdx].cat[COLDEF2] : catTable[currentIdx].cat[COLDEF1];
                 inFields = updateMerge(inFields, 'cattable', {
                     indexClicked: currentIdx,
                     value: catTable[currentIdx].value,
@@ -624,7 +627,7 @@ class CatalogDDList extends Component {
 
         //HERE HERE HERE
         const currentIdx = get(this.props.fields, 'cattable.indexClicked', 0);
-        const radius = parseFloat(catTable[currentIdx].cat[7]);
+        const radius = parseFloat(catTable[currentIdx].cat[RADIUS_COL]);
         const coneMax= radius / 3600;
         const boxMax= coneMax*2;
         //HERE HERE HERE
@@ -690,6 +693,9 @@ class CatalogDDList extends Component {
                                              dd_short={ddform}
                                              tbl_id={tbl_id}
                                              groupKey={gkey}
+                                             createDDRequest={()=>{
+                                                return {id: 'GatorDD', catalog: catname0, short: shortdd};
+                                             }}
                     />
                 </div>
                 {/*</div>*/}
@@ -733,7 +739,7 @@ function fieldInit() {
         'cattable': {
             fieldKey: 'cattable',
             value: '',
-            coldef: catmaster[0].catalogs[0].option[0].cat[9],
+            coldef: catmaster[0].catalogs[0].option[0].cat[COLDEF1],
             indexClicked: 0
         },
         'conesize': {
@@ -741,7 +747,7 @@ function fieldInit() {
             value: initRadiusArcSec,
             unit: 'arcsec',
             min: 1 / 3600,
-            max: parseInt(catmaster[0].catalogs[0].option[0].cat[7]) / 3600
+            max: parseInt(catmaster[0].catalogs[0].option[0].cat[RADIUS_COL]) / 3600
         },
         'tableconstraints': {
             fieldKey: 'tableconstraints',

@@ -38,9 +38,9 @@ function getTblId(catName, dd_short) {
  * @summary reest table constraints state
  * @param {string} gkey
  */
-function resetConstraints(gkey) {
+function resetConstraints(gkey, fieldKey) {
     const value = {constraints: '', selcols: '', filters: {}, errorConstraints:''};
-    const modPayload= Object.assign({}, {value},  {fieldKey: 'tableconstraints', groupKey: gkey});
+    const modPayload= Object.assign({}, {value},  {fieldKey, groupKey: gkey});
     dispatchValueChange(modPayload);
 }
 
@@ -64,17 +64,17 @@ export class CatalogConstraintsPanel extends React.Component {
     }
 
     componentDidMount() {
-        const {catname, processId, dd_short, showFormType = true} = this.props;
-        this.fetchDD(catname, makeFormType(showFormType, dd_short), processId,  true); //short form as default
+        const {catname, createDDRequest, dd_short, showFormType = true} = this.props;
+        this.fetchDD(catname, makeFormType(showFormType, dd_short), createDDRequest, true); //short form as default
     }
 
     componentWillReceiveProps(np) {
         var ddShort = makeFormType(np.showFormType, np.dd_short);
 
         if (np.processId !== this.props.processId) {
-            this.fetchDD(np.catname, ddShort, np.processId, true);
+            this.fetchDD(np.catname, ddShort, np.createDDRequest, true);
         } else if (np.catname !== this.props.catname || np.dd_short !== this.props.dd_short) {
-            this.fetchDD(np.catname, ddShort, np.processId);
+            this.fetchDD(np.catname, ddShort, np.createDDRequest);
         } else if (this.state.tableModel) {
             var tblid = np.tbl_id ? np.tbl_id : getTblId(np.catname, ddShort);
             if (tblid !== this.state.tableModel.tbl_id) {
@@ -86,14 +86,14 @@ export class CatalogConstraintsPanel extends React.Component {
 
     render() {
         const {tableModel} = this.state;
-        const {catname, dd_short, fieldKey, showFormType=true, processId, groupKey} = this.props;
+        const {catname, dd_short, fieldKey, showFormType=true, createDDRequest, groupKey} = this.props;
 
         var resetButton = () => {
             var ddShort = makeFormType(showFormType, dd_short);
 
             return (
                 <button style={{padding: '0 5px 0 5px', margin: showFormType ? '0 10px 0 10px' : '0'}}
-                        onClick={ () => this.resetTable(catname,  ddShort, processId, groupKey)}>Reset
+                        onClick={ () => this.resetTable(catname,  ddShort, createDDRequest, groupKey, fieldKey)}>Reset
                 </button>
             );
         };
@@ -138,19 +138,19 @@ export class CatalogConstraintsPanel extends React.Component {
         );
     }
 
-    resetTable(catName, dd_short, processId, groupKey) {
-        resetConstraints(groupKey);
-        this.fetchDD(catName, dd_short, processId, true);
+    resetTable(catName, dd_short, createDDRequest, groupKey, fieldKey) {
+        resetConstraints(groupKey, fieldKey);
+        this.fetchDD(catName, dd_short, createDDRequest, true);
     }
 
     /**
      * Getting dd info from catalog name catName
      * @param {string} catName string name of the catalog for searching DD information
      * @param {string} dd_short
-     * @param {string} processId project based processor id
+     * @param {function} createDDRequest
      * @param {boolean} clearSelections
      */
-    fetchDD(catName, dd_short, processId, clearSelections = false) {
+    fetchDD(catName, dd_short, createDDRequest, clearSelections = false) {
 
         var tblid = getTblId(catName, dd_short);
 
@@ -161,18 +161,6 @@ export class CatalogConstraintsPanel extends React.Component {
             this.setState({tableModel: tbl});
             return;
         }
-
-        var createDDRequest = () => {
-            switch (processId) {
-                case 'GatorDD':
-                    return {id: processId, 'catalog': catName, short: dd_short};
-                case LSSTDDPID:
-                    return {id: processId, 'table_name': catName, table_path: '/hydra/cm/firefly_test_data/DAXTestData/'};
-                default:
-                    return {};
-            }
-        };
-
 
         const request = createDDRequest(); //Fetch DD master table
         const urlDef = get(FieldGroupUtils.getGroupFields(this.props.groupKey), 'cattable.coldef', 'null');
@@ -341,7 +329,8 @@ CatalogConstraintsPanel.propTypes = {
     fieldKey: PropTypes.string.isRequired,
     groupKey: PropTypes.string.isRequired,
     showFormType: PropTypes.bool,
-    processId: PropTypes.string
+    processId: PropTypes.string,
+    createDDRequest: PropTypes.func.isRequired
 };
 
 CatalogConstraintsPanel.defaultProps = {
@@ -466,6 +455,10 @@ function updateRowSelected(tbl_id, onTableChanged) {
 function handleOnTableChanged(params, fireValueChange) {
     const {tbl_id} = params.tableModel;
     const tbl = getTblById(tbl_id);
+
+
+
+
 
     if (!tbl) return;
 
