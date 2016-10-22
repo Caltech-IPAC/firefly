@@ -1,5 +1,5 @@
 import React, {PropTypes} from 'react';
-import {has, get} from 'lodash';
+import {has, get, isNil} from 'lodash';
 
 import {InputFieldView} from './InputFieldView.jsx';
 import {NOT_CELL_DATA} from '../tables/ui/TableRenderer.js';
@@ -30,35 +30,34 @@ export class InputField extends React.Component {
     handleChanges(e) {
         var {fieldKey, validator, onChange, label='', actOn} = this.props;
         const value = e.target.value;
-        const nState = {fieldKey, value};
+        const nState = {fieldKey, value, notValidate: true};
         if (shouldAct(e, actOn)) {
             var {valid, message, ...others} = validator ? validator(value) : {valid: true, message: ''};
             var vadVal = get(others, 'value');  // vadVal has value as undefined in case no validator exists.
             if (vadVal && vadVal !== NOT_CELL_DATA) {
                 nState.value = others.value;
             }
-            //has(others, 'value') && (nState.value = others.value);    // allow the validator to modify the value.. useful in auto-correct.
+
             nState.valid = valid;
             nState.message = valid ? '' : (label + message).replace('::', ':');
-            nState.isAct = true;
+            nState.notValidate = false;
             onChange && onChange(nState);
-        } else {
-            nState.isAct = false;
         }
 
         this.setState(nState);
     }
 
     componentWillReceiveProps(nProps) {
-        this.setState(newState({value: nProps.value}));
+        //this.setState(newState({value: nProps.value}));
+        this.setState({value: nProps.value})
     }
 
     render() {
 
         var {label, labelWidth, tooltip, visible, inline, size,
              showWarning, style, wrapperStyle, labelStyle, validator} = this.props;
-        var {value} = this.state;
-        var {valid, message} = get(this.state, 'isAct', false)&&validator ? validator(value) : {valid:true, message: ''};
+        var {value, notValidate} = this.state;
+        var {valid=true, message=''} = (!isNil(notValidate) && notValidate)? {} : (validator ? validator(value) : {});
 
         return (
             <InputFieldView
@@ -102,7 +101,7 @@ InputField.propTypes = {
     valid: PropTypes.bool,
     onChange: PropTypes.func,
     actOn: PropTypes.arrayOf(PropTypes.oneOf(['blur', 'enter', 'changes'])),
-    showWarning : PropTypes.bool,
+    showWarning : PropTypes.bool
 };
 
 InputField.defaultProps = {
