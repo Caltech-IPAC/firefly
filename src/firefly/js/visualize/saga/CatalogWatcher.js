@@ -83,7 +83,7 @@ function handleCatalogUpdate(tbl_id) {
 
     if (!totalRows ||
         !tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] ||
-        !tableMeta[MetaConst.CATALOG_COORD_COLS]) {
+        (!tableMeta[MetaConst.CATALOG_COORD_COLS] && !tableMeta[MetaConst.CENTER_COLUMN])) {
         return; 
     }
 
@@ -92,8 +92,12 @@ function handleCatalogUpdate(tbl_id) {
         return;
     }
 
-    const s = tableMeta[MetaConst.CATALOG_COORD_COLS].split(';');
-    if (s.length!== 3) return;
+    const cenData= tableMeta[MetaConst.CATALOG_COORD_COLS] || tableMeta[MetaConst.CENTER_COLUMN];
+
+    var s;
+    if (cenData) s= cenData.split(';');
+    if (!s || s.length!== 3) return;
+
     const columns= {
         lonCol: s[0],
         latCol: s[1],
