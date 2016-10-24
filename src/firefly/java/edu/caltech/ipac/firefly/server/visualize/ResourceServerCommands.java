@@ -11,7 +11,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.Version;
-import edu.caltech.ipac.firefly.server.ServerCommandAccess;
+import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.rpc.ResourceServicesImpl;
 
 import java.util.Map;
@@ -22,7 +22,7 @@ import java.util.Map;
 public class ResourceServerCommands {
 
 
-    public static class UserKey extends ServerCommandAccess.ServCommand   {
+    public static class UserKey extends ServCommand {
 
         public String doCommand(Map<String,String[]> paramMap)  throws IllegalArgumentException {
             return new ResourceServicesImpl().getUserKey();
@@ -31,7 +31,7 @@ public class ResourceServerCommands {
         public boolean getCanCreateJson() { return false; }
     }
 
-    public static class GetVersion extends ServerCommandAccess.ServCommand   {
+    public static class GetVersion extends ServCommand   {
 
         public String doCommand(Map<String,String[]> paramMap)  throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);

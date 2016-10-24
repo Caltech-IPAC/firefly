@@ -15,9 +15,8 @@ import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
-import edu.caltech.ipac.firefly.server.ServerCommandAccess;
+import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.query.*;
 import edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
@@ -26,7 +25,6 @@ import edu.caltech.ipac.firefly.server.visualize.SrvParam;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +41,7 @@ public class SearchServerCommands {
 
 
 
-    public static abstract class BaseSearchServerCommand extends ServerCommandAccess.ServCommand {
+    public static abstract class BaseSearchServerCommand extends ServCommand {
         public boolean getCanCreateJson() { return true; }
     }
 

@@ -29,27 +29,11 @@ import java.util.Map;
 public class ServerCommandAccess {
 
 
-    public static Map<String, ServCommand> _cmdMap = new HashMap<String, ServCommand>(41);
+    private static Map<String, HttpCommand> _cmdMap = new HashMap<>();
 
     static {
         initCommand();
     }
-
-//    private Map<String, String[]> decode(Map<String, String[]> paramMap) {
-//        Map<String,String[]> retMap= new HashMap<String, String[]>(30);
-//        for(Map.Entry<String,String[]> entry : paramMap.entrySet())  {
-//            String sAry[]= new String[entry.getValue().length];
-//            for(int i= 0; (i<entry.getValue().length); i++) {
-//                try {
-//                    sAry[i]= URLDecoder.decode(entry.getValue()[i], "UTF-8");
-//                } catch (UnsupportedEncodingException e) {
-//                    sAry[i]= "";
-//                }
-//            }
-//            retMap.put(entry.getKey(), sAry);
-//        }
-//        return retMap;
-//    }
 
     private static void initCommand() {
         _cmdMap.put(ServerParams.FILE_FLUX,    new VisServerCommands.FileFluxCmd());
@@ -117,21 +101,11 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.STATIC_JSON_DATA,           new JsonDataCommands.StaticJsonData());
     }
 
-    public static ServCommand getServCommand(String cmd) {
+    public static HttpCommand getCommand(String cmd) {
         return _cmdMap.get(cmd);
     }
 
-    public static abstract class ServCommand {
-        public abstract String doCommand(Map<String, String[]> paramMap) throws Exception;
-
-        public boolean getCanCreateJson() { return true; }
-    }
-
-    public static abstract class HttpCommand extends ServCommand {
-        public String doCommand(Map<String, String[]> paramMap) throws Exception {
-            throw new IllegalArgumentException("This command handles the HttpRequest directly.  It should not call this method.");
-        }
-        public boolean getCanCreateJson() { return false; }
+    public static abstract class HttpCommand {
         abstract public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception;
     }
 

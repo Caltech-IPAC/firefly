@@ -75,7 +75,9 @@ public class BackgroundInfoCacher {
     public void cancel() {
         BackgroundInfo info= getInfo();
         if (info!=null) {
+            info.getStatus().setState(BackgroundState.CANCELED);
             updateInfo(info.getStatus(), info.getEmailAddress(), info.getBaseFileName(), info.getTitle(), info.getEventTarget(), true);
+            setStatus(info.getStatus());
         }
     }
 

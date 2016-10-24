@@ -8,7 +8,7 @@ import thunkMiddleware from 'redux-thunk';
 import loggerMiddleware from 'redux-logger';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
 import * as AppDataCntlr  from './AppDataCntlr.js';
-import * as BackgroundCntlr  from './background/BackgroundCntlr.js';
+import BackgroundCntlr from './background/BackgroundCntlr.js';
 import * as LayoutCntlr  from './LayoutCntlr.js';
 import {recordHistory} from './History.js';
 import FieldGroupCntlr, {valueChangeActionCreator,multiValueChangeActionCreator}

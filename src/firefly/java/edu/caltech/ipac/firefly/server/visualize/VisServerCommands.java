@@ -10,7 +10,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.ServerCommandAccess;
+import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.servlets.CommandService;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
@@ -39,7 +39,7 @@ import java.util.Map;
  */
 public class VisServerCommands {
 
-    public static class FileFluxCmd extends ServerCommandAccess.ServCommand {
+    public static class FileFluxCmd extends ServCommand {
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);
             List<FileAndHeaderInfo> list = new ArrayList<FileAndHeaderInfo>(3);
@@ -70,7 +70,7 @@ public class VisServerCommands {
     }
 
 
-    public static class FileFluxCmdJson extends ServerCommandAccess.ServCommand {
+    public static class FileFluxCmdJson extends ServCommand {
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
 
 
@@ -132,7 +132,7 @@ public class VisServerCommands {
 
 
 
-    public static class GetWebPlotCmd extends ServerCommandAccess.ServCommand {
+    public static class GetWebPlotCmd extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
 
@@ -163,7 +163,7 @@ public class VisServerCommands {
         }
     }
 
-    public static class GetWebPlotGroupCmd extends ServerCommandAccess.ServCommand {
+    public static class GetWebPlotGroupCmd extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
 
@@ -177,7 +177,7 @@ public class VisServerCommands {
         }
     }
 
-    public static class ZoomCmd extends ServerCommandAccess.ServCommand {
+    public static class ZoomCmd extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
 
@@ -192,7 +192,7 @@ public class VisServerCommands {
         }
     }
 
-    public static class StretchCmd extends ServerCommandAccess.ServCommand {
+    public static class StretchCmd extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
 
@@ -227,7 +227,7 @@ public class VisServerCommands {
         }
     }
 
-    public static class AddBandCmd extends ServerCommandAccess.ServCommand {
+    public static class AddBandCmd extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
 
@@ -240,7 +240,7 @@ public class VisServerCommands {
         }
     }
 
-    public static class RemoveBandCmd extends ServerCommandAccess.ServCommand {
+    public static class RemoveBandCmd extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);
@@ -252,7 +252,7 @@ public class VisServerCommands {
     }
 
 
-    public static class ChangeColor extends ServerCommandAccess.ServCommand {
+    public static class ChangeColor extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);
@@ -263,7 +263,7 @@ public class VisServerCommands {
         }
     }
 
-    public static class Crop extends ServerCommandAccess.ServCommand {
+    public static class Crop extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);
@@ -283,7 +283,7 @@ public class VisServerCommands {
         }
     }
 
-    public static class AreaStat extends ServerCommandAccess.ServCommand {
+    public static class AreaStat extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);
@@ -297,7 +297,7 @@ public class VisServerCommands {
         }
     }
 
-    public static class Header extends ServerCommandAccess.ServCommand {
+    public static class Header extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);
@@ -312,7 +312,7 @@ public class VisServerCommands {
   * DM-4494
    */
 
-    public static class FitsHeader extends ServerCommandAccess.ServCommand  {
+    public static class FitsHeader extends ServCommand  {
 
        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException, FitsException, IOException {
 
@@ -335,7 +335,7 @@ public class VisServerCommands {
 
 
     }
-    public static class GetImagePng extends ServerCommandAccess.ServCommand {
+    public static class GetImagePng extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
 
@@ -366,7 +366,7 @@ public class VisServerCommands {
         }
     }
 
-    public static class GetImagePngWithRegion extends ServerCommandAccess.ServCommand {
+    public static class GetImagePngWithRegion extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
 
@@ -379,7 +379,7 @@ public class VisServerCommands {
     }
 
 
-    public static class RotateNorth extends ServerCommandAccess.ServCommand {
+    public static class RotateNorth extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
 
@@ -393,7 +393,7 @@ public class VisServerCommands {
         }
     }
 
-    public static class RotateAngle extends ServerCommandAccess.ServCommand {
+    public static class RotateAngle extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);
@@ -408,7 +408,7 @@ public class VisServerCommands {
     }
 
 
-    public static class FlipImageOnY extends ServerCommandAccess.ServCommand {
+    public static class FlipImageOnY extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);
@@ -421,7 +421,7 @@ public class VisServerCommands {
 
 
 
-    public static class ColorHistogram extends ServerCommandAccess.ServCommand {
+    public static class ColorHistogram extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);
@@ -435,7 +435,7 @@ public class VisServerCommands {
         }
     }
 
-    public static class DeletePlot extends ServerCommandAccess.ServCommand {
+    public static class DeletePlot extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             String ctxStr = new SrvParam(paramMap).getRequired(ServerParams.CTXSTR);
@@ -446,7 +446,7 @@ public class VisServerCommands {
 
 
 
-    public static class GetProgress extends ServerCommandAccess.ServCommand {
+    public static class GetProgress extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);
@@ -456,7 +456,7 @@ public class VisServerCommands {
         }
     }
 
-    public static class DS9Region extends ServerCommandAccess.ServCommand {
+    public static class DS9Region extends ServCommand {
         private static final String footprintKey = "${footprintDef}";
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException, IOException {
@@ -473,7 +473,7 @@ public class VisServerCommands {
         }
     }
 
-    public static class SaveDS9Region extends ServerCommandAccess.ServCommand {
+    public static class SaveDS9Region extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);
@@ -483,7 +483,7 @@ public class VisServerCommands {
         }
     }
 
-    public static class AddSavedRequest extends ServerCommandAccess.ServCommand {
+    public static class AddSavedRequest extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);
@@ -494,7 +494,7 @@ public class VisServerCommands {
         }
     }
 
-    public static class GetAllSavedRequest extends ServerCommandAccess.ServCommand {
+    public static class GetAllSavedRequest extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);

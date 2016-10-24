@@ -24,8 +24,10 @@ export const BG_JOB_IMMEDIATE   = `${BACKGROUND_PATH}.bgJobImmediate`;
 export const BG_SET_EMAIL       = `${BACKGROUND_PATH}.bgSetEmail`;
 export const BG_Package         = `${BACKGROUND_PATH}.bgPackage`;
 
+export default {actionCreators, reducers};
+
 /*---------------------------- CREATORS ----------------------------*/
-export function actionCreators() {
+function actionCreators() {
     return {
         [BG_MONITOR_SHOW]: bgMonitorShow,
         [BG_SET_EMAIL]: bgSetEmail,
@@ -35,11 +37,12 @@ export function actionCreators() {
 }
 
 /*---------------------------- REDUCERS -----------------------------*/
-export function reducers() {
+function reducers() {
     return {
         [BACKGROUND_PATH]: reducer
     };
 }
+
 
 /*---------------------------- DISPATCHERS -----------------------------*/
 
