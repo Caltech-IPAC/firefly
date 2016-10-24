@@ -94,7 +94,7 @@ class ChartsPanel extends React.Component {
             if (chartType === SCATTER) {
                 // scatter plot
                 doUpdate =
-                    (nextProps.tableModel && TblUtil.isFullyLoaded(nextProps.tableModel.tblId) &&
+                    (nextProps.tableModel &&
                     (nextProps.tableModel.highlightedRow !== get(this.props, 'tableModel.highlightedRow') ||
                      nextProps.tableModel.selectInfo !== get(this.props, 'tableModel.selectInfo') ));
             }
@@ -565,7 +565,10 @@ export class ChartsTableViewPanel extends Component {
 
     storeUpdate() {
         if (this.iAmMounted) {
-            this.setState(this.getNextState());
+            const ns = this.getNextState();
+            if (TblUtil.isFullyLoaded(ns.tblId)) {
+                this.setState(ns);
+            }
         }
     }
 

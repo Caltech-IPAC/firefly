@@ -144,6 +144,7 @@ export function dispatchChartExpanded(chartId, dispatcher=flux.process) {
     dispatcher( {type: CHART_UI_EXPANDED, payload: {chartId}});
 }
 
+
 /*
  *  Dispatched when chart becomes visible (is rendered for the first time after being invisible)
  *  When chart is mounted, its data need to be in sync with the related table
@@ -564,11 +565,13 @@ export function updateRelatedData(tblId, invokedBy) {
     });
 }
 
-export function updateChartData(chartId) {
+export function updateChartData(chartId, tblId) {
     const chartDataElements = get(flux.getState(), [CHART_SPACE_PATH, 'data', chartId, 'chartDataElements']);
     if (chartDataElements) {
         Object.keys(chartDataElements).forEach((id) => {
-            dispatchChartDataFetch({chartId, chartDataElement: chartDataElements[id]});
+            if (chartDataElements[id].tblId === tblId) {
+                dispatchChartDataFetch({chartId, chartDataElement: chartDataElements[id]});
+            }
         });
     }
 }
