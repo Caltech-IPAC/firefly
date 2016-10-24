@@ -60,6 +60,7 @@
     "eslint-plugin-jsdoc":"^2.3.1",
     "jsdoc": "^3.4.0",
     "jsdoc-jsx": "^0.1.0",
+    "request": "^2.65.0",
     "mocha": "^3.1.0",
     "chai": "^3.5.0",
     "publish-release": "^1.1.0",
