@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.WiseRequest;
 import edu.caltech.ipac.firefly.data.dyn.DynUtils;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
@@ -35,7 +36,7 @@ public class LightCurveFileGroupsProcessor extends FileGroupsProcessor {
             Collection<Integer> selectedRows = dlReq.getSelectedRows();
 
             // temporary mock data instead of using searchReq
-            File voRes = new File("/Users/loi/data/p3am_cdd.vot");
+            File voRes = new File(ServerContext.getTempWorkDir(), "p3am_cdd.vot");
             int statusCode = HttpServices.getDataViaUrl(new URL("http://irsa.ipac.caltech.edu/ibe/sia/wise/allwise/p3am_cdd?POS=10.6,40.2&SIZE=10"), voRes);
             if (statusCode != 500) {
                 // should be 248 images found.
