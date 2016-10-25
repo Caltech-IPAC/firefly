@@ -68,9 +68,8 @@ export class TablePanelOptions extends React.Component {
                     <span>
                         <div style={{ position: 'relative',
                                       display: 'block',
-                                      height: 16,
                                       right: -42,
-                                      top: -4}}
+                                      top: -2}}
                              className='btn-close'
                              title='Remove Tab'
                              onClick={() => toggleOptions()}/>

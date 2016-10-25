@@ -64,6 +64,11 @@ public class BackgroundEnv {
         return true;
     }
 
+    public static boolean remove(String id) {
+        new BackgroundInfoCacher(id).cancel();
+        return true;
+    }
+
     public static void setAttribute(String id, JobAttributes attribute) {
         BackgroundInfoCacher infoCacher= new BackgroundInfoCacher(id);
         BackgroundStatus bgStat= infoCacher.getStatus();
@@ -389,6 +394,10 @@ public class BackgroundEnv {
 //----------------------- Public Inner Classes -------------------------
 //======================================================================
 
+    public interface Worker {
+        BackgroundStatus work(BackgroundProcessor processor) throws Exception;
+    }
+
     public static class ScriptRet {
         final private String _servlet;
         final private File   _file;
@@ -402,12 +411,10 @@ public class BackgroundEnv {
         public File getFile() { return _file;}
     }
 
-
     /**
      * Run in the background to query for package data and start the packaging
      */
     public static class BackgroundProcessor implements Runnable {
-        private volatile BackgroundStatus _bgStat= null;
         private final Worker _worker;
         private final String _bid;
         private final String _baseFileName;
@@ -416,6 +423,7 @@ public class BackgroundEnv {
         private final String _dataSource;
         private final RequestOwner _requestOwner;
         private final BackgroundInfoCacher piCacher;
+        private volatile BackgroundStatus _bgStat= null;
 
         public BackgroundProcessor(Worker worker,
                                    String baseFileName,
@@ -476,10 +484,6 @@ public class BackgroundEnv {
         public String getDataSource() { return _dataSource; }
         public RequestOwner getRequestOwner() { return _requestOwner; }
         public BackgroundInfoCacher getPiCacher () { return piCacher; }
-    }
-
-    public interface Worker {
-        BackgroundStatus work(BackgroundProcessor processor) throws Exception;
     }
 }
 

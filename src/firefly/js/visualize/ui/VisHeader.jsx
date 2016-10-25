@@ -6,7 +6,7 @@ import React from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
-import {VisHeaderView} from './VisHeaderView.jsx';
+import {VisHeaderView, VisPreview} from './VisHeaderView.jsx';
 import {addMouseListener, lastMouseCtx} from '../VisMouseSync.js';
 import {readoutRoot, dispatchReadoutData, makeValueReadoutItem, makePointReadoutItem,
     makeDescriptionItem, isLockByClick} from '../../visualize/MouseReadoutCntlr.js';
@@ -74,9 +74,19 @@ export class VisHeader extends React.Component {
     }
 
     render() {
+        const {showHeader=true, showPreview=true} = this.props; 
         var {visRoot,currMouseState,readout}= this.state;
-        return <VisHeaderView visRoot={visRoot} currMouseState={currMouseState} readout={readout}/>;
+        return (
+            <div>
+                {showHeader && <VisHeaderView {...{showPreview, visRoot, currMouseState, readout}}/>}
+                {showPreview && <VisPreview {...{showPreview, visRoot, currMouseState, readout}}/>}
+            </div>
+        );
     }
 }
 
+VisHeader.propTypes= {
+    showHeader : React.PropTypes.bool,
+    showPreview :React.PropTypes.bool,
+};
 

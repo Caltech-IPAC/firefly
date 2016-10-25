@@ -45,6 +45,7 @@ export const SearchPanel = (props) => {
                                      fieldKey='filters'
                                      groupKey='TBL_BY_URL_PANEL'
                                      initialState= {{
+                                                                placeholder: 'Apply this filter on the table above',
                                                                 value: '',
                                                                 label : 'Filters:',
                                                                 labelWidth : 120

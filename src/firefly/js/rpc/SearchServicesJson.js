@@ -6,23 +6,121 @@
  * Date: 3/5/12
  */
 
-//import {application,NetworkMode} from "../core/Application.js";
+import {get} from 'lodash';
+
 import {ServerParams} from '../data/ServerParams.js';
 import {doService} from '../core/JsonUtils.js';
 import {BackgroundStatus} from '../core/background/BackgroundStatus.js';
+import {MAX_ROW} from '../tables/TableUtil.js';
+import {getBgEmail} from '../core/background/BackgroundUtil.js';
 
 import Enum from 'enum';
 
 export const DownloadProgress= new Enum(['STARTING', 'WORKING', 'DONE', 'UNKNOWN', 'FAIL']);
 export const ScriptAttributes= new Enum(['URLsOnly', 'Unzip', 'Ditto', 'Curl', 'Wget', 'RemoveZip']);
 
+import {getTblById} from '../tables/TableUtil.js';
+import {SelectInfo} from '../tables/SelectInfo.js';
+import {getBackgroundJobs} from '../core/background/BackgroundUtil.js';
+
+const DOWNLOAD_REQUEST = 'downloadRequest';
+const SELECTION_INFO = 'selectionInfo';
+
 const doJsonP= function() {
     return false;
-    //return application.networkMode===NetworkMode.JSON;
 };
 
 //TODO: convert FileStatus
-//TODO: convert BackgroundStatus
+
+
+/**
+ * tableRequest will be sent to the server as a json string.
+ * @param {TableRequest} tableRequest is a table request params object
+ * @param {number} [hlRowIdx] set the highlightedRow.  default to startIdx.
+ * @returns {Promise.<TableModel>}
+ * @public
+ * @func doFetchTable
+ * @memberof firefly.util.table
+ */
+export function fetchTable(tableRequest, hlRowIdx) {
+
+    const def = {
+        startIdx: 0,
+        pageSize : MAX_ROW
+    };
+    tableRequest = Object.assign(def, tableRequest);
+    const params = {
+        [ServerParams.REQUEST]: JSON.stringify(tableRequest),
+    };
+
+    return doService(doJsonP(), ServerParams.TABLE_SEARCH, params)
+    .then( (tableModel) => {
+        const startIdx = get(tableModel, 'request.startIdx', 0);
+        if (startIdx > 0) {
+            // shift data arrays indices to match partial fetch
+            tableModel.tableData.data = tableModel.tableData.data.reduce( (nAry, v, idx) => {
+                nAry[idx+startIdx] = v;
+                return nAry;
+            }, []);
+        }
+        tableModel.highlightedRow = hlRowIdx || startIdx;
+        return tableModel;
+    });
+}
+
+/**
+ *
+ * @param {Object} params
+ * @return {Promise}
+ */
+export const selectedValues = function(params) {
+    return doService(doJsonP(), ServerParams.SELECTED_VALUES, params)
+            .then((data) => {
+                // JsonUtil may not interpret array values correctly due to error-checking.
+                // returning array as a prop 'values' inside an object instead.
+                return get(data, 'values');
+            });
+};
+
+
+/**
+ *
+ * @param {TableRequest} request
+ * @return {Promise}
+ */
+export const jsonSearch = function(request) {
+    const params = {
+        [ServerParams.REQUEST]: JSON.stringify(request),
+    };
+    return doService(doJsonP(), ServerParams.JSON_SEARCH, params);
+};
+
+
+/**
+ *
+ * @param {DownloadRequest} dlRequest
+ * @param {Object} searchRequest
+ * @param {string} selectionInfo
+ */
+export function packageRequest(dlRequest, searchRequest, selectionInfo) {
+    if (!selectionInfo) {
+        const {totalRow} = getTblById(searchRequest.tbl_id) || {};
+        if (totalRow) {
+            selectionInfo = SelectInfo.newInstance({selectAll: true, rowCount: totalRow}).toString();
+        }
+    }
+    if (!dlRequest.Email && getBgEmail()) {
+        dlRequest.Email = getBgEmail();
+    }
+
+    const params = {
+        [DOWNLOAD_REQUEST]: JSON.stringify(dlRequest),
+        [ServerParams.REQUEST]: JSON.stringify(searchRequest),
+        [SELECTION_INFO]: selectionInfo
+    };
+
+    return doService(doJsonP(), ServerParams.PACKAGE_REQUEST, params);
+}
 
 
 /**
@@ -146,14 +244,16 @@ export const getDownloadProgress= function(fileKey) {
  * @param {string} email
  * @return {Promise}
  */
-export const setEmail= function(ids, email) {
-    var idList=  Array.isArray(ids) ? ids : [ids];
+export const setEmail= function(email) {
+    var idList= Object.keys(getBackgroundJobs() || {});
     var paramList= idList.map( (id) => {
         return {name:ServerParams.ID, value: id};
     } );
-    paramList.push({name:ServerParams.EMAIL, value:email});
-    return doService(doJsonP(), ServerParams.SET_EMAIL, paramList
-    ).then( () => true);
+    if(paramList.length > 0) {
+        paramList.push({name:ServerParams.EMAIL, value:email});
+        return doService(doJsonP(), ServerParams.SET_EMAIL, paramList
+        ).then( () => true);
+    }
 };
 
 /**

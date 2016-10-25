@@ -146,15 +146,16 @@
 .TablePanel__options--small {
     z-index: 1;
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 20px;
-    height: 20px;
+    top: 1px;
+    right: 1px;
+    width: 18px;
+    height: 18px;
+    background-color: #b3b3b3;
+    border-bottom-left-radius: 33%;
 }
 .TablePanel__options--small:hover {
-    background-color: #c3c3c3;
+    background-color: #a5a5a5;
     cursor: pointer;
-    border-radius: 50%;
 }
 
 .TablePanelOptions {

@@ -140,7 +140,8 @@ function BannerSection(props) {
     return (
         <Banner key='banner'
             menu={<Menu menu={menu} /> }
-            visPreview={<VisHeader/> }
+            visPreview={<VisHeader showHeader={false}/> }
+            readout={<VisHeader showPreview={false}/> }
             {...rest}
         />
     );

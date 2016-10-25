@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.packagedata;
 
+import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
@@ -51,36 +52,43 @@ public class BackgroundInfoCacher {
     //----------------------- Public Methods -------------------------------
     //======================================================================
 
-    public void setStatus(BackgroundStatus bgStat) {
-        BackgroundInfo info= getInfo();
-        if (info!=null) {
-            updateInfo(bgStat, info.getEmailAddress(), info.getBaseFileName(), info.getTitle(), info.getEventTarget(), info.isCanceled());
-            ServerEvent.EventTarget target = info.getEventTarget() == null ?
-                            new ServerEvent.EventTarget(ServerEvent.Scope.SELF) : info.getEventTarget();
-            ServerEvent ev= new ServerEvent(ServerSentEventNames.SVR_BACKGROUND_REPORT,
-                                                    target, bgStat);
-            ServerEventManager.fireEvent(ev);
-        }
-    }
-
-
-
-
     public BackgroundStatus getStatus() {
         BackgroundInfo info= getInfo();
         return info==null ? null : info.getStatus();
     }
 
+    public void setStatus(BackgroundStatus bgStat) {
+        BackgroundInfo info= getInfo();
+        if (info!=null) {
+            updateInfo(bgStat, info.getEmailAddress(), info.getBaseFileName(), info.getTitle(), info.getEventTarget(), info.isCanceled());
+            if (!info.isCanceled() || bgStat.getState().equals(BackgroundState.CANCELED)) {
+                // only send events when job is not cancel, unless it's the canceled event.
+                ServerEvent.EventTarget target = info.getEventTarget() == null ?
+                        new ServerEvent.EventTarget(ServerEvent.Scope.SELF) : info.getEventTarget();
+                ServerEvent ev= new ServerEvent(ServerSentEventNames.SVR_BACKGROUND_REPORT,
+                        target, bgStat);
+                ServerEventManager.fireEvent(ev);
+            }
+        }
+    }
+
     public void cancel() {
         BackgroundInfo info= getInfo();
         if (info!=null) {
+            info.getStatus().setState(BackgroundState.CANCELED);
             updateInfo(info.getStatus(), info.getEmailAddress(), info.getBaseFileName(), info.getTitle(), info.getEventTarget(), true);
+            setStatus(info.getStatus());
         }
     }
 
     public boolean isCanceled() {
         BackgroundInfo info= getInfo();
         return info==null ? true : info.isCanceled();
+    }
+
+    public String getEmailAddress() {
+        BackgroundInfo info= getInfo();
+        return (info==null) ? null : info.getEmailAddress();
     }
 
     public void setEmailAddress(String email) {
@@ -90,9 +98,9 @@ public class BackgroundInfoCacher {
         }
     }
 
-    public String getEmailAddress() {
+    public String getBaseFileName() {
         BackgroundInfo info= getInfo();
-        return (info==null) ? null : info.getEmailAddress();
+        return info==null ? null : info.getBaseFileName();
     }
 
     public void setBaseFileName(String baseFileName) {
@@ -101,12 +109,6 @@ public class BackgroundInfoCacher {
             updateInfo(info.getStatus(), info.getEmailAddress(), baseFileName, info.getTitle(), info.getEventTarget(), info.isCanceled());
         }
     }
-
-    public String getBaseFileName() {
-        BackgroundInfo info= getInfo();
-        return info==null ? null : info.getBaseFileName();
-    }
-
 
     public String getTitle() {
         BackgroundInfo info= getInfo();

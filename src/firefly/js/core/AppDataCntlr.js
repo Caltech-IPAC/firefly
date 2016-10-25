@@ -3,13 +3,12 @@
  */
 
 import {take} from 'redux-saga/effects';
-import shallowequal from 'shallowequal';
 import {get} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import BrowserCache from '../util/BrowserCache.js';
-import {menuReducer} from './reducers/MenuReducer.js';
+import {menuReducer, alertsReducer} from './AppDataReducers.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
 import {getModuleName, updateSet} from '../util/WebUtil.js';
 import {getWsChannel} from './messaging/WebSocketClient.js';
@@ -31,7 +30,6 @@ export const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
 export const REINIT_RESULT_VIEW = `${APP_DATA_PATH}.reinitResultView`;
 export const ROOT_URL_PATH = `${APP_DATA_PATH}.rootUrlPath`;
 export const SET_ALERTS = `${APP_DATA_PATH}.setAlerts`;
-
 export const HELP_LOAD = `${APP_DATA_PATH}.helpLoad`;
 
 /** fired when there's a connection is added/removed from this channel.  useful for tracking connections in channel, etc   */
@@ -81,8 +79,8 @@ export function onlineHelpLoad( action )
 
 /**
  *
- * @param appData {Object} The partial object to merge with the appData branch under root
- * @returns {{type: string, payload: object}}
+ * @param {AppData} appData The partial object to merge with the appData branch under root
+ * @returns {Action}
  */
 export function updateAppData(appData) {
     return { type : APP_UPDATE, payload: appData };
@@ -153,13 +151,10 @@ function initPreferences() {
 export function reducer(state=getInitState(), action={}) {
 
     var nstate = appDataReducer(state, action);
-    nstate.menu = menuReducer(nstate.menu, action);
+    nstate = menuReducer(nstate, action);
+    nstate = alertsReducer(nstate, action);
 
-    if (shallowequal(state, nstate)) {
-        return state;
-    } else {
-        return nstate;
-    }
+    return nstate;
 }
 
 function appDataReducer(state, action={}) {
@@ -190,10 +185,6 @@ function appDataReducer(state, action={}) {
 
         case WS_CONN_UPDATED :
             return updateSet(state, ['connections'], action.payload);
-
-        case SET_ALERTS :
-            const {msg=''} = action.payload || {};
-            return updateSet(state, ['alerts'], {msg});
 
         default:
             return state;

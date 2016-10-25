@@ -16,7 +16,7 @@ import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
  * @param {object} currMouseState  the current state of the mouse
  * @return {XML}
  */
-export function VisHeaderView({visRoot,currMouseState, readout}) {
+export function VisHeaderView({readout}) {
 
     var rS= {
         width: 700,
@@ -31,9 +31,6 @@ export function VisHeaderView({visRoot,currMouseState, readout}) {
         overflow : 'hidden'
     };
 
-    var pv= getActivePlotView(visRoot);
-    var mousePv= getPlotViewById(visRoot,currMouseState.plotId);
-
     return (
         <div style={{display:'inline-block', float:'right', whiteSpace:'nowrap'}}>
             <div style={rS}>
@@ -41,16 +38,34 @@ export function VisHeaderView({visRoot,currMouseState, readout}) {
                     <MouseReadout readout={readout}/>
                 </div>
             </div>
-
-            <ThumbnailView plotView={pv}/>
-            <MagnifiedView plotView={mousePv} size={70} mouseState={currMouseState} />
-
         </div>
     );
 }
 
 VisHeaderView.propTypes= {
+    readout:  React.PropTypes.object.isRequired,
+};
+
+
+/**
+ * @param {Object} p        React props object.
+ * @param {Object} p.visRoot
+ * @param {Object} p.currMouseState
+ * @returns {HTML}
+ * @constructor
+ */
+export function VisPreview({visRoot,currMouseState}) {
+    var pv= getActivePlotView(visRoot);
+    var mousePv= getPlotViewById(visRoot,currMouseState.plotId);
+    return (
+        <div>
+            <ThumbnailView plotView={pv}/>
+            <MagnifiedView plotView={mousePv} size={70} mouseState={currMouseState} />
+        </div>
+    );
+}
+
+VisPreview.propTypes= {
     visRoot : React.PropTypes.object.isRequired,
     currMouseState :React.PropTypes.object,
-    readout:  React.PropTypes.object.isRequired
 };

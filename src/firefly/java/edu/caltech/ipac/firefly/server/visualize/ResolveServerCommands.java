@@ -10,7 +10,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.firefly.server.ServerCommandAccess;
+import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.rpc.TargetServicesImpl;
 import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
@@ -24,7 +24,7 @@ public class ResolveServerCommands {
 
 
 
-    public static class ResolveName extends ServerCommandAccess.ServCommand {
+    public static class ResolveName extends ServCommand {
 
 
         public String doCommand(Map<String, String[]> paramMap) throws Exception {

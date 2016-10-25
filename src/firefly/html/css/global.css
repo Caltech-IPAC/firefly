@@ -245,8 +245,8 @@
     display: inline-block;
     position: relative;
     text-shadow: 0 1px 0 #fff;
-    width: 14px;
-    height: 14px;
+    width: 13px;
+    height: 13px;
 }
 .btn-close:hover {
     background-color: #949494;

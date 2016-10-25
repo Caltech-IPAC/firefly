@@ -17,9 +17,13 @@ public class FluxAction {
     private JSONObject root;
 
     public FluxAction(String type) {
+        this(type, new JSONObject());
+    }
+
+    public FluxAction(String type , JSONObject payload) {
         root = new JSONObject();
         root.put(TYPE, type);
-        root.put(PAYLOAD, new JSONObject());
+        root.put(PAYLOAD, payload);
     }
 
     public String getType() {

@@ -8,7 +8,7 @@ import * as TblCntlr from './TablesCntlr.js';
 import * as TblUtil from './TableUtil.js';
 import {SelectInfo} from './SelectInfo.js';
 import {FilterInfo} from './FilterInfo.js';
-import {fetchUrl} from '../util/WebUtil.js';
+import {selectedValues} from '../rpc/SearchServicesJson.js';
 
 export class TableConnector {
     
@@ -162,11 +162,5 @@ function getRowIdFor(filePath, selected) {
     if (isEmpty(selected)) return [];
 
     const params = {id: 'Table__SelectedValues', columnName: 'ROWID', filePath, selectedRows: String(selected)};
-
-    return fetchUrl(TblUtil.SEARCH_SRV_PATH, {method: 'post', params}).then( (response) => {
-        return response.json().then( (selectedRowIdAry) => {
-            return selectedRowIdAry;
-        });
-    });
-
+    return selectedValues(params);
 }

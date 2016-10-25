@@ -24,6 +24,7 @@ import java.util.Map;
  *
  * @author loi
  * @version $Id: SaveAsIpacTable.java,v 1.1 2010/11/03 20:49:36 loi Exp $
+ * @deprecated incorporated into SearchServices.  see edu.caltech.ipac.firefly.server.servlets.SearchServices.doTableSave()
  */
 public class SaveAsIpacTable  extends BaseHttpServlet {
     public static final Logger.LoggerImpl DL_LOGGER = Logger.getLogger(Logger.DOWNLOAD_LOGGER);

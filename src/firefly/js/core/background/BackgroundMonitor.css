@@ -1,0 +1,126 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+
+
+.BGMon {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 330px;
+    min-width: 330px;
+    min-height: 200px;
+    max-width: 590px;
+    resize: both;
+    overflow: auto;
+}
+
+.BGMon__content {
+    flex-grow: 1;
+    overflow: auto;
+    resize: none;
+}
+
+.BGMon__footer{
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgba(100, 100, 100,.4);
+    background-color: rgba(100, 100, 100,.2);
+    padding: 4px;
+    height: 30px;
+}
+
+.BGMon__multiItems {
+    margin-left: 20px;
+}
+
+.BGMon__multiItems > * {
+    margin-right: 5px;
+}
+
+.BGMon__package {
+    border: 1px solid #cec5b9;
+    border-radius: 2px;
+    margin: 2px;
+}
+
+.BGMon__package--box {
+    background-color: #fff9f0;
+    padding: 2px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.BGMon__package--status {
+    display: inline-flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0 5px;
+    box-sizing: border-box;
+    color: dimgray;
+    background-color: rgba(0,0,0,.05);
+}
+
+.BGMon__header {
+    width: 100%;
+    display: inline-flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.BGMon__header--title {
+    font-weight: bold;
+    margin-left: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.BGMon__header--waiting {
+    display: inline-flex;
+    align-items: center;
+    font-style: italic;
+    font-size: smaller;
+    color: green;
+}
+
+.BGMon__header--action {
+    display: inline-flex;
+    justify-content: flex-end;
+    width: 14px;
+}
+
+.BGMon__action {
+    width: 14px;
+    height: 14px;
+    margin-left: 3px;
+}
+
+.BGMon__action:hover {
+    cursor: pointer;
+}
+
+.BGMon__packageItem {
+    display: inline-flex;
+    width: 175px;
+    height: 20px;
+    white-space: nowrap;
+    justify-content: space-between;
+}
+
+.BGMon__packageItem > * {
+    margin: 2px 4px;
+}
+
+.BGMon__packageItem--url {
+    color: blue;
+    text-decoration: underline;
+    font-style: italic;
+    margin: 4px;
+}
+
+.BGMon__packageItem--url:hover {
+    cursor: pointer;
+}

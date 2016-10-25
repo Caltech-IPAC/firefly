@@ -1,39 +1,41 @@
-.menu__item-label {
-    font-family: tahoma, arial, helvetica, sans-serif;
-    font-size: 11px;
-    line-height: 1.125em;
+.menu__main {
+    display: inline-flex;
+    justify-content: space-between;
+    width: 100%;
+    height: 28px;
+}
+
+.menu__item--holder > * {
+    margin: 0 3px;
 }
 
 .menu__item {
-    \-moz-box-shadow:inset 0px 1px 0px 0px #BED0DB;
-    \-webkit-box-shadow:inset 0px 1px 0px 0px #BED0DB;
-    box-shadow:inset 0px 1px 0px 0px #BED0DB;
+    display:inline-flex;
+    justify-content: center;
+    box-shadow:inset 0 1px 0 0 #BED0DB;
     background-color:#89A6B8;
-    \-webkit-border-top-left-radius:3px;
-    \-moz-border-radius-topleft:3px;
-    border-top-left-radius:3px;
-    \-webkit-border-top-right-radius:3px;
-    \-moz-border-radius-topright:3px;
-    border-top-right-radius:3px;
-    \-webkit-border-bottom-right-radius:3px;
-    \-moz-border-radius-bottomright:3px;
-    border-bottom-right-radius:3px;
-    \-webkit-border-bottom-left-radius:3px;
-    \-moz-border-radius-bottomleft:3px;
-    border-bottom-left-radius:3px;
+    border-radius:3px;
     text-indent:0;
     border:1px solid #1A2027;
-    display:inline-block;
     color:#1A2027;
-    font-family:Arial;
-    font-size:12px;
+    font-family: tahoma, arial, helvetica, sans-serif;
+    font-size: 11px;
+    line-height: 1.125em;
     font-weight:bold;
     font-style:normal;
     text-decoration:none;
-    text-align:center;
-    text-shadow:1px 1px 0px #ADB9C5;
-    margin-left:5px;
-    padding:0 2px;
+    text-shadow:1px 1px 0 #ADB9C5;
+    white-space: nowrap;
+    padding:6px 5px;
+    min-width: 75px;
+}
+
+.menu__item--badge {
+    display: inline-block;
+    position: relative;
+    width: 15px;
+    top: -6px;
+    right: -3px;
 }
 
 .menu__item-selected {

@@ -4,6 +4,14 @@
 
 
 /**
+ * Application-level data.
+ * @typedef {Object} AppData
+ * @prop {string} alerts  system notification message.
+ */
+
+
+
+/**
  * Common Layout information used to control generic behavior, ie drop-down panel, expanded/collapsed state, etc
  * The intention here is to allow additional layout attributes to be added to handle specific layout needs of a
  * particular component or application.  Use dispatchUpdateLayoutInfo to update this object.
@@ -16,3 +24,40 @@
  * @prop {string}   mode.expanded   if not nil/empty, show this view in expanded mode
  * @prop {string}   mode.standard   the current standard view.
  */
+
+
+/*=================  Background jobs state  =============================*/ 
+
+/**
+ * Top-level.  Information on background jobs. Object is keyed by ID.
+ * @typedef {Object} BackgroundInfo
+ * @prop {string} email  email to notify when background job is completed
+ * @prop {string} showDlScript  show download script link
+ * @prop {Object.<string, BgStatus>} jobs  a map of background job and its statuses.
+ */
+
+/**
+ * Background status of one job.  Packages info for this job are stored as PACKAGE_PROGRESS_n,
+ * where n is a sequential integer.
+ * @typedef {Object.<string, PackageStatus>} BgStatus
+ * @prop {string} TYPE  type of job.  ie. 'PACKAGE'
+ * @prop {string} ID    unique identifier for this job.
+ * @prop {string} STATE job's state.
+ * @prop {number} PACKAGE_CNT  number of package in this job.
+ * @prop {number} TOTAL_BYTES  total bytes.
+ * @prop {string} DATA_SOURCE .
+ */
+
+/**
+ * Background status of one job.  Packages info for this job are stored as PACKAGE_PROGRESS_n,
+ * where n is a sequential integer.
+ * @typedef {Object} PackageStatus
+ * @prop {number} processedBytes  type of job.  ie. 'PACKAGE'
+ * @prop {number} finalCompressedBytes    unique identifier for this job.
+ * @prop {number} processedFiles job's state.
+ * @prop {number} totalBytes  number of package in this job.
+ * @prop {number} totalFiles  total bytes.
+ * @prop {string} url
+ */
+
+/*=========================================================================*/ 

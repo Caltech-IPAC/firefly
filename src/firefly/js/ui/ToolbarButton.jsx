@@ -11,7 +11,7 @@ import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 
 
 
-function makeBadge(cnt) {
+export function makeBadge(cnt) {
     var cName= `ff-badge ${cnt<10 ? 'badge-1-digit' : 'badge-2-digit'}`;
     return <div className={cName}>{Math.trunc(cnt)}</div>;
 }

@@ -61,7 +61,7 @@ export class HeaderCell extends React.Component {
     render() {
         const {col, showUnits, showFilters, filterInfo, sortInfo, onSort, onFilter, style} = this.props;
         const cname = col.name;
-        const cdesc = col.desc || col.title || cname;
+        const cdesc = col.desc || col.label || cname;
         const filterStyle = {width: '100%', boxSizing: 'border-box'};
         const filterInfoCls = FilterInfo.parse(filterInfo);
         const sortInfoCls = SortInfo.parse(sortInfo);

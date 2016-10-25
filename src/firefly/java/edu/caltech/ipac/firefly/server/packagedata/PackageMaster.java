@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.*;
 /**
  * User: roby
  * Date: Sep 24, 2008
@@ -33,34 +35,10 @@ public class PackageMaster  {
     public static final long ASYNC_SIZE= AppProperties.getLongProperty("download.async.bytesize", 50*FileUtil.MEG);
     public final static int WARNING_FILE_LIST_SIZE = AppProperties.getIntProperty("download.warning.fileListTask.size", 15);
     public final static int HEAVY_LOAD_CNT = (int)(WARNING_FILE_LIST_SIZE * 0.66F);
-    private static long DEFAULT_MAX_BUNDLE_BYTES = AppProperties.getLongProperty("download.bundle.maxbytes", 107374182l);
-
     public static final int WAIT_MILLS= 3000;
     private static final Logger.LoggerImpl _log= Logger.getLogger();
     private static final AtomicLong _fileCounterTask= new AtomicLong(0) ;
-
-    public BackgroundStatus packageData(DownloadRequest req,
-                                        SearchProcessor<List<FileGroup>> processor) {
-
-        PackagingWorker worker= new PackagingWorker(processor,req);
-        BackgroundEnv.BackgroundProcessor backProcess=
-                new BackgroundEnv.BackgroundProcessor( worker,  req.getBaseFileName(),
-                                                       req.getTitle(),req.getEmail(),
-                                                       req.getDataSource(),
-                                                       ServerContext.getRequestOwner());
-        BackgroundStatus bgStat= BackgroundEnv.backgroundProcess(WAIT_MILLS,backProcess);
-        checkForLongQueue(bgStat);
-        return bgStat;
-
-    }
-
-    private void checkForLongQueue(BackgroundStatus bgStat) {
-        PackagingController pControl= PackagingController.getInstance();
-        if (bgStat.isActive() && pControl.isQueueLong() ||
-                _fileCounterTask.get() > WARNING_FILE_LIST_SIZE ) {
-            bgStat.addAttribute(JobAttributes.LongQueue);
-        }
-    }
+    private static long DEFAULT_MAX_BUNDLE_BYTES = AppProperties.getLongProperty("download.bundle.maxbytes", 107374182l);
 
     public static void logPIDDebug(BackgroundStatus bgStat, String... s) {
         List<String> sList= new ArrayList<String>(s.length+15);
@@ -73,8 +51,6 @@ public class PackageMaster  {
         }
         logPIDDebug(bgStat.getID(),sList.toArray(new String[sList.size()]));
     }
-
-
 
     private static List<String> createPackageStatusReport(BackgroundStatus bg) {
         ArrayList<String> retval = new ArrayList<String>(20);
@@ -104,7 +80,6 @@ public class PackageMaster  {
         return retval;
     }
 
-
     public static boolean isOnePackagedFile(BackgroundStatus bg) {
         boolean retval= false;
         if ((bg.getPackageCount())==1) {
@@ -113,9 +88,6 @@ public class PackageMaster  {
         return retval;
     }
 
-
-
-
     public static void logPIDDebug(String packageID, String... s) {
         logPID(packageID,false,s);
     }
@@ -123,7 +95,6 @@ public class PackageMaster  {
     public static void logPIDWarn(String packageID, String... s) {
         logPID(packageID,true,s);
     }
-
 
     private static void logPID(String packageID,
                                boolean warn,
@@ -135,7 +106,6 @@ public class PackageMaster  {
         else      _log.debug(outAry);
     }
 
-
     public static long getMaxBundleSize(DownloadRequest req) {
         long maxBundle= PackageMaster.DEFAULT_MAX_BUNDLE_BYTES;
         if (req!=null && req.containsParam(DownloadRequest.MAX_BUNDLE_SIZE)) {
@@ -143,17 +113,6 @@ public class PackageMaster  {
         }
         return maxBundle;
     }
-
-
-    //======================================================================
-//------------------ Package Methods -----------------------------------
-//======================================================================
-
-
-//======================================================================
-//------------------ Private / Protected Methods -----------------------
-//======================================================================
-
 
     private static BackgroundStatus doPackage(BackgroundEnv.BackgroundProcessor p,
                                               List<FileGroup> fgList,
@@ -177,7 +136,6 @@ public class PackageMaster  {
         return bgStat;
     }
 
-
     /**
      * determine whether is do immediate packaging or to do it in the background.
      * @param fgs list of file groups
@@ -192,11 +150,45 @@ public class PackageMaster  {
     }
 
 
+    //======================================================================
+//------------------ Package Methods -----------------------------------
+//======================================================================
+
+
+//======================================================================
+//------------------ Private / Protected Methods -----------------------
+//======================================================================
+
+    public BackgroundStatus packageData(DownloadRequest req,
+                                        SearchProcessor<List<FileGroup>> processor) {
+
+        PackagingWorker worker= new PackagingWorker(processor,req);
+        BackgroundEnv.BackgroundProcessor backProcess=
+                new BackgroundEnv.BackgroundProcessor( worker,  req.getBaseFileName(),
+                                                       req.getTitle(),req.getEmail(),
+                                                       req.getDataSource(),
+                                                       ServerContext.getRequestOwner());
+        BackgroundStatus bgStat= BackgroundEnv.backgroundProcess(WAIT_MILLS,backProcess);
+        checkForLongQueue(bgStat);
+        return bgStat;
+
+    }
+
+    private void checkForLongQueue(BackgroundStatus bgStat) {
+        PackagingController pControl= PackagingController.getInstance();
+        if (bgStat.isActive() && pControl.isQueueLong() ||
+                _fileCounterTask.get() > WARNING_FILE_LIST_SIZE ) {
+            bgStat.addAttribute(JobAttributes.LongQueue);
+        }
+    }
+
+
 // =====================================================================
 // -------------------- Interfaces -------------------------------------
 // =====================================================================
 
 //    public interface FileGroupCreator {
+
         /**
          * This method should compute the FileGroup list the first time it is called.
          * However, it may be called

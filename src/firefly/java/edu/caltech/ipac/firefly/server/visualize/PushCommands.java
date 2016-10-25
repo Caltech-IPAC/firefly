@@ -14,12 +14,9 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.server.ServerCommandAccess;
+import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.vispush.PushJob;
-import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.visualize.plot.RangeValues;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -30,7 +27,7 @@ import java.util.Map;
  */
 public class PushCommands {
 
-    public static abstract class BaseVisPushCommand extends ServerCommandAccess.ServCommand {
+    public static abstract class BaseVisPushCommand extends ServCommand {
         public boolean getCanCreateJson() {
             return true;
         }

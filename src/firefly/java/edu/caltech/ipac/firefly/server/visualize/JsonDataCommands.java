@@ -9,9 +9,9 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
+import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.cache.Cache;
@@ -30,7 +30,7 @@ public class JsonDataCommands {
 
 
 
-    public static class StaticJsonData extends ServerCommandAccess.ServCommand {
+    public static class StaticJsonData extends ServCommand {
 
 
         public String doCommand(Map<String, String[]> paramMap) throws Exception {

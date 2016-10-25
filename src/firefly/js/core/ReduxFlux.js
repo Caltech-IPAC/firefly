@@ -8,6 +8,7 @@ import thunkMiddleware from 'redux-thunk';
 import loggerMiddleware from 'redux-logger';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
 import * as AppDataCntlr  from './AppDataCntlr.js';
+import BackgroundCntlr from './background/BackgroundCntlr.js';
 import * as LayoutCntlr  from './LayoutCntlr.js';
 import {recordHistory} from './History.js';
 import FieldGroupCntlr, {valueChangeActionCreator,multiValueChangeActionCreator}
@@ -136,8 +137,16 @@ const reducers = {
     [DIALOG_OR_COMPONENT_KEY]: ComponentCntlr.reducer
 };
 
-let redux = null;
+function registerCntlr(cntlr={}) {
+    cntlr.reducers && Object.entries(cntlr.reducers()).forEach(([k,v]) => reducers[k]= v);
+    cntlr.actionCreators && Object.entries(cntlr.actionCreators()).forEach(([k,v]) => actionCreators.set(k,v));
+}
 
+// registering controllers...
+registerCntlr(BackgroundCntlr);
+
+
+let redux = null;
 
 // pre-map a set of action => creator prior to bootstrapping.
 actionCreators.set(AppDataCntlr.APP_LOAD, AppDataCntlr.loadAppData);

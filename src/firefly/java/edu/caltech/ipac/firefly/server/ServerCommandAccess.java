@@ -10,13 +10,12 @@ package edu.caltech.ipac.firefly.server;
 
 
 import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.firefly.server.visualize.JsonDataCommands;
-import edu.caltech.ipac.firefly.server.visualize.PushCommands;
-import edu.caltech.ipac.firefly.server.visualize.ResolveServerCommands;
-import edu.caltech.ipac.firefly.server.visualize.ResourceServerCommands;
-import edu.caltech.ipac.firefly.server.visualize.SearchServerCommands;
-import edu.caltech.ipac.firefly.server.visualize.VisServerCommands;
+import edu.caltech.ipac.firefly.server.servlets.HttpServCommands;
+import edu.caltech.ipac.firefly.server.visualize.*;
+import edu.caltech.ipac.firefly.server.query.SearchServerCommands;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,56 +29,11 @@ import java.util.Map;
 public class ServerCommandAccess {
 
 
-    public static Map<String, ServCommand> _cmdMap = new HashMap<String, ServCommand>(41);
+    private static Map<String, HttpCommand> _cmdMap = new HashMap<>();
 
     static {
         initCommand();
     }
-
-
-    public String doCommand(Map<String, String[]> paramMap) throws Exception {
-        String retval = "";
-        String cmd[] = paramMap.get(ServerParams.COMMAND);
-        if (cmd != null && _cmdMap.containsKey(cmd[0])) {
-//            retval = doCommand(cmd[0], decode(paramMap));
-            retval = doCommand(cmd[0], paramMap);
-        }
-        return retval;
-    }
-
-//    private Map<String, String[]> decode(Map<String, String[]> paramMap) {
-//        Map<String,String[]> retMap= new HashMap<String, String[]>(30);
-//        for(Map.Entry<String,String[]> entry : paramMap.entrySet())  {
-//            String sAry[]= new String[entry.getValue().length];
-//            for(int i= 0; (i<entry.getValue().length); i++) {
-//                try {
-//                    sAry[i]= URLDecoder.decode(entry.getValue()[i], "UTF-8");
-//                } catch (UnsupportedEncodingException e) {
-//                    sAry[i]= "";
-//                }
-//            }
-//            retMap.put(entry.getKey(), sAry);
-//        }
-//        return retMap;
-//    }
-
-    public boolean getCanCreateJson(Map<String, String[]> paramMap) {
-        boolean retval = false;
-        String cmd[] = paramMap.get(ServerParams.COMMAND);
-        if (cmd != null && _cmdMap.containsKey(cmd[0])) {
-            retval = _cmdMap.get(cmd[0]).getCanCreateJson();
-        }
-        return retval;
-    }
-
-    public static String doCommand(String cmd, Map<String, String[]> paramMap) throws Exception {
-        String retval = "";
-        if (_cmdMap.containsKey(cmd)) {
-            retval = _cmdMap.get(cmd).doCommand(paramMap);
-        }
-        return retval;
-    }
-
 
     private static void initCommand() {
         _cmdMap.put(ServerParams.FILE_FLUX,    new VisServerCommands.FileFluxCmd());
@@ -130,6 +84,12 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.CLEAR_PUSH_ENTRY,       new SearchServerCommands.ClearPushEntry());
         _cmdMap.put(ServerParams.REPORT_USER_ACTION,     new SearchServerCommands.ReportUserAction());
         _cmdMap.put(ServerParams.CREATE_DOWNLOAD_SCRIPT, new SearchServerCommands.CreateDownloadScript());
+        _cmdMap.put(ServerParams.PACKAGE_REQUEST,        new SearchServerCommands.PackageRequest());
+        _cmdMap.put(ServerParams.TABLE_SEARCH,           new SearchServerCommands.TableSearch());
+        _cmdMap.put(ServerParams.SELECTED_VALUES,        new SearchServerCommands.SelectedValues());
+        _cmdMap.put(ServerParams.JSON_SEARCH,            new SearchServerCommands.JsonSearch());
+
+        _cmdMap.put(ServerParams.TABLE_SAVE,             new HttpServCommands.TableSave());
 
         _cmdMap.put(ServerParams.RESOLVE_NAME,           new ResolveServerCommands.ResolveName());
 
@@ -141,11 +101,12 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.STATIC_JSON_DATA,           new JsonDataCommands.StaticJsonData());
     }
 
+    public static HttpCommand getCommand(String cmd) {
+        return _cmdMap.get(cmd);
+    }
 
-    public static abstract class ServCommand {
-        public abstract String doCommand(Map<String, String[]> paramMap) throws Exception;
-
-        public boolean getCanCreateJson() { return true; }
+    public static abstract class HttpCommand {
+        abstract public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception;
     }
 
 

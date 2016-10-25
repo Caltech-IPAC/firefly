@@ -102,7 +102,7 @@ export class BackgroundStatus {
     }
 
 
-    setPara(name, values) {
+    setParam(name, values) {
         if (values) {
             if (Array.isArray(values) && values.length) {
                 this.params[name]= values.join(',');
@@ -368,7 +368,7 @@ export class BackgroundStatus {
 
     /**
      *
-     * @param int
+     * @param {number} i
      * @return {PackageProgress}
      */
     getPartProgress(i) {
@@ -520,7 +520,7 @@ export class BackgroundStatus {
      * @param {string} str the serialized string
      * @return {BackgroundStatus}
      */
-    parse(str) {
+    static parse(str) {
         if (!str) return null;
         const bgStat= new BackgroundStatus();
         const params = str.split(PARAM_SEP);

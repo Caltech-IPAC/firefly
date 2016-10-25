@@ -54,7 +54,7 @@ export class InputField extends React.Component {
 
     render() {
 
-        var {label, labelWidth, tooltip, visible, inline, size,
+        var {label, labelWidth, tooltip, visible, inline, size, placeholder,
              showWarning, style, wrapperStyle, labelStyle, validator} = this.props;
         var {value, notValidate} = this.state;
         var {valid=true, message=''} = (!isNil(notValidate) && notValidate)? {} : (validator ? validator(value) : {});
@@ -77,6 +77,7 @@ export class InputField extends React.Component {
                 showWarning={showWarning}
                 wrapperStyle={wrapperStyle}
                 labelStyle={labelStyle}
+                placeholder={placeholder}
             />
         );
 
@@ -101,7 +102,8 @@ InputField.propTypes = {
     valid: PropTypes.bool,
     onChange: PropTypes.func,
     actOn: PropTypes.arrayOf(PropTypes.oneOf(['blur', 'enter', 'changes'])),
-    showWarning : PropTypes.bool
+    showWarning : PropTypes.bool,
+    placeholder: PropTypes.string
 };
 
 InputField.defaultProps = {
