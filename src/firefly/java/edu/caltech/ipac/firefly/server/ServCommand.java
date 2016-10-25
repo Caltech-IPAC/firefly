@@ -19,7 +19,6 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
 
     @Override
     public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception {
-        doCommand(req.getParameterMap());
         String callback = sp.getOptional("callback");
         boolean doJsonp = sp.getOptionalBoolean(ServerParams.DO_JSONP, false);
         if (doJsonp) res.setContentType("application/javascript");
