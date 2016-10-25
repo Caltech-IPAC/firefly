@@ -75,10 +75,12 @@ export class BasicTableView extends React.Component {
         this.isUnmounted = true;
     }
 
+    /*
     componentDidUpdate(){
         const {onTableChanged} = this.props;
         onTableChanged && onTableChanged();
     }
+    */
 
     shouldComponentUpdate(nProps, nState) {
         return sCompare(this, nProps, nState);
@@ -195,7 +197,6 @@ BasicTableView.propTypes = {
     rowHeight: PropTypes.number,
     showMask: PropTypes.bool,
     currentPage: PropTypes.number,
-    onTableChanged: PropTypes.func,
     bgColor: PropTypes.string,
     renderers: PropTypes.objectOf(
         PropTypes.shape({

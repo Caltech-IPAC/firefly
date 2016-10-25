@@ -57,14 +57,14 @@ function getTwoPointSelectObj(plot,cc,attribute) {
     var ipt1= cc.getImageCoords(pt1);
     if (ipt0 && ipt1) {
         data.ipt0= ipt0.toString();
-        data.ipt1= ipt0.toString();
+        data.ipt1= ipt1.toString();
     }
 
     var wpt0= cc.getWorldCoords(pt0);
     var wpt1= cc.getWorldCoords(pt1);
     if (wpt0 && wpt1) {
         data.wpt0= wpt0.toString();
-        data.wpt1= wpt0.toString();
+        data.wpt1= wpt1.toString();
     }
     return data;
 

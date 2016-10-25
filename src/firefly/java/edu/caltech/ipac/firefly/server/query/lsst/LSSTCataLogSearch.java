@@ -19,6 +19,8 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import java.io.*;
 import java.util.List;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.firefly.data.table.MetaConst;
 
 
 /**
@@ -26,6 +28,9 @@ import java.util.List;
  */
 @SearchProcessorImpl(id = "LSSTCataLogSearch")
 public class LSSTCataLogSearch extends IpacTablePartProcessor {
+    private static final String RA = "coord_ra";
+    private static final String DEC = "coord_decl";
+
     private static final Logger.LoggerImpl _log = Logger.getLogger();
 
     private static String DATA_ACCESS_URI = AppProperties.getProperty("lsst.dataAccess.uri", "lsst.dataAccess.uri");
@@ -259,6 +264,11 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
     }
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
+        TableMeta.LonLatColumns llc = null;
+
+        llc = new TableMeta.LonLatColumns(RA, DEC, CoordinateSys.EQ_J2000);
+        meta.setCenterCoordColumns(llc);
+        meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "LSST");
         super.prepareTableMeta(meta, columns, request);
     }
 

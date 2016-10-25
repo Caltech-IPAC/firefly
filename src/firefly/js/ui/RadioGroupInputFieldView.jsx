@@ -28,10 +28,13 @@ export function RadioGroupInputFieldView({options,alignment,fieldKey,value,
                                           onChange,label,inline,tooltip,
                                           labelWidth, wrapperStyle={}}) {
     const style= Object.assign({whiteSpace:'nowrap',display: inline?'inline-block':'block'},wrapperStyle);
+    const radioStyle = (alignment && alignment==='vertical') ? {display: 'block', marginTop: (label ? 10 : 0)}
+                                                             : {display: 'inline-block'};
+
     return (
         <div style={style}>
             {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} /> }
-            <div style={{display:'inline-block'}} >
+            <div style={radioStyle} >
                 {makeOptions(options,alignment,fieldKey,value,onChange,tooltip)}
             </div>
         </div>

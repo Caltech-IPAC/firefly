@@ -12,6 +12,9 @@ const UL_URL = getRootURL() + 'sticky/Firefly_FileUpload';
 
 
 function FileUploadView({fileType, isLoading, label, valid, wrapperStyle, message, onChange, value}) {
+    var style = {color: 'transparent', border: 'none', background: 'none'};
+    var fileName = value ?  value.split(/(\\|\/)/g).pop() : 'No file chosen';
+
     return (
         <div>
             <InputFieldView
@@ -25,10 +28,11 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle, messag
                 tooltip = {value}
                 labelWidth = {0}
                 inline={true}
-                style = {{border: 'none', background: 'none'}}
+                style = {style}
                 wrapperStyle = {wrapperStyle}
             />
-            {isLoading && <img style={{position: 'inline-block', width:14,height:14}} src={LOADING}/> }
+            {fileName && <div style={{display:'inline-block', marginLeft: -170}}>{fileName}</div>}
+            {isLoading && <img style={{position: 'inline-block', marginLeft: 10, width:14,height:14}} src={LOADING}/> }
         </div>
     );
 }
