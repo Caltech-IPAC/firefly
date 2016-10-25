@@ -201,15 +201,16 @@ function lsstSearchSubmit(isDD) {
 
     var tReq;
     if (isDD) { //Meta Search
-        tReq = makeTblRequest('LSSTMetaSearch', 'RunDeepForcedSourceDD', {
-            'table_name':  'RunDeepForcedSourceDD',//'RunDeepSourceDD',
-            'table_path': '/hydra/cm/firefly_test_data/DAXTestData/'
-        });
+        tReq = makeTblRequest('LSSTMetaSearch', 'RunDeepForcedSource', {
+          'table_name':  'RunDeepForcedSource',
+
+       });
     } else {//Catalog Search
-        tReq = makeTblRequest('LSSTCataLogSearch', 'RunDeepForcedSource_limit100', {
-            'table_name': 'RunDeepForcedSource_limit100',//'RunDeepSource_ra_btw',
+        tReq = makeTblRequest('LSSTCataLogSearch', 'RunDeepForcedSource', {
+            'table_name': 'RunDeepForcedSource',
             'table_path': '/hydra/cm/firefly_test_data/DAXTestData/',
-            'meta_table':  'RunDeepForcedSourceDD'//'RunDeepSourceDD'
+            'meta_table':  'RunDeepForcedSource',
+            'SearchMethod':'cone'
         });
     }
 

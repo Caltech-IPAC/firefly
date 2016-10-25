@@ -74,21 +74,27 @@ public class URLDownload {
      */
     public static FileData getDataToFileUsingPost(URL url,
                                                   String postData,
+                                                  Map<String, String> cookies,
+                                                  Map<String, String> requestHeader,
                                                   File outfile,
                                                   DownloadListener dl)
             throws FailedRequestException, IOException {
         try {
-            URLConnection c = makeConnection(url);
+            URLConnection c = makeConnection(url, cookies, requestHeader, false);
+
             if (c instanceof HttpURLConnection) {
                 HttpURLConnection conn = (HttpURLConnection) c;
-                conn.addRequestProperty("QQQ", "B");
-                conn.setDoOutput(true);
                 conn.setRequestMethod("POST");
-                OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+                conn.setRequestProperty( "Content-Type", "application/x-www-form-urlencoded" );
+                conn.setRequestProperty( "Content-Length", String.valueOf(postData.length()));
+
+                conn.setDoOutput(true);
+                OutputStream os = conn.getOutputStream();
+                OutputStreamWriter wr = new OutputStreamWriter(os);
                 wr.write(postData);
                 wr.flush();
                 wr.close();
-                return getDataToFile(conn, outfile, dl);
+                return getDataToFile(conn, outfile, dl);//, false, false, false, 0L);
             } else {
                 FailedRequestException fe = new FailedRequestException("Can only do post with http: " + url.toString());
                 logError(url, postData, fe);

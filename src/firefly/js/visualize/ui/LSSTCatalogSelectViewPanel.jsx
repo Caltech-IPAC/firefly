@@ -165,7 +165,7 @@ function doCatalog(request) {
         var filename = catPart.fileUpload;
 
         tReq = makeLsstCatalogRequest(title, project, cattable, {
-            table_path: '/hydra/cm/firefly_test_data/DAXTestData/',  // TODO: to remove later
+            //table_path: '/hydra/cm/firefly_test_data/DAXTestData/',  // TODO: to remove later
             filename,
             radius: conesize,
             SearchMethod: spatial
@@ -179,7 +179,7 @@ function doCatalog(request) {
 
         tReq = makeLsstCatalogRequest(title, project, cattable, {
             SearchMethod: spatial,
-            table_path: '/hydra/cm/firefly_test_data/DAXTestData/'  //TODO: to remove later
+            //table_path: '/hydra/cm/firefly_test_data/DAXTestData/'  //TODO: to remove later
         });
     }
 
@@ -280,12 +280,12 @@ class LSSTCatalogSelectView extends Component {
         var catalogs = [
                 {
                     label: 'Deep Forced Source',
-                    value: 'RunDeepForcedSourceDD',       //TODO: temporary hard code of catalog name
+                    value: 'RunDeepForcedSource',       //TODO: temporary hard code of catalog name
                     cat:[]
                 },
                 {
                     label: 'Deep Source',
-                    value: 'RunDeepSourceDD',
+                    value: 'RunDeepSource',
                     cat: []
                 }
         ];
