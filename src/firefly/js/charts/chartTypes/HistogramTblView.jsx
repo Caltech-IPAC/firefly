@@ -33,14 +33,16 @@ export const HISTOGRAM_TBLVIEW = {
 };
 
 function updateOnStoreChange(chartProperties) {
-    TblUtil.isFullyLoaded(get(chartProperties, 'tblId'));
+    const tblId = get(chartProperties, 'tblId');
+    return TblUtil.isFullyLoaded(tblId);
 }
 
 function renderChart(props) {
     const {chartId, tblId, chartData, widthPx, heightPx} = props;
-    if (!TblUtil.isFullyLoaded(tblId) || !chartData || !heightPx || !widthPx) {
-        return <div/>;
+    if (!TblUtil.isFullyLoaded(tblId) || !chartData) {
+        return null;
     }
+    if (!heightPx || !widthPx) { return (<div/>); }
     const { isDataReady, data:histogramData, options:histogramParams} = ChartsCntlr.getChartDataElement(chartId);
 
     if (isDataReady) {

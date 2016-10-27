@@ -1,4 +1,4 @@
-
+import './ChartPanel.css';
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import Resizable from 'react-component-resizable';

@@ -394,7 +394,7 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
     const {renderDOM} = llApi.util;
     const {makeFileRequest, getActiveTableId} = llApi.util.table;
     const {makeXYPlotParams, uniqueChartId} = llApi.util.chart;
-    const {ChartsTableViewPanel}= llApi.ui;
+    const {ChartsContainer}= llApi.ui;
     const {addActionListener} = llApi.util;
 
     if ((typeof targetDiv).match(/string|HTMLDivElement/) === null) {
@@ -455,7 +455,7 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
             }
         ]});
 
-    renderDOM(targetDiv, ChartsTableViewPanel,
+    renderDOM(targetDiv, ChartsContainer,
         {
             key: `${targetDiv}-xyplot`,
             chartId,
@@ -471,7 +471,7 @@ function doShowHistogram(llApi, targetDiv, params={}) {
     const {renderDOM} = llApi.util;
     const {makeFileRequest, getActiveTableId} = llApi.util.table;
     const {makeHistogramParams, uniqueChartId} = llApi.util.chart;
-    const {ChartsTableViewPanel}= llApi.ui;
+    const {ChartsContainer}= llApi.ui;
     const {addActionListener} = llApi.util;
 
     const histogramParams = makeHistogramParams(params);
@@ -524,7 +524,7 @@ function doShowHistogram(llApi, targetDiv, params={}) {
             }
         ]});
 
-    renderDOM(targetDiv, ChartsTableViewPanel,
+    renderDOM(targetDiv, ChartsContainer,
         {
             key: `${targetDiv}-histogram`,
             chartId,
