@@ -6,6 +6,7 @@ import {get, set, unset, has, isEmpty, uniqueId, cloneDeep, omit, omitBy, isNil,
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {FilterInfo} from './FilterInfo.js';
+import {SelectInfo} from './SelectInfo.js';
 import {flux} from '../Firefly.js';
 import {encodeServerUrl} from '../util/WebUtil.js';
 import {fetchTable} from '../rpc/SearchServicesJson.js';
@@ -409,12 +410,33 @@ export function getColumnIdx(tableModel, colName) {
  * @param {string} colName
  * @returns {TableColumn}
  * @memberof firefly.util.table
- * @func etColumn
+ * @func getColumn
  */
 export function getColumn(tableModel, colName) {
     const colIdx = getColumnIdx(tableModel, colName);
     if (colIdx >= 0) {
         return get(tableModel, `tableData.columns.${colIdx}`);
+    }
+}
+
+export function getFilterCount(tableModel) {
+    const filterInfo = get(tableModel, 'request.filters');
+    const filterCount = filterInfo ? filterInfo.split(';').length : 0;
+    return filterCount;
+}
+
+export function clearFilters(tableModel) {
+    const request = get(tableModel, 'request');
+    if (request && request.filters) {
+        const newRequest = Object.assign({}, request, {filters: ''});
+        TblCntlr.dispatchTableFilter(newRequest, 0);
+    }
+}
+
+export function clearSelection(tableModel) {
+    if (tableModel) {
+        const selectInfoCls = SelectInfo.newInstance({rowCount: tableModel.totalRows});
+        TblCntlr.dispatchTableSelect(tableModel.tbl_id, selectInfoCls.data);
     }
 }
 

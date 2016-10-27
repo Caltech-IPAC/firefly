@@ -11,7 +11,7 @@ import {MultiItemViewerView} from '../../visualize/ui/MultiItemViewerView.jsx';
 import {dispatchAddViewer, dispatchViewerUnmounted, dispatchUpdateCustom,
         getMultiViewRoot, getViewer, getLayoutType,PLOT2D} from '../../visualize/MultiViewCntlr.js';
 import {getExpandedChartProps} from '../ChartsCntlr.js';
-import {ChartsTableViewPanel} from './ChartsTableViewPanel.jsx';
+import {ChartPanel} from './ChartPanel.jsx';
 import {MultiChartToolbarStandard, MultiChartToolbarExpanded} from './MultiChartToolbar.jsx';
 
 export class MultiChartViewer extends Component {
@@ -69,11 +69,11 @@ export class MultiChartViewer extends Component {
 
 
         const makeItemViewer = (chartId) => (
-            <ChartsTableViewPanel key={chartId} expandable={!expandedMode} chartId={chartId}/>
+            <ChartPanel key={chartId} expandable={!expandedMode} chartId={chartId}/>
         );
 
         const makeItemViewerFull = (chartId) => (
-            <ChartsTableViewPanel key={chartId} expandedMode={expandedMode} expandable={!expandedMode} chartId={chartId}/>
+            <ChartPanel key={chartId} expandedMode={expandedMode} expandable={!expandedMode} chartId={chartId}/>
         );
 
         const makeToolbar = Toolbar ? () => (<Toolbar {...this.props} />) :

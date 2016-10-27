@@ -9,7 +9,7 @@ import {LO_VIEW, LO_MODE, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 
 import {CloseButton} from '../../ui/CloseButton.jsx';
-import {ChartsTableViewPanel} from './ChartsTableViewPanel.jsx';
+import {ChartPanel} from './ChartPanel.jsx';
 import {MultiChartViewer} from './MultiChartViewer.jsx';
 
 
@@ -32,7 +32,7 @@ export class ChartsContainer extends Component {
         if (chartId) {
             return expandedMode ?
                 <ExpandedView key='chart-expanded' closeable={closeable} chartId={chartId}/> :
-                <ChartsTableViewPanel key={chartId} expandable={true} chartId={chartId}/>;
+                <ChartPanel key={chartId} expandable={true} chartId={chartId}/>;
         } else {
             return (
                 <MultiChartViewer closeable={closeable} viewerId={DEFAULT_PLOT2D_VIEWER_ID} expandedMode={expandedMode}/>
@@ -56,7 +56,7 @@ function ExpandedView(props) {
             <div style={{marginBottom: 3}}>
                 {closeable && <CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
             </div>
-            <ChartsTableViewPanel key={'expanded-'+chartId} expandedMode={true} expandable={false} chartId={chartId}/>
+            <ChartPanel key={'expanded-'+chartId} expandedMode={true} expandable={false} chartId={chartId}/>
         </div>
     );
 }

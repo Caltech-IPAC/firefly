@@ -458,7 +458,6 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
     renderDOM(targetDiv, ChartsTableViewPanel,
         {
             key: `${targetDiv}-xyplot`,
-            tblId,
             chartId,
             closeable: false,
             expandedMode: false
@@ -528,7 +527,6 @@ function doShowHistogram(llApi, targetDiv, params={}) {
     renderDOM(targetDiv, ChartsTableViewPanel,
         {
             key: `${targetDiv}-histogram`,
-            tblId,
             chartId,
             closeable: false,
             expandedMode: false
