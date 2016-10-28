@@ -34,7 +34,7 @@ const tStyle= {
 var options= [];
 
 for(var i= 1; (i<=MAX_IMAGE_CNT); i+=2) {
-    options.push({label: i+'', value: i});
+    options.push({label: String(i), value: String(i)});
 }
 
 
@@ -64,7 +64,7 @@ export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layou
             <div style={{whiteSpace: 'nowrap', paddingLeft: 7}}>
                 Image Count:
                 <div style={{display:'inline-block', paddingLeft:7}}>
-                    <RadioGroupInputFieldView options={options} inline={true} fieldKey='frames' value={count}
+                    <RadioGroupInputFieldView options={options} inline={true} fieldKey='frames' value={String(count)}
                                               onChange={(ev) => changeSize(viewerId, ev.target.value)} />
                 </div>
             </div>
