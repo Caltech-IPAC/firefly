@@ -80,7 +80,7 @@ class ChartPanelView extends Component {
     }
 
     render() {
-        const {chartId, chartData, expandable, expandedMode, renderChart, renderOptions, renderToolbar} = this.props;
+        const {chartId, chartData, expandable, expandedMode, renderChart, renderOptions, renderToolbar, showToolbar, showChart} = this.props;
 
 
         if (!chartData) {
@@ -90,11 +90,59 @@ class ChartPanelView extends Component {
         var {widthPx, heightPx, componentKey, optionsShown} = this.state;
         const knownSize = widthPx && heightPx;
 
-        return (
-            <div className='ChartPanel__container'>
-                <div className='ChartPanel__wrapper'>
+
+        if (showChart) {
+            // chart with toolbar and options
+            if (showToolbar) {
+                return (
+                    <div className='ChartPanel__container'>
+                        <div className='ChartPanel__wrapper'>
+                            {renderToolbar(chartId, expandable, expandedMode, this.toggleOptions)}
+                            <div className={'ChartPanel__chartarea--withToolbar'}>
+                                {optionsShown &&
+                                <div className='ChartPanelOptions'>
+                                    <div style={{height: 14}}>
+                                        <div style={{ right: -6, float: 'right'}}
+                                             className='btn-close'
+                                             title='Remove Panel'
+                                             onClick={() => this.toggleOptions()}/>
+                                    </div>
+                                    {renderOptions(chartId, componentKey)}
+                                </div>
+                                }
+                                <Resizable id='chart-resizer' onResize={this.onResize}
+                                           className='ChartPanel__chartresizer'>
+                                    <div style={{overflow:'auto',width:widthPx,height:heightPx}}>
+                                        {knownSize ? renderChart(Object.assign({}, this.props, {widthPx, heightPx})) :
+                                            <div/>}
+                                    </div>
+                                </Resizable>
+                            </div>
+                        </div>
+                    </div>
+                );
+            } else {
+                // chart only
+                return (
+                    <div className='ChartPanel__container'>
+                        <div className={'ChartPanel__chartarea'}>
+                            <Resizable id='chart-resizer' onResize={this.onResize}
+                                       className='ChartPanel__chartresizer'>
+                                <div style={{overflow:'auto',width:widthPx,height:heightPx}}>
+                                    {knownSize ? renderChart(Object.assign({}, this.props, {widthPx, heightPx})) :
+                                        <div/>}
+                                </div>
+                            </Resizable>
+                        </div>
+                    </div>
+                );
+            }
+        } else {
+            // toolbar and options
+            return (
+                <div className='ChartPanel__chartarea'>
                     {renderToolbar(chartId, expandable, expandedMode, this.toggleOptions)}
-                    <div className='ChartPanel__chartarea'>
+                    <div className='ChartPanel__chartarea--withToolbar'>
                         {optionsShown &&
                         <div className='ChartPanelOptions'>
                             <div style={{height: 14}}>
@@ -106,15 +154,10 @@ class ChartPanelView extends Component {
                             {renderOptions(chartId, componentKey)}
                         </div>
                         }
-                        <Resizable id='chart-resizer' onResize={this.onResize} className='ChartPanel__chartresizer'>
-                            <div style={{overflow:'auto',width:widthPx,height:heightPx}}>
-                                {knownSize ? renderChart(Object.assign({}, this.props, {widthPx,heightPx})) : <div/>}
-                            </div>
-                        </Resizable>
                     </div>
                 </div>
-            </div>
-        );
+            );
+        }
     }
 }
 
@@ -123,9 +166,16 @@ ChartPanelView.propTypes = {
     chartData: PropTypes.object,
     expandable: PropTypes.bool,
     expandedMode: PropTypes.bool,
+    showToolbar: PropTypes.bool,
+    showChart: PropTypes.bool,
     renderChart: PropTypes.func,
     renderOptions: PropTypes.func,
     renderToolbar: PropTypes.func
+};
+
+ChartPanelView.defaultProps = {
+    showToolbar: true,
+    showChart: true
 };
 
 export class ChartPanel extends Component {
@@ -189,5 +239,9 @@ export class ChartPanel extends Component {
 }
 
 ChartPanel.propTypes = {
-    chartId: PropTypes.string.isRequired
+    chartId: PropTypes.string.isRequired,
+    expandable: PropTypes.bool,
+    expandedMode: PropTypes.bool,
+    showToolbar: PropTypes.bool,
+    showChart: PropTypes.bool
 };

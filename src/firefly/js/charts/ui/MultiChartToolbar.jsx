@@ -20,14 +20,14 @@ import {PagingControl} from '../../visualize/iv/ExpandedTools.jsx';
 
 const toolsStyle= {
     position:'absolute',
-    bottom:5,
-    left:5,
+    top: 'calc(0% + 1px)',
+    left: 'calc(50% - 50px)',
     zIndex:1,
     display:'flex',
     flexDirection:'row',
     flexWrap:'nowrap',
     // alignItems: 'center',
-    height: 28,
+    height: 25,
     justifyContent: 'space-between'
 };
 
@@ -88,14 +88,27 @@ MultiChartToolbarStandard.propTypes= {
 };
 
 
+const toolsStyleExpanded= {
+    position:'absolute',
+    top: 0,
+    left: 'calc(0% + 200px)',
+    right:'calc(0% + 300px)',
+    zIndex:1,
+    display:'flex',
+    flexDirection:'row',
+    flexWrap:'nowrap',
+    // alignItems: 'center',
+    height: 28,
+    justifyContent: 'space-between'
+};
+
 const closeButtonStyle= {
-    display: 'inline-block',
-    padding: '3px 12px 3px 3px'
+    display: 'inline-block'
 };
 
 const viewerTitleStyle= {
     display: 'inline-block',
-    paddingLeft: 3,
+    paddingLeft: 5,
     lineHeight: '2em',
     fontSize: '10pt',
     fontWeight: 'bold',
@@ -115,10 +128,12 @@ export function MultiChartToolbarExpanded({closeable, viewerId,
     );
 
     if (viewerItemIds.length===1) {
-        return CloseBtn;
+        return (
+            <div style={toolsStyleExpanded}>
+                {CloseBtn}
+            </div>);
     }
 
-    var viewerTitle = (<div style={viewerTitleStyle}>{layoutType==='single' ? activeItemId : 'Tiled View'}</div>);
 
     const getChartTitle = (chartId) => {
         const {chartType} = getChartData(chartId);
@@ -130,16 +145,15 @@ export function MultiChartToolbarExpanded({closeable, viewerId,
         }
     };
 
+    var viewerTitle = (<div style={viewerTitleStyle}>{layoutType==='single' ? getChartTitle(activeItemId) : 'Tiled View'}</div>);
+
     return (
-        <div>
-
-
-            <div style={{width:'100%', minHeight:25, margin: '7px 0 5px 0',
-                         display: 'flex', justifyContent:'space-between'}} className='disable-select'>
-                <div>
+        <div style={toolsStyleExpanded}>
+            <div style={{width:'100%', display: 'flex', justifyContent:'space-between'}} className='disable-select'>
+                <div style={{alignSelf:'flex-start', whiteSpace:'nowrap'}}>
                     {CloseBtn} {viewerTitle}
                 </div>
-                <div style={{paddingBottom:5, alignSelf:'flex-end', whiteSpace:'nowrap'}}>
+                <div style={{alignSelf:'flex-end', whiteSpace:'nowrap', height: 24, paddingBottom:3}}>
                     <div style={{display: 'inline-block', verticalAlign:'top'}}>
                         <ToolbarButton icon={ONE} tip={'Show single chart'}
                                        imageStyle={{width:24,height:24, flex: '0 0 auto'}}
@@ -151,13 +165,15 @@ export function MultiChartToolbarExpanded({closeable, viewerId,
                                        imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
                                        onClick={() => dispatchChangeViewerLayout(viewerId,'grid')}/>
                     </div>
-                    <PagingControl
-                        viewerItemIds={viewerItemIds}
-                        activeItemId={activeItemId}
-                        isPagingMode={layoutType==='single'}
-                        getItemTitle={getChartTitle}
-                        onActiveItemChange={(itemId) => dispatchUpdateCustom(viewerId, {activeItemId: itemId})}
-                    />
+                    <div style={{display: 'inline-block', verticalAlign:'middle'}}>
+                        <PagingControl
+                            viewerItemIds={viewerItemIds}
+                            activeItemId={activeItemId}
+                            isPagingMode={layoutType==='single'}
+                            getItemTitle={getChartTitle}
+                            onActiveItemChange={(itemId) => dispatchUpdateCustom(viewerId, {activeItemId: itemId})}
+                        />
+                    </div>
                 </div>
             </div>
         </div>
