@@ -558,8 +558,8 @@ export function computeViewPort(plot, scrollWidth, scrollHeight, visibleCenterPt
     var {viewPort}= plot;
     var {width:screenW, height:screenH} = plot.screenSize;
 
-    var vpw = Math.max(Math.min((scrollWidth * 1.5), 2000),screenW);
-    var vph = Math.max(Math.min((scrollHeight * 1.5), 1500),screenH);
+    var vpw = Math.min((scrollWidth * 1.2),screenW);
+    var vph = Math.min((scrollHeight * 1.2),screenH);
 
     var newVpX;
     var newVpY;
