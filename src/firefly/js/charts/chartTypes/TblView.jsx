@@ -29,6 +29,12 @@ export function getChartProperties(chartId) {
     return {chartId, tblId, tableModel, tblStatsData, chartData, deletable};
 }
 
+export function updateOnStoreChange(oldChartProperties) {
+    const tblId = oldChartProperties.tblId;
+    return TblUtil.isFullyLoaded(tblId) &&
+        (oldChartProperties.tableModel !== TblUtil.getTblById(tblId) ||
+         oldChartProperties.chartData !== ChartsCntlr.getChartData(oldChartProperties.chartId));
+}
 
 export class FilterEditorWrapper extends React.Component {
     constructor(props) {

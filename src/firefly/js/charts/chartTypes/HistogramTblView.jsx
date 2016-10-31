@@ -14,7 +14,7 @@ import * as ChartsCntlr from '../ChartsCntlr.js';
 
 import {HistogramOptions} from '../ui/HistogramOptions.jsx';
 import {Histogram} from '../ui/Histogram.jsx';
-import {getChartProperties, FilterEditorWrapper} from './TblView.jsx';
+import {getChartProperties, updateOnStoreChange, FilterEditorWrapper} from './TblView.jsx';
 
 import DELETE from 'html/images/blue_delete_10x10.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
@@ -32,10 +32,7 @@ export const HISTOGRAM_TBLVIEW = {
     updateOnStoreChange
 };
 
-function updateOnStoreChange(chartProperties) {
-    const tblId = get(chartProperties, 'tblId');
-    return TblUtil.isFullyLoaded(tblId);
-}
+
 
 function renderChart(props) {
     const {chartId, tblId, chartData, widthPx, heightPx} = props;

@@ -125,7 +125,7 @@ class ChartPanelView extends Component {
                 // chart only
                 return (
                     <div className='ChartPanel__container'>
-                        <div className={'ChartPanel__chartarea'}>
+                        <div className='ChartPanel__chartarea'>
                             <Resizable id='chart-resizer' onResize={this.onResize}
                                        className='ChartPanel__chartresizer'>
                                 <div style={{overflow:'auto',width:widthPx,height:heightPx}}>
@@ -218,14 +218,16 @@ export class ChartPanel extends Component {
                 renderToolbar,
                 updateOnStoreChange
             };
+        } else {
+            return {chartId};
         }
     }
 
     storeUpdate() {
         if (this.iAmMounted) {
-            const ns = this.getNextState();
-            if (ns && ns.updateOnStoreChange(ns)) {
-                this.setState(ns);
+            const {updateOnStoreChange} = this.state;
+            if (!updateOnStoreChange || updateOnStoreChange(this.state)) {
+                    this.setState(this.getNextState());
             }
         }
     }

@@ -21,7 +21,7 @@ import {setXYSelection, setZoom} from '../dataTypes/XYColsCDT.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {XYPlotOptions} from '../ui/XYPlotOptions.jsx';
 import {XYPlot} from '../ui/XYPlot.jsx';
-import {getChartProperties, FilterEditorWrapper} from './TblView.jsx';
+import {getChartProperties, updateOnStoreChange, FilterEditorWrapper} from './TblView.jsx';
 
 
 import ZOOM_IN from 'html/images/icons-2014/24x24_ZoomIn.png';
@@ -46,10 +46,6 @@ export const SCATTER_TBLVIEW = {
     updateOnStoreChange
 };
 
-function updateOnStoreChange(chartProperties) {
-    const tblId = get(chartProperties, 'tblId');
-    return TblUtil.isFullyLoaded(tblId);
-}
 
 function renderChart(props) {
     return <Chart {...props}/>;

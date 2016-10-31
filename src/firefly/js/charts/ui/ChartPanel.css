@@ -1,3 +1,17 @@
+.ChartPanel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: hidden;
+    border: 2px solid transparent;
+}
+
+.ChartPanel--active {
+    border: 2px solid orange;
+}
+
 .ChartPanel__container {
     display: flex;
     flex: auto;

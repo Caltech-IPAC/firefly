@@ -109,6 +109,7 @@ const closeButtonStyle= {
 const viewerTitleStyle= {
     display: 'inline-block',
     paddingLeft: 5,
+    paddingRight: 10,
     lineHeight: '2em',
     fontSize: '10pt',
     fontWeight: 'bold',
@@ -134,18 +135,10 @@ export function MultiChartToolbarExpanded({closeable, viewerId,
             </div>);
     }
 
-
-    const getChartTitle = (chartId) => {
-        const {chartType} = getChartData(chartId);
-        const idx = viewerItemIds.findIndex((el) => {return el === chartId;} );
-        if (idx>=0) {
-            return `${idx+1}-${chartType}`;
-        } else {
-            return chartType;
-        }
-    };
-
-    var viewerTitle = (<div style={viewerTitleStyle}>{layoutType==='single' ? getChartTitle(activeItemId) : 'Tiled View'}</div>);
+    var viewerTitle = (
+        <div style={viewerTitleStyle}>
+            {layoutType==='single' ? getChartTitle(activeItemId, viewerItemIds) : 'Tiled View'}
+        </div>);
 
     return (
         <div style={toolsStyleExpanded}>
@@ -170,7 +163,7 @@ export function MultiChartToolbarExpanded({closeable, viewerId,
                             viewerItemIds={viewerItemIds}
                             activeItemId={activeItemId}
                             isPagingMode={layoutType==='single'}
-                            getItemTitle={getChartTitle}
+                            getItemTitle={(itemId) => getChartTitle(itemId, viewerItemIds)}
                             onActiveItemChange={(itemId) => dispatchUpdateCustom(viewerId, {activeItemId: itemId})}
                         />
                     </div>
@@ -188,5 +181,13 @@ MultiChartToolbarExpanded.propTypes= {
     activeItemId : PropTypes.string
 };
 
-
+const getChartTitle = (chartId, viewerItemIds) => {
+    const {chartType} = getChartData(chartId);
+    const idx = viewerItemIds.findIndex((el) => {return el === chartId;} );
+    if (idx>=0) {
+        return `${idx+1}-${chartType}`;
+    } else {
+        return chartType;
+    }
+};
 

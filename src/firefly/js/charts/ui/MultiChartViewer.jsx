@@ -5,7 +5,7 @@
 import './ChartPanel.css';
 
 import React, {Component,PropTypes} from 'react';
-import {isEmpty} from 'lodash';
+import {isEmpty, isUndefined} from 'lodash';
 import sCompare from 'react-addons-shallow-compare';
 import {flux} from '../../Firefly.js';
 
@@ -13,7 +13,7 @@ import {ChartPanel} from './ChartPanel.jsx';
 import {MultiItemViewerView} from '../../visualize/ui/MultiItemViewerView.jsx';
 import {dispatchAddViewer, dispatchViewerUnmounted, dispatchUpdateCustom,
         getMultiViewRoot, getViewer, getLayoutType,PLOT2D} from '../../visualize/MultiViewCntlr.js';
-import {getExpandedChartProps} from '../ChartsCntlr.js';
+import {getExpandedChartProps, getChartData} from '../ChartsCntlr.js';
 
 import {MultiChartToolbarStandard, MultiChartToolbarExpanded} from './MultiChartToolbar.jsx';
 
@@ -67,21 +67,27 @@ export class MultiChartViewer extends Component {
         const {viewerId, expandedMode, closeable} = this.props;
         const {viewer}= this.state;
         const layoutType= getLayoutType(getMultiViewRoot(),viewerId);
-        const activeItemId = getViewer(getMultiViewRoot(), viewerId).customData.activeItemId;
         if (!viewer || isEmpty(viewer.itemIdAry)) return false;
+        let activeItemId = getViewer(getMultiViewRoot(), viewerId).customData.activeItemId;
+        if (isUndefined(activeItemId) || !getChartData(activeItemId)) {
+            activeItemId = viewer.itemIdAry[0];
+        }
 
+        const onChartSelect = (chartId) => {
+            if (chartId !== activeItemId) {
+                dispatchUpdateCustom(viewerId, {activeItemId: chartId});
+            }
+        };
 
         const makeItemViewer = (chartId) => (
-            <ChartPanel key={chartId} expandable={!expandedMode} showToolbar={false} chartId={chartId}/>
+            <div className={chartId === activeItemId ? 'ChartPanel ChartPanel--active' : 'ChartPanel'} onMouseDown={()=>onChartSelect(chartId)}>
+                <ChartPanel key={chartId} showToolbar={false} chartId={chartId}/>;
+            </div>
         );
 
         const makeItemViewerFull = (chartId) => (
-            <ChartPanel key={chartId} expandedMode={expandedMode} showToolbar={false} expandable={!expandedMode} chartId={chartId}/>
+            <ChartPanel key={chartId} showToolbar={false} chartId={chartId}/>
         );
-
-        //const makeToolbar = Toolbar ? () => (<Toolbar {...this.props} />) :
-        //    expandedMode ? () => (<MultiChartToolbarExpanded {...{closeable, viewerId, layoutType, activeItemId}}/>) :
-        //        () => (<MultiChartToolbarStandard {...{viewerId, layoutType, activeItemId}}/>);
 
         const newProps = {
             viewerItemIds: viewer.itemIdAry,
@@ -91,13 +97,12 @@ export class MultiChartViewer extends Component {
             makeItemViewerFull
         };
 
-        const activeChartId = activeItemId||viewer.itemIdAry[0];
-        console.log('Active chart ID: '+activeChartId);
+        //console.log('Active chart ID: '+activeItemId);
         return (
         <div className='ChartPanel__container'>
             <div className='ChartPanel__wrapper'>
                 {expandedMode ? <MultiChartToolbarExpanded {...{closeable, viewerId, layoutType, activeItemId}}/> : <MultiChartToolbarStandard {...{viewerId, layoutType, activeItemId}}/>}
-                <ChartPanel key={'toolbar-'+activeChartId} expandable={true} showChart={false} chartId={activeChartId}/>
+                <ChartPanel key={'toolbar-'+activeItemId} expandedMode={expandedMode} expandable={!expandedMode}  showChart={false} chartId={activeItemId}/>
                 <div className='ChartPanel__chartarea--withToolbar'>
                     <MultiItemViewerView {...this.props} {...newProps}/>
                 </div>
