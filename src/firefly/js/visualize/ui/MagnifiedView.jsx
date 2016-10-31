@@ -56,11 +56,11 @@ MagnifiedView.propTypes= {
  * @param plot
  * @param spt
  * @param size
- * @return {Array}
+ * @return {*}
  */
 function getImagesAt(plot, spt, size) {
 
-    if (!plot.serverImages) return null;
+    if (!plot.serverImages) return {};
 
     const scale= plot.zoomFactor / plot.plotState.getZoomLevel();
 
@@ -131,7 +131,7 @@ function showMag(spt,plot,size) {
 
 
 
-    var {tiles,newX,newY} =getImagesAt(plot,makeScreenPt(x, y), size);
+    const {tiles,newX,newY} =getImagesAt(plot,makeScreenPt(x, y), size);
     if (isEmpty(tiles)) return false;
 
     var pt1, pt2, pt3, pt4;
