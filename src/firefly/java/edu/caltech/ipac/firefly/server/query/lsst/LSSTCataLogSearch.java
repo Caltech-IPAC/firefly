@@ -70,9 +70,11 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
              return  outFile;
          } catch (Exception e) {
              _log.error("load table failed");
-             e.printStackTrace();
+            e.printStackTrace();
+            throw new DataAccessException ("Access data from the server failed");
+
          }
-         return null;
+
     }
 
 
@@ -112,14 +114,11 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
             }
             else if (req.getParam("SearchMethod").equalsIgnoreCase("cone")) {
                 String radius = req.getParam(CatalogRequest.RADIUS);
-                //TODO remove it after the unit is degree
-                if (!radius.equalsIgnoreCase("0.01")){
-                    radius="0.01";
-                }
                 return "scisql_s2PtInCircle(coord_ra,coord_decl,"+ra +","+dec+","+radius +")=1;";
 
             } else if (req.getParam("SearchMethod").equalsIgnoreCase("Eliptical")) {
-                double semiMajorAxis = new Double( req.getParam("radius")).doubleValue();
+                //semiMajorAxis and semiMinorAxis are in arcsec, so the data needs to be converted from degree to arcsec
+                double semiMajorAxis = new Double( req.getParam("radius")).doubleValue()*3600;
                 double ratio = new Double(req.getParam(CatalogRequest.RATIO)).doubleValue();
                 Double semiMinorAxis = semiMajorAxis*ratio;
                 String positionAngle = req.getParam("posang");
@@ -140,7 +139,12 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
             catTable = DATABASE_NAME+"."+ tableName;
         }
 
-        String sql = "SELECT "+request.getParam(CatalogRequest.SELECTED_COLUMNS) + " FROM " + catTable +
+
+        String columns = request.getParam(CatalogRequest.SELECTED_COLUMNS);
+        if (columns==null){
+            columns = "*";
+        }
+        String sql = "SELECT "+columns + " FROM " + catTable +
                 " WHERE " + getSearchMethod( request);
         return sql;
     }
