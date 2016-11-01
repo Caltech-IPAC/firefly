@@ -180,7 +180,7 @@ export function dispatchRestoreDefaults(groupKey) {
  * @param {Action} rawAction
  * @return {Function}
  */
-export function valueChangeActionCreator(rawAction) {
+function valueChangeActionCreator(rawAction) {
     return (dispatcher) => {
         const {value}= rawAction.payload;
         dispatcher(rawAction);
@@ -203,7 +203,7 @@ export function valueChangeActionCreator(rawAction) {
  * @param {Action} rawAction
  * @return {Function}
  */
-export function multiValueChangeActionCreator(rawAction) {
+function multiValueChangeActionCreator(rawAction) {
     return (dispatcher) => {
         const {groupKey, fieldAry}= rawAction.payload;
         dispatcher(rawAction);

@@ -56,8 +56,6 @@ export const ActionScope= new Enum(['GROUP','SINGLE', 'LIST']);
 
 export const PLOTS_PREFIX= 'ImagePlotCntlr';
 
-const ANY_CHANGE= '${PLOT_PREFIX}.AnyChange';
-
 /** Action Type: plot of new image started */
 const PLOT_IMAGE_START= `${PLOTS_PREFIX}.PlotImageStart`;
 /** Action Type: plot of new image failed */
@@ -250,9 +248,7 @@ function actionCreators() {
 
 
 export default {
-    reducer,
     reducers, actionCreators,
-    ANY_CHANGE,  // todo remove soon- only for interface with GWT
     ANY_REPLOT,
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,ZOOM_LOCKING,
@@ -787,7 +783,7 @@ export function dispatchExpandedAutoPlay(autoPlayOn) {
  * @param {Action} rawAction
  * @returns {Function}
  */
-export function changePrimeActionCreator(rawAction) {
+function changePrimeActionCreator(rawAction) {
     return (dispatcher, getState) => changePrime(rawAction,dispatcher,getState);
 }
 
@@ -795,7 +791,7 @@ export function changePrimeActionCreator(rawAction) {
  * @param {Action} rawAction
  * @returns {Function}
  */
-export function deletePlotViewActionCreator(rawAction) {
+function deletePlotViewActionCreator(rawAction) {
     return (dispatcher, getState) => {
         const vr= getState()[IMAGE_PLOT_KEY];
         if (vr.wcsMatchType && !rawAction.payload.holdWcsMatch) {
@@ -809,7 +805,7 @@ export function deletePlotViewActionCreator(rawAction) {
  * @param {Action} rawAction
  * @returns {Function}
  */
-export function plotImageActionCreator(rawAction) {
+function plotImageActionCreator(rawAction) {
     return PlotImageTask.makePlotImageAction(rawAction);
 }
 
@@ -818,7 +814,7 @@ export function plotImageActionCreator(rawAction) {
  * @param {Action} rawAction
  * @returns {Function}
  */
-export function restoreDefaultsActionCreator(rawAction) {
+function restoreDefaultsActionCreator(rawAction) {
     return (dispatcher, getState) => {
         const vr= getState()[IMAGE_PLOT_KEY];
         const {plotId}= rawAction.payload;
@@ -845,7 +841,7 @@ export function restoreDefaultsActionCreator(rawAction) {
 }
 
 
-export function autoPlayActionCreator(rawAction) {
+function autoPlayActionCreator(rawAction) {
     return (dispatcher) => {
         var {autoPlayOn}= rawAction.payload;
         if (autoPlayOn) {
@@ -886,7 +882,7 @@ const detachAll= (plotViewAry,dl) => plotViewAry.forEach( (pv) => {
 });
 
 
-export function changePointSelectionActionCreator(rawAction) {
+function changePointSelectionActionCreator(rawAction) {
     return (dispatcher,getState) => {
         var store= getState();
         var wasEnabled= store[IMAGE_PLOT_KEY].pointSelEnableAry.length ? true : false;

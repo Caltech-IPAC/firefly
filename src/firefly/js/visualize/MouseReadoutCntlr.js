@@ -112,7 +112,7 @@ export function makeDescriptionItem(title) {
 //--------------------------------------------------------------------
 
 
-export function reducer(state=initState(), action={}) {
+function reducer(state=initState(), action={}) {
 
     if (!action.payload || !action.type) return state;
 
