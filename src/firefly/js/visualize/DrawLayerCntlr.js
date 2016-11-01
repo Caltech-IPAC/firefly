@@ -518,7 +518,7 @@ function getDrawLayerIdAry(dlRoot,id,useGroup) {
 //=============================================
 //=============================================
 
-export function makeDetachLayerActionCreator(factory) {
+function makeDetachLayerActionCreator(factory) {
     return (action) => {
         return (dispatcher) => {
             var {drawLayerId}= action.payload;
