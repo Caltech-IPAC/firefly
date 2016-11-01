@@ -28,16 +28,16 @@ import {dispatchAttachLayerToPlot,
 import {dispatchReplaceViewerItems, getExpandedViewerItemIds,
          getMultiViewRoot, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
 
-export {zoomActionCreator} from './ZoomUtil.js';
-export {plotImageMaskActionCreator, overlayPlotChangeAttributeActionCreator} from './ImageOverlayTask.js';
+import {zoomActionCreator} from './ZoomUtil.js';
+import {plotImageMaskActionCreator, overlayPlotChangeAttributeActionCreator} from './ImageOverlayTask.js';
 
-export {colorChangeActionCreator,
+import {colorChangeActionCreator,
         stretchChangeActionCreator,
         flipActionCreator,
         cropActionCreator,
         rotateActionCreator} from './task/PlotChangeTask.js';
 
-export {wcsMatchActionCreator} from './task/WcsMatchTask.js';
+import {wcsMatchActionCreator} from './task/WcsMatchTask.js';
 
 /** can the 'COLLAPSE', 'GRID', 'SINGLE' */
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
@@ -55,8 +55,6 @@ export const WcsMatchType= new Enum(['NorthCenOnPt', 'NorthCenOnMoving', 'StandC
 export const ActionScope= new Enum(['GROUP','SINGLE', 'LIST']);
 
 export const PLOTS_PREFIX= 'ImagePlotCntlr';
-
-const ANY_CHANGE= '${PLOT_PREFIX}.AnyChange';
 
 /** Action Type: plot of new image started */
 const PLOT_IMAGE_START= `${PLOTS_PREFIX}.PlotImageStart`;
@@ -218,9 +216,39 @@ const initState= function() {
 //============ EXPORTS ===========
 //============ EXPORTS ===========
 
+
+
+/*---------------------------- REDUCERS -----------------------------*/
+
+function reducers() {
+    return {
+        [IMAGE_PLOT_KEY]: reducer,
+    };
+}
+
+function actionCreators() {
+    return {
+        [PLOT_IMAGE]: plotImageActionCreator,
+        [PLOT_MASK]: plotImageMaskActionCreator,
+        [OVERLAY_PLOT_CHANGE_ATTRIBUTES]: overlayPlotChangeAttributeActionCreator,
+        [ZOOM_IMAGE]: zoomActionCreator,
+        [COLOR_CHANGE]: colorChangeActionCreator,
+        [STRETCH_CHANGE]: stretchChangeActionCreator,
+        [ROTATE]: rotateActionCreator,
+        [FLIP]: flipActionCreator,
+        [CROP]: cropActionCreator,
+        [CHANGE_PRIME_PLOT] : changePrimeActionCreator,
+        [CHANGE_POINT_SELECTION]: changePointSelectionActionCreator,
+        [RESTORE_DEFAULTS]: restoreDefaultsActionCreator,
+        [EXPANDED_AUTO_PLAY]: autoPlayActionCreator,
+        [WCS_MATCH]: wcsMatchActionCreator,
+        [DELETE_PLOT_VIEW]: deletePlotViewActionCreator,
+    };
+}
+
+
 export default {
-    reducer,
-    ANY_CHANGE,  // todo remove soon- only for interface with GWT
+    reducers, actionCreators,
     ANY_REPLOT,
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,ZOOM_LOCKING,
@@ -755,7 +783,7 @@ export function dispatchExpandedAutoPlay(autoPlayOn) {
  * @param {Action} rawAction
  * @returns {Function}
  */
-export function changePrimeActionCreator(rawAction) {
+function changePrimeActionCreator(rawAction) {
     return (dispatcher, getState) => changePrime(rawAction,dispatcher,getState);
 }
 
@@ -763,7 +791,7 @@ export function changePrimeActionCreator(rawAction) {
  * @param {Action} rawAction
  * @returns {Function}
  */
-export function deletePlotViewActionCreator(rawAction) {
+function deletePlotViewActionCreator(rawAction) {
     return (dispatcher, getState) => {
         const vr= getState()[IMAGE_PLOT_KEY];
         if (vr.wcsMatchType && !rawAction.payload.holdWcsMatch) {
@@ -777,7 +805,7 @@ export function deletePlotViewActionCreator(rawAction) {
  * @param {Action} rawAction
  * @returns {Function}
  */
-export function plotImageActionCreator(rawAction) {
+function plotImageActionCreator(rawAction) {
     return PlotImageTask.makePlotImageAction(rawAction);
 }
 
@@ -786,7 +814,7 @@ export function plotImageActionCreator(rawAction) {
  * @param {Action} rawAction
  * @returns {Function}
  */
-export function restoreDefaultsActionCreator(rawAction) {
+function restoreDefaultsActionCreator(rawAction) {
     return (dispatcher, getState) => {
         const vr= getState()[IMAGE_PLOT_KEY];
         const {plotId}= rawAction.payload;
@@ -813,7 +841,7 @@ export function restoreDefaultsActionCreator(rawAction) {
 }
 
 
-export function autoPlayActionCreator(rawAction) {
+function autoPlayActionCreator(rawAction) {
     return (dispatcher) => {
         var {autoPlayOn}= rawAction.payload;
         if (autoPlayOn) {
@@ -854,7 +882,7 @@ const detachAll= (plotViewAry,dl) => plotViewAry.forEach( (pv) => {
 });
 
 
-export function changePointSelectionActionCreator(rawAction) {
+function changePointSelectionActionCreator(rawAction) {
     return (dispatcher,getState) => {
         var store= getState();
         var wasEnabled= store[IMAGE_PLOT_KEY].pointSelEnableAry.length ? true : false;

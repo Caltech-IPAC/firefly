@@ -21,6 +21,13 @@ export const DESC_VAL= 'desc';
 
 export function readoutRoot() { return flux.getState()[READOUT_KEY]; }
 
+
+export default {
+    reducers () {return {[READOUT_KEY]: reducer};},
+};
+
+
+
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
@@ -105,7 +112,7 @@ export function makeDescriptionItem(title) {
 //--------------------------------------------------------------------
 
 
-export function reducer(state=initState(), action={}) {
+function reducer(state=initState(), action={}) {
 
     if (!action.payload || !action.type) return state;
 

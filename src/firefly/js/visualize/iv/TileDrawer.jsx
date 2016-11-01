@@ -50,7 +50,7 @@ export class TileDrawer extends Component {
 
         const scale= zoomFactor / tileZoomFactor;
         const style=Object.assign({},containerStyle, {width,height});
-        if (scale < .5 && tileData.images.length>5) {
+        if (scale < .3 && tileData.images.length>7) {
             return <div></div>;
         }
         else {

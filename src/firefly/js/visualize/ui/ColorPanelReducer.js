@@ -3,7 +3,7 @@
  */
 
 import Validate from '../../util/Validate.js';
-import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
+import FieldGroupCntlr, {INIT_FIELD_GROUP} from '../../fieldGroup/FieldGroupCntlr.js';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
@@ -67,7 +67,7 @@ const computeColorPanelState= function(fields, plottedRV, fitsData, band, action
             break;
 
         case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
-        case FieldGroupCntlr.INIT_FIELD_GROUP:
+        case INIT_FIELD_GROUP:
         case ImagePlotCntlr.ANY_REPLOT:
             if (!plottedRV && !fitsData) return fields;
             var newFields = updateFieldsFromRangeValues(fields,plottedRV,fitsData);

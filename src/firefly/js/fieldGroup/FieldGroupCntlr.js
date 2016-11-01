@@ -55,7 +55,6 @@ import {smartMerge} from '../tables/TableUtil.js';
 
 
 
-
 export const INIT_FIELD_GROUP= 'FieldGroupCntlr/initFieldGroup';
 export const MOUNT_COMPONENT= 'FieldGroupCntlr/mountComponent';
 export const MOUNT_FIELD_GROUP= 'FieldGroupCntlr/mountFieldGroup';
@@ -66,7 +65,19 @@ export const CHILD_GROUP_CHANGE= 'FieldGroupCntlr/childGroupChange';
 export const RELATED_ACTION= 'FieldGroupCntlr/relatedAction';
 
 
-const FIELD_GROUP_KEY= 'fieldGroup';
+export const FIELD_GROUP_KEY= 'fieldGroup';
+
+export default {
+    reducers () {return {[FIELD_GROUP_KEY]: reducer};},
+
+    actionCreators() {
+        return {
+            [VALUE_CHANGE] : valueChangeActionCreator,
+            [MULTI_VALUE_CHANGE]: multiValueChangeActionCreator
+        };
+    },
+    VALUE_CHANGE, CHILD_GROUP_CHANGE,
+};
 
 
 //======================================== Dispatch Functions =============================
@@ -95,14 +106,14 @@ export function dispatchInitFieldGroup(groupKey,keepState=false,
 
 
 /**
- * 
+ *
  * @param groupKey
  * @param mounted
  * @param keepState
  * @param initValues
  * @param reducerFunc
- * @param wrapperGroupKey
  * @param actionTypes any action types (beyond the FieldGroup action types) that the reducer should allow though
+ * @param wrapperGroupKey
  */
 export function dispatchMountFieldGroup(groupKey, mounted, keepState= false, 
                                         initValues=null, reducerFunc= null,
@@ -129,6 +140,7 @@ export function dispatchMountComponent(groupKey,fieldKey,mounted,value,initField
 /**
  * the required parameter are below, anything else passed is put in the field group as well
  *
+ * @param {Object} payload
  * @param {String} payload.fieldKey the field Key
  * @param {String} payload.groupKey group key
  * @param {String} payload.value value can be anything including a promise or function
@@ -141,8 +153,8 @@ export function dispatchValueChange(payload) {
 
 /**
  * Update mutiliple fields
- * @param {FieldGroupField[]} fieldAry
  * @param {String} groupKey
+ * @param {FieldGroupField[]} fieldAry
  */
 export function dispatchMultiValueChange(groupKey, fieldAry) {
     flux.process({type: MULTI_VALUE_CHANGE, payload:{groupKey, fieldAry}});
@@ -168,7 +180,7 @@ export function dispatchRestoreDefaults(groupKey) {
  * @param {Action} rawAction
  * @return {Function}
  */
-export const valueChangeActionCreator= function(rawAction) {
+function valueChangeActionCreator(rawAction) {
     return (dispatcher) => {
         const {value}= rawAction.payload;
         dispatcher(rawAction);
@@ -191,7 +203,7 @@ export const valueChangeActionCreator= function(rawAction) {
  * @param {Action} rawAction
  * @return {Function}
  */
-export const multiValueChangeActionCreator= function(rawAction) {
+function multiValueChangeActionCreator(rawAction) {
     return (dispatcher) => {
         const {groupKey, fieldAry}= rawAction.payload;
         dispatcher(rawAction);
@@ -565,12 +577,6 @@ function constructFieldGroup(groupKey,fields, reducerFunc, actionTypes, keepStat
 //============ EXPORTS ===========
 //============ EXPORTS ===========
 
-var FieldGroupCntlr = {reducer, FIELD_GROUP_KEY,
-                       INIT_FIELD_GROUP, MOUNT_COMPONENT,
-                       MOUNT_FIELD_GROUP, VALUE_CHANGE,
-                       CHILD_GROUP_CHANGE, MULTI_VALUE_CHANGE,
-                       valueChangeActionCreator};
-export default FieldGroupCntlr;
 
 //============ EXPORTS ===========
 //============ EXPORTS ===========

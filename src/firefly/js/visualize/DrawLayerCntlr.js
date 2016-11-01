@@ -9,18 +9,18 @@ import DrawLayerReducer from './reducer/DrawLayerReducer.js';
 import {without,union,isEmpty} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 
-export {selectAreaEndActionCreator} from '../drawingLayers/SelectArea.js';
-export {distanceToolEndActionCreator} from '../drawingLayers/DistanceTool.js';
-export {markerToolStartActionCreator,
+import {selectAreaEndActionCreator} from '../drawingLayers/SelectArea.js';
+import {distanceToolEndActionCreator} from '../drawingLayers/DistanceTool.js';
+import {markerToolStartActionCreator,
         markerToolMoveActionCreator,
         markerToolEndActionCreator,
         markerToolCreateLayerActionCreator} from '../drawingLayers/MarkerTool.js';
 
-export {regionCreateLayerActionCreator,
+import {regionCreateLayerActionCreator,
         regionDeleteLayerActionCreator,
         regionUpdateEntryActionCreator} from './region/RegionTask.js';
 
-export {footprintCreateLayerActionCreator,
+import {footprintCreateLayerActionCreator,
         footprintStartActionCreator,
         footprintMoveActionCreator,
         footprintEndActionCreator
@@ -105,7 +105,39 @@ export function getDlAry() { return flux.getState()[DRAWING_LAYER_KEY].drawLayer
 export function getDlRoot() { return flux.getState()[DRAWING_LAYER_KEY]; }
 
 
+
+
+
+export function getDrawLayerCntlrDef(drawLayerFactory) {
+    return {
+        reducers() {return {[DRAWING_LAYER_KEY]: makeReducer(drawLayerFactory)}; },
+
+        actionCreators() {
+            return {
+                [DETACH_LAYER_FROM_PLOT] :  makeDetachLayerActionCreator(drawLayerFactory),
+                [SELECT_AREA_END] :  selectAreaEndActionCreator,
+                [DT_END] :  distanceToolEndActionCreator,
+                [MARKER_START] :  markerToolStartActionCreator,
+                [MARKER_MOVE] :  markerToolMoveActionCreator,
+                [MARKER_END] :  markerToolEndActionCreator,
+                [MARKER_CREATE] :  markerToolCreateLayerActionCreator,
+                [FOOTPRINT_CREATE] :  footprintCreateLayerActionCreator,
+                [FOOTPRINT_START] :  footprintStartActionCreator,
+                [FOOTPRINT_END] :  footprintEndActionCreator,
+                [FOOTPRINT_MOVE] :  footprintMoveActionCreator,
+
+                [REGION_CREATE_LAYER] :  regionCreateLayerActionCreator,
+                [REGION_DELETE_LAYER] :  regionDeleteLayerActionCreator,
+                [REGION_ADD_ENTRY] :  regionUpdateEntryActionCreator,
+                [REGION_REMOVE_ENTRY] :  regionUpdateEntryActionCreator
+            };
+        },
+    };
+}
+
+
 export default {
+    getDrawLayerCntlrDef,
     CHANGE_VISIBILITY, RETRIEVE_DATA,
     ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT,CHANGE_DRAWING_DEF,
     CREATE_DRAWING_LAYER,DESTROY_DRAWING_LAYER, MODIFY_CUSTOM_FIELD,
@@ -124,6 +156,8 @@ export default {
     dispatchAddRegionEntry, dispatchRemoveRegionEntry,
     dispatchCreateMarkerLayer, dispatchCreateFootprintLayer
 };
+
+
 
 /**
  *
@@ -484,7 +518,7 @@ function getDrawLayerIdAry(dlRoot,id,useGroup) {
 //=============================================
 //=============================================
 
-export function makeDetachLayerActionCreator(factory) {
+function makeDetachLayerActionCreator(factory) {
     return (action) => {
         return (dispatcher) => {
             var {drawLayerId}= action.payload;
