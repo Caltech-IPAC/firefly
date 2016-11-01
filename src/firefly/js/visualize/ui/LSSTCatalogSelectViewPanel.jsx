@@ -155,9 +155,9 @@ function doCatalog(request) {
     const catPart = request[gkey];
     const spatPart = request[gkeySpatial];
     const {project, cattable} = catPart;
-    const {spatial} = spatPart;
+    const {spatial, conesize} = spatPart;
+    const sizeUnit = 'deg';
 
-    const conesize = convertAngle('deg', 'arcsec', spatPart.conesize);
     var title = `${projectName}-${catPart.cattable}`;
     var tReq = {};
 
@@ -165,9 +165,9 @@ function doCatalog(request) {
         var filename = catPart.fileUpload;
 
         tReq = makeLsstCatalogRequest(title, project, cattable, {
-            //table_path: '/hydra/cm/firefly_test_data/DAXTestData/',  // TODO: to remove later
             filename,
             radius: conesize,
+            sizeUnit,
             SearchMethod: spatial
         });
     } else {
@@ -178,14 +178,12 @@ function doCatalog(request) {
         title += ')';
 
         tReq = makeLsstCatalogRequest(title, project, cattable, {
-            SearchMethod: spatial,
-            //table_path: '/hydra/cm/firefly_test_data/DAXTestData/'  //TODO: to remove later
+            SearchMethod: spatial
         });
     }
 
     // change and merge others parameters in request if elliptical
     // plus change spatial name to cone
-    // TODO: (assume search method for elliptical is cone)
     if (spatial === SpatialMethod.Elliptical.value) {
 
         const pa = get(spatPart, 'posangle', 0);
@@ -204,6 +202,7 @@ function doCatalog(request) {
         } else {
             tReq.radius = conesize;
         }
+        tReq.sizeUnit = sizeUnit;
     } else if (spatial === SpatialMethod.Polygon.value) {
         tReq.polygon = spatPart.polygoncoords;
     }
