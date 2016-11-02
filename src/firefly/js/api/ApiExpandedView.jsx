@@ -11,6 +11,7 @@ import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
 import {dispatchChangeExpandedMode, ExpandType} from '../visualize/ImagePlotCntlr.js';
 import {dispatchSetLayoutMode, getExpandedMode, LO_MODE, LO_VIEW} from '../core/LayoutCntlr.js';
+import {getExpandedChartProps} from '../charts/ChartsCntlr.js';
 
 // import {deepDiff} from '../util/WebUtil.js';
 
@@ -23,9 +24,8 @@ export class ApiExpandedView extends Component {
             dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);
         };
         const images  = (<ApiExpandedDisplay closeFunc={closeFunc}/>);
-        const xyPlots = (<ChartsContainer expandedMode={true} closeable={true}/>);
         const tables  = (<TablesContainer  mode='expanded' />);
-        this.state = {images, xyPlots, tables};
+        this.state = {images, tables};
     }
 
     componentDidMount() {
@@ -55,10 +55,11 @@ export class ApiExpandedView extends Component {
     // }
 
     render() {
-        var {expanded, images, xyPlots, tables} = this.state;
+        var {expanded, images, tables} = this.state;
         expanded = LO_VIEW.get(expanded) || LO_VIEW.none;
+        const {chartId} = expanded === LO_VIEW.xyPlots ? getExpandedChartProps() : {};
         const view = expanded === LO_VIEW.tables ? tables
-            : expanded === LO_VIEW.xyPlots ? xyPlots
+            : expanded === LO_VIEW.xyPlots ? (<ChartsContainer key='api' expandedMode={true} closeable={true} chartId={chartId}/>)
             : images;
         if (expanded === LO_VIEW.none) {
             document.body.style.overflow= this.saveOverflow;

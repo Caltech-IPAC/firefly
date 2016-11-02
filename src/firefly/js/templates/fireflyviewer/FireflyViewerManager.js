@@ -157,7 +157,6 @@ function handleNewTable(action, images, showImages, showTables, coverageLockedOn
                     chartId: 'xyplot-' + tbl_id,
                     chartType: SCATTER,
                     groupId: tbl_id,
-                    deletable: false,
                     chartDataElements: [{tblId: tbl_id, type: DT_XYCOLS, options: defaultOptions}]
                 });
             }

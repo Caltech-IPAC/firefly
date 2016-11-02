@@ -33,7 +33,8 @@ import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {TablePanel} from '../tables/ui/TablePanel.jsx';
 import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
-import {ChartsTableViewPanel} from '../charts/ui/ChartsTableViewPanel.jsx';
+import {ChartPanel} from '../charts/ui/ChartPanel.jsx';
+
 import {Histogram} from '../charts/ui/Histogram.jsx';
 import {PopupMouseReadoutMinimal} from  '../visualize/ui/PopupMouseReadoutMinimal.jsx';
 import {PopupMouseReadoutFull} from  '../visualize/ui/PopupMouseReadoutFull.jsx';
@@ -183,7 +184,7 @@ export function buildLowlevelAPI() {
         TablesContainer,
         TablePanel,
         ChartsContainer,
-        ChartsTableViewPanel,
+        ChartPanel,
         Histogram,
         PopupMouseReadoutMinimal,
         PopupMouseReadoutFull
