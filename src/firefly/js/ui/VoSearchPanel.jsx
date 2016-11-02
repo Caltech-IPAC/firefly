@@ -91,13 +91,14 @@ var voSearchArea = () => {
             initialState={{
                               fieldKey: 'vourl',
                               value: '',
-                              tooltip:'Enter the VO cone search URL directly (or use the link below to open external NVO search and find the VO cone search URL)',
+                              tooltip:'Enter the VO Simple Cone Search URL directly (or use the link below to open external NVO search and find the VO cone search URL)',
                               label:'Cone Search URL:',
                               labelWidth : 100,
                               nullAllowed:false,
                               /*validator: {urlValidator}*/
                           }}
             size={60}
+            placeholder='Ex. http://irsa.ipac.caltech.edu/SCS?table=wise_allwise_p3as_psd&'
             actOn={['blur','enter']}
             wrapperStyle={{margin: '5px 0'}}
         />
