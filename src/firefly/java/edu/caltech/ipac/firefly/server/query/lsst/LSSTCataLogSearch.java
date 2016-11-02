@@ -178,6 +178,21 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
     }
 
 
+    private void  adjustDataType(DataType[] dataType,JSONArray meta ){
+        for (int i=0; i<dataType.length; i++){
+            for (int j=0; j<meta.size(); j++){
+                JSONObject element = (JSONObject) meta.get(j);
+                if ( element.get("name").toString().equalsIgnoreCase(dataType[i].getKeyName())){
+                    if (element.get("datatype").getClass()!=dataType[i].getDataType()){
+                        dataType[i].setDataType(element.get("datatype").getClass());
+                    }
+                    break;
+                }
+
+            }
+        }
+
+    }
     /**
      * This method convert the json data file to data group
      * @param jsonFile
@@ -185,14 +200,15 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
      * @throws IOException
      * @throws ParseException
      */
-    private DataGroup getTableDataFromJson(TableServerRequest request,  File jsonFile) throws IOException, ParseException {
+    private DataGroup getTableDataFromJson(TableServerRequest request,  File jsonFile) throws IOException, ParseException, ClassNotFoundException {
 
         JSONParser parser = new JSONParser();
         JSONObject obj = (JSONObject) parser.parse(new FileReader(jsonFile));
         JSONArray data =  (JSONArray) ((JSONObject) ((JSONObject) obj.get("result")).get("table")).get("data");
 
-        JSONArray columns = (JSONArray) ( (JSONObject) ( (JSONObject)( (JSONObject) obj.get("result")).get("table")).get("metadata")).get("elements");
-        DataType[] dataType = getTypeDef(request, columns);
+        JSONArray metaInData = (JSONArray) ( (JSONObject) ( (JSONObject)( (JSONObject) obj.get("result")).get("table")).get("metadata")).get("elements");
+
+        DataType[] dataType = getTypeDef(request, metaInData);
 
         DataGroup dg = new DataGroup("result", dataType  );
 
@@ -208,6 +224,7 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
             for (int j=0; j<dataType.length; j++){
 
                 Object d = rowTblData.get(j);
+
                 if (d==null){
                     dataType[j].setMayBeNull(true);
                     row.setDataElement(dataType[j], null);
@@ -227,7 +244,9 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
                             d=new Boolean(true);
                         }
                     }
-                   row.setDataElement(dataType[j],d );
+
+                    row.setDataElement(dataType[j], d);
+
                 }
 
             }
@@ -249,19 +268,19 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         else if (classType.equalsIgnoreCase("float") || classType.equalsIgnoreCase("real") ){
             return Float.class;
         }
-        else if (classType.equalsIgnoreCase("int(11)")){
+        else if (classType.equalsIgnoreCase("int(11)") || classType.equalsIgnoreCase("int")){
             return Integer.class;
         }
-        else if (classType.equalsIgnoreCase("BigInt(20)") ){
+        else if (classType.equalsIgnoreCase("BigInt(20)") ||  classType.equalsIgnoreCase("long")){
             return Long.class;
         }
-        else if (classType.equalsIgnoreCase("bit(1)")){
+        else if (classType.equalsIgnoreCase("bit(1)") || classType.equalsIgnoreCase("boolean")){
             return Boolean.class;
         }
-        else if (classType.equalsIgnoreCase("TINYINT")){
+        else if (classType.equalsIgnoreCase("TINYINT") || classType.equalsIgnoreCase("byte")){
             return Byte.class;
         }
-        else if (classType.equalsIgnoreCase("SMALLINT")){
+        else if (classType.equalsIgnoreCase("SMALLINT") || classType.equalsIgnoreCase("short)")){
             return Short.class;
         }
         else if (classType.equalsIgnoreCase("string") ) {
@@ -275,34 +294,64 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         return null;
 
     }
-    private  DataType[] getTypeDef(TableServerRequest request, JSONArray columns){
+    private  DataType[] getTypeDef(TableServerRequest request, JSONArray columns) {
 
 
         TableServerRequest metaRequest = new TableServerRequest("LSSTMetaSearch");
-        metaRequest.setParam("table_name",request.getParam("meta_table") );
+        metaRequest.setParam("table_name", request.getParam("meta_table"));
         metaRequest.setPageSize(Integer.MAX_VALUE);
         //call LSSTMetaSearch processor to get the meta data as a DataGroup
         DataGroup metaData = getMeta(metaRequest);
 
         DataType[] dataTypes = new DataType[columns.size()];
-        DataObject[] dataObjects=metaData.values().toArray(new DataObject[0]);
-        for (int k=0; k<columns.size(); k++) {
-            JSONObject col = (JSONObject) columns.get(k);
-            for (int i = 0; i < dataObjects.length; i++) {
-                 String keyName = ((String) dataObjects[i].getDataElement("Field")).trim();
-                 if (keyName.equalsIgnoreCase( col.get("name").toString().trim() ) ){
-                      boolean maybeNull = dataObjects[i].getDataElement("Null").toString().equalsIgnoreCase("yes") ? true : false;
-                      dataTypes[k] = new DataType(keyName, keyName,
-                            getDataClass((String) dataObjects[i].getDataElement("Type")),
-                            DataType.Importance.HIGH,
-                            (String) dataObjects[i].getDataElement("Unit"),
-                            maybeNull
-                    );
-                    dataTypes[k].setShortDesc((String) dataObjects[i].getDataElement("Description"));
-                    break;
+        DataObject[] dataObjects = metaData.values().toArray(new DataObject[0]);
+
+        //all columns are selected, the default
+        if (columns.size() == dataObjects.length) {
+            for (int i = 0;i < columns.size(); i++) {
+                 JSONObject col = (JSONObject) columns.get(i);
+                 boolean maybeNull = dataObjects[i].getDataElement("Null").toString().equalsIgnoreCase("yes") ? true : false;
+                //TODO always get the data type from the data meta  unless it is null
+                 Class cls = getDataClass(col.get("datatype").toString());
+                 if (cls==null){
+                     cls =  getDataClass( (String) dataObjects[i].getDataElement("Type"));
+                 }
+                 String colName  = col.get("name").toString().trim();
+                 dataTypes[i] = new DataType(colName, colName,
+                                cls,
+                                DataType.Importance.HIGH,
+                                (String) dataObjects[i].getDataElement("Unit"),
+                                maybeNull
+                        );
+                        dataTypes[i].setShortDesc((String) dataObjects[i].getDataElement("Description"));
+            }
+
+
+        } else {
+            for (int k = 0; k < columns.size(); k++) {
+                JSONObject col = (JSONObject) columns.get(k);
+                for (int i = 0; i < dataObjects.length; i++) {
+                    String keyName = ((String) dataObjects[i].getDataElement("Field")).trim();
+                    if (keyName.equalsIgnoreCase(col.get("name").toString().trim())) {
+                        boolean maybeNull = dataObjects[i].getDataElement("Null").toString().equalsIgnoreCase("yes") ? true : false;
+                        //TODO always get the data type from the data meta unless it is null
+                        Class cls = getDataClass(col.get("datatype").toString());
+                        if (cls==null){
+                            cls =  getDataClass( (String) dataObjects[i].getDataElement("Type"));
+                        }
+                        dataTypes[k] = new DataType(keyName, keyName,
+                                cls,
+                                DataType.Importance.HIGH,
+                                (String) dataObjects[i].getDataElement("Unit"),
+                                maybeNull
+                        );
+                        dataTypes[k].setShortDesc((String) dataObjects[i].getDataElement("Description"));
+                        break;
+                    }
                 }
             }
         }
+
         return dataTypes;
     }
 
