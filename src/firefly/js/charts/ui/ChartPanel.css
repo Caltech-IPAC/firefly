@@ -35,6 +35,10 @@
     right: 0;
 }
 
+.ChartPanel__toolbar--offsetLeft {
+    left: 100px;
+}
+
 .ChartPanel__chartarea {
     position: absolute;
     top: 0;

@@ -10,9 +10,11 @@ import {logError} from '../util/WebUtil.js';
  * @public
  * @typedef {Object} ChartType - an object which specifies how to render a chart type
  * @prop {string} id - unique chart type id
- * @prop {Function} renderChart - function to render chart part: renderChart(chartId)
- * @prop {Function} renderOptions - function to render chart options: renderOptions(chartId)
- * @prop {Function} renderToolbar - function to render toolbar renderToolbar(chartId, expandedMode, expandable)
+ * @prop {Function} Chart - React functional component to render chart part: Chart({chartId, ...chartProps, widthPx, heightPx})
+ * @prop {Function} Options - React functional component to render chart options: Options({chartId, optionsKey})
+ * @prop {Function} Toolbar - React functional component to render toolbar: Toolbar({chartId, expandable, expandedMode, toggleOptions})
+ * @prop {Function} getChartProperties - function to get chart properties: getChartProperties(chartId)
+ * @prop {Function} updateOnStoreChange - function with returns true if chart needs to update on store update: updateOnStoreChange(prevChartProps)
  */
 
 const chartTypes = [];

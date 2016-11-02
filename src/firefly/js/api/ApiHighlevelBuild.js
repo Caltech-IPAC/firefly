@@ -423,7 +423,7 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
         dispatchTableFetch(searchRequest);
     }
 
-    const chartId = uniqueChartId();
+    const chartId = targetDiv;
 
     if (tblGroup) {
         tblId = getActiveTableId(tblGroup);
@@ -493,7 +493,7 @@ function doShowHistogram(llApi, targetDiv, params={}) {
         dispatchTableFetch(searchRequest);
     }
 
-    const chartId = uniqueChartId();
+    const chartId = targetDiv;
 
     if (tblGroup) {
         tblId = getActiveTableId(tblGroup);

@@ -59,8 +59,8 @@ const FIRST_CDEL_ID = '0'; // first data element id (if missing)
  *  @function dispatchChartAdd
  *  @memberof firefly.action
  */
-export function dispatchChartAdd({chartId, chartType, chartDataElements, groupId='main', deletable, help_id, dispatcher= flux.process}) {
-    dispatcher({type: CHART_ADD, payload: {chartId, chartType, chartDataElements, deletable, help_id, groupId}});
+export function dispatchChartAdd({chartId, chartType, chartDataElements, groupId='main', deletable, help_id, mounted=0, dispatcher= flux.process}) {
+    dispatcher({type: CHART_ADD, payload: {chartId, chartType, chartDataElements, groupId, deletable, help_id, mounted}});
 }
 
 /*
@@ -369,13 +369,20 @@ function reduceData(state={}, action={}) {
     //if (chartActions.indexOf(action.type) < 0) { return state; } // useful when debugging
     switch (action.type) {
         case (CHART_ADD) :
-            const {chartId, chartType, groupId, deletable, help_id, chartDataElements}  = action.payload;
+        {
+            const {chartId, chartType, chartDataElements, ...rest}  = action.payload;
 
             state = updateSet(state, chartId,
-                omitBy({chartType, chartDataElements: chartDataElementsToObj(chartDataElements), groupId, deletable, help_id}, isUndefined));
+                omitBy({
+                    chartType,
+                    chartDataElements: chartDataElementsToObj(chartDataElements),
+                    ...rest
+                }, isUndefined));
             return state;
+        }
         case (CHART_REMOVE)  :
-        {   const {chartId} = action.payload;
+        {
+            const {chartId} = action.payload;
             return omit(state, chartId);
         }
         case (CHART_DATA_FETCH)  :

@@ -52,11 +52,9 @@ function ExpandedView(props) {
     const {closeable, chartId} = props;
 
     return (
-        <div style={{ display: 'flex', height: '100%', flexGrow: 1, flexDirection: 'column', overflow: 'hidden'}}>
-            <div style={{marginBottom: 3}}>
-                {closeable && <CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
-            </div>
+        <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0}}>
             <ChartPanel key={'expanded-'+chartId} expandedMode={true} expandable={false} chartId={chartId}/>
+            {closeable && <CloseButton style={{position: 'absolute', top: 0, left: 0, paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
         </div>
     );
 }

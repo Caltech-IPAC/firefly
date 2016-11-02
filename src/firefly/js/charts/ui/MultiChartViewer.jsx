@@ -9,11 +9,13 @@ import {isEmpty, isUndefined} from 'lodash';
 import sCompare from 'react-addons-shallow-compare';
 import {flux} from '../../Firefly.js';
 
+import {CloseButton} from '../../ui/CloseButton.jsx';
 import {ChartPanel} from './ChartPanel.jsx';
 import {MultiItemViewerView} from '../../visualize/ui/MultiItemViewerView.jsx';
 import {dispatchAddViewer, dispatchViewerUnmounted, dispatchUpdateCustom,
         getMultiViewRoot, getViewer, getLayoutType,PLOT2D} from '../../visualize/MultiViewCntlr.js';
 import {getExpandedChartProps, getChartData} from '../ChartsCntlr.js';
+import {LO_VIEW, LO_MODE, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 
 import {MultiChartToolbarStandard, MultiChartToolbarExpanded} from './MultiChartToolbar.jsx';
 
@@ -103,9 +105,11 @@ export class MultiChartViewer extends Component {
             <div className='ChartPanel__wrapper'>
                 {expandedMode ? <MultiChartToolbarExpanded {...{closeable, viewerId, layoutType, activeItemId}}/> : <MultiChartToolbarStandard {...{viewerId, layoutType, activeItemId}}/>}
                 <ChartPanel key={'toolbar-'+activeItemId} expandedMode={expandedMode} expandable={!expandedMode}  showChart={false} chartId={activeItemId}/>
+
                 <div className='ChartPanel__chartarea--withToolbar'>
                     <MultiItemViewerView {...this.props} {...newProps}/>
                 </div>
+                {expandedMode && closeable && <CloseButton style={{paddingLeft: 10, position: 'absolute', top: 0, left: 0}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
             </div>
         </div>
 

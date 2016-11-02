@@ -8,6 +8,8 @@ import {reduxFlux} from '../../core/ReduxFlux.js';
 
 import * as ChartsCntlr from '../ChartsCntlr.js';
 
+import DELETE from 'html/images/blue_delete_10x10.png';
+
 class ChartPanelView extends Component {
 
     constructor(props) {
@@ -80,8 +82,7 @@ class ChartPanelView extends Component {
     }
 
     render() {
-        const {chartId, chartData, expandable, expandedMode, renderChart, renderOptions, renderToolbar, showToolbar, showChart} = this.props;
-
+        const {chartId, chartData, deletable, expandable, expandedMode, Chart, Options, Toolbar, showToolbar, showChart} = this.props;
 
         if (!chartData) {
             return (<div/>);
@@ -97,8 +98,8 @@ class ChartPanelView extends Component {
                 return (
                     <div className='ChartPanel__container'>
                         <div className='ChartPanel__wrapper'>
-                            {renderToolbar(chartId, expandable, expandedMode, this.toggleOptions)}
-                            <div className={'ChartPanel__chartarea--withToolbar'}>
+                            <Toolbar {...{chartId, expandable, expandedMode, toggleOptions: this.toggleOptions}}/>
+                            <div className='ChartPanel__chartarea--withToolbar'>
                                 {optionsShown &&
                                 <div className='ChartPanelOptions'>
                                     <div style={{height: 14}}>
@@ -107,16 +108,21 @@ class ChartPanelView extends Component {
                                              title='Remove Panel'
                                              onClick={() => this.toggleOptions()}/>
                                     </div>
-                                    {renderOptions(chartId, componentKey)}
-                                </div>
-                                }
+                                    <Options {...{chartId, optionsKey: componentKey}}/>
+                                </div>}
                                 <Resizable id='chart-resizer' onResize={this.onResize}
                                            className='ChartPanel__chartresizer'>
                                     <div style={{overflow:'auto',width:widthPx,height:heightPx}}>
-                                        {knownSize ? renderChart(Object.assign({}, this.props, {widthPx, heightPx})) :
+                                        {knownSize ? <Chart {...Object.assign({}, this.props, {widthPx, heightPx})}/> :
                                             <div/>}
                                     </div>
                                 </Resizable>
+                                { !optionsShown && deletable &&
+                                <img style={{display: 'inline-block', position: 'absolute', top: 29, right: 0, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
+                                     title='Delete this chart'
+                                     src={DELETE}
+                                     onClick={() => {ChartsCntlr.dispatchChartRemove(chartId);}}
+                                />}
                             </div>
                         </div>
                     </div>
@@ -129,10 +135,16 @@ class ChartPanelView extends Component {
                             <Resizable id='chart-resizer' onResize={this.onResize}
                                        className='ChartPanel__chartresizer'>
                                 <div style={{overflow:'auto',width:widthPx,height:heightPx}}>
-                                    {knownSize ? renderChart(Object.assign({}, this.props, {widthPx, heightPx})) :
+                                    {knownSize ? <Chart {...Object.assign({}, this.props, {widthPx, heightPx})}/> :
                                         <div/>}
                                 </div>
                             </Resizable>
+                            {deletable &&
+                            <img style={{display: 'inline-block', position: 'absolute', top: 0, right: 0, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
+                                 title='Delete this chart'
+                                 src={DELETE}
+                                 onClick={() => {ChartsCntlr.dispatchChartRemove(chartId);}}
+                            />}
                         </div>
                     </div>
                 );
@@ -141,7 +153,7 @@ class ChartPanelView extends Component {
             // toolbar and options
             return (
                 <div className='ChartPanel__chartarea'>
-                    {renderToolbar(chartId, expandable, expandedMode, this.toggleOptions)}
+                    <Toolbar {...{chartId, expandable, expandedMode, toggleOptions: this.toggleOptions}}/>
                     <div className='ChartPanel__chartarea--withToolbar'>
                         {optionsShown &&
                         <div className='ChartPanelOptions'>
@@ -151,7 +163,7 @@ class ChartPanelView extends Component {
                                      title='Remove Panel'
                                      onClick={() => this.toggleOptions()}/>
                             </div>
-                            {renderOptions(chartId, componentKey)}
+                            <Options {...{chartId, optionsKey: componentKey}}/>
                         </div>
                         }
                     </div>
@@ -164,13 +176,14 @@ class ChartPanelView extends Component {
 ChartPanelView.propTypes = {
     chartId: PropTypes.string.isRequired,
     chartData: PropTypes.object,
+    deletable: PropTypes.bool,
     expandable: PropTypes.bool,
     expandedMode: PropTypes.bool,
     showToolbar: PropTypes.bool,
     showChart: PropTypes.bool,
-    renderChart: PropTypes.func,
-    renderOptions: PropTypes.func,
-    renderToolbar: PropTypes.func
+    Chart: PropTypes.func,
+    Options: PropTypes.func,
+    Toolbar: PropTypes.func
 };
 
 ChartPanelView.defaultProps = {
@@ -210,12 +223,12 @@ export class ChartPanel extends Component {
         const chartData =  ChartsCntlr.getChartData(chartId);
         if (chartData) {
             const chartType = get(chartData, 'chartType');
-            const {renderChart,renderOptions,renderToolbar,getChartProperties,updateOnStoreChange} = reduxFlux.getChartType(chartType);
+            const {Chart,Options,Toolbar,getChartProperties,updateOnStoreChange} = reduxFlux.getChartType(chartType);
             return {
                 chartId, ...getChartProperties(chartId),
-                renderChart,
-                renderOptions,
-                renderToolbar,
+                Chart,
+                Options,
+                Toolbar,
                 updateOnStoreChange
             };
         } else {
@@ -244,6 +257,7 @@ ChartPanel.propTypes = {
     chartId: PropTypes.string.isRequired,
     expandable: PropTypes.bool,
     expandedMode: PropTypes.bool,
+    deletable: PropTypes.bool,
     showToolbar: PropTypes.bool,
     showChart: PropTypes.bool
 };

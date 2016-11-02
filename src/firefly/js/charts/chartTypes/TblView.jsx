@@ -25,15 +25,21 @@ export function getChartProperties(chartId) {
     const tblId = ChartsCntlr.getRelatedTblIds(chartId)[0];
     const tableModel = TblUtil.getTblById(tblId);
     const tblStatsData = flux.getState()[TableStatsCntlr.TBLSTATS_DATA_KEY][tblId];
-    const deletable = isBoolean(deletable) ? deletable : ChartsCntlr.getNumCharts(tblId) > 1;
-    return {chartId, tblId, tableModel, tblStatsData, chartData, deletable};
+    let deletable = get(chartData, 'deletable');
+    deletable = isBoolean(deletable) ? deletable : ChartsCntlr.getNumCharts(tblId) > 1;
+    const help_id = get(chartData, 'help_id');
+    return {chartId, tblId, tableModel, tblStatsData, chartData, deletable, help_id};
 }
 
 export function updateOnStoreChange(oldChartProperties) {
     const tblId = oldChartProperties.tblId;
-    return TblUtil.isFullyLoaded(tblId) &&
-        (oldChartProperties.tableModel !== TblUtil.getTblById(tblId) ||
-         oldChartProperties.chartData !== ChartsCntlr.getChartData(oldChartProperties.chartId));
+    if (isUndefined(tblId)) {
+        return oldChartProperties.chartData !== ChartsCntlr.getChartData(oldChartProperties.chartId);
+    } else {
+        return TblUtil.isFullyLoaded(tblId) &&
+            (oldChartProperties.tableModel !== TblUtil.getTblById(tblId) ||
+            oldChartProperties.chartData !== ChartsCntlr.getChartData(oldChartProperties.chartId));
+    }
 }
 
 export class FilterEditorWrapper extends React.Component {

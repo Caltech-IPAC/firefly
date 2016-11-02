@@ -5,10 +5,8 @@
 
 import React, {PropTypes} from 'react';
 import {getChartData} from '../ChartsCntlr.js';
-import {LO_VIEW, LO_MODE, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {dispatchChangeViewerLayout, dispatchUpdateCustom, getViewerItemIds, getViewer, getLayoutType, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 
-import {CloseButton} from '../../ui/CloseButton.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import ONE from 'html/images/icons-2014/Images-One.png';
 import GRID from 'html/images/icons-2014/Images-Tiled.png';
@@ -102,9 +100,6 @@ const toolsStyleExpanded= {
     justifyContent: 'space-between'
 };
 
-const closeButtonStyle= {
-    display: 'inline-block'
-};
 
 const viewerTitleStyle= {
     display: 'inline-block',
@@ -116,23 +111,15 @@ const viewerTitleStyle= {
     alignSelf : 'center'
 };
 
-export function MultiChartToolbarExpanded({closeable, viewerId,
+export function MultiChartToolbarExpanded({viewerId,
     layoutType=getLayoutType(getMultiViewRoot(), viewerId),
     activeItemId=getViewer(getMultiViewRoot(), viewerId).customData.activeItemId}) {
 
     const viewerItemIds = getViewerItemIds(getMultiViewRoot(), viewerId);
 
-    const CloseBtn = (
-        <div style={closeButtonStyle}>
-            {closeable && <CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
-        </div>
-    );
-
     if (viewerItemIds.length===1) {
         return (
-            <div style={toolsStyleExpanded}>
-                {CloseBtn}
-            </div>);
+            <div style={toolsStyleExpanded}/>);
     }
 
     var viewerTitle = (
@@ -144,7 +131,7 @@ export function MultiChartToolbarExpanded({closeable, viewerId,
         <div style={toolsStyleExpanded}>
             <div style={{width:'100%', display: 'flex', justifyContent:'space-between'}} className='disable-select'>
                 <div style={{alignSelf:'flex-start', whiteSpace:'nowrap'}}>
-                    {CloseBtn} {viewerTitle}
+                    {viewerTitle}
                 </div>
                 <div style={{alignSelf:'flex-end', whiteSpace:'nowrap', height: 24, paddingBottom:3}}>
                     <div style={{display: 'inline-block', verticalAlign:'top'}}>
@@ -175,7 +162,6 @@ export function MultiChartToolbarExpanded({closeable, viewerId,
 }
 
 MultiChartToolbarExpanded.propTypes= {
-    closeable : PropTypes.bool,
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string,
     activeItemId : PropTypes.string

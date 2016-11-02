@@ -27,7 +27,6 @@ import {getChartProperties, updateOnStoreChange, FilterEditorWrapper} from './Tb
 import ZOOM_IN from 'html/images/icons-2014/24x24_ZoomIn.png';
 import FILTER_IN from 'html/images/icons-2014/24x24_FilterAdd.png';
 import SELECT_ROWS from 'html/images/icons-2014/24x24_Checkmark.png';
-import DELETE from 'html/images/blue_delete_10x10.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import SETTINGS from 'html/images/icons-2014/24x24_GearsNEW.png';
 import ZOOM_ORIGINAL from 'html/images/icons-2014/Zoom1x-24x24-tmp.png';
@@ -39,19 +38,19 @@ import LOADING from 'html/images/gxt/loading.gif';
 
 export const SCATTER_TBLVIEW = {
     id : 'scatter',
-    renderChart,
-    renderOptions,
-    renderToolbar,
+    Chart,
+    Options,
+    Toolbar,
     getChartProperties,
     updateOnStoreChange
 };
 
 
-function renderChart(props) {
-    return <Chart {...props}/>;
+function Chart(props) {
+    return <ChartComp {...props}/>;
 }
 
-class Chart extends React.Component {
+class ChartComp extends React.Component {
 
     constructor(props) {
         super(props);
@@ -71,10 +70,10 @@ class Chart extends React.Component {
 
     render() {
         const {chartId, tblId, tableModel, chartData, widthPx, heightPx} = this.props;
-        if (!TblUtil.isFullyLoaded(tblId) || !chartData) {
-            return null;
+
+        if (!TblUtil.isFullyLoaded(tblId) || !chartData || !heightPx || !widthPx) {
+            return (<div/>);
         }
-        if (!heightPx || !widthPx) { return (<div/>); }
 
         const { isDataReady, data:xyPlotData, options:xyPlotParams} = ChartsCntlr.getChartDataElement(chartId);
 
@@ -114,16 +113,16 @@ class Chart extends React.Component {
     }
 }
 
-Chart.propTypes = {
+ChartComp.propTypes = {
+    chartId: PropTypes.string,
     chartData : PropTypes.object,
     tblId : PropTypes.string,
     tableModel : PropTypes.object,
-    chartId: PropTypes.string,
     widthPx : PropTypes.number,
     heightPx : PropTypes.number
 };
 
-function renderOptions(chartId, optionsKey) {
+function Options({chartId, optionsKey}) {
     if (optionsKey === 'options') {
         const {tblStatsData} = getChartProperties(chartId);
         if (get(tblStatsData,'isColStatsReady')) {
@@ -156,15 +155,19 @@ function renderOptions(chartId, optionsKey) {
     }
 }
 
+Options.propTypes = {
+    chartId: PropTypes.string,
+    optionsKey: PropTypes.string
+};
 
-function renderToolbar(chartId, expandable, expandedMode, toggleOptions) {
-    const {tblId, tableModel, deletable, help_id} = getChartProperties(chartId);
+function Toolbar({chartId, expandable, expandedMode, toggleOptions}) {
+    const {tblId, tableModel, help_id} = getChartProperties(chartId);
     return (
-        <div className='PanelToolbar ChartPanel__toolbar'>
-            <div className='PanelToolbar_group'>
+        <div className={`PanelToolbar ChartPanel__toolbar ${expandedMode?'ChartPanel__toolbar--offsetLeft':''}`}>
+            <div className='PanelToolbar__group'>
                 {renderSelectionButtons(chartId, tblId, tableModel)}
             </div>
-            <div className='PanelToolbar_group'>
+            <div className='PanelToolbar__group'>
                 {displayZoomOriginal(chartId) &&
                 <img className='PanelToolbar__button'
                      title='Zoom out to original chart'
@@ -204,18 +207,18 @@ function renderToolbar(chartId, expandable, expandedMode, toggleOptions) {
                      }}
                 />}
 
-                { help_id && <div style={{display: 'inline-block', position: 'relative', top: -9}}> <HelpIcon helpId={help_id} /> </div>}
-
-                { expandable && !expandedMode && deletable &&
-                <img style={{display: 'inline-block', position: 'relative', top: -9, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
-                     title='Delete this chart'
-                     src={DELETE}
-                     onClick={() => {ChartsCntlr.dispatchChartRemove(chartId);}}
-                />}
+                { help_id && <div style={{display: 'inline-block', position: 'relative', top: 0, alignSelf: 'baseline', padding: 2}}> <HelpIcon helpId={help_id} /> </div>}
             </div>
         </div>
     );
 }
+
+Toolbar.propTypes = {
+    chartId: PropTypes.string,
+    expandable: PropTypes.bool,
+    expandedMode: PropTypes.bool,
+    toggleOptions: PropTypes.func // callback: toggleOptions(optionsKey)
+};
 
 
 function renderSelectionButtons(chartId, tblId, tableModel) {

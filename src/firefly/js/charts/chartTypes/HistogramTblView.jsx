@@ -3,7 +3,7 @@
  */
 
 import {get} from 'lodash';
-import React from 'react';
+import React, {PropTypes} from 'react';
 import * as TblUtil from '../../tables/TableUtil.js';
 
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
@@ -16,7 +16,6 @@ import {HistogramOptions} from '../ui/HistogramOptions.jsx';
 import {Histogram} from '../ui/Histogram.jsx';
 import {getChartProperties, updateOnStoreChange, FilterEditorWrapper} from './TblView.jsx';
 
-import DELETE from 'html/images/blue_delete_10x10.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import SETTINGS from 'html/images/icons-2014/24x24_GearsNEW.png';
 import CLEAR_FILTERS from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
@@ -25,21 +24,20 @@ import LOADING from 'html/images/gxt/loading.gif';
 
 export const HISTOGRAM_TBLVIEW = {
     id : 'histogram',
-    renderChart,
-    renderOptions,
-    renderToolbar,
+    Chart,
+    Options,
+    Toolbar,
     getChartProperties,
     updateOnStoreChange
 };
 
 
 
-function renderChart(props) {
+function Chart(props) {
     const {chartId, tblId, chartData, widthPx, heightPx} = props;
-    if (!TblUtil.isFullyLoaded(tblId) || !chartData) {
-        return null;
+    if (!TblUtil.isFullyLoaded(tblId) || !chartData || !heightPx || !widthPx) {
+        return (<div/>);
     }
-    if (!heightPx || !widthPx) { return (<div/>); }
     const { isDataReady, data:histogramData, options:histogramParams} = ChartsCntlr.getChartDataElement(chartId);
 
     if (isDataReady) {
@@ -71,12 +69,20 @@ function renderChart(props) {
         if (histogramParams) {
             return <div style={{position: 'relative', width: '100%', height: '100%'}}><div className='loading-mask'/></div>;
         } else {
-            return 'Select Histogram Parameters';
+            return <div/>;
         }
     }
 }
 
-function renderOptions(chartId, optionsKey) {
+Chart.propTypes = {
+    chartId: PropTypes.string,
+    chartData : PropTypes.object,
+    tblId : PropTypes.string,
+    widthPx : PropTypes.number,
+    heightPx : PropTypes.number
+};
+
+function Options({chartId, optionsKey}) {
     if (optionsKey === 'options') {
         const {tblStatsData} = getChartProperties(chartId);
         if (get(tblStatsData,'isColStatsReady')) {
@@ -109,12 +115,17 @@ function renderOptions(chartId, optionsKey) {
     }
 }
 
-function renderToolbar(chartId, expandable, expandedMode, toggleOptions) {
-    const {tableModel, deletable, help_id} = getChartProperties(chartId);
+Options.propTypes = {
+    chartId: PropTypes.string,
+    optionsKey: PropTypes.string
+};
+
+function Toolbar({chartId, expandable, expandedMode, toggleOptions}) {
+    const {tableModel, help_id} = getChartProperties(chartId);
     return (
-        <div className='PanelToolbar ChartPanel__toolbar'>
-            <div className='PanelToolbar_group'/>
-            <div className='PanelToolbar_group'>
+        <div className={`PanelToolbar ChartPanel__toolbar ${expandedMode?'ChartPanel__toolbar--offsetLeft':''}`}>
+            <div className='PanelToolbar__group'/>
+            <div className='PanelToolbar__group'>
                 {TblUtil.getFilterCount(tableModel)>0 &&
                 <img className='PanelToolbar__button'
                      title='Remove all filters'
@@ -142,15 +153,16 @@ function renderToolbar(chartId, expandable, expandedMode, toggleOptions) {
                      }}
                 />}
 
-                { help_id && <div style={{display: 'inline-block', position: 'relative', top: -9}}> <HelpIcon helpId={help_id} /> </div>}
+                { help_id && <div style={{display: 'inline-block', position: 'relative', top: 0, alignSelf: 'baseline', padding: 2}}> <HelpIcon helpId={help_id} /> </div>}
 
-                { expandable && !expandedMode && deletable &&
-                <img style={{display: 'inline-block', position: 'relative', top: -9, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
-                     title='Delete this chart'
-                     src={DELETE}
-                     onClick={() => {ChartsCntlr.dispatchChartRemove(chartId);}}
-                />}
             </div>
         </div>
     );
 }
+
+Toolbar.propTypes = {
+    chartId: PropTypes.string,
+    expandable: PropTypes.bool,
+    expandedMode: PropTypes.bool,
+    toggleOptions: PropTypes.func // callback: toggleOptions(optionsKey)
+};
