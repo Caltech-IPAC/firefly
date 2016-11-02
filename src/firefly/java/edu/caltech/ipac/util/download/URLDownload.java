@@ -83,18 +83,7 @@ public class URLDownload {
             URLConnection c = makeConnection(url, cookies, requestHeader, false);
 
             if (c instanceof HttpURLConnection) {
-                HttpURLConnection conn = (HttpURLConnection) c;
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty( "Content-Type", "application/x-www-form-urlencoded" );
-                conn.setRequestProperty( "Content-Length", String.valueOf(postData.length()));
-
-                conn.setDoOutput(true);
-                OutputStream os = conn.getOutputStream();
-                OutputStreamWriter wr = new OutputStreamWriter(os);
-                wr.write(postData);
-                wr.flush();
-                wr.close();
-                return getDataToFile(conn, outfile, dl);//, false, false, false, 0L);
+                return getDataToFile(c, outfile, dl, false, true, true, 0L,postData);
             } else {
                 FailedRequestException fe = new FailedRequestException("Can only do post with http: " + url.toString());
                 logError(url, postData, fe);
@@ -315,7 +304,7 @@ public class URLDownload {
      */
     public static FileData getDataToFile(URLConnection conn, File outfile, boolean uncompress)
             throws FailedRequestException, IOException {
-        return getDataToFile(conn, outfile, null, false, uncompress, true, 0L);
+        return getDataToFile(conn, outfile, null, false, uncompress, true, 0L,null);
     }
 
     /**
@@ -328,8 +317,20 @@ public class URLDownload {
      */
     public static FileData getDataToFile(URLConnection conn, File outfile, DownloadListener dl)
             throws FailedRequestException, IOException {
-        return getDataToFile(conn, outfile, dl, false, true, true, 0L);
+        return getDataToFile(conn, outfile, dl, false, true, true, 0L,null);
     }
+
+    public static FileData getDataToFile(URLConnection conn,
+                                         File outfile,
+                                         DownloadListener dl,
+                                         boolean useSuggestedFilename,
+                                         boolean uncompress,
+                                         boolean onlyIfModified,
+                                         long maxFileSize) throws FailedRequestException, IOException {
+        return getDataToFile(conn, outfile, dl, useSuggestedFilename, uncompress, onlyIfModified, maxFileSize,null);
+    }
+
+
 
     /**
      * @param conn                 the URLConnection
@@ -340,6 +341,9 @@ public class URLDownload {
      * @param useSuggestedFilename if true then use the name from the Content-disposition of the outfile parameter at
      *                             the directory. if false then the outfile parameter specifies the filename
      * @param uncompress           if this data appears to be compressed then uncompress it first
+     * @param onlyIfModified
+     * @param maxFileSize          maximum that can be downloaded
+     * @param postData             If non-null then send as post data
      * @return an array of FileData objects
      * @throws FailedRequestException Stop externally probably by user
      * @throws IOException            any network or file error
@@ -350,16 +354,21 @@ public class URLDownload {
                                          boolean useSuggestedFilename,
                                          boolean uncompress,
                                          boolean onlyIfModified,
-                                         long maxFileSize) throws FailedRequestException,
-            IOException {
+                                         long maxFileSize,
+                                         String postData) throws FailedRequestException, IOException {
         try {
             FileData outFileData;
             FileData retval;
+            int responseCode= 200;
             try {
                 if (conn instanceof HttpURLConnection) {
-                    if (uncompress) conn.setRequestProperty("Accept-Encoding", "gzip, deflate");
+                    HttpURLConnection httpConn= (HttpURLConnection) conn;
+                    if (postData!=null) {
+                        pushPostData(httpConn,postData);
+                    }
+                    if (uncompress) httpConn.setRequestProperty("Accept-Encoding", "gzip, deflate");
                     if (onlyIfModified) {
-                        outFileData = checkAlreadyDownloaded((HttpURLConnection) conn, outfile);
+                        outFileData = checkAlreadyDownloaded(httpConn, outfile);
                         if (outFileData != null) return outFileData;
                     }
                 }
@@ -372,7 +381,8 @@ public class URLDownload {
             //------
             OutputStream out;
             DataInputStream in;
-            logHeader(conn);
+            logHeader(postData, conn);
+            if (conn instanceof HttpURLConnection) responseCode= ((HttpURLConnection)conn).getResponseCode();
             validFileSize(conn, maxFileSize);
             File f = useSuggestedFilename ? makeFile(conn, outfile) : outfile;
             String suggested = getSugestedFileName(conn);
@@ -405,7 +415,7 @@ public class URLDownload {
 
                 in = makeDataInStream(conn);
             }
-            outFileData = new FileData(f, suggested);
+            outFileData = new FileData(f, suggested, true, responseCode);
             out = makeOutStream(f);
             retval = outFileData;
 
@@ -414,6 +424,11 @@ public class URLDownload {
 
             logDownload(retval, conn.getURL().toString());
 
+            if (responseCode>=300 && responseCode<400) {
+                DException de= new DException(outFileData, responseCode, null);
+                throw new FailedRequestException("Network request failed", "Error: "+responseCode, de);
+            }
+
             return retval;
         } catch (IOException e) {
             logError(conn.getURL(), e);
@@ -421,6 +436,17 @@ public class URLDownload {
         }
     }
 
+    private static void pushPostData(HttpURLConnection conn, String postData) throws IOException {
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty( "Content-Type", "application/x-www-form-urlencoded" );
+        conn.setRequestProperty( "Content-Length", String.valueOf(postData.length()));
+        conn.setDoOutput(true);
+        OutputStream os = conn.getOutputStream();
+        OutputStreamWriter wr = new OutputStreamWriter(os);
+        wr.write(postData);
+        wr.flush();
+        wr.close();
+    }
 
     public static byte[] getDataFromURL(URL url, DownloadListener dl)
             throws FailedRequestException,
@@ -477,7 +503,7 @@ public class URLDownload {
                 urlConn.setIfModifiedSince(outfile.lastModified());
                 if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
                     ClientLog.message("Not downloading, already have current version");
-                    retval = new FileData(outfile, getSugestedFileName(urlConn), false);
+                    retval = new FileData(outfile, getSugestedFileName(urlConn), false, HttpURLConnection.HTTP_NOT_MODIFIED);
                 }
             }
         } catch (IllegalStateException e) {
@@ -654,7 +680,13 @@ public class URLDownload {
             if (postData != null) {
                 outStr[i++] = StringUtils.pad(20,"Post Data ") + ": " + postData;
             }
-            outStr[i++] = "----------Received Headers";
+            if (conn instanceof HttpURLConnection) {
+                int responseCode= ((HttpURLConnection)conn).getResponseCode();
+                outStr[i++] = "----------Received Headers, response status code: " + responseCode;
+            }
+            else {
+                outStr[i++] = "----------Received Headers";
+            }
             if (hSet!=null) {
                 for (Iterator j = hSet.iterator(); (j.hasNext()); ) {
                     workBuff = new StringBuffer(100);
@@ -749,12 +781,26 @@ public class URLDownload {
                                           "probably no status line in response headers");
         }
         else {
-            return new DataInputStream(makeInStream(conn));
+            try {
+                return new DataInputStream(makeInStream(conn));
+            }
+            catch (IOException e) {
+                if (conn instanceof HttpURLConnection) {
+                    return new DataInputStream(makeErrStream((HttpURLConnection) conn));
+                }
+                else {
+                    throw e;
+                }
+            }
         }
     }
 
     private static InputStream makeInStream(URLConnection conn) throws IOException {
         return new BufferedInputStream(conn.getInputStream(), BUFFER_SIZE);
+    }
+
+    private static InputStream makeErrStream(HttpURLConnection conn) throws IOException {
+        return new BufferedInputStream(conn.getErrorStream(), BUFFER_SIZE);
     }
 
     private static File makeFile(URLConnection conn, File outfile) {
@@ -778,5 +824,20 @@ public class URLDownload {
         return retval;
     }
 
+
+    public static class DException extends IOException {
+        private FileData fileData;
+        private int responseCode;
+
+        public DException(FileData fd, int responseCode, Throwable cause) {
+            super(cause);
+            this.fileData = fd;
+            this.responseCode= responseCode;
+        }
+
+
+        public FileData getFileData() { return fileData; }
+        public int getResponseCode() { return responseCode; }
+    }
 
 }
