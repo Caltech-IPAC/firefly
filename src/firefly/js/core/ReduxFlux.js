@@ -21,6 +21,9 @@ import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
 import * as ChartsCntlr from '../charts/ChartsCntlr.js';
 import * as TablesCntlr from '../tables/TablesCntlr';
 
+import {chartTypeFactory} from '../charts/ChartType.js';
+import {SCATTER_TBLVIEW} from '../charts/chartTypes/ScatterTblView.jsx';
+import {HISTOGRAM_TBLVIEW} from '../charts/chartTypes/HistogramTblView.jsx';
 import {chartDataTypeFactory} from '../charts/ChartDataType.js';
 import {DATATYPE_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
 import {DATATYPE_HISTOGRAM} from '../charts/dataTypes/HistogramCDT.js';
@@ -106,6 +109,8 @@ const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,Dis
                                                      Catalog, WebGrid, RegionPlot, MarkerTool, FootprintTool);
 
 const cdtFactory= chartDataTypeFactory([DATATYPE_XYCOLS, DATATYPE_HISTOGRAM]);
+const chartsFactory= chartTypeFactory([SCATTER_TBLVIEW, HISTOGRAM_TBLVIEW]);
+
 
 /**
  * A collection of reducers keyed by the node's name under the root.
@@ -331,6 +336,17 @@ function registerChartDataType(chartDataType) {
     cdtFactory.addChartDataType(chartDataType);
 }
 
+/**
+ *
+ * @param {ChartType} chartType
+ */
+function registerChartType(chartType) {
+    chartsFactory.addChartDataType(chartType);
+}
+
+function getChartType(id) {
+    return chartsFactory.getChartType(id);
+}
 
 export var reduxFlux = {
     registerCreator,
@@ -340,6 +356,8 @@ export var reduxFlux = {
     process,
     addListener,
     registerChartDataType,
+    registerChartType,
+    getChartType,
     registerDrawLayer,
     createDrawLayer,
     getDrawLayerFactory,

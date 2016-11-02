@@ -1,3 +1,17 @@
+.ChartPanel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: hidden;
+    border: 2px solid transparent;
+}
+
+.ChartPanel--active {
+    border: 2px solid orange;
+}
+
 .ChartPanel__container {
     display: flex;
     flex: auto;
@@ -11,7 +25,6 @@
     background-color: #c8c8c8;
     flex-grow: 1;
     border: 1px solid #b3b3b3;
-    padding: 0 3px 3px 3px;
 }
 
 .ChartPanel__toolbar {
@@ -22,7 +35,19 @@
     right: 0;
 }
 
+.ChartPanel__toolbar--offsetLeft {
+    left: 100px;
+}
+
 .ChartPanel__chartarea {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0
+}
+
+.ChartPanel__chartarea--withToolbar {
     position: absolute;
     top: 29px;
     bottom: 0;

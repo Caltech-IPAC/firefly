@@ -143,6 +143,11 @@ export function ExpandedTools({visRoot,closeFunc}) {
             plotTitle= (<div style={gridPlotTitleStyle}>Tiled View</div>);
         }
     }
+    const getPlotTitle = (plotId) => {
+        var plot= primePlot(visRoot,plotId);
+        return plot ? plot.title : '';
+    };
+
     return (
         <div>
             <div style={{display: 'flex', flexWrap:'wrap',paddingBottom: 2, borderBottom: '1px solid rgba(0,0,0,.2)' }}>
@@ -157,9 +162,13 @@ export function ExpandedTools({visRoot,closeFunc}) {
                 <div style={{paddingBottom:5, alignSelf:'flex-end', whiteSpace:'nowrap'}}>
                     <WhichView  visRoot={visRoot}/>
                     {createOptions(expandedMode,singleAutoPlay, visRoot, plotIdAry)}
-                    <PagingControl activePlotId={activePlotId}
-                                   visRoot={visRoot}
-                                   expandedMode={expandedMode} />
+                    <PagingControl
+                        viewerItemIds={getExpandedViewerItemIds(getMultiViewRoot())}
+                        activeItemId={activePlotId}
+                        isPagingMode={expandedMode===ExpandType.SINGLE}
+                        getItemTitle={getPlotTitle}
+                        onActiveItemChange={dispatchChangeActivePlotView}
+                    />
                 </div>
             </div>
         </div>
@@ -225,34 +234,31 @@ const controlStyle= {
 };
 
 
-function pTitle(begin,visRoot,plotId) {
-    var plot= primePlot(visRoot,plotId);
-    return plot ? begin+plot.title : '';
+function pTitle(begin,title) {
+    return title ? begin+title : '';
 }
 
 
 
-function PagingControl({visRoot,activePlotId, expandedMode}) {
+export function PagingControl({viewerItemIds,activeItemId,isPagingMode,getItemTitle,onActiveItemChange}) {
 
-    const plotIdAry= getExpandedViewerItemIds(getMultiViewRoot());
+    if (!activeItemId || viewerItemIds.length<2 || !isPagingMode) return <div style={controlStyle}/>;
 
-    if (!activePlotId || plotIdAry.length<2 || expandedMode!==ExpandType.SINGLE) return <div style={controlStyle}></div>;
-
-    const cIdx= plotIdAry.indexOf(activePlotId);
-    const nextIdx= cIdx===plotIdAry.length-1 ? 0 : cIdx+1;
-    const prevIdx= cIdx ? cIdx-1 : plotIdAry.length-1;
+    const cIdx= viewerItemIds.indexOf(activeItemId);
+    const nextIdx= cIdx===viewerItemIds.length-1 ? 0 : cIdx+1;
+    const prevIdx= cIdx ? cIdx-1 : viewerItemIds.length-1;
 
 
 
-    const dots= plotIdAry.map( (plotId,idx) =>
+    const dots= viewerItemIds.map( (plotId,idx) =>
         idx===cIdx ?
             <img src={ACTIVE_DOT} className='control-dots'
-                 title={pTitle('Active Plot: ', visRoot,plotId)}
+                 title={pTitle('Active Plot: ', getItemTitle(plotId))}
                  key={idx}/>  :
             <img src={INACTIVE_DOT} className='control-dots'
-                 title={pTitle('Display: ', visRoot,plotId)}
+                 title={pTitle('Display: ', getItemTitle(plotId))}
                  key={idx}
-                  onClick={() => dispatchChangeActivePlotView(plotId)}/>);
+                  onClick={() => onActiveItemChange(plotId)}/>);
 
     const leftTitleStyle= {
         // display:'inline-block',
@@ -263,7 +269,7 @@ function PagingControl({visRoot,activePlotId, expandedMode}) {
         verticalAlign:'bottom',
         cursor:'pointer'
     };
-    if (plotIdAry.length===2) {
+    if (viewerItemIds.length===2) {
         leftTitleStyle.visibility='hidden';
         leftImageStyle.visibility='hidden';
     }
@@ -273,25 +279,25 @@ function PagingControl({visRoot,activePlotId, expandedMode}) {
         <div style={controlStyle} >
             <div style= {{display: 'flex', flexDirection: 'row', alignItems:'center'}}>
                 <img style={leftImageStyle} src={PAGE_LEFT}
-                     title={pTitle('Previous: ',visRoot,plotIdAry[prevIdx])}
-                     onClick={() => dispatchChangeActivePlotView(plotIdAry[prevIdx])}
+                     title={pTitle('Previous: ',getItemTitle(viewerItemIds[prevIdx]))}
+                     onClick={() => onActiveItemChange(viewerItemIds[prevIdx])}
                 />
                 <a style={leftTitleStyle} className='ff-href text-nav-controls'
-                   title={pTitle('Previous: ',visRoot,plotIdAry[prevIdx])}
-                     onClick={() => dispatchChangeActivePlotView(plotIdAry[prevIdx])} >
-                    {pTitle('',visRoot,plotIdAry[prevIdx])}
+                   title={pTitle('Previous: ',getItemTitle(viewerItemIds[prevIdx]))}
+                     onClick={() => onActiveItemChange(viewerItemIds[prevIdx])} >
+                    {getItemTitle(viewerItemIds[prevIdx])}
                 </a>
-                <div style={{flex: '1 1 auto'}}> </div>
+                <div style={{flex: '1 1 auto'}}/>
 
                 <a style={rightTitleStyle} className='ff-href text-nav-controls'
-                   title={pTitle('Next: ', visRoot,plotIdAry[nextIdx])}
-                   onClick={() => dispatchChangeActivePlotView(plotIdAry[nextIdx])} >
-                    {pTitle('',visRoot,plotIdAry[nextIdx])}
+                   title={pTitle('Next: ', getItemTitle(viewerItemIds[nextIdx]))}
+                   onClick={() => onActiveItemChange(viewerItemIds[nextIdx])} >
+                    {getItemTitle(viewerItemIds[nextIdx])}
                 </a>
                 <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right'}}
-                     title={pTitle('Next: ', visRoot,plotIdAry[nextIdx])}
+                     title={pTitle('Next: ', getItemTitle(viewerItemIds[nextIdx]))}
                      src={PAGE_RIGHT}
-                     onClick={() => dispatchChangeActivePlotView(plotIdAry[nextIdx])}
+                     onClick={() => onActiveItemChange(viewerItemIds[nextIdx])}
                 />
             </div>
             <div style={{textAlign:'center'}}>
@@ -305,7 +311,9 @@ function PagingControl({visRoot,activePlotId, expandedMode}) {
 }
 
 PagingControl.propTypes= {
-    activePlotId: PropTypes.string,
-    expandedMode: PropTypes.object.isRequired,
-    visRoot : PropTypes.object.isRequired
+    viewerItemIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+    activeItemId: PropTypes.string,
+    isPagingMode: PropTypes.bool.isRequired,
+    getItemTitle : PropTypes.func.isRequired,
+    onActiveItemChange : PropTypes.func.isRequired
 };

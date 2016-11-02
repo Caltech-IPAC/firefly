@@ -4,92 +4,40 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import shallowequal from 'shallowequal';
-import {isEqual} from 'lodash';
 
+import {LO_VIEW, LO_MODE, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
+import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 
-import {flux} from '../../Firefly.js';
-
-import {LO_VIEW, LO_MODE, dispatchSetLayoutMode, getExpandedMode} from '../../core/LayoutCntlr.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
-
-import {ChartsTableViewPanel} from './ChartsTableViewPanel.jsx';
-import {getExpandedChartProps, getChartIdsInGroup} from '../ChartsCntlr.js';
-import {getActiveTableId} from '../../tables/TableUtil.js';
+import {ChartPanel} from './ChartPanel.jsx';
+import {MultiChartViewer} from './MultiChartViewer.jsx';
 
 
-function nextState(props) {
-
-    const {closeable, chartId} = props;
-    let {tblId} = props;
-    tblId = (tblId || chartId) ? tblId : getActiveTableId();
-
-    const currentCharts = chartId ? [chartId] : getChartIdsInGroup(tblId);
-    const defaultCharts = getChartIdsInGroup('default');
-
-    const expandedMode = props.expandedMode && getExpandedMode() === LO_VIEW.xyPlots;
-    const chartProps = expandedMode ? getExpandedChartProps() : {};
-
-    return Object.assign({expandedMode, closeable, currentCharts, defaultCharts}, chartProps);
-}
-
+/**
+ * Default viewer
+ */
 export class ChartsContainer extends Component {
     constructor(props) {
         super(props);
-        this.state = nextState(this.props);
-    }
 
-    componentWillReceiveProps(np) {
-        if (this.iAmMounted && !shallowequal(this.props, np)) {
-            this.setState(nextState(np));
-        }
-    }
-
-    componentDidMount() {
-        this.removeListener= flux.addListener(() => this.storeUpdate());
-        this.iAmMounted = true;
-    }
-
-    componentWillUnmount() {
-        this.iAmMounted = false;
-        this.removeListener && this.removeListener();
     }
 
     shouldComponentUpdate(nProps, nState) {
         return sCompare(this, nProps, nState);
     }
 
-
-    storeUpdate() {
-        if (this.iAmMounted) {
-            const expandedMode = this.props.expandedMode && getExpandedMode() === LO_VIEW.xyPlots;
-            if (expandedMode !== this.state.expandedMode || !(this.props.chartId||this.props.tblId)) {
-                const ns = nextState(this.props);
-                if (!isEqual(this.state.currentCharts, ns.currentCharts) ||
-                    !isEqual(this.state.defaultCharts, ns.defaultCharts) ) {
-                    this.setState(nextState(this.props));
-                }
-            }
-        }
-    }
-
     render() {
-        const {currentCharts, defaultCharts, expandedMode, closeable} = this.state;
-        return expandedMode ? <ExpandedView key='chart-expanded' closeable={closeable} {...this.props} {...this.state}/> :
-            (
-                <div style={{ display: 'flex',  height: '100%', flexGrow: 1, flexDirection: 'row', overflow: 'hidden'}}>
-                    {currentCharts.map((c) => {
-                        return (
-                            <ChartsTableViewPanel key={c} expandable={true} chartId={c}/>
-                        );
-                    })}
-                    {defaultCharts.map((c) => {
-                        return (
-                            <ChartsTableViewPanel key={'default-'+c} expandable={true} chartId={c}/>
-                        );
-                    })}
-                </div>
+        const {chartId, expandedMode, closeable} = this.props;
+
+        if (chartId) {
+            return expandedMode ?
+                <ExpandedView key='chart-expanded' closeable={closeable} chartId={chartId}/> :
+                <ChartPanel key={chartId} expandable={true} chartId={chartId}/>;
+        } else {
+            return (
+                <MultiChartViewer closeable={closeable} viewerId={DEFAULT_PLOT2D_VIEWER_ID} expandedMode={expandedMode}/>
             );
+        }
     }
 }
 
@@ -101,21 +49,17 @@ ChartsContainer.propTypes = {
 };
 
 function ExpandedView(props) {
-    const {defaultCharts, closeable, chartId} = props;
+    const {closeable, chartId} = props;
 
     return (
-        <div style={{ display: 'flex', height: '100%', flexGrow: 1, flexDirection: 'column', overflow: 'hidden'}}>
-            <div style={{marginBottom: 3}}>
-                {closeable && <CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
-            </div>
-            {chartId && <ChartsTableViewPanel expandedMode={true} expandable={false} {...props}/>}
-            {defaultCharts.map((c) => {
-                if (chartId !== c) {
-                    return (
-                        <ChartsTableViewPanel key={'default-'+c} expandedMode={true} expandable={false} {...props} chartId={c}/>
-                    );
-                }
-            })}
+        <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0}}>
+            <ChartPanel key={'expanded-'+chartId} expandedMode={true} expandable={false} chartId={chartId}/>
+            {closeable && <CloseButton style={{position: 'absolute', top: 0, left: 0, paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
         </div>
     );
 }
+
+ExpandedView.propTypes = {
+    closeable: PropTypes.bool,
+    chartId: PropTypes.string
+};
