@@ -275,9 +275,10 @@ function makeTileDrawers(pv,viewPortWidth, viewPortHeight, scrollX, scrollY ) {
             key={'TileDrawer:'+pv.plotId}
             x={scrollX} y={scrollY}
             width={viewPortWidth} height={viewPortHeight}
-            plot={plot} />
-
-        );
+            plot={plot}
+            rootPlot={plot}
+        />
+    );
     const drawers= pv.overlayPlotViews.filter( (opv) => opv.visible && opv.plot).map( (opv) => {
         return (
             <TileDrawer
@@ -285,7 +286,9 @@ function makeTileDrawers(pv,viewPortWidth, viewPortHeight, scrollX, scrollY ) {
                 key={'TileDrawer-overlay:'+opv.imageOverlayId}
                 x={scrollX} y={scrollY}
                 width={viewPortWidth} height={viewPortHeight}
-                plot={opv.plot} />
+                plot={opv.plot}
+                rootPlot={plot}
+            />
         );
     });
     drawers.unshift(rootDrawer);

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import React, {Component, PropTypes} from 'react';
-import {omit,pick} from 'lodash';
+// import {omit,pick} from 'lodash';
 // import shallowequal from 'shallowequal';
 import CsysConverter from '../CsysConverter.js';
 import sCompare from 'react-addons-shallow-compare';
@@ -19,12 +19,6 @@ const containerStyle={position:'absolute',
                       right: 0,
                       background: BACKGROUND_STYLE
 };
-
-// const exPlot=['plot'];
-// const pickPlot=['serverImages', 'plotState', 'zoomFactor', 'percentOpaque', 'imageScaleFactor'];
-// const exFromPlotPlot=[ 'attributes', 'viewPort'];
-
-
 
 
 export class TileDrawer extends Component {
@@ -43,7 +37,7 @@ export class TileDrawer extends Component {
     // }
 
     render() {
-        const { x, y, width, height, plot, opacity}= this.props;
+        const { x, y, width, height, plot, rootPlot, opacity}= this.props;
         var tileData=plot.serverImages;
         var tileZoomFactor=plot.plotState.getZoomLevel();
         var zoomFactor=plot.zoomFactor;
@@ -56,7 +50,7 @@ export class TileDrawer extends Component {
         else {
             return (
                 <div className='tile-drawer'  style={style}>
-                    {getTilesForArea(x,y,width,height,tileData,plot,scale,opacity)}
+                    {getTilesForArea(x,y,width,height,tileData,plot,scale,opacity, rootPlot)}
                 </div>
             );
         }
@@ -71,6 +65,7 @@ TileDrawer.propTypes= {
     width : PropTypes.number.isRequired,
     height : PropTypes.number.isRequired,
     plot : PropTypes.object.isRequired,
+    rootPlot : PropTypes.object.isRequired,
     opacity : PropTypes.number.isRequired,
 };
 
@@ -86,8 +81,8 @@ function makeScreenToVPConverter(plot) {
 
 
 
-function getTilesForArea(x,y,width,height,tileData,plot,scale,opacity) {
-    const screenToVP= makeScreenToVPConverter(plot);
+function getTilesForArea(x,y,width,height,tileData,plot,scale,opacity, rootPlot) {
+    const screenToVP= makeScreenToVPConverter(rootPlot);
 
     return tileData.images
         .filter( (tile) => isTileVisible(tile,x,y,width,height,scale))
