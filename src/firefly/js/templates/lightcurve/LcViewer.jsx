@@ -226,8 +226,9 @@ function onSearchSubmit(request) {
     } else if ( get(request, PEAK_TABLE) ) {
         treq = TblUtil.makeFileRequest('Peak Table', request[PEAK_TABLE], null, {tbl_id:PEAK_TABLE});
         treq.tblType='notACatalog';
+        xyPlotParams = {x: {columnOrExpr: 'Period', options: 'log'}, y: {columnOrExpr: 'Power'}};
     }
-    if (treq != null) {
+    if (treq !== null) {
         dispatchTableSearch(treq, {removable: false});
         dispatchHideDropDown();
         dispatchInitFieldGroup('LC_FORM');
