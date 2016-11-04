@@ -227,9 +227,9 @@ function installTiles(state, action) {
 
 
 function processScroll(state,action) {
-    const {plotId,scrollPt}= action.payload;
+    const {plotId,scrollPt, disableBoundCheck}= action.payload;
     var {plotViewAry, plotGroupAry, wcsMatchType, mpwWcsPrimId}= state;
-    plotViewAry= PlotView.updatePlotGroupScrollXY(state,plotId,plotViewAry, plotGroupAry,scrollPt);
+    plotViewAry= PlotView.updatePlotGroupScrollXY(state,plotId,plotViewAry, plotGroupAry,scrollPt, !disableBoundCheck);
 
     if (wcsMatchType && isInSameGroup(state, plotId, mpwWcsPrimId)) {
         mpwWcsPrimId= plotId;

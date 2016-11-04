@@ -472,10 +472,11 @@ export function dispatchCrop({plotId, imagePt1, imagePt2, cropMultiAll, dispatch
  * @param {Object}  p
  * @param {string} p.plotId
  * @param {Object} p.scrollPt a new point to scroll
+ * @param {Object} p.disableBoundCheck
  * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
-export function dispatchProcessScroll({plotId,scrollPt, dispatcher= flux.process}) {
-    dispatcher({type: PROCESS_SCROLL, payload: {plotId, scrollPt} });
+export function dispatchProcessScroll({plotId,scrollPt, disableBoundCheck=false, dispatcher= flux.process}) {
+    dispatcher({type: PROCESS_SCROLL, payload: {plotId, scrollPt,disableBoundCheck} });
 }
 
 
