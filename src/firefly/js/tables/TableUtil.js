@@ -759,3 +759,7 @@ export function isTableUsingRadians(tableOrMeta) {
     const tableMeta= tableOrMeta.tableMeta || tableOrMeta;
     return has(tableMeta, 'HIERARCH.AFW_TABLE_VERSION');
 }
+
+export function createErrorTbl(tbl_id, error) {
+    return {tbl_id, error};
+}

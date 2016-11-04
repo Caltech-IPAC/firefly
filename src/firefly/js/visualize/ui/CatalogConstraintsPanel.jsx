@@ -4,20 +4,20 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {isEmpty, get, merge} from 'lodash';
+import {isEmpty, get, merge, isNil, isArray, cloneDeep, set, has} from 'lodash';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import {fieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
-import {doFetchTable, getColumnIdx, getTblById} from '../../tables/TableUtil.js';
+import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {fetchTable} from '../../rpc/SearchServicesJson.js';
+import {getColumnIdx, getTblById} from '../../tables/TableUtil.js';
 import {BasicTableView} from '../../tables/ui/BasicTableView.jsx';
-import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
-import {InputAreaFieldConnected} from '../../ui/InputAreaField.jsx';
 import {createLinkCell, createInputCell} from '../../tables/ui/TableRenderer.js';
 import * as TblCntlr from '../../tables/TablesCntlr.js';
 import * as TblUtil from '../../tables/TableUtil.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {FilterInfo, FILTER_TTIPS} from '../../tables/FilterInfo.js';
-import {isNil, isArray, cloneDeep, set} from 'lodash';
-import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
+import {InputAreaFieldConnected} from '../../ui/InputAreaField.jsx';
+import {fieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
 import {LSSTDDPID} from './LSSTCatalogSelectViewPanel.jsx';
 const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char', width: 10};
 
@@ -37,6 +37,7 @@ function getTblId(catName, dd_short) {
 /**
  * @summary reest table constraints state
  * @param {string} gkey
+ * @param {string} fieldKey
  */
 function resetConstraints(gkey, fieldKey) {
     const value = {constraints: '', selcols: '', filters: {}, errorConstraints:''};
@@ -86,6 +87,7 @@ export class CatalogConstraintsPanel extends React.Component {
 
     render() {
         const {tableModel} = this.state;
+        const {error} = tableModel || {};
         const {catname, dd_short, fieldKey, showFormType=true, createDDRequest, groupKey} = this.props;
 
         var resetButton = () => {
@@ -126,12 +128,12 @@ export class CatalogConstraintsPanel extends React.Component {
                             margin:'0px 10px 5px 5px', padding:'0 0 0 10px',
                             border:'1px solid #a3aeb9'}}>
                     <div style={{display:'flex', flexDirection:'row', padding:'5px 5px 0'}}>
-                        {showFormType && formTypeList()}
-                        {resetButton()}
+                        {!error && showFormType && formTypeList()}
+                        {!error && resetButton()}
                     </div>
                     <div>
                         <TablePanelConnected {...{tableModel, fieldKey}} />
-                        {renderSqlArea()}
+                        {!error && renderSqlArea()}
                     </div>
                 </div>
             </div>
@@ -165,8 +167,7 @@ export class CatalogConstraintsPanel extends React.Component {
         const request = createDDRequest(); //Fetch DD master table
         const urlDef = get(FieldGroupUtils.getGroupFields(this.props.groupKey), 'cattable.coldef', 'null');
 
-
-        doFetchTable(request).then((tableModel) => {
+        fetchTable(request).then((tableModel) => {
             const tableModelFetched = tableModel;
             tableModelFetched.tbl_id = tblid;
             addConstraintColumn(tableModelFetched, this.props.groupKey);
@@ -180,7 +181,11 @@ export class CatalogConstraintsPanel extends React.Component {
             TblCntlr.dispatchTableReplace(tableModel);
             this.setState({tableModel: tableModelFetched});
         }).catch((reason) => {
-                console.error(reason);
+                console.log(reason.message);
+                const errTable = TblUtil.createErrorTbl(tblid, `Catalog Fetch Error: ${reason.message}`);
+
+                TblCntlr.dispatchTableReplace(errTable);
+                this.setState({tableModel: errTable});
             }
         );
     }
@@ -359,8 +364,9 @@ class ConstraintPanel extends Component {
         const {tableModel, onTableChanged} = this.props;
         const tbl_ui_id = tableModel.tbl_id + '-ui';
         const tbl = getTblById(tableModel.tbl_id);
-        const {columns, data} = get(tbl, 'tableData');
-        const selectInfoCls = SelectInfo.newInstance(tbl.selectInfo, 0);
+        const {columns, data} = get(tbl, 'tableData', {});
+        const selectInfoCls = has(tbl, 'selectInfo') && SelectInfo.newInstance(tbl.selectInfo, 0);
+        const totalCol = columns ? (columns.length-1) : 0;
 
         //const {tableconstraints} = FieldGroupUtils.getGroupFields(groupKey);
         //console.log('constraint: ' + tableconstraints.value.constraints + ' errorConstraints: ' + tableconstraints.value.errorConstraints);
@@ -383,6 +389,7 @@ class ConstraintPanel extends Component {
                                     currentPage={1}
                                     hlRowIdx={0}
                                     key={tableModel.tbl_id}
+                                    error={tableModel.error}
                                     callbacks={
                                         {
                                            onRowSelect: updateRowSelected(tableModel.tbl_id, onTableChanged),
@@ -395,7 +402,7 @@ class ConstraintPanel extends Component {
                                                 { cellRenderer:
                                                     createLinkCell(
                                                         {
-                                                            hrefColIdx: tableModel.tableData.columns.length-1
+                                                            hrefColIdx: totalCol
                                                         }
                                                     )
                                                 },

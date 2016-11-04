@@ -139,7 +139,7 @@ export function highlightRow(action) {
             TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
                 dispatch( {type:TABLE_HIGHLIGHT, payload: tableModel} );
             }).catch( (error) => {
-                dispatch({type: TABLE_HIGHLIGHT, payload: createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
+                dispatch({type: TABLE_HIGHLIGHT, payload: TblUtil.createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
             });
         }
     };
@@ -355,6 +355,3 @@ export function* doOnTblLoaded({tbl_id, callback}) {
     callback && callback(TblUtil.getTblInfoById(tbl_id));
 }
 
-function createErrorTbl(tbl_id, error) {
-    return {tbl_id, error};
-}
