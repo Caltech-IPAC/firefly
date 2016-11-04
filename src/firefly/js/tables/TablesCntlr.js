@@ -157,7 +157,7 @@ export function tableFetch(action) {
             TblUtil.doFetchTable(request, hlRowIdx).then ( (tableModel) => {
                 dispatch( {type: TABLE_UPDATE, payload: tableModel} );
             }).catch( (error) => {
-                dispatch({type: TABLE_UPDATE, payload: createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
+                dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
             });
         }
     };
@@ -347,7 +347,7 @@ export function* doOnTblLoaded({tbl_id, callback}) {
             hasData = hasData || get(tableModel, 'tableData.columns.length');
             if (get(tableModel, 'error')) {
                 // there was an error loading this table.
-                callback(createErrorTbl(tbl_id, tableModel.error));
+                callback(TblUtil.createErrorTbl(tbl_id, tableModel.error));
                 return;
             }
         }
