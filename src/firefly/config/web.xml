@@ -40,6 +40,8 @@
         <url-pattern>*.js</url-pattern>
         <url-pattern>/servlet/FireFly_PropertyDownload</url-pattern>
         <url-pattern>/search/json</url-pattern>
+        <url-pattern>/sticky/CmdSrv</url-pattern>
+        <url-pattern>/sticky/firefly/events</url-pattern>
     </filter-mapping>
 
 
