@@ -30,9 +30,6 @@ export function* syncCharts() {
                         ChartsCntlr.updateChartData(chartId, tblId);
                     }
                 });
-                if (action.type === ChartsCntlr.CHART_ADD) {
-                    dispatchAddViewerItems(DEFAULT_PLOT2D_VIEWER_ID, [chartId], PLOT2D);
-                }
                 break;
             }
             case ChartsCntlr.CHART_REMOVE:
@@ -41,9 +38,6 @@ export function* syncCharts() {
                 dispatchRemoveViewerItems(DEFAULT_PLOT2D_VIEWER_ID, [chartId]);
                 break;
             }
-            case TablesCntlr.TBL_RESULTS_ACTIVE:
-                updateDefaultViewer();
-                break;
             case TablesCntlr.TABLE_LOADED:
                 const {tbl_id} = action.payload;
                 if (ChartsCntlr.getNumCharts(tbl_id, true)>0) {  // has related mounted charts
@@ -57,6 +51,22 @@ export function* syncCharts() {
         }
     }
 }
+
+/**
+ * This saga makes synchronizes the default chart viewer with the active table
+ */
+export function* syncChartViewer() {
+    while (true) {
+        const action = yield take([ChartsCntlr.CHART_ADD, TablesCntlr.TBL_RESULTS_ACTIVE]);
+        switch (action.type) {
+            case ChartsCntlr.CHART_ADD:
+            case TablesCntlr.TBL_RESULTS_ACTIVE:
+                updateDefaultViewer();
+                break;
+        }
+    }
+}
+
 
 function updateDefaultViewer() {
     const tblId = TableUtil.getActiveTableId();

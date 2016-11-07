@@ -26,6 +26,7 @@ import {FileUpload} from '../../ui/FileUpload.jsx';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
+import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import * as TblUtil from '../../tables/TableUtil.js';
 import {showPhaseFoldingPopup} from './LcPhaseFoldingPopup.jsx';
 
@@ -40,6 +41,7 @@ export class LcViewer extends Component {
         super(props);
         this.state = this.getNextState();
         dispatchAddSaga(lcManager);
+        dispatchAddSaga(syncChartViewer);
     }
 
     getNextState() {

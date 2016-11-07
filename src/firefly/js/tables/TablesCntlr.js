@@ -337,7 +337,7 @@ function tblResultsAdded(action) {
             if (!TblUtil.getTableInGroup(tbl_id, options.tbl_group)) {
                 tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
                 dispatch({type: TBL_RESULTS_ADDED, payload: {tbl_id, title, tbl_ui_id, options}});
-                dispatchActiveTableChanged(tbl_id, options.tbl_group);
+                dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:() => dispatchActiveTableChanged(tbl_id, options.tbl_group)});
             }
         }
     };
