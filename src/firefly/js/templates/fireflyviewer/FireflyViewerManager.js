@@ -7,11 +7,10 @@ import {get, filter, omitBy, isNil, isEmpty} from 'lodash';
 
 import {LO_VIEW, LO_MODE, SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo, dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 import {clone} from '../../util/WebUtil.js';
-import {findGroupByTblId, getTblIdsByGroup,getActiveTableId, getTableInGroup} from '../../tables/TableUtil.js';
+import {findGroupByTblId, getTblIdsByGroup,getActiveTableId} from '../../tables/TableUtil.js';
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
-import {CHART_ADD, CHART_REMOVE, getNumCharts, dispatchChartAdd} from '../../charts/ChartsCntlr.js';
-import {getDefaultXYPlotOptions, DT_XYCOLS} from '../../charts/dataTypes/XYColsCDT.js';
-import {SCATTER} from '../../charts/ChartUtil.js';
+import {CHART_ADD, CHART_REMOVE} from '../../charts/ChartsCntlr.js';
+
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
 import {isMetaDataTable, isCatalogTable} from '../../metaConvert/converterUtils.js';
 import {META_VIEWER_ID} from '../../visualize/ui/TriViewImageSection.jsx';
@@ -144,24 +143,6 @@ function handleLayoutChanges(action) {
 function handleNewTable(action, images, showImages, showTables, coverageLockedOn) {
 
     const {tbl_id} = action.payload;
-
-    // check if a default chart needs to be added
-    if (getNumCharts(tbl_id) === 0) {
-        // how do I know the default chart should be added?
-        // add a default chart if the group is main
-        if (getTableInGroup(tbl_id, 'main')) {
-            // default chart is xy plot of coordinate columns or first two numeric columns
-            const defaultOptions = getDefaultXYPlotOptions(tbl_id);
-            if (defaultOptions) {
-                dispatchChartAdd({
-                    chartId: 'xyplot-' + tbl_id,
-                    chartType: SCATTER,
-                    groupId: tbl_id,
-                    chartDataElements: [{tblId: tbl_id, type: DT_XYCOLS, options: defaultOptions}]
-                });
-            }
-        }
-    }
 
     // check for catalog or meta images
     if (!showTables) return [showImages, images, coverageLockedOn];        // ignores this if table is not visible

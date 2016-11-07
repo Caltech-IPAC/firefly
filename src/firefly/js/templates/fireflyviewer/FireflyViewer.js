@@ -18,7 +18,7 @@ import {TriViewPanel} from './TriViewPanel.jsx';
 import {VisHeader} from '../../visualize/ui/VisHeader.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {launchImageMetaDataSega} from '../../visualize/ui/TriViewImageSection.jsx';
-import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
+import {syncChartViewer, addDefaultScatter} from '../../visualize/saga/ChartsSync.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 
 // import {deepDiff} from '../util/WebUtil.js';
@@ -45,6 +45,7 @@ export class FireflyViewer extends Component {
         this.state = this.getNextState();
         dispatchAddSaga(layoutManager,{views: props.views});
         dispatchAddSaga(syncChartViewer);
+        dispatchAddSaga(addDefaultScatter);
     }
 
     getNextState() {
