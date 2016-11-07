@@ -59,7 +59,7 @@ const FIRST_CDEL_ID = '0'; // first data element id (if missing)
  *  @function dispatchChartAdd
  *  @memberof firefly.action
  */
-export function dispatchChartAdd({chartId, chartType, chartDataElements, groupId='main', deletable, help_id, mounted=0, dispatcher= flux.process}) {
+export function dispatchChartAdd({chartId, chartType, chartDataElements, groupId='main', deletable, help_id, mounted=undefined, dispatcher= flux.process}) {
     dispatcher({type: CHART_ADD, payload: {chartId, chartType, chartDataElements, groupId, deletable, help_id, mounted}});
 }
 
@@ -370,11 +370,13 @@ function reduceData(state={}, action={}) {
     switch (action.type) {
         case (CHART_ADD) :
         {
-            const {chartId, chartType, chartDataElements, ...rest}  = action.payload;
-
+            const {chartId, chartType, chartDataElements, mounted, ...rest}  = action.payload;
+            // if a chart is replaced (added with the same id) mounted should not change
+            const nMounted = isUndefined(mounted) ? get(state, [chartId, 'mounted']) : mounted;
             state = updateSet(state, chartId,
                 omitBy({
                     chartType,
+                    mounted: nMounted,
                     chartDataElements: chartDataElementsToObj(chartDataElements),
                     ...rest
                 }, isUndefined));

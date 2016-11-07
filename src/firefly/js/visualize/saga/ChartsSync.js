@@ -9,6 +9,9 @@ import * as TableStatsCntlr from '../../charts/TableStatsCntlr.js';
 import * as TableUtil from '../../tables/TableUtil.js';
 import * as ChartsCntlr from '../../charts/ChartsCntlr.js';
 
+import {getDefaultXYPlotOptions, DT_XYCOLS} from '../../charts/dataTypes/XYColsCDT.js';
+import {SCATTER} from '../../charts/ChartUtil.js';
+
 import {PLOT2D, DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchRemoveViewerItems, getViewerItemIds, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 
 /**
@@ -30,9 +33,6 @@ export function* syncCharts() {
                         ChartsCntlr.updateChartData(chartId, tblId);
                     }
                 });
-                if (action.type === ChartsCntlr.CHART_ADD) {
-                    dispatchAddViewerItems(DEFAULT_PLOT2D_VIEWER_ID, [chartId], PLOT2D);
-                }
                 break;
             }
             case ChartsCntlr.CHART_REMOVE:
@@ -41,9 +41,6 @@ export function* syncCharts() {
                 dispatchRemoveViewerItems(DEFAULT_PLOT2D_VIEWER_ID, [chartId]);
                 break;
             }
-            case TablesCntlr.TBL_RESULTS_ACTIVE:
-                updateDefaultViewer();
-                break;
             case TablesCntlr.TABLE_LOADED:
                 const {tbl_id} = action.payload;
                 if (ChartsCntlr.getNumCharts(tbl_id, true)>0) {  // has related mounted charts
@@ -57,6 +54,49 @@ export function* syncCharts() {
         }
     }
 }
+
+/**
+ * This saga makes synchronizes the default chart viewer with the active table
+ */
+export function* syncChartViewer() {
+    while (true) {
+        const action = yield take([ChartsCntlr.CHART_ADD, TablesCntlr.TBL_RESULTS_ACTIVE]);
+        switch (action.type) {
+            case ChartsCntlr.CHART_ADD:
+            case TablesCntlr.TBL_RESULTS_ACTIVE:
+                updateDefaultViewer();
+                break;
+        }
+    }
+}
+
+/**
+ * This saga adds a default chart
+ */
+export function* addDefaultScatter() {
+    while (true) {
+        const action = yield take([TablesCntlr.TABLE_LOADED]);
+        const {tbl_id} = action.payload;
+        // check if a default chart needs to be added
+        if (ChartsCntlr.getNumCharts(tbl_id) === 0) {
+            // how do I know the default chart should be added?
+            // add a default chart if the group is main
+            if (TableUtil.getTableInGroup(tbl_id, 'main')) {
+                // default chart is xy plot of coordinate columns or first two numeric columns
+                const defaultOptions = getDefaultXYPlotOptions(tbl_id);
+                if (defaultOptions) {
+                    ChartsCntlr.dispatchChartAdd({
+                        chartId: 'xyplot-' + tbl_id,
+                        chartType: SCATTER,
+                        groupId: tbl_id,
+                        chartDataElements: [{tblId: tbl_id, type: DT_XYCOLS, options: defaultOptions}]
+                    });
+                }
+            }
+        }
+    }
+}
+
 
 function updateDefaultViewer() {
     const tblId = TableUtil.getActiveTableId();

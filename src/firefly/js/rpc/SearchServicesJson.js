@@ -69,12 +69,15 @@ export function fetchTable(tableRequest, hlRowIdx) {
 }
 
 /**
- *
- * @param {Object} params
+ * returns the values of the data from the given parameters
+ * @param {Object} p  parameters object
+ * @param {string} p.columnName name of the column
+ * @param {string} p.filePath   location of the file on the server
+ * @param {string} p.selectedRows   a comma-separated string of indices of the rows to get the data from
  * @return {Promise}
  */
-export const selectedValues = function(params) {
-    return doService(doJsonP(), ServerParams.SELECTED_VALUES, params)
+export const selectedValues = function({columnName, filePath, selectedRows}) {
+    return doService(doJsonP(), ServerParams.SELECTED_VALUES, {columnName, filePath, selectedRows})
             .then((data) => {
                 // JsonUtil may not interpret array values correctly due to error-checking.
                 // returning array as a prop 'values' inside an object instead.

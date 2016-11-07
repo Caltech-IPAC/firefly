@@ -77,25 +77,32 @@ function handleChange(ev, fireValueChange, type) {
 }
 
 function makeDoUpload(file, type) {
-    const options = {
-        method: 'multipart',
-        params: {type, file}     // file should be the last param due to AnyFileUpload limitation
-    };
     return () => {
-        return {
-            isLoading: true,
-            value : fetchUrl(UL_URL, options).then( (response) => {
-                return response.text().then( (text) => {
-                    // text is in format ${status}::${message}::${cacheKey}
-                    const resp =  text.split('::');
-                    const valid = get(resp, [0]) === '200';
-                    const message = get(resp, [1]);
-                    const value = get(resp, [2]);
-                    return {isLoading: false, valid, message, value};
-                });
-            }).catch(function(err) {
-                return { isLoading: false, valid: false, message: `Unable to upload file: ${get(file, 'name')}`};
-            })
-        };
+        return doUpload(file, {type}).then( ({status, message, cacheKey}) => {
+            const valid = status === '200';
+            return {isLoading: false, valid, message, value:cacheKey};
+        }).catch((err) => {
+            return { isLoading: false, valid: false, message: `Unable to upload file: ${get(file, 'name')}`};
+        });
     };
+}
+
+/**
+ * post the data in
+ * @param {File} file
+ * @param {Object} params additional parameters if any
+ * @returns {Promise.<{Object}>}  The returned object is : {status:string, message:string, cacheKey:string}
+ */
+export function doUpload(file, params={}) {
+    if (!file) return Promise.reject('Required file parameter not given');
+    params = Object.assign(params, {file});   // file should be the last param due to AnyFileUpload limitation
+    const options = {method: 'multipart', params};
+
+    return fetchUrl(UL_URL, options).then( (response) => {
+        return response.text().then( (text) => {
+            // text is in format ${status}::${message}::${cacheKey}
+            const [status, message, cacheKey] =  text.split('::');
+            return {status, message, cacheKey};
+        });
+    });
 }
