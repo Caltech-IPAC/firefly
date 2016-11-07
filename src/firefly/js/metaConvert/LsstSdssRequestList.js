@@ -12,60 +12,78 @@ import {getCellValue} from '../tables/TableUtil.js';
 import {RangeValues,STRETCH_LINEAR,SIGMA} from '../visualize/RangeValues.js';
 import {ZoomType} from '../visualize/ZoomType.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
+import {ServerRequest} from '../data/ServerRequest.js';
 
+/**
+ * 11/23/16
+ * Lijun Zhang
+ * @param table - {Object }
+ * @param rowIdx - {int}
+ * @returns {Function}
+ */
 
-const DAX_URL= 'http://lsst-qserv-dax01.ncsa.illinois.edu:5000';
-const bandMap= {u:0, g:1,r:2,i:3, z:4};
+function makeCcdReqBuilder(table, rowIdx) {
 
+    const run= getCellValue(table, rowIdx, 'run');
+    const field= padStart(getCellValue(table, rowIdx, 'field'), 4, '0');
+    const camcol= getCellValue(table, rowIdx, 'camcol');
+    const filterId= getCellValue(table, rowIdx, 'filterId');
 
+    const sr= new ServerRequest('LSSTImageSearch');
+    sr.setParam('run', `${run}`);
+    sr.setParam('camcol', `${camcol}`);
+    sr.setParam('filterId', `${filterId}`);
+    sr.setParam('field', `${field}`);
 
+    return (plotId, title, filterName) => {
 
-function makeUrlPlotRequest(url, title, plotId, rangeValues) {
-    const r= WebPlotRequest.makeURLPlotRequest(url);
+        sr.setParam('filterName', `${filterName}`);
+        return makeWebRequest(sr,plotId,  title);
+    };
+}
+
+/**
+ * This method returns a WebRequest object
+ * @param sr - {Object}
+ * @param plotId - {String}
+ * @param title - {String}
+ * @returns {a WebRequest object}
+ */
+
+function makeWebRequest(sr,  plotId, title) {
+    const r  = WebPlotRequest.makeProcessorRequest(sr, 'lsst');
+    const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
     r.setTitleOptions(TitleOptions.NONE);
     r.setTitle(title);
     r.setPlotId(plotId);
     r.setMultiImageIdx(0);
-    r.setPreferenceColorKey('lsst-sdss-color-pref');
+    r.setPreferenceColorKey('lsst-coadd-color-pref');
     r.setZoomType(ZoomType.TO_WIDTH);
     r.setInitialRangeValues(rangeValues);
     return r;
-
 }
+/**
+ * This method builds the Coadd search string
+ * @param table - {Object }
+ * @param rowIdx - {int}
+ * @returns {Function}
+ */
+function makeCoadReqBuilder(table, rowIdx) {
 
+    const bandMap= {u:'0', g:'1',r:'2',i:'3', z:'4'};
 
-
-function makeCcdReqBuilder(table, rowIdx) {
-    const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
-    const run= getCellValue(table, rowIdx, 'run');
-    const field= padStart(getCellValue(table, rowIdx, 'field'), 4, '0');
-    const camcol= getCellValue(table, rowIdx, 'camcol');
-    const baseUrl= `${DAX_URL}/image/v0/calexp/ids`;
+    const deepCoaddId = Number(getCellValue(table, rowIdx, 'deepCoaddId'));
+    const searchIdBase = deepCoaddId - deepCoaddId%8;
+    const sr= new ServerRequest('LSSTImageSearch');
 
     return (plotId, title, filterName) => {
 
-        // id is run + filterId + camcol + field
-        // const objId= getCellValue(table, rowIdx, 'scienceCcdExposureId');
-        // const objId= `${run}${filterId}${camcol}${field}`;
-        // const url= `http://lsst-qserv-dax01.ncsa.illinois.edu:5000/image/v0/calexp/id?id=${objId}`;
-        const url= `${baseUrl}?run=${run}&camcol=${camcol}&field=${field}&filter=${filterName}`;
-        return makeUrlPlotRequest(url, title, plotId, rangeValues);
+        const searchId = searchIdBase + Number(bandMap[filterName]);
+        sr.setParam('deepCoaddId', `${searchId}`);
+        return makeWebRequest(sr,plotId,  title);
     };
 }
 
-function makeCoaddReqBuilder(table, rowIdx) {
-    const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
-    const coaddId= Number(getCellValue(table, rowIdx, 'deepCoaddId'));
-    const coaddIdBase= coaddId - (coaddId % 8);
-
-    const baseUrl= `${DAX_URL}/image/v0/deepCoadd/id`;
-
-    return (plotId, title, filterName) => {
-
-        const url= `${baseUrl}?id=${coaddIdBase+bandMap[filterName]}`;
-        return makeUrlPlotRequest(url,title, plotId, rangeValues);
-    };
-}
 
 /**
  * make a list of plot request for wise. This function works with ConverterFactory.
@@ -76,39 +94,41 @@ function makeCoaddReqBuilder(table, rowIdx) {
  * @param threeColorOps
  * @return {{}}
  */
-export function makeLsstSdssPlotRequest(table, row, includeSingle, includeStandard, threeColorOps) {
+export function makeLsstImagePlotRequest(table, row, includeSingle, includeStandard, threeColorOps) {
 
     const retval= {};
     var builder;
+    var plotId;
     if (getCellValue(table, row, 'scienceCcdExposureId')) {
         builder= makeCcdReqBuilder(table,row);
+        plotId = 'lsst-sdss-';
     }
     else {
-        builder= makeCoaddReqBuilder(table,row);
-        //return {single:null, standard:[]};
+        builder= makeCoadReqBuilder(table, row);
+        plotId = 'lsst-coadd-';
+
     }
     const filterId= Number(getCellValue(table, row, 'filterId'));
     const filterName= getCellValue(table, row, 'filterName');
 
     if (includeSingle) {
-        retval.single= builder('lsst-sdss-'+filterName,filterName, filterName);
+       retval.single= builder(plotId+filterName,filterName, filterName);
     }
 
     if (includeStandard) {
         retval.standard= [
-            builder('lsst-sdss-u', 'u', 'u'),
-            builder('lsst-sdss-g', 'g', 'g'),
-            builder('lsst-sdss-r', 'r', 'r'),
-            builder('lsst-sdss-i', 'i', 'i'),
-            builder('lsst-sdss-z', 'z', 'z'),
+            builder(plotId+'u', 'u', 'u'),
+            builder(plotId+'g', 'g', 'g'),
+            builder(plotId+'r', 'r', 'r'),
+            builder(plotId+'i', 'i', 'i'),
+            builder(plotId+'z', 'z', 'z'),
         ];
         if (retval.standard[filterId]) retval.highlightPlotId= retval.standard[filterId].getPlotId();
     }
 
     if (threeColorOps) {
-        retval.threeColor= threeColorOps.map( (b) => b && builder('lsst-sdss-threeC', 'SDSS 3 Color', b) );
+        retval.threeColor= threeColorOps.map( (b) => b && builder(plotId+'-threeC', 'SDSS 3 Color', b) );
     }
     return retval;
 }
-
 
