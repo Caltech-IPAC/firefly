@@ -10,11 +10,8 @@ import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
-import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.util.download.FileData;
 import edu.caltech.ipac.util.download.URLDownload;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -41,10 +38,9 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
      private static final Logger.LoggerImpl _log = Logger.getLogger();
      private static final String PORT = "5000";
      private static final String HOST = AppProperties.getProperty("lsst.dd.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
-     //private static final String TABLE_NAME = AppProperties.getProperty("lsst.dd.tableName", "RunDeepForcedSource")        ;
      private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "gapon_sdss_stripe92_patch366_0");
 
-    private DataGroup  getDataFromURL(TableServerRequest request) throws IOException, FailedRequestException, DataAccessException {
+    private DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
 
 
 
@@ -56,9 +52,9 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         }
 
 
-         String sql =  "query=" + URLEncoder.encode("SHOW COLUMNS FROM " + catTable+ ";", "UTF-8");
+            String sql =  "query=" + URLEncoder.encode("SHOW COLUMNS FROM " + catTable+ ";", "UTF-8");
 
-        try{
+
             long cTime = System.currentTimeMillis();
             _log.briefDebug("Executing SQL query: " + sql);
             String url = "http://"+HOST +":"+PORT+"/db/v0/tap/sync";
@@ -67,39 +63,55 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
             Map<String, String> requestHeader=new HashMap<>();
             requestHeader.put("Accept", "application/json");
 
-            URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null);
+            FileData fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null);
+            if (fileData.getResponseCode()>=500) {
+                throw new DataAccessException("ERROR:" + sql + ";"+ getErrorMessageFromFile(file));
+            }
             DataGroup dg =  getMetaData(file);
             _log.briefDebug("SHOW COLUMNS took " + (System.currentTimeMillis() - cTime) + "ms");
             return dg;
 
-        }
-        catch (Exception e) {
-            _log.error(e);
-            throw new DataAccessException("Query failed: " + e.getMessage());
-
-        }
 
     }
 
+    static  String getErrorMessageFromFile(File file) throws IOException, ParseException {
+        JSONParser parser = new JSONParser();
+
+        JSONObject obj = ( JSONObject) parser.parse(new FileReader(file ));
+        return  obj.get("message").toString();
+    }
 
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
-        try {
-            DataGroup dg = getDataFromURL(request);
+          DataGroup dg;
+          try {
+               dg = getDataFromURL(request);
+              File outFile = createFile(request, ".tbl");
+              dg.shrinkToFitData();
+              DataGroupWriter.write(outFile, dg, 0);
+              return outFile;
+          }
+          catch (Exception e) {
+              _log.error("load table failed");
+              e.printStackTrace();
+              throw new DataAccessException("ERROR:" + e.getMessage());
+         }
 
-            File outFile = createFile(request, ".tbl");
-            dg.shrinkToFitData();
-            DataGroupWriter.write(outFile, dg, 0);
-            return outFile;
 
-        } catch (FailedRequestException e) {
-            e.printStackTrace();
-        }
-        return null;
 
     }
 
+   /* static DataGroup getErrorData(String errMsg){
+        DataType[] dtype = {new DataType("Error", new String().getClass())};
+        DataGroup dg = new DataGroup("error", dtype);
+        DataObject row = new DataObject(dg);
+
+        row.setDataElement(dtype[0], errMsg);
+        dg.add(row);
+        return dg;
+
+    }*/
 
     private DataType[] getDataType(JSONArray metaData){
         DataType[] dataTypes = new DataType[metaData.size()+2];//add unit and descriptions

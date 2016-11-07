@@ -14,6 +14,7 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.util.download.FileData;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import org.json.simple.JSONArray;
@@ -60,25 +61,34 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
+
         try {
 
-             DataGroup dg = getDataFromURL(request);
-             dg.shrinkToFitData();
-             File outFile = createFile(request, ".tbl");
-             DataGroupWriter.write(outFile, dg,0);
-             _log.info("table loaded");
-             return  outFile;
-         } catch (Exception e) {
-             _log.error("load table failed");
-            e.printStackTrace();
-            throw new DataAccessException ("Access data from the server failed");
+            DataGroup dg = getDataFromURL(request);
+            dg.shrinkToFitData();
+            File outFile = createFile(request, ".tbl");
+            DataGroupWriter.write(outFile, dg,0);
+            _log.info("table loaded");
+            return  outFile;
 
-         }
+         } catch (Exception e) {
+            e.printStackTrace();
+            throw new DataAccessException("ERROR:" + e.getMessage(), e);
+        }
+
+
 
     }
 
 
-
+    /**
+     * This method will return the search method string based on the method.  If the method is not supported, the exception
+     * will be thrown
+     *
+     * @param req
+     * @return
+     * @throws Exception
+     */
     protected String getSearchMethod(TableServerRequest req) throws Exception {
 
         if (req.getParam("SearchMethod").equalsIgnoreCase("polygon")) {
@@ -106,7 +116,9 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
             if (req.getParam("SearchMethod").equalsIgnoreCase("box")) {
                 String side = req.getParam(CatalogRequest.SIZE);
                 WorldPt wpt = new WorldPt(new Double(ra).doubleValue(), new Double(dec).doubleValue());
-                VisUtil.Corners corners  = VisUtil. getCorners(wpt, new Double(side).doubleValue());
+                //getCorners using arcsec in radius unit
+                VisUtil.Corners corners  = VisUtil. getCorners(wpt, new Double(side).doubleValue()/2.0*3600.0);
+
                 String upperLeft = String.format(Locale.US, "%8.6f,%8.6f", corners.getUpperLeft().getLon(), corners.getUpperLeft().getLat());
                 String lowerRight = String.format(Locale.US, "%8.6f,%8.6f", corners.getLowerRight().getLon(), corners.getLowerRight().getLat());
                 return "scisql_s2PtInBox(coord_ra,coord_decl," +  lowerRight + "," +upperLeft + ")=1;";
@@ -125,8 +137,12 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
                 return  "scisql_s2PtInEllipse(coord_ra,coord_decl," + ra + "," + dec + "," + semiMajorAxis + "," +
                         semiMinorAxis + "," + positionAngle + ")=1;";
             }
+            else {
+                throw new Exception("ERROR: the search method " + req.getParam("SearchMethod") + " is not supported");
+
+            }
         }
-        return null;
+        //return null;
 
     }
 
@@ -151,48 +167,30 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
     private DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
 
-        String sql = "query=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
+           String sql = "query=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
 
-        try{
-            long cTime = System.currentTimeMillis();
-            _log.briefDebug("Executing SQL query: " + sql);
-            String url = "http://"+HOST +":"+PORT+"/db/v0/tap/sync";
 
-            File file = createFile(request, ".json");
-            Map<String, String> requestHeader=new HashMap<>();
-            requestHeader.put("Accept", "application/json");
+          long cTime = System.currentTimeMillis();
+          _log.briefDebug("Executing SQL query: " + sql);
+          String url = "http://"+HOST +":"+PORT+"/db/v0/tap/sync";
 
-             URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null);
-             DataGroup dg =  getTableDataFromJson( request,file);
-            _log.briefDebug("SHOW COLUMNS took " + (System.currentTimeMillis() - cTime) + "ms");
+          File file = createFile(request, ".json");
+          Map<String, String> requestHeader=new HashMap<>();
+          requestHeader.put("Accept", "application/json");
+          FileData fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null);
 
-            return dg;
+          if (fileData.getResponseCode()>=500) {
+              throw new DataAccessException("ERROR: " + sql + ";" +  LSSTMetaSearch.getErrorMessageFromFile(file));
+          }
 
-        }
-        catch (Exception e) {
-            _log.error(e);
-            throw new DataAccessException("Query failed: " + e.getMessage());
+           DataGroup dg =  getTableDataFromJson( request,file);
+          _log.briefDebug("SHOW COLUMNS took " + (System.currentTimeMillis() - cTime) + "ms");
 
-        }
+          return dg;
+
 
     }
 
-
-    private void  adjustDataType(DataType[] dataType,JSONArray meta ){
-        for (int i=0; i<dataType.length; i++){
-            for (int j=0; j<meta.size(); j++){
-                JSONObject element = (JSONObject) meta.get(j);
-                if ( element.get("name").toString().equalsIgnoreCase(dataType[i].getKeyName())){
-                    if (element.get("datatype").getClass()!=dataType[i].getDataType()){
-                        dataType[i].setDataType(element.get("datatype").getClass());
-                    }
-                    break;
-                }
-
-            }
-        }
-
-    }
     /**
      * This method convert the json data file to data group
      * @param jsonFile
@@ -200,24 +198,32 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
      * @throws IOException
      * @throws ParseException
      */
-    private DataGroup getTableDataFromJson(TableServerRequest request,  File jsonFile) throws IOException, ParseException, ClassNotFoundException {
+    private DataGroup getTableDataFromJson(TableServerRequest request,  File jsonFile) throws IOException, ParseException, ClassNotFoundException, DataAccessException {
 
         JSONParser parser = new JSONParser();
         JSONObject obj = (JSONObject) parser.parse(new FileReader(jsonFile));
         JSONArray data =  (JSONArray) ((JSONObject) ((JSONObject) obj.get("result")).get("table")).get("data");
 
-        JSONArray metaInData = (JSONArray) ( (JSONObject) ( (JSONObject)( (JSONObject) obj.get("result")).get("table")).get("metadata")).get("elements");
+        //search returns empty result, throw no data exception
+        if (data.size()==0) {
+           // DataGroup dg = new DataGroup("result", getTypeDef(request) );
+           // return dg;
+            throw new DataAccessException("No data is found in the search range");
 
+        }
+
+        //TODO this should NOT be needed when the MetaServer is running
+        JSONArray metaInData = (JSONArray) ( (JSONObject) ( (JSONObject)( (JSONObject) obj.get("result")).get("table")).get("metadata")).get("elements");
         DataType[] dataType = getTypeDef(request, metaInData);
 
         DataGroup dg = new DataGroup("result", dataType  );
 
+        //add column description as the attribute so that it can be displayed
         for (int i=0; i<dataType.length; i++){
             dg.addAttribute(DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, dataType[i].getKeyName()),
                     dataType[i].getShortDesc());
         }
 
-        if (data.size()==0) return dg; //empty dataGroup
         for (int i=0; i<data.size(); i++){
             JSONArray  rowTblData = (JSONArray) data.get(i);
             DataObject row = new DataObject(dg);
@@ -283,7 +289,7 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         else if (classType.equalsIgnoreCase("SMALLINT") || classType.equalsIgnoreCase("short)")){
             return Short.class;
         }
-        else if (classType.equalsIgnoreCase("string") ) {
+        else if (classType.equalsIgnoreCase("string") || classType.equalsIgnoreCase("text") ) {
 
             return String.class;
 
@@ -294,6 +300,62 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         return null;
 
     }
+
+
+    private DataType[] geDataTypeFromMetaSearch(TableServerRequest request) {
+        TableServerRequest metaRequest = new TableServerRequest("LSSTMetaSearch");
+        metaRequest.setParam("table_name", request.getParam("meta_table"));
+        metaRequest.setPageSize(Integer.MAX_VALUE);
+        //call LSSTMetaSearch processor to get the meta data as a DataGroup
+        DataGroup metaData = getMeta(metaRequest);
+        DataObject[] dataObjects = metaData.values().toArray(new DataObject[0]);
+        DataType[] dataTypes = new DataType[dataObjects.length];
+        for (int i = 0; i < dataObjects.length; i++) {
+            boolean maybeNull = dataObjects[i].getDataElement("Null").toString().equalsIgnoreCase("yes") ? true : false;
+            String colName = dataObjects[i].getDataElement("Field").toString();
+            dataTypes[i] = new DataType(colName, colName,
+                    getDataClass((String) dataObjects[i].getDataElement("Type")),
+                    DataType.Importance.HIGH,
+                    (String) dataObjects[i].getDataElement("Unit"),
+                    maybeNull
+            );
+            dataTypes[i].setShortDesc((String) dataObjects[i].getDataElement("Description"));
+        }
+        return dataTypes;
+    }
+
+    private DataType  getDataType(DataType[] allColumns, String colName){
+        for (int i=0; i<allColumns.length; i++){
+            if (allColumns[i].getKeyName().equalsIgnoreCase(colName)){
+                return allColumns[i];
+            }
+        }
+        return null;
+    }
+
+    //TODO this method will be usd when the MetaServer is working
+    private  DataType[] getTypeDef(TableServerRequest request) throws IOException {
+
+        DataType[] allColumns = geDataTypeFromMetaSearch(request);
+        String[] selColumns = request.getParam(CatalogRequest.SELECTED_COLUMNS).split(",");
+        if (selColumns==null) {
+
+            return allColumns;
+        }
+        else {
+            DataType[] dataTypes = new DataType[selColumns.length];
+
+            for (int i = 0; i < selColumns.length; i++) {
+                dataTypes[i]=getDataType(allColumns, selColumns[i]);
+                if (dataTypes[i]==null){
+                    throw new IOException(selColumns[i]+ " Is not found");
+                }
+            }
+            return dataTypes;
+        }
+
+    }
+    //TODO this method will not needed when teh MetaServer is running and the data types are consistent
     private  DataType[] getTypeDef(TableServerRequest request, JSONArray columns) {
 
 
@@ -311,11 +373,11 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
             for (int i = 0;i < columns.size(); i++) {
                  JSONObject col = (JSONObject) columns.get(i);
                  boolean maybeNull = dataObjects[i].getDataElement("Null").toString().equalsIgnoreCase("yes") ? true : false;
-                //TODO always get the data type from the data meta  unless it is null
+                //TODO always get the data type from the data meta
                  Class cls = getDataClass(col.get("datatype").toString());
-                 if (cls==null){
-                     cls =  getDataClass( (String) dataObjects[i].getDataElement("Type"));
-                 }
+                if (cls==null){
+                    cls =  getDataClass( (String) dataObjects[i].getDataElement("Type"));
+                }
                  String colName  = col.get("name").toString().trim();
                  dataTypes[i] = new DataType(colName, colName,
                                 cls,
@@ -355,6 +417,11 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         return dataTypes;
     }
 
+    /**
+     * This method is calling the LSSTMetaSearch processor to search the data type definitions
+     * @param request
+     * @return
+     */
     private DataGroup getMeta(TableServerRequest request){
 
 
