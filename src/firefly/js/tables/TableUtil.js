@@ -147,7 +147,7 @@ export function makeLsstCatalogRequest(title, project, catalog, params={}, optio
     const tbl_id = options.tbl_id || uniqueTblId();
     const id = LSSTQueryPID;
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
-    const table_name = 'RunDeepForcedSource_limit100';    //catalog+'_queryresult';
+    const table_name = 'RunDeepForcedSource';//_limit100';    //catalog+'_queryresult';
     const meta_table = catalog;
     var META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
 
