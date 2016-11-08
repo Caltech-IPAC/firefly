@@ -476,7 +476,7 @@ function* doOnTblLoaded({tbl_id, callback}) {
             hasData = hasData || get(tableModel, 'tableData.columns.length');
             if (get(tableModel, 'error')) {
                 // there was an error loading this table.
-                callback(createErrorTbl(tbl_id, tableModel.error));
+                callback(TblUtil.createErrorTbl(tbl_id, tableModel.error));
                 return;
             }
         }
@@ -484,6 +484,3 @@ function* doOnTblLoaded({tbl_id, callback}) {
     callback && callback(TblUtil.getTblInfoById(tbl_id));
 }
 
-function createErrorTbl(tbl_id, error) {
-    return {tbl_id, error};
-}

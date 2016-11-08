@@ -142,11 +142,11 @@ export class BasicTableView extends React.Component {
 
     render() {
         const {columns, data, hlRowIdx, showUnits, showFilters, filterInfo, renderers, bgColor,
-            selectable, selectInfoCls, sortInfo, callbacks, textView, rowHeight, showMask} = this.props;
+            selectable, selectInfoCls, sortInfo, callbacks, textView, rowHeight, showMask, error} = this.props;
         const {widthPx, heightPx, columnWidths} = this.state;
         const {onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected} = this;
 
-        if (isEmpty(columns)) return (<div style={{top: 0}} className='loading-mask'/>);
+        if (!error && isEmpty(columns)) return (<div style={{top: 0}} className='loading-mask'/>);
 
         // const filterInfoCls = FilterInfo.parse(filterInfo);
         // const sortInfoCls = SortInfo.parse(sortInfo);
@@ -159,7 +159,8 @@ export class BasicTableView extends React.Component {
 
         return (
             <Resizable id='table-resizer' tabIndex='-1' onKeyDown={this.onKeyDown} className='TablePanel__frame' onResize={this.onResize}>
-                {   widthPx === 0 ? <div /> :
+                {   error ? <div style={{padding: 10}}>{error}</div> :
+                    widthPx === 0 ? <div /> :
                     textView ? <TextView { ...{columns, data, showUnits, heightPx, widthPx} }/> :
                     <Table
                         rowHeight={rowHeight}
@@ -175,8 +176,8 @@ export class BasicTableView extends React.Component {
                         { makeColumns(makeColumnsProps) }
                     </Table>
                 }
-                {showMask && <div style={{top: 0}} className='loading-mask'/>}
-                {!showMask && isEmpty(data) && <div className='TablePanel_NoData'> No Data Found </div>}
+                {!error && showMask && <div style={{top: 0}} className='loading-mask'/>}
+                {!error && !showMask && isEmpty(data) && <div className='TablePanel_NoData'> No Data Found </div>}
             </Resizable>
         );
     }
@@ -198,6 +199,7 @@ BasicTableView.propTypes = {
     showMask: PropTypes.bool,
     currentPage: PropTypes.number,
     bgColor: PropTypes.string,
+    error:  PropTypes.string,
     renderers: PropTypes.objectOf(
         PropTypes.shape({
             cellRenderer: PropTypes.func,
