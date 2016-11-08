@@ -41,9 +41,10 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
     //TODO how to handle the database name??
     // private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "gapon_sdss_stripe92_patch366_0");
     private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "");
+    //set default timeout to 30seconds
+    int timeout  = new Integer( AppProperties.getProperty("lsst.database.timeoutLimit" , "30")).intValue();
+
     private DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
-
-
 
 
         String tableName = request.getParam("table_name");
@@ -65,7 +66,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
          Map<String, String> requestHeader=new HashMap<>();
          requestHeader.put("Accept", "application/json");
 
-         FileData fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null);
+         FileData fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null,timeout);
          if (fileData.getResponseCode()>=500) {
              throw new DataAccessException("ERROR:" + sql + ";"+ getErrorMessageFromFile(file));
          }

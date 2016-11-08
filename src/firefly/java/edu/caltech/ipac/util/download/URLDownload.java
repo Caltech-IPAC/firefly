@@ -77,13 +77,13 @@ public class URLDownload {
                                                   Map<String, String> cookies,
                                                   Map<String, String> requestHeader,
                                                   File outfile,
-                                                  DownloadListener dl)
+                                                  DownloadListener dl, int timeout)
             throws FailedRequestException, IOException {
         try {
             URLConnection c = makeConnection(url, cookies, requestHeader, false);
             //TODO test the timeout for sql query, added by LZ
-             c.setConnectTimeout(15000);
-             c.setReadTimeout(15000);
+             c.setConnectTimeout(timeout * 1000);//Sets a specified timeout value, in milliseconds
+             c.setReadTimeout(timeout * 1000);
             if (c instanceof HttpURLConnection) {
                 return getDataToFile(c, outfile, dl, false, true, true, 0L,postData);
             } else {
