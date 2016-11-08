@@ -4,11 +4,11 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {isEmpty, get, truncate} from 'lodash';
+import {isEmpty, truncate} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {download} from '../../util/WebUtil.js';
 import * as TblUtil from '../TableUtil.js';
-import {dispatchTableReplace, dispatchTableUiUpdate, dispatchTableRemove, dispatchTblExpanded} from '../TablesCntlr.js';
+import {dispatchTableRemove, dispatchTblExpanded} from '../TablesCntlr.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableConnector} from '../TableConnector.js';
@@ -35,7 +35,10 @@ export class TablePanel extends Component {
         var {tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize} = props;
 
         if (!tbl_id && tableModel) {
-            tbl_id = get(tableModel, 'tbl_id', TblUtil.uniqueTblId());
+            if (!tableModel.tbl_id) {
+                tableModel.tbl_id = TblUtil.uniqueTblId();
+            }
+            tbl_id = tableModel.tbl_id;
         }
         tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
         this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize);
@@ -54,14 +57,7 @@ export class TablePanel extends Component {
 
     componentDidMount() {
         this.removeListener= flux.addListener(() => this.storeUpdate());
-        const {tableModel} = this.props;
-        const {tbl_id, tbl_ui_id} = this.tableConnector;
-        if (!get(this.state, 'tbl_id')) {
-            dispatchTableUiUpdate({tbl_ui_id, tbl_id});
-            if (tableModel) {
-                dispatchTableReplace(tableModel);
-            }
-        }
+        this.tableConnector.onMount();
     }
 
     componentWillUnmount() {
@@ -92,7 +88,11 @@ export class TablePanel extends Component {
     }
     saveTable() {
         const {tbl_ui_id} = this.tableConnector;
-        download(TblUtil.getTableSourceUrl(tbl_ui_id));
+        if (this.tableConnector.tableModel) {
+            TblUtil.getAsyncTableSourceUrl(tbl_ui_id).then((url) => download(url));
+        } else {
+            download(TblUtil.getTableSourceUrl(tbl_ui_id));
+        }
     }
     toggleOptions() {
         this.tableConnector.onToggleOptions(!this.state.showOptions);

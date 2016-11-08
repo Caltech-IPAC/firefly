@@ -40,14 +40,16 @@ export function* lcManager() {
         ]);
 
         /**
-         * This is the current state of the application.  Depending on what action is yielded, modify
-         * this object accordingly then update it via dispatch.
+         * This is the current state of the application.  Action handlers should return newLayoutInfo if state changes
+         * If state has changed, it will be dispacthed into the flux.
          * @type {LayoutInfo}
          * @prop {boolean}  layoutInfo.showForm    show form panel
          * @prop {boolean}  layoutInfo.showTables  show tables panel
          * @prop {boolean}  layoutInfo.showCharts  show charts panel
          * @prop {boolean}  layoutInfo.showImages  show images panel
          * @prop {string}   layoutInfo.searchDesc  optional string describing search criteria used to generate this result.
+         * @prop {Object}   layoutInfo.images      images specific states
+         * @prop {string}   layoutInfo.images.activeTableId  last active table id that images responded to
          */
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;
@@ -59,10 +61,10 @@ export function* lcManager() {
                 newLayoutInfo = handleTableLoad(newLayoutInfo, action);
                 break;
             case TABLE_HIGHLIGHT:
-                handleTableHighlight(PHASE_FOLDED, action);
+                newLayoutInfo = handleTableHighlight(newLayoutInfo, action);
                 break;
             case CHANGE_VIEWER_LAYOUT:
-                handleChangeMultiViewLayout(PHASE_FOLDED);
+                newLayoutInfo = handleChangeMultiViewLayout(newLayoutInfo, action);
                 break;
             case TBL_RESULTS_ACTIVE :
                 newLayoutInfo = handleTableActive(newLayoutInfo, action);
@@ -79,13 +81,11 @@ export function* lcManager() {
 
 function handleTableLoad(layoutInfo, action) {
     const {tbl_id} = action.payload;
-    layoutInfo =  updateSet(layoutInfo, 'showTables', true);
-    if ( [RAW_TABLE, PEAK_TABLE, PHASE_FOLDED, PERIODOGRAM].includes(tbl_id) ) {
-        layoutInfo = updateSet(layoutInfo, 'showXyPlots', true);
-    }
-    if ( [PHASE_FOLDED].includes(tbl_id) ){
+    layoutInfo =  Object.assign({}, layoutInfo, {showTables: true, showXyPlots: true});
+    if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'showImages', true);
-        handleTableHighlight(PHASE_FOLDED, action);
+        layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
+        exec(setupImages, tbl_id);
     }
     return layoutInfo;
 }
@@ -93,33 +93,30 @@ function handleTableLoad(layoutInfo, action) {
 
 
 function handleTableActive(layoutInfo, action) {
+    const {tbl_id} = action.payload;
+    if (isImageEnabledTable(tbl_id)) {
+        layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
+        exec(setupImages, tbl_id);
+    }
     return layoutInfo;
 }
 
-/**
- *
- * @param {string} activePhaseFoldedTableId last active phase folded table id
- * @param {Action} action
- */
-function handleTableHighlight(activePhaseFoldedTableId, action) {
+function handleTableHighlight(layoutInfo, action) {
     const {tbl_id} = action.payload;
-    if (tbl_id === activePhaseFoldedTableId) {
-        try {
-            setupImages(tbl_id);
-        } catch (E){
-            console.log(E.toString());
-        }
-
+    if (isImageEnabledTable(tbl_id)) {
+        exec(setupImages, tbl_id);
     }
 }
 
-/**
- *
- * @param {string} activePhaseFoldedTableId last active phase folded table id
- */
-function handleChangeMultiViewLayout(activePhaseFoldedTableId) {
-    const tbl= getTblById(activePhaseFoldedTableId);
-    if (get(tbl, 'totalRows',0)>0) setupImages(activePhaseFoldedTableId);
+function isImageEnabledTable(tbl_id) {
+    return [PHASE_FOLDED, RAW_TABLE].includes(tbl_id);
+}
+
+function handleChangeMultiViewLayout(layoutInfo, action) {
+    const activeTableId = get(layoutInfo, 'images.activeTableId');
+    const tbl= getTblById(activeTableId);
+    if (get(tbl, 'totalRows',0)>0) exec(setupImages, activeTableId);
+    return layoutInfo;
 }
 
 function getWebPlotRequest(tableModel, hlrow) {
@@ -208,3 +205,17 @@ function makePlotIds(highlightedRow, totalRows, totalPlots)  {
     return plotIds;
 }
 
+
+/**
+ * A simple wrapper to catch the exception then log it to console
+ * @param {function} f function to execute
+ * @param {*} args function's arguments.
+ */
+function exec(f, args) {
+    try {
+        f(args);
+    } catch (E){
+        console.log(E.toString());
+    }
+
+}

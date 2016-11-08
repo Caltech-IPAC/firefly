@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import './LCPanels.css';
+
 import React, {Component, PropTypes} from 'react';
 import {TargetPanel} from '../../ui/TargetPanel.jsx';
 import {InputGroup} from '../../ui/InputGroup.jsx';
@@ -27,9 +27,9 @@ import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
-
-
 import {RAW_TABLE, PHASE_FOLDED} from '../../templates/lightcurve/LcManager.js';
+
+import './LCPanels.css';
 
 const grpkey = 'LC_FORM_Panel';
 
@@ -129,8 +129,6 @@ const defValues= {
 
 
 var LcPhaseFoldingDialog = React.createClass({
-
-
 
     render() {
         return (
@@ -251,15 +249,16 @@ export function LcPFOptionsPanel ({fields}) {
                     <br/>
 
                     <ValidationField fieldKey='period'
-                         forceReinit={true}
-                         initialState= {{
-                                  fieldKey: 'period',
-                                  value: '1.0',
-                                  //validator: Validate.floatRange.bind(null, 0.5, 1.5, 3,'period'),
-                                  tooltip: 'Period',
-                                  label : 'Period:',
-                                  labelWidth : 100
-                         }} />
+                                     forceReinit={true}
+                                     initialState= {{
+                                fieldKey: 'period',
+                                value: '1.0',
+                                //validator: Validate.floatRange.bind(null, 0.5, 1.5, 3,'period'),
+                                tooltip: 'Period',
+                                label : 'Period:',
+                                labelWidth : 100
+                    }} />
+
 
                     <br/> <br/>
 

@@ -47,6 +47,8 @@ export function dataReducer(state={data:{}}, action={}) {
         {
             const {tbl_id} = action.payload || {};
             const nTable = Object.assign({isFetching:true, selectInfo: SelectInfo.newInstance({rowCount:0}).data}, action.payload);
+            const origTableModel = get(root, [tbl_id, 'origTableModel']);
+            if (origTableModel) nTable.origTableModel = origTableModel;
             return updateSet(root, [tbl_id], nTable);
         }
         case (Cntlr.TABLE_REPLACE)  :

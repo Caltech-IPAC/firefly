@@ -19,7 +19,7 @@ import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
 import * as ChartsCntlr from '../charts/ChartsCntlr.js';
-import * as TablesCntlr from '../tables/TablesCntlr';
+import TablesCntlr from '../tables/TablesCntlr';
 
 import {chartTypeFactory} from '../charts/ChartType.js';
 import {SCATTER_TBLVIEW} from '../charts/chartTypes/ScatterTblView.jsx';
@@ -137,6 +137,7 @@ registerCntlr(BackgroundCntlr);
 registerCntlr(ImagePlotCntlr);
 registerCntlr(FieldGroupCntlr);
 registerCntlr(MouseReadoutCntlr);
+registerCntlr(TablesCntlr);
 registerCntlr(DrawLayerCntlr.getDrawLayerCntlrDef(drawLayerFactory));
 
 
@@ -147,12 +148,6 @@ actionCreators.set(AppDataCntlr.APP_LOAD, AppDataCntlr.loadAppData);
 actionCreators.set(AppDataCntlr.GRAB_WINDOW_FOCUS, AppDataCntlr.grabWindowFocus);
 actionCreators.set(AppDataCntlr.HELP_LOAD, AppDataCntlr.onlineHelpLoad);
 actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.extensionActivateActionCreator);
-
-actionCreators.set(TablesCntlr.TABLE_SEARCH, TablesCntlr.tableSearch);
-actionCreators.set(TablesCntlr.TABLE_FETCH, TablesCntlr.tableFetch);
-actionCreators.set(TablesCntlr.TABLE_SORT, TablesCntlr.tableFetch);
-actionCreators.set(TablesCntlr.TABLE_FILTER, TablesCntlr.tableFetch);
-actionCreators.set(TablesCntlr.TABLE_HIGHLIGHT, TablesCntlr.highlightRow);
 
 actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);
 actionCreators.set(ChartsCntlr.CHART_DATA_FETCH, ChartsCntlr.makeChartDataFetch(cdtFactory.getChartDataType));

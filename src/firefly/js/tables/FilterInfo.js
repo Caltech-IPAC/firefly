@@ -181,18 +181,20 @@ export class FilterInfo {
                 compareTo = Number(compareTo);
             }
             switch (op) {
+                case 'like'  :
+                    return compareTo.includes(val);
+                case '>'  :
+                    return compareTo > val;
+                case '<'  :
+                    return compareTo < val;
+                case '='  :
+                    return compareTo === val;
                 case '!='  :
                     return compareTo !== val;
                 case '>='  :
                     return compareTo >= val;
                 case '<='  :
                     return compareTo <= val;
-                case '>'  :
-                    return compareTo > val;
-                case '='  :
-                    return compareTo === val;
-                case 'like'  :
-                    return compareTo.includes(val);
                 case 'in'  :
                     return val.includes(compareTo);
                 default :

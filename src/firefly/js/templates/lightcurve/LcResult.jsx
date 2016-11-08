@@ -98,10 +98,12 @@ export class LcResult extends Component {
         }
         if (showForm) {
             const fields= this.state;
+/*
             content.form = (
                 <div>
                     <div>
                         <Tabs componentKey='OuterTabs' defaultSelected={0} useFlex={true}>
+
                             <Tab name="Phase Folding">
                                 <div>
                                     {LcPFOptionsPanel(fields)}
@@ -112,15 +114,32 @@ export class LcResult extends Component {
                                     <LcPeriodFindingPanel />
                                 </div>
                             </Tab>
-                            <Tab name='Upload'>
+                            <Tab name='Upload/Phase Folding'>
                                 <div>
-                                    <UploadPanel />
+                                    <UploadPanel phaseButton={true}/>
                                 </div>
                             </Tab>
                         </Tabs>
                     </div>
                 </div> );
-
+ */
+            content.form = (
+                <div>
+                    <div>
+                        <Tabs componentKey='OuterTabs' defaultSelected={0} useFlex={true}>
+                            <Tab name="Periodogram">
+                                <div>
+                                    <LcPeriodFindingPanel />
+                                </div>
+                            </Tab>
+                            <Tab name='Upload/Phase Folding'>
+                                <div>
+                                    <UploadPanel phaseButton={true}/>
+                                </div>
+                            </Tab>
+                        </Tabs>
+                    </div>
+                </div> );
 
         }
 

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, unset, has, isEmpty, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray} from 'lodash';
+import {get, unset, has, isEmpty, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray, padEnd} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {FilterInfo} from './FilterInfo.js';
@@ -12,6 +12,7 @@ import {encodeServerUrl} from '../util/WebUtil.js';
 import {fetchTable} from '../rpc/SearchServicesJson.js';
 import {DEF_BASE_URL} from '../core/JsonUtils.js';
 import {ServerParams} from '../data/ServerParams.js';
+import {doUpload} from '../ui/FileUpload.jsx';
 
 export const MAX_ROW = Math.pow(2,31) - 1;
 /* TABLE_REQUEST should match QueryUtil on the server-side */
@@ -147,7 +148,7 @@ export function makeLsstCatalogRequest(title, project, catalog, params={}, optio
     const tbl_id = options.tbl_id || uniqueTblId();
     const id = LSSTQueryPID;
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
-    const table_name = 'RunDeepForcedSource_limit100';    //catalog+'_queryresult';
+    const table_name = 'RunDeepForcedSource';//_limit100';    //catalog+'_queryresult';
     const meta_table = catalog;
     var META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
 
@@ -212,7 +213,13 @@ export function cloneRequest(request, params = {}) {
  * @deprecated  use firefly.util.table.fetchTable instead
  */
 export function doFetchTable(tableRequest, hlRowIdx) {
-    return fetchTable(tableRequest, hlRowIdx);
+    const {tbl_id} = tableRequest;
+    const tableModel = getTblById(tbl_id) || {};
+    if (tableModel.origTableModel) {
+        return Promise.resolve(processRequest(tableModel.origTableModel, tableRequest, hlRowIdx));
+    } else {
+        return fetchTable(tableRequest, hlRowIdx);
+    }
 }
 
 export function doValidate(type, action) {
@@ -552,24 +559,7 @@ export function smartMerge(target, source) {
 }
 
 /**
- * sort the given tableModel based on the given request
- * @param {TableModel} origTableModel original table model.  this is returned when direction is UNSORTED.
- * @param {string} sortInfoStr
- * @returns {TableModel}
- * @public
- * @func sortTable
- * @memberof firefly.util.table
- */
-export function sortTable(origTableModel, sortInfoStr) {
-    const tableModel = cloneDeep(origTableModel);
-    set(tableModel, 'request.sortInfo', sortInfoStr);
-    const {data, columns} = tableModel.tableData;
-    sortTableData(data, columns, sortInfoStr);
-    return tableModel;
-}
-
-/**
- * sort table data in place.
+ * sort table data in-place.
  * @param {TableData} tableData
  * @param {TableColumn[]} columns
  * @param {string} sortInfoStr
@@ -606,22 +596,53 @@ export function sortTableData(tableData, columns, sortInfoStr) {
 }
 
 /**
- * return a new table after applying the given filters.
- * @param {TableModel} tableModel
+ * filter the given table.  This function update the table data in-place.
+ * @param {TableModel} table
  * @param {string} filterInfoStr filters are separated by comma(',').
- * @returns {TableModel}
  * @memberof firefly.util.table
  * @func filterTable
  */
-export function filterTable(tableModel, filterInfoStr) {
-    const filtered = cloneDeep(tableModel);
-    set(filtered, 'request.filters', filterInfoStr);
-    const comparators = filterInfoStr.split(';').map((s) => s.trim()).map((s) => FilterInfo.createComparator(s, tableModel));
-    filtered.tableData.data = tableModel.tableData.data.filter((row) => {
-        return comparators.reduce( (rval, match) => rval && match(row), true);
-    } );
-    filtered.totalRows = tableModel.tableData.data.length;
-    return filtered;
+export function filterTable(table, filterInfoStr) {
+    if (filterInfoStr) {
+        const comparators = filterInfoStr.split(';').map((s) => s.trim()).map((s) => FilterInfo.createComparator(s, table));
+        table.tableData.data = table.tableData.data.filter((row, idx) => {
+            return comparators.reduce( (rval, match) => rval && match(row, idx), true);
+        } );
+        table.totalRows = table.tableData.data.length;
+    }
+    return table.tableData;
+}
+
+export function processRequest(origTableModel, tableRequest, hlRowIdx) {
+    const {filters, sortInfo, inclCols, startIdx, pageSize} = tableRequest;
+
+    var nTable = cloneDeep(origTableModel);
+    nTable.origTableModel = origTableModel;
+    nTable.request = tableRequest;
+    var {data, columns} = nTable.tableData;
+
+    if (filters || sortInfo) {      // need to track original rowId.
+        columns.push({name: 'ROWID', type: 'int', visibility: 'hidden'});
+        data.forEach((r, idx) => r.push(String(idx)));
+    }
+
+    if (filters) {
+        filterTable(nTable, filters);
+    }
+    if (sortInfo) {
+        let {data, columns} = nTable.tableData;
+        data = sortTableData(data, columns, sortInfo);
+    }
+    if (inclCols) {
+        let {data, columns} = nTable.tableData;
+        const colAry = inclCols.split(',').map((s) => s.trim());
+        columns = columns.filters( (c) => colAry.includes(c));
+        const inclIdices = columns.map( (c) => origTableModel.tableData.indexOf(c));
+        data = data.map( (r) =>  r.filters( (c, idx) => inclIdices.includes(idx)));
+    }
+    data = data.slice(startIdx, startIdx + pageSize);
+    nTable.highlightedRow = hlRowIdx || startIdx;
+    return nTable;
 }
 
 /**
@@ -674,17 +695,39 @@ export function getTblInfo(tableModel, aPageSize) {
  * @func getTableSourceUrl
  */
 export function getTableSourceUrl(tbl_ui_id) {
+    const {columns, request} = getTableUiById(tbl_ui_id) || {};
+    return makeTableSourceUrl(columns, request);
+}
+
+/**
+ * Async version of getTableSourceUrl.  If the given tbl_ui_id is backed by a local TableModel,
+ * then we need to push/upload the content of the server before it can be referenced via url.
+ * @param {string} tbl_ui_id  UI id of the table
+ * @returns {Promise.<string, Error>}
+ */
+export function getAsyncTableSourceUrl(tbl_ui_id) {
+    const {tbl_id, columns} = getTableUiById(tbl_ui_id) || {};
+    const {tableData, tableMeta} = getTblById(tbl_id);
+    const ipacTable = tableToText(columns, tableData.data, true, tableMeta);
+    var filename = `${tbl_id}.tbl`;
+    const file = new File([new Blob([ipacTable])], filename);
+    return doUpload(file).then( ({status, cacheKey}) => {
+        const request = makeFileRequest('save as text', cacheKey, {pageSize: MAX_ROW});
+        return makeTableSourceUrl(columns, request);
+    });
+}
+
+function makeTableSourceUrl(columns, request) {
     const def = {
         startIdx: 0,
         pageSize : MAX_ROW
     };
-    const {columns, request} = getTableUiById(tbl_ui_id) || {};
     const tableRequest = Object.assign(def, cloneDeep(request));
     const visiCols = columns.filter( (col) => {
-                return isNil(col) || col.visibility === 'show';
-            }).map( (col) => {
-                return col.name;
-            } );
+        return isNil(col) || col.visibility === 'show';
+    }).map( (col) => {
+        return col.name;
+    } );
     if (visiCols.length !== columns.length) {
         tableRequest['inclCols'] = visiCols.toString();
     }
@@ -696,6 +739,41 @@ export function getTableSourceUrl(tbl_ui_id) {
     };
     return encodeServerUrl(DEF_BASE_URL, params);
 }
+
+export function tableToText(columns, dataAry, showUnits=false, tableMeta) {
+
+    const colWidths = calcColumnWidths(columns, dataAry);
+
+    var textMeta = '';
+    if (tableMeta) textMeta = Object.entries(tableMeta).map(([k,v]) => `\\${k} = ${v}`).join('\n');
+
+    // column's name
+    var textHead = columns.reduce( (pval, col, idx) => {
+        return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.label || col.name, colWidths[idx])}|` : '');
+    }, '|');
+
+    // column's type
+    textHead += '\n' + columns.reduce( (pval, col, idx) => {
+            return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.type || '', colWidths[idx])}|` : '');
+        }, '|');
+
+    if (showUnits) {
+        textHead += '\n' + columns.reduce( (pval, col, idx) => {
+                return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.units || '', colWidths[idx])}|` : '');
+            }, '|');
+    }
+
+    var textData = dataAry.map( (row) => {
+                    return row.reduce( (pv, cv, idx) => {
+                            const cname = get(columns, [idx, 'name']);
+                            if (!cname) return pv;      // not defined in columns.. can ignore
+                            return pv + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cv || '', colWidths[idx])} ` : '');
+                        }, ' ');
+                }).join('\n');
+
+    return textMeta + '\n' + textHead + '\n' + textData;
+}
+
 
 /**
  * returns an object map of the column name and its width.

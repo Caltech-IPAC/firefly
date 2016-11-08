@@ -17,14 +17,19 @@ public class FileData implements FileHolder, Serializable, Cloneable {
     private final File file;
     private final String suggestedExternalName;
     private final boolean fileDownloaded;
+    private final int responseCode;
 
     public FileData(File file, String suggestedExternalName) {
-        this(file,suggestedExternalName, true);
+        this(file,suggestedExternalName, true, 200);
     }
+
+
     public FileData(File file,
                     String suggestedExternalName,
-                    boolean fileDownloaded) {
+                    boolean fileDownloaded,
+                    int responseCode) {
         this.file = file;
+        this.responseCode = responseCode;
         this.suggestedExternalName = suggestedExternalName;
         this.fileDownloaded = fileDownloaded;
     }
@@ -36,8 +41,9 @@ public class FileData implements FileHolder, Serializable, Cloneable {
     public File getFile() {  return file; }
     public String getSuggestedExternalName()  { return suggestedExternalName;}
     public boolean isDownloaded() { return fileDownloaded; }
+    public int getResponseCode() { return responseCode; }
 
-    public Object clone() { return new FileData(file, suggestedExternalName); }
+    public Object clone() { return new FileData(file, suggestedExternalName, fileDownloaded, responseCode); }
 
 }
 

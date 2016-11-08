@@ -1,81 +1,130 @@
 package edu.caltech.ipac.firefly.server.query.lsst;
 
-
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
+import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.util.download.FileData;
+import edu.caltech.ipac.util.download.URLDownload;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.*;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by zhang on 10/12/16.
  * This search processor is searching the MetaData (or Data Definition from DAX database, then save to a
  * IpacTable file.
  */
-@SearchProcessorImpl(id = "LSSTMetaSearch")
+@SearchProcessorImpl(id = "LSSTMetaSearch",
+        params =
+                {@ParamDoc(name=CatalogRequest.CATALOG, desc="catalog table to query")})
+
 public class LSSTMetaSearch  extends IpacTablePartProcessor{
      private static final Logger.LoggerImpl _log = Logger.getLogger();
+     private static final String PORT = "5000";
+     private static final String HOST = AppProperties.getProperty("lsst.dd.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
+     private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "gapon_sdss_stripe92_patch366_0");
+
+    private DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
 
 
-    /* private  static TableMeta getMeta(TableServerRequest request) throws IOException, ParseException {
-        //TODO return the search data and then process it to a TableMeta data
-         return null;
-     }*/
+
+        String tableName = request.getParam("table_name");
+        String catTable = request.getParam(CatalogRequest.CATALOG);
+        if (catTable == null) {
+            //throw new RuntimeException(CatalogRequest.CATALOG + " parameter is required");
+            catTable = DATABASE_NAME+"."+ tableName;
+        }
+
+
+            String sql =  "query=" + URLEncoder.encode("SHOW COLUMNS FROM " + catTable+ ";", "UTF-8");
+
+
+            long cTime = System.currentTimeMillis();
+            _log.briefDebug("Executing SQL query: " + sql);
+            String url = "http://"+HOST +":"+PORT+"/db/v0/tap/sync";
+
+            File file = createFile(request, ".json");
+            Map<String, String> requestHeader=new HashMap<>();
+            requestHeader.put("Accept", "application/json");
+
+            FileData fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null);
+            if (fileData.getResponseCode()>=500) {
+                throw new DataAccessException("ERROR:" + sql + ";"+ getErrorMessageFromFile(file));
+            }
+            DataGroup dg =  getMetaData(file);
+            _log.briefDebug("SHOW COLUMNS took " + (System.currentTimeMillis() - cTime) + "ms");
+            return dg;
+
+
+    }
+
+    static  String getErrorMessageFromFile(File file) throws IOException, ParseException {
+        JSONParser parser = new JSONParser();
+
+        JSONObject obj = ( JSONObject) parser.parse(new FileReader(file ));
+        return  obj.get("message").toString();
+    }
 
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
-/*
-        String ddTable = request.getParam(CatalogRequest.CATALOG);
-         output file will be in json format
-        File file = createFile(request, ".json");*/
+          DataGroup dg;
+          try {
+               dg = getDataFromURL(request);
+              File outFile = createFile(request, ".tbl");
+              dg.shrinkToFitData();
+              DataGroupWriter.write(outFile, dg, 0);
+              return outFile;
+          }
+          catch (Exception e) {
+              _log.error("load table failed");
+              e.printStackTrace();
+              throw new DataAccessException("ERROR:" + e.getMessage());
+         }
 
 
-        File file = new File(request.getParam("table_path")+request.getParam("table_name")+".json");
-        try {
-            DataGroup dg = getMetaData(file);
-            File outFile = createFile(request, ".tbl");
-            dg.shrinkToFitData();
-            DataGroupWriter.write(outFile, dg, 0);
-            return outFile;
-
-        }
-        catch (ParseException e){
-            _log.error("load table failed");
-            e.getStackTrace();
-        }
-        return null;
 
     }
 
+   /* static DataGroup getErrorData(String errMsg){
+        DataType[] dtype = {new DataType("Error", new String().getClass())};
+        DataGroup dg = new DataGroup("error", dtype);
+        DataObject row = new DataObject(dg);
 
-     private DataType[] getDataType(JSONObject firstRow){
-         String[] colNames = (String[]) firstRow.keySet().toArray(new String[0]);
-         DataType[] dataTypes = new DataType[colNames.length+2];//add unit and descriptions
-         for (int i=0; i<colNames.length; i++){
-             dataTypes[i] = new DataType(colNames[i],  (new String()).getClass());
+        row.setDataElement(dtype[0], errMsg);
+        dg.add(row);
+        return dg;
 
-         }
+    }*/
 
-         dataTypes[colNames.length] =new DataType("Unit",  (new String()).getClass());
-         dataTypes[colNames.length+1] =new DataType("Description",  (new String()).getClass());
-         return dataTypes;
+    private DataType[] getDataType(JSONArray metaData){
+        DataType[] dataTypes = new DataType[metaData.size()+2];//add unit and descriptions
+        for (int i=0; i<metaData.size(); i++){
+            JSONObject element = (JSONObject) metaData.get(i);
+            dataTypes[i] = new DataType(element.get("name").toString(),  element.get("datatype").getClass());
+        }
+        dataTypes[metaData.size()] =new DataType("Unit",  (new String()).getClass());
+        dataTypes[metaData.size()+1] =new DataType("Description",  (new String()).getClass());
+        return dataTypes;
 
-     }
+    }
+
     /**
      * This method reads the json file from DAX and process it. The output is a DataGroup of the Meta data
      * @param file
@@ -88,21 +137,23 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
         JSONParser parser = new JSONParser();
 
-        Object obj = parser.parse(new FileReader(file ));
-        JSONArray metaData = (JSONArray) obj;
+        JSONObject obj = ( JSONObject) parser.parse(new FileReader(file ));
 
+        JSONArray metaData = (JSONArray) ( (JSONObject) ( (JSONObject)( (JSONObject) obj.get("result")).get("table")).get("metadata")).get("elements");
 
-        DataType[] dataTypes = getDataType( (JSONObject) metaData.get(0) );
+        DataType[] dataTypes = getDataType( metaData );
+        JSONArray  data = (JSONArray) ( (JSONObject)( (JSONObject) obj.get("result")).get("table")).get("data");
+
         DataGroup dg = new DataGroup(file.getName(), dataTypes);
 
-        for (int i=0; i<metaData.size(); i++){
-            JSONObject value = (JSONObject) metaData.get(i);
+        for (int i=0; i<data.size(); i++){
+
             DataObject row = new DataObject(dg);
             for (int j=0; j<dataTypes.length-2; j++){
-                row.setDataElement(dataTypes[j], value.get(dataTypes[j].getKeyName()));
+                row.setDataElement(dataTypes[j], ( (JSONArray)data.get(i)).get(j));
             }
             row.setDataElement(dataTypes[dataTypes.length-2], "dummyUnit1");
-            row.setDataElement(dataTypes[dataTypes.length-1], "description of "+value.get(dataTypes[0].getKeyName() ) );
+            row.setDataElement(dataTypes[dataTypes.length-1], "description of "+  ( (JSONArray)data.get(i)).get(0).toString()  );
             dg.add(row);
         }
 
@@ -127,43 +178,4 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
     }
 
-   File loadDataFileDummy(TableServerRequest request) throws IOException, DataAccessException {
-
-
-           try {
-               File file = new File(request.getParam("inFileName"));
-               DataGroup dg = getMetaData(file);
-              // File outFile = createFile(request, ".json");
-               File oFile = new File(request.getParam("outFileName"));
-               dg.shrinkToFitData();
-               DataGroupWriter.write(oFile, dg, 0);
-               return oFile;
-           }
-           catch (ParseException e){
-               e.getStackTrace();
-           }
-
-           return null;
-   }
-
-
-    public static void main(String[] args) throws IOException, ParseException, DataAccessException {
-
-        String jsonFileName = "RunDeepSourceDD";
-
-        String dataPath = "/hydra/cm/firefly_test_data/DAXTestData/";
-
-        TableServerRequest request = new TableServerRequest("DummyDD");
-        request.setParam("inFileName",dataPath +jsonFileName+".json" );
-        String outFileName = dataPath + "output_" + jsonFileName+".tbl";
-        request.setParam("outFileName", outFileName);
-        LSSTMetaSearch lsstMeta = new LSSTMetaSearch();
-
-
-        File file = lsstMeta.loadDataFileDummy(request);
-        System.out.println("done" + file.getAbsolutePath());
-
-
-
-    }
 }
