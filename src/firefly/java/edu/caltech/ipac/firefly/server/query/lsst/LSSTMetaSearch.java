@@ -38,9 +38,11 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
      private static final Logger.LoggerImpl _log = Logger.getLogger();
      private static final String PORT = "5000";
      private static final String HOST = AppProperties.getProperty("lsst.dd.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
-     private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "gapon_sdss_stripe92_patch366_0");
-
+    //TODO how to handle the database name??
+    // private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "gapon_sdss_stripe92_patch366_0");
+    private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "");
     private DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
+
 
 
 
@@ -48,28 +50,28 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         String catTable = request.getParam(CatalogRequest.CATALOG);
         if (catTable == null) {
             //throw new RuntimeException(CatalogRequest.CATALOG + " parameter is required");
-            catTable = DATABASE_NAME+"."+ tableName;
+            catTable =DATABASE_NAME.length()==0?tableName: DATABASE_NAME+"."+ tableName;
         }
 
 
-            String sql =  "query=" + URLEncoder.encode("SHOW COLUMNS FROM " + catTable+ ";", "UTF-8");
+         String sql =  "query=" + URLEncoder.encode("SHOW COLUMNS FROM " + catTable+ ";", "UTF-8");
 
 
-            long cTime = System.currentTimeMillis();
-            _log.briefDebug("Executing SQL query: " + sql);
-            String url = "http://"+HOST +":"+PORT+"/db/v0/tap/sync";
+         long cTime = System.currentTimeMillis();
+         _log.briefDebug("Executing SQL query: " + sql);
+         String url = "http://"+HOST +":"+PORT+"/db/v0/tap/sync";
 
-            File file = createFile(request, ".json");
-            Map<String, String> requestHeader=new HashMap<>();
-            requestHeader.put("Accept", "application/json");
+         File file = createFile(request, ".json");
+         Map<String, String> requestHeader=new HashMap<>();
+         requestHeader.put("Accept", "application/json");
 
-            FileData fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null);
-            if (fileData.getResponseCode()>=500) {
-                throw new DataAccessException("ERROR:" + sql + ";"+ getErrorMessageFromFile(file));
-            }
-            DataGroup dg =  getMetaData(file);
-            _log.briefDebug("SHOW COLUMNS took " + (System.currentTimeMillis() - cTime) + "ms");
-            return dg;
+         FileData fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null);
+         if (fileData.getResponseCode()>=500) {
+             throw new DataAccessException("ERROR:" + sql + ";"+ getErrorMessageFromFile(file));
+         }
+         DataGroup dg =  getMetaData(file);
+         _log.briefDebug("SHOW COLUMNS took " + (System.currentTimeMillis() - cTime) + "ms");
+         return dg;
 
 
     }
@@ -101,17 +103,6 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
 
     }
-
-   /* static DataGroup getErrorData(String errMsg){
-        DataType[] dtype = {new DataType("Error", new String().getClass())};
-        DataGroup dg = new DataGroup("error", dtype);
-        DataObject row = new DataObject(dg);
-
-        row.setDataElement(dtype[0], errMsg);
-        dg.add(row);
-        return dg;
-
-    }*/
 
     private DataType[] getDataType(JSONArray metaData){
         DataType[] dataTypes = new DataType[metaData.size()+2];//add unit and descriptions

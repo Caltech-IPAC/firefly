@@ -55,8 +55,9 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
     private static final String PORT = "5000";
     private static final String HOST = AppProperties.getProperty("lsst.dd.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
-    private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "gapon_sdss_stripe92_patch366_0");
-
+    //TODO how to handle the database name??
+   // private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "gapon_sdss_stripe92_patch366_0");
+    private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "");
 
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
@@ -152,7 +153,7 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         String catTable = request.getParam(CatalogRequest.CATALOG);
         if (catTable == null) {
             //throw new RuntimeException(CatalogRequest.CATALOG + " parameter is required");
-            catTable = DATABASE_NAME+"."+ tableName;
+            catTable =DATABASE_NAME.length()==0?tableName: DATABASE_NAME+"."+ tableName;
         }
 
 
