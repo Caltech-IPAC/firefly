@@ -486,7 +486,7 @@ class LsstCatalogDDList extends Component {
                                              processId={LSSTDDPID}
                                              groupKey={gkey}
                                              createDDRequest={()=>{
-                                                return {id: LSSTDDPID, table_name: selCat, table_path: '/hydra/cm/firefly_test_data/DAXTestData/'};
+                                                return {id: LSSTDDPID, table_name: selCat};
                                              }}
                     />
                 </div>
