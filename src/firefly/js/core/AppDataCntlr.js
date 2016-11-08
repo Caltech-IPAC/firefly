@@ -24,6 +24,7 @@ export const APP_UPDATE = `${APP_DATA_PATH}.appUpdate`;
 export const ADD_TASK_COUNT = `${APP_DATA_PATH}.addTaskCount`;
 export const REMOVE_TASK_COUNT = `${APP_DATA_PATH}.removeTaskCount`;
 export const ACTIVE_TARGET = `${APP_DATA_PATH}.activeTarget`;
+export const APP_OPTIONS = `${APP_DATA_PATH}.appOptions`;
 
 export const ADD_PREF = `${APP_DATA_PATH}.addPreference`;
 export const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
@@ -103,6 +104,10 @@ export function getRootUrlPath() {
     return flux.getState()[APP_DATA_PATH].rootUrlPath;
 }
 
+export function getAppOptions() {
+    return flux.getState()[APP_DATA_PATH].appOptions;
+}
+
 /**
  * @param channel
  * @returns {number}  the number of connections/clients connected to the given channel
@@ -117,7 +122,7 @@ export function getConnectionCount(channel) {
  */
 export const dispatchActiveTarget= function(wp,corners) {
     var payload={};
-    if (isValidPoint(wp) && wp.type==Point.W_PT) {
+    if (isValidPoint(wp) && wp.type===Point.W_PT) {
         payload.worldPt= wp;
     }
     if (corners) {
@@ -130,7 +135,29 @@ export const dispatchActiveTarget= function(wp,corners) {
 
 /*---------------------------- REDUCERS -----------------------------*/
 
+/**
+ *
+ * @returns {AppDataStore}
+ */
 function getInitState() {
+
+
+    /**
+     * @global
+     * @public
+     * @typedef {Object} AppDataStore
+     *
+     * @summary Information about the core of the application
+     *
+     * @prop {boolean} isReady : false,
+     * @prop {Object.<String,Array>} connections  channel:[] ... keyed by channel, contains an array of connId(s).
+     * @prop {WorldPt} activeTarget
+     * @prop {string} rootUrlPath
+     * @prop {Array} taskCounters
+     * @prop {Object} commandState
+     * @prop {Object.<String,String>} preferences,
+     * @prop {Object} appOptions : {}
+     */
     return {
         isReady : false,
         connections: {},      // channel:[] ... keyed by channel, contains an array of connId(s).
@@ -138,7 +165,8 @@ function getInitState() {
         rootUrlPath : null,
         taskCounters: [],
         commandState:{},   // key is command id, value is anything the action drops in, only stateful commands need this
-        preferences:initPreferences()  // preferences, will be backed by local storage
+        preferences:initPreferences(),  // preferences, will be backed by local storage
+        appOptions : {}
     };
 }
 
@@ -186,6 +214,9 @@ function appDataReducer(state, action={}) {
         case WS_CONN_UPDATED :
             return updateSet(state, ['connections'], action.payload);
 
+        case APP_OPTIONS :
+            return updateSet(state, ['appOptions'], action.payload.appOptions);
+
         default:
             return state;
     }
@@ -195,10 +226,18 @@ function appDataReducer(state, action={}) {
 
 /**
  * 
- * @param set the root url path.  This allows use to create full urls from relative urls
+ * @param {string} rootUrlPath set the root url path.  This allows use to create full urls from relative urls
  */
 export function dispatchRootUrlPath(rootUrlPath) {
     flux.process({type: ROOT_URL_PATH, payload: {rootUrlPath}});
+}
+
+/**
+ * set the options defined for the app that were set in the html file
+ * @param {AppOptions} appOptions the options for thei app
+ */
+export function dispatchAppOptions(appOptions) {
+    flux.process({type: APP_OPTIONS, payload: {appOptions}});
 }
 
 

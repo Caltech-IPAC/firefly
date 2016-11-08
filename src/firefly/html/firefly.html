@@ -12,24 +12,24 @@
     <script>
         window.firefly = {
             app: {
+                template: 'FireflyViewer',
                 menu: [
                     {label:'Images', action:'ImageSelectDropDownCmd'},
                     {label:'Catalogs', action:'IrsaCatalogDropDown'},
-//                    {label:'LSST Catalogs', action:'LsstCatalogDropDown'},
                     {label:'Charts', action:'ChartSelectDropDownCmd'},
-//                    {label:'Demo Searches', action:'TestSearches'},
-                    //{label:'Help', action:'app_data.helpLoad', type:'COMMAND'},
-                    ]
+                    ],
+                options : {
+                    MenuItemKeys: {maskOverlay:true},
+                    catalogSpacialOp: 'polygonWhenPlotExist'
+                }
             },
-            MenuItemKeys: {maskOverlay:true},
-            catalogSpacialOp: 'polygonWhenPlotExist'
         };
     </script>
     <script  type="text/javascript" src="firefly_loader.js"></script>
 </head>
 
 <body style="margin: 0; background-color: rgb(200,200,200)">
-<!-- attached loaction for firefly app -->
+<!-- attached location for firefly app -->
 <div id='app'/>
 
 

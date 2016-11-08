@@ -29,6 +29,7 @@ import {FileUpload} from '../../ui/FileUpload.jsx';
 import {convertAngle} from '../VisUtil.js';
 import {validateSql, validateConstraints, initRadiusArcSec} from './CatalogSelectViewPanel.jsx';
 import {masterTableFilter} from './IrsaMasterTableFilters.js';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 import './CatalogTableListField.css';
 import './CatalogSelectViewPanel.css';
@@ -447,7 +448,7 @@ class LsstCatalogDDList extends Component {
         const coneMax= radius / 3600;
         const boxMax= coneMax*2;
 
-        const polygonDefWhenPlot= get(window.firefly, 'catalogSpacialOp')==='polygonWhenPlotExist';
+        const polygonDefWhenPlot= get(getAppOptions(), 'catalogSpacialOp')==='polygonWhenPlotExist';
 
         var metadataSelector = () => {
                 var options = catTable.map(cat => {

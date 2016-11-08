@@ -4,29 +4,31 @@
 
 
 import Validate from '../../util/Validate.js';
-import {panelCatalogs} from './ImageSelectPanelProp.js';
+import {getPanelCatalogs} from './ImageSelectPanelProp.js';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
-import {keyMap, computeLabelWidth, rgbFieldGroup, isTargetNeeded,
-        IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, NONE} from './ImageSelectPanel.jsx';
+import {keyMap, computeLabelWidth, rgbFieldGroup, isTargetNeeded, getTabsIndexes } from './ImageSelectPanel.jsx';
 import {sizeFromDeg} from '../../ui/SizeInputField.jsx';
 import {get, isUndefined} from 'lodash';
 
 // get unit (string), min (float) and max (float) from the data file
 var getRangeItem = (crtCatalogId, rangeItem) => {
+    const {NONE}= getTabsIndexes();
     if (crtCatalogId === NONE ||
-        !panelCatalogs[crtCatalogId].hasOwnProperty('range')) {
+        !getPanelCatalogs()[crtCatalogId].hasOwnProperty('range')) {
         if (rangeItem === 'unit') {
             return 'deg';
         } else {
             return 0.0;
         }
     } else {
-        return panelCatalogs[crtCatalogId]['range'][rangeItem];
+        return getPanelCatalogs()[crtCatalogId]['range'][rangeItem];
     }
 };
 
 // get default size (string) from the data file
 var getSize = (crtCatalogId) => {
+    const {NONE}= getTabsIndexes();
+    const panelCatalogs= getPanelCatalogs();
     if (crtCatalogId !== NONE && panelCatalogs[crtCatalogId].hasOwnProperty('size')) {
         return panelCatalogs[crtCatalogId]['size'].toString();
     } else {
@@ -37,6 +39,7 @@ var getSize = (crtCatalogId) => {
 
 
 function getTypeData(keyMapId, key, id,value) {
+    const panelCatalogs= getPanelCatalogs();
     return {
         fieldKey: keyMap[keyMapId],
         label: get(panelCatalogs[id],[key,'Title'],'Unused'),
@@ -48,6 +51,8 @@ function getTypeData(keyMapId, key, id,value) {
 
 // tab fields initialization
 function initTabFields(crtCatalogId) {
+    const {IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, NONE}= getTabsIndexes();
+    const panelCatalogs= getPanelCatalogs();
     return (
     {
         [keyMap['catalogtab']]: {
@@ -140,7 +145,7 @@ var initTargetSize = (crtCatalogId) => {
 // reducer for the child field group (fieldgrouptabs for r, g, b)
 export var ImageSelPanelChangeOneColor = (inFields, action) => {
     if (!inFields) {
-        return initTabFields(panelCatalogs[0].CatalogId);
+        return initTabFields(getPanelCatalogs()[0].CatalogId);
     } else {
         return inFields;
     }

@@ -23,7 +23,7 @@ import {PlotPref} from './../PlotPref.js';
 import {DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import SimpleMemCache from '../../util/SimpleMemCache.js';
 import {CCUtil, CysConverter} from './../CsysConverter.js';
-import {defMenuItemKeys} from '../MenuItemKeys.js';
+import {getDefMenuItemKeys} from '../MenuItemKeys.js';
 import {ExpandType} from '../ImagePlotCntlr.js';
 
 const DEF_WORKING_MSG= 'Plotting ';
@@ -116,7 +116,7 @@ export function makePlotView(plotId, req, pvOptions= {}) {
         scrollY : -1,
         viewDim : {width:0, height:0}, // size of viewable area  (div size: offsetWidth & offsetHeight)
         overlayPlotViews: [],
-        menuItemKeys: makeMenuItemKeys(req,pvOptions,defMenuItemKeys), // normally wil not change
+        menuItemKeys: makeMenuItemKeys(req,pvOptions,getDefMenuItemKeys()), // normally wil not change
         plotViewCtx: createPlotViewContextData(req, pvOptions),
 
 

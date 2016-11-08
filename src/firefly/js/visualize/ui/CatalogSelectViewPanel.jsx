@@ -26,6 +26,7 @@ import {VoSearchPanel} from '../../ui/VoSearchPanel.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {convertAngle} from '../VisUtil.js';
 import {masterTableFilter} from './IrsaMasterTableFilters.js';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 
 import './CatalogTableListField.css';
@@ -297,7 +298,7 @@ class CatalogSelectView extends Component {
         const request = {id: 'irsaCatalogMasterTable'}; //Fetch master table
         doFetchTable(request).then((originalTableModel) => {
 
-            const filter= get(window.firefly, 'irsaCatalogFilter', 'defaultFilter');
+            const filter= get(getAppOptions(), 'irsaCatalogFilter', 'defaultFilter');
             const tableModel= isFunction(filter) ? filter(tableModel) : masterTableFilter[filter](originalTableModel);
 
             var data = tableModel.tableData.data;
@@ -643,7 +644,7 @@ class CatalogDDList extends Component {
         const {cols} = this.props.master;
         const catPanelStyle = {height: 350};
 
-        const polygonDefWhenPlot= get(window.firefly, 'catalogSpacialOp')==='polygonWhenPlotExist';
+        const polygonDefWhenPlot= get(getAppOptions(), 'catalogSpacialOp')==='polygonWhenPlotExist';
 
 
         return (

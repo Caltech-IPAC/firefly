@@ -12,25 +12,28 @@
     <script>
         window.firefly = {
             app: {
+                template: 'FireflyViewer',
                 menu: [
                     {label:'LSST Data', action:'LsstCatalogDropDown'},
                     {label:'External Images', action:'ImageSelectDropDownCmd'},
                     {label:'External Catalogs', action:'IrsaCatalogDropDown'},
                     {label:'Add Chart', action:'ChartSelectDropDownCmd'},
                     //{label:'Help', action:'app_data.helpLoad', type:'COMMAND'},
-                    ]
-            },
-            MenuItemKeys: {maskOverlay:true},
-            imageTabs: [ 'fileUpload', 'url', '2mass', 'wise', 'sdss', 'msx', 'dss', 'iras' ],
-            irsaCatalogFilter: 'lsstFilter',
-            catalogSpacialOp: 'polygonWhenPlotExist'
+                    ],
+                options : {
+                    MenuItemKeys: {maskOverlay:true},
+                    imageTabs: [ 'fileUpload', 'url', '2mass', 'wise', 'sdss', 'msx', 'dss', 'iras' ],
+                    irsaCatalogFilter: 'lsstFilter',
+                    catalogSpacialOp: 'polygonWhenPlotExist'
+                }
+
         };
     </script>
     <script  type="text/javascript" src="firefly_loader.js"></script>
 </head>
 
 <body style="margin: 0; background-color: rgb(200,200,200)">
-<!-- attached loaction for firefly app -->
+<!-- attached location for firefly app -->
 <div id='app'/>
 
 

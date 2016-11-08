@@ -2,14 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {keyMap, panelKey, computeCurrentCatalogId, rgbFieldGroup,
-        IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, NONE,
+import {keyMap, panelKey, computeCurrentCatalogId, rgbFieldGroup, getTabsIndexes,
         PLOT_NO, RED, GREEN, BLUE, PLOT_CREATE, PLOT_CREATE3COLOR, rgb} from './ImageSelectPanel.jsx';
 import WebPlotRequest from '../WebPlotRequest.js';
 import {dispatchPlotImage, visRoot } from '../ImagePlotCntlr.js';
 import {findViewerWithItemId, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
 import {parseWorldPt} from '../Point.js';
-import {panelCatalogs} from './ImageSelectPanelProp.js';
+import {getPanelCatalogs} from './ImageSelectPanelProp.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {sizeFromDeg} from '../../ui/SizeInputField.jsx';
 import {ZoomType} from '../ZoomType.js';
@@ -80,8 +79,9 @@ function imagePlotOnBlank(request) {
 // image plot on IRAS, 2MASS, WISE, MSX, DSS, SDSS
 function imagePlotOnSurvey(crtCatalogId, request) {
 
+    const {IRAS, TWOMASS, WISE, MSX, DSS, SDSS}= getTabsIndexes();
     var wp = parseWorldPt(request.UserTargetWorldPt);
-    var sym = panelCatalogs[crtCatalogId].Symbol.toLowerCase();
+    var sym = getPanelCatalogs()[crtCatalogId].Symbol.toLowerCase();
 
     var t = `${sym}types`;
     var b = `${sym}bands`;
@@ -135,6 +135,7 @@ function imagePlotOnSurvey(crtCatalogId, request) {
  * onFail callback and blank input checker for request sent to onSuccess
  */
 export function resultFail(fromFail = true) {
+    const {FITS, URL, NONE}= getTabsIndexes();
     return (request) => {
         var crtCatalogId = computeCurrentCatalogId(request[panelKey],
                 [request[rgbFieldGroup[RED]], request[rgbFieldGroup[GREEN]], request[rgbFieldGroup[BLUE]]]);
@@ -250,6 +251,7 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
 
         var webRequest = (cId, rq) => {
 
+            const {FITS, URL}= getTabsIndexes();
             switch (cId) {
                 case URL:
                     wpr = imagePlotOnURL(rq);
@@ -280,6 +282,7 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
         } else {
             rgbFieldGroup.map((item, index) => {
                 wpr = null;
+                const {NONE}= getTabsIndexes();
                 if (crtCatalogId[index] !== NONE) {
                     // add target and size data into r, g, b field group
 
