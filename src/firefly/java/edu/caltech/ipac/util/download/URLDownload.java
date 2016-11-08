@@ -81,7 +81,9 @@ public class URLDownload {
             throws FailedRequestException, IOException {
         try {
             URLConnection c = makeConnection(url, cookies, requestHeader, false);
-
+            //TODO test the timeout for sql query, added by LZ
+             c.setConnectTimeout(15000);
+             c.setReadTimeout(15000);
             if (c instanceof HttpURLConnection) {
                 return getDataToFile(c, outfile, dl, false, true, true, 0L,postData);
             } else {
@@ -142,6 +144,8 @@ public class URLDownload {
         try {
 
             URLConnection conn = url.openConnection();
+
+
             if (conn instanceof HttpURLConnection) addCookiesToConnection((HttpURLConnection) conn, cookies);
             String[] userInfo = getUserInfo(url);
             if (userInfo != null) {
