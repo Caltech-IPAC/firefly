@@ -278,15 +278,16 @@ class LSSTCatalogSelectView extends Component {
         var project = projectName;
         var catalogs = [
                 {
-                    label: 'Deep Forced Source',
-                    value: 'RunDeepForcedSource',       //TODO: temporary hard code of catalog name
-                    cat:[]
-                },
-                {
                     label: 'Deep Source',
                     value: 'RunDeepSource',
                     cat: []
+                },
+                {
+                    label: 'Deep Forced Source',
+                    value: 'RunDeepForcedSource',       //TODO: temporary hard code of catalog name
+                    cat:[]
                 }
+
         ];
 
         catmaster.push({  project, catalogs });
