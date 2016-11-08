@@ -18,7 +18,7 @@ import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {TargetPanel} from '../../ui/TargetPanel.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
-import {panelCatalogs} from './ImageSelectPanelProp.js';
+import {getPanelCatalogs} from './ImageSelectPanelProp.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {SizeInputFields} from '../../ui/SizeInputField.jsx';
@@ -58,19 +58,27 @@ export const keyMap = {
 
 const findCatId = (ary, id) => get(ary.find( (p) => p.id===id), 'CatalogId',-1);
 
+export function getTabsIndexes() {
+    const panelCatalogs= getPanelCatalogs();
+    return {
+        IRAS: findCatId(panelCatalogs,'iras'),
+        TWOMASS: findCatId(panelCatalogs,'2mass'),
+        WISE: findCatId(panelCatalogs,'wise'),
+        MSX: findCatId(panelCatalogs,'msx'),
+        DSS: findCatId(panelCatalogs,'dss'),
+        SDSS: findCatId(panelCatalogs,'sdss'),
+        FITS: findCatId(panelCatalogs,'fileUpload'),
+        URL: findCatId(panelCatalogs,'url'),
+        NONE: -1
+    };
+}
 
-export const IRAS= findCatId(panelCatalogs,'iras');
-export const TWOMASS= findCatId(panelCatalogs,'2mass');
-export const WISE= findCatId(panelCatalogs,'wise');
-export const MSX= findCatId(panelCatalogs,'msx');
-export const DSS= findCatId(panelCatalogs,'dss');
-export const SDSS= findCatId(panelCatalogs,'sdss');
-export const FITS= findCatId(panelCatalogs,'fileUpload');
-export const URL= findCatId(panelCatalogs,'url');
-export const NONE= -1;
 
 
-const defCurrCatalogId= [panelCatalogs[0].CatalogId, panelCatalogs[0].CatalogId, panelCatalogs[0].CatalogId];
+function getDefCurrCatalogId() {
+    const panelCatalogs= getPanelCatalogs();
+    return [panelCatalogs[0].CatalogId, panelCatalogs[0].CatalogId, panelCatalogs[0].CatalogId];
+}
 
 
 export const rgb = ['red', 'green', 'blue'];
@@ -85,7 +93,7 @@ export function completeButtonKey( isThreeColor = false ) {
  */
 
 
-export function computeCurrentCatalogId( fields, colorFields, catalogId = defCurrCatalogId ) {
+export function computeCurrentCatalogId( fields, colorFields, catalogId = getDefCurrCatalogId() ) {
 
     const keytab = keyMap['catalogtab'];
     var   newId = catalogId.slice();
@@ -189,6 +197,7 @@ export function computeLabelWidth(labelStr) {
  */
 
 export function isTargetNeeded(tabId, isThreeColor = false) {
+    const {FITS, URL, NONE}= getTabsIndexes();
     var notargets = (isThreeColor) ? [URL, FITS, NONE] : [URL, FITS];
 
     if (typeof tabId !== 'number') {
@@ -213,7 +222,7 @@ export class ImageSelection extends Component {
          this.allfields = getAllGroupFields(panelKey,...rgbFieldGroup);
 
          this.state = {
-             initCatalogId: props.catalogId ? props.catalogId : defCurrCatalogId,
+             initCatalogId: props.catalogId ? props.catalogId : getDefCurrCatalogId(),
              fields: this.allfields[panelKey],
              [rgbFieldGroup[RED]]: this.allfields[rgbFieldGroup[RED]],
              [rgbFieldGroup[GREEN]]: this.allfields[rgbFieldGroup[GREEN]],
@@ -359,12 +368,13 @@ class ImageSelectionView extends Component {
 
         // tabs for each catalog
         var categoryTabs = (fieldName, msg='') => {
-            var tabsRes = panelCatalogs.map((item, index) =>
+            var tabsRes = getPanelCatalogs().map((item, index) =>
                 (<Tab key={index} name={item.Title} id={item.CatalogId.toString()}>
                     <CatalogTabView catalog={item}  fields={get(this.props, fieldName)}/>
                 </Tab>));
             if (this.state.isThreeColor) {
                 var noneTab = 'Disable';
+                const {NONE}= getTabsIndexes();
                 tabsRes.push(
                     (<Tab key={noneTab} name={noneTab} id={`${NONE}`}>
                         <div className='tabview padding_disable'>
@@ -532,8 +542,9 @@ ImageSelectionView.defaultProps={
  *
  * @returns {XML}
  * @constructor
- * @param plotMode
- * @param displayEntry
+ * @param {Object} p
+ * @param p.plotMode
+ * @param p.displayEntry
  */
 function TargetPanelSetView({plotMode, displayEntry}) {
 

@@ -12,6 +12,7 @@ import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
 import {initApi} from './api/ApiBuild.js';
 import {HELP_LOAD} from './core/AppDataCntlr.js';
+import {dispatchAppOptions} from './core/AppDataCntlr.js';
 
 firefly.bootstrap();
 
@@ -25,9 +26,26 @@ const Templates = {
      * This templates has multiple views:  'images', 'tables', and 'xyPlots'.
      * They can be combined with ' | ', i.e.  'images | tables'
      */
-    FireflyViewer: FireflyViewer,
+    FireflyViewer,
     LightCurveViewer : LcViewer
 };
+
+
+
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} AppOptions
+ *
+ * @summary Options for the application
+ *
+ * @prop {Object} MenuItemKeys globally turns off or on visualization toolbar options
+ * @prop {Array.<String>} imageTabs controls the tab order of the image selection panel
+ * @prop {String|function} irsaCatalogFilter one of ['lsstFilter', undefined] or function
+ * @prop {String} catalogSpacialOp one of ['polygonWhenPlotExist', '']
+ */
+
 
 
 /**
@@ -36,6 +54,7 @@ const Templates = {
  * @namespace firefly
  * @type {object}
  * @prop {Templates} template  the name of the template to use. defaults to 'FireflyViewer'
+ * @prop {AppOptions} options  options to load this app with
  * @prop {string}   appTitle  title of this application.
  * @prop {string}   div       the div to load this application into.  defaults to 'app'
  * @prop {Object}   menu         custom menu bar
@@ -53,7 +72,17 @@ const Templates = {
  */
 const app = get(window, 'firefly.app');
 
-if (app) {
+if (get(app, 'options')) {
+    const defOps = {
+        MenuItemKeys: {},
+        imageTabs: undefined,
+        irsaCatalogFilter: undefined,
+        catalogSpacialOp: undefined
+    };
+    dispatchAppOptions(Object.assign({},defOps, app.options));
+}
+
+if (get(app, 'template')) {
     const defaults = {
         div: 'app',
         template: 'FireflyViewer',

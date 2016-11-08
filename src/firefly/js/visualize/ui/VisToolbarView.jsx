@@ -16,7 +16,7 @@ import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
 import {ZoomButton, ZoomType} from './ZoomButton.jsx';
 import {SimpleLayerOnOffButton} from './SimpleLayerOnOffButton.jsx';
 import {showDrawingLayerPopup} from './DrawLayerPanel.jsx';
-import {defMenuItemKeys} from '../MenuItemKeys.js';
+import {getDefMenuItemKeys} from '../MenuItemKeys.js';
 import {StretchDropDownView} from './StretchDropDownView.jsx';
 import {ColorTableDropDownView} from './ColorTableDropDownView.jsx';
 
@@ -166,7 +166,7 @@ export class VisToolbarView extends Component {
         var plot= primePlot(pv);
         var plotGroupAry= visRoot.plotGroupAry;
 
-        var mi= pv ? pv.menuItemKeys : defMenuItemKeys;
+        var mi= pv ? pv.menuItemKeys : getDefMenuItemKeys();
 
         var enabled= pv ? true : false;
 

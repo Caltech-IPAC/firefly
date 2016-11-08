@@ -3,6 +3,7 @@
  */
 
 import {get} from 'lodash';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 export const initPanelCatalogs = [
     {
@@ -199,10 +200,8 @@ const defaultOrder= [
     'url'
 ];
 
-const order= get(window.firefly, 'imageTabs', defaultOrder);
 
-
-export const panelCatalogs = order
+export const getPanelCatalogs = () => get(getAppOptions(), 'imageTabs', defaultOrder)
     .map( (id) => initPanelCatalogs.find( (p) => p.id===id))
     .filter( (e) => e)
     .map ( (e,idx) => Object.assign({},e,{CatalogId:idx}));

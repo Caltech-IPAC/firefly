@@ -75,7 +75,7 @@ import {showExampleDialog} from '../ui/ExampleDialog.jsx';
  * @prop {Object} charts - information about 2D plots (Controller: ChartsCntlr.js)
  * @prop {FieldGroupStore} fieldGroup - field group data for form and dialog input (Controller: FieldGroupCntlr.js)
  * @prop {Object} readout - mouse readout information (Controller: ReadoutCntlr.js)
- * @prop {Object} app_data - general application information (Controller: AppDataCntlr.js)
+ * @prop {AppDataStore} app_data - general application information (Controller: AppDataCntlr.js)
  * @prop {Object} drawLayers - information about the drawing layers e.g. select tool, catalogs overlays, regions, etc
  * @prop {Viewer} imageMultiView - data about the various image viewers (Controller: MultiViewCntlr.js)
  * @prop {Object} externalAccess - controls communication events with eternal applications (Controller: ExternalAccessCntlr.js)

@@ -3,6 +3,7 @@
  */
 
 import {get} from 'lodash';
+import {getAppOptions} from '../core/AppDataCntlr.js';
 
 export const MenuItemKeys= {
     fitsDownload : 'fitsDownload',
@@ -41,6 +42,5 @@ const tempMiKeys= Object.keys(MenuItemKeys).reduce((obj,k) => {
     return obj;
 },{});
 
-
-export const defMenuItemKeys= Object.assign({}, tempMiKeys, get(window.firefly, 'MenuItemKeys', {}));
+export const getDefMenuItemKeys= () => Object.assign({}, tempMiKeys, get(getAppOptions(), 'MenuItemKeys', {}));
 

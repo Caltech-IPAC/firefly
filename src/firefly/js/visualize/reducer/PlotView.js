@@ -23,7 +23,7 @@ import {PlotPref} from './../PlotPref.js';
 import {DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import SimpleMemCache from '../../util/SimpleMemCache.js';
 import {CCUtil, CysConverter} from './../CsysConverter.js';
-import {defMenuItemKeys} from '../MenuItemKeys.js';
+import {getDefMenuItemKeys} from '../MenuItemKeys.js';
 import {ExpandType} from '../ImagePlotCntlr.js';
 
 const DEF_WORKING_MSG= 'Plotting ';
@@ -116,7 +116,7 @@ export function makePlotView(plotId, req, pvOptions= {}) {
         scrollY : -1,
         viewDim : {width:0, height:0}, // size of viewable area  (div size: offsetWidth & offsetHeight)
         overlayPlotViews: [],
-        menuItemKeys: makeMenuItemKeys(req,pvOptions,defMenuItemKeys), // normally wil not change
+        menuItemKeys: makeMenuItemKeys(req,pvOptions,getDefMenuItemKeys()), // normally wil not change
         plotViewCtx: createPlotViewContextData(req, pvOptions),
 
 
@@ -328,14 +328,15 @@ export function replacePrimaryPlot(plotView,primePlot) {
  * @param {Array} plotViewAry an array of plotView
  * @param {Array} plotGroupAry the plotGroup array
  * @param {ScreenPt} newScrollPt a screen point in the plot to scroll to
+ * @param {boolean} useBoundChecking
  * @return {Array}
  */
-function updatePlotGroupScrollXY(visRoot, plotId,plotViewAry, plotGroupAry, newScrollPt) {
-    var plotView= updatePlotViewScrollXY(getPlotViewById(plotViewAry, plotId), newScrollPt);
+function updatePlotGroupScrollXY(visRoot, plotId,plotViewAry, plotGroupAry, newScrollPt, useBoundChecking=true) {
+    var plotView= updatePlotViewScrollXY(getPlotViewById(plotViewAry, plotId), newScrollPt, useBoundChecking);
     plotViewAry= replacePlotView(plotViewAry, plotView);
     var plotGroup= findPlotGroup(plotView.plotGroupId,plotGroupAry);
     if (get(plotGroup,'lockRelated')) {
-        plotViewAry= matchPlotView(plotView,plotViewAry,plotGroup,makeScrollPosMatcher(plotView, visRoot));
+        plotViewAry= matchPlotView(plotView,plotViewAry,plotGroup,makeScrollPosMatcher(plotView, visRoot,useBoundChecking));
     }
     return plotViewAry;
 }
@@ -375,10 +376,11 @@ export function findWCSMatchOffset(vr, masterPlotOrId, matchPlotOrToId) {
  * make a function that will match the scroll position of a plotview to the source plotview
  * @param {PlotView} sourcePV the plotview that others will match to
  * @param {VisRoot} visRoot
+ * @param {boolean} useBoundsChecking
  * @return {function} a function the takes the plotview to match scrolling as a parameter and
  *                      returns the scrolled matched version
  */
-function makeScrollPosMatcher(sourcePV, visRoot) {
+function makeScrollPosMatcher(sourcePV, visRoot, useBoundsChecking) {
     var {scrollX:srcSx,scrollY:srcSy}= sourcePV;
     var sourcePlot= primePlot(sourcePV);
     var {screenSize:{width:srcScreenWidth,height:srcScreenHeight}}= sourcePlot;
@@ -399,7 +401,7 @@ function makeScrollPosMatcher(sourcePV, visRoot) {
                 var {scrollWidth:sw,scrollHeight:sh}= getScrollSize(pv);
                 var newSx= width*percentX - sw/2;
                 var newSy= height*percentY - sh/2;
-                retPV= updatePlotViewScrollXY(pv,makeScreenPt(newSx,newSy));
+                retPV= updatePlotViewScrollXY(pv,makeScreenPt(newSx,newSy), useBoundsChecking);
             }
         }
         return retPV;
