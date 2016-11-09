@@ -203,7 +203,7 @@ export const UploadPanel = ({phaseButton}) => {
                     />
 
                 </FieldGroup>
-                {phaseButton ? <button type='button' onClick={() => showPhaseFoldingPopup('Phase Folding', RAW_TABLE)}>Phase Folding</button> : null}
+                {phaseButton ? <button type='button' onClick={() => showPhaseFoldingPopup('Phase Folding')}>Phase Folding</button> : null}
             </FormPanel>
         </div>
     );

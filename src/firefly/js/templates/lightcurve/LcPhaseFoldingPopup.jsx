@@ -23,16 +23,21 @@ import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import Validate from '../../util/Validate.js';
 import {LcPFOptionsPanel} from './LcPhaseFoldingPanel.jsx';
 import {RAW_TABLE, PHASE_FOLDED} from './LcManager.js';
+import ReactHighcharts from 'react-highcharts';
 import {cloneDeep, get, set, omit, slice, replace, isNil} from 'lodash';
 
 const popupId = 'PhaseFoldingPopup';
 const fKeyDef = { time: {fkey: 'timeCol', label: 'Time Column'},
                   flux: {fkey: 'flux', label: 'Flux Column'},
-                  fluxerr: {fkey: 'fluxerror', label: 'Flux Error'},
+                  fluxerr: {fkey: 'fluxerror', label: 'Flux Error Column'},
                   tz: {fkey:'tzero', label: 'Zero Point Time'},
                   period: {fkey: 'period', label: 'Period (day)'},
                   periodslider: {fkey: 'periodslider', label: ''}};
 const pfkey = 'LC_PF_Panel';
+var phaseCol = 'phase';
+var fluxCol;
+var fluxerrCol;
+var timeColName;
 
 const PanelResizableStyle = {
     width: 400,
@@ -54,6 +59,16 @@ const Header = {
     padding: '2px',
     fontSize: 'large'
 };
+
+function getTypeData(key, val='', tip = '', labelV='', labelW) {
+    return {
+        fieldKey: key,
+        label: labelV,
+        value: val,
+        tooltip: tip,
+        labelWidth: labelW
+    };
+}
 
 const defValues= {
     fieldInt: {
@@ -102,47 +117,86 @@ const defValues= {
         tooltip: 'this is a tip for high field',
         label: 'High Field:'
     },
-    periodMin: {
-        fieldKey: 'periodMin',
-        value: '3',
-        validator: Validate.floatRange.bind(null, 0.0, 365.0, 'period minimum'),
-        tooltip: 'this is a tip for period minumum',
-        label: ''
-    },
-    periodMax: {
-        fieldKey: 'periodMax',
-        value: '3',
-        validator: Validate.floatRange.bind(null, 0.0, 365.0, 'period maximum'),
-        tooltip: 'this is a tip for period maximum',
-        label: ''
-    },
-    periodSteps: {
-        fieldKey: 'periodSteps',
-        value: '3',
-        validator: Validate.intRange.bind(null, 1, 2000, 'period total step'),
-        tooltip: 'this is a tip for total period steps',
-        label: ''
-    }
+    periodMin: Object.assign(getTypeData('periodMin', '3', 'this is a tip for period maximum'),
+                            {validator: Validate.floatRange.bind(null, 0.0, Number.MAX_VALUE, 'period miniimum')}),
+    periodMax: Object.assign(getTypeData('periodMax', '3', 'this is a tip for period maximum'),
+                            {validator: Validate.floatRange.bind(null, 0.0, Number.MAX_VALUE, 'period maximum')}),
+    periodSteps: Object.assign(getTypeData('periodSteps', '3',  'this is a tip for total period steps'),
+                            {validator: Validate.intRange.bind(null, 1, 2000, 'period total step')}),
+    [fKeyDef.time.fkey]: Object.assign(getTypeData(fKeyDef.time.fkey, '',
+                                                    'time column, mjd, col1, or col2',
+                                                    `${fKeyDef.time.label}:`, 100),
+                            {validator:  (val) => {
+                                let retVal = {valid: true, message: ''};
+                                if (!validTimeSuggestions.includes(val)) {
+                                    retVal = {valid: false, message: `${val} is not a valid time column`};
+                                }
+                                return retVal;
+                            }}),
+    [fKeyDef.flux.fkey]: Object.assign(getTypeData(fKeyDef.flux.fkey, '',
+                                        'Flux column name', `${fKeyDef.flux.label}:`, 100),
+                            {validator:  (val) => {
+                                let retVal = {valid: true, message: ''};
+                                if (!validFluxSuggestions.includes(val)) {
+                                    retVal = {valid: false, message: `${val} is not a valid flux column`};
+                                }
+                                return retVal;
+                            }}),
+    [fKeyDef.fluxerr.fkey]: Object.assign(getTypeData(fKeyDef.fluxerr.fkey, '',
+                                'Flux Error column name', `${fKeyDef.fluxerr.label}:`, 100),
+                            {validator:  (val) => {
+                                let retVal = {valid: true, message: ''};
+                                if (!validFluxErrSuggestions.includes(val)) {
+                                    retVal = {valid: false, message: `${val} is not a valid flux error column`};
+                                }
+                                return retVal;
+                            }}),
+    [fKeyDef.tz.fkey]: Object.assign(getTypeData(fKeyDef.tz.fkey, '', '', `${fKeyDef.tz.label}:`, 100),
+                            {validator: null}),
+    [fKeyDef.period.fkey]: Object.assign(getTypeData(fKeyDef.period.fkey, '', '', `${fKeyDef.period.label}:`, 100),
+                            {validator: null})
 };
 
-const RES = 10;
-const DEC = 8;
 
-var periodRange;
-var timeZero;
-var timeMax;
-var currentPhaseFoldedTable;
+const RES = 10;      // factor for defining total steps for period
+const DEC = 8;       // decimal digit
+const validTimeSuggestions = ['mjd'];      // suggestive time column name
+const validFluxSuggestions = ['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'];
+const validFluxErrSuggestions = ['w1sigmpro_ep', 'w2sigmpro_ep', 'w3sigmpro_ep', 'w4sigmpro_ep'];
+const Margin = 0.2;                                  // left and right margin for xAxis on flux vs. phase plot
+
+var periodErr;       // error message for period setting
+var timeErr;         // error message for time zero setting
+
+var periodRange;     // period minumum and maximum
+var timeZero;        // time zero
+var timeMax;         // time zero maximum
+var currentPhaseFoldedTable;   // table with phase column
 
 /**
  * @summary show phase folding popup window
  * @param {string} popTitle
+ * @param {string} phaseColumnName
+ * @param {string[]} timeList
+ * @param {string[]} fluxList
+ * @param {string[]} fluxerrList
+ * @param {string} timeColumnName
+ * @param {string} fluxColumnName
+ * @param {string} fluxerrColumnName
  */
+export function showPhaseFoldingPopup(popTitle, phaseColumnName = 'phase',
+                                      timeList=validTimeSuggestions,
+                                      fluxList=validFluxSuggestions,
+                                      fluxerrList=validFluxErrSuggestions,
+                                      timeColumnName='', fluxColumnName='', fluxerrColumnName='' ) {
 
-export function showPhaseFoldingPopup(popTitle) {
-    var fields = FieldGroupUtils.getGroupFields(pfkey);
-    var timeColName = get(fields, [fKeyDef.time.fkey, 'value'], 'mjd');
-
+    timeColName = timeColumnName ? timeColumnName : timeList[0];
+    fluxCol = fluxColumnName ? fluxColumnName : fluxList[0];
+    fluxerrCol = fluxerrColumnName ? fluxerrColumnName : fluxerrList[0];
+    phaseCol = phaseColumnName;
     periodRange = computePeriodRange(RAW_TABLE, timeColName);
+    periodErr = `Period error: must be a float and not less than ${periodRange.min} (day)`;
+    timeErr = `time zero error: must be a float and within [0.0, ${timeMax}]`;
 
     var popup = (<PopupPanel title={popTitle}>
                     {PhaseFoldingSetting()}
@@ -152,7 +206,7 @@ export function showPhaseFoldingPopup(popTitle) {
                             groupKey={[pfkey]}
                             onSuccess={setPFTableSuccess(true)}
                             onFail={setPFTableFail()}
-                            text={'Phase Folding Table'}
+                            text={'Phase Folded Table'}
                         />
                     </div>
                  </PopupPanel>);
@@ -170,17 +224,192 @@ function PhaseFoldingSetting() {
     var border = '1px solid #a3aeb9';
     var borderRadius = '5px';
     var childStyle = {border, borderRadius, height: 350, margin: 5, padding: 2};
+    var width = 550;
 
     return (
         <div style={{display: 'flex'}}>
             <div style={{...childStyle}}>
                 <LcPFOptionsBox />
            </div>
-            <div style={{...childStyle, width: 300}}> XY plot</div>
+            <div style={{...childStyle}}>
+                <PhaseFoldingChart height={childStyle.height} width={width}/>
+            </div>
         </div>
     );
 }
 
+/**
+ * @summary calculate phase and return as text
+ * @param {number} time
+ * @param {number} timeZero
+ * @param {number} period
+ * @param {number} dec
+ * @returns {string}  folded phase (positive or negative) with 'dec'  decimal digits
+ */
+function getPhase(time, timeZero, period,  dec=DEC) {
+    var q = (time - timeZero)/period;
+    var p = q >= 0  ? (q - Math.floor(q)) : (q + Math.floor(-q));
+
+    return p.toFixed(dec);
+}
+
+/**
+ * @summary get flux series in terms of folded phase
+ * @param {Object} fields
+ * @returns {*}
+ */
+function getPhaseFlux(fields) {
+    var rawTable = getTblById(RAW_TABLE);
+    var {columns, data} = rawTable.tableData;    // column names and data
+
+    var {timeCol, period, tzero, flux} = fields;
+    const tc = timeCol ? timeCol.value : '';
+    const fc = flux ? flux.value: '';
+    const tIdx = tc ? columns.findIndex((c) => (c.name === tc)) : -1;  // find time column
+    const fIdx = fc ? columns.findIndex((c) => (c.name === fc)) : -1;  // find flux column
+
+    if (tIdx < 0 || fIdx < 0) return {};
+
+    var pd, tz;
+
+    if (period){
+        if (!period.valid) return {};    // invalid period
+        pd = parseFloat(period.value);
+    } else {
+        pd = periodRange.min;
+    }
+    if (tzero) {
+        if (!tzero.valid) return {};      // invalid period
+        tz = parseFloat(tzero.value);
+    } else {
+        tz = timeZero;
+    }
+
+    var phaseV = data.map((d) => {
+        return parseFloat(getPhase(d[tIdx], tz, pd));
+    });
+
+    var minPhase = Math.min(...phaseV);
+    var maxPhase = Math.max(...phaseV) + 1.0;
+
+    var xy = data.reduce((prev, d, idx) => {
+        var phase1, phase2, fluxV;
+
+        fluxV = parseFloat(d[fIdx]);
+        phase1 = phaseV[idx];
+        phase2 = phase1 + 1.0;
+        prev.push([phase1, fluxV], [phase2, fluxV]);
+
+        return prev;
+    }, []);
+
+    return Object.assign({data: xy}, {minPhase, maxPhase, period: pd.toFixed(DEC), flux: fc});
+}
+
+/**
+ * @summary 2D xyplot component on phase folding panel
+ */
+class PhaseFoldingChart extends Component {
+    constructor(props) {
+        super(props);
+
+        var fields = FieldGroupUtils.getGroupFields(pfkey);
+        var {width, height, showTooltip=true} = props;
+        var {data, minPhase = 0.0, period, flux} = getPhaseFlux(fields);
+
+        this.state = {
+            fields,
+            config: {
+                chart: {
+                    type: 'scatter',
+                    borderColor: '#a5a5a5',
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    zoomType: 'xy',
+                    height,
+                    width
+                },
+                title: {
+                    text: 'Flux vs. Phase'
+                },
+                xAxis: {
+                    min: minPhase - Margin,
+                    max: minPhase + 2.0 + Margin,
+                    title: {text: `${phaseCol}`},
+                    gridLineWidth: 1,
+                    gridLineColor: '#e9e9e9'
+                },
+                yAxis: {
+                    title: {text: `${flux}(mag)`},
+                    lineWidth: 1,
+                    tickWidth: 1,
+                    tickLength: 10,
+                    gridLineColor: '#e9e9e9'
+                },
+                tooltip: showTooltip ? {enabled: true,
+                                        formatter() {
+                                            return ('<span>' +
+                                            `${phaseCol} = ${this.x} <br/>` +
+                                            `${flux} = ${this.y} mag <br/>` +
+                                            '</span>');
+                                        }}
+                                     : {enabled: false},
+                series: [{
+                    marker: {radius: 2},
+                    color: 'blue',
+                    name: period ? `period=${period}(day)`:'period=',
+                    data
+                }]
+            }
+        };
+    }
+
+    componentWillUnmount() {
+        this.iAmMounted = false;
+        if (this.unbinder) this.unbinder();
+    }
+
+    componentDidMount() {
+        var isPhaseChanged = (newFields) => {
+            var fieldsToCheck = ['time', 'flux', 'tz', 'period'];
+            var fieldsInfo = fieldsToCheck.map((f) => {
+                return [get(newFields, fKeyDef[f].key, ''),
+                        get(this.state.fields, fKeyDef[f].key, '')];
+            });
+
+            var idx = fieldsToCheck.find((f, idx) => {
+                return !fieldsInfo[idx][0] || (fieldsInfo[idx][0] !== fieldsInfo[idx][1]);
+            });
+
+            return (idx !== -1);
+        };
+
+        this.iAmMounted = true;
+        var  chart = this.refs.chart.getChart();
+
+        this.unbinder= FieldGroupUtils.bindToStore(pfkey, (fields) => {
+            if (isPhaseChanged(fields, this.state.fields) && this.iAmMounted) {
+                this.setState({fields});
+
+                var {data, minPhase = 0.0, period, flux} = getPhaseFlux(fields);
+                chart.series[0].setData(data);
+                chart.series[0].update({name: period ? `period=${period}(day)`:'period='});
+                chart.xAxis[0].update({min: minPhase - Margin,
+                                       max: minPhase + 2.0 + Margin});
+                chart.yAxis[0].setTitle({text: `${flux}(mag)`})
+            }
+        });
+    }
+
+    render() {
+        return (
+            <div>
+                <ReactHighcharts config={this.state.config} isPureConfig={true} ref='chart'/>
+           </div>
+        );
+    }
+
+}
 /**
  * @summary Phase folding panel component for setting parameters
  */
@@ -218,19 +447,12 @@ class LcPFOptionsBox extends Component {
 }
 
 function LcPFOptions({fields}) {
-    const validSuggestions = ['mjd','col1','col2'];
-    const {periodMax, periodMin, periodSteps, tzero} = fields || {};
-    var   sRange, step, min, max, zeroT;
 
-    min = periodMin ? periodMin.value : periodRange.min;
-    max = periodMax ? periodMax.value : periodRange.max;
-    zeroT = tzero ? tzero.value : timeZero;
-
-    sRange = [0.0, max];
-    step = periodSteps ? (max - min)/periodSteps.value : (max-min)/periodRange.steps;
-
-    const periodErr = `Period error: must be a float and not less than ${periodRange.min} (day)`;
-    const timeErr = `time zero error: must be a float and within [${timeZero}, ${timeMax}]`;
+    const {periodMax, periodMin, periodSteps} = fields || {};
+    var min = periodMin ? periodMin.value : periodRange.min;
+    var max = periodMax ? periodMax.value : periodRange.max;
+    var sRange = [0.0, max];
+    var step = periodSteps ? (max - min)/periodSteps.value : (max-min)/periodRange.steps;
 
     return (
 
@@ -242,76 +464,38 @@ function LcPFOptions({fields}) {
                 <br/><br/>
                 <SuggestBoxInputField
                     fieldKey={fKeyDef.time.fkey}
-                    initialState= {{
-                            fieldKey: fKeyDef.time.fkey,
-                            value: 'mjd',
-                            validator:  (val) => {
-                                let retVal = {valid: true, message: ''};
-                                if (!validSuggestions.includes(val)) {
-                                    retVal = {valid: false, message: `${val} is not a valid time column`};
-                                }
-                                return retVal;
-                            },
-                            tooltip: 'time column, mjd, col1, or col2',
-                            label : `${fKeyDef.time.label}:`,
-                            labelWidth : 100
-                        }}
                     getSuggestions = {(val)=>{
-                            const suggestions = validSuggestions.filter((el)=>{return el.startsWith(val);});
-                            return suggestions.length > 0 ? suggestions : validSuggestions;
+                            const suggestions = validTimeSuggestions.filter((el)=>{return el.startsWith(val);});
+                            return suggestions.length > 0 ? suggestions : validTimeSuggestions;
                         }}
 
                 />
 
                 <br/>
-                <ValidationField fieldKey={fKeyDef.flux.fkey}
-                                 forceReinit={true}
-                                 initialState= {{
-                                  fieldKey: fKeyDef.flux.fkey,
-                                  value: '2.0',
-                                  validator: floatValidator.bind(null, 2.0, 5.5, 3,'Flux Column error'),
-                                  tooltip: 'Flux Column, between 2.0 to 5.5',
-                                  label : `${fKeyDef.flux.label}:`,
-                                  labelWidth : 100
-                          }} />
+                <SuggestBoxInputField
+                    fieldKey={fKeyDef.flux.fkey}
+                    getSuggestions = {(val)=>{
+                            const suggestions = validFluxSuggestions.filter((el)=>{return el.startsWith(val);});
+                            return suggestions.length > 0 ? suggestions : validFluxSuggestions;
+                        }}
 
+                />
                 <br/>
 
-                <ValidationField fieldKey={fKeyDef.fluxerr.fkey}
-                                 forceReinit={true}
-                                 initialState= {{
-                                  fieldKey: fKeyDef.fluxerr.fkey,
-                                  value: '0.02',
-                                  validator: floatValidator.bind(null, 0.01, 0.5, 3,'Flux Error'),
-                                  tooltip: 'Flux Error, between 0.01 to 0.5',
-                                  label : `${fKeyDef.fluxerr.label}:`,
-                                  labelWidth : 100
-                         }} />
+                <SuggestBoxInputField
+                    fieldKey={fKeyDef.fluxerr.fkey}
+                    getSuggestions = {(val)=>{
+                            const suggestions = validFluxErrSuggestions.filter((el)=>{return el.startsWith(val);});
+                            return suggestions.length > 0 ? suggestions : validFluxErrSuggestions;
+                        }}
+
+                />
                 <br/>
 
-                <ValidationField fieldKey={fKeyDef.tz.fkey}
-                                 forceReinit={true}
-                                 initialState= {{
-                                  fieldKey: fKeyDef.tz.fkey,
-                                  value: `${zeroT}`,
-                                  validator: timezeroValidator.bind(null, 0.0, Number.MAX_VALUE, 8, timeErr),
-                                  tooltip: `time zero, within [${timeZero}, ${timeMax}]`,
-                                  label : `${fKeyDef.tz.label}:`,
-                                  labelWidth : 100
-                         }} />
+                <ValidationField fieldKey={fKeyDef.tz.fkey} />
                 <br/>
 
                 <RangeSlider fieldKey={fKeyDef.period.fkey}
-                             initialState= {{
-                                  fieldKey: fKeyDef.period.fkey,
-                                  value: `${min}`,
-                                  label: `${fKeyDef.period.label}:`,
-                                  validator: periodValidator.bind(null, 0.0, Number.MAX_VALUE, 8, periodErr),
-                                  tooltip: `Period for phase folding, within [${periodRange.min} (i.e. 1 sec), ${periodRange.max}(suggestion)]`,
-                                  labelWidth: 100,
-                                  errMsg: periodErr
-                             }}
-                             onValueChange={() => doPFCalculate()}
                              min={sRange[0]}
                              max={sRange[1]}
                              minStop={min}
@@ -345,42 +529,22 @@ LcPFOptions.propTypes = {
  * @param {number} max
  * @param {number} precision
  * @param {string} description
- * @param {string} valStr
- * @returns {{valid: boolean, message: string}}
+ * @returns {function}
  */
-var periodValidator = function(min, max, precision, description, valStr) {
-    var retRes = Validate.floatRange(min, max, precision,  description, valStr);
+function periodValidator(min, max, precision, description) {
+    return (valStr) => {
+        var retRes = Validate.floatRange(min, max, precision, description, valStr);
 
-    if (retRes.valid) {
-        if (parseFloat(valStr) < periodRange.min) {
-            return {valid: false, message: description};
+        if (retRes.valid) {
+            if (parseFloat(valStr) < periodRange.min) {
+                return {valid: false, message: description};
+            }
+        } else {
+            retRes.message = description;
         }
-    } else {
-        retRes.message = description;
-    }
-    return retRes;
-};
-
-
-/**
- * @summary validator for float value string, empty string is invalid
- * @param {number} min
- * @param {number} max
- * @param {number} precision
- * @param {string} description
- * @param {string} valStr
- * @returns {{valid: boolean, message: *}}
- */
-var floatValidator = function(min, max, precision, description, valStr) {
-    var retRes = Validate.floatRange(min, max, precision,  description, valStr);
-
-    if (retRes.valid) {
-        if (!valStr) {    // empty string
-            return {valid: false,  message: `${description}: not specified`};
-        }
-    }
-    return retRes;
-};
+        return retRes;
+    };
+}
 
 /**
  * @summary time zero validator
@@ -388,22 +552,25 @@ var floatValidator = function(min, max, precision, description, valStr) {
  * @param {number} max
  * @param {number} precision
  * @param {string} description
- * @param {string} valStr
- * @returns {{valid: boolean, message: string}}
+ * @returns {function}
  */
-var timezeroValidator = function(min, max, precision, description, valStr) {
-    var retRes = Validate.floatRange(min, max, precision,  description, valStr);
+function timezeroValidator(min, max, precision, description) {
+    return (valStr) => {
+        var retRes = Validate.floatRange(min, max, precision, description, valStr);
 
-    if (retRes.valid) {
-        if (!valStr || parseFloat(valStr) < timeZero || parseFloat(valStr) > timeMax) {  // empty string or not in range
-            return {valid: false,
-                    message: description};
+        if (retRes.valid) {
+            if (!valStr || parseFloat(valStr) > timeMax) {  // empty string or not in range
+                return {
+                    valid: false,
+                    message: description
+                };
+            }
+        } else {
+            retRes.message = description;
         }
-    } else {
-        retRes.message = description;
-    }
-    return retRes;
-};
+        return retRes;
+    };
+}
 
 /**
  * @summary phase folding parameter reducer  // TODO: not sure how this works
@@ -417,7 +584,19 @@ var LcPFReducer= function(inFields, action) {
         defV.periodMin.value = periodRange.min;
         defV.periodMax.value = periodRange.max;
         defV.periodSteps.value = periodRange.steps;
+        set(defV, [fKeyDef.time.fkey, 'value'], timeColName);
+        set(defV, [fKeyDef.flux.fkey, 'value'], fluxCol);
+        set(defV, [fKeyDef.fluxerr.fkey, 'value'], fluxerrCol);
+        set(defV, [fKeyDef.period.fkey, 'value'],`${periodRange.min}`);
+        set(defV, [fKeyDef.tz.fkey, 'value'],`${timeZero}`);
 
+        set(defV, [fKeyDef.period.fkey, 'tooltip'], `Period for phase folding, within [${periodRange.min} (i.e. 1 sec), ${periodRange.max}(suggestion)]`);
+        set(defV, [fKeyDef.tz.fkey, 'tooltip'], `time zero, within [0.0, ${timeMax}`);
+
+        set(defV, [fKeyDef.tz.fkey, 'validator'], timezeroValidator( 0.0, Number.MAX_VALUE, 8, timeErr));
+        set(defV, [fKeyDef.period.fkey, 'validator'], periodValidator(0.0, Number.MAX_VALUE, 8, periodErr));
+
+        set(defV, [fKeyDef.period.fkey, 'errMsg'], periodErr);
         return defV;
     }
     else {
@@ -450,11 +629,11 @@ function resetDefaults() {
  * @summary duplicate the phase cycle to the phase folded table
  * @param {string} timeCol
  * @param {number} period
- * @param (TableModel} phaseTable
+ * @param {TableModel} phaseTable
  */
 function repeatDataCycle(timeCol, period, phaseTable) {
     var tIdx = phaseTable.tableData.columns.findIndex((c) => (c.name === timeCol));
-    var fIdx = phaseTable.tableData.columns.findIndex((c) => (c.name === 'phase'));
+    var fIdx = phaseTable.tableData.columns.findIndex((c) => (c.name === phaseCol));
     var {totalRows, tbl_id, title} = phaseTable;
 
 
@@ -489,13 +668,11 @@ function repeatDataCycle(timeCol, period, phaseTable) {
  */
 function setPFTableSuccess(hideDropDown = false) {
     return (request) => {
+        doPFCalculate();
         var reqData = get(request, pfkey);
-        var timeName = get(reqData, fKeyDef.time.fkey, 'mjd');
+        var timeName = get(reqData, fKeyDef.time.fkey);
         var period = get(reqData, fKeyDef.period.fkey);
-
-        if (!currentPhaseFoldedTable) {
-            doPFCalculate();
-        }
+        var flux = get(reqData, fKeyDef.flux.fkey);
 
         repeatDataCycle(timeName, parseFloat(period), currentPhaseFoldedTable);
 
@@ -509,8 +686,8 @@ function setPFTableSuccess(hideDropDown = false) {
 
             let xyPlotParams = {
                 userSetBoundaries: {xMax: 2},
-                x: {columnOrExpr: 'phase', options: 'grid'},
-                y: {columnOrExpr: 'w1mpro_ep', options: 'grid'}
+                x: {columnOrExpr: phaseCol, options: 'grid'},
+                y: {columnOrExpr: flux, options: 'grid'}
             };
             loadXYPlot({chartId: PHASE_FOLDED, tblId: PHASE_FOLDED, xyPlotParams});
         });
@@ -521,6 +698,10 @@ function setPFTableSuccess(hideDropDown = false) {
     };
 }
 
+/**
+ * @summary callback when there is failure on clicking complete button
+ * @returns {Function}
+ */
 function setPFTableFail() {
     return (request) => {
         return showInfoPopup('Phase folding parameter setting error');
@@ -532,8 +713,8 @@ function setPFTableFail() {
  */
 function doPFCalculate() {
     let fields = FieldGroupUtils.getGroupFields(pfkey);
-
     let rawTable = getTblById(RAW_TABLE);
+
     currentPhaseFoldedTable = rawTable && addPhaseToTable(rawTable, fields);
 }
 
@@ -546,9 +727,9 @@ function doPFCalculate() {
  */
 function getPhaseFoldingRequest(fields, tbl) {
     return makeTblRequest('PhaseFoldedProcessor', PHASE_FOLDED, {
-        'period_days': fields.period.value,
+        'period_days': fields&&get(fields, 'period.value'),
         'table_name': 'folded_table',
-        'time_col_name':fields.timeCol.value,
+        'time_col_name': fields&&get(fields, 'timeCol.value'),
         'original_table': tbl.tableMeta.tblFilePath
     },  {tbl_id:PHASE_FOLDED});
 
@@ -561,30 +742,27 @@ function getPhaseFoldingRequest(fields, tbl) {
  */
 function addPhaseToTable(tbl, fields) {
     var {timeCol, period, tzero} = fields;
-    var {columns, data} = tbl.tableData;
-    var tIdx = timeCol&&timeCol.value ? columns.findIndex((c) => (c.name === timeCol.value)) : -1;
+    var {columns} = tbl.tableData;
+    var tc = timeCol ? timeCol.value : 'mjd';
+    var tIdx = tc ? columns.findIndex((c) => (c.name === tc)) : -1;
 
-    if (tIdx < 0 || !tzero || !period)  return null;
-    var pd = parseFloat(period.value);
-    var tz = parseFloat(tzero.value);
+    if (tIdx < 0) return null;
 
-
+    var pd = period ? parseFloat(period.value) : periodRange.min;
+    var tz = tzero ? parseFloat(tzero.value) : timeZero;
     var tPF = Object.assign(cloneDeep(tbl), {tbl_id: PHASE_FOLDED, title: 'Phase Folded'},
                                             {request: getPhaseFoldingRequest(fields, tbl)},
                                             {highlightedRow: 0});
     tPF = omit(tPF, ['hlRowIdx', 'isFetching']);
 
     var phaseC = {desc: 'number of period elapsed since starting time.',
-                  name: 'phase', type: 'double', width: 20 };
+                  name: phaseCol, type: 'double', width: 20 };
 
     tPF.tableData.columns.push(phaseC);          // add phase column
 
     tPF.tableData.data.forEach((d, index) => {   // add phase value (in string) to each data
-        var t = d[tIdx];
-        var q = (t - tz)/pd;
-        var p = q >= 0  ? (q - Math.floor(q)) : (q + Math.floor(-q));
 
-        tPF.tableData.data[index].push(`${p.toFixed(DEC)}`);
+        tPF.tableData.data[index].push(getPhase(parseFloat(d[tIdx]), tz, pd));
     });
 
     return tPF;
@@ -599,21 +777,17 @@ function addPhaseToTable(tbl, fields) {
 function computePeriodRange(tbl_id, timeColName) {
     var tbl = getTblById(tbl_id);
     var {columns, data} = tbl.tableData;
-    var minTime = Number.MAX_VALUE;
-    var maxTime = 0;
-    var tIdx;
-    var min, max;
+    var tIdx = columns.findIndex((col) => (col.name === timeColName));
+    var arr = data.reduce((prev, e)=> {
+        prev.push(parseFloat(e[tIdx]));
+        return prev;
+    }, []);
 
-    tIdx = columns.findIndex((col) => (col.name === timeColName));
+    timeZero = Math.min(...arr);
+    timeMax = Math.max(...arr);
 
-    let arr=[]; data.map((e)=> arr.push(e[tIdx]));
-    minTime = Math.min(...arr);
-    maxTime = Math.max(...arr);
-
-    timeZero = minTime;
-    timeMax = maxTime;
-    max =  parseFloat(((maxTime - minTime) * 2).toFixed(DEC));
-    min = parseFloat((1.0/86400).toFixed(DEC));    // set one second as the minimum value for period
+    var max = parseFloat(((timeMax - timeZero) * 2).toFixed(DEC));
+    var min = parseFloat((1.0/86400).toFixed(DEC));    // set one second as the minimum value for period
 
     return {min, max, steps: data.length*RES};
 }
