@@ -21,11 +21,12 @@ function shadeColor(color, percent) {
 }
 
 function padRight(num) {
-    return num+Math.abs(num*Math.pow(10,-9));
+    return num+Math.abs(num*Math.pow(10,-14));
 }
 
-function padLeft(num) {
-    return num-Math.abs(num*Math.pow(10,-9));
+function padLeft(num, pad=0) {
+    const thePad = pad ? Math.abs(pad) : Math.abs(num*Math.pow(10,-14));
+    return num-thePad;
 }
 
 function getMinY(data) {
@@ -34,6 +35,10 @@ function getMinY(data) {
             return Math.min(minVal, row[0]);
         }, data[0][0]);
     }
+}
+
+function allBinsZeroWidth(data) {
+    return data.every((row) => {return row[1]===row[2];});
 }
 
 export class Histogram extends React.Component {
@@ -146,7 +151,7 @@ export class Histogram extends React.Component {
      * @param {number} seriesIdx - index of the series
      * @return {Boolean} f data points are set, false if no points are present
      */
-    addDataSeries(config, seriesOptions, minY, seriesIdx=0) {
+    addDataSeries(config, seriesOptions, minY, nSeries, seriesIdx=0) {
 
         // how many significant digits should we preserve? ~12?
         // EPSILON 2^(-52)
@@ -168,18 +173,27 @@ export class Histogram extends React.Component {
         var error;
 
         // use column chart for only one point
-        var areaPlot = (data.length > 1);
+        var areaPlot = !allBinsZeroWidth(data);
 
         // zones - color ajacent bins slightly differently
         var doZones = (areaPlot);
 
 
-        if (!areaPlot && data.length === 1) {
-            const xrange = data[0][2] - data[0][1];
-            if (xrange <= TINY_OFFSET) {
-                config.plotOptions.column.maxPointWidth = 10;
-            } else {
-                areaPlot = true;
+        if (!areaPlot) {
+            config.plotOptions.column.maxPointWidth = 10;
+            // walkaround for Highcharts bug when a single column does not appear in the middle (for n> 10^14)
+            if (data.length === 1 && nSeries === 1) {
+                // make one column appear in the middle
+                config.xAxis.categories = [Number(data[0][1]).toString()];
+                config.yAxis.min = minY;
+                set(config, ['series',seriesIdx],
+                    {
+                        type: 'column',
+                        color: lighterColor,
+                        fillOpacity: 0.8,
+                        data: [data[0][0]]
+                    });
+                return;
             }
         }
 
@@ -244,7 +258,7 @@ export class Histogram extends React.Component {
                             name: centerStr,
                             range: rangeStr,
                             // x - binmax
-                            x: (xrange > TINY_OFFSET) ? padLeft(data[index][2]) : padRight(data[index][1]),
+                            x: (xrange > TINY_OFFSET) ? padLeft(data[index][2], xrange/100) : padRight(data[index][1]),
                             // y - number of points in the bin
                             y: data[index][0]
                         });
@@ -278,6 +292,15 @@ export class Histogram extends React.Component {
                     x: padRight(lastBinMax),
                     y: minY
                 });
+
+                // zones allow to separate visually one bin from another
+                if (doZones) {
+                    zones.push({
+                        value: padRight(lastBinMax),
+                        color: (data.length % 2 === 0) ? binColor : lighterColor
+                    });
+                }
+
             }
             config.yAxis.min = minY;
         }
@@ -291,8 +314,8 @@ export class Histogram extends React.Component {
                 name,
                 type: areaPlot ? 'area' : 'column',
                 turboThreshold: 0,
-                //fillOpacity: 0.9,
-                //color: binColor,
+                fillOpacity: 0.8,
+                color: binColor,
                 data: points
             };
             if (doZones) {
@@ -409,8 +432,9 @@ export class Histogram extends React.Component {
             }
         };
 
+        const nSeries = series.length;
         series.forEach((s, idx) => {
-            this.addDataSeries(config, s, minY, idx);
+            this.addDataSeries(config, s, minY, nSeries, idx);
         });
 
         return (
