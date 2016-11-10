@@ -56,8 +56,8 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
     //TODO how to handle the database name??
    // private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "gapon_sdss_stripe92_patch366_0");
     private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "");
-    //set default timeout to 60seconds
-    private int timeout  = new Integer( AppProperties.getProperty("lsst.database.timeoutLimit" , "60")).intValue();
+    //set default timeout to 120seconds
+    private int timeout  = new Integer( AppProperties.getProperty("lsst.database.timeoutLimit" , "120")).intValue();
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
@@ -90,7 +90,9 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
      */
     protected String getSearchMethod(TableServerRequest req) throws Exception {
 
+
         if (req.getParam("SearchMethod").equalsIgnoreCase("polygon")) {
+            //The unit is degree for all the input
             String radecList = req.getParam(CatalogRequest.POLYGON);
             String[] sArray = radecList.split(",");
             String polygoneStr = "scisql_s2PtInCPoly(coord_ra,coord_decl,";
@@ -113,6 +115,7 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
             String ra = radec[0];
             String dec = radec[1];
             if (req.getParam("SearchMethod").equalsIgnoreCase("box")) {
+                //The unit is degree for all the input
                 String side = req.getParam(CatalogRequest.SIZE);
                 WorldPt wpt = new WorldPt(new Double(ra).doubleValue(), new Double(dec).doubleValue());
                 //getCorners using arcsec in radius unit
@@ -124,11 +127,12 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
             }
             else if (req.getParam("SearchMethod").equalsIgnoreCase("cone")) {
+                //The unit is degree for all the input
                 String radius = req.getParam(CatalogRequest.RADIUS);
                 return "scisql_s2PtInCircle(coord_ra,coord_decl,"+ra +","+dec+","+radius +")=1";
 
             } else if (req.getParam("SearchMethod").equalsIgnoreCase("Eliptical")) {
-                //semiMajorAxis and semiMinorAxis are in arcsec, so the data needs to be converted from degree to arcsec
+                //RA (degree), DEC (degree), positionAngle (degree), semi-majorAxis (arcsec), semi-minorAxis(arcsec),
                 double semiMajorAxis = new Double( req.getParam("radius")).doubleValue()*3600;
                 double ratio = new Double(req.getParam(CatalogRequest.RATIO)).doubleValue();
                 Double semiMinorAxis = semiMajorAxis*ratio;
@@ -138,7 +142,7 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
             }
             return "";
         }
-        //return null;
+
 
     }
 
