@@ -174,7 +174,7 @@ function doCatalog(request) {
     } else {
         title += ` (${spatial}`;
         if (spatial === SpatialMethod.Box.value || spatial === SpatialMethod.Cone.value || spatial === SpatialMethod.Elliptical.value) {
-            title += ':' + conesize + '\'\'';
+            title += ':' + conesize + ((sizeUnit === 'deg') ? 'deg' : ((sizeUnit === 'arcsec') ? '\'\'' : '\''));
         }
         title += ')';
 
@@ -287,8 +287,17 @@ class LSSTCatalogSelectView extends Component {
                     label: 'Deep Forced Source',
                     value: 'RunDeepForcedSource',       //TODO: temporary hard code of catalog name
                     cat:[]
+                },
+                {
+                    label: 'Science CCD Exposure',
+                    value: 'Science_Ccd_Exposure',
+                    cat: []
+                },
+                {
+                    label: 'Deep Coadd',
+                    value: 'DeepCoadd',
+                    cat: []
                 }
-
         ];
 
         catmaster.push({  project, catalogs });

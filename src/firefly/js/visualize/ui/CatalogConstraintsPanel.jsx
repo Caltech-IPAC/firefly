@@ -167,6 +167,8 @@ export class CatalogConstraintsPanel extends React.Component {
         const request = createDDRequest(); //Fetch DD master table
         const urlDef = get(FieldGroupUtils.getGroupFields(this.props.groupKey), 'cattable.coldef', 'null');
 
+        console.log('fetch DD: ' + JSON.stringify(request));
+
         fetchTable(request).then((tableModel) => {
             const tableModelFetched = tableModel;
             tableModelFetched.tbl_id = tblid;

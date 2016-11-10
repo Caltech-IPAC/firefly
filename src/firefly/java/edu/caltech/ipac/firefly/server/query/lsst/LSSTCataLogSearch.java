@@ -49,9 +49,6 @@ import edu.caltech.ipac.firefly.data.table.MetaConst;
  */
 @SearchProcessorImpl(id = "LSSTCataLogSearch")
 public class LSSTCataLogSearch extends IpacTablePartProcessor {
-    private static final String RA = "coord_ra";
-    private static final String DEC = "coord_decl";
-
     private static final Logger.LoggerImpl _log = Logger.getLogger();
     private static final String PORT = "5000";
     private static final String HOST = AppProperties.getProperty("lsst.dd.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
@@ -81,7 +78,6 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
 
     }
-
 
     /**
      * This method will return the search method string based on the method.  If the method is not supported, the exception
@@ -451,8 +447,29 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         }
 
     }
+
+    private String raName(String table_name) {
+        if (table_name.contains("RunDeep")) {
+            return "coord_ra";
+        } else if (table_name.contains("Ccd") || table_name.contains("Coadd")) {
+            return "ra";
+        }
+        return "";
+    }
+
+    private String decName(String table_name) {
+        if (table_name.contains("RunDeep")) {
+            return "coord_decl";
+        } else  {
+            return "decl";
+        }
+    }
+
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
+        String tableName = request.getParam("table_name");
+        String RA = raName(tableName);
+        String DEC = decName(tableName);
 
         TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns(RA, DEC, CoordinateSys.EQ_J2000);
         meta.setCenterCoordColumns(llc);
