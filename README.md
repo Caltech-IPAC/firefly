@@ -13,18 +13,18 @@ Firefly is being reused for various archives because it is a framework of archiv
 
 By default, this repository builds a default example webapp. This tool can be used for viewing FITS data, catalogs, and xyplots. It is a general viewer tool for retrieving and viewing astronomy related data.
 
-#### Firefly Tools
+#### Firefly APIs
 
-Firefly Tools exposes the most powerful components of Firefly in a way that can be used by any web page with no prerequisites. It allows any web developer access to Firefly's FITS visualizers or Table Tool with just a very few lines of JavaScript. The goal is to make these tools very easy to use with only a 10 minute learning curve.
+Firefly APIs exposes the most powerful components of Firefly in a way that can be used by any web page with no prerequisites. It allows any web developer access to Firefly's FITS visualizers or Table Tool with just a very few lines of JavaScript. The goal is to make these APIs very easy to use with only a 10 minute learning curve.
 
-An important feature is that the Firefly Tools server can be installed cross-site. In other words, it is not required to be on the same server as the web page. Firefly Tools can do this because it uses JSONP or CORS for the server communication. This allows Firefly Tools not to be limited by the server's Same Origin Policy and to give the developer a lot of flexibility. The web developer does not have to do any installation, but can simply just start using Firefly Tools.
+An important feature is that the Firefly APIs server can be installed cross-site. In other words, it is not required to be on the same server as the web page. Firefly APIs can do this because it uses JSONP or CORS for the server communication. This allows Firefly APIs not to be limited by the server's Same Origin Policy and to give the developer a lot of flexibility. The web developer does not have to do any installation, but can simply just start using Firefly APIs.
 
 ### Visualizers
 The firefly components contain 3 main visualizers for astronomy data.
 
 
 #### Tabular Display
-Firefly has implemented “Excel-like” tables on the webpage. In an easy, interactive way, a user can sort the results, filter the data on multiple constraints, hide or show columns or select data for download or visualization. The Firefly Tools server is optimized to show very large tables without significant performance degradation. We have tested it with over 10 million rows, 50 column tables.
+Firefly has implemented “Excel-like” tables on the webpage. In an easy, interactive way, a user can sort the results, filter the data on multiple constraints, hide or show columns or select data for download or visualization. The Firefly APIs server is optimized to show very large tables without significant performance degradation. We have tested it with over 10 million rows, 50 column tables.
 
 #### FITS Visualization
 Firefly provides a first-class FITS visualization on the Web without any plugins. All of the significant components you would expect to see in a basic desktop FITS application are available with data that Firefly displays. The FITS visualizer allows for plotting anything that the table shows that has a Lon and Lat. Therefore, users can overlay multiple catalogs over their FITS image and interact with it.
@@ -93,14 +93,14 @@ The documentation is accessible via http://localhost:8080/firefly/jsdoc/index.ht
 
 ## More Docs
 
-####Firefly Tools JavaScript API overview
+####Firefly JavaScript API overview
 See [firefly-api-overview.md](docs/firefly-api-overview.md)
  (Deprecated [docs/fftools-api-overview.md](docs/fftools-api-overview.md))
 
-####Firefly Tools Remote API using Python overview
+####Firefly Remote API using Python overview
 See [firefly-python-wrapper.md](docs/firefly-python-wrapper.md)
 
-####Code Examples Using Firefly Tools
+####Code Examples Using Firefly APIs
 See [firefly-api-code-examples.md](docs/firefly-api-code-examples.md)
  (Deprecated [docs/fftools-api-code-examples.md](docs/fftools-api-code-examples.md))
 
