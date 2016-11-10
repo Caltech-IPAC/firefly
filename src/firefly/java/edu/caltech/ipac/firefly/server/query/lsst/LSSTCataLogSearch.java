@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
+import edu.caltech.ipac.firefly.ui.catalog.Catalog;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.*;
@@ -55,8 +56,8 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
     //TODO how to handle the database name??
    // private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "gapon_sdss_stripe92_patch366_0");
     private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "");
-    //set default timeout to 30seconds
-    private int timeout  = new Integer( AppProperties.getProperty("lsst.database.timeoutLimit" , "30")).intValue();
+    //set default timeout to 60seconds
+    private int timeout  = new Integer( AppProperties.getProperty("lsst.database.timeoutLimit" , "60")).intValue();
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
@@ -99,7 +100,7 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
                     throw new Exception("wrong data entered");
                 }
                 if (i==sArray.length-1) {
-                    polygoneStr = polygoneStr + radecPair[0] + "," + radecPair[1] + ")=1;";
+                    polygoneStr = polygoneStr + radecPair[0] + "," + radecPair[1] + ")=1";
                 }
                 else {
                     polygoneStr = polygoneStr + radecPair[0] + "," + radecPair[1] + ",";
@@ -119,12 +120,12 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
                 String upperLeft = String.format(Locale.US, "%8.6f,%8.6f", corners.getUpperLeft().getLon(), corners.getUpperLeft().getLat());
                 String lowerRight = String.format(Locale.US, "%8.6f,%8.6f", corners.getLowerRight().getLon(), corners.getLowerRight().getLat());
-                return "scisql_s2PtInBox(coord_ra,coord_decl," +  lowerRight + "," +upperLeft + ")=1;";
+                return "scisql_s2PtInBox(coord_ra,coord_decl," +  lowerRight + "," +upperLeft + ")=1";
 
             }
             else if (req.getParam("SearchMethod").equalsIgnoreCase("cone")) {
                 String radius = req.getParam(CatalogRequest.RADIUS);
-                return "scisql_s2PtInCircle(coord_ra,coord_decl,"+ra +","+dec+","+radius +")=1;";
+                return "scisql_s2PtInCircle(coord_ra,coord_decl,"+ra +","+dec+","+radius +")=1";
 
             } else if (req.getParam("SearchMethod").equalsIgnoreCase("Eliptical")) {
                 //semiMajorAxis and semiMinorAxis are in arcsec, so the data needs to be converted from degree to arcsec
@@ -133,17 +134,22 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
                 Double semiMinorAxis = semiMajorAxis*ratio;
                 String positionAngle = req.getParam("posang");
                 return  "scisql_s2PtInEllipse(coord_ra,coord_decl," + ra + "," + dec + "," + semiMajorAxis + "," +
-                        semiMinorAxis + "," + positionAngle + ")=1;";
+                        semiMinorAxis + "," + positionAngle + ")=1";
             }
-            else {
-                throw new Exception("ERROR: the search method " + req.getParam("SearchMethod") + " is not supported");
-
-            }
+            return "";
         }
         //return null;
 
     }
 
+
+    String getConstraints(TableServerRequest request) {
+        String constraints = request.getParam(CatalogRequest.CONSTRAINTS);
+        if (!StringUtils.isEmpty(constraints) && constraints.contains(CatalogRequest.CONSTRAINTS_SEPARATOR)) {
+            constraints = constraints.replace(CatalogRequest.CONSTRAINTS_SEPARATOR, " and ");
+        }
+        return constraints;
+    }
     String buildSqlQueryString(TableServerRequest request) throws Exception {
 
         String tableName = request.getParam("table_name");
@@ -158,8 +164,32 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         if (columns==null){
             columns = "*";
         }
-        String sql = "SELECT "+columns + " FROM " + catTable +
-                " WHERE " + getSearchMethod( request);
+
+        //get all the constraints
+        String constraints =  getConstraints(request);
+        //get the search method
+        String searchMethod = getSearchMethod( request);
+
+        //build where clause
+        String whereStr;
+        if (searchMethod.length()>0 && constraints.length()>0){
+            whereStr = searchMethod +  " AND " + constraints;
+        }
+        else if (searchMethod.length()>0 &&constraints.length()==0 ){
+            whereStr = searchMethod ;
+        }
+        else if ( searchMethod.length()==0 &&constraints.length()>0 ){
+            whereStr = constraints;
+        }
+        else {
+            whereStr="";
+        }
+
+
+
+        String sql = "SELECT " + columns + " FROM " + catTable;
+        sql =whereStr.length()>0? sql +  " WHERE " + whereStr + ";": sql+ ";";
+
         return sql;
     }
 
@@ -179,7 +209,8 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
           FileData fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null, timeout);
 
           if (fileData.getResponseCode()>=500) {
-              throw new DataAccessException("ERROR: " + sql + ";" +  LSSTMetaSearch.getErrorMessageFromFile(file));
+              throw new DataAccessException("DAX Error: "+ LSSTMetaSearch.getErrorMessageFromFile(file));
+              //throw new DataAccessException("ERROR: " + sql + ";" +  LSSTMetaSearch.getErrorMessageFromFile(file));
           }
 
            DataGroup dg =  getTableDataFromJson( request,file);
