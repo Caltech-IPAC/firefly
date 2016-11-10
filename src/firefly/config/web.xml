@@ -12,7 +12,6 @@
     <filter-mapping>
         <filter-name>CommonFilter</filter-name>
         <url-pattern>/admin/*</url-pattern>
-        <url-pattern>/search/*</url-pattern>
         <url-pattern>/servlet/*</url-pattern>
         <url-pattern>/sticky/*</url-pattern>
     </filter-mapping>
@@ -39,7 +38,8 @@
         <url-pattern>*.css</url-pattern>
         <url-pattern>*.js</url-pattern>
         <url-pattern>/servlet/FireFly_PropertyDownload</url-pattern>
-        <url-pattern>/search/*</url-pattern>
+        <url-pattern>/sticky/CmdSrv</url-pattern>
+        <url-pattern>/sticky/firefly/events</url-pattern>
     </filter-mapping>
 
 

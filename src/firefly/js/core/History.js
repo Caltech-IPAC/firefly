@@ -13,7 +13,7 @@
  *  query_params: key/value pairs.  this is used to populate action.payload.
  */
 
-import {get, pick} from 'lodash';
+import {get, pick, isString} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import {TABLE_SEARCH} from '../tables/TablesCntlr.js';
@@ -49,13 +49,25 @@ window.onpopstate = function(event) {
 
 };
 
+/**
+ * returns an action if exists by parsing the url string.
+ * The keys and values of the payload will be urldecoded and if the value is
+ * a valid JSON string, it will be parsed as well.
+ * @returns {Action}
+ */
 export function getActionFromUrl() {
     if (get(window, 'firefly.ignoreHistory', false)) return;
     const urlInfo = parseUrl(document.location);
     if (urlInfo.searchObject) {
         const type = get(urlInfo, 'pathAry.0.a');
         if (type) {
-            return {type, payload: urlInfo.searchObject};
+            const payload = Object.entries(urlInfo.searchObject)
+                            .map( ([k, v]) => [decodeURIComponent(k), decodeURIComponent(v)])
+                            .reduce( (rval, [k,v]) => {
+                                rval[k] = resolve(v);
+                                return rval;
+                            }, {});
+            return {type, payload};
         }
     }
     return undefined;
@@ -84,5 +96,14 @@ function genericHandler(url='') {
             return encodeUrl(`${staticPart};a=${action.type}?`, action.payload);
         }
     };
+}
+
+
+function resolve(s) {
+    var rval = s;
+    try {
+        if (isString(s)) rval = JSON.parse(s);
+    } catch (e) {}
+    return rval;
 }
 
