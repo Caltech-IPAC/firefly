@@ -3,7 +3,7 @@
  */
 
 import update from 'react-addons-update';
-import {isEmpty,isUndefined} from 'lodash';
+import {isEmpty,isNil, isUndefined} from 'lodash';
 import Cntlr, {ExpandType} from '../ImagePlotCntlr.js';
 import PlotView, {replacePlotView, replacePrimaryPlot, changePrimePlot,
                   findWCSMatchOffset, updatePlotViewScrollXY} from './PlotView.js';
@@ -287,26 +287,26 @@ function updateViewSize(state,action) {
 
 function recenter(state,action) {
     const {plotId, centerPt}= action.payload;
-    var {plotGroupAry,plotViewAry, wcsMatchCenterWP}= state;
+    var {plotGroupAry,plotViewAry}= state;
     const pv= getPlotViewById(state,plotId);
     var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
 
-    plotViewAry= applyToOnePvOrGroup(plotViewAry,plotId,plotGroup, recenterPv(centerPt, wcsMatchCenterWP));
+    plotViewAry= applyToOnePvOrGroup(plotViewAry,plotId,plotGroup, recenterPv(centerPt));
     return clone(state,{plotViewAry});
 }
 
 /**
  * Center on the FIXED_TARGET attribute or the center of the plot or specified center point
  * @param centerPt center point
- * @param wcsMatchCenterWP wcs match point if it exist
  * @return {{}} a new plot view
  */
 
-function recenterPv(centerPt, wcsMatchCenterWP) {
+function recenterPv(centerPt) {
     return (pv) => {
         const plot = primePlot(pv);
         if (!plot) return pv;
         var centerImagePt;
+        const useBoundsChecking= isNil(centerPt); // will use bounds checking if centerPt is not passed
 
         if (centerPt) {
             if (centerPt.type === Point.IM_PT) {
@@ -323,7 +323,7 @@ function recenterPv(centerPt, wcsMatchCenterWP) {
                 centerImagePt = makeImagePt(plot.dataWidth / 2, plot.dataHeight / 2);
             }
         }
-        return updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv, centerImagePt));
+        return updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv, centerImagePt, useBoundsChecking));
     };
 }
 
