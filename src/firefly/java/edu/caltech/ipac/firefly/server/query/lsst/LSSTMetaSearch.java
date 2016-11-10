@@ -68,7 +68,8 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
          FileData fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null,timeout);
          if (fileData.getResponseCode()>=500) {
-             throw new DataAccessException("ERROR:" + sql + ";"+ getErrorMessageFromFile(file));
+            // throw new DataAccessException("ERROR:" + sql + ";"+ getErrorMessageFromFile(file));
+             throw new DataAccessException("DAX Error: "+ getErrorMessageFromFile(file));
          }
          DataGroup dg =  getMetaData(file);
          _log.briefDebug("SHOW COLUMNS took " + (System.currentTimeMillis() - cTime) + "ms");
@@ -77,11 +78,13 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
     }
 
+
     static  String getErrorMessageFromFile(File file) throws IOException, ParseException {
         JSONParser parser = new JSONParser();
 
         JSONObject obj = ( JSONObject) parser.parse(new FileReader(file ));
-        return  obj.get("message").toString();
+        //return  obj.get("message").toString();
+        return  obj.get("error").toString();
     }
 
     @Override
