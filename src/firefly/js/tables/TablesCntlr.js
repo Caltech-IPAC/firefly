@@ -358,9 +358,9 @@ function highlightRow(action) {
             TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
                 dispatch( {type:TABLE_HIGHLIGHT, payload: tableModel} );
             }).catch( (error) => {
-                dispatch({type: TABLE_HIGHLIGHT, payload: createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
+                dispatch({type: TABLE_HIGHLIGHT, payload: TblUtil.createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
             });
-        }
+        }E
     };
 }
 
@@ -377,7 +377,7 @@ function tableFetch(action) {
                 const type = tableModel.origTableModel ? TABLE_REPLACE : TABLE_UPDATE;
                 dispatch( {type, payload: tableModel} );
             }).catch( (error) => {
-                dispatch({type: TABLE_UPDATE, payload: createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
+                dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
             });
         }
     };
