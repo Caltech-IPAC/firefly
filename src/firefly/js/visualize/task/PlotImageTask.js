@@ -6,7 +6,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isArray} from 'lodash';
+import {isArray, uniqueId} from 'lodash';
 import {WebPlotRequest, GridOnStatus} from '../WebPlotRequest.js';
 import ImagePlotCntlr, {makeUniqueRequestKey, dispatchWcsMatch, IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
@@ -22,7 +22,7 @@ import {PlotPref} from '../PlotPref.js';
 import ActiveTarget  from '../../drawingLayers/ActiveTarget.js';
 import * as DrawLayerCntlr from '../DrawLayerCntlr.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
-import {dispatchAddViewerItems, EXPANDED_MODE_RESERVED, IMAGE} from '../MultiViewCntlr.js';
+import {dispatchAddViewerItems, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
 import {getDrawLayerByType, getPlotViewById} from '../PlotViewUtil.js';
 import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
@@ -56,7 +56,7 @@ const getFirstReq= (wpRAry) => isArray(wpRAry) ? wpRAry.find( (r) => r?true:fals
 function makeSinglePlotPayload(vr, rawPayload ) {
 
 
-    var {wpRequest,plotId, threeColor, viewerId, attributes,
+    var {wpRequest,plotId, threeColor, viewerId=DEFAULT_FITS_VIEWER_ID, attributes,
          holdWcsMatch= false, pvOptions= {}, addToHistory= false,useContextModifications= true}= rawPayload;
 
     wpRequest= ensureWPR(wpRequest);
@@ -65,11 +65,12 @@ function makeSinglePlotPayload(vr, rawPayload ) {
 
 
     if (isArray(wpRequest)) {
-        if (!plotId) plotId= req.getPlotId();
+        if (!plotId) plotId= req.getPlotId() || uniqueId('defaultPlotId-');
         wpRequest.forEach( (r) => {if (r) r.setPlotId(plotId);});
     }
     else {
-        if (plotId) wpRequest.setPlotId(plotId);
+        if (!plotId) plotId= req.getPlotId() || uniqueId('defaultPlotId-');
+        wpRequest.setPlotId(plotId);
     }
 
     if (vr.wcsMatchType && vr.mpwWcsPrimId && holdWcsMatch) {
