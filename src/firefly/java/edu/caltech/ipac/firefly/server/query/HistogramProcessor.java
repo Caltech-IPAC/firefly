@@ -9,6 +9,7 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
+import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataObjectUtil;
@@ -33,14 +34,14 @@ import java.util.List;
 public class HistogramProcessor extends IpacTablePartProcessor {
     private static final String SEARCH_REQUEST = "searchRequest";
     private static DataType[] columns = new DataType[]{
-        new DataType("numInBin", Integer.class),
+        new DataType("numInBin", Long.class),
         new DataType("binMin", Double.class),
         new DataType("binMax", Double.class)
     };
     static {
         // set default precision to 9 significant digits
-        columns[1].getFormatInfo().setDataFormat("%.9g");
-        columns[2].getFormatInfo().setDataFormat("%.9g");
+        columns[1].getFormatInfo().setDataFormat("%.14g");
+        columns[2].getFormatInfo().setDataFormat("%.14g");
     }
     private final String FIXED_SIZE_ALGORITHM = "fixedSizeBins";
     private final String NUMBER_BINS = "numBins";
@@ -99,6 +100,9 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         DataGroup histogramDataGroup = createHistogramTable(columnData);
         histogramDataGroup.addAttribute("column", columnExpression);
         histogramDataGroup.addAttribute("searchRequest", sReq.toString());
+        addFormatInfoAtt(histogramDataGroup, columns[1]);
+        addFormatInfoAtt(histogramDataGroup, columns[2]);
+
         File histogramFile = createFile(request);
         DataGroupWriter.write(histogramFile, histogramDataGroup, 0);
         return histogramFile;
@@ -107,12 +111,12 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     private void getParameters(TableServerRequest tableServerRequest) {
         //get all the required parameters
         List<Param> params = tableServerRequest.getParams();
-        for (Param p: params.toArray(new Param[0])){
+        for (Param p: params.toArray(new Param[params.size()])){
             String name = p.getName();
             String value = p.getValue();
             if (name.equalsIgnoreCase(COLUMN)) {
                 //columnName = (String) value;
-                columnExpression = (String) value;
+                columnExpression = value;
             } else if (name.equalsIgnoreCase(MIN)) {
                 min =  Double.parseDouble(value);
 
@@ -131,13 +135,17 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
     }
 
+    private void addFormatInfoAtt(DataGroup dg, DataType dt) {
+        String fkey = DataSetParser.makeAttribKey(DataSetParser.FORMAT_DISP_TAG, dt.getKeyName());
+        dg.addAttribute(fkey, dt.getFormatInfo().getDataFormatStr());
+    }
 
     /**
      * This method is changed to public to be able to run the test case in the test tree
      * This method adds the three data arrays and the DataTypes into a DataGroup (IpacTable).
      *
-     * @param columnData
-     * @return
+     * @param columnData - an array of doubles
+     * @return DataGroup
      */
     public DataGroup createHistogramTable(double[] columnData) throws DataAccessException {
 
@@ -154,7 +162,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
             }
 
-            int[] numPointsInBin = (int[]) obj[0];
+            long[] numPointsInBin = (long[]) obj[0];
             double[] binMin = (double[]) obj[1];
             double[] binMax = (double[]) obj[2];
             int nPoints = numPointsInBin.length;
@@ -177,8 +185,8 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     /**
      * Calculate the numInBin, binMin and binMax arrays
      *
-     * @param columnData
-     * @return
+     * @param columnData an array of doubles
+     * @return an array of 3 arrays: numInBin[], min[], max[]
      */
     private Object[] calculateFixedBinSizeDataArray(double[] columnData) {
         //sort the data in ascending order, thus, index 0 has the minimum and the last index has the maximum
@@ -195,23 +203,23 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         double binSize = (max-min)/numBins;
 
        // double delta =( max -min)/100*numBins;
-        int[] numPointsInBin = new int[numBins];
+        long[] numPointsInBin = new long[numBins];
         double[] binMin = new double[numBins];
 
         double[] binMax = new double[numBins];
 
-
+        int iBin;
         for (int i = 0; i < columnData.length; i++) {
             if (columnData[i] >= min && columnData[i] < max) {
-                 int iBin = (int) ((columnData[i] - min) / binSize);
-                 numPointsInBin[iBin]++;
+                iBin = (int) ((columnData[i] - min) / binSize);
+                numPointsInBin[iBin]++;
 
             }
             else if (columnData[i]  == max) { //put the last data in the last bin
-                numPointsInBin[numBins-1]++;
+                numPointsInBin[numBins - 1]++;
             }
 
-          }
+        }
         for (int i=0; i<numBins; i++){
             binMin[i]=min+i*binSize;
             binMax[i]=binMin[i]+binSize;
@@ -220,10 +228,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
 
        if (showEmptyBin){
-
-           Object[] obj = {numPointsInBin, binMin, binMax};
-           return obj;
-
+           return new Object[]{numPointsInBin, binMin, binMax};
        }
        else {
           return filterEmptyBins(numPointsInBin, binMin, binMax);
@@ -231,9 +236,9 @@ public class HistogramProcessor extends IpacTablePartProcessor {
        }
     }
 
-    private int[]  getSelection(int[] inArray, ArrayList<Integer> list ){
+    private long[]  getSelection(long[] inArray, ArrayList<Integer> list ){
 
-        int[] outArray=new int[list.size()];
+        long[] outArray=new long[list.size()];
         int count=0;
         for (int i=0; i<inArray.length; i++){
             if (isInSelection(i, list)){
@@ -260,9 +265,9 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     }
 
     private boolean isInSelection( int idx, ArrayList<Integer> list){
-        for (int j=0; j<list.size(); j++){
-              if (idx==list.get(j).intValue()){
-                 return true;
+        for (Integer el : list) {
+            if (idx == el) {
+                return true;
             }
         }
         return false;
@@ -286,8 +291,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         String[] dirs = inputFileName.split("/");
         String name = dirs[dirs.length - 1];
         String path = inputFileName.substring(0, inputFileName.length() - name.length());
-        String[] ret = {path, name};
-        return ret;
+        return new String[]{path, name};
     }
 
     /**
@@ -298,7 +302,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
      * There are a few implementations. Each of them is a little different.  I based the two above and
      * modified it to take the special cases where there is no fitness value found.
      *
-     * @return
+     * @return an array of 3 arrays: numInBin[], min[], max[]
      */
 
 
@@ -313,7 +317,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
 
         int nBin = bins.length;
-        int[] numPointsInBin = new int[nBin];
+        long[] numPointsInBin = new long[nBin];
         double[] binMin = new double[nBin];
         if (Double.isNaN(min)) {
             min = columnData[0];
@@ -321,11 +325,11 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         if (Double.isNaN(max)) {
             max = columnData[columnData.length - 1];
         }
-     //fill all entries to the maximum, thus, all data values will be smaller than it
-       // Arrays.fill(binMin, Double.MAX_VALUE);
+        //fill all entries to the maximum, thus, all data values will be smaller than it
+        // Arrays.fill(binMin, Double.MAX_VALUE);
         double[] binMax = new double[nBin];
         //fill all entries to the minimum thus, all data values will be larger than it
-       // Arrays.fill(binMax, -Double.MAX_VALUE);
+        // Arrays.fill(binMax, -Double.MAX_VALUE);
 
         if (nBin==1){  //only one bin
 
@@ -362,41 +366,35 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
             binMin[0] = min;
             //assign the left edge to the binMin
-            for (int i = 1; i < nBin; i++) {
-                binMin[i] = bins[i - 1];
-              }
+            System.arraycopy(bins, 0, binMin, 1, nBin-1);
+//            for (int i = 1; i < nBin; i++) {
+//                binMin[i] = bins[i - 1];
+//              }
 
             //assign the right edge to the binMax
-            for (int i = 0; i < nBin; i++) {
-                binMax[i] = bins[i];
-            }
-
-
+            System.arraycopy(bins, 0, binMax, 0, nBin);
+//            for (int i = 0; i < nBin; i++) {
+//                binMax[i] = bins[i];
+//            }
         }
 
         if (showEmptyBin){
-
-            Object[] obj = {numPointsInBin, binMin, binMax};
-            return obj;
-
+            return new Object[]{numPointsInBin, binMin, binMax};
         }
         else {
-           return filterEmptyBins(numPointsInBin, binMin, binMax);
+            return filterEmptyBins(numPointsInBin, binMin, binMax);
 
         }
-
-
     }
-     private  Object[] filterEmptyBins(int[] numPointsInBin, double[] binMin, double[] binMax){
+
+     private  Object[] filterEmptyBins(long[] numPointsInBin, double[] binMin, double[] binMax){
          //filter out the  entries which has the empty bins
-         ArrayList<Integer> idx = new ArrayList<Integer>();
+         ArrayList<Integer> idx = new ArrayList<>();
          for (int i = 0; i < numPointsInBin.length; i++) {
              if (numPointsInBin[i] == 0) continue;
              idx.add(i);
          }
-         Object[] obj = {getSelection(numPointsInBin, idx), getSelection(binMin, idx), getSelection(binMax, idx)};
-
-         return obj;
+         return new Object[]{getSelection(numPointsInBin, idx), getSelection(binMin, idx), getSelection(binMax, idx)};
      }
 
     /**
@@ -404,7 +402,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
      * This method calculates the variable bins
      *
      * @param columnData - input, double array
-     * @return
+     * @return an array of doubles
      * @throws DataAccessException
      */
     public double[] getBins(double[] columnData) throws DataAccessException {
@@ -450,7 +448,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         //-----------------------------------------------------------------
         // Recover changepoints by iteratively peeling off the last block
         //-----------------------------------------------------------------
-        ArrayList<Integer> changePointList = new ArrayList<Integer>();
+        ArrayList<Integer> changePointList = new ArrayList<>();
         int ind = n;
 
         for (int icp = n - 1; icp > -1; icp--) {
@@ -463,7 +461,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
         int[] newChangePoint = reverseArray(changePointList);
 
-        ArrayList<Double> sData = new ArrayList<Double>();
+        ArrayList<Double> sData = new ArrayList<>();
         for (int i = 0; i < edges.length; i++) {
             for (int j = 0; j < newChangePoint.length; j++) {
                 if (i == newChangePoint[j]) {
@@ -475,7 +473,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         int nBin = sData.size();
         double[] bins = new double[nBin];
         for (int i = 0; i < nBin; i++) {
-            bins[i] = sData.get(i).doubleValue();
+            bins[i] = sData.get(i);
         }
         return bins;
     }
@@ -483,8 +481,8 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     /**
      * return -1 if there is no valid data values in the array
      *
-     * @param inArray
-     * @return
+     * @param inArray input array
+     * @return index of the max value or -1
      */
     private int getIndexOfTheMaxValue(double[] inArray) {
         double max = -Double.MAX_VALUE; //using the minimum double value
@@ -503,10 +501,6 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
     /**
      * This method evaluate the fitness function for these possibilities
-     *
-     * @param countVec
-     * @param width
-     * @return
      */
     private double[] calculateFitnessFunction(double[] countVec, double[] width, double[] best, double ncpPrior) throws DataAccessException {
 
@@ -533,8 +527,8 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     /**
      * variable bin methods
      *
-     * @param data
-     * @return
+     * @param data an array of doubles
+     * @return edges
      */
     private double[] getEdges(double[] data) throws DataAccessException {
 
@@ -552,10 +546,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             a2Plusa3[i] = a2[i] + a3[i];
         }
         double[] multiply = multiply(a2Plusa3, 0.5);
-        double[] edges = concatenate(concatenate(a1, multiply), a4);
-
-        return edges;
-
+        return concatenate(concatenate(a1, multiply), a4);
     }
 
     private double[] getWidth(double[] inArray, int k) {
@@ -574,8 +565,8 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     /**
      * This method reverse the array's order
      *
-     * @param inArray
-     * @return
+     * @param inArray input array
+     * @return reversed array
      */
     private double[] reverseArray(double[] inArray) {
         double[] outArray = new double[inArray.length];
@@ -586,16 +577,16 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     }
 
     /**
-     * This method reverse the ArrayList and then return a double array
+     * This method reverse the ArrayList and then return a int array
      *
-     * @param inArrayList
-     * @return
+     * @param inArrayList  input
+     * @return reversed list as an array
      */
     private int[] reverseArray(ArrayList<Integer> inArrayList) {
         int len = inArrayList.size();
         int[] outArray = new int[len];
         for (int i = 0; i < len; i++) {
-            outArray[i] = inArrayList.get(len - 1 - i).intValue();
+            outArray[i] = inArrayList.get(len - 1 - i);
         }
         return outArray;
     }
@@ -603,9 +594,9 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     /**
      * This method calculates the cumulative sum
      *
-     * @param nnVec
-     * @param k
-     * @return
+     * @param nnVec nnVec
+     * @param k k
+     * @return cumulative sum
      */
     private double[] getCumulativeSum(double[] nnVec, int k) {
         double[] nnCumVec = new double[k + 1];
@@ -625,9 +616,9 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     /**
      * This method concatenate two double arrays
      *
-     * @param a
-     * @param b
-     * @return
+     * @param a first array
+     * @param b second array
+     * @return concatenated array
      * @throws DataAccessException
      */
     private double[] concatenate(double[] a, double[] b) throws DataAccessException {
@@ -656,9 +647,9 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     /**
      * This method multiplies an array by a number
      *
-     * @param array
-     * @param a
-     * @return
+     * @param array an array
+     * @param a multiplier
+     * @return result array
      */
     private double[] multiply(double[] array, double a) {
         double[] newArray = new double[array.length];
@@ -681,9 +672,6 @@ public class HistogramProcessor extends IpacTablePartProcessor {
                     HistogramProcessor hp = new HistogramProcessor();
                     hp.columnExpression = "f_y";
 
-                    if (columns == null) {
-                        throw new DataAccessException(hp.columnExpression + " is not found in the input table");
-                    }
                     double[] columnData = hp.getColumnData(dg);
 
                     DataGroup outDg = hp.createHistogramTable(columnData);

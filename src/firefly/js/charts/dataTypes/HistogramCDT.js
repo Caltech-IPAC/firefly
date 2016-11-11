@@ -4,7 +4,8 @@
 
 import {get} from 'lodash';
 
-import {doFetchTable, getTblById, isFullyLoaded, makeTblRequest, cloneRequest} from '../../tables/TableUtil.js';
+import {fetchTable} from '../../rpc/SearchServicesJson.js';
+import {getTblById, isFullyLoaded, makeTblRequest, cloneRequest} from '../../tables/TableUtil.js';
 import {getChartDataElement, chartDataUpdate} from './../ChartsCntlr.js';
 import {logError} from '../../util/WebUtil.js';
 
@@ -120,7 +121,7 @@ function fetchColData(dispatch, chartId, chartDataElementId) {
 
     req.tbl_id = 'histogram-'+chartId;
 
-    doFetchTable(req).then(
+    fetchTable(req).then(
         (tableModel) => {
 
             // make sure the data are coming from the latest search
@@ -141,8 +142,16 @@ function fetchColData(dispatch, chartId, chartDataElementId) {
                             return Math.pow(10,Number(val));
                         }
                     } : (val)=>Number(val);
-                histogramData = tableModel.tableData.data.reduce((data, arow) => {
-                    data.push(arow.map(toNumber));
+                var nrow, lastIdx;
+                histogramData = tableModel.tableData.data.reduce((data, arow, i) => {
+                    nrow = arow.map(toNumber);
+                    lastIdx = data.length - 1;
+                    if (i>0 && data[lastIdx][1]===nrow[1]) {
+                        //collapse bins when two bins are the same because of precision loss
+                        data[lastIdx] = [data[lastIdx][0]+nrow[0], data[lastIdx][1], nrow[2]];
+                    } else {
+                        data.push(nrow);
+                    }
                     return data;
                 }, []);
 
