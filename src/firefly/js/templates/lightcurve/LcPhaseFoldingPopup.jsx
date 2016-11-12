@@ -508,6 +508,7 @@ function setPFTableSuccess(hideDropDown = false) {
             dispatchTableSearch(tReq, {removable: false});
 
             let xyPlotParams = {
+                userSetBoundaries: {xMax: 2},
                 x: {columnOrExpr: 'phase', options: 'grid'},
                 y: {columnOrExpr: 'w1mpro_ep', options: 'grid'}
             };
@@ -604,15 +605,10 @@ function computePeriodRange(tbl_id, timeColName) {
     var min, max;
 
     tIdx = columns.findIndex((col) => (col.name === timeColName));
-    data.forEach((dRow) => {
-        var dTime = dRow[tIdx];
 
-        if (dTime > maxTime) {
-            maxTime = dTime;
-        } else if (dTime < minTime) {
-            minTime = dTime;
-        }
-    });
+    let arr=[]; data.map((e)=> arr.push(e[tIdx]));
+    minTime = Math.min(...arr);
+    maxTime = Math.max(...arr);
 
     timeZero = minTime;
     timeMax = maxTime;
