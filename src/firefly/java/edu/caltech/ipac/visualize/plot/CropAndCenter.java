@@ -7,6 +7,7 @@ import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.*;
 import nom.tam.fits.ImageData;
+import nom.tam.util.ArrayFuncs;
 import nom.tam.util.BufferedDataOutputStream;
 import nom.tam.util.Cursor;
 
@@ -16,6 +17,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 /**
+ * 11/11/16
+ *  DM-8049
+ *  Fixed the bug when the image data is stored in the FITS.  Data is calculate using float.  But when save the data to
+ *  to the FITs file, the original data type (defined in bitpix) should be preserved.
+ *
  * 6/19/15 LZ
  * Refactor the codes
  *
@@ -89,7 +95,8 @@ public class CropAndCenter  {
     }
 
     /**
-     *
+     * This method is added and is copied from Crop.java.  Since those two files have many common methods,
+     * add do_crop method here, the Crop.java is no longer needed.
      * @param inFits      : a Fits object
      * @param min_x       : double
      * @param min_y       : double
@@ -106,10 +113,10 @@ public class CropAndCenter  {
             System.out.println("RBH do_crop  min_x = " + min_x +
                     "  min_y = " + min_y + "  max_x = " + max_x + "  max_y = " + max_y);
         }
-        BasicHDU out_HDU = null;
+
         Fits ret_fits = new Fits();
         BasicHDU[] myHDUs = inFits.read();
-        out_HDU = splitFITSCube(myHDUs[0], min_x, min_y, max_x, max_y);
+        BasicHDU out_HDU = splitFITSCube(myHDUs[0], min_x, min_y, max_x, max_y);
         ret_fits.addHDU(out_HDU);
         return(ret_fits);
     }
@@ -145,14 +152,16 @@ public class CropAndCenter  {
      *
      * @return
      */
-    private static ImageData getNewImageData(Object dataIn, int naxis,
+    private static Object getNewDataInFloat(Object dataIn, int naxis,
                                             int naxis1, int naxis2,
                                             int newNaxis1, int newNaxis2,
-                                           int minX, int maxX,
+                                            int minX, int maxX,
                                             int minY, int maxY) {
+
         switch (naxis) {
             case 2: {
                 float[][] data = new float[newNaxis2][newNaxis1];
+
                 int yOut = 0;
                 for (int y = minY; y <= maxY; y++) {
                     int xOut = 0;
@@ -166,7 +175,8 @@ public class CropAndCenter  {
                     }
                     yOut++;
                 }
-                return new ImageData(data);
+                return data;
+
             }
 
             case 3: {
@@ -186,7 +196,7 @@ public class CropAndCenter  {
 
                     yOut++;
                 }
-               return new ImageData(data);
+                return data;
             }
 
             case 4: {
@@ -205,12 +215,13 @@ public class CropAndCenter  {
                     yOut++;
                 }
 
-                return new ImageData(data);
+                return data;
             }
 
         }
         return null;
     }
+
     /*
      This method get a new BasicHDU in the cropped area
      */
@@ -248,17 +259,24 @@ public class CropAndCenter  {
         int newNaxis1 = max_x - min_x + 1;
         int newNaxis2 = max_y - min_y + 1;
 
+        //create a new header
         Header newHeader =getNewHeader(header, newNaxis1, newNaxis2,min_x, min_y );
 
-        Object dataIn = hdu.getData().getData();
+        //convert to float data type for calculation
+        Object dataIn = ArrayFuncs.convertArray(hdu.getData().getData(), Float.TYPE, true);
+        Object floatDataArray = getNewDataInFloat(dataIn, naxis, naxis1, naxis2,
+                newNaxis1, newNaxis2, min_x, max_x, min_y, max_y);
 
-        ImageData newImageData =getNewImageData(dataIn, naxis, naxis1, naxis2,
-                 newNaxis1, newNaxis2, min_x, max_x, min_y, max_y);
-        if (newImageData==null){
+        if (floatDataArray==null){
             throw new FitsException("create a new fits ImageData failed, please check your input");
         }
 
-        return  new ImageHDU(newHeader, newImageData);
+        //convert the float data array to the bitpix type in the header
+        Object data =ArrayFuncs.convertArray(floatDataArray, FitsRead.getDataType(header.getIntValue("BITPIX")), true);
+        ImageData imageData= new ImageData(data);
+
+        return new ImageHDU(newHeader,  imageData );
+
 
 
     }
@@ -327,7 +345,7 @@ public class CropAndCenter  {
             System.exit(1);
         }
 
-        try
+          try
         {
             inFits = new Fits(in_name);
             fits_read_array = FitsRead.createFitsReadArray(inFits);
