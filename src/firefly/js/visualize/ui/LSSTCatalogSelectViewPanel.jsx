@@ -388,9 +388,19 @@ var userChangeLsstDispatch = function () {
                         max: sizeFactor * radius / 3600
                     });
 
-                    inFields = updateMerge(inFields, 'tableconstraints', {
-                        tbl_id: `${currentCatValue}-dd-table-constraint`
-                    });
+                    const tblSuf = '-dd-table-constraint';
+                    var crtTbl = `${currentCatValue}${tblSuf}`;
+                    var preTbl = get(inFields, 'tableconstraints.tbl_id');
+
+                    if (!preTbl) {
+                        preTbl = `${catmaster[0].catalogs[0].value}${tblSuf}`;
+                    }
+
+                    inFields = updateMerge(inFields, 'tableconstraints', {tbl_id: `${crtTbl}`});
+                    if (preTbl !== crtTbl) {
+                        inFields = updateMerge(inFields, 'tableconstraints',
+                                                {value: {constraints: '', selcols: '', filters: {}}});
+                    }
                 }
                 break;
             case FieldGroupCntlr.CHILD_GROUP_CHANGE:
