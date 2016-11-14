@@ -84,21 +84,11 @@ export class TestQueriesPanel extends Component {
                         </div>
                         <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs'>
                             <Tab name='Test Catalog' id='catalog'>{renderCatalogTab()}</Tab>
-                            <Tab name='Images' id='images'>{renderImagesTab()}</Tab>
                             <Tab name='Wise Search' id='wiseImage'>
                                 <div>{renderWiseSearch(fields)}</div>
                             </Tab>
                             <Tab name='2Mass Search' id='2massImage'>
                                 <div>{render2MassSearch(fields)}</div>
-                            </Tab>
-                            <Tab name='Load Region' id='loadRegion'>
-                                <div>{renderLoadRegion(fields)}</div>
-                            </Tab>
-                            <Tab name='Compute Periodogram' id='periodogram'>
-                                <div>{renderPeriodogram(fields)}</div>
-                            </Tab>
-                            <Tab name='LSST DAX Dummy' id='lsstDummy'>
-                                <div>{renderLSSTDummy(fields)}</div>
                             </Tab>
                         </FieldGroupTabs>
 
@@ -111,6 +101,24 @@ export class TestQueriesPanel extends Component {
 
 
 }
+
+/*
+ <Tab name='Images' id='images'>{renderImagesTab()}</Tab>
+<Tab name='LSST DAX Dummy' id='lsstDummy'>
+    <div>{renderLSSTDummy(fields)}</div>
+</Tab>
+ <Tab name='Load Region' id='loadRegion'>
+ <div>{renderLoadRegion(fields)}</div>
+ </Tab>
+ <Tab name='Compute Periodogram' id='periodogram'>
+ <div>{renderPeriodogram(fields)}</div>
+ </Tab>
+*/
+
+
+
+
+
 
 TestQueriesPanel.propTypes = {
     name: PropTypes.oneOf(['TestSearches']),
