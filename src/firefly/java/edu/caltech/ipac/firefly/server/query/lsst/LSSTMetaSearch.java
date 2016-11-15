@@ -50,7 +50,6 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         String tableName = request.getParam("table_name");
         String catTable = request.getParam(CatalogRequest.CATALOG);
         if (catTable == null) {
-            //throw new RuntimeException(CatalogRequest.CATALOG + " parameter is required");
             catTable =DATABASE_NAME.length()==0?tableName: DATABASE_NAME+"."+ tableName;
         }
 
