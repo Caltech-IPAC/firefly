@@ -527,8 +527,9 @@ export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
  * @param {boolean} [p.setNewPlotAsActive= true] the new plot will be active
  * @param {boolean} [p.holdWcsMatch= false] if wcs match is on, then modify the request to hold the wcs match
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
- * @param {string} [p.viewerId] - viewer that this plot should be put into, only optional if using the default viewer id
- *                                normally you need to specify the viewer
+ * @param {string} [p.viewerId] - viewer that this plot should be put into, only optional if
+ *                                you have added the plot id manually to a viewer.
+ *                                otherwise, you need to specify the viewer.
  * @public
  * @function dispatchPlotImage
  * @memberof firefly.action
