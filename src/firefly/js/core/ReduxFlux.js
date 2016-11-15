@@ -122,7 +122,6 @@ const reducers = {
     [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer,
     [TableStatsCntlr.TBLSTATS_DATA_KEY]: TableStatsCntlr.reducer,
     [ChartsCntlr.CHART_SPACE_PATH]: ChartsCntlr.reducer,
-    [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
     [IMAGE_MULTI_VIEW_KEY]: MultiViewCntlr.reducer,
     [DIALOG_OR_COMPONENT_KEY]: ComponentCntlr.reducer
 };

@@ -360,7 +360,7 @@ function highlightRow(action) {
             }).catch( (error) => {
                 dispatch({type: TABLE_HIGHLIGHT, payload: TblUtil.createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
             });
-        }E
+        }
     };
 }
 
