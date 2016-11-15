@@ -32,50 +32,57 @@ public class ServerEventManager {
     private static long deliveredEventCnt;
 
 
-
-    public static void fireAction(FluxAction action) { fireJsonAction(action.toString(), ServerEvent.Scope.SELF,null);
+    /**
+     * Send this action to the calling client, i.e Scope.SELF.
+     * @param action
+     */
+    public static void fireAction(FluxAction action) {
+        fireAction(action, ServerEvent.Scope.SELF);
     }
 
-    public static void fireAction(FluxAction action, String channel) {
-        fireJsonAction(action.toString(), ServerEvent.Scope.CHANNEL, channel);
-    }
-
+    /**
+     * Send this action to the calling client, i.e Scope.SELF.
+     * @param action
+     */
     public static void fireAction(FluxAction action, ServerEvent.Scope scope) {
-        fireJsonAction(action.toString(), scope, null);
+        fireJsonAction(action.toString(), scope);
     }
 
-    public static void fireJsonAction(String actionStr, String channel) {
-        fireJsonAction(actionStr, ServerEvent.Scope.CHANNEL, channel);
+    /**
+     * Send this action to a specific client based on the given target.
+     * @param action
+     * @param target
+     */
+    public static void fireAction(FluxAction action, ServerEvent.EventTarget target) {
+        fireJsonAction(action.toString(), target);
     }
 
-    public static void fireJsonAction(String actionStr, ServerEvent.Scope scope, String channel) {
-        ServerEvent sev;
-        if (channel!=null) {
-            ServerEvent.EventTarget t= new ServerEvent.EventTarget(ServerEvent.Scope.CHANNEL,null,channel);
-            sev = new ServerEvent(Name.ACTION, t, ServerEvent.DataType.JSON, actionStr);
-        }
-        else {
-            sev = new ServerEvent(Name.ACTION, scope, ServerEvent.DataType.JSON, actionStr);
-        }
+    /**
+     * Send this JSON string action to the client based on the given scope
+     * @param actionStr
+     * @param scope
+     */
+    public static void fireJsonAction(String actionStr, ServerEvent.Scope scope) {
+        ServerEvent sev = new ServerEvent(Name.ACTION, scope, ServerEvent.DataType.JSON, actionStr);
+        ServerEventManager.fireEvent(sev);
+    }
 
+    /**
+     * Send this JSON string action to a specific client based on the given target.
+     * @param actionStr
+     * @param target
+     */
+    public static void fireJsonAction(String actionStr, ServerEvent.EventTarget target) {
+        ServerEvent sev = new ServerEvent(Name.ACTION, target, ServerEvent.DataType.JSON, actionStr);
         ServerEventManager.fireEvent(sev);
     }
 
 
 
-
-
     public static void fireEvent(ServerEvent sev) {
-        if (sev == null || sev.getTarget() == null) {
+        if (sev == null || sev.getTarget() == null || !sev.getTarget().hasDestination()) {
             LOG.warn("Something is wrong with this ServerEvent: " + String.valueOf(sev));
         } else {
-            if (!sev.getTarget().hasDestination()) {
-                if (sev.getTarget().getScope() == ServerEvent.Scope.CHANNEL) {
-                    sev.getTarget().setChannel(ServerContext.getRequestOwner().getEventChannel());
-                } else {
-                    sev.getTarget().setConnID(ServerContext.getRequestOwner().getEventConnID());
-                }
-            }
             eventWorker.deliver(sev);
         }
     }

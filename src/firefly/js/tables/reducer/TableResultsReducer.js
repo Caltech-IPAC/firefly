@@ -17,10 +17,11 @@ export function resultsReducer(state={results:{}}, action={}) {
         case (Cntlr.TBL_RESULTS_ADDED)     :
         case (Cntlr.TBL_RESULTS_UPDATE)    :
         {
-            const {tbl_id, options={}} = action.payload;
-            const {tbl_group} = options;
+            const {options={}, ...rest} = action.payload;
+            const flatten = Object.assign(rest, options);   // if options is passed as a prop, flatten it into the payload.
+            const {tbl_id, tbl_group} = flatten;
             if (tbl_id ) {
-                const changes = set({}, [tbl_group, 'tables', tbl_id], action.payload);
+                const changes = set({}, [tbl_group, 'tables', tbl_id], flatten);
                 set(changes, [tbl_group, 'name'], tbl_group);
                 return TblUtil.smartMerge(root, changes);
             } else return root;

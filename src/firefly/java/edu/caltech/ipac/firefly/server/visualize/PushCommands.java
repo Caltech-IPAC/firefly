@@ -13,6 +13,7 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
+import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
@@ -71,7 +72,7 @@ public class PushCommands {
             SrvParam sp= new SrvParam(paramMap);
             String action= sp.getRequired(ServerParams.ACTION);
             String channel= sp.getRequired(ServerParams.CHANNEL_ID);
-            ServerEventManager.fireJsonAction(action,channel);
+            ServerEventManager.fireJsonAction(action, new ServerEvent.EventTarget(ServerEvent.Scope.CHANNEL, null, channel, null));
             JSONObject map = new JSONObject();
             JSONArray outJson = new JSONArray();
             outJson.add(map);

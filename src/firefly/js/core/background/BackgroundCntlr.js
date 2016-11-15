@@ -32,6 +32,7 @@ function actionCreators() {
         [BG_MONITOR_SHOW]: bgMonitorShow,
         [BG_SET_EMAIL]: bgSetEmail,
         [BG_Package]: bgPackage,
+        [BG_JOB_REMOVE]: bgJobRemove,
         [BG_JOB_CANCEL]: bgJobCancel
     };
 }
@@ -132,6 +133,16 @@ function bgMonitorShow(action) {
     };
 }
 
+function bgJobRemove(action) {
+    return (dispatch) => {
+        const {id} = action.payload;
+        if (id) {
+            SearchServices.removeBgJob(id);
+            dispatch(action);
+        }
+    };
+}
+
 function bgJobCancel(action) {
     return (dispatch) => {
         const {id} = action.payload;
@@ -197,10 +208,8 @@ function reducer(state={}, action={}) {
 function handleBgStatusUpdate(state, action) {
     var bgstats = action.payload;
     bgstats = transform(bgstats);
-    if (has(state, ['jobs', bgstats.ID])) {
-        const nState = set({}, ['jobs', bgstats.ID], bgstats);
-        return smartMerge(state, nState);
-    } else return state;
+    const nState = set({}, ['jobs', bgstats.ID], bgstats);
+    return smartMerge(state, nState);
 }
 
 function handleBgJobAdd(state, action) {

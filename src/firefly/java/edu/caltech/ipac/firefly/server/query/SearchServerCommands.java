@@ -183,6 +183,15 @@ public class SearchServerCommands {
         }
     }
 
+    public static class RemoveBgJob extends BaseSearchServerCommand {
+        @Override
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+            SrvParam sp= new SrvParam(paramMap);
+            BackgroundEnv.removeUserBackgroundInfo(sp.getID());
+            return "true";
+        }
+    }
+
     public static class Cancel extends BaseSearchServerCommand {
         @Override
         public String doCommand(Map<String, String[]> paramMap) throws Exception {

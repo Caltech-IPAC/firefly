@@ -295,13 +295,13 @@ function tableSearch(action) {
         //dispatch(validate(FETCH_TABLE, action));
         if (!action.err) {
             var {request={}, options={}} = action.payload;
-            const {tbl_group} = options;
+            const {tbl_ui_id} = options;
             const {tbl_id} = request;
             const title = get(request, 'META_INFO.title');
             request.pageSize = options.pageSize = options.pageSize || request.pageSize || 100;
 
             dispatchTableFetch(request);
-            dispatchTblResultsAdded(tbl_id, title, options, tbl_group);
+            dispatchTblResultsAdded(tbl_id, title, options, tbl_ui_id);
         }
     };
 }
@@ -309,14 +309,14 @@ function tableSearch(action) {
 function tableInsert(action) {
     return (dispatch) => {
         const {tableModel={}, options={}, addUI=true} = action.payload || {};
-        const {tbl_group} = options;
+        const {tbl_ui_id} = options;
         const title = tableModel.title || get(tableModel, 'request.META_INFO.title') || 'untitled';
         const tbl_id = tableModel.tbl_id || get(tableModel, 'request.tbl_id');
 
         Object.assign(tableModel, {isFetching: false});
         set(tableModel, 'tableMeta.Loading-Status', 'COMPLETED');
         if (!tableModel.origTableModel) tableModel.origTableModel = tableModel;
-        if (addUI) dispatchTblResultsAdded(tbl_id, title, options, tbl_group);
+        if (addUI) dispatchTblResultsAdded(tbl_id, title, options, tbl_ui_id);
         dispatch( {type: TABLE_REPLACE, payload: tableModel} );
         dispatchTableLoaded(Object.assign( TblUtil.getTblInfo(tableModel), {invokedBy: TABLE_FETCH}));
     };

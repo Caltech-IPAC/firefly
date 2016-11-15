@@ -197,6 +197,17 @@ export const getStatus= function(id, polling) {
  * @param {string} id background id
  * @return {Promise}
  */
+export function removeBgJob(id) {
+    const params = {[ServerParams.ID]: id};
+    return doService(doJsonP(), ServerParams.REMOVE_JOB, params
+    ).then( () => true);
+};
+
+/**
+ *
+ * @param {string} id background id
+ * @return {Promise}
+ */
 export const cancel= function(id) {
     var paramList = [];
     paramList.push({name: ServerParams.ID, value: id});

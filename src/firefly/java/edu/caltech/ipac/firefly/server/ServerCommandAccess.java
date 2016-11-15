@@ -72,6 +72,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.GET_ENUM_VALUES,        new SearchServerCommands.GetEnumValues());
         _cmdMap.put(ServerParams.SUB_BACKGROUND_SEARCH,  new SearchServerCommands.SubmitBackgroundSearch());
         _cmdMap.put(ServerParams.GET_STATUS,             new SearchServerCommands.GetStatus());
+        _cmdMap.put(ServerParams.REMOVE_JOB,             new SearchServerCommands.RemoveBgJob());
         _cmdMap.put(ServerParams.CANCEL,                 new SearchServerCommands.Cancel());
         _cmdMap.put(ServerParams.ADD_ID_TO_CRITERIA,     new SearchServerCommands.AddIDToPushCriteria());
         _cmdMap.put(ServerParams.CLEAN_UP,               new SearchServerCommands.CleanUp());

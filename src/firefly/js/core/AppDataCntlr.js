@@ -7,15 +7,13 @@ import {get} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
-import BrowserCache from '../util/BrowserCache.js';
-import {menuReducer, alertsReducer} from './AppDataReducers.js';
+import {appDataReducer, menuReducer, alertsReducer} from './AppDataReducers.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
-import {getModuleName, updateSet} from '../util/WebUtil.js';
+import {getModuleName} from '../util/WebUtil.js';
 import {getWsChannel} from './messaging/WebSocketClient.js';
 
 export const APP_DATA_PATH = 'app_data';
 export const COMMAND = 'COMMAND';
-const APP_PREFERENCES= 'APP_PREFERENCES';
 
 /*---------------------------- ACTIONS -----------------------------*/
 
@@ -39,193 +37,26 @@ export const WS_CONN_UPDATED = `${APP_DATA_PATH}.wsConnUpdated`;
 /** grab focus */
 export const GRAB_WINDOW_FOCUS = `${APP_DATA_PATH}.grabFocus`;
 
-/*---------------------------- CREATORS ----------------------------*/
 
-export function loadAppData() {
+export default {actionCreators, reducers};
 
-    return function (dispatch) {
-        dispatch({ type : APP_LOAD });
-        fetchAppData(dispatch, 'fftools_v1.0.1 Beta', 2);
-    };
-}
-
-export function grabWindowFocus() {
-    return blinkWindowTitle;
-}
-
-export function onlineHelpLoad( action )
-{
-    return () => {
-        /*global __$help_base_url*/
-        var url = typeof __$help_base_url === 'undefined' ? 'unknown' : __$help_base_url;       // this is a global var.. ending with '/'
-        var windowName = 'onlineHelp';
-        var moduleName = getModuleName();
-
-        if (moduleName) {
-            url +=  moduleName;
-            windowName += '-' + moduleName;
-        }
-
-        if (action.payload && action.payload.helpId) {
-            url += '/#id=' + action.payload.helpId;
-        } else {
-            url += '/';
-        }
-
-        if (url) {
-            window.open(url, windowName);
-        }
-    };
-}
-
-/**
- *
- * @param {AppData} appData The partial object to merge with the appData branch under root
- * @returns {Action}
- */
-export function updateAppData(appData) {
-    return { type : APP_UPDATE, payload: appData };
-}
-
-
-
-export const getActiveTarget= function() { return flux.getState()[APP_DATA_PATH].activeTarget; };
-
-export function getTaskCount(componentId) {
-    var state= flux.getState()[APP_DATA_PATH];
-    return state.taskCounters[componentId] ? state.taskCounters[componentId] : 0;
-}
-
-export function getPreference(name) {
-    return flux.getState()[APP_DATA_PATH].preferences[name];
-}
-
-export function getRootUrlPath() {
-    return flux.getState()[APP_DATA_PATH].rootUrlPath;
-}
-
-export function getAppOptions() {
-    return flux.getState()[APP_DATA_PATH].appOptions;
-}
-
-/**
- * @param channel
- * @returns {number}  the number of connections/clients connected to the given channel
- */
-export function getConnectionCount(channel) {
-    return get(flux.getState(), [APP_DATA_PATH, 'connections', channel, 'length'], 0);
-}
-
-/**
- * @param wp center WorldPt
- * @param corners array of 4 WorldPts that represent the corners of a image
- */
-export const dispatchActiveTarget= function(wp,corners) {
-    var payload={};
-    if (isValidPoint(wp) && wp.type===Point.W_PT) {
-        payload.worldPt= wp;
-    }
-    if (corners) {
-        payload.corners= corners;
-    }
-    if (Object.keys(payload).length) {
-        flux.process({type: ACTIVE_TARGET, payload});
-    }
-};
-
-/*---------------------------- REDUCERS -----------------------------*/
-
-/**
- *
- * @returns {AppDataStore}
- */
-function getInitState() {
-
-
-    /**
-     * @global
-     * @public
-     * @typedef {Object} AppDataStore
-     *
-     * @summary Information about the core of the application
-     *
-     * @prop {boolean} isReady : false,
-     * @prop {Object.<String,Array>} connections  channel:[] ... keyed by channel, contains an array of connId(s).
-     * @prop {WorldPt} activeTarget
-     * @prop {string} rootUrlPath
-     * @prop {Array} taskCounters
-     * @prop {Object} commandState
-     * @prop {Object.<String,String>} preferences,
-     * @prop {Object} appOptions : {}
-     */
+function actionCreators() {
     return {
-        isReady : false,
-        connections: {},      // channel:[] ... keyed by channel, contains an array of connId(s).
-        activeTarget: null,
-        rootUrlPath : null,
-        taskCounters: [],
-        commandState:{},   // key is command id, value is anything the action drops in, only stateful commands need this
-        preferences:initPreferences(),  // preferences, will be backed by local storage
-        appOptions : {}
+        [APP_LOAD]:     loadAppData,
+        [GRAB_WINDOW_FOCUS]:     grabWindowFocus,
+        [HELP_LOAD]:  onlineHelpLoad
     };
 }
 
-function initPreferences() {
-    var prefs= BrowserCache.get(APP_PREFERENCES);
-    return prefs || {};
+function reducers() {
+    return {
+        [APP_DATA_PATH]: reducer
+    };
 }
 
-
-export function reducer(state=getInitState(), action={}) {
-
-    var nstate = appDataReducer(state, action);
-    nstate = menuReducer(nstate, action);
-    nstate = alertsReducer(nstate, action);
-
-    return nstate;
-}
-
-function appDataReducer(state, action={}) {
-    switch (action.type) {
-        case APP_LOAD  :
-            return getInitState();
-
-        case APP_UPDATE  :
-            return Object.assign({}, state, action.payload);
-
-        case ACTIVE_TARGET  :
-            return updateActiveTarget(state,action);
-
-        case REMOVE_TASK_COUNT  :
-            return removeTaskCount(state,action);
-
-        case ADD_TASK_COUNT  :
-            return addTaskCount(state,action);
-
-        case ADD_PREF  :
-            return addPreference(state,action);
-
-        case REMOVE_PREF  :
-            return removePreference(state,action);
-        
-        case ROOT_URL_PATH :
-            return Object.assign({},state, {rootUrlPath:action.payload.rootUrlPath});
-
-        case WS_CONN_UPDATED :
-            return updateSet(state, ['connections'], action.payload);
-
-        case APP_OPTIONS :
-            return updateSet(state, ['appOptions'], action.payload.appOptions);
-
-        default:
-            return state;
-    }
-}
 /*---------------------------- DISPATCHERS -----------------------------*/
-
-
 /**
- * 
+ *
  * @param {string} rootUrlPath set the root url path.  This allows use to create full urls from relative urls
  */
 export function dispatchRootUrlPath(rootUrlPath) {
@@ -293,6 +124,7 @@ export function dispatchUpdateAppData(appData) {
 
 /**
  * execute this callback when app is ready.
+ * @param {function} callback
  */
 export function dispatchOnAppReady(callback) {
     if (isAppReady()) {
@@ -306,8 +138,8 @@ export function dispatchOnAppReady(callback) {
 /*---------------------------- EXPORTED FUNTIONS -----------------------------*/
 export function isAppReady() {
     const gwtReady = !get(window, 'firefly.use_gwt', false) ||
-                      get(flux.getState(), [APP_DATA_PATH, 'gwtLoaded']);
-    
+        get(flux.getState(), [APP_DATA_PATH, 'gwtLoaded']);
+
     return getWsChannel() && get(flux.getState(), [APP_DATA_PATH, 'isReady']) && gwtReady;
 }
 
@@ -318,15 +150,118 @@ export function getMenu() {
 export function getAlerts() {
     return get(flux.getState(), [APP_DATA_PATH, 'alerts'], {});
 }
+
+export const getActiveTarget= function() { return flux.getState()[APP_DATA_PATH].activeTarget; };
+
+export function getTaskCount(componentId) {
+    var state= flux.getState()[APP_DATA_PATH];
+    return state.taskCounters[componentId] ? state.taskCounters[componentId] : 0;
+}
+
+export function getPreference(name) {
+    return flux.getState()[APP_DATA_PATH].preferences[name];
+}
+
+export function getRootUrlPath() {
+    return flux.getState()[APP_DATA_PATH].rootUrlPath;
+}
+
+export function getAppOptions() {
+    return flux.getState()[APP_DATA_PATH].appOptions;
+}
+
+/**
+ * @param channel
+ * @returns {number}  the number of connections/clients connected to the given channel
+ */
+export function getConnectionCount(channel) {
+    return get(flux.getState(), [APP_DATA_PATH, 'connections', channel, 'length'], 0);
+}
+
+/**
+ * @param wp center WorldPt
+ * @param corners array of 4 WorldPts that represent the corners of a image
+ */
+export const dispatchActiveTarget= function(wp,corners) {
+    var payload={};
+    if (isValidPoint(wp) && wp.type===Point.W_PT) {
+        payload.worldPt= wp;
+    }
+    if (corners) {
+        payload.corners= corners;
+    }
+    if (Object.keys(payload).length) {
+        flux.process({type: ACTIVE_TARGET, payload});
+    }
+};
+
+/*---------------------------- REDUCERS -----------------------------*/
+
+function reducer(state={}, action={}) {
+
+    var nstate = appDataReducer(state, action);
+    nstate = menuReducer(nstate, action);
+    nstate = alertsReducer(nstate, action);
+
+    return nstate;
+}
+
+/*---------------------------- CREATORS ----------------------------*/
+
+function loadAppData() {
+
+    return function (dispatch) {
+        dispatch({ type : APP_LOAD });
+        fetchAppData(dispatch, 'fftools_v1.0.1 Beta', 2);
+    };
+}
+
+function grabWindowFocus() {
+    return blinkWindowTitle;
+}
+
+function onlineHelpLoad( action )
+{
+    return () => {
+        /*global __$help_base_url*/
+        var url = typeof __$help_base_url === 'undefined' ? 'unknown' : __$help_base_url;       // this is a global var.. ending with '/'
+        var windowName = 'onlineHelp';
+        var moduleName = getModuleName();
+
+        if (moduleName) {
+            url +=  moduleName;
+            windowName += '-' + moduleName;
+        }
+
+        if (action.payload && action.payload.helpId) {
+            url += '/#id=' + action.payload.helpId;
+        } else {
+            url += '/';
+        }
+
+        if (url) {
+            window.open(url, windowName);
+        }
+    };
+}
+
 /*---------------------------- PRIVATE -----------------------------*/
 
 /**
- * this saga does the following:
- * <ul>
- *     <li>watches for app_data.isReady
- *     <li>when isReady, it will execute the given callback with the current state
- * </ul>
- * @param callback  callback to execute when table is loaded.
+ *
+ * @param {AppData} appData The partial object to merge with the appData branch under root
+ * @returns {Action}
+ */
+function updateAppData(appData) {
+    return { type : APP_UPDATE, payload: appData };
+}
+
+/**
+ * This saga watches for app_data.isReady.  
+ * When that happens, it will execute the given callback with the current state. 
+ * @param {function} callback
+ * @param {function} dispatch
+ * @param {function} getState
  */
 function* doOnAppReady(callback, dispatch, getState) {
 
@@ -350,55 +285,11 @@ function fetchAppData(dispatch) {
         }));
 }
 
-
-
-/*---------------------------- REDUCING FUNTIONS -----------------------------*/
-const updateActiveTarget= function(state,action) {
-    var {worldPt,corners}= action.payload;
-    if (!worldPt && !corners) return state;
-    return Object.assign({}, state, {activeTarget:{worldPt,corners}});
-};
-
-const addTaskCount= function(state,action) {
-    var {componentId,taskId}= action.payload;
-    if (!componentId && !taskId) return state;
-    var taskArray= state.taskCounters[componentId] | [];
-    taskArray= [...taskArray,taskId];
-    var taskCounters= Object.assign({}, taskCounters, {[componentId]:taskArray});
-    return Object.assign({},state, {taskCounters});
-};
-
-const removeTaskCount= function(state,action) {
-    var {componentId,taskId}= action.payload;
-    if (!componentId && !taskId) return state;
-    var taskArray= state.taskCounters[componentId] | [];
-    taskArray= taskArray.filter( (id) => id!==taskId);
-    var taskCounters= Object.assign({}, taskCounters, {[componentId]:taskArray});
-    return Object.assign({},state, {taskCounters});
-};
-
-function addPreference(state,action) {
-    if (!action.payload) return state;
-    var {name,value}= action.payload;
-    var preferences= Object.assign({},state.preferences,{[name]:value} );
-    BrowserCache.put(APP_PREFERENCES,preferences);
-    return Object.assign({},state,{preferences});
-}
-
-function removePreference(state,action) {
-    if (!action.payload) return state;
-    var {name}= action.payload;
-    var preferences= Object.assign({},state.preferences);
-    Reflect.deleteProperty(preferences,name);
-    BrowserCache.put(APP_PREFERENCES,preferences);
-    return Object.assign({},state,{preferences});
-}
-
 const blinkWindowTitle = ( () => {
     var oldTitle = oldTitle || document.title;
     var msg = 'Updated!';
     var timeoutId;
-    var blink = () => { document.title = document.title == msg ? oldTitle : msg; };
+    var blink = () => { document.title = document.title === msg ? oldTitle : msg; };
     var clear = () => {
         clearInterval(timeoutId);
         document.title = oldTitle;
@@ -412,3 +303,4 @@ const blinkWindowTitle = ( () => {
         }
     };
 })();
+
