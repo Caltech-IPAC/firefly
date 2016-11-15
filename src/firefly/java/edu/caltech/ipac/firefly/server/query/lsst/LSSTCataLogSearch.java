@@ -57,13 +57,6 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
     private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "");
     //set default timeout to 120seconds
     private int timeout  = new Integer( AppProperties.getProperty("lsst.database.timeoutLimit" , "120")).intValue();
-    //define all methods here
-    private static final CatalogRequest.Method allSearchMethods[] = {CatalogRequest.Method.CONE,
-            CatalogRequest.Method.ELIPTICAL,
-            CatalogRequest.Method.BOX,
-            CatalogRequest.Method.POLYGON,
-            CatalogRequest.Method.TABLE,
-            CatalogRequest. Method.ALL_SKY};
 
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
@@ -82,19 +75,6 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         }
     }
 
-
-    private CatalogRequest.Method getMethod (String searchMethod){
-
-        CatalogRequest.Method retval = null;
-        for (CatalogRequest.Method m : allSearchMethods) {
-            if (m.getDesc().equals(searchMethod)) {
-                retval = m;
-                break;
-            }
-        }
-        return retval;
-
-    }
     /**
      * This method will return the search method string based on the method.  If the method is not supported, the exception
      * will be thrown
@@ -103,18 +83,17 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
      * @return
      * @throws Exception
      */
-    protected String getSearchMethod(TableServerRequest req, String raCol, String decCol) throws Exception {
+    protected String getSearchMethod(TableServerRequest req, String calTable)throws Exception { //, String raCol, String decCol) throws Exception {
 
-
-        CatalogRequest.Method method = getMethod(req.getParam("SearchMethod"));
+        String method = req.getParam("SearchMethod");
         String[]  radec = req.getParam("UserTargetWorldPt")!=null? req.getParam("UserTargetWorldPt").split(";"):null;
         String ra =radec!=null? radec[0]:"";
         String dec = radec!=null?radec[1]:"";
 
-        switch (method) {
-            case ALL_SKY:
+        switch (method.toUpperCase()) {
+            case "ALL_SKY":
                 return "";
-            case BOX:
+            case "BOX":
                 //The unit is degree for all the input
                 String side = req.getParam(CatalogRequest.SIZE);
                 WorldPt wpt = new WorldPt(new Double(ra).doubleValue(), new Double(dec).doubleValue());
@@ -123,25 +102,25 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
                 String upperLeft = String.format(Locale.US, "%8.6f,%8.6f", corners.getUpperLeft().getLon(), corners.getUpperLeft().getLat());
                 String lowerRight = String.format(Locale.US, "%8.6f,%8.6f", corners.getLowerRight().getLon(), corners.getLowerRight().getLat());
-                return "scisql_s2PtInBox("+ raCol+"," + decCol+"," +  lowerRight + "," +upperLeft + ")=1";
+                return "scisql_s2PtInBox("+ getRA(calTable)+"," + getDEC(calTable)+"," +  lowerRight + "," +upperLeft + ")=1";
 
-            case CONE:
+            case "CONE":
                 //The unit is degree for all the input
                 String radius = req.getParam(CatalogRequest.RADIUS);
-                return "scisql_s2PtInCircle("+ raCol+"," + decCol+","+ra +","+dec+","+radius +")=1";
-           case ELIPTICAL:
+                return "scisql_s2PtInCircle("+ getRA(calTable)+"," + getDEC(calTable)+","+ra +","+dec+","+radius +")=1";
+           case "ELIPTICAL":
                //RA (degree), DEC (degree), positionAngle (degree), semi-majorAxis (arcsec), semi-minorAxis(arcsec),
                double semiMajorAxis = new Double( req.getParam("radius")).doubleValue()*3600;
                double ratio = new Double(req.getParam(CatalogRequest.RATIO)).doubleValue();
                Double semiMinorAxis = semiMajorAxis*ratio;
                String positionAngle = req.getParam("posang");
-               return  "scisql_s2PtInEllipse("+ raCol+"," + decCol+"," + ra + "," + dec + "," + semiMajorAxis + "," +
+               return  "scisql_s2PtInEllipse("+ getRA(calTable)+"," + getDEC(calTable)+"," + ra + "," + dec + "," + semiMajorAxis + "," +
                        semiMinorAxis + "," + positionAngle + ")=1";
-            case POLYGON:
+            case "POLYGON":
                 //The unit is degree for all the input
                 String radecList = req.getParam(CatalogRequest.POLYGON);
                 String[] sArray = radecList.split(",");
-                String polygoneStr = "scisql_s2PtInCPoly("+ raCol+"," + decCol+",";
+                String polygoneStr = "scisql_s2PtInCPoly("+ getRA(calTable)+"," + getDEC(calTable)+",";
                 for (int i=0; i<sArray.length; i++){
                     String[] radecPair = sArray[i].trim().split("\\s+");
                     if (radecPair.length!=2){
@@ -156,7 +135,7 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
                 }
                 return polygoneStr;
 
-            case TABLE:
+            case "TABLE":
                 //TODO what to do in multi-obj
                 throw new EndUserException("Could not do Multi Object search, internal configuration wrong.",
                         "table should be a post search not a get");
@@ -178,14 +157,6 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
     String buildSqlQueryString(TableServerRequest request) throws Exception {
 
         String tableName = request.getParam("table_name");
-
-        boolean usingRaDec=true;
-        if (tableName.equalsIgnoreCase("RunDeepSource") || tableName.equalsIgnoreCase("RunDeepForcedSource")){
-           usingRaDec=false;
-        }
-        String raColumn=usingRaDec?"ra":"coord_ra";
-        String decColumn=usingRaDec?"decl":"coord_decl";
-
         String catTable = request.getParam(CatalogRequest.CATALOG);
         if (catTable == null) {
             //throw new RuntimeException(CatalogRequest.CATALOG + " parameter is required");
@@ -202,7 +173,7 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         //get all the constraints
         String constraints =  getConstraints(request);
         //get the search method
-        String searchMethod = getSearchMethod( request, raColumn,decColumn);
+        String searchMethod = getSearchMethod( request, tableName);//, raColumn,decColumn);
 
         //build where clause
         String whereStr;
@@ -218,8 +189,6 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         else {
             whereStr="";
         }
-
-
 
         String sql = "SELECT " + columns + " FROM " + catTable;
         sql =whereStr.length()>0? sql +  " WHERE " + whereStr + ";": sql+ ";";
@@ -255,26 +224,47 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
     }
 
-    private Object convertType(Object d, DataType dt) throws Exception {
-         Class targetType = dt.getDataType();
-         if (targetType.getTypeName().equalsIgnoreCase("java.lang.integer")  && d instanceof Long ){
-             return new Long((long) d).intValue();
-         }
-        else if (targetType.getTypeName().equalsIgnoreCase("java.lang.float")  && d instanceof Double ) {
-            return new Double((double) d).floatValue();
-        }
-       else  if (targetType.getTypeName().equalsIgnoreCase("java.lang.byte")  && d instanceof Short ) {
-            return new Short((short) d).byteValue();
-        }
+    private void addNumberToRow(DataType dataType, Number nd,DataObject row ) {
+        switch (dataType.getDataType().getSimpleName()){
+            case "Byte":
+                row.setDataElement(dataType, nd.byteValue());
+                break;
+            case "Short":
+                row.setDataElement(dataType, nd.shortValue());
+                break;
+            case "Integer":
+                row.setDataElement(dataType, nd.intValue());
+                break;
+            case "Long":
+                row.setDataElement(dataType, nd.longValue());
+                break;
+            case "Float":
+                row.setDataElement(dataType, nd.floatValue());
+                break;
+            case "Double":
+                row.setDataElement(dataType, nd.doubleValue());
+                break;
 
-       else if (targetType.getTypeName().equalsIgnoreCase("java.lang.short")  && d instanceof Integer ) {
-            return new Integer((int) d).shortValue();
         }
-       else{
-             throw new Exception(d.getClass() + "to " + targetType + "is not supported");
-         }
     }
-
+    private void addStringToRow(DataType dataType, String sd,DataObject row){
+        switch (dataType.getDataType().getSimpleName()) {
+            case "Boolean":
+                char c = sd.toCharArray()[0];
+                if (c == '\u0000') {
+                    System.out.println(c);
+                }
+                if (sd.equalsIgnoreCase(new String("\u0000")) || sd.length() == 0) {//\u0000 is "", an empty string
+                    row.setDataElement(dataType, false);
+                } else {
+                    row.setDataElement(dataType, true);
+                }
+                break;
+            case "String":
+                row.setDataElement(dataType, sd);
+                break;
+        }
+     }
     /**
      * This method convert the json data file to data group
      * @param jsonFile
@@ -283,6 +273,8 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
      * @throws ParseException
      */
     private DataGroup getTableDataFromJson(TableServerRequest request,  File jsonFile) throws Exception {
+
+
 
         JSONParser parser = new JSONParser();
         JSONObject obj = (JSONObject) parser.parse(new FileReader(jsonFile));
@@ -305,45 +297,32 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
             dg.addAttribute(DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, dataType[i].getKeyName()),
                     dataType[i].getShortDesc());
         }
-
         for (int i=0; i<data.size(); i++){
             JSONArray  rowTblData = (JSONArray) data.get(i);
             DataObject row = new DataObject(dg);
             for (int j=0; j<dataType.length; j++){
-
                 Object d = rowTblData.get(j);
-
                 if (d==null){
                     dataType[j].setMayBeNull(true);
                     row.setDataElement(dataType[j], null);
+                    continue;
                 }
-                else  {
-
-                    //if it is a boolean, convert the "text" to boolean
-                    if (dataType[j].getDataType().getTypeName().equalsIgnoreCase("java.lang.Boolean")){
-                        char c = d.toString().toCharArray()[0];
-                        if (c=='\u0000'){
-                            System.out.println(c);
-                        }
-                        if (d.toString().equalsIgnoreCase(new String("\u0000"))  || d.toString().length()==0) {//\u0000 is "", an empty string
-                            d=new Boolean(false);
-                        }
-                        else {
-                            d=new Boolean(true);
-                        }
-                    }
-                    try {
-                        row.setDataElement(dataType[j], d);
-                    }
-                    catch (Exception e){
-                        //when the parser does not translate the type right, force the type to be converted
-                          row.setDataElement(dataType[j], convertType(d,dataType[j]));
+                if (d instanceof Number){
+                    Number nd = (Number) d;
+                    addNumberToRow(dataType[j], nd, row);
+                }
+                else if (d instanceof String){
+                    String sd = (String) d;
+                    addStringToRow(dataType[j], sd, row);
+                }
+                else {
+                    throw new Exception(d.getClass() + "to " + dataType[j].getDataType().getSimpleName() + " is not supported");
                     }
                 }
+                dg.add(row);
+          }
 
-            }
-            dg.add(row);
-        }
+
 
         return dg;
     }
@@ -366,9 +345,6 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         else if (classType.equalsIgnoreCase("BigInt(20)") ||  classType.equalsIgnoreCase("long")){
             return Long.class;
         }
-        else if (classType.equalsIgnoreCase("bit(1)") || classType.equalsIgnoreCase("boolean")){
-            return Boolean.class;
-        }
         else if (classType.equalsIgnoreCase("TINYINT") || classType.equalsIgnoreCase("byte")){
             return Byte.class;
         }
@@ -381,6 +357,9 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
             return String.class;
 
+        }
+        else if (classType.equalsIgnoreCase("bit(1)") || classType.equalsIgnoreCase("boolean")){
+            return Boolean.class;
         }
         /*else if (classType.equalsIgnoreCase("binary") || classType.equalsIgnoreCase("varbinary")
                                                       || classType.equalsIgnoreCase("longvarbinary")){
@@ -553,12 +532,44 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         }
 
     }
+    private String getRA(String catalog) {
+        if (catalog != null && catalog.contains("RunDeep")) {
+            return "coord_ra";
+        } else {
+            return "ra";
+        }
+    }
+
+    private String getDEC(String catalog) {
+        if (catalog != null && catalog.contains("RunDeep")) {
+            return "coord_decl";
+        } else {
+            return "decl";
+        }
+    }
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
 
+        super.prepareTableMeta(meta, columns, request);
+        String catTable = request.getParam("table_name");
+        String RA = getRA(catTable);
+        String DEC = getDEC(catTable);
         TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns(RA, DEC, CoordinateSys.EQ_J2000);
         meta.setCenterCoordColumns(llc);
         meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "LSST");
+        meta.setCenterCoordColumns(llc);
+        String tableName = request.getParam("table_name");
+        switch (tableName.toUpperCase()){
+            case "SCIENCE_CCD_EXPOSURE":
+                meta.setAttribute(MetaConst.LSST_SDSS_SINGLE_EXPOSURE, "LSST_CCD");
+                break;
+            case "DEEPCOADD":
+                meta.setAttribute(MetaConst.LSST_SDSS_COADD, "LSST_COADD");
+                break;
+            default:
+                meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "LSST");
+        }
+
         super.prepareTableMeta(meta, columns, request);
     }
 
