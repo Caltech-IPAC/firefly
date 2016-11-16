@@ -209,6 +209,7 @@ function handleBgStatusUpdate(state, action) {
     var bgstats = action.payload;
     bgstats = transform(bgstats);
     const nState = set({}, ['jobs', bgstats.ID], bgstats);
+    if (bgstats.email && nState.email !== bgstats.email) nState.email = bgstats.email;
     return smartMerge(state, nState);
 }
 

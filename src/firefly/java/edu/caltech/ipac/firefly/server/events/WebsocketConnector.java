@@ -17,8 +17,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import javax.websocket.CloseReason;
 import javax.websocket.OnClose;
@@ -110,7 +108,7 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
     /**
      * notify the clients that connections have been updated from the given channel.
      * In order for external viewer to work correctly, we have to treat them as pair.
-     * So, event though they have different channels, we notify them both when connections are
+     * So, even though they have different channels, we notify them both when connections are
      * added/removed from them.
      * The event will be sent to both of them.
      * @param type  action type.  Either "app_data.wsConnAdded" or "app_data.wsConnRemoved"

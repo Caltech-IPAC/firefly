@@ -12,7 +12,6 @@ package edu.caltech.ipac.firefly.data;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.StringUtils;
-import org.apache.xpath.operations.*;
 
 import java.io.Serializable;
 import java.lang.String;
@@ -21,9 +20,10 @@ import java.lang.String;
  * @author Trey Roby
  */
 public class ServerEvent implements Serializable {
+
     public static final String SERVER_CONN_ID = "-1";
     private Name name;
-        private EventTarget target;;
+    private EventTarget target;
     private DataType dataType = DataType.STRING;
     private Serializable data;
     private String from;
@@ -34,11 +34,9 @@ public class ServerEvent implements Serializable {
     public ServerEvent(Name name, Scope scope, Serializable data) {
         this(name, new EventTarget(scope), DataType.JSON, data, null);
     }
-
     public ServerEvent(Name name, Scope scope, DataType dataType, Serializable data) {
         this(name, new EventTarget(scope), dataType, data, null);
     }
-
     public ServerEvent(Name name, EventTarget target, Serializable data) {
         this(name, target, DataType.BG_STATUS, data, SERVER_CONN_ID);
     }
@@ -90,7 +88,7 @@ public class ServerEvent implements Serializable {
 
     public enum Scope {SELF, CHANNEL, USER, WORLD}
 
-public enum DataType {JSON, BG_STATUS, STRING}
+    public enum DataType {JSON, BG_STATUS, STRING}
 
 //====================================================================
 //
