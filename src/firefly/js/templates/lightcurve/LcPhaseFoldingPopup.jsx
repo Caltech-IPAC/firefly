@@ -14,6 +14,7 @@ import {ValidationField} from '../../ui/ValidationField.jsx';
 import {InputGroup} from '../../ui/InputGroup.jsx';
 import {doUpload} from '../../ui/FileUpload.jsx';
 import {RangeSlider}  from '../../ui/RangeSlider.jsx';
+import {adjustMax} from '../../ui/RangeSliderView.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
@@ -21,18 +22,17 @@ import {dispatchRestoreDefaults} from '../../fieldGroup/FieldGroupCntlr.js';
 import {makeTblRequest,getTblById, tableToText, makeFileRequest} from '../../tables/TableUtil.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import Validate from '../../util/Validate.js';
-import {LcPFOptionsPanel} from './LcPhaseFoldingPanel.jsx';
 import {RAW_TABLE, PHASE_FOLDED} from './LcManager.js';
 import ReactHighcharts from 'react-highcharts';
-import {cloneDeep, get, set, omit, slice, replace, isNil} from 'lodash';
+import {cloneDeep, get, set, omit, slice, replace} from 'lodash';
 
 const popupId = 'PhaseFoldingPopup';
 const fKeyDef = { time: {fkey: 'timeCol', label: 'Time Column'},
                   flux: {fkey: 'flux', label: 'Flux Column'},
                   fluxerr: {fkey: 'fluxerror', label: 'Flux Error Column'},
                   tz: {fkey:'tzero', label: 'Zero Point Time'},
-                  period: {fkey: 'period', label: 'Period (day)'},
-                  periodslider: {fkey: 'periodslider', label: ''}};
+                  period: {fkey: 'period', label: 'Period (day)'}};
+
 const pfkey = 'LC_PF_Panel';
 var phaseCol = 'phase';
 var fluxCol;
@@ -159,11 +159,14 @@ const defValues= {
 
 
 const RES = 10;      // factor for defining total steps for period
-const DEC = 8;       // decimal digit
+const DEC = 3;       // decimal digit
 const validTimeSuggestions = ['mjd'];      // suggestive time column name
 const validFluxSuggestions = ['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'];
 const validFluxErrSuggestions = ['w1sigmpro_ep', 'w2sigmpro_ep', 'w3sigmpro_ep', 'w4sigmpro_ep'];
 const Margin = 0.2;                                  // left and right margin for xAxis on flux vs. phase plot
+const STEP = 1;     // step for slider
+
+var SliderMin;
 
 var periodErr;       // error message for period setting
 var timeErr;         // error message for time zero setting
@@ -359,9 +362,16 @@ class PhaseFoldingChart extends Component {
                     color: 'blue',
                     name: period ? `period=${period}(day)`:'period=',
                     data
-                }]
+                }],
+                credits: {
+                    enabled: false // removes a reference to Highcharts.com from the chart
+                }
             }
         };
+    }
+
+    shouldComponentUpdate(np,ns) {
+        return (this.props !== np) || (this.state.fields !== ns.fields);
     }
 
     componentWillUnmount() {
@@ -373,11 +383,11 @@ class PhaseFoldingChart extends Component {
         var isPhaseChanged = (newFields) => {
             var fieldsToCheck = ['time', 'flux', 'tz', 'period'];
             var fieldsInfo = fieldsToCheck.map((f) => {
-                return [get(newFields, fKeyDef[f].key, ''),
-                        get(this.state.fields, fKeyDef[f].key, '')];
+                return [get(newFields, [fKeyDef[f].fkey, 'value'], ''),
+                        get(this.state.fields, [fKeyDef[f].fkey, 'value'], '')];
             });
 
-            var idx = fieldsToCheck.find((f, idx) => {
+            var idx = fieldsToCheck.findIndex((f, idx) => {
                 return !fieldsInfo[idx][0] || (fieldsInfo[idx][0] !== fieldsInfo[idx][1]);
             });
 
@@ -448,11 +458,36 @@ class LcPFOptionsBox extends Component {
 
 function LcPFOptions({fields}) {
 
-    const {periodMax, periodMin, periodSteps} = fields || {};
+    const {periodMax, periodMin} = fields || {};
+    const step = STEP;
+    const DECS = 2;
     var min = periodMin ? periodMin.value : periodRange.min;
     var max = periodMax ? periodMax.value : periodRange.max;
-    var sRange = [0.0, max];
-    var step = periodSteps ? (max - min)/periodSteps.value : (max-min)/periodRange.steps;
+
+    min = parseFloat(min.toFixed(DEC));
+    max = adjustMax(max, SliderMin, step).max;
+
+    const sRange = [SliderMin, max];
+    const sliderSize = sRange[1] - sRange[0];
+    const NOMark = 5;
+    const INTMark = (sliderSize)/(NOMark - 1);
+
+    function  markStyle(per, val) {
+        return {style: {left: `${per}%`, marginLeft: -16, width: 40}, label: `${val}`};
+    }
+
+    var marks = Object.assign({}, {[min]: markStyle(parseFloat((100*(min-SliderMin)/sliderSize).toFixed(DECS)), min)});
+
+    marks = [...Array(NOMark).keys()].slice(1).reduce((prev, m) => {
+                var val = parseFloat((INTMark * m + sRange[0]).toFixed(DECS));
+                var per = parseFloat((100*(val - SliderMin)/sliderSize).toFixed(DECS));
+
+                prev = Object.assign(prev, {[val]: markStyle(per, val)});
+                return prev;
+            }, marks);
+
+
+    //var step = periodSteps ? (max - min)/periodSteps.value : (max-min)/periodRange.steps;
 
     return (
 
@@ -499,8 +534,7 @@ function LcPFOptions({fields}) {
                              min={sRange[0]}
                              max={sRange[1]}
                              minStop={min}
-                             marks={{[min]: {style: { left: '0%', marginLeft: -20, width: 40}, label: `${min}`},
-                                     [sRange[1]]: {style: { left: '100%', marginLeft: -20, width: 40}, label: `${sRange[1]}`}}}
+                             marks={marks}
                              step={step}
                              defaultValue={min}
                              wrapperStyle={{marginBottom: 20, width: PanelResizableStyle.width*4/5}}
@@ -782,12 +816,16 @@ function computePeriodRange(tbl_id, timeColName) {
         prev.push(parseFloat(e[tIdx]));
         return prev;
     }, []);
+    var factor = 1;
 
     timeZero = Math.min(...arr);
     timeMax = Math.max(...arr);
 
-    var max = parseFloat(((timeMax - timeZero) * 2).toFixed(DEC));
-    var min = parseFloat((1.0/86400).toFixed(DEC));    // set one second as the minimum value for period
+    var max = parseFloat(((timeMax - timeZero)*factor).toFixed(DEC));
+    var min = Math.pow(10, -DEC);
 
-    return {min, max, steps: data.length*RES};
+    SliderMin = min;
+    var newMax = adjustMax(max, SliderMin, STEP);
+
+    return {min, max: newMax.max, steps: newMax.steps};
 }
