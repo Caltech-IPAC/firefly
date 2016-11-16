@@ -40,11 +40,9 @@ public class ServerEvent implements Serializable {
     public ServerEvent(Name name, EventTarget target, Serializable data) {
         this(name, target, DataType.BG_STATUS, data, SERVER_CONN_ID);
     }
-
     public ServerEvent(Name name, EventTarget target, DataType dataType, Serializable data) {
         this(name, target, dataType, data, SERVER_CONN_ID);
     }
-
     public ServerEvent(Name name, EventTarget target, DataType dataType, Serializable data, String from) {
         this.name = name;
         this.target = target;
