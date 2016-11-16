@@ -10,6 +10,7 @@
 import {get, has} from 'lodash';
 import {makeWisePlotRequest} from './WiseRequestList.js';
 import {make2MassPlotRequest} from './TwoMassRequestList.js';
+import {makeLsstSdssPlotRequest} from './LsstSdssRequestList.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
 import {Band} from '../visualize/Band';
@@ -49,6 +50,20 @@ export const converters = {
             J : {color : Band.RED, title: 'J'},
             H : {color : Band.GREEN, title: 'H'},
             K : {color : Band.BLUE, title: 'K'}
+        }
+    },
+    'lsst_sdss' : {
+        threeColor : true,
+        hasRelatedBands : true,
+        canGrid : true,
+        maxPlots : 12,
+        makeRequest : makeLsstSdssPlotRequest,
+        threeColorBands : {
+            u : {color : null, title: 'u'},
+            g : {color : Band.RED, title: 'g'},
+            r : {color : Band.GREEN, title: 'r'},
+            i : {color : null,  title: 'i'},
+            z : {color : Band.BLUE, title: 'z'}
         }
     },
     'UNKNOWN' : {

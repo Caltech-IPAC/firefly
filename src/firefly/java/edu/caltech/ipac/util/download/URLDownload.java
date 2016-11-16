@@ -364,12 +364,14 @@ public class URLDownload {
             FileData outFileData;
             FileData retval;
             int responseCode= 200;
+            Map<String,List<String>> sendHeaders= null;
             try {
                 if (conn instanceof HttpURLConnection) {
                     HttpURLConnection httpConn= (HttpURLConnection) conn;
                     if (postData!=null) {
                         pushPostData(httpConn,postData);
                     }
+                    sendHeaders= httpConn.getRequestProperties();
                     if (uncompress) httpConn.setRequestProperty("Accept-Encoding", "gzip, deflate");
                     if (onlyIfModified) {
                         outFileData = checkAlreadyDownloaded(httpConn, outfile);
@@ -385,7 +387,7 @@ public class URLDownload {
             //------
             OutputStream out;
             DataInputStream in;
-            logHeader(postData, conn);
+            logHeader(postData, conn, sendHeaders);
             if (conn instanceof HttpURLConnection) responseCode= ((HttpURLConnection)conn).getResponseCode();
             validFileSize(conn, maxFileSize);
             File f = useSuggestedFilename ? makeFile(conn, outfile) : outfile;
@@ -658,18 +660,16 @@ public class URLDownload {
     }
 
 
-    public static void logHeader(String postData, URLConnection conn) {
+    public static void logHeader(String postData, URLConnection conn, Map<String,List<String>> sendHeaders) {
         StringBuffer workBuff;
         try {
             Set hSet= null;
-            String outStr[];
-            int extra = postData == null ? 3 : 4;
+            List<String> outStr= new ArrayList<>(40);
+            int extra = 30;
             if (conn instanceof HttpURLConnection && ((HttpURLConnection)conn).getResponseCode()==-1) {
-                outStr = new String[extra+1];
             }
             else {
                 hSet = conn.getHeaderFields().entrySet();
-                outStr = new String[hSet.size() + extra];
             }
             Map.Entry entry;
             List values;
@@ -678,18 +678,35 @@ public class URLDownload {
             String key;
             Iterator k;
             if (conn.getURL() != null) {
-                outStr[i++] = "----------Sending";
-                outStr[i++] = conn.getURL().toString();
+                outStr.add("----------Sending");
+                outStr.add( conn.getURL().toString());
+                if (sendHeaders!=null) {
+                    for(Map.Entry<String,List<String>> se: sendHeaders.entrySet()) {
+                        workBuff = new StringBuffer(100);
+                        if (se.getKey() == null) key = "<none>";
+                        else key= se.getKey();
+                        workBuff.append(StringUtils.pad(20,key));
+                        workBuff.append(": ");
+                        if (key.equalsIgnoreCase("cookie")) {
+                            workBuff.append("not shown");
+                        }
+                        else {
+                            workBuff.append(se.getValue());
+                        }
+                        outStr.add(workBuff.toString());
+                    }
+
+                }
             }
             if (postData != null) {
-                outStr[i++] = StringUtils.pad(20,"Post Data ") + ": " + postData;
+                outStr.add(StringUtils.pad(20,"Post Data ") + ": " + postData);
             }
             if (conn instanceof HttpURLConnection) {
                 int responseCode= ((HttpURLConnection)conn).getResponseCode();
-                outStr[i++] = "----------Received Headers, response status code: " + responseCode;
+                outStr.add("----------Received Headers, response status code: " + responseCode);
             }
             else {
-                outStr[i++] = "----------Received Headers";
+                outStr.add("----------Received Headers");
             }
             if (hSet!=null) {
                 for (Iterator j = hSet.iterator(); (j.hasNext()); ) {
@@ -704,11 +721,11 @@ public class URLDownload {
                         if (m > 0) workBuff.append("; ");
                         workBuff.append(k.next().toString());
                     }
-                    outStr[i++] = workBuff.toString();
+                    outStr.add(workBuff.toString());
                 }
             }
             else {
-                outStr[i++] = "No headers or status received, invalid http response, using work around";
+                outStr.add("No headers or status received, invalid http response, using work around");
             }
             ClientLog.message(outStr);
         } catch (Exception e) {
@@ -717,7 +734,7 @@ public class URLDownload {
     }
 
     public static void logHeader(URLConnection conn) {
-        logHeader(null, conn);
+        logHeader(null, conn, null);
     }
 
     public static void logCompletedDownload(long size) {

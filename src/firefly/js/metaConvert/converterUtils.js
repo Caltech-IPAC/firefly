@@ -19,19 +19,21 @@ const getSetInSrByRow= (table,sr,rowNum) => (col) => {
 /**
  *
  * @param table table data
- * @param colToUse columns from table
- * @param headerParams meta data parameters
- * @param rv rangeValues
- * @param colorTableId color table id
- * @return {function}
+ * @param {Array.<string>} colToUse columns from table
+ * @param {Array.<string>} headerParams meta data parameters
+ * @param {RangeValues} rv rangeValues
+ * @param {number} colorTableId color table id
+ * @return {function} see below, function takes plotId, reqKey,title, rowNum, extranParams and returns a WebPlotRequest
+ *
  */
 export function makeServerRequestBuilder(table, colToUse, headerParams, rv=null, colorTableId=0) {
     /**
-     * @param plotId
-     * @param reqKey
-     * @param title
-     * @param rowNum
+     * @param plotId - the plot id for the request
+     * @param reqKey - search processor request key
+     * @param title - title of plot
+     * @param rowNum - get the row number of data in the table
      * @param extraParams can be an object with single key or an array of objects with single key
+     * @return {WebPlotRequest}
      */
     return (plotId, reqKey, title, rowNum, extraParams) => {
         const sr= new ServerRequest(reqKey);
