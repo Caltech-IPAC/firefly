@@ -721,7 +721,7 @@ function setPFTableSuccess(hideDropDown = false) {
             let xyPlotParams = {
                 userSetBoundaries: {xMax: 2},
                 x: {columnOrExpr: phaseCol, options: 'grid'},
-                y: {columnOrExpr: flux, options: 'grid'}
+                y: {columnOrExpr: flux, options: 'grid,flip'}
             };
             loadXYPlot({chartId: PHASE_FOLDED, tblId: PHASE_FOLDED, xyPlotParams});
         });

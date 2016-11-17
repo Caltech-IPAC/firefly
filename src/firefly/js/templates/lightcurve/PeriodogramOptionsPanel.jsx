@@ -217,7 +217,7 @@ function doPeriodFinding(request) {
         dispatchTableSearch(tReq, {removable: true});
         let xyPlotParams = {
             userSetBoundaries: {yMin: 0},
-            x: {columnOrExpr: 'PERIOD', options: 'grid, log'},
+            x: {columnOrExpr: 'PERIOD', options: 'grid,log'},
             y: {columnOrExpr: 'POWER', options: 'grid'}
         };
         loadXYPlot({chartId:PERIODOGRAM, tblId:PERIODOGRAM, markAsDefault:true, xyPlotParams});
