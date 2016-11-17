@@ -98,7 +98,7 @@ export class LcResult extends Component {
         }
         if (showForm) {
             const fields= this.state;
-/*
+
             content.form = (
                 <div>
                     <div>
@@ -116,13 +116,13 @@ export class LcResult extends Component {
                             </Tab>
                             <Tab name='Upload/Phase Folding'>
                                 <div>
-                                    <UploadPanel phaseButton={true}/>
+                                    <UploadPanel />
                                 </div>
                             </Tab>
                         </Tabs>
                     </div>
                 </div> );
- */
+ /*
             content.form = (
                 <div>
                     <div>
@@ -140,7 +140,7 @@ export class LcResult extends Component {
                         </Tabs>
                     </div>
                 </div> );
-
+*/
         }
 
         expanded = LO_VIEW.get(expanded) || LO_VIEW.none;

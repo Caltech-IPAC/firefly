@@ -151,6 +151,7 @@ export class RangeSliderView extends Component {
                             value={v}
                             handle={handle}
                             tipFormatter={null}
+                            included={true}
                             onChange={this.onSliderChange} />
                 </div>
             </div>

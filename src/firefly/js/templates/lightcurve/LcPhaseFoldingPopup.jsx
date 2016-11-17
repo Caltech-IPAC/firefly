@@ -157,7 +157,6 @@ const defValues= {
                             {validator: null})
 };
 
-
 const RES = 10;      // factor for defining total steps for period
 const DEC = 3;       // decimal digit
 const validTimeSuggestions = ['mjd'];      // suggestive time column name
@@ -333,7 +332,8 @@ class PhaseFoldingChart extends Component {
                     width
                 },
                 title: {
-                    text: 'Flux vs. Phase'
+                    fontSize: '16px',
+                    text: period ? `period=${period}(day)`:'period='
                 },
                 xAxis: {
                     min: minPhase - Margin,
@@ -358,9 +358,9 @@ class PhaseFoldingChart extends Component {
                                         }}
                                      : {enabled: false},
                 series: [{
+                    showInLegend: false,
                     marker: {radius: 2},
                     color: 'blue',
-                    name: period ? `period=${period}(day)`:'period=',
                     data
                 }],
                 credits: {
@@ -402,8 +402,8 @@ class PhaseFoldingChart extends Component {
                 this.setState({fields});
 
                 var {data, minPhase = 0.0, period, flux} = getPhaseFlux(fields);
+                chart.setTitle({text: period ? `period=${period}(day)`:'period='});
                 chart.series[0].setData(data);
-                chart.series[0].update({name: period ? `period=${period}(day)`:'period='});
                 chart.xAxis[0].update({min: minPhase - Margin,
                                        max: minPhase + 2.0 + Margin});
                 chart.yAxis[0].setTitle({text: `${flux}(mag)`})
@@ -412,6 +412,7 @@ class PhaseFoldingChart extends Component {
     }
 
     render() {
+        //console.log('rerender hicharts');
         return (
             <div>
                 <ReactHighcharts config={this.state.config} isPureConfig={true} ref='chart'/>
@@ -460,7 +461,6 @@ function LcPFOptions({fields}) {
 
     const {periodMax, periodMin} = fields || {};
     const step = STEP;
-    const DECS = 2;
     var min = periodMin ? periodMin.value : periodRange.min;
     var max = periodMax ? periodMax.value : periodRange.max;
 
@@ -476,11 +476,11 @@ function LcPFOptions({fields}) {
         return {style: {left: `${per}%`, marginLeft: -16, width: 40}, label: `${val}`};
     }
 
-    var marks = Object.assign({}, {[min]: markStyle(parseFloat((100*(min-SliderMin)/sliderSize).toFixed(DECS)), min)});
+    var marks = Object.assign({}, {[min]: markStyle(100*(min-SliderMin)/sliderSize, min)});
 
     marks = [...Array(NOMark).keys()].slice(1).reduce((prev, m) => {
-                var val = parseFloat((INTMark * m + sRange[0]).toFixed(DECS));
-                var per = parseFloat((100*(val - SliderMin)/sliderSize).toFixed(DECS));
+                var val = parseFloat((INTMark * m + sRange[0]).toFixed(DEC));
+                var per = 100*(val - SliderMin)/sliderSize;
 
                 prev = Object.assign(prev, {[val]: markStyle(per, val)});
                 return prev;
@@ -824,7 +824,7 @@ function computePeriodRange(tbl_id, timeColName) {
     var max = parseFloat(((timeMax - timeZero)*factor).toFixed(DEC));
     var min = Math.pow(10, -DEC);
 
-    SliderMin = min;
+    SliderMin = 0.0;
     var newMax = adjustMax(max, SliderMin, STEP);
 
     return {min, max: newMax.max, steps: newMax.steps};
