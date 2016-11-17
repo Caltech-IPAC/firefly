@@ -28,7 +28,6 @@ import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import * as TblUtil from '../../tables/TableUtil.js';
-import {showPhaseFoldingPopup} from './LcPhaseFoldingPopup.jsx';
 
 // import {deepDiff} from '../util/WebUtil.js';
 
@@ -155,7 +154,7 @@ function BannerSection(props) {
 /**
  *  A temporary upload panel for use during development phase.  This should be removed or replaced with something else.
  */
-export const UploadPanel = ({phaseButton}) => {
+export const UploadPanel = () => {
 
     return (
         <div style={{padding: 10}}>
@@ -203,7 +202,6 @@ export const UploadPanel = ({phaseButton}) => {
                     />
 
                 </FieldGroup>
-                {phaseButton ? <button type='button' onClick={() => showPhaseFoldingPopup('Phase Folding', RAW_TABLE)}>Phase Folding</button> : null}
             </FormPanel>
         </div>
     );

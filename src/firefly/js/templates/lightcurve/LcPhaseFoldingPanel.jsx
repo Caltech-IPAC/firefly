@@ -28,6 +28,7 @@ import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {RAW_TABLE, PHASE_FOLDED} from '../../templates/lightcurve/LcManager.js';
+import {showPhaseFoldingPopup} from './LcPhaseFoldingPopup.jsx';
 
 import './LCPanels.css';
 
@@ -269,7 +270,10 @@ export function LcPFOptionsPanel ({fields}) {
                         <b>Reset</b>
                     </button>
 
-                    <br/>
+                    <br/> <br/>
+
+                   <button type='button' className='button std hl'
+                           onClick={() => showPhaseFoldingPopup('Phase Folding')}>Phase Folding Dialog</button>
                 </InputGroup>
             </FieldGroup>
 
