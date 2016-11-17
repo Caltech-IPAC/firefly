@@ -352,7 +352,7 @@ class PhaseFoldingChart extends Component {
                 tooltip: showTooltip ? {enabled: true,
                                         formatter() {
                                             return ('<span>' +
-                                            `${phaseCol} = ${this.x} <br/>` +
+                                            `${phaseCol} = ${this.x.toFixed(DEC)} <br/>` +
                                             `${flux} = ${this.y} mag <br/>` +
                                             '</span>');
                                         }}
