@@ -66,9 +66,13 @@ public class RequestOwner implements Cloneable {
         if (requestAgent != null) {
             host = requestAgent.getHeader("host");
             referrer = requestAgent.getHeader("Referer");
-            eventChannel = requestAgent.getHeader("FF-channel");
-            eventConnID = requestAgent.getHeader("FF-connID");
+            setWsConnInfo(requestAgent.getHeader("FF-connID"), requestAgent.getHeader("FF-channel"));
         }
+    }
+
+    public void setWsConnInfo(String connID, String channel) {
+        eventConnID = connID;
+        eventChannel = channel;
     }
 
     public WorkspaceManager getWsManager() {

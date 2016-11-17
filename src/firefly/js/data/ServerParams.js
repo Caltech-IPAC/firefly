@@ -112,6 +112,7 @@ export const ServerParams = {
         PROGRESS : 'CmdProgress',
         SUB_BACKGROUND_SEARCH: 'subBackgroundSearch',
         GET_STATUS: 'status',
+        REMOVE_JOB: 'removeBgJob',
         CANCEL: 'cancel',
         ADD_ID_TO_CRITERIA: 'addIDToCriteria',
         CLEAN_UP: 'cleanup',

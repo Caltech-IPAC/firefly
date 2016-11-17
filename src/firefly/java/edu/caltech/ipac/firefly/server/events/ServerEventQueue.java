@@ -31,12 +31,13 @@ public class ServerEventQueue {
     private final EventConnector eventTerminal;
     private String connID;
     private String channel;
+    private String userKey;
 
-    public ServerEventQueue(String connID, String channel, EventConnector terminal) {
+    public ServerEventQueue(String connID, String channel, String userKey, EventConnector terminal) {
         this.connID = connID;
         this.channel = channel;
+        this.userKey = userKey;
         this.eventTerminal = terminal;
-
     }
 
     public static String convertToJson(ServerEvent ev) {
@@ -92,6 +93,8 @@ public class ServerEventQueue {
 
     public String getConnID() { return connID; }
 
+    public String getUserKey() { return userKey; }
+
     public void putEvent(ServerEvent ev) throws Exception{
         if (eventTerminal ==null){
             throw new IllegalStateException("Event terminal is null.. should remove this queue.");
@@ -127,6 +130,8 @@ public class ServerEventQueue {
             ServerEvent.Scope scope = sEvent.getTarget().getScope();
             if (scope == ServerEvent.Scope.CHANNEL) {
                 return !StringUtils.isEmpty(evTarget.getChannel()) && evTarget.getChannel().equals(channel);
+            } else if (scope == ServerEvent.Scope.USER){
+                return !StringUtils.isEmpty(evTarget.getUserKey()) && evTarget.getUserKey().equals(userKey);
             } else if (scope == ServerEvent.Scope.SELF){
                 return !StringUtils.isEmpty(evTarget.getConnID()) && evTarget.getConnID().equals(connID);
             } else if (scope == ServerEvent.Scope.WORLD){

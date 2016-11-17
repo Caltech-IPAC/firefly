@@ -128,6 +128,7 @@ public class ServerParams {
     public static final String PROGRESS = "CmdProgress";
     public static final String SUB_BACKGROUND_SEARCH= "subBackgroundSearch";
     public static final String GET_STATUS= "status";
+    public static final String REMOVE_JOB = "removeBgJob";
     public static final String CANCEL= "cancel";
     public static final String ADD_ID_TO_CRITERIA= "addIDToCriteria";
     public static final String CLEAN_UP= "cleanup";

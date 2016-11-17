@@ -20,7 +20,7 @@ public class FluxAction {
         this(type, new JSONObject());
     }
 
-    public FluxAction(String type , JSONObject payload) {
+    public FluxAction(String type , Object payload) {
         root = new JSONObject();
         root.put(TYPE, type);
         root.put(PAYLOAD, payload);

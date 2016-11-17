@@ -8,7 +8,7 @@ import thunkMiddleware from 'redux-thunk';
 import loggerMiddleware from 'redux-logger';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
 import {dispatchAddSaga} from './MasterSaga.js';
-import * as AppDataCntlr  from './AppDataCntlr.js';
+import AppDataCntlr  from './AppDataCntlr.js';
 import BackgroundCntlr from './background/BackgroundCntlr.js';
 import * as LayoutCntlr  from './LayoutCntlr.js';
 import {recordHistory} from './History.js';
@@ -117,7 +117,6 @@ const chartsFactory= chartTypeFactory([SCATTER_TBLVIEW, HISTOGRAM_TBLVIEW]);
  * @type {Object<string, function>}
  */
 const reducers = {
-    [AppDataCntlr.APP_DATA_PATH]: AppDataCntlr.reducer,
     [LayoutCntlr.LAYOUT_PATH]: LayoutCntlr.reducer,
     [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer,
     [TableStatsCntlr.TBLSTATS_DATA_KEY]: TableStatsCntlr.reducer,
@@ -132,6 +131,7 @@ function registerCntlr(cntlr={}) {
 }
 
 // registering controllers...
+registerCntlr(AppDataCntlr);
 registerCntlr(BackgroundCntlr);
 registerCntlr(ImagePlotCntlr);
 registerCntlr(FieldGroupCntlr);
@@ -143,9 +143,6 @@ registerCntlr(DrawLayerCntlr.getDrawLayerCntlrDef(drawLayerFactory));
 let redux = null;
 
 // pre-map a set of action => creator prior to bootstrapping.
-actionCreators.set(AppDataCntlr.APP_LOAD, AppDataCntlr.loadAppData);
-actionCreators.set(AppDataCntlr.GRAB_WINDOW_FOCUS, AppDataCntlr.grabWindowFocus);
-actionCreators.set(AppDataCntlr.HELP_LOAD, AppDataCntlr.onlineHelpLoad);
 actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.extensionActivateActionCreator);
 
 actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);

@@ -42,6 +42,8 @@
  * @typedef {Object.<string, PackageStatus>} BgStatus
  * @prop {string} TYPE  type of job.  ie. 'PACKAGE'
  * @prop {string} ID    unique identifier for this job.
+ * @prop {string} email email to notify when job completes.
+ * @prop {string} Title title to display for this job.
  * @prop {string} STATE job's state.
  * @prop {number} PACKAGE_CNT  number of package in this job.
  * @prop {number} TOTAL_BYTES  total bytes.

@@ -126,9 +126,9 @@ export class Tabs extends Component {
             }
 
             return React.cloneElement(child, {
-                selected: (index == selectedIdx),
+                selected: (index === selectedIdx),
                 onSelect: this.onSelect.bind(this, index),
-                ref: 'tab-' + (index)
+                key: 'tab-' + (index)
             });
         });
         const contentDiv = useFlex ? content :
