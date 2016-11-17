@@ -102,19 +102,13 @@ public class ServerEvent implements Serializable {
         public EventTarget() {}
 
         public EventTarget(Scope scope) {
-            this.scope = scope;
-            if (scope == ServerEvent.Scope.CHANNEL) {
-                this.channel = ServerContext.getRequestOwner().getEventChannel();
-            } else if (scope == Scope.USER) {
-                this.userKey =ServerContext.getRequestOwner().getUserKey();
-            } else if (scope == Scope.SELF) {
-                this.connID =ServerContext.getRequestOwner().getEventConnID();
-            }
+            this(scope, null, null, null);
         }
 
         /**
-         * This is typically used on the server-side where connID
-         * and channel can be easily injected.
+         * Creates an EventTarget based on the given information.
+         * scope is required.  If other information are missing, it
+         * will get it from the request owner.
          * @param scope
          * @param connID
          * @param channel
@@ -125,6 +119,13 @@ public class ServerEvent implements Serializable {
             this.connID = connID;
             this.channel = channel;
             this.userKey = userKey;
+            if (scope == ServerEvent.Scope.CHANNEL && channel == null) {
+                this.channel = ServerContext.getRequestOwner().getEventChannel();
+            } else if (scope == Scope.USER && userKey == null) {
+                this.userKey =ServerContext.getRequestOwner().getUserKey();
+            } else if (scope == Scope.SELF && connID == null) {
+                this.connID =ServerContext.getRequestOwner().getEventConnID();
+            }
         }
 
         /**
@@ -132,10 +133,10 @@ public class ServerEvent implements Serializable {
          * @return
          */
         public boolean hasDestination() {
-            boolean rval = scope == ServerEvent.Scope.CHANNEL && !StringUtils.isEmpty(this.channel);
-            rval = rval || (scope == ServerEvent.Scope.USER && !StringUtils.isEmpty(this.userKey));
-            rval = rval || (scope == ServerEvent.Scope.SELF && !StringUtils.isEmpty(this.connID));
-            return rval;
+            return scope == Scope.WORLD
+                    || scope == ServerEvent.Scope.CHANNEL && !StringUtils.isEmpty(this.channel)
+                    || scope == ServerEvent.Scope.USER && !StringUtils.isEmpty(this.userKey)
+                    || scope == ServerEvent.Scope.SELF && !StringUtils.isEmpty(this.connID);
         }
 
         public Scope getScope() {
