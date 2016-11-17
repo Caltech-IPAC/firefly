@@ -17,6 +17,7 @@ import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
 import edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Trey Roby
@@ -256,8 +258,11 @@ public class SearchServerCommands {
         @Override
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
             SrvParam sp= new SrvParam(paramMap);
-            List<String> idList = sp.getIDList();
             String email= sp.getRequired(ServerParams.EMAIL);
+            List<String> idList = BackgroundEnv.getUserBackgroundInfo().stream()
+                                  .filter( (bic) -> bic.isSuccess())
+                                  .map( (bic) -> bic.getBID() )
+                                  .collect(Collectors.toList());
             BackgroundEnv.resendEmail(idList,email);
             return "true";
         }

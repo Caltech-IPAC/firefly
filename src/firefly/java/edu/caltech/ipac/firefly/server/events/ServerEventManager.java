@@ -83,6 +83,15 @@ public class ServerEventManager {
         if (sev == null || sev.getTarget() == null || !sev.getTarget().hasDestination()) {
             LOG.warn("Something is wrong with this ServerEvent: " + String.valueOf(sev));
         } else {
+            ServerEvent.Scope scope = sev.getTarget().getScope();
+            // if target is missing key information, get it from RequestOwner
+            if (scope == ServerEvent.Scope.CHANNEL && sev.getTarget().getChannel() == null) {
+                sev.getTarget().setChannel(ServerContext.getRequestOwner().getEventChannel());
+            } else if (scope == ServerEvent.Scope.USER && sev.getTarget().getUserKey() == null) {
+                sev.getTarget().setUserKey(ServerContext.getRequestOwner().getUserKey());
+            } else if (scope == ServerEvent.Scope.SELF && sev.getTarget().getConnID() == null) {
+                sev.getTarget().setConnID(ServerContext.getRequestOwner().getEventConnID());
+            }
             eventWorker.deliver(sev);
         }
     }

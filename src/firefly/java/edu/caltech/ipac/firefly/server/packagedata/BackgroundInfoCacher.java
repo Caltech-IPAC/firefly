@@ -68,6 +68,10 @@ public class BackgroundInfoCacher {
         }
     }
 
+    public String getBID() {
+        return _key.getUniqueString();
+    }
+
     public BackgroundStatus getStatus() {
         BackgroundInfo info= getInfo();
         return info==null ? null : info.getStatus();
@@ -92,6 +96,13 @@ public class BackgroundInfoCacher {
     public boolean isCanceled() {
         BackgroundInfo info= getInfo();
         return info == null || info.isCanceled();
+    }
+
+    public boolean isSuccess() {
+        BackgroundInfo info= getInfo();
+        return  info != null
+                && info.getStatus() != null
+                && info.getStatus().getState() == BackgroundState.SUCCESS;
     }
 
     public String getEmailAddress() {

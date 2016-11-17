@@ -144,7 +144,9 @@ public class IpacTableUtil {
      * @return
      */
     public static List<DataGroup.Attribute> getAllColMeta(Collection<DataGroup.Attribute> metas, String cname) {
-        return metas.stream().filter(m -> String.valueOf(m.getKey()).startsWith("col." + cname)).collect(Collectors.toList());
+        return metas.stream()
+                    .filter(m -> String.valueOf(m.getKey()).startsWith("col." + cname))
+                    .collect(Collectors.toList());
     }
 
     public static  void setDataType(List<DataType> cols, String line) {

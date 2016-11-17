@@ -157,6 +157,7 @@ function bgSetEmail(action) {
         const {email} = action.payload;
         if (email) {
             SearchServices.setEmail(email);
+            SearchServices.resendEmail(email);
             dispatch(action);
         }
     };
