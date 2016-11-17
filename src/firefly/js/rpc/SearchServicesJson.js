@@ -136,7 +136,7 @@ export const getJsonData = function(request) {
     paramList.push({name:ServerParams.REQUEST, value: request.toString()});
 
     return doService(doJsonP(), ServerParams.JSON_DATA, paramList
-    ).then((data) => {return JSON.parse(data); });
+    ).then((data) => {return data; });
 };
 
 /**
@@ -253,8 +253,6 @@ export const getDownloadProgress= function(fileKey) {
 
 
 /**
- *
- * @param {array|string} ids - one id or an array of ids
  * @param {string} email
  * @return {Promise}
  */
@@ -273,7 +271,7 @@ export const setEmail= function(email) {
 /**
  *
  * @param {array|string} ids one id or an array of ids
- * @param {JobAttributes} job attribute
+ * @param {JobAttributes} attribute job attribute
  * @return {Promise}
  */
 export const setAttribute= function(ids, attribute) {

@@ -35,7 +35,7 @@ public class JsonFromExternalTask implements SearchProcessor {
         for (String p : ExternalTaskHandler.ALL_PARAMS) {
             String v = request.getParam(p);
             if (v != null) {
-                uid += "|" + p;
+                uid += "|" + v;
             }
         }
         return uid;
@@ -44,6 +44,9 @@ public class JsonFromExternalTask implements SearchProcessor {
     @Override
     public String getData(ServerRequest request) throws DataAccessException {
         String launcher = request.getParam(ExternalTaskHandler.LAUNCHER);
+        if (launcher == null) {
+            throw new DataAccessException(ExternalTaskHandler.LAUNCHER+" parameter is not found in request.");
+        }
         ExternalTaskLauncher taskLauncher = new ExternalTaskLauncher(launcher);
 
         try {
@@ -59,13 +62,13 @@ public class JsonFromExternalTask implements SearchProcessor {
             // get result from outfile
 
             if (!ServerContext.isFileInPath(outFile)) {
-                throw new SecurityException("Access is not permitted.");
+                throw new SecurityException("Access to "+outFile.getAbsolutePath()+" is not permitted.");
             }
 
             return FileUtil.readFile(outFile);
         } catch (Exception e) {
-            LOGGER.error(e, "Unable to data from external task: "+request.toString());
-            throw new DataAccessException("Unable to data from external task: "+e.getMessage());
+            LOGGER.error(e, "Unable get to data from external task: "+request.toString());
+            throw new DataAccessException("Unable to get data from external task: "+e.getMessage());
         }
     }
 

@@ -75,13 +75,15 @@ public class ExternalTaskHandlerImpl implements ExternalTaskHandler {
             launcher.addParam("-o", ServerContext.getExternalPermWorkDir());
 
         } catch (Exception e) {
+            String err = null;
             if (e instanceof ParseException) {
                 ParseException pe = (ParseException)e;
-                LOGGER.error(e, "invalid JSON in taskParams; position: " + pe.getPosition() + "; " + pe.getMessage() + "; " +taskParams);
+                err = "Invalid JSON in taskParams: " + pe.toString() + " " +taskParams;
+                LOGGER.error(e, err);
             } else {
                 LOGGER.error(e);
             }
-            throw new InterruptedException(task+" launcher setup failed: "+e.getMessage());
+            throw new InterruptedException(task+" launcher setup failed: " + (err==null?e.getMessage():err));
         }
     }
 
@@ -146,7 +148,16 @@ public class ExternalTaskHandlerImpl implements ExternalTaskHandler {
                             result = status.toString();
                         }
                     }
+                } else {
+                    setErrorIfEmpty("Unable to parse task status.");
                 }
+            } else {
+                if (collectStatus) {
+                    setErrorIfEmpty("No lines after "+STATUS_KEYWORD+".");
+                } else {
+                    setErrorIfEmpty("No "+STATUS_KEYWORD+" in external task standard output.");
+                }
+
             }
 
         }
@@ -158,6 +169,7 @@ public class ExternalTaskHandlerImpl implements ExternalTaskHandler {
         try {
             for (String line = reader.readLine(); (line != null); line = reader.readLine()) {
                 LOGGER.warn(line);
+                addError(line);
             }
         } catch (Exception e) {
             Logger.getLogger().error(e);
@@ -186,7 +198,7 @@ public class ExternalTaskHandlerImpl implements ExternalTaskHandler {
             throw new DataAccessException("Failed to obtain data. " + getError());
         } else {
             if (outfile == null) {
-                throw new DataAccessException("Output file is not available");
+                throw new DataAccessException("Output file is not returned from the task.");
             } else {
                 File ofile = new File(outfile);
                 if (!ofile.canRead()) {
@@ -210,6 +222,21 @@ public class ExternalTaskHandlerImpl implements ExternalTaskHandler {
 //---------------------------- Private / Protected Methods -------------------
 //============================================================================
 
+
+    private void setErrorIfEmpty(String error) {
+        if (this.error == null || this.error.trim().length() == 0) {
+            this.error = error;
+        }
+    }
+
+    private void addError(String error) {
+        if (this.error == null || this.error.trim().length() == 0) {
+            this.error = "";
+        } else {
+            this.error += " ";
+        }
+        this.error += error;
+    }
 
     private static java.nio.file.Path createWorkDir(String task) throws IOException {
         return Files.createTempDirectory(ServerContext.getExternalTempWorkDir().toPath(), task);

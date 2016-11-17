@@ -16,10 +16,12 @@ import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.packagedata.PackageMaster;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.*;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
+import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.IpacTableUtil;
-import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -67,8 +69,8 @@ public class SearchManager {
                 return jsonText;
             }
             catch(ParseException pe){
-                LOGGER.error(processor.getUniqueID(request) + " return invalid JSON; position: " + pe.getPosition() + "; " + pe.getMessage() + "; " + jsonText);
-                throw new DataAccessException("Request failed: invalid JSON; position: " + pe.getPosition() + "; " + pe.getMessage());
+                LOGGER.error(processor.getUniqueID(request) + " Can not parse returned JSON: " + pe.toString() + "\n" + jsonText);
+                throw new DataAccessException(request.getRequestId()+" Can not parse returned JSON: " + pe.toString());
             }
         } else {
             throw new DataAccessException("Request fail inspection.  Operation aborted.");
