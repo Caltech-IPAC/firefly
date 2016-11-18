@@ -76,11 +76,15 @@ public class BackgroundEnv {
         return rval;
     }
 
-    public static void addUserBackgroundInfo(String bgId) {
+    public static void addUserBackgroundInfo(String bgId, String title) {
         List<String> bgInfos = getUserBackgroundInfoKeys();
         if (!bgInfos.contains(bgId)) {
             bgInfos.add(bgId);
             updateUserBackgroundInfo(bgInfos);
+            FluxAction addAction = new FluxAction("background.bgJobAdd");
+            addAction.setValue(bgId, BackgroundStatus.ID);
+            addAction.setValue(title, BackgroundStatus.TITLE);
+            ServerEventManager.fireAction(addAction, ServerEvent.Scope.USER);
         }
     }
 
@@ -505,7 +509,6 @@ public class BackgroundEnv {
             _dataSource= dataSource;
             _requestOwner= requestOwner;
             piCacher= new BackgroundInfoCacher(_bid, _email, _baseFileName, _title, evTarget); // force a cache entry here
-            addUserBackgroundInfo(_bid);
         }
 
 
