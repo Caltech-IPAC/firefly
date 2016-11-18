@@ -31,7 +31,7 @@ const LSSTQueryPID = 'LSSTCataLogSearch';
  * @param {object} [params] the parameters to include with this request.
  * @param {TableRequest} [options] more options.  see TableRequest for details.
  * @returns {TableRequest}
- * @pubic
+ * @public
  * @func  makeTblRequest
  * @memberof firefly.util.table
  */
@@ -52,9 +52,9 @@ export function makeTblRequest(id, title, params={}, options={}) {
  * @param {string} [alt_source] use this if source does not exists.
  * @param {TableRequest} [options]  more options.  see TableRequest for details.
  * @returns {TableRequest}
- * @pubic
+ * @public
  * @func makeFileRequest
- * @memberof firefly.util.table
+ *  @memberof firefly.util.table
  */
 export function makeFileRequest(title, source, alt_source, options={}) {
     const id = 'IpacTableFromSource';
