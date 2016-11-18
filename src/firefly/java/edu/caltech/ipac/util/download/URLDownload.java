@@ -371,8 +371,8 @@ public class URLDownload {
                     if (postData!=null) {
                         pushPostData(httpConn,postData);
                     }
-                    sendHeaders= httpConn.getRequestProperties();
                     if (uncompress) httpConn.setRequestProperty("Accept-Encoding", "gzip, deflate");
+                    sendHeaders= httpConn.getRequestProperties();
                     if (onlyIfModified) {
                         outFileData = checkAlreadyDownloaded(httpConn, outfile);
                         if (outFileData != null) return outFileData;

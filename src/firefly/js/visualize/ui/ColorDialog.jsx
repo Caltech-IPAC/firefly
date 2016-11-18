@@ -225,13 +225,18 @@ function replot3Color(redReq,greenReq,blueReq,activeTab) {
 function makeSerializedRv(request) {
     const useZ= Boolean(request.zscale);
 
-    const rv= RangeValues.make( useZ ? ZSCALE : request.lowerWhich,
-        request.lowerRange,
-        useZ ? ZSCALE :request.upperWhich,
-        request.upperRange,
-        request.beta,
-        request.gamma, request.algorithm, request.zscaleContrast,
-        request.zscaleSamples, request.zscaleSamplesPerLine);
+    const rv= RangeValues.makeRV( {
+            lowerWhich: useZ ? ZSCALE : request.lowerWhich,
+            upperWhich: useZ ? ZSCALE : request.upperWhich,
+            lowerRange: request.lowerRange,
+            upperRange: request.upperRange,
+            betaValue: request.beta,
+            gammaValue: request.gamma,
+            algorithm: request.algorithm,
+            zscaleContrast: request.zscaleContrast,
+            zscaleSamples: request.zscaleSamples,
+            zscaleSamplesPerLine: request.zscaleSamplesPerLine
+       });
 
     return RangeValues.serializeRV(rv);
 }

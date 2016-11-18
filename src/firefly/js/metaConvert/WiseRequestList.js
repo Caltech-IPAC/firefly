@@ -9,8 +9,7 @@ import {RangeValues,STRETCH_LINEAR,SIGMA} from '../visualize/RangeValues.js';
 import {getCellValue} from '../tables/TableUtil.js';
 
 const colToUse= ['scan_id', 'frame_num', 'coadd_id', 'in_ra', 'in_dec', 'image_set'];
-const rangeValues= RangeValues.make(SIGMA, -2, SIGMA, 10);
-rangeValues.algorithm= STRETCH_LINEAR;
+const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
 
 const bandMap= {b1:'1', b2:'2',b3:'3',b4:'4'};
 

@@ -9,8 +9,7 @@ import {RangeValues,STRETCH_LINEAR,PERCENTAGE} from '../visualize/RangeValues.js
 import {getCellValue} from '../tables/TableUtil.js';
 
 const colToUse= [ 'filter', 'scanno', 'fname', 'ordate', 'hemisphere', 'in_ra', 'in_dec', 'image_set' ];
-const rangeValues= RangeValues.make(PERCENTAGE, 1, PERCENTAGE, 99);
-rangeValues.algorithm= STRETCH_LINEAR;
+const rangeValues= RangeValues.makeRV({which:PERCENTAGE, lowerValue:1, upperValue:99, algorithm:STRETCH_LINEAR});
 
 const bandIdx= {'J':0, 'K':1, 'H':2};
 

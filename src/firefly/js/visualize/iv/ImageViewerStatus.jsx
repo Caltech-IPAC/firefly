@@ -88,7 +88,7 @@ export class ImageViewerStatus extends Component {
     }
 
     render() {
-        const {message,working,useMessageAlpha=false, canClear=false, clearCB} = this.props;
+        const {message='',working,useMessageAlpha=false, canClear=false, clearCB} = this.props;
         const {messageShowing, maskShowing}= this.state;
 
         var workingStatusText= useMessageAlpha ? statusTextAlpha : statusText;
@@ -115,7 +115,7 @@ export class ImageViewerStatus extends Component {
 }
 
 ImageViewerStatus.propTypes= {
-    message : PropTypes.string.isRequired,
+    message : PropTypes.string,
     working : PropTypes.bool.isRequired,
     messageWaitTimeMS : PropTypes.number,
     maskWaitTimeMS : PropTypes.number,
