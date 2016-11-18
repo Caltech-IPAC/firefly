@@ -213,7 +213,7 @@ function doCatalog(request) {
         tReq.selcols = colsSearched;
     }
 
-    // console.log('final request: ' + JSON.stringify(tReq));
+    console.log('final request: ' + JSON.stringify(tReq));
     dispatchTableSearch(tReq);
 }
 
