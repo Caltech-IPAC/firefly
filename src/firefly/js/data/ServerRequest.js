@@ -160,7 +160,7 @@ export class ServerRequest {
     static parse(str,req) {
         if (!str) return null;
         words(str,PARAM_SEP).forEach((p) => {
-            var outParam= words(p,KW_VAL_SEP);
+            var outParam= p.split(/=(.+)?/,2);
             if (outParam.length===2) {
                 var newParam= {name : outParam[0], value:outParam[1]};
                 if (!req.addPredefinedAttrib(newParam)) {

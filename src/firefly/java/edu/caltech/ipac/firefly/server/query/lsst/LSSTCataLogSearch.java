@@ -4,32 +4,40 @@ import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
-import edu.caltech.ipac.firefly.server.query.*;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
+import edu.caltech.ipac.firefly.server.query.SearchManager;
+import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
-import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataObject;
+import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FileData;
 import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import java.io.*;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.lang.Exception;
-
-import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.firefly.data.table.MetaConst;
 
 
 /**
@@ -552,24 +560,24 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
         super.prepareTableMeta(meta, columns, request);
         String catTable = request.getParam("table_name");
+        String tUp=catTable.toUpperCase();
+
         String RA = getRA(catTable);
         String DEC = getDEC(catTable);
         TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns(RA, DEC, CoordinateSys.EQ_J2000);
         meta.setCenterCoordColumns(llc);
-        meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "LSST");
-        meta.setCenterCoordColumns(llc);
-        String tableName = request.getParam("table_name");
-        switch (tableName.toUpperCase()){
-            case "SCIENCE_CCD_EXPOSURE":
-                meta.setAttribute(MetaConst.LSST_SDSS_SINGLE_EXPOSURE, "LSST_CCD");
-                break;
-            case "DEEPCOADD":
-                meta.setAttribute(MetaConst.LSST_SDSS_COADD, "LSST_COADD");
-                break;
-            default:
-                meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "LSST");
-        }
 
+        if (tUp.equals("SCIENCE_CCD_EXPOSURE") || tUp.equals("DEEPCOADD")) {
+            TableMeta.LonLatColumns c1= new TableMeta.LonLatColumns("corner1Ra", "corner1Decl", CoordinateSys.EQ_J2000);
+            TableMeta.LonLatColumns c2= new TableMeta.LonLatColumns("corner2Ra", "corner2Decl", CoordinateSys.EQ_J2000);
+            TableMeta.LonLatColumns c3= new TableMeta.LonLatColumns("corner3Ra", "corner3Decl", CoordinateSys.EQ_J2000);
+            TableMeta.LonLatColumns c4= new TableMeta.LonLatColumns("corner4Ra", "corner4Decl", CoordinateSys.EQ_J2000);
+            meta.setCorners(c1, c2, c3, c4);
+            meta.setAttribute(MetaConst.DATASET_CONVERTER, "lsst_sdss");
+        }
+        else {
+            meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "LSST");
+        }
         super.prepareTableMeta(meta, columns, request);
     }
 

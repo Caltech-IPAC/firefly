@@ -64,7 +64,7 @@ public class URLFileRetriever implements FileRetriever {
                 params.setLoginName(ro.getUserInfo().getLoginName());
                 params.setSecurityCookie(ro.getRequestAgent().getAuthKey());
             }
-            params.setCheckForNewer(true);
+            params.setCheckForNewer(request.getUrlCheckForNewer());
             params.setLocalFileExtensions(Arrays.asList(FileUtil.FITS, FileUtil.GZ)); //assuming WebPlotRequest ONLY expect FITS or GZ file.
             params.setMaxSizeToDownload(VisContext.FITS_MAX_SIZE);
             if (request.getUserDesc() != null) params.setDesc(request.getUserDesc()); // set file description
