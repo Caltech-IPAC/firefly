@@ -395,7 +395,7 @@ function doPhaseFolding(fields) {
     },  {tbl_id:PHASE_FOLDED});
     if (tReq !== null) {
         dispatchTableSearch(tReq, {removable: false});
-        let xyPlotParams = {x: {columnOrExpr: 'phase', options: 'grid'}, y: {columnOrExpr: 'w1mpro_ep', options:'grid'}};
+        let xyPlotParams = {x: {columnOrExpr: 'phase', options: 'grid'}, y: {columnOrExpr: 'w1mpro_ep', options:'grid,flip'}};
         loadXYPlot({chartId:PHASE_FOLDED, tblId:PHASE_FOLDED, xyPlotParams});
     }
 }

@@ -347,7 +347,8 @@ class PhaseFoldingChart extends Component {
                     lineWidth: 1,
                     tickWidth: 1,
                     tickLength: 10,
-                    gridLineColor: '#e9e9e9'
+                    gridLineColor: '#e9e9e9',
+                    reversed: true
                 },
                 tooltip: showTooltip ? {enabled: true,
                                         formatter() {
@@ -721,7 +722,7 @@ function setPFTableSuccess(hideDropDown = false) {
             let xyPlotParams = {
                 userSetBoundaries: {xMax: 2},
                 x: {columnOrExpr: phaseCol, options: 'grid'},
-                y: {columnOrExpr: flux, options: 'grid'}
+                y: {columnOrExpr: flux, options: 'grid,flip'}
             };
             loadXYPlot({chartId: PHASE_FOLDED, tblId: PHASE_FOLDED, xyPlotParams});
         });
