@@ -15,21 +15,23 @@ import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 import Histogram from '../../charts/ui/Histogram.jsx';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {dispatchMultiValueChange, dispatchRestoreDefaults} from '../../fieldGroup/FieldGroupCntlr.js';
+import {dispatchValueChange, dispatchRestoreDefaults} from '../../fieldGroup/FieldGroupCntlr.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import FieldGroupUtils, {revalidateFields} from '../../fieldGroup/FieldGroupUtils';
-import {makeTblRequest,getTblById} from '../../tables/TableUtil.js';
+import {makeTblRequest,getTblById,getCellValue} from '../../tables/TableUtil.js';
 
 import {CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
 import {Tabs, Tab,FieldGroupTabs} from '../../ui/panel/TabPanel.jsx';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
-import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
+import {dispatchTableSearch, TABLE_HIGHLIGHT} from '../../tables/TablesCntlr.js';
 
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
-import {RAW_TABLE, PHASE_FOLDED} from '../../templates/lightcurve/LcManager.js';
+import {RAW_TABLE, PHASE_FOLDED, PERIODOGRAM, PEAK_TABLE} from '../../templates/lightcurve/LcManager.js';
 import {showPhaseFoldingPopup} from './LcPhaseFoldingPopup.jsx';
 
+import {isUndefined, get,set,isNil} from 'lodash';
+import {take} from 'redux-saga/effects';
 import './LCPanels.css';
 
 const grpkey = 'LC_FORM_Panel';
@@ -135,7 +137,7 @@ var LcPhaseFoldingDialog = React.createClass({
         return (
             <div style={{padding:'5px', minWidth: 480}}>
                 <div>
-                    <Tabs componentKey='LCInputTabs' defaultSelected={0} useFlex={true}>
+                    <Tabs componentKey='LCInputTabs' defaultSelected={0} keepState={true} useFlex={true}>
                         <Tab name='Phase Folding'>
                             <LcPhaseFoldingForm />
                         </Tab>
@@ -225,7 +227,6 @@ export function LcPFOptionsPanel ({fields}) {
 
                     <br/>
                     <ValidationField fieldKey='flux'
-                         forceReinit={true}
                          initialState= {{
                                   fieldKey: 'flux',
                                   value: '2.0',
@@ -238,7 +239,6 @@ export function LcPFOptionsPanel ({fields}) {
                     <br/>
 
                     <ValidationField fieldKey='fluxerror'
-                         forceReinit={true}
                          initialState= {{
                                   fieldKey: 'fluxerror',
                                   value: '0.02',
@@ -250,7 +250,6 @@ export function LcPFOptionsPanel ({fields}) {
                     <br/>
 
                     <ValidationField fieldKey='period'
-                                     forceReinit={true}
                                      initialState= {{
                                 fieldKey: 'period',
                                 value: '1.0',
@@ -408,6 +407,42 @@ function makeField1(hide) {
     return hide ? hidden : f1;
 }
 
+export function* listenerPanel() {
 
+    while (true) {
+        const action = yield take([
+            TABLE_HIGHLIGHT
+        ]);
 
+        switch (action.type) {
+            case TABLE_HIGHLIGHT:
+                handleTableHighlight(action);
+                break;
+        }
+    }
+}
+
+function handleTableHighlight(action) {
+    const {tbl_id} = action.payload;
+    const per = getPeriodFromTable(tbl_id);
+    if (per) {
+        dispatchValueChange({fieldKey: 'period', groupKey: grpkey, value: per});
+    }
+
+}
 //export default LcPhaseFoldingForm;
+
+/**
+ * gets the period from either peak or periodogram table, these tables doesn't necesary have a period column and same name
+ * @param {string} tbl_id
+ * @returns {string} period value
+ */
+function getPeriodFromTable(tbl_id) {
+    const tableModel = getTblById(tbl_id);
+    if (!tableModel || isNil(tableModel.highlightedRow)) return;
+    if ([PERIODOGRAM].includes(tbl_id)) {
+        return getCellValue(tableModel, tableModel.highlightedRow, 'PERIOD');
+    } else if ([PEAK_TABLE].includes(tbl_id)) {
+        return getCellValue(tableModel, tableModel.highlightedRow, 'Period');
+    }
+}
