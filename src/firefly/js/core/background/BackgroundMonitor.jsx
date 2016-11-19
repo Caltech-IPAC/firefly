@@ -152,12 +152,14 @@ function PackageStatus(bgStatus) {
 }
 
 // eslint-disable-next-line
-function SinglePackage({ID, Title, STATE, ITEMS}) {
+function SinglePackage({ID, Title, STATE, ITEMS=[]}) {
     var progress;
     if (BG_STATE.WAITING.is(STATE)) {
         progress = <div className='BGMon__header--waiting'>Computing number of packages... <img style={{marginLeft: 3}} src={LOADING}/></div>;
     } else if (BG_STATE.CANCELED.is(STATE)) {
         progress = <div>User aborted this request</div>;
+    } else if (ITEMS.length === 0){
+        progress = <div/>;
     } else {
         progress = <PackageItem SINGLE={true} STATE={STATE} ID={ID} {...ITEMS[0]} />;
     }

@@ -170,7 +170,7 @@ public class PackageMaster  {
                                                        ServerContext.getRequestOwner());
         BackgroundStatus bgStat= BackgroundEnv.backgroundProcess(WAIT_MILLS,backProcess);
         if (!bgStat.isDone()) {
-            BackgroundEnv.addUserBackgroundInfo(bgStat.getID(), bgStat.getParam(BackgroundStatus.TITLE));
+            BackgroundEnv.addUserBackgroundInfo(bgStat);
         }
         checkForLongQueue(bgStat);
         return bgStat;
