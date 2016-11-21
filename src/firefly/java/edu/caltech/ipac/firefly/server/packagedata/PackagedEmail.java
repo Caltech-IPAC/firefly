@@ -142,8 +142,6 @@ public class PackagedEmail {
         } catch(Throwable e) {
             PackageMaster.logPIDWarn(bgStat!=null ? bgStat.getID() : "Unknown Background ID",
                                      "Failed to send completion email to "+email+": "+e.getMessage()+sw.toString());
-// FOR TEST ONLY.. REMOVE AFTERWARD!!!
-            bgStat.addAttribute(JobAttributes.EmailSent);
             info.setStatus(bgStat);
 
         }

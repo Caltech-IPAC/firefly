@@ -1,0 +1,7 @@
+mail.use.prop.file = true
+mail.transport.protocol = @mail.transport.protocol@
+mail.smtp.host = @mail.smtp.host@
+mail.smtp.auth = @mail.smtp.auth@
+mail.smtp.port = @mail.smtp.port@
+mail.smtp.from = @mail.smtp.from@
+mail.smtp.starttls.enable = @mail.smtp.starttls.enable@

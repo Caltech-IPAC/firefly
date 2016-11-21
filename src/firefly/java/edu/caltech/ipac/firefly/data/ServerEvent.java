@@ -9,9 +9,7 @@ package edu.caltech.ipac.firefly.data;
  */
 
 
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.util.event.Name;
-import edu.caltech.ipac.util.StringUtils;
 
 import java.io.Serializable;
 import java.lang.String;
@@ -119,13 +117,6 @@ public class ServerEvent implements Serializable {
             this.connID = connID;
             this.channel = channel;
             this.userKey = userKey;
-            if (scope == ServerEvent.Scope.CHANNEL && channel == null) {
-                this.channel = ServerContext.getRequestOwner().getEventChannel();
-            } else if (scope == Scope.USER && userKey == null) {
-                this.userKey =ServerContext.getRequestOwner().getUserKey();
-            } else if (scope == Scope.SELF && connID == null) {
-                this.connID =ServerContext.getRequestOwner().getEventConnID();
-            }
         }
 
         /**
@@ -133,10 +124,7 @@ public class ServerEvent implements Serializable {
          * @return
          */
         public boolean hasDestination() {
-            return scope == Scope.WORLD
-                    || scope == ServerEvent.Scope.CHANNEL && !StringUtils.isEmpty(this.channel)
-                    || scope == ServerEvent.Scope.USER && !StringUtils.isEmpty(this.userKey)
-                    || scope == ServerEvent.Scope.SELF && !StringUtils.isEmpty(this.connID);
+            return scope != null;
         }
 
         public Scope getScope() {
@@ -161,6 +149,9 @@ public class ServerEvent implements Serializable {
 
         public String getUserKey() {
             return userKey;
+        }
+        public void setUserKey(String userKey) {
+            this.userKey = userKey;
         }
     }
 }

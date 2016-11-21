@@ -297,18 +297,12 @@ export const getEmail= function(id) {
 };
 
 /**
- *
- * @param {array|string} ids - one id or an array of ids
+ * resend email notification to all successfully completed background jobs.
  * @param {string} email
  * @return {Promise}
  */
-export const resendEmail= function(ids, email) {
-    var idList=  Array.isArray(ids) ? ids : [ids];
-    var paramList= idList.map( (id) => {
-        return {name:ServerParams.ID, value: id};
-    } );
-    paramList.push({name:ServerParams.EMAIL, value:email});
-    return doService(doJsonP(), ServerParams.RESEND_EMAIL, paramList
+export const resendEmail= function(email) {
+    return doService(doJsonP(), ServerParams.RESEND_EMAIL, {[ServerParams.EMAIL]: email}
     ).then( () => true);
 };
 
