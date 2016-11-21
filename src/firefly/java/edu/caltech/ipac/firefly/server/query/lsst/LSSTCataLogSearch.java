@@ -91,7 +91,8 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
      * @return
      * @throws Exception
      */
-    protected String getSearchMethod(TableServerRequest req, String catalog)throws Exception { //, String raCol, String decCol) throws Exception {
+
+    protected String getSearchMethodCatalog(TableServerRequest req, String catalog)throws Exception { //, String raCol, String decCol) throws Exception {
 
         String method = req.getParam("SearchMethod");
         String[]  radec = req.getParam("UserTargetWorldPt")!=null? req.getParam("UserTargetWorldPt").split(";"):null;
@@ -178,12 +179,72 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
                         "table should be a post search not a get");
             default:
                // should only be happened if a new method was added and not added here
-                throw new EndUserException("The search method is not supported", req.getParam("SearchMethod"));
+                throw new EndUserException("The search method:"+method+ " is not supported", method);
         }
 
     }
 
+    protected String getMethodOnSearchType(TableServerRequest req)throws Exception { //, String raCol, String decCol) throws Exception {
 
+       /*
+        String method = req.getParam("SearchMethod");
+        if (!method.equalsIgnoreCase("box")) {
+                throw new DataAccessException("Inout Error:" + method  + " is not supported for now");
+        }*/
+        String searchType = req.getParam("intersect");
+        String[]  radec = req.getParam("UserTargetWorldPt")!=null? req.getParam("UserTargetWorldPt").split(";"):null;
+        String ra =radec!=null? radec[0]:"";
+        String dec = radec!=null?radec[1]:"";
+
+        VisUtil.Corners corners=null;
+        if (!searchType.equalsIgnoreCase("center")) {
+            WorldPt wpt = new WorldPt(new Double(ra).doubleValue(), new Double(dec).doubleValue());
+            //getCorners using arcsec in radius unit
+            String side = req.getParam(CatalogRequest.SIZE);
+            corners = VisUtil.getCorners(wpt, new Double(side).doubleValue() / 2.0 * 3600.0);
+        }
+
+         switch (searchType.toUpperCase()) {
+             case "CENTER":
+                 return "(scisql_s2PtInCPoly(" + ra + "," + dec + ",corner1Ra, corner1Decl, corner2Ra, corner2Decl, " +
+                         "corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1)";
+
+             case "COVERS":
+                 String upperLeft = String.format(Locale.US, "%8.6f,%8.6f", corners.getUpperLeft().getLon(), corners.getUpperLeft().getLat());
+                 String upperRight = String.format(Locale.US, "%8.6f,%8.6f", corners.getUpperRight().getLon(), corners.getUpperRight().getLat());
+                 String lowerLeft = String.format(Locale.US, "%8.6f,%8.6f", corners.getLowerLeft().getLon(), corners.getLowerLeft().getLat());
+                 String lowerRight = String.format(Locale.US, "%8.6f,%8.6f", corners.getLowerRight().getLon(), corners.getLowerRight().getLat());
+
+                 return "(scisql_s2PtInCPoly(" + lowerRight + ", corner1Ra, corner1Decl, corner2Ra, corner2Decl, " +
+                         "corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1) AND" +
+                         "(scisql_s2PtInCPoly(" + lowerLeft + ", corner1Ra, corner1Decl, corner2Ra, corner2Decl, " +
+                         "corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1) AND" +
+                         "(scisql_s2PtInCPoly(" + upperLeft + ", corner1Ra, corner1Decl, corner2Ra, corner2Decl, " +
+                         "corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1) AND" +
+                         "(scisql_s2PtInCPoly(" + upperRight + ", corner1Ra, corner1Decl, corner2Ra, corner2Decl, " +
+                         "corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1) ";
+
+             case "ENCLOSED":
+
+                   double minRa = corners.getLowerRight().getLon();
+                   double minDec = corners.getLowerRight().getLat();
+                   double maxRa = corners.getUpperLeft().getLon();
+                   double maxDec = corners.getUpperLeft().getLat();
+
+                   return
+                     "(scisql_s2PtInBox(corner1Ra, corner1Decl," + minRa + "," + minDec + "," + maxRa + "," + maxDec + ")=1) AND " +
+                     "(scisql_s2PtInBox(corner2Ra, corner2Decl," + minRa + "," + minDec + "," + maxRa + "," + maxDec + ")=1) AND " +
+                     "(scisql_s2PtInBox(corner3Ra, corner3Decl," + minRa + "," + minDec + "," + maxRa + "," + maxDec + ")=1) AND " +
+                     "(scisql_s2PtInBox(corner4Ra, corner4Decl, " + minRa + "," + minDec + "," + maxRa + "," + maxDec + ")=1)";
+
+
+             default:
+                 // should only be happened if a new method was added and not added here
+                 throw new EndUserException("The search intersect: "+ searchType + "  is not supported", searchType);
+         }
+
+
+    }
     String getConstraints(TableServerRequest request) {
         String constraints = request.getParam(CatalogRequest.CONSTRAINTS);
         if (!StringUtils.isEmpty(constraints) && constraints.contains(CatalogRequest.CONSTRAINTS_SEPARATOR)) {
@@ -201,6 +262,7 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         }
 
 
+        boolean isCatalogTable =   (tableName != null && tableName.contains("RunDeep"))? true:false;
 
         String columns = request.getParam(CatalogRequest.SELECTED_COLUMNS);
         if (columns==null){
@@ -210,7 +272,8 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
         //get all the constraints
         String constraints =  getConstraints(request);
         //get the search method
-        String searchMethod = getSearchMethod( request, tableName);//, raColumn,decColumn);
+
+        String searchMethod = isCatalogTable ? getSearchMethodCatalog( request, tableName):getMethodOnSearchType(request);
 
         //build where clause
         String whereStr;
@@ -418,7 +481,6 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
             System.out.println(classType + "is not supported");
             throw new DataAccessException(classType + "is not handled");
         }
-       // return null;
 
     }
 
