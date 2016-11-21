@@ -96,7 +96,8 @@ class BgFooter extends Component {
 
     onEmailChanged(v) {
         if (get(v, 'valid')) {
-            dispatchBgSetEmail(v.value);
+            const {email} = this.props;
+            if (email !== v.value) dispatchBgSetEmail(v.value);
         }
     }
 
@@ -114,7 +115,7 @@ class BgFooter extends Component {
                     value={email}
                     placeholder='Enter an email to get notification'
                     size={27}
-                    onChange={this.onEmailChanged}
+                    onChange={this.onEmailChanged.bind(this)}
                     actOn={['blur','enter']}
                 />
                 <div>
@@ -158,10 +159,9 @@ function SinglePackage({ID, Title, STATE, ITEMS=[]}) {
         progress = <div className='BGMon__header--waiting'>Computing number of packages... <img style={{marginLeft: 3}} src={LOADING}/></div>;
     } else if (BG_STATE.CANCELED.is(STATE)) {
         progress = <div>User aborted this request</div>;
-    } else if (ITEMS.length === 0){
-        progress = <div/>;
     } else {
-        progress = <PackageItem SINGLE={true} STATE={STATE} ID={ID} {...ITEMS[0]} />;
+        const params = ITEMS[0] || {};
+        progress = <PackageItem SINGLE={true} STATE={STATE} ID={ID} {...params} />;
     }
     return (
         <PackageHeader {...{ID, Title, progress, STATE}} />

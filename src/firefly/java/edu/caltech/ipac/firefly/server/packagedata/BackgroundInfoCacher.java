@@ -6,10 +6,12 @@ package edu.caltech.ipac.firefly.server.packagedata;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.event.ServerSentEventNames;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.StringKey;
@@ -47,11 +49,16 @@ public class BackgroundInfoCacher {
         updateInfo(new BackgroundInfo(null, email, baseFileName, title, target, false));
     }
 
-    public BackgroundInfo getPackageInfo() { return getInfo(); }
+    public static void fireBackgroundJobAdd(BackgroundStatus bgStat) {
+        FluxAction addAction = new FluxAction("background.bgJobAdd", QueryUtil.convertToJsonObject(bgStat));
+        ServerEventManager.fireAction(addAction, ServerEvent.Scope.USER);
+    }
 
     //======================================================================
     //----------------------- Public Methods -------------------------------
     //======================================================================
+
+    public BackgroundInfo getPackageInfo() { return getInfo(); }
 
     public void fireStatusUpdate(BackgroundInfo info) {
         if (info == null) info = getInfo();
@@ -66,6 +73,10 @@ public class BackgroundInfoCacher {
                 ServerEventManager.fireEvent(ev);
             }
         }
+    }
+
+    public void fireBackgroundJobAdd() {
+        fireBackgroundJobAdd(getStatus());
     }
 
     public String getBID() {

@@ -194,7 +194,6 @@ public class Packager {
             bundle.finish(url);
             retval= new BackgroundStatus(_packageID, BackgroundState.SUCCESS, BackgroundStatus.BgType.PACKAGE);
             retval.addAttribute(JobAttributes.Zipped);
-            retval.addAttribute(JobAttributes.CanSendEmail);
             retval.setParam(BackgroundStatus.TOTAL_BYTES, fileInfo.getSizeInBytes()+"");
             retval.addPackageProgress(bundle.makePackageProgress());
         } catch (FailedRequestException e) {
@@ -303,7 +302,6 @@ public class Packager {
         bundleList.add(bundle);
         _estimateStat = new BackgroundStatus( _packageID, BackgroundState.WAITING, BackgroundStatus.BgType.PACKAGE);
         _estimateStat.addAttribute(JobAttributes.Zipped);
-        _estimateStat.addAttribute(JobAttributes.CanSendEmail);
         _estimateStat.addAttribute(JobAttributes.DownloadScript);
         _estimateStat.addPackageProgress(bundle.makePackageProgress());
         _estimateStat.setParam(BackgroundStatus.TOTAL_BYTES, totalSize + "");

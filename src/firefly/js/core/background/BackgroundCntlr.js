@@ -3,7 +3,7 @@
  */
 
 import {take} from 'redux-saga/effects';
-import {set, get, has, pick} from 'lodash';
+import {set, get, has, pick, isNil} from 'lodash';
 
 import {flux} from '../../Firefly.js';
 import {smartMerge} from '../../tables/TableUtil.js';
@@ -154,11 +154,11 @@ function bgJobCancel(action) {
 
 function bgSetEmail(action) {
     return (dispatch) => {
-        const {email} = action.payload;
+        const {email=''} = action.payload;
+        SearchServices.setEmail(email);
+        dispatch(action);
         if (email) {
-            SearchServices.setEmail(email);
             SearchServices.resendEmail(email);
-            dispatch(action);
         }
     };
 }
@@ -207,16 +207,16 @@ function reducer(state={}, action={}) {
 function handleBgStatusUpdate(state, action) {
     var bgstats = action.payload;
     if (has(state, ['jobs', bgstats.ID])) {
-        bgstats = transform(bgstats);
-        const nState = set({}, ['jobs', bgstats.ID], bgstats);
-        if (bgstats.email && nState.email !== bgstats.email) nState.email = bgstats.email;
-        return smartMerge(state, nState);
+        return handleBgJobAdd(state, action);
     } else return state;
 }
 
 function handleBgJobAdd(state, action) {
     var bgstats = action.payload;
-    return updateSet(state, ['jobs', bgstats.ID], bgstats);
+    bgstats = transform(bgstats);
+    const nState = set({}, ['jobs', bgstats.ID], bgstats);
+    if (!isNil(bgstats.email)) nState.email = bgstats.email;
+    return smartMerge(state, nState);
 }
 
 function handleBgJobRemove(state, action) {

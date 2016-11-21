@@ -84,8 +84,7 @@ public class BackgroundEnv {
         if (!bgInfos.contains(bgId)) {
             bgInfos.add(bgId);
             updateUserBackgroundInfo(bgInfos);
-            FluxAction addAction = new FluxAction("background.bgJobAdd", QueryUtil.convertToJsonObject(bgStat));
-            ServerEventManager.fireAction(addAction, ServerEvent.Scope.USER);
+            BackgroundInfoCacher.fireBackgroundJobAdd(bgStat);
         }
     }
 
@@ -299,9 +298,15 @@ public class BackgroundEnv {
         Logger.briefDebug("Background thread returned");
         BackgroundStatus bgStat= processor.getBackgroundStatus();
         if (bgStat==null) {
-            bgStat= new BackgroundStatus(bid, BackgroundState.WAITING);
-            processor.getPiCacher().setStatus(bgStat);
+            bgStat = processor.getPiCacher().getStatus();
+            bgStat = bgStat == null ? new BackgroundStatus(bid, BackgroundState.WAITING) : bgStat;
         }
+        if (!bgStat.isDone()) {
+            // it's not done within the same request.. add it to background and enable email notification.
+            bgStat.addAttribute(JobAttributes.CanSendEmail);
+            BackgroundEnv.addUserBackgroundInfo(bgStat);
+        }
+        processor.getPiCacher().setStatus(bgStat);
         Logger.briefDebug("Background report returned");
         return bgStat;
     }

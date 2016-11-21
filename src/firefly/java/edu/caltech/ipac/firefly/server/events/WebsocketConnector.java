@@ -146,7 +146,7 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
         AlertsMonitor.checkAlerts(true);
         // check for background jobs
         BackgroundEnv.getUserBackgroundInfo().stream()
-                    .forEach(bgc -> bgc.fireStatusUpdate(null));
+                    .forEach(bgc -> bgc.fireBackgroundJobAdd());
 
     }
 

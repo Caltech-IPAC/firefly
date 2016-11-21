@@ -150,7 +150,7 @@ public class PackageMaster  {
     }
 
 
-    //======================================================================
+//======================================================================
 //------------------ Package Methods -----------------------------------
 //======================================================================
 
@@ -169,9 +169,6 @@ public class PackageMaster  {
                                                        req.getDataSource(),
                                                        ServerContext.getRequestOwner());
         BackgroundStatus bgStat= BackgroundEnv.backgroundProcess(WAIT_MILLS,backProcess);
-        if (!bgStat.isDone()) {
-            BackgroundEnv.addUserBackgroundInfo(bgStat);
-        }
         checkForLongQueue(bgStat);
         return bgStat;
 
