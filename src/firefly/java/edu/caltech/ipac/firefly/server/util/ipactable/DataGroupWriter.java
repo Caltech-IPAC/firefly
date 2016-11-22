@@ -5,141 +5,46 @@ package edu.caltech.ipac.firefly.server.util.ipactable;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.util.*;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 
 /**
- * This class query the database, and then write results out to the given file as an ipac table.
- * If the results exceed the number of maximum row set by property 'IpacTableExtractor.Max.Rows.Limit',
- * it will return to the caller with a status of 'INPROGRESS', and spin off another thread to
- * completely write out the rest of the results.
- * NOTE:  In the case when the results is very large, there is a good chance that this class is
- *        still writing to the file at the time when a read is requested.  This works fine on
- *        a Unix-like OS.  This may not work on Windows.
- *        If this is a concern, one solution is to use a temp file.
- *        Write the results into the temp file.  Rename the temp to the given file when it is done.
- *        In the case when background processing is needed,
- *        Copy the temp file containing partial results to the given file, continue to write
- *        out the rest of the results into the temp file.
- *        When it's completely finish, rename the temp file to the
- *        given file.
- *
+ * Writes a DataGroup into an IPAC table file.  This class support different handlers.
+ * IpacTableHandler: This default handler works like a typical synchronous method where the control is returned after
+ * the whole file is written to disk.
+ * BgIpacTableHandler:  add the ability to background the write process after a page of data is written.
+ * FilterHandler: subclass from BgIpacTableHandler; in-place filtering with background option.
  */
 public class DataGroupWriter {
-    private static int minPrefetchSize = DataGroupReader.MIN_PREFETCH_SIZE;
     private static Logger.LoggerImpl LOG = Logger.getLogger();
 
-    private File outf;
-    private PrintWriter writer;
-    private DataGroup source;
-    private boolean doclose = true;
-    private int prefetchSize = minPrefetchSize;
-    private int rowCount;
-    private Map<String, String> meta;
 
-
-    DataGroupWriter(File outf, DataGroup source, int prefetchSize, Map<String, String> meta) {
-        this.outf = outf;
-        this.source = source;
-        this.prefetchSize = Math.max(minPrefetchSize, prefetchSize);
-        this.meta = meta;
+    public static void write(File outFile, DataGroup source) throws IOException {
+        write(new IpacTableHandler(outFile, source));
     }
 
-    public static void write(File outFile, DataGroup source, int prefetchSize) throws IOException {
-        write(outFile, source, prefetchSize, null);
-    }
-
-    public static void write(File outFile, DataGroup source, int prefetchSize, Map<String, String> meta) throws IOException {
-        DataGroupWriter dgw = new DataGroupWriter(outFile, source, prefetchSize, meta);
+    public static void write(IpacTableHandler handler) throws IOException {
         try {
-            dgw.start();
-        } finally {
-            dgw.close();
+            Thread t = new Thread(new WriteTask(handler));
+            t.start();
+            handler.onStart();
+        } catch (InterruptedException e) {
+            LOG.info("DataGroupWriter interrupted:" + e.getMessage());
         }
     }
 
-    public void start() throws IOException {
-
-        if (source == null) {
-            return;
-        }
-
-        StopWatch.getInstance().start("DataGroupWriter");
-
-        writer = new PrintWriter(new BufferedWriter(new FileWriter(this.outf), IpacTableUtil.FILE_IO_BUFFER_SIZE));
-
-        ArrayList<DataGroup.Attribute> attributes = new ArrayList<>(source.getKeywords());
-        writeStatus(writer, DataGroupPart.State.INPROGRESS);
-        IpacTableUtil.writeAttributes(writer, attributes, DataGroupPart.LOADING_STATUS);
-        List<DataType> headers = Arrays.asList(source.getDataDefinitions());
-        IpacTableUtil.writeHeader(writer, headers);
-        rowCount = 0;
-        for(Iterator<DataObject> itr = source.iterator(); itr.hasNext(); rowCount++) {
-            DataObject row = itr.next();
-            IpacTableUtil.writeRow(writer, headers, row);
-            if (rowCount == prefetchSize) {
-                processInBackground(headers, itr);
-                doclose = false;
-                break;
-            }
-        }
-        StopWatch.getInstance().printLog("DataGroupWriter");
-        writer.flush();
-    }
-
-    private void close() {
-        if (doclose) {
-            if (writer != null) {
-                insertStatus(outf, DataGroupPart.State.COMPLETED);
-                writer.flush();
-                writer.close();
-                if (meta != null) {
-                    IpacTableUtil.sendLoadStatusEvents(meta, outf, rowCount, DataGroupPart.State.COMPLETED);
-                }
-            }
-        }
-    }
-
-    private void processInBackground(final List<DataType> headers, final Iterator<DataObject> itr) {
-        Runnable r = new Runnable(){
-                public void run() {
-                    try {
-                        while(itr.hasNext()) {
-                            DataObject row = itr.next();
-                            IpacTableUtil.writeRow(writer, headers, row);
-                            if (meta != null) {
-                                if (++rowCount % 5000 == 0) {
-                                    IpacTableUtil.sendLoadStatusEvents(meta, outf, rowCount, DataGroupPart.State.INPROGRESS);
-                                }
-                            }
-                        }
-                    } finally {
-                        doclose = true;
-                        close();
-                    }
-                }
-            };
-        Thread t = new Thread(r);
-        t.setDaemon(true);
-        t.start();
+    public static void writeStatus(PrintWriter writer, DataGroupPart.State status) {
+        writer.println("\\" + DataGroupPart.LOADING_STATUS + " = " + status + "                           ");
     }
 
     public static void insertStatus(File outf, DataGroupPart.State state) {
         RandomAccessFile rdf = null;
         try {
-             rdf = new RandomAccessFile(outf, "rw");
+            rdf = new RandomAccessFile(outf, "rw");
             String status = "\\" + DataGroupPart.LOADING_STATUS + " = " + state;
             rdf.writeBytes(status);
         } catch (FileNotFoundException e) {
@@ -157,9 +62,106 @@ public class DataGroupWriter {
         }
     }
 
-    public static void writeStatus(PrintWriter writer, DataGroupPart.State status) {
-        writer.println("\\" + DataGroupPart.LOADING_STATUS + " = " + status + "                           ");
+
+    public interface Handler {
+        void onStart() throws InterruptedException;
+
+        void onComplete();
+
+        File getOutFile();
+
+        List<DataType> getHeaders();
+
+        List<DataGroup.Attribute> getAttributes();
+
+        DataObject next() throws IOException;
+
+    }
+
+    private static class WriteTask implements Runnable {
+        private static Logger.LoggerImpl LOG = Logger.getLogger();
+        private IpacTableHandler handler;
+
+        public WriteTask(IpacTableHandler handler) {
+            this.handler = handler;
+        }
+
+        @Override
+        public void run() {
+
+            if (handler == null) {
+                return;
+            }
+
+            StopWatch.getInstance().start("DataGroupWriter");
+
+            PrintWriter writer = null;
+            try {
+                writer = new PrintWriter(new BufferedWriter(new FileWriter(handler.getOutFile()), IpacTableUtil.FILE_IO_BUFFER_SIZE));
+                List<DataGroup.Attribute> attributes = handler.getAttributes();
+                writeStatus(writer, DataGroupPart.State.INPROGRESS);
+                IpacTableUtil.writeAttributes(writer, attributes, DataGroupPart.LOADING_STATUS);
+                List<DataType> headers = handler.getHeaders();
+                IpacTableUtil.writeHeader(writer, headers);
+                DataObject row = handler.next();
+                while (row != null) {
+                    IpacTableUtil.writeRow(writer, headers, row);
+                    row = handler.next();
+                }
+                StopWatch.getInstance().printLog("DataGroupWriter");
+            } catch (IOException e) {
+                LOG.error(e);
+            } finally {
+                if (writer != null) {
+                    insertStatus(handler.getOutFile(), DataGroupPart.State.COMPLETED);
+                    writer.flush();
+                    writer.close();
+                    handler.onComplete();
+                }
+            }
+        }
+
+    }
+
+    public static class IpacTableHandler implements Handler {
+        private final CountDownLatch waitOn = new CountDownLatch(1);
+        private File ofile;
+        private List<DataType> headers;
+        private List<DataGroup.Attribute> attributes;
+        private Iterator<DataObject> itr;
+        private int rowCount = 0;
+
+        public IpacTableHandler(File ofile, DataGroup source) {
+            this(ofile, Arrays.asList(source.getDataDefinitions()), source.getKeywords(), source.iterator());
+        }
+
+        public IpacTableHandler(File ofile, List<DataType> headers, List<DataGroup.Attribute> attributes, Iterator<DataObject> itr) {
+            this.ofile = ofile;
+            this.headers = headers;
+            this.attributes = attributes;
+            this.itr = itr;
+        }
+
+        public void onStart() throws InterruptedException {
+            waitOn.await();
+        }
+        public void onComplete() {
+            waitOn.countDown();
+        }
+        public File getOutFile() { return ofile; }
+        public List<DataType> getHeaders() { return headers; }
+        public List<DataGroup.Attribute> getAttributes() { return attributes; }
+        public DataObject next() throws IOException {
+            DataObject next = itr != null && itr.hasNext() ? itr.next() : null;
+            if (next != null) rowCount++;
+            return  next;
+        }
+
+        public int getRowCount() {
+            return rowCount;
+        }
     }
 
 }
+
 

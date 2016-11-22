@@ -73,7 +73,7 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
             DataGroup dg = getDataFromURL(request);
             dg.shrinkToFitData();
             File outFile = createFile(request, ".tbl");
-            DataGroupWriter.write(outFile, dg,0);
+            DataGroupWriter.write(outFile, dg);
             _log.info("table loaded");
             return  outFile;
 

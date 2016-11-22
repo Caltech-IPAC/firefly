@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.query.inventory;
 
 import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.server.util.ipactable.BgIpacTableHandler;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
@@ -74,8 +75,7 @@ public class InventorySummary extends DynQueryProcessor {
             }
             SortInfo si = new SortInfo("datatype");
             QueryUtil.doSort(dg, si);
-            DataGroupWriter.write(outf, dg, req.getPageSize());
-
+            DataGroupWriter.write(new BgIpacTableHandler(outf, dg, req));
             return outf;
         } catch (FailedRequestException e) {
             throw new IOException(e);

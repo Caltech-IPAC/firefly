@@ -22,18 +22,12 @@ import edu.caltech.ipac.firefly.server.cache.PrivateCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupFilter;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
-import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
+import edu.caltech.ipac.firefly.server.util.ipactable.*;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
@@ -120,7 +114,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             // read in any format.. then write it back out as ipac table
             DataGroup dg = DataGroupReader.readAnyFormat(tblFile, tblIdx);
             File convertedFile = File.createTempFile(request.getRequestId(), ".tbl", ServerContext.getTempWorkDir());
-            DataGroupWriter.write(convertedFile, dg, 0, request.getMeta());
+            DataGroupWriter.write(new BgIpacTableHandler(convertedFile, dg, request));
             return convertedFile;
         } else {
             throw new DataAccessException("Source file has an unknown format:" + ServerContext.replaceWithPrefix(tblFile));
@@ -430,7 +424,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
                 deciFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
                 DataGroup retval = QueryUtil.doDecimation(dg, decimateInfo);
-                DataGroupWriter.write(deciFile, retval, Integer.MAX_VALUE, request.getMeta());
+                DataGroupWriter.write(deciFile, retval);
                 cache.put(key, deciFile);
             }
             resultsFile = deciFile;
@@ -496,7 +490,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         QueryUtil.doSort(dg, sortInfo);
         timer.printLog("sort");
         timer.start("write");
-        DataGroupWriter.write(outFile, dg, pageSize, request.getMeta());
+        DataGroupWriter.write(new BgIpacTableHandler(outFile, dg, request));
         timer.printLog("write");
     }
 
@@ -604,7 +598,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     protected void doFilter(File outFile, File source, CollectionUtil.Filter<DataObject>[] filters, TableServerRequest request) throws IOException {
         StopWatch timer = StopWatch.getInstance();
         timer.start("filter");
-        DataGroupFilter.filter(outFile, source, filters, request.getPageSize(), request.getMeta());
+        DataGroupWriter.write(new FilterHanlder(outFile, source, filters, request));
         timer.printLog("filter");
     }
 
