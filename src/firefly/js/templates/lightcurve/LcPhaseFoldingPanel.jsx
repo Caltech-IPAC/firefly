@@ -440,9 +440,9 @@ function handleTableHighlight(action) {
 function getPeriodFromTable(tbl_id) {
     const tableModel = getTblById(tbl_id);
     if (!tableModel || isNil(tableModel.highlightedRow)) return;
-    if ([PERIODOGRAM].includes(tbl_id)) {
+    if (tbl_id === PERIODOGRAM) {
         return getCellValue(tableModel, tableModel.highlightedRow, 'PERIOD');
-    } else if ([PEAK_TABLE].includes(tbl_id)) {
+    } else if (tbl_id === PEAK_TABLE) {
         return getCellValue(tableModel, tableModel.highlightedRow, 'Period');
     }
 }
