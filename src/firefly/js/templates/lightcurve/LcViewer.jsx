@@ -11,6 +11,7 @@ import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
 import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
 import {lcManager, PERIODOGRAM, PHASE_FOLDED, RAW_TABLE, PEAK_TABLE} from './LcManager.js';
+import {listenerPanel} from './LcPhaseFoldingPanel.jsx';
 import {LcResult} from './LcResult.jsx';
 import {Menu} from '../../ui/Menu.jsx';
 import {Banner} from '../../ui/Banner.jsx';
@@ -40,6 +41,7 @@ export class LcViewer extends Component {
         super(props);
         this.state = this.getNextState();
         dispatchAddSaga(lcManager);
+        dispatchAddSaga(listenerPanel);
         dispatchAddSaga(syncChartViewer);
     }
 
