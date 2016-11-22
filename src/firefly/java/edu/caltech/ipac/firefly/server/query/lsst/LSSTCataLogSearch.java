@@ -91,13 +91,14 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
      * @return
      * @throws Exception
      */
-    protected String getSearchMethod(TableServerRequest req, String calTable)throws Exception { //, String raCol, String decCol) throws Exception {
+    protected String getSearchMethod(TableServerRequest req, String catalog)throws Exception { //, String raCol, String decCol) throws Exception {
 
         String method = req.getParam("SearchMethod");
         String[]  radec = req.getParam("UserTargetWorldPt")!=null? req.getParam("UserTargetWorldPt").split(";"):null;
         String ra =radec!=null? radec[0]:"";
         String dec = radec!=null?radec[1]:"";
 
+        boolean isRunDeep = (catalog != null && catalog.contains("RunDeep"));
         switch (method.toUpperCase()) {
             case "ALL_SKY":
                 return "";
@@ -110,32 +111,60 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
                 String upperLeft = String.format(Locale.US, "%8.6f,%8.6f", corners.getUpperLeft().getLon(), corners.getUpperLeft().getLat());
                 String lowerRight = String.format(Locale.US, "%8.6f,%8.6f", corners.getLowerRight().getLon(), corners.getLowerRight().getLat());
-                return "scisql_s2PtInBox("+ getRA(calTable)+"," + getDEC(calTable)+"," +  lowerRight + "," +upperLeft + ")=1";
+
+                if (isRunDeep) {
+                    return "qserv_areaspec_box(" +  lowerRight + "," +upperLeft + ")";
+                }
+                else {
+                    return "scisql_s2PtInBox("+ getRA(catalog)+"," + getDEC(catalog)+"," +  lowerRight + "," +upperLeft + ")=1";
+                }
 
             case "CONE":
                 //The unit is degree for all the input
                 String radius = req.getParam(CatalogRequest.RADIUS);
-                return "scisql_s2PtInCircle("+ getRA(calTable)+"," + getDEC(calTable)+","+ra +","+dec+","+radius +")=1";
+                if (isRunDeep) {
+                    return "qserv_areaspec_circle(" + ra + "," + dec + "," + radius + ")";
+                }
+                else {
+                    return "scisql_s2PtInCircle("+ getRA(catalog)+"," + getDEC(catalog)+","+ra +","+dec+","+radius +")=1";
+                }
            case "ELIPTICAL":
                //RA (degree), DEC (degree), positionAngle (degree), semi-majorAxis (arcsec), semi-minorAxis(arcsec),
                double semiMajorAxis = new Double( req.getParam("radius")).doubleValue()*3600;
                double ratio = new Double(req.getParam(CatalogRequest.RATIO)).doubleValue();
                Double semiMinorAxis = semiMajorAxis*ratio;
                String positionAngle = req.getParam("posang");
-               return  "scisql_s2PtInEllipse("+ getRA(calTable)+"," + getDEC(calTable)+"," + ra + "," + dec + "," + semiMajorAxis + "," +
-                       semiMinorAxis + "," + positionAngle + ")=1";
+               if (isRunDeep) {
+                   return "qserv_areaspec_ellipse(" + ra + "," + dec + "," + semiMajorAxis + "," +
+                           semiMinorAxis + "," + positionAngle + ")";
+               }
+               else {
+                   return  "scisql_s2PtInEllipse("+ getRA(catalog)+"," + getDEC(catalog)+"," + ra + "," + dec + "," + semiMajorAxis + "," +
+                           semiMinorAxis + "," + positionAngle + ")=1";
+               }
             case "POLYGON":
                 //The unit is degree for all the input
                 String radecList = req.getParam(CatalogRequest.POLYGON);
                 String[] sArray = radecList.split(",");
-                String polygoneStr = "scisql_s2PtInCPoly("+ getRA(calTable)+"," + getDEC(calTable)+",";
+                String polygoneStr=null;
+                if (isRunDeep) {
+                     polygoneStr = "qserv_areaspec_poly(";
+                }
+                else {
+                    polygoneStr = "scisql_s2PtInCPoly("+ getRA(catalog)+"," + getDEC(catalog)+",";
+                }
                 for (int i=0; i<sArray.length; i++){
                     String[] radecPair = sArray[i].trim().split("\\s+");
                     if (radecPair.length!=2){
                         throw new Exception("wrong data entered");
                     }
                     if (i==sArray.length-1) {
-                        polygoneStr = polygoneStr + radecPair[0] + "," + radecPair[1] + ")=1";
+                        if (isRunDeep) {
+                            polygoneStr = polygoneStr + radecPair[0] + "," + radecPair[1] + ")";
+                        }
+                        else {
+                            polygoneStr = polygoneStr + radecPair[0] + "," + radecPair[1] + ")=1";
+                        }
                     }
                     else {
                         polygoneStr = polygoneStr + radecPair[0] + "," + radecPair[1] + ",";
