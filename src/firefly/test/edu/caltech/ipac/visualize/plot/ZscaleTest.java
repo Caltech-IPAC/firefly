@@ -1,10 +1,6 @@
-package edu.caltech.ipac.visualize;
+package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.firefly.util.FileLoader;
-import edu.caltech.ipac.visualize.plot.FitsRead;
-import edu.caltech.ipac.visualize.plot.ImageHeader;
-import edu.caltech.ipac.visualize.plot.RangeValues;
-import edu.caltech.ipac.visualize.plot.Zscale;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import org.junit.Assert;
@@ -24,6 +20,20 @@ public class ZscaleTest {
 
     private static String filename = "WISE-Band-4.fits";
     
+/**
+    @Test
+    public void testFitLineRetvalAbnormalInputs() {
+        float[] data = {1,2,3,4,5,6,7,8,9};
+        int npix = 0;
+        float krej = 2.2f;
+        int ngrow = 6;
+        int maxiter = 5;
+        Zscale.FitLineRetval fitLineRetval = Zscale.fitLine (data, npix, krej, ngrow, maxiter);
+
+
+    // Private!!!
+    }
+    */
 
     @Test
     public void testZscalRetval() throws FitsException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
