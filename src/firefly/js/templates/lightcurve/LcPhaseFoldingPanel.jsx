@@ -228,29 +228,29 @@ export function LcPFOptionsPanel ({fields}) {
                     <br/>
                     <ValidationField fieldKey='flux'
                          initialState= {{
-                                  fieldKey: 'flux',
-                                  value: '2.0',
-                                  validator: Validate.floatRange.bind(null, 2.0, 5.5, 3,'Flux Column'),
-                                  tooltip: 'Flux Column, value between 2.0 to 5.5',
-                                  label : 'Flux Column:',
-                                  labelWidth : 100
+                                fieldKey: 'flux',
+                                value: '2.0',
+                                validator: Validate.floatRange.bind(null, 2.0, 5.5, 3,'Flux Column'),
+                                tooltip: 'Flux Column, value between 2.0 to 5.5',
+                                label : 'Flux Column:',
+                                labelWidth : 100
                           }} />
 
                     <br/>
 
                     <ValidationField fieldKey='fluxerror'
                          initialState= {{
-                                  fieldKey: 'fluxerror',
-                                  value: '0.02',
-                                  validator: Validate.floatRange.bind(null, 0.01, 0.5, 3,'Flux Error'),
-                                  tooltip: 'Flux Error, value is between 0.01 to 0.5',
-                                  label : 'Flux Error:',
-                                  labelWidth : 100
+                                fieldKey: 'fluxerror',
+                                value: '0.02',
+                                validator: Validate.floatRange.bind(null, 0.01, 0.5, 3,'Flux Error'),
+                                tooltip: 'Flux Error, value is between 0.01 to 0.5',
+                                label : 'Flux Error:',
+                                labelWidth : 100
                          }} />
                     <br/>
 
                     <ValidationField fieldKey='period'
-                                     initialState= {{
+                         initialState= {{
                                 fieldKey: 'period',
                                 value: '1.0',
                                 //validator: Validate.floatRange.bind(null, 0.5, 1.5, 3,'period'),
@@ -258,6 +258,17 @@ export function LcPFOptionsPanel ({fields}) {
                                 label : 'Period:',
                                 labelWidth : 100
                     }} />
+                    <br/>
+
+                    <ValidationField fieldKey='cutoutSize'
+                        initialState= {{
+                               fieldKey: 'cutoutSize',
+                               value: '0.3',
+                               //validator: Validate.floatRange.bind(null, 0.1, 1, 3,'cutoutsize'),
+                               tooltip: 'Cutout Size',
+                               label : 'Cutout Size:',
+                               labelWidth : 100
+                       }} />
 
 
                     <br/> <br/>
@@ -388,6 +399,8 @@ function doPhaseFolding(fields) {
 
     var tReq = makeTblRequest('PhaseFoldedProcessor', PHASE_FOLDED, {
         'period_days': fields.period.value,
+        'cutout_size': fields.cutoutSize.value,
+        'flux': fields.flux.value,
         'table_name': 'folded_table',
         'time_col_name':fields.timeCol.value,
         'original_table': tbl.tableMeta.tblFilePath
