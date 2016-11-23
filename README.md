@@ -101,7 +101,7 @@ See [firefly-api-overview.md](docs/firefly-api-overview.md)
 See [firefly-python-wrapper.md](docs/firefly-python-wrapper.md)
 
 ####Code Examples Using Firefly APIs
-See [firefly-api-code-examples.md](docs/firefly-api-code-examples.md)
+See [firefly-api-code-examples.md](tutorial/firefly-api-code-examples.md)
  (Deprecated [docs/fftools-api-code-examples.md](docs/fftools-api-code-examples.md))
 
 ####Setting up the Server correctly for FITS files
