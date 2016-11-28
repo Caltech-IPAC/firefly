@@ -18,7 +18,7 @@ import {dispatchTableToIgnore} from '../../visualize/DrawLayerCntlr.js';
 import Catlog from '../../drawingLayers/Catalog.js';
 import {ServerRequest} from '../../data/ServerRequest.js';
 import {CHANGE_VIEWER_LAYOUT} from '../../visualize/MultiViewCntlr.js';
-import LcPFOptionsPanel, {getCutoutValue} from './LcPhaseFoldingPanel.jsx';
+import {LcPFOptionsPanel, grpkey} from './LcPhaseFoldingPanel.jsx';
 import FieldGroupUtils, {revalidateFields} from '../../fieldGroup/FieldGroupUtils';
 
 export const RAW_TABLE = 'raw_table';
@@ -166,7 +166,9 @@ function getWebPlotRequestViaUrl(tableModel, hlrow) {
     const scan_id = res[1] + res[2];
     const scangrp = res[2];
     const frame_num = res[3];
-    const cutoutsize = tableModel.request.cutout_size || 0.3;
+
+    let {cutoutSize} = FieldGroupUtils.getGroupFields(grpkey);
+    const cutoutsize = cutoutSize.value;
 
     /*the following should be from reading in the url column returned from LC search
      we are constructing the url for wise as the LC table does
@@ -190,7 +192,7 @@ function getWebPlotRequestViaUrl(tableModel, hlrow) {
 
 }
 
-function setupImages(tbl_id) {
+export function setupImages(tbl_id) {
     const viewer=  getViewer(getMultiViewRoot(),IMG_VIEWER_ID);
     const count= get(viewer, 'layoutDetail.count',DEF_IMAGE_CNT);
     const tableModel = getTblById(tbl_id);

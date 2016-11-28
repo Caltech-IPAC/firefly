@@ -27,14 +27,14 @@ import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {dispatchTableSearch, TABLE_HIGHLIGHT} from '../../tables/TablesCntlr.js';
 
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
-import {RAW_TABLE, PHASE_FOLDED, PERIODOGRAM, PEAK_TABLE} from '../../templates/lightcurve/LcManager.js';
+import {RAW_TABLE, PHASE_FOLDED, PERIODOGRAM, PEAK_TABLE, setupImages} from '../../templates/lightcurve/LcManager.js';
 import {showPhaseFoldingPopup} from './LcPhaseFoldingPopup.jsx';
 
 import {isUndefined, get,set,isNil} from 'lodash';
 import {take} from 'redux-saga/effects';
 import './LCPanels.css';
 
-const grpkey = 'LC_FORM_Panel';
+export const grpkey = 'LC_FORM_Panel';
 
 function getDialogBuilder() {
     var popup= null;
@@ -265,8 +265,8 @@ export function LcPFOptionsPanel ({fields}) {
                                fieldKey: 'cutoutSize',
                                value: '0.3',
                                //validator: Validate.floatRange.bind(null, 0.1, 1, 3,'cutoutsize'),
-                               tooltip: 'Cutout Size',
-                               label : 'Cutout Size:',
+                               tooltip: 'Cutout Size in degrees',
+                               label : 'Cutout Size (deg):',
                                labelWidth : 100
                        }} />
 
@@ -441,7 +441,6 @@ function handleTableHighlight(action) {
     if (per) {
         dispatchValueChange({fieldKey: 'period', groupKey: grpkey, value: per});
     }
-
 }
 //export default LcPhaseFoldingForm;
 
@@ -458,4 +457,16 @@ function getPeriodFromTable(tbl_id) {
     } else if (tbl_id === PEAK_TABLE) {
         return getCellValue(tableModel, tableModel.highlightedRow, 'Period');
     }
+}
+
+/**
+ * return true if the table is LC raw or phase folded table
+ * @param {string} tbl_id
+ * @returns
+ */
+function isLcTable(tbl_id) {
+    const tableModel = getTblById(tbl_id);
+    if (!tableModel || isNil(tableModel.highlightedRow)) return;
+    return !![RAW_TABLE, PHASE_FOLDED].includes(tbl_id);
+
 }
