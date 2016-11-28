@@ -4,57 +4,96 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {FormPanel} from '../../ui/FormPanel.jsx';
-import { get, merge, isEmpty} from 'lodash';
+import { get,set, merge, isEmpty, isArray, isNil} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
-import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
-import {doFetchTable, makeTblRequest, makeLsstCatalogRequest, getTblById} from '../../tables/TableUtil.js';
-import {CatalogTableListField} from './CatalogTableListField.jsx';
-import {CatalogConstraintsPanel} from './CatalogConstraintsPanel.jsx';
+import {FormPanel} from '../../ui/FormPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
-import {fieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
-import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
-import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
-import {ServerParams} from '../../data/ServerParams.js';
-import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {CatalogSearchMethodType, SpatialMethod} from '../../ui/CatalogSearchMethodType.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-import {parseWorldPt} from '../../visualize/Point.js';
-import {VoSearchPanel} from '../../ui/VoSearchPanel.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
-import {convertAngle} from '../VisUtil.js';
-import {validateSql, validateConstraints, initRadiusArcSec} from './CatalogSelectViewPanel.jsx';
-import {masterTableFilter} from './IrsaMasterTableFilters.js';
+import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
+import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
+import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
+import {ServerParams} from '../../data/ServerParams.js';
+import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
+import {makeTblRequest, makeLsstCatalogRequest} from '../../tables/TableUtil.js';
+import {CatalogConstraintsPanel, getTblId} from './CatalogConstraintsPanel.jsx';
+import {validateSql, validateConstraints} from './CatalogSelectViewPanel.jsx';
+import {LSSTImageSpatialType} from './LSSTImageSpatialType.jsx';
 
-import './CatalogTableListField.css';
+//import './CatalogTableListField.css';
 import './CatalogSelectViewPanel.css';
 
 /**
  * group key for fieldgroup comp
  */
 const gkey = 'LSST_CATALOG_PANEL';
-const  gkeySpatial = 'LSST_CATALOG_PANEL_spatial';
-const dropdownName = 'LsstCatalogDropDown';
+const gkeySpatial = 'LSST_CATALOG_PANEL_spatial';
+const gkeyImageSpatial = 'LSST_IMAGE_PANEL_spatial';
 const constraintskey = 'inputconstraint';
 const projectName = 'Lsst';
 const RADIUS_COL = '7';
 const COLDEF1 = '9';
 const COLDEF2 = '8';
 
+const DEEPSOURCE = 0;
+const DEEPFORCEDSOURCE = 1;
+const DEEPCOADD = 2;
+const CCDEXPOSURE = 3;
+const CATTYPE = '0';
+const IMAGETYPE = '1';
+const defCatalog = 0;
+const defImage = 2;
+
+
+const LSSTTables = [
+    {
+        id: DEEPSOURCE,
+        label: 'Deep Source',
+        value: 'RunDeepSource',
+        type: CATTYPE,
+        cat: {}
+    },
+    {
+        id: DEEPFORCEDSOURCE,
+        label: 'Deep Forced Source',
+        value: 'RunDeepForcedSource',
+        type: CATTYPE,
+        cat: {}
+    },
+    {
+        id: DEEPCOADD,
+        label: 'Deep Coadd',
+        value: 'DeepCoadd',
+        type: IMAGETYPE,
+        cat: {}
+    },
+    {
+        id: CCDEXPOSURE,
+        label: 'Science CCD Exposure',
+        value: 'Science_Ccd_Exposure',
+        type: IMAGETYPE,
+        cat: {}
+    }
+];
+
+const LSSTTableTypes = {
+   [CATTYPE]: 'Catalogs',
+   [IMAGETYPE]: 'Images'
+};
+
+const LSSTMaster = {
+    project: projectName,
+    catalogs: LSSTTables
+};
+
 export const LSSTDDPID = 'LSSTMetaSearch';
 
-
-/**
- * Globally scoped here, master table, columns object
- * @type {Array}
- */
-var catmaster = [], cols = [];
-
+var catmaster = [];
 
 /**
  * @summary component for LSST catalog search panel
@@ -63,7 +102,11 @@ export class LSSTCatalogSelectViewPanel extends Component {
 
     constructor(props) {
         super(props);
-        this.state = {cattable: get(FieldGroupUtils.getGroupFields(gkey), 'cattable', '')};
+
+        var fields = FieldGroupUtils.getGroupFields(gkey);
+        this.state = {
+            cattable: fields ? get(fields, ['cattable', 'value'], '') : '',
+            cattype: fields ? get(fields, ['cattype', 'value'], CATTYPE) : CATTYPE};
     }
 
     componentWillUnmount() {
@@ -75,7 +118,7 @@ export class LSSTCatalogSelectViewPanel extends Component {
         this.iAmMounted = true;
         this.unbinder = FieldGroupUtils.bindToStore(gkey, (fields) => {
             if (fields.cattable.value !== this.state.cattable && this.iAmMounted) {
-                this.setState({cattable: fields.cattable.value});
+                this.setState({cattable: fields.cattable.value, cattype: fields.cattype.value});
             }
         });
     }
@@ -85,15 +128,15 @@ export class LSSTCatalogSelectViewPanel extends Component {
     }
 
     render() {
-        var {cattable}= this.state;
+        var {cattable, cattype}= this.state;
         return (
             <div>
                 <FormPanel
                     width='auto' height='auto'
-                    groupKey={[gkey, gkeySpatial]}
+                    groupKey={[gkey]}
                     onSubmit={(request) => onSearchSubmit(request)}
                     onCancel={hideSearchPanel}>
-                    <LSSTCatalogSelectView cattable={cattable}/>
+                    <LSSTCatalogSelectView cattype={cattype} cattable={cattable} />
                 </FormPanel>
             </div>
 
@@ -107,30 +150,58 @@ export class LSSTCatalogSelectViewPanel extends Component {
  */
 function onSearchSubmit(request) {
     if (request[gkey].Tabs === 'catalogLsst') {
-        const {spatial} = request[gkeySpatial];
+        const {cattype} = request[gkey];
 
-        if (spatial === SpatialMethod.Cone.value ||
-            spatial === SpatialMethod.Box.value ||
-            spatial === SpatialMethod.Elliptical.value) {
+        if (cattype === CATTYPE) {
+            const catalogState = FieldGroupUtils.getGroupFields(gkeySpatial);
+            const spatial = get(catalogState, ['spatial', 'value']);
 
-            const wp = parseWorldPt(request[gkeySpatial][ServerParams.USER_TARGET_WORLD_PT]);
+            if (spatial === SpatialMethod.Cone.value ||
+                spatial === SpatialMethod.Box.value ||
+                spatial === SpatialMethod.Elliptical.value) {
+
+                const wp = get(catalogState, [ServerParams.USER_TARGET_WORLD_PT, 'value']);
+                if (!wp) {
+                    showInfoPopup('Target is required');
+                    return;
+                }
+                if (!get(catalogState, ['conesize', 'valid'])){
+                    showInfoPopup('invalid size');
+                    return;
+                }
+
+            } else if (spatial === SpatialMethod.Polygon.value) {
+                if (!get(catalogState, ['polygoncoords', 'value'])) {
+                    showInfoPopup('polygon coordinate is required');
+                    return;
+                }
+            } else if (spatial === SpatialMethod.get('Multi-Object').value) {
+                if (!get(catalogState, ['fileUpload', 'value'])) {
+                    showInfoPopup('multi-object file is required');
+                    return;
+                }
+            }
+            if (validateConstraints(gkey)) {
+                doCatalog(request, catalogState);
+            }
+        } else if (cattype === IMAGETYPE) {
+            const imageState = FieldGroupUtils.getGroupFields(gkeyImageSpatial);
+            const wp = get(imageState, [ServerParams.USER_TARGET_WORLD_PT, 'value']);
             if (!wp) {
                 showInfoPopup('Target is required');
                 return;
             }
-        } else if (spatial === SpatialMethod.Polygon.value) {
-            if (!get(request[gkeySpatial], 'polygoncoords')) {
-                showInfoPopup('polygon coordinate is required');
-                return;
+
+            const intersect = get(imageState, ['intersect', 'value']);
+
+            if (intersect !== 'CENTER') {
+
+                if (!get(imageState, ['size', 'valid'])) {
+                    showInfoPopup('box size is required');
+                    return;
+                }
             }
-        } else if (spatial ===   SpatialMethod.get('Multi-Object').value) {
-            if (!get(request[gkeySpatial], 'fileUpload')) {
-                showInfoPopup('multi-object file is required');
-                return;
-            }
-        }
-        if (validateConstraints(gkey)) {
-            doCatalog(request);
+            doImage(request, imageState);
         }
     }
     else if (request[gkey].Tabs === 'loadcatLsst') {
@@ -147,25 +218,76 @@ function hideSearchPanel() {
     dispatchHideDropDown();
 }
 
+function addConstraintToQuery(tReq) {
+    const sql = get(FieldGroupUtils.getGroupFields(gkey), ['tableconstraints', 'value']);
+
+    tReq.constraints = '';
+    let addAnd = false;
+
+    if (sql.constraints.length > 0) {
+        tReq.constraints += sql.constraints;
+        addAnd = true;
+    }
+
+    const sqlTxt = get(FieldGroupUtils.getGroupFields(gkey), ['txtareasql', 'value'], '').trim();
+    if (sqlTxt.length > 0) {
+        tReq.constraints += (addAnd ? ' AND ' : '') + validateSql(sqlTxt);
+    }
+
+    const colsSearched = sql.selcols.lastIndexOf(',') > 0 ? sql.selcols.substring(0, sql.selcols.lastIndexOf(',')) : sql.selcols;
+    if (colsSearched.length > 0) {
+        tReq.selcols = colsSearched;
+    }
+
+    return tReq;
+}
+
+function doImage(request, imgPart) {
+    const {cattable} = request[gkey] || {};
+    const spatial =  get(imgPart, ['spatial', 'value']);
+    const intersect = get(imgPart, ['intersect', 'value']);
+    const size = (intersect !== 'CENTER') ? get(imgPart, ['size', 'value']) : '0';
+    const sizeUnit = 'deg';
+    const wp = get(imgPart, [ServerParams.USER_TARGET_WORLD_PT,'value']);
+
+    var title = `${projectName}-${cattable}`;
+    var tReq = {};
+
+    tReq = makeLsstCatalogRequest(title, projectName, cattable,
+                                      {[ServerParams.USER_TARGET_WORLD_PT]: wp,
+                                       intersect,
+                                       size,
+                                       sizeUnit,
+                                       SearchMethod: spatial},
+                                       {use: 'lsst_image'});
+
+
+    tReq = addConstraintToQuery(tReq);
+    console.log('final request: ' + JSON.stringify(tReq));
+    dispatchTableSearch(tReq);
+}
+
 /**
  * @summary catalog search
  * @param {Object} request
+ * @param {Object} spatPart
  */
-function doCatalog(request) {
+function doCatalog(request, spatPart) {
 
     const catPart = request[gkey];
-    const spatPart = request[gkeySpatial];
-    const {project, cattable} = catPart;
-    const {spatial, conesize} = spatPart;
+    const {cattable} = catPart;
+    const spatial =  get(spatPart, ['spatial', 'value']);
+    const conesize = get(spatPart, ['conesize', 'value']);
+    const wp = get(spatPart, [ServerParams.USER_TARGET_WORLD_PT,'value']);
     const sizeUnit = 'deg';
 
     var title = `${projectName}-${catPart.cattable}`;
-    var tReq = {};
+    var tReq;
 
     if (spatial === SpatialMethod.get('Multi-Object').value) {
         var filename = catPart.fileUpload;
 
-        tReq = makeLsstCatalogRequest(title, project, cattable, {
+        tReq = makeLsstCatalogRequest(title, projectName, cattable, {
             filename,
             radius: conesize,
             sizeUnit,
@@ -178,7 +300,7 @@ function doCatalog(request) {
         }
         title += ')';
 
-        tReq = makeLsstCatalogRequest(title, project, cattable, {
+        tReq = makeLsstCatalogRequest(title, projectName, cattable, {
             SearchMethod: spatial
         });
     }
@@ -187,8 +309,8 @@ function doCatalog(request) {
     // plus change spatial name to cone
     if (spatial === SpatialMethod.Elliptical.value) {
 
-        const pa = get(spatPart, 'posangle', 0);
-        const ar = get(spatPart, 'axialratio', 0.26);
+        const pa = get(spatPart, ['posangle', 'value'], 0);
+        const ar = get(spatPart, ['axialratio', 'value'], 0.26);
 
         // see PA and RATIO string values in edu.caltech.ipac.firefly.server.catquery.GatorQuery
         merge(tReq, {'posang': pa, 'ratio': ar});
@@ -197,7 +319,7 @@ function doCatalog(request) {
     if (spatial === SpatialMethod.Cone.value ||
         spatial === SpatialMethod.Box.value ||
         spatial === SpatialMethod.Elliptical.value) {
-        merge(tReq, {[ServerParams.USER_TARGET_WORLD_PT]: spatPart[ServerParams.USER_TARGET_WORLD_PT]});
+        merge(tReq, {[ServerParams.USER_TARGET_WORLD_PT]: wp});
         if (spatial === SpatialMethod.Box.value) {
             tReq.size = conesize;
         } else {
@@ -208,26 +330,7 @@ function doCatalog(request) {
         tReq.polygon = spatPart.polygoncoords;
     }
 
-    const {tableconstraints, txtareasql} = FieldGroupUtils.getGroupFields(gkey);
-    const sql = tableconstraints.value;
-
-    tReq.constraints = '';
-    let addAnd = false;
-
-    if (sql.constraints.length > 0) {
-        tReq.constraints += sql.constraints;
-        addAnd = true;
-    }
-
-    const sqlTxt = txtareasql.value.trim();
-    if (sqlTxt.length > 0) {
-        tReq.constraints += (addAnd ? ' AND ' : '') + validateSql(sqlTxt);
-    }
-
-    const colsSearched = sql.selcols.lastIndexOf(',') > 0 ? sql.selcols.substring(0, sql.selcols.lastIndexOf(',')) : sql.selcols;
-    if (colsSearched.length > 0) {
-        tReq.selcols = colsSearched;
-    }
+    tReq = addConstraintToQuery(tReq);
 
     console.log('final request: ' + JSON.stringify(tReq));
     dispatchTableSearch(tReq);
@@ -253,14 +356,21 @@ class LSSTCatalogSelectView extends Component {
     constructor(props) {
         super(props);
         if (!isEmpty(catmaster)) {
-            this.state = {master: {catmaster, cols}};
+            this.state = {master: {catmaster}};
         } else {
             this.state = {master: {}};
         }
+
+    }
+
+    shouldComponentUpdate(np,ns) {
+        return sCompare(this, np, ns);
     }
 
     componentWillMount() {
-        if (isEmpty(catmaster)) {
+        var idx = catmaster.findIndex((m) => m.project === LSSTMaster.project);
+
+        if (idx === -1) {
             this.loadMasterCatalogTable();
         }
     }
@@ -268,40 +378,13 @@ class LSSTCatalogSelectView extends Component {
     /**
      * Fetch master catalog table with search id = 'lsstCatalogMasterTable'
      * set the project name lsst.
-     * result is set in the state as 'master' object {catmaster, cols}
+     * result is set in the state as 'master' object {catmaster}
      * @see setMaster
      * @returns {Object} fetch master table and once fetched, set state with it
      */
-    loadMasterCatalogTable() {    //TODO send the request to the server and fill out catmaster
-
-
-        //const request = {id: 'lsstCatalogMasterTable'}; //Fetch master table
-        var project = projectName;
-        var catalogs = [
-                {
-                    label: 'Deep Source',
-                    value: 'RunDeepSource',
-                    cat: []
-                },
-                {
-                    label: 'Deep Forced Source',
-                    value: 'RunDeepForcedSource',       //TODO: temporary hard code of catalog name
-                    cat:[]
-                },
-                {
-                    label: 'Science CCD Exposure',
-                    value: 'Science_Ccd_Exposure',
-                    cat: []
-                },
-                {
-                    label: 'Deep Coadd',
-                    value: 'DeepCoadd',
-                    cat: []
-                }
-        ];
-
-        catmaster.push({  project, catalogs });
-        this.setMaster({catmaster, cols});
+    loadMasterCatalogTable() {
+        catmaster.push(LSSTMaster);
+        this.setMaster({catmaster});
     }
 
     /**
@@ -319,6 +402,8 @@ class LSSTCatalogSelectView extends Component {
 
     render() {
         const {master={}} = this.state;
+        var  {cattable} = this.props;
+
         if (isEmpty(master)) {
             return (
                 <div style={{position: 'relative'}}>
@@ -327,9 +412,13 @@ class LSSTCatalogSelectView extends Component {
             );
         }
 
+
+        var tblId = getTblId((cattable ? cattable : getDefaultTable(master.catmaster, LSSTMaster.project)));
+
+        // pass cattable and master to  LsstCatalogDDList
         return (
             <FieldGroup groupKey={gkey}
-                        reducerFunc={userChangeLsstDispatch()}
+                        reducerFunc={userChangeLsstDispatch(tblId)}
                         keepState={true}>
                 <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs' resizable={true}>
                     <Tab name='Search Catalogs' id='catalogLsst'>
@@ -348,11 +437,11 @@ class LSSTCatalogSelectView extends Component {
  * @summary Reducer from field group component, should return updated catalog selection
  * @returns {Function} reducer to change fields when user interact with the dialog
  */
-var userChangeLsstDispatch = function () {
+var userChangeLsstDispatch = function (tblId) {
 
     return (inFields, action) => {
 
-        if (!inFields) return fieldInit();
+        if (!inFields) return fieldInit(tblId);
 
         switch (action.type) {
             // update the size field in case tab selection is changed
@@ -364,35 +453,55 @@ var userChangeLsstDispatch = function () {
                 if (fieldKey === 'targettry' || fieldKey === 'UserTargetWorldPt' || fieldKey === 'conesize' ) {  // image select panel
                     break;
                 }
-                const projName = inFields.project.value;
-                let currentCatValue = get(inFields, 'cattable.value', catmaster[0].catalogs[0].value);
-                const catTable = getCatalogs(catmaster, projName);
-                const currentIdx = getCatalogIndex(catTable, currentCatValue);
+                const projName = get(inFields, 'project.value');
+                if (!projName) break;
 
-                if (fieldKey === 'cattable') {
-                    let sizeFactor = 1;
-                    const method = get(inFields, 'spatial.value', SpatialMethod.Cone.value);
-                    if (method === SpatialMethod.Box.value) {
-                        sizeFactor = 2;
-                    }
+                var cattype = get(inFields, 'cattype.value');
+                var currentCat;
 
-                    // TODO: wait until catalog table is set
-                    const radius = get(catTable[currentIdx], ['cat', RADIUS_COL], 100);
-                    const coldef = get(catTable[currentIdx], ['cat', COLDEF1]) || get(catTable[currentIdx], ['cat', COLDEF2]) || "";
+                if (fieldKey === 'cattype') {
+                    currentCat = get(inFields, ['cattype', 'cattable', cattype]);
+                    inFields = updateMerge(inFields, 'cattable', {value: currentCat});
+                }  else {
+                    currentCat = get(inFields, 'cattable.value');
+                }
+                if (!currentCat) break;
 
-                    inFields = updateMerge(inFields, 'cattable', {
-                        value: currentCatValue,
-                        coldef
-                    });
+                var currentIdx = getCatalogIndex(catmaster, projName, currentCat);
+                if (currentIdx < 0) break;
+                var idstr = `${currentIdx}`;
+
+                if (fieldKey === 'cattable' || fieldKey === 'cattype') {
+                    const method = get(inFields, 'spatial.value',
+                                      (cattype === CATTYPE ? SpatialMethod.Cone.value : SpatialMethod.Box.value));
+                    var sizeFactor = (method === SpatialMethod.Box.value) ? 2: 1;
+                    const radius = getLSSTCatalogRadius(catmaster, currentCat);
+
                     inFields = updateMerge(inFields, 'conesize', {
                         max: sizeFactor * radius / 3600
                     });
 
-                    inFields = updateMerge(inFields, 'tableconstraints', {
-                        tbl_id: `${currentCatValue}-dd-table-constraint`
-                    });
+
+                    var tbl_id = getTblId(currentCat, '');
+                    if (tbl_id !== get(inFields, ['tableconstraints', 'tbl_id'])) {   // catalog changes
+
+                        if (fieldKey === 'cattable') {
+                            inFields = updateMerge(inFields, 'cattype.cattable',
+                                                   {[cattype]: currentCat});
+                        }
+                        inFields = updateMerge(inFields, 'cattable',
+                                        {coldef: get(inFields, ['cattable', 'coldefOptions', idstr])});
+                        inFields = updateMerge(inFields, 'tableconstraints', { tbl_id });
+                        inFields = updateMerge(inFields, 'tableconstraints',
+                                        {value: get(inFields, ['tableconstraints', 'options', idstr])});
+                        inFields = updateMerge(inFields, 'txtareasql',
+                                        {value: get(inFields, ['txtareasql', 'options', idstr])});
+
+                    }
+                } else if (fieldKey === 'tableconstraints' || fieldKey === 'txtareasql') {
+                    set(inFields, [fieldKey, 'options', idstr], get(inFields, [fieldKey, 'value']));
                 }
-                break;
+                 break;
             case FieldGroupCntlr.CHILD_GROUP_CHANGE:
                 //console.log('Child group change called...');
                 break;
@@ -411,30 +520,85 @@ var userChangeLsstDispatch = function () {
  * to ith columns in cols of master table and its value, i.e. ith = 0, 0:'WISE', where cols[0]=projectshort
  */
 function getCatalogs(catmaster, project) {
-    return catmaster.find((op) => {
+    return catmaster&&catmaster.find((op) => {
         return op.project === project;
     }).catalogs;
 }
 
-
 /**
- * @summary return the catalog index by given the catalog table name
- * @param {Object[]} catTab
- * @param {string} catVal
- * @returns {number} index of the catalog in the catalog array
+ * @summry get the default table value fromt the project's catalog list
+ * @param catmaster
+ * @param project
+ * @returns {string}
  */
-function getCatalogIndex(catTab, catVal) {
-    return catTab.findIndex((cat) => cat.value === catVal);
+function getDefaultTable(catmaster, project) {
+    var cats = getCatalogs(catmaster, project);
+
+    return cats ? cats[0].value : '';
 }
 
 /**
- * @summary component of the constraint table for catalog search
+ * @summary return the catalog index by given the catalog table name
+ * @param {Object[]} catmaster
+ * @param {string} project
+ * @param {string} catVal
+ * @returns {number} index of the catalog in the catalog array
+ */
+function getCatalogIndex(catmaster, project, catVal) {
+    var cats = getCatalogs(catmaster, project);
+
+    return cats ?  cats.findIndex((cat) => cat.value === catVal) : -1;
+}
+
+
+/**
+ * @summary  get catalog table type
+ * @param project
+ * @param catname
+ * @returns {number}
+ */
+function getTableType(project, catname) {
+    var cats = getCatalogs(catmaster, project);
+    var cat = cats&&cats.find((c) => (c.value === catname));
+
+    return cat ? cat.type : CATTYPE;
+}
+
+/**
+ * @summary get radius hint for the given table
+ * @param catmaster
+ * @param catName
+ * @returns {Number}
+ */
+function getLSSTCatalogRadius(catmaster, catName) {
+    const proj = get(FieldGroupUtils.getGroupFields(gkey), 'project.value', LSSTMaster.project);
+    var radius = 100;
+
+    catmaster.find((m) => {
+        if (m.project === proj) {
+            var catObj = m.catalogs.find((cat) => {
+                return cat.value === catName;
+            });
+
+            if (catObj) {
+                radius = get(catObj, ['cat', RADIUS_COL], radius);
+            }
+
+            return true;
+        } else {
+            return false;
+        }
+    });
+    return radius;
+}
+/**
+ * @summary component of the constraint table for catalog search, get 'cattable' and 'master' from the parent
  */
 class LsstCatalogDDList extends Component {
 
     constructor(props) {
         super(props);
-        this.state = Object.assign({...this.state}, {...this.props}, {optList: ''});
+        this.state = Object.assign({...this.props}, {optList: ''});
     }
 
     shouldComponentUpdate(np, ns) {
@@ -444,60 +608,90 @@ class LsstCatalogDDList extends Component {
 
     render() {
         const {catmaster} = this.state.master;
-        if (!catmaster) false;
+        if (!catmaster) return false;
 
-        const selProj = get(FieldGroupUtils.getGroupFields(gkey), 'project.value', catmaster[0].project);
-        const selCat =  get(FieldGroupUtils.getGroupFields(gkey), 'cattable.value', catmaster[0].catalogs[0].value);
-        const catTable = getCatalogs(catmaster, selProj);
-        const currentIdx = getCatalogIndex(catTable, selCat);
-        const radius = parseFloat(get(catTable[currentIdx], ['cat', RADIUS_COL], '100'));
-        const catPanelStyle = {height: 350};
+        var {cattable} = this.props;
+        if (!cattable) return false;
 
-        //TODO: re-examine the setting
-        const coneMax= radius / 3600;
-        const boxMax= coneMax*2;
+        var {cattype} = this.props;
+        if (!cattype) return false;
 
-        const polygonDefWhenPlot= get(getAppOptions(), 'catalogSpacialOp')==='polygonWhenPlotExist';
+        const spatialH = 300;
+        const spatialPanelStyle = {height: spatialH, width: 550, paddingLeft: 2, paddingRight: 2};
+        const catPanelStyle = {paddingLeft: 20, paddingRight: 20, height: spatialH, width: 200};
 
         var metadataSelector = () => {
-                var options = catTable.map(cat => {
-                    return {value: cat.value, label: cat.label}
+
+                var typeOptions = Object.keys(LSSTTableTypes).map((t) => {
+                        return {value: t, label: LSSTTableTypes[t]};
                 });
+
+                var options = LSSTMaster.catalogs.reduce((prev, cat) => {
+                    if (cat.type === cattype) {
+                        prev.push({value: cat.value, label: cat.label});
+                    }
+                    return prev;
+                }, []);
 
                 return (
                     <div className='ddselectors' style={catPanelStyle}>
                         <RadioGroupInputField
+                            inlin={false}
+                            initialState={{fieldKey: 'cattype'}}
+                            fieldKey='cattype'
+                            options={typeOptions}
+                        />
+
+
+                        <RadioGroupInputField
                             inline={false}
                             initialState={{value: 'lsst cat table name 1',
                                            fieldKey: 'cattable'}}
-                            label={`${projectName} Catalogs`}
-                            labelWidth={200}
                             alignment={'vertical'}
                             fieldKey='cattable'
                             options={options}
+                            tooltip={`${projectName} table types`}
+                            wrapperStyle={{marginLeft: 15, marginTop: 10}}
                         />
                      </div>
                 )
+        };
+
+        var searchMethod = () => {
+            var method;
+
+            if (cattype === CATTYPE) {
+                const radius = getLSSTCatalogRadius(catmaster, cattable);
+                const coneMax = radius / 3600;
+                const boxMax = coneMax * 2;
+                const polygonDefWhenPlot = get(getAppOptions(), 'catalogSpacialOp') === 'polygonWhenPlotExist';
+
+                method = <CatalogSearchMethodType groupKey={gkeySpatial} polygonDefWhenPlot={polygonDefWhenPlot}
+                                                  coneMax={coneMax} boxMax={boxMax}/>;
+            } else {
+                method = <LSSTImageSpatialType groupKey={gkeyImageSpatial} />
+            }
+
+            return (<div className='spatialsearch' style={spatialPanelStyle}>
+                     {method}
+                    </div>);
         };
 
         return (
             <div>
                 <div className='catalogpanel'>
                     {metadataSelector()}
-                    <div className='spatialsearch' style={catPanelStyle}>
-                        <CatalogSearchMethodType groupKey={gkeySpatial} polygonDefWhenPlot={polygonDefWhenPlot}
-                                                 coneMax={coneMax} boxMax={boxMax}/>
-                    </div>
+                    {searchMethod()}
                 </div>
                 <div className='ddtable'>
                     <CatalogConstraintsPanel fieldKey={'tableconstraints'}
                                              constraintskey={constraintskey}
-                                             catname={selCat}
+                                             catname={cattable}
                                              showFormType={false}
                                              processId={LSSTDDPID}
                                              groupKey={gkey}
                                              createDDRequest={()=>{
-                                                return {id: LSSTDDPID, table_name: selCat};
+                                                return {id: LSSTDDPID, table_name: cattable};
                                              }}
                     />
                 </div>
@@ -509,15 +703,6 @@ class LsstCatalogDDList extends Component {
         );
     }
 }
-
-LSSTCatalogSelectViewPanel.propTypes = {
-    name: PropTypes.oneOf([dropdownName])
-};
-
-LSSTCatalogSelectViewPanel.defaultProps = {
-    name: dropdownName
-};
-
 
 /**
  * @summary component for loading catalog file
@@ -549,29 +734,45 @@ CatalogLoad.propTypes = {};
 /*
  Define fields init and per action
  */
-function fieldInit() {
+function fieldInit(tblId) {
+    var constraintV = LSSTMaster.catalogs.map((t) =>  ({constraints: '', selcols: '', filters: undefined}));
+    var catOptions = LSSTMaster.catalogs.map((t) => (t.value));
+    var sqlValues = LSSTMaster.catalogs.map((t) => (''));
+    var coldefList = LSSTMaster.catalogs.map((t) => (get(t, ['cat', COLDEF1]) || get(t, ['cat', COLDEF2]) || ""));
+
     return (
         {
             'project': {
                 fieldKey: 'project',
-                label: projectName,
+                label: LSSTMaster.project,
                 value: projectName,
                 labelWidth: '100'
             },
+            'cattype': {
+                fieldKey: 'cattype',
+                value: LSSTMaster.catalogs[0].type,
+                cattable: [LSSTMaster.catalogs[defCatalog].value, LSSTMaster.catalogs[defImage].value]
+            },
             'cattable': {
                 fieldKey: 'cattable',
-                value: catmaster[0].catalogs[0].value,
-                coldef: ''
+                value: LSSTMaster.catalogs[0].value,
+                coldef: coldefList[0],
+                options: catOptions,
+                coldefOptions: coldefList
             },
             'tableconstraints': {
                 fieldKey: 'tableconstraints',
-                value: {constraints: '', selcols: '', filters: {}},
-                tbl_id: ''
+                value: constraintV[0],
+                tbl_id:  tblId,
+                options: constraintV
             },
             'txtareasql': {
                 fieldKey: 'txtareasql',
-                value: ''
+                value: sqlValues[0],
+                options: sqlValues
             }
         }
     );
 }
+
+

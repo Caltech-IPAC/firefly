@@ -110,7 +110,7 @@ export const jsonRequest= function(baseUrl, cmd, paramList, doPost) {
  * @param paramList
  * @param doPost
  */
-export const doJsonRequest= function(cmd, paramList, doPost=false) {
+export const doJsonRequest= function(cmd, paramList, doPost=true) {
     return jsonRequest(DEF_BASE_URL, cmd, paramList, doPost);
 };
 

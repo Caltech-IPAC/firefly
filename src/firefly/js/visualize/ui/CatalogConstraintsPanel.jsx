@@ -4,7 +4,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {isEmpty, get, merge, isNil, isArray, cloneDeep, set, has} from 'lodash';
+import {isEmpty, get, merge, isNil, isArray, cloneDeep, set, has, isUndefined} from 'lodash';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {fetchTable} from '../../rpc/SearchServicesJson.js';
@@ -30,7 +30,7 @@ function makeFormType(showForm, short_dd) {
     return  !showForm ? '' : (isNil(short_dd) ? 'short' : (short_dd === 'true' ? 'short' : 'long'));
 }
 
-function getTblId(catName, dd_short) {
+export function getTblId(catName, dd_short) {
     return `${catName}${dd_short ? '-' : ''}${dd_short}-dd-table-constraint`;
 }
 
@@ -64,7 +64,7 @@ export class CatalogConstraintsPanel extends React.Component {
         return sCompare(this, np, ns);
     }
 
-    componentDidMount() {
+    componentWillMount() {
         const {catname, createDDRequest, dd_short, showFormType = true} = this.props;
         this.fetchDD(catname, makeFormType(showFormType, dd_short), createDDRequest, true); //short form as default
     }
@@ -75,8 +75,8 @@ export class CatalogConstraintsPanel extends React.Component {
         if (np.processId !== this.props.processId) {
             this.fetchDD(np.catname, ddShort, np.createDDRequest, true);
         } else if (np.catname !== this.props.catname || np.dd_short !== this.props.dd_short) {
-            this.fetchDD(np.catname, ddShort, np.createDDRequest);
-        } else if (this.state.tableModel) {
+            this.fetchDD(np.catname, ddShort, np.createDDRequest, true);   //column selection or constraint needs update
+        } else if (this.state.tableModel) {      // TODO: when will this case happen
             var tblid = np.tbl_id ? np.tbl_id : getTblId(np.catname, ddShort);
             if (tblid !== this.state.tableModel.tbl_id) {
                 const tableModel = getTblById(tblid);
@@ -99,6 +99,7 @@ export class CatalogConstraintsPanel extends React.Component {
                 </button>
             );
         };
+
         var formTypeList = () => {
                 return (
                    <ListBoxInputField fieldKey={'ddform'} inline={true} labelWidth={0}
@@ -159,31 +160,31 @@ export class CatalogConstraintsPanel extends React.Component {
         //// Check if it exists already - fieldgroup has a keepState property but
         //// here we are not using the table as a fieldgroup per se so we need to cache the column restrictions changes
         const tbl = getTblById(tblid);
+
         if (tbl && !clearSelections) {
             this.setState({tableModel: tbl});
             return;
         }
 
         const request = createDDRequest(); //Fetch DD master table
-        const urlDef = get(FieldGroupUtils.getGroupFields(this.props.groupKey), 'cattable.coldef', 'null');
+        const urlDef = get(FieldGroupUtils.getGroupFields(this.props.groupKey), ['cattable', 'coldef'], 'null');
 
-        console.log('fetch DD: ' + JSON.stringify(request));
-
+        //console.log('fetch DD: ' + JSON.stringify(request));
         fetchTable(request).then((tableModel) => {
             const tableModelFetched = tableModel;
+
             tableModelFetched.tbl_id = tblid;
             addConstraintColumn(tableModelFetched, this.props.groupKey);
             addColumnDef(tableModelFetched, urlDef);
-            //hideColumns(tableModelFetched);
-            setRowsChecked(tableModelFetched,  this.props.groupKey);
+            setRowsChecked(tableModelFetched, this.props.groupKey);
 
-            updateColumnWidth(tableModelFetched,  ['description', 'Description'], -1);
+            updateColumnWidth(tableModelFetched, ['description', 'Description'], -1);
             updateColumnWidth(tableModelFetched, ['name', 'Name', 'Field', 'field'], -1);
 
             TblCntlr.dispatchTableReplace(tableModel);
             this.setState({tableModel: tableModelFetched});
         }).catch((reason) => {
-                console.log(reason.message);
+                //console.log(reason.message);
                 const errTable = TblUtil.createErrorTbl(tblid, `Catalog Fetch Error: ${reason.message}`);
 
                 TblCntlr.dispatchTableReplace(errTable);
@@ -302,7 +303,7 @@ function addColumnDef(tableModelFetched, urlDef) {
  */
 function addConstraintColumn(tableModelFetched, gkey) {
     const idxSqlCol = sqlConstraintsCol.idx; // after 'name' column
-    var   filterStatus = get(FieldGroupUtils.getGroupFields(gkey), 'tableconstraints.value.filters', {});
+    const filterStatus = get(FieldGroupUtils.getGroupFields(gkey), ['tableconstraints', 'value', 'filters'], {});
 
     tableModelFetched.tableData.columns.splice(idxSqlCol, 0, {...sqlConstraintsCol});
     tableModelFetched.tableData.data.map((e) => {
@@ -358,8 +359,7 @@ class ConstraintPanel extends Component {
         this.newInputCell = createInputCell(FILTER_TTIPS,
             15,
             FilterInfo.conditionValidatorNoAutoCorrect,
-            //null,
-            this.props.onTableChanged);
+            this.props.onTableChanged, {width: '100%', boxSizing: 'border-box'});
     }
 
     render() {
@@ -369,9 +369,6 @@ class ConstraintPanel extends Component {
         const {columns, data} = get(tbl, 'tableData', {});
         const selectInfoCls = has(tbl, 'selectInfo') && SelectInfo.newInstance(tbl.selectInfo, 0);
         const totalCol = columns ? (columns.length-1) : 0;
-
-        //const {tableconstraints} = FieldGroupUtils.getGroupFields(groupKey);
-        //console.log('constraint: ' + tableconstraints.value.constraints + ' errorConstraints: ' + tableconstraints.value.errorConstraints);
 
         return (
 
@@ -389,7 +386,6 @@ class ConstraintPanel extends Component {
                                     selectInfoCls={selectInfoCls}
                                     selectable={true}
                                     currentPage={1}
-                                    hlRowIdx={0}
                                     key={tableModel.tbl_id}
                                     error={tableModel.error}
                                     callbacks={
@@ -465,10 +461,6 @@ function handleOnTableChanged(params, fireValueChange) {
     const {tbl_id} = params.tableModel;
     const tbl = getTblById(tbl_id);
 
-
-
-
-
     if (!tbl) return;
 
     const tbl_data = tbl.tableData.data;
@@ -499,17 +491,24 @@ function handleOnTableChanged(params, fireValueChange) {
     });
 
     // collect the column name of all selected column
+    var allSelected = true;
+
     let selCols = tbl_data.reduce((prev, d, idx) => {
             if ((sel_info.selectAll && (!sel_info.exceptions.has(idx))) ||
                 (!sel_info.selectAll && (sel_info.exceptions.has(idx)))) {
                 prev += d[0] + ',';
+            } else {
+                allSelected = false;
             }
             return prev;
         }, '');
 
     if (isEmpty(selCols)) {
         errors = 'Invalid selection: no column is selected';
+    } else if (allSelected) {
+        selCols = '';
     }
+
 
 
     // the value of this input field is a string
@@ -525,7 +524,7 @@ function handleOnTableChanged(params, fireValueChange) {
 
     if (val.constraints !== sqlTxt || val.selcols !== selCols || errors !== val.errorConstraints) {
         fireValueChange({
-            value: {constraints: sqlTxt, selcols: selCols, errorConstraints: errors, filters}
+            value:  {constraints: sqlTxt, selcols: selCols, errorConstraints: errors, filters}
         });
     }
 }
@@ -590,6 +589,7 @@ function renderSqlArea() {
         </div>
     );
 }
+
 
 /*
 const sqlValidator = (val) => {
