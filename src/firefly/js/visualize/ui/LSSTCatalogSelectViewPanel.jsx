@@ -4,7 +4,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import { get,set, merge, isEmpty, isArray, isNil} from 'lodash';
+import { get,set, merge, isEmpty, isArray, isNil, capitalize} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {FormPanel} from '../../ui/FormPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -250,7 +250,7 @@ function doImage(request, imgPart) {
     const sizeUnit = 'deg';
     const wp = get(imgPart, [ServerParams.USER_TARGET_WORLD_PT,'value']);
 
-    var title = `${projectName}-${cattable}`;
+    var title = `${projectName}-${cattable}-${capitalize(intersect)}`;
     var tReq = {};
 
     tReq = makeLsstCatalogRequest(title, projectName, cattable,
