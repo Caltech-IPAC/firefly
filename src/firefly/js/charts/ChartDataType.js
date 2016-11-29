@@ -12,7 +12,7 @@ import {logError} from '../util/WebUtil.js';
  * @prop {string} id - unique chart data type id
  * @prop {Function} fetchData - function to load chart data element data: fetchData(dispatch, chartId, chartDataElementId)
  * @prop {Function} fetchParamsChanged - function to determine if fetch is necessary: fetchParamsChanged(oldOptions, newOptions)
- * @prop {Function} getUpdatedOptions - function to resolve the options, which depend on table or chart data getUpdatedOptions(options, tblId, data, meta)
+ * @prop {Function} [getUpdatedOptions=undefined] - function to resolve the options, which depend on table or chart data getUpdatedOptions(options, tblId, data, meta)
  * @prop {boolean} [fetchOnTblSort=true] - if false, don't re-fetch data on tbl sort
  */
 

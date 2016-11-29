@@ -311,6 +311,9 @@ function doChartDataFetch(dispatch, payload, getChartDataType) {
  * @param payload.chartId
  * @param payload.chartDataElementId
  * @param payload.isDataReady
+ * @param payload.error
+ * @param payload.error.message
+ * @param payload.error.reason
  * @param payload.data
  * @param [payload.options]
  * @param [payload.meta]
@@ -520,6 +523,25 @@ export function getChartData(chartId) {
 
 export function getChartDataElement(chartId, chartDataElementId=FIRST_CDEL_ID) {
     return get(flux.getState(), [CHART_SPACE_PATH, 'data', chartId, 'chartDataElements', chartDataElementId]);
+}
+
+/**
+ * Get error object associated with the given chart data element
+ * @param chartId
+ * @returns {Array<{message:string, reason:object}>} an array of error objects
+ */
+export function getErrors(chartId) {
+    const chartDataElements = get(flux.getState(), [CHART_SPACE_PATH, 'data', chartId, 'chartDataElements']);
+    const errors = [];
+    if (chartDataElements) {
+        Object.keys(chartDataElements).forEach((id) => {
+            const error = chartDataElements[id].error;
+            if (error) {
+                errors.push(error);
+            }
+        });
+    }
+    return errors;
 }
 
 export function getExpandedChartProps() {
