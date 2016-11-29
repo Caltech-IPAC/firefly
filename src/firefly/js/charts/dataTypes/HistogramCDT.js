@@ -161,6 +161,7 @@ function fetchColData(dispatch, chartId, chartDataElementId) {
                     chartId,
                     chartDataElementId,
                     isDataReady: true,
+                    error: undefined,
                     options : histogramParams,
                     data: histogramData,
                     meta: {tblSource}
@@ -168,7 +169,16 @@ function fetchColData(dispatch, chartId, chartDataElementId) {
         }
     ).catch(
         (reason) => {
-            console.error(`Failed to fetch histogram data: ${reason}`);
+            const message = 'Failed to fetch histogram data';
+            logError(`${message}: ${reason}`);
+            dispatch(chartDataUpdate(
+                {
+                    chartId,
+                    chartDataElementId,
+                    isDataReady: true,
+                    error: {message, reason},
+                    data: undefined
+                }));
         }
     );
 }

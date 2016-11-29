@@ -8,7 +8,8 @@ import {updateSet, logError} from '../../util/WebUtil.js';
 import {get, omitBy, isEmpty, isString, isUndefined} from 'lodash';
 
 import {MetaConst} from '../../data/MetaConst.js';
-import {doFetchTable, getColumn, getTblById, isFullyLoaded, cloneRequest} from '../../tables/TableUtil.js';
+import {fetchTable} from '../../rpc/SearchServicesJson.js';
+import {getColumn, getTblById, isFullyLoaded, cloneRequest} from '../../tables/TableUtil.js';
 
 import {getChartDataElement, dispatchChartAdd, dispatchChartOptionsUpdate, chartDataUpdate} from './../ChartsCntlr.js';
 import {colWithName, getNumericCols, SCATTER} from './../ChartUtil.js';
@@ -325,7 +326,7 @@ function fetchPlotData(dispatch, chartId, chartDataElementId) {
         });
     req.tbl_id = `xy-${chartId}`;
 
-    doFetchTable(req).then(
+    fetchTable(req).then(
         (tableModel) => {
 
             // make sure we only save the data from the latest fetch
@@ -369,6 +370,7 @@ function fetchPlotData(dispatch, chartId, chartDataElementId) {
                     chartId,
                     chartDataElementId,
                     isDataReady: true,
+                    error: undefined,
                     options: getUpdatedParams(xyPlotParams, tblId, xyPlotData),
                     data: xyPlotData,
                     meta: {tblSource, decimatedUnzoomed}
@@ -376,7 +378,16 @@ function fetchPlotData(dispatch, chartId, chartDataElementId) {
         }
     ).catch(
         (reason) => {
-            logError(`Failed to fetch XY plot data: ${reason}`);
+            const message = 'Failed to fetch XY plot data';
+            logError(`${message}: ${reason}`);
+            dispatch(chartDataUpdate(
+                {
+                    chartId,
+                    chartDataElementId,
+                    isDataReady: true,
+                    error: {message, reason},
+                    data: undefined
+                }));
         }
     );
 
