@@ -15,6 +15,24 @@ import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 
 
 const DAX_URL= 'http://lsst-qserv-dax01.ncsa.illinois.edu:5000';
+const bandMap= {u:0, g:1,r:2,i:3, z:4};
+
+
+
+
+function makeUrlPlotRequest(url, title, plotId, rangeValues) {
+    const r= WebPlotRequest.makeURLPlotRequest(url);
+    r.setTitleOptions(TitleOptions.NONE);
+    r.setTitle(title);
+    r.setPlotId(plotId);
+    r.setMultiImageIdx(0);
+    r.setPreferenceColorKey('lsst-sdss-color-pref');
+    r.setZoomType(ZoomType.TO_WIDTH);
+    r.setInitialRangeValues(rangeValues);
+    return r;
+
+}
+
 
 
 function makeCcdReqBuilder(table, rowIdx) {
@@ -31,15 +49,21 @@ function makeCcdReqBuilder(table, rowIdx) {
         // const objId= `${run}${filterId}${camcol}${field}`;
         // const url= `http://lsst-qserv-dax01.ncsa.illinois.edu:5000/image/v0/calexp/id?id=${objId}`;
         const url= `${baseUrl}?run=${run}&camcol=${camcol}&field=${field}&filter=${filterName}`;
-        const r= WebPlotRequest.makeURLPlotRequest(url);
-        r.setTitleOptions(TitleOptions.NONE);
-        r.setTitle(title);
-        r.setPlotId(plotId);
-        r.setMultiImageIdx(0);
-        r.setPreferenceColorKey('lsst-sdss-color-pref');
-        r.setZoomType(ZoomType.TO_WIDTH);
-        r.setInitialRangeValues(rangeValues);
-        return r;
+        return makeUrlPlotRequest(url, title, plotId, rangeValues);
+    };
+}
+
+function makeCoaddReqBuilder(table, rowIdx) {
+    const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
+    const coaddId= Number(getCellValue(table, rowIdx, 'deepCoaddId'));
+    const coaddIdBase= coaddId - (coaddId % 8);
+
+    const baseUrl= `${DAX_URL}/image/v0/deepCoadd/id`;
+
+    return (plotId, title, filterName) => {
+
+        const url= `${baseUrl}?id=${coaddIdBase+bandMap[filterName]}`;
+        return makeUrlPlotRequest(url,title, plotId, rangeValues);
     };
 }
 
@@ -54,14 +78,14 @@ function makeCcdReqBuilder(table, rowIdx) {
  */
 export function makeLsstSdssPlotRequest(table, row, includeSingle, includeStandard, threeColorOps) {
 
-    const bandMap= {u:'0', g:'1',r:'2',i:'3', z:'4'};
     const retval= {};
     var builder;
     if (getCellValue(table, row, 'scienceCcdExposureId')) {
         builder= makeCcdReqBuilder(table,row);
     }
     else {
-        return {single:null, standard:[]};
+        builder= makeCoaddReqBuilder(table,row);
+        //return {single:null, standard:[]};
     }
     const filterId= Number(getCellValue(table, row, 'filterId'));
     const filterName= getCellValue(table, row, 'filterName');

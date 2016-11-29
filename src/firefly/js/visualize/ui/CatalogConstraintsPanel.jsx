@@ -56,6 +56,7 @@ export class CatalogConstraintsPanel extends React.Component {
         this.state = {};
         this.fetchDD = this.fetchDD.bind(this);
         this.resetTable = this.resetTable.bind(this);
+        this.afterFetchDD = this.afterFetchDD.bind(this);
     }
 
     //shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
@@ -64,24 +65,35 @@ export class CatalogConstraintsPanel extends React.Component {
         return sCompare(this, np, ns);
     }
 
-    componentWillMount() {
+    componentWillUnmount() {
+        this.iAmMounted = false;
+    }
+
+    componentDidMount() {
+        this.iAmMounted = true;
         const {catname, createDDRequest, dd_short, showFormType = true} = this.props;
-        this.fetchDD(catname, makeFormType(showFormType, dd_short), createDDRequest, true); //short form as default
+
+        this.fetchDD(catname, makeFormType(showFormType, dd_short), createDDRequest, true, this.afterFetchDD); //short form as default
     }
 
     componentWillReceiveProps(np) {
         var ddShort = makeFormType(np.showFormType, np.dd_short);
 
         if (np.processId !== this.props.processId) {
-            this.fetchDD(np.catname, ddShort, np.createDDRequest, true);
+            this.fetchDD(np.catname, ddShort, np.createDDRequest, true, this.afterFetchDD);
         } else if (np.catname !== this.props.catname || np.dd_short !== this.props.dd_short) {
-            this.fetchDD(np.catname, ddShort, np.createDDRequest, true);   //column selection or constraint needs update
+            this.fetchDD(np.catname, ddShort, np.createDDRequest, true, this.afterFetchDD);   //column selection or constraint needs update
         } else if (this.state.tableModel) {      // TODO: when will this case happen
             var tblid = np.tbl_id ? np.tbl_id : getTblId(np.catname, ddShort);
             if (tblid !== this.state.tableModel.tbl_id) {
-                const tableModel = getTblById(tblid);
-                this.setState({tableModel});
+                this.afterFetchDD({tableModel: getTblById(tblid)});
             }
+        }
+    }
+
+    afterFetchDD(updateState) {
+        if (this && this.iAmMounted) {
+            this.setState(updateState);
         }
     }
 
@@ -143,7 +155,7 @@ export class CatalogConstraintsPanel extends React.Component {
 
     resetTable(catName, dd_short, createDDRequest, groupKey, fieldKey) {
         resetConstraints(groupKey, fieldKey);
-        this.fetchDD(catName, dd_short, createDDRequest, true);
+        this.fetchDD(catName, dd_short, createDDRequest, true, this.afterFetchDD);
     }
 
     /**
@@ -153,16 +165,16 @@ export class CatalogConstraintsPanel extends React.Component {
      * @param {function} createDDRequest
      * @param {boolean} clearSelections
      */
-    fetchDD(catName, dd_short, createDDRequest, clearSelections = false) {
+    fetchDD(catName, dd_short, createDDRequest, clearSelections = false, afterFetch) {
 
         var tblid = getTblId(catName, dd_short);
 
         //// Check if it exists already - fieldgroup has a keepState property but
         //// here we are not using the table as a fieldgroup per se so we need to cache the column restrictions changes
-        const tbl = getTblById(tblid);
+        var tbl = getTblById(tblid);
 
         if (tbl && !clearSelections) {
-            this.setState({tableModel: tbl});
+            afterFetch&&afterFetch({tableModel: tbl});
             return;
         }
 
@@ -182,13 +194,13 @@ export class CatalogConstraintsPanel extends React.Component {
             updateColumnWidth(tableModelFetched, ['name', 'Name', 'Field', 'field'], -1);
 
             TblCntlr.dispatchTableReplace(tableModel);
-            this.setState({tableModel: tableModelFetched});
+            afterFetch&&afterFetch({tableModel: tableModelFetched});
         }).catch((reason) => {
                 //console.log(reason.message);
                 const errTable = TblUtil.createErrorTbl(tblid, `Catalog Fetch Error: ${reason.message}`);
 
                 TblCntlr.dispatchTableReplace(errTable);
-                this.setState({tableModel: errTable});
+                afterFetch&&afterFetch({tableModel: errTable});
             }
         );
     }
