@@ -92,9 +92,6 @@ export function* watchCoverage({viewerId, options= {}}) {
                                   MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED, 
                                   MultiViewCntlr.VIEWER_UNMOUNTED]);
         
-        if (!getViewerItemIds(getMultiViewRoot(),viewerId).includes(PLOT_ID))  {
-            dispatchAddViewerItems(viewerId,[PLOT_ID],IMAGE);
-        }
 
         if (paused && (action.type!==MultiViewCntlr.VIEWER_MOUNTED && action.type!==MultiViewCntlr.ADD_VIEWER) )  {
             continue;
@@ -242,6 +239,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     else {
         dispatchPlotImage({
                 wpRequest,
+                viewerId,
                 attributes: {
                     [COVERAGE_TARGET]: centralPoint,
                     [COVERAGE_RADIUS]: maxRadius,
