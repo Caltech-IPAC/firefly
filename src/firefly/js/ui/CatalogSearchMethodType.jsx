@@ -385,13 +385,16 @@ function searchMethodTypeReducer(inFields, action) {
 
             if (pv && (cornerCalcV==='image' || cornerCalcV==='viewport' || cornerCalcV==='area-selection')) {
                 const plot = primePlot(pv);
-                const sel= plot.attributes[PlotAttribute.SELECTION];
-                if (!sel && cornerCalcV==='area-selection') {
-                    rFields.imageCornerCalc= clone(inFields.imageCornerCalc, {value:'image'});
+
+                if (plot) {
+                    const sel = plot.attributes[PlotAttribute.SELECTION];
+                    if (!sel && cornerCalcV === 'area-selection') {
+                        rFields.imageCornerCalc = clone(inFields.imageCornerCalc, {value: 'image'});
+                    }
+                    const {value:cornerCalcV}= rFields.imageCornerCalc;
+                    const v = calcCornerString(pv, cornerCalcV);
+                    rFields.polygoncoords = clone(inFields.polygoncoords, {value: v});
                 }
-                const {value:cornerCalcV}= rFields.imageCornerCalc;
-                const v= calcCornerString(pv,cornerCalcV);
-                rFields.polygoncoords= clone(inFields.polygoncoords, {value:v});
             }
         }
         return rFields;
