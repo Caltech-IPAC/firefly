@@ -231,7 +231,7 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
         if (!isEmpty(plotThreeReqAry)) {
             dispatchPlotImage(
                 {
-                    plotId:threeCPlotId, wpRequest:plotThreeReqAry, threeColor:true,
+                    plotId:threeCPlotId, viewerId, wpRequest:plotThreeReqAry, threeColor:true,
                                pvOptions: {userCanDeletePlots: true, menuItemKeys:{imageSelect : false}}
                 });
         }

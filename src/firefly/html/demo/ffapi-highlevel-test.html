@@ -32,6 +32,9 @@
     <a href="javascript:firefly.action.dispatchZoom({plotId: 'xxq',userZoomType:'DOWN' ,dispatcher:window.ffViewer.dispatch})">down</a>
 </div>
 <div>
+    <a href='../../firefly/;a=ImagePlotCntlr.PlotImage?wpRequest={%20%22File%22:%20%22http://ned.ipac.caltech.edu/img/1988MNRAS.230..345N/ARP_220:I:6cm:n1988.fits.gz%22,%20%22URL%22:%20%22http://ned.ipac.caltech.edu/img/1988MNRAS.230..345N/ARP_220:I:6cm:n1988.fits.gz%22,%20%22RangeValues%22:%20%2292,-2,92,8,1,0,1,2,44,25,600,120%22,%20%22PostTitle%22:%20%22ARP%20220%22,%20%22TitleFilenameModePfx%22:%20%22cutout%22,%20%22ColorTable%22:%201,%20%22TitleOptions%22:%20%22FILE_NAME%22,%20%22Type%22:%20%22TRY_FILE_THEN_URL%22%20}'>Show Fits by URL</a>
+</div>
+<div>
     <div id="imageViewHere" style="display: inline-block; width: 550px; height: 550px; margin: 10px;"></div>
     <div id="coverageHere" style="display: inline-block; width: 400px; height: 400px; margin: 10px;"></div>
 </div>
@@ -58,17 +61,6 @@
     <div id="histogram1" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
     <div id="histogram2" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white; position: absolute"></div>
 </div>
-<div>Tables from deprecated API calls:</div>
-<div>
-    <div id="oldSelectable" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
-    <div id="oldBasic" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white; position: absolute"></div>
-</div>
-<div>Deprecated API plot:</div>
-<div>
-    <div id="oldXyPlot1" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
-</div>
-<div id="old1" style="width: 300px; height: 300px; margin: 10px;"></div>
-<div id="old2" style="width: 300px; height: 300px; margin: 10px;"></div>
 
 <div>
     <div style="display: flex; width:820px">
@@ -205,11 +197,6 @@
 
             firefly.showCoverage('coverageHere', {gridOn:true});
 
-            var v1= firefly.makeImageViewer('old1');
-            var v2= firefly.makeImageViewer('old2');
-
-            v1.plot(Object.assign({},req, {title:'old1 example'}));
-            v2.plotURL('http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits');
 
 
             //-----------------  TABLE DEMO ------------------------//
@@ -242,29 +229,7 @@
             firefly.showHistogram('histogram2', {tbl_id: tblReq2.tbl_id, col: 'w2mpro+w3mpro', falsePositiveRate: 0.05});
 
 
-            //-----< old table api ------//
-            var tblParams = {
-                source: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
-                type: 'selectable',
-                Title: 'old api: selectable table',
-                pageSize: 50,
-                rowHeight: 30,
-                tableOptions: "show-filter=true,show-title=true,show-toolbar=true,show-options=true,show-paging=true,show-save=true"
-            };
-            firefly.showTable(tblParams, 'oldSelectable');
-            var tblParams2 = {
-                source: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
-                Title: 'old api: basic table',
-                pageSize: 1000,
-                tableOptions: "show-toolbar=false"
-            };
-            firefly.showTable(tblParams2, 'oldBasic');
-            //----- old table api >------//
 
-            //-----< old xyplot api ------//
-            //--- using QUERY_ID: 'oldSelectable' does not work getActiveTableId('upload') returns undefined ---//
-            firefly.addXYPlot({QUERY_ID: 'oldSelectable'}, 'oldXyPlot1');
-            //-----< old xyplot api ------//
 
             window.regionAry = [
                  /*

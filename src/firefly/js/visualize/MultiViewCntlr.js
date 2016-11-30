@@ -371,7 +371,9 @@ function reducer(state=initState(), action={}) {
             break;
 
         case ImagePlotCntlr.PLOT_IMAGE_START:
-            if (payload.viewerId && payload.plotId) {
+            const {viewerId, plotId} = payload;
+            if (imageViewerCanAdd(state,viewerId, plotId)) {
+            //if (payload.viewerId && payload.plotId) {
                 state= addItems(state,payload.viewerId,[payload.plotId], IMAGE);
                 retState= addItems(state,EXPANDED_MODE_RESERVED,[payload.plotId],IMAGE);
             }
@@ -384,6 +386,16 @@ function reducer(state=initState(), action={}) {
 }
 
 
+function imageViewerCanAdd(state, viewerId, plotId) {
+    if (!viewerId || !plotId) return false;
+    if (!hasViewerId(state,viewerId)) return true;
+
+    return !state.find( (viewer) => { // look for the plotId in all the normal image viewers
+        if (viewer.containerType!==IMAGE || viewer.viewerId===EXPANDED_MODE_RESERVED) return false;
+        return getViewerItemIds(state,viewer.viewerId).includes(plotId);
+    });
+
+}
 
 function addViewer(state,payload) {
 
