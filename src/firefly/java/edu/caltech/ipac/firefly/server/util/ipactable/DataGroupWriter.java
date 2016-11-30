@@ -29,9 +29,11 @@ public class DataGroupWriter {
 
     public static void write(IpacTableHandler handler) throws IOException {
         try {
-            Thread t = new Thread(new WriteTask(handler));
+            WriteTask task = new WriteTask(handler);
+            Thread t = new Thread(task);
             t.start();
             handler.onStart();
+            task.flush();
         } catch (InterruptedException e) {
             LOG.info("DataGroupWriter interrupted:" + e.getMessage());
         }
@@ -81,9 +83,14 @@ public class DataGroupWriter {
     private static class WriteTask implements Runnable {
         private static Logger.LoggerImpl LOG = Logger.getLogger();
         private IpacTableHandler handler;
+        private PrintWriter writer = null;
 
         public WriteTask(IpacTableHandler handler) {
             this.handler = handler;
+        }
+
+        public void flush() {
+            if (writer != null) writer.flush();
         }
 
         @Override
@@ -95,7 +102,6 @@ public class DataGroupWriter {
 
             StopWatch.getInstance().start("DataGroupWriter");
 
-            PrintWriter writer = null;
             try {
                 writer = new PrintWriter(new BufferedWriter(new FileWriter(handler.getOutFile()), IpacTableUtil.FILE_IO_BUFFER_SIZE));
                 List<DataGroup.Attribute> attributes = handler.getAttributes();
@@ -116,6 +122,7 @@ public class DataGroupWriter {
                     insertStatus(handler.getOutFile(), DataGroupPart.State.COMPLETED);
                     writer.flush();
                     writer.close();
+                    writer = null;
                     handler.onComplete();
                 }
             }
