@@ -25,11 +25,9 @@ public class DataGroup implements Serializable,
     //TODO: take this out!!!
     public static final String ROWID_NAME = "ROWID";         // all row ids and indexes start from 0
     public static final DataType ROWID = new DataType(ROWID_NAME, Integer.class);
-
-
-    private String _title;
     private final ArrayList<DataObject> _objects = new ArrayList<DataObject>(200);
     private final ArrayList<DataType> _dataDefinitions = new ArrayList<DataType>(30);
+    private String _title;
     private ArrayList<Attribute> _attributes = new ArrayList<Attribute>();
     private HashMap<String, Attribute> _cachedAttributesMap = null;
     private DataType _cachedDataDefinitionsAry[] = null;
@@ -49,6 +47,82 @@ public class DataGroup implements Serializable,
         this(title, dataDefs.toArray(new DataType[dataDefs.size()]));
     }
 
+    public static boolean containsKey(DataType[] dataTypes, String key) {
+        boolean found = false;
+        for (int i = 0; (i < dataTypes.length && !found); i++) {
+            found = dataTypes[i].getKeyName().equals(key);
+        }
+        return found;
+    }
+
+    private static void validateDataDefs(DataType dataDef[]) {
+        int tstCol;
+        for (int i = 0; i < dataDef.length; i++) {
+            tstCol = dataDef[i].getColumnIdx();
+            for (int j = i + 1; j < dataDef.length; j++) {
+                Assert.argTst((tstCol != dataDef[j].getColumnIdx()),
+                        "data[" + i + "] and data[" + j +
+                                "have the same column idx and, each must be unique");
+
+            }
+        }
+    }
+
+    /**
+     * This method convert data definition type from String to HREF, whenever all data elements with this data
+     * definition can be converted to HREFs.
+     *
+     * @param dataGroup DataGroup
+     */
+    public static void convertHREFTypes(DataGroup dataGroup) {
+        if (dataGroup.size() < 1) {
+            return;
+        }
+        List<DataType> suspectHREFtypes = null;
+        HREF href;
+        int columnIdx = 0;
+        for (Object obj : dataGroup.get(0).getData()) {
+            if (obj instanceof String) {
+                href = HREF.parseHREF((String) obj);
+                if (href != null) {
+                    if (suspectHREFtypes == null) {
+                        suspectHREFtypes = new ArrayList<DataType>();
+                    }
+                    suspectHREFtypes.add(dataGroup.getDataDefinitions()[columnIdx]);
+                }
+            }
+            columnIdx++;
+        }
+
+        HREF[] hrefs;
+        href = null;
+        int rowIdx;
+        if (suspectHREFtypes != null) {
+            for (DataType dt : suspectHREFtypes) {
+                hrefs = new HREF[dataGroup.size()];
+                rowIdx = 0;
+                for (DataObject o : dataGroup) {
+                    href = HREF.parseHREF((String) o.getDataElement(dt));
+                    if (href != null) {
+                        hrefs[rowIdx] = href;
+                    } else {
+                        break;
+                    }
+                    rowIdx++;
+                }
+                if (href != null) {
+                    // all fields are hrefs, can change data type definition
+                    dt.setDataType(HREF.class);
+                    rowIdx = 0;
+                    for (DataObject o : dataGroup) {
+                        o.setDataElement(dt, hrefs[rowIdx]);
+                        rowIdx++;
+                    }
+                }
+            }
+        }
+    }
+
     public void setRowIdxOffset(int rowIdxOffset) {
         this.rowIdxOffset = rowIdxOffset;
     }
@@ -60,7 +134,6 @@ public class DataGroup implements Serializable,
     public void setTitle(String title) {
         _title = title;
     }
-
 
     public void addDataDefinition(DataType dataType) {
         _cachedDataDefinitionsAry = null;
@@ -99,11 +172,9 @@ public class DataGroup implements Serializable,
         return null;
     }
 
-
     public void ensureCapacity(int size) {
         _objects.ensureCapacity(size);
     }
-
 
     public void setDataType(int typeIdx, Class type) {
         (_dataDefinitions.get(typeIdx)).setDataType(type);
@@ -179,14 +250,6 @@ public class DataGroup implements Serializable,
     }
 
     /**
-     * set the attributes to this new list
-     */
-    public void setAttributes(List<Attribute> attribList) {
-        _attributes = new ArrayList<Attribute>(attribList);
-        _cachedAttributesMap = null;
-    }
-
-    /**
      * merge the in coming attribute list with the current one.
      * All comments will be added.
      * Only attribute with new key will be added.
@@ -240,6 +303,14 @@ public class DataGroup implements Serializable,
     }
 
     /**
+     * set the attributes to this new list
+     */
+    public void setAttributes(List<Attribute> attribList) {
+        _attributes = new ArrayList<Attribute>(attribList);
+        _cachedAttributesMap = null;
+    }
+
+    /**
      * Keyword is equivalent to attributes.  However, it mandates order and allow
      * for comments and duplicate keywords.
      * @return
@@ -248,18 +319,8 @@ public class DataGroup implements Serializable,
         return Collections.unmodifiableList(_attributes);
     }
 
-
     public DataObject get(int i) {
         return _objects.get(i);
-    }
-
-
-    public static boolean containsKey(DataType[] dataTypes, String key) {
-        boolean found = false;
-        for (int i = 0; (i < dataTypes.length && !found); i++) {
-            found = dataTypes[i].getKeyName().equals(key);
-        }
-        return found;
     }
 
     public boolean containsKey(String key) {
@@ -274,6 +335,10 @@ public class DataGroup implements Serializable,
         }
         return retval;
     }
+
+//======================================================================
+//------------- Methods from TableConnectionList  ----------------------
+//======================================================================
 
     /**
      * Returns a subset of the datagroup between the specified fromIndex, inclusive, and toIndex, exclusive
@@ -307,13 +372,13 @@ public class DataGroup implements Serializable,
         return copy;
     }
 
-//======================================================================
-//------------- Methods from TableConnectionList  ----------------------
-//======================================================================
-
     public int size() {
         return _objects.size();
     }
+
+//======================================================================
+//------------------ Private / Protected / Package Methods --------------
+//======================================================================
 
     public int indexOf(Object o) {
         return indexOf((DataObject) o);
@@ -322,10 +387,6 @@ public class DataGroup implements Serializable,
     public int indexOf(DataObject fixedObj) {
         return _objects.indexOf(fixedObj);
     }
-
-//======================================================================
-//------------------ Private / Protected / Package Methods --------------
-//======================================================================
 
     String availableKeys() {
         DataType dataTypes[] = getDataDefinitions();
@@ -336,74 +397,6 @@ public class DataGroup implements Serializable,
             if (i < dataTypes.length - 1) buff.append(", ");
         }
         return buff.toString();
-    }
-
-    private static void validateDataDefs(DataType dataDef[]) {
-        int tstCol;
-        for (int i = 0; i < dataDef.length; i++) {
-            tstCol = dataDef[i].getColumnIdx();
-            for (int j = i + 1; j < dataDef.length; j++) {
-                Assert.argTst((tstCol != dataDef[j].getColumnIdx()),
-                        "data[" + i + "] and data[" + j +
-                                "have the same column idx and, each must be unique");
-
-            }
-        }
-    }
-
-    /**
-     * This method convert data definition type from String to HREF, whenever all data elements with this data
-     * definition can be converted to HREFs.
-     *
-     * @param dataGroup DataGroup
-     */
-    public static void convertHREFTypes(DataGroup dataGroup) {
-        if (dataGroup.size() < 1) {
-            return;
-        }
-        List<DataType> suspectHREFtypes = null;
-        HREF href;
-        int columnIdx = 0;
-        for (Object obj : dataGroup.get(0).getData()) {
-            if (obj instanceof String) {
-                href = HREF.parseHREF((String) obj);
-                if (href != null) {
-                    if (suspectHREFtypes == null) {
-                        suspectHREFtypes = new ArrayList<DataType>();
-                    }
-                    suspectHREFtypes.add(dataGroup.getDataDefinitions()[columnIdx]);
-                }
-            }
-            columnIdx++;
-        }
-
-        HREF[] hrefs;
-        href = null;
-        int rowIdx;
-        if (suspectHREFtypes != null) {
-            for (DataType dt : suspectHREFtypes) {
-                hrefs = new HREF[dataGroup.size()];
-                rowIdx = 0;
-                for (DataObject o : dataGroup) {
-                    href = HREF.parseHREF((String) o.getDataElement(dt));
-                    if (href != null) {
-                        hrefs[rowIdx] = href;
-                    } else {
-                        break;
-                    }
-                    rowIdx++;
-                }
-                if (href != null) {
-                    // all fields are hrefs, can change data type definition
-                    dt.setDataType(HREF.class);
-                    rowIdx = 0;
-                    for (DataObject o : dataGroup) {
-                        o.setDataElement(dt, hrefs[rowIdx]);
-                        rowIdx++;
-                    }
-                }
-            }
-        }
     }
 
 //===================================================================
@@ -433,14 +426,6 @@ public class DataGroup implements Serializable,
             _comment = comment;
         }
 
-        public String getKey() {
-            return _key;
-        }
-
-        public String getValue() {
-            return _value;
-        }
-
         public static Attribute parse(String s) {
             if (s == null || !s.startsWith("\\")) return null;
             String v = s.substring(1);  // remove '\'
@@ -464,17 +449,25 @@ public class DataGroup implements Serializable,
             }
         }
 
+        public String getKey() {
+            return _key;
+        }
+
+        public String getValue() {
+            return _value;
+        }
+
         public boolean isComment() {
             return _key != null && _key.startsWith(" ");
         }
 
         @Override
         public String toString() {
-            if (StringUtils.isEmpty(_key)) {
-                return "\\ " + _value;
-            } else {
-                return "\\" + _key + " = " + _value + (_comment == null ? "" : " /" + _comment);
-            }
+            String key = StringUtils.isEmpty(_key) ? " " : _key + " = ";
+            String value = _value == null ? "" : _value.replaceAll("\\p{Cntrl}", "");
+            String comment = _comment == null ? "" : " /" + _comment.replaceAll("\\p{Cntrl}", "");
+
+            return "\\" + key + value + comment;
         }
     }
 

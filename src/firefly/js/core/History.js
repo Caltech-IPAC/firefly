@@ -28,8 +28,8 @@ const DEF_HANDLER = genericHandler(document.location);
  * a map of all actions that should be in history
  * @type {{}}
  */
-const historyAware = [  TABLE_SEARCH, SHOW_DROPDOWN
-                    ].reduce( (o, v) => {o[v] = DEF_HANDLER; return o;}, {});
+const historyAware = [TABLE_SEARCH, SHOW_DROPDOWN]
+                        .reduce( (o, v) => {o[v] = DEF_HANDLER; return o;}, {});
 
 var isHistoryEvent = false;
 
@@ -61,12 +61,7 @@ export function getActionFromUrl() {
     if (urlInfo.searchObject) {
         const type = get(urlInfo, 'pathAry.0.a');
         if (type) {
-            const payload = Object.entries(urlInfo.searchObject)
-                            .map( ([k, v]) => [decodeURIComponent(k), decodeURIComponent(v)])
-                            .reduce( (rval, [k,v]) => {
-                                rval[k] = resolve(v);
-                                return rval;
-                            }, {});
+            const payload = urlInfo.searchObject || {};
             return {type, payload};
         }
     }
@@ -97,13 +92,3 @@ function genericHandler(url='') {
         }
     };
 }
-
-
-function resolve(s) {
-    var rval = s;
-    try {
-        if (isString(s)) rval = JSON.parse(s);
-    } catch (e) {}
-    return rval;
-}
-

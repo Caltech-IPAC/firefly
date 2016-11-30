@@ -6,7 +6,7 @@
 
 import Enum from 'enum';
 import update from 'react-addons-update';
-import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil, last, isObjectLike} from 'lodash';
+import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil, last, isPlainObject} from 'lodash';
 import { getRootURL } from './BrowserUtil.js';
 import {getWsConnId, getWsChannel} from '../core/messaging/WebSocketClient.js';
 import {getDownloadProgress, DownloadProgress} from '../rpc/SearchServicesJson.js';
@@ -62,23 +62,17 @@ export const encodeUrl= function(url, params) {
  */
 export function encodeParams(params) {
     if (Array.isArray(params)) {
-        params = params.reduce( (rval, val) => {
-            const key = get(val, 'name');
-            key && (rval[key] = get(val, 'value'));
-            return rval;
-        }, {});
+        // if it's an array of ServerParam, convert it into a simple key/value object
+        params = params.filter( (p) => has(p, 'name')
+                       .map((p) => [get(p, 'name'), get(p, 'value', '')])
+                       .reduce((rval, [key, value]) => rval[key] = value), {});
     }
 
-    return Object.keys(params).reduce((rval, key) => {
-        key = encodeURIComponent(key.trim());
-        var val = get(params, key, '');
-        rval = rval.length ? rval + '&' : rval;
-        if (typeof val === 'object') {
-            return rval + key + '=' + encodeURIComponent(encodeParams(val));
-        } else {
-            return rval + key + '=' + encodeURIComponent(val);
-        }
-    },'');
+    return Object.entries(params)
+                .map(([key, val]) => [key.trim(), isPlainObject(val) ? JSON.stringify(val) : val])  // convert object to json
+                .map(([key, val]) => [key, encodeURIComponent(val)])    // encoded it
+                .map(([key, val]) => key + '=' + val)    // create key=val parts
+                .join('&');     // combine the parts, separating them by '&'
 }
 
 /**
@@ -88,19 +82,22 @@ export function encodeParams(params) {
  * @returns {*}
  */
 export function decodeParams(queryStr) {
-    const params = queryStr.replace(/^\?/, '').split('&');
-    return params.reduce( (rval, param) => {
-        const parts = param.split('=').map((s) => s.trim());
-        var val = decodeURIComponent(get(parts, [1], ''));
-        if (val.includes('&')) {
-            val = decodeParams(val);
+    const toVal = (s) => {
+        var val = s;
+        try {
+            val = JSON.parse(val);
+        } catch(e) {
+            val = isBooleanString(val) ? toBoolean(val) : val;
         }
-        if (isBooleanString(val)) {
-            val = toBoolean(val);
-        }
-        rval[parts[0]] = val;
-        return rval;
-    }, {});
+        return val;
+    };
+
+    return  queryStr.replace(/^\?/, '')                     // remove prefex '?' if exists
+                    .split('&')                             // separate into param array
+                    .map((p) => p.split('=', 2))             // split into key/value pairs
+                    .map(([key, val='']) => [key.trim(), val.trim()] )   // trim key and values
+                    .map(([key, val]) => [key, toVal(decodeURIComponent(val))]) // decode and convert val
+                    .reduce((rval, [key, val]) => set(rval, [key], val), {}); // create a simple object of key/value.
 }
 
 

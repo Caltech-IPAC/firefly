@@ -44,6 +44,14 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
     //set default timeout to 30seconds
     int timeout  = new Integer( AppProperties.getProperty("lsst.database.timeoutLimit" , "30")).intValue();
 
+    static  String getErrorMessageFromFile(File file) throws IOException, ParseException {
+        JSONParser parser = new JSONParser();
+
+        JSONObject obj = ( JSONObject) parser.parse(new FileReader(file ));
+        //return  obj.get("message").toString();
+        return  obj.get("error").toString();
+    }
+
     private DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
 
 
@@ -77,15 +85,6 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
     }
 
-
-    static  String getErrorMessageFromFile(File file) throws IOException, ParseException {
-        JSONParser parser = new JSONParser();
-
-        JSONObject obj = ( JSONObject) parser.parse(new FileReader(file ));
-        //return  obj.get("message").toString();
-        return  obj.get("error").toString();
-    }
-
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
@@ -94,7 +93,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
                dg = getDataFromURL(request);
               File outFile = createFile(request, ".tbl");
               dg.shrinkToFitData();
-              DataGroupWriter.write(outFile, dg, 0);
+              DataGroupWriter.write(outFile, dg);
               return outFile;
           }
           catch (Exception e) {

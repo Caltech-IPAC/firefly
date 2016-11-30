@@ -77,7 +77,7 @@ public class QuerySearchHistory  extends IpacFileQuery {
                 dg.add(row);
             }
             File f = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
-            DataGroupWriter.write(f, dg, Integer.MAX_VALUE);
+            DataGroupWriter.write(f, dg);
             return f;
         } else {
             return super.loadDataFile(request);

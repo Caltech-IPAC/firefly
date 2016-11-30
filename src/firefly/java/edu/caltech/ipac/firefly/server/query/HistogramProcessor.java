@@ -60,6 +60,39 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     private double falsePostiveRate = 0.05;
     private boolean showEmptyBin=false;
 
+    private static String[] getInputFilePath(String inputFileName) {
+        String[] dirs = inputFileName.split("/");
+        String name = dirs[dirs.length - 1];
+        String path = inputFileName.substring(0, inputFileName.length() - name.length());
+        return new String[]{path, name};
+    }
+
+    public static void main(String args[]) throws IOException, DataAccessException {
+
+        if (args.length > 0) {
+            String path = getInputFilePath(args[0])[0];
+            String inFileName = getInputFilePath(args[0])[1];
+            if (args.length > 0) {
+                try {
+                    File inFile = new File(args[0]);
+                    DataGroup dg = IpacTableReader.readIpacTable(inFile, null, false, "inputTable");
+
+                    HistogramProcessor hp = new HistogramProcessor();
+                    hp.columnExpression = "f_y";
+
+                    double[] columnData = hp.getColumnData(dg);
+
+                    DataGroup outDg = hp.createHistogramTable(columnData);
+                    String outFileName = path + "output_" + inFileName;
+                    File outFile = new File(outFileName);
+                    IpacTableWriter.save(outFile, outDg);
+
+                } catch (IpacTableException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
@@ -104,7 +137,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         addFormatInfoAtt(histogramDataGroup, columns[2]);
 
         File histogramFile = createFile(request);
-        DataGroupWriter.write(histogramFile, histogramDataGroup, 0);
+        DataGroupWriter.write(histogramFile, histogramDataGroup);
         return histogramFile;
     }
 
@@ -285,13 +318,6 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             data[i] = dGetter.getValue(row);
         }
         return Arrays.stream(data).filter(d -> !Double.isNaN(d)).toArray();
-    }
-
-    private static String[] getInputFilePath(String inputFileName) {
-        String[] dirs = inputFileName.split("/");
-        String name = dirs[dirs.length - 1];
-        String path = inputFileName.substring(0, inputFileName.length() - name.length());
-        return new String[]{path, name};
     }
 
     /**
@@ -498,7 +524,6 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         return maxIdx;
     }
 
-
     /**
      * This method evaluate the fitness function for these possibilities
      */
@@ -657,33 +682,6 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             newArray[i] = a * array[i];
         }
         return newArray;
-    }
-
-    public static void main(String args[]) throws IOException, DataAccessException {
-
-        if (args.length > 0) {
-            String path = getInputFilePath(args[0])[0];
-            String inFileName = getInputFilePath(args[0])[1];
-            if (args.length > 0) {
-                try {
-                    File inFile = new File(args[0]);
-                    DataGroup dg = IpacTableReader.readIpacTable(inFile, null, false, "inputTable");
-
-                    HistogramProcessor hp = new HistogramProcessor();
-                    hp.columnExpression = "f_y";
-
-                    double[] columnData = hp.getColumnData(dg);
-
-                    DataGroup outDg = hp.createHistogramTable(columnData);
-                    String outFileName = path + "output_" + inFileName;
-                    File outFile = new File(outFileName);
-                    IpacTableWriter.save(outFile, outDg);
-
-                } catch (IpacTableException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 
 
