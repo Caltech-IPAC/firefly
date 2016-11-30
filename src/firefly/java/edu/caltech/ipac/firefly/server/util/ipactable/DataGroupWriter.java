@@ -109,6 +109,7 @@ public class DataGroupWriter {
                 IpacTableUtil.writeAttributes(writer, attributes, DataGroupPart.LOADING_STATUS);
                 List<DataType> headers = handler.getHeaders();
                 IpacTableUtil.writeHeader(writer, headers);
+                writer.flush();
                 DataObject row = handler.next();
                 while (row != null) {
                     IpacTableUtil.writeRow(writer, headers, row);
