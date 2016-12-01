@@ -228,7 +228,7 @@ function hideSearchPanel() {
 function formatNumberString(numstr, digits = DEC) {
     var d = digits&digits >= 0 ?  digits : DEC;
 
-    return parseFloat(numstr).toFixed(d);
+    return parseFloat(numstr).toFixed(d).replace(/(?:\.0+|(\.\d+?)0+)$/, '$1');
 }
 
 function addConstraintToQuery(tReq) {
@@ -264,14 +264,14 @@ function doImage(request, imgPart) {
     const wp = get(imgPart, [ServerParams.USER_TARGET_WORLD_PT,'value']);
 
     var title = `${projectName}-${cattable}-${capitalize(intersect)}`;
+    var loc = wp.split(';').slice(0, 2).join();
 
-    if (intersect === 'COVERS') {
-        title += `(${formatNumberString(size)}deg)`;
-    } else if (intersect === 'ENCLOSED') {
-        var loc = wp.split(';').slice(0, 2).join();
-
-        title += `([${loc}]:${formatNumberString(size, 1)}deg)`;
+    if (intersect !== 'CENTER') {
+        title += `([${loc}]:${formatNumberString(size)}deg)`;
+    } else {
+        title += `([${loc}])`;
     }
+
     var tReq = makeLsstCatalogRequest(title, projectName, cattable,
                                       {[ServerParams.USER_TARGET_WORLD_PT]: wp,
                                        intersect,
