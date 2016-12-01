@@ -49,6 +49,7 @@ const IMAGETYPE = '1';
 const defCatalog = 0;
 const defImage = 2;
 
+const DEC = 3;
 
 const LSSTTables = [
     {
@@ -218,6 +219,18 @@ function hideSearchPanel() {
     dispatchHideDropDown();
 }
 
+/**
+ * @summary format number string with specified decimal digit
+ * @param numstr
+ * @param digits
+ * @returns {string}
+ */
+function formatNumberString(numstr, digits = DEC) {
+    var d = digits&digits >= 0 ?  digits : DEC;
+
+    return parseFloat(numstr).toFixed(d).replace(/(?:\.0+|(\.\d+?)0+)$/, '$1');
+}
+
 function addConstraintToQuery(tReq) {
     const sql = get(FieldGroupUtils.getGroupFields(gkey), ['tableconstraints', 'value']);
 
@@ -251,9 +264,15 @@ function doImage(request, imgPart) {
     const wp = get(imgPart, [ServerParams.USER_TARGET_WORLD_PT,'value']);
 
     var title = `${projectName}-${cattable}-${capitalize(intersect)}`;
-    var tReq = {};
+    var loc = wp.split(';').slice(0, 2).join();
 
-    tReq = makeLsstCatalogRequest(title, projectName, cattable,
+    if (intersect !== 'CENTER') {
+        title += `([${loc}]:${formatNumberString(size)}deg)`;
+    } else {
+        title += `([${loc}])`;
+    }
+
+    var tReq = makeLsstCatalogRequest(title, projectName, cattable,
                                       {[ServerParams.USER_TARGET_WORLD_PT]: wp,
                                        intersect,
                                        size,
@@ -280,6 +299,7 @@ function doCatalog(request, spatPart) {
     const conesize = get(spatPart, ['conesize', 'value']);
     const wp = get(spatPart, [ServerParams.USER_TARGET_WORLD_PT,'value']);
     const sizeUnit = 'deg';
+    const conestr = formatNumberString(conesize);
 
     var title = `${projectName}-${catPart.cattable}`;
     var tReq;
@@ -289,14 +309,14 @@ function doCatalog(request, spatPart) {
 
         tReq = makeLsstCatalogRequest(title, projectName, cattable, {
             filename,
-            radius: conesize,
+            radius: conestr,
             sizeUnit,
             SearchMethod: spatial
         });
     } else {
         title += ` (${spatial}`;
         if (spatial === SpatialMethod.Box.value || spatial === SpatialMethod.Cone.value || spatial === SpatialMethod.Elliptical.value) {
-            title += ':' + conesize + ((sizeUnit === 'deg') ? 'deg' : ((sizeUnit === 'arcsec') ? '\'\'' : '\''));
+            title += ':' + conestr + ((sizeUnit === 'deg') ? 'deg' : ((sizeUnit === 'arcsec') ? '\'\'' : '\''));
         }
         title += ')';
 
@@ -327,7 +347,7 @@ function doCatalog(request, spatPart) {
         }
         tReq.sizeUnit = sizeUnit;
     } else if (spatial === SpatialMethod.Polygon.value) {
-        tReq.polygon = spatPart.polygoncoords;
+        tReq.polygon = get(spatPart, ['polygoncoords', 'value']);
     }
 
     tReq = addConstraintToQuery(tReq);
