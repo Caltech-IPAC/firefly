@@ -2,16 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.firefly.server.visualize;
-/**
- * User: roby
- * Date: 2/15/11
- * Time: 1:53 PM
- */
-
 
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.visualize.imageretrieve.FileRetriever;
+import edu.caltech.ipac.firefly.server.visualize.imageretrieve.ImageFileRetrieverFactory;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.InsertBandInitializer;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
@@ -58,7 +54,7 @@ public class WebPlotFactory {
                                                  WebPlotRequest greenRequest,
                                                  WebPlotRequest blueRequest) throws FailedRequestException, GeomException {
 
-        LinkedHashMap<Band, WebPlotRequest> requestMap = new LinkedHashMap<Band, WebPlotRequest>(5);
+        LinkedHashMap<Band, WebPlotRequest> requestMap = new LinkedHashMap<>(5);
 
         if (redRequest != null) requestMap.put(RED, redRequest);
         if (greenRequest != null) requestMap.put(GREEN, greenRequest);
@@ -70,11 +66,11 @@ public class WebPlotFactory {
     public static WebPlotInitializer[] createNewGroup(String workingCtxStr, List<WebPlotRequest> wprList) throws Exception {
 
 
-        FileRetriever retrieve = FileRetrieverFactory.getRetriever(wprList.get(0));
+        FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(wprList.get(0));
         FileData fileData = retrieve.getFile(wprList.get(0));
 
         FitsRead[] frAry= FitsCacher.readFits(fileData.getFile());
-        List<ImagePlotBuilder.Results> resultsList= new ArrayList<ImagePlotBuilder.Results>(wprList.size());
+        List<ImagePlotBuilder.Results> resultsList= new ArrayList<>(wprList.size());
         int length= Math.min(wprList.size(), frAry.length);
         WebPlotInitializer retval[]= new WebPlotInitializer[length];
         for(int i= 0; (i<length); i++) {
@@ -104,7 +100,7 @@ public class WebPlotFactory {
 
 
     public static WebPlotInitializer[] createNew(String workingCtxStr, WebPlotRequest request) throws FailedRequestException, GeomException {
-        Map<Band, WebPlotRequest> requestMap = new LinkedHashMap<Band, WebPlotRequest>(2);
+        Map<Band, WebPlotRequest> requestMap = new LinkedHashMap<>(2);
         requestMap.put(NO_BAND, request);
         PlotState.MultiImageAction multiAction= PlotState.MultiImageAction.USE_ALL;
         if (request.containsParam(WebPlotRequest.MULTI_IMAGE_IDX)) {
@@ -116,7 +112,6 @@ public class WebPlotFactory {
     public static WebPlotInitializer[] recreate(PlotState state) throws FailedRequestException, GeomException {
         Map<Band, WebPlotRequest> requestMap = new LinkedHashMap<Band, WebPlotRequest>(5);
         for (Band band : state.getBands()) requestMap.put(band, state.getWebPlotRequest(band));
-        VisContext.purgeOtherPlots(state);
         for(WebPlotRequest req : requestMap.values()) {
             req.setZoomType(ZoomType.STANDARD);
             req.setInitialZoomLevel(state.getZoomLevel());
@@ -139,13 +134,11 @@ public class WebPlotFactory {
         InsertBandInitializer retval;
 
         try {
-            VisContext.purgeOtherPlots(state);
             if (CtxControl.getPlotCtx(state.getContextString()) == null) {
-                throw new FailedRequestException("PlotClientCtx not found, ctxStr=" +
-                                                         state.getContextString());
+                throw new FailedRequestException("PlotClientCtx not found, ctxStr=" + state.getContextString());
             }
 
-            FileReadInfo frInfo[] = new WebPlotReader().readOneFits(fd, band, null);
+            FileReadInfo frInfo[] = WebPlotReader.readOneFits(fd, band, null);
 
             ModFileWriter modWriter = ImagePlotCreator.createBand(state, plot, frInfo[0],frGroup);
 
@@ -166,10 +159,7 @@ public class WebPlotFactory {
 
             retval = new InsertBandInitializer(state, images, band, wfData, frInfo[0].getDataDesc());
 
-        } catch (FitsException e) {
-            PlotServUtils.statsLog("Fits Read Failed", e.getMessage());
-            throw new FailedRequestException("Fits read failed: " + fd.getFile(), null, e);
-        } catch (IOException e) {
+        } catch (FitsException|IOException e) {
             PlotServUtils.statsLog("Fits Read Failed", e.getMessage());
             throw new FailedRequestException("Fits read failed: " + fd.getFile(), null, e);
         } catch (OutOfMemoryError e) {
@@ -266,27 +256,23 @@ public class WebPlotFactory {
      * @param request request for the insert
      * @param band    which color band
      * @return the insertion initializer
-     * @throws FailedRequestException
-     * @throws GeomException
-     * @throws SecurityException
+     * @throws FailedRequestException if you can plot the band
+     * @throws GeomException when a band can't be reprojected to another band
      */
     public static InsertBandInitializer addBand(ImagePlot plot,
                                                 PlotState state,
                                                 WebPlotRequest request,
                                                 Band band,
-                                                ActiveFitsReadGroup frGroup) throws FailedRequestException, GeomException, SecurityException {
+                                                ActiveFitsReadGroup frGroup) throws FailedRequestException, GeomException {
         long start = System.currentTimeMillis();
         InsertBandInitializer retval = null;
 
-        PlotClientCtx ctx = CtxControl.getPlotCtx(state.getContextString());
-
         state.setWebPlotRequest(request, band);
         File file;
-        String desc = null;
         FileData fd = null;
 
         long findStart = System.currentTimeMillis();
-        FileRetriever retrieve = FileRetrieverFactory.getRetriever(request);
+        FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(request);
         if (retrieve != null) {
             fd = retrieve.getFile(request);
             file = fd.getFile();
@@ -295,7 +281,6 @@ public class WebPlotFactory {
             _log.error("failed to find FileRetriever should only be FILE, URL, ALL_SKY, or SERVICE, for band " + band.toString());
         }
         long findElapse = System.currentTimeMillis() - findStart;
-        VisContext.shouldContinue(ctx, null);
 
 
         if (file != null) {
@@ -315,8 +300,7 @@ public class WebPlotFactory {
 
     private static WebPlotInitializer makePlotResults(ImagePlotInfo pInfo,
                                                       boolean       makeFiles,
-                                                      ZoomChoice zoomChoice) throws FitsException,
-                                                                                                         IOException {
+                                                      ZoomChoice zoomChoice) throws FitsException, IOException {
         PlotState state = pInfo.getState();
 
         PlotImages images = createImages(state, pInfo.getPlot(), pInfo.getFrGroup(),makeFiles,
@@ -324,7 +308,7 @@ public class WebPlotFactory {
 
         WebPlotInitializer wpInit = makeWebPlotInitializer(state, images, pInfo);
 
-        initPlotCtx(pInfo.getPlot(), pInfo.getFrGroup(), state, images);
+        CtxControl.initPlotCtx(state, pInfo.getPlot(), pInfo.getFrGroup(), images);
 
         return wpInit;
     }
@@ -353,30 +337,12 @@ public class WebPlotFactory {
                                       pInfo.getDataDesc());
     }
 
-    private static void initPlotCtx(ImagePlot plot,
-                                    ActiveFitsReadGroup frGroup,
-                                    PlotState state,
-                                    PlotImages images) throws FitsException,
-                                                              IOException {
-        PlotClientCtx ctx = CtxControl.getPlotCtx(state.getContextString());
-        ctx.setImages(images);
-        ctx.setPlotState(state);
-        ctx.setPlot(plot);
-        ctx.extractColorInfo(frGroup);
-        ctx.addZoomLevel(plot.getPlotGroup().getZoomFact());
-        PlotStateUtil.setPixelAccessInfo(plot, state, frGroup);
-        CtxControl.putPlotCtx(ctx);
-//        _log.briefInfo("creating context for new plot: " + ctx.getKey());
-        PlotServUtils.createThumbnail(plot, frGroup, images, true, state.getThumbnailSize());
-        state.setNewPlot(false);
-    }
 
     private static PlotImages createImages(PlotState state,
                                            ImagePlot plot,
                                            ActiveFitsReadGroup frGroup,
                                            boolean makeFiles,
                                            boolean fullScreen) throws IOException {
-//        if (plot.getPlotView() == null) new PlotView().addPlot(plot);
         String base = PlotServUtils.makeTileBase(state);
 
         return PlotServUtils.writeImageTiles(ServerContext.getVisSessionDir(),
@@ -398,7 +364,7 @@ public class WebPlotFactory {
         String time3String = bandAdded ? ", Insert-" : ", Read-";
         long totSize = 0;
 
-        List<String> out = new ArrayList<String>(8);
+        List<String> out = new ArrayList<>(8);
         String more = String.format("%s%9s%s%9s",
                                     ", Find-", UTCTimeUtil.getHMSFromMills(findElapse),
                                     time3String, UTCTimeUtil.getHMSFromMills(readElapse));

@@ -373,11 +373,5 @@ public class RegionPng {
            // do nothing
         }
     }
-
-
-
-
-
-
 }
 

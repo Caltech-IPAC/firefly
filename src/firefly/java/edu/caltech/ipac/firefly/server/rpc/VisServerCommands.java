@@ -1,7 +1,11 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.server.visualize;
+
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+package edu.caltech.ipac.firefly.server.rpc;
 /**
  * User: roby
  * Date: 2/8/12
@@ -11,9 +15,13 @@ package edu.caltech.ipac.firefly.server.visualize;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServCommand;
+import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.servlets.CommandService;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
+import edu.caltech.ipac.firefly.server.visualize.VisJsonSerializer;
+import edu.caltech.ipac.firefly.server.visualize.VisServerOps;
+import edu.caltech.ipac.firefly.server.visualize.WebPlotResultSerializer;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.FileAndHeaderInfo;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -187,7 +195,7 @@ public class VisServerCommands {
             float level= sp.getRequiredFloat(ServerParams.LEVEL);
             boolean isFull = sp.getOptionalBoolean(ServerParams.FULL_SCREEN, false);
 
-            WebPlotResult result = VisServerOps.setZoomLevel(stateAry, level, false, isFull);
+            WebPlotResult result = VisServerOps.setZoomLevel(stateAry, level, isFull);
             return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }

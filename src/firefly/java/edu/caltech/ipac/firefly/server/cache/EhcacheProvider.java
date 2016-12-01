@@ -9,7 +9,6 @@ import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
-import edu.caltech.ipac.util.cache.Cleanupable;
 import edu.caltech.ipac.util.cache.FileHolder;
 import edu.caltech.ipac.util.download.URLDownload;
 import net.sf.ehcache.CacheException;
@@ -23,7 +22,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Date: Jul 17, 2008
@@ -37,9 +35,6 @@ public class EhcacheProvider implements Cache.Provider {
     private static final net.sf.ehcache.CacheManager manager;
     private static net.sf.ehcache.CacheManager sharedManager;
     private static final boolean enableJMX = AppProperties.getBooleanProperty("ehcache.jmx.monitor", true);
-    private static final int cleanupIntervalMin = AppProperties.getIntProperty("ehcache.cleanup.internal.minutes", 5);
-    private static final String cleanupTypes[] = findCleanupCacheTypes();
-    //    private static final MemCleanup cleanup= new MemCleanup();
     private static HashMap<String, Boolean> fileListenersReg = new HashMap<String, Boolean>();
     private static HashMap<String, Boolean> logListenersReg = new HashMap<String, Boolean>();
     private static long curConfModTime = 0;
@@ -84,8 +79,6 @@ public class EhcacheProvider implements Cache.Provider {
             _log.info("shared cache manager config file: " + sharedConfig);
         }
 
-
-//        if (cleanupTypes.length>0)  cleanup.start();
 
         if (enableJMX) {
 //            // enable JMX monitoring for ehcache
@@ -357,77 +350,4 @@ public class EhcacheProvider implements Cache.Provider {
 //                         StringUtils.toString(element.getValue()));
         }
     }
-
-
-    private static class MemCleanup implements Runnable {
-
-
-        private volatile Thread _thread= null;
-
-        MemCleanup() {
-        }
-
-        public void stop() {
-            synchronized (this) {
-                Thread t= _thread;
-                _thread= null;
-                if (t!=null) t.interrupt();
-            }
-        }
-
-        public void start() {
-            synchronized (this) {
-                if (_thread==null) {
-                    _thread= new Thread(this, "EhcacheProvider-cleanup");
-                }
-                _thread.setDaemon(true);
-                _thread.start();
-            }
-        }
-
-        public void run() {
-            try {
-                boolean loop = true;
-                while (loop) {
-
-                    Element el;
-                    Ehcache ehcache;
-                    List list;
-                    long cleanUpTime = System.currentTimeMillis() - (cleanupIntervalMin * 1000 * 60);
-                    for (String ctype : cleanupTypes) {
-                        ehcache = manager.getCache(ctype);
-                        list = ehcache.getKeys();
-//                        Logger.briefDebug("MemCleanup awake, list size: " + list.size());
-                        for (Object key : list) {
-                            el = ehcache.getQuiet(key);
-                            if (el != null && el.getValue() instanceof Cleanupable &&
-                                    el.getLastAccessTime() < cleanUpTime) {
-                                ((Cleanupable) el.getValue()).cleanup();
-                            }
-                        }
-                    }
-
-                    synchronized (this) {
-                        loop = (_thread != null);
-                    }
-
-                    if (loop) {
-                        try {
-                            TimeUnit.SECONDS.sleep(120);
-                        } catch (InterruptedException e) { /* ignore*/ }
-                    }
-
-
-                    synchronized (this) {
-                        loop = (_thread != null);
-                    }
-
-                }
-            } catch (Throwable e) {
-                _log.error(e, "MemCleanup encountered unexpected exception.  This should not happen.");
-            }
-            _log.briefDebug("MemCleanup exiting");
-        }
-    }
-
 }

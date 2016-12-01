@@ -40,8 +40,6 @@ import java.util.Map;
 public class ImagePlotCreator {
 
     private static final Logger.LoggerImpl _log= Logger.getLogger();
-    private static final String OBS_DATE="Obs date";
-    private static final String MID_OBS="Mid obs";
 
     static ImagePlotInfo[] makeAllNoBand(String workingCtxStr,
                                          PlotState stateAry[],
@@ -73,7 +71,6 @@ public class ImagePlotCreator {
              Map<Band,ModFileWriter> fileWriterMap= new LinkedHashMap<Band,ModFileWriter>(1);
              if (readInfo.getModFileWriter()!=null) fileWriterMap.put(Band.NO_BAND,readInfo.getModFileWriter());
              piAry[i]= new ImagePlotInfo(stateAry[i],plot, frGroup,readInfo.getDataDesc(), wfDataMap,fileWriterMap);
-             VisContext.shouldContinue(workingCtxStr);
          }
 
          return piAry;
@@ -122,7 +119,6 @@ public class ImagePlotCreator {
             }
             WebFitsData wfData= makeWebFitsData(plot, frGroup, readInfo.getBand(), readInfo.getOriginalFile());
             wfDataMap.put(band, wfData);
-            VisContext.shouldContinue(workingCtxStr);
         }
         String desc= make3ColorDataDesc(readInfoMap);
         retval= new ImagePlotInfo(state,plot,frGroup, desc, wfDataMap,fileWriterMap);
@@ -274,43 +270,6 @@ public class ImagePlotCreator {
         return card!=null ? card.getValue() : "";
     }
 
-//    private static String getServiceDateDesc(WebPlotRequest.ServiceType sType, FitsRead fr) {
-//        String preFix;
-//        String header= "none";
-//        preFix= OBS_DATE;
-//        switch (sType) {
-//            case TWOMASS:
-//                header= "ORDATE";
-//                break;
-//            case DSS:
-//                header= "DATE-OBS";
-//                break;
-//            case WISE:
-//                preFix= MID_OBS;
-//                header= "MIDOBS";
-//                break;
-//            case SDSS:
-//                header= "DATE-OBS";
-//                break;
-//            case IRIS:
-//                header= "DATEIRIS";
-//                break;
-//        }
-//        return preFix + ": " + PlotServUtils.getDateValueFromServiceFits(header, fr);
-//    }
-
-
-//    private static String getDateValue(String addDateTitleStr, FitsRead fr) {
-//        String retval = "";
-//        if (addDateTitleStr!=null && addDateTitleStr.contains(";")) {
-//            String dateAry[]= addDateTitleStr.split(";");
-//            retval = dateAry[1] + ": " + PlotServUtils.getDateValueFromServiceFits(dateAry[0], fr);
-//        }
-//        return retval;
-//    }
-
-
-
 
     private static String make3ColorDataDesc(Map<Band, FileReadInfo[]> readInfoMap) {
 
@@ -324,14 +283,11 @@ public class ImagePlotCreator {
 
 
 
-    static float computeZoomLevel(ImagePlot plot, ZoomChoice zoomChoice) {
+    private static float computeZoomLevel(ImagePlot plot, ZoomChoice zoomChoice) {
         int width=  plot.getImageDataWidth();
         int height= plot.getImageDataHeight();
         float retval= zoomChoice.getZoomLevel();
-        if (zoomChoice.isSmartZoom()) {
-            retval= computeSmartZoom(width,height,zoomChoice.getZoomType());
-        }
-        else if (zoomChoice.getZoomType()== ZoomType.TO_WIDTH) {
+        if (zoomChoice.getZoomType()== ZoomType.TO_WIDTH) {
             retval= (float)zoomChoice.getWidth() / (float)width ;
             if (zoomChoice.hasMaxZoomLevel()) {
                 if (retval>zoomChoice.getMaxZoomLevel()) retval=zoomChoice.getMaxZoomLevel();
@@ -350,19 +306,6 @@ public class ImagePlotCreator {
         return retval;
     }
 
-    static float computeSmartZoom(int width, int height, ZoomType zoomType) {
-        float zoomLevel;
-        if (width> 6200 || height> 6200 )      zoomLevel= 1F/32F;
-        else if (width> 2800 || height> 2800 ) zoomLevel= 1F/16F;
-        else if (width> 2000 || height> 2000 ) zoomLevel= 1F/8F;
-        else if (width> 1200 || height> 1200 ) zoomLevel= 1F/4F;
-        else if (width> 500 || height> 500 )   zoomLevel= 1F/2F;
-        else if (width< 100 && height< 100 )   zoomLevel= 4F;
-        else if (width< 30 && height< 30 )     zoomLevel= 4F;
-        else                  zoomLevel= 1;
-
-        return zoomLevel;
-    }
 
     /**
      * 5/13/16 LZ modified to add the beta in the WebFitsData calling parameter

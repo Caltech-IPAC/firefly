@@ -575,9 +575,7 @@ public class WebPlotRequest extends ServerRequest {
         return retval;
     }
 
-    public static boolean isSmartZoom(ZoomType type) {
-        return type == ZoomType.SMART;
-    }
+    public static boolean isSmartZoom(ZoomType type) { return false; }
 
     public boolean isSmartZoom() {
         return isSmartZoom(getZoomType());

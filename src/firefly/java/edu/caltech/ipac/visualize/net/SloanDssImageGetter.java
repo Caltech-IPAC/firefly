@@ -31,7 +31,6 @@ public class SloanDssImageGetter {
     public static void lowlevelGetSloanDssImage(SloanDssImageParams params,
                                                 File outFile) throws FailedRequestException,
                                                                            IOException {
-        ClientLog.message("Retrieving Sloan Dss image");
 
         NetworkManager manager = NetworkManager.getInstance();
         HostPort server = manager.getServer(NetworkManager.SDSS_SERVER);
@@ -91,7 +90,6 @@ public class SloanDssImageGetter {
                     "Details in exception", me);
         }
 
-        ClientLog.message("Done");
     }
 
 

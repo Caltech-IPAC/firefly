@@ -1,7 +1,11 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.server.visualize;
+
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.RequestType;
@@ -18,13 +22,13 @@ import java.util.Map;
 /**
  * @author Trey Roby
  */
-public final class FileRetrieverFactory {
+public final class ImageFileRetrieverFactory {
 
-    private static final FileRetrieverFactory _instance= new FileRetrieverFactory();
+    private static final ImageFileRetrieverFactory _instance= new ImageFileRetrieverFactory();
     private final Map<RequestType, FileRetriever> _types=
                       new HashMap<RequestType, FileRetriever>();
 
-    private FileRetrieverFactory() {
+    private ImageFileRetrieverFactory() {
         _types.put(RequestType.FILE,      new LocalFileRetriever());
         _types.put(RequestType.URL,       new URLFileRetriever());
         _types.put(RequestType.SERVICE,   new ServiceRetriever());

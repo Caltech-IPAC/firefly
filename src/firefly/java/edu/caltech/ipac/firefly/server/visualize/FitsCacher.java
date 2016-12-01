@@ -3,12 +3,6 @@
  */
 
 package edu.caltech.ipac.firefly.server.visualize;
-/**
- * User: roby
- * Date: 5/7/15
- * Time: 12:57 PM
- */
-
 
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -34,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class FitsCacher {
 
     private static Cache memCache= CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM);
-    private static final Map<CacheKey, Object> activeRequest = new ConcurrentHashMap<CacheKey, Object>(61);
+    private static final Map<CacheKey, Object> activeRequest = new ConcurrentHashMap<>(61);
     private static final Logger.LoggerImpl _log = Logger.getLogger();
 
     static FitsRead[] readFits(File fitsFile) throws FitsException, FailedRequestException, IOException {
@@ -81,9 +75,7 @@ public class FitsCacher {
                                     dir.equals(ServerContext.getVisUploadDir()) ) {
                                 String newF= fitsFile.getAbsolutePath()+"--bad-file";
                                 fitsFile.renameTo(new File(newF));
-                                FitsException newE= new FitsException("bad fits file renamed to: "+newF);
-                                newE.initCause(e);
-                                throw newE;
+                                throw new FitsException("bad fits file renamed to: "+newF,e);
                             }
                             else {
                                 throw e;

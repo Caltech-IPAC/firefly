@@ -22,33 +22,6 @@ import java.net.URL;
  **/
 public class AnyUrlGetter {
 
-  public static String lowlevelGetUrlToString(URL  url, DownloadListener dl)
-                                             throws FailedRequestException,
-                                                    IOException {
-
-      ClientLog.message("Retrieving Url:");
-
-      String retval;
-
-      try {
-          byte data[]=URLDownload.getDataFromURL(url, null);
-          retval=new String(data);
-      } catch (MalformedURLException me) {
-          ClientLog.warning(me.toString());
-          throw new FailedRequestException(FailedRequestException.SERVICE_FAILED,
-                                           "Details in exception", me);
-      } catch (IOException ioe) {
-          if(ioe.getCause() instanceof EOFException) {
-              throw new FailedRequestException("Could not find any data for this URL",
-                          "No data could be downloaded from this URL\n"+
-                          url.toString());
-          }
-          else {
-              throw ioe;
-          }
-      }
-      return retval;
-  }
 
   public static FileData lowlevelGetUrlToFile(AnyUrlParams     params,
                                               File             outfile,

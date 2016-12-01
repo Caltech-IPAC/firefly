@@ -10,8 +10,12 @@ package edu.caltech.ipac.firefly.server;
 
 
 import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.server.rpc.JsonDataCommands;
+import edu.caltech.ipac.firefly.server.rpc.PushCommands;
+import edu.caltech.ipac.firefly.server.rpc.ResolveServerCommands;
+import edu.caltech.ipac.firefly.server.rpc.ResourceServerCommands;
+import edu.caltech.ipac.firefly.server.rpc.VisServerCommands;
 import edu.caltech.ipac.firefly.server.servlets.HttpServCommands;
-import edu.caltech.ipac.firefly.server.visualize.*;
 import edu.caltech.ipac.firefly.server.query.SearchServerCommands;
 
 import javax.servlet.http.HttpServletRequest;
