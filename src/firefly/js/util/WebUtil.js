@@ -54,6 +54,25 @@ export const encodeUrl= function(url, params) {
 };
 
 /**
+ * returns an array of {name, value} pairs based on the given params object.
+ * If the value in the params object is an array, it will be flatten into multiple
+ * name-value pairs based on the same key.
+ * @param params
+ * @returns {string}
+ */
+export function toNameValuePairs(params) {
+    if (isPlainObject(params)) {
+        return Object.entries(params)
+            .filter( ([key, val]) => key)       // remove empty params
+            .reduce( (rval, [key, val]) => {
+                if (Array.isArray(val)) {
+                    return rval.concat(val.map( (v) => ({name:key, value:v}) ));
+                } else return rval.concat({name:key, value:val});
+            }, []);
+    } else return params;
+}
+
+/**
  * convert a params object to an encoded url fragment.
  * this function supports nested object.  if the value of a param is an object
  * or an array of {name, value}, it will encode the child, and then encode the parent as well.
@@ -61,18 +80,13 @@ export const encodeUrl= function(url, params) {
  * @returns {*}
  */
 export function encodeParams(params) {
-    if (Array.isArray(params)) {
-        // if it's an array of ServerParam, convert it into a simple key/value object
-        params = params.filter( (p) => has(p, 'name')
-                       .map((p) => [get(p, 'name'), get(p, 'value', '')])
-                       .reduce((rval, [key, value]) => rval[key] = value), {});
-    }
+    params = toNameValuePairs(params);  // convert to name-value pairs if params is a plain object.
 
-    return Object.entries(params)
-                .map(([key, val]) => [key.trim(), isPlainObject(val) ? JSON.stringify(val) : val])  // convert object to json
-                .map(([key, val]) => [key, encodeURIComponent(val)])    // encoded it
-                .map(([key, val]) => key + '=' + val)    // create key=val parts
-                .join('&');     // combine the parts, separating them by '&'
+    return params.filter( (p) => has(p, 'name') )       // only take name-value pair.
+        .map(({name, value}) => [name.trim(), isPlainObject(value) ? JSON.stringify(value) : value])  // map nam/value pair into [name,value] and convert object to json
+        .map(([name, value]) => [name, encodeURIComponent(value)])    // encoded it
+        .map(([name, value]) => name + '=' + value)    // create key=val parts
+        .join('&');     // combine the parts, separating them by '&'
 }
 
 /**
@@ -151,22 +165,22 @@ export function fetchUrl(url, options, doValidation= true) {
     options.headers = Object.assign(headers, options.headers);
 
     if (options.params) {
+        const params = toNameValuePairs(options.params);        // convert to name-value pairs if it's a simple object.
         if (options.method.toLowerCase() === 'get') {
-            url = encodeUrl(url, options.params);
+            url = encodeUrl(url, params);
         } else {
             url = encodeUrl(url);
             if (!options.body) {
                 // if 'post' but, body is not provided, add the parameters into the body.
                 if (options.method.toLowerCase() === 'post') {
                     options.headers['Content-type'] = 'application/x-www-form-urlencoded';
-                    options.body = Object.keys(options.params).map((key) => {
-                                        return encodeURIComponent(key) + '=' + encodeURIComponent(options.params[key]);
-                                    }).join('&');
+                    options.body = params.map(({name, value=''}) => encodeURIComponent(name) + '=' + encodeURIComponent(value))
+                                    .join('&');
                 } else if (options.method.toLowerCase() === 'multipart') {
                     options.method = 'post';
                     var data = new FormData();
-                    Object.keys(options.params).forEach( (key) => {
-                        data.append(key, options.params[key]);
+                    params.forEach( ({name, value}) => {
+                        data.append(name, value);
                     });
                     options.body = data;
                 }
@@ -180,7 +194,7 @@ export function fetchUrl(url, options, doValidation= true) {
         .then( (response) => {
             if (!doValidation) return response;
             if (response.ok) {
-                return response; 
+                return response;
             } else {
                 return new Error(`${url} failed with status: ${response}.statusText`);
             }

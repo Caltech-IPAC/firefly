@@ -9,7 +9,7 @@
 /*eslint prefer-template:0 */
 import {get, has} from 'lodash';
 import { getRootURL} from '../util/BrowserUtil.js';
-import { encodeServerUrl, toBoolean } from '../util/WebUtil.js';
+import { encodeUrl, toBoolean } from '../util/WebUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {fetchUrl} from '../util/WebUtil.js';
 
@@ -19,33 +19,10 @@ import {fetchUrl} from '../util/WebUtil.js';
 export const DEF_BASE_URL = getRootURL() + 'sticky/CmdSrv';
 
 
-function preparePostParamList(cmd,paramList) {
-    if (Array.isArray(paramList)) {
-        const initObj= cmd ? {[ServerParams.COMMAND]: cmd} : {};
-         return paramList.reduce( (rval, entry) => {
-                    if (entry.name) rval[entry.name]= get(entry, 'value','');
-                    return rval;
-                }, initObj);
-    }
-    else {
-        return Object.assign({},paramList,{[ServerParams.COMMAND]:cmd});
-    }
-}
-
-
-
 const makeURL= function(baseUrl, cmd, paramList, isJsonp= false) {
-    if (Array.isArray(paramList)) {
-        if (cmd) paramList.push({name: ServerParams.COMMAND, value: cmd});
-        if (isJsonp) paramList.push({name: ServerParams.DO_JSONP, value: 'true'});
-    }
-    else {
-        var add= {};
-        if (cmd) add[ServerParams.COMMAND]= cmd;
-        if (isJsonp) add[ServerParams.DO_JSONP]= 'true';
-        paramList= Object.assign({},paramList,add);
-    }
-    return encodeServerUrl(baseUrl, paramList);
+    paramList = cmd ? addParam(paramList, ServerParams.COMMAND, cmd) : paramList;
+    paramList = isJsonp ? addParam(paramList, ServerParams.DO_JSONP, 'true') : paramList;
+    return encodeUrl(baseUrl, paramList);
 };
 
 export const jsonpRequest= function(baseUrl, cmd, paramList) {//TODO - convert
@@ -66,18 +43,10 @@ export const defaultJsonpRequest= function(cmd, paramList, cb) {
  */
 export const jsonRequest= function(baseUrl, cmd, paramList, doPost) {
     const options= {method: doPost?'POST':'GET'};
-    var url;
-    if (doPost) {
-        url= encodeServerUrl(baseUrl,{});
-        options.params= preparePostParamList(cmd,paramList);
-    }
-    else {
-        url = makeURL(baseUrl, cmd, paramList);
-    }
-
+    options.params = addParam(paramList, ServerParams.COMMAND, cmd);
 
     return new Promise(function(resolve, reject) {
-        fetchUrl(url,options,false ).then( (response) => {
+        fetchUrl(baseUrl, options, false ).then( (response) => {
             if (!response.ok) {
                 reject(new Error(`Error from Server for command ${cmd}: code: ${response.status}, text: ${response.statusText}`));
                 return;
@@ -126,3 +95,16 @@ export const doSimpleService= function(doJsonP, cmd, asyncCB) {
     doService(doJsonP, cmd, [], asyncCB, (s) => s);
 };
 
+/**
+ * add the given name-value param into a new paramList.  If a param by a given name exists, it will be replaced.
+ * if name is not given, the original paramList is returned.
+ * @param {Object, Object[]} paramList
+ * @param {string} name
+ * @param {string} value
+ */
+function addParam(paramList, name, value) {
+    if (!name) return paramList;
+    if (Array.isArray(paramList)) {
+        return paramList.filter((v) => v.name !== name).concat({name, value});
+    } else return Object.assign({}, paramList, {[name]: value});
+}

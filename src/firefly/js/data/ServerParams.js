@@ -117,7 +117,6 @@ export const ServerParams = {
         ADD_ID_TO_CRITERIA: 'addIDToCriteria',
         CLEAN_UP: 'cleanup',
         DOWNLOAD_PROGRESS: 'downloadProgress',
-        GET_DATA_FILE_VALUES: 'getDataFileValues',
         SET_EMAIL: 'setEmail',
         SET_ATTR: 'setAttribute',
         GET_EMAIL: 'getEmail',

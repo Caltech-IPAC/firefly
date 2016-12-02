@@ -28,13 +28,14 @@ function createSuccessHandler(action, params, onSubmit) {
 }
 
 export const FormPanel = function (props) {
-    var {children, onSubmit, onCancel, onError, groupKey, action, params, width, height} = props;
+    var {children, onSubmit, onCancel, onError, groupKey, action, params, width='100%', height='100%', submitText='Search'} = props;
 
     const style = { width, height,
         backgroundColor: 'white',
         border: '1px solid rgba(0,0,0,0.3)',
         padding: 5,
-        marginBottom: 5
+        marginBottom: 5,
+        boxSizing: 'border-box'
     };
     return (
         <div>
@@ -45,7 +46,7 @@ export const FormPanel = function (props) {
                             groupKey={groupKey}
                             onSuccess={createSuccessHandler(action, params, onSubmit)}
                             onFail={onError || handleFailfure}
-                            text = 'Search'
+                            text = {submitText}
             />
             <button style={{display: 'inline-block'}} type='button' className='button std' onClick={onCancel}>Cancel</button>
         </div>
@@ -54,8 +55,12 @@ export const FormPanel = function (props) {
 
 
 FormPanel.propTypes = {
+    submitText: React.PropTypes.string,
+    width: React.PropTypes.string,
+    height: React.PropTypes.string,
     onSubmit: React.PropTypes.func,
     onCancel: React.PropTypes.func,
+    onError: React.PropTypes.func,
     groupKey: React.PropTypes.any,
     action: React.PropTypes.string,
     params: React.PropTypes.object
