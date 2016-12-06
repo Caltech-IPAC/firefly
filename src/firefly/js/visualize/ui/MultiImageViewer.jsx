@@ -27,8 +27,8 @@ export class MultiImageViewer extends Component {
             dispatchViewerUnmounted(this.props.viewerId);
 
             var viewer = getViewer(getMultiViewRoot(), nextProps.viewerId);
-            if (viewer && viewer.lastActivePlotId) {
-                dispatchChangeActivePlotView(viewer.lastActivePlotId);
+            if (viewer && viewer.lastActiveItemId) {
+                dispatchChangeActivePlotView(viewer.lastActiveItemId);
             }
         }
         this.storeUpdate(nextProps);
