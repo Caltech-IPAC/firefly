@@ -1,10 +1,6 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-
-
-import {padStart} from 'lodash';
 import {getCellValue} from '../tables/TableUtil.js';
 import {RangeValues,STRETCH_LINEAR,SIGMA} from '../visualize/RangeValues.js';
 import {ZoomType} from '../visualize/ZoomType.js';
@@ -18,15 +14,14 @@ import {ServerRequest} from '../data/ServerRequest.js';
  * @param title - {String}
  * @returns {a WebRequest object}
  */
-
 function makeWebRequest(sr,  plotId, title) {
-    const r  = WebPlotRequest.makeProcessorRequest(sr, 'lsst');
+    const r  = WebPlotRequest.makeProcessorRequest(sr, 'lsst-sdss');
     const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
     r.setTitleOptions(TitleOptions.NONE);
     r.setTitle(title);
     r.setPlotId(plotId);
     r.setMultiImageIdx(0);
-    r.setPreferenceColorKey('lsst-coadd-color-pref');
+    r.setPreferenceColorKey('lsst-sdss-color-pref');
     r.setZoomType(ZoomType.TO_WIDTH);
     r.setInitialRangeValues(rangeValues);
     return r;
@@ -42,7 +37,7 @@ function makeWebRequest(sr,  plotId, title) {
 function makeCcdReqBuilder(table, rowIdx) {
 
     const run= getCellValue(table, rowIdx, 'run');
-    const field= padStart(getCellValue(table, rowIdx, 'field'), 4, '0');
+    const field= getCellValue(table, rowIdx, 'field');
     const camcol= getCellValue(table, rowIdx, 'camcol');
     const filterId= getCellValue(table, rowIdx, 'filterId');
 
@@ -70,7 +65,7 @@ function makeCoadReqBuilder(table, rowIdx) {
 
 
     const tract= getCellValue(table, rowIdx, 'tract');
-    const patch= padStart(getCellValue(table, rowIdx, 'patch'), 4, '0');
+    const patch= getCellValue(table, rowIdx, 'patch');
     const filterId= getCellValue(table, rowIdx, 'filterId');
 
     const sr= new ServerRequest('LSSTImageSearch');
@@ -93,7 +88,7 @@ function makeCoadReqBuilder(table, rowIdx) {
  * @param threeColorOps
  * @return {{}}
  */
-export function makeLsstImagePlotRequest(table, row, includeSingle, includeStandard, threeColorOps) {
+export function makeLsstSdssPlotRequest(table, row, includeSingle, includeStandard, threeColorOps) {
 
     const retval= {};
     var builder;
@@ -111,22 +106,22 @@ export function makeLsstImagePlotRequest(table, row, includeSingle, includeStand
     const filterName= getCellValue(table, row, 'filterName');
 
     if (includeSingle) {
-       retval.single= builder('lsst-'+filterName,filterName, filterName);
+       retval.single= builder('lsst-sdss-'+filterName,filterName, filterName);
     }
 
     if (includeStandard) {
         retval.standard= [
-            builder('lsst-u',  titleBase+'-u', 'u'),
-            builder('lsst-g',  titleBase+'-g', 'g'),
-            builder('lsst-r',  titleBase+'-r', 'r'),
-            builder('lsst-i',  titleBase+'-i', 'i'),
-            builder('lsst-z',  titleBase+'-z', 'z'),
+            builder('lsst-sdss-u',  titleBase+'-u', 'u'),
+            builder('lsst-sdss-g',  titleBase+'-g', 'g'),
+            builder('lsst-sdss-r',  titleBase+'-r', 'r'),
+            builder('lsst-sdss-i',  titleBase+'-i', 'i'),
+            builder('lsst-sdss-z',  titleBase+'-z', 'z'),
         ];
         if (retval.standard[filterId]) retval.highlightPlotId= retval.standard[filterId].getPlotId();
     }
 
     if (threeColorOps) {
-        retval.threeColor= threeColorOps.map( (b) => b && builder('lsst-threeC', 'SDSS 3 Color', b) );
+        retval.threeColor= threeColorOps.map( (b) => b && builder('lsst-sdss-threeC', 'SDSS 3 Color', b) );
     }
     return retval;
 }
