@@ -565,15 +565,15 @@ function changeActivePlot(state, payload, containerType) {
     return state.map((viewer) => {
         var isView = false;
 
+        if (!has(viewer, 'lastActivePlotId')) return viewer;
+
         if (viewerId) {         // plot image action case
             if ((viewerId === viewer.viewerId) && viewer.itemIdAry.includes(plotId)) {
                 isView = true;
             }
-        } else {                // change active plot action case
-            if (has(viewer, 'lastActivePlotId') &&
-                (viewer.containerType === containerType) &&
-                (viewer.itemIdAry.includes(plotId))) {
-                isView = true;
+        } else {               // change active plot action case
+            if ((viewer.containerType === containerType) && (viewer.itemIdAry.includes(plotId))) {
+              isView = true;
             }
         }
 
