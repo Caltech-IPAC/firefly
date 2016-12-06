@@ -2,9 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
 
 
 import {padStart} from 'lodash';
@@ -13,34 +10,6 @@ import {RangeValues,STRETCH_LINEAR,SIGMA} from '../visualize/RangeValues.js';
 import {ZoomType} from '../visualize/ZoomType.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {ServerRequest} from '../data/ServerRequest.js';
-
-/**
- * 11/23/16
- * Lijun Zhang
- * @param table - {Object }
- * @param rowIdx - {int}
- * @returns {Function}
- */
-
-function makeCcdReqBuilder(table, rowIdx) {
-
-    const run= getCellValue(table, rowIdx, 'run');
-    const field= padStart(getCellValue(table, rowIdx, 'field'), 4, '0');
-    const camcol= getCellValue(table, rowIdx, 'camcol');
-    const filterId= getCellValue(table, rowIdx, 'filterId');
-
-    const sr= new ServerRequest('LSSTImageSearch');
-    sr.setParam('run', `${run}`);
-    sr.setParam('camcol', `${camcol}`);
-    sr.setParam('filterId', `${filterId}`);
-    sr.setParam('field', `${field}`);
-
-    return (plotId, title, filterName) => {
-
-        sr.setParam('filterName', `${filterName}`);
-        return makeWebRequest(sr,plotId,  title);
-    };
-}
 
 /**
  * This method returns a WebRequest object
@@ -62,28 +31,58 @@ function makeWebRequest(sr,  plotId, title) {
     r.setInitialRangeValues(rangeValues);
     return r;
 }
+
 /**
- * This method builds the Coadd search string
+ * 11/23/16
+ * Lijun Zhang
  * @param table - {Object }
+ * @param rowIdx - {int}
+ * @returns {Function}
+ */
+function makeCcdReqBuilder(table, rowIdx) {
+
+    const run= getCellValue(table, rowIdx, 'run');
+    const field= padStart(getCellValue(table, rowIdx, 'field'), 4, '0');
+    const camcol= getCellValue(table, rowIdx, 'camcol');
+    const filterId= getCellValue(table, rowIdx, 'filterId');
+
+    const sr= new ServerRequest('LSSTImageSearch');
+    sr.setParam('run', `${run}`);
+    sr.setParam('camcol', `${camcol}`);
+    sr.setParam('filterId', `${filterId}`);
+    sr.setParam('field', `${field}`);
+
+    return (plotId, title, filterName) => {
+
+        sr.setParam('filterName', `${filterName}`);
+        return makeWebRequest(sr, plotId,  title);
+    };
+}
+
+/**
+ * @desc This function makes the WebRequest for DeepCoadd database
+ *
+ * @param table  - {Object }
  * @param rowIdx - {int}
  * @returns {Function}
  */
 function makeCoadReqBuilder(table, rowIdx) {
 
-    const bandMap= {u:'0', g:'1',r:'2',i:'3', z:'4'};
 
-    const deepCoaddId = Number(getCellValue(table, rowIdx, 'deepCoaddId'));
-    const searchIdBase = deepCoaddId - deepCoaddId%8;
+    const tract= getCellValue(table, rowIdx, 'tract');
+    const patch= padStart(getCellValue(table, rowIdx, 'patch'), 4, '0');
+    const filterId= getCellValue(table, rowIdx, 'filterId');
+
     const sr= new ServerRequest('LSSTImageSearch');
+    sr.setParam('tract', `${tract}`);
+    sr.setParam('patch', `${patch}`);
+    sr.setParam('filterId', `${filterId}`);
 
     return (plotId, title, filterName) => {
-
-        const searchId = searchIdBase + Number(bandMap[filterName]);
-        sr.setParam('deepCoaddId', `${searchId}`);
-        return makeWebRequest(sr,plotId,  title);
+        sr.setParam('filterName', `${filterName}`);
+        return makeWebRequest(sr, plotId,  title);
     };
 }
-
 
 /**
  * make a list of plot request for wise. This function works with ConverterFactory.
@@ -98,36 +97,36 @@ export function makeLsstImagePlotRequest(table, row, includeSingle, includeStand
 
     const retval= {};
     var builder;
-    var plotId;
+    var titleBase;
     if (getCellValue(table, row, 'scienceCcdExposureId')) {
         builder= makeCcdReqBuilder(table,row);
-        plotId = 'lsst-sdss-';
+        titleBase= Number(getCellValue(table, row, 'scienceCcdExposureId'));
     }
     else {
         builder= makeCoadReqBuilder(table, row);
-        plotId = 'lsst-coadd-';
+        titleBase= Number(getCellValue(table, row, 'deepCoaddId'));
 
     }
     const filterId= Number(getCellValue(table, row, 'filterId'));
     const filterName= getCellValue(table, row, 'filterName');
 
     if (includeSingle) {
-       retval.single= builder(plotId+filterName,filterName, filterName);
+       retval.single= builder('lsst-'+filterName,filterName, filterName);
     }
 
     if (includeStandard) {
         retval.standard= [
-            builder(plotId+'u', 'u', 'u'),
-            builder(plotId+'g', 'g', 'g'),
-            builder(plotId+'r', 'r', 'r'),
-            builder(plotId+'i', 'i', 'i'),
-            builder(plotId+'z', 'z', 'z'),
+            builder('lsst-u',  titleBase+'-u', 'u'),
+            builder('lsst-g',  titleBase+'-g', 'g'),
+            builder('lsst-r',  titleBase+'-r', 'r'),
+            builder('lsst-i',  titleBase+'-i', 'i'),
+            builder('lsst-z',  titleBase+'-z', 'z'),
         ];
         if (retval.standard[filterId]) retval.highlightPlotId= retval.standard[filterId].getPlotId();
     }
 
     if (threeColorOps) {
-        retval.threeColor= threeColorOps.map( (b) => b && builder(plotId+'-threeC', 'SDSS 3 Color', b) );
+        retval.threeColor= threeColorOps.map( (b) => b && builder('lsst-threeC', 'SDSS 3 Color', b) );
     }
     return retval;
 }
