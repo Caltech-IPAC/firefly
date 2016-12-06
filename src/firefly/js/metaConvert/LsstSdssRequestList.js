@@ -39,16 +39,13 @@ function makeCcdReqBuilder(table, rowIdx) {
     const run= getCellValue(table, rowIdx, 'run');
     const field= getCellValue(table, rowIdx, 'field');
     const camcol= getCellValue(table, rowIdx, 'camcol');
-    const filterId= getCellValue(table, rowIdx, 'filterId');
 
     const sr= new ServerRequest('LSSTImageSearch');
     sr.setParam('run', `${run}`);
     sr.setParam('camcol', `${camcol}`);
-    sr.setParam('filterId', `${filterId}`);
     sr.setParam('field', `${field}`);
 
     return (plotId, title, filterName) => {
-
         sr.setParam('filterName', `${filterName}`);
         return makeWebRequest(sr, plotId,  title);
     };
@@ -66,12 +63,10 @@ function makeCoadReqBuilder(table, rowIdx) {
 
     const tract= getCellValue(table, rowIdx, 'tract');
     const patch= getCellValue(table, rowIdx, 'patch');
-    const filterId= getCellValue(table, rowIdx, 'filterId');
 
     const sr= new ServerRequest('LSSTImageSearch');
     sr.setParam('tract', `${tract}`);
     sr.setParam('patch', `${patch}`);
-    sr.setParam('filterId', `${filterId}`);
 
     return (plotId, title, filterName) => {
         sr.setParam('filterName', `${filterName}`);

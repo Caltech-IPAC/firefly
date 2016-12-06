@@ -54,11 +54,10 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
     private URL getURLForDeepCoadd(ServerRequest request) throws IOException, DataAccessException {
         String tract = request.getParam("tract");
         String patch = request.getParam("patch");
-        String fiterId = request.getParam("filterId");
         String filterName = request.getParam("filterName");
 
         _log.info("create URL");
-        return new URL(DAX_URL+"deepCoadd/ids?tract="+tract+"&patch="+patch+"&fiterId="+fiterId+"&filter="+filterName);
+         return new URL(DAX_URL+"deepCoadd/ids?tract="+tract+"&patch="+patch+"&filter="+filterName);
 
     }
 
