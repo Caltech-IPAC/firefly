@@ -7,10 +7,7 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
-<<<<<<< Updated upstream
-=======
 import edu.caltech.ipac.util.FileUtil;
->>>>>>> Stashed changes
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
 
