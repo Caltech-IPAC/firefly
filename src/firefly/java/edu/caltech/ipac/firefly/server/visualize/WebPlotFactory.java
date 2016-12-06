@@ -229,10 +229,10 @@ public class WebPlotFactory {
             throw e;
         } catch (FailedRequestException e) {
             updateProgressIsFailure(saveRequest);
-            throw new FailedRequestException("Could not create plot. " , e.getDetailMessage() + ": "+ e.getMessage()   );
+            throw new FailedRequestException("Could not create plot. " , e.getDetailMessage() + ": "+ e.getMessage(),e);
         } catch (FitsException e) {
             updateProgressIsFailure(saveRequest);
-            throw new FailedRequestException("Could not create plot. Invalid FITS File format.", e.getMessage());
+            throw new FailedRequestException("Could not create plot. Invalid FITS File format.", e.getMessage(),e);
         } catch (Exception e) {
             updateProgressIsFailure(saveRequest);
             throw new FailedRequestException("Could not create plot.", e.getMessage(), e);

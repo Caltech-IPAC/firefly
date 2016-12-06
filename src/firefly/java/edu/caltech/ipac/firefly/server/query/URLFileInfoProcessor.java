@@ -7,9 +7,14 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
+<<<<<<< Updated upstream
+=======
+import edu.caltech.ipac.util.FileUtil;
+>>>>>>> Stashed changes
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -40,6 +45,21 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
                 }
             }
             retval= LockingVisNetwork.getFitsFile(params);
+            if (retval.getResponseCode()>=500) {
+                File f= new File(retval.getInternalFilename());
+                if (f.length()<800) {
+                    String fileData= FileUtil.readFile(f);
+                    _logger.warn("Could not retrieve URL, status: "+ retval.getResponseCode(),
+                                 "response: "+ fileData);
+                    f.delete();
+                    throw new DataAccessException("Could not retrieve file: "+ fileData);
+                }
+                else {
+                    _logger.warn("Could not retrieve URL, status: "+ retval.getResponseCode());
+                    throw new DataAccessException("Could not retrieve file");
+                }
+            }
+            _logger.info("retrieving URL:" + url.toString());
         } catch (FailedRequestException e) {
             _logger.warn(e, "Could not retrieve URL");
         } catch (MalformedURLException e) {

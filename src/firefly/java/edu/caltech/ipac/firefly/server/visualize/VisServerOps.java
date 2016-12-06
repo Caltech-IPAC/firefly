@@ -1450,11 +1450,9 @@ public class VisServerOps {
         if (e instanceof FileRetrieveException) {
             FileRetrieveException fe = (FileRetrieveException) e;
             retval = WebPlotResult.makeFail("Retrieve failed", "Could not retrieve fits file", fe.getDetailMessage(), progressKey, plotId);
-            fe.setSimpleToString(true);
         } else if (e instanceof FailedRequestException) {
             FailedRequestException fe = (FailedRequestException) e;
             retval = WebPlotResult.makeFail(fe.getUserMessage(), fe.getUserMessage(), fe.getDetailMessage(), progressKey, plotId);
-            fe.setSimpleToString(true);
             userAbort = VisContext.PLOT_ABORTED.equals(fe.getDetailMessage());
         } else if (e instanceof SecurityException) {
             retval = WebPlotResult.makeFail("No Access", "You do not have access to this data,", e.getMessage(), progressKey, plotId);

@@ -14,9 +14,9 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.GeomException;
 
 import java.io.File;
@@ -48,11 +48,9 @@ public class ProcessorFileRetriever implements FileRetriever {
             File f= new File(fi.getInternalFilename());
             return new FileData(f, f.getName());
         } catch (DataAccessException dae) {
-            Logger.error(dae);
             throw new FailedRequestException("Unable to get file location info", dae.getMessage(), dae);
         } catch (Exception e) {
-            Logger.error(e);
-            throw new FailedRequestException("Unable to get file location info", e.getMessage(), e);            
+            throw new FailedRequestException("Unable to get file location info", e.getMessage(), e);
         }
     }
 }
