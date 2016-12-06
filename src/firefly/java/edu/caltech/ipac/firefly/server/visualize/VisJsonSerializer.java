@@ -70,7 +70,6 @@ public class VisJsonSerializer {
     }
 
     public static JSONObject serializeProjection(WebPlotInitializer wpInit) {
-//        Projection proj= ProjectionSerializer.deserializeProjection(wpInit.getProjectionSerialized());
         Projection proj= wpInit.getProjection();
         if (proj==null) return null;
         JSONObject map = new JSONObject();
@@ -279,7 +278,7 @@ public class VisJsonSerializer {
                         (Boolean)sdJson.get("bandVisible"));
             }
         } catch (ParseException e){
-            // return null
+            return null;
         }
         return null;
     }
@@ -291,23 +290,22 @@ public class VisJsonSerializer {
     public static PlotState deserializePlotStateFromString(String s) {
         if (s==null) return null;
         if (!s.contains("JSON")) return PlotState.parse(s);
-        PlotState state= null;
         try {
+            PlotState state= null;
             JSONParser parser= new JSONParser();
             Object obj= parser.parse(s);
             if (obj!=null && obj instanceof JSONObject) {
                 state= deserializePlotState((JSONObject)obj);
             }
+            return state;
         } catch (ParseException e){
-            // return null
+            return null;
         }
-        return state;
     }
 
     public static PlotState deserializePlotState(JSONObject map) {
-        PlotState state= null;
         try {
-            state= new PlotState();
+            PlotState state= new PlotState();
             PlotState.MultiImageAction multiImage= StringUtils.getEnum(getStr(map, "multiImage"),
                     PlotState.MultiImageAction.GUESS);
             PlotState.RotateType rType= StringUtils.getEnum(getStr(map, "rotationType"),
@@ -340,12 +338,10 @@ public class VisJsonSerializer {
             for(Object oStr : opList) {
                 state.addOperation( StringUtils.getEnum(oStr.toString(), PlotState.Operation.ROTATE));
             }
-        } catch (ClassCastException e) {
-            // return null
-        } catch (IllegalArgumentException e) {
-            // return null
+            return state;
+        } catch (ClassCastException|IllegalArgumentException  e) {
+            return null;
         }
-        return state;
     }
 
 
@@ -369,8 +365,8 @@ public class VisJsonSerializer {
 
     public static BandState deserializeBandState(JSONObject map) {
         if (map==null) return null;
-        BandState b= new BandState();
         try {
+            BandState b= new BandState();
             b.setWorkingFitsFileStr(getStr(map, "workingFitsFileStr"));
             b.setOriginalFitsFileStr(getStr(map,"originalFitsFileStr"));
             b.setUploadedFileName(getStr(map,"uploadFileNameStr",true));
@@ -381,14 +377,12 @@ public class VisJsonSerializer {
             b.setFitsHeader(deserializeClientFitsHeader((JSONObject)map.get("fitsHeader")));
             b.setBandVisible((Boolean) map.get("bandVisible"));
             b.setMultiImageFile((Boolean) map.get("multiImageFile"));
-            b.setCubeCnt((Integer)map.get("cubeCnt"));
+            b.setCubeCnt(getInt(map,"cubeCnt"));
             b.setCubePlaneNumber(getInt(map, "cubePlaneNumber"));
-        } catch (ClassCastException e) {
-            // return null
-        } catch (IllegalArgumentException e) {
-            // return null
+            return b;
+        } catch (ClassCastException|IllegalArgumentException  e) {
+            return null;
         }
-        return b;
     }
 
 
@@ -411,12 +405,9 @@ public class VisJsonSerializer {
                 tMap.put((String)key, (String)map.get(key));
             }
             return new ClientFitsHeader(tMap);
-        } catch (ClassCastException e) {
-            // return null
-        } catch (IllegalArgumentException e) {
-            // return null
+        } catch (ClassCastException|IllegalArgumentException  e) {
+            return null;
         }
-        return null;
     }
 
     private static String getStr(JSONObject j, String key) throws IllegalArgumentException, ClassCastException {

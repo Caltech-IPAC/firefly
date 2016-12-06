@@ -37,7 +37,6 @@ public class AnyFitsGetter {
                                              throws FailedRequestException,
                                                     IOException {
 
-      ClientLog.message("Retrieving Fits Image:");
       String fileName;
       URL url  = params.getURL();
       FileData fileData = null;
@@ -46,7 +45,6 @@ public class AnyFitsGetter {
 
 
           boolean allowDownload= false;
-         ClientLog.message("url=" + url);
          URLConnection   conn = url.openConnection();
          if (conn instanceof HttpURLConnection) {
              ((HttpURLConnection)conn).setFollowRedirects(true);

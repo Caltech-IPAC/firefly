@@ -74,7 +74,6 @@ public class RegionPng {
         this.plot = plot;
         this.container= new PlotContainerImpl();
         ((PlotContainerImpl)container).getPlotList().add(plot);
-//        if (plot.getPlotView()==null)  new PlotView().addPlot(plot);
     }
 
 //======================================================================
@@ -118,9 +117,7 @@ public class RegionPng {
                     else if (r instanceof RegionText) {
                         makeText((RegionText)r);
                     }
-                } catch (NoninvertibleTransformException e) {
-                    // ignore - just don't plot region
-                } catch (ProjectionException e) {
+                } catch (NoninvertibleTransformException|ProjectionException   e) {
                     // ignore - just don't plot region
                 }
             }
@@ -358,7 +355,7 @@ public class RegionPng {
         return retval;
     }
 
-    void updatePositionAngle(WorldPt wp, ScalableObjectPosition pos) {
+    private void updatePositionAngle(WorldPt wp, ScalableObjectPosition pos) {
         float posAngle;
         try {
             ImageWorkSpacePt iwpt = plot.getImageCoords(wp);
@@ -373,11 +370,5 @@ public class RegionPng {
            // do nothing
         }
     }
-
-
-
-
-
-
 }
 

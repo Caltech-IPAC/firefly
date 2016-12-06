@@ -12,8 +12,8 @@ import edu.caltech.ipac.firefly.server.ResourceManager;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.visualize.FileData;
-import edu.caltech.ipac.firefly.server.visualize.FileRetriever;
-import edu.caltech.ipac.firefly.server.visualize.FileRetrieverFactory;
+import edu.caltech.ipac.firefly.server.visualize.imageretrieve.FileRetriever;
+import edu.caltech.ipac.firefly.server.visualize.imageretrieve.ImageFileRetrieverFactory;
 import edu.caltech.ipac.firefly.server.visualize.VisServerOps;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.FileAndHeaderInfo;
@@ -61,7 +61,7 @@ public class PlotServiceImpl extends BaseRemoteService implements PlotService {
 
 
     public WebPlotResult setZoomLevel(PlotState state[], float level, boolean isFullScreen) {
-        return VisServerOps.setZoomLevel(state, level, false, isFullScreen);
+        return VisServerOps.setZoomLevel(state, level, isFullScreen);
     }
 
     public WebPlotResult crop(PlotState stateAry[],
@@ -134,7 +134,7 @@ public class PlotServiceImpl extends BaseRemoteService implements PlotService {
     }
 
     public WebPlotResult[] getOneFileGroup(List<WebPlotRequest> requestList, String progressKey) {
-        return VisServerOps.createOneFileGroup(requestList,progressKey);
+        return VisServerOps.createOneFileGroup(requestList);
     }
 
     public WebPlotResult getWebPlot(WebPlotRequest request){
@@ -205,7 +205,7 @@ public class PlotServiceImpl extends BaseRemoteService implements PlotService {
                 }
             } else {
                 File f= null;
-                FileRetriever retrieve= FileRetrieverFactory.getRetriever(request);
+                FileRetriever retrieve= ImageFileRetrieverFactory.getRetriever(request);
                 if (retrieve!=null)  {
                     FileData retf= retrieve.getFile(request);
                     f= retf.getFile();

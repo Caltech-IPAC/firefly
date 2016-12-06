@@ -17,8 +17,7 @@ import edu.caltech.ipac.firefly.visualize.ZoomType;
 public class ZoomChoice {
     private static final float DEFAULT_MAX_ZOOM_LEVEL = 8.0F;
 
-    private final boolean smartZoom;
-    private final ZoomType hint;
+    private final ZoomType zoomType;
     private final float zoomLevel;
     private final int width;
     private final int height;
@@ -27,15 +26,13 @@ public class ZoomChoice {
     private float maxZoomLevel = DEFAULT_MAX_ZOOM_LEVEL;
 
 
-    public ZoomChoice(boolean smartZoom,
-                      boolean hasMaxZoomLevel,
-                      ZoomType hint,
+    public ZoomChoice(boolean hasMaxZoomLevel,
+                      ZoomType zoomType,
                       float zoomLevel,
                       int width,
                       int height,
                       float arcsecPerScreenPix) {
-        this.smartZoom = smartZoom;
-        this.hint = hint;
+        this.zoomType = zoomType;
         this.zoomLevel = zoomLevel;
         this.width = width;
         this.height = height;
@@ -43,8 +40,7 @@ public class ZoomChoice {
         this.hasMaxZoomLevel = hasMaxZoomLevel;
     }
 
-    public boolean isSmartZoom() { return smartZoom; }
-    public ZoomType getZoomType() { return hint; }
+    public ZoomType getZoomType() { return zoomType; }
     public float getZoomLevel() { return zoomLevel; }
     public int getWidth() { return width; }
     public int getHeight() { return height; }

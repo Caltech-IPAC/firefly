@@ -228,8 +228,8 @@ function makeSerializedRv(request) {
     const rv= RangeValues.makeRV( {
             lowerWhich: useZ ? ZSCALE : request.lowerWhich,
             upperWhich: useZ ? ZSCALE : request.upperWhich,
-            lowerRange: request.lowerRange,
-            upperRange: request.upperRange,
+            lowerValue: request.lowerRange,
+            upperValue: request.upperRange,
             betaValue: request.beta,
             gammaValue: request.gamma,
             algorithm: request.algorithm,

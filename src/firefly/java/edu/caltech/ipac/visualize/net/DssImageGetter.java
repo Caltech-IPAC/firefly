@@ -30,7 +30,6 @@ public class DssImageGetter {
                                            File           outFile) 
                                            throws FailedRequestException,
                                                   IOException {
-      ClientLog.message("Retrieving Dss image");
 
       String cgiapp= null;
       String req   = null;
@@ -74,8 +73,6 @@ public class DssImageGetter {
                           FailedRequestException.SERVICE_FAILED,
                           "Details in exception", me );
       }
-
-      ClientLog.message("Done");
     }
 
 

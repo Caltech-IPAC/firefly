@@ -7,6 +7,7 @@ import edu.caltech.ipac.util.Base64;
 import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.UTCTimeUtil;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -426,9 +427,11 @@ public class URLDownload {
             retval = outFileData;
 
 
+            long start = System.currentTimeMillis();
             netCopy(in, out, conn, maxFileSize, dl);
 
-            logDownload(retval, conn.getURL().toString());
+            long elapse = System.currentTimeMillis() - start;
+            logDownload(retval, conn.getURL().toString(), elapse );
 
             if (responseCode>=300 && responseCode<400) {
                 DException de= new DException(outFileData, responseCode, null);
@@ -628,11 +631,13 @@ public class URLDownload {
     }
 
 
-    private static void logDownload(FileData retFile, String urlStr) {
+    private static void logDownload(FileData retFile, String urlStr, long elapse) {
+        String timeStr = (elapse>0) ? ", time: "+UTCTimeUtil.getHMSFromMills(elapse) : "";
         if (retFile != null) {
             List<String> outList = new ArrayList<String>(2);
+            outList.add(String.format("Download Complete: %s : %d bytes%s",
+                          retFile.getFile().getName(), retFile.getFile().length(), timeStr));
             outList.add(urlStr);
-            outList.add(String.format("Download Complete: %s : %d bytes", retFile.getFile().getName(), retFile.getFile().length()));
             ClientLog.message(outList);
         }
     }
@@ -737,12 +742,14 @@ public class URLDownload {
         logHeader(null, conn, null);
     }
 
-    public static void logCompletedDownload(long size) {
-        logCompletedDownload(null, size);
+    public static void logCompletedDownload(URL url, long size) {
+        logCompletedDownload(url, size, 0);
     }
 
-    public static void logCompletedDownload(URL url, long size) {
-        String s = String.format("Download Complete- %d bytes", size);
+    public static void logCompletedDownload(URL url, long size, long elapse) {
+
+        String timeStr = (elapse>0) ? ", time: "+UTCTimeUtil.getHMSFromMills(elapse) : "";
+        String s = String.format("Download Complete- %d bytes%s", size, timeStr);
         String urlString = null;
         if (url != null) urlString = url.toString();
         ClientLog.message(s, urlString);

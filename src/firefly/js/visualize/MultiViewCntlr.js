@@ -378,6 +378,9 @@ function reducer(state=initState(), action={}) {
                 retState= addItems(state,EXPANDED_MODE_RESERVED,[payload.plotId],IMAGE);
             }
             break;
+        case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
+             // update last plot view
+            break;
         default:
             break;
 

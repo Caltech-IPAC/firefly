@@ -10,6 +10,7 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
+import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 
@@ -28,11 +29,13 @@ public class ActiveCallCtx {
         this.fitsReadGroup = fitsReadGroup;
     }
 
-    public PlotClientCtx getPlotClientCtx() { return plotClientCtx; }
-
     public ImagePlot getPlot() { return plot; }
 
     public ActiveFitsReadGroup getFitsReadGroup() { return fitsReadGroup; }
 
     public String getKey() { return plotClientCtx.getKey(); }
+
+
+    public PlotImages getImages() { return plotClientCtx.getImages(); }
+    public void setImages(PlotImages images) { plotClientCtx.setImages(images); }
 }

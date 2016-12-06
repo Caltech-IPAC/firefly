@@ -12,14 +12,12 @@ import edu.caltech.ipac.firefly.server.visualize.VisJsonSerializer;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.URLDownload;
-import nom.tam.fits.FitsException;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
@@ -31,11 +29,11 @@ import java.util.TimeZone;
  */
 public class ImageDownload extends BaseHttpServlet {
 
-    public static final boolean ENABLE_CACHE= true;
-    public static final String TYPE_TILE= "tile";
-    public static final String TYPE_FULL= "full";
-    public static final String TYPE_THUMBNAIL= "thumbnail";
-    public static final String TYPE_ANY = "any";
+    private static final boolean ENABLE_CACHE= true;
+    private static final String TYPE_TILE= "tile";
+    private static final String TYPE_FULL= "full";
+    private static final String TYPE_THUMBNAIL= "thumbnail";
+    private static final String TYPE_ANY = "any";
     private static final int MAX_AGE= 86400; // 1 day in seconds
     private static final SimpleDateFormat _dateFormatter=new SimpleDateFormat(URLDownload.PATTERN_RFC1123);
 
@@ -50,11 +48,9 @@ public class ImageDownload extends BaseHttpServlet {
         String widthStr= req.getParameter("width");
         String heightStr= req.getParameter("height");
         String stateStr= req.getParameter("state");
-//        PlotState state= PlotState.parse(stateStr);
         PlotState state= VisJsonSerializer.deserializePlotStateFromString(stateStr);
 
         if (type==null) type= TYPE_ANY;
-        ActiveCallCtx ctx= null;
         try {
 
             String fname= getFileName(req);
@@ -65,6 +61,7 @@ public class ImageDownload extends BaseHttpServlet {
 
             ServletOutputStream out= res.getOutputStream();
 
+            ActiveCallCtx ctx;
             if (type.equals(TYPE_TILE)) {
                 if (isNonMatch(fname,req)) {
                     int x= Integer.parseInt(xStr);
@@ -106,10 +103,6 @@ public class ImageDownload extends BaseHttpServlet {
                 File f= ServerContext.convertToFile(fname);
                 FileUtil.writeFileToStream(f,out);
             }
-        } catch (IOException e) {
-            throw new ServletException(e.toString(),e);
-        } catch (FitsException e) {
-            throw new ServletException(e.toString(),e);
         } catch (Exception e) {
             throw new ServletException(e.toString(),e);
         }
