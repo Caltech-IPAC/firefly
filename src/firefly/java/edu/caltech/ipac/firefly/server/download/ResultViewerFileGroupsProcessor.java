@@ -19,8 +19,8 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.visualize.FileData;
-import edu.caltech.ipac.firefly.server.visualize.FileRetriever;
-import edu.caltech.ipac.firefly.server.visualize.FileRetrieverFactory;
+import edu.caltech.ipac.firefly.server.visualize.imageretrieve.FileRetriever;
+import edu.caltech.ipac.firefly.server.visualize.imageretrieve.ImageFileRetrieverFactory;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.DataGroup;
@@ -142,7 +142,7 @@ public class ResultViewerFileGroupsProcessor extends FileGroupsProcessor {
         }
 
         WebPlotRequest wpReq= WebPlotRequest.makeProcessorRequest(sr,"dummy title");
-        FileRetriever retrieve= FileRetrieverFactory.getRetriever(wpReq);
+        FileRetriever retrieve= ImageFileRetrieverFactory.getRetriever(wpReq);
         if (retrieve!=null) {
             try {
                 FileData fileData = retrieve.getFile(wpReq);

@@ -1,18 +1,13 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.server.visualize;
-/**
- * User: roby
- * Date: 3/5/12
- * Time: 12:26 PM
- */
+package edu.caltech.ipac.firefly.server.rpc;
 
 
+import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.ServCommand;
-import edu.caltech.ipac.firefly.server.rpc.TargetServicesImpl;
-import edu.caltech.ipac.astro.net.Resolver;
+import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 
 import java.util.Map;

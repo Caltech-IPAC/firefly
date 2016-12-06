@@ -1,7 +1,11 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.server.visualize;
+
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+package edu.caltech.ipac.firefly.server;
 /**
  * User: roby
  * Date: 12/19/12
@@ -12,6 +16,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
+import edu.caltech.ipac.firefly.server.visualize.VisJsonSerializer;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.visualize.plot.ImagePt;

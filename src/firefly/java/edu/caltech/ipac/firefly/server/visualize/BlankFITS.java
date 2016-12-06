@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
-import edu.caltech.ipac.astro.target.PositionJ2000;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -15,20 +14,12 @@ import nom.tam.fits.ImageData;
 import nom.tam.fits.ImageHDU;
 
 
-   /**
-    *  Create a blank FITS image 
-    */
+/**
+ *  Create a blank FITS image
+ */
 public class BlankFITS 
 {
-    //private WorldPt       _movingPt= null;
-    public static Fits createBlankFITS(PositionJ2000 position, int width,
-                                       int height,double scale) {
-        return createBlankFITS(new WorldPt(position.getRa(),position.getDec()),width,height,scale);
-    }
-
-
-    public static Fits createBlankFITS(WorldPt wp, int width, int height,double scale)
-    {
+    public static Fits createBlankFITS(WorldPt wp, int width, int height,double scale) {
     wp= Plot.convert(wp, CoordinateSys.EQ_J2000);
 	if (scale < 0)
 	    scale = - scale;
@@ -79,8 +70,6 @@ public class BlankFITS
 	ImageData image_data = new ImageData(values);
 
 	ImageHDU image_hdu = new ImageHDU(header, image_data);
-
-	//image_hdu.info();
 
 	blank_fits.addHDU(image_hdu);
 	}

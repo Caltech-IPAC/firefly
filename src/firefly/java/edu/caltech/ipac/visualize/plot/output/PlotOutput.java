@@ -36,7 +36,6 @@ import java.util.List;
 public class PlotOutput {
 
     public static final int JPEG= 99;
-    public static final int GIF=  88;
     public static final int PNG=  84;
     public static final int BMP=  82;
 
@@ -223,7 +222,6 @@ public class PlotOutput {
         switch (outType) {
             case JPEG : retval= FileUtil.jpg; break;
             case PNG : retval= FileUtil.png; break;
-            case GIF : retval= FileUtil.gif; break;
             case BMP : retval= FileUtil.bmp; break;
         }
         return retval;
@@ -295,10 +293,7 @@ public class PlotOutput {
         container.getPlotList().add(_plot);
 
 
-        Assert.tst(outType == JPEG ||
-                   outType == BMP  ||
-                   outType == PNG  ||
-                   outType == GIF);
+        Assert.tst(outType == JPEG || outType == BMP  || outType == PNG);
         int width= defTileSize;
         int height;
         File file;
@@ -345,10 +340,7 @@ public class PlotOutput {
                                                  int screenHeight) {
 
         String ext= getExt(outType);
-        Assert.argTst(outType == JPEG ||
-                      outType == BMP  ||
-                      outType == PNG  ||
-                      outType == GIF, "ext must be jpeg, bmp, png, or gif");
+        Assert.argTst(outType == JPEG || outType == BMP  || outType == PNG,  "ext must be jpeg, bmp, or png");
         int defTileSize= findTileSize(zfact);
         int width= defTileSize;
         int height;
@@ -524,10 +516,6 @@ public class PlotOutput {
             } catch (Exception e) {
                 System.out.println("PlotJpeg: " + e);
             }
-        }
-        else if (outType == GIF) {
-            GifEncoder encoder= new GifEncoder(image, out);
-            encoder.encode();
         }
         else {
             Assert.tst(false);

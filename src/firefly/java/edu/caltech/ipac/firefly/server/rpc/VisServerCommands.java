@@ -1,7 +1,11 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.server.visualize;
+
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+package edu.caltech.ipac.firefly.server.rpc;
 /**
  * User: roby
  * Date: 2/8/12
@@ -11,9 +15,13 @@ package edu.caltech.ipac.firefly.server.visualize;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServCommand;
+import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.servlets.CommandService;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
+import edu.caltech.ipac.firefly.server.visualize.VisJsonSerializer;
+import edu.caltech.ipac.firefly.server.visualize.VisServerOps;
+import edu.caltech.ipac.firefly.server.visualize.WebPlotResultSerializer;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.FileAndHeaderInfo;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -173,7 +181,7 @@ public class VisServerCommands {
             List<WebPlotRequest> reqList= sp.getRequestList();
             WebPlotResult resultAry[] = VisServerOps.createPlotGroup(reqList,key);
 
-            return WebPlotResultSerializer.createJson(resultAry, sp.isJsonDeep());
+            return WebPlotResultSerializer.createJson(resultAry);
         }
     }
 
@@ -187,7 +195,7 @@ public class VisServerCommands {
             float level= sp.getRequiredFloat(ServerParams.LEVEL);
             boolean isFull = sp.getOptionalBoolean(ServerParams.FULL_SCREEN, false);
 
-            WebPlotResult result = VisServerOps.setZoomLevel(stateAry, level, false, isFull);
+            WebPlotResult result = VisServerOps.setZoomLevel(stateAry, level, isFull);
             return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
@@ -199,18 +207,15 @@ public class VisServerCommands {
             SrvParam sp= new SrvParam(paramMap);
             PlotState state= sp.getState();
             boolean jsonDeep= sp.getOptionalBoolean(ServerParams.JSON_DEEP,false);
-            List<StretchData> list = new ArrayList<StretchData>(3);
+            List<StretchData> list = new ArrayList<>(3);
 
             StretchData sd;
-//            sd = StretchData.parse(sp.getOptional(ServerParams.STRETCH_DATA + "0"));
             sd= VisJsonSerializer.deserializeStretchDataFromString(
                     sp.getOptional(ServerParams.STRETCH_DATA + "0"),jsonDeep);
             if (sd != null) list.add(sd);
             sd= VisJsonSerializer.deserializeStretchDataFromString(
                     sp.getOptional(ServerParams.STRETCH_DATA + "1"),jsonDeep);
-//            sd = StretchData.parse(sp.getOptional(ServerParams.STRETCH_DATA + "1"));
             if (sd != null) list.add(sd);
-//            sd = StretchData.parse(sp.getOptional(ServerParams.STRETCH_DATA + "2"));
             sd= VisJsonSerializer.deserializeStretchDataFromString(
                     sp.getOptional(ServerParams.STRETCH_DATA + "2"),jsonDeep);
             if (sd != null) list.add(sd);
@@ -345,7 +350,7 @@ public class VisServerCommands {
             List<StaticDrawInfo> drawInfoList;
             try {
                 if (drawInfoStrAry != null && drawInfoStrAry.length > 0) {
-                    drawInfoList = new ArrayList<StaticDrawInfo>(drawInfoStrAry.length);
+                    drawInfoList = new ArrayList<>(drawInfoStrAry.length);
                     for (String s : drawInfoStrAry) {
                         StaticDrawInfo drawInfo = StaticDrawInfo.parse(s);
                         if (s != null) drawInfoList.add(drawInfo);
@@ -503,10 +508,6 @@ public class VisServerCommands {
             return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
-
-    //=============================================
-    //-------------- Utility Methods --------------
-    //=============================================
 
 
 }

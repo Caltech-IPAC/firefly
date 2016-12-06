@@ -22,16 +22,6 @@ public class AnyFitsParams extends BaseNetParams {
     }
 
     public AnyFitsParams(URL url,
-                         Compression compression) {
-        this(url,compression,false);
-    }
-
-
-    public AnyFitsParams(URL url, boolean allowTables) {
-        this(url,Compression.GUESS,allowTables);
-    }
-
-    public AnyFitsParams(URL url,
                          Compression compression,
                          boolean allowTables) {
         _url= url;
@@ -45,9 +35,7 @@ public class AnyFitsParams extends BaseNetParams {
 
 
     public String getUniqueString() {
-       //String fileStr= _url.getFile(); // query field of URL can be very long, so _url.getQuery().hashCode() can shorten the fileStr.
         int urlHashCode= _url.getFile().hashCode();
-//        String fileStr = _url.getPath()+"?"+(_url.getQuery()==null?"":Integer.toString(_url.getQuery().hashCode()));
         String fileStr = _url.getPath();
                          //we can determine the file type by getting extension from _url.getPath().
         String ext= FileUtil.getExtension(_url.getPath()==null?fileStr:_url.getPath());
@@ -87,8 +75,6 @@ public class AnyFitsParams extends BaseNetParams {
         }
         String retval=  "AF-" + getShortName(_url.getHost()) +"-"+fileStr;
 
-//       String retval=  "AF-" + _url.getHost() +"-"+
-//               (fileStr.length()>150?fileStr.substring(0, 150)+fileStr.hashCode():fileStr);
        return retval.replaceAll("[ :\\[\\]\\/\\\\|\\*\\?<>]", "");
     }
 

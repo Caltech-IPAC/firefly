@@ -10,7 +10,6 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
@@ -23,7 +22,7 @@ import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
-import java.awt.Color;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,12 +33,10 @@ import java.util.List;
  * @author Trey Roby
  */
 public class PlotPngCreator {
-    private static final Logger.LoggerImpl logger = Logger.getLogger();
-//    private static final int ARROW_LENTH = 60;
     private final List<StaticDrawInfo> drawInfoList;
-    private final List<FixedObjectGroup> fgList= new ArrayList<FixedObjectGroup>(10);
-    private final List<VectorObject> vectorList= new ArrayList<VectorObject>(10);
-    private final List<ScalableObjectPosition> scaleList= new ArrayList<ScalableObjectPosition>(10);
+    private final List<FixedObjectGroup> fgList= new ArrayList<>(10);
+    private final List<VectorObject> vectorList= new ArrayList<>(10);
+    private final List<ScalableObjectPosition> scaleList= new ArrayList<>(10);
     private GridLayer gridLayer= null;
 
     private PlotPngCreator (List<StaticDrawInfo> drawInfoList) {

@@ -59,6 +59,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicLong;
 /**
  * User: roby
  * Date: Sep 23, 2009
@@ -71,16 +72,14 @@ import java.util.TreeMap;
  */
 public class PlotServUtils {
 
-    public static final String FUNCTION = "Function: ";
     private static final Logger.LoggerImpl _statsLog= Logger.getLogger(Logger.VIS_LOGGER);
     private static final Logger.LoggerImpl _log= Logger.getLogger();
     private static final int PLOT_FULL_WIDTH = -25;
     private static final int PLOT_FULL_HEIGHT = -25;
-    private static int _nameCnt=1;
+    private static final AtomicLong _nameCnt= new AtomicLong(0);
 
     private static final String JPG_NAME_EXT=FileUtil.jpg;
     private static final String PNG_NAME_EXT=FileUtil.png;
-//    private static final String GIF_NAME_EXT=FileUtil.gif;
     private static final String _hostname;
     private static final String _pngNameExt="." + PNG_NAME_EXT;
 
@@ -119,7 +118,7 @@ public class PlotServUtils {
     }
 
 
-    static void writeThumbnail(ImagePlot plot, ActiveFitsReadGroup frGroup, File f, int thumbnailSize) throws IOException, FitsException {
+    private static void writeThumbnail(ImagePlot plot, ActiveFitsReadGroup frGroup, File f, int thumbnailSize) throws IOException, FitsException {
         ImagePlot tPlot= (ImagePlot)plot.makeSharedDataPlot(frGroup);
         int div= Math.max(plot.getPlotGroup().getGroupImageWidth(), plot.getPlotGroup().getGroupImageHeight());
 
@@ -210,7 +209,6 @@ public class PlotServUtils {
                 "." + FileUtil.FITS,
                 ServerContext.getVisSessionDir());
         BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
-//        ImagePlot.writeFile(stream, new FitsRead[]{northFR});
         if (northFR!=null) northFR.writeSimpleFitsFile(stream);
         FileUtil.silentClose(stream);
         return f;
@@ -227,7 +225,6 @@ public class PlotServUtils {
                                     "."+FileUtil.FITS,
                                     ServerContext.getVisSessionDir());
         BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
-//        ImagePlot.writeFile(stream, new FitsRead[]{rotateFR});
         if (rotateFR!=null) rotateFR.writeSimpleFitsFile(stream);
         FileUtil.silentClose(stream);
         return f;
@@ -244,7 +241,6 @@ public class PlotServUtils {
         File f= File.createTempFile(base+"-flip", "."+FileUtil.FITS,
                                     ServerContext.getVisSessionDir());
         BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
-//        ImagePlot.writeFile(stream, new FitsRead[]{rotateFR});
         rotateFR.writeSimpleFitsFile(stream);
         FileUtil.silentClose(stream);
         return f;
@@ -298,11 +294,11 @@ public class PlotServUtils {
     }
 
 
-    public static boolean isValidForDownload(File f) {
+    private static boolean isValidForDownload(File f) {
         return (ServerContext.convertToFile(f.getPath())!=null);
     }
 
-    static File createFullTile(ImagePlot plot, ActiveFitsReadGroup frGroup, File f) throws IOException {
+    private static File createFullTile(ImagePlot plot, ActiveFitsReadGroup frGroup, File f) throws IOException {
         return  createOneTile(plot,frGroup,f,0,0,PLOT_FULL_WIDTH,PLOT_FULL_HEIGHT);
     }
 
@@ -318,22 +314,22 @@ public class PlotServUtils {
     }
 
 
-    static File createOneTile(ImagePlot plot, ActiveFitsReadGroup frGroup, File f, int x, int y, int width, int height) throws IOException {
+    private static File createOneTile(ImagePlot plot, ActiveFitsReadGroup frGroup, File f, int x, int y, int width, int height) throws IOException {
         return createOneTile(plot,frGroup,f,x,y,width,height,null,null,null,null);
     }
 
 
-    static File createOneTile(ImagePlot plot,
-                              ActiveFitsReadGroup frGroup,
-                              File f,
-                              int x,
-                              int y,
-                              int width,
-                              int height,
-                              List<FixedObjectGroup> fogList,
-                              List<VectorObject> vectorList,
-                              List<ScalableObjectPosition> scaleList,
-                              GridLayer gridLayer) throws IOException {
+    private static File createOneTile(ImagePlot plot,
+                                      ActiveFitsReadGroup frGroup,
+                                      File f,
+                                      int x,
+                                      int y,
+                                      int width,
+                                      int height,
+                                      List<FixedObjectGroup> fogList,
+                                      List<VectorObject> vectorList,
+                                      List<ScalableObjectPosition> scaleList,
+                                      GridLayer gridLayer) throws IOException {
 
         PlotOutput po= new PlotOutput(plot,frGroup);
         if (fogList!=null) po.setFixedObjectGroupList(fogList);
@@ -408,18 +404,15 @@ public class PlotServUtils {
         }
     }
 
-    public static Header getTopFitsHeader(File f) {
-        Header header= null;
+    private static Header getTopFitsHeader(File f) {
         try {
             Fits fits= new Fits(f);
-            header=  fits.getHDU(0).getHeader();
+            Header header=  fits.getHDU(0).getHeader();
             fits.getStream().close();
-        } catch (FitsException e) {
-            // quite fail
-        } catch (IOException e) {
-            // quite fail
+            return header;
+        } catch (FitsException|IOException  e) {
+            return null;
         }
-        return header;
     }
 
 
@@ -459,7 +452,7 @@ public class PlotServUtils {
         return getDateValueFromServiceFits(getServiceDateHeaderKey(sType), header);
     }
 
-    public static String getDateValueFromServiceFits(String headerKey, Header header) {
+    private static String getDateValueFromServiceFits(String headerKey, Header header) {
         long currentYear = Math.round(Math.floor(System.currentTimeMillis()/1000/3600/24/365.25) +1970);
         long year;
         String dateValue= header.getStringValue(headerKey);
@@ -531,7 +524,7 @@ public class PlotServUtils {
         return f;
     }
 
-    static void writeImage(BufferedImage image, File f) throws IOException {
+    private static void writeImage(BufferedImage image, File f) throws IOException {
         OutputStream chistOut= new BufferedOutputStream( new FileOutputStream(f),4096);
         Iterator writers = ImageIO.getImageWritersByFormatName("png");
         ImageWriter writer = (ImageWriter)writers.next();
@@ -561,9 +554,8 @@ public class PlotServUtils {
 
 
     static File getUniquePngFileName(String nameBase, File dir) {
-        File f= new File(dir,nameBase + "-" + _nameCnt +"-"+ _hostname+ _pngNameExt);
+        File f= new File(dir,nameBase + "-" + _nameCnt.incrementAndGet() +"-"+ _hostname+ _pngNameExt);
         f= FileUtil.createUniqueFileFromFile(f);
-        _nameCnt++;
         return f;
     }
 
@@ -581,17 +573,17 @@ public class PlotServUtils {
      * When such mask array passed to create IndexColorModel, the number of the colors can be decided using the
      * masks colors and store the color according to the order of the imageMask in the array.
      *
-     * @param imageMasks
-     * @return
+     * @param imageMasks the mask
+     * @return the ImageMask array
      */
     private static ImageMask[] sortImageMaskArrayInIndexOrder(ImageMask[] imageMasks){
 
-        Map<Integer, ImageMask> unsortedMap= new HashMap<Integer, ImageMask>();
+        Map<Integer, ImageMask> unsortedMap= new HashMap<>();
         for (int i=0;i<imageMasks.length; i++){
-            unsortedMap.put(new Integer(imageMasks[i].getIndex()), imageMasks[i]);
+            unsortedMap.put(imageMasks[i].getIndex(), imageMasks[i]);
         }
 
-        Map<Integer, ImageMask> treeMap = new TreeMap<Integer, ImageMask>(unsortedMap);
+        Map<Integer, ImageMask> treeMap = new TreeMap<>(unsortedMap);
         return treeMap.values().toArray(new ImageMask[0]);
     }
 
@@ -640,7 +632,7 @@ public class PlotServUtils {
         return retval;
     }
 
-    public static ImageMask[] createMaskDefinition(WebPlotRequest r) {
+    private static ImageMask[] createMaskDefinition(WebPlotRequest r) {
         List<String> maskColors= r.getMaskColors();
         Color cAry[]= new Color[maskColors.size()];
         List<ImageMask> masksList=  new ArrayList<ImageMask>();
@@ -785,7 +777,7 @@ public class PlotServUtils {
     }
 
 
-    static ProgressMessage getSingleStatusMessage(String key) {
+    private static ProgressMessage getSingleStatusMessage(String key) {
         ProgressMessage retval = EMPTY_MESSAGE;
         Cache cache = UserCache.getInstance();
         ProgressStat stat = (ProgressStat) cache.get(new StringKey(key));
@@ -795,7 +787,7 @@ public class PlotServUtils {
         return retval;
     }
 
-    static ProgressMessage getMultiStatMessage(ProgressStat stat) {
+    private static ProgressMessage getMultiStatMessage(ProgressStat stat) {
         ProgressMessage retval = null;
         String downloadStr = null;
         Cache cache = UserCache.getInstance();

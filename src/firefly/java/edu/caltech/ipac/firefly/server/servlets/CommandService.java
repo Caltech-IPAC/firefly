@@ -5,7 +5,7 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.visualize.SrvParam;
+import edu.caltech.ipac.firefly.server.SrvParam;
 import org.json.simple.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
@@ -23,7 +23,7 @@ import java.util.Map;
  * @version $Id: CommandService.java,v 1.8 2012/08/22 20:31:43 roby Exp $
  */
 public class CommandService extends BaseHttpServlet {
-    public static final boolean DEBUG= true;
+    public static final boolean DEBUG= false;
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
 

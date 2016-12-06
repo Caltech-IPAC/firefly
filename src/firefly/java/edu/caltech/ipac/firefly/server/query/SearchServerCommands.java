@@ -21,7 +21,7 @@ import edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
-import edu.caltech.ipac.firefly.server.visualize.SrvParam;
+import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;

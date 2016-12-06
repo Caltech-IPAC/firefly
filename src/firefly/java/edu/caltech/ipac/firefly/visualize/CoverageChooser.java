@@ -127,8 +127,7 @@ public class CoverageChooser {
 
             }
             request.setTitleOptions(WebPlotRequest.TitleOptions.PLOT_DESC);
-            request.setZoomType(ZoomType.SMART);
-            if (WebPlotRequest.isSmartZoom(smartType)) request.setZoomType(smartType);
+            request.setZoomType(smartType);
 
         }
         request.setGridOn(gridOn);

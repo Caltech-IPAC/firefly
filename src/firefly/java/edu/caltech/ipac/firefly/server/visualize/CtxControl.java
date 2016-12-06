@@ -3,24 +3,17 @@
  */
 
 package edu.caltech.ipac.firefly.server.visualize;
-/**
- * User: roby
- * Date: 5/7/15
- * Time: 1:16 PM
- */
 
 
 import edu.caltech.ipac.firefly.server.Counters;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
+import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
-import edu.caltech.ipac.util.cache.Cleanupable;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
@@ -28,11 +21,10 @@ import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.GeomException;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.RangeValues;
+import nom.tam.fits.FitsException;
 
 import java.io.File;
-import java.io.Serializable;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -47,8 +39,49 @@ public class CtxControl {
     private final static long CHECK_DIR_DELTA = 1000 * 60 * 60 * 12; // 12 hours
     private static Counters counters= Counters.getInstance();
 
-    static ActiveCallCtx revalidatePlot(PlotClientCtx ctx)  {
-        ActiveCallCtx retval= null;
+    public static ActiveCallCtx prepare(PlotState state) throws FailedRequestException {
+        try {
+            ActiveCallCtx retval;
+            PlotClientCtx ctx= getPlotCtx(state.getContextString());
+            if (ctx==null) {
+                String oldCtxStr= state.getContextString();
+                ctx= makeAndCachePlotCtx();
+                String ctxStr= ctx.getKey();
+                state.setContextString(ctxStr);
+                ctx.setPlotState(state);
+
+                log.briefInfo("Plot context not found, recreating, Old : " + oldCtxStr+ " New: " + ctxStr);
+                WebPlotFactory.recreate(state);
+                retval= revalidatePlot(ctx);
+                counters.incrementVis("Revalidate");
+
+            }
+            else {
+                ctx.setPlotState(state);
+                retval= revalidatePlot(ctx);
+                if (retval==null) {
+                    WebPlotFactory.recreate(state);
+                    retval= revalidatePlot(ctx);
+                    counters.incrementVis("Revalidate");
+                }
+            }
+            return retval;
+        } catch (FailedRequestException e) {
+            log.warn(e, "prepare failed - failed to re-validate plot: " +
+                            "User Msg: " + e.getUserMessage(),
+                    "Detail Msg: " + e.getDetailMessage());
+            throw e;
+        } catch (GeomException e) {
+            log.warn(e, "prepare failed - failed to re-validate plot: " + e.getMessage());
+            throw new FailedRequestException("prepare failed, geom error", "this should almost never happen", e);
+        }
+    }
+
+
+
+
+    private static ActiveCallCtx revalidatePlot(PlotClientCtx ctx)  {
+        ActiveCallCtx retval;
         synchronized (ctx)  { // keep the test from happening at the same time with this ctx
             try {
                 ImagePlot plot= ctx.getCachedPlot();
@@ -65,7 +98,6 @@ public class CtxControl {
                         boolean blank= PlotServUtils.isBlank(state, band);
 
                         if (fitsFile.canRead() || blank) {
-                            VisContext.purgeOtherPlots(state);
                             FitsRead fr[];
                             if (blank) fr= PlotServUtils.createBlankFITS(state.getWebPlotRequest(band));
                             else       fr= FitsCacher.readFits(fitsFile);
@@ -133,133 +165,94 @@ public class CtxControl {
         return retval;
     }
 
-    public static PlotClientCtx makeAndCachePlotCtx() {
+    public static String makeCachedCtx() {
+        PlotClientCtx ctx= makeAndCachePlotCtx();
+        return ctx.getKey();
+    }
+
+    private static PlotClientCtx makeAndCachePlotCtx() {
         PlotClientCtx ctx= new PlotClientCtx();
         putPlotCtx(ctx);
         return ctx;
     }
 
+    static void initPlotCtx(PlotState state,
+                            ImagePlot plot,
+                            ActiveFitsReadGroup frGroup,
+                            PlotImages images) throws FitsException, IOException {
+        PlotClientCtx ctx = CtxControl.getPlotCtx(state.getContextString());
+        ctx.setImages(images);
+        ctx.setPlotState(state);
+        ctx.setPlot(plot);
+        loadColorInfoIntoState(plot, state, frGroup);
+        PlotStateUtil.setPixelAccessInfo(plot, state, frGroup);
+        putPlotCtx(ctx);
+        PlotServUtils.createThumbnail(plot, frGroup, images, true, state.getThumbnailSize());
+        state.setNewPlot(false);
+    }
 
-    public static ActiveCallCtx prepare(PlotState state) throws FailedRequestException {
-        try {
-            ActiveCallCtx retval;
-            PlotClientCtx ctx= getPlotCtx(state.getContextString());
-            if (ctx==null) {
-                String oldCtxStr= state.getContextString();
-                ctx= makeAndCachePlotCtx();
-                String ctxStr= ctx.getKey();
-                state.setContextString(ctxStr);
-                ctx.setPlotState(state);
-
-                log.info("Plot context not found, creating new context.",
-                         "Old context string: " + oldCtxStr,
-                         "New context string: " + ctxStr);
-                WebPlotFactory.recreate(state);
-                retval= revalidatePlot(ctx);
-                counters.incrementVis("Revalidate");
-
+    private static void loadColorInfoIntoState(ImagePlot p, PlotState state, ActiveFitsReadGroup frGroup) {
+        if (p!=null) {
+            if (p.isThreeColor()) {
+                for(Band band : new Band[] {Band.RED,Band.GREEN,Band.BLUE}) {
+                    if (p.isColorBandInUse(band, frGroup)) {
+                        state.setRangeValues(FitsRead.getDefaultRangeValues(), band);
+                    }
+                }
             }
             else {
-                ctx.setPlotState(state);
-                boolean success;
-                retval= revalidatePlot(ctx);
-//                else                  success= confirmFileData(ctx);
-                if (retval==null) {
-                    WebPlotFactory.recreate(state);
-                    retval= revalidatePlot(ctx);
-                    counters.incrementVis("Revalidate");
+                if (state.getRangeValues(Band.NO_BAND)==null) {
+                    state.setRangeValues(FitsRead.getDefaultRangeValues(), Band.NO_BAND);
                 }
+                int id= p.getImageData().getColorTableId();
+                state.setColorTableId(id==-1 ? 0 : id);
             }
-            return retval;
-        } catch (FailedRequestException e) {
-            log.warn(e, "prepare failed - failed to re-validate plot: " +
-                              "User Msg: " + e.getUserMessage(),
-                      "Detail Msg: " + e.getDetailMessage());
-            throw e;
-        } catch (GeomException e) {
-            log.warn(e, "prepare failed - failed to re-validate plot: " + e.getMessage());
-            throw new FailedRequestException("prepare failed, geom error", "this should almost never happen", e);
         }
     }
 
-    private static boolean confirmFileData(PlotClientCtx ctx)  {
-        boolean retval= true;
-        try {
-            PlotState state= ctx.getPlotState();
 
-            for(Band band : state.getBands()) {
-                if (!PlotStateUtil.getWorkingFitsFile(state, band).canRead() ||
-                    !PlotStateUtil.getOriginalFile(state, band).canRead()) {
-                    retval= false;
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            retval= false;
-        }
-        ctx.updateAccessTime();
-        return retval;
-    }
 
-    /**
-     * This cache key will be different for each user.  Even though it is static it compute a unique key
-     * per session id.
-     */
-    private static CacheKey getKey() {
-        return new StringKey("VisContext-OnePerUser-"+ ServerContext.getRequestOwner().getUserKey());
-    }
 
     public static PlotClientCtx getPlotCtx(String ctxStr) {
-        return (ctxStr!=null) ? getMap().get(ctxStr) : null;
+        return (PlotClientCtx) getCache().get(new StringKey(ctxStr));
     }
+
+    public static boolean isCtxAvailable(String ctxStr) { return getPlotCtx(ctxStr)!=null; }
 
     public static void putPlotCtx(PlotClientCtx ctx) {
         if (ctx!=null && ctx.getKey()!=null) {
-            synchronized (VisContext.class) {
-                getMap().put(ctx.getKey(),ctx);
-            }
+            getCache().put(new StringKey(ctx.getKey()),ctx);
         }
     }
+
+
+    public static boolean isImagePlotAvailable(String ctxString) {
+        PlotClientCtx ctx = getPlotCtx(ctxString);
+        if (ctx != null) return (ctx.getCachedPlot() != null);
+        else             return false;
+    }
+
+    public static void freeCtxResources(String ctxString) {
+        PlotClientCtx ctx = getPlotCtx(ctxString);
+        if (ctx != null) ctx.freeResources(PlotClientCtx.Free.ALWAYS);
+    }
+
+    public static boolean deletePlot(String ctxStr) {
+        PlotClientCtx ctx = getPlotCtx(ctxStr);
+        if (ctx != null) deletePlotCtx(ctx);
+        return true;
+    }
+
 
     public static void deletePlotCtx(PlotClientCtx ctx) {
-        if (ctx!=null) {
-            String key= ctx.getKey();
-            ctx.deleteCtx();
-            synchronized (VisContext.class) {
-                Map<String, PlotClientCtx> map= getMap();
-                if (map.containsKey(key)) map.remove(key);
-            }
-            log.info("deletePlotCtx: Deleted plot context: " + key);
-        }
+        if (ctx==null) return;
+        String key= ctx.getKey();
+        ctx.deleteCtx();
+        getCache().put(new StringKey(key),null);
+        log.info("deletePlotCtx: Deleted plot context: " + key);
     }
 
-    /**
-     * There is one map per PlotClientContextContainer.  Should work out to one map per user.
-     * Each map contains all the PlotClientCtx for that user.
-     * @return the map of plot of PlotClientCtx
-     */
-    static Map<String,PlotClientCtx> getMap() {
-
-        Cache cache= getCache();
-        PlotClientCtxContainer ctxContainer;
-        boolean created= false;
-        CacheKey key= getKey();
-        synchronized (VisContext.class) {
-            ctxContainer = (PlotClientCtxContainer)cache.get(key);
-            if (ctxContainer ==null) {
-                created= true;
-                ctxContainer = new PlotClientCtxContainer();
-                cache.put(key, ctxContainer);
-            }
-        }
-        if (created) {
-            log.info("New session or cache was cleared: Creating new PlotClientCtxContainer",
-                      "key: " + key.getUniqueString());
-        }
-        return ctxContainer.getMap();
-    }
-
-    static Cache getCache() { return CacheManager.getCache(Cache.TYPE_VISUALIZE); }
+    static public Cache getCache() { return CacheManager.getCache(Cache.TYPE_VISUALIZE); }
 
     public static void updateCachedPlot(ActiveCallCtx ctx) { if (ctx!=null) updateCachedPlot(ctx.getKey()); }
 
@@ -270,38 +263,18 @@ public class CtxControl {
         if (p!=null) ctx.setPlot(p);
     }
 
-    private static void cleanupOldDirs() {
-        long now= System.currentTimeMillis();
-        long lastDelta= now-_lastDirCheck.get();
-        if (lastDelta>CHECK_DIR_DELTA) {
-            for(Map.Entry<File,Long> entry : ServerContext._visSessionDirs.entrySet()) {
-                if (now - entry.getValue() > EXPIRE_DIR_DELTA) {
-                    FileUtil.deleteDirectory(entry.getKey());
-                    log.briefInfo("Removed " + EXPIRE_DAYS + " day old directory: " + entry.getKey().getPath());
-                }
-            }
-            _lastDirCheck.getAndSet(System.currentTimeMillis());
-        }
-    }
-
-
-// =====================================================================
-// -------------------- Inner classes ----------------------------------
-// =====================================================================
-
-    public static class PlotClientCtxContainer implements Serializable, Cleanupable {
-        private final Map<String,PlotClientCtx> _map= new ConcurrentHashMap<String,PlotClientCtx>(217);
-
-        Map<String,PlotClientCtx> getMap() { return _map; }
-
-        public void cleanup() {
-            PlotClientCtx ctx;
-            Logger.briefDebug("PlotClientCtxContainer.cleanup, Entries:"+_map.size() );
-            cleanupOldDirs();
-            for(Map.Entry<String,PlotClientCtx> entry : getMap().entrySet()) {
-                    ctx= entry.getValue();
-                    ctx.freeResources(PlotClientCtx.Free.OLD);
-            }
-        }
-    }
+// **** KEEP Around **** I might want to use this code somewhere else
+//    private static void cleanupOldDirs() {
+//        long now= System.currentTimeMillis();
+//        long lastDelta= now-_lastDirCheck.get();
+//        if (lastDelta>CHECK_DIR_DELTA) {
+//            for(Map.Entry<File,Long> entry : ServerContext._visSessionDirs.entrySet()) {
+//                if (now - entry.getValue() > EXPIRE_DIR_DELTA) {
+//                    FileUtil.deleteDirectory(entry.getKey());
+//                    log.briefInfo("Removed " + EXPIRE_DAYS + " day old directory: " + entry.getKey().getPath());
+//                }
+//            }
+//            _lastDirCheck.getAndSet(System.currentTimeMillis());
+//        }
+//    }
 }
