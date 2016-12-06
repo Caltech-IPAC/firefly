@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {without,union,difference, get} from 'lodash';
+import {without,union,difference, get, includes, has} from 'lodash';
 import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
 import ImagePlotCntlr, {ExpandType} from './ImagePlotCntlr.js';
@@ -95,7 +95,8 @@ function initState() {
             mounted: false,
             containerType : IMAGE,
             layoutDetail : 'none',
-            customData: {}
+            customData: {},
+            lastActiveItemId: ''
         },
         {
             viewerId:DEFAULT_PLOT2D_VIEWER_ID,
@@ -107,7 +108,8 @@ function initState() {
             mounted: false,
             containerType : PLOT2D,
             layoutDetail : 'none',
-            customData: {}
+            customData: {},
+            lastActiveItemId: ''
         }
     ];
 }
@@ -127,7 +129,7 @@ function initState() {
  * @param {boolean} mounted
  */
 export function dispatchAddViewer(viewerId, canReceiveNewPlots, containerType, mounted=false) {
-    flux.process({type: ADD_VIEWER , payload: {viewerId, canReceiveNewPlots, containerType, mounted} });
+    flux.process({type: ADD_VIEWER , payload: {viewerId, canReceiveNewPlots, containerType, mounted, lastActiveItemId:''} });
 }
 
 /**
@@ -379,7 +381,8 @@ function reducer(state=initState(), action={}) {
             }
             break;
         case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
-             // update last plot view
+        case ImagePlotCntlr.PLOT_IMAGE:
+            retState = changeActiveItem(state, payload, IMAGE);
             break;
         default:
             break;
@@ -403,13 +406,20 @@ function imageViewerCanAdd(state, viewerId, plotId) {
 function addViewer(state,payload) {
 
     const {viewerId,containerType, layout=GRID,canReceiveNewPlots=NewPlotMode.replace_only.key, mounted=false}= payload;
+    var   {lastActiveItemId} = payload;
     var entryInState = hasViewerId(state,viewerId);
 
     if (entryInState) {
         entryInState = Object.assign(entryInState, {canReceiveNewPlots, mounted, containerType});
+
+        if (has(entryInState, 'lastActiveItemId')) {
+            lastActiveItemId = entryInState.lastActiveItemId ? entryInState.lastActiveItemId : get(entryInState, ['itemIdAry', '0'], '');
+            entryInState = Object.assign(entryInState, {lastActiveItemId});
+        }
         return [...state];
     } else {
-        const entry = {viewerId, containerType, canReceiveNewPlots, layout, mounted, itemIdAry: [], customData: {}};
+        const entry = {viewerId, containerType, canReceiveNewPlots, layout, mounted, itemIdAry: [], customData: {},
+                       lastActiveItemId};
         return [...state, entry];
     }
 }
@@ -468,7 +478,15 @@ function replaceImages(state,viewerId,itemIdAry,containerType) {
         }
     }
 
-    return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, {itemIdAry}) : entry);
+    var updateViewer = (entry) => {
+        if (has(entry, 'lastActiveItemId')) {
+            return {itemIdAry, lastActiveItemId: get(itemIdAry, '0', '')};
+        } else {
+            return {itemIdAry};
+        }
+    };
+
+    return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, updateViewer(entry)) : entry);
 }
 
 
@@ -484,8 +502,19 @@ function removeItems(state,action) {
     var viewer= state.find( (entry) => entry.viewerId===viewerId);
     if (!viewer) return state;
 
+    var rmIdAry = itemIdAry.slice();
     itemIdAry= difference(viewer.itemIdAry,itemIdAry);
-    return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, {itemIdAry}) : entry);
+
+    var updateViewer = (entry) => {
+
+        if (has(entry, 'lastActiveItemId')&&rmIdAry.includes(entry.lastActiveItemId)) {
+            return {itemIdAry, lastActiveItemId: get(itemIdAry, '0', '')};
+        } else {
+            return {itemIdAry}
+        }
+    };
+
+    return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, updateViewer(entry)) : entry);
 }
 
 
@@ -499,7 +528,13 @@ function removeItems(state,action) {
 function deleteSingleItem(state,itemId, containerType) {
     return state.map( (viewer) => {
         if (viewer.containerType!==containerType || !viewer.itemIdAry.includes( itemId)) return viewer;
-        return clone(viewer, {itemIdAry: without(viewer.itemIdAry, itemId)});
+        const v = clone(viewer, {itemIdAry: without(viewer.itemIdAry, itemId)});
+
+        if (has(v, 'lastActiveItemId') && (v.lastActiveItemId === itemId)) {
+            return clone(v, {lastActiveItemId:  get(v, 'itemIdAry.0', '')});
+        } else {
+            return v;
+        }
     });
 }
 
@@ -525,5 +560,28 @@ function updateCustomData(state,action) {
     return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, {customData}) : entry);
 }
 
+function changeActiveItem(state, payload, containerType) {
+    var {plotId, viewerId} = payload;
 
+    return state.map((viewer) => {
+        var isView = false;
 
+        if (!has(viewer, 'lastActiveItemId')) return viewer;
+
+        if (viewerId) {         // plot image action case
+            if ((viewerId === viewer.viewerId) && viewer.itemIdAry.includes(plotId)) {
+                isView = true;
+            }
+        } else {               // change active plot action case
+            if ((viewer.containerType === containerType) && (viewer.itemIdAry.includes(plotId))) {
+              isView = true;
+            }
+        }
+
+        if (isView) {
+            return clone(viewer, {lastActiveItemId: plotId});
+        } else {
+            return viewer;
+        }
+    });
+}
