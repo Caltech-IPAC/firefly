@@ -53,8 +53,6 @@ public class PlotStateUtil {
     }
 
     public static PlotState create(WebPlotRequest req[], PlotState initializerState) {
-//        PlotState state= new PlotState(initializerState.isThreeColor());
-
         PlotState state= new PlotState();
         boolean threeC= initializerState.isThreeColor();
         state.setThreeColor(threeC);

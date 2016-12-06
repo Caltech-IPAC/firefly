@@ -49,21 +49,20 @@ public class WebPlotFactory {
         VisContext.init();
     }
 
-    public static WebPlotInitializer[] createNew(String workingCtxStr,
-                                                 WebPlotRequest redRequest,
-                                                 WebPlotRequest greenRequest,
-                                                 WebPlotRequest blueRequest) throws FailedRequestException, GeomException {
+    public static WebPlotInitializer[] createNew(WebPlotRequest rRequest,
+                                                 WebPlotRequest gRequest,
+                                                 WebPlotRequest bRequest) throws FailedRequestException, GeomException {
 
-        LinkedHashMap<Band, WebPlotRequest> requestMap = new LinkedHashMap<>(5);
+        LinkedHashMap<Band, WebPlotRequest> rMap = new LinkedHashMap<>();
 
-        if (redRequest != null) requestMap.put(RED, redRequest);
-        if (greenRequest != null) requestMap.put(GREEN, greenRequest);
-        if (blueRequest != null) requestMap.put(BLUE, blueRequest);
+        if (rRequest != null) rMap.put(RED, rRequest);
+        if (gRequest != null) rMap.put(GREEN, gRequest);
+        if (bRequest != null) rMap.put(BLUE, bRequest);
 
-        return create(workingCtxStr, requestMap, PlotState.MultiImageAction.USE_FIRST, null, true);
+        return create(rMap, PlotState.MultiImageAction.USE_FIRST, null, true);
     }
 
-    public static WebPlotInitializer[] createNewGroup(String workingCtxStr, List<WebPlotRequest> wprList) throws Exception {
+    public static WebPlotInitializer[] createNewGroup(List<WebPlotRequest> wprList) throws Exception {
 
 
         FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(wprList.get(0));
@@ -99,14 +98,14 @@ public class WebPlotFactory {
     }
 
 
-    public static WebPlotInitializer[] createNew(String workingCtxStr, WebPlotRequest request) throws FailedRequestException, GeomException {
+    public static WebPlotInitializer[] createNew(WebPlotRequest request) throws FailedRequestException, GeomException {
         Map<Band, WebPlotRequest> requestMap = new LinkedHashMap<>(2);
         requestMap.put(NO_BAND, request);
         PlotState.MultiImageAction multiAction= PlotState.MultiImageAction.USE_ALL;
         if (request.containsParam(WebPlotRequest.MULTI_IMAGE_IDX)) {
             multiAction= PlotState.MultiImageAction.USE_IDX;
         }
-        return create(workingCtxStr, requestMap, multiAction, null, false);
+        return create(requestMap, multiAction, null, false);
     }
 
     public static WebPlotInitializer[] recreate(PlotState state) throws FailedRequestException, GeomException {
@@ -116,7 +115,7 @@ public class WebPlotFactory {
             req.setZoomType(ZoomType.STANDARD);
             req.setInitialZoomLevel(state.getZoomLevel());
         }
-        WebPlotInitializer wpAry[] = create(null, requestMap, null, state, state.isThreeColor());
+        WebPlotInitializer wpAry[] = create(requestMap, null, state, state.isThreeColor());
         Assert.argTst(wpAry.length == 1, "in this case you should never have more than one result");
         return wpAry;
     }
@@ -172,8 +171,7 @@ public class WebPlotFactory {
 
 
 
-    private static WebPlotInitializer[] create(String workingCtxStr,
-                                               Map<Band, WebPlotRequest> requestMap,
+    private static WebPlotInitializer[] create(Map<Band, WebPlotRequest> requestMap,
                                                PlotState.MultiImageAction multiAction,
                                                PlotState state,
                                                boolean threeColor) throws FailedRequestException, GeomException {
@@ -189,9 +187,7 @@ public class WebPlotFactory {
 
         try {
 
-            ImagePlotBuilder.Results allPlots= ImagePlotBuilder.build(workingCtxStr, requestMap,
-                                                                      multiAction, state,
-                                                                      threeColor);
+            ImagePlotBuilder.Results allPlots= ImagePlotBuilder.build(requestMap, multiAction, state, threeColor);
 
             // ------------ Iterate through results, Prepare the return objects, including PlotState if it is null
             ImagePlotInfo pInfo[]= allPlots.getPlotInfoAry();
@@ -229,23 +225,23 @@ public class WebPlotFactory {
                        allPlots.getFindElapse(), allPlots.getReadElapse(),
                        false, null, true);
         } catch (FileRetrieveException e) {
-            makeFailProgressState(saveRequest);
+            updateProgressIsFailure(saveRequest);
             throw e;
         } catch (FailedRequestException e) {
-            makeFailProgressState(saveRequest);
+            updateProgressIsFailure(saveRequest);
             throw new FailedRequestException("Could not create plot. " , e.getDetailMessage() + ": "+ e.getMessage()   );
         } catch (FitsException e) {
-            makeFailProgressState(saveRequest);
+            updateProgressIsFailure(saveRequest);
             throw new FailedRequestException("Could not create plot. Invalid FITS File format.", e.getMessage());
         } catch (Exception e) {
-            makeFailProgressState(saveRequest);
+            updateProgressIsFailure(saveRequest);
             throw new FailedRequestException("Could not create plot.", e.getMessage(), e);
         }
         return retval;
 
     }
 
-    private static void makeFailProgressState(WebPlotRequest wpr) {
+    private static void updateProgressIsFailure(WebPlotRequest wpr) {
         if (wpr!=null) PlotServUtils.updateProgress(wpr, ProgressStat.PType.FAIL, "Failed");
     }
 
@@ -265,46 +261,46 @@ public class WebPlotFactory {
                                                 Band band,
                                                 ActiveFitsReadGroup frGroup) throws FailedRequestException, GeomException {
         long start = System.currentTimeMillis();
-        InsertBandInitializer retval = null;
 
         state.setWebPlotRequest(request, band);
-        File file;
-        FileData fd = null;
+
+        FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(request);
+
+
+        if (retrieve== null) {
+            _log.error("Failed to find FileRetriever should only be FILE, URL, ALL_SKY, or SERVICE, for band " + band.toString());
+            return null;
+        }
+
 
         long findStart = System.currentTimeMillis();
-        FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(request);
-        if (retrieve != null) {
-            fd = retrieve.getFile(request);
-            file = fd.getFile();
-        } else {
-            file = null;
-            _log.error("failed to find FileRetriever should only be FILE, URL, ALL_SKY, or SERVICE, for band " + band.toString());
-        }
+        FileData fd = retrieve.getFile(request);
+        File file = fd.getFile();
         long findElapse = System.currentTimeMillis() - findStart;
 
 
-        if (file != null) {
-            long insertStart = System.currentTimeMillis();
-            retval = insertBand(plot, state, fd, band,frGroup);
-            long insertElapse = System.currentTimeMillis() - insertStart;
-            long elapse = System.currentTimeMillis() - start;
-
-            logSuccess(state, elapse, findElapse, insertElapse, true, band, false);
-            state.setNewPlot(false);
-        } else {
-            _log.error("could not find any fits files from request");
+        if (file==null) {
+            _log.error("Could not find any fits files from request");
+            return null;
         }
 
-        return retval;
+        long insertStart = System.currentTimeMillis();
+        InsertBandInitializer bandInit = insertBand(plot, state, fd, band,frGroup);
+        long insertElapse = System.currentTimeMillis() - insertStart;
+        long elapse = System.currentTimeMillis() - start;
+
+        logSuccess(state, elapse, findElapse, insertElapse, true, band, false);
+        state.setNewPlot(false);
+
+        return bandInit;
     }
 
-    private static WebPlotInitializer makePlotResults(ImagePlotInfo pInfo,
-                                                      boolean       makeFiles,
-                                                      ZoomChoice zoomChoice) throws FitsException, IOException {
+    private static WebPlotInitializer makePlotResults(ImagePlotInfo pInfo, boolean makeFiles, ZoomChoice zoomChoice)
+                                               throws FitsException, IOException {
         PlotState state = pInfo.getState();
 
-        PlotImages images = createImages(state, pInfo.getPlot(), pInfo.getFrGroup(),makeFiles,
-                                         zoomChoice.getZoomType() == ZoomType.FULL_SCREEN);
+        boolean fullScreen= zoomChoice.getZoomType() == ZoomType.FULL_SCREEN;
+        PlotImages images = createImages(state, pInfo.getPlot(), pInfo.getFrGroup(),makeFiles, fullScreen);
 
         WebPlotInitializer wpInit = makeWebPlotInitializer(state, images, pInfo);
 

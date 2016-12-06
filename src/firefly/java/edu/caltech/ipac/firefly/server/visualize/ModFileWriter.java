@@ -115,7 +115,6 @@ abstract class ModFileWriter {
             File f= getTargetFile();
             try {
                 OutputStream os= new BufferedOutputStream(new FileOutputStream(f), 1024*16);
-//                ImagePlot.writeFile(os, new FitsRead[]{_fr});
                 _fr.writeSimpleFitsFile(os);
                 FileUtil.silentClose(os);
             } catch (Exception e) {

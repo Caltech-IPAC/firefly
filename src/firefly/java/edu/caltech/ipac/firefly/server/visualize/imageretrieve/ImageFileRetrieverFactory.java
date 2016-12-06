@@ -1,10 +1,6 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
 package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -12,15 +8,10 @@ import edu.caltech.ipac.firefly.visualize.RequestType;
 
 import java.util.HashMap;
 import java.util.Map;
-/**
- * User: roby
- * Date: Feb 26, 2010
- * Time: 10:45:12 AM
- */
-
 
 /**
  * @author Trey Roby
+ * Date: Feb 26, 2010
  */
 public final class ImageFileRetrieverFactory {
 

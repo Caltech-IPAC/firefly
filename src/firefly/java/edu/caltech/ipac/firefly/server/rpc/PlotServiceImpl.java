@@ -134,7 +134,7 @@ public class PlotServiceImpl extends BaseRemoteService implements PlotService {
     }
 
     public WebPlotResult[] getOneFileGroup(List<WebPlotRequest> requestList, String progressKey) {
-        return VisServerOps.createOneFileGroup(requestList,progressKey);
+        return VisServerOps.createOneFileGroup(requestList);
     }
 
     public WebPlotResult getWebPlot(WebPlotRequest request){

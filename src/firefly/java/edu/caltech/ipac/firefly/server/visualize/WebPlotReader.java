@@ -2,15 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.firefly.server.visualize;
-/**
- * User: roby
- * Date: 2/16/11
- * Time: 3:49 PM
- *
- * 07/07/15
- * The Crop class is deprecated. The same function is added to CropAndCenter.
- */
-
 
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.visualize.Band;
@@ -42,6 +33,9 @@ import java.util.Map;
 
 /**
  * @author Trey Roby
+ *
+ * 07/07/15
+ * The Crop class is deprecated. The same function is added to CropAndCenter.
  */
 public class WebPlotReader {
 
@@ -267,12 +261,9 @@ public class WebPlotReader {
                 pt2 = getCropPt2(req);
             }
             if (pt1 != null && pt2 != null) {
-//              Fits inFits = fr.getFits();
                 Fits inFits = fr.createNewFits();
                 Fits cropFits = CropAndCenter.do_crop(inFits, (int) pt1.getX(), (int) pt1.getY(),
                         (int) pt2.getX(), (int) pt2.getY());
-                        //Crop.do_crop(inFits, (int) pt1.getX(), (int) pt1.getY(),
-                         //                            (int) pt2.getX(), (int) pt2.getY());
                 FitsRead tmpFr[] = FitsRead.createFitsReadArray(cropFits);
                 retval = tmpFr[0];
                 File rotName= ModFileWriter.makeRotFileName(originalFile,imageIdx, req.getRotationAngle());

@@ -120,7 +120,7 @@ public class FitsCacher {
         addFitsReadToCache(fitsFile.getPath(), frAry);
     }
 
-    static void addFitsReadToCache(String fitsFilePath, FitsRead frAry[]) {
+    private static void addFitsReadToCache(String fitsFilePath, FitsRead frAry[]) {
         File f= ServerContext.convertToFile(fitsFilePath,true);
         if (f!=null) {
             CacheKey key= new StringKey(fitsFilePath);

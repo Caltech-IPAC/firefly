@@ -41,8 +41,7 @@ public class ImagePlotCreator {
 
     private static final Logger.LoggerImpl _log= Logger.getLogger();
 
-    static ImagePlotInfo[] makeAllNoBand(String workingCtxStr,
-                                         PlotState stateAry[],
+    static ImagePlotInfo[] makeAllNoBand(PlotState stateAry[],
                                          FileReadInfo[] readAry,
                                          ZoomChoice zoomChoice) throws FailedRequestException,
                                                                        FitsException,
@@ -76,8 +75,7 @@ public class ImagePlotCreator {
          return piAry;
      }
 
-    static ImagePlotInfo makeOneImagePerBand(String workingCtxStr,
-                                             PlotState state,
+    static ImagePlotInfo makeOneImagePerBand(PlotState state,
                                              Map<Band, FileReadInfo[]> readInfoMap,
                                              ZoomChoice zoomChoice)  throws FailedRequestException,
                                                                             FitsException,
@@ -88,8 +86,8 @@ public class ImagePlotCreator {
         ImagePlotInfo retval;
         ImagePlot plot= null;
         boolean first= true;
-        Map<Band,WebFitsData> wfDataMap= new LinkedHashMap<Band,WebFitsData>(5);
-        Map<Band,ModFileWriter> fileWriterMap= new LinkedHashMap<Band,ModFileWriter>(5);
+        Map<Band,WebFitsData> wfDataMap= new LinkedHashMap<>(5);
+        Map<Band,ModFileWriter> fileWriterMap= new LinkedHashMap<>(5);
         ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
         for(Map.Entry<Band,FileReadInfo[]> entry :  readInfoMap.entrySet()) {
             Band band= entry.getKey();
@@ -162,8 +160,6 @@ public class ImagePlotCreator {
             if (plot.getImageDataWidth()!=rWidth || plot.getImageDataWidth()!=rHeight) {
                 String primDim= rWidth+"x"+rHeight;
                 String overDim= plot.getImageDataWidth()+"x"+plot.getImageDataHeight();
-//                throw new FitsException("Mask Overlay does not match the primary plot dimensions ("+
-//                                         overDim+" vs "+primDim+")");
                 _log.warn( "Mask Overlay does not match the primary plot dimensions ("+ overDim+" vs "+primDim+")");
             }
         }
@@ -215,11 +211,11 @@ public class ImagePlotCreator {
         return retval;
     }
 
-    static void initPlotTitle(PlotState state,
-                              ImagePlot plot,
-                              ActiveFitsReadGroup frGroup,
-                              String dataDesc,
-                              boolean isMultiImage) {
+    private static void initPlotTitle(PlotState state,
+                                      ImagePlot plot,
+                                      ActiveFitsReadGroup frGroup,
+                                      String dataDesc,
+                                      boolean isMultiImage) {
 
         WebPlotRequest req= state.getWebPlotRequest();
         plot.setPlotDesc("");

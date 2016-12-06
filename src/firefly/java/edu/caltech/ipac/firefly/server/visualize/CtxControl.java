@@ -3,11 +3,6 @@
  */
 
 package edu.caltech.ipac.firefly.server.visualize;
-/**
- * User: roby
- * Date: 5/7/15
- * Time: 1:16 PM
- */
 
 
 import edu.caltech.ipac.firefly.server.Counters;
@@ -86,7 +81,7 @@ public class CtxControl {
 
 
     private static ActiveCallCtx revalidatePlot(PlotClientCtx ctx)  {
-        ActiveCallCtx retval= null;
+        ActiveCallCtx retval;
         synchronized (ctx)  { // keep the test from happening at the same time with this ctx
             try {
                 ImagePlot plot= ctx.getCachedPlot();

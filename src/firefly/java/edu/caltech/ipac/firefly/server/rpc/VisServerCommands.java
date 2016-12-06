@@ -181,7 +181,7 @@ public class VisServerCommands {
             List<WebPlotRequest> reqList= sp.getRequestList();
             WebPlotResult resultAry[] = VisServerOps.createPlotGroup(reqList,key);
 
-            return WebPlotResultSerializer.createJson(resultAry, sp.isJsonDeep());
+            return WebPlotResultSerializer.createJson(resultAry);
         }
     }
 
@@ -207,18 +207,15 @@ public class VisServerCommands {
             SrvParam sp= new SrvParam(paramMap);
             PlotState state= sp.getState();
             boolean jsonDeep= sp.getOptionalBoolean(ServerParams.JSON_DEEP,false);
-            List<StretchData> list = new ArrayList<StretchData>(3);
+            List<StretchData> list = new ArrayList<>(3);
 
             StretchData sd;
-//            sd = StretchData.parse(sp.getOptional(ServerParams.STRETCH_DATA + "0"));
             sd= VisJsonSerializer.deserializeStretchDataFromString(
                     sp.getOptional(ServerParams.STRETCH_DATA + "0"),jsonDeep);
             if (sd != null) list.add(sd);
             sd= VisJsonSerializer.deserializeStretchDataFromString(
                     sp.getOptional(ServerParams.STRETCH_DATA + "1"),jsonDeep);
-//            sd = StretchData.parse(sp.getOptional(ServerParams.STRETCH_DATA + "1"));
             if (sd != null) list.add(sd);
-//            sd = StretchData.parse(sp.getOptional(ServerParams.STRETCH_DATA + "2"));
             sd= VisJsonSerializer.deserializeStretchDataFromString(
                     sp.getOptional(ServerParams.STRETCH_DATA + "2"),jsonDeep);
             if (sd != null) list.add(sd);
@@ -353,7 +350,7 @@ public class VisServerCommands {
             List<StaticDrawInfo> drawInfoList;
             try {
                 if (drawInfoStrAry != null && drawInfoStrAry.length > 0) {
-                    drawInfoList = new ArrayList<StaticDrawInfo>(drawInfoStrAry.length);
+                    drawInfoList = new ArrayList<>(drawInfoStrAry.length);
                     for (String s : drawInfoStrAry) {
                         StaticDrawInfo drawInfo = StaticDrawInfo.parse(s);
                         if (s != null) drawInfoList.add(drawInfo);
@@ -511,10 +508,6 @@ public class VisServerCommands {
             return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
-
-    //=============================================
-    //-------------- Utility Methods --------------
-    //=============================================
 
 
 }

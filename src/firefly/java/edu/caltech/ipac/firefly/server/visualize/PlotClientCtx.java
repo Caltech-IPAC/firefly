@@ -21,15 +21,10 @@ import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-/**
- * User: roby
- * Date: Mar 3, 2008
- * Time: 1:32:08 PM
- */
-
 
 /**
  * @author Trey Roby
+ * Date: Mar 3, 2008
  */
 public class PlotClientCtx implements Serializable {
 
@@ -60,16 +55,16 @@ public class PlotClientCtx implements Serializable {
 //======================================================================
 
     public ImagePlot getCachedPlot() {
-        Cache memCache= CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM);
-        return (ImagePlot)memCache.get(new StringKey(_key));
+        return (ImagePlot)getCache().get(new StringKey(_key));
     }
 
 
     public void setPlot(ImagePlot p) {
-        Cache memCache= CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM);
-        memCache.put(new StringKey(_key),p);
+        getCache().put(new StringKey(_key),p);
         updateAccessTime();
     }
+
+    private Cache getCache() { return CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM); }
 
     public PlotImages getImages() { return _images.get(); }
     public void setImages(PlotImages images) {
@@ -137,10 +132,8 @@ public class PlotClientCtx implements Serializable {
             p.freeResources();
             if (group!=null) group.freeResources();
             if (pv!=null) pv.freeResources();
-            Cache memCache= CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM);
-            memCache.put(new StringKey(_key), null);
+            getCache().put(new StringKey(_key), null);
         }
         return doFree;
     }
 }
-
