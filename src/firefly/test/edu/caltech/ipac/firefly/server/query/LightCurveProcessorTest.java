@@ -5,9 +5,11 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.server.query.lc.IrsaLightCurveHandler;
 import edu.caltech.ipac.firefly.server.query.lc.LightCurveHandler;
 import edu.caltech.ipac.firefly.server.query.lc.PeriodogramAPIRequest;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
@@ -25,9 +27,9 @@ import java.net.URLConnection;
 import java.util.List;
 
 /**
- * Created by ejoliet on 8/23/16.
+ * Test IRSA LC API
  */
-public class LightCurveProcessorTest {
+public class LightCurveProcessorTest extends ConfigTest {
 
 
     private static PeriodogramAPIRequestTest req;
@@ -49,10 +51,6 @@ public class LightCurveProcessorTest {
 
         boolean deleteOnExit = true;
         LightCurveHandler t = new IrsaLightCurveHandler() {
-            @Override
-            protected URL buildUrl(PeriodogramAPIRequest req) throws MalformedURLException {
-                return new URL(req.getResultTable());
-            }
 
             @Override
             protected File makeResultTempFile(RESULT_TABLES_IDX resultTable) throws IOException {
@@ -79,8 +77,8 @@ public class LightCurveProcessorTest {
             DataGroup inDataGroup = IpacTableReader.readIpacTable(p, "periodogram");
             List<DataObject> dgjList = inDataGroup.values();
             DataType[] inColumns = inDataGroup.getDataDefinitions();
-            Assert.assertTrue(inColumns.length + " is not 2", inColumns.length == 2);
-            Assert.assertTrue("expected " + dgjList.size(), dgjList.size() == 390);
+            Assert.assertTrue(inColumns.length + " is not 3", inColumns.length > 1);
+            Assert.assertTrue("expected " + dgjList.size(), dgjList.size() > 0);
         } catch (IpacTableException e) {
             e.printStackTrace();
         }
@@ -92,10 +90,6 @@ public class LightCurveProcessorTest {
 
         boolean deleteOnExit = true;
         LightCurveHandler t = new IrsaLightCurveHandler() {
-            @Override
-            protected URL buildUrl(PeriodogramAPIRequest req) throws MalformedURLException {
-                return new URL(req.getResultTable());
-            }
 
             @Override
             protected File makeResultTempFile(RESULT_TABLES_IDX resultTable) throws IOException {
@@ -134,11 +128,22 @@ public class LightCurveProcessorTest {
     @Test
     public void testPhaseFoldedCurve() {
 
+        try {
+            URL demo = new URL("http://web.ipac.caltech.edu/staff/ejoliet/demo/AllWISE-MEP-m82-2targets-10arsecs.tbl");
+            URLConnection uc = URLDownload.makeConnection(demo);
+            URLDownload.getDataToFile(uc, rawTable);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (FailedRequestException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         boolean deleteOnExit = true;
-        if(deleteOnExit){
+        if (deleteOnExit) {
             rawTable.deleteOnExit();
         }
-        IrsaLightCurveHandler t = new IrsaLightCurveHandler(){
+        IrsaLightCurveHandler t = new IrsaLightCurveHandler() {
             @Override
             protected File createPhaseFoldedTempFile() throws IOException {
                 File tmpFile = File.createTempFile("phase-folded-test-", ".tbl", new File("."));
@@ -151,32 +156,32 @@ public class LightCurveProcessorTest {
 
         DataGroup inDataGroup = null;
         try {
-            inDataGroup = IpacTableReader.readIpacTable(new File(req.getLcSource()), "lc_raw");
+            inDataGroup = IpacTableReader.readIpacTable(rawTable, "lc_raw");
         } catch (IpacTableException e) {
             e.printStackTrace();
         }
         List<DataObject> dgjListOrigin = inDataGroup.values();
         DataType[] inColumns = inDataGroup.getDataDefinitions();
 
-        File p = t.toPhaseFoldedTable(new File(req.getLcSource()), req.getPeriod(), req.getTimeColName());
+        File p = t.toPhaseFoldedTable(rawTable, req.getPeriod(), req.getTimeColName());
 
         try {
             inDataGroup = IpacTableReader.readIpacTable(p, "phasefolded");
             List<DataObject> dgjList = inDataGroup.values();
             DataType[] inColumnsPhaseFolded = inDataGroup.getDataDefinitions();
             //should be one more extra column (Phase)
-            Assert.assertTrue(inColumns.length + " is not correct", inColumns.length == inColumnsPhaseFolded.length-1);
+            Assert.assertTrue(inColumns.length + " is not correct", inColumns.length == inColumnsPhaseFolded.length - 1);
             Assert.assertTrue("expected " + dgjList.size(), dgjList.size() == dgjListOrigin.size());
             double period = req.getPeriod();
-            double tzero = (Double)dgjListOrigin.get(0).getDataElement("mjd");
+            double tzero = (Double) dgjListOrigin.get(0).getDataElement("mjd");
 
             int iTest = 3;
             double mjdTest = (Double) dgjListOrigin.get(iTest).getDataElement("mjd");
 
             double phaseTested = (Double) inDataGroup.get(iTest).getDataElement("phase");
-            double phaseExpected = (mjdTest-tzero)/period - Math.floor((mjdTest-tzero)/period);
+            double phaseExpected = (mjdTest - tzero) / period - Math.floor((mjdTest - tzero) / period);
 
-            Assert.assertEquals(phaseExpected ,phaseTested,0.0001);
+            Assert.assertEquals(phaseExpected, phaseTested, 0.0001);
         } catch (IpacTableException e) {
             e.printStackTrace();
         }
@@ -188,6 +193,23 @@ public class LightCurveProcessorTest {
      */
     static class PeriodogramAPIRequestTest extends PeriodogramAPIRequest {
 
+        private int n_peaks = 52;
+        // Fake values passed from client,
+        // see test properties irsa.gator.service.periodogram.keys
+        private final String[] reqValues = new String[]{"x=mjd", "y=w1mpro_ep", "peaks="+n_peaks, "alg=ls"};
+
+        @Override
+        public String getParam(String param) {
+            int i = 0;
+            for (String k : reqValues) {
+                if (k.startsWith(param)) {
+                    return reqValues[i].split("=")[1];
+                }
+                i++;
+            }
+            return "";
+        }
+
         @Override
         public float getPeriod() {
             return 1.345f;
@@ -195,24 +217,17 @@ public class LightCurveProcessorTest {
 
         @Override
         public String getLcSource() {
-            try {
-                URL demo = new URL("http://web.ipac.caltech.edu/staff/ejoliet/demo/AllWISE-MEP-m82-2targets-10arsecs.tbl");
-                URLConnection uc = URLDownload.makeConnection(demo);
-                URLDownload.getDataToFile(uc, rawTable);
-                return rawTable.getAbsolutePath();
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (FailedRequestException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
+            return "http://web.ipac.caltech.edu/staff/ejoliet/demo/AllWISE-MEP-m82-2targets-10arsecs.tbl";
+        }
+
+        @Override
+        public String getDataColName() {
+            return "w1mpro_ep";
         }
 
         @Override
         public int getNumberPeaks() {
-            return 50;
+            return n_peaks;
         }
 
         @Override

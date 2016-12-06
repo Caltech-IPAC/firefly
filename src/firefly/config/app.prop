@@ -23,3 +23,10 @@ lsst.dataAccess.db = @lsst.dataAccess.db@
 visualize.fits.Security= @visualize.fits.Security@
 
 python.exe= @python.exe@
+
+
+# IRSA Periodogram API
+irsa.gator.service.periodogram.url=@irsa.gator.service.periodogram.url@
+
+# Periodogram API request parameter list definition, separated by space
+irsa.gator.service.periodogram.keys=@irsa.gator.service.periodogram.keys@

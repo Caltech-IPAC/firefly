@@ -6,14 +6,18 @@ package edu.caltech.ipac.firefly.server.query.lc;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.VoTableUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
-import org.apache.commons.lang.NotImplementedException;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -23,17 +27,28 @@ import java.net.URLConnection;
 /**
  * .
  * Should handle the LC transformations to get files out of the API result VOtable xml
+ * Dev API can be found here:
+ * http://bacchus.ipac.caltech.edu:9027/applications/periodogram/Periodogram.html
+ * <p>
+ * TODO update api url and doc.
  *
  * @author ejoliet
  * @see PeriodogramAPIRequest
  */
 public class IrsaLightCurveHandler implements LightCurveHandler {
 
+    private final String[] apiKey;
+    public String rootApiUrl;
+    private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
     /**
-     * TODO Update with correct API root url
+     * IRSA lc handler constructor, sets the root api url to be used
      */
-    public final String rootApiUrl = "http://irsa.ipac.caltech.edu/periodogram";
+    public IrsaLightCurveHandler() {
+
+        rootApiUrl = AppProperties.getProperty("irsa.gator.service.periodogram.url", "http://bacchus.ipac.caltech.edu:9027/cgi-bin/periodogram/nph-periodogram_api");
+        apiKey = AppProperties.getArrayProperties("irsa.gator.service.periodogram.keys", "\\s+", "x y");// At least x,y , rest are optional
+    }
 
     public File getPeriodogramTable(PeriodogramAPIRequest request) {
 
@@ -82,22 +97,6 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         return File.createTempFile("phase-folded", ".tbl", ServerContext.getTempWorkDir());
     }
 
-    /**
-     * Return the API URL to be called to get VOTable from Nexsci, which will contain 2 tables: periodogram and peaks tables.
-     * <p>
-     * TODO need to be implemented
-     *
-     * @param request object to contain the required paramter to make the API call
-     * @return the URL object
-     * @throws MalformedURLException
-     * @see LightCurveProcessor#computePeriodogram(PeriodogramAPIRequest, java.lang.String)
-     * @see IrsaLightCurveHandler#buildUrl(PeriodogramAPIRequest)
-     */
-    protected URL buildUrl(PeriodogramAPIRequest request) throws MalformedURLException {
-        //loop other request and append to rootApiUrl
-        throw new NotImplementedException("Not yet implemented");
-    }
-
     protected File extractTblFrom(File votableResult, RESULT_TABLES_IDX resultTable) {
         File resultTblFile = null;
         try {
@@ -115,12 +114,7 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
     protected File ipacTableFromAPI(PeriodogramAPIRequest request, RESULT_TABLES_IDX resultTable) {
         File tempFile = null;
         try {
-            /**
-             * @see LightCurveProcessor#computePeriodogram(PeriodogramAPIRequest, java.lang.String)
-             */
-            URL url = buildUrl(request);
-
-            File apiResult = apiDownlaod(url);
+            File apiResult = apiDownlaod(request);
 
             tempFile = extractTblFrom(apiResult, resultTable);
 
@@ -132,17 +126,63 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         return tempFile;
     }
 
-    protected File apiDownlaod(URL url) throws IOException, FailedRequestException {
-
+    protected File apiDownlaod(PeriodogramAPIRequest request) throws IOException, FailedRequestException {
         File apiResultTempFile = makeApiResultTempFile();
+        /**
+         * @see LightCurveProcessor#computePeriodogram(PeriodogramAPIRequest, java.lang.String)
+         */
+        if (isPost(request)) {
+            MultiPartPostBuilder _postBuilder = new MultiPartPostBuilder(rootApiUrl);
+            insertPostParams(request, _postBuilder);
+            BufferedOutputStream writer = new BufferedOutputStream(new FileOutputStream(apiResultTempFile), 10240);
+            _postBuilder.post(writer);
+            writer.close();
 
-        URLConnection aconn = URLDownload.makeConnection(url);
-        aconn.setRequestProperty("Accept", "*/*");
-        URLDownload.getDataToFile(aconn, apiResultTempFile); //TODO Get from cache
+        } else {
+            // Col definition time, data
+            String tmpUrl = rootApiUrl;
 
+            tmpUrl += "?" + getSourceFile(request.getLcSource()) + "&";
+            int i = 0;
+            for (String key : apiKey) {
+                String val = request.getParam(key);
+                if (val != null) {
+                    tmpUrl += key + "=" + val;
+                }
+                if (i < apiKey.length-1) {
+                    tmpUrl += "&";
+                }
+                i++;
+            }
+
+            URLConnection aconn = URLDownload.makeConnection(new URL(tmpUrl));
+            aconn.setRequestProperty("Accept", "*/*");
+            URLDownload.getDataToFile(aconn, apiResultTempFile);
+        }
         return apiResultTempFile;
     }
 
+    boolean isPost(PeriodogramAPIRequest url) {
+        return url.getLcSource().indexOf("http") < 0;
+    }
+
+    void insertPostParams(PeriodogramAPIRequest request, MultiPartPostBuilder posBuilder) {
+        //        rootApiUrl+= "alg=ls"+"&"; //Optional
+        // Col definition time, data
+        String src = getSourceFile(request.getLcSource());
+        posBuilder.addFile("upload", new File(src));
+
+        for (String key : apiKey) {
+            String val = request.getParam(key);
+            if (val != null) {
+                posBuilder.addParam(key, val);
+            }
+        }
+//        posBuilder.addParam("x", request.getTimeColName());
+//        posBuilder.addParam("y", request.getDataColName());
+//        posBuilder.addParam("alg", request.getAlgoName());
+//        posBuilder.addParam("peaks", "" + request.getNumberPeaks());
+    }
 
     protected File makeResultTempFile(RESULT_TABLES_IDX resultTable) throws IOException {
         String prefix = "error";
@@ -160,5 +200,17 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
 
     protected File makeApiResultTempFile() throws IOException {
         return File.createTempFile("lc-api-result-", ".xml", ServerContext.getTempWorkDir());
+    }
+
+    private String getSourceFile(String source) {
+        String inf = null;
+        URL url = null;
+        try {
+            url = new URL(source);
+            inf = "input=" + url.toString();
+        } catch (MalformedURLException e) {
+            inf = ServerContext.convertToFile(source).getAbsolutePath();
+        }
+        return inf;
     }
 }

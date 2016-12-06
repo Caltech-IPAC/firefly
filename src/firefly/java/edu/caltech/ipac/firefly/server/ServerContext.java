@@ -135,7 +135,6 @@ public class ServerContext {
 
         // setup ClientLog and Assert to use firefly logging.
         Assert.setLogger(new AssertLogger());
-        ClientLog.setLogger(new Logger.ClientLogImpl());
 
 
         // load resource files
