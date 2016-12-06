@@ -280,6 +280,7 @@ function computePointHighlightLayer(drawLayer, columns) {
 function computeBoxHighlightLayer(drawLayer, columns, highlightedRow) {
     const {tableData}= drawLayer;
     const d= tableData.data[highlightedRow];
+    if (!d) return null;
     const fp= columns.map( (c) => {
         const lonIdx= findColIdx(tableData.columns, c.lonCol);
         const latIdx= findColIdx(tableData.columns, c.latCol);
