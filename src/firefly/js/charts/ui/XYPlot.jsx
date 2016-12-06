@@ -11,7 +11,6 @@ import {parseDecimateKey} from '../../tables/Decimate.js';
 
 import numeral from 'numeral';
 import {getFormatString} from '../../util/MathUtil.js';
-import {logError} from '../../util/WebUtil.js';
 
 const defaultShading = 'lin';
 
@@ -75,7 +74,7 @@ const toNumber = (val)=>Number(val);
  @return {number|string} from 1 to 6, 1 for 1 pt series
  */
 const getWeightBasedGroup = function(weight, minWeight, maxWeight, logShading=false, returnNum=true) {
-    if (weight == 1) return returnNum ? 1 : '1pt';
+    if (weight === 1) return returnNum ? 1 : '1pt';
     else {
         if (logShading) {
             //use log scale for shade assignment
@@ -85,7 +84,7 @@ const getWeightBasedGroup = function(weight, minWeight, maxWeight, logShading=fa
                 max = Math.round(Math.pow(base, e));
                 if (weight <= max) {
                     if (max > maxWeight) { max = maxWeight; }
-                    return returnNum ? e+1 : (min==max ? min : (min+'-'+max))+'pts';
+                    return returnNum ? e+1 : (min===max ? min : (min+'-'+max))+'pts';
                 }
                 min = max+1;
             }
@@ -98,7 +97,7 @@ const getWeightBasedGroup = function(weight, minWeight, maxWeight, logShading=fa
             for (let incr = 0.20; incr <=1; incr += 0.20) {
                 max = Math.round(minWeight+1+incr*range);
                 if (weight <= max) {
-                    return returnNum ? n : (min==max ? min : (min+'-'+max))+'pts';
+                    return returnNum ? n : (min===max ? min : (min+'-'+max))+'pts';
                 }
                 min = max+1;
                 n++;
@@ -129,27 +128,28 @@ const getXAxisOptions = function(params) {
     return {xTitle, xGrid, xReversed, xLog};
 };
 
-const canUseXLog = function(data) {
-    const min = get(data,'xMin');
-    if (Number.isFinite(min)) {
-        if (min > 0) { return true; }
-        else {
-            logError('XYPlot: logarithmic scale can not be used for minimum X value '+min);
+const validate = function(params, data) {
+    const errors = [];
+    const {options:xOptions} = get(params, 'x');
+    if (xOptions && xOptions.includes('log')) {
+        const min = get(data,'xMin');
+        if (Number.isFinite(min)) {
+            if (min <= 0) {
+                errors.push(`Logarithmic scale can not be used for minimum X value ${min}.`);
+            }
         }
     }
-    return false;
-};
-
-const canUseYLog = function(data) {
-    const min = get(data,'yMin');
-    if (Number.isFinite(min)) {
-        if (min > 0) { return true; }
-        else {
-            logError('XYPlot: logarithmic scale can not be used for minimum Y value '+min);
+    const {options:yOptions} = get(params, 'y');
+    if (yOptions && yOptions.includes('log')) {
+        const min = get(data,'yMin');
+        if (Number.isFinite(min)) {
+            if (min <= 0) {
+                errors.push(`Logarithmic scale can not be used for minimum Y value ${min}.`);
+            }
         }
     }
-    return false;
-};
+    return errors;
+} ;
 
 const getYAxisOptions = function(params) {
     const yTitle = params.y.label + (params.y.unit ? ` (${params.y.unit})` : '');
@@ -253,7 +253,7 @@ export class XYPlot extends React.Component {
 
         // no update is needed if properties did ot change
         if (shallowequal(omit(this.props, propsToOmit), omit(nextProps, propsToOmit)) &&
-            get(this.props,'highlighted.rowIdx') == get(nextProps,'highlighted.rowIdx')) {
+            get(this.props,'highlighted.rowIdx') === get(nextProps,'highlighted.rowIdx')) {
             return false;
         }
 
@@ -268,6 +268,13 @@ export class XYPlot extends React.Component {
             if (chart && chart.container && !this.error) {
                 const {params:newParams, width:newWidth, height:newHeight, highlighted:newHighlighted, selectInfo:newSelectInfo, desc:newDesc } = nextProps;
                 try {
+                    const errors = validate(newParams, data);
+                    if (errors.length > 0) {
+                        this.error = errors[0];
+                        chart.showLoading(errors[0]);
+                        return false;
+                    }
+
                     if (newDesc !== desc) {
                         chart.setTitle(newDesc, undefined, false);
                     }
@@ -309,7 +316,7 @@ export class XYPlot extends React.Component {
                                 gridLineWidth: newXOptions.xGrid ? 1 : 0,
                                 reversed: newXOptions.xReversed,
                                 opposite: newYOptions.yReversed,
-                                type: newXOptions.xLog && canUseXLog(nextProps.data) ? 'logarithmic' : 'linear'
+                                type: newXOptions.xLog ? 'logarithmic' : 'linear'
                             });
                         }
                         if (!shallowequal(getYAxisOptions(params), newYOptions)) {
@@ -317,7 +324,7 @@ export class XYPlot extends React.Component {
                                 title: {text: newYOptions.yTitle},
                                 gridLineWidth: newYOptions.yGrid ? 1 : 0,
                                 reversed: newYOptions.yReversed,
-                                type: newYOptions.yLog && canUseYLog(nextProps.data) ? 'logarithmic' : 'linear'
+                                type: newYOptions.yLog ? 'logarithmic' : 'linear'
                             });
                         }
                         if (!shallowequal(params.zoom, newParams.zoom) || !shallowequal(params.boundaries, newParams.boundaries)) {
@@ -343,7 +350,7 @@ export class XYPlot extends React.Component {
 
                     // size change
                     if (newWidth !== width || newHeight !== height ||
-                        newParams.xyRatio !== params.xyRatio || newParams.stretch != params.stretch) {
+                        newParams.xyRatio !== params.xyRatio || newParams.stretch !== params.stretch) {
                         const {chartWidth, chartHeight} = calculateChartSize(newWidth, newHeight, nextProps);
                         if (Math.abs(chart.chartWidth - chartWidth) > 20 || Math.abs(chart.chartHeight - chartHeight) > 20) {
 
@@ -590,12 +597,28 @@ export class XYPlot extends React.Component {
     }
 
     render() {
-
-        this.error = undefined;
-
         const {data, params, width, height, onSelection, desc} = this.props;
-        const onSelectionEvent = this.onSelectionEvent;
 
+        // validate parameters for the given data
+        const errors = validate(params, data);
+        if (errors.length > 0) {
+            this.error = errors[0];
+            return (
+                <div style={{position: 'relative', width: '100%', height: '100%'}}>
+                    {errors.map((error, i) => {
+                        return (
+                            <div key={i} style={{padding: 10, textAlign: 'center', overflowWrap: 'normal'}}>
+                                <h3>{`${error}`}</h3>
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        // render chart
+        this.error = undefined;
+        const onSelectionEvent = this.onSelectionEvent;
         const {chartWidth, chartHeight} = calculateChartSize(width, height, this.props);
 
         const {xTitle, xGrid, xReversed, xLog} = getXAxisOptions(params);
@@ -696,7 +719,7 @@ export class XYPlot extends React.Component {
                 opposite: yReversed,
                 reversed: xReversed,
                 title: {text: xTitle},
-                type: xLog && canUseXLog(data) ? 'logarithmic' : 'linear'
+                type: xLog ? 'logarithmic' : 'linear'
             },
             yAxis: {
                 min: selFinite(yMin,yDataMin),
@@ -711,7 +734,7 @@ export class XYPlot extends React.Component {
                 endOnTick: false,
                 reversed: yReversed,
                 title: {text: yTitle},
-                type: yLog && canUseYLog(data) ? 'logarithmic' : 'linear'
+                type: yLog ? 'logarithmic' : 'linear'
             },
             series: [{
                 // This series is to make sure the axes are created.

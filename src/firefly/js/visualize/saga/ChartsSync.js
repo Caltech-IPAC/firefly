@@ -12,7 +12,7 @@ import * as ChartsCntlr from '../../charts/ChartsCntlr.js';
 import {getDefaultXYPlotOptions, DT_XYCOLS} from '../../charts/dataTypes/XYColsCDT.js';
 import {SCATTER} from '../../charts/ChartUtil.js';
 
-import {PLOT2D, DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchRemoveViewerItems, getViewerItemIds, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
+import {PLOT2D, DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchRemoveViewerItems, dispatchUpdateCustom, getViewerItemIds, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 
 /**
  * this saga handles chart related side effects
@@ -104,6 +104,7 @@ function updateDefaultViewer() {
     chartIds.push(...ChartsCntlr.getChartIdsInGroup(tblId), ...ChartsCntlr.getChartIdsInGroup('default'));
     const currentIds = getViewerItemIds(getMultiViewRoot(),DEFAULT_PLOT2D_VIEWER_ID);
     if (!isEqual(chartIds, currentIds)) {
+        dispatchUpdateCustom(DEFAULT_PLOT2D_VIEWER_ID, {activeItemId: undefined});
         dispatchRemoveViewerItems(DEFAULT_PLOT2D_VIEWER_ID,currentIds);
         dispatchAddViewerItems(DEFAULT_PLOT2D_VIEWER_ID, chartIds, PLOT2D);
     }

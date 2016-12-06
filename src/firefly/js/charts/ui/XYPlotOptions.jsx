@@ -77,7 +77,7 @@ export function resultsSuccess(callback, flds, tblId) {
     const nbinsY = get(flds, ['nbins.y']);
 
     let {xMin, xMax, yMin, yMax} = flds;  // string values
-    [xMin, xMax, yMin, yMax] = [xMin, xMax, yMin, yMax].map((v) => { return (v && isFinite(v)) ? Number(v) : undefined; });
+    [xMin, xMax, yMin, yMax] = [xMin, xMax, yMin, yMax].map((v) => { return (isFinite(v)) ? Number(v) : undefined; });
     let userSetBoundaries = omitBy({xMin, xMax, yMin, yMax}, isUndefined);
     userSetBoundaries = isEmpty(userSetBoundaries) ? undefined : userSetBoundaries;
     const xyRatio = parseFloat(flds.xyRatio);

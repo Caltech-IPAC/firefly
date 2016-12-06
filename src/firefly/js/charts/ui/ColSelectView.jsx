@@ -70,7 +70,8 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
 
     var tableModel = {totalRows: data.length, tbl_id:TBL_ID, tableData: {columns,  data }, highlightedRow: hlRowNum};
 
-    const minWidth = columns.reduce((rval, c) => rval + c.prefWidth, 0) * 7;
+    // 360 is the width of table options
+    const minWidth = Math.max(columns.reduce((rval, c) => isFinite(c.prefWidth) ? rval+c.prefWidth : rval, 0), 360);
     var popup = (<PopupPanel title={popupTitle}>
             {popupForm(tableModel,onColSelected,buttonText,popupId, minWidth)}
         </PopupPanel>
@@ -106,17 +107,17 @@ function popupForm(tableModel, onColSelected,buttonText,popupId, minWidth) {
  * @return table section
  */
 function renderTable(tableModel,popupId) {
-    const tbl_ui_id = (tableModel.tbl_id || 'ColSelectView') + '-ui'; 
+    const tbl_ui_id = (tableModel.tbl_id || 'ColSelectView') + '-ui';
     return (
         <div style={tableStyle}>
-           <TablePanel
-               key={popupId}
-               tbl_ui_id = {tbl_ui_id}
-               tableModel={tableModel}
-               showToolbar={false}
-               selectable={false}
-               border={false}
-           />
+            <TablePanel
+                key={popupId}
+                tbl_ui_id={tbl_ui_id}
+                tableModel={tableModel}
+                showToolbar={false}
+                selectable={false}
+                border={false}
+            />
         </div>
     );
 
@@ -127,7 +128,7 @@ function renderCloseAndHelpButtons(tblId,onColSelected,buttonText,popupId) {
     return(
     <div>
         <div style={closeButtonStyle}>
-            < CompleteButton
+            <CompleteButton
                 text={buttonText}
                 onSuccess={()=>setXYColumns(tblId,onColSelected)}
                 dialogId={popupId}
