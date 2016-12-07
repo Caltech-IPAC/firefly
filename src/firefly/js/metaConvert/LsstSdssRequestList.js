@@ -12,7 +12,7 @@ import {ServerRequest} from '../data/ServerRequest.js';
  * @param sr - {Object}
  * @param plotId - {String}
  * @param title - {String}
- * @returns {a WebRequest object}
+ * @returns {WebPlotRequest} a web plot request
  */
 function makeWebRequest(sr,  plotId, title) {
     const r  = WebPlotRequest.makeProcessorRequest(sr, 'lsst-sdss');
@@ -28,8 +28,6 @@ function makeWebRequest(sr,  plotId, title) {
 }
 
 /**
- * 11/23/16
- * Lijun Zhang
  * @param table - {Object }
  * @param rowIdx - {int}
  * @returns {Function}
