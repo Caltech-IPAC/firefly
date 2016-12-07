@@ -19,7 +19,7 @@ import {PLOT2D, DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchRemove
  */
 export function* syncCharts() {
     while (true) {
-        const action= yield take([ChartsCntlr.CHART_ADD, ChartsCntlr.CHART_MOUNTED, ChartsCntlr.CHART_REMOVE, TablesCntlr.TBL_RESULTS_ACTIVE, TablesCntlr.TABLE_LOADED]);
+        const action= yield take([ChartsCntlr.CHART_ADD, ChartsCntlr.CHART_MOUNTED, ChartsCntlr.CHART_REMOVE, TablesCntlr.TABLE_LOADED]);
         switch (action.type) {
             case ChartsCntlr.CHART_ADD:
             case ChartsCntlr.CHART_MOUNTED:
@@ -60,11 +60,13 @@ export function* syncCharts() {
  */
 export function* syncChartViewer() {
     while (true) {
-        const action = yield take([ChartsCntlr.CHART_ADD, TablesCntlr.TBL_RESULTS_ACTIVE]);
+        const action = yield take([ChartsCntlr.CHART_ADD, TablesCntlr.TBL_RESULTS_ACTIVE, TablesCntlr.TABLE_REMOVE]);
         switch (action.type) {
             case ChartsCntlr.CHART_ADD:
+            case TablesCntlr.TABLE_REMOVE:
             case TablesCntlr.TBL_RESULTS_ACTIVE:
-                updateDefaultViewer();
+                const {chartId} = action.payload;
+                updateDefaultViewer(chartId);
                 break;
         }
     }
@@ -98,13 +100,14 @@ export function* addDefaultScatter() {
 }
 
 
-function updateDefaultViewer() {
+function updateDefaultViewer(chartId) {
     const tblId = TableUtil.getActiveTableId();
     const chartIds = [];
     chartIds.push(...ChartsCntlr.getChartIdsInGroup(tblId), ...ChartsCntlr.getChartIdsInGroup('default'));
     const currentIds = getViewerItemIds(getMultiViewRoot(),DEFAULT_PLOT2D_VIEWER_ID);
     if (!isEqual(chartIds, currentIds)) {
-        dispatchUpdateCustom(DEFAULT_PLOT2D_VIEWER_ID, {activeItemId: undefined});
+        const activeItemId =  chartIds.includes(chartId) ? chartId : undefined;
+        dispatchUpdateCustom(DEFAULT_PLOT2D_VIEWER_ID, {activeItemId});
         dispatchRemoveViewerItems(DEFAULT_PLOT2D_VIEWER_ID,currentIds);
         dispatchAddViewerItems(DEFAULT_PLOT2D_VIEWER_ID, chartIds, PLOT2D);
     }
