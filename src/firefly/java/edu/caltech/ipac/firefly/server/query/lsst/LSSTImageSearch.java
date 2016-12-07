@@ -1,10 +1,13 @@
 package edu.caltech.ipac.firefly.server.query.lsst;
 
 
-import edu.caltech.ipac.firefly.data.*;
-import edu.caltech.ipac.firefly.server.query.*;
-import edu.caltech.ipac.firefly.server.util.Logger;
-import java.io.*;
+import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
+import edu.caltech.ipac.firefly.server.query.URLFileInfoProcessor;
+import edu.caltech.ipac.util.FileUtil;
+
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -19,7 +22,7 @@ import java.net.URL;
  * Created by zhang on 11/3/16.
  */
 public class LSSTImageSearch extends URLFileInfoProcessor {
-    private static final Logger.LoggerImpl _log = Logger.getLogger();
+//    private static final Logger.LoggerImpl _log = Logger.getLogger();
     private static String DAX_URL="http://lsst-qserv-dax01.ncsa.illinois.edu:5000/image/v0/";
 
 
@@ -56,7 +59,7 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
         String patch = request.getParam("patch");
         String filterName = request.getParam("filterName");
 
-        _log.info("create URL");
+//        _log.info("create URL");
          return new URL(DAX_URL+"deepCoadd/ids?tract="+tract+"&patch="+patch+"&filter="+filterName);
 
     }
@@ -70,16 +73,18 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
      * @throws DataAccessException
      */
     private URL getURLForCCDs(ServerRequest request)throws IOException, DataAccessException {
-        _log.info("getting the parameters out from the request");
+//        _log.info("getting the parameters out from the request");
         String run = request.getParam("run");
         String camcol = request.getParam("camcol");
         String field = request.getParam("field");
         String filterName = request.getParam("filterName");
-        _log.info("create URL");
+//        _log.info("create URL");
         return new URL( DAX_URL+"calexp/ids?run="+run+"&camcol="+camcol+"&field="+field+"&filter="+filterName);
 
 
     }
+
+    public String getFileExtension()  { return FileUtil.FITS; }
 
 
 }
