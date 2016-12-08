@@ -13,11 +13,13 @@ import {dispatchPlotImage, visRoot, dispatchDeletePlotView,
         dispatchChangeActivePlotView} from '../../visualize/ImagePlotCntlr.js';
 import {getPlotViewById} from '../../visualize/PlotViewUtil.js';
 import {getMultiViewRoot, dispatchReplaceViewerItems, getViewer} from '../../visualize/MultiViewCntlr.js';
-import {WebPlotRequest} from '../../visualize/WebPlotRequest.js';
+import {WebPlotRequest,TitleOptions} from '../../visualize/WebPlotRequest.js';
 import {dispatchTableToIgnore} from '../../visualize/DrawLayerCntlr.js';
 import Catlog from '../../drawingLayers/Catalog.js';
 import {ServerRequest} from '../../data/ServerRequest.js';
 import {CHANGE_VIEWER_LAYOUT} from '../../visualize/MultiViewCntlr.js';
+import {LcPFOptionsPanel, grpkey} from './LcPhaseFoldingPanel.jsx';
+import FieldGroupUtils, {revalidateFields} from '../../fieldGroup/FieldGroupUtils';
 
 export const RAW_TABLE = 'raw_table';
 export const PHASE_FOLDED = 'phase_folded';
@@ -28,10 +30,23 @@ export const DEF_IMAGE_CNT= 5;
 export const MAX_IMAGE_CNT= 7;
 const plotIdRoot= 'LC_FRAME-';
 
+
+var webplotRequestCreator;
 /**
- *  This event manager is custom made for light curve viewer.
+ * A function to create a WebPlotRequest from the given parameters
+ * @callback WebplotRequestCreator
+ * @param {TableModel} tableModel
+ * @param {number} hlrow
+ * @param {number} cutoutSize
  */
-export function* lcManager() {
+
+/**
+ * This event manager is custom made for light curve viewer.
+ * @param {Object} params
+ * @props {WebplotRequestCreator} params.webplotRequestCreator
+ */
+export function* lcManager(params={}) {
+    webplotRequestCreator = params.WebplotRequestCreator || getWebPlotRequestViaUrl;
 
     while (true) {
         const action = yield take([
@@ -85,7 +100,7 @@ function handleTableLoad(layoutInfo, action) {
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'showImages', true);
         layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
-        exec(setupImages, tbl_id);
+        setupImages(tbl_id);
     }
     return layoutInfo;
 }
@@ -96,7 +111,7 @@ function handleTableActive(layoutInfo, action) {
     const {tbl_id} = action.payload;
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
-        exec(setupImages, tbl_id);
+        setupImages(tbl_id);
     }
     return layoutInfo;
 }
@@ -104,7 +119,7 @@ function handleTableActive(layoutInfo, action) {
 function handleTableHighlight(layoutInfo, action) {
     const {tbl_id} = action.payload;
     if (isImageEnabledTable(tbl_id)) {
-        exec(setupImages, tbl_id);
+        setupImages(tbl_id);
     }
 }
 
@@ -115,7 +130,7 @@ function isImageEnabledTable(tbl_id) {
 function handleChangeMultiViewLayout(layoutInfo, action) {
     const activeTableId = get(layoutInfo, 'images.activeTableId');
     const tbl= getTblById(activeTableId);
-    if (get(tbl, 'totalRows',0)>0) exec(setupImages, activeTableId);
+    if (get(tbl, 'totalRows',0)>0) setupImages(activeTableId);
     return layoutInfo;
 }
 
@@ -155,39 +170,75 @@ function getWebPlotRequest(tableModel, hlrow) {
 
 }
 
+function getWebPlotRequestViaUrl(tableModel, hlrow, cutoutSize) {
+    const ra = getCellValue(tableModel, hlrow, 'ra');
+    const dec = getCellValue(tableModel, hlrow, 'dec');
+    const frameId = getCellValue(tableModel, hlrow, 'frame_id');
+    var   wise_sexp_ibe = /(\d+)([0-9][a-z])(\w+)/g;
+    var   res = wise_sexp_ibe.exec(frameId);
+    const scan_id = res[1] + res[2];
+    const scangrp = res[2];
+    const frame_num = res[3];
 
-function setupImages(tbl_id) {
-    const viewer=  getViewer(getMultiViewRoot(),IMG_VIEWER_ID);
-    const count= get(viewer, 'layoutDetail.count',DEF_IMAGE_CNT);
-    const tableModel = getTblById(tbl_id);
-    if (!tableModel || isNil(tableModel.highlightedRow)) return;
-    var vr= visRoot();
-    const newPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,count);
-    const maxPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,MAX_IMAGE_CNT);
+    /*the following should be from reading in the url column returned from LC search
+     we are constructing the url for wise as the LC table does
+     not have the url colume yet
+     It is only for WISE, using default cutout size 0.3 deg
+    const url = `http://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w1-int-1b.fits`;
+    */
+    const serverinfo = 'http://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/';
+    const centerandsize = cutoutSize ? `?center=${ra},${dec}&size=${cutoutSize}&gzip=false` : '';
+    const url = `${serverinfo}${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w1-int-1b.fits${centerandsize}`;
+    const plot_desc = `WISE-${frameId}`;
+    const reqParams = WebPlotRequest.makeURLPlotRequest(url, plot_desc);
+    reqParams.setTitle('WISE-'+ frameId + (cutoutSize ? ` size: ${cutoutSize}(deg)` : ''));
+    reqParams.setTitleOptions(TitleOptions.NONE);
+    reqParams.setGroupLocked(true);
+    reqParams.setPlotGroupId('LightCurveGroup');
+    reqParams.setPreferenceColorKey('light-curve-color-pref');
+    return reqParams;
 
 
-    newPlotIdAry.forEach( (plotId) => {
-        if (!getPlotViewById(vr,plotId)) {
-            const rowNum= Number(plotId.substring(plotIdRoot.length));
-            const webPlotReq = getWebPlotRequest(tableModel,rowNum );
-            dispatchPlotImage({plotId, wpRequest:webPlotReq,
-                                       setNewPlotAsActive:false,
-                                       holdWcsMatch:true,
-                                       pvOptions: { userCanDeletePlots: false}});
-        }
-    });
+
+}
+
+export function setupImages(tbl_id) {
+    try {
+        const viewer=  getViewer(getMultiViewRoot(),IMG_VIEWER_ID);
+        const count= get(viewer, 'layoutDetail.count',DEF_IMAGE_CNT);
+        const tableModel = getTblById(tbl_id);
+        if (!tableModel || isNil(tableModel.highlightedRow)) return;
+        var vr= visRoot();
+        const newPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,count);
+        const maxPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,MAX_IMAGE_CNT);
+
+        const cutoutSize = get(FieldGroupUtils.getGroupFields(grpkey), ['cutoutSize', 'value'], null);
+
+        newPlotIdAry.forEach( (plotId) => {
+            if (!getPlotViewById(vr,plotId)) {
+                const rowNum= Number(plotId.substring(plotIdRoot.length));
+                const webPlotReq = webplotRequestCreator(tableModel,rowNum, cutoutSize);
+                dispatchPlotImage({plotId, wpRequest:webPlotReq,
+                                           setNewPlotAsActive:false,
+                                           holdWcsMatch:true,
+                                           pvOptions: { userCanDeletePlots: false}});
+            }
+        });
 
 
-    dispatchReplaceViewerItems(IMG_VIEWER_ID, newPlotIdAry);
-    dispatchChangeActivePlotView(plotIdRoot+tableModel.highlightedRow);
+        dispatchReplaceViewerItems(IMG_VIEWER_ID, newPlotIdAry);
+        dispatchChangeActivePlotView(plotIdRoot+tableModel.highlightedRow);
 
-    vr= visRoot();
+        vr= visRoot();
 
-    vr.plotViewAry
-        .filter( (pv) => pv.plotId.startsWith(plotIdRoot))
-        .filter( (pv) => pv.plotId!==vr.mpwWcsPrimId)
-        .filter( (pv) => !maxPlotIdAry.includes(pv.plotId))
-        .forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId, holdWcsMatch:true}));
+        vr.plotViewAry
+            .filter( (pv) => pv.plotId.startsWith(plotIdRoot))
+            .filter( (pv) => pv.plotId!==vr.mpwWcsPrimId)
+            .filter( (pv) => !maxPlotIdAry.includes(pv.plotId))
+            .forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId, holdWcsMatch:true}));
+    } catch (E){
+        console.log(E.toString());
+    }
 }
 
 
@@ -206,16 +257,3 @@ function makePlotIds(highlightedRow, totalRows, totalPlots)  {
 }
 
 
-/**
- * A simple wrapper to catch the exception then log it to console
- * @param {function} f function to execute
- * @param {*} args function's arguments.
- */
-function exec(f, args) {
-    try {
-        f(args);
-    } catch (E){
-        console.log(E.toString());
-    }
-
-}
