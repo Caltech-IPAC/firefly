@@ -216,30 +216,14 @@ UploadPanel.defaultProps = {
     name: 'LCUpload'
 };
 
-let plotConfig = {
-    "plot": {
-        "periodogram": {
-            "x": {
-                "name": "Period"
-            },
-            "y": {
-                "name": "Power"
-            }
-        },
-        "peaks": {
-            "x": {
-                "name": "Power"
-            },
-            "y": {
-                "name": "Peak"
-            }
-        }
-    }
-};
+const plotConfig = {
+    periodogram: {x: 'Period', y: 'Power'},
+    peaks: {x: 'Power', y: 'Peak'}
+}
 
 function onSearchSubmit(request) {
     var treq, xyPlotParams;
-    let {plot} = plotConfig;
+    const {periodogram, peaks} = plotConfig;
     if ( get(request, RAW_TABLE) ){
         treq = TblUtil.makeFileRequest('Raw Table', request[RAW_TABLE], null, {tbl_id:RAW_TABLE});
         treq.tblType='notACatalog';
@@ -251,11 +235,11 @@ function onSearchSubmit(request) {
     } else if ( get(request, PERIODOGRAM) ) {
         treq = TblUtil.makeFileRequest('Periodogram', request[PERIODOGRAM], null, {tbl_id:PERIODOGRAM});
         treq.tblType='notACatalog';
-        xyPlotParams = {x: {columnOrExpr: plot.periodogram.x.name, options: 'log'}, y: {columnOrExpr: plot.periodogram.y.name}};
+        xyPlotParams = {x: {columnOrExpr: periodogram.x.name, options: 'log'}, y: {columnOrExpr: periodogram.y.name}};
     } else if ( get(request, PEAK_TABLE) ) {
         treq = TblUtil.makeFileRequest('Peak Table', request[PEAK_TABLE], null, {tbl_id:PEAK_TABLE});
         treq.tblType='notACatalog';
-        xyPlotParams = {x: {columnOrExpr: plot.peaks.x.name, options: 'log'}, y: {columnOrExpr: plot.peaks.y.name}};
+        xyPlotParams = {x: {columnOrExpr: peaks.x.name, options: 'log'}, y: {columnOrExpr: peaks.y.name}};
     }
     if (treq !== null) {
         dispatchTableSearch(treq, {removable: false});

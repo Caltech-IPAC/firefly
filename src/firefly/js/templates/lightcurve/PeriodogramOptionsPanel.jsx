@@ -62,6 +62,7 @@ const defValues = {
         fieldKey: 'x',
         value: 'mjd',
         forceReinit: true,
+        label: 'Time column:',
         //validator: Validate.intRange.bind(null, 1, 100, 'periodMax field'),
         labelWidth: 150
     },
@@ -69,12 +70,14 @@ const defValues = {
         fieldKey: 'y',
         value: 'w1mpro_ep',
         forceReinit: true,
+        label: 'Flux column:',
         //validator: Validate.intRange.bind(null, 1, 100, 'periodMax field'),
         labelWidth: 150
     },
     peaks: {
         fieldKey: 'peaks',
         value: '50',
+        label: 'N peaks:',
         forceReinit: true,
         validator: Validate.intRange.bind(null, 1, 500, 'peaks number field'),
         labelWidth: 150
@@ -82,6 +85,7 @@ const defValues = {
     periodAlgor: {
         fieldKey: 'periodAlgor',
         value: 'ls',
+        label: 'Algorithm:',
         forceReinit: true,
         labelWidth: 150
     }
@@ -240,21 +244,15 @@ var periodogramRangeReducer = function (inFields, action) {
 
 
 function onSearchSubmit(request) {
-    console.log(request);
-    //if (request.Tabs==='periodfinding') {
+    //console.log(request);
     doPeriodFinding(request);
-    //}
-    //else {
-    //    console.log('request no supported');
-    //}
 }
 
 function doPeriodFinding(request) {
     let tbl = getTblById(RAW_TABLE);
-    //let catname0 = get(FieldGroupUtils.getGroupFields(gkey), 'cattable.value', catTable[0].value);
     const fields = FieldGroupUtils.getGroupFields(gkey);
     const srcFile = tbl.request.source;
-    console.log(fields);
+    //console.log(fields);
 
     var tReq2 = makeTblRequest('LightCurveProcessor', PEAK_TABLE, {
         'original_table': srcFile,

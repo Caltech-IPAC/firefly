@@ -100,7 +100,6 @@ export class LcResult extends Component {
             const fields= this.state;
 
             content.form = (
-                <div style={{height:'100%'}}>
                     <div style={{height:'100%'}}>
                         <Tabs componentKey='OuterTabs' defaultSelected={0} useFlex={true}>
 
@@ -120,8 +119,7 @@ export class LcResult extends Component {
                                 </div>
                             </Tab>
                         </Tabs>
-                    </div>
-                </div> );
+                    </div>);
  /*
             content.form = (
                 <div>
