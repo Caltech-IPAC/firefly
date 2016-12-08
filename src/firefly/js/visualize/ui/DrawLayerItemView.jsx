@@ -5,18 +5,19 @@
 import React from 'react';
 import {SimpleCanvas} from '../draw/SimpleCanvas.jsx';
 import DrawUtil from '../draw/DrawUtil.js';
-
+import {DrawSymbol} from '../draw/PointDataObj.js';
 
 
 const bSty= {
     display:'inline-block',
     whiteSpace: 'nowrap'
 };
+const symbolSize= 10;
 
 function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
                             color, canUserChangeColor, canUserDelete, title, helpLine,
                             isPointData, drawingDef,
-                            visible, changeVisible, modifyColor, UIComponent}) {
+                            visible, changeVisible, modifyColor, modifyShape, UIComponent}) {
     var style= {
         width:'100%',
         height:'100%',
@@ -50,7 +51,7 @@ function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
                 </div>
                 <div style={{padding:'0 4px 0 5px'}}>
                     {makeColorChange(color, canUserChangeColor,modifyColor)}
-                    {makeShape(isPointData,drawingDef)}
+                    {makeShape(isPointData,drawingDef, modifyShape)}
                     {makeDelete(canUserDelete,deleteLayer)}
                 </div>
             </div>
@@ -85,7 +86,7 @@ function getTitleTag(title, maxTitleChars) {
     const tStyle= {
         display:'inline-block',
         whiteSpace: 'nowrap',
-        minWidth: (maxTitleChars*.7)+'em',
+        minWidth: (maxTitleChars*.7)+'em'
         // paddingLeft : 5
     };
 
@@ -97,8 +98,8 @@ function getTitleTag(title, maxTitleChars) {
 
 function makeColorChange(color, canUserChangeColor, modifyColor) {
     const feedBackStyle= {
-        width:10,
-        height:10,
+        width:symbolSize,
+        height:symbolSize,
         backgroundColor: color,
         display:'inline-block',
         marginLeft:5
@@ -119,10 +120,29 @@ function makeColorChange(color, canUserChangeColor, modifyColor) {
 
 }
 
-function makeShape(isPointData, drawingDef) {
+function makeShape(isPointData, drawingDef, modifyShape) {
+    var [w, h] = [symbolSize, symbolSize];
+    var size = DrawUtil.getSymbolSize(w, h, drawingDef.symbol);
+    var df = Object.assign({}, drawingDef, {size});
+    var {width, height} = DrawUtil.getDrawingSize(size, drawingDef.symbol);
+
+    const feedBackStyle= {
+        width:width,
+        height:height,
+        display:'inline-block',
+        marginLeft:5
+    };
+
     if (isPointData) {
         return (
-            <SimpleCanvas width={20} height={12} drawIt={ (c) => drawOnCanvas(c,drawingDef)}/>
+            <div style={bSty} >
+                <div style={feedBackStyle} onClick={() => modifyShape()}>
+                    <SimpleCanvas width={width} height={height} drawIt={ (c) => drawOnCanvas(c, df, width, height)}/>
+                </div>
+                <a className='ff-href'
+                   onClick={() => modifyShape()}
+                   style={Object.assign({}, bSty, {marginLeft:5})}>Symbol</a>
+           </div>
         );
     }
     else {
@@ -131,9 +151,14 @@ function makeShape(isPointData, drawingDef) {
 
 }
 
-function drawOnCanvas(c,drawingDef) {
+export function drawOnCanvas(c,drawingDef, w, h) {
     if (!c) return;
-    DrawUtil.drawSymbol(c.getContext('2d'), 10,5,drawingDef,null,false);
+
+    var [x, y] = drawingDef.symbol === DrawSymbol.ARROW ? [w/2+drawingDef.size/2, h/2+drawingDef.size/2] : [w/2, h/2];
+    var ct = c.getContext('2d');
+    ct.clearRect(0, 0, w, h);
+
+    DrawUtil.drawSymbol(ct, x, y, drawingDef, null,false);
 }
 
 
@@ -151,7 +176,8 @@ function makeHelpLine(helpLine) {
 function makeDelete(canUserDelete,deleteLayer) {
     const deleteStyle= {
         display:'inline-block',
-        whiteSpace: 'nowrap'
+        whiteSpace: 'nowrap',
+        marginLeft: 5
     };
     if (canUserDelete) {
         return (

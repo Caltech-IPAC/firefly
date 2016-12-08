@@ -11,8 +11,7 @@ import {dispatchChangeDrawingDef, dispatchChangeVisibility,
     dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import {dispatchOverlayPlotChangeAttributes, dispatchDeleteOverlayPlot} from '../ImagePlotCntlr.js';
 import {showColorPickerDialog} from '../../ui/ColorPicker.jsx';
-
-
+import {showPointShapeSizePickerDialog} from '../../ui/PointShapeSizePicker.jsx';
 
 
 function DrawLayerPanelView({dlAry, plotView, mouseOverMaskValue, drawLayerFactory}) {
@@ -65,6 +64,7 @@ function makeDrawLayerItemAry(layers,pv, maxTitleChars, factory) {
                                                      title= {getLayerTitle(pv.plotId,l)}
                                                      visible={isDrawLayerVisible(l,pv.plotId)}
                                                      modifyColor={() => modifyColor(l,pv.plotId)}
+                                                     modifyShape={() => modifyShape(l,pv.plotId)}
                                                      deleteLayer={() => deleteLayer(l,pv.plotId)}
                                                      changeVisible={() => changeVisible(l,pv.plotId)}
                                                      UIComponent={getUIComponent(l,pv,factory)}
@@ -149,7 +149,9 @@ function modifyMaskColor(opv) {
         });
 }
 
-
+function modifyShape(dl, plotId) {
+    showPointShapeSizePickerDialog(dl, plotId);
+}
 
 function deleteLayer(dl,plotId) {
     dispatchDetachLayerFromPlot(dl.displayGroupId,plotId,true, true, dl.destroyWhenAllDetached);

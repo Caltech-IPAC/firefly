@@ -25,6 +25,7 @@ import {PlotAttribute} from '../visualize/WebPlot.js';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
 import {getTblById,getCellValue} from '../tables/TableUtil.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
+import DrawUtil from '../visualize/draw/DrawUtil.js';
 
 const TYPE_ID= 'CATALOG_TYPE';
 
@@ -73,7 +74,7 @@ function creator(initPayload, presetDefaults) {
         canFilter: true,
         dataTooBigForSelection,
         helpLine : helpText,
-        canUserChangeColor: ColorChangeType.STATIC
+        canUserChangeColor: ColorChangeType.DYNAMIC
     };
     // todo: get the real title
     const dl= DrawLayer.makeDrawLayer(catalogId,TYPE_ID, 
@@ -225,7 +226,7 @@ function computePointDrawLayer(drawLayer, tableData, columns) {
     const {size,symbol}= drawLayer.drawingDef;
     return tableData.data.map( (d) => {
         const wp= makeWorldPt( toAngle(d[lonIdx],rad), toAngle(d[latIdx],rad), columns.csys);
-        return PointDataObj.make(wp, size, symbol);
+        return PointDataObj.make(wp);
     });
 }
 
@@ -270,8 +271,10 @@ function computePointHighlightLayer(drawLayer, columns) {
     if (!raStr || !decStr) return null;
 
     const wp= makeWorldPt( toAngle(raStr,rad), toAngle(decStr, rad), columns.csys);
-    const obj= PointDataObj.make(wp, 5, drawLayer.drawingDef.symbol);
-    const obj2= PointDataObj.make(wp, 5, DrawSymbol.X);
+    const s = drawLayer.drawingDef.size || 5;
+    const s2 = DrawUtil.getSymbolSizeBasedOn(DrawSymbol.X, Object.assign({}, drawLayer.drawingDef, {size: s}));
+    const obj= PointDataObj.make(wp, s, drawLayer.drawingDef.symbol);
+    const obj2= PointDataObj.make(wp, s2, DrawSymbol.X);
     obj.color= COLOR_HIGHLIGHTED_PT;
     obj2.color= COLOR_HIGHLIGHTED_PT;
     return [obj,obj2];

@@ -11,7 +11,9 @@ import React from 'react';
  */
 export const InputFieldLabel= function( { label= '', tooltip= '', labelStyle, labelWidth=200, } ) {
 
-    var currStyle = labelStyle || { display:'inline-block', paddingRight:'4px' };
+    //var currStyle = labelStyle || { display:'inline-block', paddingRight:'4px' };
+    var currStyle = Object.assign({ display:'inline-block', paddingRight:'4px' }, labelStyle);
+
     if (labelWidth > 0) {
         currStyle.width = labelWidth;
     }
