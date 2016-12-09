@@ -631,20 +631,6 @@ export class WebPlotRequest extends ServerRequest {
     }
 
     /**
-     * @deprecated
-     * Check if the zoom type is a smart type, the parameter is optional. if not passed the
-     * function will look at the object for the value
-     * @param testType optional, ZoomType
-     * @return boolean, true is the type is smart
-     */
-    isSmartZoom(testType) {
-        var type= testType||this.getZoomType();
-        return (ZoomType.SMART.is(type) ||
-                ZoomType.SMART_SMALL.is(type) ||
-                ZoomType.SMART_LARGE.is(type));
-    }
-
-    /**
      *
      * @param {boolean} hasMax
      */

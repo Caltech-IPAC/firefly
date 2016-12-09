@@ -171,13 +171,14 @@ function getThumbZoomFact(plot, thumbW, thumbH) {
 function getScrollBoxInfo(pv, thumbW, thumbH) {
     var plot= primePlot(pv);
     var fact= getThumbZoomFact(plot,thumbW,thumbH)/ plot.zoomFactor;
-    var ss= getScrollSize(pv);
+    const {viewDim}= pv;
+    // var ss= getScrollSize(pv);
 
     return {
         tsX: (pv.scrollX)*fact,
         tsY: (pv.scrollY)*fact,
-        tsWidth: ss.scrollWidth*fact,
-        tsHeight: ss.scrollHeight*fact
+        tsWidth: viewDim.width*fact,
+        tsHeight: viewDim.height*fact
     };
 
 }

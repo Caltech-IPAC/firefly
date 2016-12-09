@@ -5,10 +5,10 @@
 
 import React, {PropTypes} from 'react';
 import {dispatchChangeViewerLayout} from '../MultiViewCntlr.js';
-import {dispatchChangeActivePlotView, WcsMatchType, dispatchWcsMatch} from '../ImagePlotCntlr.js';
+import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {VisInlineToolbarView} from './VisInlineToolbarView.jsx';
 import {getPlotViewById, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
-import {getDlAry} from '../DrawLayerCntlr.js';
+import {WcsMatchOptions} from './WcsMatchOptions.jsx';
 
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import BrowserInfo from '../../util/BrowserInfo.js';
@@ -30,13 +30,6 @@ const toolsStyle= {
     justifyContent: 'space-between'
 };
 
-const tStyle= {
-    display:'inline-block',
-    whiteSpace: 'nowrap',
-    minWidth: '3em',
-    paddingLeft : 5
-};
-
 
 export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, layoutType= 'grid', dlAry, handleInlineTools=true }) {
     
@@ -47,7 +40,7 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, layo
     if (cIdx<0) cIdx= 0;
 
     if (viewerPlotIds.length===1) {
-        return <div></div>;
+        return <div/>;
     }
 
     // single mode stuff
@@ -77,16 +70,7 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, layo
 
     if (viewerPlotIds.length>1) {
         wcsMatch= (
-            <div style={{alignSelf:'center', paddingLeft:25}}>
-                <div style={{display:'inline-block'}}>
-                    <input style={{margin: 0}}
-                           type='checkbox'
-                           checked={visRoot.wcsMatchType===WcsMatchType.Standard}
-                           onChange={(ev) => wcsMatchStandard(ev.target.checked, visRoot.activePlotId) }
-                    />
-                </div>
-                <div style={tStyle}>WCS Match</div>
-            </div>
+            <WcsMatchOptions activePlotId={visRoot.activePlotId} wcsMatchType={visRoot.wcsMatchType} />
         );
     }
 
@@ -119,10 +103,6 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, layo
             {handleInlineTools && makeInlineRightToolbar(visRoot,pv,pvDlAry)}
         </div>
     );
-}
-
-function wcsMatchStandard(doWcsStandard, plotId) {
-    dispatchWcsMatch({matchType:doWcsStandard?WcsMatchType.Standard:false, plotId});
 }
 
 function makeInlineRightToolbar(visRoot,pv,dlAry){

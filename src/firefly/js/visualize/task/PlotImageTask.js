@@ -130,6 +130,10 @@ function makePlotImageAction(rawAction) {
                 useContextModifications:true,
                 groupLocked:true
             };
+            if (vr.wcsMatchType && vr.mpwWcsPrimId && rawAction.payload.holdWcsMatch) {
+                const wcsPrim= getPlotViewById(vr,vr.mpwWcsPrimId);
+                payload.wpRequestAry= payload.wpRequestAry.map( (wpr) => modifyRequestForWcsMatch(wcsPrim, wpr));
+            }
         }
 
         if (firstTime) {

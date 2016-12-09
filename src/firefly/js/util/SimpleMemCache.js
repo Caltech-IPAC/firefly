@@ -23,7 +23,7 @@ var SimpleMemCache= {
 
 
     deleteCache(name) {
-        cacheContainer[name] = undefined;
+        Reflect.defineProperty(cacheContainer,name);
     },
 
 

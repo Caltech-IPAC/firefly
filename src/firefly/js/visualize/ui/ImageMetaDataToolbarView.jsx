@@ -12,6 +12,7 @@ import {dispatchChangeViewerLayout, getViewer, getMultiViewRoot,
         GRID, GRID_FULL, GRID_RELATED, SINGLE} from '../MultiViewCntlr.js';
 import {showColorBandChooserPopup} from './ColorBandChooserPopup.jsx';
 import {ImagePager} from './ImagePager.jsx';
+import {WcsMatchOptions} from './WcsMatchOptions.jsx';
 
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import ONE from 'html/images/icons-2014/Images-One.png';
@@ -34,12 +35,13 @@ const toolsStyle= {
 };
 
 
-
-export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds, layoutType, dlAry,
+export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds, layoutType, dlAry, wcsMatchType,
                                           activeTable, converterFactory, handleInlineTools=true }) {
 
     const {dataId,converter}= converterFactory(activeTable) || {};
-    if (!converter) return <div/>;
+    if (!converter) {
+        return <div/>;
+    }
     var nextIdx, prevIdx, leftImageStyle;
     const viewer= getViewer(getMultiViewRoot(), viewerId);
     const vr= visRoot();
@@ -62,6 +64,7 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds,
     }
     const showThreeColorButton= converter.threeColor && viewer.layout===GRID && viewer.layoutDetail!==GRID_FULL;
     const showPager= activeTable && viewer.layoutDetail===GRID_FULL;
+
 
 
     return (
@@ -98,7 +101,8 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds,
                                  onClick={() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])} />
                 }
             </div>
-            {showPager && <ImagePager pageSize={10} tbl_id={activeTable.tbl_id} />}
+            <WcsMatchOptions activePlotId={activePlotId} wcsMatchType={wcsMatchType} />
+            {showPager && <ImagePager pageSize={converter.maxPlots} tbl_id={activeTable.tbl_id} />}
             {handleInlineTools && <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={pvDlAry} />}
         </div>
     );

@@ -2,10 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
 
 import {get, has} from 'lodash';
 import {makeWisePlotRequest} from './WiseRequestList.js';
@@ -15,7 +11,9 @@ import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
 import {Band} from '../visualize/Band';
 import {getCellValue} from '../tables/TableUtil.js';
+import {makeWorldPt} from '../visualize/Point.js';
 import {MetaConst} from '../data/MetaConst.js';
+import {CoordinateSys} from '../visualize/CoordSys.js';
 
 
 const URL= 'URL';
@@ -72,6 +70,13 @@ export const converters = {
         canGrid : true,
         maxPlots : 12,
         makeRequest : makeRequestForUnknown
+    },
+    'SimpleMoving' : {
+        threeColor : false,
+        hasRelatedBands : false,
+        canGrid : true,
+        maxPlots : 12,
+        makeRequest : makeRequestSimpleMoving
     }
 };
 
@@ -119,11 +124,60 @@ function makeRequestForUnknown(table, row, includeSingle, includeStandard) {
 
 }
 
+function makeRequestSimpleMoving(table, row, includeSingle, includeStandard) {
+
+    const {tableMeta:meta}= table;
+    const dataSource= meta['DataSource'] || URL;
+
+
+
+    if (!meta[MetaConst.MOVING_COORD_COLS]) return [];
+
+
+    if (!meta['urlColumn']) return [];
+
+    const sAry= meta[MetaConst.MOVING_COORD_COLS].split(';');
+    if (!sAry || sAry.length!== 3) return [];
+
+    const lonCol= sAry[0];
+    const latCol= sAry[1];
+    const csys= CoordinateSys.parse(sAry[2]);
+    const urlCol= meta['urlColumn'];
+
+    const retval= {};
+    if (includeSingle) {
+        retval.single= makeMovingRequest(table,row,lonCol,latCol,urlCol,csys,'simple-moving-single-'+(row %24));
+    }
+
+    if (includeStandard) {
+        retval.standard= [makeMovingRequest(table,row,lonCol,latCol,urlCol,csys,'simple-moving-single')];
+        retval.highlightPlotId= retval.standard[0].getPlotId();
+    }
+
+    return retval;
+
+}
+
 
 function findAColumn(meta,columns) {
     const dsCol= Object.keys(meta).find( (key) => key.toUpperCase()===dataSourceUpper);
     const guesses= dsCol ? [dsCol,...defGuesses] : defGuesses;
     return columns.find( (c) => guesses.includes(c.name.toUpperCase()));
+}
+
+
+function makeMovingRequest(table, row, lonCol, latCol, urlCol, csys, plotId) {
+    const lon= Number(getCellValue(table,row,lonCol));
+    const lat= Number(getCellValue(table,row,latCol));
+    const url= getCellValue(table,row,urlCol);
+    const r = WebPlotRequest.makeURLPlotRequest(url, 'Fits Image');
+    const wp= makeWorldPt(lon,lat,csys);
+    r.setTitleOptions(TitleOptions.FILE_NAME);
+    r.setZoomType(ZoomType.TO_WIDTH_HEIGHT);
+    r.setOverlayPosition(wp);
+    r.setPlotId(plotId);
+    return r;
+
 }
 
 

@@ -14,6 +14,7 @@ import {showExpandedOptionsPopup} from '../ui/ExpandedOptionsPopup.jsx';
 import { dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {VisToolbar} from '../ui/VisToolbar.jsx';
 import {getMultiViewRoot, getExpandedViewerItemIds} from '../MultiViewCntlr.js';
+import {WcsMatchOptions} from '../ui/WcsMatchOptions.jsx';
 
 import './ExpandedTools.css';
 
@@ -41,9 +42,7 @@ function createOptions(expandedMode, singleAutoPlay, visRoot, plotIdAry) {
         autoPlay= (
             <div>
                 <div style={{display:'inline-block'}}>
-                    <input style={{margin: 0}}
-                           type='checkbox'
-                          checked={singleAutoPlay}
+                    <input style={{margin: 0}} type='checkbox' checked={singleAutoPlay}
                            onChange={() => dispatchExpandedAutoPlay(!singleAutoPlay) }
                     />
                 </div>
@@ -54,16 +53,7 @@ function createOptions(expandedMode, singleAutoPlay, visRoot, plotIdAry) {
 
     if (plotIdAry.length>1) {
         wcsMatch= (
-            <div>
-                <div style={{display:'inline-block'}}>
-                    <input style={{margin: 0}}
-                           type='checkbox'
-                           checked={visRoot.wcsMatchType===WcsMatchType.Standard}
-                           onChange={(ev) => wcsMatchStandard(ev.target.checked, visRoot.activePlotId) }
-                    />
-                </div>
-                <div style={tStyle}>WCS Match</div>
-            </div>
+                <WcsMatchOptions activePlotId={visRoot.activePlotId} wcsMatchType={visRoot.wcsMatchType} />
         );
     }
 
@@ -74,29 +64,6 @@ function createOptions(expandedMode, singleAutoPlay, visRoot, plotIdAry) {
             {autoPlay}
         </div>
     );
-}
-
-
-// wcsSTMatch= (
-//     <div>
-//         <div style={{display:'inline-block'}}>
-//             <input style={{margin: 0}}
-//                    type='checkbox'
-//                    checked={visRoot.wcsMatchType===WcsMatchType.NorthCenOnPt}
-//                    onChange={(ev) =>  wcsMatchNorth(ev.target.checked, visRoot.activePlotId) }
-//             />
-//         </div>
-//         <div style={tStyle}>WCS Search Target Match</div>
-//     </div>
-// );
-
-// function wcsMatchNorth(doWcsNorth, plotId) {
-//     dispatchWcsMatch({matchType:doWcsNorth?WcsMatchType.NorthCenOnPt:false, plotId});
-//     // console.log(`doWcsNorth: ${doWcsNorth}`);
-// }
-
-function wcsMatchStandard(doWcsStandard, plotId) {
-    dispatchWcsMatch({matchType:doWcsStandard?WcsMatchType.Standard:false, plotId});
 }
 
 

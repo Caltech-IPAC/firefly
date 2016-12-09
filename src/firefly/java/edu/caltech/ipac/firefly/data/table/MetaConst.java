@@ -26,6 +26,7 @@ public class MetaConst {
 
     public final static String CATALOG_TARGET_COL_NAME = "CatalogTargetColName";
     public final static String CATALOG_COORD_COLS = "CatalogCoordColumns";
+    public final static String MOVING_COORD_COLS = "MovingObjCoordColumns";
     public final static String DATASET_CONVERTER = "datasetInfoConverterId";
 
 

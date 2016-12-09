@@ -175,7 +175,7 @@ var collapsedLogging= [
     ExternalAccessCntlr.EXTENSION_ACTIVATE
 ];
 
-window.enableFireflyReduxLogging= true;
+window.enableFireflyReduxLogging= false;
 
 
 /**
@@ -184,7 +184,7 @@ window.enableFireflyReduxLogging= true;
  * @param action
  * @return {boolean}
  */
-function logFilter(getState,action) { 
+function logFilter(getState,action) {
     const {type}= action;
     if (!type) return false;
     if (type.startsWith('VisMouseCntlr')) return false;
@@ -195,8 +195,12 @@ function logFilter(getState,action) {
     if (type.startsWith('tblstats')) return false;
     if (type.startsWith('table_ui')) return false;
     if (type.startsWith('app_data')) return false;
-    return true;
+    return window.enableFireflyReduxLogging;;
 }
+
+// function logFilter(getState,action) {
+//     return window.enableFireflyReduxLogging;
+// }
 
 
 function collapsedFilter(getState,action) {
@@ -212,7 +216,7 @@ function createRedux() {
     // create a rootReducer from all of the registered reducers
     const rootReducer = combineReducers(reducers);
     const sagaMiddleware = createSagaMiddleware();
-    const middleWare=  applyMiddleware(thunkMiddleware, /*logger,*/ sagaMiddleware);
+    const middleWare=  applyMiddleware(thunkMiddleware, logger, sagaMiddleware); //todo: turn off action logging
     const store = createStore(rootReducer, middleWare);
     sagaMiddleware.run(masterSaga);
     return store;

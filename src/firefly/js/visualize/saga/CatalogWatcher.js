@@ -63,7 +63,7 @@ export function* watchCatalogs() {
                 break;
 
             case ImagePlotCntlr.PLOT_IMAGE:
-                attachToAllCatalogs(action.payload.plotId);
+                attachToAllCatalogs(action.payload.pvNewPlotInfoAry);
                 break;
         }
     }
@@ -162,10 +162,10 @@ function updateDrawingLayer(tbl_id, title, tableData, tableMeta, tableRequest,
 }
 
 
-function attachToAllCatalogs(plotId) {
+function attachToAllCatalogs(pvNewPlotInfoAry) {
     dlRoot().drawLayerAry.forEach( (dl) => {
         if (dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalog) {
-            dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
+            pvNewPlotInfoAry.forEach( (info) => dispatchAttachLayerToPlot(dl.drawLayerId, info.plotId));
         }
     });
 }

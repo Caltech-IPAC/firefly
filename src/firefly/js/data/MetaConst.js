@@ -15,6 +15,7 @@ export const MetaConst = {
     DATA_PRIMARY : 'DataPrimary',
     CATALOG_TARGET_COL_NAME : 'CatalogTargetColName',
     CATALOG_COORD_COLS : 'CatalogCoordColumns',
+    MOVING_COORD_COLS : 'MovingObjCoordColumns',
     DATASET_CONVERTER : 'datasetInfoConverterId',
     DEFAULT_COLOR : 'DEFAULT_COLOR'
 };

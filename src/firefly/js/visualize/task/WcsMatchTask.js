@@ -5,7 +5,7 @@
 import {get} from 'lodash';
 import ImagePlotCntlr, {WcsMatchType, IMAGE_PLOT_KEY,
                        dispatchGroupLocking, dispatchZoom, dispatchRotate,
-                       dispatchUpdateViewSize, ActionScope} from '../ImagePlotCntlr.js';
+                       dispatchUpdateViewSize, dispatchRecenter, ActionScope} from '../ImagePlotCntlr.js';
 import {getPlotViewById, primePlot, applyToOnePvOrGroup, findPlotGroup} from '../PlotViewUtil.js';
 import {PlotAttribute} from '../WebPlot.js';
 import PlotView from '../reducer/PlotView.js';
@@ -24,7 +24,6 @@ export function wcsMatchActionCreator(action) {
         matchType= WcsMatchType.get(matchType);
         var visRoot= getState()[IMAGE_PLOT_KEY];
         var masterPv= getPlotViewById(visRoot, plotId);
-        const northUp= matchType===WcsMatchType.NorthCenOnPt || matchType===WcsMatchType.NorthCenOnMoving;
 
         const width= get(masterPv,'viewDim.width',false);
         const height= get(masterPv,'viewDim.height',false);
@@ -53,7 +52,7 @@ export function wcsMatchActionCreator(action) {
         masterPv= getPlotViewById(visRoot, plotId);
         const masterPlot= primePlot(masterPv);
 
-        const level = matchType===WcsMatchType.Standard ?
+        const level = matchType===WcsMatchType.Standard  || matchType===WcsMatchType.Target ?
                   masterPlot.zoomFactor :
                   getEstimatedFullZoomFactor(primePlot(masterPv),masterPv.viewDim, FullType.WIDTH_HEIGHT);
         const asPerPix= getArcSecPerPix(masterPlot,level);
@@ -61,10 +60,16 @@ export function wcsMatchActionCreator(action) {
 
 
         dispatchUpdateViewSize(masterPv.plotId);
+
+        if (matchType===WcsMatchType.Target) {
+            const ft=  masterPlot.attributes[PlotAttribute.FIXED_TARGET];
+            if (ft) dispatchRecenter({plotId:masterPv.plotId, centerPt:ft});
+        }
+
         applyToOnePvOrGroup(visRoot.plotViewAry, masterPv.plotId, group,
                      (pv) => {
-                         if (masterPv.plotId!= pv.plotId) {
-                             syncPlotToLevel(primePlot(pv), masterPlot, asPerPix, northUp);
+                         if (masterPv.plotId!==pv.plotId) {
+                             syncPlotToLevel(primePlot(pv), masterPlot, asPerPix);
                              dispatchUpdateViewSize(pv.plotId);
                          }
                      }
@@ -93,30 +98,21 @@ export function modifyRequestForWcsMatch(pv, wpr) {
 }
 
 
-function syncPlotToLevel(plot, masterPlot, targetASpix, northUp) {
+function syncPlotToLevel(plot, masterPlot, targetASpix) {
     if (!plot) return;
     const currZoomLevel= plot.zoomFactor;
+
 
     const targetLevel= getZoomLevelForScale(plot, targetASpix);
     // we want each plot to have the same arcsec / pixel as the target level
     // if the new level is only slightly different then use the target level
     const newZoomLevel= (Math.abs(targetLevel-currZoomLevel)<.01) ? currZoomLevel : targetLevel;
 
-    if (northUp) {
-        if (isNorth(plot)) {
-            zoomToLevel(plot, targetLevel);
-        }
-        else {
-            rotateNorth(plot,newZoomLevel);
-        }
+    if (isRotationMatching(plot, masterPlot)) {
+        zoomToLevel(plot, targetLevel);
     }
     else {
-        if (isRotationMatching(plot, masterPlot)) {
-            zoomToLevel(plot, targetLevel);
-        }
-        else {
-            rotateToMatch(plot, masterPlot, newZoomLevel);
-        }
+        rotateToMatch(plot, masterPlot, newZoomLevel);
     }
 }
 
@@ -133,17 +129,6 @@ function zoomToLevel(plot, newZoomLevel) {
         });
     }
 }
-
-function rotateNorth(plot, newZoomLevel) {
-    dispatchRotate({
-        plotId: plot.plotId,
-        rotateType: RotateType.NORTH,
-        newZoomLevel,
-        keepWcsLock : true,
-        actionScope: ActionScope.SINGLE,
-    });
-}
-
 
 function rotateToMatch(plot, masterPlot, newZoomLevel) {
     const targetRotation= getRotationAngle(plot) - getRotationAngle(masterPlot);
@@ -190,10 +175,6 @@ function isRotationMatching(p1, p2) {
 function findWcsMatchPoint(pv, plotId, matchType) {
     const p= primePlot(pv);
     switch (matchType) {
-        case WcsMatchType.NorthCenOnPt:
-            return p.attributes[PlotAttribute.FIXED_TARGET] || getCenterPtOfPlot(p);
-        case WcsMatchType.NorthCenOnMoving:
-            return null;
         case WcsMatchType.Standard:
             return CCUtil.getWorldCoords(p, makeScreenPt(p.screenSize.width/2,p.screenSize.height/2));
     }
