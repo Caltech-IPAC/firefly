@@ -402,7 +402,7 @@ function doPhaseFolding(fields) {
         'cutout_size': fields.cutoutSize.value,
         'flux': fields.flux.value,
         'table_name': 'folded_table',
-        'time_col_name':fields.timeCol.value,
+        'x':fields.timeCol.value,
         'original_table': tbl.tableMeta.tblFilePath
     },  {tbl_id:PHASE_FOLDED});
     if (tReq !== null) {
@@ -453,20 +453,8 @@ function getPeriodFromTable(tbl_id) {
     const tableModel = getTblById(tbl_id);
     if (!tableModel || isNil(tableModel.highlightedRow)) return;
     if (tbl_id === PERIODOGRAM) {
-        return getCellValue(tableModel, tableModel.highlightedRow, 'PERIOD');
+        return getCellValue(tableModel, tableModel.highlightedRow, 'Period');
     } else if (tbl_id === PEAK_TABLE) {
         return getCellValue(tableModel, tableModel.highlightedRow, 'Period');
     }
-}
-
-/**
- * return true if the table is LC raw or phase folded table
- * @param {string} tbl_id
- * @returns
- */
-function isLcTable(tbl_id) {
-    const tableModel = getTblById(tbl_id);
-    if (!tableModel || isNil(tableModel.highlightedRow)) return;
-    return !![RAW_TABLE, PHASE_FOLDED].includes(tbl_id);
-
 }

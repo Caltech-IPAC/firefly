@@ -9,7 +9,6 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
@@ -17,7 +16,6 @@ import edu.caltech.ipac.util.download.FailedRequestException;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
@@ -30,19 +28,16 @@ public class LightCurveProcessor extends IpacTablePartProcessor {
 
     private static final String PERIODOGRAM_API_URL = AppProperties.getProperty("periodogram.host", "default_periodogram_host_url");
 
-    private static final Logger.LoggerImpl _log = Logger.getLogger();
-
     // API will return votable, depending on the request, return either peaks or periodogram table, which names are predefined here:
     private static final String PERIODOGRAM_TABLE_NAME = "periodogram_table.tbl";
     private static final String PEAKS_TABLE_NAME = "peaks_table.tbl";
+    private final IrsaLightCurveHandler h;
 
     /**
      * Class handling the API call and returning LC result table
      */
     public LightCurveProcessor() {
-
-        // TODO enable the nadler in constructor when the NexsciHandler is ready
-        //        LightCurveHandler h = new IrsaLightCurveHandler() {
+        h = new IrsaLightCurveHandler();
     }
 
     /**
@@ -87,36 +82,6 @@ public class LightCurveProcessor extends IpacTablePartProcessor {
      */
     public File computePeriodogram(PeriodogramAPIRequest req, String tblName) throws FailedRequestException {
 
-        //Fake call API, parse VOTable result. See for example QueryMOS
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        //TODO this is used with overwritten method. Once API known, remove and use the handler directly
-        LightCurveHandler h = new IrsaLightCurveHandler() {
-
-            /**
-             * For testing purposes returned periodogram from here:
-             * PeriodogramAPIRequest.RESULT_TABLE = "http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml"
-             * TODO remove after implementing NexsciHandler
-             * @param req
-             * @return url api
-             * @throws MalformedURLException
-             */
-            @Override
-            protected URL buildUrl(PeriodogramAPIRequest req) throws MalformedURLException {
-                /**
-                 * For now just download the file from the url from req.getResultTable()
-                 * and stream it out
-                 */
-                String SAMPLE_URL = req.getResultTable();
-                return new URL(SAMPLE_URL);
-            }
-        };
-
-//        LightCurveHandler h = new IrsaLightCurveHandler();
         if (tblName.equalsIgnoreCase(PERIODOGRAM_TABLE_NAME)) {
             return h.getPeriodogramTable(req);
         } else if (tblName.equalsIgnoreCase(PEAKS_TABLE_NAME)) {
@@ -124,32 +89,5 @@ public class LightCurveProcessor extends IpacTablePartProcessor {
         } else {
             throw new FailedRequestException("Unable to deal with the request table name " + tblName);
         }
-    }
-
-    private static File makeFileName(PeriodogramAPIRequest req) throws IOException {
-        return File.createTempFile("lc-result", ".xml", ServerContext.getPermWorkDir());
-    }
-
-    private URL createURL(PeriodogramAPIRequest req) throws EndUserException, IOException {
-        PeriodogramAPIRequest request = (PeriodogramAPIRequest) req.cloneRequest();
-        String url = req.getUrl();
-        if (url == null || url.length() < 5) {
-            url = PERIODOGRAM_API_URL;
-        }
-        String paramStr = buildParamFrom(request);
-        if (paramStr.startsWith("&")) {
-            paramStr = paramStr.substring(1);
-        }
-        url += "?" + paramStr;
-
-        return new URL(url);
-    }
-
-    private String buildParamFrom(PeriodogramAPIRequest request) {
-        String outputMode = request.getParam(PeriodogramAPIRequest.OUTPUT_MODE);
-        if (StringUtils.isEmpty(outputMode)) {
-            outputMode = "VOTable";
-        }
-        return "min_period=0&n_peaks=50";
     }
 }

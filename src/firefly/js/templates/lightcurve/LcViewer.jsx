@@ -83,7 +83,7 @@ export class LcViewer extends Component {
         var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown,
                 dropdownPanels=[], views, footer, style} = this.state;
         const {visible, view} = dropDown || {};
-        
+
         dropdownPanels.push(<UploadPanel/>);
 
         if (!isReady) {
@@ -216,9 +216,14 @@ UploadPanel.defaultProps = {
     name: 'LCUpload'
 };
 
+const plotConfig = {
+    periodogram: {x: 'Period', y: 'Power'},
+    peaks: {x: 'Power', y: 'Peak'}
+}
 
 function onSearchSubmit(request) {
     var treq, xyPlotParams;
+    const {periodogram, peaks} = plotConfig;
     if ( get(request, RAW_TABLE) ){
         treq = TblUtil.makeFileRequest('Raw Table', request[RAW_TABLE], null, {tbl_id:RAW_TABLE});
         treq.tblType='notACatalog';
@@ -230,11 +235,11 @@ function onSearchSubmit(request) {
     } else if ( get(request, PERIODOGRAM) ) {
         treq = TblUtil.makeFileRequest('Periodogram', request[PERIODOGRAM], null, {tbl_id:PERIODOGRAM});
         treq.tblType='notACatalog';
-        xyPlotParams = {x: {columnOrExpr: 'PERIOD', options: 'log'}, y: {columnOrExpr: 'POWER'}};
+        xyPlotParams = {x: {columnOrExpr: periodogram.x.name, options: 'log'}, y: {columnOrExpr: periodogram.y.name}};
     } else if ( get(request, PEAK_TABLE) ) {
         treq = TblUtil.makeFileRequest('Peak Table', request[PEAK_TABLE], null, {tbl_id:PEAK_TABLE});
         treq.tblType='notACatalog';
-        xyPlotParams = {x: {columnOrExpr: 'Period', options: 'log'}, y: {columnOrExpr: 'Power'}};
+        xyPlotParams = {x: {columnOrExpr: peaks.x.name, options: 'log'}, y: {columnOrExpr: peaks.y.name}};
     }
     if (treq !== null) {
         dispatchTableSearch(treq, {removable: false});

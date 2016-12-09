@@ -8,7 +8,6 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -28,8 +27,6 @@ import java.net.URL;
 @SearchProcessorImpl(id = "PhaseFoldedProcessor")
 
 public class PhaseFoldedCurveProcessor extends IpacTablePartProcessor {
-
-    private static final Logger.LoggerImpl _log = Logger.getLogger();
 
     private static final String FOLDED_TABLE_NAME = "folded_table.tbl";
     private final IrsaLightCurveHandler irsaLcHandler;

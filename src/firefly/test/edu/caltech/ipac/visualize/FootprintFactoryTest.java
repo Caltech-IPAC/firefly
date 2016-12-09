@@ -1,5 +1,6 @@
 package edu.caltech.ipac.visualize;
 
+import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory.FOOTPRINT;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory.INSTRUMENTS;
@@ -28,9 +29,8 @@ import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
-public class FootprintFactoryTest {
+public class FootprintFactoryTest extends ConfigTest {
     private static FootprintFactory footprintFactory;
-    private static boolean DEBUG = false;
 
     @Before
     public void setMeUp() throws FailedRequestException, GeomException {
@@ -77,7 +77,7 @@ public class FootprintFactoryTest {
                 + "POLYGON    0.00193333  -0.02526111  -0.02477500   0.00130833  -0.00116944   0.02586667   0.02621944  -0.00136389   0.00193333  -0.02526111 "
                 + "POLYGON    0.00193333  -0.02526111  -0.02477500   0.00130833  -0.00116944   0.02586667   0.02621944  -0.00136389   0.00193333  -0.02526111";
         /*
-		 * String jwst =
+         * String jwst =
 		 * " POLYGON    0.03794999  -0.17407720   0.03843333  -0.21384895   0.07796106  -0.21439047   0.07665551  -0.17417432   0.03794999  -0.17407720"
 		 * +
 		 * " POLYGON   -0.01246111  -0.17438280  -0.01299444  -0.21437121   0.02619722  -0.21371843   0.02595278  -0.17398279  -0.01246111  -0.17438280"
@@ -152,10 +152,9 @@ public class FootprintFactoryTest {
         for (Region r : footprintRegions) {
 
             DrawObj drawObj = regConnection.makeRegionDrawObject(r, plot, false);
-            if (DEBUG) {
-                System.out.println(r.toString());
-                System.out.println(drawObj.toString());
-            }
+
+            LOG.debug(r.toString());
+            LOG.debug(drawObj.toString());
             if (drawObj instanceof FootprintObj) {
                 i++;
             } else {
@@ -172,7 +171,7 @@ public class FootprintFactoryTest {
     public void testInstrumentsChildren() {
 
         String stcFromFootprint = FootprintFactory.getStcFromFootprint(FOOTPRINT.JWST);
-        //System.out.println(stcFromFootprint);
+        //LOG.debug(stcFromFootprint);
         String valJwst[] = new String[]{"FGS", "MIRI", "NIRCAM", "NIS", "NIRSPEC"};
         // Yi: added new HST instrument:
         String valHst[] = new String[]{"NICMOS", "WFPC2", "WFC", "HRC", "SBC", "UVIS", "IR"};
@@ -180,7 +179,7 @@ public class FootprintFactoryTest {
         FOOTPRINT[] fp = FOOTPRINT.values();
         for (int f = 0; f < fp.length; f++) {
             INSTRUMENTS[] values = FootprintFactory.getInstruments(fp[f]);// .values();
-            // System.out.println(fp[f].name());
+            // LOG.debug(fp[f].name());
             if (fp[f] == FOOTPRINT.JWST) {
                 for (int i = 0; i < valJwst.length; i++) {
                     assertEquals(values[i].name(), valJwst[i]);
@@ -224,7 +223,7 @@ public class FootprintFactoryTest {
                     mapPick.put(val + pickle, lst);
                     pickle++;
                 } else {
-                    // System.out.println(polys+": "+trim);
+                    // LOG.debug(polys+": "+trim);
                     lst.add(Double.parseDouble(val));
                 }
 
@@ -266,7 +265,7 @@ public class FootprintFactoryTest {
             for (int i = 0; i < array.length / 2; i++) {
                 WorldPt pt0 = new WorldPt(array[2 * i].doubleValue(), array[2 * i + 1].doubleValue());
                 pts[i] = VisUtil.calculatePosition(refCenter, pt0.getLon() * 3600, pt0.getLat() * 3600);
-                if(DEBUG) System.out.println(pts[i].toString());
+                LOG.debug(pts[i].toString());
             }
         }
     }
@@ -313,10 +312,8 @@ public class FootprintFactoryTest {
         for (Region region : listref) {
             WorldPt[] ptAry = ((RegionLines) region).getPtAry();
             for (int i = 0; i < ptAry.length - 1; i++) {
-                if(DEBUG) {
-                    System.out.println("Dist " + i + " " + ptAry[i].toString() + ":"
-                            + VisUtil.computeDistance(ptAry[i], ptAry[i + 1]));
-                }
+                LOG.debug("Dist " + i + " " + ptAry[i].toString() + ":"
+                        + VisUtil.computeDistance(ptAry[i], ptAry[i + 1]));
             }
         }
         //fov at RA00DEC40:
@@ -324,10 +321,8 @@ public class FootprintFactoryTest {
         for (Region region : list2) {
             WorldPt[] ptAry = ((RegionLines) region).getPtAry();
             for (int i = 0; i < ptAry.length - 1; i++) {
-                if(DEBUG) {
-                    System.out.println("Dist " + i + " " + ptAry[i].toString() + ":"
-                            + VisUtil.computeDistance(ptAry[i], ptAry[i + 1]));
-                }
+                LOG.debug("Dist " + i + " " + ptAry[i].toString() + ":"
+                        + VisUtil.computeDistance(ptAry[i], ptAry[i + 1]));
             }
         }
         //fov at RA00DEC90:
@@ -335,10 +330,8 @@ public class FootprintFactoryTest {
         for (Region region : list2) {
             WorldPt[] ptAry = ((RegionLines) region).getPtAry();
             for (int i = 0; i < ptAry.length - 1; i++) {
-                if(DEBUG) {
-                    System.out.println("Dist " + i + " " + ptAry[i].toString() + ":"
-                            + VisUtil.computeDistance(ptAry[i], ptAry[i + 1]));
-                }
+                LOG.debug("Dist " + i + " " + ptAry[i].toString() + ":"
+                        + VisUtil.computeDistance(ptAry[i], ptAry[i + 1]));
             }
         }
 
@@ -395,13 +388,13 @@ public class FootprintFactoryTest {
         double[] dist = null, dist1 = null;
         WorldPt[] ptAry = null, ptAry1 = null;
         for (Region region : list) {
-            if(DEBUG) System.out.println(list.size());
+            LOG.debug("" + list.size());
             ptAry = ((RegionLines) region).getPtAry();
             dist = new double[ptAry.length];
         }
 
         for (Region region : list2) {
-            if(DEBUG) System.out.println(list2.size());
+            LOG.debug("" + list2.size());
             ptAry1 = ((RegionLines) region).getPtAry();
             dist1 = new double[ptAry1.length];
         }
@@ -409,14 +402,14 @@ public class FootprintFactoryTest {
         for (int i = 0; i < dist1.length - 1; i++) {
             dist[i] = VisUtil.computeDistance(ptAry[i], ptAry[i + 1]);
             dist1[i] = VisUtil.computeDistance(ptAry1[i], ptAry1[i + 1]);
-            if(DEBUG) System.out.println(dist[i] * 3600 + ", " + dist1[i] * 3600);
+            LOG.debug("" + dist[i] * 3600 + ", " + dist1[i] * 3600);
         }
         List<WorldPt> lst = new ArrayList<>();
         for (int i = 0; i < ptAry1.length; i++) {
             lst.add(ptAry1[i]);
         }
         CentralPointRetval cp = VisUtil.computeCentralPointAndRadius(lst);
-        if(DEBUG) System.out.println(cp.getWorldPt() + ", " + cp.getRadius() * 3600);//arcsec
+        LOG.debug(cp.getWorldPt() + ", " + cp.getRadius() * 3600);//arcsec
     }
 
     @Test
@@ -457,13 +450,13 @@ public class FootprintFactoryTest {
         double[] dist = null, dist1 = null;
         WorldPt[] ptAry = null, ptAry1 = null;
         for (Region region : list) {
-            if(DEBUG) System.out.println(list.size());
+            LOG.debug("" + list.size());
             ptAry = ((RegionLines) region).getPtAry();
             dist = new double[ptAry.length];
         }
 
         for (Region region : list2) {
-            if(DEBUG) System.out.println(list2.size());
+            LOG.debug("" + list2.size());
             ptAry1 = ((RegionLines) region).getPtAry();
             dist1 = new double[ptAry1.length];
         }
@@ -471,14 +464,14 @@ public class FootprintFactoryTest {
         for (int i = 0; i < dist1.length - 1; i++) {
             dist[i] = VisUtil.computeDistance(ptAry[i], ptAry[i + 1]);
             dist1[i] = VisUtil.computeDistance(ptAry1[i], ptAry1[i + 1]);
-            if(DEBUG) System.out.println(dist[i] * 3600 + ", " + dist1[i] * 3600);
+            LOG.debug("" + dist[i] * 3600 + ", " + dist1[i] * 3600);
         }
         List<WorldPt> lst = new ArrayList<>();
         for (int i = 0; i < ptAry1.length; i++) {
             lst.add(ptAry1[i]);
         }
         CentralPointRetval cp = VisUtil.computeCentralPointAndRadius(lst);
-        if(DEBUG) System.out.println(cp.getWorldPt() + ", " + cp.getRadius() * 3600);//arcsec
+        LOG.debug(cp.getWorldPt() + ", " + cp.getRadius() * 3600);//arcsec
     }
 
     @Test
@@ -490,7 +483,7 @@ public class FootprintFactoryTest {
 
         footprintFactory.getFootprintAsRegionsFromString(polRA00, new WorldPt(0, 0), false);
         WorldPt worldCoordCenter = footprintFactory.getWorldCoordCenter();
-        System.out.println(worldCoordCenter);
+        LOG.debug(worldCoordCenter.toString());
         HashMap<String, List<Double>> map = footprintFactory.getRegionMap();
         Set<String> keySet = map.keySet();
         for (String string : keySet) {
@@ -501,7 +494,7 @@ public class FootprintFactoryTest {
                 WorldPt pt0 = new WorldPt(array[2 * i].doubleValue(), array[2 * i + 1].doubleValue());
                 pts[i] = VisUtil.calculatePosition(refCenter, pt0.getLon() * 3600, pt0.getLat() * 3600);
                 WorldPt pt = VisUtil.calculatePosition(pts[i], pt0.getLon() * 3600, pt0.getLat() * 3600);
-                if(DEBUG)  System.out.println(pts[i].toString() + ", " + pt.toString());
+                LOG.debug(pts[i].toString() + ", " + pt.toString());
             }
             Assert.assertEquals(12.29839928, pts[0].getLon(), 1E-05);
             Assert.assertEquals(89.82183415, pts[0].getLat(), 1E-05);
@@ -519,7 +512,8 @@ public class FootprintFactoryTest {
         WorldPt pos090 = new WorldPt(12.29839928, 89.82183415);
         WorldPt newPos = VisUtil.getTranslateAndRotatePosition(new WorldPt(0, 0), newRefCenter, pos00);
 
-        System.out.println("1e-06 deg in arcseconds  = " + 1e-06 * 3600);
+
+        LOG.debug("1e-06 deg in arcseconds  = " + 1e-06 * 3600);
         Assert.assertEquals(pos090.getLon(), newPos.getLon(), 1E-6);
         Assert.assertEquals(pos090.getLat(), newPos.getLat(), 1E-6);
 
@@ -541,7 +535,7 @@ public class FootprintFactoryTest {
                     FOOTPRINT.HST, INSTRUMENTS.UVIS,
                     new WorldPt(ra, 0), false);
             worldCoordCenters[i] = footprintFactory.getWorldCoordCenter();
-            if(DEBUG) System.out.println("ra =" + ra + " " + "center  = " + worldCoordCenters[i].toString());
+            LOG.debug("ra =" + ra + " " + "center  = " + worldCoordCenters[i].toString());
         }
 
     }

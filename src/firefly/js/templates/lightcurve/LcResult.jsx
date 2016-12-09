@@ -100,8 +100,7 @@ export class LcResult extends Component {
             const fields= this.state;
 
             content.form = (
-                <div>
-                    <div>
+                    <div style={{height:'100%'}}>
                         <Tabs componentKey='OuterTabs' defaultSelected={0} useFlex={true}>
 
                             <Tab name="Phase Folding">
@@ -120,8 +119,7 @@ export class LcResult extends Component {
                                 </div>
                             </Tab>
                         </Tabs>
-                    </div>
-                </div> );
+                    </div>);
  /*
             content.form = (
                 <div>

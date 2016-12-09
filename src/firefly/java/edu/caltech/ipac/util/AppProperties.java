@@ -4,20 +4,10 @@
 package edu.caltech.ipac.util;
 
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.security.AccessControlException;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 
 /**
@@ -581,6 +571,68 @@ public class AppProperties {
     }
 
 
+    /**
+     * Returns an array of property values from the Properties. If the property is empty an empty array is returned. If
+     * the property is not defined return null.
+     *
+     * @param property Property to query
+     * @param sep      separator between values
+     * @return Property values.
+     */
+    public static String[] getArrayProperties(final String property, final String sep) {
+        final String value = getProperty(property);
+        String[] values = null;
 
+        if (value != null) {
+            if (value.length() == 0) {
+                values = new String[0];
+            } else {
+                values = value.split(sep);
+            }
+        }
+
+        // may be null
+        return values;
+    }
+
+    /**
+     * Returns an array of property values from the properties. If the property is empty an empty array is returned. If
+     * the property is not defined return default.
+     *
+     * @param property Property to query
+     * @param sep      separator between values
+     * @param def      default list of properties
+     * @return Property values.
+     */
+    public static String[] getArrayProperties(final String property, final String sep, final String def) {
+        final String value = getProperty(property, def);
+        String[] values = null;
+
+        if (value != null) {
+            if (value.length() == 0) {
+                values = new String[0];
+            } else {
+                values = value.split(sep);
+            }
+        }
+
+        // may be null
+        return values;
+    }
+
+    /**
+     * Returns an array of property values from the Properties, values list is defined by spaces.
+     * <p>
+     * Note that this method assumes that the property values are separated by one or more spaces. Multiple spaces in
+     * between property values are equivalent to a single space. A property value corresponding to one or more spaces is
+     * not possible.
+     * </p>
+     *
+     * @param property Property to query
+     * @return Property values.
+     */
+    public static String[] getArrayProperties(final String property) {
+        return getArrayProperties(property, "\\s+");
+    }
 }
 
