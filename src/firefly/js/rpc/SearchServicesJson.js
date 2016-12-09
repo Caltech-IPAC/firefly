@@ -197,6 +197,19 @@ export const addIDToPushCriteria= function(id) {
 };
 
 /**
+ *
+ * @param {string} fileKey
+ * @return {Promise}
+ */
+export const getDownloadProgress= function(fileKey) {
+    var paramList = [];
+    paramList.push({name: ServerParams.FILE, value: fileKey});
+    return doService(doJsonP(), ServerParams.DOWNLOAD_PROGRESS, paramList
+    ).then((data) => {return DownloadProgress.get(data); });
+};
+
+
+/**
  * @param {string} email
  * @return {Promise}
  */

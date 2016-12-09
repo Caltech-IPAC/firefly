@@ -66,7 +66,7 @@ class ScripDownloadPanel extends Component {
 
     onSubmit(request) {
         const {ID, Title, DATA_SOURCE} = this.props;
-        const attributes = Object.values(request).filter((v) => v);
+        const attributes = Object.values(request).filter((v) => v && v !== '-');
         createDownloadScript(ID, Title.replace(/\s/g, '_'), DATA_SOURCE, attributes)
             .then((url) => {
                 download(url);
@@ -107,7 +107,7 @@ class ScripDownloadPanel extends Component {
                                 options = {[
                                             {label: 'unzip - on most platforms, works only on files smaller than 2GB', value: 'Unzip'},
                                             {label: 'ditto - on Mac, best for files larger than 2GB', value: 'Ditto'},
-                                            {label: 'Don\'t unzip the files', value: ''}
+                                            {label: "Don't unzip the files", value: '-'}
                                            ]}
                                 labelWidth = {110}
                                 wrapperStyle = {{marginTop: 3}}

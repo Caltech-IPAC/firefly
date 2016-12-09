@@ -98,7 +98,7 @@ export const doSimpleService= function(doJsonP, cmd, asyncCB) {
 /**
  * add the given name-value param into a new paramList.  If a param by a given name exists, it will be replaced.
  * if name is not given, the original paramList is returned.
- * @param {Object, Object[]} paramList
+ * @param {Object | Object[]} paramList
  * @param {string} name
  * @param {string} value
  */
