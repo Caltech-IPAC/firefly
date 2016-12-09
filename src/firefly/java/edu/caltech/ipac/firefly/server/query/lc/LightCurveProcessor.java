@@ -82,7 +82,6 @@ public class LightCurveProcessor extends IpacTablePartProcessor {
      */
     public File computePeriodogram(PeriodogramAPIRequest req, String tblName) throws FailedRequestException {
 
-//        LightCurveHandler h = new IrsaLightCurveHandler();
         if (tblName.equalsIgnoreCase(PERIODOGRAM_TABLE_NAME)) {
             return h.getPeriodogramTable(req);
         } else if (tblName.equalsIgnoreCase(PEAKS_TABLE_NAME)) {
@@ -90,32 +89,5 @@ public class LightCurveProcessor extends IpacTablePartProcessor {
         } else {
             throw new FailedRequestException("Unable to deal with the request table name " + tblName);
         }
-    }
-
-    private static File makeFileName(PeriodogramAPIRequest req) throws IOException {
-        return File.createTempFile("lc-result", ".xml", ServerContext.getPermWorkDir());
-    }
-
-    private URL createURL(PeriodogramAPIRequest req) throws EndUserException, IOException {
-        PeriodogramAPIRequest request = (PeriodogramAPIRequest) req.cloneRequest();
-        String url = req.getUrl();
-        if (url == null || url.length() < 5) {
-            url = PERIODOGRAM_API_URL;
-        }
-        String paramStr = buildParamFrom(request);
-        if (paramStr.startsWith("&")) {
-            paramStr = paramStr.substring(1);
-        }
-        url += "?" + paramStr;
-
-        return new URL(url);
-    }
-
-    private String buildParamFrom(PeriodogramAPIRequest request) {
-        String outputMode = request.getParam(PeriodogramAPIRequest.OUTPUT_MODE);
-        if (StringUtils.isEmpty(outputMode)) {
-            outputMode = "VOTable";
-        }
-        return "pmin=0&peaks=50";
     }
 }

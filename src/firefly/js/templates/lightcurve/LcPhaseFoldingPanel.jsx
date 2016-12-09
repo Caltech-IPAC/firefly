@@ -458,15 +458,3 @@ function getPeriodFromTable(tbl_id) {
         return getCellValue(tableModel, tableModel.highlightedRow, 'Period');
     }
 }
-
-/**
- * return true if the table is LC raw or phase folded table
- * @param {string} tbl_id
- * @returns
- */
-function isLcTable(tbl_id) {
-    const tableModel = getTblById(tbl_id);
-    if (!tableModel || isNil(tableModel.highlightedRow)) return;
-    return !![RAW_TABLE, PHASE_FOLDED].includes(tbl_id);
-
-}

@@ -9,21 +9,16 @@ import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.server.query.lc.IrsaLightCurveHandler;
 import edu.caltech.ipac.firefly.server.query.lc.LightCurveHandler;
 import edu.caltech.ipac.firefly.server.query.lc.PeriodogramAPIRequest;
-import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.URLDownload;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.List;
 
 /**
@@ -33,17 +28,11 @@ public class LightCurveProcessorTest extends ConfigTest {
 
 
     private static PeriodogramAPIRequestTest req;
-    private static File rawTable;
 
 
     @BeforeClass
     public static void setUp() {
         req = new PeriodogramAPIRequestTest();
-        try {
-            rawTable = File.createTempFile("phasefolded-temp-", ".tbl", new File("."));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Test
@@ -128,21 +117,8 @@ public class LightCurveProcessorTest extends ConfigTest {
     @Test
     public void testPhaseFoldedCurve() {
 
-        try {
-            URL demo = new URL("http://web.ipac.caltech.edu/staff/ejoliet/demo/AllWISE-MEP-m82-2targets-10arsecs.tbl");
-            URLConnection uc = URLDownload.makeConnection(demo);
-            URLDownload.getDataToFile(uc, rawTable);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (FailedRequestException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        File rlc = FileLoader.resolveFile(LightCurveProcessorTest.class, "/AllWISE-MEP-m82-2targets-10arsecs-oneTarget.tbl");
         boolean deleteOnExit = true;
-        if (deleteOnExit) {
-            rawTable.deleteOnExit();
-        }
         IrsaLightCurveHandler t = new IrsaLightCurveHandler() {
             @Override
             protected File createPhaseFoldedTempFile() throws IOException {
@@ -156,14 +132,14 @@ public class LightCurveProcessorTest extends ConfigTest {
 
         DataGroup inDataGroup = null;
         try {
-            inDataGroup = IpacTableReader.readIpacTable(rawTable, "lc_raw");
+            inDataGroup = IpacTableReader.readIpacTable(rlc, "lc_raw");
         } catch (IpacTableException e) {
             e.printStackTrace();
         }
         List<DataObject> dgjListOrigin = inDataGroup.values();
         DataType[] inColumns = inDataGroup.getDataDefinitions();
 
-        File p = t.toPhaseFoldedTable(rawTable, req.getPeriod(), req.getTimeColName());
+        File p = t.toPhaseFoldedTable(rlc, req.getPeriod(), req.getTimeColName());
 
         try {
             inDataGroup = IpacTableReader.readIpacTable(p, "phasefolded");
@@ -196,7 +172,7 @@ public class LightCurveProcessorTest extends ConfigTest {
         private int n_peaks = 52;
         // Fake values passed from client,
         // see test properties irsa.gator.service.periodogram.keys
-        private final String[] reqValues = new String[]{"x=mjd", "y=w1mpro_ep", "peaks="+n_peaks, "alg=ls"};
+        private final String[] reqValues = new String[]{"x=mjd", "y=w1mpro_ep", "peaks=" + n_peaks, "alg=ls"};
 
         @Override
         public String getParam(String param) {
@@ -233,15 +209,6 @@ public class LightCurveProcessorTest extends ConfigTest {
         @Override
         public String getTimeColName() {
             return "mjd";
-        }
-
-        /**
-         * @return the built url api
-         */
-        @Override
-        public String getUrl() {
-            //As for the test, we return the result table
-            return getResultTable();
         }
 
         @Override

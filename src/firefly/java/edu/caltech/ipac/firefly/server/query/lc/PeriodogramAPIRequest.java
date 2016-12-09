@@ -46,10 +46,6 @@ public class PeriodogramAPIRequest extends TableServerRequest {
         super(PeriodogramAPIRequest.class.getSimpleName());
     }
 
-    public String getUrl() {
-        return getParam(URL);
-    }
-
     /**
      * Period value
      *
