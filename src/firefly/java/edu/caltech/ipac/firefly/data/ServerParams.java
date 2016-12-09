@@ -133,7 +133,6 @@ public class ServerParams {
     public static final String ADD_ID_TO_CRITERIA= "addIDToCriteria";
     public static final String CLEAN_UP= "cleanup";
     public static final String DOWNLOAD_PROGRESS= "downloadProgress";
-    public static final String GET_DATA_FILE_VALUES= "getDataFileValues";
     public static final String SET_EMAIL= "setEmail";
     public static final String SET_ATTR= "setAttribute";
     public static final String GET_EMAIL= "getEmail";

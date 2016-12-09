@@ -81,7 +81,6 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.ADD_ID_TO_CRITERIA,     new SearchServerCommands.AddIDToPushCriteria());
         _cmdMap.put(ServerParams.CLEAN_UP,               new SearchServerCommands.CleanUp());
         _cmdMap.put(ServerParams.DOWNLOAD_PROGRESS,      new SearchServerCommands.DownloadProgress());
-        _cmdMap.put(ServerParams.GET_DATA_FILE_VALUES,   new SearchServerCommands.GetDataFileValues());
         _cmdMap.put(ServerParams.SET_EMAIL,              new SearchServerCommands.SetEmail());
         _cmdMap.put(ServerParams.SET_ATTR,               new SearchServerCommands.SetAttribute());
         _cmdMap.put(ServerParams.GET_EMAIL,              new SearchServerCommands.GetEmail());

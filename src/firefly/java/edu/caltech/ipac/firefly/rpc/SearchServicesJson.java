@@ -239,7 +239,7 @@ public class SearchServicesJson implements SearchServicesAsync {
         paramList.add(new Param(ServerParams.SOURCE, filePath));
         paramList.add(new Param(ServerParams.ROWS, CollectionUtil.toString(rows)));
         paramList.add(new Param(ServerParams.COL_NAME, colName));
-        JsonUtils.doService(doJsonP, ServerParams.GET_DATA_FILE_VALUES, paramList, async, new JsonUtils.Converter<List<String>>() {
+        JsonUtils.doService(doJsonP, ServerParams.SELECTED_VALUES, paramList, async, new JsonUtils.Converter<List<String>>() {
             public List<String> convert(String s) {
                 return Arrays.asList(s.split(", "));
             }

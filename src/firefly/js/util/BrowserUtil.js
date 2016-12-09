@@ -27,7 +27,7 @@ var getScriptURL = (function() {
 
 
 export var getRootURL = (function() {
-    var rootURL = 'http://localhost:8080/';
+    var rootURL = '//localhost:8080/';
     if (SCRIPT_NAME !== undefined) {
         var workingURL= getScriptURL() || window.location.href;
         rootURL= workingURL.substring(0,workingURL.lastIndexOf('/')) + '/';

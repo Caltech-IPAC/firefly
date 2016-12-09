@@ -16,8 +16,9 @@ import {flux} from '../../Firefly.js';
 import sCompare from 'react-addons-shallow-compare';
 import {getBackgroundInfo, BG_STATE, isActive, isDone, isSuccess, emailSent, canCreateScript, SCRIPT_ATTRIB} from './BackgroundUtil.js';
 import {dispatchBgStatus, dispatchJobRemove, dispatchBgSetEmail, dispatchJobCancel} from './BackgroundCntlr.js';
-import {downloadWithProgress, download} from '../../util/WebUtil.js';
-import {DownloadProgress, createDownloadScript} from '../../rpc/SearchServicesJson.js';
+import {downloadWithProgress} from '../../util/WebUtil.js';
+import {DownloadProgress} from '../../rpc/SearchServicesJson.js';
+import {showScriptDownloadDialog} from '../../ui/ScriptDownloadDialog.jsx';
 
 import LOADING from 'html/images/gxt/loading.gif';
 import CANCEL from 'html/images/stop.gif';
@@ -127,16 +128,11 @@ class BgFooter extends Component {
 }
 
 function PackageStatus(bgStatus) {
-    const {PACKAGE_CNT, ID, STATE, Title='unknown'} = bgStatus;
+    const {PACKAGE_CNT, ID, STATE, DATA_SOURCE, Title='unknown'} = bgStatus;
     const Content = PACKAGE_CNT > 1 ? MultiPackage : SinglePackage;
     const emailed = emailSent(bgStatus);
     const script = canCreateScript(bgStatus) && isSuccess(STATE) && PACKAGE_CNT > 1;
-    const getDownloadScript = () => {
-                createDownloadScript(ID, Title.replace(/\s/, '_'), 'source', SCRIPT_ATTRIB.Curl.key)
-                    .then((url) => {
-                        download(url);
-                    });
-            };
+    
     return (
         <div className='BGMon__package'>
             <div className='BGMon__package--box'>
@@ -144,7 +140,7 @@ function PackageStatus(bgStatus) {
                 { (emailed || script) &&
                     <div className='BGMon__package--status'>
                         { emailed ? <div>Notification email sent</div> : <div/>}
-                        { script  && <div className='BGMon__packageItem--url' onClick={getDownloadScript}>Get Download Script</div> }
+                        { script  && <div className='BGMon__packageItem--url' onClick={() => showScriptDownloadDialog({ID, Title, DATA_SOURCE})}>Get Download Script</div> }
                     </div>
                 }
             </div>

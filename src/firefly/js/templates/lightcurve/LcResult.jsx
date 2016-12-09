@@ -238,6 +238,7 @@ function DownloadDialog({mask=false}) {
             MaxBundleSize: 1024*1024*1024,
             FilePrefix: 'WISE_Files',
             BaseFileName: 'WISE_Files',
+            DataSource: 'WISE images',
             Title: request.Title
         };
         const rowCount = request.rowCount || 2;
