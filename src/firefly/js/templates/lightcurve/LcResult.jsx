@@ -4,10 +4,9 @@
 
 import React, {Component} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {pick,get} from 'lodash';
+import {pick} from 'lodash';
 import SplitPane from 'react-split-pane';
 
-import ColValuesStatistics from '../../charts/ColValuesStatistics.js';
 
 import {flux} from '../../Firefly.js';
 import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
@@ -16,34 +15,17 @@ import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {MultiImageViewerContainer} from '../../visualize/ui/MultiImageViewerContainer.jsx';
 import {createContentWrapper} from '../../ui/panel/DockLayoutPanel.jsx';
-import {IMG_VIEWER_ID} from './LcManager.js';
+import {LC} from './LcManager.js';
 import {FormPanel} from '../../ui/FormPanel.jsx';
-import {Tabs, Tab,FieldGroupTabs} from '../../ui/panel/TabPanel.jsx';
-import {CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
-import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
+import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import Validate from '../../util/Validate.js';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {InputGroup} from '../../ui/InputGroup.jsx';
 import {UploadPanel} from './LcViewer.jsx';
-import {LcPlotOptionsPanel} from './LcPlotOptions.jsx';
 import {LcImageToolbar} from './LcImageToolbar.jsx';
-import {ImageMetaDataToolbar} from '../../visualize/ui/ImageMetaDataToolbar.jsx';
 import {LcPFOptionsPanel} from './LcPhaseFoldingPanel.jsx';
 import {LcPeriodFindingPanel} from './PeriodogramOptionsPanel.jsx';
-
-
-const PanelResizableStyle = {
-    width: 400,
-    minWidth: 450,
-    height: 300,
-    minHeight: 760,
-    resize: 'both',
-    position: 'relative',
-    backgroundColor: '#e6ffff',
-    overflow: 'auto'
-};
 
 
 export class LcResult extends Component {
@@ -78,7 +60,7 @@ export class LcResult extends Component {
         if (showImages) {
             visToolbar = <VisToolbar key='res-vis-tb'/>;
             content.imagePlot = (<MultiImageViewerContainer key='res-images'
-                                        viewerId={IMG_VIEWER_ID}
+                                        viewerId={LC.IMG_VIEWER_ID}
                                         closeable={true}
                                         forceRowSize={1}
                                         imageExpandedMode={expanded===LO_VIEW.images}
@@ -103,12 +85,12 @@ export class LcResult extends Component {
                     <div style={{height:'100%'}}>
                         <Tabs componentKey='OuterTabs' defaultSelected={0} useFlex={true}>
 
-                            <Tab name="Phase Folding">
+                            <Tab name='Phase Folding'>
                                 <div>
                                     {LcPFOptionsPanel(fields)}
                                 </div>
                             </Tab>
-                            <Tab name="Periodogram">
+                            <Tab name='Periodogram'>
                                 <div>
                                     <LcPeriodFindingPanel />
                                 </div>
@@ -125,7 +107,7 @@ export class LcResult extends Component {
                 <div>
                     <div>
                         <Tabs componentKey='OuterTabs' defaultSelected={0} useFlex={true}>
-                            <Tab name="Periodogram">
+                            <Tab name='Periodogram'>
                                 <div>
                                     <LcPeriodFindingPanel />
                                 </div>
@@ -181,7 +163,7 @@ const StandardView = ({visToolbar, title, searchDesc, standard, imagePlot, xyPlo
             <div style={{flexGrow: 1, position: 'relative'}}>
             <div style={{position: 'absolute', top: 0, right: 0, bottom: 0, left: 0}}>
                 <SplitPane split='vertical' minSize={20}  defaultSize={435}>
-                    <SplitPane split='horizontal' minSize={20} defaultSize={300}>
+                    <SplitPane split='horizontal' minSize={20} defaultSize={435}>
                         {createContentWrapper(form)}
                         {createContentWrapper(tables)}
                     </SplitPane>
