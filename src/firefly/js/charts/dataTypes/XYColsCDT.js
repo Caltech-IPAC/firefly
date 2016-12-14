@@ -9,7 +9,7 @@ import {get, omitBy, isEmpty, isString, isUndefined} from 'lodash';
 
 import {MetaConst} from '../../data/MetaConst.js';
 import {fetchTable} from '../../rpc/SearchServicesJson.js';
-import {getColumn, getTblById, isFullyLoaded, cloneRequest} from '../../tables/TableUtil.js';
+import {getColumn, getTblById, isFullyLoaded, cloneRequest, makeTblRequest} from '../../tables/TableUtil.js';
 
 import {getChartDataElement, dispatchChartAdd, dispatchChartOptionsUpdate, chartDataUpdate} from './../ChartsCntlr.js';
 import {colWithName, getNumericCols, SCATTER} from './../ChartUtil.js';
@@ -211,6 +211,11 @@ function serverParamsChanged(oldParams, newParams) {
 function getServerCallParameters(xyPlotParams) {
     if (!xyPlotParams) { return []; }
 
+    // error plot
+    if (xyPlotParams.x.error || xyPlotParams.y.error) {
+        return [xyPlotParams.x.columnOrExpr, xyPlotParams.x.error, xyPlotParams.y.columnOrExpr, xyPlotParams.y.error];
+    }
+
     if (xyPlotParams.zoom) {
         var {xMin, xMax, yMin, yMax}  = xyPlotParams.zoom;
     }
@@ -226,7 +231,7 @@ function getServerCallParameters(xyPlotParams) {
     return [xyPlotParams.x.columnOrExpr, xyPlotParams.y.columnOrExpr, maxBins, xyRatio, xMin, xMax, yMin, yMax];
 }
 
-function getDataBoundaries(xyPlotData) {
+export function getDataBoundaries(xyPlotData) {
     if (!isEmpty(xyPlotData)) {
         return omitBy({
             xMin: xyPlotData.xMin,
@@ -267,7 +272,7 @@ function getPaddedRange(min, max, isLog, factor) {
  * @returns {XYBoundaries} - padded boundaries
  * @ignore
  */
-function getPaddedBoundaries(xyPlotParams, boundaries, factor=100) {
+export function getPaddedBoundaries(xyPlotParams, boundaries, factor=100) {
     if (!isEmpty(boundaries)) {
         let {xMin, xMax, yMin, yMax} = boundaries;
 
@@ -300,17 +305,27 @@ function getPaddedBoundaries(xyPlotParams, boundaries, factor=100) {
  * @param {string} chartDataElementId - chart data element id
  */
 function fetchPlotData(dispatch, chartId, chartDataElementId) {
-
     const chartDataElement = getChartDataElement(chartId, chartDataElementId);
     if (!chartDataElement) { logError(`[XYPlot] Chart data element is not found: ${chartId}, ${chartDataElementId}` ); return; }
+
+    const {tblId, options:xyPlotParams} = chartDataElement;
+    if (!tblId || !isFullyLoaded(tblId)) {return; }
+
+    if (get(xyPlotParams, 'x.error') || get(xyPlotParams, 'y.error')) {
+        fetchXYWithErrors(dispatch, chartId, chartDataElementId);
+    } else {
+        fetchXYNoErrors(dispatch, chartId, chartDataElementId);
+    }
+}
+
+function fetchXYNoErrors(dispatch, chartId, chartDataElementId) {
+    const chartDataElement = getChartDataElement(chartId, chartDataElementId);
 
     // tblId - table search request to obtain source table
     // options - options to create chart element
     // meta - table metadata, contains tblSource and decimatedUnzoomed
     const {tblId, meta, options} = chartDataElement;
     let xyPlotParams = options;
-
-    if (!tblId || !isFullyLoaded(tblId)) {return; }
 
     const activeTableModel = getTblById(tblId);
     const activeTableServerRequest = activeTableModel['request'];
@@ -326,72 +341,175 @@ function fetchPlotData(dispatch, chartId, chartDataElementId) {
         });
     req.tbl_id = `xy-${chartId}`;
 
-    fetchTable(req).then(
-        (tableModel) => {
+    fetchTable(req).then((tableModel) => {
 
-            // make sure we only save the data from the latest fetch
-            const cde = getChartDataElement(chartId, chartDataElementId);
-            if (!cde || (cde.options && serverParamsChanged(xyPlotParams,cde.options))) {
-                return;
-            }
-
-            let xyPlotData = {rows: []};
-            // when zoomed, we don't know if the unzoomed data are decimated or not
-            let decimatedUnzoomed = xyPlotParams.zoom ? undefined : false;
-
-            if (tableModel.tableData && tableModel.tableData.data) {
-                const {tableMeta} = tableModel;
-                xyPlotData = omitBy({
-                    rows: tableModel.tableData.data,
-                    decimateKey: tableMeta['decimate_key'],
-                    xMin: tableMeta['decimate.X-MIN'],
-                    xMax: tableMeta['decimate.X-MAX'],
-                    yMin: tableMeta['decimate.Y-MIN'],
-                    yMax: tableMeta['decimate.Y-MAX'],
-                    weightMin: tableMeta['decimate.WEIGHT-MIN'],
-                    weightMax: tableMeta['decimate.WEIGHT-MAX'],
-                    idStr: tableMeta['tbl_id']
-                }, isUndefined);
-
-                // convert strings with numbers into numbers
-                Object.keys(xyPlotData).forEach( (prop) => {
-                    const val = xyPlotData[prop];
-                    if (isString(val) && isFinite(val)) { xyPlotData[prop] = Number(val); }
-                });
-
-                decimatedUnzoomed = Boolean(tableMeta['decimate_key']) || decimatedUnzoomed;
-            }
-
-            // need to preserve original decimatedUnzoomed for zoomed plots
-            decimatedUnzoomed = isUndefined(decimatedUnzoomed) ? get(meta,'decimatedUnzoomed') : decimatedUnzoomed;
-
-            dispatch(chartDataUpdate(
-                {
-                    chartId,
-                    chartDataElementId,
-                    isDataReady: true,
-                    error: undefined,
-                    options: getUpdatedParams(xyPlotParams, tblId, xyPlotData),
-                    data: xyPlotData,
-                    meta: {tblSource, decimatedUnzoomed}
-                }));
+        // make sure we only save the data from the latest fetch
+        const cde = getChartDataElement(chartId, chartDataElementId);
+        if (!cde || (cde.options && serverParamsChanged(xyPlotParams,cde.options))) {
+            return;
         }
-    ).catch(
-        (reason) => {
-            const message = 'Failed to fetch XY plot data';
-            logError(`${message}: ${reason}`);
-            dispatch(chartDataUpdate(
-                {
-                    chartId,
-                    chartDataElementId,
-                    isDataReady: true,
-                    error: {message, reason},
-                    data: undefined
-                }));
-        }
-    );
 
+        let xyPlotData = {rows: []};
+        // when zoomed, we don't know if the unzoomed data are decimated or not
+        let decimatedUnzoomed = xyPlotParams.zoom ? undefined : false;
+
+        if (tableModel.tableData && tableModel.tableData.data) {
+            const {tableMeta} = tableModel;
+            const decimateKey = tableMeta['decimate_key'];
+
+            // use first 4 or 3 columns renamed
+            const colNames = decimateKey ? ['x', 'y', 'rowIdx', 'weight'] : ['x', 'y', 'rowIdx'];
+
+            // change row data from [ [val] ] to [ {cname:val} ] and make them numeric
+            const rows = tableModel.tableData.data.map((row) => {
+                return colNames.reduce( (arow, name, cidx) => {
+                    arow[name] = parseFloat(row[cidx]);
+                    return arow;
+                }, {});
+            });
+
+            xyPlotData = omitBy({
+                rows,
+                decimateKey,
+                xMin: tableMeta['decimate.X-MIN'],
+                xMax: tableMeta['decimate.X-MAX'],
+                yMin: tableMeta['decimate.Y-MIN'],
+                yMax: tableMeta['decimate.Y-MAX'],
+                weightMin: tableMeta['decimate.WEIGHT-MIN'],
+                weightMax: tableMeta['decimate.WEIGHT-MAX'],
+                idStr: tableMeta['tbl_id']
+            }, isUndefined);
+
+            // convert strings with numbers into numbers
+            Object.keys(xyPlotData).forEach( (prop) => {
+                const val = xyPlotData[prop];
+                if (isString(val) && isFinite(val)) { xyPlotData[prop] = Number(val); }
+            });
+
+            decimatedUnzoomed = Boolean(tableMeta['decimate_key']) || decimatedUnzoomed;
+        }
+
+        // need to preserve original decimatedUnzoomed for zoomed plots
+        decimatedUnzoomed = isUndefined(decimatedUnzoomed) ? get(meta,'decimatedUnzoomed') : decimatedUnzoomed;
+
+        dispatch(chartDataUpdate(
+            {
+                chartId,
+                chartDataElementId,
+                isDataReady: true,
+                error: undefined,
+                options: getUpdatedParams(xyPlotParams, tblId, xyPlotData),
+                data: xyPlotData,
+                meta: {tblSource, decimatedUnzoomed}
+            }));
+    }).catch((reason) => {
+        dispatchError(dispatch, chartId, chartDataElementId, reason);
+    });
 }
+
+
+function fetchXYWithErrors(dispatch, chartId, chartDataElementId) {
+    const chartDataElement = getChartDataElement(chartId, chartDataElementId);
+
+    // tblId - table search request to obtain source table
+    // options - options to create chart element
+    const {tblId,  options:xyPlotParams} = chartDataElement;
+
+    const activeTableModel = getTblById(tblId);
+    const activeTableServerRequest = activeTableModel['request'];
+    const tblSource = get(activeTableModel, 'tableMeta.tblFilePath');
+
+    if (!xyPlotParams) {
+        dispatchError(dispatch, chartId, chartDataElementId, 'Can not fetch data for unknown parameters');
+    }
+
+    const sreq = cloneRequest(activeTableServerRequest, {'startIdx' : 0, 'pageSize' : 1000000});
+    const req = makeTblRequest('XYWithErrors');
+    req.searchRequest = JSON.stringify(sreq);
+    req.xColOrExpr = get(xyPlotParams, 'x.columnOrExpr');
+    req.yColOrExpr = get(xyPlotParams, 'y.columnOrExpr');
+
+    if (!req.xColOrExpr || !req.yColOrExpr) {
+        dispatchError(dispatch, chartId, chartDataElementId, 'Unknown X/Y column or expression');
+    }
+
+    req.xErrLowColOrExpr = get(xyPlotParams, 'x.error');
+    req.xErrHighColOrExpr = get(xyPlotParams, 'x.error');
+    req.yErrLowColOrExpr = get(xyPlotParams, 'y.error');
+    req.yErrHighColOrExpr = get(xyPlotParams, 'y.error');
+    req.startIdx = 0;
+    req.pageSize = 1000000;
+
+    fetchTable(req).then((tableModel) => {
+
+        // make sure we only save the data from the latest fetch
+        const cde = getChartDataElement(chartId, chartDataElementId);
+        if (!cde || (cde.options && serverParamsChanged(xyPlotParams,cde.options))) {
+            return;
+        }
+
+        let xyPlotData = {rows: []};
+
+        if (tableModel.tableData && tableModel.tableData.data) {
+            const {tableMeta} = tableModel;
+
+            const colNames = tableModel.tableData.columns.map((col) => col.name);
+            colNames[1] = 'x';
+            colNames[2] = 'y';
+
+            // make sure all fields are numeric and change row data from [ [val] ] to [ {cname:val} ]
+            const rows = tableModel.tableData.data.map((row) => {
+                return colNames.reduce( (nrow, name, cidx) => {
+                    nrow[name] = parseFloat(row[cidx]);
+                    return nrow;
+                }, {});
+            });
+
+            xyPlotData = omitBy({
+                rows,
+                xMin: tableMeta['X-MIN'],
+                xMax: tableMeta['X-MAX'],
+                yMin: tableMeta['Y-MIN'],
+                yMax: tableMeta['Y-MAX'],
+                idStr: tableMeta['tbl_id']
+            }, isUndefined);
+
+            // convert strings with numbers into numbers
+            Object.keys(xyPlotData).forEach( (prop) => {
+                const val = xyPlotData[prop];
+                if (isString(val) && isFinite(val)) { xyPlotData[prop] = Number(val); }
+            });
+
+        }
+
+        dispatch(chartDataUpdate(
+            {
+                chartId,
+                chartDataElementId,
+                isDataReady: true,
+                error: undefined,
+                options: getUpdatedParams(xyPlotParams, tblId, xyPlotData),
+                data: xyPlotData,
+                meta: {tblSource}
+            }));
+    }).catch((reason) => {
+        dispatchError(dispatch, chartId, chartDataElementId, reason);
+    });
+}
+
+function dispatchError(dispatch, chartId, chartDataElementId, reason) {
+    const message = 'Failed to fetch XY plot data';
+    logError(`${message}: ${reason}`);
+    dispatch(chartDataUpdate(
+        {
+            chartId,
+            chartDataElementId,
+            isDataReady: true,
+            error: {message, reason},
+            data: undefined
+        }));
+}
+
 
 /*
  * Label and unit must be specified to display plot,

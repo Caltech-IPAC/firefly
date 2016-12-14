@@ -5,6 +5,7 @@ import {isUndefined, debounce, get, omit} from 'lodash';
 import shallowequal from 'shallowequal';
 import React, {PropTypes} from 'react';
 import ReactHighcharts from 'react-highcharts';
+import {xyErrorBarExtension} from '../highcharts/XYErrorBars.js';
 
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {parseDecimateKey} from '../../tables/Decimate.js';
@@ -12,12 +13,15 @@ import {parseDecimateKey} from '../../tables/Decimate.js';
 import numeral from 'numeral';
 import {getFormatString} from '../../util/MathUtil.js';
 
+xyErrorBarExtension(ReactHighcharts.Highcharts);
+
 const defaultShading = 'lin';
 
 export const axisParamsShape = PropTypes.shape({
     columnOrExpr : PropTypes.string,
     label : PropTypes.string,
     unit : PropTypes.string,
+    error: PropTypes.string,
     options : PropTypes.string // ex. 'grid,log,flip'
 });
 
@@ -42,7 +46,7 @@ export const plotParamsShape = PropTypes.shape({
 });
 
 const plotDataShape = PropTypes.shape({
-    rows: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.string)), // [x,y,rowIdx,weight]
+    rows: PropTypes.arrayOf(PropTypes.object), // {x,y,rowIdx} or {x,y,rowIdx,weight} or {x,y,rowIdx,right,left,low,high}
     decimateKey: PropTypes.string,
     xMin: PropTypes.number,
     xMax: PropTypes.number,
@@ -54,16 +58,20 @@ const plotDataShape = PropTypes.shape({
 });
 
 const DATAPOINTS = 'data';
+const XERROR = 'xerror';
+const YERROR = 'yerror';
 const SELECTED = 'selected';
 const HIGHLIGHTED = 'highlighted';
 const MINMAX = 'minmax';
 
 const datapointsColor = 'rgba(63, 127, 191, 0.5)';
+const datapointsColorWithErrors = 'rgba(63, 127, 191, 0.7)';
+const errorBarColor = 'rgba(191, 192, 193, 0.5)';
+const selectedColorWithErrors = 'rgba(21, 138, 15, 0.7)';
 const selectedColor = 'rgba(21, 138, 15, 0.5)';
 const highlightedColor = 'rgba(250, 243, 40, 1)';
 const selectionRectColor = 'rgba(165, 165, 165, 0.5)';
 
-const toNumber = (val)=>Number(val);
 
 /*
  @param {number} weight for a given point
@@ -235,6 +243,25 @@ const calculateChartSize = function(widthPx, heightPx, props) {
     return {chartWidth, chartHeight};
 };
 
+const formatError = function(val, low, high) {
+    if (Number.isFinite(low) && Number.isFinite(high) && Number.isFinite(val)) {
+        const lowErr = Math.abs(val - low);
+        const highErr = Math.abs(high - val);
+        const fmtLow = getFormatString(lowErr, 4);
+        const symmetricError = Math.abs(highErr-lowErr) < Math.abs(Math.min(lowErr, highErr))/1000;
+        if (symmetricError) {
+            return ' \u00B1 '+numeral(lowErr).format(fmtLow); //Unicode U+00B1 is plusmn
+        } else {
+            const fmtHigh = getFormatString(highErr, 4);
+            // asymmetric errors format: 8 +4/-2
+            return `\u002B${numeral(highErr).format(fmtHigh)} / \u2212${numeral(lowErr).format(fmtLow)}`;
+        }
+    } else {
+        return '';
+    }
+};
+
+
 export class XYPlot extends React.Component {
 
     constructor(props) {
@@ -285,9 +312,8 @@ export class XYPlot extends React.Component {
                         if (newSelectInfo) {
                             const selectInfoCls = SelectInfo.newInstance(newSelectInfo, 0);
                             data.rows.forEach((arow) => {
-                                if (selectInfoCls.isSelected(Number(arow[2]))) {
-                                    const nrow = arow.map(toNumber);
-                                    selectedData.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
+                                if (selectInfoCls.isSelected(arow['rowIdx'])) {
+                                    selectedData.push(arow);
                                 }
                             });
                         }
@@ -488,51 +514,80 @@ export class XYPlot extends React.Component {
             };
 
             if (!decimateKey) {
-                let pushFunc;
+                const hasErrorBars = get(params, 'x.error') || get(params, 'y.error');
+
+                let selectedRows = [];
                 if (selectInfo) {
                     const selectInfoCls = SelectInfo.newInstance(selectInfo, 0);
-                    // set all and selected data
-                    pushFunc = (numdata, nrow) => {
-                        numdata.all.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
-                        if (selectInfoCls.isSelected(nrow[2])) {
-                            numdata.selected.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
-                        }
-                    };
-                } else {
-                    pushFunc = (numdata, nrow) => {
-                        numdata.all.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
-                    };
-                }
-                const numericData = rows.reduce((numdata, arow) => {
-                    const nrow = arow.map(toNumber);
-                    pushFunc(numdata, nrow);
-                    return numdata;
-                }, {selected: [], all: []});
 
+                    selectedRows = rows.reduce((selrows, arow) => {
+                        if (selectInfoCls.isSelected(arow['rowIdx'])) {
+                            selrows.push(arow);
+                        }
+                        return selrows;
+                    }, []);
+                }
 
                 marker = {symbol: 'circle', radius: 3};
-                allSeries = [
-                    {
+
+                allSeries = [];
+                if (get(params, 'x.error')) {
+                    const xErrRows = rows.filter((r) => (Number.isFinite(r['left']) && Number.isFinite(r['right'])));
+                    xErrRows.sort((r1,r2) => (r1['x']-r2['x']));
+                    allSeries.push({
+                        id: XERROR,
+                        name: XERROR,
+                        type: 'error_bar',
+                        animation: false,
+                        format: 'x',
+                        color: errorBarColor,
+                        lineWidth: 1,
+                        whiskerLength: (xErrRows.length > 20) ? 0 : 3,
+                        data: xErrRows,
+                        turboThreshold: 0,
+                        showInLegend: false,
+                        enableMouseTracking: false
+                    });
+                }
+                if (get(params, 'y.error')) {
+                    const yErrRows = rows.filter((r) => (Number.isFinite(r['low']) && Number.isFinite(r['high'])));
+                    yErrRows.sort((r1,r2) => (r1['x']-r2['x']));
+                    allSeries.push({
+                        id: YERROR,
+                        name: YERROR,
+                        type: 'error_bar',
+                        animation: false,
+                        format: 'y',
+                        animation: false,
+                        color: errorBarColor,
+                        lineWidth: 1,
+                        whiskerLength: (yErrRows.length > 20) ? 0 : 3,
+                        data: yErrRows,
+                        turboThreshold: 0,
+                        showInLegend: false,
+                        enableMouseTracking: false
+                    });
+                }
+                allSeries.push({
                         id: DATAPOINTS,
                         name: DATAPOINTS,
-                        color: datapointsColor,
-                        data: numericData.all,
+                        color: hasErrorBars? datapointsColorWithErrors : datapointsColor,
+                        data: rows,
                         marker,
                         turboThreshold: 0,
                         showInLegend: false,
                         point
-                    },
-                    {
+                    });
+                allSeries.push({
                         id: SELECTED,
                         name: SELECTED,
-                        color: selectedColor,
-                        data: numericData.selected,
+                        color: hasErrorBars? selectedColorWithErrors : selectedColor,
+                        data: selectedRows,
                         marker,
                         turboThreshold: 0,
                         showInLegend: false,
                         point
-                    }
-                ];
+                    });
             } else {
                 const {xUnitPx, yUnitPx} = getDeciSymbolSize(chart, decimateKey);
                 marker = {symbol: 'rectangle', radius: xUnitPx/2.0, hD: (xUnitPx-yUnitPx)/2.0};
@@ -550,11 +605,10 @@ export class XYPlot extends React.Component {
                 // split into 6 groups by weight
                 const numericDataArr = [[],[],[],[],[],[]];
                 for (var i= 0, l = rows.length; i < l; i++) {
-                    const nrow = rows[i].map(toNumber);
-                    const weight = nrow[3];
+                    const {x:ptX,y:ptY,rowIdx, weight} = rows[i];
                     const group = getWeightBasedGroup(weight, weightMin, weightMax, params.shading==='log');
-                    const {x,y} = getCenter(nrow[0], nrow[1]);
-                    numericDataArr[group-1].push({x, y, rowIdx: nrow[2], weight});
+                    const {x,y} = getCenter(ptX, ptY);
+                    numericDataArr[group-1].push({x, y, rowIdx, weight});
                 }
 
                 // 5 colors (use http://colorbrewer2.org)
@@ -572,8 +626,6 @@ export class XYPlot extends React.Component {
                         point
                     };
                 });
-
-
             }
 
             try {
@@ -693,9 +745,11 @@ export class XYPlot extends React.Component {
                 formatter() {
                     const weight = this.point.weight ? `represents ${this.point.weight} points <br/>` : '';
                     const xval = xFormat ? numeral(this.point.x).format(xFormat) : this.point.x;
+                    const xerr = formatError(this.point.x, this.point.left, this.point.right);
                     const yval = yFormat ? numeral(this.point.y).format(yFormat) : this.point.y;
-                    return '<span> ' + `${params.x.label} = ${xval} ${params.x.unit} <br/>` +
-                        `${params.y.label} = ${yval} ${params.y.unit} <br/> ` +
+                    const yerr = formatError(this.point.y, this.point.low, this.point.high);
+                    return '<span> ' + `${params.x.label} = ${xval} ${xerr} ${params.x.unit} <br/>` +
+                        `${params.y.label} = ${yval} ${yerr} ${params.y.unit} <br/> ` +
                         `${weight}</span>`;
                 },
                 shadow: !(decimateKey),
@@ -745,7 +799,7 @@ export class XYPlot extends React.Component {
                 name: MINMAX,
                 color: 'rgba(240, 240, 240, 0.1)',
                 marker: {radius: 1},
-                data: [[selFinite(xMin, xDataMin), selFinite(yMin,yDataMin)], [selFinite(xMax, xDataMax), selFinite(yMax,yDataMax)]],
+                data: decimateKey? [[selFinite(xMin, xDataMin), selFinite(yMin,yDataMin)], [selFinite(xMax, xDataMax), selFinite(yMax,yDataMax)]]:[],
                 showInLegend: false,
                 enableMouseTracking: false,
                 states: {

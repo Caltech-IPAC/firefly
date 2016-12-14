@@ -31,7 +31,7 @@
     "react-addons-perf" : "15.3.1",
     "react-component-resizable": "1.0.1",
     "react-grid-layout": "0.13.3",
-    "react-highcharts": "10.0.0",
+    "react-highcharts": "11.0.0",
     "react-split-pane": "0.1.44",
     "redux": "3.5.2",
     "redux-thunk": "2.1.0",
