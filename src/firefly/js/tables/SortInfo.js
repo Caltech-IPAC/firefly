@@ -5,6 +5,17 @@ export const SORT_ASC = 'ASC';
 export const SORT_DESC = 'DESC';
 export const UNSORTED = '';
 
+
+/**
+ * convenience function to create the serialized string representation of SortInfo
+ * @param {string} colName column's name
+ * @param {boolean} [isAscending=true] false for descending order, otherwise it's default to ascending.
+ */
+export function sortInfoString(colName, isAscending=true) {
+    if (!colName) return '';
+    return SortInfo.newInstance( (isAscending ? SORT_ASC : SORT_DESC), colName).serialize();
+}
+
 /**
  * convenience class to handle the table's sort information.
  * data is stored as a string of '(ASC|DESC),col1[,col2]*.  ie.  'ASC,id,band'

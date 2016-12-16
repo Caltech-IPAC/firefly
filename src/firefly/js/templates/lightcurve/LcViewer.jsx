@@ -5,12 +5,12 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {get, pickBy} from 'lodash';
+import {pickBy} from 'lodash';
 
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
-import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
-import {lcManager, PERIODOGRAM, PHASE_FOLDED, RAW_TABLE, PEAK_TABLE} from './LcManager.js';
+import {getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
+import {lcManager, LC} from './LcManager.js';
 import {listenerPanel} from './LcPhaseFoldingPanel.jsx';
 import {LcResult} from './LcResult.jsx';
 import {Menu} from '../../ui/Menu.jsx';
@@ -24,11 +24,13 @@ import {FormPanel} from './../../ui/FormPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {dispatchInitFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
 import {FileUpload} from '../../ui/FileUpload.jsx';
+import {ValidationField} from '../../ui/ValidationField.jsx';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import * as TblUtil from '../../tables/TableUtil.js';
+import {sortInfoString} from '../../tables/SortInfo.js';
 
 // import {deepDiff} from '../util/WebUtil.js';
 
@@ -154,54 +156,42 @@ function BannerSection(props) {
 
 
 /**
- *  A temporary upload panel for use during development phase.  This should be removed or replaced with something else.
+ *  A generic upload panel.
+ * @param {Object} props react component's props
  */
-export const UploadPanel = () => {
-
+export function UploadPanel(props) {
+    const wrapperStyle = {margin: '5px 0'};
     return (
         <div style={{padding: 10}}>
             <FormPanel
-                width='640px' height='200px'
-                groupKey='LC_FORM'
+                groupKey='LC_UPLOAD_FORM'
                 onSubmit={(request) => onSearchSubmit(request)}
                 onCancel={dispatchHideDropDown}>
-                <FieldGroup groupKey='LC_FORM' validatorFunc={null} keepState={true}>
+                <FieldGroup groupKey='LC_UPLOAD_FORM' validatorFunc={null} keepState={true}>
                     <FileUpload
-                        wrapperStyle = {{margin: '5px 0'}}
-                        fieldKey = {RAW_TABLE}
-                        groupKey='LC_FORM'
+                        wrapperStyle = {wrapperStyle}
+                        fieldKey = 'rawTblSource'
                         initialState= {{
-                                tooltip: 'Select a file to upload',
-                                label: 'Raw Table:'
+                                tooltip: 'Select a Light Curves Table file to upload',
+                                label: 'Raw Light Curves Table:'
                             }}
                     />
-                    <FileUpload
-                        wrapperStyle = {{margin: '5px 0'}}
-                        fieldKey = {PEAK_TABLE}
-                        groupKey='LC_FORM'
-                        initialState= {{
-                                tooltip: 'Select a file to upload',
-                                label: 'Peak Table:'
-                            }}
-                    />
-                    <FileUpload
-                        wrapperStyle = {{margin: '5px 0'}}
-                        fieldKey = {PHASE_FOLDED}
-                        groupKey='LC_FORM'
-                        initialState= {{
-                                tooltip: 'Select a file to upload',
-                                label: 'Phase Folded:'
-                            }}
-                    />
-                    <FileUpload
-                        wrapperStyle = {{margin: '5px 0'}}
-                        fieldKey = {PERIODOGRAM}
-                        groupKey='LC_FORM'
-                        initialState= {{
-                                tooltip: 'Select a file to upload',
-                                label: 'Periodogram:'
-                            }}
-                    />
+                    <ValidationField fieldKey='timeCName'
+                                     wrapperStyle = {wrapperStyle}
+                                     placeholder = 'mjd'
+                                     initialState= {{
+                                          tooltip: 'Enter the name of the time column',
+                                          label : 'Time Column Name:',
+                                          labelWidth : 120
+                                      }} />
+                    <ValidationField fieldKey='fluxCName'
+                                     wrapperStyle = {wrapperStyle}
+                                     placeholder = 'w1mpro_ep'
+                                     initialState= {{
+                                          tooltip: 'Enter the name of the flux column',
+                                          label : 'Flux Column Name:',
+                                          labelWidth : 120
+                                      }} />
 
                 </FieldGroup>
             </FormPanel>
@@ -216,37 +206,22 @@ UploadPanel.defaultProps = {
     name: 'LCUpload'
 };
 
-const plotConfig = {
-    periodogram: {x: 'Period', y: 'Power'},
-    peaks: {x: 'Power', y: 'Peak'}
-}
-
 function onSearchSubmit(request) {
-    var treq, xyPlotParams;
-    const {periodogram, peaks} = plotConfig;
-    if ( get(request, RAW_TABLE) ){
-        treq = TblUtil.makeFileRequest('Raw Table', request[RAW_TABLE], null, {tbl_id:RAW_TABLE});
-        treq.tblType='notACatalog';
-        xyPlotParams = {x: {columnOrExpr: 'mjd'}, y: {columnOrExpr: 'w1mpro_ep', options:'grid,flip'}};
-    } else if ( get(request, PHASE_FOLDED) ) {
-        treq = TblUtil.makeFileRequest('Phase Folded', request[PHASE_FOLDED], null, {tbl_id:PHASE_FOLDED});
-        treq.tblType='notACatalog';
-        xyPlotParams = {x: {columnOrExpr: 'phase'}, y: {columnOrExpr: 'w1mpro_ep',  options:'grid,flip'}};
-    } else if ( get(request, PERIODOGRAM) ) {
-        treq = TblUtil.makeFileRequest('Periodogram', request[PERIODOGRAM], null, {tbl_id:PERIODOGRAM});
-        treq.tblType='notACatalog';
-        xyPlotParams = {x: {columnOrExpr: periodogram.x.name, options: 'log'}, y: {columnOrExpr: periodogram.y.name}};
-    } else if ( get(request, PEAK_TABLE) ) {
-        treq = TblUtil.makeFileRequest('Peak Table', request[PEAK_TABLE], null, {tbl_id:PEAK_TABLE});
-        treq.tblType='notACatalog';
-        xyPlotParams = {x: {columnOrExpr: peaks.x.name, options: 'log'}, y: {columnOrExpr: peaks.y.name}};
-    }
-    if (treq !== null) {
+    if ( request.rawTblSource ){
+        const {timeCName= LC.DEF_TIME_CNAME, fluxCName= LC.DEF_FLUX_CNAME} = request;
+        const options = {
+            tbl_id: LC.RAW_TABLE,
+            tblType: 'notACatalog',
+            sortInfo: sortInfoString(timeCName),
+            META_INFO: {timeCName, fluxCName}
+        };
+        const treq = TblUtil.makeFileRequest('Raw Table', request.rawTblSource, null, options);
         dispatchTableSearch(treq, {removable: false});
-        dispatchHideDropDown();
-        dispatchInitFieldGroup('LC_FORM');
-    }
-    if (xyPlotParams) {
+
+        const xyPlotParams = {x: {columnOrExpr: timeCName}, y: {columnOrExpr: fluxCName, options:'grid,flip'}};
         loadXYPlot({chartId:treq.tbl_id, tblId:treq.tbl_id, xyPlotParams});
-    }
+
+        dispatchHideDropDown();
+        dispatchInitFieldGroup('LC_UPLOAD_FORM');
+    } 
 }

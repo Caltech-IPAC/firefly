@@ -299,7 +299,10 @@ function tableSearch(action) {
             const {tbl_id} = request;
             const title = get(request, 'META_INFO.title');
             request.pageSize = options.pageSize = options.pageSize || request.pageSize || 100;
-
+            if (TblUtil.getTblById(tbl_id)) {
+                // table exists... this is a new search.  old data should be removed.
+                dispatchTableRemove(tbl_id);
+            }
             dispatchTableFetch(request);
             dispatchTblResultsAdded(tbl_id, title, options, tbl_ui_id);
         }
@@ -345,8 +348,10 @@ function tblResultsAdded(action) {
 
 function highlightRow(action) {
     return (dispatch) => {
-        const {tbl_id} = action.payload;
+        const {tbl_id, highlightedRow} = action.payload;
         var tableModel = TblUtil.getTblById(tbl_id);
+        if (highlightedRow < 0 || highlightedRow >= tableModel.totalRows) return;   // out of bound.. ignore.
+
         var tmpModel = TblUtil.smartMerge(tableModel, action.payload);
         const {hlRowIdx, startIdx, endIdx, pageSize} = TblUtil.getTblInfo(tmpModel);
         if (TblUtil.isTblDataAvail(startIdx, endIdx, tableModel)) {

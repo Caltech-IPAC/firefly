@@ -2,26 +2,20 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import './LCPanels.css';
-import React, {Component, PropTypes} from 'react';
-import {get,omit} from 'lodash';
+import React, {Component} from 'react';
 
-import {FormPanel} from '../../ui/FormPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {InputGroup} from '../../ui/InputGroup.jsx';
-import {InputField} from '../../ui/InputField.jsx';
-import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 import Validate from '../../util/Validate.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {makeTblRequest,getTblById} from '../../tables/TableUtil.js';
-
+import {sortInfoString} from '../../tables/SortInfo.js';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
-
-import {dispatchMultiValueChange, dispatchRestoreDefaults} from '../../fieldGroup/FieldGroupCntlr.js';
-import {RAW_TABLE,PERIODOGRAM, PEAK_TABLE} from '../../templates/lightcurve/LcManager.js';
+import {dispatchRestoreDefaults} from '../../fieldGroup/FieldGroupCntlr.js';
+import {LC} from '../../templates/lightcurve/LcManager.js';
 
 const gkey = 'PFO_PANEL';
 const options = [
@@ -119,7 +113,7 @@ export class PeriodogramOptionsPanel extends Component {
     }
 
     render() {
-        var fields = this.state;
+        // var fields = this.state;
         return (
             <LcPeriodFindingPanel />
         );
@@ -249,56 +243,55 @@ function onSearchSubmit(request) {
 }
 
 function doPeriodFinding(request) {
-    let tbl = getTblById(RAW_TABLE);
+    const tbl = getTblById(LC.RAW_TABLE);
     const fields = FieldGroupUtils.getGroupFields(gkey);
     const srcFile = tbl.request.source;
     //console.log(fields);
 
-    var tReq2 = makeTblRequest('LightCurveProcessor', PEAK_TABLE, {
-        'original_table': srcFile,
-        'x': fields.x.value || 'mjd',
-        'y': fields.y.value || 'w1mpro_ep',
-        'alg': fields.periodAlgor.value,
-        'pmin': fields.periodMin.value,
-        'pmax': fields.periodMax.value,
-        'step_method': fields.stepMethod.value,
-        'step_size': fields.stepSize.value,
-        'peaks': fields.peaks.value,
-        //'result_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml', //For now return result table for non-existing API
-        'table_name': PEAK_TABLE
-    }, {tbl_id: PEAK_TABLE});
+    var tReq2 = makeTblRequest('LightCurveProcessor', LC.PEAK_TABLE, {
+        original_table: srcFile,
+        x: fields.x.value || 'mjd',
+        y: fields.y.value || 'w1mpro_ep',
+        alg: fields.periodAlgor.value,
+        pmin: fields.periodMin.value,
+        pmax: fields.periodMax.value,
+        step_method: fields.stepMethod.value,
+        step_size: fields.stepSize.value,
+        peaks: fields.peaks.value,
+        table_name: LC.PEAK_TABLE,
+        sortInfo: sortInfoString('SDE')                 // sort peak table by column SDE
+    }, {tbl_id: LC.PEAK_TABLE});
 
-    if (tReq2 != null) {
-        let xyPlotParams = {
-            x: {columnOrExpr: 'Peak', options: 'grid'},
-            y: {columnOrExpr: 'Power', options: 'grid'}
+    if (tReq2 !== null) {
+        const xyPlotParams = {
+            x: {columnOrExpr: LC.PEAK_CNAME, options: 'grid'},
+            y: {columnOrExpr: LC.POWER_CNAME, options: 'grid'}
         };
-        loadXYPlot({chartId: PEAK_TABLE, tblId: PEAK_TABLE, xyPlotParams});
+        loadXYPlot({chartId: LC.PEAK_TABLE, tblId: LC.PEAK_TABLE, xyPlotParams});
         dispatchTableSearch(tReq2, {removable: true});
     }
 
-    var tReq = makeTblRequest('LightCurveProcessor', PERIODOGRAM, {
-        'original_table': srcFile,
-        'x': fields.x.value || 'mjd',
-        'y': fields.y.value || 'w1mpro_ep',
-        'alg': fields.periodAlgor.value,
-        'pmin': fields.periodMin.value,
-        'pmax': fields.periodMax.value,
-        'step_method': fields.stepMethod.value,
-        'step_size': fields.stepSize.value,
-        'peaks': fields.peaks.value,
-        //'result_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml', //For now return result table for non-existing API
-        'table_name': PERIODOGRAM
-    }, {tbl_id: PERIODOGRAM});
+    var tReq = makeTblRequest('LightCurveProcessor', LC.PERIODOGRAM, {
+        original_table: srcFile,
+        x: fields.x.value || 'mjd',
+        y: fields.y.value || 'w1mpro_ep',
+        alg: fields.periodAlgor.value,
+        pmin: fields.periodMin.value,
+        pmax: fields.periodMax.value,
+        step_method: fields.stepMethod.value,
+        step_size: fields.stepSize.value,
+        peaks: fields.peaks.value,
+        table_name: LC.PERIODOGRAM
+    }, {tbl_id: LC.PERIODOGRAM});
 
-    if (tReq != null) {
+    if (tReq !== null) {
         dispatchTableSearch(tReq, {removable: true});
-        let xyPlotParams = {
+        const xyPlotParams = {
             userSetBoundaries: {yMin: 0},
-            x: {columnOrExpr: 'Period', options: 'grid,log'},
-            y: {columnOrExpr: 'Power', options: 'grid'}
+            x: {columnOrExpr: LC.PERIOD_CNAME, options: 'grid,log'},
+            y: {columnOrExpr: LC.POWER_CNAME, options: 'grid'}
         };
-        loadXYPlot({chartId: PERIODOGRAM, tblId: PERIODOGRAM, markAsDefault: true, xyPlotParams});
+        loadXYPlot({chartId: LC.PERIODOGRAM, tblId: LC.PERIODOGRAM, markAsDefault: true, xyPlotParams});
     }
 }
 
