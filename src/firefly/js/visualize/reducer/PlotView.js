@@ -408,7 +408,6 @@ function makeScrollPosMatcher(sourcePV, visRoot, useBoundsChecking) {
                 retPV= updatePlotViewScrollXY(pv,makeScreenPt(srcSx-offPt.x,srcSy-offPt.y), false);
             }
             else if (visRoot.wcsMatchType===WcsMatchType.Target) {
-                // TODO: need compute offset of the active target from the center and match it
                 const offPt = findWCSMatchOffset(visRoot, sourcePV.plotId, plot.plotId);
                 retPV= updatePlotViewScrollXY(pv,makeScreenPt(srcSx-offPt.x,srcSy-offPt.y), false);
             }
