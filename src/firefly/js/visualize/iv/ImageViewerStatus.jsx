@@ -88,13 +88,13 @@ export class ImageViewerStatus extends Component {
     }
 
     render() {
-        const {message='',working,useMessageAlpha=false, canClear=false, clearCB} = this.props;
+        const {message='',working,useMessageAlpha=false, useButton=false, buttonCB, buttonText='OK'} = this.props;
         const {messageShowing, maskShowing}= this.state;
 
         var workingStatusText= useMessageAlpha ? statusTextAlpha : statusText;
-        const workingStatusTextCell= canClear ? statusTextCellWithClear : statusTextCell;
+        const workingStatusTextCell= useButton ? statusTextCellWithClear : statusTextCell;
 
-        if (!working && !canClear) workingStatusText= omit(workingStatusText,'zIndex');
+        if (!working && !useButton) workingStatusText= omit(workingStatusText,'zIndex');
 
         return (
             <div style={statusContainer}>
@@ -106,7 +106,8 @@ export class ImageViewerStatus extends Component {
                 { messageShowing &&
                      <div style={workingStatusText} >
                          <div style={workingStatusTextCell}>{message}</div>
-                         { canClear && <CompleteButton style={{flex: '2 2 auto'}} onSuccess={clearCB}/> }
+                         { useButton && <CompleteButton text= {buttonText}
+                                                        style={{flex: '2 2 auto'}} onSuccess={buttonCB}/> }
                      </div>
                 }
             </div>
@@ -120,6 +121,7 @@ ImageViewerStatus.propTypes= {
     messageWaitTimeMS : PropTypes.number,
     maskWaitTimeMS : PropTypes.number,
     useMessageAlpha : PropTypes.bool,
-    canClear : PropTypes.bool,
-    clearCB : PropTypes.func
+    useButton : PropTypes.bool,
+    buttonCB : PropTypes.func,
+    buttonText : PropTypes.string
 };

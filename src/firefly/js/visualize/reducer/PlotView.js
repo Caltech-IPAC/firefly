@@ -10,7 +10,7 @@
 
 import update from 'react-addons-update';
 import {WebPlot, PlotAttribute} from './../WebPlot.js';
-import {get, isString} from 'lodash';
+import {get, isString, isUndefined} from 'lodash';
 import {clone} from '../../util/WebUtil.js';
 import {WPConst} from './../WebPlotRequest.js';
 import {RotateType} from './../PlotState.js';
@@ -24,7 +24,7 @@ import {DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import SimpleMemCache from '../../util/SimpleMemCache.js';
 import {CCUtil, CysConverter} from './../CsysConverter.js';
 import {getDefMenuItemKeys} from '../MenuItemKeys.js';
-import {ExpandType} from '../ImagePlotCntlr.js';
+import {ExpandType, WcsMatchType} from '../ImagePlotCntlr.js';
 
 const DEF_WORKING_MSG= 'Plotting ';
 
@@ -116,7 +116,7 @@ export function makePlotView(plotId, req, pvOptions= {}) {
         scrollY : -1,
         viewDim : {width:0, height:0}, // size of viewable area  (div size: offsetWidth & offsetHeight)
         overlayPlotViews: [],
-        menuItemKeys: makeMenuItemKeys(req,pvOptions,getDefMenuItemKeys()), // normally wil not change
+        menuItemKeys: makeMenuItemKeys(req,pvOptions,getDefMenuItemKeys()), // normally will not change
         plotViewCtx: createPlotViewContextData(req, pvOptions),
 
 
@@ -212,14 +212,6 @@ function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, keepPrimeIdx=
     pv= clone(pv);
     pv.plotViewCtx= clone(pv.plotViewCtx);
 
-    if (pv.plots && pv.plots.length) {
-        pv.plots.forEach( (plot) => {
-            SimpleMemCache.clearCache(plot.plotImageId);
-            // todo- clean up before resetting the array - go through old array call server to delete plot
-            //todo -- somewhere need to call the server with a delete plot - probably needs to be an action or side effect
-        });
-    }
-
 
     if (overlayPlotViews) {
         const oPlotAry= overlayPlotViews.map( (opv) => opv.plot);
@@ -281,7 +273,7 @@ export function updatePlotViewScrollXY(plotView,newScrollPt, useBoundChecking= t
     newScrollPt= cc.getScreenCoords(newScrollPt);
     var {x:newSx,y:newSy}= newScrollPt;
 
-    if (useBoundChecking) {
+    if (useBoundChecking && false) { // todo: reenable
         newSx= checkBounds(newSx,plot.screenSize.width,scrollWidth);
         newSy= checkBounds(newSy,plot.screenSize.height,scrollHeight);
     }
@@ -331,7 +323,7 @@ export function replacePrimaryPlot(plotView,primePlot) {
  * @param {boolean} useBoundChecking
  * @return {Array}
  */
-function updatePlotGroupScrollXY(visRoot, plotId,plotViewAry, plotGroupAry, newScrollPt, useBoundChecking=true) {
+export function updatePlotGroupScrollXY(visRoot, plotId,plotViewAry, plotGroupAry, newScrollPt, useBoundChecking=true) {
     var plotView= updatePlotViewScrollXY(getPlotViewById(plotViewAry, plotId), newScrollPt, useBoundChecking);
     plotViewAry= replacePlotView(plotViewAry, plotView);
     var plotGroup= findPlotGroup(plotView.plotGroupId,plotGroupAry);
@@ -353,15 +345,34 @@ export function findWCSMatchOffset(vr, masterPlotOrId, matchPlotOrToId) {
 
     const masterP=  isString(masterPlotOrId) ? primePlot(vr, masterPlotOrId) : masterPlotOrId;
     const matchToP = isString(matchPlotOrToId) ? primePlot(vr, matchPlotOrToId) : matchPlotOrToId;
-
     if (!masterP || !matchToP) return makeScreenPt(0,0);
     if (masterP.plotId===matchToP.plotId) return makeScreenPt(0,0);
 
-    const masterPt = CCUtil.getScreenCoords(masterP, vr.wcsMatchCenterWP);
-    const matchToPt = CCUtil.getScreenCoords(matchToP, vr.wcsMatchCenterWP);
+    if (vr.wcsMatchType===WcsMatchType.Standard) {
 
-    return (matchToPt && masterPt) ? makeScreenPt(masterPt.x - matchToPt.x, masterPt.y - matchToPt.y) :
-                                     makeScreenPt(-matchToP.screenSize.width,-matchToP.screenSize.width);
+        const masterPt = CCUtil.getScreenCoords(masterP, vr.wcsMatchCenterWP);
+        const matchToPt = CCUtil.getScreenCoords(matchToP, vr.wcsMatchCenterWP);
+
+        return (matchToPt && masterPt) ?
+                    makeScreenPt(masterPt.x - matchToPt.x, masterPt.y - matchToPt.y) :
+                    makeScreenPt(-matchToP.screenSize.width,-matchToP.screenSize.width);
+    }
+    else if (vr.wcsMatchType===WcsMatchType.Target) {
+
+        if (!matchToP.attributes[PlotAttribute.FIXED_TARGET] || !masterP.attributes[PlotAttribute.FIXED_TARGET] ) {
+            return makeScreenPt(0,0);
+        }
+
+        const matchToFT= CCUtil.getScreenCoords(matchToP,matchToP.attributes[PlotAttribute.FIXED_TARGET]);
+        const masterFT= CCUtil.getScreenCoords(masterP,masterP.attributes[PlotAttribute.FIXED_TARGET]);
+
+        const offsetPt= makeScreenPt(masterFT.x-matchToFT.x, masterFT.y-matchToFT.y);
+        return offsetPt;
+    }
+    else {
+        return makeScreenPt(0,0);
+    }
+
 }
 
 
@@ -392,7 +403,11 @@ function makeScrollPosMatcher(sourcePV, visRoot, useBoundsChecking) {
         var retPV= pv;
         var plot= primePlot(pv);
         if (plot) {
-            if (visRoot.wcsMatchType) {
+            if (visRoot.wcsMatchType===WcsMatchType.Standard) {
+                const offPt = findWCSMatchOffset(visRoot, sourcePV.plotId, plot.plotId);
+                retPV= updatePlotViewScrollXY(pv,makeScreenPt(srcSx-offPt.x,srcSy-offPt.y), false);
+            }
+            else if (visRoot.wcsMatchType===WcsMatchType.Target) {
                 const offPt = findWCSMatchOffset(visRoot, sourcePV.plotId, plot.plotId);
                 retPV= updatePlotViewScrollXY(pv,makeScreenPt(srcSx-offPt.x,srcSy-offPt.y), false);
             }
@@ -488,12 +503,13 @@ function findCurrentCenterPoint(plotView,scrollX,scrollY) {
     var plot= primePlot(plotView);
     if (!plot) return null;
     var {scrollWidth,scrollHeight}= getScrollSize(plotView);
-    var sx= (typeof scrollX !== 'undefined') ? scrollX : plotView.scrollX;
-    var sy= (typeof scrollY !== 'undefined') ? scrollY : plotView.scrollY;
+    var {viewDim}= plotView;
+    var sx= (isUndefined(scrollX)) ? plotView.scrollX : scrollX;
+    var sy= (isUndefined(scrollY)) ? plotView.scrollY : scrollY ;
 
     var {width:screenW, height:screenH}= plot.screenSize;
-    var cX=  (screenW<scrollWidth) ? screenW/2 : sx+scrollWidth/2;
-    var cY= (screenH<scrollHeight) ? screenH/2 : sy+scrollHeight/2;
+    var cX=  (screenW<viewDim.width) ? screenW/2 : sx+scrollWidth/2;
+    var cY= (screenH<viewDim.height) ? screenH/2 : sy+scrollHeight/2;
     var pt= makeScreenPt(cX,cY);
     return CCUtil.getImageCoords(plot,pt);
 }
@@ -612,8 +628,10 @@ function checkBounds(pos,screenSize,scrollSize) {
 function findScrollPtForCenter(plotView) {
     var {width,height}= plotView.viewDim;
     var {width:scrW,height:scrH}= primePlot(plotView).screenSize;
-    var x= (scrW>width) ? scrW/2- width/2 : 0;
-    var y= (scrH>height) ? scrH/2- height/2 : 0;
+    // var x= (scrW>width) ? scrW/2- width/2 : (width-scrW)/2;
+    // var y= (scrH>height) ? scrH/2- height/2 : (height/scrH)/2;
+    var x= scrW/2- width/2;
+    var y= scrH/2- height/2;
     return makeScreenPt(x,y);
 }
 
@@ -630,7 +648,23 @@ function findScrollPtForImagePt(plotView, ipt, useBoundChecking= true) {
     var center= CCUtil.getScreenCoords(plot, ipt);
     var x= center.x- Math.min(width,scrW)/2;
     var y= center.y- Math.min(height,scrH)/2;
-    if (useBoundChecking) {
+
+    if (scrW>width) {
+        x= center.x - width/2;
+    }
+    else {
+        x=  center.x - width/2;
+    }
+
+    if (scrH>height) {
+        y= center.y - height/2;
+    }
+    else {
+        y=  center.y - height/2;
+    }
+
+
+    if (useBoundChecking && false) { // todo: reenable
         x= checkBounds(x,scrW,width);
         y= checkBounds(y,scrH,height);
     }

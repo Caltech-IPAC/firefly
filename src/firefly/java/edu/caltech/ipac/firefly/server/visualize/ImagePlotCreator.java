@@ -289,7 +289,7 @@ public class ImagePlotCreator {
                 if (retval>zoomChoice.getMaxZoomLevel()) retval=zoomChoice.getMaxZoomLevel();
             }
         }
-        else if (zoomChoice.getZoomType()== ZoomType.FULL_SCREEN) {
+        else if (zoomChoice.getZoomType()== ZoomType.FULL_SCREEN || zoomChoice.getZoomType()== ZoomType.TO_WIDTH_HEIGHT) {
             retval= VisUtil.getEstimatedFullZoomFactor(VisUtil.FullType.WIDTH_HEIGHT,width, height,
                                                        zoomChoice.getWidth(), zoomChoice.getHeight());
             if (zoomChoice.hasMaxZoomLevel()) {

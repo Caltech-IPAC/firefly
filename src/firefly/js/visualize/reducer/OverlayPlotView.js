@@ -3,7 +3,6 @@
  */
 
 import {clone} from '../../util/WebUtil.js'
-import SimpleMemCache from '../../util/SimpleMemCache.js';
 
 /**
  * @typedef {Object} OverlayPlotView
@@ -58,8 +57,6 @@ export function makeOverlayPlotView(imageOverlayId, plotId, title, imageNumber, 
 export function replaceOverlayPlots(opv, plot) {
 
     opv= clone(opv, {plot});
-    SimpleMemCache.clearCache(plot.plotImageId);
-    SimpleMemCache.clearCache(plot.plotImageId);
     plot.plotImageId= `${opv.imageOverlayId}--${opv.plotCounter}`;
     opv.plotCounter++;
 

@@ -3,7 +3,6 @@
  */
 import CoordinateSys from './CoordSys.js';
 import VisUtil from './VisUtil.js';
-import SimpleMemCache from '../util/SimpleMemCache.js';
 import {makeRoughGuesser} from './ImageBoundsData.js';
 import Point, {makeImageWorkSpacePt, makeViewPortPt, makeImagePt,
                makeScreenPt, makeWorldPt, isValidPoint} from './Point.js';
@@ -54,6 +53,7 @@ export class CysConverter {
         this.zoomFactor= plot.zoomFactor;
         this.imageCoordSys= plot.imageCoordSys;
         this.inPlotRoughGuess= null;
+        this.conversionCache= plot.conversionCache;
     }
 
 
@@ -63,8 +63,8 @@ export class CysConverter {
      * @param {ImagePt} imp Image Point
      */
     putInConversionCache(wp, imp) {
-        if (SimpleMemCache.size(this.plotImageId)<MAX_CACHE_ENTRIES) {
-            SimpleMemCache.set(this.plotImageId, wp.toString(), imp);
+        if (this.conversionCache.size<MAX_CACHE_ENTRIES) {
+            this.conversionCache.set(wp.toString(), imp);
         }
     }
 
@@ -291,7 +291,7 @@ export class CysConverter {
         var checkedPt= convertToCorrect(wpt);
         if (checkedPt.type===Point.W_PT) {
             var originalWp= wpt;
-            retval= SimpleMemCache.get(this.plotImageId, checkedPt.toString() );
+            retval= this.conversionCache.get(checkedPt.toString() );
             if (!retval) {
                 if (this.imageCoordSys!==wpt.getCoordSys()) {
                     wpt= VisUtil.convert(wpt,this.imageCoordSys);
@@ -365,7 +365,7 @@ export class CysConverter {
     getViewPortCoordsOptimize(wpt, retPt) {
         var success= false;
 
-        var  imagePt= SimpleMemCache.get(this.plotImageId, wpt.toString);
+        var  imagePt= this.conversionCache.get(wpt.toString());
 
         if (!imagePt) {
             const csys= wpt.getCoordSys();
@@ -665,6 +665,4 @@ export const CCUtil = {
 
 
 export default CysConverter;
-
-
 

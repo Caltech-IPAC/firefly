@@ -3,12 +3,14 @@
  */
 
 import {uniqBy,unionBy, isEmpty} from 'lodash';
-import Cntlr from '../ImagePlotCntlr.js';
+import Cntlr, {WcsMatchType} from '../ImagePlotCntlr.js';
 import PlotView, {makePlotView,findWCSMatchOffset, updatePlotViewScrollXY} from './PlotView.js';
 import {makeOverlayPlotView, replaceOverlayPlots} from './OverlayPlotView.js';
-import {primePlot, getPlotViewById, clonePvAry, getOverlayById} from '../PlotViewUtil.js';
+import {primePlot, getPlotViewById, clonePvAry, getOverlayById, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
 import {makeScreenPt} from '../Point.js';
 import PlotGroup from '../PlotGroup.js';
+import {PlotAttribute} from '../WebPlot.js';
+import {CCUtil} from '../CsysConverter.js';
 
 
 //============ EXPORTS ===========
@@ -107,37 +109,59 @@ const updateDefaults= function(plotRequestDefaults, action) {
 };
 
 function addPlot(state,action, replace, setActive) {
-    var {plotViewAry, activePlotId, prevActivePlotId, mpwWcsPrimId, wcsMatchType }= state;
+    var {plotViewAry, activePlotId, prevActivePlotId, mpwWcsPrimId, wcsMatchType}= state;
     const {pvNewPlotInfoAry}= action.payload;
 
     if (!pvNewPlotInfoAry) {
         console.error(new Error(
-                         `Deprecated payload send to handPlotChange.addPlot: type:${action.type}, plot not updated`));
+            `Deprecated payload send to handPlotChange.addPlot: type:${action.type}, plot not updated`));
         return state;
     }
 
-    plotViewAry= plotViewAry.map( (pv) => { // map has side effect of setting active plotId
-        const info= pvNewPlotInfoAry.find( (i) => i.plotId===pv.plotId);
+
+    plotViewAry = plotViewAry.map((pv) => { // map has side effect of setting active plotId
+        const info = pvNewPlotInfoAry.find((i) => i.plotId === pv.plotId);
         if (!info) return pv;
         const {plotAry, overlayPlotViews}= info;
         if (setActive) {
-            prevActivePlotId= state.activePlotId;
-            activePlotId= pv.plotId;
+            prevActivePlotId = state.activePlotId;
+            activePlotId = pv.plotId;
         }
-        pv= PlotView.replacePlots(pv,plotAry,overlayPlotViews, state.expandedMode, replace);
-
-        if (wcsMatchType && mpwWcsPrimId!==pv.plotId) {
-            const offPt= findWCSMatchOffset(state, mpwWcsPrimId, primePlot(pv));
-            const masterPv=getPlotViewById(state,mpwWcsPrimId);
-            if (masterPv) {
-                pv= updatePlotViewScrollXY(pv, makeScreenPt(masterPv.scrollX-offPt.x, masterPv.scrollY-offPt.y), false);
-            }
-        }
+        pv = PlotView.replacePlots(pv, plotAry, overlayPlotViews, state.expandedMode, replace);
         return pv;
     });
 
-    if (!mpwWcsPrimId) mpwWcsPrimId= activePlotId;
-    return clone(state, {prevActivePlotId, plotViewAry,activePlotId, mpwWcsPrimId});
+    if (!mpwWcsPrimId) mpwWcsPrimId = activePlotId;
+
+    const newState = clone(state, {prevActivePlotId, plotViewAry, activePlotId, mpwWcsPrimId});
+
+    if (wcsMatchType) {
+        newState.plotViewAry = plotViewAry.map((pv) => updateForWcsMatching(newState, pv, mpwWcsPrimId));
+    }
+    return newState;
+}
+
+
+function updateForWcsMatching(visRoot, pv, mpwWcsPrimId) {
+    const {wcsMatchType}= visRoot;
+    const plot= primePlot(pv);
+    if (!plot || !wcsMatchType ) return pv;
+
+    if (mpwWcsPrimId!==pv.plotId) {
+        const offPt= findWCSMatchOffset(visRoot, mpwWcsPrimId, primePlot(pv));
+        const masterPv=getPlotViewById(visRoot,mpwWcsPrimId);
+        if (masterPv) {
+            pv= updatePlotViewScrollXY(pv, makeScreenPt(masterPv.scrollX-offPt.x, masterPv.scrollY-offPt.y), false);
+        }
+    }
+    else if (wcsMatchType===WcsMatchType.Target && getPlotViewIdListInGroup(visRoot,pv.plotId).length<2) {
+        const ft=  plot.attributes[PlotAttribute.FIXED_TARGET];
+        if (ft) {
+            const centerImagePt = CCUtil.getImageCoords(plot, ft);
+            pv= updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv, centerImagePt, false));
+        }
+    }
+    return pv;
 }
 
 function newOverlayPrep(state, action) {
@@ -205,7 +229,7 @@ function plotFail(state,action) {
     const {description, plotId}= action.payload;
     var {plotViewAry}= state;
     const plotView=  getPlotViewById(state,plotId);
-    if (!plotView) return plotViewAry;
+    if (!plotView) return state;
     const changes= {plottingStatus:description,serverCall:'fail' };
     return clone(state,  {plotViewAry:clonePvAry(plotViewAry,plotId,changes)});
 }

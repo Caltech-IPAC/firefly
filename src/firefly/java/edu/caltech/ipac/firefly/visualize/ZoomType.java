@@ -18,6 +18,7 @@ public enum ZoomType {
                       SMART,         // use smart zoom - this is deprecated, don't use anymore
                       FULL_SCREEN,       // requires width & height specified
                       TO_WIDTH,          // requires width
+                      TO_WIDTH_HEIGHT,   // requires width
                       TO_HEIGHT,         // requires height, not yet implemented
                       ARCSEC_PER_SCREEN_PIX // arcsec
                       }

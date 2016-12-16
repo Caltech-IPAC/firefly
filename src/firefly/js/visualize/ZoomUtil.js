@@ -7,7 +7,8 @@ import Enum from 'enum';
 import numeral from 'numeral';
 import {logError} from '../util/WebUtil.js';
 import {PlotAttribute} from './WebPlot.js';
-import ImagePlotCntlr, {ActionScope, IMAGE_PLOT_KEY, dispatchUpdateViewSize} from './ImagePlotCntlr.js';
+import ImagePlotCntlr, {ActionScope, IMAGE_PLOT_KEY,
+                       dispatchUpdateViewSize, dispatchRecenter} from './ImagePlotCntlr.js';
 import {getPlotViewById,primePlot,getPlotStateAry,
         operateOnOthersInGroup, applyToOnePvOrGroup, findPlotGroup} from './PlotViewUtil.js';
 import {callSetZoomLevel} from '../rpc/PlotServicesJson.js';
@@ -98,6 +99,9 @@ export function zoomActionCreator(rawAction) {
 
 
         if (Math.floor(plot.zoomFactor*1000)===Math.floor(level*1000)) { //zoom level the same - just return
+            if (userZoomType===UserZoomTypes.FIT || userZoomType===UserZoomTypes.FILL) {
+                dispatchRecenter({plotId, centerOnImage:true});
+            }
             return;
         }
 
@@ -158,14 +162,15 @@ function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,isFullScreen,z
 
 
 /**
+ * Begin zooming
  *
  * @param dispatcher
  * @param visRoot
  * @param plotId
  * @param zoomLevel
+ * @param isFullScreen
  * @param zoomLockingEnabled
  * @param userZoomType
- * @param isFullScreen
  * @param useDelay
  */
 function doZoom(dispatcher,visRoot,plotId,zoomLevel,isFullScreen, zoomLockingEnabled, userZoomType,useDelay) {
@@ -184,22 +189,24 @@ function doZoom(dispatcher,visRoot,plotId,zoomLevel,isFullScreen, zoomLockingEna
 
     var zoomWait= useDelay ? ZOOM_WAIT_MS : 5;
 
-    if (true) {
-        var timerId= setTimeout(zoomPlotIdNow, zoomWait, dispatcher,visRoot,plotId,zoomLevel,isFullScreen);
-        zoomTimers.push({plotId,timerId});
-    }
-    else {
-        zoomPlotIdNow(dispatcher,visRoot,plotId,zoomLevel,isFullScreen);
-    }
+    var timerId= setTimeout(zoomPlotIdNow, zoomWait, dispatcher,visRoot,plotId,zoomLevel,isFullScreen);
+    zoomTimers.push({plotId,timerId});
 }
 
 
-
+/**
+ * call the server to do the zoom
+ * @param dispatcher
+ * @param visRoot
+ * @param plotId
+ * @param zoomLevel
+ * @param isFullScreen
+ */
 function zoomPlotIdNow(dispatcher,visRoot,plotId,zoomLevel,isFullScreen) {
     zoomTimers= zoomTimers.filter((t) => t.plotId!==plotId);
 
     var pv= getPlotViewById(visRoot,plotId);
-    if (!primePlot(pv)) return;  // the plot what changed, abort zoom
+    if (!primePlot(pv)) return;  // the plot was deleted, abort zoom
     callSetZoomLevel(getPlotStateAry(pv),zoomLevel,isFullScreen)
         .then( (wpResult) => processZoomSuccess(dispatcher,plotId,zoomLevel,wpResult) )
         .catch ( (e) => {
@@ -211,7 +218,7 @@ function zoomPlotIdNow(dispatcher,visRoot,plotId,zoomLevel,isFullScreen) {
 
 
 /**
- *
+ * The server appears to have returned a successful zoom
  * @param dispatcher
  * @param plotId
  * @param zoomLevel

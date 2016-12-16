@@ -13,14 +13,14 @@ import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
 import {getTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../../tables/TableUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
 import MultiViewCntlr, {dispatchReplaceViewerItems, dispatchUpdateCustom, getViewerItemIds,
+                        dispatchChangeViewerLayout,
                         getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE} from '../MultiViewCntlr.js';
 import {converterFactory, converters} from '../../metaConvert/ConverterFactory.js';
 import {findGridTableRows,isMetaDataTable} from '../../metaConvert/converterUtils.js';
-// import {getActiveTableId} from '../../core/LayoutCntlr.js';
 import {PlotAttribute} from '../WebPlot.js';
 import {isImageDataRequeestedEqual} from '../WebPlotRequest.js';
 
-const MAX_GRID_SIZE= 10; //todo when post is working, increase to 16 or 24
+const MAX_GRID_SIZE= 50;
 
 /**
  * this saga does the following:
@@ -114,21 +114,30 @@ const getKey= (threeOp, band) => Object.keys(threeOp).find( (k) => threeOp[k].co
  */
 function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
 
-    const viewer= getViewer(getMultiViewRoot(),viewerId);
-    const table= getTblById(tbl_id);
+    var viewer = getViewer(getMultiViewRoot(), viewerId);
+
+
+    const table = getTblById(tbl_id);
     // check to see if tableData is available in this range.
-    if (!table || !isTblDataAvail(table.highlightedRow, table.highlightedRow+1, table)) {
+    if (!table || !isTblDataAvail(table.highlightedRow, table.highlightedRow + 1, table)) {
         removeAllPlotsInViewer(viewerId);
         return [];
     }
 
     var reqRet;
-    const converterData= converterFactory(table);
+    const converterData = converterFactory(table);
     if (!converterData) return [];
-    const {dataId,converter}= converterData;
+    const {dataId, converter}= converterData;
     var highlightPlotId;
     var threeColorOps;
     var threeReqAry;
+
+
+    if (viewer.layout === GRID && viewer.layoutDetail !== GRID_FULL && !converter.hasRelatedBands) {
+        dispatchChangeViewerLayout(viewerId, SINGLE, null);
+        viewer = getViewer(getMultiViewRoot(), viewerId);
+    }
+
 
     if (converter.threeColor) {
         const showThreeColor= get(viewer.customData, [dataId,'threeColorVisible'], false);
@@ -212,13 +221,13 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
 
     // clean up unused Ids
     const cleanUpIds= difference(inViewerIds,plottingIds);
-    cleanUpIds.forEach( (plotId) => dispatchDeletePlotView({plotId}));
+    cleanUpIds.forEach( (plotId) => dispatchDeletePlotView({plotId, holdWcsMatch:true}));
 
 
     // prepare stand plot
     const wpRequestAry= makePlottingList(reqAry);
     if (!isEmpty(wpRequestAry)) {
-        dispatchPlotGroup({wpRequestAry, viewerId,
+        dispatchPlotGroup({wpRequestAry, viewerId, holdWcsMatch:true,
                            pvOptions: { userCanDeletePlots: false, menuItemKeys:{imageSelect : false} }
         });
     }
