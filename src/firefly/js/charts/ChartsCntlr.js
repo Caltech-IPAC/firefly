@@ -243,7 +243,25 @@ function doChartDataFetch(dispatch, payload, getChartDataType) {
     let newMeta = meta;
 
     if (tblId) {
-        const tblSource = get(getTblById(tblId), 'tableMeta.tblFilePath');
+        const tblModel = getTblById(tblId);
+
+        // if table load produced an error, we can not get chart data
+        const error = get(tblModel, error);
+        if (error) {
+            const message = 'Failed to fetch chart data';
+            logError(`${message}: ${error}`);
+            dispatch(chartDataUpdate(
+                {
+                    chartId,
+                    chartDataElementId,
+                    isDataReady: true,
+                    error: {message, error},
+                    data: undefined
+                }));
+            return;
+        }
+
+        const tblSource = get(tblModel, 'tableMeta.tblFilePath');
         const tblSourceChart = get(meta, 'tblSource');
 
         if (tblSourceChart !== tblSource) {

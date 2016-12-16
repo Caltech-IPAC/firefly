@@ -6,7 +6,6 @@ import React, {PropTypes} from 'react';
 import {get, isEmpty, isUndefined, omitBy, defer} from 'lodash';
 
 import ColValuesStatistics from '../ColValuesStatistics.js';
-import {DT_XYCOLS} from '../dataTypes/XYColsCDT.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
@@ -64,6 +63,8 @@ function getUnit(colValStats, colname) {
 export function resultsSuccess(callback, flds, tblId) {
     const xName = get(flds, ['x.columnOrExpr']);
     const yName = get(flds, ['y.columnOrExpr']);
+    const xErr = get(flds, ['x.error']);
+    const yErr = get(flds, ['y.error']);
 
     const xOptions = get(flds, ['x.options']);
     const xLabel = get(flds, ['x.label']);
@@ -100,17 +101,22 @@ export function resultsSuccess(callback, flds, tblId) {
          y : axisParamsShape
       });
       */
+
     const xyPlotParams = omitBy({
         userSetBoundaries,
         xyRatio : Number.isFinite(xyRatio) ? xyRatio : undefined,
         stretch : flds.stretch,
         nbins : (nbinsX && nbinsY) ? {x: Number(nbinsX), y: Number(nbinsY)} : undefined,
         shading: flds.shading || undefined,
-        x : { columnOrExpr : xName, label : xLabel, unit : xUnit, options : xOptions},
-        y : { columnOrExpr : yName, label : yLabel, unit : yUnit, options : yOptions},
-        type : DT_XYCOLS,
+        x : { columnOrExpr : xName, error: xErr, label : xLabel, unit : xUnit, options : xOptions},
+        y : { columnOrExpr : yName, error: yErr, label : yLabel, unit : yUnit, options : yOptions},
         tblId
     }, isUndefined);
+
+    if (xErr || yErr) {
+        if (xErr) { xyPlotParams.x.error = xErr; }
+        if (yErr) { xyPlotParams.y.error = yErr; }
+    }
 
     callback(xyPlotParams);
 }
@@ -123,10 +129,12 @@ export function resultsFail() {
 export function setOptions(groupKey, xyPlotParams) {
     const flds = [
         {fieldKey: 'x.columnOrExpr', value: get(xyPlotParams, 'x.columnOrExpr')},
+        {fieldKey: 'x.error', value: get(xyPlotParams, 'x.error')},
         {fieldKey: 'x.label', value: get(xyPlotParams, 'x.label')},
         {fieldKey: 'x.unit', value: get(xyPlotParams, 'x.unit')},
         {fieldKey: 'x.options', value: get(xyPlotParams, 'x.options', '_none_')},
         {fieldKey: 'y.columnOrExpr', value: get(xyPlotParams, 'y.columnOrExpr')},
+        {fieldKey: 'y.error', value: get(xyPlotParams, 'y.error')},
         {fieldKey: 'y.label', value: get(xyPlotParams, 'y.label')},
         {fieldKey: 'y.unit', value: get(xyPlotParams, 'y.unit')},
         {fieldKey: 'y.options', value: get(xyPlotParams, 'y.options', '_none_')},
@@ -143,12 +151,14 @@ export function setOptions(groupKey, xyPlotParams) {
     dispatchMultiValueChange(groupKey, flds);
 }
 
-export function getColValidator(colValStats) {
+export function getColValidator(colValStats, required=true) {
     const colNames = colValStats.map((colVal) => {return colVal.name;});
     return (val) => {
         let retval = {valid: true, message: ''};
         if (!val) {
-            return {valid: false, message: 'Can not be empty. Please provide value or expression'};
+            if (required) {
+                return {valid: false, message: 'Can not be empty. Please provide value or expression'};
+            }
         } else if (colNames.indexOf(val) < 0) {
             const expr = new Expression(val, colNames);
             if (!expr.isValid()) {
@@ -175,6 +185,7 @@ function fldChangeReducer(inFields, action) {
         // when field changes, clear the label and unit
         fieldKey = get(action.payload, 'fieldKey');
         if (fieldKey === 'x.columnOrExpr') {
+            inFields = updateSet(inFields, ['x.error', 'value'], undefined);
             inFields = updateSet(inFields, ['x.label', 'value'], undefined);
             inFields = updateSet(inFields, ['x.unit', 'value'], undefined);
             inFields = updateSet(inFields, ['xMin', 'value'], undefined);
@@ -183,6 +194,7 @@ function fldChangeReducer(inFields, action) {
             // do not reset grid selection
             inFields = updateSet(inFields, ['x.options', 'value'], getOption(currOptions, 'grid'));
         } else if (fieldKey === 'y.columnOrExpr') {
+            inFields = updateSet(inFields, ['y.error', 'value'], undefined);
             inFields = updateSet(inFields, ['y.label', 'value'], undefined);
             inFields = updateSet(inFields, ['y.unit', 'value'], undefined);
             inFields = updateSet(inFields, ['yMin', 'value'], undefined);
@@ -263,9 +275,12 @@ export class XYPlotOptions extends React.Component {
         const {colValStats, groupKey, xyPlotParams} = this.props;
         if (colValStats) {
             const colValidator = getColValidator(colValStats);
+            const colValidatorOptValue = getColValidator(colValStats, false); // value can be empty
             const flds = [
                 {fieldKey: 'x.columnOrExpr', validator: colValidator},
-                {fieldKey: 'y.columnOrExpr', validator: colValidator}
+                {fieldKey: 'x.error', validator: colValidatorOptValue},
+                {fieldKey: 'y.columnOrExpr', validator: colValidator},
+                {fieldKey: 'y.error', validator: colValidatorOptValue}
             ];
             dispatchMultiValueChange(groupKey, flds);
             if (xyPlotParams) {
@@ -442,38 +457,12 @@ export class XYPlotOptions extends React.Component {
     render() {
         const { colValStats, groupKey, xyPlotParams, defaultParams, onOptionsSelected}= this.props;
 
-        // the suggestions are indexes in the colValStats array - it makes it easier to render then with labels
-        const allSuggestions = colValStats.map((colVal,idx)=>{return idx;});
-
-        const getSuggestions = (val)=>{
-            const {token} = parseSuggestboxContent(val);
-            const matches = allSuggestions.filter( (idx)=>{return colValStats[idx].name.startsWith(token);} );
-            return matches.length ? matches : allSuggestions;
-        };
-
-        const renderSuggestion = (idx)=>{
-            const colVal = colValStats[idx];
-            return colVal.name + (colVal.unit && colVal.unit !== 'null' ? ', '+colVal.unit : ' ');
-        };
-
-        const valueOnSuggestion = (prevVal, idx)=>{
-            const {priorContent} = parseSuggestboxContent(prevVal);
-            return priorContent+colValStats[idx].name;
-        };
-
-        var x = get(xyPlotParams, 'x.columnOrExpr');
-        var y = get(xyPlotParams, 'y.columnOrExpr');
-        const onXColSelected = (colName) => {
-            x = colName;
-            dispatchValueChange({fieldKey: 'x.columnOrExpr', groupKey, value: colName, valid: true});
-        };
-        const onYColSelected = (colName) => {
-            y = colName;
-            dispatchValueChange({fieldKey: 'y.columnOrExpr', groupKey, value: colName, valid: true});
-        };
-
         const noLogOption = possibleDecimatedTable(colValStats);
 
+        const xProps = {colValStats,params:xyPlotParams,groupKey,fldPath:'x.columnOrExpr',label:'X',tooltip:'X Axis',nullAllowed:false};
+        const yProps = {colValStats,params:xyPlotParams,groupKey,fldPath:'y.columnOrExpr',label:'Y',tooltip:'Y Axis',nullAllowed:false};
+        const xErrProps = {colValStats,params:xyPlotParams,groupKey,fldPath:'x.error',label:'X Err',tooltip:'X Error',nullAllowed:true};
+        const yErrProps = {colValStats,params:xyPlotParams,groupKey,fldPath:'y.error',label:'Y Err',tooltip:'Y Error',nullAllowed:true};
         return (
             <div style={{padding:'0 5px 7px'}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}
@@ -497,29 +486,8 @@ export class XYPlotOptions extends React.Component {
                         For X and Y, enter a column or an expression<br/>
                         ex. log(col); 100*col1/col2; col1-col2
                     </div>
-                    <div style={{whiteSpace: 'nowrap'}}>
-                        <SuggestBoxInputField
-                            inline={true}
-                            initialState= {{
-                                            value: get(xyPlotParams, 'x.columnOrExpr'),
-                                            tooltip: 'Column or expression for X axis',
-                                            label: 'X:',
-                                            nullAllowed : false
-                                        }}
-                            getSuggestions={getSuggestions}
-                            renderSuggestion={renderSuggestion}
-                            valueOnSuggestion={valueOnSuggestion}
-                            fieldKey='x.columnOrExpr'
-                            groupKey={groupKey}
-                            labelWidth={20}
-                        />
-                        <TextButton style={{display: 'inline-block', paddingLeft: 3, verticalAlign: 'bottom'}}
-                                    groupKey={groupKey}
-                                    text='Cols'
-                                    tip='Select X column'
-                                    onClick={() => showColSelectPopup(colValStats, onXColSelected,'Choose X','Set X',x)}
-                        />
-                    </div>
+                    <ColumnOrExpression {...xProps}/>
+                    <ColumnOrExpression {...xErrProps}/>
 
                     <FieldGroupCollapsible  header='X Label/Unit/Options'
                                             initialState= {{ value:'closed' }}
@@ -560,30 +528,8 @@ export class XYPlotOptions extends React.Component {
                     </FieldGroupCollapsible>
                     <br/>
 
-                    <div style={{whiteSpace: 'nowrap'}}>
-                        <SuggestBoxInputField
-                            inline={true}
-                            initialState= {{
-                                            value: get(xyPlotParams, 'y.columnOrExpr'),
-                                            tooltip: 'Column or expression for Y axis',
-                                            label: 'Y:',
-                                            nullAllowed : false
-                                        }}
-                            getSuggestions={getSuggestions}
-                            renderSuggestion={renderSuggestion}
-                            valueOnSuggestion={valueOnSuggestion}
-                            fieldKey='y.columnOrExpr'
-                            groupKey={groupKey}
-                            labelWidth={20}
-                        />
-
-                        <TextButton style={{display: 'inline-block', paddingLeft: 3, verticalAlign: 'bottom'}}
-                                    groupKey={groupKey}
-                                    text='Cols'
-                                    tip='Select Y column'
-                                    onClick={() => showColSelectPopup(colValStats,onYColSelected,'Choose Y','Set Y',y)}
-                        />
-                    </div>
+                    <ColumnOrExpression {...yProps}/>
+                    <ColumnOrExpression {...yErrProps}/>
 
                     <FieldGroupCollapsible  header='Y Label/Unit/Options'
                                             initialState= {{ value:'closed' }}
@@ -642,4 +588,68 @@ XYPlotOptions.propTypes = {
     onOptionsSelected: PropTypes.func,
     xyPlotParams: plotParamsShape,
     defaultParams: plotParamsShape
+};
+
+function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,labelWidth=30,tooltip,nullAllowed}) {
+
+    // the suggestions are indexes in the colValStats array - it makes it easier to render then with labels
+    const allSuggestions = colValStats.map((colVal,idx)=>{return idx;});
+
+    const getSuggestions = (val)=>{
+        const {token} = parseSuggestboxContent(val);
+        const matches = allSuggestions.filter( (idx)=>{return colValStats[idx].name.startsWith(token);} );
+        return matches.length ? matches : allSuggestions;
+    };
+
+    const renderSuggestion = (idx)=>{
+        const colVal = colValStats[idx];
+        return colVal.name + (colVal.unit && colVal.unit !== 'null' ? ', '+colVal.unit : ' ');
+    };
+
+    const valueOnSuggestion = (prevVal, idx)=>{
+        const {priorContent} = parseSuggestboxContent(prevVal);
+        return priorContent+colValStats[idx].name;
+    };
+
+    var val = get(params, fldPath);
+    const onColSelected = (colName) => {
+        val = colName;
+        dispatchValueChange({fieldKey: fldPath, groupKey, value: colName, valid: true});
+    };
+    return (
+        <div style={{whiteSpace: 'nowrap'}}>
+            <SuggestBoxInputField
+                inline={true}
+                initialState= {{
+                    value: get(params, fldPath),
+                    tooltip: `Column or expression for ${tooltip}`,
+                    label: `${label}:`,
+                    nullAllowed
+                }}
+                getSuggestions={getSuggestions}
+                renderSuggestion={renderSuggestion}
+                valueOnSuggestion={valueOnSuggestion}
+                fieldKey={fldPath}
+                groupKey={groupKey}
+                labelWidth={labelWidth}
+            />
+            <TextButton style={{display: 'inline-block', paddingLeft: 3, verticalAlign: 'bottom'}}
+                        groupKey={groupKey}
+                        text='Cols'
+                        tip={`Select ${label} column`}
+                        onClick={() => showColSelectPopup(colValStats, onColSelected,`Choose ${label}`,`Set ${label}`,val)}
+            />
+        </div>
+    );
+}
+
+ColumnOrExpression.propTypes = {
+    colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
+    params: plotParamsShape,
+    groupKey: PropTypes.string.isRequired,
+    fldPath: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    labelWidth: PropTypes.number,
+    tooltip: PropTypes.string,
+    nullAllowed: PropTypes.bool
 };
