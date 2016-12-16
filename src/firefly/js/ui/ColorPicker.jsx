@@ -11,9 +11,9 @@ import {SketchPicker} from 'react-color';
 
 
 
-export function showColorPickerDialog(color,callbackOnOKOnly, callbackOnBoth, cb ) {
+export function showColorPickerDialog(color, callbackOnOKOnly, callbackOnBoth, cb, Id = '' ) {
     const popup= (
-        <PopupPanel title={'Color Picker'} >
+        <PopupPanel title={'Color Picker'+ (Id ? ` - ${Id}`: '')} >
             <ColorPickerWrapper callback={cb} color={color} callbackOnOKOnly={callbackOnOKOnly} callbackOnBoth={callbackOnBoth}/>
         </PopupPanel>
     );
