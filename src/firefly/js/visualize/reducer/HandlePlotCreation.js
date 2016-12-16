@@ -147,22 +147,34 @@ function updateForWcsMatching(visRoot, pv, mpwWcsPrimId) {
     const plot= primePlot(pv);
     if (!plot || !wcsMatchType ) return pv;
 
-    if (mpwWcsPrimId!==pv.plotId) {
-        const offPt= findWCSMatchOffset(visRoot, mpwWcsPrimId, primePlot(pv));
-        const masterPv=getPlotViewById(visRoot,mpwWcsPrimId);
-        if (masterPv) {
-            pv= updatePlotViewScrollXY(pv, makeScreenPt(masterPv.scrollX-offPt.x, masterPv.scrollY-offPt.y), false);
+    if (wcsMatchType===WcsMatchType.Standard) {
+        if (mpwWcsPrimId!==pv.plotId) {
+            const offPt= findWCSMatchOffset(visRoot, mpwWcsPrimId, primePlot(pv));
+            const masterPv=getPlotViewById(visRoot,mpwWcsPrimId);
+            if (masterPv) {
+                pv= updatePlotViewScrollXY(pv, makeScreenPt(masterPv.scrollX-offPt.x, masterPv.scrollY-offPt.y), false);
+            }
         }
     }
-    else if (wcsMatchType===WcsMatchType.Target && getPlotViewIdListInGroup(visRoot,pv.plotId).length<2) {
-        const ft=  plot.attributes[PlotAttribute.FIXED_TARGET];
-        if (ft) {
-            const centerImagePt = CCUtil.getImageCoords(plot, ft);
-            pv= updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv, centerImagePt, false));
+    else if (wcsMatchType===WcsMatchType.Target) {
+        if (getPlotViewIdListInGroup(visRoot,pv.plotId,true,true).length<2) {
+            const ft=  plot.attributes[PlotAttribute.FIXED_TARGET];
+            if (ft) {
+                const centerImagePt = CCUtil.getImageCoords(plot, ft);
+                pv= updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv, centerImagePt, false));
+            }
+        }
+        else {
+            const offPt= findWCSMatchOffset(visRoot, mpwWcsPrimId, primePlot(pv));
+            const masterPv=getPlotViewById(visRoot,mpwWcsPrimId);
+            if (masterPv) {
+                pv= updatePlotViewScrollXY(pv, makeScreenPt(masterPv.scrollX-offPt.x, masterPv.scrollY-offPt.y), false);
+            }
         }
     }
     return pv;
 }
+
 
 function newOverlayPrep(state, action) {
     const {plotId, imageOverlayId, imageNumber, maskValue, maskNumber, color, title, drawingDef}= action.payload;

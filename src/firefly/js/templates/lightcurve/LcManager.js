@@ -10,7 +10,8 @@ import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT} fr
 import {getCellValue, getTblById, makeTblRequest} from '../../tables/TableUtil.js';
 import {updateSet} from '../../util/WebUtil.js';
 import {dispatchPlotImage, visRoot, dispatchDeletePlotView,
-        dispatchChangeActivePlotView} from '../../visualize/ImagePlotCntlr.js';
+        dispatchChangeActivePlotView,
+        WcsMatchType, dispatchWcsMatch} from '../../visualize/ImagePlotCntlr.js';
 import {getPlotViewById} from '../../visualize/PlotViewUtil.js';
 import {getMultiViewRoot, dispatchReplaceViewerItems, getViewer} from '../../visualize/MultiViewCntlr.js';
 import {WebPlotRequest,TitleOptions} from '../../visualize/WebPlotRequest.js';
@@ -20,6 +21,8 @@ import {ServerRequest} from '../../data/ServerRequest.js';
 import {CHANGE_VIEWER_LAYOUT} from '../../visualize/MultiViewCntlr.js';
 import {LcPFOptionsPanel, grpkey} from './LcPhaseFoldingPanel.jsx';
 import FieldGroupUtils, {revalidateFields} from '../../fieldGroup/FieldGroupUtils';
+import {makeWorldPt} from '../../visualize/Point.js';
+import {CoordinateSys} from '../../visualize/CoordSys.js';
 
 export const RAW_TABLE = 'raw_table';
 export const PHASE_FOLDED = 'phase_folded';
@@ -160,14 +163,7 @@ function getWebPlotRequest(tableModel, hlrow) {
     sr.setParam('in_dec',`${dec}`);
 
     const reqParams = WebPlotRequest.makeProcessorRequest(sr, 'wise');
-    reqParams.setTitle('WISE-'+ frameId);
-    reqParams.setGroupLocked(true);
-    reqParams.setPlotGroupId('LightCurveGroup');
-    reqParams.setPreferenceColorKey('light-curve-color-pref');
-    return reqParams;
-
-
-
+    return addCommonReqParams(reqParams, title, makeWorldPt(ra,dec,CoordinateSys.EQ_J2000));
 }
 
 function getWebPlotRequestViaUrl(tableModel, hlrow, cutoutSize) {
@@ -191,15 +187,19 @@ function getWebPlotRequestViaUrl(tableModel, hlrow, cutoutSize) {
     const url = `${serverinfo}${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w1-int-1b.fits${centerandsize}`;
     const plot_desc = `WISE-${frameId}`;
     const reqParams = WebPlotRequest.makeURLPlotRequest(url, plot_desc);
-    reqParams.setTitle('WISE-'+ frameId + (cutoutSize ? ` size: ${cutoutSize}(deg)` : ''));
-    reqParams.setTitleOptions(TitleOptions.NONE);
-    reqParams.setGroupLocked(true);
-    reqParams.setPlotGroupId('LightCurveGroup');
-    reqParams.setPreferenceColorKey('light-curve-color-pref');
-    return reqParams;
+    const title= 'WISE-'+ frameId + (cutoutSize ? ` size: ${cutoutSize}(deg)` : '');
+    return addCommonReqParams(reqParams, title, makeWorldPt(ra,dec,CoordinateSys.EQ_J2000));
+}
 
-
-
+function addCommonReqParams(inWpr,title,wp) {
+    const retWpr= inWpr.makeCopy();
+    retWpr.setTitle(title);
+    retWpr.setTitleOptions(TitleOptions.NONE);
+    retWpr.setGroupLocked(true);
+    retWpr.setPlotGroupId('LightCurveGroup');
+    retWpr.setPreferenceColorKey('light-curve-color-pref');
+    retWpr.setOverlayPosition(wp);
+    return retWpr;
 }
 
 export function setupImages(tbl_id) {
@@ -227,7 +227,14 @@ export function setupImages(tbl_id) {
 
 
         dispatchReplaceViewerItems(IMG_VIEWER_ID, newPlotIdAry);
-        dispatchChangeActivePlotView(plotIdRoot+tableModel.highlightedRow);
+        const newActivePlotId= plotIdRoot+tableModel.highlightedRow;
+        dispatchChangeActivePlotView(newActivePlotId);
+
+
+        vr= visRoot();
+        if (!vr.wcsMatchType) {
+            dispatchWcsMatch({matchType:WcsMatchType.Target, plotId:newActivePlotId});
+        }
 
         vr= visRoot();
 

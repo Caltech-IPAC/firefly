@@ -61,17 +61,6 @@ var Point = {  SPT, IM_PT, IM_WS_PT, VP_PT, PROJ_PT, W_PT, OFFSET_PT};
  * @global
  */
 
-var ptTypes= Object.values(Point);
-
-//var makePt = function (x, y) {
-//    var retval= {};
-//    retval.getX = function () { return x; };
-//    retval.getY = function () { return y; };
-//    retval.toString= function() {
-//        return x+";"+y;
-//    };
-//    return retval;
-//};
 
 
 export class SimplePt {
@@ -192,8 +181,8 @@ function stringAryToWorldPt(wpParts) {
 
 /**
  * @summary A point on the sky with a coordinate system
- * @param {number} lon - longitude in degrees
- * @param {number} lat - latitude in degrees
+ * @param {number|string} lon - longitude in degrees, strings are converted to numbers
+ * @param {number|string} lat - latitude in degrees, strings are converted to numbers
  * @param {CoordinateSys} coordSys - The coordinate system of this worldPt
  *
  * @param {String} [objName] -  object name used to create this worldPt
@@ -206,16 +195,14 @@ function stringAryToWorldPt(wpParts) {
  * @global
  */
 export const makeWorldPt= function (lon,lat,coordSys,objName,resolver) {
-    if (typeof lon === 'string') lon= Number(lon);
-    if (typeof lat === 'string') lat= Number(lat);
-    return new WorldPt(lon,lat,coordSys,objName,resolver) ;
+    return new WorldPt(Number(lon),Number(lat),coordSys,objName,resolver) ;
 };
 
 
 /**
  * @summary A point in the image file
- * @param {number} x - the x
- * @param {number} y - the y
+ * @param {number|string} x - the x, string is converted to number
+ * @param {number|string} y - the y, string is converted to number
  *
  * @return {ImagePt}
  *
@@ -224,31 +211,25 @@ export const makeWorldPt= function (lon,lat,coordSys,objName,resolver) {
  * @public
  * @global
  */
-export const makeImagePt= function(x,y) {
-    if (typeof x === 'string') x= Number(x);
-    if (typeof y === 'string') y= Number(y);
-    return Object.assign(new SimplePt(x,y), {type:IM_PT});
-};
+export const makeImagePt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:IM_PT});
+
 
 /**
  *
- * @param x
- * @param y
+ * @param {number|string} x - the x, string is converted to number
+ * @param {number|string} y - the y, string is converted to number
  * @memberof firefly.util.image
  * @return {Pt}
  */
-export const makeImageWorkSpacePt= function(x,y) {
-    if (typeof x === 'string') x= Number(x);
-    if (typeof y === 'string') y= Number(y);
-    return Object.assign(new SimplePt(x,y), {type:IM_WS_PT});
-};
+export const makeImageWorkSpacePt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:IM_WS_PT});
+
 
 
 
 /**
  * @summary A point of the display image
- * @param {number} x - the x
- * @param {number} y - the y
+ * @param {number|string} x - the x, string is converted to number
+ * @param {number|string} y - the y, string is converted to number
  *
  * @return {ScreenPt}
  *
@@ -257,27 +238,31 @@ export const makeImageWorkSpacePt= function(x,y) {
  * @public
  * @global
  */
-export const makeScreenPt= function(x,y) {
-    if (typeof x === 'string') x= Number(x);
-    if (typeof y === 'string') y= Number(y);
-    return Object.assign(new SimplePt(x,y), {type:SPT});
-};
-export const makeViewPortPt= function(x,y) {
-    if (typeof x === 'string') x= Number(x);
-    if (typeof y === 'string') y= Number(y);
-    return Object.assign(new SimplePt(x,y), {type:VP_PT});
-};
-export const makeProjectionPt= function(x,y) {
-    if (typeof x === 'string') x= Number(x);
-    if (typeof y === 'string') y= Number(y);
-    return Object.assign(new SimplePt(x,y), {type:PROJ_PT});
-};
-export const makeOffsetPt= function(x,y) {
-    if (typeof x === 'string') x= Number(x);
-    if (typeof y === 'string') y= Number(y);
-    return Object.assign(new SimplePt(x,y), {type:OFFSET_PT});
-};
+export const makeScreenPt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:SPT});
 
+export const makeViewPortPt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:VP_PT});
+
+export const makeProjectionPt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:PROJ_PT});
+
+export const makeOffsetPt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:OFFSET_PT});
+
+
+/**
+ * @summary Test if two points are equals.  They must be the same coordinate system and have the same values to be
+ * equal. Two points that are null or undefined are also considered equal.
+ * If both points are WorldPt and are equal in values and coordindate system but have a
+ * different resolver and object names, * they are still considered equal.
+ *
+ * @param {Point} p1 - the first point
+ * @param {Point} p2 - the second point
+ *
+ * @return  true if equals
+ *
+ * @function pointEquals
+ * @memberof firefly.util.image
+ * @public
+ * @global
+ */
 export const pointEquals= function(p1,p2)  {
     if (isNil(p1) && isNil(p2)) return true;
     else if (isNil(p1) || isNil(p2)) return false;
@@ -326,6 +311,8 @@ export const parseWorldPt = function (serializedWP) {
     }
     return stringAryToWorldPt(sAry);
 };
+
+const ptTypes= Object.values(Point);
 
 export const isValidPoint= (testPt) =>  (testPt && testPt.type && ptTypes.includes(testPt.type));
 

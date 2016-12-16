@@ -30,16 +30,20 @@ export function wcsMatchActionCreator(action) {
 
         var group= findPlotGroup(masterPv.plotGroupId, visRoot.plotGroupAry);
 
-        if (!matchType || matchType.Off || !width  || !height) {
+
+        if (!matchType || !width  || !height) {
             dispatcher({
                 type: ImagePlotCntlr.WCS_MATCH,
-                payload: {wcsMatchCenterWP:null,wcsMatchType:false,mpwWcsPrimId:null}
+                payload: {wcsMatchCenterWP:null,wcsMatchType:matchType,mpwWcsPrimId:plotId}
             });
             applyToOnePvOrGroup(visRoot.plotViewAry, masterPv.plotId, group,
                 (pv) => dispatchUpdateViewSize(pv.plotId));
             return;
         }
+
         const wcsMatchCenterWP= findWcsMatchPoint(masterPv, plotId, matchType);
+
+
 
         dispatcher({
             type: ImagePlotCntlr.WCS_MATCH,
@@ -174,6 +178,7 @@ function isRotationMatching(p1, p2) {
  */
 function findWcsMatchPoint(pv, plotId, matchType) {
     const p= primePlot(pv);
+    if (!p) return null;
     switch (matchType) {
         case WcsMatchType.Standard:
             return CCUtil.getWorldCoords(p, makeScreenPt(p.screenSize.width/2,p.screenSize.height/2));
