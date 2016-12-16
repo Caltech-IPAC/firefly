@@ -33,9 +33,9 @@ export class SimpleCanvas extends React.Component {
     }
 
     render() {
-        var {drawIt, width, height}= this.props;
+        var {drawIt, width, height, backgroundColor}= this.props;
         return (
-            <canvas width={width+''} height={height+''} ref={(c) => this.setUpCanvas(c)}/>
+            <canvas width={width+''} height={height+''} style={{backgroundColor}} ref={(c) => this.setUpCanvas(c)}/>
         );
     }
 }
@@ -43,7 +43,8 @@ export class SimpleCanvas extends React.Component {
 SimpleCanvas.propTypes= {
     drawIt : React.PropTypes.func.isRequired,
     width : React.PropTypes.number.isRequired,
-    height : React.PropTypes.number.isRequired
+    height : React.PropTypes.number.isRequired,
+    backgroundColor: React.PropTypes.string
 };
 
 

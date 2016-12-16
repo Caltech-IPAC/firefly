@@ -90,7 +90,7 @@ export class InputFieldView extends Component {
     render() {
         var {hasFocus}= this.state;
         var {visible,label,tooltip,labelWidth,value,style,wrapperStyle,labelStyle,
-             valid,size,onChange, onBlur, onKeyPress, showWarning, message, type, placeholder}= this.props;
+             valid,size,onChange, onBlur, onKeyPress, onKeyDown, onKeyUp, showWarning, message, type, placeholder}= this.props;
         if (!visible) return null;
         wrapperStyle = Object.assign({whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'}, wrapperStyle);
         return (
@@ -105,6 +105,8 @@ export class InputFieldView extends Component {
                                 this.setState({hasFocus:false, infoPopup:false});
                             }}
                        onKeyPress={(ev) => onKeyPress && onKeyPress(ev)}
+                       onKeyDown={(ev) => onKeyDown && onKeyDown(ev)}
+                       onKeyUp={(ev) => onKeyUp && onKeyUp(ev)}
                        value={type==='file' ? undefined : value}
                        title={ (!showWarning && !valid) ? message : tooltip}
                        size={size}
@@ -133,6 +135,8 @@ InputFieldView.propTypes= {
     onChange : PropTypes.func.isRequired,
     onBlur : PropTypes.func,
     onKeyPress : PropTypes.func,
+    onKeyDown: PropTypes.func,
+    onKeyUp: PropTypes.func,
     showWarning : PropTypes.bool,
     type: PropTypes.string,
     placeholder: PropTypes.string
