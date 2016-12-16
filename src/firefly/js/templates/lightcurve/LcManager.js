@@ -209,6 +209,7 @@ export function setupImages(tbl_id) {
         const tableModel = getTblById(tbl_id);
         if (!tableModel || isNil(tableModel.highlightedRow)) return;
         var vr= visRoot();
+        const hasPlots= vr.plotViewAry.length>0;
         const newPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,count);
         const maxPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,MAX_IMAGE_CNT);
 
@@ -232,7 +233,7 @@ export function setupImages(tbl_id) {
 
 
         vr= visRoot();
-        if (!vr.wcsMatchType) {
+        if (!vr.wcsMatchType && !hasPlots) {
             dispatchWcsMatch({matchType:WcsMatchType.Target, plotId:newActivePlotId});
         }
 
