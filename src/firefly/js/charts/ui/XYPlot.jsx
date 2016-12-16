@@ -243,18 +243,21 @@ const calculateChartSize = function(widthPx, heightPx, props) {
     return {chartWidth, chartHeight};
 };
 
-const formatError = function(val, low, high) {
-    if (Number.isFinite(low) && Number.isFinite(high) && Number.isFinite(val)) {
-        const lowErr = Math.abs(val - low);
-        const highErr = Math.abs(high - val);
-        const fmtLow = getFormatString(lowErr, 4);
-        const symmetricError = Math.abs(highErr-lowErr) < Math.abs(Math.min(lowErr, highErr))/1000;
+const formatError = function(val, err, errLow, errHigh) {
+    if (Number.isFinite(err) || (Number.isFinite(errLow) && Number.isFinite(errHigh))) {
+        const symmetricError = Number.isFinite(err);
+        const lowErr = symmetricError ? err : errLow;
+        const highErr = symmetricError ? err : errHigh;
+        // we might want to use format for expressions in future - still hard to tell how many places to save
+        //const fmtLow = getFormatString(lowErr, 4);
         if (symmetricError) {
-            return ' \u00B1 '+numeral(lowErr).format(fmtLow); //Unicode U+00B1 is plusmn
+            //return ' \u00B1 '+numeral(lowErr).format(fmtLow); //Unicode U+00B1 is plusmn
+            return ' \u00B1 '+lowErr; //Unicode U+00B1 is plusmn
         } else {
-            const fmtHigh = getFormatString(highErr, 4);
+            //const fmtHigh = getFormatString(highErr, 4);
+            //return `\u002B${numeral(highErr).format(fmtHigh)} / \u2212${numeral(lowErr).format(fmtLow)}`;
             // asymmetric errors format: 8 +4/-2
-            return `\u002B${numeral(highErr).format(fmtHigh)} / \u2212${numeral(lowErr).format(fmtLow)}`;
+            return `\u002B${highErr} / \u2212${lowErr}`;
         }
     } else {
         return '';
@@ -745,9 +748,9 @@ export class XYPlot extends React.Component {
                 formatter() {
                     const weight = this.point.weight ? `represents ${this.point.weight} points <br/>` : '';
                     const xval = xFormat ? numeral(this.point.x).format(xFormat) : this.point.x;
-                    const xerr = formatError(this.point.x, this.point.left, this.point.right);
+                    const xerr = formatError(this.point.x, this.point.xErr, this.point.xErrLow, this.point.xErrHigh);
                     const yval = yFormat ? numeral(this.point.y).format(yFormat) : this.point.y;
-                    const yerr = formatError(this.point.y, this.point.low, this.point.high);
+                    const yerr = formatError(this.point.y, this.point.yErr, this.point.yErrLow, this.point.yErrHigh);
                     return '<span> ' + `${params.x.label} = ${xval} ${xerr} ${params.x.unit} <br/>` +
                         `${params.y.label} = ${yval} ${yerr} ${params.y.unit} <br/> ` +
                         `${weight}</span>`;

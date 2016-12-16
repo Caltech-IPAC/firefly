@@ -29,23 +29,21 @@ export const getHighlighted = function(xyPlotParams, tblId) {
     const tableModel = getTblById(tblId);
     if (tableModel && xyPlotParams) {
         const rowIdx = tableModel.highlightedRow;
-        const xIn = xyPlotParams.x.columnOrExpr;
-        const yIn = xyPlotParams.y.columnOrExpr;
-        const xErr= xyPlotParams.x.error;
-        const yErr= xyPlotParams.y.error;
-
-        const x = getColOrExprValue(tableModel, rowIdx, xIn);
-        const y = getColOrExprValue(tableModel, rowIdx, yIn);
-        const highlighted = {x, y, rowIdx};
-        if (xErr) {
-            highlighted['left'] = getColOrExprValue(tableModel, rowIdx, `${xIn}-${xErr}`);
-            highlighted['right'] = getColOrExprValue(tableModel, rowIdx, `${xIn}+${xErr}`);
-        }
-        if (yErr) {
-            highlighted['low'] = getColOrExprValue(tableModel, rowIdx, `${yIn}-${yErr}`);
-            highlighted['high'] = getColOrExprValue(tableModel, rowIdx, `${yIn}+${yErr}`);
-
-        }
+        const highlighted = {rowIdx};
+        [
+            {n:'x',v:xyPlotParams.x.columnOrExpr},
+            {n:'y',v:xyPlotParams.y.columnOrExpr},
+            {n:'xErr', v:xyPlotParams.x.error},
+            {n:'xErrLow', v:xyPlotParams.x.errorLow},
+            {n:'xErrHigh', v:xyPlotParams.x.errorHigh},
+            {n:'yErr', v:xyPlotParams.y.error},
+            {n:'yErrLow', v:xyPlotParams.y.errorLow},
+            {n:'yErrHigh', v:xyPlotParams.y.errorHigh}
+        ].map((entry) => {
+            if (entry.v) {
+                highlighted[entry.n] = getColOrExprValue(tableModel, rowIdx, entry.v);
+            }
+        });
         return highlighted;
     }
 };

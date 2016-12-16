@@ -208,12 +208,19 @@ function serverParamsChanged(oldParams, newParams) {
     });
 }
 
+function errorsRequested(xyPlotParams) {
+    return xyPlotParams &&
+        (xyPlotParams.x.error || xyPlotParams.y.error ||
+        xyPlotParams.x.errorLow || xyPlotParams.y.errorLow ||
+        xyPlotParams.x.errorHigh || xyPlotParams.y.errorHigh);
+}
+
 function getServerCallParameters(xyPlotParams) {
     if (!xyPlotParams) { return []; }
 
-    // error plot
-    if (xyPlotParams.x.error || xyPlotParams.y.error) {
-        return [xyPlotParams.x.columnOrExpr, xyPlotParams.x.error, xyPlotParams.y.columnOrExpr, xyPlotParams.y.error];
+    if (errorsRequested(xyPlotParams)) {
+        return [xyPlotParams.x.columnOrExpr, xyPlotParams.x.error, xyPlotParams.x.errorLow, xyPlotParams.x.errorHigh,
+            xyPlotParams.y.columnOrExpr, xyPlotParams.y.error];
     }
 
     if (xyPlotParams.zoom) {
@@ -311,7 +318,7 @@ function fetchPlotData(dispatch, chartId, chartDataElementId) {
     const {tblId, options:xyPlotParams} = chartDataElement;
     if (!tblId || !isFullyLoaded(tblId)) {return; }
 
-    if (get(xyPlotParams, 'x.error') || get(xyPlotParams, 'y.error')) {
+    if (errorsRequested(xyPlotParams)) {
         fetchXYWithErrors(dispatch, chartId, chartDataElementId);
     } else {
         fetchXYNoErrors(dispatch, chartId, chartDataElementId);
@@ -433,10 +440,12 @@ function fetchXYWithErrors(dispatch, chartId, chartDataElementId) {
         dispatchError(dispatch, chartId, chartDataElementId, 'Unknown X/Y column or expression');
     }
 
-    req.xErrLowColOrExpr = get(xyPlotParams, 'x.error');
-    req.xErrHighColOrExpr = get(xyPlotParams, 'x.error');
-    req.yErrLowColOrExpr = get(xyPlotParams, 'y.error');
-    req.yErrHighColOrExpr = get(xyPlotParams, 'y.error');
+    req.xErrColOrExpr = get(xyPlotParams, 'x.error');
+    req.xErrLowColOrExpr = get(xyPlotParams, 'x.errorLow');
+    req.xErrHighColOrExpr = get(xyPlotParams, 'x.errorHigh');
+    req.yErrColOrExpr = get(xyPlotParams, 'y.error');
+    req.yErrLowColOrExpr = get(xyPlotParams, 'y.errorLow');
+    req.yErrHighColOrExpr = get(xyPlotParams, 'y.errorHigh');
     req.startIdx = 0;
     req.pageSize = 1000000;
 
@@ -452,34 +461,63 @@ function fetchXYWithErrors(dispatch, chartId, chartDataElementId) {
 
         if (tableModel.tableData && tableModel.tableData.data) {
             const {tableMeta} = tableModel;
+            xyPlotData = {rows: [], idStr: tableMeta['tbl_id']};
 
-            const colNames = tableModel.tableData.columns.map((col) => col.name);
-            colNames[1] = 'x';
-            colNames[2] = 'y';
+            if (tableModel.tableData.data.length>0) {
 
-            // make sure all fields are numeric and change row data from [ [val] ] to [ {cname:val} ]
-            const rows = tableModel.tableData.data.map((row) => {
-                return colNames.reduce( (nrow, name, cidx) => {
-                    nrow[name] = parseFloat(row[cidx]);
-                    return nrow;
-                }, {});
-            });
+                // create an array of column names that we recognize
+                const validCols = ['rowIdx', 'x', 'y', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh'];
+                const colNames = tableModel.tableData.columns.map((col) => {
+                    const name = col.name;
+                    if (validCols.includes(name)) {
+                        return name;
+                    } else {
+                        const cIdx = validCols.findIndex((attr) => (tableMeta[attr]===name));
 
-            xyPlotData = omitBy({
-                rows,
-                xMin: tableMeta['X-MIN'],
-                xMax: tableMeta['X-MAX'],
-                yMin: tableMeta['Y-MIN'],
-                yMax: tableMeta['Y-MAX'],
-                idStr: tableMeta['tbl_id']
-            }, isUndefined);
+                        if (cIdx < 0) {
+                            throw Error('Unrecognized column name '+name);
+                        }
+                        const cname = validCols[cIdx];
+                        validCols.splice(cIdx,1); // delete processed name
+                        return cname;
+                    }
+                });
 
-            // convert strings with numbers into numbers
-            Object.keys(xyPlotData).forEach( (prop) => {
-                const val = xyPlotData[prop];
-                if (isString(val) && isFinite(val)) { xyPlotData[prop] = Number(val); }
-            });
-
+                // make sure all fields are numeric and change row data from [ [val] ] to [ {cname:val} ]
+                let xMin = Number.MAX_VALUE;
+                let xMax = Number.MIN_VALUE;
+                let yMin = Number.MAX_VALUE;
+                let yMax = Number.MIN_VALUE;
+                const rows = tableModel.tableData.data.map((row) => {
+                    const nrow =  colNames.reduce( (nrow, name, cidx) => {
+                        nrow[name] = parseFloat(row[cidx]);
+                        return nrow;
+                    }, {});
+                    const {x, y} = nrow;
+                    const x_errLow  = isUndefined(nrow['xErr']) ? nrow['xErrLow'] : nrow['xErr'];
+                    const x_errHigh  = isUndefined(nrow['xErr']) ? nrow['xErrHigh'] : nrow['xErr'];
+                    const y_errLow  = isUndefined(nrow['yErr']) ? nrow['yErrLow'] : nrow['yErr'];
+                    const y_errHigh  = isUndefined(nrow['yErr']) ? nrow['yErrHigh'] : nrow['yErr'];
+                    const left = Number.isFinite(x_errLow) ? x-x_errLow : Number.NaN;
+                    const right = Number.isFinite(x_errHigh) ? x+x_errHigh : Number.NaN;
+                    const low = Number.isFinite(y_errLow) ? y-y_errLow : Number.NaN;
+                    const high = Number.isFinite(y_errHigh) ? y+y_errHigh : Number.NaN;
+                    if (Number.isFinite(left)) {
+                        if (left < xMin) {xMin = left; }
+                    } else if (x < xMin) {xMin = x; }
+                    if (Number.isFinite(right)) {
+                        if (right > xMax) { xMax = right; }
+                    } else if (x > xMax) {xMax = x; }
+                    if (Number.isFinite(low)) {
+                        if (low < yMin) { yMin = low; }
+                    } else if (y < yMin) { yMin = x; }
+                    if (Number.isFinite(high)) {
+                        if (high > yMax) { yMax = high; }
+                    } else if (y > yMax) { yMax = y; }
+                    return Object.assign(nrow, {left, right, low, high});
+                });
+                Object.assign(xyPlotData, {rows, xMin, xMax, yMin, yMax});
+            }
         }
 
         dispatch(chartDataUpdate(
@@ -519,7 +557,6 @@ function dispatchError(dispatch, chartId, chartDataElementId, reason) {
 function getUpdatedParams(xyPlotParams, tblId, data) {
     const tableModel = getTblById(tblId);
     let newParams = xyPlotParams;
-    const dataBoundaries = getDataBoundaries(data);
 
     if (!get(xyPlotParams, 'x.label')) {
         newParams = updateSet(newParams, 'x.label', get(xyPlotParams, 'x.columnOrExpr'));
@@ -543,6 +580,7 @@ function getUpdatedParams(xyPlotParams, tblId, data) {
 
     // set plot boundaries,
     // if user set boundaries are undefined, use data boundaries
+    const dataBoundaries = getDataBoundaries(data);
     const userSetBoundaries = get(xyPlotParams, 'userSetBoundaries', {});
     const boundaries = Object.assign({}, userSetBoundaries);
     if (Object.keys(boundaries).length < 4 && !isEmpty(dataBoundaries)) {
@@ -554,9 +592,9 @@ function getUpdatedParams(xyPlotParams, tblId, data) {
         if (!isEmpty(newBoundaries)) {
             newParams = updateSet(newParams, 'boundaries', newBoundaries);
         }
+    } else if (!isEmpty(boundaries)) {
+        newParams = updateSet(newParams, 'boundaries', boundaries);
     }
 
     return newParams;
 }
-
-

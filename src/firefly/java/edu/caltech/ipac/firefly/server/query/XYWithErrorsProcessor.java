@@ -20,9 +20,11 @@ import java.util.ArrayList;
 public class XYWithErrorsProcessor extends IpacTablePartProcessor {
     private static final String SEARCH_REQUEST = "searchRequest";
     private static final String X_COL_EXPR = "xColOrExpr";
-    private static final String Y_COL_EXPR = "yColOrExpr"    ;
+    private static final String Y_COL_EXPR = "yColOrExpr";
+    private static final String XERR_COL_EXPR = "xErrColOrExpr";
     private static final String XERR_LOW_COL_EXPR = "xErrLowColOrExpr";
     private static final String XERR_HIGH_COL_EXPR = "xErrHighColOrExpr";
+    private static final String YERR_COL_EXPR = "yErrColOrExpr";
     private static final String YERR_LOW_COL_EXPR = "yErrLowColOrExpr";
     private static final String YERR_HIGH_COL_EXPR = "yErrHighColOrExpr";
 
@@ -34,58 +36,56 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
         DataGroup dg = SearchRequestUtils.dataGroupFromSearchRequest(searchRequestJson);
         String xColOrExpr = request.getParam(X_COL_EXPR);
         String yColOrExpr = request.getParam(Y_COL_EXPR);
+        String xErrColOrExpr = request.getParam(XERR_COL_EXPR);
         String xErrLowColOrExpr = request.getParam(XERR_LOW_COL_EXPR);
         String xErrHighColOrExpr = request.getParam(XERR_HIGH_COL_EXPR);
+        String yErrColOrExpr = request.getParam(YERR_COL_EXPR);
         String yErrLowColOrExpr = request.getParam(YERR_LOW_COL_EXPR);
         String yErrHighColOrExpr = request.getParam(YERR_HIGH_COL_EXPR);
 
+        boolean hasXError = !StringUtils.isEmpty(xErrColOrExpr);
         boolean hasXLowError = !StringUtils.isEmpty(xErrLowColOrExpr);
         boolean hasXHighError = !StringUtils.isEmpty(xErrHighColOrExpr) ;
+        boolean hasYError = !StringUtils.isEmpty(yErrColOrExpr);
         boolean hasYLowError = !StringUtils.isEmpty(yErrLowColOrExpr);
         boolean hasYHighError = !StringUtils.isEmpty(yErrHighColOrExpr);
-        if ((hasXLowError || hasXHighError || hasYLowError || hasYHighError) && dg.size()>=QueryUtil.DECI_ENABLE_SIZE) {
+        if ((hasXError || hasXLowError || hasXHighError || hasYError || hasYLowError || hasYHighError) && dg.size()>=QueryUtil.DECI_ENABLE_SIZE) {
             throw new DataAccessException("Errors for more than "+QueryUtil.DECI_ENABLE_SIZE+" are not supported");
         }
 
         // the output table columns: rowIdx, x, y, [[left, right], [low, high]]
         DataType[] dataTypes = dg.getDataDefinitions();
-        Col xCol = getCol(dataTypes, xColOrExpr,"x", false);
-        Col yCol = getCol(dataTypes, yColOrExpr, "y", false);
-        Col xLowCol = NO_COL;
-        Col xHighCol = NO_COL;
-        Col yLowCol = NO_COL;
-        Col yHighCol = NO_COL;
-        if (hasXLowError || hasXHighError) {
-            String xLowColOrExpr = hasXLowError ? xColOrExpr+"-"+xErrLowColOrExpr : xColOrExpr;
-            xLowCol = getCol(dataTypes, xLowColOrExpr, "left", true);
-            String xHighColOrExpr = hasXHighError ? xColOrExpr+"+"+xErrHighColOrExpr : xColOrExpr;
-            xHighCol = getCol(dataTypes, xHighColOrExpr, "right", true);
-        }
-        if (hasYLowError || hasYHighError) {
-            String yLowColOrExpr = hasYLowError ? yColOrExpr+"-"+yErrLowColOrExpr : yColOrExpr;
-            yLowCol = getCol(dataTypes, yLowColOrExpr, "low", true);
-            String yHighColOrExpr = hasYHighError ? yColOrExpr+"+"+yErrHighColOrExpr : yColOrExpr;
-            yHighCol = getCol(dataTypes, yHighColOrExpr, "high", true);
-        }
 
         // create the array of getters, which know how to get double values
         ArrayList<Col> colsLst = new ArrayList<>();
-        colsLst.add(xCol);
-        colsLst.add(yCol);
-        if (hasXLowError || hasXHighError) {
-            colsLst.add(xLowCol);
-            colsLst.add(xHighCol);
+        colsLst.add(getCol(dataTypes, xColOrExpr,"x", false));
+        colsLst.add(getCol(dataTypes, yColOrExpr, "y", false));
+
+        if (hasXError) {
+            colsLst.add(getCol(dataTypes, xErrColOrExpr, "xErr", true));
         }
-        if (hasYLowError || hasYHighError) {
-            colsLst.add(yLowCol);
-            colsLst.add(yHighCol);
+        if (hasXLowError) {
+            colsLst.add(getCol(dataTypes, xErrLowColOrExpr, "xErrLow", true));
         }
+        if (hasXHighError) {
+            colsLst.add(getCol(dataTypes, xErrHighColOrExpr, "xErrHigh", true));
+        }
+        if (hasYError) {
+            colsLst.add(getCol(dataTypes, yErrColOrExpr, "yErr", true));
+        }
+        if (hasYLowError) {
+            colsLst.add(getCol(dataTypes, yErrLowColOrExpr, "yErrLow", true));
+        }
+        if (hasYHighError) {
+            colsLst.add(getCol(dataTypes, yErrHighColOrExpr, "yErrHigh", true));
+        }
+
         Col[] cols = colsLst.toArray(new Col[colsLst.size()]);
 
         // create the array of output columns
         ArrayList<DataType> columnList = new ArrayList<>();
-        ArrayList<DataGroup.Attribute> colMeta = new ArrayList<>();
         columnList.add(new DataType("rowIdx", Integer.class));
+        ArrayList<DataGroup.Attribute> colMeta = new ArrayList<>();
         for (Col col : cols) {
             if (col.getter.isExpression()) {
                 columnList.add(new DataType(col.colname, col.colname, Double.class, DataType.Importance.HIGH, "", false));
@@ -98,7 +98,6 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
 
         // create the return data group
         DataGroup retval = new DataGroup("XY with Errors", columns);
-        retval.setAttributes(colMeta);
 
         DataObject retrow;
         int ncols = cols.length;
@@ -125,7 +124,6 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
                     } else {
                         retrow.setFormattedData(dt, formatted);
                     }
-                    col.updateMinMax(val);
                 }
             }
             if (retrow != null) {
@@ -134,17 +132,10 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
             }
         }
 
-        if (retval.size() > 0) {
-            double xMin = Math.min(xCol.minVal, xLowCol.minVal);
-            retval.addAttribute("X-MIN", String.valueOf(xMin));
-            double xMax = Math.max(xCol.maxVal, xHighCol.maxVal);
-            retval.addAttribute("X-MAX", String.valueOf(xMax));
-
-            double yMin = Math.min(yCol.minVal, yLowCol.minVal);
-            retval.addAttribute("Y-MIN", String.valueOf(yMin));
-            double yMax = Math.max(yCol.maxVal, yHighCol.maxVal);
-            retval.addAttribute("Y-MAX", String.valueOf(yMax));
+        for (Col c : cols) {
+            colMeta.add(new DataGroup.Attribute(c.exprColName, c.colOrExpr));
         }
+        retval.setAttributes(colMeta);
 
         retval.shrinkToFitData();
         File outFile = createFile(request);
@@ -164,15 +155,17 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
     private static class Col {
         DataObjectUtil.DoubleValueGetter getter;
         String colname;
+        String exprColName;
+        String colOrExpr;
         boolean canBeNaN;
-        double minVal = Double.MAX_VALUE;
-        double maxVal = Double.MIN_VALUE;
 
         Col() {
             this.canBeNaN = true;
         }
 
         Col(DataType[] dataTypes, String colOrExpr, String exprColName, boolean canBeNaN) {
+            this.colOrExpr = colOrExpr;
+            this.exprColName = exprColName;
             this.getter = new DataObjectUtil.DoubleValueGetter(dataTypes, colOrExpr);
             if (getter.isExpression()) {
                 this.colname = exprColName;
@@ -180,12 +173,6 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
                 this.colname = colOrExpr;
             }
             this.canBeNaN = canBeNaN;
-        }
-
-
-        public void updateMinMax(double val) {
-            if (val > maxVal) { maxVal = val; }
-            if (val < minVal) { minVal = val; }
         }
     }
 }
