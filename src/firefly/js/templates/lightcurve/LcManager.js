@@ -24,13 +24,26 @@ import FieldGroupUtils, {revalidateFields} from '../../fieldGroup/FieldGroupUtil
 import {makeWorldPt} from '../../visualize/Point.js';
 import {CoordinateSys} from '../../visualize/CoordSys.js';
 
-export const RAW_TABLE = 'raw_table';
-export const PHASE_FOLDED = 'phase_folded';
-export const PERIODOGRAM = 'periodogram';
-export const PEAK_TABLE = 'peak_table';
-export const IMG_VIEWER_ID = 'lc_image_viewer';
-export const DEF_IMAGE_CNT= 5;
-export const MAX_IMAGE_CNT= 7;
+export const LC = {
+    RAW_TABLE: 'raw_table',
+    PHASE_FOLDED: 'phase_folded',
+    PERIODOGRAM: 'periodogram',
+    PEAK_TABLE: 'peak_table',
+    PERIOD_CNAME: 'Period',
+    POWER_CNAME: 'Power',
+    PEAK_CNAME: 'Peak',
+    PHASE_CNAME: 'phase',
+
+    IMG_VIEWER_ID: 'lc_image_viewer',
+    MAX_IMAGE_CNT: 7,
+    DEF_IMAGE_CNT: 5,
+
+    META_TIME_CNAME: 'timeCName',
+    META_FLUX_CNAME: 'fluxCName',
+    DEF_TIME_CNAME: 'mjd',
+    DEF_FLUX_CNAME: 'w1mpro_ep',
+};
+
 const plotIdRoot= 'LC_FRAME-';
 
 
@@ -127,7 +140,7 @@ function handleTableHighlight(layoutInfo, action) {
 }
 
 function isImageEnabledTable(tbl_id) {
-    return [PHASE_FOLDED, RAW_TABLE].includes(tbl_id);
+    return [LC.PHASE_FOLDED, LC.RAW_TABLE].includes(tbl_id);
 }
 
 function handleChangeMultiViewLayout(layoutInfo, action) {
@@ -163,7 +176,7 @@ function getWebPlotRequest(tableModel, hlrow) {
     sr.setParam('in_dec',`${dec}`);
 
     const reqParams = WebPlotRequest.makeProcessorRequest(sr, 'wise');
-    return addCommonReqParams(reqParams, title, makeWorldPt(ra,dec,CoordinateSys.EQ_J2000));
+    return addCommonReqParams(reqParams, frameId, makeWorldPt(ra,dec,CoordinateSys.EQ_J2000));
 }
 
 function getWebPlotRequestViaUrl(tableModel, hlrow, cutoutSize) {
@@ -204,14 +217,14 @@ function addCommonReqParams(inWpr,title,wp) {
 
 export function setupImages(tbl_id) {
     try {
-        const viewer=  getViewer(getMultiViewRoot(),IMG_VIEWER_ID);
-        const count= get(viewer, 'layoutDetail.count',DEF_IMAGE_CNT);
+        const viewer=  getViewer(getMultiViewRoot(),LC.IMG_VIEWER_ID);
+        const count= get(viewer, 'layoutDetail.count',LC.DEF_IMAGE_CNT);
         const tableModel = getTblById(tbl_id);
         if (!tableModel || isNil(tableModel.highlightedRow)) return;
         var vr= visRoot();
         const hasPlots= vr.plotViewAry.length>0;
         const newPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,count);
-        const maxPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,MAX_IMAGE_CNT);
+        const maxPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,LC.MAX_IMAGE_CNT);
 
         const cutoutSize = get(FieldGroupUtils.getGroupFields(grpkey), ['cutoutSize', 'value'], null);
 
@@ -227,7 +240,7 @@ export function setupImages(tbl_id) {
         });
 
 
-        dispatchReplaceViewerItems(IMG_VIEWER_ID, newPlotIdAry);
+        dispatchReplaceViewerItems(LC.IMG_VIEWER_ID, newPlotIdAry);
         const newActivePlotId= plotIdRoot+tableModel.highlightedRow;
         dispatchChangeActivePlotView(newActivePlotId);
 

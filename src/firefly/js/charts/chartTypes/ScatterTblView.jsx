@@ -288,12 +288,10 @@ function addSelection(chartId, tblId, tableModel) {
             const {xMin, xMax, yMin, yMax} = selection;
             const selectInfoCls = SelectInfo.newInstance({rowCount: tableModel.totalRows});
             // add all rows which fall into selection
-            const xIdx = 0, yIdx = 1, rowIdx = 2;
             rows.forEach((arow) => {
-                const x = Number(arow[xIdx]);
-                const y = Number(arow[yIdx]);
+                const {x, y, rowIdx} = arow;
                 if (x >= xMin && x <= xMax && y >= yMin && y <= yMax) {
-                    selectInfoCls.setRowSelect(Number(arow[rowIdx]), true);
+                    selectInfoCls.setRowSelect(rowIdx, true);
                 }
             });
             const selectInfo = selectInfoCls.data;
@@ -309,10 +307,8 @@ function selectionNotEmpty(chartId, selection) {
     if (rows) {
         if (selection) {
             const {xMin, xMax, yMin, yMax} = selection;
-            const xIdx = 0, yIdx = 1;
             const aPt = rows.find((arow) => {
-                const x = Number(arow[xIdx]);
-                const y = Number(arow[yIdx]);
+                const {x, y} = arow;
                 return (x >= xMin && x <= xMax && y >= yMin && y <= yMax);
             });
             return Boolean(aPt);

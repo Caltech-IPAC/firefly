@@ -22,7 +22,8 @@ import {dispatchRestoreDefaults} from '../../fieldGroup/FieldGroupCntlr.js';
 import {makeTblRequest,getTblById, tableToText, makeFileRequest} from '../../tables/TableUtil.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import Validate from '../../util/Validate.js';
-import {RAW_TABLE, PHASE_FOLDED} from './LcManager.js';
+import {LC} from './LcManager.js';
+import {sortInfoString} from '../../tables/SortInfo.js';
 import ReactHighcharts from 'react-highcharts';
 import {cloneDeep, get, set, omit, slice, replace} from 'lodash';
 
@@ -71,52 +72,6 @@ function getTypeData(key, val='', tip = '', labelV='', labelW) {
 }
 
 const defValues= {
-    fieldInt: {
-        fieldKey: 'fieldInt',
-        value: '3',
-        validator: Validate.intRange.bind(null, 1, 10, 'test field'),
-        tooltip: 'this is a tip for field 1',
-        label: 'Int Value:'
-    },
-    FluxColumn: {
-        fieldKey: 'fluxcolumn',
-        value: '',
-        validator: Validate.floatRange.bind(null, 0.2, 20.5, 2, 'Flux Column'),
-        tooltip: 'Flux Column',
-        label: 'Flux Column:',
-        nullAllowed : true,
-        labelWidth: 100
-    },
-    field1: {
-        fieldKey: 'field1',
-        value: '3',
-        validator: Validate.intRange.bind(null, 1, 10, 'test field'),
-        tooltip: 'this is a tip for field 1',
-        label: 'Int Value:'
-    },
-    field2: {
-        fieldKey: 'field2',
-        value: '',
-        validator: Validate.floatRange.bind(null, 1.5, 50.5, 2, 'a float field'),
-        tooltip: 'field 2 tool tip',
-        label: 'Float Value:',
-        nullAllowed : true,
-        labelWidth: 100
-    },
-    low: {
-        fieldKey: 'low',
-        value: '1',
-        validator: Validate.intRange.bind(null, 1, 100, 'low field'),
-        tooltip: 'this is a tip for low field',
-        label: 'Low Field:'
-    },
-    high: {
-        fieldKey: 'high',
-        value: '3',
-        validator: Validate.intRange.bind(null, 1, 100, 'high field'),
-        tooltip: 'this is a tip for high field',
-        label: 'High Field:'
-    },
     periodMin: Object.assign(getTypeData('periodMin', '3', 'this is a tip for period maximum'),
                             {validator: Validate.floatRange.bind(null, 0.0, Number.MAX_VALUE, 'period miniimum')}),
     periodMax: Object.assign(getTypeData('periodMax', '3', 'this is a tip for period maximum'),
@@ -158,7 +113,7 @@ const defValues= {
 };
 
 const RES = 10;      // factor for defining total steps for period
-const DEC = 3;       // decimal digit
+const DEC = 8;       // decimal digit
 const validTimeSuggestions = ['mjd'];      // suggestive time column name
 const validFluxSuggestions = ['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'];
 const validFluxErrSuggestions = ['w1sigmpro_ep', 'w2sigmpro_ep', 'w3sigmpro_ep', 'w4sigmpro_ep'];
@@ -186,7 +141,7 @@ var currentPhaseFoldedTable;   // table with phase column
  * @param {string} fluxColumnName
  * @param {string} fluxerrColumnName
  */
-export function showPhaseFoldingPopup(popTitle, phaseColumnName = 'phase',
+export function showPhaseFoldingPopup(popTitle, phaseColumnName = LC.PHASE_CNAME,
                                       timeList=validTimeSuggestions,
                                       fluxList=validFluxSuggestions,
                                       fluxerrList=validFluxErrSuggestions,
@@ -196,7 +151,7 @@ export function showPhaseFoldingPopup(popTitle, phaseColumnName = 'phase',
     fluxCol = fluxColumnName ? fluxColumnName : fluxList[0];
     fluxerrCol = fluxerrColumnName ? fluxerrColumnName : fluxerrList[0];
     phaseCol = phaseColumnName;
-    periodRange = computePeriodRange(RAW_TABLE, timeColName);
+    periodRange = computePeriodRange(LC.RAW_TABLE, timeColName);
     periodErr = `Period error: must be a float and not less than ${periodRange.min} (day)`;
     timeErr = `time zero error: must be a float and within [0.0, ${timeMax}]`;
 
@@ -261,7 +216,7 @@ function getPhase(time, timeZero, period,  dec=DEC) {
  * @returns {*}
  */
 function getPhaseFlux(fields) {
-    var rawTable = getTblById(RAW_TABLE);
+    var rawTable = getTblById(LC.RAW_TABLE);
     var {columns, data} = rawTable.tableData;    // column names and data
 
     var {timeCol, period, tzero, flux} = fields;
@@ -407,7 +362,7 @@ class PhaseFoldingChart extends Component {
                 chart.series[0].setData(data);
                 chart.xAxis[0].update({min: minPhase - Margin,
                                        max: minPhase + 2.0 + Margin});
-                chart.yAxis[0].setTitle({text: `${flux}(mag)`})
+                chart.yAxis[0].setTitle({text: `${flux}(mag)`});
             }
         });
     }
@@ -634,23 +589,7 @@ var LcPFReducer= function(inFields, action) {
         set(defV, [fKeyDef.period.fkey, 'errMsg'], periodErr);
         return defV;
     }
-    else {
-        var {low,high}= inFields;
-        // inFields= revalidateFields(inFields);
-        if (!low.valid || !high.valid) {
-            return inFields;
-        }
-        if (parseFloat(low.value)> parseFloat(high.value)) {
-            low= Object.assign({},low, {valid:false, message:'must be lower than high'});
-            high= Object.assign({},high, {valid:false, message:'must be higher than low'});
-            return Object.assign({},inFields,{low,high});
-        }
-        else {
-            low= Object.assign({},low, low.validator(low.value));
-            high= Object.assign({},high, high.validator(high.value));
-            return Object.assign({},inFields,{low,high});
-        }
-    }
+    return Object.assign({},inFields);
 };
 
 /**
@@ -716,7 +655,7 @@ function setPFTableSuccess(hideDropDown = false) {
         const file = new File([new Blob([ipacTable])], `${tbl_id}.tbl`);
 
         doUpload(file).then(({status, cacheKey}) => {
-            const tReq = makeFileRequest(title, cacheKey, null, {tbl_id});
+            const tReq = makeFileRequest(title, cacheKey, null, {tbl_id, sortInfo:sortInfoString(LC.PHASE_CNAME)});
             dispatchTableSearch(tReq, {removable: false});
 
             let xyPlotParams = {
@@ -724,7 +663,7 @@ function setPFTableSuccess(hideDropDown = false) {
                 x: {columnOrExpr: phaseCol, options: 'grid'},
                 y: {columnOrExpr: flux, options: 'grid,flip'}
             };
-            loadXYPlot({chartId: PHASE_FOLDED, tblId: PHASE_FOLDED, xyPlotParams});
+            loadXYPlot({chartId: LC.PHASE_FOLDED, tblId: LC.PHASE_FOLDED, xyPlotParams});
         });
 
         if (hideDropDown) {
@@ -748,7 +687,7 @@ function setPFTableFail() {
  */
 function doPFCalculate() {
     let fields = FieldGroupUtils.getGroupFields(pfkey);
-    let rawTable = getTblById(RAW_TABLE);
+    let rawTable = getTblById(LC.RAW_TABLE);
 
     currentPhaseFoldedTable = rawTable && addPhaseToTable(rawTable, fields);
 }
@@ -761,12 +700,12 @@ function doPFCalculate() {
  * @returns {TableRequest}
  */
 function getPhaseFoldingRequest(fields, tbl) {
-    return makeTblRequest('PhaseFoldedProcessor', PHASE_FOLDED, {
+    return makeTblRequest('PhaseFoldedProcessor', LC.PHASE_FOLDED, {
         'period_days': fields&&get(fields, 'period.value'),
         'table_name': 'folded_table',
         'x': fields&&get(fields, 'timeCol.value'),
         'original_table': tbl.tableMeta.tblFilePath
-    },  {tbl_id:PHASE_FOLDED});
+    },  {tbl_id:LC.PHASE_FOLDED});
 
 }
 /**
@@ -785,7 +724,7 @@ function addPhaseToTable(tbl, fields) {
 
     var pd = period ? parseFloat(period.value) : periodRange.min;
     var tz = tzero ? parseFloat(tzero.value) : timeZero;
-    var tPF = Object.assign(cloneDeep(tbl), {tbl_id: PHASE_FOLDED, title: 'Phase Folded'},
+    var tPF = Object.assign(cloneDeep(tbl), {tbl_id: LC.PHASE_FOLDED, title: 'Phase Folded'},
                                             {request: getPhaseFoldingRequest(fields, tbl)},
                                             {highlightedRow: 0});
     tPF = omit(tPF, ['hlRowIdx', 'isFetching']);

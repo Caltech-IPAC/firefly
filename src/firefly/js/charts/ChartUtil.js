@@ -29,26 +29,47 @@ export const getHighlighted = function(xyPlotParams, tblId) {
     const tableModel = getTblById(tblId);
     if (tableModel && xyPlotParams) {
         const rowIdx = tableModel.highlightedRow;
-        const xIn = xyPlotParams.x.columnOrExpr;
-        const yIn = xyPlotParams.y.columnOrExpr;
-
-        var x, y;
-        if (getColumnIdx(tableModel, xIn) >= 0) {
-            x = getCellValue(tableModel, rowIdx, xIn);
-        } else {
-            x = getExpressionValue(xIn, tableModel, rowIdx);
-        }
-
-        if (getColumnIdx(tableModel, yIn) >= 0) {
-            y = getCellValue(tableModel, rowIdx, yIn);
-        } else {
-            y = getExpressionValue(yIn, tableModel, rowIdx);
-        }
-        return {x:Number(x), y:Number(y), rowIdx};
+        const highlighted = {rowIdx};
+        [
+            {n:'x',v:xyPlotParams.x.columnOrExpr},
+            {n:'y',v:xyPlotParams.y.columnOrExpr},
+            {n:'xErr', v:xyPlotParams.x.error},
+            {n:'xErrLow', v:xyPlotParams.x.errorLow},
+            {n:'xErrHigh', v:xyPlotParams.x.errorHigh},
+            {n:'yErr', v:xyPlotParams.y.error},
+            {n:'yErrLow', v:xyPlotParams.y.errorLow},
+            {n:'yErrHigh', v:xyPlotParams.y.errorHigh}
+        ].map((entry) => {
+            if (entry.v) {
+                highlighted[entry.n] = getColOrExprValue(tableModel, rowIdx, entry.v);
+            }
+        });
+        return highlighted;
     }
 };
 
-function getExpressionValue(strExpr, tableModel, rowIdx) {
+/**
+ * This method returns the value of the column cell or an expression from multiple column cells in a given row
+ *
+ * @param {TableModel} tableModel - table model
+ * @param {number} rowIdx - row index in the table
+ * @param {string} colOrExpr - column name or expression
+ * @returns {number} value of the column or expression in the given row
+ */
+export function getColOrExprValue(tableModel, rowIdx, colOrExpr) {
+    if (tableModel) {
+        var val;
+        if (getColumnIdx(tableModel, colOrExpr) >= 0) {
+            val = getCellValue(tableModel, rowIdx, colOrExpr);
+            val = isFinite(parseFloat(val)) ? Number(val) : Number.NaN;
+        } else {
+            val = getExpressionValue(tableModel, rowIdx, colOrExpr);
+        }
+        return val;
+    }
+}
+
+function getExpressionValue(tableModel, rowIdx, strExpr) {
 
     const expr = new Expression(strExpr); // no check for allowed variables, already validated
     if (expr.isValid()) {
