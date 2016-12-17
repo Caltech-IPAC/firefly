@@ -547,6 +547,6 @@ body[dir="rtl"] .fixedDataTableColumnResizerLineLayout_main, .fixedDataTableColu
 }
 
 .fixedDataTableRowLayout_rowWrapper .tablePanel__Row_highlighted {
-    background-color: #d3fad1
+    background-color: #ffe8bf /* #d3fad1 */
 }
 

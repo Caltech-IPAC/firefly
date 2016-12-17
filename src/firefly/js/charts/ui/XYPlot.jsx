@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isUndefined, debounce, get, omit} from 'lodash';
+import {isUndefined, debounce, get, has, omit} from 'lodash';
 import shallowequal from 'shallowequal';
 import React, {PropTypes} from 'react';
 import ReactHighcharts from 'react-highcharts';
@@ -66,12 +66,12 @@ const MINMAX = 'minmax';
 
 const datapointsColor = 'rgba(63, 127, 191, 0.5)';
 const datapointsColorWithErrors = 'rgba(63, 127, 191, 0.7)';
-const errorBarColor = 'rgba(191, 192, 193, 0.5)';
-const selectedColorWithErrors = 'rgba(21, 138, 15, 0.7)';
-const selectedColor = 'rgba(21, 138, 15, 0.5)';
-const highlightedColor = 'rgba(250, 243, 40, 1)';
-const selectionRectColor = 'rgba(165, 165, 165, 0.5)';
-
+const errorBarColor = 'rgba(255, 209, 128, 0.5)';
+const selectedColorWithErrors = 'rgba(255, 200, 0, 1)';
+const selectedColor = 'rgba(255, 200, 0, 1)';
+const highlightedColor = 'rgba(255, 165, 0, 1)';
+const selectionRectColor = 'rgba(255, 209, 128, 0.5)';
+const selectionRectColorGray = 'rgba(165, 165, 165, 0.5)';
 
 /*
  @param {number} weight for a given point
@@ -470,9 +470,10 @@ export class XYPlot extends React.Component {
             const yMaxPx = chart.yAxis[0].toPixels(selection.yMax);
             const width = Math.abs(xMaxPx - xMinPx);
             const height = Math.abs(yMaxPx - yMinPx);
+            const selColor = has(this.props, 'data.decimateKey') ? selectionRectColor : selectionRectColorGray;
             this.selectionRect = chart.renderer.rect(Math.min(xMinPx, xMaxPx), Math.min(yMinPx, yMaxPx), width, height, 1)
                 .attr({
-                    fill: selectionRectColor,
+                    fill: selColor,
                     stroke: '#8c8c8c',
                     'stroke-width': 0.5,
                     zIndex: 7 // same as Highcharts' selectionMrker rectangle
@@ -640,7 +641,7 @@ export class XYPlot extends React.Component {
                     id: HIGHLIGHTED,
                     name: HIGHLIGHTED,
                     color: highlightedColor,
-                    marker: {symbol: 'circle', lineColor: '#404040', lineWidth: 1, radius: 4},
+                    marker: {symbol: 'circle', radius: 4, lineColor: '#737373', lineWidth: 1},
                     data: highlightedData,
                     showInLegend: false
                 }, true, false);
@@ -725,7 +726,7 @@ export class XYPlot extends React.Component {
                         display: 'none'
                     }
                 },
-                selectionMarkerFill: selectionRectColor
+                selectionMarkerFill: decimateKey? selectionRectColor : selectionRectColorGray
             },
             exporting: {
                 enabled: true

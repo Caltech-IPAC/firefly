@@ -7,7 +7,7 @@ import Enum from 'enum';
 
 
 export const COLOR_SELECTED_PT = '#ffff00';
-export const COLOR_HIGHLIGHTED_PT = '#00aaff';
+export const COLOR_HIGHLIGHTED_PT = '#ff8000'; // orange
 export const COLOR_PT_1 = '#ff0000'; // red
 export const COLOR_PT_2 = '#00ff00'; //green
 export const COLOR_PT_3 = 'pink';  // pink
