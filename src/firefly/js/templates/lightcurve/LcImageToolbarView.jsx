@@ -51,11 +51,11 @@ export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layou
             <div style={{display:'inline-block'}}>
                 <input style={{margin: 0}}
                        type='checkbox'
-                       checked={vr.wcsMatchType===WcsMatchType.Standard}
-                       onChange={(ev) => wcsMatchStandard(ev.target.checked, vr.activePlotId) }
+                       checked={vr.wcsMatchType===WcsMatchType.Target}
+                       onChange={(ev) => wcsMatchTarget(ev.target.checked, vr.activePlotId) }
                 />
             </div>
-            <div style={tStyle}>WCS Match</div>
+            <div style={tStyle}>Target Match</div>
         </div>
     );
 
@@ -125,6 +125,6 @@ InlineRightToolbarWrapper.propTypes= {
     dlAry : PropTypes.array
 };
 
-function wcsMatchStandard(doWcsStandard, plotId) {
-    dispatchWcsMatch({matchType:doWcsStandard?WcsMatchType.Standard:false, plotId});
+function wcsMatchTarget(doWcsStandard, plotId) {
+    dispatchWcsMatch({matchType:doWcsStandard?WcsMatchType.Target:false, plotId});
 }

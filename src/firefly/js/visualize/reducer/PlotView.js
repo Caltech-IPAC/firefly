@@ -472,7 +472,7 @@ function getNewAttributes(plot) {
 
     if (worldPt) {
         const cc= CysConverter.make(plot);
-        if (cc.pointInPlot(worldPt)) {
+        if (cc.pointInPlot(worldPt) || req.getOverlayPosition()) {
             attributes[PlotAttribute.FIXED_TARGET]= worldPt;
             if (circle) attributes[PlotAttribute.REQUESTED_SIZE]= circle.radius;  // says radius but really size
         }
