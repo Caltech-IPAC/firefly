@@ -5,7 +5,7 @@
 import React, {PropTypes} from 'react';
 import ReactHighcharts from 'react-highcharts';
 import numeral from 'numeral';
-import {set} from 'lodash';
+import {get, set} from 'lodash';
 import {getFormatString} from '../../util/MathUtil.js';
 import {logError} from '../../util/WebUtil.js';
 
@@ -368,14 +368,26 @@ export class Histogram extends React.Component {
                 text: ''
             },
             tooltip: {
-                split: true,
+                //shared: true works, split: true does not work with the current formatter in Highcharts 5
                 followPointer: true,
                 borderWidth: 1,
                 formatter() {
                     if (this.y === minY) {return false;} // don't display tooltip
-                    return '<span>'+(this.point.name ? `<b>Bin center:</b> ${this.point.name}<br/>` : '')+
-                        (this.point.range ? `<b>Range:</b> ${this.point.range}<br/>` : '')+
+                    let name, range;
+                    // either a point or an array of points are passed depending if the tooltip is shared
+                    if (this.point) {
+                        name = this.point.name;
+                        range = this.point.range;
+                    } else {
+                        const point = get(this, 'points[0].point');
+                        if (!point) {return false;}
+                        name = point.name;
+                        range = point.range;
+                    }
+                    return '<span>' + (name ? `<b>Bin center:</b> ${name}<br/>` : '') +
+                        (range ? `<b>Range:</b> ${range}<br/>` : '') +
                         `<b>Count:</b> ${this.y}</span>`;
+
                 }
             },
             plotOptions: {
