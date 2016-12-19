@@ -235,12 +235,7 @@ function bootstrap() {
         redux = createRedux();
         startCoreSagas();
     }
-    return new Promise(
-        function (resolve, reject) {
-            // there may be async logic here..
-            // if not, simply invoke resolve.
-            resolve('success');
-        });
+    return Promise.resolve('success');
 }
 
 /**
