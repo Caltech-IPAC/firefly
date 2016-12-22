@@ -1,7 +1,6 @@
 /* eslint-env node */
 
 import webpack from 'webpack';
-import HtmlWebpackPlugin from 'html-webpack-plugin';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
 import path from 'path';
 import fs from 'fs';
@@ -33,7 +32,6 @@ export default function makeWebpackConfig(config) {
         env         : process.env.NODE_ENV || 'development',
         dist        : process.env.WP_BUILD_DIR || path.resolve(config.project, `build/${config.name}/gwt/${config.name}`),
         do_lint     : process.env.DO_LINT || process.env.DO_LINT_STRICT || false,
-        index_html  : 'index.html',
         html_dir    : 'html',
         use_loader  : true,
         filename    : '[name]-dev.js',
@@ -115,20 +113,6 @@ export default function makeWebpackConfig(config) {
             })
         );
     }
-
-    // if index_html exists, insert script tag to load built javascript bundles(s).
-    if (fs.existsSync(path.resolve(config.dist, config.index_html))) {
-        plugins.push(
-            new HtmlWebpackPlugin({
-                template : path.resolve(config.src, config.html_dir, config.index_html),
-                hash     : false,
-                filename : config.index_html,
-                minify   : PROD,
-                inject   : 'body'
-            })
-        );
-    }
-
 
     /*------------------------ MODULE -----------------------------*/
     var loaders = [
