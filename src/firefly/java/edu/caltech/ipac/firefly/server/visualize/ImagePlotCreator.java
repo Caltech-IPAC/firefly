@@ -36,6 +36,11 @@ import java.util.Map;
 
 /**
  * @author Trey Roby
+ *
+ * Edit history
+ *
+ * 1/3/17
+ * LZ: DM-8648
  */
 public class ImagePlotCreator {
 
@@ -51,7 +56,7 @@ public class ImagePlotCreator {
 
          ImagePlotInfo piAry[]= new ImagePlotInfo[readAry.length];
          FileReadInfo readInfo;
-         Map<Band,WebFitsData> wfDataMap= new LinkedHashMap<Band,WebFitsData>(5);
+
          for(int i= 0; (i<readAry.length); i++)  {
              readInfo= readAry[i];
              WebPlotRequest req= stateAry[i].getWebPlotRequest();
@@ -66,6 +71,7 @@ public class ImagePlotCreator {
              frGroup.setFitsRead(readInfo.getBand(),readInfo.getFitsRead());
              ImagePlot plot= createImagePlot(stateAry[i], frGroup, readInfo.getBand(),readInfo.getDataDesc(),zoomChoice, readAry.length>1);
              WebFitsData wfData= makeWebFitsData(plot,frGroup, readInfo.getBand(),readInfo.getOriginalFile());
+             Map<Band,WebFitsData> wfDataMap= new LinkedHashMap<>();
              wfDataMap.put(Band.NO_BAND,wfData);
              Map<Band,ModFileWriter> fileWriterMap= new LinkedHashMap<Band,ModFileWriter>(1);
              if (readInfo.getModFileWriter()!=null) fileWriterMap.put(Band.NO_BAND,readInfo.getModFileWriter());
