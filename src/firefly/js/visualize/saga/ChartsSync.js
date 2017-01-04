@@ -60,13 +60,12 @@ export function* syncCharts() {
  */
 export function* syncChartViewer() {
     while (true) {
-        const action = yield take([ChartsCntlr.CHART_ADD, TablesCntlr.TBL_RESULTS_ACTIVE, TablesCntlr.TABLE_REMOVE]);
+        const action = yield take([ChartsCntlr.CHART_ADD, TablesCntlr.TBL_RESULTS_ACTIVE]);
         switch (action.type) {
             case ChartsCntlr.CHART_ADD:
-            case TablesCntlr.TABLE_REMOVE:
             case TablesCntlr.TBL_RESULTS_ACTIVE:
-                const {chartId} = action.payload;
-                updateDefaultViewer(chartId);
+                const {chartId, tbl_id} = action.payload;
+                updateDefaultViewer(chartId, tbl_id);
                 break;
         }
     }
@@ -100,8 +99,8 @@ export function* addDefaultScatter() {
 }
 
 
-function updateDefaultViewer(chartId) {
-    const tblId = TableUtil.getActiveTableId();
+function updateDefaultViewer(chartId, active_tbl_id) {
+    const tblId = active_tbl_id || TableUtil.getActiveTableId();
     const chartIds = [];
     chartIds.push(...ChartsCntlr.getChartIdsInGroup(tblId), ...ChartsCntlr.getChartIdsInGroup('default'));
     const currentIds = getViewerItemIds(getMultiViewRoot(),DEFAULT_PLOT2D_VIEWER_ID);

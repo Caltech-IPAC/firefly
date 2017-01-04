@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {take} from 'redux-saga/effects';
-import {get, set, omitBy, pickBy, isNil, cloneDeep} from 'lodash';
+import {get, set, omitBy, pickBy, isNil, cloneDeep, findKey} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
@@ -127,7 +127,8 @@ function actionCreators() {
         [TABLE_SORT]:       tableFetch,
         [TABLE_FILTER]:     tableFetch,
         [TABLE_FILTER_SELROW]:  tableFilterSelrow,
-        [TBL_RESULTS_ADDED]:    tblResultsAdded
+        [TBL_RESULTS_ADDED]:    tblResultsAdded,
+        [TABLE_REMOVE]:     tblRemove
     };
 }
 
@@ -343,6 +344,19 @@ function tblResultsAdded(action) {
                 dispatchAddSaga(doOnTblLoaded, {tbl_id, callback:() => dispatchActiveTableChanged(tbl_id, options.tbl_group)});
             }
         }
+    };
+}
+
+function tblRemove(action) {
+    return (dispatch) => {
+        dispatch(action);
+        const {tbl_id} = action.payload;
+        const results = get(flux.getState(), [TABLE_SPACE_PATH, 'results'], {});
+        Object.keys(results).forEach( (tbl_group) => {
+            if (get(results, [tbl_group, 'active']) === tbl_id) {
+                dispatchActiveTableChanged(findKey(results[tbl_group].tables), tbl_group);
+            }
+        });
     };
 }
 
