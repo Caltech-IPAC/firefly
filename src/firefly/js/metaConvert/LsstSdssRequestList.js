@@ -14,7 +14,7 @@ import {ServerRequest} from '../data/ServerRequest.js';
  * @param title - {String}
  * @returns {WebPlotRequest} a web plot request
  */
-
+const bandMap= {u:0, g:1,r:2,i:3, z:4};
 function makeWebRequest(sr,  plotId, title) {
     const r  = WebPlotRequest.makeProcessorRequest(sr, 'lsst-sdss');
     const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
@@ -38,6 +38,7 @@ function makeCcdReqBuilder(table, rowIdx) {
     const run= getCellValue(table, rowIdx, 'run');
     const field= getCellValue(table, rowIdx, 'field');
     const camcol= getCellValue(table, rowIdx, 'camcol');
+
     const sr= new ServerRequest('LSSTImageSearch');
     sr.setParam('run', `${run}`);
     sr.setParam('camcol', `${camcol}`);
@@ -45,7 +46,8 @@ function makeCcdReqBuilder(table, rowIdx) {
 
     return (plotId, id, filterName) => {
         sr.setParam('filterName', `${filterName}`);
-        const title = id+'-'+filterName;
+        const scienceCCCdId = id.toString();
+        const title =scienceCCCdId.substr(0, 4) + bandMap[filterName].toString() + scienceCCCdId.substr(5, 10)+'-'+filterName;
         return makeWebRequest(sr, plotId,  title);
     };
 }
@@ -59,7 +61,7 @@ function makeCcdReqBuilder(table, rowIdx) {
  */
 function makeCoadReqBuilder(table, rowIdx) {
 
-    const bandMap= {u:0, g:1,r:2,i:3, z:4};
+
     const tract= getCellValue(table, rowIdx, 'tract');
     const patch= getCellValue(table, rowIdx, 'patch');
 
