@@ -92,6 +92,11 @@
     font-weight: bold;
 }
 
+.button.attn {
+    font-weight: bold;
+    color: #005da4; /*highlightColor*/
+}
+
 .button:hover {
     cursor: pointer;
 }
