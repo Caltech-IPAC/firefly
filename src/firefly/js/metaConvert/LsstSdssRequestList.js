@@ -14,6 +14,7 @@ import {ServerRequest} from '../data/ServerRequest.js';
  * @param title - {String}
  * @returns {WebPlotRequest} a web plot request
  */
+const bandMap= {u:0, g:1,r:2,i:3, z:4};
 function makeWebRequest(sr,  plotId, title) {
     const r  = WebPlotRequest.makeProcessorRequest(sr, 'lsst-sdss');
     const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
@@ -43,8 +44,10 @@ function makeCcdReqBuilder(table, rowIdx) {
     sr.setParam('camcol', `${camcol}`);
     sr.setParam('field', `${field}`);
 
-    return (plotId, title, filterName) => {
+    return (plotId, id, filterName) => {
         sr.setParam('filterName', `${filterName}`);
+        const scienceCCCdId = id.toString();
+        const title =scienceCCCdId.substr(0, 4) + bandMap[filterName].toString() + scienceCCCdId.substr(5, 10)+'-'+filterName;
         return makeWebRequest(sr, plotId,  title);
     };
 }
@@ -66,8 +69,10 @@ function makeCoadReqBuilder(table, rowIdx) {
     sr.setParam('tract', `${tract}`);
     sr.setParam('patch', `${patch}`);
 
-    return (plotId, title, filterName) => {
+    return (plotId, id, filterName) => {
         sr.setParam('filterName', `${filterName}`);
+        const deepCoaddId = id + bandMap[filterName];
+        const title = deepCoaddId+'-'+filterName;
         return makeWebRequest(sr, plotId,  title);
     };
 }
@@ -85,14 +90,15 @@ export function makeLsstSdssPlotRequest(table, row, includeSingle, includeStanda
 
     const retval= {};
     var builder;
-    var titleBase;
+    var id;
     if (getCellValue(table, row, 'scienceCcdExposureId')) {
-        builder= makeCcdReqBuilder(table,row);
-        titleBase= Number(getCellValue(table, row, 'scienceCcdExposureId'));
+          builder= makeCcdReqBuilder(table,row);
+         id= Number(getCellValue(table, row, 'scienceCcdExposureId'));
     }
     else {
         builder= makeCoadReqBuilder(table, row);
-        titleBase= Number(getCellValue(table, row, 'deepCoaddId'));
+        const deepCoaddId= Number(getCellValue(table, row, 'deepCoaddId'));
+        id = deepCoaddId - deepCoaddId%8;
 
     }
     const filterId= Number(getCellValue(table, row, 'filterId'));
@@ -104,11 +110,11 @@ export function makeLsstSdssPlotRequest(table, row, includeSingle, includeStanda
 
     if (includeStandard) {
         retval.standard= [
-            builder('lsst-sdss-u',  titleBase+'-u', 'u'),
-            builder('lsst-sdss-g',  titleBase+'-g', 'g'),
-            builder('lsst-sdss-r',  titleBase+'-r', 'r'),
-            builder('lsst-sdss-i',  titleBase+'-i', 'i'),
-            builder('lsst-sdss-z',  titleBase+'-z', 'z'),
+            builder('lsst-sdss-u', id, 'u'),
+            builder('lsst-sdss-g', id, 'g'),
+            builder('lsst-sdss-r', id, 'r'),
+            builder('lsst-sdss-i', id, 'i'),
+            builder('lsst-sdss-z', id, 'z'),
         ];
         if (retval.standard[filterId]) retval.highlightPlotId= retval.standard[filterId].getPlotId();
     }
