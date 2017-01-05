@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get} from 'lodash';
+import {get, set} from 'lodash';
 import React, {PropTypes} from 'react';
 import * as TblUtil from '../../tables/TableUtil.js';
 
@@ -41,18 +41,20 @@ function Chart(props) {
     const { isDataReady, data:histogramData, options:histogramParams} = ChartsCntlr.getChartDataElement(chartId);
 
     if (isDataReady) {
-        var logs, reversed;
+        var logs;
+        const xAxis = histogramParams.xAxis || {reversed: false, opposite: false};
+        const yAxis = histogramParams.yAxis || {reversed: false, opposite: false};
         if (histogramParams) {
             var logvals = '';
             if (histogramParams.x.includes('log')) { logvals += 'x';}
             if (histogramParams.y.includes('log')) { logvals += 'y';}
             if (logvals.length>0) { logs = logvals;}
 
-            var rvals = '';
-            if (histogramParams.x.includes('flip')) { rvals += 'x';}
-            if (histogramParams.y.includes('flip')) { rvals += 'y';}
-            if (rvals.length>0) { reversed = rvals;}
+            if (histogramParams.x.includes('flip')) { set(xAxis, 'reversed', true); }
+            if (histogramParams.y.includes('flip')) { set(yAxis, 'reversed', true); }
 
+            if (histogramParams.x.includes('opposite')) { set(xAxis, 'opposite', true); }
+            if (histogramParams.y.includes('opposite')) { set(yAxis, 'opposite', true); }
         }
 
         return (
@@ -62,7 +64,8 @@ function Chart(props) {
                        height={heightPx}
                        width={widthPx}
                        logs={logs}
-                       reversed={reversed}
+                       xAxis={xAxis}
+                       yAxis={yAxis}
             />
         );
     } else {
