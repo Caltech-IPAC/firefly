@@ -3,7 +3,9 @@ package edu.caltech.ipac.visualize.plot;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
@@ -14,58 +16,58 @@ import java.lang.reflect.Method;
  * Created by ymei on 3/28/16.
  * 10/19/16
  *  DM-8028
- *    Use teh UnitTestUtility to load file
+ *    Use the UnitTestUtility to load file
+ * 01/07/2017 DM-7188
+ *    Added the setUp() and tearDown(); Directly called Zscale.cdl_zscale;
  */
 public class ZscaleTest {
 
+    //Input fits file:
     private static String filename = "WISE-Band-4.fits";
+
+    //Prepare the parameters for calling cdl_zscale:
+    private ImageHeader imageHeader = null;
+    private float[] float1d = null;
+
     
-/**
-    @Test
-    public void testFitLineRetvalAbnormalInputs() {
-        float[] data = {1,2,3,4,5,6,7,8,9};
-        int npix = 0;
-        float krej = 2.2f;
-        int ngrow = 6;
-        int maxiter = 5;
-        Zscale.FitLineRetval fitLineRetval = Zscale.fitLine (data, npix, krej, ngrow, maxiter);
+    @Before
+    /**
+     * An one dimensional array is created and it is used to run the unit test for Histogram's public methods
+     */
+    public void setUp() throws FitsException {
 
+        Fits fits = FileLoader.loadFits(ZscaleTest.class,filename );
+        FitsRead[] fry = FitsRead.createFitsReadArray(fits);
+        float1d = fry[0].getDataFloat();
+        imageHeader = fry[0].getImageHeader();
 
-    // Private!!!
     }
-    */
+
+    @After
+    /**
+     * Release the memories
+     */
+    public void tearDown() {
+        float1d = null;
+        imageHeader = null;
+    }
+
 
     @Test
     public void testZscalRetval() throws FitsException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
-        //String inFitsName =  TEST_ROOT + filename;
-        // For IntelliJ run:
-        //String inFitsName =  filename;
-        Fits fits = FileLoader.loadFits(ZscaleTest.class,filename );
-        FitsRead[] fry = FitsRead.createFitsReadArray(fits);
-        float[] float1d = fry[0].getDataFloat();
-        ImageHeader imageHeader = fry[0].getImageHeader();
 
-        //Make rangeValues:
-        int    lowerWhich = 91;
-        double lowerValue = 1.0;
-        int    upperWhich = 91;
-        double upperValue = 1.0;
-        double betaValue = 1.0;
-        double gammaValue = 2.0;
-        int    algorithm = 45;
-        int    zscale_contrast = 25;
-        int    zscale_samples = 600;
-        int    zscale_samples_per_line = 120;
-        double bias = 0.5;
-        double contrast = 1.0;
-        RangeValues rangeValues = new RangeValues(lowerWhich, lowerValue, upperWhich, upperValue, betaValue, gammaValue,  algorithm, zscale_contrast, zscale_samples, zscale_samples_per_line, bias, contrast);
+        int nx = imageHeader.naxis1;
+        int ny = imageHeader.naxis2;
+        int bitpix = imageHeader.bitpix;
+        double blank_value = imageHeader.blank_value;
+
+        double contrast = 0.25;
+        int opt_size = 600;
+        int len_stdline = 120;
 
 
-        //Make the method getZscaleValue accessible:
-        Method m = FitsRead.class.getDeclaredMethod("getZscaleValue", float[].class, ImageHeader.class, RangeValues.class);
-        m.setAccessible(true);
-        Zscale.ZscaleRetval zscaleRetval = (Zscale.ZscaleRetval)m.invoke(fry[0], new Object[]{float1d, imageHeader, rangeValues});
+        Zscale.ZscaleRetval zscaleRetval = Zscale.cdl_zscale(float1d, nx, ny, bitpix, contrast, opt_size, len_stdline, blank_value);
 
         double z1 = zscaleRetval.getZ1();
         double z2 = zscaleRetval.getZ2();
