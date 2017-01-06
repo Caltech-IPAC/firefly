@@ -21,7 +21,7 @@ import nom.tam.util.BufferedDataInputStream;
 import nom.tam.util.BufferedDataOutputStream;
 
 
-public class GeomTest
+public class GeomTestMain
 {
 
 /* geom.c (geometric image transform program) */
@@ -215,6 +215,7 @@ static void get_params(String argv[])
 
 
 
+
     // main is for testing only
     public static void main(String[] args)
     {
@@ -223,20 +224,20 @@ static void get_params(String argv[])
 	Fits refFits = null;
 	Fits newFits;
 
-	System.err.println("Enter a CR:");
+/*	System.err.println("Enter a CR:");
         try
 	{
 	    int c = System.in.read();
 	}
 	catch (IOException e)
 	{
-	}
+	}*/
 
 
 	geom = new Geom();
 	get_params(args);
 
-	System.out.println("GeomTest:  opening file in_name = " + in_name);
+	System.out.println("GeomTestMain:  opening file in_name = " + in_name);
 	try
 	{
 	    inFits = new Fits(in_name);
@@ -247,12 +248,12 @@ static void get_params(String argv[])
 	    e.printStackTrace();
 	    System.exit(1);
 	}
-	System.out.println("GeomTest:  done opening file in_name = " + in_name);
+	System.out.println("GeomTestMain:  done opening file in_name = " + in_name);
 
 
 	if (geom.n_ref_name) 
 	{
-	    System.out.println("GeomTest:  opening ref_name = " + ref_name);
+	    System.out.println("GeomTestMain:  opening ref_name = " + ref_name);
 	    try
 	    {
 	    refFits = new Fits(ref_name);
@@ -263,7 +264,7 @@ static void get_params(String argv[])
 		e.printStackTrace();
 		System.exit(1);
 	    }
-	    System.out.println("GeomTest:  done opening ref_name = " + ref_name);
+	    System.out.println("GeomTestMain:  done opening ref_name = " + ref_name);
 
 	}
 
@@ -282,14 +283,14 @@ static void get_params(String argv[])
 
 	try
 	{
-	    System.out.println("GeomTest:  calling geom.do_geom");
+	    System.out.println("GeomTestMain:  calling geom.do_geom");
 	    newFits = geom.do_geom(inFits, refFits);
-	    System.out.println("GeomTest:  back from geom.do_geom");
+	    System.out.println("GeomTestMain:  back from geom.do_geom");
 	    FileOutputStream fo = new java.io.FileOutputStream(out_name);
 	    BufferedDataOutputStream o = new BufferedDataOutputStream(fo);
-	    System.out.println("GeomTest:  writing output file  o = " + o);
+	    System.out.println("GeomTestMain:  writing output file  o = " + o);
 	    newFits.write(o);
-	    System.out.println("GeomTest:  done writing output file");
+	    System.out.println("GeomTestMain:  done writing output file");
 	}
 	catch (FileNotFoundException e)
 	{
