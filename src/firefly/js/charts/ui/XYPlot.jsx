@@ -22,7 +22,7 @@ export const axisParamsShape = PropTypes.shape({
     label : PropTypes.string,
     unit : PropTypes.string,
     error: PropTypes.string,
-    options : PropTypes.string // ex. 'grid,log,flip'
+    options : PropTypes.string // ex. 'grid,log,flip,opposite'
 });
 
 export const selectionShape = PropTypes.shape({
@@ -126,14 +126,15 @@ const isDataSeries = function(name) {
 
 const getXAxisOptions = function(params) {
     const xTitle = params.x.label + (params.x.unit ? ` (${params.x.unit})` : '');
-    let xGrid = false, xReversed = false, xLog = false;
+    let xGrid = false, xReversed = false, xOpposite = false, xLog = false;
     const {options:xOptions} = params.x;
     if (xOptions) {
         xGrid = xOptions.includes('grid');
         xReversed = xOptions.includes('flip');
+        xOpposite = xOptions.includes('opposite');
         xLog = xOptions.includes('log');
     }
-    return {xTitle, xGrid, xReversed, xLog};
+    return {xTitle, xGrid, xReversed, xOpposite, xLog};
 };
 
 const validate = function(params, data) {
@@ -162,14 +163,15 @@ const validate = function(params, data) {
 const getYAxisOptions = function(params) {
     const yTitle = params.y.label + (params.y.unit ? ` (${params.y.unit})` : '');
 
-    let yGrid = false, yReversed = false, yLog = false;
+    let yGrid = false, yReversed = false, yOpposite=false, yLog = false;
     const {options:yOptions} = params.y;
     if (params.y.options) {
         yGrid = yOptions.includes('grid');
         yReversed = yOptions.includes('flip');
+        yOpposite = yOptions.includes('opposite');
         yLog = yOptions.includes('log');
     }
-    return {yTitle, yGrid, yReversed, yLog};
+    return {yTitle, yGrid, yReversed, yOpposite, yLog};
 };
 
 const getZoomSelection = function(params) {
@@ -344,7 +346,7 @@ export class XYPlot extends React.Component {
                                 title: {text: newXOptions.xTitle},
                                 gridLineWidth: newXOptions.xGrid ? 1 : 0,
                                 reversed: newXOptions.xReversed,
-                                opposite: newYOptions.yReversed,
+                                opposite: newXOptions.xOpposite,
                                 type: newXOptions.xLog ? 'logarithmic' : 'linear'
                             });
                         }
@@ -353,6 +355,7 @@ export class XYPlot extends React.Component {
                                 title: {text: newYOptions.yTitle},
                                 gridLineWidth: newYOptions.yGrid ? 1 : 0,
                                 reversed: newYOptions.yReversed,
+                                opposite: newYOptions.yOpposite,
                                 type: newYOptions.yLog ? 'logarithmic' : 'linear'
                             });
                         }
@@ -677,8 +680,8 @@ export class XYPlot extends React.Component {
         const onSelectionEvent = this.onSelectionEvent;
         const {chartWidth, chartHeight} = calculateChartSize(width, height, this.props);
 
-        const {xTitle, xGrid, xReversed, xLog} = getXAxisOptions(params);
-        const {yTitle, yGrid, yReversed, yLog} = getYAxisOptions(params);
+        const {xTitle, xGrid, xReversed, xOpposite, xLog} = getXAxisOptions(params);
+        const {yTitle, yGrid, yReversed, yOpposite, yLog} = getYAxisOptions(params);
         const {xMin, xMax, yMin, yMax} = getZoomSelection(params);
         const {decimateKey} = data;
         const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = get(params, 'boundaries', {});
@@ -774,7 +777,7 @@ export class XYPlot extends React.Component {
                 gridLineWidth: xGrid ? 1 : 0,
                 lineColor: '#999',
                 tickColor: '#ccc',
-                opposite: yReversed,
+                opposite: xOpposite,
                 reversed: xReversed,
                 title: {text: xTitle},
                 type: xLog ? 'logarithmic' : 'linear'
@@ -790,6 +793,7 @@ export class XYPlot extends React.Component {
                 lineWidth: 1,
                 lineColor: '#999',
                 endOnTick: false,
+                opposite: yOpposite,
                 reversed: yReversed,
                 title: {text: yTitle},
                 type: yLog ? 'logarithmic' : 'linear'

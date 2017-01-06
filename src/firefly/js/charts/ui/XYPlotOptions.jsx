@@ -9,48 +9,40 @@ import ColValuesStatistics from '../ColValuesStatistics.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import {dispatchValueChange, dispatchMultiValueChange, VALUE_CHANGE, MULTI_VALUE_CHANGE} from '../../fieldGroup/FieldGroupCntlr.js';
+import {dispatchMultiValueChange, VALUE_CHANGE, MULTI_VALUE_CHANGE} from '../../fieldGroup/FieldGroupCntlr.js';
 import Validate from '../../util/Validate.js';
 import {Expression} from '../../util/expr/Expression.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
-import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 import {plotParamsShape} from  './XYPlot.jsx';
-import {showColSelectPopup, hideColSelectPopup} from './ColSelectView.jsx';
+import {hideColSelectPopup} from './ColSelectView.jsx';
+import {ColumnOrExpression} from './ColumnOrExpression.jsx';
 import {updateSet} from '../../util/WebUtil.js';
 
 const DECI_ENABLE_SIZE = 5000;
 
-const AXIS_OPTIONS = [
+const X_AXIS_OPTIONS = [
     {label: 'grid', value: 'grid'},
     {label: 'reverse', value: 'flip'},
+    {label: 'top', value: 'opposite'},
     {label: 'log', value: 'log'}
 ];
 
-const AXIS_OPTIONS_NOLOG = AXIS_OPTIONS.filter((el) => {return el.label !== 'log';});
+const X_AXIS_OPTIONS_NOLOG = X_AXIS_OPTIONS.filter((el) => {return el.label !== 'log';});
+
+const Y_AXIS_OPTIONS = [
+    {label: 'grid', value: 'grid'},
+    {label: 'reverse', value: 'flip'},
+    {label: 'right', value: 'opposite'},
+    {label: 'log', value: 'log'}
+];
+
+const Y_AXIS_OPTIONS_NOLOG = Y_AXIS_OPTIONS.filter((el) => {return el.label !== 'log';});
 
 const helpStyle = {fontStyle: 'italic', color: '#808080', paddingBottom: 10};
-import {TextButton} from '../../ui/TextButton.jsx';
 
-/*
- * Split content into prior content and the last alphanumeric token in the text
- * @param {string} text - current content of suggest box
- * @return {Object} with token and priorContent properties
- */
-function parseSuggestboxContent(text) {
-    let token='', priorContent='';
-    if (text && text.length) {
-        // [entireMatch, firstCature, secondCapture] or null
-        const match =  text.match(/^(.*[^A-Za-z\d_]|)([A-Za-z\d_]*)$/);
-        if (match && match.length === 3) {
-            priorContent = match[1];
-            token = match[2];
-        }
-    }
-    return {token, priorContent};
-}
 
 /*
 function getUnit(colValStats, colname) {
@@ -520,7 +512,7 @@ export class XYPlotOptions extends React.Component {
                                 tooltip: 'Check if you would like to plot grid',
                                 label : 'Options:'
                             }}
-                            options={noLogOption ? AXIS_OPTIONS_NOLOG : AXIS_OPTIONS}
+                            options={noLogOption ? X_AXIS_OPTIONS_NOLOG : X_AXIS_OPTIONS}
                             fieldKey='x.options'
                             groupKey={groupKey}
                             labelWidth={50}
@@ -563,7 +555,7 @@ export class XYPlotOptions extends React.Component {
                                 label : 'Options:'
 
                             }}
-                            options={noLogOption ? AXIS_OPTIONS_NOLOG : AXIS_OPTIONS}
+                            options={noLogOption ? Y_AXIS_OPTIONS_NOLOG : Y_AXIS_OPTIONS}
                             fieldKey='y.options'
                             groupKey={groupKey}
                             labelWidth={50}
@@ -590,66 +582,3 @@ XYPlotOptions.propTypes = {
     defaultParams: plotParamsShape
 };
 
-function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,labelWidth=30,tooltip,nullAllowed}) {
-
-    // the suggestions are indexes in the colValStats array - it makes it easier to render then with labels
-    const allSuggestions = colValStats.map((colVal,idx)=>{return idx;});
-
-    const getSuggestions = (val)=>{
-        const {token} = parseSuggestboxContent(val);
-        const matches = allSuggestions.filter( (idx)=>{return colValStats[idx].name.startsWith(token);} );
-        return matches.length ? matches : allSuggestions;
-    };
-
-    const renderSuggestion = (idx)=>{
-        const colVal = colValStats[idx];
-        return colVal.name + (colVal.unit && colVal.unit !== 'null' ? ', '+colVal.unit : ' ');
-    };
-
-    const valueOnSuggestion = (prevVal, idx)=>{
-        const {priorContent} = parseSuggestboxContent(prevVal);
-        return priorContent+colValStats[idx].name;
-    };
-
-    var val = get(params, fldPath);
-    const onColSelected = (colName) => {
-        val = colName;
-        dispatchValueChange({fieldKey: fldPath, groupKey, value: colName, valid: true});
-    };
-    return (
-        <div style={{whiteSpace: 'nowrap'}}>
-            <SuggestBoxInputField
-                inline={true}
-                initialState= {{
-                    value: get(params, fldPath),
-                    tooltip: `Column or expression for ${tooltip}`,
-                    label: `${label}:`,
-                    nullAllowed
-                }}
-                getSuggestions={getSuggestions}
-                renderSuggestion={renderSuggestion}
-                valueOnSuggestion={valueOnSuggestion}
-                fieldKey={fldPath}
-                groupKey={groupKey}
-                labelWidth={labelWidth}
-            />
-            <TextButton style={{display: 'inline-block', paddingLeft: 3, verticalAlign: 'bottom'}}
-                        groupKey={groupKey}
-                        text='Cols'
-                        tip={`Select ${label} column`}
-                        onClick={() => showColSelectPopup(colValStats, onColSelected,`Choose ${label}`,`Set ${label}`,val)}
-            />
-        </div>
-    );
-}
-
-ColumnOrExpression.propTypes = {
-    colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
-    params: plotParamsShape,
-    groupKey: PropTypes.string.isRequired,
-    fldPath: PropTypes.string.isRequired,
-    label: PropTypes.string.isRequired,
-    labelWidth: PropTypes.number,
-    tooltip: PropTypes.string,
-    nullAllowed: PropTypes.bool
-};

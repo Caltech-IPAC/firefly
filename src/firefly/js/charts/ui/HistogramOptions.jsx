@@ -11,9 +11,9 @@ import {InputGroup} from '../../ui/InputGroup.jsx';
 import Validate from '../../util/Validate.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
-import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
+import {ColumnOrExpression} from './ColumnOrExpression.jsx';
 
 export const histogramParamsShape = PropTypes.shape({
          algorithm : PropTypes.oneOf(['fixedSizeBins','bayesianBlocks']),
@@ -125,6 +125,7 @@ export class HistogramOptions extends React.Component {
 
     render() {
         const { colValStats, groupKey, histogramParams, defaultParams, onOptionsSelected}= this.props;
+        const xProps = {colValStats,params:histogramParams,groupKey,fldPath:'columnOrExpr',label:'Column or expression', labelWidth:120, tooltip:'X Axis',nullAllowed:false};
         return (
             <div style={{padding:'0 5px'}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
@@ -142,26 +143,8 @@ export class HistogramOptions extends React.Component {
                             <button type='button' className='button std' onClick={() => setOptions(groupKey, defaultParams)}>Reset</button>
                         </div>
                     </div>}
+                    <ColumnOrExpression {...xProps}/>
 
-                    <ListBoxInputField
-                        initialState= {{
-                            value: get(histogramParams, 'columnOrExpr'),
-                            tooltip: 'Please select a column',
-                            label : 'Column or expression:'
-                        }}
-                        options={
-                            colValStats.map((colVal) => {
-                                return {
-                                    label: colVal.name + ' ' + (colVal.unit && colVal.unit !== 'null' ? colVal.unit : ''),
-                                    value: colVal.name
-                                };
-                            })
-                        }
-                        multiple={false}
-                        fieldKey='columnOrExpr'
-                        groupKey={groupKey}
-                        labelWidth={120}
-                    />
                     <FieldGroupCollapsible  header='Options'
                                             initialState= {{ value:'closed' }}
                                             fieldKey='plotoptions'>
@@ -173,8 +156,9 @@ export class HistogramOptions extends React.Component {
                                     label : 'X:'
                                 }}
                                 options={[
-                                    {label: 'log', value: 'log'},
-                                    {label: 'flip', value: 'flip'}
+                                    {label: 'reverse', value: 'flip'},
+                                    {label: 'top', value: 'opposite'},
+                                    {label: 'log', value: 'log'}
                                 ]}
                                 fieldKey='x'
                             />
@@ -185,8 +169,9 @@ export class HistogramOptions extends React.Component {
                                     label : 'Y:'
                                 }}
                                 options={[
-                                    {label: 'log', value: 'log'},
-                                    {label: 'flip', value: 'flip'}
+                                    {label: 'reverse', value: 'flip'},
+                                    {label: 'right', value: 'opposite'},
+                                    {label: 'log', value: 'log'}
                                 ]}
                                 fieldKey='y'
                             />

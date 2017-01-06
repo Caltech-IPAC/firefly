@@ -6,6 +6,7 @@ import React, {PropTypes} from 'react';
 import ReactHighcharts from 'react-highcharts';
 import numeral from 'numeral';
 import {get, set} from 'lodash';
+import shallowequal from 'shallowequal';
 import {getFormatString} from '../../util/MathUtil.js';
 import {logError} from '../../util/WebUtil.js';
 
@@ -51,6 +52,9 @@ export class Histogram extends React.Component {
      * @param {number} props.width - width of the chart in pixels
      * @param {number} props.height - height of the chart in pixels
      * @param {string} [props.logs] - can have values 'x', 'y', or 'xy'
+     * @param {Object} [props.xAxis] - Highcharts xAxis properties
+     * @param {Object} [props.yAxis] = Highcharts yAxis properties
+     * @param {string} [props.opposite] - can have values 'x', 'y', or 'xy'
      * @param {string} [props.binColor='#d1d1d1'] - darker bin color
      * @param {string} props.desc - description
      * @public
@@ -63,41 +67,39 @@ export class Histogram extends React.Component {
     }
 
     shouldComponentUpdate(nextProps) {
-        const {series, data, width, height, logs, reversed, desc, binColor} = this.props;
-        // should rerender only if data or bin color has changed
+        const {series, data, width, height, logs, xAxis, yAxis, desc, binColor} = this.props;
+        // should rerender if data, logs, or bin color has changed
         // otherwise just change the existing chart
-        if (series !== nextProps.series || data !== nextProps.data || binColor !== nextProps.binColor) { return true; }
+        if (this.error || series !== nextProps.series || data !== nextProps.data || logs !== nextProps.logs || binColor !== nextProps.binColor) { return true; }
         const chart = this.refs.chart && this.refs.chart.getChart();
         if (chart) {
-            let doUpdate = false;
-            if (height !== nextProps.height || width !== nextProps.width ) {
-                chart.setSize(nextProps.width, nextProps.height, false);
-                return false;
-            }
+            try {
+                let doUpdate = false;
+                if (height !== nextProps.height || width !== nextProps.width ) {
+                    chart.setSize(nextProps.width, nextProps.height, false);
+                }
 
-            if (desc !== nextProps.desc) {
-                chart.xAxis[0].setTitle(nextProps.desc, false);
-                doUpdate = true;
+                if (desc !== nextProps.desc) {
+                    chart.xAxis[0].setTitle(nextProps.desc, false);
+                    doUpdate = true;
+                }
+
+                if (!shallowequal(xAxis, nextProps.xAxis)) {
+                    chart.xAxis[0].update(nextProps.xAxis, false);
+                    doUpdate = true;
+                }
+                if (!shallowequal(yAxis, nextProps.yAxis)) {
+                    chart.yAxis[0].update(nextProps.yAxis, false);
+                    doUpdate = true;
+                }
+
+                if (doUpdate) { chart.redraw(false); }
+            } catch (error) {
+                this.error = error;
+                chart.showLoading(error);
             }
-            const nreversed = nextProps.reversed;
-            if (reversed !== nreversed){
-                const yReversed = Boolean(nreversed && nreversed.indexOf('y')>-1);
-                const xReversed = Boolean(nreversed && nreversed.indexOf('x')>-1);
-                chart.xAxis[0].update({reversed : xReversed, opposite: yReversed}, false);
-                chart.yAxis[0].update({reversed : yReversed}, false);
-                doUpdate = true;
-            }
-            const nlogs = nextProps.logs;
-            if (logs !== nextProps.logs){
-                const xtype = nlogs && nlogs.indexOf('x')>-1 ? 'logarithmic' : 'linear';
-                const ytype = nlogs && nlogs.indexOf('y')>-1 ? 'logarithmic' : 'linear';
-                chart.xAxis[0].update({type : xtype}, false);
-                chart.yAxis[0].update({type : ytype}, false);
-                doUpdate = true;
-            }
-            if (doUpdate) { chart.redraw(false); }
-            return false;
         }
+        return false;
     }
 
     /*
@@ -326,14 +328,13 @@ export class Histogram extends React.Component {
     }
 
     render() {
+        this.error = undefined;
 
-        const { binColor, data, desc, width, height, logs, reversed}= this.props;
+        const { binColor, data, desc, width, height, logs, xAxis, yAxis}= this.props;
         let series = this.props.series;
         if (!series) {
             series = [{data, binColor, name: 'data points'}];
         }
-        const yReversed = (reversed && reversed.indexOf('y')>-1 ? true : false);
-
 
         let minY = 0;
         // what should be the minimum y value be?
@@ -415,17 +416,15 @@ export class Histogram extends React.Component {
                 }
             },
             series: [],
-            xAxis: {
+            xAxis: Object.assign({
                 lineColor: '#999',
                 tickColor: '#ccc',
                 title: {
                     text: desc
                 },
-                opposite: yReversed,
-                reversed: (reversed && reversed.indexOf('x')>-1 ? true : false),
                 type: (logs && logs.indexOf('x')>-1 ? 'logarithmic' : 'linear')
-            },
-            yAxis: {
+            }, xAxis),
+            yAxis: Object.assign({
                 gridLineColor: '#e9e9e9',
                 tickWidth: 1,
                 tickLength: 3,
@@ -436,9 +435,8 @@ export class Histogram extends React.Component {
                 title: {
                     text: ''
                 },
-                reversed: yReversed,
                 type: (logs && logs.indexOf('y')>-1 ? 'logarithmic' : 'linear')
-            },
+            }, yAxis),
             credits: {
                 enabled: false // removes a reference to Highcharts.com from the chart
             }
@@ -459,17 +457,20 @@ export class Histogram extends React.Component {
 
 Histogram.defaultProps = {
     desc: 'Sample Distribution',
-    binColor: '#d1d1d1'
+    binColor: '#d1d1d1',
+    xAxis: {},
+    yAxis: {}
 };
 
 
 // when more than one histogram is defined use series
 Histogram.propTypes = {
     series: PropTypes.arrayOf(PropTypes.object), // array of objects with data, binColor, and name properties
+    xAxis: PropTypes.object,
+    yAxis: PropTypes.object,
     width: PropTypes.number,
     height: PropTypes.number,
     logs: PropTypes.oneOf(['x','y','xy']),
-    reversed: PropTypes.oneOf(['x','y','xy']),
     desc: PropTypes.string,
     data: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.number)), // array of numbers [0] - nInBin, [1] - binMin, [2] - binMax
     binColor(props, propName, componentName) {
