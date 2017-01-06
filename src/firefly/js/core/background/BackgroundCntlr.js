@@ -118,7 +118,7 @@ export function* doOnPackage({title, callback}) {
     var isDone = false;
     while (!(isDone)) {
         const action = yield take([BG_JOB_IMMEDIATE, BG_JOB_ADD]);
-        isDone = title === get(action, 'payload.Title');
+        isDone = !title || title === get(action, 'payload.Title');
     }
     callback && callback();
 }
