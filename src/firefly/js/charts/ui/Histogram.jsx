@@ -77,7 +77,6 @@ export class Histogram extends React.Component {
                 let doUpdate = false;
                 if (height !== nextProps.height || width !== nextProps.width ) {
                     chart.setSize(nextProps.width, nextProps.height, false);
-                    return false;
                 }
 
                 if (desc !== nextProps.desc) {
@@ -99,8 +98,8 @@ export class Histogram extends React.Component {
                 this.error = error;
                 chart.showLoading(error);
             }
-            return false;
         }
+        return false;
     }
 
     /*
