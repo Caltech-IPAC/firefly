@@ -126,6 +126,13 @@ task prepareWebapp (type:Copy, dependsOn: [gwt, loadConfig, createVersionTag]) {
       into gwt.warDir
     }
 
+    // temporary solution to extract fits_io.jar into WEB-INF/classes directory
+    // this fix the multiple nom.tam.fits issue
+    copy {
+      from zipTree(file("$fireflyPath/jars/fits-io/fits_io.jar"))
+      into "${gwt.warDir}/WEB-INF/classes"
+    }
+
     if (project.appConfigProps["ehcache.replicate"] && !project.appConfigProps["ehcache.replicate"].toBoolean()) {
       exclude "ehcache.xml"
     }
@@ -240,12 +247,18 @@ task publishToGithub (dependsOn: loadConfig) {
       throw new GradleException(">> Task failed due to missing node.js", e)
     }
 
-    def relConfig = '{ "tag": "' + tag_label + '"' +
-            ', "token": "' + project.property("github.auth.token") + '"' +
-            ', "name": "' + rel_title + '"' +
-            ', "assets": ["' + "${buildDir}/exec/${webapp.baseWarName}-exec.war" + '"]' +
-            "}"
 
+    def relConfig = sprintf("""
+                    |{ "tag": "%s",
+                    |  "token": "%s",
+                    |  "name": "%s",
+                    |  "assets": ["%s", "%s"]
+                    |}
+                    """.stripMargin(),
+                    tag_label,
+                    project.property("github.auth.token"),
+                    rel_title,
+                    "${buildDir}/exec/${webapp.baseWarName}-exec.war", "${buildDir}/exec/${webapp.baseWarName}.war")
     def res = exec {
       environment 'NODE_PATH': "${fireflyPath}/node_modules"
       executable "node"
