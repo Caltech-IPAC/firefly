@@ -45,7 +45,7 @@ import {Region} from '../visualize/region/Region.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
 
 const options = [
-    {label: 'AllWISE Source Catalog', value: 'wise_allwise_p3as_psd', proj: 'WISE'},
+    {label: 'AllWISE Source Catalog', value: 'allwise_p3as_psd', proj: 'WISE'},
     {label: '2MASS All-Sky Point Source Catalog (PSC)', value: 'fp_psc', proj: '2MASS'},
     {label: 'IRAS Point Source Catalog v2.1 (PSC)', value: 'iraspsc', proj: 'IRAS'}
 ];
