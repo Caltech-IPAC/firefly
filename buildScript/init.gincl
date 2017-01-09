@@ -1,4 +1,6 @@
-def INIT_GROUP = "Common initial setup for all gradle build."
+ext.MAIN_GROUP = "~> Main"
+ext.DEV_GROUP = "~> Development"
+ext.MISC_GROUP = "~ Misc"
 
 project.ext["app-name"] = name
 project.ext.buildRoot = "$rootDir/build"
@@ -7,7 +9,7 @@ buildDir = "$buildRoot/${project.ext["app-name"]}"
 
 task loadConfig {
   description= 'Load build and app config files.  Also, setup common properties like build_date, build_time, etc.'
-  group = INIT_GROUP
+  group = MISC_GROUP
 
   project.ext.build_time = new Date().toString()
   project.ext.build_date = new Date().format("yyyy-MM-dd")
@@ -47,6 +49,8 @@ task loadConfig {
 }
 
 task createVersionTag  {
+  description = 'Creates version info used for tagging as well as build label.'
+  group = MISC_GROUP
   dependsOn loadConfig
 
   doLast {
@@ -70,34 +74,37 @@ ext.getVersionTag = { ->
   return "$major.$minor.${rev}_${type}-$buildNum"
 }
 
-task createTag(dependsOn: loadConfig) << {
+task createTag(dependsOn: loadConfig) {
   description = 'Create and push a tag to remote repo. Optional properties: ${tag_name}, ${tag_file} if ${tag_name} is missing. defaults to build/version.tag, ${tag_remote} defaults to origin, ${tag_message}.'
+  group = MISC_GROUP
 
-  def tag_label = project.ext.createTagLabel();
-  println "tag: $tag_label"
+  doLast {
+    def tag_label = project.ext.createTagLabel();
+    println "tag: $tag_label"
 
-  exec {
-    executable 'git'
-    args 'tag'
-    args '-a'
-    args tag_label
-    args '-m'
-    if (project.hasProperty("tag_message")) {
-      args tag_message
-    } else {
-      args 'not given'
+    exec {
+      executable 'git'
+      args 'tag'
+      args '-a'
+      args tag_label
+      args '-m'
+      if (project.hasProperty("tag_message")) {
+        args tag_message
+      } else {
+        args 'not given'
+      }
     }
-  }
 
-  exec {
-    executable 'git'
-    args 'push'
-    if (project.hasProperty("tag_remote")) {
-      args tag_remote
-    } else {
-      args 'origin'
+    exec {
+      executable 'git'
+      args 'push'
+      if (project.hasProperty("tag_remote")) {
+        args tag_remote
+      } else {
+        args 'origin'
+      }
+      args tag_label
     }
-    args tag_label
   }
 }
 

@@ -106,6 +106,8 @@ clean {
 }
 
 task buildClient (dependsOn: loadConfig) {
+  description= 'Build JavaScript portion of the application.'
+  group = MISC_GROUP
 
   outputs.dir "${buildDir}/gwt/${project['app-name']}"
   inputs.dir "${projectDir}/js"
@@ -124,6 +126,9 @@ task buildClient (dependsOn: loadConfig) {
 }
 
 task buildJsDoc (dependsOn: loadConfig) {
+  description= 'Build JSDoc.'
+  group = MISC_GROUP
+
   def outdir = "${buildDir}/gwt/${project['app-name']}"
 
   outputs.dir outdir

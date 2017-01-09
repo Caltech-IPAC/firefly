@@ -1,4 +1,3 @@
-def DEV_GROUP = "Development"
 
 task gwt {
   outputs.upToDateWhen { false }
@@ -176,9 +175,3 @@ task devMode (dependsOn: loadConfig) {
 }
 
 
-task immediateStart (dependsOn: gwt) << {
-  logger.info ">> running immediate-start-mod.sh on $gwt.warDir/${project['app-name']}.nocache"
-  exec {
-    commandLine "$fireflyPath/buildScript/immediate-start-mod.sh", "$gwt.warDir/${project['app-name']}.nocache"
-  }
-}
