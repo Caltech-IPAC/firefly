@@ -1,5 +1,3 @@
-def WEBAPP_GROUP = "Webapp"
-
 apply plugin: 'war'
 apply from: "$fireflyPath/buildScript/gwt.gincl"
 
@@ -42,7 +40,15 @@ task jsTest (dependsOn: [loadConfig]) << {
   }
 }
 
+clean {
+  description= 'Remove build files from this project'
+  group = DEV_GROUP
+}
+
 test {
+  description= 'Run Java and JavaScript unit test'
+  group = DEV_GROUP
+
   dependsOn jsTest
   // set a system property for the test JVM(s)
   systemProperty 'some.prop', 'value'
@@ -70,7 +76,7 @@ test {
 
 task prepareWebapp (type:Copy, dependsOn: [gwt, loadConfig, createVersionTag]) {
   description= 'Generates the configuration files needed by the webapp, ie. app.prop, web.xml, etc.'
-  group = WEBAPP_GROUP
+  group = MISC_GROUP
 
   // should rerun this everytime.  properties could be modified from external files.
   outputs.upToDateWhen { false }
@@ -126,6 +132,13 @@ task prepareWebapp (type:Copy, dependsOn: [gwt, loadConfig, createVersionTag]) {
       into gwt.warDir
     }
 
+    // temporary solution to extract fits_io.jar into WEB-INF/classes directory
+    // this fix the multiple nom.tam.fits issue
+    copy {
+      from zipTree(file("$fireflyPath/jars/fits-io/fits_io.jar"))
+      into "${gwt.warDir}/WEB-INF/classes"
+    }
+
     if (project.appConfigProps["ehcache.replicate"] && !project.appConfigProps["ehcache.replicate"].toBoolean()) {
       exclude "ehcache.xml"
     }
@@ -142,7 +155,7 @@ task webapp {
 
 war {
   description= 'Build application. Creates a war file.'
-  group = WEBAPP_GROUP
+  group = MAIN_GROUP
 
   dependsOn webapp, jar, gwtCompile, buildClient, prepareWebapp
   outputs.dir gwt.warDir
@@ -161,7 +174,7 @@ clean {
 
 task deploy (dependsOn: [loadConfig, webapp]) << {
   description= 'Deploy webapp(war file) to Tomcat.  Require ${tomcat_home} property'
-  group = WEBAPP_GROUP
+  group = MAIN_GROUP
 
   if (!project.hasProperty("tomcat_home")) {
     throw ProjectConfigurationException("tomcat_home property is not found.")
@@ -179,37 +192,48 @@ task deploy (dependsOn: [loadConfig, webapp]) << {
   }
 }
 
-task warAll( dependsOn:[war, buildJsDoc] )
-task buildAndDeploy( dependsOn:[war, deploy] )
-task buildAllAndDeploy( dependsOn:[warAll, deploy] )
+task warAll( dependsOn:[war, buildJsDoc] ) {
+  description= 'Build the war file with JSDoc generated.'
+  group = MAIN_GROUP
+}
+task buildAndDeploy( dependsOn:[war, deploy] ) {
+  description= 'Build the war file and then deploy it to a local tomcat server if successful. Property ${tomcat_home} is required'
+  group = MAIN_GROUP
+}
+task buildAllAndDeploy( dependsOn:[warAll, deploy] ) {
+  description= 'Run test and docs first, then build the war file.  Deploy it to a local tomcat server if successful. Property ${tomcat_home} is required'
+  group = MAIN_GROUP
+}
 
-task buildAndPublish( dependsOn: war ) << {
-  description= 'Build the war file and then publish it to a remote host. Property ${publish_host} is required'
-  group = WEBAPP_GROUP
+task buildAndPublish( dependsOn: war ) {
+  description= 'Build the war file and then publish it to a remote host. Property ${publish_host} is required.'
+  group = MAIN_GROUP
 
-  if (!file(war.archivePath).exists()) {
-    throw new StopExecutionException("$war.archivePath not found.  Skipping sendArtifacts.")
-  }
-  if (!project.hasProperty("publish_host")) {
-    throw new StopExecutionException("publish_host not found.  Skipping sendArtifacts.")
-  }
+  doLast {
+    if (!file(war.archivePath).exists()) {
+      throw new StopExecutionException("$war.archivePath not found.  Skipping sendArtifacts.")
+    }
+    if (!project.hasProperty("publish_host")) {
+      throw new StopExecutionException("publish_host not found.  Skipping sendArtifacts.")
+    }
 
-  def rhost = project.property("publish_host")
-  def reposRoot = "/hydra/repos/${project['app-name']}"
-  def major = appConfigProps.get('BuildMajor')
-  def minor = appConfigProps.get('BuildMinor')
-  def rev = appConfigProps.get('BuildRev')
-  def buildNum = appConfigProps.get('BuildNumber')
-  def dirName = "v$major.$minor.$rev.$buildNum"
+    def rhost = project.property("publish_host")
+    def reposRoot = "/hydra/repos/${project['app-name']}"
+    def major = appConfigProps.get('BuildMajor')
+    def minor = appConfigProps.get('BuildMinor')
+    def rev = appConfigProps.get('BuildRev')
+    def buildNum = appConfigProps.get('BuildNumber')
+    def dirName = "v$major.$minor.$rev.$buildNum"
 
-  exec {
-    commandLine "ssh", "$rhost", "mkdir -p $reposRoot/$dirName/"
-  }
-  exec {
-    commandLine "scp", "$war.archivePath", "$rhost:$reposRoot/$dirName/"
-  }
-  exec {
-    commandLine "ssh", "$rhost", "cd $reposRoot; rm current; ln -s $dirName current"
+    exec {
+      commandLine "ssh", "$rhost", "mkdir -p $reposRoot/$dirName/"
+    }
+    exec {
+      commandLine "scp", "$war.archivePath", "$rhost:$reposRoot/$dirName/"
+    }
+    exec {
+      commandLine "ssh", "$rhost", "cd $reposRoot; rm current; ln -s $dirName current"
+    }
   }
 }
 
@@ -226,6 +250,8 @@ def getVersionLabel() {
 }
 
 task publishToGithub (dependsOn: loadConfig) {
+  description = 'Publish the built artifacts as a GitHub release.'
+  group = MISC_GROUP
 
   outputs.upToDateWhen { false }
 
@@ -240,12 +266,18 @@ task publishToGithub (dependsOn: loadConfig) {
       throw new GradleException(">> Task failed due to missing node.js", e)
     }
 
-    def relConfig = '{ "tag": "' + tag_label + '"' +
-            ', "token": "' + project.property("github.auth.token") + '"' +
-            ', "name": "' + rel_title + '"' +
-            ', "assets": ["' + "${buildDir}/exec/${webapp.baseWarName}-exec.war" + '"]' +
-            "}"
 
+    def relConfig = sprintf("""
+                    |{ "tag": "%s",
+                    |  "token": "%s",
+                    |  "name": "%s",
+                    |  "assets": ["%s", "%s"]
+                    |}
+                    """.stripMargin(),
+                    tag_label,
+                    project.property("github.auth.token"),
+                    rel_title,
+                    "${buildDir}/exec/${webapp.baseWarName}-exec.war", "${buildDir}/exec/${webapp.baseWarName}.war")
     def res = exec {
       environment 'NODE_PATH': "${fireflyPath}/node_modules"
       executable "node"
