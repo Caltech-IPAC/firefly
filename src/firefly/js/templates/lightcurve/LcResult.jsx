@@ -13,7 +13,7 @@ import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
-import {MultiImageViewerContainer} from '../../visualize/ui/MultiImageViewerContainer.jsx';
+import {LcImageViewerContainer} from './LcImageViewerContainer.jsx';
 import {createContentWrapper} from '../../ui/panel/DockLayoutPanel.jsx';
 import {LC} from './LcManager.js';
 import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
@@ -56,7 +56,7 @@ export class LcResult extends Component {
         var visToolbar;
         if (showImages) {
             visToolbar = <VisToolbar key='res-vis-tb'/>;
-            content.imagePlot = (<MultiImageViewerContainer key='res-images'
+            content.imagePlot = (<LcImageViewerContainer key='res-images'
                                         viewerId={LC.IMG_VIEWER_ID}
                                         closeable={true}
                                         forceRowSize={1}

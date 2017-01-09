@@ -148,7 +148,8 @@ export function ExpandedTools({visRoot,closeFunc}) {
 
 ExpandedTools.propTypes= {
     visRoot : PropTypes.object.isRequired,
-    closeable : PropTypes.bool
+    closeable : PropTypes.bool,
+    closeFunc : PropTypes.func
 };
 
 

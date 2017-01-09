@@ -12,6 +12,8 @@ import {VisInlineToolbarView} from '../../visualize/ui/VisInlineToolbarView.jsx'
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import {dispatchChangeViewerLayout, getViewer, getMultiViewRoot, GRID, SINGLE} from '../../visualize/MultiViewCntlr.js';
 import {LC} from './LcManager.js';
+import {CloseButton} from '../../ui/CloseButton.jsx';
+import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 
 
 
@@ -31,6 +33,11 @@ const tStyle= {
     paddingLeft : 5
 };
 
+const closeButtonStyle= {
+    display: 'inline-block',
+    padding: '1px 12px 0 1px'
+};
+
 var options= [];
 
 for(var i= 1; (i<=LC.MAX_IMAGE_CNT); i+=2) {
@@ -38,7 +45,7 @@ for(var i= 1; (i<=LC.MAX_IMAGE_CNT); i+=2) {
 }
 
 
-export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layoutType, dlAry, tableId}) {
+export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layoutType, dlAry, tableId, closeFunc=null}) {
 
     const viewer= getViewer(getMultiViewRoot(), viewerId);
     const count= get(viewer, 'layoutDetail.count',LC.DEF_IMAGE_CNT);
@@ -47,7 +54,7 @@ export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layou
     const pvDlAry= getAllDrawLayersForPlot(dlAry,activePlotId,true);
 
     const wcsMatch= (
-        <div style={{alignSelf:'center', paddingLeft:25}}>
+        <div style={{alignSelf:'center', padding: '0 10px 0 25px'}}>
             <div style={{display:'inline-block'}}>
                 <input style={{margin: 0}}
                        type='checkbox'
@@ -59,17 +66,33 @@ export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layou
         </div>
     );
 
-    return (
-        <div style={toolsStyle}>
-            <div style={{whiteSpace: 'nowrap', paddingLeft: 7}}>
-                Image Count:
-                <div style={{display:'inline-block', paddingLeft:7}}>
-                    <RadioGroupInputFieldView options={options} inline={true} fieldKey='frames' value={String(count)}
-                                              onChange={(ev) => changeSize(viewerId, ev.target.value)} />
+    var expandedUI= null;
+    if (closeFunc) {
+        expandedUI= (
+            <div style={{display:'flex', flexDirection:'row', flexWrap:'nowrap'}}>
+                <CloseButton style={closeButtonStyle} onClick={closeFunc}/>
+                <div style={{'flex': '1 1 auto'}}>
+                    <VisToolbar messageUnder={Boolean(closeFunc)}/>
                 </div>
             </div>
-            {wcsMatch}
-            <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={pvDlAry} />
+
+        );
+    }
+
+    return (
+        <div>
+            {expandedUI}
+            <div style={toolsStyle}>
+                <div style={{whiteSpace: 'nowrap', paddingLeft: 7}}>
+                    Image Count:
+                    <div style={{display:'inline-block', paddingLeft:7}}>
+                        <RadioGroupInputFieldView options={options} inline={true} fieldKey='frames' value={String(count)}
+                                                  onChange={(ev) => changeSize(viewerId, ev.target.value)} />
+                    </div>
+                </div>
+                {wcsMatch}
+                {!closeFunc && <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={pvDlAry} />}
+            </div>
         </div>
     );
 }
@@ -97,7 +120,8 @@ LcImageToolbarView.propTypes= {
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string.isRequired,
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
-    tableId: PropTypes.string
+    tableId: PropTypes.string,
+    closeFunc : PropTypes.func
 };
 
 
