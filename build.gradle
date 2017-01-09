@@ -13,8 +13,8 @@ subprojects {
 apply from: "$fireflyPath/buildScript/utils.gincl"
 
 task purge {
-  description= 'Remove all build files from this repository, including node_module.'
-  group = MAIN_GROUP
+  description= 'Remove all build files from this project, including node_module.'
+  group = DEV_GROUP
 
   doLast {
     println('Removes all firefly build directories.')

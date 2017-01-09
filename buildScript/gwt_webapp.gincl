@@ -40,7 +40,15 @@ task jsTest (dependsOn: [loadConfig]) << {
   }
 }
 
+clean {
+  description= 'Remove build files from this project'
+  group = DEV_GROUP
+}
+
 test {
+  description= 'Run Java and JavaScript unit test'
+  group = DEV_GROUP
+
   dependsOn jsTest
   // set a system property for the test JVM(s)
   systemProperty 'some.prop', 'value'
@@ -185,7 +193,7 @@ task deploy (dependsOn: [loadConfig, webapp]) << {
 }
 
 task warAll( dependsOn:[war, buildJsDoc] ) {
-  description= 'Run test and docs first, then build the war file.'
+  description= 'Build the war file with JSDoc generated.'
   group = MAIN_GROUP
 }
 task buildAndDeploy( dependsOn:[war, deploy] ) {
