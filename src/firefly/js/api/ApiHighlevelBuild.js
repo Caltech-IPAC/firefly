@@ -129,6 +129,7 @@ function buildTablePart(llApi) {
      * @prop {boolean} expandable   defaults to true
      * @prop {boolean} showToolbar  defaults to true
      * @prop {boolean} border       defaults to true
+     * @prop {object}  downloadButton   a download button component for this table
      */
 
     /**
