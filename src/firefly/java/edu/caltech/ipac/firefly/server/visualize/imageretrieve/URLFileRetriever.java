@@ -78,7 +78,7 @@ public class URLFileRetriever implements FileRetriever {
             params.setMaxSizeToDownload(VisContext.FITS_MAX_SIZE);
             if (request.getUserDesc() != null) params.setDesc(request.getUserDesc()); // set file description
 
-            PlotServUtils.updateProgress(request, ProgressStat.PType.READING, PlotServUtils.READ_PERCENT_MSG);
+            PlotServUtils.updatePlotCreateProgress(request, ProgressStat.PType.READING, PlotServUtils.READ_PERCENT_MSG);
 
             fitsFile = LockingVisNetwork.getImage(params);
         } catch (MalformedURLException e) {

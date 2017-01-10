@@ -1168,6 +1168,10 @@ export class WebPlotRequest extends ServerRequest {
 
     getProgressKey() { return this.getParam(C.PROGRESS_KEY); }
 
+    setRequestKey(key) { this.setParam(C.PROGRESS_KEY,key); }  // alias of setProgressKey
+
+    getRequestKey() { return this.getParam(C.PROGRESS_KEY); } // alias of getProgressKey
+
     /**
      * @param minimalReadout boolean
      */
@@ -1497,7 +1501,7 @@ function makeDataOnlyRequestString(r) {
     r= r.makeCopy();
     r.setZoomToWidth(1);
     r.setZoomToHeight(1);
-    r.setProgressKey('');
+    r.setRequestKey('');
     r.setInitialRangeValues();
     r.setInitialColorTable(0);
     return r.toString();

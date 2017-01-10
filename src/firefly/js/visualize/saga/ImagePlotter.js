@@ -20,6 +20,9 @@ import {logError} from '../../util/WebUtil.js';
  *     <li>when width/height is available via UPDATE_VIEW_SIZE, the PLOT_IMAGE_START action is continued
  *     <li>Either way when a plot is all set to continue it call the server 
  * </ul>
+ * @param {Object} params object with sega parameters
+ * @param {Function} dispatch the dispatcher function
+ * @param {Function} getState get the store
  */
 export function* imagePlotter(params, dispatch, getState) {
 
@@ -115,13 +118,13 @@ function makeContinueAction(rawAction) {
 }
 
 function makeContinueActionSingle(rawAction) {
-    var {plotId,wpRequest,redReq, greenReq, blueReq,requestKey}= rawAction.payload;
+    var {plotId,wpRequest,redReq, greenReq, blueReq}= rawAction.payload;
     const pv= getPlotViewById(visRoot(),plotId);
     var {viewDim:{width,height}}= pv;
-    redReq= addWHP(redReq,width,height,requestKey);
-    greenReq=addWHP(greenReq,width,height,requestKey);
-    blueReq= addWHP(blueReq,width,height, requestKey);
-    wpRequest= addWHP(wpRequest,width,height,requestKey );
+    redReq= addWidthHeight(redReq,width,height);
+    greenReq=addWidthHeight(greenReq,width,height);
+    blueReq= addWidthHeight(blueReq,width,height);
+    wpRequest= addWidthHeight(wpRequest,width,height);
     const payload= Object.assign({},rawAction.payload, {wpRequest, redReq, greenReq, blueReq});
     return Object.assign({}, rawAction,{payload});
 }
@@ -131,10 +134,9 @@ function makeContinueActionGroup(rawAction) {
 
     var {wpRequestAry}= rawAction.payload;
     wpRequestAry= wpRequestAry.map( (req) => {
-        const progressKey= makeUniqueRequestKey();
         const pv= getPlotViewById(visRoot(),req.getPlotId());
         var {viewDim:{width,height}}= pv;
-        return addWHP(req,width,height,progressKey );
+        return addWidthHeight(req,width,height);
     });
 
     const payload= Object.assign({},rawAction.payload, {wpRequestAry});
@@ -149,15 +151,13 @@ function makeContinueActionGroup(rawAction) {
  * @param r
  * @param {number} w
  * @param {number} h
- * @param {string} progressKey
  * @return {*}
  */
-function addWHP(r,w,h,progressKey) {
+function addWidthHeight(r,w,h) {
     if (!r) return;
     r= r.makeCopy();
     r.setZoomToWidth(w);
     r.setZoomToHeight(h);
-    r.setProgressKey(progressKey);
     return r;
 }
 
@@ -197,8 +197,7 @@ function continueSinglePlotting(rawAction, dispatcher) {
 }
 
 function continueGroupPlotting(rawAction, dispatcher) {
-    var {wpRequestAry}= rawAction.payload;
-    const progressKey= makeUniqueRequestKey();
+    var {wpRequestAry, requestKey}= rawAction.payload;
 
     if (rawAction.payload.useContextModifications) {
         wpRequestAry= wpRequestAry.map( (req) =>{
@@ -207,7 +206,7 @@ function continueGroupPlotting(rawAction, dispatcher) {
 
         });
     }
-    callGetWebPlotGroup(wpRequestAry, progressKey)
+    callGetWebPlotGroup(wpRequestAry, requestKey)
         .then( (wpResult) => processPlotImageSuccessResponse(dispatcher,rawAction.payload,wpResult) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload: {wpRequestAry, error:e} } );

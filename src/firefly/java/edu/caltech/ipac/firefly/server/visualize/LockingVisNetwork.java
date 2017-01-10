@@ -68,7 +68,8 @@ public class LockingVisNetwork {
             }
             synchronized (lockKey) {
                 DownloadListener dl = null;
-                if (params.getStatusKey() != null) {
+                if (params.getStatusKey() != null) { // todo: the download listener has very specific behavior
+                                                     // todo: it could be generalized by passing a DownloadListener
                     dl = new DownloadProgress(params.getStatusKey(), params.getPlotid());
                 }
                 edu.caltech.ipac.util.download.FileData fd = VisNetwork.getImage(params, dl);
@@ -112,8 +113,8 @@ public class LockingVisNetwork {
                 if (ev.getMax() > 0) {
                     offStr = " of " + FileUtil.getSizeAsString(ev.getMax());
                 }
-                String messStr = "Downloaded " + FileUtil.getSizeAsString(ev.getCurrent()) + offStr;
-                PlotServUtils.updateProgress(_key, _plotId, ProgressStat.PType.DOWNLOADING, messStr);
+                String messStr = "Retrieved " + FileUtil.getSizeAsString(ev.getCurrent()) + offStr;
+                PlotServUtils.updatePlotCreateProgress(_key, _plotId, ProgressStat.PType.DOWNLOADING, messStr);
             }
         }
 

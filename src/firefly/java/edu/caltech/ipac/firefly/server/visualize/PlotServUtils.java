@@ -363,7 +363,7 @@ public class PlotServUtils {
         return  baseStr +"-"+ state.getContextString() +"-"+state.serialize().hashCode();
     }
 
-    public static void updateProgress(ProgressStat pStat) {
+    public static void updatePlotCreateProgress(ProgressStat pStat) {
         Cache cache= UserCache.getInstance();
         CacheKey key= new StringKey(pStat.getId());
         ProgressStat lastPstat= (ProgressStat) cache.get(key);
@@ -381,7 +381,7 @@ public class PlotServUtils {
             ProgressMessage progMsg= getPlotProgressMessage(pStat);
             FluxAction a= new FluxAction("ImagePlotCntlr.PlotProgressUpdate");
             a.setValue(progMsg.message,"message");
-            a.setValue(pStat.getId(),"progressKey");
+            a.setValue(pStat.getId(),"requestKey");
             a.setValue(pStat.getType()==ProgressStat.PType.GROUP,"group");
             a.setValue(progMsg.done,"done");
             a.setValue( pStat.getPlotId(),"plotId");
@@ -389,18 +389,18 @@ public class PlotServUtils {
         }
     }
 
-    public static void updateProgress(String key, String plotId, ProgressStat.PType type, String progressMsg) {
+    public static void updatePlotCreateProgress(String key, String plotId, ProgressStat.PType type, String progressMsg) {
         if (key!=null) {
-            updateProgress(new ProgressStat(key,plotId, type,progressMsg));
+            updatePlotCreateProgress(new ProgressStat(key,plotId, type,progressMsg));
         }
 
     }
 
-    public static void updateProgress(WebPlotRequest r, ProgressStat.PType type, String progressMsg) {
+    public static void updatePlotCreateProgress(WebPlotRequest r, ProgressStat.PType type, String progressMsg) {
         if (r!=null) {
             String key= r.getProgressKey();
             String plotId= r.getPlotId();
-            if (key!=null) updateProgress(new ProgressStat(key,plotId, type,progressMsg));
+            if (key!=null) updatePlotCreateProgress(new ProgressStat(key,plotId, type,progressMsg));
         }
     }
 

@@ -81,7 +81,7 @@ public class WebPlotFactory {
         for(int i= 0; (i<resultsList.size()); i++) {
             ImagePlotBuilder.Results r= resultsList.get(i);
             ImagePlotInfo pi = r.getPlotInfoAry()[0];
-            PlotServUtils.updateProgress(pi.getState().getWebPlotRequest(), ProgressStat.PType.CREATING,
+            PlotServUtils.updatePlotCreateProgress(pi.getState().getWebPlotRequest(), ProgressStat.PType.CREATING,
                                          PlotServUtils.PROCESSING_MSG+": "+ (i+1)+" of "+resultsList.size());
 
             for (Map.Entry<Band, ModFileWriter> entry : pi.getFileWriterMap().entrySet()) {
@@ -197,11 +197,11 @@ public class WebPlotFactory {
                 if (i==0) saveRequest= pi.getState().getWebPlotRequest();
 
                 if (pInfo.length>3) {
-                    PlotServUtils.updateProgress(pi.getState().getWebPlotRequest(), ProgressStat.PType.CREATING,
+                    PlotServUtils.updatePlotCreateProgress(pi.getState().getWebPlotRequest(), ProgressStat.PType.CREATING,
                                                  PlotServUtils.PROCESSING_MSG+": "+ (i+1)+" of "+pInfo.length);
                 }
                 else {
-                    PlotServUtils.updateProgress(pi.getState().getWebPlotRequest(),ProgressStat.PType.CREATING,
+                    PlotServUtils.updatePlotCreateProgress(pi.getState().getWebPlotRequest(),ProgressStat.PType.CREATING,
                                                  PlotServUtils.PROCESSING_MSG);
                 }
 
@@ -217,7 +217,7 @@ public class WebPlotFactory {
             }
 
             if (saveRequest!=null) {
-                PlotServUtils.updateProgress(saveRequest, ProgressStat.PType.SUCCESS, "Success");
+                PlotServUtils.updatePlotCreateProgress(saveRequest, ProgressStat.PType.SUCCESS, "Success");
             }
 
             long elapse = System.currentTimeMillis() - start;
@@ -242,7 +242,7 @@ public class WebPlotFactory {
     }
 
     private static void updateProgressIsFailure(WebPlotRequest wpr) {
-        if (wpr!=null) PlotServUtils.updateProgress(wpr, ProgressStat.PType.FAIL, "Failed");
+        if (wpr!=null) PlotServUtils.updatePlotCreateProgress(wpr, ProgressStat.PType.FAIL, "Failed");
     }
 
 

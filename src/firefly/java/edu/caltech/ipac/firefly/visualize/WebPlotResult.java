@@ -48,7 +48,7 @@ public class WebPlotResult implements Serializable, DataEntry, Iterable<Map.Entr
     private String _briefFailReason;
     private String _userFailReason;
     private String _detailFailReason;
-    private String _progressKey;
+    private String _requestKey;
     private String _plotId;
     private HashMap<String, DataEntry> _map= new HashMap<String, DataEntry>(3);
 
@@ -85,14 +85,14 @@ public class WebPlotResult implements Serializable, DataEntry, Iterable<Map.Entr
                           String briefFailReason,
                           String userFailReason,
                           String detailFailReason,
-                          String progressKey,
+                          String requestKey,
                           String plotId)  {
         _ctxStr= ctxStr;
         _success= success;
         _briefFailReason= briefFailReason;
         _userFailReason= userFailReason;
         _detailFailReason= detailFailReason;
-        _progressKey= progressKey;
+        _requestKey = requestKey;
         _plotId= plotId;
     }
 //======================================================================
@@ -120,9 +120,11 @@ public class WebPlotResult implements Serializable, DataEntry, Iterable<Map.Entr
     public String getBriefFailReason() { return _briefFailReason; }
     public String getUserFailReason() { return _userFailReason; }
     public String getDetailFailReason() { return _detailFailReason; }
-    public String getProgressKey() { return _progressKey; }
+    public String getProgressKey() { return _requestKey; }
     public String getPlotId() { return _plotId; }
     public String getContextStr() { return _ctxStr; }
+    public void setRequestKey(String requestKey) { _requestKey = requestKey;}
+    public String getRequestKey() { return _requestKey; }
 
     public Iterator<Map.Entry<String,DataEntry>> iterator() {
         return _map.entrySet().iterator();

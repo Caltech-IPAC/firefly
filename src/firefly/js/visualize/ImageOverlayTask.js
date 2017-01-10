@@ -55,7 +55,7 @@ export function plotImageMaskActionCreator(rawAction) {
             title,
             imageOverlayId,
             maskRequest,
-            requestKey: makeUniqueRequestKey()
+            requestKey: makeUniqueRequestKey('overlay')
         };
         dispatcher({type:ImagePlotCntlr.PLOT_MASK_START, payload});
 
