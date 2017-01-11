@@ -1221,8 +1221,6 @@ public class FitsRead implements Serializable {
     }
 
 
-
-
     private static int getNoneLinerStretchedPixelValue(double dRunVal,  double[] dtbl, int delta) {
 
         int pixval = 128;
@@ -1772,7 +1770,7 @@ public class FitsRead implements Serializable {
 
         FitsImageCube fic = FitsRead.createFitsImageCube(fits);
         Object[] keys = fic.getMapKeys();
-         FitsRead fitsRead0 = fic.getFitsReadMap().get(keys[0])[1];
+        FitsRead fitsRead0 = fic.getFitsReadMap().get(keys[0])[1];
         FileOutputStream fo = new java.io.FileOutputStream(outFitsName+"fitsRead1ReadAsImageCube.fits");
         fitsRead0.writeSimpleFitsFile(fo);
         fo.close();
