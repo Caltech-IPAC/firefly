@@ -8,7 +8,6 @@ import {visRoot} from '../ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
 import {VisHeaderView} from './VisHeaderView.jsx';
 import {ExpandedModeDisplay} from '../iv/ExpandedModeDisplay.jsx';
-// import {currMouseState} from '../VisMouseCntlr.js';
 import {addMouseListener, lastMouseCtx} from '../VisMouseSync.js';
 import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
 

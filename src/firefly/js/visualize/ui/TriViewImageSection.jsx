@@ -17,17 +17,17 @@ import {getTblById} from '../../tables/TableUtil.js';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode, dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 
 export const META_VIEWER_ID = 'triViewImageMetaData';
-export const COVERAGE_VIEWER_ID = 'TBD';
 
 
 /**
  * This component works with ImageMetaDataWatch sega which should be launch during initialization
- * @param showCoverage
- * @param showFits
- * @param showMeta
- * @param imageExpandedMode if true, then imageExpandedMode overrides everything else
- * @param closeable expanded mode should have a close button
- * @param metaDataTableId
+ * @param p
+ * @param p.showCoverage
+ * @param p.showFits
+ * @param p.showMeta
+ * @param p.imageExpandedMode if true, then imageExpandedMode overrides everything else
+ * @param p.closeable expanded mode should have a close button
+ * @param p.metaDataTableId
  * @return {XML}
  * @constructor
  */
@@ -102,5 +102,6 @@ TriViewImageSection.propTypes= {
     showMeta : PropTypes.bool,
     imageExpandedMode : PropTypes.bool,
     closeable: PropTypes.bool,
+    metaDataTableId: PropTypes.string,
     selectedTab: PropTypes.oneOf(['fits', 'meta', 'coverage'])
 };

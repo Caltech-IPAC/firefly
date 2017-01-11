@@ -733,7 +733,7 @@ export function dispatchChangePointSelection(requester, enabled) {
  */
 export function dispatchChangeExpandedMode(expandedMode) {
 
-    const vr= visRoot();
+    var vr= visRoot();
 
     if (!isExpanded(vr.expandedMode) && isExpanded(expandedMode)) { // if going from collapsed to expanded
         const plotId= vr.activePlotId;
@@ -765,7 +765,6 @@ export function dispatchChangeExpandedMode(expandedMode) {
             }
         });
     }
-    
 }
 
 

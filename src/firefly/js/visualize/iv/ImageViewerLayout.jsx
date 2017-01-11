@@ -16,6 +16,7 @@ import {UserZoomTypes}  from '../ZoomUtil.js';
 import {primePlot, plotInActiveGroup} from '../PlotViewUtil.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js';
 import {contains} from '../VisUtil.js';
+import {PlotAttribute} from '../WebPlot.js';
 import {
     visRoot,
     WcsMatchType,
@@ -86,6 +87,14 @@ export class ImageViewerLayout extends Component {
         if (pv.plotViewCtx.zoomLockingEnabled && primePlot(pv)) {
             const paging= isImageViewerSingleLayout(getMultiViewRoot(), visRoot(), pv.plotId);
             updateZoom(pv,paging);
+        }
+
+        const vr= visRoot();
+
+        if (vr.wcsMatchType===WcsMatchType.Target && vr.activePlotId===pv.plotId && primePlot(vr)) {
+            const plot= primePlot(vr);
+            const ft=  plot.attributes[PlotAttribute.FIXED_TARGET];
+            if (ft) dispatchRecenter({plotId:plot.plotId, centerPt:ft});
         }
     }
 
