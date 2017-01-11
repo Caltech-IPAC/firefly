@@ -82,7 +82,8 @@ MultiImageViewer.propTypes= {
     gridDefFunc : PropTypes.func,
     insideFlex : PropTypes.bool,
     closeFunc : PropTypes.func,
-    showWhenExpanded : PropTypes.bool
+    showWhenExpanded : PropTypes.bool,
+    handleInlineToolsWhenSingle : PropTypes.bool
 };
 
 // function gridDefFunc(plotIdAry) : [ {title :string, [plotId:string]}]

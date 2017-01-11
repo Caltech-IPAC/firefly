@@ -34,10 +34,14 @@ export function LcImageViewerContainer({viewerId, imageExpandedMode=false, close
             />
         );
     } else {
-        return ( <MultiImageViewer viewerId = {viewerId}
-                        insideFlex = {insideFlex} forceRowSize={forceRowSize}
-                        canReceiveNewPlots = {NewPlotMode.create_replace.key}
-                        Toolbar = {Toolbar}/>
+        return ( <MultiImageViewer
+                        viewerId = {viewerId}
+                        insideFlex= {insideFlex}
+                        forceRowSize={forceRowSize}
+                        canReceiveNewPlots= {NewPlotMode.create_replace.key}
+                        handleInlineToolsWhenSingle= {false}
+                        Toolbar = {Toolbar}
+            />
         );
     }
 }
