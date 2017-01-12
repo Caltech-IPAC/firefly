@@ -163,7 +163,7 @@ public class Decimate {
 	ImageTiler t = h.getTiler();
 
 	/* first, do the header */
-	Header new_header = Crop.clone_header(old_header);
+	Header new_header = CropAndCenter.clone_header(old_header);
 
 	int bitpix = old_header.getIntValue("BITPIX");
 	naxis = old_header.getIntValue("NAXIS");

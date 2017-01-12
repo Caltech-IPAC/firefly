@@ -28,7 +28,7 @@ import org.json.simple.parser.ParseException;
  */
 public class ProjectionTest {
 
-    private  double delta = 0.0000000001;
+    private  double delta = 0.1E-10;
     /**
      * This method gets the .json files in the given directory
      * @param path - the directory that has the testing data

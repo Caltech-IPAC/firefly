@@ -19,6 +19,7 @@ import java.io.*;
  *
  * It is difficult to do a unit test for this kind cases.  We the end to end test is used instead.
  */
+@Deprecated
 public class CropTest extends FitsValidation{
 
 
