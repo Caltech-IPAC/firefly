@@ -226,7 +226,7 @@ public class CropFile {
      */
     private static Header getNewHeader(ImageHDU h, Header old_header,
                                        int xCenter, int yCenter, int xSize, int ySize) throws HeaderCardException {
-        Header newHeader = Crop.clone_header(old_header);
+        Header newHeader = CropAndCenter.clone_header(old_header);
 
         int naxis1 = old_header.getIntValue("NAXIS1");
         int naxis2 = old_header.getIntValue("NAXIS2");
