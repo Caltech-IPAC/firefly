@@ -110,7 +110,7 @@ export function isMetaDataTable(tbl_id) {
     const tableMeta= get(table, 'tableMeta');
     if (!tableMeta) return false;
 
-    if (MetaConst.DATASET_CONVERTER) return true;
+    if (tableMeta[MetaConst.DATASET_CONVERTER]) return true;
     if (tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] || tableMeta[MetaConst.CATALOG_COORD_COLS])  return false;
     const converter= converterFactory(table);
     return Boolean(converter);
