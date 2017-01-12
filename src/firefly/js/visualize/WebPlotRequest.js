@@ -4,7 +4,7 @@
  * Time: 9:18:47 AM
  */
 /* eslint prefer-template:0 */
-import {isString, isPlainObject, isArray, join} from 'lodash';
+import {isString, isPlainObject, isArray, join, has} from 'lodash';
 import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
 import {RequestType} from './RequestType.js';
 import {ZoomType} from './ZoomType.js';
@@ -214,7 +214,7 @@ export class WebPlotRequest extends ServerRequest {
 
             var typeGuess;
             if (obj[C.FILE]) typeGuess= RequestType.FILE;
-            if (obj[C.URL]) typeGuess= RequestType.URL;
+            if (obj[C.URLKEY]) typeGuess= RequestType.URL;
             if (obj[C.SURVEY_KEY]) typeGuess= RequestType.SERVICE;
 
 
@@ -223,6 +223,11 @@ export class WebPlotRequest extends ServerRequest {
                 typeGuess= RequestType.BLANK;
             }
             if (typeGuess && !wpr.params[C.SERVICE]) wpr.setServiceType(typeGuess);
+
+            if (has(wpr.params, C.URLKEY)) {
+                wpr.setURL(wpr.params[C.URLKEY]);
+            }
+
             return wpr;
         }
         return obj;
