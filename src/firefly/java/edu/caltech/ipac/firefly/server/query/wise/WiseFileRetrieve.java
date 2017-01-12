@@ -70,6 +70,7 @@ public class WiseFileRetrieve extends BaseFileInfoProcessor {
         PROD_LEVEL_MAP.put(WiseRequest.NEOWISER_YR1 +"|1b", "links-neowiser/l1b-yr1/");
         PROD_LEVEL_MAP.put(WiseRequest.NEOWISER_YR2 +"|1b", "links-neowiser/l1b-yr2/");
         PROD_LEVEL_MAP.put(WiseRequest.NEOWISER_YR3 +"|1b", "links-neowiser/l1b-yr3/");
+        PROD_LEVEL_MAP.put(WiseRequest.NEOWISER_YR4 +"|1b", "links-neowiser/l1b-yr4/");
 
     }
 

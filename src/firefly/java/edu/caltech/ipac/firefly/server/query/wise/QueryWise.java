@@ -371,7 +371,7 @@ public class QueryWise extends IBESearchProcessor {
 
         String schema = req.getSchema();
         List<String> imageSets = Arrays.asList(schema.split(","));
-        if (WiseRequest.useMergedTable(schema) && imageSets.size() < 6) {   // 6 means all were selected.  no constraint is needed.
+        if (WiseRequest.useMergedTable(schema) && imageSets.size() < 7) {   // 7 means all were selected.  no constraint is needed.
             int n = 0;
             String imageSetConstraint = "image_set";
             if (imageSets.size() > 1) {
@@ -411,6 +411,11 @@ public class QueryWise extends IBESearchProcessor {
             if (imageSets.contains(WiseRequest.NEOWISER_YR3)) {
                 if (n>0) imageSetConstraint += ",8";
                 else imageSetConstraint += "8";
+                n++;
+            }
+            if (imageSets.contains(WiseRequest.NEOWISER_YR4)) {
+                if (n>0) imageSetConstraint += ",9";
+                else imageSetConstraint += "9";
                 n++;
             }
 

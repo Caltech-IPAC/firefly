@@ -65,7 +65,8 @@ public class WiseRequest extends TableServerRequest {
     public final static String NEOWISER_PROV = "neowiser_prov";
     public final static String NEOWISER_YR1 = "neowiser_yr1";
     public final static String NEOWISER_YR2 = "neowiser_yr2";
-    public final static String NEOWISER_YR3 = "neowiser_yr3";       //this is the on-going yr3 internal neowiser
+    public final static String NEOWISER_YR3 = "neowiser_yr3";
+    public final static String NEOWISER_YR4 = "neowiser_yr4";       //this is the on-going yr4 internal neowiser
     public final static String PASS2_4BAND = "pass2-4band";
     public final static String PASS2_3BAND = "pass2-3band";
     public final static String PASS2_2BAND = "pass2-2band";
@@ -88,6 +89,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER,"NEOWISER PUBLIC (2 Bands)");
             put(NEOWISER_YR2,"NEOWISER YR2 (2 Bands)");
             put(NEOWISER_YR3,"NEOWISER YR3 (2 Bands)");
+            put(NEOWISER_YR4,"NEOWISER YR4 (2 Bands)");
             put(PASS2_4BAND,"Pass 2 (4 Bands)");
             put(PASS2_3BAND,"Pass 2 (3 Bands)");
             put(PASS2_2BAND, "Pass 2 (2 Bands)");
@@ -119,6 +121,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR1 +"|1b", new String[]{"yr1_p1bm_frm", "yr1_p1bs_psd"});
             put(NEOWISER_YR2 +"|1b", new String[]{"yr2_p1bm_frm", "yr2_p1bs_psd"});
             put(NEOWISER_YR3 +"|1b", new String[]{"yr3_i1bm_frm", "yr3_i1bs_psd"});  // TODO: check
+            put(NEOWISER_YR4 +"|1b", new String[]{"yr4_i1bm_frm", "yr4_i1bs_psd"});  // TODO: check
             put(MERGE_INT+"|1b", new String[]{"merge_i1bm_frm", "merge_i1bs_psd"});
             put(MERGE_INT+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
             put(PASS2_4BAND+"|1b", new String[]{"4band_i1bm_frm", "4band_i1bs_psd"});
@@ -152,7 +155,8 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_PROV, new Integer[]{44212, 55289});
             put(NEOWISER_YR1, new Integer[]{44212, 55289});
             put(NEOWISER_YR2, new Integer[]{55290, 66418});   // 66418a is the last scan for yr2
-            put(NEOWISER_YR3, new Integer[]{66418, 999999}); // 66418b is the first scan for yr3?
+            put(NEOWISER_YR3, new Integer[]{66418, 77590});  // 66418b is the first scan for yr3 and 77509a is the last scan
+            put(NEOWISER_YR4, new Integer[]{77590, 999999}); // 77590b is the first scan for yr4
         }
     };
 
@@ -176,6 +180,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR1,"wise_neowiser_yr1");
             put(NEOWISER_YR2,"wise_neowiser_yr2");
             put(NEOWISER_YR3,"wise_neowiser_yr3");
+            put(NEOWISER_YR4,"wise_neowiser_yr4");
 
         }
     };
@@ -195,7 +200,8 @@ public class WiseRequest extends TableServerRequest {
             put(PASS2_2BAND, "pass2_2band_i1bs_psd_view");
             put(NEOWISER_YR1,"neowiser_yr1_p1bs_psd");
             put(NEOWISER_YR2,"neowiser_yr2_p1bs_psd");
-            put(NEOWISER_YR3,"neowiser_i1bs_psd");
+            put(NEOWISER_YR3,"neowiser_yr3_i1bs_psd");
+            put(NEOWISER_YR4,"neowiser_i1bs_psd");
         }
     };
 
@@ -506,9 +512,12 @@ public class WiseRequest extends TableServerRequest {
             } else if (scanNum < SCANID_MAP.get(NEOWISER_YR2)[1] ||
                     (scanNum==SCANID_MAP.get(NEOWISER_YR2)[1]) && scanID.trim().endsWith("a")) {
                 return new String[]{NEOWISER_YR2};
-            } else if (scanNum > SCANID_MAP.get(NEOWISER_YR3)[0] ||
-                    (scanNum==SCANID_MAP.get(NEOWISER_YR3)[0] && scanID.trim().endsWith("b")) ) {
+            } else if (scanNum >= SCANID_MAP.get(NEOWISER_YR3)[0] &&
+                    scanNum <= SCANID_MAP.get(NEOWISER_YR3)[1]) {
                 return new String[]{NEOWISER_YR3};
+            } else if (scanNum > SCANID_MAP.get(NEOWISER_YR4)[0] ||
+                    (scanNum==SCANID_MAP.get(NEOWISER_YR4)[0] && scanID.trim().endsWith("b")) ) {
+                return new String[]{NEOWISER_YR4};
             }else {
                 // these 2 have the same range..
                 // getImageSetFromSourceId() will determine which one to select
