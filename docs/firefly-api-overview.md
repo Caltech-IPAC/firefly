@@ -671,7 +671,7 @@ Please, see `firefly.showXYPlot` and `firefly.showHistogram` for the list of oth
 
 *Example:*
 ```js
-tblReq = firefly.util.table.makeIrsaCatalogRequest('wise catalog', 'WISE', 'wise_allwise_p3as_psd',
+tblReq = firefly.util.table.makeIrsaCatalogRequest('wise catalog', 'WISE', 'allwise_p3as_psd',
     {   
         position: '10.68479;41.26906;EQ_J2000',
         SearchMethod: 'Cone',

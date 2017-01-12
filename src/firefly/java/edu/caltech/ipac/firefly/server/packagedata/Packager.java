@@ -41,14 +41,13 @@ public class Packager {
 
     public static final long DEFAULT_DATA_BYTES = AppProperties.getLongProperty("download.data.bytesize", 2097152);
     public final static String DOWNLOAD_SERVLET_PATH = "servlet/Download";
-
-    private BackgroundStatus _estimateStat = null;
     private final String _packageID;
     private final String _dataSource;
     private final BackgroundInfoCacher backgroundInfoCacher;
     private final List<FileGroup> _fgList;
     private final long _maxBundleBytes;
     private final List<PackagedBundle> bundleList= new ArrayList<PackagedBundle>(20);
+    private BackgroundStatus _estimateStat = null;
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -83,6 +82,51 @@ public class Packager {
 //----------------------- Method from Runnable -------------------------------
 //======================================================================
 
+    private static String getUrl(String packageId, int packageIdx, int numPackages, String baseFileName) {
+        try {
+            String suggestedName;
+            try {
+                suggestedName = URLEncoder.encode(baseFileName, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                suggestedName = "DownloadPackage";
+            }
+            if (numPackages > 1) suggestedName += "-part" + (packageIdx + 1);
+
+            suggestedName += ".zip";
+
+            File zipFile = getZipFile(packageId, packageIdx);
+
+            return getUrl(zipFile,suggestedName );
+
+        } catch (RuntimeException e) {
+            Logger.debug("id= " + packageId + " baseFileName= " + baseFileName);
+            throw e;
+        }
+    }
+
+    private static String getUrl(File f, String suggestedName) {
+        String fileStr = ServerContext.replaceWithPrefix(f);
+        try {
+            fileStr = URLEncoder.encode(fileStr, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            // ignore, just proceed
+        }
+        return ServerContext.getRequestOwner().getBaseUrl() + DOWNLOAD_SERVLET_PATH + "?" +
+                AnyFileDownload.FILE_PARAM + "=" + fileStr + "&" +
+                AnyFileDownload.RETURN_PARAM + "=" + suggestedName + "&" +
+                AnyFileDownload.LOG_PARAM + "=true&" +
+                AnyFileDownload.TRACK_PARAM + "=true";
+    }
+
+    public static File getZipFile(String packageId, String packageIdx) {
+        File stagingDir = ServerContext.getStageWorkDir();
+        return new File(stagingDir, packageId + "_" + packageIdx + ".zip");
+
+    }
+
+    private static File getZipFile(String packageId, int packageIdx) {
+        return getZipFile(packageId, (new Integer(packageIdx)).toString());
+    }
 
     public void packageAll() {
         BackgroundStatus bgStat = null;
@@ -110,7 +154,6 @@ public class Packager {
     public boolean isOneFile() {
         return _fgList.size()==1 && _fgList.get(0).getSize()==1;
     }
-
 
     private BackgroundStatus packageOneFile(FileInfo fileInfo) {
         BackgroundStatus retval;
@@ -150,8 +193,7 @@ public class Packager {
             bundle.addProcessedBytes(1, fSize, fSize, fSize);
             bundle.finish(url);
             retval= new BackgroundStatus(_packageID, BackgroundState.SUCCESS, BackgroundStatus.BgType.PACKAGE);
-            _estimateStat.addAttribute(JobAttributes.Zipped);
-            _estimateStat.addAttribute(JobAttributes.CanSendEmail);
+            retval.addAttribute(JobAttributes.Zipped);
             retval.setParam(BackgroundStatus.TOTAL_BYTES, fileInfo.getSizeInBytes()+"");
             retval.addPackageProgress(bundle.makePackageProgress());
         } catch (FailedRequestException e) {
@@ -206,6 +248,11 @@ public class Packager {
         }
     }
 
+
+//======================================================================
+//------------------ Private / Protected Methods -----------------------
+//======================================================================
+
     //int getTotalToZip() { return _estimateStat.getPartCount(); }
     public BackgroundInfoCacher getBackgroundInfoCacher() {
         return backgroundInfoCacher;
@@ -222,11 +269,6 @@ public class Packager {
     public String getID() {
         return _packageID;
     }
-
-
-//======================================================================
-//------------------ Private / Protected Methods -----------------------
-//======================================================================
 
     private void resolveUrlData() {
 
@@ -260,58 +302,11 @@ public class Packager {
         bundleList.add(bundle);
         _estimateStat = new BackgroundStatus( _packageID, BackgroundState.WAITING, BackgroundStatus.BgType.PACKAGE);
         _estimateStat.addAttribute(JobAttributes.Zipped);
-        _estimateStat.addAttribute(JobAttributes.CanSendEmail);
         _estimateStat.addAttribute(JobAttributes.DownloadScript);
         _estimateStat.addPackageProgress(bundle.makePackageProgress());
         _estimateStat.setParam(BackgroundStatus.TOTAL_BYTES, totalSize + "");
         _estimateStat.setDataSource(_dataSource);
         backgroundInfoCacher.setStatus(_estimateStat);
-    }
-
-    private static String getUrl(String packageId, int packageIdx, int numPackages, String baseFileName) {
-        try {
-            String suggestedName;
-            try {
-                suggestedName = URLEncoder.encode(baseFileName, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                suggestedName = "DownloadPackage";
-            }
-            if (numPackages > 1) suggestedName += "-part" + (packageIdx + 1);
-
-            suggestedName += ".zip";
-
-            File zipFile = getZipFile(packageId, packageIdx);
-
-            return getUrl(zipFile,suggestedName );
-
-        } catch (RuntimeException e) {
-            Logger.debug("id= " + packageId + " baseFileName= " + baseFileName);
-            throw e;
-        }
-    }
-
-    private static String getUrl(File f, String suggestedName) {
-        String fileStr = ServerContext.replaceWithPrefix(f);
-        try {
-            fileStr = URLEncoder.encode(fileStr, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            // ignore, just proceed
-        }
-        return ServerContext.getRequestOwner().getBaseUrl() + DOWNLOAD_SERVLET_PATH + "?" +
-                AnyFileDownload.FILE_PARAM + "=" + fileStr + "&" +
-                AnyFileDownload.RETURN_PARAM + "=" + suggestedName + "&" +
-                AnyFileDownload.LOG_PARAM + "=true&" +
-                AnyFileDownload.TRACK_PARAM + "=true";
-    }
-
-    public static File getZipFile(String packageId, String packageIdx) {
-        File stagingDir = ServerContext.getStageWorkDir();
-        return new File(stagingDir, packageId + "_" + packageIdx + ".zip");
-
-    }
-
-    private static File getZipFile(String packageId, int packageIdx) {
-        return getZipFile(packageId, (new Integer(packageIdx)).toString());
     }
 
 // =====================================================================

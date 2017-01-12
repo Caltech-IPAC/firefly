@@ -90,16 +90,20 @@ export function expandedPlotViewAry(ref,activePlotId=null) {
  * @param visRoot - root of the visualization object in store
  * @param pvOrId this parameter will take the plotId string or a plotView object
  * @param onlyIfGroupLocked
+ * @param hasPlots
  * @returns {*}
  */
-export function getPlotViewIdListInGroup(visRoot,pvOrId,onlyIfGroupLocked=true) {
+export function getPlotViewIdListInGroup(visRoot,pvOrId,onlyIfGroupLocked=true, hasPlots=false) {
     if (!pvOrId) return [];
     var pv= (typeof pvOrId ==='string') ? getPlotViewById(visRoot,pvOrId) : pvOrId;
     var gid= pv.plotGroupId;
     var group= getPlotGroupById(visRoot,gid);
     var locked= hasGroupLock(pv,group);
     if (!locked && onlyIfGroupLocked) return [pv.plotId];
-    return visRoot.plotViewAry.filter( (pv) => pv.plotGroupId===gid).map( (pv) => pv.plotId);
+    const idList=  visRoot.plotViewAry.filter( (pv) => pv.plotGroupId===gid).map( (pv) => pv.plotId);
+    if (!hasPlots) return idList;
+
+    return idList.filter( (id) => get(getPlotViewById(visRoot,id),'plots.length') );
 }
 
 

@@ -43,8 +43,9 @@ public abstract class BaseFileInfoProcessor implements SearchProcessor<FileInfo>
             }
             onComplete(request, fi);
             return fi;
+        } catch (DataAccessException e) {
+            throw e;
         } catch (Exception e) {
-            _logger.error(e, "Error while processing request:" + StringUtils.truncate(request, 256));
             throw new DataAccessException("Request failed due to unexpected exception: ", e);
         }
     }

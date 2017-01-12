@@ -126,9 +126,9 @@ export class Tabs extends Component {
             }
 
             return React.cloneElement(child, {
-                selected: (index == selectedIdx),
+                selected: (index === selectedIdx),
                 onSelect: this.onSelect.bind(this, index),
-                ref: 'tab-' + (index)
+                key: 'tab-' + (index)
             });
         });
         const contentDiv = useFlex ? content :
@@ -194,7 +194,7 @@ export class Tab extends Component {
         const textStyle = maxTitleWidth ? {float: 'left', width: maxTitleWidth-(removable?14:0)} : {};
 
         return (
-            <li className={tabClassName} onClick={() => !this.removed && onSelect(id,name)}>
+            <li className={tabClassName} onClick={() => onSelect(id,name)}>
                 <div>
                     <div style={textStyle} className='text-ellipsis' title={name}>
                          {name}
@@ -202,10 +202,10 @@ export class Tab extends Component {
                     {removable &&
                             <div style={{right: -4, top: -2}} className='btn-close'
                                  title='Remove Tab'
-                                 onClick={() => {
+                                 onClick={(e) => {
                                  onTabRemove && onTabRemove(name);
-                                 this.removed = true;
-                                 }}/>
+                                 e.stopPropagation && e.stopPropagation();
+                            }}/>
                     }
                 </div>
             </li>);

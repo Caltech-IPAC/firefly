@@ -11,7 +11,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Demo of Firefly Tools</title>
+    <title>Charts in Firefly</title>
 </head>
 
 <body>
@@ -25,7 +25,7 @@
 
 <div id="histogramHere" style="width: 800px; height: 550px; border: solid 1px"></div>
 <br/><br/>
-<div id="chartHere" style="width: 800px; height: 550px; border: solid 1px;"></div>
+<div id="xyplotHere" style="width: 800px; height: 550px; border: solid 1px;"></div>
 
 <script type="text/javascript">
     {
@@ -89,12 +89,10 @@
                 xCol: 'ra1',
                 yCol: 'dec1'
             };
-            firefly.showXYPlot('chartHere', chartParams);
-
-
+            firefly.showXYPlot('xyplotHere', chartParams);
 
         }
-   }
+    }
 
 
 </script>
@@ -103,3 +101,5 @@
 <script  type="text/javascript" src="../firefly_loader.js"></script>
 
 
+</body>
+</html>

@@ -3,9 +3,10 @@
  */
 
 import React from 'react';
+
 import CompleteButton from './CompleteButton.jsx';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
-
+import {HelpIcon} from './HelpIcon.jsx';
 
 
 function handleFailfure() {
@@ -28,37 +29,51 @@ function createSuccessHandler(action, params, onSubmit) {
 }
 
 export const FormPanel = function (props) {
-    var {children, onSubmit, onCancel, onError, groupKey, action, params, width, height} = props;
+    var {children, onSubmit, onCancel, onError, groupKey, action, params, width='100%', height='100%', submitText='Search', help_id} = props;
 
     const style = { width, height,
         backgroundColor: 'white',
         border: '1px solid rgba(0,0,0,0.3)',
         padding: 5,
-        marginBottom: 5
+        marginBottom: 5,
+        boxSizing: 'border-box'
     };
     return (
         <div>
             <div style={style}>
                 {children}
             </div>
-            <CompleteButton style={{display: 'inline-block', marginRight: 10}}
-                            groupKey={groupKey}
-                            onSuccess={createSuccessHandler(action, params, onSubmit)}
-                            onFail={onError || handleFailfure}
-                            text = 'Search'
-            />
-            <button style={{display: 'inline-block'}} type='button' className='button std' onClick={onCancel}>Cancel</button>
+            <div style={{display: 'inline-flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-end'}}>
+                <div>
+                    <CompleteButton style={{display: 'inline-block', marginRight: 10}}
+                                    groupKey={groupKey}
+                                    onSuccess={createSuccessHandler(action, params, onSubmit)}
+                                    onFail={onError || handleFailfure}
+                                    text = {submitText}
+                    />
+                    <button style={{display: 'inline-block'}} type='button' className='button std' onClick={onCancel}>Cancel</button>
+
+                </div>
+                <div>
+                    {help_id && <HelpIcon helpId={help_id} />}
+                </div>
+            </div>
         </div>
     );
 };
 
 
 FormPanel.propTypes = {
+    submitText: React.PropTypes.string,
+    width: React.PropTypes.string,
+    height: React.PropTypes.string,
     onSubmit: React.PropTypes.func,
     onCancel: React.PropTypes.func,
+    onError: React.PropTypes.func,
     groupKey: React.PropTypes.any,
     action: React.PropTypes.string,
-    params: React.PropTypes.object
+    params: React.PropTypes.object,
+    help_id: React.PropTypes.string
 };
 
 

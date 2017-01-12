@@ -10,7 +10,8 @@ export default {getColor, beginPath, stroke, strokeRec, drawLine, drawText, draw
                 drawHandledLine, drawInnerRecWithHandles, rotateAroundScreenPt,
                 drawX, drawSquareX, drawSquare, drawEmpSquareX, drawCross, drawSymbol,
                 drawEmpCross, drawDiamond, drawDot, drawCircle, drawEllipse, drawBoxcircle,
-                drawArrow, drawRotate, clear,clearCanvas, fillRec};
+                drawArrow, drawRotate, clear,clearCanvas, fillRec, getDrawingSize,
+                getSymbolSize, getSymbolSizeBasedOn};
 
 function drawHandledLine(ctx, color, sx, sy, ex, ey, onlyAddToPath= false) {
     var slope= NaN;
@@ -308,8 +309,8 @@ function drawSquare(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
 
 
 function drawEmpSquareX(ctx, x, y, color, size, renderOptions, c1, c2) {
-    drawX(ctx,x,y,color,renderOptions, false);
-    drawSquare(ctx,x,y,c1,renderOptions,  false);
+    drawX(ctx,x,y,color, size, renderOptions, false);
+    drawSquare(ctx,x,y,c1,size, renderOptions,  false);
     drawSquare(ctx,x,y,c2, size+2,renderOptions, false);
 }
 
@@ -360,8 +361,8 @@ function drawDot(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
 
     if (!onlyAddToPath) beginPath(ctx,color,1, renderOptions);
     for(var i=begin; (i<=end); i++) {
-        ctx.moveTo(x-size,i);
-        ctx.lineTo(x+size,i);
+        ctx.moveTo(x-size/2,i);
+        ctx.lineTo(x+size/2,i);
     }
 
     if (!onlyAddToPath) stroke(ctx);
@@ -369,7 +370,7 @@ function drawDot(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
 
 
 function drawBoxcircle(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
-    drawSquare(ctx, x, y, color, size+2, renderOptions, onlyAddToPath);
+    drawSquare(ctx, x, y, color, size, renderOptions, onlyAddToPath);
     drawCircle(ctx, x, y, color, 1, size, renderOptions, onlyAddToPath);
 }
 
@@ -483,7 +484,79 @@ function drawSymbol(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
     }
 }
 
+function getDrawingSize(size, symbol) {
+    var width = 10, height = 10;
 
+    size += 1;
+    switch (symbol) {
+        case DrawSymbol.X :
+        case DrawSymbol.CROSS :
+        case DrawSymbol.EMP_SQUARE_X:
+        case DrawSymbol.SQUARE_X :
+        case DrawSymbol.SQUARE :
+        case DrawSymbol.DIAMOND :
+        case DrawSymbol.BOXCIRCLE :
+        case DrawSymbol.CIRCLE :
+            width = size * 2;
+            break;
+        case DrawSymbol.EMP_CROSS :
+            width = (size+2) * 2;
+            break;
+        case DrawSymbol.DOT :
+        case DrawSymbol.ARROW :
+        case DrawSymbol.ROTATE :
+            width = size+1;
+            break;
+        default :
+            break;
+    }
+    width = Math.ceil(width);
+    height = width;
+    return {width, height}
+}
+
+/**
+ * @summary symbol size based on the given canvas dimension
+ * @param width
+ * @param height
+ * @param symbol
+ * @returns {number}
+ */
+function getSymbolSize(width, height, symbol) {
+    var size = 5;
+
+    switch (symbol) {
+        case DrawSymbol.X :
+        case DrawSymbol.CROSS :
+        case DrawSymbol.EMP_SQUARE_X:
+        case DrawSymbol.SQUARE_X :
+        case DrawSymbol.SQUARE :
+        case DrawSymbol.DIAMOND :
+        case DrawSymbol.BOXCIRCLE :
+        case DrawSymbol.CIRCLE :
+            size = Math.min(width, height)/2;
+            break;
+        case DrawSymbol.EMP_CROSS :
+            size = Math.min(width, height)/2 - 2;
+            break;
+        case DrawSymbol.DOT :
+        case DrawSymbol.ARROW :
+        case DrawSymbol.ROTATE :
+            size = Math.min(width, height)-1;
+            break;
+        default :
+            break;
+    }
+
+    size -= 1;
+    return size;
+}
+
+function getSymbolSizeBasedOn(symbol, drawingDef) {
+    var {width, height} = getDrawingSize(drawingDef.size, drawingDef.symbol);
+
+    return getSymbolSize(width, height, symbol);
+}
 
 /**
  *
@@ -497,7 +570,7 @@ function drawSymbol(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
  * @param onlyAddToPath
  */
 function drawCircle(ctx, x, y, color, lineWidth, size, renderOptions= null, onlyAddToPath= false) {
-    var radius= size+2;
+    var radius= size;
     if (onlyAddToPath) {
         ctx.moveTo(x+radius,y);
     }

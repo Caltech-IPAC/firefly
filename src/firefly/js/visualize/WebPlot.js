@@ -24,47 +24,48 @@ export const PlotAttribute= {
      * This will probably be a WebMouseReadoutHandler class
      * @see WebMouseReadoutHandler
      */
-    READOUT_ATTR:             'READOUT_ATTR',
+    READOUT_ATTR: 'READOUT_ATTR',
 
-    READOUT_ROW_PARAMS:             'READOUT_ROW_PARAMS',
+    READOUT_ROW_PARAMS: 'READOUT_ROW_PARAMS',
 
     /**
      * This will probably be a WorldPt
+     * Used to overlay a target associated with this image
      */
-    FIXED_TARGET:             'FIXED_TARGET',
+    FIXED_TARGET: 'FIXED_TARGET',
 
     /**
      * This will probably be a double with the requested size of the plot
      */
-    REQUESTED_SIZE:             'REQUESTED_SIZE',
+    REQUESTED_SIZE: 'REQUESTED_SIZE',
 
 
     /**
      * This will probably an object represent a rectangle {pt0: point,pt1: point}
      * @See ./Point.js
      */
-    SELECTION:                'SELECTION',
+    SELECTION: 'SELECTION',
 
     /**
      * This will probably an object to represent a line {pt0: point,pt1: point}
      * @See ./Point.js
      */
-    ACTIVE_DISTANCE:          'ACTIVE_DISTANCE',
+    ACTIVE_DISTANCE: 'ACTIVE_DISTANCE',
 
-    SHOW_COMPASS:          'SHOW_COMPASS',
+    SHOW_COMPASS: 'SHOW_COMPASS',
 
     /**
      * This will probably an object {pt: point}
      * @See ./Point.js
      */
-    ACTIVE_POINT:          'ACTIVE_POINT',
+    ACTIVE_POINT: 'ACTIVE_POINT',
 
 
     /**
      * This is a String describing why this plot can't be rotated.  If it is defined then
      * rotating is disabled.
      */
-    DISABLE_ROTATE_REASON:          'DISABLE_ROTATE_HINT',
+    DISABLE_ROTATE_REASON: 'DISABLE_ROTATE_HINT',
 
     /**
      * what should happen when multi-fits images are changed.  If set the zoom is set to the same level
@@ -150,7 +151,7 @@ export const PlotAttribute= {
  * @prop {number} zoomFactor - the zoom factor
  * @prop {string} title - title of the plot
  * @prop {object} webFitsData -  needs documentation
- * @prop {ImageTileData} serverImages -  object contains the image tile information (todo: needs typedef)
+ * @prop {ImageTileData} serverImages -  object contains the image tile information
  * @prop {ViewPort} viewPort -  needs documentation
  * @prop {CoordinateSys} imageCoordSys - the image coordinate system
  * @prop {Dimension} screenSize - width/height in screen pixels
@@ -224,14 +225,11 @@ export const WebPlot= {
         var plotState= PlotState.makePlotStateWithJson(wpInit.plotState);
         var zf= plotState.getZoomLevel();
 
-        var csys= CoordinateSys.parse(wpInit.imageCoordSys);
-
-
         var webPlot= {
             plotId,
             plotImageId     : plotId+'---NEEDS___INIT',
             serverImages    : wpInit.initImages,
-            imageCoordSys   : csys,
+            imageCoordSys   : CoordinateSys.parse(wpInit.imageCoordSys),
             plotState,
             projection,
             dataWidth       : wpInit.dataWidth,
@@ -245,10 +243,14 @@ export const WebPlot= {
             //=== Mutable =====================
             screenSize: {width:wpInit.dataWidth*zf, height:wpInit.dataHeight*zf},
             zoomFactor: zf,
-            // percentOpaque   : 1.0,
             alive    : true,
             attributes,
             viewPort: WebPlot.makeViewPort(0,0,0,0),
+
+                 // a note about conversionCache - the caches (using a map) calls to convert WorldPt to ImagePt
+                 // have this here breaks the redux paradigm, however it still seems to be the best place. The cache
+                 // is completely transient. If we start serializing the store there should not be much of an issue.
+            conversionCache: new Map(),
             //=== End Mutable =====================
             asOverlay
         };

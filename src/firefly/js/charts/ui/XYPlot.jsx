@@ -1,17 +1,19 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isUndefined, debounce, get, omit} from 'lodash';
+import {isUndefined, debounce, get, has, omit} from 'lodash';
 import shallowequal from 'shallowequal';
 import React, {PropTypes} from 'react';
 import ReactHighcharts from 'react-highcharts';
+import {xyErrorBarExtension} from '../highcharts/XYErrorBars.js';
 
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {parseDecimateKey} from '../../tables/Decimate.js';
 
 import numeral from 'numeral';
 import {getFormatString} from '../../util/MathUtil.js';
-import {logError} from '../../util/WebUtil.js';
+
+xyErrorBarExtension(ReactHighcharts.Highcharts);
 
 const defaultShading = 'lin';
 
@@ -19,7 +21,8 @@ export const axisParamsShape = PropTypes.shape({
     columnOrExpr : PropTypes.string,
     label : PropTypes.string,
     unit : PropTypes.string,
-    options : PropTypes.string // ex. 'grid,log,flip'
+    error: PropTypes.string,
+    options : PropTypes.string // ex. 'grid,log,flip,opposite'
 });
 
 export const selectionShape = PropTypes.shape({
@@ -43,7 +46,7 @@ export const plotParamsShape = PropTypes.shape({
 });
 
 const plotDataShape = PropTypes.shape({
-    rows: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.string)), // [x,y,rowIdx,weight]
+    rows: PropTypes.arrayOf(PropTypes.object), // {x,y,rowIdx} or {x,y,rowIdx,weight} or {x,y,rowIdx,right,left,low,high}
     decimateKey: PropTypes.string,
     xMin: PropTypes.number,
     xMax: PropTypes.number,
@@ -55,16 +58,20 @@ const plotDataShape = PropTypes.shape({
 });
 
 const DATAPOINTS = 'data';
+const XERROR = 'xerror';
+const YERROR = 'yerror';
 const SELECTED = 'selected';
 const HIGHLIGHTED = 'highlighted';
 const MINMAX = 'minmax';
 
 const datapointsColor = 'rgba(63, 127, 191, 0.5)';
-const selectedColor = 'rgba(21, 138, 15, 0.5)';
-const highlightedColor = 'rgba(250, 243, 40, 1)';
-const selectionRectColor = 'rgba(165, 165, 165, 0.5)';
-
-const toNumber = (val)=>Number(val);
+const datapointsColorWithErrors = 'rgba(63, 127, 191, 0.7)';
+const errorBarColor = 'rgba(255, 209, 128, 0.5)';
+const selectedColorWithErrors = 'rgba(255, 200, 0, 1)';
+const selectedColor = 'rgba(255, 200, 0, 1)';
+const highlightedColor = 'rgba(255, 165, 0, 1)';
+const selectionRectColor = 'rgba(255, 209, 128, 0.5)';
+const selectionRectColorGray = 'rgba(165, 165, 165, 0.5)';
 
 /*
  @param {number} weight for a given point
@@ -75,7 +82,7 @@ const toNumber = (val)=>Number(val);
  @return {number|string} from 1 to 6, 1 for 1 pt series
  */
 const getWeightBasedGroup = function(weight, minWeight, maxWeight, logShading=false, returnNum=true) {
-    if (weight == 1) return returnNum ? 1 : '1pt';
+    if (weight === 1) return returnNum ? 1 : '1pt';
     else {
         if (logShading) {
             //use log scale for shade assignment
@@ -85,7 +92,7 @@ const getWeightBasedGroup = function(weight, minWeight, maxWeight, logShading=fa
                 max = Math.round(Math.pow(base, e));
                 if (weight <= max) {
                     if (max > maxWeight) { max = maxWeight; }
-                    return returnNum ? e+1 : (min==max ? min : (min+'-'+max))+'pts';
+                    return returnNum ? e+1 : (min===max ? min : (min+'-'+max))+'pts';
                 }
                 min = max+1;
             }
@@ -98,7 +105,7 @@ const getWeightBasedGroup = function(weight, minWeight, maxWeight, logShading=fa
             for (let incr = 0.20; incr <=1; incr += 0.20) {
                 max = Math.round(minWeight+1+incr*range);
                 if (weight <= max) {
-                    return returnNum ? n : (min==max ? min : (min+'-'+max))+'pts';
+                    return returnNum ? n : (min===max ? min : (min+'-'+max))+'pts';
                 }
                 min = max+1;
                 n++;
@@ -119,49 +126,52 @@ const isDataSeries = function(name) {
 
 const getXAxisOptions = function(params) {
     const xTitle = params.x.label + (params.x.unit ? ` (${params.x.unit})` : '');
-    let xGrid = false, xReversed = false, xLog = false;
+    let xGrid = false, xReversed = false, xOpposite = false, xLog = false;
     const {options:xOptions} = params.x;
     if (xOptions) {
         xGrid = xOptions.includes('grid');
         xReversed = xOptions.includes('flip');
+        xOpposite = xOptions.includes('opposite');
         xLog = xOptions.includes('log');
     }
-    return {xTitle, xGrid, xReversed, xLog};
+    return {xTitle, xGrid, xReversed, xOpposite, xLog};
 };
 
-const canUseXLog = function(data) {
-    const min = get(data,'xMin');
-    if (Number.isFinite(min)) {
-        if (min > 0) { return true; }
-        else {
-            logError('XYPlot: logarithmic scale can not be used for minimum X value '+min);
+const validate = function(params, data) {
+    const errors = [];
+    const {options:xOptions} = get(params, 'x');
+    if (xOptions && xOptions.includes('log')) {
+        const min = get(data,'xMin');
+        if (Number.isFinite(min)) {
+            if (min <= 0) {
+                errors.push(`Logarithmic scale can not be used for minimum X value ${min}.`);
+            }
         }
     }
-    return false;
-};
-
-const canUseYLog = function(data) {
-    const min = get(data,'yMin');
-    if (Number.isFinite(min)) {
-        if (min > 0) { return true; }
-        else {
-            logError('XYPlot: logarithmic scale can not be used for minimum Y value '+min);
+    const {options:yOptions} = get(params, 'y');
+    if (yOptions && yOptions.includes('log')) {
+        const min = get(data,'yMin');
+        if (Number.isFinite(min)) {
+            if (min <= 0) {
+                errors.push(`Logarithmic scale can not be used for minimum Y value ${min}.`);
+            }
         }
     }
-    return false;
-};
+    return errors;
+} ;
 
 const getYAxisOptions = function(params) {
     const yTitle = params.y.label + (params.y.unit ? ` (${params.y.unit})` : '');
 
-    let yGrid = false, yReversed = false, yLog = false;
+    let yGrid = false, yReversed = false, yOpposite=false, yLog = false;
     const {options:yOptions} = params.y;
     if (params.y.options) {
         yGrid = yOptions.includes('grid');
         yReversed = yOptions.includes('flip');
+        yOpposite = yOptions.includes('opposite');
         yLog = yOptions.includes('log');
     }
-    return {yTitle, yGrid, yReversed, yLog};
+    return {yTitle, yGrid, yReversed, yOpposite, yLog};
 };
 
 const getZoomSelection = function(params) {
@@ -235,6 +245,28 @@ const calculateChartSize = function(widthPx, heightPx, props) {
     return {chartWidth, chartHeight};
 };
 
+const formatError = function(val, err, errLow, errHigh) {
+    if (Number.isFinite(err) || (Number.isFinite(errLow) && Number.isFinite(errHigh))) {
+        const symmetricError = Number.isFinite(err);
+        const lowErr = symmetricError ? err : errLow;
+        const highErr = symmetricError ? err : errHigh;
+        // we might want to use format for expressions in future - still hard to tell how many places to save
+        //const fmtLow = getFormatString(lowErr, 4);
+        if (symmetricError) {
+            //return ' \u00B1 '+numeral(lowErr).format(fmtLow); //Unicode U+00B1 is plusmn
+            return ' \u00B1 '+lowErr; //Unicode U+00B1 is plusmn
+        } else {
+            //const fmtHigh = getFormatString(highErr, 4);
+            //return `\u002B${numeral(highErr).format(fmtHigh)} / \u2212${numeral(lowErr).format(fmtLow)}`;
+            // asymmetric errors format: 8 +4/-2
+            return `\u002B${highErr} / \u2212${lowErr}`;
+        }
+    } else {
+        return '';
+    }
+};
+
+
 export class XYPlot extends React.Component {
 
     constructor(props) {
@@ -253,7 +285,7 @@ export class XYPlot extends React.Component {
 
         // no update is needed if properties did ot change
         if (shallowequal(omit(this.props, propsToOmit), omit(nextProps, propsToOmit)) &&
-            get(this.props,'highlighted.rowIdx') == get(nextProps,'highlighted.rowIdx')) {
+            get(this.props,'highlighted.rowIdx') === get(nextProps,'highlighted.rowIdx')) {
             return false;
         }
 
@@ -268,6 +300,13 @@ export class XYPlot extends React.Component {
             if (chart && chart.container && !this.error) {
                 const {params:newParams, width:newWidth, height:newHeight, highlighted:newHighlighted, selectInfo:newSelectInfo, desc:newDesc } = nextProps;
                 try {
+                    const errors = validate(newParams, data);
+                    if (errors.length > 0) {
+                        this.error = errors[0];
+                        chart.showLoading(errors[0]);
+                        return false;
+                    }
+
                     if (newDesc !== desc) {
                         chart.setTitle(newDesc, undefined, false);
                     }
@@ -278,9 +317,8 @@ export class XYPlot extends React.Component {
                         if (newSelectInfo) {
                             const selectInfoCls = SelectInfo.newInstance(newSelectInfo, 0);
                             data.rows.forEach((arow) => {
-                                if (selectInfoCls.isSelected(Number(arow[2]))) {
-                                    const nrow = arow.map(toNumber);
-                                    selectedData.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
+                                if (selectInfoCls.isSelected(arow['rowIdx'])) {
+                                    selectedData.push(arow);
                                 }
                             });
                         }
@@ -308,8 +346,8 @@ export class XYPlot extends React.Component {
                                 title: {text: newXOptions.xTitle},
                                 gridLineWidth: newXOptions.xGrid ? 1 : 0,
                                 reversed: newXOptions.xReversed,
-                                opposite: newYOptions.yReversed,
-                                type: newXOptions.xLog && canUseXLog(nextProps.data) ? 'logarithmic' : 'linear'
+                                opposite: newXOptions.xOpposite,
+                                type: newXOptions.xLog ? 'logarithmic' : 'linear'
                             });
                         }
                         if (!shallowequal(getYAxisOptions(params), newYOptions)) {
@@ -317,7 +355,8 @@ export class XYPlot extends React.Component {
                                 title: {text: newYOptions.yTitle},
                                 gridLineWidth: newYOptions.yGrid ? 1 : 0,
                                 reversed: newYOptions.yReversed,
-                                type: newYOptions.yLog && canUseYLog(nextProps.data) ? 'logarithmic' : 'linear'
+                                opposite: newYOptions.yOpposite,
+                                type: newYOptions.yLog ? 'logarithmic' : 'linear'
                             });
                         }
                         if (!shallowequal(params.zoom, newParams.zoom) || !shallowequal(params.boundaries, newParams.boundaries)) {
@@ -325,7 +364,7 @@ export class XYPlot extends React.Component {
                             const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = get(newParams, 'boundaries', {});
                             Object.assign(xoptions, {min: selFinite(xMin, xDataMin), max: selFinite(xMax, xDataMax)});
                             Object.assign(yoptions, {min: selFinite(yMin, yDataMin), max: selFinite(yMax, yDataMax)});
-                            chart.get(MINMAX).setData([[xoptions.min, yoptions.min], [xoptions.max, yoptions.max]]);
+                            chart.get(MINMAX).setData([[xoptions.min, yoptions.min], [xoptions.max, yoptions.max]], false, false, false);
                         }
                         const xUpdate = Reflect.ownKeys(xoptions).length > 0;
                         const yUpdate = Reflect.ownKeys(yoptions).length > 0;
@@ -343,7 +382,7 @@ export class XYPlot extends React.Component {
 
                     // size change
                     if (newWidth !== width || newHeight !== height ||
-                        newParams.xyRatio !== params.xyRatio || newParams.stretch != params.stretch) {
+                        newParams.xyRatio !== params.xyRatio || newParams.stretch !== params.stretch) {
                         const {chartWidth, chartHeight} = calculateChartSize(newWidth, newHeight, nextProps);
                         if (Math.abs(chart.chartWidth - chartWidth) > 20 || Math.abs(chart.chartHeight - chartHeight) > 20) {
 
@@ -434,9 +473,10 @@ export class XYPlot extends React.Component {
             const yMaxPx = chart.yAxis[0].toPixels(selection.yMax);
             const width = Math.abs(xMaxPx - xMinPx);
             const height = Math.abs(yMaxPx - yMinPx);
+            const selColor = has(this.props, 'data.decimateKey') ? selectionRectColor : selectionRectColorGray;
             this.selectionRect = chart.renderer.rect(Math.min(xMinPx, xMaxPx), Math.min(yMinPx, yMaxPx), width, height, 1)
                 .attr({
-                    fill: selectionRectColor,
+                    fill: selColor,
                     stroke: '#8c8c8c',
                     'stroke-width': 0.5,
                     zIndex: 7 // same as Highcharts' selectionMrker rectangle
@@ -481,51 +521,80 @@ export class XYPlot extends React.Component {
             };
 
             if (!decimateKey) {
-                let pushFunc;
+                const hasErrorBars = get(params, 'x.error') || get(params, 'y.error');
+
+                let selectedRows = [];
                 if (selectInfo) {
                     const selectInfoCls = SelectInfo.newInstance(selectInfo, 0);
-                    // set all and selected data
-                    pushFunc = (numdata, nrow) => {
-                        numdata.all.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
-                        if (selectInfoCls.isSelected(nrow[2])) {
-                            numdata.selected.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
-                        }
-                    };
-                } else {
-                    pushFunc = (numdata, nrow) => {
-                        numdata.all.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
-                    };
-                }
-                const numericData = rows.reduce((numdata, arow) => {
-                    const nrow = arow.map(toNumber);
-                    pushFunc(numdata, nrow);
-                    return numdata;
-                }, {selected: [], all: []});
 
+                    selectedRows = rows.reduce((selrows, arow) => {
+                        if (selectInfoCls.isSelected(arow['rowIdx'])) {
+                            selrows.push(arow);
+                        }
+                        return selrows;
+                    }, []);
+                }
 
                 marker = {symbol: 'circle', radius: 3};
-                allSeries = [
-                    {
+
+                allSeries = [];
+                if (get(params, 'x.error')) {
+                    const xErrRows = rows.filter((r) => (Number.isFinite(r['left']) && Number.isFinite(r['right'])));
+                    xErrRows.sort((r1,r2) => (r1['x']-r2['x']));
+                    allSeries.push({
+                        id: XERROR,
+                        name: XERROR,
+                        type: 'error_bar',
+                        animation: false,
+                        format: 'x',
+                        color: errorBarColor,
+                        lineWidth: 1,
+                        whiskerLength: (xErrRows.length > 20) ? 0 : 3,
+                        data: xErrRows,
+                        turboThreshold: 0,
+                        showInLegend: false,
+                        enableMouseTracking: false
+                    });
+                }
+                if (get(params, 'y.error')) {
+                    const yErrRows = rows.filter((r) => (Number.isFinite(r['low']) && Number.isFinite(r['high'])));
+                    yErrRows.sort((r1,r2) => (r1['x']-r2['x']));
+                    allSeries.push({
+                        id: YERROR,
+                        name: YERROR,
+                        type: 'error_bar',
+                        animation: false,
+                        format: 'y',
+                        animation: false,
+                        color: errorBarColor,
+                        lineWidth: 1,
+                        whiskerLength: (yErrRows.length > 20) ? 0 : 3,
+                        data: yErrRows,
+                        turboThreshold: 0,
+                        showInLegend: false,
+                        enableMouseTracking: false
+                    });
+                }
+                allSeries.push({
                         id: DATAPOINTS,
                         name: DATAPOINTS,
-                        color: datapointsColor,
-                        data: numericData.all,
+                        color: hasErrorBars? datapointsColorWithErrors : datapointsColor,
+                        data: rows,
                         marker,
                         turboThreshold: 0,
                         showInLegend: false,
                         point
-                    },
-                    {
+                    });
+                allSeries.push({
                         id: SELECTED,
                         name: SELECTED,
-                        color: selectedColor,
-                        data: numericData.selected,
+                        color: hasErrorBars? selectedColorWithErrors : selectedColor,
+                        data: selectedRows,
                         marker,
                         turboThreshold: 0,
                         showInLegend: false,
                         point
-                    }
-                ];
+                    });
             } else {
                 const {xUnitPx, yUnitPx} = getDeciSymbolSize(chart, decimateKey);
                 marker = {symbol: 'rectangle', radius: xUnitPx/2.0, hD: (xUnitPx-yUnitPx)/2.0};
@@ -543,11 +612,10 @@ export class XYPlot extends React.Component {
                 // split into 6 groups by weight
                 const numericDataArr = [[],[],[],[],[],[]];
                 for (var i= 0, l = rows.length; i < l; i++) {
-                    const nrow = rows[i].map(toNumber);
-                    const weight = nrow[3];
+                    const {x:ptX,y:ptY,rowIdx, weight} = rows[i];
                     const group = getWeightBasedGroup(weight, weightMin, weightMax, params.shading==='log');
-                    const {x,y} = getCenter(nrow[0], nrow[1]);
-                    numericDataArr[group-1].push({x, y, rowIdx: nrow[2], weight});
+                    const {x,y} = getCenter(ptX, ptY);
+                    numericDataArr[group-1].push({x, y, rowIdx, weight});
                 }
 
                 // 5 colors (use http://colorbrewer2.org)
@@ -565,8 +633,6 @@ export class XYPlot extends React.Component {
                         point
                     };
                 });
-
-
             }
 
             try {
@@ -578,7 +644,7 @@ export class XYPlot extends React.Component {
                     id: HIGHLIGHTED,
                     name: HIGHLIGHTED,
                     color: highlightedColor,
-                    marker: {symbol: 'circle', lineColor: '#404040', lineWidth: 1, radius: 4},
+                    marker: {symbol: 'circle', radius: 4, lineColor: '#737373', lineWidth: 1},
                     data: highlightedData,
                     showInLegend: false
                 }, true, false);
@@ -590,16 +656,32 @@ export class XYPlot extends React.Component {
     }
 
     render() {
-
-        this.error = undefined;
-
         const {data, params, width, height, onSelection, desc} = this.props;
-        const onSelectionEvent = this.onSelectionEvent;
 
+        // validate parameters for the given data
+        const errors = validate(params, data);
+        if (errors.length > 0) {
+            this.error = errors[0];
+            return (
+                <div style={{position: 'relative', width: '100%', height: '100%'}}>
+                    {errors.map((error, i) => {
+                        return (
+                            <div key={i} style={{padding: 10, textAlign: 'center', overflowWrap: 'normal'}}>
+                                <h3>{`${error}`}</h3>
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        // render chart
+        this.error = undefined;
+        const onSelectionEvent = this.onSelectionEvent;
         const {chartWidth, chartHeight} = calculateChartSize(width, height, this.props);
 
-        const {xTitle, xGrid, xReversed, xLog} = getXAxisOptions(params);
-        const {yTitle, yGrid, yReversed, yLog} = getYAxisOptions(params);
+        const {xTitle, xGrid, xReversed, xOpposite, xLog} = getXAxisOptions(params);
+        const {yTitle, yGrid, yReversed, yOpposite, yLog} = getYAxisOptions(params);
         const {xMin, xMax, yMin, yMax} = getZoomSelection(params);
         const {decimateKey} = data;
         const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = get(params, 'boundaries', {});
@@ -647,7 +729,7 @@ export class XYPlot extends React.Component {
                         display: 'none'
                     }
                 },
-                selectionMarkerFill: selectionRectColor
+                selectionMarkerFill: decimateKey? selectionRectColor : selectionRectColorGray
             },
             exporting: {
                 enabled: true
@@ -670,9 +752,11 @@ export class XYPlot extends React.Component {
                 formatter() {
                     const weight = this.point.weight ? `represents ${this.point.weight} points <br/>` : '';
                     const xval = xFormat ? numeral(this.point.x).format(xFormat) : this.point.x;
+                    const xerr = formatError(this.point.x, this.point.xErr, this.point.xErrLow, this.point.xErrHigh);
                     const yval = yFormat ? numeral(this.point.y).format(yFormat) : this.point.y;
-                    return '<span> ' + `${params.x.label} = ${xval} ${params.x.unit} <br/>` +
-                        `${params.y.label} = ${yval} ${params.y.unit} <br/> ` +
+                    const yerr = formatError(this.point.y, this.point.yErr, this.point.yErrLow, this.point.yErrHigh);
+                    return '<span> ' + `${params.x.label} = ${xval} ${xerr} ${params.x.unit} <br/>` +
+                        `${params.y.label} = ${yval} ${yerr} ${params.y.unit} <br/> ` +
                         `${weight}</span>`;
                 },
                 shadow: !(decimateKey),
@@ -693,10 +777,10 @@ export class XYPlot extends React.Component {
                 gridLineWidth: xGrid ? 1 : 0,
                 lineColor: '#999',
                 tickColor: '#ccc',
-                opposite: yReversed,
+                opposite: xOpposite,
                 reversed: xReversed,
                 title: {text: xTitle},
-                type: xLog && canUseXLog(data) ? 'logarithmic' : 'linear'
+                type: xLog ? 'logarithmic' : 'linear'
             },
             yAxis: {
                 min: selFinite(yMin,yDataMin),
@@ -709,9 +793,10 @@ export class XYPlot extends React.Component {
                 lineWidth: 1,
                 lineColor: '#999',
                 endOnTick: false,
+                opposite: yOpposite,
                 reversed: yReversed,
                 title: {text: yTitle},
-                type: yLog && canUseYLog(data) ? 'logarithmic' : 'linear'
+                type: yLog ? 'logarithmic' : 'linear'
             },
             series: [{
                 // This series is to make sure the axes are created.
@@ -722,7 +807,7 @@ export class XYPlot extends React.Component {
                 name: MINMAX,
                 color: 'rgba(240, 240, 240, 0.1)',
                 marker: {radius: 1},
-                data: [[selFinite(xMin, xDataMin), selFinite(yMin,yDataMin)], [selFinite(xMax, xDataMax), selFinite(yMax,yDataMax)]],
+                data: decimateKey? [[selFinite(xMin, xDataMin), selFinite(yMin,yDataMin)], [selFinite(xMax, xDataMax), selFinite(yMax,yDataMax)]]:[],
                 showInLegend: false,
                 enableMouseTracking: false,
                 states: {

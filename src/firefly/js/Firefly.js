@@ -4,9 +4,10 @@
 /*global __$version_tag*/
 
 
-import 'babel-polyfill';
+// import 'babel-polyfill';
 import 'isomorphic-fetch';
 import React from 'react';
+import ReactDOM from 'react-dom';
 import 'styles/global.css';
 
 import {APP_LOAD} from './core/AppDataCntlr.js';
@@ -15,6 +16,9 @@ import {ExtensionResult } from './gwtinterface/ExtensionResult.js';
 import {PlotCmdExtension } from './visualize/PlotCmdExtension.js';
 import {ReactJavaInterface } from './gwtinterface/ReactJavaInterface.jsx';
 import {showExampleDialog}  from './ui/ExampleDialog.jsx';
+import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
+import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
+import {initApi} from './api/ApiBuild.js';
 
 import {ServerRequest } from './data/ServerRequest.js';
 import PlotState from './visualize/PlotState.js';
@@ -24,8 +28,24 @@ import ExternalAccessUtils from './core/ExternalAccessUtils.js';
 import {reduxFlux} from './core/ReduxFlux.js';
 import {wsConnect} from './core/messaging/WebSocketClient.js';
 import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
+import {dispatchAppOptions} from './core/AppDataCntlr.js';
 
 export const flux = reduxFlux;
+
+/**
+ * A list of available templates
+ * @enum {string}
+ */
+export const Templates = {
+    /**
+     * This templates has multiple views:  'images', 'tables', and 'xyPlots'.
+     * They can be combined with ' | ', i.e.  'images | tables'
+     */
+    FireflyViewer,
+    LightCurveViewer : LcViewer
+};
+
+
 
 /**
  * work around for transition from flummox to redux
@@ -90,15 +110,9 @@ export function getVersion() {
 } 
 
 
-export var firefly = {
+export const firefly = {
 
-    bootstrap() {
-        return new Promise(function(resolve, reject) {
-            fireflyInit();
-            flux.process( {type : APP_LOAD} );
-            resolve();
-        });
-    },
+    bootstrap,
 
     process(rawAction, condition) {
         return flux.process(rawAction, condition);
@@ -111,4 +125,33 @@ export var firefly = {
 };
 
 
+/**
+ * boostrap Firefly api or application.
+ * @param options   global options used by both application and api
+ * @param viewer    render this viewer onto the document.  if viewer does not exists, it will init api instead.
+ * @param props     viewer's props used for rendering.
+ * @returns {Promise.<boolean>}
+ */
+function bootstrap(options, viewer, props) {
 
+    fireflyInit();
+    flux.process( {type : APP_LOAD} );
+
+    if (options) {
+        const defOps = {
+            MenuItemKeys: {},
+            imageTabs: undefined,
+            irsaCatalogFilter: undefined,
+            catalogSpacialOp: undefined
+        };
+        dispatchAppOptions(Object.assign({},defOps, options));
+    }
+    if (viewer) {
+        ReactDOM.render(React.createElement(viewer, props),
+            document.getElementById(props.div));
+    } else {
+        initApi();
+
+    }
+    return Promise.resolve(true);
+}

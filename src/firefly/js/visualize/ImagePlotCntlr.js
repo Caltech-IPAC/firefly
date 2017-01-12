@@ -42,8 +42,8 @@ import {wcsMatchActionCreator} from './task/WcsMatchTask.js';
 /** can the 'COLLAPSE', 'GRID', 'SINGLE' */
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
 
-/** can the 'NorthCenOnPt', 'NorthCenOnMoving', 'Standard', 'Off' */
-export const WcsMatchType= new Enum(['NorthCenOnPt', 'NorthCenOnMoving', 'StandCenOnPt', 'StandCenOnMoving', 'Standard']);
+/** can the 'Standard', 'Target' */
+export const WcsMatchType= new Enum(['Standard', 'Target']);
 
 
 
@@ -395,7 +395,7 @@ export function dispatchStretchChange({plotId, stretchData,
  * Enable / Disable WCS Match
  * @param {Object}  p
  * @param {string} p.plotId
- * @param {Enum|string} p.matchType one of 'NorthCenOnPt', 'NorthCenOnMoving', 'Standard', 'Off'
+ * @param {Enum|string} p.matchType one of 'Standard', 'Off'
  * @param {Function} p.dispatcher
  */
 export function dispatchWcsMatch({plotId, matchType, dispatcher= flux.process} ) {
@@ -486,15 +486,18 @@ export function dispatchProcessScroll({plotId,scrollPt, disableBoundCheck=false,
  * Note - function parameter is a single object
  * @param {Object}  p
  * @param {string} p.plotId
- * @param {Point} p.centerPt
+ * @param {Point} p.centerPt Point to center on
+ * @param {boolean} p.centerOnImage only used if centerPt is not defined.  If true then the centering will be
+ *                                  the center of the image.  If false, then the center point will be the
+ *                                  FIXED_TARGET attribute, if defined. Otherwise it will be the center of the image.
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  *
  * @public
  * @function dispatchRecenter
  * @memberof firefly.action
  */
-export function dispatchRecenter({plotId, centerPt, dispatcher= flux.process}) {
-    dispatcher({type: RECENTER, payload: {plotId, centerPt} });
+export function dispatchRecenter({plotId, centerPt, centerOnImage, dispatcher= flux.process}) {
+    dispatcher({type: RECENTER, payload: {plotId, centerPt, centerOnImage} });
 }
 
 /**
@@ -557,12 +560,13 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
  * @param {string} p.viewerId
  * @param {Object} p.pvOptions PlotView init Options
  * @param {boolean} [p.setNewPlotAsActive] the last completed plot will be active
+ * @param {boolean} [p.holdWcsMatch= false] if wcs match is on, then modify the request to hold the wcs match
  * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
 export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
-                                   setNewPlotAsActive= true,
+                                   setNewPlotAsActive= true, holdWcsMatch= false,
                                    dispatcher= flux.process}) {
-    dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry, pvOptions, setNewPlotAsActive, viewerId} });
+    dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry, pvOptions, setNewPlotAsActive, holdWcsMatch, viewerId} });
 }
 
 
@@ -729,7 +733,7 @@ export function dispatchChangePointSelection(requester, enabled) {
  */
 export function dispatchChangeExpandedMode(expandedMode) {
 
-    const vr= visRoot();
+    var vr= visRoot();
 
     if (!isExpanded(vr.expandedMode) && isExpanded(expandedMode)) { // if going from collapsed to expanded
         const plotId= vr.activePlotId;
@@ -761,7 +765,6 @@ export function dispatchChangeExpandedMode(expandedMode) {
             }
         });
     }
-    
 }
 
 

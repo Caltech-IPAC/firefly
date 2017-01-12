@@ -153,9 +153,11 @@ function rotatePtAround(plot, drawObj, angle, worldPt) {
 
 
 function makeDrawParams(pointDataObj,def) {
+
     const symbol= DrawSymbol.get(pointDataObj.symbol || def.symbol || DEFAULT_SYMBOL);
     const size= (symbol===DrawSymbol.DOT) ? pointDataObj.size || def.size || DOT_DEFAULT_SIZE :
-                                          pointDataObj.size || def.size || DEFAULT_SIZE;
+                                            pointDataObj.size || def.size || DEFAULT_SIZE;
+
     const fontName= pointDataObj.fontName || def.fontName || 'helvetica';
     const fontSize= pointDataObj.fontSize || def.fontSize || DEFAULT_FONT_SIZE;
     const fontWeight= pointDataObj.fontWeight || def.fontWeight || 'normal';

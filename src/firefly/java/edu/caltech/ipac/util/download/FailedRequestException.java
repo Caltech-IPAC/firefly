@@ -3,9 +3,6 @@
  */
 package edu.caltech.ipac.util.download;
 
-import edu.caltech.ipac.util.ServerStringUtil;
-import edu.caltech.ipac.util.ThrowableUtil;
-
 /**
  * This exception is thrown when a value is out of range.
  * @author Trey Roby
@@ -14,13 +11,7 @@ import edu.caltech.ipac.util.ThrowableUtil;
 public class FailedRequestException extends Exception {
 
     static public final String SERVICE_FAILED=  "Service Failed";
-                                                 
-
     private String     _detailMessage;
-    private boolean    _simple= false;
-    private String     _constructedThread= Thread.currentThread().getName();
-
-    private static final String NL= "\n";
 
     /**
      * Create a new FailedRequestException Exception.
@@ -48,7 +39,7 @@ public class FailedRequestException extends Exception {
                                   String    detailMessage, 
                                   Throwable e) {
         
-        this(mess, detailMessage, isHtml(mess), e);
+        this(mess, detailMessage, false, e);
     }
 
     /**
@@ -69,68 +60,4 @@ public class FailedRequestException extends Exception {
     public String     getUserMessage()       { return getMessage(); }
     public String     getDetailMessage()     { return _detailMessage; }
 
-    public String toString(){
-        StackTraceElement eAry[]= getStackTrace();
-        StackTraceElement ste= eAry[0];
-        String cName= ServerStringUtil.getShortClassName(ste.getClassName());
-
-        String detail= "";
-        String extra= "";
-
-        String where = NL + NL +
-                   "========---------- Location -----------========="  +
-                        makeLineReport(this) + NL +
-                       "Thread: " + _constructedThread;
-        if (_detailMessage != null) 
-              detail= NL + NL +
-                   "========---------- Detailed Message -----------=========" 
-                    + NL +_detailMessage;
-        return super.toString() + detail + where + (_simple? "" : makeCausedBy()) + extra;
-    }
-
-    public void setSimpleToString(boolean simple) {
-        _simple= simple;
-    }
-
-    private String makeCausedBy() {
-       String retval= "";
-       String shortName;
-       for (Throwable t= getCause(); (t!=null); t= t.getCause()) {
-           shortName= ServerStringUtil.getShortClassName(t.getClass().getName());
-           retval+= NL + NL + 
-                "========---------- Caused By " + shortName + 
-                " ----------========" + NL +
-                ThrowableUtil.getStackTraceAsString(t) +NL+
-                makeLineReport(t);
-       }
-       return retval;
-    }
-
-
-    private String makeLineReport(Throwable t) {
-	String where = "";
-        StackTraceElement eAry[]= t.getStackTrace();
-	if ((eAry != null) && (eAry.length > 0))
-	{
-	    StackTraceElement ste= eAry[0];
-	    String cName= ServerStringUtil.getShortClassName(ste.getClassName());
-	    where = NL +
-                       "Class:  " + cName                              + NL +
-                       "Method: " + ste.getMethodName()                + NL +
-                       "File:   " + ste.getFileName()                  + NL +
-                       "Line:   " + ste.getLineNumber();
-	}
-
-        return where;
-    }
-
-    private static boolean isHtml(String s) {
-        boolean retval= false;
-        if (s!=null && s.length()>6 && s.substring(0,6).equals("<html>")) {
-                 retval= true;   
-        }
-        return retval;
-    }
 }
-
-

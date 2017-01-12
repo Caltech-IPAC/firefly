@@ -95,7 +95,7 @@ public class QueryLSSTCatalogDD extends IpacTablePartProcessor {
                 }
                 toReturn.shrinkToFitData();
                 File inf = createFile(request, ".tbl");
-                DataGroupWriter.write(inf, toReturn, 0);
+                DataGroupWriter.write(inf, toReturn);
                 return inf;
             } else {
                 return null;

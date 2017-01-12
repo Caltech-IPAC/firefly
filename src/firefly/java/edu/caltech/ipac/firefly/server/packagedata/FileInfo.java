@@ -24,6 +24,7 @@ public class FileInfo implements HasAccessInfo {
     private boolean hasAccess = true;
     private Object extraData = null;
     private Map<String, String> cookies;
+    private int responseCode= -1;
 
     private FileNameResolver _resolver = null;
 
@@ -36,6 +37,13 @@ public class FileInfo implements HasAccessInfo {
         _internalFilename = internalFilename;
         _externalName = externalName;
         _sizeInBytes = sizeInBytes;
+    }
+
+    public FileInfo(String internalFilename, String externalName, long sizeInBytes, int responseCode) {
+        _internalFilename = internalFilename;
+        _externalName = externalName;
+        _sizeInBytes = sizeInBytes;
+        this.responseCode= responseCode;
     }
 
     public FileInfo(String internalFilename, FileNameResolver resolver, long sizeInBytes) {
@@ -125,6 +133,8 @@ public class FileInfo implements HasAccessInfo {
     public String resolveFileName(String name) {
         return _resolver.getResolvedName(name);
     }
+
+    public int getResponseCode() { return responseCode; }
 
     public interface FileNameResolver {
         public String getResolvedName(String input);

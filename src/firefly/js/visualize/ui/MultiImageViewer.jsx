@@ -9,7 +9,7 @@ import {flux} from '../../Firefly.js';
 import {NewPlotMode, dispatchAddViewer, dispatchViewerMounted, dispatchViewerUnmounted,
         getMultiViewRoot, getViewer, getLayoutType, IMAGE} from '../MultiViewCntlr.js';
 import {MultiImageViewerView} from './MultiImageViewerView.jsx';
-import {visRoot} from '../ImagePlotCntlr.js';
+import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 
 export class MultiImageViewer extends Component {
@@ -23,8 +23,13 @@ export class MultiImageViewer extends Component {
 
     componentWillReceiveProps(nextProps) {
         if (this.props.viewerId!==nextProps.viewerId) {
-            dispatchAddViewer(nextProps.viewerId,nextProps.canReceiveNewPlots,IMAGE, true);
+            dispatchAddViewer(nextProps.viewerId, nextProps.canReceiveNewPlots, IMAGE,true);
             dispatchViewerUnmounted(this.props.viewerId);
+
+            var viewer = getViewer(getMultiViewRoot(), nextProps.viewerId);
+            if (viewer && viewer.lastActiveItemId) {
+                dispatchChangeActivePlotView(viewer.lastActiveItemId);
+            }
         }
         this.storeUpdate(nextProps);
     }
@@ -56,12 +61,11 @@ export class MultiImageViewer extends Component {
         const {viewer,visRoot,dlAry}= this.state;
         const layoutType= getLayoutType(getMultiViewRoot(),viewerId);
         if (!viewer || isEmpty(viewer.itemIdAry)) return false;
-        const newProps= omit(this.props, ['viewerPlotIds', 'showWhenExpanded']);
+        const newProps= omit(this.props, ['viewerPlotIds']);
         return (
             <MultiImageViewerView {...newProps}
                                   viewerPlotIds={viewer.itemIdAry}
                                   layoutType={layoutType}
-                                  showWhenExpanded={false}
                                   visRoot={visRoot}
                                   dlAry={dlAry}
             />
@@ -78,6 +82,8 @@ MultiImageViewer.propTypes= {
     gridDefFunc : PropTypes.func,
     insideFlex : PropTypes.bool,
     closeFunc : PropTypes.func,
+    showWhenExpanded : PropTypes.bool,
+    handleInlineToolsWhenSingle : PropTypes.bool
 };
 
 // function gridDefFunc(plotIdAry) : [ {title :string, [plotId:string]}]
@@ -93,4 +99,5 @@ MultiImageViewer.propTypes= {
 
 MultiImageViewer.defaultProps= {
     canReceiveNewPlots : NewPlotMode.create_replace.key,
+    showWhenExpanded : false,
 };

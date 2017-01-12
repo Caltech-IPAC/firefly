@@ -135,6 +135,45 @@ export class RangeValues {
     }
 
     /**
+     *
+     * @param p the params objects
+     * @param p.which
+     * @param p.lowerWhich
+     * @param p.lowerValue
+     * @param p.upperWhich
+     * @param p.upperValue
+     * @param p.betaValue
+     * @param p.gammaValue
+     * @param p.algorithm
+     * @param p.zscaleContrast
+     * @param p.zscaleSamples
+     * @param p.zscaleSamplesPerLine
+     * @param p.bias
+     * @param p.contrast
+     * @return {RangeValues}
+     */
+    static makeRV({which= PERCENTAGE,
+                   lowerWhich,
+                   lowerValue= 1.0,
+                   upperWhich,
+                   upperValue= 99.0,
+                   betaValue=0.1,
+                   gammaValue=2.0,
+                   algorithm= STRETCH_LINEAR,
+                   zscaleContrast= 25,
+                   zscaleSamples= 600,
+                   zscaleSamplesPerLine= 120,
+                   bias= 0.5,
+                   contrast= 1.0} ) {
+
+        lowerWhich= lowerWhich || which;
+        upperWhich= upperWhich || which;
+        return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, betaValue,
+            gammaValue, algorithm, zscaleContrast, zscaleSamples,
+            zscaleSamplesPerLine, bias, contrast);
+    }
+
+    /**
      * 
      * @param lowerWhich
      * @param lowerValue

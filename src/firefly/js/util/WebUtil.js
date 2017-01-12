@@ -6,7 +6,7 @@
 
 import Enum from 'enum';
 import update from 'react-addons-update';
-import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil, last, isObjectLike} from 'lodash';
+import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil, last, isPlainObject} from 'lodash';
 import { getRootURL } from './BrowserUtil.js';
 import {getWsConnId, getWsChannel} from '../core/messaging/WebSocketClient.js';
 import {getDownloadProgress, DownloadProgress} from '../rpc/SearchServicesJson.js';
@@ -54,6 +54,25 @@ export const encodeUrl= function(url, params) {
 };
 
 /**
+ * returns an array of {name, value} pairs based on the given params object.
+ * If the value in the params object is an array, it will be flatten into multiple
+ * name-value pairs based on the same key.
+ * @param params
+ * @returns {string}
+ */
+export function toNameValuePairs(params) {
+    if (isPlainObject(params)) {
+        return Object.entries(params)
+            .filter( ([key, val]) => key)       // remove empty params
+            .reduce( (rval, [key, val]) => {
+                if (Array.isArray(val)) {
+                    return rval.concat(val.map( (v) => ({name:key, value:v}) ));
+                } else return rval.concat({name:key, value:val});
+            }, []);
+    } else return params;
+}
+
+/**
  * convert a params object to an encoded url fragment.
  * this function supports nested object.  if the value of a param is an object
  * or an array of {name, value}, it will encode the child, and then encode the parent as well.
@@ -61,24 +80,13 @@ export const encodeUrl= function(url, params) {
  * @returns {*}
  */
 export function encodeParams(params) {
-    if (Array.isArray(params)) {
-        params = params.reduce( (rval, val) => {
-            const key = get(val, 'name');
-            key && (rval[key] = get(val, 'value'));
-            return rval;
-        }, {});
-    }
+    params = toNameValuePairs(params);  // convert to name-value pairs if params is a plain object.
 
-    return Object.keys(params).reduce((rval, key) => {
-        key = encodeURIComponent(key.trim());
-        var val = get(params, key, '');
-        rval = rval.length ? rval + '&' : rval;
-        if (typeof val === 'object') {
-            return rval + key + '=' + encodeURIComponent(encodeParams(val));
-        } else {
-            return rval + key + '=' + encodeURIComponent(val);
-        }
-    },'');
+    return params.filter( (p) => has(p, 'name') )       // only take name-value pair.
+        .map(({name, value}) => [name.trim(), isPlainObject(value) ? JSON.stringify(value) : value])  // map nam/value pair into [name,value] and convert object to json
+        .map(([name, value]) => [name, encodeURIComponent(value)])    // encoded it
+        .map(([name, value]) => name + '=' + value)    // create key=val parts
+        .join('&');     // combine the parts, separating them by '&'
 }
 
 /**
@@ -88,19 +96,22 @@ export function encodeParams(params) {
  * @returns {*}
  */
 export function decodeParams(queryStr) {
-    const params = queryStr.replace(/^\?/, '').split('&');
-    return params.reduce( (rval, param) => {
-        const parts = param.split('=').map((s) => s.trim());
-        var val = decodeURIComponent(get(parts, [1], ''));
-        if (val.includes('&')) {
-            val = decodeParams(val);
+    const toVal = (s) => {
+        var val = s;
+        try {
+            val = JSON.parse(val);
+        } catch(e) {
+            val = isBooleanString(val) ? toBoolean(val) : val;
         }
-        if (isBooleanString(val)) {
-            val = toBoolean(val);
-        }
-        rval[parts[0]] = val;
-        return rval;
-    }, {});
+        return val;
+    };
+
+    return  queryStr.replace(/^\?/, '')                     // remove prefex '?' if exists
+                    .split('&')                             // separate into param array
+                    .map((p) => p.split('=', 2))             // split into key/value pairs
+                    .map(([key, val='']) => [key.trim(), val.trim()] )   // trim key and values
+                    .map(([key, val]) => [key, toVal(decodeURIComponent(val))]) // decode and convert val
+                    .reduce((rval, [key, val]) => set(rval, [key], val), {}); // create a simple object of key/value.
 }
 
 
@@ -154,22 +165,22 @@ export function fetchUrl(url, options, doValidation= true) {
     options.headers = Object.assign(headers, options.headers);
 
     if (options.params) {
+        const params = toNameValuePairs(options.params);        // convert to name-value pairs if it's a simple object.
         if (options.method.toLowerCase() === 'get') {
-            url = encodeUrl(url, options.params);
+            url = encodeUrl(url, params);
         } else {
             url = encodeUrl(url);
             if (!options.body) {
                 // if 'post' but, body is not provided, add the parameters into the body.
                 if (options.method.toLowerCase() === 'post') {
                     options.headers['Content-type'] = 'application/x-www-form-urlencoded';
-                    options.body = Object.keys(options.params).map((key) => {
-                                        return encodeURIComponent(key) + '=' + encodeURIComponent(options.params[key]);
-                                    }).join('&');
+                    options.body = params.map(({name, value=''}) => encodeURIComponent(name) + '=' + encodeURIComponent(value))
+                                    .join('&');
                 } else if (options.method.toLowerCase() === 'multipart') {
                     options.method = 'post';
                     var data = new FormData();
-                    Object.keys(options.params).forEach( (key) => {
-                        data.append(key, options.params[key]);
+                    params.forEach( ({name, value}) => {
+                        data.append(name, value);
                     });
                     options.body = data;
                 }
@@ -183,7 +194,7 @@ export function fetchUrl(url, options, doValidation= true) {
         .then( (response) => {
             if (!doValidation) return response;
             if (response.ok) {
-                return response; 
+                return response;
             } else {
                 return new Error(`${url} failed with status: ${response}.statusText`);
             }

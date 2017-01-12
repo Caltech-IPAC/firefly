@@ -12,14 +12,14 @@ import * as ChartsCntlr from '../../charts/ChartsCntlr.js';
 import {getDefaultXYPlotOptions, DT_XYCOLS} from '../../charts/dataTypes/XYColsCDT.js';
 import {SCATTER} from '../../charts/ChartUtil.js';
 
-import {PLOT2D, DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchRemoveViewerItems, getViewerItemIds, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
+import {PLOT2D, DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchRemoveViewerItems, dispatchUpdateCustom, getViewerItemIds, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 
 /**
  * this saga handles chart related side effects
  */
 export function* syncCharts() {
     while (true) {
-        const action= yield take([ChartsCntlr.CHART_ADD, ChartsCntlr.CHART_MOUNTED, ChartsCntlr.CHART_REMOVE, TablesCntlr.TBL_RESULTS_ACTIVE, TablesCntlr.TABLE_LOADED]);
+        const action= yield take([ChartsCntlr.CHART_ADD, ChartsCntlr.CHART_MOUNTED, ChartsCntlr.CHART_REMOVE, TablesCntlr.TABLE_LOADED]);
         switch (action.type) {
             case ChartsCntlr.CHART_ADD:
             case ChartsCntlr.CHART_MOUNTED:
@@ -64,7 +64,8 @@ export function* syncChartViewer() {
         switch (action.type) {
             case ChartsCntlr.CHART_ADD:
             case TablesCntlr.TBL_RESULTS_ACTIVE:
-                updateDefaultViewer();
+                const {chartId, tbl_id} = action.payload;
+                updateDefaultViewer(chartId, tbl_id);
                 break;
         }
     }
@@ -98,12 +99,14 @@ export function* addDefaultScatter() {
 }
 
 
-function updateDefaultViewer() {
-    const tblId = TableUtil.getActiveTableId();
+function updateDefaultViewer(chartId, active_tbl_id) {
+    const tblId = active_tbl_id || TableUtil.getActiveTableId();
     const chartIds = [];
     chartIds.push(...ChartsCntlr.getChartIdsInGroup(tblId), ...ChartsCntlr.getChartIdsInGroup('default'));
     const currentIds = getViewerItemIds(getMultiViewRoot(),DEFAULT_PLOT2D_VIEWER_ID);
     if (!isEqual(chartIds, currentIds)) {
+        const activeItemId =  chartIds.includes(chartId) ? chartId : undefined;
+        dispatchUpdateCustom(DEFAULT_PLOT2D_VIEWER_ID, {activeItemId});
         dispatchRemoveViewerItems(DEFAULT_PLOT2D_VIEWER_ID,currentIds);
         dispatchAddViewerItems(DEFAULT_PLOT2D_VIEWER_ID, chartIds, PLOT2D);
     }

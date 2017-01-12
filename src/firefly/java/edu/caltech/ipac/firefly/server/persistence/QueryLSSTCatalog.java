@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.server.util.JsonToDataGroup;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
+import edu.caltech.ipac.firefly.server.util.ipactable.BgIpacTableHandler;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.download.FailedRequestException;
@@ -45,6 +46,32 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
     private static String DATA_ACCESS_URI = AppProperties.getProperty("lsst.dataAccess.uri", "lsst.dataAccess.uri");
     private static String DATABASE = AppProperties.getProperty("lsst.dataAccess.db", "lsst.dataAccess.db");
 
+    public static void main(String[] args) {
+
+        //String sql="select * from DeepSource where qserv_areaspec_box(0.4, 1.05, 0.5, 1.15)";
+        String sql="SELECT ra,decl,filterName FROM DC_W13_Stripe82.Science_Ccd_Exposure WHERE scisql_s2PtInBox(ra,decl,330,-0.1,335.1,-0.08)=1";
+
+
+        try {
+            long cTime = System.currentTimeMillis();
+            String url = "http://localhost:8661/db/v0/query?sql="+ URLEncoder.encode(sql, "UTF-8");
+            System.out.println("Executing SQL query: " + sql);
+            try {
+                URLConnection uc = URLDownload.makeConnection(new URL(url));
+                uc.setRequestProperty("Accept", "text/plain");
+                URLDownload.getDataToFile(uc, new File("/tmp/result.json"), null);
+            } catch (FailedRequestException e) {
+                throw new IOException("Request Failed", e);
+            }
+
+            System.out.println("SELECT took " + (System.currentTimeMillis() - cTime) + "ms");
+
+
+       } catch (Exception e) {
+            System.out.println("Exception "+e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
@@ -60,8 +87,7 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
 
         DataGroup dg = JsonToDataGroup.parse(file);
         File inf = createFile(request, ".tbl");
-        DataGroupWriter.write(inf, dg, 0);  // for big files write will happen in background
-
+        DataGroupWriter.write(new BgIpacTableHandler(inf, dg, request));  // for big files write will happen in background
         return inf;
     }
 
@@ -173,7 +199,6 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
         }
     }
 
-
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
@@ -232,8 +257,6 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
 
     }
 
-
-
     protected void setColumnTips(TableMeta meta, ServerRequest request) {
 
         TableServerRequest req = new TableServerRequest("LSSTCatalogDD");
@@ -270,33 +293,6 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
                 String nameStr = (String) dObj.getDataElement("name");
                 meta.setAttribute(makeAttribKey(DESC_TAG, nameStr.toLowerCase()), tipStr);
             }
-        }
-    }
-
-    public static void main(String[] args) {
-
-        //String sql="select * from DeepSource where qserv_areaspec_box(0.4, 1.05, 0.5, 1.15)";
-        String sql="SELECT ra,decl,filterName FROM DC_W13_Stripe82.Science_Ccd_Exposure WHERE scisql_s2PtInBox(ra,decl,330,-0.1,335.1,-0.08)=1";
-
-
-        try {
-            long cTime = System.currentTimeMillis();
-            String url = "http://localhost:8661/db/v0/query?sql="+ URLEncoder.encode(sql, "UTF-8");
-            System.out.println("Executing SQL query: " + sql);
-            try {
-                URLConnection uc = URLDownload.makeConnection(new URL(url));
-                uc.setRequestProperty("Accept", "text/plain");
-                URLDownload.getDataToFile(uc, new File("/tmp/result.json"), null);
-            } catch (FailedRequestException e) {
-                throw new IOException("Request Failed", e);
-            }
-
-            System.out.println("SELECT took " + (System.currentTimeMillis() - cTime) + "ms");
-
-
-       } catch (Exception e) {
-            System.out.println("Exception "+e.getMessage());
-            e.printStackTrace();
         }
     }
 

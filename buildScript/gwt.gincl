@@ -1,4 +1,3 @@
-def DEV_GROUP = "Development"
 
 task gwt {
   outputs.upToDateWhen { false }
@@ -89,7 +88,7 @@ task gwtCompile (type: JavaExec, dependsOn: [gwt, loadConfig]) {
 
 task gwtRun (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   description= 'GWT DevMode'
-  group = DEV_GROUP
+  group = MISC_GROUP
 
   inputs.source sourceSets.main.java.srcDirs
   inputs.dir sourceSets.main.output.resourcesDir
@@ -133,7 +132,7 @@ task gwtRun (type: JavaExec, dependsOn: [gwt, loadConfig]) {
 
 task gwtSuperDev (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   description= 'GWT SuperDev Mode'
-  group = DEV_GROUP
+  group = MISC_GROUP
 
   inputs.source sourceSets.main.java.srcDirs
   inputs.dir sourceSets.main.output.resourcesDir
@@ -176,9 +175,3 @@ task devMode (dependsOn: loadConfig) {
 }
 
 
-task immediateStart (dependsOn: gwt) << {
-  logger.info ">> running immediate-start-mod.sh on $gwt.warDir/${project['app-name']}.nocache"
-  exec {
-    commandLine "$fireflyPath/buildScript/immediate-start-mod.sh", "$gwt.warDir/${project['app-name']}.nocache"
-  }
-}

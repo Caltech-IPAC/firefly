@@ -42,12 +42,12 @@ public class PackagingController {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
     private static final Logger.LoggerImpl _statsLog = Logger.getLogger(Logger.DOWNLOAD_LOGGER);
     private static final PackagingController _instance = new PackagingController();
+    private final List<PackagerItem> _packagerList = new LinkedList<PackagerItem>();
     private volatile int _activeThreads = 0;
     private volatile int _activeLargeThreads = 0;
     private volatile int _queueHighWater = 0;
     private volatile long _totalPackage = 0;
     private volatile long _totalImmediatePackage = 0;
-    private final List<PackagerItem> _packagerList = new LinkedList<PackagerItem>();
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -63,6 +63,13 @@ public class PackagingController {
 
 
 //    public int getActiveThreads() { return _activeThreads;}
+
+    private static BackgroundStatus makeFailStatus(String id) {
+        BackgroundStatus retval= new BackgroundStatus(id, BackgroundState.FAIL, BackgroundStatus.BgType.PACKAGE);
+        retval.addAttribute(JobAttributes.Zipped);
+        retval.addMessage("report is canceled or failed");
+        return retval;
+    }
 
     public synchronized void queue(Packager packager,
                                    RequestOwner requestOwner) {
@@ -87,13 +94,13 @@ public class PackagingController {
         return bgStat;
     }
 
-    public boolean isQueueLong() {
-        return (getQueueSize() > WARNING_QUEUE_SIZE);
-    }
-
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
+
+    public boolean isQueueLong() {
+        return (getQueueSize() > WARNING_QUEUE_SIZE);
+    }
 
     private synchronized void startNewThreads() {
         List<String> logList = new ArrayList<String>(12);
@@ -120,7 +127,6 @@ public class PackagingController {
 
         logStartStatus(logList, started);
     }
-
 
     public List<String> getStatus() {
         ArrayList<String> statuses = new ArrayList<String>();
@@ -170,6 +176,14 @@ public class PackagingController {
         return (_packagerList.size() - _activeThreads);
     }
 
+//    private int countLarge() {
+//        int large= 0;
+//        for(PackagerItem pi : _packagerList) {
+//           if (pi.isLarge()) large++;
+//        }
+//        return large;
+//    }
+
     private int countLargeActive() {
         int large = 0;
         for (PackagerItem pi : _packagerList) {
@@ -181,14 +195,6 @@ public class PackagingController {
         }
         return large;
     }
-
-//    private int countLarge() {
-//        int large= 0;
-//        for(PackagerItem pi : _packagerList) {
-//           if (pi.isLarge()) large++;
-//        }
-//        return large;
-//    }
 
     private synchronized String startThread(final PackagerItem pi) {
         PackagingThread tc = new PackagingThread(pi);
@@ -210,11 +216,13 @@ public class PackagingController {
         return desc;
     }
 
-
     private BackgroundStatus doPackaging(Packager packager) {
         return doPackaging(packager, ALL);
     }
 
+//======================================================================
+//------------------ Private / Protected Methods -----------------------
+//======================================================================
 
     private BackgroundStatus doPackaging(Packager packager, int idx) {
         if (idx == ALL) {
@@ -227,7 +235,7 @@ public class PackagingController {
         BackgroundStatus bgStat = getStatus(packager);
 
         if (!info.isCanceled()) {
-            if (bgStat.isDone()) {
+            if (bgStat.isDone() && bgStat.hasAttribute(JobAttributes.CanSendEmail)) {
                 String email = info.getEmailAddress();
                 if (email != null) PackagedEmail.send(email, info, bgStat);
             }
@@ -237,10 +245,6 @@ public class PackagingController {
         return bgStat;
 
     }
-
-//======================================================================
-//------------------ Private / Protected Methods -----------------------
-//======================================================================
 
     private synchronized void threadCompletedWithException(PackagerItem pi,
                                                            Thread t,
@@ -273,7 +277,6 @@ public class PackagingController {
         }
     }
 
-
     public BackgroundStatus getStatus(Packager packager) {
         BackgroundStatus bgStat = null;
         BackgroundInfo info = packager.getPackageInfo();
@@ -281,14 +284,6 @@ public class PackagingController {
         if (bgStat == null)     bgStat= makeFailStatus(packager.getID());
         return bgStat;
 
-    }
-
-    private static BackgroundStatus makeFailStatus(String id) {
-        BackgroundStatus retval= new BackgroundStatus(id, BackgroundState.FAIL, BackgroundStatus.BgType.PACKAGE);
-        retval.addAttribute(JobAttributes.Zipped);
-        retval.addAttribute(JobAttributes.CanSendEmail);
-        retval.addMessage("report is canceled or failed");
-        return retval;
     }
 
     private synchronized void threadCompleted(PackagerItem pi) {
@@ -335,29 +330,6 @@ public class PackagingController {
 // -------------------- Inner Classes ----------------------------------
 // =====================================================================
 
-
-    private class PackagingThread implements Runnable {
-
-        private PackagerItem _pi;
-
-        PackagingThread(PackagerItem pi) {
-            _pi = pi;
-        }
-
-        public void run() {
-            Packager packager = _pi.getPackager();
-            Thread thread = Thread.currentThread();
-            PackageMaster.logPIDDebug(_pi.getID(),
-                                      "Packager thread: " + thread.getName() + " is beginning");
-            doPackaging(packager, ALL);
-            PackageMaster.logPIDDebug(_pi.getID(),
-                                      "Packager thread: " + thread.getName() + "  has completed");
-            threadCompleted(_pi);
-        }
-
-    }
-
-
     private static class QueueStats {
         private final int _total;
         private final int _totalLarge;
@@ -399,6 +371,27 @@ public class PackagingController {
         public String getLongestWaitStr() {
             return UTCTimeUtil.getHMSFromMills(_longestWait);
         }
+    }
+
+    private class PackagingThread implements Runnable {
+
+        private PackagerItem _pi;
+
+        PackagingThread(PackagerItem pi) {
+            _pi = pi;
+        }
+
+        public void run() {
+            Packager packager = _pi.getPackager();
+            Thread thread = Thread.currentThread();
+            PackageMaster.logPIDDebug(_pi.getID(),
+                                      "Packager thread: " + thread.getName() + " is beginning");
+            doPackaging(packager, ALL);
+            PackageMaster.logPIDDebug(_pi.getID(),
+                                      "Packager thread: " + thread.getName() + "  has completed");
+            threadCompleted(_pi);
+        }
+
     }
 }
 

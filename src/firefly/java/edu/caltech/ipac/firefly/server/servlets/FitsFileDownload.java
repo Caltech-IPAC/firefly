@@ -5,7 +5,7 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
-import edu.caltech.ipac.firefly.server.visualize.SrvParam;
+import edu.caltech.ipac.firefly.server.SrvParam;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;

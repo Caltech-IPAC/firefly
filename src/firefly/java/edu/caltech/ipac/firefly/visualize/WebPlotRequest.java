@@ -97,6 +97,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String HAS_MAX_ZOOM_LEVEL = "HasMaxZoomLevel";
     public static final String THUMBNAIL_SIZE = "thumbnailSize";
     public static final String PIPELINE_ORDER = "pipelineOrder"; // todo: convert, doc, add to allKeys
+    public static final String URL_CHECK_FOR_NEWER = "urlCheckForNewer"; // todo: convert, doc, add to allKeys
 
     public static final String MASK_BITS= "MaskBits";
     public static final String PLOT_AS_MASK= "PlotAsMask";
@@ -574,9 +575,7 @@ public class WebPlotRequest extends ServerRequest {
         return retval;
     }
 
-    public static boolean isSmartZoom(ZoomType type) {
-        return type == ZoomType.SMART;
-    }
+    public static boolean isSmartZoom(ZoomType type) { return false; }
 
     public boolean isSmartZoom() {
         return isSmartZoom(getZoomType());
@@ -883,6 +882,10 @@ public class WebPlotRequest extends ServerRequest {
     public String getURL() {
         return getSafeParam(URL);
     }
+
+    public void setUrlCheckForNewer(boolean check) { setSafeParam(URL_CHECK_FOR_NEWER,check+"");}
+
+    public boolean getUrlCheckForNewer() { return getBooleanParam(URL_CHECK_FOR_NEWER);}
 
     public void setServiceType(ServiceType service) {
         setParam(SERVICE, service.toString());

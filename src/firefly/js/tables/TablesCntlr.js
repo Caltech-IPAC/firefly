@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {take} from 'redux-saga/effects';
-import {get, set, omitBy, pickBy, isNil, cloneDeep} from 'lodash';
+import {get, set, omitBy, pickBy, isNil, cloneDeep, findKey} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
@@ -127,7 +127,8 @@ function actionCreators() {
         [TABLE_SORT]:       tableFetch,
         [TABLE_FILTER]:     tableFetch,
         [TABLE_FILTER_SELROW]:  tableFilterSelrow,
-        [TBL_RESULTS_ADDED]:    tblResultsAdded
+        [TBL_RESULTS_ADDED]:    tblResultsAdded,
+        [TABLE_REMOVE]:     tblRemove
     };
 }
 
@@ -295,13 +296,16 @@ function tableSearch(action) {
         //dispatch(validate(FETCH_TABLE, action));
         if (!action.err) {
             var {request={}, options={}} = action.payload;
-            const {tbl_group} = options;
+            const {tbl_ui_id} = options;
             const {tbl_id} = request;
             const title = get(request, 'META_INFO.title');
             request.pageSize = options.pageSize = options.pageSize || request.pageSize || 100;
-
+            if (TblUtil.getTblById(tbl_id)) {
+                // table exists... this is a new search.  old data should be removed.
+                dispatchTableRemove(tbl_id);
+            }
             dispatchTableFetch(request);
-            dispatchTblResultsAdded(tbl_id, title, options, tbl_group);
+            dispatchTblResultsAdded(tbl_id, title, options, tbl_ui_id);
         }
     };
 }
@@ -309,14 +313,14 @@ function tableSearch(action) {
 function tableInsert(action) {
     return (dispatch) => {
         const {tableModel={}, options={}, addUI=true} = action.payload || {};
-        const {tbl_group} = options;
+        const {tbl_ui_id} = options;
         const title = tableModel.title || get(tableModel, 'request.META_INFO.title') || 'untitled';
         const tbl_id = tableModel.tbl_id || get(tableModel, 'request.tbl_id');
 
         Object.assign(tableModel, {isFetching: false});
         set(tableModel, 'tableMeta.Loading-Status', 'COMPLETED');
         if (!tableModel.origTableModel) tableModel.origTableModel = tableModel;
-        if (addUI) dispatchTblResultsAdded(tbl_id, title, options, tbl_group);
+        if (addUI) dispatchTblResultsAdded(tbl_id, title, options, tbl_ui_id);
         dispatch( {type: TABLE_REPLACE, payload: tableModel} );
         dispatchTableLoaded(Object.assign( TblUtil.getTblInfo(tableModel), {invokedBy: TABLE_FETCH}));
     };
@@ -343,10 +347,25 @@ function tblResultsAdded(action) {
     };
 }
 
+function tblRemove(action) {
+    return (dispatch) => {
+        dispatch(action);
+        const {tbl_id} = action.payload;
+        const results = get(flux.getState(), [TABLE_SPACE_PATH, 'results'], {});
+        Object.keys(results).forEach( (tbl_group) => {
+            if (get(results, [tbl_group, 'active']) === tbl_id) {
+                dispatchActiveTableChanged(findKey(results[tbl_group].tables), tbl_group);
+            }
+        });
+    };
+}
+
 function highlightRow(action) {
     return (dispatch) => {
-        const {tbl_id} = action.payload;
+        const {tbl_id, highlightedRow} = action.payload;
         var tableModel = TblUtil.getTblById(tbl_id);
+        if (highlightedRow < 0 || highlightedRow >= tableModel.totalRows) return;   // out of bound.. ignore.
+
         var tmpModel = TblUtil.smartMerge(tableModel, action.payload);
         const {hlRowIdx, startIdx, endIdx, pageSize} = TblUtil.getTblInfo(tmpModel);
         if (TblUtil.isTblDataAvail(startIdx, endIdx, tableModel)) {

@@ -2,15 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.firefly.server.visualize;
-/**
- * User: roby
- * Date: 2/16/11
- * Time: 3:49 PM
- *
- * 07/07/15
- * The Crop class is deprecated. The same function is added to CropAndCenter.
- */
-
 
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.visualize.Band;
@@ -39,29 +30,22 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-//import edu.caltech.ipac.visualize.plot.Crop;
 
 /**
  * @author Trey Roby
+ *
+ * 07/07/15
+ * The Crop class is deprecated. The same function is added to CropAndCenter.
  */
 public class WebPlotReader {
 
-
-    /**
-     * @param workingCtxStr ctx string
-     */
-    public WebPlotReader(String workingCtxStr) {
-    }
-
-    public WebPlotReader() { this(null);  }
-
-    public Map<Band, FileReadInfo[]> readFiles(Map<Band, FileData> fitsFiles, WebPlotRequest req)
+    public static Map<Band, FileReadInfo[]> readFiles(Map<Band, FileData> fitsFiles, WebPlotRequest req)
             throws IOException,
                    FitsException,
                    FailedRequestException,
                    GeomException {
 
-        Map<Band, FileReadInfo[]> retMap = new LinkedHashMap<Band, FileReadInfo[]>();
+        Map<Band, FileReadInfo[]> retMap = new LinkedHashMap<>();
         for (Map.Entry<Band, FileData> entry : fitsFiles.entrySet()) {
             Band band = entry.getKey();
             FileReadInfo info[] = readOneFits(entry.getValue(), band, req);
@@ -71,22 +55,16 @@ public class WebPlotReader {
     }
 
 
-
-
-
-
     /**
      * @param fd file data
      * @param req WebPlotRequest from the search, usually the first
      * @return the ReadInfo[] object
      * @throws java.io.IOException        any io problem
      * @throws nom.tam.fits.FitsException problem reading the fits file
-     * @throws edu.caltech.ipac.util.download.FailedRequestException
-     *                                    any other problem
-     * @throws edu.caltech.ipac.visualize.plot.GeomException
-     *                                    problem reprojecting
+     * @throws edu.caltech.ipac.util.download.FailedRequestException any other problem
+     * @throws edu.caltech.ipac.visualize.plot.GeomException problem reprojecting
      */
-    public Map<Band, FileReadInfo[]> processFitsRead(FileData fd, WebPlotRequest req, FitsRead fitsRead, int imageIdx)
+    public static Map<Band, FileReadInfo[]> processFitsRead(FileData fd, WebPlotRequest req, FitsRead fitsRead, int imageIdx)
             throws IOException,
                    FitsException,
                    FailedRequestException,
@@ -114,7 +92,7 @@ public class WebPlotReader {
         retval= new FileReadInfo(originalFile, fitsRead, Band.NO_BAND, imageIdx,
                                  fd.getDesc(), uploadedName, modFileWriter);
 
-        Map<Band, FileReadInfo[]> retMap= new HashMap<Band, FileReadInfo[]>(1);
+        Map<Band, FileReadInfo[]> retMap= new HashMap<>(1);
         retMap.put(Band.NO_BAND, new FileReadInfo[] {retval});
 
         return retMap;
@@ -135,7 +113,7 @@ public class WebPlotReader {
      * @throws edu.caltech.ipac.visualize.plot.GeomException
      *                                    problem reprojecting
      */
-    public FileReadInfo[] readOneFits(FileData fd, Band band, WebPlotRequest req)
+    public static FileReadInfo[] readOneFits(FileData fd, Band band, WebPlotRequest req)
             throws IOException,
                    FitsException,
                    FailedRequestException,
@@ -214,7 +192,7 @@ public class WebPlotReader {
         return new PipelineRet(fr,modFileWriter);
     }
 
-    private boolean needsPipeline(WebPlotRequest req) {
+    private static boolean needsPipeline(WebPlotRequest req) {
         if (req==null) return false;
         return (req.isFlipY() || req.isFlipX() || req.getPostCropAndCenter() || req.getPostCrop() || isRotation(req));
     }
@@ -283,12 +261,9 @@ public class WebPlotReader {
                 pt2 = getCropPt2(req);
             }
             if (pt1 != null && pt2 != null) {
-//              Fits inFits = fr.getFits();
                 Fits inFits = fr.createNewFits();
                 Fits cropFits = CropAndCenter.do_crop(inFits, (int) pt1.getX(), (int) pt1.getY(),
                         (int) pt2.getX(), (int) pt2.getY());
-                        //Crop.do_crop(inFits, (int) pt1.getX(), (int) pt1.getY(),
-                         //                            (int) pt2.getX(), (int) pt2.getY());
                 FitsRead tmpFr[] = FitsRead.createFitsReadArray(cropFits);
                 retval = tmpFr[0];
                 File rotName= ModFileWriter.makeRotFileName(originalFile,imageIdx, req.getRotationAngle());
@@ -321,7 +296,7 @@ public class WebPlotReader {
                                                                 GeomException,
                                                                 FitsException,
                                                                 IOException {
-        FitsRead retval= fr;
+        FitsRead retval;
         ModFileWriter modFileWriter= null;
         if (req.isFlipY()) {
             retval= FitsRead.createFitsReadFlipLR(fr);
@@ -336,7 +311,7 @@ public class WebPlotReader {
                     GeomException,
                     FitsException,
                     IOException {
-        FitsRead retval= fr;
+        FitsRead retval;
         ModFileWriter modFileWriter= null;
         if (req.isFlipX()) {
             retval= new FlipXY(fr,"xAxis").doFlip();
@@ -358,7 +333,7 @@ public class WebPlotReader {
                 projType != Projection.UNSPECIFIED);
     }
 
-    public static void validateAccess(Map<Band, FileData> fitsFiles) throws FailedRequestException {
+    static void validateAccess(Map<Band, FileData> fitsFiles) throws FailedRequestException {
         for (FileData rf : fitsFiles.values()) {
             if (!rf.isBlank()) {
                 File f = rf.getFile();
@@ -381,7 +356,7 @@ public class WebPlotReader {
     }
 
     private static String concatFileNames(Map<Band, FileData> fitsFiles) {
-        StringBuffer sb = new StringBuffer(200);
+        StringBuilder sb = new StringBuilder(200);
         boolean first = true;
         for (FileData rf : fitsFiles.values()) {
             File f = rf.getFile();
@@ -393,7 +368,7 @@ public class WebPlotReader {
     }
 
 
-    public static boolean isRotation(WebPlotRequest r) {
+    static boolean isRotation(WebPlotRequest r) {
         return r!=null && ((r.getRotate() && !Double.isNaN(r.getRotationAngle())) || r.getRotateNorth());
     }
 

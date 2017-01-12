@@ -3,34 +3,10 @@
  */
 
 
-import React from 'react';
-import ReactDOM from 'react-dom';
 import {get} from 'lodash';
 
-import {firefly} from './Firefly.js';
-import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
-import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
-import {initApi} from './api/ApiBuild.js';
+import {firefly, Templates} from './Firefly.js';
 import {HELP_LOAD} from './core/AppDataCntlr.js';
-import {dispatchAppOptions} from './core/AppDataCntlr.js';
-
-firefly.bootstrap();
-
-
-/**
- * A list of available templates
- * @enum {string}
- */
-const Templates = {
-    /**
-     * This templates has multiple views:  'images', 'tables', and 'xyPlots'.
-     * They can be combined with ' | ', i.e.  'images | tables'
-     */
-    FireflyViewer,
-    LightCurveViewer : LcViewer
-};
-
-
 
 
 /**
@@ -50,7 +26,11 @@ const Templates = {
 
 /**
  * This entry point allows dynamic application loading.  Use firefly.app to configure
- * what this application should do
+ * what this application should do.
+ * By default, firefly.js will startup in api mode.
+ * If you want it to startup as an application, you need to at least
+ * define a firefly.app under window.
+ *
  * @namespace firefly
  * @type {object}
  * @prop {Templates} template  the name of the template to use. defaults to 'FireflyViewer'
@@ -70,39 +50,25 @@ const Templates = {
  *      window.firefly = {app: {views: 'images | tables', menu}};
  *   </script>
  */
-const app = get(window, 'firefly.app');
+const defaults = {
+    div: 'app',
+    template: 'FireflyViewer',
+    menu: [ {label:'Data Sets: Catalogs & Images', action:'AnyDataSetSearch'},
+        {label:'Catalogs CLASSIC', action:'IrsaCatalogDropDown'},
+        {label:'Test Searches', action:'TestSearches'},
+        {label:'Images', action:'ImageSelectDropDownCmd'},
+        {label:'Charts', action:'ChartSelectDropDownCmd'},
+        {label:'Help', action:HELP_LOAD, type:'COMMAND'},
+        {label:'Example Js Dialog', action:'exampleDialog', type:'COMMAND'}
+    ]
+};
 
-if (get(app, 'options')) {
-    const defOps = {
-        MenuItemKeys: {},
-        imageTabs: undefined,
-        irsaCatalogFilter: undefined,
-        catalogSpacialOp: undefined
-    };
-    dispatchAppOptions(Object.assign({},defOps, app.options));
+const app = get(window, 'firefly.app', {});
+var viewer, props;
+if (app.template) {
+    props = Object.assign({}, defaults, app);
+    viewer = Templates[props.template];
 }
 
-if (get(app, 'template')) {
-    const defaults = {
-        div: 'app',
-        template: 'FireflyViewer',
-        menu: [ {label:'Data Sets: Catalogs & Images', action:'AnyDataSetSearch'},
-                {label:'Catalogs CLASSIC', action:'IrsaCatalogDropDown'},
-                {label:'Test Searches', action:'TestSearches'},
-                {label:'Images', action:'ImageSelectDropDownCmd'},
-                {label:'Charts', action:'ChartSelectDropDownCmd'},
-                {label:'Help', action:HELP_LOAD, type:'COMMAND'},
-                {label:'Example Js Dialog', action:'exampleDialog', type:'COMMAND'}
-        ]
-    };
-    const props = Object.assign(defaults, app);
-    const viewer = Templates[props.template];
-
-    ReactDOM.render(React.createElement(viewer, props),
-        document.getElementById(props.div));
-}
-else {
-    initApi();
-}
-
+firefly.bootstrap(app.options, viewer, props);
 

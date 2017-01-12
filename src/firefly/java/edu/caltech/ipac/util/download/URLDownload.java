@@ -7,6 +7,7 @@ import edu.caltech.ipac.util.Base64;
 import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.UTCTimeUtil;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -364,6 +365,7 @@ public class URLDownload {
             FileData outFileData;
             FileData retval;
             int responseCode= 200;
+            Map<String,List<String>> sendHeaders= null;
             try {
                 if (conn instanceof HttpURLConnection) {
                     HttpURLConnection httpConn= (HttpURLConnection) conn;
@@ -371,6 +373,7 @@ public class URLDownload {
                         pushPostData(httpConn,postData);
                     }
                     if (uncompress) httpConn.setRequestProperty("Accept-Encoding", "gzip, deflate");
+                    sendHeaders= httpConn.getRequestProperties();
                     if (onlyIfModified) {
                         outFileData = checkAlreadyDownloaded(httpConn, outfile);
                         if (outFileData != null) return outFileData;
@@ -385,7 +388,7 @@ public class URLDownload {
             //------
             OutputStream out;
             DataInputStream in;
-            logHeader(postData, conn);
+            logHeader(postData, conn, sendHeaders);
             if (conn instanceof HttpURLConnection) responseCode= ((HttpURLConnection)conn).getResponseCode();
             validFileSize(conn, maxFileSize);
             File f = useSuggestedFilename ? makeFile(conn, outfile) : outfile;
@@ -424,9 +427,11 @@ public class URLDownload {
             retval = outFileData;
 
 
+            long start = System.currentTimeMillis();
             netCopy(in, out, conn, maxFileSize, dl);
 
-            logDownload(retval, conn.getURL().toString());
+            long elapse = System.currentTimeMillis() - start;
+            logDownload(retval, conn.getURL().toString(), elapse );
 
             if (responseCode>=300 && responseCode<400) {
                 DException de= new DException(outFileData, responseCode, null);
@@ -626,11 +631,13 @@ public class URLDownload {
     }
 
 
-    private static void logDownload(FileData retFile, String urlStr) {
+    private static void logDownload(FileData retFile, String urlStr, long elapse) {
+        String timeStr = (elapse>0) ? ", time: "+UTCTimeUtil.getHMSFromMills(elapse) : "";
         if (retFile != null) {
             List<String> outList = new ArrayList<String>(2);
+            outList.add(String.format("Download Complete: %s : %d bytes%s",
+                          retFile.getFile().getName(), retFile.getFile().length(), timeStr));
             outList.add(urlStr);
-            outList.add(String.format("Download Complete: %s : %d bytes", retFile.getFile().getName(), retFile.getFile().length()));
             ClientLog.message(outList);
         }
     }
@@ -658,18 +665,16 @@ public class URLDownload {
     }
 
 
-    public static void logHeader(String postData, URLConnection conn) {
+    public static void logHeader(String postData, URLConnection conn, Map<String,List<String>> sendHeaders) {
         StringBuffer workBuff;
         try {
             Set hSet= null;
-            String outStr[];
-            int extra = postData == null ? 3 : 4;
+            List<String> outStr= new ArrayList<>(40);
+            int extra = 30;
             if (conn instanceof HttpURLConnection && ((HttpURLConnection)conn).getResponseCode()==-1) {
-                outStr = new String[extra+1];
             }
             else {
                 hSet = conn.getHeaderFields().entrySet();
-                outStr = new String[hSet.size() + extra];
             }
             Map.Entry entry;
             List values;
@@ -678,18 +683,35 @@ public class URLDownload {
             String key;
             Iterator k;
             if (conn.getURL() != null) {
-                outStr[i++] = "----------Sending";
-                outStr[i++] = conn.getURL().toString();
+                outStr.add("----------Sending");
+                outStr.add( conn.getURL().toString());
+                if (sendHeaders!=null) {
+                    for(Map.Entry<String,List<String>> se: sendHeaders.entrySet()) {
+                        workBuff = new StringBuffer(100);
+                        if (se.getKey() == null) key = "<none>";
+                        else key= se.getKey();
+                        workBuff.append(StringUtils.pad(20,key));
+                        workBuff.append(": ");
+                        if (key.equalsIgnoreCase("cookie")) {
+                            workBuff.append("not shown");
+                        }
+                        else {
+                            workBuff.append(se.getValue());
+                        }
+                        outStr.add(workBuff.toString());
+                    }
+
+                }
             }
             if (postData != null) {
-                outStr[i++] = StringUtils.pad(20,"Post Data ") + ": " + postData;
+                outStr.add(StringUtils.pad(20,"Post Data ") + ": " + postData);
             }
             if (conn instanceof HttpURLConnection) {
                 int responseCode= ((HttpURLConnection)conn).getResponseCode();
-                outStr[i++] = "----------Received Headers, response status code: " + responseCode;
+                outStr.add("----------Received Headers, response status code: " + responseCode);
             }
             else {
-                outStr[i++] = "----------Received Headers";
+                outStr.add("----------Received Headers");
             }
             if (hSet!=null) {
                 for (Iterator j = hSet.iterator(); (j.hasNext()); ) {
@@ -704,11 +726,11 @@ public class URLDownload {
                         if (m > 0) workBuff.append("; ");
                         workBuff.append(k.next().toString());
                     }
-                    outStr[i++] = workBuff.toString();
+                    outStr.add(workBuff.toString());
                 }
             }
             else {
-                outStr[i++] = "No headers or status received, invalid http response, using work around";
+                outStr.add("No headers or status received, invalid http response, using work around");
             }
             ClientLog.message(outStr);
         } catch (Exception e) {
@@ -717,15 +739,17 @@ public class URLDownload {
     }
 
     public static void logHeader(URLConnection conn) {
-        logHeader(null, conn);
-    }
-
-    public static void logCompletedDownload(long size) {
-        logCompletedDownload(null, size);
+        logHeader(null, conn, null);
     }
 
     public static void logCompletedDownload(URL url, long size) {
-        String s = String.format("Download Complete- %d bytes", size);
+        logCompletedDownload(url, size, 0);
+    }
+
+    public static void logCompletedDownload(URL url, long size, long elapse) {
+
+        String timeStr = (elapse>0) ? ", time: "+UTCTimeUtil.getHMSFromMills(elapse) : "";
+        String s = String.format("Download Complete- %d bytes%s", size, timeStr);
         String urlString = null;
         if (url != null) urlString = url.toString();
         ClientLog.message(s, urlString);

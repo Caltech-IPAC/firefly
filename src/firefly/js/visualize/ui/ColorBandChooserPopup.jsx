@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
-import {isEmpty, omit,countBy} from 'lodash';
+import React, {PropTypes} from 'react';
+import {omit,countBy} from 'lodash';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {InputGroup} from '../../ui/InputGroup.jsx';
@@ -73,7 +73,9 @@ function ColorBandChooserPanel ({viewerId, bandData, dataId}) {
 
 
 ColorBandChooserPanel.propTypes= {
-    plotViewAry: PropTypes.array.isRequired
+    viewerId: PropTypes.string.isRequired,
+    bandData: PropTypes.object.isRequired,
+    dataId : PropTypes.string.isRequired
 };
 
 

@@ -32,9 +32,21 @@
     <a href="javascript:firefly.action.dispatchZoom({plotId: 'xxq',userZoomType:'DOWN' ,dispatcher:window.ffViewer.dispatch})">down</a>
 </div>
 <div>
+    <a href='../../firefly/;a=ImagePlotCntlr.PlotImage?wpRequest={%20%22File%22:%20%22http://ned.ipac.caltech.edu/img/1988MNRAS.230..345N/ARP_220:I:6cm:n1988.fits.gz%22,%20%22URL%22:%20%22http://ned.ipac.caltech.edu/img/1988MNRAS.230..345N/ARP_220:I:6cm:n1988.fits.gz%22,%20%22RangeValues%22:%20%2292,-2,92,8,1,0,1,2,44,25,600,120%22,%20%22PostTitle%22:%20%22ARP%20220%22,%20%22TitleFilenameModePfx%22:%20%22cutout%22,%20%22ColorTable%22:%201,%20%22TitleOptions%22:%20%22FILE_NAME%22,%20%22Type%22:%20%22TRY_FILE_THEN_URL%22%20}'>Show Fits by URL</a>
+</div>
+<div>
+    <a href="javascript:loadMoving()">load Moving Images</a>
+</div>
+<div>
+    <a href="javascript:loadMovingTable()">load Moving Table</a>
+</div>
+<div>
     <div id="imageViewHere" style="display: inline-block; width: 550px; height: 550px; margin: 10px;"></div>
     <div id="coverageHere" style="display: inline-block; width: 400px; height: 400px; margin: 10px;"></div>
 </div>
+<!--<div>-->
+    <!--<div id="movingDiv" style="display: inline-block; width: 400px; height: 400px; margin: 10px;"></div>-->
+<!--</div>-->
 <div>Tables from API calls:
     <a href='javascript:firefly.getViewer().showTable(tblReq3)'>Open a table</a>
     <a href='javascript:firefly.getViewer().showTable(tblReq1)'>Open allwise</a>
@@ -58,17 +70,6 @@
     <div id="histogram1" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
     <div id="histogram2" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white; position: absolute"></div>
 </div>
-<div>Tables from deprecated API calls:</div>
-<div>
-    <div id="oldSelectable" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
-    <div id="oldBasic" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white; position: absolute"></div>
-</div>
-<div>Deprecated API plot:</div>
-<div>
-    <div id="oldXyPlot1" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
-</div>
-<div id="old1" style="width: 300px; height: 300px; margin: 10px;"></div>
-<div id="old2" style="width: 300px; height: 300px; margin: 10px;"></div>
 
 <div>
     <div style="display: flex; width:820px">
@@ -110,6 +111,74 @@
         <textarea id='selectRegionContent' style='width: 800px; height: 300px; margin: 10px;'></textarea>
     </div>
 </div>
+
+<script type="text/javascript">
+    {
+        function loadMoving() {
+            var m49025b_143_2= {
+                url: 'http://web.ipac.caltech.edu/staff/roby/demo/moving/49025b143-w2-int-1b.fits',
+                plotId: 'm49025b_143_2',
+                OverlayPosition : '330.347003;-2.774482;EQ_J2000',
+                ZoomType : 'TO_WIDTH_HEIGHT',
+                Title: '49025b143-w2',
+                plotGroupId : 'movingGroup',
+            };
+            var m49273b_134_2= {
+                url: 'http://web.ipac.caltech.edu/staff/roby/demo/moving/49273b134-w2-int-1b.fits',
+                plotId: 'm49273b_134_2',
+                OverlayPosition : '333.539702;-0.779310;EQ_J2000',
+                ZoomType : 'TO_WIDTH_HEIGHT',
+                Title: '49273b134-w2',
+                plotGroupId : 'movingGroup',
+            };
+            var m49277b_135_1= {
+                url: 'http://web.ipac.caltech.edu/staff/roby/demo/moving/49277b135-w1-int-1b.fits',
+                plotId: 'm49277b_135_1',
+                OverlayPosition : '333.589054;-0.747251;EQ_J2000',
+                ZoomType : 'TO_WIDTH_HEIGHT',
+                Title: '49277b135-w1',
+                plotGroupId : 'movingGroup',
+            };
+            var m49289b_134_2= {
+                url: 'http://web.ipac.caltech.edu/staff/roby/demo/moving/49289b134-w2-int-1b.fits',
+                plotId: 'm49289b_134_2',
+                OverlayPosition : '333.736578;-0.651222;EQ_J2000',
+                ZoomType : 'TO_WIDTH_HEIGHT',
+                Title: '49289b134-w2',
+                plotGroupId : 'movingGroup',
+            };
+
+//            firefly.showImage('movingDiv', m49025b_143_2);
+//            firefly.showImage('movingDiv', m49273b_134_2);
+//            firefly.showImage('movingDiv', m49277b_135_1);
+//            firefly.showImage('movingDiv', m49289b_134_2);
+
+            firefly.getViewer().showImage( m49025b_143_2);
+            firefly.getViewer().showImage( m49273b_134_2);
+            firefly.getViewer().showImage( m49277b_135_1);
+            firefly.getViewer().showImage( m49289b_134_2);
+        }
+    }
+</script>
+
+<script type="text/javascript">
+    {
+        function loadMovingTable() {
+            var req = firefly.util.table.makeFileRequest('A moving object table',
+                    'http://web.ipac.caltech.edu/staff/roby/demo/moving/MOST_results-sample.tbl',null,
+                    { pageSize: 15,
+                        META_INFO: {
+                            datasetInfoConverterId : 'SimpleMoving',
+                            MovingObjCoordColumns: 'ra_obj;dec_obj;EQ_J2000',
+                            urlColumn : 'image_url'
+                        }
+                    });
+            firefly.getViewer().showTable( req, {removable: true, showUnits: false, showFilters: true});
+        }
+    }
+</script>
+
+
 
 
 <script type="text/javascript">
@@ -205,20 +274,15 @@
 
             firefly.showCoverage('coverageHere', {gridOn:true});
 
-            var v1= firefly.makeImageViewer('old1');
-            var v2= firefly.makeImageViewer('old2');
-
-            v1.plot(Object.assign({},req, {title:'old1 example'}));
-            v2.plotURL('http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits');
 
 
             //-----------------  TABLE DEMO ------------------------//
-            tblReq1 = firefly.util.table.makeIrsaCatalogRequest('wise_allwise_p3as_psd', 'WISE', 'wise_allwise_p3as_psd',
+            tblReq1 = firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
                     {   position: '148.9;68.8;EQ_J2000',
                         SearchMethod: 'Cone',
                         radius: 300
                     });
-            tblReq2 = firefly.util.table.makeIrsaCatalogRequest('another wise catalog', 'WISE', 'wise_allwise_p3as_psd',
+            tblReq2 = firefly.util.table.makeIrsaCatalogRequest('another wise catalog', 'WISE', 'allwise_p3as_psd',
                     {   position: '10.68479;41.26906;EQ_J2000',
                         SearchMethod: 'Cone',
                         radius: 300
@@ -242,29 +306,7 @@
             firefly.showHistogram('histogram2', {tbl_id: tblReq2.tbl_id, col: 'w2mpro+w3mpro', falsePositiveRate: 0.05});
 
 
-            //-----< old table api ------//
-            var tblParams = {
-                source: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
-                type: 'selectable',
-                Title: 'old api: selectable table',
-                pageSize: 50,
-                rowHeight: 30,
-                tableOptions: "show-filter=true,show-title=true,show-toolbar=true,show-options=true,show-paging=true,show-save=true"
-            };
-            firefly.showTable(tblParams, 'oldSelectable');
-            var tblParams2 = {
-                source: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
-                Title: 'old api: basic table',
-                pageSize: 1000,
-                tableOptions: "show-toolbar=false"
-            };
-            firefly.showTable(tblParams2, 'oldBasic');
-            //----- old table api >------//
 
-            //-----< old xyplot api ------//
-            //--- using QUERY_ID: 'oldSelectable' does not work getActiveTableId('upload') returns undefined ---//
-            firefly.addXYPlot({QUERY_ID: 'oldSelectable'}, 'oldXyPlot1');
-            //-----< old xyplot api ------//
 
             window.regionAry = [
                  /*

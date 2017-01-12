@@ -1,7 +1,6 @@
 package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.firefly.server.visualize.SrvParam;
 import edu.caltech.ipac.firefly.util.BrowserInfo;
 import edu.caltech.ipac.util.StringUtils;
 

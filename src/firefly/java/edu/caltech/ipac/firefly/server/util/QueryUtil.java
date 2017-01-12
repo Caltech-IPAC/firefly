@@ -54,7 +54,7 @@ public class QueryUtil {
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
     private static final int DECI_DEF_MAX_POINTS = AppProperties.getIntProperty("decimation.def.max.points", 100000);
-    private static final int DECI_ENABLE_SIZE = AppProperties.getIntProperty("decimation.enable.size", 5000);
+    public static final int DECI_ENABLE_SIZE = AppProperties.getIntProperty("decimation.enable.size", 5000);
 
     public static String makeUrlBase(String url) {
 
@@ -915,7 +915,7 @@ public class QueryUtil {
         return "%."+needSigDigits+"g";
     }
 
-    private static Object convertData(Class dataType, double x) {
+    public static Object convertData(Class dataType, double x) {
         if (dataType.isAssignableFrom(Double.class)) {
             return x;
         } else if (dataType.isAssignableFrom(Float.class)) {

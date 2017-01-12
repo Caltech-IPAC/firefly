@@ -90,7 +90,7 @@ class ChartPanelView extends Component {
 
         var {widthPx, heightPx, componentKey, optionsShown} = this.state;
         const knownSize = widthPx && heightPx;
-
+        const errors  = ChartsCntlr.getErrors(chartId);
 
         if (showChart) {
             // chart with toolbar and options
@@ -113,7 +113,10 @@ class ChartPanelView extends Component {
                                 <Resizable id='chart-resizer' onResize={this.onResize}
                                            className='ChartPanel__chartresizer'>
                                     <div style={{overflow:'auto',width:widthPx,height:heightPx}}>
-                                        {knownSize ? <Chart {...Object.assign({}, this.props, {widthPx, heightPx})}/> :
+                                        {knownSize ?
+                                            errors.length > 0 ?
+                                                <ErrorPanel errors={errors}/> :
+                                                <Chart {...Object.assign({}, this.props, {widthPx, heightPx})}/> :
                                             <div/>}
                                     </div>
                                 </Resizable>
@@ -135,7 +138,11 @@ class ChartPanelView extends Component {
                             <Resizable id='chart-resizer' onResize={this.onResize}
                                        className='ChartPanel__chartresizer'>
                                 <div style={{overflow:'auto',width:widthPx,height:heightPx}}>
-                                    {knownSize ? <Chart {...Object.assign({}, this.props, {widthPx, heightPx})}/> :
+                                    {knownSize ?
+                                        errors.length > 0 ?
+                                            <ErrorPanel errors={errors}/> :
+                                            <Chart {...Object.assign({}, this.props, {widthPx, heightPx})}/> :
+
                                         <div/>}
                                 </div>
                             </Resizable>
@@ -189,6 +196,30 @@ ChartPanelView.propTypes = {
 ChartPanelView.defaultProps = {
     showToolbar: true,
     showChart: true
+};
+
+function ErrorPanel({errors}) {
+    return (
+      <div style={{position: 'relative', width: '100%', height: '100%'}}>
+          {errors.map((error, i) => {
+              const {message='Error', reason=''} = error;
+                    return (
+                        <div key={i} style={{padding: 20, textAlign: 'center', overflowWrap: 'normal'}}>
+                            <h3>{message}</h3>
+                            {`${reason}`}
+                        </div>
+                    );
+              })}
+      </div>
+    );
+}
+
+ErrorPanel.propTypes = {
+    errors: PropTypes.arrayOf(
+        PropTypes.shape({
+            message: PropTypes.string,
+            reason: PropTypes.oneOfType([PropTypes.object,PropTypes.string]) // reason can be an Error object
+        }))
 };
 
 export class ChartPanel extends Component {

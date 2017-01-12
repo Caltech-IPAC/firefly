@@ -2,12 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.firefly.server.visualize;
-/**
- * User: roby
- * Date: 2/17/11
- * Time: 12:05 PM
- */
-
 
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -23,19 +17,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.text.DecimalFormat;
-import java.util.concurrent.TimeUnit;
 
 /**
-* @author Trey Roby
-*/
-abstract class ModFileWriter implements Runnable {
+ * @author Trey Roby
+ */
+abstract class ModFileWriter {
 
     private static final Logger.LoggerImpl _log= Logger.getLogger();
     private final Band _band;
     private final File _targetFile;
     private final boolean _markAsOriginal;
 
-    ModFileWriter(Band band, File targetFile, boolean markAsOriginal) {
+    private ModFileWriter(Band band, File targetFile, boolean markAsOriginal) {
         _band= band;
         _targetFile= targetFile;
         _markAsOriginal= markAsOriginal;
@@ -43,9 +36,7 @@ abstract class ModFileWriter implements Runnable {
 
     protected File getTargetFile() { return _targetFile; }
     protected boolean doTask() { return true; }
-    private boolean doAsThread() { return false; }
 
-//    protected boolean doThread() { return true; }
     /**
      * Start the file writing in separate thread.  This method also update the working fits file to the name that is about
      * to be created.
@@ -57,22 +48,8 @@ abstract class ModFileWriter implements Runnable {
             PlotStateUtil.setOriginalFitsFile(state, _targetFile, _band);
         }
         if (doTask()) {
-            if (doAsThread()) {
-                Thread thread= new Thread(this);
-                thread.setDaemon(true);
-                thread.start();
-            }
-            else {
-                write();
-            }
+            write();
         }
-    }
-
-    public void run() {
-        try { TimeUnit.MILLISECONDS.sleep(500);
-        } catch (InterruptedException e) { /*ignore*/ }
-
-        write();
     }
 
     public boolean getCreatesOnlyOneImage() { return true; }
@@ -106,17 +83,12 @@ abstract class ModFileWriter implements Runnable {
         public boolean getCreatesOnlyOneImage() { return false; }
     }
 
-
-
-
-
-
     static class GeomFileWriter extends ModFileWriter {
 
         private final FitsRead _fr;
 
-        GeomFileWriter(File templatefile, int idx, FitsRead fr, Band band, boolean markAsOriginal) {
-            super(band, makeFile(templatefile, idx), markAsOriginal);
+        GeomFileWriter(File templateFile, int idx, FitsRead fr, Band band, boolean markAsOriginal) {
+            super(band, makeFile(templateFile, idx), markAsOriginal);
             _fr= fr;
         }
 
@@ -143,7 +115,6 @@ abstract class ModFileWriter implements Runnable {
             File f= getTargetFile();
             try {
                 OutputStream os= new BufferedOutputStream(new FileOutputStream(f), 1024*16);
-//                ImagePlot.writeFile(os, new FitsRead[]{_fr});
                 _fr.writeSimpleFitsFile(os);
                 FileUtil.silentClose(os);
             } catch (Exception e) {

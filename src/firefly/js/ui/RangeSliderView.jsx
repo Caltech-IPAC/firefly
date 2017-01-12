@@ -5,7 +5,7 @@ import {InputFieldView}  from './InputFieldView.jsx';
 import Slider from 'rc-slider';
 import './rc-slider.css';
 
-const DEC = 8;
+const DEC = 3;
 
 /**
  * @summary adjust the maximum to be the multiple of the step resolution if the maximum on the slider is updated
@@ -151,6 +151,7 @@ export class RangeSliderView extends Component {
                             value={v}
                             handle={handle}
                             tipFormatter={null}
+                            included={true}
                             onChange={this.onSliderChange} />
                 </div>
             </div>

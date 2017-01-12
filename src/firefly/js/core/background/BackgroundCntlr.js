@@ -3,7 +3,7 @@
  */
 
 import {take} from 'redux-saga/effects';
-import {set, get, has, pick} from 'lodash';
+import {set, get, has, pick, isNil} from 'lodash';
 
 import {flux} from '../../Firefly.js';
 import {smartMerge} from '../../tables/TableUtil.js';
@@ -32,6 +32,7 @@ function actionCreators() {
         [BG_MONITOR_SHOW]: bgMonitorShow,
         [BG_SET_EMAIL]: bgSetEmail,
         [BG_Package]: bgPackage,
+        [BG_JOB_REMOVE]: bgJobRemove,
         [BG_JOB_CANCEL]: bgJobCancel
     };
 }
@@ -117,7 +118,7 @@ export function* doOnPackage({title, callback}) {
     var isDone = false;
     while (!(isDone)) {
         const action = yield take([BG_JOB_IMMEDIATE, BG_JOB_ADD]);
-        isDone = title === get(action, 'payload.Title');
+        isDone = !title || title === get(action, 'payload.Title');
     }
     callback && callback();
 }
@@ -132,6 +133,16 @@ function bgMonitorShow(action) {
     };
 }
 
+function bgJobRemove(action) {
+    return (dispatch) => {
+        const {id} = action.payload;
+        if (id) {
+            SearchServices.removeBgJob(id);
+            dispatch(action);
+        }
+    };
+}
+
 function bgJobCancel(action) {
     return (dispatch) => {
         const {id} = action.payload;
@@ -143,10 +154,11 @@ function bgJobCancel(action) {
 
 function bgSetEmail(action) {
     return (dispatch) => {
-        const {email} = action.payload;
+        const {email=''} = action.payload;
+        SearchServices.setEmail(email);
+        dispatch(action);
         if (email) {
-            SearchServices.setEmail(email);
-            dispatch(action);
+            SearchServices.resendEmail(email);
         }
     };
 }
@@ -162,8 +174,6 @@ function bgPackage(action) {
                     if (url && isSuccess(get(bgStatus, 'STATE'))) {
                         download(url);
                         dispatch({type: BG_JOB_IMMEDIATE, payload: bgStatus});       // allow saga to catch flow.
-                    } else {
-                        dispatchJobAdd(bgStatus);
                     }
                 }
             });
@@ -196,16 +206,17 @@ function reducer(state={}, action={}) {
 
 function handleBgStatusUpdate(state, action) {
     var bgstats = action.payload;
-    bgstats = transform(bgstats);
     if (has(state, ['jobs', bgstats.ID])) {
-        const nState = set({}, ['jobs', bgstats.ID], bgstats);
-        return smartMerge(state, nState);
+        return handleBgJobAdd(state, action);
     } else return state;
 }
 
 function handleBgJobAdd(state, action) {
     var bgstats = action.payload;
-    return updateSet(state, ['jobs', bgstats.ID], bgstats);
+    bgstats = transform(bgstats);
+    const nState = set({}, ['jobs', bgstats.ID], bgstats);
+    if (!isNil(bgstats.email)) nState.email = bgstats.email;
+    return smartMerge(state, nState);
 }
 
 function handleBgJobRemove(state, action) {

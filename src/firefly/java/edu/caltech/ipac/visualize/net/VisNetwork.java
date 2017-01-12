@@ -12,10 +12,8 @@ import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.FileData;
 import edu.caltech.ipac.util.download.NetParams;
 
-import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 
 /*
  * This is the new class that all the visualization network request 
@@ -182,23 +180,6 @@ public class VisNetwork {
         return retval;
     }
 
-    public static File getAnyUrl(URL url, Component  c)
-                   throws FailedRequestException {
-        File f;
-
-        AnyUrlParams params= new AnyUrlParams(url);
-        f= CacheHelper.getFile(params);
-
-        if (f == null)  {          // if not in cache
-            f= CacheHelper.makeFile(params.getUniqueString());
-            AnyUrlGetter.lowlevelGetUrlToFile(params,f,false,null);
-            CacheHelper.putFile(params,f);
-        }
-        return f;
-    }
-
-
-
 
     /**
      * Retrieve an image, this call should only be used in server mode
@@ -222,16 +203,10 @@ public class VisNetwork {
           f=  getSloanDssImage( (SloanDssImageParams)params);
           retval= new FileData(f,null);
       }
-//      else if (params instanceof NedImageParams) {
-//          no longer supported
-//      }
       else if (params instanceof WiseImageParams) {
           f=  getIbeImage((BaseIrsaParams) params);
           retval= new FileData(f,null);
       }
-//      else if (params instanceof SkyViewImageParams) {
-//          no longer supported
-//      }
       else if (params instanceof AnyFitsParams) {
           retval=  getAnyFits( (AnyFitsParams)params,dl);
       }

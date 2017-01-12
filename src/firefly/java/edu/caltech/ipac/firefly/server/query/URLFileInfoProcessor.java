@@ -3,22 +3,21 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
 
 
@@ -36,7 +35,12 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
             URL url= getURL(sr);
             if (url==null) throw new MalformedURLException("computed url is null");
 
-            AnyUrlParams params = new AnyUrlParams(url);
+            String progressKey= sr.getParam(WebPlotRequest.PROGRESS_KEY);
+            String plotId= sr.getParam(WebPlotRequest.PLOT_ID);
+            AnyUrlParams params = new AnyUrlParams(url,progressKey,plotId);
+            if (!StringUtils.isEmpty(getFileExtension())) {
+                params.setLocalFileExtensions(Arrays.asList(getFileExtension()));
+            }
             if (identityAware()) {
                 Map<String, String> cookies = ServerContext.getRequestOwner().getIdentityCookies();
                 if (cookies != null && cookies.size() > 0) {
@@ -46,7 +50,20 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
                 }
             }
             retval= LockingVisNetwork.getFitsFile(params);
-            _logger.info("retrieving URL:" + url.toString());
+            if (retval.getResponseCode()>=500) {
+                File f= new File(retval.getInternalFilename());
+                if (f.length()<800) {
+                    String fileData= FileUtil.readFile(f);
+                    _logger.warn("Could not retrieve URL, status: "+ retval.getResponseCode(),
+                                 "response: "+ fileData);
+                    f.delete();
+                    throw new DataAccessException("Could not retrieve file: "+ fileData);
+                }
+                else {
+                    _logger.warn("Could not retrieve URL, status: "+ retval.getResponseCode());
+                    throw new DataAccessException("Could not retrieve file");
+                }
+            }
         } catch (FailedRequestException e) {
             _logger.warn(e, "Could not retrieve URL");
         } catch (MalformedURLException e) {
@@ -59,6 +76,8 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
     protected boolean identityAware() {
         return false;
     }
+
+    public String getFileExtension()  { return ""; }
 
     public abstract URL getURL(ServerRequest sr) throws MalformedURLException;
 }

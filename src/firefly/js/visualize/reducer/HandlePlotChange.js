@@ -4,7 +4,7 @@
 
 import update from 'react-addons-update';
 import {isEmpty,isNil, isUndefined} from 'lodash';
-import Cntlr, {ExpandType} from '../ImagePlotCntlr.js';
+import Cntlr, {ExpandType, WcsMatchType} from '../ImagePlotCntlr.js';
 import PlotView, {replacePlotView, replacePrimaryPlot, changePrimePlot,
                   findWCSMatchOffset, updatePlotViewScrollXY} from './PlotView.js';
 import {WebPlot, clonePlotWithZoom, PlotAttribute} from '../WebPlot.js';
@@ -237,6 +237,7 @@ function processScroll(state,action) {
     return Object.assign({},state,{plotViewAry, mpwWcsPrimId});
 }
 
+
 function updateViewSize(state,action) {
     const {plotId,width,height}= action.payload;
 
@@ -245,25 +246,28 @@ function updateViewSize(state,action) {
         if (pv.plotId!==plotId ) return pv;
         var plot= primePlot(pv);
 
+
         const w= isUndefined(width) ? pv.viewDim.width : width;
         const h= isUndefined(height) ? pv.viewDim.height : height;
-
-        if (plot) {
-            var centerImagePt;
-            if (pv.scrollX<0 || pv.scrollY<0) {
-                centerImagePt= makeImagePt(plot.dataWidth/2, plot.dataHeight/2);
-            }
-            else {
-                centerImagePt= PlotView.findCurrentCenterPoint(pv,pv.scrollX,pv.scrollY);
-            }
-        }
         pv= Object.assign({}, pv, {viewDim: {width:w, height:h}});
-        if (plot && state.wcsMatchType && state.mpwWcsPrimId!==plotId) {
-            const offPt= findWCSMatchOffset(state, state.mpwWcsPrimId, plotId);
-            const masterPv=getPlotViewById(state,state.mpwWcsPrimId);
+        if (!plot) return pv;
+
+        var offPt, masterPv;
+
+        if (state.wcsMatchType===WcsMatchType.Standard && state.mpwWcsPrimId!==plotId) {
+            offPt= findWCSMatchOffset(state, state.mpwWcsPrimId, plotId);
+            masterPv=getPlotViewById(state,state.mpwWcsPrimId);
             pv= updatePlotViewScrollXY(pv, makeScreenPt(masterPv.scrollX-offPt.x, masterPv.scrollY-offPt.y), false);
         }
-        else if (centerImagePt) {
+        else if (state.wcsMatchType===WcsMatchType.Target) {
+            offPt= findWCSMatchOffset(state, state.mpwWcsPrimId, plotId);
+            masterPv=getPlotViewById(state,state.mpwWcsPrimId);
+            pv= updatePlotViewScrollXY(pv, makeScreenPt(masterPv.scrollX-offPt.x, masterPv.scrollY-offPt.y), false);
+        }
+        else {
+            const centerImagePt= (pv.scrollX<0 || pv.scrollY<0) ?
+                                 makeImagePt(plot.dataWidth/2, plot.dataHeight/2) :
+                                 PlotView.findCurrentCenterPoint(pv,pv.scrollX,pv.scrollY);
             pv= updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv,centerImagePt));
         }
         return pv;
@@ -273,35 +277,36 @@ function updateViewSize(state,action) {
 }
 
 
-// function alignWCS(state,action) {
-//     if (state.wcsMatchType && state.mpwWcsPrimId!==plotId) {
-//         const offPt= findWCSMatchOffset(state, state.mpwWcsPrimId, plotId);
-//         const masterPv=getPlotViewById(state,state.mpwWcsPrimId);
-//         pv= updatePlotViewScrollXY(pv, makeScreenPt(masterPv.scrollX-offPt.x, masterPv.scrollY-offPt.y), false);
-//     }
-//
-// }
-
-
-
 
 function recenter(state,action) {
-    const {plotId, centerPt}= action.payload;
+    const {plotId, centerPt, centerOnImage }= action.payload;
     var {plotGroupAry,plotViewAry}= state;
     const pv= getPlotViewById(state,plotId);
     var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
 
-    plotViewAry= applyToOnePvOrGroup(plotViewAry,plotId,plotGroup, recenterPv(centerPt));
+    if (state.wcsMatchType) {
+        const newPv= recenterPv(centerPt, centerOnImage)(pv);
+        plotViewAry= replacePlotView(plotViewAry, newPv);
+        plotViewAry= PlotView.updatePlotGroupScrollXY(state, plotId, plotViewAry, state.plotGroupAry,
+                                                       makeScreenPt(newPv.scrollX, newPv.scrollY), false);
+    }
+    else {
+        plotViewAry= applyToOnePvOrGroup(plotViewAry,plotId,plotGroup, recenterPv(centerPt, centerOnImage));
+    }
+
     return clone(state,{plotViewAry});
 }
 
 /**
  * Center on the FIXED_TARGET attribute or the center of the plot or specified center point
- * @param centerPt center point
+ * @param {Point} centerPt center point
+ * @param {boolean} only used if centerPt is not defined.  If true then the centering will be
+ *                  the center of the image.  If false, then the center point will be the
+ *                  FIXED_TARGET attribute, if defined. Otherwise it will be the center of the image.
  * @return {{}} a new plot view
  */
 
-function recenterPv(centerPt) {
+function recenterPv(centerPt,  centerOnImage) {
     return (pv) => {
         const plot = primePlot(pv);
         if (!plot) return pv;
@@ -316,7 +321,7 @@ function recenterPv(centerPt) {
             }
         } else {
             var wp = plot.attributes[PlotAttribute.FIXED_TARGET];
-            if (wp) {
+            if (wp && !centerOnImage) {
                 centerImagePt = CCUtil.getImageCoords(plot, wp);
             }
             else {

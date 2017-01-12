@@ -11,7 +11,9 @@ import {WcsMatchType, visRoot, dispatchWcsMatch} from '../../visualize/ImagePlot
 import {VisInlineToolbarView} from '../../visualize/ui/VisInlineToolbarView.jsx';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import {dispatchChangeViewerLayout, getViewer, getMultiViewRoot, GRID, SINGLE} from '../../visualize/MultiViewCntlr.js';
-import {DEF_IMAGE_CNT, MAX_IMAGE_CNT} from './LcManager.js';
+import {LC} from './LcManager.js';
+import {CloseButton} from '../../ui/CloseButton.jsx';
+import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 
 
 
@@ -31,45 +33,66 @@ const tStyle= {
     paddingLeft : 5
 };
 
+const closeButtonStyle= {
+    display: 'inline-block',
+    padding: '1px 12px 0 1px'
+};
+
 var options= [];
 
-for(var i= 1; (i<=MAX_IMAGE_CNT); i+=2) {
+for(var i= 1; (i<=LC.MAX_IMAGE_CNT); i+=2) {
     options.push({label: String(i), value: String(i)});
 }
 
 
-export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layoutType, dlAry, tableId}) {
+export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layoutType, dlAry, tableId, closeFunc=null}) {
 
     const viewer= getViewer(getMultiViewRoot(), viewerId);
-    const count= get(viewer, 'layoutDetail.count',DEF_IMAGE_CNT);
+    const count= get(viewer, 'layoutDetail.count',LC.DEF_IMAGE_CNT);
     const vr= visRoot();
     const pv= getPlotViewById(vr, activePlotId);
     const pvDlAry= getAllDrawLayersForPlot(dlAry,activePlotId,true);
 
     const wcsMatch= (
-        <div style={{alignSelf:'center', paddingLeft:25}}>
+        <div style={{alignSelf:'center', padding: '0 10px 0 25px'}}>
             <div style={{display:'inline-block'}}>
                 <input style={{margin: 0}}
                        type='checkbox'
-                       checked={vr.wcsMatchType===WcsMatchType.Standard}
-                       onChange={(ev) => wcsMatchStandard(ev.target.checked, vr.activePlotId) }
+                       checked={vr.wcsMatchType===WcsMatchType.Target}
+                       onChange={(ev) => wcsMatchTarget(ev.target.checked, vr.activePlotId) }
                 />
             </div>
-            <div style={tStyle}>WCS Match</div>
+            <div style={tStyle}>Target Match</div>
         </div>
     );
 
-    return (
-        <div style={toolsStyle}>
-            <div style={{whiteSpace: 'nowrap', paddingLeft: 7}}>
-                Image Count:
-                <div style={{display:'inline-block', paddingLeft:7}}>
-                    <RadioGroupInputFieldView options={options} inline={true} fieldKey='frames' value={String(count)}
-                                              onChange={(ev) => changeSize(viewerId, ev.target.value)} />
+    var expandedUI= null;
+    if (closeFunc) {
+        expandedUI= (
+            <div style={{display:'flex', flexDirection:'row', flexWrap:'nowrap'}}>
+                <CloseButton style={closeButtonStyle} onClick={closeFunc}/>
+                <div style={{'flex': '1 1 auto'}}>
+                    <VisToolbar messageUnder={Boolean(closeFunc)}/>
                 </div>
             </div>
-            {wcsMatch}
-            <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={pvDlAry} />
+
+        );
+    }
+
+    return (
+        <div>
+            {expandedUI}
+            <div style={toolsStyle}>
+                <div style={{whiteSpace: 'nowrap', paddingLeft: 7}}>
+                    Image Count:
+                    <div style={{display:'inline-block', paddingLeft:7}}>
+                        <RadioGroupInputFieldView options={options} inline={true} fieldKey='frames' value={String(count)}
+                                                  onChange={(ev) => changeSize(viewerId, ev.target.value)} />
+                    </div>
+                </div>
+                {wcsMatch}
+                {!closeFunc && <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={pvDlAry} />}
+            </div>
         </div>
     );
 }
@@ -97,7 +120,8 @@ LcImageToolbarView.propTypes= {
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string.isRequired,
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
-    tableId: PropTypes.string
+    tableId: PropTypes.string,
+    closeFunc : PropTypes.func
 };
 
 
@@ -125,6 +149,6 @@ InlineRightToolbarWrapper.propTypes= {
     dlAry : PropTypes.array
 };
 
-function wcsMatchStandard(doWcsStandard, plotId) {
-    dispatchWcsMatch({matchType:doWcsStandard?WcsMatchType.Standard:false, plotId});
+function wcsMatchTarget(doWcsStandard, plotId) {
+    dispatchWcsMatch({matchType:doWcsStandard?WcsMatchType.Target:false, plotId});
 }

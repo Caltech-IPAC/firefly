@@ -31,6 +31,7 @@ public class BackgroundStatus implements Serializable {
     // --------Keys -------------------
     public static final String TYPE = "TYPE";
     public static final String ID = "ID";
+    public static final String TITLE = "Title";
     public static final String ATTRIBUTE = "ATTRIBUTES";
     public static final String STATE = "STATE";
     public static final String DATA_SOURCE = "DATA_SOURCE";

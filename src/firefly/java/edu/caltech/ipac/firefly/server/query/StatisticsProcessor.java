@@ -43,56 +43,6 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
     public StatisticsProcessor(){}
 
     /**
-     * This method is defined as an abstract in the IpacTablePartProcessor and it is implemented here.
-     * The TableServerRequest is passed here and processed.  Only when the "searchRequest" is set, the request
-     * is processed.
-     *
-     * @param request table server request
-     * @return File with statistics on a table
-     * @throws IOException
-     * @throws DataAccessException
-     */
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-
-        String searchRequestJson = request.getParam(SEARCH_REQUEST);
-        if (searchRequestJson == null) {
-            throw new DataAccessException("Unable to get statistics: " + SEARCH_REQUEST + " is missing");
-        }
-        JSONObject searchRequestJSON = (JSONObject) JSONValue.parse(request.getParam(SEARCH_REQUEST));
-        String searchId = (String) searchRequestJSON.get(ServerParams.ID);
-        if (searchId == null) {
-            throw new DataAccessException("Unable to get statistics: " + SEARCH_REQUEST + " must contain " + ServerParams.ID);
-        }
-        TableServerRequest sReq = new TableServerRequest(searchId);
-
-        String value;
-        for (Object param : searchRequestJSON.keySet()) {
-            String name = (String) param;
-            if (!name.equalsIgnoreCase(ServerParams.ID)) {
-                value = searchRequestJSON.get(param).toString();
-                sReq.setTrueParam(name, value);
-            }
-        }
-
-        FileInfo fi = new SearchManager().getFileInfo(sReq);
-        if (fi == null) {
-            throw new DataAccessException("Unable to get file location info");
-        }
-        if (fi.getInternalFilename() == null) {
-            throw new DataAccessException("File not available");
-        }
-        if (!fi.hasAccess()) {
-            throw new SecurityException("Access is not permitted.");
-        }
-        DataGroup sourceDataGroup = DataGroupReader.readAnyFormat(new File(fi.getInternalFilename()));
-        DataGroup statisticsDataGroup = createTableStatistic(sourceDataGroup);
-        statisticsDataGroup.addAttribute("searchRequest", sReq.toString());
-        File statisticsFile = createFile(request);
-        DataGroupWriter.write(statisticsFile, statisticsDataGroup, 0);
-        return statisticsFile;
-    }
-
-    /**
      * Add this method to run unit test
      *
      * @param inDataGroup source data group
@@ -129,21 +79,6 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
         // adjust the width of all columns to fit the data
         statisticsTable.shrinkToFitData(true);
         return statisticsTable;
-    }
-    /**
-     *
-     * This method process the input IpacTable and find the coumnNames, min, max etc and store in a new IpacTable, ie, a DataGroup.
-     * @param file file with the source table
-     * @return DataGroup which contains table statistics
-     * @throws IpacTableException
-     * @throws IOException
-     * @throws DataAccessException
-     */
-    private  DataGroup  createTableStatistic(File file) throws IpacTableException, IOException, DataAccessException  {
-
-        DataGroup dg = IpacTableReader.readIpacTable(file, null, false, "inputTable" );
-        return createTableStatistic(dg);
-
     }
 
     /**
@@ -271,7 +206,6 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
         return ret;
     }
 
-
     public static void main(String args[]) throws IOException, DataAccessException {
 
         if (args.length > 0) {
@@ -291,5 +225,71 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
                 }
             }
         }
+    }
+
+    /**
+     * This method is defined as an abstract in the IpacTablePartProcessor and it is implemented here.
+     * The TableServerRequest is passed here and processed.  Only when the "searchRequest" is set, the request
+     * is processed.
+     *
+     * @param request table server request
+     * @return File with statistics on a table
+     * @throws IOException
+     * @throws DataAccessException
+     */
+    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
+
+        String searchRequestJson = request.getParam(SEARCH_REQUEST);
+        if (searchRequestJson == null) {
+            throw new DataAccessException("Unable to get statistics: " + SEARCH_REQUEST + " is missing");
+        }
+        JSONObject searchRequestJSON = (JSONObject) JSONValue.parse(request.getParam(SEARCH_REQUEST));
+        String searchId = (String) searchRequestJSON.get(ServerParams.ID);
+        if (searchId == null) {
+            throw new DataAccessException("Unable to get statistics: " + SEARCH_REQUEST + " must contain " + ServerParams.ID);
+        }
+        TableServerRequest sReq = new TableServerRequest(searchId);
+
+        String value;
+        for (Object param : searchRequestJSON.keySet()) {
+            String name = (String) param;
+            if (!name.equalsIgnoreCase(ServerParams.ID)) {
+                value = searchRequestJSON.get(param).toString();
+                sReq.setTrueParam(name, value);
+            }
+        }
+
+        FileInfo fi = new SearchManager().getFileInfo(sReq);
+        if (fi == null) {
+            throw new DataAccessException("Unable to get file location info");
+        }
+        if (fi.getInternalFilename() == null) {
+            throw new DataAccessException("File not available");
+        }
+        if (!fi.hasAccess()) {
+            throw new SecurityException("Access is not permitted.");
+        }
+        DataGroup sourceDataGroup = DataGroupReader.readAnyFormat(new File(fi.getInternalFilename()));
+        DataGroup statisticsDataGroup = createTableStatistic(sourceDataGroup);
+        statisticsDataGroup.addAttribute("searchRequest", sReq.toString());
+        File statisticsFile = createFile(request);
+        DataGroupWriter.write(statisticsFile, statisticsDataGroup);
+        return statisticsFile;
+    }
+
+    /**
+     *
+     * This method process the input IpacTable and find the coumnNames, min, max etc and store in a new IpacTable, ie, a DataGroup.
+     * @param file file with the source table
+     * @return DataGroup which contains table statistics
+     * @throws IpacTableException
+     * @throws IOException
+     * @throws DataAccessException
+     */
+    private  DataGroup  createTableStatistic(File file) throws IpacTableException, IOException, DataAccessException  {
+
+        DataGroup dg = IpacTableReader.readIpacTable(file, null, false, "inputTable" );
+        return createTableStatistic(dg);
+
     }
 }

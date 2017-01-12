@@ -4,34 +4,33 @@
 
 
 import React, {Component, PropTypes} from 'react';
-import {TargetPanel} from '../../ui/TargetPanel.jsx';
+import {isNil} from 'lodash';
+
 import {InputGroup} from '../../ui/InputGroup.jsx';
 import Validate from '../../util/Validate.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
-import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
-import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
-import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
-import Histogram from '../../charts/ui/Histogram.jsx';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {dispatchMultiValueChange, dispatchRestoreDefaults} from '../../fieldGroup/FieldGroupCntlr.js';
+import {dispatchValueChange, dispatchRestoreDefaults} from '../../fieldGroup/FieldGroupCntlr.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import FieldGroupUtils, {revalidateFields} from '../../fieldGroup/FieldGroupUtils';
-import {makeTblRequest,getTblById} from '../../tables/TableUtil.js';
+import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
+import {makeTblRequest,getTblById,getCellValue} from '../../tables/TableUtil.js';
 
-import {CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
-import {Tabs, Tab,FieldGroupTabs} from '../../ui/panel/TabPanel.jsx';
+import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
-import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
+import {dispatchTableSearch, TABLE_HIGHLIGHT} from '../../tables/TablesCntlr.js';
 
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
-import {RAW_TABLE, PHASE_FOLDED} from '../../templates/lightcurve/LcManager.js';
+import {LC} from '../../templates/lightcurve/LcManager.js';
+import {showPhaseFoldingPopup} from './LcPhaseFoldingPopup.jsx';
+import {sortInfoString} from '../../tables/SortInfo.js';
 
+import {take} from 'redux-saga/effects';
 import './LCPanels.css';
 
-const grpkey = 'LC_FORM_Panel';
+export const grpkey = 'LC_FORM_Panel';
 
 function getDialogBuilder() {
     var popup= null;
@@ -78,55 +77,6 @@ const Header = {
     };
 
 
-const defValues= {
-    fieldInt: {
-        fieldKey: 'fieldInt',
-        value: '3',
-        validator: Validate.intRange.bind(null, 1, 10, 'test field'),
-        tooltip: 'this is a tip for field 1',
-        label: 'Int Value:'
-    },
-    FluxColumn: {
-        fieldKey: 'fluxcolumn',
-        value: '',
-        validator: Validate.floatRange.bind(null, 0.2, 20.5, 2, 'Flux Column'),
-        tooltip: 'Flux Column',
-        label: 'Flux Column:',
-        nullAllowed : true,
-        labelWidth: 100
-    },
-    field1: {
-        fieldKey: 'field1',
-        value: '3',
-        validator: Validate.intRange.bind(null, 1, 10, 'test field'),
-        tooltip: 'this is a tip for field 1',
-        label: 'Int Value:'
-    },
-    field2: {
-        fieldKey: 'field2',
-        value: '',
-        validator: Validate.floatRange.bind(null, 1.5, 50.5, 2, 'a float field'),
-        tooltip: 'field 2 tool tip',
-        label: 'Float Value:',
-        nullAllowed : true,
-        labelWidth: 100
-    },
-    low: {
-        fieldKey: 'low',
-        value: '1',
-        validator: Validate.intRange.bind(null, 1, 100, 'low field'),
-        tooltip: 'this is a tip for low field',
-        label: 'Low Field:'
-    },
-    high: {
-        fieldKey: 'high',
-        value: '3',
-        validator: Validate.intRange.bind(null, 1, 100, 'high field'),
-        tooltip: 'this is a tip for high field',
-        label: 'High Field:'
-    }
-};
-
 
 var LcPhaseFoldingDialog = React.createClass({
 
@@ -134,7 +84,7 @@ var LcPhaseFoldingDialog = React.createClass({
         return (
             <div style={{padding:'5px', minWidth: 480}}>
                 <div>
-                    <Tabs componentKey='LCInputTabs' defaultSelected={0} useFlex={true}>
+                    <Tabs componentKey='LCInputTabs' defaultSelected={0} keepState={true} useFlex={true}>
                         <Tab name='Phase Folding'>
                             <LcPhaseFoldingForm />
                         </Tab>
@@ -185,8 +135,6 @@ export function LcPFOptionsPanel ({fields}) {
         const {radioGrpFld}= fields;
         hide= (radioGrpFld && radioGrpFld.value==='opt2');
     }
-    var fieldInt= makeField1(hide);
-
     //Todo: get valication Suggestion from table
 
     const validSuggestions = ['mjd','col1','col2'];
@@ -194,8 +142,7 @@ export function LcPFOptionsPanel ({fields}) {
 
     return (
 
-            <FieldGroup style= {PanelResizableStyle} groupKey={grpkey} initValues={{timeCol:'mjd',field1:'4'}}
-                              reducerFunc={DialogReducer} keepState={true}>
+            <FieldGroup style= {PanelResizableStyle} groupKey={grpkey} initValues={{timeCol:LC.DEF_TIME_CNAME}} keepState={true}>
                 <InputGroup labelWidth={110}>
 
                     <span style={Header}>Phase Folding</span>
@@ -224,33 +171,18 @@ export function LcPFOptionsPanel ({fields}) {
 
                     <br/>
                     <ValidationField fieldKey='flux'
-                         forceReinit={true}
                          initialState= {{
-                                  fieldKey: 'flux',
-                                  value: '2.0',
-                                  validator: Validate.floatRange.bind(null, 2.0, 5.5, 3,'Flux Column'),
-                                  tooltip: 'Flux Column, value between 2.0 to 5.5',
-                                  label : 'Flux Column:',
-                                  labelWidth : 100
+                                fieldKey: 'flux',
+                                value: LC.DEF_FLUX_CNAME,
+                                tooltip: 'Flux column name',
+                                label : 'Flux Column:',
+                                labelWidth : 100
                           }} />
 
                     <br/>
 
-                    <ValidationField fieldKey='fluxerror'
-                         forceReinit={true}
-                         initialState= {{
-                                  fieldKey: 'fluxerror',
-                                  value: '0.02',
-                                  validator: Validate.floatRange.bind(null, 0.01, 0.5, 3,'Flux Error'),
-                                  tooltip: 'Flux Error, value is between 0.01 to 0.5',
-                                  label : 'Flux Error:',
-                                  labelWidth : 100
-                         }} />
-                    <br/>
-
                     <ValidationField fieldKey='period'
-                                     forceReinit={true}
-                                     initialState= {{
+                         initialState= {{
                                 fieldKey: 'period',
                                 value: '1.0',
                                 //validator: Validate.floatRange.bind(null, 0.5, 1.5, 3,'period'),
@@ -258,6 +190,17 @@ export function LcPFOptionsPanel ({fields}) {
                                 label : 'Period:',
                                 labelWidth : 100
                     }} />
+                    <br/>
+
+                    <ValidationField fieldKey='cutoutSize'
+                        initialState= {{
+                               fieldKey: 'cutoutSize',
+                               value: '0.3',
+                               //validator: Validate.floatRange.bind(null, 0.1, 1, 3,'cutoutsize'),
+                               tooltip: 'Cutout Size in degrees',
+                               label : 'Cutout Size (deg):',
+                               labelWidth : 100
+                       }} />
 
 
                     <br/> <br/>
@@ -269,7 +212,10 @@ export function LcPFOptionsPanel ({fields}) {
                         <b>Reset</b>
                     </button>
 
-                    <br/>
+                    <br/> <br/>
+
+                   <button type='button' className='button std hl'
+                           onClick={() => showPhaseFoldingPopup('Phase Folding')}>Phase Folding Dialog</button>
                 </InputGroup>
             </FieldGroup>
 
@@ -280,36 +226,6 @@ export function LcPFOptionsPanel ({fields}) {
 LcPFOptionsPanel.propTypes= {
     fields: PropTypes.object
 };
-
-/**
- *
- * @param {object} inFields
- * @param {object} action
- * @return {object}
- */
-var DialogReducer= function(inFields, action) {
-    if (!inFields)  {
-        return defValues;
-    }
-    else {
-        var {low,high}= inFields;
-        // inFields= revalidateFields(inFields);
-        if (!low.valid || !high.valid) {
-            return inFields;
-        }
-        if (parseFloat(low.value)> parseFloat(high.value)) {
-            low= Object.assign({},low, {valid:false, message:'must be lower than high'});
-            high= Object.assign({},high, {valid:false, message:'must be higher than low'});
-            return Object.assign({},inFields,{low,high});
-        }
-        else {
-            low= Object.assign({},low, low.validator(low.value));
-            high= Object.assign({},high, high.validator(high.value));
-            return Object.assign({},inFields,{low,high});
-        }
-    }
-};
-
 
 function resetDefaults() {
     dispatchRestoreDefaults(grpkey);
@@ -366,44 +282,65 @@ function resultsSuccess(request) {
 }
 
 function onSearchSubmit(request) {
-    let fieldState = FieldGroupUtils.getGroupFields(grpkey);
-
-    // TODO Fix: request doesn't contain 'Tabs'...
-    //if (request.Tabs==='LC Param') {
-        doPhaseFolding(fieldState);
-    //}
-    //else {
-    //    console.log('request no supported');
-    //}
+    const fieldState = FieldGroupUtils.getGroupFields(grpkey);
+    doPhaseFolding(fieldState);
 }
 
 //here to plug in the phase folding processor
 function doPhaseFolding(fields) {
-    let tbl = getTblById(RAW_TABLE);
+    let tbl = getTblById(LC.RAW_TABLE);
 
-    console.log(fields);
+    // console.log(fields);
 
-    var tReq = makeTblRequest('PhaseFoldedProcessor', PHASE_FOLDED, {
-        'period_days': fields.period.value,
-        'table_name': 'folded_table',
-        'time_col_name':fields.timeCol.value,
-        'original_table': tbl.tableMeta.tblFilePath
-    },  {tbl_id:PHASE_FOLDED});
-    if (tReq !== null) {
-        dispatchTableSearch(tReq, {removable: false});
-        let xyPlotParams = {x: {columnOrExpr: 'phase', options: 'grid'}, y: {columnOrExpr: 'w1mpro_ep', options:'grid'}};
-        loadXYPlot({chartId:PHASE_FOLDED, tblId:PHASE_FOLDED, xyPlotParams});
+    var tReq = makeTblRequest('PhaseFoldedProcessor', LC.PHASE_FOLDED, {
+        period_days: fields.period.value,
+        cutout_size: fields.cutoutSize.value,
+        flux: fields.flux.value,
+        table_name: 'folded_table',
+        x:fields.timeCol.value,
+        original_table: tbl.tableMeta.tblFilePath
+    },  {tbl_id:LC.PHASE_FOLDED, sortInfo:sortInfoString(LC.PHASE_CNAME)});
+
+    dispatchTableSearch(tReq, {removable: false});
+    const xyPlotParams = {x: {columnOrExpr: LC.PHASE_CNAME, options: 'grid'}, y: {columnOrExpr: tReq.flux, options:'grid,flip'}};
+    loadXYPlot({chartId:LC.PHASE_FOLDED, tblId:LC.PHASE_FOLDED, xyPlotParams});
+}
+
+export function* listenerPanel() {
+
+    while (true) {
+        const action = yield take([
+            TABLE_HIGHLIGHT
+        ]);
+
+        switch (action.type) {
+            case TABLE_HIGHLIGHT:
+                handleTableHighlight(action);
+                break;
+        }
     }
 }
 
-function makeField1(hide) {
-    var f1= (
-        <ValidationField fieldKey={'field1'} />
-    );
-    var hidden= <div style={{paddingLeft:30}}>field is hidden</div>;
-    return hide ? hidden : f1;
+function handleTableHighlight(action) {
+    const {tbl_id} = action.payload;
+    const per = getPeriodFromTable(tbl_id);
+    if (per) {
+        dispatchValueChange({fieldKey: 'period', groupKey: grpkey, value: per});
+    }
 }
-
-
-
 //export default LcPhaseFoldingForm;
+
+/**
+ * gets the period from either peak or periodogram table, these tables doesn't necesary have a period column and same name
+ * @param {string} tbl_id
+ * @returns {string} period value
+ */
+function getPeriodFromTable(tbl_id) {
+    const tableModel = getTblById(tbl_id);
+    if (!tableModel || isNil(tableModel.highlightedRow)) return;
+    if (tbl_id === LC.PERIODOGRAM) {
+        return getCellValue(tableModel, tableModel.highlightedRow, LC.PERIOD_CNAME);
+    } else if (tbl_id === LC.PEAK_TABLE) {
+        return getCellValue(tableModel, tableModel.highlightedRow, LC.PERIOD_CNAME);
+    }
+}

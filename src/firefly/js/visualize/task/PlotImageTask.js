@@ -55,8 +55,7 @@ const getFirstReq= (wpRAry) => isArray(wpRAry) ? wpRAry.find( (r) => r?true:fals
 
 function makeSinglePlotPayload(vr, rawPayload ) {
 
-
-    var {wpRequest,plotId, threeColor, viewerId, attributes, setNewPlotAsActive,
+   var {wpRequest, plotId, threeColor, viewerId=DEFAULT_FITS_VIEWER_ID, attributes, setNewPlotAsActive,
          holdWcsMatch= false, pvOptions= {}, addToHistory= false,useContextModifications= true}= rawPayload;
 
     wpRequest= ensureWPR(wpRequest);
@@ -131,6 +130,10 @@ function makePlotImageAction(rawAction) {
                 useContextModifications:true,
                 groupLocked:true
             };
+            if (vr.wcsMatchType && vr.mpwWcsPrimId && rawAction.payload.holdWcsMatch) {
+                const wcsPrim= getPlotViewById(vr,vr.mpwWcsPrimId);
+                payload.wpRequestAry= payload.wpRequestAry.map( (wpr) => modifyRequestForWcsMatch(wcsPrim, wpr));
+            }
         }
 
         if (firstTime) {

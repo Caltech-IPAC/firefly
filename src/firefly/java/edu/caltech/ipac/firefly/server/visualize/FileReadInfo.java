@@ -2,12 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.firefly.server.visualize;
-/**
- * User: roby
- * Date: 2/16/11
- * Time: 3:53 PM
- */
-
 
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.visualize.plot.FitsRead;
@@ -54,4 +48,3 @@ class FileReadInfo {
     public ModFileWriter getModFileWriter() { return modFileWriter; }
     public String getUploadedName() {return uploadedName;}
 }
-

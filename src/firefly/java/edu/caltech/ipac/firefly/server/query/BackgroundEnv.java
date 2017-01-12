@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
 import edu.caltech.ipac.firefly.server.packagedata.PackageMaster;
@@ -15,6 +16,7 @@ import edu.caltech.ipac.firefly.server.packagedata.PackagedEmail;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.DownloadScript;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -29,6 +31,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.*;
+import java.util.stream.Collectors;
+
 /**
  * User: roby
  * Date: Aug 23, 2010
@@ -40,6 +44,7 @@ import java.util.*;
  * @author Trey Roby
  */
 public class BackgroundEnv {
+    private static final String BG_USER_PREFIX = "BG_USER";
 
     private static final String _hostname= FileUtil.getHostname();
 
@@ -56,6 +61,50 @@ public class BackgroundEnv {
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
+    //====================================================================
+    // user's level background jobs related methods.
+    //====================================================================
+    public static List<String> getUserBackgroundInfoKeys() {
+        String userKey = ServerContext.getRequestOwner().getUserKey();
+        StringKey cacheKey = new StringKey(BG_USER_PREFIX, userKey);
+        List<String> rval = (List<String>) getCache().get(cacheKey);
+        return rval == null ? new ArrayList<>() : rval;
+    }
+
+    public static List<BackgroundInfoCacher> getUserBackgroundInfo() {
+        List<BackgroundInfoCacher> rval = getUserBackgroundInfoKeys().stream()
+                                    .map( s -> new BackgroundInfoCacher(s))
+                                    .collect(Collectors.toList());
+        return rval;
+    }
+
+    public static void addUserBackgroundInfo(BackgroundStatus bgStat) {
+        String bgId = bgStat.getID();
+        List<String> bgInfos = getUserBackgroundInfoKeys();
+        if (!bgInfos.contains(bgId)) {
+            bgInfos.add(bgId);
+            updateUserBackgroundInfo(bgInfos);
+            BackgroundInfoCacher.fireBackgroundJobAdd(bgStat);
+        }
+    }
+
+    public static void removeUserBackgroundInfo(String bgId) {
+        List<String> bgInfos = getUserBackgroundInfoKeys();
+        boolean updated = bgInfos.remove(bgId);
+        if (updated) {
+            updateUserBackgroundInfo(bgInfos);
+            FluxAction rmJob = new FluxAction("background.bgJobRemove");
+            rmJob.setValue(bgId, "id");
+            ServerEventManager.fireAction(rmJob, ServerEvent.Scope.USER);
+        }
+    }
+
+    static void updateUserBackgroundInfo(List<String> bgIds) {
+        String userKey = ServerContext.getRequestOwner().getUserKey();
+        StringKey cacheKey = new StringKey(BG_USER_PREFIX, userKey);
+        getCache().put(cacheKey, bgIds);
+    }
+    //====================================================================
 
     public static boolean cleanup(String id) { return true; }
 
@@ -65,6 +114,7 @@ public class BackgroundEnv {
     }
 
     public static boolean remove(String id) {
+        removeUserBackgroundInfo(id);
         new BackgroundInfoCacher(id).cancel();
         return true;
     }
@@ -248,9 +298,15 @@ public class BackgroundEnv {
         Logger.briefDebug("Background thread returned");
         BackgroundStatus bgStat= processor.getBackgroundStatus();
         if (bgStat==null) {
-            bgStat= new BackgroundStatus(bid, BackgroundState.WAITING);
-            processor.getPiCacher().setStatus(bgStat);
+            bgStat = processor.getPiCacher().getStatus();
+            bgStat = bgStat == null ? new BackgroundStatus(bid, BackgroundState.WAITING) : bgStat;
         }
+        if (!bgStat.isDone()) {
+            // it's not done within the same request.. add it to background and enable email notification.
+            bgStat.addAttribute(JobAttributes.CanSendEmail);
+            BackgroundEnv.addUserBackgroundInfo(bgStat);
+        }
+        processor.getPiCacher().setStatus(bgStat);
         Logger.briefDebug("Background report returned");
         return bgStat;
     }

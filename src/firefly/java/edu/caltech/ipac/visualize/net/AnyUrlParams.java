@@ -73,11 +73,6 @@ public class AnyUrlParams extends BaseNetParams {
     public void setMaxSizeToDownload(long max) {_maxSizeToDownload= max;}
     public long getMaxSizeToDownload() {return _maxSizeToDownload;}
 
-
-
-    public long getCacheLifespanInSec() { return _cacheLifespan; }
-
-
     public void setCheckForNewer(boolean check) { _checkForNewer= check; }
     public boolean getCheckForNewer() { return _checkForNewer; }
 

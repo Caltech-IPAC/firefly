@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.util;
 
 import java.util.List;
 
+import edu.caltech.ipac.firefly.ConfigTest;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -9,7 +10,7 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.VoRegistryUtil;
 import edu.caltech.ipac.util.dd.VOResourceEndpoint;
 
-public class VoUtilsTest {
+public class VoUtilsTest extends ConfigTest {
 
 	private List<VOResourceEndpoint> endpoints;
 
@@ -29,7 +30,7 @@ public class VoUtilsTest {
 		for (VOResourceEndpoint ep : pts) {
             final String shortName = ep.getShortName();
             final String url = ep.getUrl();
-            System.out.println(url + ": "+ep.getTitle()+
+            LOG.error(url + ": "+ep.getTitle()+
                                 (StringUtils.isEmpty(shortName) ? "" : " ["+shortName+"]"));
 		}
 	}

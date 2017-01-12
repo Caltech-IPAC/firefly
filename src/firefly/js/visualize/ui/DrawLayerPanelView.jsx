@@ -8,11 +8,11 @@ import {isDrawLayerVisible, getAllDrawLayersForPlot, getLayerTitle}  from '../Pl
 import DrawLayerItemView from './DrawLayerItemView.jsx';
 import {ColorChangeType} from '../draw/DrawLayer.js';
 import {dispatchChangeDrawingDef, dispatchChangeVisibility,
-    dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
+        dispatchDetachLayerFromPlot, getDlAry} from '../DrawLayerCntlr.js';
 import {dispatchOverlayPlotChangeAttributes, dispatchDeleteOverlayPlot} from '../ImagePlotCntlr.js';
 import {showColorPickerDialog} from '../../ui/ColorPicker.jsx';
-
-
+import {showPointShapeSizePickerDialog} from '../../ui/PointShapeSizePicker.jsx';
+import {getDrawLayersByDisplayGroup} from '../PlotViewUtil.js';
 
 
 function DrawLayerPanelView({dlAry, plotView, mouseOverMaskValue, drawLayerFactory}) {
@@ -65,6 +65,7 @@ function makeDrawLayerItemAry(layers,pv, maxTitleChars, factory) {
                                                      title= {getLayerTitle(pv.plotId,l)}
                                                      visible={isDrawLayerVisible(l,pv.plotId)}
                                                      modifyColor={() => modifyColor(l,pv.plotId)}
+                                                     modifyShape={() => modifyShape(l,pv.plotId)}
                                                      deleteLayer={() => deleteLayer(l,pv.plotId)}
                                                      changeVisible={() => changeVisible(l,pv.plotId)}
                                                      UIComponent={getUIComponent(l,pv,factory)}
@@ -123,8 +124,9 @@ function modifyColor(dl,plotId) {
         (ev) => {
             var {r,g,b,a}= ev.rgb;
             var rgbStr= `rgba(${r},${g},${b},${a})`;
+            dl = getDrawLayersByDisplayGroup(getDlAry(), dl.displayGroupId);
             dispatchChangeDrawingDef(dl.displayGroupId, Object.assign({},dl.drawingDef,{color:rgbStr}),plotId);
-        });
+        }, dl.drawLayerId);
 }
 
 const hexC= (v) =>  padStart(v.toString(16),2,'0');
@@ -149,7 +151,9 @@ function modifyMaskColor(opv) {
         });
 }
 
-
+function modifyShape(dl, plotId) {
+    showPointShapeSizePickerDialog(dl, plotId);
+}
 
 function deleteLayer(dl,plotId) {
     dispatchDetachLayerFromPlot(dl.displayGroupId,plotId,true, true, dl.destroyWhenAllDetached);

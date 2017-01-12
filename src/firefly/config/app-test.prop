@@ -1,0 +1,11 @@
+# properties are loaded via AppProperties and classes use AppProperties.getProperty()
+# add here the test value you want to overwrite from app.config file (OPS)
+
+# Property used in Light-curve API periodogram - use a result sample as basis to extract periodogram/peaks
+#irsa.gator.service.periodogram.url=http://web.ipac.caltech.edu/staff/ejoliet/demo/irsa-lc-sample-result-test.xml
+
+# In case the dev API (bacchus) is avialble, test with the follwoing (uncomment!) and comment the above prop
+irsa.gator.service.periodogram.url=http://bacchus.ipac.caltech.edu:9027/cgi-bin/periodogram/nph-periodogram_api
+
+# Periodogram API request parameter list definition, separated by space
+irsa.gator.service.periodogram.keys=x y alg peaks

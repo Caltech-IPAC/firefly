@@ -10,28 +10,59 @@ import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT} fr
 import {getCellValue, getTblById, makeTblRequest} from '../../tables/TableUtil.js';
 import {updateSet} from '../../util/WebUtil.js';
 import {dispatchPlotImage, visRoot, dispatchDeletePlotView,
-        dispatchChangeActivePlotView} from '../../visualize/ImagePlotCntlr.js';
+        dispatchChangeActivePlotView,
+        WcsMatchType, dispatchWcsMatch} from '../../visualize/ImagePlotCntlr.js';
 import {getPlotViewById} from '../../visualize/PlotViewUtil.js';
 import {getMultiViewRoot, dispatchReplaceViewerItems, getViewer} from '../../visualize/MultiViewCntlr.js';
-import {WebPlotRequest} from '../../visualize/WebPlotRequest.js';
+import {WebPlotRequest,TitleOptions} from '../../visualize/WebPlotRequest.js';
 import {dispatchTableToIgnore} from '../../visualize/DrawLayerCntlr.js';
 import Catlog from '../../drawingLayers/Catalog.js';
 import {ServerRequest} from '../../data/ServerRequest.js';
 import {CHANGE_VIEWER_LAYOUT} from '../../visualize/MultiViewCntlr.js';
+import {LcPFOptionsPanel, grpkey} from './LcPhaseFoldingPanel.jsx';
+import FieldGroupUtils, {revalidateFields} from '../../fieldGroup/FieldGroupUtils';
+import {makeWorldPt} from '../../visualize/Point.js';
+import {CoordinateSys} from '../../visualize/CoordSys.js';
 
-export const RAW_TABLE = 'raw_table';
-export const PHASE_FOLDED = 'phase_folded';
-export const PERIODOGRAM = 'periodogram';
-export const PEAK_TABLE = 'peak_table';
-export const IMG_VIEWER_ID = 'lc_image_viewer';
-export const DEF_IMAGE_CNT= 5;
-export const MAX_IMAGE_CNT= 7;
+export const LC = {
+    RAW_TABLE: 'raw_table',
+    PHASE_FOLDED: 'phase_folded',
+    PERIODOGRAM: 'periodogram',
+    PEAK_TABLE: 'peak_table',
+    PERIOD_CNAME: 'Period',
+    POWER_CNAME: 'Power',
+    PEAK_CNAME: 'Peak',
+    PHASE_CNAME: 'phase',
+
+    IMG_VIEWER_ID: 'lc_image_viewer',
+    MAX_IMAGE_CNT: 7,
+    DEF_IMAGE_CNT: 5,
+
+    META_TIME_CNAME: 'timeCName',
+    META_FLUX_CNAME: 'fluxCName',
+    DEF_TIME_CNAME: 'mjd',
+    DEF_FLUX_CNAME: 'w1mpro_ep',
+};
+
 const plotIdRoot= 'LC_FRAME-';
 
+
+var webplotRequestCreator;
 /**
- *  This event manager is custom made for light curve viewer.
+ * A function to create a WebPlotRequest from the given parameters
+ * @callback WebplotRequestCreator
+ * @param {TableModel} tableModel
+ * @param {number} hlrow
+ * @param {number} cutoutSize
  */
-export function* lcManager() {
+
+/**
+ * This event manager is custom made for light curve viewer.
+ * @param {Object} params
+ * @props {WebplotRequestCreator} params.webplotRequestCreator
+ */
+export function* lcManager(params={}) {
+    webplotRequestCreator = params.WebplotRequestCreator || getWebPlotRequestViaUrl;
 
     while (true) {
         const action = yield take([
@@ -85,7 +116,7 @@ function handleTableLoad(layoutInfo, action) {
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'showImages', true);
         layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
-        exec(setupImages, tbl_id);
+        setupImages(tbl_id);
     }
     return layoutInfo;
 }
@@ -96,7 +127,7 @@ function handleTableActive(layoutInfo, action) {
     const {tbl_id} = action.payload;
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
-        exec(setupImages, tbl_id);
+        setupImages(tbl_id);
     }
     return layoutInfo;
 }
@@ -104,18 +135,18 @@ function handleTableActive(layoutInfo, action) {
 function handleTableHighlight(layoutInfo, action) {
     const {tbl_id} = action.payload;
     if (isImageEnabledTable(tbl_id)) {
-        exec(setupImages, tbl_id);
+        setupImages(tbl_id);
     }
 }
 
 function isImageEnabledTable(tbl_id) {
-    return [PHASE_FOLDED, RAW_TABLE].includes(tbl_id);
+    return [LC.PHASE_FOLDED, LC.RAW_TABLE].includes(tbl_id);
 }
 
 function handleChangeMultiViewLayout(layoutInfo, action) {
     const activeTableId = get(layoutInfo, 'images.activeTableId');
     const tbl= getTblById(activeTableId);
-    if (get(tbl, 'totalRows',0)>0) exec(setupImages, activeTableId);
+    if (get(tbl, 'totalRows',0)>0) setupImages(activeTableId);
     return layoutInfo;
 }
 
@@ -145,49 +176,90 @@ function getWebPlotRequest(tableModel, hlrow) {
     sr.setParam('in_dec',`${dec}`);
 
     const reqParams = WebPlotRequest.makeProcessorRequest(sr, 'wise');
-    reqParams.setTitle('WISE-'+ frameId);
-    reqParams.setGroupLocked(true);
-    reqParams.setPlotGroupId('LightCurveGroup');
-    reqParams.setPreferenceColorKey('light-curve-color-pref');
-    return reqParams;
-
-
-
+    return addCommonReqParams(reqParams, frameId, makeWorldPt(ra,dec,CoordinateSys.EQ_J2000));
 }
 
+function getWebPlotRequestViaUrl(tableModel, hlrow, cutoutSize) {
+    const ra = getCellValue(tableModel, hlrow, 'ra');
+    const dec = getCellValue(tableModel, hlrow, 'dec');
+    const frameId = getCellValue(tableModel, hlrow, 'frame_id');
+    var   wise_sexp_ibe = /(\d+)([0-9][a-z])(\w+)/g;
+    var   res = wise_sexp_ibe.exec(frameId);
+    const scan_id = res[1] + res[2];
+    const scangrp = res[2];
+    const frame_num = res[3];
 
-function setupImages(tbl_id) {
-    const viewer=  getViewer(getMultiViewRoot(),IMG_VIEWER_ID);
-    const count= get(viewer, 'layoutDetail.count',DEF_IMAGE_CNT);
-    const tableModel = getTblById(tbl_id);
-    if (!tableModel || isNil(tableModel.highlightedRow)) return;
-    var vr= visRoot();
-    const newPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,count);
-    const maxPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,MAX_IMAGE_CNT);
+    /*the following should be from reading in the url column returned from LC search
+     we are constructing the url for wise as the LC table does
+     not have the url colume yet
+     It is only for WISE, using default cutout size 0.3 deg
+    const url = `http://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w1-int-1b.fits`;
+    */
+    const serverinfo = 'http://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/';
+    const centerandsize = cutoutSize ? `?center=${ra},${dec}&size=${cutoutSize}&gzip=false` : '';
+    const url = `${serverinfo}${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w1-int-1b.fits${centerandsize}`;
+    const plot_desc = `WISE-${frameId}`;
+    const reqParams = WebPlotRequest.makeURLPlotRequest(url, plot_desc);
+    const title= 'WISE-'+ frameId + (cutoutSize ? ` size: ${cutoutSize}(deg)` : '');
+    return addCommonReqParams(reqParams, title, makeWorldPt(ra,dec,CoordinateSys.EQ_J2000));
+}
+
+function addCommonReqParams(inWpr,title,wp) {
+    const retWpr= inWpr.makeCopy();
+    retWpr.setTitle(title);
+    retWpr.setTitleOptions(TitleOptions.NONE);
+    retWpr.setGroupLocked(true);
+    retWpr.setPlotGroupId('LightCurveGroup');
+    retWpr.setPreferenceColorKey('light-curve-color-pref');
+    retWpr.setOverlayPosition(wp);
+    return retWpr;
+}
+
+export function setupImages(tbl_id) {
+    try {
+        const viewer=  getViewer(getMultiViewRoot(),LC.IMG_VIEWER_ID);
+        const count= get(viewer, 'layoutDetail.count',LC.DEF_IMAGE_CNT);
+        const tableModel = getTblById(tbl_id);
+        if (!tableModel || isNil(tableModel.highlightedRow)) return;
+        var vr= visRoot();
+        const hasPlots= vr.plotViewAry.length>0;
+        const newPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,count);
+        const maxPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,LC.MAX_IMAGE_CNT);
+
+        const cutoutSize = get(FieldGroupUtils.getGroupFields(grpkey), ['cutoutSize', 'value'], null);
+
+        newPlotIdAry.forEach( (plotId) => {
+            if (!getPlotViewById(vr,plotId)) {
+                const rowNum= Number(plotId.substring(plotIdRoot.length));
+                const webPlotReq = webplotRequestCreator(tableModel,rowNum, cutoutSize);
+                dispatchPlotImage({plotId, wpRequest:webPlotReq,
+                                           setNewPlotAsActive:false,
+                                           holdWcsMatch:true,
+                                           pvOptions: { userCanDeletePlots: false}});
+            }
+        });
 
 
-    newPlotIdAry.forEach( (plotId) => {
-        if (!getPlotViewById(vr,plotId)) {
-            const rowNum= Number(plotId.substring(plotIdRoot.length));
-            const webPlotReq = getWebPlotRequest(tableModel,rowNum );
-            dispatchPlotImage({plotId, wpRequest:webPlotReq,
-                                       setNewPlotAsActive:false,
-                                       holdWcsMatch:true,
-                                       pvOptions: { userCanDeletePlots: false}});
+        dispatchReplaceViewerItems(LC.IMG_VIEWER_ID, newPlotIdAry);
+        const newActivePlotId= plotIdRoot+tableModel.highlightedRow;
+        dispatchChangeActivePlotView(newActivePlotId);
+
+
+        vr= visRoot();
+        if (!vr.wcsMatchType && !hasPlots) {
+            dispatchWcsMatch({matchType:WcsMatchType.Target, plotId:newActivePlotId});
         }
-    });
 
+        vr= visRoot();
 
-    dispatchReplaceViewerItems(IMG_VIEWER_ID, newPlotIdAry);
-    dispatchChangeActivePlotView(plotIdRoot+tableModel.highlightedRow);
-
-    vr= visRoot();
-
-    vr.plotViewAry
-        .filter( (pv) => pv.plotId.startsWith(plotIdRoot))
-        .filter( (pv) => pv.plotId!==vr.mpwWcsPrimId)
-        .filter( (pv) => !maxPlotIdAry.includes(pv.plotId))
-        .forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId, holdWcsMatch:true}));
+        vr.plotViewAry
+            .filter( (pv) => pv.plotId.startsWith(plotIdRoot))
+            .filter( (pv) => pv.plotId!==vr.mpwWcsPrimId)
+            .filter( (pv) => !maxPlotIdAry.includes(pv.plotId))
+            .forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId, holdWcsMatch:true}));
+    } catch (E){
+        console.log(E.toString());
+    }
 }
 
 
@@ -206,16 +278,3 @@ function makePlotIds(highlightedRow, totalRows, totalPlots)  {
 }
 
 
-/**
- * A simple wrapper to catch the exception then log it to console
- * @param {function} f function to execute
- * @param {*} args function's arguments.
- */
-function exec(f, args) {
-    try {
-        f(args);
-    } catch (E){
-        console.log(E.toString());
-    }
-
-}

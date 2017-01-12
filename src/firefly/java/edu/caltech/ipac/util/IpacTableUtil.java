@@ -3,10 +3,6 @@
  */
 package edu.caltech.ipac.util;
 
-import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.firefly.server.events.FluxAction;
-import edu.caltech.ipac.firefly.server.events.ServerEventManager;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 
@@ -144,7 +140,9 @@ public class IpacTableUtil {
      * @return
      */
     public static List<DataGroup.Attribute> getAllColMeta(Collection<DataGroup.Attribute> metas, String cname) {
-        return metas.stream().filter(m -> String.valueOf(m.getKey()).startsWith("col." + cname)).collect(Collectors.toList());
+        return metas.stream()
+                    .filter(m -> String.valueOf(m.getKey()).startsWith("col." + cname))
+                    .collect(Collectors.toList());
     }
 
     public static  void setDataType(List<DataType> cols, String line) {
@@ -405,24 +403,6 @@ public class IpacTableUtil {
             meta.setSource(src.getAbsolutePath());
         }
         return meta;
-    }
-
-    /**
-     * Send an action event message to the client updating the status of a table read/write.
-     * @param meta
-     * @param outf
-     * @param crows
-     * @param state
-     */
-    public static void sendLoadStatusEvents(Map<String,String> meta, File outf, int crows, DataGroupPart.State state) {
-        if (meta == null || StringUtils.isEmpty(meta.get("tbl_id"))) return;
-
-        String tblId = String.valueOf( meta.get("tbl_id") );
-        FluxAction action = new FluxAction("table.update");
-        action.setValue(tblId, "tbl_id");
-        action.setValue(crows, "totalRows");
-        action.setValue(state.name(), "tableMeta", DataGroupPart.LOADING_STATUS);
-        ServerEventManager.fireAction(action);
     }
 
     public static String guessFormatStr(DataType type, String val) {

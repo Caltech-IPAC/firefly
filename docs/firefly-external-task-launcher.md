@@ -105,21 +105,20 @@ A sample javascript, which builds up on the examples below is in
 Create an image viewer and place it into the `<div>` id `plotHere`.
 
 ```html
-<div id="plotHere" style="width: 350px; height: 350px;"></div>
+<div id="imageHere" style="width: 350px; height: 350px;"></div>
 ```
 
 ```js
  function onFireflyLoaded() {
-    var iv2= firefly.makeImageViewer("plotHere");
-    iv2.plot({
-        "id" :"FileFromExternalTask",
-        "launcher" :"python",
-        "task" :"someImageTask",
-        "taskParams" : {"p1":1,"p2":2},
-        "Title" :"Example FITS Image'",
-        "ColorTable" :"16",
-        "RangeValues":firefly.serializeRangeValues("Sigma",-2,8,"Linear")
-    });
+    var req = {
+        id : 'FileFromExternalTask',
+        launcher : 'python',
+        task : 'someImageTask',
+        taskParams : {p1:1,p2:2},
+        Title : 'FITS from Python task',
+        ColorTable : 2
+    };
+    firefly.showImage('imageHere', req);
  }
 ```
 
@@ -135,12 +134,11 @@ The table is plotted in the `<div>` id `tableHere`.
 
 ```js
  function onFireflyLoaded() {
-     var tableData= { "processor" : "TableFromExternalTask",
-         "launcher" : "python",
-         "task" : "TestTask3",
-         "taskParams" : { "param1" : "first arg", "param2" : "second arg" }
-     }; 
-     firefly.showTable(tableData, "tableHere");
+    var tblReq = firefly.util.table.makeTblRequest('TableFromExternalTask', 'Table from Python task',
+        { launcher : 'python', task : 'TableTask', taskParams : {p1: 1, p2: 2} }, // search parameters
+        { pageSize: 15} // table options
+    );
+    firefly.showTable('tableHere', tblReq);
  }
 ```
 
@@ -157,21 +155,23 @@ In this example, we get the histogram data from an exernal task and feed them to
 
 ```js
  function onFireflyLoaded() {
-      var launcher = 'python';
-      var task = 'JsonTaskToGetHistogramData';
-      var taskParams = { 'numbins': bins };
-      firefly.getJsonFromTask(launcher, task, taskParams)
-           .then(
-                function (histdata) {
-                     firefly.showHistogram(
-                          {'descr' : 'Histogram data returned from python JSON task',
-                           'binColor' : '#3d3033',
-                           'height' : 350,
-                           'data': histdata}, 'chartHere');
-                }
-           ).catch(function (reason) {
-                     console.log('Error fetching JSON data from '+launcher+' task '+task+': '+reason);
-                   }
-           );
+    var launcher = 'python';
+    var task = 'JsonTaskToGetHistogramData';
+    var taskParams = {'numbins': 10};
+    firefly.getJsonFromTask(launcher, task, taskParams)
+        .then(function (histdata) {
+            console.log('Returned JSON: ' + JSON.stringify(histdata));
+            firefly.util.renderDOM("chartHere", firefly.ui.Histogram,
+                {
+                    desc: 'Histogram data from Python JSON task',
+                    binColor: '#3d3033',
+                    height: 350,
+                    data: histdata
+                });
+        })
+        .catch(function (reason) {
+            console.error('Error fetching JSON data from ' + launcher + ' task ' + task + ': ' + reason);
+            document.getElementById('chartHere').innerHTML = '<p style="color:red">'+reason+'</p>';
+        });
  }
 ```

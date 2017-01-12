@@ -45,7 +45,7 @@ import {Region} from '../visualize/region/Region.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
 
 const options = [
-    {label: 'AllWISE Source Catalog', value: 'wise_allwise_p3as_psd', proj: 'WISE'},
+    {label: 'AllWISE Source Catalog', value: 'allwise_p3as_psd', proj: 'WISE'},
     {label: '2MASS All-Sky Point Source Catalog (PSC)', value: 'fp_psc', proj: '2MASS'},
     {label: 'IRAS Point Source Catalog v2.1 (PSC)', value: 'iraspsc', proj: 'IRAS'}
 ];
@@ -90,6 +90,11 @@ export class TestQueriesPanel extends Component {
                             <Tab name='2Mass Search' id='2massImage'>
                                 <div>{render2MassSearch(fields)}</div>
                             </Tab>
+                            {/*
+                            <Tab name='Periodogram' id='periodogram'>
+                                <div>{renderPeriodogram(fields)}</div>
+                            </Tab>
+                            */}
                         </FieldGroupTabs>
 
                     </FieldGroup>
@@ -139,25 +144,50 @@ function renderPeriodogram(fields) {
      *
      * @param isPeriodogram
      */
-    function lightCurveSubmit(isPeriodogram) {
+    function lightCurveSubmit(opt) {
         console.log('periodogram...');
         let tReq;
         const ds = get(fields, 'period.value', 1);
         //var tReq = makeTblRequest('PhaseFoldedProcessor', 'Phase folded', { period: '1', 'table_name':'folded_table','original_table':});
-        if (isPeriodogram) {
+        if (opt === 0) {
             tReq = makeTblRequest('LightCurveProcessor', 'Periodogram', {
+                'original_table':'http://web.ipac.caltech.edu/staff/ejoliet/demo/OneTarget-27-AllWISE-MEP-m82-2targets-10arsecs.tbl',
+                'x':'mjd',
+                'y':'w1mpro_ep',
                 'table_name': 'periodogram',
-                'result_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml'
+                // The following are optional
+                //'pmin':0,
+                //'pmax':200,
+                //'step_method':'fixedf',
+                //'step_size': 10,
+                //'alg': 'ls', //There are three algorithms: ls (Lomb-Scargle), bls (Box-fitting Least Squares), and plav (Plavchan 2008). The default algorithm is Lomb-Scargle.
+                //'peaks' : 50
+                //'result_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml'
             });
-        } else {
+        } else if (opt === 1) {
             tReq = makeTblRequest('PhaseFoldedProcessor', 'Phase folded', {
                 'period_days': ds,
                 'table_name': 'folded_table',
-                'time_col_name':'mjd',
-                //'original_table': 'file:///Users/ejoliet/Documents/IPAC/ipac_samples/AllWISE-MEP-m82-2targets-10arsecs.tbl'
+                'x':'mjd',
+                'y':'w1mpro_ep',
                 'original_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/OneTarget-27-AllWISE-MEP-m82-2targets-10arsecs.tbl'
             });
+        } else if (opt === 2){
+            tReq = makeTblRequest('LightCurveProcessor', 'Peaks', {
+                'original_table':'http://web.ipac.caltech.edu/staff/ejoliet/demo/OneTarget-27-AllWISE-MEP-m82-2targets-10arsecs.tbl',
+                'x':'mjd',
+                'y':'w1mpro_ep',
+                'table_name': 'peak_table',
+                //'pmin':0,
+                //'pmax':200,
+                //'step_method':'fixedf',
+                //'step_size': 10,
+                //'alg': 'ls', //There are three algorithms: ls (Lomb-Scargle), bls (Box-fitting Least Squares), and plav (Plavchan 2008). The default algorithm is Lomb-Scargle.
+                'peaks' : 57
+                //'result_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml'
+            });
         }
+
         console.log(ds);
         console.log('tReq ' +tReq);
         dispatchTableSearch(tReq);
@@ -166,12 +196,12 @@ function renderPeriodogram(fields) {
     return (
         <div style={{padding:5}}>
 
-            <button type='button' className='button std hl' onClick={() => lightCurveSubmit(true)}>
-                <b>Compute Periodogram [fake call]</b>
+            <button type='button' className='button std hl' onClick={() => lightCurveSubmit(0)}>
+                <b>Compute Periodogram</b>
             </button>
             <br/>
-            <button type='button' className='button std hl' onClick={() => lightCurveSubmit(true)}>
-                <b> Get peaks table [fake call]</b>
+            <button type='button' className='button std hl' onClick={() => lightCurveSubmit(2)}>
+                <b> Get peaks table</b>
             </button>
             <br/>
             <ValidationField fieldKey='period'
@@ -182,7 +212,7 @@ function renderPeriodogram(fields) {
                                           label : 'period:',
                                           labelWidth : 100
                                       }}/>
-            <button type='button' className='button std hl' onClick={() => lightCurveSubmit(false)}>
+            <button type='button' className='button std hl' onClick={() => lightCurveSubmit(1)}>
                 <b>Phase folded (period value not used yet)</b>
             </button>
         </div>

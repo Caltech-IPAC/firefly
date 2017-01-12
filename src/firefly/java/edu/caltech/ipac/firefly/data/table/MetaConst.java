@@ -26,15 +26,10 @@ public class MetaConst {
 
     public final static String CATALOG_TARGET_COL_NAME = "CatalogTargetColName";
     public final static String CATALOG_COORD_COLS = "CatalogCoordColumns";
+    public final static String MOVING_COORD_COLS = "MovingObjCoordColumns";
     public final static String DATASET_CONVERTER = "datasetInfoConverterId";
 
 
     public static final String DEFAULT_COLOR="DEFAULT_COLOR";
-
-    //11/15/16 Added by LZ
-    public static final String LSST_SDSS_COADD="LSST_COADD_TABLE";
-    public static final String LSST_SDSS_SINGLE_EXPOSURE="LSST_SINGLE_EXPORSURE_TABLE";
-
-
 }
 

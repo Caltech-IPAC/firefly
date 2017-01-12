@@ -44,7 +44,6 @@ public class IbeImageGetter {
                                            DownloadListener dl )
                                            throws FailedRequestException,
                                                   IOException {
-      ClientLog.message("Retrieving WISE image");
         boolean isWise= false;
 
 
@@ -136,7 +135,6 @@ public class IbeImageGetter {
                           "Details in exception", me );
       }
 
-      ClientLog.message("Done");
     }
 
 

@@ -16,11 +16,14 @@ import {UserZoomTypes}  from '../ZoomUtil.js';
 import {primePlot, plotInActiveGroup} from '../PlotViewUtil.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js';
 import {contains} from '../VisUtil.js';
+import {PlotAttribute} from '../WebPlot.js';
 import {
     visRoot,
+    WcsMatchType,
     ActionScope,
     dispatchPlotProgressUpdate,
     dispatchZoom,
+    dispatchRecenter,
     dispatchProcessScroll,
     dispatchChangeActivePlotView,
     dispatchUpdateViewSize} from '../ImagePlotCntlr.js';
@@ -84,6 +87,14 @@ export class ImageViewerLayout extends Component {
         if (pv.plotViewCtx.zoomLockingEnabled && primePlot(pv)) {
             const paging= isImageViewerSingleLayout(getMultiViewRoot(), visRoot(), pv.plotId);
             updateZoom(pv,paging);
+        }
+
+        const vr= visRoot();
+
+        if (vr.wcsMatchType===WcsMatchType.Target && vr.activePlotId===pv.plotId && primePlot(vr)) {
+            const plot= primePlot(vr);
+            const ft=  plot.attributes[PlotAttribute.FIXED_TARGET];
+            if (ft) dispatchRecenter({plotId:plot.plotId, centerPt:ft});
         }
     }
 
@@ -161,16 +172,12 @@ export class ImageViewerLayout extends Component {
 
     renderInside() {
         var {plotView,drawLayersAry}= this.props;
-        var {plotId,scrollX,scrollY, viewDim}= plotView;
-        var plot= primePlot(plotView);
-        const vr= visRoot();
+        const plot= primePlot(plotView);
+        const {plotId}= plotView;
+        var {width:viewPortWidth,height:viewPortHeight}= plot.viewPort.dim;
+        const {left,top,scrollViewWidth, scrollViewHeight, scrollX,scrollY, viewDim}=  getPositionInfo(plotView);
 
-        var {dim:{width:viewPortWidth,height:viewPortHeight},x:vpX,y:vpY}= plot.viewPort;
-        var {width:sw,height:sh}= plot.screenSize;
-        var scrollViewWidth= Math.min(viewPortWidth,sw);
-        var scrollViewHeight= Math.min(viewPortHeight,sh);
-        var left= vpX-scrollX; //+offPt.x;
-        var top= vpY-scrollY; //+offPt.y;
+
         var rootStyle= {left, top,
                         position:'relative',
                         width:scrollViewWidth,
@@ -178,17 +185,6 @@ export class ImageViewerLayout extends Component {
                         marginRight: 'auto',
                         marginLeft: 0
         };
-
-        if (vr.wcsMatchType) {
-            rootStyle.marginLeft = 0; // todo: could I do some sort of center computation so the active wcs was centered
-        }
-        else {
-            if (viewDim.width>plot.screenSize.width) {
-                rootStyle.marginLeft = (viewDim.width-plot.screenSize.width)/2;
-            }
-         }
-
-
 
         const drawLayersIdAry= drawLayersAry ? drawLayersAry.map( (dl) => dl.drawLayerId) : null;
 
@@ -200,7 +196,10 @@ export class ImageViewerLayout extends Component {
                 <div className='plot-view-master-panel'
                      style={{width:viewPortWidth,height:viewPortHeight,
                                  left:0,right:0,position:'absolute', cursor}}>
-                    {makeTileDrawers(plotView,viewPortWidth,viewPortHeight,scrollX,scrollY)}
+                    {makeTileDrawers(plotView,
+                                     Math.max(viewPortWidth,viewDim.width),
+                                     Math.max(viewPortHeight,viewDim.height),
+                                     scrollX,scrollY)}
                     <DrawingLayers
                         key={'DrawingLayers:'+plotId}
                         plot={plot} drawLayersIdAry={drawLayersIdAry} />
@@ -220,9 +219,12 @@ export class ImageViewerLayout extends Component {
         var {viewDim:{width,height}}= pv;
         var insideStuff;
         var plotShowing= Boolean(width && height && primePlot(this.props.plotView));
+        var onScreen= true;
 
-        if (plotShowing) {
+        if (plotShowing ) {
+            onScreen= isImageOnScreen(this.props.plotView);
             insideStuff= this.renderInside();
+
         }
 
         var style= {
@@ -235,7 +237,7 @@ export class ImageViewerLayout extends Component {
         return (
             <div className='web-plot-view-scr' style={style}>
                 {insideStuff}
-                {makeMessageArea(pv,plotShowing)}
+                {makeMessageArea(pv,plotShowing,onScreen)}
             </div>
         );
     }
@@ -253,6 +255,27 @@ ImageViewerLayout.propTypes= {
     externalHeight: PropTypes.number.isRequired
 };
 
+
+function isImageOnScreen(plotView) {
+
+    const {left,top,scrollViewWidth, scrollViewHeight, viewDim}=  getPositionInfo(plotView);
+    const visible= (left+scrollViewWidth>=0 && left<=viewDim.width && top+scrollViewHeight>=0 && top<=viewDim.height);
+    return visible;
+}
+
+
+function getPositionInfo(plotView) {
+    var plot= primePlot(plotView);
+    var {dim:{width:viewPortWidth,height:viewPortHeight},x:vpX,y:vpY}= plot.viewPort;
+    var {width:sw,height:sh}= plot.screenSize;
+    var scrollViewWidth= Math.min(viewPortWidth,sw);
+    var scrollViewHeight= Math.min(viewPortHeight,sh);
+    var {scrollX,scrollY, viewDim}= plotView;
+    var left= vpX-scrollX;
+    var top= vpY-scrollY;
+
+    return {left,top,scrollViewWidth, scrollViewHeight, scrollX,scrollY, viewDim};
+}
 
 
 // eslint-disable-next-line valid-jsdoc
@@ -323,15 +346,30 @@ function plotMover(screenX,screenY, originalScrollX, originalScrollY) {
         var newX= originalScrollX -xdiff;
         var newY= originalScrollY -ydiff;
 
-        if (newX<0) newX= 0;
-        if (newY<0) newY= 0;
+        // if (newX<0) newX= 0; //todo: reenable
+        // if (newY<0) newY= 0; //todo: reenable
 
         return makeScreenPt(newX, newY);
     };
 }
 
-function makeMessageArea(pv,plotShowing) {
-    if (pv.serverCall==='success') return false;
+function makeMessageArea(pv,plotShowing,onScreen) {
+    if (pv.serverCall==='success') {
+        if (onScreen) {
+            return false;
+        }
+        else {
+            return (
+                <ImageViewerStatus message={'Center Plot'} working={false}
+                                   useMessageAlpha={false}
+                                   useButton={true}
+                                   buttonText='Recenter'
+                                   buttonCB={() => dispatchRecenter({plotId:pv.plotId}) }
+
+                />
+            );
+        }
+    }
 
     if (pv.serverCall==='working') {
         return (
@@ -344,8 +382,9 @@ function makeMessageArea(pv,plotShowing) {
     else if (pv.plottingStatus) {
         return (
             <ImageViewerStatus message={pv.plottingStatus} working={false}
-                               useMessageAlpha={true} canClear={plotShowing}
-                               clearCB={() => dispatchPlotProgressUpdate(pv.plotId,'',true)}
+                               useMessageAlpha={true} useButton={plotShowing}
+                               buttonText='OK'
+                               buttonCB={() => dispatchPlotProgressUpdate(pv.plotId,'',true)}
                                />
         );
     }

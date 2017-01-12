@@ -4,6 +4,8 @@
 package edu.caltech.ipac.util;
 
 
+import edu.caltech.ipac.firefly.server.util.Logger;
+
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,7 +25,7 @@ public class ClientLog {
     private static final int PAD_SIZE   = 60;
 
 
-    private static Logger _logger= new ClientLogger();
+    private static Logger _logger= new edu.caltech.ipac.firefly.server.util.Logger.ClientLogImpl();
     private static PrintStream _out= null;
 
     public static enum MessageType {INFORMATION, WARNING, ERROR, BRIEF_INFO };
@@ -38,10 +40,6 @@ public class ClientLog {
         _descriptions.put(MessageType.ERROR, "!!! Error !!!");
         _descriptions.put(MessageType.WARNING, "!!! Warning !!!");
         _descriptions.put(MessageType.BRIEF_INFO, "");
-    }
-
-    public static void setLogger(Logger logger) {
-        _logger = logger;
     }
 
     public static void warning(String... s) {

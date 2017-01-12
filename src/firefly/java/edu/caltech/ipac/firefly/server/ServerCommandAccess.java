@@ -10,8 +10,12 @@ package edu.caltech.ipac.firefly.server;
 
 
 import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.server.rpc.JsonDataCommands;
+import edu.caltech.ipac.firefly.server.rpc.PushCommands;
+import edu.caltech.ipac.firefly.server.rpc.ResolveServerCommands;
+import edu.caltech.ipac.firefly.server.rpc.ResourceServerCommands;
+import edu.caltech.ipac.firefly.server.rpc.VisServerCommands;
 import edu.caltech.ipac.firefly.server.servlets.HttpServCommands;
-import edu.caltech.ipac.firefly.server.visualize.*;
 import edu.caltech.ipac.firefly.server.query.SearchServerCommands;
 
 import javax.servlet.http.HttpServletRequest;
@@ -72,11 +76,11 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.GET_ENUM_VALUES,        new SearchServerCommands.GetEnumValues());
         _cmdMap.put(ServerParams.SUB_BACKGROUND_SEARCH,  new SearchServerCommands.SubmitBackgroundSearch());
         _cmdMap.put(ServerParams.GET_STATUS,             new SearchServerCommands.GetStatus());
+        _cmdMap.put(ServerParams.REMOVE_JOB,             new SearchServerCommands.RemoveBgJob());
         _cmdMap.put(ServerParams.CANCEL,                 new SearchServerCommands.Cancel());
         _cmdMap.put(ServerParams.ADD_ID_TO_CRITERIA,     new SearchServerCommands.AddIDToPushCriteria());
         _cmdMap.put(ServerParams.CLEAN_UP,               new SearchServerCommands.CleanUp());
         _cmdMap.put(ServerParams.DOWNLOAD_PROGRESS,      new SearchServerCommands.DownloadProgress());
-        _cmdMap.put(ServerParams.GET_DATA_FILE_VALUES,   new SearchServerCommands.GetDataFileValues());
         _cmdMap.put(ServerParams.SET_EMAIL,              new SearchServerCommands.SetEmail());
         _cmdMap.put(ServerParams.SET_ATTR,               new SearchServerCommands.SetAttribute());
         _cmdMap.put(ServerParams.GET_EMAIL,              new SearchServerCommands.GetEmail());

@@ -41,7 +41,7 @@ export class ExpandedModeDisplay extends Component {
             const vr= visRoot();
             const mvR= getMultiViewRoot();
 
-            if (vr!==state.visRoot || mvR!=state.multiViewRoot) {
+            if (vr!==state.visRoot || mvR!==state.multiViewRoot) {
                 this.setState({visRoot:vr, multiViewRoot:mvR});
             }
         }

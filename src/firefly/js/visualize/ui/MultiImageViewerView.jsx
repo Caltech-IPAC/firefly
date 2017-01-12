@@ -13,7 +13,7 @@ import {ImageViewer} from './../iv/ImageViewer.jsx';
 
 export function MultiImageViewerView(props) {
 
-    const {Toolbar, visRoot, viewerPlotIds, showWhenExpanded=false}= props;
+    const {Toolbar, visRoot, viewerPlotIds, showWhenExpanded=false, handleInlineToolsWhenSingle=true}= props;
 
     const makeItemViewer = (plotId) => (
         <ImageViewer plotId={plotId} key={plotId}
@@ -22,7 +22,11 @@ export function MultiImageViewerView(props) {
 
     const makeItemViewerFull = (plotId) => (
         <ImageViewer plotId={plotId} key={plotId}
-                     handleInlineTools={false} {...{showWhenExpanded, handleInlineTools: viewerPlotIds.length===1}} />
+                     handleInlineTools={false} {...{
+                         showWhenExpanded,
+                         handleInlineTools: viewerPlotIds.length===1 && handleInlineToolsWhenSingle
+                     }
+                     } />
     );
 
     const makeToolbar = Toolbar ? () => (<Toolbar {...props} />) : undefined;
@@ -52,6 +56,7 @@ MultiImageViewerView.propTypes= {
     forceColSize : PropTypes.number,  //optional - force a certain number of columns
     gridDefFunc : PropTypes.func,  // optional - a function to return the grid definition
     gridComponent : PropTypes.object,  // a react element to define the grid - not implemented, just an idea
-    insideFlex :  PropTypes.bool
+    insideFlex :  PropTypes.bool,
+    handleInlineToolsWhenSingle :  PropTypes.bool
 };
 

@@ -1,5 +1,6 @@
 package edu.caltech.ipac.visualize.plot;
 
+import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import nom.tam.fits.FitsException;
 import org.json.simple.JSONArray;
@@ -16,7 +17,7 @@ import java.io.*;
 /**
  * Created by zhang on 10/4/16.
  */
-public class HistogramTest {
+public class HistogramTest extends ConfigTest {
 
      private static String fileName = "f3.fits";
 
@@ -85,7 +86,7 @@ public class HistogramTest {
         expectedSima = getExpectedSigma( histArray, rangeValue , round_up, hbinSize,  dataMin);
         sigma = hist.get_sigma( rangeValue , round_up);
         Assert.assertEquals(expectedSima,sigma,delta);
-        System.out.println("test get_sigma is pass") ;
+        LOG.debug("test get_sigma is pass") ;
     }
 
     @Test
@@ -96,7 +97,7 @@ public class HistogramTest {
 
         double[] tbl = hist.getTblArray();
         Assert.assertArrayEquals(expectedTblArray, tbl, delta);
-        System.out.println("test getTbl array is pass") ;
+        LOG.debug("test getTbl array is pass") ;
 
     }
 
@@ -168,7 +169,7 @@ public class HistogramTest {
         expectedPct = getExpectedPctValue(histArray, ra_value, Boolean.FALSE, hbinSize,dataMin);
 
         Assert.assertEquals(expectedPct, pct,delta );
-        System.out.println("test get_pct is pass") ;
+        LOG.debug("test get_pct is pass") ;
 
     }
 
@@ -250,7 +251,7 @@ public class HistogramTest {
         JSONArray jArray=  (JSONArray) jsonObject.get("tbl");
         double[] expectedTbl = jsonArray1dToDouble1d(jArray);
         Assert.assertArrayEquals(hist.getTblArray(),expectedTbl, delta );
-        System.out.println("Histogram end to end test is pass") ;
+        LOG.debug("Histogram end to end test is pass") ;
 
     }
     @Test
