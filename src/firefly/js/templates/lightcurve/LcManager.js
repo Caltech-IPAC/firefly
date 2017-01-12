@@ -71,12 +71,12 @@ export function* lcManager(params={}) {
         ]);
 
         /**
-         * This is the current state of the application.  Action handlers should return newLayoutInfo if state changes
+         * This is the current state of the layout store.  Action handlers should return newLayoutInfo if state changes
          * If state has changed, it will be dispacthed into the flux.
-         * @type {LayoutInfo}
+         * @type {LayoutInfo}   layoutInfo
          * @prop {boolean}  layoutInfo.showForm    show form panel
          * @prop {boolean}  layoutInfo.showTables  show tables panel
-         * @prop {boolean}  layoutInfo.showCharts  show charts panel
+         * @prop {boolean}  layoutInfo.showXyPlots show charts panel
          * @prop {boolean}  layoutInfo.showImages  show images panel
          * @prop {string}   layoutInfo.searchDesc  optional string describing search criteria used to generate this result.
          * @prop {Object}   layoutInfo.images      images specific states

@@ -135,7 +135,7 @@ export function dropDownHandler(layoutInfo, action) {
         case REPLACE_VIEWER_ITEMS :
         case ImagePlotCntlr.PLOT_IMAGE :
         case ImagePlotCntlr.PLOT_IMAGE_START :
-            return updateSet(layoutInfo, 'dropDown.visible', false);
+            return smartMerge(layoutInfo, {dropDown: {visible: false}});
             break;
 
         case SHOW_DROPDOWN:
@@ -143,7 +143,7 @@ export function dropDownHandler(layoutInfo, action) {
         case ImagePlotCntlr.DELETE_PLOT_VIEW:
             if (!get(layoutInfo, 'dropDown.visible', false)) {
                 if (count===0) {
-                    return updateSet(layoutInfo, 'dropDown.visible', true);
+                    return smartMerge(layoutInfo, {dropDown: {visible: true}});
                 }
             }
             break;
