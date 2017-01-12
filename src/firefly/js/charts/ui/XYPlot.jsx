@@ -364,7 +364,7 @@ export class XYPlot extends React.Component {
                             const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = get(newParams, 'boundaries', {});
                             Object.assign(xoptions, {min: selFinite(xMin, xDataMin), max: selFinite(xMax, xDataMax)});
                             Object.assign(yoptions, {min: selFinite(yMin, yDataMin), max: selFinite(yMax, yDataMax)});
-                            chart.get(MINMAX).setData([[xoptions.min, yoptions.min], [xoptions.max, yoptions.max]]);
+                            chart.get(MINMAX).setData([[xoptions.min, yoptions.min], [xoptions.max, yoptions.max]], false, false, false);
                         }
                         const xUpdate = Reflect.ownKeys(xoptions).length > 0;
                         const yUpdate = Reflect.ownKeys(yoptions).length > 0;
