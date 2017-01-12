@@ -7,7 +7,7 @@
  */
 package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
-import edu.caltech.ipac.firefly.server.visualize.FileData;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
@@ -15,7 +15,6 @@ import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
 import edu.caltech.ipac.visualize.plot.GeomException;
 
-import java.io.File;
 import java.net.URL;
 import java.util.Collections;
 /**
@@ -45,22 +44,21 @@ public class AllSkyRetriever implements FileRetriever {
 
 
 
-    public FileData getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
+    public FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
         String urlStr= RESERVED_IMAGES[DEFAULT_ALLSKY].getURLString();
 
-        File fitsFile;
+        FileInfo fitsFileInfo;
         try {
             URL url= this.getClass().getClassLoader().getResource(urlStr);
             AnyUrlParams p= new AnyUrlParams(url);
             p.setLocalFileExtensions(Collections.singletonList(FileUtil.FITS));
-            fitsFile= LockingVisNetwork.getImage(p);
+            fitsFileInfo= LockingVisNetwork.retrieve(p);
         }  catch (FailedRequestException e) {
             throw e;
         }  catch (Exception e) {
             throw new FailedRequestException("No data",null,e);
         }
-        return new FileData(fitsFile,
-                           RESERVED_IMAGES[DEFAULT_ALLSKY].getDescription());
+        return fitsFileInfo.copyWithDesc(RESERVED_IMAGES[DEFAULT_ALLSKY].getDescription());
     }
 
 //===================================================================

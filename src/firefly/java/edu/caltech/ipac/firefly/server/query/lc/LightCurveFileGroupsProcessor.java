@@ -1,18 +1,14 @@
 package edu.caltech.ipac.firefly.server.query.lc;
 
 
-import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.WiseRequest;
-import edu.caltech.ipac.firefly.data.dyn.DynUtils;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
-import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
 import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;

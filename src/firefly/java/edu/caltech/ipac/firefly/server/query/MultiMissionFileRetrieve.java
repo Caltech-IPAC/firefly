@@ -5,12 +5,10 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Map;
 
 @SearchProcessorImpl(id = MultiMissionFileRetrieve.ID)

@@ -7,7 +7,7 @@ import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.datasource.PtfIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
-import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.URLFileInfoProcessor;
 import edu.caltech.ipac.util.DataGroup;
@@ -129,7 +129,7 @@ public class IBE {
         if (!param.isDoCutout() && ibeDataSource.useFileSystem()) {
             File f = createDataFilePath(param);
             if (f != null && f.exists()) {
-                return new FileInfo(f.getAbsolutePath(),f.getAbsolutePath(), f.length());
+                return new FileInfo(f);
             }
         }
 

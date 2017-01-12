@@ -3,27 +3,18 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
-import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheManager;
-import edu.caltech.ipac.util.cache.StringKey;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 
 /**

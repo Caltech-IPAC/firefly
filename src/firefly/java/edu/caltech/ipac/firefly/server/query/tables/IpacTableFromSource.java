@@ -3,13 +3,12 @@
  */
 package edu.caltech.ipac.firefly.server.query.tables;
 
-import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.query.*;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;

@@ -3,13 +3,13 @@
  */
 package edu.caltech.ipac.visualize.net;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.download.CacheHelper;
 import edu.caltech.ipac.util.download.DownloadListener;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.FileData;
 import edu.caltech.ipac.util.download.NetParams;
 
 import java.io.File;
@@ -120,12 +120,12 @@ public class VisNetwork {
      * Retrieve a file from URL and cache it.  If the URL is a gz file then uncompress it and return the uncompress version.
      * @param params the configuration about the retrieve request
      * @param dl a Download listener, only used in server mode
-     * @return a FileData of file returned from this URL.
+     * @return a FileInfo of file returned from this URL.
      * @throws FailedRequestException when request fails
      */
-    private static FileData getAnyUrlImage(AnyUrlParams params, DownloadListener dl)
+    private static FileInfo getAnyUrlImage(AnyUrlParams params, DownloadListener dl)
                                                      throws FailedRequestException {
-        FileData retval=CacheHelper.getFileData(params);
+        FileInfo retval=CacheHelper.getFileData(params);
         File fileName= (retval==null) ? CacheHelper.makeFile(params.getFileDir(), params.getUniqueString()) : retval.getFile();
 
         if (retval==null && params.isCompressedFileName()) {  // if we are requesting a gz file then check to see if we cached the unzipped version
@@ -134,7 +134,7 @@ public class VisNetwork {
         }
 
         if (retval == null || params.getCheckForNewer())  {          // if not in cache or is in cache & we want to see if there is a newer version
-            FileData fd= AnyUrlGetter.lowlevelGetUrlToFile(params,fileName,false,dl);
+            FileInfo fd= AnyUrlGetter.lowlevelGetUrlToFile(params,fileName,false,dl);
 
             CacheKey saveKey= params;
             // if is ends with GZ and it is not compressed then rename the file without the GZ
@@ -147,7 +147,7 @@ public class VisNetwork {
                     FileUtil.writeStringToFile(fd.getFile(),"placeholder for uncompress file: " +
                                                             uncompFileName.getPath());
                     saveKey= params.getUncompressedKey();
-                    fd= new FileData(uncompFileName,fd.getSuggestedExternalName()); // modify the results with the uncompressed file
+                    fd= fd.copyWith(FileInfo.INTERNAL_NAME, uncompFileName.getAbsolutePath());
                 }
             }
             if (fd.isDownloaded() || retval==null) {
@@ -166,24 +166,24 @@ public class VisNetwork {
      * @return one more more files, almost always this will be one file
      * @throws FailedRequestException when anything fails
      */
-    public static FileData getImage(NetParams params, DownloadListener dl) throws FailedRequestException {
-       FileData retval= null;
+    public static FileInfo getImage(NetParams params, DownloadListener dl) throws FailedRequestException {
+       FileInfo retval= null;
        File f;
       if (params instanceof IrsaImageParams) {
           f=  getIrsaImage( (IrsaImageParams)params);
-          retval= new FileData(f,null);
+          retval= new FileInfo(f);
       }
       else if (params instanceof DssImageParams) {
           f=  getDssImage( (DssImageParams)params);
-          retval= new FileData(f,null);
+          retval= new FileInfo(f);
       }
       else if (params instanceof SloanDssImageParams) {
           f=  getSloanDssImage( (SloanDssImageParams)params);
-          retval= new FileData(f,null);
+          retval= new FileInfo(f);
       }
       else if (params instanceof WiseImageParams) {
           f=  getIbeImage((BaseIrsaParams) params);
-          retval= new FileData(f,null);
+          retval= new FileInfo(f);
       }
       else if (params instanceof AnyUrlParams) {
           retval=  getAnyUrlImage( (AnyUrlParams)params,dl);

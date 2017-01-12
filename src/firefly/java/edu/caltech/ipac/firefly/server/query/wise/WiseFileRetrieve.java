@@ -8,7 +8,7 @@ import edu.caltech.ipac.firefly.server.query.*;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.WiseRequest;
-import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
@@ -355,7 +355,7 @@ public class WiseFileRetrieve extends BaseFileInfoProcessor {
 //                    fd.getSugestedExternalName(),
 //                    fd.getFile().length());
 
-            retval= LockingVisNetwork.getFitsFile(url);
+            retval= LockingVisNetwork.retrieve(url);
 
             // remove authenticator from http requests
             if (USE_HTTP_AUTHENTICATOR) {
@@ -423,7 +423,7 @@ public class WiseFileRetrieve extends BaseFileInfoProcessor {
                     setAuthenticator();
                 }
 
-                retval= LockingVisNetwork.getFitsFile(url);
+                retval= LockingVisNetwork.retrieve(url);
                 _logger.info("retrieving URL:" + url.toString());
 
                 // remove authenticator from http requests

@@ -6,6 +6,7 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
@@ -20,7 +21,6 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.download.FileData;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -309,7 +309,7 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
           File file = createFile(request, ".json");
           Map<String, String> requestHeader=new HashMap<>();
           requestHeader.put("Accept", "application/json");
-          FileData fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null, timeout);
+          FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null, timeout);
 
           if (fileData.getResponseCode()>=500) {
               throw new DataAccessException("DAX Error: "+ LSSTMetaSearch.getErrorMessageFromFile(file));

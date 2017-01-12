@@ -4,10 +4,9 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.data.Request;
-import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.Counters;
-import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -16,8 +15,6 @@ import edu.caltech.ipac.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.util.Map;
 
 /**
  * Date: Sep 15, 2008

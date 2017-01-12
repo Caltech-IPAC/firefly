@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -39,14 +40,14 @@ import java.util.Map;
  */
 public class WebPlotReader {
 
-    public static Map<Band, FileReadInfo[]> readFiles(Map<Band, FileData> fitsFiles, WebPlotRequest req)
+    public static Map<Band, FileReadInfo[]> readFiles(Map<Band, FileInfo> fitsFiles, WebPlotRequest req)
             throws IOException,
                    FitsException,
                    FailedRequestException,
                    GeomException {
 
         Map<Band, FileReadInfo[]> retMap = new LinkedHashMap<>();
-        for (Map.Entry<Band, FileData> entry : fitsFiles.entrySet()) {
+        for (Map.Entry<Band, FileInfo> entry : fitsFiles.entrySet()) {
             Band band = entry.getKey();
             FileReadInfo info[] = readOneFits(entry.getValue(), band, req);
             retMap.put(band, info);
@@ -64,7 +65,7 @@ public class WebPlotReader {
      * @throws edu.caltech.ipac.util.download.FailedRequestException any other problem
      * @throws edu.caltech.ipac.visualize.plot.GeomException problem reprojecting
      */
-    public static Map<Band, FileReadInfo[]> processFitsRead(FileData fd, WebPlotRequest req, FitsRead fitsRead, int imageIdx)
+    public static Map<Band, FileReadInfo[]> processFitsRead(FileInfo fd, WebPlotRequest req, FitsRead fitsRead, int imageIdx)
             throws IOException,
                    FitsException,
                    FailedRequestException,
@@ -113,7 +114,7 @@ public class WebPlotReader {
      * @throws edu.caltech.ipac.visualize.plot.GeomException
      *                                    problem reprojecting
      */
-    public static FileReadInfo[] readOneFits(FileData fd, Band band, WebPlotRequest req)
+    public static FileReadInfo[] readOneFits(FileInfo fd, Band band, WebPlotRequest req)
             throws IOException,
                    FitsException,
                    FailedRequestException,
@@ -333,8 +334,8 @@ public class WebPlotReader {
                 projType != Projection.UNSPECIFIED);
     }
 
-    static void validateAccess(Map<Band, FileData> fitsFiles) throws FailedRequestException {
-        for (FileData rf : fitsFiles.values()) {
+    static void validateAccess(Map<Band, FileInfo> fitsFiles) throws FailedRequestException {
+        for (FileInfo rf : fitsFiles.values()) {
             if (!rf.isBlank()) {
                 File f = rf.getFile();
                 if (!f.exists()) {
@@ -355,10 +356,10 @@ public class WebPlotReader {
         }
     }
 
-    private static String concatFileNames(Map<Band, FileData> fitsFiles) {
+    private static String concatFileNames(Map<Band, FileInfo> fitsFiles) {
         StringBuilder sb = new StringBuilder(200);
         boolean first = true;
-        for (FileData rf : fitsFiles.values()) {
+        for (FileInfo rf : fitsFiles.values()) {
             File f = rf.getFile();
             if (!first) sb.append(", ");
             sb.append(f);

@@ -6,7 +6,7 @@ import edu.caltech.ipac.firefly.server.ExternalTaskHandler;
 import edu.caltech.ipac.firefly.server.ExternalTaskHandlerImpl;
 import edu.caltech.ipac.firefly.server.ExternalTaskLauncher;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.DataType;
 

@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.packagedata;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.server.util.Logger;

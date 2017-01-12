@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.ImageFileRetrieverFactory;
@@ -66,7 +67,7 @@ public class WebPlotFactory {
 
 
         FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(wprList.get(0));
-        FileData fileData = retrieve.getFile(wprList.get(0));
+        FileInfo fileData = retrieve.getFile(wprList.get(0));
 
         FitsRead[] frAry= FitsCacher.readFits(fileData.getFile());
         List<ImagePlotBuilder.Results> resultsList= new ArrayList<>(wprList.size());
@@ -126,7 +127,7 @@ public class WebPlotFactory {
 
     private static InsertBandInitializer insertBand(ImagePlot plot,
                                                     PlotState state,
-                                                    FileData fd,
+                                                    FileInfo fd,
                                                     Band band,
                                                     ActiveFitsReadGroup frGroup) throws FailedRequestException, GeomException {
 
@@ -274,7 +275,7 @@ public class WebPlotFactory {
 
 
         long findStart = System.currentTimeMillis();
-        FileData fd = retrieve.getFile(request);
+        FileInfo fd = retrieve.getFile(request);
         File file = fd.getFile();
         long findElapse = System.currentTimeMillis() - findStart;
 
