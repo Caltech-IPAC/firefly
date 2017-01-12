@@ -40,7 +40,7 @@ public class IbeFileRetrieve extends BaseFileInfoProcessor {
             IbeDataSource ibeDataSource = ibe.getIbeDataSource();
             IbeDataParam dataParam = ibeDataSource.makeDataParam(paramMap);
 //            File ofile = makeOutputFile(dataParam);
-            FileInfo ofile= ibe.getData(dataParam);
+            FileInfo ofile= ibe.getData(dataParam, paramMap);
 
             // no result found
             if (ofile == null ||  ofile.getSizeInBytes() == 0) {

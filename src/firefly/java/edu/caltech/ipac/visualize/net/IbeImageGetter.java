@@ -110,7 +110,7 @@ public class IbeImageGetter {
 
               dataParam.setCutout(true, params.getRaJ2000String()+","+params.getDecJ2000String(), sizeStr);
               dataParam.setDoZip(true);
-              FileInfo result= ibe.getData(dataParam);
+              FileInfo result= ibe.getData(dataParam,null);
               return new File(result.getInternalFilename());
           }
           else {

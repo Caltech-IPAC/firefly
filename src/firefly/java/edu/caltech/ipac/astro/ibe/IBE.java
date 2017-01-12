@@ -107,8 +107,8 @@ public class IBE {
      * @return
      * @throws IOException
      */
-    public FileInfo getData(IbeDataParam param) throws IOException {
-        return getData(param, null, null);
+    public FileInfo getData(IbeDataParam param, Map<String, String> sourceParams) throws IOException {
+        return getData(param, sourceParams, null, null);
     }
 
 
@@ -119,7 +119,8 @@ public class IBE {
      * @return
      * @throws IOException
      */
-    public FileInfo getData(IbeDataParam param, File dir, DownloadListener dl) throws IOException {
+    public FileInfo getData(IbeDataParam param, Map<String, String> sourceParams, File dir, DownloadListener dl)
+                                  throws IOException {
 
         if (param.getFilePath() == null) {
             throw new IOException("IbeDataParam does not contains the required filepath information.");
@@ -139,7 +140,7 @@ public class IBE {
 //        } else if (results.isDirectory()) {
 //            results = new File(results, param.getFileName());
 //        }
-        return downloadViaUrl(url, dir, dl);
+        return downloadViaUrl(url, sourceParams, dir, dl);
     }
 
     public File createDataFilePath(IbeDataParam param) throws IOException {
@@ -166,9 +167,16 @@ public class IBE {
     }
 
 
-    private FileInfo downloadViaUrl(URL url, File dir, DownloadListener dl) throws IOException {
+    private FileInfo downloadViaUrl(URL url, Map<String, String> sourceParams, File dir, DownloadListener dl)
+                                                         throws IOException {
+        String progressKey= null;
+        String plotId= null;
         try {
-            return URLFileInfoProcessor.retrieveViaURL(url,dir);
+            if (sourceParams!=null) {
+                progressKey= sourceParams.get("ProgressKey");
+                plotId= sourceParams.get("plotId");
+            }
+            return URLFileInfoProcessor.retrieveViaURL(url,dir, progressKey, plotId, null, null);
         } catch (DataAccessException e) {
             throw new IOException("Request Failed", e);
         }
@@ -287,7 +295,7 @@ public class IBE {
                         IbeDataParam dparam = ibe.getIbeDataSource().makeDataParam(dinfo);
                         dparam.setCutout(true, "10.768479,41.26906", ".1");
                         try {
-                            ibe.getData(dparam, new File(basedir), null);
+                            ibe.getData(dparam, null, new File(basedir), null);
                         } catch (IOException ex) {
                             System.out.println("Line " + idx + ": Unable to retrieve " + dtype + " data.");
                         }
@@ -322,7 +330,7 @@ public class IBE {
                     IbeDataParam dparam = ibe.getIbeDataSource().makeDataParam(dinfo);
                     dparam.setCutout(true, "10.768479,41.26906", ".1");
                     try {
-                        ibe.getData(dparam, new File(basedir), null);
+                        ibe.getData(dparam, null, new File(basedir), null);
                     } catch (IOException ex) {
                         System.out.println("Line " + idx + ": Unable to retrieve data.");
                     }

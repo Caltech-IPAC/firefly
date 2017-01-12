@@ -34,7 +34,7 @@ public class ProcessorFileRetriever implements FileRetriever {
             } else {
                 sreq= QueryUtil.assureType(TableServerRequest.class, request);
             }
-            sreq= makeDataOnlyRequestString(sreq);
+//            sreq= makeDataOnlyRequestString(sreq);
             FileInfo fi = new SearchManager().getFileInfo(sreq);
             if (fi == null) {
                 throw new FailedRequestException("Unable to get file location info");

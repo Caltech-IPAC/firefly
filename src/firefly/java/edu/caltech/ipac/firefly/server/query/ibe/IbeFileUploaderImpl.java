@@ -73,7 +73,7 @@ public class IbeFileUploaderImpl implements IbeFileUploader {
                         IbeDataParam dparam = ibe.getIbeDataSource().makeDataParam(dinfo);
                         dparam.setCutout(true, row.getDataElement("in_ra") + "," + row.getDataElement("in_dec"), ".1");
                         try {
-                            ibe.getData(dparam, new File(basedir), null);
+                            ibe.getData(dparam, null, new File(basedir), null);
                         } catch (IOException ex) {
                             System.out.println("Line " + idx + ": Unable to retrieve " + dtype + " data.");
                         }
