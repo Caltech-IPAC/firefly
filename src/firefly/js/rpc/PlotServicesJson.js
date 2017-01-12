@@ -52,9 +52,9 @@ export function callGetWebPlot(request) {
     return doJsonRequest(ServerParams.CREATE_PLOT, paramList,true);
 };
 
-export function callGetWebPlotGroup(reqAry,  progressKey) {
+export function callGetWebPlotGroup(reqAry,  requestKey) {
     var paramList = {};
-    paramList[ServerParams.PROGRESS_KEY]= progressKey;
+    paramList[ServerParams.PROGRESS_KEY]= requestKey;
     paramList[ServerParams.JSON_DEEP]= 'true';
     paramList= reqAry.reduce( (obj,req, idx) => {
         obj[ServerParams.REQUEST+idx]= req.toString();

@@ -120,7 +120,7 @@ function addPlot(state,action, replace, setActive) {
 
 
     plotViewAry = plotViewAry.map((pv) => { // map has side effect of setting active plotId
-        const info = pvNewPlotInfoAry.find((i) => i.plotId === pv.plotId);
+        const info = pvNewPlotInfoAry.find((i) => i.plotId === pv.plotId && (!i.requestKey || i.requestKey===pv.request.getRequestKey()));
         if (!info) return pv;
         const {plotAry, overlayPlotViews}= info;
         if (setActive) {

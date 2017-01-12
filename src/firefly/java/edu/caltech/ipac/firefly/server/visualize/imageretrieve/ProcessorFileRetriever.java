@@ -7,14 +7,13 @@
  */
 package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
-import edu.caltech.ipac.firefly.server.visualize.FileData;
-import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
+import edu.caltech.ipac.firefly.server.visualize.FileData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.GeomException;
@@ -35,6 +34,7 @@ public class ProcessorFileRetriever implements FileRetriever {
             } else {
                 sreq= QueryUtil.assureType(TableServerRequest.class, request);
             }
+//            sreq= makeDataOnlyRequestString(sreq);
             FileInfo fi = new SearchManager().getFileInfo(sreq);
             if (fi == null) {
                 throw new FailedRequestException("Unable to get file location info");
@@ -53,4 +53,21 @@ public class ProcessorFileRetriever implements FileRetriever {
             throw new FailedRequestException("Unable to get file location info", e.getMessage(), e);
         }
     }
+
+
+
+
+    private TableServerRequest makeDataOnlyRequestString(TableServerRequest r) {
+        TableServerRequest newR= new TableServerRequest();
+        newR.copyFrom(r);
+        r.setParam(WebPlotRequest.ZOOM_TO_WIDTH, "");
+        r.setParam(WebPlotRequest.ZOOM_TO_HEIGHT, "");
+        r.setParam(WebPlotRequest.PROGRESS_KEY, "");
+        r.setParam(WebPlotRequest.PLOT_ID, "");
+        r.setParam(WebPlotRequest.INIT_RANGE_VALUES, "");
+        r.setParam(WebPlotRequest.INIT_COLOR_TABLE, "");
+        return r;
+    }
+
 }
+

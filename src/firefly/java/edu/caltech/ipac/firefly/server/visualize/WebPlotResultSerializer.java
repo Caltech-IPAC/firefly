@@ -39,13 +39,15 @@ public class WebPlotResultSerializer {
         return useDeepJson ? createJsonDeepString(res) : createJsonShallow(res);
     }
 
-    public static String createJson(WebPlotResult resAry[]) {  // note- this call only support useDeepJson
+    public static String createJson(WebPlotResult resAry[], String requestKey) {  // note- this call only support useDeepJson
         JSONArray ary= new JSONArray();
         for(WebPlotResult res : resAry) ary.add(createJsonDeep(res));
 
         JSONObject map = new JSONObject();
         map.put( "success", true);
         map.put("data", ary);
+        map.put("requestKey", requestKey);
+
         return map.toString();
     }
 
@@ -62,6 +64,7 @@ public class WebPlotResultSerializer {
         JSONObject map = new JSONObject();
         map.put("JSON", true);
         map.put( "success", res.isSuccess());
+        String requestKey= res.getRequestKey()==null?"":res.getRequestKey();
         if (res.isSuccess()) {
             if (res.containsKey(WebPlotResult.PLOT_STATE)) {
                 PlotState state= (PlotState)res.getResult(WebPlotResult.PLOT_STATE);
@@ -145,14 +148,15 @@ public class WebPlotResultSerializer {
                 map.put(WebPlotResult.RESULT_ARY, jResAry);
 
             }
+            map.put( "requestKey", requestKey);
 
         }
         else {
-            String pKey= res.getProgressKey()==null?"":res.getProgressKey();
+            map.put( "requestKey", requestKey);
             map.put( "briefFailReason", res.getBriefFailReason());
             map.put( "userFailReason", res.getUserFailReason());
             map.put( "detailFailReason", res.getDetailFailReason());
-            map.put( "progressKey", pKey);
+            map.put( "requestKey", requestKey);
             map.put( "plotId", res.getPlotId());
         }
 

@@ -3,10 +3,11 @@
  */
 package edu.caltech.ipac.visualize.net;
 
-import edu.caltech.ipac.util.download.BaseNetParams;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.cache.CacheKey;
+import edu.caltech.ipac.util.download.BaseNetParams;
 
+import java.io.File;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ public class AnyUrlParams extends BaseNetParams {
     private boolean _checkForNewer= false;
     private List<String> _localFileExtensions = null;
     private String _desc = null;
+    private File _dir = null; // if null, the use the default dir
     private static long _maxSizeToDownload= 0L;
 
 
@@ -72,6 +74,8 @@ public class AnyUrlParams extends BaseNetParams {
     public void setCacheLifespanInSec(long lifeSpan) { _cacheLifespan= lifeSpan; }
     public void setMaxSizeToDownload(long max) {_maxSizeToDownload= max;}
     public long getMaxSizeToDownload() {return _maxSizeToDownload;}
+    public void setFileDir(File dir) {_dir= dir;}
+    public File getFileDir() {return _dir;}
 
     public void setCheckForNewer(boolean check) { _checkForNewer= check; }
     public boolean getCheckForNewer() { return _checkForNewer; }

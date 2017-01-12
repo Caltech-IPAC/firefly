@@ -107,8 +107,7 @@ public class ImagePlotBuilder {
         // ------------ read the FITS files
         long readStart = System.currentTimeMillis();
         Map<Band, FileReadInfo[]> readInfoMap = WebPlotReader.readFiles(fileDataMap, firstR);
-        PlotServUtils.updateProgress( firstR, ProgressStat.PType.CREATING,
-                                      PlotServUtils.CREATING_MSG);
+        PlotServUtils.updatePlotCreateProgress( firstR, ProgressStat.PType.CREATING, PlotServUtils.CREATING_MSG);
         purgeFailedBands(readInfoMap, requestMap);
         long readElapse = System.currentTimeMillis() - readStart;
 
@@ -134,8 +133,7 @@ public class ImagePlotBuilder {
         ImagePlotInfo pInfo[];
         // ------------ read the FITS files
         long readStart = System.currentTimeMillis();
-        PlotServUtils.updateProgress(request, ProgressStat.PType.CREATING,
-                                     PlotServUtils.CREATING_MSG);
+        PlotServUtils.updatePlotCreateProgress(request, ProgressStat.PType.CREATING, PlotServUtils.CREATING_MSG);
         long readElapse = System.currentTimeMillis() - readStart;
 
 
@@ -179,8 +177,8 @@ public class ImagePlotBuilder {
 
         Map<Band, FileData> fitsFiles = new LinkedHashMap<>();
 
-        PlotServUtils.updateProgress( firstRequest(requestMap), ProgressStat.PType.READING,
-                                      PlotServUtils.STARTING_READ_MSG);
+        PlotServUtils.updatePlotCreateProgress( firstRequest(requestMap), ProgressStat.PType.READING,
+                                                PlotServUtils.STARTING_READ_MSG);
 
         for (Map.Entry<Band, WebPlotRequest> entry : requestMap.entrySet()) {
             Band band = entry.getKey();
@@ -209,7 +207,8 @@ public class ImagePlotBuilder {
         } else {
             _log.error("could not find any fits files from request");
         }
-        PlotServUtils.updateProgress(firstRequest(requestMap), ProgressStat.PType.READING, PlotServUtils.ENDING_READ_MSG);
+        PlotServUtils.updatePlotCreateProgress(firstRequest(requestMap), ProgressStat.PType.READING,
+                                               PlotServUtils.ENDING_READ_MSG);
 
         return fitsFiles;
     }

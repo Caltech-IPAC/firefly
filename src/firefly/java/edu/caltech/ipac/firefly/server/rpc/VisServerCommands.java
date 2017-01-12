@@ -181,7 +181,7 @@ public class VisServerCommands {
             List<WebPlotRequest> reqList= sp.getRequestList();
             WebPlotResult resultAry[] = VisServerOps.createPlotGroup(reqList,key);
 
-            return WebPlotResultSerializer.createJson(resultAry);
+            return WebPlotResultSerializer.createJson(resultAry,key);
         }
     }
 

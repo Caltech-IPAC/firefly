@@ -7,13 +7,16 @@ import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.datasource.PtfIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
-import edu.caltech.ipac.util.download.DownloadListener;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.query.URLFileInfoProcessor;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.download.DownloadListener;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,14 +68,14 @@ public class IBE {
         String url = ibeDataSource.getIbeHost() + "/search/" +
                 ibeDataSource.getMission() + "/" + ibeDataSource.getDataset() +
                 "/" + ibeDataSource.getTableName()+ "?FORMAT=METADATA";
-        downloadViaUrl(new URL(url), results);
+        downloadViaUrlToFile(new URL(url), results);
     }
 
     public void query(File results, IbeQueryParam param) throws IOException {
         String url = ibeDataSource.getIbeHost() + "/search/" +
                 ibeDataSource.getMission() + "/" + ibeDataSource.getDataset() +
                 "/" + ibeDataSource.getTableName() + "?" + convertToUrl(param);
-        downloadViaUrl(new URL(url), results);
+        downloadViaUrlToFile(new URL(url), results);
     }
 
     public void multipleQueries(File results, File posFile, IbeQueryParam param) {
@@ -100,29 +103,24 @@ public class IBE {
 
     /**
      * this is used to return fits images as well as artifacts.
-     * @param results The file to send the results to.  If it's a directory, a new file
-     *                containing the results will be created there.  If null, the results
-     *                will be created in the temp directory.
      * @param param param map
      * @return
      * @throws IOException
      */
-    public File getData(File results, IbeDataParam param) throws IOException {
-        return getData(results, param, null);
+    public FileInfo getData(IbeDataParam param, Map<String, String> sourceParams) throws IOException {
+        return getData(param, sourceParams, null, null);
     }
 
 
     /**
      * this is used to return fits images as well as artifacts.
-     * @param results The file to send the results to.  If it's a directory, a new file
-     *                containing the results will be created there.  If null, the results
-     *                will be created in the temp directory.
      * @param param param map
      * @param dl Download listener
      * @return
      * @throws IOException
      */
-    public File getData(File results, IbeDataParam param, DownloadListener dl) throws IOException {
+    public FileInfo getData(IbeDataParam param, Map<String, String> sourceParams, File dir, DownloadListener dl)
+                                  throws IOException {
 
         if (param.getFilePath() == null) {
             throw new IOException("IbeDataParam does not contains the required filepath information.");
@@ -131,19 +129,18 @@ public class IBE {
         if (!param.isDoCutout() && ibeDataSource.useFileSystem()) {
             File f = createDataFilePath(param);
             if (f != null && f.exists()) {
-                return f;
+                return new FileInfo(f.getAbsolutePath(),f.getAbsolutePath(), f.length());
             }
         }
 
         URL url = createDataUrl(param);
 
-        if (results == null) {
-            results = File.createTempFile(param.getFileName(), "", results);
-        } else if (results.isDirectory()) {
-            results = new File(results, param.getFileName());
-        }
-        downloadViaUrl(url, results,dl);
-        return results;
+//        if (results == null) {
+//            results = File.createTempFile(param.getFileName(), "", results);
+//        } else if (results.isDirectory()) {
+//            results = new File(results, param.getFileName());
+//        }
+        return downloadViaUrl(url, sourceParams, dir, dl);
     }
 
     public File createDataFilePath(IbeDataParam param) throws IOException {
@@ -169,11 +166,28 @@ public class IBE {
         return new URL(url);
     }
 
-    private void downloadViaUrl(URL url, File results) throws IOException {
-        downloadViaUrl(url,results,null);
+
+    private FileInfo downloadViaUrl(URL url, Map<String, String> sourceParams, File dir, DownloadListener dl)
+                                                         throws IOException {
+        String progressKey= null;
+        String plotId= null;
+        try {
+            if (sourceParams!=null) {
+                progressKey= sourceParams.get("ProgressKey");
+                plotId= sourceParams.get("plotId");
+            }
+            return URLFileInfoProcessor.retrieveViaURL(url,dir, progressKey, plotId, null, null);
+        } catch (DataAccessException e) {
+            throw new IOException("Request Failed", e);
+        }
     }
 
-    private void downloadViaUrl(URL url, File results, DownloadListener dl) throws IOException {
+
+    private void downloadViaUrlToFile(URL url, File results) throws IOException {
+        downloadViaUrlToFile(url,results,null);
+    }
+
+    private void downloadViaUrlToFile(URL url, File results, DownloadListener dl) throws IOException {
         try {
             URLConnection uc = URLDownload.makeConnection(url);
             uc.setRequestProperty("Accept", "text/plain");
@@ -184,7 +198,7 @@ public class IBE {
     }
 
     private Map<String, String> asMap(IbeQueryParam param) {
-        HashMap<String, String> params = new HashMap<String, String>();
+        HashMap<String, String> params = new HashMap<>();
         String s = convertToUrl(param);
         String[] pp = s.split("&");
         for (String keyval : pp) {
@@ -281,7 +295,7 @@ public class IBE {
                         IbeDataParam dparam = ibe.getIbeDataSource().makeDataParam(dinfo);
                         dparam.setCutout(true, "10.768479,41.26906", ".1");
                         try {
-                            ibe.getData(new File(basedir), dparam);
+                            ibe.getData(dparam, null, new File(basedir), null);
                         } catch (IOException ex) {
                             System.out.println("Line " + idx + ": Unable to retrieve " + dtype + " data.");
                         }
@@ -316,7 +330,7 @@ public class IBE {
                     IbeDataParam dparam = ibe.getIbeDataSource().makeDataParam(dinfo);
                     dparam.setCutout(true, "10.768479,41.26906", ".1");
                     try {
-                        ibe.getData(new File(basedir), dparam);
+                        ibe.getData(dparam, null, new File(basedir), null);
                     } catch (IOException ex) {
                         System.out.println("Line " + idx + ": Unable to retrieve data.");
                     }

@@ -33,13 +33,16 @@ public abstract class BaseFileInfoProcessor implements SearchProcessor<FileInfo>
         try {
             inspectRequest(request);
             FileInfo fi = null;
+            Cache cache = getCache(request);
+            StringKey key = new StringKey(getClass().getName(), getUniqueID(request));
             if (doCache()) {
-                StringKey key = new StringKey(getClass().getName(), getUniqueID(request));
-                Cache cache = getCache(request);
                 fi = cache != null ? (FileInfo) cache.get(key) : null;
             }
             if (fi == null) {
                 fi = loadData(request);
+                if (fi!=null && doCache() && cache!=null) {
+                    cache.put(key,fi);
+                }
             }
             onComplete(request, fi);
             return fi;

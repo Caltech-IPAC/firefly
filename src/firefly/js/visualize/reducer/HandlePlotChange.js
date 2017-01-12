@@ -377,11 +377,12 @@ function changeOverlayPlotAttributes(state,action) {
 }
 
 function updatePlotProgress(state,action) {
-    const {plotId, message:plottingStatus, done}= action.payload;
+    const {plotId, message:plottingStatus, done, requestKey}= action.payload;
     //console.log(`updatePlotProgress: plotId;${plotId}, message:${plottingStatus}, done:${done}`);
     if (!plotId) return state;
     const plotView=  getPlotViewById(state,plotId);
     if (!plotView) return state;
+    if (requestKey!==plotView.request.getRequestKey()) return state;
     if (plotView.plottingStatus===plottingStatus) return state;
     const changes= {plottingStatus,serverCall:done ? 'success': 'working'};
     return clone(state,{plotViewAry:clonePvAry(state,plotId, changes)});

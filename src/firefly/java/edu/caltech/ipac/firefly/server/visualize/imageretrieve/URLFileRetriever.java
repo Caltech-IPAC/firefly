@@ -53,12 +53,6 @@ public class URLFileRetriever implements FileRetriever {
                 // do nothing
             }
         }
-//        try {
-//            urlStr= URLDecoder.decode(urlStr, "UTF-16");
-//        } catch (UnsupportedEncodingException e) {
-//            // do nothing, just leave reqStr
-//            Logger.warn("oops");
-//        }
         try {
             AnyUrlParams params = new AnyUrlParams(new URL(urlStr), request.getProgressKey(),request.getPlotId());
             RequestOwner ro = ServerContext.getRequestOwner();
@@ -78,7 +72,7 @@ public class URLFileRetriever implements FileRetriever {
             params.setMaxSizeToDownload(VisContext.FITS_MAX_SIZE);
             if (request.getUserDesc() != null) params.setDesc(request.getUserDesc()); // set file description
 
-            PlotServUtils.updateProgress(request, ProgressStat.PType.READING, PlotServUtils.READ_PERCENT_MSG);
+            PlotServUtils.updatePlotCreateProgress(request, ProgressStat.PType.READING, PlotServUtils.READ_PERCENT_MSG);
 
             fitsFile = LockingVisNetwork.getImage(params);
         } catch (MalformedURLException e) {

@@ -18,9 +18,6 @@ import edu.caltech.ipac.firefly.server.query.BaseFileInfoProcessor;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,14 +39,14 @@ public class IbeFileRetrieve extends BaseFileInfoProcessor {
             IBE ibe = IBEUtils.getIBE(mission, paramMap);
             IbeDataSource ibeDataSource = ibe.getIbeDataSource();
             IbeDataParam dataParam = ibeDataSource.makeDataParam(paramMap);
-            File ofile = makeOutputFile(dataParam);
-            ibe.getData(ofile, dataParam);
+//            File ofile = makeOutputFile(dataParam);
+            FileInfo ofile= ibe.getData(dataParam, paramMap);
 
             // no result found
-            if (ofile == null || !ofile.exists() || ofile.length() == 0) {
+            if (ofile == null ||  ofile.getSizeInBytes() == 0) {
                 return null;
             } else {
-                return new FileInfo(ofile.getAbsolutePath(), dataParam.getFileName(), ofile.length());
+                return ofile;
             }
         } catch (Exception e) {
             throw new DataAccessException("Fail to retrieve file from IBE.", e);
@@ -68,7 +65,7 @@ public class IbeFileRetrieve extends BaseFileInfoProcessor {
 
     @Override
     public boolean doCache() {
-        return true;
+        return false;
     }
 
 }

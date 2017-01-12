@@ -85,7 +85,7 @@ public class FileUtil
      */
   public static String getExtension(String s) 
   {
-    String ext = null;
+    String ext = "";
     int i = s.lastIndexOf('.');
     if (i > 0 &&  i < s.length() - 1) 
     {

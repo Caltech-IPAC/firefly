@@ -273,10 +273,10 @@ export default {
 
 const KEY_ROOT= 'progress-';
 var  keyCnt= 0;
-export function makeUniqueRequestKey() {
-    const progressKey= `${KEY_ROOT}-${keyCnt}-${Date.now()}`;
+export function makeUniqueRequestKey(prefix= KEY_ROOT) {
+    const requestKey= `${prefix}-${keyCnt}-${Date.now()}`;
     keyCnt++;
-    return progressKey;
+    return requestKey;
 }
 
 

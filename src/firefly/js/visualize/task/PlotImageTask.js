@@ -8,7 +8,7 @@
 
 import {isArray, uniqueId} from 'lodash';
 import {WebPlotRequest, GridOnStatus} from '../WebPlotRequest.js';
-import ImagePlotCntlr, {makeUniqueRequestKey, dispatchWcsMatch, IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {makeUniqueRequestKey, IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {WebPlot,PlotAttribute} from '../WebPlot.js';
 import CsysConverter from '../CsysConverter.js';
@@ -53,7 +53,7 @@ function ensureWPR(inVal) {
 const getFirstReq= (wpRAry) => isArray(wpRAry) ? wpRAry.find( (r) => r?true:false) : wpRAry;
 
 
-function makeSinglePlotPayload(vr, rawPayload ) {
+function makeSinglePlotPayload(vr, rawPayload, requestKey) {
 
    var {wpRequest, plotId, threeColor, viewerId=DEFAULT_FITS_VIEWER_ID, attributes, setNewPlotAsActive,
          holdWcsMatch= false, pvOptions= {}, addToHistory= false,useContextModifications= true}= rawPayload;
@@ -83,21 +83,21 @@ function makeSinglePlotPayload(vr, rawPayload ) {
     const payload= { plotId:req.getPlotId(),
                      plotGroupId:req.getPlotGroupId(),
                      groupLocked:req.isGroupLocked(),
-                     attributes, viewerId, pvOptions, addToHistory,
+                     requestKey, attributes, viewerId, pvOptions, addToHistory,
                      useContextModifications, threeColor, setNewPlotAsActive};
 
     if (threeColor) {
         if (isArray(wpRequest)) {
-            payload.redReq= wpRequest[Band.RED.value];
-            payload.greenReq= wpRequest[Band.GREEN.value];
-            payload.blueReq= wpRequest[Band.BLUE.value];
+            payload.redReq= addRequestKey(wpRequest[Band.RED.value], requestKey);
+            payload.greenReq= addRequestKey(wpRequest[Band.GREEN.value], requestKey);
+            payload.blueReq= addRequestKey(wpRequest[Band.BLUE.value], requestKey);
         }
         else {
-            payload.redReq= wpRequest;
+            payload.redReq= addRequestKey(wpRequest,requestKey);
         }
     }
     else {
-        payload.wpRequest= wpRequest;
+        payload.wpRequest= addRequestKey(wpRequest,requestKey);
     }
 
     return payload;
@@ -115,9 +115,10 @@ function makePlotImageAction(rawAction) {
         var vr= getState()[IMAGE_PLOT_KEY];
         var {wpRequestAry}= rawAction.payload;
         var payload;
+        const requestKey= makeUniqueRequestKey('plotRequestKey');
 
         if (!wpRequestAry) {
-            payload= makeSinglePlotPayload(vr, rawAction.payload);
+            payload= makeSinglePlotPayload(vr, rawAction.payload, requestKey);
         }
         else {
             payload= {
@@ -128,8 +129,12 @@ function makePlotImageAction(rawAction) {
                 threeColor:false,
                 addToHistory:false,
                 useContextModifications:true,
-                groupLocked:true
+                groupLocked:true,
+                requestKey
             };
+            payload.wpRequestAry= payload.wpRequestAry.map( (req) =>
+                            addRequestKey(req,makeUniqueRequestKey('groupItemReqKey-'+req.getPlotId())));
+
             if (vr.wcsMatchType && vr.mpwWcsPrimId && rawAction.payload.holdWcsMatch) {
                 const wcsPrim= getPlotViewById(vr,vr.mpwWcsPrimId);
                 payload.wpRequestAry= payload.wpRequestAry.map( (wpr) => modifyRequestForWcsMatch(wcsPrim, wpr));
@@ -141,7 +146,7 @@ function makePlotImageAction(rawAction) {
             firstTime= false;
         }
 
-        payload.requestKey= makeUniqueRequestKey();
+        payload.requestKey= requestKey;
 
         vr= getState()[IMAGE_PLOT_KEY];
 
@@ -156,6 +161,14 @@ function makePlotImageAction(rawAction) {
         // NOTE - sega ImagePlotter handles next step
         // NOTE - sega ImagePlotter handles next step
     };
+}
+
+
+function addRequestKey(r,requestKey) {
+    if (!r) return;
+    r= r.makeCopy();
+    r.setRequestKey(requestKey);
+    return r;
 }
 
 
@@ -194,7 +207,7 @@ export function modifyRequest(pvCtx, r, band) {
     //    retval.setInitialZoomLevel(plot.zoomFac);
     //}
 
-    if (pvCtx.defThumbnailSize!=DEFAULT_THUMBNAIL_SIZE && !r.containsParam(WPConst.THUMBNAIL_SIZE)) {
+    if (pvCtx.defThumbnailSize!==DEFAULT_THUMBNAIL_SIZE && !r.containsParam(WPConst.THUMBNAIL_SIZE)) {
         retval.setThumbnailSize(pvCtx.defThumbnailSize);
     }
 
@@ -227,6 +240,9 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
     var successAry= [];
     var failAry= [];
 
+     // the following line checks to see if we are processing the results from the right request
+    if (payload.requestKey && result.requestKey && payload.requestKey!==result.requestKey) return;
+
     if (result.success && Array.isArray(result.data)) {
         successAry= result.data.filter( (d) => d.data.success);
         failAry= result.data.filter( (d) => !d.data.success);
@@ -237,7 +253,7 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
     }
 
 
-    const pvNewPlotInfoAry= successAry.map( (r) => handleSuccess(r.data.PlotCreate,payload) );
+    const pvNewPlotInfoAry= successAry.map( (r) => handleSuccess(r.data.PlotCreate,payload, r.data.requestKey) );
     resultPayload= Object.assign({},payload, {pvNewPlotInfoAry});
     if (successAry.length) {
         dispatcher({type: ImagePlotCntlr.PLOT_IMAGE, payload: resultPayload});
@@ -279,6 +295,14 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
 
 }
 
+// function requestSuccesful(resultData, req) {
+//     if (!resultData.success) return false;
+//     if (!resultData.requestKey) return true;
+//     if (resultData.requestKey !== findRequest() )
+//
+//
+// }
+
 
 function addDrawLayers(request, plot ) {
     const {plotId}= plot;
@@ -312,13 +336,13 @@ function getRequest(payload) {
 }
 
 
-const handleSuccess= function(plotCreate, payload) {
+const handleSuccess= function(plotCreate, payload, requestKey) {
     const plotState= PlotState.makePlotStateWithJson(plotCreate[0].plotState);
     const plotId= plotState.getWebPlotRequest().getPlotId();
 
     var plotAry= plotCreate.map((wpInit) => makePlot(wpInit,plotId, payload.attributes));
     if (plotAry.length) updateActiveTarget(plotAry[0]);
-    return {plotId, plotAry, overlayPlotViews:null};
+    return {plotId, requestKey, plotAry, overlayPlotViews:null};
 };
 
 function makePlot(wpInit,plotId, attributes) {

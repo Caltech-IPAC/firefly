@@ -50,7 +50,6 @@ public class VisJsonSerializer {
         map.put("JSON", true);
 
         map.put("imageCoordSys", wpInit.getCoordinatesOfPlot().toString());
-        map.put("projection", wpInit.getProjectionSerialized());
         map.put("projectionJson", serializeProjection(wpInit));
         map.put("dataWidth", wpInit.getDataWidth());
         map.put("dataHeight", wpInit.getDataHeight());

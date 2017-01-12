@@ -9,13 +9,15 @@ package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
 import edu.caltech.ipac.firefly.server.visualize.FileData;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
-import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.visualize.net.AnyFitsParams;
+import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.visualize.net.AnyUrlParams;
 import edu.caltech.ipac.visualize.plot.GeomException;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Collections;
 /**
  * User: roby
  * Date: Feb 26, 2010
@@ -49,7 +51,9 @@ public class AllSkyRetriever implements FileRetriever {
         File fitsFile;
         try {
             URL url= this.getClass().getClassLoader().getResource(urlStr);
-            fitsFile= LockingVisNetwork.getImage(new AnyFitsParams(url));
+            AnyUrlParams p= new AnyUrlParams(url);
+            p.setLocalFileExtensions(Collections.singletonList(FileUtil.FITS));
+            fitsFile= LockingVisNetwork.getImage(p);
         }  catch (FailedRequestException e) {
             throw e;
         }  catch (Exception e) {

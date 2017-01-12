@@ -11,7 +11,7 @@ import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView,
                         dispatchPlotGroup, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
 import {getTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../../tables/TableUtil.js';
-import {primePlot} from '../PlotViewUtil.js';
+import {primePlot, getPlotViewById} from '../PlotViewUtil.js';
 import MultiViewCntlr, {dispatchReplaceViewerItems, dispatchUpdateCustom, getViewerItemIds,
                         dispatchChangeViewerLayout,
                         getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE} from '../MultiViewCntlr.js';
@@ -251,9 +251,17 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
 
 function makePlottingList(reqAry) {
     return reqAry.filter( (r) => {
-        const plot= primePlot(visRoot(),r.getPlotId());
-        if (!plot) return true;
-        return !isImageDataRequeestedEqual(plot.plotState.getWebPlotRequest(),r);
+        const pv= getPlotViewById(visRoot(),r.getPlotId());
+        const plot= primePlot(pv);
+        if (plot) {
+            return !isImageDataRequeestedEqual(plot.plotState.getWebPlotRequest(), r);
+        }
+        else if (get(pv,'request')) {
+            return !isImageDataRequeestedEqual(pv.request,r);
+        }
+        else {
+            return true;
+        }
     });
 }
 

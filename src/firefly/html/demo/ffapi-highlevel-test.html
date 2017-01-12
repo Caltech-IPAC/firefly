@@ -271,6 +271,11 @@
             firefly.showImage('imageViewHere', req2);
             firefly.showImage('imageViewHere', window.threeC);
             firefly.showImage('imageViewHere', {url:'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits', plotId: 'regiontest'});
+//
+            firefly.showImage('imageViewHere', {
+                url:'http://bacchus1.ipac.caltech.edu:9070/cgi-bin/Subimage/nph-subimage?origfile=/irsadata/COSMOS//images%2Facs_2.0%2FI%2Facs_I_095921%2B0228_unrot_wht_20.fits&ra=149.858180&dec=2.479260&xsize=0.200000',
+                plotId: 'badURLTest'
+            });
 
             firefly.showCoverage('coverageHere', {gridOn:true});
 

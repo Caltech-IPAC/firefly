@@ -103,7 +103,8 @@ public class VisServerOps {
     public static WebPlotResult create3ColorPlot(WebPlotRequest redR, WebPlotRequest greenR, WebPlotRequest blueR) {
         try {
             WebPlotInitializer wpInit[] = WebPlotFactory.createNew(redR, greenR, blueR);
-            WebPlotResult retval = makeNewPlotResult(wpInit);
+            WebPlotRequest req= wpInit[0].getPlotState().getPrimaryRequest();
+            WebPlotResult retval = makeNewPlotResult(wpInit,req.getProgressKey());
             CtxControl.deletePlotCtx(CtxControl.getPlotCtx(null));
             counters.incrementVis("New 3 Color Plots");
             return retval;
@@ -125,7 +126,7 @@ public class VisServerOps {
         for (WebPlotRequest wpr : rList) {
             if (wpr.getProgressKey() != null) keyList.add(wpr.getProgressKey());
         }
-        PlotServUtils.updateProgress(new ProgressStat(keyList, progressKey));
+        PlotServUtils.updatePlotCreateProgress(new ProgressStat(keyList, progressKey));
 
         ExecutorService executor = Executors.newFixedThreadPool(rList.size());
         boolean allCompleted = false;
@@ -159,7 +160,8 @@ public class VisServerOps {
         try {
             WebPlotInitializer wpInitAry[] = WebPlotFactory.createNewGroup(rList);
             for (WebPlotInitializer wpInit : wpInitAry) {
-                resultList.add(makeNewPlotResult(new WebPlotInitializer[]{wpInit}));
+                WebPlotRequest req= wpInitAry[0].getPlotState().getPrimaryRequest();
+                resultList.add(makeNewPlotResult(new WebPlotInitializer[]{wpInit}, req.getProgressKey()));
                 CtxControl.deletePlotCtx(CtxControl.getPlotCtx(null));
                 counters.incrementVis("New Plots");
             }
@@ -182,7 +184,7 @@ public class VisServerOps {
 
         try {
             WebPlotInitializer wpInit[] = WebPlotFactory.createNew(request);
-            WebPlotResult retval = makeNewPlotResult(wpInit);
+            WebPlotResult retval = makeNewPlotResult(wpInit, request.getProgressKey());
             CtxControl.deletePlotCtx(CtxControl.getPlotCtx(null));
             counters.incrementVis("New Plots");
             return retval;
@@ -205,7 +207,7 @@ public class VisServerOps {
             }
         }
         counters.incrementVis("New Plots");
-        return makeNewPlotResult(wpInitAry);
+        return makeNewPlotResult(wpInitAry,null);
     }
 
 
@@ -484,7 +486,7 @@ public class VisServerOps {
             }
 
 
-            WebPlotResult cropResult = makeNewPlotResult(wpInitAry);
+            WebPlotResult cropResult = makeNewPlotResult(wpInitAry, null);
             CtxControl.updateCachedPlot(cropResult.getContextStr());
 
             counters.incrementVis("Crop");
@@ -1503,9 +1505,10 @@ public class VisServerOps {
     }
 
 
-    private static WebPlotResult makeNewPlotResult(WebPlotInitializer wpInit[]) {
+    private static WebPlotResult makeNewPlotResult(WebPlotInitializer wpInit[], String requestKey) {
         PlotState state = wpInit[0].getPlotState();
         WebPlotResult retval = new WebPlotResult(state.getContextString());
+        if (requestKey!=null) retval.setRequestKey(requestKey);
         retval.putResult(WebPlotResult.PLOT_CREATE, new CreatorResults(wpInit));
         return retval;
     }
