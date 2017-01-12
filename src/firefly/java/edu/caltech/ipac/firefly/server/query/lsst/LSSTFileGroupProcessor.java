@@ -17,6 +17,7 @@ import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
@@ -33,7 +34,7 @@ import static edu.caltech.ipac.firefly.server.util.Logger.getLogger;
  *
  */
 
-@SearchProcessorImpl(id = "LSSTDownload")
+@SearchProcessorImpl(id = "LSSTFileGroupProcessor")
 public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
     public static final String LSST_FILESYSTEM_BASEPATH = AppProperties.getProperty("lsst.filesystem_basepath");
     private  Logger.LoggerImpl logger = getLogger();
@@ -71,18 +72,21 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
         }
 
         String basePath = LSST_FILESYSTEM_BASEPATH;
+        basePath = basePath!=null? basePath :"";
         String baseFileName = request.getParam(DownloadRequest.BASE_FILE_NAME);
 
-        if (!basePath.endsWith("/")) {
+
+        if ( basePath!=null && !basePath.endsWith("/")) {
             basePath += "/";
         }
 
-        basePath +=  "/"+baseFileName+"/";
 
-        String fileName = basePath + baseFileName+new Integer( selectedRows.size()).toString();
+        basePath +=  "/"+baseFileName;
 
 
-        boolean isDeepCoadd = baseFileName.equalsIgnoreCase("deepCoad")? true:false;
+
+
+        boolean isDeepCoadd = baseFileName.equalsIgnoreCase("deepCoadd")? true:false;
 
 
 
@@ -92,18 +96,26 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
 
         IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
                 selectedRows, columns);
-        ArrayList<FileInfo> fiArr = new ArrayList<FileInfo>();
+        ArrayList<FileInfo> fiArr = new ArrayList<>();
 
         for (int rowIdx : selectedRows) {
 
-            String outFile = ServerContext.getTempWorkDir() + "/" + fileName;
 
-            FileInfo fileInfo = getDataFileInfo(dgData, rowIdx, isDeepCoadd, outFile);
+            String filterName =(String) dgData.get(rowIdx,"filterName");
+            String fileName = basePath + filterName+new Integer(rowIdx).toString()+".fits";
+            String extFileName = ServerContext.getTempWorkDir() +  fileName;
+
+            FileInfo fileInfo = getDataFileInfo(dgData, rowIdx, isDeepCoadd, extFileName);
 
             if (zipFolders) {
-                 String zipName = fileInfo.getExternalName();
-                if(!zipFiles.contains(zipName)){
-                    zipFiles.add(zipName);
+                String zipName = fileInfo.getExternalName();
+                if (!zipName.equalsIgnoreCase(extFileName)){
+                    File file = new File(zipName);
+                    file.renameTo(new File(extFileName));
+                    fileInfo.setExternalName(extFileName);
+                }
+                if(!zipFiles.contains(extFileName)){
+                    zipFiles.add(extFileName);
                 }
             } else {
                 String[]  zipNameArrays = fileInfo.getExternalName().split("/");
@@ -113,7 +125,7 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
                 }
              }
             fiArr.add(fileInfo );
-            fgSize += outFile.length();
+            //fgSize += new File(extFileName).length();  //fileInfo.getSizeInBytes();
         }
 
 
@@ -138,74 +150,41 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
             return null;
      }
 
-    private FileInfo getDataFileInfo( IpacTableParser.MappedData dgData, int rowIdx,  boolean isDeepCoadd, String outFile) throws MalformedURLException {
+    private FileInfo getDataFileInfo( IpacTableParser.MappedData dgData, int rowIdx,  boolean isDeepCoadd, String extFileName) throws MalformedURLException {
 
         FileInfo fileInfo;
         URL url;
         ServerRequest svr = new ServerRequest();
         if (isDeepCoadd){
-            String tract = (String) dgData.get(rowIdx,"tract");
+            Long tract = (Long) dgData.get(rowIdx,"tract");
             String patch = (String) dgData.get(rowIdx,"patch");
             String filterName =(String) dgData.get(rowIdx,"filterName");
-            svr.setParam("tract", tract);
+            svr.setParam("tract", tract.toString());
             svr.setParam("patch", patch);
             svr.setParam("filterName", filterName);
-            url = LSSTImageSearch.createURLForDeepCoadd(tract, patch, filterName);
+            url = LSSTImageSearch.createURLForDeepCoadd(tract.toString(), patch, filterName);
         }
         else{
-            String run =  (String) dgData.get(rowIdx,"run");
-            String camcol =  (String) dgData.get(rowIdx,"camcol");
-            String field =  (String) dgData.get(rowIdx,"field");
+            Long run =  (Long) dgData.get(rowIdx,"run");
+            Integer camcol =  (Integer)dgData.get(rowIdx,"camcol");
+            Long field =  (Long) dgData.get(rowIdx,"field");
             String filterName =  (String) dgData.get(rowIdx,"filterName");
 
-            svr.setParam("run", run);
-            svr.setParam("camcol", camcol);
-            svr.setParam("field", field);
+            svr.setParam("run", run.toString());
+            svr.setParam("camcol", camcol.toString());
+            svr.setParam("field", field.toString());
             svr.setParam("filterName", filterName);
-            url =LSSTImageSearch.createURLForScienceCCD(run, camcol,field, filterName);
+            url =LSSTImageSearch.createURLForScienceCCD(run.toString(), camcol.toString(),field.toString(), filterName);
         }
-        //search to see if the file is already in the work area.
+         //search to see if the file is already in the work area.
         fileInfo = getFileInfo(svr);
         if (fileInfo==null) {
-            fileInfo = new FileInfo(url.toString(), outFile, SIZE );
+            fileInfo = new FileInfo(url.toString(), extFileName, SIZE );
         }
+
+    
         return  fileInfo;
     }
 
-    private URL getDataURL( IpacTableParser.MappedData dgData, int rowIdx,  boolean isDeepCoadd) throws MalformedURLException {
-        if (isDeepCoadd){
-            String tract = (String) dgData.get(rowIdx,"tract");
-            String patch = (String) dgData.get(rowIdx,"patch");
-            String filterName =(String) dgData.get(rowIdx,"filterName");
 
-            return LSSTImageSearch.createURLForDeepCoadd(tract, patch, filterName);
-
-        }
-
-        else{
-            String run =  (String) dgData.get(rowIdx,"run");
-            String camcol =  (String) dgData.get(rowIdx,"camcol");
-            String field =  (String) dgData.get(rowIdx,"field");
-            String filterName =  (String) dgData.get(rowIdx,"filterName");
-
-            return LSSTImageSearch.createURLForScienceCCD(run, camcol,field, filterName);
-        }
-    }
-    private String getDataUROldL(String baseURL, IpacTableParser.MappedData dgData, int rowIdx,String[] columns){
-
-
-
-        StringBuffer sb = new  StringBuffer();
-        for (int i=0; i<columns.length; i++){
-            String val = ((String) dgData.get(rowIdx, columns[i])).trim();
-            if (i==columns.length-1) {
-                sb.append(columns[i] + "=" + val );
-            }
-            else {
-                sb.append(columns[i] + "=" + val + "&");
-            }
-        }
-
-        return  baseURL+sb.toString();
-    }
 }

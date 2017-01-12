@@ -292,7 +292,7 @@ function doImage(request, imgPart) {
                             FilePrefix: cattable,
                             BaseFileName: cattable,
                             DataSource: cattable,
-                            FileGroupProcessor: 'LightCurveFileGroupsProcessor'     // insert FileGroupProcessor's ID here.
+                            FileGroupProcessor: 'LSSTFileGroupProcessor'     // insert FileGroupProcessor's ID here.
                         }}/>
             </DownloadButton>
 
