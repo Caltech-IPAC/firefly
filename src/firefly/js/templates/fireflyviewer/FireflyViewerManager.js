@@ -65,6 +65,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
                 break;
             case ImagePlotCntlr.DELETE_PLOT_VIEW:
                 newLayoutInfo = handlePlotDelete(newLayoutInfo, action);
+                break;
             case TABLE_LOADED:
             case TBL_RESULTS_ADDED:
                 newLayoutInfo = handleNewTable(newLayoutInfo, action);
@@ -221,7 +222,7 @@ function handleNewImage(layoutInfo, action) {
     var {selectedTab, showMeta, showFits} = images;
     var coverageLockedOn = false;
 
-    const {viewerId, plotGroupId} = action.payload || {};
+    const {viewerId} = action.payload || {};
     if (viewerId === META_VIEWER_ID) {
         // select image meta tab when new images are added.
         selectedTab = 'meta';
