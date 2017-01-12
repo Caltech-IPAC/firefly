@@ -24,6 +24,7 @@ export const LO_MODE = new Enum(['expanded', 'standard']);
 export const SET_LAYOUT         = `${LAYOUT_PATH}.setLayout`;
 export const SET_LAYOUT_MODE    = `${LAYOUT_PATH}.setLayoutMode`;
 export const SHOW_DROPDOWN      = `${LAYOUT_PATH}.showDropDown`;
+export const SET_LAYOUT_DISPLAY = `${LAYOUT_PATH}.showPage`;
 
 /*---------------------------- Reducers ----------------------------*/
 
@@ -45,6 +46,10 @@ export function reducer(state={}, action={}) {
             var {visible = true} = action.payload;
             return smartMerge(state, {dropDown: {visible, view: getSelView(state, action.payload)}});
 
+        case SET_LAYOUT_DISPLAY :
+            var {displayMode} = action.payload;
+
+            return smartMerge(state, {displayMode});
         default:
             return state;
     }
@@ -85,6 +90,10 @@ export function dispatchHideDropDown() {
     flux.process({type: SHOW_DROPDOWN, payload: {visible: false}});
 }
 
+
+export function dispatchLayoutDisplayMode(mode) {
+    flux.process({type: SET_LAYOUT_DISPLAY, payload: {displayMode: mode}});
+}
 
 /*------------------------- Util functions -------------------------*/
 export function getExpandedMode() {

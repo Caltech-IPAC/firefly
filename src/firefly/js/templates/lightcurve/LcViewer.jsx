@@ -5,7 +5,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {pickBy} from 'lodash';
+import {pickBy, startsWith} from 'lodash';
 
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
@@ -13,6 +13,7 @@ import {getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
 import {lcManager, LC} from './LcManager.js';
 import {listenerPanel} from './LcPhaseFoldingPanel.jsx';
 import {LcResult} from './LcResult.jsx';
+import {LcPeriod} from './LcPeriod.jsx';
 import {Menu} from '../../ui/Menu.jsx';
 import {Banner} from '../../ui/Banner.jsx';
 import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
@@ -31,6 +32,7 @@ import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import * as TblUtil from '../../tables/TableUtil.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
+import {menuHas} from './LcManager.js';
 
 // import {deepDiff} from '../util/WebUtil.js';
 
@@ -83,7 +85,7 @@ export class LcViewer extends Component {
 
     render() {
         var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown,
-                dropdownPanels=[], views, footer, style} = this.state;
+                dropdownPanels=[], views, footer, style, displayMode} = this.state;
         const {visible, view} = dropDown || {};
 
         dropdownPanels.push(<UploadPanel/>);
@@ -103,7 +105,7 @@ export class LcViewer extends Component {
                             {...{dropdownPanels} } />
                     </header>
                     <main>
-                        <LcResult/>
+                        {displayMode&&startsWith(displayMode, 'period') ? <LcPeriod display={displayMode}/> : <LcResult/>}
                     </main>
                 </div>
             );

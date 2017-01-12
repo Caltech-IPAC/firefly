@@ -19,7 +19,8 @@ function handleAction (menuItem) {
 
     // set whether search menu should be shown
     if (menuItem.type === COMMAND) {
-        flux.process({type: menuItem.action, payload:{}});
+        flux.process({type: menuItem.action,
+                      payload: (menuItem.payload ? menuItem.payload : {})});
     } else {
         dispatchShowDropDown( {view: menuItem.action});
     }

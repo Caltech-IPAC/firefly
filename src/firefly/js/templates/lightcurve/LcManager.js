@@ -2,10 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isUndefined, get,isNil} from 'lodash';
+import {isUndefined, get,isNil, has, set} from 'lodash';
 import {take} from 'redux-saga/effects';
-
-import {LO_VIEW, LO_MODE, SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo, dispatchUpdateLayoutInfo, dropDownHandler} from '../../core/LayoutCntlr.js';
+import {flux} from '../../Firefly.js';
+import {LO_VIEW, LO_MODE, SHOW_DROPDOWN, SET_LAYOUT_MODE, SET_LAYOUT_DISPLAY,  getLayouInfo,
+        dispatchUpdateLayoutInfo, dropDownHandler, dispatchLayoutDisplayMode} from '../../core/LayoutCntlr.js';
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT} from '../../tables/TablesCntlr.js';
 import {getCellValue, getTblById, makeTblRequest} from '../../tables/TableUtil.js';
 import {updateSet} from '../../util/WebUtil.js';
@@ -21,8 +22,10 @@ import {ServerRequest} from '../../data/ServerRequest.js';
 import {CHANGE_VIEWER_LAYOUT} from '../../visualize/MultiViewCntlr.js';
 import {LcPFOptionsPanel, grpkey} from './LcPhaseFoldingPanel.jsx';
 import FieldGroupUtils, {revalidateFields} from '../../fieldGroup/FieldGroupUtils';
+import {VALUE_CHANGE} from '../../fieldGroup/FieldGroupCntlr.js';
 import {makeWorldPt} from '../../visualize/Point.js';
 import {CoordinateSys} from '../../visualize/CoordSys.js';
+import {getMenu, dispatchSetMenu} from '../../core/AppDataCntlr.js';
 
 export const LC = {
     RAW_TABLE: 'raw_table',
@@ -42,9 +45,34 @@ export const LC = {
     META_FLUX_CNAME: 'fluxCName',
     DEF_TIME_CNAME: 'mjd',
     DEF_FLUX_CNAME: 'w1mpro_ep',
+
+    RESULT_PAGE: 'result',
+    PERIOD_PAGE: 'period',
+    PERGRAM_PAGE: 'periodogram',
+
+    PERIOD_FINDER: 'LC_PERIOD_FINDER',
+    PERIODOGRAM_GROUP: 'LC_PERIODOGRAM_TBL'
 };
 
 const plotIdRoot= 'LC_FRAME-';
+export var menuHas = (menu, action) => {
+    return  menu && has(menu, 'menuItems') && menu.menuItems.find((item)=> item.action === action);
+};
+
+
+export function periodPageMode(mode) {
+    const menu = getMenu();
+
+    if (menu) {
+        var newMenu = Object.assign({}, menu);
+        var periodItem = newMenu.menuItems.find((item) => item.action === SET_LAYOUT_DISPLAY);
+
+        if (periodItem) {
+            set(periodItem, ['payload', 'displayMode'], mode);
+            dispatchSetMenu(newMenu);
+        }
+    }
+}
 
 
 var webplotRequestCreator;
@@ -67,7 +95,7 @@ export function* lcManager(params={}) {
     while (true) {
         const action = yield take([
             TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, SHOW_DROPDOWN, SET_LAYOUT_MODE,
-            CHANGE_VIEWER_LAYOUT
+            CHANGE_VIEWER_LAYOUT, VALUE_CHANGE
         ]);
 
         /**
@@ -81,15 +109,29 @@ export function* lcManager(params={}) {
          * @prop {string}   layoutInfo.searchDesc  optional string describing search criteria used to generate this result.
          * @prop {Object}   layoutInfo.images      images specific states
          * @prop {string}   layoutInfo.images.activeTableId  last active table id that images responded to
+         * @prop {string}   layoutInfo.rawTableId  indicate the raw table id, it there is, show the button of 'peridod finding'
+         * @prop {string}   layoutInfo.displayMode:'result' (result page), 'period' (period finding page), 'periodogram' or neither
          */
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;
+        var menu;
 
         newLayoutInfo = dropDownHandler(newLayoutInfo, action);
         switch (action.type) {
             case TBL_RESULTS_ADDED:
             case TABLE_LOADED :
                 newLayoutInfo = handleTableLoad(newLayoutInfo, action);
+                menu = getMenu();
+                if (menu && !menuHas(menu, SET_LAYOUT_DISPLAY)) {
+                    var newMenu = Object.assign({}, menu);
+
+                    newMenu.menuItems.push({action: SET_LAYOUT_DISPLAY,
+                                            label: 'Period Finding',
+                                            type: 'COMMAND',
+                                            payload: {displayMode: 'period'}});
+                    dispatchSetMenu(newMenu);
+                }
+
                 break;
             case TABLE_HIGHLIGHT:
                 newLayoutInfo = handleTableHighlight(newLayoutInfo, action);
@@ -100,19 +142,30 @@ export function* lcManager(params={}) {
             case TBL_RESULTS_ACTIVE :
                 newLayoutInfo = handleTableActive(newLayoutInfo, action);
                 break;
+            case VALUE_CHANGE:
+                if (['time', 'flux', 'periodMin', 'periodMax'].includes(action.payload.fieldKey)) {
+                    menu = getMenu();
+                    if (menu) {
+                        var periodItem = newMenu.menuItems.find((item) => item.action === SET_LAYOUT_DISPLAY);
+
+                        if (periodItem && get(periodItem, ['payload', 'displayMode']) !== LC.PERIOD_PAGE) {
+                            dispatchLayoutDisplayMode(LC.PERIOD_PAGE);
+                            periodPageMode(LC.PERIOD_PAGE);
+                        }
+                    }
+                }
+                break;
         }
 
         if (newLayoutInfo !== layoutInfo) {
             dispatchUpdateLayoutInfo(newLayoutInfo);
-
         }
     }
 }
 
-
 function handleTableLoad(layoutInfo, action) {
     const {tbl_id} = action.payload;
-    layoutInfo =  Object.assign({}, layoutInfo, {showTables: true, showXyPlots: true});
+    layoutInfo =  Object.assign({}, layoutInfo, {showTables: true, showXyPlots: true, rawTableId: tbl_id});
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'showImages', true);
         layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
