@@ -1,4 +1,5 @@
 import validator from 'validator';
+import {get} from 'lodash';
 
 export default { toRGBA, toRGB, toHex, brighter, darker, makeSimpleColorMap, getBWBackground, getComplementaryColor};
 

@@ -53,12 +53,6 @@ public class URLFileRetriever implements FileRetriever {
                 // do nothing
             }
         }
-//        try {
-//            urlStr= URLDecoder.decode(urlStr, "UTF-16");
-//        } catch (UnsupportedEncodingException e) {
-//            // do nothing, just leave reqStr
-//            Logger.warn("oops");
-//        }
         try {
             AnyUrlParams params = new AnyUrlParams(new URL(urlStr), request.getProgressKey(),request.getPlotId());
             RequestOwner ro = ServerContext.getRequestOwner();

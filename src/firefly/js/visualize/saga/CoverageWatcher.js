@@ -6,13 +6,13 @@ import {take} from 'redux-saga/effects';
 import Enum from 'enum';
 import {has,get,isEmpty,flattenDeep,values} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
-import {TitleOptions} from '../WebPlotRequest.js';
+import {TitleOptions, isImageDataRequeestedEqual} from '../WebPlotRequest.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {cloneRequest} from '../../tables/TableUtil.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE, TABLE_SORT} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
-import {primePlot} from '../PlotViewUtil.js';
+import {primePlot, getPlotViewById} from '../PlotViewUtil.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
 import {doFetchTable, getTblById, getActiveTableId, getColumnIdx, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
 import MultiViewCntlr, {getViewerItemIds, dispatchAddViewerItems, getMultiViewRoot, getViewer, IMAGE} from '../MultiViewCntlr.js';
@@ -237,19 +237,39 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
         overlayCoverageDrawing(decimatedTables, options);
     }
     else {
-        dispatchPlotImage({
-                wpRequest,
-                viewerId,
-                attributes: {
-                    [COVERAGE_TARGET]: centralPoint,
-                    [COVERAGE_RADIUS]: maxRadius,
-                    [COVERAGE_TABLE]: tbl_id
-                },
-                pvOptions: { userCanDeletePlots: false}
-            }
-        );
+        if (!isPlotted(wpRequest)) {
+            dispatchPlotImage({
+                    wpRequest,
+                    viewerId,
+                    attributes: {
+                        [COVERAGE_TARGET]: centralPoint,
+                        [COVERAGE_RADIUS]: maxRadius,
+                        [COVERAGE_TABLE]: tbl_id
+                    },
+                    pvOptions: { userCanDeletePlots: false}
+                }
+            );
+        }
     }
 }
+
+
+function isPlotted(r) {
+    const pv= getPlotViewById(visRoot(),r.getPlotId());
+    const plot= primePlot(pv);
+    if (plot) {
+        return isImageDataRequeestedEqual(plot.plotState.getWebPlotRequest(), r);
+    }
+    else if (get(pv,'request')) {
+        return isImageDataRequeestedEqual(pv.request,r);
+    }
+    else {
+        return false;
+    }
+}
+
+
+
 
 function computeSize(options, decimatedTables,allRowsTable, usesRadians) {
     const ary= options.multiCoverage ? values(decimatedTables) : [allRowsTable];

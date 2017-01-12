@@ -26,8 +26,6 @@ import java.io.IOException;
  */
 public class VisNetwork {
 
-    private static final int SEC_IN_DAY= 86400; //60*60*24
-
     private static File getIrsaImage(IrsaImageParams params) throws FailedRequestException {
 
         File f;
@@ -66,9 +64,8 @@ public class VisNetwork {
         File f= CacheHelper.getFile(params);
 
         if (f == null)  {          // if not in cache
-            f= CacheHelper.makeFitsFile(params);
             try {
-                IbeImageGetter.lowlevelGetIbeImage(params, f);
+                f= IbeImageGetter.lowlevelGetIbeImage(params);
             } catch (IOException e) {
                 throw new FailedRequestException("IbeImageGetter Call failed with IOException",
                                                  "no more detail",e);
@@ -81,7 +78,7 @@ public class VisNetwork {
 
 
 
-    public static File getSloanDssImage(SloanDssImageParams params)
+    private static File getSloanDssImage(SloanDssImageParams params)
             throws FailedRequestException {
         File f= CacheHelper.getFile(params);
         if (f == null)  {          // if not in cache
@@ -97,7 +94,7 @@ public class VisNetwork {
         return f;
     }
 
-    public static File getDssImage(DssImageParams params)
+    private static File getDssImage(DssImageParams params)
                                   throws FailedRequestException {
         File f= CacheHelper.getFile(params);
         if (f == null)  {          // if not in cache
@@ -115,25 +112,6 @@ public class VisNetwork {
 
 
 
-    public static FileData getAnyFits(AnyFitsParams params, DownloadListener dl)
-                                  throws FailedRequestException {
-        File f;
-
-        FileData fData= CacheHelper.getFileData(params);
-        if (fData == null)  {          // if not in cache
-            String newfile= params.getUniqueString();
-            f= CacheHelper.makeFile(newfile);
-            try {
-                fData= AnyFitsGetter.lowlevelGetFits(params, f,dl);
-            } catch (IOException e) {
-                throw new FailedRequestException("AnyFitsGetter failed with IOException",
-                                                 "no more detail",e);
-            }
-            CacheHelper.putFile(params,fData);
-        }
-        return fData;
-    }
-
 
 
 
@@ -143,12 +121,12 @@ public class VisNetwork {
      * @param params the configuration about the retrieve request
      * @param dl a Download listener, only used in server mode
      * @return a FileData of file returned from this URL.
-     * @throws FailedRequestException
+     * @throws FailedRequestException when request fails
      */
-    public static FileData getAnyUrlImage(AnyUrlParams params, DownloadListener dl)
+    private static FileData getAnyUrlImage(AnyUrlParams params, DownloadListener dl)
                                                      throws FailedRequestException {
         FileData retval=CacheHelper.getFileData(params);
-        File fileName= (retval==null) ? CacheHelper.makeFile(params.getUniqueString()) : retval.getFile();
+        File fileName= (retval==null) ? CacheHelper.makeFile(params.getFileDir(), params.getUniqueString()) : retval.getFile();
 
         if (retval==null && params.isCompressedFileName()) {  // if we are requesting a gz file then check to see if we cached the unzipped version
             retval=CacheHelper.getFileData(params.getUncompressedKey());
@@ -207,9 +185,6 @@ public class VisNetwork {
           f=  getIbeImage((BaseIrsaParams) params);
           retval= new FileData(f,null);
       }
-      else if (params instanceof AnyFitsParams) {
-          retval=  getAnyFits( (AnyFitsParams)params,dl);
-      }
       else if (params instanceof AnyUrlParams) {
           retval=  getAnyUrlImage( (AnyUrlParams)params,dl);
       }
@@ -219,10 +194,4 @@ public class VisNetwork {
 
       return retval;
    }
-
-
-
-
-
-
 }

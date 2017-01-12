@@ -183,7 +183,7 @@ export class ServerRequest {
      */
     toString() {
         var idStr= (ID_KEY+KW_VAL_SEP+this.params[ID_KEY]);
-        var retStr= Object.keys(this.params).reduce((str,key) => {
+        var retStr= Object.keys(this.params).sort().reduce((str,key) => {
             if (key!==ID_KEY) str+= PARAM_SEP+key+KW_VAL_SEP+this.params[key];
             return str;
         },idStr);

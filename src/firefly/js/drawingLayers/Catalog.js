@@ -66,7 +66,7 @@ function creator(initPayload, presetDefaults) {
 
     var options= {
         hasPerPlotData:false,
-        isPointData:true,
+        isPointData:!boxData,
         canUserDelete: true,
         canUseMouse:true,
         canHighlight: true,
@@ -290,6 +290,7 @@ function computeBoxHighlightLayer(drawLayer, columns, highlightedRow) {
         return makeWorldPt( d[lonIdx], d[latIdx], c.csys);
     });
     const fpObj= FootprintObj.make([fp]);
+    fpObj.lineWidth= 3;
     fpObj.color= COLOR_HIGHLIGHTED_PT;
     return [fpObj];
 }

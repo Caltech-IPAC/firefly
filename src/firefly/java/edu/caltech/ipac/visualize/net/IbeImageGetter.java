@@ -12,14 +12,14 @@ import edu.caltech.ipac.astro.ibe.IbeDataSource;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
 import edu.caltech.ipac.astro.ibe.datasource.TwoMassIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
-import edu.caltech.ipac.util.download.CacheHelper;
-import edu.caltech.ipac.util.download.DownloadListener;
-import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.util.download.CacheHelper;
+import edu.caltech.ipac.util.download.FailedRequestException;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,16 +32,8 @@ import java.util.Map;
  */
 public class IbeImageGetter {
 
-    public static void lowlevelGetIbeImage(BaseIrsaParams params,
-                                           File           outFile) 
-                                           throws FailedRequestException,
-                                                  IOException {
-       lowlevelGetIbeImage(params, outFile, null);
-    }
 
-    public static void lowlevelGetIbeImage(BaseIrsaParams  params,
-                                           File             outFile,
-                                           DownloadListener dl )
+    public static File lowlevelGetIbeImage(BaseIrsaParams  params)
                                            throws FailedRequestException,
                                                   IOException {
         boolean isWise= false;
@@ -118,7 +110,8 @@ public class IbeImageGetter {
 
               dataParam.setCutout(true, params.getRaJ2000String()+","+params.getDecJ2000String(), sizeStr);
               dataParam.setDoZip(true);
-              ibe.getData(outFile, dataParam,dl);
+              FileInfo result= ibe.getData(dataParam);
+              return new File(result.getInternalFilename());
           }
           else {
               throw new FailedRequestException("No results found for this location");
@@ -140,17 +133,17 @@ public class IbeImageGetter {
 
 
    public static void main(String args[]) {
-       WiseImageParams params= new WiseImageParams();
-       params.setSize(.33F);
-       params.setBand("1");
-       params.setBand(WiseImageParams.WISE_3A);
-       params.setRaJ2000(10.672);
-       params.setDecJ2000(41.259);
-       try {
-           lowlevelGetIbeImage(params, new File("./a.fits.gz"), null);
-       }
-       catch (Exception e) {
-           System.out.println(e);
-       }
+//       WiseImageParams params= new WiseImageParams();
+//       params.setSize(.33F);
+//       params.setBand("1");
+//       params.setBand(WiseImageParams.WISE_3A);
+//       params.setRaJ2000(10.672);
+//       params.setDecJ2000(41.259);
+//       try {
+//           lowlevelGetIbeImage(params, new File("./a.fits.gz"), null);
+//       }
+//       catch (Exception e) {
+//           System.out.println(e);
+//       }
    }
 }

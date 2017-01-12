@@ -56,8 +56,8 @@ function computeTitleFromURL(urlStr, r, preTitle='') {
     var retval= '';
     var qIdx=urlStr.indexOf('?');
     if (qIdx>-1 && urlStr.length>qIdx+1) {
-        var prepend= r.getTitleFilenameModePfx() ? r.getTitleFilenameModePfx()+ ' ' : 'from ';
-        prepend+= preTitle;
+        // var prepend= r.getTitleFilenameModePfx() ? r.getTitleFilenameModePfx()+ ' ' : 'from ';
+        var prepend= preTitle;
         var workStr= urlStr.substring(qIdx+1);
         var fLoc= workStr.toLowerCase().indexOf('.fit');
         if (fLoc>-1) {

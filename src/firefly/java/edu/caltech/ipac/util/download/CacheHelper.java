@@ -64,6 +64,7 @@ public class CacheHelper {
     }
 
     public static File makeFile(String name) { return new File(getDir(),name); }
+    public static File makeFile(File dir, String name) { return new File(dir!=null ? dir : getDir(),name); }
 
     public static File getDir() { return _cacheDir; }
 
