@@ -89,7 +89,6 @@ function onAnyAction(layoutInfo, action, views) {
     var {mode, hasXyPlots, hasTables, showImages, showXyPlots, showTables, autoExpand} = layoutInfo;
     var {expanded=LO_VIEW.none, standard=views} = mode || {};
 
-    console.log('showTables:' + showTables + '  hasTables:' + hasTables);
     // enforce views settings
     showImages =  showImages && views.has(LO_VIEW.images);
     showXyPlots = hasXyPlots && views.has(LO_VIEW.xyPlots);
