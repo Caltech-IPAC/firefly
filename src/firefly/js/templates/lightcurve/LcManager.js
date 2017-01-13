@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isUndefined, get,isNil, has, set} from 'lodash';
+import {isUndefined, get,isNil, has, set, lowerCase} from 'lodash';
 import {take} from 'redux-saga/effects';
 import {flux} from '../../Firefly.js';
 import {LO_VIEW, LO_MODE, SHOW_DROPDOWN, SET_LAYOUT_MODE, SET_LAYOUT_DISPLAY,  getLayouInfo,
@@ -22,19 +22,19 @@ import {ServerRequest} from '../../data/ServerRequest.js';
 import {CHANGE_VIEWER_LAYOUT} from '../../visualize/MultiViewCntlr.js';
 import {LcPFOptionsPanel, grpkey} from './LcPhaseFoldingPanel.jsx';
 import FieldGroupUtils, {revalidateFields} from '../../fieldGroup/FieldGroupUtils';
-import {VALUE_CHANGE} from '../../fieldGroup/FieldGroupCntlr.js';
+import {VALUE_CHANGE, dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {makeWorldPt} from '../../visualize/Point.js';
 import {CoordinateSys} from '../../visualize/CoordSys.js';
 import {getMenu, dispatchSetMenu} from '../../core/AppDataCntlr.js';
 
 export const LC = {
-    RAW_TABLE: 'raw_table',
-    PHASE_FOLDED: 'phase_folded',
-    PERIODOGRAM: 'periodogram',
-    PEAK_TABLE: 'peak_table',
-    PERIOD_CNAME: 'Period',
-    POWER_CNAME: 'Power',
-    PEAK_CNAME: 'Peak',
+    RAW_TABLE: 'raw_table',          // raw table id
+    PHASE_FOLDED: 'phase_folded',    // phase folded table id
+    PERIODOGRAM: 'periodogram',      // periodogram table id
+    PEAK_TABLE: 'peak_table',        // peak table id
+    PERIOD_CNAME: 'Period',          // period column
+    POWER_CNAME: 'Power',            // power column
+    PEAK_CNAME: 'Peak',              // peak column
     PHASE_CNAME: 'phase',
 
     IMG_VIEWER_ID: 'lc_image_viewer',
@@ -46,12 +46,12 @@ export const LC = {
     DEF_TIME_CNAME: 'mjd',
     DEF_FLUX_CNAME: 'w1mpro_ep',
 
-    RESULT_PAGE: 'result',
-    PERIOD_PAGE: 'period',
-    PERGRAM_PAGE: 'periodogram',
+    RESULT_PAGE: 'result',          // result layout
+    PERIOD_PAGE: 'period',          // period finding layout with periodogram button
+    PERGRAM_PAGE: 'periodogram',    // period finding layout with peak and periodogram tables/charts
 
-    PERIOD_FINDER: 'LC_PERIOD_FINDER',
-    PERIODOGRAM_GROUP: 'LC_PERIODOGRAM_TBL'
+    PERIOD_FINDER: 'LC_PERIOD_FINDER',         // period finding group for the form
+    PERIODOGRAM_GROUP: 'LC_PERIODOGRAM_TBL'    // table container, table group
 };
 
 const plotIdRoot= 'LC_FRAME-';
@@ -144,14 +144,28 @@ export function* lcManager(params={}) {
                 break;
             case VALUE_CHANGE:
                 if (['time', 'flux', 'periodMin', 'periodMax'].includes(action.payload.fieldKey)) {
+                    /*
                     menu = getMenu();
                     if (menu) {
                         var periodItem = newMenu.menuItems.find((item) => item.action === SET_LAYOUT_DISPLAY);
 
+                        // change the period layout with periodogram and peak display to be with find periodogram button
                         if (periodItem && get(periodItem, ['payload', 'displayMode']) !== LC.PERIOD_PAGE) {
                             dispatchLayoutDisplayMode(LC.PERIOD_PAGE);
                             periodPageMode(LC.PERIOD_PAGE);
                         }
+                    }
+                    */
+                    // re-validate period value
+                    if (action.payload.fieldKey.startsWith('period')) { // periodMin or periodMax is changed
+                        const fields = FieldGroupUtils.getGroupFields(LC.PERIOD_FINDER);
+                        const per = fields && get(fields, ['period', 'value']);
+
+                        dispatchValueChange({
+                            fieldKey: lowerCase(LC.PERIOD_CNAME),
+                            groupKey: LC.PERIOD_FINDER,
+                            value: per
+                        });
                     }
                 }
                 break;
@@ -175,7 +189,6 @@ function handleTableLoad(layoutInfo, action) {
 }
 
 
-
 function handleTableActive(layoutInfo, action) {
     const {tbl_id} = action.payload;
     if (isImageEnabledTable(tbl_id)) {
@@ -190,7 +203,34 @@ function handleTableHighlight(layoutInfo, action) {
     if (isImageEnabledTable(tbl_id)) {
         setupImages(tbl_id);
     }
+
+    const per = getPeriodFromTable(tbl_id);
+    if (per) {
+        dispatchValueChange({fieldKey: lowerCase(LC.PERIOD_CNAME), groupKey: LC.PERIOD_FINDER, value: `${parseFloat(per)}`});
+    }
+
 }
+
+/**
+ * gets the period from either peak or periodogram table, these tables don't necessarily have a period column and same name
+ * @param {string} tbl_id
+ * @returns {string} period value
+ */
+function getPeriodFromTable(tbl_id) {
+
+    if (tbl_id !== LC.PERIODOGRAM && tbl_id !== LC.PEAK_TABLE) {
+        return '';
+    }
+
+    const tableModel = getTblById(tbl_id);
+
+    if (!tableModel || isNil(tableModel.highlightedRow)) {
+        return '';
+    }
+
+    return getCellValue(tableModel, tableModel.highlightedRow, LC.PERIOD_CNAME);
+}
+
 
 function isImageEnabledTable(tbl_id) {
     return [LC.PHASE_FOLDED, LC.RAW_TABLE].includes(tbl_id);

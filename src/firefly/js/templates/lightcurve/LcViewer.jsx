@@ -105,7 +105,7 @@ export class LcViewer extends Component {
                             {...{dropdownPanels} } />
                     </header>
                     <main>
-                        {displayMode&&startsWith(displayMode, 'period') ? <LcPeriod display={displayMode}/> : <LcResult/>}
+                        {displayMode&&startsWith(displayMode, 'period') ? <LcPeriod displayMode={displayMode}/> : <LcResult/>}
                     </main>
                 </div>
             );

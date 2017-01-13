@@ -30,8 +30,6 @@ import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 
-var pgramkey = LC.PERIOD_FINDER;
-
 const algorOptions = [
     {label: 'Lomb‑Scargle ', value: 'ls', proj: 'LCViewer'},
     {label: 'Box-fitting Least Squares', value: 'bls', proj: 'LCViewer'},
@@ -45,6 +43,7 @@ const stepOptions = [
     {label: 'Plavchan', value: 'plav', proj: 'LCViewer'}
 ];
 
+// parameter from period calculation used in the popup dialog
 const cPeriodKeyDef = {
     time: {fkey: 'time', label: 'Time Column'},
     flux: {fkey: 'flux', label: 'Flux Column'},
@@ -54,24 +53,35 @@ const cPeriodKeyDef = {
     fluxcols: {fkey: 'fluxCols', label: ''}
 };
 
+
+// parameter list in the popup dialog
 const pKeyDef = Object.assign({}, cPeriodKeyDef,
                     { algor: {fkey: 'periodAlgor', label: 'Periodogram Type'},
                       stepmethod: {fkey: 'stepMethod', label: 'Period Step Method'},
                       stepsize: {fkey: 'stepSize', label: 'Fixed Step Size'},
                       peaks: {fkey: 'peaks', label:'Number of Peaks'} });
 
+const SSIZE = 0.3;
 
+// calculate default step size
 function getDefaultStepSize(fields) {
     //const fields = FieldGroupUtils.getGroupFields(gKey);
-    const min = get(fields, [pKeyDef.min.fkey]);
-    const max = get(fields, [pKeyDef.max.fkey]);
+    const min = get(fields, [pKeyDef.min.fkey, 'value']);
+    const max = get(fields, [pKeyDef.max.fkey, 'value']);
     const {totalRows} = getTblById(LC.RAW_TABLE) || {};
 
-    const s = min&&max&&totalRows ? (parseFloat(max)-parseFloat(min))/(totalRows*10) : 1.0e-7;
+    var s = min&&max&&totalRows ? (parseFloat(max)-parseFloat(min))/(totalRows*10) : SSIZE;
+
+    if (s < SSIZE) {
+        s = SSIZE;
+    }
 
     return `${s}`;
 }
 
+function maxStepSize() {
+    return 100.0;
+}
 
 var defValues = {
     [pKeyDef.algor.fkey]: Object.assign(getTypeData(pKeyDef.algor.fkey,
@@ -85,13 +95,14 @@ var defValues = {
     [pKeyDef.stepsize.fkey]: Object.assign(getTypeData(pKeyDef.stepsize.fkey, '',
         'period fixed step size',
         `${pKeyDef.stepsize.label}:`, 150),
-        {validator: Validate.floatRange.bind(null, 1.0e-7, undefined, 'fixed step size field')}),
+        {validator: Validate.floatRange.bind(null, SSIZE, maxStepSize(), 3, 'step size')}),
     [pKeyDef.peaks.fkey]: Object.assign(getTypeData(pKeyDef.peaks.fkey, '50',
-        'number of peaks to return',
+        'number of peaks to return (defalut is 50)',
         `${pKeyDef.peaks.label}:`, 50),
-        {validator: Validate.intRange.bind(null, 1, 500, 'peaks number field')})
+        {validator: Validate.intRange.bind(null, 1, 500, 'peaks number')})
 };
 
+// initial values of period parameters
 var defPeriod = {
     [pKeyDef.time.fkey]: {value: ''},
     [pKeyDef.flux.fkey]: {value: ''},
@@ -99,6 +110,7 @@ var defPeriod = {
     [pKeyDef.max.fkey]: {value: ''}
 };
 
+// initial values of periodogram parameters
 var defPeriodogram = {
     [pKeyDef.algor.fkey]: {value: ''},
     [pKeyDef.stepmethod.fkey]: {value: ''},
@@ -106,55 +118,52 @@ var defPeriodogram = {
     [pKeyDef.peaks.fkey]: {value: ''}
 };
 
+/**
+ * @summary component of periodogram panel (periodogram button or periodogram table/chart)
+ * @param props
+ * @returns {XML}
+ * @constructor
+ */
 export function LcPeriodogram(props) {
-    const {display, groupKey=pgramkey, expanded} = props;
-    const content = {};
-
-    content.tables =  (<TablesContainer key='res-tables'
-                                        mode='both'
-                                        tbl_group={LC.PERIODOGRAM_GROUP}
-                                        closeable={true}
-                                        expandedMode={expanded===LO_VIEW.tables}/>);
-    content.xyPlot = (<ChartsContainer key='res-charts'
-                                       closeable={true}
-                                       expandedMode={expanded===LO_VIEW.xyPlots}/>);
-
-    const resultProps = {...content, expanded, display, groupKey};
+    const {displayMode, groupKey=LC.PERIOD_FINDER, expanded} = props;
+    const resultProps = {expanded, groupKey};
 
     return (
-        <div style={{height: '100%'}}>
-            {(display&&display==='period') ? <PeriodogramButton groupKey={groupKey} /> :
-                                             <PeriodogramResult {...resultProps} />}
+         <div style={{height: '100%', width: '100%', position: 'absolute'}}>
+             {(displayMode&&displayMode==='period') ? <PeriodogramButton groupKey={groupKey} />
+                                                    : <PeriodogramResult {...resultProps} />}
         </div>
     );
 }
 
 
 LcPeriodogram.propTypes = {
-    display: PropTypes.string.isRequired,
+    displayMode: PropTypes.string.isRequired,
     expanded: PropTypes.object,
     groupKey: PropTypes.string
 };
 
 LcPeriodogram.defaultProps = {
-    display: LC.PERIOD_PAGE
+    displayMode: LC.PERIOD_PAGE
 };
 
-
+/**
+ * @summary component containing a button to start periodogram dialog popup
+ * @param props
+ * @returns {XML}
+ * @constructor
+ */
 function  PeriodogramButton(props) {
     const {groupKey} = props;
     return (
         <div style={{height: '100%',
                      display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-            <CompleteButton style={{maxWidth: '50%'}}
-                            groupKey={groupKey}
-                            text={'Find Periodogram'}
-                            onSuccess={startPeriodogramPopup(groupKey)}
-            />
+            <button type='button' style={{maxWidth: '50%'}}
+                    className='button std'
+                    onClick={startPeriodogramPopup(groupKey)}>Find Periodogram</button>
         </div>
     )
 }
-
 
 
 PeriodogramButton.propTypes = {
@@ -163,39 +172,56 @@ PeriodogramButton.propTypes = {
 
 const popupId = 'periodogramPopup';
 
-var startPeriodogramPopup = (groupKey) =>  {
-    return (request) => {
+/**
+ * @summry periodogram popup
+ * @param groupKey
+ * @returns {Function}
+ */
+export var startPeriodogramPopup = (groupKey) =>  {
+    return () => {
+        var fields = FieldGroupUtils.getGroupFields(groupKey);
 
         Object.keys(defPeriod).forEach((key) => {
-            set(defPeriod, [key, 'value'], get(request, [key]));     // init default time, flux value, period
+            set(defPeriod, [key, 'value'], get(fields, [key, 'value']));     // init default time, flux value, period
         });
 
-        updatePeriodGroup(groupKey, request);
+        updatePeriodGroup(groupKey, fields);
 
-        var popup = (<PopupPanel title={'Periodogram'}>
-            {<PeriodogramOptionsBox groupKey={groupKey} />}
-            <div>
-                <CompleteButton
-                    dialogId={popupId}
-                    groupKey={groupKey}
-                    onSuccess={periodogramSuccess(true)}
-                    text={'Periodogram Calculation'}
-                />
-            </div>
-        </PopupPanel>);
+        var popup = (
+            <PopupPanel title={'Periodogram'}
+                                 closeCallback={cancelPeriodogram(groupKey, popupId)}>
+                <PeriodogramOptionsBox groupKey={groupKey} />
+                <div style={{display: 'flex', margin: '30px 10px 10px 10px'}} >
+                    <div>
+                        <button type='button' className='button std hl'
+                                onClick={periodogramSuccess(groupKey, popupId, true)}>Periodogram Calculation
+                        </button>
+                    </div>
+                    <div>
+                        <button type='button' className='button std hl'
+                                onClick={cancelPeriodogram(groupKey, popupId)}>Cancel
+                        </button>
+                    </div>
+                </div>
+            </PopupPanel>);
 
         DialogRootContainer.defineDialog(popupId, popup);
         dispatchShowDialog(popupId);
     };
 };
 
+/**
+ * @summary add periodogram related parameters into FieldGroup of period finder and init values of
+ *          those parameters
+ * @param gkey
+ * @param fields
+ */
+function updatePeriodGroup(gkey, fields) {
 
-function updatePeriodGroup(gkey, request) {
-
-    if (!Object.keys(request).includes(pKeyDef.algor.fkey)){
+    if (!Object.keys(fields).includes(pKeyDef.algor.fkey)){
         var defV = Object.assign({}, defValues);
 
-        set(defV, [pKeyDef.stepsize.fkey, 'value'], getDefaultStepSize(request));
+        set(defV, [pKeyDef.stepsize.fkey, 'value'], getDefaultStepSize(fields));
 
         Object.keys(defV).forEach((key) => {
            var v = defV[key].value;
@@ -206,11 +232,14 @@ function updatePeriodGroup(gkey, request) {
     } else {
 
         Object.keys(defPeriodogram).forEach((key) => {
-            set(defPeriodogram, [key, 'value'], get(request, [key]));     // init default time, flux value, period
+            set(defPeriodogram, [key, 'value'], get(fields, [key, 'value']));     // init default time, flux value, period
         });
     }
 }
 
+/**
+ * class for periodogram dialog content
+ */
 class PeriodogramOptionsBox extends Component {
     constructor(props) {
         super(props);
@@ -237,11 +266,11 @@ class PeriodogramOptionsBox extends Component {
 
     render() {
         const {groupKey} = this.props;
-        const {timeCols, fluxCols } = this.state.fields || {};
+        const {timeCols, fluxCols} = this.state.fields || {};
 
         return (
-            <div style={{padding:5}}>
-                <FieldGroup groupKey={groupKey} keepState={true}>
+            <div style={{padding:5, margin: 10, border: '1px solid #a3aeb9'}}>
+                <FieldGroup groupKey={groupKey} keepState={true} keepMounted={true}>
                     <InputGroup labelWidth={150}>
                         <ListBoxInputField options={algorOptions}
                                            multiple={false}
@@ -272,7 +301,6 @@ class PeriodogramOptionsBox extends Component {
                         <ListBoxInputField options={stepOptions}
                                            multiple={false}
                                            fieldKey={pKeyDef.stepmethod.fkey}
-                                           multiple={false}
                         />
                         <br/>
                         <ValidationField fieldKey={pKeyDef.stepsize.fkey} />
@@ -301,20 +329,53 @@ PeriodogramOptionsBox.propTypes = {
     groupKey: PropTypes.string.isRequired
 };
 
+/**
+ * @summary reset parameters to the initial values
+ * @param groupKey
+ */
 function resetDefaults(groupKey) {
+    const fields = FieldGroupUtils.getGroupFields(groupKey);
+
+
     Object.keys(defPeriodogram).forEach((fieldKey) => {
-        dispatchValueChange({groupKey, fieldKey, value: defPeriodogram[fieldKey].value});
+        if (defPeriodogram[fieldKey].value !== get(fields, [fieldKey, 'value'])) {
+            dispatchValueChange({groupKey, fieldKey, value: defPeriodogram[fieldKey].value});
+        }
     });
 
     Object.keys(defPeriod).forEach((fieldKey) => {
-        dispatchValueChange({groupKey, fieldKey, value: defPeriod[fieldKey].value});
+        if (defPeriod[fieldKey].value !== get(fields, [fieldKey, 'value'])) {
+            dispatchValueChange({groupKey, fieldKey, value: defPeriod[fieldKey].value});
+        }
     });
 }
 
-function periodogramSuccess(hideDropDown = false) {
-    return (request) => {
+/**
+ * @summary reset the values and exit the popup
+ * @param groupKey
+ * @param popupId
+ * @returns {Function}
+ */
+function cancelPeriodogram(groupKey, popupId) {
+    return () => {
+        resetDefaults(groupKey);
+        if (popupId && isDialogVisible(popupId)) {
+            dispatchHideDialog(popupId);
+        }
+    }
+}
+
+/**
+ * @summary create periodogram tables and charts
+ * @param groupKey
+ * @param popupId
+ * @param hideDropDown
+ * @returns {Function}
+ */
+function periodogramSuccess(groupKey, popupId, hideDropDown = false) {
+    return () => {
         const tbl = getTblById(LC.RAW_TABLE);
-        const fields = FieldGroupUtils.getGroupFields(pgramkey);
+        const fields = FieldGroupUtils.getGroupFields(groupKey);
         const srcFile = tbl.request.source;
 
         var tReq2 = makeTblRequest('LightCurveProcessor', LC.PEAK_TABLE, {
@@ -332,12 +393,12 @@ function periodogramSuccess(hideDropDown = false) {
         }, {tbl_id: LC.PEAK_TABLE});
 
         if (tReq2 !== null) {
+            dispatchTableSearch(tReq2, {removable: true, tbl_group: LC.PERIODOGRAM_GROUP});
             const xyPlotParams = {
                 x: {columnOrExpr: LC.PEAK_CNAME, options: 'grid'},
                 y: {columnOrExpr: LC.POWER_CNAME, options: 'grid'}
             };
             loadXYPlot({chartId: LC.PEAK_TABLE, tblId: LC.PEAK_TABLE, xyPlotParams});
-            dispatchTableSearch(tReq2, {removable: true, tbl_group: LC.PERIODOGRAM_GROUP});
         }
 
         var tReq = makeTblRequest('LightCurveProcessor', LC.PERIODOGRAM, {
@@ -364,7 +425,7 @@ function periodogramSuccess(hideDropDown = false) {
             loadXYPlot({chartId: LC.PERIODOGRAM, tblId: LC.PERIODOGRAM, markAsDefault: true, xyPlotParams});
         }
 
-        if (hideDropDown && isDialogVisible(popupId)) {
+        if (hideDropDown && popupId && isDialogVisible(popupId)) {
             dispatchHideDialog(popupId);
         }
 
@@ -373,9 +434,24 @@ function periodogramSuccess(hideDropDown = false) {
     };
 }
 
-function  PeriodogramResult({expanded, groupKey, tables, xyPlot}) {
+/**
+ * @summary component for showing periodogram result (table/chart) in standard or expeanded mode
+ * @param expanded
+ * @returns {*}
+ * @constructor
+ */
+const  PeriodogramResult = ({expanded}) => {
 
     var resultLayout;
+    const tables =  (<TablesContainer key='res-tables'
+                                      mode='both'
+                                      tbl_group={LC.PERIODOGRAM_GROUP}
+                                      closeable={true}
+                                      expandedMode={expanded===LO_VIEW.tables}/>);
+    const xyPlot = (<ChartsContainer key='res-charts'
+                                     closeable={true}
+                                     expandedMode={expanded===LO_VIEW.xyPlots}/>);
+
 
     if (!expanded || expanded === LO_VIEW.none) {
         resultLayout = <SplitPane split='horizontal' minSize={20} defaultSize={'45%'}>
@@ -383,9 +459,10 @@ function  PeriodogramResult({expanded, groupKey, tables, xyPlot}) {
                             {createContentWrapper(xyPlot)}
                         </SplitPane>;
     } else {
-        resultLayout = <div style={{ flex: 'auto', display: 'flex', flexFlow: 'column', overflow: 'hidden'}}>
+        resultLayout = <div style={{ flex: 'auto', display: 'flex', flexFlow: 'column', overflow: 'hidden', height: '100%'}}>
             {expanded === LO_VIEW.tables ? tables : xyPlot}
         </div>;
     }
     return resultLayout;
-}
+};
+
