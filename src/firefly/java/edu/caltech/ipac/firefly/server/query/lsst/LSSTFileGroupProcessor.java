@@ -63,7 +63,7 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
         long fgSize = 0;
 
 
-        // values = folder or flat
+        // do folder or flat
         Set<String> zipFiles = new HashSet<String>();
         String zipType = request.getParam("zipType");
         boolean zipFolders = true;
@@ -71,27 +71,17 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
             zipFolders = false;
         }
 
-        String basePath = LSST_FILESYSTEM_BASEPATH;
-        basePath = basePath!=null? basePath :"";
+        //String basePath = LSST_FILESYSTEM_BASEPATH;
+        //basePath = basePath!=null? basePath :"";
         String baseFileName = request.getParam(DownloadRequest.BASE_FILE_NAME);
-
-
-        if ( basePath!=null && !basePath.endsWith("/")) {
-            basePath += "/";
-        }
-
-
-        basePath +=  "/"+baseFileName;
-
-
+        String basePath  = baseFileName ;
 
 
         boolean isDeepCoadd = baseFileName.equalsIgnoreCase("deepCoadd")? true:false;
 
 
-
-        String[] sccdCols = {"run",  "camcol", "field", "filterName"};
-        String[] deeoCoaddCols={"tract", "patch", "filterName"};
+        String[] sccdCols = { "scienceCcdExposureId","run",  "camcol", "field", "filterName"};
+        String[] deeoCoaddCols={"deepCoaddId","tract", "patch", "filterName"};
         String[] columns= isDeepCoadd?deeoCoaddCols:sccdCols;
 
         IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
@@ -100,60 +90,45 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
 
         for (int rowIdx : selectedRows) {
 
+            String fileName = getFileName(isDeepCoadd, dgData,rowIdx);
 
-            String filterName =(String) dgData.get(rowIdx,"filterName");
-            String fileName = basePath + filterName+new Integer(rowIdx).toString()+".fits";
-            String extFileName = ServerContext.getTempWorkDir() +  fileName;
+            String urlStr = getDataURLString(dgData, rowIdx, isDeepCoadd);
 
-            FileInfo fileInfo = getDataFileInfo(dgData, rowIdx, isDeepCoadd, extFileName);
+            String extFileName =zipFolders? baseFileName + "/"+ fileName : fileName;
 
-            if (zipFolders) {
-                String zipName = fileInfo.getExternalName();
-                if (!zipName.equalsIgnoreCase(extFileName)){
-                    File file = new File(zipName);
-                    file.renameTo(new File(extFileName));
-                    fileInfo.setExternalName(extFileName);
-                }
-                if(!zipFiles.contains(extFileName)){
-                    zipFiles.add(extFileName);
-                }
-            } else {
-                String[]  zipNameArrays = fileInfo.getExternalName().split("/");
-                String zipName = zipNameArrays[zipNameArrays.length-2];
-                if(!zipFiles.contains(zipName)) {
-                    zipFiles.add(zipName);
-                }
-             }
+            if(!zipFiles.contains(urlStr)){
+                zipFiles.add(urlStr);
+            }
+
+            FileInfo fileInfo =  new FileInfo(urlStr, extFileName, SIZE );
             fiArr.add(fileInfo );
+
             //fgSize += new File(extFileName).length();  //fileInfo.getSizeInBytes();
         }
 
 
 
-        FileGroup fg = new FileGroup(fiArr, ServerContext.getTempWorkDir(), fgSize, "LSST Download Files");
+        FileGroup fg = new FileGroup(fiArr, ServerContext.getTempWorkDir(), 0, "LSST Download Files");
         fgArr.add(fg);
 
         return fgArr;
     }
 
+    private String getFileName(boolean isDeepCoadd, IpacTableParser.MappedData dgData, int rowIdx){
+        String filterName =(String) dgData.get(rowIdx,"filterName");
+        String id="";
+        if (isDeepCoadd) {
+            id =  dgData.get(rowIdx,"deepCoaddId").toString();
 
-    private FileInfo getFileInfo(ServerRequest request){
+        }
+        else{
+            id =  dgData.get(rowIdx,"scienceCcdExposureId").toString();
+        }
+        return  id +"-"+filterName+".fits";
 
-            SearchManager sm = new SearchManager();
-            try {
+    }
+    private  String  getDataURLString( IpacTableParser.MappedData dgData, int rowIdx,  boolean isDeepCoadd) throws MalformedURLException {
 
-                LSSTImageSearch lsstImage = (LSSTImageSearch) sm.getProcessor("LSSTImageSearch");
-                return lsstImage.getData(request);
-            } catch (Exception e) {
-                e.getStackTrace();
-            }
-            return null;
-     }
-
-    private FileInfo getDataFileInfo( IpacTableParser.MappedData dgData, int rowIdx,  boolean isDeepCoadd, String extFileName) throws MalformedURLException {
-
-        FileInfo fileInfo;
-        URL url;
         ServerRequest svr = new ServerRequest();
         if (isDeepCoadd){
             Long tract = (Long) dgData.get(rowIdx,"tract");
@@ -162,7 +137,7 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
             svr.setParam("tract", tract.toString());
             svr.setParam("patch", patch);
             svr.setParam("filterName", filterName);
-            url = LSSTImageSearch.createURLForDeepCoadd(tract.toString(), patch, filterName);
+            return LSSTImageSearch.createURLForDeepCoadd(tract.toString(), patch, filterName);
         }
         else{
             Long run =  (Long) dgData.get(rowIdx,"run");
@@ -174,16 +149,9 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
             svr.setParam("camcol", camcol.toString());
             svr.setParam("field", field.toString());
             svr.setParam("filterName", filterName);
-            url =LSSTImageSearch.createURLForScienceCCD(run.toString(), camcol.toString(),field.toString(), filterName);
-        }
-         //search to see if the file is already in the work area.
-        fileInfo = getFileInfo(svr);
-        if (fileInfo==null) {
-            fileInfo = new FileInfo(url.toString(), extFileName, SIZE );
+            return LSSTImageSearch.createURLForScienceCCD(run.toString(), camcol.toString(),field.toString(), filterName);
         }
 
-    
-        return  fileInfo;
     }
 
 

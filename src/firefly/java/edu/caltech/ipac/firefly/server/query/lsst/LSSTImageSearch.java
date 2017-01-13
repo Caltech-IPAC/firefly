@@ -38,7 +38,7 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
             if (sr.getParam("tract") != null) {
                 return getURLForDeepCoadd(sr);
             } else {
-                return getURLForCCDs(sr);
+                return  getURLForCCDs(sr);
             }
         }
         catch (Exception e){
@@ -60,12 +60,12 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
         String filterName = request.getParam("filterName");
 
         _log.info("create URL");
-         return createURLForDeepCoadd(tract, patch, filterName);
+         return  new URL(createURLForDeepCoadd(tract, patch, filterName));
     }
 
 
-    public static URL createURLForDeepCoadd(String tract, String patch, String filterName) throws MalformedURLException {
-        return new URL(getBaseURL(true)+"tract="+tract+"&patch="+patch+"&filter="+filterName);
+    public static String createURLForDeepCoadd(String tract, String patch, String filterName) throws MalformedURLException {
+        return  getBaseURL(true)+"tract="+tract+"&patch="+patch+"&filter="+filterName;
     }
     /**
      * This method uses a set of fields to search for image
@@ -74,19 +74,19 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
      * @throws IOException
      * @throws DataAccessException
      */
-    private URL getURLForCCDs(ServerRequest request)throws IOException, DataAccessException {
+    private URL  getURLForCCDs(ServerRequest request)throws IOException, DataAccessException {
         _log.info("getting the parameters out from the request");
         String run = request.getParam("run");
         String camcol = request.getParam("camcol");
         String field = request.getParam("field");
         String filterName = request.getParam("filterName");
         _log.info("create URL");
-        return createURLForScienceCCD(run, camcol,field, filterName);
+        return new URL( createURLForScienceCCD(run, camcol,field, filterName) );
 
     }
 
-    public static URL createURLForScienceCCD(String run, String camcol, String field, String filterName) throws MalformedURLException {
-        return new URL(getBaseURL(false)+"run="+run+"&camcol="+camcol+"&field="+field+"&filter="+filterName);
+    public static String  createURLForScienceCCD(String run, String camcol, String field, String filterName) throws MalformedURLException {
+        return getBaseURL(false)+"run="+run+"&camcol="+camcol+"&field="+field+"&filter="+filterName;
     }
 
     private static  String getBaseURL(boolean isDeepCoadd){
