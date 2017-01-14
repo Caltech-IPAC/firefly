@@ -130,8 +130,8 @@ function onAnyAction(layoutInfo, action, views) {
 
 function handleNewTable(layoutInfo, action) {
     const {tbl_id} = action.payload;
-    var {images, showImages} = layoutInfo;
-    var {coverageLockedOn, showFits, showMeta, showCoverage, selectedTab, metaDataTableId} = images || {};
+    var {images={}, showImages} = layoutInfo;
+    var {coverageLockedOn, showFits, showMeta, showCoverage, selectedTab, metaDataTableId} = images;
 
     const isMeta = isMetaDataTable(tbl_id);
     if (isMeta || isCatalogTable(tbl_id)) {
@@ -156,7 +156,7 @@ function handleNewTable(layoutInfo, action) {
 
 function handleActiveTableChange (layoutInfo, action) {
     const {tbl_id} = action.payload;
-    var {images, showImages} = layoutInfo;
+    var {images={}, showImages} = layoutInfo;
     var {coverageLockedOn, showCoverage, showMeta, metaDataTableId} = images;
 
     const showFits= shouldShowFits();
@@ -206,8 +206,8 @@ const shouldShowFits= () => !isEmpty(getViewerItemIds(getMultiViewRoot(), DEFAUL
 
 
 function handlePlotDelete(layoutInfo, action) {
-    var {images, showImages} = layoutInfo;
-    var {coverageLockedOn} = images || {};
+    var {images={}, showImages} = layoutInfo;
+    var {coverageLockedOn} = images;
     const showFits = shouldShowFits();
     if (!get(visRoot(), 'plotViewAry.length', 0)) {
         coverageLockedOn = false;
@@ -217,7 +217,7 @@ function handlePlotDelete(layoutInfo, action) {
 }
 
 function handleNewImage(layoutInfo, action) {
-    var {images} = layoutInfo;
+    var {images={}} = layoutInfo;
     var {selectedTab, showMeta, showFits} = images;
     var coverageLockedOn = false;
 
