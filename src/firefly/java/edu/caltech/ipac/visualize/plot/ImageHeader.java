@@ -77,7 +77,8 @@ public class ImageHeader implements Serializable
     public double bp[][] = new double[ProjectionParams.MAX_SIP_LENGTH][ProjectionParams.MAX_SIP_LENGTH];
     public boolean map_distortion = false;
     public String keyword;
-	public Map<String,String> additionalHeaders= new HashMap<>(77);
+	public Map<String,String> maskHeaders= new HashMap<>(23);
+	public Map<String,String> sendToClientHeaders = new HashMap<>(23);
 
 
     public ImageHeader()
@@ -112,11 +113,12 @@ public class ImageHeader implements Serializable
 	for(;extraIter.hasNext();) {
 		hc= (HeaderCard)extraIter.next();
 		if (hc.getKey().startsWith("MP") || hc.getKey().startsWith("HIERARCH.MP")) {
-			additionalHeaders.put(hc.getKey(), hc.getValue());
+			maskHeaders.put(hc.getKey(), hc.getValue());
+			sendToClientHeaders.put(hc.getKey(), hc.getValue());
 		}
 	}
 	hc= header.findCard("EXTTYPE");
-	if (hc!=null) additionalHeaders.put(hc.getKey(), hc.getValue());
+	if (hc!=null) sendToClientHeaders.put(hc.getKey(), hc.getValue());
 
 
 
@@ -729,7 +731,7 @@ public class ImageHeader implements Serializable
     public static ProjectionParams createProjectionParams(ImageHeader hdr) {
         ProjectionParams params= new ProjectionParams();
 
-		params.additionalHeaders= hdr.additionalHeaders;
+		params.sendToClientHeaders= hdr.sendToClientHeaders;
         params.bitpix= hdr.bitpix;
         params.naxis = hdr.naxis;
         params.naxis1= hdr.naxis1;

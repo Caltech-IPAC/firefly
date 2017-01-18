@@ -3,8 +3,9 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.data.RelatedData;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -27,8 +28,10 @@ import nom.tam.fits.FitsException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -91,7 +94,7 @@ public class WebPlotReader {
         modFileWriter= checkUnzip(imageIdx,Band.NO_BAND,originalFile, modFileWriter);
 
         retval= new FileReadInfo(originalFile, fitsRead, Band.NO_BAND, imageIdx,
-                                 fd.getDesc(), uploadedName, modFileWriter);
+                                 fd.getDesc(), uploadedName, null, modFileWriter);
 
         Map<Band, FileReadInfo[]> retMap= new HashMap<>(1);
         retMap.put(Band.NO_BAND, new FileReadInfo[] {retval});
@@ -124,7 +127,7 @@ public class WebPlotReader {
 
         if (fd.isBlank())  {
             retval= new FileReadInfo[] { new FileReadInfo(null, PlotServUtils.createBlankFITS(req)[0],
-                                                          band, 0, fd.getDesc(), null, null) };
+                                                          band, 0, fd.getDesc(), null, null, null) };
         }
         else {
             File originalFile = fd.getFile();
@@ -136,7 +139,7 @@ public class WebPlotReader {
             FitsRead frAry[]= FitsCacher.readFits(originalFile);
             retval = new FileReadInfo[frAry.length];
 
-            if (needsPipeline(req)) { // if we need to use the pipline make sure we create a new array
+            if (needsPipeline(req)) { // if we need to use the pipeline make sure we create a new array
                 FitsRead newFrAry[]= new FitsRead[frAry.length];
                 int imageIdx;
                 for (int i = 0; (i < frAry.length); i++) {
@@ -146,12 +149,14 @@ public class WebPlotReader {
                     ModFileWriter modFileWriter= checkUnzip(i,band,originalFile, pipeRet.modFileWriter);
 
                     retval[i]= new FileReadInfo(originalFile, newFrAry[i], band, imageIdx,
-                            fd.getDesc(), uploadedName, modFileWriter);
+                            fd.getDesc(), uploadedName, null, modFileWriter);
                 }
             }
             else {
+                List<List<RelatedData>> relatedDataList= investigateRelations(fd.getFile(),frAry);
                 for (int i = 0; (i < frAry.length); i++) {
-                    retval[i]= new FileReadInfo(originalFile, frAry[i], band, i, fd.getDesc(), uploadedName, null);
+                    List<RelatedData> rd= relatedDataList!=null ? relatedDataList.get(i) : null;
+                    retval[i]= new FileReadInfo(originalFile, frAry[i], band, i, fd.getDesc(), uploadedName, rd, null);
                 }
             }
         }
@@ -227,7 +232,7 @@ public class WebPlotReader {
                                                              req.getRotateNorthType().toString());
                 }
             } else if (req.getRotate()) {
-                retval = FitsRead.createFitsReadRotated(fr, req.getRotationAngle(), true);
+                retval = FitsRead.createFitsReadRotated(fr, req.getRotationAngle(), req.getRotateFromNorth());
             }
             File rotFile= ModFileWriter.makeRotFileName(originalFile,imageIdx,req.getRotationAngle());
             modFileWriter = new ModFileWriter.GeomFileWriter(rotFile, retval, band);
@@ -399,6 +404,49 @@ public class WebPlotReader {
             this.fr = fr;
             this.modFileWriter = modFileWriter;
         }
+    }
+
+    private static List<List<RelatedData>> investigateRelations(File f, FitsRead frAry[]) {
+        if (frAry.length>1) {
+            int imageIdx= -1;
+            List<List<RelatedData>> retList= new ArrayList<>(frAry.length);
+            for(int i=0; (i<frAry.length); i++) {
+                retList.add(null);
+                String extType= frAry[i].getExtType();
+                if (extType!=null && extType.equalsIgnoreCase("IMAGE")) {
+                    imageIdx = i;
+                }
+            }
+            if (imageIdx>-1) {
+                List <RelatedData> relatedList= new ArrayList<>();
+                for(int i=0; (i<frAry.length); i++) {
+                    String extType= frAry[i].getExtType();
+                    if (extType!=null) {
+                        if (!extType.equalsIgnoreCase("IMAGE")) {
+                            if (frAry[i].getExtType().equalsIgnoreCase("MASK")) {
+                                RelatedData d= RelatedData.makeMaskRelatedData(f.getAbsolutePath(),
+                                        frAry[i].getImageHeader().maskHeaders, i);
+                                relatedList.add(d);
+                            }
+                        }
+                        if (extType.equalsIgnoreCase("VARIANCE")) {
+                            RelatedData d= RelatedData.makeImageOverlayRelatedData(f.getAbsolutePath(),
+                                    "Variance", i);
+                            relatedList.add(d);
+                        }
+                    }
+                }
+                retList.set(imageIdx,relatedList);
+                return retList;
+            }
+            else {
+                return null;
+            }
+        }
+        else {
+            return null;
+        }
+
     }
 
 }

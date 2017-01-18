@@ -97,8 +97,8 @@ function canContinue(rawAction) {
  */
 function canContinueRequest(req, pv) {
     if (!pv) return false;
-    var requiresWH= requiresWidthHeight(req.getZoomType());
-    if (!requiresWH) return true;
+    // var requiresWH= requiresWidthHeight(req.getZoomType());
+    // if (!requiresWH) return true;
     var {viewDim:{width,height}}= pv;
     return width && height;
 }

@@ -48,7 +48,7 @@ public class ProjectionParams implements Serializable {
     public double bp[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
     public boolean map_distortion = false;
     public String keyword;
-    public Map<String,String> additionalHeaders= new HashMap<>();
+    public Map<String,String> sendToClientHeaders= new HashMap<>();
 
     public ProjectionParams() {}
 }

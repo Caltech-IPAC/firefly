@@ -8,7 +8,8 @@ import {getActivePlotView,
     hasGroupLock,
     findPlotGroup,
     getAllDrawLayersForPlot} from '../PlotViewUtil.js';
-import {dispatchRotate, dispatchFlip, dispatchRecenter, 
+import {findRelatedData} from '../RelatedDataUtil.js';
+import {dispatchRotate, dispatchFlip, dispatchRecenter,
         dispatchRestoreDefaults,dispatchGroupLocking, ActionScope} from '../ImagePlotCntlr.js';
 import {RotateType} from '../PlotState.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
@@ -92,10 +93,11 @@ const tipStyle= {
 
 /**
  * Vis Toolbar
- * @param visRoot visualization store root
- * @param toolTip tool tip to show
- * @param dlCount drawing layer count
- * @param messageUnder put the help message under
+ * @param p
+ * @param p.visRoot visualization store root
+ * @param p.toolTip tool tip to show
+ * @param p.dlCount drawing layer count
+ * @param p.messageUnder put the help message under
  * @return {XML}
  */
 export function VisToolbarViewWrapper({visRoot,toolTip,dlCount, messageUnder}) {
@@ -389,10 +391,11 @@ function showImagePopup() {
 
 export function LayerButton({pv,visible}) {
     const layerCnt=  pv ? (getAllDrawLayersForPlot(getDlAry(),pv.plotId).length + pv.overlayPlotViews.length) : 0;
+    const enabled= Boolean(layerCnt || findRelatedData(pv).length);
     return (
         <ToolbarButton icon={LAYER_ICON}
                        tip='Manipulate overlay display: Control color, visibility, and advanced options'
-                       enabled={Boolean(layerCnt)}
+                       enabled={enabled}
                        badgeCount={layerCnt}
                        horizontal={true}
                        visible={visible}

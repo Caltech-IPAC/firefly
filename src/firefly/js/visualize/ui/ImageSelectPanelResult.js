@@ -265,7 +265,7 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
                 default:
                     wpr = imagePlotOnSurvey(cId, rq);
             }
-            wpr.setZoomType(ZoomType.TO_WIDTH);
+            wpr.setZoomType(ZoomType.TO_WIDTH_HEIGHT);
             return wpr;
         };
 

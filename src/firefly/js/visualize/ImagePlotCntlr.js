@@ -8,6 +8,7 @@ import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
 import PlotImageTask from './task/PlotImageTask.js';
 import {UserZoomTypes} from './ZoomUtil.js';
+import {ZoomType} from './ZoomType.js';
 import {reducer as plotChangeReducer} from './reducer/HandlePlotChange.js';
 import {reducer as plotCreationReducer} from './reducer/HandlePlotCreation.js';
 import {getPlotGroupById} from './PlotGroup.js';
@@ -17,6 +18,7 @@ import {isActivePlotView,
         applyToOnePvOrGroup,
         findPlotGroup,
         isDrawLayerAttached,
+        primePlot,
         getDrawLayerByType } from './PlotViewUtil.js';
 import {changePrime} from './ChangePrime.js';
 
@@ -29,7 +31,9 @@ import {dispatchReplaceViewerItems, getExpandedViewerItemIds,
          getMultiViewRoot, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
 
 import {zoomActionCreator} from './ZoomUtil.js';
-import {plotImageMaskActionCreator, overlayPlotChangeAttributeActionCreator} from './ImageOverlayTask.js';
+import {plotImageMaskActionCreator,
+        plotImageMaskLazyActionCreator,
+        overlayPlotChangeAttributeActionCreator} from './task/ImageOverlayTask.js';
 
 import {colorChangeActionCreator,
         stretchChangeActionCreator,
@@ -136,6 +140,7 @@ const DELETE_PLOT_VIEW=`${PLOTS_PREFIX}.deletePlotView`;
 const PLOT_MASK_START= `${PLOTS_PREFIX}.plotMaskStart`;
 /** Action Type: add a mask image*/
 const PLOT_MASK=`${PLOTS_PREFIX}.plotMask`;
+const PLOT_MASK_LAZY_LOAD=`${PLOTS_PREFIX}.plotMaskLazyLoad`;
 const PLOT_MASK_FAIL= `${PLOTS_PREFIX}.plotMaskFail`;
 const DELETE_OVERLAY_PLOT=`${PLOTS_PREFIX}.deleteOverlayPlot`;
 const OVERLAY_PLOT_CHANGE_ATTRIBUTES=`${PLOTS_PREFIX}.overlayPlotChangeAttributes`;
@@ -230,6 +235,7 @@ function actionCreators() {
     return {
         [PLOT_IMAGE]: plotImageActionCreator,
         [PLOT_MASK]: plotImageMaskActionCreator,
+        [PLOT_MASK_LAZY_LOAD]: plotImageMaskLazyActionCreator,
         [OVERLAY_PLOT_CHANGE_ATTRIBUTES]: overlayPlotChangeAttributeActionCreator,
         [ZOOM_IMAGE]: zoomActionCreator,
         [COLOR_CHANGE]: colorChangeActionCreator,
@@ -261,7 +267,7 @@ export default {
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER, GROUP_LOCKING,
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
     DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT,
-    PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, DELETE_OVERLAY_PLOT,
+    PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, PLOT_MASK_LAZY_LOAD, DELETE_OVERLAY_PLOT,
     OVERLAY_PLOT_CHANGE_ATTRIBUTES, WCS_MATCH
 };
 
@@ -504,7 +510,7 @@ export function dispatchRecenter({plotId, centerPt, centerOnImage, dispatcher= f
  * replot the image with the original plot parameters
  *
  * Note - function parameter is a single object
- * @param {Object}  p this function take a single parameter
+ * @param {Object}  p this function takes a single parameter
  * @param {string} p.plotId
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
@@ -555,7 +561,7 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
 /**
  *
  * Note - function parameter is a single object
- * @param {Object}  p this function take a single parameter
+ * @param {Object}  p this function takes a single parameter
  * @param {WebPlotRequest[]} p.wpRequestAry
  * @param {string} p.viewerId
  * @param {Object} p.pvOptions PlotView init Options
@@ -572,7 +578,7 @@ export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
 
 /**
  * @summary Add a mask
- * @param {Object}  p this function take a single parameter
+ * @param {Object}  p this function takes a single parameter
  * @param {string} p.plotId
  * @param {number} p.maskValue power of 2, e.g 4, 8, 32, 128, etc
  * @param {number} p.maskNumber 2, e.g 4, 8, 32, 128, etc
@@ -581,32 +587,44 @@ export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
  * @param {string} p.fileKey file on the server
  * @param {string} p.color - color is optional, if not specified, one is chosen
  * @param {string} p.title
+ * @param {string} [p.relatedDataId] pass a related data id if one exist
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  *
  * @public
  * @function dispatchPlotImage
  * @memberof firefly.action
  */
-export function dispatchPlotMask({plotId,imageOverlayId, maskValue, fileKey, imageNumber, maskNumber=-1, color, title, dispatcher= flux.process}) {
-    dispatcher( { type: PLOT_MASK, payload: { plotId,imageOverlayId, fileKey, maskValue, imageNumber, maskNumber, color, title} });
+export function dispatchPlotMask({plotId,imageOverlayId, maskValue, fileKey,
+                                  imageNumber, maskNumber=-1, color, title,
+                                  uiCanAugmentTitle,
+                                  relatedDataId, lazyLoad, dispatcher= flux.process}) {
+
+    dispatcher( { type: PLOT_MASK, payload: { plotId,imageOverlayId, fileKey, maskValue,
+                                              uiCanAugmentTitle, imageNumber, maskNumber,
+                                              color, title, relatedDataId, lazyLoad } });
+}
+
+export function dispatchPlotMaskLazyLoad(payload ) {
+    flux.process( { type: PLOT_MASK_LAZY_LOAD, payload});
 }
 
 /**
  *
  *
- * @param {Object}  p this function take a single parameter
+ * @param {Object}  p this function takes a single parameter
  * @param {string} p.plotId
- * @param {string} p.imageOverlayId
+ * @param {string} [p.imageOverlayId] the id of the overlay optional if deleteAll is true
+ * @param {string} [p.deleteAll] delete all the overlay plot on the given plotId, defaults to false
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
-export function dispatchDeleteOverlayPlot({plotId,imageOverlayId, dispatcher= flux.process}) {
-    dispatcher( { type: DELETE_OVERLAY_PLOT, payload: { plotId,imageOverlayId} });
+export function dispatchDeleteOverlayPlot({plotId,imageOverlayId, deleteAll= false, dispatcher= flux.process}) {
+    dispatcher( { type: DELETE_OVERLAY_PLOT, payload: { plotId,imageOverlayId, deleteAll} });
 }
 
 
 /**
  *
- * @param {Object}  p this function take a single parameter
+ * @param {Object}  p this function takes a single parameter
  * @param {string} p.plotId
  * @param {string} p.imageOverlayId
  * @param {Object} p.attributes any attribute in OverlayPlotView
@@ -622,7 +640,7 @@ export function dispatchOverlayPlotChangeAttributes({plotId,imageOverlayId, attr
 /**
  * Zoom a image
  * Note - function parameter is a single object
- * @param {Object}  p this function take a single parameter
+ * @param {Object}  p this function takes a single parameter
  * @param {string} p.plotId
  * @param {UserZoomTypes} p.userZoomType (one of ['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV')
  * @param {boolean} [p.maxCheck]
@@ -664,7 +682,7 @@ export function dispatchZoom({plotId, userZoomType, maxCheck= true,
 /**
  *
  * Note - function parameter is a single object
- * @param {Object}  p this function take a single parameter
+ * @param {Object}  p this function takes a single parameter
  * @param {string} p.plotId
  * @param {boolean} [p.holdWcsMatch= false] if wcs match is on, then modify the request to hold the wcs match
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
@@ -750,8 +768,11 @@ export function dispatchChangeExpandedMode(expandedMode) {
 
 
     const enable= expandedMode!==ExpandType.COLLAPSE;
-    visRoot().plotViewAry.forEach( (pv) =>
-               dispatchZoomLocking(pv.plotId,enable,pv.plotViewCtx.zoomLockingType) );
+    visRoot().plotViewAry.forEach( (pv) => {
+        const p= primePlot(pv);
+        const zlEnabled= enable && p && p.plotState.getWebPlotRequest().getZoomType()!==ZoomType.LEVEL;
+        dispatchZoomLocking(pv.plotId,zlEnabled,pv.plotViewCtx.zoomLockingType);
+    });
 
     if (!enable) {
         visRoot().plotViewAry.forEach( (pv) => {

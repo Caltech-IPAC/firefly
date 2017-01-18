@@ -364,7 +364,6 @@ public class URLDownload {
                                          String postData) throws FailedRequestException, IOException {
         try {
             FileInfo outFileData;
-            FileInfo retval;
             int responseCode= 200;
             Map<String,List<String>> sendHeaders= null;
             try {
@@ -423,23 +422,22 @@ public class URLDownload {
 
                 in = makeDataInStream(conn);
             }
-            outFileData = new FileInfo(f, suggested, responseCode);
             out = makeOutStream(f);
-            retval = outFileData;
 
 
             long start = System.currentTimeMillis();
             netCopy(in, out, conn, maxFileSize, dl);
 
             long elapse = System.currentTimeMillis() - start;
-            logDownload(retval, conn.getURL().toString(), elapse );
+            outFileData = new FileInfo(f, suggested, responseCode);
+            logDownload(outFileData, conn.getURL().toString(), elapse );
 
             if (responseCode>=300 && responseCode<400) {
                 DException de= new DException(outFileData, responseCode, null);
                 throw new FailedRequestException("Network request failed", "Error: "+responseCode, de);
             }
 
-            return retval;
+            return outFileData;
         } catch (IOException e) {
             logError(conn.getURL(), e);
             throw e;

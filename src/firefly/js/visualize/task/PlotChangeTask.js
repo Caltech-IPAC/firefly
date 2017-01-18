@@ -329,10 +329,11 @@ function processPlotReplace(dispatcher, result, pv, makeSuccessAction, makeFailA
                 plotAry= pv.plots.map( (p,idx) => idx===pv.primeIdx ? newP : p);
             }
 
+            const existingOverlayPlotViews = pv.overlayPlotViews.filter((opv) => opv.plot);
             var overlayPlotViews = [];
             resultAry.forEach((r, i) => {
                 if (i === 0) return;
-                const {imageOverlayId}= pv.overlayPlotViews[i-1];
+                const {imageOverlayId}= existingOverlayPlotViews[i-1];
                 var plot = WebPlot.makeWebPlotData(imageOverlayId, r.data[WebPlotResult.PLOT_CREATE][0], {}, true);
                 overlayPlotViews[i - 1] = {plot};
             });

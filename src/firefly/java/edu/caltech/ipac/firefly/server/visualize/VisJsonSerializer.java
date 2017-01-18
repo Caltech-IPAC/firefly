@@ -10,6 +10,7 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
+import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.BandState;
 import edu.caltech.ipac.firefly.visualize.ClientFitsHeader;
@@ -31,6 +32,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -51,6 +53,7 @@ public class VisJsonSerializer {
 
         map.put("imageCoordSys", wpInit.getCoordinatesOfPlot().toString());
         map.put("projectionJson", serializeProjection(wpInit));
+        map.put("relatedData", serializeRelatedDataArray(wpInit.getRelatedData()));
         map.put("dataWidth", wpInit.getDataWidth());
         map.put("dataHeight", wpInit.getDataHeight());
         map.put("imageScaleFactor", wpInit.getImageScaleFactor());
@@ -65,7 +68,25 @@ public class VisJsonSerializer {
         map.put("fitsData", ary);
 
         return map;
+    }
 
+    public static JSONArray serializeRelatedDataArray(List<RelatedData> relatedData) {
+        if (relatedData==null || relatedData.size()==0) return null;
+        JSONArray relatedArray= new JSONArray();
+        for(RelatedData r : relatedData) relatedArray.add(serializeRelated(r));
+        return relatedArray;
+    }
+
+    public static JSONObject serializeRelated(RelatedData rData) {
+        if (rData==null) return null;
+        JSONObject retObj= new JSONObject();
+        retObj.put("dataType", rData.getDataType());
+        if (rData.getAvailableMask().size()>0) {
+            retObj.put("availableMask", new JSONObject(rData.getAvailableMask()));
+        }
+        retObj.put("searchParams", new JSONObject(rData.getSearchParams()));
+        retObj.put("desc", rData.getDesc());
+        return retObj;
     }
 
     public static JSONObject serializeProjection(WebPlotInitializer wpInit) {
@@ -131,7 +152,7 @@ public class VisJsonSerializer {
         map.put("map_distortion", p.map_distortion);
         map.put("keyword", p.keyword);
 
-        for(Map.Entry<String,String> e : p.additionalHeaders.entrySet() ) {
+        for(Map.Entry<String,String> e : p.sendToClientHeaders.entrySet() ) {
             map.put(e.getKey(),e.getValue());
         }
 

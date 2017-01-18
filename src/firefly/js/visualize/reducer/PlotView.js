@@ -19,6 +19,7 @@ import {getActiveTarget} from '../../core/AppDataCntlr.js';
 import VisUtil from './../VisUtil.js';
 import {getPlotViewById, matchPlotView, primePlot, findPlotGroup} from './../PlotViewUtil.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
+import {ZoomType} from '../ZoomType.js';
 import {PlotPref} from './../PlotPref.js';
 import {DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import SimpleMemCache from '../../util/SimpleMemCache.js';
@@ -33,8 +34,7 @@ const DEF_WORKING_MSG= 'Plotting ';
 //============ EXPORTS ===========
 //============ EXPORTS ===========
 
-export default {replacePlots,
-                updatePlotViewScrollXY,
+export default {updatePlotViewScrollXY,
                 findCurrentCenterPoint, findScrollPtForImagePt,
                 updatePlotGroupScrollXY};
 
@@ -204,10 +204,10 @@ export function changePrimePlot(pv, nextIdx) {
  * @param {WebPlot[]} plotAry
  * @param {Array} overlayPlotViews
  * @param {ExpandType} expandedMode
- * @param {boolean} keepPrimeIdx
+ * @param {boolean} newPlot true, this is a new plot otherwise is is from a flip, rotate, etc
  * @return {PlotView}
  */
-function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, keepPrimeIdx=false) {
+export function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, newPlot) {
 
     pv= clone(pv);
     pv.plotViewCtx= clone(pv.plotViewCtx);
@@ -221,8 +221,14 @@ function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, keepPrimeIdx=
         });
     }
 
+    if (newPlot || get(pv, 'plots.length') !== plotAry.length) {
+        pv.plots= plotAry;
+    }
+    else {
+        const oldPlots= pv.plots;
+        pv.plots= plotAry.map( (p,idx) => clone(p, {relatedData:oldPlots[idx].relatedData}) );
+    }
 
-    pv.plots= plotAry;
 
     pv.plots.forEach( (plot) => {
         plot.attributes= Object.assign({},plot.attributes, getNewAttributes(plot));
@@ -231,7 +237,7 @@ function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, keepPrimeIdx=
     });
 
 
-    if (!keepPrimeIdx || pv.primeIdx<0 || pv.primeIdx>=pv.plots.length) pv.primeIdx=0;
+    if (pv.primeIdx<0 || pv.primeIdx>=pv.plots.length) pv.primeIdx=0;
     pv.plottingStatus='';
     pv.serverCall='success';
 
@@ -246,7 +252,12 @@ function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, keepPrimeIdx=
     }
     pv.plotViewCtx.containsMultipleCubes= pv.plots.every( (p) => p.plotState.getCubeCnt()>1);
     pv.plotViewCtx.rotateNorthLock= pv.plots[pv.primeIdx].plotState.getRotateType()===RotateType.NORTH;  // todo, study this more, understand why
-    if (expandedMode===ExpandType.COLLAPSE) pv.plotViewCtx.lastCollapsedZoomLevel= pv.plots[pv.primeIdx].zoomFactor;
+    if (expandedMode===ExpandType.COLLAPSE) {
+        pv.plotViewCtx.lastCollapsedZoomLevel= pv.plots[pv.primeIdx].zoomFactor;
+    }
+    else {
+        pv.plotViewCtx.zoomLockingEnabled= primePlot(pv).plotState.getWebPlotRequest().getZoomType() !== ZoomType.LEVEL;
+    }
 
     pv= initScrollCenterPoint(pv);
 

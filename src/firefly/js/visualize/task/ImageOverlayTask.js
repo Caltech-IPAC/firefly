@@ -2,22 +2,33 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {logError} from '../util/WebUtil.js';
-import ImagePlotCntlr, {makeUniqueRequestKey, IMAGE_PLOT_KEY, dispatchPlotMask} from './ImagePlotCntlr.js';
-import {primePlot, getOverlayByPvAndId, getPlotViewById} from './PlotViewUtil.js';
-import {PlotState, RotateType} from './PlotState.js';
-import {RequestType} from './RequestType.js';
-import {ZoomType} from './ZoomType.js';
-import {clone} from '../util/WebUtil.js';
-import {WebPlot} from './WebPlot.js';
-import {callGetWebPlot} from '../rpc/PlotServicesJson.js';
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 
+import {get} from 'lodash';
+import {logError} from '../../util/WebUtil.js';
+import ImagePlotCntlr, {makeUniqueRequestKey, IMAGE_PLOT_KEY, dispatchPlotMask, dispatchZoom} from '../ImagePlotCntlr.js';
+import {UserZoomTypes} from '../ZoomUtil.js';
+import {primePlot, getOverlayByPvAndId, getPlotViewById, getOverlayById} from '../PlotViewUtil.js';
+import {PlotState, RotateType} from '../PlotState.js';
+import {RequestType} from '../RequestType.js';
+import {ZoomType} from '../ZoomType.js';
+import {clone} from '../../util/WebUtil.js';
+import {WebPlot} from '../WebPlot.js';
+import {callGetWebPlot} from '../../rpc/PlotServicesJson.js';
+
+const colorList= [
+    '#FF0000','#00FF00', '#0000FF', '#91D33D',
+    '#AE14E0','#FFC0CB', '#EBAA38', '#F6E942',
+    '#00E8FF','#8B572A', '#B8E986', '#4A90E2',
+    '#BD10E0','#E0107F', '#B9F81C', '#F19301',
+];
 
 function *getColor()  {
-    const autoColor= ['#FF0000','#00FF00','#0000FF','#91D33D', '#AE14DB','#FF0000', '#EBAA38', '#F6E942'];
     var nextColor=0;
     while (true) {
-        yield autoColor[nextColor % autoColor.length];
+        yield colorList[nextColor % colorList.length];
         nextColor++;
     }
 }
@@ -37,16 +48,16 @@ export function plotImageMaskActionCreator(rawAction) {
     return (dispatcher,getStore) => {
         const vr= getStore()[IMAGE_PLOT_KEY];
 
-        const {plotId,imageOverlayId, maskValue, imageNumber, title,fileKey, maskNumber}= rawAction.payload;
+        const {plotId,imageOverlayId, maskValue, imageNumber, title,fileKey,
+               uiCanAugmentTitle= true, maskNumber, relatedDataId, lazyLoad}= rawAction.payload;
         var {color}= rawAction.payload;
-        if (!color) color= nextColor();
+        // if (!color) color= nextColor();
+        if (!color) color= colorList[maskNumber % colorList.length];
 
-
-        const pv= getPlotViewById(vr, plotId);
-        const maskRequest= makeMaskRequest(fileKey,imageOverlayId ,pv,maskValue,imageNumber, color);
 
 
         var payload= {
+            fileKey,
             plotId,
             maskValue,
             maskNumber,
@@ -54,21 +65,60 @@ export function plotImageMaskActionCreator(rawAction) {
             color,
             title,
             imageOverlayId,
-            maskRequest,
+            uiCanAugmentTitle,
+            relatedDataId,
             requestKey: makeUniqueRequestKey('overlay')
         };
+
+        if (lazyLoad) {
+            payload.lazyLoadPayload= {plotId,imageOverlayId};
+        }
+
         dispatcher({type:ImagePlotCntlr.PLOT_MASK_START, payload});
 
 
-
-        callGetWebPlot(maskRequest).then( (wpResult) => processMaskSuccessResponse(dispatcher,payload,wpResult) )
-            .catch ( (e) => {
-                dispatcher( { type: ImagePlotCntlr.PLOT_MASK_FAIL, payload:  clone(rawAction.payload, {error:e}) } );
-                logError(`plot mask error, plotId: ${plotId}`, e);
-            });
-
-
+        if (!lazyLoad) {
+            maskCall(vr, dispatcher,payload, color);
+        }
     };
+}
+
+export function plotImageMaskLazyActionCreator(rawAction) {
+    return (dispatcher,getStore) => {
+        const {plotId,imageOverlayId }= rawAction.payload;
+        dispatcher( { type: ImagePlotCntlr.OVERLAY_PLOT_CHANGE_ATTRIBUTES,
+                      payload: { plotId,imageOverlayId, attributes:{visible:true}} });
+        const vr= getStore()[IMAGE_PLOT_KEY];
+        const opv= getOverlayById(getPlotViewById(vr, plotId), imageOverlayId);
+        if (!opv) return;
+
+        const data= {plotId,imageOverlayId,
+            color:opv.color,
+            maskValue:opv.maskValue,
+            maskNumber:opv.maskNumber,
+            imageNumber:opv.imageNumber,
+            fileKey:opv.fileKey,
+        };
+
+        maskCall(vr, dispatcher,data);
+    };
+}
+
+/**
+ *
+ * @param vr
+ * @param dispatcher
+ * @param payload
+ */
+function maskCall(vr, dispatcher, payload) {
+    const {plotId,imageOverlayId, maskValue, imageNumber, fileKey, color}= payload;
+    const pv= getPlotViewById(vr, plotId);
+    const maskRequest= makeMaskRequest(fileKey,imageOverlayId ,pv,maskValue,imageNumber, color);
+
+    callGetWebPlot(maskRequest).then( (wpResult) => processMaskSuccessResponse(dispatcher,payload,wpResult) )
+        .catch ( (e) => {
+            logError(`plot mask error, plotId: ${payload.plotId}`, e);
+        });
 }
 
 export function overlayPlotChangeAttributeActionCreator(rawAction) {
@@ -76,8 +126,8 @@ export function overlayPlotChangeAttributeActionCreator(rawAction) {
         dispatcher(rawAction);
         if (rawAction.payload.doReplot) {
             const {plotId,imageOverlayId}= rawAction.payload;
-            const vr= getStore()[IMAGE_PLOT_KEY];
-            const opv= getOverlayByPvAndId(vr,plotId, imageOverlayId);
+            var vr= getStore()[IMAGE_PLOT_KEY];
+            var opv= getOverlayByPvAndId(vr,plotId, imageOverlayId);
             if (!opv) return;
             const {imageNumber,color, maskValue, title}= opv;
             var fileKey;
@@ -88,6 +138,17 @@ export function overlayPlotChangeAttributeActionCreator(rawAction) {
                 }
             }
             dispatchPlotMask({plotId,imageOverlayId, fileKey, maskValue, imageNumber, color, title});
+
+            vr= getStore()[IMAGE_PLOT_KEY];
+            opv= getOverlayByPvAndId(vr,plotId, imageOverlayId);
+            const plot= primePlot();
+            if (plot && get(opv, 'plot.zoomFactor') !== plot.zoomFactor) {
+               dispatchZoom({
+                   plotId:plot.plotId,
+                   UserZoomType:UserZoomTypes.LEVEL,
+                   level: plot.zoomFactor
+               })
+            }
         }
     };
 }
@@ -127,17 +188,19 @@ function makeMaskRequest(fileKey, imageOverlayId, pv, maskValue, imageNumber, co
 
     //TODO check flip and set handle flip case
     if (state) {
-        r.setZoomType(ZoomType.STANDARD);
-        r.setInitialZoomLevel(state.getZoomLevel());
+        r.setZoomType(ZoomType.LEVEL);
+        r.setInitialZoomLevel(plot.zoomFactor);
+        // r.setInitialZoomLevel(state.getZoomLevel());
         if (state.isRotated()) {
             const rt= state.getRotateType();
-            r.setMultiImageIdx(0);
+            // r.setMultiImageIdx(0);
             if (rt===RotateType.NORTH) {
                 r.setRotateNorth(true);
             }
             else if (rt===RotateType.ANGLE) {
                 r.setRotate(true);
                 r.setRotationAngle(state.getRotationAngle());
+                r.setRotateFromNorth(false);
             }
         }
         else {

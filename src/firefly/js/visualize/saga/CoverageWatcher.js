@@ -16,7 +16,6 @@ import {primePlot, getPlotViewById} from '../PlotViewUtil.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
 import {doFetchTable, getTblById, getActiveTableId, getColumnIdx, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
 import MultiViewCntlr, {getViewerItemIds, dispatchAddViewerItems, getMultiViewRoot, getViewer, IMAGE} from '../MultiViewCntlr.js';
-// import {serializeDecimateInfo} from '../../tables/Decimate.js'; //todo need to support
 import {DrawSymbol} from '../draw/PointDataObj.js';
 import {computeCentralPointAndRadius} from '../VisUtil.js';
 import {makeWorldPt, pointEquals} from '../Point.js';
@@ -318,7 +317,7 @@ function makeOverlayCoverageDrawing() {
         const tbl_id=  plot.attributes[COVERAGE_TABLE];
         if (!tbl_id || !decimatedTables[tbl_id] || !getTblById(tbl_id)) return;
         const table= getTblById(tbl_id);
-        
+
         if (table.tableMeta[MetaConst.CATALOG_OVERLAY_TYPE]) return; // let the catalog just handle the drawing overlays
 
         const allRowsTable= decimatedTables[tbl_id];
