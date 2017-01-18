@@ -3,10 +3,10 @@
  */
 package edu.caltech.ipac.visualize.net;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.download.DownloadListener;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.FileData;
 import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.EOFException;
@@ -23,12 +23,12 @@ import java.net.URL;
 public class AnyUrlGetter {
 
 
-  public static FileData lowlevelGetUrlToFile(AnyUrlParams     params,
+  public static FileInfo lowlevelGetUrlToFile(AnyUrlParams     params,
                                               File             outfile,
                                               boolean          useSuggestedFilename,
                                               DownloadListener dl) throws FailedRequestException {
 
-      FileData outFiles;
+      FileInfo outFiles;
       try {
           outFiles=URLDownload.getDataToFile(params.getURL(), outfile, params.getCookies(), null,
                                              dl, useSuggestedFilename,true,

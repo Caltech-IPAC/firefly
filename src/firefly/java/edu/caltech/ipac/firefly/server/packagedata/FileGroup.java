@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.packagedata;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.HasAccessInfos;
 
 import java.io.File;

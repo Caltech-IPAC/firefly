@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.util.download;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
@@ -84,12 +85,12 @@ public class CacheHelper {
         else if (cacheObj instanceof File) {
             f= (File)cacheObj;
         }
-        else if (cacheObj instanceof FileData[]){
-            FileData fData[]= (FileData[])cacheObj;
+        else if (cacheObj instanceof FileInfo[]){
+            FileInfo fData[]= (FileInfo[])cacheObj;
             f= fData[0].getFile();
         }
-        else if (cacheObj instanceof FileData){
-            f= ((FileData)cacheObj).getFile();
+        else if (cacheObj instanceof FileInfo){
+            f= ((FileInfo)cacheObj).getFile();
         }
         else if (cacheObj instanceof String){
             f= new File((String)cacheObj);
@@ -114,24 +115,24 @@ public class CacheHelper {
     }
 
 
-    public static FileData getFileData(CacheKey key)   {
+    public static FileInfo getFileData(CacheKey key)   {
         Cache cache= getFileCache();
         Object cacheObj= cache.get(key);
-        FileData fd;
+        FileInfo fd;
 
         if (cacheObj==null){
             fd= null;
         }
-        else if (cacheObj instanceof FileData[]){
-            FileData fData[]= (FileData[])cacheObj;
+        else if (cacheObj instanceof FileInfo[]){
+            FileInfo fData[]= (FileInfo[])cacheObj;
             fd= fData[0];
         }
-        else if (cacheObj instanceof FileData){
-            fd= (FileData)cacheObj;
+        else if (cacheObj instanceof FileInfo){
+            fd= (FileInfo)cacheObj;
         }
         else {
             fd= null;
-            Assert.argTst(false, "expected type FileData, found: " +cacheObj.getClass().getName() );
+            Assert.argTst(false, "expected type FileInfo, found: " +cacheObj.getClass().getName() );
         }
         return fd;
     }

@@ -3,9 +3,9 @@
  */
 package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
-import edu.caltech.ipac.firefly.server.visualize.FileData;
-import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.GeomException;
 
 /**
@@ -13,6 +13,6 @@ import edu.caltech.ipac.visualize.plot.GeomException;
  */
 public interface FileRetriever {
 
-    FileData getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException;
+    FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException;
 }
 

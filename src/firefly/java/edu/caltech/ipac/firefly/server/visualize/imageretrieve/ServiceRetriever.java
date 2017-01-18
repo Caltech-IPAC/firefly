@@ -7,8 +7,8 @@
  */
 package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.visualize.FileData;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
 import edu.caltech.ipac.firefly.util.MathUtil;
@@ -26,27 +26,16 @@ import edu.caltech.ipac.visualize.plot.GeomException;
 import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
-import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
-/**
- * User: roby
- * Date: Feb 26, 2010
- * Time: 10:43:21 AM
- */
 
 
-/**
- * @author Trey Roby
- */
 public class ServiceRetriever implements FileRetriever {
-
-
 
     public static final String WISE_3A = "3a";
 
 
-    public FileData getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
-        FileData retval;
+    public FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
+        FileInfo retval;
 
         switch (request.getServiceType()) {
             case ISSA:
@@ -82,7 +71,7 @@ public class ServiceRetriever implements FileRetriever {
     }
 
 
-    private FileData getSloanDSSPlot(WebPlotRequest request) throws FailedRequestException, GeomException {
+    private FileInfo getSloanDSSPlot(WebPlotRequest request) throws FailedRequestException, GeomException {
         String bandStr = request.getSurveyKey();
         Circle circle = PlotServUtils.getRequestArea(request);
         SloanDssImageParams.SDSSBand band;
@@ -94,7 +83,7 @@ public class ServiceRetriever implements FileRetriever {
         return getSloanDSSPlot(band, circle);
     }
 
-    private FileData getSloanDSSPlot(SloanDssImageParams.SDSSBand band, Circle circle) throws FailedRequestException, GeomException {
+    private FileInfo getSloanDSSPlot(SloanDssImageParams.SDSSBand band, Circle circle) throws FailedRequestException, GeomException {
         // this is really size not radius, i am just using Circle to hold the params
         float sizeInDegrees = (float)circle.getRadius();
         if (sizeInDegrees > 1) sizeInDegrees = 1F;
@@ -106,19 +95,18 @@ public class ServiceRetriever implements FileRetriever {
         params.setSizeInDeg(sizeInDegrees);
         params.setRaJ2000(wp.getLon());
         params.setDecJ2000(wp.getLat());
-        File f = getNetworkPlot(params);
-        String desc = getSloanDssDesc(band);
-        return new FileData(f, desc);
+        FileInfo fi = getNetworkPlot(params);
+        return fi.copyWithDesc(getSloanDssDesc(band));
     }
 
-    private FileData getDssPlot(WebPlotRequest request) throws FailedRequestException, GeomException {
+    private FileInfo getDssPlot(WebPlotRequest request) throws FailedRequestException, GeomException {
         String surveyKey = request.getSurveyKey();
         Circle circle = PlotServUtils.getRequestArea(request);
         return getDssPlot(surveyKey, circle, 15000);
     }
 
 
-    private FileData getDssPlot(String surveyKey, Circle circle, int timeoutMills) throws FailedRequestException, GeomException {
+    private FileInfo getDssPlot(String surveyKey, Circle circle, int timeoutMills) throws FailedRequestException, GeomException {
         DssImageParams params = new DssImageParams();
         WorldPt wp = Plot.convert(circle.getCenter(), CoordinateSys.EQ_J2000);
         params.setTimeout(timeoutMills); // time out - 15 sec
@@ -128,14 +116,15 @@ public class ServiceRetriever implements FileRetriever {
         params.setWidth(arcMin);// this is really size not radius, i am just using Circle to hold the params
         params.setHeight(arcMin);// this is really size not radius, i am just using Circle to hold the params
         params.setSurvey(surveyKey);
-        return new FileData(getNetworkPlot(params), getDssDesc(surveyKey));
+        FileInfo fi= getNetworkPlot(params);
+        return fi.copyWithDesc(getDssDesc(surveyKey));
     }
 
 
 
 
 
-    private FileData get2MassPlot(WebPlotRequest request) throws FailedRequestException, GeomException {
+    private FileInfo get2MassPlot(WebPlotRequest request) throws FailedRequestException, GeomException {
         Circle circle = PlotServUtils.getRequestArea(request);
         // this is really size not radius, i am just using Circle to hold the params
         float sizeInArcSec = (float) MathUtil.convert(MathUtil.Units.DEGREE, MathUtil.Units.ARCSEC, circle.getRadius());
@@ -143,27 +132,27 @@ public class ServiceRetriever implements FileRetriever {
         if (sizeInArcSec < 50) sizeInArcSec = 50;
         circle = new Circle(circle.getCenter(), sizeInArcSec);
         String survey = request.getSurveyKey();
-        File f = getIrsaPlot(survey, circle, IrsaImageParams.IrsaTypes.TWOMASS);
-        String desc = get2MassDesc(survey);
-        return new FileData(f, desc);
+        FileInfo fi = getIrsaPlot(survey, circle, IrsaImageParams.IrsaTypes.TWOMASS);
+        return fi.copyWithDesc(get2MassDesc(survey));
     }
 
 
-    private FileData getIrisPlot(WebPlotRequest request) throws FailedRequestException, GeomException {
+    private FileInfo getIrisPlot(WebPlotRequest request) throws FailedRequestException, GeomException {
         String desc = getIrisDesc(request.getSurveyKey());
-        File f = getIrsaPlot(request, IrsaImageParams.IrsaTypes.IRIS);
-        return new FileData(f, desc);
+        FileInfo fi = getIrsaPlot(request, IrsaImageParams.IrsaTypes.IRIS);
+        return fi.copyWithDesc(desc);
     }
 
-    private FileData getIssaPlot(WebPlotRequest request) throws FailedRequestException, GeomException {
+    private FileInfo getIssaPlot(WebPlotRequest request) throws FailedRequestException, GeomException {
         String desc = getIssaDesc(request.getSurveyKey());
-        File f = getIrsaPlot(request, IrsaImageParams.IrsaTypes.ISSA);
-        return new FileData(f, desc);
+        FileInfo fi = getIrsaPlot(request, IrsaImageParams.IrsaTypes.ISSA);
+        return fi.copyWithDesc(desc);
     }
 
-    private FileData getMsxPlot(WebPlotRequest request) throws FailedRequestException, GeomException {
+    private FileInfo getMsxPlot(WebPlotRequest request) throws FailedRequestException, GeomException {
         try {
-            return new FileData(getIrsaPlot(request, IrsaImageParams.IrsaTypes.MSX), "MSX Image");
+            FileInfo fi= getIrsaPlot(request, IrsaImageParams.IrsaTypes.MSX);
+            return fi.copyWithDesc("MSX Image");
         } catch (FailedRequestException e) {
             if (e.getUserMessage().contains("does not lie on an image")) {
                 throw new FailedRequestException("Location not covered by MSX",
@@ -174,17 +163,16 @@ public class ServiceRetriever implements FileRetriever {
         }
     }
 
-    private File getIrsaPlot(WebPlotRequest request,
-                             IrsaImageParams.IrsaTypes plotType) throws FailedRequestException,
-                                                                        GeomException {
+    private FileInfo getIrsaPlot(WebPlotRequest request,
+                                 IrsaImageParams.IrsaTypes plotType) throws FailedRequestException, GeomException {
         Circle surveyArea = PlotServUtils.getRequestArea(request);
         return getIrsaPlot(request.getSurveyKey(), surveyArea, plotType);
     }
 
-    private File getIrsaPlot(String surveyKey,
-                             Circle surveyArea,
-                             IrsaImageParams.IrsaTypes plotType) throws FailedRequestException,
-                                                                        GeomException {
+    private FileInfo getIrsaPlot(String surveyKey,
+                                 Circle surveyArea,
+                                 IrsaImageParams.IrsaTypes plotType) throws FailedRequestException,
+                                                                            GeomException {
         IrsaImageParams params = new IrsaImageParams();
         WorldPt wp = surveyArea.getCenter();
         wp = Plot.convert(wp, CoordinateSys.EQ_J2000);
@@ -199,7 +187,7 @@ public class ServiceRetriever implements FileRetriever {
 
 
 
-    private FileData getWisePlotNEW(WebPlotRequest r) throws FailedRequestException, GeomException {
+    private FileInfo getWisePlotNEW(WebPlotRequest r) throws FailedRequestException, GeomException {
         Circle circle = PlotServUtils.getRequestArea(r);
         WorldPt wp = circle.getCenter();
         wp = Plot.convert(wp, CoordinateSys.EQ_J2000);
@@ -209,8 +197,8 @@ public class ServiceRetriever implements FileRetriever {
         params.setType(r.getSurveyKey());
         params.setBand(r.getSurveyBand());
         params.setSize((float)circle.getRadius());
-        File f= getNetworkPlot(params);
-        return new FileData(f,getWiseDesc(r.getSurveyKey(),r.getSurveyBand()));
+        FileInfo fi= getNetworkPlot(params);
+        return fi.copyWithDesc(getWiseDesc(r.getSurveyKey(),r.getSurveyBand()));
     }
 
     /**
@@ -218,16 +206,16 @@ public class ServiceRetriever implements FileRetriever {
      * @return a fits file
      * @throws FailedRequestException if anything goes wrong
      */
-    private File getNetworkPlot(BaseNetParams params) throws FailedRequestException {
+    private FileInfo getNetworkPlot(BaseNetParams params) throws FailedRequestException {
         try {
-            return LockingVisNetwork.getImage(params);
+            return LockingVisNetwork.retrieve(params);
         } catch (SecurityException e) {
             throw new FailedRequestException("Error cause by failed reprojection", "Geom failed", e);
         }
     }
 
-    private FileData getDSSorIris(WebPlotRequest request) throws FailedRequestException {
-        FileData retval;
+    private FileInfo getDSSorIris(WebPlotRequest request) throws FailedRequestException {
+        FileInfo retval;
         String dssSurveyKey = request.getSurveyKey();
         String irisSurveyKey = request.getSurveyKeyAlt();
         Circle circle = PlotServUtils.getRequestArea(request);
@@ -268,11 +256,11 @@ public class ServiceRetriever implements FileRetriever {
 
 
     private class GetDSSInBackground implements Runnable {
-        private final AtomicReference<FileData> _retFile = new AtomicReference<FileData>(null);
+        private final AtomicReference<FileInfo> _retFile = new AtomicReference<>(null);
         private final String _surveyKey;
         private final Circle _circle;
 
-        public GetDSSInBackground(String surveyKey, Circle circle) {
+        GetDSSInBackground(String surveyKey, Circle circle) {
             _surveyKey = surveyKey;
             _circle = circle;
         }
@@ -285,17 +273,17 @@ public class ServiceRetriever implements FileRetriever {
             }
         }
 
-        public FileData getFile() {
+        public FileInfo getFile() {
             return _retFile.get();
         }
     }
 
     private class GetIrisInBackground implements Runnable {
-        private final AtomicReference<FileData> _retFile = new AtomicReference<FileData>(null);
+        private final AtomicReference<FileInfo> _retFile = new AtomicReference<>(null);
         private final String _surveyKey;
         private final Circle _circle;
 
-        public GetIrisInBackground(String surveyKey, Circle circle) {
+        GetIrisInBackground(String surveyKey, Circle circle) {
             _surveyKey = surveyKey;
             _circle = circle;
         }
@@ -303,15 +291,15 @@ public class ServiceRetriever implements FileRetriever {
         public void run() {
             try {
                 String desc = getIrisDesc(_surveyKey);
-                File f = getIrsaPlot(_surveyKey, _circle, IrsaImageParams.IrsaTypes.IRIS);
-                _retFile.getAndSet(new FileData(f, desc));
+                FileInfo fi = getIrsaPlot(_surveyKey, _circle, IrsaImageParams.IrsaTypes.IRIS);
+                _retFile.getAndSet(fi.copyWithDesc(desc));
             } catch (Exception e) {
                 Logger.warn(e, "IRIS background retrieve failed");
 
             }
         }
 
-        public FileData getFile() {
+        public FileInfo getFile() {
             return _retFile.get();
         }
     }

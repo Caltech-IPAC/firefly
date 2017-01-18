@@ -7,9 +7,9 @@
  */
 package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
-import edu.caltech.ipac.firefly.server.visualize.FileData;
-import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.GeomException;
 /**
  * User: roby
@@ -23,8 +23,8 @@ import edu.caltech.ipac.visualize.plot.GeomException;
  */
 public class TryFileThenURLRetriever implements FileRetriever {
 
-    public FileData getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
-        FileData retval;
+    public FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
+        FileInfo retval;
         try {
             retval= new LocalFileRetriever().getFile(request);
         } catch (Exception e) {

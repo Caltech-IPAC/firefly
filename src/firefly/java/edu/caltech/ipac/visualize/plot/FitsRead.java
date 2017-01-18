@@ -1572,6 +1572,11 @@ public class FitsRead implements Serializable {
         return cloneHeader(header);
     }
 
+    public String getExtType() {
+        HeaderCard hc= header.findCard("EXTTYPE");
+        return (hc!=null) ? hc.getValue() : null;
+    }
+
 
     public ImageHeader getImageHeader() {
         return imageHeader;

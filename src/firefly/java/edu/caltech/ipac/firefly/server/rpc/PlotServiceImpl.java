@@ -10,11 +10,11 @@ import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.rpc.PlotService;
 import edu.caltech.ipac.firefly.server.ResourceManager;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
-import edu.caltech.ipac.firefly.server.visualize.FileData;
+import edu.caltech.ipac.firefly.server.visualize.VisServerOps;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.ImageFileRetrieverFactory;
-import edu.caltech.ipac.firefly.server.visualize.VisServerOps;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.FileAndHeaderInfo;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -207,7 +207,7 @@ public class PlotServiceImpl extends BaseRemoteService implements PlotService {
                 File f= null;
                 FileRetriever retrieve= ImageFileRetrieverFactory.getRetriever(request);
                 if (retrieve!=null)  {
-                    FileData retf= retrieve.getFile(request);
+                    FileInfo retf= retrieve.getFile(request);
                     f= retf.getFile();
                 }
                 if (f==null) throw new IOException("file is null");

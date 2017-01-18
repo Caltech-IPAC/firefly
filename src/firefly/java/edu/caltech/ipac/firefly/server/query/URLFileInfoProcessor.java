@@ -5,7 +5,7 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
@@ -49,7 +49,7 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
                     }
                 }
             }
-            retval= LockingVisNetwork.getFitsFile(params);
+            retval= LockingVisNetwork.retrieve(params);
             if (retval.getResponseCode()>=500) {
                 File f= new File(retval.getInternalFilename());
                 if (f.length()<800) {
@@ -121,7 +121,7 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
                     params.addCookie(key, identityCookies.get(key));
                 }
             }
-            retval= LockingVisNetwork.getFitsFile(params);
+            retval= LockingVisNetwork.retrieve(params);
             if (retval.getResponseCode()>=500) {
                 File f= new File(retval.getInternalFilename());
                 if (f.length()<800) {

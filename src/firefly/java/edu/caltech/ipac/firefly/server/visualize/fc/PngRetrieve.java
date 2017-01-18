@@ -9,7 +9,7 @@ package edu.caltech.ipac.firefly.server.visualize.fc;
 
 import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.ImagePlotBuilder;
 import edu.caltech.ipac.firefly.server.visualize.PlotPngCreator;

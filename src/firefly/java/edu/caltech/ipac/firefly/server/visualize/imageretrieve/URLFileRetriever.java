@@ -7,20 +7,19 @@
  */
 package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
-import edu.caltech.ipac.firefly.server.visualize.FileData;
+import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.RequestOwner;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
 import edu.caltech.ipac.firefly.server.visualize.ProgressStat;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.firefly.server.RequestOwner;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
 import edu.caltech.ipac.visualize.plot.GeomException;
 
-import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -42,8 +41,8 @@ public class URLFileRetriever implements FileRetriever {
     public static final long EXPIRE_IN_SEC = 60 * 60 * 4; // 4 hours
     public static final String FITS = "fits";
 
-    public FileData getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
-        File fitsFile;
+    public FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
+        FileInfo fitsFileInfo;
         String urlStr = request.getURL();
         if (urlStr == null) throw new FailedRequestException("Could not find file", "request.getURL() returned null");
         if (urlStr.contains("+")) { // i think this is a hack for IRSA image that have a plus in files names as ra+dec
@@ -74,7 +73,7 @@ public class URLFileRetriever implements FileRetriever {
 
             PlotServUtils.updatePlotCreateProgress(request, ProgressStat.PType.READING, PlotServUtils.READ_PERCENT_MSG);
 
-            fitsFile = LockingVisNetwork.getImage(params);
+            fitsFileInfo = LockingVisNetwork.retrieve(params);
         } catch (MalformedURLException e) {
             throw new FailedRequestException("Bad URL", null, e);
         } catch (FailedRequestException e) {
@@ -82,7 +81,7 @@ public class URLFileRetriever implements FileRetriever {
         } catch (Exception e) {
             throw new FailedRequestException("No data", null, e);
         }
-        return new FileData(fitsFile, urlStr);
+        return fitsFileInfo.copyWithDesc(urlStr);
     }
 
 }

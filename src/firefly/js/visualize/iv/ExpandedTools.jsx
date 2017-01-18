@@ -36,11 +36,10 @@ const tStyle= {
 
 function createOptions(expandedMode, singleAutoPlay, visRoot, plotIdAry) {
     var autoPlay= false;
-    var wcsSTMatch= false;
     var wcsMatch= false;
     if (expandedMode===ExpandType.SINGLE && plotIdAry.length>1) {
         autoPlay= (
-            <div>
+            <div style={{paddingLeft:25}}>
                 <div style={{display:'inline-block'}}>
                     <input style={{margin: 0}} type='checkbox' checked={singleAutoPlay}
                            onChange={() => dispatchExpandedAutoPlay(!singleAutoPlay) }
@@ -59,7 +58,6 @@ function createOptions(expandedMode, singleAutoPlay, visRoot, plotIdAry) {
 
     return (
         <div style={{display:'inline-block', paddingLeft:15}}>
-            {wcsSTMatch}
             {wcsMatch}
             {autoPlay}
         </div>

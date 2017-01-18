@@ -9,7 +9,7 @@ import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
-import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
@@ -18,7 +18,6 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.visualize.FileData;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.ImageFileRetrieverFactory;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
@@ -40,6 +39,7 @@ import java.util.Set;
 import static edu.caltech.ipac.firefly.ui.creator.CommonParams.DataSource;
 
 
+@Deprecated
 @SearchProcessorImpl(id = "resultViewerDownload")
 public class ResultViewerFileGroupsProcessor extends FileGroupsProcessor {
 
@@ -145,9 +145,9 @@ public class ResultViewerFileGroupsProcessor extends FileGroupsProcessor {
         FileRetriever retrieve= ImageFileRetrieverFactory.getRetriever(wpReq);
         if (retrieve!=null) {
             try {
-                FileData fileData = retrieve.getFile(wpReq);
+                FileInfo fileData = retrieve.getFile(wpReq);
                 File f= fileData.getFile();
-                fi= new FileInfo(f.getPath(), f.getName(), f.length());
+                fi= new FileInfo(f);
             } catch (Exception e) {
                 fi= null;
                 logger.warn(e,"Could not retrieve file for row index: " + rowIdx);
@@ -180,7 +180,7 @@ public class ResultViewerFileGroupsProcessor extends FileGroupsProcessor {
             else if (dataSource==DataSource.FILE) {
                 File f= new File(fname);
                 if (f.canRead()) {
-                    fi= new FileInfo(f.getPath(), f.getName(), f.length());
+                    fi= new FileInfo(f);
                 }
                 else {
                     logger.warn("Could not find file dataSource at row #" + rowIdx + " file: " + f.getPath());

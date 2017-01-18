@@ -12,7 +12,7 @@ import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
-import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.packagedata.PackageMaster;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -175,7 +175,7 @@ public class SearchManager {
                 if (processor instanceof IpacTablePartProcessor) {
                     File dgFile = ((IpacTablePartProcessor)processor).getDataFile(request);
                     // page size will not be taken into account
-                    return new FileInfo(dgFile.getPath(), dgFile.getName(), dgFile.length());
+                    return new FileInfo(dgFile);
                 } else {
                     return (FileInfo) processor.getData(request);
                 }

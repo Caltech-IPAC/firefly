@@ -2,7 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.firefly.server.visualize;
+
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.ImageFileRetrieverFactory;
@@ -101,7 +103,7 @@ public class ImagePlotBuilder {
         WebPlotRequest firstR = requestMap.values().iterator().next();
         // ------------ find the files to read
         long findStart = System.currentTimeMillis();
-        Map<Band, FileData> fileDataMap = findFiles(requestMap);
+        Map<Band, FileInfo> fileDataMap = findFiles(requestMap);
         long findElapse = System.currentTimeMillis() - findStart;
 
         // ------------ read the FITS files
@@ -124,7 +126,7 @@ public class ImagePlotBuilder {
     }
 
     static Results buildFromFile(WebPlotRequest request,
-                                 FileData fileData,
+                                 FileInfo fileData,
                                  FitsRead fitsRead,
                                  int imageIdx,
                                  PlotState state) throws Exception {
@@ -173,9 +175,9 @@ public class ImagePlotBuilder {
 
 
 
-    private static Map<Band, FileData> findFiles(Map<Band, WebPlotRequest> requestMap) throws Exception {
+    private static Map<Band, FileInfo> findFiles(Map<Band, WebPlotRequest> requestMap) throws Exception {
 
-        Map<Band, FileData> fitsFiles = new LinkedHashMap<>();
+        Map<Band, FileInfo> fitsFiles = new LinkedHashMap<>();
 
         PlotServUtils.updatePlotCreateProgress( firstRequest(requestMap), ProgressStat.PType.READING,
                                                 PlotServUtils.STARTING_READ_MSG);
@@ -185,7 +187,7 @@ public class ImagePlotBuilder {
             WebPlotRequest request = entry.getValue();
             FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(request);
             if (retrieve != null) {
-                FileData fileData;
+                FileInfo fileData;
                 try {
                     fileData = retrieve.getFile(request);
                     fitsFiles.put(band, fileData);

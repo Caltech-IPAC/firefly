@@ -222,7 +222,7 @@ export class WebPlotRequest extends ServerRequest {
                 obj[C.BLANK_PLOT_HEIGHT]) {
                 typeGuess= RequestType.BLANK;
             }
-            if (typeGuess && !wpr.params[C.SERVICE]) wpr.setServiceType(typeGuess);
+            if (typeGuess && !wpr.params[C.TYPE]) wpr.setRequestType(typeGuess);
 
             if (has(wpr.params, C.URLKEY)) {
                 wpr.setURL(wpr.params[C.URLKEY]);

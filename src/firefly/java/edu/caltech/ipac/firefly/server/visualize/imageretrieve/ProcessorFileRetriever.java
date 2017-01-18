@@ -9,11 +9,10 @@ package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.visualize.FileData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.GeomException;
@@ -25,7 +24,7 @@ import java.io.File;
  *         $Id: ProcessorFileRetriever.java,v 1.8 2012/07/27 22:23:29 tatianag Exp $
  */
 public class ProcessorFileRetriever implements FileRetriever {
-    public FileData getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
+    public FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
         try {
             TableServerRequest sreq;
             String reqStr = request.getParam(ServerParams.REQUEST);
@@ -46,7 +45,7 @@ public class ProcessorFileRetriever implements FileRetriever {
                 throw new SecurityException("Access is not permitted.");
             }
             File f= new File(fi.getInternalFilename());
-            return new FileData(f, f.getName());
+            return new FileInfo(f, f.getName());
         } catch (DataAccessException dae) {
             throw new FailedRequestException("Unable to get file location info", dae.getMessage(), dae);
         } catch (Exception e) {
