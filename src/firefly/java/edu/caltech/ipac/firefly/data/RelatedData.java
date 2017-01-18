@@ -25,17 +25,17 @@ public class RelatedData implements Serializable {
     public static final String TABLE= "TABLE";
 
     private String dataType= ""; // image or table
-    private int maskValues[];
     private String desc;
     private Map<String,String> searchParams= new HashMap<>();
+    private Map<String,String> availableMask= new HashMap<>();
 
 
     private RelatedData() {}
 
-    public static RelatedData makeMaskRelatedData(String fileName, int maskValues[], int extensionNumber) {
+    public static RelatedData makeMaskRelatedData(String fileName, Map<String,String> availableMask, int extensionNumber) {
         RelatedData d= new RelatedData();
         d.dataType= IMAGE_MASK;
-        d.maskValues= maskValues;
+        d.availableMask= availableMask;
 
         d.desc= null;
         d.searchParams.put(WebPlotRequest.FILE, fileName);
@@ -47,10 +47,10 @@ public class RelatedData implements Serializable {
     }
 
 
-    public static RelatedData makeMaskRelatedData(Map<String,String> searchParams, int maskValues[]) {
+    public static RelatedData makeMaskRelatedData(Map<String,String> searchParams, Map<String,String> availableMask) {
         RelatedData d= new RelatedData();
         d.dataType= IMAGE_MASK;
-        d.maskValues= maskValues;
+        d.availableMask= availableMask;
 
         d.desc= null;
         d.searchParams= searchParams;
@@ -62,8 +62,6 @@ public class RelatedData implements Serializable {
         d.dataType= IMAGE_OVERLAY;
         d.desc= desc;
 
-        d.maskValues= null;
-
         d.searchParams.put(WebPlotRequest.FILE, fileName);
         d.searchParams.put(WebPlotRequest.TYPE, RequestType.FILE+"");
         d.searchParams.put(WebPlotRequest.MULTI_IMAGE_IDX, extensionNumber+"");
@@ -74,8 +72,6 @@ public class RelatedData implements Serializable {
         RelatedData d= new RelatedData();
         d.dataType= IMAGE_OVERLAY;
         d.desc= desc;
-        d.maskValues= null;
-
         d.searchParams= searchParams;
         return d;
     }
@@ -85,13 +81,12 @@ public class RelatedData implements Serializable {
         d.dataType= TABLE;
         d.searchParams= searchParams;
         d.desc= desc;
-        d.maskValues= null;
         return d;
     }
 
 
     public String getDataType() { return dataType;}
-    public int[] getMaskValues() { return maskValues;}
+    public Map<String,String> getAvailableMask() { return availableMask;}
     public String getDesc() { return desc;}
     public Map<String,String> getSearchParams() { return searchParams;}
 }
