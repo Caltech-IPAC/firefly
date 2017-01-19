@@ -5,7 +5,7 @@
 import {isUndefined, get,isNil, has, set, lowerCase} from 'lodash';
 import {take} from 'redux-saga/effects';
 import {flux} from '../../Firefly.js';
-import {LO_VIEW, LO_MODE, SHOW_DROPDOWN, SET_LAYOUT_MODE, SET_LAYOUT_DISPLAY,  getLayouInfo,
+import {LO_VIEW, LO_MODE, SHOW_DROPDOWN, SET_LAYOUT_MODE, SET_LAYOUT, getLayouInfo,
         dispatchUpdateLayoutInfo, dropDownHandler, dispatchLayoutDisplayMode} from '../../core/LayoutCntlr.js';
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT} from '../../tables/TablesCntlr.js';
 import {getCellValue, getTblById, makeTblRequest} from '../../tables/TableUtil.js';
@@ -65,15 +65,28 @@ export function periodPageMode(mode) {
 
     if (menu) {
         var newMenu = Object.assign({}, menu);
-        var periodItem = newMenu.menuItems.find((item) => item.action === SET_LAYOUT_DISPLAY);
+        var periodItem = newMenu.menuItems.find((item) => item.action === SET_LAYOUT);
 
         if (periodItem) {
             set(periodItem, ['payload', 'displayMode'], mode);
-            dispatchSetMenu(newMenu);
+        } else {
+            newMenu.menuItems.push({action: SET_LAYOUT,
+                                    label: 'Period Finding',
+                                    type: 'COMMAND',
+                                    payload: {displayMode: mode}});
         }
+        dispatchSetMenu(newMenu);
     }
 }
 
+export function updateLayoutDisplay(displayMode) {
+    var layoutInfo = getLayouInfo();
+    var newLayoutInfo = Object.assign({}, layoutInfo, {displayMode});
+
+    if (newLayoutInfo !== layoutInfo) {
+        dispatchUpdateLayoutInfo(newLayoutInfo);
+    }
+}
 
 var webplotRequestCreator;
 /**
@@ -109,29 +122,18 @@ export function* lcManager(params={}) {
          * @prop {string}   layoutInfo.searchDesc  optional string describing search criteria used to generate this result.
          * @prop {Object}   layoutInfo.images      images specific states
          * @prop {string}   layoutInfo.images.activeTableId  last active table id that images responded to
-         * @prop {string}   layoutInfo.rawTableId  indicate the raw table id, it there is, show the button of 'peridod finding'
          * @prop {string}   layoutInfo.displayMode:'result' (result page), 'period' (period finding page), 'periodogram' or neither
          */
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;
-        var menu;
+        var bInitPeriod = false;
 
         newLayoutInfo = dropDownHandler(newLayoutInfo, action);
         switch (action.type) {
             case TBL_RESULTS_ADDED:
             case TABLE_LOADED :
                 newLayoutInfo = handleTableLoad(newLayoutInfo, action);
-                menu = getMenu();
-                if (menu && !menuHas(menu, SET_LAYOUT_DISPLAY)) {
-                    var newMenu = Object.assign({}, menu);
-
-                    newMenu.menuItems.push({action: SET_LAYOUT_DISPLAY,
-                                            label: 'Period Finding',
-                                            type: 'COMMAND',
-                                            payload: {displayMode: 'period'}});
-                    dispatchSetMenu(newMenu);
-                }
-
+                bInitPeriod = handleMenuSetting(action);
                 break;
             case TABLE_HIGHLIGHT:
                 newLayoutInfo = handleTableHighlight(newLayoutInfo, action);
@@ -144,18 +146,6 @@ export function* lcManager(params={}) {
                 break;
             case VALUE_CHANGE:
                 if (['time', 'flux', 'periodMin', 'periodMax'].includes(action.payload.fieldKey)) {
-                    /*
-                    menu = getMenu();
-                    if (menu) {
-                        var periodItem = newMenu.menuItems.find((item) => item.action === SET_LAYOUT_DISPLAY);
-
-                        // change the period layout with periodogram and peak display to be with find periodogram button
-                        if (periodItem && get(periodItem, ['payload', 'displayMode']) !== LC.PERIOD_PAGE) {
-                            dispatchLayoutDisplayMode(LC.PERIOD_PAGE);
-                            periodPageMode(LC.PERIOD_PAGE);
-                        }
-                    }
-                    */
                     // re-validate period value
                     if (action.payload.fieldKey.startsWith('period')) { // periodMin or periodMax is changed
                         const fields = FieldGroupUtils.getGroupFields(LC.PERIOD_FINDER);
@@ -174,12 +164,24 @@ export function* lcManager(params={}) {
         if (newLayoutInfo !== layoutInfo) {
             dispatchUpdateLayoutInfo(newLayoutInfo);
         }
+        if (bInitPeriod) {
+            periodPageMode(LC.PERIOD_PAGE);
+        }
     }
+}
+
+function handleMenuSetting(action) {
+    return (get(action, ['payload', 'tbl_id']) === LC.RAW_TABLE);
 }
 
 function handleTableLoad(layoutInfo, action) {
     const {tbl_id} = action.payload;
-    layoutInfo =  Object.assign({}, layoutInfo, {showTables: true, showXyPlots: true, rawTableId: tbl_id});
+
+    layoutInfo =  Object.assign({}, layoutInfo, {showTables: true, showXyPlots: true});
+    if (tbl_id === LC.RAW_TABLE) {
+        layoutInfo = Object.assign({}, layoutInfo, {displayMode: LC.RESULT_PAGE});
+    }
+
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'showImages', true);
         layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);

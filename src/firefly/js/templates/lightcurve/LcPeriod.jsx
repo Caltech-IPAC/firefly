@@ -23,9 +23,9 @@ import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {dispatchRestoreDefaults, dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {makeTblRequest,getTblById, tableToText, makeFileRequest} from '../../tables/TableUtil.js';
-import {LC} from './LcManager.js';
+import {LC, updateLayoutDisplay} from './LcManager.js';
 import {LcPeriodogram, startPeriodogramPopup} from './LcPeriodogram.jsx';
-import {dispatchLayoutDisplayMode, LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
+import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
 import ReactHighcharts from 'react-highcharts';
 
 const pfinderkey = LC.PERIOD_FINDER;
@@ -848,7 +848,7 @@ function setPFTableSuccess() {
             loadXYPlot({chartId: LC.PHASE_FOLDED, tblId: LC.PHASE_FOLDED, xyPlotParams});
         });
 
-        dispatchLayoutDisplayMode(LC.RESULT_PAGE);
+        updateLayoutDisplay(LC.RESULT_PAGE);
     };
 }
 
@@ -1030,6 +1030,6 @@ function resetDefaults() {
  */
 function cancelPeriodSetting() {
     return () => {
-        dispatchLayoutDisplayMode(LC.RESULT_PAGE);
+        updateLayoutDisplay(LC.RESULT_PAGE);
     };
 }

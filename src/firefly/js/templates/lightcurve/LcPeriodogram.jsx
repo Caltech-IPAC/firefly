@@ -9,7 +9,7 @@ import { get, set, isEmpty} from 'lodash';
 import SplitPane from 'react-split-pane';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {createContentWrapper} from '../../ui/panel/DockLayoutPanel.jsx';
-import {LC, periodPageMode} from './LcManager.js';
+import {LC, periodPageMode, updateLayoutDisplay} from './LcManager.js';
 import {getTypeData} from './LcPeriod.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {dispatchValueChange, dispatchMountComponent} from '../../fieldGroup/FieldGroupCntlr.js';
@@ -20,7 +20,7 @@ import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
-import {dispatchLayoutDisplayMode, LO_VIEW} from '../../core/LayoutCntlr.js';
+import {LO_VIEW} from '../../core/LayoutCntlr.js';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
@@ -429,7 +429,7 @@ function periodogramSuccess(groupKey, popupId, hideDropDown = false) {
             dispatchHideDialog(popupId);
         }
 
-        dispatchLayoutDisplayMode(LC.PERGRAM_PAGE);
+        updateLayoutDisplay(LC.PERGRAM_PAGE);
         periodPageMode(LC.PERGRAM_PAGE);
     };
 }

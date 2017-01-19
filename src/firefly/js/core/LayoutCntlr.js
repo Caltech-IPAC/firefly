@@ -24,7 +24,6 @@ export const LO_MODE = new Enum(['expanded', 'standard']);
 export const SET_LAYOUT         = `${LAYOUT_PATH}.setLayout`;
 export const SET_LAYOUT_MODE    = `${LAYOUT_PATH}.setLayoutMode`;
 export const SHOW_DROPDOWN      = `${LAYOUT_PATH}.showDropDown`;
-export const SET_LAYOUT_DISPLAY = `${LAYOUT_PATH}.showPage`;
 
 /*---------------------------- Reducers ----------------------------*/
 
@@ -46,10 +45,6 @@ export function reducer(state={}, action={}) {
             var {visible = true} = action.payload;
             return smartMerge(state, {dropDown: {visible, view: getSelView(state, action.payload)}});
 
-        case SET_LAYOUT_DISPLAY :
-            var {displayMode} = action.payload;
-
-            return smartMerge(state, {displayMode});
         default:
             return state;
     }
@@ -90,10 +85,6 @@ export function dispatchHideDropDown() {
     flux.process({type: SHOW_DROPDOWN, payload: {visible: false}});
 }
 
-
-export function dispatchLayoutDisplayMode(mode) {
-    flux.process({type: SET_LAYOUT_DISPLAY, payload: {displayMode: mode}});
-}
 
 /*------------------------- Util functions -------------------------*/
 export function getExpandedMode() {
@@ -144,7 +135,7 @@ export function dropDownHandler(layoutInfo, action) {
         case REPLACE_VIEWER_ITEMS :
         case ImagePlotCntlr.PLOT_IMAGE :
         case ImagePlotCntlr.PLOT_IMAGE_START :
-            return updateSet(layoutInfo, 'dropDown.visible', false);
+            return smartMerge(layoutInfo, {dropDown: {visible: false}});
             break;
 
         case SHOW_DROPDOWN:
@@ -152,7 +143,7 @@ export function dropDownHandler(layoutInfo, action) {
         case ImagePlotCntlr.DELETE_PLOT_VIEW:
             if (!get(layoutInfo, 'dropDown.visible', false)) {
                 if (count===0) {
-                    return updateSet(layoutInfo, 'dropDown.visible', true);
+                    return smartMerge(layoutInfo, {dropDown: {visible: true}});
                 }
             }
             break;
