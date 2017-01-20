@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
@@ -27,8 +28,8 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
     private static final String YERR_COL_EXPR = "yErrColOrExpr";
     private static final String YERR_LOW_COL_EXPR = "yErrLowColOrExpr";
     private static final String YERR_HIGH_COL_EXPR = "yErrHighColOrExpr";
+    private static final String SORT_COL_OR_EXPR = "sortColOrExpr";
 
-    private static final Col NO_COL = new Col();
 
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
@@ -42,6 +43,7 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
         String yErrColOrExpr = request.getParam(YERR_COL_EXPR);
         String yErrLowColOrExpr = request.getParam(YERR_LOW_COL_EXPR);
         String yErrHighColOrExpr = request.getParam(YERR_HIGH_COL_EXPR);
+        String sortColOrExpr = request.getParam(SORT_COL_OR_EXPR);
 
         boolean hasXError = !StringUtils.isEmpty(xErrColOrExpr);
         boolean hasXLowError = !StringUtils.isEmpty(xErrLowColOrExpr);
@@ -49,8 +51,12 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
         boolean hasYError = !StringUtils.isEmpty(yErrColOrExpr);
         boolean hasYLowError = !StringUtils.isEmpty(yErrLowColOrExpr);
         boolean hasYHighError = !StringUtils.isEmpty(yErrHighColOrExpr);
+        boolean hasSortCol = !StringUtils.isEmpty(sortColOrExpr);
         if ((hasXError || hasXLowError || hasXHighError || hasYError || hasYLowError || hasYHighError) && dg.size()>=QueryUtil.DECI_ENABLE_SIZE) {
             throw new DataAccessException("Errors for more than "+QueryUtil.DECI_ENABLE_SIZE+" are not supported");
+        }
+        if (hasSortCol && dg.size()>=QueryUtil.DECI_ENABLE_SIZE) {
+            throw new DataAccessException("Connected points for more than "+QueryUtil.DECI_ENABLE_SIZE+" are not supported");
         }
 
         // the output table columns: rowIdx, x, y, [[left, right], [low, high]]
@@ -58,8 +64,19 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
 
         // create the array of getters, which know how to get double values
         ArrayList<Col> colsLst = new ArrayList<>();
-        colsLst.add(getCol(dataTypes, xColOrExpr,"x", false));
+        Col xCol = getCol(dataTypes, xColOrExpr,"x", false);
+        colsLst.add(xCol);
         colsLst.add(getCol(dataTypes, yColOrExpr, "y", false));
+
+        Col sortCol = null;
+        if (hasSortCol) {
+            if (sortColOrExpr.equals(xColOrExpr)) {
+                sortCol = xCol;
+            } else {
+                sortCol = getCol(dataTypes, sortColOrExpr, "sortBy", true);
+                colsLst.add(sortCol);
+            }
+        }
 
         if (hasXError) {
             colsLst.add(getCol(dataTypes, xErrColOrExpr, "xErr", true));
@@ -123,6 +140,10 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
                         retrow.setDataElement(dt, QueryUtil.convertData(dt.getDataType(), val));
                     } else {
                         retrow.setFormattedData(dt, formatted);
+                        // we need to have data in the sort column
+                        if (col == sortCol) {
+                            retrow.setDataElement(dt, QueryUtil.convertData(dt.getDataType(), val));
+                        }
                     }
                 }
             }
@@ -132,10 +153,19 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
             }
         }
 
+
         for (Col c : cols) {
             colMeta.add(new DataGroup.Attribute(c.exprColName, c.colOrExpr));
         }
+        if (xCol == sortCol) {
+            colMeta.add(new DataGroup.Attribute("sortBy", xCol.colOrExpr));
+        }
         retval.setAttributes(colMeta);
+
+        // if sorting is requested - sort
+        if (sortCol != null) {
+            QueryUtil.doSort(retval, new SortInfo(sortCol.colname));
+        }
 
         retval.shrinkToFitData();
         File outFile = createFile(request);
@@ -158,10 +188,6 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
         String exprColName;
         String colOrExpr;
         boolean canBeNaN;
-
-        Col() {
-            this.canBeNaN = true;
-        }
 
         Col(DataType[] dataTypes, String colOrExpr, String exprColName, boolean canBeNaN) {
             this.colOrExpr = colOrExpr;
