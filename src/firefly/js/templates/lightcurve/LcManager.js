@@ -108,7 +108,7 @@ var webplotRequestCreator;
  * @props {WebplotRequestCreator} params.webplotRequestCreator
  */
 export function* lcManager(params={}) {
-    webplotRequestCreator = params.WebplotRequestCreator || getWebPlotRequestViaUrl;
+    webplotRequestCreator = params.WebplotRequestCreator || getWebPlotRequestViaWISEIbe;
 
     while (true) {
         const action = yield take([
@@ -260,7 +260,7 @@ function handleChangeMultiViewLayout(layoutInfo) {
     return layoutInfo;
 }
 
-function getWebPlotRequest(tableModel, hlrow) {
+function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, fluxCol) {
     const ra = getCellValue(tableModel, hlrow, 'ra');
     const dec = getCellValue(tableModel, hlrow, 'dec');
     const frameId = getCellValue(tableModel, hlrow, 'frame_id');
@@ -269,24 +269,26 @@ function getWebPlotRequest(tableModel, hlrow) {
     const scan_id = res[1] + res[2];
     const scangrp = res[2];
     const frame_num = res[3];
+    const band=`${fluxCol}`.match(/\d/g);
+    const title= 'WISE-W'+ band + '-'+ frameId + (cutoutSize ? ` size: ${cutoutSize}(deg)` : '');
 
     const sr= new ServerRequest('ibe_file_retrieve');
     sr.setParam('mission', 'wise');
     sr.setParam('PROC_ID', 'ibe_file_retrieve');
     sr.setParam('ProductLevel',  '1b');
-    sr.setParam('ImageSet', 'allsky-4band');
-    sr.setParam('band', 2);
+    sr.setParam('ImageSet', 'merge');
+    sr.setParam('band', `${band}`);
     sr.setParam('scangrp', `${scangrp}`);
     sr.setParam('scan_id', `${scan_id}`);
     sr.setParam('frame_num', `${frame_num}`);
     sr.setParam('center', `${ra},${dec}`);
-    sr.setParam('size', '0.3');
-    sr.setParam('subsize', '0.3');
+    sr.setParam('size', `${cutoutSize}`);
+    sr.setParam('subsize', `${cutoutSize}`);
     sr.setParam('in_ra',`${ra}`);
     sr.setParam('in_dec',`${dec}`);
 
     const reqParams = WebPlotRequest.makeProcessorRequest(sr, 'wise');
-    return addCommonReqParams(reqParams, frameId, makeWorldPt(ra,dec,CoordinateSys.EQ_J2000));
+    return addCommonReqParams(reqParams, title, makeWorldPt(ra,dec,CoordinateSys.EQ_J2000));
 }
 
 function getWebPlotRequestViaUrl(tableModel, hlrow, cutoutSize) {
@@ -337,11 +339,12 @@ export function setupImages(tbl_id) {
         const maxPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,LC.MAX_IMAGE_CNT);
 
         const cutoutSize = get(FieldGroupUtils.getGroupFields(grpkey), ['cutoutSize', 'value'], null);
+        const fluxCol =  get(FieldGroupUtils.getGroupFields(grpkey), ['flux', 'value'], LC.DEF_FLUX_CNAME);
 
         newPlotIdAry.forEach( (plotId) => {
             if (!getPlotViewById(vr,plotId)) {
                 const rowNum= Number(plotId.substring(plotIdRoot.length));
-                const webPlotReq = webplotRequestCreator(tableModel,rowNum, cutoutSize);
+                const webPlotReq = webplotRequestCreator(tableModel,rowNum, cutoutSize,fluxCol);
                 dispatchPlotImage({plotId, wpRequest:webPlotReq,
                                            setNewPlotAsActive:false,
                                            holdWcsMatch:true,
