@@ -39,7 +39,9 @@ export class FieldGroup extends Component {
     }
 
     componentWillUnmount() {
-        dispatchMountFieldGroup(this.props.groupKey, false);
+        if (!this.props.keepMounted) {
+            dispatchMountFieldGroup(this.props.groupKey, false);
+        }
     }
 
     render() {
@@ -59,7 +61,8 @@ FieldGroup.propTypes= {
     actionTypes: PropTypes.arrayOf(PropTypes.string),
     keepState : PropTypes.bool,
     initValues : PropTypes.object,
-    style : PropTypes.object
+    style : PropTypes.object,
+    keepMounted: PropTypes.bool
 };
 
 FieldGroup.childContextTypes= {
@@ -71,6 +74,7 @@ FieldGroup.contextTypes = { groupKey: PropTypes.string };
 FieldGroup.defaultProps=  {
     reducerFunc: null,
     validatorFunc: null,
-    keepState : false
+    keepState : false,
+    keepMounted : false
 };
 

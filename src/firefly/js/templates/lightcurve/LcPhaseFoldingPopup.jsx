@@ -703,7 +703,7 @@ function getPhaseFoldingRequest(fields, tbl) {
     return makeTblRequest('PhaseFoldedProcessor', LC.PHASE_FOLDED, {
         'period_days': fields&&get(fields, 'period.value'),
         'table_name': 'folded_table',
-        'x': fields&&get(fields, 'timeCol.value'),
+        'x': fields&&get(fields, 'time.value'),
         'original_table': tbl.tableMeta.tblFilePath
     },  {tbl_id:LC.PHASE_FOLDED});
 

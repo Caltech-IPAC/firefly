@@ -9,7 +9,6 @@ function getProps(params, fireValueChange) {
     return Object.assign({}, params,
         {
             handleChange: (v) => handleOnChange(v, params, fireValueChange),
-            handleMaxChange: (v) => handleOnMaxChange(v, params, fireValueChange)
         });
 }
 
@@ -20,7 +19,7 @@ function getProps(params, fireValueChange) {
  * @param {function} fireValueChange
  */
 function handleOnChange(value, params, fireValueChange){
-     fireValueChange({
+     fireValueChange&&fireValueChange({
          value
      });
 
@@ -35,34 +34,11 @@ function handleOnChange(value, params, fireValueChange){
     }
 }
 
-/**
- * @summary callback to handle the slider value change  entered in the input field
- * @param {string} vText
- * @param {Object} params
- * @param {function} fireValueChange
- */
-function handleOnMaxChange(vText, params, fireValueChange) {
-    var value = vText;
-    var {steps, max} = adjustMax(parseFloat(vText), params.min, params.step);
-
-    fireValueChange({
-        value
-    });
-
-    var {groupKey} = params;
-    var payload = Object.assign({}, {value: max}, {groupKey, fieldKey: 'periodMax'});
-    dispatchValueChange(payload);
-    payload = Object.assign({}, {value: steps}, {groupKey, fieldKey: 'periodSteps'});
-    dispatchValueChange(payload);
-
-    if (has(params, 'onValueChange')) {
-        params.onValueChange(parseFloat(value));
-    }
-}
-
 const propTypes={
-    label:       PropTypes.string,                  // slider label
-    value:       PropTypes.string.required,         // slider value
+    associatedKey: PropTypes.string,
+    label:       PropTypes.string,             // slider label
+    slideValue:  PropTypes.string.required,    // slider value
+    value:       PropTypes.string,
     onValueChange: PropTypes.func,                  // callback on slider change
     min:         PropTypes.number,                  // minimum end of slider
     max:         PropTypes.number,                  // maximum end of slider
@@ -78,7 +54,6 @@ const propTypes={
     tooltip:  PropTypes.string,                          // tooltip on label
     minStop:  PropTypes.number,                          // minimum value the slider can be changed to
     maxStop:  PropTypes.number,                          // maximum value the slider can be changed to
-    canEnterValue: PropTypes.bool,                       // if the slider value can be mannually entered
     errMsg: PropTypes.string                            // message for invalid value
 };
 

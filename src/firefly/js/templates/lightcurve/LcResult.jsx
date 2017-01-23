@@ -24,12 +24,13 @@ import {LcPFOptionsPanel} from './LcPhaseFoldingPanel.jsx';
 import {LcPeriodFindingPanel} from './PeriodogramOptionsPanel.jsx';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 
+const resultItems = ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'showForm', 'images'];
 
 export class LcResult extends Component {
 
     constructor(props) {
         super(props);
-        this.state = {};
+        this.state = Object.assign({}, pick(getLayouInfo(), resultItems));
     }
 
     shouldComponentUpdate(np, ns) {
@@ -45,7 +46,7 @@ export class LcResult extends Component {
     }
 
     storeUpdate() {
-        const nextState = pick(getLayouInfo(), ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'showForm', 'images']);
+        const nextState = pick(getLayouInfo(), resultItems);
         this.setState(nextState);
     }
 
@@ -145,7 +146,7 @@ const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
 
 
 // eslint-disable-next-line
-const StandardView = ({visToolbar, title, searchDesc, standard, imagePlot, xyPlot, tables, form}) => {
+const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables, form}) => {
 
     return (
         <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, position: 'relative'}}>

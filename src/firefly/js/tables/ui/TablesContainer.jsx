@@ -55,7 +55,7 @@ export class TablesContainer extends Component {
     render() {
         const {closeable, tbl_group, expandedMode, tables, layout, active} = this.state;
         if (expandedMode) {
-            return <ExpandedView {...{active, tables, layout, expandedMode, closeable}} />;
+            return <ExpandedView {...{active, tables, layout, expandedMode, closeable, tbl_group}} />;
         } else {
             return isEmpty(tables) ? <div></div> : <StandardView {...{active, tables, expandedMode, tbl_group}} />;
         }
