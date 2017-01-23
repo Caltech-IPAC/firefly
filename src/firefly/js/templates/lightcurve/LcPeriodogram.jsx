@@ -3,11 +3,8 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-
-import sCompare from 'react-addons-shallow-compare';
-import { get, set, isEmpty} from 'lodash';
+import { get, set} from 'lodash';
 import SplitPane from 'react-split-pane';
-import CompleteButton from '../../ui/CompleteButton.jsx';
 import {createContentWrapper} from '../../ui/panel/DockLayoutPanel.jsx';
 import {LC, periodPageMode, updateLayoutDisplay} from './LcManager.js';
 import {getTypeData} from './LcPeriod.jsx';
@@ -16,7 +13,7 @@ import {dispatchValueChange, dispatchMountComponent} from '../../fieldGroup/Fiel
 import Validate from '../../util/Validate.js';
 import {makeTblRequest, getTblById} from '../../tables/TableUtil.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
-import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
+import {dispatchTableSearch, dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
@@ -162,7 +159,7 @@ function  PeriodogramButton(props) {
                     className='button std'
                     onClick={startPeriodogramPopup(groupKey)}>Find Periodogram</button>
         </div>
-    )
+    );
 }
 
 
@@ -170,7 +167,7 @@ PeriodogramButton.propTypes = {
     groupKey: PropTypes.string.isRequired
 };
 
-const popupId = 'periodogramPopup';
+export const popupId = 'periodogramPopup';
 
 /**
  * @summry periodogram popup
@@ -275,7 +272,6 @@ class PeriodogramOptionsBox extends Component {
                         <ListBoxInputField options={algorOptions}
                                            multiple={false}
                                            fieldKey={pKeyDef.algor.fkey}
-                                           multiple={false}
                         />
                         <br/>
                         <SuggestBoxInputField
@@ -356,13 +352,13 @@ function resetDefaults(groupKey) {
  * @param popupId
  * @returns {Function}
  */
-function cancelPeriodogram(groupKey, popupId) {
+export function cancelPeriodogram(groupKey, popupId) {
     return () => {
         resetDefaults(groupKey);
         if (popupId && isDialogVisible(popupId)) {
             dispatchHideDialog(popupId);
         }
-    }
+    };
 }
 
 /**
@@ -425,6 +421,7 @@ function periodogramSuccess(groupKey, popupId, hideDropDown = false) {
             loadXYPlot({chartId: LC.PERIODOGRAM, tblId: LC.PERIODOGRAM, markAsDefault: true, xyPlotParams});
         }
 
+        dispatchActiveTableChanged(LC.PERIODOGRAM, LC.PERIODOGRAM_GROUP);
         if (hideDropDown && popupId && isDialogVisible(popupId)) {
             dispatchHideDialog(popupId);
         }
@@ -454,14 +451,14 @@ const  PeriodogramResult = ({expanded}) => {
 
 
     if (!expanded || expanded === LO_VIEW.none) {
-        resultLayout = <SplitPane split='horizontal' minSize={20} defaultSize={'45%'}>
+        resultLayout = (<SplitPane split='horizontal' minSize={20} defaultSize={'45%'}>
                             {createContentWrapper(tables)}
                             {createContentWrapper(xyPlot)}
-                        </SplitPane>;
+                        </SplitPane>);
     } else {
-        resultLayout = <div style={{ flex: 'auto', display: 'flex', flexFlow: 'column', overflow: 'hidden', height: '100%'}}>
+        resultLayout = (<div style={{ flex: 'auto', display: 'flex', flexFlow: 'column', overflow: 'hidden', height: '100%'}}>
             {expanded === LO_VIEW.tables ? tables : xyPlot}
-        </div>;
+        </div>);
     }
     return resultLayout;
 };

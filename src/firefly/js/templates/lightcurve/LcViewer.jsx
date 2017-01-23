@@ -5,12 +5,12 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {pickBy, startsWith} from 'lodash';
+import {pickBy} from 'lodash';
 
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
 import {getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
-import {lcManager, LC} from './LcManager.js';
+import {lcManager, LC, removeTablesFromGroup} from './LcManager.js';
 import {listenerPanel} from './LcPhaseFoldingPanel.jsx';
 import {LcResult} from './LcResult.jsx';
 import {LcPeriod} from './LcPeriod.jsx';
@@ -32,9 +32,6 @@ import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import * as TblUtil from '../../tables/TableUtil.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
-import {menuHas} from './LcManager.js';
-
-// import {deepDiff} from '../util/WebUtil.js';
 
 /**
  * This is a light curve viewer.
@@ -85,7 +82,7 @@ export class LcViewer extends Component {
 
     render() {
         var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown,
-                dropdownPanels=[], views, footer, style, displayMode} = this.state;
+                dropdownPanels=[], footer, style, displayMode} = this.state;
         const {visible, view} = dropDown || {};
 
         dropdownPanels.push(<UploadPanel/>);
@@ -105,7 +102,7 @@ export class LcViewer extends Component {
                             {...{dropdownPanels} } />
                     </header>
                     <main>
-                        {displayMode&&startsWith(displayMode, 'period') ? <LcPeriod displayMode={displayMode}/> : <LcResult/>}
+                        {displayMode&&displayMode.startsWith('period') ? <LcPeriod displayMode={displayMode}/> : <LcResult/>}
                     </main>
                 </div>
             );
@@ -199,7 +196,8 @@ export function UploadPanel(props) {
             </FormPanel>
         </div>
     );
-};
+}
+
 UploadPanel.propTypes = {
     name: PropTypes.oneOf(['LCUpload'])
 };
@@ -210,6 +208,9 @@ UploadPanel.defaultProps = {
 
 function onSearchSubmit(request) {
     if ( request.rawTblSource ){
+        removeTablesFromGroup();
+        removeTablesFromGroup(LC.PERIODOGRAM_GROUP);
+
         const {timeCName= LC.DEF_TIME_CNAME, fluxCName= LC.DEF_FLUX_CNAME} = request;
         const options = {
             tbl_id: LC.RAW_TABLE,

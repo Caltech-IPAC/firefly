@@ -2,13 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isUndefined, get,isNil, has, set, lowerCase} from 'lodash';
+import {get, isNil, set} from 'lodash';
 import {take} from 'redux-saga/effects';
-import {flux} from '../../Firefly.js';
-import {LO_VIEW, LO_MODE, SHOW_DROPDOWN, SET_LAYOUT_MODE, SET_LAYOUT, getLayouInfo,
-        dispatchUpdateLayoutInfo, dropDownHandler, dispatchLayoutDisplayMode} from '../../core/LayoutCntlr.js';
-import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT} from '../../tables/TablesCntlr.js';
-import {getCellValue, getTblById, makeTblRequest} from '../../tables/TableUtil.js';
+import {SHOW_DROPDOWN, SET_LAYOUT_MODE, SET_LAYOUT, getLayouInfo,
+        dispatchUpdateLayoutInfo, dropDownHandler} from '../../core/LayoutCntlr.js';
+import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT,
+        dispatchTableRemove} from '../../tables/TablesCntlr.js';
+import {getCellValue, getTblById, getTblIdsByGroup} from '../../tables/TableUtil.js';
 import {updateSet} from '../../util/WebUtil.js';
 import {dispatchPlotImage, visRoot, dispatchDeletePlotView,
         dispatchChangeActivePlotView,
@@ -16,16 +16,15 @@ import {dispatchPlotImage, visRoot, dispatchDeletePlotView,
 import {getPlotViewById} from '../../visualize/PlotViewUtil.js';
 import {getMultiViewRoot, dispatchReplaceViewerItems, getViewer} from '../../visualize/MultiViewCntlr.js';
 import {WebPlotRequest,TitleOptions} from '../../visualize/WebPlotRequest.js';
-import {dispatchTableToIgnore} from '../../visualize/DrawLayerCntlr.js';
-import Catlog from '../../drawingLayers/Catalog.js';
 import {ServerRequest} from '../../data/ServerRequest.js';
 import {CHANGE_VIEWER_LAYOUT} from '../../visualize/MultiViewCntlr.js';
-import {LcPFOptionsPanel, grpkey} from './LcPhaseFoldingPanel.jsx';
-import FieldGroupUtils, {revalidateFields} from '../../fieldGroup/FieldGroupUtils';
+import {grpkey} from './LcPhaseFoldingPanel.jsx';
+import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {VALUE_CHANGE, dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {makeWorldPt} from '../../visualize/Point.js';
 import {CoordinateSys} from '../../visualize/CoordSys.js';
 import {getMenu, dispatchSetMenu} from '../../core/AppDataCntlr.js';
+
 
 export const LC = {
     RAW_TABLE: 'raw_table',          // raw table id
@@ -55,10 +54,11 @@ export const LC = {
 };
 
 const plotIdRoot= 'LC_FRAME-';
+/*
 export var menuHas = (menu, action) => {
     return  menu && has(menu, 'menuItems') && menu.menuItems.find((item)=> item.action === action);
 };
-
+*/
 
 export function periodPageMode(mode) {
     const menu = getMenu();
@@ -80,12 +80,17 @@ export function periodPageMode(mode) {
 }
 
 export function updateLayoutDisplay(displayMode) {
-    var layoutInfo = getLayouInfo();
-    var newLayoutInfo = Object.assign({}, layoutInfo, {displayMode});
+    var newLayoutInfo = Object.assign(getLayouInfo(), {displayMode});
 
-    if (newLayoutInfo !== layoutInfo) {
-        dispatchUpdateLayoutInfo(newLayoutInfo);
-    }
+    dispatchUpdateLayoutInfo(newLayoutInfo);
+}
+
+export function removeTablesFromGroup(tbl_group_id = 'main') {
+    const tblAry = getTblIdsByGroup(tbl_group_id);
+
+    tblAry&&tblAry.forEach((tbl_id) => {
+        dispatchTableRemove(tbl_id);
+    });
 }
 
 var webplotRequestCreator;
@@ -126,20 +131,20 @@ export function* lcManager(params={}) {
          */
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;
-        var bInitPeriod = false;
+        var bInit = false;
 
         newLayoutInfo = dropDownHandler(newLayoutInfo, action);
         switch (action.type) {
             case TBL_RESULTS_ADDED:
             case TABLE_LOADED :
+                bInit = handleMenuSetting(action);
                 newLayoutInfo = handleTableLoad(newLayoutInfo, action);
-                bInitPeriod = handleMenuSetting(action);
                 break;
             case TABLE_HIGHLIGHT:
                 newLayoutInfo = handleTableHighlight(newLayoutInfo, action);
                 break;
             case CHANGE_VIEWER_LAYOUT:
-                newLayoutInfo = handleChangeMultiViewLayout(newLayoutInfo, action);
+                newLayoutInfo = handleChangeMultiViewLayout(newLayoutInfo);
                 break;
             case TBL_RESULTS_ACTIVE :
                 newLayoutInfo = handleTableActive(newLayoutInfo, action);
@@ -152,7 +157,7 @@ export function* lcManager(params={}) {
                         const per = fields && get(fields, ['period', 'value']);
 
                         dispatchValueChange({
-                            fieldKey: lowerCase(LC.PERIOD_CNAME),
+                            fieldKey: (LC.PERIOD_CNAME).toLowerCase(),
                             groupKey: LC.PERIOD_FINDER,
                             value: per
                         });
@@ -164,7 +169,7 @@ export function* lcManager(params={}) {
         if (newLayoutInfo !== layoutInfo) {
             dispatchUpdateLayoutInfo(newLayoutInfo);
         }
-        if (bInitPeriod) {
+        if (bInit) {
             periodPageMode(LC.PERIOD_PAGE);
         }
     }
@@ -173,6 +178,7 @@ export function* lcManager(params={}) {
 function handleMenuSetting(action) {
     return (get(action, ['payload', 'tbl_id']) === LC.RAW_TABLE);
 }
+
 
 function handleTableLoad(layoutInfo, action) {
     const {tbl_id} = action.payload;
@@ -202,15 +208,24 @@ function handleTableActive(layoutInfo, action) {
 
 function handleTableHighlight(layoutInfo, action) {
     const {tbl_id} = action.payload;
-    if (isImageEnabledTable(tbl_id)) {
-        setupImages(tbl_id);
+
+    if (tbl_id !== LC.PERIODOGRAM && tbl_id !== LC.PEAK_TABLE) {
+        if (isImageEnabledTable(tbl_id)) {
+            setupImages(tbl_id);
+        }
+    } else {
+        const per = getPeriodFromTable(tbl_id);
+
+        if (per) {
+            dispatchValueChange({
+                fieldKey: (LC.PERIOD_CNAME).toLowerCase(),
+                groupKey: LC.PERIOD_FINDER,
+                value: `${parseFloat(per)}`
+            });
+        }
     }
 
-    const per = getPeriodFromTable(tbl_id);
-    if (per) {
-        dispatchValueChange({fieldKey: lowerCase(LC.PERIOD_CNAME), groupKey: LC.PERIOD_FINDER, value: `${parseFloat(per)}`});
-    }
-
+    return layoutInfo;
 }
 
 /**
@@ -238,7 +253,7 @@ function isImageEnabledTable(tbl_id) {
     return [LC.PHASE_FOLDED, LC.RAW_TABLE].includes(tbl_id);
 }
 
-function handleChangeMultiViewLayout(layoutInfo, action) {
+function handleChangeMultiViewLayout(layoutInfo) {
     const activeTableId = get(layoutInfo, 'images.activeTableId');
     const tbl= getTblById(activeTableId);
     if (get(tbl, 'totalRows',0)>0) setupImages(activeTableId);

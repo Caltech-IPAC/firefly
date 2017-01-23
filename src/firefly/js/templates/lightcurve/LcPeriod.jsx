@@ -5,7 +5,7 @@
 import React, {Component, PropTypes} from 'react';
 
 import sCompare from 'react-addons-shallow-compare';
-import {cloneDeep, get, set, omit, slice, replace, pick, isEmpty} from 'lodash';
+import {cloneDeep, get, set, omit, slice, replace, pick, isEmpty,  debounce, defer} from 'lodash';
 import SplitPane from 'react-split-pane';
 import {flux} from '../../Firefly.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
@@ -19,14 +19,16 @@ import {createContentWrapper} from '../../ui/panel/DockLayoutPanel.jsx';
 import Validate from '../../util/Validate.js';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
-import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
+import {dispatchTableSearch, dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {dispatchRestoreDefaults, dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
-import {makeTblRequest,getTblById, tableToText, makeFileRequest} from '../../tables/TableUtil.js';
+import {makeTblRequest,getTblById, tableToText, makeFileRequest, getActiveTableId} from '../../tables/TableUtil.js';
 import {LC, updateLayoutDisplay} from './LcManager.js';
-import {LcPeriodogram, startPeriodogramPopup} from './LcPeriodogram.jsx';
+import {LcPeriodogram, startPeriodogramPopup, cancelPeriodogram, popupId} from './LcPeriodogram.jsx';
 import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
+import {isDialogVisible} from '../../core/ComponentCntlr.js';
 import ReactHighcharts from 'react-highcharts';
+import Resizable from 'react-component-resizable';
 
 const pfinderkey = LC.PERIOD_FINDER;
 const labelWidth = 100;
@@ -124,9 +126,6 @@ var currentPhaseFoldedTable;   // table with phase column
 var SliderMin = 0.0;           // min on slider
 var SliderMax;                 // max on slider
 var periodErr;       // error message for period setting
-var timeErr;         // error message for time zero setting
-
-
 
 function lastFrom(strAry) {
     return strAry.length > 0 ? strAry[strAry.length - 1] : '';
@@ -169,7 +168,7 @@ export class LcPeriod extends Component {
     }
 
     storeUpdate() {
-        if (this && this.iAmMounted) {
+        if (this.iAmMounted) {
             const nextState = pick(getLayouInfo(), ['mode']);
             const cState = pick(this.state, ['mode']);
             const nextLayout = pick(getLayouInfo(), ['displayMode']);
@@ -279,9 +278,11 @@ const PeriodStandardView = (props) => {
 
     // when field is not set yet, set the init value
     if (!fields) {
-        var {timeColName:time, fluxColName:flux, validTimeColumns:timeCols, validFluxColumns:fluxCols} = props;
-        timeErr = `time zero error: must be a float and within [${periodRange.tzero}, ${periodRange.tzeroMax}]`;
-        initState = Object.assign({time, flux, timeCols, fluxCols}, {...periodRange});
+        var {timeColName, fluxColName, validTimeColumns, validFluxColumns} = props;
+        initState = Object.assign({time: timeColName,
+                                   flux: fluxColName,
+                                   timeCols: validTimeColumns,
+                                   fluxCols: validFluxColumns}, {...periodRange});
     }
 
     const acceptPeriodTxt = `Accept Period: ${currentPeriod ? currentPeriod : ''}`;
@@ -299,8 +300,7 @@ const PeriodStandardView = (props) => {
                         <SplitPane split='vertical' minSize={20} defaultSize={PanelResizableStyle.width}>
                             <SplitPane split='horizontal' minSize={20} defaultSize={'45%'}>
                                 {createContentWrapper(<LcPFOptionsBox />)}
-                                {createContentWrapper(<PhaseFoldingChart height={350}
-                                                                         width={PanelResizableStyle.width}/>)}
+                                {createContentWrapper(<PhaseFoldingChart />)}
                             </SplitPane>
                             {createContentWrapper(<LcPeriodogram displayMode={displayMode} groupKey={pfinderkey}/>)}
                         </SplitPane>
@@ -340,12 +340,30 @@ const PeriodStandardView = (props) => {
     );
 };
 
+
+PeriodStandardView.propTypes = {
+    displayMode: PropTypes.string,
+    lastPeriod: PropTypes.string,
+    currentPeriod: PropTypes.string,
+    revertPeriod: PropTypes.func,
+    timeColName: PropTypes.string,
+    fluxColName: PropTypes.string,
+    validTimeColumns: PropTypes.arrayOf(PropTypes.string),
+    validFluxColumns: PropTypes.arrayOf(PropTypes.string)
+};
+
+
 const PeriodExpandedView = ({expanded, displayMode}) => {
     const expandedProps = {expanded, displayMode, groupKey: pfinderkey};
 
     return (
         <LcPeriodogram  {...expandedProps} />
     );
+};
+
+PeriodExpandedView.propTypes = {
+    expanded: PropTypes.object,
+    displayMode: PropTypes.string
 };
 
 /**
@@ -356,8 +374,27 @@ class PhaseFoldingChart extends Component {
         super(props);
 
         var fields = FieldGroupUtils.getGroupFields(pfinderkey);
-        var {width, height, showTooltip=true} = props;
+        var {showTooltip=true} = props;
         var {data, minPhase = 0.0, period, flux} = getPhaseFlux(fields);
+
+        const normal = (size) => {
+            if (size && this.iAmMounted) {
+                var widthPx = size.width;
+                var heightPx = size.height;
+
+                if (widthPx !== this.state.widthPx || heightPx !== this.state.heightPx) {
+                    this.setState({widthPx, heightPx});
+                }
+            }
+        };
+        const debounced = debounce(normal, 100);
+        this.onResize = (size) => {
+            if (this.state.widthPx === 0) {
+                defer(normal, size);
+            } else {
+                debounced(size);
+            }
+        };
 
         this.state = {
             fields,
@@ -367,9 +404,7 @@ class PhaseFoldingChart extends Component {
                     borderColor: '#a5a5a5',
                     borderWidth: 1,
                     borderRadius: 5,
-                    zoomType: 'xy',
-                    height,
-                    width
+                    zoomType: 'xy'
                 },
                 title: {
                     fontSize: '16px',
@@ -411,7 +446,7 @@ class PhaseFoldingChart extends Component {
     }
 
     shouldComponentUpdate(np,ns) {
-        return (this.props !== np) || (this.state.fields !== ns.fields);
+        return sCompare(np, ns);
     }
 
     componentWillUnmount() {
@@ -451,16 +486,29 @@ class PhaseFoldingChart extends Component {
         });
     }
 
+
     render() {
-        //console.log('rerender hicharts');
+        const {widthPx, heightPx} = this.state;
+
+        if (this.refs.chart) {
+            var  chart = this.refs.chart.getChart();
+
+            chart.setSize(widthPx, heightPx);
+        }
+
         return (
-            <div>
+            <Resizable className='ChartPanel__chartresizer'
+                       onResize={this.onResize}>
                 <ReactHighcharts config={this.state.config} isPureConfig={true} ref='chart'/>
-            </div>
+            </Resizable>
         );
     }
 
 }
+
+PhaseFoldingChart.propTypes = {
+    showTooltip: PropTypes.bool
+};
 
 
 /**
@@ -555,7 +603,7 @@ class LcPFOptionsBox extends Component {
                     newState = Object.assign({}, newState, {minPeriod});
                 }
                 if (period) {
-                    newState = Object.assign({}, newState, {period})
+                    newState = Object.assign({}, newState, {period});
                 }
 
                 this.setState(newState);
@@ -575,12 +623,8 @@ class LcPFOptionsBox extends Component {
 
 /**
  * @summary light curve phase folding FieldGroup rendering
- * @param period
- * @param minPeriod
- * @param maxPeriod
- * @returns {XML}
- * @constructor
  */
+
 function LcPFOptions({period, minPeriod, maxPeriod}) {
 
     if (!maxPeriod || !minPeriod || !period) return <span />;   // when there is no field defined in the beginning
@@ -662,7 +706,8 @@ function LcPFOptions({period, minPeriod, maxPeriod}) {
                     <ValidationField fieldKey={fKeyDef.max.fkey} />
                 </div>
                 <br/>
-                <div style={{marginTop: 20, display: 'flex', justifyContent: 'center'}}>
+                <div style={{marginTop: 20, width: PanelResizableStyle.width,
+                             display: 'flex', justifyContent: 'center'}}>
                     <ValidationField fieldKey={fKeyDef.period.fkey} />
                 </div>
                 <br/>
@@ -694,7 +739,6 @@ var LcPFReducer= (initState) => {
                 var defV = Object.assign({}, defValues);
                 const {min, max, time, flux, timeCols, fluxCols, tzero,  tzeroMax} = initState || {};
 
-                timeErr = `time zero error: must be a float and within [${periodRange.tzero}, ${periodRange.tzeroMax}]`;
                 set(defV, [fKeyDef.min.fkey, 'value'], `${min}`);
                 set(defV, [fKeyDef.max.fkey, 'value'], `${max}`);
                 set(defV, [fKeyDef.time.fkey, 'value'], time);
@@ -723,6 +767,7 @@ var LcPFReducer= (initState) => {
 /**
  * @summary validator for periopd value
  * @param {number} precision
+ * @param {string} description
  * @returns {function}
  */
 function periodValidator(precision, description) {
@@ -840,7 +885,7 @@ function setPFTableSuccess() {
             const tReq = makeFileRequest(title, cacheKey, null, {tbl_id, sortInfo:sortInfoString(LC.PHASE_CNAME)});
             dispatchTableSearch(tReq, {removable: false});
 
-            let xyPlotParams = {
+            const xyPlotParams = {
                 userSetBoundaries: {xMax: 2},
                 x: {columnOrExpr: LC.PHASE_CNAME, options: 'grid'},
                 y: {columnOrExpr: flux, options: 'grid,flip'}
@@ -866,8 +911,8 @@ function setPFTableFail() {
  * @summary adding phase column to raw table
  */
 function doPFCalculate() {
-    let fields = FieldGroupUtils.getGroupFields(pfinderkey);
-    let rawTable = getTblById(LC.RAW_TABLE);
+    const fields = FieldGroupUtils.getGroupFields(pfinderkey);
+    const rawTable = getTblById(LC.RAW_TABLE);
 
     currentPhaseFoldedTable = rawTable && addPhaseToTable(rawTable, fields);
 }
@@ -1030,6 +1075,11 @@ function resetDefaults() {
  */
 function cancelPeriodSetting() {
     return () => {
+        if (isDialogVisible(popupId)) {
+            cancelPeriodogram(pfinderkey, popupId);
+        }
+
+        dispatchActiveTableChanged(getActiveTableId()||LC.RAW_TABLE);
         updateLayoutDisplay(LC.RESULT_PAGE);
     };
 }
