@@ -16,6 +16,7 @@ import {colWithName, getNumericCols, SCATTER} from './../ChartUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 
 export const DT_XYCOLS = 'xycols';
+const DECI_ENABLE_SIZE = 5000; // matching QueryUtil.DECI_ENABLE_SIZE
 
 /**
  * Chart data type for XY columns
@@ -231,7 +232,7 @@ function serverParamsChanged(oldParams, newParams, chartDataElement) {
 
 function isLargeTable(tblId) {
     const {totalRows}= getTblById(tblId);
-    return (totalRows >= 5000);
+    return (totalRows >= DECI_ENABLE_SIZE);
 }
 
 //function errorsOrSortRequested(xyPlotParams) {

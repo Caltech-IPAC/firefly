@@ -19,6 +19,9 @@ const defaultShading = 'lin';
 
 export const axisParamsShape = PropTypes.shape({
     columnOrExpr : PropTypes.string,
+    error : PropTypes.string, // for symmetric errors
+    errorLow : PropTypes.string, // for asymmetric errors
+    errorHigh : PropTypes.string, // for asymmetric errors
     label : PropTypes.string,
     unit : PropTypes.string,
     error: PropTypes.string,
@@ -33,6 +36,8 @@ export const selectionShape = PropTypes.shape({
 });
 
 export const plotParamsShape = PropTypes.shape({
+    plotStyle: PropTypes.oneOf(['points', 'line', 'linepoints']),
+    sortColOrExpr: PropTypes.string,
     xyRatio : PropTypes.number,
     stretch : PropTypes.oneOf(['fit','fill']),
     selection : selectionShape,
@@ -72,6 +77,10 @@ const selectedColor = 'rgba(255, 200, 0, 1)';
 const highlightedColor = 'rgba(255, 165, 0, 1)';
 const selectionRectColor = 'rgba(255, 209, 128, 0.5)';
 const selectionRectColorGray = 'rgba(165, 165, 165, 0.5)';
+
+const isLinePlot = function(plotStyle) {
+    return plotStyle === 'line' || plotStyle === 'linepoints';
+};
 
 /*
  @param {number} weight for a given point
@@ -580,7 +589,7 @@ export class XYPlot extends React.Component {
                 allSeries.push({
                     id: DATAPOINTS,
                     name: DATAPOINTS,
-                    type: params.plotStyle === 'line' ? 'line' : 'scatter',
+                    type: isLinePlot(params.plotStyle) ? 'line' : 'scatter',
                     color: hasErrorBars? datapointsColorWithErrors : datapointsColor,
                     data: rows,
                     marker,
@@ -753,6 +762,9 @@ export class XYPlot extends React.Component {
                     stickyTracking: false
                 },
                 line: {
+                    marker: {
+                        enabled: params.plotStyle === 'linepoints'
+                    },
                     states: {
                         hover: {
                             lineWidthPlus: 0 // do not increase line width when hovering over the series, default is 1

@@ -59,7 +59,7 @@ export function resultsSuccess(callback, flds, tblId) {
     const yErr = get(flds, ['y.error']);
 
     const plotStyle = get(flds, ['plotStyle']);
-    const sortColOrExpr = (plotStyle === 'line') ? xName : undefined;
+    const sortColOrExpr = plotStyle.startsWith('line') ? xName : undefined;
 
     const xOptions = get(flds, ['x.options']);
     const xLabel = get(flds, ['x.label']);
@@ -485,10 +485,11 @@ export class XYPlotOptions extends React.Component {
                         initialState= {{
                             value: get(xyPlotParams, 'plotStyle', 'points'),
                             tooltip: 'Select plot style',
-                            label : 'Plot style:'
+                            label : 'Plot Style:'
                         }}
                         options={[
                             {label: 'Points', value: 'points'},
+                            {label: 'Connected Points', value: 'linepoints'},
                             {label: 'Line', value: 'line'}
                         ]}
                         fieldKey='plotStyle'
