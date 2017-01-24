@@ -1076,7 +1076,7 @@ function resetDefaults() {
 function cancelPeriodSetting() {
     return () => {
         if (isDialogVisible(popupId)) {
-            cancelPeriodogram(pfinderkey, popupId);
+            cancelPeriodogram(pfinderkey, popupId)();
         }
 
         dispatchActiveTableChanged(getActiveTableId()||LC.RAW_TABLE);
