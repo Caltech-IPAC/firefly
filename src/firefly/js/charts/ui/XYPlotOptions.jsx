@@ -59,7 +59,7 @@ export function resultsSuccess(callback, flds, tblId) {
     const yErr = get(flds, ['y.error']);
 
     const plotStyle = get(flds, ['plotStyle']);
-    const sortColOrExpr = plotStyle.startsWith('line') ? xName : undefined;
+    const sortColOrExpr = (plotStyle === 'line' || plotStyle === 'linepoints') ? xName : undefined;
 
     const xOptions = get(flds, ['x.options']);
     const xLabel = get(flds, ['x.label']);
