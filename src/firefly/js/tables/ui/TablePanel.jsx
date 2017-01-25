@@ -112,7 +112,7 @@ export class TablePanel extends Component {
     render() {
         const {selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
                 showToolbar, showTitle, showOptionButton, showPaging, showSave, showFilterButton} = this.state;
-        var {totalRows, showLoading, columns, showOptions, showUnits, showFilters, textView, optSortInfo} = this.state;
+        var {totalRows, showLoading, columns, showOptions, showUnits, showFilters, textView, optSortInfo, downloadButton} = this.state;
         const {tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
                 filterInfo, filterCount, sortInfo, data} = this.state;
         const {tableConnector} = this;
@@ -123,8 +123,9 @@ export class TablePanel extends Component {
 
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
         const viewIcoStyle = 'PanelToolbar__button ' + (textView ? 'tableView' : 'textView');
-        const tableTopPos = showToolbar ? 29 : 0;
+        const tableTopPos = showToolbar && (downloadButton && showTitle ? 41 : 29) || 0;
         const TT_VIEW = textView ? TT_TABLE_VIEW : TT_TEXT_VIEW;
+        downloadButton = downloadButton && React.cloneElement(downloadButton, {tbl_id});
 
         return (
             <div style={{ position: 'relative', width: '100%', height: '100%'}}>
@@ -132,7 +133,7 @@ export class TablePanel extends Component {
                 <div className={'TablePanel__wrapper' + (border ? '--border' : '')}>
                     {showToolbar &&
                         <div className='PanelToolbar TablePanel__toolbar'>
-                            {showTitle ? <TableTitle {...{tbl_id, title, removable}} /> : <div/>}
+                            <LeftToolBar {...{tbl_id, title, removable, showTitle, downloadButton}}/>
                             {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:tableConnector}} /> }
                             <div className='PanelToolbar__group'>
                                 {showFilterButton && filterCount > 0 &&
@@ -241,20 +242,25 @@ TablePanel.defaultProps = {
 };
 
 // eslint-disable-next-line
-function TableTitle({tbl_id, title, removable}) {
-    if (title) {
-        return (
-            <div className='TablePanel__title'>
-                <div style={{display: 'inline-block', marginLeft: 5, marginTop: 2}}
-                     title={title}>{truncate(title)}</div>
-                {removable &&
-                <div style={{right: -5}} className='btn-close'
-                     title='Remove Tab'
-                     onClick={() => dispatchTableRemove(tbl_id)}/>
-                }
-            </div>
-        );
-    } else return <div/>;
+function LeftToolBar({tbl_id, title, removable, showTitle, downloadButton}) {
+    const style = {display: 'flex'};
+    downloadButton && Object.assign(style, {flexDirection: 'column', justifyContent: 'center'});
+    return (
+        <div style={style}>
+            { showTitle &&
+                <div className='TablePanel__title'>
+                    <div style={{display: 'inline-block', marginLeft: 5, marginTop: 2}}
+                         title={title}>{truncate(title)}</div>
+                    {removable &&
+                    <div style={{right: -5}} className='btn-close'
+                         title='Remove Tab'
+                         onClick={() => dispatchTableRemove(tbl_id)}/>
+                    }
+                </div>
+            }
+            {downloadButton && <div>{downloadButton}</div>}
+        </div>
+    );
 }
 
 // eslint-disable-next-line
@@ -262,7 +268,7 @@ function Loading({showTitle, tbl_id, title, removable}) {
     return (
         <div style={{position: 'relative', width: '100%', height: '100%'}}>
             <div className='loading-mask'/>
-            {showTitle ? <TableTitle {...{tbl_id, title, removable}} /> : <div/>}
+            <div style={{padding: '2px 4px'}}>{showTitle ? title : ''}</div>
         </div>
     );
 }

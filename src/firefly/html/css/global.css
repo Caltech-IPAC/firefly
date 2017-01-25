@@ -214,7 +214,7 @@
 .PanelToolbar {
     display: flex;
     justify-content: space-between;
-    height:30px;
+    min-height:30px;
 }
 
 .PanelToolbar__group {

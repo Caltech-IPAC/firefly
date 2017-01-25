@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import { get,set, merge, isEmpty, isArray, isNil, capitalize} from 'lodash';
+import { get,set, merge, isEmpty, capitalize} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {FormPanel} from '../../ui/FormPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -24,6 +24,7 @@ import {makeTblRequest, makeLsstCatalogRequest} from '../../tables/TableUtil.js'
 import {CatalogConstraintsPanel, getTblId} from './CatalogConstraintsPanel.jsx';
 import {validateSql, validateConstraints} from './CatalogSelectViewPanel.jsx';
 import {LSSTImageSpatialType} from './LSSTImageSpatialType.jsx';
+import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 
 //import './CatalogTableListField.css';
 import './CatalogSelectViewPanel.css';
@@ -209,7 +210,7 @@ function onSearchSubmit(request) {
         doLoadTable(request[gkey]);
     }
     else {
-        console.log('request no supported');
+        console.log('request not supported');
     }
 }
 /**
@@ -259,7 +260,7 @@ function doImage(request, imgPart) {
     const {cattable} = request[gkey] || {};
     const spatial =  get(imgPart, ['spatial', 'value']);
     const intersect = get(imgPart, ['intersect', 'value']);
-    const size = (intersect !== 'CENTER') ? get(imgPart, ['size', 'value']) : '0';
+    const size = (intersect !== 'CENTER') ? get(imgPart, ['size', 'value']) : '';
     const sizeUnit = 'deg';
     const wp = get(imgPart, [ServerParams.USER_TARGET_WORLD_PT,'value']);
 
@@ -282,8 +283,21 @@ function doImage(request, imgPart) {
 
 
     tReq = addConstraintToQuery(tReq);
-    console.log('final request: ' + JSON.stringify(tReq));
-    dispatchTableSearch(tReq);
+    const downloadButton = (
+            <DownloadButton>
+                <DownloadOptionPanel
+                    cutoutSize = {size}
+                    dlParams = {{
+                            Title: title,
+                            FilePrefix: cattable,
+                            BaseFileName: cattable,
+                            DataSource: cattable,
+                            FileGroupProcessor: 'LSSTFileGroupProcessor'     // insert FileGroupProcessor's ID here.
+                        }}/>
+            </DownloadButton>
+
+        );
+    dispatchTableSearch(tReq, {downloadButton});
 }
 
 /**
@@ -352,7 +366,6 @@ function doCatalog(request, spatPart) {
 
     tReq = addConstraintToQuery(tReq);
 
-    console.log('final request: ' + JSON.stringify(tReq));
     dispatchTableSearch(tReq);
 }
 
@@ -523,7 +536,6 @@ var userChangeLsstDispatch = function (tblId) {
                 }
                  break;
             case FieldGroupCntlr.CHILD_GROUP_CHANGE:
-                //console.log('Child group change called...');
                 break;
             default:
                 break;

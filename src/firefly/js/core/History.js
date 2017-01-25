@@ -74,7 +74,9 @@ export function recordHistory(action={}) {
     const handler = historyAware[action.type];
     if (get(handler, 'actionToUrl')) {
         const url = handler.actionToUrl(action);
-        history.pushState(pick(action, ['type', 'payload']), url, url);
+        try {
+            history.pushState(pick(action, ['type', 'payload']), url, url);
+        } catch(e) {}
     }
 }
 
