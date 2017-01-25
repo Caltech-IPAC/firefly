@@ -19,6 +19,8 @@ import static edu.caltech.ipac.firefly.server.util.Logger.getLogger;
 
 /**
  * Created by zhang on 11/17/16.
+ * This search processor finds all the FITS data based on the rows of the table passed to the processor.
+ * This processor is calling the LSSTCatalogSearch processor through SearchManager to get IpacTable data information
  *
  *
  */
@@ -28,8 +30,7 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
     //leave this line here in case we are going to use the property file later
     //public static final String LSST_FILESYSTEM_BASEPATH = AppProperties.getProperty("lsst.filesystem_basepath");
     private  Logger.LoggerImpl logger = getLogger();
-    private static  long  DEEP_COADD_SIZE  = 44196480;
-    private static  long  SCIENCE_CCD_SIZE = 44196480;
+
     @Override
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         assert (request instanceof DownloadRequest);
@@ -73,7 +74,7 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
                 selectedRows, columns);
         ArrayList<FileInfo> fiArr = new ArrayList<>();
 
-        long size = isDeepCoadd? DEEP_COADD_SIZE:SCIENCE_CCD_SIZE;
+
         for (int rowIdx : selectedRows) {
 
             String fileName = getFileName(isDeepCoadd, dgData,rowIdx);
@@ -86,7 +87,8 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
                 zipFiles.add(urlStr);
             }
 
-            FileInfo fileInfo =  new FileInfo(urlStr, extFileName, size );
+            //since the size is unknown at this point, I used 0 for the size
+            FileInfo fileInfo =  new FileInfo(urlStr, extFileName, 0 );
             fiArr.add(fileInfo );
 
         }
