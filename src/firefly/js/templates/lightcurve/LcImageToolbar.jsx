@@ -34,12 +34,18 @@ export class LcImageToolbar extends Component {
     
     componentWillMount() {
         this.iAmMounted= true;
-        this.removeListener= flux.addListener(() => this.storeUpdate(this.props));
+        this.removeListener= flux.addListener(() => this.storeUpdate());
     }
 
     storeUpdate() {
         if (!this.iAmMounted) return;
         const {tableId}= this.props;
+        const activeTable = tableId && getTblById(this.props.tableId);
+
+        if (activeTable !== this.state.activeTable) {
+            this.setState(activeTable);
+        }
+
     }
 
     render() {

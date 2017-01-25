@@ -16,12 +16,14 @@ import {dispatchChangeExpandedMode, ExpandType} from '../../visualize/ImagePlotC
  * @param obj.imageExpandedMode  if true, then imageExpandedMode overrides everything else
  * @param {boolean} obj.closeable    if true, expanded view can be closed.
  * @param {boolean} obj.insideFlex  true if it's used inside a css flex box.  Defaults to false.
+ * @param {number} obj.forceRowSize
+ * @param {string} obj.activeTableId
  * @param {Object} obj.Toolbar  the toolbar for the image multi viewer
  * @returns {Object}
  * @constructor
  */
 export function LcImageViewerContainer({viewerId, imageExpandedMode=false, closeable=true, insideFlex=false,
-                                           forceRowSize, Toolbar= MultiViewStandardToolbar}) {
+                                        forceRowSize, activeTableId, Toolbar= MultiViewStandardToolbar}) {
     
     if (imageExpandedMode) {
         return (
@@ -41,6 +43,7 @@ export function LcImageViewerContainer({viewerId, imageExpandedMode=false, close
                         canReceiveNewPlots= {NewPlotMode.create_replace.key}
                         handleInlineToolsWhenSingle= {false}
                         Toolbar = {Toolbar}
+                        tableId={activeTableId}
             />
         );
     }
@@ -57,6 +60,8 @@ LcImageViewerContainer.propTypes = {
     imageExpandedMode : PropTypes.bool,
     closeable: PropTypes.bool,
     insideFlex: PropTypes.bool,
+    forceRowSize: PropTypes.number,
+    activeTableId: PropTypes.string
 };
 
 LcImageViewerContainer.defaultProps = {

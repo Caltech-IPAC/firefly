@@ -18,7 +18,7 @@ export class RangeSliderView extends Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        this.setState( {value: nextProps.slideValue} );
+        this.setState( {value: parseFloat(nextProps.slideValue)} );
     }
 
 

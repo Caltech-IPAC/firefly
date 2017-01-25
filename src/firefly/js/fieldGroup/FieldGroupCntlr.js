@@ -77,6 +77,7 @@ export default {
         };
     },
     VALUE_CHANGE, CHILD_GROUP_CHANGE,
+    MOUNT_FIELD_GROUP
 };
 
 

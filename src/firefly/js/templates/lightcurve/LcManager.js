@@ -2,15 +2,15 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, isNil, set} from 'lodash';
+import {get, isNil} from 'lodash';
 import {take} from 'redux-saga/effects';
-import {SHOW_DROPDOWN, SET_LAYOUT_MODE, SET_LAYOUT, getLayouInfo,
+import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
         dispatchUpdateLayoutInfo, dropDownHandler} from '../../core/LayoutCntlr.js';
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT,
-        dispatchTableRemove} from '../../tables/TablesCntlr.js';
-import {getCellValue, getTblById, getTblIdsByGroup} from '../../tables/TableUtil.js';
-import {updateSet} from '../../util/WebUtil.js';
-import {dispatchPlotImage, visRoot, dispatchDeletePlotView,
+        dispatchTableRemove, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
+import {getCellValue, getTblById, getTblIdsByGroup, getActiveTableId} from '../../tables/TableUtil.js';
+import {updateSet, clone} from '../../util/WebUtil.js';
+import ImagePlotCntlr, {dispatchPlotImage, visRoot, dispatchDeletePlotView,
         dispatchChangeActivePlotView,
         WcsMatchType, dispatchWcsMatch} from '../../visualize/ImagePlotCntlr.js';
 import {getPlotViewById} from '../../visualize/PlotViewUtil.js';
@@ -18,18 +18,18 @@ import {getMultiViewRoot, dispatchReplaceViewerItems, getViewer} from '../../vis
 import {WebPlotRequest,TitleOptions} from '../../visualize/WebPlotRequest.js';
 import {ServerRequest} from '../../data/ServerRequest.js';
 import {CHANGE_VIEWER_LAYOUT} from '../../visualize/MultiViewCntlr.js';
-import {grpkey} from './LcPhaseFoldingPanel.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
-import {VALUE_CHANGE, dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {VALUE_CHANGE, dispatchValueChange, dispatchMultiValueChange, dispatchRestoreDefaults}
+        from '../../fieldGroup/FieldGroupCntlr.js';
 import {makeWorldPt} from '../../visualize/Point.js';
 import {CoordinateSys} from '../../visualize/CoordSys.js';
-import {getMenu, dispatchSetMenu} from '../../core/AppDataCntlr.js';
-
+import {MetaConst} from '../../data/MetaConst.js';
+import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 
 export const LC = {
     RAW_TABLE: 'raw_table',          // raw table id
     PHASE_FOLDED: 'phase_folded',    // phase folded table id
-    PERIODOGRAM: 'periodogram',      // periodogram table id
+    PERIODOGRAM_TABLE: 'periodogram',// periodogram table id
     PEAK_TABLE: 'peak_table',        // peak table id
     PERIOD_CNAME: 'Period',          // period column
     POWER_CNAME: 'Power',            // power column
@@ -49,38 +49,26 @@ export const LC = {
     PERIOD_PAGE: 'period',          // period finding layout with periodogram button
     PERGRAM_PAGE: 'periodogram',    // period finding layout with peak and periodogram tables/charts
 
-    PERIOD_FINDER: 'LC_PERIOD_FINDER',         // period finding group for the form
-    PERIODOGRAM_GROUP: 'LC_PERIODOGRAM_TBL'    // table container, table group
+    FG_FILE_FINDER: 'LC_FILE_FINDER',
+    FG_VIEWER_FINDER: 'LC_VIWER_FINDER',
+    FG_PERIOD_FINDER: 'LC_PERIOD_FINDER',         // period finding group for the form
+    FG_PERIODOGRAM_FINDER: 'LC_PERIODOGRAM_FINDER',// periodogram finding group
+    FG_TIMESERIES_FINDER: 'LC_TIMESERIES_FINDER', // result layout panel finding group
+    PERIODOGRAM_GROUP: 'LC_PERIODOGRAM_TBL',    // table container, table group
+
+    META_TIME_NAMES: 'timeNames',
+    META_FLUX_NAMES: 'fluxNames',
+    META_MISSION: MetaConst.DATASET_CONVERTER,
+
+    MISSION_DATA: 'missionEntries',
+    GENERAL_DATA:'generalEntries'
 };
 
 const plotIdRoot= 'LC_FRAME-';
-/*
-export var menuHas = (menu, action) => {
-    return  menu && has(menu, 'menuItems') && menu.menuItems.find((item)=> item.action === action);
-};
-*/
 
-export function periodPageMode(mode) {
-    const menu = getMenu();
-
-    if (menu) {
-        var newMenu = Object.assign({}, menu);
-        var periodItem = newMenu.menuItems.find((item) => item.action === SET_LAYOUT);
-
-        if (periodItem) {
-            set(periodItem, ['payload', 'displayMode'], mode);
-        } else {
-            newMenu.menuItems.push({action: SET_LAYOUT,
-                                    label: 'Period Finding',
-                                    type: 'COMMAND',
-                                    payload: {displayMode: mode}});
-        }
-        dispatchSetMenu(newMenu);
-    }
-}
-
-export function updateLayoutDisplay(displayMode) {
-    var newLayoutInfo = Object.assign(getLayouInfo(), {displayMode});
+export function updateLayoutDisplay(displayMode, periodState) {
+    var updateObj = periodState ? {displayMode, periodState} : {displayMode};
+    var newLayoutInfo = Object.assign({}, getLayouInfo(), updateObj);
 
     dispatchUpdateLayoutInfo(newLayoutInfo);
 }
@@ -92,6 +80,13 @@ export function removeTablesFromGroup(tbl_group_id = 'main') {
         dispatchTableRemove(tbl_id);
     });
 }
+
+export var getValidValueFrom = (fields, valKey) => {
+    var val =  fields && get(fields, [valKey, 'valid']) && get(fields, [valKey, 'value']);
+
+    return val ? val : '';
+};
+
 
 var webplotRequestCreator;
 /**
@@ -113,7 +108,7 @@ export function* lcManager(params={}) {
     while (true) {
         const action = yield take([
             TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, SHOW_DROPDOWN, SET_LAYOUT_MODE,
-            CHANGE_VIEWER_LAYOUT, VALUE_CHANGE
+            CHANGE_VIEWER_LAYOUT, VALUE_CHANGE, ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW
         ]);
 
         /**
@@ -128,16 +123,17 @@ export function* lcManager(params={}) {
          * @prop {Object}   layoutInfo.images      images specific states
          * @prop {string}   layoutInfo.images.activeTableId  last active table id that images responded to
          * @prop {string}   layoutInfo.displayMode:'result' (result page), 'period' (period finding page), 'periodogram' or neither
+         * @prop {string}   layoutInfo.minnsionEntries mission specific entries on result layout panel
+         * @prop {array}    layoutInfo.generalEntries general entries for result layout panel
+         * @prop {string}   layoutInfo.periodState  // period or periodogram
          */
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;
-        var bInit = false;
 
         newLayoutInfo = dropDownHandler(newLayoutInfo, action);
         switch (action.type) {
             case TBL_RESULTS_ADDED:
-            case TABLE_LOADED :
-                bInit = handleMenuSetting(action);
+            case TABLE_LOADED:
                 newLayoutInfo = handleTableLoad(newLayoutInfo, action);
                 break;
             case TABLE_HIGHLIGHT:
@@ -149,67 +145,242 @@ export function* lcManager(params={}) {
             case TBL_RESULTS_ACTIVE :
                 newLayoutInfo = handleTableActive(newLayoutInfo, action);
                 break;
+            case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
+                newLayoutInfo = handlePlotActive(newLayoutInfo, action.payload.plotId);
+                break;
             case VALUE_CHANGE:
-                if (['time', 'flux', 'periodMin', 'periodMax'].includes(action.payload.fieldKey)) {
-                    // re-validate period value
-                    if (action.payload.fieldKey.startsWith('period')) { // periodMin or periodMax is changed
-                        const fields = FieldGroupUtils.getGroupFields(LC.PERIOD_FINDER);
-                        const per = fields && get(fields, ['period', 'value']);
-
-                        dispatchValueChange({
-                            fieldKey: (LC.PERIOD_CNAME).toLowerCase(),
-                            groupKey: LC.PERIOD_FINDER,
-                            value: per
-                        });
-                    }
-                }
+                newLayoutInfo = handleValueChange(newLayoutInfo, action);
+                break;
+            default:
                 break;
         }
 
         if (newLayoutInfo !== layoutInfo) {
             dispatchUpdateLayoutInfo(newLayoutInfo);
         }
-        if (bInit) {
-            periodPageMode(LC.PERIOD_PAGE);
-        }
     }
 }
 
-function handleMenuSetting(action) {
-    return (get(action, ['payload', 'tbl_id']) === LC.RAW_TABLE);
+function getMissionName() {
+    var mName = get(getLayouInfo(), ['misionEntries', MetaConst.DATASET_CONVERTER]);
+
+    return mName ? mName.toUpperCase() : '';
 }
 
+function getCutoutSize() {
+    return get(getLayouInfo(), ['generalEntries', 'cutoutSize'], '0.3');
+}
 
+var getImageTitle = (mName,frameId, cutoutSize ) => {
+    return  `${mName}-`+ frameId + (cutoutSize ? ` size: ${cutoutSize}(deg)` : '');
+};
+
+function updateResultRawTable(layoutInfo, timeCName, fluxCName) {
+    const timeCols = get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_NAMES], []);
+    const fluxCols = get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_NAMES], []);
+
+    if (timeCols.includes(timeCName) && fluxCols.includes(fluxCName)) {
+        const xyPlotParams = {x: {columnOrExpr: timeCName}, y: {columnOrExpr: fluxCName, options: 'grid,flip'}};
+        loadXYPlot({chartId: LC.RAW_TABLE, tblId: LC.RAW_TABLE, xyPlotParams});
+    }
+}
+
+function updateResultPhaseTable(layoutInfo, flux) {
+    const fluxCols = get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_NAMES]);
+
+    if (fluxCols.includes(flux)) {
+        const xyPlotParams = {
+            userSetBoundaries: {xMax: 2},
+            x: {columnOrExpr: LC.PHASE_CNAME, options: 'grid'},
+            y: {columnOrExpr: flux, options: 'grid,flip'}
+        };
+        loadXYPlot({chartId: LC.PHASE_FOLDED, tblId: LC.PHASE_FOLDED, xyPlotParams});
+    }
+}
+
+/**
+ * @summary handle value change on time, flux, cutout size
+ * @param {object} layoutInfo
+ * @param {object} action
+ * @returns {*}
+ */
+function handleValueChange(layoutInfo, action) {
+    var {fieldKey, value} = action.payload;
+    var crtValue;
+
+    if ([LC.META_TIME_CNAME, LC.META_FLUX_CNAME].includes(fieldKey)) {
+        crtValue = get(layoutInfo, [LC.MISSION_DATA, fieldKey]);
+
+        if (value !== crtValue) {
+            var keyOfPeriod = '';
+
+            if (fieldKey === LC.META_FLUX_CNAME &&
+                get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_NAMES]).includes(value)) {
+                const actTbl = getActiveTableId();
+                if (actTbl === LC.RAW_TABLE) {
+                    updateResultRawTable(layoutInfo,
+                                         get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]), value);
+                } else if (actTbl === LC.PHASE_FOLDED) {
+                    updateResultPhaseTable(layoutInfo, value);
+                }
+                keyOfPeriod = 'flux';
+            } else if (fieldKey === LC.META_TIME_CNAME &&
+                       get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_NAMES]).includes(value)) {
+                keyOfPeriod = 'time';   // assume time is unique
+            }
+
+            if (keyOfPeriod) {
+                layoutInfo = updateSet(layoutInfo, [LC.MISSION_DATA, fieldKey], value);
+
+                // update time or flux for period panel field group if it exists
+                if (FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER)) {
+                    dispatchValueChange({
+                        groupKey: LC.FG_PERIOD_FINDER,
+                        fieldKey: keyOfPeriod,
+                        value
+                    });
+                }
+            }
+        }
+    } else if (fieldKey === 'cutoutSize') { // cutoutsize changes
+        if ((get(layoutInfo, [LC.GENERAL_DATA, fieldKey]) !== value) && (value > 0.0) ) {
+            if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
+                setupImages(get(layoutInfo, 'images.activeTableId'));
+                layoutInfo = updateSet(layoutInfo, [LC.GENERAL_DATA, fieldKey], value);
+            }
+        }
+    }
+    return layoutInfo;
+}
+
+/**
+ * @summary highlight the table row & chart after change the active plot view
+ * @param layoutInfo
+ * @param plotId
+ * @returns {*}
+ */
+function handlePlotActive(layoutInfo, plotId) {
+    const tableId = get(layoutInfo, ['images', 'activeTableId']);
+
+    var rowNum= Number(plotId.substring(plotIdRoot.length));
+    dispatchTableHighlight(tableId, rowNum);
+    return layoutInfo;
+}
+/*
+ * field group, LC_VIEWER_FINDER, includes fieldKey from misionAry & generalAry
+ * missionAry & generalAy is mission specific, more detail to be fixed after raw table metadata is defined. -- TO DO
+ */
+function handleRawTableLoad(layoutInfo, tblId) {
+    const rawTable = getTblById(tblId);
+    var   metaInfo = rawTable && get(rawTable, ['META_INFO']);
+    const missionAry = [LC.META_TIME_CNAME, LC.META_FLUX_CNAME, LC.META_TIME_NAMES, LC.META_FLUX_NAMES,
+                        MetaConst.DATASET_CONVERTER];
+    const generalEntryAry = {cutoutSize: '0.3', errorColumn: ''};  // default setting for cutoutsize?
+
+
+    // TODO - fill in mission information from table's metadata
+    metaInfo = {[LC.META_TIME_CNAME]: 'mjd',
+                [LC.META_FLUX_CNAME]: 'w1mpro_ep',
+                [LC.META_TIME_NAMES]: ['mjd'],
+                [LC.META_FLUX_NAMES]: ['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'],
+                [MetaConst.DATASET_CONVERTER]: 'wise'};
+
+    var   missionEntries = missionAry.reduce((prev, key) => {
+            prev[key] = metaInfo ? get(metaInfo, key, ''): '';
+            return prev;
+          }, {});
+
+    var   generalEntries = clone(generalEntryAry);
+
+    var {columns, data} = rawTable.tableData;
+    var tIdx = columns.findIndex((col) => (col.name === get(missionEntries, [LC.META_TIME_CNAME])));
+    var arr = data.reduce((prev, e)=> {
+        prev.push(parseFloat(e[tIdx]));
+        return prev;
+    }, []);
+
+    var [tzero, tzeroMax] = arr.length > 0 ? [Math.min(...arr), Math.max(...arr)] : [0.0, 0.0];
+    var max = 365;
+    var min = Math.pow(10, -3);   // 0.0001
+
+    var fields = FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER);
+    var initState;
+    if (fields) {
+        initState = [
+                    {fieldKey: 'time', value: get(missionEntries, [LC.META_TIME_CNAME])},
+                    {fieldKey: 'flux', value: get(missionEntries, [LC.META_FLUX_CNAME])},
+                    {fieldKey: 'periodMin', value: `${min}`},
+                    {fieldKey: 'periodMax', value: `${max}`},
+                    {fieldKey: 'period', value: `${min}`},
+                    {fieldKey: 'tzero', value: `${tzero}`},
+                    {fieldKey: 'tzeroMax', value: `${tzeroMax}`}];
+
+        dispatchMultiValueChange(LC.FG_PERIOD_FINDER, initState);
+    }
+    fields = FieldGroupUtils.getGroupFields(LC.FG_PERIODOGRAM_FINDER);
+    if (fields) {
+        dispatchRestoreDefaults(LC.FG_PERIODOGRAM_FINDER);
+    }
+
+    return Object.assign(layoutInfo, {missionEntries, generalEntries,
+                                      periodRange: {min, max, tzero, tzeroMax}});
+}
+
+/**
+ * @summary handle on loaded table, update period and periodogram field groups, update chart
+ * @param layoutInfo
+ * @param action
+ * @returns {*}
+ */
 function handleTableLoad(layoutInfo, action) {
     const {tbl_id} = action.payload;
 
-    layoutInfo =  Object.assign({}, layoutInfo, {showTables: true, showXyPlots: true});
-    if (tbl_id === LC.RAW_TABLE) {
-        layoutInfo = Object.assign({}, layoutInfo, {displayMode: LC.RESULT_PAGE});
+    layoutInfo = Object.assign({}, layoutInfo, {showTables: true, showXyPlots: true});
+    if (tbl_id === LC.RAW_TABLE) {         // a new raw table is loaded
+        if (action.type === TABLE_LOADED) {
+            layoutInfo = Object.assign(layoutInfo, {displayMode: LC.RESULT_PAGE, periodState: LC.PERIOD_PAGE});
+            layoutInfo = handleRawTableLoad(layoutInfo, tbl_id);
+        }
     }
-
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'showImages', true);
         layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
         setupImages(tbl_id);
     }
+
     return layoutInfo;
 }
 
-
+/**
+ * @summary handle on changing the active table, update image and chart
+ * @param layoutInfo
+ * @param action
+ * @returns {*}
+ */
 function handleTableActive(layoutInfo, action) {
     const {tbl_id} = action.payload;
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
         setupImages(tbl_id);
     }
+
+    const timeCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]);
+    const fluxCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME]);
+
+    if (tbl_id === LC.RAW_TABLE) {
+        updateResultRawTable(layoutInfo, timeCol, fluxCol);
+    } else if (tbl_id === LC.PHASE_FOLDED) {
+        updateResultPhaseTable(layoutInfo, fluxCol);
+    }
+
     return layoutInfo;
+    //return Object.assign({}, layoutInfo);
 }
 
 function handleTableHighlight(layoutInfo, action) {
     const {tbl_id} = action.payload;
 
-    if (tbl_id !== LC.PERIODOGRAM && tbl_id !== LC.PEAK_TABLE) {
+    if (tbl_id !== LC.PERIODOGRAM_TABLE && tbl_id !== LC.PEAK_TABLE) {
         if (isImageEnabledTable(tbl_id)) {
             setupImages(tbl_id);
         }
@@ -219,23 +390,24 @@ function handleTableHighlight(layoutInfo, action) {
         if (per) {
             dispatchValueChange({
                 fieldKey: (LC.PERIOD_CNAME).toLowerCase(),
-                groupKey: LC.PERIOD_FINDER,
+                groupKey: LC.FG_PERIOD_FINDER,
                 value: `${parseFloat(per)}`
             });
         }
     }
 
     return layoutInfo;
+    //return Object.assign({}, layoutInfo);
 }
 
 /**
- * gets the period from either peak or periodogram table, these tables don't necessarily have a period column and same name
+ * @summary gets the period from either peak or periodogram table
  * @param {string} tbl_id
  * @returns {string} period value
  */
 function getPeriodFromTable(tbl_id) {
 
-    if (tbl_id !== LC.PERIODOGRAM && tbl_id !== LC.PEAK_TABLE) {
+    if (tbl_id !== LC.PERIODOGRAM_TABLE && tbl_id !== LC.PEAK_TABLE) {
         return '';
     }
 
@@ -298,6 +470,7 @@ function getWebPlotRequestViaUrl(tableModel, hlrow, cutoutSize) {
     const scan_id = res[1] + res[2];
     const scangrp = res[2];
     const frame_num = res[3];
+    const mName = getMissionName();
 
     /*the following should be from reading in the url column returned from LC search
      we are constructing the url for wise as the LC table does
@@ -308,9 +481,9 @@ function getWebPlotRequestViaUrl(tableModel, hlrow, cutoutSize) {
     const serverinfo = 'http://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/';
     const centerandsize = cutoutSize ? `?center=${ra},${dec}&size=${cutoutSize}&gzip=false` : '';
     const url = `${serverinfo}${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w1-int-1b.fits${centerandsize}`;
-    const plot_desc = `WISE-${frameId}`;
+    const plot_desc = `${mName}-${frameId}`;
     const reqParams = WebPlotRequest.makeURLPlotRequest(url, plot_desc);
-    const title= 'WISE-'+ frameId + (cutoutSize ? ` size: ${cutoutSize}(deg)` : '');
+    const title= getImageTitle(mName, frameId, cutoutSize);
     return addCommonReqParams(reqParams, title, makeWorldPt(ra,dec,CoordinateSys.EQ_J2000));
 }
 
@@ -336,11 +509,17 @@ export function setupImages(tbl_id) {
         const newPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,count);
         const maxPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,LC.MAX_IMAGE_CNT);
 
-        const cutoutSize = get(FieldGroupUtils.getGroupFields(grpkey), ['cutoutSize', 'value'], null);
+        const cutoutSize = get(FieldGroupUtils.getGroupFields(LC.FG_VIEWER_FINDER), ['cutoutSize', 'value'],
+                                                              getCutoutSize());
 
         newPlotIdAry.forEach( (plotId) => {
-            if (!getPlotViewById(vr,plotId)) {
-                const rowNum= Number(plotId.substring(plotIdRoot.length));
+            var pv = getPlotViewById(vr,plotId);
+            const rowNum= Number(plotId.substring(plotIdRoot.length));
+            var imgTitle = () => {
+                return getImageTitle(getMissionName(), getCellValue(tableModel, rowNum, 'frame_id'), cutoutSize);
+            };
+
+            if (!pv || get(pv, ['request', 'params', 'Title']) !== imgTitle()) {
                 const webPlotReq = webplotRequestCreator(tableModel,rowNum, cutoutSize);
                 dispatchPlotImage({plotId, wpRequest:webPlotReq,
                                            setNewPlotAsActive:false,

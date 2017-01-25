@@ -14,6 +14,7 @@ import {dispatchChangeViewerLayout, getViewer, getMultiViewRoot, GRID, SINGLE} f
 import {LC} from './LcManager.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
+import {getTblById} from '../../tables/TableUtil.js';
 
 
 
@@ -79,6 +80,31 @@ export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layou
         );
     }
 
+    var getSortInfo = () => {
+        if (!tableId) return '';
+
+        const tbl = getTblById(tableId);
+        const sortInfo = get(tbl, ['request', 'sortInfo'], '');
+
+        if (!sortInfo) return '';
+
+        var cols = sortInfo.split(',');
+
+        if (cols.length >= 2) {
+            var orderInfo = 'Sort order: ';
+            var columnInfo = cols.length > 2 ? 'Sortable columns: ' : 'Sortable column: ';
+
+            if (cols[0] === 'ASC') {
+                orderInfo += 'ascending';
+            } else if (cols[0] === 'DESC') {
+                orderInfo += 'descending';
+            }
+            columnInfo += cols.slice(1).join(',');
+            return `${columnInfo};  ${orderInfo}`;
+        }
+        return '';
+    };
+
     return (
         <div>
             {expandedUI}
@@ -90,6 +116,7 @@ export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layou
                                                   onChange={(ev) => changeSize(viewerId, ev.target.value)} />
                     </div>
                 </div>
+                <div> { getSortInfo() } </div>
                 {wcsMatch}
                 {!closeFunc && <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={pvDlAry} />}
             </div>
