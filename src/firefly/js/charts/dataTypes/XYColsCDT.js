@@ -16,6 +16,7 @@ import {colWithName, getNumericCols, SCATTER} from './../ChartUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 
 export const DT_XYCOLS = 'xycols';
+const DECI_ENABLE_SIZE = 5000; // matching QueryUtil.DECI_ENABLE_SIZE
 
 /**
  * Chart data type for XY columns
@@ -197,31 +198,53 @@ export function setZoom(chartId, chartDataElementId, selection=undefined) {
     }
 }
 
-function serverParamsChanged(oldParams, newParams) {
+function serverParamsChanged(oldParams, newParams, chartDataElement) {
     if (oldParams === newParams) { return false; }
     if (!oldParams || !newParams) { return true; }
 
-    const newServerParams = getServerCallParameters(newParams);
-    const oldServerParams = getServerCallParameters(oldParams);
-    return newServerParams.some((p, i) => {
-        return p !== oldServerParams[i];
-    });
+    const {tblId, data} = chartDataElement;
+
+    if (isLargeTable(tblId)) {
+        const newServerParams = getServerCallParameters(newParams);
+        const oldServerParams = getServerCallParameters(oldParams);
+        return newServerParams.some((p, i) => {
+            return p !== oldServerParams[i];
+        });
+    } else {
+        // 'x', 'y', 'sortBy', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh'
+        // server call parameters are present in the data
+        const newOpts = omitBy({
+            sortBy: newParams.sortColOrExpr,
+            x: newParams.x.columnOrExpr,
+            xErr: newParams.x.error,
+            xErrLow: newParams.x.errorLow,
+            xErrHigh: newParams.x.errorHigh,
+            y: newParams.y.columnOrExpr,
+            yErr: newParams.y.error,
+            yErrLow: newParams.y.errorLow,
+            yErrHigh: newParams.y.errorHigh
+        }, isUndefined);
+        return Object.keys(newOpts).some((o) => {
+            return newOpts[o] !== data[o];
+        });
+    }
 }
 
-function errorsRequested(xyPlotParams) {
-    return xyPlotParams &&
-        (xyPlotParams.x.error || xyPlotParams.y.error ||
-        xyPlotParams.x.errorLow || xyPlotParams.y.errorLow ||
-        xyPlotParams.x.errorHigh || xyPlotParams.y.errorHigh);
+function isLargeTable(tblId) {
+    const {totalRows}= getTblById(tblId);
+    return (totalRows >= DECI_ENABLE_SIZE);
 }
+
+//function errorsOrSortRequested(xyPlotParams) {
+//    return xyPlotParams &&
+//        (xyPlotParams.sortColOrExpr ||
+//        xyPlotParams.x.error || xyPlotParams.y.error ||
+//        xyPlotParams.x.errorLow || xyPlotParams.y.errorLow ||
+//        xyPlotParams.x.errorHigh || xyPlotParams.y.errorHigh);
+//}
 
 function getServerCallParameters(xyPlotParams) {
     if (!xyPlotParams) { return []; }
-
-    if (errorsRequested(xyPlotParams)) {
-        return [xyPlotParams.x.columnOrExpr, xyPlotParams.x.error, xyPlotParams.x.errorLow, xyPlotParams.x.errorHigh,
-            xyPlotParams.y.columnOrExpr, xyPlotParams.y.error];
-    }
 
     if (xyPlotParams.zoom) {
         var {xMin, xMax, yMin, yMax}  = xyPlotParams.zoom;
@@ -315,17 +338,17 @@ function fetchPlotData(dispatch, chartId, chartDataElementId) {
     const chartDataElement = getChartDataElement(chartId, chartDataElementId);
     if (!chartDataElement) { logError(`[XYPlot] Chart data element is not found: ${chartId}, ${chartDataElementId}` ); return; }
 
-    const {tblId, options:xyPlotParams} = chartDataElement;
+    const {tblId} = chartDataElement;
     if (!tblId || !isFullyLoaded(tblId)) {return; }
 
-    if (errorsRequested(xyPlotParams)) {
-        fetchXYWithErrors(dispatch, chartId, chartDataElementId);
+    if (isLargeTable(tblId)) {
+        fetchXYLargeTable(dispatch, chartId, chartDataElementId);
     } else {
-        fetchXYNoErrors(dispatch, chartId, chartDataElementId);
+        fetchXYWithErrorsOrSort(dispatch, chartId, chartDataElementId);
     }
 }
 
-function fetchXYNoErrors(dispatch, chartId, chartDataElementId) {
+function fetchXYLargeTable(dispatch, chartId, chartDataElementId) {
     const chartDataElement = getChartDataElement(chartId, chartDataElementId);
 
     // tblId - table search request to obtain source table
@@ -415,7 +438,7 @@ function fetchXYNoErrors(dispatch, chartId, chartDataElementId) {
 }
 
 
-function fetchXYWithErrors(dispatch, chartId, chartDataElementId) {
+function fetchXYWithErrorsOrSort(dispatch, chartId, chartDataElementId) {
     const chartDataElement = getChartDataElement(chartId, chartDataElementId);
 
     // tblId - table search request to obtain source table
@@ -435,11 +458,13 @@ function fetchXYWithErrors(dispatch, chartId, chartDataElementId) {
     req.searchRequest = JSON.stringify(sreq);
     req.xColOrExpr = get(xyPlotParams, 'x.columnOrExpr');
     req.yColOrExpr = get(xyPlotParams, 'y.columnOrExpr');
+    req.sortColOrExpr = get(xyPlotParams, 'sortColOrExpr', req.xColOrExpr);
 
     if (!req.xColOrExpr || !req.yColOrExpr) {
         dispatchError(dispatch, chartId, chartDataElementId, 'Unknown X/Y column or expression');
     }
 
+    req.sortColOrExpr = get(xyPlotParams, 'sortColOrExpr'); // sort column for line plot
     req.xErrColOrExpr = get(xyPlotParams, 'x.error');
     req.xErrLowColOrExpr = get(xyPlotParams, 'x.errorLow');
     req.xErrHighColOrExpr = get(xyPlotParams, 'x.errorHigh');
@@ -466,7 +491,7 @@ function fetchXYWithErrors(dispatch, chartId, chartDataElementId) {
             if (tableModel.tableData.data.length>0) {
 
                 // create an array of column names that we recognize
-                const validCols = ['rowIdx', 'x', 'y', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh'];
+                const validCols = ['rowIdx', 'x', 'y', 'sortBy', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh'];
                 const colNames = tableModel.tableData.columns.map((col) => {
                     const name = col.name;
                     if (validCols.includes(name)) {
@@ -510,13 +535,19 @@ function fetchXYWithErrors(dispatch, chartId, chartDataElementId) {
                     } else if (x > xMax) {xMax = x; }
                     if (Number.isFinite(low)) {
                         if (low < yMin) { yMin = low; }
-                    } else if (y < yMin) { yMin = x; }
+                    } else if (y < yMin) { yMin = y; }
                     if (Number.isFinite(high)) {
                         if (high > yMax) { yMax = high; }
                     } else if (y > yMax) { yMax = y; }
                     return Object.assign(nrow, {left, right, low, high});
                 });
                 Object.assign(xyPlotData, {rows, xMin, xMax, yMin, yMax});
+                // save server call parameters, which were used to obtain the data
+                ['x', 'y', 'sortBy', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh'].forEach((c) => {
+                    if (tableMeta[c]) {
+                        xyPlotData[c] = tableMeta[c];
+                    }
+                });
             }
         }
 
@@ -594,6 +625,13 @@ function getUpdatedParams(xyPlotParams, tblId, data) {
         }
     } else if (!isEmpty(boundaries)) {
         newParams = updateSet(newParams, 'boundaries', boundaries);
+    }
+
+    // if sortBy is set in the data, save sorting order in parameters
+    // needed to avoid server call, when data are already sorted as needed
+    const sortColOrExpr =  data['sortBy'];
+    if (sortColOrExpr && sortColOrExpr !== xyPlotParams.sortColOrExpr) {
+        newParams = updateSet(newParams, 'sortColOrExpr', sortColOrExpr);
     }
 
     return newParams;

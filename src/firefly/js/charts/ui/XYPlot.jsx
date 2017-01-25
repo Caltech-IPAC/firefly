@@ -19,6 +19,9 @@ const defaultShading = 'lin';
 
 export const axisParamsShape = PropTypes.shape({
     columnOrExpr : PropTypes.string,
+    error : PropTypes.string, // for symmetric errors
+    errorLow : PropTypes.string, // for asymmetric errors
+    errorHigh : PropTypes.string, // for asymmetric errors
     label : PropTypes.string,
     unit : PropTypes.string,
     error: PropTypes.string,
@@ -33,6 +36,8 @@ export const selectionShape = PropTypes.shape({
 });
 
 export const plotParamsShape = PropTypes.shape({
+    plotStyle: PropTypes.oneOf(['points', 'line', 'linepoints']),
+    sortColOrExpr: PropTypes.string,
     xyRatio : PropTypes.number,
     stretch : PropTypes.oneOf(['fit','fill']),
     selection : selectionShape,
@@ -72,6 +77,10 @@ const selectedColor = 'rgba(255, 200, 0, 1)';
 const highlightedColor = 'rgba(255, 165, 0, 1)';
 const selectionRectColor = 'rgba(255, 209, 128, 0.5)';
 const selectionRectColorGray = 'rgba(165, 165, 165, 0.5)';
+
+const isLinePlot = function(plotStyle) {
+    return plotStyle === 'line' || plotStyle === 'linepoints';
+};
 
 /*
  @param {number} weight for a given point
@@ -293,7 +302,9 @@ export class XYPlot extends React.Component {
 
         // only re-render when the plot data change or an error occurs
         // shading change for density plot changes series
-        if (nextProps.data !== data || get(params, 'shading', defaultShading) !== get(nextProps.params, 'shading', defaultShading)) {
+        if (nextProps.data !== data ||
+            get(params, 'plotStyle') !== get(nextProps.params, 'plotStyle') ||
+            get(params, 'shading', defaultShading) !== get(nextProps.params, 'shading', defaultShading)) {
             return true;
         } else {
             const chart = this.refs.chart && this.refs.chart.getChart();
@@ -576,25 +587,26 @@ export class XYPlot extends React.Component {
                     });
                 }
                 allSeries.push({
-                        id: DATAPOINTS,
-                        name: DATAPOINTS,
-                        color: hasErrorBars? datapointsColorWithErrors : datapointsColor,
-                        data: rows,
-                        marker,
-                        turboThreshold: 0,
-                        showInLegend: false,
-                        point
-                    });
+                    id: DATAPOINTS,
+                    name: DATAPOINTS,
+                    type: isLinePlot(params.plotStyle) ? 'line' : 'scatter',
+                    color: hasErrorBars? datapointsColorWithErrors : datapointsColor,
+                    data: rows,
+                    marker,
+                    turboThreshold: 0,
+                    showInLegend: false,
+                    point
+                });
                 allSeries.push({
-                        id: SELECTED,
-                        name: SELECTED,
-                        color: hasErrorBars? selectedColorWithErrors : selectedColor,
-                        data: selectedRows,
-                        marker,
-                        turboThreshold: 0,
-                        showInLegend: false,
-                        point
-                    });
+                    id: SELECTED,
+                    name: SELECTED,
+                    color: hasErrorBars? selectedColorWithErrors : selectedColor,
+                    data: selectedRows,
+                    marker,
+                    turboThreshold: 0,
+                    showInLegend: false,
+                    point
+                });
             } else {
                 const {xUnitPx, yUnitPx} = getDeciSymbolSize(chart, decimateKey);
                 marker = {symbol: 'rectangle', radius: xUnitPx/2.0, hD: (xUnitPx-yUnitPx)/2.0};
@@ -743,11 +755,28 @@ export class XYPlot extends React.Component {
                 symbolWidth: 12,
                 symbolRadius: 6
             },
+            plotOptions: {
+                series: {
+                    animation: false,
+                    cursor: 'pointer',
+                    stickyTracking: false
+                },
+                line: {
+                    marker: {
+                        enabled: params.plotStyle === 'linepoints'
+                    },
+                    states: {
+                        hover: {
+                            lineWidthPlus: 0 // do not increase line width when hovering over the series, default is 1
+                        }
+                    }
+                }
+            },
             title: {
                 text: desc
             },
             tooltip: {
-
+                snap: 10,
                 borderWidth: 1,
                 formatter() {
                     const weight = this.point.weight ? `represents ${this.point.weight} points <br/>` : '';
@@ -761,14 +790,6 @@ export class XYPlot extends React.Component {
                 },
                 shadow: !(decimateKey),
                 useHTML: Boolean((decimateKey))
-            },
-            plotOptions: {
-                scatter: {
-                    animation: false,
-                    cursor: 'pointer',
-                    snap: 10, // proximity to the point for mouse events
-                    stickyTracking: false
-                }
             },
             xAxis: {
                 min: selFinite(xMin, xDataMin),

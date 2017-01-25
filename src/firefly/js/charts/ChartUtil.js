@@ -7,7 +7,7 @@
  * Utilities related to charts
  * Created by tatianag on 3/17/16.
  */
-import {uniqueId} from 'lodash';
+import {uniqueId, isUndefined, omitBy} from 'lodash';
 
 import {getTblById, getColumnIdx, getCellValue} from '../tables/TableUtil.js';
 import {Expression} from '../util/expr/Expression.js';
@@ -123,6 +123,8 @@ export function getNumericCols(cols) {
  * @prop {string}  [chartTitle] title of the chart
  * @prop {string}  xCol         column or expression to use for x values, can contain multiple column names ex. log(col) or (col1-col2)/col3
  * @prop {string}  yCol         column or expression to use for y values, can contain multiple column names ex. sin(col) or (col1-col2)/col3
+ * @prop {string}  [plotStyle]  points, linepoints, line
+ * @prop {string}  [sortColOrExpr] sort column or expression (when line plot is requested
  * @prop {number}  [xyRatio]    aspect ratio (must be between 1 and 10), if not defined the chart will fill all available space
  * @prop {string}  [stretch]    'fit' to fit plot into available space or 'fill' to fill the available width (applied when xyPlotRatio is defined)
  * @prop {string}  [xLabel]     label to use with x axis
@@ -131,6 +133,8 @@ export function getNumericCols(cols) {
  * @prop {string}  [yUnit]      unit for y axis
  * @prop {string}  [xOptions]   comma separated list of x axis options: grid,flip,log
  * @prop {string}  [yOptions]   comma separated list of y axis options: grid,flip,log
+ * @prop {string}  [xError]     column or expression for X error
+ * @prop {string}  [yError]     column or expression for Y error
  */
 
 /**
@@ -142,14 +146,16 @@ export function getNumericCols(cols) {
  * @memberof firefly.util.chart
  */
 export function makeXYPlotParams(params) {
-    const {xCol, yCol, xyRatio, stretch, xLabel, yLabel, xUnit, yUnit, xOptions, yOptions} = params;
+    const {xCol, yCol, xError, yError, xLabel, yLabel, xUnit, yUnit, xOptions, yOptions, plotStyle, sortColOrExpr, xyRatio, stretch} = params;
     const xyPlotParams = xCol && yCol ?
-    {
+    omitBy({
+        plotStyle,
+        sortColOrExpr,
         xyRatio,
         stretch,
-        x : { columnOrExpr : xCol, label : xLabel, unit : xUnit, options : xOptions},
-        y : { columnOrExpr : yCol, label : yLabel, unit : yUnit, options : yOptions}
-    } : undefined;
+        x : omitBy({ columnOrExpr : xCol, error: xError, label : xLabel, unit : xUnit, options : xOptions}, isUndefined),
+        y : omitBy({ columnOrExpr : yCol, error: yError, label : yLabel, unit : yUnit, options : yOptions}, isUndefined)
+    }, isUndefined) : undefined;
     return xyPlotParams;
 }
 

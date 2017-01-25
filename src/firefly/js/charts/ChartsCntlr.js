@@ -295,7 +295,7 @@ function doChartDataFetch(dispatch, payload, getChartDataType) {
         const fetchParamsChanged = chartDataElement.fetchParamsChanged  || cdt.fetchParamsChanged || (() => !isUndefined(fetchData));
 
         // need to fetch data if fetch parameters have changed
-        dataFetchNeeded = dataFetchNeeded || !oldOptions || fetchParamsChanged(oldOptions, newOptions);
+        dataFetchNeeded = dataFetchNeeded || !oldOptions ||  fetchParamsChanged(oldOptions, newOptions, chartDataElement);
 
         if (!dataFetchNeeded) {
             // when server call (fetch) parameters do not change but chart options change,

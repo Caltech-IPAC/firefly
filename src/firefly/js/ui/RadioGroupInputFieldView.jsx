@@ -1,4 +1,5 @@
 import React, {PropTypes}  from 'react';
+import {uniqueId} from 'lodash';
 import InputFieldLabel from './InputFieldLabel.jsx';
 
 const vStyle={paddingLeft: 3, paddingRight: 8};
@@ -8,12 +9,13 @@ const hStyle={paddingLeft: 0, paddingRight: 12};
 function makeOptions(options,alignment,fieldKey,value,onChange,tooltip) {
 
     const labelStyle= alignment==='vertical' ? vStyle : hStyle;
+    const uniqueName = uniqueId(fieldKey);
     return options.map((option) => (
         <span key={option.value}>
             <div style={{display:'inline-block'}} title={tooltip}>
                 <input type='radio'
                        title={tooltip}
-                       name={fieldKey}
+                       name={uniqueName}
                        value={option.value}
                        checked={value===option.value}
                        onChange={onChange}

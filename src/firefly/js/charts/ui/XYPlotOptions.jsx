@@ -58,6 +58,9 @@ export function resultsSuccess(callback, flds, tblId) {
     const xErr = get(flds, ['x.error']);
     const yErr = get(flds, ['y.error']);
 
+    const plotStyle = get(flds, ['plotStyle']);
+    const sortColOrExpr = plotStyle.startsWith('line') ? xName : undefined;
+
     const xOptions = get(flds, ['x.options']);
     const xLabel = get(flds, ['x.label']);
     const xUnit = get(flds, ['x.unit']);
@@ -95,6 +98,8 @@ export function resultsSuccess(callback, flds, tblId) {
       */
 
     const xyPlotParams = omitBy({
+        plotStyle,
+        sortColOrExpr,
         userSetBoundaries,
         xyRatio : Number.isFinite(xyRatio) ? xyRatio : undefined,
         stretch : flds.stretch,
@@ -120,6 +125,7 @@ export function resultsFail() {
 
 export function setOptions(groupKey, xyPlotParams) {
     const flds = [
+        {fieldKey: 'plotStyle', value: get(xyPlotParams, 'plotStyle', 'points')},
         {fieldKey: 'x.columnOrExpr', value: get(xyPlotParams, 'x.columnOrExpr')},
         {fieldKey: 'x.error', value: get(xyPlotParams, 'x.error')},
         {fieldKey: 'x.label', value: get(xyPlotParams, 'x.label')},
@@ -449,7 +455,7 @@ export class XYPlotOptions extends React.Component {
     render() {
         const { colValStats, groupKey, xyPlotParams, defaultParams, onOptionsSelected}= this.props;
 
-        const noLogOption = possibleDecimatedTable(colValStats);
+        const largeTable = possibleDecimatedTable(colValStats);
 
         const xProps = {colValStats,params:xyPlotParams,groupKey,fldPath:'x.columnOrExpr',label:'X',tooltip:'X Axis',nullAllowed:false};
         const yProps = {colValStats,params:xyPlotParams,groupKey,fldPath:'y.columnOrExpr',label:'Y',tooltip:'Y Axis',nullAllowed:false};
@@ -474,12 +480,29 @@ export class XYPlotOptions extends React.Component {
                         </div>
                     </div>}
 
+                    {!largeTable && <RadioGroupInputField
+                        alignment='horizontal'
+                        initialState= {{
+                            value: get(xyPlotParams, 'plotStyle', 'points'),
+                            tooltip: 'Select plot style',
+                            label : 'Plot Style:'
+                        }}
+                        options={[
+                            {label: 'Points', value: 'points'},
+                            {label: 'Connected Points', value: 'linepoints'},
+                            {label: 'Line', value: 'line'}
+                        ]}
+                        fieldKey='plotStyle'
+                        groupKey={groupKey}
+                        labelWidth={50}
+                    />}
+                    {!largeTable && <br/>}
                     <div style={helpStyle}>
                         For X and Y, enter a column or an expression<br/>
                         ex. log(col); 100*col1/col2; col1-col2
                     </div>
                     <ColumnOrExpression {...xProps}/>
-                    <ColumnOrExpression {...xErrProps}/>
+                    {!largeTable && <ColumnOrExpression {...xErrProps}/>}
 
                     <FieldGroupCollapsible  header='X Label/Unit/Options'
                                             initialState= {{ value:'closed' }}
@@ -512,7 +535,7 @@ export class XYPlotOptions extends React.Component {
                                 tooltip: 'Check if you would like to plot grid',
                                 label : 'Options:'
                             }}
-                            options={noLogOption ? X_AXIS_OPTIONS_NOLOG : X_AXIS_OPTIONS}
+                            options={largeTable ? X_AXIS_OPTIONS_NOLOG : X_AXIS_OPTIONS}
                             fieldKey='x.options'
                             groupKey={groupKey}
                             labelWidth={50}
@@ -521,7 +544,7 @@ export class XYPlotOptions extends React.Component {
                     <br/>
 
                     <ColumnOrExpression {...yProps}/>
-                    <ColumnOrExpression {...yErrProps}/>
+                    {!largeTable && <ColumnOrExpression {...yErrProps}/>}
 
                     <FieldGroupCollapsible  header='Y Label/Unit/Options'
                                             initialState= {{ value:'closed' }}
@@ -555,7 +578,7 @@ export class XYPlotOptions extends React.Component {
                                 label : 'Options:'
 
                             }}
-                            options={noLogOption ? Y_AXIS_OPTIONS_NOLOG : Y_AXIS_OPTIONS}
+                            options={largeTable ? Y_AXIS_OPTIONS_NOLOG : Y_AXIS_OPTIONS}
                             fieldKey='y.options'
                             groupKey={groupKey}
                             labelWidth={50}
