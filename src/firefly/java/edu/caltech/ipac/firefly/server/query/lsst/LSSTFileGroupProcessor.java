@@ -3,9 +3,6 @@ package edu.caltech.ipac.firefly.server.query.lsst;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.WiseRequest;
-import edu.caltech.ipac.firefly.data.dyn.DynUtils;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
@@ -13,18 +10,9 @@ import edu.caltech.ipac.firefly.server.query.*;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
-import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.download.URLDownload;
-
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
 import static edu.caltech.ipac.firefly.server.util.Logger.getLogger;
@@ -32,20 +20,25 @@ import static edu.caltech.ipac.firefly.server.util.Logger.getLogger;
 /**
  * Created by zhang on 11/17/16.
  *
+ *
  */
 
 @SearchProcessorImpl(id = "LSSTFileGroupProcessor")
 public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
-    public static final String LSST_FILESYSTEM_BASEPATH = AppProperties.getProperty("lsst.filesystem_basepath");
+    //leave this line here in case we are going to use the property file later
+    //public static final String LSST_FILESYSTEM_BASEPATH = AppProperties.getProperty("lsst.filesystem_basepath");
     private  Logger.LoggerImpl logger = getLogger();
-    private static  long  SIZE = 30611520;
+    private static  long  DEEP_COADD_SIZE  = 44196480;
+    private static  long  SCIENCE_CCD_SIZE = 44196480;
     @Override
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         assert (request instanceof DownloadRequest);
         try {
+            logger.info("compute file groups");
             return computeFileGroup((DownloadRequest) request);
         } catch (Exception e) {
             e.printStackTrace();
+            logger.info("failed at computing file groups");
             throw new DataAccessException(e.getMessage());
         }
     }
@@ -57,26 +50,18 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
         Collection<Integer> selectedRows = request.getSelectedRows();
         DataGroupPart dgp = new SearchManager().getDataGroup(request.getSearchRequest());
 
-
-        ArrayList<FileGroup> fgArr = new ArrayList<FileGroup>();
-
-        long fgSize = 0;
-
+        ArrayList<FileGroup> fgArr = new ArrayList<>();
 
         // do folder or flat
-        Set<String> zipFiles = new HashSet<String>();
+        Set<String> zipFiles = new HashSet<>();
         String zipType = request.getParam("zipType");
         boolean zipFolders = true;
         if (zipType != null && zipType.equalsIgnoreCase("flat")) {
             zipFolders = false;
         }
 
-        //String basePath = LSST_FILESYSTEM_BASEPATH;
-        //basePath = basePath!=null? basePath :"";
+
         String baseFileName = request.getParam(DownloadRequest.BASE_FILE_NAME);
-        String basePath  = baseFileName ;
-
-
         boolean isDeepCoadd = baseFileName.equalsIgnoreCase("deepCoadd")? true:false;
 
 
@@ -88,6 +73,7 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
                 selectedRows, columns);
         ArrayList<FileInfo> fiArr = new ArrayList<>();
 
+        long size = isDeepCoadd? DEEP_COADD_SIZE:SCIENCE_CCD_SIZE;
         for (int rowIdx : selectedRows) {
 
             String fileName = getFileName(isDeepCoadd, dgData,rowIdx);
@@ -100,10 +86,9 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
                 zipFiles.add(urlStr);
             }
 
-            FileInfo fileInfo =  new FileInfo(urlStr, extFileName, SIZE );
+            FileInfo fileInfo =  new FileInfo(urlStr, extFileName, size );
             fiArr.add(fileInfo );
 
-            //fgSize += new File(extFileName).length();  //fileInfo.getSizeInBytes();
         }
 
 
@@ -116,27 +101,24 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
 
     private String getFileName(boolean isDeepCoadd, IpacTableParser.MappedData dgData, int rowIdx){
         String filterName =(String) dgData.get(rowIdx,"filterName");
-        String id="";
         if (isDeepCoadd) {
-            id =  dgData.get(rowIdx,"deepCoaddId").toString();
+            return  dgData.get(rowIdx,"deepCoaddId").toString()+"-"+filterName+".fits";
 
         }
         else{
-            id =  dgData.get(rowIdx,"scienceCcdExposureId").toString();
+           return dgData.get(rowIdx,"scienceCcdExposureId").toString()+"-"+filterName+".fits";
         }
-        return  id +"-"+filterName+".fits";
+
 
     }
     private  String  getDataURLString( IpacTableParser.MappedData dgData, int rowIdx,  boolean isDeepCoadd) throws MalformedURLException {
 
-        ServerRequest svr = new ServerRequest();
+
         if (isDeepCoadd){
             Long tract = (Long) dgData.get(rowIdx,"tract");
             String patch = (String) dgData.get(rowIdx,"patch");
             String filterName =(String) dgData.get(rowIdx,"filterName");
-            svr.setParam("tract", tract.toString());
-            svr.setParam("patch", patch);
-            svr.setParam("filterName", filterName);
+
             return LSSTImageSearch.createURLForDeepCoadd(tract.toString(), patch, filterName);
         }
         else{
@@ -145,10 +127,6 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
             Long field =  (Long) dgData.get(rowIdx,"field");
             String filterName =  (String) dgData.get(rowIdx,"filterName");
 
-            svr.setParam("run", run.toString());
-            svr.setParam("camcol", camcol.toString());
-            svr.setParam("field", field.toString());
-            svr.setParam("filterName", filterName);
             return LSSTImageSearch.createURLForScienceCCD(run.toString(), camcol.toString(),field.toString(), filterName);
         }
 
