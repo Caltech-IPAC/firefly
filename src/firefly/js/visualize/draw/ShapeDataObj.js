@@ -1,4 +1,3 @@
-
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
@@ -426,10 +425,12 @@ export function rectOnImage(wpt, isCenter, plot, width, height, unit, isOnWorld)
             centerPt = plot.getImageCoords(wpt);
         }
 
-        imgUpperLeft = makeImagePt(centerPt.x - width/2, centerPt.y + height/2);
-        imgUpperRight = makeImagePt(centerPt.x + width/2, centerPt.y + height/2);
-        imgLowerLeft = makeImagePt(centerPt.x - width/2, centerPt.y - height/2);
-        imgLowerRight = makeImagePt(centerPt.x + width/2, centerPt.y - height/2);
+        if (centerPt) {
+            imgUpperLeft = makeImagePt(centerPt.x - width / 2, centerPt.y + height / 2);
+            imgUpperRight = makeImagePt(centerPt.x + width / 2, centerPt.y + height / 2);
+            imgLowerLeft = makeImagePt(centerPt.x - width / 2, centerPt.y - height / 2);
+            imgLowerRight = makeImagePt(centerPt.x + width / 2, centerPt.y - height / 2);
+        }
 
         if (!centerPt || !imgUpperLeft || !imgUpperRight || !imgLowerLeft || !imgLowerRight) return null;
     }
