@@ -24,7 +24,7 @@ const options = [
 const stepoptions = [
     {label: 'Fixed Frequency', value: 'fixedf', proj: 'LCViewer'},
     {label: 'Fixed Period', value: 'fixedp', proj: 'LCViewer'},
-    {label: 'Exponential', value: 'exp', proj: 'LCViewer'}
+//    {label: 'Exponential', value: 'exp', proj: 'LCViewer'}
 
 ];
 
