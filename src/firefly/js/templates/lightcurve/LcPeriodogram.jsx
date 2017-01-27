@@ -28,16 +28,16 @@ import {ValidationField} from '../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 
 const algorOptions = [
-    {label: 'Lomb‑Scargle ', value: 'ls', proj: 'LCViewer'},
-    {label: 'Box-fitting Least Squares', value: 'bls', proj: 'LCViewer'},
-    {label: 'Plavchan 2008', value: 'plav', proj: 'LCViewer'}
+    {label: 'Lomb‑Scargle ', value: 'ls', proj: 'LCViewer'}
+    //{label: 'Box-fitting Least Squares', value: 'bls', proj: 'LCViewer'},
+    //{label: 'Plavchan 2008', value: 'plav', proj: 'LCViewer'}
 ];
 
 const stepOptions = [
     {label: 'Fixed Frequency', value: 'fixedf', proj: 'LCViewer'},
     {label: 'Fixed Period', value: 'fixedp', proj: 'LCViewer'},
-    {label: 'Exponential', value: 'exp', proj: 'LCViewer'},
-    {label: 'Plavchan', value: 'plav', proj: 'LCViewer'}
+    {label: 'Exponential', value: 'exp', proj: 'LCViewer'}
+//    {label: 'Plavchan', value: 'plav', proj: 'LCViewer'}
 ];
 
 // parameter from period calculation used in the popup dialog

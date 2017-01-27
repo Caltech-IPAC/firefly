@@ -19,16 +19,12 @@ import {LC} from '../../templates/lightcurve/LcManager.js';
 
 const gkey = 'PFO_PANEL';
 const options = [
-    {label: 'Lomb‑Scargle ', value: 'ls', proj: 'LCViewer'},
-    {label: 'Box-fitting Least Squares', value: 'bls', proj: 'LCViewer'},
-    {label: 'Plavchan 2008', value: 'plav', proj: 'LCViewer'}
-
+    {label: 'Lomb‑Scargle ', value: 'ls', proj: 'LCViewer'}
 ];
 const stepoptions = [
     {label: 'Fixed Frequency', value: 'fixedf', proj: 'LCViewer'},
     {label: 'Fixed Period', value: 'fixedp', proj: 'LCViewer'},
-    {label: 'Exponential', value: 'exp', proj: 'LCViewer'},
-    {label: 'Plavchan', value: 'plav', proj: 'LCViewer'}
+    {label: 'Exponential', value: 'exp', proj: 'LCViewer'}
 
 ];
 
