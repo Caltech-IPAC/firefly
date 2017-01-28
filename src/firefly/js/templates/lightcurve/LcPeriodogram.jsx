@@ -28,9 +28,9 @@ import {ValidationField} from '../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 
 const algorOptions = [
-    {label: 'Lomb‑Scargle ', value: 'ls', proj: 'LCViewer'},
-    {label: 'Box-fitting Least Squares', value: 'bls', proj: 'LCViewer'},
-    {label: 'Plavchan 2008', value: 'plav', proj: 'LCViewer'}
+    {label: 'Lomb‑Scargle ', value: 'ls', proj: 'LCViewer'}
+    //{label: 'Box-fitting Least Squares', value: 'bls', proj: 'LCViewer'},
+    //{label: 'Plavchan 2008', value: 'plav', proj: 'LCViewer'}
 ];
 
 const stepOptions = [
