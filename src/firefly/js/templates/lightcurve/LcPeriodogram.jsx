@@ -36,8 +36,8 @@ const algorOptions = [
 const stepOptions = [
     {label: 'Fixed Frequency', value: 'fixedf', proj: 'LCViewer'},
     {label: 'Fixed Period', value: 'fixedp', proj: 'LCViewer'},
-//    {label: 'Exponential', value: 'exp', proj: 'LCViewer'}
-//    {label: 'Plavchan', value: 'plav', proj: 'LCViewer'}
+    {label: 'Exponential', value: 'exp', proj: 'LCViewer'},
+    {label: 'Plavchan', value: 'plav', proj: 'LCViewer'}
 ];
 
 // parameter from period calculation used in the popup dialog
