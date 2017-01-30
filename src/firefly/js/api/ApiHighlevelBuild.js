@@ -129,7 +129,8 @@ function buildTablePart(llApi) {
      * @prop {boolean} expandable   defaults to true
      * @prop {boolean} showToolbar  defaults to true
      * @prop {boolean} border       defaults to true
-     * @prop {object}  downloadButton   a download button component for this table
+     * @prop {function[]}  leftButtons   an array of functions that returns a button-like component laid out on the left side of this table header.  Function will be called with table's state.
+     * @prop {function[]}  rightButtons  an array of functions that returns a button-like component laid out on the left side of this table header.  Function will be called with table's state.
      */
 
     /**
