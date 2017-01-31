@@ -197,8 +197,8 @@ public class FitsRead implements Serializable {
     /**
      * Flip an image left to right so that pixels read backwards
      *
-     * @param aFitsReader FitsReadLZ object for the input image
-     * @return FitsReadLZ object for the new, flipped image
+     * @param aFitsReader FitsRead object for the input image
+     * @return FitsRead object for the new, flipped image
      */
 
     public static FitsRead createFitsReadFlipLR(FitsRead aFitsReader)
@@ -212,8 +212,8 @@ public class FitsRead implements Serializable {
     /**
      * Rotate an image so that Equatorial North is up in the new image
      *
-     * @param fitsReader FitsReadLZ object for the input image
-     * @return FitsReadLZ object for the new, rotated image
+     * @param fitsReader FitsRead object for the input image
+     * @return FitsRead object for the new, rotated image
      */
 
     public static FitsRead createFitsReadNorthUp(FitsRead fitsReader)
@@ -224,8 +224,8 @@ public class FitsRead implements Serializable {
     /**
      * Rotate an image so that Galactic North is up in the new image
      *
-     * @param aFitsReader FitsReadLZ object for the input image
-     * @return FitsReadLZ object for the new, rotated image
+     * @param aFitsReader FitsRead object for the input image
+     * @return FitsRead object for the new, rotated image
      */
 
     public static FitsRead createFitsReadNorthUpGalactic(FitsRead aFitsReader)
@@ -236,10 +236,10 @@ public class FitsRead implements Serializable {
     /**
      * Rotate an image by a specified amount
      *
-     * @param fitsReader    FitsReadLZ object for the input image
+     * @param fitsReader    FitsRead object for the input image
      * @param rotationAngle number of degrees to rotate the image counter-clockwise
      * @param fromNorth if true that the rotation angle is from the north
-     * @return FitsReadLZ object for the new, rotated image
+     * @return FitsRead object for the new, rotated image
      */
     public static FitsRead createFitsReadRotated(FitsRead fitsReader, double rotationAngle, boolean fromNorth)
             throws FitsException, IOException, GeomException {
@@ -460,10 +460,10 @@ public class FitsRead implements Serializable {
     /**
      * Rotate an image so that North is at the specified position angle in the new image
      *
-     * @param fitsRead      FitsReadLZ object for the input image
+     * @param fitsRead      FitsRead object for the input image
      * @param positionAngle desired position angle in degrees
      * @param coordinateSys desired coordinate system for output image
-     * @return FitsReadLZ object for the new, rotated image
+     * @return FitsRead object for the new, rotated image
      */
     public static FitsRead createFitsReadPositionAngle(FitsRead fitsRead, double positionAngle,
                                                        CoordinateSys coordinateSys)
@@ -1610,7 +1610,7 @@ public class FitsRead implements Serializable {
 
     /**
      * return the index of where this fits data was i a fits file.  If a -1
-     * is returned the we do not know or many this FitsReadLZ was created with
+     * is returned the we do not know or many this FitsRead was created with
      * geom.  Otherwise if a number >= 0 other is return then that is the
      * location in the fits file
      *
