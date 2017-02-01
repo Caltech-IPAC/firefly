@@ -1,17 +1,20 @@
 package edu.caltech.ipac.firefly.util;
 
+import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import nom.tam.fits.*;
 import nom.tam.util.Cursor;
 import org.junit.Assert;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * Created by zhang on 12/13/16.
  * This is a base class to validate FITS file for the unit test
  */
-public class FitsValidation {
+public class FitsValidation extends ConfigTest{
     private  double  delta =0.1e-10;
     /**
      * Validate the header card one by one
@@ -44,35 +47,70 @@ public class FitsValidation {
 
     }
 
-    public void validateFits(Fits expectedFits, Fits fits) throws FitsException {
+    public void validateFits(Fits expectedFits, Fits fits) throws  FitsException  {
         validateHDUs(expectedFits,fits);
         validateData(expectedFits,fits);
     }
 
-    public void validateSingleHDU(BasicHDU expectedHdu, BasicHDU outHdu) throws FitsException{
+    public void validateSingleHDU(BasicHDU expectedHdu, BasicHDU outHdu) throws FitsException {
 
          Header expectedHeader = expectedHdu.getHeader();
          Header calculatedHeader = outHdu.getHeader();
+
+
          //validate expected and calculated headers have the same number of card
          Assert.assertEquals(expectedHeader.getNumberOfCards(), calculatedHeader.getNumberOfCards());
 
-         //validate expected and calculated headers have the same keys and same values
+
+        //validate expected and calculated headers have the same keys and same values
          String[] keys = getExpectedKeys(expectedHeader);
          for (int i=0; i<keys.length; i++){
              HeaderCard expectedCard =expectedHeader.findCard(keys[i]);
              HeaderCard calculatedCard =calculatedHeader.findCard(keys[i]);
+
+             //OK for both are null
              if (expectedCard==null && calculatedCard==null) continue;
-             if (expectedCard!=null &&   calculatedCard!=null ){
-                  Assert.assertEquals(expectedCard.getValue(), calculatedCard.getValue());
+
+             //Not OK if only one is null
+             if (expectedCard==null  && calculatedCard !=null ||
+                     expectedCard!=null && calculatedCard==null  ){
+                 Assert.fail("The calculated Header is not the same as expected header.");
              }
-            else {
-                 Assert.fail("The calculated Fits Header is not the same as expected header");
-                 break;
+
+             //compare the header values in each HeaderCard
+             String expectedValue = expectedCard.getValue().trim();
+             String calculatedValue = calculatedCard.getValue().trim();
+             //Do the numerical comparison  in case there are scientific notations, or precision difference
+             if (!isBlank(expectedValue) && isOnlyNumber(expectedValue)){
+                 double expectedDoubleNumber = new Double(expectedValue).doubleValue();
+                 double calculatedDoubleNumber = new Double(calculatedValue).doubleValue();
+                 //compare double numbers
+                 Assert.assertEquals(expectedDoubleNumber, calculatedDoubleNumber,delta);
+             }
+             else {
+                 //compare strings
+                 Assert.assertEquals(expectedValue, calculatedValue);
              }
 
          }
 
-   }
+    }
+
+    public boolean isBlank(String value) {
+        return (value == null || value.equals("") || value.equals("null") || value.trim().equals(""));
+    }
+
+
+    public boolean isOnlyNumber(String value) {
+         try{
+             Double.parseDouble(value);
+             return true;
+         }  catch(NumberFormatException e)
+         {
+             return false;
+         }
+
+    }
 
     private String[] getExpectedKeys( Header expectedHeader){
         Cursor expectedIter = 	expectedHeader.iterator();
