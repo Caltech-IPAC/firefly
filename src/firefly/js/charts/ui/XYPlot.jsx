@@ -695,10 +695,10 @@ export class XYPlot extends React.Component {
         const {xTitle, xGrid, xReversed, xOpposite, xLog} = getXAxisOptions(params);
         const {yTitle, yGrid, yReversed, yOpposite, yLog} = getYAxisOptions(params);
         const {xMin, xMax, yMin, yMax} = getZoomSelection(params);
-        const {decimateKey} = data;
+        const {decimateKey, x, y} = data;
         const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = get(params, 'boundaries', {});
-        const xFormat = decimateKey ? getFormatString(Math.abs(xDataMax-xDataMin), 4) : undefined;
-        const yFormat = decimateKey ? getFormatString(Math.abs(yDataMax-yDataMin), 4) : undefined;
+        const xFormat = (decimateKey || x) ? getFormatString(Math.abs(xDataMax-xDataMin), 4) : undefined;
+        const yFormat = (decimateKey || y) ? getFormatString(Math.abs(yDataMax-yDataMin), 4) : undefined;
 
         const makeSeries = this.makeSeries;
 
