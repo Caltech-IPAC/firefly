@@ -35,7 +35,9 @@ import {showRegionFileUploadPanel} from '../region/RegionFileUploadView.jsx';
 import {MarkerDropDownView} from './MarkerDropDownView.jsx';
 import {dispatchShowDropDown} from '../../core/LayoutCntlr.js';
 import {showImageSelPanel} from './ImageSelectPanel.jsx';
-import {showMaskDialog} from './MaskAddPanel.jsx';
+import {showMaskDialog} from './MaskAddPanel.jsx'
+import {isOverlayLayersActive} from '../RelatedDataUtil.js';
+import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
 
 //===================================================
@@ -360,7 +362,12 @@ function doRotateNorth(pv,rotate) {
 function recenter(pv) { dispatchRecenter({plotId:pv.plotId}); }
 
 function flipY(pv) {
-    dispatchFlip({plotId:pv.plotId});
+    if (isOverlayLayersActive(pv)) {
+        showInfoPopup('Flip not yet supported with mask layers');
+    }
+    else {
+        dispatchFlip({plotId:pv.plotId});
+    }
 }
 
 

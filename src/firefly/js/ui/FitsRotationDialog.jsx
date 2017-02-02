@@ -12,10 +12,12 @@ import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
+import {showInfoPopup} from './PopupUtil.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {visRoot, dispatchRotate, ActionScope} from '../visualize/ImagePlotCntlr.js';
 import {RotateType} from '../visualize/PlotState.js';
+import {isOverlayLayersActive} from '../visualize/RelatedDataUtil.js';
 
 import HelpIcon from './HelpIcon.jsx';
 
@@ -37,8 +39,13 @@ function getDialogBuilder() {
 const dialogBuilder = getDialogBuilder();
 
 export function showFitsRotationDialog() {
-    dialogBuilder();
-    dispatchShowDialog('fitsRotationDialog');
+    if (isOverlayLayersActive(visRoot())) {
+       showInfoPopup('Rotate not yet supported with mask layers');
+    }
+    else {
+        dialogBuilder();
+        dispatchShowDialog('fitsRotationDialog');
+    }
 }
 
 

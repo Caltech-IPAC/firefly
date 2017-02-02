@@ -21,6 +21,10 @@ import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 import {selectCatalog,unselectCatalog,filterCatalog,clearFilterCatalog} from '../../drawingLayers/Catalog.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
+import {isOverlayLayersActive} from '../RelatedDataUtil.js';
+import {showInfoPopup} from '../../ui/PopupUtil.jsx';
+import CoordUtil from '../CoordUtil.js';
+import { parseImagePt } from '../Point.js';
 
 import CROP from 'html/images/icons-2014/24x24_Crop.png';
 import STATISTICS from 'html/images/icons-2014/24x24_Statistics.png';
@@ -33,8 +37,6 @@ import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import SELECTED_ZOOM from 'html/images/icons-2014/ZoomFitToSelectedSpace.png';
 import SELECTED_RECENTER from 'html/images/icons-2014/RecenterImage-selection.png';
 
-import CoordUtil from '../CoordUtil.js';
-import { parseImagePt } from '../Point.js';
 
 
 //todo move the statistics constants to where they are needed
@@ -179,6 +181,13 @@ function stats(pv) {
 
 
 function crop(pv) {
+
+    if (isOverlayLayersActive(pv)) {
+        showInfoPopup('Crop not yet supported with mask layers');
+        return;
+    }
+
+
     var p= primePlot(pv);
     var cc= CysConverter.make(p);
     var sel= p.attributes[PlotAttribute.SELECTION];

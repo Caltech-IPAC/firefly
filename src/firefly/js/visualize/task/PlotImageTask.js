@@ -425,7 +425,7 @@ function initBuildInDrawLayers() {
 /**
  *
  * @param {String[]} plotIdAry
- * @param {Object.<string, OverlayPlotView>} oldOverlayPlotViews
+ * @param {Object.<string, OverlayPlotView[]>} oldOverlayPlotViews
  */
 function matchAndActivateOverlayPlotViews(plotIdAry, oldOverlayPlotViews) {
     plotIdAry.forEach( (plotId) => dispatchDeleteOverlayPlot({plotId, deleteAll:true}));

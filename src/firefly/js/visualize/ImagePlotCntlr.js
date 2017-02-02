@@ -302,9 +302,10 @@ export function dispatchApiToolsView(apiToolsView) {
  * @param plotId
  * @param message
  * @param done
+ * @param requestKey
  */
-export function dispatchPlotProgressUpdate(plotId, message, done ) {
-    flux.process({ type: PLOT_PROGRESS_UPDATE, payload: { plotId, done, message }});
+export function dispatchPlotProgressUpdate(plotId, message, done, requestKey ) {
+    flux.process({ type: PLOT_PROGRESS_UPDATE, payload: { plotId, done, message, requestKey }});
 }
 
 /**
@@ -428,9 +429,10 @@ export function dispatchWcsMatch({plotId, matchType, dispatcher= flux.process} )
 export function dispatchRotate({plotId, rotateType, angle=-1, newZoomLevel=0,
                                 keepWcsLock= false,
                                 actionScope=ActionScope.GROUP,
+                                onlyRotateBase= false,
                                 dispatcher= flux.process} ) {
     dispatcher({ type: ROTATE,
-        payload: { plotId, angle, rotateType, actionScope, newZoomLevel, keepWcsLock}});
+        payload: { plotId, angle, rotateType, actionScope, newZoomLevel, onlyRotateBase, keepWcsLock}});
 }
 
 

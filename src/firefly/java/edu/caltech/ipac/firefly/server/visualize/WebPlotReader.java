@@ -406,6 +406,15 @@ public class WebPlotReader {
         }
     }
 
+    /**
+     * This method attempts to find how data might be related in a multi-extension fits file. I expect it will grow
+     * and become more advanced over time.
+     * Currently it looks of the extension type marked 'IMAGE' and makes that the based. Any extensions marked 'MASK' or
+     * 'VARIANCE' are related data.
+     * @param f the fits file name
+     * @param frAry the array of FitsRead objects that came from the file.
+     * @return the data relations
+     */
     private static List<List<RelatedData>> investigateRelations(File f, FitsRead frAry[]) {
         if (frAry.length>1) {
             int imageIdx= -1;

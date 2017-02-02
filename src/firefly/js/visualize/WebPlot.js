@@ -169,6 +169,22 @@ export const PlotAttribute= {
  */
 
 
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} RelatedData
+ * @summary overlay data that is associated with the image data
+ *
+ * @prop {string} dataType one of 'IMAGE_OVERLAY', 'IMAGE_MASK', 'TABLE'
+ * @prop {string} desc user description of the data
+ * @prop {Object.<string, string>} searchParams map of search parameters to get the related data
+ * @prop {Object.<string, string>} availableMask only used for makes key it sh bit number value is the description
+ *
+ */
+
+
+
 /**
  * @global
  * @public

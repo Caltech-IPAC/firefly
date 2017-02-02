@@ -2,10 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {difference,get, flatten, values, uniq, isEmpty} from 'lodash';
-import {getPlotViewIdListInGroup, getPlotViewById, operateOnOthersInGroup} from './PlotViewUtil.js';
+import {isEmpty, difference,get, flatten, values, uniq} from 'lodash';
+import {primePlot, getPlotViewIdListInGroup, getPlotViewById, operateOnOthersInGroup} from './PlotViewUtil.js';
 import {WPConst} from './WebPlotRequest.js';
 import {RDConst} from './WebPlot.js';
+import {Operation} from './PlotState.js';
 import {visRoot, dispatchPlotMask, dispatchOverlayPlotChangeAttributes, dispatchPlotMaskLazyLoad} from './ImagePlotCntlr.js';
 
 
@@ -17,14 +18,31 @@ import {visRoot, dispatchPlotMask, dispatchOverlayPlotChangeAttributes, dispatch
 //--------------------------------------------------------------
 //--------------------------------------------------------------
 
+/**
+ * Find any related data that is associated with the PlotView that is supported has not be activated
+ * (activated means turned into an overlay).
+ * @param pv
+ * @return {RelatedData[]} all the unactivated related data the the UI supports
+ */
 export function findRelatedData(pv) {
-    if (!get(pv,'plots')) return [];
-
+    const plot= primePlot(pv);
+    if (!plot) return [];
+    const {plotState}= plot;
+    if (plotState.isFlippedY() || plotState.isRotated()) return [];
+    if (plotState.hasOperation(Operation.CROP)) return [];
     const relatedData= flatten(pv.plots.map( (p) =>  p.relatedData))
         .filter( (r,idx) => dataTypeMatches(r,idx,pv));
     return relatedData;
 }
 
+/**
+ * For the related data that is passed check to see if is supported and has not been completely activated.
+ * Mask type related data might be partially activated.
+ * @param {RelatedData} r
+ * @param idx
+ * @param {PlotView} pv
+ * @return {boolean}
+ */
 function dataTypeMatches(r,idx, pv) {
     const dataType= get(r,'dataType');
     if (!RDConst.SUPPORTED_DATATYPES.includes(dataType)) return false;
@@ -55,6 +73,11 @@ export function operateOnOverlayPlotViewsThatMatch(vr, opv, func) {
     opvList.forEach( (aOpv) => func(aOpv));
 }
 
+/**
+ * Set a mask layer visible, this means either change the visibility attributes or calling a dispatch to fetch the data.
+ * @param {OverlayPlotView} opv
+ * @param {boolean} visible
+ */
 export function setMaskVisible(opv, visible) {
     if (!visible || opv.plot) {
         dispatchOverlayPlotChangeAttributes({plotId:opv.plotId, imageOverlayId:opv.imageOverlayId, attributes:{visible}});
@@ -65,10 +88,6 @@ export function setMaskVisible(opv, visible) {
 }
 
 
-
-
-//===========  Note the following set of related data functions might should go in another file.
-//===========  maybe even an action creator, not sure so for now I am going to keep it like this.
 
 /**
  * Do processing to turn this related data into a drawing layer
@@ -151,12 +170,12 @@ function makeMaskTitle(maskNumber, availableMask) {
     }
 }
 
-function enableRelatedDataLayerImageOverlay(pv, relatedData) {
+function enableRelatedDataLayerImageOverlay(pv, relatedData) { // eslint-disable-line no-unused-vars
     //todo
     console.log('todo: ImageOverlay');
 }
 
-function enableRelatedDataLayerTableOverlay(pv, relatedData) {
+function enableRelatedDataLayerTableOverlay(pv, relatedData) {// eslint-disable-line no-unused-vars
     //todo
     console.log('todo: artifact overlay');
 }
@@ -188,3 +207,21 @@ export function enableMatchingRelatedData(pv, matchOverlayPlotViews) {
         });
 }
 
+/**
+ * Are the plot view overlays active
+ * @param {VisRoot|PlotView} ref
+ */
+export function isOverlayLayersActive(ref) {
+    if (!ref) return false;
+    var pv;
+    if (ref.plotViewAry) { // I was passed the visRoot, use either plot it or the active plot id
+        pv= getPlotViewById(ref, ref.activePlotId);
+    }
+    else if (ref.plots) {
+       pv= ref;
+    }
+    else {
+        return false;
+    }
+    return !isEmpty(pv.overlayPlotViews);
+}

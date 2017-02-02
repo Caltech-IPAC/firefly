@@ -384,7 +384,7 @@ function makeMessageArea(pv,plotShowing,onScreen) {
             <ImageViewerStatus message={pv.plottingStatus} working={false}
                                useMessageAlpha={true} useButton={plotShowing}
                                buttonText='OK'
-                               buttonCB={() => dispatchPlotProgressUpdate(pv.plotId,'',true)}
+                               buttonCB={() => dispatchPlotProgressUpdate(pv.plotId,'',true, pv.request.getRequestKey())}
                                />
         );
     }
