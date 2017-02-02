@@ -59,6 +59,9 @@ public class PlotStateUtil {
         state.setMultiImageAction(threeC ? PlotState.MultiImageAction.USE_FIRST : PlotState.MultiImageAction.USE_ALL);
 
         state.setContextString(CtxControl.makeCachedCtx());
+        for(PlotState.Operation op : initializerState.getOperations()) {
+            state.addOperation(op);
+        }
         initState(state, req, initializerState);
         CtxControl.getPlotCtx(state.getContextString()).setPlotState(state);
         for(Band band : initializerState.getBands()) {

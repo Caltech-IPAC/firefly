@@ -12,6 +12,14 @@ import PlotState from './PlotState.js';
 
 
 
+export const RDConst= {
+    IMAGE_OVERLAY: 'IMAGE_OVERLAY',
+    IMAGE_MASK: 'IMAGE_MASK',
+    TABLE: 'TABLE',
+    SUPPORTED_DATATYPES: ['IMAGE_MASK']
+   // SUPPORTED_DATATYPES: ['IMAGE_MASK', 'IMAGE_OVERLAY']
+
+};
 
 export const PlotAttribute= {
 
@@ -161,6 +169,22 @@ export const PlotAttribute= {
  */
 
 
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} RelatedData
+ * @summary overlay data that is associated with the image data
+ *
+ * @prop {string} dataType one of 'IMAGE_OVERLAY', 'IMAGE_MASK', 'TABLE'
+ * @prop {string} desc user description of the data
+ * @prop {Object.<string, string>} searchParams map of search parameters to get the related data
+ * @prop {Object.<string, string>} availableMask only used for makes key it sh bit number value is the description
+ *
+ */
+
+
+
 /**
  * @global
  * @public
@@ -204,6 +228,8 @@ export const PlotAttribute= {
  */
 
 
+const relatedIdRoot= 'RelatedId-';
+var relatedId= 0;
 
 
 /**
@@ -230,6 +256,7 @@ export const WebPlot= {
             plotImageId     : plotId+'---NEEDS___INIT',
             serverImages    : wpInit.initImages,
             imageCoordSys   : CoordinateSys.parse(wpInit.imageCoordSys),
+            relatedData     : wpInit.relatedData,
             plotState,
             projection,
             dataWidth       : wpInit.dataWidth,
@@ -254,6 +281,13 @@ export const WebPlot= {
             //=== End Mutable =====================
             asOverlay
         };
+
+        if (webPlot.relatedData) {
+            webPlot.relatedData.forEach( (d) => {
+                d.relatedDataId= relatedIdRoot+relatedId;
+                relatedId++;
+            } );
+        }
 
         return webPlot;
     },
@@ -312,13 +346,14 @@ export function isBlankImage(plot) {
 
 /**
  *
- * @param {WebPlot} wpData
+ * @param {WebPlot} plot
  * @param {number} zoomFactor
  * @return {WebPlot}
  */
-export function clonePlotWithZoom(wpData,zoomFactor) {
-    var screenSize= {width:wpData.dataWidth*zoomFactor, height:wpData.dataHeight*zoomFactor};
-    return Object.assign({},wpData,{zoomFactor,screenSize});
+export function clonePlotWithZoom(plot,zoomFactor) {
+    if (!plot) return null;
+    var screenSize= {width:plot.dataWidth*zoomFactor, height:plot.dataHeight*zoomFactor};
+    return Object.assign({},plot,{zoomFactor,screenSize});
 }
 
 

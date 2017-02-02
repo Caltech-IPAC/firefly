@@ -188,6 +188,21 @@ public class PlotServUtils {
 
 
 
+    public static File createRotatedFile(FitsRead originalFR,
+                                         String originalFileStr,
+                                         String workingFileStr,
+                                         PlotState.RotateType rotateType,
+                                         double angle,
+                                         CoordinateSys rotNorthType) throws FitsException, IOException, GeomException {
+
+        String fStr = originalFileStr != null ? originalFileStr : workingFileStr;
+        File originalFile = ServerContext.convertToFile(fStr);
+        boolean rotateNorth = (rotateType == PlotState.RotateType.NORTH);
+        File f = rotateNorth ? createRotateNorthFile(originalFile, originalFR, rotNorthType) :
+                               createRotatedAngleFile(originalFile, originalFR, angle);
+        return f;
+    }
+
     public static File createRotateNorthFile(File originalFile,
                                              FitsRead originalFR,
                                              CoordinateSys rotateNorthType) throws FitsException,
@@ -215,7 +230,7 @@ public class PlotServUtils {
     }
 
 
-    public static File createRotatedFile(File originalFile, FitsRead originalFR, double angle) throws FitsException,
+    public static File createRotatedAngleFile(File originalFile, FitsRead originalFR, double angle) throws FitsException,
                                                                                                       IOException,
                                                                                                       GeomException {
         FitsRead rotateFR= FitsRead.createFitsReadRotated(originalFR, angle, false);

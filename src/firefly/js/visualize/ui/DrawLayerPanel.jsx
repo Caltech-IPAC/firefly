@@ -12,7 +12,7 @@ import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
-import DrawLayerPanelView from './DrawLayerPanelView.jsx';
+import {DrawLayerPanelView} from './DrawLayerPanelView.jsx';
 import {flux} from '../../Firefly.js';
 import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
 

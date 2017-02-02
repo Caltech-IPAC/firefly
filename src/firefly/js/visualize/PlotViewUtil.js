@@ -1,11 +1,14 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {difference,isArray,has,isString,get, isEmpty} from 'lodash';
+import {difference,isArray,has,isString,get, isEmpty,flatten, values} from 'lodash';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeImagePt, pointEquals} from './Point.js';
 import {CysConverter} from './CsysConverter.js';
 import {clone} from '../util/WebUtil.js';
+import {WPConst} from './WebPlotRequest.js';
+import {RDConst} from './WebPlot.js';
+import {dispatchPlotMask} from './ImagePlotCntlr.js';
 
 
 /**
@@ -87,7 +90,7 @@ export function expandedPlotViewAry(ref,activePlotId=null) {
 
 /**
  * Return an array of plotId's that are in the plot group associated with the the pvOrId parameter.
- * @param visRoot - root of the visualization object in store
+ * @param {VisRoot} visRoot - root of the visualization object in store
  * @param pvOrId this parameter will take the plotId string or a plotView object
  * @param onlyIfGroupLocked
  * @param hasPlots
@@ -163,6 +166,7 @@ export function operateOnOthersInGroup(visRoot,sourcePv,operationFunc, ignoreThr
  * @return {OverlayPlotView}
  */
 export function getOverlayById(plotView, imageOverlayId) {
+    if (!plotView) return null;
     return plotView.overlayPlotViews.find( (opv) => opv.imageOverlayId===imageOverlayId);
 }
 
@@ -176,11 +180,6 @@ export function getOverlayById(plotView, imageOverlayId) {
 export function getOverlayByPvAndId(ref,plotId,imageOverlayId) {
     return getOverlayById(getPlotViewById(ref,plotId),imageOverlayId);
 }
-
-
-//--------------------------------------------------------------
-//--------- Drawing Layer outside functions
-//--------------------------------------------------------------
 
 
 
@@ -307,7 +306,7 @@ export function plotInActiveGroup(visRoot, plotId) {
  * @return {Array}
  */
 export function getPlotStateAry(pv) {
-    var overlayStates= pv.overlayPlotViews.map( (opv) => opv.plot.plotState);
+    var overlayStates= pv.overlayPlotViews.map( (opv) => get(opv.plot,'plotState')).filter( (s) => s);
     const p= primePlot(pv);
     const pvStateAry= p ? [p.plotState] : [];
     return [...pvStateAry, ...overlayStates];
@@ -338,6 +337,31 @@ export function isInSameGroup(ref, plotId1, plotId2) {
     return pv1.plotGroupId===pv2.plotGroupId;
 }
 
+/**
+ * find the plot group from the array
+ * @param plotGroupId
+ * @param plotGroupAry
+ * @return {*}
+ */
+export function findPlotGroup(plotGroupId, plotGroupAry) {
+    if (!plotGroupId || !plotGroupAry) return null;
+    return plotGroupAry.find( (pg) => pg.plotGroupId===plotGroupId);
+}
+
+/**
+ * based on groupLock return an array which will either contain one plotView or the whole group
+ * @param {PlotView[]} plotViewAry
+ * @param {string} plotId
+ * @param {PlotGroup} plotGroup
+ * @return {*}
+ */
+export function getOnePvOrGroup(plotViewAry, plotId,plotGroup) {
+    var groupLock= hasGroupLock(getPlotViewById(plotViewAry,plotId),plotGroup);
+    return groupLock ?
+        plotViewAry.filter( (pv) => pv.plotGroupId===plotGroup.plotGroupId) :
+        [getPlotViewById(plotViewAry,plotId)];
+}
+
 
 
 //--------------------------------------------------------------
@@ -356,16 +380,6 @@ export function findPlotViewIdx(plotId, plotViewAry) {
 
 
 
-/**
- * find the plot group from the array
- * @param plotGroupId
- * @param plotGroupAry
- * @return {*}
- */
-export function findPlotGroup(plotGroupId, plotGroupAry) {
-    if (!plotGroupId || !plotGroupAry) return null;
-    return plotGroupAry.find( (pg) => pg.plotGroupId===plotGroupId);
-}
 
 
 /**
@@ -407,21 +421,6 @@ export function applyToOnePvOrGroup(plotViewAry, plotId,plotGroup,operationFunc)
         else if (groupLock && pv.plotGroupId===plotGroup.plotGroupId) return operationFunc(pv);
         else return pv;
     });
-}
-
-
-/**
- * based on groupLock return an array which will either contain one plotView or the whole group 
- * @param {PlotView[]} plotViewAry
- * @param {string} plotId
- * @param {PlotGroup} plotGroup
- * @return {*}
- */
-export function getOnePvOrGroup(plotViewAry, plotId,plotGroup) {
-    var groupLock= hasGroupLock(getPlotViewById(plotViewAry,plotId),plotGroup);
-    return groupLock ? 
-        plotViewAry.filter( (pv) => pv.plotGroupId===plotGroup.plotGroupId) : 
-        [getPlotViewById(plotViewAry,plotId)];
 }
 
 
@@ -495,9 +494,4 @@ export function isMultiImageFitsWithSameArea(pv) {
                 pointEquals(iwc4,c4) );
     });
 }
-
-
-
-
-
 

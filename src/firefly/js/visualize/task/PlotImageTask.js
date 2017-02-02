@@ -6,11 +6,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isArray, uniqueId} from 'lodash';
+import {flatten, isArray, uniqueId, uniq, uniqBy, get, isEmpty} from 'lodash';
 import {WebPlotRequest, GridOnStatus} from '../WebPlotRequest.js';
-import ImagePlotCntlr, {makeUniqueRequestKey, IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot, makeUniqueRequestKey,
+                        IMAGE_PLOT_KEY, dispatchDeleteOverlayPlot} from '../ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
-import {WebPlot,PlotAttribute} from '../WebPlot.js';
+import {WebPlot,PlotAttribute, RDConst} from '../WebPlot.js';
 import CsysConverter from '../CsysConverter.js';
 import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
 import VisUtils from '../VisUtil.js';
@@ -23,7 +24,8 @@ import ActiveTarget  from '../../drawingLayers/ActiveTarget.js';
 import * as DrawLayerCntlr from '../DrawLayerCntlr.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddViewerItems, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
-import {getDrawLayerByType, getPlotViewById} from '../PlotViewUtil.js';
+import {getPlotViewById, getDrawLayerByType, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
+import {enableMatchingRelatedData} from '../RelatedDataUtil.js';
 import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
 
@@ -86,6 +88,11 @@ function makeSinglePlotPayload(vr, rawPayload, requestKey) {
                      requestKey, attributes, viewerId, pvOptions, addToHistory,
                      useContextModifications, threeColor, setNewPlotAsActive};
 
+    const existingPv= getPlotViewById(vr,plotId);
+    if (existingPv) {
+        payload.oldOverlayPlotViews= {[plotId] :existingPv.overlayPlotViews};
+    }
+
     if (threeColor) {
         if (isArray(wpRequest)) {
             payload.redReq= addRequestKey(wpRequest[Band.RED.value], requestKey);
@@ -132,8 +139,18 @@ function makePlotImageAction(rawAction) {
                 groupLocked:true,
                 requestKey
             };
+
             payload.wpRequestAry= payload.wpRequestAry.map( (req) =>
                             addRequestKey(req,makeUniqueRequestKey('groupItemReqKey-'+req.getPlotId())));
+
+
+            payload.oldOverlayPlotViews= wpRequestAry
+                .map( (wpr) => getPlotViewById(vr,wpr.getPlotId()))
+                .filter( (pv) => get(pv, 'overlayPlotViews'))
+                .reduce( (obj, pv) => {
+                    obj[pv.plotId]= pv.overlayPlotViews;
+                    return obj;
+            },{});
 
             if (vr.wcsMatchType && vr.mpwWcsPrimId && rawAction.payload.holdWcsMatch) {
                 const wcsPrim= getPlotViewById(vr,vr.mpwWcsPrimId);
@@ -157,9 +174,9 @@ function makePlotImageAction(rawAction) {
 
 
         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,payload});
-        // NOTE - sega ImagePlotter handles next step
-        // NOTE - sega ImagePlotter handles next step
-        // NOTE - sega ImagePlotter handles next step
+        // NOTE - saga ImagePlotter handles next step
+        // NOTE - saga ImagePlotter handles next step
+        // NOTE - saga ImagePlotter handles next step
     };
 }
 
@@ -202,10 +219,6 @@ export function modifyRequest(pvCtx, r, band) {
     //}
 
 
-    //if (pv.options.rememberZoom && primePlot(pv)) {
-    //    retval.setZoomType(ZoomType.STANDARD);
-    //    retval.setInitialZoomLevel(plot.zoomFac);
-    //}
 
     if (pvCtx.defThumbnailSize!==DEFAULT_THUMBNAIL_SIZE && !r.containsParam(WPConst.THUMBNAIL_SIZE)) {
         retval.setThumbnailSize(pvCtx.defThumbnailSize);
@@ -260,6 +273,12 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
         const plotIdAry = pvNewPlotInfoAry.map((info) => info.plotId);
         dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotIdAry}});
 
+        if (isEmpty(payload.oldOverlayPlotViews)) {
+            matchAndActivateOverlayPlotViewsByGroup(plotIdAry);
+        }
+        else {
+            matchAndActivateOverlayPlotViews(plotIdAry, payload.oldOverlayPlotViews);
+        }
 
         // pvNewPlotInfoAry.forEach((info) => {
         //     info.plotAry.map((p) => ({r: p.plotState.getWebPlotRequest(), plotId: p.plotId}))
@@ -336,6 +355,13 @@ function getRequest(payload) {
 }
 
 
+/**
+ *
+ * @param plotCreate
+ * @param payload
+ * @param requestKey
+ * @return {{plotId: *, requestKey: *, plotAry: *, overlayPlotViews: null}}
+ */
 const handleSuccess= function(plotCreate, payload, requestKey) {
     const plotState= PlotState.makePlotStateWithJson(plotCreate[0].plotState);
     const plotId= plotState.getWebPlotRequest().getPlotId();
@@ -370,9 +396,7 @@ function updateActiveTarget(plot) {
 
 
     if (!getActiveTarget()) {
-        var circle = req.getRequestArea();
-
-        if (req.getOverlayPosition())     activeTarget= req.getOverlayPosition();
+        var circle = req.getRequestArea(); if (req.getOverlayPosition())     activeTarget= req.getOverlayPosition();
         else if (circle && circle.center) activeTarget= circle.center;
         else                              activeTarget= VisUtils.getCenterPtOfPlot(plot);
 
@@ -398,3 +422,37 @@ function initBuildInDrawLayers() {
     DrawLayerCntlr.dispatchCreateDrawLayer(ActiveTarget.TYPE_ID);
 }
 
+/**
+ *
+ * @param {String[]} plotIdAry
+ * @param {Object.<string, OverlayPlotView[]>} oldOverlayPlotViews
+ */
+function matchAndActivateOverlayPlotViews(plotIdAry, oldOverlayPlotViews) {
+    plotIdAry.forEach( (plotId) => dispatchDeleteOverlayPlot({plotId, deleteAll:true}));
+
+    plotIdAry
+        .map( (plotId) => getPlotViewById(visRoot(), plotId))
+        .filter( (pv) => pv)
+        .forEach( (pv) => enableMatchingRelatedData(pv,oldOverlayPlotViews[pv.plotId]));
+}
+
+
+
+/**
+ *
+ * @param {String[]} plotIdAry
+ */
+function matchAndActivateOverlayPlotViewsByGroup(plotIdAry) {
+    const vr= visRoot();
+    plotIdAry
+        .map( (plotId) => getPlotViewById(visRoot(), plotId))
+        .filter( (pv) => pv)
+        .forEach( (pv) => {
+            const opvMatchArray= uniqBy(flatten(getPlotViewIdListInGroup(vr, pv.plotId)
+                                                       .filter( (id) => id!== pv.plotId)
+                                                       .map( (id) => getPlotViewById(vr,id))
+                                                       .map( (gpv) => gpv.overlayPlotViews)),
+                                   'maskNumber' );
+            enableMatchingRelatedData(pv,opvMatchArray);
+        });
+}

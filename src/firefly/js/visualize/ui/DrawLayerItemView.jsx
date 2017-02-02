@@ -121,19 +121,20 @@ function makeColorChange(color, canUserChangeColor, modifyColor) {
 }
 
 function makeShape(isPointData, drawingDef, modifyShape) {
-    var [w, h] = [symbolSize, symbolSize];
-    var size = DrawUtil.getSymbolSize(w, h, drawingDef.symbol);
-    var df = Object.assign({}, drawingDef, {size});
-    var {width, height} = DrawUtil.getDrawingSize(size, drawingDef.symbol);
-
-    const feedBackStyle= {
-        width:width,
-        height:height,
-        display:'inline-block',
-        marginLeft:5
-    };
 
     if (isPointData) {
+        var [w, h] = [symbolSize, symbolSize];
+        var size = DrawUtil.getSymbolSize(w, h, drawingDef.symbol);
+        var df = Object.assign({}, drawingDef, {size});
+        var {width, height} = DrawUtil.getDrawingSize(size, drawingDef.symbol);
+
+        const feedBackStyle= {
+            width:width,
+            height:height,
+            display:'inline-block',
+            marginLeft:5
+        };
+
         return (
             <div style={bSty} >
                 <div style={feedBackStyle} onClick={() => modifyShape()}>

@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {clone} from '../../util/WebUtil.js'
+import {clone} from '../../util/WebUtil.js';
+import {RDConst} from '../WebPlot.js';
 
 /**
  * @typedef {Object} OverlayPlotView
@@ -29,24 +30,30 @@ import {clone} from '../../util/WebUtil.js'
  * @param maskValue
  * @param {string} color the color, if overlay is a mask
  * @param drawingDef
+ * @param {string} [relatedDataId] a related data id if one exist
  * @return {OverlayPlotView}
  */
-export function makeOverlayPlotView(imageOverlayId, plotId, title, imageNumber, maskNumber, maskValue, color, drawingDef) {
+export function makeOverlayPlotView(imageOverlayId, plotId, title, imageNumber, maskNumber,
+                                    maskValue, color, drawingDef, relatedDataId, fileKey) {
 
     var opv= {
         imageOverlayId,
+        opvType: RDConst.IMAGE_MASK,
         plotId,
         title,
         plot: null,
         drawingDef,
         makeOverlay : true,
         visible: true,
+        wasVisibleWhenReplace: false,
         maskNumber,
         maskValue,
         imageNumber,
         color,
+        relatedDataId,
         opacity: .58,
         plotCounter:0, // index of how many plots, used for making next ID
+        fileKey,
         plottingStatus:'',
         serverCall:'success'
     };
@@ -59,6 +66,7 @@ export function replaceOverlayPlots(opv, plot) {
     opv= clone(opv, {plot});
     plot.plotImageId= `${opv.imageOverlayId}--${opv.plotCounter}`;
     opv.plotCounter++;
+    opv.visible= true;
 
     opv.plottingStatus='';
     opv.serverCall='success';

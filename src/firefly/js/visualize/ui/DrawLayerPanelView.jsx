@@ -4,18 +4,20 @@
 
 import React from 'react';
 import {padStart} from 'lodash';
-import {isDrawLayerVisible, getAllDrawLayersForPlot, getLayerTitle}  from '../PlotViewUtil.js';
+import {isDrawLayerVisible, getAllDrawLayersForPlot,
+    getLayerTitle, getDrawLayersByDisplayGroup}  from '../PlotViewUtil.js';
+import {operateOnOverlayPlotViewsThatMatch, enableRelatedDataLayer,
+               findRelatedData, setMaskVisible } from '../RelatedDataUtil.js';
 import DrawLayerItemView from './DrawLayerItemView.jsx';
 import {ColorChangeType} from '../draw/DrawLayer.js';
 import {dispatchChangeDrawingDef, dispatchChangeVisibility,
         dispatchDetachLayerFromPlot, getDlAry} from '../DrawLayerCntlr.js';
-import {dispatchOverlayPlotChangeAttributes, dispatchDeleteOverlayPlot} from '../ImagePlotCntlr.js';
+import {visRoot, dispatchOverlayPlotChangeAttributes, dispatchDeleteOverlayPlot} from '../ImagePlotCntlr.js';
 import {showColorPickerDialog} from '../../ui/ColorPicker.jsx';
 import {showPointShapeSizePickerDialog} from '../../ui/PointShapeSizePicker.jsx';
-import {getDrawLayersByDisplayGroup} from '../PlotViewUtil.js';
 
 
-function DrawLayerPanelView({dlAry, plotView, mouseOverMaskValue, drawLayerFactory}) {
+export function DrawLayerPanelView({dlAry, plotView, mouseOverMaskValue, drawLayerFactory}) {
     var style= {width:'calc(100% - 12px)',
         height:'100%',
         padding: 6,
@@ -30,8 +32,11 @@ function DrawLayerPanelView({dlAry, plotView, mouseOverMaskValue, drawLayerFacto
 
     return (
         <div style={style}>
-            {makeImageLayerItemAry(plotView,maxTitleChars,layers.length===0, mouseOverMaskValue)}
-            {makeDrawLayerItemAry(layers,plotView,maxTitleChars, drawLayerFactory)}
+            <div style={{overflow:'auto', maxHeight:500}}>
+                {makeImageLayerItemAry(plotView,maxTitleChars,layers.length===0, mouseOverMaskValue)}
+                {makeDrawLayerItemAry(layers,plotView,maxTitleChars, drawLayerFactory)}
+            </div>
+            {makePermInfo(plotView,layers)}
         </div>
     );
 }
@@ -49,6 +54,68 @@ DrawLayerPanelView.propTypes= {
 function getUIComponent(dl,pv, factory) {
     return factory.getGetUIComponentFunc(dl) && factory.getGetUIComponentFunc(dl)(dl,pv);
 }
+
+
+function makePermInfo(pv,layers) {
+    return (
+        <div style={{minWidth: 260, borderTop:'1px solid rgba(0, 0, 0, 0.298039)', paddingTop: 5, margin: '4px 5px 0 5px'}}>
+            {makeAddRelatedDataAry(pv)}
+            <div style={{paddingTop:5}}>
+                <button style={{display : 'inline-block'}} type='button'
+                        className='button'
+                        onClick={() => showAllLayers(layers,pv,true)}>
+                    {'Show All'}
+                </button>
+                <button style={{display : 'inline-block'}} type='button'
+                        className='button'
+                        onClick={() => showAllLayers(layers,pv,false)}>
+                    {'Hide All'}
+                </button>
+
+            </div>
+        </div>
+    );
+}
+
+function showAllLayers(layers, pv, visible) {
+    // var last= layers.length-1;
+    // return layers.map( (l,idx) => <DrawLayerItemView key={l.drawLayerId}
+    //                                                  if (!pv.overlayPlotViews) return [];
+    pv.overlayPlotViews.forEach( (opv) => {
+        setMaskVisibleInGroup(opv,visible);
+        // dispatchOverlayPlotChangeAttributes({plotId:pv.plotId, imageOverlayId:opv.imageOverlayId, attributes:{visible}});
+    });
+
+    return layers.forEach( (dl) => {
+        dispatchChangeVisibility(dl.displayGroupId, visible,pv.plotId );
+    });
+}
+
+
+function makeAddRelatedDataAry(pv) {
+    if (!pv.plots) return null;
+
+    const relatedData= findRelatedData(pv);
+
+    return relatedData.map( (d,idx) => {
+        return (
+            <div key={`button- ${idx}`}>
+                <div style={{display : 'inline-block', width: 150, marginRight:10, fontStyle: 'italic', textAlign:'right'}}>
+                    {`${d.desc} Layer found :`}
+                </div>
+                <button style={{display : 'inline-block'}} type='button'
+                        className='button'
+                        onClick={() => enableRelatedDataLayer(visRoot(), pv, d)}>
+                    {'Enable'}
+                </button>
+            </div>
+        );
+    });
+}
+
+
+
+
 
 
 function makeDrawLayerItemAry(layers,pv, maxTitleChars, factory) {
@@ -88,17 +155,18 @@ function makeImageLayerItemAry(pv, maxTitleChars, hasLast, mouseOverMaskValue) {
                            visible={opv.visible}
                            modifyColor={() => modifyMaskColor(opv)}
                            deleteLayer={() => deleteMaskLayer(opv)}
-                           changeVisible={() => changeMaskVisible(opv)}
+                           changeVisible={() => setMaskVisibleInGroup(opv, !opv.visible)}
                            UIComponent={null}
     />);
     return retAry;
-
 }
 
+
 function makeOverlayTitle(opv,mouseOn) {
-    var {title, color, maskNumber}= opv;
-    if (opv.plot) {
-        const {header}= opv.plot.projection;
+    var {title, color, maskNumber, plot, visible, uiCanAugmentTitle}= opv;
+    maskNumber= Number(maskNumber);
+    if (plot && uiCanAugmentTitle) {
+        const {header}= plot.projection;
         const titleKey= Object.keys(header)
             .filter( (k) => k.includes('MP'))
             .find( (k) => parseInt(header[k])===maskNumber);
@@ -108,12 +176,15 @@ function makeOverlayTitle(opv,mouseOn) {
             title= `${title} - ${maskDesc}`;
         }
     }
+    if (!plot && visible) {
+        title= `${title} - loading`;
+    }
 
     mouseOn= Boolean(mouseOn);
 
     return (
         <div style={{color : mouseOn ? color : 'inherit'}}>{title}
-        {mouseOn && <span style={{fontStyle: 'italic'}}> over</span>}
+            {mouseOn && <span style={{fontStyle: 'italic'}}> over</span>}
         </div>
     );
 }
@@ -131,6 +202,7 @@ function modifyColor(dl,plotId) {
 
 const hexC= (v) =>  padStart(v.toString(16),2,'0');
 
+
 function modifyMaskColor(opv) {
 
     const {color}= opv;
@@ -142,12 +214,17 @@ function modifyMaskColor(opv) {
     var rgbStr= `rgba(${rV},${gV},${bV},${opv.opacity})`;
     showColorPickerDialog(rgbStr, false, true,
         (ev, okPushed) => {
-            const {plotId, imageOverlayId} = opv;
             var {r,g,b,a}= ev.rgb;
             const newColor= `#${hexC(r)}${hexC(g)}${hexC(b)}`;
             const doReplot= okPushed && (newColor.toUpperCase()!==opv.color.toUpperCase());
-            dispatchOverlayPlotChangeAttributes({plotId, imageOverlayId,doReplot,
+
+
+            operateOnOverlayPlotViewsThatMatch(visRoot(),opv, (aOpv) => {
+                const {plotId, imageOverlayId} = aOpv;
+                dispatchOverlayPlotChangeAttributes({plotId, imageOverlayId,doReplot,
                     attributes:{color:newColor,opacity:a}});
+            });
+
         });
 }
 
@@ -159,22 +236,19 @@ function deleteLayer(dl,plotId) {
     dispatchDetachLayerFromPlot(dl.displayGroupId,plotId,true, true, dl.destroyWhenAllDetached);
 }
 
-
 function deleteMaskLayer(opv) {
-    const {plotId, imageOverlayId} = opv;
-    dispatchDeleteOverlayPlot({plotId, imageOverlayId});
+    operateOnOverlayPlotViewsThatMatch(visRoot(),opv, (aOpv) => {
+        const {plotId, imageOverlayId} = aOpv;
+        dispatchDeleteOverlayPlot({plotId, imageOverlayId});
+    });
 }
-
 
 function changeVisible(dl, plotId) {
     dispatchChangeVisibility(dl.displayGroupId, !isDrawLayerVisible(dl,plotId),plotId );
 }
 
 
-function changeMaskVisible(opv) {
-    const {plotId, imageOverlayId, visible} = opv;
-    dispatchOverlayPlotChangeAttributes({plotId, imageOverlayId, attributes:{visible:!visible}});
+function setMaskVisibleInGroup(opv, visible) {
+    operateOnOverlayPlotViewsThatMatch(visRoot(),opv, (aOpv) => setMaskVisible(aOpv,visible));
 }
 
-
-export default DrawLayerPanelView;

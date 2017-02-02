@@ -3,10 +3,12 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
+import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 
 import java.io.File;
+import java.util.List;
 
 /**
 * @author Trey Roby
@@ -20,6 +22,7 @@ class FileReadInfo {
     private final FitsRead fr;
     private final String dataDesc;
     private final ModFileWriter modFileWriter;
+    private final List<RelatedData> relatedData;
     private final String uploadedName;
 
     FileReadInfo(File originalFile,
@@ -28,6 +31,7 @@ class FileReadInfo {
                  int imageIdx,
                  String dataDesc,
                  String uploadedName,
+                 List<RelatedData> relatedData,
                  ModFileWriter modFileWriter) {
         this.originalFile= originalFile;
         this.workingFile = originalFile;
@@ -36,6 +40,7 @@ class FileReadInfo {
         this.fr= fr;
         this.modFileWriter= modFileWriter;
         this.dataDesc= dataDesc;
+        this.relatedData= relatedData;
         this.uploadedName= uploadedName;
     }
 
@@ -47,4 +52,5 @@ class FileReadInfo {
     public String getDataDesc() { return dataDesc; }
     public ModFileWriter getModFileWriter() { return modFileWriter; }
     public String getUploadedName() {return uploadedName;}
+    public List<RelatedData> getRelatedData() {return relatedData;}
 }

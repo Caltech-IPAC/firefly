@@ -10,6 +10,7 @@
 import Enum from 'enum';
 export const ZoomType= new Enum([
                       'STANDARD',       // use normal zoom, zoom to given zoom level or 1x if not specified
+                      'LEVEL',       // use normal zoom, zoom to given zoom level or 1x if not specified
                       'FULL_SCREEN',       // requires width & height specified. deprecated, same as TO_WIDTH_HEIGHT
                       'TO_WIDTH_HEIGHT',   // requires width & height specified
                       'TO_WIDTH',          // requires width

@@ -2,13 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.firefly.server.visualize;
-/**
- * User: roby
- * Date: 2/17/11
- * Time: 3:33 PM
- */
 
-
+import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -32,6 +27,7 @@ import nom.tam.fits.HeaderCard;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -73,9 +69,10 @@ public class ImagePlotCreator {
              WebFitsData wfData= makeWebFitsData(plot,frGroup, readInfo.getBand(),readInfo.getOriginalFile());
              Map<Band,WebFitsData> wfDataMap= new LinkedHashMap<>();
              wfDataMap.put(Band.NO_BAND,wfData);
-             Map<Band,ModFileWriter> fileWriterMap= new LinkedHashMap<Band,ModFileWriter>(1);
+             Map<Band,ModFileWriter> fileWriterMap= new LinkedHashMap<>(1);
              if (readInfo.getModFileWriter()!=null) fileWriterMap.put(Band.NO_BAND,readInfo.getModFileWriter());
-             piAry[i]= new ImagePlotInfo(stateAry[i],plot, frGroup,readInfo.getDataDesc(), wfDataMap,fileWriterMap);
+             piAry[i]= new ImagePlotInfo(stateAry[i],plot, frGroup,readInfo.getDataDesc(), readInfo.getRelatedData(),
+                                         wfDataMap,fileWriterMap);
          }
 
          return piAry;
@@ -95,6 +92,7 @@ public class ImagePlotCreator {
         Map<Band,WebFitsData> wfDataMap= new LinkedHashMap<>(5);
         Map<Band,ModFileWriter> fileWriterMap= new LinkedHashMap<>(5);
         ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
+        List<RelatedData> relatedData= null;
         for(Map.Entry<Band,FileReadInfo[]> entry :  readInfoMap.entrySet()) {
             Band band= entry.getKey();
             FileReadInfo readInfoAry[]= entry.getValue();
@@ -115,6 +113,7 @@ public class ImagePlotCreator {
                 }
                 if (readInfo.getModFileWriter()!=null) fileWriterMap.put(band,readInfo.getModFileWriter());
                 first= false;
+                relatedData= readInfo.getRelatedData();
             }
             else {
                 ModFileWriter mfw= createBand(state,plot,readInfo,frGroup);
@@ -125,7 +124,7 @@ public class ImagePlotCreator {
             wfDataMap.put(band, wfData);
         }
         String desc= make3ColorDataDesc(readInfoMap);
-        retval= new ImagePlotInfo(state,plot,frGroup, desc, wfDataMap,fileWriterMap);
+        retval= new ImagePlotInfo(state,plot,frGroup, desc, relatedData, wfDataMap, fileWriterMap);
 
         if (first) _log.error("something is wrong, plot not setup correctly - no color bands specified");
         return retval;
@@ -275,7 +274,7 @@ public class ImagePlotCreator {
 
     private static String make3ColorDataDesc(Map<Band, FileReadInfo[]> readInfoMap) {
 
-        StringBuffer desc= new StringBuffer(100);
+        StringBuilder desc= new StringBuilder(100);
         desc.append("3 Color: ");
         for(Map.Entry<Band,FileReadInfo[]> entry : readInfoMap.entrySet()) {
             desc.append(readInfoMap.get(entry.getKey())[0].getDataDesc());
@@ -311,11 +310,11 @@ public class ImagePlotCreator {
 
     /**
      * 5/13/16 LZ modified to add the beta in the WebFitsData calling parameter
-     * @param plot
-     * @param frGroup
-     * @param band
-     * @param f
-     * @return
+     * @param plot the plot
+     * @param frGroup group
+     * @param band which band
+     * @param f file
+     * @return the data to pass to the client
      */
     public static WebFitsData makeWebFitsData(ImagePlot plot, ActiveFitsReadGroup frGroup, Band band, File f) {
         long fileLength= (f!=null && f.canRead()) ? f.length() : 0;

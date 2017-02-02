@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.visualize;
 
 import edu.caltech.ipac.firefly.data.DataEntry;
+import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
 
@@ -34,6 +35,7 @@ public class WebPlotInitializer implements Serializable, DataEntry {
     private WebFitsData   _fitsData[];
     private String        _desc;
     private String        _dataDesc;
+    private transient List<RelatedData> relatedData;
     private transient Projection _projection;
 
 
@@ -50,7 +52,8 @@ public class WebPlotInitializer implements Serializable, DataEntry {
                              int imageScaleFactor,
                              WebFitsData  fitsData[],
                              String desc,
-                             String dataDesc) {
+                             String dataDesc,
+                             List<RelatedData> relatedData ) {
 
         _plotState= plotState;
         _initImages= images;
@@ -63,6 +66,7 @@ public class WebPlotInitializer implements Serializable, DataEntry {
         _fitsData= fitsData;
         _desc= desc;
         _dataDesc= dataDesc;
+        this.relatedData= relatedData;
     }
 
 //======================================================================
@@ -79,6 +83,7 @@ public class WebPlotInitializer implements Serializable, DataEntry {
     }
 
     public String getProjectionSerialized() { return _projectionSerialized; }
+    public List<RelatedData> getRelatedData() { return  relatedData; }
 
     public int getDataWidth() { return _dataWidth; }
     public int getDataHeight() { return _dataHeight; }
@@ -125,13 +130,13 @@ public class WebPlotInitializer implements Serializable, DataEntry {
                 PlotState     plotState= PlotState.parse(sAry[i++]);
                 String        desc= getString(sAry[i++]);
                 String        dataDesc= getString(sAry[i++]);
-                List<WebFitsData> fdList= new ArrayList<WebFitsData>(3);
+                List<WebFitsData> fdList= new ArrayList<>(3);
                 while (i<sAry.length) {
                    fdList.add(WebFitsData.parse(sAry[i++]));
                 }
                 WebFitsData fitsData[]= fdList.toArray(new WebFitsData[fdList.size()]);
                 retval= new WebPlotInitializer(plotState,initImages,imageCoordSys,projection,dataWidth,dataHeight,
-                                               imageScaleFactor,fitsData,desc,dataDesc);
+                                               imageScaleFactor,fitsData,desc,dataDesc, null);
 
             } catch (NumberFormatException e) {
                 retval= null;

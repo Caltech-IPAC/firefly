@@ -113,7 +113,7 @@ public class WebPlotFactory {
         Map<Band, WebPlotRequest> requestMap = new LinkedHashMap<Band, WebPlotRequest>(5);
         for (Band band : state.getBands()) requestMap.put(band, state.getWebPlotRequest(band));
         for(WebPlotRequest req : requestMap.values()) {
-            req.setZoomType(ZoomType.STANDARD);
+            req.setZoomType(ZoomType.LEVEL);
             req.setInitialZoomLevel(state.getZoomLevel());
         }
         WebPlotInitializer wpAry[] = create(requestMap, null, state, state.isThreeColor());
@@ -331,7 +331,8 @@ public class WebPlotFactory {
                                       pInfo.getFrGroup().getFitsRead(state.firstBand()).getImageScaleFactor(),
                                       wfDataAry,
                                       plot.getPlotDesc(),
-                                      pInfo.getDataDesc());
+                                      pInfo.getDataDesc(),
+                                      pInfo.getRelatedData());
     }
 
 

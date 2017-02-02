@@ -77,7 +77,7 @@ export function MaskAddPanel({vr}) {
 
 }
 
-const maskIdRoot= 'MASK_';
+const maskIdRoot= 'USER_LOADED_MASK_';
 var maskCnt= 0;
 
 function resultsSuccess(request,vr) {
@@ -86,8 +86,9 @@ function resultsSuccess(request,vr) {
     const maskV= Number(request.maskIdx);
     const hdu= Number(request.hduIdx);
     const fileKey= request.maskFile;
-    dispatchPlotMask({plotId:pv.plotId,imageOverlayId:maskIdRoot+maskCnt, fileKey, maskNumber:maskV, maskValue:Math.pow(2,maskV),
-                      imageNumber:hdu, title:'bit # '+maskV});
+    dispatchPlotMask({plotId:pv.plotId,imageOverlayId:maskIdRoot+maskCnt, fileKey,
+                      maskNumber:maskV, maskValue:Math.pow(2,maskV),
+                      uiCanAugmentTitle:true, imageNumber:hdu, title:'bit # '+maskV});
     maskCnt++;
 }
 

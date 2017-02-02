@@ -4,7 +4,7 @@
 
 import {uniqBy,unionBy, isEmpty} from 'lodash';
 import Cntlr, {WcsMatchType} from '../ImagePlotCntlr.js';
-import PlotView, {makePlotView,findWCSMatchOffset, updatePlotViewScrollXY} from './PlotView.js';
+import PlotView, {replacePlots, makePlotView,findWCSMatchOffset, updatePlotViewScrollXY} from './PlotView.js';
 import {makeOverlayPlotView, replaceOverlayPlots} from './OverlayPlotView.js';
 import {primePlot, getPlotViewById, clonePvAry, getOverlayById, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
 import {makeScreenPt} from '../Point.js';
@@ -43,7 +43,7 @@ export function reducer(state, action) {
             retState= plotFail(state,action);
             break;
         case Cntlr.PLOT_IMAGE  :
-            retState= addPlot(state,action, true, action.payload.setNewPlotAsActive);
+            retState= addPlot(state,action, action.payload.setNewPlotAsActive, true);
             // todo: also process adding to history
             break;
 
@@ -80,7 +80,7 @@ export function reducer(state, action) {
         case Cntlr.ROTATE  :
         case Cntlr.FLIP:
         case Cntlr.CROP:
-            retState= addPlot(state,action, true, false);
+            retState= addPlot(state,action, false, false);
             break;
         default:
             break;
@@ -108,7 +108,7 @@ const updateDefaults= function(plotRequestDefaults, action) {
     }
 };
 
-function addPlot(state,action, replace, setActive) {
+function addPlot(state,action, setActive, newPlot) {
     var {plotViewAry, activePlotId, prevActivePlotId, mpwWcsPrimId, wcsMatchType}= state;
     const {pvNewPlotInfoAry}= action.payload;
 
@@ -127,7 +127,7 @@ function addPlot(state,action, replace, setActive) {
             prevActivePlotId = state.activePlotId;
             activePlotId = pv.plotId;
         }
-        pv = PlotView.replacePlots(pv, plotAry, overlayPlotViews, state.expandedMode, replace);
+        pv = replacePlots(pv, plotAry, overlayPlotViews, state.expandedMode, newPlot);
         return pv;
     });
 
@@ -177,17 +177,25 @@ function updateForWcsMatching(visRoot, pv, mpwWcsPrimId) {
 
 
 function newOverlayPrep(state, action) {
-    const {plotId, imageOverlayId, imageNumber, maskValue, maskNumber, color, title, drawingDef}= action.payload;
+    const {plotId, imageOverlayId, imageNumber, maskValue, maskNumber,
+           color, title, drawingDef, relatedDataId,lazyLoadPayload, fileKey}= action.payload;
 
     const pv= getPlotViewById(state, plotId);
     if (!pv) return state;
 
     const overlayPv= getOverlayById(pv, imageOverlayId);
     var oPvArray;
+    var opv;
     if (!overlayPv) {
         oPvArray= isEmpty(pv.overlayPlotViews) ? [] : pv.overlayPlotViews.slice(0);
-        oPvArray.push(makeOverlayPlotView(imageOverlayId, plotId, title, imageNumber,
-                                           maskNumber, maskValue, color, drawingDef));
+        opv= makeOverlayPlotView(imageOverlayId, plotId, title, imageNumber,
+                                           maskNumber, maskValue, color, drawingDef, relatedDataId,
+                                           fileKey);
+        if (lazyLoadPayload) {
+            opv.lazyLoadPayload= lazyLoadPayload;
+            opv.visible= false;
+        }
+        oPvArray.push(opv);
     }
     else {
         oPvArray= pv.overlayPlotViews.map( (opv) => opv.imageOverlayId===imageOverlayId ?
@@ -214,10 +222,12 @@ function addOverlay(state, action) {
 
 
 function removeOverlay(state, action) {
-    const {plotId, imageOverlayId}= action.payload;
+    const {plotId, imageOverlayId, deleteAll}= action.payload;
     const plotViewAry= state.plotViewAry.map( (pv) => {
         if (pv.plotId!== plotId) return pv;
-        const overlayPlotViews= pv.overlayPlotViews.filter( (opv) => opv.imageOverlayId!== imageOverlayId);
+
+        const overlayPlotViews= deleteAll ? [] :
+                                   pv.overlayPlotViews.filter( (opv) => opv.imageOverlayId!== imageOverlayId);
         return clone(pv, {overlayPlotViews});
     });
     return clone(state, {plotViewAry});

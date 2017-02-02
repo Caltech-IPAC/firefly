@@ -37,7 +37,7 @@ public class RelatedData implements Serializable {
         d.dataType= IMAGE_MASK;
         d.availableMask= availableMask;
 
-        d.desc= null;
+        d.desc= "Mask";
         d.searchParams.put(WebPlotRequest.FILE, fileName);
         d.searchParams.put(WebPlotRequest.PLOT_AS_MASK, "true");
         d.searchParams.put(WebPlotRequest.TYPE, RequestType.FILE+"");
@@ -52,7 +52,7 @@ public class RelatedData implements Serializable {
         d.dataType= IMAGE_MASK;
         d.availableMask= availableMask;
 
-        d.desc= null;
+        d.desc= "Mask";
         d.searchParams= searchParams;
         return d;
     }

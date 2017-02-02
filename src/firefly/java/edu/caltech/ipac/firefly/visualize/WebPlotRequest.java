@@ -67,6 +67,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String ROTATE_NORTH = "RotateNorth";
     public static final String ROTATE_NORTH_TYPE = "RotateNorthType";
     public static final String ROTATE = "Rotate";
+    public static final String ROTATE_FROM_NORTH= "RotateFromNorth";
     public static final String ROTATION_ANGLE = "RotationAngle";
     public static final String HEADER_KEY_FOR_TITLE = "HeaderKeyForTitle";
     public static final String INIT_RANGE_VALUES = "RangeValues";
@@ -152,7 +153,7 @@ public class WebPlotRequest extends ServerRequest {
                                               GRID_ON, TITLE_OPTIONS, EXPANDED_TITLE_OPTIONS,
                                               POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
                                               TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT, DRAWING_SUB_GROUP_ID, GRID_ID,
-                                              DOWNLOAD_FILENAME_ROOT, PLOT_ID
+                                              DOWNLOAD_FILENAME_ROOT, PLOT_ID, ROTATE_FROM_NORTH
 
     };
 
@@ -609,9 +610,14 @@ public class WebPlotRequest extends ServerRequest {
     }
 
     public ZoomType getZoomType() {
-        ZoomType retval = ZoomType.STANDARD;
+        ZoomType retval = ZoomType.LEVEL;
+        int w= getZoomToWidth();
+        int h= getZoomToHeight();
         if (this.containsParam(ZOOM_TYPE)) {
             retval = Enum.valueOf(ZoomType.class, getParam(ZOOM_TYPE));
+        }
+        else if (w>0 && h>0){
+            retval = ZoomType.TO_WIDTH_HEIGHT;
         }
         return retval;
     }
@@ -691,6 +697,9 @@ public class WebPlotRequest extends ServerRequest {
         return getBooleanParam(ROTATE);
     }
 
+    public void setRotateFromNorth(boolean fromNorth) { this.setParam(ROTATE_FROM_NORTH, fromNorth+ ""); }
+
+    public boolean getRotateFromNorth() { return getBooleanParam(ROTATE_FROM_NORTH,true); }
 
     /**
      * set the angle to rotate to

@@ -40,7 +40,6 @@ function expand(plotId) {
 
 const rS= {
     width: '100% - 2px',
-    height: 34,
     position: 'relative',
     verticalAlign: 'top',
     whiteSpace: 'nowrap',

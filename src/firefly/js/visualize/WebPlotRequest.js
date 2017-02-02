@@ -68,6 +68,7 @@ const C= {
     ROTATE_NORTH : 'RotateNorth',
     ROTATE_NORTH_TYPE : 'RotateNorthType',
     ROTATE : 'Rotate',
+    ROTATE_FROM_NORTH : 'RotateFromNorth',
     ROTATION_ANGLE : 'RotationAngle',
     HEADER_KEY_FOR_TITLE : 'HeaderKeyForTitle',
     INIT_RANGE_VALUES : 'RangeValues',
@@ -618,7 +619,7 @@ export class WebPlotRequest extends ServerRequest {
 
 
     /**
-     * set the initialize zoom level, this is used with ZoomType.STANDARD
+     * set the initialize zoom level, this is used with ZoomType.LEVEL
      *
      * @param {number} zl the zoom level, float
      * @see {ZoomType}
@@ -651,7 +652,7 @@ export class WebPlotRequest extends ServerRequest {
      * sets the zoom type, based on the ZoomType other zoom set methods may be required
      * Notes for ZoomType:
      * <ul>
-     * <li>ZoomType.STANDARD is the default, when set you may optionally call
+     * <li>ZoomType.LEVEL is the default when there is not width and height, when set you may optionally call
      * setInitialZoomLevel the zoom will default to be 1x</li>
      * <li>if ZoomType.TO_WIDTH then you must call setZoomToWidth and set a width </li>
      * <li>if ZoomType.FULL_SCREEN then you must call setZoomToWidth with a width and
@@ -667,7 +668,10 @@ export class WebPlotRequest extends ServerRequest {
     }
 
     getZoomType() {
-        return ZoomType.get(this.getParam(C.ZOOM_TYPE)) ||ZoomType.STANDARD;
+        const w= this.getZoomToWidth();
+        const h= this.getZoomToHeight();
+        const defaultType= (w && h) ?  ZoomType.TO_WIDTH_HEIGHT : ZoomType.LEVEL;
+        return ZoomType.get(this.getParam(C.ZOOM_TYPE)) || defaultType;
     }
 
     /**
@@ -766,6 +770,10 @@ export class WebPlotRequest extends ServerRequest {
      * @return number, the angle
      */
     getRotationAngle() { return this.getFloatParam(C.ROTATION_ANGLE); }
+
+    setRotateFromNorth(fromNorth) { this.setParam(C.ROTATE_FROM_NORTH, fromNorth+ ''); }
+
+    getRotateFromNorth() { this.getBooleanParam(C.ROTATE_FROM_NORTH,true); }
 
     /**
      * set if this image should be flipped on the Y axis
