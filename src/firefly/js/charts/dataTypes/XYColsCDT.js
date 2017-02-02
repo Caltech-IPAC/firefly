@@ -510,9 +510,9 @@ function fetchXYWithErrorsOrSort(dispatch, chartId, chartDataElementId) {
 
                 // make sure all fields are numeric and change row data from [ [val] ] to [ {cname:val} ]
                 let xMin = Number.MAX_VALUE;
-                let xMax = Number.MIN_VALUE;
+                let xMax = -Number.MAX_VALUE;
                 let yMin = Number.MAX_VALUE;
-                let yMax = Number.MIN_VALUE;
+                let yMax = -Number.MAX_VALUE;
                 const rows = tableModel.tableData.data.map((row) => {
                     const nrow =  colNames.reduce( (nrow, name, cidx) => {
                         nrow[name] = parseFloat(row[cidx]);

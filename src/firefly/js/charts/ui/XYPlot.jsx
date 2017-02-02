@@ -697,8 +697,9 @@ export class XYPlot extends React.Component {
         const {xMin, xMax, yMin, yMax} = getZoomSelection(params);
         const {decimateKey, x, y} = data;
         const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = get(params, 'boundaries', {});
-        const xFormat = (decimateKey || x) ? getFormatString(Math.abs(xDataMax-xDataMin), 4) : undefined;
-        const yFormat = (decimateKey || y) ? getFormatString(Math.abs(yDataMax-yDataMin), 4) : undefined;
+        // bin center and expression values need to be formatted
+        const xFormat = (decimateKey || (x && x.match(/\W/))) ? getFormatString(Math.abs(xDataMax-xDataMin), 4) : undefined;
+        const yFormat = (decimateKey || (y && y.match(/\W/))) ? getFormatString(Math.abs(yDataMax-yDataMin), 4) : undefined;
 
         const makeSeries = this.makeSeries;
 
