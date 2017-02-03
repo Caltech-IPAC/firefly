@@ -64,9 +64,9 @@
     "mocha": "^3.1.0",
     "chai": "^3.5.0",
     "publish-release": "^1.1.0",
-    "react-addons-test-utils": "15.3.1",
+    "react-addons-test-utils": "^15.3.1",
     "redux-devtools": "^3.3.1",
-    "react-redux": "5.0.0",
+    "react-redux": "^5.0.0",
     "webpack": "^1.13.2",
     "ink-docstrap" :"^1.2.1"
   }
