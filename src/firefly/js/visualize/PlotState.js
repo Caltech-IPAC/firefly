@@ -141,14 +141,14 @@ export class PlotState {
      *
      * @return {RotateType}
      */
-    getRotateType() {return this.rotationType; }
+    // getRotateType() {return this.rotationType; }
 
     /**
      * @summary check to see it the image is rotated
      * @return {boolean}
      * @public
      */
-    isRotated() {return this.rotationType!==RotateType.UNROTATE;}
+    // isRotated() {return this.rotationType!==RotateType.UNROTATE;}
 
     /**
      *
@@ -156,11 +156,7 @@ export class PlotState {
      */
     isFlippedY() { return this.flippedY; }
 
-    /**
-     *
-     * @return {Number}
-     */
-    getRotationAngle() { return this.rotationAngle; }
+    // getRotationAngle() { return this.rotationAngle; }
 
 
     /**

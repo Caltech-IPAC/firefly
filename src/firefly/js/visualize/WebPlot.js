@@ -54,6 +54,8 @@ export const PlotAttribute= {
      */
     SELECTION: 'SELECTION',
 
+    IMAGE_BOUNDS_SELECTION: 'IMAGE_BOUNDS_SELECTION',
+
     /**
      * This will probably an object to represent a line {pt0: point,pt1: point}
      * @See ./Point.js
@@ -160,10 +162,11 @@ export const PlotAttribute= {
  * @prop {string} title - title of the plot
  * @prop {object} webFitsData -  needs documentation
  * @prop {ImageTileData} serverImages -  object contains the image tile information
- * @prop {ViewPort} viewPort -  needs documentation
  * @prop {CoordinateSys} imageCoordSys - the image coordinate system
  * @prop {Dimension} screenSize - width/height in screen pixels
  * @prop {Projection} projection - projection routines for this projections
+ * @prop {Object} affTrans - the affine transform
+ * @prop {{width:number, height:number}} viewDim  size of viewable area  (div size: offsetWidth & offsetHeight)
  *
  * @see PlotView
  */
@@ -271,8 +274,9 @@ export const WebPlot= {
             screenSize: {width:wpInit.dataWidth*zf, height:wpInit.dataHeight*zf},
             zoomFactor: zf,
             alive    : true,
+            affTrans : null,
+            viewDim  : null,
             attributes,
-            viewPort: WebPlot.makeViewPort(0,0,0,0),
 
                  // a note about conversionCache - the caches (using a map) calls to convert WorldPt to ImagePt
                  // have this here breaks the redux paradigm, however it still seems to be the best place. The cache
@@ -290,16 +294,6 @@ export const WebPlot= {
         }
 
         return webPlot;
-    },
-
-    /**
-     *
-     * @param {WebPlot} wpData
-     * @param {ViewPort} viewPort
-     * @return {WebPlot} new webplot data
-     */
-    setWPViewPort(wpData,viewPort) {
-        return Object.assign({},wpData,{viewPort});
     },
 
 

@@ -28,7 +28,7 @@ export function findRelatedData(pv) {
     const plot= primePlot(pv);
     if (!plot) return [];
     const {plotState}= plot;
-    if (plotState.isFlippedY() || plotState.isRotated()) return [];
+    if (plotState.isFlippedY()) return [];
     if (plotState.hasOperation(Operation.CROP)) return [];
     const relatedData= flatten(pv.plots.map( (p) =>  p.relatedData))
         .filter( (r,idx) => dataTypeMatches(r,idx,pv));

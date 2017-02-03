@@ -126,7 +126,7 @@ export function makePlotSelectionExtActivateData(ext, pv, dlAry) {
 
     switch (ext.extType) {
         case AREA_SELECT:
-            data= Object.assign(data,getTwoPointSelectObj(plot,cc,PlotAttribute.SELECTION));
+            data= Object.assign(data,getTwoPointSelectObj(plot,cc,PlotAttribute.IMAGE_BOUNDS_SELECTION));
             break;
         case LINE_SELECT:
             data= Object.assign(data,getTwoPointSelectObj(plot,cc,PlotAttribute.ACTIVE_DISTANCE));

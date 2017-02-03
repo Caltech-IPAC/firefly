@@ -1,4 +1,3 @@
-import Enum from 'enum';
 import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil';
 import {makeScreenPt, makeWorldPt} from '../Point.js';
@@ -28,7 +27,7 @@ const DEF_WIDTH = 1;
 function make(footprintAry,style) {
 	if (!footprintAry && !footprintAry.length) return null;
 
-	var obj= DrawObj.makeDrawObj();
+	const obj= DrawObj.makeDrawObj();
 	obj.type= FOOTPRINT_OBJ;
 	obj.footprintAry= footprintAry;
 	if (!style) obj.style= Style.STANDARD;
@@ -47,18 +46,18 @@ function make(footprintAry,style) {
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 
-var draw=  {
+const draw=  {
 
 	usePathOptimization(drawObj) {
 		return drawObj.lineWidth===1;
 	},
 
 	getCenterPt(drawObj) {
-		var {footprintAry}= drawObj;
-		var xSum = 0;
-		var ySum = 0;
-		var xTot = 0;
-		var yTot = 0;
+		const {footprintAry}= drawObj;
+		let xSum = 0;
+		let ySum = 0;
+		let xTot = 0;
+		let yTot = 0;
 
 		footprintAry.forEach( (footprint) => {
 			footprint.forEach( (wp) => {
@@ -72,16 +71,16 @@ var draw=  {
 	},
 
 	getScreenDist(drawObj,plot, pt) {
-		var minDistSq = Number.MAX_VALUE;
+		let minDistSq = Number.MAX_VALUE;
 		const cc= CsysConverter.make(plot);
 
 		drawObj.footprintAry.forEach( (footprint) => {
-			var totX = 0;
-			var distSq;
-			var totY = 0;
-			var last = cc.getScreenCoords(footprint[footprint.length - 1]);
+			let totX = 0;
+			let distSq;
+			let totY = 0;
+			let last = cc.getScreenCoords(footprint[footprint.length - 1]);
 			footprint.forEach( (wpt) => {
-				var testPt = cc.getScreenCoords(wpt);
+				const testPt = cc.getScreenCoords(wpt);
 				if (testPt) {
 					distSq = ptSegDistSq(testPt.x, testPt.y, last.x, last.y, pt.x, pt.y);
 					totX += testPt.x;
@@ -90,8 +89,8 @@ var draw=  {
 				}
 				last = testPt;
 			});
-			var aveX = totX / footprint.length;
-			var aveY = totY / footprint.length;
+			const aveX = totX / footprint.length;
+			const aveY = totY / footprint.length;
 			distSq = distToPtSq(aveX, aveY, pt.x, pt.y);
 			if (distSq < minDistSq) minDistSq = distSq;
 		});
@@ -100,7 +99,7 @@ var draw=  {
 	},
 
 	draw(drawObj,ctx,drawTextAry,plot,def,vpPtM,onlyAddToPath) {
-		var drawParams= makeDrawParams(drawObj,def);
+		const drawParams= makeDrawParams(drawObj,def);
 		drawFootprint(ctx, plot, drawObj.footprintAry, drawParams, drawObj.renderOptions, onlyAddToPath);
 	},
 
@@ -129,8 +128,8 @@ export default {make,draw, FOOTPRINT_OBJ};
 
 
 function makeDrawParams(fpObj,def) {
-	var style= fpObj.style || def.style || DEFAULT_STYLE;
-	var lineWidth= fpObj.lineWidth || def.lineWidth || DEF_WIDTH;
+	const style= fpObj.style || def.style || DEFAULT_STYLE;
+	const lineWidth= fpObj.lineWidth || def.lineWidth || DEF_WIDTH;
 	return {
 		color: DrawUtil.getColor(fpObj.color,def.color),
 		lineWidth,
@@ -143,8 +142,8 @@ function makeDrawParams(fpObj,def) {
 
 
 function distToPtSq(x0, y0, x1, y1) {
-	var dx = x1 - x0;
-	var dy = y1 - y0;
+	const dx = x1 - x0;
+	const dy = y1 - y0;
 	return dx * dx + dy * dy;
 }
 
@@ -177,8 +176,8 @@ function ptSegDistSq(x1, y1, x2, y2, px, py) {
 	// px,py becomes relative vector from x1,y1 to test point
 	px -= x1;
 	py -= y1;
-	var dotprod = px * x2 + py * y2;
-	var projlenSq;
+	let dotprod = px * x2 + py * y2;
+	let projlenSq;
 	if (dotprod <= 0) {
 		// px,py is on the side of x1,y1 away from x2,y2
 		// distance to segment is length of px,py vector
@@ -210,48 +209,51 @@ function ptSegDistSq(x1, y1, x2, y2, px, py) {
 	// vector minus the length of its projection onto the line
 	// (which is zero if the projection falls outside the range
 	// of the line segment).
-	var lenSq = px * px + py * py - projlenSq;
+	let lenSq = px * px + py * py - projlenSq;
 	if (lenSq < 0) lenSq = 0;
 	return lenSq;
 }
 
 
 function drawFootprint(ctx, plot, footprintAry, drawParams, renderOptions, onlyAddToPath) {
-	var inView = false;
-	var footprint= null;
-	var wpt= null;
-	for (footprint of footprintAry) {
-		for (wpt of footprint) {
-			if (wpt && plot.pointInViewPort(wpt)) {
-				inView = true;
-				break;
-			}
-		}
-		if (inView) break;
+	let inView = false;
+	let footprint= null;
+	let pt= null;
+
+	if (plot) {
+        for (footprint of footprintAry) {
+            for (pt of footprint) {
+                if (pt && plot.pointOnDisplay(pt)) {
+                    inView = true;
+                    break;
+                }
+            }
+            if (inView) break;
+        }
 	}
 
-	if (inView) {
+	if (inView || !plot) {
 		for (footprint of footprintAry) {
-			drawStandardFootprint(ctx, footprint, plot, drawParams, onlyAddToPath);
+			drawStandardFootprint(ctx, footprint, plot, drawParams, renderOptions, onlyAddToPath);
 		}
 	}
 }
 
 
-function drawStandardFootprint(ctx, footprint, plot, drawParams, onlyAddToPath) {
+function drawStandardFootprint(ctx, footprint, plot, drawParams, renderOptions, onlyAddToPath) {
 
-	var wpt0 = footprint[footprint.length - 1];
-	var wpt= null;
-	var pt0;
-	var pt;
-	var {color,lineWidth} = drawParams;
-	if (!onlyAddToPath) DrawUtil.beginPath(ctx,color,lineWidth);
+	let wpt0 = footprint[footprint.length - 1];
+	let wpt= null;
+	let pt0;
+	let pt;
+	const {color,lineWidth} = drawParams;
+	if (!onlyAddToPath) DrawUtil.beginPath(ctx,color,lineWidth, renderOptions);
 	for (wpt of footprint) {
-		pt0 = plot.getViewPortCoords(wpt0);
-		pt = plot.getViewPortCoords(wpt);
+        pt0 = plot ? plot.getDeviceCoords(wpt0) : wpt0;
+        pt = plot ? plot.getDeviceCoords(wpt) : wpt;
 		if (!pt0 || !pt) return;
 		ctx.moveTo(pt0.x, pt0.y);
-		if (!plot.coordsWrap(wpt0, wpt)) {
+		if (!plot || !plot.coordsWrap(wpt0, wpt)) {
 			ctx.lineTo(pt.x, pt.y);
 		}
 		wpt0 = wpt;
@@ -261,12 +263,11 @@ function drawStandardFootprint(ctx, footprint, plot, drawParams, onlyAddToPath) 
 
 
 function toRegion(footprintAry, plot, drawParams) {
-	var {color, lineWidth} = drawParams;
-	var cc = CsysConverter.make(plot);
-	var wpAry;
-	var des;
+	const {color, lineWidth} = drawParams;
+	const cc = CsysConverter.make(plot);
+	let des;
 
-	wpAry = footprintAry.map( (footprint) => cc.getWorldCoords(footprint) );
+	const wpAry = footprintAry.map( (footprint) => cc.getWorldCoords(footprint) );
 	des = startRegionDes(RegionType.polygon, cc, wpAry, null, null);
 	if (isEmpty(des)) return [];
 
@@ -278,18 +279,18 @@ function toRegion(footprintAry, plot, drawParams) {
 }
 
 function translateTo(footprintAry, plot, apt) {
-	var pt = plot.getScreenCoords(apt);
+	const pt = plot.getScreenCoords(apt);
 
 	return footprintAry.map( (footprint) => {
 		return footprint.map( (wpt) => {
-			var pti = plot.getScreenCoords(wpt);
+			const pti = plot.getScreenCoords(wpt);
 			return (pti) ? plot.getWorldCoords(makeScreenPt(pti.x + pt.x, pti.y + pt.y)) : wpt;
 		});
 	});
 }
 
 function rotateAround(footprintAry, plot, angle, wc) {
-	var center = plot.getScreenCoords(wc);
+	const center = plot.getScreenCoords(wc);
 
 	return footprintAry.map( (footprint) => {
 		footprint.map( (p1) => DrawUtil.rotateAroundScreenPt(p1,plot,angle,center));

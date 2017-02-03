@@ -203,43 +203,34 @@ function addRequestKey(r,requestKey) {
  * @param {Band} band
  * @return {WebPlotRequest}
  */
-export function modifyRequest(pvCtx, r, band) {
+export function modifyRequest(pvCtx, r, band, useCtxMods) {
 
-    if (!r || !pvCtx) return r;
+    if (!r) return r;
 
-    var retval= r.makeCopy();
+    const retval= r.makeCopy();
 
-    var userModRot= pvCtx.userModifiedRotate;
-    if (pvCtx.rotateNorthLock) retval.setRotateNorth(true);
-    if (r.getRotateNorthSuggestion() && userModRot) retval.setRotateNorth(true);
+    if (retval.getRotateNorth()) retval.setRotateNorth(false);
+    if (retval.getRotate()) retval.setRotate(false);
+    if (retval.getRotationAngle()) retval.setRotationAngle(0);
 
-
-
-    //if (r.getRequestType()===RequestType.URL ) { //todo, when do we need to make if a full url, I think in cross-site mode
-    //    r.setURL(modifyURLToFull(r.getURL()));
-    //}
-
-
+    if (!pvCtx || !useCtxMods) return retval;
 
     if (pvCtx.defThumbnailSize!==DEFAULT_THUMBNAIL_SIZE && !r.containsParam(WPConst.THUMBNAIL_SIZE)) {
         retval.setThumbnailSize(pvCtx.defThumbnailSize);
     }
 
 
-    var cPref= PlotPref.getCacheColorPref(pvCtx.preferenceColorKey);
+    const cPref= PlotPref.getCacheColorPref(pvCtx.preferenceColorKey);
     if (cPref) {
         if (cPref[band]) retval.setInitialRangeValues(cPref[band]);
         retval.setInitialColorTable(cPref.colorTableId);
     }
 
-    var zPref= PlotPref.getCacheZoomPref(pvCtx.preferenceZoomKey);
+    const zPref= PlotPref.getCacheZoomPref(pvCtx.preferenceZoomKey);
     if (zPref) {
         retval.setInitialZoomLevel(zPref.zooomLevel);
     }
 
-    //for(Map.Entry<String,String> entry : _reqMods.entrySet()) { //todo, I don't think I need this any more, use for deferred loading
-    //    retval.setParam(new Param(entry.getKey(), entry.getValue()));
-    //}
     return retval;
 
 }
@@ -250,9 +241,9 @@ export function modifyRequest(pvCtx, r, band) {
  * @param {object} result the result of the search
  */
 export function processPlotImageSuccessResponse(dispatcher, payload, result) {
-    var resultPayload;
-    var successAry= [];
-    var failAry= [];
+    let resultPayload;
+    let successAry= [];
+    let failAry= [];
 
      // the following line checks to see if we are processing the results from the right request
     if (payload.requestKey && result.requestKey && payload.requestKey!==result.requestKey) return;
@@ -267,7 +258,7 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
     }
 
 
-    const pvNewPlotInfoAry= successAry.map( (r) => handleSuccess(r.data.PlotCreate,payload, r.data.requestKey) );
+    const pvNewPlotInfoAry= successAry.map( (r) => handleSuccessfulCall(r.data.PlotCreate,payload, r.data.requestKey) );
     resultPayload= Object.assign({},payload, {pvNewPlotInfoAry});
     if (successAry.length) {
         dispatcher({type: ImagePlotCntlr.PLOT_IMAGE, payload: resultPayload});
@@ -280,6 +271,7 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
         else {
             matchAndActivateOverlayPlotViews(plotIdAry, payload.oldOverlayPlotViews);
         }
+
 
         pvNewPlotInfoAry
             .forEach((info) => info.plotAry
@@ -370,7 +362,7 @@ function getRequest(payload) {
  * @param requestKey
  * @return {NewPlotInfo}
  */
-const handleSuccess= function(plotCreate, payload, requestKey) {
+const handleSuccessfulCall= function(plotCreate, payload, requestKey) {
     const plotState= PlotState.makePlotStateWithJson(plotCreate[0].plotState);
     const plotId= plotState.getWebPlotRequest().getPlotId();
 

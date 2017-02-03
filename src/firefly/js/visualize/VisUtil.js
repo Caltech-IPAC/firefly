@@ -9,23 +9,23 @@
  */
 
 
+import {isArray} from 'lodash';
 import Enum from 'enum';
 import CoordinateSys from './CoordSys.js';
 import {CCUtil, CysConverter} from './CsysConverter.js';
-import Point, {makeImageWorkSpacePt, makeViewPortPt, makeImagePt,
-    makeScreenPt, makeWorldPt, isValidPoint} from './Point.js';
+import Point, {makeImageWorkSpacePt, makeImagePt, makeScreenPt, makeWorldPt, makeDevicePt, isValidPoint} from './Point.js';
 import ZoomUtil from './ZoomUtil.js';
 import DrawOp from './draw/DrawOp.js';
-import {isArray} from 'lodash';
+import {primePlot} from './PlotViewUtil.js';
 import {doConv} from '../astro/conv/CoordConv.js';
+import pointInPolygon from 'point-in-polygon';
 
-var {AllPlots} = window.ffgwt ? window.ffgwt.Visualize : {AllPlots:null};
 
 export const DtoR = Math.PI / 180.0;
 export const RtoD = 180.0 / Math.PI;
 
-function toDegrees (angle) { return angle * (180 / Math.PI); }
-function toRadians(angle) { return angle * Math.PI / 180; }
+export const toDegrees = (angle) => angle * (180 / Math.PI);
+export const toRadians = (angle) => (angle * Math.PI) / 180;
 
 
 export const FullType= new Enum(['ONLY_WIDTH', 'WIDTH_HEIGHT', 'ONLY_HEIGHT', 'SMART']);
@@ -44,7 +44,7 @@ export const FullType= new Enum(['ONLY_WIDTH', 'WIDTH_HEIGHT', 'ONLY_HEIGHT', 'S
  * @param {number} y2
  * @return {number}
  */
-const computeScreenDistance= function (x1, y1, x2, y2) {
+export const computeScreenDistance= function (x1, y1, x2, y2) {
     const deltaXSq = (x1 - x2) * (x1 - x2);
     const  deltaYSq = (y1 - y2) * (y1 - y2);
     return Math.sqrt(deltaXSq + deltaYSq);
@@ -344,16 +344,21 @@ const getBestTitle= function(plot) {
 
 
 export const getRotationAngle= function(plot) {
-    var retval = 0;
-    var iWidth = plot.dataWidth;
-    var iHeight = plot.dataHeight;
-    var ix = iWidth / 2;
-    var iy = iHeight / 2;
+    let retval = 0;
+    const iWidth = plot.dataWidth;
+    const iHeight = plot.dataHeight;
+    const ix = iWidth / 2;
+    const iy = iHeight / 2;
     const cc= CysConverter.make(plot);
-    var wptC = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy));
-    var wpt2 = cc.getWorldCoords(makeImageWorkSpacePt(ix, iHeight/4));
+    const wptC = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy));
+    const wpt2 = cc.getWorldCoords(makeImageWorkSpacePt(ix, iHeight/4));
     if (wptC && wpt2) {
-        retval = getPositionAngle(wptC.getLon(), wptC.getLat(), wpt2.getLon(), wpt2.getLat());
+        if (wptC.y > wpt2.y) {
+            retval = getPositionAngle(wpt2.getLon(), wpt2.getLat(), wptC.getLon(), wptC.getLat());
+        }
+        else {
+            retval = getPositionAngle(wptC.getLon(), wptC.getLat(), wpt2.getLon(), wpt2.getLat());
+        }
     }
     return retval;
 };
@@ -375,6 +380,21 @@ export function isPlotNorth(plot) {
     }
     return retval;
 }
+
+
+export function isEastLeft(plot) {
+    const iy = plot.dataHeight/2;
+    const cc= CysConverter.make(plot);
+    const wpt1 = cc.getWorldCoords(makeImagePt(plot.dataWidth-1, iy));
+    if (wpt1) {
+        const wpt2 = cc.getWorldCoords(makeImagePt(1, iy));
+        if (wpt2) return wpt2.x > wpt1.x;
+    }
+    return true;
+}
+
+
+
 
 const getPossibleZoomLevels= function() {
         return ZoomUtil.levels;
@@ -506,14 +526,17 @@ const getArrowCoords= function(x1, y1, x2, y2) {
     };
 };
 
-export const getCurrentPlot= function() {
-    var retval= null;
-    var mpw= AllPlots.getInstance().getMiniPlotWidget();
-    if (mpw) {
-        retval= mpw.getCurrentPlot();
-    }
-    return retval;
-};
+
+export function getBoundingBox(ptAry) {
+    const sortX= ptAry.map( (pt) => pt.x).sort( (v1,v2) => v1-v2);
+    const sortY= ptAry.map( (pt) => pt.y).sort( (v1,v2) => v1-v2);
+    const minX= sortX[0];
+    const minY= sortY[0];
+    const maxX= sortX[sortX.length-1];
+    const maxY= sortY[sortY.length-1];
+    return {x:minX, y:minY, w:Math.abs(maxX-minX), h:Math.abs(maxY-minY)};
+}
+
 
 /**
  *
@@ -526,17 +549,16 @@ export function getSelectedPts(selection, plot, objList) {
     var selectedList= [];
     if (selection && plot && objList && objList.length) {
         const cc= CysConverter.make(plot);
-        var pt0= cc.getScreenCoords(selection.pt0);
-        var pt1= cc.getScreenCoords(selection.pt1);
+        const pt0= cc.getDeviceCoords(selection.pt0);
+        const pt1= cc.getDeviceCoords(selection.pt1);
         if (!pt0 || !pt1) return selectedList;
 
-        var x= Math.min( pt0.x,  pt1.x);
-        var y= Math.min(pt0.y, pt1.y);
-        var width= Math.abs(pt0.x-pt1.x);
-        var height= Math.abs(pt0.y-pt1.y);
-        var testObj;
+        const x= Math.min( pt0.x,  pt1.x);
+        const y= Math.min(pt0.y, pt1.y);
+        const width= Math.abs(pt0.x-pt1.x);
+        const height= Math.abs(pt0.y-pt1.y);
         objList.forEach( (obj,idx) => {
-            testObj = cc.getScreenCoords(DrawOp.getCenterPt(obj));
+            const testObj = cc.getDeviceCoords(DrawOp.getCenterPt(obj));
             if (testObj && contains(x,y,width,height,testObj.x, testObj.y)) {
                 selectedList.push(idx);
             }
@@ -656,9 +678,6 @@ const getWorldPtRepresentation= function(pt) {
         case Point.IM_PT:
             retval= makeWorldPt(pt.x,pt.y, CoordinateSys.PIXEL);
             break;
-        case Point.VP_PT:
-            retval= makeWorldPt(pt.x,pt.y, CoordinateSys.SCREEN_PIXEL);
-            break;
         case Point.W_PT:
             retval=  pt;
             break;
@@ -677,9 +696,6 @@ const makePt= function(type,  x, y) {
             break;
         case Point.IM_PT:
             retval= makeImagePt(x,y);
-            break;
-        case Point.VP_PT:
-            retval= makeViewPortPt(x,y);
             break;
         case Point.W_PT:
             retval= makeWorldPt(x,y);
@@ -734,7 +750,131 @@ export function formatFluxValue(value) {
         value.toFixed(6);
 }
 
+/**
+ *
+ * @param {PlotView} pv
+ * @param {number} xOff
+ * @param {number} yOff
+ */
+// export function getTopmostVisiblePoint(pv,xOff, yOff) {
+//     const plot= primePlot(pv);
+//     const cc= CysConverter.make(plot);
+//     const ipt= cc.getImageCoords(makeDevicePt(xOff,yOff));
+//     // if (cc.pointInPlot(ipt)) return ipt;
+//     if (isImageCoveringArea(pv,ipt)) return ipt;
+//
+//     const zXoff= xOff/plot.zoomFactor;
+//     const zYoff= xOff/plot.zoomFactor;
+//
+//     const tryPts= [
+//         makeImagePt(1+zXoff,1+zXoff),
+//         makeImagePt(plot.dataWidth-zXoff,1+zYoff),
+//         makeImagePt(plot.dataWidth-zXoff,plot.dataHeight-zYoff),
+//         makeImagePt(1+zXoff, plot.dataHeight-zYoff),
+//     ];
+//
+//     const highPts= tryPts
+//         .map( (p) => cc.getDeviceCoords(p) )
+//         .filter( (p) => cc.pointOnDisplay(p))
+//         .sort( (p1,p2) => p1.y!==p2.y ? p1.y - p2.y : p1.x - p2.x);
+//
+//     return highPts[0];
+// }
 
+
+export function getTopmostVisiblePoint(pv,xOff, yOff) {
+    const plot= primePlot(pv);
+    const cc= CysConverter.make(plot);
+    const ipt= cc.getImageCoords(makeDevicePt(xOff,yOff));
+    // if (cc.pointInPlot(ipt)) return ipt;
+    // if (isImageCoveringArea(pv,ipt,xOff,yOff)) return ipt;
+    if (isImageCoveringArea(pv,ipt,2,2)) return ipt;
+
+
+    const {dataWidth,dataHeight}= plot;
+    const {viewDim} = pv;
+
+    const lineSegs= [
+        {pt1: cc.getDeviceCoords(makeImagePt(0,0)), pt2: cc.getDeviceCoords(makeImagePt(dataWidth,0))},
+        {pt1: cc.getDeviceCoords(makeImagePt(dataWidth,0)), pt2: cc.getDeviceCoords(makeImagePt(dataWidth,dataHeight))},
+        {pt1: cc.getDeviceCoords(makeImagePt(dataWidth,dataHeight)), pt2: cc.getDeviceCoords(makeImagePt(0,dataHeight))},
+        {pt1: cc.getDeviceCoords(makeImagePt(0,dataHeight)), pt2: cc.getDeviceCoords(makeImagePt(0,0))}
+    ];
+
+    const foundSegs= lineSegs
+        .filter((lineSeg) => {
+                 const {pt1,pt2}= lineSeg;
+                 const iPt= findIntersectionPt(pt1.x,pt1.y,pt2.x,pt2.y, 0,0,viewDim.width-1,0);
+                 return iPt && iPt.onSeg1 && iPt.onSeg2;
+             })
+        .sort( (l1, l2) => l1.pt1.x - l2.pt1.x);
+
+    if (foundSegs[0]) {
+        const pt= findIntersectionPt(foundSegs[0].pt1.x,foundSegs[0].pt1.y,foundSegs[0].pt2.x,foundSegs[0].pt2.y, 0,0,viewDim.width-1,0);
+        return makeDevicePt(pt.x+xOff, pt.y+yOff);
+    }
+
+    const zXoff= xOff/plot.zoomFactor;
+    const zYoff= xOff/plot.zoomFactor;
+
+    const tryPts= [
+        makeImagePt(1+zXoff,1+zXoff),
+        makeImagePt(plot.dataWidth-zXoff,1+zYoff),
+        makeImagePt(plot.dataWidth-zXoff,plot.dataHeight-zYoff),
+        makeImagePt(1+zXoff, plot.dataHeight-zYoff),
+    ];
+
+
+    const highPts= tryPts
+        .map( (p) => cc.getDeviceCoords(p) )
+        .filter( (p) => cc.pointOnDisplay(p))
+        .sort( (p1,p2) => p1.y!==p2.y ? p1.y - p2.y : p1.x - p2.x);
+
+    return highPts[0];
+}
+
+
+
+
+export function isImageCoveringArea(pv,pt, width,height) {
+
+    const {viewDim} = pv;
+    const plot= primePlot(pv);
+    const cc= CysConverter.make(plot);
+    pt= cc.getDeviceCoords(pt);
+    const testPts= [
+        makeDevicePt(pt.x,pt.y),
+        makeDevicePt(pt.x+width,pt.y),
+        makeDevicePt(pt.x+width,pt.y+height),
+        makeDevicePt(pt.x,pt.y+height),
+    ];
+
+    const polyPts= [
+        cc.getDeviceCoords(makeImagePt(1,1)),
+        cc.getDeviceCoords(makeImagePt(plot.dataWidth,1)),
+        cc.getDeviceCoords(makeImagePt(plot.dataWidth,plot.dataHeight)),
+        cc.getDeviceCoords(makeImagePt(1, plot.dataHeight))
+    ];
+
+
+    const polyPtsAsArray= polyPts.map( (p) => [p.x,p.y]);
+
+    return testPts.every( (p) => pointInPolygon([p.x,p.y], polyPtsAsArray));
+}
+
+export function findIntersectionPt(x1, y1, x2, y2, x3, y3, x4, y4) {
+    const denom = (y4 - y3)*(x2 - x1) - (x4 - x3)*(y2 - y1);
+    if (!denom) return null;
+
+    const ua = ((x4 - x3)*(y1 - y3) - (y4 - y3)*(x1 - x3))/denom;
+    const ub = ((x2 - x1)*(y1 - y3) - (y2 - y1)*(x1 - x3))/denom;
+    return {
+        x: x1 + ua*(x2 - x1),
+        y: y1 + ua*(y2 - y1),
+        onSeg1: ua >= 0 && ua <= 1,
+        onSeg2: ub >= 0 && ub <= 1
+    };
+}
 
 
 

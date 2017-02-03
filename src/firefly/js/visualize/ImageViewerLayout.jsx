@@ -5,18 +5,20 @@
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {xor,isEmpty,get, isString, isFunction} from 'lodash';
-import {TileDrawer} from './TileDrawer.jsx';
-import {EventLayer} from './EventLayer.jsx';
-import {ImageViewerStatus} from './ImageViewerStatus.jsx';
-import {makeScreenPt} from '../Point.js';
-import {flux} from '../../Firefly.js';
-import {DrawerComponent}  from '../draw/DrawerComponent.jsx';
-import {CysConverter, CCUtil}  from '../CsysConverter.js';
-import {UserZoomTypes}  from '../ZoomUtil.js';
-import {primePlot, plotInActiveGroup} from '../PlotViewUtil.js';
-import {isImageViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js';
-import {contains} from '../VisUtil.js';
-import {PlotAttribute} from '../WebPlot.js';
+import {TileDrawerCanvas} from './iv/TileDrawerCanvas.jsx';
+import {EventLayer} from './iv/EventLayer.jsx';
+import {ImageViewerStatus} from './iv/ImageViewerStatus.jsx';
+import {makeScreenPt, makeDevicePt} from './Point.js';
+import {plotMover} from './PlotPostionUtil.js';
+import {flux} from '../Firefly.js';
+import {DrawerComponent}  from './draw/DrawerComponent.jsx';
+import {CysConverter}  from './CsysConverter.js';
+import {UserZoomTypes}  from './ZoomUtil.js';
+import {primePlot, plotInActiveGroup} from './PlotViewUtil.js';
+import {isImageViewerSingleLayout, getMultiViewRoot} from './MultiViewCntlr.js';
+import {contains, intersects} from './VisUtil.js';
+import {PlotAttribute} from './WebPlot.js';
+
 import {
     visRoot,
     WcsMatchType,
@@ -26,21 +28,21 @@ import {
     dispatchRecenter,
     dispatchProcessScroll,
     dispatchChangeActivePlotView,
-    dispatchUpdateViewSize} from '../ImagePlotCntlr.js';
-import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from '../VisMouseSync.js';
+    dispatchUpdateViewSize} from './ImagePlotCntlr.js';
+import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from './VisMouseSync.js';
 
 const DEFAULT_CURSOR= 'crosshair';
 
 const {MOVE,DOWN,DRAG,UP, DRAG_COMPONENT, EXIT, ENTER}= MouseState;
 
-const draggingOrReleasing = (ms) => ms==DRAG || ms===DRAG_COMPONENT || ms===UP || ms===EXIT || ms===ENTER;
+const draggingOrReleasing = (ms) => ms===DRAG || ms===DRAG_COMPONENT || ms===UP || ms===EXIT || ms===ENTER;
 
 
 
 function updateZoom(pv, paging) {
     if (!primePlot(pv)) return;
-    var doZoom= false;
-    var actionScope= ActionScope.GROUP;
+    let doZoom= false;
+    let actionScope= ActionScope.GROUP;
     const vr= visRoot();
     if (!paging && vr.wcsMatchType && pv.plotId!==vr.mpwWcsPrimId) {
         doZoom= false;
@@ -70,6 +72,14 @@ function updateZoom(pv, paging) {
 }
 
 
+const rootStyle= {
+    position:'absolute',
+    left : 0,
+    right : 0,
+    top : 0,
+    bottom : 0,
+    overflow:'hidden'
+};
 
 export class ImageViewerLayout extends Component {
 
@@ -84,8 +94,7 @@ export class ImageViewerLayout extends Component {
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentDidMount() {
-        var {width,height}= this.props;
-        var {plotView:pv}= this.props;
+        const {width,height, plotView:pv}= this.props;
         this.previousDim= makePrevDim(this.props);
         dispatchUpdateViewSize(pv.plotId,width,height);
         if (pv.plotViewCtx.zoomLockingEnabled && primePlot(pv)) {
@@ -127,9 +136,13 @@ export class ImageViewerLayout extends Component {
     }
 
     eventCB(plotId,mouseState,screenPt,screenX,screenY) {
-        var {drawLayersAry,plotView}= this.props;
-        var mouseStatePayload= makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY);
-        var list= drawLayersAry.filter( (dl) => dl.visiblePlotIdAry.includes(plotView.plotId) &&
+        const {drawLayersAry,plotView}= this.props;
+        //-------------------
+
+
+        //-------------------
+        const mouseStatePayload= makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY);
+        const list= drawLayersAry.filter( (dl) => dl.visiblePlotIdAry.includes(plotView.plotId) &&
                                                 get(dl,['mouseEventMap',mouseState.key],false) );
 
         if (this.mouseOwnerLayerId && draggingOrReleasing(mouseState)) { // use layer from the mouseDown
@@ -147,8 +160,8 @@ export class ImageViewerLayout extends Component {
             else { // fire to all non-exclusive layers, scroll, and determine cursor
                 list.filter( (dl) => !get(dl, 'exclusiveDef.exclusiveOnDown',false))
                     .forEach( (dl) => fireMouseEvent(dl,mouseState,mouseStatePayload) );
-                this.scroll(plotId,mouseState,screenX,screenY);
-                var cursor = DEFAULT_CURSOR;
+                this.scroll(plotView,mouseState,screenX,screenY);
+                let cursor = DEFAULT_CURSOR;
                 const cursorCandidate= ownerCandidate || findMouseOwner(drawLayersAry,primePlot(plotView),screenPt);
                 if (MOVE.is(mouseState) && get(cursorCandidate, 'getCursor') ) {
                     cursor = cursorCandidate.getCursor(plotView, screenPt) || DEFAULT_CURSOR;
@@ -159,79 +172,62 @@ export class ImageViewerLayout extends Component {
         fireMouseCtxChange(mouseStatePayload);  // this for anyone listening directly to the mouse
     }
 
-    scroll(plotId,mouseState,screenX,screenY) {
-        if (!screenX && !screenY) return;
+    scroll(plotView,mouseState,screenX,screenY) {
+         if (!screenX && !screenY) return;
+         const {plotId}= plotView;
 
-        switch (mouseState) {
-            case DOWN :
-                dispatchChangeActivePlotView(plotId);
-                var {scrollX, scrollY}= this.props.plotView;
-                this.plotDrag= plotMover(screenX,screenY,scrollX,scrollY);
-                break;
-            case DRAG :
-                if (this.plotDrag) {
-                    const newScrollPt= this.plotDrag(screenX,screenY);
-                    dispatchProcessScroll({plotId,scrollPt:newScrollPt});
-                }
-                break;
-            case UP :
-                this.plotDrag= null;
-                break;
-        }
-    }
+         switch (mouseState) {
+             case DOWN :
+                 dispatchChangeActivePlotView(plotId);
+                 const {scrollX, scrollY}= this.props.plotView;
+                 this.plotDrag= plotMover(screenX,screenY,makeScreenPt(scrollX,scrollY), plotView);
+                 break;
+             case DRAG :
+                 if (this.plotDrag) {
+                     const newScrollPt= this.plotDrag(screenX,screenY);
+                     dispatchProcessScroll({plotId,scrollPt:newScrollPt});
+                 }
+                 break;
+             case UP :
+                 this.plotDrag= null;
+                 break;
+         }
+     }
 
 
 
     renderInside() {
-        var {plotView,drawLayersAry}= this.props;
+        const {plotView,drawLayersAry}= this.props;
         const plot= primePlot(plotView);
-        const {plotId}= plotView;
-        var {width:viewPortWidth,height:viewPortHeight}= plot.viewPort.dim;
-        const {left,top,scrollViewWidth, scrollViewHeight, scrollX,scrollY, viewDim}=  getPositionInfo(plotView);
+        const {plotId, viewDim:{width,height}}= plotView;
 
-
-        var rootStyle= {left, top,
-                        position:'relative',
-                        width:scrollViewWidth,
-                        height:scrollViewHeight,
-                        marginRight: 'auto',
-                        marginLeft: 0
-        };
+        const rootStyle= {left:0, top:0, bottom:0, right:0,
+                           position:'absolute', marginRight: 'auto', marginLeft: 0 };
 
         const drawLayersIdAry= drawLayersAry ? drawLayersAry.map( (dl) => dl.drawLayerId) : null;
-
-
-        // var cursor= drawLayersAry.map( (dl) => dl.cursor).find( (c) => (c && c.length));
         const {cursor}= this.state;
         return (
             <div className='plot-view-scroll-view-window' style={rootStyle}>
                 <div className='plot-view-master-panel'
-                     style={{width:viewPortWidth,height:viewPortHeight,
-                                 left:0,right:0,position:'absolute', cursor}}>
-                    {makeTileDrawers(plotView,
-                                     Math.max(viewPortWidth,viewDim.width),
-                                     Math.max(viewPortHeight,viewDim.height),
-                                     scrollX,scrollY)}
+                     style={{width,height, left:0,right:0,position:'absolute', cursor}}>
+                    {makeTileDrawers(plotView)}
                     <DrawingLayers
-                        key={'DrawingLayers:'+plotId}
-                        plot={plot} drawLayersIdAry={drawLayersIdAry} />
-                    <EventLayer plotId={plotId} 
-                                key={'EventLayer:'+plotId}
-                                viewPort={plot.viewPort}
-                                width={viewPortWidth} height={viewPortHeight}
-                                eventCallback={this.eventCB}/>
+                        key={'DrawingLayers:'+plotId} plot={plot} plotView={plotView}
+                        drawLayersIdAry={drawLayersIdAry} />
                 </div>
+                <EventLayer plotId={plotId} key={'EventLayer:'+plotId}
+                            transform={plotView.affTrans} eventCallback={this.eventCB}/>
             </div>
         );
     }
 
 
     render() {
-        var {plotView:pv}= this.props;
-        var {viewDim:{width,height}}= pv;
-        var insideStuff;
-        var plotShowing= Boolean(width && height && primePlot(this.props.plotView));
-        var onScreen= true;
+        const {plotView:pv}= this.props;
+        const {viewDim:{width,height}}= pv;
+        let insideStuff;
+        const plotShowing= Boolean(width && height && primePlot(this.props.plotView));
+        let onScreen= true;
 
         if (plotShowing ) {
             onScreen= isImageOnScreen(this.props.plotView);
@@ -239,15 +235,8 @@ export class ImageViewerLayout extends Component {
 
         }
 
-        var style= {
-            position:'absolute',
-            left : 0,
-            right : 0,
-            top : 0,
-            bottom : 0,
-            overflow:'hidden'};
         return (
-            <div className='web-plot-view-scr' style={style}>
+            <div className='web-plot-view-scr' style={rootStyle}>
                 {insideStuff}
                 {makeMessageArea(pv,plotShowing,onScreen)}
             </div>
@@ -270,59 +259,58 @@ ImageViewerLayout.propTypes= {
 
 function isImageOnScreen(plotView) {
 
-    const {left,top,scrollViewWidth, scrollViewHeight, viewDim}=  getPositionInfo(plotView);
-    const visible= (left+scrollViewWidth>=0 && left<=viewDim.width && top+scrollViewHeight>=0 && top<=viewDim.height);
-    return visible;
+    const {viewDim}= plotView;
+    const plot= primePlot(plotView);
+
+    const cc= CysConverter.make(plot);
+    const {screenSize}= plot;
+    const devAsScreenAry= [
+        cc.getScreenCoords(makeDevicePt(0,0)),
+        cc.getScreenCoords(makeDevicePt(viewDim.width,0)),
+        cc.getScreenCoords(makeDevicePt(viewDim.width,viewDim.height)),
+        cc.getScreenCoords(makeDevicePt(0,viewDim.height)),
+        cc.getScreenCoords(makeDevicePt(viewDim.width/2,viewDim.height/2)),
+    ];
+
+
+    const screenAsDevAry= [
+        cc.getDeviceCoords(makeScreenPt(0,0)),
+        cc.getDeviceCoords(makeScreenPt(screenSize.width,0)),
+        cc.getDeviceCoords(makeScreenPt(screenSize.width,screenSize.height)),
+        cc.getDeviceCoords(makeScreenPt(0,screenSize.height)),
+        cc.getDeviceCoords(makeScreenPt(screenSize.width/2,screenSize.height/2)),
+    ];
+
+    let found=  devAsScreenAry.some( (pt) =>
+                   contains(0,0,screenSize.width, screenSize.height,pt.x,pt.y)  ||
+                   intersects(0,0,screenSize.width, screenSize.height,pt.x,pt.y,1,1));
+
+    if (!found) {
+        found= screenAsDevAry.some( (pt) => contains(0,0,viewDim.width, viewDim.height,pt.x,pt.y) ||
+                                            intersects(0,0,viewDim.width, viewDim.height,pt.x,pt.y,1,1));
+    }
+    return found;
 }
 
-
-function getPositionInfo(plotView) {
-    var plot= primePlot(plotView);
-    var {dim:{width:viewPortWidth,height:viewPortHeight},x:vpX,y:vpY}= plot.viewPort;
-    var {width:sw,height:sh}= plot.screenSize;
-    var scrollViewWidth= Math.min(viewPortWidth,sw);
-    var scrollViewHeight= Math.min(viewPortHeight,sh);
-    var {scrollX,scrollY, viewDim}= plotView;
-    var left= vpX-scrollX;
-    var top= vpY-scrollY;
-
-    return {left,top,scrollViewWidth, scrollViewHeight, scrollX,scrollY, viewDim};
-}
 
 
 // eslint-disable-next-line valid-jsdoc
 /**
  *
- * @param pv
- * @param viewPortWidth
- * @param viewPortHeight
- * @param scrollX
- * @param scrollY
+ * @param {PlotView} pv
  * @return {Array}
  */
-function makeTileDrawers(pv,viewPortWidth, viewPortHeight, scrollX, scrollY ) {
+function makeTileDrawers(pv) {
 
 
-    var plot= primePlot(pv);
+    const plot= primePlot(pv);
     const rootDrawer= (
-        <TileDrawer
-            opacity={1}
-            key={'TileDrawer:'+pv.plotId}
-            x={scrollX} y={scrollY}
-            width={viewPortWidth} height={viewPortHeight}
-            plot={plot}
-            rootPlot={plot}
-        />
+        <TileDrawerCanvas opacity={1} plot={plot} plotView={pv} key={'TileDrawer:'+pv.plotId} />
     );
     const drawers= pv.overlayPlotViews.filter( (opv) => opv.visible && opv.plot).map( (opv) => {
         return (
-            <TileDrawer
-                opacity={opv.opacity}
+            <TileDrawerCanvas opacity={opv.opacity} plot={opv.plot} plotView={pv}
                 key={'TileDrawer-overlay:'+opv.imageOverlayId}
-                x={scrollX} y={scrollY}
-                width={viewPortWidth} height={viewPortHeight}
-                plot={opv.plot}
-                rootPlot={plot}
             />
         );
     });
@@ -336,7 +324,7 @@ function makeTileDrawers(pv,viewPortWidth, viewPortHeight, scrollX, scrollY ) {
  * @return {{prevWidth, prevHeight, prevExternalWidth, prevExternalHeight, prevPlotId: *}}
  */
 function makePrevDim(props) {
-    var {width,height,externalWidth,externalHeight,plotView}= props;
+    const {width,height,externalWidth,externalHeight,plotView}= props;
     return {
         prevWidth:width,
         prevHeight:height,
@@ -346,24 +334,6 @@ function makePrevDim(props) {
     };
 }
 
-
-function plotMover(screenX,screenY, originalScrollX, originalScrollY) {
-
-    var originalMouseX = screenX;
-    var originalMouseY = screenY;
-
-    return (screenX, screenY) => {
-        var xdiff= screenX- originalMouseX;
-        var ydiff= screenY- originalMouseY;
-        var newX= originalScrollX -xdiff;
-        var newY= originalScrollY -ydiff;
-
-        // if (newX<0) newX= 0; //todo: reenable
-        // if (newY<0) newY= 0; //todo: reenable
-
-        return makeScreenPt(newX, newY);
-    };
-}
 
 function makeMessageArea(pv,plotShowing,onScreen) {
     if (pv.serverCall==='success') {
@@ -428,7 +398,7 @@ function findMouseOwner(dlList, plot, screenPt) {
 
                       // Step 3
     const cc= CysConverter.make(plot);
-    var vertexDL= exList
+    const vertexDL= exList
         .filter((dl) => {
             const exType= get(dl,'exclusiveDef.type','');
             const points= get(dl,'vertexDef.points',null);
@@ -456,8 +426,8 @@ function findMouseOwner(dlList, plot, screenPt) {
 }
 
 function fireMouseEvent(drawLayer,mouseState,mouseStatePayload) {
-    var payload= Object.assign({},mouseStatePayload,{drawLayer});
-    var fireObj= drawLayer.mouseEventMap[mouseState.key];
+    const payload= Object.assign({},mouseStatePayload,{drawLayer});
+    const fireObj= drawLayer.mouseEventMap[mouseState.key];
     if (isString(fireObj)) {
         flux.process({type: fireObj, payload});
     }
@@ -486,9 +456,9 @@ class DrawingLayers extends Component {
     }
     
     render() {
-        const {plot,drawLayersIdAry:dlIdAry}= this.props;
-        var drawingAry= null;
-        var {width,height}= plot.viewPort.dim;
+        const {plotView:pv, plot, drawLayersIdAry:dlIdAry}= this.props;
+        let drawingAry= null;
+        const {width,height}= pv.viewDim;
         if (dlIdAry) {
             drawingAry= dlIdAry.map( (dlId) => <DrawerComponent plot={plot} drawLayerId={dlId}
                                                                 width={width} height={height}
@@ -505,6 +475,7 @@ class DrawingLayers extends Component {
 }
 
 DrawingLayers.propTypes= {
+    plotView: PropTypes.object.isRequired,
     plot: PropTypes.object.isRequired,
     drawLayersIdAry: PropTypes.array.isRequired
 };

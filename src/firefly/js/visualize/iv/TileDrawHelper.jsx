@@ -13,18 +13,18 @@ const BACKGROUND_STYLE = `url(+ ${BG_IMAGE} ) top left repeat`;
 /**
  *
  * @param {string} src  url of the tile
- * @param {object} vpPt viewPortPt, where to put the tile
+ * @param {object} pt  where to put the tile
  * @param {number} width
  * @param {number} height
  * @param {number} scale
  * @param {number} opacity
  * @return {object}
  */
-export function makeImageFromTile(src, vpPt, width, height, scale,opacity=1) {
-    var s= {
+export function makeImageFromTile(src, pt, width, height, scale,opacity=1) {
+    const s= {
         position : 'absolute',
-        left : vpPt.x,
-        top : vpPt.y,
+        left : pt.x,
+        top : pt.y,
         width: width*scale,
         height: height*scale,
         background: BACKGROUND_STYLE,
@@ -39,7 +39,7 @@ export function makeImageFromTile(src, vpPt, width, height, scale,opacity=1) {
 
 
 export function createImageUrl(plot, tile) {
-    var params = {
+    const params = {
         file: tile.url,
         state: plot.plotState.toJson(),
         type: 'tile',
@@ -63,13 +63,13 @@ export function createImageUrl(plot, tile) {
  */
 export function isTileVisible(tile, x, y, w, h, scale) {
 
-    var tileX= tile.xoff*scale;
-    var tileY= tile.yoff*scale;
-    var tileWidth= tile.width*scale;
-    var tileHeight= tile.height*scale;
+    const tileX= tile.xoff*scale;
+    const tileY= tile.yoff*scale;
+    const tileWidth= tile.width*scale;
+    const tileHeight= tile.height*scale;
 
     return (x + w > tileX &&
-    y + h > tileY &&
-    x < tileX  + tileWidth &&
-    y < tileY + tileHeight);
+            y + h > tileY &&
+            x < tileX  + tileWidth &&
+            y < tileY + tileHeight);
 }

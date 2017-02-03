@@ -221,24 +221,6 @@ function makeMaskRequest(fileKey, imageOverlayId, pv, maskValue, imageNumber, co
     if (state) {
         r.setZoomType(ZoomType.LEVEL);
         r.setInitialZoomLevel(plot.zoomFactor);
-        // r.setInitialZoomLevel(state.getZoomLevel());
-        if (state.isRotated()) {
-            const rt= state.getRotateType();
-            // r.setMultiImageIdx(0);
-            if (rt===RotateType.NORTH) {
-                r.setRotateNorth(true);
-            }
-            else if (rt===RotateType.ANGLE) {
-                r.setRotate(true);
-                r.setRotationAngle(state.getRotationAngle());
-                r.setRotateFromNorth(false);
-            }
-        }
-        else {
-            r.setRotate(false);
-            r.setRotateNorth(false);
-            r.setRotationAngle(0);
-        }
         r.setFlipY(state.isFlippedY());
         r.setFlipX(false);//todo handle flip x
     }
