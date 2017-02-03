@@ -141,7 +141,6 @@ export function startRegionDes(regionType, cc, ptAry,
 
     switch(ptAry[0].type) {
         case Point.SPT:
-        case Point.VP_PT:
             // convert physical coordinate to image coordinate
             sys = Point.IM_PT;
             des = `image;${DS9RegionName[regionType.key]}`;

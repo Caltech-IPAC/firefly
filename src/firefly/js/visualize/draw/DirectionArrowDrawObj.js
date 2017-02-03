@@ -2,11 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
-
 import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil.js';
 import Point, {makeScreenPt} from '../Point.js';
@@ -31,7 +26,7 @@ const DIR_ARROW_DRAW_OBJ= 'DirectionArrayDrawObj';
 export function makeDirectionArrowDrawObj(startPt, endPt, text) {
     if (!startPt || !endPt) return null;
 
-    var obj= DrawObj.makeDrawObj();
+    const obj= DrawObj.makeDrawObj();
     obj.type= DIR_ARROW_DRAW_OBJ;
     obj.startPt= startPt;
     obj.endPt= endPt;
@@ -49,19 +44,19 @@ export function makeDirectionArrowDrawObj(startPt, endPt, text) {
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 
-var draw=  {
+const draw=  {
 
     usePathOptimization(drawObj) { return false; },
 
     getCenterPt(drawObj) { return drawObj.startPt; },
 
     getScreenDist(drawObj,plot, pt) {
-        var dist = -1;
-        var testPt= plot ? plot.getScreenCoords(drawObj.pt) : drawObj.pt;
+        let dist = -1;
+        const testPt= plot ? plot.getScreenCoords(drawObj.pt) : drawObj.pt;
 
         if (testPt.type===Point.SPT) {
-            var dx= pt.x - testPt.x;
-            var dy= pt.y - testPt.y;
+            const dx= pt.x - testPt.x;
+            const dy= pt.y - testPt.y;
             dist= Math.sqrt(dx*dx + dy*dy);
         }
         return dist;
@@ -78,14 +73,14 @@ var draw=  {
      * @param onlyAddToPath
      */
     draw(drawObj,ctx,drawTextAry,plot,def,vpPtM,onlyAddToPath) {
-        var drawParams= makeDrawParams(drawObj,def);
-        var {startPt,endPt,renderOptions}= drawObj;
+        const drawParams= makeDrawParams(drawObj,def);
+        const {startPt,endPt,renderOptions}= drawObj;
         drawDirectionArrow(ctx,drawTextAry, plot, startPt,endPt,drawParams,renderOptions);
     },
 
     toRegion(drawObj,plot, def) {
-        var drawParams= makeDrawParams(drawObj,def);
-        var {startPt,endPt,renderOptions}= drawObj;
+        const drawParams= makeDrawParams(drawObj,def);
+        const {startPt,endPt,renderOptions}= drawObj;
 
         return toRegion(startPt,endPt,plot,drawParams,renderOptions);
     }
@@ -118,40 +113,39 @@ function makeDrawParams(obj,def) {
  * @param renderOptions
  */
 function drawDirectionArrow(ctx,drawTextAry,plot, startPt,endPt,drawParams,renderOptions) {
-    var pt1= plot ? plot.getScreenCoords(startPt) : startPt;
-    var pt2= plot ? plot.getScreenCoords(endPt) : endPt;
-    var {color,text}=  drawParams;
+    const pt1= plot ? plot.getScreenCoords(startPt) : startPt;
+    const pt2= plot ? plot.getScreenCoords(endPt) : endPt;
+    const {color,text}=  drawParams;
 
-    var ret= VisUtil.getArrowCoords(pt1.x, pt1.y, pt2.x, pt2.y);
-    var drawList= [];
-    var textScreen = makeScreenPt(ret.textX, ret.textY);
-    var textLoc = plot ? plot.getViewPortCoords(textScreen) : textScreen;
-    var p1Screen = makeScreenPt(ret.x1,ret.y1);
-    var p2Screen = makeScreenPt(ret.x2,ret.y2);
-    var barScreen = makeScreenPt(ret.barbX2,ret.barbY2);
+    const ret= VisUtil.getArrowCoords(pt1.x, pt1.y, pt2.x, pt2.y);
+    const drawList= [];
+    const textScreen = makeScreenPt(ret.textX, ret.textY);
+    const textLoc = plot ? plot.getDeviceCoords(textScreen) : textScreen;
+    const p1Screen = makeScreenPt(ret.x1,ret.y1);
+    const p2Screen = makeScreenPt(ret.x2,ret.y2);
+    const barScreen = makeScreenPt(ret.barbX2,ret.barbY2);
 
-    drawList.push(plot ? plot.getViewPortCoords(p1Screen) : p1Screen) ;
-    drawList.push(plot ? plot.getViewPortCoords(p2Screen) : p2Screen);
-    drawList.push(plot ? plot.getViewPortCoords(barScreen) : barScreen);
+    drawList.push(plot ? plot.getDeviceCoords(p1Screen) : p1Screen) ;
+    drawList.push(plot ? plot.getDeviceCoords(p2Screen) : p2Screen);
+    drawList.push(plot ? plot.getDeviceCoords(barScreen) : barScreen);
 
     DrawUtil.drawPath(ctx, color,2,drawList,false, renderOptions);
     DrawUtil.drawText(drawTextAry, text, textLoc.x, textLoc.y, color, renderOptions);
 }
 
 function toRegion(startPt,endPt,plot,drawParams,renderOptions) {
-    var pt1 = startPt;    // screen point
-    var pt2 = endPt;
-    var {color,text}=  drawParams;
-    var ret = VisUtil.getArrowCoords(pt1.x, pt1.y, pt2.x, pt2.y);
-    var wpt1, wpt2, barbPt, textPt;
-    var cc = CsysConverter.make(plot);
-    var des;
-    var retList = [];
+    const pt1 = startPt;    // screen point
+    const pt2 = endPt;
+    const {color,text}=  drawParams;
+    const ret = VisUtil.getArrowCoords(pt1.x, pt1.y, pt2.x, pt2.y);
+    const cc = CsysConverter.make(plot);
+    let des;
+    const retList = [];
 
-    wpt1 = cc.getWorldCoords(makeScreenPt(ret.x1, ret.y1));
-    wpt2 = cc.getWorldCoords(makeScreenPt(ret.x2, ret.y2));
-    barbPt = cc.getWorldCoords(makeScreenPt(ret.barbX2, ret.barbY2));
-    textPt = cc.getWorldCoords(makeScreenPt(ret.textX, ret.textY));
+    const wpt1 = cc.getWorldCoords(makeScreenPt(ret.x1, ret.y1));
+    const wpt2 = cc.getWorldCoords(makeScreenPt(ret.x2, ret.y2));
+    const barbPt = cc.getWorldCoords(makeScreenPt(ret.barbX2, ret.barbY2));
+    const textPt = cc.getWorldCoords(makeScreenPt(ret.textX, ret.textY));
 
     des = startRegionDes(RegionType.line, cc, [wpt1, wpt2], null, null);
     if (isEmpty(des)) return [];

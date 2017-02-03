@@ -314,8 +314,8 @@ function computeSelectedIdxAry(selectInfo) {
 
 
 export function selectCatalog(pv,dlAry) {
-    var p= primePlot(pv);
-    var sel= p.attributes[PlotAttribute.SELECTION];
+    const p= primePlot(pv);
+    const sel= p.attributes[PlotAttribute.SELECTION];
     if (!sel) return;
     const catDlAry= getLayers(pv,dlAry);
     if (catDlAry.length) {

@@ -6,12 +6,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {flatten, isArray, uniqueId, uniq, uniqBy, get, isEmpty} from 'lodash';
+import {flatten, isArray, uniqueId, uniqBy, get, isEmpty} from 'lodash';
 import {WebPlotRequest, GridOnStatus} from '../WebPlotRequest.js';
 import ImagePlotCntlr, {visRoot, makeUniqueRequestKey,
                         IMAGE_PLOT_KEY, dispatchDeleteOverlayPlot} from '../ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
-import {WebPlot,PlotAttribute, RDConst} from '../WebPlot.js';
+import {WebPlot,PlotAttribute} from '../WebPlot.js';
 import CsysConverter from '../CsysConverter.js';
 import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
 import VisUtils from '../VisUtil.js';
@@ -41,7 +41,7 @@ export default {makePlotImageAction};
 
 
 
-var firstTime= true;
+let firstTime= true;
 
 
 function ensureWPR(inVal) {
@@ -53,13 +53,14 @@ function ensureWPR(inVal) {
     }
 }
 
-const getFirstReq= (wpRAry) => isArray(wpRAry) ? wpRAry.find( (r) => r?true:false) : wpRAry;
+const getFirstReq= (wpRAry) => isArray(wpRAry) ? wpRAry.find( (r) => Boolean(r)) : wpRAry;
 
 
 function makeSinglePlotPayload(vr, rawPayload, requestKey) {
 
-   var {wpRequest, plotId, threeColor, viewerId=DEFAULT_FITS_VIEWER_ID, attributes, setNewPlotAsActive= true,
+   const {threeColor, viewerId=DEFAULT_FITS_VIEWER_ID, attributes, setNewPlotAsActive= true,
          holdWcsMatch= false, pvOptions= {}, addToHistory= false,useContextModifications= true}= rawPayload;
+   let {plotId, wpRequest}= rawPayload;
 
     wpRequest= ensureWPR(wpRequest);
 
@@ -120,9 +121,9 @@ function makeSinglePlotPayload(vr, rawPayload, requestKey) {
 function makePlotImageAction(rawAction) {
     return (dispatcher, getState) => {
 
-        var vr= getState()[IMAGE_PLOT_KEY];
-        var {wpRequestAry}= rawAction.payload;
-        var payload;
+        let vr= getState()[IMAGE_PLOT_KEY];
+        const {wpRequestAry}= rawAction.payload;
+        let payload;
         const requestKey= makeUniqueRequestKey('plotRequestKey');
 
         if (!wpRequestAry) {
@@ -201,45 +202,37 @@ function addRequestKey(r,requestKey) {
  * @param {object} pvCtx
  * @param {WebPlotRequest} r
  * @param {Band} band
+ * @param useCtxMods
  * @return {WebPlotRequest}
  */
-export function modifyRequest(pvCtx, r, band) {
+export function modifyRequest(pvCtx, r, band, useCtxMods) {
 
-    if (!r || !pvCtx) return r;
+    if (!r) return r;
 
-    var retval= r.makeCopy();
+    const retval= r.makeCopy();
 
-    var userModRot= pvCtx.userModifiedRotate;
-    if (pvCtx.rotateNorthLock) retval.setRotateNorth(true);
-    if (r.getRotateNorthSuggestion() && userModRot) retval.setRotateNorth(true);
+    if (retval.getRotateNorth()) retval.setRotateNorth(false);
+    if (retval.getRotate()) retval.setRotate(false);
+    if (retval.getRotationAngle()) retval.setRotationAngle(0);
 
-
-
-    //if (r.getRequestType()===RequestType.URL ) { //todo, when do we need to make if a full url, I think in cross-site mode
-    //    r.setURL(modifyURLToFull(r.getURL()));
-    //}
-
-
+    if (!pvCtx || !useCtxMods) return retval;
 
     if (pvCtx.defThumbnailSize!==DEFAULT_THUMBNAIL_SIZE && !r.containsParam(WPConst.THUMBNAIL_SIZE)) {
         retval.setThumbnailSize(pvCtx.defThumbnailSize);
     }
 
 
-    var cPref= PlotPref.getCacheColorPref(pvCtx.preferenceColorKey);
+    const cPref= PlotPref.getCacheColorPref(pvCtx.preferenceColorKey);
     if (cPref) {
         if (cPref[band]) retval.setInitialRangeValues(cPref[band]);
         retval.setInitialColorTable(cPref.colorTableId);
     }
 
-    var zPref= PlotPref.getCacheZoomPref(pvCtx.preferenceZoomKey);
+    const zPref= PlotPref.getCacheZoomPref(pvCtx.preferenceZoomKey);
     if (zPref) {
         retval.setInitialZoomLevel(zPref.zooomLevel);
     }
 
-    //for(Map.Entry<String,String> entry : _reqMods.entrySet()) { //todo, I don't think I need this any more, use for deferred loading
-    //    retval.setParam(new Param(entry.getKey(), entry.getValue()));
-    //}
     return retval;
 
 }
@@ -250,9 +243,9 @@ export function modifyRequest(pvCtx, r, band) {
  * @param {object} result the result of the search
  */
 export function processPlotImageSuccessResponse(dispatcher, payload, result) {
-    var resultPayload;
-    var successAry= [];
-    var failAry= [];
+    let resultPayload;
+    let successAry= [];
+    let failAry= [];
 
      // the following line checks to see if we are processing the results from the right request
     if (payload.requestKey && result.requestKey && payload.requestKey!==result.requestKey) return;
@@ -267,7 +260,7 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
     }
 
 
-    const pvNewPlotInfoAry= successAry.map( (r) => handleSuccess(r.data.PlotCreate,payload, r.data.requestKey) );
+    const pvNewPlotInfoAry= successAry.map( (r) => handleSuccessfulCall(r.data.PlotCreate,payload, r.data.requestKey) );
     resultPayload= Object.assign({},payload, {pvNewPlotInfoAry});
     if (successAry.length) {
         dispatcher({type: ImagePlotCntlr.PLOT_IMAGE, payload: resultPayload});
@@ -280,6 +273,7 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
         else {
             matchAndActivateOverlayPlotViews(plotIdAry, payload.oldOverlayPlotViews);
         }
+
 
         pvNewPlotInfoAry
             .forEach((info) => info.plotAry
@@ -305,14 +299,6 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
     });
 
 }
-
-// function requestSuccesful(resultData, req) {
-//     if (!resultData.success) return false;
-//     if (!resultData.requestKey) return true;
-//     if (resultData.requestKey !== findRequest() )
-//
-//
-// }
 
 
 function addDrawLayers(request, plot ) {
@@ -345,9 +331,9 @@ function addDrawLayers(request, plot ) {
 
 
 
-function getRequest(payload) {
-    return payload.wpRequest || payload.redReq ||  payload.blueReq ||  payload.greenReq;
-}
+// function getRequest(payload) {
+//     return payload.wpRequest || payload.redReq ||  payload.blueReq ||  payload.greenReq;
+// }
 
  /**
  * @global
@@ -370,18 +356,18 @@ function getRequest(payload) {
  * @param requestKey
  * @return {NewPlotInfo}
  */
-const handleSuccess= function(plotCreate, payload, requestKey) {
+const handleSuccessfulCall= function(plotCreate, payload, requestKey) {
     const plotState= PlotState.makePlotStateWithJson(plotCreate[0].plotState);
     const plotId= plotState.getWebPlotRequest().getPlotId();
 
-    var plotAry= plotCreate.map((wpInit) => makePlot(wpInit,plotId, payload.attributes));
+    const plotAry= plotCreate.map((wpInit) => makePlot(wpInit,plotId, payload.attributes));
     if (plotAry.length) updateActiveTarget(plotAry[0]);
     return {plotId, requestKey, plotAry, overlayPlotViews:null};
 };
 
 function makePlot(wpInit,plotId, attributes) {
-    var plot= WebPlot.makeWebPlotData(plotId, wpInit);
-    var r= plot.plotState.getWebPlotRequest();
+    const plot= WebPlot.makeWebPlotData(plotId, wpInit);
+    const r= plot.plotState.getWebPlotRequest();
     plot.title= makePostPlotTitle(plot,r);
     if (r.isMinimalReadout()) plot.attributes[PlotAttribute.MINIMAL_READOUT]= true;
     if (r.getRelatedTableRow()>-1) plot.attributes[PlotAttribute.TABLE_ROW]= r.getRelatedTableRow();
@@ -396,28 +382,28 @@ function makePlot(wpInit,plotId, attributes) {
 function updateActiveTarget(plot) {
     if (!plot) return;
 
-    var req= plot.plotState.getWebPlotRequest();
+    const req= plot.plotState.getWebPlotRequest();
     if (!req) return;
 
-    var corners;
-    var activeTarget;
+    let corners;
+    let activeTarget;
 
 
     if (!getActiveTarget()) {
-        var circle = req.getRequestArea(); if (req.getOverlayPosition())     activeTarget= req.getOverlayPosition();
+        const circle = req.getRequestArea(); if (req.getOverlayPosition())     activeTarget= req.getOverlayPosition();
         else if (circle && circle.center) activeTarget= circle.center;
         else                              activeTarget= VisUtils.getCenterPtOfPlot(plot);
 
     }
 
     if (req.getSaveCorners()) {
-        var w= plot.dataWidth;
-        var h= plot.dataHeight;
-        var cc= CsysConverter.make(plot);
-        var pt1= cc.getWorldCoords(makeImagePt(0, 0));
-        var pt2= cc.getWorldCoords(makeImagePt(w, 0));
-        var pt3= cc.getWorldCoords(makeImagePt(w,h));
-        var pt4= cc.getWorldCoords(makeImagePt(0, h));
+        const w= plot.dataWidth;
+        const h= plot.dataHeight;
+        const cc= CsysConverter.make(plot);
+        const pt1= cc.getWorldCoords(makeImagePt(0, 0));
+        const pt2= cc.getWorldCoords(makeImagePt(w, 0));
+        const pt3= cc.getWorldCoords(makeImagePt(w,h));
+        const pt4= cc.getWorldCoords(makeImagePt(0, h));
         if (pt1 && pt2 && pt3 && pt4) {
             corners= [pt1,pt2,pt3,pt4];
         }

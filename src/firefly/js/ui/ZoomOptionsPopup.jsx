@@ -8,7 +8,7 @@ import {Operation} from '../visualize/PlotState.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import {getActivePlotView, primePlot} from '../visualize/PlotViewUtil.js';
-import {visRoot, dispatchZoom, ActionScope} from '../visualize/ImagePlotCntlr.js';
+import {visRoot, dispatchZoom} from '../visualize/ImagePlotCntlr.js';
 import {levels, UserZoomTypes, convertZoomToString} from '../visualize/ZoomUtil';
 import {ToolbarButton} from './ToolbarButton.jsx';
 

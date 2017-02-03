@@ -9,8 +9,8 @@ import {getActivePlotView,
     findPlotGroup,
     getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {findRelatedData} from '../RelatedDataUtil.js';
-import {dispatchRotate, dispatchFlip, dispatchRecenter,
-        dispatchRestoreDefaults,dispatchGroupLocking, ActionScope} from '../ImagePlotCntlr.js';
+import {dispatchRotateClient, dispatchFlip, dispatchRecenter,
+        dispatchRestoreDefaults,dispatchGroupLocking} from '../ImagePlotCntlr.js';
 import {RotateType} from '../PlotState.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
@@ -33,11 +33,8 @@ import { getDlAry } from '../DrawLayerCntlr.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
 import {showRegionFileUploadPanel} from '../region/RegionFileUploadView.jsx';
 import {MarkerDropDownView} from './MarkerDropDownView.jsx';
-import {dispatchShowDropDown} from '../../core/LayoutCntlr.js';
 import {showImageSelPanel} from './ImageSelectPanel.jsx';
-import {showMaskDialog} from './MaskAddPanel.jsx'
-import {isOverlayLayersActive} from '../RelatedDataUtil.js';
-import {showInfoPopup} from '../../ui/PopupUtil.jsx';
+import {showMaskDialog} from './MaskAddPanel.jsx';
 
 
 //===================================================
@@ -104,7 +101,7 @@ const tipStyle= {
  */
 export function VisToolbarViewWrapper({visRoot,toolTip,dlCount, messageUnder}) {
 
-    var rS= {
+    const rS= {
         width: 'calc(100% - 2px)',
         height: messageUnder ? VIS_TOOLBAR_V_HEIGHT : VIS_TOOLBAR_HEIGHT,
         display: 'inline-flex',
@@ -158,7 +155,7 @@ export class VisToolbarView extends Component {
 
     render() {
         const {visRoot,dlCount}= this.props;
-        var rS= {
+        const rS= {
             display: 'inline-block',
             position: 'relative',
             verticalAlign: 'top',
@@ -166,13 +163,13 @@ export class VisToolbarView extends Component {
         };
         const {apiToolsView}= visRoot;
 
-        var pv= getActivePlotView(visRoot);
-        var plot= primePlot(pv);
-        var plotGroupAry= visRoot.plotGroupAry;
+        const pv= getActivePlotView(visRoot);
+        const plot= primePlot(pv);
+        const plotGroupAry= visRoot.plotGroupAry;
 
-        var mi= pv ? pv.menuItemKeys : getDefMenuItemKeys();
+        const mi= pv ? pv.menuItemKeys : getDefMenuItemKeys();
 
-        var enabled= pv ? true : false;
+        const enabled= Boolean(pv);
 
         return (
             <div style={rS}>
@@ -356,18 +353,13 @@ VisToolbarView.propTypes= {
 
 function doRotateNorth(pv,rotate) {
     const rotateType= rotate?RotateType.NORTH:RotateType.UNROTATE;
-    dispatchRotate({plotId:pv.plotId, rotateType});
+    dispatchRotateClient({plotId:pv.plotId, rotateType});
 }
 
 function recenter(pv) { dispatchRecenter({plotId:pv.plotId}); }
 
 function flipY(pv) {
-    if (isOverlayLayersActive(pv)) {
-        showInfoPopup('Flip not yet supported with mask layers');
-    }
-    else {
         dispatchFlip({plotId:pv.plotId});
-    }
 }
 
 
@@ -377,13 +369,13 @@ function flipY(pv) {
 // }
 
 function isGroupLocked(pv,plotGroupAry){
-    var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
-    var lockEnabled = hasGroupLock(pv,plotGroup);
+    const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
+    const lockEnabled = hasGroupLock(pv,plotGroup);
     return lockEnabled;
 
 }
 function toggleLockRelated(pv,plotGroupAry){
-    var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
+    const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
     dispatchGroupLocking(pv.plotId,!hasGroupLock(pv,plotGroup));
 }
 

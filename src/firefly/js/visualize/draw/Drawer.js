@@ -3,7 +3,7 @@
  */
 
 
-import Point, {makeViewPortPt,makeImagePt,pointEquals} from '../Point.js';
+import Point, {makeScreenPt,makeImagePt,pointEquals} from '../Point.js';
 import * as AppDataCntlr from '../../core/AppDataCntlr.js';
 import BrowserInfo, {Browser} from '../../util/BrowserInfo.js';
 import DrawUtil from './DrawUtil.js';
@@ -11,7 +11,7 @@ import Color from '../../util/Color.js';
 import CsysConverter, {CCUtil} from '../CsysConverter.js';
 import {POINT_DATA_OBJ} from './PointDataObj.js';
 import DrawOp from './DrawOp.js';
-import {get} from 'lodash';
+import {get, isFunction} from 'lodash';
 
 
 const ENABLE_COLORMAP= false;
@@ -48,6 +48,7 @@ class Drawer {
         this.textUpdateCallback= null;
         //this.highPriorityLayer= false;
         this.drawerId= drawerCnt++;
+        this.deferredDrawingCompletedCB= null;
     }
 
 
@@ -97,15 +98,16 @@ class Drawer {
     /**
      *
      * @param {Array} data the list of DataObj
-     * @param selectedIndexes
-     * @param plot
-     * @param width
-     * @param height
-     * @param drawingDef
+     * @param {number[]} selectedIndexes
+     * @param {WebPlot} plot
+     * @param {number} width
+     * @param {number} height
+     * @param {DrawingDef} drawingDef
+     * @param {boolean} forceUpdate
      */
     setData(data,selectedIndexes,plot,width,height,drawingDef,forceUpdate= false) {
         if (data && !Array.isArray(data)) data= [data];
-        var cWidth, cHeight, oldvpX, oldvpY, vpX, vpY, dWidth, oldDWidth, dHeight;
+        var cWidth, cHeight, dWidth, oldDWidth, dHeight;
         var oldDHeight, zfact, oldZfact, oldTestPtStr, testPtStr, pt;
 
         width= Math.floor(width);
@@ -116,8 +118,6 @@ class Drawer {
         }
 
         if (plot) {
-            vpX= plot.viewPort.x;
-            vpY= plot.viewPort.y;
             dWidth= plot.dataWidth;
             dHeight= plot.dataHeight;
             zfact= Math.round(plot.zoomFactor*100000)/100000;
@@ -126,8 +126,6 @@ class Drawer {
         }
 
         if (this.plot) {
-            oldvpX= this.plot.viewPort.x;
-            oldvpY= this.plot.viewPort.y;
             oldDWidth= this.plot.dataWidth;
             oldDHeight= this.plot.dataHeight;
             oldZfact= Math.round(this.plot.zoomFactor*100000)/100000;
@@ -139,7 +137,6 @@ class Drawer {
 
         if (drawingDef===this.drawingDef &&
             cWidth===width && cHeight===height &&
-            oldvpX===vpX && oldvpY===vpY &&
             dWidth===oldDWidth && dHeight===oldDHeight  &&
             zfact===oldZfact  && testPtStr===oldTestPtStr ) {
             viewUpdated= false;
@@ -185,7 +182,6 @@ class Drawer {
         // if (dHeight!==oldDHeight ) changes.push(`data height: ${oldDHeight}, ${dHeight}`);
         // if (zfact!==oldZfact ) changes.push(`zoom factor ${oldZfact}, ${zfact}`);
         // if (testPtStr!==oldTestPtStr ) changes.push('test pt');
-        // if (oldvpX!==vpX ) changes.push(`vpX: ${oldvpX}, ${vpX}`);
         // if (oldvpY!==vpY ) changes.push(`vpY: ${oldvpY}, ${vpY}`);
         // if (drawingDef!==this.drawingDef ) changes.push('drawingDef');
         // var changeStr= join(', ',...changes);
@@ -197,7 +193,7 @@ class Drawer {
 
 
     setPrimCanvas(c, width, height) {
-        if (c && c!=this.primaryCanvas) {
+        if (c && c!==this.primaryCanvas) {
             this.primaryCanvas= c;
             //console.log(`Drawer ${this.drawerId}: redraw primary- canvas update`);
             this.dataUpdated(width,height);
@@ -205,7 +201,7 @@ class Drawer {
     }
 
     setHighlightCanvas(c, width, height) {
-        if (c && c!=this.highlightCanvas) {
+        if (c && c!==this.highlightCanvas) {
             this.highlightCanvas= c;
             //console.log(`Drawer ${this.drawerId}: redraw highlight- canvas update`);
             updateCanvasSize(width,height,c);
@@ -214,7 +210,7 @@ class Drawer {
     }
 
     setSelectCanvas(c, width, height) {
-        if (c && c!=this.selectCanvas) {
+        if (c && c!==this.selectCanvas) {
             this.selectCanvas= c;
             //console.log(`Drawer ${this.drawerId}: redraw select- canvas update`);
             updateCanvasSize(width,height,c);
@@ -334,8 +330,8 @@ class Drawer {
         if (!highlightData || !highlightData.length) return;
 
         if (canDraw(ctx,highlightData)) {
-            var vpPtM= makeViewPortPt(0,0);
-            highlightData.forEach( (pt) => drawObj(ctx, [], drawingDef, cc, pt, vpPtM, false) );
+            var sPtM= makeScreenPt(0,0);
+            highlightData.forEach( (pt) => drawObj(ctx, [], drawingDef, cc, pt, sPtM, false) );
         }
     }
 
@@ -351,7 +347,8 @@ class Drawer {
             this.drawTextAry= [];
             if (drawData.length>500) {
                 params= makeDrawingParams(canvas, this.drawTextAry, drawingDef,cc,drawData,
-                                         this.drawConnect, getMaxChunk(drawData,this.isPointData));
+                                         this.drawConnect, getMaxChunk(drawData,this.isPointData),
+                                         this.deferredDrawingCompletedCB);
                 this.cancelRedraw();
                 this.drawingCanceler= makeDrawingDeferred(this,params);
                 this.removeTask();
@@ -392,8 +389,8 @@ class Drawer {
         if (!decimate || inData.length<=150) return inData;
 
         var retData= inData;
-        var dim = cc.viewPort.dim;
-        var spt= cc.getScreenCoords(makeViewPortPt(0,0));
+        var dim = cc.viewDim;
+        var spt= cc.getScreenCoords(makeScreenPt(0,0));
         var defCol= this.drawingDef.color;
         if (!oldDecimatedData ||
             dim.width!==this.decimateDim.width ||
@@ -445,9 +442,7 @@ class Drawer {
             if (params.drawConnect) {
                 params.drawConnect.endDrawing();
             }
-//            if (useBuffer) {
-//                ((AdvancedGraphics)params._graphics).copyAsImage((AdvancedGraphics)params.drawBuffer);
-//            }
+            if (params.deferCnt && isFunction(params.deferredDrawingCompletedCB)) params.deferredDrawingCompletedCB();
         }
 
     }
@@ -497,7 +492,7 @@ function nextPt(i,fuzzLevel, max) {
     return retval;
 }
 
-/***
+/**
  *
  * @param canvas
  * @param drawTextAry
@@ -506,9 +501,10 @@ function nextPt(i,fuzzLevel, max) {
  * @param data
  * @param drawConnect
  * @param maxChunk
- * @return {{canvas: *, ctx: (CanvasRenderingContext2D|*), drawTextAry: *, drawingDef: *, csysConv: *, data: *, maxChunk: *, drawConnect: *, iterator: *, startTime: number, opCnt: number, done: boolean, begin: boolean, deferCnt: number, vpPtM}}
+ * @param {Function} deferredDrawingCompletedCB - called when drawing has completed
+ * @return {Object}
  */
-function makeDrawingParams(canvas, drawTextAry, drawingDef, csysConv, data, drawConnect, maxChunk) {
+function makeDrawingParams(canvas, drawTextAry, drawingDef, csysConv, data, drawConnect, maxChunk, deferredDrawingCompletedCB) {
     var params= {
         canvas,    //const
         ctx : canvas.getContext('2d'),    //const
@@ -524,7 +520,8 @@ function makeDrawingParams(canvas, drawTextAry, drawingDef, csysConv, data, draw
         done : false,
         begin : true,
         deferCnt: 0,
-        vpPtM : makeViewPortPt(0,0) //const
+        vpPtM : makeScreenPt(0,0), //const
+        deferredDrawingCompletedCB //const
     };
     params.next= params.iterator.next();
     return params;
@@ -533,18 +530,18 @@ function makeDrawingParams(canvas, drawTextAry, drawingDef, csysConv, data, draw
 /**
  *
  * @param {{x:number,y:number,type:string}} pt
- * @param {{x:number,y:number,type:string}}mVpPt
+ * @param {{x:number,y:number,type:string}}mSpPt
  * @param {CysConverter} cc
  * @return {*}
  */
-function getViewPortCoords(pt, mVpPt, cc) {
+function getScreenCoords(pt, mSpPt, cc) {
     var retval;
     if (pt.type===Point.W_PT) {
-        var success= cc.getViewPortCoordsOptimize(pt,mVpPt);
-        retval= success ? mVpPt : null;
+        var success= cc.getScreenCoordsOptimize(pt,mSpPt);
+        retval= success ? mSpPt : null;
     }
     else {
-        retval= cc.getViewPortCoords(pt);
+        retval= cc.getScreenCoords(pt);
     }
     return retval;
 }
@@ -580,15 +577,15 @@ function drawObj(ctx, drawTextAry, def, csysConv, obj, vpPtM, onlyAddToPath) {
  * An optimization of drawing.  Check is the Object is a PointDataObj (most common and simple) and then checks
  * it is draw on a WebPlot, and if it is in the drawing area.
  * Otherwise it will always return true
+ * @param {CysConverter} csysConv the WebPlot to draw on
  * @param obj the DrawingObj to check
- * @param csysConv the WebPlot to draw on
  * @return {boolean} true is it should be drawn
  */
 function shouldDrawObj(csysConv, obj) {
     if (!obj) return false;
-    var retval= true;
+    let retval= true;
     if (csysConv && obj.pt && obj.type===POINT_DATA_OBJ) {
-        if (obj.pt.type === Point.W_PT) retval= csysConv.pointInViewPort(obj.pt);
+        retval= csysConv.pointOnDisplay(obj.pt);
     }
     return retval;
 }
@@ -742,7 +739,7 @@ function setupColorMap(data, maxEntry) {
 
 function doDecimation(inData, cc, useColormap) {
     var i,j;
-    var dim = cc.viewPort.dim;
+    var dim = cc.viewDim;
 
     var supportCmap= useColormap && ENABLE_COLORMAP;
 
@@ -757,8 +754,8 @@ function doDecimation(inData, cc, useColormap) {
     var decimateObs= new Array(width);
     for(i=0; (i<decimateObs.length);i++) decimateObs[i]= new Array(height);
 
-    var seedPt= makeViewPortPt(0,0);
-    var vpPt;
+    var seedPt= makeScreenPt(0,0);
+    var sPt;
     var pt;
     var maxEntry= -1;
     var entryCnt;
@@ -774,20 +771,20 @@ function doDecimation(inData, cc, useColormap) {
     for(var obj of inData) {
         if (obj) {
             pt= DrawOp.getCenterPt(obj);
-            if (pt.type==Point.W_PT) {
-                vpPt= cc.pointInPlotRoughGuess(pt) ? getViewPortCoords(pt,seedPt,cc) : null;
+            if (pt.type===Point.W_PT) {
+                sPt= cc.pointInPlotRoughGuess(pt) ? getScreenCoords(pt,seedPt,cc) : null;
             }
             else {
-                vpPt= getViewPortCoords(pt,seedPt,cc);
+                sPt= getScreenCoords(pt,seedPt,cc);
             }
 
         }
         else {
-            vpPt= null;
+            sPt= null;
         }
-        if (vpPt) {
-            i= nextPt(vpPt.x,fuzzLevel,width);
-            j= nextPt(vpPt.y, fuzzLevel,height);
+        if (sPt) {
+            i= nextPt(sPt.x,fuzzLevel,width);
+            j= nextPt(sPt.y, fuzzLevel,height);
             if (i>=0 && j>=0 && i<width && j<height) {
                 if (!decimateObs[i][j]) {
                     decimateObs[i][j]= supportCmap ? Object.assign({},obj) : obj;

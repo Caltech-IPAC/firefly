@@ -35,11 +35,7 @@ import {plotImageMaskActionCreator,
         plotImageMaskLazyActionCreator,
         overlayPlotChangeAttributeActionCreator} from './task/ImageOverlayTask.js';
 
-import {colorChangeActionCreator,
-        stretchChangeActionCreator,
-        flipActionCreator,
-        cropActionCreator,
-        rotateActionCreator} from './task/PlotChangeTask.js';
+import {colorChangeActionCreator, stretchChangeActionCreator, cropActionCreator} from './task/PlotChangeTask.js';
 
 import {wcsMatchActionCreator} from './task/WcsMatchTask.js';
 
@@ -99,12 +95,14 @@ const ROTATE_START= `${PLOTS_PREFIX}.RotateChangeStart`;
 const ROTATE= `${PLOTS_PREFIX}.RotateChange`;
 const ROTATE_FAIL= `${PLOTS_PREFIX}.RotateChangeFail`;
 
+const ROTATE_CLIENT= `${PLOTS_PREFIX}.RotateClient`;
 
 /** Action Type: server image flipped call started */
 const FLIP_START= `${PLOTS_PREFIX}.FlipStart`;
 /** Action Type: image flipped */
 const FLIP= `${PLOTS_PREFIX}.Flip`;
 const FLIP_FAIL= `${PLOTS_PREFIX}.FlipFail`;
+const FLIP_CLIENT= `${PLOTS_PREFIX}.FlipClient`;
 
 
 const CROP_START= `${PLOTS_PREFIX}.CropStart`;
@@ -240,8 +238,8 @@ function actionCreators() {
         [ZOOM_IMAGE]: zoomActionCreator,
         [COLOR_CHANGE]: colorChangeActionCreator,
         [STRETCH_CHANGE]: stretchChangeActionCreator,
-        [ROTATE]: rotateActionCreator,
-        [FLIP]: flipActionCreator,
+        // [ROTATE]: rotateActionCreator,
+        // [FLIP]: flipActionCreator,
         [CROP]: cropActionCreator,
         [CHANGE_PRIME_PLOT] : changePrimeActionCreator,
         [CHANGE_POINT_SELECTION]: changePointSelectionActionCreator,
@@ -258,8 +256,8 @@ export default {
     ANY_REPLOT,
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,ZOOM_LOCKING,
-    ROTATE_START, ROTATE, ROTATE_FAIL,
-    FLIP_START, FLIP, FLIP_FAIL,
+    ROTATE_START, ROTATE, ROTATE_FAIL, ROTATE_CLIENT,
+    FLIP_START, FLIP, FLIP_FAIL, FLIP_CLIENT,
     CROP_START, CROP, CROP_FAIL,
     COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL,
@@ -278,7 +276,7 @@ export default {
 //============ EXPORTS ===========
 
 const KEY_ROOT= 'progress-';
-var  keyCnt= 0;
+let  keyCnt= 0;
 export function makeUniqueRequestKey(prefix= KEY_ROOT) {
     const requestKey= `${prefix}-${keyCnt}-${Date.now()}`;
     keyCnt++;
@@ -426,14 +424,38 @@ export function dispatchWcsMatch({plotId, matchType, dispatcher= flux.process} )
  * @function dispatchRotate
  * @memberof firefly.action
  */
-export function dispatchRotate({plotId, rotateType, angle=-1, newZoomLevel=0,
-                                keepWcsLock= false,
-                                actionScope=ActionScope.GROUP,
-                                onlyRotateBase= false,
-                                dispatcher= flux.process} ) {
-    dispatcher({ type: ROTATE,
-        payload: { plotId, angle, rotateType, actionScope, newZoomLevel, onlyRotateBase, keepWcsLock}});
+// export function dispatchRotate({plotId, rotateType, angle=-1, newZoomLevel=0,
+//                                 keepWcsLock= false,
+//                                 actionScope=ActionScope.GROUP,
+//                                 onlyRotateBase= false,
+//                                 dispatcher= flux.process} ) {
+//     dispatcher({ type: ROTATE,
+//         payload: { plotId, angle, rotateType, actionScope, newZoomLevel, onlyRotateBase, keepWcsLock}});
+// }
+
+
+/**
+ * Rotate image, do it client side
+ *
+ * Note - function parameter is a single object
+ * @param {Object}  p
+ * @param {string} p.plotId
+ * @param {Enum} p.rotateType enum RotateType
+ * @param {number} p.angle
+ * @param {ActionScope} p.actionScope enum ActionScope
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ *
+ * @public
+ * @function dispatchRotate
+ * @memberof firefly.action
+ */
+export function dispatchRotateClient({plotId, rotateType, angle=-1,
+                                      actionScope=ActionScope.GROUP, dispatcher= flux.process} ) {
+    dispatcher({ type: ROTATE_CLIENT,
+        payload: { plotId, angle, rotateType, actionScope}});
 }
+
+
 
 
 /**
@@ -443,14 +465,15 @@ export function dispatchRotate({plotId, rotateType, angle=-1, newZoomLevel=0,
  * @param {Object}  p
  * @param {string} p.plotId
  * @param {boolean} p.isY
+ * @param {ActionScope} p.actionScope enum ActionScope
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  *
  * @public
  * @function dispatchFlip
  * @memberof firefly.action
  */
-export function dispatchFlip({plotId, isY=true, dispatcher= flux.process}) {
-    dispatcher({ type: FLIP, payload: { plotId, isY}});
+export function dispatchFlip({plotId, isY=true, actionScope=ActionScope.GROUP, dispatcher= flux.process}) {
+    dispatcher({ type: FLIP_CLIENT, payload: { plotId, isY, actionScope}});
 }
 
 /**
@@ -754,7 +777,7 @@ export function dispatchChangePointSelection(requester, enabled) {
  */
 export function dispatchChangeExpandedMode(expandedMode) {
 
-    var vr= visRoot();
+    const vr= visRoot();
 
     if (!isExpanded(vr.expandedMode) && isExpanded(expandedMode)) { // if going from collapsed to expanded
         const plotId= vr.activePlotId;
@@ -848,8 +871,8 @@ function restoreDefaultsActionCreator(rawAction) {
         const vr= getState()[IMAGE_PLOT_KEY];
         const {plotId}= rawAction.payload;
         const {plotGroupAry,plotViewAry}= vr;
-        var pv= getPlotViewById(vr,plotId);
-        var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
+        const pv= getPlotViewById(vr,plotId);
+        const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
         applyToOnePvOrGroup( plotViewAry, plotId, plotGroup,
             (pv)=> {
                 if (vr.plotRequestDefaults[pv.plotId]) {
@@ -873,12 +896,12 @@ function restoreDefaultsActionCreator(rawAction) {
 
 function autoPlayActionCreator(rawAction) {
     return (dispatcher) => {
-        var {autoPlayOn}= rawAction.payload;
+        const {autoPlayOn}= rawAction.payload;
         if (autoPlayOn) {
             if (!visRoot().singleAutoPlay) {
                 dispatcher(rawAction);
-                var id= window.setInterval( () => {
-                    var {singleAutoPlay,activePlotId}= visRoot();
+                const id= window.setInterval( () => {
+                    const {singleAutoPlay,activePlotId}= visRoot();
                     if (singleAutoPlay) {
 
                         const plotIdAry= getExpandedViewerItemIds(getMultiViewRoot());
@@ -914,7 +937,7 @@ const detachAll= (plotViewAry,dl) => plotViewAry.forEach( (pv) => {
 
 function changePointSelectionActionCreator(rawAction) {
     return (dispatcher,getState) => {
-        var store= getState();
+        let store= getState();
 
         const {plotViewAry}= store[IMAGE_PLOT_KEY];
         const typeId= PointSelection.TYPE_ID;
@@ -923,7 +946,7 @@ function changePointSelectionActionCreator(rawAction) {
 
         store= getState();
         const enabled= get(rawAction.payload, 'enabled') || store[IMAGE_PLOT_KEY].pointSelEnableAry.length;
-        var dl= getDrawLayerByType(store[DRAWING_LAYER_KEY], typeId);
+        let dl= getDrawLayerByType(store[DRAWING_LAYER_KEY], typeId);
         if (store[IMAGE_PLOT_KEY].pointSelEnableAry.length && enabled) {
             if (!dl) {
                 dispatchCreateDrawLayer(typeId);
@@ -954,14 +977,14 @@ function reducer(state=initState(), action={}) {
 
     if (!action.payload || !action.type) return state;
 
-    var retState= state;
+    let retState= state;
     switch (action.type) {
         case PLOT_IMAGE_START  :
         case PLOT_IMAGE_FAIL  :
         case PLOT_IMAGE  :
-        case ROTATE_START:
-        case ROTATE_FAIL:
-        case ROTATE:
+        // case ROTATE_START:
+        // case ROTATE_FAIL:
+        // case ROTATE:
         case FLIP_START:
         case FLIP_FAIL:
         case FLIP:
@@ -986,6 +1009,8 @@ function reducer(state=initState(), action={}) {
         case COLOR_CHANGE  :
         case COLOR_CHANGE_START  :
         case COLOR_CHANGE_FAIL  :
+        case ROTATE_CLIENT:
+        case FLIP_CLIENT:
         case STRETCH_CHANGE_START  :
         case STRETCH_CHANGE  :
         case STRETCH_CHANGE_FAIL:
@@ -1057,8 +1082,8 @@ function validateState(state,originalState,action) {
 
 
 function changePointSelection(state,action) {
-    var {requester,enabled}= action.payload;
-    var {pointSelEnableAry}= state;
+    const {requester,enabled}= action.payload;
+    const {pointSelEnableAry}= state;
     if (enabled) {
         if (pointSelEnableAry.includes(requester)) return state;
         return clone(state,{pointSelEnableAry: [...pointSelEnableAry,requester]});
@@ -1071,10 +1096,10 @@ function changePointSelection(state,action) {
 
 function changeMouseReadout(state, action) {
 
-    var fieldKey=action.payload.readoutType;
-    var payload = action.payload;
-    var newRadioValue = payload.newRadioValue;
-    var oldRadioValue = state[fieldKey];
+    const fieldKey=action.payload.readoutType;
+    const payload = action.payload;
+    const newRadioValue = payload.newRadioValue;
+    const oldRadioValue = state[fieldKey];
     if (newRadioValue ===oldRadioValue) return state;
     return Object.assign({}, state, {[fieldKey]:newRadioValue});
 
@@ -1095,7 +1120,7 @@ const isExpanded = (expandedMode) => expandedMode===true ||
                                      expandedMode===ExpandType.SINGLE;
 
 function changeExpandedMode(state,action) {
-    var {expandedMode}= action.payload;
+    let {expandedMode}= action.payload;
 
     if (expandedMode===true) expandedMode= state.previousExpandedMode;
     else if (!expandedMode) expandedMode= ExpandType.COLLAPSE;

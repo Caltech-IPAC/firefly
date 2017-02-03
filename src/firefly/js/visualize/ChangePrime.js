@@ -3,13 +3,10 @@
  */
 
 import {take} from 'redux-saga/effects';
-import {isNil} from 'lodash';
-import ImagePlotCntlr, {IMAGE_PLOT_KEY, dispatchZoom, dispatchRotate,
-       dispatchProcessScroll,ActionScope} from './ImagePlotCntlr.js';
+import ImagePlotCntlr, {IMAGE_PLOT_KEY, dispatchZoom, dispatchProcessScroll} from './ImagePlotCntlr.js';
 import {getPlotViewById, primePlot} from './PlotViewUtil.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {UserZoomTypes, getZoomLevelForScale} from './ZoomUtil.js';
-import {RotateType} from './PlotState.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeScreenPt} from './Point.js';
 
@@ -66,35 +63,14 @@ export function changePrime(rawAction, dispatcher, getState) {
 
     dispatcher(rawAction);
 
+    checkZoom(plotId,oldP, newP, scrollToImagePt,visRoot);
 
-    const doRotate= checkRotation(plotId,oldP,newP);
-    if (doRotate) {
-        dispatchAddSaga(zoomRotateSega,{plotId,oldP,newP, scrollToImagePt});
-        doRotate();
-    }
-    else {
-        checkZoom(plotId,oldP, newP, scrollToImagePt,visRoot);
-    }
 }
 
-
-
-
-function* zoomRotateSega({plotId,oldP,newP, scrollToImagePt}, dispatch,getState) {
-    while(true) {
-        var action= yield take([ImagePlotCntlr.ROTATE]);
-        const visRoot= getState()[IMAGE_PLOT_KEY];
-        const {plotId:testPlotId}= action.payload.pvNewPlotInfoAry[0];
-        if (testPlotId===plotId) {
-            checkZoom(plotId,oldP,newP, scrollToImagePt,visRoot);
-            return;
-        }
-    }
-}
 
 function* zoomCompleteSega({plotId,scrollToImagePt},dispatch,getState) {
     while(true) {
-        var action= yield take([ImagePlotCntlr.ZOOM_IMAGE]);
+        const action= yield take([ImagePlotCntlr.ZOOM_IMAGE]);
         const {plotId:testPlotId}= action.payload;
         if (testPlotId===plotId) {
             const visRoot= getState()[IMAGE_PLOT_KEY];
@@ -139,39 +115,3 @@ function checkZoom(plotId, oldP, newP, scrollToImagePt, visRoot) {
         changeScrollToImagePt(visRoot,plotId,scrollToImagePt);
     }
 }
-
-
-
-function checkRotation(plotId,oldP,newP) {
-
-    const oldRotType= oldP.plotState.getRotateType();
-    const newRotType= newP.plotState.getRotateType();
-    const oldAngle= oldP.plotState.getRotationAngle();
-    const newAngle= newP.plotState.getRotationAngle();
-    const differentAngles= Math.floor(oldAngle)!==Math.floor(newAngle);
-
-    if (oldRotType===RotateType.NORTH && newRotType!==RotateType.NORTH) {
-        return () => dispatchRotate({plotId,
-                                     rotateType:RotateType.NORTH,  
-                                     actionScope:ActionScope.SINGLE
-                                    });
-    }
-
-    if (oldRotType===RotateType.ANGLE && (differentAngles || isNil(newAngle))) {
-        return () => dispatchRotate({plotId,
-                                     rotateType:RotateType.ANGLE, 
-                                     angle:oldAngle, 
-                                     actionScope:ActionScope.SINGLE
-                                     });
-    }
-
-    if (oldRotType===RotateType.UNROTATE && newRotType!==RotateType.UNROTATE) {
-        return () => dispatchRotate({plotId,
-                                     rotateType:RotateType.UNROTATE, 
-                                     actionScope:ActionScope.SINGLE
-                                    });
-    }
-    return false;
-}
-
-

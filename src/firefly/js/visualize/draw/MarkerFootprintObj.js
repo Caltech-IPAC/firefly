@@ -3,7 +3,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import Point, {makeImagePt, makeScreenPt, makeViewPortPt, makeWorldPt, SimplePt} from '../Point.js';
+import Point, {makeImagePt, makeScreenPt, makeDevicePt, makeWorldPt, SimplePt} from '../Point.js';
 import {CoordinateSys} from '../CoordSys.js';
 import ShapeDataObj, {lengthToImagePixel, lengthToScreenPixel,
        lengthToArcsec, makePoint, drawText, makeTextLocationComposite} from './ShapeDataObj.js';
@@ -15,7 +15,6 @@ import {TextLocation, Style, DEFAULT_FONT_SIZE} from './DrawingDef.js';
 import {FootprintFactory} from './FootprintFactory.js';
 import {convertAngle} from '../VisUtil.js';
 import DrawObj from './DrawObj.js';
-import DrawUtil from './DrawUtil.js';
 import DrawOp from './DrawOp.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {clone} from '../../util/WebUtil.js';
@@ -433,8 +432,6 @@ function getRectCorners(pt, width, height, unitType, cc, outUnit = Point.W_PT) {
             return getWorldOrImage(rImgPt, cc);
         } else if (outUnit ===  Point.SPT ) {
             return cc.getScreenCoords(rImgPt);
-        } else if (outUnit === Point.VP_PT) {
-            return cc.getViewPortCoords(rImgPt);
         } else {
             return rImgPt;
         }
@@ -526,7 +523,7 @@ var rectCornerInView = (drawObj, cc) => {
     return corners.reduce( (prev, corner) =>
     {
         var rCorner = simpleRotateAroundPt(cc.getImageCoords(corner), cc.getImageCoords(pts[0]), -rotAngle, Point.IM_PT);
-        if (cc.pointInViewPort(rCorner)) {
+        if (cc.pointOnDisplay(rCorner)) {
             prev++;
         }
         return prev;
@@ -590,7 +587,7 @@ function remakeOutlineBox(drawObj, cc, checkOutline = AllOutline) {
     }
     // try plotcenter outlinebox
     if (checkOutline.includes(OutlineType.plotcenter)) {
-        var vCenter = makeViewPortPt(cc.viewPort.dim.width / 2, cc.viewPort.dim.height / 2);
+        var vCenter = makeDevicePt(cc.viewDim.width / 2, cc.viewDim.height / 2);
 
         tryOutline = createOutlineBox(vCenter, CENTER_BOX, CENTER_BOX, ShapeDataObj.UnitType.PIXEL, cc, angle);
         if (tryOutline) {
@@ -711,7 +708,7 @@ function createOutlineBoxAllSteps(fpCenter, outlineCenter, width, height, unitTy
         if (outlineBox) {
             outlineBox.outlineType = OutlineType.center;
         } else if (!stopAt || stopAt !== OutlineType.plotcenter) {
-            var vCenter = makeViewPortPt(cc.viewPort.dim.width / 2, cc.viewPort.dim.height / 2);
+            var vCenter = makeDevicePt(cc.viewDim.width / 2, cc.viewDim.height / 2);
 
             outlineBox = createOutlineBox(vCenter, CENTER_BOX, CENTER_BOX, ShapeDataObj.UnitType.PIXEL, cc, angle);
             outlineBox.outlineType = OutlineType.plotcenter;
@@ -759,16 +756,16 @@ function createResizeHandle(outlineBox, cc, rotAngle) {
 function createRotateHandle(outlineBox, cc, rotAngle) {
     const handleCenter = [[0, -0.5], [0.5, 0], [0, 0.5], [-0.5, 0]];  // handle center relative to the end of handle bar
     const handleAngle = [Math.PI * 3/2, 0, Math.PI*0.5, Math.PI];
-    const [x1, x2, y1, y2] = [cc.viewPort.x, cc.viewPort.dim.width, cc.viewPort.y, cc.viewPort.dim.height];
+    const [x1, x2, y1, y2] = [0, cc.screenSize.width, 0, cc.screenSize.height];
 
     var rotateObj = null;
     var corners =  getRectCorners(outlineBox.pts[0], outlineBox.width, outlineBox.height, outlineBox.unitType, cc);
     var side = 4;
-    var originVp = cc.getViewPortCoords(outlineBox.pts[0]);
+    var originVp = cc.getScreenCoords(outlineBox.pts[0]);
     var vpCorners = corners.map((c) => {
-        return simpleRotateAroundPt(cc.getViewPortCoords(c), originVp, rotAngle, Point.VP_PT);
+        return simpleRotateAroundPt(cc.getScreenCoords(c), originVp, rotAngle, Point.SPT);
     });
-    var vpInView = vpCorners.map( (v) => cc.pointInViewPort(v) );
+    var vpInView = vpCorners.map( (v) => cc.pointOnDisplay(v) );
 
     var startIdx = has(outlineBox, 'rotateSide') ? outlineBox.rotateSide : 1;
     var endIdx = startIdx + side - 1;
@@ -804,19 +801,19 @@ function createRotateHandle(outlineBox, cc, rotAngle) {
         });
 
         // bottom center of the hanle
-        var hBottom = makeViewPortPt((ends[0].x + ends[1].x)/2, (ends[0].y + ends[1].y)/2);
+        var hBottom = makeScreenPt((ends[0].x + ends[1].x)/2, (ends[0].y + ends[1].y)/2);
         // center of the handle, rotate first if there is
-        var hCenter = makeViewPortPt((ends[0].x + ends[1].x)/2 + handleCenter[i][0] * ROTATE_BOX,
+        var hCenter = makeScreenPt((ends[0].x + ends[1].x)/2 + handleCenter[i][0] * ROTATE_BOX,
                                      (ends[0].y + ends[1].y)/2 + handleCenter[i][1] * ROTATE_BOX);
         if (rotAngle !== 0) {
-            hCenter = simpleRotateAroundPt(hCenter, hBottom, rotAngle, Point.VP_PT);
+            hCenter = simpleRotateAroundPt(hCenter, hBottom, rotAngle, Point.DEV_PT);
         }
         // test if all cornres of the handle after rotation are seen
         var hNotInView = cornerScreen.find ( (c) => {
-            var vp = makeViewPortPt(hCenter.x + c[0] * ROTATE_BOX * 0.5, hCenter.y + c[1] * ROTATE_BOX * 0.5);
-            var rVp = simpleRotateAroundPt(vp, hCenter, rotAngle, Point.VP_PT);
+            var vp = makeScreenPt(hCenter.x + c[0] * ROTATE_BOX * 0.5, hCenter.y + c[1] * ROTATE_BOX * 0.5);
+            var rVp = simpleRotateAroundPt(vp, hCenter, rotAngle, Point.SPT);
 
-            return !(cc.pointInViewPort(rVp));
+            return !(cc.pointOnDisplay(rVp));
         });
 
         if (hNotInView) continue; // corners of handle are not seen
@@ -857,7 +854,7 @@ function createOutlineBox(centerPt, width, height, unitType, cc, angle = 0.0) {
                       simpleRotateAroundPt(cc.getImageCoords(corner), cc.getImageCoords(centerPt), -angle, Point.IM_PT) :
                       corner;
 
-        if (cc.pointInViewPort(rCorner)) {
+        if (cc.pointOnDisplay(rCorner)) {
             prev++;
         }
         return prev;

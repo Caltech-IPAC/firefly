@@ -197,13 +197,13 @@ function drawPt(ctx, drawTextAry, pt, plot, drawObj, drawParams, renderOptions, 
     else {
         var vpPt;
         if (vpPtM && pt.type===Point.W_PT) {
-            var success= plot.getViewPortCoordsOptimize(pt,vpPtM);
+            var success= plot.getScreenCoordsOptimize(pt,vpPtM);
             vpPt= success ? vpPtM : null;
         }
         else {
-            vpPt=plot.getViewPortCoords(pt);
+            vpPt=plot.getScreenCoords(pt);
         }
-        if (plot.pointInViewPort(vpPt)) {
+        if (plot.pointOnDisplay(vpPt)) {
             drawXY(ctx,drawTextAry, vpPt, plot, drawObj, drawParams, renderOptions, onlyAddToPath);
         }
     }
@@ -300,29 +300,32 @@ function makeTextLocationPoint(drawObj, plot, textLoc, fontSize) {
 
 
 function drawXY(ctx, drawTextAry, pt, plot, drawObj, drawParams,renderOptions, onlyAddToPath) {
-    var {color, textLoc, fontName, fontSize, fontWeight, fontStyle}= drawParams;
-    var {text, textOffset} = drawObj;
+    const {textLoc, fontName, fontSize, fontWeight, fontStyle}= drawParams;
+    let {color}= drawParams;
+    const {text, textOffset} = drawObj;
 
+    const devicePt= plot.getDeviceCoords(pt);
 
-    drawSymbolOnPlot(ctx, pt.x, pt.y, drawParams,renderOptions, onlyAddToPath);
+    drawSymbolOnPlot(ctx, devicePt.x, devicePt.y, drawParams,renderOptions, onlyAddToPath);
     if (!text)  return;
 
     if (isNil(color)) {
         color = 'black';
     }
 
-    var vpt;
+    let vpt;
 
     if (textLoc) {
-        vpt = plot.getViewPortCoords(makeTextLocationPoint(drawObj, plot, textLoc, fontSize));
+        vpt = plot.getDeviceCoords(makeTextLocationPoint(drawObj, plot, textLoc, fontSize));
     } else {
-        vpt = plot.getViewPortCoords(pt);
+        vpt = plot.getDeviceCoords(pt);
     }
     if (textOffset && (textOffset.x !== 0.0 || textOffset.y !== 0.0)) {
         drawText(drawObj, drawTextAry, plot, vpt, drawParams);
     } else {
         drawObj.textWorldLoc = plot.getImageCoords(vpt);
-        DrawUtil.drawText(drawTextAry, text, vpt.x, vpt.y, color, renderOptions,
+        const textDevicePt= plot.getDeviceCoords(vpt);
+        DrawUtil.drawText(drawTextAry, text, textDevicePt.x, textDevicePt.y, color, renderOptions,
                           fontName, fontSize, fontWeight, fontStyle);
     }
  }
