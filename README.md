@@ -59,6 +59,7 @@ There are several branches the this repository.  Here are the ones that you shou
 
 #### Prepare before the build
  - Make sure you have  `<GRADLE>/bin`, `<JAVA>/bin`, and `<NODE>/bin` in your PATH.
+ - Install yarn via npm:  npm install yarn -g
 
 
 #### How to build Firefly:

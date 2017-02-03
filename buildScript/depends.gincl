@@ -118,7 +118,7 @@ task buildClient (dependsOn: loadConfig) {
       println ">> webpack.config.js not found.  Skipping buildClient."
       throw new StopExecutionException("webpack.config.js not found.  Skipping buildClient.")
     }
-    def res = project.ext.NODE 'npm', 'run', 'build'
+    def res = project.ext.NODE 'yarn', 'run', 'build'
     if (res.getExitValue() != 0) {
       throw new GradleException("Fail to build Client")
     }
@@ -157,17 +157,17 @@ ext.NODE = { ...cmd ->
   def tag = "v" + getVersionTag() + ' Built On:' + build_time;
 
   try {
-    def process = "npm version".execute()
+    def process = "yarn version".execute()
   } catch (Exception e) {
-    println ">> Task failed due to missing npm package manager which comes bundled with node.js"
-    throw new GradleException("Task failed due to missing npm package manager which comes bundled with node.js", e)
+    println ">> Task failed due to missing yarn package manager which comes bundled with node.js"
+    throw new GradleException("Task failed due to missing yarn package manager which comes bundled with node.js", e)
   }
 
   if (file("${rootDir}/package.json").exists()) {
     exec {
       workingDir = rootDir
-      executable "npm"
-      args "install"
+      executable "yarn"
+      args "install", "--frozen-lockfile"
     }
   }
 

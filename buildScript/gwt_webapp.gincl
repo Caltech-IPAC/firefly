@@ -33,7 +33,7 @@ configurations {
 task jsTest (dependsOn: [loadConfig]) << {
   if (file("package.json").exists()) {
     println ">> running JavaScript test..."
-    def res = project.ext.NODE 'npm', 'run', 'test-unit'
+    def res = project.ext.NODE 'yarn', 'run', 'test-unit'
     if (res.getExitValue() != 0) {
       throw new GradleException("JavaScript test fail.")
     }
