@@ -18,7 +18,7 @@ import Validate from '../../util/Validate.js';
 import {dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import FieldGroupCntlr, {dispatchValueChange, dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
-import {getTblById, getActiveTableId} from '../../tables/TableUtil.js';
+import {getTblById, getActiveTableId, getColumnIdx} from '../../tables/TableUtil.js';
 import {LC, updateLayoutDisplay, getValidValueFrom} from './LcManager.js';
 import {uploadPhaseTable, doPFCalculate, getPhase} from './LcPhaseTable.js';
 import {LcPeriodogram, startPeriodogramPopup, cancelPeriodogram, popupId} from './LcPeriodogram.jsx';
@@ -27,13 +27,14 @@ import {isDialogVisible} from '../../core/ComponentCntlr.js';
 import {updateSet} from '../../util/WebUtil.js';
 import ReactHighcharts from 'react-highcharts';
 import Resizable from 'react-component-resizable';
+import './LCPanels.css';
 
 const pfinderkey = LC.FG_PERIOD_FINDER;
 const labelWidth = 100;
-const highlightBorder = '1px solid #a3aeb9';
 const validTimeSuggestions = ['mjd'];      // suggestive time column name
 const validFluxSuggestions = ['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'];
 
+export const highlightBorder = '1px solid #a3aeb9';
 export function getTypeData(key, val='', tip = '', labelV='', labelW) {
     return {
         fieldKey: key,
@@ -47,7 +48,7 @@ export function getTypeData(key, val='', tip = '', labelV='', labelW) {
 export var isBetween = (a, b, c) => (c >= a && c <= b);
 
 const PanelResizableStyle = {
-    width: 520,
+    width: 550,
     minWidth: 400,
     minHeight: 300,
     marginLeft: 15,
@@ -70,7 +71,7 @@ const STEP = 1;            // step for slider
 const Margin = 0.2;        // phase margin reserved at two ends of the phase charts x axis
 const DEC_PHASE = 3;       // decimal digit
 
-// defValues used to keep the initial values for phase finding parameters
+// defValues used to keep the initial values for parameters in phase finding field group
 // time: time column
 // flux: flux column
 // tz:   zero time
@@ -257,7 +258,7 @@ const PeriodStandardView = (props) => {
                                 reducerFunc={LcPFReducer(initState)}  keepState={true}>
                     <SplitPane split='horizontal' minSize={100} defaultSize={'90%'}>
                         <SplitPane split='horizontal' minSize={100} defaultSize={'50%'}>
-                            <SplitPane split='vertical' minSize={20} defaultSize={PanelResizableStyle.width}>
+                            <SplitPane split='vertical' minSize={20} defaultSize={PanelResizableStyle.width} allowResize={false}>
                                 {createContentWrapper(<LcPFOptionsBox/>)}
                                 {createContentWrapper(<PhaseFoldingChart />)}
                             </SplitPane>
@@ -475,13 +476,13 @@ PhaseFoldingChart.propTypes = {
  */
 function getPhaseFlux(fields) {
     var rawTable = getTblById(LC.RAW_TABLE);
-    var {columns, data} = rawTable.tableData;    // column names and data
+    var {data} = rawTable.tableData;    // column names and data
 
     var {time, period, tzero, flux} = fields;
     const tc = time ? time.value : '';
     const fc = flux ? flux.value: '';
-    const tIdx = tc ? columns.findIndex((c) => (c.name === tc)) : -1;  // find time column
-    const fIdx = fc ? columns.findIndex((c) => (c.name === fc)) : -1;  // find flux column
+    const tIdx = tc ? getColumnIdx(rawTable, tc) : -1;  // find time column
+    const fIdx = fc ? getColumnIdx(rawTable, fc) : -1;  // find flux column
 
     if (tIdx < 0 || fIdx < 0) return {};
 
@@ -646,9 +647,11 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
     const NOMark = 5;
     const {min:sliderMin, max:sliderMax, stepSize} = adjustSliderEnds(minPerN, maxPerN);  //number
     var marks = getSliderMarks(minPerN, maxPerN, sliderMin, sliderMax, NOMark);
-    var highlightW = PanelResizableStyle.width-panelSpace;
+    var offset = 16;
+    var highlightW = PanelResizableStyle.width-panelSpace - offset;
+    var pSize = panelSpace/2 - 5;
 
-    return (<div>
+    return (<div style={{width: PanelResizableStyle.width - offset}}>
                 <br/>
                 {ReadOnlyText({label: get(defValues, [fKeyDef.time.fkey, 'label']),
                                labelWidth: get(defValues, [fKeyDef.time.fkey, 'labelWidth']),
@@ -662,7 +665,7 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
                 <br/>
                 <br/>
                 <div style={{display: 'flex', alignItems: 'center'}}>
-                    <ValidationField fieldKey={fKeyDef.min.fkey} style={{width: 40}}/>
+                    <ValidationField fieldKey={fKeyDef.min.fkey} style={{width: pSize}}/>
                     <RangeSlider fieldKey={fKeyDef.period.fkey}
                                  min={sliderMin}
                                  max={sliderMax}
@@ -676,11 +679,11 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
                                  wrapperStyle={{marginBottom: 20, marginLeft: 9, marginRight: 25, width: highlightW}}
                                  decimalDig={DEC_PHASE}
                     />
-                    <ValidationField fieldKey={fKeyDef.max.fkey} style={{width: 40}}/>
+                    <ValidationField fieldKey={fKeyDef.max.fkey} style={{width: pSize}}/>
                 </div>
                 <br/>
-                <div style={{display: 'flex', alignItems: 'center', marginTop: 20}}>
-                    <div style={{padding: 10, width: highlightW - 20,
+                <div style={{display: 'flex', alignItems: 'center', marginTop: 20 }}>
+                    <div style={{padding: 10, width: highlightW - 10,
                                  display: 'flex', justifyContent: 'space-between',
                                  border: highlightBorder}}>
                         <ValidationField fieldKey={fKeyDef.period.fkey} />
@@ -690,7 +693,7 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
                             </button>
                         </div>
                     </div>
-                    <div style={{marginLeft: 20}} >
+                    <div style={{marginLeft: 30}} >
                         <button type='button' className='button std hl'  onClick={() => resetPeriodDefaults(defPeriod)}>
                             <b>Reset</b>
                         </button>
@@ -946,7 +949,10 @@ function setPFTableSuccess() {
 
         var phaseFoldedTable = doPFCalculate(flux, timeName, period, tzero);
         phaseFoldedTable&&uploadPhaseTable(phaseFoldedTable,  flux);
-        updateLayoutDisplay(LC.RESULT_PAGE);
+
+        if (isDialogVisible(popupId)) {
+            cancelPeriodogram(pfinderkey, popupId)();
+        }
     };
 }
 

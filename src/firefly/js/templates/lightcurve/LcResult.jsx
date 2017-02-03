@@ -14,13 +14,16 @@ import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {LcImageViewerContainer} from './LcImageViewerContainer.jsx';
 import {createContentWrapper} from '../../ui/panel/DockLayoutPanel.jsx';
 import {LC, updateLayoutDisplay} from './LcManager.js';
-import {getTypeData, ReadOnlyText} from './LcPeriod.jsx';
+import {getTypeData, ReadOnlyText, highlightBorder} from './LcPeriod.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {LcImageToolbar} from './LcImageToolbar.jsx';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
+import {showInfoPopup} from '../../ui/PopupUtil.jsx';
+import CompleteButton from '../../ui/CompleteButton.jsx';
+
 const resultItems = ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'searchDesc', 'images',
                      LC.MISSION_DATA, LC.GENERAL_DATA, 'periodState'];
 const labelWidth = 100;
@@ -31,9 +34,16 @@ const cTimeSeriesKeyDef = {
     timecols: {fkey: LC.META_TIME_NAMES, label: ''},
     fluxcols: {fkey: LC.META_FLUX_NAMES, label: ''},
     cutoutsize: {fkey: 'cutoutSize', label: 'Cutout Size (deg)'},
-    errorcolumn: {fkey: 'errorColumn', label: 'Error Column'}
+    errorcolumn: {fkey: LC.META_ERROR_COLUMN, label: 'Error Column'}
 };
 
+// defValues used to keep the initial values for parameters in the field group of result page
+// time: time column
+// flux: flux column
+// timecols:  time column candidates
+// fluxcols:  flux column candidates
+// errorcolumm: error column
+// cutoutsize: image cutout size
 const defValues = {
     [cTimeSeriesKeyDef.time.fkey]: Object.assign(getTypeData(cTimeSeriesKeyDef.time.fkey, '',
                                                 'time column name',
@@ -144,6 +154,7 @@ const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
     );
 };
 
+const buttonW = 650;
 
 // eslint-disable-next-line
 const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables, settingBox}) => {
@@ -181,11 +192,17 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
             <div style={{flexGrow: 1, position: 'relative'}}>
                 <div style={{position: 'absolute', top: 0, right: 0, bottom: 0, left: 0}}>
                     <SplitPane split='horizontal' minSize={20}  defaultSize={'60%'}>
-                        <SplitPane split='vertical' minSize={20} defaultSize={'50%'}>
-                            <SplitPane split='horizontal' minSize={20} defaultSize={100}>
-                                {createContentWrapper(settingBox)}
+                        <SplitPane split='vertical' minSize={20} defaultSize={buttonW}>
+                            <div style={{display: 'flex', flexDirection: 'column', position: 'absolute',
+                                         top: 0, bottom: 0, width: '100%', height: '100%', minHeight: '100%'}}>
+                                <div style={{position: 'relative', height: 140, width: '100%', overflow: 'hidden',
+                                             border: highlightBorder, borderRadius: 5, margin: 3}}>
+                                     <div style={{overflow: 'hidden', position: 'absolute', top: 5, bottom: 5, left: 5, right: 5}}>
+                                         {settingBox}
+                                     </div>
+                                </div>
                                 {createContentWrapper(tables)}
-                            </SplitPane>
+                            </div>
                             {createContentWrapper(xyPlot)}
                         </SplitPane>
                         {createContentWrapper(imagePlot)}
@@ -197,6 +214,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
 };
 
 const missionKeys = [cTimeSeriesKeyDef.time.fkey, cTimeSeriesKeyDef.flux.fkey];
+const missionOtherKeys = [cTimeSeriesKeyDef.errorcolumn.fkey];
 const missionListKeys = [cTimeSeriesKeyDef.timecols.fkey, cTimeSeriesKeyDef.fluxcols.fkey];
 
 
@@ -231,12 +249,14 @@ class SettingBox extends Component {
         var {generalEntries, missionEntries, periodState} = this.props;
 
         if (isEmpty(generalEntries) || isEmpty(missionEntries)) return false;
-        const wrapperStyle = {marginLeft: 10, marginTop: 5};
+        const wrapperStyle = {marginLeft: 10, marginTop: 5, marginBottom: 5};
 
         var allCommonEntries = () => {
             return Object.keys(generalEntries).map((key) => {
                 return (
-                    <ValidationField key={key} fieldKey={key} wrapperStyle={wrapperStyle}/>
+                    <ValidationField key={key} fieldKey={key}
+                                     style={{width: 80}}
+                                     wrapperStyle={{marginTop: 5, marginBottom: 5}}/>
                 );
             });
         };
@@ -255,12 +275,15 @@ class SettingBox extends Component {
                 </div>);
             });
 
-            return (<div>
-                {ReadOnlyText({
-                    label: 'Mission:', labelWidth,
-                    content: get(missionEntries, LC.META_MISSION, ''), wrapperStyle
-                })}
+            var missionOthers = missionOtherKeys.map((key) => {
+                    return (
+                        <ValidationField key={key} fieldKey={key} wrapperStyle={wrapperStyle}/>
+                    );
+                });
+
+            return (<div >
                 {missionInputs}
+                {missionOthers}
             </div>);
         };
 
@@ -271,22 +294,32 @@ class SettingBox extends Component {
         };
 
         return (
-            <div>
-                <FieldGroup groupKey={LC.FG_VIEWER_FINDER}
+                <FieldGroup groupKey={LC.FG_VIEWER_FINDER} style={{position: 'relative', width: buttonW-16, height: '100%'}}
                             reducerFunc={timeSeriesReducer(missionEntries, generalEntries)} keepState={true}>
-                    <div style={{display: 'flex', alignItems: 'flex-end'}}>
-                        {allMissionEntries()}
-                        <div>
-                            {allCommonEntries()}
-                        </div>
-                        <div>
-                            <button type='button' className={'button std'} style={{width: 90, marginLeft: 10}}
-                                    onClick={moveToPeriod(periodState)}> Period Finding
-                            </button>
+                    <div style={{display: 'flex', flexDirection: 'column', width: '100%', position: 'absolute', top: 0, bottom: 0}} >
+                        {ReadOnlyText({
+                            label: 'Mission:', labelWidth,
+                            content: get(missionEntries, LC.META_MISSION, ''), wrapperStyle
+                        })}
+                        <div style={{display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                            <div style={{display: 'flex', alignItems: 'flex-start'}} >
+                                {allMissionEntries()}
+                                <div>
+                                    {allCommonEntries()}
+                                </div>
+                            </div>
+                            <div>
+                                <CompleteButton
+                                    style={{marginLeft: 10}}
+                                    groupKey={LC.FG_VIEWER_FINDER}
+                                    onSuccess={setViewerSuccess(periodState)}
+                                    onFail={setViewerFail()}
+                                    text={'Period Finding'}
+                                />
+                            </div>
                         </div>
                     </div>
                 </FieldGroup>
-            </div>
         );
     }
 }
@@ -330,3 +363,19 @@ var timeSeriesReducer = (missionEntries, generalEntries) => {
             };
   };
 
+/**
+ * @summary callback to go to period finding page
+ * @param {string} periodState
+ * @returns {Function}
+ */
+function setViewerSuccess(periodState) {
+    return (request) => {
+        updateLayoutDisplay(periodState);
+    };
+}
+
+function setViewerFail() {
+    return (request) => {
+        return showInfoPopup('Parameter setting error');
+    };
+}

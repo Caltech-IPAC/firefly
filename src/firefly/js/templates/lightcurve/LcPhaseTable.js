@@ -2,13 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {cloneDeep, get, set, omit, slice, replace, isArray, isString} from 'lodash';
+import {get, set, omit, slice, replace, isArray, isString} from 'lodash';
 import {doUpload} from '../../ui/FileUpload.jsx';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {makeTblRequest,getTblById, getTblIdsByGroup, tableToText, makeFileRequest} from '../../tables/TableUtil.js';
-import {dispatchTableReplace} from '../../tables/TablesCntlr.js';
+import {makeTblRequest,getTblById, tableToText, makeFileRequest, getColumnIdx} from '../../tables/TableUtil.js';
 import {LC, getValidValueFrom} from './LcManager.js';
 import {getLayouInfo} from '../../core/LayoutCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
@@ -28,7 +27,11 @@ export function uploadPhaseTable(tbl, flux) {
     const file = new File([new Blob([ipacTable])], `${tbl_id}.tbl`);
 
     doUpload(file).then(({status, cacheKey}) => {
-        const tReq = makeFileRequest(title, cacheKey, null, {tbl_id, sortInfo:sortInfoString(LC.PHASE_CNAME)});
+        const tReq = makeFileRequest(title, cacheKey, null,
+                                     {tbl_id, sortInfo:sortInfoString(LC.PHASE_CNAME),
+                                      pageSize: LC.FULL_TABLE_SIZE
+                                     });
+
         dispatchTableSearch(tReq, {removable: true});
 
         const xyPlotParams = {
@@ -84,12 +87,11 @@ export function getPhase(time, timeZero, period,  dec=DEC_PHASE) {
  * @returns {TableModel}
  */
 function addPhaseToTable(tbl, timeName, fluxName, tzero, period) {
-    var {columns} = tbl.tableData;
-    var tIdx = timeName ? columns.findIndex((c) => (c.name === timeName)) : -1;
+    var tIdx = timeName ? getColumnIdx(tbl, timeName) : -1;
 
     if (tIdx < 0) return null;
 
-    var tPF = Object.assign(cloneDeep(tbl), {tbl_id: LC.PHASE_FOLDED, title: 'Phase Folded'},
+    var tPF = Object.assign({}, tbl, {tbl_id: LC.PHASE_FOLDED, title: 'Phase Folded'},
                                             {request: getPhaseFoldingRequest(period, timeName, fluxName, tbl)},
                                             {highlightedRow: 0});
     tPF = omit(tPF, ['hlRowIdx', 'isFetching']);
@@ -115,8 +117,8 @@ function addPhaseToTable(tbl, timeName, fluxName, tzero, period) {
  * @summary change the content of each row of the table by relocating some columns
  *          to be after or replace certain column
  * @param {TableModel} tbl
- * @param {array|string} srcCols
- * @param {number|string} targetCol
+ * @param {array|string} srcCols -- a string or an array of strings
+ * @param {number|string} targetCol -- a string indicating column name or a number indicating column index
  * @param {number} position 1: after the target columm, -1: before the target column, 0: at the target column
  */
 function locateTableColumns(tbl, srcCols, targetCol, position = 1) {
@@ -128,7 +130,7 @@ function locateTableColumns(tbl, srcCols, targetCol, position = 1) {
 
     var colIdx = [];
     var cols = srcCols.reduce((prev, srcCol) => {
-            var idx = columns.findIndex((col) => (col.name === srcCol));
+            var idx = getColumnIdx(tbl, srcCol);
 
             if (idx >= 0) {
                 prev.push(columns[idx]);
@@ -139,7 +141,7 @@ function locateTableColumns(tbl, srcCols, targetCol, position = 1) {
         }, []);
 
 
-    var targetIdx = isString(targetCol) ? columns.findIndex((col) => (col.name === targetCol)) : targetCol;
+    var targetIdx = isString(targetCol) ? getColumnIdx(tbl, targetCol) : targetCol;
     if (targetIdx < 0) {
         targetIdx = 0;
         position = 1;
@@ -192,7 +194,7 @@ function getPhaseFoldingRequest(period, time, flux, tbl) {
         flux,
         x: time,
         original_table: tbl.tableMeta.tblFilePath
-    },  {tbl_id:LC.PHASE_FOLDED});
+    },  {tbl_id:LC.PHASE_FOLDED, pageSize: LC.FULL_TABLE_SIZE});
 
 }
 
@@ -203,17 +205,16 @@ function getPhaseFoldingRequest(period, time, flux, tbl) {
  * @param {TableModel} phaseTable
  */
 function repeatDataCycle(timeCol, period, phaseTable) {
-    var tIdx = phaseTable.tableData.columns.findIndex((c) => (c.name === timeCol));
-    var fIdx = phaseTable.tableData.columns.findIndex((c) => (c.name === LC.PHASE_CNAME));
-    var {totalRows, tbl_id, title} = phaseTable;
+    var {totalRows, tbl_id, title, tableData} = phaseTable;
+    var tIdx = getColumnIdx(phaseTable, timeCol);
+    var fIdx = getColumnIdx(phaseTable, LC.PHASE_CNAME);
 
-
-    slice(phaseTable.tableData.data, 0, totalRows).forEach((d) => {
+    slice(tableData.data, 0, totalRows).forEach((d) => {
         var newRow = slice(d);
 
         newRow[tIdx] = `${parseFloat(d[tIdx]) + period}`;
         newRow[fIdx] = `${parseFloat(d[fIdx]) + 1}`;
-        phaseTable.tableData.data.push(newRow);
+        tableData.data.push(newRow);
     });
 
     totalRows *= 2;
@@ -224,7 +225,7 @@ function repeatDataCycle(timeCol, period, phaseTable) {
     set(phaseTable, ['tableMeta', 'tbl_id'], tbl_id);
     set(phaseTable, ['tableMeta', 'title'], title);
 
-    var col = phaseTable.tableData.columns.length;
+    var col = tableData.columns.length;
     var sqlMeta = get(phaseTable, ['tableMeta', 'SQL']);
     if (sqlMeta) {
         set(phaseTable, ['tableMeta', 'SQL'], replace(sqlMeta, `${col-1}`, `${col}`));

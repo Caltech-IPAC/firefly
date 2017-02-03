@@ -30,6 +30,7 @@
     font-family: sans-serif;
     z-index: 1;
     text-shadow: 1px 1px 3px rgba(195,235,234, 0.79);
+    white-space: nowrap;
 }
 
 .banner__middle--readout {

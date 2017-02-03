@@ -130,7 +130,8 @@ LcViewer.propTypes = {
     altAppIcon: PropTypes.string,
     footer: PropTypes.element,
     dropdownPanels: PropTypes.arrayOf(PropTypes.element),
-    style: PropTypes.object
+    style: PropTypes.object,
+    appTitle: PropTypes.string
 };
 
 LcViewer.defaultProps = {
@@ -228,7 +229,8 @@ function onSearchSubmit(request) {
             tbl_id: LC.RAW_TABLE,
             tblType: 'notACatalog',
             sortInfo: sortInfoString(timeCName),
-            META_INFO: {timeCName, fluxCName}
+            META_INFO: {timeCName, fluxCName},
+            pageSize: LC.FULL_TABLE_SIZE
         };
         const treq = makeFileRequest('Raw Table', request.rawTblSource, null, options);
         dispatchTableSearch(treq, {removable: true});

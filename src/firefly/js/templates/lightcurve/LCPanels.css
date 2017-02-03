@@ -24,3 +24,12 @@
     padding: 0 5px;
     cursor: pointer;
 }
+
+.Resizer.vertical.disabled:hover {
+    border-left: 5px solid rgba(255, 255, 255, 0);
+    border-right: 5px solid rgba(255, 255, 255, 0);
+}
+
+.Resizer.disabled {
+    cursor: auto;
+}

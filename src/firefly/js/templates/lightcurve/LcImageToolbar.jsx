@@ -42,7 +42,7 @@ export class LcImageToolbar extends Component {
         const {tableId}= this.props;
         const activeTable = tableId && getTblById(this.props.tableId);
 
-        if (activeTable !== this.state.activeTable) {
+        if (activeTable) {   // no active table in case reload a new file
             this.setState(activeTable);
         }
 

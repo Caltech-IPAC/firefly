@@ -58,7 +58,7 @@ export function makeTblRequest(id, title, params={}, options={}) {
  */
 export function makeFileRequest(title, source, alt_source, options={}) {
     const id = 'IpacTableFromSource';
-    var req = {startIdx: 0, pageSize: 100000};
+    var req = {startIdx: 0, pageSize: 100};
     title = title || source;
     const tbl_id = options.tbl_id || uniqueTblId();
     options = omit(options, 'tbl_id');

@@ -57,6 +57,15 @@ const pKeyDef = { time: {fkey: 'time', label: 'Time Column'},
 const pgfinderkey = LC.FG_PERIODOGRAM_FINDER;
 const labelWidth = 150;
 
+
+// defValues used to keep the initial values for parameters in the field group of periodogram popup dialog
+// min:  minimum period
+// max:  maximum period
+// algor: periodogram algorithm
+// stepmethod:  step mothod algorithm
+// stepsize:  fixed step size
+// peaks: number of peaks in peak table
+
 var defValues = {
     [pKeyDef.min.fkey]: Object.assign(getTypeData(pKeyDef.min.fkey,
         '', 'minimum period',
@@ -462,6 +471,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
         const pMin = get(request, [pKeyDef.min.fkey]);
         const pMax = get(request, [pKeyDef.max.fkey]);
         const ssize = get(request, [pKeyDef.stepsize.fkey]);
+        const peak = get(request, [pKeyDef.peaks.fkey]);
 
         var tReq2 = makeTblRequest('LightCurveProcessor', LC.PEAK_TABLE, {
             original_table: srcFile,
@@ -475,7 +485,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             peaks: get(request, [pKeyDef.peaks.fkey]),
             table_name: LC.PEAK_TABLE,
             sortInfo: sortInfoString('SDE')                 // sort peak table by column SDE
-        }, {tbl_id: LC.PEAK_TABLE});
+        }, {tbl_id: LC.PEAK_TABLE, pageSize: parseInt(peak)});
 
         if (tReq2 !== null) {
             dispatchTableSearch(tReq2, {removable: true, tbl_group: LC.PERIODOGRAM_GROUP});
@@ -497,7 +507,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             step_size: ssize ? ssize : undefined,
             peaks: get(request, [pKeyDef.peaks.fkey]),
             table_name: LC.PERIODOGRAM_TABLE
-        }, {tbl_id: LC.PERIODOGRAM_TABLE});
+        }, {tbl_id: LC.PERIODOGRAM_TABLE, pageSize: LC.FULL_TABLE_SIZE});
 
 
         if (tReq !== null) {

@@ -15,7 +15,7 @@ import {LC} from './LcManager.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {getTblById} from '../../tables/TableUtil.js';
-
+import {SortInfo, SORT_ASC, SORT_DESC, UNSORTED} from '../../tables/SortInfo.js';
 
 
 const toolsStyle= {
@@ -82,27 +82,14 @@ export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layou
 
     var getSortInfo = () => {
         if (!tableId) return '';
+        const sInfo = SortInfo.parse(get(getTblById(tableId), ['request', 'sortInfo'], ''));
 
-        const tbl = getTblById(tableId);
-        const sortInfo = get(tbl, ['request', 'sortInfo'], '');
+        const orderInfo = {[SORT_ASC]: 'ascending',
+                           [SORT_DESC]:'descending'};
 
-        if (!sortInfo) return '';
-
-        var cols = sortInfo.split(',');
-
-        if (cols.length >= 2) {
-            var orderInfo = 'Sort order: ';
-            var columnInfo = cols.length > 2 ? 'Sortable columns: ' : 'Sortable column: ';
-
-            if (cols[0] === 'ASC') {
-                orderInfo += 'ascending';
-            } else if (cols[0] === 'DESC') {
-                orderInfo += 'descending';
-            }
-            columnInfo += cols.slice(1).join(',');
-            return `${columnInfo};  ${orderInfo}`;
-        }
-        return '';
+        if (sInfo.direction === UNSORTED) return '';
+        return `Sortable columns: ${sInfo.sortColumns.join(',')}; `+
+               `Sort order: ${orderInfo[sInfo.direction]}`;
     };
 
     return (

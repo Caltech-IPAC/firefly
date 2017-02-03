@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, isNil} from 'lodash';
+import {get, isNil, has} from 'lodash';
 import {take} from 'redux-saga/effects';
 import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
         dispatchUpdateLayoutInfo, dropDownHandler} from '../../core/LayoutCntlr.js';
@@ -25,6 +25,7 @@ import {makeWorldPt} from '../../visualize/Point.js';
 import {CoordinateSys} from '../../visualize/CoordSys.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
+import {CHART_ADD, getChartDataElement} from '../../charts/ChartsCntlr.js';
 
 export const LC = {
     RAW_TABLE: 'raw_table',          // raw table id
@@ -42,6 +43,7 @@ export const LC = {
 
     META_TIME_CNAME: 'timeCName',
     META_FLUX_CNAME: 'fluxCName',
+    META_ERROR_COLUMN: 'errorColumn',
     DEF_TIME_CNAME: 'mjd',
     DEF_FLUX_CNAME: 'w1mpro_ep',
 
@@ -61,7 +63,9 @@ export const LC = {
     META_MISSION: MetaConst.DATASET_CONVERTER,
 
     MISSION_DATA: 'missionEntries',
-    GENERAL_DATA:'generalEntries'
+    GENERAL_DATA:'generalEntries',
+
+    FULL_TABLE_SIZE: 500
 };
 
 const plotIdRoot= 'LC_FRAME-';
@@ -82,7 +86,7 @@ export function removeTablesFromGroup(tbl_group_id = 'main') {
 }
 
 export var getValidValueFrom = (fields, valKey) => {
-    var val =  fields && get(fields, [valKey, 'valid']) && get(fields, [valKey, 'value']);
+    var val =  get(fields, [valKey, 'valid']) && get(fields, [valKey, 'value']);
 
     return val ? val : '';
 };
@@ -108,7 +112,7 @@ export function* lcManager(params={}) {
     while (true) {
         const action = yield take([
             TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, SHOW_DROPDOWN, SET_LAYOUT_MODE,
-            CHANGE_VIEWER_LAYOUT, VALUE_CHANGE, ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW
+            CHANGE_VIEWER_LAYOUT, VALUE_CHANGE, ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW, CHART_ADD
         ]);
 
         /**
@@ -148,6 +152,9 @@ export function* lcManager(params={}) {
             case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
                 newLayoutInfo = handlePlotActive(newLayoutInfo, action.payload.plotId);
                 break;
+            case CHART_ADD:
+                 newLayoutInfo = handleAddChart(newLayoutInfo, action.payload.chartId);
+                break;
             case VALUE_CHANGE:
                 newLayoutInfo = handleValueChange(newLayoutInfo, action);
                 break;
@@ -168,14 +175,19 @@ function getMissionName() {
 }
 
 function getCutoutSize() {
-    return get(getLayouInfo(), ['generalEntries', 'cutoutSize'], '0.3');
+    return get(getLayouInfo(), ['generalEntries', 'cutoutSize'], '0.2');
 }
 
 var getImageTitle = (mName,frameId, cutoutSize ) => {
     return  `${mName}-`+ frameId + (cutoutSize ? ` size: ${cutoutSize}(deg)` : '');
 };
 
-function updateResultRawTable(layoutInfo, timeCName, fluxCName) {
+function updateRawTableChart(layoutInfo, timeCName, fluxCName) {
+    var chartX = get(getChartDataElement(LC.RAW_TABLE), ['options', 'x', 'columnOrExpr']);
+    var chartY = get(getChartDataElement(LC.RAW_TABLE), ['options', 'y', 'columnOrExpr']);
+
+    if (chartX === timeCName && chartY === fluxCName) return;
+
     const timeCols = get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_NAMES], []);
     const fluxCols = get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_NAMES], []);
 
@@ -185,7 +197,11 @@ function updateResultRawTable(layoutInfo, timeCName, fluxCName) {
     }
 }
 
-function updateResultPhaseTable(layoutInfo, flux) {
+function updatePhaseTableChart(layoutInfo, flux) {
+    var chartY = get(getChartDataElement(LC.RAW_TABLE), ['options', 'y', 'columnOrExpr']);
+
+    if (chartY === flux) return;
+
     const fluxCols = get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_NAMES]);
 
     if (fluxCols.includes(flux)) {
@@ -218,10 +234,10 @@ function handleValueChange(layoutInfo, action) {
                 get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_NAMES]).includes(value)) {
                 const actTbl = getActiveTableId();
                 if (actTbl === LC.RAW_TABLE) {
-                    updateResultRawTable(layoutInfo,
+                    updateRawTableChart(layoutInfo,
                                          get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]), value);
                 } else if (actTbl === LC.PHASE_FOLDED) {
-                    updateResultPhaseTable(layoutInfo, value);
+                    updatePhaseTableChart(layoutInfo, value);
                 }
                 keyOfPeriod = 'flux';
             } else if (fieldKey === LC.META_TIME_CNAME &&
@@ -253,6 +269,15 @@ function handleValueChange(layoutInfo, action) {
     return layoutInfo;
 }
 
+function handleAddChart(layoutInfo, chartId) {
+    if (chartId === LC.PHASE_FOLDED) {
+        if (get(layoutInfo, ['displaMode']) !== 'result') {
+            layoutInfo = updateSet(layoutInfo, ['displayMode'], 'result');
+        }
+    }
+    return layoutInfo;
+}
+
 /**
  * @summary highlight the table row & chart after change the active plot view
  * @param layoutInfo
@@ -274,24 +299,23 @@ function handleRawTableLoad(layoutInfo, tblId) {
     const rawTable = getTblById(tblId);
     var   metaInfo = rawTable && get(rawTable, ['META_INFO']);
     const missionAry = [LC.META_TIME_CNAME, LC.META_FLUX_CNAME, LC.META_TIME_NAMES, LC.META_FLUX_NAMES,
-                        MetaConst.DATASET_CONVERTER];
-    const generalEntryAry = {cutoutSize: '0.3', errorColumn: ''};  // default setting for cutoutsize?
-
+                        MetaConst.DATASET_CONVERTER, LC.META_ERROR_COLUMN];
+    const generalEntryAry = {cutoutSize: '0.2'};  // default setting for cutoutsize?
 
     // TODO - fill in mission information from table's metadata
     metaInfo = {[LC.META_TIME_CNAME]: 'mjd',
                 [LC.META_FLUX_CNAME]: 'w1mpro_ep',
                 [LC.META_TIME_NAMES]: ['mjd'],
                 [LC.META_FLUX_NAMES]: ['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'],
-                [MetaConst.DATASET_CONVERTER]: 'wise'};
+                [MetaConst.DATASET_CONVERTER]: 'wise',
+                [LC.META_ERROR_COLUMN]: ''};
 
-    var   missionEntries = missionAry.reduce((prev, key) => {
+    var missionEntries = missionAry.reduce((prev, key) => {
             prev[key] = metaInfo ? get(metaInfo, key, ''): '';
             return prev;
-          }, {});
+        }, {});
 
-    var   generalEntries = clone(generalEntryAry);
-
+    var generalEntries = clone(generalEntryAry);
     var {columns, data} = rawTable.tableData;
     var tIdx = columns.findIndex((col) => (col.name === get(missionEntries, [LC.META_TIME_CNAME])));
     var arr = data.reduce((prev, e)=> {
@@ -303,8 +327,21 @@ function handleRawTableLoad(layoutInfo, tblId) {
     var max = 365;
     var min = Math.pow(10, -3);   // 0.0001
 
-    var fields = FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER);
+    var fields = FieldGroupUtils.getGroupFields(LC.FG_VIEWER_FINDER);
     var initState;
+    if (fields) {
+        initState = Object.keys(fields).reduce((prev, fieldKey) => {
+            if (has(missionEntries, fieldKey)) {
+                prev.push({fieldKey, value: get(missionEntries, fieldKey)});
+            } else if (has(generalEntries,fieldKey)) {
+                prev.push({fieldKey, value: get(generalEntries, fieldKey)});
+            }
+            return prev;
+        }, []);
+        dispatchMultiValueChange(LC.FG_VIEWER_FINDER, initState);
+    }
+
+    fields = FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER);
     if (fields) {
         initState = [
                     {fieldKey: 'time', value: get(missionEntries, [LC.META_TIME_CNAME])},
@@ -368,9 +405,9 @@ function handleTableActive(layoutInfo, action) {
     const fluxCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME]);
 
     if (tbl_id === LC.RAW_TABLE) {
-        updateResultRawTable(layoutInfo, timeCol, fluxCol);
+        updateRawTableChart(layoutInfo, timeCol, fluxCol);
     } else if (tbl_id === LC.PHASE_FOLDED) {
-        updateResultPhaseTable(layoutInfo, fluxCol);
+        updatePhaseTableChart(layoutInfo, fluxCol);
     }
 
     return layoutInfo;
@@ -475,7 +512,7 @@ function getWebPlotRequestViaUrl(tableModel, hlrow, cutoutSize) {
     /*the following should be from reading in the url column returned from LC search
      we are constructing the url for wise as the LC table does
      not have the url colume yet
-     It is only for WISE, using default cutout size 0.3 deg
+     It is only for WISE, using default cutout size 0.2 deg
     const url = `http://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w1-int-1b.fits`;
     */
     const serverinfo = 'http://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/';
