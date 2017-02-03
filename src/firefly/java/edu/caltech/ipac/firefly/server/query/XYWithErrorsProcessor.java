@@ -103,9 +103,14 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
         ArrayList<DataType> columnList = new ArrayList<>();
         columnList.add(new DataType("rowIdx", Integer.class));
         ArrayList<DataGroup.Attribute> colMeta = new ArrayList<>();
+        DataType dt;
         for (Col col : cols) {
             if (col.getter.isExpression()) {
-                columnList.add(new DataType(col.colname, col.colname, Double.class, DataType.Importance.HIGH, "", false));
+                dt = new DataType(col.colname, col.colname, Double.class, DataType.Importance.HIGH, "", false);
+                DataType.FormatInfo fi = dt.getFormatInfo();
+                fi.setDataFormat("%.14g");
+                dt.setFormatInfo(fi);
+                columnList.add(dt);
             } else {
                 columnList.add(dg.getDataDefintion(col.colname).copyWithNoColumnIdx(columnList.size()));
                 colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), col.colname));
@@ -119,7 +124,6 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
         DataObject retrow;
         int ncols = cols.length;
         Col col;
-        DataType dt;
         double val;
         String formatted;
         DataType dtRowIdx = columns[0];
