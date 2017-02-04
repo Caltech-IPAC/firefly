@@ -43,44 +43,12 @@ public class LightCurveFileGroupsProcessor extends FileGroupsProcessor {
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         try {
             DownloadRequest dlReq = (DownloadRequest) request;
-            TableServerRequest searchReq = dlReq.getSearchRequest();
-            Collection<Integer> selectedRows = dlReq.getSelectedRows();
             return computeFileGroup(dlReq);
-
-
-//            // temporary mock data instead of using searchReq
-//            File voRes = new File(ServerContext.getTempWorkDir(), "p3am_cdd.vot");
-//            int statusCode = HttpServices.getDataViaUrl(new URL("http://irsa.ipac.caltech.edu/ibe/sia/wise/allwise/p3am_cdd?POS=10.6,40.2&SIZE=10"), voRes);
-//            if (statusCode != 500) {
-//                // should be 248 images found.
-//                DataGroup dataWithUrl = DataGroupReader.readAnyFormat(voRes);
-//                return computeFileGroup(dataWithUrl, selectedRows);
-//            }
-//            return null;
         } catch (Exception e) {
             LOGGER.error(e);
             throw new DataAccessException(e.getMessage());
         }
     }
-
-    /**
-     * givent the results from a search, compute the files to be packaged from the selectedRows.
-     *
-     * @param data         the tabular data from a search
-     * @param selectedRows selected rows from the data above.  index starts from zero.
-     * @return
-     * @throws Exception
-     */
-    private List<FileGroup> computeFileGroup(DataGroup data, Collection<Integer> selectedRows) throws Exception {
-        ArrayList<FileInfo> images = new ArrayList<>();
-        for (int idx : selectedRows) {
-            String url = String.valueOf(data.get(idx).getDataElement("sia_url"));
-            images.add(new FileInfo(url, "/3a/img" + idx, 67 * 1024 * 1024));
-        }
-        FileGroup fgroup = new FileGroup(images, new File("/lightcurve_data"), selectedRows.size() * 640 * 1024, "Test lightcurve data");
-        return Arrays.asList(fgroup);
-    }
-
 
     private List<FileGroup> computeFileGroup(DownloadRequest request) throws IOException, IpacTableException, DataAccessException {
         // create unique list of filesystem-based and url-based files
@@ -273,7 +241,10 @@ public class LightCurveFileGroupsProcessor extends FileGroupsProcessor {
                     if (t == WiseFileRetrieve.IMG_TYPE.INTENSITY) {
                         filenameInfo = scanId + StringUtils.pad(3, frameNum, StringUtils.Align.RIGHT, '0') + "-w" + band + "-int-1b";
                         if (cutFlag) {
-                            String size = "2";// TODO need to pass it.//request.getParam("subsize");
+                            String size = ".3";
+                            if(request.getParam("cutoutSize")!=null){
+                                size = request.getParam("cutoutSize");
+                            }
                             double sizeD = Double.parseDouble(size);
                             filenameInfo += "_ra" + ra + "_dec" + dec + "_asec" + String.format("%.3f", sizeD * 3600);
 

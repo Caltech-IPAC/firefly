@@ -167,7 +167,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                     <div>
                         <DownloadButton>
                             <DownloadOptionPanel
-                                cutoutSize = '200'
+                                cutoutSize = '.3'
                                 dlParams = {{
                                     MaxBundleSize: 200*1024*1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
                                     FilePrefix: 'WISE_Files',

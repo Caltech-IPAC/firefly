@@ -483,6 +483,13 @@ function handleChangeMultiViewLayout(layoutInfo) {
     return layoutInfo;
 }
 
+/**
+ * WISE specific function to fetch image for each time (row)
+ * @param {TableModel} tableModel table model
+ * @param {number}  hlrow row index
+ * @param {number} cutoutSize siez in degrees of the cutout
+ * @param {string} fluxCol
+ */
 function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, fluxCol) {
     const ra = getCellValue(tableModel, hlrow, 'ra');
     const dec = getCellValue(tableModel, hlrow, 'dec');
@@ -514,6 +521,14 @@ function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, fluxCol) {
     return addCommonReqParams(reqParams, title, makeWorldPt(ra,dec,CoordinateSys.EQ_J2000));
 }
 
+/**
+ * Old way to get single exposure via url,
+ * would have worked if we had the url column defined and no mission specific code
+ * @deprecated
+ * @param tableModel
+ * @param hlrow
+ * @param cutoutSize
+ */
 function getWebPlotRequestViaUrl(tableModel, hlrow, cutoutSize) {
     const ra = getCellValue(tableModel, hlrow, 'ra');
     const dec = getCellValue(tableModel, hlrow, 'dec');
