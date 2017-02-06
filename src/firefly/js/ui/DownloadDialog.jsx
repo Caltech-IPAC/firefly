@@ -156,11 +156,11 @@ export class DownloadOptionPanel extends Component {
     }
 
     onSubmit(options) {
-        const {tbl_id, dlParams} = this.props;
+        const {tbl_id, dlParams, cutoutSize} = this.props;
         const {request, selectInfo} = getTblInfoById(tbl_id);
         const {FileGroupProcessor} = dlParams;
         const Title = dlParams.Title || options.Title;
-        const dreq = makeTblRequest(FileGroupProcessor, Title, Object.assign(dlParams, options));
+        const dreq = makeTblRequest(FileGroupProcessor, Title, Object.assign(dlParams, {cutoutSize}, options));
         this.setState({mask: true});
         dispatchAddSaga(doOnPackage, {title: Title, callback:() => {
             this.setState({mask: false});

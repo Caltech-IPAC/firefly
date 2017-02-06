@@ -2,8 +2,8 @@
   "scripts":
     {
       "build" : "../../node_modules/webpack/bin/webpack.js",
-      "lint"  : "DO_LINT=true npm run build",
-      "dev"   : "DEBUG=true npm run build -- -w -d --no-color",
+      "lint"  : "DO_LINT=true yarn run build",
+      "dev"   : "DEBUG=true yarn run build -- -w -d --no-color",
       "test-unit": "echo 'No jsTest in this project.'"
     }
 }
