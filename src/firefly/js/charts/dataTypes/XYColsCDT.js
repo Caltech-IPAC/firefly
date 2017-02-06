@@ -202,6 +202,11 @@ function serverParamsChanged(oldParams, newParams, chartDataElement) {
     if (oldParams === newParams) { return false; }
     if (!oldParams || !newParams) { return true; }
 
+    if (!chartDataElement) {
+        logError('chart replaced?');
+        return true;
+    }
+
     const {tblId, data} = chartDataElement;
 
     if (isLargeTable(tblId)) {
