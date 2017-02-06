@@ -24,9 +24,10 @@ export function uploadPhaseTable(tbl, flux) {
     const {tableData, tbl_id, tableMeta, title} = tbl;
 
     const ipacTable = tableToText(tableData.columns, tableData.data, true, tableMeta);
-    const file = new File([new Blob([ipacTable])], `${tbl_id}.tbl`);
+    const blob = new Blob([ipacTable]);
+    //const file = new File([new Blob([ipacTable])], `${tbl_id}.tbl`);
 
-    doUpload(file).then(({status, cacheKey}) => {
+    doUpload(blob).then(({status, cacheKey}) => {
         const tReq = makeFileRequest(title, cacheKey, null,
                                      {tbl_id, sortInfo:sortInfoString(LC.PHASE_CNAME),
                                       pageSize: LC.FULL_TABLE_SIZE

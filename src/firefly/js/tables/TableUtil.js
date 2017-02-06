@@ -710,8 +710,9 @@ export function getAsyncTableSourceUrl(tbl_ui_id) {
     const {tableData, tableMeta} = getTblById(tbl_id);
     const ipacTable = tableToText(columns, tableData.data, true, tableMeta);
     var filename = `${tbl_id}.tbl`;
-    const file = new File([new Blob([ipacTable])], filename);
-    return doUpload(file).then( ({status, cacheKey}) => {
+    const blob = new Blob([ipacTable]);
+    //const file = new File([new Blob([ipacTable])], filename);
+    return doUpload(blob).then( ({status, cacheKey}) => {
         const request = makeFileRequest('save as text', cacheKey, {pageSize: MAX_ROW});
         return makeTableSourceUrl(columns, request);
     });

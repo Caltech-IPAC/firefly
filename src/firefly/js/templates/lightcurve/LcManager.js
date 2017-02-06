@@ -174,6 +174,10 @@ function getMissionName() {
     return mName ? mName.toUpperCase() : '';
 }
 
+function getFluxColumn() {
+    return get(getLayouInfo(), ['misionEntries', LC.META_FLUX_CNAME], '');
+}
+
 function getCutoutSize() {
     return get(getLayouInfo(), ['generalEntries', 'cutoutSize'], '0.2');
 }
@@ -551,6 +555,8 @@ export function setupImages(tbl_id) {
 
         const cutoutSize = get(FieldGroupUtils.getGroupFields(LC.FG_VIEWER_FINDER), ['cutoutSize', 'value'],
                                                               getCutoutSize());
+        const fluxCol = get(FieldGroupUtils.getGroupFields(LC.FG_VIEWER_FINDER), [LC.META_FLUX_CNAME, 'value'],
+                                                              getFluxColumn());
 
         newPlotIdAry.forEach( (plotId) => {
             var pv = getPlotViewById(vr,plotId);
@@ -560,7 +566,7 @@ export function setupImages(tbl_id) {
             };
 
             if (!pv || get(pv, ['request', 'params', 'Title']) !== imgTitle()) {
-                const webPlotReq = webplotRequestCreator(tableModel,rowNum, cutoutSize);
+                const webPlotReq = webplotRequestCreator(tableModel,rowNum, cutoutSize,  fluxCol);
 
                 dispatchPlotImage({plotId, wpRequest:webPlotReq,
                                            setNewPlotAsActive:false,
