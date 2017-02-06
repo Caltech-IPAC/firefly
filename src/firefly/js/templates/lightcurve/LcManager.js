@@ -182,8 +182,13 @@ function getCutoutSize() {
     return get(getLayouInfo(), ['generalEntries', 'cutoutSize'], '0.2');
 }
 
-var getImageTitle = (mName,frameId, cutoutSize ) => {
-    return  `${mName}-`+ frameId + (cutoutSize ? ` size: ${cutoutSize}(deg)` : '');
+var getImageTitle = (mName,frameId, cutoutSize, fluxCol = '',  webplotRequestCreator = null ) => {
+    if (webplotRequestCreator && webplotRequestCreator === getWebPlotRequestViaWISEIbe) {
+        const band=`${fluxCol}`.match(/\d/g);
+        return 'WISE-W'+ band + '-'+ frameId + (cutoutSize ? ` size: ${cutoutSize}(deg)` : '');
+    } else {
+        return `${mName}-` + frameId + (cutoutSize ? ` size: ${cutoutSize}(deg)` : '');
+    }
 };
 
 function updateRawTableChart(layoutInfo, timeCName, fluxCName) {
@@ -562,7 +567,7 @@ export function setupImages(tbl_id) {
             var pv = getPlotViewById(vr,plotId);
             const rowNum= Number(plotId.substring(plotIdRoot.length));
             var imgTitle = () => {
-                return getImageTitle(getMissionName(), getCellValue(tableModel, rowNum, 'frame_id'), cutoutSize);
+                return getImageTitle(getMissionName(), getCellValue(tableModel, rowNum, 'frame_id'), cutoutSize, fluxCol, webplotRequestCreator);
             };
 
             if (!pv || get(pv, ['request', 'params', 'Title']) !== imgTitle()) {
