@@ -100,10 +100,13 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
         Col[] cols = colsLst.toArray(new Col[colsLst.size()]);
 
         // create the array of output columns
+        DataType dt, dtSrc;
         ArrayList<DataType> columnList = new ArrayList<>();
-        columnList.add(new DataType("rowIdx", Integer.class));
+        dt = new DataType("rowIdx", Integer.class);
+        dt.setFormatInfo(new DataType.FormatInfo(11)); // max num digits in integer, long - 20
+        columnList.add(dt);
         ArrayList<DataGroup.Attribute> colMeta = new ArrayList<>();
-        DataType dt;
+
         for (Col col : cols) {
             if (col.getter.isExpression()) {
                 dt = new DataType(col.colname, col.colname, Double.class, DataType.Importance.HIGH, "", false);
@@ -112,7 +115,11 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
                 dt.setFormatInfo(fi);
                 columnList.add(dt);
             } else {
-                columnList.add(dg.getDataDefintion(col.colname).copyWithNoColumnIdx(columnList.size()));
+                dtSrc = dg.getDataDefintion(col.colname);
+                dt = dtSrc.copyWithNoColumnIdx(columnList.size());
+                dt.setMaxDataWidth(dtSrc.getMaxDataWidth());
+                dt.setFormatInfo(dtSrc.getFormatInfo());
+                columnList.add(dt);
                 colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), col.colname));
             }
         }
@@ -171,7 +178,8 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
             QueryUtil.doSort(retval, new SortInfo(sortCol.colname));
         }
 
-        retval.shrinkToFitData();
+        // should not shrink, otherwise the formatted data will be lost
+        // retval.shrinkToFitData();
         File outFile = createFile(request);
         DataGroupWriter.write(outFile, retval);
         return outFile;
