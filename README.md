@@ -54,7 +54,7 @@ There are several branches the this repository.  Here are the ones that you shou
  -  [Tomcat 7+] (http://tomcat.apache.org/download-70.cgi)
     Apache Tomcat is an open source software implementation of the Java Servlet and JavaServer Pages technologies.
 
- -  [Node 0.12.0.+] (https://nodejs.org/download/)
+ -  [Node v6.9+] (https://nodejs.org/)
     Javascript interpreter for command line environment, used for development tools
 
 #### Prepare before the build
