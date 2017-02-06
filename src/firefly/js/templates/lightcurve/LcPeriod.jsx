@@ -5,34 +5,36 @@
 import React, {Component, PropTypes} from 'react';
 
 import sCompare from 'react-addons-shallow-compare';
-import {cloneDeep, get, set, omit, slice, replace, pick, isEmpty,  debounce, defer} from 'lodash';
+import {get, set,  pick,  debounce, defer} from 'lodash';
 import SplitPane from 'react-split-pane';
 import {flux} from '../../Firefly.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
-import {doUpload} from '../../ui/FileUpload.jsx';
 import {RangeSlider}  from '../../ui/RangeSlider.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {createContentWrapper} from '../../ui/panel/DockLayoutPanel.jsx';
 import Validate from '../../util/Validate.js';
-import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
-import {sortInfoString} from '../../tables/SortInfo.js';
-import {dispatchTableSearch, dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
+import {dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
-import {dispatchRestoreDefaults, dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
-import {makeTblRequest,getTblById, tableToText, makeFileRequest, getActiveTableId} from '../../tables/TableUtil.js';
-import {LC, updateLayoutDisplay} from './LcManager.js';
+import FieldGroupCntlr, {dispatchValueChange, dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {getTblById, getActiveTableId, getColumnIdx} from '../../tables/TableUtil.js';
+import {LC, updateLayoutDisplay, getValidValueFrom} from './LcManager.js';
+import {uploadPhaseTable, doPFCalculate, getPhase} from './LcPhaseTable.js';
 import {LcPeriodogram, startPeriodogramPopup, cancelPeriodogram, popupId} from './LcPeriodogram.jsx';
 import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
 import {isDialogVisible} from '../../core/ComponentCntlr.js';
+import {updateSet} from '../../util/WebUtil.js';
 import ReactHighcharts from 'react-highcharts';
 import Resizable from 'react-component-resizable';
+import './LCPanels.css';
 
-const pfinderkey = LC.PERIOD_FINDER;
+const pfinderkey = LC.FG_PERIOD_FINDER;
 const labelWidth = 100;
+const validTimeSuggestions = ['mjd'];      // suggestive time column name
+const validFluxSuggestions = ['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'];
 
+export const highlightBorder = '1px solid #a3aeb9';
 export function getTypeData(key, val='', tip = '', labelV='', labelW) {
     return {
         fieldKey: key,
@@ -43,17 +45,10 @@ export function getTypeData(key, val='', tip = '', labelV='', labelW) {
     };
 }
 
-export const cPeriodKeyDef = {
-    time: {fkey: 'time', label: 'Time Column'},
-    flux: {fkey: 'flux', label: 'Flux Column'},
-    min: {fkey: 'periodMin', label: 'Period Min'},
-    max: {fkey: 'periodMax', label: 'Period Max'},
-    timecols: {fkey: 'timeCols', label: ''},
-    fluxcols: {fkey: 'fluxCols', label: ''}
-};
+export var isBetween = (a, b, c) => (c >= a && c <= b);
 
 const PanelResizableStyle = {
-    width: 520,
+    width: 550,
     minWidth: 400,
     minHeight: 300,
     marginLeft: 15,
@@ -62,19 +57,21 @@ const PanelResizableStyle = {
 };
 
 const panelSpace = PanelResizableStyle.width/5;
-
-const fKeyDef = Object.assign({}, cPeriodKeyDef,
-                                {tz: {fkey: 'tzero', label: 'Zero Point Time'},
-                                period: {fkey: 'period', label: 'Period (day)'},
-                                tzmax: {fkey: 'tzeroMax', label: ''}});
+const fKeyDef = {
+    time: {fkey: 'time', label: 'Time Column'},
+    flux: {fkey: 'flux', label: 'Flux Column'},
+    min: {fkey: 'periodMin', label: 'Period Min (day)'},
+    max: {fkey: 'periodMax', label: 'Period Max (day)'},
+    tz: {fkey: 'tzero', label: 'Zero Point Time'},
+    period: {fkey: 'period', label: 'Period (day)'},
+    tzmax: {fkey: 'tzeroMax', label: ''}
+};
 
 const STEP = 1;            // step for slider
-export const validTimeSuggestions = ['mjd'];      // suggestive time column name
-export const validFluxSuggestions = ['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep']; // suggestive flux col name
 const Margin = 0.2;        // phase margin reserved at two ends of the phase charts x axis
 const DEC_PHASE = 3;       // decimal digit
 
-// defValues used to keep the initial values for phase finding parameters
+// defValues used to keep the initial values for parameters in phase finding field group
 // time: time column
 // flux: flux column
 // tz:   zero time
@@ -82,54 +79,57 @@ const DEC_PHASE = 3;       // decimal digit
 // min:  minimum period
 // max:  maximum period
 // period: period for phase folding
-// timecols: possible time column names (not a field, shown as suggestion)
-// fluxcols: possible flux column names (not a field, shown as suggestion)
 
 const defValues= {
     [fKeyDef.time.fkey]: Object.assign(getTypeData(fKeyDef.time.fkey, '',
         'time column name',
-        `${fKeyDef.time.label}:`, labelWidth),
-        {validator:  (val) => {
-            let retVal = {valid: true, message: ''};
-            if (!validTimeSuggestions.includes(val)) {
-                retVal = {valid: false, message: `${val} is not a valid time column`};
-            }
-            return retVal;
-        }}),
+        `${fKeyDef.time.label}:`, labelWidth), {validator:  null}),
     [fKeyDef.flux.fkey]: Object.assign(getTypeData(fKeyDef.flux.fkey, '',
-        'flux column name', `${fKeyDef.flux.label}:`, labelWidth),
-        {validator:  (val) => {
-            let retVal = {valid: true, message: ''};
-            if (!validFluxSuggestions.includes(val)) {
-                retVal = {valid: false, message: `${val} is not a valid flux column`};
-            }
-            return retVal;
-        }}),
+        'flux column name', `${fKeyDef.flux.label}:`, labelWidth), {validator:  null}),
     [fKeyDef.tz.fkey]: Object.assign(getTypeData(fKeyDef.tz.fkey, '', 'zero time', `${fKeyDef.tz.label}:`, labelWidth),
         {validator: null}),
     [fKeyDef.tzmax.fkey]: Object.assign(getTypeData(fKeyDef.tzmax.fkey, '', 'maximum for zero time'),
         {validator: null}),
-    [fKeyDef.min.fkey]: Object.assign(getTypeData(fKeyDef.min.fkey, '', 'minimum period', `${fKeyDef.min.label}:`, labelWidth-panelSpace/3),
+    [fKeyDef.min.fkey]: Object.assign(getTypeData(fKeyDef.min.fkey, '', 'minimum period', '', 0),
         {validator: null}),
-    [fKeyDef.max.fkey]: Object.assign(getTypeData(fKeyDef.max.fkey, '', 'maximum period', `${fKeyDef.max.label}:`, labelWidth-panelSpace/3),
+    [fKeyDef.max.fkey]: Object.assign(getTypeData(fKeyDef.max.fkey, '', 'maximum period', '', 0),
         {validator: null}),
     [fKeyDef.period.fkey]: Object.assign(getTypeData(fKeyDef.period.fkey, '', '', `${fKeyDef.period.label}:`, labelWidth-10),
-        {validator: null}),
-    [fKeyDef.timecols.fkey]: Object.assign(getTypeData(fKeyDef.timecols.fkey, [],  'time column suggestion'),
-        {validator: null}),
-    [fKeyDef.fluxcols.fkey]: Object.assign(getTypeData(fKeyDef.fluxcols.fkey, [],  'flux column suggestion'),
         {validator: null})
 };
 
+var defPeriod = {
+    [fKeyDef.tz.fkey]: {value: ''},
+    [fKeyDef.tzmax.fkey]: {value: ''},
+    [fKeyDef.min.fkey]: {value: ''},
+    [fKeyDef.max.fkey]: {value: ''},
+    [fKeyDef.period.fkey]: {value: ''}
+};
+
 var periodRange;        // prediod range based on raw table, set based on the row table, and unchangable
-var currentPhaseFoldedTable;   // table with phase column
-var SliderMin = 0.0;           // min on slider
-var SliderMax;                 // max on slider
-var periodErr;       // error message for period setting
+var periodErr;          // error message for period setting
+
+export var ReadOnlyText = ({label, content, labelWidth, wrapperStyle}) => {
+    return (
+        <div style={{display: 'flex',...wrapperStyle}}>
+            <div style={{width: labelWidth, paddingRight: 4}}> {label} </div>
+            <div> {content} </div>
+        </div>
+    );
+};
+
+ReadOnlyText.propTypes = {
+    label: PropTypes.string,
+    content: PropTypes.string,
+    labelWidth: PropTypes.number,
+    wrapperStyle: PropTypes.object
+};
+
 
 function lastFrom(strAry) {
     return strAry.length > 0 ? strAry[strAry.length - 1] : '';
 }
+
 /**
  * class for creating component for light curve period finding
  */
@@ -138,12 +138,18 @@ export class LcPeriod extends Component {
     constructor(props) {
         super(props);
 
-        periodRange = computePeriodRange(LC.RAW_TABLE, props.timeColName);
-        const currentPeriod = this.getCurrentValidPeriod() || `${periodRange.min}`;   // the first time
-        const {displayMode} = props;
+        const layoutInfo = getLayouInfo();
+        periodRange = get(layoutInfo, 'periodRange');
 
-        this.state = Object.assign({}, pick(getLayouInfo(), ['mode']), {displayMode, currentPeriod, periodList:[]});
-        this.revertPeriod = this.revertPeriod.bind(this);
+        const fields = FieldGroupUtils.getGroupFields(pfinderkey);
+        this.state = Object.assign({}, pick(layoutInfo, ['mode']), {displayMode: props.displayMode, fields});
+
+        this.getNextState = () => {
+            const layout = pick(getLayouInfo(), ['mode', 'displayMode']);
+            const fields = FieldGroupUtils.getGroupFields(pfinderkey);
+
+            return Object.assign({}, layout, {fields});
+        };
     }
 
     shouldComponentUpdate(np, ns) {
@@ -160,84 +166,25 @@ export class LcPeriod extends Component {
         this.removeListener && this.removeListener();
     }
 
-    getCurrentValidPeriod() {
-        var fields = FieldGroupUtils.getGroupFields(pfinderkey);
-        var period =  get(fields, ['period', 'valid']) && get(fields, ['period', 'value']);
-
-        return period ? period : '';
-    }
 
     storeUpdate() {
         if (this.iAmMounted) {
-            const nextState = pick(getLayouInfo(), ['mode']);
-            const cState = pick(this.state, ['mode']);
-            const nextLayout = pick(getLayouInfo(), ['displayMode']);
-            const cLayout = pick(this.state, ['displayMode']);
+            const nextState = this.getNextState();
 
-            if (!isEmpty(nextState) && cState !== nextState) {
-               this.setState(nextState);
-            }
-            if (!isEmpty(nextLayout) && nextLayout !== cLayout) {
-                this.setState(nextLayout);
-            }
-
-            var {periodList, currentPeriod} = this.state;
-            var newPeriod = this.getCurrentValidPeriod();
-            var bRevert = (lastFrom(periodList) === 'revert');
-
-            if (bRevert) {
-                currentPeriod = newPeriod;
-                periodList.pop();          // remove 'revert' flag on the top
-                this.setState({currentPeriod,
-                               lastPeriod: lastFrom(periodList),
-                               periodList});
-            } else {
-                var bUpdate = false;
-
-                if (!newPeriod) {     // period: empty string
-                    this.setState({currentPeriod: ''});       // non valid current
-                    if (currentPeriod) bUpdate = true;        // current->last
-                } else if (newPeriod !== currentPeriod) {
-                    this.setState({currentPeriod: newPeriod}); // valid current
-                    if (currentPeriod) {                       // current->last
-                        bUpdate = true;
-                    } else {                                   // new period is the same as last period
-                        if (lastFrom(periodList) === newPeriod) {
-                            periodList.pop();
-                            this.setState({lastPeriod: lastFrom(periodList), periodList});
-                        }
-                    }
-                }
-                if (bUpdate) {      // current -> top of history if not exist
-                    if (currentPeriod !== lastFrom(periodList)) {
-                        periodList.push(currentPeriod);
-                        this.setState({lastPeriod: currentPeriod, periodList});
-                    }
-                }
+            const {displayMode} = nextState;
+            if (displayMode && displayMode.startsWith('period') && nextState) {
+                this.setState(nextState);
             }
         }
     }
 
-    revertPeriod() {
-        var {periodList, lastPeriod} = this.state;
-
-        if ((periodList.length >= 1) && (periodList[periodList.length-1] === lastPeriod)) {
-            periodList[periodList.length-1] = 'revert';      // a flag to block adding new item to the list in store{
-
-            dispatchValueChange({
-                    fieldKey: fKeyDef.period.fkey,
-                    groupKey: pfinderkey,
-                    value: lastPeriod
-                });
-        }
-    }
 
     render() {
-        const {mode, displayMode, lastPeriod, currentPeriod} = this.state;
+        const {mode, displayMode, fields} = this.state;
         var {expanded} = mode || {};
 
         expanded = LO_VIEW.get(expanded) || LO_VIEW.none;
-        var standardProps = {...this.props, lastPeriod, currentPeriod, displayMode, revertPeriod: this.revertPeriod};
+        var standardProps = {...this.props,  displayMode, fields};  // period is for accept period display
         var expandProps = {expanded, displayMode};
 
         return (
@@ -266,14 +213,27 @@ LcPeriod.defaultProps = {
 };
 
 /**
+ * @summary cancel from stardard view
+ */
+function cancelStandard() {
+    if (isDialogVisible(popupId)) {
+        cancelPeriodogram(pfinderkey, popupId)();
+    }
+
+    updateLayoutDisplay(LC.RESULT_PAGE);
+    dispatchActiveTableChanged(getActiveTableId()||LC.RAW_TABLE);
+    resetPeriodDefaults(defPeriod);
+}
+
+/**
  * @summary stardard mode of period layout
  * @param props
  * @returns {XML}
  * @constructor
  */
 const PeriodStandardView = (props) => {
-    var {displayMode, lastPeriod, currentPeriod, revertPeriod} = props;
-    const fields = FieldGroupUtils.getGroupFields(pfinderkey);
+    var {displayMode, fields} = props;
+    var currentPeriod = fields && getValidValueFrom(fields, 'period');
     var initState = {};
 
     // when field is not set yet, set the init value
@@ -283,12 +243,12 @@ const PeriodStandardView = (props) => {
                                    flux: fluxColName,
                                    timeCols: validTimeColumns,
                                    fluxCols: validFluxColumns}, {...periodRange});
+        currentPeriod = initState.min;
     }
 
     const acceptPeriodTxt = `Accept Period: ${currentPeriod ? currentPeriod : ''}`;
-    const revertPeriodTxt = `Back to Period: ${lastPeriod ? lastPeriod : ''}`;
     const space = 5;
-    const aroundButton = {marginLeft: space, marginRight: space};
+    const aroundButton = {margin: space};
 
     return (
         <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, position: 'relative'}}>
@@ -297,25 +257,29 @@ const PeriodStandardView = (props) => {
                     <FieldGroup groupKey={pfinderkey}
                                 reducerFunc={LcPFReducer(initState)}  keepState={true}>
                     <SplitPane split='horizontal' minSize={100} defaultSize={'90%'}>
-                        <SplitPane split='vertical' minSize={20} defaultSize={PanelResizableStyle.width}>
-                            <SplitPane split='horizontal' minSize={20} defaultSize={'45%'}>
-                                {createContentWrapper(<LcPFOptionsBox />)}
+                        <SplitPane split='horizontal' minSize={100} defaultSize={'50%'}>
+                            <SplitPane split='vertical' minSize={20} defaultSize={PanelResizableStyle.width} allowResize={false}>
+                                {createContentWrapper(<LcPFOptionsBox/>)}
                                 {createContentWrapper(<PhaseFoldingChart />)}
                             </SplitPane>
-                            {createContentWrapper(<LcPeriodogram displayMode={displayMode} groupKey={pfinderkey}/>)}
+                            {createContentWrapper(
+                                <SplitPane split='horizontal' minSize={10} defaultSize={30}>
+                                    {displayMode===LC.PERGRAM_PAGE ?
+                                        <div style={aroundButton}>
+                                            <button type='button'
+                                                    className='button std hl'
+                                                    onClick={startPeriodogramPopup(LC.FG_PERIODOGRAM_FINDER)}>Change Periodogram
+                                            </button>
+                                        </div> : <div></div>}
+                                    <LcPeriodogram displayMode={displayMode} />
+                                </SplitPane>)}
                         </SplitPane>
                         <div style={{width: '100%', position: 'absolute',
                                      height: 20, marginTop: 5, marginBottom: 5,
                                      display: 'flex', justifyContent: 'flex-end'}}>
-                            {displayMode===LC.PERGRAM_PAGE &&
-                                <div style={aroundButton}>
-                                    <button type='button'
-                                            className='button std hl'
-                                            onClick={startPeriodogramPopup(pfinderkey)}>Change Periodogram</button>
-                                </div>}
                             <div style={aroundButton}>
-                                <button type='button' className='button std hl' onClick={revertPeriod}>
-                                        {revertPeriodTxt}
+                                <button type='button' className='button std hl' onClick={()=>cancelStandard()}>
+                                    Cancel
                                 </button>
                             </div>
                             <CompleteButton
@@ -326,11 +290,6 @@ const PeriodStandardView = (props) => {
                                     text={acceptPeriodTxt}
                                     includeUnmounted={true}
                             />
-                            <div style={{marginLeft: space}}>
-                                <button type='button' className='button std hl' onClick={cancelPeriodSetting()}>
-                                        Cancel
-                                </button>
-                            </div>
                         </div>
                     </SplitPane>
                     </FieldGroup>
@@ -343,18 +302,16 @@ const PeriodStandardView = (props) => {
 
 PeriodStandardView.propTypes = {
     displayMode: PropTypes.string,
-    lastPeriod: PropTypes.string,
-    currentPeriod: PropTypes.string,
-    revertPeriod: PropTypes.func,
     timeColName: PropTypes.string,
     fluxColName: PropTypes.string,
     validTimeColumns: PropTypes.arrayOf(PropTypes.string),
-    validFluxColumns: PropTypes.arrayOf(PropTypes.string)
+    validFluxColumns: PropTypes.arrayOf(PropTypes.string),
+    fields: PropTypes.object
 };
 
 
 const PeriodExpandedView = ({expanded, displayMode}) => {
-    const expandedProps = {expanded, displayMode, groupKey: pfinderkey};
+    const expandedProps = {expanded, displayMode};
 
     return (
         <LcPeriodogram  {...expandedProps} />
@@ -425,6 +382,7 @@ class PhaseFoldingChart extends Component {
                     gridLineColor: '#e9e9e9'
                 },
                 tooltip: showTooltip ? {enabled: true,
+                    borderColor: '#a3aeb9',
                     formatter() {
                         return ('<span>' +
                         `${LC.PHASE_CNAME} = ${this.x.toFixed(DEC_PHASE)} <br/>` +
@@ -518,26 +476,26 @@ PhaseFoldingChart.propTypes = {
  */
 function getPhaseFlux(fields) {
     var rawTable = getTblById(LC.RAW_TABLE);
-    var {columns, data} = rawTable.tableData;    // column names and data
+    var {data} = rawTable.tableData;    // column names and data
 
     var {time, period, tzero, flux} = fields;
     const tc = time ? time.value : '';
     const fc = flux ? flux.value: '';
-    const tIdx = tc ? columns.findIndex((c) => (c.name === tc)) : -1;  // find time column
-    const fIdx = fc ? columns.findIndex((c) => (c.name === fc)) : -1;  // find flux column
+    const tIdx = tc ? getColumnIdx(rawTable, tc) : -1;  // find time column
+    const fIdx = fc ? getColumnIdx(rawTable, fc) : -1;  // find flux column
 
     if (tIdx < 0 || fIdx < 0) return {};
 
     var pd, tz;
 
     if (period){
-        if (!period.valid) return {};    // invalid period
+        if (!period.valid) return {flux: fc};    // invalid period
         pd = parseFloat(period.value);
     } else {
         pd = periodRange.min;
     }
     if (tzero) {
-        if (!tzero.valid) return {};      // invalid period
+        if (!tzero.valid) return {flux: fc};      // invalid period
         tz = parseFloat(tzero.value);
     } else {
         tz = periodRange.tzero;
@@ -571,13 +529,15 @@ function getPhaseFlux(fields) {
 class LcPFOptionsBox extends Component {
     constructor(props) {
         super(props);
+        var fields = FieldGroupUtils.getGroupFields(pfinderkey);
 
-        const fields = FieldGroupUtils.getGroupFields(pfinderkey);
-        const maxPeriod = fields && get(fields, ['periodMax', 'value']);
-        const minPeriod = fields && get(fields, ['periodMin', 'value']);
-        const period = fields && get(fields, ['period', 'value']);
-        this.state = {fields: FieldGroupUtils.getGroupFields(pfinderkey),
-                      minPeriod, maxPeriod, period};
+        const period = getValidValueFrom(fields, 'period');       // same as for 'accept period'
+        const lastPeriod = '';                                    // used for 'revert to' button display
+        this.state = {fields, period, lastPeriod, periodList: []};
+    }
+
+    shouldComponentUpdate(np, ns) {
+        return sCompare(this, np, ns);
     }
 
     componentWillUnmount() {
@@ -589,143 +549,164 @@ class LcPFOptionsBox extends Component {
     componentDidMount() {
         this.iAmMounted= true;
         this.unbinder= FieldGroupUtils.bindToStore(pfinderkey, (fields) => {
-            if (this && this.iAmMounted && fields!==this.state.fields) {
+            if (this && this.iAmMounted && fields !== this.state.fields) {
 
-                const maxPeriod = fields && get(fields, ['periodMax', 'valid']) && get(fields, ['periodMax', 'value']);
-                const minPeriod = fields && get(fields, ['periodMin', 'valid']) && get(fields, ['periodMin', 'value']);
-                const period =  fields && get(fields, ['period', 'valid']) && get(fields, ['period', 'value']);
-                var   newState = {fields};
+                var {periodList, period, lastPeriod} = this.state;
+                var newPeriod = getValidValueFrom(fields, 'period');
+                var bRevert = (lastFrom(periodList) === 'revert');
+                var periodToList = '';
 
-                if (maxPeriod) {
-                    newState = Object.assign({}, newState, {maxPeriod});
+                if (bRevert) {                 // revert from last period
+                    period = newPeriod;
+                    periodList.pop();          // remove 'revert' flag on the top
+                    lastPeriod = lastFrom(periodList);
+                } else {
+                    if (!newPeriod) {         // new period is empty string
+                        if (period) periodToList = period;   // save current period
+                        period = '';
+                    } else if (newPeriod !== period) {      // new period not empty string, different from current
+                        if (period) {                       // save current period
+                            periodToList = period;
+                        } else {                            // current period is empty
+                            if (lastFrom(periodList) === newPeriod) {
+                                periodList.pop();
+                                lastPeriod = lastFrom(periodList);
+                            }
+                        }
+                        period = newPeriod;
+                    }
+                    if (periodToList && periodToList !== lastFrom(periodList)) {      // current -> top of history if not exist
+                        periodList.push(periodToList);
+                        lastPeriod = periodToList;
+                    }
                 }
-                if (minPeriod) {
-                    newState = Object.assign({}, newState, {minPeriod});
-                }
-                if (period) {
-                    newState = Object.assign({}, newState, {period});
-                }
+
+                var newState = {fields, lastPeriod, period, periodList};
 
                 this.setState(newState);
             }
         });
     }
 
+
     render() {
-        var {minPeriod, maxPeriod, period} = this.state;   // only pass valid minPeriod & maxPeriod defined previously
+        var optionProps = pick(this.state, ['fields', 'lastPeriod', 'periodList']);
 
         return (
-                <LcPFOptions minPeriod={minPeriod} maxPeriod={maxPeriod} period={period}/>
+                <LcPFOptions {...optionProps} />
         );
-
     }
 }
+
 
 /**
  * @summary light curve phase folding FieldGroup rendering
  */
 
-function LcPFOptions({period, minPeriod, maxPeriod}) {
+function LcPFOptions({fields, lastPeriod, periodList=[]}) {
 
-    if (!maxPeriod || !minPeriod || !period) return <span />;   // when there is no field defined in the beginning
+    if (!fields) return <span />;   // when there is no field defined in the beginning
 
-    const step = STEP;
-    var min = parseFloat(minPeriod);                                     // number, stop min
-    var minFixed = parseFloat(parseFloat(minPeriod).toFixed(DEC_PHASE)); // number, fixed decimal of min (<= min)
-    var max = parseFloat(maxPeriod);                                     // number, stop max
+    const maxPeriod = getValidValueFrom(fields, 'periodMax');
+    const minPeriod = getValidValueFrom(fields, 'periodMin');
 
-    SliderMax = adjustMax(max, SliderMin, step).max;    // number, [SliderMin, SliderMax] covers [min, max]
-
-    function  markStyle(per, val) {
-        return {style: {left: `${per}%`, marginLeft: -16, width: 40}, label: `${val}`};
-    }
+    const revertPeriodTxt = `Undo: ${lastPeriod ? lastPeriod : ''}`;
+    var minPerN = minPeriod ? parseFloat(minPeriod) : periodRange.min;
+    var maxPerN = maxPeriod ? parseFloat(maxPeriod) : periodRange.max;
+    var period = get(fields, [fKeyDef.period.fkey, 'value']) || `${periodRange.min}`;
 
     // marks on the slider, marks on two ends: min and SliderMax
-    var getMarks = (sliderMin, sliderMax, noMarks) => {
+    var getSliderMarks = (periodMin, periodMax, sliderMin, sliderMax, noMarks) => {
         const sliderSize = sliderMax - sliderMin;
-        const intMark = (sliderSize)/(noMarks - 1);
+        const intMark = (periodMax - periodMin)/(noMarks - 1);
 
-        // min sits at the first mark, all other marks evenly spread on the slider
-        var marks = Object.assign({}, {[minFixed]: markStyle(100*(minFixed-sliderMin)/sliderSize, minFixed)});
+        var markStyle = (per, val) => ({style: {left: `${per}%`, marginLeft: -16, width: 40}, label: `${val}`});
 
         // make an array like [0, 1, 2, ...] and produce marks between two ends of Slider min and max
-        marks = [...Array(noMarks).keys()].slice(1).reduce((prev, m) => {
-            var val = parseFloat((intMark * m + sliderMin).toFixed(DEC_PHASE));
+        return [...new Array(noMarks).keys()].reduce((prev, m) => {
+            var val = parseFloat((intMark * m + periodMin).toFixed(DEC_PHASE));
             var per = 100*(val - sliderMin)/sliderSize;
 
             prev = Object.assign(prev, {[val]: markStyle(per, val)});
             return prev;
-        }, marks);
+        }, {});
+    };
 
-        return marks;
+    var revertPeriod = () => {
+        if ((periodList.length >= 1) && (periodList[periodList.length-1] === lastPeriod)) {
+            periodList[periodList.length-1] = 'revert';      // a flag to block adding new item to the list in store{
+
+            dispatchValueChange({
+                fieldKey: fKeyDef.period.fkey,
+                groupKey: pfinderkey,
+                value: lastPeriod
+            });
+        }
     };
 
     const NOMark = 5;
-    var marks = getMarks(SliderMin, SliderMax, NOMark);
+    const {min:sliderMin, max:sliderMax, stepSize} = adjustSliderEnds(minPerN, maxPerN);  //number
+    var marks = getSliderMarks(minPerN, maxPerN, sliderMin, sliderMax, NOMark);
+    var offset = 16;
+    var highlightW = PanelResizableStyle.width-panelSpace - offset;
+    var pSize = panelSpace/2 - 5;
 
-    return (<div>
-                <SuggestBoxInputField
-                    fieldKey={fKeyDef.time.fkey}
-                    getSuggestions = {(val)=>{
-                            const suggestions = validTimeSuggestions.filter((el)=>{return el.startsWith(val);});
-                            return suggestions.length > 0 ? suggestions : validTimeSuggestions;
-                        }}
-
-                />
+    return (<div style={{width: PanelResizableStyle.width - offset}}>
                 <br/>
-                <SuggestBoxInputField
-                    fieldKey={fKeyDef.flux.fkey}
-                    getSuggestions = {(val)=>{
-                            const suggestions = validFluxSuggestions.filter((el)=>{return el.startsWith(val);});
-                            return suggestions.length > 0 ? suggestions : validFluxSuggestions;
-                        }}
-
-                />
+                {ReadOnlyText({label: get(defValues, [fKeyDef.time.fkey, 'label']),
+                               labelWidth: get(defValues, [fKeyDef.time.fkey, 'labelWidth']),
+                               content: get(fields, [fKeyDef.time.fkey, 'value'])})}
+                <br/>
+                {ReadOnlyText({label: get(defValues, [fKeyDef.flux.fkey, 'label']),
+                               labelWidth: get(defValues, [fKeyDef.flux.fkey, 'labelWidth']),
+                               content: get(fields, [fKeyDef.flux.fkey, 'value'])})}
                 <br/>
                 <ValidationField fieldKey={fKeyDef.tz.fkey} />
                 <br/>
-                <RangeSlider fieldKey={fKeyDef.period.fkey}
-                             min={SliderMin}
-                             max={SliderMax}
-                             minStop={min}
-                             maxStop={max}
-                             marks={marks}
-                             step={step}
-                             tooptip={'slide to set period value'}
-                             slideValue={period}
-                             defaultValue={min}
-                             wrapperStyle={{marginBottom: 20, width: PanelResizableStyle.width*4/5}}
-                             sliderStyle={{marginLeft: 10, marginTop: 20}}
-                             decimalDig={DEC_PHASE}
-                />
                 <br/>
-                <br/>
-                <br/>
-                <div style={{display: 'flex'}}>
-                    <ValidationField fieldKey={fKeyDef.min.fkey} />
-                    <ValidationField fieldKey={fKeyDef.max.fkey} />
+                <div style={{display: 'flex', alignItems: 'center'}}>
+                    <ValidationField fieldKey={fKeyDef.min.fkey} style={{width: pSize}}/>
+                    <RangeSlider fieldKey={fKeyDef.period.fkey}
+                                 min={sliderMin}
+                                 max={sliderMax}
+                                 minStop={minPerN}
+                                 maxStop={maxPerN}
+                                 marks={marks}
+                                 step={stepSize}
+                                 tooptip={'slide to set period value'}
+                                 slideValue={period}
+                                 defaultValue={minPerN}
+                                 wrapperStyle={{marginBottom: 20, marginLeft: 9, marginRight: 25, width: highlightW}}
+                                 decimalDig={DEC_PHASE}
+                    />
+                    <ValidationField fieldKey={fKeyDef.max.fkey} style={{width: pSize}}/>
                 </div>
                 <br/>
-                <div style={{marginTop: 20, width: PanelResizableStyle.width,
-                             display: 'flex', justifyContent: 'center'}}>
-                    <ValidationField fieldKey={fKeyDef.period.fkey} />
+                <div style={{display: 'flex', alignItems: 'center', marginTop: 20 }}>
+                    <div style={{padding: 10, width: highlightW - 10,
+                                 display: 'flex', justifyContent: 'space-between',
+                                 border: highlightBorder}}>
+                        <ValidationField fieldKey={fKeyDef.period.fkey} />
+                        <div>
+                            <button type='button' className='button std hl' onClick={revertPeriod}>
+                                {revertPeriodTxt}
+                            </button>
+                        </div>
+                    </div>
+                    <div style={{marginLeft: 30}} >
+                        <button type='button' className='button std hl'  onClick={() => resetPeriodDefaults(defPeriod)}>
+                            <b>Reset</b>
+                        </button>
+                    </div>
                 </div>
-                <br/>
-                <br/>
-                <div style={{marginTop: 25}}>
-                    <button type='button' className='button std hl'  onClick={() => resetDefaults()}>
-                        <b>Reset</b>
-                    </button>
-                </div>
-                <br/>
-        </div>
+            </div>
     );
 }
 
 LcPFOptions.propTypes = {
-    minPeriod: PropTypes.string,
-    maxPeriod: PropTypes.string,
-    period: PropTypes.string
+    lastPeriod: PropTypes.string,
+    periodList: PropTypes.arrayOf(PropTypes.string),
+    fields: PropTypes.object
 };
 
 /**
@@ -734,10 +715,16 @@ LcPFOptions.propTypes = {
  * @return {object}
  */
 var LcPFReducer= (initState) => {
+        var initPeriodValues = (fromFields) => {
+            Object.keys(defPeriod).forEach((key) => {
+                set(defPeriod, [key, 'value'], get(fromFields, [key, 'value']));
+            });
+        };
+
         return (inFields, action) => {
             if (!inFields) {
                 var defV = Object.assign({}, defValues);
-                const {min, max, time, flux, timeCols, fluxCols, tzero,  tzeroMax} = initState || {};
+                const {min, max, time, flux, tzero,  tzeroMax} = initState || {};
 
                 set(defV, [fKeyDef.min.fkey, 'value'], `${min}`);
                 set(defV, [fKeyDef.max.fkey, 'value'], `${max}`);
@@ -745,8 +732,6 @@ var LcPFReducer= (initState) => {
                 set(defV, [fKeyDef.flux.fkey, 'value'], flux);
                 set(defV, [fKeyDef.period.fkey, 'value'], `${min}`);
                 set(defV, [fKeyDef.tz.fkey, 'value'], `${tzero}`);
-                set(defV, [fKeyDef.timecols.fkey, 'value'], timeCols);
-                set(defV, [fKeyDef.fluxcols.fkey, 'value'], fluxCols);
                 set(defV, [fKeyDef.tzmax.fkey, 'value'], `${tzeroMax}`);
 
                 set(defV, [fKeyDef.period.fkey, 'tooltip'], `Period for phase folding, within [${min} (i.e. 1 sec), ${max}(suggestion)]`);
@@ -754,38 +739,153 @@ var LcPFReducer= (initState) => {
 
                 set(defV, [fKeyDef.min.fkey, 'validator'], periodMinValidator('minimum period'));
                 set(defV, [fKeyDef.max.fkey, 'validator'], periodMaxValidator('maximum period'));
-                set(defV, [fKeyDef.tz.fkey, 'validator'], timezeroValidator(8, 'time zero'));
-                set(defV, [fKeyDef.period.fkey, 'validator'], periodValidator(8, 'pediod'));
+                set(defV, [fKeyDef.tz.fkey, 'validator'], timezeroValidator('time zero'));
+                set(defV, [fKeyDef.period.fkey, 'validator'], periodValidator('pediod'));
 
                 set(defV, [fKeyDef.period.fkey, 'errMsg'], periodErr);
+
+                initPeriodValues(defV);
                 return defV;
+            } else {
+                switch (action.type) {
+                    case FieldGroupCntlr.MOUNT_FIELD_GROUP:
+                        initPeriodValues(inFields);
+                        break;
+                    case FieldGroupCntlr.VALUE_CHANGE:
+                        var period = getValidValueFrom(inFields, fKeyDef.period.fkey);
+                        const maxPer = getValidValueFrom(inFields, fKeyDef.max.fkey);
+                        const minPer = getValidValueFrom(inFields, fKeyDef.min.fkey);
+
+
+                        // key: period: increase max in case updated period is greater than max or less than min
+                        //      max:    decrease period in case updated max is less than period
+                        //      min:    increase period in case updated min is greater than min
+
+                        if (period && (action.payload.fieldKey === fKeyDef.max.fkey)) {
+                            if (maxPer && (parseFloat(period) > parseFloat(maxPer))) {
+                                inFields = updateSet(inFields, [fKeyDef.period.fkey, 'value'], maxPer);
+                            }
+                        } else if (period && (action.payload.fieldKey === fKeyDef.min.fkey)) {
+                            if (minPer && parseFloat(period) < parseFloat(minPer)) {
+                                inFields = updateSet(inFields, [fKeyDef.period.fkey, 'value'], minPer);
+                            }
+                        } else if (period && (action.payload.fieldKey === fKeyDef.period.fkey)) {
+                            if (maxPer && (parseFloat(period) > parseFloat(maxPer))) {
+                                inFields = updateSet(inFields, [fKeyDef.max.fkey, 'value'], period);
+                            } else if (minPer && isBetween(periodRange.min, parseFloat(minPer), parseFloat(period))) {
+                                inFields = updateSet(inFields, [fKeyDef.min.fkey, 'value'], period);
+                            }
+                        }
+                        var retval;
+                        period = get(inFields, [fKeyDef.period.fkey, 'value']);
+
+                        var validatePeriod = (valStr, min, max) => {
+                            var ret = Validate.isFloat('period', valStr);
+
+                            if (!ret.valid || !valStr) return {valid: false, message: 'period must be a float'};
+                            var minV = parseFloat(min);
+                            var maxV = parseFloat(max);
+                            var val = parseFloat(valStr);
+
+                            return (val >= minV && val <= maxV) ? {valid: true} :
+                                    {valid:false, message: `period must be between ${minV} and ${maxV}`};
+
+                        };
+
+                        // recheck period min & period after period max is updated as valid
+                        if (maxPer && (action.payload.fieldKey === fKeyDef.max.fkey)) {
+                            var minP = get(inFields, [fKeyDef.min.fkey, 'value']);
+
+                            retval = isPeriodMinValid(minP, 'minimum period');
+                            inFields = updateSet(inFields, [fKeyDef.min.fkey, 'valid'], retval.valid);
+                            inFields = updateSet(inFields, [fKeyDef.min.fkey, 'message'], retval.message);
+
+                            if (retval.valid) {
+                                retval = validatePeriod(period, minP, maxPer);
+                                inFields = updateSet(inFields, [fKeyDef.period.fkey, 'valid'], retval.valid);
+                                inFields = updateSet(inFields, [fKeyDef.period.fkey, 'message'], retval.message);
+                            }
+
+                        }
+                        // recheck period max & period after period min is updated as valid
+                        if (minPer && (action.payload.fieldKey === fKeyDef.min.fkey)) {
+                            var maxP = get(inFields, [fKeyDef.max.fkey, 'value']);
+
+                            retval = isPeriodMaxValid(maxP, 'maximum period');
+                            inFields = updateSet(inFields, [fKeyDef.max.fkey, 'valid'], retval.valid);
+                            inFields = updateSet(inFields, [fKeyDef.max.fkey, 'message'], retval.message);
+
+                            if (retval.valid) {
+                                retval = validatePeriod(period, minPer, maxP);
+                                inFields = updateSet(inFields, [fKeyDef.period.fkey, 'valid'], retval.valid);
+                                inFields = updateSet(inFields, [fKeyDef.period.fkey, 'message'], retval.message);
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                } 
             }
             return Object.assign({}, inFields);
         };
     };
 
 /**
+ * @summary validate minimum period
+ * @param valStr
+ * @param description
+ * @returns {*}
+ */
+var isPeriodMinValid = (valStr, description) => {
+    var retval;
+
+    retval = Validate.isFloat(description, valStr);
+    if (!retval.valid || !valStr) return {retval: false, message: `${description}: must be a float`};
+
+    var val = parseFloat(valStr);
+    var max = getValidValueFrom(FieldGroupUtils.getGroupFields(pfinderkey), fKeyDef.max.fkey);
+    var mmax = max ? parseFloat(max) : periodRange.max;
+
+    return (val >= periodRange.min && val < mmax) ? {valid: true} :
+            {valid: false, message: `${description}: must be between ${periodRange.min} and ${max}`};
+
+};
+
+/**
+ * @summary validate maximum period
+ * @param valStr
+ * @param description
+ * @returns {*}
+ */
+var isPeriodMaxValid = (valStr, description) => {
+    var retval;
+
+    retval = Validate.isFloat(description, valStr);
+    if (!retval.valid || !valStr) return {retval: false, message: `${description}: must be a float`};
+
+    var val = parseFloat(valStr);
+    var min = getValidValueFrom(FieldGroupUtils.getGroupFields(pfinderkey), fKeyDef.min.fkey);
+    var mmin = min ? parseFloat(min) : periodRange.min;
+
+    return (val > mmin) ? {valid: true} :
+                          {valid: false, message: `${description}: must be greater than ${mmin}`};
+};
+
+/**
  * @summary validator for periopd value
- * @param {number} precision
  * @param {string} description
  * @returns {function}
  */
-function periodValidator(precision, description) {
+function periodValidator(description) {
     return (valStr) => {
         var retRes = Validate.isFloat(description, valStr);
 
         if (retRes.valid) {
-            var fields = FieldGroupUtils.getGroupFields(pfinderkey);
-            var max = get(fields, [fKeyDef.max.fkey, 'valid']) && get(fields, [fKeyDef.max.fkey, 'value']);
-            max = max ? parseFloat(max) : periodRange.max;
-            var min = get(fields, [fKeyDef.min.fkey, 'valid']) && get(fields, [fKeyDef.min.fkey, 'value']);
-            min = min ? parseFloat(min) : periodRange.min;
-
-            retRes = Validate.floatRange(min, max, precision, description, valStr);
-            if (!valStr || !retRes.valid) {
+            if (!valStr || parseFloat(valStr) < periodRange.min) {
                 return {
                     valid: false,
-                    message: `period: must be between ${min} and ${max}`
+                    message:  `period: must be greater than ${periodRange.min}`
+                    //message: `period: must be between ${min} and ${max}`
                 };
             }
         }
@@ -800,18 +900,7 @@ function periodValidator(precision, description) {
  */
 function periodMinValidator(description) {
     return (valStr) => {
-        var retRes = Validate.isFloat(description, valStr);
-
-        if (retRes.valid) {
-            var val = valStr && parseFloat(valStr);
-            var max = get(FieldGroupUtils.getGroupFields(pfinderkey), [fKeyDef.max.fkey, 'value']);
-            max = max ? parseFloat(max) : periodRange.max;
-
-            if (!valStr || (val < periodRange.min || val >= max)) {    // can not be less than the computed minimum
-                return {valid: false, message: description + `: must be between ${periodRange.min} and ${max}`} ;
-            }
-        }
-        return retRes;
+        return isPeriodMinValid(valStr, description);
     };
 }
 
@@ -822,46 +911,29 @@ function periodMinValidator(description) {
  */
 function periodMaxValidator(description) {
     return (valStr) => {
-        var retRes = Validate.isFloat(description, valStr);
-
-        if (retRes.valid) {
-            var val = valStr && parseFloat(valStr);
-            var min = get(FieldGroupUtils.getGroupFields(pfinderkey), [fKeyDef.min.fkey, 'value']);
-            min = min ? parseFloat(min) : periodRange.min;
-
-            if (!valStr || (val <= min || val > periodRange.max) ) {   // can not be greater than computed maximum
-                return {valid: false, message: description + `: must be between ${min} and ${periodRange.max}`};
-            }
-        }
-        return retRes;
+        return isPeriodMaxValid(valStr, description);
     };
 }
 /**
  * @summary time zero validator
- * @param {number} precision
  * @param {string} description
  * @returns {function}
  */
-function timezeroValidator(precision, description) {
+function timezeroValidator(description) {
     return (valStr) => {
         var retRes = Validate.isFloat(description, valStr);
 
         if (retRes.valid) {
-            retRes = Validate.floatRange(periodRange.tzero, periodRange.tzeroMax, precision, description, valStr);
-
-            if (retRes.valid) {
-                if (!valStr) {
-                    return {
-                        valid: false,
-                        message: description + `: must be between ${periodRange.tzero} and ${periodRange.tzeroMax}`
-                    };
-                }
+            if (!valStr || parseFloat(valStr) < 0) {
+                return {
+                    valid: false,
+                    message: `${description}: must be greater than 0.0`
+                };
             }
         }
         return retRes;
     };
 }
-
 
 /**
  * @summary callback to create table with phase folding column and phase folding chart based on the accepted period value
@@ -869,31 +941,18 @@ function timezeroValidator(precision, description) {
  */
 function setPFTableSuccess() {
     return (request) => {
-        doPFCalculate();
         var reqData = get(request, pfinderkey);
         var timeName = get(reqData, fKeyDef.time.fkey);
         var period = get(reqData, fKeyDef.period.fkey);
         var flux = get(reqData, fKeyDef.flux.fkey);
+        var tzero = get(reqData, fKeyDef.tz.fkey);
 
-        repeatDataCycle(timeName, parseFloat(period), currentPhaseFoldedTable);
+        var phaseFoldedTable = doPFCalculate(flux, timeName, period, tzero);
+        phaseFoldedTable&&uploadPhaseTable(phaseFoldedTable,  flux);
 
-        const {tableData, tbl_id, tableMeta, title} = currentPhaseFoldedTable;
-        const ipacTable = tableToText(tableData.columns, tableData.data, true, tableMeta);
-        const file = new File([new Blob([ipacTable])], `${tbl_id}.tbl`);
-
-        doUpload(file).then(({status, cacheKey}) => {
-            const tReq = makeFileRequest(title, cacheKey, null, {tbl_id, sortInfo:sortInfoString(LC.PHASE_CNAME)});
-            dispatchTableSearch(tReq, {removable: false});
-
-            const xyPlotParams = {
-                userSetBoundaries: {xMax: 2},
-                x: {columnOrExpr: LC.PHASE_CNAME, options: 'grid'},
-                y: {columnOrExpr: flux, options: 'grid,flip'}
-            };
-            loadXYPlot({chartId: LC.PHASE_FOLDED, tblId: LC.PHASE_FOLDED, xyPlotParams});
-        });
-
-        updateLayoutDisplay(LC.RESULT_PAGE);
+        if (isDialogVisible(popupId)) {
+            cancelPeriodogram(pfinderkey, popupId)();
+        }
     };
 }
 
@@ -907,179 +966,54 @@ function setPFTableFail() {
     };
 }
 
-/**
- * @summary adding phase column to raw table
- */
-function doPFCalculate() {
-    const fields = FieldGroupUtils.getGroupFields(pfinderkey);
-    const rawTable = getTblById(LC.RAW_TABLE);
-
-    currentPhaseFoldedTable = rawTable && addPhaseToTable(rawTable, fields);
-}
 
 /**
- * @summary create a table model with phase column
- * @param {TableModel} tbl
- * @param {Object} fields
- * @returns {TableModel}
- */
-function addPhaseToTable(tbl, fields) {
-    var {time, period, tzero} = fields;
-    var {columns} = tbl.tableData;
-    var tc = time ? time.value : 'mjd';
-    var tIdx = tc ? columns.findIndex((c) => (c.name === tc)) : -1;
-
-    if (tIdx < 0) return null;
-
-    var pd = period ? parseFloat(period.value) : periodRange.min;
-    var tz = tzero ? parseFloat(tzero.value) : periodRange.tzero;
-    var tPF = Object.assign(cloneDeep(tbl), {tbl_id: LC.PHASE_FOLDED, title: 'Phase Folded'},
-        {request: getPhaseFoldingRequest(fields, tbl)},
-        {highlightedRow: 0});
-    tPF = omit(tPF, ['hlRowIdx', 'isFetching']);
-
-    var phaseC = {desc: 'number of period elapsed since starting time.',
-        name: LC.PHASE_CNAME, type: 'double', width: 20 };
-
-    tPF.tableData.columns.push(phaseC);          // add phase column
-
-    tPF.tableData.data.forEach((d, index) => {   // add phase value (in string) to each data
-
-        tPF.tableData.data[index].push(getPhase(parseFloat(d[tIdx]), tz, pd));
-    });
-
-    return tPF;
-}
-
-/**
- * @summary create table request object for phase folded table
- * @param {Object} fields
- * @param {TableModel} tbl
- * @returns {TableRequest}
- */
-function getPhaseFoldingRequest(fields, tbl) {
-    return makeTblRequest('PhaseFoldedProcessor', LC.PHASE_FOLDED, {
-        'period_days': fields&&get(fields, 'period.value'),
-        'table_name': 'folded_table',
-        'x': fields&&get(fields, 'time.value'),
-        'original_table': tbl.tableMeta.tblFilePath
-    },  {tbl_id:LC.PHASE_FOLDED});
-
-}
-
-/**
- * @summary calculate phase and return as text
- * @param {number} time
- * @param {number} timeZero
- * @param {number} period
- * @param {number} dec
- * @returns {string}  folded phase (positive or negative) with 'dec'  decimal digits
- */
-function getPhase(time, timeZero, period,  dec=DEC_PHASE) {
-    var q = (time - timeZero)/period;
-    var p = q >= 0  ? (q - Math.floor(q)) : (q + Math.floor(-q));
-
-    return p.toFixed(dec);
-}
-
-/**
- * @summary duplicate the phase cycle to the phase folded table
- * @param {string} timeCol
- * @param {number} period
- * @param {TableModel} phaseTable
- */
-function repeatDataCycle(timeCol, period, phaseTable) {
-    var tIdx = phaseTable.tableData.columns.findIndex((c) => (c.name === timeCol));
-    var fIdx = phaseTable.tableData.columns.findIndex((c) => (c.name === LC.PHASE_CNAME));
-    var {totalRows, tbl_id, title} = phaseTable;
-
-
-    slice(phaseTable.tableData.data, 0, totalRows).forEach((d) => {
-        var newRow = slice(d);
-
-        newRow[tIdx] = `${parseFloat(d[tIdx]) + period}`;
-        newRow[fIdx] = `${parseFloat(d[fIdx]) + 1}`;
-        phaseTable.tableData.data.push(newRow);
-    });
-
-    totalRows *= 2;
-
-    set(phaseTable, 'totalRows', totalRows);
-    set(phaseTable, ['tableMeta', 'RowsRetrieved'], `${totalRows}`);
-
-    set(phaseTable, ['tableMeta', 'tbl_id'], tbl_id);
-    set(phaseTable, ['tableMeta', 'title'], title);
-
-    var col = phaseTable.tableData.columns.length;
-    var sqlMeta = get(phaseTable, ['tableMeta', 'SQL']);
-    if (sqlMeta) {
-        set(phaseTable, ['tableMeta', 'SQL'], replace(sqlMeta, `${col-1}`, `${col}`));
-    }
-
-}
-
-/**
- * @summary compute the period minimum and maximum based on table data
- * @param {string} tbl_id
- * @param {string} timeColName
- * @returns {Object}
- */
-function computePeriodRange(tbl_id, timeColName) {
-    var tbl = getTblById(tbl_id);
-    var {columns, data} = tbl.tableData;
-    var tIdx = columns.findIndex((col) => (col.name === timeColName));
-    var arr = data.reduce((prev, e)=> {
-        prev.push(parseFloat(e[tIdx]));
-        return prev;
-    }, []);
-    var factor = 1;
-
-    var timeZero = Math.min(...arr);
-    var timeMax = Math.max(...arr);
-
-    var max = parseFloat(((timeMax - timeZero)*factor).toFixed(DEC_PHASE));
-    var min = Math.pow(10, -3);   // 0.0001
-    //max = 19;
-
-    var newMax = adjustMax(max, SliderMin, STEP);
-
-    return {min, max: newMax.max, steps: newMax.steps, tzero: timeZero, tzeroMax: timeMax};
-}
-
-/**
- * @summary adjust the maximum to be the multiple of the step resolution if the maximum on the slider is updated
- * @param {number} max
+ * @summary adjust the step and the ends for slider
  * @param {number} min
- * @param {number} step
+ * @param {number} max
+ * @param {number} startStep
  * @returns {{steps: number, max: number}}
  */
-export function adjustMax(max, min, step) {
-    var newTotalSteps = Math.ceil((max - min) / step);
-    var newMax = parseFloat((newTotalSteps*step + min).toFixed(DEC_PHASE));
-    var res = (newMax - min)/newTotalSteps;
+function adjustSliderEnds(min, max, startStep = STEP) {
+    var s;
+    var newMax, newMin;
+    const  MIN_TOTAL_STEP = 200;
 
-    return {steps: newTotalSteps, max: newMax, res};
+    s = startStep;
+    newMin = Math.round(min);
+
+    while (true) {
+        if ((max - newMin)/s < MIN_TOTAL_STEP) {
+            s = s/2;
+        } else {
+            break;
+        }
+    }
+
+    var totalSteps = Math.ceil((max - newMin)/s);
+    newMax = newMin + totalSteps * s;
+
+    return { min: newMin, max: newMax, steps: totalSteps, stepSize: s};
 }
-
 
 /**
  * @summary reset the period parameter setting
+ * @param {object} defPeriod
  */
-function resetDefaults() {
-    dispatchRestoreDefaults(pfinderkey);
-}
+export function resetPeriodDefaults(defPeriod) {
+    const fields = FieldGroupUtils.getGroupFields(pfinderkey);
 
-/**
- * @summary cancel the period setting
- * @returns {Function}
- */
-function cancelPeriodSetting() {
-    return () => {
-        if (isDialogVisible(popupId)) {
-            cancelPeriodogram(pfinderkey, popupId)();
+    var multiVals = Object.keys(defPeriod).reduce((prev, fieldKey) => {
+        var val = get(defPeriod, [fieldKey, 'value']);
+
+        if (get(fields, [fieldKey, 'value']) !== val) {
+            prev.push({fieldKey, value: val});
         }
+        return prev;
+    }, []);
 
-        dispatchActiveTableChanged(getActiveTableId()||LC.RAW_TABLE);
-        updateLayoutDisplay(LC.RESULT_PAGE);
-    };
+    if (multiVals.length > 0) {
+        dispatchMultiValueChange(pfinderkey, multiVals);
+    }
 }
+

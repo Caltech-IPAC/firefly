@@ -5,8 +5,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {pickBy} from 'lodash';
-
+import {pickBy, get} from 'lodash';
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
 import {getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
@@ -20,19 +19,19 @@ import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
 import {VisHeader} from '../../visualize/ui/VisHeader.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
-
 import {FormPanel} from './../../ui/FormPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {dispatchInitFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
-import * as TblUtil from '../../tables/TableUtil.js';
+import {makeFileRequest} from '../../tables/TableUtil.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 
+
+const vFileKey = LC.FG_FILE_FINDER;
 /**
  * This is a light curve viewer.
  */
@@ -60,6 +59,7 @@ export class LcViewer extends Component {
     }
 
     componentDidMount() {
+        this.iAmMounted = true;
         dispatchOnAppReady((state) => {
             onReady({state, menu: this.props.menu});
         });
@@ -73,17 +73,24 @@ export class LcViewer extends Component {
     // }
 
     componentWillUnmount() {
+        this.iAmMounted = false;
         this.removeListener && this.removeListener();
     }
 
     storeUpdate() {
-        this.setState(this.getNextState());
+        if (this.iAmMounted) {
+            this.setState(this.getNextState());
+        }
     }
 
     render() {
         var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown,
-                dropdownPanels=[], footer, style, displayMode} = this.state;
+                dropdownPanels=[], footer, style, displayMode, missionEntries} = this.state;
         const {visible, view} = dropDown || {};
+        const periodProps = {displayMode, timeColName: get(missionEntries, [LC.META_TIME_CNAME]),
+                                          fluxColName: get(missionEntries, [LC.META_FLUX_CNAME]),
+                                          validTimeColumns: get(missionEntries, [LC.META_TIME_NAMES]),
+                                          validFluxColumns: get(missionEntries, [LC.META_FLUX_NAMES])};
 
         dropdownPanels.push(<UploadPanel/>);
 
@@ -102,7 +109,7 @@ export class LcViewer extends Component {
                             {...{dropdownPanels} } />
                     </header>
                     <main>
-                        {displayMode&&displayMode.startsWith('period') ? <LcPeriod displayMode={displayMode}/> : <LcResult/>}
+                        {displayMode&&displayMode.startsWith('period') ? <LcPeriod {...periodProps}/> : <LcResult/>}
                     </main>
                 </div>
             );
@@ -123,11 +130,12 @@ LcViewer.propTypes = {
     altAppIcon: PropTypes.string,
     footer: PropTypes.element,
     dropdownPanels: PropTypes.arrayOf(PropTypes.element),
-    style: PropTypes.object
+    style: PropTypes.object,
+    appTitle: PropTypes.string
 };
 
 LcViewer.defaultProps = {
-    appTitle: 'Light Curve'
+    appTitle: 'Time Series Viewer'
 };
 
 function onReady({menu}) {
@@ -141,6 +149,7 @@ function onReady({menu}) {
     }
 }
 
+
 function BannerSection(props) {
     const {menu, ...rest} = pickBy(props);
     return (
@@ -153,6 +162,10 @@ function BannerSection(props) {
     );
 }
 
+BannerSection.propTypes = {
+    props: PropTypes.object
+};
+
 
 /**
  *  A generic upload panel.
@@ -163,10 +176,10 @@ export function UploadPanel(props) {
     return (
         <div style={{padding: 10}}>
             <FormPanel
-                groupKey='LC_UPLOAD_FORM'
+                groupKey={vFileKey}
                 onSubmit={(request) => onSearchSubmit(request)}
                 onCancel={dispatchHideDropDown}>
-                <FieldGroup groupKey='LC_UPLOAD_FORM' validatorFunc={null} keepState={true}>
+                <FieldGroup groupKey={vFileKey} validatorFunc={null} keepState={true}>
                     <FileUpload
                         wrapperStyle = {wrapperStyle}
                         fieldKey = 'rawTblSource'
@@ -175,7 +188,7 @@ export function UploadPanel(props) {
                                 label: 'Raw Light Curves Table:'
                             }}
                     />
-                    <ValidationField fieldKey='timeCName'
+                    <ValidationField fieldKey={LC.META_TIME_CNAME}
                                      wrapperStyle = {wrapperStyle}
                                      placeholder = 'mjd'
                                      initialState= {{
@@ -183,7 +196,7 @@ export function UploadPanel(props) {
                                           label : 'Time Column Name:',
                                           labelWidth : 120
                                       }} />
-                    <ValidationField fieldKey='fluxCName'
+                    <ValidationField fieldKey={LC.META_FLUX_CNAME}
                                      wrapperStyle = {wrapperStyle}
                                      placeholder = 'w1mpro_ep'
                                      initialState= {{
@@ -216,15 +229,14 @@ function onSearchSubmit(request) {
             tbl_id: LC.RAW_TABLE,
             tblType: 'notACatalog',
             sortInfo: sortInfoString(timeCName),
-            META_INFO: {timeCName, fluxCName}
+            META_INFO: {timeCName, fluxCName},
+            pageSize: LC.FULL_TABLE_SIZE
         };
-        const treq = TblUtil.makeFileRequest('Raw Table', request.rawTblSource, null, options);
-        dispatchTableSearch(treq, {removable: false});
+        const treq = makeFileRequest('Raw Table', request.rawTblSource, null, options);
+        dispatchTableSearch(treq, {removable: true});
 
         const xyPlotParams = {x: {columnOrExpr: timeCName}, y: {columnOrExpr: fluxCName, options:'grid,flip'}};
         loadXYPlot({chartId:treq.tbl_id, tblId:treq.tbl_id, xyPlotParams});
-
         dispatchHideDropDown();
-        dispatchInitFieldGroup('LC_UPLOAD_FORM');
     } 
 }

@@ -278,8 +278,8 @@ function doPeriodFinding(request) {
         step_method: fields.stepMethod.value,
         step_size: fields.stepSize.value,
         peaks: fields.peaks.value,
-        table_name: LC.PERIODOGRAM
-    }, {tbl_id: LC.PERIODOGRAM});
+        table_name: LC.PERIODOGRAM_TABLE
+    }, {tbl_id: LC.PERIODOGRAM_TABLE});
 
     if (tReq !== null) {
         dispatchTableSearch(tReq, {removable: true});
@@ -288,7 +288,7 @@ function doPeriodFinding(request) {
             x: {columnOrExpr: LC.PERIOD_CNAME, options: 'grid,log'},
             y: {columnOrExpr: LC.POWER_CNAME, options: 'grid'}
         };
-        loadXYPlot({chartId: LC.PERIODOGRAM, tblId: LC.PERIODOGRAM, markAsDefault: true, xyPlotParams});
+        loadXYPlot({chartId: LC.PERIODOGRAM_TABLE, tblId: LC.PERIODOGRAM_TABLE, markAsDefault: true, xyPlotParams});
     }
 }
 

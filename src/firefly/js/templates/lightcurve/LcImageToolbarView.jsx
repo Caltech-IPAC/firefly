@@ -14,7 +14,8 @@ import {dispatchChangeViewerLayout, getViewer, getMultiViewRoot, GRID, SINGLE} f
 import {LC} from './LcManager.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
-
+import {getTblById} from '../../tables/TableUtil.js';
+import {SortInfo, SORT_ASC, SORT_DESC, UNSORTED} from '../../tables/SortInfo.js';
 
 
 const toolsStyle= {
@@ -79,6 +80,18 @@ export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layou
         );
     }
 
+    var getSortInfo = () => {
+        if (!tableId) return '';
+        const sInfo = SortInfo.parse(get(getTblById(tableId), ['request', 'sortInfo'], ''));
+
+        const orderInfo = {[SORT_ASC]: 'ascending',
+                           [SORT_DESC]:'descending'};
+
+        if (sInfo.direction === UNSORTED) return '';
+        return `Sortable columns: ${sInfo.sortColumns.join(',')}; `+
+               `Sort order: ${orderInfo[sInfo.direction]}`;
+    };
+
     return (
         <div>
             {expandedUI}
@@ -90,6 +103,7 @@ export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layou
                                                   onChange={(ev) => changeSize(viewerId, ev.target.value)} />
                     </div>
                 </div>
+                <div> { getSortInfo() } </div>
                 {wcsMatch}
                 {!closeFunc && <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={pvDlAry} />}
             </div>
