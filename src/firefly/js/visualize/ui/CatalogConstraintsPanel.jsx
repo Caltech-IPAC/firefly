@@ -18,12 +18,11 @@ import {FilterInfo, FILTER_TTIPS} from '../../tables/FilterInfo.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {InputAreaFieldConnected} from '../../ui/InputAreaField.jsx';
 import {fieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
-import {LSSTDDPID} from './LSSTCatalogSelectViewPanel.jsx';
 const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char', width: 10};
 
 import '../../tables/ui/TablePanel.css';
 
-/**
+/*
  * update short_dd to be one of ['short', 'long', ''] based on if 'showForm' is true or not
  */
 function makeFormType(showForm, short_dd) {

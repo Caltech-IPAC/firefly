@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import { get,set, merge, isEmpty, capitalize} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
@@ -93,7 +93,7 @@ const LSSTMaster = {
     catalogs: LSSTTables
 };
 
-export const LSSTDDPID = 'LSSTMetaSearch';
+const LSSTDDPID = 'LSSTMetaSearch';
 
 var catmaster = [];
 
@@ -227,7 +227,7 @@ function hideSearchPanel() {
  * @returns {string}
  */
 function formatNumberString(numstr, digits = DEC) {
-    var d = digits&digits >= 0 ?  digits : DEC;
+    var d = digits&&digits >= 0 ?  digits : DEC;
 
     return parseFloat(numstr).toFixed(d).replace(/(?:\.0+|(\.\d+?)0+)$/, '$1');
 }
@@ -345,8 +345,8 @@ function doCatalog(request, spatPart) {
     // plus change spatial name to cone
     if (spatial === SpatialMethod.Elliptical.value) {
 
-        const pa = get(spatPart, ['posangle', 'value'], 0);
-        const ar = get(spatPart, ['axialratio', 'value'], 0.26);
+        const pa = get(spatPart, ['posangle', 'value'], '0');
+        const ar = get(spatPart, ['axialratio', 'value'], '0.26');
 
         // see PA and RATIO string values in edu.caltech.ipac.firefly.server.catquery.GatorQuery
         merge(tReq, {'posang': pa, 'ratio': ar});
@@ -377,7 +377,7 @@ function doCatalog(request, spatPart) {
  */
 function doLoadTable(request) {
     var tReq = makeTblRequest('userCatalogFromFile', 'Lsst Table Upload', {
-        filePath: request.fileUpload
+        filePath: get(request, 'fileUpload')
     });
     dispatchTableSearch(tReq);
 }
@@ -468,8 +468,14 @@ class LSSTCatalogSelectView extends Component {
     }
 }
 
+LSSTCatalogSelectView.propsType = {
+    cattable: PropTypes.string,
+    cattype: PropTypes.string
+};
+
 /**
  * @summary Reducer from field group component, should return updated catalog selection
+ * @param {string} tblId
  * @returns {Function} reducer to change fields when user interact with the dialog
  */
 var userChangeLsstDispatch = function (tblId) {
@@ -644,11 +650,8 @@ class LsstCatalogDDList extends Component {
         const {catmaster} = this.state.master;
         if (!catmaster) return false;
 
-        var {cattable} = this.props;
-        if (!cattable) return false;
-
-        var {cattype} = this.props;
-        if (!cattype) return false;
+        var {cattable, cattype} = this.props;
+        if (!cattable || !cattype) return false;
 
         const spatialH = 300;
         const spatialPanelStyle = {height: spatialH, width: 550, paddingLeft: 2, paddingRight: 2};
@@ -688,7 +691,7 @@ class LsstCatalogDDList extends Component {
                             wrapperStyle={{marginLeft: 15, marginTop: 10}}
                         />
                      </div>
-                )
+                );
         };
 
         var searchMethod = () => {
@@ -700,10 +703,10 @@ class LsstCatalogDDList extends Component {
                 const boxMax = coneMax * 2;
                 const polygonDefWhenPlot = get(getAppOptions(), 'catalogSpacialOp') === 'polygonWhenPlotExist';
 
-                method = <CatalogSearchMethodType groupKey={gkeySpatial} polygonDefWhenPlot={polygonDefWhenPlot}
-                                                  coneMax={coneMax} boxMax={boxMax}/>;
+                method = (<CatalogSearchMethodType groupKey={gkeySpatial} polygonDefWhenPlot={polygonDefWhenPlot}
+                                                  coneMax={coneMax} boxMax={boxMax}/>);
             } else {
-                method = <LSSTImageSpatialType groupKey={gkeyImageSpatial} />
+                method = <LSSTImageSpatialType groupKey={gkeyImageSpatial} />;
             }
 
             return (<div className='spatialsearch' style={spatialPanelStyle}>
@@ -738,13 +741,18 @@ class LsstCatalogDDList extends Component {
     }
 }
 
+LsstCatalogDDList.propTypes = {
+    cattable: PropTypes.string,
+    cattype: PropTypes.string,
+    master: PropTypes.object
+};
+
 /**
  * @summary component for loading catalog file
  * @returns {XML}
  * @constructor
  */
-function CatalogLoad({}) {
-
+function CatalogLoad() {
     return (
         <div style={{padding: 5, width: '800px', height: '300px'}}>
             <FileUpload
@@ -769,10 +777,10 @@ CatalogLoad.propTypes = {};
  Define fields init and per action
  */
 function fieldInit(tblId) {
-    var constraintV = LSSTMaster.catalogs.map((t) =>  ({constraints: '', selcols: '', filters: undefined}));
+    var constraintV = LSSTMaster.catalogs.map(() =>  ({constraints: '', selcols: '', filters: undefined}));
     var catOptions = LSSTMaster.catalogs.map((t) => (t.value));
     var sqlValues = LSSTMaster.catalogs.map((t) => (''));
-    var coldefList = LSSTMaster.catalogs.map((t) => (get(t, ['cat', COLDEF1]) || get(t, ['cat', COLDEF2]) || ""));
+    var coldefList = LSSTMaster.catalogs.map((t) => (get(t, ['cat', COLDEF1]) || get(t, ['cat', COLDEF2]) || ''));
 
     return (
         {

@@ -153,7 +153,7 @@ function imageSearchReducer(inFields, action) {
     if (!inFields) {
         return fieldInit();
     } else {
-        return inFields
+        return inFields;
     }
 }
 
