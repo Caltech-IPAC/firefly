@@ -14,6 +14,8 @@ import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 import {ColumnOrExpression} from './ColumnOrExpression.jsx';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
+
 
 export const histogramParamsShape = PropTypes.shape({
          algorithm : PropTypes.oneOf(['fixedSizeBins','bayesianBlocks']),
@@ -45,12 +47,16 @@ export function setOptions(groupKey, histogramParams) {
     dispatchMultiValueChange(groupKey, flds);
 }
 
+const algorithmOptions = [  {label: 'Bayesian blocks', value: 'bayesianBlocks'},
+                            {label: 'Fixed size', value: 'fixedSizeBins'} ];
+
 export class HistogramOptions extends React.Component {
 
         constructor(props) {
             super(props);
             this.state = {
-                fields : FieldGroupUtils.getGroupFields(this.props.groupKey)
+                fields : FieldGroupUtils.getGroupFields(this.props.groupKey),
+                fixedAlgorithm: get(getAppOptions(), 'charts.ui.HistogramOptions.fixedAlgorithm') || props.fixedAlgorithm
             };
         }
 
@@ -124,8 +130,12 @@ export class HistogramOptions extends React.Component {
     }
 
     render() {
-        const { colValStats, groupKey, histogramParams, defaultParams, onOptionsSelected}= this.props;
+        const { colValStats, groupKey, histogramParams, defaultParams, onOptionsSelected} = this.props;
+        const {fixedAlgorithm=false} = this.state;
         const xProps = {colValStats,params:histogramParams,groupKey,fldPath:'columnOrExpr',label:'Column or expression', labelWidth:120, tooltip:'X Axis',nullAllowed:false};
+        
+        const algorithm = get(histogramParams, 'algorithm', 'fixedSizeBins');
+        const m_algorithmOptions = fixedAlgorithm ? algorithmOptions.filter((el) => el.value === algorithm) : algorithmOptions;
         return (
             <div style={{padding:'0 5px'}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
@@ -181,14 +191,11 @@ export class HistogramOptions extends React.Component {
                     <InputGroup labelWidth={60}>
                         <RadioGroupInputField
                             initialState= {{
-                                value: get(histogramParams, 'algorithm', 'fixedSizeBins'),
+                                value: algorithm,
                                 tooltip: 'Please select an algorithm',
                                 label: 'Algorithm:'
                             }}
-                            options={[
-                                {label: 'Bayesian blocks', value: 'bayesianBlocks'},
-                                {label: 'Fixed size', value: 'fixedSizeBins'}
-                            ]}
+                            options={m_algorithmOptions}
                             alignment='horizontal'
                             fieldKey='algorithm'
                             groupKey={groupKey}/>
@@ -208,5 +215,6 @@ HistogramOptions.propTypes = {
     colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
     onOptionsSelected: PropTypes.func,
     histogramParams: histogramParamsShape,
-    defaultParams: histogramParamsShape
+    defaultParams: histogramParamsShape,
+    fixedAlgorithm: PropTypes.bool
 };
