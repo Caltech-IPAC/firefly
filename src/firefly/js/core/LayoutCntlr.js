@@ -10,6 +10,7 @@ import {smartMerge} from '../tables/TableUtil.js';
 import {getDropDownNames} from '../ui/Menu.jsx';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import {TBL_RESULTS_ADDED, TABLE_REMOVE} from '../tables/TablesCntlr.js';
+import {CHART_ADD} from '../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../visualize/MultiViewCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
 
@@ -131,6 +132,7 @@ export function dropDownHandler(layoutInfo, action) {
     // calculate dropDown when new UI elements are added or removed from results
     const count = filter(pick(layoutInfo, ['showTables', 'showXyPlots', 'showImages'])).length;
     switch (action.type) {
+        case CHART_ADD:
         case TBL_RESULTS_ADDED:
         case REPLACE_VIEWER_ITEMS :
         case ImagePlotCntlr.PLOT_IMAGE :
