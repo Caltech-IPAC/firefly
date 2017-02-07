@@ -168,6 +168,9 @@ export function* lcManager(params={}) {
     }
 }
 
+var defaultCutout = '0.2';
+var defaultFlux = '';
+
 function getMissionName() {
     var mName = get(getLayouInfo(), ['misionEntries', MetaConst.DATASET_CONVERTER]);
 
@@ -175,11 +178,11 @@ function getMissionName() {
 }
 
 function getFluxColumn() {
-    return get(getLayouInfo(), ['misionEntries', LC.META_FLUX_CNAME], '');
+    return get(getLayouInfo(), ['misionEntries', LC.META_FLUX_CNAME], defaultFlux);
 }
 
 function getCutoutSize() {
-    return get(getLayouInfo(), ['generalEntries', 'cutoutSize'], '0.2');
+    return get(getLayouInfo(), ['generalEntries', 'cutoutSize'], defaultCutout);
 }
 
 var getImageTitle = (mName,frameId, cutoutSize, fluxCol = '',  webplotRequestCreator = null ) => {
@@ -309,8 +312,9 @@ function handleRawTableLoad(layoutInfo, tblId) {
     var   metaInfo = rawTable && get(rawTable, ['META_INFO']);
     const missionAry = [LC.META_TIME_CNAME, LC.META_FLUX_CNAME, LC.META_TIME_NAMES, LC.META_FLUX_NAMES,
                         MetaConst.DATASET_CONVERTER, LC.META_ERROR_COLUMN];
-    const generalEntryAry = {cutoutSize: '0.2'};  // default setting for cutoutsize?
+    const generalEntryAry = {cutoutSize: defaultCutout};  // default setting for cutoutsize?
 
+    defaultFlux = '';
     // TODO - fill in mission information from table's metadata
     metaInfo = {[LC.META_TIME_CNAME]: 'mjd',
                 [LC.META_FLUX_CNAME]: 'w1mpro_ep',
@@ -324,6 +328,7 @@ function handleRawTableLoad(layoutInfo, tblId) {
             return prev;
         }, {});
 
+    defaultFlux = get(missionEntries, LC.META_FLUX_CNAME);
     var generalEntries = clone(generalEntryAry);
     var {columns, data} = rawTable.tableData;
     var tIdx = columns.findIndex((col) => (col.name === get(missionEntries, [LC.META_TIME_CNAME])));
@@ -571,12 +576,16 @@ export function setupImages(tbl_id) {
             };
 
             if (!pv || get(pv, ['request', 'params', 'Title']) !== imgTitle()) {
-                const webPlotReq = webplotRequestCreator(tableModel,rowNum, cutoutSize,  fluxCol);
+                if (cutoutSize && fluxCol) {
+                    const webPlotReq = webplotRequestCreator(tableModel, rowNum, cutoutSize, fluxCol);
 
-                dispatchPlotImage({plotId, wpRequest:webPlotReq,
-                                           setNewPlotAsActive:false,
-                                           holdWcsMatch:true,
-                                           pvOptions: { userCanDeletePlots: false}});
+                    dispatchPlotImage({
+                        plotId, wpRequest: webPlotReq,
+                        setNewPlotAsActive: false,
+                        holdWcsMatch: true,
+                        pvOptions: {userCanDeletePlots: false}
+                    });
+                }
             }
         });
 
