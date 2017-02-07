@@ -159,6 +159,8 @@ const buttonW = 650;
 // eslint-disable-next-line
 const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables, settingBox}) => {
 
+    let {cutoutSize} = settingBox.props.generalEntries || '0.3';
+    //let csize = get(generalEntries, 'cutoutsize, '0.3');
     return (
         <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, position: 'relative'}}>
             { visToolbar &&
@@ -167,7 +169,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                     <div>
                         <DownloadButton>
                             <DownloadOptionPanel
-                                cutoutSize = '.3'
+                                cutoutSize = {cutoutSize}
                                 dlParams = {{
                                     MaxBundleSize: 200*1024*1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
                                     FilePrefix: 'WISE_Files',
