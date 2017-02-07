@@ -3,6 +3,7 @@
  */
 
 
+import {isEmpty} from 'lodash'
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
@@ -27,7 +28,8 @@ var idCnt=0;
 
 function creator(initPayload, presetDefaults) {
     var drawingDef= makeDrawingDef('blue');
-    drawingDef.symbol= DrawSymbol.SQUARE;
+    drawingDef.symbol= DrawSymbol.CIRCLE;
+    drawingDef.size= 6;
     drawingDef= Object.assign(drawingDef,presetDefaults);
 
     idCnt++;
@@ -42,8 +44,8 @@ function creator(initPayload, presetDefaults) {
 
 
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
-    if (dataType!= DataTypes.DATA) return null;
-    return lastDataRet || computeDrawLayer(plotId);
+    if (dataType!==DataTypes.DATA) return null;
+    return isEmpty(lastDataRet) ? computeDrawData(plotId) : lastDataRet;
 }
 
 function getLayerChanges(drawLayer, action) {
@@ -72,7 +74,7 @@ function getTitle(plotId) {
     return retval;
 }
 
-function computeDrawLayer(plotId) {
+function computeDrawData(plotId) {
     if (!plotId) return null;
     var plot= primePlot(visRoot(),plotId);
     if (!plot) return [];

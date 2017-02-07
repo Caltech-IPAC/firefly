@@ -356,7 +356,8 @@ function initCoverage(llApi, targetDiv,options= {}) {
 
     renderDOM(targetDiv, MultiImageViewer,
         {viewerId:targetDiv, canReceiveNewPlots, canDelete:false, Toolbar:MultiViewStandardToolbar });
-    dispatchAddSaga(watchCoverage, {viewerId:targetDiv, options});
+    options= Object.assign({},options, {viewerId:targetDiv})
+    dispatchAddSaga(watchCoverage, options);
 }
 
 

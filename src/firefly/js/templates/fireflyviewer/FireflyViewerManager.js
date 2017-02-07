@@ -181,7 +181,7 @@ function handleActiveTableChange (layoutInfo, action) {
         coverageLockedOn= anyHasCatalog || anyHasMeta;
     }
 
-    if (anyHasCatalog) {
+    if (anyHasCatalog || anyHasMeta) {
         showCoverage = coverageLockedOn;
         showImages = true;
     } else {
@@ -218,8 +218,7 @@ function handlePlotDelete(layoutInfo, action) {
 
 function handleNewImage(layoutInfo, action) {
     var {images={}} = layoutInfo;
-    var {selectedTab, showMeta, showFits} = images;
-    var coverageLockedOn = false;
+    var {selectedTab, showMeta, showFits, coverageLockedOn} = images;
 
     const {viewerId} = action.payload || {};
     if (viewerId === META_VIEWER_ID) {

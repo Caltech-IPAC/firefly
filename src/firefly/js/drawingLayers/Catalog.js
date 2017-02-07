@@ -52,10 +52,11 @@ var createCnt= 0;
 function creator(initPayload, presetDefaults) {
     const {catalogId, tableData, tableMeta, title,
            selectInfo, columns, tableRequest, highlightedRow, color, angleInRadian=false,
+           symbol, size,
            dataTooBigForSelection=false, catalog=true,boxData=false }= initPayload;
     var drawingDef= makeDrawingDef();
-    drawingDef.size= 5;
-    drawingDef.symbol= DrawSymbol.SQUARE;
+    drawingDef.size= size || 5;
+    drawingDef.symbol= DrawSymbol.get(symbol) || DrawSymbol.SQUARE;
     drawingDef= Object.assign(drawingDef,presetDefaults);
 
     var pairs= {
@@ -223,7 +224,6 @@ function computePointDrawLayer(drawLayer, tableData, columns) {
     const {angleInRadian:rad}= drawLayer;
     if (lonIdx<0 || latIdx<0) return null;
 
-    const {size,symbol}= drawLayer.drawingDef;
     return tableData.data.map( (d) => {
         const wp= makeWorldPt( toAngle(d[lonIdx],rad), toAngle(d[latIdx],rad), columns.csys);
         return PointDataObj.make(wp);

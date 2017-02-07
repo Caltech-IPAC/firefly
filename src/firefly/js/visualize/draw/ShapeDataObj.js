@@ -19,7 +19,7 @@ const FONT_FALLBACK= ',sans-serif';
 
 var UnitType= new Enum(['PIXEL','ARCSEC','IMAGE_PIXEL']);
 export var ShapeType= new Enum(['Line', 'Text','Circle', 'Rectangle', 'Ellipse',
-                         'Annulus', 'BoxAnnulus', 'EllipseAnnulus', 'Polygon']);
+                         'Annulus', 'BoxAnnulus', 'EllipseAnnulus', 'Polygon'], { ignoreCase: true });
 const SHAPE_DATA_OBJ= 'ShapeDataObj';
 const DEF_WIDTH = 1;
 

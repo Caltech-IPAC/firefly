@@ -4,15 +4,15 @@
 
 import {take} from 'redux-saga/effects';
 import Enum from 'enum';
-import {has,get,isEmpty,flattenDeep,values} from 'lodash';
+import {has,get,isEmpty,isString,isObject, flattenDeep,values} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
 import {TitleOptions, isImageDataRequeestedEqual} from '../WebPlotRequest.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {cloneRequest} from '../../tables/TableUtil.js';
-import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,
+import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE, TABLE_SORT} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
-import {primePlot, getPlotViewById} from '../PlotViewUtil.js';
+import {primePlot, getPlotViewById, getDrawLayerByType} from '../PlotViewUtil.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
 import {doFetchTable, getTblById, getActiveTableId, getColumnIdx, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
 import MultiViewCntlr, {getViewerItemIds, dispatchAddViewerItems, getMultiViewRoot, getViewer, IMAGE} from '../MultiViewCntlr.js';
@@ -21,7 +21,8 @@ import {computeCentralPointAndRadius} from '../VisUtil.js';
 import {makeWorldPt, pointEquals} from '../Point.js';
 import {getCoverageRequest} from './CoverageChooser.js';
 import {logError} from '../../util/WebUtil.js';
-import DrawLayerCntlr, {dispatchCreateDrawLayer,dispatchDestroyDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
+import DrawLayerCntlr, {dispatchCreateDrawLayer,dispatchDestroyDrawLayer, dispatchModifyCustomField,
+                         dispatchAttachLayerToPlot, getDlAry} from '../DrawLayerCntlr.js';
 import Catalog from '../../drawingLayers/Catalog.js';
 import {getNextColor} from '../draw/DrawingDef.js';
 
@@ -37,19 +38,40 @@ const COVERAGE_TABLE = 'COVERAGE_TABLE';
 
 const PLOT_ID= 'CoveragePlot';
 
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} CoverageOptions
+ * @summary options of coverage
+ *
+ * @prop {string} title
+ * @prop {string} tip
+ * @prop {string} coverageType- one of 'GUESS', 'BOX', 'BOTH', or 'X' default is 'BOTH'
+ * @prop {string} overlayPosition search position point to overlay, e.g '149.08;68.739;EQ_J2000'
+ * @prop {string|Object.<String,String>} shape - a shape name for the symbol or an object keyed by table id and value is symbol name, symbol name one of 'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE','BOXCIRCLE', 'ARROW'
+ * @prop {string|Object.<String,Number>} symbolSize - a number of the symbol size or an object keyed by table id and value the symbol size
+ * @prop {string|Object.<String,String>} color - a color the symbol size or an object keyed by table id and color
+ * @prop {boolean} multiCoverage - overlay more than one table  on the coverage
+ * @prop {string} gridOn : one of 'FALSE','TRUE','TRUE_LABELS_FALSE'
+ */
+
+
 const defOptions= {
     title: 'Coverage',
     tip: 'Coverage',
     getCoverageBaseTitle : (table) => '',   // eslint-disable-line no-unused-vars
     coverageType : CoverageType.BOTH,
-    shape : DrawSymbol.SQUARE,
+    symbol : DrawSymbol.SQUARE,
     symbolSize : 5,
-    color : 'red',
+    overlayPosition: null,
+    color : null,
     highlightedColor : 'blue',
     multiCoverage : true,
     gridOn : false,
     useBlankPlot : false,
     fitType : FitType.WIDTH_HEIGHT,
+    ignoreCatalogs:false,
     canDoCorners : defaultCanDoCorners,
     getQueryCenter,
     hasCoverageData,
@@ -74,8 +96,9 @@ const overlayCoverageDrawing= makeOverlayCoverageDrawing();
  * @param options
  */
 
-export function* watchCoverage({viewerId, options= {}}) {
+export function* watchCoverage(options) {
 
+    const {viewerId='DefCoverageId'}= options;
     var decimatedTables=  {};
     var tbl_id;
     var paused= !get(getViewer(getMultiViewRoot(), viewerId), 'mounted' , false);
@@ -140,6 +163,11 @@ export function* watchCoverage({viewerId, options= {}}) {
                     tbl_id = getActiveTableId();
                     displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
                 }
+                break;
+
+            case TABLE_HIGHLIGHT:
+            case TABLE_UPDATE:
+                dispatchModifyCustomField(tbl_id, {highlightedRow:action.payload.highlightedRow});
                 break;
 
             case MultiViewCntlr.VIEWER_UNMOUNTED:
@@ -224,6 +252,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
                                         false, options.gridOn);
     wpRequest.setPlotId(PLOT_ID);
     wpRequest.setPlotGroupId(viewerId);
+    if (options.overlayPosition) wpRequest.setOverlayPosition(options.overlayPosition);
     if (options.title) {
         wpRequest.setTitleOptions(TitleOptions.NONE);
         wpRequest.setTitle(options.title);
@@ -318,7 +347,7 @@ function makeOverlayCoverageDrawing() {
         if (!tbl_id || !decimatedTables[tbl_id] || !getTblById(tbl_id)) return;
         const table= getTblById(tbl_id);
 
-        if (table.tableMeta[MetaConst.CATALOG_OVERLAY_TYPE]) return; // let the catalog just handle the drawing overlays
+        if (table.tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] && options.ignoreCatalogs) return; // let the catalog just handle the drawing overlays
 
         const allRowsTable= decimatedTables[tbl_id];
 
@@ -327,8 +356,8 @@ function makeOverlayCoverageDrawing() {
         const overlayAry=  options.multiCoverage ? Object.keys(decimatedTables) : [allRowsTable.tbl_id];
 
         overlayAry.forEach( (id) => {
-            if (id!==tbl_id) return;
-            if (!colors[id]) colors[id]= getNextColor();
+            // if (id!==tbl_id) return;
+            if (!colors[id]) colors[id]= lookupOption(options,'color',id) || getNextColor();
             const oriTable= getTblById(id);
             const arTable= decimatedTables[id];
             if (oriTable && arTable) addToCoverageDrawing(PLOT_ID, options, oriTable, arTable, colors[id]);
@@ -337,31 +366,52 @@ function makeOverlayCoverageDrawing() {
     };
 }
 
+
 function addToCoverageDrawing(plotId, options, table, allRowsTable, color) {
 
     if (allRowsTable==='WORKING') return;
     const covType= getCoverageType(options,allRowsTable);
 
     const boxData= covType===CoverageType.BOTH || covType===CoverageType.BOX;
+    const {tbl_id}= table;
     const {tableMeta, tableData}= allRowsTable;
     const columns = boxData ? options.getCornersColumns(table) : options.getCenterColumns(table);
     const angleInRadian= isTableUsingRadians(tableMeta);
-    dispatchCreateDrawLayer(Catalog.TYPE_ID, {
-        catalogId: table.tbl_id,
-        title: `Coverage: ${table.title || table.tbl_id}`,
-        color,
-        tableData,
-        tableMeta,
-        tableRequest: allRowsTable.request,
-        highlightedRow: table.highlightedRow,
-        catalog: false,
-        columns,
-        boxData,
-        angleInRadian
-    });
-    dispatchAttachLayerToPlot(table.tbl_id, plotId);
+    const dl= getDlAry().find( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalogId===table.tbl_id);
+    if (!dl) {
+        dispatchCreateDrawLayer(Catalog.TYPE_ID, {
+            catalogId: table.tbl_id,
+            title: `Coverage: ${table.title || table.tbl_id}`,
+            color,
+            tableData,
+            tableMeta,
+            tableRequest: allRowsTable.request,
+            highlightedRow: table.highlightedRow,
+            catalog: false,
+            columns,
+            symbol: lookupOption(options,'symbol',tbl_id),
+            size: lookupOption(options,'symbolSize',tbl_id),
+            boxData,
+            angleInRadian
+        });
+        dispatchAttachLayerToPlot(table.tbl_id, plotId);
+    }
 }
 
+// function lookupColor(color, tbl_id) {
+//     if (!color) return undefined;
+//     return isString(color) ? color : color[tbl_id];
+// }
+// function lookupSymbol(symbol, tbl_id) {
+//     if (!symbol) return undefined;
+//     return !isObject(symbol) ? symbol[tbl_id] : symbol;
+// }
+
+function lookupOption(options, key, tbl_id) {
+    const value= options[key];
+    if (!value) return undefined;
+    return isObject(value) ? value[tbl_id] : value;
+}
 
 function getCoverageType(options,table) {
     if (options.coverageType===CoverageType.GUESS ||

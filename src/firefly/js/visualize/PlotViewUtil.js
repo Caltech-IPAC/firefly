@@ -220,7 +220,7 @@ export function getConnectedPlotsIds(ref, drawLayerId) {
 
 /**
  *
- * @param ref - the root of the drawing layer controller or the master array of all drawing layers
+ * @param {DrawLayer[]|DrawLayerRoot} ref - the root of the drawing layer controller or the master array of all drawing layers
  * @param typeId
  * @return {object} the draw layer
  */
@@ -231,7 +231,7 @@ export function getDrawLayerByType(ref,typeId) {
 
 /**
  *
- * @param ref - the root of the drawing layer controller or the master array of all drawing layers
+ * @param {DrawLayer[]|DrawLayerRoot} ref - the root of the drawing layer controller or the master array of all drawing layers
  * @param id draw layer id
  * @returns {Array} the draw layer
  */
@@ -242,7 +242,7 @@ export function getDrawLayerById(ref,id) {
 
 /**
  * UNTESTED - I think I will need this eventually
- * @param {Object} ref - the root of the drawing layer controller or the master array of all drawing layers
+ * @param {DrawLayer[]|DrawLayerRoot} ref - the root of the drawing layer controller or the master array of all drawing layers
  * @param {string} displayGroupId
  * @return {Array} the draw layer
  */
