@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, omit, slice, replace, isArray, isString} from 'lodash';
+import {get, set, omit, slice, replace, isArray, isString, cloneDeep} from 'lodash';
 import {doUpload} from '../../ui/FileUpload.jsx';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
@@ -92,7 +92,7 @@ function addPhaseToTable(tbl, timeName, fluxName, tzero, period) {
 
     if (tIdx < 0) return null;
 
-    var tPF = Object.assign({}, tbl, {tbl_id: LC.PHASE_FOLDED, title: 'Phase Folded'},
+    var tPF = Object.assign(cloneDeep(tbl), {tbl_id: LC.PHASE_FOLDED, title: 'Phase Folded'},
                                             {request: getPhaseFoldingRequest(period, timeName, fluxName, tbl)},
                                             {highlightedRow: 0});
     tPF = omit(tPF, ['hlRowIdx', 'isFetching']);
