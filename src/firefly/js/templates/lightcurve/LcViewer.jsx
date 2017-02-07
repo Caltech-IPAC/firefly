@@ -9,7 +9,9 @@ import {pickBy, get} from 'lodash';
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
 import {getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
-import {lcManager, LC, removeTablesFromGroup} from './LcManager.js';
+import {MetaConst} from '../../data/MetaConst.js';
+import {lcManager, LC, removeTablesFromGroup, } from './LcManager.js';
+import {getAllConverterIds, getConverter} from './LcConverterFactory.js';
 import {listenerPanel} from './LcPhaseFoldingPanel.jsx';
 import {LcResult} from './LcResult.jsx';
 import {LcPeriod} from './LcPeriod.jsx';
@@ -22,10 +24,9 @@ import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {FormPanel} from './../../ui/FormPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
-import {ValidationField} from '../../ui/ValidationField.jsx';
+import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import {makeFileRequest} from '../../tables/TableUtil.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
@@ -173,6 +174,8 @@ BannerSection.propTypes = {
  */
 export function UploadPanel(props) {
     const wrapperStyle = {margin: '5px 0'};
+
+    const options = getAllConverterIds().map((id) => { return {label: id, value: id}; });
     return (
         <div style={{padding: 10}}>
             <FormPanel
@@ -184,27 +187,20 @@ export function UploadPanel(props) {
                         wrapperStyle = {wrapperStyle}
                         fieldKey = 'rawTblSource'
                         initialState= {{
-                                tooltip: 'Select a Light Curves Table file to upload',
-                                label: 'Raw Light Curves Table:'
-                            }}
+                            tooltip: 'Select a Light Curves Table file to upload',
+                            label: 'Raw Light Curves Table:'
+                        }}
                     />
-                    <ValidationField fieldKey={LC.META_TIME_CNAME}
-                                     wrapperStyle = {wrapperStyle}
-                                     placeholder = 'mjd'
-                                     initialState= {{
-                                          tooltip: 'Enter the name of the time column',
-                                          label : 'Time Column Name:',
-                                          labelWidth : 120
-                                      }} />
-                    <ValidationField fieldKey={LC.META_FLUX_CNAME}
-                                     wrapperStyle = {wrapperStyle}
-                                     placeholder = 'w1mpro_ep'
-                                     initialState= {{
-                                          tooltip: 'Enter the name of the flux column',
-                                          label : 'Flux Column Name:',
-                                          labelWidth : 120
-                                      }} />
-
+                    <ListBoxInputField fieldKey='mission'
+                        wrapperStyle = {wrapperStyle}
+                        initialState= {{
+                            value: 'wise',
+                            tooltip: 'Enter the name of the mission',
+                            label : 'Mission:',
+                            labelWidth : 45
+                        }}
+                        options={options}
+                    />
                 </FieldGroup>
             </FormPanel>
         </div>
@@ -224,19 +220,20 @@ function onSearchSubmit(request) {
         removeTablesFromGroup();
         removeTablesFromGroup(LC.PERIODOGRAM_GROUP);
 
-        const {timeCName= LC.DEF_TIME_CNAME, fluxCName= LC.DEF_FLUX_CNAME} = request;
+        const {mission} = request;
+        const converter = getConverter(mission);
+        if (!converter) return;
+
+        const timeCName = converter.defaultTimeCName;
         const options = {
             tbl_id: LC.RAW_TABLE,
             tblType: 'notACatalog',
             sortInfo: sortInfoString(timeCName),
-            META_INFO: {timeCName, fluxCName},
+            META_INFO: {[MetaConst.DATASET_CONVERTER]: mission, timeCName},
             pageSize: LC.FULL_TABLE_SIZE
         };
         const treq = makeFileRequest('Raw Table', request.rawTblSource, null, options);
         dispatchTableSearch(treq, {removable: true});
-
-        const xyPlotParams = {x: {columnOrExpr: timeCName}, y: {columnOrExpr: fluxCName, options:'grid,flip'}};
-        loadXYPlot({chartId:treq.tbl_id, tblId:treq.tbl_id, xyPlotParams});
         dispatchHideDropDown();
     } 
 }

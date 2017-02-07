@@ -11,7 +11,7 @@ import {WcsMatchType, visRoot, dispatchWcsMatch} from '../../visualize/ImagePlot
 import {VisInlineToolbarView} from '../../visualize/ui/VisInlineToolbarView.jsx';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import {dispatchChangeViewerLayout, getViewer, getMultiViewRoot, GRID, SINGLE} from '../../visualize/MultiViewCntlr.js';
-import {LC} from './LcManager.js';
+import {LC, getConverterData} from './LcManager.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {getTblById} from '../../tables/TableUtil.js';
@@ -47,9 +47,11 @@ for(var i= 1; (i<=LC.MAX_IMAGE_CNT); i+=2) {
 
 
 export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layoutType, dlAry, tableId, closeFunc=null}) {
+    const converter = getConverterData();
+    if (!converter) { return; }
 
     const viewer= getViewer(getMultiViewRoot(), viewerId);
-    const count= get(viewer, 'layoutDetail.count',LC.DEF_IMAGE_CNT);
+    const count= get(viewer, 'layoutDetail.count', converter.defaultImageCount);
     const vr= visRoot();
     const pv= getPlotViewById(vr, activePlotId);
     const pvDlAry= getAllDrawLayersForPlot(dlAry,activePlotId,true);
