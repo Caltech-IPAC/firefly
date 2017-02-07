@@ -210,7 +210,7 @@ function updateRawTableChart(layoutInfo, timeCName, fluxCName) {
 }
 
 function updatePhaseTableChart(layoutInfo, flux) {
-    var chartY = get(getChartDataElement(LC.RAW_TABLE), ['options', 'y', 'columnOrExpr']);
+    var chartY = get(getChartDataElement(LC.PHASE_FOLDED), ['options', 'y', 'columnOrExpr']);
 
     if (chartY === flux) return;
 
@@ -251,6 +251,9 @@ function handleValueChange(layoutInfo, action) {
                 } else if (actTbl === LC.PHASE_FOLDED) {
                     updatePhaseTableChart(layoutInfo, value);
                 }
+                if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
+                    setupImages(get(layoutInfo, 'images.activeTableId'));
+                }
                 keyOfPeriod = 'flux';
             } else if (fieldKey === LC.META_TIME_CNAME &&
                        get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_NAMES]).includes(value)) {
@@ -270,7 +273,7 @@ function handleValueChange(layoutInfo, action) {
                 }
             }
         }
-    } else if (fieldKey === 'cutoutSize') { // cutoutsize changes
+    }  else if (fieldKey === 'cutoutSize') { // cutoutsize changes
         if ((get(layoutInfo, [LC.GENERAL_DATA, fieldKey]) !== value) && (value > 0.0) ) {
             if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
                 setupImages(get(layoutInfo, 'images.activeTableId'));
@@ -327,6 +330,9 @@ function handleRawTableLoad(layoutInfo, tblId) {
             prev[key] = metaInfo ? get(metaInfo, key, ''): '';
             return prev;
         }, {});
+
+
+    missionEntries[MetaConst.DATASET_CONVERTER] = get(missionEntries, [MetaConst.DATASET_CONVERTER], '').toUpperCase();
 
     defaultFlux = get(missionEntries, LC.META_FLUX_CNAME);
     var generalEntries = clone(generalEntryAry);
