@@ -210,7 +210,7 @@ function updateRawTableChart(layoutInfo, timeCName, fluxCName) {
 }
 
 function updatePhaseTableChart(layoutInfo, flux) {
-    var chartY = get(getChartDataElement(LC.RAW_TABLE), ['options', 'y', 'columnOrExpr']);
+    var chartY = get(getChartDataElement(LC.PHASE_FOLDED), ['options', 'y', 'columnOrExpr']);
 
     if (chartY === flux) return;
 
@@ -251,6 +251,9 @@ function handleValueChange(layoutInfo, action) {
                 } else if (actTbl === LC.PHASE_FOLDED) {
                     updatePhaseTableChart(layoutInfo, value);
                 }
+                if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
+                    setupImages(get(layoutInfo, 'images.activeTableId'));
+                }
                 keyOfPeriod = 'flux';
             } else if (fieldKey === LC.META_TIME_CNAME &&
                        get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_NAMES]).includes(value)) {
@@ -270,7 +273,7 @@ function handleValueChange(layoutInfo, action) {
                 }
             }
         }
-    } else if (fieldKey === 'cutoutSize') { // cutoutsize changes
+    }  else if (fieldKey === 'cutoutSize') { // cutoutsize changes
         if ((get(layoutInfo, [LC.GENERAL_DATA, fieldKey]) !== value) && (value > 0.0) ) {
             if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
                 setupImages(get(layoutInfo, 'images.activeTableId'));
@@ -327,6 +330,9 @@ function handleRawTableLoad(layoutInfo, tblId) {
             prev[key] = metaInfo ? get(metaInfo, key, ''): '';
             return prev;
         }, {});
+
+
+    missionEntries[MetaConst.DATASET_CONVERTER] = get(missionEntries, [MetaConst.DATASET_CONVERTER], '').toUpperCase();
 
     defaultFlux = get(missionEntries, LC.META_FLUX_CNAME);
     var generalEntries = clone(generalEntryAry);
@@ -483,6 +489,13 @@ function handleChangeMultiViewLayout(layoutInfo) {
     return layoutInfo;
 }
 
+/**
+ * WISE specific function to fetch image for each time (row)
+ * @param {TableModel} tableModel table model
+ * @param {number}  hlrow row index
+ * @param {number} cutoutSize siez in degrees of the cutout
+ * @param {string} fluxCol
+ */
 function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, fluxCol) {
     const ra = getCellValue(tableModel, hlrow, 'ra');
     const dec = getCellValue(tableModel, hlrow, 'dec');
@@ -514,6 +527,14 @@ function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, fluxCol) {
     return addCommonReqParams(reqParams, title, makeWorldPt(ra,dec,CoordinateSys.EQ_J2000));
 }
 
+/**
+ * Old way to get single exposure via url,
+ * would have worked if we had the url column defined and no mission specific code
+ * @deprecated
+ * @param tableModel
+ * @param hlrow
+ * @param cutoutSize
+ */
 function getWebPlotRequestViaUrl(tableModel, hlrow, cutoutSize) {
     const ra = getCellValue(tableModel, hlrow, 'ra');
     const dec = getCellValue(tableModel, hlrow, 'dec');
