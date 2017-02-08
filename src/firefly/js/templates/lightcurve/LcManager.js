@@ -9,23 +9,20 @@ import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT,
         dispatchTableRemove, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
 import {getCellValue, getTblById, getTblIdsByGroup, getActiveTableId} from '../../tables/TableUtil.js';
-import {updateSet, clone} from '../../util/WebUtil.js';
+import {updateSet, logError} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {dispatchPlotImage, visRoot, dispatchDeletePlotView,
         dispatchChangeActivePlotView,
         WcsMatchType, dispatchWcsMatch} from '../../visualize/ImagePlotCntlr.js';
 import {getPlotViewById} from '../../visualize/PlotViewUtil.js';
 import {getMultiViewRoot, dispatchReplaceViewerItems, getViewer} from '../../visualize/MultiViewCntlr.js';
-import {WebPlotRequest,TitleOptions} from '../../visualize/WebPlotRequest.js';
-import {ServerRequest} from '../../data/ServerRequest.js';
 import {CHANGE_VIEWER_LAYOUT} from '../../visualize/MultiViewCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {VALUE_CHANGE, dispatchValueChange, dispatchMultiValueChange, dispatchRestoreDefaults}
         from '../../fieldGroup/FieldGroupCntlr.js';
-import {makeWorldPt} from '../../visualize/Point.js';
-import {CoordinateSys} from '../../visualize/CoordSys.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {CHART_ADD, getChartDataElement} from '../../charts/ChartsCntlr.js';
+import {getConverter} from './LcConverterFactory.js';
 
 export const LC = {
     RAW_TABLE: 'raw_table',          // raw table id
@@ -39,13 +36,10 @@ export const LC = {
 
     IMG_VIEWER_ID: 'lc_image_viewer',
     MAX_IMAGE_CNT: 7,
-    DEF_IMAGE_CNT: 5,
 
     META_TIME_CNAME: 'timeCName',
     META_FLUX_CNAME: 'fluxCName',
-    META_ERROR_COLUMN: 'errorColumn',
-    DEF_TIME_CNAME: 'mjd',
-    DEF_FLUX_CNAME: 'w1mpro_ep',
+    META_ERR_CNAME: 'errorCName',
 
     RESULT_PAGE: 'result',          // result layout
     PERIOD_PAGE: 'period',          // period finding layout with periodogram button
@@ -60,6 +54,7 @@ export const LC = {
 
     META_TIME_NAMES: 'timeNames',
     META_FLUX_NAMES: 'fluxNames',
+    META_ERR_NAMES: 'errorNames',
     META_MISSION: MetaConst.DATASET_CONVERTER,
 
     MISSION_DATA: 'missionEntries',
@@ -69,6 +64,64 @@ export const LC = {
 };
 
 const plotIdRoot= 'LC_FRAME-';
+
+
+export function getConverterId() {
+    return get(getLayouInfo(), [LC.MISSION_DATA, MetaConst.DATASET_CONVERTER]);
+}
+
+export function getConverterData() {
+    const converterId = getConverterId();
+    return getConverter(converterId);
+}
+
+export function getMissionEntries() {
+    return get(getLayouInfo(), [LC.MISSION_DATA]);
+}
+
+function getMissionEntriesForRawTable(rawTable) {
+    const metaInfo = rawTable && rawTable.tableMeta;
+    const converterId = get(metaInfo, MetaConst.DATASET_CONVERTER);
+    const converterData = converterId && getConverter(converterId);
+    if (!converterId || !converterData) {
+        logError('Unknown mission or no converter');
+        return;
+    }
+    return {
+        [MetaConst.DATASET_CONVERTER]: converterId,
+        [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, converterData.defaultTimeCName),
+        [LC.META_FLUX_CNAME]: get(metaInfo, LC.META_FLUX_CNAME, converterData.defaultYCname),
+        [LC.META_ERR_CNAME]: get(metaInfo, LC.META_ERR_CNAME, converterData.defaultYErrCname),
+        [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES, converterData.timeNames),
+        [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, converterData.yNames),
+        [LC.META_ERR_NAMES]: get(metaInfo, LC.META_ERR_NAMES, converterData.yErrNames)
+    };
+}
+
+function getMissionFieldValidators(missionEntries) {
+    const fldsWithValidators = [
+        {key: LC.META_TIME_CNAME, vkey: LC.META_TIME_NAMES},
+        {key: LC.META_FLUX_CNAME, vkey: LC.META_FLUX_NAMES},
+        {key: LC.META_ERR_CNAME, vkey: LC.META_ERR_NAMES}
+        ];
+    return fldsWithValidators.reduce((all, fld) => {
+        all[fld.key] =
+            (val) => {
+                let retVal = {valid: true, message: ''};
+                const cols = get(missionEntries, fld.vkey, []);
+                if (cols.length !== 0 && !cols.includes(val)) {
+                    retVal = {valid: false, message: `${val} is not a valid column name`};
+                }
+                return retVal;
+            };
+        return all;
+    }, {});
+}
+
+
+function getGeneralEntries() {
+    return {cutoutSize: defaultCutout};
+}
 
 export function updateLayoutDisplay(displayMode, periodState) {
     var updateObj = periodState ? {displayMode, periodState} : {displayMode};
@@ -91,23 +144,11 @@ export var getValidValueFrom = (fields, valKey) => {
     return val ? val : '';
 };
 
-
-var webplotRequestCreator;
-/**
- * A function to create a WebPlotRequest from the given parameters
- * @callback WebplotRequestCreator
- * @param {TableModel} tableModel
- * @param {number} hlrow
- * @param {number} cutoutSize
- */
-
 /**
  * This event manager is custom made for light curve viewer.
- * @param {Object} params
- * @props {WebplotRequestCreator} params.webplotRequestCreator
+ * @param {LCMissionConverter} params
  */
 export function* lcManager(params={}) {
-    webplotRequestCreator = params.WebplotRequestCreator || getWebPlotRequestViaWISEIbe;
 
     while (true) {
         const action = yield take([
@@ -117,7 +158,7 @@ export function* lcManager(params={}) {
 
         /**
          * This is the current state of the layout store.  Action handlers should return newLayoutInfo if state changes
-         * If state has changed, it will be dispacthed into the flux.
+         * If state has changed, it will be dispatched into the flux.
          * @type {LayoutInfo}   layoutInfo
          * @prop {boolean}  layoutInfo.showForm    show form panel
          * @prop {boolean}  layoutInfo.showTables  show tables panel
@@ -127,7 +168,7 @@ export function* lcManager(params={}) {
          * @prop {Object}   layoutInfo.images      images specific states
          * @prop {string}   layoutInfo.images.activeTableId  last active table id that images responded to
          * @prop {string}   layoutInfo.displayMode:'result' (result page), 'period' (period finding page), 'periodogram' or neither
-         * @prop {string}   layoutInfo.minnsionEntries mission specific entries on result layout panel
+         * @prop {string}   layoutInfo.missionEntries mission specific entries on result layout panel
          * @prop {array}    layoutInfo.generalEntries general entries for result layout panel
          * @prop {string}   layoutInfo.periodState  // period or periodogram
          */
@@ -171,11 +212,11 @@ export function* lcManager(params={}) {
 var defaultCutout = '0.2';
 var defaultFlux = '';
 
-function getMissionName() {
-    var mName = get(getLayouInfo(), ['misionEntries', MetaConst.DATASET_CONVERTER]);
+//function getMissionName() {
+//    var mName = get(getLayouInfo(), ['misionEntries', MetaConst.DATASET_CONVERTER]);
+//    return mName ? mName.toUpperCase() : '';
+//}
 
-    return mName ? mName.toUpperCase() : '';
-}
 
 function getFluxColumn() {
     return get(getLayouInfo(), ['misionEntries', LC.META_FLUX_CNAME], defaultFlux);
@@ -185,14 +226,6 @@ function getCutoutSize() {
     return get(getLayouInfo(), ['generalEntries', 'cutoutSize'], defaultCutout);
 }
 
-var getImageTitle = (mName,frameId, cutoutSize, fluxCol = '',  webplotRequestCreator = null ) => {
-    if (webplotRequestCreator && webplotRequestCreator === getWebPlotRequestViaWISEIbe) {
-        const band=`${fluxCol}`.match(/\d/g);
-        return 'WISE-W'+ band + '-'+ frameId + (cutoutSize ? ` size: ${cutoutSize}(deg)` : '');
-    } else {
-        return `${mName}-` + frameId + (cutoutSize ? ` size: ${cutoutSize}(deg)` : '');
-    }
-};
 
 function updateRawTableChart(layoutInfo, timeCName, fluxCName) {
     var chartX = get(getChartDataElement(LC.RAW_TABLE), ['options', 'x', 'columnOrExpr']);
@@ -236,7 +269,7 @@ function handleValueChange(layoutInfo, action) {
     var {fieldKey, value} = action.payload;
     var crtValue;
 
-    if ([LC.META_TIME_CNAME, LC.META_FLUX_CNAME].includes(fieldKey)) {
+    if ([LC.META_TIME_CNAME, LC.META_FLUX_CNAME, LC.META_ERR_CNAME].includes(fieldKey)) {
         crtValue = get(layoutInfo, [LC.MISSION_DATA, fieldKey]);
 
         if (value !== crtValue) {
@@ -251,9 +284,6 @@ function handleValueChange(layoutInfo, action) {
                 } else if (actTbl === LC.PHASE_FOLDED) {
                     updatePhaseTableChart(layoutInfo, value);
                 }
-                if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
-                    setupImages(get(layoutInfo, 'images.activeTableId'));
-                }
                 keyOfPeriod = 'flux';
             } else if (fieldKey === LC.META_TIME_CNAME &&
                        get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_NAMES]).includes(value)) {
@@ -262,6 +292,7 @@ function handleValueChange(layoutInfo, action) {
 
             if (keyOfPeriod) {
                 layoutInfo = updateSet(layoutInfo, [LC.MISSION_DATA, fieldKey], value);
+                setupImages(get(layoutInfo, 'images.activeTableId'), layoutInfo);
 
                 // update time or flux for period panel field group if it exists
                 if (FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER)) {
@@ -273,10 +304,10 @@ function handleValueChange(layoutInfo, action) {
                 }
             }
         }
-    }  else if (fieldKey === 'cutoutSize') { // cutoutsize changes
+    } else if (fieldKey === 'cutoutSize') { // cutoutsize changes
         if ((get(layoutInfo, [LC.GENERAL_DATA, fieldKey]) !== value) && (value > 0.0) ) {
             if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
-                setupImages(get(layoutInfo, 'images.activeTableId'));
+                setupImages(get(layoutInfo, 'images.activeTableId'), layoutInfo);
                 layoutInfo = updateSet(layoutInfo, [LC.GENERAL_DATA, fieldKey], value);
             }
         }
@@ -312,30 +343,11 @@ function handlePlotActive(layoutInfo, plotId) {
  */
 function handleRawTableLoad(layoutInfo, tblId) {
     const rawTable = getTblById(tblId);
-    var   metaInfo = rawTable && get(rawTable, ['META_INFO']);
-    const missionAry = [LC.META_TIME_CNAME, LC.META_FLUX_CNAME, LC.META_TIME_NAMES, LC.META_FLUX_NAMES,
-                        MetaConst.DATASET_CONVERTER, LC.META_ERROR_COLUMN];
-    const generalEntryAry = {cutoutSize: defaultCutout};  // default setting for cutoutsize?
 
-    defaultFlux = '';
-    // TODO - fill in mission information from table's metadata
-    metaInfo = {[LC.META_TIME_CNAME]: 'mjd',
-                [LC.META_FLUX_CNAME]: 'w1mpro_ep',
-                [LC.META_TIME_NAMES]: ['mjd'],
-                [LC.META_FLUX_NAMES]: ['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'],
-                [MetaConst.DATASET_CONVERTER]: 'wise',
-                [LC.META_ERROR_COLUMN]: ''};
-
-    var missionEntries = missionAry.reduce((prev, key) => {
-            prev[key] = metaInfo ? get(metaInfo, key, ''): '';
-            return prev;
-        }, {});
-
-
-    missionEntries[MetaConst.DATASET_CONVERTER] = get(missionEntries, [MetaConst.DATASET_CONVERTER], '').toUpperCase();
+    const missionEntries = getMissionEntriesForRawTable(rawTable);
+    const generalEntries = getGeneralEntries();
 
     defaultFlux = get(missionEntries, LC.META_FLUX_CNAME);
-    var generalEntries = clone(generalEntryAry);
     var {columns, data} = rawTable.tableData;
     var tIdx = columns.findIndex((col) => (col.name === get(missionEntries, [LC.META_TIME_CNAME])));
     var arr = data.reduce((prev, e)=> {
@@ -349,10 +361,11 @@ function handleRawTableLoad(layoutInfo, tblId) {
 
     var fields = FieldGroupUtils.getGroupFields(LC.FG_VIEWER_FINDER);
     var initState;
+    const validators = getMissionFieldValidators(missionEntries);
     if (fields) {
         initState = Object.keys(fields).reduce((prev, fieldKey) => {
             if (has(missionEntries, fieldKey)) {
-                prev.push({fieldKey, value: get(missionEntries, fieldKey)});
+                prev.push({fieldKey, value: get(missionEntries, fieldKey), validator: validators[fieldKey]});
             } else if (has(generalEntries,fieldKey)) {
                 prev.push({fieldKey, value: get(generalEntries, fieldKey)});
             }
@@ -401,9 +414,11 @@ function handleTableLoad(layoutInfo, action) {
     }
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'showImages', true);
-        layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
-        setupImages(tbl_id);
+        //layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
+        //setupImages(tbl_id);
     }
+    dispatchUpdateLayoutInfo(layoutInfo);
+    layoutInfo = handleTableActive(layoutInfo, action);
 
     return layoutInfo;
 }
@@ -418,7 +433,7 @@ function handleTableActive(layoutInfo, action) {
     const {tbl_id} = action.payload;
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
-        setupImages(tbl_id);
+        setupImages(tbl_id, layoutInfo);
     }
 
     const timeCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]);
@@ -439,7 +454,7 @@ function handleTableHighlight(layoutInfo, action) {
 
     if (tbl_id !== LC.PERIODOGRAM_TABLE && tbl_id !== LC.PEAK_TABLE) {
         if (isImageEnabledTable(tbl_id)) {
-            setupImages(tbl_id);
+            setupImages(tbl_id, layoutInfo);
         }
     } else {
         const per = getPeriodFromTable(tbl_id);
@@ -485,99 +500,22 @@ function isImageEnabledTable(tbl_id) {
 function handleChangeMultiViewLayout(layoutInfo) {
     const activeTableId = get(layoutInfo, 'images.activeTableId');
     const tbl= getTblById(activeTableId);
-    if (get(tbl, 'totalRows',0)>0) setupImages(activeTableId);
+    if (get(tbl, 'totalRows',0)>0) setupImages(activeTableId, layoutInfo);
     return layoutInfo;
 }
 
-/**
- * WISE specific function to fetch image for each time (row)
- * @param {TableModel} tableModel table model
- * @param {number}  hlrow row index
- * @param {number} cutoutSize siez in degrees of the cutout
- * @param {string} fluxCol
- */
-function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, fluxCol) {
-    const ra = getCellValue(tableModel, hlrow, 'ra');
-    const dec = getCellValue(tableModel, hlrow, 'dec');
-    const frameId = getCellValue(tableModel, hlrow, 'frame_id');
-    var   wise_sexp_ibe = /(\d+)([0-9][a-z])(\w+)/g;
-    var   res = wise_sexp_ibe.exec(frameId);
-    const scan_id = res[1] + res[2];
-    const scangrp = res[2];
-    const frame_num = res[3];
-    const band=`${fluxCol}`.match(/\d/g);
-    const title= 'WISE-W'+ band + '-'+ frameId + (cutoutSize ? ` size: ${cutoutSize}(deg)` : '');
-
-    const sr= new ServerRequest('ibe_file_retrieve');
-    sr.setParam('mission', 'wise');
-    sr.setParam('PROC_ID', 'ibe_file_retrieve');
-    sr.setParam('ProductLevel',  '1b');
-    sr.setParam('ImageSet', 'merge');
-    sr.setParam('band', `${band}`);
-    sr.setParam('scangrp', `${scangrp}`);
-    sr.setParam('scan_id', `${scan_id}`);
-    sr.setParam('frame_num', `${frame_num}`);
-    sr.setParam('center', `${ra},${dec}`);
-    sr.setParam('size', `${cutoutSize}`);
-    sr.setParam('subsize', `${cutoutSize}`);
-    sr.setParam('in_ra',`${ra}`);
-    sr.setParam('in_dec',`${dec}`);
-
-    const reqParams = WebPlotRequest.makeProcessorRequest(sr, 'wise');
-    return addCommonReqParams(reqParams, title, makeWorldPt(ra,dec,CoordinateSys.EQ_J2000));
-}
-
-/**
- * Old way to get single exposure via url,
- * would have worked if we had the url column defined and no mission specific code
- * @deprecated
- * @param tableModel
- * @param hlrow
- * @param cutoutSize
- */
-function getWebPlotRequestViaUrl(tableModel, hlrow, cutoutSize) {
-    const ra = getCellValue(tableModel, hlrow, 'ra');
-    const dec = getCellValue(tableModel, hlrow, 'dec');
-    const frameId = getCellValue(tableModel, hlrow, 'frame_id');
-    var   wise_sexp_ibe = /(\d+)([0-9][a-z])(\w+)/g;
-    var   res = wise_sexp_ibe.exec(frameId);
-    const scan_id = res[1] + res[2];
-    const scangrp = res[2];
-    const frame_num = res[3];
-    const mName = getMissionName();
-
-    /*the following should be from reading in the url column returned from LC search
-     we are constructing the url for wise as the LC table does
-     not have the url colume yet
-     It is only for WISE, using default cutout size 0.2 deg
-    const url = `http://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w1-int-1b.fits`;
-    */
-    const serverinfo = 'http://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/';
-    const centerandsize = cutoutSize ? `?center=${ra},${dec}&size=${cutoutSize}&gzip=false` : '';
-    const url = `${serverinfo}${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w1-int-1b.fits${centerandsize}`;
-    const plot_desc = `${mName}-${frameId}`;
-    const reqParams = WebPlotRequest.makeURLPlotRequest(url, plot_desc);
-    const title= getImageTitle(mName, frameId, cutoutSize);
-    return addCommonReqParams(reqParams, title, makeWorldPt(ra,dec,CoordinateSys.EQ_J2000));
-}
-
-function addCommonReqParams(inWpr,title,wp) {
-    const retWpr= inWpr.makeCopy();
-    retWpr.setTitle(title);
-    retWpr.setTitleOptions(TitleOptions.NONE);
-    retWpr.setGroupLocked(true);
-    retWpr.setPlotGroupId('LightCurveGroup');
-    retWpr.setPreferenceColorKey('light-curve-color-pref');
-    retWpr.setOverlayPosition(wp);
-    return retWpr;
-}
-
-export function setupImages(tbl_id) {
+export function setupImages(tbl_id, layoutInfo) {
     try {
-        const viewer=  getViewer(getMultiViewRoot(),LC.IMG_VIEWER_ID);
-        const count= get(viewer, 'layoutDetail.count',LC.DEF_IMAGE_CNT);
         const tableModel = getTblById(tbl_id);
         if (!tableModel || isNil(tableModel.highlightedRow)) return;
+
+        const converterId = get(layoutInfo, [LC.MISSION_DATA,MetaConst.DATASET_CONVERTER]);
+        const converterData = converterId && getConverter(converterId);
+        if (!converterId || !converterData) {return;}
+
+        const viewer=  getViewer(getMultiViewRoot(),LC.IMG_VIEWER_ID);
+        const count= get(viewer, 'layoutDetail.count', converterData.defaultImageCount);
+
         var vr= visRoot();
         const hasPlots= vr.plotViewAry.length>0;
         const newPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,count);
@@ -588,25 +526,17 @@ export function setupImages(tbl_id) {
                                                               getCutoutSize());
         const fluxCol = get(FieldGroupUtils.getGroupFields(LC.FG_VIEWER_FINDER), [LC.META_FLUX_CNAME, 'value'],
                                                               getFluxColumn());
-
         newPlotIdAry.forEach( (plotId) => {
             var pv = getPlotViewById(vr,plotId);
             const rowNum= Number(plotId.substring(plotIdRoot.length));
-            var imgTitle = () => {
-                return getImageTitle(getMissionName(), getCellValue(tableModel, rowNum, 'frame_id'), cutoutSize, fluxCol, webplotRequestCreator);
-            };
-
-            if (!pv || get(pv, ['request', 'params', 'Title']) !== imgTitle()) {
-                if (cutoutSize && fluxCol) {
-                    const webPlotReq = webplotRequestCreator(tableModel, rowNum, cutoutSize, fluxCol);
-
-                    dispatchPlotImage({
-                        plotId, wpRequest: webPlotReq,
-                        setNewPlotAsActive: false,
-                        holdWcsMatch: true,
-                        pvOptions: {userCanDeletePlots: false}
-                    });
-                }
+            const webPlotReq = converterData.webplotRequestCreator(tableModel,rowNum, cutoutSize, {fluxCol});
+            if (!pv || get(pv, ['request', 'params', 'Title']) !== webPlotReq.getTitle())  {
+                dispatchPlotImage({
+                    plotId, wpRequest: webPlotReq,
+                    setNewPlotAsActive: false,
+                    holdWcsMatch: true,
+                    pvOptions: {userCanDeletePlots: false}
+                });
             }
         });
 
@@ -647,5 +577,3 @@ function makePlotIds(highlightedRow, totalRows, totalPlots)  {
     for(var i= startRow; i<=endRow; i++) plotIds[j++]= plotIdRoot+i;
     return plotIds;
 }
-
-

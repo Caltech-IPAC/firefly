@@ -39,8 +39,8 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
 
         /**
          * This is the current state of the layout store.  Action handlers should return newLayoutInfo if state changes
-         * If state has changed, it will be dispacthed into the flux.
-         * @type {LayoutInfo} layoutInfo
+         * If state has changed, it will be dispatched into the flux.
+         * @type {LayoutInfo}
          * @prop {boolean}  layoutInfo.showTables  show tables panel
          * @prop {boolean}  layoutInfo.showXyPlots show charts panel
          * @prop {boolean}  layoutInfo.showImages  show images panel

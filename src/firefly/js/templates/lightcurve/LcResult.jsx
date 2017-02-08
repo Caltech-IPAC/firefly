@@ -34,7 +34,7 @@ const cTimeSeriesKeyDef = {
     timecols: {fkey: LC.META_TIME_NAMES, label: ''},
     fluxcols: {fkey: LC.META_FLUX_NAMES, label: ''},
     cutoutsize: {fkey: 'cutoutSize', label: 'Cutout Size (deg)'},
-    errorcolumn: {fkey: LC.META_ERROR_COLUMN, label: 'Error Column'}
+    errorcolumn: {fkey: LC.META_ERR_CNAME, label: 'Error Column'}
 };
 
 // defValues used to keep the initial values for parameters in the field group of result page
@@ -63,7 +63,7 @@ const defValues = {
                                                 'image cutout size',
                                                 `${cTimeSeriesKeyDef.cutoutsize.label}:`, labelWidth)),
     [cTimeSeriesKeyDef.errorcolumn.fkey]: Object.assign(getTypeData(cTimeSeriesKeyDef.errorcolumn.fkey, '',
-                                                'flux column name',
+                                                'flux error column name',
                                                 `${cTimeSeriesKeyDef.errorcolumn.label}:`, labelWidth),
                                                 {validator: null})
     };
@@ -159,7 +159,7 @@ const buttonW = 650;
 // eslint-disable-next-line
 const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables, settingBox}) => {
 
-    let {cutoutSize} = settingBox.props.generalEntries || '0.3';
+    const {cutoutSize} = settingBox.props.generalEntries || '0.3';
     //let csize = get(generalEntries, 'cutoutsize, '0.3');
     return (
         <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, position: 'relative'}}>
@@ -271,7 +271,6 @@ class SettingBox extends Component {
                                           getSuggestions={(val) => {
                                                         const list = get(missionEntries, missionListKeys[index], []);
                                                         const suggestions =  list && list.filter((el) => {return el.startsWith(val);});
-
                                                         return suggestions.length > 0 ? suggestions : missionListKeys[index];
                                                   }}/>
                 </div>);
@@ -289,11 +288,11 @@ class SettingBox extends Component {
             </div>);
         };
 
-        var moveToPeriod = (periodState) => {
-            return () => {
-                updateLayoutDisplay(periodState);
-            };
-        };
+        //var moveToPeriod = (periodState) => {
+        //    return () => {
+        //        updateLayoutDisplay(periodState);
+        //    };
+        //};
 
         return (
                 <FieldGroup groupKey={LC.FG_VIEWER_FINDER} style={{position: 'relative', width: buttonW-16, height: '100%'}}
@@ -333,29 +332,29 @@ SettingBox.propTypes = {
 };
 
 var timeSeriesReducer = (missionEntries, generalEntries) => {
-      return (inFields, action) => {
-                if (inFields) {
-                    return Object.assign({}, inFields);
-                }
+    return (inFields, action) => {
+        if (inFields) {
+            return inFields;
+        }
 
-                var   defV = Object.assign({}, defValues);
+        var   defV = Object.assign({}, defValues);
 
-                missionListKeys.forEach((key) => {
-                    set(defV, [key, 'value'], get(missionEntries, key, []));
-                });
+        missionListKeys.forEach((key) => {
+            set(defV, [key, 'value'], get(missionEntries, key, []));
+        });
 
-                // set value and validator
-                missionKeys.forEach((key, idx) => {
-                    set(defV, [key, 'value'], get(missionEntries, key, ''));
+        // set value and validator
+        missionKeys.forEach((key, idx) => {
+            set(defV, [key, 'value'], get(missionEntries, key, ''));
                     set(defV, [key, 'validator'], (val) => {
-                        let retVal = {valid: true, message: ''};
+                let retVal = {valid: true, message: ''};
                         const cols = get(missionEntries, missionListKeys[idx], []);
 
-                        if (cols.length !== 0 && !cols.includes(val)) {
-                            retVal = {valid: false, message: `${val} is not a valid column name`};
-                        }
+                if (cols.length !== 0 && !cols.includes(val)) {
+                    retVal = {valid: false, message: `${val} is not a valid column name`};
+                }
 
-                        return retVal;
+                return retVal;
                     });
                 });
                 Object.keys(generalEntries).forEach((key) => {

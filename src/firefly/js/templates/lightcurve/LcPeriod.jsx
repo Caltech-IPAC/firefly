@@ -31,8 +31,6 @@ import './LCPanels.css';
 
 const pfinderkey = LC.FG_PERIOD_FINDER;
 const labelWidth = 100;
-const validTimeSuggestions = ['mjd'];      // suggestive time column name
-const validFluxSuggestions = ['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'];
 
 export const highlightBorder = '1px solid #a3aeb9';
 export function getTypeData(key, val='', tip = '', labelV='', labelW) {
@@ -197,18 +195,12 @@ export class LcPeriod extends Component {
 
 
 LcPeriod.propTypes = {
-    timeColName: PropTypes.string,
-    fluxColName: PropTypes.string,
-    validTimeColumns: PropTypes.arrayOf(PropTypes.string),
-    validFluxColumns: PropTypes.arrayOf(PropTypes.string),
+    timeColName: PropTypes.string.isRequired,
+    fluxColName: PropTypes.string.isRequired,
     displayMode: PropTypes.string
 };
 
 LcPeriod.defaultProps = {
-    timeColName: 'mjd',
-    fluxColName: validFluxSuggestions[0],
-    validTimeColumns: validTimeSuggestions,
-    validFluxColumns: validFluxSuggestions,
     displayMode: 'period'
 };
 
@@ -238,11 +230,9 @@ const PeriodStandardView = (props) => {
 
     // when field is not set yet, set the init value
     if (!fields) {
-        var {timeColName, fluxColName, validTimeColumns, validFluxColumns} = props;
+        var {timeColName, fluxColName} = props;
         initState = Object.assign({time: timeColName,
-                                   flux: fluxColName,
-                                   timeCols: validTimeColumns,
-                                   fluxCols: validFluxColumns}, {...periodRange});
+                                   flux: fluxColName}, {...periodRange});
         currentPeriod = initState.min;
     }
 
@@ -304,8 +294,6 @@ PeriodStandardView.propTypes = {
     displayMode: PropTypes.string,
     timeColName: PropTypes.string,
     fluxColName: PropTypes.string,
-    validTimeColumns: PropTypes.arrayOf(PropTypes.string),
-    validFluxColumns: PropTypes.arrayOf(PropTypes.string),
     fields: PropTypes.object
 };
 
