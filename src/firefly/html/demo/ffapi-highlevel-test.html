@@ -166,7 +166,7 @@
         function launchLC(req) {
             var req = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/ejoliet/demo/WISE-mep-2764p772_ac51-010204.tbl',null,
                     { tbl_id: 'raw_table',
-                      META_INFO: {mission: 'WISE'} });
+                      META_INFO: {datasetInfoConverterId: 'wise'} });
             firefly.getViewer(null, "lc.html").showTable(req);
         }
 
