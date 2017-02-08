@@ -4,7 +4,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {isEmpty, truncate} from 'lodash';
+import {isEmpty, truncate, get} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {download} from '../../util/WebUtil.js';
 import * as TblUtil from '../TableUtil.js';
@@ -112,7 +112,7 @@ export class TablePanel extends Component {
     render() {
         const {selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
                 showToolbar, showTitle, showOptionButton, showPaging, showSave, showFilterButton} = this.state;
-        var {totalRows, showLoading, columns, showOptions, showUnits, showFilters, textView, optSortInfo, downloadButton} = this.state;
+        var {totalRows, showLoading, columns, showOptions, showUnits, showFilters, textView, optSortInfo, leftButtons, rightButtons} = this.state;
         const {tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
                 filterInfo, filterCount, sortInfo, data} = this.state;
         const {tableConnector} = this;
@@ -123,9 +123,16 @@ export class TablePanel extends Component {
 
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
         const viewIcoStyle = 'PanelToolbar__button ' + (textView ? 'tableView' : 'textView');
-        const tableTopPos = showToolbar && (downloadButton && showTitle ? 41 : 29) || 0;
+        const tableTopPos = showToolbar && (leftButtons && showTitle ? 41 : 29) || 0;
         const TT_VIEW = textView ? TT_TABLE_VIEW : TT_TEXT_VIEW;
-        downloadButton = downloadButton && React.cloneElement(downloadButton, {tbl_id});
+
+        // converts the additional left/right buttons into elements
+        leftButtons =   leftButtons && leftButtons
+                        .map((f) => f(this.state))
+                        .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
+        rightButtons = rightButtons && rightButtons
+                        .map((f) => f(this.state))
+                        .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
 
         return (
             <div style={{ position: 'relative', width: '100%', height: '100%'}}>
@@ -133,9 +140,10 @@ export class TablePanel extends Component {
                 <div className={'TablePanel__wrapper' + (border ? '--border' : '')}>
                     {showToolbar &&
                         <div className='PanelToolbar TablePanel__toolbar'>
-                            <LeftToolBar {...{tbl_id, title, removable, showTitle, downloadButton}}/>
+                            <LeftToolBar {...{tbl_id, title, removable, showTitle, leftButtons}}/>
                             {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:tableConnector}} /> }
                             <div className='PanelToolbar__group'>
+                                {rightButtons}
                                 {showFilterButton && filterCount > 0 &&
                                     <div onClick={this.clearFilter}
                                             title={TT_CLEAR_FILTER}
@@ -242,9 +250,11 @@ TablePanel.defaultProps = {
 };
 
 // eslint-disable-next-line
-function LeftToolBar({tbl_id, title, removable, showTitle, downloadButton}) {
+function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
     const style = {display: 'flex'};
-    downloadButton && Object.assign(style, {flexDirection: 'column', justifyContent: 'center'});
+    if (leftButtons) {
+        Object.assign(style, {flexDirection: 'column', justifyContent: 'center'});
+    }
     return (
         <div style={style}>
             { showTitle &&
@@ -258,7 +268,7 @@ function LeftToolBar({tbl_id, title, removable, showTitle, downloadButton}) {
                     }
                 </div>
             }
-            {downloadButton && <div>{downloadButton}</div>}
+            {leftButtons && <div>{leftButtons}</div>}
         </div>
     );
 }

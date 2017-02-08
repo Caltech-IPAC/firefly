@@ -25,7 +25,6 @@ import {FileUpload} from '../../ui/FileUpload.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import {makeFileRequest} from '../../tables/TableUtil.js';
 import {sortInfoString} from '../../tables/SortInfo.js';

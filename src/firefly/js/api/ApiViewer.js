@@ -49,7 +49,7 @@ export function buildViewerApi() {
  * @memberof firefly
  *
  */
-function getViewer(channel= getWsChannel(),file='') {
+export function getViewer(channel= getWsChannel(),file='') {
     channel += VIEWER_ID;
     const dispatch= (action) => dispatchRemoteAction(channel,action);
 
