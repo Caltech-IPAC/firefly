@@ -199,7 +199,7 @@ function updateRawTableChart(layoutInfo, timeCName, fluxCName) {
 }
 
 function updatePhaseTableChart(layoutInfo, flux) {
-    var chartY = get(getChartDataElement(LC.RAW_TABLE), ['options', 'y', 'columnOrExpr']);
+    var chartY = get(getChartDataElement(LC.PHASE_FOLDED), ['options', 'y', 'columnOrExpr']);
 
     if (chartY === flux) return;
 
@@ -549,5 +549,3 @@ function makePlotIds(highlightedRow, totalRows, totalPlots)  {
     for(var i= startRow; i<=endRow; i++) plotIds[j++]= plotIdRoot+i;
     return plotIds;
 }
-
-
