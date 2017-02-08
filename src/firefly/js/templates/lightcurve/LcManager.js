@@ -292,7 +292,7 @@ function handleValueChange(layoutInfo, action) {
 
             if (keyOfPeriod) {
                 layoutInfo = updateSet(layoutInfo, [LC.MISSION_DATA, fieldKey], value);
-                setupImages(get(layoutInfo, 'images.activeTableId'));
+                setupImages(get(layoutInfo, 'images.activeTableId'), layoutInfo);
 
                 // update time or flux for period panel field group if it exists
                 if (FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER)) {
@@ -307,7 +307,7 @@ function handleValueChange(layoutInfo, action) {
     } else if (fieldKey === 'cutoutSize') { // cutoutsize changes
         if ((get(layoutInfo, [LC.GENERAL_DATA, fieldKey]) !== value) && (value > 0.0) ) {
             if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
-                setupImages(get(layoutInfo, 'images.activeTableId'));
+                setupImages(get(layoutInfo, 'images.activeTableId'), layoutInfo);
                 layoutInfo = updateSet(layoutInfo, [LC.GENERAL_DATA, fieldKey], value);
             }
         }
@@ -414,9 +414,11 @@ function handleTableLoad(layoutInfo, action) {
     }
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'showImages', true);
-        layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
-        setupImages(tbl_id);
+        //layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
+        //setupImages(tbl_id);
     }
+    dispatchUpdateLayoutInfo(layoutInfo);
+    layoutInfo = handleTableActive(layoutInfo, action);
 
     return layoutInfo;
 }
@@ -431,7 +433,7 @@ function handleTableActive(layoutInfo, action) {
     const {tbl_id} = action.payload;
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
-        setupImages(tbl_id);
+        setupImages(tbl_id, layoutInfo);
     }
 
     const timeCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]);
@@ -452,7 +454,7 @@ function handleTableHighlight(layoutInfo, action) {
 
     if (tbl_id !== LC.PERIODOGRAM_TABLE && tbl_id !== LC.PEAK_TABLE) {
         if (isImageEnabledTable(tbl_id)) {
-            setupImages(tbl_id);
+            setupImages(tbl_id, layoutInfo);
         }
     } else {
         const per = getPeriodFromTable(tbl_id);
@@ -498,16 +500,16 @@ function isImageEnabledTable(tbl_id) {
 function handleChangeMultiViewLayout(layoutInfo) {
     const activeTableId = get(layoutInfo, 'images.activeTableId');
     const tbl= getTblById(activeTableId);
-    if (get(tbl, 'totalRows',0)>0) setupImages(activeTableId);
+    if (get(tbl, 'totalRows',0)>0) setupImages(activeTableId, layoutInfo);
     return layoutInfo;
 }
 
-export function setupImages(tbl_id) {
+export function setupImages(tbl_id, layoutInfo) {
     try {
         const tableModel = getTblById(tbl_id);
         if (!tableModel || isNil(tableModel.highlightedRow)) return;
 
-        const converterId = get(getLayouInfo(), [LC.MISSION_DATA,MetaConst.DATASET_CONVERTER]);
+        const converterId = get(layoutInfo, [LC.MISSION_DATA,MetaConst.DATASET_CONVERTER]);
         const converterData = converterId && getConverter(converterId);
         if (!converterId || !converterData) {return;}
 
