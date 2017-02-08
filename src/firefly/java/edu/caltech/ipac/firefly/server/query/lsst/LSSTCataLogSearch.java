@@ -101,7 +101,7 @@ public class LSSTCataLogSearch extends IpacTablePartProcessor {
 
         boolean isRunDeep = (catalog != null && catalog.contains("RunDeep"));
         switch (method.toUpperCase()) {
-            case "ALL_SKY":
+            case "ALLSKY":
                 return "";
             case "BOX":
                 //The unit is degree for all the input
