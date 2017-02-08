@@ -51,7 +51,7 @@
     <a href='javascript:firefly.getViewer().showTable(tblReq3)'>Open a table</a>
     <a href='javascript:firefly.getViewer().showTable(tblReq1)'>Open allwise</a>
     <a href='javascript:tblReq1.sortInfo="ASC,ra"; firefly.getViewer().fetchTable(tblReq1)'>Sort allwise by ra</a>
-</div>
+    <a href='javascript:launchLC()'>Launch WISE LcViewer</a></div>
 <div>
     <div id="tables-2" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
     <div id="tables-1" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white; position: absolute"></div>
@@ -163,6 +163,13 @@
 
 <script type="text/javascript">
     {
+        function launchLC(req) {
+            var req = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/ejoliet/demo/WISE-mep-2764p772_ac51-010204.tbl',null,
+                    { tbl_id: 'raw_table',
+                      META_INFO: {datasetInfoConverterId: 'wise'} });
+            firefly.getViewer(null, "lc.html").showTable(req);
+        }
+
         function loadMovingTable() {
             var req = firefly.util.table.makeFileRequest('A moving object table',
                     'http://web.ipac.caltech.edu/staff/roby/demo/moving/MOST_results-sample.tbl',null,

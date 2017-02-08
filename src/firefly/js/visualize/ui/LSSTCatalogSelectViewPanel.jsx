@@ -20,7 +20,7 @@ import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {makeTblRequest, makeLsstCatalogRequest} from '../../tables/TableUtil.js';
+import {makeTblRequest, makeLsstCatalogRequest, makeFileRequest, getCellValue} from '../../tables/TableUtil.js';
 import {CatalogConstraintsPanel, getTblId} from './CatalogConstraintsPanel.jsx';
 import {validateSql, validateConstraints} from './CatalogSelectViewPanel.jsx';
 import {LSSTImageSpatialType} from './LSSTImageSpatialType.jsx';
@@ -283,21 +283,23 @@ function doImage(request, imgPart) {
 
 
     tReq = addConstraintToQuery(tReq);
-    const downloadButton = (
-            <DownloadButton>
-                <DownloadOptionPanel
-                    cutoutSize = {size}
-                    dlParams = {{
-                            Title: title,
-                            FilePrefix: cattable,
-                            BaseFileName: cattable,
-                            DataSource: cattable,
-                            FileGroupProcessor: 'LSSTFileGroupProcessor'     // insert FileGroupProcessor's ID here.
-                        }}/>
-            </DownloadButton>
+    const downloadButton = ({tbl_id}) => {
+                return (
+                    <DownloadButton tbl_id = {tbl_id}>
+                        <DownloadOptionPanel
+                            cutoutSize = {size}
+                            dlParams = {{
+                                    Title: title,
+                                    FilePrefix: cattable,
+                                    BaseFileName: cattable,
+                                    DataSource: cattable,
+                                    FileGroupProcessor: 'LSSTFileGroupProcessor'     // insert FileGroupProcessor's ID here.
+                                }}/>
+                    </DownloadButton>
 
-        );
-    dispatchTableSearch(tReq, {downloadButton});
+                );
+            };
+    dispatchTableSearch(tReq, {leftButtons: [downloadButton]});
 }
 
 /**
