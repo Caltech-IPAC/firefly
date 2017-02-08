@@ -9,7 +9,7 @@ import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT,
         dispatchTableRemove, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
 import {getCellValue, getTblById, getTblIdsByGroup, getActiveTableId} from '../../tables/TableUtil.js';
-import {updateSet, clone, logError} from '../../util/WebUtil.js';
+import {updateSet, logError} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {dispatchPlotImage, visRoot, dispatchDeletePlotView,
         dispatchChangeActivePlotView,
         WcsMatchType, dispatchWcsMatch} from '../../visualize/ImagePlotCntlr.js';
@@ -79,6 +79,50 @@ export function getMissionEntries() {
     return get(getLayouInfo(), [LC.MISSION_DATA]);
 }
 
+function getMissionEntriesForRawTable(rawTable) {
+    const metaInfo = rawTable && rawTable.tableMeta;
+    const converterId = get(metaInfo, MetaConst.DATASET_CONVERTER);
+    const converterData = converterId && getConverter(converterId);
+    if (!converterId || !converterData) {
+        logError('Unknown mission or no converter');
+        return;
+    }
+    return {
+        [MetaConst.DATASET_CONVERTER]: converterId,
+        [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, converterData.defaultTimeCName),
+        [LC.META_FLUX_CNAME]: get(metaInfo, LC.META_FLUX_CNAME, converterData.defaultYCname),
+        [LC.META_ERR_CNAME]: get(metaInfo, LC.META_ERR_CNAME, converterData.defaultYErrCname),
+        [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES, converterData.timeNames),
+        [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, converterData.yNames),
+        [LC.META_ERR_NAMES]: get(metaInfo, LC.META_ERR_NAMES, converterData.yErrNames)
+    };
+}
+
+function getMissionFieldValidators(missionEntries) {
+    const fldsWithValidators = [
+        {key: LC.META_TIME_CNAME, vkey: LC.META_TIME_NAMES},
+        {key: LC.META_FLUX_CNAME, vkey: LC.META_FLUX_NAMES},
+        {key: LC.META_ERR_CNAME, vkey: LC.META_ERR_NAMES}
+        ];
+    return fldsWithValidators.reduce((all, fld) => {
+        all[fld.key] =
+            (val) => {
+                let retVal = {valid: true, message: ''};
+                const cols = get(missionEntries, fld.vkey, []);
+                if (cols.length !== 0 && !cols.includes(val)) {
+                    retVal = {valid: false, message: `${val} is not a valid column name`};
+                }
+                return retVal;
+            };
+        return all;
+    }, {});
+}
+
+
+function getGeneralEntries() {
+    return {cutoutSize: defaultCutout};
+}
+
 export function updateLayoutDisplay(displayMode, periodState) {
     var updateObj = periodState ? {displayMode, periodState} : {displayMode};
     var newLayoutInfo = Object.assign({}, getLayouInfo(), updateObj);
@@ -114,7 +158,7 @@ export function* lcManager(params={}) {
 
         /**
          * This is the current state of the layout store.  Action handlers should return newLayoutInfo if state changes
-         * If state has changed, it will be dispacthed into the flux.
+         * If state has changed, it will be dispatched into the flux.
          * @type {LayoutInfo}   layoutInfo
          * @prop {boolean}  layoutInfo.showForm    show form panel
          * @prop {boolean}  layoutInfo.showTables  show tables panel
@@ -124,7 +168,7 @@ export function* lcManager(params={}) {
          * @prop {Object}   layoutInfo.images      images specific states
          * @prop {string}   layoutInfo.images.activeTableId  last active table id that images responded to
          * @prop {string}   layoutInfo.displayMode:'result' (result page), 'period' (period finding page), 'periodogram' or neither
-         * @prop {string}   layoutInfo.minnsionEntries mission specific entries on result layout panel
+         * @prop {string}   layoutInfo.missionEntries mission specific entries on result layout panel
          * @prop {array}    layoutInfo.generalEntries general entries for result layout panel
          * @prop {string}   layoutInfo.periodState  // period or periodogram
          */
@@ -299,28 +343,9 @@ function handlePlotActive(layoutInfo, plotId) {
  */
 function handleRawTableLoad(layoutInfo, tblId) {
     const rawTable = getTblById(tblId);
-    var   metaInfo = rawTable && rawTable.tableMeta;
-    const generalEntryAry = {cutoutSize: defaultCutout};  // default setting for cutoutsize?
 
-    const converterId = get(metaInfo, MetaConst.DATASET_CONVERTER);
-    const converterData = converterId && getConverter(converterId);
-    if (!converterId || !converterData) {
-        logError('Unknown mission or no converter');
-        return;
-    }
-    const missionEntries =  {
-        [MetaConst.DATASET_CONVERTER]: converterId,
-        [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, converterData.defaultTimeCName),
-        [LC.META_FLUX_CNAME]: get(metaInfo, LC.META_FLUX_CNAME, converterData.defaultYCname),
-        [LC.META_ERR_CNAME]: get(metaInfo, LC.META_ERR_CNAME, converterData.defaultYErrCname),
-        [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES, converterData.timeNames),
-        [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, converterData.yNames),
-        [LC.META_ERR_NAMES]: get(metaInfo, LC.META_ERR_NAMES, converterData.yErrNames)
-    };
-
-    var generalEntries = clone(generalEntryAry);
-    const newLayoutInfo = Object.assign({}, getLayouInfo(), {missionEntries, generalEntries});
-    dispatchUpdateLayoutInfo(newLayoutInfo);
+    const missionEntries = getMissionEntriesForRawTable(rawTable);
+    const generalEntries = getGeneralEntries();
 
     defaultFlux = get(missionEntries, LC.META_FLUX_CNAME);
     var {columns, data} = rawTable.tableData;
@@ -336,10 +361,11 @@ function handleRawTableLoad(layoutInfo, tblId) {
 
     var fields = FieldGroupUtils.getGroupFields(LC.FG_VIEWER_FINDER);
     var initState;
+    const validators = getMissionFieldValidators(missionEntries);
     if (fields) {
         initState = Object.keys(fields).reduce((prev, fieldKey) => {
             if (has(missionEntries, fieldKey)) {
-                prev.push({fieldKey, value: get(missionEntries, fieldKey)});
+                prev.push({fieldKey, value: get(missionEntries, fieldKey), validator: validators[fieldKey]});
             } else if (has(generalEntries,fieldKey)) {
                 prev.push({fieldKey, value: get(generalEntries, fieldKey)});
             }

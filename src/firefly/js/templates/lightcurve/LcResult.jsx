@@ -13,7 +13,7 @@ import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {LcImageViewerContainer} from './LcImageViewerContainer.jsx';
 import {createContentWrapper} from '../../ui/panel/DockLayoutPanel.jsx';
-import {getMissionEntries, LC, updateLayoutDisplay} from './LcManager.js';
+import {LC, updateLayoutDisplay} from './LcManager.js';
 import {getTypeData, ReadOnlyText, highlightBorder} from './LcPeriod.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
@@ -159,7 +159,7 @@ const buttonW = 650;
 // eslint-disable-next-line
 const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables, settingBox}) => {
 
-    let {cutoutSize} = settingBox.props.generalEntries || '0.3';
+    const {cutoutSize} = settingBox.props.generalEntries || '0.3';
     //let csize = get(generalEntries, 'cutoutsize, '0.3');
     return (
         <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, position: 'relative'}}>
@@ -269,7 +269,7 @@ class SettingBox extends Component {
                 return (<div style={wrapperStyle} key={key}>
                     <SuggestBoxInputField fieldKey={key} wrapperStyle={wrapperStyle}
                                           getSuggestions={(val) => {
-                                                        const list = get(getMissionEntries(), missionListKeys[index], []);
+                                                        const list = get(missionEntries, missionListKeys[index], []);
                                                         const suggestions =  list && list.filter((el) => {return el.startsWith(val);});
                                                         return suggestions.length > 0 ? suggestions : missionListKeys[index];
                                                   }}/>
@@ -332,29 +332,29 @@ SettingBox.propTypes = {
 };
 
 var timeSeriesReducer = (missionEntries, generalEntries) => {
-      return (inFields, action) => {
-                if (inFields) {
-                    return Object.assign({}, inFields);
+    return (inFields, action) => {
+        if (inFields) {
+            return inFields;
+        }
+
+        var   defV = Object.assign({}, defValues);
+
+        missionListKeys.forEach((key) => {
+            set(defV, [key, 'value'], get(missionEntries, key, []));
+        });
+
+        // set value and validator
+        missionKeys.forEach((key, idx) => {
+            set(defV, [key, 'value'], get(missionEntries, key, ''));
+                    set(defV, [key, 'validator'], (val) => {
+                let retVal = {valid: true, message: ''};
+                        const cols = get(missionEntries, missionListKeys[idx], []);
+
+                if (cols.length !== 0 && !cols.includes(val)) {
+                    retVal = {valid: false, message: `${val} is not a valid column name`};
                 }
 
-                var   defV = Object.assign({}, defValues);
-
-                missionListKeys.forEach((key) => {
-                    set(defV, [key, 'value'], get(missionEntries, key, []));
-                });
-
-                // set value and validator
-                missionKeys.forEach((key, idx) => {
-                    set(defV, [key, 'value'], get(missionEntries, key, ''));
-                    set(defV, [key, 'validator'], (val) => {
-                        let retVal = {valid: true, message: ''};
-                        const cols = get(getMissionEntries(), missionListKeys[idx], []);
-
-                        if (cols.length !== 0 && !cols.includes(val)) {
-                            retVal = {valid: false, message: `${val} is not a valid column name`};
-                        }
-
-                        return retVal;
+                return retVal;
                     });
                 });
                 Object.keys(generalEntries).forEach((key) => {
