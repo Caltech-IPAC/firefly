@@ -13,7 +13,7 @@ import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {LcImageViewerContainer} from './LcImageViewerContainer.jsx';
 import {createContentWrapper} from '../../ui/panel/DockLayoutPanel.jsx';
-import {LC, updateLayoutDisplay} from './LcManager.js';
+import {getMissionEntries, LC, updateLayoutDisplay} from './LcManager.js';
 import {getTypeData, ReadOnlyText, highlightBorder} from './LcPeriod.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
@@ -34,7 +34,7 @@ const cTimeSeriesKeyDef = {
     timecols: {fkey: LC.META_TIME_NAMES, label: ''},
     fluxcols: {fkey: LC.META_FLUX_NAMES, label: ''},
     cutoutsize: {fkey: 'cutoutSize', label: 'Cutout Size (deg)'},
-    errorcolumn: {fkey: LC.META_ERROR_COLUMN, label: 'Error Column'}
+    errorcolumn: {fkey: LC.META_ERR_CNAME, label: 'Error Column'}
 };
 
 // defValues used to keep the initial values for parameters in the field group of result page
@@ -63,7 +63,7 @@ const defValues = {
                                                 'image cutout size',
                                                 `${cTimeSeriesKeyDef.cutoutsize.label}:`, labelWidth)),
     [cTimeSeriesKeyDef.errorcolumn.fkey]: Object.assign(getTypeData(cTimeSeriesKeyDef.errorcolumn.fkey, '',
-                                                'flux column name',
+                                                'flux error column name',
                                                 `${cTimeSeriesKeyDef.errorcolumn.label}:`, labelWidth),
                                                 {validator: null})
     };
@@ -267,9 +267,8 @@ class SettingBox extends Component {
                 return (<div style={wrapperStyle} key={key}>
                     <SuggestBoxInputField fieldKey={key} wrapperStyle={wrapperStyle}
                                           getSuggestions={(val) => {
-                                                        const list = get(missionEntries, missionListKeys[index], []);
+                                                        const list = get(getMissionEntries(), missionListKeys[index], []);
                                                         const suggestions =  list && list.filter((el) => {return el.startsWith(val);});
-
                                                         return suggestions.length > 0 ? suggestions : missionListKeys[index];
                                                   }}/>
                 </div>);
@@ -287,11 +286,11 @@ class SettingBox extends Component {
             </div>);
         };
 
-        var moveToPeriod = (periodState) => {
-            return () => {
-                updateLayoutDisplay(periodState);
-            };
-        };
+        //var moveToPeriod = (periodState) => {
+        //    return () => {
+        //        updateLayoutDisplay(periodState);
+        //    };
+        //};
 
         return (
                 <FieldGroup groupKey={LC.FG_VIEWER_FINDER} style={{position: 'relative', width: buttonW-16, height: '100%'}}
@@ -347,7 +346,7 @@ var timeSeriesReducer = (missionEntries, generalEntries) => {
                     set(defV, [key, 'value'], get(missionEntries, key, ''));
                     set(defV, [key, 'validator'], (val) => {
                         let retVal = {valid: true, message: ''};
-                        const cols = get(missionEntries, missionListKeys[idx], []);
+                        const cols = get(getMissionEntries(), missionListKeys[idx], []);
 
                         if (cols.length !== 0 && !cols.includes(val)) {
                             retVal = {valid: false, message: `${val} is not a valid column name`};

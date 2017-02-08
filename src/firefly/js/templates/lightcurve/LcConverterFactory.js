@@ -38,16 +38,20 @@ export const converters = {
         defaultImageCount: 5,
         defaultTimeCName: 'mjd',
         defaultYCname: 'w1mpro_ep',
+        defaultYErrCname: '',
         timeNames: ['mjd'],
         yNames: ['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'],
+        yErrNames: ['w1sigmpro_ep', 'w2sigmpro_ep', 'w3sigmpro_ep', 'w4sigmpro_ep'],
         webplotRequestCreator: getWebPlotRequestViaWISEIbe
     },
     'lsst_sdss': {
         defaultImageCount: 1,
         defaultTimeCName: 'exposure_time_mid',
         defaultYCname: 'mag',
+        defaultYErrCname: '',
         timeNames: ['exposure_time_mid'],
         yNames: ['mag', 'tsv_flux'],
+        yErrNames: ['magErr', 'tsv_fluxErr'],
         webplotRequestCreator: makeLsstSdssPlotRequest
     }
 };

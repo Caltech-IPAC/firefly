@@ -36,13 +36,10 @@ export const LC = {
 
     IMG_VIEWER_ID: 'lc_image_viewer',
     MAX_IMAGE_CNT: 7,
-    DEF_IMAGE_CNT: 5,
 
     META_TIME_CNAME: 'timeCName',
     META_FLUX_CNAME: 'fluxCName',
-    META_ERROR_COLUMN: 'errorColumn',
-    DEF_TIME_CNAME: 'mjd',
-    DEF_FLUX_CNAME: 'w1mpro_ep',
+    META_ERR_CNAME: 'errorCName',
 
     RESULT_PAGE: 'result',          // result layout
     PERIOD_PAGE: 'period',          // period finding layout with periodogram button
@@ -57,6 +54,7 @@ export const LC = {
 
     META_TIME_NAMES: 'timeNames',
     META_FLUX_NAMES: 'fluxNames',
+    META_ERR_NAMES: 'errorNames',
     META_MISSION: MetaConst.DATASET_CONVERTER,
 
     MISSION_DATA: 'missionEntries',
@@ -75,6 +73,10 @@ export function getConverterId() {
 export function getConverterData() {
     const converterId = getConverterId();
     return getConverter(converterId);
+}
+
+export function getMissionEntries() {
+    return get(getLayouInfo(), [LC.MISSION_DATA]);
 }
 
 export function updateLayoutDisplay(displayMode, periodState) {
@@ -166,11 +168,11 @@ export function* lcManager(params={}) {
 var defaultCutout = '0.2';
 var defaultFlux = '';
 
-function getMissionName() {
-    var mName = get(getLayouInfo(), ['misionEntries', MetaConst.DATASET_CONVERTER]);
+//function getMissionName() {
+//    var mName = get(getLayouInfo(), ['misionEntries', MetaConst.DATASET_CONVERTER]);
+//    return mName ? mName.toUpperCase() : '';
+//}
 
-    return mName ? mName.toUpperCase() : '';
-}
 
 function getFluxColumn() {
     return get(getLayouInfo(), ['misionEntries', LC.META_FLUX_CNAME], defaultFlux);
@@ -223,7 +225,7 @@ function handleValueChange(layoutInfo, action) {
     var {fieldKey, value} = action.payload;
     var crtValue;
 
-    if ([LC.META_TIME_CNAME, LC.META_FLUX_CNAME].includes(fieldKey)) {
+    if ([LC.META_TIME_CNAME, LC.META_FLUX_CNAME, LC.META_ERR_CNAME].includes(fieldKey)) {
         crtValue = get(layoutInfo, [LC.MISSION_DATA, fieldKey]);
 
         if (value !== crtValue) {
@@ -306,15 +308,21 @@ function handleRawTableLoad(layoutInfo, tblId) {
         logError('Unknown mission or no converter');
         return;
     }
-    const missionEntries =  {[MetaConst.DATASET_CONVERTER]: converterId,
-                [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, converterData.defaultTimeCName),
-                [LC.META_FLUX_CNAME]: get(metaInfo, LC.META_FLUX_CNAME, converterData.defaultYCname),
-                [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES, converterData.timeNames),
-                [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, converterData.yNames),
-                [LC.META_ERROR_COLUMN]: ''};
+    const missionEntries =  {
+        [MetaConst.DATASET_CONVERTER]: converterId,
+        [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, converterData.defaultTimeCName),
+        [LC.META_FLUX_CNAME]: get(metaInfo, LC.META_FLUX_CNAME, converterData.defaultYCname),
+        [LC.META_ERR_CNAME]: get(metaInfo, LC.META_ERR_CNAME, converterData.defaultYErrCname),
+        [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES, converterData.timeNames),
+        [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, converterData.yNames),
+        [LC.META_ERR_NAMES]: get(metaInfo, LC.META_ERR_NAMES, converterData.yErrNames)
+    };
+
+    var generalEntries = clone(generalEntryAry);
+    const newLayoutInfo = Object.assign({}, getLayouInfo(), {missionEntries, generalEntries});
+    dispatchUpdateLayoutInfo(newLayoutInfo);
 
     defaultFlux = get(missionEntries, LC.META_FLUX_CNAME);
-    var generalEntries = clone(generalEntryAry);
     var {columns, data} = rawTable.tableData;
     var tIdx = columns.findIndex((col) => (col.name === get(missionEntries, [LC.META_TIME_CNAME])));
     var arr = data.reduce((prev, e)=> {

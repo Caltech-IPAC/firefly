@@ -12,7 +12,6 @@ import {getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import {lcManager, LC, removeTablesFromGroup, } from './LcManager.js';
 import {getAllConverterIds, getConverter} from './LcConverterFactory.js';
-import {listenerPanel} from './LcPhaseFoldingPanel.jsx';
 import {LcResult} from './LcResult.jsx';
 import {LcPeriod} from './LcPeriod.jsx';
 import {Menu} from '../../ui/Menu.jsx';
@@ -42,7 +41,6 @@ export class LcViewer extends Component {
         super(props);
         this.state = this.getNextState();
         dispatchAddSaga(lcManager);
-        dispatchAddSaga(listenerPanel);
         dispatchAddSaga(syncChartViewer);
     }
 
@@ -237,3 +235,5 @@ function onSearchSubmit(request) {
         dispatchHideDropDown();
     } 
 }
+
+
