@@ -10,6 +10,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
 
@@ -56,7 +57,7 @@ public class IpacTableReaderTest extends ConfigTest{
             Keep onlyColumns = null to read all the columns.
      */
 
-    public void testValidIpacTable() {
+    public void testValidIpacTable() throws IpacTableException, IOException {
 
         //Input table:
         String input =
@@ -88,48 +89,44 @@ public class IpacTableReaderTest extends ConfigTest{
         dataValues = new String[][]{{"165.466279", "-34.70473", "5", "11.27", "K6Ve"}, {"123.4", "5.67", "9", "8.9", "K6Ve-1"}};
 
 
-        try {
-            //public static DataGroup readIpacTable(Reader fr, String catName)
-            //public static DataGroup readIpacTable(Reader fr, String catName, long estFileSize)
-            //public static DataGroup readIpacTable(Reader fr, String catName, String onlyColumns[],boolean useFloatsForDoubles,long estFileSize)
-            //public static DataGroup readIpacTable(Reader fr, String catName, String onlyColumns[],boolean useFloatsForDoubles,long estFileSize, boolean isHeadersOnlyAllow)
+        //Test the following methods:
+        //public static DataGroup readIpacTable(Reader fr, String catName)
+        //public static DataGroup readIpacTable(Reader fr, String catName, long estFileSize)
+        //public static DataGroup readIpacTable(Reader fr, String catName, String onlyColumns[],boolean useFloatsForDoubles,long estFileSize)
+        //public static DataGroup readIpacTable(Reader fr, String catName, String onlyColumns[],boolean useFloatsForDoubles,long estFileSize, boolean isHeadersOnlyAllow)
 
-            DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName);
-            checkResult(dataGroup);
+        DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName);
+        checkResult(dataGroup);
 
-            estFileSize = 100;
-            dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, estFileSize);
-            checkResult(dataGroup); //estFileSize is never used.
+        estFileSize = 100;
+        dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, estFileSize);
+        checkResult(dataGroup); //estFileSize is never used.
 
-            useFloatsForDoubles = true;
-            dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, useFloatsForDoubles, estFileSize);
-            checkResult(dataGroup); //useFloatForDoubles is never used.
+        useFloatsForDoubles = true;
+        dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, useFloatsForDoubles, estFileSize);
+        checkResult(dataGroup); //useFloatForDoubles is never used.
 
-            isHeadersOnlyAllow = true;
-            dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, useFloatsForDoubles, estFileSize, isHeadersOnlyAllow);
-            checkResult(dataGroup); //isHeadersOnlyAllow = true is never use.
+        isHeadersOnlyAllow = true;
+        dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, useFloatsForDoubles, estFileSize, isHeadersOnlyAllow);
+        checkResult(dataGroup); //isHeadersOnlyAllow = true is never use.
 
-            //Test the following methods:
-            //public static DataGroup readIpacTable(File f, String catName)
-            //public static DataGroup readIpacTable(File f, String onlyColumns[], boolean useFloatsForDoubles, String catName)
-            //public static DataGroup readIpacTable(File f, String onlyColumns[], boolean useFloatsForDoubles, String catName, boolean isHeadersOnlyAllow)
+        //Test the following methods:
+        //public static DataGroup readIpacTable(File f, String catName)
+        //public static DataGroup readIpacTable(File f, String onlyColumns[], boolean useFloatsForDoubles, String catName)
+        //public static DataGroup readIpacTable(File f, String onlyColumns[], boolean useFloatsForDoubles, String catName, boolean isHeadersOnlyAllow)
 
-            File tempFile = new File("./temp.tbl");
-            IpacTableWriter.save(tempFile, dataGroup);
-            dataGroup = IpacTableReader.readIpacTable(tempFile, catName);
-            checkResult(dataGroup);
-            useFloatsForDoubles = true;
-            dataGroup = IpacTableReader.readIpacTable(tempFile, onlyColumns, useFloatsForDoubles, catName);
-            checkResult(dataGroup); //useFloatsForDoubles has never be used!
-            isHeadersOnlyAllow = true;
-            dataGroup = IpacTableReader.readIpacTable(tempFile, onlyColumns, useFloatsForDoubles, catName, isHeadersOnlyAllow);
-            checkResult(dataGroup); //isHeadersOnlyAllow=true has never be used!
+        File tempFile = new File("./temp.tbl");
+        tempFile.deleteOnExit();
 
-            tempFile.delete();
-
-        }catch (Exception e){
-            //?
-        }
+        IpacTableWriter.save(tempFile, dataGroup);
+        dataGroup = IpacTableReader.readIpacTable(tempFile, catName);
+        checkResult(dataGroup);
+        useFloatsForDoubles = true;
+        dataGroup = IpacTableReader.readIpacTable(tempFile, onlyColumns, useFloatsForDoubles, catName);
+        checkResult(dataGroup); //useFloatsForDoubles has never be used!
+        isHeadersOnlyAllow = true;
+        dataGroup = IpacTableReader.readIpacTable(tempFile, onlyColumns, useFloatsForDoubles, catName, isHeadersOnlyAllow);
+        checkResult(dataGroup); //isHeadersOnlyAllow=true has never be used!
 
         //Test result: This IPAC table is read correctly.
         // Passed.
@@ -142,7 +139,7 @@ public class IpacTableReaderTest extends ConfigTest{
      * and verify if the produced dataGroup contains the correct information from the table.
      */
 
-    public void testOnlyColumns() {
+    public void testOnlyColumns() throws IpacTableException {
 
         //Input table:
         String input =
@@ -176,15 +173,11 @@ public class IpacTableReaderTest extends ConfigTest{
         //Set the data:
         dataValues = new String[][]{{"165.466279", "-34.70473"}, {"123.4", "5.67"}};
 
-        try {
-            //Read the table and generate the dataGroup:
-            DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, useFloatsForDoubles, estFileSize, isHeadersOnlyAllow);
+        //Read the table and generate the dataGroup:
+        DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, useFloatsForDoubles, estFileSize, isHeadersOnlyAllow);
 
-            //Check the result:
-            checkResult(dataGroup);
-        }catch(IpacTableException e){
-
-        }
+        //Check the result:
+        checkResult(dataGroup);
 
         //Test result: "onlyColumns" works fine. Only those two selected columns are read.
         // Passed.
@@ -198,7 +191,7 @@ public class IpacTableReaderTest extends ConfigTest{
      * Verify if the produced dataGroup contains the correct information from the table.
      *
      */
-    public void testNoAttributes() {
+    public void testNoAttributes() throws IpacTableException {
 
 
         String input =
@@ -211,19 +204,14 @@ public class IpacTableReaderTest extends ConfigTest{
 
         noAttributes = true;
 
-        try {
-            DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, useFloatsForDoubles, estFileSize, isHeadersOnlyAllow);
+        DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, useFloatsForDoubles, estFileSize, isHeadersOnlyAllow);
 
-            List<DataGroup.Attribute> comments = dataGroup.getKeywords();
-            Assert.assertEquals("There should be 0 comments", 0, comments.size());
-            Map<String, DataGroup.Attribute> keywordsMap = dataGroup.getAttributes();
-            Assert.assertEquals("There should be 0 keywords", 0, keywordsMap.size());
+        List<DataGroup.Attribute> comments = dataGroup.getKeywords();
+        Assert.assertEquals("There should be 0 comments", 0, comments.size());
+        Map<String, DataGroup.Attribute> keywordsMap = dataGroup.getAttributes();
+        Assert.assertEquals("There should be 0 keywords", 0, keywordsMap.size());
 
-            Assert.assertEquals("ra for row 1", 165.466279, (Double) dataGroup.get(0).getDataElement("ra"), 0.001);
-        }catch(IpacTableException e){
-
-        }
-
+        Assert.assertEquals("ra for row 1", 165.466279, (Double) dataGroup.get(0).getDataElement("ra"), 0.000001);
 
         //Test result: It is okay for an IPAC table not having any attributes. The table is read correctly.
         // Passed.
@@ -235,7 +223,7 @@ public class IpacTableReaderTest extends ConfigTest{
      * Need to see how our table reader handle it.
      *
      */
-    public void testWrongAttributes1() {
+    public void testWrongAttributes1() throws IpacTableException {
 
         String input =
         "\\ catalog1 = 'A space makes this line as a comment'\n" +
@@ -248,20 +236,15 @@ public class IpacTableReaderTest extends ConfigTest{
         "  165.466279  -34.704730      5       11.27       K6Ve      \n" +
         "  123.4       5.67            9       8.9         K6Ve-1    ";
 
-        try {
-            DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName);
+        DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName);
 
-            //Check the Attributes (comments):
-            List<DataGroup.Attribute> attributes = dataGroup.getKeywords();
-            Assert.assertTrue(attributes.get(0).isComment());
-            Assert.assertEquals("The first attribute has a space so it is parsed as a comment.",
-                    attributes.get(0).toString(), "\\ catalog1 = 'A space makes this line as a comment'");
+        //Check the Attributes (comments):
+        List<DataGroup.Attribute> attributes = dataGroup.getKeywords();
+        Assert.assertTrue(attributes.get(0).isComment());
+        Assert.assertEquals("The first attribute has a space so it is parsed as a comment.",
+                attributes.get(0).toString(), "\\ catalog1 = 'A space makes this line as a comment'");
 
-            Assert.assertEquals("The last two lines will be ignored as they have no leading space nor '=' ", 1, attributes.size());
-
-        }catch(IpacTableException e){
-
-        }
+        Assert.assertEquals("The last two lines will be ignored as they have no leading space nor '=' ", 1, attributes.size());
 
         /*Test result:
 
@@ -285,7 +268,6 @@ public class IpacTableReaderTest extends ConfigTest{
 
         String input =
                 "catalog2 = missing the back slash and no space\n" +
-                "\\ Comment2 Valid comment\n" +
                 "|   ra      |    dec    |   n_obs  |    V     |   SpType   |\n" +
                 "|   double  |    double |   int    |   real   |   char     |\n" +
                 "|   deg     |    deg    |          |   mag    |            |\n" +
@@ -294,15 +276,14 @@ public class IpacTableReaderTest extends ConfigTest{
                 "  123.4       5.67            9       8.9         K6Ve-1    ";
 
 
-        try{
+        try {
             DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName);
             Assert.fail("No exception thrown.");
-        } catch (Exception e){
+        } catch (IpacTableException e) {
 
         }
 
         //Test result:
-        //If an attribute starts with a space, it will be ignored.
         //If an attribute has no "\" nor space at beginning, it will trigger IpacTableException: "Data row must start with a space." and no dataGroup is generated.
 
         //Passed
@@ -332,8 +313,10 @@ public class IpacTableReaderTest extends ConfigTest{
 
         try{
             DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName);
-            // After DM-9332 is implemented uncomment this:
+            //After DM-9332 is implemented uncomment this:
             //Assert.fail("No exception thrown out");
+            //After DM-9332, the LOG.WARN should be deleted:
+            LOG.warn("This test should trigger IpacTableException but it doesn't. After DM-9332 fixes it, the test needs to be updated.");
 
         } catch (IpacTableException e){
 
@@ -362,6 +345,7 @@ public class IpacTableReaderTest extends ConfigTest{
      * Test if it can be handled correctly.
      */
     public void testDatatype_real() {
+
         String input =
                 "\\catalog1 = 'Sample Catalog1'\n" +
                 "\\catalog2 = 'Sample Catalog2'\n" +
@@ -397,6 +381,7 @@ public class IpacTableReaderTest extends ConfigTest{
 
         //Test result:
         //The 4th one is "real" in the table but currently the IPAC table treat it as "char". DM-9026.
+        LOG.warn("The data type \'real\' is parsed as a char. DM-9026 will parse real as double and then the test needs some updates.");
 
     }
 
@@ -454,8 +439,9 @@ public class IpacTableReaderTest extends ConfigTest{
 
         try{
             DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName);
-            //After https://jira.lsstcorp.org/browse/DM-9333 is implemented, use this:
+            //After https://jira.lsstcorp.org/browse/DM-9333 is implemented, use this Assert.fail and delete the LOG.warn below:
             //Assert.fail("No exception is thrown out");
+            LOG.warn("When some data are under \'|\' in an IPAC table, the reader doesn't throw out IpacTableException. DM-9333 will fix it and then this test needs some mods.");
         }catch(IpacTableException e){
 
         }
@@ -490,8 +476,9 @@ public class IpacTableReaderTest extends ConfigTest{
 
         try{
             DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName);
-            //After https://jira.lsstcorp.org/browse/DM-9335 is implemented, use this:
+            //After https://jira.lsstcorp.org/browse/DM-9335 is implemented, use the Assert.fail and delete the LOG.warn below:
             //Assert.fail("No exception is thrown out.");
+            LOG.warn("IPAC table reader doesn't catch the no header problem. DM-9335 will fix it and then the test needs some mods.");
         }catch(IpacTableException e) {
 
         }
