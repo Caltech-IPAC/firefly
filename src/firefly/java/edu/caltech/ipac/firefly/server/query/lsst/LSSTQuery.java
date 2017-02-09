@@ -31,7 +31,9 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
-
+/**
+ * This is a base class for LSSTCatlogSearch and LSSTLightCurveQuery
+ */
 public abstract class LSSTQuery extends IpacTablePartProcessor {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
     private static final String PORT = "5000";
@@ -147,7 +149,12 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         return dg;
     }
 
-
+    /**
+     * This method add a number to a DataObject
+     * @param dataType
+     * @param nd
+     * @param row
+     */
     private void addNumberToRow(DataType dataType, Number nd,DataObject row ) {
         switch (dataType.getDataType().getSimpleName()){
             case "Byte":
@@ -172,6 +179,12 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         }
     }
 
+    /**
+     * This method adds a String to a DataObject
+     * @param dataType
+     * @param sd
+     * @param row
+     */
     private void addStringToRow(DataType dataType, String sd,DataObject row){
         switch (dataType.getDataType().getSimpleName()) {
             case "Boolean":

@@ -12,22 +12,33 @@ import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
-
 import java.util.List;
 import java.util.Locale;
 
 
 /**
+ * Feb-9-2017
+ * DM-9247
+ *   Implement search processor(s) to support All Sky mode
+ *
+ *
  * Created by zhang on 10/10/16.
- * This is the Catalog search processor.  For any given target (ra and dec, except in polygon), it searches based on
- * the search method.  It supports four search methods:
+ * This is the Catalog search processor.  It searches based on search method for for catalog database and searches based on
+ * search type in image database.
+ * For catlog database, the search method.  It supports four search methods:
  *   1.  Cone
  *   2.  Box
  *   3.  Elliptical
  *   4.  Polygon
  *
+ *
  *   For cone, box and polygon searches, all input have to be in degree unit
  *   For Elliptical, ra and dec are in degree and the semi axis are in arcsec.
+ *
+ *  For image data base, it supports:
+ *     1. CENTER
+ *     2. COVER
+ *     3. ENCLOSED
  *
  */
 @SearchProcessorImpl(id = "LSSTCataLogSearch")
@@ -46,14 +57,15 @@ public class LSSTCataLogSearch extends LSSTQuery {
     protected String getSearchMethodCatalog(TableServerRequest req, String catalog)throws Exception { //, String raCol, String decCol) throws Exception {
 
         String method = req.getParam("SearchMethod");
+        if (method.equalsIgnoreCase("allSky")){
+            return "";
+        }
         String[]  radec = req.getParam("UserTargetWorldPt")!=null? req.getParam("UserTargetWorldPt").split(";"):null;
         String ra =radec!=null? radec[0]:"";
         String dec = radec!=null?radec[1]:"";
 
         boolean isRunDeep = (catalog != null && catalog.contains("RunDeep"));
         switch (method.toUpperCase()) {
-            case "ALLSKY":
-                return "";
             case "BOX":
                 //The unit is degree for all the input
                 String side = req.getParam(CatalogRequest.SIZE);
@@ -135,14 +147,13 @@ public class LSSTCataLogSearch extends LSSTQuery {
 
     }
 
-    protected String getMethodOnSearchType(TableServerRequest req)throws Exception { //, String raCol, String decCol) throws Exception {
+    protected String getMethodOnSearchType(TableServerRequest req)throws Exception {
 
-       /*
-        String method = req.getParam("SearchMethod");
-        if (!method.equalsIgnoreCase("box")) {
-                throw new DataAccessException("Inout Error:" + method  + " is not supported for now");
-        }*/
+
         String searchType = req.getParam("intersect");
+        if (searchType.equalsIgnoreCase("allSky")){
+            return "";
+        }
         String[]  radec = req.getParam("UserTargetWorldPt")!=null? req.getParam("UserTargetWorldPt").split(";"):null;
         String ra =radec!=null? radec[0]:"";
         String dec = radec!=null?radec[1]:"";
@@ -189,7 +200,6 @@ public class LSSTCataLogSearch extends LSSTQuery {
                                 "(scisql_s2PtInBox(corner2Ra, corner2Decl," + minRa + "," + minDec + "," + maxRa + "," + maxDec + ")=1) AND " +
                                 "(scisql_s2PtInBox(corner3Ra, corner3Decl," + minRa + "," + minDec + "," + maxRa + "," + maxDec + ")=1) AND " +
                                 "(scisql_s2PtInBox(corner4Ra, corner4Decl, " + minRa + "," + minDec + "," + maxRa + "," + maxDec + ")=1)";
-
 
             default:
                 // should only be happened if a new method was added and not added here
@@ -245,9 +255,15 @@ public class LSSTCataLogSearch extends LSSTQuery {
         }
 
         String sql = "SELECT " + columns + " FROM " + catTable;
-        sql =whereStr.length()>0? sql +  " WHERE " + whereStr + ";": sql+ ";";
+        //add the guard to prevent from seaching the whole database when users do not enter a constrain
+        if (whereStr.length()>0){
+            return sql +  " WHERE " + whereStr + ";";
+        }
+        else {
+            throw new EndUserException("Error: Search without constrains will cause database hanging!!!", sql);
+        }
 
-        return sql;
+
     }
 
 
