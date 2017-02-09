@@ -69,11 +69,11 @@ const labelWidth = 150;
 
 var defValues = {
     [pKeyDef.min.fkey]: Object.assign(getTypeData(pKeyDef.min.fkey,
-        '', 'minimum period',
+        '', 'minimum period (> 0)',
         `${pKeyDef.min.label}:`, labelWidth),
         {validator: null}),
     [pKeyDef.max.fkey]: Object.assign(getTypeData(pKeyDef.max.fkey,
-        '', 'maximum period',
+        '', 'maximum period (> 0)',
         `${pKeyDef.max.label}:`, labelWidth),
         {validator: null}),
     [pKeyDef.algor.fkey]: Object.assign(getTypeData(pKeyDef.algor.fkey,
@@ -359,8 +359,8 @@ var isPeriodMinValid = (valStr, description) => {
     var mmax = max ? parseFloat(max) :  Number.MAX_VALUE;
     var pMin = parseFloat(0);//get(getLayouInfo(), ['periodRange', 'min']);
 
-    return (val >= pMin && val < mmax) ?  {valid: true} :
-                   {valid: false, message: description + `must be greater than ${pMin} ` +
+    return (val > pMin && val < mmax) ?  {valid: true} :
+                   {valid: false, message: description + `: must be greater than ${pMin} ` +
                                                          (max&&` and less than ${mmax}`)};
 };
 
