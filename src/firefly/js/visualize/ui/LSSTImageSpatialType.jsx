@@ -49,7 +49,7 @@ export class LSSTImageSpatialType extends Component {
                         keepState={true}
                         reducerFunc={imageSearchReducer}
                         style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
-                {renderTargetPanel(groupKey)}
+                {renderTargetPanel(groupKey, searchType)}
                 <div style={{padding: 3}}>
                     <InputGroup labelWidth={270}>
                         <ListBoxInputField
@@ -63,13 +63,14 @@ export class LSSTImageSpatialType extends Component {
                                         {value: 'CENTER', label: 'Image contains target' },
                                         {value: 'COVERS', label: 'Image covers entire search region' },
                                         {value: 'ENCLOSED', label: 'Image is entirely enclosed by search region' },
-                                        {value: 'OVERLAPS', label: 'Any pixel overlaps search region', disabled: true}
-                                          ] }
+                                        {value: 'OVERLAPS', label: 'Any pixel overlaps search region', disabled: true},
+                                        {value: 'ALLSKY', label: 'All Sky'}] }
                             multiple={false}
                         />
-                        {renderSearchRegion(searchType!=='CENTER')}
-                        {renderImageSize(searchType==='CENTER' || searchType==='COVERS', true)}
-                        {renderMostCenter(searchType==='CENTER' || searchType==='COVERS', true)}
+                        {searchType === 'ALLSKY' && renderAllSkyNote()}
+                        {searchType !== 'ALLSKY' && renderSearchRegion(searchType !== 'CENTER')}
+                        {searchType !== 'ALLSKY' && renderImageSize(searchType === 'CENTER' || searchType === 'COVERS', true)}
+                        {searchType !== 'ALLSKY' && renderMostCenter(searchType ==='CENTER' || searchType === 'COVERS', true)}
                     </InputGroup>
                 </div>
             </FieldGroup>
@@ -77,11 +78,11 @@ export class LSSTImageSpatialType extends Component {
     }
 }
 
-function renderTargetPanel(groupKey) {
+function renderTargetPanel(groupKey, searchType) {
     return (
         <div className='intarget'>
-            <TargetPanel labelWidth={100} groupKey={groupKey}/>
-        </div>
+            {(searchType !== 'ALLSKY') && <TargetPanel labelWidth={100} groupKey={groupKey}/>}
+        </div> 
     );
 }
 
@@ -142,6 +143,16 @@ function renderMostCenter(visible, disable) {
                                       {label: 'No', value: 'all'}
                                       ]}
         />
+    );
+}
+
+function renderAllSkyNote() {
+    return (
+        <div style={{display:'flex', flexDirection:'column', alignItems:'center'}} >
+            <div style={{marginTop: 10,  border: '1px solid #a3aeb9', padding:'30px 30px'}}>
+                Search the catalog with no spatial constraints
+            </div>
+        </div>
     );
 }
 

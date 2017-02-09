@@ -189,14 +189,14 @@ function onSearchSubmit(request) {
         } else if (cattype === IMAGETYPE) {
             const imageState = FieldGroupUtils.getGroupFields(gkeyImageSpatial);
             const wp = get(imageState, [ServerParams.USER_TARGET_WORLD_PT, 'value']);
-            if (!wp) {
+            const intersect = get(imageState, ['intersect', 'value']);
+
+            if (!wp && intersect !== 'ALLSKY') {
                 showInfoPopup('Target is required');
                 return;
             }
 
-            const intersect = get(imageState, ['intersect', 'value']);
-
-            if (intersect !== 'CENTER') {
+            if (intersect !== 'CENTER' && intersect !== 'ALLSKY') {
 
                 if (!get(imageState, ['size', 'valid'])) {
                     showInfoPopup('box size is required');
@@ -257,19 +257,21 @@ function addConstraintToQuery(tReq) {
 }
 
 function doImage(request, imgPart) {
+    const noSizeMethod = ['ALLSKY', 'CENTER'];
+    const noTargetMethod = ['ALLSKY'];
     const {cattable} = request[gkey] || {};
     const spatial =  get(imgPart, ['spatial', 'value']);
     const intersect = get(imgPart, ['intersect', 'value']);
-    const size = (intersect !== 'CENTER') ? get(imgPart, ['size', 'value']) : '';
+    const size = (!noSizeMethod.includes(intersect)) ? get(imgPart, ['size', 'value']) : '';
     const sizeUnit = 'deg';
-    const wp = get(imgPart, [ServerParams.USER_TARGET_WORLD_PT,'value']);
+    const wp = (!noTargetMethod.includes(intersect)) && get(imgPart, [ServerParams.USER_TARGET_WORLD_PT,'value']);
 
     var title = `${projectName}-${cattable}-${capitalize(intersect)}`;
-    var loc = wp.split(';').slice(0, 2).join();
+    var loc = wp && wp.split(';').slice(0, 2).join();
 
-    if (intersect !== 'CENTER') {
+    if (!noSizeMethod.includes(intersect)) {
         title += `([${loc}]:${formatNumberString(size)}deg)`;
-    } else {
+    } else if (!noTargetMethod.includes(intersect)) {
         title += `([${loc}])`;
     }
 
