@@ -708,8 +708,8 @@ static void usage()
 /*   output new lat, lon 			*/
 /* all inputs and outputs in decimal degrees 	*/
 /*=================================================================*/
-
-public WorldPt posdis(double ra, double dec, double dist, double phi)
+//LZ 2/13/17 this is only be used inside the class, it should be private.
+private WorldPt posdis(double ra, double dec, double dist, double phi)
 {
     double tmp, newdec, delta_ra;
     double radian=180./Math.PI;
