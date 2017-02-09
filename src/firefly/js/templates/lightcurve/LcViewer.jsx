@@ -28,6 +28,7 @@ import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import {makeFileRequest} from '../../tables/TableUtil.js';
+import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 
 
@@ -40,6 +41,7 @@ export class LcViewer extends Component {
     constructor(props) {
         super(props);
         this.state = this.getNextState();
+        dispatchAddSaga(watchCatalogs);
         dispatchAddSaga(lcManager);
         dispatchAddSaga(syncChartViewer);
     }

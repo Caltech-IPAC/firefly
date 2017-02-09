@@ -93,7 +93,7 @@ function closeExpanded() {
 
 export function launchImageMetaDataSega() {
     dispatchAddSaga(watchImageMetaData,{viewerId: META_VIEWER_ID});
-    dispatchAddSaga(watchCoverage, {viewerId:'coverageImages'});
+    dispatchAddSaga(watchCoverage, {viewerId:'coverageImages', ignoreCatalogs:true});
 }
 
 TriViewImageSection.propTypes= {

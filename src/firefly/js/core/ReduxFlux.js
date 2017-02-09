@@ -37,7 +37,6 @@ import {masterSaga} from './MasterSaga.js';
 
 
 //--- import Sagas
-import {watchCatalogs} from '../visualize/saga/CatalogWatcher.js';
 import {syncCharts} from '../visualize/saga/ChartsSync.js';
 import {imagePlotter} from '../visualize/saga/ImagePlotter.js';
 import {watchReadout} from '../visualize/saga/MouseReadoutWatch.js';
@@ -223,7 +222,6 @@ function createRedux() {
 }
 
 function startCoreSagas() {
-    dispatchAddSaga(watchCatalogs);
     dispatchAddSaga( imagePlotter);
     dispatchAddSaga( syncCharts);
     dispatchAddSaga( watchReadout);

@@ -43,8 +43,8 @@ export function* imagePlotter(params, dispatch, getState) {
 
             case ImagePlotCntlr.UPDATE_VIEW_SIZE:
                 const {plotId}= action.payload;
-                const waitAction= waitingPlotActions.find( (a) => actionMatches(a,plotId));
-                if (waitAction) {
+                const waitActions= waitingPlotActions.filter( (a) => actionMatches(a,plotId));
+                waitActions.forEach( (waitAction) => {
                     const {requestKey}= waitAction.payload;
                     if (canContinue(waitAction)) {
                         continuePlotting(makeContinueAction(waitAction),dispatch);
@@ -52,7 +52,7 @@ export function* imagePlotter(params, dispatch, getState) {
                             .filter( (a) => a.payload.requestKey!==requestKey) // filter out this request
                             .filter( (a) => !actionMatches(a,plotId));         // filter out any duplicates
                     }
-                }
+                });
                 break;
         }
     }

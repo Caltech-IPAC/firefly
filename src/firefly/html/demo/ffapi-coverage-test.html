@@ -1,0 +1,91 @@
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Demo of Firefly Tools</title>
+</head>
+
+<body>
+
+
+<div style="width: 500px; padding: 50px 0 0 20px;">
+    <br>
+    This page demos new api
+    <br>
+</div>
+
+<div>
+    <div id="coverageHere" style="display: inline-block; width: 400px; height: 400px; margin: 10px;"></div>
+    <div id="tables-1" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white;"></div>
+</div>
+
+<script type="text/javascript">
+    {
+        onFireflyLoaded= function(firefly) {
+
+            window.ffViewer= firefly.getViewer();
+
+            firefly.setGlobalImageDef({
+                ZoomType  : 'TO_WIDTH'
+            } );
+
+            firefly.debug= true;
+
+            var util= firefly.util;
+            var ui= firefly.ui;
+              util.image.initAutoReadout(ui.DefaultApiReadout,
+                     {MouseReadoutComponent:ui.PopupMouseReadoutMinimal, showThumb:false,showMag:false});
+
+
+
+
+
+
+            //-----------------  TABLE DEMO ------------------------//
+            tblReq1 = firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
+                    {   position: '148.9;68.8;EQ_J2000',
+                        SearchMethod: 'Cone',
+                        radius: 300,
+                    },
+                    {tbl_id: 'aTable'}
+                    );
+            tblReq2 = firefly.util.table.makeIrsaCatalogRequest('fp_psc', '2MASS', 'fp_psc',
+                    {   position: '148.9;68.8;EQ_J2000',
+                        SearchMethod: 'Cone',
+                        radius: 300,
+                    },
+                    {tbl_id: 'bTable'}
+            );
+
+            firefly.showTable('tables-1', tblReq1);
+            firefly.showTable('tables-1', tblReq2);
+
+            firefly.showCoverage('coverageHere',
+                    {
+                        gridOn:true,
+                        symbol: {aTable: 'X', bTable: 'arrow'},
+                        symbolSize: {aTable: 3, bTable: 12},
+                        color: {aTable: 'blue', bTable: 'yellow'},
+//                        overlayPosition : '149.9;68.8;EQ_J2000',
+                        overlayPosition : '149.08;68.739;EQ_J2000',
+                   });
+
+        };
+
+   }
+   
+</script>
+
+
+<script  type="text/javascript" src="../firefly_loader.js"></script>
+
+

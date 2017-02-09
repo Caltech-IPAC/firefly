@@ -98,7 +98,7 @@ export function getDlAry() { return flux.getState()[DRAWING_LAYER_KEY].drawLayer
 
 /**
  * Return the draw layer store
- * @returns {DrawLayerRoot[]}
+ * @returns {DrawLayerRoot}
  * @memberof firefly.action
  * @function  getDlRoot
  */
