@@ -197,13 +197,14 @@ function onSearchSubmit(request) {
             }
 
             if (intersect !== 'CENTER' && intersect !== 'ALLSKY') {
-
                 if (!get(imageState, ['size', 'valid'])) {
                     showInfoPopup('box size is required');
                     return;
                 }
             }
-            doImage(request, imageState);
+            if (validateConstraints(gkey)) {
+                doImage(request, imageState);
+            }
         }
     }
     else if (request[gkey].Tabs === 'loadcatLsst') {
