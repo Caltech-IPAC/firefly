@@ -101,8 +101,8 @@ function getMissionEntriesForRawTable(rawTable) {
 function getMissionFieldValidators(missionEntries) {
     const fldsWithValidators = [
         {key: LC.META_TIME_CNAME, vkey: LC.META_TIME_NAMES},
-        {key: LC.META_FLUX_CNAME, vkey: LC.META_FLUX_NAMES},
-        {key: LC.META_ERR_CNAME, vkey: LC.META_ERR_NAMES}
+        {key: LC.META_FLUX_CNAME, vkey: LC.META_FLUX_NAMES}
+        //{key: LC.META_ERR_CNAME, vkey: LC.META_ERR_NAMES} // error can have no value
         ];
     return fldsWithValidators.reduce((all, fld) => {
         all[fld.key] =
