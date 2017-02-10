@@ -262,9 +262,9 @@ function sizeArea(searchType, imageCornerCalc) {
     } else if (searchType === SpatialMethod.Polygon.value) {
         const cornerTypeOps=
             [
-                {label: 'Image Center', value: 'image'},
-                {label: 'ViewPort', value: 'viewport'},
-                {label: 'User', value: 'user'}
+                {label: 'Image', value: 'image'},
+                {label: 'Visible', value: 'viewport'},
+                {label: 'Custom', value: 'user'}
             ];
 
 
@@ -281,12 +281,27 @@ function sizeArea(searchType, imageCornerCalc) {
         return (
             <div
                 style={{padding:5, border:'solid #a3aeb9 1px' }}>
+                <div style={{paddingTop: 10, paddingLeft: 5}}>
+                    {pv && <RadioGroupInputField
+                        inline={false}
+                        labelWidth={60}
+                        alignment='horizontal'
+                        initialState= {{
+                        tooltip: 'Choose how to init corners',
+                        label : 'Search area: ',
+                        value: 'image'
+                    }}
+                        options={cornerTypeOps}
+                        fieldKey='imageCornerCalc'
+                    />
+                    }
+                </div>
                 <InputAreaFieldConnected fieldKey='polygoncoords'
                                          wrapperStyle={{padding:5}}
                                          style={{overflow:'auto',height:'65px', maxHeight:'200px', width:'220px', maxWidth:'300px'}}
                                          initialState={{
                                                tooltip:'Enter polygon coordinates search',
-                                               labelWidth:70,
+                                               labelWidth:70
                                             }}
                                          label='Coordinates:'
                                          tooltip='Enter polygon coordinates search'
@@ -297,21 +312,6 @@ function sizeArea(searchType, imageCornerCalc) {
                     <li>- Vertices must be separated by a comma (,)</li>
                     <li>- Example: 20.7 21.5, 20.5 20.5, 21.5 20.5, 21.5 21.5</li>
                 </ul>
-                <div style={{paddingTop: 10}}>
-                    {pv && <RadioGroupInputField
-                        inline={false}
-                        labelWidth={60}
-                        alignment='horizontal'
-                        initialState= {{
-                        tooltip: 'Choose how to init corners',
-                        label : 'Corners: ',
-                        value: 'image'
-                    }}
-                        options={cornerTypeOps}
-                        fieldKey='imageCornerCalc'
-                    />
-                    }
-                </div>
             </div>
         );
 
