@@ -28,7 +28,7 @@ public class FilterHanlder extends BgIpacTableHandler {
     private static Logger.LoggerImpl LOG = Logger.getLogger();
     private BufferedReader reader;
     private List<CollectionUtil.Filter<DataObject>> filters;
-    private int cRowNum;
+    private int cRowNum = -1;
     private boolean hasRowIdFilter = false;
     private int rowsFound;
     private List<DataGroup.Attribute> attributes;
