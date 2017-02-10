@@ -190,7 +190,7 @@ class ShapePickerWrapper extends Component {
     drawSymbol(df, validSize, size){
         const {drawingDef} = this.state;
 
-        const maxSize = 20;
+        const maxSize = 30;
         var canvasSize = validSize && (Math.floor(parseFloat(size)) + 2);
         const bkColor = getBackgroundColor(df.color);
         if (size > maxSize) {
@@ -204,10 +204,10 @@ class ShapePickerWrapper extends Component {
             if (size > maxSize) {
 
                 return (
-                    <div style={{display:'flex', width: canvasSize, height: canvasSize}}>
+                    <div style={{display:'flex', alignItems:'center', width: canvasSize, height: canvasSize}}>
                         <SimpleCanvas width={canvasSize} height={canvasSize} backgroundColor={bkColor}
                                       drawIt={(c)=>drawOnCanvas(c, df, canvasSize, canvasSize)}/>
-                        <text style={{fontSize:`${10.5+parseInt(size/10)}px`}}>+</text>
+                        {/*<text style={{fontSize:`${10.5+parseInt(size/10)}px`}}>+</text>*/}
                     </div>);
             } else {
                 return (
@@ -232,7 +232,7 @@ class ShapePickerWrapper extends Component {
                             return {value: p.key, label: drawShapeWithLabel(p, drawingDef, bkColor, textColor)}
                         });
         return (
-            <div style={{width: 300}}>
+            <div style={{width: 320}}>
                 <div style={{margin: mLeft,
                              border: '1px solid rgba(0, 0, 0, 0.298039)',
                              borderRadius: 5,
@@ -264,7 +264,7 @@ class ShapePickerWrapper extends Component {
                         {validSize && this.drawSymbol(df, validSize, size)}
                     </div>
                     <div style={{marginLeft: mLeft, marginTop: mLeft, color: textColor}}>
-                        <i>enter the number or use the arrow up/down key to increase/decrease the size number </i>
+                        <i>Try up/down arrow keys  </i>
                     </div>
                     <div style={{display:'flex'}}>
                         <HelpIcon
