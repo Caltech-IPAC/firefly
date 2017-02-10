@@ -13,7 +13,7 @@ import {drawOnCanvas} from '../visualize/ui/DrawLayerItemView.jsx';
 import {dispatchChangeDrawingDef, getDlAry} from '../visualize/DrawLayerCntlr.js';
 import CompleteButton from './CompleteButton.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
-import {CheckboxGroupInputFieldView} from './CheckboxGroupInputField.jsx';
+import {RadioGroupInputFieldView} from './RadioGroupInputFieldView.jsx';
 import {InputFieldView} from './InputFieldView.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
 import {SimpleCanvas} from '../visualize/draw/SimpleCanvas.jsx';
@@ -22,6 +22,7 @@ import {get, isNaN} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import Color from '../util/Color.js';
 import validator from 'validator';
+import {HelpIcon} from '../ui/HelpIcon.jsx';
 
 
 const PointOptions = [ DrawSymbol.CIRCLE, DrawSymbol.SQUARE, DrawSymbol.DIAMOND,
@@ -29,7 +30,7 @@ const PointOptions = [ DrawSymbol.CIRCLE, DrawSymbol.SQUARE, DrawSymbol.DIAMOND,
                        DrawSymbol.BOXCIRCLE, DrawSymbol.DOT];
 
 const MINSIZE = 3;
-const MAXSIZE = 20;
+const MAXSIZE = 100;
 const popupIdBase = 'ShapePickerDialog';
 const ARROW_UP = 38;
 const ARROW_DOWN = 40;
@@ -197,7 +198,6 @@ class ShapePickerWrapper extends Component {
         const options = PointOptions.map((p) => {
                             return {value: p.key, label: drawShapeWithLabel(p, drawingDef, bkColor, textColor)}
                         });
-
         return (
             <div style={{width: 300}}>
                 <div style={{margin: mLeft,
@@ -207,17 +207,17 @@ class ShapePickerWrapper extends Component {
                              }}>
                     <div style={{display: 'flex', marginLeft: mLeft}} >
                         <div style={{width: labelW, color: textColor}} title={'pick a symbol'}>Symbols:</div>
-                        {CheckboxGroupInputFieldView({fieldKey: 'pointoptions',
-                                                  onChange: this.updateSymbol,
-                                                  tooltip: 'available symbol shapes',
-                                                  options,
-                                                  value: drawingDef.symbol.key,
-                                                  alignment: 'vertical'})}
+                        <RadioGroupInputFieldView fieldKey='pointoptions'
+                                                  onChange={this.updateSymbol}
+                                                  tooltip='available symbol shapes'
+                                                  options={options}
+                                                  value={drawingDef.symbol.key}
+                                                  alignment='vertical'/>
                     </div>
                     <div style={{marginLeft: mLeft, marginTop: mLeft, height: 26, display: 'flex', alignItems: 'center'}}>
-                        <InputFieldView  label={'Symbol Size:'}
+                        <InputFieldView  label={'Symbol Size (px):'}
                                          labelStyle={{color: textColor}}
-                                         labelWidth={labelW}
+                                         labelWidth={labelW+30}
                                          valid={validSize}
                                          onChange={this.updateSize}
                                          onKeyDown={this.onArrowDown}
@@ -225,16 +225,21 @@ class ShapePickerWrapper extends Component {
                                          value={size}
                                          tooltip={'enter the symbol size or use the arrow up (or down) key in the field to increase (or decrease) the size number '}
                                          type={'text'}
-                                         placeholder={'size is between 3 and 20'}
+                                         placeholder={`size 3 < ${MAXSIZE}`}
                                          size={16}
-                                         message={'invalid data entry, size is within 3 & 20'}/>
-                        <div style={{width: canvasSize, height: canvasSize}}>
+                                         message={`invalid data entry, size is within 3 & ${MAXSIZE}`}/>
+                        {/*<div style={{width: canvasSize, height: canvasSize}}>
                             {validSize && <SimpleCanvas width={canvasSize} height={canvasSize} backgroundColor={bkColor}
                                                         drawIt={(c)=>drawOnCanvas(c, df, canvasSize, canvasSize)}/>}
                         </div>
+                        */}
                     </div>
                     <div style={{marginLeft: mLeft, marginTop: mLeft, color: textColor}}>
                         <i>enter the number or use the arrow up/down key to increase/decrease the size number </i>
+                    </div>
+                    <div style={{display:'flex'}}>
+                        <HelpIcon
+                            helpId={'catalogs'}/>
                     </div>
                 </div>
                 <div style={{marginBottom: 10, marginLeft: mLeft}} >
