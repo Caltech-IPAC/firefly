@@ -8,7 +8,7 @@ import {FormPanel} from '../../ui/FormPanel.jsx';
 import { get, merge, isEmpty, isFunction} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
-import {doFetchTable, makeTblRequest, makeIrsaCatalogRequest, makeVOCatalogRequest, getTblById} from '../../tables/TableUtil.js';
+import {doFetchTable, makeTblRequest, makeIrsaCatalogRequest, makeVOCatalogRequest} from '../../tables/TableUtil.js';
 import {CatalogTableListField} from './CatalogTableListField.jsx';
 import {CatalogConstraintsPanel} from './CatalogConstraintsPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -146,11 +146,11 @@ function doCatalog(request) {
     var title = `${catPart.project}-${catPart.cattable}`;
     var tReq = {};
     if (spatial === SpatialMethod.get('Multi-Object').value) {
-        var filename = catPart.fileUpload;
-        var radius = conesize;
+        var filename = get(catPart, 'fileUpload');
+
         tReq = makeIrsaCatalogRequest(title, catPart.project, catPart.cattable, {
             filename,
-            radius,
+            radius: conesize,
             SearchMethod: spacPart.spatial,
             RequestedDataSet: catalog
         });
@@ -222,10 +222,10 @@ export function validateSql(sqlTxt) {
     //const filterInfoCls = FilterInfo.parse(sql);
     //return filterInfoCls.serialize();//sql.replace(';',' AND ');
     // Check that text area sql doesn't starts with 'AND', if needed, update the value without
-    if (sqlTxt.toLowerCase().indexOf('and') == 0) { // text sql starts with and, but and will be added if constraints is added to any column already, so remove here if found
+    if (sqlTxt.toLowerCase().indexOf('and') === 0) { // text sql starts with and, but and will be added if constraints is added to any column already, so remove here if found
         sqlTxt = sqlTxt.substring(3, sqlTxt.length).trim();
     }
-    if (sqlTxt.toLowerCase().lastIndexOf('and') == sqlTxt.length - 3) {
+    if (sqlTxt.toLowerCase().lastIndexOf('and') === sqlTxt.length - 3) {
         sqlTxt = sqlTxt.substring(0, sqlTxt.length - 3).trim();
     }
     return sqlTxt;
@@ -291,7 +291,6 @@ class CatalogSelectView extends Component {
      * from tableModel.tableData.columns
      * result is set in the state as 'master' object {catmaster, cols}
      * @see setMaster
-     * @returns {Void} fetch master table and once fetched, set state with it
      */
     loadMasterCatalogTable() {
 
@@ -329,8 +328,6 @@ class CatalogSelectView extends Component {
                     }
                 });
                 subprojects[projects[i]] = tmp;
-
-
             }
             var o = 0;
             for (i = 0; i < projects.length; i++) {
@@ -384,7 +381,6 @@ class CatalogSelectView extends Component {
      *      ["projectshort", "subtitle", "description", "server", "catname", "cols", "nrows", "coneradius", "infourl", "ddlink", "catSearchProcessor", "ddSearchProcessor"]
      * @see master table file from http://irsa.ipac.caltech.edu/cgi-bin/Gator/nph-scan?mode=ascii
      * @param {Object} master table model
-     * @returns {Void} set the state to include master table
      */
     setMaster(master = {}) {
         this.setState({master});
@@ -436,7 +432,7 @@ class CatalogSelectView extends Component {
         );
     }
 }
-const currentField = {};
+
 /**
  * Reducer from field group component, should return updated project and sub-project updated
  * @returns {Function} reducer to change fields when user interact with the dialog
@@ -513,7 +509,7 @@ var userChangeDispatch = function () {
 
                 const catname = get(inFields, 'cattable.value', '');
                 const formsel = get(inFields, 'ddform.value', 'true');
-                const shortdd = formsel == 'true' ? 'short' : 'long';
+                const shortdd = formsel === 'true' ? 'short' : 'long';
                 inFields = updateMerge(inFields, 'tableconstraints', {
                     tbl_id: `${catname}-${shortdd}-dd-table-constraint`
                 });
@@ -530,6 +526,7 @@ var userChangeDispatch = function () {
     };
 };
 
+/*
 function cleanFilterRestrictions(inFields) {
     //Object.keys(inFields).forEach((k) => {
     //
@@ -545,6 +542,7 @@ function cleanFilterRestrictions(inFields) {
     inFields = updateMerge(inFields, 'txtareasql', {value: ''});
     return inFields;
 }
+*/
 
 /**
  * Return the project elements such as label, value and project is present in each
@@ -601,7 +599,6 @@ class CatalogDDList extends Component {
         const selProject0 = catmaster[0].project;
         const selCat0 = catmaster[0].subproject[0].value;
 
-        let catTable, optProjects, optList;
         // User interact, coming from field group reducer function
         // @see userChangeDispatch
 
@@ -619,15 +616,13 @@ class CatalogDDList extends Component {
         //}
         // Build option list for project,  sub-project and catalog table based on the selected or initial value of project and sub-project
 
-
-
-
-        optProjects = getProjectOptions(this.props.master.catmaster);
-        optList = getSubProjectOptions(catmaster, selProj);
-        catTable = getCatalogOptions(catmaster, selProj, selCat).option;
+        const {master, fields} = this.props;
+        const optProjects = getProjectOptions(master.catmaster);
+        const optList = getSubProjectOptions(catmaster, selProj);
+        const catTable = getCatalogOptions(catmaster, selProj, selCat).option;
 
         //HERE HERE HERE
-        const currentIdx = get(this.props.fields, 'cattable.indexClicked', 0);
+        const currentIdx = get(fields, 'cattable.indexClicked', 0);
         const radius = parseFloat(catTable[currentIdx].cat[RADIUS_COL]);
         const coneMax= radius / 3600;
         const boxMax= coneMax*2;
@@ -638,10 +633,10 @@ class CatalogDDList extends Component {
             catname0 = catTable[0].value;
         }
         const ddform = get(FieldGroupUtils.getGroupFields(gkey), 'ddform.value', 'true');
-        const shortdd = ddform == 'true' ? 'short' : 'long';
+        const shortdd = ddform === 'true' ? 'short' : 'long';
         const tbl_id = `${catname0}-${shortdd}-dd-table-constraint`;
 
-        const {cols} = this.props.master;
+        const {cols} = master;
         const catPanelStyle = {height: 350};
 
         const polygonDefWhenPlot= get(getAppOptions(), 'catalogSpacialOp')==='polygonWhenPlotExist';
@@ -709,12 +704,13 @@ class CatalogDDList extends Component {
     }
 }
 
-CatalogSelectViewPanel.propTypes = {
+CatalogDDList.propTypes = {
     name: PropTypes.oneOf([dropdownName]),
-    fields: PropTypes.object
+    fields: PropTypes.object,
+    master: PropTypes.object
 };
 
-CatalogSelectViewPanel.defaultProps = {
+CatalogDDList.defaultProps = {
     name: dropdownName
 };
 

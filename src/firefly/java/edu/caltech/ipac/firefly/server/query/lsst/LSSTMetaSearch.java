@@ -53,7 +53,6 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         JSONParser parser = new JSONParser();
 
         JSONObject obj = ( JSONObject) parser.parse(new FileReader(file ));
-        //return  obj.get("message").toString();
         return  obj.get("error").toString();
     }
 
@@ -111,6 +110,13 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
     }
 
+    /**
+     * This method processes the input JSONArray and then return a DataType array.
+     * Since there is no unit data,this method fakes the unit and description.
+     *
+     * @param metaData
+     * @return
+     */
     private DataType[] getDataType(JSONArray metaData){
         DataType[] dataTypes = new DataType[metaData.size()+2];//add unit and descriptions
         for (int i=0; i<metaData.size(); i++){
