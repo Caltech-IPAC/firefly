@@ -537,7 +537,7 @@ export class WebPlotRequest extends ServerRequest {
      * @param {WorldPt|String} worldPt - the world point object or a serialized version
      */
     setOverlayPosition(worldPt) {
-        this.setParam(C.OVERLAY_POSITION, worldPt.toString());
+        this.setParam(C.OVERLAY_POSITION, worldPt ? worldPt.toString() : false);
     }
 
     /**

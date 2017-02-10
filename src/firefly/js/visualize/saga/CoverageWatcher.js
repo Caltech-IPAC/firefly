@@ -4,7 +4,7 @@
 
 import {take} from 'redux-saga/effects';
 import Enum from 'enum';
-import {has,get,isEmpty,isString,isObject, flattenDeep,values} from 'lodash';
+import {has,get,isEmpty,isString,isObject, flattenDeep,values, isUndefined} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
 import {TitleOptions, isImageDataRequeestedEqual} from '../WebPlotRequest.js';
 import {CoordinateSys} from '../CoordSys.js';
@@ -16,6 +16,7 @@ import {primePlot, getPlotViewById, getDrawLayerByType} from '../PlotViewUtil.js
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
 import {doFetchTable, getTblById, getActiveTableId, getColumnIdx, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
 import MultiViewCntlr, {getViewerItemIds, dispatchAddViewerItems, getMultiViewRoot, getViewer, IMAGE} from '../MultiViewCntlr.js';
+import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {DrawSymbol} from '../draw/PointDataObj.js';
 import {computeCentralPointAndRadius} from '../VisUtil.js';
 import {makeWorldPt, pointEquals} from '../Point.js';
@@ -165,6 +166,10 @@ export function* watchCoverage(options) {
                 }
                 break;
 
+            case TABLE_SELECT:
+                dispatchModifyCustomField(tbl_id, {selectInfo:action.payload.selectInfo});
+                break;
+
             case TABLE_HIGHLIGHT:
             case TABLE_UPDATE:
                 dispatchModifyCustomField(tbl_id, {highlightedRow:action.payload.highlightedRow});
@@ -212,6 +217,11 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
         pageSize : 1000000,
         inclCols : getCovColumnsForQuery(options, table)
     };
+    var dataTooBigForSelection= false;
+    if (table.totalRows>10000) {
+        const cenCol= options.getCenterColumns(table)
+        params.decimate=  serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000);
+    }
 
 
     const req = cloneRequest(table.request, params);
@@ -252,7 +262,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
                                         false, options.gridOn);
     wpRequest.setPlotId(PLOT_ID);
     wpRequest.setPlotGroupId(viewerId);
-    if (options.overlayPosition) wpRequest.setOverlayPosition(options.overlayPosition);
+    if (!isUndefined(options.overlayPosition)) wpRequest.setOverlayPosition(options.overlayPosition);
     if (options.title) {
         wpRequest.setTitleOptions(TitleOptions.NONE);
         wpRequest.setTitle(options.title);
@@ -392,7 +402,9 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, color) {
             symbol: lookupOption(options,'symbol',tbl_id),
             size: lookupOption(options,'symbolSize',tbl_id),
             boxData,
-            angleInRadian
+            selectInfo: table.selectInfo,
+            angleInRadian,
+            dataTooBigForSelection: table.totalRows>10000
         });
         dispatchAttachLayerToPlot(table.tbl_id, plotId);
     }
@@ -461,7 +473,8 @@ function defaultCanDoCorners(table) {// eslint-disable-line no-unused-vars
 
 function getCovColumnsForQuery(options, table) {
     const cAry= [...options.getCornersColumns(table), options.getCenterColumns(table)];
-    return cAry.reduce( (s,c,idx)=> s+`${idx>0?',':''}${c.lonCol},${c.latCol}`,'');
+    const base= cAry.reduce( (s,c,idx)=> s+`${idx>0?',':''}${c.lonCol},${c.latCol}`,'');
+    return base+',ROWID';
 }
 
 function getCornersColumns(table) {

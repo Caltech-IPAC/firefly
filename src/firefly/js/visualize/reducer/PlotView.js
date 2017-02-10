@@ -468,7 +468,7 @@ function getNewAttributes(plot) {
     var worldPt;
     var circle = req.getRequestArea();
 
-    if (req.getOverlayPosition()) {
+    if (req.containsParam(WPConst.OVERLAY_POSITION)) {
         worldPt= req.getOverlayPosition();
     }
     else if (circle && circle.center) {
