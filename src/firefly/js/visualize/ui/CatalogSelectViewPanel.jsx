@@ -291,7 +291,6 @@ class CatalogSelectView extends Component {
      * from tableModel.tableData.columns
      * result is set in the state as 'master' object {catmaster, cols}
      * @see setMaster
-     * @returns {Void} fetch master table and once fetched, set state with it
      */
     loadMasterCatalogTable() {
 

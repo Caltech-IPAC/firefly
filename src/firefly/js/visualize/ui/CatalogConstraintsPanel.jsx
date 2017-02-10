@@ -163,6 +163,7 @@ export class CatalogConstraintsPanel extends React.Component {
      * @param {string} dd_short
      * @param {function} createDDRequest
      * @param {boolean} clearSelections
+     * @param {func} afterFetch
      */
     fetchDD(catName, dd_short, createDDRequest, clearSelections = false, afterFetch) {
 
@@ -460,7 +461,7 @@ function updateRowSelected(tbl_id, onTableChanged) {
         }
         TblCntlr.dispatchTableSelect(tbl_id, selectInfoCls.data);
         onTableChanged && onTableChanged();
-    }
+    };
 }
 
 /**
