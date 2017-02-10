@@ -362,9 +362,10 @@ function tblRemove(action) {
 
 function highlightRow(action) {
     return (dispatch) => {
-        const {tbl_id, highlightedRow} = action.payload;
+        const {tbl_id, highlightedRow, request={}} = action.payload;
         var tableModel = TblUtil.getTblById(tbl_id);
         if (highlightedRow < 0 || highlightedRow >= tableModel.totalRows) return;   // out of bound.. ignore.
+        if (highlightedRow === tableModel.highlightedRow && !request.pageSize) return;   // nothing to change
 
         var tmpModel = TblUtil.smartMerge(tableModel, action.payload);
         const {hlRowIdx, startIdx, endIdx, pageSize} = TblUtil.getTblInfo(tmpModel);
@@ -462,19 +463,6 @@ function getRowIdFor(filePath, selected) {
     const params = {columnName: 'ROWID', filePath, selectedRows: String(selected)};
     return selectedValues(params);
 }
-
-/**
- * validates the action object based on the given type.
- * In case when a validation error occurs, the action's err property will be
- * updated with the error.
- * @param type
- * @param action
- * @returns the given action
- */
-function validate(type, action) {
-    return TblUtil.doValidate(type, action);
-}
-
 
 /**
  * this saga watches for table update and invoke the given callback when

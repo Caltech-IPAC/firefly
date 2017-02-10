@@ -7,7 +7,7 @@ import {doUpload} from '../../ui/FileUpload.jsx';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {makeTblRequest,getTblById, tableToText, makeFileRequest, getColumnIdx} from '../../tables/TableUtil.js';
+import {makeTblRequest,getTblById, tableToIpac, makeFileRequest, getColumnIdx} from '../../tables/TableUtil.js';
 import {LC, getValidValueFrom} from './LcManager.js';
 import {getLayouInfo} from '../../core/LayoutCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
@@ -21,9 +21,9 @@ const DEC_PHASE = 3;       // decimal digit
  * @param {string} flux
  */
 export function uploadPhaseTable(tbl, flux) {
-    const {tableData, tbl_id, tableMeta, title} = tbl;
+    const {tbl_id, title} = tbl;
 
-    const ipacTable = tableToText(tableData.columns, tableData.data, true, tableMeta);
+    const ipacTable = tableToIpac(tbl);
     const blob = new Blob([ipacTable]);
     //const file = new File([new Blob([ipacTable])], `${tbl_id}.tbl`);
 
@@ -96,6 +96,7 @@ function addPhaseToTable(tbl, timeName, fluxName, tzero, period) {
                                             {request: getPhaseFoldingRequest(period, timeName, fluxName, tbl)},
                                             {highlightedRow: 0});
     tPF = omit(tPF, ['hlRowIdx', 'isFetching']);
+    tPF.tableMeta = omit(tPF.tableMeta, ['source', 'tblFilePath', 'sortInfo', 'isFullyLoaded']);
 
     var phaseC = {desc: 'number of period elapsed since starting time.',
                   name: LC.PHASE_CNAME, type: 'double', width: 6 };
@@ -110,6 +111,21 @@ function addPhaseToTable(tbl, timeName, fluxName, tzero, period) {
     const fluxCols = get(getLayouInfo(), [LC.MISSION_DATA, LC.META_FLUX_NAMES]);
 
     locateTableColumns(tPF, [timeName, LC.PHASE_CNAME,...fluxCols], 0);
+
+
+    // add reference to raw_table original row
+    var raw_rowid = get(tPF, 'tableData.columns', []).find((el) => el.name === 'ROWID');
+    if (raw_rowid) {
+        raw_rowid.name = 'RAW_ROWID';
+        raw_rowid.visibility = 'hidden';
+    } else {
+        raw_rowid = {name: 'RAW_ROWID', type: 'int', visibility: 'hidden'};
+        tPF.tableData.columns.push(raw_rowid);
+        tPF.tableData.data.forEach((row, index) => {
+            row.push(index);
+        });
+    }
+
     return tPF;
 }
 

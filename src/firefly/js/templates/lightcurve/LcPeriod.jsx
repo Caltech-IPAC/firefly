@@ -18,7 +18,7 @@ import Validate from '../../util/Validate.js';
 import {dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import FieldGroupCntlr, {dispatchValueChange, dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
-import {getTblById, getActiveTableId, getColumnIdx} from '../../tables/TableUtil.js';
+import {makeTblRequest, getTblById, tableToIpac, makeFileRequest, getActiveTableId, getColumnIdx, getCellValue} from '../../tables/TableUtil.js';
 import {LC, updateLayoutDisplay, getValidValueFrom} from './LcManager.js';
 import {uploadPhaseTable, doPFCalculate, getPhase} from './LcPhaseTable.js';
 import {LcPeriodogram, startPeriodogramPopup, cancelPeriodogram, popupId} from './LcPeriodogram.jsx';

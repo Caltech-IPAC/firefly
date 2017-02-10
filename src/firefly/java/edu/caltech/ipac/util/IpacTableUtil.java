@@ -396,7 +396,7 @@ public class IpacTableUtil {
         }
         if (src != null) {
             long totalRow = meta.getLineWidth() == 0 ? 0 :
-                    (src.length() - (long) meta.getRowStartOffset()) / meta.getLineWidth();
+                    (src.length()+1 - (long) meta.getRowStartOffset()) / meta.getLineWidth();
             meta.setRowCount((int) totalRow);
         }
         if (src != null) {

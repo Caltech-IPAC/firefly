@@ -23,15 +23,13 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -54,6 +52,19 @@ public class SearchServerCommands {
             DataGroupPart dgp = new SearchManager().getDataGroup(tsr);
             JSONObject json = JsonTableUtil.toJsonTableModel(dgp, tsr);
             return json.toJSONString();
+        }
+    }
+
+    public static class TableFindIndex extends BaseSearchServerCommand {
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+            SrvParam sp= new SrvParam(paramMap);
+            TableServerRequest tsr = sp.getTableServerRequest();
+            List<String> filterInfo = Arrays.asList(sp.getRequired("filterInfo").split(";"));
+            tsr.setPageSize(Integer.MAX_VALUE);
+            tsr.setStartIndex(0);
+            CollectionUtil.Filter<DataObject>[] filters = QueryUtil.convertToDataFilter(filterInfo);
+            DataGroupPart dgp = new SearchManager().getDataGroup(tsr);
+            return String.valueOf(CollectionUtil.findIndex(dgp.getData().values(), filters));
         }
     }
 
@@ -339,7 +350,6 @@ public class SearchServerCommands {
         }
 
     }
-
 
 }
 
