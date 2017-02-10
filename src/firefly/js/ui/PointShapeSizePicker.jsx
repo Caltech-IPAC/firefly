@@ -65,6 +65,7 @@ class ShapePickerWrapper extends Component {
         this.displayGroupId = props.displayGroupId;
         this.plotId = props.plotId;
         this.updateSymbol = this.updateSymbol.bind(this);
+        this.drawSymbol = this.drawSymbol.bind(this);
         this.updateSize = this.updateSize.bind(this);
         this.updateShape = this.updateShape.bind(this);
         this.onArrowDown = this.onArrowDown.bind(this);
@@ -186,13 +187,45 @@ class ShapePickerWrapper extends Component {
 
     }
 
+    drawSymbol(df, validSize, size){
+        const {drawingDef} = this.state;
+
+        const maxSize = 20;
+        var canvasSize = validSize && (Math.floor(parseFloat(size)) + 2);
+        const bkColor = getBackgroundColor(df.color);
+        if (size > maxSize) {
+            canvasSize = validSize && Math.floor(parseFloat(maxSize)) + 2;
+            const symbolSize = DrawUtil.getSymbolSize(maxSize, maxSize, drawingDef.symbol);
+            df = clone(drawingDef, {size: symbolSize})
+        }
+
+        if (validSize) {
+
+            if (size > maxSize) {
+
+                return (
+                    <div style={{display:'flex', width: canvasSize, height: canvasSize}}>
+                        <SimpleCanvas width={canvasSize} height={canvasSize} backgroundColor={bkColor}
+                                      drawIt={(c)=>drawOnCanvas(c, df, canvasSize, canvasSize)}/>
+                        <text style={{fontSize:`${10.5+parseInt(size/10)}px`}}>+</text>
+                    </div>);
+            } else {
+                return (
+
+                    <div style={{display:'flex', width: canvasSize, height: canvasSize}}>
+
+                        <SimpleCanvas width={canvasSize} height={canvasSize} backgroundColor={bkColor}
+                                      drawIt={(c)=>drawOnCanvas(c, df, canvasSize, canvasSize)}/>
+                    </div>);
+            }
+        }
+    }
 
     render() {
         const {drawingDef, size, validSize} = this.state;
+        const df = validSize&&drawingDef;
         const labelW = 70;
         const mLeft = 10;
-        const df = validSize&&drawingDef;
-        const canvasSize = validSize && (Math.floor(parseFloat(size)) + 2);
         const bkColor = getBackgroundColor(drawingDef.color);
         const textColor = '#000000';
         const options = PointOptions.map((p) => {
@@ -228,11 +261,7 @@ class ShapePickerWrapper extends Component {
                                          placeholder={`size 3 < ${MAXSIZE}`}
                                          size={16}
                                          message={`invalid data entry, size is within 3 & ${MAXSIZE}`}/>
-                        {/*<div style={{width: canvasSize, height: canvasSize}}>
-                            {validSize && <SimpleCanvas width={canvasSize} height={canvasSize} backgroundColor={bkColor}
-                                                        drawIt={(c)=>drawOnCanvas(c, df, canvasSize, canvasSize)}/>}
-                        </div>
-                        */}
+                        {validSize && this.drawSymbol(df, validSize, size)}
                     </div>
                     <div style={{marginLeft: mLeft, marginTop: mLeft, color: textColor}}>
                         <i>enter the number or use the arrow up/down key to increase/decrease the size number </i>
