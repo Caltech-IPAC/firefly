@@ -29,6 +29,7 @@ import {InputGroup} from '../../ui/InputGroup.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {updateSet} from '../../util/WebUtil.js';
+import HelpIcon from '../../ui/HelpIcon.jsx';
 
 const algorOptions = [
     {label: 'Lomb‑Scargle ', value: 'ls', proj: 'LCViewer'}
@@ -39,8 +40,8 @@ const algorOptions = [
 const stepOptions = [
     {label: 'Fixed Frequency', value: 'fixedf', proj: 'LCViewer'},
     {label: 'Fixed Period', value: 'fixedp', proj: 'LCViewer'},
-    {label: 'Exponential', value: 'exp', proj: 'LCViewer'},
-    {label: 'Plavchan', value: 'plav', proj: 'LCViewer'}
+    //{label: 'Exponential', value: 'exp', proj: 'LCViewer'},
+    //{label: 'Plavchan', value: 'plav', proj: 'LCViewer'}
 ];
 
 
@@ -68,11 +69,11 @@ const labelWidth = 150;
 
 var defValues = {
     [pKeyDef.min.fkey]: Object.assign(getTypeData(pKeyDef.min.fkey,
-        '', 'minimum period',
+        '', 'minimum period (> 0)',
         `${pKeyDef.min.label}:`, labelWidth),
         {validator: null}),
     [pKeyDef.max.fkey]: Object.assign(getTypeData(pKeyDef.max.fkey,
-        '', 'maximum period',
+        '', 'maximum period (> 0)',
         `${pKeyDef.max.label}:`, labelWidth),
         {validator: null}),
     [pKeyDef.algor.fkey]: Object.assign(getTypeData(pKeyDef.algor.fkey,
@@ -88,7 +89,7 @@ var defValues = {
         `${pKeyDef.stepsize.label}:`, labelWidth),
         {validator: null}),
     [pKeyDef.peaks.fkey]: Object.assign(getTypeData(pKeyDef.peaks.fkey, '50',
-        'number of peaks to return (defalut is 50)',
+        'number of peaks to return (default is 50)',
         `${pKeyDef.peaks.label}:`, labelWidth),
         {validator: Validate.intRange.bind(null, 1, 500, 'peaks number')})
 };
@@ -106,7 +107,7 @@ var defPeriodogram = {
     [pKeyDef.algor.fkey]: {value: ''},
     [pKeyDef.stepmethod.fkey]: {value: ''},
     [pKeyDef.stepsize.fkey]: {value: ''},
-    [pKeyDef.peaks.fkey]: {value: ''}
+    [pKeyDef.peaks.fkey]: {value: '50'}
 };
 
 /**
@@ -256,7 +257,7 @@ class PeriodogramOptionsBox extends Component {
                         </button>
                         <br/>
                         <div style={{marginTop: 10}}>
-                            {'Fields of "Period Min", "Period Max" and "Step Size" are allowed to be blank.'}
+                            {'Leave the fields blank to use default values.'}  <HelpIcon helpId={'periodogram.options'}/>
                         </div>
                     </InputGroup>
                 </FieldGroup>
@@ -276,7 +277,9 @@ var LcPeriodogramReducer = () => {
 
         var initPeriodValues = (fromFields) => {
             Object.keys(defPeriod).forEach((key) => {
-                set(defPeriod, [key, 'value'], get(fromFields, [key, 'value']));     // init default time, flux value, period
+                if(key !== pKeyDef.min.fkey && key !== pKeyDef.max.fkey){
+                    set(defPeriod, [key, 'value'], get(fromFields, [key, 'value']));
+                }     // init default time, flux value, period
             });
         };
 
@@ -289,9 +292,9 @@ var LcPeriodogramReducer = () => {
         if (!inFields) {
             var defV = Object.assign({}, defValues);
 
-            set(defV, [pKeyDef.min.fkey, 'value'], get(pFields, [pKeyDef.min.fkey, 'value']));
-            set(defV, [pKeyDef.max.fkey, 'value'], get(pFields, [pKeyDef.max.fkey, 'value']));
-            set(defV, [pKeyDef.stepsize.fkey, 'value'], '');
+            //set(defV, [pKeyDef.min.fkey, 'value'], get(pFields, [pKeyDef.min.fkey, 'value']));
+            //set(defV, [pKeyDef.max.fkey, 'value'], get(pFields, [pKeyDef.max.fkey, 'value']));
+            set(defV, [pKeyDef.peaks.fkey, 'validator'], peaksValidator('peaks'));
             set(defV, [pKeyDef.min.fkey, 'validator'], periodMinValidator('minimum period'));
             set(defV, [pKeyDef.max.fkey, 'validator'], periodMaxValidator('maximum period'));
             set(defV, [pKeyDef.stepsize.fkey, 'validator'], stepsizeValidator('step size'));
@@ -305,10 +308,10 @@ var LcPeriodogramReducer = () => {
                 case FieldGroupCntlr.MOUNT_FIELD_GROUP:
                     initPeriodValues(pFields);
                     initPeriodogramValues(inFields);
-                    inFields = updateSet(inFields, [pKeyDef.min.fkey, 'value'],
-                        get(defPeriod, [pKeyDef.min.fkey, 'value']));
-                    inFields = updateSet(inFields, [pKeyDef.max.fkey, 'value'],
-                        get(defPeriod, [pKeyDef.max.fkey, 'value']));
+                   // inFields = updateSet(inFields, [pKeyDef.min.fkey, 'value'],
+                   //     get(defPeriod, [pKeyDef.min.fkey, 'value']));
+                   // inFields = updateSet(inFields, [pKeyDef.max.fkey, 'value'],
+                   //     get(defPeriod, [pKeyDef.max.fkey, 'value']));
                     break;
                 case FieldGroupCntlr.VALUE_CHANGE:
                     var retVal;
@@ -354,11 +357,11 @@ var isPeriodMinValid = (valStr, description) => {
     var max = getValidValueFrom(FieldGroupUtils.getGroupFields(pgfinderkey), pKeyDef.max.fkey);
 
     var mmax = max ? parseFloat(max) :  Number.MAX_VALUE;
-    var pMin = get(getLayouInfo(), ['periodRange', 'min']);
+    var pMin = parseFloat(0);//get(getLayouInfo(), ['periodRange', 'min']);
 
-    return (val >= pMin && val < mmax) ?  {valid: true} :
-                   {valid: false, message: description + `must be greater than ${pMin}` +
-                                                         (max&&`and less than ${mmax}`)};
+    return (val > pMin && val < mmax) ?  {valid: true} :
+                   {valid: false, message: description + `: must be greater than ${pMin} ` +
+                                                         (max&&` and less than ${mmax}`)};
 };
 
 /**
@@ -374,12 +377,15 @@ var isPeriodMaxValid = (valStr, description) => {
     if (!retval.valid) return retval;
 
     var val = parseFloat(valStr);
-    var min = getValidValueFrom(FieldGroupUtils.getGroupFields(pgfinderkey), pKeyDef.min.fkey);
+    //var min = getValidValueFrom(FieldGroupUtils.getGroupFields(pgfinderkey), pKeyDef.min.fkey);
+    const min = 0.0;
+    var bVal = val > min;
+    //var mmin = min ?  parseFloat(min) : get(getLayouInfo(), ['periodRange', 'min']);  // min is invalid or null string
+    //
+    //return (val > mmin) ? {valid: true} :
+    //                      {valid: false, message: description + `: must be greater than ${mmin}`};
 
-    var mmin = min ?  parseFloat(min) : get(getLayouInfo(), ['periodRange', 'min']);  // min is invalid or null string
-
-    return (val > mmin) ? {valid: true} :
-                          {valid: false, message: description + `: must be greater than ${mmin}`};
+    return bVal ? {valid: true} : {valid: false, message: description + `: must be greater than ${min}`};
 };
 
 /**
@@ -422,6 +428,26 @@ function stepsizeValidator(description) {
 
         return bVal ? {valid: true} :
                       {valid: false, message: description + `: must be greater than ${min}`};
+    };
+}
+/**
+ * @summary peaks number validator
+ * @param description
+ * @returns {Function}
+ */
+function peaksValidator(description) {
+    return (valStr) => {
+        if (!valStr) return {valid: true};
+        var retval = Validate.isInt(description, valStr);
+
+        if (!retval.valid) return retval;
+
+        var val = parseInt(valStr);
+        const min = 0;
+        var bVal = val > min;
+
+        return bVal ? {valid: true} :
+        {valid: false, message: description + `: must be greater than ${min}`};
     };
 }
 
