@@ -8,7 +8,7 @@ import sCompare from 'react-addons-shallow-compare';
 import {pickBy, get} from 'lodash';
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
-import {getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
+import {dispatchHideDropDown, getLayouInfo, SHOW_DROPDOWN,  dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import {lcManager, LC, removeTablesFromGroup, } from './LcManager.js';
 import {getAllConverterIds, getConverter} from './LcConverterFactory.js';
@@ -24,7 +24,6 @@ import {FormPanel} from './../../ui/FormPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
-import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import {makeFileRequest} from '../../tables/TableUtil.js';
@@ -219,7 +218,9 @@ function onSearchSubmit(request) {
     if ( request.rawTblSource ){
         removeTablesFromGroup();
         removeTablesFromGroup(LC.PERIODOGRAM_GROUP);
+        var layoutInfo = getLayouInfo();
 
+        dispatchUpdateLayoutInfo(Object.assign({}, layoutInfo, {fullRawTable: null}));  // clear full rawtable
         const {mission} = request;
         const converter = getConverter(mission);
         if (!converter) return;
@@ -230,7 +231,7 @@ function onSearchSubmit(request) {
             tblType: 'notACatalog',
             sortInfo: sortInfoString(timeCName),
             META_INFO: {[MetaConst.DATASET_CONVERTER]: mission, timeCName},
-            pageSize: LC.FULL_TABLE_SIZE
+            pageSize: LC.TABLE_PAGESIZE
         };
         const treq = makeFileRequest('Raw Table', request.rawTblSource, null, options);
         dispatchTableSearch(treq, {removable: true});

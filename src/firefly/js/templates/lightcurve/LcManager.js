@@ -17,8 +17,7 @@ import {getPlotViewById} from '../../visualize/PlotViewUtil.js';
 import {getMultiViewRoot, dispatchReplaceViewerItems, getViewer} from '../../visualize/MultiViewCntlr.js';
 import {CHANGE_VIEWER_LAYOUT} from '../../visualize/MultiViewCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
-import {VALUE_CHANGE, dispatchValueChange, dispatchMultiValueChange, dispatchRestoreDefaults}
-        from '../../fieldGroup/FieldGroupCntlr.js';
+import {VALUE_CHANGE, dispatchValueChange, dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {CHART_ADD, getChartDataElement} from '../../charts/ChartsCntlr.js';
@@ -60,7 +59,7 @@ export const LC = {
     MISSION_DATA: 'missionEntries',
     GENERAL_DATA:'generalEntries',
 
-    FULL_TABLE_SIZE: 500
+    TABLE_PAGESIZE: 50
 };
 
 const plotIdRoot= 'LC_FRAME-';
@@ -77,6 +76,10 @@ export function getConverterData() {
 
 export function getMissionEntries() {
     return get(getLayouInfo(), [LC.MISSION_DATA]);
+}
+
+export function getFullRawTable() {
+    return get(getLayouInfo(), 'fullRawTable', {});
 }
 
 function getMissionEntriesForRawTable(rawTable) {
@@ -171,6 +174,7 @@ export function* lcManager(params={}) {
          * @prop {string}   layoutInfo.missionEntries mission specific entries on result layout panel
          * @prop {array}    layoutInfo.generalEntries general entries for result layout panel
          * @prop {string}   layoutInfo.periodState  // period or periodogram
+         * @prop {Object}   layoutInfo.fullRawTable
          */
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;
@@ -348,17 +352,6 @@ function handleRawTableLoad(layoutInfo, tblId) {
     const generalEntries = getGeneralEntries();
 
     defaultFlux = get(missionEntries, LC.META_FLUX_CNAME);
-    var {columns, data} = rawTable.tableData;
-    var tIdx = columns.findIndex((col) => (col.name === get(missionEntries, [LC.META_TIME_CNAME])));
-    var arr = data.reduce((prev, e)=> {
-        prev.push(parseFloat(e[tIdx]));
-        return prev;
-    }, []);
-
-    var [tzero, tzeroMax] = arr.length > 0 ? [Math.min(...arr), Math.max(...arr)] : [0.0, 0.0];
-    var max = 365;
-    var min = Math.pow(10, -3);   // 0.0001
-
     var fields = FieldGroupUtils.getGroupFields(LC.FG_VIEWER_FINDER);
     var initState;
     const validators = getMissionFieldValidators(missionEntries);
@@ -374,26 +367,7 @@ function handleRawTableLoad(layoutInfo, tblId) {
         dispatchMultiValueChange(LC.FG_VIEWER_FINDER, initState);
     }
 
-    fields = FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER);
-    if (fields) {
-        initState = [
-                    {fieldKey: 'time', value: get(missionEntries, [LC.META_TIME_CNAME])},
-                    {fieldKey: 'flux', value: get(missionEntries, [LC.META_FLUX_CNAME])},
-                    {fieldKey: 'periodMin', value: `${min}`},
-                    {fieldKey: 'periodMax', value: `${max}`},
-                    {fieldKey: 'period', value: `${min}`},
-                    {fieldKey: 'tzero', value: `${tzero}`},
-                    {fieldKey: 'tzeroMax', value: `${tzeroMax}`}];
-
-        dispatchMultiValueChange(LC.FG_PERIOD_FINDER, initState);
-    }
-    fields = FieldGroupUtils.getGroupFields(LC.FG_PERIODOGRAM_FINDER);
-    if (fields) {
-        dispatchRestoreDefaults(LC.FG_PERIODOGRAM_FINDER);
-    }
-
-    return Object.assign(layoutInfo, {missionEntries, generalEntries,
-                                      periodRange: {min, max, tzero, tzeroMax}});
+    return Object.assign(layoutInfo, {missionEntries, generalEntries});
 }
 
 /**
@@ -436,13 +410,25 @@ function handleTableActive(layoutInfo, action) {
         setupImages(tbl_id, layoutInfo);
     }
 
-    const timeCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]);
-    const fluxCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME]);
+    if (tbl_id === LC.PERIODOGRAM_TABLE || tbl_id === LC.PEAK_TABLE) {
+        const per = getPeriodFromTable(tbl_id);
+        if (per) {
+            dispatchValueChange({
+                fieldKey: (LC.PERIOD_CNAME).toLowerCase(),
+                groupKey: LC.FG_PERIOD_FINDER,
+                value: `${parseFloat(per)}`
+            });
+        }
+    } else {
+        const fluxCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME]);
 
-    if (tbl_id === LC.RAW_TABLE) {
-        updateRawTableChart(layoutInfo, timeCol, fluxCol);
-    } else if (tbl_id === LC.PHASE_FOLDED) {
-        updatePhaseTableChart(layoutInfo, fluxCol);
+        if (tbl_id === LC.PHASE_FOLDED) {
+            updatePhaseTableChart(layoutInfo, fluxCol);
+        } else if (tbl_id === LC.RAW_TABLE) {
+            const timeCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]);
+
+            updateRawTableChart(layoutInfo, timeCol, fluxCol);
+        }
     }
 
     return layoutInfo;
@@ -451,8 +437,11 @@ function handleTableActive(layoutInfo, action) {
 
 function handleTableHighlight(layoutInfo, action) {
     const {tbl_id, highlightedRow} = action.payload;
+    const {displayMode} = layoutInfo;
+    const activeTableContainer = displayMode && displayMode.startsWith('period') ? LC.PERIODOGRAM_GROUP : 'main';
 
-    if (tbl_id !== getActiveTableId()) return;      // only respond to active table highlight
+    // only respond to active table highlight
+    if (tbl_id !== getActiveTableId(activeTableContainer)) return layoutInfo;
 
     if (isImageEnabledTable(tbl_id)) {
         setupImages(tbl_id, layoutInfo);

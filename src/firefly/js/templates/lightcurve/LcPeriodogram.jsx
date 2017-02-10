@@ -533,7 +533,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             step_size: ssize ? ssize : undefined,
             peaks: get(request, [pKeyDef.peaks.fkey]),
             table_name: LC.PERIODOGRAM_TABLE
-        }, {tbl_id: LC.PERIODOGRAM_TABLE, pageSize: LC.FULL_TABLE_SIZE});
+        }, {tbl_id: LC.PERIODOGRAM_TABLE});
 
 
         if (tReq !== null) {

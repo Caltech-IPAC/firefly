@@ -210,7 +210,6 @@ export function cloneRequest(request, params = {}) {
  * @public
  * @func doFetchTable
  * @memberof firefly.util.table
- * @deprecated  use firefly.util.table.fetchTable instead
  */
 export function doFetchTable(tableRequest, hlRowIdx) {
     const {tbl_id} = tableRequest;

@@ -4,10 +4,10 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {pick, get, isEmpty, set} from 'lodash';
+import {pick, get, isEmpty, set, cloneDeep} from 'lodash';
 import SplitPane from 'react-split-pane';
 import {flux} from '../../Firefly.js';
-import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
+import {LO_VIEW, getLayouInfo, dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
@@ -16,13 +16,16 @@ import {createContentWrapper} from '../../ui/panel/DockLayoutPanel.jsx';
 import {LC, updateLayoutDisplay} from './LcManager.js';
 import {getTypeData, ReadOnlyText, highlightBorder} from './LcPeriod.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
+import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {LcImageToolbar} from './LcImageToolbar.jsx';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import CompleteButton from '../../ui/CompleteButton.jsx';
+import {getTblById, doFetchTable, isTblDataAvail, MAX_ROW} from '../../tables/TableUtil.js';
+import {dispatchMultiValueChange, dispatchRestoreDefaults}  from '../../fieldGroup/FieldGroupCntlr.js';
+import {logError} from '../../util/WebUtil.js';
 
 const resultItems = ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'searchDesc', 'images',
                      LC.MISSION_DATA, LC.GENERAL_DATA, 'periodState'];
@@ -64,8 +67,7 @@ const defValues = {
                                                 `${cTimeSeriesKeyDef.cutoutsize.label}:`, labelWidth)),
     [cTimeSeriesKeyDef.errorcolumn.fkey]: Object.assign(getTypeData(cTimeSeriesKeyDef.errorcolumn.fkey, '',
                                                 'flux error column name',
-                                                `${cTimeSeriesKeyDef.errorcolumn.label}:`, labelWidth),
-                                                {validator: null})
+                                                `${cTimeSeriesKeyDef.errorcolumn.label}:`, labelWidth))
     };
 
 
@@ -346,7 +348,7 @@ var timeSeriesReducer = (missionEntries, generalEntries) => {
         // set value and validator
         missionKeys.forEach((key, idx) => {
             set(defV, [key, 'value'], get(missionEntries, key, ''));
-                    set(defV, [key, 'validator'], (val) => {
+            set(defV, [key, 'validator'], (val) => {
                 let retVal = {valid: true, message: ''};
                         const cols = get(missionEntries, missionListKeys[idx], []);
 
@@ -355,14 +357,14 @@ var timeSeriesReducer = (missionEntries, generalEntries) => {
                 }
 
                 return retVal;
-                    });
-                });
-                Object.keys(generalEntries).forEach((key) => {
-                    set(defV, [key, 'value'], get(generalEntries, key, ''));
-                });
-                return defV;
-            };
-  };
+            });
+        });
+        Object.keys(generalEntries).forEach((key) => {
+            set(defV, [key, 'value'], get(generalEntries, key, ''));
+        });
+        return defV;
+    };
+};
 
 /**
  * @summary callback to go to period finding page
@@ -371,7 +373,7 @@ var timeSeriesReducer = (missionEntries, generalEntries) => {
  */
 function setViewerSuccess(periodState) {
     return (request) => {
-        updateLayoutDisplay(periodState);
+        updateFullRawTable(()=>updateLayoutDisplay(periodState));
     };
 }
 
@@ -379,4 +381,71 @@ function setViewerFail() {
     return (request) => {
         return showInfoPopup('Parameter setting error');
     };
+}
+
+function updateFullRawTable(callback) {
+    const layoutInfo = getLayouInfo();
+    const tableItems = ['tableData', 'tableMeta'];
+
+    // fullRawTable for the derivation of other table, like phase folded table
+    var setTableData = (tbl) => {
+        const fullRawTable = pick(tbl, tableItems);
+
+        // find tzero, tzeroMax, period min, period max from table data
+        var {columns, data} = fullRawTable.tableData;
+        var tIdx = columns.findIndex((col) => (col.name === get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME])));
+        var arr = data.reduce((prev, e)=> {
+            prev.push(parseFloat(e[tIdx]));
+            return prev;
+        }, []);
+
+        var [tzero, tzeroMax] = arr.length > 0 ? [Math.min(...arr), Math.max(...arr)] : [0.0, 0.0];
+        var max = 365;
+        var min = Math.pow(10, -3);   // 0.0001
+
+        var fields = FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER);
+        var initState;
+
+        if (fields) {      // fields already exists and new table is loaded
+            initState = [
+                {fieldKey: 'time', value: get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME])},
+                {fieldKey: 'flux', value: get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME])},
+                {fieldKey: 'periodMin', value: `${min}`},
+                {fieldKey: 'periodMax', value: `${max}`},
+                {fieldKey: 'period', value: `${min}`},
+                {fieldKey: 'tzero', value: `${tzero}`},
+                {fieldKey: 'tzeroMax', value: `${tzeroMax}`}];
+
+            dispatchMultiValueChange(LC.FG_PERIOD_FINDER, initState);
+        }
+        fields = FieldGroupUtils.getGroupFields(LC.FG_PERIODOGRAM_FINDER);
+        if (fields) {
+            dispatchRestoreDefaults(LC.FG_PERIODOGRAM_FINDER);
+        }
+
+        dispatchUpdateLayoutInfo(Object.assign({}, layoutInfo, {fullRawTable, periodRange: {min, max, tzero, tzeroMax}}));
+        callback && callback();
+    };
+
+    if (layoutInfo.fullRawTable) {
+        callback && callback();
+    } else {
+        var rawTable = getTblById(LC.RAW_TABLE);
+
+        if (isTblDataAvail(0, rawTable.totalRows, rawTable)) {
+            setTableData(rawTable);
+        } else {
+            var req = Object.assign(cloneDeep(rawTable.request), {pageSize:  MAX_ROW});
+
+            doFetchTable(req).then(
+                (tableModel) => {
+                    setTableData(tableModel);
+                }
+            ).catch(
+                (reason) => {
+                    logError(`Failed to get full raw table: ${reason}`, reason);
+                }
+            );
+        }
+    }
 }
