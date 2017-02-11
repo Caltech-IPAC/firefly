@@ -76,7 +76,7 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
                         groupKey={groupKey}
                         text='Cols'
                         tip={`Select ${label} column`}
-                        onClick={() => showColSelectPopup(colValStats, onColSelected,`Choose ${label}`,`Set ${label}`,val)}
+                        onClick={() => showColSelectPopup(colValStats, onColSelected,`Choose ${label}`,'OK',val)}
             />
         </div>
     );

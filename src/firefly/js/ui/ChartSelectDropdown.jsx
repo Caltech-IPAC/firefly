@@ -118,6 +118,7 @@ class ChartSelect extends Component {
         return (
             <div style={{padding:10, overflow:'auto', maxWidth:600, maxHeight:600}}>
                 <FormPanel
+                    submitText='OK'
                     groupKey={formName}
                     onSubmit={resultSuccess}
                     onCancel={hideSearchPanel}>

@@ -433,7 +433,7 @@ export class Histogram extends React.Component {
                 min: minY,
                 endOnTick: false,
                 title: {
-                    text: ''
+                    text: 'Number'
                 },
                 type: (logs && logs.indexOf('y')>-1 ? 'logarithmic' : 'linear')
             }, yAxis),
