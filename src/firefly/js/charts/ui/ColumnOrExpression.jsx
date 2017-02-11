@@ -42,7 +42,7 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
 
     const renderSuggestion = (idx)=>{
         const colVal = colValStats[idx];
-        return colVal.name + (colVal.unit && colVal.unit !== 'null' ? ', '+colVal.unit : ' ');
+        return colVal.name + (colVal.unit && colVal.unit !== 'null' ? ' ('+colVal.unit+')' : ' ');
     };
 
     const valueOnSuggestion = (prevVal, idx)=>{
