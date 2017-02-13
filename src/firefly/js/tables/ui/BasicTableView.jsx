@@ -4,11 +4,11 @@
 
 import React, {PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import FixedDataTable from 'fixed-data-table';
+import FixedDataTable from 'fixed-data-table-2';
 import Resizable from 'react-component-resizable';
 import {debounce, defer, get, isEmpty} from 'lodash';
 
-import {tableToText} from '../TableUtil.js';
+import {tableTextView} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
@@ -230,7 +230,7 @@ BasicTableView.defaultProps = {
 // components here on down are private.  not all props are defined.
 /* eslint-disable react/prop-types */
 const TextView = ({columns, data, showUnits, widthPx, heightPx}) => {
-    const text = tableToText(columns, data, showUnits);
+    const text = tableTextView(columns, data, showUnits);
     return (
         <div style={{height: heightPx, width: widthPx,overflow: 'hidden'}}>
             <div style={{height: '100%',overflow: 'auto'}}>

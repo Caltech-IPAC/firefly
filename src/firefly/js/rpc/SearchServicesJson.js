@@ -70,6 +70,24 @@ export function fetchTable(tableRequest, hlRowIdx) {
 }
 
 /**
+ * tableRequest will be sent to the server as a json string.
+ * @param {TableRequest} tableRequest is a table request params object
+ * @param {string} filterInfo filter info string used to find the first row that matches it.
+ * @returns {Promise.<number>}
+ */
+export function findTableIndex(tableRequest, filterInfo) {
+
+    const params = {
+        [ServerParams.REQUEST]: JSON.stringify(tableRequest),
+        filterInfo
+    };
+    return doService(doJsonP(), ServerParams.TABLE_FIND_INDEX, params)
+        .then( (index) => {
+            return index;
+        });
+}
+
+/**
  * returns the values of the data from the given parameters
  * @param {Object} p  parameters object
  * @param {string} p.columnName name of the column

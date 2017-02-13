@@ -827,6 +827,7 @@ public class DataGroupQuery {
         }
 
         private boolean isNumberType(DataType dt) {
+            if (dt == null) return false;
             Class type = dt.getDataType();
             return type.equals(Double.class) ||
                     type.equals(Float.class) ||

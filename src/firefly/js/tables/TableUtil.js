@@ -9,7 +9,7 @@ import {FilterInfo} from './FilterInfo.js';
 import {SelectInfo} from './SelectInfo.js';
 import {flux} from '../Firefly.js';
 import {encodeServerUrl} from '../util/WebUtil.js';
-import {fetchTable} from '../rpc/SearchServicesJson.js';
+import {fetchTable, findTableIndex} from '../rpc/SearchServicesJson.js';
 import {DEF_BASE_URL} from '../core/JsonUtils.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {doUpload} from '../ui/FileUpload.jsx';
@@ -222,43 +222,6 @@ export function doFetchTable(tableRequest, hlRowIdx) {
     }
 }
 
-export function doValidate(type, action) {
-    if (type !== action.type) {
-        error(action, `Incorrect type:${action.type} was sent to a ${type} actionCreator.`);
-    }
-    if (!action.payload) {
-        error(action, 'Invalid action.  Payload is missing.');
-    }
-    var {request} = action.payload;
-    if (type === TblCntlr.TABLE_FETCH ) {
-        if (request.id) {
-            error(action, 'Required "id" field is missing.');
-        }
-        if (request.tbl_id) {
-            error(action, 'Required "tbl_id" field is missing.');
-        }
-    } else if(type === TblCntlr.TABLE_HIGHLIGHT) {
-        const idx = action.payload.highlightedRow;
-        if (!idx || idx<0) {
-            error(action, 'highlightedRow must be a positive number.');
-        }
-    }
-    return action;
-}
-
-/**
- * updates the given action with a new error given by cause.
- * action.err is stored as an array of errors.  Errors may be a String or an Error type.
- * @param {Object} action  the action to update
- * @param {string} cause  the error to be added.
- * @public
- * @func error
- * @memberof firefly.util.table
- */
-export function error(action, cause) {
-    (action.err = action.err || []).push(cause);
-}
-
 /**
  * returns true is there is data within the given range.  this is needed because
  * of paging table not loading the full table.
@@ -397,6 +360,30 @@ export function isFullyLoaded(tbl_id) {
 }
 
 /**
+ * Returns the first index of the found row.  It will search the table on the client first.
+ * If none is found and the table is partially loaded, it will search the server-side as well.
+ * @param {string} tbl_id the tbl_id of the table to search on.
+ * @param {string} filterInfo filter info string used to find the first row that matches it.
+ * @returns {Promise.<number>} Returns the index of the found row, else -1.
+ * @public
+ * @func findIndex
+ * @memberof firefly.util.table
+ */
+export function findIndex(tbl_id, filterInfo) {
+
+    const tableModel = getTblById(tbl_id);
+    if (!tableModel) return Promise.resolve(-1);
+    const comparators = filterInfo.split(';').map((s) => s.trim()).map((s) => FilterInfo.createComparator(s, tableModel));
+    const idx = get(tableModel, 'tableData.data', []).findIndex((row, idx) => comparators.reduce( (rval, matcher) => rval && matcher(row, idx), true));
+    if (idx >= 0) {
+        return Promise.resolve(idx);
+    } else {
+        return findTableIndex(tableModel.request, filterInfo);
+    }
+}
+
+
+/**
  * Returns the column index with the given name; otherwise, -1.
  * @param {TableModel} tableModel
  * @param {string} colName
@@ -471,8 +458,11 @@ export function getActiveTableId(tbl_group='main') {
 export function getCellValue(tableModel, rowIdx, colName) {
     if (get(tableModel, 'tableData.data.length', 0) > 0) {
         const colIdx = getColumnIdx(tableModel, colName);
-        // might be undefined if row is not loaded
-        return get(tableModel.tableData.data, [rowIdx, colIdx]);
+        if (colIdx < 0 && colName === 'ROWID') {
+            return rowIdx;
+        } else {
+            return get(tableModel, ['tableData', 'data', rowIdx, colIdx]);
+        }
     }
 }
 
@@ -488,30 +478,6 @@ export function getCellValue(tableModel, rowIdx, colName) {
 export function isTableLoaded(tableModel) {
     const status = tableModel && !tableModel.isFetching && get(tableModel, 'tableMeta.Loading-Status', 'COMPLETED');
     return status === 'COMPLETED';
-}
-
-/**
- * This function transform the json data from the server to fit the need of the UI.
- * For instance, the column's name is repeated after transform.  This is good for the UI.
- * But, it's more efficient to not include it during data transfer from the server.
- * @param {TableModel} tableModel
- * @returns {*}
- * @public
- * @memberof firefly.util.table
- * @func transform
- */
-export function transform(tableModel) {
-
-    if (tableModel.tableData && tableModel.tableData.data) {
-        const cols = tableModel.tableData.columns;
-        // change row data from [ [val] ] to [ {cname:val} ]
-        tableModel.tableData.data = tableModel.tableData.data.map( (row) => {
-            return cols.reduce( (nrow, col, cidx) => {
-                nrow[col.name] = row[cidx];
-                return nrow;
-            }, {});
-        });
-    }
 }
 
 /**
@@ -707,9 +673,7 @@ export function getTableSourceUrl(tbl_ui_id) {
  */
 export function getAsyncTableSourceUrl(tbl_ui_id) {
     const {tbl_id, columns} = getTableUiById(tbl_ui_id) || {};
-    const {tableData, tableMeta} = getTblById(tbl_id);
-    const ipacTable = tableToText(columns, tableData.data, true, tableMeta);
-    var filename = `${tbl_id}.tbl`;
+    const ipacTable = tableToIpac(getTblById(tbl_id));
     const blob = new Blob([ipacTable]);
     //const file = new File([new Blob([ipacTable])], filename);
     return doUpload(blob).then( ({status, cacheKey}) => {
@@ -741,38 +705,61 @@ function makeTableSourceUrl(columns, request) {
     return encodeServerUrl(DEF_BASE_URL, params);
 }
 
-export function tableToText(columns, dataAry, showUnits=false, tableMeta) {
+/**
+ * convert this table into IPAC format
+ * @param tableModel
+ * @returns {string}
+ */
+export function tableToIpac(tableModel) {
+    const {tableData, tableMeta} = tableModel;
+    const {columns, data} = tableData || {};
+
+    const colWidths = calcColumnWidths(columns, data);
+
+    const meta = Object.entries(tableMeta).map(([k,v]) => `\\${k} = ${v}`)
+                    .concat(columns.filter( (c) => c.visibility === 'hidden').map( (c) => `\\col.${c.name}.Visibility = ${c.visibility}`))
+                    .concat(columns.filter( (c) => c.filterable).map( (c) => `\\col.${c.name}.Filterable = ${c.filterable}`))
+                    .concat(columns.filter( (c) => c.sortable).map( (c) => `\\col.${c.name}.Sortable = ${c.sortable}`))
+                    .concat(columns.filter( (c) => c.label).map( (c) => `\\col.${c.name}.Label = ${c.label}`))
+                    .concat(columns.filter( (c) => c.desc).map( (c) => `\\col.${c.name}.ShortDescription = ${c.desc}`))
+                    .join('\n');
+
+    const head = [
+                    columns.map((c, idx) => padEnd(c.name, colWidths[idx])),
+                    columns.map((c, idx) => padEnd(c.type, colWidths[idx])),
+                    columns.find((c) => c.units) && columns.map((c, idx) => padEnd(c.units, colWidths[idx])),
+                    columns.find((c) => c.nullString) && columns.map((c, idx) => padEnd(c.nullString, colWidths[idx]))
+                ]
+                .filter( (ary) => ary)
+                .map( (ary) => '|' + ary.join('|') + '|')
+                .join('\n');
+    const dataStr = data.map( (row) => ' ' + row.map( (c, idx) => padEnd(c, colWidths[idx])).join(' ') + ' ' )
+                    .join('\n');
+
+    return [meta, '\\', head, dataStr].join('\n');
+}
+
+export function tableTextView(columns, dataAry, showUnits=false, tableMeta) {
 
     const colWidths = calcColumnWidths(columns, dataAry);
+    const meta = tableMeta && Object.entries(tableMeta).map(([k,v]) => `\\${k} = ${v}`).join('\n');
+    const head = [
+                    columns.map((c, idx) => get(c,'visibility', 'show') === 'show' && padEnd(c.name, colWidths[idx])),
+                    columns.map((c, idx) => get(c,'visibility', 'show') === 'show' && padEnd(c.type, colWidths[idx])),
+                    showUnits && columns.map((c, idx) => get(c,'visibility', 'show') === 'show' && padEnd(c.units, colWidths[idx]))
+                ]
+                .filter( (ary) => ary)
+                .map( (ary) => '|' + ary.filter( (v) => v ).join('|') + '|')
+                .join('\n');
 
-    var textMeta = '';
-    if (tableMeta) textMeta = Object.entries(tableMeta).map(([k,v]) => `\\${k} = ${v}`).join('\n');
+    const dataStr = dataAry.map((row) => ' ' +
+                                    row.map((c, idx) => get(columns, `${idx}.visibility`, 'show') === 'show' && padEnd(c, colWidths[idx]))
+                                       .filter((v) => v)
+                                       .join(' ')
+                                    + ' ')
+                           .join('\n');
 
-    // column's name
-    var textHead = columns.reduce( (pval, col, idx) => {
-        return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.label || col.name, colWidths[idx])}|` : '');
-    }, '|');
-
-    // column's type
-    textHead += '\n' + columns.reduce( (pval, col, idx) => {
-            return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.type || '', colWidths[idx])}|` : '');
-        }, '|');
-
-    if (showUnits) {
-        textHead += '\n' + columns.reduce( (pval, col, idx) => {
-                return pval + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(col.units || '', colWidths[idx])}|` : '');
-            }, '|');
-    }
-
-    var textData = dataAry.map( (row) => {
-                    return row.reduce( (pv, cv, idx) => {
-                            const cname = get(columns, [idx, 'name']);
-                            if (!cname) return pv;      // not defined in columns.. can ignore
-                            return pv + (get(columns, [idx,'visibility'], 'show') === 'show' ? `${padEnd(cv || '', colWidths[idx])} ` : '');
-                        }, ' ');
-                }).join('\n');
-
-    return textMeta + '\n' + textHead + '\n' + textData;
+    return [meta, head, dataStr].join('\n');
 }
 
 

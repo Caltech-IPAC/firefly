@@ -114,7 +114,7 @@ public class IpacTableParser {
         dg.setAttributes(tableDef.getAllAttributes());
 
         long totalRow = tableDef.getLineWidth() == 0 ? 0 :
-                        (inf.length() - tableDef.getRowStartOffset())/tableDef.getLineWidth();
+                        (inf.length()+1 - tableDef.getRowStartOffset())/tableDef.getLineWidth();
         return new DataGroupPart(tableDef, dg, start, (int) totalRow);
     }
 

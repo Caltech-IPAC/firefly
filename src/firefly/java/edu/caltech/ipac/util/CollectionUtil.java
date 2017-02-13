@@ -236,6 +236,20 @@ public class CollectionUtil {
         return null;
     }
 
+    public static <T> int findIndex(List<T> list, Filter<T>... matchers) {
+        if (!isEmpty(list)) {
+            for(int idx = 0; idx < list.size(); idx++) {
+                T item = list.get(idx);
+                boolean rval = true;
+                for (Filter<T> m : matchers) {
+                    rval = rval && m.accept(item);
+                }
+                if (rval) return idx;
+            }
+        }
+        return -1;
+    }
+
 //=========================================================================
 //  inner classes/interfaces
 //=========================================================================
