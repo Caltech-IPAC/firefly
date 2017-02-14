@@ -159,7 +159,7 @@ public class FitsReadTest extends FitsValidation {
 
         //prepare  the expected results for end to end  tests
 
-        String dataPath =FileLoader.getDataPath( FitsReadTest.class);
+        String dataPath = FileLoader.getDataPath( FitsReadTest.class);
         String fileName="f3.fits";
         String outFitsName=dataPath+"/f3_out.fits";
         Fits  inFits = FileLoader.loadFits(FitsReadTest.class, fileName);

@@ -2,10 +2,19 @@ package edu.caltech.ipac.firefly.util;
 
 
 import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.visualize.plot.FitsRead;
+import edu.caltech.ipac.visualize.plot.*;
+import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.Fits;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 
 /**
  * Created by zhang on 10/19/16.
@@ -16,7 +25,7 @@ import java.io.File;
  * package under the test tree.
  *
  */
-public  class  FileLoader {
+public class FileLoader {
 
     private static final String TEST_DATA_ROOT = "firefly_test_data/";
 

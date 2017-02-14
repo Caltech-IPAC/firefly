@@ -4,9 +4,7 @@ package edu.caltech.ipac.visualize.plot;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import nom.tam.fits.*;
 import nom.tam.util.BufferedDataOutputStream;
-import nom.tam.util.Cursor;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
 
@@ -121,7 +119,7 @@ public class CropFileTest extends CropTestBase {
      */
     public static void main(String[] args) throws Exception {
 
-        String dataPath =FileLoader.getDataPath(CropFileTest.class);
+        String dataPath = FileLoader.getDataPath(CropFileTest.class);
         Fits inFits = FileLoader.loadFits(CropFileTest.class, fileName);
 
         //create first FITS file
