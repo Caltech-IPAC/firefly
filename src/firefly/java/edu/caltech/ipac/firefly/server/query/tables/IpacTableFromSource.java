@@ -13,6 +13,7 @@ import edu.caltech.ipac.firefly.server.query.*;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
@@ -33,55 +34,49 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
 
         String source = request.getParam(ServerParams.SOURCE);
         String altSource = request.getParam(ServerParams.ALT_SOURCE);
+        String processor = request.getParam("processor");
 
-        if (StringUtils.isEmpty(source)) {
-            String processor = request.getParam("processor");
-            if (StringUtils.isEmpty(processor)) {
-                throw new DataAccessException("Required parameter 'source' is not given.");
+        if (StringUtils.isEmpty(source) && processor != null) {
+            return getByProcessor(processor, request);
+        } else {
+            // get source by source key
+            File inf = getSourceFile(source, request);
+            if (inf == null) {
+                inf = getSourceFile(altSource, request);
             }
-            TableServerRequest sReq = new TableServerRequest(processor, request);
-            FileInfo fi = new SearchManager().getFileInfo(sReq);
-            if (fi == null) {
-                throw new DataAccessException("Unable to get file location info");
+
+            if (inf == null) {
+                throw new DataAccessException("Unable to read the source[alt_source] file:" + source + (StringUtils.isEmpty(altSource) ? "" : " [" + altSource + "]") );
             }
-            if (fi.getInternalFilename()== null) {
-                throw new DataAccessException("File not available");
-            }
-            if (!fi.hasAccess()) {
+
+            if ( !ServerContext.isFileInPath(inf) ) {
                 throw new SecurityException("Access is not permitted.");
             }
-            source = fi.getInternalFilename();
+            return inf;
         }
+    }
 
-        File inf = getSourceFile(source, request);
-        if (inf == null) {
-            inf = getSourceFile(altSource, request);
+    private File getByProcessor(String processor, TableServerRequest request) throws DataAccessException {
+        if (StringUtils.isEmpty(processor)) {
+            throw new DataAccessException("Required parameter 'source' is not given.");
         }
-
-        if (inf == null) {
-            throw new DataAccessException("Unable to read the source[alt_source] file:" + source + (StringUtils.isEmpty(altSource) ? "" : " [" + altSource + "]") );
+        TableServerRequest sReq = new TableServerRequest(processor, request);
+        FileInfo fi = new SearchManager().getFileInfo(sReq);
+        if (fi == null) {
+            throw new DataAccessException("Unable to get file location info");
         }
-
-        if ( !ServerContext.isFileInPath(inf) ) {
+        if (fi.getInternalFilename()== null) {
+            throw new DataAccessException("File not available");
+        }
+        if (!fi.hasAccess()) {
             throw new SecurityException("Access is not permitted.");
         }
-
-        return convertToIpacTable(inf, request);
+        return fi.getFile();
     }
 
     @Override
-    public String getUniqueID(ServerRequest request) {
-        String uid = super.getUniqueID(request);
-        String source = request.getParam(ServerParams.SOURCE);
-        URL url = makeUrl(source);
-        if (url == null) {
-            File f = ServerContext.convertToFile(source);
-            if (f != null && f.exists()) {
-                // if this is a local file, watch for changes.
-                uid += f.lastModified();
-            }
-        }
-        return uid;
+    public boolean doCache() {
+        return false;
     }
 
     /**
@@ -92,32 +87,35 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
      * @return
      */
     private File getSourceFile(String source, TableServerRequest request) {
-        File inf = null;
+        if (source == null) return null;
         try {
             URL url = makeUrl(source);
             if (url == null) {
-                inf = ServerContext.convertToFile(source);
+                File f = ServerContext.convertToFile(source);
+                if (f == null || !f.canRead()) return  null;
+
+                StringKey key = new StringKey(getUniqueID(request), f.lastModified());
+                File cached  = (File) getCache().get(key);
+                if (cached != null) return cached;    // it's cached.. return it.
+
+                File res = convertToIpacTable(f, request);
+                getCache().put(key, res);
+                return res;
             } else {
-                HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
-                int rcode = conn.getResponseCode();
-                if (rcode >= 200 && rcode < 400) {
-                    String sfname = URLDownload.getSugestedFileName(conn);
-                    if (sfname == null) {
-                        sfname = url.getPath();
-                    }
-                    String ext = sfname == null ? null : FileUtil.getExtension(sfname);
+                StringKey key = new StringKey(getUniqueID(request), url);
+                File res  = (File) getCache().get(key);
+                if (res == null) {
+                    String ext = FileUtil.getExtension(url.getPath());
                     ext = StringUtils.isEmpty(ext) ? ".ul" : "." + ext;
-                    inf = createFile(request, ext);
-                    URLDownload.getDataToFile(conn, inf, null, false, true, true, Long.MAX_VALUE);
+                    res = createFile(request, ext);
                 }
+                HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
+                URLDownload.getDataToFile(conn, res, null, false, true, true, Long.MAX_VALUE);
+                getCache().put(key, res);
+                return res;
             }
         } catch (Exception ex) {
-            inf = null;
         }
-        if (inf != null && inf.canRead()) {
-            return inf;
-        }
-
         return null;
     }
 
