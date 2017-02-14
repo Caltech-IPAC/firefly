@@ -213,10 +213,13 @@ function repeatDataCycle(phaseTable) {
     });
 
     var totalRows = tableData.data.length;
+    /* TODO: investigate to pick the needed properties under tableMeta */
+    /*
     var newTableMeta = pick(tableMeta, ['fixlen', 'QueryTime', 'ORIGIN',
                                         'DATETIME', 'DataTag','DATABASE',
                                         'EQUINOX', 'SKYAREA', 'StatusFile', 'SQL']);
-    set(phaseTable, ['tableMeta'], newTableMeta);
+    */
+    set(phaseTable, ['tableMeta'], tableMeta);
 
     set(phaseTable, ['tableMeta', 'RowsRetrieved'], `${totalRows}`);
     set(phaseTable, ['tableMeta', 'tbl_id'], tbl_id);

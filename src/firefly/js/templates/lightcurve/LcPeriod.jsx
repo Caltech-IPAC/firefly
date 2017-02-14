@@ -402,7 +402,7 @@ class PhaseFoldingChart extends Component {
 
     componentDidMount() {
         var isPhaseChanged = (newFields) => {
-            var fieldsToCheck = ['time', 'flux', 'tz', 'period'];
+            var fieldsToCheck = ['tz', 'period'];
             var fieldsInfo = fieldsToCheck.map((f) => {
                 return [get(newFields, [fKeyDef[f].fkey, 'value'], ''),
                     get(this.state.fields, [fKeyDef[f].fkey, 'value'], '')];
@@ -831,7 +831,7 @@ var isPeriodMinValid = (valStr, description) => {
     var retval;
 
     retval = Validate.isFloat(description, valStr);
-    if (!retval.valid || !valStr) return {retval: false, message: `${description}: must be a float`};
+    if (!retval.valid || !valStr) return {valid: false, message: `${description}: must be a float`};
 
     var val = parseFloat(valStr);
     var max = getValidValueFrom(FieldGroupUtils.getGroupFields(pfinderkey), fKeyDef.max.fkey);
@@ -852,7 +852,7 @@ var isPeriodMaxValid = (valStr, description) => {
     var retval;
 
     retval = Validate.isFloat(description, valStr);
-    if (!retval.valid || !valStr) return {retval: false, message: `${description}: must be a float`};
+    if (!retval.valid || !valStr) return {valid: false, message: `${description}: must be a float`};
 
     var val = parseFloat(valStr);
     var min = getValidValueFrom(FieldGroupUtils.getGroupFields(pfinderkey), fKeyDef.min.fkey);
