@@ -27,7 +27,7 @@ public class FinderChartRequestUtil {
                                  ISSA(DEF, "issa", null, issaCombo, null, DEF),
                                  MSX(DEF, "msx", null, msxCombo, null, DEF),
                                  TWOMASS("2MASS", "2mass","twomass_bands", twoMassCombo, "fp_psc", DEF),
-                                 WISE("WISE (AllWISE)", "wise", "wise_bands", wiseCombo, "wise_allwise_p3as_psd", DEF),
+                                 WISE("WISE (AllWISE)", "wise", "wise_bands", wiseCombo, "allwise_p3as_psd", DEF),
                                  SDSS("SDSS (DR7)", "sdss", "sdss_bands",sDssCombo, null, "SDSS (DR10)");
 
         public WebPlotRequest.ServiceType srvType = WebPlotRequest.ServiceType.valueOf(this.name());
