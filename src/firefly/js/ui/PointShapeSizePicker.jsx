@@ -268,7 +268,7 @@ class ShapePickerWrapper extends Component {
                     </div>
                     <div style={{display:'flex'}}>
                         <HelpIcon
-                            helpId={'catalogs'}/>
+                            helpId={'visualization.imageoptions'}/>
                     </div>
                 </div>
                 <div style={{marginBottom: 10, marginLeft: mLeft}} >
