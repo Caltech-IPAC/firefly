@@ -1,7 +1,7 @@
 import validator from 'validator';
-import {get} from 'lodash';
+import {get, isArray} from 'lodash';
 
-export default { toRGBA, toRGB, toHex, brighter, darker, makeSimpleColorMap, getBWBackground, getComplementaryColor};
+export default { toRGBA, toRGB, getRGBA, toHex, brighter, darker, makeSimpleColorMap, getBWBackground, getComplementaryColor, toRGBAString};
 
 const colours = {
     aliceblue:'#f0f8ff',antiquewhite:'#faebd7',aqua:'#00ffff',aquamarine:'#7fffd4',azure:'#f0ffff',
@@ -159,7 +159,7 @@ const [LUMI, CONTRAST, HSP] = [0, 1, 2];
  * @param color
  * @returns {Array} [r, g, b, a]
  */
-function getRGBA(color) {
+export function getRGBA(color) {
     const rgbKey = ['rgba(', 'rgb(', '#'];
     var rgbStr = rgbKey.find((k) => {
         return color.includes(k);
@@ -181,7 +181,7 @@ function getRGBA(color) {
         rgba = rgba.map((v) => parseFloat(v));
     }
 
-    if (rgbKey !== 'rgba') {
+    if (rgba.length < 4) {
         rgba.push(1.0);
     }
 
@@ -354,4 +354,17 @@ function getComplementaryColor(color) {
     return `rgba(${rgb[R]}, ${rgb[G]}, ${rgb[B]}, ${rgba[3]})`;
 }
 
+function toRGBAString(rgba) {
+    const len = (!rgba || !isArray(rgba)) ? 0 : rgba.length;
+    const val = len === 0 ? 255 : rgba[len-1];
 
+    if (len <= A) {
+        if (len === 0) rgba = [];
+        for (let i = 0; i < A - len; i++ ) {
+            rgba.push(val);
+        }
+        rgba.push(1.0);
+    }
+
+    return `rgba(${rgba[R]}, ${rgba[G]}, ${rgba[B]}, ${rgba[A]})`;
+}

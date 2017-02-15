@@ -11,7 +11,6 @@ import {TextLocation, Style, DEFAULT_FONT_SIZE} from './DrawingDef.js';
 import Point, {makeScreenPt, makeViewPortPt, makeOffsetPt, makeWorldPt, makeImagePt} from '../Point.js';
 import {toRegion} from './ShapeToRegion.js';
 import {getDrawobjArea,  isScreenPtInRegion, makeHighlightShapeDataObj} from './ShapeHighlight.js';
-import {makeHighlightPointDataObj, POINT_DATA_OBJ} from './PointDataObj.js';
 import CsysConverter from '../CsysConverter.js';
 import {has, isNil, get, set} from 'lodash';
 
@@ -208,8 +207,8 @@ var draw=  {
 
     usePathOptimization(drawObj,def) {
         var dp= makeDrawParams(drawObj,def);
-        return dp==Style.STANDARD &&
-            (drawObj.sType==ShapeType.Line || drawObj.sType==ShapeType.Rectangle);
+        return dp===Style.STANDARD &&
+            (drawObj.sType===ShapeType.Line || drawObj.sType===ShapeType.Rectangle);
     },
 
     getCenterPt(drawObj) {
@@ -219,7 +218,7 @@ var draw=  {
     getScreenDist(drawObj,plot, pt) {
         var dist = -1;
         var testPt;
-        if (drawObj.sType==ShapeType.Rectangle) {
+        if (drawObj.sType===ShapeType.Rectangle) {
             testPt = getRectangleCenterScreenPt(drawObj,plot);
         } else {
             testPt = plot.getScreenCoords(drawObj.pts[0]);
@@ -529,7 +528,7 @@ function drawLine(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath) {
                 drawParams);
     }
 
-    if (style==Style.HANDLED && inView) {
+    if (style===Style.HANDLED && inView) {
         DrawUtil.fillRec(ctx, color,pt0.x-2, pt0.y-2, 5,5, renderOptions);
         DrawUtil.fillRec(ctx, color,pt1.x-2, pt1.y-2, 5,5, renderOptions);
     }
@@ -552,7 +551,7 @@ function drawCircle(drawObj, ctx, drawTextAry, plot, drawParams) {
     var screenRadius= 1;
     var centerPt=null;
 
-    if (pts.length==1 && !isNil(radius)) {
+    if (pts.length===1 && !isNil(radius)) {
         switch (unitType) {
             case UnitType.PIXEL: screenRadius= radius;
                 break;
@@ -799,7 +798,7 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
         var textPt= makeTextLocationRectangle(plot, textLoc, fontSize, centerPt, w, h, angle, lineWidth);
         drawText(drawObj, drawTextAry, plot, textPt, drawParams);
     }
-    if (style == Style.HANDLED && inView) {
+    if (style === Style.HANDLED && inView) {
         // todo
     }
 }
@@ -896,7 +895,7 @@ function drawEllipse(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPath
         var textPt= makeTextLocationEllipse(plot, textLoc, fontSize, centerPt, w, h, angle, lineWidth);
         drawText(drawObj, drawTextAry, plot, textPt, drawParams);
     }
-    if (style == Style.HANDLED && inView) {
+    if (style === Style.HANDLED && inView) {
         // todo
     }
 }
@@ -1078,9 +1077,9 @@ function makeTextLocationRectangle(plot, textLoc, fontSize, centerPt, width, hei
  * @param textLoc
  * @param fontSize
  * @param centerPt
- * @param angle    in radian
  * @param radius1  radius on horizotal axis
  * @param radius2  radius on vertical axis
+ * @param angle    in radian
  * @param lineWidth
  * @returns {object} screen location
  */
