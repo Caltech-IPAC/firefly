@@ -85,10 +85,7 @@ export const converters = {
 
 export function converterFactory(table) {
     var dataId= get(table, ['tableMeta', MetaConst.DATASET_CONVERTER]);
-    if (!dataId && has(table, 'tableMeta') && has(table, 'tableData')) {
-        dataId = findAColumn(table.tableMeta, get(table, 'tableData.columns', [])) && 'UNKNOWN';
-    }
-    const converter= dataId && converters[dataId];
+    const converter= dataId ? converters[dataId] : converters['UNKNOWN'];
     return converter && {converter,dataId};
 }
 
@@ -126,15 +123,14 @@ function makeRequestForUnknown(table, row, includeSingle, includeStandard) {
 
 function makeRequestSimpleMoving(table, row, includeSingle, includeStandard) {
 
-    const {tableMeta:meta}= table;
+    const {tableMeta:meta, tableData}= table;
     const dataSource= meta['DataSource'] || URL;
 
 
+    const urlCol= findAColumn(meta, tableData.columns);
 
-    if (!meta[MetaConst.MOVING_COORD_COLS]) return [];
+    if (!urlCol) return [];
 
-
-    if (!meta['urlColumn']) return [];
 
     const sAry= meta[MetaConst.MOVING_COORD_COLS].split(';');
     if (!sAry || sAry.length!== 3) return [];
@@ -142,15 +138,14 @@ function makeRequestSimpleMoving(table, row, includeSingle, includeStandard) {
     const lonCol= sAry[0];
     const latCol= sAry[1];
     const csys= CoordinateSys.parse(sAry[2]);
-    const urlCol= meta['urlColumn'];
 
     const retval= {};
     if (includeSingle) {
-        retval.single= makeMovingRequest(table,row,lonCol,latCol,urlCol,csys,'simple-moving-single-'+(row %24));
+        retval.single= makeMovingRequest(table,row,lonCol,latCol,urlCol.name,csys,'simple-moving-single-'+(row %24));
     }
 
     if (includeStandard) {
-        retval.standard= [makeMovingRequest(table,row,lonCol,latCol,urlCol,csys,'simple-moving-single')];
+        retval.standard= [makeMovingRequest(table,row,lonCol,latCol,urlCol.name,csys,'simple-moving-single')];
         retval.highlightPlotId= retval.standard[0].getPlotId();
     }
 
@@ -161,7 +156,8 @@ function makeRequestSimpleMoving(table, row, includeSingle, includeStandard) {
 
 function findAColumn(meta,columns) {
     const dsCol= Object.keys(meta).find( (key) => key.toUpperCase()===dataSourceUpper);
-    const guesses= dsCol ? [dsCol,...defGuesses] : defGuesses;
+    var guesses= meta[dsCol] ? [meta[dsCol],...defGuesses] : defGuesses;
+    guesses= guesses.map( (g) => g.toUpperCase());
     return columns.find( (c) => guesses.includes(c.name.toUpperCase()));
 }
 

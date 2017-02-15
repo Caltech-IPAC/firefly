@@ -10,6 +10,7 @@ import {getTblById,getTblInfo, getCellValue} from '../tables/TableUtil.js';
 import {converterFactory} from './ConverterFactory.js';
 import {MetaConst} from '../data/MetaConst.js';
 
+const dataSourceUpper= 'DATASOURCE';
 
 const getSetInSrByRow= (table,sr,rowNum) => (col) => {
     sr.setSafeParam(col.name, getCellValue(table,rowNum,col.name));
@@ -100,6 +101,7 @@ export function findGridTableRows(table,maxRows, plotIdRoot) {
     return retval;
 }
 
+
 /**
  * Guess if this table contains image meta data
  * @param tbl_id
@@ -110,7 +112,9 @@ export function isMetaDataTable(tbl_id) {
     const tableMeta= get(table, 'tableMeta');
     if (!tableMeta) return false;
 
-    if (tableMeta[MetaConst.DATASET_CONVERTER]) return true;
+    const hasDsCol= Boolean(Object.keys(tableMeta).find( (key) => key.toUpperCase()===dataSourceUpper));
+
+    if (tableMeta[MetaConst.DATASET_CONVERTER] || hasDsCol) return true;
     if (tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] || tableMeta[MetaConst.CATALOG_COORD_COLS])  return false;
     const converter= converterFactory(table);
     return Boolean(converter);

@@ -10,6 +10,7 @@ import {CysConverter} from './CsysConverter.js';
 import {PlotState} from './PlotState.js';
 import {PlotAttribute} from './WebPlot.js';
 import {primePlot} from './PlotViewUtil.js';
+import {getTblById, getTblRowAsObj} from '../tables/TableUtil.js';
 
 export const AREA_SELECT= 'AREA_SELECT';
 export const LINE_SELECT= 'LINE_SELECT';
@@ -29,6 +30,15 @@ export function makeExtActivateData(ext,pv,dlAry) {
         type: ext.extType,
         plotState: PlotState.convertToJSON(plot.plotState)
     };
+
+    if (plot.attributes.tbl_id) {
+        const table = getTblById(plot.attributes.tbl_id);
+        data.table= {
+            highlightedRow: table.highlightedRow,
+            row : getTblRowAsObj(table)
+        };
+    }
+
 
     switch (ext.extType) {
         case AREA_SELECT:
