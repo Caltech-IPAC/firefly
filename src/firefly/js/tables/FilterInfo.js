@@ -174,8 +174,11 @@ export class FilterInfo {
         const cidx = getColumnIdx(tableModel, cname);
         const col = getColumn(tableModel, cname);
         val = op === 'in' ? val.replace(/[()]/g, '').split(',').map((s) => s.trim()) : val;
-        return (row) => {
+        return (row, idx) => {
             var compareTo = row[cidx].toLowerCase();
+            if (!compareTo && cname === 'ROWID') {
+                compareTo = idx;
+            }
             if (!['in','like'].includes(op) && col.type.match(/^[dfil]/)) {      // int, float, double, long .. or their short form.
                 val = Number(val);
                 compareTo = Number(compareTo);

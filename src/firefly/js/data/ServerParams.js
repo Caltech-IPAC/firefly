@@ -133,6 +133,7 @@ export const ServerParams = {
         ACTION: 'action',
         PACKAGE_REQUEST: 'packageRequest',
         TABLE_SEARCH: 'tableSearch',
+        TABLE_FIND_INDEX: 'tableFindIndex',
         SELECTED_VALUES: 'selectedValues',
         TABLE_SAVE: 'tableSave',
         JSON_SEARCH: 'jsonSearch',

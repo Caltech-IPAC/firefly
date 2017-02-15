@@ -3,9 +3,9 @@
  */
 
 import React from 'react';
-import FixedDataTable from 'fixed-data-table';
+import FixedDataTable from 'fixed-data-table-2';
 import sCompare from 'react-addons-shallow-compare';
-import {set, get, isEmpty, isEqual, isArray, pick} from 'lodash';
+import {set, get, isEqual, pick} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';

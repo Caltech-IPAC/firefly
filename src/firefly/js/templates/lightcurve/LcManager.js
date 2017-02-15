@@ -8,7 +8,7 @@ import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
         dispatchUpdateLayoutInfo, dropDownHandler} from '../../core/LayoutCntlr.js';
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT,
         dispatchTableRemove, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
-import {getCellValue, getTblById, getTblIdsByGroup, getActiveTableId} from '../../tables/TableUtil.js';
+import {getCellValue, getTblById, getTblIdsByGroup, findIndex, getActiveTableId} from '../../tables/TableUtil.js';
 import {updateSet, logError} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {dispatchPlotImage, visRoot, dispatchDeletePlotView,
         dispatchChangeActivePlotView,
@@ -450,15 +450,17 @@ function handleTableActive(layoutInfo, action) {
 }
 
 function handleTableHighlight(layoutInfo, action) {
-    const {tbl_id} = action.payload;
+    const {tbl_id, highlightedRow} = action.payload;
 
-    if (tbl_id !== LC.PERIODOGRAM_TABLE && tbl_id !== LC.PEAK_TABLE) {
-        if (isImageEnabledTable(tbl_id)) {
-            setupImages(tbl_id, layoutInfo);
-        }
-    } else {
+    if (tbl_id !== getActiveTableId()) return;      // only respond to active table highlight
+
+    if (isImageEnabledTable(tbl_id)) {
+        setupImages(tbl_id, layoutInfo);
+    }
+
+    // update period field when it's selected from a table with period.
+    if (tbl_id === LC.PERIODOGRAM_TABLE || tbl_id === LC.PEAK_TABLE) {
         const per = getPeriodFromTable(tbl_id);
-
         if (per) {
             dispatchValueChange({
                 fieldKey: (LC.PERIOD_CNAME).toLowerCase(),
@@ -466,6 +468,27 @@ function handleTableHighlight(layoutInfo, action) {
                 value: `${parseFloat(per)}`
             });
         }
+    }
+
+    // ensure the highlighted row of the raw and phase-folded tables are in sync.
+    if ([LC.PHASE_FOLDED, LC.RAW_TABLE].includes(tbl_id)) {
+        let filterInfo, actOn, rowid;
+        const tableModel = getTblById(tbl_id);
+        if (tbl_id === LC.RAW_TABLE) {
+            actOn = LC.PHASE_FOLDED;
+            rowid = getCellValue(tableModel, highlightedRow, 'ROWID');
+            filterInfo = `RAW_ROWID = ${rowid}`;
+        } else {
+            rowid = getCellValue(tableModel, highlightedRow, 'RAW_ROWID');
+            actOn = LC.RAW_TABLE;
+            filterInfo = `ROWID = ${rowid}`;
+        }
+        findIndex(actOn, filterInfo)
+            .then( (index) => {
+                if (index >=0) {
+                    dispatchTableHighlight(actOn, index);
+                }
+            });
     }
 
     return layoutInfo;
