@@ -1,21 +1,17 @@
 package edu.caltech.ipac.visualize.plot;
 
 
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.firefly.util.FitsGenerator;
 import edu.caltech.ipac.firefly.util.FitsValidation;
 import nom.tam.fits.*;
-import nom.tam.util.ArrayFuncs;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
-
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
+
 
 
 /**
