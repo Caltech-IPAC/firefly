@@ -367,7 +367,8 @@ class PhaseFoldingChart extends Component {
                     lineWidth: 1,
                     tickWidth: 1,
                     tickLength: 10,
-                    gridLineColor: '#e9e9e9'
+                    gridLineColor: '#e9e9e9',
+                    reversed: true
                 },
                 tooltip: showTooltip ? {enabled: true,
                     borderColor: '#a3aeb9',
