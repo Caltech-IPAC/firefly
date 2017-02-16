@@ -79,7 +79,7 @@ public class CropTest extends FitsValidation{
      */
     public static void main(String[] args) throws Exception {
 
-        String dataPath =FileLoader.getDataPath(CropTest.class);
+        String dataPath = FileLoader.getDataPath(CropTest.class);
         Fits    inFits = FileLoader.loadFits(CropTest.class, fileName);
         String outFitsName =dataPath+ "out_"+fileName.substring(0, fileName.length()-5 )+".fits";
 

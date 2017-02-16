@@ -15,9 +15,7 @@ package edu.caltech.ipac.visualize.plot;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import nom.tam.fits.*;
 import nom.tam.util.BufferedDataOutputStream;
-import nom.tam.util.Cursor;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -34,7 +32,6 @@ public class CropAndCenterTest extends CropTestBase  {
     private  String resultUsingRaDec ="cropUsingRaDec_f3.fits";
     private  Fits expectedFitsUsingMinMax =null;
     private  Fits expectedFitsUsingRaDec =null;
-    private double delta = 1.0E-10;
     private CropAndCenter crop;
 
     @Before
@@ -115,7 +112,7 @@ public class CropAndCenterTest extends CropTestBase  {
      */
     public static void main(String[] args) throws Exception {
 
-        String dataPath =FileLoader.getDataPath(CropAndCenterTest.class);
+        String dataPath = FileLoader.getDataPath(CropAndCenterTest.class);
         Fits    inFits = FileLoader.loadFits(CropAndCenterTest.class, fileName);
         String outFitsName1 =dataPath+ "cropUsingMinMax_"+fileName.substring(0, fileName.length()-5 )+".fits";
 

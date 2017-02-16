@@ -263,8 +263,8 @@ public class HistogramTest extends ConfigTest {
      */
     public void testEndToEnd() throws FitsException, IOException, ParseException, ClassNotFoundException {
 
-        String inFitsName =FileLoader.getDataPath(HistogramTest.class)+fileName;
-        FitsRead fitsRead =FileLoader.loadFitsRead(HistogramTest.class, fileName);
+        String inFitsName = FileLoader.getDataPath(HistogramTest.class)+fileName;
+        FitsRead fitsRead = FileLoader.loadFitsRead(HistogramTest.class, fileName);
         ImageHeader imageHeader = fitsRead.getImageHeader();
         inData = fitsRead.getDataFloat();
 
@@ -340,8 +340,8 @@ public class HistogramTest extends ConfigTest {
     public static void main(String[] args) throws Exception {
 
 
-        String inFitsName =FileLoader.getDataPath(HistogramTest.class)+fileName;
-        FitsRead fitsRead =FileLoader.loadFitsRead(HistogramTest.class, fileName);
+        String inFitsName = FileLoader.getDataPath(HistogramTest.class)+fileName;
+        FitsRead fitsRead = FileLoader.loadFitsRead(HistogramTest.class, fileName);
         ImageHeader imageHeader = fitsRead.getImageHeader();
         float[] inData = fitsRead.getDataFloat();
 

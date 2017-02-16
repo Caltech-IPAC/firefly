@@ -1,13 +1,10 @@
 package edu.caltech.ipac.visualize.plot.projection;
+import edu.caltech.ipac.firefly.util.FitsHeaderToJson;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.visualize.plot.*;
 import nom.tam.fits.*;
-import org.json.simple.JSONArray;
 import org.junit.*;
-
 import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.Type;
 import java.net.URISyntaxException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -64,73 +61,6 @@ public class ProjectionTest {
         return map;
     }
 
-    /**
-     * This method convert a JSONArray which is one dimensional array to java double array
-     * @param jsonArray1d
-     * @return
-     */
-    private double[] jsonArray1dToDouble1d(JSONArray jsonArray1d){
-        double[] double1d = new double[jsonArray1d.size()];
-        for (int i=0; i<jsonArray1d.size(); i++){
-            double1d[i]=(double)jsonArray1d.get(i);
-        }
-        return double1d;
-    }
-
-    /**
-     * This method read the JSONObject which was converted by ImageHeader object and then convert it back to ImageHeader
-     * @param jsonObject
-     * @return
-     * @throws IllegalAccessException
-     */
-    private ImageHeader jsonObjectToImageHeader(JSONObject jsonObject) throws IllegalAccessException {
-
-        ImageHeader imageHeader = new ImageHeader();
-        Class<?> objClass =  imageHeader.getClass();
-
-        //array containing Field objects reflecting all the accessible public fields of the
-        //class or interface represented by this Class object
-        Field[] fields = objClass.getFields();
-        for (Field field : fields) {
-
-            if (field == null || field.toString().contains("final")) continue;
-            String name = field.getName();
-            Object value = jsonObject.get(name);
-
-            if (value != null) {
-                if (value instanceof JSONArray){ //test if the value is an array
-                    JSONArray jArray= (JSONArray) value;
-                    if (jArray.get(0) instanceof JSONArray) { //test if it is a two dimensional array
-                        int len = jArray.size();
-                        double[][] double2d = new double[len][((JSONArray) jArray.get(0)).size()];
-                        for (int i=0; i<len; i++){
-                            JSONArray a = (JSONArray) jArray.get(i);
-                            double2d[i]= jsonArray1dToDouble1d((JSONArray) jArray.get(i));
-                        }
-                        field.set(imageHeader, double2d);
-                    }
-                    else {
-                        double[] dArray = jsonArray1dToDouble1d(jArray);
-                        field.set(imageHeader, dArray);
-                    }
-                }
-                else { //none array
-                    Type type = field.getType();
-                    if (type.getTypeName().equalsIgnoreCase("int")) {
-                        if (value instanceof Long) {
-                            int v = ((Long) value).intValue();
-                            field.set(imageHeader, v);
-                        } else {
-                            field.set(imageHeader, value);
-                        }
-                    } else {
-                        field.set(imageHeader, value);
-                    }
-                }
-            }
-        }
-        return imageHeader;
-    }
 
     /**
      * This method validate the projection results
@@ -145,7 +75,7 @@ public class ProjectionTest {
         String jsonFileName = jsonObject.get("headerFileName").toString();
 
 
-        ImageHeader imageHeader = jsonObjectToImageHeader((JSONObject) jsonObject.get("header"));
+        ImageHeader imageHeader = FitsHeaderToJson.jsonObjectToImageHeader((JSONObject) jsonObject.get("header"));
 
         Projection projection = imageHeader.createProjection(CoordinateSys.EQ_J2000);
 
@@ -196,6 +126,48 @@ public class ProjectionTest {
 
             JSONObject jsonObject = (JSONObject) obj;
             validate(jsonObject);
+
+        }
+
+    }
+
+
+
+    /**
+     * This main method is used to create unit test reference files.
+     *
+     * @param args
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+
+        String path="/Users/zhang/lsstDev/testingData/projectionTestingData/";
+        String[] fNames = {
+                "1904-66_SFL.fits",                                      //SFL or GLS  SANSON-FLAMSTEED
+                "f3.fits",                                               //GNOMONIC
+                "DssImage-10.68470841.26902815.015.0poss2ukstu_red.fits", //PLATE
+                "GLM_01050+0000_mosaic_I2.fits",                        //CAR  CARTESIAN
+                "m51.car.fits",                                         //CAR  CARTESIAN
+                "field1.fits",                                          //SIN  ORTHOGRAPHIC
+                "m51.sin.fits",                                         //SIN  ORTHOGRAPHIC
+                // "file7.fits",                                           //Not FITS format
+                //"file7Downloaded.fits",
+                "SIP.fits",                                            //TAN--SIP  GNOMONIC
+                //"lsstsample1.fits",                                   //CEA  CYLINDRICAL EQUAL AREA
+                "allsky.fits",                                        //AIT (ATF is deprecated)   AITOFF
+                "bird_2ha3-Booth.fits",                              //----  LINEAR
+                "NED_M31.fits",                                          //ARC  ZENITH EQUIDISTANT
+                "cong_12_smo.fits"                                    //ARC  ZENITH EQUIDISTANT
+        };
+
+        for (int i=0; i<fNames.length; i++) {
+            try {
+                FitsHeaderToJson.writeImageHeaderProjectionToJson(path + fNames[i]);
+            }
+            catch (FitsException e) {
+                System.out.println("========ERROR=========="+fNames[i]+"===============");
+                e.printStackTrace();
+            }
 
         }
 
