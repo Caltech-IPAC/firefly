@@ -18,9 +18,9 @@ import Validate from '../../util/Validate.js';
 import {dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import FieldGroupCntlr, {dispatchValueChange, dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
-import {makeTblRequest, getTblById, tableToIpac, makeFileRequest, getActiveTableId, getColumnIdx, getCellValue} from '../../tables/TableUtil.js';
-import {LC, updateLayoutDisplay, getValidValueFrom} from './LcManager.js';
-import {uploadPhaseTable, doPFCalculate, getPhase} from './LcPhaseTable.js';
+import {getActiveTableId, getColumnIdx} from '../../tables/TableUtil.js';
+import {LC, updateLayoutDisplay, getValidValueFrom, getFullRawTable} from './LcManager.js';
+import {doPFCalculate, getPhase} from './LcPhaseTable.js';
 import {LcPeriodogram, startPeriodogramPopup, cancelPeriodogram, popupId} from './LcPeriodogram.jsx';
 import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
 import {isDialogVisible} from '../../core/ComponentCntlr.js';
@@ -402,7 +402,7 @@ class PhaseFoldingChart extends Component {
 
     componentDidMount() {
         var isPhaseChanged = (newFields) => {
-            var fieldsToCheck = ['time', 'flux', 'tz', 'period'];
+            var fieldsToCheck = ['tz', 'period'];
             var fieldsInfo = fieldsToCheck.map((f) => {
                 return [get(newFields, [fKeyDef[f].fkey, 'value'], ''),
                     get(this.state.fields, [fKeyDef[f].fkey, 'value'], '')];
@@ -463,12 +463,15 @@ PhaseFoldingChart.propTypes = {
  * @returns {*}
  */
 function getPhaseFlux(fields) {
-    var rawTable = getTblById(LC.RAW_TABLE);
-    var {data} = rawTable.tableData;    // column names and data
+    const fc = get(fields, ['flux', 'value'], '');
+    var rawTable = getFullRawTable();
+    var {data} = get(rawTable, ['tableData'], {});
 
-    var {time, period, tzero, flux} = fields;
+    if (!data) return {flux: fc};
+
+    var {time, period, tzero} = fields;
     const tc = time ? time.value : '';
-    const fc = flux ? flux.value: '';
+
     const tIdx = tc ? getColumnIdx(rawTable, tc) : -1;  // find time column
     const fIdx = fc ? getColumnIdx(rawTable, fc) : -1;  // find flux column
 
@@ -483,7 +486,7 @@ function getPhaseFlux(fields) {
         pd = periodRange.min;
     }
     if (tzero) {
-        if (!tzero.valid) return {flux: fc};      // invalid period
+        if (!tzero.valid) return {flux: fc};      // invalid tzero
         tz = parseFloat(tzero.value);
     } else {
         tz = periodRange.tzero;
@@ -828,7 +831,7 @@ var isPeriodMinValid = (valStr, description) => {
     var retval;
 
     retval = Validate.isFloat(description, valStr);
-    if (!retval.valid || !valStr) return {retval: false, message: `${description}: must be a float`};
+    if (!retval.valid || !valStr) return {valid: false, message: `${description}: must be a float`};
 
     var val = parseFloat(valStr);
     var max = getValidValueFrom(FieldGroupUtils.getGroupFields(pfinderkey), fKeyDef.max.fkey);
@@ -849,7 +852,7 @@ var isPeriodMaxValid = (valStr, description) => {
     var retval;
 
     retval = Validate.isFloat(description, valStr);
-    if (!retval.valid || !valStr) return {retval: false, message: `${description}: must be a float`};
+    if (!retval.valid || !valStr) return {valid: false, message: `${description}: must be a float`};
 
     var val = parseFloat(valStr);
     var min = getValidValueFrom(FieldGroupUtils.getGroupFields(pfinderkey), fKeyDef.min.fkey);
@@ -929,14 +932,13 @@ function timezeroValidator(description) {
  */
 function setPFTableSuccess() {
     return (request) => {
-        var reqData = get(request, pfinderkey);
-        var timeName = get(reqData, fKeyDef.time.fkey);
-        var period = get(reqData, fKeyDef.period.fkey);
-        var flux = get(reqData, fKeyDef.flux.fkey);
-        var tzero = get(reqData, fKeyDef.tz.fkey);
+        const reqData = get(request, pfinderkey);
+        const timeName = get(reqData, fKeyDef.time.fkey);
+        const period = get(reqData, fKeyDef.period.fkey);
+        const flux = get(reqData, fKeyDef.flux.fkey);
+        const tzero = get(reqData, fKeyDef.tz.fkey);
 
-        var phaseFoldedTable = doPFCalculate(flux, timeName, period, tzero);
-        phaseFoldedTable&&uploadPhaseTable(phaseFoldedTable,  flux);
+        doPFCalculate(flux, timeName, period, tzero);
 
         if (isDialogVisible(popupId)) {
             cancelPeriodogram(pfinderkey, popupId)();

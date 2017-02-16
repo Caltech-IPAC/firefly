@@ -2,15 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, omit, slice, replace, isArray, isString, cloneDeep} from 'lodash';
+import {get, set, slice, isArray, isString, cloneDeep, pick, omit} from 'lodash';
 import {doUpload} from '../../ui/FileUpload.jsx';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {makeTblRequest,getTblById, tableToIpac, makeFileRequest, getColumnIdx} from '../../tables/TableUtil.js';
-import {LC, getValidValueFrom} from './LcManager.js';
+import {tableToIpac, makeFileRequest, getColumnIdx} from '../../tables/TableUtil.js';
+import {LC, getFullRawTable} from './LcManager.js';
 import {getLayouInfo} from '../../core/LayoutCntlr.js';
-import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 
 
 const DEC_PHASE = 3;       // decimal digit
@@ -22,15 +21,16 @@ const DEC_PHASE = 3;       // decimal digit
  */
 export function uploadPhaseTable(tbl, flux) {
     const {tbl_id, title} = tbl;
-
     const ipacTable = tableToIpac(tbl);
     const blob = new Blob([ipacTable]);
     //const file = new File([new Blob([ipacTable])], `${tbl_id}.tbl`);
 
     doUpload(blob).then(({status, cacheKey}) => {
         const tReq = makeFileRequest(title, cacheKey, null,
-                                     {tbl_id, sortInfo:sortInfoString(LC.PHASE_CNAME),
-                                      pageSize: LC.FULL_TABLE_SIZE
+                                     {tbl_id,
+                                      sortInfo:sortInfoString(LC.PHASE_CNAME),
+                                      tblType: 'notACatalog',
+                                      pageSize: LC.TABLE_PAGESIZE
                                      });
 
         dispatchTableSearch(tReq, {removable: true});
@@ -43,6 +43,8 @@ export function uploadPhaseTable(tbl, flux) {
         loadXYPlot({chartId: tbl_id, tblId: tbl_id, xyPlotParams});
     });
 
+
+
 }
 
 /**
@@ -54,14 +56,15 @@ export function uploadPhaseTable(tbl, flux) {
  * @return {TableModel} phase table
  */
 export function doPFCalculate(flux, time, period, tzero) {
-    const rawTable = getTblById(LC.RAW_TABLE);
+    const fullRawTable = getFullRawTable();
 
-    var phaseFoldedTable = rawTable && addPhaseToTable(rawTable, time, flux, tzero, period);
-    phaseFoldedTable&&repeatDataCycle(time, parseFloat(period), phaseFoldedTable);
+    var phaseFoldedTable = fullRawTable && addPhaseToTable(fullRawTable, time, tzero, period);
 
-    return phaseFoldedTable;
+     if (phaseFoldedTable) {
+         phaseFoldedTable = repeatDataCycle(phaseFoldedTable);
+         uploadPhaseTable(phaseFoldedTable, flux);
+    }
 }
-
 
 /**
  * @summary calculate phase and return as text
@@ -82,20 +85,21 @@ export function getPhase(time, timeZero, period,  dec=DEC_PHASE) {
  * @summary create a table model with phase column
  * @param {TableModel} tbl
  * @param {string} timeName
- * @param {string} fluxName
  * @param {string} tzero
  * @param {string} period
  * @returns {TableModel}
  */
-function addPhaseToTable(tbl, timeName, fluxName, tzero, period) {
+function addPhaseToTable(tbl, timeName, tzero, period) {
     var tIdx = timeName ? getColumnIdx(tbl, timeName) : -1;
 
     if (tIdx < 0) return null;
 
-    var tPF = Object.assign(cloneDeep(tbl), {tbl_id: LC.PHASE_FOLDED, title: 'Phase Folded'},
-                                            {request: getPhaseFoldingRequest(period, timeName, fluxName, tbl)},
-                                            {highlightedRow: 0});
-    tPF = omit(tPF, ['hlRowIdx', 'isFetching']);
+    const tbl_id =  LC.PHASE_FOLDED;
+    const title = 'Phase Folded';
+
+    var tPF = {tableData: cloneDeep(tbl.tableData),
+               tableMeta: cloneDeep(tbl.tableMeta),
+               tbl_id, title};
     tPF.tableMeta = omit(tPF.tableMeta, ['source', 'tblFilePath', 'sortInfo', 'isFullyLoaded']);
 
     var phaseC = {desc: 'number of period elapsed since starting time.',
@@ -194,57 +198,30 @@ function locateTableColumns(tbl, srcCols, targetCol, position = 1) {
 }
 
 /**
- * @summary create table request object for phase folded table
- * @param {string} period period in string
- * @param {string} time  time column
- * @param {string} flux flux name
- * @param {TableModel} tbl
- * @returns {TableRequest}
- */
-function getPhaseFoldingRequest(period, time, flux, tbl) {
-    const cutoutSize = getValidValueFrom(FieldGroupUtils.getGroupFields(LC.FG_VIEWER_FINDER), 'cutoutSize');
-
-    return makeTblRequest('PhaseFoldedProcessor', LC.PHASE_FOLDED, {
-        period_days: period,
-        table_name: 'folded_table',
-        cutout_size: cutoutSize ? cutoutSize : undefined,
-        flux,
-        x: time,
-        original_table: tbl.tableMeta.tblFilePath
-    },  {tbl_id:LC.PHASE_FOLDED, pageSize: LC.FULL_TABLE_SIZE});
-
-}
-
-/**
  * @summary duplicate the phase cycle to the phase folded table
- * @param {string} timeCol
- * @param {number} period
  * @param {TableModel} phaseTable
  */
-function repeatDataCycle(timeCol, period, phaseTable) {
-    var {totalRows, tbl_id, title, tableData} = phaseTable;
-    var tIdx = getColumnIdx(phaseTable, timeCol);
+function repeatDataCycle(phaseTable) {
+    var {tableData, tbl_id, title, tableMeta} = phaseTable;
     var fIdx = getColumnIdx(phaseTable, LC.PHASE_CNAME);
 
-    slice(tableData.data, 0, totalRows).forEach((d) => {
+    slice(tableData.data, 0).forEach((d) => {
         var newRow = slice(d);
 
-        newRow[tIdx] = `${parseFloat(d[tIdx]) + period}`;
         newRow[fIdx] = `${parseFloat(d[fIdx]) + 1}`;
         tableData.data.push(newRow);
     });
 
-    totalRows *= 2;
-
-    set(phaseTable, 'totalRows', totalRows);
+    var totalRows = tableData.data.length;
+    /* TODO: investigate to pick the needed properties under tableMeta */
+    /*
+    var newTableMeta = pick(tableMeta, ['fixlen', 'QueryTime', 'ORIGIN',
+                                        'DATETIME', 'DataTag','DATABASE',
+                                        'EQUINOX', 'SKYAREA', 'StatusFile', 'SQL']);
+    */
     set(phaseTable, ['tableMeta', 'RowsRetrieved'], `${totalRows}`);
-
     set(phaseTable, ['tableMeta', 'tbl_id'], tbl_id);
     set(phaseTable, ['tableMeta', 'title'], title);
-
-    var col = tableData.columns.length;
-    var sqlMeta = get(phaseTable, ['tableMeta', 'SQL']);
-    if (sqlMeta) {
-        set(phaseTable, ['tableMeta', 'SQL'], replace(sqlMeta, `${col-1}`, `${col}`));
-    }
+    set(phaseTable, ['tableMeta', 'SQL'],`SELECT (${tableData.columns.length} column names follow in next row.)`);
+    return phaseTable;
 }
