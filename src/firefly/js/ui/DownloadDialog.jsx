@@ -209,7 +209,7 @@ export class DownloadOptionPanel extends Component {
                                         label : 'Zip File Structure:'
                                     }}
                             options = {[
-                                        {label: 'Structure (with folders)', value: 'folder'},
+                                        {label: 'Structured (with folders)', value: 'folder'},
                                         {label: 'Flattened (no folders)', value: 'flat'}
                                     ]}
                             labelWidth = {labelWidth}
