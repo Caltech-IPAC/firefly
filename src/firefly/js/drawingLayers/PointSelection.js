@@ -14,6 +14,7 @@ import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {flux} from '../Firefly.js';
+import {clone} from '../util/WebUtil.js';
 
 const ID= 'POINT_SELECTION';
 const TYPE_ID= 'POINT_SELECTION_TYPE';
@@ -43,9 +44,11 @@ function onDetach(drawLayer,action) {
 
 
 
-function creator(initPayload) {
+function creator(initPayload, presetDefaults) {
     var drawingDef= makeDrawingDef('pink');
-    drawingDef.symbol= DrawSymbol.CIRCLE;
+    drawingDef.symbol= DrawSymbol.SQUARE;
+    drawingDef.size= 6;
+    drawingDef= Object.assign(drawingDef,presetDefaults);
     idCnt++;
 
     var pairs= {
@@ -75,7 +78,9 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 
 
 function getLayerChanges(drawLayer, action) {
-    return null;
+    if  (action.type===DrawLayerCntlr.CHANGE_DRAWING_DEF) {
+        return {drawingDef: clone(drawLayer.drawingDef,action.payload.drawingDef)}
+    }
 }
 
 function makeSelectedPt(screenPt,plotId) {
@@ -96,12 +101,11 @@ function selectAPoint(drawLayer, action, active) {
     var drawAry;
     if (active) {
         drawAry= [
-            PointDataObj.make(selPt,5,DrawSymbol.CIRCLE),
-            PointDataObj.make(selPt,5,DrawSymbol.SQUARE)
+            PointDataObj.make(selPt),
         ];
     }
     else {
-        drawAry= [PointDataObj.make(selPt,5,DrawSymbol.CIRCLE)];
+        drawAry= [PointDataObj.make(selPt)]
     }
     return  drawAry;
 }

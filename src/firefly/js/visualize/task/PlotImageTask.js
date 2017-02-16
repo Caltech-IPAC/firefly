@@ -57,7 +57,7 @@ const getFirstReq= (wpRAry) => isArray(wpRAry) ? wpRAry.find( (r) => r?true:fals
 
 function makeSinglePlotPayload(vr, rawPayload, requestKey) {
 
-   var {wpRequest, plotId, threeColor, viewerId=DEFAULT_FITS_VIEWER_ID, attributes, setNewPlotAsActive,
+   var {wpRequest, plotId, threeColor, viewerId=DEFAULT_FITS_VIEWER_ID, attributes, setNewPlotAsActive= true,
          holdWcsMatch= false, pvOptions= {}, addToHistory= false,useContextModifications= true}= rawPayload;
 
     wpRequest= ensureWPR(wpRequest);

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, unset, has, isEmpty, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray, padEnd} from 'lodash';
+import {get, unset, has, isEmpty, isUndefined, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray, padEnd} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {FilterInfo} from './FilterInfo.js';
@@ -650,6 +650,29 @@ export function getTblInfo(tableModel, aPageSize) {
     var totalPages = Math.ceil((totalRows || 0)/pageSize);
     return { tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow, selectInfo, error};
 }
+
+
+/**
+ * Return the row data as an object keyed by the column name
+ * @param {TableModel} tableModel
+ * @param {Number} [rowIdx] = the index of the row to return, default to highlighted row
+ * @return {Object<String,String>} the values of the row keyed by the column name
+ */
+export function getTblRowAsObj(tableModel, rowIdx= undefined) {
+    if (!tableModel) return {};
+    const {highlightedRow, tableData} = tableModel;
+    const {data, columns}= tableData;
+    if (isUndefined(rowIdx)) rowIdx= highlightedRow;
+    if (rowIdx<0 && rowIdx< get(tableData, 'data.length',0)) return {};
+    const row= data[rowIdx];
+    if (!row) return {};
+    return row.reduce( (obj,v, idx)  => {
+           obj[columns[idx].name]= v;
+           return obj;
+          }, {});
+}
+
+
 
 /**
  * returns the url to download a snapshot of the current table data.

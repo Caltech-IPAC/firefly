@@ -135,6 +135,7 @@ registerCntlr(BackgroundCntlr);
 registerCntlr(ImagePlotCntlr);
 registerCntlr(FieldGroupCntlr);
 registerCntlr(MouseReadoutCntlr);
+registerCntlr(ExternalAccessCntlr);
 registerCntlr(TablesCntlr);
 registerCntlr(DrawLayerCntlr.getDrawLayerCntlrDef(drawLayerFactory));
 
@@ -142,7 +143,6 @@ registerCntlr(DrawLayerCntlr.getDrawLayerCntlrDef(drawLayerFactory));
 let redux = null;
 
 // pre-map a set of action => creator prior to bootstrapping.
-actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.extensionActivateActionCreator);
 
 actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);
 actionCreators.set(ChartsCntlr.CHART_DATA_FETCH, ChartsCntlr.makeChartDataFetch(cdtFactory.getChartDataType));

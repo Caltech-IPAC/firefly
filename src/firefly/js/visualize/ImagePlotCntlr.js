@@ -533,7 +533,7 @@ export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
  * @param {boolean} [p.addToHistory=true] add this request to global history of plots, may be deprecated in the future
  * @param {boolean} [p.useContextModifications=true] it true the request will be modified to use preferences, rotation, etc
  *                                 should only be false when it is doing a 'restore to defaults' type plot
- * @param {boolean} [p.attributes] the are added to the plot
+ * @param {Object} [p.attributes] meta data that is added the plot
  * @param {Object} [p.pvOptions] parameter specific to the  plotView, only read the first time per plot id
  * @param {boolean} [p.setNewPlotAsActive= true] the new plot will be active
  * @param {boolean} [p.holdWcsMatch= false] if wcs match is on, then modify the request to hold the wcs match
@@ -567,14 +567,15 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
  * @param {WebPlotRequest[]} p.wpRequestAry
  * @param {string} p.viewerId
  * @param {Object} p.pvOptions PlotView init Options
+ * @param {Object} [p.attributes] meta data that is added the plot
  * @param {boolean} [p.setNewPlotAsActive] the last completed plot will be active
  * @param {boolean} [p.holdWcsMatch= false] if wcs match is on, then modify the request to hold the wcs match
  * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
 export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
-                                   setNewPlotAsActive= true, holdWcsMatch= false,
+                                   attributes={}, setNewPlotAsActive= true, holdWcsMatch= false,
                                    dispatcher= flux.process}) {
-    dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry, pvOptions, setNewPlotAsActive, holdWcsMatch, viewerId} });
+    dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry, pvOptions, attributes, setNewPlotAsActive, holdWcsMatch, viewerId} });
 }
 
 
@@ -913,22 +914,23 @@ const detachAll= (plotViewAry,dl) => plotViewAry.forEach( (pv) => {
 function changePointSelectionActionCreator(rawAction) {
     return (dispatcher,getState) => {
         var store= getState();
-        var wasEnabled= store[IMAGE_PLOT_KEY].pointSelEnableAry.length ? true : false;
-        var {plotViewAry}= store[IMAGE_PLOT_KEY];
-        var typeId= PointSelection.TYPE_ID;
+
+        const {plotViewAry}= store[IMAGE_PLOT_KEY];
+        const typeId= PointSelection.TYPE_ID;
 
         dispatcher(rawAction);
 
         store= getState();
+        const enabled= get(rawAction.payload, 'enabled') || store[IMAGE_PLOT_KEY].pointSelEnableAry.length;
         var dl= getDrawLayerByType(store[DRAWING_LAYER_KEY], typeId);
-        if (store[IMAGE_PLOT_KEY].pointSelEnableAry.length && !wasEnabled) {
+        if (store[IMAGE_PLOT_KEY].pointSelEnableAry.length && enabled) {
             if (!dl) {
                 dispatchCreateDrawLayer(typeId);
                 dl= getDrawLayerByType(getState()[DRAWING_LAYER_KEY], typeId);
             }
             attachAll(plotViewAry,dl);
         }
-        else if (wasEnabled) {
+        else if (!enabled) {
             detachAll(plotViewAry,dl);
         }
     };

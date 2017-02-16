@@ -160,6 +160,7 @@ function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
 
     if (viewer.layout===SINGLE) {
         const {single}= converter.makeRequest(table,highlightedRow,true);
+        if (!single) return [];
         reqAry= [single];
         single.setPlotId(`${dataId}-singleview`,0);
         single.setRelatedTableRow(highlightedRow);
@@ -169,6 +170,7 @@ function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
         const plotRows= findGridTableRows(table,Math.min(converter.maxPlots,MAX_GRID_SIZE),`${dataId}-gridfull`);
         var reqAry= plotRows.map( (pR) => {
             const {single}= converter.makeRequest(table,pR.row,true);
+            if (!single) return [];
             single.setRelatedTableRow(pR.row);
             single.setPlotId(pR.plotId);
             return single;
@@ -180,10 +182,11 @@ function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
         reqRet= converter.makeRequest(table,highlightedRow,false,true,threeColorOps);
         highlightPlotId= reqRet.highlightPlotId;
         reqAry= reqRet.standard;
+        if (isEmpty(reqAry)) return [];
         threeReqAry= reqRet.threeColor;
     }
 
-    replot(reqAry, threeReqAry, highlightPlotId, viewerId, dataId);
+    replot(reqAry, threeReqAry, highlightPlotId, viewerId, dataId, tbl_id);
 }
 
 
@@ -194,7 +197,7 @@ function removeAllPlotsInViewer(viewerId) {
     inViewerIds.forEach( (plotId) => dispatchDeletePlotView({plotId}));
 }
 
-function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
+function replot(reqAry, threeReqAry, activeId, viewerId, dataId, tbl_id)  {
     const groupId= `${viewerId}-${dataId}-standard`;
     var plottingIds= reqAry.map( (r) =>  r.getPlotId());
     var threeCPlotId;
@@ -228,7 +231,8 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
     const wpRequestAry= makePlottingList(reqAry);
     if (!isEmpty(wpRequestAry)) {
         dispatchPlotGroup({wpRequestAry, viewerId, holdWcsMatch:true,
-                           pvOptions: { userCanDeletePlots: false, menuItemKeys:{imageSelect : false} }
+                           pvOptions: { userCanDeletePlots: false, menuItemKeys:{imageSelect : false} },
+                           attributes: { tbl_id },
         });
     }
     if (activeId) dispatchChangeActivePlotView(activeId);
@@ -241,7 +245,8 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId)  {
             dispatchPlotImage(
                 {
                     plotId:threeCPlotId, viewerId, wpRequest:plotThreeReqAry, threeColor:true,
-                               pvOptions: {userCanDeletePlots: true, menuItemKeys:{imageSelect : false}}
+                               pvOptions: {userCanDeletePlots: true, menuItemKeys:{imageSelect : false}},
+                    attributes: { tbl_id },
                 });
         }
     }
