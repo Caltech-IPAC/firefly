@@ -59,7 +59,7 @@ export const LC = {
     MISSION_DATA: 'missionEntries',
     GENERAL_DATA:'generalEntries',
 
-    TABLE_PAGESIZE: 50
+    TABLE_PAGESIZE: 100
 };
 
 const plotIdRoot= 'LC_FRAME-';
@@ -438,7 +438,7 @@ function handleTableActive(layoutInfo, action) {
 function handleTableHighlight(layoutInfo, action) {
     const {tbl_id, highlightedRow} = action.payload;
     const {displayMode} = layoutInfo;
-    const activeTableContainer = displayMode && displayMode.startsWith('period') ? LC.PERIODOGRAM_GROUP : 'main';
+    const activeTableContainer = displayMode && displayMode.startsWith('period') ? LC.PERIODOGRAM_GROUP : undefined;
 
     // only respond to active table highlight
     if (tbl_id !== getActiveTableId(activeTableContainer)) return layoutInfo;

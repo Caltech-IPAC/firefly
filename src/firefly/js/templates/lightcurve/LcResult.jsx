@@ -401,7 +401,7 @@ function updateFullRawTable(callback) {
 
         var [tzero, tzeroMax] = arr.length > 0 ? [Math.min(...arr), Math.max(...arr)] : [0.0, 0.0];
         var max = 365;
-        var min = Math.pow(10, -3);   // 0.0001
+        var min = Math.pow(10, -3);   // 0.001
 
         var fields = FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER);
         var initState;

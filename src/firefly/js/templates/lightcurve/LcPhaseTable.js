@@ -219,8 +219,6 @@ function repeatDataCycle(phaseTable) {
                                         'DATETIME', 'DataTag','DATABASE',
                                         'EQUINOX', 'SKYAREA', 'StatusFile', 'SQL']);
     */
-    set(phaseTable, ['tableMeta'], tableMeta);
-
     set(phaseTable, ['tableMeta', 'RowsRetrieved'], `${totalRows}`);
     set(phaseTable, ['tableMeta', 'tbl_id'], tbl_id);
     set(phaseTable, ['tableMeta', 'title'], title);
