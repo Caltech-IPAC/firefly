@@ -198,14 +198,7 @@ public class FlipXYTest extends FitsValidation {
         validateFlipX(fitsRead);
         validateFlipY(fitsRead);
     }
-
-    private void validateFloatArray(float[][] expectedFData, float[][] calculatedFData) {
-        for (int i = 0; i < expectedFData.length; i++) {
-
-                Assert.assertArrayEquals(expectedFData[i],calculatedFData[i], (float) delta );
-
-        }
-    }
+    
     /**
      * This is to validate the flipped results against x axis.  When the data flipped twice along
      * the same axis, the result will be the same as the original input.
