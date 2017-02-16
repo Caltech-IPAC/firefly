@@ -654,22 +654,23 @@ export function getTblInfo(tableModel, aPageSize) {
 
 
 /**
- *
+ * Return the row data as an object keyed by the column name
  * @param {TableModel} tableModel
  * @param {Number} [rowIdx] = the index of the row to return, default to highlighted row
+ * @return {Object<String,String>} the values of the row keyed by the column name
  */
 export function getTblRowAsObj(tableModel, rowIdx= undefined) {
     if (!tableModel) return {};
-    if (isUndefined(rowIdx)) rowIdx= tableModel.highlightedRow;
-    if (rowIdx<0) return {};
-    const {data, columns}= tableModel.tableData;
+    const {highlightedRow, tableData} = tableModel;
+    const {data, columns}= tableData;
+    if (isUndefined(rowIdx)) rowIdx= highlightedRow;
+    if (rowIdx<0 && rowIdx< get(tableData, 'data.length',0)) return {};
     const row= data[rowIdx];
     if (!row) return {};
     return row.reduce( (obj,v, idx)  => {
            obj[columns[idx].name]= v;
            return obj;
           }, {});
-
 }
 
 
