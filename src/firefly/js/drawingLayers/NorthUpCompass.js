@@ -98,12 +98,15 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
 
 function makeCompass(plotId, action){
     var plot= primePlot(visRoot(),plotId);
-    var pv= getPlotViewById(visRoot(),plotId);
-    var cc= CsysConverter.make(primePlot(visRoot(),plotId));
+    if (!plot.projection.isImplemented()) return null;
+
+    var cc= CsysConverter.make(plot);
     if (!cc) return null;
 
+    var pv= getPlotViewById(visRoot(),plotId);
+
     const dist = 60;
-    var px = 30;
+    const px = 30;
     var textSpace = {x: 8, y: 15};
     const yOff = Math.min(Math.min(plot.viewPort.dim.height, pv.viewDim.height)/4, dist);
     const xOff = Math.min(Math.min(plot.viewPort.dim.width, pv.viewDim.width)/4, dist);
