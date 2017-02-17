@@ -510,7 +510,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             step_size: ssize ? ssize : undefined,
             peaks: get(request, [pKeyDef.peaks.fkey]),
             table_name: LC.PEAK_TABLE,
-            sortInfo: sortInfoString('SDE')                 // sort peak table by column SDE
+            sortInfo: sortInfoString('SDE', false)                 // sort peak table by column SDE, descending
         }, {tbl_id: LC.PEAK_TABLE, pageSize: parseInt(peak)});
 
         if (tReq2 !== null) {
@@ -533,6 +533,8 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             step_size: ssize ? ssize : undefined,
             peaks: get(request, [pKeyDef.peaks.fkey]),
             table_name: LC.PERIODOGRAM_TABLE
+            /* Should we do the same for Power column in Periodogram? */
+            /*sortInfo: sortInfoString('Power', false)*/
         }, {tbl_id: LC.PERIODOGRAM_TABLE});
 
 
