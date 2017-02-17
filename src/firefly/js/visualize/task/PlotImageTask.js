@@ -21,6 +21,7 @@ import {WPConst, DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import {Band} from '../Band.js';
 import {PlotPref} from '../PlotPref.js';
 import ActiveTarget  from '../../drawingLayers/ActiveTarget.js';
+import PointSelection  from '../../drawingLayers/PointSelection.js';
 import * as DrawLayerCntlr from '../DrawLayerCntlr.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddViewerItems, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
@@ -280,15 +281,6 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
             matchAndActivateOverlayPlotViews(plotIdAry, payload.oldOverlayPlotViews);
         }
 
-        // pvNewPlotInfoAry.forEach((info) => {
-        //     info.plotAry.map((p) => ({r: p.plotState.getWebPlotRequest(), plotId: p.plotId}))
-        //         .forEach((obj) => obj.r.getOverlayIds()
-        //             .forEach((drawLayerId)=> {
-        //                 DrawLayerCntlr.dispatchAttachLayerToPlot(drawLayerId, obj.plotId);
-        //             });
-        // });
-
-
         pvNewPlotInfoAry
             .forEach((info) => info.plotAry
                 .forEach( (p)  => addDrawLayers(p.plotState.getWebPlotRequest(), p) ));
@@ -337,6 +329,9 @@ function addDrawLayers(request, plot ) {
             else {
                 DrawLayerCntlr.dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
             }
+            if (dl.drawLayerTypeId===PointSelection.TYPE_ID) {
+                DrawLayerCntlr.dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
+            }
         }
     });
 
@@ -354,13 +349,26 @@ function getRequest(payload) {
     return payload.wpRequest || payload.redReq ||  payload.blueReq ||  payload.greenReq;
 }
 
+ /**
+ * @global
+ * @public
+ * @typedef {Object} NewPlotInfo
+ * @summary Main part of the payload of successful call to the server
+ *
+ * @prop {String} plotId,
+ * @prop {String} requestKey,
+ * @prop {WebPlot[]} plotAry
+ * @prop {OverPlotView[]} overlayPlotViews
+ *
+ */
+
 
 /**
  *
  * @param plotCreate
  * @param payload
  * @param requestKey
- * @return {{plotId: *, requestKey: *, plotAry: *, overlayPlotViews: null}}
+ * @return {NewPlotInfo}
  */
 const handleSuccess= function(plotCreate, payload, requestKey) {
     const plotState= PlotState.makePlotStateWithJson(plotCreate[0].plotState);

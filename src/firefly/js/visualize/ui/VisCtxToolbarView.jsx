@@ -5,7 +5,7 @@
 import React, {Component, PropTypes} from 'react';
 import {isEmpty} from 'lodash';
 import sCompare from 'react-addons-shallow-compare';
-import {primePlot,isMultiImageFitsWithSameArea,getAllDrawLayersForPlot} from '../PlotViewUtil.js';
+import {primePlot,isMultiImageFitsWithSameArea} from '../PlotViewUtil.js';
 import {CysConverter} from '../CsysConverter.js';
 import {PlotAttribute} from '../WebPlot.js';
 import {makeImagePt, makeScreenPt} from '../Point.js';
@@ -16,7 +16,7 @@ import {showImageAreaStatsPopup} from './ImageStatsPopup.jsx';
 
 import {dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import {dispatchCrop, dispatchChangePrimePlot, dispatchZoom, dispatchProcessScroll} from '../ImagePlotCntlr.js';
-import {makeExtActivateData} from '../PlotCmdExtension.js';
+import {makePlotSelectionExtActivateData} from '../../core/ExternalAccessUtils.js';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 import {selectCatalog,unselectCatalog,filterCatalog,clearFilterCatalog} from '../../drawingLayers/Catalog.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
@@ -214,7 +214,7 @@ function makeExtensionButtons(extensionAry,pv,dlAry) {
                                horizontal={true} enabled={true}
                                visible={true}
                                lastTextItem={idx===(extensionAry.length-1)}
-                               onClick={() => dispatchExtensionActivate(ext,makeExtActivateData(ext,pv,dlAry))}/>
+                               onClick={() => dispatchExtensionActivate(ext,makePlotSelectionExtActivateData(ext,pv,dlAry))}/>
                 );
         }
     );

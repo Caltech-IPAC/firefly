@@ -3,7 +3,7 @@
  */
 
 
-import {get, has} from 'lodash';
+import {get, has, isEmpty} from 'lodash';
 import {makeWisePlotRequest} from './WiseRequestList.js';
 import {make2MassPlotRequest} from './TwoMassRequestList.js';
 import {makeLsstSdssPlotRequest} from './LsstSdssRequestList.js';
@@ -11,7 +11,7 @@ import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
 import {Band} from '../visualize/Band';
 import {getCellValue} from '../tables/TableUtil.js';
-import {makeWorldPt} from '../visualize/Point.js';
+import {makeWorldPt, parseWorldPt} from '../visualize/Point.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
 
@@ -101,19 +101,33 @@ export function converterFactory(table) {
 function makeRequestForUnknown(table, row, includeSingle, includeStandard) {
 
     const {tableMeta:meta}= table;
-    const dataSource= meta['DataSource'] || URL;
 
-    const col= findAColumn(meta,table.tableData.columns);
-    if (!col) return {};
+    const dataSource= findAColumn(meta,table.tableData.columns);
+    if (!dataSource) return {};
+
+
+    var positionWP= null;
+    if (meta[MetaConst.POSITION_COORD_COLS]) {
+        const sAry= meta[MetaConst.POSITION_COORD_COLS].split(';');
+        if (!isEmpty(sAry)) {
+            const lon= Number(getCellValue(table,row,sAry[0]));
+            const lat= Number(getCellValue(table,row,sAry[1]));
+            const csys= CoordinateSys.parse(sAry[2]);
+            positionWP= makeWorldPt(lon,lat,csys);
+        }
+    }
+    else if (meta[MetaConst.POSITION_COORD]) {
+        positionWP= parseWorldPt(meta[MetaConst.POSITION_COORD]);
+    }
 
 
     const retval= {};
     if (includeSingle) {
-        retval.single= makeRequest(table,col.name,dataSource,row);
+        retval.single= makeRequest(table,dataSource.name,positionWP, row);
     }
     
     if (includeStandard) {
-        retval.standard= [makeRequest(table,col.name,dataSource,row)];
+        retval.standard= [makeRequest(table,dataSource.name,positionWP, row)];
         retval.highlightPlotId= retval.standard[0].getPlotId();
     }
     
@@ -124,28 +138,31 @@ function makeRequestForUnknown(table, row, includeSingle, includeStandard) {
 function makeRequestSimpleMoving(table, row, includeSingle, includeStandard) {
 
     const {tableMeta:meta, tableData}= table;
-    const dataSource= meta['DataSource'] || URL;
 
 
-    const urlCol= findAColumn(meta, tableData.columns);
+    const dataSource= findAColumn(meta, tableData.columns);
 
-    if (!urlCol) return [];
+    if (!dataSource) return {};
 
 
-    const sAry= meta[MetaConst.MOVING_COORD_COLS].split(';');
+    const sAry= meta[MetaConst.POSITION_COORD_COLS].split(';');
     if (!sAry || sAry.length!== 3) return [];
 
-    const lonCol= sAry[0];
-    const latCol= sAry[1];
-    const csys= CoordinateSys.parse(sAry[2]);
+    var positionWP= null;
+    if (!isEmpty(sAry)) {
+        const lon= Number(getCellValue(table,row,sAry[0]));
+        const lat= Number(getCellValue(table,row,sAry[1]));
+        const csys= CoordinateSys.parse(sAry[2]);
+        positionWP= makeWorldPt(lon,lat,csys);
+    }
 
     const retval= {};
     if (includeSingle) {
-        retval.single= makeMovingRequest(table,row,lonCol,latCol,urlCol.name,csys,'simple-moving-single-'+(row %24));
+        retval.single= makeMovingRequest(table,row,dataSource.name,positionWP,'simple-moving-single-'+(row %24));
     }
 
     if (includeStandard) {
-        retval.standard= [makeMovingRequest(table,row,lonCol,latCol,urlCol.name,csys,'simple-moving-single')];
+        retval.standard= [makeMovingRequest(table,row,dataSource.name,positionWP,'simple-moving-single')];
         retval.highlightPlotId= retval.standard[0].getPlotId();
     }
 
@@ -162,35 +179,50 @@ function findAColumn(meta,columns) {
 }
 
 
-function makeMovingRequest(table, row, lonCol, latCol, urlCol, csys, plotId) {
-    const lon= Number(getCellValue(table,row,lonCol));
-    const lat= Number(getCellValue(table,row,latCol));
-    const url= getCellValue(table,row,urlCol);
+/**
+ *
+ * @param table
+ * @param row
+ * @param dataSource
+ * @param positionWP
+ * @param plotId
+ * @return {*}
+ */
+function makeMovingRequest(table, row, dataSource, positionWP, plotId) {
+    const url= getCellValue(table,row,dataSource);
     const r = WebPlotRequest.makeURLPlotRequest(url, 'Fits Image');
-    const wp= makeWorldPt(lon,lat,csys);
     r.setTitleOptions(TitleOptions.FILE_NAME);
     r.setZoomType(ZoomType.TO_WIDTH_HEIGHT);
-    r.setOverlayPosition(wp);
     r.setPlotId(plotId);
+    r.setOverlayPosition(positionWP);
     return r;
 
 }
 
 
-function makeRequest(table, dataColumn, dataSource, row) {
-    if (!dataColumn || !table || !dataSource) return null;
+/**
+ *
+ * @param table
+ * @param dataSource
+ * @param positionWP
+ * @param row
+ * @return {*}
+ */
+function makeRequest(table, dataSource, positionWP, row) {
+    if (!table || !dataSource) return null;
 
     var r;
-    var source= getCellValue(table, row, dataColumn);
-    if (dataSource.toLocaleUpperCase() === URL) {
-        r = WebPlotRequest.makeURLPlotRequest(source, 'Fits Image');
-    }
-    else if (dataSource.toLocaleUpperCase() === FILE) {
+    var source= getCellValue(table, row, dataSource);
+    if (dataSource.toLocaleUpperCase() === FILE) {
         r = WebPlotRequest.makeFilePlotRequest(source, 'Fits Image');
     }
-    r.setTitleOptions(TitleOptions.FILE_NAME);
+    else {
+        r = WebPlotRequest.makeURLPlotRequest(source, 'Fits Image');
+    }
     r.setZoomType(ZoomType.FULL_SCREEN);
+    r.setTitleOptions(TitleOptions.FILE_NAME);
     r.setPlotId(source);
-    
+    if (positionWP) r.setOverlayPosition(positionWP);
+
     return r;
 }

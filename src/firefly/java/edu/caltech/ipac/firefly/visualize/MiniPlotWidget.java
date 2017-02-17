@@ -1121,7 +1121,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 //        lineSelectAdditionActionBar.clear();
 //        pointSelectAdditionActionBar.clear();
 //        List<PlotCmdExtension> addedList= new ArrayList<PlotCmdExtension>(5);
-//        List<PlotCmdExtension> list= AllPlots.getInstance().getExtensionList(plotId);
+//        List<PlotCmdExtension> list= AllPlots.getInstance().getPlotUIExtensionList(plotId);
 //        if (list!=null) {
 //            for(PlotCmdExtension ext : list) {
 //                boolean found= false;

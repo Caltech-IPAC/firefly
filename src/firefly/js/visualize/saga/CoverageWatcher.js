@@ -40,6 +40,11 @@ const COVERAGE_TABLE = 'COVERAGE_TABLE';
 const PLOT_ID= 'CoveragePlot';
 
 
+const opStrList= [ 'title', 'tip', 'coveragetype', 'symbol', 'symbolSize', 'overlayPosition',
+                    'color', 'highlightedColor', 'multiCoverage', 'gridOn', 'useBlankPlot', 'fitType',
+                    'ignoreCatalogs',
+];
+
 /**
  * @global
  * @public
@@ -103,7 +108,7 @@ export function* watchCoverage(options) {
     var decimatedTables=  {};
     var tbl_id;
     var paused= !get(getViewer(getMultiViewRoot(), viewerId), 'mounted' , false);
-    options= Object.assign(defOptions,options);
+    options= Object.assign(defOptions,cleanUpOptions(options));
     var displayedTableId= null;
     var previousDisplayedTableId;
     while (true) {
@@ -530,4 +535,12 @@ function makeCoordCol(def, table) {
         csys : s[2] ? CoordinateSys.parse(s[2]) : CoordinateSys.EQ_J2000
     };
     
+}
+
+function cleanUpOptions(options) {
+    return Object.keys(options).reduce( (result, key) => {
+        const properKey= opStrList.find( (testKey) => testKey.toLowerCase()===key.toLowerCase());
+        result[properKey||key]= options[key];
+        return result;
+    },{});
 }

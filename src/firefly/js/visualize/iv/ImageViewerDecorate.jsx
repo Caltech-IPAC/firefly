@@ -4,7 +4,6 @@
 
 
 import React, {Component,PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
 import shallowequal from 'shallowequal';
 import {get,isEmpty,omit} from 'lodash';
 import {getPlotGroupById}  from '../PlotGroup.js';
@@ -16,7 +15,7 @@ import {ImageViewerLayout}  from './ImageViewerLayout.jsx';
 import {PlotAttribute} from '../WebPlot.js';
 import {AnnotationOps} from '../WebPlotRequest.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
-import {AREA_SELECT,LINE_SELECT,POINT} from '../PlotCmdExtension.js';
+import {AREA_SELECT,LINE_SELECT,POINT} from '../../core/ExternalAccessUtils.js'
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
 import './ImageViewerDecorate.css';
 import Catalog from '../../drawingLayers/Catalog.js';

@@ -733,9 +733,9 @@ public class AllPlots implements HasWebEventManager {
 //
 //    }
 
-//    public List<Ext.Extension> getExtensionList(String id) {
+//    public List<Ext.Extension> getPlotUIExtensionList(String id) {
 //        Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
-//        JavaScriptObject o= exI.getExtensionList(id);
+//        JavaScriptObject o= exI.getPlotUIExtensionList(id);
 //        return Ext.makeIntoList(o);
 //        if (id==null) id= ALL_MPW;
 //        int len= exI.getExtLength();
@@ -760,7 +760,7 @@ public class AllPlots implements HasWebEventManager {
 
 
 
-//    public List<Ext.Extension> getExtensionList(String id) {
+//    public List<Ext.Extension> getPlotUIExtensionList(String id) {
 //        if (id==null) id= ALL_MPW;
 //        Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
 //        Ext.Extension allExtensions[]= exI.getExtensionListTEST();
