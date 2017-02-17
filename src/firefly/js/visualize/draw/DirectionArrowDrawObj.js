@@ -7,8 +7,6 @@
  */
 
 
-
-
 import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil.js';
 import Point, {makeScreenPt} from '../Point.js';
@@ -82,7 +80,7 @@ var draw=  {
     draw(drawObj,ctx,drawTextAry,plot,def,vpPtM,onlyAddToPath) {
         var drawParams= makeDrawParams(drawObj,def);
         var {startPt,endPt,renderOptions}= drawObj;
-        drawDirectionArrow(ctx,drawTextAry,startPt,endPt,drawParams,renderOptions);
+        drawDirectionArrow(ctx,drawTextAry, plot, startPt,endPt,drawParams,renderOptions);
     },
 
     toRegion(drawObj,plot, def) {
@@ -109,21 +107,35 @@ function makeDrawParams(obj,def) {
     };
 }
 
-function drawDirectionArrow(ctx,drawTextAry,startPt,endPt,drawParams,renderOptions) {
-    var pt1= startPt;
-    var pt2= endPt;
+/**
+ * @summary draw direction arrow on image coordinate
+ * @param ctx
+ * @param drawTextAry
+ * @param plot
+ * @param startPt
+ * @param endPt
+ * @param drawParams
+ * @param renderOptions
+ */
+function drawDirectionArrow(ctx,drawTextAry,plot, startPt,endPt,drawParams,renderOptions) {
+    var pt1= plot ? plot.getScreenCoords(startPt) : startPt;
+    var pt2= plot ? plot.getScreenCoords(endPt) : endPt;
     var {color,text}=  drawParams;
 
     var ret= VisUtil.getArrowCoords(pt1.x, pt1.y, pt2.x, pt2.y);
-
     var drawList= [];
-    drawList.push(makeScreenPt(ret.x1,ret.y1));
-    drawList.push(makeScreenPt(ret.x2,ret.y2));
-    drawList.push(makeScreenPt(ret.barbX2,ret.barbY2));
+    var textScreen = makeScreenPt(ret.textX, ret.textY);
+    var textLoc = plot ? plot.getViewPortCoords(textScreen) : textScreen;
+    var p1Screen = makeScreenPt(ret.x1,ret.y1);
+    var p2Screen = makeScreenPt(ret.x2,ret.y2);
+    var barScreen = makeScreenPt(ret.barbX2,ret.barbY2);
+
+    drawList.push(plot ? plot.getViewPortCoords(p1Screen) : p1Screen) ;
+    drawList.push(plot ? plot.getViewPortCoords(p2Screen) : p2Screen);
+    drawList.push(plot ? plot.getViewPortCoords(barScreen) : barScreen);
 
     DrawUtil.drawPath(ctx, color,2,drawList,false, renderOptions);
-
-    DrawUtil.drawText(drawTextAry, text, ret.textX, ret.textY, color, renderOptions);
+    DrawUtil.drawText(drawTextAry, text, textLoc.x, textLoc.y, color, renderOptions);
 }
 
 function toRegion(startPt,endPt,plot,drawParams,renderOptions) {
