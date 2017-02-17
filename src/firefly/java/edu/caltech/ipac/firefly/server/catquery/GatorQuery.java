@@ -387,7 +387,7 @@ public class GatorQuery extends BaseGator {
 
     private String encodeParams(String params) {
         if (!StringUtils.isEmpty(params)) {
-            params = params.replace(" ", "+");
+            return urlEncode(params);
         }
         return params;
     }
