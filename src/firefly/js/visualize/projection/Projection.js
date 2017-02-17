@@ -123,8 +123,8 @@ const projTypes= {
 
 
 const translateProjectionName= (maptype) => get(projTypes, [maptype,'name'],'UNRECOGNIZED');
-const isImplemented= (header) => get(header, ['maptype.implemented'],false);
-const isWrappingProjection= (header) => get(header, ['maptype.wrapping'],false);
+const isImplemented= (header) => get(projTypes, [header.maptype, 'implemented'],false);
+const isWrappingProjection= (header) => get(projTypes, [header.maptype, 'wrapping'],false);
 
 
 
@@ -247,7 +247,7 @@ export class Projection {
 	 * @return {boolean} true, if this projection is implemented
 	 * @public
 	 */
-	isImplemented() { isImplemented(this.header); }
+	isImplemented() { return isImplemented(this.header); }
 
 	/**
 	 * @return {boolean} true, if this projection is specified
