@@ -6,7 +6,7 @@ import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import { get, set, has} from 'lodash';
 import SplitPane from 'react-split-pane';
-import {createContentWrapper} from '../../ui/panel/DockLayoutPanel.jsx';
+import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import {LC, getValidValueFrom, updateLayoutDisplay} from './LcManager.js';
 import {getTypeData} from './LcPeriod.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
@@ -120,12 +120,15 @@ export function LcPeriodogram(props) {
     const {displayMode, groupKey=pgfinderkey, expanded} = props;
     const resultProps = {expanded, groupKey};
 
-    return (
-         <div style={{height: '100%', width: '100%', position: 'absolute'}}>
-             {(displayMode&&displayMode==='period') ? <PeriodogramButton groupKey={groupKey} />
-                                                    : <PeriodogramResult {...resultProps} />}
-        </div>
-    );
+    if (displayMode&&displayMode==='period') {
+        return (
+            <SplitContent>
+                <PeriodogramButton groupKey={groupKey}/>
+            </SplitContent>
+        );
+    } else {
+        return <PeriodogramResult {...resultProps} />;
+    }
 }
 
 
@@ -161,6 +164,14 @@ function  PeriodogramButton(props) {
 PeriodogramButton.propTypes = {
     groupKey: PropTypes.string.isRequired
 };
+
+function ChangePeriodogram() {
+    return (
+        <button type='button' className='button std hl'
+                 onClick={startPeriodogramPopup(LC.FG_PERIODOGRAM_FINDER)}>Change Periodogram
+        </button>
+    );
+}
 
 export const popupId = 'periodogramPopup';
 
@@ -587,15 +598,20 @@ const  PeriodogramResult = ({expanded}) => {
                                      closeable={true}
                                      expandedMode={expanded===LO_VIEW.xyPlots}/>);
 
+    
+    
 
     if (!expanded || expanded === LO_VIEW.none) {
 
-        resultLayout = (<SplitPane split='vertical' minSize={20} defaultSize={'50%'}>
-                            {createContentWrapper(tables)}
-                            {createContentWrapper(xyPlot)}
+        resultLayout = (<SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={565}>
+                            <SplitContent>
+                                <div style={{margin: '0 0 5px 6px'}}><ChangePeriodogram/></div>
+                                <div style={{height: 'calc(100% - 28px'}}>{tables}</div>
+                            </SplitContent>
+                            <SplitContent>{xyPlot}</SplitContent>
                         </SplitPane>);
     } else {
-        resultLayout = (<div style={{ flex: 'auto', display: 'flex', flexFlow: 'column', overflow: 'hidden', height: '100%'}}>
+        resultLayout = (<div style={{flexGrow: 1}}>
             {expanded === LO_VIEW.tables ? tables : xyPlot}
         </div>);
     }

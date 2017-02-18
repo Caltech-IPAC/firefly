@@ -86,6 +86,7 @@
 
 .button.std {
     height: 23px;
+    white-space: nowrap;
 }
 
 .button.hl {
@@ -338,4 +339,13 @@
 .alerts__msg a {
     color: blue;
     text-decoration: none;
+}
+
+/*------------------- reusable layout styles >---------------------*/
+.abs_full {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
 }

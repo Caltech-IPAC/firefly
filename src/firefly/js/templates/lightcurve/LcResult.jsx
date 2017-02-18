@@ -12,7 +12,7 @@ import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {LcImageViewerContainer} from './LcImageViewerContainer.jsx';
-import {createContentWrapper} from '../../ui/panel/DockLayoutPanel.jsx';
+import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import {LC, updateLayoutDisplay} from './LcManager.js';
 import {getTypeData, ReadOnlyText, highlightBorder} from './LcPeriod.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -29,7 +29,7 @@ import {logError} from '../../util/WebUtil.js';
 
 const resultItems = ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'searchDesc', 'images',
                      LC.MISSION_DATA, LC.GENERAL_DATA, 'periodState'];
-const labelWidth = 100;
+const labelWidth = 80;
 
 const cTimeSeriesKeyDef = {
     time: {fkey: LC.META_TIME_CNAME, label: 'Time Column'},
@@ -64,7 +64,7 @@ const defValues = {
                                                 {validator: null}),
     [cTimeSeriesKeyDef.cutoutsize.fkey]: Object.assign(getTypeData(cTimeSeriesKeyDef.cutoutsize.fkey, '',
                                                 'image cutout size',
-                                                `${cTimeSeriesKeyDef.cutoutsize.label}:`, labelWidth)),
+                                                `${cTimeSeriesKeyDef.cutoutsize.label}:`, 100)),
     [cTimeSeriesKeyDef.errorcolumn.fkey]: Object.assign(getTypeData(cTimeSeriesKeyDef.errorcolumn.fkey, '',
                                                 'flux error column name',
                                                 `${cTimeSeriesKeyDef.errorcolumn.label}:`, labelWidth))
@@ -163,6 +163,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
 
     const {cutoutSize} = settingBox.props.generalEntries || '0.3';
     //let csize = get(generalEntries, 'cutoutsize, '0.3');
+
     return (
         <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, position: 'relative'}}>
             { visToolbar &&
@@ -195,21 +196,17 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
             {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
             <div style={{flexGrow: 1, position: 'relative'}}>
                 <div style={{position: 'absolute', top: 0, right: 0, bottom: 0, left: 0}}>
-                    <SplitPane split='horizontal' minSize={20}  defaultSize={'60%'}>
-                        <SplitPane split='vertical' minSize={20} defaultSize={buttonW}>
-                            <div style={{display: 'flex', flexDirection: 'column', position: 'absolute',
-                                         top: 0, bottom: 0, width: '100%', height: '100%', minHeight: '100%'}}>
-                                <div style={{position: 'relative', height: 140, width: '100%', overflow: 'hidden',
-                                             border: highlightBorder, borderRadius: 5, margin: 3}}>
-                                     <div style={{overflow: 'hidden', position: 'absolute', top: 5, bottom: 5, left: 5, right: 5}}>
-                                         {settingBox}
-                                     </div>
+                    <SplitPane split='horizontal' maxSize={-20} minSize={20}  defaultSize={'60%'}>
+                        <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={buttonW}>
+                            <SplitContent>
+                                <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
+                                    <div className='settingBox'>{settingBox}</div>
+                                    <div style={{flexGrow: 1, position: 'relative'}}><div className='abs_full'>{tables}</div></div>
                                 </div>
-                                {createContentWrapper(tables)}
-                            </div>
-                            {createContentWrapper(xyPlot)}
+                            </SplitContent>
+                            <SplitContent>{xyPlot}</SplitContent>
                         </SplitPane>
-                        {createContentWrapper(imagePlot)}
+                        <SplitContent>{imagePlot}</SplitContent>
                     </SplitPane>
                 </div>
             </div>
@@ -253,42 +250,25 @@ class SettingBox extends Component {
         var {generalEntries, missionEntries, periodState} = this.props;
 
         if (isEmpty(generalEntries) || isEmpty(missionEntries)) return false;
-        const wrapperStyle = {marginLeft: 10, marginTop: 5, marginBottom: 5};
+        const wrapperStyle = {margin: '3px 0'};
 
-        var allCommonEntries = () => {
-            return Object.keys(generalEntries).map((key) => {
-                return (
-                    <ValidationField key={key} fieldKey={key}
-                                     style={{width: 80}}
-                                     wrapperStyle={{marginTop: 5, marginBottom: 5}}/>
-                );
-            });
-        };
+        var allCommonEntries = Object.keys(generalEntries).map((key) =>
+                                    <ValidationField key={key} fieldKey={key} wrapperStyle={wrapperStyle}
+                                                     style={{width: 80}}/>
+                                );
 
+        var missionInputs = missionKeys.map((key, index) =>
+                                    <SuggestBoxInputField key={key} fieldKey={key} wrapperStyle={wrapperStyle}
+                                                          getSuggestions={(val) => {
+                                                                    const list = get(missionEntries, missionListKeys[index], []);
+                                                                    const suggestions =  list && list.filter((el) => {return el.startsWith(val);});
+                                                                    return suggestions.length > 0 ? suggestions : missionListKeys[index];
+                                                              }}/>
+                                );
 
-        var allMissionEntries = () => {
-            var missionInputs = missionKeys.map((key, index) => {
-                return (<div style={wrapperStyle} key={key}>
-                    <SuggestBoxInputField fieldKey={key} wrapperStyle={wrapperStyle}
-                                          getSuggestions={(val) => {
-                                                        const list = get(missionEntries, missionListKeys[index], []);
-                                                        const suggestions =  list && list.filter((el) => {return el.startsWith(val);});
-                                                        return suggestions.length > 0 ? suggestions : missionListKeys[index];
-                                                  }}/>
-                </div>);
-            });
-
-            var missionOthers = missionOtherKeys.map((key) => {
-                    return (
-                        <ValidationField key={key} fieldKey={key} wrapperStyle={wrapperStyle}/>
-                    );
-                });
-
-            return (<div >
-                {missionInputs}
-                {missionOthers}
-            </div>);
-        };
+        var missionOthers = missionOtherKeys.map((key) =>
+                                    <ValidationField key={key} fieldKey={key} wrapperStyle={wrapperStyle}/>
+                                );
 
         //var moveToPeriod = (periodState) => {
         //    return () => {
@@ -297,32 +277,27 @@ class SettingBox extends Component {
         //};
 
         return (
-                <FieldGroup groupKey={LC.FG_VIEWER_FINDER} style={{position: 'relative', width: buttonW-16, height: '100%'}}
-                            reducerFunc={timeSeriesReducer(missionEntries, generalEntries)} keepState={true}>
-                    <div style={{display: 'flex', flexDirection: 'column', width: '100%', position: 'absolute', top: 0, bottom: 0}} >
-                        {ReadOnlyText({
-                            label: 'Mission:', labelWidth,
-                            content: get(missionEntries, LC.META_MISSION, ''), wrapperStyle
-                        })}
-                        <div style={{display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-                            <div style={{display: 'flex', alignItems: 'flex-start'}} >
-                                {allMissionEntries()}
-                                <div>
-                                    {allCommonEntries()}
-                                </div>
-                            </div>
-                            <div>
-                                <CompleteButton
-                                    style={{marginLeft: 10}}
-                                    groupKey={LC.FG_VIEWER_FINDER}
-                                    onSuccess={setViewerSuccess(periodState)}
-                                    onFail={setViewerFail()}
-                                    text={'Period Finding'}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </FieldGroup>
+            <FieldGroup groupKey={LC.FG_VIEWER_FINDER} style={{position: 'relative', display: 'inline-flex'}}
+                        reducerFunc={timeSeriesReducer(missionEntries, generalEntries)} keepState={true}>
+                <div style={{alignSelf: 'flex-end'}}>
+                    <ReadOnlyText label='Mission:' content={get(missionEntries, LC.META_MISSION, '')}
+                                  labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>
+                    {missionInputs}
+                    {missionOthers}
+                </div>
+                <div style={{alignSelf: 'flex-end'}}>
+                    {allCommonEntries}
+                </div>
+
+                <div style={{alignSelf: 'flex-end', marginLeft: 10}}>
+                    <CompleteButton
+                        groupKey={LC.FG_VIEWER_FINDER}
+                        onSuccess={setViewerSuccess(periodState)}
+                        onFail={setViewerFail()}
+                        text={'Period Finding'}
+                    />
+                </div>
+            </FieldGroup>
         );
     }
 }

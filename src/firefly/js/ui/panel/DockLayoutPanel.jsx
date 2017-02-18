@@ -10,13 +10,26 @@ export function createContentWrapper(content) {
    return ( <div className='wrapper'> <div className='content'>{content}</div> </div> );
 }
 
+/**
+ * decorate the content with DockLayoutPanel's look and feel.
+ */
+export function SplitContent({children}) {
+    return ( <div className='wrapper'>
+                <div className='content'>{children}</div>
+             </div>
+            );
+}
+
+
 function one(config, items){
     config = config || {center: {index: 0}};
     const item = config.center || config.north || config.east || config.west || config.south;
 
     return (
         <div className='Pane vertical' style={{height: '100%'}}>
-            {createContentWrapper(items[item.index])}
+            <SplitContent>
+                {items[item.index]}
+            </SplitContent>
         </div>
     );
 }
@@ -29,8 +42,12 @@ function two(config, items){
         const bottom = config.south || config.center;
         return (
             <SplitPane split='horizontal'  {...top}>
-                {createContentWrapper(items[top.index])}
-                {createContentWrapper(items[bottom.index])}
+                <SplitContent>
+                    {items[top.index]}
+                </SplitContent>
+                <SplitContent>
+                    {items[bottom.index]}
+                </SplitContent>
             </SplitPane>
 
         );
@@ -39,8 +56,12 @@ function two(config, items){
         const right = config.west || config.center;
         return (
             <SplitPane split='vertical' {...left}>
-                {createContentWrapper(items[left.index])}
-                {createContentWrapper(items[right.index])}
+                <SplitContent>
+                    {items[left.index]}
+                </SplitContent>
+                <SplitContent>
+                    {items[right.index]}
+                </SplitContent>
             </SplitPane>
         );
     }
@@ -54,10 +75,16 @@ function three(config, items){
             const two = config.east || config.center || config.west;
             return (
                 <SplitPane split='horizontal' {...config.north}>
-                    {createContentWrapper(items[config.north.index])}
+                    <SplitContent>
+                        {items[config.north.index]}
+                    </SplitContent>
                     <SplitPane split='horizontal' {...two}>
-                        {createContentWrapper(items[two.index])}
-                        {createContentWrapper(items[config.south.index])}
+                        <SplitContent>
+                            {items[two.index]}
+                        </SplitContent>
+                        <SplitContent>
+                            {items[config.south.index]}
+                        </SplitContent>
                     </SplitPane>
                 </SplitPane>
             );
@@ -66,10 +93,16 @@ function three(config, items){
             const three = config.west || config.center;
             return (
                 <SplitPane split='horizontal' {...config.north}>
-                    {createContentWrapper(items[config.north.index])}
+                    <SplitContent>
+                        {items[config.north.index]}
+                    </SplitContent>
                     <SplitPane split='vertical' {...two.config}>
-                        {createContentWrapper(items[two.index])}
-                        {createContentWrapper(items[three.index])}
+                        <SplitContent>
+                            {items[two.index]}
+                        </SplitContent>
+                        <SplitContent>
+                            {items[three.index]}
+                        </SplitContent>
                     </SplitPane>
                 </SplitPane>
             );
@@ -81,19 +114,31 @@ function three(config, items){
             return (
                 <SplitPane split='horizontal' {...config.south}>
                     <SplitPane split='vertical' {...one}>
-                        {createContentWrapper(items[one.index])}
-                        {createContentWrapper(items[two.index])}
+                        <SplitContent>
+                            {items[one.index]}
+                        </SplitContent>
+                        <SplitContent>
+                            {items[two.index]}
+                        </SplitContent>
                     </SplitPane>
-                    {createContentWrapper(items[config.south.index])}
+                    <SplitContent>
+                        {items[config.south.index]}
+                    </SplitContent>
                 </SplitPane>
             );
         } else {
             return (
                 <SplitPane split='vertical' {...config.east}>
-                    {createContentWrapper(items[config.east.index])}
+                    <SplitContent>
+                        {items[config.east.index]}
+                    </SplitContent>
                     <SplitPane split='vertical' {...config.west}>
-                        {createContentWrapper(items[config.center.index])}
-                        {createContentWrapper(items[config.west.index])}
+                        <SplitContent>
+                            {items[config.center.index]}
+                        </SplitContent>
+                        <SplitContent>
+                            {items[config.west.index]}
+                        </SplitContent>
                     </SplitPane>
                 </SplitPane>
             );

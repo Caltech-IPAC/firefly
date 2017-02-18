@@ -33,3 +33,24 @@
 .Resizer.disabled {
     cursor: auto;
 }
+
+.phaseFolded {
+    display: inline-flex;
+    width: 100%;
+    height: 100%;
+}
+
+.phaseFolded__options {
+    background-color: #dcdcdc;
+    border-radius: 7px;
+    border: 1px solid #cccccc;
+    margin-right: 2px;
+    padding: 10px;
+}
+
+.settingBox {
+    background-color: #dcdcdc;
+    border: 1px solid #cccccc;
+    margin-bottom: 3px;
+    padding: 5px 10px;
+}
