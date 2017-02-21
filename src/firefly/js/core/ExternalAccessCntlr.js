@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import ExternalAccessUtils from './ExternalAccessUtils.js';
-import {POINT} from '../visualize/PlotCmdExtension.js';
+import {POINT} from './ExternalAccessUtils.js';
 import {dispatchChangePointSelection} from '../visualize/ImagePlotCntlr.js';
 
 const EXTENSION_ADD= 'ExternalAccessCntlr/extensionAdd';

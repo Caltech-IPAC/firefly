@@ -11,11 +11,6 @@ import ReactDOM from 'react-dom';
 import 'styles/global.css';
 
 import {APP_LOAD} from './core/AppDataCntlr.js';
-import {ExtensionJavaInterface } from './gwtinterface/ExtensionJavaInterface.js';
-import {ExtensionResult } from './gwtinterface/ExtensionResult.js';
-import {PlotCmdExtension } from './visualize/PlotCmdExtension.js';
-import {ReactJavaInterface } from './gwtinterface/ReactJavaInterface.jsx';
-import {showExampleDialog}  from './ui/ExampleDialog.jsx';
 import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
 import {initApi} from './api/ApiBuild.js';
@@ -75,17 +70,9 @@ function fireflyInit() {
         }
 
         if (!window.firefly) window.firefly= {};
-        if (!window.firefly.gwt) {
-            window.firefly.gwt= {};
-        }
 
         window.firefly.appFlux= appFlux;
-        window.firefly.gwt.ExtensionJavaInterface= ExtensionJavaInterface;
-        window.firefly.gwt.ExtensionResult= ExtensionResult;
-        window.firefly.gwt.PlotCmdExtension= PlotCmdExtension;
-        window.firefly.gwt.makePlotState= PlotState.makePlotState;
         // to call histogram and other react components from GWT
-        window.firefly.gwt.ReactJavaInterface= ReactJavaInterface;
 
         // a method to get JSON data from external task launcher
         window.firefly.getJsonFromTask= function(launcher, task, taskParams) {
@@ -95,7 +82,6 @@ function fireflyInit() {
             req.setParam({name : 'taskParams', value : JSON.stringify(taskParams)});
             return getJsonData(req);
         };
-        window.firefly.gwt.showExampleDialog= showExampleDialog;
         window.firefly.initialized = true;
 
         // start WebSocketClient

@@ -41,6 +41,12 @@
     <a href="javascript:loadMovingTable()">load Moving Table</a>
 </div>
 <div>
+    <a href="javascript:loadSimpleImageTable()">load image Table</a>
+</div>
+<div>
+    <a href="javascript:loadSimpleM31ImageTable()">load m31 image Table</a>
+</div>
+<div>
     <div id="imageViewHere" style="display: inline-block; width: 550px; height: 550px; margin: 10px;"></div>
     <div id="coverageHere" style="display: inline-block; width: 400px; height: 400px; margin: 10px;"></div>
 </div>
@@ -176,8 +182,31 @@
                     { pageSize: 15,
                         META_INFO: {
                             datasetInfoConverterId : 'SimpleMoving',
-                            MovingObjCoordColumns: 'ra_obj;dec_obj;EQ_J2000',
+                            //positionCoordColumns: 'ra_obj;dec_obj;EQ_J2000',
+                            positionCoord: '10.68479;41.26906;EQ_J2000',
                             datasource: 'image_url'
+                        }
+                    });
+            firefly.getViewer().showTable( req, {removable: true, showUnits: false, showFilters: true});
+        }
+
+        function loadSimpleImageTable() {
+            var req = firefly.util.table.makeFileRequest('A table of images',
+                    'http://web.ipac.caltech.edu/staff/roby/demo/test-table4.tbl',null,
+                    { pageSize: 15,
+                        META_INFO: {
+                            datasource: 'FITS'
+                        }
+                    });
+            firefly.getViewer().showTable( req, {removable: true, showUnits: false, showFilters: true});
+        }
+        function loadSimpleM31ImageTable() {
+            var req = firefly.util.table.makeFileRequest('A table of images',
+                    'http://web.ipac.caltech.edu/staff/roby/demo/test-table-m31.tbl',null,
+                    { pageSize: 15,
+                        META_INFO: {
+                            positionCoordColumns: 'ra_obj;dec_obj;EQ_J2000',
+                            datasource: 'FITS'
                         }
                     });
             firefly.getViewer().showTable( req, {removable: true, showUnits: false, showFilters: true});

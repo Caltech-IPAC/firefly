@@ -7,7 +7,7 @@ import createSagaMiddleware from 'redux-saga';
 import thunkMiddleware from 'redux-thunk';
 import loggerMiddleware from 'redux-logger';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
-import {dispatchAddSaga} from './MasterSaga.js';
+import {masterSaga, dispatchAddSaga} from './MasterSaga.js';
 import AppDataCntlr  from './AppDataCntlr.js';
 import BackgroundCntlr from './background/BackgroundCntlr.js';
 import * as LayoutCntlr  from './LayoutCntlr.js';
@@ -32,7 +32,6 @@ import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import MultiViewCntlr, {IMAGE_MULTI_VIEW_KEY} from '../visualize/MultiViewCntlr.js';
 import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from '../core/ComponentCntlr.js';
-import {masterSaga} from './MasterSaga.js';
 
 
 
@@ -41,6 +40,7 @@ import {syncCharts} from '../visualize/saga/ChartsSync.js';
 import {imagePlotter} from '../visualize/saga/ImagePlotter.js';
 import {watchReadout} from '../visualize/saga/MouseReadoutWatch.js';
 import {watchForRelatedActions} from '../fieldGroup/FieldGroupCntlr.js';
+import {watchExtensionActions} from '../core/messaging/ExternalAccessWatcher.js';
 
 
 
@@ -226,6 +226,7 @@ function startCoreSagas() {
     dispatchAddSaga( syncCharts);
     dispatchAddSaga( watchReadout);
     dispatchAddSaga( watchForRelatedActions);
+    dispatchAddSaga( watchExtensionActions);
 }
 
 function bootstrap() {

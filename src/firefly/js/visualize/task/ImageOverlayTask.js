@@ -8,15 +8,17 @@
 
 import {get} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
-import ImagePlotCntlr, {makeUniqueRequestKey, IMAGE_PLOT_KEY, dispatchPlotMask, dispatchZoom} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {makeUniqueRequestKey, IMAGE_PLOT_KEY, dispatchPlotMask, dispatchZoom, dispatchPlotMaskLazyLoad} from '../ImagePlotCntlr.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {primePlot, getOverlayByPvAndId, getPlotViewById, getOverlayById} from '../PlotViewUtil.js';
+import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {PlotState, RotateType} from '../PlotState.js';
 import {RequestType} from '../RequestType.js';
 import {ZoomType} from '../ZoomType.js';
 import {clone} from '../../util/WebUtil.js';
 import {WebPlot} from '../WebPlot.js';
 import {callGetWebPlot} from '../../rpc/PlotServicesJson.js';
+import {take} from 'redux-saga/effects';
 
 const colorList= [
     '#FF0000','#00FF00', '#0000FF', '#91D33D',
@@ -39,6 +41,24 @@ const colorChoose= getColor();
  */
 const nextColor= () => colorChoose.next().value;
 
+export function* watchForCompletedPlot(options) {
+
+
+    var idMatch= false;
+    while (!idMatch) {
+        const action = yield take([ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_IMAGE_FAIL]);
+        const {pvNewPlotInfoAry, plotId}= action.payload;
+        const idMatch = Boolean(pvNewPlotInfoAry && pvNewPlotInfoAry.find((i) => i.plotId === options.plotId)) ||
+                               plotId===options.plotId;
+        if (idMatch) {
+            if (action.type===ImagePlotCntlr.PLOT_IMAGE) {
+                dispatchPlotMaskLazyLoad(options.opv.lazyLoadPayload);
+            }
+        }
+    }
+
+}
+
 /**
  *
  * @param rawAction
@@ -46,7 +66,7 @@ const nextColor= () => colorChoose.next().value;
  */
 export function plotImageMaskActionCreator(rawAction) {
     return (dispatcher,getStore) => {
-        const vr= getStore()[IMAGE_PLOT_KEY];
+        var vr= getStore()[IMAGE_PLOT_KEY];
 
         const {plotId,imageOverlayId, maskValue, imageNumber, title,fileKey,
                uiCanAugmentTitle= true, maskNumber, relatedDataId, lazyLoad}= rawAction.payload;
@@ -70,15 +90,26 @@ export function plotImageMaskActionCreator(rawAction) {
             requestKey: makeUniqueRequestKey('overlay')
         };
 
-        if (lazyLoad) {
-            payload.lazyLoadPayload= {plotId,imageOverlayId};
-        }
+        const pv= getPlotViewById(vr, plotId);
+        if (pv) {
+            const plot= primePlot(pv);
 
-        dispatcher({type:ImagePlotCntlr.PLOT_MASK_START, payload});
+            if (lazyLoad || !plot) {
+                payload.lazyLoadPayload= {plotId,imageOverlayId};
+            }
 
+            dispatcher({type:ImagePlotCntlr.PLOT_MASK_START, payload});
 
-        if (!lazyLoad) {
-            maskCall(vr, dispatcher,payload, color);
+            if (!lazyLoad && !plot) {
+                vr= getStore()[IMAGE_PLOT_KEY];
+                const pv= getPlotViewById(vr, plotId);
+                const opv= getOverlayById(pv, imageOverlayId);
+                dispatchAddSaga( watchForCompletedPlot, {plotId, opv});
+            }
+
+            if (!lazyLoad && plot) {
+                maskCall(vr, dispatcher,payload, color);
+            }
         }
     };
 }
@@ -147,7 +178,7 @@ export function overlayPlotChangeAttributeActionCreator(rawAction) {
                    plotId:plot.plotId,
                    UserZoomType:UserZoomTypes.LEVEL,
                    level: plot.zoomFactor
-               })
+               });
             }
         }
     };

@@ -13,7 +13,7 @@ export class ExtensionJavaInterface {
             //this.cb= cb.bind(this, javaObject);
             this.storeListenerRemove= flux.addListener(cb.bind(this, javaObject));
         }
-        this.getExtensionList= ExternalAccessUtils.getExtensionList;
+        this.getExtensionList= ExternalAccessUtils.getPlotUIExtensionList;
         this.getRemoteChannel= ExternalAccessUtils.getRemoteChannel;
         this.fireExtAction= ExternalAccessUtils.extensionActivate;
         this.fireExtAdd= ExternalAccessUtils.extensionAdd;
@@ -24,8 +24,8 @@ export class ExtensionJavaInterface {
          if (this.storeListenerRemove) this.storeListenerRemove();
     }
 
-    //getExtensionList(testPlotId) {
-    //    ExternalAccessUtils.getExtensionList(testPlotId);
+    //getPlotUIExtensionList(testPlotId) {
+    //    ExternalAccessUtils.getPlotUIExtensionList(testPlotId);
     //}
     //
     //getRemoteChannel() {

@@ -12,7 +12,7 @@ import {visRoot, ExpandType} from '../ImagePlotCntlr.js';
 import {extensionRoot} from '../../core/ExternalAccessCntlr.js';
 import {MouseState} from '../VisMouseSync.js';
 import {addMouseListener, lastMouseCtx} from '../VisMouseSync.js';
-import {getExtensionList} from '../../core/ExternalAccessUtils.js';
+import {getPlotUIExtensionList} from '../../core/ExternalAccessUtils.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {flux} from '../../Firefly.js';
 
@@ -109,7 +109,7 @@ export class ImageViewer extends Component {
                              visRoot={allPlots}
                              mousePlotId={mousePlotId}
                              handleInlineTools={handleInlineTools}
-                             extensionList={getExtensionList(plotId)} />
+                             extensionList={getPlotUIExtensionList(plotId)} />
         );
     }
 }

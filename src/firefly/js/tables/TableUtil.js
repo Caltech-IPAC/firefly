@@ -661,9 +661,10 @@ export function getTblInfo(tableModel, aPageSize) {
 export function getTblRowAsObj(tableModel, rowIdx= undefined) {
     if (!tableModel) return {};
     const {highlightedRow, tableData} = tableModel;
+    if (!tableData) return {};
     const {data, columns}= tableData;
     if (isUndefined(rowIdx)) rowIdx= highlightedRow;
-    if (rowIdx<0 && rowIdx< get(tableData, 'data.length',0)) return {};
+    if (rowIdx<0 || rowIdx>= get(tableData, 'data.length',0)) return {};
     const row= data[rowIdx];
     if (!row) return {};
     return row.reduce( (obj,v, idx)  => {

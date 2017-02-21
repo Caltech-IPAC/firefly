@@ -1293,7 +1293,7 @@ export class WebPlotRequest extends ServerRequest {
     getOverlayIds() {
         return this.containsParam(C.OVERLAY_IDS) ?
             this.getParam(C.OVERLAY_IDS).split(';') :
-            ['ACTIVE_TARGET_TYPE','OTHER'];
+            ['ACTIVE_TARGET_TYPE','POINT_SELECTION_TYPE'];
             //[ActiveTarget.TYPE_ID,'OTHER'];
     }
 

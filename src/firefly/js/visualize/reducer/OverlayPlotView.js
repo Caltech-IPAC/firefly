@@ -31,6 +31,7 @@ import {RDConst} from '../WebPlot.js';
  * @param {string} color the color, if overlay is a mask
  * @param drawingDef
  * @param {string} [relatedDataId] a related data id if one exist
+ * @param {string} [fileKey] a file on the server
  * @return {OverlayPlotView}
  */
 export function makeOverlayPlotView(imageOverlayId, plotId, title, imageNumber, maskNumber,
