@@ -22,6 +22,8 @@ import {syncChartViewer, addDefaultScatter} from '../../visualize/saga/ChartsSyn
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 
+import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-75x75.png';
+
 // import {deepDiff} from '../util/WebUtil.js';
 
 /**
@@ -151,12 +153,13 @@ function onReady({menu, views}) {
 }
 
 function BannerSection(props) {
-    const {menu, ...rest} = pickBy(props);
+    const {menu, appIcon=FFTOOLS_ICO, ...rest} = pickBy(props);
     return (
         <Banner key='banner'
             menu={<Menu menu={menu} /> }
             visPreview={<VisHeader showHeader={false}/> }
             readout={<VisHeader showPreview={false}/> }
+            appIcon={appIcon}
             {...rest}
         />
     );

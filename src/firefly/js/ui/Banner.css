@@ -13,6 +13,7 @@
 
 .banner__middle {
     flex-grow: 1;
+    padding-top: 2px;
     display: flex;
     flex-direction: column;
     align-items: baseline;
