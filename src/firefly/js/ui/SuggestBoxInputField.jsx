@@ -216,13 +216,14 @@ class SuggestBoxInputFieldView extends Component {
     render() {
 
         const {displayValue, valid, message, highlightedIdx, isOpen, inputWidth, suggestions, mouseTrigger } = this.state;
-        var {label, labelWidth, tooltip, inline, renderSuggestion} = this.props;
+        var {label, labelWidth, tooltip, inline, renderSuggestion, wrapperStyle} = this.props;
 
         const leftOffset = (labelWidth?labelWidth:0)+4;
         const minWidth = (inputWidth?inputWidth-4:50);
+        const style = Object.assign({display: inline?'inline-block':'block'}, wrapperStyle);
 
         return (
-            <div className={'SuggestBoxInputField'} style={{display: inline?'inline-block':'block'}} onKeyDown={this.handleKeyPress}>
+            <div className={'SuggestBoxInputField'} style={style} onKeyDown={this.handleKeyPress}>
                 <div>
                     <InputFieldView
                         valid={valid}
@@ -259,6 +260,7 @@ SuggestBoxInputFieldView.propTypes = {
     label:  PropTypes.string,
     tooltip:  PropTypes.string,
     labelWidth : React.PropTypes.number,
+    wrapperStyle: PropTypes.object,     //style to merge into the container div
     getSuggestions : PropTypes.func,   //suggestionsArr = getSuggestions(displayValue)
     valueOnSuggestion : PropTypes.func, //newDisplayValue = valueOnSuggestion(prevValue, suggestion),
     renderSuggestion : PropTypes.func   // ReactElem = renderSuggestion(suggestion)

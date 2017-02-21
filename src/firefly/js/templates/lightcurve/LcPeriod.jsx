@@ -13,7 +13,7 @@ import {RangeSlider}  from '../../ui/RangeSlider.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-import {createContentWrapper} from '../../ui/panel/DockLayoutPanel.jsx';
+import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import Validate from '../../util/Validate.js';
 import {dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
@@ -21,7 +21,7 @@ import FieldGroupCntlr, {dispatchValueChange, dispatchMultiValueChange} from '..
 import {getActiveTableId, getColumnIdx} from '../../tables/TableUtil.js';
 import {LC, updateLayoutDisplay, getValidValueFrom, getFullRawTable} from './LcManager.js';
 import {doPFCalculate, getPhase} from './LcPhaseTable.js';
-import {LcPeriodogram, startPeriodogramPopup, cancelPeriodogram, popupId} from './LcPeriodogram.jsx';
+import {LcPeriodogram, cancelPeriodogram, popupId} from './LcPeriodogram.jsx';
 import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
 import {isDialogVisible} from '../../core/ComponentCntlr.js';
 import {updateSet} from '../../util/WebUtil.js';
@@ -241,51 +241,35 @@ const PeriodStandardView = (props) => {
     const aroundButton = {margin: space};
 
     return (
-        <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, position: 'relative'}}>
+        <FieldGroup groupKey={pfinderkey} style={{display: 'flex', flexDirection: 'column', position: 'relative', flexGrow: 1, minHeight: 500}}
+                    reducerFunc={LcPFReducer(initState)}  keepState={true}>
             <div style={{flexGrow: 1, position: 'relative'}}>
-                <div style={{position: 'absolute', top: 0, right: 0, bottom: 0, left: 0}}>
-                    <FieldGroup groupKey={pfinderkey}
-                                reducerFunc={LcPFReducer(initState)}  keepState={true}>
-                    <SplitPane split='horizontal' minSize={100} defaultSize={'90%'}>
-                        <SplitPane split='horizontal' minSize={100} defaultSize={'50%'}>
-                            <SplitPane split='vertical' minSize={20} defaultSize={PanelResizableStyle.width} allowResize={false}>
-                                {createContentWrapper(<LcPFOptionsBox/>)}
-                                {createContentWrapper(<PhaseFoldingChart />)}
-                            </SplitPane>
-                            {createContentWrapper(
-                                <SplitPane split='horizontal' minSize={10} defaultSize={30}>
-                                    {displayMode===LC.PERGRAM_PAGE ?
-                                        <div style={aroundButton}>
-                                            <button type='button'
-                                                    className='button std hl'
-                                                    onClick={startPeriodogramPopup(LC.FG_PERIODOGRAM_FINDER)}>Change Periodogram
-                                            </button>
-                                        </div> : <div></div>}
-                                    <LcPeriodogram displayMode={displayMode} />
-                                </SplitPane>)}
-                        </SplitPane>
-                        <div style={{width: '100%', position: 'absolute',
-                                     height: 20, marginTop: 5, marginBottom: 5,
-                                     display: 'flex', justifyContent: 'flex-end'}}>
-                            <div style={aroundButton}>
-                                <button type='button' className='button std hl' onClick={()=>cancelStandard()}>
-                                    Cancel
-                                </button>
+                <SplitPane split='horizontal' primary='second' maxSize={-100} minSize={100} defaultSize={400}>
+                    <SplitContent>
+                        <div className='phaseFolded'>
+                            <div className='phaseFolded__options'>
+                                <LcPFOptionsBox/>
                             </div>
-                            <CompleteButton
-                                    style={aroundButton}
-                                    groupKey={[pfinderkey]}
-                                    onSuccess={setPFTableSuccess()}
-                                    onFail={setPFTableFail()}
-                                    text={acceptPeriodTxt}
-                                    includeUnmounted={true}
-                            />
+                            <PhaseFoldingChart/>
                         </div>
-                    </SplitPane>
-                    </FieldGroup>
-                </div>
+                    </SplitContent>
+                    <LcPeriodogram displayMode={displayMode}/>
+                </SplitPane>
             </div>
-        </div>
+            <div style={{flexGrow: 0, display: 'inline-flex', justifyContent: 'flex-end', height: 40}}>
+                <div style={{margin: 5}}>
+                    <button type='button' className='button std hl' onClick={()=>cancelStandard()}>Cancel</button>
+                </div>
+                <CompleteButton
+                    style={aroundButton}
+                    groupKey={[pfinderkey]}
+                    onSuccess={setPFTableSuccess()}
+                    onFail={setPFTableFail()}
+                    text={acceptPeriodTxt}
+                    includeUnmounted={true}
+                />
+            </div>
+        </FieldGroup>
     );
 };
 
@@ -310,6 +294,7 @@ PeriodExpandedView.propTypes = {
     expanded: PropTypes.object,
     displayMode: PropTypes.string
 };
+
 
 /**
  * @summary 2D xyplot component on phase folding
