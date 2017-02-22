@@ -165,7 +165,7 @@ const bindToStore= function(groupKey, stateUpdaterFunc) {
 
 
 /**
- *
+ * @param fields
  */
 export function revalidateFields(fields) {
     const newfields= clone(fields);

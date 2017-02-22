@@ -2,14 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, isNil, has} from 'lodash';
+import {get, isEmpty, isNil} from 'lodash';
 import {take} from 'redux-saga/effects';
 import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
         dispatchUpdateLayoutInfo, dropDownHandler} from '../../core/LayoutCntlr.js';
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT,
         dispatchTableRemove, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
 import {getCellValue, getTblById, getTblIdsByGroup, findIndex, getActiveTableId} from '../../tables/TableUtil.js';
-import {updateSet, logError} from '../../util/WebUtil.js';
+import {updateSet, updateMerge, logError} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {dispatchPlotImage, visRoot, dispatchDeletePlotView,
         dispatchChangeActivePlotView,
         WcsMatchType, dispatchWcsMatch} from '../../visualize/ImagePlotCntlr.js';
@@ -45,11 +45,11 @@ export const LC = {
     PERGRAM_PAGE: 'periodogram',    // period finding layout with peak and periodogram tables/charts
 
     FG_FILE_FINDER: 'LC_FILE_FINDER',
-    FG_VIEWER_FINDER: 'LC_VIWER_FINDER',
-    FG_PERIOD_FINDER: 'LC_PERIOD_FINDER',         // period finding group for the form
+    FG_VIEWER_FINDER: 'LC_VIEWER_FINDER',          // mission and general entries group
+    FG_PERIOD_FINDER: 'LC_PERIOD_FINDER',          // period finding group for the form
     FG_PERIODOGRAM_FINDER: 'LC_PERIODOGRAM_FINDER',// periodogram finding group
-    FG_TIMESERIES_FINDER: 'LC_TIMESERIES_FINDER', // result layout panel finding group
-    PERIODOGRAM_GROUP: 'LC_PERIODOGRAM_TBL',    // table container, table group
+    FG_TIMESERIES_FINDER: 'LC_TIMESERIES_FINDER',  // result layout panel finding group
+    PERIODOGRAM_GROUP: 'LC_PERIODOGRAM_TBL',       // table container, table group
 
     META_TIME_NAMES: 'timeNames',
     META_FLUX_NAMES: 'fluxNames',
@@ -65,62 +65,29 @@ export const LC = {
 const plotIdRoot= 'LC_FRAME-';
 
 
-export function getConverterId() {
-    return get(getLayouInfo(), [LC.MISSION_DATA, MetaConst.DATASET_CONVERTER]);
+var defaultCutout = '0.2';
+var defaultFlux = '';
+
+function getFluxColumn(layoutInfo) {
+    return get(layoutInfo, ['missionEntries', LC.META_FLUX_CNAME], defaultFlux);
 }
 
-export function getConverterData() {
-    const converterId = getConverterId();
-    return getConverter(converterId);
+function getCutoutSize(layoutInfo) {
+    return get(layoutInfo, ['generalEntries', 'cutoutSize'], defaultCutout);
 }
 
-export function getMissionEntries() {
-    return get(getLayouInfo(), [LC.MISSION_DATA]);
+export function getConverterData(layoutInfo=getLayouInfo()) {
+    const converterId = get(layoutInfo, [LC.MISSION_DATA, LC.META_MISSION]);
+    return converterId && getConverter(converterId);
+}
+
+export function getViewerGroupKey(missionEntries) {
+    return LC.FG_VIEWER_FINDER+get(missionEntries, LC.META_MISSION, '');
 }
 
 export function getFullRawTable() {
     return get(getLayouInfo(), 'fullRawTable', {});
 }
-
-function getMissionEntriesForRawTable(rawTable) {
-    const metaInfo = rawTable && rawTable.tableMeta;
-    const converterId = get(metaInfo, MetaConst.DATASET_CONVERTER);
-    const converterData = converterId && getConverter(converterId);
-    if (!converterId || !converterData) {
-        logError('Unknown mission or no converter');
-        return;
-    }
-    return {
-        [MetaConst.DATASET_CONVERTER]: converterId,
-        [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, converterData.defaultTimeCName),
-        [LC.META_FLUX_CNAME]: get(metaInfo, LC.META_FLUX_CNAME, converterData.defaultYCname),
-        [LC.META_ERR_CNAME]: get(metaInfo, LC.META_ERR_CNAME, converterData.defaultYErrCname),
-        [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES, converterData.timeNames),
-        [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, converterData.yNames),
-        [LC.META_ERR_NAMES]: get(metaInfo, LC.META_ERR_NAMES, converterData.yErrNames)
-    };
-}
-
-function getMissionFieldValidators(missionEntries) {
-    const fldsWithValidators = [
-        {key: LC.META_TIME_CNAME, vkey: LC.META_TIME_NAMES},
-        {key: LC.META_FLUX_CNAME, vkey: LC.META_FLUX_NAMES}
-        //{key: LC.META_ERR_CNAME, vkey: LC.META_ERR_NAMES} // error can have no value
-        ];
-    return fldsWithValidators.reduce((all, fld) => {
-        all[fld.key] =
-            (val) => {
-                let retVal = {valid: true, message: ''};
-                const cols = get(missionEntries, fld.vkey, []);
-                if (cols.length !== 0 && !cols.includes(val)) {
-                    retVal = {valid: false, message: `${val} is not a valid column name`};
-                }
-                return retVal;
-            };
-        return all;
-    }, {});
-}
-
 
 function getGeneralEntries() {
     return {cutoutSize: defaultCutout};
@@ -162,7 +129,7 @@ export function* lcManager(params={}) {
         /**
          * This is the current state of the layout store.  Action handlers should return newLayoutInfo if state changes
          * If state has changed, it will be dispatched into the flux.
-         * @type {LayoutInfo}   layoutInfo
+         * @type {LayoutInfo}
          * @prop {boolean}  layoutInfo.showForm    show form panel
          * @prop {boolean}  layoutInfo.showTables  show tables panel
          * @prop {boolean}  layoutInfo.showXyPlots show charts panel
@@ -171,8 +138,8 @@ export function* lcManager(params={}) {
          * @prop {Object}   layoutInfo.images      images specific states
          * @prop {string}   layoutInfo.images.activeTableId  last active table id that images responded to
          * @prop {string}   layoutInfo.displayMode:'result' (result page), 'period' (period finding page), 'periodogram' or neither
-         * @prop {string}   layoutInfo.missionEntries mission specific entries on result layout panel
-         * @prop {array}    layoutInfo.generalEntries general entries for result layout panel
+         * @prop {Object}   layoutInfo.missionEntries mission specific entries on result layout panel
+         * @prop {Object}   layoutInfo.generalEntries general entries for result layout panel
          * @prop {string}   layoutInfo.periodState  // period or periodogram
          * @prop {Object}   layoutInfo.fullRawTable
          */
@@ -213,47 +180,24 @@ export function* lcManager(params={}) {
     }
 }
 
-var defaultCutout = '0.2';
-var defaultFlux = '';
-
-//function getMissionName() {
-//    var mName = get(getLayouInfo(), ['misionEntries', MetaConst.DATASET_CONVERTER]);
-//    return mName ? mName.toUpperCase() : '';
-//}
-
-
-function getFluxColumn() {
-    return get(getLayouInfo(), ['misionEntries', LC.META_FLUX_CNAME], defaultFlux);
-}
-
-function getCutoutSize() {
-    return get(getLayouInfo(), ['generalEntries', 'cutoutSize'], defaultCutout);
-}
-
-
-function updateRawTableChart(layoutInfo, timeCName, fluxCName) {
+function updateRawTableChart(timeCName, fluxCName) {
     var chartX = get(getChartDataElement(LC.RAW_TABLE), ['options', 'x', 'columnOrExpr']);
     var chartY = get(getChartDataElement(LC.RAW_TABLE), ['options', 'y', 'columnOrExpr']);
 
     if (chartX === timeCName && chartY === fluxCName) return;
 
-    const timeCols = get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_NAMES], []);
-    const fluxCols = get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_NAMES], []);
-
-    if (timeCols.includes(timeCName) && fluxCols.includes(fluxCName)) {
+    if (timeCName && fluxCName) {
         const xyPlotParams = {x: {columnOrExpr: timeCName}, y: {columnOrExpr: fluxCName, options: 'grid,flip'}};
         loadXYPlot({chartId: LC.RAW_TABLE, tblId: LC.RAW_TABLE, xyPlotParams});
     }
 }
 
-function updatePhaseTableChart(layoutInfo, flux) {
+function updatePhaseTableChart(flux) {
     var chartY = get(getChartDataElement(LC.PHASE_FOLDED), ['options', 'y', 'columnOrExpr']);
 
     if (chartY === flux) return;
 
-    const fluxCols = get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_NAMES]);
-
-    if (fluxCols.includes(flux)) {
+    if (flux) {
         const xyPlotParams = {
             userSetBoundaries: {xMax: 2},
             x: {columnOrExpr: LC.PHASE_CNAME, options: 'grid'},
@@ -270,51 +214,49 @@ function updatePhaseTableChart(layoutInfo, flux) {
  * @returns {*}
  */
 function handleValueChange(layoutInfo, action) {
-    var {fieldKey, value} = action.payload;
-    var crtValue;
+    var {fieldKey, value, valid} = action.payload;
 
-    if ([LC.META_TIME_CNAME, LC.META_FLUX_CNAME, LC.META_ERR_CNAME].includes(fieldKey)) {
-        crtValue = get(layoutInfo, [LC.MISSION_DATA, fieldKey]);
+    if (!valid) { return; }
 
-        if (value !== crtValue) {
-            var keyOfPeriod = '';
-
-            if (fieldKey === LC.META_FLUX_CNAME &&
-                get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_NAMES]).includes(value)) {
-                const actTbl = getActiveTableId();
-                if (actTbl === LC.RAW_TABLE) {
-                    updateRawTableChart(layoutInfo,
-                                         get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]), value);
-                } else if (actTbl === LC.PHASE_FOLDED) {
-                    updatePhaseTableChart(layoutInfo, value);
-                }
-                keyOfPeriod = 'flux';
-            } else if (fieldKey === LC.META_TIME_CNAME &&
-                       get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_NAMES]).includes(value)) {
-                keyOfPeriod = 'time';   // assume time is unique
-            }
-
-            if (keyOfPeriod) {
-                layoutInfo = updateSet(layoutInfo, [LC.MISSION_DATA, fieldKey], value);
-                setupImages(get(layoutInfo, 'images.activeTableId'), layoutInfo);
-
-                // update time or flux for period panel field group if it exists
-                if (FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER)) {
-                    dispatchValueChange({
-                        groupKey: LC.FG_PERIOD_FINDER,
-                        fieldKey: keyOfPeriod,
-                        value
-                    });
-                }
-            }
-        }
-    } else if (fieldKey === 'cutoutSize') { // cutoutsize changes
+    if (fieldKey === 'cutoutSize') { // cutoutsize changes
         if ((get(layoutInfo, [LC.GENERAL_DATA, fieldKey]) !== value) && (value > 0.0) ) {
             if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
-                setupImages(get(layoutInfo, 'images.activeTableId'), layoutInfo);
+                setupImages(layoutInfo);
                 layoutInfo = updateSet(layoutInfo, [LC.GENERAL_DATA, fieldKey], value);
             }
         }
+    } else {
+        const converterData = getConverterData(layoutInfo);
+        if (!converterData) {return;}
+
+        const updates = converterData.onFieldUpdate(fieldKey, value);
+        if (isEmpty(updates)) {
+            return layoutInfo;
+        }
+
+        const didChange = (el) => Object.keys(updates).includes(el) && updates[el] !== get(layoutInfo, [LC.MISSION_DATA, fieldKey]);
+
+        const newLayoutInfo = updateMerge(layoutInfo, LC.MISSION_DATA, updates);
+
+        if ([LC.META_TIME_CNAME, LC.META_FLUX_CNAME].some(didChange)) {
+            const timeCol = get(newLayoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]);
+            const fluxCol = get(newLayoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME]);
+            const activeTbl = getActiveTableId();
+            if (activeTbl === LC.RAW_TABLE) {
+                updateRawTableChart(timeCol, fluxCol);
+            } else if (activeTbl === LC.PHASE_FOLDED) {
+                updatePhaseTableChart(fluxCol);
+            }
+
+            setupImages(newLayoutInfo);
+
+            // update time or flux for period panel field group if it exists
+            if (FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER)) {
+                dispatchMultiValueChange(LC.FG_PERIOD_FINDER,
+                [{fieldKey: 'time', timeCol}, {fieldKey: 'flux', fluxCol}]);
+            }
+        }
+        layoutInfo = newLayoutInfo;
     }
     return layoutInfo;
 }
@@ -342,30 +284,24 @@ function handlePlotActive(layoutInfo, plotId) {
     return layoutInfo;
 }
 /*
- * field group, LC_VIEWER_FINDER, includes fieldKey from misionAry & generalAry
- * missionAry & generalAy is mission specific, more detail to be fixed after raw table metadata is defined. -- TO DO
+ * field group, LC_VIEWER_FINDER, includes fieldKey from missionEntries & generalEntries
+ * missionEntries & generalEntries is mission specific, more detail to be fixed after raw table metadata is defined. -- TO DO
  */
 function handleRawTableLoad(layoutInfo, tblId) {
     const rawTable = getTblById(tblId);
 
-    const missionEntries = getMissionEntriesForRawTable(rawTable);
+    const metaInfo = rawTable && rawTable.tableMeta;
+    const converterId = get(metaInfo, LC.META_MISSION);
+    const converterData = converterId && getConverter(converterId);
+    if (!converterData) {
+        logError('Unknown mission or no converter');
+        return;
+    }
+
     const generalEntries = getGeneralEntries();
+    const missionEntries = converterData.onNewRawTable(rawTable, converterData, generalEntries);
 
     defaultFlux = get(missionEntries, LC.META_FLUX_CNAME);
-    var fields = FieldGroupUtils.getGroupFields(LC.FG_VIEWER_FINDER);
-    var initState;
-    const validators = getMissionFieldValidators(missionEntries);
-    if (fields) {
-        initState = Object.keys(fields).reduce((prev, fieldKey) => {
-            if (has(missionEntries, fieldKey)) {
-                prev.push({fieldKey, value: get(missionEntries, fieldKey), validator: validators[fieldKey]});
-            } else if (has(generalEntries,fieldKey)) {
-                prev.push({fieldKey, value: get(generalEntries, fieldKey)});
-            }
-            return prev;
-        }, []);
-        dispatchMultiValueChange(LC.FG_VIEWER_FINDER, initState);
-    }
 
     return Object.assign(layoutInfo, {missionEntries, generalEntries});
 }
@@ -407,7 +343,7 @@ function handleTableActive(layoutInfo, action) {
     const {tbl_id} = action.payload;
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
-        setupImages(tbl_id, layoutInfo);
+        setupImages(layoutInfo);
     }
 
     if (tbl_id === LC.PERIODOGRAM_TABLE || tbl_id === LC.PEAK_TABLE) {
@@ -423,11 +359,10 @@ function handleTableActive(layoutInfo, action) {
         const fluxCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME]);
 
         if (tbl_id === LC.PHASE_FOLDED) {
-            updatePhaseTableChart(layoutInfo, fluxCol);
+            updatePhaseTableChart(fluxCol);
         } else if (tbl_id === LC.RAW_TABLE) {
             const timeCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]);
-
-            updateRawTableChart(layoutInfo, timeCol, fluxCol);
+            updateRawTableChart(timeCol, fluxCol);
         }
     }
 
@@ -444,7 +379,7 @@ function handleTableHighlight(layoutInfo, action) {
     if (tbl_id !== getActiveTableId(activeTableContainer)) return layoutInfo;
 
     if (isImageEnabledTable(tbl_id)) {
-        setupImages(tbl_id, layoutInfo);
+        setupImages(layoutInfo);
     }
 
     // update period field when it's selected from a table with period.
@@ -510,18 +445,18 @@ function isImageEnabledTable(tbl_id) {
 }
 
 function handleChangeMultiViewLayout(layoutInfo) {
-    const activeTableId = get(layoutInfo, 'images.activeTableId');
-    const tbl= getTblById(activeTableId);
-    if (get(tbl, 'totalRows',0)>0) setupImages(activeTableId, layoutInfo);
+    setupImages(layoutInfo);
     return layoutInfo;
 }
 
-export function setupImages(tbl_id, layoutInfo) {
+export function setupImages(layoutInfo) {
     try {
-        const tableModel = getTblById(tbl_id);
-        if (!tableModel || isNil(tableModel.highlightedRow)) return;
+        const activeTableId = get(layoutInfo, 'images.activeTableId');
 
-        const converterId = get(layoutInfo, [LC.MISSION_DATA,MetaConst.DATASET_CONVERTER]);
+        const tableModel = getTblById(activeTableId);
+        if (!tableModel || isNil(tableModel.highlightedRow) || get(tableModel, 'totalRows',0) < 1) return;
+
+        const converterId = get(layoutInfo, [LC.MISSION_DATA,LC.META_MISSION]);
         const converterData = converterId && getConverter(converterId);
         if (!converterId || !converterData) {return;}
 
@@ -534,10 +469,8 @@ export function setupImages(tbl_id, layoutInfo) {
         const maxPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,LC.MAX_IMAGE_CNT);
 
 
-        const cutoutSize = get(FieldGroupUtils.getGroupFields(LC.FG_VIEWER_FINDER), ['cutoutSize', 'value'],
-                                                              getCutoutSize());
-        const fluxCol = get(FieldGroupUtils.getGroupFields(LC.FG_VIEWER_FINDER), [LC.META_FLUX_CNAME, 'value'],
-                                                              getFluxColumn());
+        const cutoutSize = getCutoutSize(layoutInfo);
+        const fluxCol = getFluxColumn(layoutInfo);
         newPlotIdAry.forEach( (plotId) => {
             var pv = getPlotViewById(vr,plotId);
             const rowNum= Number(plotId.substring(plotIdRoot.length));

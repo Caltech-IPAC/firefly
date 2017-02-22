@@ -23,7 +23,7 @@ function handleOnChange(ev, params, fireValueChange) {
     var checked = ev.target.checked;
 
     if (checked) {
-        fireValueChange({ value: val });
+        fireValueChange({ value: val, valid: true});
     }
 }
 

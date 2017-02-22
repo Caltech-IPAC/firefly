@@ -112,7 +112,8 @@ function addPhaseToTable(tbl, timeName, tzero, period) {
         tPF.tableData.data[index].push(getPhase(parseFloat(d[tIdx]), parseFloat(tzero), parseFloat(period)));
     });
 
-    const fluxCols = get(getLayouInfo(), [LC.MISSION_DATA, LC.META_FLUX_NAMES]);
+    const fluxCol = get(getLayouInfo(), [LC.MISSION_DATA, LC.META_FLUX_CNAME]);
+    const fluxCols = get(getLayouInfo(), [LC.MISSION_DATA, LC.META_FLUX_NAMES], [fluxCol]);
 
     locateTableColumns(tPF, [timeName, LC.PHASE_CNAME,...fluxCols], 0);
 
