@@ -350,7 +350,7 @@ function resultsSuccess(request, plot) {
 
     var band = Band.NO_BAND;
     if (bandSelect) {
-        band = Band[bandSelect.toUpperCase()];
+        band= Band.get(bandSelect);
     }
 
 
