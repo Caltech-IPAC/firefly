@@ -91,7 +91,7 @@ public class ImagePlot extends Plot implements Serializable {
         configureImage(frGroup);
     }
 
-    /** 07/20/15 LZcm
+    /** 07/20/15 LZ
      * Create a ImagePlot with given IndexColorModel
      */
     public ImagePlot(PlotGroup plotGroup,
@@ -319,7 +319,7 @@ public class ImagePlot extends Plot implements Serializable {
      * This number will change as the plot is zoomed up and down.
      * @return the width of the plot
      */
-   public int     getScreenWidth()  { return getPlotGroup().getScreenWidth(); }
+   public int  getScreenWidth()  { return getPlotGroup().getScreenWidth(); }
 
     /**
      *  This method will return the height of the image in screen coordinates.
@@ -333,7 +333,7 @@ public class ImagePlot extends Plot implements Serializable {
      * This number will not change as the plot is zoomed up and down.
      * @return the width of the image data
      */
-   public int     getImageDataWidth() { 
+   public int   getImageDataWidth() {
       return _imageData.getImageWidth() * imageScaleFactor;
    }
 
@@ -342,7 +342,7 @@ public class ImagePlot extends Plot implements Serializable {
      * This number will not change as the plot is zoomed up and down.
      * @return the height of the image data
      */
-   public int     getImageDataHeight(){ 
+   public int  getImageDataHeight(){
       return _imageData.getImageHeight() * imageScaleFactor;
    }
      
