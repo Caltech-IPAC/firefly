@@ -193,7 +193,7 @@ export var startPeriodogramPopup = (groupKey) =>  {
                 <div style={{display: 'flex', margin: '30px 10px 10px 10px', justifyContent:'space-between'}} >
                     <div style={aroundButton}>
                         <button type='button' className='button std hl'
-                                onClick={cancelPeriodogram(groupKey, popupId)}>Cancel
+                                onClick={cancelPeriodogram}>Cancel
                         </button>
                     </div>
                     <div style={aroundButton}>
@@ -296,7 +296,9 @@ var LcPeriodogramReducer = () => {
             Object.keys(defPeriod).forEach((key) => {
                 if(key !== pKeyDef.min.fkey && key !== pKeyDef.max.fkey){
                     set(defPeriod, [key, 'value'], get(fromFields, [key, 'value']));
-                }     // init default time, flux value, period
+                } else {
+                    inFields&&set(defPeriod, [key, 'value'], get(inFields, [key, 'value']));
+                }
             });
         };
 
@@ -470,9 +472,9 @@ function peaksValidator(description) {
 
 /**
  * @summary reset parameters to the initial values
- * @param groupKey
  */
-function resetDefaults(groupKey) {
+function resetDefaults() {
+    const groupKey = pgfinderkey;
     const fields = FieldGroupUtils.getGroupFields(groupKey);
 
     Object.keys(defValues).forEach((fieldKey) => {
@@ -486,17 +488,11 @@ function resetDefaults(groupKey) {
 
 /**
  * @summary reset the values and exit the popup
- * @param groupKey
- * @param popupId
  * @returns {Function}
  */
-export function cancelPeriodogram(groupKey, popupId) {
-    return () => {
-        resetDefaults(groupKey);
-        if (popupId && isDialogVisible(popupId)) {
-            dispatchHideDialog(popupId);
-        }
-    };
+export function cancelPeriodogram() {
+    resetDefaults();
+    dispatchHideDialog(popupId);
 }
 
 /**
@@ -509,7 +505,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
     return (request) => {
         const tbl = getTblById(LC.RAW_TABLE);
         const layoutInfo = getLayouInfo();
-        const srcFile = tbl.request.source;
+        const srcFile = get(tbl, ['tableMeta', 'tblFilePath']);
 
         const pMin = get(request, [pKeyDef.min.fkey]);
         const pMax = get(request, [pKeyDef.max.fkey]);
@@ -528,7 +524,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             peaks: get(request, [pKeyDef.peaks.fkey]),
             table_name: LC.PEAK_TABLE,
             sortInfo: sortInfoString('SDE', false)                 // sort peak table by column SDE, descending
-        }, {tbl_id: LC.PEAK_TABLE, pageSize: parseInt(peak)});
+        }, {tbl_id: LC.PEAK_TABLE, pageSize: parseInt(peak), noPeriodUpdate: true});
 
         if (tReq2 !== null) {
             dispatchTableSearch(tReq2, {removable: true, tbl_group: LC.PERIODOGRAM_GROUP});
@@ -578,13 +574,15 @@ function periodogramSuccess(popupId, hideDropDown = false) {
         if (hideDropDown && popupId && isDialogVisible(popupId)) {
             dispatchHideDialog(popupId);
         }
-
+        /* TODO: pMin & pMax should not affect the value in PERIOD_FINDER panel, need to be confirmed */
+        /*
         if (pMin && (pMin !== get(defPeriod, [pKeyDef.min.fkey, 'value']))) {
             dispatchValueChange({fieldKey: pKeyDef.min.fkey, groupKey: LC.FG_PERIOD_FINDER, value: pMin});
         }
         if (pMax && (pMax !== get(defPeriod, [pKeyDef.max.fkey, 'value']))) {
             dispatchValueChange({fieldKey: pKeyDef.max.fkey, groupKey: LC.FG_PERIOD_FINDER, value: pMax});
         }
+        */
         updateLayoutDisplay(LC.PERGRAM_PAGE, LC.PERGRAM_PAGE);
     };
 }

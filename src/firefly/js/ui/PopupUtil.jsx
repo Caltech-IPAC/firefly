@@ -8,7 +8,7 @@ import {PopupPanel} from './PopupPanel.jsx';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 
-const INFO_POPUP= 'InfoPopup';
+export const INFO_POPUP= 'InfoPopup';
 
 
 // ------------------------------------------------------------

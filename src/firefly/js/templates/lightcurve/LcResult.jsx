@@ -123,7 +123,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
 
     const cutoutSize = get(settingBox, 'props.generalEntries.cutoutSize', '0.3');
     const converterId = get(settingBox, ['props', 'missionEntries', LC.META_MISSION]);
-    const mission = get(getMissionName(converterId), 'mission', 'Mission');
+    const mission = getMissionName(converterId) || 'Mission';
 
     return (
         <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, position: 'relative'}}>

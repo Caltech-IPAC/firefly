@@ -13,7 +13,7 @@ import HelpIcon from '../../ui/HelpIcon.jsx';
 import {RangeSlider}  from '../../ui/RangeSlider.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
-import {showInfoPopup} from '../../ui/PopupUtil.jsx';
+import {showInfoPopup, INFO_POPUP} from '../../ui/PopupUtil.jsx';
 import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import Validate from '../../util/Validate.js';
 import {dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
@@ -25,7 +25,7 @@ import {doPFCalculate, getPhase} from './LcPhaseTable.js';
 import {LcPeriodogram, cancelPeriodogram, popupId} from './LcPeriodogram.jsx';
 import {ReadOnlyText, getTypeData} from './LcUtil.jsx';
 import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
-import {isDialogVisible} from '../../core/ComponentCntlr.js';
+import {isDialogVisible, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {updateSet} from '../../util/WebUtil.js';
 import ReactHighcharts from 'react-highcharts';
 import Resizable from 'react-component-resizable';
@@ -187,7 +187,7 @@ LcPeriod.defaultProps = {
  */
 function cancelStandard() {
     if (isDialogVisible(popupId)) {
-        cancelPeriodogram(pfinderkey, popupId)();
+        cancelPeriodogram();
     }
 
     updateLayoutDisplay(LC.RESULT_PAGE);
@@ -911,7 +911,10 @@ function setPFTableSuccess() {
         doPFCalculate(flux, timeName, period, tzero);
 
         if (isDialogVisible(popupId)) {
-            cancelPeriodogram(pfinderkey, popupId)();
+            cancelPeriodogram();
+        }
+        if (isDialogVisible(INFO_POPUP)) {
+            dispatchHideDialog(INFO_POPUP);
         }
     };
 }

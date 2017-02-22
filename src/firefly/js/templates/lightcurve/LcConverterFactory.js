@@ -5,14 +5,14 @@
 import {get} from 'lodash';
 import {TitleOptions} from '../../visualize/WebPlotRequest.js';
 import {logError} from '../../util/WebUtil.js';
-
-import {DefaultSettingBox, defaultOnNewRawTable, defaultOnFieldUpdate, defaultRawTableRequest} from './DefaultMissionOptions.js';
-import {getWebPlotRequestViaWISEIbe} from './wise/WisePlotRequests.js';  //WiseRequestList.js
-import {makeLsstSdssPlotRequest} from './lsst_sdss/LsstSdssPlotRequests.js'; //LsstSdssRequestList.js';
+import {getWebPlotRequestViaWISEIbe} from './wise/WisePlotRequests.js';
+import {makeLsstSdssPlotRequest} from './lsst_sdss/LsstSdssPlotRequests.js';
+import {makeURLPlotRequest} from './generic/DefaultPlotRequests.js';
 import {LsstSdssSettingBox, lsstSdssOnNewRawTable, lsstSdssOnFieldUpdate, lsstSdssRawTableRequest} from './lsst_sdss/LsstSdssMissionOptions.js';
+import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest} from './wise/WiseMissionOptions.js';
+import {DefaultSettingBox, defaultOnNewRawTable, defaultOnFieldUpdate, defaultRawTableRequest} from './generic/DefaultMissionOptions.js';
 
-
-
+export const UNKNOWN_MISSION = 'generic';
 /**
  * A function to create a WebPlotRequest from the given parameters
  * @callback WebplotRequestCreator
@@ -73,10 +73,10 @@ const converters = {
         defaultYCname: 'w1mpro_ep',
         defaultYErrCname: '',
         missionName: 'WISE',
-        MissionOptions: DefaultSettingBox,
-        onNewRawTable: defaultOnNewRawTable,
-        onFieldUpdate: defaultOnFieldUpdate,
-        rawTableRequest: defaultRawTableRequest,
+        MissionOptions: WiseSettingBox,
+        onNewRawTable: wiseOnNewRawTable,
+        onFieldUpdate: wiseOnFieldUpdate,
+        rawTableRequest: wiseRawTableRequest,
         timeNames: ['mjd'],
         yNames: ['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'],
         yErrNames: ['w1sigmpro_ep', 'w2sigmpro_ep', 'w3sigmpro_ep', 'w4sigmpro_ep'],
@@ -97,6 +97,20 @@ const converters = {
         yNames: ['mag', 'tsv_flux'],
         yErrNames: ['magErr', 'tsv_fluxErr'],
         webplotRequestCreator: makeLsstSdssPlotRequest
+    },
+    [UNKNOWN_MISSION]: {
+        converterId: UNKNOWN_MISSION,
+        defaultImageCount: 3,
+        defaultTimeCName: 'mjd',
+        defaultYCname: 'value',
+        defaultYErrCname: '',
+        missionName: '',
+        MissionOptions: DefaultSettingBox,
+        onNewRawTable: defaultOnNewRawTable,
+        onFieldUpdate: defaultOnFieldUpdate,
+        rawTableRequest: defaultRawTableRequest,
+        dataSource: 'img_url',
+        webplotRequestCreator: makeURLPlotRequest
     }
 };
 
@@ -104,7 +118,7 @@ export function getAllConverterIds() {
     return Object.keys(converters);
 }
 
-export function getConverter(converterId) {
+export function getConverter(converterId = UNKNOWN_MISSION) {
     const converter = converterId && converters[converterId];
     if (!converter) {
         logError(`Unable to find dataset converter ${converterId}`);
