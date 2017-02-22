@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 
 import {pick} from 'lodash';
@@ -40,7 +40,7 @@ export class TriViewPanel extends Component {
 
     render() {
         // eslint-disable-next-line
-        const {showViewsSwitch} = this.props;
+        const {showViewsSwitch, leftButtons, centerButtons, rightButtons} = this.props;
         const {title, mode, showTables, showImages, showXyPlots, images={}} = this.state;
         const {expanded, standard, closeable} = mode || {};
         const content = {};
@@ -63,27 +63,13 @@ export class TriViewPanel extends Component {
                                                closeable={closeable}
                                                expandedMode={expanded===LO_VIEW.tables}/>);
         }
-        const searchDesc = (showViewsSwitch && showImages && showXyPlots && showTables) ?
-            (<div>
-                <div style={ {display: 'inline-block', float: 'right'} }>
-                    <button type='button' className='button std'
-                            onClick={() => dispatchSetLayoutMode(LO_MODE.standard, LO_VIEW.get('tables | images | xyPlots'))}>tri-view</button>
-                    <button type='button' className='button std'
-                            onClick={() => dispatchSetLayoutMode(LO_MODE.standard, LO_VIEW.get('tables | images'))}>img-tbl</button>
-                    <button type='button' className='button std'
-                            onClick={() => dispatchSetLayoutMode(LO_MODE.standard, LO_VIEW.get('images | xyPlots'))}>img-xy</button>
-                    <button type='button' className='button std'
-                            onClick={() => dispatchSetLayoutMode(LO_MODE.standard, LO_VIEW.get('tables | xyPlots'))}>xy-tbl</button>
-                </div>
-            </div>)
-            : <div/>;
-
+        const viewSwitch = showViewsSwitch && showImages && showXyPlots && showTables;
 
         if (showImages || showXyPlots || showTables) {
             return (
                 <ResultsPanel key='results'
                               title={title}
-                              searchDesc ={searchDesc}
+                              searchDesc ={searchDesc({viewSwitch, leftButtons, centerButtons, rightButtons})}
                               expanded={expanded}
                               standard={standard}
                               visToolbar={visToolbar}
@@ -94,4 +80,55 @@ export class TriViewPanel extends Component {
             return <div/>;
         }
     }
+}
+
+
+TriViewPanel.propTypes = {
+    showViewsSwitch: PropTypes.bool,
+    leftButtons: PropTypes.arrayOf( PropTypes.func ),
+    centerButtons: PropTypes.arrayOf( PropTypes.func ),
+    rightButtons: PropTypes.arrayOf( PropTypes.func )
+};
+TriViewPanel.defaultProps = {
+    showViewsSwitch: true
+};
+
+
+// eslint-disable-next-line
+function searchDesc({viewSwitch, leftButtons, centerButtons, rightButtons}) {
+
+    const hasContent = viewSwitch || leftButtons || centerButtons || rightButtons;
+    return !hasContent ? <div/> :
+    (
+        <div style={{display: 'inline-flex', justifyContent: 'space-between'}}>
+            <div>
+                {leftButtons &&
+                    leftButtons.map( (el) => el())
+                }
+            </div>
+            <div>
+                {centerButtons &&
+                    centerButtons.map( (el) => el())
+                }
+            </div>
+            <div style={{display: 'inline-flex'}}>
+                {rightButtons &&
+                    rightButtons.map( (el) => el())
+                }
+                <div style={{width: 20}}/>
+                {viewSwitch &&
+                    <div style={ {display: 'inline-block', float: 'right'} }>
+                        <button type='button' className='button std'
+                                onClick={() => dispatchSetLayoutMode(LO_MODE.standard, LO_VIEW.get('tables | images | xyPlots'))}>tri-view</button>
+                        <button type='button' className='button std'
+                                onClick={() => dispatchSetLayoutMode(LO_MODE.standard, LO_VIEW.get('tables | images'))}>img-tbl</button>
+                        <button type='button' className='button std'
+                                onClick={() => dispatchSetLayoutMode(LO_MODE.standard, LO_VIEW.get('images | xyPlots'))}>img-xy</button>
+                        <button type='button' className='button std'
+                                onClick={() => dispatchSetLayoutMode(LO_MODE.standard, LO_VIEW.get('tables | xyPlots'))}>xy-tbl</button>
+                    </div>
+                }
+            </div>
+       </div>
+    );
 }

@@ -88,7 +88,7 @@ export class FireflyViewer extends Component {
 
     render() {
         var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown,
-                dropdownPanels, views, footer, style, showViewsSwitch} = this.state;
+                dropdownPanels, views, footer, style, showViewsSwitch, leftButtons, centerButtons, rightButtons} = this.state;
         const {visible, view} = dropDown || {};
 
         if (!isReady) {
@@ -106,7 +106,7 @@ export class FireflyViewer extends Component {
                             {...{dropdownPanels} } />
                     </header>
                     <main>
-                        <DynamicResults {...{views, showViewsSwitch}}/>
+                        <DynamicResults {...{views, showViewsSwitch, leftButtons, centerButtons, rightButtons}}/>
                     </main>
                 </div>
             );
@@ -129,7 +129,10 @@ FireflyViewer.propTypes = {
     dropdownPanels: PropTypes.arrayOf(PropTypes.element),
     views: PropTypes.string,     // combination of LO_VIEW separated by ' | '.  ie. 'images | tables'.
     style: PropTypes.object,
-    showViewsSwitch: PropTypes.bool
+    showViewsSwitch: PropTypes.bool,
+    leftButtons: PropTypes.arrayOf( PropTypes.func ),
+    centerButtons: PropTypes.arrayOf( PropTypes.func ),
+    rightButtons: PropTypes.arrayOf( PropTypes.func )
 };
 
 FireflyViewer.defaultProps = {
@@ -167,16 +170,19 @@ function BannerSection(props) {
 
 
 function DynamicResults(props) {
-    var {views, showViewsSwitch} = props;
+    var {views, ...rest} = props;
     if (LO_VIEW.get(views)) {
-        return <TriViewPanel {...{showViewsSwitch}}/>;
+        return <TriViewPanel {...rest}/>;
     }
 }
 DynamicResults.propTypes = {
     views: PropTypes.oneOfType([
                     PropTypes.string,
                     PropTypes.object]),
-    showViewsSwitch: PropTypes.bool
+    showViewsSwitch: PropTypes.bool,
+    leftButtons: PropTypes.arrayOf( PropTypes.func ),
+    centerButtons: PropTypes.arrayOf( PropTypes.func ),
+    rightButtons: PropTypes.arrayOf( PropTypes.func )
 };
 DynamicResults.defaultProps = {
     showViewsSwitch: true

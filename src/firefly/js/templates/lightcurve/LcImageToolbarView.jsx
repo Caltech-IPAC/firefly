@@ -48,7 +48,7 @@ for(var i= 1; (i<=LC.MAX_IMAGE_CNT); i+=2) {
 
 export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layoutType, dlAry, tableId, closeFunc=null}) {
     const converter = getConverterData();
-    if (!converter) { return; }
+    if (!converter) { return null; }
 
     const viewer= getViewer(getMultiViewRoot(), viewerId);
     const count= get(viewer, 'layoutDetail.count', converter.defaultImageCount);

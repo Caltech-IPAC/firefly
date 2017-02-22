@@ -1,17 +1,19 @@
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {get, isEmpty, set, omit} from 'lodash';
+import {get, isEmpty, set, omit, pick, cloneDeep, defer} from 'lodash';
 import {getLayouInfo, dispatchUpdateLayoutInfo} from '../../../core/LayoutCntlr.js';
+import FieldGroupUtils from '../../../fieldGroup/FieldGroupUtils';
+import {dispatchMultiValueChange} from '../../../fieldGroup/FieldGroupCntlr.js';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
 import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
-import {makeFileRequest, makeTblRequest} from '../../../tables/TableUtil.js';
-import {dispatchTableSearch} from '../../../tables/TablesCntlr.js';
+import {makeFileRequest, makeTblRequest, smartMerge} from '../../../tables/TableUtil.js';
+import {dispatchTableFetch, dispatchTableSearch} from '../../../tables/TablesCntlr.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {FilterInfo} from '../../../tables/FilterInfo.js';
 
-import {LC, getViewerGroupKey, removeTablesFromGroup} from '../LcManager.js';
+import {LC, getViewerGroupKey} from '../LcManager.js';
 import {getTypeData} from './../LcUtil.jsx';
 
 const labelWidth = 100;
@@ -152,61 +154,60 @@ function setFields(missionEntries, generalEntries) {
 }
 */
 
+export function lsstSdssOnNewRawTable(rawTable, missionEntries, generalEntries, layoutInfo={}) {
+    const {band, lsst_filtered_band} = get(rawTable, 'request.META_INFO');
+    var {rawTableRequest} = layoutInfo;
 
-export function lsstSdssOnNewRawTable(rawTable, converterData) {
-    const metaInfo = rawTable && rawTable.tableMeta;
-    const missionEntries = {
-        [LC.META_MISSION]: converterData.converterId,
-        [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, converterData.defaultTimeCName),
-        [LC.META_FLUX_CNAME]: get(metaInfo, LC.META_FLUX_CNAME, converterData.defaultYCname),
-        [LC.META_ERR_CNAME]: get(metaInfo, LC.META_ERR_CNAME, converterData.defaultYErrCname),
-        [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES, converterData.timeNames),
-        [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, converterData.yNames),
-        [LC.META_ERR_NAMES]: get(metaInfo, LC.META_ERR_NAMES, converterData.yErrNames),
-        band: get(metaInfo, 'band', 'u'),
-        rawTableSource: get(metaInfo, 'rawTableSource')
+    missionEntries.band = band || 'u';
+    missionEntries.lsst_filtered_band = lsst_filtered_band;
+
+    if (lsst_filtered_band && band === lsst_filtered_band) {
+        return {shouldContinue: true, newLayoutInfo: smartMerge(layoutInfo, {missionEntries, generalEntries})};
     };
-    return missionEntries;
+
+    if (!lsst_filtered_band) {
+        missionEntries.lsst_filtered_band = band;
+        rawTableRequest = cloneDeep(rawTable.request);
+    }
+    const treq = makeRawTableRequest(missionEntries, rawTableRequest);
+    defer(() => dispatchTableSearch(treq, {removable: true}));
+    return {shouldContinue: false, newLayoutInfo: smartMerge(layoutInfo, {missionEntries, generalEntries, rawTableRequest})};
 }
 
 export function lsstSdssOnFieldUpdate(fieldKey, value) {
-    var layoutInfo = getLayouInfo();
-    const missionEntries = get(layoutInfo, LC.MISSION_DATA);
+    const {missionEntries, rawTableRequest} = getLayouInfo() || {};
     if (!missionEntries) return;
-    const newMissionEntries = Object.assign(omit(missionEntries,[LC.META_TIME_NAMES, LC.META_FLUX_NAMES,LC.META_ERR_NAMES]), {[fieldKey]: value});
     if (fieldKey === 'band' || fieldKey === LC.META_TIME_CNAME) {
-        removeTablesFromGroup();
-        removeTablesFromGroup(LC.PERIODOGRAM_GROUP);
-        dispatchUpdateLayoutInfo(Object.assign({}, layoutInfo, {showTables: false, showXyPlots: false, fullRawTable: null, missionEntries: {}}));  // clear full rawtable
-        const treq = makeRawTableRequest(newMissionEntries);
-        dispatchTableSearch(treq, {removable: true});
-        return {};
+        missionEntries[fieldKey] = value;
+        const treq = makeRawTableRequest(missionEntries, rawTableRequest);
+        defer(() => dispatchTableSearch(treq, {removable: true}));
+        return {[fieldKey]: value};
     } else if ([LC.META_FLUX_CNAME, LC.META_ERR_CNAME].includes(fieldKey)) {
         return {[fieldKey]: value};
     }
 }
 
 export function lsstSdssRawTableRequest(converter, source) {
-    const missionEntries = {
-        band: 'u',
-        [LC.META_TIME_CNAME]: converter.defaultTimeCName,
-        [LC.META_MISSION]: converter.converterId,
-        rawTableSource: source
+    const options = {
+        tbl_id: LC.RAW_TABLE,
+        META_INFO: {[LC.META_MISSION]: converter.converterId},
+        pageSize: LC.TABLE_PAGESIZE
     };
-    return makeRawTableRequest(missionEntries);
 
+    return makeFileRequest('Raw Table', source, null, options);
 }
 
-function makeRawTableRequest(missionEntries) {
+function makeRawTableRequest(missionEntries, rawTableRequest) {
     const band = missionEntries['band'];
     const filterInfo = new FilterInfo;
     filterInfo.addFilter('filterName', `LIKE ${band}`);
-    const searchRequest = JSON.stringify(makeFileRequest('Raw Table', missionEntries['rawTableSource'], null, {filters: filterInfo.serialize()}));
+    var searchRequest = cloneDeep(rawTableRequest);
+    searchRequest.filters = filterInfo.serialize();
+    searchRequest = JSON.stringify(searchRequest);
     const options = {
         tbl_id: LC.RAW_TABLE,
-        tblType: 'notACatalog',
         sortInfo: sortInfoString(missionEntries[LC.META_TIME_CNAME]),
-        META_INFO: missionEntries,
+        META_INFO: {band, lsst_filtered_band: band, ...pick(missionEntries, [LC.META_MISSION, LC.META_TIME_CNAME, LC.META_FLUX_CNAME])},
         pageSize: LC.TABLE_PAGESIZE
     };
     return makeTblRequest('IpacTableFromSource', `Raw Table ${band}`, {searchRequest}, options);

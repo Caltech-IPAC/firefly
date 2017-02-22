@@ -29,7 +29,6 @@ export function uploadPhaseTable(tbl, flux) {
         const tReq = makeFileRequest(title, cacheKey, null,
                                      {tbl_id,
                                       sortInfo:sortInfoString(LC.PHASE_CNAME),
-                                      tblType: 'notACatalog',
                                       pageSize: LC.TABLE_PAGESIZE
                                      });
 
