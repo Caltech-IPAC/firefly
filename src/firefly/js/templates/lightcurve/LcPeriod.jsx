@@ -22,6 +22,7 @@ import {getActiveTableId, getColumnIdx} from '../../tables/TableUtil.js';
 import {LC, updateLayoutDisplay, getValidValueFrom, getFullRawTable} from './LcManager.js';
 import {doPFCalculate, getPhase} from './LcPhaseTable.js';
 import {LcPeriodogram, cancelPeriodogram, popupId} from './LcPeriodogram.jsx';
+import {ReadOnlyText, getTypeData} from './LcUtil.jsx';
 import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
 import {isDialogVisible} from '../../core/ComponentCntlr.js';
 import {updateSet} from '../../util/WebUtil.js';
@@ -33,15 +34,7 @@ const pfinderkey = LC.FG_PERIOD_FINDER;
 const labelWidth = 100;
 
 export const highlightBorder = '1px solid #a3aeb9';
-export function getTypeData(key, val='', tip = '', labelV='', labelW) {
-    return {
-        fieldKey: key,
-        label: labelV,
-        value: val,
-        tooltip: tip,
-        labelWidth: labelW
-    };
-}
+
 
 export var isBetween = (a, b, c) => (c >= a && c <= b);
 
@@ -106,22 +99,6 @@ var defPeriod = {
 
 var periodRange;        // prediod range based on raw table, set based on the row table, and unchangable
 var periodErr;          // error message for period setting
-
-export var ReadOnlyText = ({label, content, labelWidth, wrapperStyle}) => {
-    return (
-        <div style={{display: 'flex',...wrapperStyle}}>
-            <div style={{width: labelWidth, paddingRight: 4}}> {label} </div>
-            <div> {content} </div>
-        </div>
-    );
-};
-
-ReadOnlyText.propTypes = {
-    label: PropTypes.string,
-    content: PropTypes.string,
-    labelWidth: PropTypes.number,
-    wrapperStyle: PropTypes.object
-};
 
 
 function lastFrom(strAry) {

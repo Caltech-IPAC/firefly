@@ -8,7 +8,7 @@ import { get, set, has} from 'lodash';
 import SplitPane from 'react-split-pane';
 import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import {LC, getValidValueFrom, updateLayoutDisplay} from './LcManager.js';
-import {getTypeData} from './LcPeriod.jsx';
+import {getTypeData} from './LcUtil.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import FieldGroupCntlr, {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import Validate from '../../util/Validate.js';

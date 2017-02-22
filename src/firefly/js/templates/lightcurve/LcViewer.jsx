@@ -9,9 +9,8 @@ import {pickBy, get} from 'lodash';
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
 import {dispatchHideDropDown, getLayouInfo, SHOW_DROPDOWN,  dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
-import {MetaConst} from '../../data/MetaConst.js';
 import {lcManager, LC, removeTablesFromGroup, } from './LcManager.js';
-import {getAllConverterIds, getConverter} from './LcConverterFactory.js';
+import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
 import {LcResult} from './LcResult.jsx';
 import {LcPeriod} from './LcPeriod.jsx';
 import {Menu} from '../../ui/Menu.jsx';
@@ -26,9 +25,7 @@ import {FileUpload} from '../../ui/FileUpload.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
-import {makeFileRequest} from '../../tables/TableUtil.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
-import {sortInfoString} from '../../tables/SortInfo.js';
 
 
 const vFileKey = LC.FG_FILE_FINDER;
@@ -88,9 +85,7 @@ export class LcViewer extends Component {
                 dropdownPanels=[], footer, style, displayMode, missionEntries} = this.state;
         const {visible, view} = dropDown || {};
         const periodProps = {displayMode, timeColName: get(missionEntries, [LC.META_TIME_CNAME]),
-                                          fluxColName: get(missionEntries, [LC.META_FLUX_CNAME]),
-                                          validTimeColumns: get(missionEntries, [LC.META_TIME_NAMES]),
-                                          validFluxColumns: get(missionEntries, [LC.META_FLUX_NAMES])};
+                                          fluxColName: get(missionEntries, [LC.META_FLUX_CNAME])};
 
         dropdownPanels.push(<UploadPanel/>);
 
@@ -174,7 +169,7 @@ BannerSection.propTypes = {
 export function UploadPanel(props) {
     const wrapperStyle = {margin: '5px 0'};
 
-    const options = getAllConverterIds().map((id) => { return {label: id, value: id}; });
+    const options = getAllConverterIds().map((id) => { return {label: getMissionName(id), value: id}; });
     return (
         <div style={{padding: 10}}>
             <FormPanel
@@ -225,15 +220,7 @@ function onSearchSubmit(request) {
         const converter = getConverter(mission);
         if (!converter) return;
 
-        const timeCName = converter.defaultTimeCName;
-        const options = {
-            tbl_id: LC.RAW_TABLE,
-            tblType: 'notACatalog',
-            sortInfo: sortInfoString(timeCName),
-            META_INFO: {[MetaConst.DATASET_CONVERTER]: mission, timeCName},
-            pageSize: LC.TABLE_PAGESIZE
-        };
-        const treq = makeFileRequest('Raw Table', request.rawTblSource, null, options);
+        const treq = converter.rawTableRequest(converter, request.rawTblSource);
         dispatchTableSearch(treq, {removable: true});
         dispatchHideDropDown();
     } 

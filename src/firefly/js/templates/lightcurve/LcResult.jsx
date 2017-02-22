@@ -4,7 +4,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {pick, get, isEmpty, set, cloneDeep} from 'lodash';
+import {pick, get, isEmpty, cloneDeep} from 'lodash';
 import SplitPane from 'react-split-pane';
 import {flux} from '../../Firefly.js';
 import {LO_VIEW, getLayouInfo, dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
@@ -13,11 +13,8 @@ import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {LcImageViewerContainer} from './LcImageViewerContainer.jsx';
 import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
-import {LC, updateLayoutDisplay} from './LcManager.js';
-import {getTypeData, ReadOnlyText, highlightBorder} from './LcPeriod.jsx';
-import {FieldGroup} from '../../ui/FieldGroup.jsx';
+import {LC, getViewerGroupKey, updateLayoutDisplay} from './LcManager.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {LcImageToolbar} from './LcImageToolbar.jsx';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
@@ -26,50 +23,10 @@ import CompleteButton from '../../ui/CompleteButton.jsx';
 import {getTblById, doFetchTable, isTblDataAvail, MAX_ROW} from '../../tables/TableUtil.js';
 import {dispatchMultiValueChange, dispatchRestoreDefaults}  from '../../fieldGroup/FieldGroupCntlr.js';
 import {logError} from '../../util/WebUtil.js';
+import {getConverter, getMissionName} from './LcConverterFactory.js';
 
 const resultItems = ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'searchDesc', 'images',
                      LC.MISSION_DATA, LC.GENERAL_DATA, 'periodState'];
-const labelWidth = 80;
-
-const cTimeSeriesKeyDef = {
-    time: {fkey: LC.META_TIME_CNAME, label: 'Time Column'},
-    flux: {fkey: LC.META_FLUX_CNAME, label: 'Flux Column'},
-    timecols: {fkey: LC.META_TIME_NAMES, label: ''},
-    fluxcols: {fkey: LC.META_FLUX_NAMES, label: ''},
-    cutoutsize: {fkey: 'cutoutSize', label: 'Cutout Size (deg)'},
-    errorcolumn: {fkey: LC.META_ERR_CNAME, label: 'Error Column'}
-};
-
-// defValues used to keep the initial values for parameters in the field group of result page
-// time: time column
-// flux: flux column
-// timecols:  time column candidates
-// fluxcols:  flux column candidates
-// errorcolumm: error column
-// cutoutsize: image cutout size
-const defValues = {
-    [cTimeSeriesKeyDef.time.fkey]: Object.assign(getTypeData(cTimeSeriesKeyDef.time.fkey, '',
-                                                'time column name',
-                                                `${cTimeSeriesKeyDef.time.label}:`, labelWidth),
-                                                {validator: null}),
-    [cTimeSeriesKeyDef.flux.fkey]: Object.assign(getTypeData(cTimeSeriesKeyDef.flux.fkey, '',
-                                                'flux column name',
-                                                `${cTimeSeriesKeyDef.flux.label}:`, labelWidth),
-                                                {validator: null}),
-    [cTimeSeriesKeyDef.timecols.fkey]: Object.assign(getTypeData(cTimeSeriesKeyDef.timecols.fkey, '',
-                                                'time column suggestion'),
-                                                {validator: null}),
-    [cTimeSeriesKeyDef.fluxcols.fkey]: Object.assign(getTypeData(cTimeSeriesKeyDef.fluxcols.fkey, '',
-                                                'flux column suggestion'),
-                                                {validator: null}),
-    [cTimeSeriesKeyDef.cutoutsize.fkey]: Object.assign(getTypeData(cTimeSeriesKeyDef.cutoutsize.fkey, '',
-                                                'image cutout size',
-                                                `${cTimeSeriesKeyDef.cutoutsize.label}:`, 100)),
-    [cTimeSeriesKeyDef.errorcolumn.fkey]: Object.assign(getTypeData(cTimeSeriesKeyDef.errorcolumn.fkey, '',
-                                                'flux error column name',
-                                                `${cTimeSeriesKeyDef.errorcolumn.label}:`, labelWidth))
-    };
-
 
 
 export class LcResult extends Component {
@@ -161,8 +118,9 @@ const buttonW = 650;
 // eslint-disable-next-line
 const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables, settingBox}) => {
 
-    const {cutoutSize} = settingBox.props.generalEntries || '0.3';
-    //let csize = get(generalEntries, 'cutoutsize, '0.3');
+    const cutoutSize = get(settingBox, 'props.generalEntries.cutoutSize', '0.3');
+    const converterId = get(settingBox, ['props', 'missionEntries', LC.META_MISSION]);
+    const mission = get(getMissionName(converterId), 'mission', 'Mission');
 
     return (
         <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, position: 'relative'}}>
@@ -175,9 +133,9 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                                 cutoutSize = {cutoutSize}
                                 dlParams = {{
                                     MaxBundleSize: 200*1024*1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
-                                    FilePrefix: 'WISE_Files',
-                                    BaseFileName: 'WISE_Files',
-                                    DataSource: 'WISE images',
+                                    FilePrefix: `${mission}_Files`,
+                                    BaseFileName: `${mission}_Files`,
+                                    DataSource: `${mission} images`,
                                     FileGroupProcessor: 'LightCurveFileGroupsProcessor'
                                 }}>
                                 <ValidationField
@@ -214,90 +172,43 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
     );
 };
 
-const missionKeys = [cTimeSeriesKeyDef.time.fkey, cTimeSeriesKeyDef.flux.fkey];
-const missionOtherKeys = [cTimeSeriesKeyDef.errorcolumn.fkey];
-const missionListKeys = [cTimeSeriesKeyDef.timecols.fkey, cTimeSeriesKeyDef.fluxcols.fkey];
-
 
 class SettingBox extends Component {
     constructor(props) {
         super(props);
-
-        var fields = FieldGroupUtils.getGroupFields(LC.FG_VIEWER_FINDER);
-        this.state = {fields};
     }
 
     shouldComponentUpdate(np, ns) {
         return sCompare(this, np, ns);
     }
 
-    componentWillUnmount() {
-        this.iAmMounted= false;
-        if (this.unbinder) this.unbinder();
-    }
-
-    componentDidMount() {
-        this.iAmMounted = true;
-
-        this.unbinder = FieldGroupUtils.bindToStore(LC.FG_VIEWER_FINDER, (fields) => {
-            if (this.iAmMounted && fields !== this.state.fields) {
-                this.setState(fields);
-            }
-        });
-    }
-
     render() {
         var {generalEntries, missionEntries, periodState} = this.props;
 
         if (isEmpty(generalEntries) || isEmpty(missionEntries)) return false;
-        const wrapperStyle = {margin: '3px 0'};
 
-        var allCommonEntries = Object.keys(generalEntries).map((key) =>
-                                    <ValidationField key={key} fieldKey={key} wrapperStyle={wrapperStyle}
-                                                     style={{width: 80}}/>
-                                );
+        const converterId = get(missionEntries, LC.META_MISSION);
+        const converterData = converterId && getConverter(converterId);
+        if (!converterId || !converterData) { return null; }
+        const {MissionOptions} = converterData;
 
-        var missionInputs = missionKeys.map((key, index) =>
-                                    <SuggestBoxInputField key={key} fieldKey={key} wrapperStyle={wrapperStyle}
-                                                          getSuggestions={(val) => {
-                                                                    const list = get(missionEntries, missionListKeys[index], []);
-                                                                    const suggestions =  list && list.filter((el) => {return el.startsWith(val);});
-                                                                    return suggestions.length > 0 ? suggestions : missionListKeys[index];
-                                                              }}/>
-                                );
-
-        var missionOthers = missionOtherKeys.map((key) =>
-                                    <ValidationField key={key} fieldKey={key} wrapperStyle={wrapperStyle}/>
-                                );
-
-        //var moveToPeriod = (periodState) => {
-        //    return () => {
-        //        updateLayoutDisplay(periodState);
-        //    };
-        //};
-
+        const groupKey = getViewerGroupKey(missionEntries);
         return (
-            <FieldGroup groupKey={LC.FG_VIEWER_FINDER} style={{position: 'relative', display: 'inline-flex'}}
-                        reducerFunc={timeSeriesReducer(missionEntries, generalEntries)} keepState={true}>
+            <div style={{position: 'relative', display: 'inline-flex'}}>
                 <div style={{alignSelf: 'flex-end'}}>
-                    <ReadOnlyText label='Mission:' content={get(missionEntries, LC.META_MISSION, '')}
-                                  labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>
-                    {missionInputs}
-                    {missionOthers}
-                </div>
-                <div style={{alignSelf: 'flex-end'}}>
-                    {allCommonEntries}
+                   <MissionOptions {...{missionEntries, generalEntries}}/>
                 </div>
 
                 <div style={{alignSelf: 'flex-end', marginLeft: 10}}>
                     <CompleteButton
-                        groupKey={LC.FG_VIEWER_FINDER}
+                        style={{marginLeft: 10}}
+                        groupKey={groupKey}
                         onSuccess={setViewerSuccess(periodState)}
                         onFail={setViewerFail()}
                         text={'Period Finding'}
                     />
                 </div>
-            </FieldGroup>
+            </div>
         );
     }
 }
@@ -306,39 +217,6 @@ SettingBox.propTypes = {
     generalEntries: PropTypes.object,
     missionEntries: PropTypes.object,
     periodState:    PropTypes.string
-};
-
-var timeSeriesReducer = (missionEntries, generalEntries) => {
-    return (inFields, action) => {
-        if (inFields) {
-            return inFields;
-        }
-
-        var   defV = Object.assign({}, defValues);
-
-        missionListKeys.forEach((key) => {
-            set(defV, [key, 'value'], get(missionEntries, key, []));
-        });
-
-        // set value and validator
-        missionKeys.forEach((key, idx) => {
-            set(defV, [key, 'value'], get(missionEntries, key, ''));
-            set(defV, [key, 'validator'], (val) => {
-                let retVal = {valid: true, message: ''};
-                        const cols = get(missionEntries, missionListKeys[idx], []);
-
-                if (cols.length !== 0 && !cols.includes(val)) {
-                    retVal = {valid: false, message: `${val} is not a valid column name`};
-                }
-
-                return retVal;
-            });
-        });
-        Object.keys(generalEntries).forEach((key) => {
-            set(defV, [key, 'value'], get(generalEntries, key, ''));
-        });
-        return defV;
-    };
 };
 
 /**
