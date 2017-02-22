@@ -448,15 +448,14 @@ function fetchXYWithErrorsOrSort(dispatch, chartId, chartDataElementId) {
 
     // tblId - table search request to obtain source table
     // options - options to create chart element
-    const {tblId,  options:xyPlotParams} = chartDataElement;
+    const {tblId,  options} = chartDataElement;
+    let xyPlotParams = options;
 
     const activeTableModel = getTblById(tblId);
     const activeTableServerRequest = activeTableModel['request'];
     const tblSource = get(activeTableModel, 'tableMeta.tblFilePath');
 
-    if (!xyPlotParams) {
-        dispatchError(dispatch, chartId, chartDataElementId, 'Can not fetch data for unknown parameters');
-    }
+    if (!xyPlotParams) { xyPlotParams = getDefaultXYPlotOptions(tblId); }
 
     const sreq = cloneRequest(activeTableServerRequest, {'startIdx' : 0, 'pageSize' : 1000000});
     const req = makeTblRequest('XYWithErrors');
