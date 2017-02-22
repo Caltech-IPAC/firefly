@@ -140,10 +140,10 @@ function calcCornerString(pv, method) {
     var h = plot.dataHeight;
     var cc = CsysConverter.make(plot);
     if (method==='image' || (!sel && method==='area-selection') ) {
-        pt1 = cc.getWorldCoords(makeImagePt(w/4,h/4));
-        pt2 = cc.getWorldCoords(makeImagePt(3*w/4, h/4));
-        pt3 = cc.getWorldCoords(makeImagePt(3*w/4, 3*h/4));
-        pt4 = cc.getWorldCoords(makeImagePt(w/4, 3*h/4));
+        pt1 = cc.getWorldCoords(makeImagePt(0,0));
+        pt2 = cc.getWorldCoords(makeImagePt(w, 0));
+        pt3 = cc.getWorldCoords(makeImagePt(w, h));
+        pt4 = cc.getWorldCoords(makeImagePt(0, h));
     }
     else if (method==='viewport') {
         const {viewDim, scrollX, scrollY}= pv;
