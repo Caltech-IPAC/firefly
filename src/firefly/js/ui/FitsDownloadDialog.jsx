@@ -5,6 +5,11 @@
  *   propType: define all the property variable for the component
  *   this.plot, this.plotSate are the class global variables
  *
+ * Work History
+ *
+ *  [Feb-22-2017 LZ]
+ *  DM-9500
+ *  DM-8963
  */
 import React from 'react';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
@@ -37,7 +42,7 @@ function getDialogBuilder() {
     return () => {
         if (!popup) {
             const popup = (
-                <PopupPanel title={'Fits Download Dialog'}>
+                <PopupPanel title={'FITS Download Dialog'}>
                     <FitsDownloadDialog groupKey={'FITS_DOWNLOAD_FORM'}/>
                 </PopupPanel>
             );
@@ -85,7 +90,8 @@ function getInitialPlotState() {
                         colors[i] = 'Blue';
                         break;
                     default:
-                }        break;
+                        break;
+                }
 
             }
 
@@ -175,6 +181,13 @@ function renderOperationOption(hasOperation) {
 
 function renderThreeBand(hasThreeColorBand, colors) {
 
+    const fieldKey = FieldGroupUtils.getGroupFields('FITS_DOWNLOAD_FORM');
+
+    if (fieldKey && (fieldKey.fileType.value==='png' || fieldKey.fileType.value==='reg') ){
+        return <br/>;
+    }
+    
+
     var rightColumn={display: 'inline-block', paddingLeft:18};
     var leftColumn;
 
@@ -194,7 +207,7 @@ function renderThreeBand(hasThreeColorBand, colors) {
 
         var optionArray=[];
         for (var i=0; i<colors.length; i++){
-            optionArray[i]={label: colors[i], value: colors[i]+'Radio'};
+            optionArray[i]={label: colors[i], value: colors[i]};
         }
 
         return (
@@ -231,9 +244,9 @@ function FitsDownloadDialogForm() {
     var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, colors);//true, ['Green','Red', 'Blue']);
 
 
-    var leftColumn = { display: 'inline-block', paddingLeft:75, verticalAlign:'middle', paddingBottom:30};
+    var leftColumn = { display: 'inline-block', paddingLeft:63, verticalAlign:'middle', paddingBottom:30};
 
-    var rightColumn = {display: 'inline-block',  paddingLeft:18};
+    var rightColumn = {display: 'inline-block',  paddingLeft:14};
 
 	var dialogStyle = { minWidth : 300, minHeight: 100 , padding:'15px 5px 5px 5px'};
     return (
@@ -245,7 +258,7 @@ function FitsDownloadDialogForm() {
                             <RadioGroupInputField
                                 initialState={{
                                     tooltip: 'Please select an option',
-                                    value : 'fits'
+                                    value : 'FITS'
                                     //move the label as a InputFieldLabel
                                    }}
                                 options={ [
@@ -255,7 +268,9 @@ function FitsDownloadDialogForm() {
                                     ]}
                                 alignment={'vertical'}
                                 fieldKey='fileType'
+
                             />
+
                         </div>
 
 
@@ -326,6 +341,7 @@ function resultsSuccess(request, plot) {
         }
         if (key === 'threeBandColor') {
             bandSelect = value;
+
         }
         if (key === 'operationOption') {
             whichOp = value;
@@ -334,7 +350,7 @@ function resultsSuccess(request, plot) {
 
     var band = Band.NO_BAND;
     if (bandSelect) {
-        band = Band[bandSelect];
+        band = Band[bandSelect.toUpperCase()];
     }
 
 
