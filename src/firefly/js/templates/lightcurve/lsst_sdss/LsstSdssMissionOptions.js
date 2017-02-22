@@ -16,7 +16,7 @@ import {FilterInfo} from '../../../tables/FilterInfo.js';
 import {LC, getViewerGroupKey, removeTablesFromGroup} from '../LcManager.js';
 import {getTypeData} from './../LcUtil.jsx';
 
-const labelWidth = 90;
+const labelWidth = 100;
 
 export class LsstSdssSettingBox extends Component {
     constructor(props) {
@@ -36,19 +36,10 @@ export class LsstSdssSettingBox extends Component {
         const wrapperStyle = {margin: '3px 0'};
 
         var rightEntries = Object.keys(generalEntries).map((key) =>
-            <ValidationField key={key} fieldKey={key} wrapperStyle={wrapperStyle}/>
+            <ValidationField key={key} fieldKey={key} wrapperStyle={wrapperStyle} style={{width: 80}}/>
         );
 
         const validFluxVals = get(missionEntries, LC.META_FLUX_NAMES, []);
-        rightEntries.unshift(
-            <SuggestBoxInputField key={LC.META_FLUX_CNAME}
-                fieldKey={LC.META_FLUX_CNAME} wrapperStyle={Object.assign(wrapperStyle)}
-                getSuggestions={(val) => {
-                    const suggestions =  validFluxVals && validFluxVals.filter((el) => {return el.startsWith(val);});
-                    return suggestions.length > 0 ? suggestions : validFluxVals;
-                }}
-            />
-        );
 
         var leftEntries = [
             <RadioGroupInputField key='band' fieldKey='band' wrapperStyle={wrapperStyle}
@@ -60,6 +51,13 @@ export class LsstSdssSettingBox extends Component {
                     {label: 'i', value: 'i'},
                     {label: 'z', value: 'z'}
                 ]}
+            />,
+            <SuggestBoxInputField key={LC.META_FLUX_CNAME}
+                fieldKey={LC.META_FLUX_CNAME} wrapperStyle={wrapperStyle}
+                getSuggestions={(val) => {
+                    const suggestions =  validFluxVals && validFluxVals.filter((el) => {return el.startsWith(val);});
+                    return suggestions.length > 0 ? suggestions : validFluxVals;
+                }}
             />
         ];
 
@@ -68,7 +66,7 @@ export class LsstSdssSettingBox extends Component {
         return (
             <FieldGroup groupKey={groupKey}
                         reducerFunc={lsstSdssReducer(missionEntries, generalEntries)} keepState={true}>
-                <div style={{display: 'flex', alignItems: 'flex-start'}} >
+                <div style={{display: 'flex', alignItems: 'flex-end'}} >
                     <div >
                         {leftEntries}
                     </div>
@@ -109,7 +107,7 @@ export const lsstSdssReducer = (missionEntries, generalEntries) => {
         const defValues = {
             band: Object.assign(getTypeData('band', '',
                 'LSST SDSS band',
-                'LSST Band:', 60)),
+                'LSST SDSS Band:', labelWidth)),
             [LC.META_FLUX_CNAME]: Object.assign(getTypeData(LC.META_FLUX_CNAME, '',
                 'Y column name',
                 'Periodic Column:', labelWidth),
