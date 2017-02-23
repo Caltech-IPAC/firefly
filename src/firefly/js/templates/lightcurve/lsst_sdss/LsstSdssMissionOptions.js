@@ -8,7 +8,7 @@ import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
 import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
-import {makeFileRequest} from '../../../tables/TableUtil.js';
+import {makeFileRequest, makeTblRequest} from '../../../tables/TableUtil.js';
 import {dispatchTableSearch} from '../../../tables/TablesCntlr.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {FilterInfo} from '../../../tables/FilterInfo.js';
@@ -202,16 +202,16 @@ export function lsstSdssRawTableRequest(converter, source) {
 }
 
 function makeRawTableRequest(missionEntries) {
+    const band = missionEntries['band'];
     const filterInfo = new FilterInfo;
-    filterInfo.addFilter('filterName', `LIKE ${missionEntries['band']}`);
+    filterInfo.addFilter('filterName', `LIKE ${band}`);
+    const searchRequest = JSON.stringify(makeFileRequest('Raw Table', missionEntries['rawTableSource'], null, {filters: filterInfo.serialize()}));
     const options = {
         tbl_id: LC.RAW_TABLE,
         tblType: 'notACatalog',
         sortInfo: sortInfoString(missionEntries[LC.META_TIME_CNAME]),
-        filters: filterInfo.serialize(),
         META_INFO: missionEntries,
         pageSize: LC.TABLE_PAGESIZE
     };
-    return makeFileRequest('Raw Table', missionEntries['rawTableSource'], null, options);
-
+    return makeTblRequest('IpacTableFromSource', `Raw Table ${band}`, {searchRequest}, options);
 }
