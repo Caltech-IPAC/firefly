@@ -29,7 +29,31 @@ public class SearchRequestUtils {
      * @throws IOException
      * @throws DataAccessException
      */
-    static DataGroup dataGroupFromSearchRequest(String searchRequestJson) throws IOException, DataAccessException {
+    public static DataGroup dataGroupFromSearchRequest(String searchRequestJson) throws IOException, DataAccessException {
+        FileInfo fi = fileInfoFromSearchRequest(searchRequestJson);
+        return DataGroupReader.readAnyFormat(new File(fi.getInternalFilename()));
+    }
+
+    /**
+     * Get file created by the search request
+     * @param searchRequestJson search request in JSON format
+     * @return File file with the result table
+     * @throws IOException
+     * @throws DataAccessException
+     **/
+    public static File fileFromSearchRequest(String searchRequestJson) throws IOException, DataAccessException {
+        FileInfo fi = fileInfoFromSearchRequest(searchRequestJson);
+        return new File(fi.getInternalFilename());
+    }
+
+    /**
+     * Get file info for the results created by the search request
+     * @param searchRequestJson search request in JSON format
+     * @return File file with the result table
+     * @throws IOException
+     * @throws DataAccessException
+     **/
+    static FileInfo fileInfoFromSearchRequest(String searchRequestJson)  throws IOException, DataAccessException {
         if (searchRequestJson == null) {
             throw new DataAccessException("Missing search request");
         }
@@ -51,6 +75,6 @@ public class SearchRequestUtils {
             throw new SecurityException("Access is not permitted.");
         }
 
-       return DataGroupReader.readAnyFormat(new File(fi.getInternalFilename()));
+       return fi;
     }
 }

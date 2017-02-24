@@ -28,16 +28,22 @@ import java.util.List;
 public class IpacTableFromSource extends IpacTablePartProcessor {
     public static final String TBL_TYPE = "tblType";
     public static final String TYPE_CATALOG = "catalog";
-    public static final String TBL_INDEX = TableServerRequest.TBL_INDEX;     // the table to show if it's a multi-table file.
+    //public static final String TBL_INDEX = TableServerRequest.TBL_INDEX;     // the table to show if it's a multi-table file.
+    private static final String SEARCH_REQUEST = "searchRequest";
+
 
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
         String source = request.getParam(ServerParams.SOURCE);
         String altSource = request.getParam(ServerParams.ALT_SOURCE);
         String processor = request.getParam("processor");
+        String searchRequestJson = request.getParam(SEARCH_REQUEST);
 
         if (StringUtils.isEmpty(source) && processor != null) {
             return getByProcessor(processor, request);
+        } else if (searchRequestJson != null) {
+            // wrapping search request is useful to hide filters of the wrapped search request
+            return SearchRequestUtils.fileFromSearchRequest(searchRequestJson);
         } else {
             // get source by source key
             File inf = getSourceFile(source, request);
@@ -58,7 +64,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
 
     private File getByProcessor(String processor, TableServerRequest request) throws DataAccessException {
         if (StringUtils.isEmpty(processor)) {
-            throw new DataAccessException("Required parameter 'source' is not given.");
+            throw new DataAccessException("Required parameter 'processor' is not given.");
         }
         TableServerRequest sReq = new TableServerRequest(processor, request);
         FileInfo fi = new SearchManager().getFileInfo(sReq);
@@ -82,9 +88,9 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
     /**
      * resolve the file given a 'source' string.  it could be a local path, or a url.
      * if it's a url, download it into the application's workarea
-     * @param source
-     * @param request
-     * @return
+     * @param source source file
+     * @param request table request
+     * @return file
      */
     private File getSourceFile(String source, TableServerRequest request) {
         if (source == null) return null;
