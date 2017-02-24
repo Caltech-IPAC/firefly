@@ -33,6 +33,7 @@ const makeInfoPopup = (mess,x,y) => <PointerPopup x={x} y={y} message={makeMessa
 
 function computeWarningXY(warnIcon) {
     var bodyRect = document.body.getBoundingClientRect();
+    if (!warnIcon) return {};
     var elemRect = warnIcon.getBoundingClientRect();
     var warningOffsetX = (elemRect.left - bodyRect.left) + warnIcon.offsetWidth / 2;
     var warningOffsetY = elemRect.top - bodyRect.top;
@@ -59,16 +60,15 @@ export class InputFieldView extends Component {
 
     componentDidUpdate() {
         var {infoPopup}= this.state;
-        if (infoPopup) {
+        if (infoPopup && this.warnIcon) {
             var {warningOffsetX, warningOffsetY}= computeWarningXY(this.warnIcon);
             var {message}= this.props;
+            if (this.hider) this.hider();
             this.hider = DialogRootContainer.showTmpPopup(makeInfoPopup(message, warningOffsetX, warningOffsetY));
         }
-        else {
-            if (this.hider) {
-                this.hider();
-                this.hider = null;
-            }
+        else if (this.hider) {
+            this.hider();
+            this.hider = null;
         }
     }
 
