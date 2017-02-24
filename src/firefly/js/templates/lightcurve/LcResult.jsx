@@ -80,14 +80,14 @@ export class LcResult extends Component {
             content.xyPlot = (<ChartsContainer key='res-charts'
                                                closeable={true}
                                                expandedMode={expanded===LO_VIEW.xyPlots}
-                                               help_id={''}/>);
+                                               />);
         }
         if (showTables) {
             content.tables = (<TablesContainer key='res-tables'
                                                mode='both'
                                                closeable={true}
                                                expandedMode={expanded===LO_VIEW.tables}
-                                               help_id={''}/>);
+                                               tableOptions={{help_id:'main1TSV.table'}}/>);
         }
 
         content.settingBox = (<SettingBox generalEntries={generalEntries} missionEntries={missionEntries}
