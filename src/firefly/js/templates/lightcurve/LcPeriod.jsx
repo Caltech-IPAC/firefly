@@ -51,7 +51,7 @@ const PanelResizableStyle = {
 const panelSpace = PanelResizableStyle.width/5;
 const fKeyDef = {
     time: {fkey: 'time', label: 'Time Column'},
-    flux: {fkey: 'flux', label: 'Flux Column'},
+    flux: {fkey: 'flux', label: 'Value Column'},
     min: {fkey: 'periodMin', label: 'Period Min (day)'},
     max: {fkey: 'periodMax', label: 'Period Max (day)'},
     tz: {fkey: 'tzero', label: 'Zero Point Time'},
@@ -74,10 +74,10 @@ const DEC_PHASE = 3;       // decimal digit
 
 const defValues= {
     [fKeyDef.time.fkey]: Object.assign(getTypeData(fKeyDef.time.fkey, '',
-        'time column name',
+        'Time column name',
         `${fKeyDef.time.label}:`, labelWidth), {validator:  null}),
     [fKeyDef.flux.fkey]: Object.assign(getTypeData(fKeyDef.flux.fkey, '',
-        'flux column name', `${fKeyDef.flux.label}:`, labelWidth), {validator:  null}),
+        'Value column name', `${fKeyDef.flux.label}:`, labelWidth), {validator:  null}),
     [fKeyDef.tz.fkey]: Object.assign(getTypeData(fKeyDef.tz.fkey, '', 'zero time', `${fKeyDef.tz.label}:`, labelWidth),
         {validator: null}),
     [fKeyDef.tzmax.fkey]: Object.assign(getTypeData(fKeyDef.tzmax.fkey, '', 'maximum for zero time'),
@@ -319,7 +319,7 @@ class PhaseFoldingChart extends Component {
                 },
                 title: {
                     fontSize: '16px',
-                    text: period ? `period=${period}(day)`:'period='
+                    text: period ? `period=${period} day`:'period='
                 },
                 xAxis: {
                     min: minPhase - Margin,
@@ -329,7 +329,7 @@ class PhaseFoldingChart extends Component {
                     gridLineColor: '#e9e9e9'
                 },
                 yAxis: {
-                    title: {text: `${flux}(mag)`},
+                    title: {text: `${flux} (mag)`},
                     lineWidth: 1,
                     tickWidth: 1,
                     tickLength: 10,

@@ -95,7 +95,7 @@ function addPhaseToTable(tbl, timeName, tzero, period) {
     if (tIdx < 0) return null;
 
     const tbl_id =  LC.PHASE_FOLDED;
-    const title = 'Phase Folded';
+    const title = 'Phase Folded Data';
 
     var tPF = {tableData: cloneDeep(tbl.tableData),
                tableMeta: cloneDeep(tbl.tableMeta),

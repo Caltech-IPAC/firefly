@@ -90,8 +90,8 @@ export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layou
                            [SORT_DESC]:'descending'};
 
         if (sInfo.direction === UNSORTED) return '';
-        return `Sortable columns: ${sInfo.sortColumns.join(',')}; `+
-               `Sort order: ${orderInfo[sInfo.direction]}`;
+        return `Sorted by column: ${sInfo.sortColumns.join(',')} `+
+               ` ${orderInfo[sInfo.direction]}`;
     };
 
     return (

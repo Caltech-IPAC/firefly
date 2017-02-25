@@ -19,7 +19,6 @@ import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
-import {dispatchChartAdd} from '../../charts/ChartsCntlr.js';
 import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
@@ -48,7 +47,7 @@ const stepOptions = [
 
 // parameter list in the popup dialog
 const pKeyDef = { time: {fkey: 'time', label: 'Time Column'},
-                  flux: {fkey: 'flux', label: 'Flux Column'},
+                  flux: {fkey: 'flux', label: 'Value Column'},
                   min: {fkey: 'periodMin', label: 'Period Min (day)'},
                   max: {fkey: 'periodMax', label: 'Period Max (day)'},
                   algor: {fkey: 'periodAlgor', label: 'Periodogram Type'},
@@ -156,7 +155,7 @@ function  PeriodogramButton(props) {
                      display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
             <button type='button' style={{maxWidth: '50%'}}
                     className='button std'
-                    onClick={startPeriodogramPopup(groupKey)}>Find Periodogram</button>
+                    onClick={startPeriodogramPopup(groupKey)}>Calculate Periodogram</button>
             <div style={{marginLeft:10}}>
                 <HelpIcon helpId={'findpTSV.pgram'}/>
             </div>
@@ -172,7 +171,7 @@ PeriodogramButton.propTypes = {
 function ChangePeriodogram() {
     return (
         <button type='button' className='button std hl'
-                 onClick={startPeriodogramPopup(LC.FG_PERIODOGRAM_FINDER)}>Change Periodogram
+                 onClick={startPeriodogramPopup(LC.FG_PERIODOGRAM_FINDER)}>Recalculate Periodogram
         </button>
     );
 }
@@ -517,7 +516,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
         const ssize = get(request, [pKeyDef.stepsize.fkey]);
         const peak = get(request, [pKeyDef.peaks.fkey]);
 
-        var tReq2 = makeTblRequest('LightCurveProcessor', LC.PEAK_TABLE, {
+        var tReq2 = makeTblRequest('LightCurveProcessor', LC.PEAK_TABLE.replace('_',' '), {
             original_table: srcFile,
             x: get(defPeriod, [pKeyDef.time.fkey, 'value']) || get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]),
             y:  get(defPeriod, [pKeyDef.flux.fkey, 'value']) || get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME]),
