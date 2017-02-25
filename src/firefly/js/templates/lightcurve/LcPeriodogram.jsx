@@ -191,7 +191,7 @@ export var startPeriodogramPopup = (groupKey) =>  {
         var popup = (
             <PopupPanel title={'Periodogram'}>
                 <PeriodogramOptionsBox groupKey={groupKey} />
-                <div style={{display: 'flex', margin: '30px 10px 10px 10px'}} >
+                <div style={{display: 'flex', margin: '30px 10px 10px 10px', justifyContent:'space-between'}} >
                     <div style={aroundButton}>
                         <button type='button' className='button std hl'
                                 onClick={cancelPeriodogram(groupKey, popupId)}>Cancel
@@ -203,6 +203,9 @@ export var startPeriodogramPopup = (groupKey) =>  {
                                 onSuccess={periodogramSuccess(popupId, true)}
                                 onFail={periodogramFail(popupId, true)}
                                 text={'Periodogram Calculation'} />
+                    </div>
+                    <div style={{marginTop:17}}>
+                        <HelpIcon helpId={'findpTSV.pgramresults'}/>
                     </div>
                 </div>
             </PopupPanel>);
@@ -272,7 +275,7 @@ class PeriodogramOptionsBox extends Component {
                         </button>
                         <br/>
                         <div style={{marginTop: 10}}>
-                            {'Leave the fields blank to use default values.'}  <HelpIcon helpId={'findpTSV.pgramresults'}/>
+                            {'Leave the fields blank to use default values.'}
                         </div>
                     </InputGroup>
                 </FieldGroup>

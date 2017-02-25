@@ -197,7 +197,7 @@ class SettingBox extends Component {
 
         const groupKey = getViewerGroupKey(missionEntries);
         return (
-            <div style={{position: 'relative', display: 'inline-flex'}}>
+            <div style={{position: 'relative', display: 'inline-flex', justifyContent: 'space-between', width: '100%'}}>
                 <div style={{alignSelf: 'flex-end'}}>
                    <MissionOptions {...{missionEntries, generalEntries}}/>
                 </div>
@@ -211,7 +211,7 @@ class SettingBox extends Component {
                         text={'Period Finding'}
                     />
                 </div>
-                <div style={{display: 'flex', flexDirection: 'row-reverse', marginTop:'10px'}}>
+                <div style={{display: 'flex', flexDirection: 'row-reverse'}}>
                     <HelpIcon helpId={'main1TSV.settings'}/>
                 </div>
             </div>

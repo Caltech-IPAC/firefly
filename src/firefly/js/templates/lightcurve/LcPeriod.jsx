@@ -610,6 +610,9 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
     var pSize = panelSpace/2 - 5;
 
     return (<div style={{width: PanelResizableStyle.width - offset}}>
+                <div style={{display:'flex', flexDirection:'row-reverse', justifyContent:'space-between'}}>
+                    <HelpIcon helpId={'findpTSV.settings'}/>
+                </div>
                 <br/>
                 {ReadOnlyText({label: get(defValues, [fKeyDef.time.fkey, 'label']),
                                labelWidth: get(defValues, [fKeyDef.time.fkey, 'labelWidth']),
@@ -655,9 +658,6 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
                         <button type='button' className='button std hl'  onClick={() => resetPeriodDefaults(defPeriod)}>
                             <b>Reset</b>
                         </button>
-                    </div>
-                    <div style={{marginLeft:10}}>
-                        <HelpIcon helpId={'findpTSV.settings'}/>
                     </div>
                 </div>
             </div>
