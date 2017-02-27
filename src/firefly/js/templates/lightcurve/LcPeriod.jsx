@@ -9,6 +9,7 @@ import {get, set,  pick,  debounce, defer} from 'lodash';
 import SplitPane from 'react-split-pane';
 import {flux} from '../../Firefly.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
+import HelpIcon from '../../ui/HelpIcon.jsx';
 import {RangeSlider}  from '../../ui/RangeSlider.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
@@ -234,6 +235,9 @@ const PeriodStandardView = (props) => {
                 </SplitPane>
             </div>
             <div style={{flexGrow: 0, display: 'inline-flex', justifyContent: 'flex-end', height: 40}}>
+                <div style={{marginTop:7, marginRight:10}}>
+                    <HelpIcon helpId={'findpTSV.acceptp'}/>
+                </div>
                 <div style={{margin: 5}}>
                     <button type='button' className='button std hl' onClick={()=>cancelStandard()}>Cancel</button>
                 </div>
@@ -606,6 +610,9 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
     var pSize = panelSpace/2 - 5;
 
     return (<div style={{width: PanelResizableStyle.width - offset}}>
+                <div style={{display:'flex', flexDirection:'row-reverse', justifyContent:'space-between'}}>
+                    <HelpIcon helpId={'findpTSV.settings'}/>
+                </div>
                 <br/>
                 {ReadOnlyText({label: get(defValues, [fKeyDef.time.fkey, 'label']),
                                labelWidth: get(defValues, [fKeyDef.time.fkey, 'labelWidth']),

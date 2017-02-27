@@ -40,7 +40,7 @@ export function uploadPhaseTable(tbl, flux) {
             x: {columnOrExpr: LC.PHASE_CNAME, options: 'grid'},
             y: {columnOrExpr: flux, options: 'grid,flip'}
         };
-        loadXYPlot({chartId: tbl_id, tblId: tbl_id, xyPlotParams});
+        loadXYPlot({chartId: tbl_id, tblId: tbl_id, xyPlotParams, help_id: 'main1TSV.plot'});
     });
 
 

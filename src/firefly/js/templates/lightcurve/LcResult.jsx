@@ -20,6 +20,7 @@ import {LcImageToolbar} from './LcImageToolbar.jsx';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import CompleteButton from '../../ui/CompleteButton.jsx';
+import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {getTblById, doFetchTable, isTblDataAvail, MAX_ROW} from '../../tables/TableUtil.js';
 import {dispatchMultiValueChange, dispatchRestoreDefaults}  from '../../fieldGroup/FieldGroupCntlr.js';
 import {logError} from '../../util/WebUtil.js';
@@ -77,14 +78,16 @@ export class LcResult extends Component {
         }
         if (showXyPlots) {
             content.xyPlot = (<ChartsContainer key='res-charts'
-                                        closeable={true}
-                                        expandedMode={expanded===LO_VIEW.xyPlots}/>);
+                                               closeable={true}
+                                               expandedMode={expanded===LO_VIEW.xyPlots}
+                                               />);
         }
         if (showTables) {
             content.tables = (<TablesContainer key='res-tables'
-                                        mode='both'
-                                        closeable={true}
-                                        expandedMode={expanded===LO_VIEW.tables}/>);
+                                               mode='both'
+                                               closeable={true}
+                                               expandedMode={expanded===LO_VIEW.tables}
+                                               tableOptions={{help_id:'main1TSV.table'}}/>);
         }
 
         content.settingBox = (<SettingBox generalEntries={generalEntries} missionEntries={missionEntries}
@@ -194,7 +197,7 @@ class SettingBox extends Component {
 
         const groupKey = getViewerGroupKey(missionEntries);
         return (
-            <div style={{position: 'relative', display: 'inline-flex'}}>
+            <div style={{position: 'relative', display: 'inline-flex', justifyContent: 'space-between', width: '100%'}}>
                 <div style={{alignSelf: 'flex-end'}}>
                    <MissionOptions {...{missionEntries, generalEntries}}/>
                 </div>
@@ -207,6 +210,9 @@ class SettingBox extends Component {
                         onFail={setViewerFail()}
                         text={'Period Finding'}
                     />
+                </div>
+                <div style={{display: 'flex', flexDirection: 'row-reverse'}}>
+                    <HelpIcon helpId={'main1TSV.settings'}/>
                 </div>
             </div>
         );

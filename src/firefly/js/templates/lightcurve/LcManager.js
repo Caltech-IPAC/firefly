@@ -188,7 +188,7 @@ function updateRawTableChart(timeCName, fluxCName) {
 
     if (timeCName && fluxCName) {
         const xyPlotParams = {x: {columnOrExpr: timeCName}, y: {columnOrExpr: fluxCName, options: 'grid,flip'}};
-        loadXYPlot({chartId: LC.RAW_TABLE, tblId: LC.RAW_TABLE, xyPlotParams});
+        loadXYPlot({chartId: LC.RAW_TABLE, tblId: LC.RAW_TABLE, xyPlotParams, help_id: 'main1TSV.plot'});
     }
 }
 
@@ -203,7 +203,7 @@ function updatePhaseTableChart(flux) {
             x: {columnOrExpr: LC.PHASE_CNAME, options: 'grid'},
             y: {columnOrExpr: flux, options: 'grid,flip'}
         };
-        loadXYPlot({chartId: LC.PHASE_FOLDED, tblId: LC.PHASE_FOLDED, xyPlotParams});
+        loadXYPlot({chartId: LC.PHASE_FOLDED, tblId: LC.PHASE_FOLDED, xyPlotParams, help_id: 'main1TSV.plot'});
     }
 }
 

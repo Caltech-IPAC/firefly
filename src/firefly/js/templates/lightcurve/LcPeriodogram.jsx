@@ -19,6 +19,7 @@ import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
+import {dispatchChartAdd} from '../../charts/ChartsCntlr.js';
 import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
@@ -156,6 +157,9 @@ function  PeriodogramButton(props) {
             <button type='button' style={{maxWidth: '50%'}}
                     className='button std'
                     onClick={startPeriodogramPopup(groupKey)}>Find Periodogram</button>
+            <div style={{marginLeft:10}}>
+                <HelpIcon helpId={'findpTSV.pgram'}/>
+            </div>
         </div>
     );
 }
@@ -187,7 +191,7 @@ export var startPeriodogramPopup = (groupKey) =>  {
         var popup = (
             <PopupPanel title={'Periodogram'}>
                 <PeriodogramOptionsBox groupKey={groupKey} />
-                <div style={{display: 'flex', margin: '30px 10px 10px 10px'}} >
+                <div style={{display: 'flex', margin: '30px 10px 10px 10px', justifyContent:'space-between'}} >
                     <div style={aroundButton}>
                         <button type='button' className='button std hl'
                                 onClick={cancelPeriodogram(groupKey, popupId)}>Cancel
@@ -199,6 +203,9 @@ export var startPeriodogramPopup = (groupKey) =>  {
                                 onSuccess={periodogramSuccess(popupId, true)}
                                 onFail={periodogramFail(popupId, true)}
                                 text={'Periodogram Calculation'} />
+                    </div>
+                    <div style={{marginTop:17}}>
+                        <HelpIcon helpId={'findpTSV.pgramresults'}/>
                     </div>
                 </div>
             </PopupPanel>);
@@ -268,7 +275,7 @@ class PeriodogramOptionsBox extends Component {
                         </button>
                         <br/>
                         <div style={{marginTop: 10}}>
-                            {'Leave the fields blank to use default values.'}  <HelpIcon helpId={'periodogram.options'}/>
+                            {'Leave the fields blank to use default values.'}
                         </div>
                     </InputGroup>
                 </FieldGroup>
@@ -528,9 +535,11 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             dispatchTableSearch(tReq2, {removable: true, tbl_group: LC.PERIODOGRAM_GROUP});
             const xyPlotParams = {
                 x: {columnOrExpr: LC.PEAK_CNAME, options: 'grid'},
-                y: {columnOrExpr: LC.POWER_CNAME, options: 'grid'}
+                y: {columnOrExpr: LC.POWER_CNAME, options: 'grid'},
+                plotStyle: 'linepoints'
+
             };
-            loadXYPlot({chartId: LC.PEAK_TABLE, tblId: LC.PEAK_TABLE, xyPlotParams});
+            loadXYPlot({chartId: LC.PEAK_TABLE, tblId: LC.PEAK_TABLE, xyPlotParams, help_id: 'findpTSV.pgramresults'});
         }
 
         var tReq = makeTblRequest('LightCurveProcessor', LC.PERIODOGRAM_TABLE, {
@@ -554,9 +563,16 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             const xyPlotParams = {
                 userSetBoundaries: {yMin: 0},
                 x: {columnOrExpr: LC.PERIOD_CNAME, options: 'grid,log'},
-                y: {columnOrExpr: LC.POWER_CNAME, options: 'grid'}
+                y: {columnOrExpr: LC.POWER_CNAME, options: 'grid'},
+                plotStyle: 'linepoints'
             };
-            loadXYPlot({chartId: LC.PERIODOGRAM_TABLE, tblId: LC.PERIODOGRAM_TABLE, markAsDefault: true, xyPlotParams});
+            loadXYPlot({
+                chartId: LC.PERIODOGRAM_TABLE,
+                tblId: LC.PERIODOGRAM_TABLE,
+                markAsDefault: true,
+                xyPlotParams,
+                help_id: 'findpTSV.pgramresults'
+            });
         }
 
         dispatchActiveTableChanged(LC.PERIODOGRAM_TABLE, LC.PERIODOGRAM_GROUP);
@@ -593,7 +609,8 @@ const  PeriodogramResult = ({expanded}) => {
                                       mode='both'
                                       tbl_group={LC.PERIODOGRAM_GROUP}
                                       closeable={true}
-                                      expandedMode={expanded===LO_VIEW.tables}/>);
+                                      expandedMode={expanded===LO_VIEW.tables}
+                                      tableOptions={{help_id:'findpTSV.pgramresults'}}/>);
     const xyPlot = (<ChartsContainer key='res-charts'
                                      closeable={true}
                                      expandedMode={expanded===LO_VIEW.xyPlots}/>);

@@ -175,7 +175,8 @@ export function UploadPanel(props) {
             <FormPanel
                 groupKey={vFileKey}
                 onSubmit={(request) => onSearchSubmit(request)}
-                onCancel={dispatchHideDropDown}>
+                onCancel={dispatchHideDropDown}
+                help_id={'loadingTSV'}>
                 <FieldGroup groupKey={vFileKey} validatorFunc={null} keepState={true}>
                     <FileUpload
                         wrapperStyle = {wrapperStyle}

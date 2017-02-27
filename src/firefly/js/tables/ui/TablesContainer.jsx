@@ -37,13 +37,14 @@ export class TablesContainer extends Component {
     }
 
     nextState(props) {
-        var {mode, tbl_group, closeable} = props;
+        var {mode, tbl_group, closeable, tableOptions} = props;
         const expandedMode = props.expandedMode || getExpandedMode() === LO_VIEW.tables;
         if (expandedMode && mode !== 'standard') {
             tbl_group = TblUtil.getTblExpandedInfo().tbl_group;
         }
         const {tables, layout, active} = TblUtil.getTableGroup(tbl_group) || {};
-        return {closeable, tbl_group, expandedMode, tables, layout, active};
+
+        return {closeable, tbl_group, expandedMode, tables, tableOptions, layout, active};
     }
 
     storeUpdate() {
@@ -53,11 +54,11 @@ export class TablesContainer extends Component {
     }
 
     render() {
-        const {closeable, tbl_group, expandedMode, tables, layout, active} = this.state;
+        const {closeable, tbl_group, expandedMode, tables, tableOptions, layout, active} = this.state;
         if (expandedMode) {
-            return <ExpandedView {...{active, tables, layout, expandedMode, closeable, tbl_group}} />;
+            return <ExpandedView {...{active, tables, tableOptions, layout, expandedMode, closeable, tbl_group}} />;
         } else {
-            return isEmpty(tables) ? <div></div> : <StandardView {...{active, tables, expandedMode, tbl_group}} />;
+            return isEmpty(tables) ? <div></div> : <StandardView {...{active, tables, tableOptions, expandedMode, tbl_group}} />;
         }
     }
 }
@@ -99,7 +100,7 @@ function ExpandedView(props) {
 
 function StandardView(props) {
     // eslint-disable-next-line
-    const {tables, expandedMode, active, tbl_group} = props;
+    const {tables, tableOptions, expandedMode, active, tbl_group} = props;
 
     var activeIdx = Object.keys(tables).findIndex( (tbl_ui_id) => get(tables,[tbl_ui_id,'tbl_id']) === active);
     activeIdx = activeIdx === -1 ? 0 : activeIdx;
@@ -109,30 +110,33 @@ function StandardView(props) {
     };
     const keys = Object.keys(tables);
     if (keys.length === 1) {
-        return <SingleTable table={get(tables, [keys[0]])} expandedMode={expandedMode}/>;
+        return <SingleTable table={get(tables, [keys[0]])} expandedMode={expandedMode} tableOptions={tableOptions}/>;
     } else {
         return (
             <Tabs defaultSelected={activeIdx} onTabSelect={onTabSelect} resizable={true}>
-                {tablesAsTab(tables, expandedMode)}
+                {tablesAsTab(tables, tableOptions, expandedMode)}
             </Tabs>
         );
     }
 }
 
 // eslint-disable-next-line
-function SingleTable({table, expandedMode}) {
+function SingleTable({table, tableOptions, expandedMode}) {
     var {tbl_id, title, removable, tbl_ui_id, options={}} = table;
+
+    options = Object.assign({}, options, tableOptions);
 
     return  (
         <TablePanel key={tbl_id} border={true} {...{title, removable, tbl_id, tbl_ui_id, ...options, expandedMode}} />
     );
 }
 
-function tablesAsTab(tables, expandedMode) {
+function tablesAsTab(tables, tableOptions, expandedMode) {
 
     return tables &&
         Object.keys(tables).map( (key) => {
             var {tbl_id, title, removable, tbl_ui_id, options={}} = tables[key];
+            options = Object.assign({}, options, tableOptions);
             const onTabRemove = () => {
                 dispatchTableRemove(tbl_id);
             };

@@ -154,6 +154,7 @@ function InlineRightToolbarWrapper({visRoot,pv,dlAry}){
                 showExpand={true}
                 showToolbarButton={tb}
                 showDelete ={false}
+                help_id={'main1TSV.images'}
             />
         </div>
     );

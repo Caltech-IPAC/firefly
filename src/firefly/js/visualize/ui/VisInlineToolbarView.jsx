@@ -9,6 +9,7 @@ import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LayerButton} from './VisToolbarView.jsx';
 import {VisToolbar,showTools} from './VisToolbar.jsx';
 import {LayoutType, PopupPanel} from '../../ui/PopupPanel.jsx'
+import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {dispatchShowDialog,dispatchHideDialog} from '../../core/ComponentCntlr.js';
@@ -69,7 +70,7 @@ export class VisInlineToolbarView extends Component {
     // showToolsClick() {showTools();}
 
     render() {
-        const {pv, dlAry, showLayer, showExpand, showDelete, showToolbarButton}= this.props;
+        const {pv, dlAry, showLayer, showExpand, showDelete, showToolbarButton, help_id}= this.props;
 
         return (
             <div style={rS}>
@@ -81,7 +82,7 @@ export class VisInlineToolbarView extends Component {
                                horizontal={true}
                                visible={showToolbarButton && showExpand}
                                onClick={showTools}/>
-                
+                {help_id && <div style={{marginRight: 20}}><HelpIcon helpId={help_id}/></div>}
                 <ToolbarButton icon={OUTLINE_EXPAND}
                                tip='Expand this panel to take up a larger area'
                                horizontal={true}
