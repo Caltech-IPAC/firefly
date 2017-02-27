@@ -141,6 +141,7 @@ export function getDefaultXYPlotOptions(tbl_id) {
  * @param {string} params.chartId - if no chart id is specified table id is used as chart id
  * @param {XYPlotParams} params.xyPlotParams - XY plot options (column names, etc.)
  * @param {string} params.tblId - table id
+ * @param {string} params.help_id - help id
  * @param {Function} [params.dispatcher=flux.process] - only for special dispatching uses such as remote
  */
 export function loadXYPlot({chartId, xyPlotParams, help_id, tblId, dispatcher=flux.process}) {
