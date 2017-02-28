@@ -134,6 +134,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                         <DownloadButton>
                             <DownloadOptionPanel
                                 cutoutSize = {cutoutSize}
+                                title = {'Image Download Option'}
                                 dlParams = {{
                                     MaxBundleSize: 200*1024*1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
                                     FilePrefix: `${mission}_Files`,
@@ -208,7 +209,7 @@ class SettingBox extends Component {
                         groupKey={groupKey}
                         onSuccess={setViewerSuccess(periodState)}
                         onFail={setViewerFail()}
-                        text={'Period Finding'}
+                        text={'Find Period'}
                     />
                 </div>
                 <div style={{display: 'flex', flexDirection: 'row-reverse'}}>

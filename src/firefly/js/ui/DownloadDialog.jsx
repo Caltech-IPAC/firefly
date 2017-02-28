@@ -251,6 +251,7 @@ DownloadOptionPanel.propTypes = {
     tbl_id:     PropTypes.string,
     cutoutSize: PropTypes.string,
     help_id:    PropTypes.string,
+    title:      PropTypes.string,
     mask:       PropTypes.bool,
     style:      PropTypes.object,
     dlParams:   PropTypes.shape({
@@ -276,16 +277,17 @@ DownloadOptionPanel.defaultProps= {
  * @param {boolean} [show=true] show or hide this dialog
  */
 function showDownloadDialog(panel, show=true) {
+    let ttl = panel.props.title || DOWNLOAD_DIALOG_ID;
     if (show) {
         const content= (
-            <PopupPanel title={DOWNLOAD_DIALOG_ID} >
+            <PopupPanel title={ttl} >
                 {panel}
             </PopupPanel>
         );
-        DialogRootContainer.defineDialog(DOWNLOAD_DIALOG_ID, content);
-        dispatchShowDialog(DOWNLOAD_DIALOG_ID);
+        DialogRootContainer.defineDialog(ttl, content);
+        dispatchShowDialog(ttl);
     } else {
-        dispatchHideDialog(DOWNLOAD_DIALOG_ID);
+        dispatchHideDialog(ttl);
     }
 }
 

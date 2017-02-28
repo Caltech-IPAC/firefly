@@ -100,18 +100,18 @@ export const defaultOptionsReducer = (missionEntries, generalEntries) => {
         // cutoutsize: image cutout size
         const defValues = {
             [LC.META_TIME_CNAME]: Object.assign(getTypeData(LC.META_TIME_CNAME, '',
-                'time column name',
+                'Time column name',
                 'Time Column:', labelWidth),
                 {validator: null}),
             [LC.META_FLUX_CNAME]: Object.assign(getTypeData(LC.META_FLUX_CNAME, '',
-                'flux column name',
-                'Flux Column:', labelWidth),
+                'Value column name',
+                'Value Column:', labelWidth),
                 {validator: null}),
             [LC.META_TIME_NAMES]: Object.assign(getTypeData(LC.META_TIME_NAMES, '',
-                'time column suggestion'),
+                'Value column suggestion'),
                 {validator: null}),
             [LC.META_FLUX_NAMES]: Object.assign(getTypeData(LC.META_FLUX_NAMES, '',
-                'flux column suggestion'),
+                'Value column suggestion'),
                 {validator: null}),
             ['cutoutSize']: Object.assign(getTypeData('cutoutSize', '',
                 'image cutout size',
@@ -217,7 +217,7 @@ export function defaultRawTableRequest(converter, source) {
         META_INFO: {[LC.META_MISSION]: mission, timeCName},
         pageSize: LC.TABLE_PAGESIZE
     };
-    return makeFileRequest('Raw Table', source, null, options);
+    return makeFileRequest('Input Data', source, null, options);
 
 }
 

@@ -27,7 +27,7 @@ export const LC = {
     RAW_TABLE: 'raw_table',          // raw table id
     PHASE_FOLDED: 'phase_folded',    // phase folded table id
     PERIODOGRAM_TABLE: 'periodogram',// periodogram table id
-    PEAK_TABLE: 'peak_table',        // peak table id
+    PEAK_TABLE: 'peaks_table',        // peak table id
     PERIOD_CNAME: 'Period',          // period column
     POWER_CNAME: 'Power',            // power column
     PEAK_CNAME: 'Peak',              // peak column

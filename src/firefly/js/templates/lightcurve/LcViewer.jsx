@@ -176,14 +176,15 @@ export function UploadPanel(props) {
                 groupKey={vFileKey}
                 onSubmit={(request) => onSearchSubmit(request)}
                 onCancel={dispatchHideDropDown}
+                submitText={'Upload'}
                 help_id={'loadingTSV'}>
                 <FieldGroup groupKey={vFileKey} validatorFunc={null} keepState={true}>
                     <FileUpload
                         wrapperStyle = {wrapperStyle}
                         fieldKey = 'rawTblSource'
                         initialState= {{
-                            tooltip: 'Select a Light Curves Table file to upload',
-                            label: 'Raw Light Curves Table:'
+                            tooltip: 'Select a Time Series Table file to upload',
+                            label: 'Time Series Table:'
                         }}
                     />
                     <ListBoxInputField fieldKey='mission'
