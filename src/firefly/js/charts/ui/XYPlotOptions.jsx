@@ -52,7 +52,7 @@ function getUnit(colValStats, colname) {
 }
 */
 
-export function resultsSuccess(callback, flds, tblId) {
+export function resultsSuccess(callback, flds, tblId, zoom) {
     const xName = get(flds, ['x.columnOrExpr']);
     const yName = get(flds, ['y.columnOrExpr']);
     const xErr = get(flds, ['x.error']);
@@ -107,7 +107,8 @@ export function resultsSuccess(callback, flds, tblId) {
         shading: flds.shading || undefined,
         x : { columnOrExpr : xName, error: xErr, label : xLabel, unit : xUnit, options : xOptions},
         y : { columnOrExpr : yName, error: yErr, label : yLabel, unit : yUnit, options : yOptions},
-        tblId
+        tblId,
+        zoom,
     }, isUndefined);
 
     if (xErr || yErr) {
@@ -469,7 +470,7 @@ export class XYPlotOptions extends React.Component {
                     <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
                         <CompleteButton style={{flexGrow: 0}}
                                         groupKey={groupKey}
-                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds, xyPlotParams.tblId)}
+                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds, xyPlotParams.tblId, xyPlotParams.zoom)}
                                         onFail={resultsFail}
                                         text = 'Apply'
                         />
