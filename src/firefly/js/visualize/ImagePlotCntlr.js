@@ -27,8 +27,8 @@ import {dispatchAttachLayerToPlot,
         dispatchCreateDrawLayer,
         dispatchDetachLayerFromPlot,
         DRAWING_LAYER_KEY} from './DrawLayerCntlr.js';
-import {dispatchReplaceViewerItems, getExpandedViewerItemIds,
-         getMultiViewRoot, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
+import {dispatchReplaceViewerItems, getExpandedViewerItemIds, findViewerWithItemId,
+         getMultiViewRoot, EXPANDED_MODE_RESERVED, IMAGE} from './MultiViewCntlr.js';
 
 import {zoomActionCreator} from './ZoomUtil.js';
 import {plotImageMaskActionCreator,
@@ -854,15 +854,16 @@ function restoreDefaultsActionCreator(rawAction) {
             (pv)=> {
                 if (vr.plotRequestDefaults[pv.plotId]) {
                     const def= vr.plotRequestDefaults[pv.plotId];
+                    const viewerId= findViewerWithItemId(getMultiViewRoot(), pv.plotId, IMAGE);
                     if (def.threeColor) {
-                        dispatchPlotImage({plotId:pv.plotId, 
-                                           wpRequest:[def.redReq,def.greenReq,def.blueReq],
+                        dispatchPlotImage({plotId:pv.plotId,
+                                           viewerId, wpRequest:[def.redReq,def.greenReq,def.blueReq],
                                            threeColor:true,
                                            useContextModifications:false});
                     }
                     else {
                         dispatchPlotImage({plotId:pv.plotId, wpRequest:def.wpRequest,
-                                           useContextModifications:false});
+                                           viewerId, useContextModifications:false});
                     }
                 }
             });
