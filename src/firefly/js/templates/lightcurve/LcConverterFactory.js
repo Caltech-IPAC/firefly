@@ -13,6 +13,8 @@ import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableReques
 import {DefaultSettingBox, defaultOnNewRawTable, defaultOnFieldUpdate, defaultRawTableRequest} from './generic/DefaultMissionOptions.js';
 
 export const UNKNOWN_MISSION = 'generic';
+export const COORD_SYSTEM_OPTIONS = ['EQ_J2000', 'EQ_B1950', 'GALACTIC'];
+export const coordSysOptions = 'coordSysOptions';
 /**
  * A function to create a WebPlotRequest from the given parameters
  * @callback WebplotRequestCreator
@@ -101,15 +103,19 @@ const converters = {
     [UNKNOWN_MISSION]: {
         converterId: UNKNOWN_MISSION,
         defaultImageCount: 3,
-        defaultTimeCName: 'mjd',
-        defaultYCname: 'value',
+        defaultTimeCName: '',
+        defaultYCname: '',
         defaultYErrCname: '',
         missionName: '',
+        defaultCoordX: '',
+        defaultCoordY: '',
+        defaultCoordSys: '',
         MissionOptions: DefaultSettingBox,
         onNewRawTable: defaultOnNewRawTable,
         onFieldUpdate: defaultOnFieldUpdate,
         rawTableRequest: defaultRawTableRequest,
-        dataSource: 'img_url',
+        dataSource: '',
+        [coordSysOptions]: COORD_SYSTEM_OPTIONS,
         webplotRequestCreator: makeURLPlotRequest
     }
 };
@@ -119,7 +125,7 @@ export function getAllConverterIds() {
 }
 
 export function getConverter(converterId = UNKNOWN_MISSION) {
-    const converter = converterId && converters[converterId];
+    const converter = converters[converterId];
     if (!converter) {
         logError(`Unable to find dataset converter ${converterId}`);
         return;

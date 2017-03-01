@@ -39,7 +39,11 @@ export const LC = {
     META_TIME_CNAME: 'ts_timeCName',
     META_FLUX_CNAME: 'ts_fluxCName',
     META_ERR_CNAME: 'ts_errorCName',
+    META_COORD_XNAME: 'ts_coordXName',
+    META_COORD_YNAME: 'ts_coordYName',
+    META_COORD_SYS: 'ts_coordSys',
     META_URL_CNAME: 'datasource',
+    META_POS_COORD: 'positionCoordColumns',
 
     RESULT_PAGE: 'result',          // result layout
     PERIOD_PAGE: 'period',          // period finding layout with periodogram button
@@ -54,6 +58,7 @@ export const LC = {
     META_TIME_NAMES: 'ts_timeNames',
     META_FLUX_NAMES: 'ts_fluxNames',
     META_ERR_NAMES: 'ts_errorNames',
+
     META_MISSION: MetaConst.TS_DATASET,
 
     MISSION_DATA: 'missionEntries',
@@ -76,8 +81,33 @@ function getTimeColumn(layoutInfo) {
     return get(layoutInfo, ['missionEntries', LC.META_TIME_CNAME]);
 }
 
+function getRA(layoutInfo) {
+    return get(layoutInfo, [LC.MISSION_DATA, LC.META_COORD_XNAME]);
+}
+
+function getDEC(layoutInfo) {
+    return get(layoutInfo, [LC.MISSION_DATA, LC.META_COORD_YNAME]);
+}
+
+function getCoordSys(layoutInfo) {
+    return get(layoutInfo, [LC.MISSION_DATA, LC.META_COORD_SYS]);
+}
+
 function getCutoutSize(layoutInfo) {
     return get(layoutInfo, ['generalEntries', 'cutoutSize'], defaultCutout);
+}
+
+function getDataSource(layoutInfo) {
+    return get(layoutInfo, [LC.MISSION_DATA, LC.META_URL_CNAME]);
+}
+
+function getImagePlotParams(layoutInfo) {
+    return {timeCol: getTimeColumn(layoutInfo),
+            fluxCol: getFluxColumn(layoutInfo),
+            dataSource: getDataSource(layoutInfo),
+            ra: getRA(layoutInfo),
+            dec: getDEC(layoutInfo),
+            coordSys: getCoordSys(layoutInfo)};
 }
 
 export function getConverterData(layoutInfo=getLayouInfo()) {
@@ -226,6 +256,13 @@ function handleValueChange(layoutInfo, action) {
         if ((get(layoutInfo, [LC.GENERAL_DATA, fieldKey]) !== value) && (value > 0.0) ) {
             if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
                 layoutInfo = updateSet(layoutInfo, [LC.GENERAL_DATA, fieldKey], value);
+                setupImages(layoutInfo);
+            }
+        }
+    } else if ([LC.META_COORD_XNAME, LC.META_COORD_YNAME, LC.META_COORD_SYS].includes(fieldKey)) {
+        if (get(layoutInfo, [LC.MISSION_DATA, fieldKey]) !== value) {
+            if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
+                layoutInfo = updateSet(layoutInfo, [LC.MISSION_DATA, fieldKey], value);
                 setupImages(layoutInfo);
             }
         }
@@ -471,7 +508,7 @@ function handleChangeMultiViewLayout(layoutInfo) {
 export function setupImages(layoutInfo) {
     try {
         const activeTableId = get(layoutInfo, 'images.activeTableId');
-        const dataSource = get(layoutInfo, [LC.MISSION_DATA, LC.META_URL_CNAME]);
+
         const tableModel = getTblById(activeTableId);
         if (!tableModel || isNil(tableModel.highlightedRow) || get(tableModel, 'totalRows',0) < 1) return;
 
@@ -486,17 +523,16 @@ export function setupImages(layoutInfo) {
         const hasPlots= vr.plotViewAry.length>0;
         const newPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,count);
         const maxPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,LC.MAX_IMAGE_CNT);
-
         const cutoutSize = getCutoutSize(layoutInfo);
-        const fluxCol = getFluxColumn(layoutInfo);
-        const timeCol = getTimeColumn(layoutInfo);
 
         newPlotIdAry.forEach( (plotId) => {
             var pv = getPlotViewById(vr,plotId);
             const rowNum= Number(plotId.substring(plotIdRoot.length));
             const webPlotReq = converterData.webplotRequestCreator(tableModel,rowNum, cutoutSize,
-                                                                   {fluxCol, timeCol, dataSource});
-            if (webPlotReq && (!pv || get(pv, ['request', 'params', 'Title']) !== webPlotReq.getTitle()))  {
+                                                                   getImagePlotParams(layoutInfo));
+
+            if (webPlotReq && (!pv || get(pv, ['request', 'params', 'Title']) !== webPlotReq.getTitle() ||
+                                      get(pv, ['request', 'params', 'UserDesc']) !== webPlotReq.getUserDesc()))  {
                 dispatchPlotImage({
                     plotId, wpRequest: webPlotReq,
                     setNewPlotAsActive: false,
@@ -510,7 +546,6 @@ export function setupImages(layoutInfo) {
         dispatchReplaceViewerItems(LC.IMG_VIEWER_ID, newPlotIdAry);
         const newActivePlotId= plotIdRoot+tableModel.highlightedRow;
         dispatchChangeActivePlotView(newActivePlotId);
-
 
         vr= visRoot();
 
