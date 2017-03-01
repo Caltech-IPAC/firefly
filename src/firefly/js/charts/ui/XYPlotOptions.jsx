@@ -52,9 +52,13 @@ function getUnit(colValStats, colname) {
 }
 */
 
-export function resultsSuccess(callback, flds, tblId) {
+export function resultsSuccess(callback, flds, optionParameters) {
+    const tblId = optionParameters.tblId;
+
     const xName = get(flds, ['x.columnOrExpr']);
     const yName = get(flds, ['y.columnOrExpr']);
+
+    const zoom = (xName!==optionParameters.x.columnOrExpr || yName!==optionParameters.y.columnOrExpr)? undefined:optionParameters.zoom;
     const xErr = get(flds, ['x.error']);
     const yErr = get(flds, ['y.error']);
 
@@ -77,6 +81,7 @@ export function resultsSuccess(callback, flds, tblId) {
     let userSetBoundaries = omitBy({xMin, xMax, yMin, yMax}, isUndefined);
     userSetBoundaries = isEmpty(userSetBoundaries) ? undefined : userSetBoundaries;
     const xyRatio = parseFloat(flds.xyRatio);
+
 
     /*
       const axisParamsShape = PropTypes.shape({
@@ -107,7 +112,8 @@ export function resultsSuccess(callback, flds, tblId) {
         shading: flds.shading || undefined,
         x : { columnOrExpr : xName, error: xErr, label : xLabel, unit : xUnit, options : xOptions},
         y : { columnOrExpr : yName, error: yErr, label : yLabel, unit : yUnit, options : yOptions},
-        tblId
+        tblId,
+        zoom,
     }, isUndefined);
 
     if (xErr || yErr) {
@@ -453,6 +459,7 @@ export class XYPlotOptions extends React.Component {
     }
 
     render() {
+
         const { colValStats, groupKey, xyPlotParams, defaultParams, onOptionsSelected}= this.props;
 
         const largeTable = possibleDecimatedTable(colValStats);
@@ -461,6 +468,7 @@ export class XYPlotOptions extends React.Component {
         const yProps = {colValStats,params:xyPlotParams,groupKey,fldPath:'y.columnOrExpr',label:'Y',tooltip:'Y Axis',nullAllowed:false};
         const xErrProps = {colValStats,params:xyPlotParams,groupKey,fldPath:'x.error',label:'X Err',tooltip:'X Error',nullAllowed:true};
         const yErrProps = {colValStats,params:xyPlotParams,groupKey,fldPath:'y.error',label:'Y Err',tooltip:'Y Error',nullAllowed:true};
+
         return (
             <div style={{padding:'0 5px 7px'}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}
@@ -469,7 +477,7 @@ export class XYPlotOptions extends React.Component {
                     <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
                         <CompleteButton style={{flexGrow: 0}}
                                         groupKey={groupKey}
-                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds, xyPlotParams.tblId)}
+                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds, xyPlotParams)}
                                         onFail={resultsFail}
                                         text = 'Apply'
                         />

@@ -187,7 +187,24 @@ const getZoomSelection = function(params) {
     return (params.zoom ? params.zoom : {xMin:null, xMax: null, yMin:null, yMax:null});
 };
 
+
 const selFinite = (v1, v2) => {return Number.isFinite(v1) ? v1 : v2;};
+
+const selFiniteMin = (v1, v2) => {
+    if (Number.isFinite(v1) && Number.isFinite(v2)) {
+        return Math.min(v1, v2);
+    } else {
+        return selFinite(v1,v2);
+    }
+};
+
+const selFiniteMax = (v1, v2) => {
+    if (Number.isFinite(v1) && Number.isFinite(v2)) {
+        return Math.max(v1, v2);
+    } else {
+        return selFinite(v1,v2);
+    }
+};
 
 /*
  A symbol to represent decimated series. The size of the rectangle depends of the decimation unit
@@ -373,8 +390,8 @@ export class XYPlot extends React.Component {
                         if (!shallowequal(params.zoom, newParams.zoom) || !shallowequal(params.boundaries, newParams.boundaries)) {
                             const {xMin, xMax, yMin, yMax} = getZoomSelection(newParams);
                             const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = get(newParams, 'boundaries', {});
-                            Object.assign(xoptions, {min: selFinite(xMin, xDataMin), max: selFinite(xMax, xDataMax)});
-                            Object.assign(yoptions, {min: selFinite(yMin, yDataMin), max: selFinite(yMax, yDataMax)});
+                            Object.assign(xoptions, {min: selFiniteMax(xMin, xDataMin), max: selFiniteMin(xMax, xDataMax)});
+                            Object.assign(yoptions, {min: selFiniteMax(yMin, yDataMin), max: selFiniteMin(yMax, yDataMax)});
                             chart.get(MINMAX).setData([[xoptions.min, yoptions.min], [xoptions.max, yoptions.max]], false, false, false);
                         }
                         const xUpdate = Reflect.ownKeys(xoptions).length > 0;
@@ -793,8 +810,8 @@ export class XYPlot extends React.Component {
                 useHTML: Boolean((decimateKey))
             },
             xAxis: {
-                min: selFinite(xMin, xDataMin),
-                max: selFinite(xMax, xDataMax),
+                min: selFiniteMax(xMin, xDataMin),
+                max: selFiniteMin(xMax, xDataMax),
                 gridLineColor: '#e9e9e9',
                 gridLineWidth: xGrid ? 1 : 0,
                 lineColor: '#999',
@@ -805,8 +822,8 @@ export class XYPlot extends React.Component {
                 type: xLog ? 'logarithmic' : 'linear'
             },
             yAxis: {
-                min: selFinite(yMin,yDataMin),
-                max: selFinite(yMax,yDataMax),
+                min: selFiniteMax(yMin,yDataMin),
+                max: selFiniteMin(yMax,yDataMax),
                 gridLineColor: '#e9e9e9',
                 gridLineWidth: yGrid ? 1 : 0,
                 tickWidth: 1,
@@ -829,7 +846,7 @@ export class XYPlot extends React.Component {
                 name: MINMAX,
                 color: 'rgba(240, 240, 240, 0.1)',
                 marker: {radius: 1},
-                data: decimateKey? [[selFinite(xMin, xDataMin), selFinite(yMin,yDataMin)], [selFinite(xMax, xDataMax), selFinite(yMax,yDataMax)]]:[],
+                data: decimateKey? [[selFiniteMax(xMin, xDataMin), selFiniteMax(yMin,yDataMin)], [selFiniteMin(xMax, xDataMax), selFiniteMin(yMax,yDataMax)]]:[],
                 showInLegend: false,
                 enableMouseTracking: false,
                 states: {
