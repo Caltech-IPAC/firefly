@@ -16,11 +16,12 @@ import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
+import {validateFieldGroup} from '../../fieldGroup/FieldGroupUtils';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {makeTblRequest, makeLsstCatalogRequest, makeFileRequest, getCellValue} from '../../tables/TableUtil.js';
+import {makeTblRequest, makeLsstCatalogRequest} from '../../tables/TableUtil.js';
 import {CatalogConstraintsPanel, getTblId} from './CatalogConstraintsPanel.jsx';
 import {validateSql, validateConstraints} from './CatalogSelectViewPanel.jsx';
 import {LSSTImageSpatialType} from './LSSTImageSpatialType.jsx';
@@ -155,6 +156,7 @@ function onSearchSubmit(request) {
         const {cattype} = request[gkey];
 
         if (cattype === CATTYPE) {
+
             const catalogState = FieldGroupUtils.getGroupFields(gkeySpatial);
             const spatial = get(catalogState, ['spatial', 'value']);
 
@@ -167,7 +169,7 @@ function onSearchSubmit(request) {
                     showInfoPopup('Target is required');
                     return;
                 }
-                if (!get(catalogState, ['conesize', 'valid'])){
+                if (!get(catalogState, ['conesize', 'valid'])) {
                     showInfoPopup('invalid size');
                     return;
                 }
@@ -184,9 +186,17 @@ function onSearchSubmit(request) {
                 }
             }
             if (validateConstraints(gkey)) {
-                doCatalog(request, catalogState);
+                validateFieldGroup(gkeySpatial).then((valid) => {
+                    if (!valid) {
+                        showInfoPopup('invalid input');
+                        return;
+                    }
+                    doCatalog(request, catalogState);
+                });
             }
+
         } else if (cattype === IMAGETYPE) {
+
             const imageState = FieldGroupUtils.getGroupFields(gkeyImageSpatial);
             const wp = get(imageState, [ServerParams.USER_TARGET_WORLD_PT, 'value']);
             const intersect = get(imageState, ['intersect', 'value']);
@@ -203,7 +213,13 @@ function onSearchSubmit(request) {
                 }
             }
             if (validateConstraints(gkey)) {
-                doImage(request, imageState);
+                validateFieldGroup(gkeyImageSpatial).then((valid) => {
+                    if (!valid) {
+                        showInfoPopup('invalid input');
+                        return;
+                    }
+                    doImage(request, imageState);
+                });
             }
         }
     }
@@ -259,12 +275,14 @@ function addConstraintToQuery(tReq) {
 
 function doImage(request, imgPart) {
     const noSizeMethod = ['ALLSKY', 'CENTER'];
+    const noSubsizeMethod = ['ALLSKY', 'ENCLOSED'];
     const noTargetMethod = ['ALLSKY'];
     const {cattable} = request[gkey] || {};
     const spatial =  get(imgPart, ['spatial', 'value']);
     const intersect = get(imgPart, ['intersect', 'value']);
     const size = (!noSizeMethod.includes(intersect)) ? get(imgPart, ['size', 'value']) : '';
     const sizeUnit = 'deg';
+    let subsize = (!noSubsizeMethod.includes(intersect)) ? get(imgPart, ['subsize', 'value']) : ''; // in degrees
     const wp = (!noTargetMethod.includes(intersect)) && get(imgPart, [ServerParams.USER_TARGET_WORLD_PT,'value']);
 
     var title = `${projectName}-${cattable}-${capitalize(intersect)}`;
@@ -276,11 +294,17 @@ function doImage(request, imgPart) {
         title += `([${loc}])`;
     }
 
+    //TODO: remove when cutouts are supported for deepCoadd
+    if (subsize && cattable === 'DeepCooad') {
+        subsize = undefined;
+    }
+
     var tReq = makeLsstCatalogRequest(title, projectName, cattable,
                                       {[ServerParams.USER_TARGET_WORLD_PT]: wp,
                                        intersect,
                                        size,
                                        sizeUnit,
+                                       subsize,
                                        SearchMethod: spatial},
                                        {use: 'lsst_image'});
 
@@ -445,7 +469,7 @@ class LSSTCatalogSelectView extends Component {
         if (isEmpty(master)) {
             return (
                 <div style={{position: 'relative'}}>
-                    <div className='loading-mask'></div>
+                    <div className='loading-mask'/>
                 </div>
             );
         }
@@ -471,7 +495,7 @@ class LSSTCatalogSelectView extends Component {
     }
 }
 
-LSSTCatalogSelectView.propsType = {
+LSSTCatalogSelectView.propTypes = {
     cattable: PropTypes.string,
     cattype: PropTypes.string
 };
@@ -819,5 +843,6 @@ function fieldInit(tblId) {
         }
     );
 }
+
 
 

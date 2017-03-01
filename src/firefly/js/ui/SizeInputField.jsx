@@ -27,9 +27,9 @@ function toMaxFixed(floatNum, digits) {
 // output: size in degree (string foramt, no decimal digit limit), '': invalid input
 export const sizeToDeg = (sizestr, unit) => {
     if (sizestr && !validator.isFloat(sizestr)) {
-        return '';
+        return sizestr;
     }
-    return (sizestr) ? convertAngle(((unit) ? unit : 'deg'), 'deg', sizestr).toString() : '';
+    return (sizestr) ? toMaxFixed(convertAngle(((unit) ? unit : 'deg'), 'deg', sizestr), DECDIGIT).toString() : '';
 };
 
 // input: size in degree string format
@@ -45,8 +45,8 @@ var isSizeValid = (sizeDeg,  min, max) => (
 
 function updateSizeInfo(params) {
     var unit = params.unit ? params.unit : 'deg';
-    var valid = isSizeValid(params.value, params.min, params.max);
-    var value = (valid&&params.value) ? params.value  : '';
+    var valid = (params.nullAllowed && !params.value) || isSizeValid(params.value, params.min, params.max);
+    var value = params.value; //(valid&&params.value) ? params.value  : '';
     var displayValue = params.displayValue ? params.displayValue : sizeFromDeg(value, unit);
 
     return {unit, valid, value, displayValue};
@@ -77,7 +77,7 @@ function handleOnChange(ev, sizeInfo, params, fireValueChange) {
      var {unit, value, valid, displayValue} = Object.assign({}, params, sizeInfo);
      var min = () => sizeFromDeg(params.min, params.unit);
      var max = () => sizeFromDeg(params.max, params.unit);
-     var msg = valid? '': `${invalidSizeMsg}, ${min()}-(${max()}${getUnit(params.unit)}.`;
+     var msg = valid? '': `${invalidSizeMsg}, ${min()}-${max()}${getUnit(params.unit)}.`;
 
 
      fireValueChange({
@@ -125,10 +125,9 @@ class SizeInputFieldView extends Component {
 
     onSizeChange(ev) {
         var displayValue = get(ev, 'target.value');
-
         var tmpDeg = sizeToDeg(displayValue, this.state.unit);
-        var valid = isSizeValid(tmpDeg, this.props.min, this.props.max);
-        var value = (valid) ? tmpDeg: '';
+        var valid = (this.props.nullAllowed && !tmpDeg) || isSizeValid(tmpDeg, this.props.min, this.props.max);
+        var value = tmpDeg; //(valid) ? tmpDeg: '';
         var stateUpdate = Object.assign({}, this.state, { displayValue,  value, valid });
 
         this.setState({displayValue, value, valid});
@@ -146,7 +145,7 @@ class SizeInputFieldView extends Component {
             // try keep it if it is good for new unit
             if ( !valid ) {
                 value = sizeToDeg(displayValue, unit);
-                valid = isSizeValid(value, this.props.min, this.props.max);
+                valid = (this.props.nullAllowed && !value) || isSizeValid(value, this.props.min, this.props.max);
                 if (!valid) {
                     value = '';   // set back to empty string in case still invalid
                 }
@@ -167,7 +166,6 @@ class SizeInputFieldView extends Component {
         var minmsg = `${sizeFromDeg(min, unit)}`;
         var maxmsg = `${sizeFromDeg(max, unit)}`;
         var errmsg = `${invalidSizeMsg}, ${minmsg}-${maxmsg}${sign}.`;
-
 
         var showFeedback = () => {
             if (this.props.showFeedback) {
@@ -220,6 +218,7 @@ SizeInputFieldView.propTypes = {
     displayValue: PropTypes.string,
     labelWidth: PropTypes.number,
     label:    PropTypes.string,
+    nullAllowed: PropTypes.bool,
     onChange: PropTypes.func,
     value: PropTypes.string,
     valid: PropTypes.bool,

@@ -221,8 +221,8 @@ function handleValueChange(layoutInfo, action) {
     if (fieldKey === 'cutoutSize') { // cutoutsize changes
         if ((get(layoutInfo, [LC.GENERAL_DATA, fieldKey]) !== value) && (value > 0.0) ) {
             if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
-                setupImages(layoutInfo);
                 layoutInfo = updateSet(layoutInfo, [LC.GENERAL_DATA, fieldKey], value);
+                setupImages(layoutInfo);
             }
         }
     } else {
@@ -298,7 +298,7 @@ function handleRawTableLoad(layoutInfo, tblId) {
         return;
     }
 
-    const generalEntries = getGeneralEntries();
+    const generalEntries = get(layoutInfo, LC.GENERAL_DATA, getGeneralEntries());
     const missionEntries = converterData.onNewRawTable(rawTable, converterData, generalEntries);
 
     defaultFlux = get(missionEntries, LC.META_FLUX_CNAME);
