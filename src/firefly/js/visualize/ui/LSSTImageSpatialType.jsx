@@ -69,7 +69,7 @@ export class LSSTImageSpatialType extends Component {
                         />
                         {searchType === 'ALLSKY' && renderAllSkyNote()}
                         {searchType !== 'ALLSKY' && renderSearchRegion(searchType !== 'CENTER')}
-                        {searchType !== 'ALLSKY' && renderImageSize(searchType === 'CENTER' || searchType === 'COVERS', true)}
+                        {searchType !== 'ALLSKY' && renderImageSize(searchType === 'CENTER' || searchType === 'COVERS', false)}
                         {searchType !== 'ALLSKY' && renderMostCenter(searchType ==='CENTER' || searchType === 'COVERS', true)}
                     </InputGroup>
                 </div>
@@ -113,7 +113,7 @@ function renderImageSize(visible, disable) {
        <SizeInputFields fieldKey='subsize'
                         wrapperStyle={wrapper}
                         initialState= {{
-                                           value: '.1',
+                                           value: '', // default 0.1?
                                            tooltip: 'Please select an option',
                                            unit: 'arcsec',
                                            min:  1/3600,

@@ -6,6 +6,7 @@ import {RangeValues,STRETCH_LINEAR,SIGMA} from '../../../visualize/RangeValues.j
 import {WebPlotRequest} from '../../../visualize/WebPlotRequest.js';
 import {makeWorldPt} from '../../../visualize/Point.js';
 import {CoordinateSys} from '../../../visualize/CoordSys.js';
+import {ZoomType} from '../../../visualize/ZoomType.js';
 import {ServerRequest} from '../../../data/ServerRequest.js';
 
 import {addCommonReqParams} from '../LcConverterFactory.js';
@@ -25,31 +26,30 @@ export function makeLsstSdssPlotRequest(table, rowIdx, cutoutSize) {
     if (!id) {
         return; // error
     }
-    const run= getCellValue(table, rowIdx, 'run');
-    const field= getCellValue(table, rowIdx, 'field');
-    const camcol= getCellValue(table, rowIdx, 'camcol');
-
-    //const filterId= Number(getCellValue(table, rowIdx, 'filterId'));
+    const scienceCcdId = id.toString();
+    //const run= getCellValue(table, rowIdx, 'run');
+    //const field= getCellValue(table, rowIdx, 'field');
+    //const camcol= getCellValue(table, rowIdx, 'camcol');
     const filterName= getCellValue(table, rowIdx, 'filterName');
 
     // cutout center
     const ra = getCellValue(table, rowIdx, 'coord_ra');
     const decl = getCellValue(table, rowIdx, 'coord_decl');
 
-    // TODO: add support for cutouts
     const sr= new ServerRequest('LSSTImageSearch');
-    sr.setParam('run', `${run}`);
-    sr.setParam('camcol', `${camcol}`);
-    sr.setParam('field', `${field}`);
-    sr.setParam('filterName', `${filterName}`);
+    sr.setParam('imageType', 'calexp');
+    sr.setParam('imageId', scienceCcdId);
+    sr.setParam('ra', ra);
+    sr.setParam('dec', decl);
+    sr.setParam('subsize', `${cutoutSize}`); // in degrees
 
-    const scienceCcdId = id.toString();
     const title =scienceCcdId.substr(0, 4) + bandMap[filterName].toString() + scienceCcdId.substr(5, 10)+'-'+filterName+(cutoutSize ? ` size: ${cutoutSize}(deg)` : '');
-    const plot_desc = `lsst-sdss-${run}`;
+    const plot_desc = `lsst-sdss-${scienceCcdId}`;
 
     const r  = WebPlotRequest.makeProcessorRequest(sr, plot_desc);
     const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
     r.setInitialRangeValues(rangeValues);
+    r.setZoomType(ZoomType.TO_WIDTH);
 
     return addCommonReqParams(r, title, makeWorldPt(ra,decl,CoordinateSys.EQ_J2000));
 }
