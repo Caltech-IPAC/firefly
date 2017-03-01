@@ -6,6 +6,7 @@ import {convertAngle} from '../visualize/VisUtil.js';
 import {InputFieldView} from './InputFieldView.jsx';
 import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
 import Validate from '../util/Validate.js';
+import {toMaxFixed} from '../util/MathUtil.js';
 import validator from 'validator';
 
 const invalidSizeMsg = 'size is not set properly or size is out of range';
@@ -16,20 +17,13 @@ function getUnit(unit) {
     return unitSign[unit];
 }
 
-/*
- * remove trailing zero from toFixed result
- */
-function toMaxFixed(floatNum, digits) {
-    return parseFloat(floatNum.toFixed(digits));
-}
-
 // input: string format,
 // output: size in degree (string foramt, no decimal digit limit), '': invalid input
 export const sizeToDeg = (sizestr, unit) => {
     if (sizestr && !validator.isFloat(sizestr)) {
         return sizestr;
     }
-    return (sizestr) ? toMaxFixed(convertAngle(((unit) ? unit : 'deg'), 'deg', sizestr), DECDIGIT).toString() : '';
+    return (sizestr) ? convertAngle(((unit) ? unit : 'deg'), 'deg', sizestr).toString() : '';
 };
 
 // input: size in degree string format

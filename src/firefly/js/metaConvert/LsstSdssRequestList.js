@@ -8,6 +8,7 @@ import {ZoomType} from '../visualize/ZoomType.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {ServerParams} from '../data/ServerParams.js';
+import {toMaxFixed} from '../util/MathUtil.js';
 
 /**
  * This method returns a WebRequest object
@@ -17,6 +18,9 @@ import {ServerParams} from '../data/ServerParams.js';
  * @returns {WebPlotRequest} a web plot request
  */
 const bandMap= {u:0, g:1,r:2,i:3, z:4};
+
+const DECDIGIT = 4;
+
 function makeWebRequest(sr,  plotId, title) {
     const r  = WebPlotRequest.makeProcessorRequest(sr, 'lsst-sdss');
     const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
@@ -56,7 +60,8 @@ function makeCcdReqBuilder(table, rowIdx) {
     return (plotId, id, filterName) => {
         sr.setParam('filterName', `${filterName}`);
         const scienceCCCdId = id.toString();
-        const title =scienceCCCdId.substr(0, 4) + bandMap[filterName].toString() + scienceCCCdId.substr(5, 10)+'-'+filterName+(subsize ? ` size: ${subsize}(deg)` : '');
+        const title =scienceCCCdId.substr(0, 4) + bandMap[filterName].toString() + scienceCCCdId.substr(5, 10)+
+            '-'+filterName+(subsize ? ` size: ${toMaxFixed(subsize,DECDIGIT)}(deg)` : '');
         return makeWebRequest(sr, plotId,  title);
     };
 }
@@ -87,7 +92,7 @@ function makeCoadReqBuilder(table, rowIdx) {
     return (plotId, id, filterName) => {
         sr.setParam('filterName', `${filterName}`);
         const deepCoaddId = id + bandMap[filterName];
-        const title = deepCoaddId+'-'+filterName+(subsize ? ` size: ${subsize}(deg)` : '');
+        const title = deepCoaddId+'-'+filterName+(subsize ? ` size: ${toMaxFixed(subsize,DECDIGIT)}(deg)` : '');
         return makeWebRequest(sr, plotId,  title);
     };
 }

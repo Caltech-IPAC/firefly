@@ -1,13 +1,10 @@
-/**
- * @author tatianag
- */
 /*
  Get the format string for a number, given an interval between the adjacent numbers
  and the number of significant digits you'd like to preserve in this interval
  */
 export const getFormatString = function(range, numSigDigits) {
 
-    if (range==0) { return '0'; }
+    if (range===0) { return '0'; }
 
     var format; // string format
 
@@ -32,3 +29,9 @@ export const getFormatString = function(range, numSigDigits) {
     return format;
 };
 
+/*
+ * remove trailing zero from toFixed result
+ */
+export function toMaxFixed(floatNum, digits) {
+    return parseFloat(Number(floatNum).toFixed(digits));
+}
