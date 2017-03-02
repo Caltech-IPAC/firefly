@@ -1,21 +1,19 @@
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {get, has, isEmpty, set} from 'lodash';
-import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
-import {dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
-import {ValidationField} from '../../ui/ValidationField.jsx';
-import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
-import {makeFileRequest} from '../../tables/TableUtil.js';
-import {sortInfoString} from '../../tables/SortInfo.js';
-import {ReadOnlyText, getTypeData} from './LcUtil.jsx';
-import {LC, getViewerGroupKey} from './LcManager.js';
-import {getMissionName} from './LcConverterFactory.js';
+import {FieldGroup} from '../../../ui/FieldGroup.jsx';
+import {ValidationField} from '../../../ui/ValidationField.jsx';
+import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
+import {makeFileRequest, getTblById} from '../../../tables/TableUtil.js';
+import {sortInfoString} from '../../../tables/SortInfo.js';
+import {ReadOnlyText, getTypeData} from '../LcUtil.jsx';
+import {LC, getViewerGroupKey} from '../LcManager.js';
+import {getMissionName} from '../LcConverterFactory.js';
 
 
 const labelWidth = 80;
 
-export class DefaultSettingBox extends Component {
+export class WiseSettingBox extends Component {
     constructor(props) {
         super(props);
     }
@@ -57,11 +55,11 @@ export class DefaultSettingBox extends Component {
 
         const groupKey = getViewerGroupKey(missionEntries);
         const converterId = get(missionEntries, LC.META_MISSION);
-        const missionName = getMissionName(converterId);
+        var   missionName = getMissionName(converterId) || 'Mission';
 
         return (
             <FieldGroup groupKey={groupKey}
-                        reducerFunc={defaultOptionsReducer(missionEntries, generalEntries)} keepState={true}>
+                        reducerFunc={wiseOptionsReducer(missionEntries, generalEntries)} keepState={true}>
                 <div style={{display: 'flex', alignItems: 'flex-end'}} >
                     <div >
                         <ReadOnlyText label='Mission:' content={missionName}
@@ -79,13 +77,13 @@ export class DefaultSettingBox extends Component {
     }
 }
 
-DefaultSettingBox.propTypes = {
+WiseSettingBox.propTypes = {
     generalEntries: PropTypes.object,
     missionEntries: PropTypes.object
 };
 
 
-export const defaultOptionsReducer = (missionEntries, generalEntries) => {
+export const wiseOptionsReducer = (missionEntries, generalEntries) => {
     return (inFields, action) => {
         if (inFields) {
             return inFields;
@@ -100,18 +98,18 @@ export const defaultOptionsReducer = (missionEntries, generalEntries) => {
         // cutoutsize: image cutout size
         const defValues = {
             [LC.META_TIME_CNAME]: Object.assign(getTypeData(LC.META_TIME_CNAME, '',
-                'Time column name',
+                'time column name',
                 'Time Column:', labelWidth),
                 {validator: null}),
             [LC.META_FLUX_CNAME]: Object.assign(getTypeData(LC.META_FLUX_CNAME, '',
-                'Value column name',
-                'Value Column:', labelWidth),
+                'flux column name',
+                'Flux Column:', labelWidth),
                 {validator: null}),
             [LC.META_TIME_NAMES]: Object.assign(getTypeData(LC.META_TIME_NAMES, '',
-                'Value column suggestion'),
+                'time column suggestion'),
                 {validator: null}),
             [LC.META_FLUX_NAMES]: Object.assign(getTypeData(LC.META_FLUX_NAMES, '',
-                'Value column suggestion'),
+                'flux column suggestion'),
                 {validator: null}),
             ['cutoutSize']: Object.assign(getTypeData('cutoutSize', '',
                 'image cutout size',
@@ -125,24 +123,18 @@ export const defaultOptionsReducer = (missionEntries, generalEntries) => {
 
         const missionKeys = [LC.META_TIME_CNAME, LC.META_FLUX_CNAME];
         const missionListKeys = [LC.META_TIME_NAMES, LC.META_FLUX_NAMES];
+        const validators = getFieldValidators(missionEntries, getTblById(LC.RAW_TABLE));
 
         missionListKeys.forEach((key) => {
             set(defV, [key, 'value'], get(missionEntries, key, []));
         });
 
         // set value and validator
-        missionKeys.forEach((key, idx) => {
+        missionKeys.forEach((key) => {
             set(defV, [key, 'value'], get(missionEntries, key, ''));
-            set(defV, [key, 'validator'], (val) => {
-                let retVal = {valid: true, message: ''};
-                        const cols = get(missionEntries, missionListKeys[idx], []);
-
-                if (cols.length !== 0 && !cols.includes(val)) {
-                    retVal = {valid: false, message: `${val} is not a valid column name`};
-                }
-
-                return retVal;
-            });
+            if (has(validators, key)) {
+                set(defV, [key, 'validator'], validators[key]);
+            }
         });
         Object.keys(generalEntries).forEach((key) => {
             set(defV, [key, 'value'], get(generalEntries, key, ''));
@@ -172,7 +164,7 @@ function getFieldValidators(missionEntries) {
         return all;
     }, {});
 }
-
+/*
 function setFields(missionEntries, generalEntries) {
     const groupKey = getViewerGroupKey(missionEntries);
     const fields = FieldGroupUtils.getGroupFields(groupKey);
@@ -189,10 +181,10 @@ function setFields(missionEntries, generalEntries) {
         dispatchMultiValueChange(groupKey, initState);
     }
 }
+*/
 
 
-
-export function defaultOnNewRawTable(rawTable, converterData, generalEntries) {
+export function wiseOnNewRawTable(rawTable, converterData) {
     const metaInfo = rawTable && rawTable.tableMeta;
     const missionEntries = {
         [LC.META_MISSION]: converterData.converterId,
@@ -203,11 +195,10 @@ export function defaultOnNewRawTable(rawTable, converterData, generalEntries) {
         [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, converterData.yNames),
         [LC.META_ERR_NAMES]: get(metaInfo, LC.META_ERR_NAMES, converterData.yErrNames)
     };
-    setFields(missionEntries, generalEntries);
     return missionEntries;
 }
 
-export function defaultRawTableRequest(converter, source) {
+export function wiseRawTableRequest(converter, source) {
     const timeCName = converter.defaultTimeCName;
     const mission = converter.converterId;
     const options = {
@@ -217,11 +208,11 @@ export function defaultRawTableRequest(converter, source) {
         META_INFO: {[LC.META_MISSION]: mission, timeCName},
         pageSize: LC.TABLE_PAGESIZE
     };
-    return makeFileRequest('Input Data', source, null, options);
+    return makeFileRequest('Raw Table', source, null, options);
 
 }
 
-export function defaultOnFieldUpdate(fieldKey, value) {
+export function wiseOnFieldUpdate(fieldKey, value) {
     if ([LC.META_TIME_CNAME, LC.META_FLUX_CNAME, LC.META_ERR_CNAME].includes(fieldKey)) {
         return {[fieldKey] : value};
     }

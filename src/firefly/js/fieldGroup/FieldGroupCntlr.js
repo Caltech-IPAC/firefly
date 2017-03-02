@@ -118,9 +118,9 @@ export function dispatchInitFieldGroup(groupKey,keepState=false,
  */
 export function dispatchMountFieldGroup(groupKey, mounted, keepState= false, 
                                         initValues=null, reducerFunc= null,
-                                        actionTypes=[], wrapperGroupKey) {
+                                        actionTypes=[], wrapperGroupKey, forceUnmount = false) {
     flux.process({type: MOUNT_FIELD_GROUP, payload: {groupKey, mounted, initValues, reducerFunc, 
-                                                     actionTypes, keepState, wrapperGroupKey} });
+                                                     actionTypes, keepState, wrapperGroupKey, forceUnmount} });
 }
 
 
@@ -340,7 +340,7 @@ function initFieldGroup(state,action) {
 }
 
 const updateFieldGroupMount= function(state,action) {
-    var {groupKey, mounted, initValues, wrapperGroupKey}= action.payload;
+    var {groupKey, mounted, initValues, wrapperGroupKey, forceUnmount}= action.payload;
     if (!groupKey) return state;
 
     var retState= state;
@@ -365,7 +365,7 @@ const updateFieldGroupMount= function(state,action) {
     else {
         if (isFieldGroupDefined(state,groupKey)) {
             var fg= findAndCloneFieldGroup(state, groupKey, {mounted:false});
-            if (!fg.keepState) fg.fields= null;
+            if (!fg.keepState || forceUnmount) fg.fields= null;
             retState= clone(state,{[groupKey]:fg});
         }
     }

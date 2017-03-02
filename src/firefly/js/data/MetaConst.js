@@ -19,5 +19,6 @@ export const MetaConst = {
     POSITION_COORD: 'positionCoord',
     DATASET_CONVERTER : 'datasetInfoConverterId',
     DEFAULT_COLOR : 'DEFAULT_COLOR',
-    DATA_SOURCE : 'DataSource'
+    DATA_SOURCE : 'DataSource',
+    TS_DATASET : 'TSDatasetId'
 };

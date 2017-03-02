@@ -1,9 +1,7 @@
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {get, has, isEmpty, set, omit} from 'lodash';
+import {get, isEmpty, set, omit} from 'lodash';
 import {getLayouInfo, dispatchUpdateLayoutInfo} from '../../../core/LayoutCntlr.js';
-import FieldGroupUtils from '../../../fieldGroup/FieldGroupUtils';
-import {dispatchMultiValueChange} from '../../../fieldGroup/FieldGroupCntlr.js';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
 import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
@@ -136,7 +134,7 @@ export const lsstSdssReducer = (missionEntries, generalEntries) => {
 };
 
 
-
+/*
 function setFields(missionEntries, generalEntries) {
     const groupKey = getViewerGroupKey(missionEntries);
     const fields = FieldGroupUtils.getGroupFields(groupKey);
@@ -152,10 +150,10 @@ function setFields(missionEntries, generalEntries) {
         dispatchMultiValueChange(groupKey, initState);
     }
 }
+*/
 
 
-
-export function lsstSdssOnNewRawTable(rawTable, converterData, generalEntries) {
+export function lsstSdssOnNewRawTable(rawTable, converterData) {
     const metaInfo = rawTable && rawTable.tableMeta;
     const missionEntries = {
         [LC.META_MISSION]: converterData.converterId,
@@ -168,7 +166,6 @@ export function lsstSdssOnNewRawTable(rawTable, converterData, generalEntries) {
         band: get(metaInfo, 'band', 'u'),
         rawTableSource: get(metaInfo, 'rawTableSource')
     };
-    setFields(missionEntries, generalEntries);
     return missionEntries;
 }
 
@@ -180,7 +177,6 @@ export function lsstSdssOnFieldUpdate(fieldKey, value) {
     if (fieldKey === 'band' || fieldKey === LC.META_TIME_CNAME) {
         removeTablesFromGroup();
         removeTablesFromGroup(LC.PERIODOGRAM_GROUP);
-        var layoutInfo = getLayouInfo();
         dispatchUpdateLayoutInfo(Object.assign({}, layoutInfo, {showTables: false, showXyPlots: false, fullRawTable: null, missionEntries: {}}));  // clear full rawtable
         const treq = makeRawTableRequest(newMissionEntries);
         dispatchTableSearch(treq, {removable: true});

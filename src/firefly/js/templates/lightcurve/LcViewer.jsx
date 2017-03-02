@@ -5,11 +5,11 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {pickBy, get} from 'lodash';
+import {pickBy, get, capitalize, has} from 'lodash';
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
 import {dispatchHideDropDown, getLayouInfo, SHOW_DROPDOWN,  dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
-import {lcManager, LC, removeTablesFromGroup, } from './LcManager.js';
+import {lcManager, LC, removeTablesFromGroup, getViewerGroupKey} from './LcManager.js';
 import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
 import {LcResult} from './LcResult.jsx';
 import {LcPeriod} from './LcPeriod.jsx';
@@ -26,6 +26,7 @@ import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
+import {dispatchMountFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
 
 
 const vFileKey = LC.FG_FILE_FINDER;
@@ -125,8 +126,7 @@ LcViewer.propTypes = {
     altAppIcon: PropTypes.string,
     footer: PropTypes.element,
     dropdownPanels: PropTypes.arrayOf(PropTypes.element),
-    style: PropTypes.object,
-    appTitle: PropTypes.string
+    style: PropTypes.object
 };
 
 LcViewer.defaultProps = {
@@ -169,7 +169,7 @@ BannerSection.propTypes = {
 export function UploadPanel(props) {
     const wrapperStyle = {margin: '5px 0'};
 
-    const options = getAllConverterIds().map((id) => { return {label: getMissionName(id), value: id}; });
+    const options = getAllConverterIds().map((id) => { return {label: getMissionName(id)||capitalize(id), value: id}; });
     return (
         <div style={{padding: 10}}>
             <FormPanel
@@ -215,11 +215,18 @@ function onSearchSubmit(request) {
     if ( request.rawTblSource ){
         removeTablesFromGroup();
         removeTablesFromGroup(LC.PERIODOGRAM_GROUP);
+
         var layoutInfo = getLayouInfo();
 
-        dispatchUpdateLayoutInfo(Object.assign({}, layoutInfo, {fullRawTable: null}));  // clear full rawtable
-        const {mission} = request;
-        const converter = getConverter(mission);
+        /* remove current viewer field group,
+           it is better to put this part into lcManager's handleRawTableLoad when that works solely for raw table load */
+        if (has(layoutInfo, [LC.MISSION_DATA])) {
+            dispatchMountFieldGroup(getViewerGroupKey(get(layoutInfo, LC.MISSION_DATA)), false, false,
+                                                      null, null, [], undefined, true);
+        }
+
+        dispatchUpdateLayoutInfo(Object.assign({}, layoutInfo, {fullRawTable: null}));  // clear full raw table
+        const converter = getConverter(request.mission);
         if (!converter) return;
 
         const treq = converter.rawTableRequest(converter, request.rawTblSource);
