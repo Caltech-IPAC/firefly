@@ -86,7 +86,7 @@ const converters = {
     },
     'lsst_sdss': {
         converterId: 'lsst_sdss',
-        defaultImageCount: 1,
+        defaultImageCount: 3,
         defaultTimeCName: 'exposure_time_mid',
         defaultYCname: 'mag',
         defaultYErrCname: '',

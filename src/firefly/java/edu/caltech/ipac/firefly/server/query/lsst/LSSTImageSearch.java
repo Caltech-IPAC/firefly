@@ -1,23 +1,27 @@
 package edu.caltech.ipac.firefly.server.query.lsst;
 
 
-import edu.caltech.ipac.firefly.data.*;
-import edu.caltech.ipac.firefly.server.query.*;
+import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
+import edu.caltech.ipac.firefly.server.query.URLFileInfoProcessor;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import java.io.*;
+import edu.caltech.ipac.firefly.util.MathUtil;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.visualize.plot.Plot;
+import edu.caltech.ipac.visualize.plot.WorldPt;
+
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 
 
 /**
  * Created by zhang on 10/12/16.
- * This search processor is searching the MetaData (or Data Definition from DAX database, then save to a
- * IpacTable file.
+ * This search processor is to get LSST images.
  */
 @SearchProcessorImpl(id = "LSSTImageSearch")
-/**
- * Created by zhang on 11/3/16.
- */
 public class LSSTImageSearch extends URLFileInfoProcessor {
     private static final Logger.LoggerImpl logger = Logger.getLogger();
     private static String DAX_URL="http://lsst-qserv-dax01.ncsa.illinois.edu:5000/image/v0/";
@@ -30,17 +34,69 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
      */
     @Override
     public URL getURL(ServerRequest sr) throws MalformedURLException {
+        String subsize =  sr.getParam("subsize");
+        boolean isCutout = subsize != null;
 
         try {
-
-            if (sr.getParam("tract") != null) {
-                return getURLForDeepCoadd(sr);
+            if (isCutout) {
+                return getURLForCutout(sr);
             } else {
-                return  getURLForCCDs(sr);
+                if (sr.getParam("tract") != null) {
+                    return getURLForDeepCoadd(sr);
+                } else {
+                    return getURLForCCDs(sr);
+                }
             }
         }
         catch (Exception e){
             throw new MalformedURLException(e.getMessage());
+        }
+    }
+
+    /**
+     *
+     * @param request - ServerRequest which contains imageType, imageId, ra, dec, widthDeg, heightDeg
+     * @return URL
+     * @throws IOException
+     * @throws DataAccessException
+     */
+    private URL getURLForCutout(ServerRequest request) throws IOException, DataAccessException {
+        // ra, dec, and subsize are in degrees
+        validateRequiredParams(request, new String[]{"imageType", "imageId", "subsize"});
+
+        String ra = request.getParam("ra");
+        String dec = request.getParam("dec");
+        if (ra == null || dec == null) {
+            String userTargetWorldPt = request.getParam("UserTargetWorldPt");
+            if (userTargetWorldPt == null) {
+                throw new DataAccessException("No position is specified to get a cutout");
+            }
+            WorldPt pt = WorldPt.parse(userTargetWorldPt);
+            if (pt != null) {
+                pt = Plot.convert(pt, CoordinateSys.EQ_J2000);
+                ra = "" + pt.getLon();
+                dec = "" + pt.getLat();
+            }
+        }
+
+        String imageType = request.getParam("imageType"); // calexp
+        if (!imageType.equals("calexp")) {
+            throw new DataAccessException("Only calexp cutouts are supported at the moment");
+        }
+        String imageId = request.getParam("imageId");
+
+        double subsizeArcSec = MathUtil.convert(MathUtil.Units.DEGREE, MathUtil.Units.ARCSEC, request.getDoubleParam("subsize"));
+        return new URL(DAX_URL+imageType+"/"+imageId+"/cutout?ra="+ra+"&dec="+dec+"&widthAng="+subsizeArcSec+"&heightAng="+subsizeArcSec);
+    }
+
+    private void validateRequiredParams(ServerRequest request, String [] requiredParams) throws DataAccessException {
+        ArrayList<String> missing = new ArrayList<>();
+        for (String p : requiredParams) {
+            if (request.getParam(p) == null)
+                missing.add(p);
+        }
+        if (missing.size() > 0) {
+            throw new DataAccessException("Required parameters missing: "+String.join(",", missing));
         }
     }
 
@@ -67,8 +123,8 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
     }
     /**
      * This method uses a set of fields to search for image
-     * @param request
-     * @return
+     * @param request server request
+     * @return URL
      * @throws IOException
      * @throws DataAccessException
      */

@@ -347,9 +347,9 @@ function handleRawTableLoad(layoutInfo, tblId) {
         return;
     }
 
-    const generalEntries = getGeneralEntries();
+    const generalEntries = get(layoutInfo, LC.GENERAL_DATA, getGeneralEntries());
     const missionEntries = converterData.onNewRawTable(rawTable, converterData);
-
+    
     return Object.assign(layoutInfo, {missionEntries, generalEntries});
 }
 
