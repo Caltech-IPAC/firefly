@@ -58,7 +58,7 @@ export function resultsSuccess(callback, flds, optionParameters) {
     const xName = get(flds, ['x.columnOrExpr']);
     const yName = get(flds, ['y.columnOrExpr']);
 
-    const zoom = (xName!==optionParameters.x.columnOrExpr || yName!==optionParameters.y.columnOrExpr)? undefined:optionParameters.zoom;
+    const zoom = (xName!== get(optionParameters, ['x','columnOrExpr']) || yName!==get(optionParameters, ['y','columnOrExpr']))? undefined:optionParameters.zoom;
     const xErr = get(flds, ['x.error']);
     const yErr = get(flds, ['y.error']);
 
