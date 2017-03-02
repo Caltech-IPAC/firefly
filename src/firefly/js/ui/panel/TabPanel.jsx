@@ -195,8 +195,8 @@ export class Tab extends Component {
 
         return (
             <li className={tabClassName} onClick={() => onSelect(id,name)}>
-                <div>
-                    <div style={textStyle} className='text-ellipsis' title={name}>
+                <div style={{height: '100%'}}>
+                    <div style={{...textStyle, height: '100%'}} className='text-ellipsis' title={name}>
                          {name}
                     </div>
                     {removable &&

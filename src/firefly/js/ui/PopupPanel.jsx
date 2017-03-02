@@ -146,20 +146,20 @@ export var PopupPanel= React.createClass(
                      onMouseLeave={this.onMouseLeave}
                 >
                     <div className={'standard-border'}>
-                        <div style={{position:'relative', height:'14px', width:'100%', cursor:'default'}}
+                        <div style={{position:'relative', height:'16px', width:'100%', cursor:'default'}}
                              className={'title-bar title-color popup-panel-title-background'}
                             onTouchStart={this.dialogMoveStart}
                             onTouchMove={this.dialogMove}
                             onTouchEnd={this.dialogMoveEnd}
                             onMouseDownCapture={this.dialogMoveStart}>
                             <div ref={(c) => this.titleBarRef=c}
-                                 style= {{position:'absolute', left:'0px', top:'0px',width:'100%', padding: '3px 0 3px 10px'}}
+                                 style= {{position:'absolute', left: 0, top: 0, bottom: 0, width:'100%', padding: '3px 0 3px 10px'}}
                                  onMouseDownCapture={this.dialogMoveStart}
                                  onTouchStart={this.dialogMoveStart}
                                  onTouchMove={this.dialogMove}
                                  onTouchEnd={this.dialogMoveEnd}
                                  className={'title-label'} >
-                                <div className={'text-ellipsis'} style={{width:'80%'}}>
+                                <div className={'text-ellipsis'} style={{width:'80%', height: '100%'}}>
                                     {title}
                                 </div>
                             </div>
