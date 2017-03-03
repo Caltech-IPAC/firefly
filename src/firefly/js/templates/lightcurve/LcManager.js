@@ -1,13 +1,13 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, isEmpty, isNil, set} from 'lodash';
+import {get, has, isEmpty, isNil, set, cloneDeep} from 'lodash';
 import {take} from 'redux-saga/effects';
 import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
         dispatchUpdateLayoutInfo, dropDownHandler} from '../../core/LayoutCntlr.js';
-import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT,
-        dispatchTableRemove, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
-import {getCellValue, getTblById, getTblIdsByGroup, findIndex, getActiveTableId} from '../../tables/TableUtil.js';
+import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, TABLE_SEARCH, TABLE_FETCH, TABLE_FILTER,
+        dispatchTableRemove, dispatchTableHighlight, dispatchTableFetch} from '../../tables/TablesCntlr.js';
+import {getCellValue, getTblById, getTblIdsByGroup, getActiveTableId, smartMerge} from '../../tables/TableUtil.js';
 import {dispatchTableReplace} from '../../tables/TablesCntlr.js';
 import {updateSet, updateMerge, logError} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {dispatchPlotImage, visRoot, dispatchDeletePlotView,
@@ -21,7 +21,10 @@ import {VALUE_CHANGE, dispatchValueChange, dispatchMultiValueChange} from '../..
 import {MetaConst} from '../../data/MetaConst.js';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {CHART_ADD, getChartDataElement} from '../../charts/ChartsCntlr.js';
-import {getConverter, UNKNOWN_MISSION} from './LcConverterFactory.js';
+import {getConverter} from './LcConverterFactory.js';
+import {sortInfoString} from '../../tables/SortInfo.js';
+import {makeMissionEntries, keepHighlightedRowSynced} from './LcUtil.jsx';
+import {dispatchMountFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
 
 export const LC = {
     RAW_TABLE: 'raw_table',          // raw table id
@@ -156,7 +159,7 @@ export function* lcManager(params={}) {
 
     while (true) {
         const action = yield take([
-            TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, SHOW_DROPDOWN, SET_LAYOUT_MODE,
+            TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, TABLE_SEARCH, SHOW_DROPDOWN, SET_LAYOUT_MODE,
             CHANGE_VIEWER_LAYOUT, VALUE_CHANGE, ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW, CHART_ADD
         ]);
 
@@ -182,6 +185,9 @@ export function* lcManager(params={}) {
 
         newLayoutInfo = dropDownHandler(newLayoutInfo, action);
         switch (action.type) {
+            case TABLE_SEARCH:
+                newLayoutInfo = handleNewSearch(newLayoutInfo, action);
+                break;
             case TBL_RESULTS_ADDED:
             case TABLE_LOADED:
                 newLayoutInfo = handleTableLoad(newLayoutInfo, action);
@@ -196,10 +202,10 @@ export function* lcManager(params={}) {
                 newLayoutInfo = handleTableActive(newLayoutInfo, action);
                 break;
             case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
-                newLayoutInfo = handlePlotActive(newLayoutInfo, action.payload.plotId);
+                newLayoutInfo = handlePlotActive(newLayoutInfo, action);
                 break;
             case CHART_ADD:
-                 newLayoutInfo = handleAddChart(newLayoutInfo, action.payload.chartId);
+                 newLayoutInfo = handleAddChart(newLayoutInfo, action);
                 break;
             case VALUE_CHANGE:
                 newLayoutInfo = handleValueChange(newLayoutInfo, action);
@@ -250,7 +256,7 @@ function updatePhaseTableChart(flux) {
 function handleValueChange(layoutInfo, action) {
     var {fieldKey, value, valid} = action.payload;
 
-    if (!valid) { return; }
+    if (!valid) { return layoutInfo; }
 
     if (fieldKey === 'cutoutSize') { // cutoutsize changes
         if ((get(layoutInfo, [LC.GENERAL_DATA, fieldKey]) !== value) && (value > 0.0) ) {
@@ -268,7 +274,7 @@ function handleValueChange(layoutInfo, action) {
         }
     } else {
         const converterData = getConverterData(layoutInfo);
-        if (!converterData) {return;}
+        if (!converterData) {return layoutInfo;}
 
         const updates = converterData.onFieldUpdate(fieldKey, value);
         if (isEmpty(updates)) {
@@ -306,7 +312,8 @@ function handleValueChange(layoutInfo, action) {
     return layoutInfo;
 }
 
-function handleAddChart(layoutInfo, chartId) {
+function handleAddChart(layoutInfo, action) {
+    const chartId = action.payload.chartId;
     if (chartId === LC.PHASE_FOLDED) {
         if (get(layoutInfo, ['displaMode']) !== 'result') {
             layoutInfo = updateSet(layoutInfo, ['displayMode'], 'result');
@@ -321,13 +328,39 @@ function handleAddChart(layoutInfo, chartId) {
  * @param plotId
  * @returns {*}
  */
-function handlePlotActive(layoutInfo, plotId) {
+function handlePlotActive(layoutInfo, action) {
+    const plotId = action.payload.plotId;
     const tableId = get(layoutInfo, ['images', 'activeTableId']);
 
     var rowNum= Number(plotId.substring(plotIdRoot.length));
     dispatchTableHighlight(tableId, rowNum);
     return layoutInfo;
 }
+
+function clearResults(layoutInfo) {
+    removeTablesFromGroup();
+    removeTablesFromGroup(LC.PERIODOGRAM_GROUP);
+
+    if (has(layoutInfo, [LC.MISSION_DATA])) {
+        dispatchMountFieldGroup(getViewerGroupKey(get(layoutInfo, LC.MISSION_DATA)), false, false,
+            null, null, [], undefined, true);
+    }
+    return smartMerge(layoutInfo, {displayMode: LC.RESULT_PAGE, periodState: LC.PERIOD_PAGE, missionEntries: null, generalEntries: null, fullRawTable:null});
+}
+
+/**
+ * handle logic when a new search is initiated.
+ * @param {LayoutInfo} layoutInfo layoutInfo
+ * @param {string} action
+ * @returns {LayoutInfo} the new layoutInfo
+ */
+function handleNewSearch(layoutInfo, action) {
+    const tbl_id = get(action, 'payload.request.META_INFO.tbl_id');
+    if (tbl_id === LC.RAW_TABLE) {
+        return clearResults(layoutInfo);
+    }
+}
+
 /*
  * field group, LC_VIEWER_FINDER, includes fieldKey from missionEntries & generalEntries
  * missionEntries & generalEntries is mission specific, more detail to be fixed after raw table metadata is defined. -- TO DO
@@ -336,21 +369,34 @@ function handleRawTableLoad(layoutInfo, tblId) {
     const rawTable = getTblById(tblId);
     if (rawTable.error) {
         logError('Table load error: ' + rawTable.error);
-        return;
+        return layoutInfo;
     }
 
-    const metaInfo = rawTable && rawTable.tableMeta;
-    const converterId = get(metaInfo, LC.META_MISSION, UNKNOWN_MISSION);
-    const converterData = converterId && getConverter(converterId);
+    const generalEntries = get(layoutInfo, LC.GENERAL_DATA) || getGeneralEntries();
+    const {converterData, missionEntries} = makeMissionEntries(rawTable.tableMeta);
+
     if (!converterData) {
         logError('Unknown mission or no converter');
         return;
     }
 
-    const generalEntries = get(layoutInfo, LC.GENERAL_DATA, getGeneralEntries());
-    const missionEntries = converterData.onNewRawTable(rawTable, converterData);
-    
-    return Object.assign(layoutInfo, {missionEntries, generalEntries});
+    const {newLayoutInfo, shouldContinue} = converterData.onNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo);
+    if (shouldContinue) {
+        // additional changes to the loaded table
+        ensureValidRawTable(rawTable, missionEntries);
+    }
+    return newLayoutInfo;
+}
+
+function ensureValidRawTable(rawTable={}, missionEntries) {
+    const {request={}} = rawTable;
+    const {sortInfo} = request;
+    // check to ensure time column is sorted.
+    if (!sortInfo) {
+        const timeSortInfo = sortInfoString(missionEntries[LC.META_TIME_CNAME]);
+        const treq = Object.assign(cloneDeep(request), {sortInfo: timeSortInfo});
+        dispatchTableFetch(treq);
+    }
 }
 
 /**
@@ -360,23 +406,25 @@ function handleRawTableLoad(layoutInfo, tblId) {
  * @returns {*}
  */
 function handleTableLoad(layoutInfo, action) {
-    const {tbl_id} = action.payload;
+    const {tbl_id, invokedBy=TABLE_FETCH} = action.payload;
 
     layoutInfo = Object.assign({}, layoutInfo, {showTables: true, showXyPlots: true});
-    if (tbl_id === LC.RAW_TABLE) {         // a new raw table is loaded
-        if (action.type === TABLE_LOADED) {
-            layoutInfo = Object.assign(layoutInfo, {displayMode: LC.RESULT_PAGE, periodState: LC.PERIOD_PAGE});
-            layoutInfo = handleRawTableLoad(layoutInfo, tbl_id);
-            if (!layoutInfo) {
-                return;
+    if (action.type === TABLE_LOADED) {
+        if (tbl_id === LC.RAW_TABLE) {         // a new raw table is loaded
+            if (invokedBy === TABLE_FETCH) {
+                layoutInfo = handleRawTableLoad(layoutInfo, tbl_id);
             }
+            layoutInfo = handleTableActive(layoutInfo, action);     // because table_active happened before loaded.. we'll handle it here.
         }
+    }
+    if([LC.RAW_TABLE, LC.PHASE_FOLDED].includes(tbl_id)) {
+        const {highlightedRow} = getTblById(tbl_id);
+        // this handles sorting and filtering cases.
+        keepHighlightedRowSynced(tbl_id, highlightedRow);
     }
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'showImages', true);
     }
-    dispatchUpdateLayoutInfo(layoutInfo);
-    layoutInfo = handleTableActive(layoutInfo, action);
 
     return layoutInfo;
 }
@@ -415,7 +463,6 @@ function handleTableActive(layoutInfo, action) {
     }
 
     return layoutInfo;
-    //return Object.assign({}, layoutInfo);
 }
 
 function handleTableHighlight(layoutInfo, action) {
@@ -443,25 +490,7 @@ function handleTableHighlight(layoutInfo, action) {
     }
 
     // ensure the highlighted row of the raw and phase-folded tables are in sync.
-    if ([LC.PHASE_FOLDED, LC.RAW_TABLE].includes(tbl_id)) {
-        let filterInfo, actOn, rowid;
-        const tableModel = getTblById(tbl_id);
-        if (tbl_id === LC.RAW_TABLE) {
-            actOn = LC.PHASE_FOLDED;
-            rowid = getCellValue(tableModel, highlightedRow, 'ROWID');
-            filterInfo = `RAW_ROWID = ${rowid}`;
-        } else {
-            rowid = getCellValue(tableModel, highlightedRow, 'RAW_ROWID');
-            actOn = LC.RAW_TABLE;
-            filterInfo = `ROWID = ${rowid}`;
-        }
-        findIndex(actOn, filterInfo)
-            .then( (index) => {
-                if (index >=0) {
-                    dispatchTableHighlight(actOn, index);
-                }
-            });
-    }
+    keepHighlightedRowSynced(tbl_id, highlightedRow);
 
     return layoutInfo;
     //return Object.assign({}, layoutInfo);

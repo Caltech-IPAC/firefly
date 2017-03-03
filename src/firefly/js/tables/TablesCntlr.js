@@ -295,6 +295,7 @@ function tableSearch(action) {
     return (dispatch) => {
         //dispatch(validate(FETCH_TABLE, action));
         if (!action.err) {
+            dispatch(action);
             var {request={}, options={}} = action.payload;
             const {tbl_ui_id} = options;
             const {tbl_id} = request;

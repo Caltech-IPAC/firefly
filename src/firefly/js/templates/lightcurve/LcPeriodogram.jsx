@@ -620,7 +620,7 @@ const  PeriodogramResult = ({expanded}) => {
         resultLayout = (<SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={565}>
                             <SplitContent>
                                 <div style={{margin: '0 0 5px 6px'}}><ChangePeriodogram/></div>
-                                <div style={{height: 'calc(100% - 28px'}}>{tables}</div>
+                                <div style={{height: 'calc(100% - 28px)'}}>{tables}</div>
                             </SplitContent>
                             <SplitContent>{xyPlot}</SplitContent>
                         </SplitPane>);

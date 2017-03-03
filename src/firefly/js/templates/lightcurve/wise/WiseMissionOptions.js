@@ -4,7 +4,7 @@ import {get, has, isEmpty, set} from 'lodash';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
-import {makeFileRequest, getTblById} from '../../../tables/TableUtil.js';
+import {makeFileRequest, getTblById, smartMerge} from '../../../tables/TableUtil.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {ReadOnlyText, getTypeData} from '../LcUtil.jsx';
 import {LC, getViewerGroupKey} from '../LcManager.js';
@@ -164,38 +164,10 @@ function getFieldValidators(missionEntries) {
         return all;
     }, {});
 }
-/*
-function setFields(missionEntries, generalEntries) {
-    const groupKey = getViewerGroupKey(missionEntries);
-    const fields = FieldGroupUtils.getGroupFields(groupKey);
-    const validators = getFieldValidators(missionEntries);
-    if (fields) {
-        const initState = Object.keys(fields).reduce((prev, fieldKey) => {
-            if (has(missionEntries, fieldKey)) {
-                prev.push({fieldKey, value: get(missionEntries, fieldKey), validator: validators[fieldKey]});
-            } else if (has(generalEntries,fieldKey)) {
-                prev.push({fieldKey, value: get(generalEntries, fieldKey)});
-            }
-            return prev;
-        }, []);
-        dispatchMultiValueChange(groupKey, initState);
-    }
-}
-*/
 
-
-export function wiseOnNewRawTable(rawTable, converterData) {
-    const metaInfo = rawTable && rawTable.tableMeta;
-    const missionEntries = {
-        [LC.META_MISSION]: converterData.converterId,
-        [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, converterData.defaultTimeCName),
-        [LC.META_FLUX_CNAME]: get(metaInfo, LC.META_FLUX_CNAME, converterData.defaultYCname),
-        [LC.META_ERR_CNAME]: get(metaInfo, LC.META_ERR_CNAME, converterData.defaultYErrCname),
-        [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES, converterData.timeNames),
-        [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, converterData.yNames),
-        [LC.META_ERR_NAMES]: get(metaInfo, LC.META_ERR_NAMES, converterData.yErrNames)
-    };
-    return missionEntries;
+export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo) {
+    const newLayoutInfo = smartMerge(layoutInfo, {missionEntries, generalEntries});
+    return {newLayoutInfo, shouldContinue: true};
 }
 
 export function wiseRawTableRequest(converter, source) {
@@ -203,7 +175,6 @@ export function wiseRawTableRequest(converter, source) {
     const mission = converter.converterId;
     const options = {
         tbl_id: LC.RAW_TABLE,
-        tblType: 'notACatalog',
         sortInfo: sortInfoString(timeCName),
         META_INFO: {[LC.META_MISSION]: mission, timeCName},
         pageSize: LC.TABLE_PAGESIZE

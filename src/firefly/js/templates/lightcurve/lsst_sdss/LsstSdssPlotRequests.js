@@ -49,7 +49,8 @@ export function makeLsstSdssPlotRequest(table, rowIdx, cutoutSize) {
     const r  = WebPlotRequest.makeProcessorRequest(sr, plot_desc);
     const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
     r.setInitialRangeValues(rangeValues);
-    r.setZoomType(ZoomType.TO_WIDTH);
+    // r.setZoomType(ZoomType.TO_WIDTH);  TODO:LLY
+    r.setMultiImageIdx(0);
 
     return addCommonReqParams(r, title, makeWorldPt(ra,decl,CoordinateSys.EQ_J2000));
 }
