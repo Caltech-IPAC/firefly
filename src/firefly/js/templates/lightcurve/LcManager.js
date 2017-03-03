@@ -5,7 +5,7 @@ import {get, has, isEmpty, isNil, set, cloneDeep} from 'lodash';
 import {take} from 'redux-saga/effects';
 import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
         dispatchUpdateLayoutInfo, dropDownHandler} from '../../core/LayoutCntlr.js';
-import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, TABLE_SEARCH,
+import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, TABLE_SEARCH, TABLE_FETCH, TABLE_FILTER,
         dispatchTableRemove, dispatchTableHighlight, dispatchTableFetch} from '../../tables/TablesCntlr.js';
 import {getCellValue, getTblById, getTblIdsByGroup, getActiveTableId, smartMerge} from '../../tables/TableUtil.js';
 import {dispatchTableReplace} from '../../tables/TablesCntlr.js';
@@ -337,6 +337,17 @@ function handlePlotActive(layoutInfo, action) {
     return layoutInfo;
 }
 
+function clearResults(layoutInfo) {
+    removeTablesFromGroup();
+    removeTablesFromGroup(LC.PERIODOGRAM_GROUP);
+
+    if (has(layoutInfo, [LC.MISSION_DATA])) {
+        dispatchMountFieldGroup(getViewerGroupKey(get(layoutInfo, LC.MISSION_DATA)), false, false,
+            null, null, [], undefined, true);
+    }
+    return smartMerge(layoutInfo, {displayMode: LC.RESULT_PAGE, periodState: LC.PERIOD_PAGE, missionEntries: null, generalEntries: null, fullRawTable:null});
+}
+
 /**
  * handle logic when a new search is initiated.
  * @param {LayoutInfo} layoutInfo layoutInfo
@@ -346,14 +357,7 @@ function handlePlotActive(layoutInfo, action) {
 function handleNewSearch(layoutInfo, action) {
     const tbl_id = get(action, 'payload.request.META_INFO.tbl_id');
     if (tbl_id === LC.RAW_TABLE) {
-        removeTablesFromGroup();
-        removeTablesFromGroup(LC.PERIODOGRAM_GROUP);
-
-        if (has(layoutInfo, [LC.MISSION_DATA])) {
-            dispatchMountFieldGroup(getViewerGroupKey(get(layoutInfo, LC.MISSION_DATA)), false, false,
-                                                      null, null, [], undefined, true);
-        }
-        return smartMerge(layoutInfo, {displayMode: LC.RESULT_PAGE, periodState: LC.PERIOD_PAGE, missionEntries: null, generalEntries: null, fullRawTable:null});
+        return clearResults(layoutInfo);
     }
 }
 
@@ -376,7 +380,7 @@ function handleRawTableLoad(layoutInfo, tblId) {
         return;
     }
 
-    const {newLayoutInfo, shouldContinue} = converterData.onNewRawTable(rawTable, missionEntries, generalEntries, layoutInfo);
+    const {newLayoutInfo, shouldContinue} = converterData.onNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo);
     if (shouldContinue) {
         // additional changes to the loaded table
         ensureValidRawTable(rawTable, missionEntries);
@@ -402,12 +406,14 @@ function ensureValidRawTable(rawTable={}, missionEntries) {
  * @returns {*}
  */
 function handleTableLoad(layoutInfo, action) {
-    const {tbl_id} = action.payload;
+    const {tbl_id, invokedBy=TABLE_FETCH} = action.payload;
 
     layoutInfo = Object.assign({}, layoutInfo, {showTables: true, showXyPlots: true});
-    if (tbl_id === LC.RAW_TABLE) {         // a new raw table is loaded
-        if (action.type === TABLE_LOADED) {
-            layoutInfo = handleRawTableLoad(layoutInfo, tbl_id);
+    if (action.type === TABLE_LOADED) {
+        if (tbl_id === LC.RAW_TABLE) {         // a new raw table is loaded
+            if (invokedBy === TABLE_FETCH) {
+                layoutInfo = handleRawTableLoad(layoutInfo, tbl_id);
+            }
             layoutInfo = handleTableActive(layoutInfo, action);     // because table_active happened before loaded.. we'll handle it here.
         }
     }

@@ -2,8 +2,6 @@ import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {get, has, isEmpty, set} from 'lodash';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
-import FieldGroupUtils from '../../../fieldGroup/FieldGroupUtils';
-import {dispatchMultiValueChange} from '../../../fieldGroup/FieldGroupCntlr.js';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
 import {makeFileRequest, getTblById, smartMerge} from '../../../tables/TableUtil.js';
@@ -167,7 +165,7 @@ function getFieldValidators(missionEntries) {
     }, {});
 }
 
-export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, layoutInfo) {
+export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo) {
     const newLayoutInfo = smartMerge(layoutInfo, {missionEntries, generalEntries});
     return {newLayoutInfo, shouldContinue: true};
 }

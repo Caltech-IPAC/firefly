@@ -5,7 +5,7 @@ import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
 import {makeFileRequest} from '../../../tables/TableUtil.js';
-import {getColumnIdx, getTblById} from '../../../tables/TableUtil.js';
+import {getColumnIdx, getTblById, smartMerge} from '../../../tables/TableUtil.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {ReadOnlyText, getTypeData} from '../LcUtil.jsx';
 import {LC, getViewerGroupKey} from '../LcManager.js';
@@ -221,25 +221,19 @@ const posColumnInfo = (posCoords) => {
 };
 
 
-export function defaultOnNewRawTable(rawTable, converterData) {
+export function defaultOnNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo={}) {
     const metaInfo = rawTable && rawTable.tableMeta;
     var posInfo = posColumnInfo(get(metaInfo, LC.META_POS_COORD));
 
-    const missionEntries = {
-        [LC.META_MISSION]: converterData.converterId,
-        [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, converterData.defaultTimeCName),
-        [LC.META_FLUX_CNAME]: get(metaInfo, LC.META_FLUX_CNAME, converterData.defaultYCname),
-        [LC.META_ERR_CNAME]: get(metaInfo, LC.META_ERR_CNAME, converterData.defaultYErrCname),
-        [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES),
-        [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES),
-        [LC.META_ERR_NAMES]: get(metaInfo, LC.META_ERR_NAMES),
+    const addtlEntries = {
         [LC.META_URL_CNAME]: get(metaInfo, LC.META_URL_CNAME, converterData.dataSource),
         [LC.META_COORD_XNAME]: get(posInfo, LC.META_COORD_XNAME),
         [LC.META_COORD_YNAME]: get(posInfo, LC.META_COORD_YNAME),
         [LC.META_COORD_SYS]: get(posInfo, LC.META_COORD_SYS),
         [coordSysOptions]: get(converterData, coordSysOptions)
     };
-    return missionEntries;
+    missionEntries = Object.assign({}, missionEntries, addtlEntries);
+    return {shouldContinue: false, newLayoutInfo: smartMerge(layoutInfo, {missionEntries, generalEntries})};
 }
 
 export function defaultRawTableRequest(converter, source) {

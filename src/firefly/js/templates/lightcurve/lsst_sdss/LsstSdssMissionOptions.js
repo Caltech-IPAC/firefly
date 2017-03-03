@@ -1,15 +1,13 @@
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {get, isEmpty, set, omit, pick, cloneDeep, defer} from 'lodash';
-import {getLayouInfo, dispatchUpdateLayoutInfo} from '../../../core/LayoutCntlr.js';
-import FieldGroupUtils from '../../../fieldGroup/FieldGroupUtils';
-import {dispatchMultiValueChange} from '../../../fieldGroup/FieldGroupCntlr.js';
+import {get, isEmpty, set, pick, cloneDeep, defer} from 'lodash';
+import {getLayouInfo} from '../../../core/LayoutCntlr.js';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
 import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {makeFileRequest, makeTblRequest, smartMerge} from '../../../tables/TableUtil.js';
-import {dispatchTableFetch, dispatchTableSearch} from '../../../tables/TablesCntlr.js';
+import {dispatchTableSearch} from '../../../tables/TablesCntlr.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {FilterInfo} from '../../../tables/FilterInfo.js';
 
@@ -136,25 +134,7 @@ export const lsstSdssReducer = (missionEntries, generalEntries) => {
 };
 
 
-/*
-function setFields(missionEntries, generalEntries) {
-    const groupKey = getViewerGroupKey(missionEntries);
-    const fields = FieldGroupUtils.getGroupFields(groupKey);
-    if (fields) {
-        const initState = Object.keys(fields).reduce((prev, fieldKey) => {
-            if (has(missionEntries, fieldKey)) {
-                prev.push({fieldKey, value: get(missionEntries, fieldKey)});
-            } else if (has(generalEntries,fieldKey)) {
-                prev.push({fieldKey, value: get(generalEntries, fieldKey)});
-            }
-            return prev;
-        }, []);
-        dispatchMultiValueChange(groupKey, initState);
-    }
-}
-*/
-
-export function lsstSdssOnNewRawTable(rawTable, missionEntries, generalEntries, layoutInfo={}) {
+export function lsstSdssOnNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo={}) {
     const {band, lsst_filtered_band} = get(rawTable, 'request.META_INFO');
     var {rawTableRequest} = layoutInfo;
 
