@@ -6,7 +6,7 @@ import {take} from 'redux-saga/effects';
 import {filter, isEmpty, get} from 'lodash';
 
 import {LO_VIEW, SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo, dispatchUpdateLayoutInfo, dropDownHandler} from '../../core/LayoutCntlr.js';
-import {findGroupByTblId, getTblIdsByGroup, smartMerge} from '../../tables/TableUtil.js';
+import {findGroupByTblId, getTblIdsByGroup, smartMerge, getTblById} from '../../tables/TableUtil.js';
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import {CHART_ADD, CHART_REMOVE} from '../../charts/ChartsCntlr.js';
 
@@ -126,10 +126,13 @@ function onAnyAction(layoutInfo, action, views) {
     }
     return smartMerge(layoutInfo, {showTables, showImages, showXyPlots, autoExpand, mode: {expanded, standard, closeable}});
 }
-    
+
+var isOnlyTableData = (id) => (get(getTblById(id), 'onlyData'));
 
 function handleNewTable(layoutInfo, action) {
     const {tbl_id} = action.payload;
+
+    if (isOnlyTableData(tbl_id)) return layoutInfo;
     var {images={}, showImages} = layoutInfo;
     var {coverageLockedOn, showFits, showMeta, showCoverage, selectedTab, metaDataTableId} = images;
 

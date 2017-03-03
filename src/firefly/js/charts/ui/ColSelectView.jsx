@@ -68,7 +68,7 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
         columns[3] = {name: 'Description', prefWidth: widths[3], visibility: 'show'};
     }
 
-    var tableModel = {totalRows: data.length, tbl_id:TBL_ID, tableData: {columns,  data }, highlightedRow: hlRowNum};
+    var tableModel = {totalRows: data.length, tbl_id:TBL_ID, tableData: {columns,  data }, highlightedRow: hlRowNum, onlyData: true};
 
     // 360 is the width of table options
     const minWidth = Math.max(columns.reduce((rval, c) => isFinite(c.prefWidth) ? rval+c.prefWidth : rval, 0), 360);
