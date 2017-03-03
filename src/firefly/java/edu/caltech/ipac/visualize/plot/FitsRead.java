@@ -53,6 +53,9 @@ import java.util.Arrays;
  *  remove the mask testing codes since the mask is done in the mask branch.
  * 9/26/16
  *  DM-4127
+ *
+ *  3/1/17
+ *  DM-9581
  */
 public class FitsRead implements Serializable {
     //class variable
@@ -264,11 +267,11 @@ public class FitsRead implements Serializable {
                     return fitsReader;
                 }
                 else {
-                    return createFitsReadPositionAngle(fitsReader, -angleToRotate, CoordinateSys.EQ_J2000);
+                    return createFitsReadPositionAngle(fitsReader, -angleToRotate, inCoordinateSys);
                 }
             }
             else {
-                return createFitsReadPositionAngle(fitsReader, -positionAngle+ rotationAngle, CoordinateSys.EQ_J2000);
+                return createFitsReadPositionAngle(fitsReader, -positionAngle+ rotationAngle, inCoordinateSys);
             }
         } catch (ProjectionException pe) {
             if (SUTDebug.isDebug()) {
