@@ -22,7 +22,7 @@ const rgUploadGroupKey = 'RegionUploadGroup';
 const rgUploadFieldKey = 'regionFileUpload';
 const regionDrawLayerId = RegionPlot.TYPE_ID;
 
-export function showRegionFileUploadPanel(popTitle) {
+export function showRegionFileUploadPanel(popTitle='Load DS9 Region File') {
     var popup = (<PopupPanel title={popTitle}>
                     <RegionUpload />
                 </PopupPanel>);
