@@ -26,6 +26,7 @@ import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
+import {HelpIcon} from './../../ui/HelpIcon.jsx';
 
 
 const vFileKey = LC.FG_FILE_FINDER;
@@ -82,11 +83,14 @@ export class LcViewer extends Component {
 
     render() {
         var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown,
-                dropdownPanels=[], footer, style, displayMode, missionEntries} = this.state;
+            dropdownPanels=[], footer, style, displayMode, missionEntries} = this.state;
         const {visible, view} = dropDown || {};
-        const periodProps = {displayMode, timeColName: get(missionEntries, [LC.META_TIME_CNAME]),
-                                          fluxColName: get(missionEntries, [LC.META_FLUX_CNAME])};
+        const periodProps = {
+            displayMode, timeColName: get(missionEntries, [LC.META_TIME_CNAME]),
+            fluxColName: get(missionEntries, [LC.META_FLUX_CNAME])
+        };
 
+        const missionName = get(missionEntries, 'missionName', '');
         dropdownPanels.push(<UploadPanel/>);
 
         if (!isReady) {
@@ -104,7 +108,8 @@ export class LcViewer extends Component {
                             {...{dropdownPanels} } />
                     </header>
                     <main>
-                        {displayMode&&displayMode.startsWith('period') ? <LcPeriod {...periodProps}/> : <LcResult/>}
+                        {displayMode && displayMode.startsWith('period') ? <LcPeriod {...periodProps}/> :
+                            <LcResult/>}
                     </main>
                 </div>
             );
@@ -148,9 +153,9 @@ function BannerSection(props) {
     const {menu, ...rest} = pickBy(props);
     return (
         <Banner key='banner'
-            menu={<Menu menu={menu} /> }
-            visPreview={<VisHeader showHeader={false}/> }
-            readout={<VisHeader showPreview={false}/> }
+                menu={<Menu menu={menu} /> }
+                visPreview={<VisHeader showHeader={false}/> }
+                readout={<VisHeader showPreview={false}/> }
             {...rest}
         />
     );
@@ -168,7 +173,9 @@ BannerSection.propTypes = {
 export function UploadPanel(props) {
     const wrapperStyle = {margin: '5px 0'};
 
-    const options = getAllConverterIds().map((id) => { return {label: getMissionName(id)||capitalize(id), value: id}; });
+    const options = getAllConverterIds().map((id) => {
+        return {label: getMissionName(id) || capitalize(id), value: id};
+    });
     return (
         <div style={{padding: 10}}>
             <FormPanel
@@ -179,22 +186,22 @@ export function UploadPanel(props) {
                 help_id={'loadingTSV'}>
                 <FieldGroup groupKey={vFileKey} validatorFunc={null} keepState={true}>
                     <FileUpload
-                        wrapperStyle = {wrapperStyle}
-                        fieldKey = 'rawTblSource'
-                        initialState= {{
+                        wrapperStyle={wrapperStyle}
+                        fieldKey='rawTblSource'
+                        initialState={{
                             tooltip: 'Select a Time Series Table file to upload',
                             label: 'Time Series Table:'
                         }}
                     />
                     <ListBoxInputField fieldKey='mission'
-                        wrapperStyle = {wrapperStyle}
-                        initialState= {{
+                                       wrapperStyle={wrapperStyle}
+                                       initialState={{
                             value: 'wise',
                             tooltip: 'Enter the name of the mission',
                             label : 'Mission:',
                             labelWidth : 45
                         }}
-                        options={options}
+                                       options={options}
                     />
                 </FieldGroup>
             </FormPanel>
@@ -211,7 +218,7 @@ UploadPanel.defaultProps = {
 };
 
 function onSearchSubmit(request) {
-    if ( request.rawTblSource ){
+    if (request.rawTblSource) {
         const {mission} = request;
         const converter = getConverter(request.mission);
         if (!converter) return;
@@ -219,7 +226,7 @@ function onSearchSubmit(request) {
         const treq = converter.rawTableRequest(converter, request.rawTblSource);
         dispatchTableSearch(treq, {removable: true});
         dispatchHideDropDown();
-    } 
+    }
 }
 
 

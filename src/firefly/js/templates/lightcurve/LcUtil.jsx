@@ -42,7 +42,8 @@ export function makeMissionEntries(tableMeta, layoutInfo={}) {
         [LC.META_ERR_CNAME]: get(tableMeta, LC.META_ERR_CNAME, converterData.defaultYErrCname),
         [LC.META_TIME_NAMES]: get(tableMeta, LC.META_TIME_NAMES, converterData.timeNames),
         [LC.META_FLUX_NAMES]: get(tableMeta, LC.META_FLUX_NAMES, converterData.yNames),
-        [LC.META_ERR_NAMES]: get(tableMeta, LC.META_ERR_NAMES, converterData.yErrNames)
+        [LC.META_ERR_NAMES]: get(tableMeta, LC.META_ERR_NAMES, converterData.yErrNames),
+        [LC.META_FLUX_BAND]: get(tableMeta, LC.META_ERR_NAMES, converterData.bandName)
     });
     return {converterData, missionEntries};
 }

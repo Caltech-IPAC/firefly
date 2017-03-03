@@ -649,9 +649,9 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
                                  border: highlightBorder}}>
                         <ValidationField fieldKey={fKeyDef.period.fkey} />
                         <div>
-                            <button type='button' className='button std hl' onClick={revertPeriod}>
+                            {/*<button type='button' className='button std hl' onClick={revertPeriod}>
                                 {revertPeriodTxt}
-                            </button>
+                            </button>*/}
                         </div>
                     </div>
                     <div style={{marginLeft: 30}} >

@@ -25,9 +25,10 @@ import {getTblById, doFetchTable, isTblDataAvail, MAX_ROW} from '../../tables/Ta
 import {dispatchMultiValueChange, dispatchRestoreDefaults}  from '../../fieldGroup/FieldGroupCntlr.js';
 import {logError} from '../../util/WebUtil.js';
 import {getConverter, getMissionName} from './LcConverterFactory.js';
+import {ERROR_MSG_KEY} from '../lightcurve/generic/errorMsg.js';
 
 const resultItems = ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'searchDesc', 'images',
-                     LC.MISSION_DATA, LC.GENERAL_DATA, 'periodState'];
+    LC.MISSION_DATA, LC.GENERAL_DATA, 'periodState'];
 
 
 export class LcResult extends Component {
@@ -62,25 +63,25 @@ export class LcResult extends Component {
 
     render() {
         const {title, mode, showTables, showImages, showXyPlots, searchDesc, images,
-                missionEntries, generalEntries, periodState} = this.state;
+            missionEntries, generalEntries, periodState} = this.state;
         var {expanded, standard} = mode || {};
         const content = {};
         var visToolbar;
         if (showImages) {
             visToolbar = <VisToolbar key='res-vis-tb'/>;
             content.imagePlot = (<LcImageViewerContainer key='res-images'
-                                        viewerId={LC.IMG_VIEWER_ID}
-                                        closeable={true}
-                                        forceRowSize={1}
-                                        imageExpandedMode={expanded===LO_VIEW.images}
-                                        Toolbar={LcImageToolbar}
-                                        {...images}  />);
+                                                         viewerId={LC.IMG_VIEWER_ID}
+                                                         closeable={true}
+                                                         forceRowSize={1}
+                                                         imageExpandedMode={expanded===LO_VIEW.images}
+                                                         Toolbar={LcImageToolbar}
+                {...images}  />);
         }
         if (showXyPlots) {
             content.xyPlot = (<ChartsContainer key='res-charts'
                                                closeable={true}
                                                expandedMode={expanded===LO_VIEW.xyPlots}
-                                               />);
+            />);
         }
         if (showTables) {
             content.tables = (<TablesContainer key='res-tables'
@@ -91,20 +92,37 @@ export class LcResult extends Component {
         }
 
         content.settingBox = (<SettingBox generalEntries={generalEntries} missionEntries={missionEntries}
-                                         periodState={periodState}/>);
+                                          periodState={periodState}/>);
 
         expanded = LO_VIEW.get(expanded) || LO_VIEW.none;
-        const expandedProps =  {expanded, ...content};
-        const standardProps =  {visToolbar, title, searchDesc, standard, ...content};
-        
-        return (
-            expanded === LO_VIEW.none
-                ? <StandardView key='res-std-view' {...standardProps} />
-                : <ExpandedView key='res-exp-view' {...expandedProps} />
-        );
+        const expandedProps = {expanded, ...content};
+        const standardProps = {visToolbar, title, searchDesc, standard, ...content};
+        const converterId = get(missionEntries, LC.META_MISSION);
+        if (!isValidTable(converterId)) {
+            return (
+                <div style={{display:'flex', position:'absolute', border: '1px solid #a3aeb9', padding:20, fontSize:'150%'}}>
+                    {`Table uploaded is not ${getMissionName(converterId)} valid, missing image identifier columns.
+                      Please, select option 'Basic' for general table upload.`}
+                    <div>
+                        <HelpIcon helpId={'loadingTSV'}/>
+                    </div>
+                </div>
+            );
+        } else {
+            return (
+                expanded === LO_VIEW.none
+                    ? <StandardView key='res-std-view' {...standardProps} />
+                    : <ExpandedView key='res-exp-view' {...expandedProps} />
+            );
+        }
     }
 }
 
+function isValidTable(converterId) {
+    const converterData = converterId && getConverter(converterId);
+
+    return converterData && converterData.isTableUploadValid();
+}
 
 // eslint-disable-next-line
 const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
@@ -124,52 +142,78 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
     const cutoutSize = get(settingBox, 'props.generalEntries.cutoutSize', '0.3');
     const converterId = get(settingBox, ['props', 'missionEntries', LC.META_MISSION]);
     const mission = getMissionName(converterId) || 'Mission';
+    const showImages = isEmpty(imagePlot);
 
+    var tsView = (err) => {
+
+        if (!err) {
+            return (
+                <SplitPane split='horizontal' maxSize={-20} minSize={20} defaultSize={'60%'}>
+                    <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={buttonW}>
+                        <SplitContent>
+                            <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
+                                <div className='settingBox'>{settingBox}</div>
+                                <div style={{flexGrow: 1, position: 'relative'}}>
+                                    <div className='abs_full'>{tables}</div>
+                                </div>
+                            </div>
+                        </SplitContent>
+                        <SplitContent>{xyPlot}</SplitContent>
+                    </SplitPane>
+                    <SplitContent>{imagePlot}</SplitContent>
+                </SplitPane>
+            );
+        } else {
+            return (
+                <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={buttonW}>
+                    <SplitContent>
+                        <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
+                            <div className='settingBox'>{settingBox}</div>
+                            <div style={{flexGrow: 1, position: 'relative'}}>
+                                <div className='abs_full'>{tables}</div>
+                            </div>
+                        </div>
+                    </SplitContent>
+                    <SplitContent>{xyPlot}</SplitContent>
+                </SplitPane>
+            );
+        }
+
+    };
     return (
         <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, position: 'relative'}}>
             { visToolbar &&
-                <div style={{display: 'inline-flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <div>{visToolbar}</div>
-                    <div>
-                        <DownloadButton>
-                            <DownloadOptionPanel
-                                cutoutSize = {cutoutSize}
-                                title = {'Image Download Option'}
-                                dlParams = {{
+            <div style={{display: 'inline-flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <div>{visToolbar}</div>
+                <div>
+                    <DownloadButton>
+                        <DownloadOptionPanel
+                            cutoutSize={cutoutSize}
+                            title={'Image Download Option'}
+                            dlParams={{
                                     MaxBundleSize: 200*1024*1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
                                     FilePrefix: `${mission}_Files`,
                                     BaseFileName: `${mission}_Files`,
                                     DataSource: `${mission} images`,
                                     FileGroupProcessor: 'LightCurveFileGroupsProcessor'
                                 }}>
-                                <ValidationField
-                                        initialState= {{
+                            <ValidationField
+                                initialState={{
                                                value: 'A sample download',
                                                label : 'Title for this download:'
                                                    }}
-                                        fieldKey='Title'
-                                        labelWidth={110}/>
-                            </DownloadOptionPanel>
-                        </DownloadButton>
-                    </div>
+                                fieldKey='Title'
+                                labelWidth={110}/>
+                        </DownloadOptionPanel>
+                    </DownloadButton>
                 </div>
+            </div>
             }
             {searchDesc}
             {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
             <div style={{flexGrow: 1, position: 'relative'}}>
                 <div style={{position: 'absolute', top: 0, right: 0, bottom: 0, left: 0}}>
-                    <SplitPane split='horizontal' maxSize={-20} minSize={20}  defaultSize={'60%'}>
-                        <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={buttonW}>
-                            <SplitContent>
-                                <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
-                                    <div className='settingBox'>{settingBox}</div>
-                                    <div style={{flexGrow: 1, position: 'relative'}}><div className='abs_full'>{tables}</div></div>
-                                </div>
-                            </SplitContent>
-                            <SplitContent>{xyPlot}</SplitContent>
-                        </SplitPane>
-                        <SplitContent>{imagePlot}</SplitContent>
-                    </SplitPane>
+                    {tsView(showImages)}
                 </div>
             </div>
         </div>
@@ -193,14 +237,16 @@ class SettingBox extends Component {
 
         const converterId = get(missionEntries, LC.META_MISSION);
         const converterData = converterId && getConverter(converterId);
-        if (!converterId || !converterData) { return null; }
+        if (!converterId || !converterData) {
+            return null;
+        }
         const {MissionOptions} = converterData;
 
         const groupKey = getViewerGroupKey(missionEntries);
         return (
             <div style={{position: 'relative', display: 'inline-flex', justifyContent: 'space-between', width: '100%'}}>
                 <div style={{alignSelf: 'flex-end'}}>
-                   <MissionOptions {...{missionEntries, generalEntries}}/>
+                    <MissionOptions {...{missionEntries, generalEntries}}/>
                 </div>
 
                 <div style={{alignSelf: 'flex-end', marginLeft: 10}}>
@@ -223,7 +269,7 @@ class SettingBox extends Component {
 SettingBox.propTypes = {
     generalEntries: PropTypes.object,
     missionEntries: PropTypes.object,
-    periodState:    PropTypes.string
+    periodState: PropTypes.string
 };
 
 /**
@@ -283,7 +329,10 @@ function updateFullRawTable(callback) {
             dispatchRestoreDefaults(LC.FG_PERIODOGRAM_FINDER);
         }
 
-        dispatchUpdateLayoutInfo(Object.assign({}, layoutInfo, {fullRawTable, periodRange: {min, max, tzero, tzeroMax}}));
+        dispatchUpdateLayoutInfo(Object.assign({}, layoutInfo, {
+            fullRawTable,
+            periodRange: {min, max, tzero, tzeroMax}
+        }));
         callback && callback();
     };
 
@@ -295,7 +344,7 @@ function updateFullRawTable(callback) {
         if (isTblDataAvail(0, rawTable.totalRows, rawTable)) {
             setTableData(rawTable);
         } else {
-            var req = Object.assign(cloneDeep(rawTable.request), {pageSize:  MAX_ROW});
+            var req = Object.assign(cloneDeep(rawTable.request), {pageSize: MAX_ROW});
 
             doFetchTable(req).then(
                 (tableModel) => {
