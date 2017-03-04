@@ -10,7 +10,8 @@ const flexContainerStyle= {
     display:'flex',
     flexDirection:'column',
     flexWrap:'nowrap',
-    alignItems: 'stretch'
+    alignItems: 'stretch',
+    flexGrow: 1
 };
 
 const defDecStyle= {

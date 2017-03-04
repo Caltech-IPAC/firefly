@@ -3,32 +3,69 @@
  */
 
 import {get} from 'lodash';
+import {take} from 'redux-saga/effects';
 import ImagePlotCntlr, {WcsMatchType, IMAGE_PLOT_KEY,
                        dispatchGroupLocking, dispatchZoom, dispatchRotate,
                        dispatchUpdateViewSize, dispatchRecenter, ActionScope} from '../ImagePlotCntlr.js';
 import {getPlotViewById, primePlot, applyToOnePvOrGroup, findPlotGroup} from '../PlotViewUtil.js';
 import {PlotAttribute} from '../WebPlot.js';
-import PlotView from '../reducer/PlotView.js';
-import {getCenterPtOfPlot, FullType, isPlotNorth, getRotationAngle} from '../VisUtil.js';
+import {FullType, isPlotNorth, getRotationAngle} from '../VisUtil.js';
 import {getEstimatedFullZoomFactor, getArcSecPerPix, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import {CCUtil} from '../CsysConverter.js';
 import {ZoomType} from '../ZoomType.js';
 import {makeScreenPt} from '../Point.js';
+import {dispatchAddSaga} from '../../core/MasterSaga.js';
 
+
+export function* watchForCompletedPlot(options, dispatch, getState) {
+
+
+    let masterPlot;
+    let plot;
+
+    while (!masterPlot || !plot) {
+        const action = yield take([ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_IMAGE_FAIL]);
+        const {plotId, masterPlotId, wcsMatchType}= options;
+
+        if (action.type===ImagePlotCntlr.PLOT_IMAGE_FAIL && action.payload.plotId===plotId) {
+            return;
+        }
+        const visRoot= getState()[IMAGE_PLOT_KEY];
+        masterPlot= primePlot(visRoot, masterPlotId);
+        plot= primePlot(visRoot, plotId);
+
+
+        if (masterPlot && plot) {
+            const masterPv= getPlotViewById(visRoot, masterPlotId);
+            const pv= getPlotViewById(visRoot, plotId);
+            const level = wcsMatchType===WcsMatchType.Standard  || wcsMatchType===WcsMatchType.Target ?
+                masterPlot.zoomFactor :
+                getEstimatedFullZoomFactor(primePlot(masterPv),masterPv.viewDim, FullType.WIDTH_HEIGHT);
+            const asPerPix= getArcSecPerPix(masterPlot,level);
+            if (wcsMatchType===WcsMatchType.Target) {
+                const ft=  masterPlot.attributes[PlotAttribute.FIXED_TARGET];
+                if (ft) dispatchRecenter({plotId:masterPv.plotId, centerPt:ft});
+            }
+            syncPlotToLevel(primePlot(pv), masterPlot, asPerPix);
+            dispatchUpdateViewSize(pv.plotId);
+        }
+    }
+
+}
 
 
 export function wcsMatchActionCreator(action) {
     return (dispatcher, getState) => {
-        var {plotId, matchType}= action.payload;
-        matchType= WcsMatchType.get(matchType);
-        var visRoot= getState()[IMAGE_PLOT_KEY];
-        var masterPv= getPlotViewById(visRoot, plotId);
+        const {plotId}= action.payload;
+        const matchType= WcsMatchType.get(action.payload.matchType);
+        let visRoot= getState()[IMAGE_PLOT_KEY];
+        let masterPv= getPlotViewById(visRoot, plotId);
 
         const width= get(masterPv,'viewDim.width',false);
         const height= get(masterPv,'viewDim.height',false);
 
-        var group= findPlotGroup(masterPv.plotGroupId, visRoot.plotGroupAry);
+        let group= findPlotGroup(masterPv.plotGroupId, visRoot.plotGroupAry);
 
 
         if (!matchType || !width  || !height) {
@@ -36,8 +73,19 @@ export function wcsMatchActionCreator(action) {
                 type: ImagePlotCntlr.WCS_MATCH,
                 payload: {wcsMatchCenterWP:null,wcsMatchType:matchType,mpwWcsPrimId:plotId}
             });
-            applyToOnePvOrGroup(visRoot.plotViewAry, masterPv.plotId, group,
-                (pv) => dispatchUpdateViewSize(pv.plotId));
+            if (matchType) {
+                applyToOnePvOrGroup(visRoot.plotViewAry, masterPv.plotId, group,
+                    (pv) => {
+                        if (masterPv.plotId!==pv.plotId) {
+                            dispatchAddSaga( watchForCompletedPlot, {plotId:pv.plotId, masterPlotId:plotId, wcsMatchType:matchType});
+                        }
+                    }
+                );
+            }
+            else {
+                applyToOnePvOrGroup(visRoot.plotViewAry, masterPv.plotId, group,
+                    (pv) => dispatchUpdateViewSize(pv.plotId));
+            }
             return;
         }
 

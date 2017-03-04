@@ -39,10 +39,13 @@ const draggingOrReleasing = (ms) => ms==DRAG || ms===DRAG_COMPONENT || ms===UP |
 
 function updateZoom(pv, paging) {
     if (!primePlot(pv)) return;
-    const vr= visRoot();
     var doZoom= false;
     var actionScope= ActionScope.GROUP;
-    if (isImageViewerSingleLayout(getMultiViewRoot(), visRoot(), pv.plotId)) {
+    const vr= visRoot();
+    if (!paging && vr.wcsMatchType && pv.plotId!==vr.mpwWcsPrimId) {
+        doZoom= false;
+    }
+    else if (isImageViewerSingleLayout(getMultiViewRoot(), vr, pv.plotId)) {
         doZoom= true;
         actionScope= ActionScope.SINGLE;
     }
@@ -54,6 +57,7 @@ function updateZoom(pv, paging) {
         doZoom= (isActive || !inActive);
         actionScope= isActive ? ActionScope.GROUP : ActionScope.SINGLE;
     }
+
     if (doZoom) {
         dispatchZoom({
             plotId: pv.plotId,
@@ -95,6 +99,14 @@ export class ImageViewerLayout extends Component {
             const plot= primePlot(vr);
             const ft=  plot.attributes[PlotAttribute.FIXED_TARGET];
             if (ft) dispatchRecenter({plotId:plot.plotId, centerPt:ft});
+        }
+    }
+
+    componentWillReceiveProps(nextProps) {
+        const {width,height}= nextProps;
+        const {viewDim}= nextProps.plotView;
+        if (width!==viewDim.width && height!==viewDim.height) {
+            dispatchUpdateViewSize(nextProps.plotView.plotId,width,height);
         }
     }
 
