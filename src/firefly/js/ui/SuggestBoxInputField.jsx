@@ -216,7 +216,7 @@ class SuggestBoxInputFieldView extends Component {
     render() {
 
         const {displayValue, valid, message, highlightedIdx, isOpen, inputWidth, suggestions, mouseTrigger } = this.state;
-        var {label, labelWidth, tooltip, inline, renderSuggestion, wrapperStyle} = this.props;
+        var {label, labelWidth, tooltip, inline, renderSuggestion, wrapperStyle, popupIndex} = this.props;
 
         const leftOffset = (labelWidth?labelWidth:0)+4;
         const minWidth = (inputWidth?inputWidth-4:50);
@@ -237,7 +237,7 @@ class SuggestBoxInputFieldView extends Component {
                     />
                 </div>
 
-                {isOpen && <div className={'SuggestBoxPopup'} style={{left: leftOffset, minWidth}} onMouseLeave={() => this.setState({highlightedIdx : undefined})}>
+                {isOpen && <div className={'SuggestBoxPopup'} style={{left: leftOffset, minWidth, zIndex: popupIndex}} onMouseLeave={() => this.setState({highlightedIdx : undefined})}>
                     <SuggestBox
                         suggestions={suggestions}
                         highlightedIdx={highlightedIdx}
@@ -263,7 +263,8 @@ SuggestBoxInputFieldView.propTypes = {
     wrapperStyle: PropTypes.object,     //style to merge into the container div
     getSuggestions : PropTypes.func,   //suggestionsArr = getSuggestions(displayValue)
     valueOnSuggestion : PropTypes.func, //newDisplayValue = valueOnSuggestion(prevValue, suggestion),
-    renderSuggestion : PropTypes.func   // ReactElem = renderSuggestion(suggestion)
+    renderSuggestion : PropTypes.func,   // ReactElem = renderSuggestion(suggestion)
+    popupIndex: PropTypes.number
 };
 
 

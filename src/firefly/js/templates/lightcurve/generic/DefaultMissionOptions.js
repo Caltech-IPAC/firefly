@@ -36,17 +36,33 @@ export class DefaultSettingBox extends Component {
         );
 */
         const missionKeys = [LC.META_TIME_CNAME, LC.META_FLUX_CNAME];
-        const missionOtherKeys = [ LC.META_URL_CNAME, LC.META_ERR_CNAME];
-        const missionListKeys = [LC.META_TIME_NAMES, LC.META_FLUX_NAMES];
+        const missionUrl = [LC.META_URL_CNAME];
+        const missionOtherKeys = [ LC.META_ERR_CNAME];
+        const tblModel = getTblById(LC.RAW_TABLE);
+        const topZ = 9999;
 
-        var missionInputs = missionKeys.map((key, index) =>
-            <SuggestBoxInputField key={key} fieldKey={key} wrapperStyle={wrapperStyle}
-                                  getSuggestions={(val) => {
-                                    const list = get(missionEntries, missionListKeys[index], []);
-                                    const suggestions =  list && list.filter((el) => {return el.startsWith(val);});
-                                    return suggestions.length > 0 ? suggestions : list;
-                                  }}
-            />
+        var getList = (val, type) => {
+            var colType =  (!type || (type === 'numeric')) ?
+                            ['double', 'd', 'long', 'l', 'int', 'i', 'float',  'f'] : ['char', 'c', 's', 'str'];
+
+            return get(tblModel, ['tableData', 'columns']).reduce((prev, col) => {
+                if ((colType.includes(col.type)) &&
+                    (!has(col, 'visibility') || get(col, 'visibility') !== 'hidden') &&
+                    (col.name.startsWith(val))) {
+                    prev.push(col.name);
+                }
+                return prev;
+            }, []);
+        };
+
+        var missionInputs = missionKeys.map((key) =>
+            <SuggestBoxInputField key={key} fieldKey={key} wrapperStyle={wrapperStyle} popupIndex={topZ}
+                                  getSuggestions={(val) => getList(val)} />
+        );
+
+        var missionData = missionUrl.map((key) =>
+            <SuggestBoxInputField key={key} fieldKey={key} wrapperStyle={wrapperStyle} popupIndex={topZ}
+                                  getSuggestions={(val) => getList(val, 'char')} />
         );
 
         var missionOthers = missionOtherKeys.map((key) =>
@@ -61,7 +77,8 @@ export class DefaultSettingBox extends Component {
                                       getSuggestions={() =>get(missionEntries, coordSysOptions, [])} />
             );
             var xyCols = [LC.META_COORD_XNAME, LC.META_COORD_YNAME].map((key) =>
-                <ValidationField key={key} fieldKey={key} wrapperStyle={wrapperStyle} />
+                <SuggestBoxInputField key={key} fieldKey={key} wrapperStyle={wrapperStyle} popupIndex={topZ}
+                                      getSuggestions={(val) => getList(val)} />
             );
 
             return [sysCol, xyCols];
@@ -79,6 +96,7 @@ export class DefaultSettingBox extends Component {
                     <div style={{display: 'flex'}}>
                         <div>
                             {missionInputs}
+                            {missionData}
                             {missionOthers}
                         </div>
                         <div>
