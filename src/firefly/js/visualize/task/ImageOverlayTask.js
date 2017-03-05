@@ -44,11 +44,11 @@ const nextColor= () => colorChoose.next().value;
 export function* watchForCompletedPlot(options) {
 
 
-    var idMatch= false;
+    let idMatch= false;
     while (!idMatch) {
         const action = yield take([ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_IMAGE_FAIL]);
         const {pvNewPlotInfoAry, plotId}= action.payload;
-        const idMatch = Boolean(pvNewPlotInfoAry && pvNewPlotInfoAry.find((i) => i.plotId === options.plotId)) ||
+        idMatch = Boolean(pvNewPlotInfoAry && pvNewPlotInfoAry.find((i) => i.plotId === options.plotId)) ||
                                plotId===options.plotId;
         if (idMatch) {
             if (action.type===ImagePlotCntlr.PLOT_IMAGE) {

@@ -262,6 +262,7 @@ function handleValueChange(layoutInfo, action) {
         if ((get(layoutInfo, [LC.GENERAL_DATA, fieldKey]) !== value) && (value > 0.0) ) {
             if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
                 layoutInfo = updateSet(layoutInfo, [LC.GENERAL_DATA, fieldKey], value);
+                clearLcImages();
                 setupImages(layoutInfo);
             }
         }
@@ -269,6 +270,7 @@ function handleValueChange(layoutInfo, action) {
         if (get(layoutInfo, [LC.MISSION_DATA, fieldKey]) !== value) {
             if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
                 layoutInfo = updateSet(layoutInfo, [LC.MISSION_DATA, fieldKey], value);
+                clearLcImages();
                 setupImages(layoutInfo);
             }
         }
@@ -295,6 +297,7 @@ function handleValueChange(layoutInfo, action) {
                 updatePhaseTableChart(fluxCol);
             }
 
+            clearLcImages();
             setupImages(newLayoutInfo);
 
             // update time or flux for period panel field group if it exists
@@ -304,6 +307,7 @@ function handleValueChange(layoutInfo, action) {
             }
         }
         if (didChange(LC.META_URL_CNAME)) {
+            clearLcImages();
             setupImages(newLayoutInfo);
         }
 
@@ -337,9 +341,17 @@ function handlePlotActive(layoutInfo, action) {
     return layoutInfo;
 }
 
+function clearLcImages() {
+    const vr= visRoot();
+    vr.plotViewAry.forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId}));
+    dispatchReplaceViewerItems(LC.IMG_VIEWER_ID, ['placeHolder']);
+}
+
 function clearResults(layoutInfo) {
     removeTablesFromGroup();
     removeTablesFromGroup(LC.PERIODOGRAM_GROUP);
+    clearLcImages();
+
 
     if (has(layoutInfo, [LC.MISSION_DATA])) {
         dispatchMountFieldGroup(getViewerGroupKey(get(layoutInfo, LC.MISSION_DATA)), false, false,
