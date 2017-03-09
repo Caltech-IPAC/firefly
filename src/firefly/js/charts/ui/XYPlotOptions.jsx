@@ -469,6 +469,9 @@ export class XYPlotOptions extends React.Component {
         const xErrProps = {colValStats,params:xyPlotParams,groupKey,fldPath:'x.error',label:'X Err',tooltip:'X Error',nullAllowed:true};
         const yErrProps = {colValStats,params:xyPlotParams,groupKey,fldPath:'y.error',label:'Y Err',tooltip:'Y Error',nullAllowed:true};
 
+        //var plotStyle = (xyPlotParams && xyPlotParams.plotStyle)? xyPlotParams.plotStyle:undefined;
+        //const testParams = {plotStyle:plotStyle, x:(defaultParams && defaultParams.x)?defaultParams.x:undefined
+       //     , y:(defaultParams && defaultParams.y)?defaultParams.y:undefined};
         return (
             <div style={{padding:'0 5px 7px'}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}
@@ -483,8 +486,8 @@ export class XYPlotOptions extends React.Component {
                         />
                         <div style={{flexGrow: 1}}/>
                         <div style={{flexGrow: 0}}>
-                            <button type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
-                            <button type='button' className='button std' onClick={() => setOptions(groupKey, defaultParams)}>Reset</button>
+                            <button type='button' className='button std' onClick={() => setOptions(groupKey, {plotStyle:xyPlotParams.plotStyle})}>Clear</button>
+                            <button type='button' className='button std' onClick={() => setOptions(groupKey, {plotStyle:xyPlotParams.plotStyle, x:defaultParams.x, y:defaultParams.y})}>Reset</button>
                         </div>
                     </div>}
 
