@@ -6,16 +6,14 @@ const vStyle={paddingLeft: 3, paddingRight: 8};
 const hStyle={paddingLeft: 0, paddingRight: 12};
 
 
-function makeOptions(options,alignment,fieldKey,value,onChange,tooltip) {
+function makeOptions(options,alignment ,value,onChange,tooltip) {
 
     const labelStyle= alignment==='vertical' ? vStyle : hStyle;
-    const uniqueName = uniqueId(fieldKey);
     return options.map((option) => (
         <span key={option.value}>
             <div style={{display:'inline-block'}} title={tooltip}>
                 <input type='radio'
                        title={tooltip}
-                       name={uniqueName}
                        value={option.value}
                        checked={value===option.value}
                        onChange={onChange}
@@ -26,7 +24,7 @@ function makeOptions(options,alignment,fieldKey,value,onChange,tooltip) {
     ));
 }
 
-export function RadioGroupInputFieldView({options,alignment,fieldKey,value,
+export function RadioGroupInputFieldView({options,alignment,value,
                                           onChange,label,inline,tooltip,
                                           labelWidth, wrapperStyle={}}) {
     const style= Object.assign({whiteSpace:'nowrap',display: inline?'inline-block':'block'},wrapperStyle);
@@ -37,7 +35,7 @@ export function RadioGroupInputFieldView({options,alignment,fieldKey,value,
         <div style={style}>
             {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} /> }
             <div style={radioStyle} >
-                {makeOptions(options,alignment,fieldKey,value,onChange,tooltip)}
+                {makeOptions(options,alignment,value,onChange,tooltip)}
             </div>
         </div>
     );
@@ -45,7 +43,6 @@ export function RadioGroupInputFieldView({options,alignment,fieldKey,value,
 
 RadioGroupInputFieldView.propTypes= {
     options: PropTypes.array.isRequired,
-    fieldKey: PropTypes.string.isRequired,
     value: PropTypes.string.isRequired,
     alignment:  PropTypes.string,
     onChange: PropTypes.func,

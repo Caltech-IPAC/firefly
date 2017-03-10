@@ -45,7 +45,7 @@ function DistanceToolUI({drawLayer,pv}) {
             <div>
                 Unit:
                 <div style={{display:'inline-block', paddingLeft:7}}>
-                    <RadioGroupInputFieldView options={options} fieldKey='units' value={pref}
+                    <RadioGroupInputFieldView options={options}  value={pref}
                                               onChange={(ev) => changeReadoutPref(drawLayer,pv,ev.target.value)} />
                 </div>
             </div>

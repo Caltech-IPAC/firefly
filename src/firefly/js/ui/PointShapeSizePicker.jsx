@@ -240,7 +240,7 @@ class ShapePickerWrapper extends Component {
                              }}>
                     <div style={{display: 'flex', marginLeft: mLeft}} >
                         <div style={{width: labelW, color: textColor}} title={'pick a symbol'}>Symbols:</div>
-                        <RadioGroupInputFieldView fieldKey='pointoptions'
+                        <RadioGroupInputFieldView
                                                   onChange={this.updateSymbol}
                                                   tooltip='available symbol shapes'
                                                   options={options}
