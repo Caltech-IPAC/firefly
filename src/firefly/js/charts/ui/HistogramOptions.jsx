@@ -6,20 +6,20 @@ import {DATATYPE_HISTOGRAM} from '../dataTypes/HistogramCDT.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import {dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {dispatchValueChange, dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {InputGroup} from '../../ui/InputGroup.jsx';
 import Validate from '../../util/Validate.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
-import {ColumnOrExpression} from './ColumnOrExpression.jsx';
+import {ColumnOrExpression, getColValidator} from './ColumnOrExpression.jsx';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 
 export const histogramParamsShape = PropTypes.shape({
          algorithm : PropTypes.oneOf(['fixedSizeBins','bayesianBlocks']),
-         numBins : PropTypes.string,
+         numBins : PropTypes.oneOfType([React.PropTypes.string,React.PropTypes.number]),
          falsePositiveRate : PropTypes.string,
          minCutoff : PropTypes.number,
          maxCutoff : PropTypes.number
@@ -85,6 +85,12 @@ export class HistogramOptions extends React.Component {
                     this.setState({fields});
                 }
             });
+        // make sure column validator matches current columns
+        const {colValStats, groupKey} = this.props;
+        if (colValStats) {
+            const colValidator = getColValidator(colValStats);
+            dispatchValueChange({groupKey, fieldKey: 'columnOrExpr', validator: colValidator});
+        }
         this.iAmMounted= true;
     }
 
@@ -133,7 +139,7 @@ export class HistogramOptions extends React.Component {
         const { colValStats, groupKey, histogramParams, defaultParams, onOptionsSelected} = this.props;
         const {fixedAlgorithm=false} = this.state;
         const xProps = {colValStats,params:histogramParams,groupKey,fldPath:'columnOrExpr',label:'Column or expression', labelWidth:120, tooltip:'X Axis',nullAllowed:false};
-        
+
         const algorithm = get(histogramParams, 'algorithm', 'fixedSizeBins');
         const m_algorithmOptions = fixedAlgorithm ? algorithmOptions.filter((el) => el.value === algorithm) : algorithmOptions;
         return (

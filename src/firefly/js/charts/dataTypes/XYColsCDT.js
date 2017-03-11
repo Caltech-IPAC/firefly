@@ -594,9 +594,9 @@ function dispatchError(dispatch, chartId, chartDataElementId, reason) {
     if (reasonStr.match(/not supported/)) {
         reasonStr = 'Unsupported feature requested. Please choose valid options.';
     } else if (reasonStr.match(/invalid column/)) {
-        reasonStr = 'Invalid column or expression. Please choose valid X and Y.';
+        reasonStr = 'Non-existent column or invalid expression. Please choose valid X and Y.';
     } else {
-        reasonStr = 'Please check console for more information.';
+        reasonStr = 'Please contact Help Desk. Check browser console for more information.';
     }
     dispatch(chartDataUpdate(
         {

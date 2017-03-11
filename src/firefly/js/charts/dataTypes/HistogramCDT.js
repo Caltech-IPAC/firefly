@@ -169,16 +169,25 @@ function fetchColData(dispatch, chartId, chartDataElementId) {
         }
     ).catch(
         (reason) => {
-            const message = 'Failed to fetch histogram data';
-            logError(`${message}: ${reason}`);
-            dispatch(chartDataUpdate(
-                {
-                    chartId,
-                    chartDataElementId,
-                    isDataReady: true,
-                    error: {message, reason},
-                    data: undefined
-                }));
+            dispatchError(dispatch, chartId, chartDataElementId, reason);
         }
     );
+}
+function dispatchError(dispatch, chartId, chartDataElementId, reason) {
+    const message = 'Failed to fetch histogram data';
+    logError(`${message}: ${reason}`);
+    let reasonStr = `${reason}`.toLowerCase();
+    if (reasonStr.match(/invalid column/)) {
+        reasonStr = 'Non-existent column or invalid expression. Please use valid value.';
+    } else {
+        reasonStr = 'Please contact Help Desk. Check browser console for more information.';
+    }
+    dispatch(chartDataUpdate(
+        {
+            chartId,
+            chartDataElementId,
+            isDataReady: true,
+            error: {message, reason: reasonStr},
+            data: undefined
+        }));
 }

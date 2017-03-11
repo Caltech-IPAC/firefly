@@ -4,6 +4,7 @@
 import React, {PropTypes} from 'react';
 
 import {get} from 'lodash';
+import {Expression} from '../../util/expr/Expression.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {TextButton} from '../../ui/TextButton.jsx';
 import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
@@ -27,6 +28,24 @@ function parseSuggestboxContent(text) {
         }
     }
     return {token, priorContent};
+}
+
+export function getColValidator(colValStats, required=true) {
+    const colNames = colValStats.map((colVal) => {return colVal.name;});
+    return (val) => {
+        let retval = {valid: true, message: ''};
+        if (!val) {
+            if (required) {
+                return {valid: false, message: 'Can not be empty. Please provide value or expression'};
+            }
+        } else if (colNames.indexOf(val) < 0) {
+            const expr = new Expression(val, colNames);
+            if (!expr.isValid()) {
+                retval = {valid: false, message: `${expr.getError().error}. Unable to parse ${val}.`};
+            }
+        }
+        return retval;
+    };
 }
 
 export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,labelWidth=30,tooltip,nullAllowed}) {
@@ -55,12 +74,18 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
         val = colName;
         dispatchValueChange({fieldKey: fldPath, groupKey, value: colName, valid: true});
     };
+    const colValidator = getColValidator(colValStats,!nullAllowed);
+    const value = get(params, fldPath);
+    const {valid=true, message=''} = value ? colValidator(value) : {};
     return (
         <div style={{whiteSpace: 'nowrap'}}>
             <SuggestBoxInputField
                 inline={true}
                 initialState= {{
-                    value: get(params, fldPath),
+                    value,
+                    valid,
+                    message,
+                    validator: colValidator,
                     tooltip: `Column or expression for ${tooltip}`,
                     label: `${label}:`,
                     nullAllowed
