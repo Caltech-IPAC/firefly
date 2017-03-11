@@ -66,7 +66,7 @@ export class WiseSettingBox extends Component {
                                       labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>
 
                         {missionInputs}
-                        {missionOthers}
+                        {/* missionOthers */}
                     </div>
                     <div>
                         {allCommonEntries}
