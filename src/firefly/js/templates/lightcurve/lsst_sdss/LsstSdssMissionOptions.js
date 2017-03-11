@@ -11,7 +11,7 @@ import {dispatchTableSearch} from '../../../tables/TablesCntlr.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {FilterInfo} from '../../../tables/FilterInfo.js';
 
-import {LC, getViewerGroupKey} from '../LcManager.js';
+import {LC, getViewerGroupKey, makeRawTableRequestByColumnChange} from '../LcManager.js';
 import {getTypeData} from './../LcUtil.jsx';
 
 const labelWidth = 100;
@@ -38,7 +38,17 @@ export class LsstSdssSettingBox extends Component {
         );
 
         const validFluxVals = get(missionEntries, LC.META_FLUX_NAMES, []);
+        const validTimeVals = get(missionEntries, LC.META_TIME_NAMES, []);
 
+        const suggestInput = (key, sugAry) => {
+            return (<SuggestBoxInputField key={key}
+                                          fieldKey={key} wrapperStyle={wrapperStyle}
+                                          getSuggestions={(val) => {
+                    const suggestions =  sugAry && sugAry.filter((el) => {return el.startsWith(val);});
+                    return suggestions.length > 0 ? suggestions : sugAry;
+                }}
+            />);
+        };
         var leftEntries = [
             <RadioGroupInputField key='band' fieldKey='band' wrapperStyle={wrapperStyle}
                 alignment='horizontal'
@@ -49,14 +59,11 @@ export class LsstSdssSettingBox extends Component {
                     {label: 'i', value: 'i'},
                     {label: 'z', value: 'z'}
                 ]}
+
+
             />,
-            <SuggestBoxInputField key={LC.META_FLUX_CNAME}
-                fieldKey={LC.META_FLUX_CNAME} wrapperStyle={wrapperStyle}
-                getSuggestions={(val) => {
-                    const suggestions =  validFluxVals && validFluxVals.filter((el) => {return el.startsWith(val);});
-                    return suggestions.length > 0 ? suggestions : validFluxVals;
-                }}
-            />
+            suggestInput(LC.META_TIME_CNAME, validTimeVals),
+            suggestInput(LC.META_FLUX_CNAME, validFluxVals)
         ];
 
         const groupKey = getViewerGroupKey(missionEntries);
@@ -82,19 +89,22 @@ LsstSdssSettingBox.propTypes = {
     missionEntries: PropTypes.object
 };
 
-export const lsstSdssReducer = (missionEntries, generalEntries) => {
+
+const lsstSdssReducer = (missionEntries, generalEntries) => {
     return (inFields, action) => {
         if (inFields) {
             return inFields;
         }
 
-        const validFluxVals = get(missionEntries, LC.META_FLUX_NAMES, []);
-        const fluxFldValidator = (val) => {
-            let retVal = {valid: true, message: ''};
-            if (validFluxVals.length !== 0 && !validFluxVals.includes(val)) {
-                retVal = {valid: false, message: `${val} is not a valid column name`};
-            }
-            return retVal;
+        const fldValidator = (valsKey) => {
+            return (val) => {
+                let retVal = {valid: true, message: ''};
+                const cols = get(missionEntries, valsKey, []);
+                if (cols.length !== 0 && !cols.includes(val)) {
+                    retVal = {valid: false, message: `${val} is not a valid column name`};
+                }
+                return retVal;
+            };
         };
 
         // defValues used to keep the initial values for parameters in the field group of result page
@@ -106,10 +116,14 @@ export const lsstSdssReducer = (missionEntries, generalEntries) => {
             band: Object.assign(getTypeData('band', '',
                 'LSST SDSS band',
                 'LSST SDSS Band:', labelWidth)),
+            [LC.META_TIME_CNAME]: Object.assign(getTypeData(LC.META_TIME_CNAME, '',
+                'X column name',
+                'Time Column:', labelWidth),
+                {validator: fldValidator(LC.META_TIME_NAMES)}),
             [LC.META_FLUX_CNAME]: Object.assign(getTypeData(LC.META_FLUX_CNAME, '',
                 'Y column name',
                 'Periodic Column:', labelWidth),
-                {validator: fluxFldValidator}),
+                {validator: fldValidator(LC.META_FLUX_NAMES)}),
             ['cutoutSize']: Object.assign(getTypeData('cutoutSize', '',
                 'image cutout size',
                 'Cutout Size (deg):', labelWidth)),
@@ -120,7 +134,7 @@ export const lsstSdssReducer = (missionEntries, generalEntries) => {
 
         var   defV = Object.assign({}, defValues);
 
-        const missionKeys = ['band', LC.META_FLUX_CNAME];
+        const missionKeys = ['band', LC.META_TIME_CNAME, LC.META_FLUX_CNAME];
 
         // set value
         missionKeys.forEach((key) => {
@@ -143,7 +157,7 @@ export function lsstSdssOnNewRawTable(rawTable, missionEntries, generalEntries, 
 
     if (lsst_filtered_band && band === lsst_filtered_band) {
         return {shouldContinue: true, newLayoutInfo: smartMerge(layoutInfo, {missionEntries, generalEntries})};
-    };
+    }
 
     if (!lsst_filtered_band) {
         missionEntries.lsst_filtered_band = band;
@@ -157,9 +171,17 @@ export function lsstSdssOnNewRawTable(rawTable, missionEntries, generalEntries, 
 export function lsstSdssOnFieldUpdate(fieldKey, value) {
     const {missionEntries, rawTableRequest} = getLayouInfo() || {};
     if (!missionEntries) return;
-    if (fieldKey === 'band' || fieldKey === LC.META_TIME_CNAME) {
+
+    if (fieldKey === LC.META_TIME_CNAME) {
+        if (missionEntries[fieldKey] !== value) {
+            defer(() => makeRawTableRequestByColumnChange(value));
+        }
+
+        return {[fieldKey]: value};
+    } else if (fieldKey === 'band') {
         missionEntries[fieldKey] = value;
         const treq = makeRawTableRequest(missionEntries, rawTableRequest);
+
         defer(() => dispatchTableSearch(treq, {removable: true}));
         return {[fieldKey]: value};
     } else if ([LC.META_FLUX_CNAME, LC.META_ERR_CNAME].includes(fieldKey)) {

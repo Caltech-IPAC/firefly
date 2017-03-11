@@ -3,6 +3,8 @@
  */
 
 import {getColumnIdx, getColumn} from './TableUtil.js';
+import {isUndefined, get} from 'lodash';
+
 const cond_regex = new RegExp('(!=|>=|<=|<|>|=|like|in)\\s*(.+)');
 const cond_only_regex = new RegExp('^' + cond_regex.source, 'i');
 const filter_regex = new RegExp('(\\S+)\\s*' + cond_regex.source, 'i');
@@ -172,17 +174,21 @@ export class FilterInfo {
         op = op.toLowerCase();
         val = val.toLowerCase();
         const cidx = getColumnIdx(tableModel, cname);
-        const col = getColumn(tableModel, cname);
+        const noROWID = cname === 'ROWID' && cidx < 0;
+        const colType = noROWID ? 'int' : get(getColumn(tableModel, cname), 'type', 'char');
         val = op === 'in' ? val.replace(/[()]/g, '').split(',').map((s) => s.trim()) : val;
+
         return (row, idx) => {
-            var compareTo = row[cidx].toLowerCase();
-            if (!compareTo && cname === 'ROWID') {
-                compareTo = idx;
-            }
-            if (!['in','like'].includes(op) && col.type.match(/^[dfil]/)) {      // int, float, double, long .. or their short form.
+            var compareTo = noROWID ? idx : row[cidx];
+            if (isUndefined(compareTo)) return false;
+
+            if (!['in','like'].includes(op) && colType.match(/^[dfil]/)) {      // int, float, double, long .. or their short form.
                 val = Number(val);
                 compareTo = Number(compareTo);
+            } else {
+                compareTo = compareTo.toLowerCase();
             }
+
             switch (op) {
                 case 'like'  :
                     return compareTo.includes(val);

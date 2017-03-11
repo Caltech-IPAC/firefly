@@ -90,7 +90,6 @@ export class LcViewer extends Component {
             fluxColName: get(missionEntries, [LC.META_FLUX_CNAME])
         };
 
-        const missionName = get(missionEntries, 'missionName', '');
         dropdownPanels.push(<UploadPanel/>);
 
         var mainView = (err,converterId) => {
