@@ -712,7 +712,7 @@ function makeTableSourceUrl(columns, request) {
     };
     const tableRequest = Object.assign(def, cloneDeep(request));
     const visiCols = columns.filter( (col) => {
-        return isNil(col) || col.visibility === 'show';
+        return get(col, 'visibility', 'show') === 'show';
     }).map( (col) => {
         return col.name;
     } );
@@ -720,11 +720,11 @@ function makeTableSourceUrl(columns, request) {
         tableRequest['inclCols'] = visiCols.toString();
     }
     Reflect.deleteProperty(tableRequest, 'tbl_id');
-    const params = {
+    const params = omitBy({
         [ServerParams.COMMAND]: ServerParams.TABLE_SAVE,
         [ServerParams.REQUEST]: JSON.stringify(tableRequest),
-        file_name: tableRequest.file_name
-    };
+        file_name: get(tableRequest, 'META_INFO.title')
+    }, isNil);
     return encodeServerUrl(DEF_BASE_URL, params);
 }
 
