@@ -35,7 +35,7 @@ function NorthUpCompassUI({drawLayer,pv}) {
             <div>
                 Overlay:
                 <div style={{display:'inline-block', paddingLeft:7}}>
-                    <RadioGroupInputFieldView options={options} fieldKey='overlay_option' value={pref.value}
+                    <RadioGroupInputFieldView options={options}  value={pref.value}
                                               onChange={(ev) => changeOverlayPref(drawLayer,pv,ev.target.value)} />
                 </div>
             </div>
