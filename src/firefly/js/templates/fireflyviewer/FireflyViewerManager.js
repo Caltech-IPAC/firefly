@@ -126,7 +126,6 @@ function onAnyAction(layoutInfo, action, views) {
     }
     return smartMerge(layoutInfo, {showTables, showImages, showXyPlots, autoExpand, mode: {expanded, standard, closeable}});
 }
-    
 
 function handleNewTable(layoutInfo, action) {
     const {tbl_id} = action.payload;

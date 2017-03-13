@@ -114,11 +114,7 @@ export function isMetaDataTable(tbl_id) {
 
     const hasDsCol= Boolean(Object.keys(tableMeta).find( (key) => key.toUpperCase()===dataSourceUpper));
 
-    if (tableMeta[MetaConst.DATASET_CONVERTER] || hasDsCol) return true;
-    if (tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] || tableMeta[MetaConst.CATALOG_COORD_COLS])  return false;
-    const converter= converterFactory(table);
-    return Boolean(converter);
-
+    return Boolean(tableMeta[MetaConst.DATASET_CONVERTER] || hasDsCol);
 }
 
 /**
