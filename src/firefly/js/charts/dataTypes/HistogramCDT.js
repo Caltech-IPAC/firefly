@@ -66,8 +66,12 @@ function getServerCallParameters(histogramParams) {
     return [
         histogramParams.columnOrExpr,
         histogramParams.x && histogramParams.x.includes('log'),
+        histogramParams.binWidth,
         histogramParams.numBins,
-        histogramParams.falsePositiveRate
+        histogramParams.fixedBinSizeSelection,
+        histogramParams.falsePositiveRate,
+        histogramParams.minCutoff,
+        histogramParams.maxCutoff
     ];
 }
 
@@ -104,20 +108,23 @@ function fetchColData(dispatch, chartId, chartDataElementId) {
     if (histogramParams.x && histogramParams.x.includes('log')) {
         req.columnExpression = 'log('+req.columnExpression+')';
     }
-    if (histogramParams.numBins) { // fixed size bins
-        req.numBins = histogramParams.numBins;
+    if (histogramParams.fixedBinSizeSelection) { // fixed size bins
+        req.fixedBinSizeSelection=histogramParams.fixedBinSizeSelection;
+        if (histogramParams.fixedBinSizeSelection==='numBins'){
+           req.binSize =  histogramParams.numBins;
+        }else{
+            req.binSize =  histogramParams.binWidth;
+        }
     }
     if (histogramParams.falsePositiveRate) {  // variable size bins using Bayesian Blocks
         req.falsePositiveRate = histogramParams.falsePositiveRate;
     }
-    /*
     if (histogramParams.minCutoff) {
         req.min = histogramParams.minCutoff;
     }
     if (histogramParams.maxCutoff) {
         req.max = histogramParams.maxCutoff;
     }
-    */
 
     req.tbl_id = 'histogram-'+chartId;
 
