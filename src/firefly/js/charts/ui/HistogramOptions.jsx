@@ -6,20 +6,20 @@ import {DATATYPE_HISTOGRAM} from '../dataTypes/HistogramCDT.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import {dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {dispatchValueChange, dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {InputGroup} from '../../ui/InputGroup.jsx';
 import Validate from '../../util/Validate.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
-import {ColumnOrExpression} from './ColumnOrExpression.jsx';
+import {ColumnOrExpression, getColValidator} from './ColumnOrExpression.jsx';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 
 export const histogramParamsShape = PropTypes.shape({
          algorithm : PropTypes.oneOf(['fixedSizeBins','bayesianBlocks']),
-         numBins : PropTypes.string,
+         numBins : PropTypes.oneOfType([React.PropTypes.string,React.PropTypes.number]),
          falsePositiveRate : PropTypes.string,
          minCutoff : PropTypes.number,
          maxCutoff : PropTypes.number
@@ -85,6 +85,18 @@ export class HistogramOptions extends React.Component {
                     this.setState({fields});
                 }
             });
+        // make sure column validator matches current columns
+        const {colValStats, groupKey, histogramParams} = this.props;
+        if (colValStats) {
+            const colValidator = getColValidator(colValStats);
+            var payload = {groupKey, fieldKey: 'columnOrExpr', validator: colValidator};
+            const value = get(histogramParams, 'columnOrExpr');
+            if (value) {
+                var {valid, message} = colValidator(value);
+                payload = Object.assign(payload, {value, valid, message});
+            }
+            dispatchValueChange(payload);
+        }
         this.iAmMounted= true;
     }
 
@@ -133,11 +145,13 @@ export class HistogramOptions extends React.Component {
         const { colValStats, groupKey, histogramParams, defaultParams, onOptionsSelected} = this.props;
         const {fixedAlgorithm=false} = this.state;
         const xProps = {colValStats,params:histogramParams,groupKey,fldPath:'columnOrExpr',label:'Column or expression', labelWidth:120, tooltip:'X Axis',nullAllowed:false};
-        
+
         const algorithm = get(histogramParams, 'algorithm', 'fixedSizeBins');
         const m_algorithmOptions = fixedAlgorithm ? algorithmOptions.filter((el) => el.value === algorithm) : algorithmOptions;
+        // set minimum height to fit full height suggest box,
+        // to avoid width change due to scroll bar appearing when full height suggest box is rendered
         return (
-            <div style={{padding:'0 5px'}}>
+            <div style={{padding:'0 5px', minHeight: 250}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
                     {onOptionsSelected &&
                     <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>

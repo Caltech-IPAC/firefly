@@ -11,14 +11,13 @@ import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchMultiValueChange, VALUE_CHANGE, MULTI_VALUE_CHANGE} from '../../fieldGroup/FieldGroupCntlr.js';
 import Validate from '../../util/Validate.js';
-import {Expression} from '../../util/expr/Expression.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 import {plotParamsShape} from  './XYPlot.jsx';
 import {hideColSelectPopup} from './ColSelectView.jsx';
-import {ColumnOrExpression} from './ColumnOrExpression.jsx';
+import {ColumnOrExpression, getColValidator} from './ColumnOrExpression.jsx';
 import {updateSet} from '../../util/WebUtil.js';
 
 const DECI_ENABLE_SIZE = 5000;
@@ -113,7 +112,7 @@ export function resultsSuccess(callback, flds, optionParameters) {
         x : { columnOrExpr : xName, error: xErr, label : xLabel, unit : xUnit, options : xOptions},
         y : { columnOrExpr : yName, error: yErr, label : yLabel, unit : yUnit, options : yOptions},
         tblId,
-        zoom,
+        zoom
     }, isUndefined);
 
     if (xErr || yErr) {
@@ -153,24 +152,6 @@ export function setOptions(groupKey, xyPlotParams) {
         {fieldKey: 'shading', value: get(xyPlotParams, 'shading', 'lin')}
     ];
     dispatchMultiValueChange(groupKey, flds);
-}
-
-export function getColValidator(colValStats, required=true) {
-    const colNames = colValStats.map((colVal) => {return colVal.name;});
-    return (val) => {
-        let retval = {valid: true, message: ''};
-        if (!val) {
-            if (required) {
-                return {valid: false, message: 'Can not be empty. Please provide value or expression'};
-            }
-        } else if (colNames.indexOf(val) < 0) {
-            const expr = new Expression(val, colNames);
-            if (!expr.isValid()) {
-                retval = {valid: false, message: `${expr.getError().error}. Unable to parse ${val}.`};
-            }
-        }
-        return retval;
-    };
 }
 
 /**

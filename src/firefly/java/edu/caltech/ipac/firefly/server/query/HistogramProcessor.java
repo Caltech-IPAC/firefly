@@ -306,11 +306,14 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         return false;
     }
 
-    private double[] getColumnData(DataGroup dg) {
+    private double[] getColumnData(DataGroup dg) throws DataAccessException {
         List<DataObject> objList = dg.values();
         int nRow = objList.size();
         DataType[] dataTypes=dg.getDataDefinitions();
         DataObjectUtil.DoubleValueGetter dGetter = new DataObjectUtil.DoubleValueGetter(dataTypes, columnExpression);
+        if (!dGetter.isValid()) {
+            throw new DataAccessException("Invalid column or expression: "+columnExpression);
+        }
 
         double[] data = new double[nRow];
         for (int i = 0; i < nRow; i++) {

@@ -219,20 +219,19 @@ function serverParamsChanged(oldParams, newParams, chartDataElement) {
     } else {
         // 'x', 'y', 'sortBy', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh'
         // server call parameters are present in the data
-        const newOpts = omitBy({
-            sortBy: newParams.sortColOrExpr,
-            x: newParams.x.columnOrExpr,
-            xErr: newParams.x.error,
-            xErrLow: newParams.x.errorLow,
-            xErrHigh: newParams.x.errorHigh,
-            y: newParams.y.columnOrExpr,
-            yErr: newParams.y.error,
-            yErrLow: newParams.y.errorLow,
-            yErrHigh: newParams.y.errorHigh
-        }, isUndefined);
-        return Object.keys(newOpts).some((o) => {
-            return newOpts[o] !== data[o];
-        });
+        const newOpts = getServerCallParameters(newParams, false);
+        if (data) {
+            // if data available, see if the new parameters are different from those used to obtain the data
+            return Object.keys(newOpts).some((o) => {
+                return newOpts[o] !== data[o];
+            });
+        } else {
+            // if data are not available, compare with the old parameters
+            const oldOpts = getServerCallParameters(oldParams, false);
+            return Object.keys(newOpts).some((o) => {
+                return newOpts[o] !== oldOpts[o];
+            });
+        }
     }
 }
 
@@ -249,22 +248,39 @@ function isLargeTable(tblId) {
 //        xyPlotParams.x.errorHigh || xyPlotParams.y.errorHigh);
 //}
 
-function getServerCallParameters(xyPlotParams) {
-    if (!xyPlotParams) { return []; }
+function getServerCallParameters(xyPlotParams, isLargeTable=true) {
+    if (isLargeTable) {
+        if (!xyPlotParams) {
+            return [];
+        }
 
-    if (xyPlotParams.zoom) {
-        var {xMin, xMax, yMin, yMax}  = xyPlotParams.zoom;
-    }
+        if (xyPlotParams.zoom) {
+            var {xMin, xMax, yMin, yMax}  = xyPlotParams.zoom;
+        }
 
-    let maxBins = 10000;
-    let xyRatio = xyPlotParams.xyRatio || 1.0;
-    if (xyPlotParams.nbins) {
-        const {x, y} = xyPlotParams.nbins;
-        maxBins = x*y;
-        xyRatio = x/y;
+        let maxBins = 10000;
+        let xyRatio = xyPlotParams.xyRatio || 1.0;
+        if (xyPlotParams.nbins) {
+            const {x, y} = xyPlotParams.nbins;
+            maxBins = x * y;
+            xyRatio = x / y;
+        }
+        // order should match the order of the parameters in serializeDecimateInfo
+        return [xyPlotParams.x.columnOrExpr, xyPlotParams.y.columnOrExpr, maxBins, xyRatio, xMin, xMax, yMin, yMax];
+    } else {
+        // smaller (not decimated) table
+        return omitBy({
+            sortBy: xyPlotParams.sortColOrExpr,
+            x: xyPlotParams.x.columnOrExpr,
+            xErr: xyPlotParams.x.error,
+            xErrLow: xyPlotParams.x.errorLow,
+            xErrHigh: xyPlotParams.x.errorHigh,
+            y: xyPlotParams.y.columnOrExpr,
+            yErr: xyPlotParams.y.error,
+            yErrLow: xyPlotParams.y.errorLow,
+            yErrHigh: xyPlotParams.y.errorHigh
+        }, isUndefined);
     }
-    // order should match the order of the parameters in serializeDecimateInfo
-    return [xyPlotParams.x.columnOrExpr, xyPlotParams.y.columnOrExpr, maxBins, xyRatio, xMin, xMax, yMin, yMax];
 }
 
 export function getDataBoundaries(xyPlotData) {
@@ -574,12 +590,20 @@ function fetchXYWithErrorsOrSort(dispatch, chartId, chartDataElementId) {
 function dispatchError(dispatch, chartId, chartDataElementId, reason) {
     const message = 'Failed to fetch XY plot data';
     logError(`${message}: ${reason}`);
+    let reasonStr = `${reason}`.toLowerCase();
+    if (reasonStr.match(/not supported/)) {
+        reasonStr = 'Unsupported feature requested. Please choose valid options.';
+    } else if (reasonStr.match(/invalid column/)) {
+        reasonStr = 'Non-existent column or invalid expression. Please choose valid X and Y.';
+    } else {
+        reasonStr = 'Please contact Help Desk. Check browser console for more information.';
+    }
     dispatch(chartDataUpdate(
         {
             chartId,
             chartDataElementId,
             isDataReady: true,
-            error: {message, reason},
+            error: {message, reason: reasonStr},
             data: undefined
         }));
 }

@@ -623,7 +623,7 @@ public class QueryUtil {
      * @param decimateInfo DecimateInfo object
      * @return decimated data group
      */
-    public static DataGroup doDecimation(DataGroup dg, DecimateInfo decimateInfo) {
+    public static DataGroup doDecimation(DataGroup dg, DecimateInfo decimateInfo) throws DataAccessException {
 
         double xMax = Double.NEGATIVE_INFINITY, xMin = Double.POSITIVE_INFINITY, yMax = Double.NEGATIVE_INFINITY, yMin = Double.POSITIVE_INFINITY;
 
@@ -633,7 +633,7 @@ public class QueryUtil {
 
         if (!xValGetter.isValid() || !yValGetter.isValid()) {
             System.out.println("QueryUtil.doDecimation: invalid x or y column.");
-            return null; // TODO: handle null return in the caller?
+            throw new DataAccessException("Invalid column or expression");
         }
 
         int maxPoints = decimateInfo.getMaxPoints() == 0 ? DECI_DEF_MAX_POINTS : decimateInfo.getMaxPoints();
