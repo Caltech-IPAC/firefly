@@ -56,7 +56,7 @@ export function setOptions(groupKey, histogramParams) {
 }
 
 const algorithmOptions = [  {label: 'Bayesian blocks', value: 'bayesianBlocks'},
-                            {label: 'Fixed size', value: 'fixedSizeBins'} ];
+                            {label: 'Uniform binning', value: 'fixedSizeBins'} ];
 const binSizeOptions = [  {label: 'Number of bins:', value: 'numBins'},
     {label: 'Bin width:', value: 'binWidth'} ];
 
