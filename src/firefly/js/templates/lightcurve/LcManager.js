@@ -25,6 +25,7 @@ import {getConverter} from './LcConverterFactory.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeMissionEntries, keepHighlightedRowSynced} from './LcUtil.jsx';
 import {dispatchMountFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
+import {ERROR_MSG_KEY} from '../lightcurve/generic/errorMsg.js';
 
 export const LC = {
     RAW_TABLE: 'raw_table',          // raw table id
@@ -41,6 +42,7 @@ export const LC = {
 
     META_TIME_CNAME: 'ts_timeCName',
     META_FLUX_CNAME: 'ts_fluxCName',
+    META_FLUX_BAND: 'ts_bandName',
     META_ERR_CNAME: 'ts_errorCName',
     META_COORD_XNAME: 'ts_coordXName',
     META_COORD_YNAME: 'ts_coordYName',
@@ -60,10 +62,10 @@ export const LC = {
 
     META_TIME_NAMES: 'ts_timeNames',
     META_FLUX_NAMES: 'ts_fluxNames',
+    META_URL_NAMES: 'ts_datasources',
     META_ERR_NAMES: 'ts_errorNames',
 
     META_MISSION: MetaConst.TS_DATASET,
-
     MISSION_DATA: 'missionEntries',
     GENERAL_DATA:'generalEntries',
 
@@ -75,6 +77,10 @@ const plotIdRoot= 'LC_FRAME-';
 
 var defaultCutout = '0.2';
 //var defaultFlux = '';
+
+function getFluxBandName(layoutInfo) {
+    return get(layoutInfo, ['missionEntries', LC.META_FLUX_BAND]);
+}
 
 function getFluxColumn(layoutInfo) {
     return get(layoutInfo, ['missionEntries', LC.META_FLUX_CNAME]);
@@ -107,10 +113,21 @@ function getDataSource(layoutInfo) {
 function getImagePlotParams(layoutInfo) {
     return {timeCol: getTimeColumn(layoutInfo),
             fluxCol: getFluxColumn(layoutInfo),
+            bandName: getFluxBandName(layoutInfo),
             dataSource: getDataSource(layoutInfo),
             ra: getRA(layoutInfo),
             dec: getDEC(layoutInfo),
             coordSys: getCoordSys(layoutInfo)};
+}
+
+function getUserInputParams(layoutInfo) {
+    return {timeCol: getTimeColumn(layoutInfo),
+        fluxCol: getFluxColumn(layoutInfo),
+        bandName: getFluxBandName(layoutInfo),
+        dataSource: getDataSource(layoutInfo),
+        ra: getRA(layoutInfo),
+        dec: getDEC(layoutInfo),
+        coordSys: getCoordSys(layoutInfo)};
 }
 
 export function getConverterData(layoutInfo=getLayouInfo()) {
@@ -263,7 +280,7 @@ function handleValueChange(layoutInfo, action) {
             if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
                 layoutInfo = updateSet(layoutInfo, [LC.GENERAL_DATA, fieldKey], value);
                 clearLcImages();
-                setupImages(layoutInfo);
+                layoutInfo = setupImages(layoutInfo);
             }
         }
     } else if ([LC.META_COORD_XNAME, LC.META_COORD_YNAME, LC.META_COORD_SYS].includes(fieldKey)) {
@@ -271,7 +288,7 @@ function handleValueChange(layoutInfo, action) {
             if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
                 layoutInfo = updateSet(layoutInfo, [LC.MISSION_DATA, fieldKey], value);
                 clearLcImages();
-                setupImages(layoutInfo);
+                layoutInfo = setupImages(layoutInfo);
             }
         }
     } else {
@@ -285,7 +302,7 @@ function handleValueChange(layoutInfo, action) {
 
         const didChange = (el) => Object.keys(updates).includes(el) && updates[el] !== get(layoutInfo, [LC.MISSION_DATA, fieldKey]);
 
-        const newLayoutInfo = updateMerge(layoutInfo, LC.MISSION_DATA, updates);
+        let newLayoutInfo = updateMerge(layoutInfo, LC.MISSION_DATA, updates);
 
         if ([LC.META_TIME_CNAME, LC.META_FLUX_CNAME].some(didChange)) {
             const timeCol = get(newLayoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]);
@@ -298,7 +315,7 @@ function handleValueChange(layoutInfo, action) {
             }
 
             clearLcImages();
-            setupImages(newLayoutInfo);
+            newLayoutInfo = setupImages(newLayoutInfo);
 
             // update time or flux for period panel field group if it exists
             if (FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER)) {
@@ -306,9 +323,9 @@ function handleValueChange(layoutInfo, action) {
                 [{fieldKey: 'time', value: timeCol}, {fieldKey: 'flux', value: fluxCol}]);
             }
         }
-        if (didChange(LC.META_URL_CNAME)) {
+        if ([LC.META_URL_CNAME, LC.META_FLUX_BAND].some(didChange)) {
             clearLcImages();
-            setupImages(newLayoutInfo);
+            newLayoutInfo = setupImages(newLayoutInfo);
         }
 
         layoutInfo = newLayoutInfo;
@@ -352,12 +369,19 @@ function clearResults(layoutInfo) {
     removeTablesFromGroup(LC.PERIODOGRAM_GROUP);
     clearLcImages();
 
-
     if (has(layoutInfo, [LC.MISSION_DATA])) {
         dispatchMountFieldGroup(getViewerGroupKey(get(layoutInfo, LC.MISSION_DATA)), false, false,
             null, null, [], undefined, true);
     }
-    return smartMerge(layoutInfo, {displayMode: LC.RESULT_PAGE, periodState: LC.PERIOD_PAGE, missionEntries: null, generalEntries: null, fullRawTable:null});
+    return smartMerge(layoutInfo, {
+        showImages: false,
+        displayMode: LC.RESULT_PAGE,
+        periodState: LC.PERIOD_PAGE,
+        missionEntries: null,
+        generalEntries: null,
+        fullRawTable: null,
+        error:''
+    });
 }
 
 /**
@@ -392,11 +416,14 @@ function handleRawTableLoad(layoutInfo, tblId) {
         return;
     }
 
-    const {newLayoutInfo, shouldContinue} = converterData.onNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo);
+    const {newLayoutInfo, shouldContinue, validTable} = converterData.onNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo);
+    let newMissionEntries = get(newLayoutInfo, ['missionEntries']); // missionEntries could have changed after calling specific mission onRaw
     if (shouldContinue) {
         // additional changes to the loaded table
-        ensureValidRawTable(rawTable, missionEntries);
+        ensureValidRawTable(rawTable, newMissionEntries);
     }
+
+
     return newLayoutInfo;
 }
 
@@ -435,7 +462,7 @@ function handleTableLoad(layoutInfo, action) {
         keepHighlightedRowSynced(tbl_id, highlightedRow);
     }
     if (isImageEnabledTable(tbl_id)) {
-        layoutInfo = updateSet(layoutInfo, 'showImages', true);
+        layoutInfo = updateSet(layoutInfo, 'showImages', shouldImagesBeLayout(layoutInfo));
     }
 
     return layoutInfo;
@@ -451,7 +478,7 @@ function handleTableActive(layoutInfo, action) {
     const {tbl_id} = action.payload;
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
-        setupImages(layoutInfo);
+        layoutInfo = setupImages(layoutInfo);
     }
 
     if (tbl_id === LC.PERIODOGRAM_TABLE || tbl_id === LC.PEAK_TABLE) {
@@ -486,7 +513,9 @@ function handleTableHighlight(layoutInfo, action) {
     if (tbl_id !== getActiveTableId(activeTableContainer)) return layoutInfo;
 
     if (isImageEnabledTable(tbl_id)) {
-        setupImages(layoutInfo);
+        layoutInfo = setupImages(layoutInfo);
+    }else{
+        //TODO Shouldn't show the layout at all if images can't be seen:
     }
 
     // update period field when it's selected from a table with period.
@@ -541,39 +570,52 @@ function isImageEnabledTable(tbl_id) {
     return [LC.PHASE_FOLDED, LC.RAW_TABLE].includes(tbl_id);
 }
 
+function shouldImagesBeLayout(layoutInfo){
+
+    const converterId = get(layoutInfo, [LC.MISSION_DATA, LC.META_MISSION]);
+    const converterData = converterId && getConverter(converterId);
+    if (!converterId || !converterData) {
+        return false;
+    }
+
+    return converterData.shouldImagesBeDisplayed(getUserInputParams(layoutInfo));
+}
+
 function handleChangeMultiViewLayout(layoutInfo) {
-    setupImages(layoutInfo);
+    layoutInfo = setupImages(layoutInfo);
     return layoutInfo;
 }
 
 export function setupImages(layoutInfo) {
+
+    const activeTableId = get(layoutInfo, 'images.activeTableId');
+
+    const tableModel = getTblById(activeTableId);
+    if (!tableModel || isNil(tableModel.highlightedRow) || get(tableModel, 'totalRows', 0) < 1) return;
+
+    const converterId = get(layoutInfo, [LC.MISSION_DATA, LC.META_MISSION]);
+    const converterData = converterId && getConverter(converterId);
+    if (!converterId || !converterData) {
+        return;
+    }
+
+    const viewer = getViewer(getMultiViewRoot(), LC.IMG_VIEWER_ID);
+    const count = get(viewer, 'layoutDetail.count', converterData.defaultImageCount);
+
+    var vr = visRoot();
+    const hasPlots = vr.plotViewAry.length > 0;
+    const newPlotIdAry = makePlotIds(tableModel.highlightedRow, tableModel.totalRows, count);
+    const maxPlotIdAry = makePlotIds(tableModel.highlightedRow, tableModel.totalRows, LC.MAX_IMAGE_CNT);
+    const cutoutSize = getCutoutSize(layoutInfo);
     try {
-        const activeTableId = get(layoutInfo, 'images.activeTableId');
-
-        const tableModel = getTblById(activeTableId);
-        if (!tableModel || isNil(tableModel.highlightedRow) || get(tableModel, 'totalRows',0) < 1) return;
-
-        const converterId = get(layoutInfo, [LC.MISSION_DATA,LC.META_MISSION]);
-        const converterData = converterId && getConverter(converterId);
-        if (!converterId || !converterData) {return;}
-
-        const viewer=  getViewer(getMultiViewRoot(),LC.IMG_VIEWER_ID);
-        const count= get(viewer, 'layoutDetail.count', converterData.defaultImageCount);
-
-        var vr= visRoot();
-        const hasPlots= vr.plotViewAry.length>0;
-        const newPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,count);
-        const maxPlotIdAry= makePlotIds(tableModel.highlightedRow, tableModel.totalRows,LC.MAX_IMAGE_CNT);
-        const cutoutSize = getCutoutSize(layoutInfo);
-
-        newPlotIdAry.forEach( (plotId) => {
-            var pv = getPlotViewById(vr,plotId);
-            const rowNum= Number(plotId.substring(plotIdRoot.length));
-            const webPlotReq = converterData.webplotRequestCreator(tableModel,rowNum, cutoutSize,
-                                                                   getImagePlotParams(layoutInfo));
+        newPlotIdAry.forEach((plotId) => {
+            var pv = getPlotViewById(vr, plotId);
+            const rowNum = Number(plotId.substring(plotIdRoot.length));
+            const webPlotReq = converterData.webplotRequestCreator(tableModel, rowNum, cutoutSize,
+                getImagePlotParams(layoutInfo));
 
             if (webPlotReq && (!pv || get(pv, ['request', 'params', 'Title']) !== webPlotReq.getTitle() ||
-                                      get(pv, ['request', 'params', 'UserDesc']) !== webPlotReq.getUserDesc()))  {
+                get(pv, ['request', 'params', 'UserDesc']) !== webPlotReq.getUserDesc())) {
                 dispatchPlotImage({
                     plotId, wpRequest: webPlotReq,
                     setNewPlotAsActive: false,
@@ -585,24 +627,32 @@ export function setupImages(layoutInfo) {
 
 
         dispatchReplaceViewerItems(LC.IMG_VIEWER_ID, newPlotIdAry);
-        const newActivePlotId= plotIdRoot+tableModel.highlightedRow;
+        const newActivePlotId = plotIdRoot + tableModel.highlightedRow;
         dispatchChangeActivePlotView(newActivePlotId);
 
-        vr= visRoot();
+        vr = visRoot();
 
         if (!vr.wcsMatchType && !hasPlots) {
-            dispatchWcsMatch({matchType:WcsMatchType.Target, plotId:newActivePlotId});
+            dispatchWcsMatch({matchType: WcsMatchType.Target, plotId: newActivePlotId});
         }
 
-        vr= visRoot();
+        vr = visRoot();
 
         vr.plotViewAry
-            .filter( (pv) => pv.plotId.startsWith(plotIdRoot))
-            .filter( (pv) => pv.plotId!==vr.mpwWcsPrimId)
-            .filter( (pv) => !maxPlotIdAry.includes(pv.plotId))
-            .forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId, holdWcsMatch:true}));
-    } catch (E){
-        console.log(E.toString());
+            .filter((pv) => pv.plotId.startsWith(plotIdRoot))
+            .filter((pv) => pv.plotId !== vr.mpwWcsPrimId)
+            .filter((pv) => !maxPlotIdAry.includes(pv.plotId))
+            .forEach((pv) => dispatchDeletePlotView({plotId: pv.plotId, holdWcsMatch: true}));
+
+        // Decide whether or not to show images, mission specific:
+        const imagesShown = converterData.shouldImagesBeDisplayed(layoutInfo);
+        layoutInfo = updateSet(layoutInfo, 'showImages', imagesShown);
+
+        return layoutInfo;
+    } catch (E) {
+        console.log(E.stack.split('\n')[0] + E.stack.split('\n')[1]);
+        layoutInfo = updateSet(layoutInfo, 'showImages', false);
+        return layoutInfo;
     }
 }
 

@@ -2,15 +2,17 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get} from 'lodash';
+import {get, isNil} from 'lodash';
 import {TitleOptions} from '../../visualize/WebPlotRequest.js';
 import {logError} from '../../util/WebUtil.js';
 import {getWebPlotRequestViaWISEIbe} from './wise/WisePlotRequests.js';
 import {makeLsstSdssPlotRequest} from './lsst_sdss/LsstSdssPlotRequests.js';
 import {makeURLPlotRequest} from './generic/DefaultPlotRequests.js';
+import {basicURLPlotRequest} from './basic/BasicPlotRequests'
 import {LsstSdssSettingBox, lsstSdssOnNewRawTable, lsstSdssOnFieldUpdate, lsstSdssRawTableRequest} from './lsst_sdss/LsstSdssMissionOptions.js';
-import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest} from './wise/WiseMissionOptions.js';
+import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest, isBasicTableUploadValid} from './wise/WiseMissionOptions.js';
 import {DefaultSettingBox, defaultOnNewRawTable, defaultOnFieldUpdate, defaultRawTableRequest} from './generic/DefaultMissionOptions.js';
+import {BasicSettingBox, basicOnNewRawTable, basicOnFieldUpdate, basicRawTableRequest, imagesShouldBeDisplayed} from './basic/BasicMissionOptions.js';
 
 export const UNKNOWN_MISSION = 'generic';
 export const COORD_SYSTEM_OPTIONS = ['EQ_J2000', 'EQ_B1950', 'GALACTIC'];
@@ -62,10 +64,13 @@ export const coordSysOptions = 'coordSysOptions';
  * @prop {string[]} timeNames - valid column names for time axis
  * @prop {string[]} yNames - valid column names for y axis
  * @prop {WebplotRequestCreator}  webplotRequestCreator a function to create a WebplotRequest
+ * @prop {boolean} shouldImagesBeDisplayed a function that return true if user inputs make sense to the mission
+ *                  to show images
+ * @prop {function} isTableUploadValid - check table on upload if make sens with mission selected
  */
 
 /**
- * @type {{wise: LCMissionConverter, lsst_sdss: LCMissionConverter}}
+ * @type {{wise: LCMissionConverter, lsst_sdss: LCMissionConverter, , basic: LCMissionConverter}}
  **/
 const converters = {
     'wise': {
@@ -74,15 +79,18 @@ const converters = {
         defaultTimeCName: 'mjd',
         defaultYCname: 'w1mpro_ep',
         defaultYErrCname: '',
-        missionName: 'WISE',
+        missionName: 'WISE/NEOWISE',
         MissionOptions: WiseSettingBox,
         onNewRawTable: wiseOnNewRawTable,
         onFieldUpdate: wiseOnFieldUpdate,
         rawTableRequest: wiseRawTableRequest,
-        timeNames: ['mjd'],
-        yNames: ['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'],
-        yErrNames: ['w1sigmpro_ep', 'w2sigmpro_ep', 'w3sigmpro_ep', 'w4sigmpro_ep'],
-        webplotRequestCreator: getWebPlotRequestViaWISEIbe
+        /*timeNames: ['mjd'],*/
+        /*yNames: ['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'],*/
+        yErrNames: '',
+        dataSource: 'frame_id',
+        webplotRequestCreator: getWebPlotRequestViaWISEIbe,
+        shouldImagesBeDisplayed: () => {return true;},
+        isTableUploadValid: isBasicTableUploadValid
     },
     'lsst_sdss': {
         converterId: 'lsst_sdss',
@@ -98,7 +106,9 @@ const converters = {
         timeNames: ['exposure_time_mid'],
         yNames: ['mag', 'tsv_flux'],
         yErrNames: ['magErr', 'tsv_fluxErr'],
-        webplotRequestCreator: makeLsstSdssPlotRequest
+        webplotRequestCreator: makeLsstSdssPlotRequest,
+        shouldImagesBeDisplayed: () => {return true;},
+        isTableUploadValid: () => {return true;}
     },
     [UNKNOWN_MISSION]: {
         converterId: UNKNOWN_MISSION,
@@ -116,7 +126,30 @@ const converters = {
         rawTableRequest: defaultRawTableRequest,
         dataSource: '',
         [coordSysOptions]: COORD_SYSTEM_OPTIONS,
-        webplotRequestCreator: makeURLPlotRequest
+        webplotRequestCreator: makeURLPlotRequest,
+        shouldImagesBeDisplayed: () => {return true;},
+        isTableUploadValid: () => {return true;}
+    },
+    // Case which should handle any ipac table and image column, X,Y, coord system not shown (Generic/Advanced case)
+    'basic': {
+        converterId: 'basic',
+        defaultImageCount: 5,
+        defaultTimeCName: '',
+        defaultYCname: '',
+        defaultYErrCname: '',
+        missionName: '',
+        defaultCoordX: '',
+        defaultCoordY: '',
+        defaultCoordSys: '',
+        MissionOptions: BasicSettingBox,
+        onNewRawTable: basicOnNewRawTable,
+        onFieldUpdate: basicOnFieldUpdate,
+        rawTableRequest: basicRawTableRequest,
+        dataSource: '',
+        [coordSysOptions]: COORD_SYSTEM_OPTIONS,
+        webplotRequestCreator: basicURLPlotRequest,
+        shouldImagesBeDisplayed: imagesShouldBeDisplayed,
+        isTableUploadValid: () => {return true;}
     }
 };
 
@@ -151,6 +184,8 @@ export function addCommonReqParams(inWpr,title,wp) {
     retWpr.setGroupLocked(true);
     retWpr.setPlotGroupId('LightCurveGroup');
     retWpr.setPreferenceColorKey('light-curve-color-pref');
-    retWpr.setOverlayPosition(wp);
+    if(!isNil(wp)){
+        retWpr.setOverlayPosition(wp);
+    }
     return retWpr;
 }
