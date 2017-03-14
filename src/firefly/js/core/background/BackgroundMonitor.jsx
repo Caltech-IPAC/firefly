@@ -103,7 +103,7 @@ class BgFooter extends Component {
     }
 
     render() {
-        const {help_id, email} = this.props;
+        const {help_id = 'basics.bgmon', email} = this.props;
         return (
             <div className='BGMon__footer' key='bgMonFooter'>
                 <button className='button std hl' onClick={this.onHide}
