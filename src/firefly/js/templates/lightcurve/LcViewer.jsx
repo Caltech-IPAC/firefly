@@ -5,7 +5,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {pickBy, get, capitalize} from 'lodash';
+import {pickBy, get, isEmpty, capitalize} from 'lodash';
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
 import {dispatchHideDropDown, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
@@ -83,7 +83,7 @@ export class LcViewer extends Component {
 
     render() {
         var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown,
-            dropdownPanels=[], footer, style, displayMode, missionEntries} = this.state;
+            dropdownPanels=[], footer, style, displayMode, missionEntries, error} = this.state;
         const {visible, view} = dropDown || {};
         const periodProps = {
             displayMode, timeColName: get(missionEntries, [LC.META_TIME_CNAME]),
@@ -93,9 +93,36 @@ export class LcViewer extends Component {
         const missionName = get(missionEntries, 'missionName', '');
         dropdownPanels.push(<UploadPanel/>);
 
+        var mainView = (err,converterId) => {
+            if (!isEmpty(error) && converterId) {
+                return (
+                    <div
+                        style={{display:'flex', position:'absolute', border: '1px solid #a3aeb9', padding:20, fontSize:'150%'}}>
+                        {`Table uploaded is not ${getMissionName(converterId)} valid, missing columns: ${error}.
+                      Please, select option 'Basic' for general table upload.`}
+                        <div>
+                            <HelpIcon helpId={'loadingTSV'}/>
+                        </div>
+                    </div>
+                );
+            } else {
+                if (displayMode && displayMode.startsWith('period')) {
+                    return (
+                        <LcPeriod {...periodProps}/>
+                    );
+                } else {
+                    return (
+                        <LcResult/>
+                    );
+                }
+            }
+
+        };
         if (!isReady) {
             return (<div style={{top: 0}} className='loading-mask'/>);
         } else {
+
+            const converterId = get(missionEntries, LC.META_MISSION);
             return (
                 <div id='App' className='rootStyle' style={style}>
                     <header>
@@ -108,8 +135,7 @@ export class LcViewer extends Component {
                             {...{dropdownPanels} } />
                     </header>
                     <main>
-                        {displayMode && displayMode.startsWith('period') ? <LcPeriod {...periodProps}/> :
-                            <LcResult/>}
+                        {mainView(error,converterId)}
                     </main>
                 </div>
             );

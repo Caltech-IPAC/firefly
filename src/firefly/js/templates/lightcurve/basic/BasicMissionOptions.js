@@ -39,7 +39,7 @@ export class BasicSettingBox extends Component {
         const missionUrl = [LC.META_URL_CNAME];
         const missionOtherKeys = [LC.META_ERR_CNAME];
         const tblModel = getTblById(LC.RAW_TABLE);
-        const topZ = 9999;
+        const topZ = 3;
 
         var getList = (val, type, valDefault) => {
             var colType = (!type || (type === 'numeric')) ?

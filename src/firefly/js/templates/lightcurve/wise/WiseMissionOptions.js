@@ -58,7 +58,7 @@ export class WiseSettingBox extends Component {
         const missionOtherKeys = [LC.META_ERR_CNAME];
         const imageDataSource = [LC.META_URL_CNAME]; // use meta_url from generic case, see LcManager.js:320 for why
         const missionListKeys = [LC.META_TIME_NAMES, LC.META_FLUX_NAMES];
-        const topZ = 9999;
+        const topZ = 3;
         var missionInputs = missionKeys.map((key, index) =>
             <SuggestBoxInputField key={key} fieldKey={key} wrapperStyle={wrapperStyle} popupIndex={topZ}
                                   getSuggestions={(val) => getList(val, 'numeric')}/>
@@ -295,6 +295,25 @@ export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, conv
     // Update default values AND sortInfo and
     const metaInfo = rawTable && rawTable.tableMeta;
 
+    let error = '';
+    if(!isBasicTableUploadValid()){
+        const frameId = getCellValue(rawTable, 0, 'frame_id');
+        const sourceId = getCellValue(rawTable, 0, 'source_id');
+        const frameNum = getCellValue(rawTable, 0, 'frame_num');
+        const scanId = getCellValue(rawTable, 0, 'scan_id');
+        var a = [];
+        isNil(frameId) ? a.push('frame_id') :'';
+        isNil(sourceId) ? a.push('source_id'):'';
+        isNil(scanId) ? a.push('scan_id') : '';
+        isNil(frameNum) ? a.push('frame_num'):'';
+
+        for (let i=0; i< a.length-1;i++){
+            error+= a[i]+', ';
+        }
+        error+= a[a.length-1];
+    }
+
+
     let numericalCols = getOnlyNumericalCol(rawTable);
 
     //Find column based on a pattern, if not, just get the constant value from the converter (=mjd, =w1mpro_ep)
@@ -333,7 +352,7 @@ export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, conv
     //};
 
 
-    const newLayoutInfo = smartMerge(layoutInfo, {missionEntries, generalEntries});
+    const newLayoutInfo = smartMerge(layoutInfo, {missionEntries, generalEntries, error});
     return {newLayoutInfo, shouldContinue: false};
 }
 

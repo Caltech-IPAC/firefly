@@ -379,7 +379,8 @@ function clearResults(layoutInfo) {
         periodState: LC.PERIOD_PAGE,
         missionEntries: null,
         generalEntries: null,
-        fullRawTable: null
+        fullRawTable: null,
+        error:''
     });
 }
 

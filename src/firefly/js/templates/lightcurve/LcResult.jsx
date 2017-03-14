@@ -97,31 +97,13 @@ export class LcResult extends Component {
         expanded = LO_VIEW.get(expanded) || LO_VIEW.none;
         const expandedProps = {expanded, ...content};
         const standardProps = {visToolbar, title, searchDesc, standard, ...content};
-        const converterId = get(missionEntries, LC.META_MISSION);
-        if (!isValidTable(converterId)) {
-            return (
-                <div style={{display:'flex', position:'absolute', border: '1px solid #a3aeb9', padding:20, fontSize:'150%'}}>
-                    {`Table uploaded is not ${getMissionName(converterId)} valid, missing image identifier columns.
-                      Please, select option 'Basic' for general table upload.`}
-                    <div>
-                        <HelpIcon helpId={'loadingTSV'}/>
-                    </div>
-                </div>
-            );
-        } else {
-            return (
-                expanded === LO_VIEW.none
-                    ? <StandardView key='res-std-view' {...standardProps} />
-                    : <ExpandedView key='res-exp-view' {...expandedProps} />
-            );
-        }
+
+        return (
+            expanded === LO_VIEW.none
+                ? <StandardView key='res-std-view' {...standardProps} />
+                : <ExpandedView key='res-exp-view' {...expandedProps} />
+        );
     }
-}
-
-function isValidTable(converterId) {
-    const converterData = converterId && getConverter(converterId);
-
-    return converterData && converterData.isTableUploadValid();
 }
 
 // eslint-disable-next-line
