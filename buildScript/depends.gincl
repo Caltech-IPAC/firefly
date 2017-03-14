@@ -141,13 +141,38 @@ task buildJsDoc (dependsOn: loadConfig) {
       println ">> jsdoc_config.json not found.  Skipping buildJsDoc."
       throw new StopExecutionException("jsdoc_config.json not found.  Skipping buildJsDoc.")
     }
-    def res = project.ext.NODE "${fireflyPath}/node_modules/.bin/jsdoc", '-c', 'jsdoc_config.json', '-d', "${outdir}/jsdoc"
+    def res = project.ext.NODE "${fireflyPath}/node_modules/.bin/jsdoc", '-c', 'jsdoc_config.json', '-d', "${outdir}/docs/js"
     if (res.getExitValue() != 0) {
       throw new GradleException("Fail to build Client")
     }
   }
 }
 
+task publishJsDocs (dependsOn: loadConfig) {
+  description = 'Publish js docs to firefly.lsst.io'
+  group = MISC_GROUP
+
+  def docsDir = "${buildDir}/gwt/${project['app-name']}/docs/js"
+  doLast {
+    def res = project.ext.publishDocs docsDir, 'firefly'
+    if (res.getExitValue() != 0) {
+      throw new GradleException("Fail to publishJsDoc")
+    }
+  }
+}
+
+task publishPythonDocs (dependsOn: loadConfig) {
+  description = 'Publish python docs to firefly_client.lsst.io'
+  group = MISC_GROUP
+
+  def docsDir = "${buildDir}/gwt/${project['app-name']}/docs/python"
+  doLast {
+    def res = project.ext.publishDocs docsDir, 'firefly_client'
+    if (res.getExitValue() != 0) {
+      throw new GradleException("Fail to publishJsDoc")
+    }
+  }
+}
 
 /**
  * this function setup node.js environment then run the given command.
@@ -181,4 +206,41 @@ ext.NODE = { ...cmd ->
     commandLine cmd
   }
   return res;
+}
+
+/**
+ * Publish docs to lsst.io
+ */
+ext.publishDocs = { docsDir, product ->
+
+  def branch = System.env.BRANCH ?: "master"
+  docsDir = docsDir ?: "${buildDir}/gwt/${project['app-name']}/docs"
+  product = product ?: "firefly"
+
+  if (!file(docsDir).exists()) {
+    println ">> docs directory does not exists.  Skipping publishDocs."
+    throw new StopExecutionException("docs directory does not exists.  Skipping publishDocs.")
+  }
+
+  try {
+    "ltd-mason-travis -h".execute()
+  } catch (Exception e) {
+    println ">> ltd-mason-travis is not installed.  Task cannot continue."
+    throw new GradleException("ltd-mason-travis is not installed.  Task cannot continue.\"", e)
+  }
+
+  def res = exec {
+              environment 'LTD_MASON_BUILD': 'true'
+              environment 'LTD_MASON_PRODUCT': product
+              environment 'LTD_MASON_AWS_ID': 'AKIAJRVDEID2GE6GLL7Q'
+              environment 'LTD_MASON_AWS_SECRET': project.appConfigProps['LTD_MASON_AWS_SECRET']
+              environment 'LTD_KEEPER_URL': 'https://keeper.lsst.codes'
+              environment 'LTD_KEEPER_USER': 'firefly'
+              environment 'LTD_KEEPER_PASSWORD': project.appConfigProps['LTD_KEEPER_PASSWORD']
+              environment 'TRAVIS_PULL_REQUEST': 'false'
+              environment 'TRAVIS_REPO_SLUG': 'Caltech-IPAC/firefly'
+              environment 'TRAVIS_BRANCH': branch
+              commandLine "ltd-mason-travis", "--html-dir", docsDir
+            }
+  return res
 }
