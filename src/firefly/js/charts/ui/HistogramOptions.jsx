@@ -37,15 +37,18 @@ export function resultsFail() {
     // TODO: do I need to do anything here?
 }
 
-export function setOptions(groupKey, histogramParams, key=null) {
+export function setOptions(groupKey, histogramParams) {
     const flds = [
         {fieldKey: 'columnOrExpr', value: get(histogramParams, 'columnOrExpr')},
         {fieldKey: 'x', value: get(histogramParams, 'x', '_none_')},
         {fieldKey: 'y', value: get(histogramParams, 'y', '_none_')},
         {fieldKey: 'algorithm', value: get(histogramParams, 'algorithm', 'fixedSizeBins')},
         {fieldKey: 'falsePositiveRate', value: get(histogramParams, 'falsePositiveRate','0.05')},
-        {fieldKey: 'fixedBinSizeSelection', value: get(histogramParams, 'fixedBinSizeSelection','numBins')},
-        {fieldKey: 'numBins', value: get(histogramParams, 'numBins','50')}
+        {fieldKey: 'fixedBinSizeSelection', value:'numBins'},
+        {fieldKey: 'numBins', value: get(histogramParams, 'numBins','50')},
+        {fieldKey: 'binWidth', value: get(histogramParams, 'binWidth','')},
+        {fieldKey: 'minCutoff', value: get(histogramParams, 'minCutoff','')},
+        {fieldKey: 'maxCutoff', value: get(histogramParams, 'maxCutoff','')}
 
 
     ];
