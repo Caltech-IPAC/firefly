@@ -23,6 +23,7 @@ import java.net.URLDecoder;
  *
  * @author Trey Roby
  * @version $Id: FFToolsStandaloneService.java,v 1.5 2012/12/19 22:36:08 roby Exp $
+ * @deprecated
  */
 public class FFToolsStandaloneService extends BaseHttpServlet {
 

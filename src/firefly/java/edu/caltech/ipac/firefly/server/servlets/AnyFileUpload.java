@@ -8,7 +8,10 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
+import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -36,8 +39,11 @@ public class AnyFileUpload extends BaseHttpServlet {
     public static final String CACHE_KEY = "cacheKey";
     private enum FileType {FITS, TABLE, REGION, UNKNOWN}
 
-
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
+        doFileUpload(req, res);
+    }
+
+    public static void doFileUpload(HttpServletRequest req, HttpServletResponse res) throws Exception {
 
         if (! ServletFileUpload.isMultipartContent(req)) {
             sendReturnMsg(res, 400, "Is not a Multipart request. Request rejected.", "");
@@ -79,9 +85,17 @@ public class AnyFileUpload extends BaseHttpServlet {
             String rPathInfo = ServerContext.replaceWithPrefix(uf);
 
             UploadFileInfo fi= new UploadFileInfo(rPathInfo,uf,fileName,file.getContentType());
+            FileUtil.writeToFile(inStream, uf);
+            if (fType == FileType.TABLE) {
+                uf = File.createTempFile("upload_", ".tbl", destDir); // cleaned ipac file.
+                rPathInfo = ServerContext.replaceWithPrefix(uf);
+                DataGroup dg = DataGroupReader.readAnyFormat(fi.getFile(), 0);
+                DataGroupWriter.write(new DataGroupWriter.IpacTableHandler(uf, dg));
+                fi= new UploadFileInfo(rPathInfo,uf,fileName,file.getContentType());
+            }
             String fileCacheKey= overrideCacheKey!=null ? overrideCacheKey : rPathInfo;
             UserCache.getInstance().put(new StringKey(fileCacheKey), fi);
-            FileUtil.writeToFile(inStream, uf);
+
             sendReturnMsg(res, 200, null, fileCacheKey);
             Counters.getInstance().increment(Counters.Category.Upload, fi.getContentType());
 
@@ -90,7 +104,7 @@ public class AnyFileUpload extends BaseHttpServlet {
         StopWatch.getInstance().printLog("Upload File");
     }
 
-    private String getParam(String key, HashMap<String, String> params, HttpServletRequest req) {
+    private static String getParam(String key, HashMap<String, String> params, HttpServletRequest req) {
         if (key == null) return null;
         if (params.containsKey(key)) {
             return params.get(key);
@@ -99,7 +113,7 @@ public class AnyFileUpload extends BaseHttpServlet {
         }
     }
 
-    private File resolveDestDir(String dest, FileType fType) throws FileNotFoundException {
+    private static File resolveDestDir(String dest, FileType fType) throws FileNotFoundException {
         File destDir = ServerContext.getTempWorkDir();
 /*
         removed.. this writes temp file into the source directory.  may be readonly.  why was it needed before?
@@ -118,13 +132,13 @@ public class AnyFileUpload extends BaseHttpServlet {
     }
 
 
-    private String resolveExt(String fileName) {
+    private static String resolveExt(String fileName) {
         String ext = StringUtils.isEmpty(fileName) ? "" : FileUtil.getExtension(fileName);
         ext = StringUtils.isEmpty(ext) ? ".tmp" : "." + ext;
         return ext;
     }
 
-    private FileType resolveType(String fileType, String fileExtension, String contentType) {
+    private static FileType resolveType(String fileType, String fileExtension, String contentType) {
         FileType ftype = FileType.UNKNOWN;
         try {
             ftype = FileType.valueOf(fileType);

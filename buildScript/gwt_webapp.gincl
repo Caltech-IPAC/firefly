@@ -89,6 +89,9 @@ task prepareWebapp (type:Copy, dependsOn: [gwt, loadConfig, createVersionTag]) {
     include 'logging.properties'
     into 'WEB-INF/classes'
   }
+  from("$rootDir/config/web.xml") {
+    into "WEB-INF"
+  }
   from("$rootDir/config") {
     include "context.xml"
     into 'META-INF'
