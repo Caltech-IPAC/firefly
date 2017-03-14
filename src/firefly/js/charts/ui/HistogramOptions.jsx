@@ -261,7 +261,7 @@ function renderFixedBinSizeOptions(groupKey, histogramParams){
       <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}} >
          <RadioGroupInputField
             initialState= {{
-                                value: 'bin size selection',
+                                value: get(histogramParams, 'fixedBinSizeSelection', 'numBins'),
                                 tooltip: 'Please select number of bins or bin width',
                                 //label: 'BinSize:'
                             }}
