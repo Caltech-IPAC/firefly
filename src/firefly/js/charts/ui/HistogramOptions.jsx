@@ -76,12 +76,15 @@ var columnNameReducer= (colValStats, histogramParams) => {
             fieldKey = get(action.payload, 'fieldKey');
             const colName = action.payload.value;
             if (fieldKey === 'columnOrExpr') {
+                inFields = updateSet(inFields, ['minCutoff', 'value'],undefined);
+                inFields = updateSet(inFields, ['maxCutoff', 'value'], undefined);
+                inFields = updateSet(inFields, ['binWidth', 'value'], undefined);
 
                 for (var i=0; i<colValStats.length; i++){
                     if (colName=== colValStats[i].name){
                         const dataMin = colValStats[i].min;
                         const dataMax = colValStats[i].max;
-                        const binWidth = (dataMax - dataMin)/50.0;
+                        const binWidth = (dataMax - dataMin)/get(histogramParams, 'numBins', '50');//50.0;
                         inFields = updateSet(inFields, ['minCutoff', 'value'],`${dataMin}`);
                         inFields = updateSet(inFields, ['maxCutoff', 'value'], `${dataMax}`);
                         inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
@@ -228,7 +231,7 @@ export class HistogramOptions extends React.Component {
         return (
             <div style={{padding:'0 5px', minHeight: 250}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}
-                            reducerFunc={columnNameReducer(colValStats)}>
+                            reducerFunc={columnNameReducer(colValStats, histogramParams)}>
 
                     {onOptionsSelected &&
                     <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
