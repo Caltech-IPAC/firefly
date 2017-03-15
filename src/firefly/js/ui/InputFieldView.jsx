@@ -89,7 +89,7 @@ export class InputFieldView extends Component {
 
     render() {
         var {hasFocus}= this.state;
-        var {visible,label,tooltip,labelWidth,value,style,wrapperStyle,labelStyle,
+        var {visible,disabled, label,tooltip,labelWidth,value,style,wrapperStyle,labelStyle,
              valid,size,onChange, onBlur, onKeyPress, onKeyDown, onKeyUp, showWarning, message, type, placeholder}= this.props;
         if (!visible) return null;
         wrapperStyle = Object.assign({whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'}, wrapperStyle);
@@ -111,6 +111,7 @@ export class InputFieldView extends Component {
                        title={ (!showWarning && !valid) ? message : tooltip}
                        size={size}
                        type={type}
+                       disabled={disabled}
                        placeholder={placeholder}
                 />
                 {showWarning && this.makeWarningArea(!valid)}
@@ -122,6 +123,7 @@ export class InputFieldView extends Component {
 InputFieldView.propTypes= {
     valid   : PropTypes.bool,
     visible : PropTypes.bool,
+    disabled : PropTypes.bool,
     message : PropTypes.string,
     tooltip : PropTypes.string,
     label : PropTypes.string,

@@ -6,7 +6,7 @@ import {DATATYPE_HISTOGRAM} from '../dataTypes/HistogramCDT.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import {dispatchValueChange, dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {dispatchValueChange, dispatchMultiValueChange, VALUE_CHANGE} from '../../fieldGroup/FieldGroupCntlr.js';
 import {InputGroup} from '../../ui/InputGroup.jsx';
 import Validate from '../../util/Validate.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
@@ -15,7 +15,7 @@ import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 import {ColumnOrExpression, getColValidator} from './ColumnOrExpression.jsx';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
-
+import {updateSet} from '../../util/WebUtil.js';
 
 export const histogramParamsShape = PropTypes.shape({
          algorithm : PropTypes.oneOf(['fixedSizeBins','bayesianBlocks']),
@@ -44,7 +44,7 @@ export function setOptions(groupKey, histogramParams) {
         {fieldKey: 'y', value: get(histogramParams, 'y', '_none_')},
         {fieldKey: 'algorithm', value: get(histogramParams, 'algorithm', 'fixedSizeBins')},
         {fieldKey: 'falsePositiveRate', value: get(histogramParams, 'falsePositiveRate','0.05')},
-        {fieldKey: 'fixedBinSizeSelection', value:'numBins'},
+        {fieldKey: 'fixedBinSizeSelection', value:get(histogramParams, 'fixedBinSizeSelection', 'numBins')},
         {fieldKey: 'numBins', value: get(histogramParams, 'numBins','50')},
         {fieldKey: 'binWidth', value: get(histogramParams, 'binWidth','')},
         {fieldKey: 'minCutoff', value: get(histogramParams, 'minCutoff','')},
@@ -60,6 +60,41 @@ const algorithmOptions = [  {label: 'Bayesian blocks', value: 'bayesianBlocks'},
 const binSizeOptions = [  {label: 'Number of bins:', value: 'numBins'},
     {label: 'Bin width:', value: 'binWidth'} ];
 
+
+var columnNameReducer= (colValStats, histogramParams) => {
+    if (!colValStats) {
+        return {};
+    }
+    return (inFields, action) => {
+
+        if (!inFields) {
+            return {};
+        }
+        let fieldKey = undefined;
+        if (action.type === VALUE_CHANGE) {
+            // when column name changes, update the min/max input
+            fieldKey = get(action.payload, 'fieldKey');
+            const colName = action.payload.value;
+            if (fieldKey === 'columnOrExpr') {
+
+                for (var i=0; i<colValStats.length; i++){
+                    if (colName=== colValStats[i].name){
+                        const dataMin = colValStats[i].min;
+                        const dataMax = colValStats[i].max;
+                        const binWidth = (dataMax - dataMin)/50.0;
+                        inFields = updateSet(inFields, ['minCutoff', 'value'],`${dataMin}`);
+                        inFields = updateSet(inFields, ['maxCutoff', 'value'], `${dataMax}`);
+                        inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
+                        break;
+
+                    }
+                }
+             }
+        }
+
+        return Object.assign({}, inFields);
+    };
+};
 export class HistogramOptions extends React.Component {
 
         constructor(props) {
@@ -72,9 +107,14 @@ export class HistogramOptions extends React.Component {
 
 
     shouldComponentUpdate(np, ns) {
+
         return this.props.groupKey !== np.groupKey || this.props.colValStats !== np.colValStats ||
             this.props.histogramParams !== np.histogramParams ||
-            FieldGroupUtils.getFldValue(this.state.fields, 'algorithm') !== FieldGroupUtils.getFldValue(ns.fields, 'algorithm');
+            FieldGroupUtils.getFldValue(this.state.fields, 'algorithm') !== FieldGroupUtils.getFldValue(ns.fields, 'algorithm') ||
+            FieldGroupUtils.getFldValue(this.state.fields, 'fixedBinSizeSelection') !== FieldGroupUtils.getFldValue(ns.fields, 'fixedBinSizeSelection');
+
+
+
     }
 
     componentWillReceiveProps(np) {
@@ -136,9 +176,13 @@ export class HistogramOptions extends React.Component {
             );
         } else { // fixedSizeBins
 
+
+         var disabled = FieldGroupUtils.getFldValue(this.state.fields, 'fixedBinSizeSelection') ?
+             FieldGroupUtils.getFldValue(this.state.fields, 'fixedBinSizeSelection')!=='numBins':false;
+
          return (
                <div >
-                   {renderFixedBinSizeOptions(groupKey, histogramParams)}
+                   {renderFixedBinSizeOptions(groupKey, histogramParams, disabled) }
 
                    <ValidationField
                        style={{width: 156}}
@@ -183,7 +227,9 @@ export class HistogramOptions extends React.Component {
         // to avoid width change due to scroll bar appearing when full height suggest box is rendered
         return (
             <div style={{padding:'0 5px', minHeight: 250}}>
-                <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
+                <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}
+                            reducerFunc={columnNameReducer(colValStats)}>
+
                     {onOptionsSelected &&
                     <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
                         <CompleteButton style={{flexGrow: 0}}
@@ -256,7 +302,7 @@ export class HistogramOptions extends React.Component {
 }
 
 //Make the fixed bin layout
-function renderFixedBinSizeOptions(groupKey, histogramParams){
+function renderFixedBinSizeOptions(groupKey, histogramParams, disabled){
     return (
       <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}} >
          <RadioGroupInputField
@@ -275,9 +321,10 @@ function renderFixedBinSizeOptions(groupKey, histogramParams){
                  initialState= {{
                                   value: get(histogramParams, 'numBins', '50'),
                                   validator:Validate.intRange.bind(null, 1, 500, 'numBins'),
-                                  tooltip: 'Number of bins'
+                                  tooltip: 'Number of bins',
 
                              }}
+                 disabled = {disabled}
                  fieldKey='numBins'
                  groupKey={groupKey}
                  labelWidth={80}
@@ -287,9 +334,10 @@ function renderFixedBinSizeOptions(groupKey, histogramParams){
                  initialState= {{
                                   value: get(histogramParams, 'binWidth', ''),
                                   validator:Validate.isFloat.bind(null,  'binWidth'),
-                                  tooltip: 'Bin width'
+                                  tooltip: 'Bin width',
 
                              }}
+                 disabled = {!disabled}
                  fieldKey='binWidth'
                  groupKey={groupKey}
                  labelWidth={80}
