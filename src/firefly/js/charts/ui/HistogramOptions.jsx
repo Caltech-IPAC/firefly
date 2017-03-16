@@ -19,12 +19,12 @@ import {updateSet} from '../../util/WebUtil.js';
 
 export const histogramParamsShape = PropTypes.shape({
          algorithm : PropTypes.oneOf(['fixedSizeBins','bayesianBlocks']),
-         numBins : PropTypes.string,
-         binWidth : PropTypes.string,
+         numBins : PropTypes.oneOfType([PropTypes.string,PropTypes.number]),
+         binWidth :PropTypes.oneOfType([PropTypes.string,PropTypes.number]),
          fixedBinSizeSelection : PropTypes.oneOf(['numBins','binWidth']),
-         falsePositiveRate : PropTypes.string,
-         minCutoff : PropTypes.string,
-         maxCutoff : PropTypes.string
+         falsePositiveRate : PropTypes.oneOfType([PropTypes.string,PropTypes.number]),
+         minCutoff : PropTypes.oneOfType([PropTypes.string,PropTypes.number]),
+         maxCutoff :PropTypes.oneOfType([PropTypes.string,PropTypes.number])
       });
 
 

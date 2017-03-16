@@ -55,7 +55,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     private String algorithm = null;// FIXED_SIZE_ALGORITHM;
     private int numBins=0;
     private double binWidth=0.0;
-    private String binSelection;
+    private String binSelection=null;
     private String binSize;
     private double min = Double.NaN;
     private double max = Double.NaN;
@@ -149,7 +149,9 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         List<Param> params = tableServerRequest.getParams();
         for (Param p: params.toArray(new Param[params.size()])){
             String name = p.getName();
+
             String value = p.getValue();
+            if (name==null || value==null ) continue;
             if (name.equalsIgnoreCase(COLUMN)) {
                 //columnName = (String) value;
                 columnExpression = value;
@@ -174,15 +176,18 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         }
 
 
-        if (binSelection.equalsIgnoreCase("numBins")){
-            numBins = Integer.parseInt(binSize);
-        }
-        else if (binSelection.equalsIgnoreCase("binWidth") ) {
+        if (binSelection!=null ){
+            if (binSelection.equalsIgnoreCase("numBins")) {
+
+               numBins = Integer.parseInt(binSize);
+           }
+            else if (binSelection.equalsIgnoreCase("binWidth") ) {
             binWidth = Double.parseDouble(binSize);
 
-        }
-        if (numBins>0 || binWidth>0.0 ){
-            algorithm = FIXED_SIZE_ALGORITHM;
+           }
+           if (numBins>0 || binWidth>0.0 ){
+               algorithm = FIXED_SIZE_ALGORITHM;
+           }
         }
     }
 
