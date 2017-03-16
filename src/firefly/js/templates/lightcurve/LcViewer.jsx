@@ -82,7 +82,7 @@ export class LcViewer extends Component {
     }
 
     render() {
-        var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown,
+        var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown, missionOptions,
             dropdownPanels=[], footer, style, displayMode, missionEntries, error} = this.state;
         const {visible, view} = dropDown || {};
         const periodProps = {
@@ -91,7 +91,7 @@ export class LcViewer extends Component {
         };
 
         const missionName = get(missionEntries, 'missionName', '');
-        dropdownPanels.push(<UploadPanel/>);
+        dropdownPanels.push(<UploadPanel {...{missionOptions}}/>);
 
         var mainView = (err,converterId) => {
             if (!isEmpty(error) && converterId) {
@@ -198,8 +198,9 @@ BannerSection.propTypes = {
  */
 export function UploadPanel(props) {
     const wrapperStyle = {margin: '5px 0'};
+    const {missionOptions=getAllConverterIds()} = props || {};
 
-    const options = getAllConverterIds().map((id) => {
+    const options = missionOptions.map((id) => {
         return {label: getMissionName(id) || capitalize(id), value: id};
     });
     return (

@@ -196,6 +196,7 @@ export function* lcManager(params={}) {
          * @prop {Object}   layoutInfo.generalEntries general entries for result layout panel
          * @prop {string}   layoutInfo.periodState  // period or periodogram
          * @prop {Object}   layoutInfo.fullRawTable
+         * @prop {Object}   layoutInfo.missionOptions       // a list of mission choices presented by upload panel.  all missions from factory will be presented if not given. 
          */
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;
