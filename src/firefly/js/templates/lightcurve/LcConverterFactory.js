@@ -8,7 +8,7 @@ import {logError} from '../../util/WebUtil.js';
 import {getWebPlotRequestViaWISEIbe} from './wise/WisePlotRequests.js';
 import {makeLsstSdssPlotRequest} from './lsst_sdss/LsstSdssPlotRequests.js';
 import {makeURLPlotRequest} from './generic/DefaultPlotRequests.js';
-import {basicURLPlotRequest} from './basic/BasicPlotRequests'
+import {basicURLPlotRequest} from './basic/BasicPlotRequests';
 import {LsstSdssSettingBox, lsstSdssOnNewRawTable, lsstSdssOnFieldUpdate, lsstSdssRawTableRequest} from './lsst_sdss/LsstSdssMissionOptions.js';
 import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest, isBasicTableUploadValid} from './wise/WiseMissionOptions.js';
 import {DefaultSettingBox, defaultOnNewRawTable, defaultOnFieldUpdate, defaultRawTableRequest} from './generic/DefaultMissionOptions.js';
@@ -70,7 +70,7 @@ export const coordSysOptions = 'coordSysOptions';
  */
 
 /**
- * @type {{wise: LCMissionConverter, lsst_sdss: LCMissionConverter, , basic: LCMissionConverter}}
+ * @type {Object<string, LCMissionConverter>}
  **/
 const converters = {
     'wise': {

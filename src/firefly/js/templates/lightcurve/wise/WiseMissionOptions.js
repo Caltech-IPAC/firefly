@@ -233,7 +233,8 @@ function getFieldValidators(missionEntries) {
 
 /**
  * Returns only numerical column names form raw lc table
- * @returns {[TableColumn]} - array of table columns objects
+ * @param rawTbl - raw table
+ * @returns {TableColumn[]} - array of table columns objects
  */
 function getOnlyNumericalCol(rawTbl) {
     //let cols = get(rawTbl, 'tableData.columns');
