@@ -131,8 +131,8 @@ const converters = {
         isTableUploadValid: () => {return true;}
     },
     // Case which should handle any ipac table and image column, X,Y, coord system not shown (Generic/Advanced case)
-    'basic': {
-        converterId: 'basic',
+    'other': {
+        converterId: 'other',
         defaultImageCount: 5,
         defaultTimeCName: '',
         defaultYCname: '',
