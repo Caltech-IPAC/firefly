@@ -19,7 +19,6 @@ import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
@@ -133,7 +132,6 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
             DataGroup outputDG;
             if (dgExtra == null) {
                 outputDG= dg;
-//                DataGroupWriter.write(catOutFile, dg, 0);
 
             } else {
                 // concat dg to dgExtra
@@ -143,9 +141,8 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
                 }
 
                 outputDG= dgExtra;
-//                DataGroupWriter.write(catOutFile, dgExtra, 0);
             }
-            DataGroupWriter.write(catOutFile, outputDG, 0);
+            IpacTableWriter.save(catOutFile, outputDG);
 
             DataGroup data = DataGroupReader.read(catOutFile);
             // append hostname to relative path urls.
