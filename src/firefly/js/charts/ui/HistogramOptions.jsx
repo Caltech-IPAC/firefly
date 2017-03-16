@@ -4,8 +4,8 @@ import {get, defer} from 'lodash';
 import ColValuesStatistics from './../ColValuesStatistics.js';
 import {DATATYPE_HISTOGRAM} from '../dataTypes/HistogramCDT.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
-import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
+import {FieldGroup,} from '../../ui/FieldGroup.jsx';
+import FieldGroupUtils,{revalidateFields} from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange, dispatchMultiValueChange, VALUE_CHANGE} from '../../fieldGroup/FieldGroupCntlr.js';
 import {InputGroup} from '../../ui/InputGroup.jsx';
 import Validate from '../../util/Validate.js';
@@ -94,9 +94,16 @@ var columnNameReducer= (colValStats) => {
                                     const dataMax = colValStats[i].max;
                                     const numBins = get(inFields, ['numBins','value'], 50);
                                     var  binWidth =((dataMax - dataMin) /numBins).toFixed(6);
+
                                     inFields = updateSet(inFields, ['minCutoff', 'value'], `${dataMin}`);
                                     inFields = updateSet(inFields, ['maxCutoff', 'value'], `${dataMax}`);
-                                    inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
+                                    if (isFinite(parseFloat(binWidth)) ){
+                                        inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
+                                    }
+                                    else {
+                                        inFields = updateSet(inFields, ['binWidth', 'value'], '');
+                                    }
+
                                     break;
 
                                 }
@@ -125,7 +132,13 @@ var columnNameReducer= (colValStats) => {
 
                             inFields = updateSet(inFields, ['minCutoff', 'value'],`${dataMin}`);
                             inFields = updateSet(inFields, ['maxCutoff', 'value'], `${dataMax}`);
-                            inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
+                           // inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
+                            if (isFinite(parseFloat(binWidth)) ){
+                                inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
+                            }
+                            else {
+                                inFields = updateSet(inFields, ['binWidth', 'value'], '');
+                            }
                             break;
 
                         }
@@ -136,10 +149,12 @@ var columnNameReducer= (colValStats) => {
                     break;
             }
 
-
+            return revalidateFields(Object.assign({}, inFields));
+        }
+        else {
+            return inFields;
         }
 
-        return Object.assign({}, inFields);
     };
 };
 export class HistogramOptions extends React.Component {
