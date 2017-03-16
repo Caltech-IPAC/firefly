@@ -325,7 +325,6 @@ export function basicOnNewRawTable(rawTable, missionEntries, generalEntries, con
 export function basicRawTableRequest(converter, source) {
     const options = {
         tbl_id: LC.RAW_TABLE,
-        sortInfo: sortInfoString('mjd'),   //TODO: tentative solution to get around 'ROWID' issue
         tblType: 'notACatalog',
         META_INFO: {[LC.META_MISSION]: converter.converterId},
         pageSize: LC.TABLE_PAGESIZE
