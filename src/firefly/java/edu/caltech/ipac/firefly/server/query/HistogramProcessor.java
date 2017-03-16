@@ -44,16 +44,19 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         columns[2].getFormatInfo().setDataFormat("%.14g");
     }
     private final String FIXED_SIZE_ALGORITHM = "fixedSizeBins";
-    private final String NUMBER_BINS = "numBins";
+    private final String FIXED_BIN_SIZE_SELECTION="fixedBinSizeSelection";
+    private final String BIN_SIZE = "binSize";
     private final String COLUMN = "columnExpression";
-
     private final String MIN = "min";
     private final String MAX = "max";
     // private final String ALGORITHM = "algorithm";
     private final String FALSEPOSTIVERATE = "falsePositiveRate";
     private final String PRESERVE_EMPTY_BIN="preserveEmptyBins";
     private String algorithm = null;// FIXED_SIZE_ALGORITHM;
-    private int numBins;
+    private int numBins=0;
+    private double binWidth=0.0;
+    private String binSelection;
+    private String binSize;
     private double min = Double.NaN;
     private double max = Double.NaN;
     private String columnExpression;
@@ -155,10 +158,14 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
             } else if (name.equalsIgnoreCase(MAX)) {
                 max =  Double.parseDouble(value);
-            } else if (name.equalsIgnoreCase(NUMBER_BINS)) {
-                numBins =  Integer.parseInt(value);
-                if (numBins>0) algorithm = FIXED_SIZE_ALGORITHM;
-            } else if (name.equalsIgnoreCase(FALSEPOSTIVERATE)) {
+            } else if (name.equalsIgnoreCase(FIXED_BIN_SIZE_SELECTION)) {
+                binSelection = value;
+               // numBins =  Integer.parseInt(value);
+              //  if (numBins>0) algorithm = FIXED_SIZE_ALGORITHM;
+            } else if (name.equalsIgnoreCase(BIN_SIZE)) {
+                binSize  =  value;
+            }
+            else if (name.equalsIgnoreCase(FALSEPOSTIVERATE)) {
                 falsePostiveRate =  Double.parseDouble(value);
             }
             else if (name.equalsIgnoreCase(PRESERVE_EMPTY_BIN) ){
@@ -166,6 +173,17 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             }
         }
 
+
+        if (binSelection.equalsIgnoreCase("numBins")){
+            numBins = Integer.parseInt(binSize);
+        }
+        else if (binSelection.equalsIgnoreCase("binWidth") ) {
+            binWidth = Double.parseDouble(binSize);
+
+        }
+        if (numBins>0 || binWidth>0.0 ){
+            algorithm = FIXED_SIZE_ALGORITHM;
+        }
     }
 
     private void addFormatInfoAtt(DataGroup dg, DataType dt) {
@@ -233,13 +251,15 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         }
 
 
-        double binSize = (max-min)/numBins;
+        double binSize =numBins>0? (max-min)/numBins:binWidth;
+
+        int nBins = numBins>0? numBins : (int) Math.ceil((max-min)/binSize);
 
        // double delta =( max -min)/100*numBins;
-        long[] numPointsInBin = new long[numBins];
-        double[] binMin = new double[numBins];
+        long[] numPointsInBin = new long[nBins];
+        double[] binMin = new double[nBins];
 
-        double[] binMax = new double[numBins];
+        double[] binMax = new double[nBins];
 
         int iBin;
         for (int i = 0; i < columnData.length; i++) {
@@ -249,11 +269,11 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
             }
             else if (columnData[i]  == max) { //put the last data in the last bin
-                numPointsInBin[numBins - 1]++;
+                numPointsInBin[nBins - 1]++;
             }
 
         }
-        for (int i=0; i<numBins; i++){
+        for (int i=0; i<nBins; i++){
             binMin[i]=min+i*binSize;
             binMax[i]=binMin[i]+binSize;
         }
