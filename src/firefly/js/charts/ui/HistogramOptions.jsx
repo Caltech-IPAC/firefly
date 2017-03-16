@@ -1,6 +1,6 @@
 import React, {PropTypes} from 'react';
 
-import {get} from 'lodash';
+import {get, defer} from 'lodash';
 import ColValuesStatistics from './../ColValuesStatistics.js';
 import {DATATYPE_HISTOGRAM} from '../dataTypes/HistogramCDT.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
@@ -61,7 +61,16 @@ const binSizeOptions = [  {label: 'Number of bins:', value: 'numBins'},
     {label: 'Bin width:', value: 'binWidth'} ];
 
 
-var columnNameReducer= (colValStats, histogramParams) => {
+function isSingleColumn(colName, colValStats) {
+    for (var i = 0; i < colValStats.length; i++) {
+        if (colName === colValStats[i].name) {
+            return true;
+        }
+
+    }
+    return false;
+}
+var columnNameReducer= (colValStats) => {
     if (!colValStats) {
         return {};
     }
@@ -74,25 +83,60 @@ var columnNameReducer= (colValStats, histogramParams) => {
         if (action.type === VALUE_CHANGE) {
             // when column name changes, update the min/max input
             fieldKey = get(action.payload, 'fieldKey');
-            const colName = action.payload.value;
-            if (fieldKey === 'columnOrExpr') {
-                inFields = updateSet(inFields, ['minCutoff', 'value'],undefined);
-                inFields = updateSet(inFields, ['maxCutoff', 'value'], undefined);
-                inFields = updateSet(inFields, ['binWidth', 'value'], undefined);
+            switch (fieldKey){
+                case 'columnOrExpr':
+                    const colName = action.payload.value;
+                    if (colName ) {
+                        if (isSingleColumn(colName, colValStats)) {
+                            for (var i=0; i<colValStats.length; i++){
+                                if (colName=== colValStats[i].name) {
+                                    const dataMin = colValStats[i].min;
+                                    const dataMax = colValStats[i].max;
+                                    const numBins = get(inFields, ['numBins','value'], 50);
+                                    var  binWidth =((dataMax - dataMin) /numBins).toFixed(6);
+                                    inFields = updateSet(inFields, ['minCutoff', 'value'], `${dataMin}`);
+                                    inFields = updateSet(inFields, ['maxCutoff', 'value'], `${dataMax}`);
+                                    inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
+                                    break;
 
-                for (var i=0; i<colValStats.length; i++){
-                    if (colName=== colValStats[i].name){
-                        const dataMin = colValStats[i].min;
-                        const dataMax = colValStats[i].max;
-                        const binWidth = (dataMax - dataMin)/get(histogramParams, 'numBins', '50');//50.0;
-                        inFields = updateSet(inFields, ['minCutoff', 'value'],`${dataMin}`);
-                        inFields = updateSet(inFields, ['maxCutoff', 'value'], `${dataMax}`);
-                        inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
-                        break;
+                                }
+                            }
 
+                        }
+                        else {
+                            inFields = updateSet(inFields, ['minCutoff', 'value'], undefined);
+                            inFields = updateSet(inFields, ['maxCutoff', 'value'], undefined);
+                            inFields = updateSet(inFields, ['binWidth', 'value'], undefined);
+                        }
                     }
-                }
-             }
+
+                    break;
+                case 'numBins':
+                case 'minCutoff':
+                case 'maxCutoff':
+                    const numBins = get(inFields, ['numBins','value'], 50);
+                    const cName   = get(inFields, ['columnOrExpr','value'], undefined);
+                    if (!cName) break;
+                    for (let i=0; i<colValStats.length; i++){
+                        if (cName=== colValStats[i].name){
+                            const dataMin = get(inFields,['minCutoff','value'], colValStats[i].min);
+                            const dataMax = get(inFields,['maxCutoff','value'],  colValStats[i].max);
+                            var  binWidth = ((dataMax - dataMin)/numBins).toFixed(6);
+
+                            inFields = updateSet(inFields, ['minCutoff', 'value'],`${dataMin}`);
+                            inFields = updateSet(inFields, ['maxCutoff', 'value'], `${dataMax}`);
+                            inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
+                            break;
+
+                        }
+                    }
+
+                    break;
+                default:
+                    break;
+            }
+
+
         }
 
         return Object.assign({}, inFields);
@@ -149,7 +193,11 @@ export class HistogramOptions extends React.Component {
                 payload = Object.assign(payload, {value, valid, message});
             }
             dispatchValueChange(payload);
+            if (histogramParams) {
+                defer(setOptions, groupKey, histogramParams);
+            }
         }
+
         this.iAmMounted= true;
     }
 
@@ -231,7 +279,7 @@ export class HistogramOptions extends React.Component {
         return (
             <div style={{padding:'0 5px', minHeight: 250}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}
-                            reducerFunc={columnNameReducer(colValStats, histogramParams)}>
+                            reducerFunc={columnNameReducer(colValStats)}>
 
                     {onOptionsSelected &&
                     <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
