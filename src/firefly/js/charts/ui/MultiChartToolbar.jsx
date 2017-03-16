@@ -4,6 +4,7 @@
 
 
 import React, {PropTypes} from 'react';
+import {get} from 'lodash';
 import {getChartData} from '../ChartsCntlr.js';
 import {dispatchChangeViewerLayout, dispatchUpdateCustom, getViewerItemIds, getViewer, getLayoutType, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 
@@ -168,7 +169,8 @@ MultiChartToolbarExpanded.propTypes= {
 };
 
 const getChartTitle = (chartId, viewerItemIds) => {
-    const {chartType} = getChartData(chartId);
+    const chartData = getChartData(chartId);
+    const chartType = get(chartData, 'chartType');
     const idx = viewerItemIds.findIndex((el) => {return el === chartId;} );
     if (idx>=0) {
         return `${idx+1}-${chartType}`;

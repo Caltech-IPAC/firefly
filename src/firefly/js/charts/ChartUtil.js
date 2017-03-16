@@ -183,9 +183,17 @@ export function makeXYPlotParams(params) {
  * @memberof firefly.util.chart
  */
 export function makeHistogramParams(params) {
-    const {col, xOptions, yOptions, falsePositiveRate} = params;
+    const {col, xOptions, yOptions, falsePositiveRate, binWidth} = params;
     let numBins = params.numBins;
-    if (!falsePositiveRate && !numBins) {numBins = 50;}
+    let fixedBinSizeSelection = params.fixedBinSizeSelection;
+    if (!falsePositiveRate) {
+        if (!fixedBinSizeSelection) {
+            fixedBinSizeSelection = 'numBins';
+        }
+        if (!numBins) {
+            numBins = 50;
+        }
+    }
     const algorithm = numBins ? 'fixedSizeBins' : 'bayesianBlocks';
 
     if (col) {
@@ -193,7 +201,9 @@ export function makeHistogramParams(params) {
         {
             columnOrExpr: col,
             algorithm,
+            fixedBinSizeSelection,
             numBins,
+            binWidth,
             falsePositiveRate,
             x: xOptions||'',
             y: yOptions||''
