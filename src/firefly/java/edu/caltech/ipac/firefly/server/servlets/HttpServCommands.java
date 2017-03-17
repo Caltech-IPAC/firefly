@@ -57,5 +57,13 @@ public class HttpServCommands {
     }
 
 
+    public static class Upload extends BaseServletCommand {
+
+        public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception {
+            AnyFileUpload.doFileUpload(req, res);
+        }
+
+    }
+
 }
 

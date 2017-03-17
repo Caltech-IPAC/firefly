@@ -136,6 +136,7 @@ export const ServerParams = {
         TABLE_FIND_INDEX: 'tableFindIndex',
         SELECTED_VALUES: 'selectedValues',
         TABLE_SAVE: 'tableSave',
+        UPLOAD: 'upload',
         JSON_SEARCH: 'jsonSearch',
 
         VIS_PUSH_ALIVE_CHECK: 'pushAliveCheck',

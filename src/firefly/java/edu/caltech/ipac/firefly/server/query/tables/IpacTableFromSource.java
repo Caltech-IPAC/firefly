@@ -110,6 +110,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
             } else {
                 StringKey key = new StringKey(getUniqueID(request), url);
                 File res  = (File) getCache().get(key);
+                long lastmod = res == null ? 0 : res.lastModified();
                 if (res == null) {
                     String ext = FileUtil.getExtension(url.getPath());
                     ext = StringUtils.isEmpty(ext) ? ".ul" : "." + ext;
@@ -117,7 +118,11 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
                 }
                 HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
                 URLDownload.getDataToFile(conn, res, null, false, true, true, Long.MAX_VALUE);
-                getCache().put(key, res);
+                if (lastmod != res.lastModified()) {
+                    // only convert when source file changes
+                    res = convertToIpacTable(res, request);
+                    getCache().put(key, res);
+                }
                 return res;
             }
         } catch (Exception ex) {

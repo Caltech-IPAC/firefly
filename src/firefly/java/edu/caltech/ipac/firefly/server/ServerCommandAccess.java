@@ -95,12 +95,13 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.JSON_SEARCH,            new SearchServerCommands.JsonSearch());
 
         _cmdMap.put(ServerParams.TABLE_SAVE,             new HttpServCommands.TableSave());
+        _cmdMap.put(ServerParams.UPLOAD,                 new HttpServCommands.Upload());
 
         _cmdMap.put(ServerParams.RESOLVE_NAME,           new ResolveServerCommands.ResolveName());
 
-        _cmdMap.put(ServerParams.VIS_PUSH_ALIVE_CHECK,      new PushCommands.PushAliveCheck());
-        _cmdMap.put(ServerParams.VIS_PUSH_ALIVE_COUNT,      new PushCommands.PushAliveCount());
-        _cmdMap.put(ServerParams.VIS_PUSH_ACTION,           new PushCommands.PushAction());
+        _cmdMap.put(ServerParams.VIS_PUSH_ALIVE_CHECK,   new PushCommands.PushAliveCheck());
+        _cmdMap.put(ServerParams.VIS_PUSH_ALIVE_COUNT,   new PushCommands.PushAliveCount());
+        _cmdMap.put(ServerParams.VIS_PUSH_ACTION,        new PushCommands.PushAction());
 
         // maybe temporary
         _cmdMap.put(ServerParams.STATIC_JSON_DATA,           new JsonDataCommands.StaticJsonData());

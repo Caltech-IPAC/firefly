@@ -60,7 +60,7 @@ public abstract class BaseHttpServlet extends HttpServlet {
      * @param msg
      * @param value
      */
-    protected void sendReturnMsg(HttpServletResponse res, int status, String msg, String value) throws IOException {
+    protected static void sendReturnMsg(HttpServletResponse res, int status, String msg, String value) throws IOException {
 
         String retstr = status + "::" + (msg == null ? "": msg.replace("\n", "<br>")) + "::" + (value == null ? "" : value);
         res.setStatus(status);

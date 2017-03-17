@@ -37,30 +37,13 @@
         <url-pattern>*.html</url-pattern>
         <url-pattern>*.css</url-pattern>
         <url-pattern>*.js</url-pattern>
-        <url-pattern>/servlet/FireFly_PropertyDownload</url-pattern>
         <url-pattern>/sticky/CmdSrv</url-pattern>
         <url-pattern>/sticky/firefly/events</url-pattern>
     </filter-mapping>
 
 
 
-    <!-- remote loger servlet and its mappings -->
-    <servlet>
-        <servlet-name>remoteLogging</servlet-name>
-        <servlet-class>edu.caltech.ipac.firefly.server.servlets.FireflyRemoteLogging</servlet-class>
-
-        <init-param>
-            <param-name>gwtSymbolMapDir</param-name>
-            <param-value>WEB-INF/deploy/symbolMaps</param-value>
-        </init-param>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>remoteLogging</servlet-name>
-        <url-pattern>/remote_logging</url-pattern>
-    </servlet-mapping>
-
-
-
+    <!-- Servlet and its mappings -->
     <servlet>
         <servlet-class>edu.caltech.ipac.firefly.server.servlets.AnyFileDownload</servlet-class>
         <servlet-name>FireFly Any FileDownload</servlet-name>
@@ -68,15 +51,6 @@
     <servlet-mapping>
         <servlet-name>FireFly Any FileDownload</servlet-name>
         <url-pattern>/servlet/Download</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <servlet-class>edu.caltech.ipac.firefly.server.servlets.PropertyStringDownload</servlet-class>
-        <servlet-name>FireFly PropertyDownload</servlet-name>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>FireFly PropertyDownload</servlet-name>
-        <url-pattern>/servlet/FireFly_PropertyDownload</url-pattern>
     </servlet-mapping>
 
     <servlet>
@@ -98,15 +72,6 @@
     </servlet-mapping>
 
     <servlet>
-        <servlet-class>edu.caltech.ipac.firefly.server.servlets.AnyFileUpload</servlet-class>
-        <servlet-name>Firefly FileUpload</servlet-name>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>Firefly FileUpload</servlet-name>
-        <url-pattern>/sticky/Firefly_FileUpload</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
         <servlet-class>edu.caltech.ipac.firefly.server.servlets.ServerStatus</servlet-class>
         <servlet-name>status</servlet-name>
     </servlet>
@@ -125,18 +90,7 @@
     </servlet-mapping>
 
 
-
-
-<!--    Heritage servlet and its mappings -->
-
 <!--    Resources                         -->
-
-    <resource-ref>
-        <description>Archive Datasource</description>
-        <res-ref-name>jdbc/Archive</res-ref-name>
-        <res-type>javax.sql.DataSource</res-type>
-        <res-auth>Container</res-auth>
-    </resource-ref>
 
     <resource-ref>
         <description>Operation Datasource</description>
@@ -146,18 +100,12 @@
     </resource-ref>
 
     <resource-ref>
-        <description>Firefly Mail Session</description>
+        <description>Mail Session</description>
         <res-ref-name>MailSession</res-ref-name>
         <res-type>javax.mail.Session</res-type>
         <res-auth>Container</res-auth>
         <res-sharing-scope>Shareable</res-sharing-scope>
     </resource-ref>
-
-    <context-param>
-        <param-name>AppName</param-name>
-        <param-value>Firefly Viewer</param-value>
-    </context-param>
-
 
     <security-constraint>
       <web-resource-collection>
@@ -190,9 +138,10 @@
         <mime-type>image/fits</mime-type>
     </mime-mapping>
 
+    <!--welcome page-->
     <welcome-file-list>
-        <welcome-file>index.html</welcome-file>
         <welcome-file>@launch.page@</welcome-file>
+        <welcome-file>index.html</welcome-file>
     </welcome-file-list>
 
 

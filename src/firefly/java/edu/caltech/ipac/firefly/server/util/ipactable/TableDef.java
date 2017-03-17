@@ -81,7 +81,7 @@ public class TableDef {
         }
     }
 
-    DataGroup.Attribute getAttribute(String key) {
+    public DataGroup.Attribute getAttribute(String key) {
         return attributes.get(key);
     }
 

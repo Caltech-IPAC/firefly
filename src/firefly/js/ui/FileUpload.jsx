@@ -6,9 +6,10 @@ import {InputFieldView} from './InputFieldView.jsx';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 import {fetchUrl} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
+import {ServerParams} from '../data/ServerParams.js';
 
 import LOADING from 'html/images/gxt/loading.gif';
-const UL_URL = getRootURL() + 'sticky/Firefly_FileUpload';
+const UL_URL = `${getRootURL()}sticky/CmdSrv?${ServerParams.COMMAND}=${ServerParams.UPLOAD}`;
 
 
 function FileUploadView({fileType, isLoading, label, valid, wrapperStyle, message, onChange, value}) {
