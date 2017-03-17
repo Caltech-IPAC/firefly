@@ -3,7 +3,7 @@
  */
 import React, {PropTypes} from 'react';
 
-import {get, isEmpty, isUndefined, omitBy, defer} from 'lodash';
+import {defer, get, isEmpty, isUndefined, omitBy, set} from 'lodash';
 
 import ColValuesStatistics from '../ColValuesStatistics.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
@@ -14,6 +14,7 @@ import Validate from '../../util/Validate.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
+import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 import {plotParamsShape} from  './XYPlot.jsx';
 import {hideColSelectPopup} from './ColSelectView.jsx';
@@ -38,6 +39,13 @@ const Y_AXIS_OPTIONS = [
     {label: 'log', value: 'log'}
 ];
 
+const ERR_TYPE_OPTIONS = [
+    {label: 'None', value: 'none'},
+    {label: 'Sym', value: 'sym'},
+    {label: 'Asym', value: 'asym'}
+
+];
+
 const Y_AXIS_OPTIONS_NOLOG = Y_AXIS_OPTIONS.filter((el) => {return el.label !== 'log';});
 
 const helpStyle = {fontStyle: 'italic', color: '#808080', paddingBottom: 10};
@@ -51,6 +59,20 @@ function getUnit(colValStats, colname) {
 }
 */
 
+function getErrFldVals(xyPlotParams) {
+    const xErr = get(xyPlotParams, 'x.error');
+    const xErrLow = get(xyPlotParams, 'x.errorLow');
+    const xErrHigh = get(xyPlotParams, 'x.errorHigh');
+    const xErrType = xErr ? 'sym' : (xErrLow || xErrHigh) ? 'asym' : 'none';
+
+    const yErr = get(xyPlotParams, 'y.error');
+    const yErrLow = get(xyPlotParams, 'y.errorLow');
+    const yErrHigh = get(xyPlotParams, 'y.errorHigh');
+    const yErrType = yErr ? 'sym' : (yErrLow || yErrHigh) ? 'asym' : 'none';
+
+    return {xErrType, xErr, xErrLow, xErrHigh, yErrType, yErr, yErrLow, yErrHigh};
+}
+
 export function resultsSuccess(callback, flds, optionParameters) {
     const tblId = optionParameters.tblId;
 
@@ -58,8 +80,6 @@ export function resultsSuccess(callback, flds, optionParameters) {
     const yName = get(flds, ['y.columnOrExpr']);
 
     const zoom = (xName!== get(optionParameters, ['x','columnOrExpr']) || yName!==get(optionParameters, ['y','columnOrExpr']))? undefined:optionParameters.zoom;
-    const xErr = get(flds, ['x.error']);
-    const yErr = get(flds, ['y.error']);
 
     const plotStyle = get(flds, ['plotStyle']);
     const sortColOrExpr = (plotStyle === 'line' || plotStyle === 'linepoints') ? xName : undefined;
@@ -81,26 +101,6 @@ export function resultsSuccess(callback, flds, optionParameters) {
     userSetBoundaries = isEmpty(userSetBoundaries) ? undefined : userSetBoundaries;
     const xyRatio = parseFloat(flds.xyRatio);
 
-
-    /*
-      const axisParamsShape = PropTypes.shape({
-         columnOrExpr : PropTypes.string,
-         label : PropTypes.string,
-         unit : PropTypes.string,
-         options : PropTypes.string, // ex. 'grid,log,flip'
-      });
-
-      const xyPlotParamsShape = PropTypes.shape({
-         userSetBoundaries : PropTypes.selection,
-         xyRatio : PropTypes.string,
-         stretch : PropTypes.oneOf(['fit','fill']),
-         nbins : PropTypes.shape({x : PropTypes.number, y : PropTypes.number}),
-         shading : PropTypes.oneOf(['lin', 'log']),
-         x : axisParamsShape,
-         y : axisParamsShape
-      });
-      */
-
     const xyPlotParams = omitBy({
         plotStyle,
         sortColOrExpr,
@@ -109,16 +109,36 @@ export function resultsSuccess(callback, flds, optionParameters) {
         stretch : flds.stretch,
         nbins : (nbinsX && nbinsY) ? {x: Number(nbinsX), y: Number(nbinsY)} : undefined,
         shading: flds.shading || undefined,
-        x : { columnOrExpr : xName, error: xErr, label : xLabel, unit : xUnit, options : xOptions},
-        y : { columnOrExpr : yName, error: yErr, label : yLabel, unit : yUnit, options : yOptions},
+        x : { columnOrExpr : xName, label : xLabel, unit : xUnit, options : xOptions},
+        y : { columnOrExpr : yName, label : yLabel, unit : yUnit, options : yOptions},
         tblId,
         zoom
     }, isUndefined);
 
-    if (xErr || yErr) {
-        if (xErr) { xyPlotParams.x.error = xErr; }
-        if (yErr) { xyPlotParams.y.error = yErr; }
-    }
+    // set error related parameters
+    ['x', 'y'].forEach((axis) => {
+        const errorsType = get(flds, [`${axis}.errorsType`]);
+        if (errorsType && errorsType !== 'none') {
+            if (errorsType === 'sym') {
+                const fldPath = `${axis}.error`;
+                const err = get(flds, [fldPath]);
+                if (err) {
+                    set(xyPlotParams, fldPath, err);
+                }
+            } else if (errorsType === 'asym') {
+                const fldPathLow = `${axis}.errorLow`;
+                const errLow = get(flds, [fldPathLow]);
+                if (errLow) {
+                    set(xyPlotParams, fldPathLow, errLow);
+                }
+                const fldPathHigh = `${axis}.errorHigh`;
+                const errHigh = get(flds, [fldPathHigh]);
+                if (errHigh) {
+                    set(xyPlotParams, fldPathHigh, errHigh);
+                }
+            }
+        }
+    });
 
     callback(xyPlotParams);
 }
@@ -127,17 +147,21 @@ export function resultsFail() {
     // TODO: do I need to do anything here?
 }
 
-
 export function setOptions(groupKey, xyPlotParams) {
+    const {xErr, xErrLow, xErrHigh, yErr, yErrLow, yErrHigh} = getErrFldVals(xyPlotParams);
     const flds = [
         {fieldKey: 'plotStyle', value: get(xyPlotParams, 'plotStyle', 'points')},
         {fieldKey: 'x.columnOrExpr', value: get(xyPlotParams, 'x.columnOrExpr')},
-        {fieldKey: 'x.error', value: get(xyPlotParams, 'x.error')},
+        {fieldKey: 'x.error', value: xErr},
+        {fieldKey: 'x.errorLow', value: xErrLow},
+        {fieldKey: 'x.errorHigh', value: xErrHigh},
         {fieldKey: 'x.label', value: get(xyPlotParams, 'x.label')},
         {fieldKey: 'x.unit', value: get(xyPlotParams, 'x.unit')},
         {fieldKey: 'x.options', value: get(xyPlotParams, 'x.options', '_none_')},
         {fieldKey: 'y.columnOrExpr', value: get(xyPlotParams, 'y.columnOrExpr')},
-        {fieldKey: 'y.error', value: get(xyPlotParams, 'y.error')},
+        {fieldKey: 'y.error', value: yErr},
+        {fieldKey: 'y.errorLow', value: yErrLow},
+        {fieldKey: 'y.errorHigh', value: yErrHigh},
         {fieldKey: 'y.label', value: get(xyPlotParams, 'y.label')},
         {fieldKey: 'y.unit', value: get(xyPlotParams, 'y.unit')},
         {fieldKey: 'y.options', value: get(xyPlotParams, 'y.options', '_none_')},
@@ -264,8 +288,12 @@ export class XYPlotOptions extends React.Component {
             const flds = [
                 {fieldKey: 'x.columnOrExpr', validator: colValidator},
                 {fieldKey: 'x.error', validator: colValidatorOptValue},
+                {fieldKey: 'x.errorLow', validator: colValidatorOptValue},
+                {fieldKey: 'x.errorHigh', validator: colValidatorOptValue},
                 {fieldKey: 'y.columnOrExpr', validator: colValidator},
-                {fieldKey: 'y.error', validator: colValidatorOptValue}
+                {fieldKey: 'y.error', validator: colValidatorOptValue},
+                {fieldKey: 'y.errorLow', validator: colValidatorOptValue},
+                {fieldKey: 'y.errorHigh', validator: colValidatorOptValue}
             ];
             dispatchMultiValueChange(groupKey, flds);
             if (xyPlotParams) {
@@ -445,10 +473,9 @@ export class XYPlotOptions extends React.Component {
 
         const largeTable = possibleDecimatedTable(colValStats);
 
-        const xProps = {colValStats,params:xyPlotParams,groupKey,fldPath:'x.columnOrExpr',label:'X',tooltip:'X Axis',nullAllowed:false};
-        const yProps = {colValStats,params:xyPlotParams,groupKey,fldPath:'y.columnOrExpr',label:'Y',tooltip:'Y Axis',nullAllowed:false};
-        const xErrProps = {colValStats,params:xyPlotParams,groupKey,fldPath:'x.error',label:'X Err',tooltip:'X Error',nullAllowed:true};
-        const yErrProps = {colValStats,params:xyPlotParams,groupKey,fldPath:'y.error',label:'Y Err',tooltip:'Y Error',nullAllowed:true};
+        const xProps = {colValStats, params:xyPlotParams, groupKey, fldPath:'x.columnOrExpr', label:'X:', name:'X', tooltip:'X Axis', nullAllowed:false};
+        const yProps = {colValStats, params:xyPlotParams, groupKey, fldPath:'y.columnOrExpr', label:'Y:', name:'Y', tooltip:'Y Axis', nullAllowed:false};
+        const {xErrType, yErrType} = getErrFldVals(xyPlotParams);
 
         return (
             <div style={{padding:'0 5px 7px'}}>
@@ -491,7 +518,8 @@ export class XYPlotOptions extends React.Component {
                         ex. log(col); 100*col1/col2; col1-col2
                     </div>
                     <ColumnOrExpression {...xProps}/>
-                    {!largeTable && <ColumnOrExpression {...xErrProps}/>}
+                    {!largeTable && <Errors axis='x' errType={xErrType} {...{groupKey, xyPlotParams, colValStats}}/>}
+
 
                     <FieldGroupCollapsible  header='X Label/Unit/Options'
                                             initialState= {{ value:'closed' }}
@@ -533,7 +561,7 @@ export class XYPlotOptions extends React.Component {
                     <br/>
 
                     <ColumnOrExpression {...yProps}/>
-                    {!largeTable && <ColumnOrExpression {...yErrProps}/>}
+                    {!largeTable && <Errors axis='y' errType={yErrType} {...{groupKey, xyPlotParams, colValStats}}/>}
 
                     <FieldGroupCollapsible  header='Y Label/Unit/Options'
                                             initialState= {{ value:'closed' }}
@@ -594,3 +622,77 @@ XYPlotOptions.propTypes = {
     defaultParams: plotParamsShape
 };
 
+
+class Errors extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            selectedErrType : get(FieldGroupUtils.getGroupFields(props.groupKey),[`${props.axis}.errorsType`,'value'], props.errType)
+        };
+    }
+
+    componentDidMount() {
+        const {axis, groupKey, errType} = this.props;
+        this.unbinder = FieldGroupUtils.bindToStore(groupKey,
+            (fields) => {
+                if (this.iAmMounted) {
+                    const v = get(fields, [`${axis}.errorsType`, 'value'], errType);
+                    if (v !== this.state.selectedErrType) {
+                        this.setState({selectedErrType: v});
+                    }
+                }
+            });
+        this.iAmMounted = true;
+    }
+
+    componentWillUnmount() {
+        this.iAmMounted= false;
+        if (this.unbinder) this.unbinder();
+    }
+
+
+    renderErrFld(props) {
+        const {colValStats, groupKey, xyPlotParams} = this.props;
+        const commonProps = {colValStats, params:xyPlotParams, groupKey, labelWidth: 5, nullAllowed:true};
+        const allProps = Object.assign({}, commonProps, props);
+        return  (<ColumnOrExpression {...allProps}/>);
+    }
+
+
+    render() {
+        const {groupKey, axis} = this.props;
+        const errType = this.state.selectedErrType;
+        const axisU = axis.toUpperCase();
+
+        return (
+            <div style={{display: 'flex', alignItems: 'center', paddinngTop: 3}}>
+                <ListBoxInputField
+                    initialState= {{
+                        value: errType,
+                        tooltip: 'Select type of the errors',
+                        label: 'Error:',
+                        labelWidth: 30
+                    }}
+                    options={ERR_TYPE_OPTIONS}
+                    fieldKey={`${axis}.errorsType`}
+                    groupKey={groupKey}
+                />
+                <div style={{paddingLeft: 10}}>
+                {(errType==='sym') && this.renderErrFld({fldPath:`${axis}.error`, name:`${axisU} Error`})}
+                {(errType==='asym') && this.renderErrFld({fldPath:`${axis}.errorHigh`, label: '\u2191', name:`${axisU} Upper Error`})}
+                {(errType==='asym') && this.renderErrFld({fldPath:`${axis}.errorLow`, label: '\u2193', name:`${axisU} Lower Error`})}
+                </div>
+            </div>
+        );
+    }
+}
+
+
+Errors.propTypes = {
+    groupKey: PropTypes.string.isRequired,
+    colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
+    xyPlotParams: plotParamsShape,
+    axis: PropTypes.string.isRequired,
+    errType: PropTypes.string.isRequired
+};

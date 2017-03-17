@@ -71,7 +71,7 @@ const MINMAX = 'minmax';
 
 const datapointsColor = 'rgba(63, 127, 191, 0.5)';
 const datapointsColorWithErrors = 'rgba(63, 127, 191, 0.7)';
-const errorBarColor = 'rgba(255, 209, 128, 0.5)';
+const errorBarColor = 'rgba(63, 127, 191, 0.5)'; //'rgba(255, 209, 128, 0.5)';
 const selectedColorWithErrors = 'rgba(255, 200, 0, 1)';
 const selectedColor = 'rgba(255, 200, 0, 1)';
 const highlightedColor = 'rgba(255, 165, 0, 1)';
@@ -549,7 +549,9 @@ export class XYPlot extends React.Component {
             };
 
             if (!decimateKey) {
-                const hasErrorBars = get(params, 'x.error') || get(params, 'y.error');
+                const hasXErrors = get(params, 'x.error') || get(params, 'x.errorLow') || get(params, 'x.errorHigh');
+                const hasYErrors = get(params, 'y.error') || get(params, 'y.errorLow') || get(params, 'y.errorHigh');
+                const hasErrorBars = hasXErrors || hasYErrors;
 
                 let selectedRows = [];
                 if (selectInfo) {
@@ -566,7 +568,7 @@ export class XYPlot extends React.Component {
                 marker = {symbol: 'circle', radius: 3};
 
                 allSeries = [];
-                if (get(params, 'x.error')) {
+                if (hasXErrors) {
                     const xErrRows = rows.filter((r) => (Number.isFinite(r['left']) && Number.isFinite(r['right'])));
                     xErrRows.sort((r1,r2) => (r1['x']-r2['x']));
                     allSeries.push({
@@ -584,7 +586,7 @@ export class XYPlot extends React.Component {
                         enableMouseTracking: false
                     });
                 }
-                if (get(params, 'y.error')) {
+                if (hasYErrors) {
                     const yErrRows = rows.filter((r) => (Number.isFinite(r['low']) && Number.isFinite(r['high'])));
                     yErrRows.sort((r1,r2) => (r1['x']-r2['x']));
                     allSeries.push({
