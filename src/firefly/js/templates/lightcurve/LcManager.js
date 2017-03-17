@@ -225,6 +225,7 @@ export function* lcManager(params={}) {
          * @prop {Object}   layoutInfo.fullRawTable    // full raw table
          * @prop {Object}   layoutInfo.rawTableRequest // raw table request
          * @prop {Object}   layoutInfo.rawTableColumns // raw table columns
+         * @prop {Object}   layoutInfo.missionOptions       // a list of mission choices presented by upload panel.  all missions from factory will be presented if not given.
          */
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;

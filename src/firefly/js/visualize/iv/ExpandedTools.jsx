@@ -4,8 +4,8 @@
 
 
 import React, {PropTypes} from 'react';
-import {ExpandType, WcsMatchType, dispatchChangeExpandedMode,
-         dispatchExpandedAutoPlay, dispatchWcsMatch} from '../ImagePlotCntlr.js';
+import {ExpandType, dispatchChangeExpandedMode,
+         dispatchExpandedAutoPlay} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
@@ -211,10 +211,10 @@ export function PagingControl({viewerItemIds,activeItemId,isPagingMode,getItemTi
     if (!activeItemId || viewerItemIds.length<2 || !isPagingMode) return <div style={controlStyle}/>;
 
     const cIdx= viewerItemIds.indexOf(activeItemId);
+    if (cIdx<0) return <div style={controlStyle}/>;
+
     const nextIdx= cIdx===viewerItemIds.length-1 ? 0 : cIdx+1;
     const prevIdx= cIdx ? cIdx-1 : viewerItemIds.length-1;
-
-
 
     const dots= viewerItemIds.map( (plotId,idx) =>
         idx===cIdx ?

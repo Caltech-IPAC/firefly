@@ -1,12 +1,12 @@
 import React, {PropTypes} from 'react';
 
-import {get} from 'lodash';
+import {get, defer} from 'lodash';
 import ColValuesStatistics from './../ColValuesStatistics.js';
 import {DATATYPE_HISTOGRAM} from '../dataTypes/HistogramCDT.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
-import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import {dispatchValueChange, dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {FieldGroup,} from '../../ui/FieldGroup.jsx';
+import FieldGroupUtils,{revalidateFields} from '../../fieldGroup/FieldGroupUtils.js';
+import {dispatchValueChange, dispatchMultiValueChange, VALUE_CHANGE} from '../../fieldGroup/FieldGroupCntlr.js';
 import {InputGroup} from '../../ui/InputGroup.jsx';
 import Validate from '../../util/Validate.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
@@ -15,14 +15,16 @@ import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 import {ColumnOrExpression, getColValidator} from './ColumnOrExpression.jsx';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
-
+import {updateSet} from '../../util/WebUtil.js';
 
 export const histogramParamsShape = PropTypes.shape({
          algorithm : PropTypes.oneOf(['fixedSizeBins','bayesianBlocks']),
-         numBins : PropTypes.oneOfType([React.PropTypes.string,React.PropTypes.number]),
-         falsePositiveRate : PropTypes.string,
-         minCutoff : PropTypes.number,
-         maxCutoff : PropTypes.number
+         numBins : PropTypes.oneOfType([PropTypes.string,PropTypes.number]),
+         binWidth :PropTypes.oneOfType([PropTypes.string,PropTypes.number]),
+         fixedBinSizeSelection : PropTypes.oneOf(['numBins','binWidth']),
+         falsePositiveRate : PropTypes.oneOfType([PropTypes.string,PropTypes.number]),
+         minCutoff : PropTypes.oneOfType([PropTypes.string,PropTypes.number]),
+         maxCutoff :PropTypes.oneOfType([PropTypes.string,PropTypes.number])
       });
 
 
@@ -42,14 +44,119 @@ export function setOptions(groupKey, histogramParams) {
         {fieldKey: 'y', value: get(histogramParams, 'y', '_none_')},
         {fieldKey: 'algorithm', value: get(histogramParams, 'algorithm', 'fixedSizeBins')},
         {fieldKey: 'falsePositiveRate', value: get(histogramParams, 'falsePositiveRate','0.05')},
-        {fieldKey: 'numBins', value: get(histogramParams, 'numBins','50')}
+        {fieldKey: 'fixedBinSizeSelection', value:get(histogramParams, 'fixedBinSizeSelection', 'numBins')},
+        {fieldKey: 'numBins', value: get(histogramParams, 'numBins','50')},
+        {fieldKey: 'binWidth', value: get(histogramParams, 'binWidth','')},
+        {fieldKey: 'minCutoff', value: get(histogramParams, 'minCutoff','')},
+        {fieldKey: 'maxCutoff', value: get(histogramParams, 'maxCutoff','')}
+
+
     ];
     dispatchMultiValueChange(groupKey, flds);
 }
 
 const algorithmOptions = [  {label: 'Bayesian blocks', value: 'bayesianBlocks'},
-                            {label: 'Fixed size', value: 'fixedSizeBins'} ];
+                            {label: 'Uniform binning', value: 'fixedSizeBins'} ];
+const binSizeOptions = [  {label: 'Number of bins:', value: 'numBins'},
+    {label: 'Bin width:', value: 'binWidth'} ];
 
+
+function isSingleColumn(colName, colValStats) {
+    for (var i = 0; i < colValStats.length; i++) {
+        if (colName === colValStats[i].name) {
+            return true;
+        }
+
+    }
+    return false;
+}
+var columnNameReducer= (colValStats) => {
+    if (!colValStats) {
+        return {};
+    }
+    return (inFields, action) => {
+
+        if (!inFields) {
+            return {};
+        }
+        let fieldKey = undefined;
+        if (action.type === VALUE_CHANGE) {
+            // when column name changes, update the min/max input
+            fieldKey = get(action.payload, 'fieldKey');
+            switch (fieldKey){
+                case 'columnOrExpr':
+                    const colName = action.payload.value;
+                    if (colName ) {
+                        if (isSingleColumn(colName, colValStats)) {
+                            for (var i=0; i<colValStats.length; i++){
+                                if (colName=== colValStats[i].name) {
+                                    const dataMin = colValStats[i].min;
+                                    const dataMax = colValStats[i].max;
+                                    const numBins = get(inFields, ['numBins','value'], 50);
+                                    var  binWidth =((dataMax - dataMin) /numBins).toFixed(6);
+
+                                    inFields = updateSet(inFields, ['minCutoff', 'value'], `${dataMin}`);
+                                    inFields = updateSet(inFields, ['maxCutoff', 'value'], `${dataMax}`);
+                                    if (isFinite(parseFloat(binWidth)) ){
+                                        inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
+                                    }
+                                    else {
+                                        inFields = updateSet(inFields, ['binWidth', 'value'], '');
+                                    }
+
+                                    break;
+
+                                }
+                            }
+
+                        }
+                        else {
+                            inFields = updateSet(inFields, ['minCutoff', 'value'], undefined);
+                            inFields = updateSet(inFields, ['maxCutoff', 'value'], undefined);
+                            inFields = updateSet(inFields, ['binWidth', 'value'], undefined);
+                        }
+                    }
+
+                    break;
+                case 'numBins':
+                case 'minCutoff':
+                case 'maxCutoff':
+                    const numBins = get(inFields, ['numBins','value'], 50);
+                    const cName   = get(inFields, ['columnOrExpr','value'], undefined);
+                    if (!cName) break;
+                    for (let i=0; i<colValStats.length; i++){
+                        if (cName=== colValStats[i].name){
+                            const dataMin = get(inFields,['minCutoff','value'], colValStats[i].min);
+                            const dataMax = get(inFields,['maxCutoff','value'],  colValStats[i].max);
+                            var  binWidth = ((dataMax - dataMin)/numBins).toFixed(6);
+
+                            inFields = updateSet(inFields, ['minCutoff', 'value'],`${dataMin}`);
+                            inFields = updateSet(inFields, ['maxCutoff', 'value'], `${dataMax}`);
+                           // inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
+                            if (isFinite(parseFloat(binWidth)) ){
+                                inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
+                            }
+                            else {
+                                inFields = updateSet(inFields, ['binWidth', 'value'], '');
+                            }
+                            break;
+
+                        }
+                    }
+
+                    break;
+                default:
+                    break;
+            }
+
+            return revalidateFields(Object.assign({}, inFields));
+        }
+        else {
+            return inFields;
+        }
+
+    };
+};
 export class HistogramOptions extends React.Component {
 
         constructor(props) {
@@ -62,9 +169,14 @@ export class HistogramOptions extends React.Component {
 
 
     shouldComponentUpdate(np, ns) {
+
         return this.props.groupKey !== np.groupKey || this.props.colValStats !== np.colValStats ||
             this.props.histogramParams !== np.histogramParams ||
-            FieldGroupUtils.getFldValue(this.state.fields, 'algorithm') !== FieldGroupUtils.getFldValue(ns.fields, 'algorithm');
+            FieldGroupUtils.getFldValue(this.state.fields, 'algorithm') !== FieldGroupUtils.getFldValue(ns.fields, 'algorithm') ||
+            FieldGroupUtils.getFldValue(this.state.fields, 'fixedBinSizeSelection') !== FieldGroupUtils.getFldValue(ns.fields, 'fixedBinSizeSelection');
+
+
+
     }
 
     componentWillReceiveProps(np) {
@@ -96,9 +208,14 @@ export class HistogramOptions extends React.Component {
                 payload = Object.assign(payload, {value, valid, message});
             }
             dispatchValueChange(payload);
+            if (histogramParams) {
+                defer(setOptions, groupKey, histogramParams);
+            }
         }
+
         this.iAmMounted= true;
     }
+
 
     renderAlgorithmParameters() {
         const {groupKey, histogramParams} = this.props;
@@ -124,19 +241,43 @@ export class HistogramOptions extends React.Component {
                 </div>
             );
         } else { // fixedSizeBins
-            return (
-                <ValidationField
-                    style={{width: 30}}
-                    initialState= {{
-                        value: get(histogramParams, 'numBins', '50'),
-                        validator: Validate.intRange.bind(null, 1, 500, 'numBins'),
-                        tooltip: 'Number of fixed size bins',
-                        label : 'Number of bins:'
-                    }}
-                    fieldKey='numBins'
-                    groupKey={groupKey}
-                    labelWidth={80}
-                />
+
+
+         var disabled = FieldGroupUtils.getFldValue(this.state.fields, 'fixedBinSizeSelection') ?
+             FieldGroupUtils.getFldValue(this.state.fields, 'fixedBinSizeSelection')!=='numBins':false;
+
+         return (
+               <div >
+                   {renderFixedBinSizeOptions(groupKey, histogramParams, disabled) }
+
+                   <ValidationField
+                       style={{width: 156}}
+                       initialState= {{
+                                  value: get(histogramParams, 'minCutoff', ''),
+                                  validator:Validate.isFloat.bind(null,  'minCutoff'),
+                                  tooltip: 'Minimal value',
+                                  label : 'Min:'
+
+                             }}
+                       fieldKey='minCutoff'
+                       groupKey={groupKey}
+                       labelWidth={30}
+                   />
+                   <ValidationField
+                       style={{width: 156}}
+                       initialState= {{
+                                  value: get(histogramParams, 'maxCutoff', ''),
+                                  validator:Validate.isFloat.bind(null,  'maxCutoff'),
+                                  tooltip: 'Max value',
+                                  label : 'Max:'
+
+                             }}
+                       fieldKey='maxCutoff'
+                       groupKey={groupKey}
+                       labelWidth={30}
+                   />
+                 </div>
+
             );
         }
     }
@@ -152,7 +293,9 @@ export class HistogramOptions extends React.Component {
         // to avoid width change due to scroll bar appearing when full height suggest box is rendered
         return (
             <div style={{padding:'0 5px', minHeight: 250}}>
-                <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
+                <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}
+                            reducerFunc={columnNameReducer(colValStats)}>
+
                     {onOptionsSelected &&
                     <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
                         <CompleteButton style={{flexGrow: 0}}
@@ -222,6 +365,54 @@ export class HistogramOptions extends React.Component {
             </div>
         );
     }
+}
+
+//Make the fixed bin layout
+function renderFixedBinSizeOptions(groupKey, histogramParams, disabled){
+    return (
+      <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}} >
+         <RadioGroupInputField
+            initialState= {{
+                                value: get(histogramParams, 'fixedBinSizeSelection', 'numBins'),
+                                tooltip: 'Please select number of bins or bin width',
+                                //label: 'BinSize:'
+                            }}
+            options={binSizeOptions}
+            alignment='vertical'
+            fieldKey='fixedBinSizeSelection'
+            groupKey={groupKey}/>
+        <div>
+             <ValidationField
+                 style={{width: 80}}
+                 initialState= {{
+                                  value: get(histogramParams, 'numBins', '50'),
+                                  validator:Validate.intRange.bind(null, 1, 500, 'numBins'),
+                                  tooltip: 'Number of bins',
+
+                             }}
+                 disabled = {disabled}
+                 fieldKey='numBins'
+                 groupKey={groupKey}
+                 labelWidth={80}
+             />
+             <ValidationField
+                 style={{width: 80}}
+                 initialState= {{
+                                  value: get(histogramParams, 'binWidth', ''),
+                                  validator:Validate.isFloat.bind(null,  'binWidth'),
+                                  tooltip: 'Bin width',
+
+                             }}
+                 disabled = {!disabled}
+                 fieldKey='binWidth'
+                 groupKey={groupKey}
+                 labelWidth={80}
+            />
+        </div>
+      </div>
+
+
+   );
 }
 
 HistogramOptions.propTypes = {
