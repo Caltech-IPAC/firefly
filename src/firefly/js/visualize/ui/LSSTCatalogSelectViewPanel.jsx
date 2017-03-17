@@ -108,6 +108,7 @@ export class LSSTCatalogSelectViewPanel extends Component {
 
         var fields = FieldGroupUtils.getGroupFields(gkey);
         this.state = {
+           // fields: FieldGroupUtils.getGroupFields(gkey),
             cattable: fields ? get(fields, ['cattable', 'value'], '') : '',
             cattype: fields ? get(fields, ['cattype', 'value'], CATTYPE) : CATTYPE};
     }
@@ -136,7 +137,7 @@ export class LSSTCatalogSelectViewPanel extends Component {
             <div>
                 <FormPanel
                     width='auto' height='auto'
-                    groupKey={[gkey]}
+                    groupKey={[gkey,gkeySpatial]}
                     onSubmit={(request) => onSearchSubmit(request)}
                     onCancel={hideSearchPanel}>
                     <LSSTCatalogSelectView cattype={cattype} cattable={cattable} />
@@ -348,8 +349,7 @@ function doCatalog(request, spatPart) {
     var tReq;
 
     if (spatial === SpatialMethod.get('Multi-Object').value) {
-        var filename = catPart.fileUpload;
-
+        var filename = get(spatPart, ['fileUpload', 'value']);
         tReq = makeLsstCatalogRequest(title, projectName, cattable, {
             filename,
             radius: conestr,
@@ -665,7 +665,8 @@ class LsstCatalogDDList extends Component {
 
     constructor(props) {
         super(props);
-        this.state = Object.assign({...this.props}, {optList: ''});
+       // this.state = Object.assign({...this.props}, {optList: ''});
+        this.state = Object.assign({...this.state}, {...this.props}, {optList: ''});
     }
 
     shouldComponentUpdate(np, ns) {

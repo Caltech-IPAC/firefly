@@ -146,7 +146,7 @@ function doCatalog(request) {
     var title = `${catPart.project}-${catPart.cattable}`;
     var tReq = {};
     if (spatial === SpatialMethod.get('Multi-Object').value) {
-        var filename = get(catPart, 'fileUpload');
+        var filename = get(spacPart, 'fileUpload');
 
         tReq = makeIrsaCatalogRequest(title, catPart.project, catPart.cattable, {
             filename,

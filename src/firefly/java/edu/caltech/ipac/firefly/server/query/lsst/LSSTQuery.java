@@ -33,6 +33,13 @@ import java.util.Map;
 
 /**
  * This is a base class for LSSTCatlogSearch and LSSTLightCurveQuery
+ * DM-9964:
+ *   Since the MetaSeaver is not ready the meta data(columns) are from the serach result.  Therefore, the empty table can not be
+ *   displayed since there is no column information.  In order to let multi-object search work, the set the DataGroup=null when
+ *   the empty result is returned.  The loadFile will check and display the error message if the dg==null.
+ *
+ *   In Mutli-Objet search, it the dg==null, it skip this data group.
+ *
  */
 public abstract class LSSTQuery extends IpacTablePartProcessor {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
@@ -50,6 +57,10 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
 
         try {
             DataGroup dg = getDataFromURL(request);
+            //DM-9964 : TODO this is a tempoary solution until the meta server is up
+            if (dg==null){
+                throw new DataAccessException("No data is found in the search range");
+            }
             dg.shrinkToFitData();
             File outFile = createFile(request, ".tbl");
             DataGroupWriter.write(outFile, dg);
@@ -62,7 +73,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         }
     }
 
-    private DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
+    DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
 
 
         String sql = "query=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
@@ -105,16 +116,21 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         JSONObject obj = (JSONObject) parser.parse(new FileReader(jsonFile));
         JSONArray data =  (JSONArray) ((JSONObject) ((JSONObject) obj.get("result")).get("table")).get("data");
 
+
         //search returns empty, throw no data exception
-        if (data.size()==0) {
+ /*       if (data.size()==0) {
             throw new DataAccessException("No data is found in the search range");
 
+        }
+*/
+        //no data found, return the meta data only
+        if (data.size()==0){
+            return  null;
         }
 
         //TODO this should NOT be needed when the MetaServer is running
         JSONArray metaInData = (JSONArray) ( (JSONObject) ( (JSONObject)( (JSONObject) obj.get("result")).get("table")).get("metadata")).get("elements");
         DataType[] dataType = getTypeDef(request, metaInData);
-
         DataGroup dg = new DataGroup("result", dataType  );
 
         //add column description as the attribute so that it can be displayed

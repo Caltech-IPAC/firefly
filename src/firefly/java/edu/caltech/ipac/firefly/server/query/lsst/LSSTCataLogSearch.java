@@ -277,7 +277,7 @@ public class LSSTCataLogSearch extends LSSTQuery {
         }
 
     }
-    private String getRA(String catalog) {
+   String getRA(String catalog) {
         if (catalog != null && catalog.contains("RunDeep")) {
             return "coord_ra";
         } else {
@@ -285,7 +285,7 @@ public class LSSTCataLogSearch extends LSSTQuery {
         }
     }
 
-    private String getDEC(String catalog) {
+     String getDEC(String catalog) {
         if (catalog != null && catalog.contains("RunDeep")) {
             return "coord_decl";
         } else {
