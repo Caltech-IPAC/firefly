@@ -1,13 +1,13 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, has, isEmpty, isNil, set, cloneDeep} from 'lodash';
+import {get, has, isEmpty, isNil, set, cloneDeep, defer} from 'lodash';
 import {take} from 'redux-saga/effects';
 import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
         dispatchUpdateLayoutInfo, dropDownHandler} from '../../core/LayoutCntlr.js';
-import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, TABLE_SEARCH, TABLE_FETCH, TABLE_FILTER,
-        dispatchTableRemove, dispatchTableHighlight, dispatchTableFetch} from '../../tables/TablesCntlr.js';
-import {getCellValue, getTblById, getTblIdsByGroup, getActiveTableId, smartMerge} from '../../tables/TableUtil.js';
+import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, TABLE_SEARCH, TABLE_FETCH,
+        dispatchTableRemove, dispatchTableHighlight, dispatchTableFetch, dispatchTableSort} from '../../tables/TablesCntlr.js';
+import {getCellValue, getTblById, getTblIdsByGroup, getActiveTableId, smartMerge, getColumnIdx} from '../../tables/TableUtil.js';
 import {dispatchTableReplace} from '../../tables/TablesCntlr.js';
 import {updateSet, updateMerge, logError} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {dispatchPlotImage, visRoot, dispatchDeletePlotView,
@@ -17,7 +17,7 @@ import {getPlotViewById} from '../../visualize/PlotViewUtil.js';
 import {getMultiViewRoot, dispatchReplaceViewerItems, getViewer} from '../../visualize/MultiViewCntlr.js';
 import {CHANGE_VIEWER_LAYOUT} from '../../visualize/MultiViewCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
-import {VALUE_CHANGE, dispatchValueChange, dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {VALUE_CHANGE, dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {CHART_ADD, getChartDataElement} from '../../charts/ChartsCntlr.js';
@@ -25,7 +25,6 @@ import {getConverter} from './LcConverterFactory.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeMissionEntries, keepHighlightedRowSynced} from './LcUtil.jsx';
 import {dispatchMountFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
-import {ERROR_MSG_KEY} from '../lightcurve/generic/errorMsg.js';
 
 export const LC = {
     RAW_TABLE: 'raw_table',          // raw table id
@@ -168,6 +167,34 @@ export var getValidValueFrom = (fields, valKey) => {
     return val ? val : '';
 };
 
+
+export function onTimeColumnChange(preTimeColumn, crtTimeColumn) {
+    if (preTimeColumn !== crtTimeColumn) {
+        return defer(() => handleTimeColumnChange(crtTimeColumn));
+    }
+}
+/**
+ * @summary construct table fetch request based on exist request and new column sort info.
+ * @param colToSort
+ */
+export function handleTimeColumnChange(colToSort) {
+    const sortInfo = sortInfoString(colToSort);
+    const tReq = Object.assign(cloneDeep(get(getTblById(LC.RAW_TABLE), 'request')), {sortInfo, timeCName: colToSort});
+
+    removeTablesFromGroup(LC.PERIODOGRAM_GROUP);
+
+    // remove phase folded table
+    const tblAry = getTblIdsByGroup();
+
+    tblAry && tblAry.forEach((tblId) => {
+                if (tblId !== LC.RAW_TABLE) {
+                    dispatchTableRemove(tblId);
+                }
+              });
+
+    dispatchTableSort(tReq);
+}
+
 /**
  * This event manager is custom made for light curve viewer.
  * @param {LCMissionConverter} params
@@ -191,12 +218,14 @@ export function* lcManager(params={}) {
          * @prop {string}   layoutInfo.searchDesc  optional string describing search criteria used to generate this result.
          * @prop {Object}   layoutInfo.images      images specific states
          * @prop {string}   layoutInfo.images.activeTableId  last active table id that images responded to
-         * @prop {string}   layoutInfo.displayMode:'result' (result page), 'period' (period finding page), 'periodogram' or neither
+         * @prop {string}   layoutInfo.displayMode: 'result' (result page), 'period' (period finding page), 'periodogram' or neither
          * @prop {Object}   layoutInfo.missionEntries mission specific entries on result layout panel
          * @prop {Object}   layoutInfo.generalEntries general entries for result layout panel
          * @prop {string}   layoutInfo.periodState  // period or periodogram
-         * @prop {Object}   layoutInfo.fullRawTable
-         * @prop {Object}   layoutInfo.missionOptions       // a list of mission choices presented by upload panel.  all missions from factory will be presented if not given. 
+         * @prop {Object}   layoutInfo.fullRawTable    // full raw table
+         * @prop {Object}   layoutInfo.rawTableRequest // raw table request
+         * @prop {Object}   layoutInfo.rawTableColumns // raw table columns
+         * @prop {Object}   layoutInfo.missionOptions       // a list of mission choices presented by upload panel.  all missions from factory will be presented if not given.
          */
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;
@@ -273,6 +302,11 @@ function updatePhaseTableChart(flux) {
  */
 function handleValueChange(layoutInfo, action) {
     var {fieldKey, value, valid} = action.payload;
+    var bUpdateImage = false;
+    var updateImages = (layout) => {
+        clearLcImages();
+        setupImages(layout);
+    };
 
     if (!valid) { return layoutInfo; }
 
@@ -280,16 +314,14 @@ function handleValueChange(layoutInfo, action) {
         if ((get(layoutInfo, [LC.GENERAL_DATA, fieldKey]) !== value) && (value > 0.0) ) {
             if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
                 layoutInfo = updateSet(layoutInfo, [LC.GENERAL_DATA, fieldKey], value);
-                clearLcImages();
-                layoutInfo = setupImages(layoutInfo);
+                updateImages(layoutInfo);
             }
         }
     } else if ([LC.META_COORD_XNAME, LC.META_COORD_YNAME, LC.META_COORD_SYS].includes(fieldKey)) {
         if (get(layoutInfo, [LC.MISSION_DATA, fieldKey]) !== value) {
             if (get(layoutInfo, ['displayMode']) === LC.RESULT_PAGE) {
                 layoutInfo = updateSet(layoutInfo, [LC.MISSION_DATA, fieldKey], value);
-                clearLcImages();
-                layoutInfo = setupImages(layoutInfo);
+                updateImages(layoutInfo);
             }
         }
     } else {
@@ -301,38 +333,43 @@ function handleValueChange(layoutInfo, action) {
             return layoutInfo;
         }
 
-        const didChange = (el) => Object.keys(updates).includes(el) && updates[el] !== get(layoutInfo, [LC.MISSION_DATA, fieldKey]);
-
         let newLayoutInfo = updateMerge(layoutInfo, LC.MISSION_DATA, updates);
 
-        if ([LC.META_TIME_CNAME, LC.META_FLUX_CNAME].some(didChange)) {
+        const didChange = (el) => Object.keys(updates).includes(el) && updates[el] !== get(layoutInfo, [LC.MISSION_DATA, fieldKey]);
+
+        if (didChange(LC.META_TIME_CNAME)) {
+            newLayoutInfo = smartMerge(newLayoutInfo, {fullRawTable: null, periodState: LC.PERIOD_PAGE});
+        } else if (didChange(LC.META_FLUX_CNAME)) {
             const timeCol = get(newLayoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]);
             const fluxCol = get(newLayoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME]);
             const activeTbl = getActiveTableId();
+
+            // refresh chart in case flux or time
             if (activeTbl === LC.RAW_TABLE) {
                 updateRawTableChart(timeCol, fluxCol);
             } else if (activeTbl === LC.PHASE_FOLDED) {
                 updatePhaseTableChart(fluxCol);
             }
 
-            clearLcImages();
-            newLayoutInfo = setupImages(newLayoutInfo);
-
+            // if (converterData.yNamesChangeImage.includes(value))
+            updateImages(newLayoutInfo);    //TODO: need more investigation, some change may not affect the images
             // update time or flux for period panel field group if it exists
             if (FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER)) {
-                dispatchMultiValueChange(LC.FG_PERIOD_FINDER,
-                [{fieldKey: 'time', value: timeCol}, {fieldKey: 'flux', value: fluxCol}]);
+                dispatchValueChange({groupKey: LC.FG_PERIOD_FINDER, fieldKey: 'flux', value: fluxCol});
             }
-        }
-        if ([LC.META_URL_CNAME, LC.META_FLUX_BAND].some(didChange)) {
-            clearLcImages();
-            newLayoutInfo = setupImages(newLayoutInfo);
+        } else if ([LC.META_URL_CNAME, LC.META_FLUX_BAND].some(didChange)) {
+            updateImages(newLayoutInfo);
         }
 
         layoutInfo = newLayoutInfo;
     }
+    if (bUpdateImage) {
+        updateImages(layoutInfo);
+    }
+
     return layoutInfo;
 }
+
 
 function handleAddChart(layoutInfo, action) {
     const chartId = action.payload.chartId;
@@ -347,7 +384,7 @@ function handleAddChart(layoutInfo, action) {
 /**
  * @summary highlight the table row & chart after change the active plot view
  * @param layoutInfo
- * @param plotId
+ * @param action
  * @returns {*}
  */
 function handlePlotActive(layoutInfo, action) {
@@ -356,6 +393,7 @@ function handlePlotActive(layoutInfo, action) {
 
     var rowNum= Number(plotId.substring(plotIdRoot.length));
     dispatchTableHighlight(tableId, rowNum);
+    keepHighlightedRowSynced(tableId, rowNum);
     return layoutInfo;
 }
 
@@ -387,9 +425,9 @@ function clearResults(layoutInfo) {
 
 /**
  * handle logic when a new search is initiated.
- * @param {LayoutInfo} layoutInfo layoutInfo
+ * @param {object} layoutInfo layoutInfo
  * @param {string} action
- * @returns {LayoutInfo} the new layoutInfo
+ * @returns {Object} the new layoutInfo
  */
 function handleNewSearch(layoutInfo, action) {
     const tbl_id = get(action, 'payload.request.META_INFO.tbl_id');
@@ -417,13 +455,14 @@ function handleRawTableLoad(layoutInfo, tblId) {
         return;
     }
 
-    const {newLayoutInfo, shouldContinue, validTable} = converterData.onNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo);
-    let newMissionEntries = get(newLayoutInfo, ['missionEntries']); // missionEntries could have changed after calling specific mission onRaw
+    let {newLayoutInfo, shouldContinue, validTable} = converterData.onNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo);
+    const newMissionEntries = get(newLayoutInfo, ['missionEntries']); // missionEntries could have changed after calling specific mission onRaw
+    newLayoutInfo = updateSet(newLayoutInfo, 'rawTableColumns', get(rawTable, ['tableData', 'columns']));
+
     if (shouldContinue) {
         // additional changes to the loaded table
         ensureValidRawTable(rawTable, newMissionEntries);
     }
-
 
     return newLayoutInfo;
 }
@@ -431,11 +470,17 @@ function handleRawTableLoad(layoutInfo, tblId) {
 function ensureValidRawTable(rawTable={}, missionEntries) {
     const {request={}} = rawTable;
     const {sortInfo} = request;
+
     // check to ensure time column is sorted.
     if (!sortInfo) {
-        const timeSortInfo = sortInfoString(missionEntries[LC.META_TIME_CNAME]);
-        const treq = Object.assign(cloneDeep(request), {sortInfo: timeSortInfo});
-        dispatchTableFetch(treq);
+        const timeCol = missionEntries[LC.META_TIME_CNAME];
+
+        if (timeCol && (getColumnIdx(rawTable, timeCol) >= 0)) {
+            const timeSortInfo = sortInfoString(timeCol);
+            const treq = Object.assign(cloneDeep(request), {sortInfo: timeSortInfo});
+
+            dispatchTableFetch(treq);
+        }
     }
 }
 
@@ -592,12 +637,12 @@ export function setupImages(layoutInfo) {
     const activeTableId = get(layoutInfo, 'images.activeTableId');
 
     const tableModel = getTblById(activeTableId);
-    if (!tableModel || isNil(tableModel.highlightedRow) || get(tableModel, 'totalRows', 0) < 1) return;
+    if (!tableModel || isNil(tableModel.highlightedRow) || get(tableModel, 'totalRows', 0) < 1) return layoutInfo;
 
     const converterId = get(layoutInfo, [LC.MISSION_DATA, LC.META_MISSION]);
     const converterData = converterId && getConverter(converterId);
     if (!converterId || !converterData) {
-        return;
+        return layoutInfo;
     }
 
     const viewer = getViewer(getMultiViewRoot(), LC.IMG_VIEWER_ID);

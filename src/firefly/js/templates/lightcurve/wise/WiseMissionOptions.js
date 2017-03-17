@@ -1,18 +1,16 @@
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {get, has, isEmpty, set, pick, cloneDeep} from 'lodash';
+import {get, has, isEmpty, set, isNil} from 'lodash';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
 import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
 import {getLayouInfo} from '../../../core/LayoutCntlr.js';
 import {makeFileRequest, getCellValue, getTblById, getColumnIdx, smartMerge} from '../../../tables/TableUtil.js';
-import {updateMerge} from '../../../util/WebUtil.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {ReadOnlyText, getTypeData} from '../LcUtil.jsx';
-import {LC, getViewerGroupKey} from '../LcManager.js';
+import {LC, getViewerGroupKey, onTimeColumnChange} from '../LcManager.js';
 import {getMissionName} from '../LcConverterFactory.js';
-import {isNil} from 'lodash';
 
 const labelWidth = 80;
 
@@ -85,7 +83,7 @@ export class WiseSettingBox extends Component {
         //        return <div><em>frame_id</em> column is missing, no images will be displayed </div>;
         //    }
         //};
-        var missionOthers = <RadioGroupInputField key='band'
+        var missionOthers = (<RadioGroupInputField key='band'
                                                   fieldKey={LC.META_FLUX_BAND} wrapperStyle={wrapperStyle}
                                                   alignment='horizontal'
                                                   options={[
@@ -93,7 +91,7 @@ export class WiseSettingBox extends Component {
                     {label: 'W2', value: 'w2'},
                     {label: 'W3', value: 'w3'},
                     {label: 'W4', value: 'w4'}
-                ]}/>;
+                ]}/>);
         const groupKey = getViewerGroupKey(missionEntries);
         const converterId = get(missionEntries, LC.META_MISSION);
         var missionName = getMissionName(converterId) || 'Mission';
@@ -171,7 +169,7 @@ export const wiseOptionsReducer = (missionEntries, generalEntries) => {
 
         const missionKeys = [LC.META_TIME_CNAME, LC.META_FLUX_CNAME, LC.META_URL_CNAME];
         const missionListKeys = [LC.META_TIME_NAMES, LC.META_FLUX_NAMES];
-        const validators = getFieldValidators(missionEntries, getTblById(LC.RAW_TABLE));
+        const validators = getFieldValidators(missionEntries);
 
         missionListKeys.forEach((key) => {
             set(defV, [key, 'value'], get(missionEntries, key, []));
@@ -233,7 +231,7 @@ function getFieldValidators(missionEntries) {
 
 /**
  * Returns only numerical column names form raw lc table
- * @param rawTbl - raw table
+ * @param {Object} rawTbl
  * @returns {TableColumn[]} - array of table columns objects
  */
 function getOnlyNumericalCol(rawTbl) {
@@ -371,9 +369,14 @@ export function wiseRawTableRequest(converter, source) {
 }
 
 export function wiseOnFieldUpdate(fieldKey, value) {
-
     // images are controlled by radio button -> band w1,w2,w3,w4.
-    if ([LC.META_TIME_CNAME, LC.META_FLUX_CNAME, LC.META_ERR_CNAME, LC.META_URL_CNAME, LC.META_FLUX_BAND].includes(fieldKey)) {
+    if (fieldKey === LC.META_TIME_CNAME) {
+        const {missionEntries} = getLayouInfo() || {};
+        if (!missionEntries) return;
+
+        onTimeColumnChange(missionEntries[fieldKey], value);
+        return {[fieldKey]: value};
+    } else if ([LC.META_FLUX_CNAME, LC.META_ERR_CNAME, LC.META_URL_CNAME, LC.META_FLUX_BAND].includes(fieldKey)) {
         return {[fieldKey]: value};
     }
 }

@@ -91,8 +91,11 @@ export class LcResult extends Component {
                                                tableOptions={{help_id:'main1TSV.table'}}/>);
         }
 
-        content.settingBox = (<SettingBox generalEntries={generalEntries} missionEntries={missionEntries}
-                                          periodState={periodState}/>);
+
+        content.settingBox = (<SettingBox generalEntries={generalEntries}
+                                          missionEntries={missionEntries}
+                                          periodState={periodState} />);
+
 
         expanded = LO_VIEW.get(expanded) || LO_VIEW.none;
         const expandedProps = {expanded, ...content};
@@ -121,8 +124,9 @@ const buttonW = 650;
 // eslint-disable-next-line
 const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables, settingBox}) => {
 
-    const cutoutSize = get(settingBox, 'props.generalEntries.cutoutSize', '0.3');
     const converterId = get(settingBox, ['props', 'missionEntries', LC.META_MISSION]);
+    const convertData = getConverter(converterId);
+    const cutoutSize = get(convertData, 'noImageCutout') ? undefined : get(settingBox, 'props.generalEntries.cutoutSize', '0.3');
     const mission = getMissionName(converterId) || 'Mission';
     const showImages = isEmpty(imagePlot);
 
@@ -337,6 +341,6 @@ function updateFullRawTable(callback) {
                     logError(`Failed to get full raw table: ${reason}`, reason);
                 }
             );
-        }
+       }
     }
 }

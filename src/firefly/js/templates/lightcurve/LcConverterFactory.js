@@ -90,7 +90,8 @@ const converters = {
         dataSource: 'frame_id',
         webplotRequestCreator: getWebPlotRequestViaWISEIbe,
         shouldImagesBeDisplayed: () => {return true;},
-        isTableUploadValid: isBasicTableUploadValid
+        isTableUploadValid: isBasicTableUploadValid,
+        yNamesChangeImage: []
     },
     'lsst_sdss': {
         converterId: 'lsst_sdss',
@@ -108,7 +109,8 @@ const converters = {
         yErrNames: ['magErr', 'tsv_fluxErr'],
         webplotRequestCreator: makeLsstSdssPlotRequest,
         shouldImagesBeDisplayed: () => {return true;},
-        isTableUploadValid: () => {return true;}
+        isTableUploadValid: () => {return true;},
+        yNamesChangeImage: []
     },
     [UNKNOWN_MISSION]: {
         converterId: UNKNOWN_MISSION,
@@ -128,7 +130,9 @@ const converters = {
         [coordSysOptions]: COORD_SYSTEM_OPTIONS,
         webplotRequestCreator: makeURLPlotRequest,
         shouldImagesBeDisplayed: () => {return true;},
-        isTableUploadValid: () => {return true;}
+        isTableUploadValid: () => {return true;},
+        yNamesChangeImage: [],     // TODO: y columns which will affect the image display
+        noImageCutout: true        // no image cutout is used
     },
     // Case which should handle any ipac table and image column, X,Y, coord system not shown (Generic/Advanced case)
     'other': {
@@ -149,7 +153,8 @@ const converters = {
         [coordSysOptions]: COORD_SYSTEM_OPTIONS,
         webplotRequestCreator: basicURLPlotRequest,
         shouldImagesBeDisplayed: imagesShouldBeDisplayed,
-        isTableUploadValid: () => {return true;}
+        isTableUploadValid: () => {return true;},
+        yNamesChangeImage: []
     }
 };
 

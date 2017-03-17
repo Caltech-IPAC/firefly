@@ -48,17 +48,17 @@ export function makeMissionEntries(tableMeta, layoutInfo={}) {
     return {converterData, missionEntries};
 }
 
-export function keepHighlightedRowSynced(tbl_id, highlightedRow) {
+export function keepHighlightedRowSynced(tbl_id, highlightedRow=0) {
     // ensure the highlighted row of the raw and phase-folded tables are in sync.
     if ([LC.PHASE_FOLDED, LC.RAW_TABLE].includes(tbl_id)) {
         let filterInfo, actOn, rowid;
         const tableModel = getTblById(tbl_id);
         if (tbl_id === LC.RAW_TABLE) {
             actOn = LC.PHASE_FOLDED;
-            rowid = getCellValue(tableModel, highlightedRow, 'ROWID');
+            rowid = getCellValue(tableModel, highlightedRow, 'ROWID') || highlightedRow;
             filterInfo = `RAW_ROWID = ${rowid}`;
         } else {
-            rowid = getCellValue(tableModel, highlightedRow, 'RAW_ROWID');
+            rowid = getCellValue(tableModel, highlightedRow, 'RAW_ROWID') || highlightedRow;
             actOn = LC.RAW_TABLE;
             filterInfo = `ROWID = ${rowid}`;
         }
