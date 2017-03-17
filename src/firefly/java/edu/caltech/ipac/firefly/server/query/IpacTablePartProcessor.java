@@ -104,8 +104,10 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         boolean isFixedLength = request.getBooleanParam(TableServerRequest.FIXED_LENGTH, true);
         if (format == DataGroupReader.Format.IPACTABLE && isFixedLength) {
             TableDef tableDef = IpacTableUtil.getMetaInfo(tblFile);
-            if (!tableDef.getCols().stream().anyMatch(c -> !c.isKnownType())) {
-                // table is in ipac format.. and pass validation
+            DataGroup.Attribute fixlen = tableDef.getAttribute("fixlen");
+            if (fixlen != null && fixlen.getValue().equalsIgnoreCase("T") &&
+                !tableDef.getCols().stream().anyMatch(c -> !c.isKnownType()) ) {
+                // table is in fixed length ipac format.. and pass validation
                 return tblFile;
             }
         }
