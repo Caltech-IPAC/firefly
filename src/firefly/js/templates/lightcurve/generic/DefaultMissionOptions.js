@@ -1,44 +1,29 @@
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {get, has, isEmpty, set, defer} from 'lodash';
+import {get, has, isEmpty, set} from 'lodash';
 import {flux} from '../../../Firefly.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
-import {smartMerge, makeFileRequest} from '../../../tables/TableUtil.js';
+import {smartMerge, makeFileRequest, getNumericColNames, getStringColNames} from '../../../tables/TableUtil.js';
 import {ReadOnlyText, getTypeData} from '../LcUtil.jsx';
-import {LC, getViewerGroupKey,  makeRawTableRequestByColumnChange} from '../LcManager.js';
+import {LC, getViewerGroupKey,  onTimeColumnChange} from '../LcManager.js';
 import {getMissionName, coordSysOptions} from '../LcConverterFactory.js';
 import {getLayouInfo} from '../../../core/LayoutCntlr.js';
 
 const labelWidth = 90;
-const NumTypes = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
-const CharTypes = ['char', 'c', 's', 'str'];
 
 export class DefaultSettingBox extends Component {
     constructor(props) {
         super(props);
-
-        this.classifyColumns = (columns) => {
-            return isEmpty(columns) ? {} :
-                        columns.reduce((prev, col) => {
-                            if (get(col, 'visibility', '') !== 'hidden') {
-                                if (NumTypes.includes(col.type)) {
-                                    prev.numColumns.push(col.name);
-                                } else if (CharTypes.includes(col.type)) {
-                                    prev.charColumns.push(col.name);
-                                }
-                            }
-                            return prev;
-                        }, {charColumns: [], numColumns:[]});
-        };
 
         this.getNextState = () => {
             return Object.assign({}, {tblColumns: get(getLayouInfo(), 'rawTableColumns', [])});
         };
 
         const {tblColumns} = this.getNextState();
-        const {charColumns, numColumns} = this.classifyColumns(tblColumns);
+        const numColumns = getNumericColNames(tblColumns);
+        const charColumns = getStringColNames(tblColumns);
         this.state = {tblColumns, charColumns, numColumns};
     }
 
@@ -62,7 +47,8 @@ export class DefaultSettingBox extends Component {
             const {tblColumns} = this.getNextState();
 
             if (tblColumns !== this.state.tblColumns) {
-                const {charColumns, numColumns} = this.classifyColumns(tblColumns);
+                const numColumns = getNumericColNames(tblColumns);
+                const charColumns = getStringColNames(tblColumns);
                 this.setState({tblColumns, charColumns, numColumns});
             }
         }
@@ -310,9 +296,7 @@ export function defaultOnFieldUpdate(fieldKey, value) {
         const {missionEntries} = getLayouInfo() || {};
         if (!missionEntries) return;
 
-        if (missionEntries[fieldKey] !== value) {
-            defer(() => makeRawTableRequestByColumnChange(value));
-        }
+        onTimeColumnChange(missionEntries[fieldKey], value);
         return {[fieldKey]: value};
     } else if ([LC.META_FLUX_CNAME, LC.META_ERR_CNAME, LC.META_URL_CNAME,
             LC.META_COORD_XNAME, LC.META_COORD_YNAME, LC.META_COORD_SYS].includes(fieldKey)) {

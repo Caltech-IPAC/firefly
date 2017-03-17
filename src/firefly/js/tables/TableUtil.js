@@ -852,3 +852,32 @@ export function isTableUsingRadians(tableOrMeta) {
 export function createErrorTbl(tbl_id, error) {
     return {tbl_id, error};
 }
+
+
+/**
+ * @summary get column names from the column of numeric type
+ * @param {Array} tblColumns
+ * @returns {Array}
+ */
+export function getNumericColNames(tblColumns) {
+    const NumTypes = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
+
+    return isEmpty(tblColumns) ? [] :
+                tblColumns.filter((tblCol) => (get(tblCol, 'visibility', '') !== 'hidden'))
+                    .filter((tblCol) => (NumTypes.includes(tblCol.type)))
+                    .map((tblCol) => (tblCol.name));
+}
+
+/**
+ * @summary get column names from the column of string or char type
+ * @param {Array} tblColumns
+ * @returns {Array}
+ */
+export function getStringColNames(tblColumns) {
+    const CharTypes = ['char', 'c', 's', 'str'];
+
+    return isEmpty(tblColumns) ? [] :
+                tblColumns.filter((tblCol) => (get(tblCol, 'visibility', '') !== 'hidden'))
+                    .filter((tblCol) => (CharTypes.includes(tblCol.type)))
+                    .map((tblCol) => (tblCol.name));
+}

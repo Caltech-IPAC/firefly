@@ -1,6 +1,6 @@
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {get, has, isEmpty, set, defer, isNil} from 'lodash';
+import {get, has, isEmpty, set, isNil} from 'lodash';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
@@ -9,7 +9,7 @@ import {getLayouInfo} from '../../../core/LayoutCntlr.js';
 import {makeFileRequest, getCellValue, getTblById, getColumnIdx, smartMerge} from '../../../tables/TableUtil.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {ReadOnlyText, getTypeData} from '../LcUtil.jsx';
-import {LC, getViewerGroupKey, makeRawTableRequestByColumnChange} from '../LcManager.js';
+import {LC, getViewerGroupKey, onTimeColumnChange} from '../LcManager.js';
 import {getMissionName} from '../LcConverterFactory.js';
 
 const labelWidth = 80;
@@ -374,9 +374,7 @@ export function wiseOnFieldUpdate(fieldKey, value) {
         const {missionEntries} = getLayouInfo() || {};
         if (!missionEntries) return;
 
-        if (missionEntries[fieldKey] !== value) {
-            defer(() => makeRawTableRequestByColumnChange(value));
-        }
+        onTimeColumnChange(missionEntries[fieldKey], value);
         return {[fieldKey]: value};
     } else if ([LC.META_FLUX_CNAME, LC.META_ERR_CNAME, LC.META_URL_CNAME, LC.META_FLUX_BAND].includes(fieldKey)) {
         return {[fieldKey]: value};

@@ -1,45 +1,30 @@
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {flux} from '../../../Firefly.js';
-import {get, has, isEmpty, set, defer} from 'lodash';
+import {get, has, isEmpty, set} from 'lodash';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
 import {makeFileRequest} from '../../../tables/TableUtil.js';
-import {getColumnIdx, smartMerge} from '../../../tables/TableUtil.js';
+import {getColumnIdx, smartMerge, getNumericColNames, getStringColNames} from '../../../tables/TableUtil.js';
 import {ReadOnlyText, getTypeData} from '../LcUtil.jsx';
-import {LC, getViewerGroupKey, makeRawTableRequestByColumnChange} from '../LcManager.js';
+import {LC, getViewerGroupKey, onTimeColumnChange} from '../LcManager.js';
 import {getMissionName} from '../LcConverterFactory.js';
 import {getLayouInfo} from '../../../core/LayoutCntlr.js';
-import {sortInfoString} from '../../../tables/SortInfo.js';
 
 const labelWidth = 90;
-const NumTypes = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
-const CharTypes = ['char', 'c', 's', 'str'];
 
 export class BasicSettingBox extends Component {
     constructor(props) {
         super(props);
-        this.classifyColumns = (columns) => {
-            return isEmpty(columns) ? {} :
-                columns.reduce((prev, col) => {
-                    if (get(col, 'visibility', '') !== 'hidden') {
-                        if (NumTypes.includes(col.type)) {
-                            prev.numColumns.push(col.name);
-                        } else if (CharTypes.includes(col.type)) {
-                            prev.charColumns.push(col.name);
-                        }
-                    }
-                    return prev;
-                }, {charColumns: [], numColumns:[]});
-        };
 
         this.getNextState = () => {
             return Object.assign({}, {tblColumns: get(getLayouInfo(), 'rawTableColumns', [])});
         };
 
         const {tblColumns} = this.getNextState();
-        const {charColumns, numColumns} = this.classifyColumns(tblColumns);
+        const numColumns = getNumericColNames(tblColumns);
+        const charColumns = getStringColNames(tblColumns);
         this.state = {tblColumns, charColumns, numColumns};
     }
 
@@ -62,7 +47,8 @@ export class BasicSettingBox extends Component {
             const {tblColumns} = this.getNextState();
 
             if (tblColumns !== this.state.tblColumns) {
-                const {charColumns, numColumns} = this.classifyColumns(tblColumns);
+                const numColumns = getNumericColNames(tblColumns);
+                const charColumns = getStringColNames(tblColumns);
                 this.setState({tblColumns, charColumns, numColumns});
             }
         }
@@ -133,31 +119,6 @@ BasicSettingBox.propTypes = {
     missionEntries: PropTypes.object
 };
 
-function getStringCol(rawTbl) {
-    var colType = ['char', 'c', 's', 'str'];
-    let cols = get(rawTbl, 'tableData.columns');
-    let charCols = cols.filter((c) => {
-        return colType.includes(c.type);
-    });
-    let c = [];
-    charCols.forEach((el) => {
-        c.push(el.name);
-    });
-    return c;
-}
-
-function getNumCols(rawTbl) {
-    var colType = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
-    let cols = get(rawTbl, 'tableData.columns');
-    let charCols = cols.filter((c) => {
-        return colType.includes(c.type);
-    });
-    let c = [];
-    charCols.forEach((el) => {
-        c.push(el.name);
-    });
-    return c;
-}
 
 export const basicOptionsReducer = (missionEntries, generalEntries, typeColumns) => {
     return (inFields, action) => {
@@ -247,33 +208,16 @@ function getFieldValidators(missionEntries, typeColumns) {
                 } else if (!cols.includes(val)) {
                     valid = false;
                 }
-
                 return valid ? {valid, message: ''} : {valid, message: `${val} is not a valid column name`};
             };
         return all;
     }, {});
 }
 
-const posColumnInfo = (posCoords) => {
-    const posElement = [LC.META_COORD_XNAME, LC.META_COORD_YNAME, LC.META_COORD_SYS];
-    var posInfo = posElement.reduce((prev, ele) => {
-        prev[ele] = '';
-        return prev;
-    }, {});
-
-    if (posCoords) {
-        var s = posCoords.split(';');
-        if (s && s.length === 3) {
-            s.forEach((ele, idx) => posInfo[posElement[idx]] = ele);
-        }
-    }
-
-    return posInfo;
-};
 
 /**
  * Return true if the user inputs make sense to show images in result layout
- * @param {objct} layoutInfo
+ * @param {object} layoutInfo
  * @return {bool}
  */
 export function imagesShouldBeDisplayed(layoutInfo) {
@@ -297,16 +241,15 @@ export function basicOnNewRawTable(rawTable, missionEntries, generalEntries, con
 
     // Update default values AND sortInfo and
     const metaInfo = rawTable && rawTable.tableMeta;
-
-    let numericalCols = getNumCols(rawTable);
+    const numericalCols = getNumericColNames(get(rawTable, ['tableData', 'columns'], []));
 
     //let strCols = getStringCol(rawTable);
     //strCols.push('');// Empty means no images
     let defaultCTimeName = (getColumnIdx(rawTable, converterData.defaultTimeCName) > 0) ? converterData.defaultTimeCName : numericalCols[0];
-    let defaultYColName = (getColumnIdx(rawTable, converterData.defaultYCname) > 0) ? converterData.defaultYCname : numericalCols[1];
+    const defaultYColName = (getColumnIdx(rawTable, converterData.defaultYCname) > 0) ? converterData.defaultYCname : numericalCols[1];
 
     defaultCTimeName = numericalCols.filter((el) => {
-            if (el.toLocaleLowerCase().match(xyColPattern[0]) != null) {
+            if (el.toLocaleLowerCase().match(xyColPattern[0]) !== null) {
                 return el;
             }
         })[0] || defaultCTimeName;
@@ -338,9 +281,7 @@ export function basicOnFieldUpdate(fieldKey, value) {
         const {missionEntries}= getLayouInfo() || {};
         if (!missionEntries) return;
 
-        if (missionEntries[fieldKey] !== value) {
-            defer(() => makeRawTableRequestByColumnChange(value));
-        }
+        onTimeColumnChange(missionEntries[fieldKey], value);
         return {[fieldKey]: value};
     } else if ([LC.META_FLUX_CNAME].includes(fieldKey)) {
         return {[fieldKey]: value};

@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, has, isEmpty, isNil, set, cloneDeep} from 'lodash';
+import {get, has, isEmpty, isNil, set, cloneDeep, defer} from 'lodash';
 import {take} from 'redux-saga/effects';
 import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
         dispatchUpdateLayoutInfo, dropDownHandler} from '../../core/LayoutCntlr.js';
@@ -167,11 +167,17 @@ export var getValidValueFrom = (fields, valKey) => {
     return val ? val : '';
 };
 
+
+export function onTimeColumnChange(preTimeColumn, crtTimeColumn) {
+    if (preTimeColumn !== crtTimeColumn) {
+        return defer(() => handleTimeColumnChange(crtTimeColumn));
+    }
+}
 /**
  * @summary construct table fetch request based on exist request and new column sort info.
  * @param colToSort
  */
-export function makeRawTableRequestByColumnChange(colToSort) {
+export function handleTimeColumnChange(colToSort) {
     const sortInfo = sortInfoString(colToSort);
     const tReq = Object.assign(cloneDeep(get(getTblById(LC.RAW_TABLE), 'request')), {sortInfo, timeCName: colToSort});
 

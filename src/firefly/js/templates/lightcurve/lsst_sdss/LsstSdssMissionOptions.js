@@ -11,7 +11,7 @@ import {dispatchTableSearch} from '../../../tables/TablesCntlr.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {FilterInfo} from '../../../tables/FilterInfo.js';
 
-import {LC, getViewerGroupKey, makeRawTableRequestByColumnChange} from '../LcManager.js';
+import {LC, getViewerGroupKey, onTimeColumnChange} from '../LcManager.js';
 import {getTypeData} from './../LcUtil.jsx';
 
 const labelWidth = 100;
@@ -173,9 +173,7 @@ export function lsstSdssOnFieldUpdate(fieldKey, value) {
     if (!missionEntries) return;
 
     if (fieldKey === LC.META_TIME_CNAME) {
-        if (missionEntries[fieldKey] !== value) {
-            defer(() => makeRawTableRequestByColumnChange(value));
-        }
+        onTimeColumnChange(missionEntries[fieldKey], value);
 
         return {[fieldKey]: value};
     } else if (fieldKey === 'band') {
