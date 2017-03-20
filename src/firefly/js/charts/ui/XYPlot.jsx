@@ -183,6 +183,10 @@ const getYAxisOptions = function(params) {
     return {yTitle, yGrid, yReversed, yOpposite, yLog};
 };
 
+const plotErrors = function(params, axis) {
+    return get(params, [axis, 'error']) || get(params, [axis, 'errorLow']) || get(params, [axis, 'errorHigh']);
+};
+
 const getZoomSelection = function(params) {
     return (params.zoom ? params.zoom : {xMin:null, xMax: null, yMin:null, yMax:null});
 };
@@ -321,6 +325,8 @@ export class XYPlot extends React.Component {
         // shading change for density plot changes series
         if (nextProps.data !== data ||
             get(params, 'plotStyle') !== get(nextProps.params, 'plotStyle') ||
+            plotErrors(params, 'x') !== plotErrors(nextProps.params, 'x') ||
+            plotErrors(params, 'y') !== plotErrors(nextProps.params, 'y') ||
             get(params, 'shading', defaultShading) !== get(nextProps.params, 'shading', defaultShading)) {
             return true;
         } else {
@@ -549,8 +555,8 @@ export class XYPlot extends React.Component {
             };
 
             if (!decimateKey) {
-                const hasXErrors = get(params, 'x.error') || get(params, 'x.errorLow') || get(params, 'x.errorHigh');
-                const hasYErrors = get(params, 'y.error') || get(params, 'y.errorLow') || get(params, 'y.errorHigh');
+                const hasXErrors = plotErrors(params, 'x');
+                const hasYErrors = plotErrors(params, 'y');
                 const hasErrorBars = hasXErrors || hasYErrors;
 
                 let selectedRows = [];

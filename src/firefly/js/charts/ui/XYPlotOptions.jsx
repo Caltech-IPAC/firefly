@@ -148,10 +148,11 @@ export function resultsFail() {
 }
 
 export function setOptions(groupKey, xyPlotParams) {
-    const {xErr, xErrLow, xErrHigh, yErr, yErrLow, yErrHigh} = getErrFldVals(xyPlotParams);
+    const {xErrType, xErr, xErrLow, xErrHigh, yErrType, yErr, yErrLow, yErrHigh} = getErrFldVals(xyPlotParams);
     const flds = [
         {fieldKey: 'plotStyle', value: get(xyPlotParams, 'plotStyle', 'points')},
         {fieldKey: 'x.columnOrExpr', value: get(xyPlotParams, 'x.columnOrExpr')},
+        {fieldKey: 'x.errorsType', value: xErrType},
         {fieldKey: 'x.error', value: xErr},
         {fieldKey: 'x.errorLow', value: xErrLow},
         {fieldKey: 'x.errorHigh', value: xErrHigh},
@@ -159,6 +160,7 @@ export function setOptions(groupKey, xyPlotParams) {
         {fieldKey: 'x.unit', value: get(xyPlotParams, 'x.unit')},
         {fieldKey: 'x.options', value: get(xyPlotParams, 'x.options', '_none_')},
         {fieldKey: 'y.columnOrExpr', value: get(xyPlotParams, 'y.columnOrExpr')},
+        {fieldKey: 'y.errorsType', value: yErrType},
         {fieldKey: 'y.error', value: yErr},
         {fieldKey: 'y.errorLow', value: yErrLow},
         {fieldKey: 'y.errorHigh', value: yErrHigh},
