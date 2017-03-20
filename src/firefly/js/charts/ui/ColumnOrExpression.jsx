@@ -48,7 +48,7 @@ export function getColValidator(colValStats, required=true) {
     };
 }
 
-export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,labelWidth=30,tooltip,nullAllowed}) {
+export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,labelWidth=30,name,tooltip,nullAllowed}) {
 
     // the suggestions are indexes in the colValStats array - it makes it easier to render then with labels
     const allSuggestions = colValStats.map((colVal,idx)=>{return idx;});
@@ -77,6 +77,9 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
     const colValidator = getColValidator(colValStats,!nullAllowed);
     const value = get(params, fldPath);
     const {valid=true, message=''} = value ? colValidator(value) : {};
+    // http://www.charbase.com/1f50d-unicode-left-pointing-magnifying-glass
+    // http://www.charbase.com/1f50e-unicode-right-pointing-magnifying-glass
+    const cols = '\ud83d\udd0e';
     return (
         <div style={{whiteSpace: 'nowrap'}}>
             <SuggestBoxInputField
@@ -86,8 +89,7 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
                     valid,
                     message,
                     validator: colValidator,
-                    tooltip: `Column or expression for ${tooltip}`,
-                    label: `${label}:`,
+                    tooltip: `Column or expression for ${tooltip ? tooltip : name}`,
                     nullAllowed
                 }}
                 getSuggestions={getSuggestions}
@@ -95,14 +97,14 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
                 valueOnSuggestion={valueOnSuggestion}
                 fieldKey={fldPath}
                 groupKey={groupKey}
+                label={label ? label : ''}
                 labelWidth={labelWidth}
             />
-            <TextButton style={{display: 'inline-block', paddingLeft: 3, verticalAlign: 'bottom'}}
-                        groupKey={groupKey}
-                        text='Cols'
-                        tip={`Select ${label} column`}
-                        onClick={() => showColSelectPopup(colValStats, onColSelected,`Choose ${label}`,'OK',val)}
-            />
+            <div style={{display: 'inline-block', cursor:'pointer', paddingLeft: 3, verticalAlign: 'middle', fontSize: 'larger'}}
+                 title={`Select ${name} column`}
+                 onClick={() => showColSelectPopup(colValStats, onColSelected,`Choose ${name}`,'OK',val)}>
+                {cols}
+            </div>
         </div>
     );
 }
@@ -113,8 +115,9 @@ ColumnOrExpression.propTypes = {
     params: PropTypes.object,
     groupKey: PropTypes.string.isRequired,
     fldPath: PropTypes.string.isRequired,
-    label: PropTypes.string.isRequired,
+    label: PropTypes.string,
     labelWidth: PropTypes.number,
+    name: PropTypes.string.isRequired,
     tooltip: PropTypes.string,
     nullAllowed: PropTypes.bool
 };

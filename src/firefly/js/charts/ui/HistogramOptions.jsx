@@ -285,7 +285,7 @@ export class HistogramOptions extends React.Component {
     render() {
         const { colValStats, groupKey, histogramParams, defaultParams, onOptionsSelected} = this.props;
         const {fixedAlgorithm=false} = this.state;
-        const xProps = {colValStats,params:histogramParams,groupKey,fldPath:'columnOrExpr',label:'Column or expression', labelWidth:120, tooltip:'X Axis',nullAllowed:false};
+        const xProps = {colValStats,params:histogramParams,groupKey,fldPath:'columnOrExpr',label:'Column or expression:',labelWidth:120,name: 'X',tooltip:'X Axis',nullAllowed:false};
 
         const algorithm = get(histogramParams, 'algorithm', 'fixedSizeBins');
         const m_algorithmOptions = fixedAlgorithm ? algorithmOptions.filter((el) => el.value === algorithm) : algorithmOptions;
