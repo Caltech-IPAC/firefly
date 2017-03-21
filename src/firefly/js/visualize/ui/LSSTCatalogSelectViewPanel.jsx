@@ -483,7 +483,7 @@ class LSSTCatalogSelectView extends Component {
                         reducerFunc={userChangeLsstDispatch(tblId)}
                         keepState={true}>
                 <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs' resizable={true}>
-                    <Tab name='Search Catalogs' id='catalogLsst'>
+                    <Tab name='Search' id='catalogLsst'>
                         <LsstCatalogDDList {...this.props} {...this.state} />
                     </Tab>
                     <Tab name='Load Catalog' id='loadcatLsst'>
