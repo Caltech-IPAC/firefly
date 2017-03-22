@@ -48,7 +48,7 @@ public class HorizonsEphFile {
 
 
         ClientLog.message("Retrieving Ephemeris file");
-        String urlStr=  "http://" +
+        String urlStr=  "https://" +
                  server.getHost() + ":" + server.getPort() + CGI_CMD;
         if (SUTDebug.isDebug()) System.out.println("RBH URL = "+ urlStr);
         URL url = new URL(urlStr);
