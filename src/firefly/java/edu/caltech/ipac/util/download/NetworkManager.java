@@ -55,7 +55,7 @@ public class NetworkManager {
        addServerWithProp(AUTO_UPDATE_SERVER,   "soas.ipac.caltech.edu",    80);
        addServerWithProp(SPITZER_ARCHIVE,     "archive.spitzer.caltech.edu",80);
        addServerWithProp(SPIZTER_POPULAR,      "data.spitzer.caltech.edu",80);
-       addServerWithProp(HORIZONS_NAIF,        "ssd.jpl.nasa.gov"          ,80);
+       addServerWithProp(HORIZONS_NAIF,        "ssd.jpl.nasa.gov"         ,443);
        addServerWithProp(SDSS_SERVER,          "cas.sdss.org"             ,80);
      }
 
