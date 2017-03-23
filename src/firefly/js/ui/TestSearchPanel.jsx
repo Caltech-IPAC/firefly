@@ -7,6 +7,7 @@ import React, {Component, PropTypes} from 'react';
 import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
 import {ValidationField} from '../ui/ValidationField.jsx';
+import {ListBoxInputField} from '../ui/ListBoxInputField.jsx';
 import Validate from '../util/Validate.js';
 import {download} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
@@ -32,18 +33,25 @@ export const TestSearchPanel = (props) => {
                 <FieldGroup groupKey='TBL_BY_URL_PANEL' validatorFunc={null} keepState={true}>
                     <ValidationField style={{width:500}}
                                      fieldKey='srcTable'
-                                     groupKey='TBL_BY_URL_PANEL'
                                      initialState= {{
-                                                                value: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
-                                                                validator: Validate.validateUrl.bind(null, 'Source Table'),
-                                                                tooltip: 'The URL to the source table',
+                                                                value: '/Users/loi/data/300k.tbl',
+                                                                tooltip: 'path to a table file',
                                                                 label : 'Source Table:',
                                                                 labelWidth : 120
                                                              }}
                     />
+                    <ListBoxInputField initialState={{
+                                          tooltip: 'db engine to use',
+                                          label : 'dbType:',
+                                          labelWidth : 120
+                                      }}
+                                       options={[{value: 'h2'},{value: 'sqlite'},{value: 'hsql'}]}
+                                       multiple={false}
+                                       fieldKey='dbType'
+                    />
+
                     <ValidationField style={{width:500}}
                                      fieldKey='filters'
-                                     groupKey='TBL_BY_URL_PANEL'
                                      initialState= {{
                                                                 placeholder: 'Apply this filter on the table above',
                                                                 value: '',
@@ -55,14 +63,12 @@ export const TestSearchPanel = (props) => {
                     <FileUpload
                         wrapperStyle = {{margin: '5px 0'}}
                         fieldKey = 'fileUpload'
-                        groupKey='TBL_BY_URL_PANEL'
                         initialState= {{
                                 tooltip: 'Select a file to upload',
                                 label: 'Upload File:'
                             }}
                     />
                     <ValidationField fieldKey='tbl_index'
-                                     groupKey='TBL_BY_URL_PANEL'
                                      initialState= {{
                                             value: 0,
                                             size: 4,
@@ -90,7 +96,7 @@ function onSearchSubmit(request) {
         const treq = TblUtil.makeFileRequest(null, request.fileUpload, null, {...request});
         dispatchTableSearch(treq);
     } else if (request.srcTable) {
-        const treq = TblUtil.makeFileRequest(null, request.srcTable, null, {filters: request.filters});
+        const treq = TblUtil.makeFileRequest(request.dbType + ':' + request.srcTable, request.srcTable, null, {filters: request.filters, META_INFO: {tblFileType: request.dbType}});
         dispatchTableSearch(treq);
     }
 }

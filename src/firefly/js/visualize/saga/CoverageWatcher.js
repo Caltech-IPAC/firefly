@@ -13,7 +13,7 @@ import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, getDrawLayerById} from '../PlotViewUtil.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
-import {doFetchTable, getTblById, getActiveTableId, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
+import {doFetchTable, getTblById, getActiveTableId, getTableInGroup, isTableUsingRadians, MAX_ROW} from '../../tables/TableUtil.js';
 import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {DrawSymbol} from '../draw/PointDataObj.js';
@@ -217,7 +217,7 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
 
     const params= {
         startIdx : 0,
-        pageSize : 1000000,
+        pageSize : MAX_ROW,
         inclCols : getCovColumnsForQuery(options, table)
     };
     if (table.totalRows>10000) {
@@ -229,7 +229,7 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
     const req = cloneRequest(table.request, params);
     req.tbl_id = `cov-${tbl_id}`;
 
-    if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.tblFilePath===table.tableMeta.tblFilePath*/) { //todo support decimated data
+    if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.datasetID===table.tableMeta.datasetID*/) { //todo support decimated data
         updateCoverageWithData(viewerId, table, options, tbl_id, decimatedTables[tbl_id], decimatedTables, isTableUsingRadians(table));
     }
     else {
@@ -523,7 +523,7 @@ function getCovColumnsForQuery(options, table) {
                     s += (c ? `${idx > 0 ? ',' : ''}${c.lonCol},${c.latCol}` : '');
                     return s;
                 }, '');
-    return base+',ROWID';
+    return base+',ROW_IDX';
 }
 
 

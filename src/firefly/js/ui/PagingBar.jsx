@@ -76,6 +76,6 @@ PagingBar.propTypes = {
 PagingBar.defaultProps = {
     currentPage: 1,
     showLoading: false,
-    pageSize: 10
+    pageSize: 100
 };
 

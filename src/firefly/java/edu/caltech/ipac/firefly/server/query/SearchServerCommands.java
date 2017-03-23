@@ -16,16 +16,15 @@ import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.ServCommand;
-import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.TableDbUtil;
 import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
 import edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
@@ -69,19 +68,22 @@ public class SearchServerCommands {
     public static class SelectedValues extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            String filePath = params.getRequired("filePath");
+            String requestJson = params.getRequired(ServerParams.REQUEST);
+            TableServerRequest treq = QueryUtil.convertToServerRequest(requestJson);
+            treq.setPageSize(Integer.MAX_VALUE);
             try {
-                String selRows = params.getRequired("selectedRows");
-                List<String> columnNames = StringUtils.asList(params.getRequired("columnNames"), ",");
-                List<Integer> rows = StringUtils.convertToListInteger(selRows, ",");
-                File file = ServerContext.convertToFile(filePath);
+                List<String> cols = StringUtils.asList(params.getRequired("columnNames"), ",");
+                List<Integer> rows = StringUtils.convertToListInteger(params.getRequired("selectedRows"), ",");
+                // hitting the database directly.
+                String select = "select " + (cols.size() > 0 ? StringUtils.toString(cols) : "*");
+                String where = "where " + (rows.size() > 0 ? "ROWID in (" + StringUtils.toString(rows) + ")" : "");
+                String from = TableDbUtil.getDatasetID(treq);
+                from = "from " + (StringUtils.isEmpty(from) ? "data" : from);
 
-                if (!file.canRead() ||
-                        !file.getAbsolutePath().startsWith(ServerContext.getWorkingDir().getAbsolutePath())) {
-                    throw new DataAccessException("Unable to access this file:" + file.getAbsolutePath());
-                }
-                DataGroup data = IpacTableParser.getSelectedData(file, rows, columnNames.toArray(new String[0]));
-                return JsonTableUtil.toJsonTableModel(new DataGroupPart(null, data, 0, data.size()), null).toJSONString();
+                String sql = String.format("%s %s %s", select, from, where);
+                DataGroupPart page = TableDbUtil.getResults(treq, sql);
+
+                return JsonTableUtil.toJsonTableModel(page, treq).toJSONString();
             } catch (IOException e) {
                 throw new DataAccessException("Unable to resolve a search processor for this request.  SelectedValues aborted.");
             }

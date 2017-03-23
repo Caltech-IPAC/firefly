@@ -26,7 +26,7 @@ public interface TableDataView extends HasAccessInfos, Serializable {
     public static final String ROW_DESELECT_ALL = "rowDeselectAll";
     public static final String MODEL_LOADED = "modelLoaded";
 
-    public static final String ROWID = "ROWID";
+    public static final String ROWID = "ROW_IDX";
     public enum Align {LEFT, RIGHT, CENTER}
 
     DatasetInfoConverter getDatasetInfoConverter();

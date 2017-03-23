@@ -96,7 +96,7 @@ function fetchColData(dispatch, chartId, chartDataElementId) {
 
     const activeTableModel = getTblById(tblId);
     const activeTableServerRequest = activeTableModel['request'];
-    const tblSource = get(activeTableModel, 'tableMeta.tblFilePath');
+    const tblSource = get(activeTableModel, 'tableMeta.datasetID');
 
     const sreq = cloneRequest(activeTableServerRequest, {'startIdx' : 0, 'pageSize' : MAX_ROW});
 

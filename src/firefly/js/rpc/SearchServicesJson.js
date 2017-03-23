@@ -86,14 +86,14 @@ export function findTableIndex(tableRequest, filterInfo) {
  * returns the table data for the given parameters
  * @param {Object} p  parameters object
  * @param {string[]} p.columnNames an array of column names
- * @param {string} p.filePath   location of the file on the server
+ * @param {TableRequest} p.request   location of the file on the server
  * @param {string} p.selectedRows   a comma-separated string of indices of the rows to get the data from
  * @return {Promise<TableModel>}
  */
-export const selectedValues = function({columnNames, filePath, selectedRows}) {
+export const selectedValues = function({columnNames, request, selectedRows}) {
     columnNames = Array.isArray(columnNames) ? columnNames.join() : String(columnNames);
     selectedRows = Array.isArray(selectedRows) ? selectedRows.join() : String(selectedRows);
-    return doJsonRequest(ServerParams.SELECTED_VALUES, {columnNames, filePath, selectedRows})
+    return doJsonRequest(ServerParams.SELECTED_VALUES, {columnNames, request: JSON.stringify(request), selectedRows})
             .then((tableModel) => {
                 return tableModel;
             });

@@ -117,7 +117,7 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
 
     const req = TableUtil.makeTblRequest('StatisticsProcessor', `Statistics for ${tbl_id}`,
         { searchRequest: JSON.stringify(sreq) },
-        {'startIdx': 0, 'pageSize': 1000});
+        {'startIdx': 0, 'pageSize': TableUtil.MAX_ROW});
 
     TableUtil.doFetchTable(req).then(
         (tableModel) => {

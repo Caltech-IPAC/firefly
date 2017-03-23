@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.util.*;
 
@@ -36,7 +37,10 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
         String searchRequestJson = request.getParam(SEARCH_REQUEST);
-        DataGroup dg = SearchRequestUtils.dataGroupFromSearchRequest(searchRequestJson);
+        TableServerRequest treq = QueryUtil.convertToServerRequest(searchRequestJson);
+        treq.setPageSize(Integer.MAX_VALUE);
+        DataGroup dg = new SearchManager().getDataGroup(treq).getData();
+
         String xColOrExpr = request.getParam(X_COL_EXPR);
         String yColOrExpr = request.getParam(Y_COL_EXPR);
         String xErrColOrExpr = request.getParam(XERR_COL_EXPR);

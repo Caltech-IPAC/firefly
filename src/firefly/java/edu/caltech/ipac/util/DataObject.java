@@ -24,6 +24,10 @@ public class DataObject implements Serializable, Cloneable {
         _group= group;
     }
 
+    public void setData(Object[] data) {
+        _data = data;
+    }
+
     public int getRowIdx() {
         DataType dtype = getDataType(DataGroup.ROWID_NAME);
         if (dtype != null && dtype.getColumnIdx() < _data.length) {
@@ -87,9 +91,7 @@ public class DataObject implements Serializable, Cloneable {
      */
     public Object[] getData() {
         checkSize();
-        Object[] retval = new Object[_data.length];
-        System.arraycopy(_data, 0, retval, 0, retval.length);
-        return retval;
+        return _data;
     }
 
     /**

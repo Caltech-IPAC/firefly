@@ -141,10 +141,11 @@ public class JsonTableUtil {
             }
         }
 
-
         List<List<String>> tableData = new ArrayList<>();
         for (int i = 0; i < data.size(); i++) {
             List<String> row = new ArrayList<>();
+
+
             String[] rowData = data.get(i).getFormatedData();
             for (int colIdx = 0; colIdx < rowData.length; colIdx++) {
                 row.add(rowData[colIdx]);

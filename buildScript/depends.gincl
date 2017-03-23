@@ -29,6 +29,7 @@ ext {
               ':servlet-api',
               ':websocket-api']
 
+  db_lib = [':h2-1.4.194', ':sqlite-jdbc-3.20.0', ':hsqldb']
   mysql_lib = ':mysql-connector-java-5.1.6-bin'
   starlink_lib = [':rayreg', ':regclient', ':stil']
   xbeanfinder_lib = [':xbean-finder-4.1', ':asm-5.0.3']
@@ -90,6 +91,7 @@ repositories {
           "$libPath/oidc",
           "$libPath/json",
           "$libPath/log4j",
+          "$libPath/db",
           "$libPath/mysql",
           "$libPath/sdss",
           "$libPath/spring",

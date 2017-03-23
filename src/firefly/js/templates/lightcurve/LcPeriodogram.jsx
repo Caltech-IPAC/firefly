@@ -503,7 +503,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
     return (request) => {
         const tbl = getTblById(LC.RAW_TABLE);
         const layoutInfo = getLayouInfo();
-        const srcFile = get(tbl, ['tableMeta', 'tblFilePath']);
+        const srcFile = get(tbl, ['tableMeta', 'source']);
 
         const pMin = get(request, [pKeyDef.min.fkey]);
         const pMax = get(request, [pKeyDef.max.fkey]);

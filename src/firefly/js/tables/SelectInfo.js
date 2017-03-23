@@ -10,7 +10,7 @@ import {getTblById} from './TableUtil.js';
 export class SelectInfo {
     constructor(selectInfo) {
         this.data = selectInfo;
-        this.offset = 0;
+        this.offset = 1;
 
     }
 

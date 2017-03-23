@@ -8,7 +8,7 @@ import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE} fr
 import {getDlRoot, SUBGROUP, dispatchAttachLayerToPlot, dispatchChangeVisibility, dispatchCreateDrawLayer,
         dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
-import {getTblById, doFetchTable, getTableGroup, cloneRequest, isTableUsingRadians} from '../../tables/TableUtil.js';
+import {getTblById, doFetchTable, getTableGroup, cloneRequest, isTableUsingRadians, MAX_ROW} from '../../tables/TableUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {getDrawLayerById, getPlotViewById} from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
@@ -112,8 +112,8 @@ function handleCatalogUpdate(tbl_id) {
 
     const params= {
         startIdx : 0,
-        pageSize : 1000000,
-        inclCols : `${columns.lonCol},${columns.latCol},ROWID`
+        pageSize : MAX_ROW,
+        inclCols : `${columns.lonCol},${columns.latCol},ROW_IDX`
     };
 
     var dataTooBigForSelection= false;

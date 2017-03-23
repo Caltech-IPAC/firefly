@@ -522,7 +522,7 @@ export function getActiveTableId(tbl_group='main') {
 export function getCellValue(tableModel, rowIdx, colName) {
     if (get(tableModel, 'tableData.data.length', 0) > 0) {
         const colIdx = getColumnIdx(tableModel, colName);
-        if (colIdx < 0 && colName === 'ROWID') {
+        if (colIdx < 0 && colName === 'ROW_IDX') {
             return rowIdx;
         } else {
             return get(tableModel, ['tableData', 'data', rowIdx, colIdx]);
@@ -571,7 +571,7 @@ export function getRowValues(tableModel, rowIdx) {
  * @memberof firefly.util.table
  */
 export function getSelectedData(tbl_id, columnNames=[]) {
-    const {tableModel, tableMeta, totalRows, selectInfo} = getTblInfoById(tbl_id);
+    const {tableModel, tableMeta, totalRows, selectInfo, request} = getTblInfoById(tbl_id);
     const selectedRows = [...SelectInfo.newInstance(selectInfo).getSelected()];  // get selected row idx as an array
     if (columnNames.length === 0) {
         columnNames = getColumns(tableModel).map( (c) => c.name);       // return all columns
@@ -590,8 +590,7 @@ export function getSelectedData(tbl_id, columnNames=[]) {
                                 }, []));
         return Promise.resolve({tableMeta: meta, totalRows: data.length, tableData: {columns, data}});
     } else {
-        const {tblFilePath:filePath} = tableMeta;
-        return selectedValues({columnNames, filePath, selectedRows});
+        return selectedValues({columnNames, request, selectedRows});
     }
 }
 
@@ -715,7 +714,7 @@ export function processRequest(origTableModel, tableRequest, hlRowIdx) {
     var {data, columns} = nTable.tableData;
 
     if (filters || sortInfo) {      // need to track original rowId.
-        columns.push({name: 'ROWID', type: 'int', visibility: 'hidden'});
+        columns.push({name: 'ROW_IDX', type: 'int', visibility: 'hidden'});
         data.forEach((r, idx) => r.push(String(idx)));
     }
 
@@ -836,11 +835,7 @@ export function getAsyncTableSourceUrl(tbl_ui_id) {
 }
 
 function makeTableSourceUrl(columns, request) {
-    const def = {
-        startIdx: 0,
-        pageSize : MAX_ROW
-    };
-    const tableRequest = Object.assign(def, cloneDeep(request));
+    const tableRequest = Object.assign(cloneDeep(request), {startIdx: 0,pageSize : MAX_ROW});
     const visiCols = columns.filter( (col) => {
         return get(col, 'visibility', 'show') === 'show';
     }).map( (col) => {
@@ -935,7 +930,7 @@ export function calcColumnWidths(columns, dataAry) {
         }, width);  // max width of data
         pv[idx] = width;
         return pv;
-    }, {ROWID: 8});
+    }, {ROW_IDX: 8});
 }
 
 /**

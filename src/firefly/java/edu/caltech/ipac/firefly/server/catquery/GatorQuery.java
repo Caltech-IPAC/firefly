@@ -288,7 +288,7 @@ public class GatorQuery extends BaseGator {
     protected void setColumnTips(TableMeta meta, ServerRequest request) {
 
         CatalogRequest req = new CatalogRequest(CatalogRequest.RequestType.GATOR_DD);
-        req.setPageSize(1000);
+        req.setPageSize(Integer.MAX_VALUE);
         for (Param param : request.getParams()) {
             if (param.getName().equals(CatalogRequest.CATALOG)) req.setParam(param);
             if (param.getName().equals(CatalogRequest.DATABASE)) req.setParam(param);

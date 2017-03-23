@@ -55,11 +55,6 @@ public class Query2MassSIA extends QueryVOTABLE  {
     private static final String TM_URL = AppProperties.getProperty("2mass.url.catquery",
                                                       "https://irsa.ipac.caltech.edu/cgi-bin/2MASS/IM/nph-im_sia?FORMAT=image/fits");
     @Override
-    protected String getWspaceSaveDirectory() {
-        return "/" + WorkspaceManager.SEARCH_DIR + "/" + WspaceMeta.IMAGESET;
-    }
-
-    @Override
     protected String getFilePrefix(TableServerRequest request) {
         return "2mass-";
     }

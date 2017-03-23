@@ -101,7 +101,7 @@ function addPhaseToTable(tbl, timeName, tzero, period) {
     var tPF = {tableData: cloneDeep(tbl.tableData),
                tableMeta: cloneDeep(tbl.tableMeta),
                tbl_id, title};
-    tPF.tableMeta = omit(tPF.tableMeta, ['source', 'tblFilePath', 'sortInfo', 'isFullyLoaded']);
+    tPF.tableMeta = omit(tPF.tableMeta, ['source', 'datasetID', 'sortInfo', 'isFullyLoaded']);
 
     var phaseC = {desc: 'number of period elapsed since starting time.',
                   name: LC.PHASE_CNAME, type: 'double', width: 6 };
@@ -120,7 +120,7 @@ function addPhaseToTable(tbl, timeName, tzero, period) {
 
 
     // add reference to raw_table original row
-    var raw_rowid = get(tPF, 'tableData.columns', []).find((el) => el.name === 'ROWID');
+    var raw_rowid = get(tPF, 'tableData.columns', []).find((el) => el.name === 'ROW_IDX');
     if (raw_rowid) {
         raw_rowid.name = 'RAW_ROWID';
         raw_rowid.visibility = 'hidden';

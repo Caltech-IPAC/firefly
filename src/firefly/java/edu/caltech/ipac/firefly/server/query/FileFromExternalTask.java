@@ -40,6 +40,10 @@ public class FileFromExternalTask implements SearchProcessor<FileInfo> {
         return uid;
     }
 
+    public String getDatasetID(ServerRequest request) {
+        return getUniqueID(request);
+    }
+
     public FileInfo getData(ServerRequest request) throws DataAccessException {
         String launcher = request.getParam(ExternalTaskHandler.LAUNCHER);
         ExternalTaskLauncher taskLauncher = new ExternalTaskLauncher(launcher);
@@ -63,8 +67,9 @@ public class FileFromExternalTask implements SearchProcessor<FileInfo> {
         }
     }
 
-    public void writeData(OutputStream out, ServerRequest request) throws DataAccessException {
+    public FileInfo writeData(OutputStream out, ServerRequest request) throws DataAccessException {
         /* does not apply.. do nothing */
+        return null;
     }
 
     public boolean doCache() {

@@ -22,8 +22,10 @@ public class DataGroup implements Serializable,
 //----------------------- Private / Protected variables ----------------
 //======================================================================
 
-    //TODO: take this out!!!
-    public static final String ROWID_NAME = "ROWID";         // all row ids and indexes start from 0
+    /**
+     * ROW_IDX is the original row index of the dataset prior to sorting and filtering.  it starts from 0
+     */
+    public static final String ROWID_NAME = "ROW_IDX";
     private final ArrayList<DataObject> _objects = new ArrayList<DataObject>(200);
     private final ArrayList<DataType> _dataDefinitions = new ArrayList<DataType>(30);
     private String _title;
@@ -166,9 +168,14 @@ public class DataGroup implements Serializable,
     }
 
     public DataType getDataDefintion(String key) {
+        return getDataDefintion(key, false);
+    }
+
+    public DataType getDataDefintion(String key, boolean ignoreCase) {
         getDataDefinitions();
         for (DataType a : _cachedDataDefinitionsAry) {
-            if (a.getKeyName().equals(key)) {
+            if (a.getKeyName().equals(key) ||
+                    (ignoreCase && a.getKeyName().equalsIgnoreCase(key))) {
                 return a;
             }
         }

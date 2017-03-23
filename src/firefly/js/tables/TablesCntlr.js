@@ -18,6 +18,7 @@ import {selectedValues} from '../rpc/SearchServicesJson.js';
 import {BG_STATUS, BG_JOB_ADD} from '../core/background/BackgroundCntlr.js';
 import {isSuccess, isDone, getErrMsg} from '../core/background/BackgroundUtil.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
+import {ServerParams} from '../data/ServerParams.js';
 
 export const TABLE_SPACE_PATH = 'table_space';
 export const TABLE_RESULTS_PATH = 'table_space.results.tables';
@@ -470,7 +471,7 @@ function tableFilter(action) {
 
 
 /**
- * This function convert the selected rows into its associated ROWID, add it as a filter, then
+ * This function convert the selected rows into its associated ROW_IDX, add it as a filter, then
  * dispatch it to tableFilter for processing.
  * @param {Action} action
  * @returns {function}
@@ -483,22 +484,19 @@ function tableFilterSelrow(action) {
         const filterInfoCls = FilterInfo.parse(filters);
 
         if (tableModel.origTableModel) {
-            const selRowIds = selected.map((idx) => TblUtil.getCellValue(tableModel, idx, 'ROWID') || idx).toString();
-            filterInfoCls.addFilter('ROWID', `IN (${selRowIds})`);
+            const selRowIds = selected.map((idx) => TblUtil.getCellValue(tableModel, idx, 'ROW_IDX') || idx).toString();
+            filterInfoCls.addFilter('ROW_IDX', `IN (${selRowIds})`);
             request = Object.assign({}, request, {filters: filterInfoCls.serialize()});
             dispatchTableFilter(request, hlRowIdx);
         } else {
-            const filePath = get(tableModel, 'tableMeta.tblFilePath');
-            if (filePath) {
-                getRowIdFor(filePath, selected).then( (selectedRowIdAry) => {
-                    const value = selectedRowIdAry.reduce((rv, val, idx) => {
-                            return rv + (idx ? ',':'') + val;
-                        }, 'IN (') + ')';
-                    filterInfoCls.addFilter('ROWID', value);
-                    request = Object.assign({}, request, {filters: filterInfoCls.serialize()});
-                    dispatchTableFilter(request, hlRowIdx);
-                });
-            }
+            getRowIdFor(request, selected).then( (selectedRowIdAry) => {
+                const value = selectedRowIdAry.reduce((rv, val, idx) => {
+                        return rv + (idx ? ',':'') + val;
+                    }, 'IN (') + ')';
+                filterInfoCls.addFilter('ROW_IDX', value);
+                request = Object.assign({}, request, {filters: filterInfoCls.serialize()});
+                dispatchTableFilter(request, hlRowIdx);
+            });
         }
     };
 }
@@ -531,10 +529,10 @@ function reducer(state=initState(), action={}) {
 
 
 
-function getRowIdFor(filePath, selected) {
-    const params = {columnNames: ['ROWID'], filePath, selectedRows: selected};
+function getRowIdFor(request, selected) {
+    const params = {columnNames: ['ROW_IDX'], request, selectedRows: selected};
     return selectedValues(params).then((tableModel) => {
-        return TblUtil.getColumnValues(tableModel, 'ROWID');
+        return TblUtil.getColumnValues(tableModel, 'ROW_IDX');
     });
 }
 

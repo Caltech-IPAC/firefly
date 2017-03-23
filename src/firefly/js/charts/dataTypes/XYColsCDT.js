@@ -383,7 +383,7 @@ function fetchXYLargeTable(dispatch, chartId, chartDataElementId) {
 
     const activeTableModel = getTblById(tblId);
     const activeTableServerRequest = activeTableModel['request'];
-    const tblSource = get(activeTableModel, 'tableMeta.tblFilePath');
+    const tblSource = get(activeTableModel, 'tableMeta.datasetID');
 
     if (!xyPlotParams) { xyPlotParams = getDefaultXYPlotOptions(tblId); }
 
@@ -478,11 +478,11 @@ function fetchXYWithErrorsOrSort(dispatch, chartId, chartDataElementId) {
 
     const activeTableModel = getTblById(tblId);
     const activeTableServerRequest = activeTableModel['request'];
-    const tblSource = get(activeTableModel, 'tableMeta.tblFilePath');
+    const tblSource = get(activeTableModel, 'tableMeta.datasetID');
 
     if (!xyPlotParams) { xyPlotParams = getDefaultXYPlotOptions(tblId); }
 
-    const sreq = cloneRequest(activeTableServerRequest, {'startIdx' : 0, 'pageSize' : MAX_ROW});
+    const sreq = cloneRequest(activeTableServerRequest, {'pageSize' : MAX_ROW}); // this is not necessary since XYWithErrors should know what to do given a source request
     const req = makeTblRequest('XYWithErrors');
     req.searchRequest = JSON.stringify(sreq);
     req.xColOrExpr = get(xyPlotParams, 'x.columnOrExpr');
@@ -520,7 +520,7 @@ function fetchXYWithErrorsOrSort(dispatch, chartId, chartDataElementId) {
             if (tableModel.tableData.data.length>0) {
 
                 // create an array of column names that we recognize
-                const validCols = ['rowIdx', 'x', 'y', 'sortBy', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh'];
+                const validCols = ['rowIdx', 'x', 'y', 'sortBy', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh', 'ROW_IDX'];
                 const colNames = tableModel.tableData.columns.map((col) => {
                     const name = col.name;
                     if (validCols.includes(name)) {

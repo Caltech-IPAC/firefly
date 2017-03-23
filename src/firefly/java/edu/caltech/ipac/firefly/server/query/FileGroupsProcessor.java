@@ -95,9 +95,14 @@ abstract public class FileGroupsProcessor implements SearchProcessor<List<FileGr
         return request.getRequestId() + "-" + StringUtils.toString(request.getParams());
     }
 
-    public void writeData(OutputStream out, ServerRequest request) throws DataAccessException {
+    public String getDatasetID(ServerRequest request) {
+        return getUniqueID(request);
+    }
+
+    public FileInfo writeData(OutputStream out, ServerRequest request) throws DataAccessException {
         /* instead of returning the results as an object, write it into a file..
             may not make sense here.  do nothing for now. */
+        return null;
     }
 
     public boolean doCache() {

@@ -5,17 +5,25 @@ package edu.caltech.ipac.firefly.data;
 
 import edu.caltech.ipac.util.StringUtils;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class TableServerRequest extends ServerRequest implements Serializable, DataEntry, Cloneable {
 
+    public static final String TBL_FILE_PATH = "tblFilePath";       // this meta if exists contains source of the data
+    public static final String TBL_FILE_TYPE = "tblFileType";       // this meta if exists contains storage type, ipac, h2, sqlite, etc
+    public static final String DATASET_ID = "datasetID";        // this meta if exists contains the ID of the dataset returned.
+
     public static final String DECIMATE_INFO = "decimate";
-    public static final String TBL_FILE_PATH = "tblFilePath";
+    public static final String SQL_FROM = "sqlFrom";
+
     public static final String TBL_ID = "tbl_id";
     public static final String TITLE = "title";
     public static final String FILTERS = "filters";
@@ -25,8 +33,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     public static final String INCL_COLUMNS = "inclCols";
     public static final String FIXED_LENGTH = "fixedLength";
     public static final String META_INFO = "META_INFO";
-    public static final String SYS_PARAMS = "|" + StringUtils.toString(new String[]{FILTERS,SORT_INFO,PAGE_SIZE,START_IDX,INCL_COLUMNS,FIXED_LENGTH,META_INFO,TBL_ID,DECIMATE_INFO}, "|") + "|";
-
+    public static final List<String> SYS_PARAMS = Arrays.asList(new String[]{INCL_COLUMNS,FIXED_LENGTH,META_INFO,TBL_ID,DECIMATE_INFO,SQL_FROM});
     public static final String TBL_INDEX = "tbl_index";     // the table to show if it's a multi-table file.
 
     private int pageSize;
@@ -51,6 +58,9 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     }
 
     public String getMeta(String key) {
+        if (metaInfo == null) {
+
+        }
         return metaInfo == null ? null : metaInfo.get(key);
     }
 
@@ -75,7 +85,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
 
     @Override
     public boolean isInputParam(String paramName) {
-        return !SYS_PARAMS.contains("|" + paramName + "|");
+        return !SYS_PARAMS.contains(paramName);
     }
 
     public int getStartIndex() {
@@ -145,12 +155,23 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
         }
     }
 
+    /**
+     * use this when you want to get full data in its
+     * natural order.
+     */
+    public void keepBaseParamOnly() {
+        setFilters(null);
+        setPageSize(Integer.MAX_VALUE);
+        setSortInfo(null);
+        removeParam(INCL_COLUMNS);
+    }
+
     @Override
     public ServerRequest newInstance() {
         return new TableServerRequest();
     }
 
-    //====================================================================
+//====================================================================
 
 //====================================================================
 
@@ -230,6 +251,39 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
         return StringUtils.toString(l,";");
     }
 
+    /**
+     * returns only the parameters used for searching. This excludes all system parameter, including
+     * filtering, sorting, and paging.
+     * @return
+     */
+    @NotNull
+    public SortedSet<Param> getSearchParams() {
+        TreeSet<Param> params = new TreeSet<>();
+        for (Param p : getParams()) {
+            if (!SYS_PARAMS.contains(p.getName()) ||
+                    p.getName().equals(SORT_INFO)) {
+                params.add(p);
+            }
+        }
+        return params;
+    }
+
+    /**
+     * returns the parameters used to modified this dataset.  This includes filtering and sorting.
+     * @return
+     */
+    @NotNull
+    public SortedSet<Param> getDataSetParam() {
+        TreeSet<Param> params = new TreeSet<>();
+        if (filters != null && filters.size() > 0) {
+            params.add(new Param(FILTERS, toFilterStr(filters)));
+        }
+        if (getSortInfo() != null) {
+            params.add(new Param(SORT_INFO, getSortInfo().toString()));
+        }
+        return params;
+    }
+
 //====================================================================
 //
 //====================================================================
@@ -238,9 +292,6 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     protected boolean addPredefinedAttrib(Param param) {
         if (param == null || param.getName() == null || param.getValue() == null) return false;
 
-//        if (param.getName().equals(SORT_INFO)) {
-//            sortInfo = SortInfo.parse(param.getValue());
-//    }
         switch (param.getName()) {
             case PAGE_SIZE:
                 pageSize = StringUtils.getInt(param.getValue());

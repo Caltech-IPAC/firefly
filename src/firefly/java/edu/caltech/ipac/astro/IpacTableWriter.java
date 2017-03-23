@@ -73,7 +73,7 @@ public class IpacTableWriter {
         PrintWriter out = null;
         try {
             out = new PrintWriter(new BufferedWriter(new FileWriter(file)));
-            save(out, dataGroup);
+            save(out, dataGroup, false);
         } finally {
             if (out != null) out.close();
         }
@@ -88,15 +88,27 @@ public class IpacTableWriter {
      */
     public static void save(OutputStream stream, DataGroup dataGroup)
             throws IOException {
-        save(new PrintWriter(stream), dataGroup);
+        save(new PrintWriter(stream), dataGroup, false);
     }
 
-    private static void save(PrintWriter out, DataGroup dataGroup)
-        throws IOException {
+    /**
+     * save the catalogs to a stream, stream is not closed
+     *
+     * @param stream the output stream to write to
+     * @param dataGroup data group
+     * @param ignoreSysMeta ignore meta use by system.
+     * @throws IOException on error
+     */
+    public static void save(OutputStream stream, DataGroup dataGroup, boolean ignoreSysMeta)
+            throws IOException {
+        save(new PrintWriter(stream), dataGroup, ignoreSysMeta);
+    }
+
+    private static void save(PrintWriter out, DataGroup dataGroup, boolean ignoreSysMeta) throws IOException {
         List<DataType> headers = Arrays.asList(dataGroup.getDataDefinitions());
         int totalRow = dataGroup.size();
 
-        IpacTableUtil.writeAttributes(out, dataGroup.getKeywords());
+        IpacTableUtil.writeAttributes(out, dataGroup.getKeywords(), ignoreSysMeta);
         IpacTableUtil.writeHeader(out, headers);
 
         for (int i = 0; i < totalRow; i++) {

@@ -12,7 +12,6 @@ import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.WorkspaceManager;
 import edu.caltech.ipac.firefly.server.cache.PrivateCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -41,14 +40,10 @@ import java.util.*;
  * @author loi
  * @version $Id: IpacTablePartProcessor.java,v 1.33 2012/10/23 18:37:22 loi Exp $
  */
-abstract public class IpacTablePartProcessor implements SearchProcessor<DataGroupPart> {
+abstract public class IpacTablePartProcessor implements SearchProcessor<DataGroupPart>, CanGetDataFile {
 
-    public static final Logger.LoggerImpl SEARCH_LOGGER = Logger.getLogger(Logger.SEARCH_LOGGER);
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     //public static long logCounter = 0;
-    public static final String SYS_PARAMS = TableServerRequest.SYS_PARAMS;
-    public static final List<String> PAGE_PARAMS = Arrays.asList(TableServerRequest.PAGE_SIZE, TableServerRequest.START_IDX);
-
 
     private static final Map<StringKey, Object> _activeRequests =
                 Collections.synchronizedMap(new HashMap<>());
@@ -73,7 +68,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
      * @throws IOException
      * @throws DataAccessException
      */
-    protected static File convertToIpacTable(File tblFile, TableServerRequest request) throws IOException, DataAccessException {
+    public static File convertToIpacTable(File tblFile, TableServerRequest request) throws IOException, DataAccessException {
 
         DataGroupReader.Format format = DataGroupReader.guessFormat(tblFile);
         int tblIdx = request.getIntParam(TableServerRequest.TBL_INDEX, 0);
@@ -142,19 +137,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     public ServerRequest inspectRequest(ServerRequest request) {
-        TableServerRequest req = (TableServerRequest) request;
-        String doPadding = req.getMeta("padResults");
-        if (Boolean.parseBoolean(doPadding)) {
-            // if we need to pad the results, change the request.
-            req = (TableServerRequest) req.cloneRequest();
-            int start = Math.max(req.getStartIndex() - 50, 0);
-            req.setStartIndex(start);
-            req.setPageSize(req.getPageSize() + 100);
-            ((TableServerRequest)request).setStartIndex(start);   // the original request needs to be modify as well.
-            return req;
-        } else {
-            return request;
-        }
+        return SearchProcessor.inspectRequestDef(request);
     }
 
     /**
@@ -252,21 +235,8 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
     }
 
-    /**
-     * return the unique ID for the original data set of this request.  This means parameters related
-     * to paging, filtering, sorting, decimating, etc or ignored.
-     * @param request
-     * @return
-     */
     public String getUniqueID(ServerRequest request) {
-        // parameters to get original data (before filter, sort, etc.)
-        List<Param> srvParams = new ArrayList<>();
-        for (Param p : request.getParams()) {
-             if (!SYS_PARAMS.contains("|" + p.getName() + "|")) {
-                 srvParams.add(p);
-             }
-        }
-        return createUniqueId(request.getRequestId(), srvParams);
+        return SearchProcessor.getUniqueIDDef((TableServerRequest) request);
     }
 
     /**
@@ -276,34 +246,13 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
      * @return
      */
     public String getDataKey(ServerRequest request) {
-
-        List<Param> srvParams = new ArrayList<>();
-        for (Param p : request.getParams()) {
-            if (!PAGE_PARAMS.contains(p.getName())) {
-                srvParams.add(p);
-            }
-        }
-        return createUniqueId(request.getRequestId(), srvParams);
+        TableServerRequest treq = (TableServerRequest) request;
+        SortedSet<Param> params = treq.getDataSetParam();
+        return getUniqueID(treq) + StringUtils.toString(params, "|");
     }
 
-    private String createUniqueId(String reqId, List<Param> params) {
-        String uid = reqId + "-";
-        if ( isSecurityAware() &&
-                ServerContext.getRequestOwner().isAuthUser() ) {
-            uid = uid + ServerContext.getRequestOwner().getUserKey();
-        }
-
-        // sort by parameter name
-        Collections.sort(params, (p1, p2) -> p1.getName().compareTo(p2.getName()));
-
-        for (Param p : params) {
-            uid += "|" + p.toString();
-        }
-
-        return uid;
-    }
-
-    public void writeData(OutputStream out, ServerRequest sr) throws DataAccessException {
+    public FileInfo writeData(OutputStream out, ServerRequest sr) throws DataAccessException {
+        LOGGER.warn("<< slow writeData called." + this.getClass().getSimpleName());
         try {
             TableServerRequest request = (TableServerRequest) sr;
 
@@ -331,6 +280,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                     s = reader.readLine();
                 }
                 writer.flush();
+                return new FileInfo(inf);
             } else {
                 throw new DataAccessException("Data not accessible.  Check server log for errors.");
             }
@@ -340,6 +290,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     public File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
+        LOGGER.warn("<< slow getDataFile called." + this.getClass().getSimpleName());
 
         Cache cache = CacheManager.getCache(Cache.TYPE_TEMP_FILE);
 
@@ -436,15 +387,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {
-
-        if (defaults != null && request instanceof TableServerRequest) {
-            TableServerRequest tsreq = (TableServerRequest) request;
-            if (tsreq.getMeta() != null && tsreq.getMeta().size() > 0) {
-                for (String key : tsreq.getMeta().keySet()) {
-                    defaults.setAttribute(key, tsreq.getMeta(key));
-                }
-            }
-        }
+        SearchProcessor.prepareTableMetaDef(defaults, columns, request);
     }
 
     public void prepareAttributes(int rows, BufferedWriter writer, ServerRequest sr) throws IOException {
@@ -455,12 +398,13 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     protected void doSort(File inFile, File outFile, SortInfo sortInfo, TableServerRequest request) throws IOException {
+        LOGGER.warn("<< very slow doSort called." + this.getClass().getSimpleName());
         // do sorting...
         StopWatch timer = StopWatch.getInstance();
         timer.start("read");
         int pageSize = request.getPageSize();
         DataGroup dg = DataGroupReader.read(inFile, true, false, true);
-        // if this file does not contain ROWID, add it.
+        // if this file does not contain ROW_IDX, add it.
         if (!dg.containsKey(DataGroup.ROWID_NAME)) {
             dg.addDataDefinition(DataGroup.makeRowId());
             dg.addAttribute("col." + DataGroup.ROWID_NAME + ".Visibility", "hidden");
@@ -556,7 +500,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                     }
                 }
 
-                logStats(request.getRequestId(), rowCount, fileSize, isFromCache, getDescResolver().getDesc(request));
+                SearchProcessor.logStats(request.getRequestId(), rowCount, fileSize, isFromCache, getDescResolver().getDesc(request));
             }
         }
 
@@ -570,6 +514,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     protected void doFilter(File outFile, File source, CollectionUtil.Filter<DataObject>[] filters, TableServerRequest request) throws IOException {
+        LOGGER.warn("<< very slow doFilter called." + this.getClass().getSimpleName());
         StopWatch timer = StopWatch.getInstance();
         timer.start("filter");
         DataGroupWriter.write(new FilterHanlder(outFile, source, filters, request));
@@ -595,21 +540,6 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             file = File.createTempFile(getFilePrefix(request), fileExt, ServerContext.getTempWorkDir());
         }
         return file;
-    }
-
-    /**
-     * this is where your results should be saved.  It's default to WspaceMeta.IMAGESET.
-     * @return path to the workspace directory
-     */
-    protected String getWspaceSaveDirectory() {
-        return "/" + WorkspaceManager.SEARCH_DIR + "/" + WspaceMeta.IMAGESET;
-
-    }
-
-    private void logStats(String searchType, int rows, long fileSize, boolean fromCached, Object... params) {
-        String isCached = fromCached ? "cache" : "db";
-        SEARCH_LOGGER.stats(searchType, "rows", rows, "fsize(MB)", (double) fileSize / StringUtils.MEG,
-                "from", isCached, "params", CollectionUtil.toString(params, ","));
     }
 
 }

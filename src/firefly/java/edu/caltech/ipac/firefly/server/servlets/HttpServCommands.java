@@ -35,10 +35,8 @@ public class HttpServCommands {
             fileName = StringUtils.isEmpty(fileName) ? request.getRequestId() : fileName;
             res.setHeader("Content-Disposition", "attachment; filename=" + fileName + (fileName.endsWith(".tbl")?"":".tbl"));
             SearchManager am = new SearchManager();
-            try {
-                am.save(res.getOutputStream(), request);
-            } finally {
-                FileInfo fi = am.getFileInfo(request);
+            FileInfo fi = am.save(res.getOutputStream(), request);
+            if (fi != null) {
                 long length = 0;
                 if (fi != null) {
                     length = fi.getSizeInBytes();

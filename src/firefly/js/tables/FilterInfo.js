@@ -132,7 +132,7 @@ export class FilterInfo {
      */
     static isValid(filterInfo, columns = []) {
         const rval = [true, ''];
-        const allowCols = columns.concat({name:'ROWID'});
+        const allowCols = columns.concat({name:'ROW_IDX'});
         if (filterInfo && filterInfo.trim().length > 0) {
             return filterInfo.split(';').reduce( ([isValid, msg], v) => {
                 const [, cname] = v.trim().match(filter_regex) || [];
@@ -174,7 +174,7 @@ export class FilterInfo {
         op = op.toLowerCase();
         val = val.toLowerCase();
         const cidx = getColumnIdx(tableModel, cname);
-        const noROWID = cname === 'ROWID' && cidx < 0;
+        const noROWID = cname === 'ROW_IDX' && cidx < 0;
         const colType = noROWID ? 'int' : get(getColumn(tableModel, cname), 'type', 'char');
         val = op === 'in' ? val.replace(/[()]/g, '').split(',').map((s) => s.trim()) : val;
 
@@ -227,6 +227,7 @@ export class FilterInfo {
     /**
      * add additional conditions to the given column.
      * @param colName
+     * @param conditions
      */
     addFilter(colName, conditions) {
         this[colName] = !this[colName] ? conditions : `${this[colName]}; ${conditions}`;

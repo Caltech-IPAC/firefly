@@ -68,7 +68,7 @@ export function keepHighlightedRowSynced(tbl_id, highlightedRow=0) {
         const tableModel = getTblById(tbl_id);
         if (tbl_id === LC.RAW_TABLE) {
             actOn = LC.PHASE_FOLDED;
-            rowid = getCellValue(tableModel, highlightedRow, 'ROWID') || highlightedRow;
+            rowid = getCellValue(tableModel, highlightedRow, 'ROW_IDX') || highlightedRow;
             filterInfo = `RAW_ROWID = ${rowid}`;
         } else {
             rowid = getCellValue(tableModel, highlightedRow, 'RAW_ROWID') || highlightedRow;

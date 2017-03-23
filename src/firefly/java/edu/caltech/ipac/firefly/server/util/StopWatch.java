@@ -48,8 +48,8 @@ public class StopWatch {
         return stopWatch.get();
     }
 
-    public void start(String desc) {
-        if (!DEBUG_MODE) return;        // if not running in debug mode, ignore StopWatch logging
+    public StopWatch start(String desc) {
+        if (!DEBUG_MODE) return this;        // if not running in debug mode, ignore StopWatch logging
 
         Tracker l = getTracker(desc);
         if (l == null) {
@@ -57,26 +57,29 @@ public class StopWatch {
             logs.put(desc, l);
         }
         l.starts();
+        return this;
     }
 
-    public void stop(String desc) {
+    public StopWatch stop(String desc) {
         Tracker l = getTracker(desc);
         if (l != null) {
             l.stops();
         }
+        return this;
     }
 
-    public void printLog(String desc) {
-        printLog(desc, Unit.SECONDS);
+    public StopWatch printLog(String desc) {
+        return printLog(desc, Unit.SECONDS);
     }
 
-    public void printLog(String desc, Unit unit) {
+    public StopWatch printLog(String desc, Unit unit) {
 
-        if (!DEBUG_MODE) return;        // if not running in debug mode, ignore StopWatch logging
+        if (!DEBUG_MODE) return this;        // if not running in debug mode, ignore StopWatch logging
 
         if (getTracker(desc) != null) {
             getTracker(desc).printLog(unit);
         }
+        return this;
     }
 
     public Tracker getTracker(String desc) {

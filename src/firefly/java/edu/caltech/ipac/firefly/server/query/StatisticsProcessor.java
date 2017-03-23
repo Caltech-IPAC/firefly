@@ -6,6 +6,8 @@ import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.util.DataGroup;
@@ -243,33 +245,14 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
         if (searchRequestJson == null) {
             throw new DataAccessException("Unable to get statistics: " + SEARCH_REQUEST + " is missing");
         }
-        JSONObject searchRequestJSON = (JSONObject) JSONValue.parse(request.getParam(SEARCH_REQUEST));
-        String searchId = (String) searchRequestJSON.get(ServerParams.ID);
-        if (searchId == null) {
+        TableServerRequest sReq = QueryUtil.convertToServerRequest(searchRequestJson);
+
+        if (sReq.getRequestId() == null) {
             throw new DataAccessException("Unable to get statistics: " + SEARCH_REQUEST + " must contain " + ServerParams.ID);
         }
-        TableServerRequest sReq = new TableServerRequest(searchId);
-
-        String value;
-        for (Object param : searchRequestJSON.keySet()) {
-            String name = (String) param;
-            if (!name.equalsIgnoreCase(ServerParams.ID)) {
-                value = searchRequestJSON.get(param).toString();
-                sReq.setTrueParam(name, value);
-            }
-        }
-
-        FileInfo fi = new SearchManager().getFileInfo(sReq);
-        if (fi == null) {
-            throw new DataAccessException("Unable to get file location info");
-        }
-        if (fi.getInternalFilename() == null) {
-            throw new DataAccessException("File not available");
-        }
-        if (!fi.hasAccess()) {
-            throw new SecurityException("Access is not permitted.");
-        }
-        DataGroup sourceDataGroup = DataGroupReader.readAnyFormat(new File(fi.getInternalFilename()));
+        sReq.setPageSize(Integer.MAX_VALUE);
+        sReq.setStartIndex(0);
+        DataGroup sourceDataGroup = new SearchManager().getDataGroup(sReq).getData();
         DataGroup statisticsDataGroup = createTableStatistic(sourceDataGroup);
         statisticsDataGroup.addAttribute("searchRequest", sReq.toString());
         File statisticsFile = createFile(request);
