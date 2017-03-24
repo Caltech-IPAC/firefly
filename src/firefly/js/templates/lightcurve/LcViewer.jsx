@@ -13,6 +13,7 @@ import {lcManager, LC} from './LcManager.js';
 import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
 import {LcResult} from './LcResult.jsx';
 import {LcPeriod} from './LcPeriod.jsx';
+import {LcPeriodPlotly} from './LcPeriodPlotly.jsx';
 import {Menu} from '../../ui/Menu.jsx';
 import {Banner} from '../../ui/Banner.jsx';
 import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
@@ -27,6 +28,7 @@ import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {HelpIcon} from './../../ui/HelpIcon.jsx';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 
 const vFileKey = LC.FG_FILE_FINDER;
@@ -92,6 +94,9 @@ export class LcViewer extends Component {
 
         dropdownPanels.push(<UploadPanel {...{missionOptions}}/>);
 
+        const appOps= getAppOptions();
+        const LcPeriodInstance=  get(getAppOptions(), 'charts.chartEngine')==='plotly' ? LcPeriodPlotly : LcPeriod;
+
         var mainView = (err,converterId) => {
             if (!isEmpty(error) && converterId) {
                 return (
@@ -107,7 +112,7 @@ export class LcViewer extends Component {
             } else {
                 if (displayMode && displayMode.startsWith('period')) {
                     return (
-                        <LcPeriod {...periodProps}/>
+                        <LcPeriodInstance {...periodProps}/>
                     );
                 } else {
                     return (
