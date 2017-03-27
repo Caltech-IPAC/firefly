@@ -5,8 +5,46 @@ package edu.caltech.ipac.visualize.plot;
 
 public class Rotate
 {
-
-public static boolean debug = false;
+    /**
+     * DM-8845
+     * While working on this ticket, the algorithm is added for later references
+     *
+     * Basic rotation
+     * A basic rotation (also called elemental rotation) is a rotation about one of the axes of a
+     * Coordinate system. The following three basic rotation matrices rotate vectors by an angle θ
+     * about the x, y, or z axis, in three dimensions, using the right-hand rule—which codifies their
+     * alternating signs. (The same matrices can also represent a clockwise rotation of the axes.[nb 1])
+     *
+     * Rx(angle) = {
+     *
+     *     1            0            0
+     *     0       cos(angle)     - sin(angle)
+     *     0       sin(angle)       cos(angle)
+     *
+     *     }
+     *
+     * Ry(angle) = {
+     *
+     *      cos(angle)    0         - sin(angle)
+     *      0             1         0
+     *     -sin(angle)    0         cos(angle)
+     *
+     *   }
+     *
+     *  Rz(angle)  =  {
+     *      cos(angle)     - sin(angle)     0
+     *      sin(angle)     cos(angle)       0
+     *      0              0                 1
+     *  }
+     *
+     *  For column vectors, each of these basic vector rotations appears counter-clockwise when the axis about which
+     *  they occur points toward the observer, the coordinate system is right-handed, and the angle θ is positive.
+     *  Rz, for instance, would rotate toward the y-axis a vector aligned with the x-axis, as can easily be checked
+     *  by operating with Rz on the vector (1,0,0).
+     *
+     *
+     */
+    public static boolean debug = false;
 
 static final double dtr = Math.PI / 180;
 static final double rtd = 180 / Math.PI;
@@ -54,6 +92,20 @@ public static void main(String[] args)
 	"  lat = " + final_unrotated_point.getLat());
 }
 
+/**
+ * This is compute the z rotation
+ * Rz(angle)  =  {
+ *      cos(angle)     - sin(angle)     0
+ *      sin(angle)     cos(angle)       0
+ *      0              0                 1
+ *  }
+ *
+ *  zVector = {
+ *            0
+ *            0
+ *            1
+ *            }
+ */
 public void compute_rotation_angles(WorldPt point)
 {
     double lon = point.getLon();
