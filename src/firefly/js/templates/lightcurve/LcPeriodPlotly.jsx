@@ -372,8 +372,8 @@ class PhaseFoldingChart extends Component {
                     gridLineWidth: 1,
                     type: 'linear',
                     lineColor: '#e9e9e9',
-                    tickwidth: 1,
-                    ticklen: 5,
+                    // tickwidth: 1,
+                    // ticklen: 1,
                     autorange: 'reversed',
                     titlefont: {
                         size: 12,
