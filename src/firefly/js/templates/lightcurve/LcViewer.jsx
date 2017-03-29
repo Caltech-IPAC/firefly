@@ -94,7 +94,6 @@ export class LcViewer extends Component {
 
         dropdownPanels.push(<UploadPanel {...{missionOptions}}/>);
 
-        const appOps= getAppOptions();
         const LcPeriodInstance=  get(getAppOptions(), 'charts.chartEngine')==='plotly' ? LcPeriodPlotly : LcPeriod;
 
         var mainView = (err,converterId) => {

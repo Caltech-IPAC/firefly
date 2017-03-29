@@ -14,7 +14,9 @@ import * as ChartsCntlr from '../ChartsCntlr.js';
 
 import {HistogramOptions} from '../ui/HistogramOptions.jsx';
 import {Histogram} from '../ui/Histogram.jsx';
+import {HistogramPlotly} from '../ui/HistogramPlotly.jsx';
 import {getChartProperties, updateOnStoreChange, FilterEditorWrapper} from './TblView.jsx';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import SETTINGS from 'html/images/icons-2014/24x24_GearsNEW.png';
@@ -38,7 +40,9 @@ function Chart(props) {
     if (!TblUtil.isFullyLoaded(tblId) || !chartData || !heightPx || !widthPx) {
         return (<div/>);
     }
-    const { isDataReady, data:histogramData, options:histogramParams} = ChartsCntlr.getChartDataElement(chartId);
+    var { isDataReady, data:histogramData, options:histogramParams} = ChartsCntlr.getChartDataElement(chartId);
+    const HistogramInstance = get(getAppOptions(), 'charts.chartEngine') !== 'plotly' ? Histogram : HistogramPlotly;
+    const unit = get(TblUtil.getColumn(TblUtil.getTblById(tblId), histogramParams.columnOrExpr), 'units');
 
     if (isDataReady) {
         var logs;
@@ -58,14 +62,15 @@ function Chart(props) {
         }
 
         return (
-            <Histogram data={histogramData}
-                       desc={histogramParams.columnOrExpr}
-                       binColor='#8c8c8c'
-                       height={heightPx}
-                       width={widthPx}
-                       logs={logs}
-                       xAxis={xAxis}
-                       yAxis={yAxis}
+            <HistogramInstance data={histogramData}
+                               desc={histogramParams.columnOrExpr}
+                               binColor='#8c8c8c'
+                               height={heightPx}
+                               width={widthPx}
+                               logs={logs}
+                               xAxis={xAxis}
+                               yAxis={yAxis}
+                               xUnit={unit}
             />
         );
     } else {

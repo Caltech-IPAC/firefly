@@ -27,9 +27,7 @@ import {ReadOnlyText, getTypeData} from './LcUtil.jsx';
 import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
 import {isDialogVisible, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {updateSet} from '../../util/WebUtil.js';
-import ReactHighcharts from 'react-highcharts';
 import {PlotlyWrapper} from '../../charts/ui/PlotlyWrapper.jsx';
-import Plotly from '../../charts/PlotlyConfig.js';
 import Resizable from 'react-component-resizable';
 import './LCPanels.css';
 
@@ -62,7 +60,6 @@ const fKeyDef = {
 };
 
 const STEP = 1;            // step for slider
-const Margin = 0.2;        // phase margin reserved at two ends of the phase charts x axis
 const DEC_PHASE = 3;       // decimal digit
 
 // defValues used to keep the initial values for parameters in phase finding field group
@@ -287,9 +284,6 @@ class PhaseFoldingChart extends Component {
         super(props);
 
         var fields = FieldGroupUtils.getGroupFields(pfinderkey);
-        var {showTooltip=true} = props;
-        var {data, minPhase = 0.0, period, flux} = getPhaseFlux(fields);
-
         const normal = (size) => {
             if (size && this.iAmMounted) {
                 var widthPx = size.width;
@@ -318,7 +312,7 @@ class PhaseFoldingChart extends Component {
     }
 
     regenData(fields) {
-        var {data, minPhase = 0.0, period, flux} = getPhaseFlux(fields);
+        var {data, period, flux} = getPhaseFlux(fields);
         this.lastData= data;
         this.lastFluxCol= flux;
         return {
@@ -344,11 +338,11 @@ class PhaseFoldingChart extends Component {
                     symbol: 'circle',
                     size: 6,
                     //color: 'blue',
-                    color: 'rgba(63, 127, 191, 0.5)',
+                    color: 'rgba(63, 127, 191, 0.5)'
                 },
                 x: data.map((d) => d[0]),
                 y: data.map((d) => d[1]),
-                hoverinfo: 'text',
+                hoverinfo: 'text'
             }],
             plotlyLayout: {
                 hovermode: 'closest',
@@ -360,11 +354,12 @@ class PhaseFoldingChart extends Component {
                     gridLineWidth: 1,
                     type: 'linear',
                     lineColor: '#e9e9e9',
+                    zeroline: false,
                     titlefont: {
-                          size: 12,
+                          size: 12
                         },
                     tickfont: {
-                        size: 12,
+                        size: 12
                     }
                 },
                 yaxis: {
@@ -376,10 +371,7 @@ class PhaseFoldingChart extends Component {
                     // ticklen: 1,
                     autorange: 'reversed',
                     titlefont: {
-                        size: 12,
-                    },
-                    tickfont: {
-                        size: 12,
+                        size: 12
                     }
                 },
                 margin: {
@@ -388,7 +380,7 @@ class PhaseFoldingChart extends Component {
                     b: 50,
                     t: 50,
                     pad: 2
-                  },
+                  }
             }
         };
     }
@@ -418,29 +410,21 @@ class PhaseFoldingChart extends Component {
         };
 
         this.iAmMounted = true;
-        var  {chart} = this;
-
-
         this.unbinder= FieldGroupUtils.bindToStore(pfinderkey, (fields) => {
             if (this && this.iAmMounted && isPhaseChanged(fields, this.state.fields)) {
                 this.setState({fields});
-
-                var {data, minPhase = 0.0, period, flux} = getPhaseFlux(fields);
-
                 // chart.setTitle({text: period ? `period=${period}(day)`:'period='});
                 // chart.series[0].setData(data);
                 // chart.xAxis[0].update({min: minPhase - Margin,
                 //     max: minPhase + 2.0 + Margin});
                 // chart.yAxis[0].setTitle({text: `${flux}(mag)`});
-                this.lastData= data;
-                this.lastFluxCol= flux;
                 this.chartingInfo= this.regenData(fields);
             }
         });
     }
 
     afterRedraw(chart, pl) {
-        const {lastData}= this;
+        const {lastData}= this;  // data can also be access from chart.data ??
         chart.on('plotly_hover', (eventData) => {
             const pointNumber= eventData.points[0].pointNumber;
             const str= '<span>' +
@@ -449,26 +433,15 @@ class PhaseFoldingChart extends Component {
             '</span>';
 
             this.setState( {
-                dataUpdate: { text : str, }
+                dataUpdate: { text : str }
             } );
-
-            // pl.restyle(chart, {
-            //     text : str,
-            // });
-
         });
 
     }
 
 
     render() {
-        const {widthPx, heightPx, fields, dataUpdate} = this.state;
-
-        if (this.refs.chart) {
-            var  chart = this.refs.chart.getChart();
-
-            chart.setSize(widthPx, heightPx);
-        }
+        const {dataUpdate} = this.state;
         const {plotlyData, plotlyDivStyle, plotlyLayout}= this.chartingInfo;
 
         return (
