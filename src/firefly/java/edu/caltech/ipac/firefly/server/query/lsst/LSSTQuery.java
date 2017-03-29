@@ -47,8 +47,8 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
     private static final String HOST = AppProperties.getProperty("lsst.dd.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
     //TODO how to handle the database name??
     protected static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "");
-    //set default timeout to 120 seconds
-    private int timeout  = Integer.parseInt(AppProperties.getProperty("lsst.database.timeoutLimit", "120"));
+    //set default timeout to 180 seconds
+    private int timeout  = Integer.parseInt(AppProperties.getProperty("lsst.database.timeoutLimit", "180"));
 
     abstract String buildSqlQueryString(TableServerRequest request) throws Exception;
 

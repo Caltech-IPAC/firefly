@@ -31,12 +31,12 @@ import java.util.concurrent.*;
  *  elliptical. Since there is no angle column, the angle will be 0.
  * 4. If the input table contains ra, dec, major, ratio, angle, the search type is elliptical and the angle will be used.
  * NOTE:
- * The unit for ra, dec and angle is in degress and the major is in arcsec, major means semi-major
+ * The unit for ra, dec and angle is in degree and the major is in arcsec, major means semi-major
  */
 
 @SearchProcessorImpl(id = "LSSTMultiObjectSearch")
 public class LSSTMultiObjectSearch extends LSSTCataLogSearch{
-    private int timeout  = Integer.parseInt(AppProperties.getProperty("lsst.database.timeoutLimit", "120"));
+    private int timeout  = Integer.parseInt(AppProperties.getProperty("lsst.database.timeoutLimit", "180"));
 
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
@@ -237,14 +237,15 @@ public class LSSTMultiObjectSearch extends LSSTCataLogSearch{
                 dataObject.setDataElement(joinedDataTypes[0], new Double(distance));
 
                 //add the data columns from the input table
-                for (int ii=0; ii<inDg.size(); ii++){
-                    dataObject.setDataElement(joinedDataTypes[ii+1], inDg.get(ii).getDataElement(inTypes[ii]));
+                for (int ii=0; ii<inTypes.length; ii++){
+                    dataObject.setDataElement(joinedDataTypes[ii+1], inDg.get(i).getDataElement(inTypes[ii]));
                 }
                 //add the data from the searching result table
                 for (int k=0; k<row.size(); k++) {
                     dataObject.setDataElement(joinedDataTypes[k+index], row.getDataElement(joinedDataTypes[k]) );
                 }
                 joinedResult.add(dataObject);
+
             }
         }
         joinedResult.shrinkToFitData();
