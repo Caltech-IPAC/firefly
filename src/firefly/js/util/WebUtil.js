@@ -26,6 +26,29 @@ export function getModuleName() {
     return (typeof __MODULE_NAME__ === 'undefined') ? undefined : __MODULE_NAME__;
 }
 
+
+/**
+ * load a js script by dynamicly adding a script tag.
+ * @param scriptName
+ * @return {Promise} when the script is loaded or failed to load
+ */
+export function loadScript(scriptName) {
+    const loadPromise= new Promise(
+        function(resolve, reject) {
+            const head= document.getElementsByTagName('head')[0];
+            const script= document.createElement('script');
+            script.type= 'text/javascript';
+            script.src= scriptName;
+            head.appendChild(script);
+            script.onload= (ev) => resolve(ev);
+            script.onerror= (ev) => reject(ev);
+        });
+    return loadPromise;
+}
+
+
+
+
 /**
  * Returns a string where all characters that are not valid for a complete URL have been escaped.
  * Also, it will do URL rewriting for session tracking if necessary.
