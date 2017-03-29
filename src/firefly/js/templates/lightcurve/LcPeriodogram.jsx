@@ -32,7 +32,7 @@ import {updateSet} from '../../util/WebUtil.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 
 const algorOptions = [
-    {label: 'Lomb‑Scargle ', value: 'ls', proj: 'LCViewer'}
+    {label: 'Lomb-Scargle ', value: 'ls', proj: 'LCViewer'}
     //{label: 'Box-fitting Least Squares', value: 'bls', proj: 'LCViewer'},
     //{label: 'Plavchan 2008', value: 'plav', proj: 'LCViewer'}
 ];
