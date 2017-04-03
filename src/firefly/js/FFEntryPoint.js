@@ -70,5 +70,7 @@ if (app.template) {
     viewer = Templates[props.template];
 }
 
-firefly.bootstrap(app.options, viewer, props);
+const options= get(window, 'firefly.app.options') || get(window, 'firefly.options');
+
+firefly.bootstrap(options, viewer, props);
 

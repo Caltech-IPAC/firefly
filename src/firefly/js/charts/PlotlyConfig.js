@@ -8,6 +8,7 @@
 // NOTE - Remember to uncomment both the import and the register
 
 import {loadScript} from '../util/WebUtil.js';
+import {getRootURL} from '../util/BrowserUtil.js';
 /*
 import Plotly from 'plotly.js/lib/core';
 import bar from 'plotly.js/lib/bar';
@@ -86,9 +87,10 @@ function initPlotLyRetriever(loadNow) {
             return loadedPlotly ? Promise.resolve(loadedPlotly) : Promise.reject(Error(LOAD_ERR_MSG));
         }
 
+        const script= `${getRootURL()}/${PLOTLY_SCRIPT}`;
         if (!plotlyLoadBegin) {
             plotlyLoadBegin= true;
-            loadScript(PLOTLY_SCRIPT).then( () => {
+            loadScript(script).then( () => {
                 loadedPlotly= window.Plotly;
                 waitingResolvers.forEach( (r) => r(loadedPlotly));
                 waitingResolvers= undefined;
