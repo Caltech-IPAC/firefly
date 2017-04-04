@@ -9,6 +9,11 @@ import org.junit.Test;
 
 /**
  * Created by zhang on 3/24/17.
+ * This file contains the algorithm and matrix calculations.  They are kept for reference only.
+ * The  testDo_rotate() and  testUnDo_rotate() are disabled since they are not needed.  But
+ * in case the Rotate.java is modified, they can be used to as a  cross check since the matrix
+ * calculation was directly written based on the algorithm. 
+ *
  */
 public class RotateTest extends ConfigTest{
     static final double degToArc = Math.PI / 180;
@@ -68,7 +73,6 @@ public class RotateTest extends ConfigTest{
      *
      *
      */
-
     private double[][] getRotationMatrix(double angleInArc, String coordinate){
 
         double[][] matrix = new double[3][3];
@@ -143,22 +147,26 @@ public class RotateTest extends ConfigTest{
     }
 
 
-    @Test
+    /**
+     * This is to test the rotation's Unit vector
+     * This method is using the algorithm to calcualte the rotation.
+     */
     public void testDo_rotate(){
 
         double lon = point.getLon();
         double lat = point.getLat();
+        //define the angles in the same way as the Rotate.java class
         double zRotationAngle = (180.0 - lon) * degToArc;
         double yRotationAngle = - lat * degToArc;
         testRotation(point, yRotationAngle,zRotationAngle,"counterClockWise");
 
     }
 
-    @Test
     public void testDo_unRotate(){
 
         double lon = point.getLon();
         double lat = point.getLat();
+        //define the angles in the same way as the Rotate.java class
         double zUnRotationAngle =-(180.0 - lon) * degToArc;
         double yUnrotationAngle = lat * degToArc;
 
@@ -224,5 +232,44 @@ public class RotateTest extends ConfigTest{
 
         Assert.assertEquals(expectedWordPt.getLon(), calcualtedWorldPt.getLon(),delta);
         Assert.assertEquals(expectedWordPt.getLat(), calcualtedWorldPt.getLat(),delta);
+
+
     }
+
+    /**
+     * From looking at the Rotate algorithm, for any given WorldPt (lon, lat), it rotates
+     * (180-lon) and the -lat.
+     *
+     * Thus, after rotation, the final point is (-1, 0, 0).  The expected value is
+     *  dec = Math.asin(xp[2]);
+     *  ra = Math.atan2(xp[1], xp[0]);
+     *
+     */
+    @Test
+    public void testRotate(){
+
+         //after rotation
+         double[] rotatedPoint = {-1, 0, 0};
+         double dec = Math.asin(rotatedPoint[2]);
+         double ra = Math.atan2(rotatedPoint[1], rotatedPoint[0]);
+         WorldPt expectedWordPt = new WorldPt(ra / degToArc,  dec /degToArc);
+
+
+        //compute the matrix
+        rotate.compute_rotation_angles(point);
+        //validate do_rotate
+        WorldPt calcualtedWorldPt = rotate.do_rotate(point);
+        Assert.assertEquals(expectedWordPt.getLon(), calcualtedWorldPt.getLon(),delta);
+        Assert.assertEquals(expectedWordPt.getLat(), calcualtedWorldPt.getLat(),delta);
+
+        //validate do unrotate, the calculated point should be the same as input
+        WorldPt calcualtedUnrotateWorldPt = rotate.do_unrotate(calcualtedWorldPt);
+
+        Assert.assertEquals(point.getLon(), calcualtedUnrotateWorldPt.getLon(),delta);
+        Assert.assertEquals(point.getLat(), calcualtedUnrotateWorldPt.getLat(),delta);
+
+    }
+
+
+
 }
