@@ -12,7 +12,7 @@ import org.junit.Test;
  * This file contains the algorithm and matrix calculations.  They are kept for reference only.
  * The  testDo_rotate() and  testUnDo_rotate() are disabled since they are not needed.  But
  * in case the Rotate.java is modified, they can be used to as a  cross check since the matrix
- * calculation was directly written based on the algorithm. 
+ * calculation was directly written based on the algorithm.
  *
  */
 public class RotateTest extends ConfigTest{
@@ -60,10 +60,10 @@ public class RotateTest extends ConfigTest{
      * Rz(angle)  =  {
      *      cos(angle)     - sin(angle)     0
      *      sin(angle)     cos(angle)       0
-     *      0              0                 1
+     *      0              0                1
      *  }
      *
-
+     *
      *  zVector = {
      *            0
      *            0

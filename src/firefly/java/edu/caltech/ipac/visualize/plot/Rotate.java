@@ -7,7 +7,13 @@ public class Rotate
 {
     /**
      * DM-8845
-     * While working on this ticket, the algorithm is added for later references
+     * While working on this ticket, the algorithm is added for later references.  From the code, this
+     * class  first calculates the rotation matrices for any given World Point.  For rotation, it rotates
+     * the world point to a position where (lon = 180-worldPt.lon) and lat = -worldPt.lat.  Thus the result
+     * is the point (-1, 0, 0).  Once the rotation matrix is calculated, it is used for rotating other points.
+     *
+     *
+     *
      *
      * Basic rotation
      * A basic rotation (also called elemental rotation) is a rotation about one of the axes of a
@@ -15,27 +21,33 @@ public class Rotate
      * about the x, y, or z axis, in three dimensions, using the right-hand rule—which codifies their
      * alternating signs. (The same matrices can also represent a clockwise rotation of the axes.[nb 1])
      *
-     * Rx(angle) = {
+     /** https://en.wikipedia.org/wiki/Rotation_matrix#General_rotations
      *
-     *     1            0            0
-     *     0       cos(angle)     - sin(angle)
-     *     0       sin(angle)       cos(angle)
+     * This is compute the z rotation (ange about the z axis)
      *
-     *     }
+     *  Rx(angle)  =  {
+     *      1              0                0
+     *      0         cos(angle)     - sin(angle)
      *
-     * Ry(angle) = {
+     *      0         sin(angle)     cos(angle)
      *
-     *      cos(angle)    0         - sin(angle)
-     *      0             1         0
-     *     -sin(angle)    0         cos(angle)
+     *  }
      *
-     *   }
+     *  Ry(angle)  =  {
      *
-     *  Rz(angle)  =  {
+     *      cos(angle)     0       sin(angle)
+     *      0              1                0
+     *    - sin(angle)      0        cos(angle)
+     *
+     *  }
+     *
+     * Rz(angle)  =  {
      *      cos(angle)     - sin(angle)     0
      *      sin(angle)     cos(angle)       0
-     *      0              0                 1
+     *      0              0                1
      *  }
+     *
+     *
      *
      *  For column vectors, each of these basic vector rotations appears counter-clockwise when the axis about which
      *  they occur points toward the observer, the coordinate system is right-handed, and the angle θ is positive.
