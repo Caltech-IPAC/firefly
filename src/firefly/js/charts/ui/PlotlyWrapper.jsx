@@ -63,27 +63,29 @@ export class PlotlyWrapper extends React.Component {
         const {data,layout, config= defaultConfig, newPlotCB, dataUpdate, layoutUpdate, dataUpdateTraces}= this.props;
         const {renderType}= this;
         getPlotLy().then( (Plotly) => {
-            switch (renderType) {
-                case RenderType.RESTYLE:
-                    Plotly.restyle(this.div,  dataUpdate, dataUpdateTraces);
-                    break;
-                case RenderType.RELAYOUT:
-                    Plotly.relayout(this.div, layoutUpdate);
-                    break;
-                case RenderType.RESTYLE_AND_RELAYOUT:
-                    Plotly.restyle(this.div,  dataUpdate, dataUpdateTraces);
-                    Plotly.relayout(this.div, layoutUpdate);
-                    break;
-                case RenderType.RESIZE:
-                    Plotly.Plots.resize(this.div);
-                    break;
-                case RenderType.UPDATE:
-                    Plotly.update(this.div, data, layout);
-                    break;
-                case RenderType.NEW_PLOT:
-                    Plotly.newPlot(this.div, data, layout, config);
-                    if (newPlotCB) newPlotCB(this.div,Plotly);
-                    break;
+            if (this.div) { // make sure the div is still there
+                switch (renderType) {
+                    case RenderType.RESTYLE:
+                        Plotly.restyle(this.div, dataUpdate, dataUpdateTraces);
+                        break;
+                    case RenderType.RELAYOUT:
+                        Plotly.relayout(this.div, layoutUpdate);
+                        break;
+                    case RenderType.RESTYLE_AND_RELAYOUT:
+                        Plotly.restyle(this.div, dataUpdate, dataUpdateTraces);
+                        Plotly.relayout(this.div, layoutUpdate);
+                        break;
+                    case RenderType.RESIZE:
+                        Plotly.Plots.resize(this.div);
+                        break;
+                    case RenderType.UPDATE:
+                        Plotly.update(this.div, data, layout);
+                        break;
+                    case RenderType.NEW_PLOT:
+                        Plotly.newPlot(this.div, data, layout, config);
+                        if (newPlotCB) newPlotCB(this.div, Plotly);
+                        break;
+                }
             }
         } ).catch( (e) => {
             console.log('Plotly not loaded',e);

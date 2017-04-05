@@ -1,4 +1,4 @@
-import React, {PropTypes} from 'react';
+import {PropTypes} from 'react';
 
 const axisParamsShape = PropTypes.shape({
     columnOrExpr : PropTypes.string,
@@ -18,33 +18,31 @@ const selectionShape = PropTypes.shape({
     yMax : PropTypes.number
 });
 
-export const plotParamsShape =  function() {
-    return PropTypes.shape({
-        plotStyle: PropTypes.oneOf(['points', 'line', 'linepoints']),
-        sortColOrExpr: PropTypes.string,
-        xyRatio: PropTypes.number,
-        stretch: PropTypes.oneOf(['fit', 'fill']),
-        selection: selectionShape,
-        zoom: selectionShape,
-        boundaries: selectionShape,
-        userSetBoundaries: selectionShape,
-        nbins: PropTypes.shape({x: PropTypes.number, y: PropTypes.number}),
-        shading: PropTypes.oneOf(['lin', 'log']),
-        x: axisParamsShape,
-        y: axisParamsShape
-    });
-};
+export const plotParamsShape = PropTypes.shape({
+    plotStyle: PropTypes.oneOf(['points', 'line', 'linepoints']),
+    sortColOrExpr: PropTypes.string,
+    xyRatio: PropTypes.number,
+    stretch: PropTypes.oneOf(['fit', 'fill']),
+    selection: selectionShape,
+    zoom: selectionShape,
+    boundaries: selectionShape,
+    userSetBoundaries: selectionShape,
+    nbins: PropTypes.shape({x: PropTypes.number, y: PropTypes.number}),
+    shading: PropTypes.oneOf(['lin', 'log']),
+    x: axisParamsShape,
+    y: axisParamsShape
+});
 
-export const plotDataShape = function() {
-    return PropTypes.shape({
-        rows: PropTypes.arrayOf(PropTypes.object), // {x,y,rowIdx} or {x,y,rowIdx,weight} or {x,y,rowIdx,right,left,low,high}
-        decimateKey: PropTypes.string,
-        xMin: PropTypes.number,
-        xMax: PropTypes.number,
-        yMin: PropTypes.number,
-        yMax: PropTypes.number,
-        weightMin: PropTypes.number,
-        weightMax: PropTypes.number,
-        idStr: PropTypes.string
-    });
-};
+
+export const plotDataShape = PropTypes.shape({
+    rows: PropTypes.arrayOf(PropTypes.object), // {x,y,rowIdx} or {x,y,rowIdx,weight} or {x,y,rowIdx,right,left,low,high}
+    decimateKey: PropTypes.string,
+    xMin: PropTypes.number,
+    xMax: PropTypes.number,
+    yMin: PropTypes.number,
+    yMax: PropTypes.number,
+    weightMin: PropTypes.number,
+    weightMax: PropTypes.number,
+    idStr: PropTypes.string
+});
+

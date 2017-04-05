@@ -1,4 +1,4 @@
-import {isUndefined, debounce, get, has, omit} from 'lodash';
+import {isUndefined, get, has, omit} from 'lodash';
 import shallowequal from 'shallowequal';
 import React, {PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
@@ -14,18 +14,20 @@ import numeral from 'numeral';
 import {getFormatString} from '../../util/MathUtil.js';
 
 import {plotParamsShape, plotDataShape} from './XYPlotPropTypes.js';
-import {calculateChartSize, getWeightBasedGroup, getWeightedDataDescr,
-    getXAxisOptions, getYAxisOptions, getZoomSelection, formatError, isDataSeries, isLinePlot, plotErrors,
+import {calculateChartSize,
+    getXAxisOptions, getYAxisOptions, getZoomSelection, formatError, isLinePlot, plotErrors,
     selFiniteMin, selFiniteMax, validate} from './XYPlot.jsx';
 
 
 
 const defaultShading = 'lin';
 
+const PLOTLY_CONFIG = {displayModeBar: false};
+
 const DATAPOINTS = 'data';
+const DATAPOINTS_HEATMAP = 'data_heatmap';
 const SELECTED = 'selected';
 const HIGHLIGHTED = 'highlighted';
-//const MINMAX = 'minmax';
 
 const datapointsColor = 'rgba(63, 127, 191, 0.5)';
 const datapointsColorWithErrors = 'rgba(63, 127, 191, 0.7)';
@@ -43,7 +45,7 @@ function makeSeries(props) {
 
     if (rows.length < 1) { return []; }
 
-    let allSeries;
+    const allSeries = [];
 
     const highlightedData = [];
     if (!isUndefined(highlighted)) {
@@ -67,7 +69,6 @@ function makeSeries(props) {
             }, []);
         }
 
-        allSeries = [];
         const errorAxes = ['x','y'];
         const errors = errorAxes.map((axis) => {
             const err = {visible: false};
@@ -121,7 +122,7 @@ function makeSeries(props) {
             //id: SELECTED,
             name: SELECTED,
             type: 'scatter',
-            hoverinfo: 'text',
+            hoverinfo: 'skip',
             mode: 'markers',
             marker: {
                 symbol: 'circle',
@@ -133,9 +134,6 @@ function makeSeries(props) {
             y: selectedRows.map((r)=>r['y'])
         });
     } else {
-        const {xUnitPx, yUnitPx} = getDeciSymbolSize(decimateKey);
-        const symbolSizePx = Math.min(xUnitPx,yUnitPx);
-
         const {xMin, xUnit, yMin, yUnit} = parseDecimateKey(decimateKey);
         const getCenter = (xval,yval) => {
             return {
@@ -146,33 +144,29 @@ function makeSeries(props) {
             };
         };
 
-        // split into 6 groups by weight
-        const numericDataArr = [[],[],[],[],[],[]];
-        for (var i= 0, l = rows.length; i < l; i++) {
-            const {x:ptX,y:ptY,rowIdx, weight} = rows[i];
-            const group = getWeightBasedGroup(weight, weightMin, weightMax, params.shading==='log');
-            const {x,y} = getCenter(ptX, ptY);
-            numericDataArr[group-1].push({x, y, rowIdx, weight});
-        }
-
-        // 5 colors (use http://colorbrewer2.org)
-        const weightBasedColors = ['#d9d9d9', '#BDBDBD', '#969696', '#737373', '#525252', '#252525'];
-
-        allSeries = numericDataArr.map((numericData, idx) => {
-            return {
-                //id: DATAPOINTS+idx,
-                name: getWeightedDataDescr(DATAPOINTS+idx, numericData, weightMin, weightMax, params.shading==='log'),
-                type: 'scatter',
-                hoverinfo: 'text',
-                mode: 'markers',
-                marker: {
-                    symbol: 'circle',
-                    size: symbolSizePx,
-                    color: weightBasedColors[idx]
-                },
-                data: numericData,
-                showlegend: numericData.length>0
-            };
+        const x = [];
+        const y = [];
+        const z = [];
+        rows.forEach((r) => {
+            const centerPt = getCenter(r.x, r.y);
+            x.push(centerPt.x);
+            y.push(centerPt.y);
+            z.push(r.weight);
+        });
+        allSeries.push({
+            name: DATAPOINTS_HEATMAP,
+            type: 'heatmap',
+            colorscale: [[0, 'rgb(216,216,216)'], [1, 'rgb(40,40,40)']],
+            hoverinfo: 'text',
+            showlegend: true,
+            colorbar: {
+                thickness: 10,
+                outlinewidth: 0,
+                title: 'pts'
+            },
+            x,
+            y,
+            z
         });
     }
 
@@ -181,7 +175,7 @@ function makeSeries(props) {
         //id: HIGHLIGHTED,
         name: HIGHLIGHTED,
         type: 'scatter',
-        hoverinfo: 'text',
+        hoverinfo: 'skip',
         mode: 'markers',
         color: highlightedColor,
         marker: {symbol: 'circle', size: 8, lineColor: '#737373', lineWidth: 1, color: highlightedColor},
@@ -304,38 +298,11 @@ function getTraceIdx(chartingInfo, name) {
     return chartingInfo.plotlyData.findIndex((t) => {return t.name === name;});
 }
 
-/*
- * Since decimated symbol should accurately reflect bin size,
- * the size of the symbol depends on the chart size.
- * @param {object} Highcharts' Chart object
- * @param {string} decimate key string (contains binning info)
- * @returns {object} x and y pixel size if the bin
- */
-const getDeciSymbolSize = function(decimateKeyStr) {
-    return {xUnitPx: 5, yUnitPx: 5};
-    //TODO
-    //const {xUnit,yUnit} = parseDecimateKey(decimateKeyStr);
-    //const getPxSize = (axis, unit) => {
-    //    const {min} = axis.getExtremes();
-    //    const max = min+unit;
-    //    const minPx = axis.toPixels(min);
-    //    const maxPx = axis.toPixels(max);
-    //    let unitPx = Math.abs(maxPx-minPx);
-    //    if (unitPx < 2) { unitPx = 2; }
-    //    return unitPx;
-    //};
-    //
-    //const xUnitPx = getPxSize(chart.xAxis[0], xUnit);
-    //const yUnitPx = getPxSize(chart.yAxis[0], yUnit);
-    //return {xUnitPx, yUnitPx};
-};
 
 export class XYPlotPlotly extends React.Component {
 
     constructor(props) {
         super(props);
-
-        this.chartingInfo = getChartingInfo(props);
 
         this.state = {
             dataUpdateTraces: undefined,
@@ -346,15 +313,12 @@ export class XYPlotPlotly extends React.Component {
         this.afterRedraw= this.afterRedraw.bind(this);
         this.updateSelectionRect = this.updateSelectionRect.bind(this);
         this.adjustPlotDisplay = this.adjustPlotDisplay.bind(this);
-        this.debouncedResize = this.debouncedResize.bind(this);
         this.onSelectionEvent = this.onSelectionEvent.bind(this);
         this.shouldAnimate = this.shouldAnimate.bind(this);
-
-
     }
 
     componentWillReceiveProps(nextProps) {
-        if (this.props === nextProps) {  return; }
+        if (this.props === nextProps || !this.chartingInfo) {  return; }
 
         const propsToOmit = ['onHighlightChange', 'onSelection', 'highlighted'];
         if (shallowequal(omit(this.props, propsToOmit), omit(nextProps, propsToOmit)) &&
@@ -372,7 +336,8 @@ export class XYPlotPlotly extends React.Component {
             plotErrors(params, 'y') !== plotErrors(nextProps.params, 'y') ||
             get(params, 'shading', defaultShading) !== get(nextProps.params, 'shading', defaultShading)) {
 
-            this.chartingInfo = getChartingInfo(this.props);
+            this.setState({});
+            this.chartingInfo = null;
 
         } else {
 
@@ -413,7 +378,7 @@ export class XYPlotPlotly extends React.Component {
                 }
 
                 // highlight change
-                if (!shallowequal(highlighted, newHighlighted)) {
+                if (!shallowequal(highlighted, newHighlighted) && !isUndefined(get(newHighlighted, 'rowIdx'))) {
                     const highlightedData = [];
                     if (!isUndefined(newHighlighted)) {
                         highlightedData.push(newHighlighted);
@@ -460,7 +425,6 @@ export class XYPlotPlotly extends React.Component {
                         const yAxisMax = selFiniteMin(yMax,yDataMax);
                         updates['xaxis.range'] = newXOptions.xLog ? [Math.log10(xAxisMin), Math.log10(xAxisMax)] : [xAxisMin, xAxisMax];
                         updates['yaxis.range'] = newYOptions.yLog ? [Math.log10(yAxisMin), Math.log10(yAxisMax)] : [yAxisMin, yAxisMax];
-                        //TODO: set minmax data range?
                     }
 
                     if (!shallowequal(params.selection, newParams.selection)) {
@@ -483,24 +447,6 @@ export class XYPlotPlotly extends React.Component {
                     newParams.xyRatio !== params.xyRatio || newParams.stretch !== params.stretch) {
                     const {chartWidth, chartHeight} = calculateChartSize(newWidth, newHeight, nextProps);
                     this.setState({layoutUpdate: {height: chartHeight, width: chartWidth }});
-                    //if (Math.abs(chart.chartWidth - chartWidth) > 20 || Math.abs(chart.chartHeight - chartHeight) > 20) {
-                    //
-                    //    if (get(nextProps, ['data', 'decimateKey'])) {
-                    //        // hide all series for resize
-                    //        chart.series.forEach((series) => {
-                    //            series.setVisible(false, false);
-                    //        });
-                    //        chart.showLoading('Resizing');
-                    //    }
-                    //    chart.setSize(chartWidth, chartHeight, false);
-                    //
-                    //    if (this.pendingResize) {
-                    //        // if resize is slow, we want to do it only once
-                    //        this.pendingResize.cancel();
-                    //    }
-                    //    this.pendingResize = this.debouncedResize();
-                    //    this.pendingResize();
-                    //}
                 }
             }
         }
@@ -520,28 +466,6 @@ export class XYPlotPlotly extends React.Component {
         this.adjustPlotDisplay();
     }
 
-
-
-    debouncedResize() {
-        return debounce(() => {
-            const chart = this.refs.chart && this.refs.chart.getChart();
-            if (chart && chart.container) {
-                const {data} = this.props;
-                if (data.decimateKey) {
-                    // update marker's size
-                    const {xUnitPx, yUnitPx} = getDeciSymbolSize(chart, data.decimateKey);
-                    chart.series.forEach((series) => {
-                        isDataSeries(series.name) && series.update({
-                            marker: {radius: xUnitPx/2.0, hD: (xUnitPx-yUnitPx)/2.0}}, false);
-                        series.setVisible(true, false);
-                    });
-                    chart.redraw();
-                    chart.hideLoading();
-                }
-            }
-            this.pendingResize = null;
-        }, 300);
-    }
 
     shouldAnimate() {
         const {data} = this.props;
@@ -614,36 +538,46 @@ export class XYPlotPlotly extends React.Component {
         const yFormat = (decimateKey || (y && y.match(/\W/))) ? getFormatString(Math.abs(yDataMax-yDataMin), 4) : undefined;
 
         const rows = get(this.props, 'data.rows');
+        const chartingInfo = this.chartingInfo;
 
         // handling tooltips
         chart.on('plotly_hover', (eventData) => {
-            const pointNumber= eventData.points[0].pointNumber;
-            const point = rows && rows[pointNumber];
+            const curveNumber = eventData.points[0].curveNumber;
+            if (curveNumber === getTraceIdx(chartingInfo, DATAPOINTS)) {
+                const pointNumber = eventData.points[0].pointNumber;
+                const point = rows && rows[pointNumber];
 
-            const weight = point.weight ? ` <br> represents ${point.weight} points <br>` : '';
-            const xval = xFormat ? numeral(point.x).format(xFormat) : point.x;
-            const xerr = formatError(point.x, point.xErr, point.xErrLow, point.xErrHigh);
-            const yval = yFormat ? numeral(point.y).format(yFormat) : point.y;
-            const yerr = formatError(point.y,point.yErr, point.yErrLow, point.yErrHigh);
-            const str = '<span> ' + `${params.x.label} = ${xval} ${xerr} ${params.x.unit} <br>` +
-                `${params.y.label} = ${yval} ${yerr} ${params.y.unit} ` +
-                `${weight} </span>`;
+                if (point) {
+                    const weight = point.weight ? `<br> represents ${point.weight} points ` : '';
+                    const xval = xFormat ? numeral(point.x).format(xFormat) : point.x;
+                    const xerr = formatError(point.x, point.xErr, point.xErrLow, point.xErrHigh);
+                    const yval = yFormat ? numeral(point.y).format(yFormat) : point.y;
+                    const yerr = formatError(point.y, point.yErr, point.yErrLow, point.yErrHigh);
+                    const str = `<span> ${params.x.label} = ${xval} ${xerr} ${params.x.unit} <br>` +
+                        `${params.y.label} = ${yval} ${yerr} ${params.y.unit} ` +
+                        `${weight} </span>`;
 
 
-            this.setState( {
-                dataUpdate: { text : str }
-            } );
+                    this.setState({
+                        dataUpdate: {text: str},
+                        dataUpdateTraces: curveNumber
+                    });
+                }
+            }
         });
 
         // handling highlight change
         var highlightedIdx = highlighted.rowIdx;
         if (onHighlightChange) {
             chart.on('plotly_click', (eventData) => {
+                const curveNumber = eventData.points[0].curveNumber;
                 const pointNumber = eventData.points[0].pointNumber;
-                const point = rows && rows[pointNumber];
-                if (point && point.rowIdx !== highlightedIdx) {
-                    highlightedIdx = point.rowIdx;
-                    onHighlightChange(highlightedIdx);
+                if (curveNumber === getTraceIdx(chartingInfo, DATAPOINTS)) {
+                    const point = rows && rows[pointNumber];
+                    if (point && point.rowIdx !== highlightedIdx) {
+                        highlightedIdx = point.rowIdx;
+                        onHighlightChange(highlightedIdx);
+                    }
                 }
             });
         }
@@ -667,6 +601,9 @@ export class XYPlotPlotly extends React.Component {
     }
 
     render() {
+        if (!this.chartingInfo) {
+            this.chartingInfo = getChartingInfo(this.props);
+        }
         const {plotlyData, plotlyLayout, plotlyDivStyle} = this.chartingInfo;
         const {dataUpdateTraces, dataUpdate, layoutUpdate} = this.state;
 
@@ -679,6 +616,7 @@ export class XYPlotPlotly extends React.Component {
                                dataUpdateTraces={dataUpdateTraces}
                                dataUpdate={dataUpdate}
                                layoutUpdate={layoutUpdate}
+                               config={PLOTLY_CONFIG}
                                divUpdateCB={(div) => this.chartDiv = div}
                                newPlotCB={this.afterRedraw}
                 />
@@ -688,10 +626,10 @@ export class XYPlotPlotly extends React.Component {
 }
 
 XYPlotPlotly.propTypes = {
-    data: plotDataShape(),
+    data: plotDataShape,
     width: PropTypes.number,
     height: PropTypes.number,
-    params: plotParamsShape(),
+    params: plotParamsShape,
     highlighted: PropTypes.shape({
         x: PropTypes.number,
         y: PropTypes.number,

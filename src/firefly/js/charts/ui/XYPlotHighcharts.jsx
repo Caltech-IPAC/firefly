@@ -649,10 +649,10 @@ export class XYPlotHighcharts extends React.Component {
 }
 
 XYPlotHighcharts.propTypes = {
-    data: plotDataShape(),
+    data: plotDataShape,
     width: PropTypes.number,
     height: PropTypes.number,
-    params: plotParamsShape(),
+    params: plotParamsShape,
     highlighted: PropTypes.shape({
         x: PropTypes.number,
         y: PropTypes.number,
