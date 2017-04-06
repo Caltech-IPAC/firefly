@@ -152,6 +152,8 @@ function buildTablePart(llApi) {
 
 function buildChartPart(llApi) {
 
+    const showPlot= (targetDiv, parameters)  => doShowPlot(llApi, targetDiv, parameters);
+
     /**
      * @summary The general plotting function to plot an XY Plot.
      * @param {string|HTMLDivElement} targetDiv - div to put the chart in.
@@ -183,7 +185,7 @@ function buildChartPart(llApi) {
     const showHistogram= (targetDiv, parameters)  => doShowHistogram(llApi, targetDiv, parameters);
 
 
-    return {showXYPlot, addXYPlot, showHistogram};
+    return {showPlot, showXYPlot, addXYPlot, showHistogram};
 }
 
 function buildCommon(llApi) {
@@ -390,6 +392,25 @@ function makePlotId() {
 //================================================================
 //---------- Private XYPlot or Histogram functions
 //================================================================
+
+function doShowPlot(llApi, targetDiv, params={}) {
+    const {dispatchChartAdd}= llApi.action;
+    const {uniqueChartId} = llApi.util.chart;
+    const {renderDOM} = llApi.util;
+    const {MultiChartViewer}= llApi.ui;
+
+    params = Object.assign({chartId: uniqueChartId, viewerId: targetDiv}, params);
+    dispatchChartAdd(params);
+
+    renderDOM(targetDiv, MultiChartViewer,
+        {
+            key: `${targetDiv}-plot`,
+            viewerId: targetDiv,
+            closeable: false,
+            expandedMode: false
+        }
+    );
+}
 
 function doShowXYPlot(llApi, targetDiv, params={}) {
     const {dispatchTableFetch, dispatchChartAdd, dispatchChartRemove}= llApi.action;

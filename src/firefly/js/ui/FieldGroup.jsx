@@ -45,9 +45,9 @@ export class FieldGroup extends Component {
     }
 
     render() {
-        const s= Object.assign({},this.props.style);
+        const {style, className} = this.props;
         return (
-            <div style={s}>
+            <div className={className} style={style}>
                 {this.props.children}
             </div>
 
@@ -62,7 +62,8 @@ FieldGroup.propTypes= {
     keepState : PropTypes.bool,
     initValues : PropTypes.object,
     style : PropTypes.object,
-    keepMounted: PropTypes.bool
+    keepMounted: PropTypes.bool,
+    className: PropTypes.string
 };
 
 FieldGroup.childContextTypes= {

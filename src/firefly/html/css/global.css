@@ -349,3 +349,34 @@
     left: 0;
     right: 0;
 }
+
+.FieldGroup__vertical > * {
+    margin-bottom: 3px;
+}
+
+/*------------------- styled-select >---------------------*/
+.styled-select select {
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    height: 100%;
+    width: 100%;
+    padding-right: 20px;
+    padding-left: 5px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: url('/images/down_arrow.png') no-repeat 96% 0;
+    background-size: contain;
+}
+
+.styled-select select::-ms-expand {
+    display: none; /* remove default arrow on ie10 and ie11 */
+}
+
+.styled-select.semi-square {
+    border-radius: 5px;
+    background-color: darkgray;
+    border: 1px solid #808080;
+    color: #fff;
+}

@@ -17,6 +17,7 @@ export const RenderType= new Enum([ 'RESIZE', 'UPDATE', 'RESTYLE', 'RELAYOUT', '
 
 const defaultConfig= {
     displaylogo: false,
+    displayModeBar: false,
     modeBarButtonsToRemove :[
         'sendDataToCloud',
         'hoverClosestCartesian',
@@ -135,9 +136,10 @@ export class PlotlyWrapper extends Component {
         // note: wrapper div is the target for the simulated click event
         // when the original click event is lost and plotly_click is emitted instead
         // chart image download relies on div id matching chartId
+        const nstyle = Object.assign({height: '100%', width: '100%'}, style);
         return (
             <div>
-                <div id={chartId || this.id} style={style} ref={this.refUpdate}/>
+                <div id={chartId || this.id} style={nstyle} ref={this.refUpdate}/>
             </div>
         );
     }

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {take} from 'redux-saga/effects';
-import {get, set, omitBy, pickBy, isNil, cloneDeep, findKey} from 'lodash';
+import {get, set, omitBy, pickBy, isNil, cloneDeep, findKey, isEqual} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
@@ -10,7 +10,6 @@ import shallowequal from 'shallowequal';
 import {dataReducer} from './reducer/TableDataReducer.js';
 import {uiReducer} from './reducer/TableUiReducer.js';
 import {resultsReducer} from './reducer/TableResultsReducer.js';
-import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {updateMerge} from '../util/WebUtil.js';
 import {FilterInfo} from './FilterInfo.js';
 import {selectedValues} from '../rpc/SearchServicesJson.js';
@@ -47,17 +46,17 @@ export const TABLE_LOADED = `${DATA_PREFIX}.loaded`;
 export const TABLE_REMOVE = `${DATA_PREFIX}.remove`;
 
 /**
- * Sort table data.  Sequence of actions:  TABLE_SORT -> TABLE_UPDATE(+) -> TABLE_LOADED, with invokedBy = TABLE_SORT
+ * Sort table data.  Sequence of actions:  TABLE_FETCH -> TABLE_UPDATE(+) -> TABLE_LOADED -> TABLE_SORT
  */
 export const TABLE_SORT = `${DATA_PREFIX}.sort`;
 
 /**
- * Filter table data.   Sequence of actions:  TABLE_FILTER -> TABLE_UPDATE(+) -> TABLE_LOADED, with invokedBy = TABLE_FILTER
+ * Filter table data.   Sequence of actions:  TABLE_FETCH -> TABLE_UPDATE(+) -> TABLE_LOADED -> TABLE_FILTER
  */
 export const TABLE_FILTER = `${DATA_PREFIX}.filter`;
 
 /**
- * Filter table data on selected rows.   Sequence of actions:  TABLE_FILTER -> TABLE_UPDATE(+) -> TABLE_LOADED, with invokedBy = TABLE_FILTER
+ * Filter table data on selected rows.   Sequence of actions:  TABLE_FETCH -> TABLE_UPDATE(+) -> TABLE_LOADED -> TABLE_FILTER
  */
 export const TABLE_FILTER_SELROW = `${DATA_PREFIX}.filterSelrow`;
 
@@ -123,9 +122,10 @@ function actionCreators() {
         [TABLE_SEARCH]:     tableSearch,
         [TABLE_INSERT]:     tableInsert,
         [TABLE_HIGHLIGHT]:  highlightRow,
+        [TABLE_SELECT]:     tableSelect,
         [TABLE_FETCH]:      tableFetch,
-        [TABLE_SORT]:       tableFetch,
-        [TABLE_FILTER]:     tableFetch,
+        [TABLE_SORT]:       tableSort,
+        [TABLE_FILTER]:     tableFilter,
         [TABLE_FILTER_SELROW]:  tableFilterSelrow,
         [TBL_RESULTS_ADDED]:    tblResultsAdded,
         [TABLE_REMOVE]:     tblRemove
@@ -385,24 +385,60 @@ function highlightRow(action) {
     };
 }
 
+function tableSelect(action) {
+    return (dispatch) => {
+        const {tbl_id, selectInfo={}} = action.payload;
+        const cSelectInfo = get(TblUtil.getTblById(tbl_id), 'selectInfo', {});
+        if (!isEqual(selectInfo, cSelectInfo)) {
+            dispatch(action);       // only dispatch action if changes are needed.
+        }
+    };
+}
+
 function tableFetch(action) {
     return (dispatch) => {
         if (!action.err) {
             var {request, hlRowIdx} = action.payload;
             const {tbl_id} = request;
 
-            dispatchAddSaga( doOnTblLoaded, {tbl_id, callback:() => dispatchTableLoaded( Object.assign(TblUtil.getTblInfoById(tbl_id), {invokedBy: action.type}) )});
+            TblUtil.onTableLoaded(tbl_id).then( (tableModel) => dispatchTableLoaded(Object.assign(TblUtil.getTblInfoById(tableModel.tbl_id), {invokedBy: action.type})) );
             dispatch( updateMerge(action, 'payload', {tbl_id}) );
             request.startIdx = 0;
             TblUtil.doFetchTable(request, hlRowIdx).then ( (tableModel) => {
                 const type = tableModel.origTableModel ? TABLE_REPLACE : TABLE_UPDATE;
                 dispatch( {type, payload: tableModel} );
             }).catch( (error) => {
-                dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
+                dispatch({type: TABLE_LOADED, payload: TblUtil.createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
             });
         }
     };
 }
+
+function tableSort(action) {
+    return (dispatch) => {
+        if (!action.err) {
+            var {request, hlRowIdx} = action.payload;
+            const {tbl_id} = request;
+            dispatchTableFetch(request, hlRowIdx);
+            TblUtil.onTableLoaded(tbl_id).then( () => dispatch(action) );
+        }
+    };
+}
+
+function tableFilter(action) {
+    return (dispatch) => {
+        if (!action.err) {
+            var {request, hlRowIdx} = action.payload;
+            const {tbl_id} = request;
+            const oreq = get(TblUtil.getTblById(tbl_id), 'request');
+            if (!oreq) return;
+            const nreq = Object.assign({}, oreq, request);
+            dispatchTableFetch(nreq, hlRowIdx);
+            TblUtil.onTableLoaded(tbl_id).then( () => dispatch(action) );
+        }
+    };
+}
+
 
 /**
  * This function convert the selected rows into its associated ROWID, add it as a filter, then

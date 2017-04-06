@@ -40,9 +40,7 @@ export class TableConnector {
     }
 
     onFilter(filterIntoString) {
-        var {request} = TblUtil.getTblInfoById(this.tbl_id);
-        request = Object.assign({}, request, {filters: filterIntoString});
-        TblCntlr.dispatchTableFilter(request);
+        TblCntlr.dispatchTableFilter({tbl_id: this.tbl_id, filters: filterIntoString});
     }
 
     /**

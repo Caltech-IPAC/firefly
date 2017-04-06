@@ -19,6 +19,7 @@ import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
 import * as ChartsCntlr from '../charts/ChartsCntlr.js';
+import ChartsCntlrDef from '../charts/ChartsCntlr.js';
 import TablesCntlr from '../tables/TablesCntlr';
 
 import {chartTypeFactory} from '../charts/ChartType.js';
@@ -119,7 +120,6 @@ const reducers = {
     [LayoutCntlr.LAYOUT_PATH]: LayoutCntlr.reducer,
     [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer,
     [TableStatsCntlr.TBLSTATS_DATA_KEY]: TableStatsCntlr.reducer,
-    [ChartsCntlr.CHART_SPACE_PATH]: ChartsCntlr.reducer,
     [IMAGE_MULTI_VIEW_KEY]: MultiViewCntlr.reducer,
     [DIALOG_OR_COMPONENT_KEY]: ComponentCntlr.reducer
 };
@@ -138,6 +138,7 @@ registerCntlr(MouseReadoutCntlr);
 registerCntlr(ExternalAccessCntlr);
 registerCntlr(TablesCntlr);
 registerCntlr(DrawLayerCntlr.getDrawLayerCntlrDef(drawLayerFactory));
+registerCntlr(ChartsCntlrDef);
 
 
 let redux = null;

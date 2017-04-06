@@ -449,6 +449,22 @@ function parseCookies(str) {
 /*---------------------------- COOKIES >----------------------------*/
 
 /*----------------------------< update ----------------------------*/
+
+/**
+ * The changes's key must be in path string format, ie.  'a.b.c'.  The value of 
+ * of the changes's object will be placed into the give object path.
+ * @param object (Object): The object to update.
+ * @param changes (Object): The changes to be made.
+ * @return the updated object
+ */
+export function updateObject(object, changes) {
+    if (changes) {
+        object = Object.entries(changes).reduce( (p, [k,v]) => updateSet(p, k, v), object);
+    }
+    return object;
+}
+
+
 /**
  * This is a wrapper of React update's $set for use with deep object update.
  * *Syntax is similar to lodash set.
@@ -572,3 +588,18 @@ export const requestIdleCallback =
     };
 
 export const cancelIdleCallback = window.cancelIdleCallback || ((id) => clearTimeout(id));
+
+export function flattenObject(object) {
+    return Object.assign( {}, ...function _flatten( objectBit, path = '' ) {  //spread the result into our return object
+        return [].concat(                                                     //concat everything into one level
+            ...Object.keys( objectBit ).map(                                  //iterate over object
+                (key) => {
+                    const fullKey = path === '' ? key : `${ path }.${ key }`;
+                    return  (objectBit[ key ] && typeof objectBit[ key ] === 'object') ?            //check if there is a nested object
+                        _flatten( objectBit[ key ], fullKey ) :               //call itself if there is
+                        ( { [ fullKey ]: objectBit[ key ] } );                //append object with its path as key
+                }
+            )
+        );
+    }( object ) );
+};

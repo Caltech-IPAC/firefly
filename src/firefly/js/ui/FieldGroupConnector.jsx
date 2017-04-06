@@ -68,11 +68,12 @@ export function fieldGroupConnector(FieldComponent,
 
         componentWillReceiveProps(nextProps, context) {
             const {fieldKey}= nextProps;
-            if (this.props.fieldKey!==fieldKey) {
-                const groupKey= getGroupKey(this.props,this.context);
-                const fieldState= get(FieldGroupUtils.getGroupFields(groupKey),fieldKey);
+            const groupKey= getGroupKey(this.props,this.context);
+            const nGroupKey= getGroupKey(nextProps, context);
+            if (this.props.fieldKey!==fieldKey || nGroupKey !== groupKey) {
+                const fieldState= get(FieldGroupUtils.getGroupFields(nGroupKey),fieldKey);
                 this.storeUnmount(this.props.fieldKey,groupKey);
-                this.reinit(nextProps,fieldState);
+                this.reinit(nextProps,fieldState, context);
             }
             else {
                 this.updateFieldState(nextProps, context);
@@ -99,15 +100,15 @@ export function fieldGroupConnector(FieldComponent,
         }
 
 
-        reinit(props,fieldState) {
+        reinit(props,fieldState, context) {
             var value= get(fieldState, 'value');
             if (props.forceReinit) {
                 value= props.initialState.value;
             }
             if (this.storeListenerRemove) this.storeListenerRemove();
-            this.storeListenerRemove = flux.addListener(()=> this.updateFieldState(props,this.context));
+            this.storeListenerRemove = flux.addListener(()=> this.updateFieldState(props, context));
             dispatchMountComponent(
-                getGroupKey(props,this.context),
+                getGroupKey(props, context),
                 props.fieldKey,
                 true,
                 confirmInitialValue(value,props,fieldState),
@@ -116,7 +117,7 @@ export function fieldGroupConnector(FieldComponent,
         }
 
         componentDidMount() {
-            this.reinit(this.props,this.state.fieldState);
+            this.reinit(this.props,this.state.fieldState, this.context);
             this.iAmMounted= true;
         }
 

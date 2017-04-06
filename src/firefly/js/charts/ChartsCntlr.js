@@ -2,14 +2,18 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {cloneDeep, has, get, isEmpty, isUndefined, omit, omitBy, set} from 'lodash';
+import {cloneDeep, has, get, isEmpty, isUndefined, omit, omitBy, set, pick, isObject} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
-import {updateSet, updateMerge} from '../util/WebUtil.js';
+import {updateSet, updateMerge, updateObject} from '../util/WebUtil.js';
 import {getTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {logError} from '../util/WebUtil.js';
+import {dispatchAddViewer, dispatchAddViewerItems} from '../visualize/MultiViewCntlr.js';
+import {handleTableSourceConnections, clearChartConn, newTraceFrom, HIGHLIGHTED_COLOR, SELECTED_COLOR} from './ChartUtil.js';
+import {FilterInfo} from '../tables/FilterInfo.js';
+import {SelectInfo} from '../tables/SelectInfo.js';
 
 export const CHART_SPACE_PATH = 'charts';
 export const UI_PREFIX = `${CHART_SPACE_PATH}.ui`;
@@ -18,7 +22,12 @@ export const DATA_PREFIX = `${CHART_SPACE_PATH}.data`;
 
 /*---------------------------- ACTIONS -----------------------------*/
 export const CHART_ADD = `${DATA_PREFIX}/chartAdd`;
+export const CHART_UPDATE = `${DATA_PREFIX}/chartUpdate`;
 export const CHART_REMOVE = `${DATA_PREFIX}/chartRemove`;
+export const CHART_HIGHLIGHT = `${DATA_PREFIX}/chartHighlight`;
+export const CHART_SELECT = `${DATA_PREFIX}/chartSelectSelection`;
+export const CHART_FILTER_SELECTION = `${DATA_PREFIX}/chartFilterSelection`;
+export const CHART_SET_ACTIVE_TRACE = `${DATA_PREFIX}/chartSetActiveTrace`;
 export const CHART_DATA_FETCH = `${DATA_PREFIX}/chartDataFetch`;
 export const CHART_DATA_UPDATE = `${DATA_PREFIX}/chartDataUpdate`;
 export const CHART_OPTIONS_UPDATE = `${DATA_PREFIX}/chartOptionsUpdate`;
@@ -29,6 +38,26 @@ export const CHART_MOUNTED = `${UI_PREFIX}/mounted`;
 export const CHART_UNMOUNTED = `${UI_PREFIX}/unmounted`;
 
 const FIRST_CDEL_ID = '0'; // first data element id (if missing)
+
+export default {actionCreators, reducers};
+
+function actionCreators() {
+    return {
+        [CHART_ADD]:     chartAdd,
+        [CHART_UPDATE]:  chartUpdate,
+        [CHART_HIGHLIGHT]: chartHighlight,
+        [CHART_FILTER_SELECTION]: chartFilterSelection,
+        [CHART_SELECT]: chartSelect,
+        [CHART_SET_ACTIVE_TRACE]: setActiveTrace
+    };
+}
+
+function reducers() {
+    return {
+        [CHART_SPACE_PATH]: reducer
+    };
+}
+
 
 /**
  * @global
@@ -59,8 +88,8 @@ const FIRST_CDEL_ID = '0'; // first data element id (if missing)
  *  @function dispatchChartAdd
  *  @memberof firefly.action
  */
-export function dispatchChartAdd({chartId, chartType, chartDataElements, groupId='main', deletable, help_id, mounted=undefined, dispatcher= flux.process}) {
-    dispatcher({type: CHART_ADD, payload: {chartId, chartType, chartDataElements, groupId, deletable, help_id, mounted}});
+export function dispatchChartAdd({chartId, chartType, chartDataElements, groupId='main', deletable, help_id, mounted=undefined, dispatcher= flux.process, ...rest}) {
+    dispatcher({type: CHART_ADD, payload: {chartId, chartType, chartDataElements, groupId, deletable, help_id, mounted, ...rest}});
 }
 
 /*
@@ -92,6 +121,66 @@ export function dispatchChartRemove(chartId, dispatcher= flux.process) {
  */
 export function dispatchChartDataFetch({chartId, chartDataElement, newOptions, invokedBy, dispatcher=flux.process}) {
     dispatcher({type: CHART_DATA_FETCH, payload: {chartId, chartDataElement, newOptions, invokedBy}});
+}
+
+/**
+ * Update chart data. The parameter should have a partial object it wants to update.
+ * The keys of the partial object should be in path-string format, ie. 'a.b.c'.
+ * @summary Update chart data.
+ *  @param {Object} p - dispatch parameetrs
+ *  @param {string} p.chartId - chart id
+ *  @param {Function} [p.dispatcher=flux.process] - only for special dispatching uses such as remote
+ *  @public
+ *  @function dispatchChartUpdate
+ *  @memberof firefly.action
+ */
+export function dispatchChartUpdate({chartId, changes, dispatcher=flux.process}) {
+    dispatcher({type: CHART_UPDATE, payload: {chartId, changes}});
+}
+
+/**
+ * Highlight the given highlighted data point. Highlighted is an index into the current data array.
+ * @param {object} p parameter object
+ * @param {string} p.chartId      required.  
+ * @param {number} p.highlighted  index of the current data array
+ * @param {number} [p.activeTrace]
+ * @param {function} [p.dispatcher]
+ */
+export function dispatchChartHighlighted({chartId, highlighted, activeTrace, dispatcher=flux.process}) {
+    dispatcher({type: CHART_HIGHLIGHT, payload: {chartId, highlighted, activeTrace}});
+}
+
+/**
+ * Perform filter on the current selection.  This function applies only to data bound to table.
+ * @param {object} p parameter object
+ * @param {string} p.chartId      required.
+ * @param {number} [p.highlighted]  highlight the data point if given.
+ * @param {function} [p.dispatcher]
+ */
+export function dispatchChartFilterSelection({chartId, highlighted, dispatcher=flux.process}) {
+    dispatcher({type: CHART_FILTER_SELECTION, payload: {chartId, highlighted}});
+}
+
+/**
+ * Perform select(checked) on the current selection.  This function applies only to data bound to table.
+ * @param {object} p parameter object
+ * @param {string} p.chartId      required.
+ * @param {number[]} p.selIndexes required.  An array of indexes to select.
+ * @param {function} [p.dispatcher]
+ */
+export function dispatchChartSelect({chartId, selIndexes, dispatcher=flux.process}) {
+    dispatcher({type: CHART_SELECT, payload: {chartId, selIndexes}});
+}
+
+/**
+ * Perform select(checked) on the current selection.  This function applies only to data bound to table.
+ * @param {object} p parameter object
+ * @param {string} p.chartId      required.
+ * @param {number} p.activeTrace required.  An array of indexes to select.
+ * @param {function} [p.dispatcher]
+ */
+export function dispatchSetActiveTrace({chartId, activeTrace, dispatcher=flux.process}) {
+    dispatcher({type: CHART_SET_ACTIVE_TRACE, payload: {chartId, activeTrace}});
 }
 
 /*
@@ -165,7 +254,7 @@ export function dispatchChartUnmounted(chartId, dispatcher= flux.process) {
     dispatcher({type: CHART_UNMOUNTED, payload: {chartId}});
 }
 
-
+/*------------------------------- action creators -------------------------------------------*/
 // action creator for CHART_OPTIONS_UPDATE
 export function makeChartOptionsUpdate(getChartDataType) {
     return (rawAction) => {
@@ -214,6 +303,114 @@ export function makeChartDataFetch (getChartDataType) {
         };
     };
 }
+
+function chartAdd(action) {
+    return (dispatch) => {
+        const {chartId, chartType, viewerId='main', data} = action.payload;
+        clearChartConn({chartId});
+        dispatch(action);
+        if (chartType === 'plot.ly') {
+            dispatchAddViewer(viewerId,true,'plot2d',true);
+            dispatchAddViewerItems(viewerId, [chartId], 'plot2d');
+            handleTableSourceConnections({chartId, data});
+        }
+    };
+}
+
+function chartUpdate(action) {
+    return (dispatch) => {
+        dispatch(action);
+        let {chartId, changes} = action.payload;
+        const {data} = Object.entries(changes)
+                             .filter(([k,v]) => k.startsWith('data'))
+                             .reduce( (p, [k,v]) => set(p, k, v), {});          // take all of the data changes and create an object from it.
+        handleTableSourceConnections({chartId, data});
+    };
+}
+
+function chartHighlight(action) {
+    return (dispatch) => {
+        const {chartId, highlighted=0} = action.payload;
+        // TODO: activeTrace is not implmented.  switch to trace.. then highlight(?)
+        const {activeTrace=0, data, tablesources} = getChartData(chartId);
+        const ttype = get(data, [activeTrace, 'type'], 'scatter');
+
+        if (!isEmpty(tablesources) && ttype === 'scatter') {
+            const {tbl_id} = tablesources[activeTrace] || {};
+            if (!tbl_id) return;
+            const hlTrace = newTraceFrom(data[activeTrace], [highlighted], HIGHLIGHTED_COLOR);
+            dispatchChartUpdate({chartId, changes:{highlighted: hlTrace}});
+            TablesCntlr.dispatchTableHighlight(tbl_id, highlighted);
+        }
+    };
+}
+
+function chartSelect(action) {
+    return (dispatch) => {
+        const {chartId, selIndexes=[]} = action.payload;
+        const {activeTrace=0, data, tablesources} = getChartData(chartId);
+        let selected = undefined;
+        if (!isEmpty(tablesources) && selIndexes.length > 0) {
+            selected = newTraceFrom(data[activeTrace], selIndexes, SELECTED_COLOR);
+            const {tbl_id} = tablesources[activeTrace] || {};
+            const {totalRows} = getTblById(tbl_id);
+            const selectInfoCls = SelectInfo.newInstance({rowCount: totalRows});
+            selIndexes.forEach((idx) => {
+                selectInfoCls.setRowSelect(idx, true);
+            });
+            TablesCntlr.dispatchTableSelect(tbl_id, selectInfoCls.data);
+        }
+        dispatchChartUpdate({chartId, changes:{selected, selection: undefined}});
+    };
+}
+
+function chartFilterSelection(action) {
+    return (dispatch) => {
+        const {chartId} = action.payload;
+        const {activeTrace=0, selection, tablesources} = getChartData(chartId);
+        if (!isEmpty(tablesources)) {
+            const {tbl_id, x, y} = tablesources[activeTrace];
+            const [xMin, xMax] = get(selection, 'range.x', []);
+            const [yMin, yMax] = get(selection, 'range.y', []);
+            const {request} = getTblById(tbl_id);
+            const filterInfoCls = FilterInfo.parse(request.filters);
+
+            filterInfoCls.setFilter(x, '> ' + xMin);
+            filterInfoCls.addFilter(x, '< ' + xMax);
+            filterInfoCls.setFilter(y, '> ' + yMin);
+            filterInfoCls.addFilter(y, '< ' + yMax);
+
+            const newRequest = Object.assign({}, request, {filters: filterInfoCls.serialize()});
+            TablesCntlr.dispatchTableFilter(newRequest);
+            dispatchChartUpdate({chartId, changes:{selection: undefined}});
+        }
+    };
+}
+
+function setActiveTrace(action) {
+    return (dispatch) => {
+        const {chartId, activeTrace} = action.payload;
+        const {data, tablesources} = getChartData(chartId) || {};
+        const tbl_id = get(tablesources, [activeTrace, 'tbl_id']);
+        let selected = undefined;
+        let highlighted = undefined;
+        if (tbl_id) {
+            const {selectInfo, highlightedRow} = getTblById(tbl_id) || {};
+            if (selectInfo) {
+                const selectInfoCls = SelectInfo.newInstance(selectInfo);
+                const selIndexes = Array.from(selectInfoCls.getSelected());
+                if (selIndexes.length > 0) {
+                    selected = newTraceFrom(data[activeTrace], selIndexes, SELECTED_COLOR);
+                }
+            }
+            highlighted = newTraceFrom(data[activeTrace], [highlightedRow], HIGHLIGHTED_COLOR);
+        }
+        dispatchChartUpdate({chartId, changes:{activeTrace, selected, highlighted, selection: undefined}});
+    };
+}
+
+
+/*-----------------------------------------------------------------------------------------*/
 
 /**
  *
@@ -394,6 +591,9 @@ function reduceData(state={}, action={}) {
             const {chartId, chartType, chartDataElements, mounted, ...rest}  = action.payload;
             // if a chart is replaced (added with the same id) mounted should not change
             const nMounted = isUndefined(mounted) ? get(state, [chartId, 'mounted']) : mounted;
+            if (chartType==='plot.ly') {
+                rest['_original'] = cloneDeep(action.payload);
+            }
             state = updateSet(state, chartId,
                 omitBy({
                     chartType,
@@ -402,6 +602,13 @@ function reduceData(state={}, action={}) {
                     ...rest
                 }, isUndefined));
             return state;
+        }
+        case (CHART_UPDATE) :
+        {
+            const {chartId, changes}  = action.payload;
+            var chartData = getChartData(chartId) || {};
+            chartData = updateObject(chartData, changes);
+            return updateSet(state, chartId, chartData);
         }
         case (CHART_REMOVE)  :
         {
@@ -471,7 +678,7 @@ function reduceData(state={}, action={}) {
             const tbl_id = action.payload.tbl_id; //also has selectInfo
             let newState = state;
             Object.keys(state).forEach((cid) => {
-                const chartDataElements = state[cid].chartDataElements;
+                const chartDataElements = state[cid].chartDataElements || [];
                 Object.keys(chartDataElements).forEach( (id) => {
                     if (chartDataElements[id].tblId === tbl_id && has(chartDataElements[id], 'options.selection')) {
                         newState = updateSet(newState, [cid, 'chartDataElements', id, 'options', 'selection'], undefined);
@@ -486,7 +693,7 @@ function reduceData(state={}, action={}) {
             const chartsToDelete = [];
             let newState=state;
             Object.keys(state).forEach((cid) => {
-                let chartDataElements = state[cid].chartDataElements;
+                let chartDataElements = state[cid].chartDataElements || [];
                 Object.keys(state[cid].chartDataElements).forEach( (id) => {
                     if (chartDataElements[id].tblId === tbl_id) {
                         chartDataElements = omit(chartDataElements, id);
@@ -505,6 +712,7 @@ function reduceData(state={}, action={}) {
 }
 
 function chartDataElementsToObj(chartDataElementsArr) {
+    if (!chartDataElementsArr) return;
     const obj = {};
     chartDataElementsArr.forEach((el, idx) => {
         if (isUndefined(el.id)) {
