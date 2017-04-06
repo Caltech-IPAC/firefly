@@ -228,10 +228,10 @@ export class XYPlot extends React.Component {
 }
 
 XYPlot.propTypes = {
-    data: plotDataShape(),
+    data: plotDataShape,
     width: PropTypes.number,
     height: PropTypes.number,
-    params: plotParamsShape(),
+    params: plotParamsShape,
     highlighted: PropTypes.shape({
         x: PropTypes.number,
         y: PropTypes.number,
