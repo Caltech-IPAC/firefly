@@ -134,7 +134,7 @@ function makeCallbacks(onChange, columns, data, orgFilterInfo='') {
     var onRowSelect = (checked, rowIdx) => {
         const selColName = get(data, [rowIdx, 0]);
         const nColumns = cloneDeep(columns);
-        const selCol = nColumns.find((col) => col.name === selColName);
+        const selCol = nColumns.find((col) => col.name === selColName || col.label === selColName);
         selCol && (selCol.visibility = checked ? 'show' : 'hide');
         onChange && onChange({columns: nColumns});
     };
