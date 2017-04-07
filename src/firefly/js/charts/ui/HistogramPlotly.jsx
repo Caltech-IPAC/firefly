@@ -43,8 +43,14 @@ export class HistogramPlotly extends React.Component {
             bin[0] = bin[0] * Math.pow(10, (i*2-2)) ;
         });
 */
-        //this.afterRedraw = this.afterRedraw.bind(this);
-        this.state = {dataUpdate: null};
+        const yOpposite = get(this.props, ['yAxis', OPP], false);
+        this.afterRedraw = this.afterRedraw.bind(this);
+        this.notTitleSideMargin = 30;
+        this.titleSideMargin = 60;
+        this.state = {dataUpdate: null, layoutUpdate: null,
+                      leftMargin: yOpposite ? this.notTitleSideMargin :  this.titleSideMargin,
+                      rightMargin: yOpposite ? this.titleSideMargin :  this.notTitleSideMargin,
+                      config: {displayModeBar: false}};
     }
 
 
@@ -120,6 +126,7 @@ export class HistogramPlotly extends React.Component {
         }
 
         var {x, y, binWidth, color, text, colorScale, borderColor} = this.createXY(data, binColor);
+        var {leftMargin, rightMargin} = this.state;
         const plotlyData = [{
                 displaylogo: false,
                 type: 'bar',
@@ -137,7 +144,6 @@ export class HistogramPlotly extends React.Component {
 
         const isOneBar = get(plotlyData, [0, 'x', 'length']) === 1;
 
-        //this.lastData = {text};
         return {
             plotlyDivStyle: {
                 border: '#a5a5a5',
@@ -148,7 +154,7 @@ export class HistogramPlotly extends React.Component {
             plotlyData,
             plotlyLayout: {
                 hovermode: 'x',
-                xaxis: {
+                 xaxis: {
                     title: `${desc} ` + (xUnit ? `(${xUnit})` : ''),
                     type: (logs && logs.includes('x') ? LOG : LINEAR),
                     tickcolor: '#ccc',
@@ -164,11 +170,11 @@ export class HistogramPlotly extends React.Component {
                     }
                 },
                 yaxis: {
+                    title: 'Number',
                     gridLineWidth: 1,
                     type: (logs && logs.includes('y') ? LOG : LINEAR),
                     tickcolor: '#ccc',
                     zeroline: false,
-                    fixrange: true,
                     autorange: get(yAxis, REV) ? REV : true,
                     side: get(yAxis, OPP) ? 'right' : 'left',
                     titlefont: {
@@ -176,10 +182,10 @@ export class HistogramPlotly extends React.Component {
                     }
                 },
                 margin: {
-                    l: 60,
-                    r: 30,
-                    b: 60,
-                    t: 30
+                    l: leftMargin,
+                    r: rightMargin,
+                    b: get(xAxis, OPP) ? this.notTitleSideMargin : this.titleSideMargin,
+                    t: get(xAxis, OPP) ? this.titleSideMargin : this.notTitleSideMargin
                 }
             }
         };
@@ -242,35 +248,60 @@ export class HistogramPlotly extends React.Component {
         this.chartingInfo = this.regenData(this.props);
     }
 
-    /*
+
     afterRedraw(chart, pl) {
-        const {lastData}= this;
 
-        chart.on('plotly_hover', (eventData) => {
-            const pointNumber= eventData.points[0].pointNumber;
-            const str= get(lastData, ['text', `${pointNumber}`]);
+        // get the element in the plotly chart containing the y tick text
+        const ytickTexts = chart.querySelectorAll('g.ytick text');
+        var maxYTickLen = this.notTitleSideMargin;
+        for (let i = 0; i < ytickTexts.length; i++) {
+            if (ytickTexts[i].clientWidth > maxYTickLen) {
+                maxYTickLen = ytickTexts[i].clientWidth;
+            }
+        }
 
-            this.setState( {
-                dataUpdate: { text : str }
-            } );
-        });
+        //update the margin on the y axis title side based on the tick text width
+        maxYTickLen = Math.max(maxYTickLen - this.notTitleSideMargin, 0) + this.titleSideMargin;
+        const opp = get(this.props.yAxis, OPP);
+        const leftMargin = opp ? this.notTitleSideMargin : maxYTickLen;
+        const rightMargin = opp ? maxYTickLen : this.notTitleSideMargin;
+
+        if (leftMargin !== this.state.leftMargin || rightMargin !== this.state.rightMargin) {
+            var margin = get(this.chartingInfo, ['plotlyLayout', 'margin']);
+
+            if (margin) {
+                margin = Object.assign(margin, {l: leftMargin, r: rightMargin});
+                this.setState({leftMargin, rightMargin, layoutUpdate: {margin}});
+            }
+        }
+
+        // add event handler for plotly_click event
+        const {eventCallback} = this.props;
+        if (eventCallback) {
+            Object.keys(eventCallback).forEach((eventKey) => {
+                if (eventKey === 'mousedown') {
+                    chart.on('plotly_click', eventCallback[eventKey]);
+                }
+            });
+        }
     }
-    */
 
 
     render() {
         this.error = undefined;
-        const {dataUpdate} = this.state;
+        const {dataUpdate, layoutUpdate, config} = this.state;
         const {plotlyData, plotlyDivStyle, plotlyLayout}= this.chartingInfo;
         const {width, height} = this.props;
 
         return (
-            <div style={{width: width? Number(width): undefined,
-                         height: height? Number(height): undefined}}>
+            <div style={{width: width? width: undefined,
+                         height: height? height: undefined}}>
                 <PlotlyWrapper data={plotlyData} layout={plotlyLayout}  style={plotlyDivStyle}
                                dataUpdate={dataUpdate}
+                               layoutUpdate={layoutUpdate}
                                divUpdateCB={(div) => this.chart= div}
-                               config={{displayModeBar: false}}
+                               config={config}
+                               newPlotCB={this.afterRedraw}
                 />
             </div>
         );
@@ -285,14 +316,13 @@ HistogramPlotly.defaultProps = {
 };
 
 
-// when more than one histogram is defined use series
 HistogramPlotly.propTypes = {
     series: PropTypes.arrayOf(PropTypes.object), // array of objects with data, binColor, and name properties
     xAxis: PropTypes.object,
     yAxis: PropTypes.object,
     xUnit: PropTypes.string,
-    width: PropTypes.number,
-    height: PropTypes.number,
+    width: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    height: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     logs: PropTypes.oneOf(['x','y','xy']),
     desc: PropTypes.string,
     data: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.number)), // array of numbers [0] - nInBin, [1] - binMin, [2] - binMax
@@ -300,5 +330,6 @@ HistogramPlotly.propTypes = {
         if (props[propName] && !/^#[0-9a-f]{6}/.test(props[propName])) {
             return new Error(`Invalid bin color in ${componentName}, should be hex with exactly 7 characters long.`);
         }
-    }
+    },
+    eventCallback: PropTypes.object
 };

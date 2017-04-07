@@ -82,7 +82,7 @@ class ChartPanelView extends Component {
     }
 
     render() {
-        const {chartId, chartData, deletable, expandable, expandedMode, Chart, Options, Toolbar, showToolbar, showChart} = this.props;
+        const {chartId, chartData, deletable, expandable, expandedMode, Chart, Options, Toolbar, showToolbar, showChart, eventCallback} = this.props;
 
         if (!chartData) {
             return (<div/>);
@@ -190,7 +190,8 @@ ChartPanelView.propTypes = {
     showChart: PropTypes.bool,
     Chart: PropTypes.func,
     Options: PropTypes.func,
-    Toolbar: PropTypes.func
+    Toolbar: PropTypes.func,
+    eventCallback: PropTypes.object
 };
 
 ChartPanelView.defaultProps = {
@@ -227,6 +228,7 @@ export class ChartPanel extends Component {
     constructor(props) {
         super(props);
         this.state = this.getNextState();
+        this.test = props;
     }
 
     shouldComponentUpdate(np, ns) {
@@ -290,5 +292,6 @@ ChartPanel.propTypes = {
     expandedMode: PropTypes.bool,
     deletable: PropTypes.bool,
     showToolbar: PropTypes.bool,
-    showChart: PropTypes.bool
+    showChart: PropTypes.bool,
+    eventCallback: PropTypes.object
 };
