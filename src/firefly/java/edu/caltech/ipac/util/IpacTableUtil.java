@@ -174,11 +174,15 @@ public class IpacTableUtil {
         }
     }
     public static void guessFormatInfo(DataType dataType, String value) {
+       guessFormatInfo(dataType, value, 0);
+    }
 
-        String formatStr = guessFormatStr(dataType, value.trim());
+    public static void guessFormatInfo(DataType dataType, String value, int precision) {
+
+        String formatStr = guessFormatStr(dataType, value.trim(), precision);
         if (formatStr != null) {
             DataType.FormatInfo.Align align = value.startsWith(" ") ? DataType.FormatInfo.Align.RIGHT
-                                                : DataType.FormatInfo.Align.LEFT;
+                    : DataType.FormatInfo.Align.LEFT;
             DataType.FormatInfo fi = dataType.getFormatInfo();
             fi.setDataFormat(formatStr);
             fi.setDataAlign(align);
@@ -405,16 +409,16 @@ public class IpacTableUtil {
         return meta;
     }
 
-    public static String guessFormatStr(DataType type, String val) {
+    public static String guessFormatStr(DataType type, String val, int precision) {
         if (type.getTypeDesc() != null &&
                 ServerStringUtil.matchesRegExpList(type.getTypeDesc(), STRING_TYPE, true)) {
             return "%s";
         } else {
-            return guessFormatStr(val, type.getDataType());
+            return guessFormatStr(val, type.getDataType(), precision);
         }
     }
 
-    private static String guessFormatStr(String val, Class cls) {
+    private static String guessFormatStr(String val, Class cls, int minPrecision) {
 
         String formatStr = null;
         try {
@@ -436,7 +440,7 @@ public class IpacTableUtil {
                     // decimal format
                     int idx = val.indexOf(".");
                     int prec = val.length() - idx - 1;
-                    return "%." + prec + "f";
+                    return "%." + Math.max(prec,minPrecision) + "f";
                 } else {
                     boolean isFloat= (cls==Float.class || cls==Double.class);
                     formatStr = isFloat ?  "%.0f" : "%d";
