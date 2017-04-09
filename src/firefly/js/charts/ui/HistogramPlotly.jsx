@@ -275,7 +275,7 @@ export class HistogramPlotly extends React.Component {
             }
         }
 
-        // add event handler for plotly_click event
+        // add event handler to 'plotly_click' in case mouse click happens when the mouse is hovering on the bar
         const {eventCallback} = this.props;
         if (eventCallback) {
             Object.keys(eventCallback).forEach((eventKey) => {
@@ -286,16 +286,17 @@ export class HistogramPlotly extends React.Component {
         }
     }
 
-
     render() {
         this.error = undefined;
         const {dataUpdate, layoutUpdate, config} = this.state;
         const {plotlyData, plotlyDivStyle, plotlyLayout}= this.chartingInfo;
-        const {width, height} = this.props;
+        const {width, height, eventCallback} = this.props;
 
+        //add click event handler to div in case the mouse click happens when the mouse is located on non-bar area
         return (
             <div style={{width: width? width: undefined,
-                         height: height? height: undefined}}>
+                         height: height? height: undefined}}
+                 onClick={get(eventCallback, 'mousedown')}>
                 <PlotlyWrapper data={plotlyData} layout={plotlyLayout}  style={plotlyDivStyle}
                                dataUpdate={dataUpdate}
                                layoutUpdate={layoutUpdate}
