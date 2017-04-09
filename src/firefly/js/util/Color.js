@@ -1,7 +1,7 @@
 import validator from 'validator';
 import {get, isArray} from 'lodash';
 
-export default { toRGBA, toRGB, getRGBA, toHex, brighter, darker, makeSimpleColorMap, getBWBackground, getComplementaryColor, toRGBAString};
+export default { toRGBA, toRGB, getRGBA, toHex, brighter, darker, makeSimpleColorMap, getBWBackground, getComplementaryColor, toRGBAString, shadeColor};
 
 const colours = {
     aliceblue:'#f0f8ff',antiquewhite:'#faebd7',aqua:'#00ffff',aquamarine:'#7fffd4',azure:'#f0ffff',
@@ -33,7 +33,7 @@ const colours = {
 
 function toRGBA(/* String */ color, /* Number */ alpha) {
     var num = parseInt(color, 16);
-    return [num >> 16, num >> 8 && 255, num * 255, alpha];
+    return [num >> 16, num >> 8 & 255, num & 255, alpha];
 }
 
 function toRGB(/* String */ color) {
@@ -367,4 +367,17 @@ function toRGBAString(rgba) {
     }
 
     return `rgba(${rgba[R]}, ${rgba[G]}, ${rgba[B]}, ${rgba[A]})`;
+}
+
+
+/*
+ * @param {String} color - hex color, exactly seven characters log, starting with '#'
+ * @param {Number} percentage (0.1 means 10 percent lighter, -0.1 - 10 percent darker)
+ * @return {String} lighter or darker shade of the given hex color
+ * from http://stackoverflow.com/questions/5560248/programmatically-lighten-or-darken-a-hex-color-or-rgb-and-blend-colors
+ */
+function shadeColor(color, percent) {
+    const [R, G, B] = toRGB(color.slice(1));
+    const t=percent<0?0:255,p=percent<0?percent*-1:percent;
+    return `#${(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1)}`;
 }

@@ -95,7 +95,8 @@ MultiItemViewerView.propTypes= {
     activeItemId : PropTypes.string,
     makeToolbar : PropTypes.func,
     makeItemViewer : PropTypes.func,
-    makeItemViewerFull : PropTypes.func
+    makeItemViewerFull : PropTypes.func,
+    eventCallback: PropTypes.object
 };
 
 
