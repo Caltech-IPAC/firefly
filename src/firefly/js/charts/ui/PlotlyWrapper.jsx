@@ -26,7 +26,7 @@ const defaultConfig= {
     ]
 };
 
-export class PlotlyWrapper extends React.Component {
+export class PlotlyWrapper extends Component {
 
     constructor(props) {
         super(props);
@@ -61,7 +61,7 @@ export class PlotlyWrapper extends React.Component {
 
     draw() {
         const {data,layout, config= defaultConfig, newPlotCB, dataUpdate, layoutUpdate, dataUpdateTraces}= this.props;
-        const {renderType}= this;
+        const renderType = this.renderType;
         getPlotLy().then( (Plotly) => {
             if (this.div) { // make sure the div is still there
                 switch (renderType) {
@@ -83,7 +83,13 @@ export class PlotlyWrapper extends React.Component {
                         break;
                     case RenderType.NEW_PLOT:
                         Plotly.newPlot(this.div, data, layout, config);
-                        if (newPlotCB) newPlotCB(this.div, Plotly);
+                        if (this.div.on) {
+                            const chart = this.div;
+                            chart.on('plotly_click', () => chart.parentElement.click());
+                        }
+                        if (newPlotCB) {
+                            newPlotCB(this.div, Plotly);
+                        }
                         break;
                 }
             }
@@ -113,8 +119,12 @@ export class PlotlyWrapper extends React.Component {
 
     render() {
         const {style}= this.props;
+        // note: wrapper div is the target for the simulated click event
+        // when the original click event is lost and plotly_click is emitted instead
         return (
-            <div id={this.id} style={style} ref={this.refUpdate}></div>
+            <div>
+                <div id={this.id} style={style} ref={this.refUpdate}/>
+            </div>
         );
     }
 }
@@ -130,5 +140,5 @@ PlotlyWrapper.propTypes = {
     dataUpdateTraces: PropTypes.number,
     layoutUpdate: PropTypes.object,
     divUpdateCB: PropTypes.func,
-    newPlotCB: PropTypes.func,
+    newPlotCB: PropTypes.func
 };

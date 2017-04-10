@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set} from 'lodash';
+import {get, isEmpty, set} from 'lodash';
 import React, {PropTypes} from 'react';
 import * as TblUtil from '../../tables/TableUtil.js';
 
@@ -42,8 +42,10 @@ function Chart(props) {
 
     if (isDataReady) {
         var logs;
-        const xAxis = histogramParams.xAxis || {reversed: false, opposite: false};
-        const yAxis = histogramParams.yAxis || {reversed: false, opposite: false};
+        let xAxis = histogramParams.xAxis || {};
+        let yAxis = histogramParams.yAxis || {};
+
+
         if (histogramParams) {
             var logvals = '';
             if (histogramParams.x.includes('log')) { logvals += 'x';}
@@ -56,6 +58,9 @@ function Chart(props) {
             if (histogramParams.x.includes('opposite')) { set(xAxis, 'opposite', true); }
             if (histogramParams.y.includes('opposite')) { set(yAxis, 'opposite', true); }
         }
+
+        if (isEmpty(xAxis)) { xAxis = undefined;}
+        if (isEmpty(yAxis)) { yAxis = undefined;}
 
         return (
             <Histogram data={histogramData}

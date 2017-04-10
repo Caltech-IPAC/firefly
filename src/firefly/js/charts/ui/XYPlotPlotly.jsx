@@ -38,10 +38,19 @@ const highlightedColor = 'rgba(255, 165, 0, 1)';
 const selectionRectColor = 'rgba(255, 209, 128, 0.5)';
 const selectionRectColorGray = 'rgba(165, 165, 165, 0.5)';
 
+const Y_TICKLBL_PX = 80;
+const X_TICKLBL_PX = 60;
+const MIN_MARGIN_PX = 10;
+const FSIZE = 12;
 
+/**
+ * A function to make plotly data for the given properties
+ * @param props
+ * @returns {Array} plotly data array
+ */
 function makeSeries(props) {
     const {data, params, selectInfo, highlighted} = props;
-    const {rows, decimateKey, weightMin, weightMax} = data;
+    const {rows, decimateKey} = data;  //weightMin, weightMax are also part of data
 
     if (rows.length < 1) { return []; }
 
@@ -187,7 +196,26 @@ function makeSeries(props) {
     return allSeries;
 }
 
+/**
+ * Get range for a plotly axis
+ * Plotly requires range to be reversed if the axis is reversed,
+ * and limits to be log if axis scale is log
+ * @param min - minimum value
+ * @param max - maximum value
+ * @param isLog - true, if an axis uses log scale
+ * @param isReversed - true, if the axis should be reversed
+ * @returns {Array<number>} an array for axis range property in plotly layout
+ */
+function getRange(min, max, isLog, isReversed) {
+    const [r1, r2] = isReversed ? [max, min] : [min, max];
+    return isLog ? [Math.log10(r1), Math.log10(r2)] : [r1, r2];
+}
 
+/**
+ * Create plotly data, layout, and style
+ * @param props
+ * @returns {{plotlyData: Array, plotlyLayout: Object, plotlyDivStyle: Object}} - an object with plotly data, layout, and div style
+ */
 function getChartingInfo(props) {
     const {params, width, height, desc} = props;
 
@@ -203,7 +231,7 @@ function getChartingInfo(props) {
     const yAxisMin = selFiniteMax(yMin,yDataMin);
     const yAxisMax = selFiniteMin(yMax,yDataMax);
 
-    const plotlyDivStyle= {
+    const plotlyDivStyle = {
         border: '1px solid a5a5a5',
         borderRadius: 5,
         width: '100%',
@@ -225,75 +253,64 @@ function getChartingInfo(props) {
             yanchor: 'top'
         },
         xaxis: {
-            autorange: xReversed ? 'reversed' : true,
-            range: xLog? [Math.log10(xAxisMin), Math.log10(xAxisMax)] : [xAxisMin, xAxisMax],
+            autorange:false,
+            range: getRange(xAxisMin, xAxisMax, xLog, xReversed),
             title: xTitle,
             gridLineWidth: 1,
             type: xLog ? 'log' : 'linear',
             lineColor: '#e9e9e9',
-            mirror: xOpposite ? 'allticks' : false,
+            side: xOpposite ? 'top' : 'bottom',
             tickwidth: 1,
             ticklen: 5,
             showline: true,
             showgrid: xGrid,
             titlefont: {
-                size: 12
+                size: FSIZE
             },
             tickfont: {
-                size: 12
-            }
+                size: FSIZE
+            },
+            zeroline: false
         },
         yaxis: {
-            autorange: yReversed ? 'reversed' : true,
-            range: yLog? [Math.log10(yAxisMin), Math.log10(yAxisMax)] : [yAxisMin, yAxisMax],
+            autorange: false,
+            range: getRange(yAxisMin, yAxisMax, yLog, yReversed),
             title: yTitle,
             gridLineWidth: 1,
             type: yLog ? 'log' : 'linear',
             lineColor: '#e9e9e9',
-            mirror: yOpposite ? 'all' : false,
+            side: yOpposite ? 'right' : 'left',
             tickwidth: 1,
             ticklen: 5,
             showline: true,
             showgrid: yGrid,
             titlefont: {
-                size: 12
+                size: FSIZE
             },
             tickfont: {
-                size: 12
-            }
+                size: FSIZE
+            },
+            zeroline: false
         },
         margin: {
-            l: 65,
-            r: 5,
-            b: 55,
-            t: 5,
+            l: yOpposite ? MIN_MARGIN_PX : Y_TICKLBL_PX,
+            r: yOpposite ? Y_TICKLBL_PX : MIN_MARGIN_PX,
+            b: xOpposite ? MIN_MARGIN_PX: X_TICKLBL_PX,
+            t: xOpposite ? X_TICKLBL_PX: MIN_MARGIN_PX,
             pad: 2
         }
     };
 
-
-    //const minMaxSeries = {
-    //    // This series is to make sure the axes are created.
-    //    // Without actual series, xAxis creation is deferred
-    //    // and there is no way to get value to pixel conversion
-    //    // for sizing the symbol
-    //    //id: MINMAX,
-    //    name: MINMAX,
-    //    hoverinfo: 'skip',
-    //    type: scatter,
-    //    mode: 'markers',
-    //    marker: {
-    //        radius: 1,
-    //        color: 'rgba(240, 240, 240, 0.1)'
-    //    },
-    //    x: decimateKey? [selFiniteMax(xMin, xDataMin), selFiniteMin(xMax, xDataMax)] : [],   //handle logs?
-    //    y: decimateKey? [selFiniteMax(yMin,yDataMin), selFiniteMin(yMax,yDataMax)] : [],
-    //    showlegend: false,
-    //};
     return {plotlyData, plotlyLayout, plotlyDivStyle};
 
 }
 
+/**
+ * Return an index of a trace with the given name
+ * @param {{plotlyData: Array, plotlyLayout: Object, plotlyDivStyle: Object}} chartingInfo
+ * @param {string} name - name of the trace
+ * @returns {number} index of the trace
+ */
 function getTraceIdx(chartingInfo, name) {
     return chartingInfo.plotlyData.findIndex((t) => {return t.name === name;});
 }
@@ -305,16 +322,14 @@ export class XYPlotPlotly extends React.Component {
         super(props);
 
         this.state = {
-            dataUpdateTraces: undefined,
-            dataUpdate: null,
-            layoutUpdate: null
+            //dataUpdateTraces: undefined,
+            //dataUpdate: null,
+            //layoutUpdate: null
         };
 
         this.afterRedraw= this.afterRedraw.bind(this);
         this.updateSelectionRect = this.updateSelectionRect.bind(this);
-        this.adjustPlotDisplay = this.adjustPlotDisplay.bind(this);
         this.onSelectionEvent = this.onSelectionEvent.bind(this);
-        this.shouldAnimate = this.shouldAnimate.bind(this);
     }
 
     componentWillReceiveProps(nextProps) {
@@ -402,29 +417,35 @@ export class XYPlotPlotly extends React.Component {
                     //const yoptions = {};
                     const newXOptions = getXAxisOptions(newParams);
                     const newYOptions = getYAxisOptions(newParams);
-                    if (!shallowequal(getXAxisOptions(params), newXOptions)) {
+                    const oldXOptions = getXAxisOptions(params);
+                    const oldYOptions = getYAxisOptions(params);
+                    if (!shallowequal(oldXOptions, newXOptions)) {
                         updates['xaxis.title'] = newXOptions.xTitle;
                         updates['xaxis.showgrid'] = newXOptions.xGrid;
-                        updates['xaxis.autorange'] = newXOptions.xReversed ? 'reversed' : true;
-                        updates['xaxis.mirror'] = newXOptions.xOpposite ? 'allticks' : false;
+                        updates['xaxis.side'] = newXOptions.xOpposite ? 'top' : 'bottom';
                         updates['xaxis.type'] = newXOptions.xLog ? 'log' : 'linear';
+                        updates['margin.b'] = newXOptions.xOpposite ? MIN_MARGIN_PX : X_TICKLBL_PX;
+                        updates['margin.t'] = newXOptions.xOpposite ? X_TICKLBL_PX : MIN_MARGIN_PX;
                     }
-                    if (!shallowequal(getYAxisOptions(params), newYOptions)) {
+                    if (!shallowequal(oldYOptions, newYOptions)) {
                         updates['yaxis.title'] = newYOptions.yTitle;
                         updates['yaxis.showgrid'] = newYOptions.yGrid;
-                        updates['yaxis.autorange'] = newYOptions.yReversed ? 'reversed' : true;
-                        updates['yaxis.mirror'] = newYOptions.yOpposite ? 'allticks' : false;
+                        updates['yaxis.side'] = newYOptions.yOpposite ? 'right' : 'left';
                         updates['yaxis.type'] = newYOptions.yLog ? 'log' : 'linear';
+                        updates['margin.l'] = newYOptions.yOpposite ? MIN_MARGIN_PX : Y_TICKLBL_PX;
+                        updates['margin.r'] = newYOptions.yOpposite ? Y_TICKLBL_PX : MIN_MARGIN_PX;
                     }
-                    if (!shallowequal(params.zoom, newParams.zoom) || !shallowequal(params.boundaries, newParams.boundaries)) {
+                    if (!shallowequal(params.zoom, newParams.zoom) || !shallowequal(params.boundaries, newParams.boundaries) ||
+                        oldXOptions.xReversed !== newXOptions.xReversed || oldYOptions.yReversed !== newYOptions.yReversed) {
                         const {xMin, xMax, yMin, yMax} = getZoomSelection(newParams);
                         const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = get(newParams, 'boundaries', {});
                         const xAxisMin = selFiniteMax(xMin, xDataMin);
                         const xAxisMax = selFiniteMin(xMax, xDataMax);
                         const yAxisMin = selFiniteMax(yMin,yDataMin);
                         const yAxisMax = selFiniteMin(yMax,yDataMax);
-                        updates['xaxis.range'] = newXOptions.xLog ? [Math.log10(xAxisMin), Math.log10(xAxisMax)] : [xAxisMin, xAxisMax];
-                        updates['yaxis.range'] = newYOptions.yLog ? [Math.log10(yAxisMin), Math.log10(yAxisMax)] : [yAxisMin, yAxisMax];
+                        updates['xaxis.autorange'] = false;
+                        updates['xaxis.range'] = getRange(xAxisMin, xAxisMax, newXOptions.xLog, newXOptions.xReversed); // no change for reverse here
+                        updates['yaxis.range'] = getRange(yAxisMin, yAxisMax, newYOptions.yLog, newYOptions.yReversed); // no change for reverse here
                     }
 
                     if (!shallowequal(params.selection, newParams.selection)) {
@@ -453,32 +474,16 @@ export class XYPlotPlotly extends React.Component {
         return true;
     }
 
-
     shouldComponentUpdate(nextProps, nextState) {
         return sCompare(nextProps, nextState);
     }
 
     componentDidMount() {
-        this.adjustPlotDisplay();
-    }
+        const {params} = this.props;
 
-    componentDidUpdate() {
-        this.adjustPlotDisplay();
-    }
-
-
-    shouldAnimate() {
-        const {data} = this.props;
-        return (!data || !data.rows || data.rows.length <= 250);
-    }
-
-    adjustPlotDisplay() {
-        //const {params} = this.props;
-
-        // TODO?
-        //if (params.selection) {
-        //    this.updateSelectionRect(params.selection);
-        //}
+        if (params.selection) {
+            this.updateSelectionRect(get(params, 'selection'), getXAxisOptions(params).xLog, getYAxisOptions(params).yLog);
+        }
     }
 
     updateSelectionRect(selection, xLog, yLog) {
@@ -529,9 +534,6 @@ export class XYPlotPlotly extends React.Component {
 
         const {decimateKey, x, y} = data;
         const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = get(params, 'boundaries', {});
-
-        // update selection rectangle
-        this.updateSelectionRect(get(params, 'selection'), getXAxisOptions(params).xLog, getYAxisOptions(params).yLog);
 
         // bin center and expression values need to be formatted
         const xFormat = (decimateKey || (x && x.match(/\W/))) ? getFormatString(Math.abs(xDataMax-xDataMin), 4) : undefined;
@@ -617,7 +619,7 @@ export class XYPlotPlotly extends React.Component {
                                dataUpdate={dataUpdate}
                                layoutUpdate={layoutUpdate}
                                config={PLOTLY_CONFIG}
-                               divUpdateCB={(div) => this.chartDiv = div}
+                               //divUpdateCB={(div) => this.chartDiv = div}
                                newPlotCB={this.afterRedraw}
                 />
             </div>
