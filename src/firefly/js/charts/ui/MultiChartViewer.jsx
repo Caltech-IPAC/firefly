@@ -83,7 +83,7 @@ export class MultiChartViewer extends Component {
 
         const makeItemViewer = (chartId) => (
             <div className={chartId === activeItemId ? 'ChartPanel ChartPanel--active' : 'ChartPanel'} onMouseDown={()=>onChartSelect(chartId)}>
-                <ChartPanel key={chartId} showToolbar={false} chartId={chartId}/>;
+                <ChartPanel key={chartId} showToolbar={false} chartId={chartId} eventCallback={{'mousedown': ()=>onChartSelect(chartId)}}/>;
             </div>
         );
 

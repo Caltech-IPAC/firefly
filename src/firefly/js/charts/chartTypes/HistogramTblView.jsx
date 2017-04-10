@@ -11,7 +11,6 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 
 import * as ChartsCntlr from '../ChartsCntlr.js';
-
 import {HistogramOptions} from '../ui/HistogramOptions.jsx';
 import {Histogram} from '../ui/Histogram.jsx';
 import {getChartProperties, updateOnStoreChange, FilterEditorWrapper} from './TblView.jsx';
@@ -34,11 +33,12 @@ export const HISTOGRAM_TBLVIEW = {
 
 
 function Chart(props) {
-    const {chartId, tblId, chartData, widthPx, heightPx} = props;
+    const {chartId, tblId, chartData, widthPx, heightPx, eventCallback} = props;
     if (!TblUtil.isFullyLoaded(tblId) || !chartData || !heightPx || !widthPx) {
         return (<div/>);
     }
-    const { isDataReady, data:histogramData, options:histogramParams} = ChartsCntlr.getChartDataElement(chartId);
+    var { isDataReady, data:histogramData, options:histogramParams} = ChartsCntlr.getChartDataElement(chartId);
+    const unit = get(TblUtil.getColumn(TblUtil.getTblById(tblId), histogramParams.columnOrExpr), 'units');
 
     if (isDataReady) {
         var logs;
@@ -66,6 +66,10 @@ function Chart(props) {
                        logs={logs}
                        xAxis={xAxis}
                        yAxis={yAxis}
+                       xUnit={unit}
+                       eventCallback={eventCallback}
+                       chartId={chartId}
+
             />
         );
     } else {
@@ -82,7 +86,8 @@ Chart.propTypes = {
     chartData : PropTypes.object,
     tblId : PropTypes.string,
     widthPx : PropTypes.number,
-    heightPx : PropTypes.number
+    heightPx : PropTypes.number,
+    eventCallback: PropTypes.object
 };
 
 function Options({chartId, optionsKey}) {
