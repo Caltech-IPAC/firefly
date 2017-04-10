@@ -526,17 +526,6 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             sortInfo: sortInfoString('SDE', false)                 // sort peak table by column SDE, descending
         }, {tbl_id: LC.PEAK_TABLE, pageSize: parseInt(peak), noPeriodUpdate: true});
 
-        if (tReq2 !== null) {
-            dispatchTableSearch(tReq2, {removable: true, tbl_group: LC.PERIODOGRAM_GROUP});
-            const xyPlotParams = {
-                x: {columnOrExpr: LC.PEAK_CNAME, options: 'grid'},
-                y: {columnOrExpr: LC.POWER_CNAME, options: 'grid'},
-                plotStyle: 'linepoints'
-
-            };
-            loadXYPlot({chartId: LC.PEAK_TABLE, tblId: LC.PEAK_TABLE, xyPlotParams, help_id: 'findpTSV.pgramresults'});
-        }
-
         var tReq = makeTblRequest('LightCurveProcessor', LC.PERIODOGRAM_TABLE, {
             original_table: srcFile,
             x: get(defPeriod, [pKeyDef.time.fkey, 'value']) || get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]),
@@ -568,6 +557,16 @@ function periodogramSuccess(popupId, hideDropDown = false) {
                 xyPlotParams,
                 help_id: 'findpTSV.pgramresults'
             });
+        }
+        if (tReq2 !== null) {
+            dispatchTableSearch(tReq2, {removable: true, tbl_group: LC.PERIODOGRAM_GROUP});
+            const xyPlotParams = {
+                x: {columnOrExpr: LC.PEAK_CNAME, options: 'grid'},
+                y: {columnOrExpr: LC.POWER_CNAME, options: 'grid'},
+                plotStyle: 'linepoints'
+
+            };
+            loadXYPlot({chartId: LC.PEAK_TABLE, tblId: LC.PEAK_TABLE, xyPlotParams, help_id: 'findpTSV.pgramresults'});
         }
 
         dispatchActiveTableChanged(LC.PERIODOGRAM_TABLE, LC.PERIODOGRAM_GROUP);
