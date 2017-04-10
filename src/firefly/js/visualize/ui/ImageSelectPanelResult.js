@@ -308,8 +308,17 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
         var groupId = null;
         var viewerIdOnPlot;
 
-        if ((plotInfo.addPlot&create) && plotInfo.viewerId) { // create plot case: only for fits viewer
-            groupId = plotInfo.viewerId;
+        if ((plotInfo.addPlot&create) && plotInfo.viewerId) { // create plot case: only for fits
+            //IRSA-142 LZ 4/07/17
+            //When the image from different groups, the wcsMatch does not work since the match only matches the image within the same group.
+            //If the group id exists, add the image into the same group
+            var vr = visRoot();
+            if (vr.activePlotId && vr.plotGroupAry[0]){
+               groupId =  vr.plotGroupAry[0].plotGroupId;
+            }
+            else{
+                groupId = plotInfo.viewerId;
+            }
             nPlotId = plotidGen.next().value;
             viewerIdOnPlot = plotInfo.viewerId;
         } else {                                            // replace and with plotId
