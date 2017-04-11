@@ -2,10 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {get} from 'lodash';
+
 import {SHOW_DROPDOWN} from './LayoutCntlr.js';
 import * as AppDataCntlr from './AppDataCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
 import BrowserCache from '../util/BrowserCache.js';
+import {smartMerge} from '../tables/TableUtil.js';
 
 const APP_PREFERENCES= 'APP_PREFERENCES';
 
@@ -15,7 +18,7 @@ export function appDataReducer(state, action={}) {
             return getInitState();
 
         case AppDataCntlr.APP_UPDATE  :
-            return Object.assign({}, state, action.payload);
+            return smartMerge(state, action.payload);
 
         case AppDataCntlr.ACTIVE_TARGET  :
             return updateActiveTarget(state,action);
@@ -53,8 +56,7 @@ export function menuReducer(state={}, action={}) {
         case SHOW_DROPDOWN  :
             const {visible, view=''} = action.payload;
             const selected = visible ? view : '';
-            return Object.assign({}, state, {selected});
-
+            return updateSet(state, ['menu', 'selected'], selected);
         default:
             return state;
     }
@@ -137,6 +139,9 @@ function getInitState() {
      * @prop {Object} commandState
      * @prop {Object.<String,String>} preferences,
      * @prop {Object} appOptions : {}
+     * @prop {Object} menu  
+     * @prop {Object} alerts  ie. system notification messages
+     * @prop {SearchInfo} searches define searches available to this application.
      */
     return {
         isReady : false,
@@ -146,7 +151,10 @@ function getInitState() {
         taskCounters: [],
         commandState:{},   // key is command id, value is anything the action drops in, only stateful commands need this
         preferences:initPreferences(),  // preferences, will be backed by local storage
-        appOptions : {}
+        appOptions : {},
+        menu: {},
+        alerts: {},
+        searches: {}
     };
 }
 

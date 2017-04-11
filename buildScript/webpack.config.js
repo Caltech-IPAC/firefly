@@ -27,6 +27,7 @@ export default function makeWebpackConfig(config) {
     config.firefly_root = config.firefly_root || path.resolve(config.src, '../..');
     config.firefly_dir = config.firefly_dir || path.resolve(config.firefly_root, 'src/firefly');
     config.project = config.project || path.resolve(config.src, '../../');
+    config.baseWarName = config.baseWarName || config.name; 
 
     var def_config = {
         env         : process.env.NODE_ENV || 'development',
@@ -35,7 +36,7 @@ export default function makeWebpackConfig(config) {
         html_dir    : 'html',
         use_loader  : true,
         filename    : '[name]-dev.js',
-        deploy_dir  : (process.env.HYDRA_ROOT || '/hydra') + `/server/tomcat/webapps/${config.name}`,
+        deploy_dir  : (process.env.HYDRA_ROOT || '/hydra') + `/server/tomcat/webapps/${config.baseWarName}`,
         alias       : {
             firefly : path.resolve(config.firefly_dir, 'js'),
             styles : path.resolve(config.firefly_dir, 'html', 'css'),

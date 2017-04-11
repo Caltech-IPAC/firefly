@@ -278,6 +278,18 @@ export function getTblById(tbl_id) {
 }
 
 /**
+ * returns all table group IDs
+ * @returns {string[]}
+ * @public
+ * @memberof firefly.util.table
+ * @func getAllTableGroupIds
+ */
+export function getAllTableGroupIds() {
+    const groups = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results']) || {};
+    return Object.keys(groups);
+}
+
+/**
  * returns the table group information
  * @param {string} tbl_group    the group name to look for
  * @returns {TableGroup}
@@ -304,6 +316,13 @@ export function findGroupByTblId(tbl_id) {
         return has(resultsRoot, [tbl_grp_id, 'tables', tbl_id]);
     });
     return groupName;
+}
+
+export function removeTablesFromGroup(tbl_group_id = 'main') {
+    const tblAry = getTblIdsByGroup(tbl_group_id);
+    tblAry && tblAry.forEach((tbl_id) => {
+        TblCntlr.dispatchTableRemove(tbl_id);
+    });
 }
 
 /**

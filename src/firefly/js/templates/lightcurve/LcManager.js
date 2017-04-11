@@ -2,12 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {get, has, isEmpty, isNil, set, cloneDeep, defer} from 'lodash';
-import {take} from 'redux-saga/effects';
+import {take, fork} from 'redux-saga/effects';
 import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
-        dispatchUpdateLayoutInfo, dropDownHandler} from '../../core/LayoutCntlr.js';
+        dispatchUpdateLayoutInfo, dropDownManager} from '../../core/LayoutCntlr.js';
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, TABLE_SEARCH, TABLE_FETCH,
         dispatchTableRemove, dispatchTableHighlight, dispatchTableFetch, dispatchTableSort} from '../../tables/TablesCntlr.js';
-import {getCellValue, getTblById, getTblIdsByGroup, getActiveTableId, smartMerge, getColumnIdx} from '../../tables/TableUtil.js';
+import {getCellValue, getTblById, getTblIdsByGroup, getActiveTableId, smartMerge, getColumnIdx, removeTablesFromGroup} from '../../tables/TableUtil.js';
 import {dispatchTableReplace} from '../../tables/TablesCntlr.js';
 import {updateSet, updateMerge, logError} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {dispatchPlotImage, visRoot, dispatchDeletePlotView,
@@ -160,14 +160,6 @@ export function updateLayoutDisplay(displayMode, periodState) {
     dispatchUpdateLayoutInfo(newLayoutInfo);
 }
 
-export function removeTablesFromGroup(tbl_group_id = 'main') {
-    const tblAry = getTblIdsByGroup(tbl_group_id);
-
-    tblAry&&tblAry.forEach((tbl_id) => {
-        dispatchTableRemove(tbl_id);
-    });
-}
-
 export var getValidValueFrom = (fields, valKey) => {
     var val =  get(fields, [valKey, 'valid']) && get(fields, [valKey, 'value']);
 
@@ -208,6 +200,7 @@ export function handleTimeColumnChange(colToSort) {
  */
 export function* lcManager(params={}) {
 
+    yield fork(dropDownManager);        // start the dropdown manager
     while (true) {
         const action = yield take([
             TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, TABLE_SEARCH, SHOW_DROPDOWN, SET_LAYOUT_MODE,
@@ -237,7 +230,6 @@ export function* lcManager(params={}) {
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;
 
-        newLayoutInfo = dropDownHandler(newLayoutInfo, action);
         switch (action.type) {
             case TABLE_SEARCH:
                 newLayoutInfo = handleNewSearch(newLayoutInfo, action);

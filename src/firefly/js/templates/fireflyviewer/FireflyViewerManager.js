@@ -2,19 +2,16 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {take} from 'redux-saga/effects';
-import {filter, isEmpty, get} from 'lodash';
+import {take, fork} from 'redux-saga/effects';
+import {filter} from 'lodash';
 
-import {LO_VIEW, SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo, dispatchUpdateLayoutInfo, dropDownHandler} from '../../core/LayoutCntlr.js';
-import {findGroupByTblId, getTblIdsByGroup, smartMerge} from '../../tables/TableUtil.js';
+import {LO_VIEW, SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo, dispatchUpdateLayoutInfo, dropDownManager} from '../../core/LayoutCntlr.js';
+import {smartMerge} from '../../tables/TableUtil.js';
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import {CHART_ADD, CHART_REMOVE} from '../../charts/ChartsCntlr.js';
 
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
-import {isMetaDataTable, isCatalogTable} from '../../metaConvert/converterUtils.js';
-import {META_VIEWER_ID} from '../../visualize/ui/TriViewImageSection.jsx';
-import {REPLACE_VIEWER_ITEMS, DEFAULT_FITS_VIEWER_ID, getViewerItemIds, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
-import {visRoot} from '../../visualize/ImagePlotCntlr.js';
+import {REPLACE_VIEWER_ITEMS} from '../../visualize/MultiViewCntlr.js';
 import {resetChartSelectOptions} from '../../ui/ChartSelectDropdown.jsx';
 
 /**
@@ -29,6 +26,7 @@ import {resetChartSelectOptions} from '../../ui/ChartSelectDropdown.jsx';
 export function* layoutManager({title, views='tables | images | xyPlots'}) {
     views = LO_VIEW.get(views) || LO_VIEW.none;
 
+    yield fork(dropDownManager);        // start the dropdown manager
     while (true) {
         const action = yield take([
             ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE,
@@ -59,25 +57,13 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         var newLayoutInfo = layoutInfo;
 
         switch (action.type) {
-            case ImagePlotCntlr.PLOT_IMAGE_START:
-            case ImagePlotCntlr.PLOT_IMAGE :
-            case REPLACE_VIEWER_ITEMS:
-                newLayoutInfo = handleNewImage(newLayoutInfo, action);
-                break;
-            case ImagePlotCntlr.DELETE_PLOT_VIEW:
-                newLayoutInfo = handlePlotDelete(newLayoutInfo, action);
-                break;
-            case TABLE_LOADED:
-            case TBL_RESULTS_ADDED:
-                newLayoutInfo = handleNewTable(newLayoutInfo, action);
-                break;
             case TBL_RESULTS_ACTIVE:
                 newLayoutInfo = handleActiveTableChange(newLayoutInfo, action);
                 break;
         }
 
         newLayoutInfo = onAnyAction(newLayoutInfo, action, views);
-        newLayoutInfo = dropDownHandler(newLayoutInfo, action);     // handles dropdown behaviors
+        // newLayoutInfo = dropDownHandler(newLayoutInfo, action);     // replaced with manager up above
 
         if (newLayoutInfo !== layoutInfo) {
             dispatchUpdateLayoutInfo(newLayoutInfo);
@@ -93,7 +79,7 @@ function onAnyAction(layoutInfo, action, views) {
     // enforce views settings
     showImages =  showImages && views.has(LO_VIEW.images);
     showXyPlots = hasXyPlots && views.has(LO_VIEW.xyPlots);
-    showTables =  hasTables && views.has(LO_VIEW.tables) && showTables;
+    showTables =  hasTables && views.has(LO_VIEW.tables);
 
     const count = filter([showTables, showXyPlots, showImages]).length;
     const closeable = count > 1;
@@ -128,111 +114,8 @@ function onAnyAction(layoutInfo, action, views) {
     return smartMerge(layoutInfo, {showTables, showImages, showXyPlots, autoExpand, mode: {expanded, standard, closeable}});
 }
 
-function handleNewTable(layoutInfo, action) {
-    const {tbl_id} = action.payload;
-    var {images={}, showImages, showTables} = layoutInfo;
-    var {coverageLockedOn, showFits, showMeta, showCoverage, selectedTab, metaDataTableId} = images;
-    const isMeta = isMetaDataTable(tbl_id);
-
-    if ((isMeta || isCatalogTable(tbl_id)) && showTables ) {
-        if (!showFits) {
-            // only show coverage if there are not images or coverage is showing
-            showFits= shouldShowFits();
-            coverageLockedOn= !showFits||coverageLockedOn;
-            selectedTab = 'coverage';
-            showCoverage = coverageLockedOn;
-            showImages = true;
-        }
-    }
-    if (isMeta && showTables) {
-        showImages = true;
-        selectedTab = 'meta';
-        showMeta = true;
-        metaDataTableId = tbl_id;
-    }
-    return smartMerge(layoutInfo, {showTables: true, showImages, images: {coverageLockedOn, showFits, showMeta, showCoverage, selectedTab, metaDataTableId}});
-}
-
 
 function handleActiveTableChange (layoutInfo, action) {
-    const {tbl_id} = action.payload;
-    var {images={}, showImages} = layoutInfo;
-    var {coverageLockedOn, showCoverage, showMeta, metaDataTableId} = images;
-
     resetChartSelectOptions();
-
-    const showFits= shouldShowFits();
-    showImages= showFits||coverageLockedOn;
-
-    if (!tbl_id) {
-        images = {showMeta: false, showCoverage: false, showFits, metaDataTableId: null};
-        return smartMerge(layoutInfo, {images, showImages:showFits, coverageLockedOn:false});
-    }
-
-    const tblGroup= findGroupByTblId(tbl_id);
-    if (!tblGroup) return smartMerge(layoutInfo, {showImages});
-
-    const tblList= getTblIdsByGroup(tblGroup);
-    if (isEmpty(tblList)) return smartMerge(layoutInfo, {showImages});
-
-    // check for catalog or meta images
-    const anyHasCatalog= hasCatalogTable(tblList);
-    const anyHasMeta= hasMetaTable(tblList);
-
-    if (coverageLockedOn) {
-        coverageLockedOn= anyHasCatalog || anyHasMeta;
-    }
-
-    if (anyHasCatalog || anyHasMeta) {
-        showCoverage = coverageLockedOn;
-        showImages = true;
-    } else {
-        showCoverage = false;
-    }
-
-    if (anyHasMeta) {
-        metaDataTableId = isMetaDataTable(tbl_id) ? tbl_id : findFirstMetaTable(tblList);
-        showMeta = true;
-        showImages = true;
-    } else {
-        metaDataTableId = null;
-        showMeta = false;
-    }
-    return smartMerge(layoutInfo, {images: {coverageLockedOn, showCoverage, showMeta, metaDataTableId}, showImages, coverageLockedOn});
-}
-
-const hasCatalogTable= (tblList) => tblList.some( (id) => isCatalogTable(id) );
-const hasMetaTable= (tblList) => tblList.some( (id) => isMetaDataTable(id) );
-const findFirstMetaTable= (tblList) => tblList.find( (id) => isMetaDataTable(id) );
-const shouldShowFits= () => !isEmpty(getViewerItemIds(getMultiViewRoot(), DEFAULT_FITS_VIEWER_ID));
-
-
-function handlePlotDelete(layoutInfo, action) {
-    var {images={}, showImages} = layoutInfo;
-    var {coverageLockedOn} = images;
-    const showFits = shouldShowFits();
-    if (!get(visRoot(), 'plotViewAry.length', 0)) {
-        coverageLockedOn = false;
-        showImages = false;
-    }
-    return smartMerge(layoutInfo, {showImages, images:{coverageLockedOn, showFits}});
-}
-
-function handleNewImage(layoutInfo, action) {
-    var {images={}} = layoutInfo;
-    var {selectedTab, showMeta, showFits, coverageLockedOn} = images;
-
-    const {viewerId} = action.payload || {};
-    if (viewerId === META_VIEWER_ID) {
-        // select image meta tab when new images are added.
-        selectedTab = 'meta';
-        showMeta = true;
-    } else if (viewerId === DEFAULT_FITS_VIEWER_ID) {
-        // select image tab when new images are added.
-        selectedTab = 'fits';
-        showFits = true;
-    } else {
-        coverageLockedOn = true;
-    }
-    return smartMerge(layoutInfo, {showImages: true, images: {coverageLockedOn, selectedTab, showMeta, showFits}});
+    return layoutInfo;
 }

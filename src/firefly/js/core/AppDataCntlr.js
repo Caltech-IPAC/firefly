@@ -3,7 +3,7 @@
  */
 
 import {take} from 'redux-saga/effects';
-import {get} from 'lodash';
+import {get, map} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
@@ -30,6 +30,7 @@ export const REINIT_RESULT_VIEW = `${APP_DATA_PATH}.reinitResultView`;
 export const ROOT_URL_PATH = `${APP_DATA_PATH}.rootUrlPath`;
 export const SET_ALERTS = `${APP_DATA_PATH}.setAlerts`;
 export const HELP_LOAD = `${APP_DATA_PATH}.helpLoad`;
+export const LOAD_SEARCHES = `${APP_DATA_PATH}.loadSearches`;
 
 /** fired when there's a connection is added/removed from this channel.  useful for tracking connections in channel, etc   */
 export const WS_CONN_UPDATED = `${APP_DATA_PATH}.wsConnUpdated`;
@@ -38,13 +39,17 @@ export const WS_CONN_UPDATED = `${APP_DATA_PATH}.wsConnUpdated`;
 export const GRAB_WINDOW_FOCUS = `${APP_DATA_PATH}.grabFocus`;
 
 
+/** @type {SearchInfo} */
+const searchInfo = {};
+
 export default {actionCreators, reducers};
 
 function actionCreators() {
     return {
         [APP_LOAD]:     loadAppData,
         [GRAB_WINDOW_FOCUS]:     grabWindowFocus,
-        [HELP_LOAD]:  onlineHelpLoad
+        [HELP_LOAD]:  onlineHelpLoad,
+        [LOAD_SEARCHES]:  loadSearches
     };
 }
 
@@ -114,6 +119,17 @@ export function dispatchSetMenu(menu) {
 }
 
 /**
+ * Load search info into the application
+ * @param {Object[]} p  dispatch parameters
+ * @param {Search[]} p.title      the title or name of this group.
+ * @param {Search[]} p.searches   an array of searches.
+ * @param {string}   [activeSearch] the current selected search.  defaults to the first search.
+ */
+export function dispatchLoadSearches(groups, activeSearch) {
+    flux.process({ type : LOAD_SEARCHES, payload: {groups, activeSearch} });
+}
+
+/**
  * updates app-data.  This does a merge with the existing data.
  * @param appData
  * @returns {{type: string, payload: *}}
@@ -141,6 +157,11 @@ export function isAppReady() {
         get(flux.getState(), [APP_DATA_PATH, 'gwtLoaded']);
 
     return getWsChannel() && get(flux.getState(), [APP_DATA_PATH, 'isReady']) && gwtReady;
+}
+
+export function getSearchInfo() {
+    const {activeSearch} = get(flux.getState(), [APP_DATA_PATH, 'searches']);
+    return Object.assign({}, searchInfo, {activeSearch});
 }
 
 export function getMenu() {
@@ -242,6 +263,20 @@ function onlineHelpLoad( action )
         if (url) {
             window.open(url, windowName);
         }
+    };
+}
+
+function loadSearches(action) {
+    return function (dispatch) {
+        var {groups=[], activeSearch} = action.payload;
+        groups.forEach( (g) => {
+            Object.entries(get(g, 'searchItems',{}))
+                  .forEach(([k,v]) => v.name = k);      // insert key as name into the search object.
+        });
+        activeSearch = activeSearch || get(Object.values(get(groups, [0, 'searchItems'], {})), [0, 'name']);    // defaults to first searchItem
+        const allSearchItems = Object.assign({}, ...map(groups, 'searchItems'));
+        Object.assign(searchInfo, {allSearchItems, groups});
+        dispatch({ type : APP_UPDATE, payload: {searches: {activeSearch}}});
     };
 }
 

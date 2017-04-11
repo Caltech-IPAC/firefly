@@ -805,6 +805,13 @@ export function getChartIdsInGroup(groupId) {
     return chartIds;
 }
 
+export function removeChartsInGroup(groupId) {
+    const chartData = get(flux.getState(), [CHART_SPACE_PATH, 'data']);
+    Object.values(chartData)
+            .filter( (v) => !groupId || v.groupId === groupId)
+            .forEach( (v) => dispatchChartRemove(v.chartId));
+}
+
 /**
  *
  * @param {string} tblId - table id
