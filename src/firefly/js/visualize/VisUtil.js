@@ -3,22 +3,21 @@
  */
 
 /**
- * Shared by client and server
  *
- * @author Trey Roby
+ * @author Trey, Booth and many more
  */
 
 
 import {isArray} from 'lodash';
+import pointInPolygon from 'point-in-polygon';
 import Enum from 'enum';
 import CoordinateSys from './CoordSys.js';
 import {CCUtil, CysConverter} from './CsysConverter.js';
-import Point, {makeImageWorkSpacePt, makeImagePt, makeScreenPt, makeWorldPt, makeDevicePt, isValidPoint} from './Point.js';
-import ZoomUtil from './ZoomUtil.js';
 import DrawOp from './draw/DrawOp.js';
 import {primePlot} from './PlotViewUtil.js';
 import {doConv} from '../astro/conv/CoordConv.js';
-import pointInPolygon from 'point-in-polygon';
+import Point, {makeImageWorkSpacePt, makeImagePt, makeScreenPt,
+               makeWorldPt, makeDevicePt, isValidPoint} from './Point.js';
 
 
 export const DtoR = Math.PI / 180.0;
@@ -57,11 +56,11 @@ export const computeScreenDistance= function (x1, y1, x2, y2) {
  * @return {number}
  */
 const computeDistance= function(p1, p2) {
-    var lon1Radius = p1.getLon() * DtoR;
-    var lon2Radius = p2.getLon() * DtoR;
-    var lat1Radius = p1.getLat() * DtoR;
-    var lat2Radius = p2.getLat() * DtoR;
-    var cosine = Math.cos(lat1Radius) * Math.cos(lat2Radius) *
+    const lon1Radius = p1.getLon() * DtoR;
+    const lon2Radius = p2.getLon() * DtoR;
+    const lat1Radius = p1.getLat() * DtoR;
+    const lat2Radius = p2.getLat() * DtoR;
+    let cosine = Math.cos(lat1Radius) * Math.cos(lat2Radius) *
                  Math.cos(lon1Radius - lon2Radius) +
                  Math.sin(lat1Radius) * Math.sin(lat2Radius);
 
@@ -76,9 +75,9 @@ const computeDistance= function(p1, p2) {
  * @return {number}
  */
 const computeSimpleDistance= function(p1, p2) {
-        var dx = p1.x - p2.x;
-        var dy = p1.y - p2.y;
-        return Math.sqrt(dx * dx + dy * dy);
+    const dx = p1.x - p2.x;
+    const dy = p1.y - p2.y;
+    return Math.sqrt(dx * dx + dy * dy);
 };
 
 
@@ -91,8 +90,8 @@ const computeSimpleDistance= function(p1, p2) {
  * @return WorldPt the world point in the new coordinate system
  */
 export function convert(wpt, to= CoordinateSys.EQ_J2000) {
-    var from = wpt.getCoordSys();
-    if (!to || from==to) return wpt;
+    const from = wpt.getCoordSys();
+    if (!to || from===to) return wpt;
 
     const tobs=  (from===CoordinateSys.EQ_B1950) ? 1983.5 : 0;
     const ll = doConv(
@@ -111,18 +110,18 @@ function convertToJ2000(wpt) { return convert(wpt); }
  * @return {{centralPoint:WorldPt, maxRadius: Number}}
  */
 export function computeCentralPointAndRadius(inPoints) {
-    var lon, lat;
-    var radius;
-    var maxRadius = Number.NEGATIVE_INFINITY;
+    let lon;
+    let radius;
+    let maxRadius = Number.NEGATIVE_INFINITY;
 
-    var points= inPoints.map((wp) => convertToJ2000(wp));
+    const points= inPoints.map((wp) => convertToJ2000(wp));
 
 
     /* get max,min of lon and lat */
-    var maxLon = Number.NEGATIVE_INFINITY;
-    var minLon = Number.POSITIVE_INFINITY;
-    var maxLat = Number.NEGATIVE_INFINITY;
-    var minLat = Number.POSITIVE_INFINITY;
+    let maxLon = Number.NEGATIVE_INFINITY;
+    let minLon = Number.POSITIVE_INFINITY;
+    let maxLat = Number.NEGATIVE_INFINITY;
+    let minLat = Number.POSITIVE_INFINITY;
 
     points.forEach((pt) => {
         if (pt.x > maxLon) {
@@ -143,9 +142,9 @@ export function computeCentralPointAndRadius(inPoints) {
     }
     lon = (maxLon + minLon) / 2;
     if (lon > 360) lon -= 360;
-    lat = (maxLat + minLat) / 2;
+    const lat = (maxLat + minLat) / 2;
 
-    var centralPoint = makeWorldPt(lon, lat);
+    const centralPoint = makeWorldPt(lon, lat);
 
 
     points.forEach((pt) => {
@@ -158,37 +157,34 @@ export function computeCentralPointAndRadius(inPoints) {
     });
 
     return {centralPoint, maxRadius};
-};
+}
 
 
 /**
  * Compute position angle
  *
- * @param ra0  the equatorial RA in degrees of the first object
- * @param dec0 the equatorial DEC in degrees of the first object
- * @param ra   the equatorial RA in degrees of the second object
- * @param dec  the equatorial DEC in degrees of the second object
- * @return position angle in degrees between the two objects
+ * @param {number} ra0  the equatorial RA in degrees of the first object
+ * @param {number} dec0 the equatorial DEC in degrees of the first object
+ * @param {number} ra   the equatorial RA in degrees of the second object
+ * @param {number} dec  the equatorial DEC in degrees of the second object
+ * @return {number} position angle in degrees between the two objects
  */
-const getPositionAngle= function(ra0, dec0, ra, dec) {
-    var alf, alf0, del, del0;
-    var sd, sd0, cd, cd0, cosda, cosd, sind, sinpa, cospa;
-    var dist;
-    var pa;
+function getPositionAngle(ra0, dec0, ra, dec) {
+    let sind, sinpa, cospa;
 
-    alf = ra * DtoR;
-    alf0 = ra0 * DtoR;
-    del = dec * DtoR;
-    del0 = dec0 * DtoR;
+    const alf = ra * DtoR;
+    const alf0 = ra0 * DtoR;
+    const del = dec * DtoR;
+    const del0 = dec0 * DtoR;
 
-    sd0 = Math.sin(del0);
-    sd = Math.sin(del);
-    cd0 = Math.cos(del0);
-    cd = Math.cos(del);
-    cosda = Math.cos(alf - alf0);
-    cosd = sd0 * sd + cd0 * cd * cosda;
-    dist = Math.acos(cosd);
-    pa = 0.0;
+    const sd0 = Math.sin(del0);
+    const sd = Math.sin(del);
+    const cd0 = Math.cos(del0);
+    const cd = Math.cos(del);
+    const cosda = Math.cos(alf - alf0);
+    const cosd = sd0 * sd + cd0 * cd * cosda;
+    let dist = Math.acos(cosd);
+    let pa = 0.0;
     if (dist > 0.0000004) {
         sind = Math.sin(dist);
         cospa = (sd * cd0 - cd * sd0 * cosda) / sind;
@@ -213,27 +209,27 @@ const getPositionAngle= function(ra0, dec0, ra, dec) {
  * @param {WorldPt} referencePosition the reference position to start
  * @param {WorldPt} rotatedReferencePosition the rotated reference position
  * @param {WorldPt} positionToRotate the position to be moved and rotated
- * @return {WorldPt} the result new world position by applying the same displacement as the one from referencePosition to rotatedReferencePosition
+ * @return {WorldPt} the result new world position by applying the same displacement as the one from
+ *                   referencePosition to rotatedReferencePosition
  */
-const getTranslateAndRotatePosition= function(referencePosition, rotatedReferencePosition, positionToRotate) {
-    var ra1, dec1,ra2,dec2,ra,dec,cos_ra,sin_ra,cos_dec,sin_dec,x,y,z, cos_theta,sin_theta, x1,y1,z1;
+export function getTranslateAndRotatePosition(referencePosition, rotatedReferencePosition, positionToRotate) {
     // Extract coordinates and transform to radians
-     ra1 = toRadians(referencePosition.getLon());
-     dec1 = toRadians(referencePosition.getLat());
-     ra2 = toRadians(rotatedReferencePosition.getLon());
-     dec2 = toRadians(rotatedReferencePosition.getLat());
-     ra = toRadians(positionToRotate.getLon());
-     dec = toRadians(positionToRotate.getLat());
+     const ra1 = toRadians(referencePosition.getLon());
+     const dec1 = toRadians(referencePosition.getLat());
+     const ra2 = toRadians(rotatedReferencePosition.getLon());
+     const dec2 = toRadians(rotatedReferencePosition.getLat());
+     const ra = toRadians(positionToRotate.getLon());
+     const dec = toRadians(positionToRotate.getLat());
 
     // Compute (x, y, z), the unit vector in R3 corresponding to positionToRotate
-     cos_ra = Math.cos(ra);
-     sin_ra = Math.sin(ra);
-     cos_dec = Math.cos(dec);
-     sin_dec = Math.sin(dec);
+     const cos_ra = Math.cos(ra);
+     const sin_ra = Math.sin(ra);
+     const cos_dec = Math.cos(dec);
+     const sin_dec = Math.sin(dec);
 
-     x = cos_ra * cos_dec;
-     y = sin_ra * cos_dec;
-     z = sin_dec;
+     let x = cos_ra * cos_dec;
+     let y = sin_ra * cos_dec;
+     let z = sin_dec;
 
     // The rotation that maps referencePosition to rotatedReferencePosition
     // can be broken down into 3 rotations. The first is a rotation by an
@@ -248,11 +244,11 @@ const getTranslateAndRotatePosition= function(referencePosition, rotatedReferenc
     // [ x1 ]   [ cos(ra1) -sin(ra1) 0 ]   [ x ]
     // [ y1 ] = [ sin(ra1) cos(ra1)  0 ] * [ y ]
     // [ z1 ]   [ 0        0         1 ]   [ z ]
-     cos_theta = Math.cos(-ra1);
-     sin_theta = Math.sin(-ra1);
-     x1 = cos_theta * x - sin_theta * y;
-     y1 = sin_theta * x + cos_theta * y;
-     z1 = z;
+     let cos_theta = Math.cos(-ra1);
+     let sin_theta = Math.sin(-ra1);
+     let x1 = cos_theta * x - sin_theta * y;
+     let y1 = sin_theta * x + cos_theta * y;
+     let z1 = z;
 
     // Rotate by angle theta = (dec1 - dec2) around the y axis:
     //
@@ -277,10 +273,9 @@ const getTranslateAndRotatePosition= function(referencePosition, rotatedReferenc
     z1 = z;
 
     // Convert the unit vector result back to a WorldPt.
-    var d, lon, lat;
-     d = x1 * x1 + y1 * y1;
-     lon = 0.0;
-     lat = 0.0;
+    const d = x1 * x1 + y1 * y1;
+    let lon = 0.0;
+    let lat = 0.0;
     if (d !== 0.0) {
         lon = toDegrees(Math.atan2(y1, x1));
         if (lon < 0.0) {
@@ -296,20 +291,20 @@ const getTranslateAndRotatePosition= function(referencePosition, rotatedReferenc
         }
     }
     return makeWorldPt(lon, lat);
-};
+}
 
 /**
  * Compute new position given a position and a distance and position angle
  *
- * @param ra   the equatorial RA in degrees of the first object
- * @param dec  the equatorial DEC in degrees of the first object
- * @param dist the distance in degrees to the second object
- * @param phi  the position angle in degrees to the second object
- * @return WorldPt of the new object
+ * @param {number} ra   the equatorial RA in degrees of the first object
+ * @param {number} dec  the equatorial DEC in degrees of the first object
+ * @param {number} dist the distance in degrees to the second object
+ * @param {number} phi  the position angle in degrees to the second object
+ * @return {WorldPt} WorldPt of the new object
  */
 const getNewPosition= function(ra, dec, dist, phi) {
-    var tmp, newdec, deltaRa;
-    var ra1, dec1;
+    let tmp;
+    let ra1;
 
     ra *= DtoR;
     dec *= DtoR;
@@ -317,12 +312,12 @@ const getNewPosition= function(ra, dec, dist, phi) {
     phi *= DtoR;
 
     tmp = Math.cos(dist) * Math.sin(dec) + Math.sin(dist) * Math.cos(dec) * Math.cos(phi);
-    newdec = Math.asin(tmp);
-    dec1 = newdec * RtoD;
+    const newdec = Math.asin(tmp);
+    const dec1 = newdec * RtoD;
 
     tmp = Math.cos(dist) * Math.cos(dec) - Math.sin(dist) * Math.sin(dec) * Math.cos(phi);
     tmp /= Math.cos(newdec);
-    deltaRa = Math.acos(tmp);
+    const deltaRa = Math.acos(tmp);
     if (Math.sin(phi) < 0.0) {
         ra1 = ra - deltaRa;
     }
@@ -331,15 +326,6 @@ const getNewPosition= function(ra, dec, dist, phi) {
     }
     ra1 *= RtoD;
     return makeWorldPt(ra1, dec1);
-};
-
-const getBestTitle= function(plot) {
-    var t = plot.plotDesc;
-    if (!t) {
-        var mpw = plot.getPlotView().getMiniPlotWidget();
-        if (mpw) t = mpw.getTitle();
-    }
-    return t;
 };
 
 
@@ -363,17 +349,22 @@ export const getRotationAngle= function(plot) {
     return retval;
 };
 
+/**
+ * Is the image positioned so that north is up.
+ * @param {WebPlot} plot
+ * @return {boolean}
+ */
 export function isPlotNorth(plot) {
-    var retval= false;
-    var ix = plot.dataWidth/ 2;
-    var iy = plot.dataHeight/ 2;
-    var cc= CysConverter.make(plot);
-    var wpt1 = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy));
+    let retval= false;
+    const ix = plot.dataWidth/ 2;
+    const iy = plot.dataHeight/ 2;
+    const cc= CysConverter.make(plot);
+    const wpt1 = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy));
     if (wpt1) {
-        var cdelt1 = cc.getImagePixelScaleInDeg();
-        var wpt2 = makeWorldPt(wpt1.getLon(), wpt1.getLat() + (Math.abs(cdelt1) / plot.zoomFactor) * (5));
-        var spt1 = cc.getScreenCoords(wpt1);
-        var spt2 = cc.getScreenCoords(wpt2);
+        const cdelt1 = cc.getImagePixelScaleInDeg();
+        const wpt2 = makeWorldPt(wpt1.getLon(), wpt1.getLat() + (Math.abs(cdelt1) / plot.zoomFactor) * (5));
+        const spt1 = cc.getScreenCoords(wpt1);
+        const spt2 = cc.getScreenCoords(wpt2);
         if (spt1 && spt2) {
             retval = (spt1.x===spt2.x && spt1.y > spt2.y);
         }
@@ -382,6 +373,11 @@ export function isPlotNorth(plot) {
 }
 
 
+/**
+ * When plot is rotated north is east on the left hand side.  This helps determine if a plot is flipped.
+ * @param plot
+ * @return {boolean}
+ */
 export function isEastLeft(plot) {
     const iy = plot.dataHeight/2;
     const cc= CysConverter.make(plot);
@@ -394,23 +390,16 @@ export function isEastLeft(plot) {
 }
 
 
-
-
-const getPossibleZoomLevels= function() {
-        return ZoomUtil.levels;
-};
-
-
 const getEstimatedFullZoomFactor= function(fullType, dataWidth, dataHeight,
                                                   screenWidth, screenHeight, tryMinFactor=-1) {
-    var zFact;
+    let zFact;
     if (fullType===FullType.ONLY_WIDTH || screenHeight <= 0 || dataHeight <= 0) {
         zFact =  screenWidth /  dataWidth;
     } else if (fullType===FullType.ONLY_HEIGHT || screenWidth <= 0 || dataWidth <= 0) {
         zFact =  screenHeight /  dataHeight;
     } else {
-        var zFactW =  screenWidth /  dataWidth;
-        var zFactH =  screenHeight /  dataHeight;
+        const zFactW =  screenWidth /  dataWidth;
+        const zFactH =  screenHeight /  dataHeight;
         if (fullType===FullType.SMART) {
             zFact = zFactW;
             if (zFactW > Math.max(tryMinFactor, 2)) {
@@ -427,15 +416,15 @@ const getEstimatedFullZoomFactor= function(fullType, dataWidth, dataHeight,
 
 /**
  * Test to see if two rectangles intersect
- * @param x0 the first point x, top left
- * @param y0 the first point y, top left
- * @param w0 the first rec width
- * @param h0 the first rec height
- * @param x the second point x, top left
- * @param y the second point y, top left
- * @param w h the second rec width
- * @param h the second rec height
- * @return true if rectangles intersect
+ * @param {number} x0 the first point x, top left
+ * @param {number} y0 the first point y, top left
+ * @param {number} w0 the first rec width
+ * @param {number} h0 the first rec height
+ * @param {number} x the second point x, top left
+ * @param {number} y the second point y, top left
+ * @param {number} w h the second rec width
+ * @param {number} h the second rec height
+ * @return {boolean} true if rectangles intersect
  */
 export const intersects= function(x0, y0, w0, h0, x, y, w, h) {
     if (w0 <= 0 || h0 <= 0 || w <= 0 || h <= 0) {
@@ -481,26 +470,26 @@ export const containsCircle= function(x, y, centerX, centerY, radius) {
 
 const getArrowCoords= function(x1, y1, x2, y2) {
 
-    var barbLength = 10;
+    const barbLength = 10;
 
     /* compute shaft angle from arrowhead to tail */
-    var deltaY = y2 - y1;
-    var deltaX = x2 - x1;
-    var shaftAngle = Math.atan2(deltaY, deltaX);
-    var barbAngle = shaftAngle - 20 * Math.PI / 180; // 20 degrees from shaft
-    var barbX = x2 - barbLength * Math.cos(barbAngle);  // end of barb
-    var barbY = y2 - barbLength * Math.sin(barbAngle);
+    const deltaY = y2 - y1;
+    const deltaX = x2 - x1;
+    const shaftAngle = Math.atan2(deltaY, deltaX);
+    const barbAngle = shaftAngle - 20 * Math.PI / 180; // 20 degrees from shaft
+    const barbX = x2 - barbLength * Math.cos(barbAngle);  // end of barb
+    const barbY = y2 - barbLength * Math.sin(barbAngle);
 
-    var extX = x2 + 6;
-    var extY = y2 + 6;
+    let extX = x2 + 6;
+    let extY = y2 + 6;
 
-    var diffX = x2 - x1;
-    var mult = ((y2 < y1) ? -1 : 1);
+    const diffX = x2 - x1;
+    const mult = ((y2 < y1) ? -1 : 1);
     if (diffX===0) {
         extX = x2;
         extY = y2 + mult * 14;
     } else {
-        var slope = ( y2 - y1) / ( x2 - x1);
+        const slope = ( y2 - y1) / ( x2 - x1);
         if (slope >= 3 || slope <= -3) {
             extX = x2;
             extY = y2 + mult * 14;
@@ -527,6 +516,11 @@ const getArrowCoords= function(x1, y1, x2, y2) {
 };
 
 
+/**
+ * Get the bounding of of the array of points
+ * @param {Array.<{x:number, y:number}>} ptAry
+ * @return {{x, y, w: number, h: number}}
+ */
 export function getBoundingBox(ptAry) {
     const sortX= ptAry.map( (pt) => pt.x).sort( (v1,v2) => v1-v2);
     const sortY= ptAry.map( (pt) => pt.y).sort( (v1,v2) => v1-v2);
@@ -541,12 +535,12 @@ export function getBoundingBox(ptAry) {
 /**
  *
  * @param {object} selection obj with two properties pt0 & pt1
- * @param plot web plot
+ * @param {WebPlot} plot web plot
  * @param objList array of DrawObj (must be an array and contain a getCenterPt() method)
  * @return {Array} indexes from the objList array that are selected
  */
 export function getSelectedPts(selection, plot, objList) {
-    var selectedList= [];
+    const selectedList= [];
     if (selection && plot && objList && objList.length) {
         const cc= CysConverter.make(plot);
         const pt0= cc.getDeviceCoords(selection.pt0);
@@ -568,71 +562,73 @@ export function getSelectedPts(selection, plot, objList) {
 }
 
 /**
- *
- * @param plot
+ * get the world point at the center of the plot
+ * @param {WebPlot} plot
  * @return {WorldPt}
  */
-export const getCenterPtOfPlot= function(plot) {
-    var dw = plot.dataWidth;
-    var dh = plot.dataHeight;
-    var ip= makeImagePt(dw/2,dh/2);
+export function getCenterPtOfPlot(plot) {
+    if (!plot) return null;
+    const ip= makeImagePt(plot.dataWidth/2,plot.dataHeight/2);
     return CCUtil.getWorldCoords(plot,ip);
-};
+}
+
+/**
+ * Return a WorldPt that is offset by the relative ra and dec from the passed in position
+ * @param {WorldPt} pos1
+ * @param {number} offsetRa
+ * @param {number} offsetDec
+ * @return {WorldPt}
+ */
+function calculatePosition(pos1, offsetRa, offsetDec ) {
+    const ra = toRadians(pos1.getLon());
+    const dec = toRadians(pos1.getLat());
+    const de = toRadians(offsetRa/3600.0); // east
+    const dn = toRadians(offsetDec)/3600.0; // north
+
+    const rhat= [];
+    const shat= [];
+    const uhat= [];
+    let ra2, dec2;
+
+    const cosRa  = Math.cos(ra);
+    const sinRa  = Math.sin(ra);
+    const cosDec = Math.cos(dec);
+    const sinDec = Math.sin(dec);
+
+    const cosDe = Math.cos(de);
+    const sinDe = Math.sin(de);
+    const cosDn = Math.cos(dn);
+    const sinDn = Math.sin(dn);
 
 
-const calculatePosition= function(pos1, offsetRa, offsetDec ) {
-        var ra = toRadians(pos1.getLon());
-        var dec = toRadians(pos1.getLat());
-        var de = toRadians(offsetRa/3600.0); // east
-        var dn = toRadians(offsetDec)/3600.0; // north
+    rhat[0] = cosDe * cosDn;
+    rhat[1] = sinDe * cosDn;
+    rhat[2] = sinDn;
 
-        var cosRa,sinRa,cosDec,sinDec;
-        var cosDe,sinDe,cosDn,sinDn;
-        var rhat= [];
-        var shat= [];
-        var uhat= [];
-        var uxy;
-        var ra2, dec2;
+    shat[0] = cosDec * rhat[0] - sinDec * rhat[2];
+    shat[1] = rhat[1];
+    shat[2] = sinDec * rhat[0] + cosDec * rhat[2];
 
-        cosRa  = Math.cos(ra);
-        sinRa  = Math.sin(ra);
-        cosDec = Math.cos(dec);
-        sinDec = Math.sin(dec);
+    uhat[0] = cosRa * shat[0] - sinRa * shat[1];
+    uhat[1] = sinRa * shat[0] + cosRa * shat[1];
+    uhat[2] = shat[2];
 
-        cosDe = Math.cos(de);
-        sinDe = Math.sin(de);
-        cosDn = Math.cos(dn);
-        sinDn = Math.sin(dn);
+    const uxy = Math.sqrt(uhat[0] * uhat[0] + uhat[1] * uhat[1]);
+    if (uxy>0.0) {
+        ra2 = Math.atan2(uhat[1], uhat[0]);
+    }
+    else {
+        ra2 = 0.0;
+    }
+    dec2 = Math.atan2(uhat[2],uxy);
 
+    ra2  = toDegrees(ra2);
+    dec2 = toDegrees(dec2);
 
-        rhat[0] = cosDe * cosDn;
-        rhat[1] = sinDe * cosDn;
-        rhat[2] = sinDn;
+    if (ra2 < 0.0) ra2 +=360.0;
 
-        shat[0] = cosDec * rhat[0] - sinDec * rhat[2];
-        shat[1] = rhat[1];
-        shat[2] = sinDec * rhat[0] + cosDec * rhat[2];
-
-        uhat[0] = cosRa * shat[0] - sinRa * shat[1];
-        uhat[1] = sinRa * shat[0] + cosRa * shat[1];
-        uhat[2] = shat[2];
-
-        uxy = Math.sqrt(uhat[0] * uhat[0] + uhat[1] * uhat[1]);
-        if (uxy>0.0) {
-            ra2 = Math.atan2(uhat[1], uhat[0]);
-        }
-        else {
-            ra2 = 0.0;
-        }
-        dec2 = Math.atan2(uhat[2],uxy);
-
-        ra2  = toDegrees(ra2);
-        dec2 = toDegrees(dec2);
-
-        if (ra2 < 0.0) ra2 +=360.0;
-
-        return makeWorldPt(ra2, dec2);
-};
+    return makeWorldPt(ra2, dec2);
+}
 
 /**
  * Find the corners of a bounding box given the center and the radius
@@ -643,16 +639,15 @@ const calculatePosition= function(pos1, offsetRa, offsetDec ) {
  * @return object with corners
  */
 const getCorners= function(center, radius) {
-        var posLeft = calculatePosition(center, +radius, 0.0);
-        var posRight = calculatePosition(center, -radius, 0.0);
-        var posUp = calculatePosition(center, 0.0, +radius);
-        var posDown = calculatePosition(center, 0.0, -radius);
-        var upperLeft = makeWorldPt(posLeft.getLon(), posUp.getLat());
-        var upperRight = makeWorldPt(posRight.getLon(), posUp.getLat());
-        var lowerLeft = makeWorldPt(posLeft.getLon(), posDown.getLat());
-        var lowerRight = makeWorldPt(posRight.getLon(), posDown.getLat());
-
-        return {upperLeft, upperRight, lowerLeft, lowerRight};
+    const posLeft = calculatePosition(center, +radius, 0.0);
+    const posRight = calculatePosition(center, -radius, 0.0);
+    const posUp = calculatePosition(center, 0.0, +radius);
+    const posDown = calculatePosition(center, 0.0, -radius);
+    const upperLeft = makeWorldPt(posLeft.getLon(), posUp.getLat());
+    const upperRight = makeWorldPt(posRight.getLon(), posUp.getLat());
+    const lowerLeft = makeWorldPt(posLeft.getLon(), posDown.getLat());
+    const lowerRight = makeWorldPt(posRight.getLon(), posDown.getLat());
+    return {upperLeft, upperRight, lowerLeft, lowerRight};
 };
 
 
@@ -667,7 +662,7 @@ const getCorners= function(center, radius) {
 const getWorldPtRepresentation= function(pt) {
     if (!isValidPoint(pt)) return null;
 
-    var retval= null;
+    let retval= null;
     switch (pt.type) {
         case Point.IM_WS_PT:
             retval= makeWorldPt(pt.x,pt.y, CoordinateSys.PIXEL);
@@ -686,7 +681,7 @@ const getWorldPtRepresentation= function(pt) {
 };
 
 const makePt= function(type,  x, y) {
-    var retval= null;
+    let retval= null;
     switch (type) {
         case Point.IM_WS_PT:
             retval= makeImageWorkSpacePt(x,y);
@@ -714,9 +709,9 @@ const makePt= function(type,  x, y) {
 export function convertAngle(from, to, angle) {
     const angleUnit = [['deg', 'degree'], 'arcmin', 'arcsec', 'radian'];
     const rIdx = angleUnit.indexOf('radian');
-    var   fromIdx, toIdx;
-    var   numAngle = (typeof angle === 'string') ? parseFloat(angle) : angle;
-    var   unitIdx = (unit) => angleUnit.findIndex( (au) => (isArray(au) ? au.includes(unit) : au === unit));
+    let fromIdx, toIdx;
+    let numAngle = (typeof angle === 'string') ? parseFloat(angle) : angle;
+    const unitIdx = (unit) => angleUnit.findIndex( (au) => (isArray(au) ? au.includes(unit) : au === unit));
 
     if (((fromIdx = unitIdx(from.toLowerCase())) < 0) ||       // invalid unit
         ((toIdx = unitIdx(to.toLowerCase())) < 0)) {
@@ -744,50 +739,24 @@ export function formatFlux(value, plot, band) {
 }
 
 export function formatFluxValue(value) {
-    var absV= Math.abs(value);
+    const absV= Math.abs(value);
     return (absV>1000||absV<.01) ?
         value.toExponential(6).replace('e+', 'E') :
         value.toFixed(6);
 }
 
 /**
- *
+ * find a point on the plot that is top and left but is still in view and on the image.
+ * If the image is off the screen the return undefined.
  * @param {PlotView} pv
  * @param {number} xOff
  * @param {number} yOff
+ * @return {DevicePt} the found point
  */
-// export function getTopmostVisiblePoint(pv,xOff, yOff) {
-//     const plot= primePlot(pv);
-//     const cc= CysConverter.make(plot);
-//     const ipt= cc.getImageCoords(makeDevicePt(xOff,yOff));
-//     // if (cc.pointInPlot(ipt)) return ipt;
-//     if (isImageCoveringArea(pv,ipt)) return ipt;
-//
-//     const zXoff= xOff/plot.zoomFactor;
-//     const zYoff= xOff/plot.zoomFactor;
-//
-//     const tryPts= [
-//         makeImagePt(1+zXoff,1+zXoff),
-//         makeImagePt(plot.dataWidth-zXoff,1+zYoff),
-//         makeImagePt(plot.dataWidth-zXoff,plot.dataHeight-zYoff),
-//         makeImagePt(1+zXoff, plot.dataHeight-zYoff),
-//     ];
-//
-//     const highPts= tryPts
-//         .map( (p) => cc.getDeviceCoords(p) )
-//         .filter( (p) => cc.pointOnDisplay(p))
-//         .sort( (p1,p2) => p1.y!==p2.y ? p1.y - p2.y : p1.x - p2.x);
-//
-//     return highPts[0];
-// }
-
-
 export function getTopmostVisiblePoint(pv,xOff, yOff) {
     const plot= primePlot(pv);
     const cc= CysConverter.make(plot);
     const ipt= cc.getImageCoords(makeDevicePt(xOff,yOff));
-    // if (cc.pointInPlot(ipt)) return ipt;
-    // if (isImageCoveringArea(pv,ipt,xOff,yOff)) return ipt;
     if (isImageCoveringArea(pv,ipt,2,2)) return ipt;
 
 
@@ -795,10 +764,10 @@ export function getTopmostVisiblePoint(pv,xOff, yOff) {
     const {viewDim} = pv;
 
     const lineSegs= [
-        {pt1: cc.getDeviceCoords(makeImagePt(0,0)), pt2: cc.getDeviceCoords(makeImagePt(dataWidth,0))},
-        {pt1: cc.getDeviceCoords(makeImagePt(dataWidth,0)), pt2: cc.getDeviceCoords(makeImagePt(dataWidth,dataHeight))},
-        {pt1: cc.getDeviceCoords(makeImagePt(dataWidth,dataHeight)), pt2: cc.getDeviceCoords(makeImagePt(0,dataHeight))},
-        {pt1: cc.getDeviceCoords(makeImagePt(0,dataHeight)), pt2: cc.getDeviceCoords(makeImagePt(0,0))}
+       {pt1: cc.getDeviceCoords(makeImagePt(0,0)), pt2: cc.getDeviceCoords(makeImagePt(dataWidth,0))},
+       {pt1: cc.getDeviceCoords(makeImagePt(dataWidth,0)), pt2: cc.getDeviceCoords(makeImagePt(dataWidth,dataHeight))},
+       {pt1: cc.getDeviceCoords(makeImagePt(dataWidth,dataHeight)), pt2: cc.getDeviceCoords(makeImagePt(0,dataHeight))},
+       {pt1: cc.getDeviceCoords(makeImagePt(0,dataHeight)), pt2: cc.getDeviceCoords(makeImagePt(0,0))}
     ];
 
     const foundSegs= lineSegs
@@ -810,7 +779,8 @@ export function getTopmostVisiblePoint(pv,xOff, yOff) {
         .sort( (l1, l2) => l1.pt1.x - l2.pt1.x);
 
     if (foundSegs[0]) {
-        const pt= findIntersectionPt(foundSegs[0].pt1.x,foundSegs[0].pt1.y,foundSegs[0].pt2.x,foundSegs[0].pt2.y, 0,0,viewDim.width-1,0);
+        const pt= findIntersectionPt(foundSegs[0].pt1.x,foundSegs[0].pt1.y,
+                                     foundSegs[0].pt2.x,foundSegs[0].pt2.y, 0,0,viewDim.width-1,0);
         return makeDevicePt(pt.x+xOff, pt.y+yOff);
     }
 
@@ -834,11 +804,17 @@ export function getTopmostVisiblePoint(pv,xOff, yOff) {
 }
 
 
-
-
+/**
+ * return true if the image is completely covering the area passed. The width and height are in Device coordinate
+ * system.
+ * @param {PlotView} pv
+ * @param {SimplePoint} pt
+ * @param {number} width in device coordinates
+ * @param {number} height in device coordinates
+ * @return {boolean} true if covering
+ */
 export function isImageCoveringArea(pv,pt, width,height) {
 
-    const {viewDim} = pv;
     const plot= primePlot(pv);
     const cc= CysConverter.make(plot);
     pt= cc.getDeviceCoords(pt);
@@ -862,15 +838,30 @@ export function isImageCoveringArea(pv,pt, width,height) {
     return testPts.every( (p) => pointInPolygon([p.x,p.y], polyPtsAsArray));
 }
 
-export function findIntersectionPt(x1, y1, x2, y2, x3, y3, x4, y4) {
-    const denom = (y4 - y3)*(x2 - x1) - (x4 - x3)*(y2 - y1);
-    if (!denom) return null;
+/**
+ * Find the point at intersection of two line segments.
+ * If the lines do intersect then return an object with the intersection point x,y and
+ * two booleans to represent it the intersection point is on each line segment.
+ * Return false if the lines do not intersect.
+ * @param {number} seg1x1 - line segment 1 first point x
+ * @param {number} seg1y1 - line segment 1 first point y
+ * @param {number} seg1x2 - line segment 1 second point x
+ * @param {number} seg1y2 - line segment 1 second point y
+ * @param {number} seg2x1 - line segment 2 first point x
+ * @param {number} sec2y2 - line segment 2 first point y
+ * @param {number} seg2x2 - line segment 2 second point x
+ * @param {number} seg2y2 - line segment 2 second point y
+ * @return {{x: number, y:number, onSeg1:boolean, onSeg2:boolean} | boolean}
+ */
+export function findIntersectionPt(seg1x1, seg1y1, seg1x2, seg1y2, seg2x1, sec2y2, seg2x2, seg2y2) {
+    const denom = (seg2y2 - sec2y2)*(seg1x2 - seg1x1) - (seg2x2 - seg2x1)*(seg1y2 - seg1y1);
+    if (!denom) return false;
 
-    const ua = ((x4 - x3)*(y1 - y3) - (y4 - y3)*(x1 - x3))/denom;
-    const ub = ((x2 - x1)*(y1 - y3) - (y2 - y1)*(x1 - x3))/denom;
+    const ua = ((seg2x2 - seg2x1)*(seg1y1 - sec2y2) - (seg2y2 - sec2y2)*(seg1x1 - seg2x1))/denom;
+    const ub = ((seg1x2 - seg1x1)*(seg1y1 - sec2y2) - (seg1y2 - seg1y1)*(seg1x1 - seg2x1))/denom;
     return {
-        x: x1 + ua*(x2 - x1),
-        y: y1 + ua*(y2 - y1),
+        x: seg1x1 + ua*(seg1x2 - seg1x1),
+        y: seg1y1 + ua*(seg1y2 - seg1y1),
         onSeg1: ua >= 0 && ua <= 1,
         onSeg2: ub >= 0 && ub <= 1
     };
@@ -882,7 +873,7 @@ export default {
     DtoR,RtoD,FullType,computeScreenDistance, computeDistance,
     computeSimpleDistance,convert,convertToJ2000,
     computeCentralPointAndRadius, getPositionAngle, getNewPosition,
-    getBestTitle, getRotationAngle,getTranslateAndRotatePosition,
+    getRotationAngle,getTranslateAndRotatePosition,
     isPlotNorth, getEstimatedFullZoomFactor,
     intersects, contains, containsRec,containsCircle,
     getArrowCoords, getSelectedPts, calculatePosition, getCorners,

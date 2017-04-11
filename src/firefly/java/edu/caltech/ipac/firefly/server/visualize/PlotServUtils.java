@@ -9,7 +9,6 @@ import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -27,9 +26,7 @@ import edu.caltech.ipac.visualize.draw.ScalableObjectPosition;
 import edu.caltech.ipac.visualize.draw.VectorObject;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.Circle;
-import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.FitsRead;
-import edu.caltech.ipac.visualize.plot.GeomException;
 import edu.caltech.ipac.visualize.plot.ImageMask;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.PlotGroup;
@@ -188,78 +185,78 @@ public class PlotServUtils {
 
 
 
-    public static File createRotatedFile(FitsRead originalFR,
-                                         String originalFileStr,
-                                         String workingFileStr,
-                                         PlotState.RotateType rotateType,
-                                         double angle,
-                                         CoordinateSys rotNorthType) throws FitsException, IOException, GeomException {
-
-        String fStr = originalFileStr != null ? originalFileStr : workingFileStr;
-        File originalFile = ServerContext.convertToFile(fStr);
-        boolean rotateNorth = (rotateType == PlotState.RotateType.NORTH);
-        File f = rotateNorth ? createRotateNorthFile(originalFile, originalFR, rotNorthType) :
-                               createRotatedAngleFile(originalFile, originalFR, angle);
-        return f;
-    }
-
-    public static File createRotateNorthFile(File originalFile,
-                                             FitsRead originalFR,
-                                             CoordinateSys rotateNorthType) throws FitsException,
-                                                                                   IOException,
-                                                                                   GeomException {
-        FitsRead northFR= null;
-        if (rotateNorthType.equals(CoordinateSys.GALACTIC)) {
-            northFR= FitsRead.createFitsReadNorthUpGalactic(originalFR);
-        }
-        else if (rotateNorthType.equals(CoordinateSys.EQ_J2000)){
-            northFR= FitsRead.createFitsReadNorthUp(originalFR);
-        }
-        else {
-            WebAssert.argTst(false, "only supports galactic and j2000");
-
-        }
-        String fname= originalFile.getName();
-        File f= File.createTempFile(FileUtil.getBase(fname) + "-rot-north",
-                "." + FileUtil.FITS,
-                ServerContext.getVisSessionDir());
-        BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
-        if (northFR!=null) northFR.writeSimpleFitsFile(stream);
-        FileUtil.silentClose(stream);
-        return f;
-    }
-
-
-    public static File createRotatedAngleFile(File originalFile, FitsRead originalFR, double angle) throws FitsException,
-                                                                                                      IOException,
-                                                                                                      GeomException {
-        FitsRead rotateFR= FitsRead.createFitsReadRotated(originalFR, angle, false);
-        String fname= originalFile.getName();
-        String angleStr= String.format("%2f", angle);
-        File f= File.createTempFile(FileUtil.getBase(fname)+"-rot-"+angleStr,
-                                    "."+FileUtil.FITS,
-                                    ServerContext.getVisSessionDir());
-        BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
-        if (rotateFR!=null) rotateFR.writeSimpleFitsFile(stream);
-        FileUtil.silentClose(stream);
-        return f;
-    }
-
-    public static File createFlipYFile(File originalFile, FitsRead originalFR) throws FitsException,
-                                                                                      IOException,
-                                                                                      GeomException {
-        FitsRead rotateFR= FitsRead.createFitsReadFlipLR(originalFR);
-        String fname= originalFile.getName();
-        String base= FileUtil.getBase(fname);
-        int idx= base.indexOf("-flip");
-        if (idx>-1) base= base.substring(0,idx);
-        File f= File.createTempFile(base+"-flip", "."+FileUtil.FITS,
-                                    ServerContext.getVisSessionDir());
-        BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
-        rotateFR.writeSimpleFitsFile(stream);
-        FileUtil.silentClose(stream);
-        return f;
-    }
+//    public static File createRotatedFile(FitsRead originalFR,
+//                                         String originalFileStr,
+//                                         String workingFileStr,
+//                                         PlotState.RotateType rotateType,
+//                                         double angle,
+//                                         CoordinateSys rotNorthType) throws FitsException, IOException, GeomException {
+//
+//        String fStr = originalFileStr != null ? originalFileStr : workingFileStr;
+//        File originalFile = ServerContext.convertToFile(fStr);
+//        boolean rotateNorth = (rotateType == PlotState.RotateType.NORTH);
+//        File f = rotateNorth ? createRotateNorthFile(originalFile, originalFR, rotNorthType) :
+//                               createRotatedAngleFile(originalFile, originalFR, angle);
+//        return f;
+//    }
+//
+//    public static File createRotateNorthFile(File originalFile,
+//                                             FitsRead originalFR,
+//                                             CoordinateSys rotateNorthType) throws FitsException,
+//                                                                                   IOException,
+//                                                                                   GeomException {
+//        FitsRead northFR= null;
+//        if (rotateNorthType.equals(CoordinateSys.GALACTIC)) {
+//            northFR= FitsRead.createFitsReadNorthUpGalactic(originalFR);
+//        }
+//        else if (rotateNorthType.equals(CoordinateSys.EQ_J2000)){
+//            northFR= FitsRead.createFitsReadNorthUp(originalFR);
+//        }
+//        else {
+//            WebAssert.argTst(false, "only supports galactic and j2000");
+//
+//        }
+//        String fname= originalFile.getName();
+//        File f= File.createTempFile(FileUtil.getBase(fname) + "-rot-north",
+//                "." + FileUtil.FITS,
+//                ServerContext.getVisSessionDir());
+//        BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
+//        if (northFR!=null) northFR.writeSimpleFitsFile(stream);
+//        FileUtil.silentClose(stream);
+//        return f;
+//    }
+//
+//
+//    public static File createRotatedAngleFile(File originalFile, FitsRead originalFR, double angle) throws FitsException,
+//                                                                                                      IOException,
+//                                                                                                      GeomException {
+//        FitsRead rotateFR= FitsRead.createFitsReadRotated(originalFR, angle, true);
+//        String fname= originalFile.getName();
+//        String angleStr= String.format("%2f", angle);
+//        File f= File.createTempFile(FileUtil.getBase(fname)+"-rot-"+angleStr,
+//                                    "."+FileUtil.FITS,
+//                                    ServerContext.getVisSessionDir());
+//        BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
+//        if (rotateFR!=null) rotateFR.writeSimpleFitsFile(stream);
+//        FileUtil.silentClose(stream);
+//        return f;
+//    }
+//
+//    public static File createFlipYFile(File originalFile, FitsRead originalFR) throws FitsException,
+//                                                                                      IOException,
+//                                                                                      GeomException {
+//        FitsRead rotateFR= FitsRead.createFitsReadFlipLR(originalFR);
+//        String fname= originalFile.getName();
+//        String base= FileUtil.getBase(fname);
+//        int idx= base.indexOf("-flip");
+//        if (idx>-1) base= base.substring(0,idx);
+//        File f= File.createTempFile(base+"-flip", "."+FileUtil.FITS,
+//                                    ServerContext.getVisSessionDir());
+//        BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
+//        rotateFR.writeSimpleFitsFile(stream);
+//        FileUtil.silentClose(stream);
+//        return f;
+//    }
 
 
     public static long getTileModTime(String fname) {

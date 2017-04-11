@@ -280,7 +280,12 @@ public class VisUtil {
         WorldPt wptC = plot.getWorldCoords(new ImageWorkSpacePt(ix, iy));
         WorldPt wpt2 = plot.getWorldCoords(new ImageWorkSpacePt(ix, iHeight/4));
         if (wptC!=null && wpt2!=null) {
-            retval = getPositionAngle(wptC.getLon(), wptC.getLat(), wpt2.getLon(), wpt2.getLat());
+            if (wptC.getLat() > wpt2.getLat()) {
+                retval = getPositionAngle(wpt2.getLon(), wpt2.getLat(), wptC.getLon(), wptC.getLat());
+            }
+            else {
+                retval = getPositionAngle(wptC.getLon(), wptC.getLat(), wpt2.getLon(), wpt2.getLat());
+            }
         }
         return retval;
     }

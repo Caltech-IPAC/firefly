@@ -4,7 +4,7 @@
 
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {isPlotNorth} from '../VisUtil.js';
+import {isPlotNorth,getCenterPtOfPlot} from '../VisUtil.js';
 import {encodeServerUrl} from '../../util/WebUtil.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
 import {DrawerComponent} from '../draw/DrawerComponent.jsx';
@@ -18,7 +18,7 @@ import {EventLayer} from './../iv/EventLayer.jsx';
 import {MouseState} from '../VisMouseSync.js';
 import {dispatchProcessScroll} from '../ImagePlotCntlr.js';
 import {makeMouseStatePayload,fireMouseCtxChange} from '../VisMouseSync.js';
-import {makeTransform,makeThumbnailTransformCSS} from '../PlotPostionUtil.js';
+import {makeTransform,makeThumbnailTransformCSS} from '../PlotTransformUtils.js';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
 
 
@@ -212,10 +212,9 @@ function getScrollBoxInfo(pv, thumbW, thumbH) {
 
 function makeDrawing(pv,width,height) {
     const plot= primePlot(pv);
-    const {dataWidth,dataHeight}= plot;
     const thumbnailTrans= makeTransform(0,0,0,0,pv.rotation,pv.flipX,pv.flipY,{width,height} );
     const cc= CysConverter.make(plot, thumbnailTrans);
-    const wptC= cc.getWorldCoords(makeImagePt(dataWidth/2,dataHeight/2));
+    const wptC= getCenterPtOfPlot(plot);
     if (!wptC) return null;
 
     const arrowLength= (width+height)/3;

@@ -242,8 +242,7 @@ function showSingleBandFluxLabel(plot, band) {
 
 function doFluxCall(plotView,iPt) {
     const plot= primePlot(plotView);
-    const {x,y}= iPt;
-    if (x >=0 && y >= 0 && x < plot.dataWidth && y < plot.dataHeight) {
+    if (CysConverter.make(plot).pointInPlot(iPt)) {
         const plotStateAry= getPlotStateAry(plotView);
         return callGetFileFlux(plotStateAry, iPt)
             .then((result) => {

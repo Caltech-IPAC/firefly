@@ -7,7 +7,7 @@ import sCompare from 'react-addons-shallow-compare';
 import {SimpleCanvas}  from '../draw/SimpleCanvas.jsx';
 import {makeDevicePt} from '../Point.js';
 import {createImageUrl,isTileVisible} from './TileDrawHelper.jsx';
-import {makeTransform} from '../PlotPostionUtil.js';
+import {makeTransform} from '../PlotTransformUtils.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {getBoundingBox} from '../VisUtil.js';
 
@@ -22,6 +22,8 @@ const containerStyle={position:'absolute',
                       background: BACKGROUND_STYLE
 };
 
+// const debugTiles= true;
+
 export class TileDrawerCanvas extends Component {
 
 
@@ -29,12 +31,8 @@ export class TileDrawerCanvas extends Component {
         super(props);
 
         this.canvas= null;
-        this.renderCnt= 0;
-
-        this.loadedImages= {
-            serverData: null,
-            images: []
-        };
+        this.loadedImages= { serverData: null, images: [] };
+        this.drawTilesForArea= this.drawTilesForArea.bind(this);
 
 
         this.drawInit= (canvas) => {
@@ -42,42 +40,41 @@ export class TileDrawerCanvas extends Component {
             this.drawTilesForArea();
         };
 
-
-        this.drawTilesForArea= () => {
-            const {canvas:targetCanvas}= this;
-            if (!targetCanvas) return;
-
-            const {plot, opacity,plotView}= this.props;
-            const tileData = plot.serverImages;
-            const scale = plot.zoomFactor/ plot.plotState.getZoomLevel();
-
-            if (this.loadedImages.serverData!==tileData.images) {
-                this.loadedImages= {
-                    serverData: tileData.images,
-                    images: [],
-                    used: []
-                };
-            }
-
-            this.loadedImages.used= [];
-
-            const {viewDim}= plotView;
-            const rootPlot= primePlot(plotView); // bounding box should us main plot not overlay plot
-            const boundingBox= computeBounding(rootPlot,viewDim.width,viewDim.height);
-
-
-            const tilesToLoad= tileData.images.filter( (tile) =>
-                          isTileVisible(tile,boundingBox.x,boundingBox.y,boundingBox.w,boundingBox.h,scale));
-
-            const offsetX= boundingBox.x>0 ? boundingBox.x : 0;
-            const offsetY= boundingBox.y>0 ? boundingBox.y : 0;
-            const drawImageFromTile= makeDrawer(plotView, targetCanvas, tilesToLoad.length, this.loadedImages,
-                                                offsetX,offsetY, scale, opacity);
-
-            tilesToLoad.forEach( (tile) => drawImageFromTile(createImageUrl(plot,tile), tile) );
-        };
     }
 
+    drawTilesForArea()  {
+        const {canvas:targetCanvas}= this;
+        if (!targetCanvas) return;
+
+        const {plot, opacity,plotView}= this.props;
+        const tileData = plot.serverImages;
+        const scale = plot.zoomFactor/ plot.plotState.getZoomLevel();
+
+        if (this.loadedImages.serverData!==tileData.images) {
+            this.loadedImages= {
+                serverData: tileData.images,
+                images: [],
+                used: []
+            };
+        }
+
+        this.loadedImages.used= [];
+
+        const {viewDim}= plotView;
+        const rootPlot= primePlot(plotView); // bounding box should us main plot not overlay plot
+        const boundingBox= computeBounding(rootPlot,viewDim.width,viewDim.height);
+
+
+        const tilesToLoad= tileData.images.filter( (tile) =>
+            isTileVisible(tile,boundingBox.x,boundingBox.y,boundingBox.w,boundingBox.h,scale));
+
+        const offsetX= boundingBox.x>0 ? boundingBox.x : 0;
+        const offsetY= boundingBox.y>0 ? boundingBox.y : 0;
+        const drawImageFromTile= makeDrawer(plotView, targetCanvas, tilesToLoad.length, this.loadedImages,
+            offsetX,offsetY, scale, opacity);
+
+        tilesToLoad.forEach( (tile) => drawImageFromTile(createImageUrl(plot,tile), tile) );
+    }
 
 
     shouldComponentUpdate(np,ns) {
@@ -86,11 +83,9 @@ export class TileDrawerCanvas extends Component {
         const {width:targetWidth, height:targetHeight}= props.plotView.viewDim;
         const {plotView:nPv}= np;
 
-        if (
-            pv.scrollX===nPv.scrollX && pv.scrollY===nPv.scrollY &&
+        if (pv.scrollX===nPv.scrollX && pv.scrollY===nPv.scrollY &&
             targetWidth===np.plotView.viewDim.width && targetHeight===np.plotView.viewDim.height &&
-            props.plot===np.plot &&
-            props.opacity===np.opacity ) {
+            props.plot===np.plot && props.opacity===np.opacity ) {
             return false;
         }
 
@@ -103,7 +98,6 @@ export class TileDrawerCanvas extends Component {
         const {plotView:pv, plot}= this.props;
         const {width, height}= pv.viewDim;
         const tileData = plot.serverImages;
-        this.renderCnt++;
 
         const scale = plot.zoomFactor/ plot.plotState.getZoomLevel();
         const style = Object.assign({}, containerStyle, {width, height});
@@ -132,7 +126,12 @@ TileDrawerCanvas.propTypes= {
 function purgeLoadedImages(loadedImages) {
     let i;
     for(i=0; (i<loadedImages.serverData.length); i++) {
-        if (!loadedImages.used[i]) loadedImages.images[i]= null;
+        if (!loadedImages.used[i]) {
+            // if (debugTiles && loadedImages.images[i]) {
+            //     console.log(`purging tile: ${loadedImages.images[i].src}`);
+            // }
+            loadedImages.images[i]= null;
+        }
     }
 }
 
@@ -165,19 +164,27 @@ function makeDrawer(plotView, targetCanvas, totalCnt, loadedImages, offsetX,offs
     }
 
 
+    offsetX= Math.trunc(offsetX);
+    offsetY= Math.trunc(offsetY);
     let renderedCnt=0;
 
     return (src, tile) => {
 
-        const x= (tile.xoff*scale)-offsetX;
-        const y= (tile.yoff*scale)-offsetY;
-        const w= tile.width*scale;
-        const h= tile.height*scale;
+        const x= Math.trunc((tile.xoff*scale)-offsetX);
+        const y= Math.trunc((tile.yoff*scale)-offsetY);
+        const w= Math.trunc(tile.width*scale);
+        const h= Math.trunc(tile.height*scale);
         const tileIdx= loadedImages.serverData.findIndex( (d) => d.url===tile.url);
 
 
         if (loadedImages.images[tileIdx]) {
             offscreenCtx.drawImage(loadedImages.images[tileIdx], x,y, w, h);
+            // if (debugTiles) {
+            //     offscreenCtx.lineWidth= 1;
+            //     offscreenCtx.strokeStyle= 'red';
+            //     offscreenCtx.strokeRect(x, y, w-1, h-1);
+            //     offscreenCtx.restore();
+            // }
             loadedImages.used[tileIdx]= true;
             renderedCnt++;
             if (renderedCnt===totalCnt) {
@@ -191,6 +198,14 @@ function makeDrawer(plotView, targetCanvas, totalCnt, loadedImages, offsetX,offs
             im.src= src;
             im.onload= () =>  {
                 offscreenCtx.drawImage(im, x, y, w, h);
+                // if (debugTiles) {
+                //     offscreenCtx.lineWidth = 1;
+                //     offscreenCtx.strokeStyle = 'blue';
+                //     offscreenCtx.strokeRect(x, y, w - 1, h - 1);
+                //     offscreenCtx.restore();
+                // }
+
+
                 loadedImages.images[tileIdx]= im;
                 loadedImages.used[tileIdx]= true;
                 renderedCnt++;

@@ -18,6 +18,7 @@ import {primePlot,
         clonePvAry,
         clonePvAryWithPv,
         applyToOnePvOrGroup,
+        matchPlotView,
         getPlotViewIdxById,
         getPlotGroupIdxById,
         findPlotGroup,
@@ -27,7 +28,7 @@ import {makeImagePt, makeWorldPt, makeScreenPt, makeDevicePt} from '../Point.js'
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import Point from '../Point.js';
-import {updateTransform} from '../PlotPostionUtil.js';
+import {updateTransform} from '../PlotTransformUtils.js';
 
 
 //============ EXPORTS ===========
@@ -90,10 +91,10 @@ export function reducer(state, action) {
         case Cntlr.RECENTER:
             retState= recenter(state,action);
             break;
-        case Cntlr.ROTATE_CLIENT:
+        case Cntlr.ROTATE:
             retState= updateClientRotation(state,action);
             break;
-        case Cntlr.FLIP_CLIENT:
+        case Cntlr.FLIP:
             retState= updateClientFlip(state,action);
             break;
         case Cntlr.CHANGE_PLOT_ATTRIBUTE :
@@ -265,9 +266,10 @@ function updateClientRotation(state,action) {
     const {plotGroupAry}= state;
     let   {plotViewAry}= state;
 
-    const plot= primePlot(state,plotId);
+    const pv= getPlotViewById(state,plotId);
+    const plot= primePlot(pv);
     if (!plot) return state;
-    if (rotateType===RotateType.NORTH && isPlotNorth(plot)) return state;
+    if (rotateType===RotateType.NORTH && isPlotNorth(plot) && !pv.rotation) return state;
 
     let targetAngle;
     let rotateNorthLock;
@@ -278,7 +280,7 @@ function updateClientRotation(state,action) {
             rotateNorthLock= true;
             break;
         case RotateType.ANGLE:
-            targetAngle= angle;
+            targetAngle= angle ? 360-angle : 0;
             rotateNorthLock= false;
             break;
         case RotateType.UNROTATE:
@@ -290,7 +292,6 @@ function updateClientRotation(state,action) {
     targetAngle= (360 + targetAngle) % 360;
     // const realAngle= (360-targetAngle) % 360;
 
-    const pv= getPlotViewById(state,plotId);
     const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
 
     plotViewAry= actionScope===ActionScope.GROUP ?
@@ -386,14 +387,18 @@ function recenter(state,action) {
     if (state.wcsMatchType) {
         const newPv= recenterPv(centerPt, centerOnImage)(pv);
         plotViewAry= replacePlotView(plotViewAry, newPv);
-        plotViewAry= updatePlotGroupScrollXY(state, plotId, plotViewAry, state.plotGroupAry,
-                                                       makeScreenPt(newPv.scrollX, newPv.scrollY));
+        state= clone(state,{plotViewAry, mpwWcsPrimId:plotId});
+        plotViewAry= matchPlotView(newPv, plotViewAry,plotGroup, (pv) => {
+            const newSp= findWCSMatchScrollPosition(state, plotId, pv.plotId, makeScreenPt(newPv.scrollX,newPv.scrollY));
+            return updatePlotViewScrollXY(pv, newSp);
+
+        } );
     }
     else {
         plotViewAry= applyToOnePvOrGroup(plotViewAry,plotId,plotGroup, recenterPv(centerPt, centerOnImage));
     }
 
-    return clone(state,{plotViewAry});
+    return clone(state,{plotViewAry, mpwWcsPrimId:plotId});
 }
 
 /**

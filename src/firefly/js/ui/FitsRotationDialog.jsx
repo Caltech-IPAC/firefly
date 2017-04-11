@@ -15,7 +15,7 @@ import {PopupPanel} from './PopupPanel.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
-import {visRoot, dispatchRotateClient} from '../visualize/ImagePlotCntlr.js';
+import {visRoot, dispatchRotate} from '../visualize/ImagePlotCntlr.js';
 import {RotateType} from '../visualize/PlotState.js';
 import {isOverlayLayersActive} from '../visualize/RelatedDataUtil.js';
 
@@ -256,7 +256,7 @@ function resultsSuccess(request,plotId) {
         // const actionScope= request.checkAllimage ? ActionScope.GROUP : ActionScope.SINGLE;
         const rotateType= angle?RotateType.ANGLE:RotateType.UNROTATE;
         // dispatchRotate({plotId, rotateType, angle, actionScope} );
-        dispatchRotateClient({plotId, rotateType, angle} );
+        dispatchRotate({plotId, rotateType, angle} );
     }
 }
 

@@ -51,9 +51,6 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.CHANGE_COLOR, new VisServerCommands.ChangeColor());
         _cmdMap.put(ServerParams.DELETE,       new VisServerCommands.DeletePlot());
         _cmdMap.put(ServerParams.CROP,         new VisServerCommands.Crop());
-        _cmdMap.put(ServerParams.ROTATE_NORTH, new VisServerCommands.RotateNorth());
-        _cmdMap.put(ServerParams.ROTATE_ANGLE, new VisServerCommands.RotateAngle());
-        _cmdMap.put(ServerParams.FLIP_Y,       new VisServerCommands.FlipImageOnY());
         _cmdMap.put(ServerParams.HISTOGRAM,    new VisServerCommands.ColorHistogram());
         _cmdMap.put(ServerParams.STAT,         new VisServerCommands.AreaStat());
         _cmdMap.put(ServerParams.HEADER,       new VisServerCommands.Header());

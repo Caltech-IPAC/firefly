@@ -36,7 +36,7 @@ export function PlotTitle({plotView:pv, titleType, brief}) {
         if (pv.plotViewCtx.rotateNorthLock) {
             rotString= 'North';
         } else {
-            const angleStr= numeral(pv.rotation).format('#');
+            const angleStr= numeral(360-pv.rotation).format('#');
             rotString= angleStr + String.fromCharCode(176);
         }
         zlStr+=',';

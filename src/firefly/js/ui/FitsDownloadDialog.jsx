@@ -22,7 +22,7 @@ import {FieldGroup} from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
-import {primePlot} from '../visualize/PlotViewUtil.js';
+import {primePlot, getActivePlotView} from '../visualize/PlotViewUtil.js';
 import {Band} from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {encodeUrl, ParamType}  from '../util/WebUtil.js';
@@ -66,7 +66,8 @@ export function showFitsDownloadDialog() {
  */
 function getInitialPlotState() {
 
-    var plot = primePlot(visRoot());
+    const plotView= getActivePlotView(visRoot())
+    var plot = primePlot(plotView);
 
 
     var plotState = plot.plotState;
@@ -104,6 +105,7 @@ function getInitialPlotState() {
     var cropNotRotate = isCrop && !isRotation ? true : false;
 
     return {
+        plotView,
         plot,
         colors,
         hasThreeColorBand: threeColorBandUsed,
@@ -237,7 +239,7 @@ function renderThreeBand(hasThreeColorBand, colors) {
 function FitsDownloadDialogForm() {
 
 
-    const { plot, colors, hasThreeColorBand, hasOperation} = getInitialPlotState();
+    const { plotView, plot, colors, hasThreeColorBand, hasOperation} = getInitialPlotState();
 
     var renderOperationButtons = renderOperationOption(hasOperation);
 
@@ -294,7 +296,7 @@ function FitsDownloadDialogForm() {
                             <div style={{'textAlign':'center', marginBottom: 20}}>
                                 < CompleteButton
                                     text='Download'
-                                    onSuccess={ (request) => resultsSuccess(request, plot )}
+                                    onSuccess={ (request) => resultsSuccess(request, plotView )}
                                     onFail={resultsFail}
                                     dialogId='fitsDownloadDialog'
                                 />
@@ -322,9 +324,10 @@ function resultsFail(request) {
  * @param request
  * @param plot
  */
-function resultsSuccess(request, plot) {
+function resultsSuccess(request, plotView) {
     // var rel = showResults(true, request);
 
+    const plot= primePlot(plotView);
     var plotState = plot.plotState;
 
     if (!Object.keys(request).length) {
@@ -372,7 +375,9 @@ function resultsSuccess(request, plot) {
         download(url);
     } else if (ext && ext.toLowerCase() === 'png') {
 
-        getImagePng(plotState, getRegionsDes(true)).then((result) => {
+        const {flipY, rotation, plotViewCtx:{rotateNorthLock} }= plotView;
+        getImagePng(plotState, getRegionsDes(true), rotateNorthLock, rotation? ((rotation-180)+360)%360 : 0, flipY).then((result) => {
+        // getImagePng(plotState, getRegionsDes(true), rotateNorthLock, rotation, flipY).then((result) => {
             var imgFile = get(result, 'ImageFileName');
 
             if (imgFile) {

@@ -24,7 +24,7 @@ import {DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import {CCUtil, CysConverter} from './../CsysConverter.js';
 import {getDefMenuItemKeys} from '../MenuItemKeys.js';
 import {ExpandType, WcsMatchType} from '../ImagePlotCntlr.js';
-import {updateTransform, makeTransform} from '../PlotPostionUtil.js';
+import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
 
 const DEF_WORKING_MSG= 'Plotting ';
 
@@ -65,6 +65,8 @@ const DEF_WORKING_MSG= 'Plotting ';
  * @prop {Object} menuItemKeys - which toolbar button are enables for this plotView
  * @prop {Object} overlayPlotViews
  * @prop {Object} options
+ * @prop {number} rotation if > 0 then the plot is rotated by this many degrees
+ * @prop {boolean} flipY if true, the the plot is flipped on the Y axis
  * @prop {PlotViewContextData} plotViewCtx
  */
 
@@ -260,21 +262,16 @@ export function updatePlotViewScrollXY(plotView,newScrollPt) {
     if (!plotView || !newScrollPt) return plotView;
 
     const plot= primePlot(plotView);
+    if (!plot) return plotView;
     const {scrollWidth,scrollHeight}= getScrollSize(plotView);
-    if (!plot || !scrollWidth || !scrollHeight) return plotView;
+    if (!scrollWidth || !scrollHeight) return plotView;
 
     const cc= CysConverter.make(plot);
     newScrollPt= cc.getScreenCoords(newScrollPt);
     const {x:newSx,y:newSy}= newScrollPt;
 
-    let newPlotView= Object.assign({},plotView, {scrollX:newSx, scrollY:newSy});
-
-    // const newPrimary= clone(plot);
-    // newPlotView.plots= plotView.plots.map( (p) => p===plot ? newPrimary : p);
-
-    newPlotView= updateTransform(newPlotView);
-
-    return newPlotView;
+    const newPlotView= Object.assign({},plotView, {scrollX:newSx, scrollY:newSy});
+    return updateTransform(newPlotView);
 }
 
 

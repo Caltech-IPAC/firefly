@@ -4,12 +4,12 @@
 
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {xor,isEmpty,get, isString, isFunction} from 'lodash';
+import {xor,isEmpty,get, isString, isFunction, throttle} from 'lodash';
 import {TileDrawerCanvas} from './iv/TileDrawerCanvas.jsx';
 import {EventLayer} from './iv/EventLayer.jsx';
 import {ImageViewerStatus} from './iv/ImageViewerStatus.jsx';
 import {makeScreenPt, makeDevicePt} from './Point.js';
-import {plotMover} from './PlotPostionUtil.js';
+import {plotMover} from './PlotTransformUtils.js';
 import {flux} from '../Firefly.js';
 import {DrawerComponent}  from './draw/DrawerComponent.jsx';
 import {CysConverter}  from './CsysConverter.js';
@@ -18,6 +18,7 @@ import {primePlot, plotInActiveGroup} from './PlotViewUtil.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from './MultiViewCntlr.js';
 import {contains, intersects} from './VisUtil.js';
 import {PlotAttribute} from './WebPlot.js';
+import BrowserInfo from '../util/BrowserInfo.js';
 
 import {
     visRoot,
@@ -137,10 +138,6 @@ export class ImageViewerLayout extends Component {
 
     eventCB(plotId,mouseState,screenPt,screenX,screenY) {
         const {drawLayersAry,plotView}= this.props;
-        //-------------------
-
-
-        //-------------------
         const mouseStatePayload= makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY);
         const list= drawLayersAry.filter( (dl) => dl.visiblePlotIdAry.includes(plotView.plotId) &&
                                                 get(dl,['mouseEventMap',mouseState.key],false) );
@@ -179,13 +176,12 @@ export class ImageViewerLayout extends Component {
          switch (mouseState) {
              case DOWN :
                  dispatchChangeActivePlotView(plotId);
-                 const {scrollX, scrollY}= this.props.plotView;
+                 const {scrollX, scrollY}= plotView;
                  this.plotDrag= plotMover(screenX,screenY,makeScreenPt(scrollX,scrollY), plotView);
                  break;
              case DRAG :
                  if (this.plotDrag) {
-                     const newScrollPt= this.plotDrag(screenX,screenY);
-                     dispatchProcessScroll({plotId,scrollPt:newScrollPt});
+                     scrollMoveThrottled(this.plotDrag, plotId, screenX,screenY);
                  }
                  break;
              case UP :
@@ -257,6 +253,22 @@ ImageViewerLayout.propTypes= {
 };
 
 
+function scrollMove(plotDrag, plotId, screenX,screenY) {
+    const newScrollPt= plotDrag(screenX,screenY);
+    dispatchProcessScroll({plotId,scrollPt:newScrollPt});
+}
+
+const scrollMoveThrottled= BrowserInfo.isFirefox() ? throttle(scrollMove,100) : throttle(scrollMove,30);
+
+
+/**
+ * Is any part of the image on the screen.
+ * It does this by testing to see if set of device points is inside screen rectangle or if a set of screen points
+ * is inside the device rectangle.
+ * The arrays of points, each corner and the center of the screen pt system and the device point system.
+ * @param plotView
+ * @return {boolean}
+ */
 function isImageOnScreen(plotView) {
 
     const {viewDim}= plotView;
@@ -294,7 +306,6 @@ function isImageOnScreen(plotView) {
 
 
 
-// eslint-disable-next-line valid-jsdoc
 /**
  *
  * @param {PlotView} pv
@@ -479,5 +490,4 @@ DrawingLayers.propTypes= {
     plot: PropTypes.object.isRequired,
     drawLayersIdAry: PropTypes.array.isRequired
 };
-
 

@@ -21,7 +21,7 @@ import {dispatchAddSaga} from '../../core/MasterSaga.js';
 // import {deepDiff} from '../../util/WebUtil.js';
 
 const omList= ['plotViewAry'];
-const pvPickList= ['plotViewCtx','primeIdx'];
+const pvPickList= ['plotViewCtx','primeIdx', 'flipY'];
 
 export class VisToolbar extends Component {
     constructor(props) {

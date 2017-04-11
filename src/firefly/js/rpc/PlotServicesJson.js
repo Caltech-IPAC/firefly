@@ -63,21 +63,6 @@ export function callGetWebPlotGroup(reqAry,  requestKey) {
     return doJsonRequest(ServerParams.CREATE_PLOT_GROUP, paramList,true);
 }
 
-
-/**
- *
- * @param stateAry
- * @param north
- * @param newZoomLevel
- */
-export function callRotateNorth(stateAry, north, newZoomLevel) {
-    var params =  makeParamsWithStateAry(stateAry,[
-                   {name: ServerParams.NORTH, value: north + ''},
-                   {name: ServerParams.ZOOM, value: newZoomLevel + ''},
-                 ]);
-    return doJsonRequest(ServerParams.ROTATE_NORTH, params, true);
-}
-
 /**
  *
  * @param stateAry
@@ -167,14 +152,6 @@ export  function  callGetFitsHeaderInfo(plotState, tableId) {
 }
 
 
-export function callFlipImageOnY(stateAry) {
-
-    var params =  makeParamsWithStateAry(stateAry);
-    return doJsonRequest(ServerParams.FLIP_Y, params, true);
-}
-
-
-
 export function callGetFileFlux(stateAry, pt) {
 
     var params =  makeParamsWithStateAry(stateAry,[
@@ -209,10 +186,15 @@ export function saveDS9RegionFile(regionData) {
  * @param state
  * @param regionData
  */
-export function getImagePng(state, regionData) {
-    var params= {
+export function getImagePng(state, regionData, clientIsNorth, clientRotAngle, clientFlipY) {
+
+
+    const params= {
         [ServerParams.STATE]: state.toJson(),
         [ServerParams.REGION_DATA]: regionData,
+        [ServerParams.CLIENT_IS_NORTH]: clientIsNorth,
+        [ServerParams.CLIENT_ROT_ANGLE]: clientRotAngle,
+        [ServerParams.CLIENT_FlIP_Y]: clientFlipY,
         [ServerParams.JSON_DEEP]: true
     };
     return doJsonRequest(ServerParams.IMAGE_PNG_REG, params, true);

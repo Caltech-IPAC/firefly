@@ -5,7 +5,7 @@
 import {get} from 'lodash';
 import {take} from 'redux-saga/effects';
 import ImagePlotCntlr, {WcsMatchType, IMAGE_PLOT_KEY,
-                       dispatchGroupLocking, dispatchZoom, dispatchRotateClient, dispatchFlip,
+                       dispatchGroupLocking, dispatchZoom, dispatchRotate, dispatchFlip,
                        dispatchUpdateViewSize, dispatchRecenter, ActionScope} from '../ImagePlotCntlr.js';
 import {getPlotViewById, primePlot, applyToOnePvOrGroup, findPlotGroup} from '../PlotViewUtil.js';
 import {PlotAttribute} from '../WebPlot.js';
@@ -152,7 +152,6 @@ export function modifyRequestForWcsMatch(pv, wpr) {
 
 function syncPlotToLevel(pv, masterPv, targetASpix) {
     const plot= primePlot(pv);
-    const masterPlot= primePlot(masterPv);
     if (!plot) return;
     const currZoomLevel= plot.zoomFactor;
 
@@ -165,7 +164,7 @@ function syncPlotToLevel(pv, masterPv, targetASpix) {
     if (!isFlipYMatching(pv, masterPv)) dispatchFlip({plotId:pv.plotId, actionScope: ActionScope.SINGLE});
 
 
-    if (!isRotationMatching(pv, masterPv)) rotateToMatch(plot, masterPlot, masterPv.flipY);
+    if (!isRotationMatching(pv, masterPv)) rotateToMatch(pv, masterPv, masterPv.flipY);
     zoomToLevel(plot, newZoomLevel);
 }
 
@@ -183,9 +182,13 @@ function zoomToLevel(plot, newZoomLevel) {
     }
 }
 
-function rotateToMatch(plot, masterPlot, flipY) {
-    const targetRotation= (getRotationAngle(plot) - getRotationAngle(masterPlot)) * (flipY ? 1 : -1);
-    dispatchRotateClient({
+function rotateToMatch(pv, masterPv, flipY) {
+    const plot= primePlot(pv);
+    const masterPlot= primePlot(masterPv);
+    if (!plot) return;
+    const targetRotation= ((getRotationAngle(masterPlot)+masterPv.rotation) -
+                           (getRotationAngle(plot))) * (flipY ? 1 : -1);
+    dispatchRotate({
         plotId: plot.plotId,
         rotateType: RotateType.ANGLE,
         angle: targetRotation,
@@ -210,7 +213,7 @@ function isEast(pv) {
 function isNorth(pv) {
     const plot= primePlot(pv);
     if (!plot) return false;
-    return (pv.plotViewCtx.rotateNorthLock || isPlotNorth(plot) );
+    return (pv.plotViewCtx.rotateNorthLock || (isPlotNorth(plot) && !pv.rotation) );
 }
 
 function isRotationMatching(pv1, pv2) {
@@ -223,8 +226,8 @@ function isRotationMatching(pv1, pv2) {
         return true;
     }
     else {
-        const r1= getRotationAngle(p1);
-        const r2= getRotationAngle(p2);
+        const r1= getRotationAngle(p1) + pv1.rotation;
+        const r2= getRotationAngle(p2) + pv1.rotation;
         return Math.abs(r1-r2) < .9;
     }
 }

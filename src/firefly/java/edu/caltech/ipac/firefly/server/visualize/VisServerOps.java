@@ -20,10 +20,12 @@ import edu.caltech.ipac.firefly.visualize.FileAndHeaderInfo;
 import edu.caltech.ipac.firefly.visualize.InsertBandInitializer;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.PlotState;
+import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.StretchData;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
+import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
@@ -45,7 +47,19 @@ import edu.caltech.ipac.visualize.draw.ColorDisplay;
 import edu.caltech.ipac.visualize.draw.HistogramDisplay;
 import edu.caltech.ipac.visualize.draw.Metric;
 import edu.caltech.ipac.visualize.draw.Metrics;
-import edu.caltech.ipac.visualize.plot.*;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
+import edu.caltech.ipac.visualize.plot.CropFile;
+import edu.caltech.ipac.visualize.plot.FitsRead;
+import edu.caltech.ipac.visualize.plot.Histogram;
+import edu.caltech.ipac.visualize.plot.HistogramOps;
+import edu.caltech.ipac.visualize.plot.ImagePlot;
+import edu.caltech.ipac.visualize.plot.ImagePt;
+import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
+import edu.caltech.ipac.visualize.plot.PixelValue;
+import edu.caltech.ipac.visualize.plot.PixelValueException;
+import edu.caltech.ipac.visualize.plot.PlotGroup;
+import edu.caltech.ipac.visualize.plot.ProjectionException;
+import edu.caltech.ipac.visualize.plot.Pt;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -66,8 +80,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -194,24 +206,6 @@ public class VisServerOps {
             return createError("on createPlot", null, new WebPlotRequest[]{request}, e);
         }
     }
-
-    private static WebPlotResult recreatePlot(PlotState state) throws FailedRequestException, GeomException {
-        return recreatePlot(state, null);
-    }
-
-
-    private static WebPlotResult recreatePlot(PlotState state,
-                                             String newPlotDesc) throws FailedRequestException, GeomException {
-        WebPlotInitializer wpInitAry[] = WebPlotFactory.recreate(state);
-        if (newPlotDesc != null) {
-            for (WebPlotInitializer wpInit : wpInitAry) {
-                wpInit.setPlotDesc(newPlotDesc);
-            }
-        }
-        counters.incrementVis("New Plots");
-        return makeNewPlotResult(wpInitAry,null);
-    }
-
 
     public static WebPlotResult checkPlotProgress(String progressKey) {
         Cache cache = UserCache.getInstance();
@@ -399,33 +393,6 @@ public class VisServerOps {
 
 
 
-    static List<List<PlotState>> separateStates(PlotState stateAry[]) {
-        List<List<PlotState>> stateList= new ArrayList<>();
-        List<PlotState> maskList= null;
-        for(PlotState s : stateAry) {
-            if (s.getPrimaryRequest().isPlotAsMask()) {
-                if (maskList==null) maskList= new ArrayList<>();
-                if (maskList.size()==0 ||
-                        maskList.get(0).getWorkingFitsFileStr(Band.NO_BAND).equals(s.getWorkingFitsFileStr(Band.NO_BAND))) {
-                    maskList.add(s);
-                }
-                else {
-                    stateList.add(maskList);
-                    maskList= new ArrayList<>();
-                    maskList.add(s);
-                }
-            }
-            else {
-                if (maskList!=null) stateList.add(maskList);
-                stateList.add(Collections.singletonList(s));
-                maskList= null;
-            }
-        }
-        if (maskList!=null) stateList.add(maskList);
-        return stateList;
-    }
-
-
     public static WebPlotResult crop(PlotState stateAry[], ImagePt c1, ImagePt c2, boolean cropMultiAll) {
         WebPlotResult resultAry[] = new WebPlotResult[stateAry.length];
         boolean success = true;
@@ -530,352 +497,6 @@ public class VisServerOps {
     }
 
 
-
-    public static WebPlotResult flipImageOnY(PlotState stateAry[]) {
-        WebPlotResult resultAry[] = new WebPlotResult[stateAry.length];
-        boolean success = true;
-        for (int i = 0; (i < stateAry.length); i++) {
-            resultAry[i] = flipImageOnY(stateAry[i]);
-            if (success) success = resultAry[i].isSuccess();
-        }
-        WebPlotResult result = new WebPlotResult(stateAry[0].getContextString());
-        result.putResult(WebPlotResult.RESULT_ARY, new DataEntry.WebPlotResultAry(resultAry));
-        return success ? result : resultAry[0];
-    }
-
-    private static WebPlotResult flipImageOnY(PlotState state) {
-        try {
-            boolean flipped = !state.isFlippedY();
-            PlotServUtils.statsLog("flipY");
-
-            ActiveCallCtx ctx = CtxControl.prepare(state);
-            Band bands[] = state.getBands();
-            WebPlotRequest flipReq[] = new WebPlotRequest[bands.length];
-
-
-            for (int i = 0; (i < bands.length); i++) {
-                Band band = bands[i];
-
-                FitsRead currentFR = ctx.getPlot().getHistogramOps(band, ctx.getFitsReadGroup()).getFitsRead();
-                File currentFile = ServerContext.convertToFile(state.getWorkingFitsFileStr(band));
-                File f = PlotServUtils.createFlipYFile(currentFile, currentFR);
-                String fileName = ServerContext.replaceWithPrefix(f);
-                flipReq[i] = WebPlotRequest.makeFilePlotRequest(fileName, state.getZoomLevel());
-                flipReq[i].setThumbnailSize(state.getThumbnailSize());
-                addMaskParams(flipReq[i], state.getWebPlotRequest(band));
-            }
-
-            PlotState flippedState = PlotStateUtil.create(flipReq, state);
-            if (flipped) flippedState.addOperation(PlotState.Operation.FLIP_Y);
-            else flippedState.removeOperation(PlotState.Operation.FLIP_Y);
-            flippedState.setFlippedY(flipped);
-
-            for (int i = 0; (i < bands.length); i++) {
-                flippedState.setWorkingFitsFileStr(flipReq[i].getFileName(), bands[i]);
-                flippedState.setOriginalImageIdx(state.getOriginalImageIdx(bands[i]), bands[i]);
-                flippedState.setImageIdx(0, bands[i]);
-            }
-            WebPlotResult flipResult = recreatePlot(flippedState);
-            CtxControl.updateCachedPlot(flipResult.getContextStr());
-
-            for (Band band : bands) { // mark this request as flipped so recreate works
-                flippedState.getWebPlotRequest(band).setFlipY(flipped);
-            }
-            counters.incrementVis("Flip");
-
-            return flipResult;
-
-        } catch (Exception e) {
-            return createError("on flipY", state, e);
-        }
-
-    }
-
-
-    public static WebPlotResult rotateNorth(PlotState stateAry[], boolean north, float newZoomLevel) {
-        WebPlotResult resultAry[] = new WebPlotResult[stateAry.length];
-        boolean success = true;
-        for (int i = 0; (i < stateAry.length); i++) {
-            resultAry[i] = rotateNorth(stateAry[i], north, newZoomLevel);
-            if (success) success = resultAry[i].isSuccess();
-        }
-        WebPlotResult result = new WebPlotResult(stateAry[0].getContextString());
-        result.putResult(WebPlotResult.RESULT_ARY, new DataEntry.WebPlotResultAry(resultAry));
-        return success ? result : resultAry[0];
-    }
-
-    public static WebPlotResult rotateToAngle(PlotState stateAry[],
-                                              boolean rotate,
-                                              double angle,
-                                              float newZoomLevel) {
-        boolean success = true;
-
-
-
-        List<WebPlotResult> resultList= new ArrayList<>();
-        List<List<PlotState>> stateList= separateStates(stateAry);
-        for (List<PlotState> l : stateList) {
-            if (l.get(0).getPrimaryRequest().isPlotAsMask()) {
-                PlotState sAry[]= l.toArray(new PlotState[l.size()]);
-
-                WebPlotResult r[]= rotate ? rotateMask(sAry, PlotState.RotateType.ANGLE, angle, null, newZoomLevel) :
-                        rotateMask(sAry, PlotState.RotateType.UNROTATE, Double.NaN, null, newZoomLevel);
-                resultList.addAll(Arrays.asList(r));
-                if (success) success = r[0].isSuccess();
-            }
-            else {
-                WebPlotResult aResult= rotate ? rotate(l.get(0), PlotState.RotateType.ANGLE, angle, null, newZoomLevel) :
-                                                 rotate(l.get(0), PlotState.RotateType.UNROTATE, Double.NaN, null, newZoomLevel);
-                resultList.add(aResult);
-                if (success) success = aResult.isSuccess();
-            }
-        }
-
-
-
-
-
-
-//        for (int i = 0; (i < stateAry.length); i++) {
-//            resultAry[i] = rotateToAngle(stateAry[i], rotate, angle, newZoomLevel);
-//            if (success) success = resultAry[i].isSuccess();
-//        }
-
-        WebPlotResult resultAry[]= resultList.toArray(new WebPlotResult[resultList.size()]);
-        WebPlotResult result = new WebPlotResult(stateAry[0].getContextString());
-        result.putResult(WebPlotResult.RESULT_ARY, new DataEntry.WebPlotResultAry(resultAry));
-        return success ? result : resultAry[0];
-    }
-
-
-    public static WebPlotResult rotateNorth(PlotState state, boolean north, float newZoomLevel) {
-        return north ? rotate(state, PlotState.RotateType.NORTH, Double.NaN, state.getRotateNorthType(), newZoomLevel) :
-                rotate(state, PlotState.RotateType.UNROTATE, Double.NaN, null, newZoomLevel);
-    }
-
-    private static WebPlotResult rotateToAngle(PlotState state, boolean rotate, double angle, float newZoomLevel) {
-        return rotate ? rotate(state, PlotState.RotateType.ANGLE, angle, null, newZoomLevel) :
-                rotate(state, PlotState.RotateType.UNROTATE, Double.NaN, null, newZoomLevel);
-    }
-
-
-    public static WebPlotResult[] rotateMask(PlotState state[],
-                                             PlotState.RotateType rotateType,
-                                             double angle,
-                                             CoordinateSys rotNorthType,
-                                             float inZoomLevel) {
-
-        try {
-            WebPlotResult rotateResult[]= new WebPlotResult[state.length];
-            boolean rotate = (rotateType != PlotState.RotateType.UNROTATE);
-            boolean rotateNorth = (rotateType == PlotState.RotateType.NORTH);
-            boolean multiUnrotate = false;
-
-            if (rotate) {
-                String descStr = rotateType == PlotState.RotateType.NORTH ? "mask North" : "mask," + angle + "";
-                PlotServUtils.statsLog("rotate", "rotation", descStr);
-            } else {
-                PlotServUtils.statsLog("rotate", "reset", "mask");
-                angle = 0.0;
-                multiUnrotate = true;
-            }
-
-            ActiveCallCtx ctx = CtxControl.prepare(state[0]);
-
-            float newZoomLevel = inZoomLevel > 0 ? inZoomLevel : state[0].getZoomLevel();
-            Band band = Band.NO_BAND;
-
-            if (rotate) {
-
-                WebPlotRequest rotateReq[] = new WebPlotRequest[state.length];
-                PlotState rotateState[] = new PlotState[state.length];
-
-
-
-                File f= PlotServUtils.createRotatedFile(
-                        ctx.getPlot().getHistogramOps(band, ctx.getFitsReadGroup()).getFitsRead(),
-                        state[0].getOriginalFitsFileStr(band),
-                        state[0].getWorkingFitsFileStr(band),
-                        rotateType, angle, rotNorthType);
-
-                String fReq = ServerContext.replaceWithPrefix(f);
-
-                for(int i=0; (i<rotateReq.length);i++) {
-                    rotateReq[i] = WebPlotRequest.makeFilePlotRequest(fReq, newZoomLevel);
-                    rotateReq[i].setThumbnailSize(state[0].getThumbnailSize());
-                    state[i].setZoomLevel(newZoomLevel);
-                    addMaskParams(rotateReq[i], state[i].getWebPlotRequest(band));
-                    rotateState[i] = PlotStateUtil.create(new WebPlotRequest[] {rotateReq[i]}, state[i]);
-                    rotateState[i].addOperation(PlotState.Operation.ROTATE);
-
-                    rotateState[i].setWorkingFitsFileStr(rotateReq[i].getFileName(), band);
-                    rotateState[i].setOriginalImageIdx(state[i].getOriginalImageIdx(band), band);
-                    rotateState[i].setImageIdx(0, band);
-                    if (rotateNorth) {
-                        rotateState[i].setRotateType(PlotState.RotateType.NORTH);
-                        rotateState[i].setRotateNorthType(rotNorthType);
-                    } else {
-                        if (multiUnrotate) {
-                            rotateState[i].setRotateType(PlotState.RotateType.UNROTATE);
-                            rotateState[i].setRotationAngle(0.0);
-                            rotateState[i].removeOperation(PlotState.Operation.ROTATE);
-                        } else {
-                            rotateState[i].setRotateType(PlotState.RotateType.ANGLE);
-                            rotateState[i].setRotationAngle(angle);
-                        }
-                    }
-                    rotateResult[i] = recreatePlot(rotateState[i]);
-                    CtxControl.updateCachedPlot(rotateResult[i].getContextStr());
-                    rotateState[0].getWebPlotRequest(band).setRotateNorth(true);// mark this request as rotate north so recreate works
-                }
-
-                counters.incrementVis("Rotate");
-
-            } else {
-
-                WebPlotRequest unrotateReq[] = new WebPlotRequest[state.length];
-                PlotState unrotateState[] = new PlotState[state.length];
-                String originalFile = state[0].getOriginalFitsFileStr(band);
-                if (originalFile == null) {
-                    throw new FitsException("Can't rotate back to original north, " +
-                            "there is not original file- this image is probably not rotated");
-                }
-
-                for(int i=0; (i<unrotateReq.length);i++) {
-                    unrotateReq[i] = WebPlotRequest.makeFilePlotRequest(originalFile, newZoomLevel);
-                    unrotateReq[i].setThumbnailSize(state[i].getThumbnailSize());
-                    state[i].setZoomLevel(newZoomLevel);
-                    addMaskParams(unrotateReq[i], state[i].getWebPlotRequest(band));
-                    unrotateState[i] = PlotStateUtil.create(new WebPlotRequest[] {unrotateReq[i]}, state[i]);
-                    unrotateState[i].removeOperation(PlotState.Operation.ROTATE);
-                    unrotateState[i].setWorkingFitsFileStr(state[i].getOriginalFitsFileStr(band), band);
-                    unrotateState[i].setImageIdx(state[i].getOriginalImageIdx(band), band);
-                    unrotateState[i].setOriginalImageIdx(state[i].getOriginalImageIdx(band), band);
-                    rotateResult[i] = recreatePlot(unrotateState[i]);
-                    CtxControl.updateCachedPlot(rotateResult[i].getContextStr());
-                }
-            }
-
-            return rotateResult;
-        } catch (Exception e) {
-            WebPlotResult errAry[]= new WebPlotResult[state.length];
-            for(int i=0; (i<state.length); i++) errAry[i]=  createError("on rotate north", state[i], e);
-            return errAry;
-        }
-    }
-
-
-
-    public static WebPlotResult rotate(PlotState state,
-                                       PlotState.RotateType rotateType,
-                                       double angle,
-                                       CoordinateSys rotNorthType,
-                                       float inZoomLevel) {
-
-        try {
-            WebPlotResult rotateResult;
-            boolean rotate = (rotateType != PlotState.RotateType.UNROTATE);
-            boolean rotateNorth = (rotateType == PlotState.RotateType.NORTH);
-            boolean multiUnrotate = false;
-
-            if (rotate) {
-                String descStr = rotateType == PlotState.RotateType.NORTH ? "North" : angle + "";
-                PlotServUtils.statsLog("rotate", "rotation", descStr);
-            } else {
-                PlotServUtils.statsLog("rotate", "reset");
-                angle = 0.0;
-                multiUnrotate = true;
-            }
-
-            ActiveCallCtx ctx = CtxControl.prepare(state);
-
-            float newZoomLevel = inZoomLevel > 0 ? inZoomLevel : state.getZoomLevel();
-
-            if (rotate) {
-
-                Band bands[] = state.getBands();
-                WebPlotRequest rotateReq[] = new WebPlotRequest[bands.length];
-
-
-                for (int i = 0; (i < bands.length); i++) {
-                    Band band = bands[i];
-
-
-                    File f= PlotServUtils.createRotatedFile(
-                                  ctx.getPlot().getHistogramOps(band, ctx.getFitsReadGroup()).getFitsRead(),
-                                  state.getOriginalFitsFileStr(band),
-                                  state.getWorkingFitsFileStr(band),
-                                  rotateType, angle, rotNorthType);
-
-                    String fReq = ServerContext.replaceWithPrefix(f);
-
-                    rotateReq[i] = WebPlotRequest.makeFilePlotRequest(fReq, newZoomLevel);
-                    rotateReq[i].setThumbnailSize(state.getThumbnailSize());
-                    state.setZoomLevel(newZoomLevel);
-                    addMaskParams(rotateReq[i], state.getWebPlotRequest(band));
-                }
-
-                PlotState rotateState = PlotStateUtil.create(rotateReq, state);
-                rotateState.addOperation(PlotState.Operation.ROTATE);
-                for (int i = 0; (i < bands.length); i++) {
-                    rotateState.setWorkingFitsFileStr(rotateReq[i].getFileName(), bands[i]);
-                    rotateState.setOriginalImageIdx(state.getOriginalImageIdx(bands[i]), bands[i]);
-                    rotateState.setImageIdx(0, bands[i]);
-                    if (rotateNorth) {
-                        rotateState.setRotateType(PlotState.RotateType.NORTH);
-                        rotateState.setRotateNorthType(rotNorthType);
-                    } else {
-                        if (multiUnrotate) {
-                            rotateState.setRotateType(PlotState.RotateType.UNROTATE);
-                            rotateState.setRotationAngle(0.0);
-                            rotateState.removeOperation(PlotState.Operation.ROTATE);
-                        } else {
-                            rotateState.setRotateType(PlotState.RotateType.ANGLE);
-                            rotateState.setRotationAngle(angle);
-                        }
-                    }
-                }
-                rotateResult = recreatePlot(rotateState);
-                CtxControl.updateCachedPlot(rotateResult.getContextStr());
-
-                for (Band b : bands) { // mark this request as rotate north so recreate works
-                    rotateState.getWebPlotRequest(b).setRotateNorth(true);
-                }
-                counters.incrementVis("Rotate");
-
-            } else {
-
-                Band bands[] = state.getBands();
-                WebPlotRequest unrotateReq[] = new WebPlotRequest[bands.length];
-                for (int i = 0; (i < bands.length); i++) {
-                    String originalFile = state.getOriginalFitsFileStr(bands[i]);
-                    if (originalFile == null) {
-                        throw new FitsException("Can't rotate back to original north, " +
-                                "there is not original file- this image is probably not rotated");
-                    }
-
-                    unrotateReq[i] = WebPlotRequest.makeFilePlotRequest(originalFile, newZoomLevel);
-                    unrotateReq[i].setThumbnailSize(state.getThumbnailSize());
-                    state.setZoomLevel(newZoomLevel);
-                    addMaskParams(unrotateReq[i], state.getWebPlotRequest(bands[i]));
-
-                }
-                PlotState unrotateState = PlotStateUtil.create(unrotateReq, state);
-                unrotateState.removeOperation(PlotState.Operation.ROTATE);
-                for (Band band : bands) {
-                    unrotateState.setWorkingFitsFileStr(state.getOriginalFitsFileStr(band), band);
-                    unrotateState.setImageIdx(state.getOriginalImageIdx(band), band);
-                    unrotateState.setOriginalImageIdx(state.getOriginalImageIdx(band), band);
-                }
-                rotateResult = recreatePlot(unrotateState);
-                CtxControl.updateCachedPlot(rotateResult.getContextStr());
-            }
-
-            return rotateResult;
-        } catch (Exception e) {
-            return createError("on rotate north", state, e);
-        }
-    }
 
     private static WebPlotResult getFitsHeaderInfoFull(PlotState state) {
 
@@ -1372,29 +993,108 @@ public class VisServerOps {
         }
     }
 
-
-    public static WebPlotResult getImagePngWithRegion(PlotState state, String regionData) {
+    public static WebPlotResult getImagePngWithRegion(PlotState state,
+                                                         String regionData,
+                                                         boolean clientIsNorth,
+                                                         int clientRotAngle,
+                                                         boolean clientFlipY) {
         try {
             List<String> regOutList = StringUtils.parseStringList(regionData);
             List<Region> reglist= regOutList.stream().map(s -> {
                 try {
-                     List<RegionFileElement> l= RegionFactory.parsePart(s);
-                     return (Region) l.get(0);
+                    List<RegionFileElement> l= RegionFactory.parsePart(s);
+                    return (Region) l.get(0);
                 } catch (RegParseException e) {
                     return null;
                 }
             }).collect(Collectors.toList());
 
+
+            //====================================================================
+            //====================================================================
+            //====================================================================
+            // ------------ Another concept for doing the same thing
+//            ImagePlotBuilder.SimpleResults plotR;
+//
+//            ActiveCallCtx ctx = CtxControl.prepare(state);
+//            WebPlotResult retval = new WebPlotResult(ctx.getKey());
+//
+//            if (!state.isThreeColor()) {
+//                File f = ServerContext.convertToFile(state.getWorkingFitsFileStr(Band.NO_BAND));
+//                FitsRead fr;
+//                if (clientFlipY) {
+//                    fr= FitsCacher.readFits(f)[0];
+//                    f= PlotServUtils.createFlipYFile(f, fr);
+//                }
+//                if (clientIsNorth) {
+//                    fr= FitsCacher.readFits(f)[0];
+//                    f= PlotServUtils.createRotateNorthFile(f, fr, CoordinateSys.EQ_J2000);
+////                    FitsCacher.readFits(f)[0];
+//                }
+//                else if (clientRotAngle>0) {
+//                    fr= FitsCacher.readFits(f)[0];
+//                    f= PlotServUtils.createRotatedAngleFile(f, fr, clientRotAngle);
+////                    FitsCacher.readFits(f)[0];
+//                }
+//                WebPlotRequest r= state.getWebPlotRequest(Band.NO_BAND);
+//                r.setRequestType(RequestType.FILE);
+//                r.setFileName(f.getPath());
+//                r.setInitialColorTable(state.getColorTableId());
+//                r.setInitialZoomLevel(state.getZoomLevel());
+//                r.setZoomType(ZoomType.LEVEL);
+//                plotR= ImagePlotBuilder.create(r);
+//                String pngFile= PlotPngCreator.createImagePngWithRegions(plotR.getPlot(), plotR.getFrGroup(), reglist);
+//
+//                retval.putResult(WebPlotResult.IMAGE_FILE_NAME, new DataEntry.Str(pngFile));
+//            }
+            //====================================================================
+            //====================================================================
+            //====================================================================
+
+            Map<Band,WebPlotRequest> rMap= new HashMap<>();
+
+            for(Band b : state.getBands()) {
+                WebPlotRequest r= state.getWebPlotRequest(b);
+                r.setRequestType(RequestType.FILE);
+                r.setFileName(state.getWorkingFitsFileStr(b));
+                r.setInitialColorTable(state.getColorTableId());
+                r.setInitialZoomLevel(state.getZoomLevel());
+                r.setZoomType(ZoomType.LEVEL);
+
+                if (clientFlipY) r.setFlipY(true);
+
+                if (clientIsNorth) r.setRotateNorth(true);
+                else if (clientRotAngle>0) {
+                    r.setRotateFromNorth(true);
+                    r.setRotate(true);
+                    r.setRotationAngle(clientRotAngle);
+                }
+                r.setInitialRangeValues(state.getRangeValues(Band.NO_BAND));
+                rMap.put(b,r);
+            }
+
+
+            ImagePlotBuilder.SimpleResults plotR;
+
+
+            if (state.isThreeColor()) {
+                plotR= ImagePlotBuilder.create3Color(rMap.get(Band.RED), rMap.get(Band.GREEN),rMap.get(Band.BLUE));
+            }
+            else {
+                plotR= ImagePlotBuilder.create(rMap.get(Band.NO_BAND));
+            }
+            String pngFile= PlotPngCreator.createImagePngWithRegions(plotR.getPlot(), plotR.getFrGroup(), reglist);
+
             ActiveCallCtx ctx = CtxControl.prepare(state);
-            String pngFile = PlotPngCreator.createImagePngWithRegions(ctx.getPlot(), ctx.getFitsReadGroup(), reglist);
             WebPlotResult retval = new WebPlotResult(ctx.getKey());
             retval.putResult(WebPlotResult.IMAGE_FILE_NAME, new DataEntry.Str(pngFile));
+
+
             return retval;
         } catch (Exception e) {
             return createError("on getImagePng", state, e);
         }
     }
-
 
 
 
@@ -1659,11 +1359,6 @@ public class VisServerOps {
         return retval;
     }
 
-    private static boolean isMultiOperations(PlotState state, PlotState.Operation op) {
-        int multiCnt = state.hasOperation(PlotState.Operation.CROP) ? 2 : 1; // crop does not count in this test
-        return (state.getOperations().size() > multiCnt ||
-                (state.getOperations().size() == multiCnt && !state.hasOperation(op)));
-    }
 
 
     private static WebPlotResult makeNewPlotResult(WebPlotInitializer wpInit[], String requestKey) {
@@ -1674,22 +1369,5 @@ public class VisServerOps {
         return retval;
     }
 
-    private static void addMaskParams(WebPlotRequest newR, WebPlotRequest fromR) {
-        if (fromR.containsParam(WebPlotRequest.PLOT_AS_MASK)) {
-            newR.setPlotAsMask(fromR.isPlotAsMask());
-        }
-        if (fromR.containsParam(WebPlotRequest.MASK_BITS)) {
-            newR.setMaskBits(fromR.getMaskBits());
-        }
-        if (fromR.containsParam(WebPlotRequest.MASK_COLORS)) {
-            newR.setMaskColors(fromR.getMaskColors().toArray(new String[fromR.getMaskColors().size()]));
-        }
-        if (fromR.containsParam(WebPlotRequest.MASK_REQUIRED_WIDTH)) {
-            newR.setMaskRequiredWidth(fromR.getMaskRequiredWidth());
-        }
-        if (fromR.containsParam(WebPlotRequest.MASK_REQUIRED_HEIGHT)) {
-            newR.setMaskRequiredHeight(fromR.getMaskRequiredHeight());
-        }
-    }
 }
 

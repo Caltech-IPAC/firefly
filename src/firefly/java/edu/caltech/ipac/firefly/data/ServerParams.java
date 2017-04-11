@@ -146,6 +146,9 @@ public class ServerParams {
     public static final String GET_ALL_SAVED_REQUEST= "getAllSavedRequest";
     public static final String TITLE= "Title";
     public static final String JSON_DEEP= "jsonDeep";
+    public static final String CLIENT_IS_NORTH= "clientIsNorth";
+    public static final String CLIENT_ROT_ANGLE= "clientRotAngle";
+    public static final String CLIENT_FlIP_Y= "clientFlipY";
     public static final String ACTION= "action";
 
     public static final String VIS_PUSH_ALIVE_CHECK= "pushAliveCheck";

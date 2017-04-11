@@ -13,7 +13,7 @@ import PlotGroup from '../PlotGroup.js';
 import {PlotAttribute} from '../WebPlot.js';
 import {CCUtil} from '../CsysConverter.js';
 import {getRotationAngle} from '../VisUtil.js';
-import {updateTransform} from '../PlotPostionUtil.js';
+import {updateTransform} from '../PlotTransformUtils.js';
 
 
 //============ EXPORTS ===========
@@ -67,21 +67,15 @@ export function reducer(state, action) {
             retState= plotOverlayFail(state,action);
             break;
 
-        case Cntlr.ROTATE_START  :
-        case Cntlr.FLIP_START:
         case Cntlr.CROP_START:
             retState= workingServerCall(state,action);
             break;
         
-        
-        case Cntlr.ROTATE_FAIL  :
-        case Cntlr.FLIP_FAIL:
         case Cntlr.CROP_FAIL:
             retState= endServerCallFail(state,action);
             break;
 
         case Cntlr.ROTATE  :
-        case Cntlr.FLIP:
         case Cntlr.CROP:
             retState= addPlot(state,action, false, false);
             break;

@@ -36,6 +36,7 @@ import {plotImageMaskActionCreator,
         overlayPlotChangeAttributeActionCreator} from './task/ImageOverlayTask.js';
 
 import {colorChangeActionCreator, stretchChangeActionCreator, cropActionCreator} from './task/PlotChangeTask.js';
+import {RotateType} from './PlotState.js';
 
 import {wcsMatchActionCreator} from './task/WcsMatchTask.js';
 
@@ -90,19 +91,11 @@ const STRETCH_CHANGE= `${PLOTS_PREFIX}.StretchChange`;
 const STRETCH_CHANGE_FAIL= `${PLOTS_PREFIX}.StretchChangeFail`;
 
 
-const ROTATE_START= `${PLOTS_PREFIX}.RotateChangeStart`;
 /** Action Type: image rotated */
-const ROTATE= `${PLOTS_PREFIX}.RotateChange`;
-const ROTATE_FAIL= `${PLOTS_PREFIX}.RotateChangeFail`;
+const ROTATE= `${PLOTS_PREFIX}.Rotate`;
 
-const ROTATE_CLIENT= `${PLOTS_PREFIX}.RotateClient`;
-
-/** Action Type: server image flipped call started */
-const FLIP_START= `${PLOTS_PREFIX}.FlipStart`;
 /** Action Type: image flipped */
 const FLIP= `${PLOTS_PREFIX}.Flip`;
-const FLIP_FAIL= `${PLOTS_PREFIX}.FlipFail`;
-const FLIP_CLIENT= `${PLOTS_PREFIX}.FlipClient`;
 
 
 const CROP_START= `${PLOTS_PREFIX}.CropStart`;
@@ -238,8 +231,6 @@ function actionCreators() {
         [ZOOM_IMAGE]: zoomActionCreator,
         [COLOR_CHANGE]: colorChangeActionCreator,
         [STRETCH_CHANGE]: stretchChangeActionCreator,
-        // [ROTATE]: rotateActionCreator,
-        // [FLIP]: flipActionCreator,
         [CROP]: cropActionCreator,
         [CHANGE_PRIME_PLOT] : changePrimeActionCreator,
         [CHANGE_POINT_SELECTION]: changePointSelectionActionCreator,
@@ -256,8 +247,7 @@ export default {
     ANY_REPLOT,
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,ZOOM_LOCKING,
-    ROTATE_START, ROTATE, ROTATE_FAIL, ROTATE_CLIENT,
-    FLIP_START, FLIP, FLIP_FAIL, FLIP_CLIENT,
+    ROTATE, FLIP,
     CROP_START, CROP, CROP_FAIL,
     COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL,
@@ -407,32 +397,6 @@ export function dispatchWcsMatch({plotId, matchType, dispatcher= flux.process} )
     dispatcher({ type: WCS_MATCH, payload: { plotId, matchType}});
 }
 
-/**
- * Rotate image
- *
- * Note - function parameter is a single object
- * @param {Object}  p
- * @param {string} p.plotId
- * @param {Enum} p.rotateType enum RotateType
- * @param {number} p.angle
- * @param {number} p.newZoomLevel after rotating
- * @param {boolean} p.keepWcsLock it wcs lock is on then keep is on, the default is to unlock wcs
- * @param {ActionScope} p.pactionScope enum ActionScope
- * @param {Function} p.dispatcher only for special dispatching uses such as remote
- *
- * @public
- * @function dispatchRotate
- * @memberof firefly.action
- */
-// export function dispatchRotate({plotId, rotateType, angle=-1, newZoomLevel=0,
-//                                 keepWcsLock= false,
-//                                 actionScope=ActionScope.GROUP,
-//                                 onlyRotateBase= false,
-//                                 dispatcher= flux.process} ) {
-//     dispatcher({ type: ROTATE,
-//         payload: { plotId, angle, rotateType, actionScope, newZoomLevel, onlyRotateBase, keepWcsLock}});
-// }
-
 
 /**
  * Rotate image, do it client side
@@ -449,10 +413,9 @@ export function dispatchWcsMatch({plotId, matchType, dispatcher= flux.process} )
  * @function dispatchRotate
  * @memberof firefly.action
  */
-export function dispatchRotateClient({plotId, rotateType, angle=-1,
-                                      actionScope=ActionScope.GROUP, dispatcher= flux.process} ) {
-    dispatcher({ type: ROTATE_CLIENT,
-        payload: { plotId, angle, rotateType, actionScope}});
+export function dispatchRotate({plotId, rotateType, angle=-1,
+                                actionScope=ActionScope.GROUP, dispatcher= flux.process} ) {
+    dispatcher({ type: ROTATE, payload: { plotId, angle, rotateType, actionScope}});
 }
 
 
@@ -473,7 +436,7 @@ export function dispatchRotateClient({plotId, rotateType, angle=-1,
  * @memberof firefly.action
  */
 export function dispatchFlip({plotId, isY=true, actionScope=ActionScope.GROUP, dispatcher= flux.process}) {
-    dispatcher({ type: FLIP_CLIENT, payload: { plotId, isY, actionScope}});
+    dispatcher({ type: FLIP, payload: { plotId, isY, actionScope}});
 }
 
 /**
@@ -876,6 +839,9 @@ function restoreDefaultsActionCreator(rawAction) {
         applyToOnePvOrGroup( plotViewAry, plotId, plotGroup,
             (pv)=> {
                 if (vr.plotRequestDefaults[pv.plotId]) {
+                    if (pv.rotation) dispatchRotate({plotId:pv.plotId, rotateType:RotateType.UNROTATE});
+                    if (pv.flipY) dispatchFlip({plotId:pv.plotId});
+
                     const def= vr.plotRequestDefaults[pv.plotId];
                     const viewerId= findViewerWithItemId(getMultiViewRoot(), pv.plotId, IMAGE);
                     if (def.threeColor) {
@@ -982,12 +948,6 @@ function reducer(state=initState(), action={}) {
         case PLOT_IMAGE_START  :
         case PLOT_IMAGE_FAIL  :
         case PLOT_IMAGE  :
-        // case ROTATE_START:
-        // case ROTATE_FAIL:
-        // case ROTATE:
-        case FLIP_START:
-        case FLIP_FAIL:
-        case FLIP:
         case CROP_START:
         case CROP_FAIL:
         case CROP:
@@ -1009,8 +969,8 @@ function reducer(state=initState(), action={}) {
         case COLOR_CHANGE  :
         case COLOR_CHANGE_START  :
         case COLOR_CHANGE_FAIL  :
-        case ROTATE_CLIENT:
-        case FLIP_CLIENT:
+        case ROTATE:
+        case FLIP:
         case STRETCH_CHANGE_START  :
         case STRETCH_CHANGE  :
         case STRETCH_CHANGE_FAIL:

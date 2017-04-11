@@ -251,7 +251,10 @@ function drawStandardFootprint(ctx, footprint, plot, drawParams, renderOptions, 
 	for (wpt of footprint) {
         pt0 = plot ? plot.getDeviceCoords(wpt0) : wpt0;
         pt = plot ? plot.getDeviceCoords(wpt) : wpt;
-		if (!pt0 || !pt) return;
+		if (!pt0 || !pt) {
+            if (!onlyAddToPath) DrawUtil.stroke(ctx);
+			return;
+        }
 		ctx.moveTo(pt0.x, pt0.y);
 		if (!plot || !plot.coordsWrap(wpt0, wpt)) {
 			ctx.lineTo(pt.x, pt.y);

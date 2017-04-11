@@ -378,52 +378,13 @@ public class VisServerCommands {
             SrvParam sp= new SrvParam(paramMap);
             PlotState state= sp.getState();
             String data = sp.getRequired(ServerParams.REGION_DATA);
-            WebPlotResult result = VisServerOps.getImagePngWithRegion(state, data);
+            boolean isNorth = sp.getRequiredBoolean(ServerParams.CLIENT_IS_NORTH);
+            int rotAngle = (int)sp.getRequiredFloat(ServerParams.CLIENT_ROT_ANGLE);
+            boolean flipY = sp.getRequiredBoolean(ServerParams.CLIENT_FlIP_Y);
+            WebPlotResult result = VisServerOps.getImagePngWithRegion(state, data,isNorth,rotAngle,flipY);
             return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
-
-
-    public static class RotateNorth extends ServCommand {
-
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-
-            SrvParam sp= new SrvParam(paramMap);
-//            PlotState state= sp.getState();
-            PlotState stateAry[]= sp.getStateAry();
-            boolean north= sp.getRequiredBoolean(ServerParams.NORTH);
-            float zoomLevel= sp.getOptionalFloat(ServerParams.ZOOM, -1);
-            WebPlotResult result = VisServerOps.rotateNorth(stateAry, north,zoomLevel);
-            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
-        }
-    }
-
-    public static class RotateAngle extends ServCommand {
-
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            SrvParam sp= new SrvParam(paramMap);
-//            PlotState state= sp.getState();
-            PlotState stateAry[]= sp.getStateAry();
-            boolean rotate= sp.getRequiredBoolean(ServerParams.ROTATE);
-            double angle= rotate ? sp.getRequiredDouble(ServerParams.ANGLE) : 0.0;
-            float zoomLevel= sp.getOptionalFloat(ServerParams.ZOOM, -1);
-            WebPlotResult result = VisServerOps.rotateToAngle(stateAry, rotate, angle,zoomLevel);
-            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
-        }
-    }
-
-
-    public static class FlipImageOnY extends ServCommand {
-
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            SrvParam sp= new SrvParam(paramMap);
-            PlotState stateAry[]= sp.getStateAry();
-//            PlotState state= sp.getState();
-            WebPlotResult result = VisServerOps.flipImageOnY(stateAry);
-            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
-        }
-    }
-
 
 
     public static class ColorHistogram extends ServCommand {

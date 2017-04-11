@@ -92,12 +92,13 @@ function insertTransform(inPlotView, affTrans) {
 
 
 /**
- *
+ * Call the function when drag is beginning.  It returns a function that is call on each drag event.
+ * call the returned function with each next screen location it returns the new scroll point.
  * @param originalDeviceX
  * @param originalDeviceY
  * @param {ScreenPt} originalScrollPt
  * @param {PlotView} plotView
- * @return {function(*, *)}
+ * @return {function({number}, {number})}
  */
 export function plotMover(originalDeviceX ,originalDeviceY , originalScrollPt,plotView) {
 

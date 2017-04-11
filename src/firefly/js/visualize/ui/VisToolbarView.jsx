@@ -9,7 +9,7 @@ import {getActivePlotView,
     findPlotGroup,
     getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {findRelatedData} from '../RelatedDataUtil.js';
-import {dispatchRotateClient, dispatchFlip, dispatchRecenter,
+import {dispatchRotate, dispatchFlip, dispatchRecenter,
         dispatchRestoreDefaults,dispatchGroupLocking} from '../ImagePlotCntlr.js';
 import {RotateType} from '../PlotState.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
@@ -61,6 +61,7 @@ import MASK from 'html/images/mask_28x28.png';
 import CATALOG from 'html/images/catalog_28x28.png';
 import SAVE from 'html/images/icons-2014/Save.png';
 import FLIP_Y from 'html/images/icons-2014/Mirror.png';
+import FLIP_Y_ON from 'html/images/icons-2014/Mirror-ON.png';
 import RECENTER from 'html/images/icons-2014/RecenterImage.png';
 import LOCKED from 'html/images/icons-2014/BkgLocked.png';
 import UNLOCKED from 'html/images/icons-2014/BkgUnlocked.png';
@@ -229,11 +230,15 @@ export class VisToolbarView extends Component {
                                         visible={mi.rotateNorth}
                                         onClick={doRotateNorth}
                 />
-                <ToolbarButton icon={FLIP_Y} tip='Flip the image on the Y Axis'
-                               enabled={enabled} horizontal={true}
-                               visible={mi.flipImageY}
-                               onClick={() => flipY(pv)}/>
 
+                <SimpleLayerOnOffButton plotView={pv}
+                                        isIconOn={pv ? pv.flipY : false }
+                                        tip='Flip the image on the Y Axis (i.e. Invert X)'
+                                        iconOn={FLIP_Y_ON}
+                                        iconOff={FLIP_Y}
+                                        visible={mi.flipImageY}
+                                        onClick={() => flipY(pv)}
+                />
                 <ToolbarButton icon={RECENTER} tip='Re-center image on last query or center of image'
                                enabled={enabled} horizontal={true}
                                visible={mi.recenter}
@@ -353,7 +358,7 @@ VisToolbarView.propTypes= {
 
 function doRotateNorth(pv,rotate) {
     const rotateType= rotate?RotateType.NORTH:RotateType.UNROTATE;
-    dispatchRotateClient({plotId:pv.plotId, rotateType});
+    dispatchRotate({plotId:pv.plotId, rotateType});
 }
 
 function recenter(pv) { dispatchRecenter({plotId:pv.plotId}); }

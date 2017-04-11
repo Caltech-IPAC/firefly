@@ -31,7 +31,7 @@ var idCnt=0;
 function* relocateCompassSaga({id}, dispatch, getState) {
     while (true) {
         var action = yield take([ImagePlotCntlr.RECENTER, ImagePlotCntlr.PROCESS_SCROLL,
-                                 ImagePlotCntlr.ROTATE_CLIENT, ImagePlotCntlr.FLIP_CLIENT]);
+                                 ImagePlotCntlr.ROTATE, ImagePlotCntlr.FLIP]);
         switch (action.type) {
             case ImagePlotCntlr.RECENTER:
             case ImagePlotCntlr.PROCESS_SCROLL:

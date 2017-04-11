@@ -22,7 +22,7 @@ const Point = {  SPT, IM_PT, IM_WS_PT, DEV_PT, PROJ_PT, W_PT, OFFSET_PT};
  *
  * @prop {Number} x
  * @prop {Number} y
- * @prop {String} type one of 'RenderedPt', 'ScreenPt', 'ImagePt', 'ImageWorkSpacePt', 'WorldPt', 'ViewPortPt', 'ProjectionPt', 'OffsetPt'
+ * @prop {String} type one of 'RenderedPt', 'ScreenPt', 'ImagePt', 'ImageWorkSpacePt', 'WorldPt', 'ProjectionPt', 'OffsetPt'
  * @public
  * @global
  */
@@ -250,6 +250,18 @@ export const makeImageWorkSpacePt= (x,y) => Object.assign(new SimplePt(Number(x)
  */
 export const makeScreenPt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:SPT});
 
+/**
+ * @summary A point on the physical space of the image display area
+ * @param {number|string} x - the x, string is converted to number
+ * @param {number|string} y - the y, string is converted to number
+ *
+ * @return {DevicePt}
+ *
+ * @function makeDevicePt
+ * @memberof firefly.util.image
+ * @public
+ * @global
+ */
 export const makeDevicePt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:DEV_PT});
 
 export const makeProjectionPt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:PROJ_PT});
