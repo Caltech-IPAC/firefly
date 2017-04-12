@@ -323,9 +323,7 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
                     groupId = pv.plotGroupId;
                 }
             }
-            else{
-                groupId = plotInfo.viewerId;
-            }
+           
             nPlotId = plotidGen.next().value;
             viewerIdOnPlot = plotInfo.viewerId;
         }
