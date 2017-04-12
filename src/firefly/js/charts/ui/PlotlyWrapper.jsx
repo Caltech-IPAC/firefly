@@ -3,7 +3,6 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-// import Plotly, {getPlotLy} from '../PlotlyConfig.js';
 import {getPlotLy} from '../PlotlyConfig.js';
 import Enum from 'enum';
 
