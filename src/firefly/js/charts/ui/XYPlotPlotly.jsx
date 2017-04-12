@@ -3,8 +3,6 @@ import shallowequal from 'shallowequal';
 import React, {PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 
-//import {getPlotLy} from '../PlotlyConfig.js';
-//import Plotly from '../PlotlyConfig.js';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 
 import {SelectInfo} from '../../tables/SelectInfo.js';
@@ -16,7 +14,7 @@ import {getFormatString} from '../../util/MathUtil.js';
 import {plotParamsShape, plotDataShape} from './XYPlotPropTypes.js';
 import {calculateChartSize,
     getXAxisOptions, getYAxisOptions, getZoomSelection, formatError, isLinePlot, plotErrors,
-    selFiniteMin, selFiniteMax, validate} from './XYPlot.jsx';
+    selFiniteMin, selFiniteMax} from './XYPlot.jsx';
 
 
 
@@ -31,7 +29,6 @@ const HIGHLIGHTED = 'highlighted';
 
 const datapointsColor = 'rgba(63, 127, 191, 0.5)';
 const datapointsColorWithErrors = 'rgba(63, 127, 191, 0.7)';
-//const errorBarColor = 'rgba(63, 127, 191, 0.5)'; //'rgba(255, 209, 128, 0.5)';
 const selectedColorWithErrors = 'rgba(255, 200, 0, 1)';
 const selectedColor = 'rgba(255, 200, 0, 1)';
 const highlightedColor = 'rgba(255, 165, 0, 1)';
@@ -41,16 +38,34 @@ const selectionRectColorGray = 'rgba(165, 165, 165, 0.5)';
 const Y_TICKLBL_PX = 80;
 const X_TICKLBL_PX = 60;
 const MIN_MARGIN_PX = 10;
+const MIN_YLBL_PX = 30;
 const FSIZE = 12;
+
+
+/**
+ * Get range for a plotly axis
+ * Plotly requires range to be reversed if the axis is reversed,
+ * and limits to be log if axis scale is log
+ * @param min - minimum value
+ * @param max - maximum value
+ * @param isLog - true, if an axis uses log scale
+ * @param isReversed - true, if the axis should be reversed
+ * @returns {Array<number>} an array for axis range property in plotly layout
+ */
+function getRange(min, max, isLog, isReversed) {
+    const [r1, r2] = isReversed ? [max, min] : [min, max];
+    return isLog ? [Math.log10(r1), Math.log10(r2)] : [r1, r2];
+}
 
 /**
  * A function to make plotly data for the given properties
  * @param props
- * @returns {Array} plotly data array
+ * @returns {{plotlyData: Array, toRowIdx: Map}} plotly data array
  */
 function makeSeries(props) {
     const {data, params, selectInfo, highlighted} = props;
-    const {rows, decimateKey} = data;  //weightMin, weightMax are also part of data
+    const {rows, decimateKey, weightMin, weightMax} = data;
+    let toRowIdx = undefined; //the map from decimate key of a bin to rowIdx
 
     if (rows.length < 1) { return []; }
 
@@ -111,7 +126,6 @@ function makeSeries(props) {
         });
 
         allSeries.push({
-            //id: DATAPOINTS,
             name: DATAPOINTS,
             type: 'scatter',
             hoverinfo: 'text',
@@ -125,10 +139,10 @@ function makeSeries(props) {
             error_x: errors[0],
             error_y: errors[1],
             x,
-            y
+            y,
+            text: generateTooltips(props)
         });
         allSeries.push({
-            //id: SELECTED,
             name: SELECTED,
             type: 'scatter',
             hoverinfo: 'skip',
@@ -143,7 +157,8 @@ function makeSeries(props) {
             y: selectedRows.map((r)=>r['y'])
         });
     } else {
-        const {xMin, xUnit, yMin, yUnit} = parseDecimateKey(decimateKey);
+        const {xMin, xUnit, nX, yMin, yUnit, nY} = parseDecimateKey(decimateKey);
+        // get center point of the bin
         const getCenter = (xval,yval) => {
             return {
                 // bitwise operators convert operands to 32-bit integer
@@ -162,10 +177,27 @@ function makeSeries(props) {
             y.push(centerPt.y);
             z.push(r.weight);
         });
-        allSeries.push({
+
+        toRowIdx = new Map();
+        // map decimate key (bin identifier in the form 'x:y') to rowIdx
+        rows.forEach((r) => {
+            toRowIdx.set(r.decimate_key, r.rowIdx);
+        });
+
+        //make sure the values are populated for the bins with 0 x or y index
+        for (let i=0; i<nX; i++ ) {
+            for (let j = 0; j < nY; j++) {
+                if (!toRowIdx.has(`${i}:${j}`)) {
+                    x.push(xMin+(i+0.5)*xUnit);
+                    y.push(yMin+(j+0.5)*yUnit);
+                    z.push(undefined);
+                }
+            }
+        }
+
+        const heatmap = {
             name: DATAPOINTS_HEATMAP,
             type: 'heatmap',
-            colorscale: [[0, 'rgb(216,216,216)'], [1, 'rgb(40,40,40)']],
             hoverinfo: 'text',
             showlegend: true,
             colorbar: {
@@ -175,13 +207,29 @@ function makeSeries(props) {
             },
             x,
             y,
-            z
-        });
+            z,
+            text: generateTooltips(props)
+        };
+
+        if (get(params, 'shading', defaultShading) === defaultShading) {
+            heatmap.colorscale = [[0, 'rgb(216,216,216)'], [1, 'rgb(40,40,40)']];
+        } else if (weightMax - weightMin > 1) {
+            const weightRange = weightMax - weightMin;
+            const base = Math.pow(weightRange, 0.2);
+            heatmap.colorscale = [
+                [0, 'rgb(216,216,216)'],
+                [Math.pow(base,1)/weightRange, 'rgb(189, 189, 189)'],
+                [Math.pow(base,2)/weightRange, 'rgb(150, 150, 150)'],
+                [Math.pow(base,3)/weightRange, 'rgb(115, 115, 115)'],
+                [Math.pow(base,4)/weightRange, 'rgb(82, 82, 82)'],
+                [1., 'rgb(40,40,40)']
+            ];
+        }
+        allSeries.push(heatmap);
     }
 
 
     allSeries.push({
-        //id: HIGHLIGHTED,
         name: HIGHLIGHTED,
         type: 'scatter',
         hoverinfo: 'skip',
@@ -193,28 +241,42 @@ function makeSeries(props) {
         showlegend: false
     });
 
-    return allSeries;
+    return {plotlyData: allSeries, toRowIdx};
 }
 
 /**
- * Get range for a plotly axis
- * Plotly requires range to be reversed if the axis is reversed,
- * and limits to be log if axis scale is log
- * @param min - minimum value
- * @param max - maximum value
- * @param isLog - true, if an axis uses log scale
- * @param isReversed - true, if the axis should be reversed
- * @returns {Array<number>} an array for axis range property in plotly layout
+ * Generate tooltips
+ * @param props
+ * @returns {*}
  */
-function getRange(min, max, isLog, isReversed) {
-    const [r1, r2] = isReversed ? [max, min] : [min, max];
-    return isLog ? [Math.log10(r1), Math.log10(r2)] : [r1, r2];
+function generateTooltips(props) {
+    const {data, params} = props;
+
+    const {decimateKey, x, y} = data;
+    const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = get(params, 'boundaries', {});
+
+    // bin center and expression values need to be formatted
+    const xFormat = (decimateKey || (x && x.match(/\W/))) ? getFormatString(Math.abs(xDataMax-xDataMin), 4) : undefined;
+    const yFormat = (decimateKey || (y && y.match(/\W/))) ? getFormatString(Math.abs(yDataMax-yDataMin), 4) : undefined;
+
+    const rows = get(props, 'data.rows');
+
+    return rows.map((point) => {
+        const weight = point.weight ? `<br> represents ${point.weight} points ` : '';
+        const xval = xFormat ? numeral(point.x).format(xFormat) : point.x;
+        const xerr = formatError(point.x, point.xErr, point.xErrLow, point.xErrHigh);
+        const yval = yFormat ? numeral(point.y).format(yFormat) : point.y;
+        const yerr = formatError(point.y, point.yErr, point.yErrLow, point.yErrHigh);
+        return `<span> ${params.x.label} = ${xval} ${xerr} ${params.x.unit} <br>` +
+            ` ${params.y.label} = ${yval} ${yerr} ${params.y.unit} ` +
+            `${weight} </span>`;
+    });
 }
 
 /**
  * Create plotly data, layout, and style
  * @param props
- * @returns {{plotlyData: Array, plotlyLayout: Object, plotlyDivStyle: Object}} - an object with plotly data, layout, and div style
+ * @returns {{plotlyData: Array, plotlyLayout: Object, plotlyDivStyle: Object, toRowIdx: Map}} - an object with plotly data, layout, div style, and map for decimated data
  */
 function getChartingInfo(props) {
     const {params, width, height, desc} = props;
@@ -238,7 +300,7 @@ function getChartingInfo(props) {
         height: '100%'
     };
 
-    const plotlyData = makeSeries(props);
+    const {plotlyData, toRowIdx} = makeSeries(props);
 
     const plotlyLayout = {
         height: chartHeight,
@@ -287,6 +349,7 @@ function getChartingInfo(props) {
             titlefont: {
                 size: FSIZE
             },
+            tickprefix: '  ',
             tickfont: {
                 size: FSIZE
             },
@@ -301,9 +364,10 @@ function getChartingInfo(props) {
         }
     };
 
-    return {plotlyData, plotlyLayout, plotlyDivStyle};
+    return {plotlyData, plotlyLayout, plotlyDivStyle, toRowIdx};
 
 }
+
 
 /**
  * Return an index of a trace with the given name
@@ -327,7 +391,8 @@ export class XYPlotPlotly extends React.Component {
             //layoutUpdate: null
         };
 
-        this.afterRedraw= this.afterRedraw.bind(this);
+        this.afterRedraw = this.afterRedraw.bind(this);
+        this.adjustYMargin = this.adjustYMargin.bind(this);
         this.updateSelectionRect = this.updateSelectionRect.bind(this);
         this.onSelectionEvent = this.onSelectionEvent.bind(this);
     }
@@ -357,13 +422,9 @@ export class XYPlotPlotly extends React.Component {
         } else {
 
             if (this.chartingInfo) {
+                // parameters are validates in parent XYPlot component
+
                 const {params:newParams, width:newWidth, height:newHeight, highlighted:newHighlighted, selectInfo:newSelectInfo, desc:newDesc } = nextProps;
-                const errors = validate(newParams, data);
-                if (errors.length > 0) {
-                    this.error = errors[0];
-                    this.setState({error: errors[0]});
-                    return;
-                }
 
                 if (newDesc !== desc) {
                     this.setState({layoutUpdate: {title: newDesc}});
@@ -451,8 +512,10 @@ export class XYPlotPlotly extends React.Component {
                     if (!shallowequal(params.selection, newParams.selection)) {
                         if (newParams.selection) {
                             this.updateSelectionRect(newParams.selection, newXOptions.xLog, newYOptions.yLog);
+                            return false;
                         } else {
                             updates['shapes'] = [];
+                            updates['hovermode'] = 'closest'; // enable tooltips
                         }
                     }
 
@@ -478,11 +541,25 @@ export class XYPlotPlotly extends React.Component {
         return sCompare(nextProps, nextState);
     }
 
-    componentDidMount() {
-        const {params} = this.props;
+    adjustYMargin(chart) {
+        if (!chart) { return; }
+        const ytickTexts = chart.querySelectorAll('g.ytick text');
+        var maxYTickLen = MIN_MARGIN_PX;
+        for (let i = 0, len=Math.abs(ytickTexts[i].clientWidth); i < ytickTexts.length; i++) {
+            if (len > maxYTickLen) {
+                maxYTickLen = len;
+            }
+        }
+        const newMargin = maxYTickLen + MIN_YLBL_PX;
 
-        if (params.selection) {
-            this.updateSelectionRect(get(params, 'selection'), getXAxisOptions(params).xLog, getYAxisOptions(params).yLog);
+        const leftMargin = get(chart, ['layout', 'margin', 'l']);
+        const rightMargin =  get(chart, ['layout', 'margin', 'r']);
+        const oldMargin = Math.max (leftMargin, rightMargin);
+        //when moving yAxis to the right, client width is sometimes huge
+        if (newMargin < 200 && Math.abs(newMargin-oldMargin) > 2) {
+            const layoutUpdate = leftMargin > rightMargin ?
+                {'margin.l': newMargin} : {'margin.r': newMargin};
+            this.setState({layoutUpdate});
         }
     }
 
@@ -495,25 +572,25 @@ export class XYPlotPlotly extends React.Component {
         if (selection) {
             const {xMin, xMax, yMin, yMax} = selection;
             const selColor = has(this.props, 'data.decimateKey') ? selectionRectColor : selectionRectColorGray;
-            this.setState({
-                layoutUpdate: {
-                    shapes: [{
-                        layer: 'above',
-                        type: 'rect',
-                        xref: 'x',
-                        yref: 'y',
-                        x0: xLog ? Math.log10(xMin) : xMin,
-                        y0: yLog ? Math.log10(yMin) : yMin,
-                        x1: xLog ? Math.log10(xMax) : xMax,
-                        y1: yLog ? Math.log10(yMax) : yMax,
-                        fillcolor: selColor,
-                        opacity: 0.5,
-                        line: {
-                            width: 0
-                        }
-                    }]
-                }
-            });
+            const layoutUpdate = {
+                shapes: [{
+                    layer: 'above',
+                    type: 'rect',
+                    xref: 'x',
+                    yref: 'y',
+                    x0: xLog ? Math.log10(xMin) : xMin,
+                    y0: yLog ? Math.log10(yMin) : yMin,
+                    x1: xLog ? Math.log10(xMax) : xMax,
+                    y1: yLog ? Math.log10(yMax) : yMax,
+                    fillcolor: selColor,
+                    opacity: 0.5,
+                    line: {
+                        width: 0
+                    }
+                }],
+                hovermode: false // disable tooltips
+            };
+            this.setState({layoutUpdate});
         }
     }
 
@@ -527,57 +604,52 @@ export class XYPlotPlotly extends React.Component {
     }
 
 
-    // todo: hover and select should not be triggered under selection rectangle
+    /**
+     * This method is called when new plotly chart is created
+     * Because of plotly library is loaded asynchronously,
+     * and restyle and relayout are called in promise,
+     * whatever we usually do in componentDidMount should be done here,
+     * whatever we usually do in componentDidUpdate, should be done
+     * in plotly_relayout or plotly_restyle handler
+     * @param chart
+     * @param pl
+     */
     afterRedraw(chart, pl) {
 
-        const {data, params, highlighted, onHighlightChange, onSelection} = this.props;
+        const {params, highlighted, onHighlightChange, onSelection} = this.props;
 
-        const {decimateKey, x, y} = data;
-        const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = get(params, 'boundaries', {});
+        //adjustments
+        if (params.selection) {
+            this.updateSelectionRect(get(params, 'selection'), getXAxisOptions(params).xLog, getYAxisOptions(params).yLog);
+        }
+        this.adjustYMargin(chart);
 
-        // bin center and expression values need to be formatted
-        const xFormat = (decimateKey || (x && x.match(/\W/))) ? getFormatString(Math.abs(xDataMax-xDataMin), 4) : undefined;
-        const yFormat = (decimateKey || (y && y.match(/\W/))) ? getFormatString(Math.abs(yDataMax-yDataMin), 4) : undefined;
-
-        const rows = get(this.props, 'data.rows');
-        const chartingInfo = this.chartingInfo;
-
-        // handling tooltips
-        chart.on('plotly_hover', (eventData) => {
-            const curveNumber = eventData.points[0].curveNumber;
-            if (curveNumber === getTraceIdx(chartingInfo, DATAPOINTS)) {
-                const pointNumber = eventData.points[0].pointNumber;
-                const point = rows && rows[pointNumber];
-
-                if (point) {
-                    const weight = point.weight ? `<br> represents ${point.weight} points ` : '';
-                    const xval = xFormat ? numeral(point.x).format(xFormat) : point.x;
-                    const xerr = formatError(point.x, point.xErr, point.xErrLow, point.xErrHigh);
-                    const yval = yFormat ? numeral(point.y).format(yFormat) : point.y;
-                    const yerr = formatError(point.y, point.yErr, point.yErrLow, point.yErrHigh);
-                    const str = `<span> ${params.x.label} = ${xval} ${xerr} ${params.x.unit} <br>` +
-                        `${params.y.label} = ${yval} ${yerr} ${params.y.unit} ` +
-                        `${weight} </span>`;
-
-
-                    this.setState({
-                        dataUpdate: {text: str},
-                        dataUpdateTraces: curveNumber
-                    });
-                }
-            }
-        });
+        // handling tooltips in plotly_hover is very slow in Firefox
+        // that's why we are pre-generating tooltips when creating data
 
         // handling highlight change
         var highlightedIdx = highlighted.rowIdx;
         if (onHighlightChange) {
+
+            const rows = get(this.props, 'data.rows');
+            const chartingInfo = this.chartingInfo;
+
             chart.on('plotly_click', (eventData) => {
+                console.log(eventData);
                 const curveNumber = eventData.points[0].curveNumber;
                 const pointNumber = eventData.points[0].pointNumber;
                 if (curveNumber === getTraceIdx(chartingInfo, DATAPOINTS)) {
                     const point = rows && rows[pointNumber];
                     if (point && point.rowIdx !== highlightedIdx) {
                         highlightedIdx = point.rowIdx;
+                        onHighlightChange(highlightedIdx);
+                    }
+                } else if (curveNumber === getTraceIdx(chartingInfo, DATAPOINTS_HEATMAP)) {
+                    // pointNumber is an array with y and x values
+                    const [y,x] = pointNumber;
+                    const key = `${x}:${y}`;
+                    highlightedIdx = this.chartingInfo.toRowIdx.get(key);
+                    if (!isUndefined(highlightedIdx)) {
                         onHighlightChange(highlightedIdx);
                     }
                 }
@@ -587,19 +659,22 @@ export class XYPlotPlotly extends React.Component {
         // handling selection (controls display of selection rectangle and selection options)
         if (onSelection) {
             chart.on('plotly_selected', (eventData) => {
-                console.log(eventData);
-                if (onSelection) {
-                    if (eventData && eventData.range) {
-                        const [xMin, xMax] = eventData.range.x;
-                        const [yMin, yMax] = eventData.range.y;
-                        pl.d3.selectAll('.select-outline').remove();
-                        onSelection({xMin, xMax, yMin, yMax});
-                    } else {
-                        onSelection(null);
-                    }
+                if (eventData && eventData.range) {
+                    const [xMin, xMax] = eventData.range.x;
+                    const [yMin, yMax] = eventData.range.y;
+                    pl.d3.selectAll('.select-outline').remove();
+                    onSelection({xMin, xMax, yMin, yMax});
+                } else {
+                    onSelection(null);
                 }
             });
         }
+
+        // whenever relayout occurs, adjust margin to accommodate tick length
+        chart.on('plotly_relayout', () => {
+            this.adjustYMargin(chart);
+        });
+
     }
 
     render() {
@@ -609,9 +684,6 @@ export class XYPlotPlotly extends React.Component {
         const {plotlyData, plotlyLayout, plotlyDivStyle} = this.chartingInfo;
         const {dataUpdateTraces, dataUpdate, layoutUpdate} = this.state;
 
-        // render chart
-        this.error = undefined;
-
         return (
             <div style={{float: 'left'}}>
                 <PlotlyWrapper data={plotlyData} layout={plotlyLayout}  style={plotlyDivStyle}
@@ -619,7 +691,6 @@ export class XYPlotPlotly extends React.Component {
                                dataUpdate={dataUpdate}
                                layoutUpdate={layoutUpdate}
                                config={PLOTLY_CONFIG}
-                               //divUpdateCB={(div) => this.chartDiv = div}
                                newPlotCB={this.afterRedraw}
                 />
             </div>
