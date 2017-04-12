@@ -33,7 +33,8 @@ public class ConcurrentSearchUtil {
      * @throws CloneNotSupportedException
      */
 
-    public static DataGroup doSearch( Callable<DataGroup>[] workers, int nThread, DataGroup inDg, String raCol, String decCol) throws TimeoutException, CloneNotSupportedException {
+    public static DataGroup doSearch( Callable<DataGroup>[] workers, int nThread, DataGroup inDg,
+                 String raCol, String decCol) throws TimeoutException, CloneNotSupportedException {
 
 
         ExecutorService executor =  Executors.newFixedThreadPool(nThread);
@@ -154,7 +155,8 @@ public class ConcurrentSearchUtil {
      * @return
      * @throws CloneNotSupportedException
      */
-    private static DataGroup joinDataGroupArrayToDataGroup(DataGroup[] dgArray, DataGroup inDg, String raCol, String decCol) throws CloneNotSupportedException {
+    private static DataGroup joinDataGroupArrayToDataGroup(DataGroup[] dgArray, DataGroup inDg,
+                               String raCol, String decCol) throws CloneNotSupportedException {
 
 
         WorldPt[] centers =getCenterArray(inDg);
@@ -205,7 +207,8 @@ public class ConcurrentSearchUtil {
      * @throws IOException
      * @throws EndUserException
      */
-    public static DataGroup getInDataGroup(String filename) throws ExecutionException, InterruptedException, IOException, EndUserException {
+    public static DataGroup getInDataGroup(String filename) throws ExecutionException, InterruptedException, IOException,
+            EndUserException {
         boolean badParam = true;
         if (!StringUtils.isEmpty(filename)) {
             File uploadFile = ServerContext.convertToFile(filename);
@@ -237,62 +240,5 @@ public class ConcurrentSearchUtil {
         WorldPt point = new WorldPt((Double) row.getDataElement(raCol),(Double) row.getDataElement(decCol ) );
         return  VisUtil.computeDistance(center, point);
     }
-     /**
-     * This method joins all the DataGroup Array to one DataGroup
-     * @param dgArray
-     * @return
-     */
-    private static  DataGroup joinDataGroupArrayToDataGroup(DataGroup[] dgArray) throws CloneNotSupportedException {
 
-        DataType[] dTypes = dgArray[0].getDataDefinitions();
-
-        DataGroup joinedResult = new DataGroup("joinedDataGroup", dTypes);
-
-        for (int i=0; i<dgArray.length; i++){
-            for (int j=0; j<dgArray[i].size(); j++){
-                if (dgArray[i].size()==0) continue;
-
-                joinedResult.add(dgArray[i].get(j));
-
-            }
-        }
-        joinedResult.shrinkToFitData();
-        return joinedResult;
-    }
-
-    //The performance doing this way is not as good as the other way
-    public static DataGroup addInputToOutputDataGroup(DataGroup dg,  DataObject inRow, String raCol, String decCol) throws CloneNotSupportedException {
-
-
-        WorldPt center=new WorldPt( (Double) inRow.getDataElement("ra"), (Double) inRow.getDataElement("dec"));
-        DataType[] inTypes = inRow.getDataDefinitions();
-
-        int index = inTypes.length+1;
-
-        DataType[] joinedDataTypes = ConcurrentSearchUtil.getJoinedDataTypes(dg, inTypes);
-        DataGroup joinedResult = new DataGroup(null, joinedDataTypes);
-
-        for (int j=0; j<dg.size(); j++){
-            if (dg.size()==0) continue;
-            DataObject searchedRow =dg.get(j);
-            //create a new dataObject to store the column values
-            DataObject dataObject = new DataObject(joinedResult);
-
-            //dataObject.setDataElement(joinedDataTypes[0], centers[i]);
-            //add the distance to the output dataObject
-            dataObject.setDataElement(joinedDataTypes[0], computeDistance(searchedRow, center, raCol, decCol));
-
-            //add the data columns from the input table to the output dataGroup
-            for (int ii=0; ii<inTypes.length; ii++){
-                dataObject.setDataElement(joinedDataTypes[ii+1], inRow.getDataElement(inTypes[ii]));
-            }
-            //add the data from the searching result table
-            for (int k=0; k<searchedRow.size(); k++) {
-                dataObject.setDataElement(joinedDataTypes[k+index], searchedRow.getDataElement(joinedDataTypes[k]) );
-            }
-            joinedResult.add(dataObject);
-
-        }
-        return joinedResult;
-    }
 }
