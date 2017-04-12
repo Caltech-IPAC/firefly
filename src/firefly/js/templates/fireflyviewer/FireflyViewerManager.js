@@ -129,11 +129,12 @@ function onAnyAction(layoutInfo, action, views) {
 
 function handleNewTable(layoutInfo, action) {
     const {tbl_id} = action.payload;
-    var {images={}, showImages} = layoutInfo;
+    var {images={}, showImages, showTables, hasTables} = layoutInfo;
     var {coverageLockedOn, showFits, showMeta, showCoverage, selectedTab, metaDataTableId} = images;
-
     const isMeta = isMetaDataTable(tbl_id);
-    if (isMeta || isCatalogTable(tbl_id)) {
+    const isDisplayTable = (hasTables && showTables);
+
+    if ((isMeta || isCatalogTable(tbl_id)) && isDisplayTable  ) {
         if (!showFits) {
             // only show coverage if there are not images or coverage is showing
             showFits= shouldShowFits();
@@ -143,7 +144,7 @@ function handleNewTable(layoutInfo, action) {
             showImages = true;
         }
     }
-    if (isMeta) {
+    if (isMeta && isDisplayTable) {
         showImages = true;
         selectedTab = 'meta';
         showMeta = true;
