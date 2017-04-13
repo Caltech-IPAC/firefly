@@ -6,7 +6,7 @@ import {keyMap, panelKey, computeCurrentCatalogId, rgbFieldGroup, getTabsIndexes
         PLOT_NO, RED, GREEN, BLUE, PLOT_CREATE, PLOT_CREATE3COLOR, rgb} from './ImageSelectPanel.jsx';
 import WebPlotRequest from '../WebPlotRequest.js';
 import {dispatchPlotImage, visRoot } from '../ImagePlotCntlr.js';
-import {findViewerWithItemId, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
+import {findViewerWithItemId, getViewer, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
 import {parseWorldPt} from '../Point.js';
 import {getPanelCatalogs} from './ImageSelectPanelProp.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
@@ -308,11 +308,26 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
         var groupId = null;
         var viewerIdOnPlot;
 
-        if ((plotInfo.addPlot&create) && plotInfo.viewerId) { // create plot case: only for fits viewer
+        /* if ((plotInfo.addPlot&create) && plotInfo.viewerId) { // create plot case: only for fits
+         //IRSA-142 LZ 4/07/17
+         //When the image from different groups, the wcsMatch does not work since the match only matches the image within the same group.
+         //If the group id exists, add the image into the same group
+        */
+        if ((plotInfo.addPlot&create) && plotInfo.viewerId) {
             groupId = plotInfo.viewerId;
+            const viewer = getViewer(getMultiViewRoot(), plotInfo.viewerId);
+
+            if (viewer && viewer.itemIdAry[0]) {
+                const pv = getPlotViewById(visRoot(), viewer.itemIdAry[0]);
+                if (pv) {
+                    groupId = pv.plotGroupId;
+                }
+            }
+           
             nPlotId = plotidGen.next().value;
             viewerIdOnPlot = plotInfo.viewerId;
-        } else {                                            // replace and with plotId
+        }
+        else {                                            // replace and with plotId
             nPlotId = plotInfo.plotId;
             if (nPlotId) {
                 groupId = getPlotViewById(visRoot(), nPlotId).plotGroupId;

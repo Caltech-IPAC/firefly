@@ -6,6 +6,7 @@ package edu.caltech.ipac.util;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import uk.ac.starlink.table.*;
 import uk.ac.starlink.util.DataSource;
+import uk.ac.starlink.votable.VOStarTable;
 import uk.ac.starlink.votable.VOTableBuilder;
 
 import java.io.File;
@@ -48,8 +49,17 @@ public class VoTableUtil {
         String title = table.getName();
         List<DataType> cols = new ArrayList<DataType>();
         String raCol=null, decCol=null;
+        int precision = 8;
         for (int i = 0; i < table.getColumnCount(); i++) {
             ColumnInfo cinfo = table.getColumnInfo(i);
+            if(cinfo.getAuxDatum(VOStarTable.PRECISION_INFO)!=null){
+                try{
+                    precision = Integer.parseInt(cinfo.getAuxDatum(VOStarTable.PRECISION_INFO).toString());
+                }catch (NumberFormatException e){
+                    // problem with VOTable vinfo precision: should be numeric - keep default min precision
+                    continue;
+                }
+            }
             DataType dt = new DataType(cinfo.getName(), cinfo.getName(),
                     cinfo.isArray() ? String.class : cinfo.getContentClass(),
                     null, cinfo.getUnitString(), false); // mayBeNull is false to use empty space instead of null
@@ -97,7 +107,7 @@ public class VoTableUtil {
                             row.setDataElement(dtype, val);
                         }
                         if (dtype.getFormatInfo().isDefault()) {
-                            IpacTableUtil.guessFormatInfo(dtype, sval);
+                            IpacTableUtil.guessFormatInfo(dtype, sval, precision);// precision min 8 can come from VOTable attribute 'precision' later on.
                         }
                         if (sval != null && sval.length() > dtype.getMaxDataWidth()) {
                             dtype.setMaxDataWidth(sval.length());

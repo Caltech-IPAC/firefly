@@ -170,9 +170,10 @@ export class DownloadOptionPanel extends Component {
     }
 
     render() {
-        const {groupKey, cutoutSize, help_id, children, style} = this.props;
+        const {groupKey, cutoutSize, help_id, children, style, title} = this.props;
         const {mask, sendEmail} = this.state;
         const labelWidth = 110;
+        let ttl = title || DOWNLOAD_DIALOG_ID;
         return (
             <div style = {Object.assign({margin: '4px', position: 'relative', minWidth: 350}, style)}>
                 {mask && <div style={{width: '100%', height: '100%'}} className='loading-mask'/>}
@@ -180,7 +181,7 @@ export class DownloadOptionPanel extends Component {
                     submitText = 'Prepare Download'
                     groupKey = {groupKey}
                     onSubmit = {this.onSubmit}
-                    onCancel = {() => dispatchHideDialog(DOWNLOAD_DIALOG_ID)}
+                    onCancel = {() => dispatchHideDialog(ttl)}
                     help_id  = {help_id}>
                     <FieldGroup groupKey={'DownloadDialog'} keepState={true}>
 
