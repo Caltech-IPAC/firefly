@@ -87,7 +87,7 @@ var columnNameReducer= (colValStats) => {
                 case 'columnOrExpr':
                     const colName = action.payload.value;
                     if (colName ) {
-                        if (isSingleColumn(colName, colValStats)) {
+                        if (isSingleColumn(colName, colValStats) && get(inFields, ['x', 'value'], '') !== 'log') {
                             for (var i=0; i<colValStats.length; i++){
                                 if (colName=== colValStats[i].name) {
                                     const dataMin = colValStats[i].min;
@@ -144,6 +144,16 @@ var columnNameReducer= (colValStats) => {
                         }
                     }
 
+                    break;
+                case 'x':
+                    const xVal = get(inFields, ['x', 'value'], '');
+
+                    if (xVal && xVal.includes('log')) {
+                        inFields = updateSet(inFields, ['binWidth', 'value'], '');
+                        inFields = updateSet(inFields, ['minCutoff', 'value'], '');
+                        inFields = updateSet(inFields, ['maxCutoff', 'value'], '');
+
+                    }
                     break;
                 default:
                     break;
@@ -374,7 +384,7 @@ function renderFixedBinSizeOptions(groupKey, histogramParams, disabled){
          <RadioGroupInputField
             initialState= {{
                                 value: get(histogramParams, 'fixedBinSizeSelection', 'numBins'),
-                                tooltip: 'Please select number of bins or bin width',
+                                tooltip: 'Please select number of bins or bin width'
                                 //label: 'BinSize:'
                             }}
             options={binSizeOptions}
@@ -387,8 +397,7 @@ function renderFixedBinSizeOptions(groupKey, histogramParams, disabled){
                  initialState= {{
                                   value: get(histogramParams, 'numBins', '50'),
                                   validator:Validate.intRange.bind(null, 1, 500, 'numBins'),
-                                  tooltip: 'Number of bins',
-
+                                  tooltip: 'Number of bins'
                              }}
                  disabled = {disabled}
                  fieldKey='numBins'
@@ -400,8 +409,7 @@ function renderFixedBinSizeOptions(groupKey, histogramParams, disabled){
                  initialState= {{
                                   value: get(histogramParams, 'binWidth', ''),
                                   validator:Validate.isFloat.bind(null,  'binWidth'),
-                                  tooltip: 'Bin width',
-
+                                  tooltip: 'Bin width'
                              }}
                  disabled = {!disabled}
                  fieldKey='binWidth'
