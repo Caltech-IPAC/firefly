@@ -233,7 +233,7 @@ export class ChartSelectDropdown extends Component {
 
     render() {
         const {tblId, tblStatsData} = this.state;
-        
+
         return tblId ? (
             <ChartSelect {...{tblId, tblStatsData}} {...this.props}/>
         ) : (
