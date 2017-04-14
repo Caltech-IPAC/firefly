@@ -199,7 +199,7 @@ function zoomStart(state, action) {
 
 function installTiles(state, action) {
     const {plotViewAry, mpwWcsPrimId}= state;
-    const {plotId, primaryStateJson,primaryTiles,overlayStateJsonAry,overlayTilesAry }= action.payload;
+    const {plotId, primaryStateJson,primaryTiles,overlayUpdateAry}= action.payload;
     let pv= getPlotViewById(state,plotId);
     let plot= primePlot(pv);
 
@@ -224,9 +224,14 @@ function installTiles(state, action) {
     }
 
 
-    if (!isEmpty(overlayStateJsonAry) && overlayStateJsonAry.length===pv.overlayPlotViews.length) {
-        pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv,idx) => {
-            const p= WebPlot.setPlotState(oPv.plot,overlayStateJsonAry[idx],overlayTilesAry[idx]);
+    if (!isEmpty(overlayUpdateAry) ) {
+        pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv) => {
+            if (!oPv.plot) return oPv;
+
+            const overlayUpdate= overlayUpdateAry.find( (u) => u.imageOverlayId===oPv.imageOverlayId);
+            if (!overlayUpdate) return oPv;
+
+            const p= WebPlot.setPlotState(oPv.plot,overlayUpdate.overlayStateJson,overlayUpdate.overlayTiles);
             return clone(oPv, {plot:p});
         });
     }
@@ -311,7 +316,7 @@ function flipPv(pv, isY) {
     const centerOfDev= makeDevicePt(width/2,height/2);
     const ipt= cc.getImageCoords(centerOfDev);
     pv= updateTransform(pv);
-    const scrollPt= findScrollPtToPlaceOnDevPt(pv,ipt,centerOfDev)
+    const scrollPt= findScrollPtToPlaceOnDevPt(pv,ipt,centerOfDev);
     return updatePlotViewScrollXY(pv,scrollPt);
 }
 
