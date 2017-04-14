@@ -82,7 +82,7 @@ export class LcViewer extends Component {
     }
 
     render() {
-        var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown, missionOptions,
+        var {isReady, menu={}, appTitle, appIcon, altAppIcon, additionalTitleStyle, dropDown, missionOptions,
             dropdownPanels=[], footer, style, displayMode, missionEntries, error} = this.state;
         const {visible, view} = dropDown || {};
         const periodProps = {
@@ -91,7 +91,12 @@ export class LcViewer extends Component {
         };
 
         dropdownPanels.push(<UploadPanel {...{missionOptions}}/>);
-
+        //let title = 'Time Series Tool';
+        //if (displayMode && displayMode.startsWith('period')) {
+        //    title = 'Time Series Tool: Period Finder';
+        //}else{
+        //    title= 'Time Series Tool: Viewer';
+        //}
         var mainView = (err,converterId) => {
             if (!isEmpty(error) && converterId) {
 
@@ -124,6 +129,13 @@ export class LcViewer extends Component {
             }
 
         };
+        let title = appTitle;
+        if (displayMode && displayMode.startsWith('period')) {
+            title = appTitle + ': Period Finder'
+
+        } else if(displayMode && !displayMode.startsWith('period')){
+            title = appTitle + ': Viewer';
+        }
         if (!isReady) {
             return (<div style={{top: 0}} className='loading-mask'/>);
         } else {
@@ -132,7 +144,7 @@ export class LcViewer extends Component {
             return (
                 <div id='App' className='rootStyle' style={style}>
                     <header>
-                        <BannerSection {...{menu, appTitle, appIcon, altAppIcon}}/>
+                        <BannerSection {...{menu, appTitle : title, appIcon, altAppIcon, additionalTitleStyle}}/>
                         <DropDownContainer
                             key='dropdown'
                             footer={footer}
@@ -152,12 +164,13 @@ export class LcViewer extends Component {
 /**
  * menu is an array of menu items {label, action, icon, desc, type}.
  * dropdownPanels is an array of additional react elements which are mapped to a menu item's action.
- * @type {{title: *, menu: *, appTitle: *, appIcon: *, altAppIcon: *, dropdownPanels: *, views: *}}
+ * @type {{title: *, menu: *, appTitle: *, appIcon: *, altAppIcon: *, additionalTitleStyle: *, dropdownPanels: *, views: *}}
  */
 LcViewer.propTypes = {
     title: PropTypes.string,
     menu: PropTypes.arrayOf(PropTypes.object),
     appTitle: PropTypes.string,
+    additionalTitleStyle: PropTypes.object,
     appIcon: PropTypes.string,
     altAppIcon: PropTypes.string,
     footer: PropTypes.element,
@@ -166,7 +179,7 @@ LcViewer.propTypes = {
 };
 
 LcViewer.defaultProps = {
-    appTitle: 'Time Series Viewer'
+    appTitle: 'Time Series Tool'
 };
 
 function onReady({menu}) {
