@@ -315,7 +315,8 @@ class PhaseFoldingChart extends Component {
                     borderColor: '#a5a5a5',
                     borderWidth: 1,
                     borderRadius: 5,
-                    zoomType: 'xy'
+                    zoomType: 'xy',
+                    animation: (!data || data.length <= 250)
                 },
                 title: {
                     fontSize: '16px',
