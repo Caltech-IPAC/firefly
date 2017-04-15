@@ -21,6 +21,7 @@ import {resultsSuccess as onHistogramOptsSelected} from '../charts/ui/HistogramO
 //import {uniqueChartId} from '../charts/ChartUtil.js';
 
 import {FormPanel} from './FormPanel.jsx';
+import CompleteButton from './CompleteButton.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 
 import LOADING from 'html/images/gxt/loading.gif';
@@ -232,10 +233,17 @@ export class ChartSelectDropdown extends Component {
 
     render() {
         const {tblId, tblStatsData} = this.state;
+
         return tblId ? (
             <ChartSelect {...{tblId, tblStatsData}} {...this.props}/>
         ) : (
-            <div style={{padding:20, fontSize:'150%'}}>Charts are not available: no active table.</div>
+            <div>
+                <div style={{padding:20, fontSize:'150%'}}>Charts are not available: no active table.</div>
+                <CompleteButton style={{paddingLeft: 20, paddingBottom: 20}}
+                    onSuccess={hideSearchPanel}
+                    text = {'OK'}
+                />
+            </div>
         );
     }
 }
