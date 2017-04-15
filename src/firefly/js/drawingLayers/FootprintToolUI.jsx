@@ -28,11 +28,11 @@ class FootprintToolUI extends React.Component {
     constructor(props) {
         super(props);
 
-        var {angle = 0.0, angleUnit = ANGLE_UNIT.radian,
-             text = '', textLoc = defaultFootprintTextLoc} = get(this.props.drawLayer, ['drawData', 'data', '0']) || {};
-
+        var fpObj = get(this.props.drawLayer, ['drawData', 'data', this.props.pv.plotId], {});
+        var {angle = 0.0, angleUnit = ANGLE_UNIT.radian, text = '', textLoc = defaultFootprintTextLoc} = fpObj;
         var angleDeg = `${formatAngle(convertAngle(angleUnit.key, 'deg', angle))}`;
-        var {fpInfo, currentPt} = this.props.drawLayer;
+        var {fpInfo} = this.props.drawLayer;
+        var {currentPt} = get(fpObj, 'actionInfo', {});
         const plot= primePlot(visRoot(),this.props.pv.plotId);
 
         this.csys = CsysConverter.make(plot);
@@ -43,7 +43,10 @@ class FootprintToolUI extends React.Component {
         this.changeFootprintAngle = this.changeFootprintAngle.bind(this);
     }
 
-    shouldComponentUpdate(np, ns) {return sCompare(this, np, ns); }
+    shouldComponentUpdate(np, ns) {
+
+        return sCompare(this, np, ns);
+    }
 
     componentWillUnmount() {
         this.iAmMounted= false;
@@ -59,17 +62,31 @@ class FootprintToolUI extends React.Component {
         var dl = getDrawLayerById(flux.getState()[DRAWING_LAYER_KEY], this.props.drawLayer.drawLayerId);
 
         if (dl && this.iAmMounted) {
-            var {currentPt} = dl;
-            if (currentPt) {
-                currentPt = this.csys.getWorldCoords(currentPt);
-                this.setState({currentPt});
-            }
+            const crtFpObj = get(dl, ['drawData', 'data', this.props.pv.plotId]);
 
-            if (!get(dl, ['drawData', 'data', '0', 'angleFromUI'], false)) {
-                var {angle = 0.0, angleUnit = ANGLE_UNIT.radian} = get(dl, ['drawData', 'data', '0']) || {};
+            if (crtFpObj) {
+                var {currentPt} = get(crtFpObj, 'actionInfo', {});
+                if (currentPt) {
+                    currentPt = this.csys.getWorldCoords(currentPt);
+                    if (currentPt !== this.state.currentPt) {
+                        this.setState({currentPt});
+                    }
+                }
 
-                angle = convertAngle(angleUnit.key, 'deg', angle);
-                this.setState({angleDeg: `${formatAngle(angle)}`, isValidAngle: true});
+                if (!get(crtFpObj, 'angleFromUI', false)) {
+                    var {angle = 0.0, angleUnit = ANGLE_UNIT.radian} = crtFpObj;
+
+                    angle = convertAngle(angleUnit.key, 'deg', angle);
+                    this.setState({angleDeg: `${formatAngle(angle)}`, isValidAngle: true});
+                }
+
+                var {text = '', textLoc = defaultFootprintTextLoc} = crtFpObj;
+                if (text !== this.state.fpText) {
+                    this.setState({fpText: text});
+                }
+                if (textLoc.key !== this.state.fpTextLoc) {
+                    this.setState({fpTextLoc: textLoc.key});
+                }
             }
         }
     }
@@ -79,7 +96,8 @@ class FootprintToolUI extends React.Component {
 
         if (isNil(fpText) || !fpText) {
             var dl = getDrawLayerById(flux.getState()[DRAWING_LAYER_KEY], this.props.drawLayer.drawLayerId);
-            fpText = get(dl, '');
+
+            fpText = '';
             this.props.drawLayer.title = get(dl, 'defaultTitle');
         } else {
             this.props.drawLayer.title = fpText;
@@ -87,7 +105,8 @@ class FootprintToolUI extends React.Component {
         this.setState({fpText});
 
         dispatchModifyCustomField( this.props.drawLayer.drawLayerId,
-                    {fpText, fpTextLoc: TextLocation.get(this.state.fpTextLoc)}, this.props.pv.plotId);
+                    {fpText, fpTextLoc: TextLocation.get(this.state.fpTextLoc), activePlotId: this.props.pv.plotId },
+                     this.props.pv.plotId);
     }
 
     changeFootprintTextLocation(ev) {
@@ -95,7 +114,8 @@ class FootprintToolUI extends React.Component {
 
         this.setState({fpTextLoc});
         dispatchModifyCustomField( this.props.drawLayer.drawLayerId,
-                    {fpText: this.state.fpText, fpTextLoc: TextLocation.get(fpTextLoc)}, this.props.pv.plotId);
+                    {fpText: this.state.fpText, fpTextLoc: TextLocation.get(fpTextLoc), activePlotId: this.props.pv.plotId },
+                     this.props.pv.plotId);
     }
 
     changeFootprintAngle(ev) {
@@ -108,7 +128,8 @@ class FootprintToolUI extends React.Component {
         }
         this.setState({isValidAngle, angleDeg});
         if (isValidAngle) {
-            dispatchModifyCustomField(this.props.drawLayer.drawLayerId, {angleDeg}, this.props.pv.plotId);
+            dispatchModifyCustomField(this.props.drawLayer.drawLayerId, {angleDeg, activePlotId: this.props.pv.plotId },
+                                      this.props.pv.plotId);
         }
     }
 

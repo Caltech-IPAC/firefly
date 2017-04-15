@@ -10,11 +10,11 @@ import Point, {makeOffsetPt, makeScreenPt} from '../Point.js';
 import CsysConverter, {CCUtil} from '../CsysConverter.js';
 import {RegionType, regionPropsList} from '../region/Region.js';
 import {startRegionDes, setRegionPropertyDes} from '../region/RegionDescription.js';
-import ShapeDataObj, {fontHeight, drawText, translateTo, rotateAround} from './ShapeDataObj.js';
+import ShapeDataObj, {fontHeight, drawText, translateTo, rotateAround, getPVRotateAngle} from './ShapeDataObj.js';
 import {isWithinPolygon, makeShapeHighlightRenderOptions, DELTA, defaultDashline} from './ShapeHighlight.js';
 import { handleTextFromRegion } from './ShapeToRegion.js';
 import VisUtil from '../VisUtil.js';
-import {isNil, isEmpty, has, set, cloneDeep} from 'lodash';
+import {isNil, isEmpty, has, set, get, cloneDeep} from 'lodash';
 import {defaultRegionSelectColor, defaultRegionSelectStyle} from '../DrawLayerCntlr.js';
 
 
@@ -35,8 +35,8 @@ const DEFAULT_SYMBOL = DrawSymbol.X;
 
 /**
  * drawObj for point, optional: textLoc
- * @param {number} [size]
  * @param {{x:name,y:name,type:string}} pt
+ * @param {number} [size]
  * @param {Enum} [symbol]
  * @param {string} [text]
  * @return {object}
@@ -306,7 +306,7 @@ function drawXY(ctx, drawTextAry, pt, plot, drawObj, drawParams,renderOptions, o
 
     const devicePt= plot.getDeviceCoords(pt);
 
-    drawSymbolOnPlot(ctx, devicePt.x, devicePt.y, drawParams,renderOptions, onlyAddToPath);
+    drawSymbolOnPlot(ctx, devicePt.x, devicePt.y, drawParams,renderOptions, onlyAddToPath, plot);
     if (!text)  return;
 
     if (isNil(color)) {
@@ -330,8 +330,10 @@ function drawXY(ctx, drawTextAry, pt, plot, drawObj, drawParams,renderOptions, o
     }
  }
 
-function drawSymbolOnPlot(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
+function drawSymbolOnPlot(ctx, x, y, drawParams, renderOptions, onlyAddToPath, plot) {
     var {color,size}= drawParams;
+
+
     switch (drawParams.symbol) {
         case DrawSymbol.X :
             DrawUtil.drawX(ctx, x, y, color, size, renderOptions, onlyAddToPath);
@@ -367,6 +369,11 @@ function drawSymbolOnPlot(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
             DrawUtil.drawArrow(ctx, x, y, color, size, renderOptions, onlyAddToPath);
             break;
         case DrawSymbol.ROTATE:
+            const rAngle = getPVRotateAngle(plot);
+
+            if (rAngle !== 0.0) {
+                renderOptions = Object.assign({}, renderOptions, {rotAngle: get(renderOptions, 'rotAngle', 0.0) + rAngle});
+            }
             DrawUtil.drawRotate(ctx, x, y, color, size, renderOptions, onlyAddToPath);
             break;
         default :
@@ -450,7 +457,7 @@ function makeHighlightOnPoint(drawObj, color, style, lineW) {
         set(newDrawObj, 'renderOptions', { lineDash: defaultDashline });
     }
     set(newDrawObj, 'color', color );
-    set(newDrawObj, 'lineWidth', (lineW <= 0 ? get(oneObj, 'lineWidth', 1) : lineW) );
+    set(newDrawObj, 'lineWidth', (lineW <= 0 ? get(newDrawObj, 'lineWidth', 1) : lineW) );
 
     newDrawObj.symbol = DrawSymbol.get(drawObj.symbol.key);
     newDrawObj.isRendered = 1;

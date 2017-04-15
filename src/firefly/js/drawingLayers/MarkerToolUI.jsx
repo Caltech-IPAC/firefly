@@ -19,16 +19,46 @@ class MarkerToolUI extends React.Component {
     constructor(props) {
         super(props);
 
-        var markerText = get(this.props.drawLayer, ['drawData', 'data', '0', 'text'], '');
-        var markerTextLoc = get(this.props.drawLayer, ['drawData', 'data', '0', 'textLoc'], defaultMarkerTextLoc);
+        var markerObj = get(this.props.drawLayer, ['drawData', 'data', this.props.pv.plotId], {});
+        var {text = '', textLoc = defaultMarkerTextLoc} = markerObj;
         var markerType = get(this.props.drawLayer, ['markerType'], 'marker');
 
-        this.state = {markerText,  markerTextLoc: markerTextLoc.key, markerType};
+        this.state = {markerText: text,  markerTextLoc: textLoc.key, markerType};
+
         this.changeMarkerText = this.changeMarkerText.bind(this);
         this.changeMarkerTextLocation = this.changeMarkerTextLocation.bind(this);
     }
 
     shouldComponentUpdate(np, ns) {return sCompare(this, np, ns); }
+
+    componentWillUnmount() {
+        this.iAmMounted= false;
+        if (this.removeListener) this.removeListener();
+    }
+
+    componentDidMount() {
+        this.iAmMounted= true;
+        this.removeListener= flux.addListener(() => this.stateUpdate());
+    }
+
+    stateUpdate() {
+        var dl = getDrawLayerById(flux.getState()[DRAWING_LAYER_KEY], this.props.drawLayer.drawLayerId);
+
+        if (dl && this.iAmMounted) {
+            const crtMarkerObj = get(dl, ['drawData', 'data', this.props.pv.plotId]);
+
+            if (crtMarkerObj) {
+                var {text = '', textLoc = defaultMarkerTextLoc} = crtMarkerObj;
+
+                if (text !== this.state.markerText) {
+                    this.setState({markerText: text});
+                }
+                if (textLoc.key !== this.state.markerTextLoc) {
+                    this.setState({markerTextLoc: textLoc.key});
+                }
+            }
+        }
+    }
 
     changeMarkerText(ev) {
         var markerText = get(ev, 'target.value');
@@ -44,7 +74,8 @@ class MarkerToolUI extends React.Component {
         this.setState({markerText});
 
         dispatchModifyCustomField( this.props.drawLayer.drawLayerId,
-                    {markerText, markerTextLoc: TextLocation.get(this.state.markerTextLoc)}, this.props.pv.plotId);
+                    {markerText, markerTextLoc: TextLocation.get(this.state.markerTextLoc), activePlotId: this.props.pv.plotId},
+                     this.props.pv.plotId);
     }
 
     changeMarkerTextLocation(ev) {
@@ -52,7 +83,8 @@ class MarkerToolUI extends React.Component {
 
         this.setState({markerTextLoc});
         dispatchModifyCustomField( this.props.drawLayer.drawLayerId,
-                    {markerText: this.state.markerText, markerTextLoc: TextLocation.get(markerTextLoc)}, this.props.pv.plotId);
+                    {markerText: this.state.markerText, markerTextLoc: TextLocation.get(markerTextLoc), activePlotId: this.props.pv.plotId},
+                     this.props.pv.plotId);
     }
 
     render() {

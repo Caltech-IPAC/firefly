@@ -13,6 +13,8 @@ import {toRegion} from './ShapeToRegion.js';
 import {getDrawobjArea,  isScreenPtInRegion, makeHighlightShapeDataObj} from './ShapeHighlight.js';
 import CsysConverter from '../CsysConverter.js';
 import {has, isNil, get, set} from 'lodash';
+import {getPlotViewById} from '../PlotViewUtil.js';
+import {visRoot} from '../ImagePlotCntlr.js';
 
 const FONT_FALLBACK= ',sans-serif';
 
@@ -34,6 +36,13 @@ export function makePoint(pt, plot, toType) {
     } else {
         return plot.getWorldCoords(pt);
     }
+}
+
+export function getPVRotateAngle(plot) {
+     const plotId = plot.plotImageId.substring(0, plot.plotImageId.indexOf('-'));
+     const pv = getPlotViewById(visRoot(), plotId);
+
+     return pv.rotation ? convertAngle('deg', 'radian', pv.rotation) : 0.0;
 }
 
 function make(sType) {
@@ -744,10 +753,8 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
                     angle =  plot.zoomFactor * angle;
                 }
 
-                angle += rectAngle;
-                if (has(renderOptions, 'rotAngle')) {
-                    angle += renderOptions.rotAngle;
-                }
+                angle += rectAngle + getPVRotateAngle(plot) + get(renderOptions, 'rotAngle', 0.0);
+
                 if (has(renderOptions, 'translation')) {
                     x += renderOptions.translation.x;
                     y += renderOptions.translation.y;
@@ -890,7 +897,7 @@ function drawEllipse(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPath
                 angle = plot.zoomFactor * angle;
             }
 
-            angle += eAngle;
+            angle += eAngle + getPVRotateAngle(plot);
 
             if (!onlyAddToPath || style === Style.HANDLED) {
                 DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
