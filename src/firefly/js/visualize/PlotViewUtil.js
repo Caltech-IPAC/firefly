@@ -1,19 +1,16 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {difference,isArray,has,isString,get, isEmpty,flatten, values} from 'lodash';
+import {difference,isArray,has,isString,get, isEmpty,flatten} from 'lodash';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeImagePt, pointEquals} from './Point.js';
 import {CysConverter} from './CsysConverter.js';
 import {clone} from '../util/WebUtil.js';
-import {WPConst} from './WebPlotRequest.js';
-import {RDConst} from './WebPlot.js';
-import {dispatchPlotMask} from './ImagePlotCntlr.js';
 
 
 /**
  * 
- * @param {Object | PlotView[]} ref
+ * @param {VisRoot | PlotView[]} ref
  * @returns {PlotView[]}
  */
 export function getPlotViewAry(ref) {
@@ -35,7 +32,7 @@ export function getPlotViewAry(ref) {
  * @returns {WebPlot} the plot
  */
 export function primePlot(ref,plotId) {
-    var pv;
+    let pv;
     if (!ref) return null;
     if (!isString(plotId)) plotId= '';
     if (ref.plotViewAry) { // I was passed the visRoot, use either plot it or the active plot id
@@ -58,7 +55,7 @@ export function primePlot(ref,plotId) {
  */
 export function getPlotViewById(ref,plotId) {
     if (!plotId) return null;
-    var plotViewAry= getPlotViewAry(ref);
+    const plotViewAry= getPlotViewAry(ref);
     if (!plotViewAry) return null;
 
     return plotViewAry.find( (pv) => pv.plotId===plotId);
@@ -83,7 +80,7 @@ export function getPlotGroupIdxById(ref,plotGroupId) {
  * @returns {PlotView[]}
  */
 export function expandedPlotViewAry(ref,activePlotId=null) {
-    var plotViewAry= getPlotViewAry(ref);
+    const plotViewAry= getPlotViewAry(ref);
     return plotViewAry.filter( (pv) => (pv.plotId===activePlotId || pv.plotViewCtx.inExpandedList));
 }
 
@@ -98,10 +95,10 @@ export function expandedPlotViewAry(ref,activePlotId=null) {
  */
 export function getPlotViewIdListInGroup(visRoot,pvOrId,onlyIfGroupLocked=true, hasPlots=false) {
     if (!pvOrId) return [];
-    var pv= (typeof pvOrId ==='string') ? getPlotViewById(visRoot,pvOrId) : pvOrId;
-    var gid= pv.plotGroupId;
-    var group= getPlotGroupById(visRoot,gid);
-    var locked= hasGroupLock(pv,group);
+    const pv= (typeof pvOrId ==='string') ? getPlotViewById(visRoot,pvOrId) : pvOrId;
+    const gid= pv.plotGroupId;
+    const group= getPlotGroupById(visRoot,gid);
+    const locked= hasGroupLock(pv,group);
     if (!locked && onlyIfGroupLocked) return [pv.plotId];
     const idList=  visRoot.plotViewAry.filter( (pv) => pv.plotGroupId===gid).map( (pv) => pv.plotId);
     if (!hasPlots) return idList;
@@ -120,7 +117,7 @@ export function isActivePlotView(visRoot,plotId) { return visRoot.activePlotId==
 
 /**
  * Get the active PlotView from the store
- * @param visRoot - root of the visualization object in store
+ * @param {VisRoot} visRoot - root of the visualization object in store
  * @return {object} the active plot view
  */
 export function getActivePlotView(visRoot) {
@@ -133,7 +130,7 @@ export function getActivePlotView(visRoot) {
  * @return {boolean} true if three color false if not or plot is null
  */
 export function isThreeColor(plotOrPv) {
-    var plot= plotOrPv;
+    let plot= plotOrPv;
     if (plotOrPv.plots) plot= primePlot(plotOrPv);
     return plot ? plot.plotState.isThreeColor() : false;
 }
@@ -148,7 +145,7 @@ export function isThreeColor(plotOrPv) {
  * @return {Array} new plotView array after the operation
  */
 export function operateOnOthersInGroup(visRoot,sourcePv,operationFunc, ignoreThreeColor=false) {
-    var plotGroup= getPlotGroupById(visRoot,sourcePv.plotGroupId);
+    const plotGroup= getPlotGroupById(visRoot,sourcePv.plotGroupId);
     if (hasGroupLock(sourcePv,plotGroup)) {
         visRoot.plotViewAry.forEach( (pv) => {
             if (ignoreThreeColor && isThreeColor(primePlot(pv))) return;
@@ -171,6 +168,21 @@ export function getOverlayById(plotView, imageOverlayId) {
 }
 
 /**
+ * Look for a cached image tile that has been reprocessed from the original. Match by plotId and the original
+ * url key of the unprocessed tile
+ * @param {VisRoot} visRoot
+ * @param {string} plotId
+ * @param {string} originalUrlkey
+ * @return {ClientTile}
+ */
+export function findProcessedTile(visRoot, plotId, originalUrlkey) {
+    if (!visRoot) return undefined;
+    return flatten(visRoot.processedTiles.filter( (e) => e.plotId===plotId).map( (e) => e.clientTileAry))
+        .find( (tile) => tile.url===originalUrlkey );
+}
+
+
+/**
  *
  * @param ref
  * @param plotId
@@ -182,14 +194,6 @@ export function getOverlayByPvAndId(ref,plotId,imageOverlayId) {
 }
 
 
-
-/**
- * Get all drawing layers container from the store
- * @param dlRoot
- * @return {Array}
- */
-export function getAllDrawLayers(dlRoot) { return dlRoot.drawLayerAry; }
-
 /**
  * construct an array of drawing layer from the store
  * @param ref - the root of the drawing layer controller or the master array of all drawing layers
@@ -199,7 +203,7 @@ export function getAllDrawLayers(dlRoot) { return dlRoot.drawLayerAry; }
  */
 export function getAllDrawLayersForPlot(ref,plotId,mustBeVisible=false) {
     if (!plotId) return [];
-    var dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
+    const dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
     if (isEmpty(dlAry)) return [];
     if (mustBeVisible) {
         return dlAry.filter( (dl) => dl.visiblePlotIdAry.includes(plotId));
@@ -211,7 +215,7 @@ export function getAllDrawLayersForPlot(ref,plotId,mustBeVisible=false) {
 
 
 export function getConnectedPlotsIds(ref, drawLayerId) {
-    var dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
+    const dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
     const dl= getDrawLayerById(dlAry,drawLayerId);
     return dl ? dl.plotIdAry : [];
 }
@@ -225,7 +229,7 @@ export function getConnectedPlotsIds(ref, drawLayerId) {
  * @return {object} the draw layer
  */
 export function getDrawLayerByType(ref,typeId) {
-    var dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
+    const dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
     return dlAry.find( (dl) => dl.drawLayerTypeId===typeId);
 }
 
@@ -236,7 +240,7 @@ export function getDrawLayerByType(ref,typeId) {
  * @returns {Array} the draw layer
  */
 export function getDrawLayerById(ref,id) {
-    var dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
+    const dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
     return dlAry.find( (dl) => dl.drawLayerId===id);
 }
 
@@ -247,7 +251,7 @@ export function getDrawLayerById(ref,id) {
  * @return {Array} the draw layer
  */
 export function getDrawLayersByDisplayGroup(ref,displayGroupId) {
-    var dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
+    const dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
     return dlAry.find( (dl) => dl.displayGroupId===displayGroupId);
 }
 
@@ -306,7 +310,7 @@ export function plotInActiveGroup(visRoot, plotId) {
  * @return {Array}
  */
 export function getPlotStateAry(pv) {
-    var overlayStates= pv.overlayPlotViews.map( (opv) => get(opv.plot,'plotState')).filter( (s) => s);
+    const overlayStates= pv.overlayPlotViews.map( (opv) => get(opv.plot,'plotState')).filter( (s) => s);
     const p= primePlot(pv);
     const pvStateAry= p ? [p.plotState] : [];
     return [...pvStateAry, ...overlayStates];
@@ -339,7 +343,7 @@ export function isInSameGroup(ref, plotId1, plotId2) {
 
 /**
  * find the plot group from the array
- * @param plotGroupId
+ * @param {string} plotGroupId
  * @param plotGroupAry
  * @return {*}
  */
@@ -350,13 +354,13 @@ export function findPlotGroup(plotGroupId, plotGroupAry) {
 
 /**
  * based on groupLock return an array which will either contain one plotView or the whole group
- * @param {PlotView[]} plotViewAry
+ * @param {Array.<PlotView>} plotViewAry
  * @param {string} plotId
  * @param {PlotGroup} plotGroup
- * @return {*}
+ * @return {Array.<PlotView>}
  */
 export function getOnePvOrGroup(plotViewAry, plotId,plotGroup) {
-    var groupLock= hasGroupLock(getPlotViewById(plotViewAry,plotId),plotGroup);
+    const groupLock= hasGroupLock(getPlotViewById(plotViewAry,plotId),plotGroup);
     return groupLock ?
         plotViewAry.filter( (pv) => pv.plotGroupId===plotGroup.plotGroupId) :
         [getPlotViewById(plotViewAry,plotId)];
@@ -371,17 +375,6 @@ export function getOnePvOrGroup(plotViewAry, plotId,plotGroup) {
 //--------------------------------------------------------------
 
 
-
-export function findPlotViewIdx(plotId, plotViewAry) {
-    if (!plotId || !plotViewAry) return null;
-    return plotViewAry.findIndex( (pv) => pv.plotId===plotId);
-}
-
-
-
-
-
-
 /**
  * Perform an operation on all the PlotViews in a group except the source a return a new version of the plotViewAry
  * The operations are only performed if the group is locked.
@@ -391,7 +384,7 @@ export function findPlotViewIdx(plotId, plotViewAry) {
  * @param plotGroup
  * @param {Function} operationFunc the function to operate on the other plot views
  * @param {PlotView} operationFunc.param pv the PlotView to operate on
- * @return {Array} new plotView array after the operation
+ * @return {Array.<PlotView>} new plotView array after the operation
  */
 export function matchPlotView(sourcePv,plotViewAry,plotGroup,operationFunc) {
     if (hasGroupLock(sourcePv,plotGroup)) {
@@ -411,11 +404,11 @@ export function matchPlotView(sourcePv,plotViewAry,plotGroup,operationFunc) {
  * @param plotGroup the group to check against
  * @param {Function} operationFunc the function to operate on the other plot views
  * @param {PlotView} operationFunc.param pv the PlotView to operate on
- * @return {Array} new plotViewAry
+ * @return {Array.<PlotView>} new plotViewAry
  */
 
 export function applyToOnePvOrGroup(plotViewAry, plotId,plotGroup,operationFunc) {
-    var groupLock= hasGroupLock(getPlotViewById(plotViewAry,plotId),plotGroup);
+    const groupLock= hasGroupLock(getPlotViewById(plotViewAry,plotId),plotGroup);
     return plotViewAry.map( (pv) => {
         if (pv.plotId===plotId) return operationFunc(pv);
         else if (groupLock && pv.plotGroupId===plotGroup.plotGroupId) return operationFunc(pv);
@@ -430,10 +423,10 @@ export function applyToOnePvOrGroup(plotViewAry, plotId,plotGroup,operationFunc)
  * @param {PlotView[]|VisRoot} ref visRoot or plotViewAry
  * @param {string} plotId
  * @param {Object} obj fields to replace
- * @return {Array}
+ * @return {Array.<PlotView>}
  */
 export function clonePvAry(ref, plotId, obj) {
-    var plotViewAry= getPlotViewAry(ref);
+    const plotViewAry= getPlotViewAry(ref);
     if (!plotViewAry) return null;
 
     return plotViewAry.map( (pv) => pv.plotId===plotId ? clone(pv,obj) : pv);
@@ -442,50 +435,60 @@ export function clonePvAry(ref, plotId, obj) {
 /**
  * make a new copy of the plotview array with the passed plotView replacing the old one
  * @param ref visRoot or plotViewAry
- * @param {Object} plotView
- * @return {Array}
+ * @param {PlotView} plotView
+ * @return {Array.<PlotView>}
  */
 export function clonePvAryWithPv(ref, plotView) {
-    var plotViewAry= getPlotViewAry(ref);
+    const plotViewAry= getPlotViewAry(ref);
     if (!plotViewAry) return null;
     return plotViewAry.map( (pv) => pv.plotId===plotView.plotId ? plotView : pv);
 }
 
+/**
+ * Find a plot by id in a PlotView
+ * @param {PlotView} plotView
+ * @param {string} imagePlotId
+ * @return {WebPlot}
+ */
+export function findPlot(plotView, imagePlotId) {
+    if (!plotView) return null;
+    return plotView.plots.find( (p) => imagePlotId===p.imagePlotId);
+}
 
 
 /**
  *
- * @param pv plot view
+ * @param {PlotView} pv plot view
  * @return {boolean}
  */
 export function isMultiImageFitsWithSameArea(pv) {
     if (!pv.plotViewCtx.containsMultiImageFits) return false;
-    var plot= primePlot(pv);
-    var {dataWidth:w, dataHeight:h} = plot;
+    const plot= primePlot(pv);
+    const {dataWidth:w, dataHeight:h} = plot;
 
-    var ic1= makeImagePt(0,0);
-    var ic2= makeImagePt(w,0);
-    var ic3= makeImagePt(0,h);
-    var ic4= makeImagePt(w,h);
+    const ic1= makeImagePt(0,0);
+    const ic2= makeImagePt(w,0);
+    const ic3= makeImagePt(0,h);
+    const ic4= makeImagePt(w,h);
 
-    var projName= plot.projection.getProjectionName();
-    var cc= CysConverter.make(plot);
+    const projName= plot.projection.getProjectionName();
+    const cc= CysConverter.make(plot);
 
-    var c1= cc.getWorldCoords(ic1);
-    var c2= cc.getWorldCoords(ic2);
-    var c3= cc.getWorldCoords(ic3);
-    var c4= cc.getWorldCoords(ic4);
+    const c1= cc.getWorldCoords(ic1);
+    const c2= cc.getWorldCoords(ic2);
+    const c3= cc.getWorldCoords(ic3);
+    const c4= cc.getWorldCoords(ic4);
     if (!c1 || !c2 || !c3 || !c4) return false;
 
     return pv.plots.every( (p) => {
         if (w!==p.dataWidth || h!==p.dataHeight) return false;
         if (projName!==p.projection.getProjectionName()) return false;
 
-        var pCC= CysConverter.make(p);
-        var iwc1= pCC.getWorldCoords(ic1);
-        var iwc2= pCC.getWorldCoords(ic2);
-        var iwc3= pCC.getWorldCoords(ic3);
-        var iwc4= pCC.getWorldCoords(ic4);
+        const pCC= CysConverter.make(p);
+        const iwc1= pCC.getWorldCoords(ic1);
+        const iwc2= pCC.getWorldCoords(ic2);
+        const iwc3= pCC.getWorldCoords(ic3);
+        const iwc4= pCC.getWorldCoords(ic4);
         if (!iwc1 || !iwc2 || !iwc3 || !iwc4) return false;
 
         return (pointEquals(iwc1,c1) && 

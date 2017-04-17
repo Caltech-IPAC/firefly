@@ -46,8 +46,19 @@ export function loadScript(scriptName) {
     return loadPromise;
 }
 
-
-
+/**
+ * Create an image with a promise that resolves when the image is loaded
+ * @param {string} src the source of the image typically a url or local image data
+ * @return {Promise} a promised that will resolved with the loaded image object
+ */
+export function loadImage(src) {
+    return new Promise( (resolve, reject) => {
+        const im = new Image();
+        im.src= src;
+        im.onload= () => resolve(im);
+        im.onerror= (ev) => reject(ev);
+    });
+}
 
 /**
  * Returns a string where all characters that are not valid for a complete URL have been escaped.
@@ -542,3 +553,22 @@ export function isBooleanString(val) {
     return s === 'true' || s === 'false';
 }
 
+/**
+ * A shim about requestIdleFrame
+ * @param callback the callback to happens when idle
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Window/requestIdleCallback
+ * @function
+ */
+export const requestIdleCallback =
+    window.requestIdleCallback ||
+    function (callback) {
+        return setTimeout(() => {
+            const start = Date.now();
+            callback({
+                didTimeout: false,
+                timeRemaining: () => Math.max(0, 50 - (Date.now() - start))
+            });
+        }, 1);
+    };
+
+export const cancelIdleCallback = window.cancelIdleCallback || ((id) => clearTimeout(id));

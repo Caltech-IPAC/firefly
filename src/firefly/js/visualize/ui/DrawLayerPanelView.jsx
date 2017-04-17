@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {PropTypes} from 'react';
 import {padStart} from 'lodash';
 import {isDrawLayerVisible, getAllDrawLayersForPlot,
     getLayerTitle, getDrawLayersByDisplayGroup}  from '../PlotViewUtil.js';
@@ -10,6 +10,7 @@ import {operateOnOverlayPlotViewsThatMatch, enableRelatedDataLayer,
                findRelatedData, setMaskVisible } from '../RelatedDataUtil.js';
 import DrawLayerItemView from './DrawLayerItemView.jsx';
 import {ColorChangeType} from '../draw/DrawLayer.js';
+import {clone} from '../../util/WebUtil.js';
 import {dispatchChangeDrawingDef, dispatchChangeVisibility,
         dispatchDetachLayerFromPlot, getDlAry} from '../DrawLayerCntlr.js';
 import {visRoot, dispatchOverlayPlotChangeAttributes, dispatchDeleteOverlayPlot} from '../ImagePlotCntlr.js';
@@ -17,21 +18,27 @@ import {showColorPickerDialog} from '../../ui/ColorPicker.jsx';
 import {showPointShapeSizePickerDialog} from '../../ui/PointShapeSizePicker.jsx';
 
 
-export function DrawLayerPanelView({dlAry, plotView, mouseOverMaskValue, drawLayerFactory}) {
-    var style= {width:'calc(100% - 12px)',
-        height:'100%',
-        padding: 6,
-        position: 'relative',
-        overflow:'hidden'};
 
-    var layers= getAllDrawLayersForPlot(dlAry,plotView.plotId);
-    var maxTitleChars= layers.reduce( (max,l) => {
-        var t= getLayerTitle(plotView.plotId,l);
+const dlPanelViewStyle= {
+    width:'calc(100% - 12px)',
+    height:'100%',
+    padding: 6,
+    position: 'relative',
+    overflow:'hidden'
+};
+
+
+
+export function DrawLayerPanelView({dlAry, plotView, mouseOverMaskValue, drawLayerFactory}) {
+
+    const layers= getAllDrawLayersForPlot(dlAry,plotView.plotId);
+    const maxTitleChars= layers.reduce( (max,l) => {
+        const t= getLayerTitle(plotView.plotId,l);
         return Math.max(max, t?t.length:0);
     },20);
 
     return (
-        <div style={style}>
+        <div style={dlPanelViewStyle}>
             <div style={{overflow:'auto', maxHeight:500}}>
                 {makeImageLayerItemAry(plotView,maxTitleChars,layers.length===0, mouseOverMaskValue)}
                 {makeDrawLayerItemAry(layers,plotView,maxTitleChars, drawLayerFactory)}
@@ -43,11 +50,11 @@ export function DrawLayerPanelView({dlAry, plotView, mouseOverMaskValue, drawLay
 
 
 DrawLayerPanelView.propTypes= {
-    plotView : React.PropTypes.object.isRequired,
-    dlAry : React.PropTypes.array.isRequired,
-    dialogId : React.PropTypes.string.isRequired,
-    drawLayerFactory : React.PropTypes.object.isRequired,
-    mouseOverMaskValue : React.PropTypes.number.isRequired
+    plotView : PropTypes.object.isRequired,
+    dlAry : PropTypes.array.isRequired,
+    dialogId : PropTypes.string.isRequired,
+    drawLayerFactory : PropTypes.object.isRequired,
+    mouseOverMaskValue : PropTypes.number.isRequired
 };
 
 
@@ -119,7 +126,7 @@ function makeAddRelatedDataAry(pv) {
 
 
 function makeDrawLayerItemAry(layers,pv, maxTitleChars, factory) {
-    var last= layers.length-1;
+    const last= layers.length-1;
     return layers.map( (l,idx) => <DrawLayerItemView key={l.drawLayerId}
                                                      maxTitleChars={maxTitleChars}
                                                      helpLine={l.helpLine}
@@ -141,7 +148,7 @@ function makeDrawLayerItemAry(layers,pv, maxTitleChars, factory) {
 
 function makeImageLayerItemAry(pv, maxTitleChars, hasLast, mouseOverMaskValue) {
     if (!pv.overlayPlotViews) return [];
-    var last= pv.overlayPlotViews.length-1;
+    const last= pv.overlayPlotViews.length-1;
     const retAry= pv.overlayPlotViews.map( (opv,idx) =>
         <DrawLayerItemView key={'MaskControl-'+idx}
                            maxTitleChars={maxTitleChars}
@@ -150,7 +157,7 @@ function makeImageLayerItemAry(pv, maxTitleChars, hasLast, mouseOverMaskValue) {
                            canUserDelete={true}
                            canUserChangeColor={true}
                            isPointData={false}
-                           color={opv.color}
+                           color={opv.colorAttributes.color}
                            title= {makeOverlayTitle(opv, (mouseOverMaskValue & opv.maskValue)) }
                            visible={opv.visible}
                            modifyColor={() => modifyMaskColor(opv)}
@@ -163,14 +170,15 @@ function makeImageLayerItemAry(pv, maxTitleChars, hasLast, mouseOverMaskValue) {
 
 
 function makeOverlayTitle(opv,mouseOn) {
-    var {title, color, maskNumber, plot, visible, uiCanAugmentTitle}= opv;
+    let {title, maskNumber}= opv;
+    const { colorAttributes:{color}, plot, visible, uiCanAugmentTitle}= opv;
     maskNumber= Number(maskNumber);
     if (plot && uiCanAugmentTitle) {
         const {header}= plot.projection;
         const titleKey= Object.keys(header)
             .filter( (k) => k.includes('MP'))
             .find( (k) => parseInt(header[k])===maskNumber);
-        var maskDesc= titleKey;
+        let maskDesc= titleKey;
         if (maskDesc) {
             if (maskDesc.startsWith('HIERARCH')) maskDesc= maskDesc.substring(9);
             title= `${title} - ${maskDesc}`;
@@ -193,8 +201,8 @@ function makeOverlayTitle(opv,mouseOn) {
 function modifyColor(dl,plotId) {
     showColorPickerDialog(dl.drawingDef.color, dl.canUserChangeColor===ColorChangeType.STATIC, false,
         (ev) => {
-            var {r,g,b,a}= ev.rgb;
-            var rgbStr= `rgba(${r},${g},${b},${a})`;
+            const {r,g,b,a}= ev.rgb;
+            const rgbStr= `rgba(${r},${g},${b},${a})`;
             dl = getDrawLayersByDisplayGroup(getDlAry(), dl.displayGroupId);
             dispatchChangeDrawingDef(dl.displayGroupId, Object.assign({},dl.drawingDef,{color:rgbStr}),plotId);
         }, dl.drawLayerId);
@@ -205,24 +213,25 @@ const hexC= (v) =>  padStart(v.toString(16),2,'0');
 
 function modifyMaskColor(opv) {
 
-    const {color}= opv;
+    const {color}= opv.colorAttributes;
     const rV= parseInt(color.substring(1,3),16);
     const gV= parseInt(color.substring(3,5),16);
     const bV= parseInt(color.substring(5,7),16);
 
 
-    var rgbStr= `rgba(${rV},${gV},${bV},${opv.opacity})`;
+    const rgbStr= `rgba(${rV},${gV},${bV},${opv.opacity})`;
     showColorPickerDialog(rgbStr, false, true,
         (ev, okPushed) => {
-            var {r,g,b,a}= ev.rgb;
+            const {r,g,b,a}= ev.rgb;
             const newColor= `#${hexC(r)}${hexC(g)}${hexC(b)}`;
-            const doReplot= okPushed && (newColor.toUpperCase()!==opv.color.toUpperCase());
 
 
             operateOnOverlayPlotViewsThatMatch(visRoot(),opv, (aOpv) => {
                 const {plotId, imageOverlayId} = aOpv;
-                dispatchOverlayPlotChangeAttributes({plotId, imageOverlayId,doReplot,
-                    attributes:{color:newColor,opacity:a}});
+                const colorAttributes= aOpv.colorAttributes.color!==newColor ?
+                                  clone(aOpv.colorAttributes, {color:newColor} ) : aOpv.colorAttributes;
+                dispatchOverlayPlotChangeAttributes({plotId, imageOverlayId,doReplot:false,
+                    attributes:{colorAttributes,opacity:a}});
             });
 
         });
@@ -251,4 +260,3 @@ function changeVisible(dl, plotId) {
 function setMaskVisibleInGroup(opv, visible) {
     operateOnOverlayPlotViewsThatMatch(visRoot(),opv, (aOpv) => setMaskVisible(aOpv,visible));
 }
-

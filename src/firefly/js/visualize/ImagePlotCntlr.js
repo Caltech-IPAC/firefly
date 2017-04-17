@@ -141,6 +141,8 @@ const WCS_MATCH=`${PLOTS_PREFIX}.wcsMatch`;
 const PLOT_PROGRESS_UPDATE= `${PLOTS_PREFIX}.PlotProgressUpdate`;
 const API_TOOLS_VIEW= `${PLOTS_PREFIX}.apiToolsView`;
 
+const ADD_PROCESSED_TILES= `${PLOTS_PREFIX}.addProcessedTiles`;
+
 /** Action Type: enable/disable wcs matching*/
 export const IMAGE_PLOT_KEY= 'allPlots';
 
@@ -205,12 +207,43 @@ const initState= function() {
         wcsMatchCenterWP: null,
         wcsMatchType: false,
         mpwWcsPrimId: null,
+
+        processedTiles: []
     };
 
 };
 
 //============ EXPORTS ===========
 //============ EXPORTS ===========
+
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} ProcessedTiles
+ *
+ * @prop {string} plotId
+ * @prop {string} plotImageId
+ * @prop {string} imageOverlayId
+ * @prop {number} zoomFactor
+ * @prop {Array.<ClientTile>} clientTileAry
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} ClientTile
+ *
+ * @prop {Object} tileAttributes
+ * @prop {String} dataUrl
+ * @prop {number} width - width of this tile
+ * @prop {number} height - height of this tile
+ * @prop {number} index - index of this tile
+ * @prop {string} url - original file key to use in the service to retrieve this tile
+ * @prop {number} xoff - pixel offset of this tile
+ * @prop {number} yoff - pixel offset of this tile
+ */
+
 
 
 
@@ -256,7 +289,7 @@ export default {
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
     DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT,
     PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, PLOT_MASK_LAZY_LOAD, DELETE_OVERLAY_PLOT,
-    OVERLAY_PLOT_CHANGE_ATTRIBUTES, WCS_MATCH
+    OVERLAY_PLOT_CHANGE_ATTRIBUTES, WCS_MATCH, ADD_PROCESSED_TILES
 };
 
 
@@ -789,6 +822,16 @@ export function dispatchExpandedAutoPlay(autoPlayOn) {
 }
 
 
+/**
+ *
+ * @param plotId
+ * @param plotImageId
+ * @param clientTileAry
+ */
+export function dispatchAddProcessedTiles(plotId, imageOverlayId, plotImageId, zoomFactor, clientTileAry) {
+    flux.process({ type: ADD_PROCESSED_TILES, payload: {plotId, imageOverlayId, plotImageId, zoomFactor, clientTileAry} });
+}
+
 //======================================== Action Creators =============================
 //======================================== Action Creators =============================
 //======================================== Action Creators =============================
@@ -929,6 +972,7 @@ function changePointSelectionActionCreator(rawAction) {
 
 
 
+
 //======================================== Reducer =============================
 //======================================== Reducer =============================
 //======================================== Reducer =============================
@@ -979,6 +1023,7 @@ function reducer(state=initState(), action={}) {
         case PLOT_PROGRESS_UPDATE  :
         case OVERLAY_PLOT_CHANGE_ATTRIBUTES :
         case CHANGE_PRIME_PLOT  :
+        case ADD_PROCESSED_TILES:
             retState= plotChangeReducer(state,action);
             break;
 
@@ -1115,6 +1160,7 @@ function deletePlotView(state,action) {
     if (state.mpwWcsPrimId===plotId) {
         state.mpwWcsPrimId= state.prevActivePlotId;
     }
+    state.processedTiles= state.processedTiles.filter( (d) => d.plotId!==plotId);// remove old client tile data
     return state;
 }
 
