@@ -25,6 +25,8 @@ import {getConverter} from './LcConverterFactory.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeMissionEntries, keepHighlightedRowSynced} from './LcUtil.jsx';
 import {dispatchMountFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
+import {ServerParams} from '../../data/ServerParams.js';
+
 
 export const LC = {
     RAW_TABLE: 'raw_table',          // raw table id
@@ -133,8 +135,11 @@ export function getConverterData(layoutInfo=getLayouInfo()) {
     const converterId = get(layoutInfo, [LC.MISSION_DATA, LC.META_MISSION]);
     return converterId && getConverter(converterId);
 }
+export function getConvertId(layoutInfo=getLayouInfo()) {
+    return get(layoutInfo, [LC.MISSION_DATA, LC.META_MISSION]);
+}
 
-export function getViewerGroupKey(missionEntries) {
+    export function getViewerGroupKey(missionEntries) {
     return LC.FG_VIEWER_FINDER+get(missionEntries, LC.META_MISSION, '');
 }
 
@@ -267,28 +272,37 @@ export function* lcManager(params={}) {
     }
 }
 
-function updateRawTableChart(timeCName, fluxCName) {
+
+function updateRawTableChart(timeCName, fluxCName, mission='') {
     var chartX = get(getChartDataElement(LC.RAW_TABLE), ['options', 'x', 'columnOrExpr']);
     var chartY = get(getChartDataElement(LC.RAW_TABLE), ['options', 'y', 'columnOrExpr']);
 
     if (chartX === timeCName && chartY === fluxCName) return;
 
     if (timeCName && fluxCName) {
-        const xyPlotParams = {x: {columnOrExpr: timeCName}, y: {columnOrExpr: fluxCName, options: 'grid,flip'}};
+
+        const  title = (mission && (mission.toLowerCase()==='wise' || mission.toLowerCase()==='other') )? 'Input Data':'';
+
+        const xyPlotParams = {x: {columnOrExpr: timeCName}, y: {columnOrExpr: fluxCName, options: 'grid,flip'}, plotTitle:title};
+
         loadXYPlot({chartId: LC.RAW_TABLE, tblId: LC.RAW_TABLE, xyPlotParams, help_id: 'main1TSV.plot'});
     }
 }
 
-function updatePhaseTableChart(flux) {
+function updatePhaseTableChart(flux, mission) {
     var chartY = get(getChartDataElement(LC.PHASE_FOLDED), ['options', 'y', 'columnOrExpr']);
 
     if (chartY === flux) return;
 
     if (flux) {
+
+        const title= (mission && (mission.toLowerCase()==='wise' || mission.toLowerCase()==='other'))?'Phase Folded Data':'';
         const xyPlotParams = {
             userSetBoundaries: {xMax: 2},
             x: {columnOrExpr: LC.PHASE_CNAME, options: 'grid'},
-            y: {columnOrExpr: flux, options: 'grid,flip'}
+            y: {columnOrExpr: flux, options: 'grid,flip'},
+            plotTitle:title
+
         };
         loadXYPlot({chartId: LC.PHASE_FOLDED, tblId: LC.PHASE_FOLDED, xyPlotParams, help_id: 'main1TSV.plot'});
     }
@@ -344,11 +358,13 @@ function handleValueChange(layoutInfo, action) {
             const fluxCol = get(newLayoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME]);
             const activeTbl = getActiveTableId();
 
+            const mission = get(newLayoutInfo, [LC.MISSION_DATA, LC.META_MISSION]);
+
             // refresh chart in case flux or time
             if (activeTbl === LC.RAW_TABLE) {
-                updateRawTableChart(timeCol, fluxCol);
+                updateRawTableChart(timeCol, fluxCol, mission);
             } else if (activeTbl === LC.PHASE_FOLDED) {
-                updatePhaseTableChart(fluxCol);
+                updatePhaseTableChart(fluxCol, mission);
             }
 
             // if (converterData.yNamesChangeImage.includes(value))
@@ -499,6 +515,8 @@ function handleTableLoad(layoutInfo, action) {
             if (invokedBy === TABLE_FETCH) {
                 layoutInfo = handleRawTableLoad(layoutInfo, tbl_id);
             }
+
+
             layoutInfo = handleTableActive(layoutInfo, action);     // because table_active happened before loaded.. we'll handle it here.
         }
     }
@@ -522,6 +540,7 @@ function handleTableLoad(layoutInfo, action) {
  */
 function handleTableActive(layoutInfo, action) {
     const {tbl_id} = action.payload;
+
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
         layoutInfo = setupImages(layoutInfo);
@@ -538,12 +557,12 @@ function handleTableActive(layoutInfo, action) {
         }
     } else {
         const fluxCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME]);
-
+        const mission = get(layoutInfo, [LC.MISSION_DATA, LC.META_MISSION]);
         if (tbl_id === LC.PHASE_FOLDED) {
-            updatePhaseTableChart(fluxCol);
+            updatePhaseTableChart(fluxCol, mission);
         } else if (tbl_id === LC.RAW_TABLE) {
             const timeCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]);
-            updateRawTableChart(timeCol, fluxCol);
+            updateRawTableChart(timeCol, fluxCol, mission);
         }
     }
 

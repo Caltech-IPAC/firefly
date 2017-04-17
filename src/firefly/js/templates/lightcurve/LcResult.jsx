@@ -230,24 +230,27 @@ class SettingBox extends Component {
 
         const groupKey = getViewerGroupKey(missionEntries);
         return (
-            <div style={{position: 'relative', display: 'inline-flex', justifyContent: 'space-between', width: '100%'}}>
-                <div style={{alignSelf: 'flex-end'}}>
-                    <MissionOptions {...{missionEntries, generalEntries}}/>
-                </div>
+            <div>
+                <div style={{position: 'relative', display: 'inline-flex', justifyContent: 'space-between', width: '100%'}}>
+                  <div style={{alignSelf: 'flex-end'}}>
+                      <MissionOptions {...{missionEntries, generalEntries}}/>
+                  </div>
 
-                <div style={{alignSelf: 'flex-end', marginLeft: 10}}>
-                    <CompleteButton
-                        style={{marginLeft: 10}}
-                        groupKey={groupKey}
-                        onSuccess={setViewerSuccess(periodState)}
-                        onFail={setViewerFail()}
-                        text={'Find Period'}
-                    />
-                </div>
-                <div style={{display: 'flex', flexDirection: 'row-reverse'}}>
-                    <HelpIcon helpId={'main1TSV.settings'}/>
-                </div>
-            </div>
+                  <div style={{display: 'flex', flexDirection: 'row-reverse'}}>
+                      <HelpIcon helpId={'main1TSV.settings'}/>
+                  </div>
+
+              </div>
+              <div >
+                <CompleteButton
+                     style={{ width:'80px'}}
+                     groupKey={groupKey}
+                     onSuccess={setViewerSuccess(periodState)}
+                     onFail={setViewerFail()}
+                     text={'Period Finder'}
+                 />
+              </div>
+          </div>
         );
     }
 }

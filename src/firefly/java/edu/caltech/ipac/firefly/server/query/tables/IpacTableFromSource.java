@@ -9,7 +9,9 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.query.*;
+import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -24,6 +26,12 @@ import java.net.URL;
 import java.util.List;
 
 
+/**
+ * History
+ * 4/13/17 LZ
+ * IRSA-311
+ *   Add a title meta data based on the setting of  USE_UPLOADED_FILENAME_AS_TABLE_TITLE
+ */
 @SearchProcessorImpl(id = "IpacTableFromSource")
 public class IpacTableFromSource extends IpacTablePartProcessor {
     public static final String TBL_TYPE = "tblType";
@@ -135,6 +143,16 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         String type = request.getParam(TBL_TYPE);
         if (type == null || type.equals(TYPE_CATALOG)) {
             UserCatalogQuery.addCatalogMeta(defaults,columns,request);
+        }
+        if (request.containsParam(ServerParams.USE_UPLOADED_FILENAME_AS_TABLE_TITLE)){
+            if (request.getBooleanParam(ServerParams.USE_UPLOADED_FILENAME_AS_TABLE_TITLE)){
+
+                String fileName = ((UploadFileInfo) UserCache.getInstance().get(new StringKey(request.getParam(ServerParams.SOURCE)))).getFileName();
+
+                defaults.setAttribute("title",  fileName);
+
+
+            }
         }
     }
 

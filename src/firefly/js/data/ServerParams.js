@@ -144,5 +144,6 @@ export const ServerParams = {
         VIS_PUSH_ACTION: 'pushAction',
 
 
-        USER_TARGET_WORLD_PT : 'UserTargetWorldPt'
+        USER_TARGET_WORLD_PT : 'UserTargetWorldPt',
+        USE_UPLOADED_FILENAME_AS_TABLE_TITLE:'useUploadedFilenameAsTableTitle'
 };

@@ -6,11 +6,13 @@ import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
 import {makeFileRequest} from '../../../tables/TableUtil.js';
-import {getColumnIdx, smartMerge, getNumericColNames, getStringColNames} from '../../../tables/TableUtil.js';
+import {getColumnIdx, smartMerge, getNumericColNames, getStringColNames,getTblById} from '../../../tables/TableUtil.js';
 import {ReadOnlyText, getTypeData} from '../LcUtil.jsx';
 import {LC, getViewerGroupKey, onTimeColumnChange} from '../LcManager.js';
 import {getMissionName} from '../LcConverterFactory.js';
 import {getLayouInfo} from '../../../core/LayoutCntlr.js';
+import FieldGroupUtils from '../../../fieldGroup/FieldGroupUtils';
+import {ServerParams} from '../../../data/ServerParams.js';
 
 const labelWidth = 90;
 
@@ -94,10 +96,17 @@ export class BasicSettingBox extends Component {
         const groupKey = getViewerGroupKey(missionEntries);
         const converterId = get(missionEntries, LC.META_MISSION);
         const typeColumns = {charColumns, numColumns};
-
+        const tblModel = getTblById(LC.RAW_TABLE);
+        const periodFlds = FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER);
         return (
             <FieldGroup groupKey={groupKey}
                         reducerFunc={basicOptionsReducer(missionEntries, generalEntries, typeColumns)} keepState={true}>
+
+                <div >
+                    <div style={{ fontWeight:'bold', display:'inline-block'}} > Column Selection</div>
+                    <div style = {{paddingLeft:'10px', display:'inline-block'}}>{tblModel.title} </div>
+
+                </div>
                 <div style={{display: 'flex', flexDirection: 'column'}}>
                     {getMissionName(converterId) !== '' &&
                     <ReadOnlyText label='Mission:' content={getMissionName(converterId)}
@@ -109,6 +118,7 @@ export class BasicSettingBox extends Component {
                         </div>
                     </div>
                 </div>
+                <div style={{ paddingBottom:'5px'}} > Period:    {get(periodFlds, ['period', 'value'], '')} </div>
             </FieldGroup>
         );
     }
@@ -272,7 +282,10 @@ export function basicRawTableRequest(converter, source) {
         META_INFO: {[LC.META_MISSION]: converter.converterId},
         pageSize: LC.TABLE_PAGESIZE
     };
-    return makeFileRequest('Input Data', source, null, options);
+
+    var req = makeFileRequest('Input Data', source, null, options);
+    req[ServerParams.USE_UPLOADED_FILENAME_AS_TABLE_TITLE]=true;
+    return req;
 
 }
 

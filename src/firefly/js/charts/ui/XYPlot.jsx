@@ -47,7 +47,8 @@ export const plotParamsShape = PropTypes.shape({
     nbins : PropTypes.shape({x : PropTypes.number, y : PropTypes.number}),
     shading : PropTypes.oneOf(['lin', 'log']),
     x : axisParamsShape,
-    y : axisParamsShape
+    y : axisParamsShape,
+    plotTitle:PropTypes.string
 });
 
 const plotDataShape = PropTypes.shape({
@@ -895,6 +896,6 @@ XYPlot.defaultProps = {
     onHighlightChange: undefined,
     onSelection: undefined,
     height: 300,
-    desc: 'Sample XY Plot'
+    desc: ''
 };
 

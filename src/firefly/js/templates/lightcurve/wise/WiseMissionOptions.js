@@ -10,6 +10,10 @@ import {makeFileRequest, getCellValue, getTblById, getColumnIdx, smartMerge} fro
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {ReadOnlyText, getTypeData} from '../LcUtil.jsx';
 import {LC, getViewerGroupKey, onTimeColumnChange} from '../LcManager.js';
+import FieldGroupUtils from '../../../fieldGroup/FieldGroupUtils';
+import {ServerParams} from '../../../data/ServerParams.js';
+
+
 import {getMissionName} from '../LcConverterFactory.js';
 
 const labelWidth = 80;
@@ -17,6 +21,8 @@ const labelWidth = 80;
 export class WiseSettingBox extends Component {
     constructor(props) {
         super(props);
+
+
     }
 
     shouldComponentUpdate(np, ns) {
@@ -29,6 +35,7 @@ export class WiseSettingBox extends Component {
         if (isEmpty(generalEntries) || isEmpty(missionEntries)) return false;
 
         const wrapperStyle = {margin: '3px 0'};
+
 
         const tblModel = getTblById(LC.RAW_TABLE);
         //const validTimes = get(missionEntries, LC.META_FLUX_NAMES, []);
@@ -67,6 +74,10 @@ export class WiseSettingBox extends Component {
                                   getSuggestions={(val) => getList(val)}/>
         );
 
+        const periodFlds = FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER);
+       /* const  period = (FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER) &&  FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER).period.value)
+            ? FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER).period.value:'';
+*/
         //const frameId = getColumnIdx(tblModel, 'frame_id');
         //var missionOthers = (frameId) => {
         //    if (frameId > -1) {
@@ -93,17 +104,26 @@ export class WiseSettingBox extends Component {
                     {label: 'W4', value: 'w4'}
                 ]}/>);
         const groupKey = getViewerGroupKey(missionEntries);
+
+
         const converterId = get(missionEntries, LC.META_MISSION);
         var missionName = getMissionName(converterId) || 'Mission';
+
 
         return (
             <FieldGroup groupKey={groupKey}
                         reducerFunc={wiseOptionsReducer(missionEntries, generalEntries)} keepState={true}>
-                <div style={{display: 'flex', alignItems: 'flex-end'}}>
-                    <div >
+
+                <div >
+                    <div style={{ fontWeight:'bold', display:'inline-block'}} > Column Selection</div>
+                    <div style = {{paddingLeft:'10px', display:'inline-block'}}>{tblModel.title} </div>
+                    <div style = {{fontWeight:'bold',paddingLeft:'100px', display:'inline-block'}}>Images</div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'flex-end'}}>
+                     <div >
                         <ReadOnlyText label='Mission:' content={missionName}
                                       labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>
-
                         {missionInputs}
                         {/*missionData*/}
                     </div>
@@ -112,6 +132,7 @@ export class WiseSettingBox extends Component {
                         {allCommonEntries}
                     </div>
                 </div>
+                <div style={{ paddingBottom:'5px'}} > Period:    {get(periodFlds, ['period', 'value'], '')} </div>
             </FieldGroup>
         );
     }
@@ -363,8 +384,15 @@ export function wiseRawTableRequest(converter, source) {
         sortInfo: sortInfoString(timeCName), // if present, it will skip LcManager.js#ensureValidRawTable
         META_INFO: {[LC.META_MISSION]: mission, timeCName},
         pageSize: LC.TABLE_PAGESIZE
+
+
+
     };
-    return makeFileRequest('Input Data', source, null, options);
+
+    var req=makeFileRequest('Input Data', source, null, options);;
+    req[ServerParams.USE_UPLOADED_FILENAME_AS_TABLE_TITLE]=true;
+    //return makeFileRequest('Input Data', source, null, options);
+    return req;
 
 }
 

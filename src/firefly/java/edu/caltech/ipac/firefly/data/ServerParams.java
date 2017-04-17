@@ -92,6 +92,7 @@ public class ServerParams {
     public static final String DOWNLOAD_REQUEST = "downloadRequest";
     public static final String SELECTION_INFO = "selectionInfo";
 
+    public static final String USE_UPLOADED_FILENAME_AS_TABLE_TITLE="useUploadedFilenameAsTableTitle";
 
 
 

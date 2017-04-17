@@ -71,6 +71,7 @@ class ChartComp extends React.Component {
     render() {
         const {chartId, tblId, tableModel, chartData, widthPx, heightPx} = this.props;
 
+
         if (!TblUtil.isFullyLoaded(tblId) || !chartData || !heightPx || !widthPx) {
             return (<div/>);
         }
@@ -81,10 +82,11 @@ class ChartComp extends React.Component {
 
             const hRow = getHighlighted(xyPlotParams, tblId);
             const sInfo = tableModel && tableModel.selectInfo;
+            const title = (xyPlotParams.plotTitle)?xyPlotParams.plotTitle:'';
 
             return (
                 <XYPlot data={xyPlotData}
-                        desc=''
+                        desc={title}
                         width={widthPx}
                         height={heightPx}
                         params={xyPlotParams}

@@ -8,9 +8,8 @@ import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {tableToIpac, makeFileRequest, getColumnIdx} from '../../tables/TableUtil.js';
-import {LC, getFullRawTable} from './LcManager.js';
+import {LC, getFullRawTable, getConvertId} from './LcManager.js';
 import {getLayouInfo} from '../../core/LayoutCntlr.js';
-
 
 const DEC_PHASE = 3;       // decimal digit
 
@@ -33,11 +32,13 @@ export function uploadPhaseTable(tbl, flux) {
                                      });
 
         dispatchTableSearch(tReq, {removable: true});
-
+        const mission =get(getLayouInfo(), [LC.MISSION_DATA, LC.META_MISSION]);
+        const  plotTitle = (mission && (mission.toLowerCase()==='wise' ||mission.toLowerCase()==='other') )? 'Phase Folded Data':'';
         const xyPlotParams = {
             userSetBoundaries: {xMax: 2},
             x: {columnOrExpr: LC.PHASE_CNAME, options: 'grid'},
-            y: {columnOrExpr: flux, options: 'grid,flip'}
+            y: {columnOrExpr: flux, options: 'grid,flip'},
+            plotTitle:plotTitle
         };
         loadXYPlot({chartId: tbl_id, tblId: tbl_id, xyPlotParams, help_id: 'main1TSV.plot'});
     });
