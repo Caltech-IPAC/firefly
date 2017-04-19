@@ -32,7 +32,7 @@ const highlightedColor = 'rgba(255, 165, 0, 1)';
 const selectionRectColor = 'rgba(255, 209, 128, 0.5)';
 const selectionRectColorGray = 'rgba(165, 165, 165, 0.5)';
 
-const Y_TICKLBL_PX = 80;
+const Y_TICKLBL_PX = 90;
 const X_TICKLBL_PX = 60;
 const MIN_MARGIN_PX = 10;
 const MIN_YLBL_PX = 30;
@@ -70,9 +70,7 @@ function makeSeries(props) {
     let toRowIdx = undefined; //the map from decimate key of a bin to rowIdx
 
     const highlightedData = [];
-    if (!isUndefined(highlighted)) {
-        highlightedData.push(highlighted);
-    }
+
 
     if (!decimateKey) {
         const hasXErrors = plotErrors(params, 'x');
@@ -155,6 +153,9 @@ function makeSeries(props) {
             y: selectedRows.map((r)=>r['y']),
             text: generateTooltips(props, selectedRows)
         });
+        if (!isUndefined(highlighted)) {
+            highlightedData.push(highlighted);
+        }
     } else {
         const {xMin, xUnit, nX, yMin, yUnit, nY} = parseDecimateKey(decimateKey);
         // get center point of the bin
@@ -195,12 +196,18 @@ function makeSeries(props) {
             }
         }
 
+        // to avoid axis and colorbar overlap,
+        // when axis on the right, move colorbar to the left
+        const {yOpposite} = getYAxisOptions(params);
+
         const heatmap = {
             name: DATAPOINTS_HEATMAP,
             type: 'heatmap',
             hoverinfo: 'text',
             showlegend: true,
             colorbar: {
+                xanchor: yOpposite ? 'right' : 'left',
+                x: yOpposite ? -0.02 : 1.02,
                 thickness: 10,
                 outlinewidth: 0,
                 title: 'pts'
@@ -225,6 +232,11 @@ function makeSeries(props) {
             });
         }
         plotlyData.push(heatmap);
+
+        // add highlighted with weight
+        if (!isUndefined(highlighted)) {
+            highlightedData.push(highlightedWithWeight(props, toRowIdx));
+        }
     }
 
 
@@ -245,6 +257,32 @@ function makeSeries(props) {
 }
 
 /**
+ * Returns new highlighted object with weight, if the data are decimated
+ * @param props
+ * @param toRowIdx
+ * @returns {*}
+ */
+function highlightedWithWeight(props, toRowIdx) {
+    const {data, highlighted} = props;
+    const {rows, decimateKey} = data;
+    if (rows.length > 0 && decimateKey) {
+        const {xMin, xUnit, yMin, yUnit} = parseDecimateKey(decimateKey);
+        const newHighlighted = Object.assign({}, highlighted);
+        const binXIdx = ~~((highlighted.x - xMin) / xUnit);
+        const binYIdx = ~~((highlighted.y - yMin) / yUnit);
+        const binRowIdx = toRowIdx.get(`${binXIdx}:${binYIdx}`);
+        if (binRowIdx >= 0) {
+            const binRow = rows.find((r) => (r.rowIdx === binRowIdx));
+            newHighlighted.weight = binRow.weight;
+        }
+        return newHighlighted;
+    } else {
+        return highlighted;
+    }
+
+}
+
+/**
  * Generate tooltips
  * @param props
  * @param rows - data rows, an array of point defining objects
@@ -261,7 +299,7 @@ function generateTooltips(props, rows) {
     const yFormat = (decimateKey || (y && y.match(/\W/))) ? getFormatString(Math.abs(yDataMax-yDataMin), 4) : undefined;
 
     return rows.map((point) => {
-        const weight = point.weight ? `<br> represents ${point.weight} points ` : '';
+        const weight = point.weight ? `<br> represents ${point.weight} point${point.weight>1?'s':''}` : '';
         const xval = xFormat ? numeral(point.x).format(xFormat) : point.x;
         const xerr = formatError(point.x, point.xErr, point.xErrLow, point.xErrHigh);
         const yval = yFormat ? numeral(point.y).format(yFormat) : point.y;
@@ -347,7 +385,8 @@ function getChartingInfo(props) {
             titlefont: {
                 size: FSIZE
             },
-            tickprefix: '  ',
+            tickprefix: yOpposite ? '' : '  ',
+            ticksuffix: yOpposite ? '  ' : '',
             tickfont: {
                 size: FSIZE
             },
@@ -464,7 +503,12 @@ export class XYPlotPlotly extends React.Component {
                 if (!shallowequal(highlighted, newHighlighted) && !isUndefined(get(newHighlighted, 'rowIdx'))) {
                     const highlightedData = [];
                     if (!isUndefined(newHighlighted)) {
-                        highlightedData.push(newHighlighted);
+                        if (get(nextProps, ['data', 'decimateKey'])) {
+                            // make sure bin's weight is present in highlighted data when data are decimated
+                            highlightedData.push(highlightedWithWeight(nextProps, get(this.chartingInfo, 'toRowIdx')));
+                        } else {
+                            highlightedData.push(newHighlighted);
+                        }
                     }
                     const highlightedTraceIdx  = getTraceIdx(this.chartingInfo, HIGHLIGHTED);
                     if (highlightedTraceIdx >= 0) {
@@ -481,26 +525,38 @@ export class XYPlotPlotly extends React.Component {
 
                 // plot parameters change
                 if (params !== newParams) {
-                    const updates = {};
+                    const dataUpdate = {};
+                    const layoutUpdate = {};
+                    let dataUpdateTraces = 0;
                     const newXOptions = getXAxisOptions(newParams);
                     const newYOptions = getYAxisOptions(newParams);
                     const oldXOptions = getXAxisOptions(params);
                     const oldYOptions = getYAxisOptions(params);
                     if (!shallowequal(oldXOptions, newXOptions)) {
-                        updates['xaxis.title'] = newXOptions.xTitle;
-                        updates['xaxis.showgrid'] = newXOptions.xGrid;
-                        updates['xaxis.side'] = newXOptions.xOpposite ? 'top' : 'bottom';
-                        updates['xaxis.type'] = newXOptions.xLog ? 'log' : 'linear';
-                        updates['margin.b'] = newXOptions.xOpposite ? MIN_MARGIN_PX : X_TICKLBL_PX;
-                        updates['margin.t'] = newXOptions.xOpposite ? X_TICKLBL_PX : MIN_MARGIN_PX;
+                        layoutUpdate['xaxis.title'] = newXOptions.xTitle;
+                        layoutUpdate['xaxis.showgrid'] = newXOptions.xGrid;
+                        layoutUpdate['xaxis.side'] = newXOptions.xOpposite ? 'top' : 'bottom';
+                        layoutUpdate['xaxis.type'] = newXOptions.xLog ? 'log' : 'linear';
+                        layoutUpdate['margin.b'] = newXOptions.xOpposite ? MIN_MARGIN_PX : X_TICKLBL_PX;
+                        layoutUpdate['margin.t'] = newXOptions.xOpposite ? X_TICKLBL_PX : MIN_MARGIN_PX;
                     }
                     if (!shallowequal(oldYOptions, newYOptions)) {
-                        updates['yaxis.title'] = newYOptions.yTitle;
-                        updates['yaxis.showgrid'] = newYOptions.yGrid;
-                        updates['yaxis.side'] = newYOptions.yOpposite ? 'right' : 'left';
-                        updates['yaxis.type'] = newYOptions.yLog ? 'log' : 'linear';
-                        updates['margin.l'] = newYOptions.yOpposite ? MIN_MARGIN_PX : Y_TICKLBL_PX;
-                        updates['margin.r'] = newYOptions.yOpposite ? Y_TICKLBL_PX : MIN_MARGIN_PX;
+                        layoutUpdate['yaxis.title'] = newYOptions.yTitle;
+                        layoutUpdate['yaxis.showgrid'] = newYOptions.yGrid;
+                        layoutUpdate['yaxis.type'] = newYOptions.yLog ? 'log' : 'linear';
+                        if (oldYOptions.yOpposite !== newYOptions.yOpposite) {
+                            layoutUpdate['yaxis.side'] = newYOptions.yOpposite ? 'right' : 'left';
+                            layoutUpdate['yaxis.tickprefix'] = newYOptions.yOpposite ? '' : '  ',
+                            layoutUpdate['yaxis.ticksuffix'] = newYOptions.yOpposite ? '  ' : '',
+                            layoutUpdate['margin.l'] = newYOptions.yOpposite ? MIN_MARGIN_PX : Y_TICKLBL_PX;
+                            layoutUpdate['margin.r'] = newYOptions.yOpposite ? Y_TICKLBL_PX : MIN_MARGIN_PX;
+                            if (data.decimateKey) {
+                                // color bar should be on the opposite side of axis to avoid overlapping
+                                dataUpdateTraces = getTraceIdx(this.chartingInfo, DATAPOINTS_HEATMAP);
+                                dataUpdate['colorbar.xanchor'] = newYOptions.yOpposite ? 'right' : 'left';
+                                dataUpdate['colorbar.x'] = newYOptions.yOpposite ? -0.02 : 1.02;
+                            }
+                        }
                     }
                     if (!shallowequal(params.zoom, newParams.zoom) || !shallowequal(params.boundaries, newParams.boundaries) ||
                         oldXOptions.xReversed !== newXOptions.xReversed || oldYOptions.yReversed !== newYOptions.yReversed) {
@@ -510,9 +566,9 @@ export class XYPlotPlotly extends React.Component {
                         const xAxisMax = selFiniteMin(xMax, xDataMax);
                         const yAxisMin = selFiniteMax(yMin,yDataMin);
                         const yAxisMax = selFiniteMin(yMax,yDataMax);
-                        updates['xaxis.autorange'] = false;
-                        updates['xaxis.range'] = getRange(xAxisMin, xAxisMax, newXOptions.xLog, newXOptions.xReversed); // no change for reverse here
-                        updates['yaxis.range'] = getRange(yAxisMin, yAxisMax, newYOptions.yLog, newYOptions.yReversed); // no change for reverse here
+                        layoutUpdate['xaxis.autorange'] = false;
+                        layoutUpdate['xaxis.range'] = getRange(xAxisMin, xAxisMax, newXOptions.xLog, newXOptions.xReversed); // no change for reverse here
+                        layoutUpdate['yaxis.range'] = getRange(yAxisMin, yAxisMax, newYOptions.yLog, newYOptions.yReversed); // no change for reverse here
                     }
 
                     if (!shallowequal(params.selection, newParams.selection)) {
@@ -520,15 +576,17 @@ export class XYPlotPlotly extends React.Component {
                             this.updateSelectionRect(newParams.selection, newXOptions.xLog, newYOptions.yLog);
                             return false;
                         } else {
-                            updates['shapes'] = [];
-                            updates['hovermode'] = 'closest'; // enable tooltips
+                            layoutUpdate['shapes'] = [];
+                            layoutUpdate['hovermode'] = 'closest'; // enable tooltips
                         }
                     }
 
-                    if (Reflect.ownKeys(updates).length > 0) {
-                        this.setState({
-                            layoutUpdate: updates
-                        });
+                    if (Reflect.ownKeys(layoutUpdate).length > 0) {
+                        if (Reflect.ownKeys(dataUpdate).length > 0) {
+                            this.setState({layoutUpdate, dataUpdate, dataUpdateTraces});
+                        } else {
+                            this.setState({layoutUpdate});
+                        }
                     }
                 }
 
@@ -562,15 +620,26 @@ export class XYPlotPlotly extends React.Component {
                 maxYTickLen = len;
             }
         }
+
+        // Firefox has a bug which makes clientWidth tick texts 0
+        // https://bugzilla.mozilla.org/show_bug.cgi?id=874811
+        // also, when axis on the right, clientWidth is big
+        if (maxYTickLen === MIN_MARGIN_PX || maxYTickLen > 200) { return; }
+
         const newMargin = maxYTickLen + MIN_YLBL_PX;
 
-        const leftMargin = get(chart, ['layout', 'margin', 'l']);
-        const rightMargin =  get(chart, ['layout', 'margin', 'r']);
-        const oldMargin = Math.max (leftMargin, rightMargin);
-        //when moving yAxis to the right, client width is sometimes huge
-        if (newMargin < 200 && Math.abs(newMargin-oldMargin) > 2) {
-            const layoutUpdate = leftMargin > rightMargin ?
-                {'margin.l': newMargin} : {'margin.r': newMargin};
+        const {yOpposite} = getYAxisOptions(this.props.params);
+        const layoutUpdate = {};
+        let oldMargin;
+        if (yOpposite) {
+            oldMargin =  get(chart, ['layout', 'margin', 'r']);
+            layoutUpdate['margin.r'] = newMargin;
+        } else {
+            oldMargin = get(chart, ['layout', 'margin', 'l']);
+            layoutUpdate['margin.l'] = newMargin;
+        }
+
+        if (Math.abs(newMargin-oldMargin) > 2) {
             this.setState({layoutUpdate});
         }
     }
@@ -684,7 +753,17 @@ export class XYPlotPlotly extends React.Component {
                     const [xMin, xMax] = eventData.range.x;
                     const [yMin, yMax] = eventData.range.y;
                     pl.d3.selectAll('.select-outline').remove();
-                    onSelection({xMin, xMax, yMin, yMax});
+                    if (get(this.props, ['data', 'decimateKey']) || eventData.points.length>0) {
+                        onSelection({xMin, xMax, yMin, yMax});
+                    } else {
+                        const idx = getTraceIdx(this.chartingInfo, DATAPOINTS);
+                        if (idx >= 0) {
+                            // reset the opacity of the data points
+                            const dataSeries = this.chartingInfo.plotlyData[idx];
+                            const dataUpdate = {'data.marker': dataSeries.marker.color};
+                            this.setState({dataUpdateTraces: idx, dataUpdate});
+                        }
+                    }
                 } else {
                     onSelection(null);
                 }
