@@ -117,7 +117,7 @@ export class WiseSettingBox extends Component {
                 <div >
                     <div style={{ fontWeight:'bold', display:'inline-block'}} > Column Selection</div>
                     <div style = {{paddingLeft:'10px', display:'inline-block'}}>{tblModel.title} </div>
-                    <div style = {{fontWeight:'bold',paddingLeft:'100px', display:'inline-block'}}>Images</div>
+                    <div style = {{fontWeight:'bold',paddingLeft:'82px', display:'inline-block'}}>Images</div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-end'}}>
