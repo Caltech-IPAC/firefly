@@ -413,12 +413,18 @@ function fetchXYLargeTable(dispatch, chartId, chartDataElementId) {
             const colNames = decimateKey ? ['x', 'y', 'rowIdx', 'weight'] : ['x', 'y', 'rowIdx'];
 
             // change row data from [ [val] ] to [ {cname:val} ] and make them numeric
-            const rows = tableModel.tableData.data.map((row) => {
+            const getARow = (row) => {
                 return colNames.reduce( (arow, name, cidx) => {
                     arow[name] = parseFloat(row[cidx]);
                     return arow;
                 }, {});
-            });
+            };
+            const getDecimatedARow = (row) => {
+                const arow = getARow(row);
+                arow.decimate_key = row[4]; // 4th column in decimated table is decimate_key
+                return arow;
+            };
+            const rows = tableModel.tableData.data.map(decimateKey ? getDecimatedARow : getARow);
 
             xyPlotData = omitBy({
                 rows,

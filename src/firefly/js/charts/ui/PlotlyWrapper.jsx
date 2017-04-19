@@ -3,7 +3,6 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-// import Plotly, {getPlotLy} from '../PlotlyConfig.js';
 import {getPlotLy} from '../PlotlyConfig.js';
 import Enum from 'enum';
 
@@ -26,7 +25,7 @@ const defaultConfig= {
     ]
 };
 
-export class PlotlyWrapper extends React.Component {
+export class PlotlyWrapper extends Component {
 
     constructor(props) {
         super(props);
@@ -61,29 +60,37 @@ export class PlotlyWrapper extends React.Component {
 
     draw() {
         const {data,layout, config= defaultConfig, newPlotCB, dataUpdate, layoutUpdate, dataUpdateTraces}= this.props;
-        const {renderType}= this;
+        const renderType = this.renderType;
         getPlotLy().then( (Plotly) => {
-            switch (renderType) {
-                case RenderType.RESTYLE:
-                    Plotly.restyle(this.div,  dataUpdate, dataUpdateTraces);
-                    break;
-                case RenderType.RELAYOUT:
-                    Plotly.relayout(this.div, layoutUpdate);
-                    break;
-                case RenderType.RESTYLE_AND_RELAYOUT:
-                    Plotly.restyle(this.div,  dataUpdate, dataUpdateTraces);
-                    Plotly.relayout(this.div, layoutUpdate);
-                    break;
-                case RenderType.RESIZE:
-                    Plotly.Plots.resize(this.div);
-                    break;
-                case RenderType.UPDATE:
-                    Plotly.update(this.div, data, layout);
-                    break;
-                case RenderType.NEW_PLOT:
-                    Plotly.newPlot(this.div, data, layout, config);
-                    if (newPlotCB) newPlotCB(this.div,Plotly);
-                    break;
+            if (this.div) { // make sure the div is still there
+                switch (renderType) {
+                    case RenderType.RESTYLE:
+                        Plotly.restyle(this.div, dataUpdate, dataUpdateTraces);
+                        break;
+                    case RenderType.RELAYOUT:
+                        Plotly.relayout(this.div, layoutUpdate);
+                        break;
+                    case RenderType.RESTYLE_AND_RELAYOUT:
+                        Plotly.restyle(this.div, dataUpdate, dataUpdateTraces);
+                        Plotly.relayout(this.div, layoutUpdate);
+                        break;
+                    case RenderType.RESIZE:
+                        Plotly.Plots.resize(this.div);
+                        break;
+                    case RenderType.UPDATE:
+                        Plotly.update(this.div, data, layout);
+                        break;
+                    case RenderType.NEW_PLOT:
+                        Plotly.newPlot(this.div, data, layout, config);
+                        if (this.div.on) {
+                            const chart = this.div;
+                            chart.on('plotly_click', () => chart.parentElement.click());
+                        }
+                        if (newPlotCB) {
+                            newPlotCB(this.div, Plotly);
+                        }
+                        break;
+                }
             }
         } ).catch( (e) => {
             console.log('Plotly not loaded',e);
@@ -111,8 +118,12 @@ export class PlotlyWrapper extends React.Component {
 
     render() {
         const {style}= this.props;
+        // note: wrapper div is the target for the simulated click event
+        // when the original click event is lost and plotly_click is emitted instead
         return (
-            <div id={this.id} style={style} ref={this.refUpdate}></div>
+            <div>
+                <div id={this.id} style={style} ref={this.refUpdate}/>
+            </div>
         );
     }
 }
@@ -128,5 +139,5 @@ PlotlyWrapper.propTypes = {
     dataUpdateTraces: PropTypes.number,
     layoutUpdate: PropTypes.object,
     divUpdateCB: PropTypes.func,
-    newPlotCB: PropTypes.func,
+    newPlotCB: PropTypes.func
 };

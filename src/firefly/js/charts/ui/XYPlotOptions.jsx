@@ -16,7 +16,7 @@ import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
-import {plotParamsShape} from  './XYPlot.jsx';
+import {plotParamsShape} from './XYPlotPropTypes.js';
 import {hideColSelectPopup} from './ColSelectView.jsx';
 import {ColumnOrExpression, getColValidator} from './ColumnOrExpression.jsx';
 import {updateSet} from '../../util/WebUtil.js';

@@ -120,7 +120,7 @@ export class HistogramPlotly extends React.Component {
     }
 
     regenData(props) {
-        var {data, series, xAxis, yAxis, logs, desc, binColor, xUnit} = props;
+        var {data, series, xAxis, yAxis, logs, desc, binColor, xUnit, width, height} = props;
         if (!data) {
             data = series && series.data;
         }
@@ -153,6 +153,8 @@ export class HistogramPlotly extends React.Component {
             },
             plotlyData,
             plotlyLayout: {
+                height,
+                width,
                 hovermode: 'x',
                  xaxis: {
                     title: `${desc} ` + (xUnit ? `(${xUnit})` : ''),
@@ -192,7 +194,7 @@ export class HistogramPlotly extends React.Component {
     }
 
     shouldComponentUpdate(nextProps, ns) {
-        const bUpdate = sCompare(nextProps, ns);
+        const bUpdate = sCompare(this, nextProps, ns);
 
         if (bUpdate && nextProps !== this.props) {
             this.chartingInfo = this.regenData(nextProps);
@@ -274,46 +276,28 @@ export class HistogramPlotly extends React.Component {
                 this.setState({leftMargin, rightMargin, layoutUpdate: {margin}});
             }
         }
-
-        // add event handler to 'plotly_click' in case mouse click happens when the mouse is hovering on the bar
-        const {eventCallback} = this.props;
-        if (eventCallback) {
-            Object.keys(eventCallback).forEach((eventKey) => {
-                if (eventKey === 'mousedown') {
-                    chart.on('plotly_click', eventCallback[eventKey]);
-                }
-            });
-        }
     }
 
     render() {
         this.error = undefined;
         const {dataUpdate, layoutUpdate, config} = this.state;
         const {plotlyData, plotlyDivStyle, plotlyLayout}= this.chartingInfo;
-        const {width, height, eventCallback} = this.props;
 
-        //add click event handler to div in case the mouse click happens when the mouse is located on non-bar area
         return (
-            <div style={{width: width? width: undefined,
-                         height: height? height: undefined}}
-                 onClick={get(eventCallback, 'mousedown')}>
-                <PlotlyWrapper data={plotlyData} layout={plotlyLayout}  style={plotlyDivStyle}
-                               dataUpdate={dataUpdate}
-                               layoutUpdate={layoutUpdate}
-                               divUpdateCB={(div) => this.chart= div}
-                               config={config}
-                               newPlotCB={this.afterRedraw}
-                />
-            </div>
+            <PlotlyWrapper data={plotlyData} layout={plotlyLayout}  style={plotlyDivStyle}
+                           dataUpdate={dataUpdate}
+                           layoutUpdate={layoutUpdate}
+                           divUpdateCB={(div) => this.chart= div}
+                           config={config}
+                           newPlotCB={this.afterRedraw}
+            />
         );
     }
 }
 
 HistogramPlotly.defaultProps = {
     desc: 'Sample Distribution',
-    binColor: '#d1d1d1',
-    xAxis: {},
-    yAxis: {}
+    binColor: '#d1d1d1'
 };
 
 
@@ -331,6 +315,5 @@ HistogramPlotly.propTypes = {
         if (props[propName] && !/^#[0-9a-f]{6}/.test(props[propName])) {
             return new Error(`Invalid bin color in ${componentName}, should be hex with exactly 7 characters long.`);
         }
-    },
-    eventCallback: PropTypes.object
+    }
 };

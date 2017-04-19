@@ -28,6 +28,11 @@
 <div id="xyplotHere" style="width: 800px; height: 550px; border: solid 1px;"></div>
 
 <script type="text/javascript">
+    if (!window.firefly) window.firefly= {};
+    window.firefly.options= {charts: {chartEngine: 'plotly'}};
+</script>
+
+<script type="text/javascript">
     {
         onFireflyLoaded= function(firefly) {
 
