@@ -75,7 +75,7 @@ export function doPFCalculate(flux, time, period, tzero) {
  */
 export function getPhase(time, timeZero, period,  dec=DEC_PHASE) {
     var q = (time - timeZero)/period;
-    var p = q >= 0  ? (q - Math.floor(q)) : (q + Math.floor(-q));
+    var p = q >= 0  ? (q - Math.floor(q)) : (q + Math.floor(-q) + 1.0);
 
     return p.toFixed(dec);
 }
