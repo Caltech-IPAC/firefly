@@ -247,7 +247,7 @@ class SettingBox extends Component {
                      groupKey={groupKey}
                      onSuccess={setViewerSuccess(periodState)}
                      onFail={setViewerFail()}
-                     text={'Period Finder'}
+                     text={'Period Finder...'}
                  />
               </div>
           </div>
