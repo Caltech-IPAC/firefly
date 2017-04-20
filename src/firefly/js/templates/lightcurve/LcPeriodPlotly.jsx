@@ -340,8 +340,8 @@ class PhaseFoldingChart extends Component {
                     //color: 'blue',
                     color: 'rgba(63, 127, 191, 0.5)'
                 },
-                x: data.map((d) => d[0]),
-                y: data.map((d) => d[1]),
+                x: data&&data.map((d) => d[0]),
+                y: data&&data.map((d) => d[1]),
                 hoverinfo: 'text'
             }],
             plotlyLayout: {
