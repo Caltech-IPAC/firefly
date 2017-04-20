@@ -18,6 +18,7 @@ import {primePlot} from './PlotViewUtil.js';
 import {doConv} from '../astro/conv/CoordConv.js';
 import Point, {makeImageWorkSpacePt, makeImagePt, makeScreenPt,
                makeWorldPt, makeDevicePt, isValidPoint} from './Point.js';
+import {Matrix} from 'transformation-matrix-js';
 
 
 export const DtoR = Math.PI / 180.0;
@@ -374,16 +375,32 @@ export function isPlotNorth(plot) {
 
 
 /**
- * When plot is rotated north is east on the left hand side.  This helps determine if a plot is flipped.
+ * When plot is rotated north is east on the left hand side.  This helps determine if a image is flipped.
  * @param plot
  * @return {boolean}
  */
-export function isEastLeft(plot) {
-    const iy = plot.dataHeight/2;
+export function isEastLeftOfNorth(plot) {
+
+    if (!plot) return true;
+
+    const mx = plot.dataWidth/2;
+    const my = plot.dataHeight/2;
+
+    const angle= getRotationAngle(plot);
+    const affTrans= new Matrix();
+    affTrans.translate(mx,my);
+    affTrans.rotate(toRadians(-angle));
+    affTrans.translate(-mx,-my);
+    affTrans.translateY(plot.dataHeight);
+    affTrans.scale(1,-1);
+
+
     const cc= CysConverter.make(plot);
-    const wpt1 = cc.getWorldCoords(makeImagePt(plot.dataWidth-1, iy));
+    const cenPoint= affTrans.applyToPoint(mx,my);
+    const wpt1 = cc.getWorldCoords(makeImagePt(cenPoint));
     if (wpt1) {
-        const wpt2 = cc.getWorldCoords(makeImagePt(1, iy));
+        const rotPoint= affTrans.applyToPoint(1,my);
+        const wpt2 = cc.getWorldCoords(makeImagePt(rotPoint));
         if (wpt2) return wpt2.x > wpt1.x;
     }
     return true;

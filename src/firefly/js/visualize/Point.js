@@ -1,5 +1,5 @@
 
-import {isString, isNil} from 'lodash';
+import {isString, isNil, isObject, isArray} from 'lodash';
 import CoordinateSys from './CoordSys.js';
 import Resolver, {parseResolver} from '../astro/net/Resolver.js';
 import validator from 'validator';
@@ -74,9 +74,25 @@ const Point = {  SPT, IM_PT, IM_WS_PT, DEV_PT, PROJ_PT, W_PT, OFFSET_PT};
 
 
 export class SimplePt {
-    constructor(x,y) {
-        this.x= x;
-        this.y= y;
+    constructor(objOrX,y, forceToInt) {
+        if (isArray(objOrX)) {
+            forceToInt= y || forceToInt; // in  this case, forceToInt was passed in second position
+            this.x= Number(objOrX[0]);
+            this.y= Number(objOrX[1]);
+        }
+        else if (isObject(objOrX)) {
+            forceToInt= y || forceToInt; // in  this case, forceToInt was passed in second position
+            this.x= Number(objOrX.x);
+            this.y= Number(objOrX.y);
+        }
+        else {
+            this.x= Number(objOrX);
+            this.y= Number(y);
+        }
+        if (forceToInt) {
+            this.x= Math.trunc(this.x);
+            this.y= Math.trunc(this.y);
+        }
     }
     toString() { return this.x+';'+this.y; }
 }
@@ -221,7 +237,7 @@ export function makeWorldPt(lon,lat,coordSys,objName,resolver) {
  * @public
  * @global
  */
-export const makeImagePt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:IM_PT});
+export const makeImagePt= (x,y) => Object.assign(new SimplePt(x,y), {type:IM_PT});
 
 
 /**
@@ -231,7 +247,7 @@ export const makeImagePt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y
  * @memberof firefly.util.image
  * @return {Pt}
  */
-export const makeImageWorkSpacePt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:IM_WS_PT});
+export const makeImageWorkSpacePt= (x,y) => Object.assign(new SimplePt(x,y), {type:IM_WS_PT});
 
 
 
@@ -248,7 +264,7 @@ export const makeImageWorkSpacePt= (x,y) => Object.assign(new SimplePt(Number(x)
  * @public
  * @global
  */
-export const makeScreenPt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:SPT});
+export const makeScreenPt= (x,y) => Object.assign(new SimplePt(x,y), {type:SPT});
 
 /**
  * @summary A point on the physical space of the image display area
@@ -262,11 +278,11 @@ export const makeScreenPt= (x,y) => Object.assign(new SimplePt(Number(x),Number(
  * @public
  * @global
  */
-export const makeDevicePt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:DEV_PT});
+export const makeDevicePt= (x,y) => Object.assign(new SimplePt(x,y), {type:DEV_PT});
 
-export const makeProjectionPt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:PROJ_PT});
+export const makeProjectionPt= (x,y) => Object.assign(new SimplePt(x,y), {type:PROJ_PT});
 
-export const makeOffsetPt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:OFFSET_PT});
+export const makeOffsetPt= (x,y) => Object.assign(new SimplePt(x,y), {type:OFFSET_PT});
 
 
 /**

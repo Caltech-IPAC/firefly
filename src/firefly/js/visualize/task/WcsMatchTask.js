@@ -9,7 +9,7 @@ import ImagePlotCntlr, {WcsMatchType, IMAGE_PLOT_KEY,
                        dispatchUpdateViewSize, dispatchRecenter, ActionScope} from '../ImagePlotCntlr.js';
 import {getPlotViewById, primePlot, applyToOnePvOrGroup, findPlotGroup} from '../PlotViewUtil.js';
 import {PlotAttribute} from '../WebPlot.js';
-import {FullType, isPlotNorth, isEastLeft, getRotationAngle} from '../VisUtil.js';
+import {FullType, isPlotNorth, isEastLeftOfNorth, getRotationAngle} from '../VisUtil.js';
 import {getEstimatedFullZoomFactor, getArcSecPerPix, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import {CCUtil} from '../CsysConverter.js';
@@ -186,7 +186,8 @@ function rotateToMatch(pv, masterPv, flipY) {
     const plot= primePlot(pv);
     const masterPlot= primePlot(masterPv);
     if (!plot) return;
-    const targetRotation= ((getRotationAngle(masterPlot)+masterPv.rotation) -
+    const masterRot= masterPv.rotation * (flipY ? -1 : 1);
+    const targetRotation= ((getRotationAngle(masterPlot)+  masterRot)  -
                            (getRotationAngle(plot))) * (flipY ? 1 : -1);
     dispatchRotate({
         plotId: plot.plotId,
@@ -205,7 +206,7 @@ function isFlipYMatching(pv1, pv2) {
 function isEast(pv) {
     const p= primePlot(pv);
     if (!p) return true;
-    const imageDataEast= isEastLeft(p);
+    const imageDataEast= isEastLeftOfNorth(p);
     return (imageDataEast && !pv.flipY) || (!imageDataEast && pv.flipY);
 }
 
