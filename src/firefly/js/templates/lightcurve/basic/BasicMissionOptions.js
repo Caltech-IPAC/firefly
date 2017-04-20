@@ -97,14 +97,16 @@ export class BasicSettingBox extends Component {
         const converterId = get(missionEntries, LC.META_MISSION);
         const typeColumns = {charColumns, numColumns};
         const tblModel = getTblById(LC.RAW_TABLE);
-        const periodFlds = FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER);
+        //const periodFlds = FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER);
+        const layoutInfo = getLayouInfo();
+        var period = get(layoutInfo, ['periodRange','period'], '');
         return (
             <FieldGroup groupKey={groupKey}
                         reducerFunc={basicOptionsReducer(missionEntries, generalEntries, typeColumns)} keepState={true}>
 
                 <div >
                     <div style={{ fontWeight:'bold', display:'inline-block'}} > Column Selection</div>
-                    <div style = {{paddingLeft:'10px', display:'inline-block'}}>{tblModel.title} </div>
+                    <div style = {{paddingLeft:'10px', display:'inline-block'}}>{tblModel.request.META_INFO.title} </div>
 
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column'}}>
@@ -118,7 +120,7 @@ export class BasicSettingBox extends Component {
                         </div>
                     </div>
                 </div>
-                <div style={{ paddingBottom:'5px'}} > Period:    {get(periodFlds, ['period', 'value'], '')} </div>
+                <div style={{ paddingBottom:'5px'}} > Period:    {period} </div>
             </FieldGroup>
         );
     }

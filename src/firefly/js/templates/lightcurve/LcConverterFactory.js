@@ -91,7 +91,8 @@ const converters = {
         webplotRequestCreator: getWebPlotRequestViaWISEIbe,
         shouldImagesBeDisplayed: () => {return true;},
         isTableUploadValid: isBasicTableUploadValid,
-        yNamesChangeImage: []
+        yNamesChangeImage: [],
+        showPlotTitle:true
     },
     'lsst_sdss': {
         converterId: 'lsst_sdss',
@@ -154,7 +155,8 @@ const converters = {
         webplotRequestCreator: basicURLPlotRequest,
         shouldImagesBeDisplayed: imagesShouldBeDisplayed,
         isTableUploadValid: () => {return true;},
-        yNamesChangeImage: []
+        yNamesChangeImage: [],
+        showPlotTitle:true
     }
 };
 

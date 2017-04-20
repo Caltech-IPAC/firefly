@@ -145,7 +145,7 @@ export function getDefaultXYPlotOptions(tbl_id) {
  * @param {Function} [params.dispatcher=flux.process] - only for special dispatching uses such as remote
  */
 
-export function loadXYPlot({chartId, xyPlotParams, help_id, tblId,  plotTitle, dispatcher=flux.process}) {
+export function loadXYPlot({chartId, xyPlotParams, help_id, tblId,  dispatcher=flux.process}) {
     //SCATTER
     dispatchChartAdd({chartId, chartType: SCATTER, help_id, groupId: tblId,
         chartDataElements: [

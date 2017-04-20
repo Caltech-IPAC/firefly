@@ -56,7 +56,7 @@ public class JsonTableUtil {
             tableModel.put("tbl_id",  meta.getAttribute(TableServerRequest.TBL_ID).getValue());
         }
 
-        if (request.containsParam(ServerParams.USE_UPLOADED_FILENAME_AS_TABLE_TITLE) &&
+      /*  if (request.containsParam(ServerParams.USE_UPLOADED_FILENAME_AS_TABLE_TITLE) &&
                 request.getBooleanParam(ServerParams.USE_UPLOADED_FILENAME_AS_TABLE_TITLE)){
 
                 tableModel.put("title", page.getTableDef().getAttribute("title").getValue());
@@ -64,7 +64,9 @@ public class JsonTableUtil {
         }
         else {
             tableModel.put("title", page.getData().getTitle());
-        }
+        }*/
+
+        tableModel.put("title", page.getData().getTitle());
 
         tableModel.put("type", guessType(meta));
         tableModel.put("totalRows", page.getRowCount());

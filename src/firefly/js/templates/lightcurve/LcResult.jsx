@@ -94,7 +94,7 @@ export class LcResult extends Component {
 
         content.settingBox = (<SettingBox generalEntries={generalEntries}
                                           missionEntries={missionEntries}
-                                          periodState={periodState} />);
+                                          periodState={periodState}  />);
 
 
         expanded = LO_VIEW.get(expanded) || LO_VIEW.none;
@@ -298,6 +298,9 @@ function updateFullRawTable(callback) {
         var max = 365;
         var min = Math.pow(10, -3);   // 0.001
 
+       // var period = get( FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER), ['period', 'value'], '');
+
+        const period = '';
         var fields = FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER);
         var initState;
 
@@ -307,7 +310,7 @@ function updateFullRawTable(callback) {
                 {fieldKey: 'flux', value: get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME])},
                 {fieldKey: 'periodMin', value: `${min}`},
                 {fieldKey: 'periodMax', value: `${max}`},
-                {fieldKey: 'period', value: `${min}`},
+                {fieldKey: 'period', value: `${period}`},
                 {fieldKey: 'tzero', value: `${tzero}`},
                 {fieldKey: 'tzeroMax', value: `${tzeroMax}`}];
 
@@ -320,7 +323,7 @@ function updateFullRawTable(callback) {
 
         dispatchUpdateLayoutInfo(Object.assign({}, layoutInfo, {
             fullRawTable,
-            periodRange: {min, max, tzero, tzeroMax}
+            periodRange: {min, max, tzero, tzeroMax, period}
         }));
         callback && callback();
     };

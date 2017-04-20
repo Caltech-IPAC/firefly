@@ -145,14 +145,11 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
             UserCatalogQuery.addCatalogMeta(defaults,columns,request);
         }
         if (request.containsParam(ServerParams.USE_UPLOADED_FILENAME_AS_TABLE_TITLE)){
-            if (request.getBooleanParam(ServerParams.USE_UPLOADED_FILENAME_AS_TABLE_TITLE)){
 
-                String fileName = ((UploadFileInfo) UserCache.getInstance().get(new StringKey(request.getParam(ServerParams.SOURCE)))).getFileName();
+             String fileName = ((UploadFileInfo) UserCache.getInstance().get(new StringKey(request.getParam(ServerParams.SOURCE)))).getFileName();
 
-                defaults.setAttribute("title",  fileName);
+             ( (TableServerRequest) request).getMeta().put("title", fileName);
 
-
-            }
         }
     }
 

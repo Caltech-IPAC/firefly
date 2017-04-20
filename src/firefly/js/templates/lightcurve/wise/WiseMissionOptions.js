@@ -74,10 +74,12 @@ export class WiseSettingBox extends Component {
                                   getSuggestions={(val) => getList(val)}/>
         );
 
-        const periodFlds = FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER);
-       /* const  period = (FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER) &&  FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER).period.value)
-            ? FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER).period.value:'';
-*/
+
+        //var period = getTblById(LC.PHASE_FOLDED)? get( FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER), ['period', 'value'], ''):'';
+
+        const layoutInfo = getLayouInfo();
+        var period = get(layoutInfo, ['periodRange','period'], '');
+
         //const frameId = getColumnIdx(tblModel, 'frame_id');
         //var missionOthers = (frameId) => {
         //    if (frameId > -1) {
@@ -116,7 +118,7 @@ export class WiseSettingBox extends Component {
 
                 <div >
                     <div style={{ fontWeight:'bold', display:'inline-block'}} > Column Selection</div>
-                    <div style = {{paddingLeft:'10px', display:'inline-block'}}>{tblModel.title} </div>
+                    <div style = {{paddingLeft:'10px', display:'inline-block'}}>{tblModel.tableMeta.title} </div>
                     <div style = {{fontWeight:'bold',paddingLeft:'82px', display:'inline-block'}}>Images</div>
                 </div>
 
@@ -132,7 +134,7 @@ export class WiseSettingBox extends Component {
                         {allCommonEntries}
                     </div>
                 </div>
-                <div style={{ paddingBottom:'5px'}} > Period:    {get(periodFlds, ['period', 'value'], '')} </div>
+                <div style={{ paddingBottom:'5px'}} > Period:    {period} </div>
             </FieldGroup>
         );
     }
@@ -358,7 +360,8 @@ export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, conv
         [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES, numericalCols),
         [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, numericalCols),
         [LC.META_URL_CNAME]: get(metaInfo, LC.META_URL_CNAME, defaultDataSource),
-        [LC.META_FLUX_BAND]: get(metaInfo, LC.META_FLUX_BAND, 'w1')
+        [LC.META_FLUX_BAND]: get(metaInfo, LC.META_FLUX_BAND, 'w1'),
+
     };
 
     missionEntries = Object.assign({}, missionEntries, defaultValues);
