@@ -226,18 +226,13 @@ const PeriodStandardView = (props) => {
                     <SplitContent>
                         <div className='phaseFolded'>
                             <div className='phaseFolded__options'>
-                                <LcPFOptionsBox />
+                                <LcPFOptionsBox/>
                             </div>
                             <PhaseFoldingChart/>
                         </div>
                     </SplitContent>
                     <LcPeriodogram displayMode={displayMode}/>
                 </SplitPane>
-            </div>
-            <div style={{flexGrow: 0, display: 'inline-flex', justifyContent: 'flex-end', height: 40}}>
-                <div style={{marginTop:7, marginRight:10}}>
-                    <HelpIcon helpId={'findpTSV.acceptp'}/>
-                </div>
             </div>
         </FieldGroup>
     );
@@ -605,7 +600,7 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
                 <HelpIcon helpId={'findpTSV.settings'}/>
             </div>
             {'Vary period and time offset while visualizing phase folded plot. ' +
-            'Optionally calculate periodogram and click to choose period. ' +
+            'Optionally calculate periodogram. ' +
             'When satisfied, click Accept to return to Time Series Viewer with phase folded table.'}
             <br/>
             <br/>
@@ -654,7 +649,7 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
             </div>
             <div style={styleItem}>
                 <div style={innerItem}>
-                    {'Calculate periodogram (below) and click to select period'}
+                    {'Calculate periodogram (below) and click to select period.'}
                 </div>
             </div>
             <div style={{display:'flex', alignItems:'center'}}>
@@ -672,6 +667,7 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
                 <div style={{margin: 5}}>
                     <button type='button' className='button std hl' onClick={()=>cancelStandard()}>Cancel</button>
                 </div>
+                <HelpIcon helpId={'findpTSV.acceptp'}/>
             </div>
         </div>
     );
