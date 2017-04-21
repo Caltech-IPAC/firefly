@@ -600,7 +600,7 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
                 <HelpIcon helpId={'findpTSV.settings'}/>
             </div>
             {'Vary period and time offset while visualizing phase folded plot. ' +
-            'Optionally calculate periodogram and click to choose period. ' +
+            'Optionally calculate periodogram. ' +
             'When satisfied, click Accept to return to Time Series Viewer with phase folded table.'}
             <br/>
             <br/>
