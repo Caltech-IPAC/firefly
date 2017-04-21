@@ -234,11 +234,6 @@ const PeriodStandardView = (props) => {
                     <LcPeriodogram displayMode={displayMode}/>
                 </SplitPane>
             </div>
-            <div style={{flexGrow: 0, display: 'inline-flex', justifyContent: 'flex-end', height: 40}}>
-                <div style={{marginTop:7, marginRight:10}}>
-                    <HelpIcon helpId={'findpTSV.acceptp'}/>
-                </div>
-            </div>
         </FieldGroup>
     );
 };
@@ -672,6 +667,7 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
                 <div style={{margin: 5}}>
                     <button type='button' className='button std hl' onClick={()=>cancelStandard()}>Cancel</button>
                 </div>
+                <HelpIcon helpId={'findpTSV.acceptp'}/>
             </div>
         </div>
     );
