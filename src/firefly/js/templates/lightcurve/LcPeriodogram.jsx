@@ -174,7 +174,7 @@ function ChangePeriodogram() {
             <button type='button' className='button std hl'
                     onClick={startPeriodogramPopup(LC.FG_PERIODOGRAM_FINDER)}>Recalculate Periodogram
             </button>
-            {'Click on plot or table to choose period'}
+            {'Click on plot or table to choose period.'}
         </div>
     );
 }

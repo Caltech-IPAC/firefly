@@ -263,8 +263,8 @@ export function UploadPanel(props) {
                             style={{padding:5,display:'flex', flexDirection:'row', alignItems:'center' }}>
                             <div
                                 style={{display:'flex', flexDirection:'column', alignItems: 'flex-end', margin:'0px 10px'}}>
-                                    <div>{'Choose mission:'}</div>
-                                    <div>{'to view associated images'}</div>
+                                    <div>{'Choose mission'}</div>
+                                    <div>{'to view associated images:'}</div>
                                 </div>
                             <ListBoxInputField fieldKey='mission'
                                                wrapperStyle={wrapperStyle}
