@@ -704,7 +704,7 @@ var LcPFReducer= (initState) => {
                 set(defV, [fKeyDef.max.fkey, 'value'], `${max}`);
                 set(defV, [fKeyDef.time.fkey, 'value'], time);
                 set(defV, [fKeyDef.flux.fkey, 'value'], flux);
-                set(defV, [fKeyDef.period.fkey, 'value'], `${min}`);
+                //set(defV, [fKeyDef.period.fkey, 'value'], `${min}`);
                 set(defV, [fKeyDef.tz.fkey, 'value'], `${tzero}`);
                 set(defV, [fKeyDef.tzmax.fkey, 'value'], `${tzeroMax}`);
 
