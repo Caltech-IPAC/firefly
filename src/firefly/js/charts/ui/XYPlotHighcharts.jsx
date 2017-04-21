@@ -408,6 +408,7 @@ export class XYPlotHighcharts extends React.Component {
                     marker,
                     turboThreshold: 0,
                     showInLegend: false,
+                    findNearestPointBy: 'xy',
                     point
                 });
                 allSeries.push({

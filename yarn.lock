@@ -2065,6 +2065,10 @@ highcharts@^5.0.0:
   version v5.0.7
   resolved "https://registry.yarnpkg.com/highcharts/-/highcharts-5.0.7.tgz#63ebeeee05acd56e3b2554b5b31a1224e1e05bf6"
 
+highcharts@^5.0.10:
+  version v5.0.10
+  resolved "https://registry.yarnpkg.com/highcharts/-/highcharts-5.0.10.tgz#7a432c39a3c27992314ab17e45ecf29bd1a91132"
+
 hoek@2.x.x:
   version "2.16.3"
   resolved "https://registry.yarnpkg.com/hoek/-/hoek-2.16.3.tgz#20bb7403d3cea398e91dc4710a8ff1b8274a25ed"
@@ -3557,7 +3561,7 @@ react-grid-layout@^0.13.3:
     react-draggable "^2.1.1"
     react-resizable "^1.4.0"
 
-react-highcharts@^11.0.0:
+react-highcharts@^11.5.0:
   version "11.5.0"
   resolved "https://registry.yarnpkg.com/react-highcharts/-/react-highcharts-11.5.0.tgz#2812cdc56ef1057e59cbc9c4dbed79b72d8505ae"
   dependencies:
