@@ -9,8 +9,8 @@ import {getActivePlotView,
     findPlotGroup,
     getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {findRelatedData} from '../RelatedDataUtil.js';
-import {dispatchRotate, dispatchFlip, dispatchRecenter,
-        dispatchRestoreDefaults,dispatchGroupLocking, ActionScope} from '../ImagePlotCntlr.js';
+import {dispatchRotateClient, dispatchFlip, dispatchRecenter,
+        dispatchRestoreDefaults,dispatchGroupLocking} from '../ImagePlotCntlr.js';
 import {RotateType} from '../PlotState.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
@@ -33,7 +33,6 @@ import { getDlAry } from '../DrawLayerCntlr.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
 import {showRegionFileUploadPanel} from '../region/RegionFileUploadView.jsx';
 import {MarkerDropDownView} from './MarkerDropDownView.jsx';
-import {dispatchShowDropDown} from '../../core/LayoutCntlr.js';
 import {showImageSelPanel} from './ImageSelectPanel.jsx';
 import {showMaskDialog} from './MaskAddPanel.jsx'
 import {isOverlayLayersActive} from '../RelatedDataUtil.js';
@@ -356,18 +355,18 @@ VisToolbarView.propTypes= {
 
 function doRotateNorth(pv,rotate) {
     const rotateType= rotate?RotateType.NORTH:RotateType.UNROTATE;
-    dispatchRotate({plotId:pv.plotId, rotateType});
+    dispatchRotateClient({plotId:pv.plotId, rotateType});
 }
 
 function recenter(pv) { dispatchRecenter({plotId:pv.plotId}); }
 
 function flipY(pv) {
-    if (isOverlayLayersActive(pv)) {
-        showInfoPopup('Flip not yet supported with mask layers');
-    }
-    else {
+    // if (isOverlayLayersActive(pv)) {
+    //     showInfoPopup('Flip not yet supported with mask layers');
+    // }
+    // else {
         dispatchFlip({plotId:pv.plotId});
-    }
+    // }
 }
 
 

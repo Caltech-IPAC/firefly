@@ -4,13 +4,16 @@
 
 import {uniqBy,unionBy, isEmpty} from 'lodash';
 import Cntlr, {WcsMatchType} from '../ImagePlotCntlr.js';
-import PlotView, {replacePlots, makePlotView,findWCSMatchOffset, updatePlotViewScrollXY} from './PlotView.js';
+import {replacePlots, makePlotView,
+        findWCSMatchScrollPosition, updatePlotViewScrollXY, findScrollPtToCenterImagePt} from './PlotView.js';
 import {makeOverlayPlotView, replaceOverlayPlots} from './OverlayPlotView.js';
 import {primePlot, getPlotViewById, clonePvAry, getOverlayById, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
 import {makeScreenPt} from '../Point.js';
 import PlotGroup from '../PlotGroup.js';
 import {PlotAttribute} from '../WebPlot.js';
 import {CCUtil} from '../CsysConverter.js';
+import {getRotationAngle} from '../VisUtil.js';
+import {updateTransform} from '../PlotPostionUtil.js';
 
 
 //============ EXPORTS ===========
@@ -23,10 +26,10 @@ const clone = (obj,params={}) => Object.assign({},obj,params);
 
 export function reducer(state, action) {
 
-    var retState= state;
-    var plotViewAry;
-    var plotGroupAry;
-    var plotRequestDefaults;
+    let retState= state;
+    let plotViewAry;
+    let plotGroupAry;
+    let plotRequestDefaults;
     switch (action.type) {
         case Cntlr.PLOT_IMAGE_START  :
             plotRequestDefaults= updateDefaults(state.plotRequestDefaults,action);
@@ -92,7 +95,7 @@ export function reducer(state, action) {
 
 const updateDefaults= function(plotRequestDefaults, action) {
 
-    var {wpRequestAry}= action.payload;
+    const {wpRequestAry}= action.payload;
     if (wpRequestAry) {
         const newObj= wpRequestAry.reduce( (obj,r) => {
             obj[r.getPlotId()]={threeColor:false, wpRequest:r};
@@ -101,7 +104,7 @@ const updateDefaults= function(plotRequestDefaults, action) {
         return clone(plotRequestDefaults, newObj);
     }
     else {
-        var {plotId,wpRequest,redReq,greenReq, blueReq,threeColor}= action.payload;
+        const {plotId,wpRequest,redReq,greenReq, blueReq,threeColor}= action.payload;
         return threeColor ?
             clone(plotRequestDefaults, {[plotId]:{threeColor,redReq,greenReq, blueReq}}) :
             clone(plotRequestDefaults, {[plotId]:{threeColor,wpRequest}});
@@ -109,7 +112,8 @@ const updateDefaults= function(plotRequestDefaults, action) {
 };
 
 function addPlot(state,action, setActive, newPlot) {
-    var {plotViewAry, activePlotId, prevActivePlotId, mpwWcsPrimId, wcsMatchType}= state;
+    const {wcsMatchType}= state;
+    let {plotViewAry, activePlotId, prevActivePlotId, mpwWcsPrimId}= state;
     const {pvNewPlotInfoAry}= action.payload;
 
     if (!pvNewPlotInfoAry) {
@@ -128,6 +132,14 @@ function addPlot(state,action, setActive, newPlot) {
             activePlotId = pv.plotId;
         }
         pv = replacePlots(pv, plotAry, overlayPlotViews, state.expandedMode, newPlot);
+        if (pv.plotViewCtx.rotateNorthLock) {
+            pv.rotation= 360 - getRotationAngle(primePlot(pv));
+            pv= updateTransform(pv);
+        }
+        if (pv.request.getRotate()) {
+            pv.rotation=  Math.trunc(pv.request.getRotationAngle() -  getRotationAngle(primePlot(pv)));
+            pv= updateTransform(pv);
+        }
         return pv;
     });
 
@@ -149,10 +161,11 @@ function updateForWcsMatching(visRoot, pv, mpwWcsPrimId) {
 
     if (wcsMatchType===WcsMatchType.Standard) {
         if (mpwWcsPrimId!==pv.plotId) {
-            const offPt= findWCSMatchOffset(visRoot, mpwWcsPrimId, primePlot(pv));
             const masterPv=getPlotViewById(visRoot,mpwWcsPrimId);
             if (masterPv) {
-                pv= updatePlotViewScrollXY(pv, makeScreenPt(masterPv.scrollX-offPt.x, masterPv.scrollY-offPt.y), false);
+                const {scrollX,scrollY}= masterPv;
+                const newSp= findWCSMatchScrollPosition(visRoot, mpwWcsPrimId, primePlot(pv), makeScreenPt(scrollX,scrollY));
+                pv= updatePlotViewScrollXY(pv, newSp);
             }
         }
     }
@@ -161,14 +174,15 @@ function updateForWcsMatching(visRoot, pv, mpwWcsPrimId) {
             const ft=  plot.attributes[PlotAttribute.FIXED_TARGET];
             if (ft) {
                 const centerImagePt = CCUtil.getImageCoords(plot, ft);
-                pv= updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv, centerImagePt, false));
+                pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv, centerImagePt));
             }
         }
         else {
-            const offPt= findWCSMatchOffset(visRoot, mpwWcsPrimId, primePlot(pv));
+            // const offPt= findWCSMatchOffset(visRoot, mpwWcsPrimId, primePlot(pv));
             const masterPv=getPlotViewById(visRoot,mpwWcsPrimId);
             if (masterPv) {
-                pv= updatePlotViewScrollXY(pv, makeScreenPt(masterPv.scrollX-offPt.x, masterPv.scrollY-offPt.y), false);
+                const newSp= findWCSMatchScrollPosition(visRoot, mpwWcsPrimId, pv.plotId, makeScreenPt(scrollX,scrollY));
+                pv= updatePlotViewScrollXY(pv, newSp);
             }
         }
     }
@@ -184,8 +198,8 @@ function newOverlayPrep(state, action) {
     if (!pv) return state;
 
     const overlayPv= getOverlayById(pv, imageOverlayId);
-    var oPvArray;
-    var opv;
+    let oPvArray;
+    let opv;
     if (!overlayPv) {
         oPvArray= isEmpty(pv.overlayPlotViews) ? [] : pv.overlayPlotViews.slice(0);
         opv= makeOverlayPlotView(imageOverlayId, plotId, title, imageNumber,
@@ -213,7 +227,7 @@ function addOverlay(state, action) {
         if (pv.plotId!== plotId) return pv;
         const overlayPlotViews= pv.overlayPlotViews.map( (opv) => {
             if (opv.imageOverlayId!== imageOverlayId) return opv;
-            return replaceOverlayPlots(opv,plot);
+            return replaceOverlayPlots(opv,clone(plot, {affTrans:pv.affTrans}));
         });
         return clone(pv, {overlayPlotViews});
     });
@@ -249,35 +263,12 @@ function plotOverlayFail(state,action) {
 
 function plotFail(state,action) {
     const {description, plotId}= action.payload;
-    var {plotViewAry}= state;
+    const {plotViewAry}= state;
     const plotView=  getPlotViewById(state,plotId);
     if (!plotView) return state;
     const changes= {plottingStatus:description,serverCall:'fail' };
     return clone(state,  {plotViewAry:clonePvAry(plotViewAry,plotId,changes)});
 }
-
-
-// function plotFail(state,action) {
-//     const {description, plotId, wpRequestAry}= action.payload;
-//     var {plotViewAry}= state;
-//     if (plotId) {
-//         const plotView=  getPlotViewById(state,plotId);
-//         if (!plotView) return state;
-//         const changes= {plottingStatus:description,serverCall:'fail' };
-//         return clone(state,  {plotViewAry:clonePvAry(plotViewAry,plotId,changes)});
-//     }
-//     else if (wpRequestAry) {
-//         const pvChangeAry= wpRequestAry.map( (r) => {
-//             const pv=  getPlotViewById(state,plotId);
-//             if (!pv) return null;
-//             return clone(pv,{plottingStatus:description,serverCall:'fail' } );
-//         });
-//         const newPlotViewAry= unionBy(pvChangeAry,plotViewAry, 'plotId');
-//         return clone(state,  {plotViewAry:newPlotViewAry});
-//     }
-// }
-
-
 
 /**
  /**
@@ -291,26 +282,28 @@ function preNewPlotPrep(plotViewAry,action) {
 
     const pvChangeAry= wpRequestAry.map( (req) => {
         const plotId= req.getPlotId();
-        var pv= getPlotViewById(plotViewAry,plotId);
-        return pv ? clone(pv, { plottingStatus:'Plotting...', 
-                                plots:[],  
-                                primeIdx:-1,
-                                request: req
-                              }) : makePlotView(plotId, req,action.payload.pvOptions);
+        let pv= getPlotViewById(plotViewAry,plotId);
+        pv= pv ? clone(pv, { plottingStatus:'Plotting...', plots:[],  primeIdx:-1, request: req && req.makeCopy() }) :
+                 makePlotView(plotId, req,action.payload.pvOptions);
+
+        // if (req.getRotate()) pv.rotation= req.getRotationAngle();
+        if (req.getRotateNorth()) {
+            pv.plotViewCtx= clone(pv.plotViewCtx, {rotateNorthLock :true});
+        }
+        return pv;
     });
 
     return unionBy(pvChangeAry,plotViewAry, 'plotId');
 }
 
 export function endServerCallFail(state,action) {
-    var {plotId,message}= action.payload;
-    var {plotViewAry}= state;
+    const {plotId,message}= action.payload;
     const stat= {serverCall:'fail'};
     if (typeof message === 'string') stat.plottingStatus= message;
     return clone(state, {plotViewAry: clonePvAry(state.plotViewAry,plotId, stat)});
 }
 function workingServerCall(state,action) {
-    var {plotId,message}= action.payload;
+    const {plotId,message}= action.payload;
     return clone(state, {plotViewAry:
                clonePvAry(state.plotViewAry,plotId, {serverCall:'working', plottingStatus:message})});
 }
@@ -326,7 +319,7 @@ function confirmPlotGroup(plotGroupAry,action) {
     const wpRequestAry= getRequestAry(action.payload);
 
 
-    var newGrpAry= wpRequestAry
+    const newGrpAry= wpRequestAry
         .filter( (r) => !plotGroupExist(r.getPlotGroupId(),plotGroupAry))
         .map( (r) => PlotGroup.makePlotGroup(r.getPlotGroupId(), r.isGroupLocked()));
 
@@ -335,9 +328,9 @@ function confirmPlotGroup(plotGroupAry,action) {
 }
 
 
-function pvExist(plotId, plotViewAry) {
-    return (plotViewAry.some( (pv) => pv.plotId===plotId ));
-}
+// function pvExist(plotId, plotViewAry) {
+//     return (plotViewAry.some( (pv) => pv.plotId===plotId ));
+// }
 
 
 function plotGroupExist(plotGroupId, plotGroupAry) {
@@ -347,7 +340,7 @@ function plotGroupExist(plotGroupId, plotGroupAry) {
 
 function getRequestAry(obj) {
     if (obj.wpRequestAry) return obj.wpRequestAry;
-    var rKey= ['wpRequest','redReq','blueReq','greenReq'].find( (key) => obj[key] ? true : false);
+    const rKey= ['wpRequest','redReq','blueReq','greenReq'].find( (key) => Boolean(obj[key]));
     return rKey ? [obj[rKey]] : null;
 }
 

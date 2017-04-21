@@ -15,7 +15,7 @@ import {PopupPanel} from './PopupPanel.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
-import {visRoot, dispatchRotate, ActionScope} from '../visualize/ImagePlotCntlr.js';
+import {visRoot, dispatchRotateClient} from '../visualize/ImagePlotCntlr.js';
 import {RotateType} from '../visualize/PlotState.js';
 import {isOverlayLayersActive} from '../visualize/RelatedDataUtil.js';
 
@@ -39,13 +39,13 @@ function getDialogBuilder() {
 const dialogBuilder = getDialogBuilder();
 
 export function showFitsRotationDialog() {
-    if (isOverlayLayersActive(visRoot())) {
-       showInfoPopup('Rotate not yet supported with mask layers');
-    }
-    else {
+    // if (isOverlayLayersActive(visRoot())) {
+    //    showInfoPopup('Rotate not yet supported with mask layers');
+    // }
+    // else {
         dialogBuilder();
         dispatchShowDialog('fitsRotationDialog');
-    }
+    // }
 }
 
 
@@ -216,21 +216,6 @@ function FitsRotationDialogForm() {
                          }} />
                 </div>
 
-                <div style={{paddingLeft:40,marginBottom: 20}}>
-                    <CheckboxGroupInputField
-                        initialState= {{
-                              tooltip: 'Apply rotation to all related images',
-                              label : 'Apply rotation to all related images:',
-                              value: ''
-                          }}
-                        options={
-                                  [
-                                      {label: '', value: 'True'}
-                                  ]
-                                  }
-                        fieldKey='checkAllimage'
-                    />
-                </div>
                 <table style={{width:300}}>
                     <colgroup>
                         <col style={{width: '20%'}} />
@@ -267,10 +252,11 @@ function FitsRotationDialogForm() {
 
 function resultsSuccess(request,plotId) {
     if (request.rotation) {
-        var angle= Number(request.rotation);
-        const actionScope= request.checkAllimage ? ActionScope.GROUP : ActionScope.SINGLE;
+        const angle= Number(request.rotation);
+        // const actionScope= request.checkAllimage ? ActionScope.GROUP : ActionScope.SINGLE;
         const rotateType= angle?RotateType.ANGLE:RotateType.UNROTATE;
-        dispatchRotate({plotId, rotateType, angle, actionScope} );
+        // dispatchRotate({plotId, rotateType, angle, actionScope} );
+        dispatchRotateClient({plotId, rotateType, angle} );
     }
 }
 

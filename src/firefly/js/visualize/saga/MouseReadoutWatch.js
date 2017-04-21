@@ -13,6 +13,7 @@ import {Band} from '../Band.js';
 import {MouseState} from '../VisMouseSync.js';
 import {isBlankImage} from '../WebPlot.js';
 import {primePlot, getPlotStateAry, getPlotViewById} from '../PlotViewUtil.js';
+import {CysConverter} from '../CsysConverter.js';
 import {mouseUpdatePromise} from '../VisMouseSync.js';
 
 
@@ -136,14 +137,19 @@ function usePayload(mouseState, lockByClick) {
  * @return {{worldPt: *, screenPt: *, imagePt: *, threeColor: (boolean), title: *, pixel: ({title, value, unit, precision}|{title: *, value: *, unit: *, precision: *})}}
  */
 function makeReadout(plot, worldPt, screenPt, imagePt) {
-    return {
-        worldPt: makePointReadoutItem('World Point', worldPt),
-        screenPt: makePointReadoutItem('Screen Point', screenPt),
-        imagePt: makePointReadoutItem('Image Point', imagePt),
-        title: makeDescriptionItem(plot.title),
-        pixel: makeValueReadoutItem('Pixel Size',plot.projection.getPixelScaleArcSec(),'arcsec', 3),
-        screenPixel:makeValueReadoutItem('Screen Pixel Size',plot.projection.getPixelScaleArcSec()/plot.zoomFactor,'arcsec', 3)
-    };
+    if (CysConverter.make(plot).pointInPlot(imagePt)) {
+        return {
+            worldPt: makePointReadoutItem('World Point', worldPt),
+            screenPt: makePointReadoutItem('Screen Point', screenPt),
+            imagePt: makePointReadoutItem('Image Point', imagePt),
+            title: makeDescriptionItem(plot.title),
+            pixel: makeValueReadoutItem('Pixel Size',plot.projection.getPixelScaleArcSec(),'arcsec', 3),
+            screenPixel:makeValueReadoutItem('Screen Pixel Size',plot.projection.getPixelScaleArcSec()/plot.zoomFactor,'arcsec', 3)
+        };
+    }
+    else {
+        return {};
+    }
 
 }
 
@@ -235,15 +241,22 @@ function showSingleBandFluxLabel(plot, band) {
 
 
 function doFluxCall(plotView,iPt) {
-    const plotStateAry= getPlotStateAry(plotView);
-    return callGetFileFlux(plotStateAry, iPt)
-        .then((result) => {
-            return result;
-        })
-        .catch((e) => {
-            console.log(`flux error: ${plotView.plotId}`, e);
-            return ['', '', ''];
-        });
+    const plot= primePlot(plotView);
+    const {x,y}= iPt;
+    if (x >=0 && y >= 0 && x < plot.dataWidth && y < plot.dataHeight) {
+        const plotStateAry= getPlotStateAry(plotView);
+        return callGetFileFlux(plotStateAry, iPt)
+            .then((result) => {
+                return result;
+            })
+            .catch((e) => {
+                console.log(`flux error: ${plotView.plotId}`, e);
+                return ['', '', ''];
+            });
+    }
+    else {
+        return Promise.resolve(['', '', '']);
+    }
 }
 
 

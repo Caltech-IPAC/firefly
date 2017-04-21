@@ -21,7 +21,7 @@ import {getDrawobjArea} from '../visualize/draw/ShapeHighlight.js';
 import {clone} from '../util/WebUtil.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {FootprintFactory} from '../visualize/draw/FootprintFactory.js';
-import {makeViewPortPt, makeImagePt} from '../visualize/Point.js';
+import {makeImagePt, makeDevicePt} from '../visualize/Point.js';
 import {get, set, isArray, has, isNil} from 'lodash';
 import Enum from 'enum';
 
@@ -513,9 +513,9 @@ function getVertexDistance( footprintObj, cc) {
         dist = ROTATE_BOX;
         centerPt = getWorldOrImage(center, cc);
     } else {
-        w = cc.viewPort.dim.width/2;
-        h = cc.viewPort.dim.height/2;
-        centerPt = getWorldOrImage(makeViewPortPt(w, h), cc);
+        w = cc.viewDim.width/2;
+        h = cc.viewDim.height/2;
+        centerPt = getWorldOrImage(makeDevicePt(w, h), cc);
         dist = 0;
     }
     dist += Math.sqrt(Math.pow(w, 2) + Math.pow(h, 2));

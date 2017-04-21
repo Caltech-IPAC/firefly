@@ -5,7 +5,7 @@
 import React, {Component,PropTypes} from 'react';
 import {get} from 'lodash';
 import {parseTarget, getFeedback, formatPosForTextField} from './TargetPanelWorker.js';
-import TargetFeedback from './TargetFeedback.jsx';
+import {TargetFeedback} from './TargetFeedback.jsx';
 import {InputFieldView} from './InputFieldView.jsx';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 import {ListBoxInputFieldView} from './ListBoxInputField.jsx';

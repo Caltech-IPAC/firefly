@@ -8,11 +8,11 @@ const SPT= 'ScreenPt';
 const IM_PT= 'ImagePt';
 const IM_WS_PT= 'ImageWorkSpacePt';
 const W_PT= 'WorldPt';
-const VP_PT= 'ViewPortPt';
+const DEV_PT= 'DevicePt';
 const PROJ_PT= 'ProjectionPt';
 const OFFSET_PT= 'OffsetPt';
 
-var Point = {  SPT, IM_PT, IM_WS_PT, VP_PT, PROJ_PT, W_PT, OFFSET_PT};
+const Point = {  SPT, IM_PT, IM_WS_PT, DEV_PT, PROJ_PT, W_PT, OFFSET_PT};
 
 
 
@@ -22,7 +22,17 @@ var Point = {  SPT, IM_PT, IM_WS_PT, VP_PT, PROJ_PT, W_PT, OFFSET_PT};
  *
  * @prop {Number} x
  * @prop {Number} y
- * @prop {String} type one of 'ScreenPt', 'ImagePt', 'ImageWorkSpacePt', 'WorldPt', 'ViewPortPt', 'ProjectionPt', 'OffsetPt'
+ * @prop {String} type one of 'RenderedPt', 'ScreenPt', 'ImagePt', 'ImageWorkSpacePt', 'WorldPt', 'ViewPortPt', 'ProjectionPt', 'OffsetPt'
+ * @public
+ * @global
+ */
+
+/**
+ * @typedef {Object} DevicePt
+ * @summary a rendered point on the device screen, including rotation, flipping, etc
+ * @prop {Number} x
+ * @prop {Number} y
+ * @prop {String} type constant must be 'DevicePt'
  * @public
  * @global
  */
@@ -133,7 +143,7 @@ export class WorldPt {
      * @return {string}
      */
     toString() {
-        var retval = this.x + ';' + this.y + ';' + this.cSys.toString();
+        let retval = this.x + ';' + this.y + ';' + this.cSys.toString();
         if (this.objName) {
             retval += ';' + this.objName;
             if (this.resolver) {
@@ -150,10 +160,10 @@ export class WorldPt {
 
 
 function stringAryToWorldPt(wpParts) {
-    var retval= null;
-    var parsedLon;
-    var parseLat;
-    var parsedCoordSys;
+    let retval= null;
+    let parsedLon;
+    let parseLat;
+    let parsedCoordSys;
     if (wpParts.length===3) {
         parsedLon= Number(wpParts[0]);
         parseLat= Number(wpParts[1]);
@@ -173,7 +183,7 @@ function stringAryToWorldPt(wpParts) {
         parsedLon= Number(wpParts[0]);
         parseLat= Number(wpParts[1]);
         parsedCoordSys= CoordinateSys.parse(wpParts[2]);
-        var resolver= wpParts.length===5 ? parseResolver(wpParts[4]) : Resolver.UNKNOWN;
+        const resolver= wpParts.length===5 ? parseResolver(wpParts[4]) : Resolver.UNKNOWN;
         return makeWorldPt(parsedLon,parseLat,parsedCoordSys, wpParts[3],resolver);
     }
     return retval;
@@ -194,9 +204,9 @@ function stringAryToWorldPt(wpParts) {
  * @public
  * @global
  */
-export const makeWorldPt= function (lon,lat,coordSys,objName,resolver) {
+export function makeWorldPt(lon,lat,coordSys,objName,resolver) {
     return new WorldPt(Number(lon),Number(lat),coordSys,objName,resolver) ;
-};
+}
 
 
 /**
@@ -240,7 +250,7 @@ export const makeImageWorkSpacePt= (x,y) => Object.assign(new SimplePt(Number(x)
  */
 export const makeScreenPt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:SPT});
 
-export const makeViewPortPt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:VP_PT});
+export const makeDevicePt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:DEV_PT});
 
 export const makeProjectionPt= (x,y) => Object.assign(new SimplePt(Number(x),Number(y)), {type:PROJ_PT});
 
@@ -250,7 +260,7 @@ export const makeOffsetPt= (x,y) => Object.assign(new SimplePt(Number(x),Number(
 /**
  * @summary Test if two points are equals.  They must be the same coordinate system and have the same values to be
  * equal. Two points that are null or undefined are also considered equal.
- * If both points are WorldPt and are equal in values and coordindate system but have a
+ * If both points are WorldPt and are equal in values and coordinate system but have a
  * different resolver and object names, * they are still considered equal.
  *
  * @param {Point} p1 - the first point
@@ -263,12 +273,11 @@ export const makeOffsetPt= (x,y) => Object.assign(new SimplePt(Number(x),Number(
  * @public
  * @global
  */
-export const pointEquals= function(p1,p2)  {
+export function pointEquals(p1,p2)  {
     if (isNil(p1) && isNil(p2)) return true;
     else if (isNil(p1) || isNil(p2)) return false;
-
     return (p1.x===p2.x && p1.y===p2.y && p1.type===p2.type && p1.csys===p2.csys);
-};
+}
 
 
 /**
@@ -282,9 +291,9 @@ export const pointEquals= function(p1,p2)  {
  */
 export const parsePt= function(type, inStr) {
     if (!inStr) return null;
-    var parts= inStr.split(';');
+    const parts= inStr.split(';');
     if (parts.length===2 && validator.isFloat(parts[0]) && validator.isFloat(parts[1])) {
-        var pt= new SimplePt(validator.toFloat(parts[0]), validator.toFloat(parts[1]));
+        const pt= new SimplePt(validator.toFloat(parts[0]), validator.toFloat(parts[1]));
         pt.type= type;
         return pt;
     }
@@ -305,10 +314,8 @@ export const parseScreenPt= (inStr) => parsePt(SPT,inStr);
 export const parseWorldPt = function (serializedWP) {
     if (!serializedWP || !isString(serializedWP)) return null;
 
-    var sAry= serializedWP.split(';');
-    if (sAry.length<2 || sAry.length>5) {
-        return null;
-    }
+    const sAry= serializedWP.split(';');
+    if (sAry.length<2 || sAry.length>5) return null;
     return stringAryToWorldPt(sAry);
 };
 

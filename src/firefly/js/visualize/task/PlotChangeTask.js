@@ -2,24 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
 import {logError} from '../../util/WebUtil.js';
-import ImagePlotCntlr, {ActionScope,IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, operateOnOthersInGroup,getPlotStateAry} from '../PlotViewUtil.js';
-import {
-    callCrop,
-    callChangeColor,
-    callRotateNorth,
-    callRotateToAngle,
-    callFlipImageOnY,
-    callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
+import { callCrop, callChangeColor, callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
 import WebPlotResult from '../WebPlotResult.js';
-import {RangeValues} from '../RangeValues.js';
-import {isPlotNorth} from '../VisUtil.js';
-import {RotateType} from '../PlotState.js';
 import {WebPlot} from '../WebPlot.js';
 
 
@@ -35,10 +22,9 @@ import {WebPlot} from '../WebPlot.js';
  */
 export function colorChangeActionCreator(rawAction) {
     return (dispatcher,getState) => {
-        var store= getState()[IMAGE_PLOT_KEY];
-        var {plotId,cbarId, actionScope}= rawAction.payload;
-        actionScope= ActionScope.get(actionScope);
-        var pv= getPlotViewById(store,plotId);
+        const store= getState()[IMAGE_PLOT_KEY];
+        const {plotId,cbarId}= rawAction.payload;
+        const pv= getPlotViewById(store,plotId);
         if (!pv) return;
 
 
@@ -46,7 +32,7 @@ export function colorChangeActionCreator(rawAction) {
             doColorChange(dispatcher,store,plotId,cbarId);
         }
         operateOnOthersInGroup(store,pv, (pv) => {
-            var p= primePlot(pv);
+            const p= primePlot(pv);
             if (p && !p.plotState.isThreeColor()) { // only do others that are not three color
                 doColorChange(dispatcher,store,pv.plotId,cbarId);
             }
@@ -64,11 +50,10 @@ export function colorChangeActionCreator(rawAction) {
  */
 export function stretchChangeActionCreator(rawAction) {
     return (dispatcher,getState) => {
-        var store= getState()[IMAGE_PLOT_KEY];
-        var {plotId,stretchData,actionScope}= rawAction.payload;
-        actionScope= ActionScope.get(actionScope);
-        var pv= getPlotViewById(store,plotId);
-        var plot= primePlot(pv);
+        const store= getState()[IMAGE_PLOT_KEY];
+        const {plotId,stretchData}= rawAction.payload;
+        const pv= getPlotViewById(store,plotId);
+        const plot= primePlot(pv);
         if (!plot || !pv || !stretchData) return;
 
 
@@ -77,7 +62,7 @@ export function stretchChangeActionCreator(rawAction) {
         const threeColor= plot.plotState.isThreeColor();
         doStretch(dispatcher,store,plotId,stretchData);
         operateOnOthersInGroup(store,pv, (pv) => {
-            var p= primePlot(pv);
+            const p= primePlot(pv);
             if (p && p.plotState.isThreeColor()===threeColor) { // only do others that are similar
                 doStretch(dispatcher,store,pv.plotId,stretchData);
             }
@@ -90,53 +75,13 @@ export function stretchChangeActionCreator(rawAction) {
  * @param rawAction
  * @return {Function}
  */
-export function rotateActionCreator(rawAction) {
-    return (dispatcher,getState) => {
-        var store= getState()[IMAGE_PLOT_KEY];
-        var { plotId, angle, rotateType, newZoomLevel, keepWcsLock, actionScope }= rawAction.payload;
-        actionScope= ActionScope.get(actionScope);
-        rotateType= RotateType.get(rotateType);
-        var plotView= getPlotViewById(store,plotId);
-        if (!plotView || !rotateType) return;
-        var p= primePlot(plotView);
-        if (!p) return;
-
-        var firstRotate= true;
-        if (rotateType===RotateType.NORTH && isPlotNorth(p)) {
-            firstRotate= false;
-        }
-        if (rotateType===RotateType.UNROTATE && !p.plotState.isRotated()) {
-            firstRotate= false;
-        }
-        const vr= getState()[IMAGE_PLOT_KEY];
-        if (vr.wcsMatchType && !keepWcsLock) dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
-
-        if (firstRotate) doRotate(dispatcher,plotView,rotateType,angle,newZoomLevel);
-
-        if (actionScope===ActionScope.GROUP) {
-            operateOnOthersInGroup(store,plotView, (pv) => {
-                var plot= primePlot(pv);
-                if (rotateType===RotateType.NORTH && isPlotNorth(plot)) return;
-                if (rotateType===RotateType.UNROTATE && !plot.plotState.isRotated()) return;
-                doRotate(dispatcher,pv,rotateType,angle,newZoomLevel);
-            });
-        }
-    };
-}
-
-
-/**
- * @param rawAction
- * @return {Function}
- */
 export function cropActionCreator(rawAction) {
     return (dispatcher,getState) => {
-        var store= getState()[IMAGE_PLOT_KEY];
-        var { plotId, imagePt1, imagePt2, cropMultiAll, actionScope }= rawAction.payload;
-        actionScope= ActionScope.get(actionScope);
-        var plotView= getPlotViewById(store,plotId);
+        const store= getState()[IMAGE_PLOT_KEY];
+        const { plotId, imagePt1, imagePt2, cropMultiAll}= rawAction.payload;
+        const plotView= getPlotViewById(store,plotId);
         if (!plotView || !imagePt1 || !imagePt2) return;
-        var p= primePlot(plotView);
+        const p= primePlot(plotView);
         if (!p) return;
         const vr= getState()[IMAGE_PLOT_KEY];
         if (vr.wcsMatchType) dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
@@ -144,36 +89,6 @@ export function cropActionCreator(rawAction) {
         doCrop(dispatcher,plotView,imagePt1, imagePt2, cropMultiAll);
     };
 }
-
-
-
-/**
- * @param rawAction
- * @param store
- * @return {Function}
- */
-export function flipActionCreator(rawAction) {
-    return (dispatcher,getState) => {
-        var store= getState()[IMAGE_PLOT_KEY];
-        var { plotId, isY,actionScope }= rawAction.payload;
-        var plotView= getPlotViewById(store,plotId);
-        if (!plotView) return;
-        if (!isY) {
-           console.log('flip: x axis is still a todo');
-            return;
-        }
-        var p= primePlot(plotView);
-        if (!p) return;
-
-        const vr= getState()[IMAGE_PLOT_KEY];
-        if (vr.wcsMatchType) dispatcher({ type: ImagePlotCntlr.WCS_MATCH, payload: {wcsMatchType:false} });
-        doFlip(dispatcher,plotView,isY);
-        operateOnOthersInGroup(store,plotView, (pv) =>
-            doFlip(dispatcher,pv,isY));
-    };
-}
-
-
 
 
 
@@ -210,43 +125,10 @@ function doCrop(dispatcher,pv,imagePt1, imagePt2, cropMultiAll) {
 }
 
 
-function doFlip(dispatcher,pv,isY) {
-
-    if (!isY) {
-        console.log('flip: x axis is still a todo');
-        return;
-    }
-
-    var p;
-    if (isY) {
-        p= callFlipImageOnY(getPlotStateAry(pv));
-    }
-    else {
-        console.log('flip: x axis is still a todo');
-        return;
-    }
-
-    const makeSuccAction= (plotId, plotAry, overlayPlotViews) =>
-        ({ type: ImagePlotCntlr.FLIP,
-           payload: {pvNewPlotInfoAry: [{plotId, plotAry, overlayPlotViews}], isY}
-        });
-
-    const makeFailAction= (plotId) => ({ type: ImagePlotCntlr.FLIP_FAIL,
-                              payload: {plotId, message: 'Flip Failed', error: Error('flip: payload failed')}
-                            });
-
-    dispatcher( { type: ImagePlotCntlr.FLIP_START, payload: {plotId:pv.plotId, message:'Flipping...'} } );
-    p.then( (wpResult) => processPlotReplace(dispatcher,wpResult,pv,makeSuccAction, makeFailAction))
-        .catch ( (e) => { dispatcher( makeFailAction(pv.plotId) );
-            logError(`plot error, rotate , plotId: ${pv.plotId}`, e);
-        });
-}
-
-
 
 function doStretch(dispatcher,store,plotId,stretchData) {
 
-    var plot= primePlot(store,plotId);
+    const plot= primePlot(store,plotId);
     dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_START, payload: {plotId, message:'Changing Stretch...'} } );
     callRecomputeStretch(plot.plotState,stretchData)
         .then( (wpResult) => processPlotUpdate(dispatcher,plotId,wpResult,
@@ -262,7 +144,7 @@ function doStretch(dispatcher,store,plotId,stretchData) {
 
 function doColorChange(dispatcher,store,plotId,cbarId) {
 
-    var plot= primePlot(store,plotId);
+    const plot= primePlot(store,plotId);
     dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_START, payload: {plotId, message:'Changing Color...'} } );
     callChangeColor(plot.plotState,cbarId)
         .then( (wpResult) => processPlotUpdate(dispatcher,plotId,wpResult,
@@ -271,40 +153,6 @@ function doColorChange(dispatcher,store,plotId,cbarId) {
             dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_FAIL, 
                           payload: {plotId, message: 'Color change Failed', cbarId, error:e} } );
             logError(`plot error, color change, plotId: ${plot.plotId}`, e);
-        });
-}
-
-function doRotate(dispatcher,pv,rotateType,angle,newZoomLevel) {
-
-    var p;
-
-    dispatcher( { type: ImagePlotCntlr.ROTATE_START, payload: {plotId:pv.plotId, message:'Rotating...'} } );
-    switch (rotateType) {
-        case RotateType.NORTH:
-            p= callRotateNorth(getPlotStateAry(pv),true,newZoomLevel);
-            break;
-        case RotateType.ANGLE:
-            p= callRotateToAngle(getPlotStateAry(pv), true, angle, newZoomLevel);
-            break;
-        case RotateType.UNROTATE:
-            p= callRotateToAngle(getPlotStateAry(pv), false, NaN, 0);
-            break;
-    }
-
-
-    const makeSuccAction= (plotId, plotAry, overlayPlotViews) => ({
-        type: ImagePlotCntlr.ROTATE,
-        payload: {pvNewPlotInfoAry: [{plotId, plotAry, overlayPlotViews}], rotateType}
-    });
-
-    const makeFailAction= (plotId) => ({ type: ImagePlotCntlr.ROTATE_FAIL,
-        payload: {plotId, message: 'Rotate Failed', error: Error('rotate: payload failed')}
-    });
-
-    p.then( (wpResult) => processPlotReplace(dispatcher,wpResult,pv,makeSuccAction, makeFailAction))
-        .catch ( (e) => {
-            dispatcher( makeFailAction(pv.plotId));
-            logError(`plot error, rotate , plotId: ${pv.plotId}`, e);
         });
 }
 
@@ -318,23 +166,23 @@ function doRotate(dispatcher,pv,rotateType,angle,newZoomLevel) {
  * @param makeFailAction
  */
 function processPlotReplace(dispatcher, result, pv, makeSuccessAction, makeFailAction) {
-    var successSent = false;
+    let successSent = false;
     if (result.success) {
-        var resultAry= getResultAry(result);
+        const resultAry= getResultAry(result);
 
         if (resultAry[0].success) {
-            var plotAry = resultAry[0].data[WebPlotResult.PLOT_CREATE].map((wpInit) => makePlot(wpInit, pv));
+            let plotAry = resultAry[0].data[WebPlotResult.PLOT_CREATE].map((wpInit) => makePlot(wpInit, pv));
             if (plotAry.length===1 && pv.plots.length>1) {
                 const newP= plotAry[0];
                 plotAry= pv.plots.map( (p,idx) => idx===pv.primeIdx ? newP : p);
             }
 
             const existingOverlayPlotViews = pv.overlayPlotViews.filter((opv) => opv.plot);
-            var overlayPlotViews = [];
+            const overlayPlotViews = [];
             resultAry.forEach((r, i) => {
                 if (i === 0) return;
                 const {imageOverlayId}= existingOverlayPlotViews[i-1];
-                var plot = WebPlot.makeWebPlotData(imageOverlayId, r.data[WebPlotResult.PLOT_CREATE][0], {}, true);
+                const plot = WebPlot.makeWebPlotData(imageOverlayId, r.data[WebPlotResult.PLOT_CREATE][0], {}, true);
                 overlayPlotViews[i - 1] = {plot};
             });
 
@@ -361,7 +209,7 @@ function getResultAry(result) {
 
 
 function makePlot(wpInit,pv) {
-    var plot= WebPlot.makeWebPlotData(pv.plotId, wpInit, primePlot(pv).attributes);
+    const plot= WebPlot.makeWebPlotData(pv.plotId, wpInit, primePlot(pv).attributes);
     plot.title= primePlot(pv).title;
     return plot;
 }

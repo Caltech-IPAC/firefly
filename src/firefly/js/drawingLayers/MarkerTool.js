@@ -17,7 +17,7 @@ import {getWorldOrImage, makeMarker, findClosestIndex,  updateFootprintTranslate
 import {getMarkerToolUIComponent} from './MarkerToolUI.jsx';
 import {getDrawobjArea} from '../visualize/draw/ShapeHighlight.js';
 import ShapeDataObj, {lengthToScreenPixel, lengthToArcsec} from '../visualize/draw/ShapeDataObj.js';
-import {makeViewPortPt, makeImagePt} from '../visualize/Point.js';
+import {makeDevicePt, makeImagePt} from '../visualize/Point.js';
 import {clone} from '../util/WebUtil.js';
 import {get, set, has, isArray} from 'lodash';
 import Enum from 'enum';
@@ -45,7 +45,7 @@ export var initMarkerPos = (plot, cc) => {
     if (!cc) cc = CsysConverter.make(plot);
 
     if (!pos) {
-        pos = makeViewPortPt(cc.viewPort.dim.width / 2, cc.viewPort.dim.height / 2);
+        pos = makeDevicePt(cc.viewDim.width / 2, cc.viewDim.height / 2);
     }
     return getWorldOrImage(pos, cc);
 };
@@ -454,9 +454,9 @@ function getVertexDistance( markObj, cc) {
         h = lengthToScreenPixel(height, cc, ShapeDataObj.UnitType.IMAGE_PIXEL) / 2;
         centerPt = getWorldOrImage(center, cc);
     } else {
-        w = cc.viewPort.dim.width/2;
-        h = cc.viewPort.dim.height/2;
-        centerPt = getWorldOrImage(makeViewPortPt(w, h), cc);
+        w = cc.viewDim.width/2;
+        h = cc.viewDim.height/2;
+        centerPt = getWorldOrImage(makeDevicePt(w, h), cc);
     }
     dist = Math.sqrt(Math.pow(w, 2) + Math.pow(h, 2));
 
