@@ -654,7 +654,7 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
             </div>
             <div style={styleItem}>
                 <div style={innerItem}>
-                    {'Calculate periodogram (below) and click to select period'}
+                    {'Calculate periodogram (below) and click to select period.'}
                 </div>
             </div>
             <div style={{display:'flex', alignItems:'center'}}>
