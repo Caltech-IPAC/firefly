@@ -10,7 +10,6 @@ import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
 import {dispatchHideDropDown, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
 import {lcManager, LC} from './LcManager.js';
-import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
 import {LcResult} from './LcResult.jsx';
 import {LcPeriod} from './LcPeriod.jsx';
 import {Menu} from '../../ui/Menu.jsx';
@@ -27,6 +26,7 @@ import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {HelpIcon} from './../../ui/HelpIcon.jsx';
+import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
 
 
 const vFileKey = LC.FG_FILE_FINDER;

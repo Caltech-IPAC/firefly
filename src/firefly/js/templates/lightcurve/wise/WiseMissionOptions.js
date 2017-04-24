@@ -77,8 +77,7 @@ export class WiseSettingBox extends Component {
 
         //var period = getTblById(LC.PHASE_FOLDED)? get( FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER), ['period', 'value'], ''):'';
 
-        const layoutInfo = getLayouInfo();
-        var period = get(layoutInfo, ['periodRange','period'], '');
+
 
         //const frameId = getColumnIdx(tblModel, 'frame_id');
         //var missionOthers = (frameId) => {
@@ -110,16 +109,19 @@ export class WiseSettingBox extends Component {
 
         const converterId = get(missionEntries, LC.META_MISSION);
         var missionName = getMissionName(converterId) || 'Mission';
-
+        const layoutInfo = getLayouInfo();
+        var period = get(layoutInfo, ['periodRange','period'], '');
+        const title =tblModel.title;
+        const displayTableName = (title && title.length>20)? title.substring(0, 20)+'...':title;
 
         return (
             <FieldGroup groupKey={groupKey}
                         reducerFunc={wiseOptionsReducer(missionEntries, generalEntries)} keepState={true}>
 
                 <div >
-                    <div style={{ fontWeight:'bold', display:'inline-block'}} > Column Selection</div>
-                    <div style = {{paddingLeft:'10px', display:'inline-block'}}>{tblModel.tableMeta.title} </div>
-                    <div style = {{fontWeight:'bold',paddingLeft:'82px', display:'inline-block'}}>Images</div>
+                    <div style={{ with:{labelWidth}, fontWeight:'bold', display:'inline-block', margin: '3px 0 6px 0'}} > Column Selection</div>
+                    <label style = {{width: '170px', paddingLeft: '10px', display:'inline-block'}} title={title}>{displayTableName}</label>
+                    <div style = {{fontWeight:'bold',paddingLeft:'13px', display:'inline-block'}}>Images</div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-end'}}>
@@ -129,12 +131,16 @@ export class WiseSettingBox extends Component {
                         {missionInputs}
                         {/*missionData*/}
                     </div>
-                    <div style={{padding: '0 6px 0 6px', border: '1px solid #a3aeb9'}}>
+                    <div style={{ padding: '0 6px 0 6px', border: '1px solid #a3aeb9', marginLeft: '54px'}}>
                         {missionOthers}
                         {allCommonEntries}
                     </div>
                 </div>
-                <div style={{ paddingBottom:'5px'}} > Period:    {period} </div>
+                <div >
+                    <ReadOnlyText label='Period:' content={period}
+                                  labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>
+
+                </div>
             </FieldGroup>
         );
     }

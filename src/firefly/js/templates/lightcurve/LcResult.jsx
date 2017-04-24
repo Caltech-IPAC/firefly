@@ -243,7 +243,7 @@ class SettingBox extends Component {
               </div>
               <div >
                 <CompleteButton
-                     style={{ width:'80px'}}
+                     style={{ width:'1200px'}}
                      groupKey={groupKey}
                      onSuccess={setViewerSuccess(periodState)}
                      onFail={setViewerFail()}

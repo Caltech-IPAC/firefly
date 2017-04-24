@@ -282,10 +282,7 @@ function updateRawTableChart(timeCName, fluxCName, converterId) {
 
     if (timeCName && fluxCName) {
 
-        const rawTable = getTblById(LC.RAW_TABLE);
-
-        //const  title = (mission && (mission.toLowerCase()==='wise' || mission.toLowerCase()==='other') )? 'Input Data':'';
-        const title = getConverter(converterId).showPlotTitle? rawTable.request.META_INFO.title :'';
+        const title =getConverter(converterId).showPlotTitle?getConverter(converterId).showPlotTitle(LC.RAW_TABLE):''
 
         const xyPlotParams = {x: {columnOrExpr: timeCName}, y: {columnOrExpr: fluxCName, options: 'grid,flip'}, plotTitle:title};
 
@@ -300,8 +297,7 @@ function updatePhaseTableChart(flux, converterId) {
 
     if (flux) {
 
-       // const title= (mission && (mission.toLowerCase()==='wise' || mission.toLowerCase()==='other'))?'Phase Folded Data':'';
-        const title = getConverter(converterId).showPlotTitle?'Phase Folded Data':'';
+        const title = getConverter(converterId).showPlotTitle?getConverter(converterId).showPlotTitle(LC.PHASE_FOLDED):'';
         const xyPlotParams = {
             userSetBoundaries: {xMax: 2},
             x: {columnOrExpr: LC.PHASE_CNAME, options: 'grid'},

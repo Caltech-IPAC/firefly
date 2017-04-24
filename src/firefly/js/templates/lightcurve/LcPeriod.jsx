@@ -911,11 +911,11 @@ function setPFTableSuccess() {
 
         doPFCalculate(flux, timeName, period, tzero);
 
-        const layoutInfo = getLayouInfo();
         const min = get(reqData, fKeyDef.min.fkey,defPeriod.min );
         const max = get(reqData, fKeyDef.max.fkey, defPeriod.max);
         const tzeroMax = get(reqData, fKeyDef.tzmax.fkey.fkey, defPeriod.tzeroMax);
 
+        const layoutInfo = getLayouInfo();
         dispatchUpdateLayoutInfo(Object.assign({}, layoutInfo, {
 
             periodRange: {min, max, tzero, tzeroMax, period}

@@ -146,9 +146,9 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         }
         if (request.containsParam(ServerParams.USE_UPLOADED_FILENAME_AS_TABLE_TITLE)){
 
-             String fileName = ((UploadFileInfo) UserCache.getInstance().get(new StringKey(request.getParam(ServerParams.SOURCE)))).getFileName();
+                String fileName = ((UploadFileInfo) UserCache.getInstance().get(new StringKey(request.getParam(ServerParams.SOURCE)))).getFileName();
 
-             ( (TableServerRequest) request).getMeta().put("title", fileName);
+                defaults.setAttribute("title",  fileName);
 
         }
     }

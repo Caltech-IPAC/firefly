@@ -6,13 +6,11 @@ package edu.caltech.ipac.firefly.server.util.ipactable;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.cache.StringKey;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
@@ -56,17 +54,14 @@ public class JsonTableUtil {
             tableModel.put("tbl_id",  meta.getAttribute(TableServerRequest.TBL_ID).getValue());
         }
 
-      /*  if (request.containsParam(ServerParams.USE_UPLOADED_FILENAME_AS_TABLE_TITLE) &&
-                request.getBooleanParam(ServerParams.USE_UPLOADED_FILENAME_AS_TABLE_TITLE)){
+        if (request.containsParam(ServerParams.USE_UPLOADED_FILENAME_AS_TABLE_TITLE) ){
 
                 tableModel.put("title", page.getTableDef().getAttribute("title").getValue());
 
         }
         else {
             tableModel.put("title", page.getData().getTitle());
-        }*/
-
-        tableModel.put("title", page.getData().getTitle());
+        }
 
         tableModel.put("type", guessType(meta));
         tableModel.put("totalRows", page.getRowCount());

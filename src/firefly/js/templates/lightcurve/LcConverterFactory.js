@@ -13,6 +13,7 @@ import {LsstSdssSettingBox, lsstSdssOnNewRawTable, lsstSdssOnFieldUpdate, lsstSd
 import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest, isBasicTableUploadValid} from './wise/WiseMissionOptions.js';
 import {DefaultSettingBox, defaultOnNewRawTable, defaultOnFieldUpdate, defaultRawTableRequest} from './generic/DefaultMissionOptions.js';
 import {BasicSettingBox, basicOnNewRawTable, basicOnFieldUpdate, basicRawTableRequest, imagesShouldBeDisplayed} from './basic/BasicMissionOptions.js';
+import {LC} from './LcManager.js';
 
 export const UNKNOWN_MISSION = 'generic';
 export const COORD_SYSTEM_OPTIONS = ['EQ_J2000', 'EQ_B1950', 'GALACTIC'];
@@ -92,7 +93,7 @@ const converters = {
         shouldImagesBeDisplayed: () => {return true;},
         isTableUploadValid: isBasicTableUploadValid,
         yNamesChangeImage: [],
-        showPlotTitle:true
+        showPlotTitle:getPlotTitle
     },
     'lsst_sdss': {
         converterId: 'lsst_sdss',
@@ -156,10 +157,24 @@ const converters = {
         shouldImagesBeDisplayed: imagesShouldBeDisplayed,
         isTableUploadValid: () => {return true;},
         yNamesChangeImage: [],
-        showPlotTitle:true
+        showPlotTitle:getPlotTitle
     }
 };
 
+function getPlotTitle(tableId){
+    switch (tableId){
+        case LC.RAW_TABLE:
+            return 'Input Data';
+        case LC.PHASE_FOLDED:
+            return 'Phase Folded Data';
+        case LC.PEAK_TABLE:
+            return 'Peak Data';
+        case LC.PERIODOGRAM_TABLE:
+            return 'Periodogram Data';
+        default:
+            return '';
+    }
+}
 export function getAllConverterIds() {
     return Object.keys(converters);
 }
