@@ -27,6 +27,7 @@ import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {HelpIcon} from './../../ui/HelpIcon.jsx';
 import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
+import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 
 
 const vFileKey = LC.FG_FILE_FINDER;
@@ -250,13 +251,23 @@ UploadPanel.defaultProps = {
     name: 'LCUpload'
 };
 
+export function getUploadedFileName(){
+    var fields = FieldGroupUtils.getGroupFields(vFileKey);
+    const displayName = fields.rawTblSource.displayValue.split('\\');
+    return ( displayName && displayName[displayName.length-1])?displayName[displayName.length-1]:'';
+
+}
 function onSearchSubmit(request) {
     if (request.rawTblSource) {
         const {mission} = request;
         const converter = getConverter(request.mission);
         if (!converter) return;
 
-        const treq = converter.rawTableRequest(converter, request.rawTblSource);
+        var fields = FieldGroupUtils.getGroupFields(vFileKey);
+        const displayName = fields.rawTblSource.displayValue.split('\\');
+        const uploadedFileName = displayName[displayName.length-1];
+        const treq = converter.rawTableRequest(converter, request.rawTblSource,uploadedFileName);
+
         dispatchTableSearch(treq, {removable: true});
         dispatchHideDropDown();
     }

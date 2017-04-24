@@ -145,5 +145,4 @@ export const ServerParams = {
 
 
         USER_TARGET_WORLD_PT : 'UserTargetWorldPt',
-        USE_UPLOADED_FILENAME_AS_TABLE_TITLE:'useUploadedFilenameAsTableTitle'
 };

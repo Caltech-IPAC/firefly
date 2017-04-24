@@ -10,8 +10,7 @@ import {makeFileRequest, getCellValue, getTblById, getColumnIdx, smartMerge} fro
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {ReadOnlyText, getTypeData} from '../LcUtil.jsx';
 import {LC, getViewerGroupKey, onTimeColumnChange} from '../LcManager.js';
-import FieldGroupUtils from '../../../fieldGroup/FieldGroupUtils';
-import {ServerParams} from '../../../data/ServerParams.js';
+import {getUploadedFileName} from '../LcViewer.jsx';
 
 
 import {getMissionName} from '../LcConverterFactory.js';
@@ -111,8 +110,10 @@ export class WiseSettingBox extends Component {
         var missionName = getMissionName(converterId) || 'Mission';
         const layoutInfo = getLayouInfo();
         var period = get(layoutInfo, ['periodRange','period'], '');
-        const title =tblModel.title;
-        const displayTableName = (title && title.length>20)? title.substring(0, 20)+'...':title;
+
+        const title = getUploadedFileName();
+        const uploadedFileName =( title && title.length>20)?title.substring(0, 20)+'...':title;
+
 
         return (
             <FieldGroup groupKey={groupKey}
@@ -120,7 +121,7 @@ export class WiseSettingBox extends Component {
 
                 <div >
                     <div style={{ with:{labelWidth}, fontWeight:'bold', display:'inline-block', margin: '3px 0 6px 0'}} > Column Selection</div>
-                    <label style = {{width: '170px', paddingLeft: '10px', display:'inline-block'}} title={title}>{displayTableName}</label>
+                    <label style = {{width: '170px', paddingLeft: '10px', display:'inline-block'}} title={title}>{uploadedFileName}</label>
                     <div style = {{fontWeight:'bold',paddingLeft:'13px', display:'inline-block'}}>Images</div>
                 </div>
 
@@ -385,23 +386,20 @@ export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, conv
     return {newLayoutInfo, shouldContinue: false};
 }
 
-export function wiseRawTableRequest(converter, source) {
+export function wiseRawTableRequest(converter, source, uploadFileName='') {
     const timeCName = converter.defaultTimeCName;
     const mission = converter.converterId;
     const options = {
         tbl_id: LC.RAW_TABLE,
         sortInfo: sortInfoString(timeCName), // if present, it will skip LcManager.js#ensureValidRawTable
         META_INFO: {[LC.META_MISSION]: mission, timeCName},
-        pageSize: LC.TABLE_PAGESIZE
-
-
+        pageSize: LC.TABLE_PAGESIZE,
+        uploadFileName
 
     };
 
-    var req=makeFileRequest('Input Data', source, null, options);;
-    req[ServerParams.USE_UPLOADED_FILENAME_AS_TABLE_TITLE]=true;
-    //return makeFileRequest('Input Data', source, null, options);
-    return req;
+    return makeFileRequest('Input Data', source, null, options);
+
 
 }
 

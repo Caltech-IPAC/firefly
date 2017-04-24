@@ -4,7 +4,6 @@
 package edu.caltech.ipac.firefly.server.util.ipactable;
 
 import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.DataSetParser;
@@ -24,11 +23,6 @@ import static edu.caltech.ipac.firefly.util.DataSetParser.*;
 /**
  * @author loi
  * @version $Id: IpacTableParser.java,v 1.18 2011/12/08 19:34:02 loi Exp $
- *
- * Change History
- * 4/13/17  LZ
- * IRSA-311
- *   Set the title based on USE_UPLOADED_FILENAME_AS_TABLE_TITLE's true and false
  */
 public class JsonTableUtil {
 
@@ -53,16 +47,7 @@ public class JsonTableUtil {
         if (meta.contains(TableServerRequest.TBL_ID)) {
             tableModel.put("tbl_id",  meta.getAttribute(TableServerRequest.TBL_ID).getValue());
         }
-
-        if (request.containsParam(ServerParams.USE_UPLOADED_FILENAME_AS_TABLE_TITLE) ){
-
-                tableModel.put("title", page.getTableDef().getAttribute("title").getValue());
-
-        }
-        else {
-            tableModel.put("title", page.getData().getTitle());
-        }
-
+        tableModel.put("title", page.getData().getTitle());
         tableModel.put("type", guessType(meta));
         tableModel.put("totalRows", page.getRowCount());
 

@@ -11,8 +11,7 @@ import {ReadOnlyText, getTypeData} from '../LcUtil.jsx';
 import {LC, getViewerGroupKey, onTimeColumnChange} from '../LcManager.js';
 import {getMissionName} from '../LcConverterFactory.js';
 import {getLayouInfo} from '../../../core/LayoutCntlr.js';
-import FieldGroupUtils from '../../../fieldGroup/FieldGroupUtils';
-import {ServerParams} from '../../../data/ServerParams.js';
+import {getUploadedFileName} from '../LcViewer.jsx';
 
 const labelWidth = 90;
 
@@ -60,7 +59,6 @@ export class BasicSettingBox extends Component {
         var {generalEntries, missionEntries} = this.props;
         var {tblColumns, numColumns, charColumns} = this.state;
 
-        const tblModel = getTblById(LC.RAW_TABLE);
 
         if (isEmpty(tblColumns) || isEmpty(generalEntries) || isEmpty(missionEntries)) return false;
 
@@ -99,11 +97,10 @@ export class BasicSettingBox extends Component {
         const converterId = get(missionEntries, LC.META_MISSION);
         const typeColumns = {charColumns, numColumns};
 
-        //const periodFlds = FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER);
         const layoutInfo = getLayouInfo();
 
-        const title =tblModel.title;
-        const displayTableName = (title &&  title.length>60) ? title.substring(0, 60)+'...':title;
+        const title = getUploadedFileName();
+        const uploadedFileName =( title && title.length>20)?title.substring(0, 20)+'...':title;
 
         var period = get(layoutInfo, ['periodRange','period'], '');
         return (
@@ -112,7 +109,7 @@ export class BasicSettingBox extends Component {
 
                 <div >
                     <div style={{ with:{labelWidth}, fontWeight:'bold', display:'inline-block', margin: '3px 0 6px 0'}} > Column Selection</div>
-                    <label style = {{width: '170px', paddingLeft: '10px', display:'inline-block'}} title={title}>{displayTableName}</label>
+                    <label style = {{width: '170px', paddingLeft: '10px', display:'inline-block'}} title={title}>{uploadedFileName}</label>
 
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column'}}>
@@ -293,9 +290,8 @@ export function basicRawTableRequest(converter, source) {
         pageSize: LC.TABLE_PAGESIZE
     };
 
-    var req = makeFileRequest('Input Data', source, null, options);
-    req[ServerParams.USE_UPLOADED_FILENAME_AS_TABLE_TITLE]=true;
-    return req;
+   return  makeFileRequest('Input Data', source, null, options);
+
 
 }
 
