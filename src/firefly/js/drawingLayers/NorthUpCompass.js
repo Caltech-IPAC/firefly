@@ -148,9 +148,8 @@ function makeCompass(plotId, action){
     var cdelt1 = cc.getImagePixelScaleInDeg();
     var zf= cc.zoomFactor || 1;
     var wpt2= makeWorldPt(wpStart.getLon(), wpStart.getLat() + (Math.abs(cdelt1)/zf)*(px));
-    var wptE2=  makeWorldPt(wpStart.getLon()+(Math.abs(cdelt1)/zf)*(px), wpStart.getLat());
     var spt2= cc.getScreenCoords(wpt2);
-    var sptE2= cc.getScreenCoords(wptE2);
+    var sptE2 = getEastFromNorthOnScreen(cc, sptStart, spt2, Math.PI/2);
 
     if (sptStart===null || spt2===null || sptE2===null) {
         return null;
@@ -160,4 +159,14 @@ function makeCompass(plotId, action){
     var dataE= makeDirectionArrowDrawObj(sptStart, sptE2,'E');
 
     return [dataE, dataN];
+}
+
+function getEastFromNorthOnScreen(cc, origin, nVec) {
+    var originSpt = cc.getScreenCoords(origin);
+    var vec1Spt = cc.getScreenCoords(nVec);
+
+    var x2 = (vec1Spt.y - originSpt.y) + originSpt.x;
+    var y2 = -(vec1Spt.x - originSpt.x) + originSpt.y;
+
+    return makeScreenPt(x2, y2);
 }
