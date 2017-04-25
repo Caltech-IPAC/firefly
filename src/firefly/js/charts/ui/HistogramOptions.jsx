@@ -380,7 +380,7 @@ function renderFixedBinSizeOptions(groupKey, histogramParams, disabled){
                  style={{width: 80}}
                  initialState= {{
                                   value: get(histogramParams, 'numBins', '50'),
-                                  validator:Validate.intRange.bind(null, 1, 500, 'numBins'),
+                                  validator:Validate.intRange.bind('number of bins ', 1, 500, 'numBins', false),
                                   tooltip: 'Number of bins',
 
                              }}
@@ -393,7 +393,7 @@ function renderFixedBinSizeOptions(groupKey, histogramParams, disabled){
                  style={{width: 80}}
                  initialState= {{
                                   value: get(histogramParams, 'binWidth', ''),
-                                  validator:Validate.isFloat.bind(null,  'binWidth'),
+                                  validator:Validate.isFloat.bind('bin width',  'binWidth'),
                                   tooltip: 'Bin width',
 
                              }}
