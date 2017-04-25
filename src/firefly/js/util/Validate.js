@@ -68,6 +68,10 @@ var validateRange = function(min,max,precision,description,dType, valStr) {
             retval.message = description + ': must be a '+ dType.dataTypeDesc + makeErrorMessage(null, min, max, precision);
         }
     }
+    else {
+        retval.valid = false;
+        retval.message = description + ': must be a '+ dType.dataTypeDesc + makeErrorMessage(null, min, max, precision);
+    }
     return retval;
 };
 
