@@ -38,12 +38,51 @@ export function makePoint(pt, plot, toType) {
     }
 }
 
-export function getPVRotateAngle(plot) {
-     const plotId = plot.plotImageId.substring(0, plot.plotImageId.indexOf('-'));
-     const pv = getPlotViewById(visRoot(), plotId);
+export function flipTextLocAroundY(plot, textLoc) {
+    const pv = getPlotViewById(visRoot(), plot.plotId);
 
-     return pv.rotation ? convertAngle('deg', 'radian', pv.rotation) : 0.0;
+    if (pv.flipY) {
+        const locSet = [TextLocation.CIRCLE_NE, TextLocation.CIRCLE_NW,
+            TextLocation.CIRCLE_SE, TextLocation.CIRCLE_SW,
+            TextLocation.RECT_NE, TextLocation.RECT_NW,
+            TextLocation.RECT_SE, TextLocation.RECT_SW,
+            TextLocation.ELLIPSE_NE, TextLocation.ELLIPSE_NW,
+            TextLocation.ELLIPSE_SE, TextLocation.ELLIPSE_SW,
+            TextLocation.REGION_NE, TextLocation.REGION_NW,
+            TextLocation.REGION_SE, TextLocation.REGION_SW];
+
+        var idx = locSet.findIndex((loc) => (loc === textLoc));
+
+        if (idx >= 0) {
+            idx = idx%2 ? idx - 1 : idx + 1;
+            return locSet[idx];
+        }
+    }
+    return textLoc;
 }
+
+export function getPVRotateAngle(plot, angle) {
+     const pv = getPlotViewById(visRoot(), plot.plotId);
+
+     var angleInRadian = pv.rotation ? convertAngle('deg', 'radian', pv.rotation) : 0.0;
+     if (pv.flipY) {
+         angleInRadian = Math.PI - (angle - angleInRadian);
+     } else {
+         angleInRadian += angle
+     }
+
+     const twoPI = Math.PI * 2;
+     while (angleInRadian < 0 || angleInRadian >= twoPI) {
+         if (angleInRadian < 0) {
+             angleInRadian += twoPI;
+         } else {
+             angleInRadian -= twoPI;
+         }
+     }
+
+     return angleInRadian;
+}
+
 
 function make(sType) {
     const obj= DrawObj.makeDrawObj();
@@ -753,7 +792,10 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
                     angle =  plot.zoomFactor * angle;
                 }
 
-                angle += rectAngle + getPVRotateAngle(plot) + get(renderOptions, 'rotAngle', 0.0);
+                angle += rectAngle  + get(renderOptions, 'rotAngle', 0.0);
+                angle = getPVRotateAngle(plot, angle);
+
+                //angle = angleAfterFlip(angle);
 
                 if (has(renderOptions, 'translation')) {
                     x += renderOptions.translation.x;
@@ -897,7 +939,8 @@ function drawEllipse(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPath
                 angle = plot.zoomFactor * angle;
             }
 
-            angle += eAngle + getPVRotateAngle(plot);
+            angle += eAngle;
+            angle = getPVRotateAngle(plot, angle);
 
             if (!onlyAddToPath || style === Style.HANDLED) {
                 DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);

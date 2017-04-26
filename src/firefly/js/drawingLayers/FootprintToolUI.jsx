@@ -148,48 +148,51 @@ class FootprintToolUI extends React.Component {
         var {isValidAngle, angleDeg, fpText, fpTextLoc} = this.state;
 
         return (
-            <div style={{display:'flex', justifyContent:'flex-start', padding:'5px 0 9px 0'}}>
-                <div style={tStyle}>
-                    <div title={'Add a lable to this footprint'}> Label:<input style={{width: 60}}
-                                       type='text'
-                                       value={fpText}
-                                       onChange={this.changeFootprintText}/>
-                    </div>
-                    <div style={mStyle} title={'Choose a corner'}> Corners:
-                        <select value={fpTextLoc} onChange={ this.changeFootprintTextLocation }>
-                            <option value={TextLocation.REGION_NE.key}> NE </option>
-                            <option value={TextLocation.REGION_NW.key}> NW </option>
-                            <option value={TextLocation.REGION_SE.key}> SE </option>
-                            <option value={TextLocation.REGION_SW.key}> SW </option>
-                        </select>
-                    </div>
-                </div>
-                <div style={tStyle}>
-                    <InputFieldView
-                                valid={isValidAngle}
-                                onChange={this.changeFootprintAngle}
-                                value={angleDeg}
-                                message={'invalid angle value'}
-                                label={'Angle:'}
-                                labelWidth={30}
-                                style={{width: 50}}
-                                tooltip={'Enter the angle in degree you want the footprint rotated'}
-
-                    />
-                    <div style={mStyle} title={textOnLink}>
-                        <a className='ff-href' style={{textDecoration: 'underline'}}
-                           onClick={()=>addFootprintDrawLayer(this.props.pv, this.state.fpInfo)}>{textOnLink}</a>
-                    </div>
-                </div>
-                <div style={{display:'flex', justifyContent: 'flex-start', paddingLeft:10}}>
+            <div style={{display:'flex', justifyContent:'flex-start', flexDirection: 'column', padding:'5px 0 9px 0'}}>
+                <div style={{display:'flex', justifyContent: 'flex-start', paddingLeft:10, paddingBottom:8}}>
                     <div> Center:</div>
                     <div style={tStyle}>
                         {convertWorldLonToString(this.state.currentPt, this.csys) + ', ' +
-                         convertWorldLatToString(this.state.currentPt, this.csys)}
+                        convertWorldLatToString(this.state.currentPt, this.csys)}
                         {convertWorldToString(this.state.currentPt, this.csys)}
                     </div>
                 </div>
 
+                <div style={{display:'flex', justifyContent:'flex-start'}}>
+
+                    <div style={tStyle}>
+                        <div title={'Add a lable to this footprint'}> Label:<input style={{width: 60}}
+                                           type='text'
+                                           value={fpText}
+                                           onChange={this.changeFootprintText}/>
+                        </div>
+                        <div style={mStyle} title={'Choose a corner'}> Corners:
+                            <select value={fpTextLoc} onChange={ this.changeFootprintTextLocation }>
+                                <option value={TextLocation.REGION_NE.key}> NE </option>
+                                <option value={TextLocation.REGION_NW.key}> NW </option>
+                                <option value={TextLocation.REGION_SE.key}> SE </option>
+                                <option value={TextLocation.REGION_SW.key}> SW </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style={tStyle}>
+                        <InputFieldView
+                                    valid={isValidAngle}
+                                    onChange={this.changeFootprintAngle}
+                                    value={angleDeg}
+                                    message={'invalid angle value'}
+                                    label={'Angle:'}
+                                    labelWidth={30}
+                                    style={{width: 50}}
+                                    tooltip={'Enter the angle in degree you want the footprint rotated'}
+
+                        />
+                        <div style={mStyle} title={textOnLink}>
+                            <a className='ff-href' style={{textDecoration: 'underline'}}
+                               onClick={()=>addFootprintDrawLayer(this.props.pv, this.state.fpInfo)}>{textOnLink}</a>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }

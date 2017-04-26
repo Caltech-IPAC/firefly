@@ -369,11 +369,11 @@ function drawSymbolOnPlot(ctx, x, y, drawParams, renderOptions, onlyAddToPath, p
             DrawUtil.drawArrow(ctx, x, y, color, size, renderOptions, onlyAddToPath);
             break;
         case DrawSymbol.ROTATE:
-            const rAngle = getPVRotateAngle(plot);
+            var rotAngle = get(renderOptions, 'rotAngle', 0.0);
+            rotAngle = getPVRotateAngle(plot, rotAngle);
 
-            if (rAngle !== 0.0) {
-                renderOptions = Object.assign({}, renderOptions, {rotAngle: get(renderOptions, 'rotAngle', 0.0) + rAngle});
-            }
+            renderOptions = Object.assign({}, renderOptions, {rotAngle});
+
             DrawUtil.drawRotate(ctx, x, y, color, size, renderOptions, onlyAddToPath);
             break;
         default :

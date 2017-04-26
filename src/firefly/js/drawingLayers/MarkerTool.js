@@ -276,7 +276,7 @@ function getLayerChanges(drawLayer, action) {
                 const cc = CsysConverter.make(plot);
                 wpt = initMarkerPos(plot, cc);
 
-                retV = createMarkerObjs(action, drawLayer, pId, wpt, sizePlot);
+                retV = createMarkerObjs(action, drawLayer, pId, wpt, sizePlot, retV);
             });
 
             return retV;
@@ -288,7 +288,7 @@ function getLayerChanges(drawLayer, action) {
             plotIdAry = getPlotViewIdListInGroup(visRoot(), plotId);
             plotIdAry.forEach((pId) => {
                 wptObj = (pId === plotId) ? wpt : get(dd, ['data', pId, 'pts', '0']);
-                retV = createMarkerObjs(action, drawLayer, pId, wptObj, size);
+                retV = createMarkerObjs(action, drawLayer, pId, wptObj, size, retV);
             });
 
             return retV;
@@ -395,23 +395,31 @@ function showMarkersByTimer(dispatcher, actionType, plotId, doneStatus, timer, d
  * calculate vertex distance for catching the marker
  * @param markObj
  * @param plotId
+ * @param dl
+ * @param dlObj
  * @returns {{vertexDef: *, exclusiveDef: *}}
  */
-export function updateVertexInfo(markObj, plotId) {
+export function updateVertexInfo(markObj, plotId, dl, dlObj) {
     var markerStatus = markObj.sType === MarkerType.Marker ? get(markObj, ['actionInfo', 'markerStatus']) :
                                                              get(markObj, ['actionInfo', 'footprintStatus']);
     var exclusiveDef, vertexDef;
 
     if (markerStatus) {
-        if (markerStatus === MarkerStatus.attached) {
+        if (markerStatus.key === MarkerStatus.attached.key) {
             exclusiveDef = {exclusiveOnDown: true, type: 'anywhere'};
             vertexDef = {points: null, pointDist: MARKER_DISTANCE};
         } else {
             var cc = CsysConverter.make(primePlot(visRoot(), plotId));
             const {dist, centerPt} = getVertexDistance(markObj, cc);
+            var   {vertexDef, exclusiveDef} = dlObj || {};
+            var   points = get(vertexDef, ['points'], []);
 
             exclusiveDef = {exclusiveOnDown: true, type: 'vertexOnly'};
-            vertexDef = {points: [centerPt], pointDist: dist};
+            var idx = dl.plotIdAry ? dl.plotIdAry.findIndex((p) => p === plotId) : -1;
+            if (idx >= 0) {
+                points[idx] = centerPt;
+                vertexDef = {points, pointDist: dist};
+            }
         }
         return {vertexDef, exclusiveDef};
     }
@@ -425,9 +433,10 @@ export function updateVertexInfo(markObj, plotId) {
  * @param plotId
  * @param wpt
  * @param size
+ * @param prevRet previous return object
  * @returns {*}
  */
-function createMarkerObjs(action, dl, plotId, wpt, size) {
+function createMarkerObjs(action, dl, plotId, wpt, size, prevRet) {
     if (!plotId || !wpt) return null;
 
     const {isHandle, markerStatus, timeoutProcess, move, refPt} = action.payload;
@@ -480,7 +489,7 @@ function createMarkerObjs(action, dl, plotId, wpt, size) {
     var dlObj = {drawData: dl.drawData, helpLine: editHelpText};
 
     if (markerStatus) {
-        var {exclusiveDef, vertexDef} = updateVertexInfo(markObj, plotId);
+        var {exclusiveDef, vertexDef} = updateVertexInfo(markObj, plotId, dl, prevRet);
 
         if (exclusiveDef && vertexDef) {
             return clone(dlObj, {markerStatus, vertexDef, exclusiveDef});

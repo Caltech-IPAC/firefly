@@ -289,7 +289,7 @@ function getLayerChanges(drawLayer, action) {
                 const plot = primePlot(visRoot(), pId);
                 const cc = CsysConverter.make(plot);
 
-                retV = createFootprintObjs(action, drawLayer, pId, initMarkerPos(plot, cc));
+                retV = createFootprintObjs(action, drawLayer, pId, initMarkerPos(plot, cc), retV);
             });
 
             return retV;
@@ -303,7 +303,7 @@ function getLayerChanges(drawLayer, action) {
             plotIdAry = getPlotViewIdListInGroup(visRoot(), plotId);
             plotIdAry.forEach((pId) => {
                 wptObj = (pId === plotId) ? wpt : get(dd, ['data', pId, 'pts', '0']);
-                retV = createFootprintObjs(action, drawLayer, pId, wptObj);
+                retV = createFootprintObjs(action, drawLayer, pId, wptObj, retV);
             });
             return retV;
 
@@ -416,9 +416,10 @@ function showFootprintByTimer(dispatcher, actionType, regions, plotId, doneStatu
  * @param dl
  * @param plotId
  * @param wpt
+ * @param prevRet previous return object
  * @returns {*}
  */
-function createFootprintObjs(action, dl, plotId, wpt) {
+function createFootprintObjs(action, dl, plotId, wpt, prevRet) {
     if (!plotId || !wpt) return null;
 
     const {isHandle, footprintStatus, regions, timeoutProcess, refPt, move} = action.payload;
@@ -470,7 +471,7 @@ function createFootprintObjs(action, dl, plotId, wpt) {
      var dlObj = {drawData: dl.drawData, helpLine: editHelpText};
 
      if (footprintStatus) {
-         var {exclusiveDef, vertexDef} = updateVertexInfo(footprintObj, plotId);
+         var {exclusiveDef, vertexDef} = updateVertexInfo(footprintObj, plotId, dl, prevRet);
 
          if (exclusiveDef && vertexDef) {
              return clone(dlObj, {footprintStatus, vertexDef, exclusiveDef});

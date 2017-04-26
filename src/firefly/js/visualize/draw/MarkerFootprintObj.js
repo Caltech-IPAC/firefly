@@ -6,7 +6,7 @@
 import Point, {makeImagePt, makeScreenPt, makeDevicePt, makeWorldPt, SimplePt} from '../Point.js';
 import {CoordinateSys} from '../CoordSys.js';
 import ShapeDataObj, {lengthToImagePixel, lengthToScreenPixel,
-       lengthToArcsec, makePoint, drawText, makeTextLocationComposite} from './ShapeDataObj.js';
+       lengthToArcsec, makePoint, drawText, makeTextLocationComposite, flipTextLocAroundY} from './ShapeDataObj.js';
 import {POINT_DATA_OBJ, getPointDataobjArea, makePointDataObj, DrawSymbol} from './PointDataObj.js';
 import {getDrawobjArea, isWithinPolygon} from './ShapeHighlight.js';
 import {defaultMarkerTextLoc} from '../../drawingLayers/MarkerToolUI.jsx';
@@ -18,6 +18,8 @@ import DrawObj from './DrawObj.js';
 import DrawOp from './DrawOp.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {clone} from '../../util/WebUtil.js';
+import {getPlotViewById} from '../PlotViewUtil.js';
+import {visRoot} from '../ImagePlotCntlr.js';
 import Enum from 'enum';
 import {has, isNil, get, isEmpty, isArray, set} from 'lodash';
 
@@ -763,7 +765,6 @@ function createRotateHandle(outlineBox, cc, rotAngle) {
     const handleCenter = [[0, -0.5], [0.5, 0], [0, 0.5], [-0.5, 0]];  // handle center relative to the end of handle bar
     const handleAngle = [Math.PI * 3/2, 0, Math.PI*0.5, Math.PI];
     const [x1, x2, y1, y2] = [0, cc.screenSize.width, 0, cc.screenSize.height];
-
     var rotateObj = null;
     var corners =  getRectCorners(outlineBox.pts[0], outlineBox.width, outlineBox.height, outlineBox.unitType, cc);
     var side = 4;
@@ -1016,6 +1017,8 @@ function drawFootprintText(drawObj, plot, def, drawTextAry) {
     var objArea  = getObjArea(outlineObj, plot); // in image coordinate
 
     if (objArea) {
+        textLoc = flipTextLocAroundY(plot, textLoc);
+
         var textPt = makeTextLocationComposite(plot, textLoc, fontSize,
                         objArea.width * plot.zoomFactor,
                         objArea.height * plot.zoomFactor,
