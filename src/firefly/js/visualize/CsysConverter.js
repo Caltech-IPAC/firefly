@@ -46,6 +46,7 @@ export class CysConverter {
      */
     constructor(plot, altAffTrans)  {
         this.plotImageId= plot.plotImageId;
+        this.plotId = plot.plotId;
         this.plotState= plot.plotState;
         this.dataWidth= plot.dataWidth;
         this.dataHeight= plot.dataHeight;

@@ -13,6 +13,8 @@ import {toRegion} from './ShapeToRegion.js';
 import {getDrawobjArea,  isScreenPtInRegion, makeHighlightShapeDataObj} from './ShapeHighlight.js';
 import CsysConverter from '../CsysConverter.js';
 import {has, isNil, get, set} from 'lodash';
+import {getPlotViewById} from '../PlotViewUtil.js';
+import {visRoot} from '../ImagePlotCntlr.js';
 
 const FONT_FALLBACK= ',sans-serif';
 
@@ -35,6 +37,52 @@ export function makePoint(pt, plot, toType) {
         return plot.getWorldCoords(pt);
     }
 }
+
+export function flipTextLocAroundY(plot, textLoc) {
+    const pv = getPlotViewById(visRoot(), plot.plotId);
+
+    if (pv.flipY) {
+        const locSet = [TextLocation.CIRCLE_NE, TextLocation.CIRCLE_NW,
+            TextLocation.CIRCLE_SE, TextLocation.CIRCLE_SW,
+            TextLocation.RECT_NE, TextLocation.RECT_NW,
+            TextLocation.RECT_SE, TextLocation.RECT_SW,
+            TextLocation.ELLIPSE_NE, TextLocation.ELLIPSE_NW,
+            TextLocation.ELLIPSE_SE, TextLocation.ELLIPSE_SW,
+            TextLocation.REGION_NE, TextLocation.REGION_NW,
+            TextLocation.REGION_SE, TextLocation.REGION_SW];
+
+        var idx = locSet.findIndex((loc) => (loc === textLoc));
+
+        if (idx >= 0) {
+            idx = idx%2 ? idx - 1 : idx + 1;
+            return locSet[idx];
+        }
+    }
+    return textLoc;
+}
+
+export function getPVRotateAngle(plot, angle) {
+     const pv = getPlotViewById(visRoot(), plot.plotId);
+
+     var angleInRadian = pv.rotation ? convertAngle('deg', 'radian', pv.rotation) : 0.0;
+     if (pv.flipY) {
+         angleInRadian = Math.PI - (angle - angleInRadian);
+     } else {
+         angleInRadian += angle
+     }
+
+     const twoPI = Math.PI * 2;
+     while (angleInRadian < 0 || angleInRadian >= twoPI) {
+         if (angleInRadian < 0) {
+             angleInRadian += twoPI;
+         } else {
+             angleInRadian -= twoPI;
+         }
+     }
+
+     return angleInRadian;
+}
+
 
 function make(sType) {
     const obj= DrawObj.makeDrawObj();
@@ -744,10 +792,11 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
                     angle =  plot.zoomFactor * angle;
                 }
 
-                angle += rectAngle;
-                if (has(renderOptions, 'rotAngle')) {
-                    angle += renderOptions.rotAngle;
-                }
+                angle += rectAngle  + get(renderOptions, 'rotAngle', 0.0);
+                angle = getPVRotateAngle(plot, angle);
+
+                //angle = angleAfterFlip(angle);
+
                 if (has(renderOptions, 'translation')) {
                     x += renderOptions.translation.x;
                     y += renderOptions.translation.y;
@@ -891,6 +940,7 @@ function drawEllipse(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPath
             }
 
             angle += eAngle;
+            angle = getPVRotateAngle(plot, angle);
 
             if (!onlyAddToPath || style === Style.HANDLED) {
                 DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
