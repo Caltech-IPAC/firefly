@@ -221,15 +221,20 @@ function makeDrawing(pv,width,height) {
     const thumbZoomFact= getThumbZoomFact(plot,width,height);
     const cdelt1 = cc.getImagePixelScaleInDeg();
     const wpt2= makeWorldPt(wptC.getLon(), wptC.getLat() + (Math.abs(cdelt1)/thumbZoomFact)*(arrowLength/1.6));
-    const wptE2= makeWorldPt(wptC.getLon()+(Math.abs(cdelt1)/thumbZoomFact)*(arrowLength/2), wptC.getLat());
+    //const wptE2= makeWorldPt(wptC.getLon()+(Math.abs(cdelt1)/thumbZoomFact)*(arrowLength/2), wptC.getLat());
     const wptE1= wptC;
     const wpt1= wptC;
 
+    const sptC = cc.getScreenCoords(wptC);
+    const sptN = cc.getScreenCoords(wpt2);
+    const [x, y] = [(sptN.y - sptC.y) + sptC.x, (-sptN.x + sptC.x)+sptC.y];
+    const wptE2 = cc.getWorldCoords(makeScreenPt(x, y));
 
     const spt1= cc.getDeviceCoords(wpt1, thumbZoomFact, thumbnailTrans);
     const spt2= cc.getDeviceCoords(wpt2, thumbZoomFact, thumbnailTrans);
     const sptE1= cc.getDeviceCoords(wptE1, thumbZoomFact, thumbnailTrans);
     const sptE2= cc.getDeviceCoords(wptE2, thumbZoomFact, thumbnailTrans);
+
 
     if (!spt1 || !spt2 || !sptE1 || !sptE2) return null;
 
