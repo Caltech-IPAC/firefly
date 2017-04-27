@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {PropTypes} from 'react';
 
 import CompleteButton from './CompleteButton.jsx';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
@@ -29,7 +29,8 @@ function createSuccessHandler(action, params, onSubmit) {
 }
 
 export const FormPanel = function (props) {
-    var {children, onSubmit, onCancel, onError, groupKey, action, params, width='100%', height='100%', submitText='Search', help_id} = props;
+    var {children, onSubmit, onCancel, onError, groupKey, action, params,
+        width='100%', height='100%', submitText='Search', help_id, changeMasking} = props;
 
     const style = { width, height,
         backgroundColor: 'white',
@@ -49,7 +50,7 @@ export const FormPanel = function (props) {
                                     groupKey={groupKey}
                                     onSuccess={createSuccessHandler(action, params, onSubmit)}
                                     onFail={onError || handleFailfure}
-                                    text = {submitText}
+                                    text = {submitText} changeMasking={changeMasking}
                     />
                     <button style={{display: 'inline-block'}} type='button' className='button std' onClick={onCancel}>Cancel</button>
 
@@ -64,16 +65,17 @@ export const FormPanel = function (props) {
 
 
 FormPanel.propTypes = {
-    submitText: React.PropTypes.string,
-    width: React.PropTypes.string,
-    height: React.PropTypes.string,
-    onSubmit: React.PropTypes.func,
-    onCancel: React.PropTypes.func,
-    onError: React.PropTypes.func,
-    groupKey: React.PropTypes.any,
-    action: React.PropTypes.string,
-    params: React.PropTypes.object,
-    help_id: React.PropTypes.string
+    submitText: PropTypes.string,
+    width: PropTypes.string,
+    height: PropTypes.string,
+    onSubmit: PropTypes.func,
+    onCancel: PropTypes.func,
+    onError: PropTypes.func,
+    groupKey: PropTypes.any,
+    action: PropTypes.string,
+    params: PropTypes.object,
+    help_id: PropTypes.string,
+    changeMasking: PropTypes.func,
 };
 
 

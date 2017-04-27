@@ -68,13 +68,13 @@ public class FitsRead implements Serializable {
     //private variables
     private final int planeNumber;
     private final int extension_number;
-    private final BasicHDU hdu;
+    private BasicHDU hdu;
     private float[] float1d;
     private ImageHeader imageHeader;
     private Header header;
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
     private Histogram hist;
-    private  double betaValue;
+    private  double defBetaValue= Double.NaN;
 
     private static ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<Integer>(Arrays.asList(8, 16, 32, -32, -64));
 
@@ -85,7 +85,7 @@ public class FitsRead implements Serializable {
      * @param imageHdu
      * @throws FitsException
      */
-    private FitsRead( ImageHDU imageHdu) throws FitsException {
+    private FitsRead( ImageHDU imageHdu, boolean clearHdu) throws FitsException {
 
 
         hdu = imageHdu;
@@ -104,6 +104,10 @@ public class FitsRead implements Serializable {
 
         //convert the data to float to do all the calculations
         float1d = getImageHDUDataInFloatArray(imageHdu);
+        if (clearHdu) {
+            hdu= null;
+            imageHdu= null;
+        }
 
         hist= computeHistogram();
         /* The error in asinh algorithm is
@@ -113,10 +117,24 @@ public class FitsRead implements Serializable {
          *  V(mu) = a *simga^2/beta^2 = a
          *  Thus, we use sigma as a default beta value
          */
-        betaValue = computeSigma(float1d, imageHeader);
+
     }
 
-    public double getBeta() {return betaValue;}
+    public double getDefaultBeta() {
+        if (Double.isNaN(this.defBetaValue)) {
+            this.defBetaValue= computeSigma(float1d, imageHeader);
+        }
+        return this.defBetaValue;
+    }
+
+
+
+    public static FitsRead[] createFitsReadArray(Fits fits) throws FitsException {
+        return createFitsReadArray(fits,false);
+
+    }
+
+
 
     /**
      * read a fits with extensions or cube data to create a list of the FistRead object
@@ -125,7 +143,7 @@ public class FitsRead implements Serializable {
      * @return
      * @throws FitsException
      */
-    public static FitsRead[] createFitsReadArray(Fits fits)
+    public static FitsRead[] createFitsReadArray(Fits fits, boolean clearHdu)
             throws FitsException {
 
         //get all the Header Data Unit from the fits file
@@ -145,7 +163,7 @@ public class FitsRead implements Serializable {
 
         FitsRead[] fitsReadAry = new FitsRead[HDUList.size()];
         for (int i = 0; i < HDUList.size(); i++) {
-            fitsReadAry[i] = new FitsRead((ImageHDU) HDUList.get(i));
+            fitsReadAry[i] = new FitsRead((ImageHDU) HDUList.get(i), clearHdu);
             fitsReadAry[i].indexInFile = i;
         }
 
@@ -177,7 +195,7 @@ public class FitsRead implements Serializable {
 
         FitsRead[] fitsReadAry = new FitsRead[HDUList.size()];
         for (int i = 0; i < HDUList.size(); i++) {
-            fitsReadAry[i] = new FitsRead( (ImageHDU) HDUList.get(i));
+            fitsReadAry[i] = new FitsRead( (ImageHDU) HDUList.get(i), false);
             fitsReadAry[i].indexInFile = i;
 
         }
@@ -1565,8 +1583,12 @@ public class FitsRead implements Serializable {
         return result;
     }
 
+    public boolean hasHdu() { return hdu!=null;}
 
     public BasicHDU getHDU() {
+        if (hdu==null) {
+            throw new IllegalArgumentException("HDU has been cleared, there is not longer access to it.");
+        }
         return hdu;
     }
 
@@ -1703,9 +1725,14 @@ public class FitsRead implements Serializable {
         createNewFits().write(new DataOutputStream(stream));
     }
 
+    public void clearHDU() { this.hdu= null; }
+
     public Fits createNewFits() throws FitsException, IOException {
 
         Fits outputFits = new Fits();
+        if (hdu==null) {
+            throw new IOException("HDU has been clear, this FitsRead no longer supports re-writing the FITS file");
+        }
         outputFits.addHDU(hdu);
         return outputFits;
     }

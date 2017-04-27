@@ -38,18 +38,15 @@ abstract class ModFileWriter {
     protected boolean doTask() { return true; }
 
     /**
-     * Start the file writing in separate thread.  This method also update the working fits file to the name that is about
-     * to be created.
+     * Write the fits file and update data structures
      * @param state the PlotState to update
      */
-    public void go(PlotState state) {
+    public void writeFile(PlotState state) {
         PlotStateUtil.setWorkingFitsFile(state, _targetFile, _band);
         if (_markAsOriginal) {
             PlotStateUtil.setOriginalFitsFile(state, _targetFile, _band);
         }
-        if (doTask()) {
-            write();
-        }
+        if (doTask()) write();
     }
 
     public boolean getCreatesOnlyOneImage() { return true; }
@@ -117,6 +114,7 @@ abstract class ModFileWriter {
                 OutputStream os= new BufferedOutputStream(new FileOutputStream(f), 1024*16);
                 _fr.writeSimpleFitsFile(os);
                 FileUtil.silentClose(os);
+                _fr.clearHDU();
             } catch (Exception e) {
                 _log.warn(e,"geom write failed", "geom file: "+f.getPath());
             }

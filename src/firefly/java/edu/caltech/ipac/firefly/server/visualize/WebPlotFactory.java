@@ -3,14 +3,13 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.ImageFileRetrieverFactory;
 import edu.caltech.ipac.firefly.visualize.Band;
-import edu.caltech.ipac.firefly.visualize.InsertBandInitializer;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebFitsData;
@@ -69,7 +68,7 @@ public class WebPlotFactory {
         FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(wprList.get(0));
         FileInfo fileData = retrieve.getFile(wprList.get(0));
 
-        FitsRead[] frAry= FitsCacher.readFits(fileData.getFile());
+        FitsRead[] frAry= FitsCacher.readFits(fileData.getFile(), false, false);
         List<ImagePlotBuilder.Results> resultsList= new ArrayList<>(wprList.size());
         int length= Math.min(wprList.size(), frAry.length);
         WebPlotInitializer retval[]= new WebPlotInitializer[length];
@@ -89,7 +88,7 @@ public class WebPlotFactory {
                 ModFileWriter mfw = entry.getValue();
                 if (mfw != null) {
                     if (mfw.getCreatesOnlyOneImage()) pi.getState().setImageIdx(0, entry.getKey());
-                    mfw.go(pi.getState());
+                    mfw.writeFile(pi.getState());
                 }
             }
 
@@ -124,52 +123,6 @@ public class WebPlotFactory {
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
-
-    private static InsertBandInitializer insertBand(ImagePlot plot,
-                                                    PlotState state,
-                                                    FileInfo fd,
-                                                    Band band,
-                                                    ActiveFitsReadGroup frGroup) throws FailedRequestException, GeomException {
-
-        InsertBandInitializer retval;
-
-        try {
-            if (CtxControl.getPlotCtx(state.getContextString()) == null) {
-                throw new FailedRequestException("PlotClientCtx not found, ctxStr=" + state.getContextString());
-            }
-
-            FileReadInfo frInfo[] = WebPlotReader.readOneFits(fd, band, null);
-
-            ModFileWriter modWriter = ImagePlotCreator.createBand(state, plot, frInfo[0],frGroup);
-
-            WebFitsData wfData = ImagePlotCreator.makeWebFitsData(plot, frGroup, band, frInfo[0].getOriginalFile());
-            PlotStateUtil.setPixelAccessInfo(plot, state, frGroup);
-
-            ImagePlotBuilder.initState(state, frInfo[0], band, null);
-
-
-            PlotImages images = createImages(state, plot, frGroup, true, false);
-
-            if (modWriter != null) {
-                if (modWriter.getCreatesOnlyOneImage()) state.setImageIdx(0, band);
-                modWriter.go(state);
-            }
-
-            PlotServUtils.createThumbnail(plot, frGroup, images, true,state.getThumbnailSize());
-
-            retval = new InsertBandInitializer(state, images, band, wfData, frInfo[0].getDataDesc());
-
-        } catch (FitsException|IOException e) {
-            PlotServUtils.statsLog("Fits Read Failed", e.getMessage());
-            throw new FailedRequestException("Fits read failed: " + fd.getFile(), null, e);
-        } catch (OutOfMemoryError e) {
-            PlotServUtils.statsLog("Fits Read Failed", e.getMessage());
-            System.gc();
-            throw new FailedRequestException("Out of memory: " + fd.getFile(), e.toString(), e);
-        }
-        return retval;
-    }
-
 
 
     private static WebPlotInitializer[] create(Map<Band, WebPlotRequest> requestMap,
@@ -210,7 +163,7 @@ public class WebPlotFactory {
                     ModFileWriter mfw = entry.getValue();
                     if (mfw != null) {
                         if (mfw.getCreatesOnlyOneImage()) pi.getState().setImageIdx(0, entry.getKey());
-                        mfw.go(pi.getState());
+                        mfw.writeFile(pi.getState());
                     }
                 }
 
@@ -247,58 +200,14 @@ public class WebPlotFactory {
     }
 
 
-    /**
-     * @param plot    the image plot
-     * @param state   current state
-     * @param request request for the insert
-     * @param band    which color band
-     * @return the insertion initializer
-     * @throws FailedRequestException if you can plot the band
-     * @throws GeomException when a band can't be reprojected to another band
-     */
-    public static InsertBandInitializer addBand(ImagePlot plot,
-                                                PlotState state,
-                                                WebPlotRequest request,
-                                                Band band,
-                                                ActiveFitsReadGroup frGroup) throws FailedRequestException, GeomException {
-        long start = System.currentTimeMillis();
-
-        state.setWebPlotRequest(request, band);
-
-        FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(request);
-
-
-        if (retrieve== null) {
-            _log.error("Failed to find FileRetriever should only be FILE, URL, ALL_SKY, or SERVICE, for band " + band.toString());
-            return null;
-        }
-
-
-        long findStart = System.currentTimeMillis();
-        FileInfo fd = retrieve.getFile(request);
-        File file = fd.getFile();
-        long findElapse = System.currentTimeMillis() - findStart;
-
-
-        if (file==null) {
-            _log.error("Could not find any fits files from request");
-            return null;
-        }
-
-        long insertStart = System.currentTimeMillis();
-        InsertBandInitializer bandInit = insertBand(plot, state, fd, band,frGroup);
-        long insertElapse = System.currentTimeMillis() - insertStart;
-        long elapse = System.currentTimeMillis() - start;
-
-        logSuccess(state, elapse, findElapse, insertElapse, true, band, false);
-        state.setNewPlot(false);
-
-        return bandInit;
-    }
-
     private static WebPlotInitializer makePlotResults(ImagePlotInfo pInfo, boolean makeFiles, ZoomChoice zoomChoice)
                                                throws FitsException, IOException {
         PlotState state = pInfo.getState();
+
+        for(Band b : state.getBands()) { //clearing out hdu cuts fits memory usage in half
+            File f= ServerContext.convertToFile(state.getWorkingFitsFileStr(b));
+            if (f!=null) FitsCacher.clearCachedHDU(f);
+        }
 
         boolean fullScreen= zoomChoice.getZoomType() == ZoomType.FULL_SCREEN;
         PlotImages images = createImages(state, pInfo.getPlot(), pInfo.getFrGroup(),makeFiles, fullScreen);
@@ -319,6 +228,7 @@ public class WebPlotFactory {
         for (Map.Entry<Band, WebFitsData> entry : pInfo.getWebFitsDataMap().entrySet()) {
             wfDataAry[entry.getKey().getIdx()] = entry.getValue();
         }
+
 
         ImagePlot plot = pInfo.getPlot();
         ImageDataGroup imageData = plot.getImageData();

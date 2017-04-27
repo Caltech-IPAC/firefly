@@ -24,6 +24,17 @@ import {ImageSelection, getPlotInfo, panelKey, isCreatePlot, PLOT_NO,
 import {resultSuccess, resultFail} from '../visualize/ui/ImageSelectPanelResult.js';
 
 const dropdownName = 'ImageSelectDropDownCmd';
+
+
+const maskWrapper= {
+    position:'absolute',
+    left:0,
+    top:0,
+    width:'100%',
+    height:'100%'
+};
+
+
 /**
  *
  * @param props
@@ -36,8 +47,10 @@ export class ImageSelectDropdown extends Component {
 
         this.state = {
             fields: FieldGroupUtils.getGroupFields(panelKey),
-            visroot: visRoot()
+            visroot: visRoot(),
+            doMask : false
         };
+        this.changeMasking= (doMask) => this.setState(() => ({doMask}));
     }
 
 
@@ -77,9 +90,11 @@ export class ImageSelectDropdown extends Component {
                     groupKey={completeButtonKey(isThreeColor)}
                     onSubmit={resultSuccess(plotInfo, true)}
                     onError={resultFail()}
-                    onCancel={hideSearchPanel}>
+                    onCancel={hideSearchPanel}
+                    changeMasking={this.changeMasking}>
                     <ImageSelection loadButton={false} />
                 </FormPanel>
+                {this.state.doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
             </div>);
     }
 }

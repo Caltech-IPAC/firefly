@@ -27,6 +27,7 @@ public class ImageDataGroup implements Iterable<ImageData> {
 
     private final int _width;
     private final int _height;
+    private double betaValue= Double.NaN;
 
 
 //======================================================================
@@ -52,6 +53,8 @@ public class ImageDataGroup implements Iterable<ImageData> {
         _width = hdr.naxis1;
         _height = hdr.naxis2;
 
+        rangeValues= ensureBetaValues(rangeValues, fitsReadAry);
+
         int totWidth= hdr.naxis1;
         int totHeight= hdr.naxis2;
 
@@ -76,6 +79,8 @@ public class ImageDataGroup implements Iterable<ImageData> {
             }
         }
     }
+
+
 
     /**
      * LZ 07/20/15
@@ -112,6 +117,8 @@ public class ImageDataGroup implements Iterable<ImageData> {
 
         _imageDataAry= new ImageData[xPanels * yPanels];
 
+
+
         int width;
         int height;
         for(int i= 0; i<xPanels; i++) {
@@ -129,6 +136,24 @@ public class ImageDataGroup implements Iterable<ImageData> {
 //======================================================================
 //----------------------- Public Methods -------------------------------
 //======================================================================
+
+    private RangeValues ensureBetaValues(RangeValues rv, FitsRead fitsReadAry[]) {
+        if (rv.getStretchAlgorithm()==RangeValues.STRETCH_ASINH && Double.isNaN(rv.getBetaValue())) {
+                               //if asinH and the default beta then compute the beta
+            if (Double.isNaN(this.betaValue)) {
+                for(FitsRead testFr : fitsReadAry) {
+                    if (testFr!=null) {
+                        this.betaValue= testFr.getDefaultBeta();
+                        break;
+                    }
+                }
+            }
+            return new RangeValues(rv.getLowerWhich(), rv.getLowerValue(), rv.getUpperWhich(), rv.getUpperValue(),
+                    this.betaValue, rv.getGammaValue(), rv.getStretchAlgorithm(),
+                    rv.getZscaleContrast(), rv.getZscaleSamples(), rv.getZscaleSamplesPerLine());
+        }
+        return rv;
+    }
 
     public Iterator<ImageData> iterator() {
         return Arrays.asList(_imageDataAry).iterator();
@@ -181,6 +206,8 @@ public class ImageDataGroup implements Iterable<ImageData> {
                                  int idx,
                                  RangeValues rangeValues,
                                  boolean force) {
+
+        rangeValues= ensureBetaValues(rangeValues, fitsReadAry);
         for(ImageData id : _imageDataAry) {
             id.recomputeStretch(fitsReadAry,idx,rangeValues, force);
         }
@@ -208,4 +235,3 @@ public class ImageDataGroup implements Iterable<ImageData> {
 // =====================================================================
 
 }
-

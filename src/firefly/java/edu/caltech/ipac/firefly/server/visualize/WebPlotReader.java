@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -42,6 +43,8 @@ import java.util.Map;
  * The Crop class is deprecated. The same function is added to CropAndCenter.
  */
 public class WebPlotReader {
+
+    private static final Logger.LoggerImpl _log = Logger.getLogger();
 
     public static Map<Band, FileReadInfo[]> readFiles(Map<Band, FileInfo> fitsFiles, WebPlotRequest req)
             throws IOException,
@@ -136,7 +139,8 @@ public class WebPlotReader {
                 uploadedName= fd.getDesc();
             }
 
-            FitsRead frAry[]= FitsCacher.readFits(originalFile);
+            boolean usePipeline= needsPipeline(req);
+            FitsRead frAry[]= FitsCacher.readFits(originalFile, !usePipeline, !usePipeline); // turn caching off if I have to use pipeline
             retval = new FileReadInfo[frAry.length];
 
             if (needsPipeline(req)) { // if we need to use the pipeline make sure we create a new array
@@ -205,6 +209,10 @@ public class WebPlotReader {
 
     private static ModFileWriter checkUnzip(int i, Band band, File originalFile, ModFileWriter modFileWriter)  {
         if (i == 0 &&  modFileWriter == null && isUnzipNecessary(originalFile) ) {
+
+            _log.warn("Setting up unzip ModFileWriter, this procedure is deprecated.",
+                      "We should not just unzip the fits files up front.",
+                       originalFile.getAbsolutePath());
             modFileWriter = new ModFileWriter.UnzipFileWriter(band, originalFile);
         }
         return modFileWriter;

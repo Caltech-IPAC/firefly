@@ -7,7 +7,7 @@ import {makeDevicePt} from '../Point.js';
 import {createImageUrl,isTileVisible} from './TileDrawHelper.jsx';
 import {makeTransform} from '../PlotTransformUtils.js';
 import {primePlot, findProcessedTile} from '../PlotViewUtil.js';
-import {getBoundingBox} from '../VisUtil.js';
+import {getBoundingBox,toRadians} from '../VisUtil.js';
 import {clone} from '../../util/WebUtil.js';
 import {retrieveAndProcessImage} from './ImageProcessor.js';
 import {dispatchAddProcessedTiles, visRoot} from '../ImagePlotCntlr.js';
@@ -105,6 +105,7 @@ function makeDrawer(plotView, plot, targetCanvas, totalCnt, loadedImages,
     if (!targetCanvas) return;
     const offscreenCanvas = document.createElement('canvas');
     const offscreenCtx = offscreenCanvas.getContext('2d');
+
     const {viewDim:{width,height}}=  plotView;
     if (plotView.rotation) {
         const diagonal= Math.sqrt(width*width + height*height);
@@ -121,6 +122,16 @@ function makeDrawer(plotView, plot, targetCanvas, totalCnt, loadedImages,
     offsetY= Math.trunc(offsetY);
     let renderedCnt=0;
     let abortRender= false;
+    let beginRender= false;
+    let renderComplete=  false;
+    
+    offscreenCtx.font= 'italic 15pt Arial';
+    offscreenCtx.fillStyle= 'rgba(0,0,0,.4)';
+    offscreenCtx.strokeStyle='rgba(0,0,0,.2)';
+    offscreenCtx.textAlign= 'center';
+    offscreenCtx.lineWidth= 1;
+
+    const renderImage= () => renderToScreen(plotView, targetCanvas, offscreenCanvas, opacity, offsetX, offsetY);
 
     return {
         drawTile(src, tile) {
@@ -129,8 +140,8 @@ function makeDrawer(plotView, plot, targetCanvas, totalCnt, loadedImages,
             const w = Math.trunc(tile.width * scale);
             const h = Math.trunc(tile.height * scale);
 
+            if (opacity===1) drawEmptyTile(x,y,w,h,offscreenCtx,plotView);
 
-            // todo: modify this line to look first in local, then in store, then finally used the server iage
             let tileData;
             const tileIdx = loadedImages.serverData.findIndex((d) => d.url === tile.url);
             const storeTile= findProcessedTile(visRoot(), plotView.plotId, tile.url);
@@ -140,8 +151,15 @@ function makeDrawer(plotView, plot, targetCanvas, totalCnt, loadedImages,
                 tileData=storeTile;
             }
             else tileData=src;
-            
 
+            if (!beginRender && opacity===1) {
+                beginRender= true;
+                const intervalId= setTimeout( () => {
+                    if (!abortRender && !renderComplete)  {
+                        clearTimeout(intervalId);
+                    }
+                }, 100);
+            }
 
 
             const p = retrieveAndProcessImage(tileData, tileAttributes, shouldProcess, processor);
@@ -159,15 +177,10 @@ function makeDrawer(plotView, plot, targetCanvas, totalCnt, loadedImages,
                     return;
                 }
                 offscreenCtx.drawImage(loadedImages.cachedImageData[tileIdx].image, x, y, w, h);
-                // if (debugTiles) {
-                //     offscreenCtx.lineWidth= 1;
-                //     offscreenCtx.strokeStyle= 'red';
-                //     offscreenCtx.strokeRect(x, y, w-1, h-1);
-                //     offscreenCtx.restore();
-                // }
 
                 if (renderedCnt === totalCnt) {
-                    renderToScreen(plotView, targetCanvas, offscreenCanvas, opacity, offsetX, offsetY);
+                    renderComplete= true;
+                    renderImage();
                     purgeLoadedImages(loadedImages);
                 }
             }).catch((e) => {
@@ -177,10 +190,24 @@ function makeDrawer(plotView, plot, targetCanvas, totalCnt, loadedImages,
 
         abort()  {
             abortRender = true;
+            if (opacity===1) renderImage();
         }
     };
 }
 
+function drawEmptyTile(x,y,w,h,ctx,plotView ) {
+    if (w>150 && h>100) {
+        ctx.save();
+        const {flipY, rotation}= plotView;
+        ctx.translate(x+w/2,y+h/2);
+        ctx.rotate(toRadians(flipY ? rotation : -rotation));
+        if (flipY)  ctx.scale(-1,1);
+        ctx.fillText('Loading Tile...',0,0);
+        ctx.restore();
+        ctx.strokeRect(x, y, w-1, h-1);
+    }
+
+}
 
 
 function renderToScreen(plotView, targetCanvas, offscreenCanvas, opacity, offsetX, offsetY) {

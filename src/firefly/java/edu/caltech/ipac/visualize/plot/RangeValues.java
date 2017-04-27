@@ -30,7 +30,7 @@ public class RangeValues implements Cloneable, Serializable {
     public static final int ZSCALE     = 91;
     public static final int SIGMA      = 92;
 
-    public static final double BETA =0.2;
+    public static final double BETA =Double.NaN;
     public static final double GAMMA=2.0;
 
     public static final String LINEAR_STR= "Linear";

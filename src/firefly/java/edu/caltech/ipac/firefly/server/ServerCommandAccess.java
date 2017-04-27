@@ -46,7 +46,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.CREATE_PLOT_GROUP,  new VisServerCommands.GetWebPlotGroupCmd());
         _cmdMap.put(ServerParams.ZOOM,         new VisServerCommands.ZoomCmd());
         _cmdMap.put(ServerParams.STRETCH,      new VisServerCommands.StretchCmd());
-        _cmdMap.put(ServerParams.ADD_BAND,     new VisServerCommands.AddBandCmd());
+        _cmdMap.put(ServerParams.GET_BETA,     new VisServerCommands.GetBetaCmd());
         _cmdMap.put(ServerParams.REMOVE_BAND,  new VisServerCommands.RemoveBandCmd());
         _cmdMap.put(ServerParams.CHANGE_COLOR, new VisServerCommands.ChangeColor());
         _cmdMap.put(ServerParams.DELETE,       new VisServerCommands.DeletePlot());

@@ -40,6 +40,7 @@ public class EhcacheProvider implements Cache.Provider {
     private static long curConfModTime = 0;
 
     static {
+
         URL url = null;
         File f = getConfFile("ehcache.xml");
         if (f != null && f.canRead()) {
@@ -65,7 +66,14 @@ public class EhcacheProvider implements Cache.Provider {
             File ignoreSizeOf = getConfFile("ignore_sizeof.txt");
             System.setProperty("net.sf.ehcache.sizeof.filter", ignoreSizeOf.getAbsolutePath());
 
-            sharedManager = CacheManager.create(sharedConfig.getAbsolutePath());
+            try {
+                System.setProperty("net.sf.ehcache.sizeofengine.shared.VIS_SHARED_MEM",
+                                   "edu.caltech.ipac.firefly.server.cache.ObjectSizeEngineWrapper");
+                sharedManager = CacheManager.create(sharedConfig.getAbsolutePath());
+            } catch (RuntimeException e) {
+                System.clearProperty("net.sf.ehcache.sizeofengine.shared.VIS_SHARED_MEM");
+                sharedManager = CacheManager.create(sharedConfig.getAbsolutePath());
+            }
             float pctVisSharedMemSize = AppProperties.getFloatProperty("pct.vis.shared.mem.size", 0F);
 
             // check to see if vis.shared.mem.size is setup in the environment or setup for auto-config.

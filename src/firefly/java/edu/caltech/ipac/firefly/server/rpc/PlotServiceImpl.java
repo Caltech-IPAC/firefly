@@ -160,7 +160,7 @@ public class PlotServiceImpl extends BaseRemoteService implements PlotService {
     public WebPlotResult addColorBand(PlotState      state,
                                       WebPlotRequest bandRequest,
                                       Band band) {
-        return VisServerOps.addColorBand(state, bandRequest, band);
+        return null; // no longer used
     }
 
 
