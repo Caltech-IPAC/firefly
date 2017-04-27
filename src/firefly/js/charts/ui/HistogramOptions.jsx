@@ -1,6 +1,6 @@
 import React, {PropTypes} from 'react';
 
-import {get, defer} from 'lodash';
+import {get, defer, has} from 'lodash';
 import ColValuesStatistics from './../ColValuesStatistics.js';
 import {DATATYPE_HISTOGRAM} from '../dataTypes/HistogramCDT.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
@@ -49,8 +49,6 @@ export function setOptions(groupKey, histogramParams) {
         {fieldKey: 'binWidth', value: get(histogramParams, 'binWidth','')},
         {fieldKey: 'minCutoff', value: get(histogramParams, 'minCutoff','')},
         {fieldKey: 'maxCutoff', value: get(histogramParams, 'maxCutoff','')}
-
-
     ];
     dispatchMultiValueChange(groupKey, flds);
 }
@@ -79,6 +77,10 @@ var columnNameReducer= (colValStats) => {
         if (!inFields) {
             return {};
         }
+        if (has(action.payload, 'colValStats')) {
+            colValStats = get(action.payload, 'colValStats'); // reset column stats
+        }
+
         let fieldKey = undefined;
         if (action.type === VALUE_CHANGE) {
             // when column name changes, update the min/max input
@@ -87,6 +89,7 @@ var columnNameReducer= (colValStats) => {
                 case 'columnOrExpr':
                     const colName = action.payload.value;
                     if (colName ) {
+
                         if (isSingleColumn(colName, colValStats)) {
                             for (var i=0; i<colValStats.length; i++){
                                 if (colName=== colValStats[i].name) {
@@ -159,13 +162,13 @@ var columnNameReducer= (colValStats) => {
 };
 export class HistogramOptions extends React.Component {
 
-        constructor(props) {
-            super(props);
-            this.state = {
-                fields : FieldGroupUtils.getGroupFields(this.props.groupKey),
-                fixedAlgorithm: get(getAppOptions(), 'charts.ui.HistogramOptions.fixedAlgorithm') || props.fixedAlgorithm
-            };
-        }
+    constructor(props) {
+        super(props);
+        this.state = {
+            fields : FieldGroupUtils.getGroupFields(this.props.groupKey),
+            fixedAlgorithm: get(getAppOptions(), 'charts.ui.HistogramOptions.fixedAlgorithm') || props.fixedAlgorithm
+        };
+    }
 
 
     shouldComponentUpdate(np, ns) {

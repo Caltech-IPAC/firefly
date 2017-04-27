@@ -28,11 +28,11 @@ import LOADING from 'html/images/gxt/loading.gif';
 
 const dropdownName = 'ChartSelectDropDownCmd';
 
-const SCATTER = 'scatter';
-const HISTOGRAM = 'histogram';
+export const SCATTER = 'scatter';
+export const HISTOGRAM = 'histogram';
 const PREF_CHART_TYPE = 'pref.chartType';
 
-function getFormName(chartType) {
+export function getFormName(chartType) {
     return chartType+'ChartOpts';
 }
 

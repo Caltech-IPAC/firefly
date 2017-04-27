@@ -8,7 +8,7 @@ import {FormPanel} from '../../ui/FormPanel.jsx';
 import { get, merge, isEmpty, isFunction} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
-import {doFetchTable, makeTblRequest, makeIrsaCatalogRequest, makeVOCatalogRequest} from '../../tables/TableUtil.js';
+import {doFetchTable, makeTblRequest, makeIrsaCatalogRequest, makeVOCatalogRequest, getTblIdsByGroup} from '../../tables/TableUtil.js';
 import {CatalogTableListField} from './CatalogTableListField.jsx';
 import {CatalogConstraintsPanel} from './CatalogConstraintsPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -27,6 +27,9 @@ import {FileUpload} from '../../ui/FileUpload.jsx';
 import {convertAngle} from '../VisUtil.js';
 import {masterTableFilter} from './IrsaMasterTableFilters.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
+import {SCATTER, HISTOGRAM, getFormName} from '../../ui/ChartSelectDropdown.jsx';
+import {setOptions as HistogramSetOptions} from '../../charts/ui/HistogramOptions.jsx';
+import {setOptions as XYPlotSetOptions} from '../../charts/ui/XYPlotOptions.jsx';
 
 
 import './CatalogTableListField.css';
@@ -213,7 +216,19 @@ function doCatalog(request) {
         tReq.selcols = colsSearched;
     }
 
-    console.log('final request: ' + JSON.stringify(tReq));
+    //console.log('final request: ' + JSON.stringify(tReq));
+    if (!isEmpty(getTblIdsByGroup())) {     // triview has table already, reset the chart column select form values
+        const chartHandler = {[SCATTER]: XYPlotSetOptions,
+                              [HISTOGRAM]: HistogramSetOptions};
+
+        Object.keys(chartHandler).forEach((chartType) => {
+            const formGroupName = getFormName(chartType);
+
+            if (!isEmpty(FieldGroupUtils.getGroupFields(formGroupName))) {
+                chartHandler[chartType](formGroupName);
+            }
+        });
+    }
     dispatchTableSearch(tReq);
 }
 
