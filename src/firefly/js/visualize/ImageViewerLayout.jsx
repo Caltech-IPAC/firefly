@@ -339,11 +339,11 @@ function makeTileDrawers(pv) {
 
 function makeMaskColorProcessor(colorStr) {
     return (imageData) => {
-        const cAry= Color.toRGB(colorStr);
+        const cAry= Color.getRGBA(colorStr);
         const {data}= imageData;
         const len= data.length;
         for(let i= 0; i<len; i+=4) {
-            if (data[i] || data[i+1] || data[i+2]) {
+            if (data[i+3]) {
                 data[i]  = cAry[0];
                 data[i+1]= cAry[1];
                 data[i+2]= cAry[2];
