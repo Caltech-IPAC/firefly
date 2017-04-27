@@ -176,9 +176,9 @@ public class WebPlotRequest extends ServerRequest {
 
     public enum Order {FLIP_Y, FLIP_X, ROTATE, POST_CROP, POST_CROP_AND_CENTER}
 
-    public static final String DEFAULT_PIPELINE_ORDER= Order.ROTATE+";"+
-                                                       Order.FLIP_Y+";"+
+    public static final String DEFAULT_PIPELINE_ORDER= Order.FLIP_Y+";"+
                                                        Order.FLIP_X+";"+
+                                                       Order.ROTATE+";"+
                                                        Order.POST_CROP+";"+
                                                        Order.POST_CROP_AND_CENTER;
     private static List<Order> defOrder= makeOrderList(DEFAULT_PIPELINE_ORDER);

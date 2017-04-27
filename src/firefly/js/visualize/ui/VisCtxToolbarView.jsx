@@ -154,21 +154,21 @@ function tabulateStatics(wpResult, cc) {
 function stats(pv) {
     //console.log('Stats getting: ' + primePlot(pv).title);
     //console.log(Metrics);
-    var p= primePlot(pv);
-    var cc= CysConverter.make(p);
-    var sel= p.attributes[PlotAttribute.SELECTION];
+    const p= primePlot(pv);
+    const cc= CysConverter.make(p);
+    const sel= p.attributes[PlotAttribute.IMAGE_BOUNDS_SELECTION];
 
-    var ip0=  cc.getImageCoords(sel.pt0);
-    var ip2=  cc.getImageCoords(sel.pt1);
-    var ip1=  makeImagePt(ip2.x,ip0.y);
-    var ip3=  makeImagePt(ip1.x,ip2.y);
+    const ip0=  cc.getImageCoords(sel.pt0);
+    const ip2=  cc.getImageCoords(sel.pt1);
+    const ip1=  makeImagePt(ip2.x,ip0.y);
+    const ip3=  makeImagePt(ip1.x,ip2.y);
 
 
     callGetAreaStatistics(p.plotState, ip0,ip1,ip2,ip3)
         .then( (wpResult) => {      // result of area stats
 
             // tabaularize stats data
-            var tblData = tabulateStatics(wpResult, cc);
+            const tblData = tabulateStatics(wpResult, cc);
 
             //console.log(wpResult);
             showImageAreaStatsPopup(p.title, tblData, pv.plotId);
@@ -188,15 +188,15 @@ function crop(pv) {
     }
 
 
-    var p= primePlot(pv);
-    var cc= CysConverter.make(p);
-    var sel= p.attributes[PlotAttribute.SELECTION];
+    const p= primePlot(pv);
+    const cc= CysConverter.make(p);
+    const sel= p.attributes[PlotAttribute.IMAGE_BOUNDS_SELECTION];
 
-    var ip0=  cc.getImageCoords(sel.pt0);
-    var ip1=  cc.getImageCoords(sel.pt1);
+    const ip0=  cc.getImageCoords(sel.pt0);
+    const ip1=  cc.getImageCoords(sel.pt1);
 
 
-    var cropMultiAll= pv.plotViewCtx.containsMultiImageFits && isMultiImageFitsWithSameArea(pv);
+    const cropMultiAll= pv.plotViewCtx.containsMultiImageFits && isMultiImageFitsWithSameArea(pv);
 
     dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,pv.plotId,true);
     dispatchCrop({plotId:pv.plotId, imagePt1:ip0, imagePt2:ip1, cropMultiAll});
@@ -226,7 +226,7 @@ function recenterToSelection(pv) {
     if (!p) return;
     const {viewDim,plotId}= pv;
     const cc= CysConverter.make(p);
-    const sel= p.attributes[PlotAttribute.SELECTION];
+    const sel= p.attributes[PlotAttribute.IMAGE_BOUNDS_SELECTION];
     if (!sel) return;
 
     const sp0=  cc.getScreenCoords(sel.pt0);
@@ -248,7 +248,7 @@ function zoomIntoSelection(pv) {
     if (!p) return;
     const {viewDim,plotId}= pv;
     const cc= CysConverter.make(p);
-    const sel= p.attributes[PlotAttribute.SELECTION];
+    const sel= p.attributes[PlotAttribute.IMAGE_BOUNDS_SELECTION];
     if (!sel) return;
 
     const sp0=  cc.getScreenCoords(sel.pt0);

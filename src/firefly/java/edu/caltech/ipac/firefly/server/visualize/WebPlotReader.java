@@ -229,7 +229,7 @@ public class WebPlotReader {
                 } else {
                     throw new FailedRequestException("Rotation Failed",
                                                      "Fits read failed, rotation type not supported: " +
-                                                             req.getRotateNorthType().toString());
+                                                           req.getRotateNorthType().toString());
                 }
             } else if (req.getRotate()) {
                 retval = FitsRead.createFitsReadRotated(fr, req.getRotationAngle(), req.getRotateFromNorth());
@@ -302,14 +302,14 @@ public class WebPlotReader {
                                                                 GeomException,
                                                                 FitsException,
                                                                 IOException {
-        FitsRead retval;
+        FitsRead retval= fr;
         ModFileWriter modFileWriter= null;
         if (req.isFlipY()) {
             retval= FitsRead.createFitsReadFlipLR(fr);
             File flipName= ModFileWriter.makeFlipYFileName(originalFile,imageIdx);
             modFileWriter = new ModFileWriter.GeomFileWriter(flipName,retval,band);
         }
-        return new PipelineRet(fr,modFileWriter);
+        return new PipelineRet(retval,modFileWriter);
     }
 
     private static PipelineRet applyFlipXAxis(WebPlotRequest req, FitsRead fr, Band band, int imageIdx, File originalFile)
@@ -317,14 +317,14 @@ public class WebPlotReader {
                     GeomException,
                     FitsException,
                     IOException {
-        FitsRead retval;
+        FitsRead retval= fr;
         ModFileWriter modFileWriter= null;
         if (req.isFlipX()) {
             retval= new FlipXY(fr,"xAxis").doFlip();
             File flipName= ModFileWriter.makeFlipXFileName(originalFile,imageIdx);
             modFileWriter = new ModFileWriter.GeomFileWriter(flipName,retval,band);
         }
-        return new PipelineRet(fr,modFileWriter);
+        return new PipelineRet(retval,modFileWriter);
     }
 
     private static boolean isUnzipNecessary(File f) {

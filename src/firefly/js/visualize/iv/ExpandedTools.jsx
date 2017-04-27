@@ -6,7 +6,7 @@
 import React, {PropTypes} from 'react';
 import {ExpandType, dispatchChangeExpandedMode,
          dispatchExpandedAutoPlay} from '../ImagePlotCntlr.js';
-import {primePlot} from '../PlotViewUtil.js';
+import {primePlot, getActivePlotView} from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
 import {CloseButton} from '../../ui/CloseButton.jsx';
@@ -85,22 +85,18 @@ const gridPlotTitleStyle= {
 
 
 export function ExpandedTools({visRoot,closeFunc}) {
-    var {expandedMode,activePlotId, singleAutoPlay}= visRoot;
+    const {expandedMode,activePlotId, singleAutoPlay}= visRoot;
     const plotIdAry= getExpandedViewerItemIds(getMultiViewRoot());
-    var single= expandedMode===ExpandType.SINGLE || plotIdAry.length===1;
-    var plot= primePlot(visRoot);
+    const single= expandedMode===ExpandType.SINGLE || plotIdAry.length===1;
+    const pv= getActivePlotView(visRoot);
+    const plot= primePlot(pv);
 
-    var plotTitle;
+    let plotTitle;
     if (plot) {
-        var {title, zoomFactor, plotState}=plot;
         if (single) {
             plotTitle= (
                 <div style={singlePlotTitleStyle}>
-                    <PlotTitle brief={false} titleStr={title} inline={false}
-                               titleType={TitleType.EXPANDED}
-                               zoomFactor={zoomFactor}
-                               plotState={plotState} plotId={plot.plotId}
-                    />
+                    <PlotTitle brief={false} inline={false} titleType={TitleType.EXPANDED} plotView={pv} />
                 </div>
             );
         }

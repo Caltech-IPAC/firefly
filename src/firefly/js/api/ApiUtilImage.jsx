@@ -48,7 +48,7 @@ export {watchImageMetaData} from '../visualize/saga/ImageMetaDataWatcher.js';
 export {getSelectedRegion} from '../drawingLayers/RegionPlot.js';
 
 export {extensionAdd, extensionRemove} from '../core/ExternalAccessUtils.js';
-export {makeWorldPt, makeScreenPt, makeImagePt, makeViewPortPt, parsePt} from '../visualize/Point.js';
+export {makeWorldPt, makeScreenPt, makeImagePt, parsePt} from '../visualize/Point.js';
 
 
 /**

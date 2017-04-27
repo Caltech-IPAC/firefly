@@ -3,12 +3,11 @@
  */
 import {take} from 'redux-saga/effects';
 import {unionWith} from 'lodash';
-import ImagePlotCntlr, {visRoot, makeUniqueRequestKey} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {modifyRequest, processPlotImageSuccessResponse} from '../task/PlotImageTask.js';
 import {callGetWebPlot, callGetWebPlotGroup, callGetWebPlot3Color} from '../../rpc/PlotServicesJson.js';
 import {getPlotViewById} from '../PlotViewUtil.js';
 import {Band} from '../Band.js';
-import {requiresWidthHeight} from '../ZoomType.js';
 import {logError} from '../../util/WebUtil.js';
 
 
@@ -26,7 +25,7 @@ import {logError} from '../../util/WebUtil.js';
  */
 export function* imagePlotter(params, dispatch, getState) {
 
-    var waitingPlotActions= [];
+    let waitingPlotActions= [];
 
     while (true) {
         var action= yield take([ImagePlotCntlr.PLOT_IMAGE_START,ImagePlotCntlr.UPDATE_VIEW_SIZE]);
@@ -60,7 +59,7 @@ export function* imagePlotter(params, dispatch, getState) {
 
 
 function actionMatches(a,plotId) {
-    var {wpRequestAry}= a.payload;
+    const {wpRequestAry}= a.payload;
     if (wpRequestAry) {
         return wpRequestAry.some( (req) => req.getPlotId()===plotId);
     }
@@ -97,9 +96,7 @@ function canContinue(rawAction) {
  */
 function canContinueRequest(req, pv) {
     if (!pv) return false;
-    // var requiresWH= requiresWidthHeight(req.getZoomType());
-    // if (!requiresWH) return true;
-    var {viewDim:{width,height}}= pv;
+    const {viewDim:{width,height}}= pv;
     return width && height;
 }
 
@@ -112,15 +109,16 @@ function canContinueRequest(req, pv) {
  * @return {*}
  */
 function makeContinueAction(rawAction) {
-    var {wpRequestAry}= rawAction.payload;
+    const {wpRequestAry}= rawAction.payload;
     return wpRequestAry ? makeContinueActionGroup(rawAction) : makeContinueActionSingle(rawAction);
 
 }
 
 function makeContinueActionSingle(rawAction) {
-    var {plotId,wpRequest,redReq, greenReq, blueReq}= rawAction.payload;
+    let {wpRequest,redReq, greenReq, blueReq}= rawAction.payload;
+    const {plotId}= rawAction.payload;
     const pv= getPlotViewById(visRoot(),plotId);
-    var {viewDim:{width,height}}= pv;
+    const {viewDim:{width,height}}= pv;
     redReq= addWidthHeight(redReq,width,height);
     greenReq=addWidthHeight(greenReq,width,height);
     blueReq= addWidthHeight(blueReq,width,height);
@@ -132,10 +130,10 @@ function makeContinueActionSingle(rawAction) {
 
 function makeContinueActionGroup(rawAction) {
 
-    var {wpRequestAry}= rawAction.payload;
+    let {wpRequestAry}= rawAction.payload;
     wpRequestAry= wpRequestAry.map( (req) => {
         const pv= getPlotViewById(visRoot(),req.getPlotId());
-        var {viewDim:{width,height}}= pv;
+        const {viewDim:{width,height}}= pv;
         return addWidthHeight(req,width,height);
     });
 
@@ -162,7 +160,7 @@ function addWidthHeight(r,w,h) {
 }
 
 function continuePlotting(rawAction, dispatcher) {
-    var {wpRequestAry}= rawAction.payload;
+    const {wpRequestAry}= rawAction.payload;
     return wpRequestAry ? continueGroupPlotting(rawAction, dispatcher) : continueSinglePlotting(rawAction,dispatcher);
 }
 
@@ -172,22 +170,21 @@ function continuePlotting(rawAction, dispatcher) {
  * @param dispatcher
  */
 function continueSinglePlotting(rawAction, dispatcher) {
-    var {plotId,wpRequest,threeColor, redReq, greenReq, blueReq}= rawAction.payload;
+    const {plotId,threeColor, useContextModifications:useCtxMods}= rawAction.payload;
+    let {wpRequest, redReq, greenReq, blueReq}= rawAction.payload;
 
-    if (rawAction.payload.useContextModifications) {
-        var pv= getPlotViewById(visRoot(),plotId);
-        if (pv) {
-            var {plotViewCtx}= pv;
-            if (wpRequest && !Array.isArray(wpRequest)) {
-                wpRequest= modifyRequest(plotViewCtx,wpRequest,Band.NO_BAND);
-            }
-            if (redReq) redReq= modifyRequest(plotViewCtx,redReq,Band.RED);
-            if (greenReq) greenReq= modifyRequest(plotViewCtx,greenReq,Band.GREEN);
-            if (blueReq) blueReq= modifyRequest(plotViewCtx,blueReq,Band.BLUE);
+    const pv= getPlotViewById(visRoot(),plotId);
+    if (pv) {
+        const {plotViewCtx}= pv;
+        if (wpRequest && !Array.isArray(wpRequest)) {
+            wpRequest= modifyRequest(plotViewCtx,wpRequest,Band.NO_BAND, useCtxMods);
         }
+        if (redReq) redReq= modifyRequest(plotViewCtx,redReq,Band.RED, useCtxMods);
+        if (greenReq) greenReq= modifyRequest(plotViewCtx,greenReq,Band.GREEN, useCtxMods);
+        if (blueReq) blueReq= modifyRequest(plotViewCtx,blueReq,Band.BLUE, useCtxMods);
     }
 
-    var p= threeColor ? callGetWebPlot3Color(redReq,greenReq,blueReq) : callGetWebPlot(wpRequest);
+    const p= threeColor ? callGetWebPlot3Color(redReq,greenReq,blueReq) : callGetWebPlot(wpRequest);
 
     p.then( (wpResult) => processPlotImageSuccessResponse(dispatcher,rawAction.payload,wpResult) )
         .catch ( (e) => {
@@ -197,15 +194,14 @@ function continueSinglePlotting(rawAction, dispatcher) {
 }
 
 function continueGroupPlotting(rawAction, dispatcher) {
-    var {wpRequestAry, requestKey}= rawAction.payload;
+    const {requestKey, useContextModifications:useCtxMods}= rawAction.payload;
+    let {wpRequestAry}= rawAction.payload;
 
-    if (rawAction.payload.useContextModifications) {
-        wpRequestAry= wpRequestAry.map( (req) =>{
-            var pv= getPlotViewById(visRoot(),req.getPlotId());
-            return pv ? modifyRequest(pv.plotViewCtx,req,Band.NO_BAND) : req;
+    wpRequestAry= wpRequestAry.map( (req) =>{
+        const pv= getPlotViewById(visRoot(),req.getPlotId());
+        return pv ? modifyRequest(pv.plotViewCtx,req,Band.NO_BAND, useCtxMods) : req;
 
-        });
-    }
+    });
     callGetWebPlotGroup(wpRequestAry, requestKey)
         .then( (wpResult) => processPlotImageSuccessResponse(dispatcher,rawAction.payload,wpResult) )
         .catch ( (e) => {

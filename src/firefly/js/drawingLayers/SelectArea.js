@@ -9,15 +9,16 @@ import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import {makeScreenPt} from '../visualize/Point.js';
+import Point, {makeScreenPt, makeDevicePt} from '../visualize/Point.js';
 import BrowserInfo from '../util/BrowserInfo.js';
-import VisUtil from '../visualize/VisUtil.js';
+import {getBoundingBox, computeScreenDistance} from '../visualize/VisUtil.js';
 import SelectBox from '../visualize/draw/SelectBox.js';
+import FootPrintObj from '../visualize/draw/FootprintObj.js';
+import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import {getPlotViewById, primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {Style} from '../visualize/draw/DrawingDef.js';
 //import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
-import {flux} from '../Firefly.js';
 
 import Enum from 'enum';
 
@@ -48,20 +49,26 @@ const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,onDetach,n
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
 
-var idCnt=0;
+let idCnt=0;
 
 
 export function selectAreaEndActionCreator(rawAction) {
     return (dispatcher, getState) => {
-        var {drawLayer, plotId}= rawAction.payload;
+        const {plotId}= rawAction.payload;
+        let {drawLayer}= rawAction.payload;
+        const pv= getPlotViewById(visRoot(),plotId);
+        const plot= primePlot(pv);
         dispatcher({type:DrawLayerCntlr.SELECT_AREA_END, payload:rawAction.payload} );
 
         drawLayer= getDrawLayerById(getState()[DRAWING_LAYER_KEY], drawLayer.drawLayerId);
 
         if (drawLayer.drawData.data) {
-            var selectBox= drawLayer.drawData.data[0];
-            var sel= {pt0:selectBox.pt1,pt1:selectBox.pt2};
+            const selectBox= drawLayer.drawData.data[1];
+            const sel= {pt0:selectBox.pt1,pt1:selectBox.pt2};
             dispatchAttributeChange(plotId,true,PlotAttribute.SELECTION,sel,true);
+            // const imBoundSel= pv.rotation ? getImageBoundsSelection(sel,CsysConverter.make(plot)) : sel;
+            const imBoundSel= getImageBoundsSelection(sel,CsysConverter.make(plot));
+            dispatchAttributeChange(plotId,true,PlotAttribute.IMAGE_BOUNDS_SELECTION, imBoundSel,true);
         }
     };
 }
@@ -72,25 +79,25 @@ export function selectAreaEndActionCreator(rawAction) {
  */
 function creator() {
 
-    var drawingDef= makeDrawingDef('black');
-    var pairs= {
+    const drawingDef= makeDrawingDef('black');
+    const pairs= {
         [MouseState.MOVE.key]: DrawLayerCntlr.SELECT_MOUSE_LOC,
         [MouseState.DRAG.key]: DrawLayerCntlr.SELECT_AREA_MOVE,
         [MouseState.DOWN.key]: DrawLayerCntlr.SELECT_AREA_START,
         [MouseState.UP.key]: DrawLayerCntlr.SELECT_AREA_END,
     };
 
-    var actionTypes= [DrawLayerCntlr.SELECT_AREA_START,
+    const actionTypes= [DrawLayerCntlr.SELECT_AREA_START,
                       DrawLayerCntlr.SELECT_AREA_MOVE,
                       DrawLayerCntlr.SELECT_AREA_END,
                       DrawLayerCntlr.SELECT_MOUSE_LOC];
 
-    var exclusiveDef= { exclusiveOnDown: true, type : 'anywhere' };
+    const exclusiveDef= { exclusiveOnDown: true, type : 'anywhere' };
 
 
 
     idCnt++;
-    var options= {
+    const options= {
         canUseMouse:true,
         canUserChangeColor: ColorChangeType.DISABLE,
         canUserDelete: true,
@@ -101,16 +108,19 @@ function creator() {
 }
 
 function onDetach(drawLayer,action) {
-    var {plotIdAry}= action.payload;
-    plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.SELECTION,null,true));
+    const {plotIdAry}= action.payload;
+    plotIdAry.forEach( (plotId) => {
+        dispatchAttributeChange(plotId,false,PlotAttribute.SELECTION,null,true);
+        dispatchAttributeChange(plotId,false,PlotAttribute.IMAGE_BOUNDS_SELECTION,null,true);
+    });
 }
 
 function getCursor(plotView, screenPt) {
     const plot= primePlot(plotView);
-    var cc= CsysConverter.make(plot);
-    var ptAry= getPtAryFromPlot(plot);
+    const cc= CsysConverter.make(plot);
+    const ptAry= getPtAryFromPlot(plot);
     if (!ptAry) return null;
-    var corner= findClosestCorner(cc,ptAry, screenPt, EDIT_DISTANCE);
+    const corner= findClosestCorner(cc,ptAry, screenPt, EDIT_DISTANCE);
     if (!corner) return null;
     switch (corner) {
         case Corner.NE:
@@ -163,15 +173,15 @@ function attach() {
 }
 
 function moveMouse(drawLayer,action) {
-    var {screenPt,plotId}= action.payload;
-    var plot= primePlot(visRoot(),plotId);
-    var mode= getMode(plot);
+    const {screenPt,plotId}= action.payload;
+    const plot= primePlot(visRoot(),plotId);
+    const mode= getMode(plot);
     if (plot && mode==='edit') {
-        var cc= CsysConverter.make(plot);
-        var ptAry= getPtAryFromPlot(plot);
+        const cc= CsysConverter.make(plot);
+        const ptAry= getPtAryFromPlot(plot);
         if (!ptAry) return null;
-        var corner= findClosestCorner(cc,ptAry, screenPt, EDIT_DISTANCE);
-        var cursor;
+        const corner= findClosestCorner(cc,ptAry, screenPt, EDIT_DISTANCE);
+        let cursor;
         if (corner) {
             switch (corner) {
                 case Corner.NE: cursor= 'ne-resize'; break;
@@ -188,52 +198,47 @@ function moveMouse(drawLayer,action) {
 
 
 function start(drawLayer,action) {
-    var {screenPt,imagePt,plotId,shiftDown}= action.payload;
-    var plot= primePlot(visRoot(),plotId);
-    var mode= getMode(plot);
+    const {screenPt,imagePt,plotId,shiftDown}= action.payload;
+    const plot= primePlot(visRoot(),plotId);
+    const mode= getMode(plot);
     if (!plot) return;
 
-    var retObj= {};
-
-
-
-
     if (mode==='select' || shiftDown) {
-        retObj= setupSelect(imagePt);
+        return setupSelect(imagePt);
     }
     else if (mode==='edit') {
-        var ptAry= getPtAryFromPlot(plot);
-        if (!ptAry) return retObj;
+        const ptAry= getPtAryFromPlot(plot);
+        if (!ptAry) return {};
 
-        var idx= findClosestPtIdx(ptAry,screenPt);
+        const idx= findClosestPtIdx(ptAry,screenPt);
         if (idx<0) return {};
-        var cc= CsysConverter.make(plot);
-        var testPt= cc.getScreenCoords(ptAry[idx]);
+        const cc= CsysConverter.make(plot);
+        const testPt= cc.getScreenCoords(ptAry[idx]);
         if (!testPt) return {};
 
         if (distance(testPt,screenPt)<EDIT_DISTANCE) {
-            var oppoIdx= (idx+2) % 4;
+            const retObj= {};
+            const oppoIdx= (idx+2) % 4;
             retObj.firstPt= cc.getImageWorkSpaceCoords(ptAry[oppoIdx]);
             retObj.currentPt= cc.getImageWorkSpaceCoords(ptAry[idx]);
-            if (retObj.firstPt==null || retObj.currentPt==null) return {};
+            if (!retObj.firstPt || !retObj.currentPt) return {};
+            return retObj;
         }
         else {
-            retObj= setupSelect(imagePt);
+            return setupSelect(imagePt);
         }
     }
-    return retObj;
-
 }
 
 function getPtAryFromPlot(plot) {
-    var sel= plot.attributes[PlotAttribute.SELECTION];
+    const sel= plot.attributes[PlotAttribute.SELECTION];
     if (!sel) return null;
     return getPtAry(plot,sel.pt0,sel.pt1);
 }
 
 function getPtAry(plot,pt0,pt1) {
-    var ptAry=[];
-    var cc= CsysConverter.make(plot);
+    const ptAry=[];
+    const cc= CsysConverter.make(plot);
     ptAry[0]= cc.getScreenCoords(pt0);
     ptAry[2]= cc.getScreenCoords(pt1);
     if (!ptAry[0] || !ptAry[2]) return null;
@@ -247,7 +252,7 @@ function getPtAry(plot,pt0,pt1) {
 function getPtAryForCorners(plot,pt0,pt1) {
     const screenPtAry= getPtAry(plot,pt0,pt1);
     if (isEmpty(screenPtAry)) return null;
-    var cc= CsysConverter.make(plot);
+    const cc= CsysConverter.make(plot);
     const useWld=  cc.projection.isSpecified();
     return screenPtAry.map( (sp) => useWld ? cc.getWorldCoords(sp) : cc.getImageCoords(sp));
 }
@@ -255,11 +260,12 @@ function getPtAryForCorners(plot,pt0,pt1) {
 
 
 function drag(drawLayer,action) {
-    var {imagePt,plotId}= action.payload;
-    var plot= primePlot(visRoot(),plotId);
+    const {imagePt,plotId}= action.payload;
+    const pv= getPlotViewById(visRoot(),plotId);
+    const plot= primePlot(pv);
     if (!plot) return;
-    var drawSel= makeSelectObj(drawLayer.firstPt, imagePt, CsysConverter.make(plot));
-    var exclusiveDef= { exclusiveOnDown: true, type : 'vertexThenAnywhere' };
+    const drawSel= makeSelectObj(drawLayer.firstPt, imagePt, CsysConverter.make(plot), pv.rotation);
+    const exclusiveDef= { exclusiveOnDown: true, type : 'vertexThenAnywhere' };
     return {currentPt:imagePt,
             drawData:{data:drawSel},
             exclusiveDef,
@@ -268,27 +274,27 @@ function drag(drawLayer,action) {
 }
 
 function end(drawLayer,action) {
-    var mode= getMode(primePlot(visRoot(),action.payload.plotId));
+    const mode= getMode(primePlot(visRoot(),action.payload.plotId));
     return  (mode==='select') ? {helpLine: editHelpText} : {};
 }
 
 function getMode(plot) {
     if (!plot) return 'select';
-    var selection = plot.attributes[PlotAttribute.SELECTION];
+    const selection = plot.attributes[PlotAttribute.SELECTION];
     return (selection) ? 'edit' : 'select';
 }
 
-const distance= (pt1,pt2) => VisUtil.computeScreenDistance(pt1.x,pt1.y,pt2.x,pt2.y);
+const distance= (pt1,pt2) => computeScreenDistance(pt1.x,pt1.y,pt2.x,pt2.y);
 
 function setupSelect(imagePt) {
     return {firstPt: imagePt, currentPt: imagePt};
 }
 
 function findClosestPtIdx(ptAry, pt) {
-    var dist= Number.MAX_VALUE;
+    let dist= Number.MAX_VALUE;
     return ptAry.reduce( (idx,testPt,i) => {
         if (!testPt || !pt) return idx;
-        var testDist= distance(testPt,pt);
+        const testDist= distance(testPt,pt);
         if (testDist<dist) {
             dist= testDist;
             idx= i;
@@ -300,26 +306,25 @@ function findClosestPtIdx(ptAry, pt) {
 
 
 function findClosestCorner(cc,ptAry, spt, testDist) {
-    var idx = findClosestPtIdx(ptAry, spt);
+    const idx = findClosestPtIdx(ptAry, spt);
     if (idx<0) return null;
-    var testPt = cc.getScreenCoords(ptAry[idx]);
+    const testPt = cc.getScreenCoords(ptAry[idx]);
 
     if (!testPt) return null;
     if (distance(testPt, spt)>testDist) return null;
 
-    var idxBelow= idx-1>-1? idx-1 : 3;
-    var idxAbove= idx+1<4? idx+1 : 0;
+    const idxBelow= idx-1>-1? idx-1 : 3;
+    const idxAbove= idx+1<4? idx+1 : 0;
 
-    var west= (ptAry[idx].x== Math.min( ptAry[idxBelow].x, ptAry[idxAbove].x));
-    var north= (ptAry[idx].y== Math.min( ptAry[idxBelow].y, ptAry[idxAbove].y));
+    const west= (ptAry[idx].x===Math.min( ptAry[idxBelow].x, ptAry[idxAbove].x));
+    const north= (ptAry[idx].y===Math.min( ptAry[idxBelow].y, ptAry[idxAbove].y));
 
-    var corner= Corner.NE;
-    if      (north && west) corner= Corner.NW;
-    else if (north && !west) corner= Corner.NE;
-    else if (!north && west) corner= Corner.SW;
-    else if (!north && !west) corner= Corner.SE;
+    if      (north && west) return Corner.NW;
+    else if (north && !west) return Corner.NE;
+    else if (!north && west) return Corner.SW;
+    else if (!north && !west) return Corner.SE;
 
-    return corner;
+    return null;
 }
 
 
@@ -328,17 +333,66 @@ function findClosestCorner(cc,ptAry, spt, testDist) {
  * @param {object} firstPt
  * @param {object} currentPt
  * @param {CysConverter} cc
+ * @param {boolean} rotated is plot rotated
  * @return {Array}
  */
-function makeSelectObj(firstPt,currentPt,cc) {
-    var fallbackAry= [firstPt,currentPt];
+function makeSelectObj(firstPt,currentPt,cc, rotated) {
+    const fallbackAry= [firstPt,currentPt];
 
-    var twoPtAry= cc.projection.isSpecified() ?
-        [cc.getWorldCoords(firstPt),cc.getWorldCoords(currentPt)] : fallbackAry;
+    const world= cc.projection.isSpecified();
+    let twoPtAry=  world? [cc.getWorldCoords(firstPt),cc.getWorldCoords(currentPt)] : fallbackAry;
 
     if (!twoPtAry[0] || !twoPtAry[1]) twoPtAry= fallbackAry;
 
-    return [SelectBox.makeSelectBox(twoPtAry[0], twoPtAry[1], Style.HANDLED)];
+    const {x,y,w,h}= makeImageBoundingBox({pt0:firstPt,pt1:currentPt},cc);
+    const fpScreenAry= [ makeScreenPt(x,y), makeScreenPt(x+w,y), makeScreenPt(x+w,y+h), makeScreenPt(x,y+h) ];
+
+    const fpAry= fpScreenAry.map( (p) => world ? cc.getWorldCoords(p) : cc.getImageCoords(p));
+    const fpObj= FootPrintObj.make([fpAry]);
+    fpObj.color= 'yellow';
+    fpObj.renderOptions.lineDash= [8,5,2,5];
+
+    const retAry=  [fpObj, SelectBox.makeSelectBox(twoPtAry[0], twoPtAry[1], Style.HANDLED)];
+    if (rotated) {
+        const textInfo= ShapeDataObj.makeText(fpAry[0], 'Selection: image space');
+        textInfo.color= 'yellow';
+        retAry.push(textInfo);
+    }
+    return retAry;
 }
 
+function getImageBoundsSelection(sel,cc) {
+    const {x,y,w,h}=  makeImageBoundingBox(sel,cc);
 
+    const sp0= makeScreenPt(x,y);
+    const sp1= makeScreenPt(x+w,y+h);
+
+    return sel.pt0.type=== Point.W_PT ?
+            {pt0:cc.getWorldCoords(sp0),pt1:cc.getWorldCoords(sp1)} :
+            {pt0:cc.getImageCoords(sp0),pt1:cc.getImageCoords(sp1)};
+
+}
+
+function makeImageBoundingBox(sel,cc) {
+    const {pt0,pt1}= sel;
+    const dev0= cc.getDeviceCoords(pt0);
+    const dev1= cc.getDeviceCoords(pt1);
+    const screenPtVersion= [
+        cc.getScreenCoords(dev0),
+        cc.getScreenCoords(makeDevicePt(dev0.x,dev1.y)),
+        cc.getScreenCoords(dev1),
+        cc.getScreenCoords(makeDevicePt(dev1.x,dev0.y))
+    ];
+    const {width,height}= cc.screenSize;
+
+    const modScreenPtVersion= screenPtVersion.map ( (p) => {
+        let {x,y}= p;
+        x= x<0 ? 0 : x;
+        x= x> width-1 ? width-1 : x;
+        y= y<0 ? 0 : y;
+        y= y> height-1 ? height-1 : y;
+
+        return makeScreenPt( x,y );
+    } );
+    return getBoundingBox(modScreenPtVersion);
+}

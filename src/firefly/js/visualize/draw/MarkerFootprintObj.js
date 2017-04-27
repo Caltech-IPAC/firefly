@@ -3,10 +3,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import Point, {makeImagePt, makeScreenPt, makeViewPortPt, makeWorldPt, SimplePt} from '../Point.js';
+import Point, {makeImagePt, makeScreenPt, makeDevicePt, makeWorldPt, SimplePt} from '../Point.js';
 import {CoordinateSys} from '../CoordSys.js';
 import ShapeDataObj, {lengthToImagePixel, lengthToScreenPixel,
-       lengthToArcsec, makePoint, drawText, makeTextLocationComposite} from './ShapeDataObj.js';
+       lengthToArcsec, makePoint, drawText, makeTextLocationComposite, flipTextLocAroundY} from './ShapeDataObj.js';
 import {POINT_DATA_OBJ, getPointDataobjArea, makePointDataObj, DrawSymbol} from './PointDataObj.js';
 import {getDrawobjArea, isWithinPolygon} from './ShapeHighlight.js';
 import {defaultMarkerTextLoc} from '../../drawingLayers/MarkerToolUI.jsx';
@@ -15,10 +15,11 @@ import {TextLocation, Style, DEFAULT_FONT_SIZE} from './DrawingDef.js';
 import {FootprintFactory} from './FootprintFactory.js';
 import {convertAngle} from '../VisUtil.js';
 import DrawObj from './DrawObj.js';
-import DrawUtil from './DrawUtil.js';
 import DrawOp from './DrawOp.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {clone} from '../../util/WebUtil.js';
+import {getPlotViewById} from '../PlotViewUtil.js';
+import {visRoot} from '../ImagePlotCntlr.js';
 import Enum from 'enum';
 import {has, isNil, get, isEmpty, isArray, set} from 'lodash';
 
@@ -66,10 +67,11 @@ function make(sType, style) {
         //obj.includeOutline = true|false  show outlinebox
         //obj.textLoc= TextLocation.CIRCLE_SE
         //obj.textOffset= null;   // offsetScreenPt
+        //obj.pts // center of footprint or marker, rotation center
         //obj.drawObjAry= array of ShapeDataObj
-        //obj.originalOutlineBox  // the 'original' outlinebox, is only recorded if the outline box in
-        //                        // drawObjAry is not the original ('center' or 'plotcenter')
-        //obj.isRotable    //rotable
+        //obj.originalOutlineBox  // the 'original' outlinebox, is only recorded if the outline box around the footprint is in view
+        //                        // outlinebox in drawObjAry may not be the original (coult be becomes around 'center' or 'plotcenter')
+        //obj.isRotable    //rotablable
         //obj.isEditable   //resizable
         //obj.isMovable    //movable
         //obj.outlineIndex // handler starting index, outline box pos in drawObjAry
@@ -111,7 +113,7 @@ export function lengthSizeUnit(cc, size, unitType) {
  * @param unitType
  * @returns {{size: *, unit: *}}
  */
-function boxSizeUnit(cc, boxSize = HANDLER_BOX, unitType = ShapeDataObj.UnitType.SCREEN_PIXEL)  {
+function boxSizeUnit(cc, boxSize = HANDLER_BOX, unitType = ShapeDataObj.UnitType.PIXEL)  {
     var size;
     var unit;
     var sizeUnit;
@@ -191,7 +193,7 @@ export function makeMarker(centerPt, width, height, isHandle, cc, text, textLoc,
     dObj.includeResize = !!(get(dObj, 'isEditable') && isResize && isOutline);
     dObj.includeRotate = !!(get(dObj, 'isRotable') && isRotate && isOutline);
     setHandleIndex(dObj);
-    dObj.plotImageId = cc.plotImageId;
+
     return dObj;
 }
 
@@ -214,7 +216,11 @@ export function makeFootprint(regions, centerPt, isHandle, cc, text, textLoc) {
     var dObj = clone(make(MarkerType.Footprint), {pts: [makeWorldPt(fpCenter.x, fpCenter.y)]});
 
     centerObj.color = 'red';
-    regionDrawObjAry.forEach((obj) => obj.isMarker = true);
+
+    regionDrawObjAry.forEach((obj) => {
+        obj.isMarker = true;
+    });
+
     regionDrawObjAry.push(centerObj);
     dObj = Object.assign(dObj, {
         isMovable: true,
@@ -240,7 +246,6 @@ export function makeFootprint(regions, centerPt, isHandle, cc, text, textLoc) {
     dObj.includeResize = !!(get(dObj, 'isEditable') && isResize && isOutline);
     dObj.includeRotate = !!(get(dObj, 'isRotable') && isRotate && isOutline);
     setHandleIndex(dObj);
-    dObj.plotImageId = cc.plotImageId;
     return dObj;
 }
 
@@ -275,7 +280,7 @@ var draw=  {
 
         if (drawObj.sType === MarkerType.Marker ) {
             var dp = makeDrawParams(drawObj, def);
-            return dp == Style.STANDARD && (drawObj.sType == MarkerType.Marker);
+            return dp === Style.STANDARD && (drawObj.sType === MarkerType.Marker);
         } else {
             return drawObj.lineWidth===1;
         }
@@ -433,8 +438,6 @@ function getRectCorners(pt, width, height, unitType, cc, outUnit = Point.W_PT) {
             return getWorldOrImage(rImgPt, cc);
         } else if (outUnit ===  Point.SPT ) {
             return cc.getScreenCoords(rImgPt);
-        } else if (outUnit === Point.VP_PT) {
-            return cc.getViewPortCoords(rImgPt);
         } else {
             return rImgPt;
         }
@@ -526,7 +529,7 @@ var rectCornerInView = (drawObj, cc) => {
     return corners.reduce( (prev, corner) =>
     {
         var rCorner = simpleRotateAroundPt(cc.getImageCoords(corner), cc.getImageCoords(pts[0]), -rotAngle, Point.IM_PT);
-        if (cc.pointInViewPort(rCorner)) {
+        if (cc.pointInData(rCorner)) {
             prev++;
         }
         return prev;
@@ -590,7 +593,7 @@ function remakeOutlineBox(drawObj, cc, checkOutline = AllOutline) {
     }
     // try plotcenter outlinebox
     if (checkOutline.includes(OutlineType.plotcenter)) {
-        var vCenter = makeViewPortPt(cc.viewPort.dim.width / 2, cc.viewPort.dim.height / 2);
+        var vCenter = makeDevicePt(cc.viewDim.width / 2, cc.viewDim.height / 2);
 
         tryOutline = createOutlineBox(vCenter, CENTER_BOX, CENTER_BOX, ShapeDataObj.UnitType.PIXEL, cc, angle);
         if (tryOutline) {
@@ -625,12 +628,13 @@ function updateHandle(drawObj, cc, handleList = AllHandle, upgradeOutline = fals
             var checkOutline;  // outline candidate to be created in order
 
             // if the outline box is not in view, try to get a new outline box
-            // if the outline is around the center or plot center, check if the original or the center outline box exist
+            // if the outline is around the footprint center or plot center, check if the original or the center outline box exist
             if (cornersInView === 0) {    // if not in view, get a new outline box
                 if (outlineBox.outlineType === OutlineType.original) {
                     drawObj.originalOutlineBox = Object.assign({}, outlineBox);
                 }
 
+                // remake outlinebox from some candidates in case the original outline box is out of display range
                 checkOutline = AllOutline.reduce ( (prev, outl) => {
                     if (outl !== outlineBox.outlineType || outlineBox.outlineType === OutlineType.plotcenter) {
                         prev.push(outl);
@@ -665,7 +669,7 @@ function updateHandle(drawObj, cc, handleList = AllHandle, upgradeOutline = fals
 
     // add resize handles, TODO: test the case with both rotangle and resize handle
     if (get(drawObj, 'includeResize') && handleList.includes(MARKER_HANDLE.resize) &&
-        outlineBox.outlineType === OutlineType.original) {
+            (outlineBox.outlineType === OutlineType.original)) {
         createResizeHandle(outlineBox, cc, rotAngle).forEach((r) => retval.push(r));
      }
 
@@ -682,7 +686,8 @@ function updateHandle(drawObj, cc, handleList = AllHandle, upgradeOutline = fals
 }
 
 /**
- * create outline by trying to create the outline around all object, then the center, and last the plot center
+ * create outline by first trying to create the outline around all object, or around the center if the object
+ * is oversized, or around the plot center if no corner is seen
  * stop creating the outline box around the center or the plot center if 'stopAt' is specified
  * @param fpCenter
  * @param outlineCenter
@@ -690,7 +695,7 @@ function updateHandle(drawObj, cc, handleList = AllHandle, upgradeOutline = fals
  * @param height
  * @param unitType
  * @param cc
- * @param angle
+ * @param angle angle rotate on screen domain. reverse the angle on image domain
  * @param stopAt
  * @returns {*}
  */
@@ -704,14 +709,14 @@ function createOutlineBoxAllSteps(fpCenter, outlineCenter, width, height, unitTy
 
     var outlineBox = createOutlineBox(outlineCenter, width, height, unitType, cc, angle);
 
-    if (outlineBox) {
+    if (outlineBox) {   // outline box around the footprint is visible
         outlineBox.outlineType = OutlineType.original;
-    } else if (!stopAt || stopAt !== OutlineType.center) {
+    } else if (!stopAt || stopAt !== OutlineType.center) { // try outline box around center and plot center
         outlineBox = createOutlineBox(fpCenter, CENTER_BOX, CENTER_BOX, ShapeDataObj.UnitType.PIXEL, cc, angle);
         if (outlineBox) {
             outlineBox.outlineType = OutlineType.center;
         } else if (!stopAt || stopAt !== OutlineType.plotcenter) {
-            var vCenter = makeViewPortPt(cc.viewPort.dim.width / 2, cc.viewPort.dim.height / 2);
+            var vCenter = makeDevicePt(cc.viewDim.width / 2, cc.viewDim.height / 2);
 
             outlineBox = createOutlineBox(vCenter, CENTER_BOX, CENTER_BOX, ShapeDataObj.UnitType.PIXEL, cc, angle);
             outlineBox.outlineType = OutlineType.plotcenter;
@@ -759,16 +764,15 @@ function createResizeHandle(outlineBox, cc, rotAngle) {
 function createRotateHandle(outlineBox, cc, rotAngle) {
     const handleCenter = [[0, -0.5], [0.5, 0], [0, 0.5], [-0.5, 0]];  // handle center relative to the end of handle bar
     const handleAngle = [Math.PI * 3/2, 0, Math.PI*0.5, Math.PI];
-    const [x1, x2, y1, y2] = [cc.viewPort.x, cc.viewPort.dim.width, cc.viewPort.y, cc.viewPort.dim.height];
-
+    const [x1, x2, y1, y2] = [0, cc.screenSize.width, 0, cc.screenSize.height];
     var rotateObj = null;
     var corners =  getRectCorners(outlineBox.pts[0], outlineBox.width, outlineBox.height, outlineBox.unitType, cc);
     var side = 4;
-    var originVp = cc.getViewPortCoords(outlineBox.pts[0]);
+    var originVp = cc.getScreenCoords(outlineBox.pts[0]);
     var vpCorners = corners.map((c) => {
-        return simpleRotateAroundPt(cc.getViewPortCoords(c), originVp, rotAngle, Point.VP_PT);
+        return simpleRotateAroundPt(cc.getScreenCoords(c), originVp, rotAngle, Point.SPT);
     });
-    var vpInView = vpCorners.map( (v) => cc.pointInViewPort(v) );
+    var vpInView = vpCorners.map( (v) => cc.pointInData(v) );
 
     var startIdx = has(outlineBox, 'rotateSide') ? outlineBox.rotateSide : 1;
     var endIdx = startIdx + side - 1;
@@ -804,19 +808,19 @@ function createRotateHandle(outlineBox, cc, rotAngle) {
         });
 
         // bottom center of the hanle
-        var hBottom = makeViewPortPt((ends[0].x + ends[1].x)/2, (ends[0].y + ends[1].y)/2);
+        var hBottom = makeScreenPt((ends[0].x + ends[1].x)/2, (ends[0].y + ends[1].y)/2);
         // center of the handle, rotate first if there is
-        var hCenter = makeViewPortPt((ends[0].x + ends[1].x)/2 + handleCenter[i][0] * ROTATE_BOX,
+        var hCenter = makeScreenPt((ends[0].x + ends[1].x)/2 + handleCenter[i][0] * ROTATE_BOX,
                                      (ends[0].y + ends[1].y)/2 + handleCenter[i][1] * ROTATE_BOX);
         if (rotAngle !== 0) {
-            hCenter = simpleRotateAroundPt(hCenter, hBottom, rotAngle, Point.VP_PT);
+            hCenter = simpleRotateAroundPt(hCenter, hBottom, rotAngle, Point.SPT);
         }
         // test if all cornres of the handle after rotation are seen
         var hNotInView = cornerScreen.find ( (c) => {
-            var vp = makeViewPortPt(hCenter.x + c[0] * ROTATE_BOX * 0.5, hCenter.y + c[1] * ROTATE_BOX * 0.5);
-            var rVp = simpleRotateAroundPt(vp, hCenter, rotAngle, Point.VP_PT);
+            var vp = makeScreenPt(hCenter.x + c[0] * ROTATE_BOX * 0.5, hCenter.y + c[1] * ROTATE_BOX * 0.5);
+            var rVp = simpleRotateAroundPt(vp, hCenter, rotAngle, Point.SPT);
 
-            return !(cc.pointInViewPort(rVp));
+            return !(cc.pointInData(rVp));
         });
 
         if (hNotInView) continue; // corners of handle are not seen
@@ -827,15 +831,12 @@ function createRotateHandle(outlineBox, cc, rotAngle) {
         // store the rotate angle and handle center
         rotateObj = Object.assign(rotateObj, {renderOptions: {rotAngle: (handleAngle[i%side]+rotAngle)},
                                               color: HANDLE_COLOR},
-                                             {rotateCenter: hCenter});  // rotate center in viewport
-
-
+                                              {rotateCenter: cc.getDeviceCoords(hCenter)});  // rotate center in device coordinate
         outlineBox.rotateSide = i;
         break;
     }
     return rotateObj;
 }
-
 
 
 /**
@@ -857,7 +858,7 @@ function createOutlineBox(centerPt, width, height, unitType, cc, angle = 0.0) {
                       simpleRotateAroundPt(cc.getImageCoords(corner), cc.getImageCoords(centerPt), -angle, Point.IM_PT) :
                       corner;
 
-        if (cc.pointInViewPort(rCorner)) {
+        if (cc.pointInData(rCorner)) {
             prev++;
         }
         return prev;
@@ -868,6 +869,7 @@ function createOutlineBox(centerPt, width, height, unitType, cc, angle = 0.0) {
     if (totalInView >= 1) {
         var w = lengthSizeUnit(cc, width, unitType);
         var h = lengthSizeUnit(cc, height, unitType);
+
         outlineBox = ShapeDataObj.makeRectangleByCenter(centerPt, w.len, h.len, w.unit,
                                                     0.0, ShapeDataObj.UnitType.ARCSEC, false);
 
@@ -895,7 +897,7 @@ export function findClosestIndex(screenPt, drawObj, cc) {
 
     var dObjAry = drawObjAry.slice(0, outlineIndex);
 
-    // consider to add the outline box which is plotcenter type in case no handles are included
+    // consider to add the outline box which is at plot center in case no handles are included
     if (get(drawObj, 'includeResize', false) || get(drawObj, 'includeRotate', false)) {
         dObjAry = dObjAry.concat(updateHandle(drawObj, cc, [MARKER_HANDLE.rotate, MARKER_HANDLE.resize]));
         if (isEmpty(dObjAry)) {
@@ -922,7 +924,6 @@ export function findClosestIndex(screenPt, drawObj, cc) {
         }
         return prev;
     }, -1);
-
     return {index, distance};
 }
 
@@ -949,66 +950,7 @@ function updateColorFromDef(drawObj, def) {
     });
 }
 
-/**
- * find the new rotation angle and outline box based on the given plot and region points of other plot
- * @param drawObj
- * @param cc
- */
-function computeRotAngleOnPlot(drawObj, cc) {
-    if (!get(drawObj, 'isRotable', false)) {
-        drawObj.plotImageId = cc.plotImageId;
-        return;
-    }
 
-    var crtObjAry = drawObj.drawObjAry.slice(0, drawObj.outlineIndex);
-    var orgObjAry = FootprintFactory.getDrawObjFromOriginalRegion(drawObj.regions, drawObj.pts[0],
-        drawObj.regions[0].isInstrument);
-
-    var crtPt = cc.getImageCoords(crtObjAry[0].pts[0]);
-    var orgPt = cc.getImageCoords(orgObjAry[0].pts[0]);
-    var cImg = cc.getImageCoords(drawObj.pts[0]);
-
-    var getRotateAngle = (crtPt, orgPt, cImg) => {
-        var [x_o, y_o, x_c, y_c] = [orgPt.x - cImg.x, orgPt.y - cImg.y, crtPt.x - cImg.x, crtPt.y - cImg.y];
-        var z = (x_o * y_c - y_o * x_c) > 0 ? 1 : -1;
-        var innerProd = (x_o * x_c + y_o * y_c) / (Math.sqrt(x_o * x_o + y_o * y_o) * Math.sqrt(x_c * x_c + y_c * y_c));
-
-        innerProd = innerProd > 1.0 ? 1.0 : innerProd < -1.0 ? -1.0 : innerProd;
-
-        return -Math.acos(innerProd) * z;
-    };
-
-    var angle = getRotateAngle(crtPt, orgPt, cImg);
-
-    drawObj.angle = 0.0;
-
-    // reset the region object to be the original one
-    orgObjAry.forEach( (obj, idx) => {
-        obj.isMarker = true;
-        drawObj.drawObjAry[idx] = obj;
-    });
-
-    // find outline box around the original region objects with the new rotate angle
-    drawObj = Object.assign(drawObj, {angle, angleUnit: ANGLE_UNIT.radian});
-
-    var newOutline = updateHandle(drawObj, cc, [MARKER_HANDLE.outline]);
-
-    if (!isEmpty(newOutline)) {
-        drawObj.drawObjAry[drawObj.outlineIndex] = newOutline[0];
-    }
-
-    // recover the region objects to be the one with the rotation angle
-    crtObjAry.forEach((obj, index) => {
-        if (get(obj, 'isMarker', false)) {
-            drawObj.drawObjAry[index] = obj;
-            if (obj.sType === ShapeDataObj.ShapeType.Rectangle || obj.sType === ShapeDataObj.ShapeType.Ellipse) {
-                set(obj, 'renderOptions.rotAngle', angle);
-            }
-        }
-    });
-
-    drawObj.plotImageId = cc.plotImageId;
-}
 /**
  * draw the object which contains drawObj array
  * @param drawObjP
@@ -1028,11 +970,6 @@ export function drawMarkerObject(drawObjP, ctx, drawTextAry, plot, def, vpPtM, o
         var drawObj = Object.assign({}, drawObjP);
         drawObj.drawObjAry = drawObjP.drawObjAry.map( (obj) => Object.assign({}, obj) );
 
-        // draw the same objects on multiple plots
-        if (get(drawObj, 'plotImageId') !== plot.plotImageId && get(drawObj, 'isRotable', false)) {
-            computeRotAngleOnPlot(drawObj, plot);   // update the rotate angle of outline box depending on the plot
-        }
-
         var newObj = Object.assign({}, drawObj, {drawObjAry: drawObj.drawObjAry.slice(0, drawObj.outlineIndex)});
 
         // add outline box, resize and rotate handle if any is included
@@ -1050,7 +987,7 @@ export function drawMarkerObject(drawObjP, ctx, drawTextAry, plot, def, vpPtM, o
         });
 
         drawFootprintText(newObj, plot, def, drawTextAry);
-        set(drawObjP, ['textWorldLoc', plot.plotImageId], newObj.textWorldLoc);
+        set(drawObjP, 'textWorldLoc', newObj.textWorldLoc);
     }
 }
 
@@ -1080,6 +1017,8 @@ function drawFootprintText(drawObj, plot, def, drawTextAry) {
     var objArea  = getObjArea(outlineObj, plot); // in image coordinate
 
     if (objArea) {
+        textLoc = flipTextLocAroundY(plot, textLoc);
+
         var textPt = makeTextLocationComposite(plot, textLoc, fontSize,
                         objArea.width * plot.zoomFactor,
                         objArea.height * plot.zoomFactor,
@@ -1097,11 +1036,6 @@ function drawFootprintText(drawObj, plot, def, drawTextAry) {
  * @returns {*}
  */
 export function updateFootprintOutline(drawObj, cc) {
-
-    if (drawObj.plotImageId !== cc.plotImageId) {
-        computeRotAngleOnPlot(drawObj, cc);
-    }
-
     updateOutlineBox(drawObj, cc, true);
 
     return Object.assign({}, drawObj);
@@ -1110,8 +1044,8 @@ export function updateFootprintOutline(drawObj, cc) {
 /**
  * update the outline box after translation and rotation operation.
  * @param drawObj
- * @param upgradeOutline
  * @param cc
+ * @param upgradeOutline
  */
 function updateOutlineBox(drawObj, cc, upgradeOutline = false) {
     var {outlineIndex, drawObjAry} = drawObj;
@@ -1161,10 +1095,10 @@ export function updateFootprintTranslate(drawObj, cc, apt, isSet = false) {
 /**
  * update object rotate angle
  * @param drawObj
- * @param angle
- * @param angleUnit
  * @param plot
  * @param worldPt  certer point to rotate around
+ * @param angle
+ * @param angleUnit
  * @param isSet set or increment the angle
  * @returns {*}
  */
@@ -1195,11 +1129,10 @@ export function updateFootprintDrawobjAngle(drawObj, plot, worldPt, angle = 0.0,
 }
 
 
-
 /**
  * translate the marker by apt on image coordinate
- * @param plot
  * @param drawObj
+ * @param plot
  * @param apt
  * @returns {*} an array of translated objects contained in drawObj
  */
@@ -1231,11 +1164,11 @@ export function translateMarker(drawObj, plot, apt) {
 
 /**
  * rotate a marker around worldPt by angle on image coordinate
- * @param plot
  * @param drawObj
- * @param angle,  screen coordinate direction, in radian
+ * @param plot
+ * @param angle  screen coordinate direction, in radian
  * @param worldPt
- * @returns {*} a array of rotated objects contained in drawObj
+ * @returns {array} a array of rotated objects contained in drawObj
  */
 export function rotateMarkerAround(drawObj,plot, angle, worldPt) {
     var {pts} = drawObj;
@@ -1335,7 +1268,7 @@ export function toMarkerRegion(drawObj,plot, def) {
     var {text} = drawObj;
 
     if (text) {
-        var textImgLoc = get(drawObj, ['textWorldLoc', plot.plotImageId], null);
+        var textImgLoc = get(drawObj, 'textWorldLoc', null);
 
         if (textImgLoc) {
             var fontName= drawObj.fontName || def.fontName || 'helvetica';
@@ -1381,7 +1314,7 @@ export function getScreenDistToMarker(drawObj, plot, pt) {
         return Math.sqrt((dx * dx) + (dy * dy));
     };
 
-    // if the rectangle is slanted, then find the distance by usiung distToPolygon
+    // if the rectangle is slanted, then find the distance by usiung distToPolygon, centerPt: screen point
     var distToRect = (corners, rotAngle, centerPt) => {
         if (rotAngle !== 0.0) {
             var rCorners = corners.reduce( (prev, c) => {
@@ -1445,6 +1378,7 @@ export function getScreenDistToMarker(drawObj, plot, pt) {
      // the center of rectangle is specified
      if (drawObj.type === POINT_DATA_OBJ) {
          var {size} = drawObj;
+
          cScreen = plot.getScreenCoords(drawObj.symbol === DrawSymbol.ROTATE ? drawObj.rotateCenter : drawObj.pt);
 
          corners = getRectCorners(cScreen, size, size, screenUnit, plot, Point.SPT);

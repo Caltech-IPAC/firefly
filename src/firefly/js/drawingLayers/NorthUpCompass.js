@@ -10,6 +10,7 @@ import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {makeWorldPt, makeScreenPt} from '../visualize/Point.js';
 import {primePlot, getPlotViewById} from '../visualize/PlotViewUtil.js';
+import {getTopmostVisiblePoint} from '../visualize/VisUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {makeDirectionArrowDrawObj} from '../visualize/draw/DirectionArrowDrawObj.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
@@ -29,7 +30,8 @@ var idCnt=0;
 
 function* relocateCompassSaga({id}, dispatch, getState) {
     while (true) {
-        var action = yield take([ImagePlotCntlr.RECENTER, ImagePlotCntlr.PROCESS_SCROLL]);
+        var action = yield take([ImagePlotCntlr.RECENTER, ImagePlotCntlr.PROCESS_SCROLL,
+                                 ImagePlotCntlr.ROTATE, ImagePlotCntlr.FLIP]);
         switch (action.type) {
             case ImagePlotCntlr.RECENTER:
             case ImagePlotCntlr.PROCESS_SCROLL:
@@ -105,44 +107,49 @@ function makeCompass(plotId, action){
 
     var pv= getPlotViewById(visRoot(),plotId);
 
-    const dist = 60;
+    // const dist = 60;
     const px = 30;
-    var textSpace = {x: 8, y: 15};
-    const yOff = Math.min(Math.min(plot.viewPort.dim.height, pv.viewDim.height)/4, dist);
-    const xOff = Math.min(Math.min(plot.viewPort.dim.width, pv.viewDim.width)/4, dist);
-    const offStart = Math.min(xOff, yOff);
+    // var textSpace = {x: 8, y: 15};
+    // const yOff = Math.min(Math.min(plot.screenSize.height, pv.viewDim.height)/4, dist);
+    // const xOff = Math.min(Math.min(plot.screenSize.width, pv.viewDim.width)/4, dist);
+    // const offStart = Math.min(xOff, yOff);
 
-    const {viewPort} = plot;
-    const {viewDim} = pv;
+    // const {screenSize} = plot;
+    // const {viewDim} = pv;
 
-    var compassAt = (scroll, widthHeight, xY) => {
-        var compassAt;
+    // var compassAt = (scroll, widthHeight, xY) => {
+    //     var compassAt;
+    //
+    //
+    //     if (scroll < 0) { // viewport origin is inside viewDim
+    //         var border = scroll + viewDim[widthHeight];
+    //
+    //         compassAt = offStart;
+    //         if (compassAt > border) {
+    //             compassAt = Math.max(border,  px + textSpace[xY]);
+    //         }
+    //     } else {
+    //         compassAt = Math.min(scroll + offStart, (screenSize[widthHeight] - textSpace.x));
+    //     }
+    //     return compassAt;
+    // };
+    //
+    // const sy = compassAt(pv.scrollY, 'height', 'y');
+    // const sx = compassAt(pv.scrollX, 'width', 'x');
+    //
+    // var sptStart = makeScreenPt(sx, sy);
 
 
-        if (scroll < 0) { // viewport origin is inside viewDim
-            var border = scroll + viewDim[widthHeight];
+    const sptStart= cc.getScreenCoords(getTopmostVisiblePoint(pv, 55, 55));
+    if (!sptStart) return null;
 
-            compassAt = viewPort[xY] + offStart;
-            if (compassAt > border) {
-                compassAt = Math.max(border,  viewPort[xY] + px + textSpace[xY]);
-            }
-        } else {          // viewPort origin is outside viewDim
-            compassAt = Math.min(scroll + offStart, (viewPort[xY] + viewPort.dim[widthHeight] - textSpace.x));
-        }
-        return compassAt;
-    };
 
-    const sy = compassAt(pv.scrollY, 'height', 'y');
-    const sx = compassAt(pv.scrollX, 'width', 'x');
-
-    var sptStart = makeScreenPt(sx, sy);
     var wpStart= cc.getWorldCoords(sptStart);
     var cdelt1 = cc.getImagePixelScaleInDeg();
     var zf= cc.zoomFactor || 1;
     var wpt2= makeWorldPt(wpStart.getLon(), wpStart.getLat() + (Math.abs(cdelt1)/zf)*(px));
-    var wptE2=  makeWorldPt(wpStart.getLon()+(Math.abs(cdelt1)/zf)*(px), wpStart.getLat());
     var spt2= cc.getScreenCoords(wpt2);
-    var sptE2= cc.getScreenCoords(wptE2);
+    var sptE2 = getEastFromNorthOnScreen(cc, sptStart, spt2, Math.PI/2);
 
     if (sptStart===null || spt2===null || sptE2===null) {
         return null;
@@ -152,4 +159,14 @@ function makeCompass(plotId, action){
     var dataE= makeDirectionArrowDrawObj(sptStart, sptE2,'E');
 
     return [dataE, dataN];
+}
+
+function getEastFromNorthOnScreen(cc, origin, nVec) {
+    var originSpt = cc.getScreenCoords(origin);
+    var vec1Spt = cc.getScreenCoords(nVec);
+
+    var x2 = (vec1Spt.y - originSpt.y) + originSpt.x;
+    var y2 = -(vec1Spt.x - originSpt.x) + originSpt.y;
+
+    return makeScreenPt(x2, y2);
 }

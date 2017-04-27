@@ -9,6 +9,7 @@ import {MouseState} from '../VisMouseSync.js';
 import {makeImageFromTile,createImageUrl,isTileVisible} from './../iv/TileDrawHelper.jsx';
 import {isBlankImage} from '../WebPlot.js';
 import {primePlot} from '../PlotViewUtil.js';
+import {makeThumbnailTransformCSS} from '../PlotTransformUtils.js';
 
 
 var defStyle= {
@@ -37,7 +38,7 @@ export function MagnifiedView({plotView:pv,size,mouseState}) {
     var s= Object.assign({},defStyle, {border: '1px solid rgb(187, 187, 187)'});
     return (
         <div style={s}>
-            {showMag(spt,p,size)}
+            {showMag(spt,pv, p,size)}
         </div>
     );
 }
@@ -95,7 +96,7 @@ function compareFourTileSort(o1, o2) {
 
 
 
-function showMag(spt,plot,size) {
+function showMag(spt,pv, plot,size) {
 
     if (!plot) return false;
     if (isBlankImage(plot)) return false;
@@ -140,8 +141,9 @@ function showMag(spt,plot,size) {
     pt1= makeScreenPt(-2 * newX - sizeOffX, -2 * newY - sizeOffY);
     var firstImage= makeImageFromTile(createImageUrl(plot,t1), pt1, t1.width, t1.height, 2);
 
+    let results;
     if (tiles.length===1) {
-        return firstImage;
+        results= firstImage;
     }
     else if (tiles.length===2) {
         if (t1.xoff < t2.xoff) {  // tiles are horizontal
@@ -149,7 +151,7 @@ function showMag(spt,plot,size) {
         } else { // tiles are vertical
             pt2= makeScreenPt( -2 * newX - sizeOffX, -2 * newY - sizeOffY + t1.height * 2); // below
         }
-        return [
+        results= [
             firstImage,
             makeImageFromTile(createImageUrl(plot,t2), pt2, t2.width, t2.height, 2)
         ];
@@ -159,7 +161,7 @@ function showMag(spt,plot,size) {
         pt3= makeScreenPt( -2 * (newX) - sizeOffX + t1.width * 2, -2 * newY - sizeOffY); // north west
         pt4= makeScreenPt( -2 * (newX) - sizeOffX + t1.width * 2, -2 * newY - sizeOffY + t1.height * 2); // south west
 
-        return [
+        results= [
             firstImage,
             makeImageFromTile(createImageUrl(plot,t2), pt2, t2.width, t2.height, 2),
             makeImageFromTile(createImageUrl(plot,t3), pt3, t3.width, t3.height, 2),
@@ -168,5 +170,16 @@ function showMag(spt,plot,size) {
     } else {
         return null;
     }
+
+    const style= {
+        transform :makeThumbnailTransformCSS(pv.rotation,pv.flipX, pv.flipY),
+        width: size,
+        height: size,
+    };
+    return (
+        <div style={style}>
+            {results}
+        </div>
+     )
 }
 
