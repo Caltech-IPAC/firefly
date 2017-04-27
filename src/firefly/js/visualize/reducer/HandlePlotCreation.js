@@ -107,7 +107,7 @@ const updateDefaults= function(plotRequestDefaults, action) {
 
 function addPlot(state,action, setActive, newPlot) {
     const {wcsMatchType}= state;
-    let {plotViewAry, activePlotId, prevActivePlotId, mpwWcsPrimId}= state;
+    let {plotViewAry, activePlotId, prevActivePlotId, mpwWcsPrimId, processedTiles}= state;
     const {pvNewPlotInfoAry}= action.payload;
 
     if (!pvNewPlotInfoAry) {
@@ -117,7 +117,7 @@ function addPlot(state,action, setActive, newPlot) {
     }
 
 
-    plotViewAry = plotViewAry.map((pv) => { // map has side effect of setting active plotId
+    plotViewAry = plotViewAry.map((pv) => { // map has side effect of setting active plotId, and cleaning processedTiles
         const info = pvNewPlotInfoAry.find((i) => i.plotId === pv.plotId && (!i.requestKey || i.requestKey===pv.request.getRequestKey()));
         if (!info) return pv;
         const {plotAry, overlayPlotViews}= info;
@@ -134,12 +134,13 @@ function addPlot(state,action, setActive, newPlot) {
             pv.rotation=  Math.trunc(pv.request.getRotationAngle() -  getRotationAngle(primePlot(pv)));
             pv= updateTransform(pv);
         }
+        processedTiles= processedTiles.filter( (d) => d.plotId!==pv.plotId); // remove old client tile data
         return pv;
     });
 
     if (!mpwWcsPrimId) mpwWcsPrimId = activePlotId;
 
-    const newState = clone(state, {prevActivePlotId, plotViewAry, activePlotId, mpwWcsPrimId});
+    const newState = clone(state, {prevActivePlotId, plotViewAry, activePlotId, mpwWcsPrimId, processedTiles});
 
     if (wcsMatchType) {
         newState.plotViewAry = plotViewAry.map((pv) => updateForWcsMatching(newState, pv, mpwWcsPrimId));

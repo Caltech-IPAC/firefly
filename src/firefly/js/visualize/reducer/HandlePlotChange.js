@@ -3,7 +3,7 @@
  */
 
 import update from 'react-addons-update';
-import {isEmpty,isUndefined} from 'lodash';
+import {get, isEmpty,isUndefined, isArray, unionBy} from 'lodash';
 import Cntlr, {ExpandType, WcsMatchType, ActionScope} from '../ImagePlotCntlr.js';
 import {replacePlotView, replacePrimaryPlot, changePrimePlot,
         findWCSMatchScrollPosition,updatePlotViewScrollXY,
@@ -21,8 +21,10 @@ import {primePlot,
         matchPlotView,
         getPlotViewIdxById,
         getPlotGroupIdxById,
+        getOverlayById,
         findPlotGroup,
         isInSameGroup,
+        findPlot,
         getPlotViewById} from '../PlotViewUtil.js';
 import {makeImagePt, makeWorldPt, makeScreenPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
@@ -115,6 +117,10 @@ export function reducer(state, action) {
 
         case Cntlr.OVERLAY_PLOT_CHANGE_ATTRIBUTES :
             retState= changeOverlayPlotAttributes(state,action);
+            break;
+
+        case Cntlr.ADD_PROCESSED_TILES:
+            retState= addProcessedTileData(state,action);
             break;
 
         default:
@@ -239,8 +245,9 @@ function installTiles(state, action) {
     plot= primePlot(pv); // get the updated on
     PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, plot.plotState);
     PlotPref.putCacheZoomPref(pv.plotViewCtx.preferenceZoomKey, plot.plotState);
+    const processedTiles= state.processedTiles.filter( (d) => d.plotId!==plotId); // remove old client tile data
 
-    return clone(state, {plotViewAry : replacePlotView(plotViewAry,pv)});
+    return clone(state, {plotViewAry : replacePlotView(plotViewAry,pv), processedTiles});
 }
 
 
@@ -482,6 +489,36 @@ function changeOverlayPlotAttributes(state,action) {
             return clone(pv, {overlayPlotViews});
         });
     return clone(state,{plotViewAry});
+}
+
+function addProcessedTileData(state,action) {
+    const {plotId, plotImageId, imageOverlayId, zoomFactor}= action.payload;
+    let {clientTileAry}= action.payload;
+    let {processedTiles}= state;
+    const pv= getPlotViewById(state, plotId);
+    if (!pv) return state;
+    const plot= imageOverlayId? get(getOverlayById(pv,imageOverlayId),'plot') : findPlot(pv, plotImageId);
+    if (!plot) return state;
+    if (plot.zoomFactor!==zoomFactor) return state;
+
+    if (!isArray(clientTileAry)) clientTileAry= [clientTileAry];
+    let entry= processedTiles.find( (d) => d.plotId===plotId &&
+                                              d.imageOverlayId===imageOverlayId &&
+                                              d.plotImageId===plotImageId);
+    const doReplace= Boolean(entry);
+    if (doReplace && entry.zoomFactor!==zoomFactor) entry= null;
+
+    entry= entry ? clone(entry) : { plotId, imageOverlayId, plotImageId, zoomFactor, clientTileAry:[] };
+
+    entry.clientTileAry= unionBy(clientTileAry,entry.clientTileAry, 'url');
+
+    processedTiles= doReplace ? processedTiles.map( (d) =>
+                                         d.plotId===plotId &&
+                                         d.imageOverlayId===imageOverlayId &&
+                                         d.plotImageId===plotImageId ? entry : d) :
+                               [...processedTiles, entry];
+
+    return clone(state, {processedTiles});
 }
 
 function updatePlotProgress(state,action) {

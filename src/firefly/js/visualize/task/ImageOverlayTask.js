@@ -124,7 +124,7 @@ export function plotImageMaskLazyActionCreator(rawAction) {
         if (!opv) return;
 
         const data= {plotId,imageOverlayId,
-            color:opv.color,
+            color:opv.colorAttributes.color,
             maskValue:opv.maskValue,
             maskNumber:opv.maskNumber,
             imageNumber:opv.imageNumber,

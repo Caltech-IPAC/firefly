@@ -50,7 +50,7 @@ export function makeOverlayPlotView(imageOverlayId, plotId, title, imageNumber, 
         maskNumber,
         maskValue,
         imageNumber,
-        color,
+        colorAttributes : {color, srcImageColor: color},
         relatedDataId,
         opacity: .58,
         plotCounter:0, // index of how many plots, used for making next ID

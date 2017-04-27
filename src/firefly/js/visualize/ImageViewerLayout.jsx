@@ -5,7 +5,7 @@
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {xor,isEmpty,get, isString, isFunction, throttle} from 'lodash';
-import {TileDrawerCanvas} from './iv/TileDrawerCanvas.jsx';
+import {ImageRender} from './iv/ImageRender.jsx';
 import {EventLayer} from './iv/EventLayer.jsx';
 import {ImageViewerStatus} from './iv/ImageViewerStatus.jsx';
 import {makeScreenPt, makeDevicePt} from './Point.js';
@@ -31,6 +31,7 @@ import {
     dispatchChangeActivePlotView,
     dispatchUpdateViewSize} from './ImagePlotCntlr.js';
 import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from './VisMouseSync.js';
+import Color from '../util/Color.js';
 
 const DEFAULT_CURSOR= 'crosshair';
 
@@ -316,18 +317,42 @@ function makeTileDrawers(pv) {
 
     const plot= primePlot(pv);
     const rootDrawer= (
-        <TileDrawerCanvas opacity={1} plot={plot} plotView={pv} key={'TileDrawer:'+pv.plotId} />
+        <ImageRender opacity={1} plot={plot} plotView={pv} key={'TileDrawer:'+pv.plotId} />
     );
     const drawers= pv.overlayPlotViews.filter( (opv) => opv.visible && opv.plot).map( (opv) => {
         return (
-            <TileDrawerCanvas opacity={opv.opacity} plot={opv.plot} plotView={pv}
-                key={'TileDrawer-overlay:'+opv.imageOverlayId}
+            <ImageRender opacity={opv.opacity} plot={opv.plot} plotView={pv}
+                         tileAttributes={opv.colorAttributes}
+                         shouldProcess={(im, newData, imState, nextImState) => {
+                                  if (newData) return imState.color!== imState.srcImageColor;
+                                  else         return imState.color!==nextImState.color;
+                              }}
+                         processor={makeMaskColorProcessor(opv.colorAttributes.color)}
+                         key={'TileDrawer-overlay:'+opv.imageOverlayId}
             />
         );
     });
     drawers.unshift(rootDrawer);
     return drawers;
 }
+
+
+function makeMaskColorProcessor(colorStr) {
+    return (imageData) => {
+        const cAry= Color.getRGBA(colorStr);
+        const {data}= imageData;
+        const len= data.length;
+        for(let i= 0; i<len; i+=4) {
+            if (data[i+3]) {
+                data[i]  = cAry[0];
+                data[i+1]= cAry[1];
+                data[i+2]= cAry[2];
+            }
+        }
+        return {imageData, compressible:true};
+    };
+}
+
 
 /**
  *
