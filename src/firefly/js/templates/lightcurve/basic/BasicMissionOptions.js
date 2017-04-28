@@ -99,7 +99,7 @@ export class BasicSettingBox extends Component {
         const layoutInfo = getLayouInfo();
 
         const tblModel = getTblById(LC.RAW_TABLE);
-        const title = tblModel.request?tblModel.request.uploadFileName:'';
+        const title = get(tblModel, 'request.uploadFileName','');
         const uploadedFileName =( title && title.length>20)?title.substring(0, 20)+'...':title;
 
         var period = get(layoutInfo, ['periodRange','period'], '');

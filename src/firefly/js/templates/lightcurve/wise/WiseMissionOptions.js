@@ -108,9 +108,9 @@ export class WiseSettingBox extends Component {
         const converterId = get(missionEntries, LC.META_MISSION);
         var missionName = getMissionName(converterId) || 'Mission';
         const layoutInfo = getLayouInfo();
-        var period = get(layoutInfo, ['periodRange','period'], '');
-
-        const title = tblModel.request?tblModel.request.uploadFileName:'';
+        var period =  get(layoutInfo, ['periodRange','period'], '');
+        const title = get(tblModel, 'request.uploadFileName','');
+        //if the name is too long, truncates it and displays it as a tip
         const uploadedFileName =( title && title.length>20)?title.substring(0, 20)+'...':title;
 
 
