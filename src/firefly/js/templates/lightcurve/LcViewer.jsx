@@ -29,6 +29,8 @@ import {HelpIcon} from './../../ui/HelpIcon.jsx';
 import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 
+import {HelpText} from './../../ui/HelpText.jsx';
+import {HELP_LOAD} from '../../core/AppDataCntlr.js';
 
 const vFileKey = LC.FG_FILE_FINDER;
 /**
@@ -83,7 +85,7 @@ export class LcViewer extends Component {
     }
 
     render() {
-        var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown, missionOptions,
+        var {isReady, menu={}, appTitle, appIcon, altAppIcon, additionalTitleStyle, dropDown, missionOptions,
             dropdownPanels=[], footer, style, displayMode, missionEntries, error} = this.state;
         const {visible, view} = dropDown || {};
         const periodProps = {
@@ -92,7 +94,12 @@ export class LcViewer extends Component {
         };
 
         dropdownPanels.push(<UploadPanel {...{missionOptions}}/>);
-
+        //let title = 'Time Series Tool';
+        //if (displayMode && displayMode.startsWith('period')) {
+        //    title = 'Time Series Tool: Period Finder';
+        //}else{
+        //    title= 'Time Series Tool: Viewer';
+        //}
         var mainView = (err,converterId) => {
             if (!isEmpty(error) && converterId) {
 
@@ -125,6 +132,13 @@ export class LcViewer extends Component {
             }
 
         };
+        let title = appTitle;
+        if (displayMode && displayMode.startsWith('period')) {
+            title = appTitle + ': Period Finder';
+
+        } else if(displayMode && !displayMode.startsWith('period')){
+            title = appTitle + ': Viewer';
+        }
         if (!isReady) {
             return (<div style={{top: 0}} className='loading-mask'/>);
         } else {
@@ -133,7 +147,7 @@ export class LcViewer extends Component {
             return (
                 <div id='App' className='rootStyle' style={style}>
                     <header>
-                        <BannerSection {...{menu, appTitle, appIcon, altAppIcon}}/>
+                        <BannerSection {...{menu, appTitle : title, appIcon, altAppIcon, additionalTitleStyle}}/>
                         <DropDownContainer
                             key='dropdown'
                             footer={footer}
@@ -153,12 +167,13 @@ export class LcViewer extends Component {
 /**
  * menu is an array of menu items {label, action, icon, desc, type}.
  * dropdownPanels is an array of additional react elements which are mapped to a menu item's action.
- * @type {{title: *, menu: *, appTitle: *, appIcon: *, altAppIcon: *, dropdownPanels: *, views: *}}
+ * @type {{title: *, menu: *, appTitle: *, appIcon: *, altAppIcon: *, additionalTitleStyle: *, dropdownPanels: *, views: *}}
  */
 LcViewer.propTypes = {
     title: PropTypes.string,
     menu: PropTypes.arrayOf(PropTypes.object),
     appTitle: PropTypes.string,
+    additionalTitleStyle: PropTypes.object,
     appIcon: PropTypes.string,
     altAppIcon: PropTypes.string,
     footer: PropTypes.element,
@@ -167,7 +182,7 @@ LcViewer.propTypes = {
 };
 
 LcViewer.defaultProps = {
-    appTitle: 'Time Series Viewer'
+    appTitle: 'Time Series Tool'
 };
 
 function onReady({menu}) {
@@ -204,14 +219,23 @@ BannerSection.propTypes = {
  * @param {Object} props react component's props
  */
 export function UploadPanel(props) {
-    const wrapperStyle = {margin: '5px 0'};
+    const wrapperStyle = {color:'inherit', margin: '5px 0'};
     const {missionOptions=getAllConverterIds()} = props || {};
+
+    let instruction = 'Plot time series data, view associated images, find period, and phase fold.';
 
     const options = missionOptions.map((id) => {
         return {label: getMissionName(id) || capitalize(id), value: id};
     });
+    var helpClick = (helpId) => {
+        flux.process({
+            type: HELP_LOAD,
+            payload: {helpId}
+        });
+    };
     return (
         <div style={{padding: 10}}>
+            <div style={{margin: '0px 5px 5px'}}>{instruction}</div>
             <FormPanel
                 groupKey={vFileKey}
                 onSubmit={(request) => onSearchSubmit(request)}
@@ -219,24 +243,43 @@ export function UploadPanel(props) {
                 submitText={'Upload'}
                 help_id={'loadingTSV'}>
                 <FieldGroup groupKey={vFileKey} validatorFunc={null} keepState={true}>
-                    <FileUpload
-                        wrapperStyle={wrapperStyle}
-                        fieldKey='rawTblSource'
-                        initialState={{
+                    <div
+                        style={{padding:5 }}>
+                        <div
+                            style={{padding:5, display:'flex', flexDirection:'row', alignItems:'center' }}>
+                            <div
+                                style={{display:'flex', flexDirection:'column', alignItems: 'flex-end', margin:'0px 13px'}}>
+                                <div> {'Upload time series table:'} </div>
+                                <HelpText helpId={'loadingTSV'} linkText={'(See requirements)'} />
+                                </div>
+                            <FileUpload
+                                wrapperStyle={wrapperStyle}
+                                fieldKey='rawTblSource'
+                                initialState={{
                             tooltip: 'Select a Time Series Table file to upload',
-                            label: 'Time Series Table:'
+                            label: ''
                         }}
-                    />
-                    <ListBoxInputField fieldKey='mission'
-                                       wrapperStyle={wrapperStyle}
-                                       initialState={{
+                            />
+                        </div>
+                        <div
+                            style={{padding:5,display:'flex', flexDirection:'row', alignItems:'center' }}>
+                            <div
+                                style={{display:'flex', flexDirection:'column', alignItems: 'flex-end', margin:'0px 10px'}}>
+                                    <div>{'Choose mission'}</div>
+                                    <div>{'to view associated images:'}</div>
+                                </div>
+                            <ListBoxInputField fieldKey='mission'
+                                               wrapperStyle={wrapperStyle}
+                                               initialState={{
                             value: 'wise',
-                            tooltip: 'Enter the name of the mission',
-                            label : 'Mission:',
-                            labelWidth : 45
+                            tooltip: 'Choose mission to view associated images',
+                            label : '',
+                            labelWidth : 0
                         }}
-                                       options={options}
-                    />
+                                               options={options}
+                            />
+                        </div>
+                    </div>
                 </FieldGroup>
             </FormPanel>
         </div>

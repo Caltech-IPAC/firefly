@@ -550,16 +550,16 @@ function handleTableActive(layoutInfo, action) {
         layoutInfo = setupImages(layoutInfo);
     }
 
-    if (tbl_id === LC.PERIODOGRAM_TABLE || tbl_id === LC.PEAK_TABLE) {
-        const per = getPeriodFromTable(tbl_id);
-        if (per) {
-            dispatchValueChange({
-                fieldKey: (LC.PERIOD_CNAME).toLowerCase(),
-                groupKey: LC.FG_PERIOD_FINDER,
-                value: `${parseFloat(per)}`
-            });
-        }
-    } else {
+    //if (tbl_id === LC.PERIODOGRAM_TABLE || tbl_id === LC.PEAK_TABLE) {
+    //    const per = getPeriodFromTable(tbl_id);
+    //    if (per) {
+    //        dispatchValueChange({
+    //            fieldKey: (LC.PERIOD_CNAME).toLowerCase(),
+    //            groupKey: LC.FG_PERIOD_FINDER,
+    //            value: `${parseFloat(per)}`
+    //        });
+    //    }
+    //} else {
         const fluxCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME]);
         const converterId = getConverterId(layoutInfo);//, [LC.MISSION_DATA, LC.META_MISSION]);
         if (tbl_id === LC.PHASE_FOLDED) {
@@ -570,7 +570,7 @@ function handleTableActive(layoutInfo, action) {
             const timeCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]);
             updateRawTableChart(timeCol, fluxCol, converterId);
         }
-    }
+    //}
 
     return layoutInfo;
 }
@@ -625,13 +625,14 @@ function getPeriodFromTable(tbl_id) {
         return '';
     }
 
+    //// KEEP IT JUST IN CASE WE WANT IT BACK FOR ANY REASON I CAN'T THINK OF NOW!
     // not update the period if 'noPeriodUpdate' is set to be true
-    // (for the case when both periodogram and peak tables are recalculated and only reset the period per the active one)
-    if (get(tableModel, ['request', 'noPeriodUpdate'])) {
-        set(tableModel, ['request', 'noPeriodUpdate'], undefined);
-        dispatchTableReplace(tableModel);
-        return '';
-    }
+    //// (for the case when both periodogram and peak tables are recalculated and only reset the period per the active one)
+    //if (get(tableModel, ['request', 'noPeriodUpdate'])) {
+    //    set(tableModel, ['request', 'noPeriodUpdate'], undefined);
+    //    dispatchTableReplace(tableModel);
+    //    return '';
+    //}
 
     return getCellValue(tableModel, tableModel.highlightedRow, LC.PERIOD_CNAME);
 }

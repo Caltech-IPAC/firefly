@@ -50,7 +50,7 @@ var makeErrorMessage= function(description,min,max,precision) {
     return retval;
 };
 
-var validateRange = function(min,max,precision,description,dType, valStr) {
+var validateRange = function(min,max,precision,description,dType, valStr, nullAllowed) {
     var retval= {
         valid : true,
         message : ''
@@ -67,6 +67,10 @@ var validateRange = function(min,max,precision,description,dType, valStr) {
             retval.valid = false;
             retval.message = description + ': must be a '+ dType.dataTypeDesc + makeErrorMessage(null, min, max, precision);
         }
+    }
+    else if (!nullAllowed) {
+        retval.valid = false;
+        retval.message = description + ': must be a '+ dType.dataTypeDesc + makeErrorMessage(null, min, max, precision);
     }
     return retval;
 };
@@ -95,12 +99,12 @@ export const validateUrl = function(description,valStr) {
     return retval;
 };
 
-export const intRange = function(min,max,description, valStr) {
-   return validateRange(min,max,null,description,typeInject.asInt,valStr);
+export const intRange = function(min,max,description, valStr, nullAllowed=true) {
+   return validateRange(min,max,null,description,typeInject.asInt,valStr, nullAllowed);
 };
 
-export const floatRange = function(min,max,precision, description, valStr) {
-    return validateRange(min,max,precision,description,typeInject.asFloat,valStr);
+export const floatRange = function(min,max,precision, description, valStr, nullAllowed=true) {
+    return validateRange(min,max,precision,description,typeInject.asFloat,valStr, nullAllowed);
 };
 
 export const isFloat = function(description, valStr) {
