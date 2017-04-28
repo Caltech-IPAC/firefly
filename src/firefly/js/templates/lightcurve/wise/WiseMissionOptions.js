@@ -10,7 +10,6 @@ import {makeFileRequest, getCellValue, getTblById, getColumnIdx, smartMerge} fro
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {ReadOnlyText, getTypeData} from '../LcUtil.jsx';
 import {LC, getViewerGroupKey, onTimeColumnChange} from '../LcManager.js';
-import {getUploadedFileName} from '../LcViewer.jsx';
 
 
 import {getMissionName} from '../LcConverterFactory.js';
@@ -38,7 +37,7 @@ export class WiseSettingBox extends Component {
 
         const tblModel = getTblById(LC.RAW_TABLE);
         //const validTimes = get(missionEntries, LC.META_FLUX_NAMES, []);
-        //const validValues = get(missionEntries, LC.META_FLUX_NAMES, []);
+        //const validValues = gnTablet(missionEntries, LC.META_FLUX_NAMES, []);
 
         var getList = (val, type) => {
             var colType = (!type || type === 'numeric') ?
@@ -111,7 +110,7 @@ export class WiseSettingBox extends Component {
         const layoutInfo = getLayouInfo();
         var period = get(layoutInfo, ['periodRange','period'], '');
 
-        const title = getUploadedFileName();
+        const title = tblModel.request?tblModel.request.uploadFileName:'';
         const uploadedFileName =( title && title.length>20)?title.substring(0, 20)+'...':title;
 
 
@@ -398,7 +397,8 @@ export function wiseRawTableRequest(converter, source, uploadFileName='') {
 
     };
 
-    return makeFileRequest('Input Data', source, null, options);
+    var req=makeFileRequest('Input Data', source, null, options);
+    return req;
 
 
 }

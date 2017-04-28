@@ -251,12 +251,6 @@ UploadPanel.defaultProps = {
     name: 'LCUpload'
 };
 
-export function getUploadedFileName(){
-    var fields = FieldGroupUtils.getGroupFields(vFileKey);
-    const displayName = fields.rawTblSource.displayValue.split('\\');
-    return ( displayName && displayName[displayName.length-1])?displayName[displayName.length-1]:'';
-
-}
 function onSearchSubmit(request) {
     if (request.rawTblSource) {
         const {mission} = request;

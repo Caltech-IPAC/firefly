@@ -11,7 +11,6 @@ import {ReadOnlyText, getTypeData} from '../LcUtil.jsx';
 import {LC, getViewerGroupKey, onTimeColumnChange} from '../LcManager.js';
 import {getMissionName} from '../LcConverterFactory.js';
 import {getLayouInfo} from '../../../core/LayoutCntlr.js';
-import {getUploadedFileName} from '../LcViewer.jsx';
 
 const labelWidth = 90;
 
@@ -99,7 +98,8 @@ export class BasicSettingBox extends Component {
 
         const layoutInfo = getLayouInfo();
 
-        const title = getUploadedFileName();
+        const tblModel = getTblById(LC.RAW_TABLE);
+        const title = tblModel.request?tblModel.request.uploadFileName:'';
         const uploadedFileName =( title && title.length>20)?title.substring(0, 20)+'...':title;
 
         var period = get(layoutInfo, ['periodRange','period'], '');
@@ -282,12 +282,13 @@ export function basicOnNewRawTable(rawTable, missionEntries, generalEntries, con
     return {newLayoutInfo, shouldContinue: true};
 }
 
-export function basicRawTableRequest(converter, source) {
+export function basicRawTableRequest(converter, source, uploadFileName='') {
     const options = {
         tbl_id: LC.RAW_TABLE,
         tblType: 'notACatalog',
         META_INFO: {[LC.META_MISSION]: converter.converterId},
-        pageSize: LC.TABLE_PAGESIZE
+        pageSize: LC.TABLE_PAGESIZE,
+        uploadFileName
     };
 
    return  makeFileRequest('Input Data', source, null, options);
