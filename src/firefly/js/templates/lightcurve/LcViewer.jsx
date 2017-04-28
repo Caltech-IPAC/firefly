@@ -10,7 +10,6 @@ import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
 import {dispatchHideDropDown, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
 import {lcManager, LC} from './LcManager.js';
-import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
 import {LcResult} from './LcResult.jsx';
 import {LcPeriod} from './LcPeriod.jsx';
 import {Menu} from '../../ui/Menu.jsx';
@@ -27,6 +26,9 @@ import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {HelpIcon} from './../../ui/HelpIcon.jsx';
+import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
+import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
+
 import {HelpText} from './../../ui/HelpText.jsx';
 import {HELP_LOAD} from '../../core/AppDataCntlr.js';
 
@@ -132,7 +134,7 @@ export class LcViewer extends Component {
         };
         let title = appTitle;
         if (displayMode && displayMode.startsWith('period')) {
-            title = appTitle + ': Period Finder'
+            title = appTitle + ': Period Finder';
 
         } else if(displayMode && !displayMode.startsWith('period')){
             title = appTitle + ': Viewer';
@@ -298,7 +300,11 @@ function onSearchSubmit(request) {
         const converter = getConverter(request.mission);
         if (!converter) return;
 
-        const treq = converter.rawTableRequest(converter, request.rawTblSource);
+        var fields = FieldGroupUtils.getGroupFields(vFileKey);
+        const displayName = fields.rawTblSource.displayValue.split('\\');
+        const uploadedFileName = displayName[displayName.length-1];
+        const treq = converter.rawTableRequest(converter, request.rawTblSource,uploadedFileName);
+
         dispatchTableSearch(treq, {removable: true});
         dispatchHideDropDown();
     }

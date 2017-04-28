@@ -10,6 +10,8 @@ import {makeFileRequest, getCellValue, getTblById, getColumnIdx, smartMerge} fro
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {ReadOnlyText, getTypeData} from '../LcUtil.jsx';
 import {LC, getViewerGroupKey, onTimeColumnChange} from '../LcManager.js';
+
+
 import {getMissionName} from '../LcConverterFactory.js';
 
 const labelWidth = 80;
@@ -17,6 +19,8 @@ const labelWidth = 80;
 export class WiseSettingBox extends Component {
     constructor(props) {
         super(props);
+
+
     }
 
     shouldComponentUpdate(np, ns) {
@@ -30,9 +34,10 @@ export class WiseSettingBox extends Component {
 
         const wrapperStyle = {margin: '3px 0'};
 
+
         const tblModel = getTblById(LC.RAW_TABLE);
         //const validTimes = get(missionEntries, LC.META_FLUX_NAMES, []);
-        //const validValues = get(missionEntries, LC.META_FLUX_NAMES, []);
+        //const validValues = gnTablet(missionEntries, LC.META_FLUX_NAMES, []);
 
         var getList = (val, type) => {
             var colType = (!type || type === 'numeric') ?
@@ -67,6 +72,11 @@ export class WiseSettingBox extends Component {
                                   getSuggestions={(val) => getList(val)}/>
         );
 
+
+        //var period = getTblById(LC.PHASE_FOLDED)? get( FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER), ['period', 'value'], ''):'';
+
+
+
         //const frameId = getColumnIdx(tblModel, 'frame_id');
         //var missionOthers = (frameId) => {
         //    if (frameId > -1) {
@@ -93,24 +103,43 @@ export class WiseSettingBox extends Component {
                     {label: 'W4', value: 'w4'}
                 ]}/>);
         const groupKey = getViewerGroupKey(missionEntries);
+
+
         const converterId = get(missionEntries, LC.META_MISSION);
         var missionName = getMissionName(converterId) || 'Mission';
+        const layoutInfo = getLayouInfo();
+        var period =  get(layoutInfo, ['periodRange','period'], '');
+        const title = get(tblModel, 'request.uploadFileName','');
+        //if the name is too long, truncates it and displays it as a tip
+        const uploadedFileName =( title && title.length>20)?title.substring(0, 20)+'...':title;
+
 
         return (
             <FieldGroup groupKey={groupKey}
                         reducerFunc={wiseOptionsReducer(missionEntries, generalEntries)} keepState={true}>
-                <div style={{display: 'flex', alignItems: 'flex-end'}}>
-                    <div >
+
+                <div >
+                    <div style={{ with:{labelWidth}, fontWeight:'bold', display:'inline-block', margin: '3px 0 6px 0'}} > Column Selection</div>
+                    <label style = {{width: '170px', paddingLeft: '10px', display:'inline-block'}} title={title}>{uploadedFileName}</label>
+                    <div style = {{fontWeight:'bold',paddingLeft:'13px', display:'inline-block'}}>Images</div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'flex-end'}}>
+                     <div >
                         <ReadOnlyText label='Mission:' content={missionName}
                                       labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>
-
                         {missionInputs}
                         {/*missionData*/}
                     </div>
-                    <div style={{padding: '0 6px 0 6px', border: '1px solid #a3aeb9'}}>
+                    <div style={{ padding: '0 6px 0 6px', border: '1px solid #a3aeb9', marginLeft: '54px'}}>
                         {missionOthers}
                         {allCommonEntries}
                     </div>
+                </div>
+                <div >
+                    <ReadOnlyText label='Period:' content={period}
+                                  labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>
+
                 </div>
             </FieldGroup>
         );
@@ -337,7 +366,8 @@ export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, conv
         [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES, numericalCols),
         [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, numericalCols),
         [LC.META_URL_CNAME]: get(metaInfo, LC.META_URL_CNAME, defaultDataSource),
-        [LC.META_FLUX_BAND]: get(metaInfo, LC.META_FLUX_BAND, 'w1')
+        [LC.META_FLUX_BAND]: get(metaInfo, LC.META_FLUX_BAND, 'w1'),
+
     };
 
     missionEntries = Object.assign({}, missionEntries, defaultValues);
@@ -355,16 +385,21 @@ export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, conv
     return {newLayoutInfo, shouldContinue: false};
 }
 
-export function wiseRawTableRequest(converter, source) {
+export function wiseRawTableRequest(converter, source, uploadFileName='') {
     const timeCName = converter.defaultTimeCName;
     const mission = converter.converterId;
     const options = {
         tbl_id: LC.RAW_TABLE,
         sortInfo: sortInfoString(timeCName), // if present, it will skip LcManager.js#ensureValidRawTable
         META_INFO: {[LC.META_MISSION]: mission, timeCName},
-        pageSize: LC.TABLE_PAGESIZE
+        pageSize: LC.TABLE_PAGESIZE,
+        uploadFileName
+
     };
-    return makeFileRequest('Input Data', source, null, options);
+
+    var req=makeFileRequest('Input Data', source, null, options);
+    return req;
+
 
 }
 

@@ -144,5 +144,5 @@ export const ServerParams = {
         VIS_PUSH_ACTION: 'pushAction',
 
 
-        USER_TARGET_WORLD_PT : 'UserTargetWorldPt'
+        USER_TARGET_WORLD_PT : 'UserTargetWorldPt',
 };

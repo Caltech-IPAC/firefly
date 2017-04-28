@@ -24,7 +24,7 @@ import {LC, updateLayoutDisplay, getValidValueFrom, getFullRawTable} from './LcM
 import {doPFCalculate, getPhase} from './LcPhaseTable.js';
 import {LcPeriodogram, cancelPeriodogram, popupId} from './LcPeriodogram.jsx';
 import {ReadOnlyText, getTypeData} from './LcUtil.jsx';
-import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
+import {LO_VIEW, getLayouInfo,dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 import {isDialogVisible, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {updateSet} from '../../util/WebUtil.js';
 import ReactHighcharts from 'react-highcharts';
@@ -913,11 +913,21 @@ function setPFTableSuccess() {
     return (request) => {
         const reqData = get(request, pfinderkey);
         const timeName = get(reqData, fKeyDef.time.fkey);
-        const period = get(reqData, fKeyDef.period.fkey);
         const flux = get(reqData, fKeyDef.flux.fkey);
         const tzero = get(reqData, fKeyDef.tz.fkey);
+        const period = get(reqData, fKeyDef.period.fkey);
 
         doPFCalculate(flux, timeName, period, tzero);
+
+        const min = get(reqData, fKeyDef.min.fkey,defPeriod.min );
+        const max = get(reqData, fKeyDef.max.fkey, defPeriod.max);
+        const tzeroMax = get(reqData, fKeyDef.tzmax.fkey.fkey, defPeriod.tzeroMax);
+
+        const layoutInfo = getLayouInfo();
+        dispatchUpdateLayoutInfo(Object.assign({}, layoutInfo, {
+
+            periodRange: {min, max, tzero, tzeroMax, period}
+        }));
 
         if (isDialogVisible(popupId)) {
             cancelPeriodogram();
@@ -987,5 +997,6 @@ export function resetPeriodDefaults(defPeriod) {
     if (multiVals.length > 0) {
         dispatchMultiValueChange(pfinderkey, multiVals);
     }
+
 }
 

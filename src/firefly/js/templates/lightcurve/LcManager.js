@@ -25,6 +25,8 @@ import {getConverter} from './LcConverterFactory.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeMissionEntries, keepHighlightedRowSynced} from './LcUtil.jsx';
 import {dispatchMountFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
+import {ServerParams} from '../../data/ServerParams.js';
+
 
 export const LC = {
     RAW_TABLE: 'raw_table',          // raw table id
@@ -130,11 +132,14 @@ function getUserInputParams(layoutInfo) {
 }
 
 export function getConverterData(layoutInfo=getLayouInfo()) {
-    const converterId = get(layoutInfo, [LC.MISSION_DATA, LC.META_MISSION]);
+    const converterId =getConverterId(layoutInfo);//, [LC.MISSION_DATA, LC.META_MISSION]);
     return converterId && getConverter(converterId);
 }
+export function getConverterId(layoutInfo=getLayouInfo()) {
+    return get(layoutInfo, [LC.MISSION_DATA, LC.META_MISSION]);
+}
 
-export function getViewerGroupKey(missionEntries) {
+ export function getViewerGroupKey(missionEntries) {
     return LC.FG_VIEWER_FINDER+get(missionEntries, LC.META_MISSION, '');
 }
 
@@ -257,6 +262,7 @@ export function* lcManager(params={}) {
             case VALUE_CHANGE:
                 newLayoutInfo = handleValueChange(newLayoutInfo, action);
                 break;
+
             default:
                 break;
         }
@@ -267,28 +273,37 @@ export function* lcManager(params={}) {
     }
 }
 
-function updateRawTableChart(timeCName, fluxCName) {
+
+function updateRawTableChart(timeCName, fluxCName, converterId) {
     var chartX = get(getChartDataElement(LC.RAW_TABLE), ['options', 'x', 'columnOrExpr']);
     var chartY = get(getChartDataElement(LC.RAW_TABLE), ['options', 'y', 'columnOrExpr']);
 
     if (chartX === timeCName && chartY === fluxCName) return;
 
     if (timeCName && fluxCName) {
-        const xyPlotParams = {x: {columnOrExpr: timeCName}, y: {columnOrExpr: fluxCName, options: 'grid,flip'}};
+
+        const title =getConverter(converterId).showPlotTitle?getConverter(converterId).showPlotTitle(LC.RAW_TABLE):''
+
+        const xyPlotParams = {x: {columnOrExpr: timeCName}, y: {columnOrExpr: fluxCName, options: 'grid,flip'}, plotTitle:title};
+
         loadXYPlot({chartId: LC.RAW_TABLE, tblId: LC.RAW_TABLE, xyPlotParams, help_id: 'main1TSV.plot'});
     }
 }
 
-function updatePhaseTableChart(flux) {
+function updatePhaseTableChart(flux, converterId) {
     var chartY = get(getChartDataElement(LC.PHASE_FOLDED), ['options', 'y', 'columnOrExpr']);
 
     if (chartY === flux) return;
 
     if (flux) {
+
+        const title = getConverter(converterId).showPlotTitle?getConverter(converterId).showPlotTitle(LC.PHASE_FOLDED):'';
         const xyPlotParams = {
             userSetBoundaries: {xMax: 2},
             x: {columnOrExpr: LC.PHASE_CNAME, options: 'grid'},
-            y: {columnOrExpr: flux, options: 'grid,flip'}
+            y: {columnOrExpr: flux, options: 'grid,flip'},
+            plotTitle:title
+
         };
         loadXYPlot({chartId: LC.PHASE_FOLDED, tblId: LC.PHASE_FOLDED, xyPlotParams, help_id: 'main1TSV.plot'});
     }
@@ -344,11 +359,13 @@ function handleValueChange(layoutInfo, action) {
             const fluxCol = get(newLayoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME]);
             const activeTbl = getActiveTableId();
 
+            const converterId = getConverterId(newLayoutInfo);//, [LC.MISSION_DATA, LC.META_MISSION]);
+
             // refresh chart in case flux or time
             if (activeTbl === LC.RAW_TABLE) {
-                updateRawTableChart(timeCol, fluxCol);
+                updateRawTableChart(timeCol, fluxCol, converterId);
             } else if (activeTbl === LC.PHASE_FOLDED) {
-                updatePhaseTableChart(fluxCol);
+                updatePhaseTableChart(fluxCol, converterId);
             }
 
             // if (converterData.yNamesChangeImage.includes(value))
@@ -498,7 +515,10 @@ function handleTableLoad(layoutInfo, action) {
         if (tbl_id === LC.RAW_TABLE) {         // a new raw table is loaded
             if (invokedBy === TABLE_FETCH) {
                 layoutInfo = handleRawTableLoad(layoutInfo, tbl_id);
+                layoutInfo = updateSet(layoutInfo, ['periodRange', 'period'], '' );
             }
+
+
             layoutInfo = handleTableActive(layoutInfo, action);     // because table_active happened before loaded.. we'll handle it here.
         }
     }
@@ -506,6 +526,7 @@ function handleTableLoad(layoutInfo, action) {
         const {highlightedRow} = getTblById(tbl_id);
         // this handles sorting and filtering cases.
         keepHighlightedRowSynced(tbl_id, highlightedRow);
+
     }
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'showImages', shouldImagesBeLayout(layoutInfo));
@@ -513,6 +534,7 @@ function handleTableLoad(layoutInfo, action) {
 
     return layoutInfo;
 }
+
 
 /**
  * @summary handle on changing the active table, update image and chart
@@ -522,6 +544,7 @@ function handleTableLoad(layoutInfo, action) {
  */
 function handleTableActive(layoutInfo, action) {
     const {tbl_id} = action.payload;
+
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
         layoutInfo = setupImages(layoutInfo);
@@ -538,12 +561,14 @@ function handleTableActive(layoutInfo, action) {
     //    }
     //} else {
         const fluxCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME]);
-
+        const converterId = getConverterId(layoutInfo);//, [LC.MISSION_DATA, LC.META_MISSION]);
         if (tbl_id === LC.PHASE_FOLDED) {
-            updatePhaseTableChart(fluxCol);
+            updatePhaseTableChart(fluxCol, converterId);
+           // layoutInfo = updateSet(layoutInfo, ['periodRange', 'period'], get( FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER), ['period', 'value'], '' ));
+
         } else if (tbl_id === LC.RAW_TABLE) {
             const timeCol = get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]);
-            updateRawTableChart(timeCol, fluxCol);
+            updateRawTableChart(timeCol, fluxCol, converterId);
         }
     //}
 
@@ -619,7 +644,7 @@ function isImageEnabledTable(tbl_id) {
 
 function shouldImagesBeLayout(layoutInfo){
 
-    const converterId = get(layoutInfo, [LC.MISSION_DATA, LC.META_MISSION]);
+    const converterId = getConverterId(layoutInfo);//, [LC.MISSION_DATA, LC.META_MISSION]);
     const converterData = converterId && getConverter(converterId);
     if (!converterId || !converterData) {
         return false;
@@ -640,7 +665,7 @@ export function setupImages(layoutInfo) {
     const tableModel = getTblById(activeTableId);
     if (!tableModel || isNil(tableModel.highlightedRow) || get(tableModel, 'totalRows', 0) < 1) return layoutInfo;
 
-    const converterId = get(layoutInfo, [LC.MISSION_DATA, LC.META_MISSION]);
+    const converterId = getConverterId(layoutInfo);//, [LC.MISSION_DATA, LC.META_MISSION]);
     const converterData = converterId && getConverter(converterId);
     if (!converterId || !converterData) {
         return layoutInfo;
