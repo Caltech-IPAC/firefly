@@ -8,7 +8,7 @@ import {FormPanel} from '../../ui/FormPanel.jsx';
 import { get, merge, isEmpty, isFunction} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
-import {doFetchTable, makeTblRequest, makeIrsaCatalogRequest, makeVOCatalogRequest, getTblIdsByGroup} from '../../tables/TableUtil.js';
+import {doFetchTable, makeTblRequest, makeIrsaCatalogRequest, makeVOCatalogRequest} from '../../tables/TableUtil.js';
 import {CatalogTableListField} from './CatalogTableListField.jsx';
 import {CatalogConstraintsPanel} from './CatalogConstraintsPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -217,18 +217,17 @@ function doCatalog(request) {
     }
 
     //console.log('final request: ' + JSON.stringify(tReq));
-    if (!isEmpty(getTblIdsByGroup())) {     // triview has table already, reset the chart column select form values
-        const chartHandler = {[SCATTER]: XYPlotSetOptions,
-                              [HISTOGRAM]: HistogramSetOptions};
+    //reset column select dropdown value if there is the field group
+    const chartHandler = {[SCATTER]: XYPlotSetOptions,
+                          [HISTOGRAM]: HistogramSetOptions};
 
-        Object.keys(chartHandler).forEach((chartType) => {
-            const formGroupName = getFormName(chartType);
+    Object.keys(chartHandler).forEach((chartType) => {
+        const formGroupName = getFormName(chartType);
 
-            if (!isEmpty(FieldGroupUtils.getGroupFields(formGroupName))) {
-                chartHandler[chartType](formGroupName);
-            }
-        });
-    }
+        if (!isEmpty(FieldGroupUtils.getGroupFields(formGroupName))) {
+            chartHandler[chartType](formGroupName);
+        }
+    });
     dispatchTableSearch(tReq);
 }
 
