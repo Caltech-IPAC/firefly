@@ -21,7 +21,7 @@ jar {
   from sourceSets.main.allJava
 
   manifest {
-    attributes(["properties-dir": "edu/caltech/ipac/firefly/resources"],"webapp-properties")
-    attributes(["hasSearchProcessors": "true"],"hasSearchProcessors")
+    attributes(["properties-dir": "edu/caltech/ipac/firefly/resources"], "webapp-properties")
+    attributes(["hasSearchProcessors": "true"], "hasSearchProcessors")
   }
 }

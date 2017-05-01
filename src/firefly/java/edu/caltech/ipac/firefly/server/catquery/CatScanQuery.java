@@ -35,8 +35,8 @@ import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
  */
 @SearchProcessorImpl(id ="catScan")
 public class CatScanQuery extends DynQueryProcessor {
-    private static final String DEF_HOST    = AppProperties.getProperty("irsa.gator.hostname", "irsa.ipac.caltech.edu");
-    private static final String URL_FORMAT  = "http://%s/cgi-bin/Gator/nph-scan?%smode=ascii";
+    private static final String DEF_HOST    = AppProperties.getProperty("irsa.gator.hostname", "https://irsa.ipac.caltech.edu");
+    private static final String URL_FORMAT  = "%s/cgi-bin/Gator/nph-scan?%smode=ascii";
     private static final String PROJ_PARAM = "projshort=%s&";
 
     protected File loadDynDataFile(TableServerRequest req) throws IOException, DataAccessException {
@@ -58,13 +58,13 @@ public class CatScanQuery extends DynQueryProcessor {
     public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
 
         if (results != null && results.getData() != null) {
-            // prepend http://irsa to the description link
+            // prepend https://irsa to the description link
             DataGroup data = results.getData();
             for (int i = 0; i <data.size(); i++) {
                 DataObject row = data.get(i);
                 String desc = String.valueOf(row.getDataElement("description"));
                 if (desc.indexOf("href='/data/") >= 0){
-                    desc = desc.replaceAll("href='/data/", "href='http://irsa.ipac.caltech.edu/data/");
+                    desc = desc.replaceAll("href='/data/", "href='https://irsa.ipac.caltech.edu/data/");
                     row.setDataElement(data.getDataDefintion("description"), desc);
                 }
             }

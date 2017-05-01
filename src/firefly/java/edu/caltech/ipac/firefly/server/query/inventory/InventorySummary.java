@@ -44,8 +44,8 @@ import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
  */
 @SearchProcessorImpl(id ="inventorySummary")
 public class InventorySummary extends DynQueryProcessor {
-    private static final String DEF_HOST    = AppProperties.getProperty("irsa.inventory.hostname","irsa.ipac.caltech.edu" );
-    private static final String URL_FORMAT  = "http://%s/cgi-bin/SSCDemo/nph-sscdemo?action=list&region=cone+%+.6f+%+.6f+%+.6f";
+    private static final String DEF_HOST    = AppProperties.getProperty("irsa.inventory.hostname","https://irsa.ipac.caltech.edu" );
+    private static final String URL_FORMAT  = "%s/cgi-bin/SSCDemo/nph-sscdemo?action=list&region=cone+%+.6f+%+.6f+%+.6f";
 
     protected File loadDynDataFile(TableServerRequest req) throws IOException, DataAccessException {
 
