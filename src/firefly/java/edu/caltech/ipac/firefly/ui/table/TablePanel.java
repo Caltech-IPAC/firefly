@@ -361,7 +361,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         String eMsg = caught != null ? caught.getMessage() : "unknown";
 
         String msgExtra = "<span class=\"faded-text\">" +
-                "<br><br>If you still continue to receive this message, contact IRSA for <a href='http://irsa.ipac.caltech.edu/applications/Helpdesk' target='_blank'>help</a>.  " +
+                "<br><br>If you still continue to receive this message, contact IRSA for <a href='https://irsa.ipac.caltech.edu/applications/Helpdesk' target='_blank'>help</a>.  " +
                 "<span>";
         String msg = "<b> Unable to load table.</b><br>";
 
