@@ -69,11 +69,9 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
     };
 
     var val = get(params, fldPath);
-    const onColSelected = (colValStats) => {
-        return (colName) => {
-            val = colName;
-            dispatchValueChange({fieldKey: fldPath, groupKey, value: colName, valid: true, colValStats});
-        };
+    const onColSelected = (colName) => {
+        val = colName;
+        dispatchValueChange({fieldKey: fldPath, groupKey, value: colName, valid: true});
     };
     const colValidator = getColValidator(colValStats,!nullAllowed);
     const value = get(params, fldPath);
@@ -103,7 +101,7 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
             />
             <div style={{display: 'inline-block', cursor:'pointer', paddingLeft: 3, verticalAlign: 'middle', fontSize: 'larger'}}
                  title={`Select ${name} column`}
-                 onClick={() => showColSelectPopup(colValStats, onColSelected(colValStats),`Choose ${name}`,'OK',val)}>
+                 onClick={() => showColSelectPopup(colValStats, onColSelected,`Choose ${name}`,'OK',val)}>
                 {cols}
             </div>
         </div>

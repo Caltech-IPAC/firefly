@@ -340,7 +340,7 @@ function initFieldGroup(state,action) {
 }
 
 const updateFieldGroupMount= function(state,action) {
-    var {groupKey, mounted, initValues, wrapperGroupKey, forceUnmount}= action.payload;
+    var {groupKey, mounted, initValues, reducerFunc, wrapperGroupKey, forceUnmount}= action.payload;
     if (!groupKey) return state;
 
     var retState= state;
@@ -349,6 +349,7 @@ const updateFieldGroupMount= function(state,action) {
         if (isFieldGroupDefined(state,groupKey)) {
             fg= findAndCloneFieldGroup(state, groupKey, {mounted:true});
             if (wrapperGroupKey) fg.wrapperGroupKey= wrapperGroupKey;
+            if (reducerFunc) fg.reducerFunc= reducerFunc;
 
             if (initValues) {
                 fg.fields= addInitValues(fg.fields,initValues);

@@ -27,11 +27,7 @@ import {FileUpload} from '../../ui/FileUpload.jsx';
 import {convertAngle} from '../VisUtil.js';
 import {masterTableFilter} from './IrsaMasterTableFilters.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
-/*
-import {SCATTER, HISTOGRAM, getFormName} from '../../ui/ChartSelectDropdown.jsx';
-import {setOptions as HistogramSetOptions} from '../../charts/ui/HistogramOptions.jsx';
-import {setOptions as XYPlotSetOptions} from '../../charts/ui/XYPlotOptions.jsx';
-*/
+
 
 import './CatalogTableListField.css';
 import './CatalogSelectViewPanel.css';

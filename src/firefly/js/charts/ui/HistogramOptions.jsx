@@ -68,14 +68,12 @@ function isSingleColumn(colName, colValStats) {
     }
     return false;
 }
-var columnNameReducer = () => {
+var columnNameReducer= (colValStats) => {
     return (inFields, action) => {
 
         if (!inFields) {
             return {};
         }
-        const colValStats = get(action.payload, 'colValStats');
-
         let fieldKey = undefined;
         if (!isEmpty(colValStats) && action.type === VALUE_CHANGE) {
             // when column name changes, update the min/max input
@@ -84,7 +82,6 @@ var columnNameReducer = () => {
                 case 'columnOrExpr':
                     const colName = action.payload.value;
                     if (colName ) {
-
                         if (isSingleColumn(colName, colValStats)) {
                             for (var i=0; i<colValStats.length; i++){
                                 if (colName=== colValStats[i].name) {
@@ -292,7 +289,7 @@ export class HistogramOptions extends React.Component {
         return (
             <div style={{padding:'0 5px', minHeight: 250}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}
-                            reducerFunc={columnNameReducer()}>
+                            reducerFunc={columnNameReducer(colValStats)}>
 
                     {onOptionsSelected &&
                     <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
