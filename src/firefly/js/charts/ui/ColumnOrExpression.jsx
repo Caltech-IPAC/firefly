@@ -6,7 +6,6 @@ import React, {PropTypes} from 'react';
 import {get} from 'lodash';
 import {Expression} from '../../util/expr/Expression.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
-import {TextButton} from '../../ui/TextButton.jsx';
 import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 import ColValuesStatistics from '../ColValuesStatistics.js';
 import {showColSelectPopup} from './ColSelectView.jsx';

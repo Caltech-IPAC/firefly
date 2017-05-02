@@ -107,7 +107,6 @@ export function dispatchInitFieldGroup(groupKey,keepState=false,
 
 
 /**
- *
  * @param groupKey
  * @param mounted
  * @param keepState
@@ -115,6 +114,7 @@ export function dispatchInitFieldGroup(groupKey,keepState=false,
  * @param reducerFunc
  * @param actionTypes any action types (beyond the FieldGroup action types) that the reducer should allow though
  * @param wrapperGroupKey
+ * @param forceUnmount
  */
 export function dispatchMountFieldGroup(groupKey, mounted, keepState= false, 
                                         initValues=null, reducerFunc= null,

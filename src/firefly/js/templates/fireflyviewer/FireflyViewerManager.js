@@ -15,6 +15,7 @@ import {isMetaDataTable, isCatalogTable} from '../../metaConvert/converterUtils.
 import {META_VIEWER_ID} from '../../visualize/ui/TriViewImageSection.jsx';
 import {REPLACE_VIEWER_ITEMS, DEFAULT_FITS_VIEWER_ID, getViewerItemIds, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 import {visRoot} from '../../visualize/ImagePlotCntlr.js';
+import {resetChartSelectOptions} from '../../ui/ChartSelectDropdown.jsx';
 
 /**
  * this manager manages what main components get display on the screen.
@@ -157,6 +158,8 @@ function handleActiveTableChange (layoutInfo, action) {
     const {tbl_id} = action.payload;
     var {images={}, showImages} = layoutInfo;
     var {coverageLockedOn, showCoverage, showMeta, metaDataTableId} = images;
+
+    resetChartSelectOptions();
 
     const showFits= shouldShowFits();
     showImages= showFits||coverageLockedOn;

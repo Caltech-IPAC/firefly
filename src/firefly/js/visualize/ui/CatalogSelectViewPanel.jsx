@@ -27,10 +27,11 @@ import {FileUpload} from '../../ui/FileUpload.jsx';
 import {convertAngle} from '../VisUtil.js';
 import {masterTableFilter} from './IrsaMasterTableFilters.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
+/*
 import {SCATTER, HISTOGRAM, getFormName} from '../../ui/ChartSelectDropdown.jsx';
 import {setOptions as HistogramSetOptions} from '../../charts/ui/HistogramOptions.jsx';
 import {setOptions as XYPlotSetOptions} from '../../charts/ui/XYPlotOptions.jsx';
-
+*/
 
 import './CatalogTableListField.css';
 import './CatalogSelectViewPanel.css';
@@ -215,19 +216,8 @@ function doCatalog(request) {
     if (colsSearched.length > 0) {
         tReq.selcols = colsSearched;
     }
-
     //console.log('final request: ' + JSON.stringify(tReq));
-    //reset column select dropdown value if there is the field group
-    const chartHandler = {[SCATTER]: XYPlotSetOptions,
-                          [HISTOGRAM]: HistogramSetOptions};
 
-    Object.keys(chartHandler).forEach((chartType) => {
-        const formGroupName = getFormName(chartType);
-
-        if (!isEmpty(FieldGroupUtils.getGroupFields(formGroupName))) {
-            chartHandler[chartType](formGroupName);
-        }
-    });
     dispatchTableSearch(tReq);
 }
 
