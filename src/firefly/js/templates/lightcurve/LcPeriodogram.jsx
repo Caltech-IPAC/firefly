@@ -204,7 +204,7 @@ export var startPeriodogramPopup = (groupKey) =>  {
                                 groupKey={groupKey}
                                 onSuccess={periodogramSuccess(popupId, true)}
                                 onFail={periodogramFail(popupId, true)}
-                                text={'Periodogram Calculation'} />
+                                text={'Calculate'} />
                     </div>
                     <div style={{marginTop:17}}>
                         <HelpIcon helpId={'findpTSV.pgramresults'}/>
