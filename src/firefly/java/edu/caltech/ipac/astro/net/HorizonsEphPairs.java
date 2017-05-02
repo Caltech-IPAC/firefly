@@ -89,7 +89,7 @@ public class HorizonsEphPairs {
 
             //String data = URLEncoder.encode("OBJECT", "UTF-8") + "=" +
             //              URLEncoder.encode(idOrName, "UTF-8");
-            String urlStr = "http://" +
+            String urlStr = "https://" +
                     server.getHost() + ":" + server.getPort() + CGI_CMD;
             URL url = new URL(urlStr);
             String line;
