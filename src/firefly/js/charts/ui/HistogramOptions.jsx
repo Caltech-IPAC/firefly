@@ -310,7 +310,7 @@ export class HistogramOptions extends React.Component {
                                             initialState= {{ value:'closed' }}
                                             fieldKey='plotoptions'>
                         <InputGroup labelWidth={20}>
-                            {/*<CheckboxGroupInputField
+                            <CheckboxGroupInputField
                                 initialState= {{
                                     value: get(histogramParams, 'x', '_none_'),
                                     tooltip: 'X axis options',
@@ -319,10 +319,10 @@ export class HistogramOptions extends React.Component {
                                 options={[
                                     {label: 'reverse', value: 'flip'},
                                     {label: 'top', value: 'opposite'},
-                                    {label: 'log', value: 'log'}
+                                    /*{label: 'log', value: 'log'}*/
                                 ]}
                                 fieldKey='x'
-                            />*/}
+                            />
                             <CheckboxGroupInputField
                                 initialState= {{
                                     value: get(histogramParams, 'y', '_none_'),
