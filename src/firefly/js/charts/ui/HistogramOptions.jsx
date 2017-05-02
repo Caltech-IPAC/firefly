@@ -319,7 +319,7 @@ export class HistogramOptions extends React.Component {
                                 options={[
                                     {label: 'reverse', value: 'flip'},
                                     {label: 'top', value: 'opposite'},
-                                    {label: 'log', value: 'log'}
+                                    /*{label: 'log', value: 'log'}*/
                                 ]}
                                 fieldKey='x'
                             />
