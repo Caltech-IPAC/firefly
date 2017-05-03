@@ -12,27 +12,30 @@ import * as TblUtil from '../tables/TableUtil.js';
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
 import * as ChartsCntlr from '../charts/ChartsCntlr.js';
 import {uniqueChartId} from '../charts/ChartUtil.js';
-import {XYPlotOptions} from '../charts/ui/XYPlotOptions.jsx';
 import {DT_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
-import {resultsSuccess as onXYPlotOptsSelected} from '../charts/ui/XYPlotOptions.jsx';
-import {HistogramOptions} from '../charts/ui/HistogramOptions.jsx';
+import {XYPlotOptions, resultsSuccess as onXYPlotOptsSelected,
+                       setOptions as XYPlotSetOptions} from '../charts/ui/XYPlotOptions.jsx';
 import {DT_HISTOGRAM} from '../charts/dataTypes/HistogramCDT.js';
-import {resultsSuccess as onHistogramOptsSelected} from '../charts/ui/HistogramOptions.jsx';
+import {HistogramOptions, resultsSuccess as onHistogramOptsSelected,
+                          setOptions as HistogramSetOptions} from '../charts/ui/HistogramOptions.jsx';
+
 //import {uniqueChartId} from '../charts/ChartUtil.js';
 
 import {FormPanel} from './FormPanel.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
+import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
+import {isEmpty} from 'lodash';
 
 import LOADING from 'html/images/gxt/loading.gif';
 
 const dropdownName = 'ChartSelectDropDownCmd';
 
-const SCATTER = 'scatter';
-const HISTOGRAM = 'histogram';
+export const SCATTER = 'scatter';
+export const HISTOGRAM = 'histogram';
 const PREF_CHART_TYPE = 'pref.chartType';
 
-function getFormName(chartType) {
+export function getFormName(chartType) {
     return chartType+'ChartOpts';
 }
 
@@ -257,3 +260,22 @@ ChartSelectDropdown.propTypes = {
 ChartSelectDropdown.defaultProps = {
     name: dropdownName
 };
+
+
+/**
+ * @summary reset chart column select dropdown value if the relevant field group exists
+ */
+export function resetChartSelectOptions() {
+    const chartHandler = {
+        [SCATTER]: XYPlotSetOptions,
+        [HISTOGRAM]: HistogramSetOptions
+    };
+
+    Object.keys(chartHandler).forEach((chartType) => {
+        const formGroupName = getFormName(chartType);
+
+        if (!isEmpty(FieldGroupUtils.getGroupFields(formGroupName))) {
+            chartHandler[chartType](formGroupName);
+        }
+    });
+}

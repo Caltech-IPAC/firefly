@@ -212,8 +212,8 @@ function doCatalog(request) {
     if (colsSearched.length > 0) {
         tReq.selcols = colsSearched;
     }
+    //console.log('final request: ' + JSON.stringify(tReq));
 
-    console.log('final request: ' + JSON.stringify(tReq));
     dispatchTableSearch(tReq);
 }
 

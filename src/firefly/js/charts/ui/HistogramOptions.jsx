@@ -1,6 +1,6 @@
 import React, {PropTypes} from 'react';
 
-import {get, defer} from 'lodash';
+import {get, defer, isEmpty} from 'lodash';
 import ColValuesStatistics from './../ColValuesStatistics.js';
 import {DATATYPE_HISTOGRAM} from '../dataTypes/HistogramCDT.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
@@ -49,8 +49,6 @@ export function setOptions(groupKey, histogramParams) {
         {fieldKey: 'binWidth', value: get(histogramParams, 'binWidth','')},
         {fieldKey: 'minCutoff', value: get(histogramParams, 'minCutoff','')},
         {fieldKey: 'maxCutoff', value: get(histogramParams, 'maxCutoff','')}
-
-
     ];
     dispatchMultiValueChange(groupKey, flds);
 }
@@ -71,16 +69,13 @@ function isSingleColumn(colName, colValStats) {
     return false;
 }
 var columnNameReducer= (colValStats) => {
-    if (!colValStats) {
-        return {};
-    }
     return (inFields, action) => {
 
         if (!inFields) {
             return {};
         }
         let fieldKey = undefined;
-        if (action.type === VALUE_CHANGE) {
+        if (!isEmpty(colValStats) && action.type === VALUE_CHANGE) {
             // when column name changes, update the min/max input
             fieldKey = get(action.payload, 'fieldKey');
             switch (fieldKey){
@@ -159,13 +154,13 @@ var columnNameReducer= (colValStats) => {
 };
 export class HistogramOptions extends React.Component {
 
-        constructor(props) {
-            super(props);
-            this.state = {
-                fields : FieldGroupUtils.getGroupFields(this.props.groupKey),
-                fixedAlgorithm: get(getAppOptions(), 'charts.ui.HistogramOptions.fixedAlgorithm') || props.fixedAlgorithm
-            };
-        }
+    constructor(props) {
+        super(props);
+        this.state = {
+            fields : FieldGroupUtils.getGroupFields(this.props.groupKey),
+            fixedAlgorithm: get(getAppOptions(), 'charts.ui.HistogramOptions.fixedAlgorithm') || props.fixedAlgorithm
+        };
+    }
 
 
     shouldComponentUpdate(np, ns) {
@@ -374,7 +369,7 @@ function renderFixedBinSizeOptions(groupKey, histogramParams, disabled){
          <RadioGroupInputField
             initialState= {{
                                 value: get(histogramParams, 'fixedBinSizeSelection', 'numBins'),
-                                tooltip: 'Please select number of bins or bin width',
+                                tooltip: 'Please select number of bins or bin width'
                                 //label: 'BinSize:'
                             }}
             options={binSizeOptions}
@@ -387,7 +382,7 @@ function renderFixedBinSizeOptions(groupKey, histogramParams, disabled){
                  initialState= {{
                                   value: get(histogramParams, 'numBins', '50'),
                                   validator:Validate.intRange.bind(null, 1, 500, 'numBins'),
-                                  tooltip: 'Number of bins',
+                                  tooltip: 'Number of bins'
 
                              }}
                  disabled = {disabled}
@@ -400,7 +395,7 @@ function renderFixedBinSizeOptions(groupKey, histogramParams, disabled){
                  initialState= {{
                                   value: get(histogramParams, 'binWidth', ''),
                                   validator:Validate.isFloat.bind(null,  'binWidth'),
-                                  tooltip: 'Bin width',
+                                  tooltip: 'Bin width'
 
                              }}
                  disabled = {!disabled}
