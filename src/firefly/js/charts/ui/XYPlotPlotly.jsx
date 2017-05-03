@@ -786,7 +786,7 @@ export class XYPlotPlotly extends React.Component {
 
         return (
             <div style={{float: 'left'}}>
-                <PlotlyWrapper data={plotlyData} layout={plotlyLayout}  style={plotlyDivStyle}
+                <PlotlyWrapper chartId={this.props.chartId} data={plotlyData} layout={plotlyLayout}  style={plotlyDivStyle}
                                dataUpdateTraces={dataUpdateTraces}
                                dataUpdate={dataUpdate}
                                layoutUpdate={layoutUpdate}
@@ -799,6 +799,7 @@ export class XYPlotPlotly extends React.Component {
 }
 
 XYPlotPlotly.propTypes = {
+    chartId: PropTypes.string,
     data: plotDataShape,
     width: PropTypes.number,
     height: PropTypes.number,

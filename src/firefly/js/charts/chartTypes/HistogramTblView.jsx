@@ -11,6 +11,8 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 
 import * as ChartsCntlr from '../ChartsCntlr.js';
+import {isPlotly} from '../ChartUtil.js';
+import {downloadChart} from '../ui/PlotlyWrapper.jsx';
 import {HistogramOptions} from '../ui/HistogramOptions.jsx';
 import {Histogram} from '../ui/Histogram.jsx';
 import {getChartProperties, updateOnStoreChange, FilterEditorWrapper} from './TblView.jsx';
@@ -19,6 +21,7 @@ import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutlin
 import SETTINGS from 'html/images/icons-2014/24x24_GearsNEW.png';
 import CLEAR_FILTERS from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
+import SAVE from 'html/images/icons-2014/24x24_Save.png';
 import LOADING from 'html/images/gxt/loading.gif';
 
 export const HISTOGRAM_TBLVIEW = {
@@ -33,7 +36,7 @@ export const HISTOGRAM_TBLVIEW = {
 
 
 function Chart(props) {
-    const {chartId, tblId, chartData, widthPx, heightPx, eventCallback} = props;
+    const {chartId, tblId, chartData, widthPx, heightPx} = props;
     if (!TblUtil.isFullyLoaded(tblId) || !chartData || !heightPx || !widthPx) {
         return (<div/>);
     }
@@ -72,7 +75,6 @@ function Chart(props) {
                        xAxis={xAxis}
                        yAxis={yAxis}
                        xUnit={unit}
-                       eventCallback={eventCallback}
                        chartId={chartId}
 
             />
@@ -133,6 +135,7 @@ Options.propTypes = {
     optionsKey: PropTypes.string
 };
 
+
 function Toolbar({chartId, expandable, expandedMode, toggleOptions}) {
     const {tableModel, help_id} = getChartProperties(chartId);
     return (
@@ -150,6 +153,10 @@ function Toolbar({chartId, expandable, expandedMode, toggleOptions}) {
                                visible={true}
                                badgeCount={TblUtil.getFilterCount(tableModel)}
                                onClick={() => toggleOptions('filters')}/>
+                {isPlotly() && <img className='PanelToolbar__button'
+                     title='Download the chart as a PNG image'
+                     src={SAVE}
+                     onClick={() => downloadChart(chartId)}/>}
                 <img className='PanelToolbar__button'
                      title='Chart options and tools'
                      src={SETTINGS}

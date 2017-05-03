@@ -7,8 +7,9 @@
  * Utilities related to charts
  * Created by tatianag on 3/17/16.
  */
-import {uniqueId, isUndefined, omitBy} from 'lodash';
+import {get, uniqueId, isUndefined, omitBy} from 'lodash';
 
+import {getAppOptions} from '../core/AppDataCntlr.js';
 import {getTblById, getColumnIdx, getCellValue} from '../tables/TableUtil.js';
 import {Expression} from '../util/expr/Expression.js';
 import {logError} from '../util/WebUtil.js';
@@ -16,6 +17,9 @@ import {logError} from '../util/WebUtil.js';
 export const SCATTER = 'scatter';
 export const HISTOGRAM = 'histogram';
 
+export function isPlotly() {
+    return get(getAppOptions(), 'charts.chartEngine')==='plotly';
+}
 
 /**
  * This method returns an object with the keys x,y,highlightedRow
@@ -24,7 +28,7 @@ export const HISTOGRAM = 'histogram';
  * @param {string} tblId
  * @returns {{x: number, y: number, rowIdx}}
  */
-export const getHighlighted = function(xyPlotParams, tblId) {
+export function getHighlighted(xyPlotParams, tblId) {
 
     const tableModel = getTblById(tblId);
     if (tableModel && xyPlotParams) {
@@ -46,7 +50,7 @@ export const getHighlighted = function(xyPlotParams, tblId) {
         });
         return highlighted;
     }
-};
+}
 
 /**
  * This method returns the value of the column cell or an expression from multiple column cells in a given row

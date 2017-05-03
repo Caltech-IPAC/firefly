@@ -284,7 +284,7 @@ export class HistogramPlotly extends React.Component {
         const {plotlyData, plotlyDivStyle, plotlyLayout}= this.chartingInfo;
 
         return (
-            <PlotlyWrapper data={plotlyData} layout={plotlyLayout}  style={plotlyDivStyle}
+            <PlotlyWrapper chartId={this.props.chartId} data={plotlyData} layout={plotlyLayout}  style={plotlyDivStyle}
                            dataUpdate={dataUpdate}
                            layoutUpdate={layoutUpdate}
                            divUpdateCB={(div) => this.chart= div}
@@ -302,6 +302,7 @@ HistogramPlotly.defaultProps = {
 
 
 HistogramPlotly.propTypes = {
+    chartId: PropTypes.string,
     series: PropTypes.arrayOf(PropTypes.object), // array of objects with data, binColor, and name properties
     xAxis: PropTypes.object,
     yAxis: PropTypes.object,

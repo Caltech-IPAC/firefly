@@ -15,7 +15,8 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 
 import * as ChartsCntlr from '../ChartsCntlr.js';
-import {getHighlighted} from '../ChartUtil.js';
+import {getHighlighted, isPlotly} from '../ChartUtil.js';
+import {downloadChart} from '../ui/PlotlyWrapper.jsx';
 import {setXYSelection, setZoom} from '../dataTypes/XYColsCDT.js';
 
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
@@ -33,6 +34,7 @@ import ZOOM_ORIGINAL from 'html/images/icons-2014/Zoom1x-24x24-tmp.png';
 import UNSELECT_ROWS from 'html/images/icons-2014/24x24_CheckmarkOff_Circle.png';
 import CLEAR_FILTERS from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
+import SAVE from 'html/images/icons-2014/24x24_Save.png';
 import LOADING from 'html/images/gxt/loading.gif';
 
 
@@ -83,7 +85,8 @@ class ChartComp extends React.Component {
             const sInfo = tableModel && tableModel.selectInfo;
 
             return (
-                <XYPlot data={xyPlotData}
+                <XYPlot chartId={chartId}
+                        data={xyPlotData}
                         desc=''
                         width={widthPx}
                         height={heightPx}
@@ -191,6 +194,10 @@ function Toolbar({chartId, expandable, expandedMode, toggleOptions}) {
                                visible={true}
                                badgeCount={TblUtil.getFilterCount(tableModel)}
                                onClick={() => toggleOptions('filters')}/>
+                {isPlotly() && <img className='PanelToolbar__button'
+                     title='Download the chart as a PNG image'
+                     src={SAVE}
+                     onClick={() => downloadChart(chartId)}/>}
                 <img className='PanelToolbar__button'
                      title='Chart options and tools'
                      src={SETTINGS}
