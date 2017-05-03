@@ -340,12 +340,7 @@ export const getRotationAngle= function(plot) {
     const wptC = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy));
     const wpt2 = cc.getWorldCoords(makeImageWorkSpacePt(ix, iHeight/4));
     if (wptC && wpt2) {
-        if (wptC.y > wpt2.y) {
-            retval = getPositionAngle(wpt2.getLon(), wpt2.getLat(), wptC.getLon(), wptC.getLat());
-        }
-        else {
-            retval = getPositionAngle(wptC.getLon(), wptC.getLat(), wpt2.getLon(), wpt2.getLat());
-        }
+        retval = getPositionAngle(wptC.getLon(), wptC.getLat(), wpt2.getLon(), wpt2.getLat());
     }
     return retval;
 };
