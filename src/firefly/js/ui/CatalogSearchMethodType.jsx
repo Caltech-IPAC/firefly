@@ -176,7 +176,9 @@ function calcCornerString(pv, method) {
         pt2 = makeWorldPt( pt3.x, pt1.y, pt1.cSys );
         pt4 = makeWorldPt( pt1.x, pt3.y, pt1.cSys );
     }
-    return `${f5(pt1.x)} ${f5(pt1.y)}, ${f5(pt2.x)} ${f5(pt2.y)}, ${f5(pt3.x)} ${f5(pt3.y)}, ${f5(pt4.x)} ${f5(pt4.y)}`;
+    return (pt1 && pt2 && pt3 && pt4) ?
+             `${f5(pt1.x)} ${f5(pt1.y)}, ${f5(pt2.x)} ${f5(pt2.y)}, ${f5(pt3.x)} ${f5(pt3.y)}, ${f5(pt4.x)} ${f5(pt4.y)}` :
+             '';
 }
 
 
