@@ -46,6 +46,9 @@
     border: 1px solid #cccccc;
     margin-right: 2px;
     padding: 10px;
+    width: 100%;
+    max-width: 525px;
+    overflow: auto;
 }
 
 .settingBox {
