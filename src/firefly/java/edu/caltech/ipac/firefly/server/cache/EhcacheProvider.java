@@ -66,9 +66,17 @@ public class EhcacheProvider implements Cache.Provider {
             File ignoreSizeOf = getConfFile("ignore_sizeof.txt");
             System.setProperty("net.sf.ehcache.sizeof.filter", ignoreSizeOf.getAbsolutePath());
 
+            // Two 2 tries to start cache manager:
+            //   1. The first time will only work in the single app deployment such the firefly standalone version.
+            //      Ehcahce is not deployed in the tomcat lib directory.
+            //
+            //   2. In the typical multi app production case there will be an exception, because ehcache is in the tomcat lib
+            //      directory and has a different class loader. Then the cache manager will start without
+            //      the sizeofEngine override. To use the sizeofEngine wrapper in multi app production case it would need to
+            //      be a jar that is placed in the tomcat lib directory alone with EHcache.
             try {
-                System.setProperty("net.sf.ehcache.sizeofengine.shared.VIS_SHARED_MEM",
-                                   "edu.caltech.ipac.firefly.server.cache.ObjectSizeEngineWrapper");
+                String sizeEngName= ObjectSizeEngineWrapper.class.getName();
+                System.setProperty("net.sf.ehcache.sizeofengine.shared.VIS_SHARED_MEM", sizeEngName);
                 sharedManager = CacheManager.create(sharedConfig.getAbsolutePath());
             } catch (RuntimeException e) {
                 System.clearProperty("net.sf.ehcache.sizeofengine.shared.VIS_SHARED_MEM");
