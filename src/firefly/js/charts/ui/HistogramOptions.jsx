@@ -131,12 +131,27 @@ var columnNameReducer= (colValStats) => {
                 //when minCutOff or maxCutOff change, update numBins
                 case 'minCutoff':
                 case 'maxCutoff':   {
-                    const binWidth = get(inFields, ['binWidth', 'value'], '');
-                    const min = get(inFields, ['minCutoff', 'value'], '');
-                    const max = get(inFields, ['maxCutoff', 'value'], '');
 
-                    const numBins = Math.ceil( (max - min) / binWidth);
-                    inFields = updateSet(inFields, ['numBins', 'value'], `${numBins}`);
+                    const fixedBinSizeSelection = get(inFields, ['fixedBinSizeSelection', 'value']);
+                    var numBins, min, max, binWidth;
+                    if (fixedBinSizeSelection==='numBins'){
+                        numBins = get(inFields, ['numBins', 'value'], 50);
+                        min = get(inFields, ['minCutoff', 'value'], '');
+                        max = get(inFields, ['maxCutoff', 'value'], '');
+                        binWidth = (max - min) / numBins;
+                        inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
+
+                    }
+                    else {
+                         binWidth = get(inFields, ['binWidth', 'value'], '');
+                         numBins = get(inFields, ['numBins', 'value'], 50);
+
+                         min = get(inFields, ['minCutoff', 'value'], '');
+                         max = get(inFields, ['maxCutoff', 'value'], '');
+
+                         numBins = Math.ceil((max - min) / binWidth);
+                        inFields = updateSet(inFields, ['numBins', 'value'], `${numBins}`);
+                    }
                     break;
                 }
                 default:
