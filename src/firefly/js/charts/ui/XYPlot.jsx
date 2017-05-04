@@ -4,7 +4,7 @@
 import {get, omit} from 'lodash';
 import shallowequal from 'shallowequal';
 import React, {PropTypes} from 'react';
-import {getAppOptions} from '../../core/AppDataCntlr.js';
+import {isPlotly} from '../ChartUtil.js';
 import {XYPlotHighcharts} from './XYPlotHighcharts.jsx';
 import {XYPlotPlotly} from './XYPlotPlotly.jsx';
 import {plotParamsShape, plotDataShape} from './XYPlotPropTypes.js';
@@ -221,13 +221,14 @@ export class XYPlot extends React.Component {
                 </div>
             );
         } else {
-            const XYPlotInstance=  get(getAppOptions(), 'charts.chartEngine')==='plotly' ? XYPlotPlotly : XYPlotHighcharts;
+            const XYPlotInstance=  isPlotly() ? XYPlotPlotly : XYPlotHighcharts;
             return (<XYPlotInstance {...this.props}/>);
         }
     }
 }
 
 XYPlot.propTypes = {
+    chartId: PropTypes.string,
     data: plotDataShape,
     width: PropTypes.number,
     height: PropTypes.number,

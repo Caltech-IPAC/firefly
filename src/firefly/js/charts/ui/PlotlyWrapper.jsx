@@ -3,17 +3,16 @@
  */
 
 import React, {Component, PropTypes} from 'react';
+import {get} from 'lodash';
 import {getPlotLy} from '../PlotlyConfig.js';
+import {logError} from '../../util/WebUtil.js';
 import Enum from 'enum';
 
 const PLOTLY_BASE_ID= 'plotly-plot';
 var counter= 0;
 
-
-
 export const RenderType= new Enum([ 'RESIZE', 'UPDATE', 'RESTYLE', 'RELAYOUT', 'RESTYLE_AND_RELAYOUT', 'NEW_PLOT'],
              { ignoreCase: true });
-
 
 
 const defaultConfig= {
@@ -24,6 +23,21 @@ const defaultConfig= {
         'hoverCompareCartesian'
     ]
 };
+
+export function downloadChart(chartId) {
+    getPlotLy().then( (Plotly) => {
+        const chartDiv = document.getElementById(chartId);
+        if (chartId && chartDiv) {
+            const filename = get(chartDiv, 'layout.title') || chartId;
+            Plotly.downloadImage(chartDiv, {
+                format: 'png',
+                filename
+            });
+        } else {
+            logError(`Image download has failed for chart id ${chartId}`);
+        }
+    });
+}
 
 export class PlotlyWrapper extends Component {
 
@@ -117,12 +131,13 @@ export class PlotlyWrapper extends Component {
     }
 
     render() {
-        const {style}= this.props;
+        const {chartId, style}= this.props;
         // note: wrapper div is the target for the simulated click event
         // when the original click event is lost and plotly_click is emitted instead
+        // chart image download relies on div id matching chartId
         return (
             <div>
-                <div id={this.id} style={style} ref={this.refUpdate}/>
+                <div id={chartId || this.id} style={style} ref={this.refUpdate}/>
             </div>
         );
     }
@@ -131,6 +146,7 @@ export class PlotlyWrapper extends Component {
 
 
 PlotlyWrapper.propTypes = {
+    chartId: PropTypes.string,
     data: PropTypes.arrayOf(PropTypes.object),
     style :PropTypes.object,
     layout: PropTypes.object,
