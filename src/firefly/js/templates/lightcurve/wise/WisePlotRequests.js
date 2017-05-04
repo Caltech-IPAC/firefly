@@ -29,7 +29,7 @@ export function makeWisePlotRequest(table, rowIdx, cutoutSize) {
      It is only for WISE, using default cutout size 0.3 deg
      const url = `http://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w1-int-1b.fits`;
      */
-    const serverinfo = 'http://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/';
+    const serverinfo = 'https://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/';
     const centerandsize = cutoutSize ? `?center=${ra},${dec}&size=${cutoutSize}&gzip=false` : '';
     const url = `${serverinfo}${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w${band}-int-1b.fits${centerandsize}`;
     const plot_desc = `WISE-${frameId}`;
