@@ -9,6 +9,7 @@ import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.*;
@@ -43,11 +44,12 @@ public class PostDownloadTest extends ConfigTest {
 
     }
 
+    @Ignore
     @Test
     public void testMultipart() {
         //"curl -F upload=@/hydra/workarea/firefly/temp_files/upload_7350632974912517382.tbl -F x=mjd -F y=w1mpro_ep http://bacchus.ipac.caltech.edu:9027/cgi-bin/periodogram/nph-periodogram_api -o pepe.xml"
         try {
-            URL url = new URL("https://irsadev.ipac.caltech.edu/cgi-bin/periodogram/nph-periodogram_api");
+            URL url = new URL("https://irsa.ipac.caltech.edu/cgi-bin/periodogram/nph-periodogram_api");
             check(url);
             MultiPartPostBuilder posBuilder = new MultiPartPostBuilder(url.toString());
             String src = tmpRawTable.getAbsolutePath();
