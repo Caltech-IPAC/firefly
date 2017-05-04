@@ -639,7 +639,6 @@ function drawCircle(drawObj, ctx, drawTextAry, plot, drawParams) {
     }
 }
 
-
 /**
  * @param drawObj
  * @param drawTextAry
@@ -651,6 +650,21 @@ export function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
     if (!inPt) return;
     
     const {text, textOffset, renderOptions, rotationAngle}= drawObj;
+    //the angle of the grid line
+    var angle='0deg';
+    if (rotationAngle){
+        const lineAngle = parseInt( rotationAngle.substring(0,  rotationAngle.length-3));
+        const pv = getPlotViewById(visRoot(), plot.plotId);
+        var pvAngle =pv.rotation;
+        if (pv.flipY){
+           angle = 180 + (pvAngle-lineAngle);
+        }
+        else {
+            angle = pvAngle + lineAngle;
+        }
+        angle = (angle>360)? (angle-360)+'deg':angle+'deg';
+    }
+
     const {fontName, fontSize, fontWeight, fontStyle}= drawParams;
     const color = drawParams.color || drawObj.color || 'black';
 
@@ -692,7 +706,7 @@ export function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
         }
 
         DrawUtil.drawText(drawTextAry, text, x, y, color, renderOptions,
-                fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle,null,null,rotationAngle);
+                fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle,null,null,angle);
         drawObj.textWorldLoc = plot.getImageCoords(makeDevicePt(x, y));
     }
 }

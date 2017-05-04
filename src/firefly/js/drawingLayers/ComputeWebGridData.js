@@ -703,7 +703,7 @@ function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidt
                     var wpt1 = cc.getScreenCoords(ipt0);
                     var wpt2 = cc.getScreenCoords(ipt1);
                     const slope = (wpt2.y - wpt1.y) / (wpt2.x - wpt1.x);
-                    slopAngle = Math.atan(slope) * 180 / Math.PI;
+                    slopAngle =  Math.atan(slope) * 180 / Math.PI;
 
                     //difficult to find a padding to work for all coordinates. Adding deltaX(Y) does not make a big difference
                     labelPoint = makeImageWorkSpacePt(x[i]+deltaX , y[i]+deltaY);
