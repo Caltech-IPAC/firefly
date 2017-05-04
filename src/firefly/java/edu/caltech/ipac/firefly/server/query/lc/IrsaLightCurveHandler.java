@@ -28,7 +28,7 @@ import java.net.URLConnection;
  * .
  * Should handle the LC transformations to get files out of the API result VOtable xml
  * Dev API can be found here:
- * http://irsadev.ipac.caltech.edu/applications/periodogram/Periodogram.html
+ * http://irsa.ipac.caltech.edu/applications/periodogram/Periodogram.html
  * <p>
  * TODO update api url and doc.
  *
@@ -46,7 +46,7 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
      */
     public IrsaLightCurveHandler() {
 
-        rootApiUrl = AppProperties.getProperty("irsa.gator.service.periodogram.url", "https://irsadev.ipac.caltech.edu/cgi-bin/periodogram/nph-periodogram_api");
+        rootApiUrl = AppProperties.getProperty("irsa.gator.service.periodogram.url", "https://irsa.ipac.caltech.edu/cgi-bin/periodogram/nph-periodogram_api");
         apiKey = AppProperties.getArrayProperties("irsa.gator.service.periodogram.keys", "\\s+", "x y");// At least x,y , rest are optional
     }
 
