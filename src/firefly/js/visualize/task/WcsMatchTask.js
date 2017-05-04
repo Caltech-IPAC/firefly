@@ -187,8 +187,9 @@ function rotateToMatch(pv, masterPv, flipY) {
     const masterPlot= primePlot(masterPv);
     if (!plot) return;
     const masterRot= masterPv.rotation * (flipY ? -1 : 1);
-    const targetRotation= ((getRotationAngle(masterPlot)+  masterRot)  -
+    var targetRotation= ((getRotationAngle(masterPlot)+  masterRot)  -
                            (getRotationAngle(plot))) * (flipY ? 1 : -1);
+    if (targetRotation<0) targetRotation+= 360;
     dispatchRotate({
         plotId: plot.plotId,
         rotateType: RotateType.ANGLE,

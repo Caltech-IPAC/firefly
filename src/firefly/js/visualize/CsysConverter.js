@@ -485,8 +485,8 @@ export class CysConverter {
 
         // convert image workspace to screen
         const zFact= this.zoomFactor;
-        retPt.x= Math.floor(imageWorkspaceX*zFact);
-        retPt.y= Math.floor((this.dataHeight - imageWorkspaceY) *zFact);
+        retPt.x= imageWorkspaceX*zFact;
+        retPt.y= (this.dataHeight - imageWorkspaceY) *zFact;
     }
 
 
@@ -499,8 +499,8 @@ export class CysConverter {
     makeSPtFromIWPt(iwpt, altZoomLevel) {
         if (!iwpt) return null;
         const zoom= altZoomLevel || this.zoomFactor;
-        return makeScreenPt(Math.floor(iwpt.x*zoom),
-                            Math.floor((this.dataHeight - iwpt.y) *zoom) );
+        return makeScreenPt(iwpt.x*zoom,
+                            (this.dataHeight - iwpt.y) *zoom );
     }
 
 
