@@ -40,6 +40,7 @@ public class EhcacheProvider implements Cache.Provider {
     private static long curConfModTime = 0;
 
     static {
+
         URL url = null;
         File f = getConfFile("ehcache.xml");
         if (f != null && f.canRead()) {
@@ -65,7 +66,22 @@ public class EhcacheProvider implements Cache.Provider {
             File ignoreSizeOf = getConfFile("ignore_sizeof.txt");
             System.setProperty("net.sf.ehcache.sizeof.filter", ignoreSizeOf.getAbsolutePath());
 
-            sharedManager = CacheManager.create(sharedConfig.getAbsolutePath());
+            // Two 2 tries to start cache manager:
+            //   1. The first time will only work in the single app deployment such the firefly standalone version.
+            //      Ehcahce is not deployed in the tomcat lib directory.
+            //
+            //   2. In the typical multi app production case there will be an exception, because ehcache is in the tomcat lib
+            //      directory and has a different class loader. Then the cache manager will start without
+            //      the sizeofEngine override. To use the sizeofEngine wrapper in multi app production case it would need to
+            //      be a jar that is placed in the tomcat lib directory alone with EHcache.
+            try {
+                String sizeEngName= ObjectSizeEngineWrapper.class.getName();
+                System.setProperty("net.sf.ehcache.sizeofengine.shared.VIS_SHARED_MEM", sizeEngName);
+                sharedManager = CacheManager.create(sharedConfig.getAbsolutePath());
+            } catch (RuntimeException e) {
+                System.clearProperty("net.sf.ehcache.sizeofengine.shared.VIS_SHARED_MEM");
+                sharedManager = CacheManager.create(sharedConfig.getAbsolutePath());
+            }
             float pctVisSharedMemSize = AppProperties.getFloatProperty("pct.vis.shared.mem.size", 0F);
 
             // check to see if vis.shared.mem.size is setup in the environment or setup for auto-config.

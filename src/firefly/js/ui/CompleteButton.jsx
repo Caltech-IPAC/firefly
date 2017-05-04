@@ -28,10 +28,14 @@ function validUpdate(valid,onSuccess,onFail,closeOnValid,groupKey,dialogId, incl
     if (valid && dialogId && closeOnValid) dispatchHideDialog(dialogId);
 }
 
-function onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,includeUnmounted) {
+function onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,includeUnmounted, changeMasking) {
     if (groupKey) {
+        if (changeMasking) changeMasking(true);
         validateFieldGroup(groupKey, includeUnmounted)
-            .then( (valid)=> validUpdate(valid,onSuccess,onFail,closeOnValid,groupKey,dialogId, includeUnmounted));
+            .then( (valid)=> {
+                if (changeMasking) changeMasking(false);
+                validUpdate(valid,onSuccess,onFail,closeOnValid,groupKey,dialogId, includeUnmounted);
+            });
     }
     else {
         if (onSuccess) onSuccess();
@@ -43,9 +47,9 @@ function onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,includeUnmounte
 
 export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
                           closeOnValid=true, dialogId,includeUnmounted= false,
-                          style={}}, context) {
+                          style={}, changeMasking}, context) {
     if (!groupKey && context) groupKey= context.groupKey;
-    const onComplete = () => onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,includeUnmounted);
+    const onComplete = () => onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,includeUnmounted,changeMasking);
     return (
         <div style={style}>
             <button type='button' className='button std hl'  onClick={onComplete}>{text}</button>
@@ -62,7 +66,8 @@ CompleteButton.propTypes= {
     closeOnValid: PropTypes.bool,
     dialogId: PropTypes.string,
     style: PropTypes.object,
-    includeUnmounted : PropTypes.bool
+    includeUnmounted : PropTypes.bool,
+    changeMasking: PropTypes.func,
 };
 
 CompleteButton.contextTypes= {

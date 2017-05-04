@@ -56,6 +56,14 @@ export const keyMap = {
     'plotmode':    'SELECTIMAGEPANEL_targetplot'
 };
 
+const maskWrapper= {
+    position:'absolute',
+    left:0,
+    top:0,
+    width:'100%',
+    height:'100%'
+};
+
 const findCatId = (ary, id) => get(ary.find( (p) => p.id===id), 'CatalogId',-1);
 
 export function getTabsIndexes() {
@@ -349,8 +357,10 @@ class ImageSelectionView extends Component {
                             [props[rgbFieldGroup[RED]], props[rgbFieldGroup[GREEN]], props[rgbFieldGroup[BLUE]]],
                             props.initCatalogId),
             addPlot:  isCreatePlot(props.plotMode, props.fields),
-            isThreeColor: isOnThreeColorSetting(props.plotMode, props.fields)
+            isThreeColor: isOnThreeColorSetting(props.plotMode, props.fields),
+            doMask : false
         };
+        this.changeMasking= (doMask) => this.setState(() => ({doMask}));
     }
 
     componentWillReceiveProps(nextProps) {
@@ -470,7 +480,9 @@ class ImageSelectionView extends Component {
                                 groupKey={completeButtonKey(this.state.isThreeColor)}
                                 onSuccess={resultSuccess(plotInfo)}
                                 onFail={resultFail()}
-                                text={'Load'} />
+                                text={'Load'}
+                                changeMasking={this.changeMasking}
+                            />
                         </div>
                         <div className={'padding'}>
                             <HelpIcon helpId={'visualizationCST'}/>
@@ -516,6 +528,7 @@ class ImageSelectionView extends Component {
                     { loadButtonArea() }
                 </div>
                 { panelHelpIcon() }
+                {this.state.doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
             </FieldGroup>
         );
     }

@@ -117,9 +117,6 @@ public class PlotServiceJson implements PlotServiceAsync {
     }
 
     public void addColorBand(PlotState state, WebPlotRequest bandRequest, Band band, AsyncCallback<WebPlotResult> async) {
-        doPlotService(ServerParams.ADD_BAND, async, state,
-                      new Param(ServerParams.BAND, band.toString()),
-                      new Param(ServerParams.REQUEST, bandRequest.toString()));
     }
 
     public void getFileFlux(FileAndHeaderInfo[] fileAndHeader, ImagePt inIpt, final AsyncCallback<String[]> async) {

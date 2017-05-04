@@ -17,7 +17,6 @@ import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.ClientFitsHeader;
 import edu.caltech.ipac.firefly.visualize.CreatorResults;
 import edu.caltech.ipac.firefly.visualize.FileAndHeaderInfo;
-import edu.caltech.ipac.firefly.visualize.InsertBandInitializer;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.RequestType;
@@ -228,6 +227,20 @@ public class VisServerOps {
         return true;
     }
 
+    public static double[] getBeta(PlotState state) {
+        double[] resultsAry= new double[] {Double.NaN,Double.NaN,Double.NaN};
+        try {
+            ActiveCallCtx ctx = CtxControl.prepare(state);
+            FitsRead frAry[]= ctx.getFitsReadGroup().getFitsReadAry();
+            for(int i= 0; (i<frAry.length);i++) {
+                if (frAry[i]!=null) resultsAry[i]= frAry[i].getDefaultBeta();
+            }
+            return resultsAry;
+
+        } catch (Exception e) {
+            return resultsAry;
+        }
+    }
 
     public static String[] getFileFlux(FileAndHeaderInfo fileAndHeader[], ImagePt ipt) {
         try {
@@ -282,24 +295,6 @@ public class VisServerOps {
             return createError("on getFlux", state, e);
         }
     }
-
-
-    public static WebPlotResult addColorBand(PlotState state, WebPlotRequest bandRequest, Band band) {
-        try {
-            ActiveCallCtx ctx = CtxControl.prepare(state);
-            InsertBandInitializer init;
-            init = WebPlotFactory.addBand(ctx.getPlot(), state, bandRequest, band, ctx.getFitsReadGroup());
-            CtxControl.updateCachedPlot(ctx);
-            WebPlotResult retval = new WebPlotResult(ctx.getKey());
-            retval.putResult(WebPlotResult.INSERT_BAND_INIT, init);
-            counters.incrementVis("3 Color Band");
-            return retval;
-        } catch (Exception e) {
-            return createError("on addColorBand", state, e);
-        }
-
-    }
-
 
     public static WebPlotResult deleteColorBand(PlotState state, Band band) {
         try {

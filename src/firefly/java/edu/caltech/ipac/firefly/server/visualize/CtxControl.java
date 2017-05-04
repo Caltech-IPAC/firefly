@@ -112,7 +112,6 @@ public class CtxControl {
                                                                   state.getColorTableId(), rv);
                                 plot.getPlotGroup().setZoomTo(state.getZoomLevel());
                                 if (state.isThreeColor()) plot.setThreeColorBand(fr[imageIdx],band,frGroup);
-                                ctx.setPlot(plot);
                                 first= false;
                             }
                             else {
@@ -217,7 +216,10 @@ public class CtxControl {
         return (PlotClientCtx) getCache().get(new StringKey(ctxStr));
     }
 
-    public static boolean isCtxAvailable(String ctxStr) { return getPlotCtx(ctxStr)!=null; }
+    public static boolean isCtxAvailable(String ctxStr) {
+        PlotClientCtx ctx= getPlotCtx(ctxStr);
+        return (ctx!=null && ctx.getCachedPlot()!=null);
+    }
 
     public static void putPlotCtx(PlotClientCtx ctx) {
         if (ctx!=null && ctx.getKey()!=null) {

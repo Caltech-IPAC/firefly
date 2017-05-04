@@ -200,6 +200,32 @@ public class VisServerCommands {
         }
     }
 
+
+    public static class GetBetaCmd extends ServCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
+
+            SrvParam sp= new SrvParam(paramMap);
+            PlotState state= sp.getState();
+            double resultAry[]= VisServerOps.getBeta(state);
+
+            JSONObject obj= new JSONObject();
+            obj.put("success", true);
+
+            JSONArray data= new JSONArray();
+            for(double r : resultAry) data.add(r);
+
+            JSONArray wrapperAry= new JSONArray();
+            obj.put("data", data);
+            wrapperAry.add(obj);
+
+            return wrapperAry.toJSONString();
+        }
+    }
+
+
+
+
     public static class StretchCmd extends ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
@@ -228,19 +254,6 @@ public class VisServerCommands {
             }
 
             WebPlotResult result = VisServerOps.recomputeStretch(state, sdAry);
-            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
-        }
-    }
-
-    public static class AddBandCmd extends ServCommand {
-
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-
-            SrvParam sp= new SrvParam(paramMap);
-            PlotState state= sp.getState();
-            Band band = Band.parse(sp.getRequired(ServerParams.BAND));
-            WebPlotRequest req= WebPlotRequest.parse(sp.getRequired(ServerParams.REQUEST));
-            WebPlotResult result = VisServerOps.addColorBand(state, req, band);
             return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }

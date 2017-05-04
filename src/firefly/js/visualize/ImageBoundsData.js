@@ -28,22 +28,21 @@ function getJ2XY(wp) {
 export const makeRoughGuesser= function(cc) {
 
 
-    var dataWidth= cc.dataWidth;
-    var dataHeight= cc.dataHeight;
-    var topLeft= cc.getWorldCoords(makeImagePt(0,0));
-    var topRight= cc.getWorldCoords(makeImagePt(0,dataWidth));
-    var bottomLeft= cc.getWorldCoords(makeImagePt(dataHeight,0));
-    var bottomRight= cc.getWorldCoords(makeImagePt(dataHeight,dataWidth));
-    var scale= cc.getImagePixelScaleInDeg();
+    const {dataWidth, dataHeight}= cc;
+    const topLeft= cc.getWorldCoords(makeImagePt(0,0));
+    const topRight= cc.getWorldCoords(makeImagePt(dataWidth,0));
+    const bottomRight= cc.getWorldCoords(makeImagePt(dataWidth,dataHeight));
+    const bottomLeft= cc.getWorldCoords(makeImagePt(0,dataHeight));
+    const scale= cc.getImagePixelScaleInDeg();
 
 
-    var wPad= 25;
-    var hPad= 25;
+    const wPad= 25;
+    const hPad= 25;
 
-    var minRa= 5000;
-    var maxRa= -5000;
-    var minDec=5000;
-    var maxDec= -5000;
+    let minRa= 5000;
+    let maxRa= -5000;
+    let minDec=5000;
+    let maxDec= -5000;
 
                     // if I can find the corners then rough guess will not work
     if (!topLeft ||  !topRight || !bottomLeft || !bottomRight) return () => true;
@@ -61,13 +60,13 @@ export const makeRoughGuesser= function(cc) {
     maxDec+= (hPad*scale);
     maxRa+= (wPad*scale);
 
-    var imageSize= scale * Math.max(dataHeight,dataWidth);
-    var checkDeltaTop=    90-(2*imageSize);
-    var checkDeltaBottom= -90 + (2*imageSize);
+    const imageSize= scale * Math.max(dataHeight,dataWidth);
+    const checkDeltaTop=    90-(2*imageSize);
+    const checkDeltaBottom= -90 + (2*imageSize);
 
-    var wrapsRa= (maxRa-minRa) > 90;
-    var northPole= minDec>checkDeltaTop;
-    var southPole= maxDec<checkDeltaBottom;
+    const wrapsRa= (maxRa-minRa) > 90;
+    const northPole= minDec>checkDeltaTop;
+    const southPole= maxDec<checkDeltaBottom;
 
 
     if (northPole) { //if near the j2000 "north pole" then ignore ra check
@@ -78,15 +77,15 @@ export const makeRoughGuesser= function(cc) {
     }
     else if (wrapsRa) { // if image wraps around 0 ra
         return (wp) => {
-            var {x,y}= getJ2XY(wp);
-            var retval= y> minDec && y< maxDec;
+            const {x,y}= getJ2XY(wp);
+            let retval= y> minDec && y< maxDec;
             if (retval) retval= x> maxRa || x< minRa;
             return retval;
         };
     }
     else { // normal case
         return (wp) => {
-            var {x,y}= getJ2XY(wp);
+            const {x,y}= getJ2XY(wp);
             return (x> minRa && y> minDec && x< maxRa && y< maxDec);
         };
     }

@@ -103,7 +103,7 @@ public class ServerParams {
     public static final String CREATE_PLOT_GROUP = "CmdCreatePlotGroup";
     public static final String ZOOM = "CmdZoom";
     public static final String STRETCH = "CmdStretch";
-    public static final String ADD_BAND = "CmdAddBand";
+    public static final String GET_BETA = "CmdGetBeta";
     public static final String REMOVE_BAND = "CmdRemoveBand";
     public static final String CHANGE_COLOR = "CmdChangeColor";
     public static final String ROTATE_NORTH = "CmdRotateNorth";

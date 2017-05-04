@@ -5,6 +5,7 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.cache.ObjectSizeEngineWrapper;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.UTCTimeUtil;
@@ -32,10 +33,14 @@ public class FitsCacher {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
 
     static FitsRead[] readFits(File fitsFile) throws FitsException, FailedRequestException, IOException {
-        CacheKey key= new StringKey(fitsFile.getPath());
-        FitsRead frAry[];
+        return readFits(fitsFile,true, false);
+    }
 
-        frAry= getFromCache(key);
+    static FitsRead[] readFits(File fitsFile, boolean useCache, boolean clearHdu) throws FitsException, FailedRequestException, IOException {
+        CacheKey key= new StringKey(fitsFile.getPath());
+        FitsRead frAry[]= null;
+
+        if (useCache) frAry= getFromCache(key);
         if (frAry!=null) {  // check first with out any locking
             return frAry;
         }
@@ -59,9 +64,13 @@ public class FitsCacher {
                     else {
                         Fits fits= null;
                         try {
+                            if (memCache != null) {
+                                memCache.put(key, new ObjectSizeEngineWrapper.BluffSize(fitsFile.length()));
+                                memCache.put(key, null);
+                            }
                             fits= new Fits(fitsFile.getPath());
                             long start = System.currentTimeMillis();
-                            frAry = FitsRead.createFitsReadArray(fits);
+                            frAry = FitsRead.createFitsReadArray(fits, clearHdu);
                             if (memCache != null) memCache.put(key, frAry);
                             long elapse = System.currentTimeMillis() - start;
                             String timeStr = UTCTimeUtil.getHMSFromMills(elapse);
@@ -115,6 +124,25 @@ public class FitsCacher {
           if (fits.getStream()!=null) fits.getStream().close();
       }
   }
+
+
+
+  static void clearCachedHDU(File fitsFile) {
+      CacheKey key= new StringKey(fitsFile.getPath());
+      FitsRead frAry[]= getFromCache(key);
+      if (frAry!=null) {
+          boolean needsReinsert= false;
+          for (FitsRead fr : frAry) {
+              if (fr!=null && fr.hasHdu()) {
+                  fr.clearHDU();
+                  needsReinsert= true;
+              }
+          }
+          if (memCache != null && needsReinsert) memCache.put(key, frAry);
+      }
+  }
+
+
 
     public static void addFitsReadToCache(File fitsFile, FitsRead frAry[]) {
         addFitsReadToCache(fitsFile.getPath(), frAry);

@@ -63,7 +63,7 @@ export class RangeValues {
                  lowerValue= 1.0,
                  upperWhich= PERCENTAGE,
                  upperValue= 99.0,
-                 betaValue=0.2,
+                 betaValue=NaN,
                  gammaValue=2.0,
                  algorithm= STRETCH_LINEAR,
                  zscaleContrast= 25,
@@ -157,7 +157,7 @@ export class RangeValues {
                    lowerValue= 1.0,
                    upperWhich,
                    upperValue= 99.0,
-                   betaValue=0.1,
+                   betaValue=NaN,
                    gammaValue=2.0,
                    algorithm= STRETCH_LINEAR,
                    zscaleContrast= 25,
@@ -193,7 +193,7 @@ export class RangeValues {
                 lowerValue= 1.0,
                 upperWhich= PERCENTAGE,
                 upperValue= 99.0,
-                betaValue=0.1,
+                betaValue=NaN,
                 gammaValue=2.0,
                 algorithm= STRETCH_LINEAR,
                 zscaleContrast= 25,
@@ -259,7 +259,7 @@ export class RangeValues {
 
 
         var params= sIn.split(',').map( (v) => validator.toFloat(v) );
-        var valid= params.every( (v)=> typeof v !== 'undefined' && !isNaN(v) );
+        var valid= params.every( (v)=> typeof v !== 'undefined');
 
         return valid ? new RangeValues(...params) : null;
     }

@@ -8,7 +8,8 @@ import numeral from 'numeral';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
-import {callGetColorHistogram} from '../../rpc/PlotServicesJson.js';
+import {callGetColorHistogram, callGetBeta} from '../../rpc/PlotServicesJson.js';
+import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {encodeServerUrl} from '../../util/WebUtil.js';
 import {formatFlux} from '../VisUtil.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
@@ -35,13 +36,24 @@ const histImStyle= {
     display: 'block'
 };
 
+
+const maskWrapper= {
+    position:'absolute',
+    left:0,
+    top:0,
+    width:'100%',
+    height:'100%'
+};
+
+
+
 const textPadding= {paddingBottom:3};
 
 export class ColorBandPanel extends Component {
 
     constructor(props) {
         super(props);
-        this.state={exit:true};
+        this.state={exit:true, retrievedBetaValue:NaN};
         this.handleReadout= this.handleReadout.bind(this);
         this.mouseMove= this.mouseMove.bind(this);
         this.mouseLeave= this.mouseLeave.bind(this);
@@ -49,10 +61,16 @@ export class ColorBandPanel extends Component {
 
 
     componentWillReceiveProps(nextProps) {
-        const {plot:nPlot}= nextProps;
+        const {plot:nPlot, fields:nFields}= nextProps;
+        let {retrievedBetaValue}= this.state;
         const {plot}= this.props;
         if (nPlot.plotId!==plot.plotId || nPlot.plotState!==plot.plotState) {
             this.initImages(nPlot,nextProps.band);
+            retrievedBetaValue= NaN;
+            this.setState(() => ({retrievedBetaValue}));
+        }
+        if (isNaN(retrievedBetaValue) && nFields.algorithm.value===STRETCH_ASINH) {
+            this.retrieveBeta(nPlot,nextProps.band);
         }
         
     }
@@ -61,7 +79,21 @@ export class ColorBandPanel extends Component {
         const {plot,band}= this.props;
         this.initImages(plot,band);
     }
-    
+
+
+    retrieveBeta(plot,band) {
+        if (this.state.doMask) return;
+        this.setState(() => ({doMask:true}));
+        callGetBeta(plot.plotState)
+            .then( (betaAry) => {
+                const beta= !isNaN(betaAry[band.value]) ? betaAry[band.value].toFixed(2) : betaAry[band.value];
+                this.setState(() => ({doMask:false, retrievedBetaValue:beta}));
+                if (isNaN(this.props.fields.beta.value)) {
+                    dispatchValueChange({fieldKey:'beta', groupKey:this.props.groupKey, value:beta,valid:true } );
+                }
+            });
+    }
+
     initImages(plot,band) {
         callGetColorHistogram(plot.plotState,band,HIST_WIDTH,HIST_HEIGHT)
             .then(  (result) => {
@@ -97,7 +129,7 @@ export class ColorBandPanel extends Component {
 
     render() {
         var {fields,plot,band}=this.props;
-        const {dataHistUrl,cbarUrl, histIdx, histValue,histMean,exit}=  this.state;
+        const {dataHistUrl,cbarUrl, histIdx, histValue,histMean,exit, doMask, retrievedBetaValue}=  this.state;
 
 
 
@@ -123,7 +155,8 @@ export class ColorBandPanel extends Component {
         else {
             panel= renderStandard();
         }
-        
+
+
         return (
                 <div style={{minHeight:305, minWidth:360, padding:5, position:'relative'}}>
                     <img style={histImStyle} src={dataHistUrl} key={dataHistUrl} ref={this.handleReadout}/>
@@ -142,7 +175,7 @@ export class ColorBandPanel extends Component {
 
                     {panel}
                     <div>
-                        {suggestedValuesPanel( plot,band, showBeta)}
+                        {suggestedValuesPanel( plot,band, showBeta && !isNaN(retrievedBetaValue), retrievedBetaValue)}
                     </div>
                     <div style={{position:'absolute', bottom:5, left:5, right:5}}>
                         <div style={{display:'table', margin:'auto auto', paddingBottom:5}}>
@@ -153,6 +186,7 @@ export class ColorBandPanel extends Component {
                         </div>
                         <img style={cbarImStyle} src={cbarUrl} key={cbarUrl}/>
                     </div>
+                    {doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
                 </div>
             );
     }
@@ -170,7 +204,7 @@ ColorBandPanel.propTypes= {
 const readTopBaseStyle= { fontSize: '11px', paddingBottom:5, height:16 };
 const dataStyle= { color: 'red' };
 
-function suggestedValuesPanel( plot,band, showBeta) {
+function suggestedValuesPanel( plot,band, showBeta, betaValue) {
 
     const precision6Digit = '0.000000';
    // const precision2Digit = '0.00';
@@ -180,7 +214,7 @@ function suggestedValuesPanel( plot,band, showBeta) {
     const {dataMin, dataMax, beta} = fitsData;
     const dataMaxStr = `DataMax: ${numeral(dataMax).format(precision6Digit)} `;
     const dataMinStr = `DataMin: ${numeral(dataMin).format(precision6Digit)}`;
-    const betaStr =  `Beta: ${numeral(beta).format(precision6Digit)}`;
+    const betaStr =  `Beta: ${numeral(betaValue).format(precision6Digit)}`;
 
     if (showBeta) {
        return (

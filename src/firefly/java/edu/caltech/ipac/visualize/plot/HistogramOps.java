@@ -43,7 +43,7 @@ public class HistogramOps {
     public FitsRead getFitsRead() { return fitsReadAry[band.getIdx()]; }
 
     //5/13/16 LZ added this method so the beta can be passed to the client side
-    public double getBeta(){ return fitsReadAry[band.getIdx()].getBeta();}
+    public double getBeta(){ return fitsReadAry[band.getIdx()].getDefaultBeta();}
 
     public Histogram getDataHistogram() {
         return fitsReadAry[band.getIdx()].getHistogram();

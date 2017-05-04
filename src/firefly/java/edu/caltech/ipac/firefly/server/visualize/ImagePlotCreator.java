@@ -197,6 +197,7 @@ public class ImagePlotCreator {
         Band band= readInfo.getBand();
 
 
+        FitsCacher.clearCachedHDU(readInfo.getOriginalFile());
         plot.setThreeColorBand(state.isBandVisible(readInfo.getBand()) ? readInfo.getFitsRead() :null,
                                readInfo.getBand(),frGroup);
         HistogramOps histOps= plot.getHistogramOps(band,frGroup);
@@ -320,7 +321,8 @@ public class ImagePlotCreator {
         long fileLength= (f!=null && f.canRead()) ? f.length() : 0;
         HistogramOps ops= plot.getHistogramOps(band,frGroup);
         Histogram hist= ops.getDataHistogram();
-        return new WebFitsData( ops.getDataMin(hist), ops.getDataMax(hist),ops.getBeta(),
+        return new WebFitsData( ops.getDataMin(hist), ops.getDataMax(hist),
+                                Double.NaN /*no longer pass beta by default*/,
                                 fileLength, plot.getFluxUnits(band,frGroup));
     }
 }

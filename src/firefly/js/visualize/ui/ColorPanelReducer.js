@@ -204,7 +204,7 @@ const updateFieldsFromRangeValues= function(fields,rv, fitsData) {
     fields.upperWhich= cloneWithValue(fields.upperWhich, rv.lowerWhich===ZSCALE ? PERCENTAGE : rv.upperWhich);
     fields.upperRange= cloneWithValue(fields.upperRange, rv.upperValue);
     // fields.beta= cloneWithValue(fields.beta,fitsData.beta.toFixed(2) );//rv.betaValue); //
-    fields.beta= cloneWithValue(fields.beta, rv.algorithm===STRETCH_ASINH ? rv.betaValue : fitsData.beta.toFixed(2));
+    fields.beta= cloneWithValue(fields.beta, rv.betaValue);
     fields.gamma= cloneWithValue(fields.gamma, rv.gammaValue);
     fields.algorithm= cloneWithValue(fields.algorithm, rv.algorithm);
     fields.zscaleContrast= cloneWithValue(fields.zscaleContrast, rv.zscaleContrast);
@@ -260,7 +260,7 @@ var getFieldInit= function() {
 
         beta: {
             fieldKey: 'beta',
-            value: '0.1',
+            value: NaN,
             validator: Validate.isPositiveFiniteNumber.bind(null, 'Beta'),
             tooltip: 'an arbitrary "softness"',
             label: 'Beta:'
