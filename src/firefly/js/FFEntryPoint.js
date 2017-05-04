@@ -4,7 +4,6 @@
 
 
 import {get} from 'lodash';
-
 import {firefly, Templates} from './Firefly.js';
 import {HELP_LOAD} from './core/AppDataCntlr.js';
 
