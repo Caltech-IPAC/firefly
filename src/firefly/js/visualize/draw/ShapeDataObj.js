@@ -220,7 +220,7 @@ function makePolygon(ptAry, drawObjAry=null) {
  *  @param  rotationAngle - the rotation angle + deg
  * @return {*}
  */
-function makeText(pt, text, rotationAngle='0deg') {
+function makeText(pt, text, rotationAngle=undefined) {
     return Object.assign(make(ShapeType.Text), {pts:[pt],text, rotationAngle});
 }
 
@@ -238,7 +238,7 @@ function makeDrawParams(drawObj,def={}) {
     var fontSize= drawObj.fontSize || def.fontSize || DEFAULT_FONT_SIZE;
     var fontWeight= drawObj.fontWeight || def.fontWeight || 'normal';
     var fontStyle= drawObj.fontStyle || def.fontStyle || 'normal';
-    var rotationAngle = drawObj.rotationAngle||'0deg';
+    var rotationAngle = drawObj.rotationAngle||undefined;
     return {
         color: DrawUtil.getColor(drawObj.color,def.color),
         lineWidth,
@@ -651,7 +651,7 @@ export function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
     
     const {text, textOffset, renderOptions, rotationAngle}= drawObj;
     //the angle of the grid line
-    var angle='0deg';
+    var angle=undefined;
     if (rotationAngle){
         const lineAngle = parseInt( rotationAngle.substring(0,  rotationAngle.length-3));
         const pv = getPlotViewById(visRoot(), plot.plotId);
@@ -662,7 +662,10 @@ export function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
         else {
             angle = pvAngle + lineAngle;
         }
-        angle = (angle>360)? (angle-360)+'deg':angle+'deg';
+        if (angle){
+            angle = angle>360? (angle-360)+'deg' : angle+'deg';
+        }
+
     }
 
     const {fontName, fontSize, fontWeight, fontStyle}= drawParams;

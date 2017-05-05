@@ -105,7 +105,7 @@ function drawText(drawTextAry,text, x,y,color,
                   renderOptions,
                   fontFamily='helvetica', size='9px',
                   fontWeight='normal', fontStyle='normal',
-                  backGroundColor, padDing,rotationAngle='0deg' ) {
+                  backGroundColor, padDing,rotationAngle=undefined ) {
 
 
     //todo
@@ -128,11 +128,10 @@ function drawText(drawTextAry,text, x,y,color,
         'MozBorderRadius': '1px',
         'borderRadius': '1px',
         'WebkitBorderRadius': '1px',
-        transform: 'rotate('+rotationAngle+')'
-
     };
 
     if (backGroundColor) style.backgroundColor = backGroundColor;
+    if (rotationAngle) style.transform = 'rotate('+rotationAngle+')';
     if (padDing) style.padding = padDing;
 
     drawTextAry.push({text,style});
@@ -515,7 +514,7 @@ function getDrawingSize(size, symbol) {
     }
     width = Math.ceil(width);
     height = width;
-    return {width, height}
+    return {width, height};
 }
 
 /**

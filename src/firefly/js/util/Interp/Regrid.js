@@ -1,18 +1,11 @@
 
 import {LinearInterpolator} from './LinearInterpolator';
 /**
- * The Regrid class shrinks or expands the size of an array by an
- * arbitrary amount.  This class is similar to "Rebin" that we was not implemented in that it can
- * resize a one, two, or three dimensional array.  "Rebin", however, requires that the new array size must be an
- * integer multiple of the original size.  Regrid will resize an array to any arbitrary size
- * (Rebin is somewhat faster, however).  Rebin averages multiple points when shrinking an array, while Regrid just
- * resamples the array. The returned array has the same number of dimensions as the original
- * array and is of the same data type.
- *
+ * The Regrid class shrinks or expands the size of an array by an  arbitrary amount.
  *
  * NOTE: this implementation is one dimension only.
  *
- *  The algorithm is the same as IDL CONGRID with MINUS_ONE is set to true and extropolation=false by default
+ *  The algorithm is the same as IDL CONGRID with MINUS_ONE is set to true and extrapolation=false by default
  *
  *        When MINUS_ONE is true, I enforced the new coordinate at newDim -1 is
  *          the same as oldDim-1.   Mathematically,
@@ -26,18 +19,12 @@ import {LinearInterpolator} from './LinearInterpolator';
 
 export function Regrid(inData, outSize, allowExtrapolation=false){
 
-
-    var outData = new Array(outSize);
-
     const outDataCoord = generateNewCoordinates(inData, outSize, allowExtrapolation);
 
     const inCoords = Array.from(new Array(inData.length), (x,i) => i);
-    const linearInterpolator = new LinearInterpolator(inCoords, inData, allowExtrapolation);
+    const linearInterpolator = LinearInterpolator(inCoords, inData, allowExtrapolation);
 
-    for (var i=0; i<outSize; i++){
-        outData[i]=linearInterpolator.getInterpolatedValue(outDataCoord[i]);
-    }
-
+    const outData= outDataCoord.map( (c) => linearInterpolator(c));
     return outData;
 }
 
@@ -66,21 +53,9 @@ export function Regrid(inData, outSize, allowExtrapolation=false){
  */
 function generateNewCoordinates (inData,outArraySize, allowExtrapolation) {
 
-    var coordinate = new Array(outArraySize);
-    var  RegridFact;
+    var  RegridFact = allowExtrapolation?inData.length / outArraySize:(inData.length - 1) / (outArraySize - 1);
 
-
-
-    if (allowExtrapolation ) {
-        RegridFact = inData.length / outArraySize;
-    }
-    else { //MINUS_ONE
-        RegridFact = (inData.length - 1) / (outArraySize - 1);
-    }
-
-    for (let i=0; i<outArraySize; i++) {
-        coordinate[i] =i * RegridFact;
-    }
+    var coordinate = Array.from(new Array(outArraySize), (x,i) => i * RegridFact);
 
 
     //At the right most point, coordinate(outArraySize-1) = (outArraySize-1) * RegridFact =
@@ -91,5 +66,6 @@ function generateNewCoordinates (inData,outArraySize, allowExtrapolation) {
     if (!allowExtrapolation)  coordinate[outArraySize-1] = inData.length-1;
 
     return coordinate;
+
 } // End of generateNewCoordinates().
 

@@ -8,60 +8,47 @@
  */
 
 /**
- * @Desc This method is displaying error message when there are exceptions.
- * @param message
- * @constructor
- */
-function UserException(message) {
-    this.message = message;
-    this.name = 'UserException';
-}
-
-/**
  * LinearInterpolator class
  */
-export class LinearInterpolator {
-    constructor(x, y, allowExtrapolation) {
-        this.x=x;
-        this.y=y;
-        this.n = x.length;
-        this.allowExtrapolation=allowExtrapolation;
-        this.checkInvariant();
-    }
+
+export const  LinearInterpolator = (x, y, allowExtrapolation) => {
+
+    const n = x.length;
+
     /**
      *
      * @desc Check that the class invariant is satisfied. The x-coordinates have to be monotonically ascending or
      * descending. If the input array is not strictly monotonically increasing or decreasing, exception is thrown.
      * If the input array is descending, reverse the array and return.
      */
-    checkInvariant() {
+    var checkInvariant = ()=> {
         var revX = false;
-        var x0 = this.x[0]; // first value
-        var xn = this.x[ this.n - 1]; // last value
+        var x0 = x[0]; // first value
+        var xn = x[n - 1]; // last value I didn't hello
 
-        if ((this.n < 2)) {
-            throw  new UserException('At least 2 points needed');
+        if ((n < 2)) {
+            throw  new Error('At least 2 points needed');
         }
 
         // determine "x" is ascending or descending
         var max = ((x0 > xn) ? x0 : xn);
-        for (let i = 1; i < this.n; i++) {
+        for (let i = 1; i < n; i++) {
             if (max > x0) {
                 // check if the data is strictly monotonically increasing
-                if (this.x[i] <= this.x[i - 1]) {
-                    const  x1 = i - 1;
-                    throw new UserException(
+                if (x[i] <= x[i - 1]) {
+                    const x1 = i - 1;
+                    throw new Error(
                         'Data must be strictly monotonically increasing or decreasing' + '\n    x['
-                        + i + '] =' + this.x[i] + '\n <= x[' + x1 + '] = ' + this.x[x1] + ' ... ');
+                        + i + '] =' + x[i] + '\n <= x[' + x1 + '] = ' + x[x1] + ' ... ');
                 }
             }
             else {
-                if (this.x[i] >= this.x[i - 1]) {
+                if (x[i] >= x[i - 1]) {
                     // check if the data is strictly monotonically decreasing
-                    const  x1 = i - 1;
-                    throw new UserException(
+                    const x1 = i - 1;
+                    throw new Error(
                         'Data must be strictly monotonically increasing or decreasing' + '\n    x['
-                        + i + '] = ' + this.x[i] + '\n >= x[' + x1 + '] = ' + this.x[x1] + ' ... ');
+                        + i + '] = ' + x[i] + '\n >= x[' + x1 + '] = ' + x[x1] + ' ... ');
 
                 }
                 revX = true;
@@ -69,55 +56,13 @@ export class LinearInterpolator {
         }
 
         if (revX) {
-            this.x= this.x.reverse();
-            this.y= this.y.reverse();
+            x= x.reverse();
+            y= y.reverse();
 
         }
-    }
 
-    /**
-     * @desc this method calculates the output value at the coordinate=xVal.  It first finds the range where xVal falls
-     * in the input array.  Then use the neighbors' points to calculate the slope and then the value.
-     * @param xVal
-     * @returns {*}
-     */
-    getInterpolatedValue(xVal){
+    };
 
-         var i, j, k;
-
-         if ((xVal < this.x[0]) || (xVal > this.x[this.n - 1])) {
-             // Extrapolate if allowed.
-             if (this.allowExtrapolation) {
-                 if (xVal <this.x[0]) {
-                     //left knots.
-                     j = 0;
-                     k = 1;
-                 } else {
-                     //right knots.
-                     j = this.n - 2;
-                     k = this.n - 1;
-                 }
-                 return this.extrapolate(xVal, j, k);
-             } else {
-                 // No extrapolation allowed.
-                 throw new UserException('Abscissa out of range');
-             }
-         } else {
-             // Binary search for correct place in the table.
-             j = 0;
-             k = this.n - 1;
-             while (k - j > 1) {
-                 i = (k + j) >> 1;
-                 if (this.x[i] > xVal) {
-                     k = i;
-                 }
-                 else {
-                     j = i;
-                 }
-             }
-             return this.interpolate(xVal, j, k);
-         }
-     }
 
     /**
      * Algorithm:
@@ -134,9 +79,9 @@ export class LinearInterpolator {
      * @param k
      * @returns {*}
      */
-     interpolate( xVal, j, k) {
-          return  this.y[j] + (this.y[k] - this.y[j]) * (xVal - this.x[j]) / (this.x[k] - this.x[j]);
-     }
+    const interpolate = (xVal, j, k)=> {
+        return y[j] + (y[k] - y[j]) * (xVal - x[j]) / (x[k] - x[j]);
+    };
 
     /**
      * @desc to find the output value beyong the input data range.
@@ -145,13 +90,58 @@ export class LinearInterpolator {
      * @param k
      * @returns {*}
      */
-     extrapolate(xVal,  j,  k) {
+    const extrapolate = (xVal, j, k) => {
 
-        if (xVal < this.x[j]) {
-            return this.y[j] + (this.y[k] - this.y[j]) * (xVal - this.x[j]) / (this.x[k] -this.x[j]);
+        if (xVal < x[j]) {
+            return y[j] + (y[k] - y[j]) * (xVal - x[j]) / (x[k] - x[j]);
         } else {
-            return this.y[k] + (this.y[k] - this.y[j]) * (xVal - this.x[k]) / (this.x[k] - this.x[j]);
+            return y[k] + (y[k] - y[j]) * (xVal - x[k]) / (x[k] - x[j]);
         }
 
-    }
-}
+    };
+
+
+    const getInterpolatedValue=(xVal)=>{
+
+        var i, j, k;
+
+        if ((xVal < x[0]) || (xVal > x[n - 1])) {
+            // Extrapolate if allowed.
+            if (allowExtrapolation) {
+                if (xVal <x[0]) {
+                    //left knots.
+                    j = 0;
+                    k = 1;
+                } else {
+                    //right knots.
+                    j = n - 2;
+                    k = n - 1;
+                }
+                return extrapolate(xVal, j, k);
+            } else {
+                // No extrapolation allowed.
+                throw new Error('Abscissa out of range');
+            }
+        } else {
+            // Binary search for correct place in the table.
+            j = 0;
+            k = n - 1;
+            while (k - j > 1) {
+                i = (k + j) >> 1;
+                if (x[i] > xVal) {
+                    k = i;
+                }
+                else {
+                    j = i;
+                }
+            }
+            return interpolate(xVal, j, k);
+        }
+    };
+
+    //check the input data
+    checkInvariant();
+    return getInterpolatedValue;
+
+};
+
