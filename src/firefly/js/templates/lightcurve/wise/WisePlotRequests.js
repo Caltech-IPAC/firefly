@@ -30,7 +30,6 @@ export function makeWisePlotRequest(table, rowIdx, cutoutSize) {
      set default cutout size 5 arcmin
      const url = `http://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w1-int-1b.fits`;
      */
-
     // convert the default Cutout size in arcmin to deg for WebPlotRequest
     const cutoutSizeInDeg = convertAngle('arcmin','deg', cutoutSize);
 

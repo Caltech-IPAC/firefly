@@ -454,7 +454,7 @@ class LSSTCatalogSelectView extends Component {
      * an Object {project, catalogs} where'progject' is the progject name and 'catalogs' is array of catalog tables.
      * Each element in catalogs is with 'value' for catalog name value, 'label' for text shown on UI, and 'cat' for an
      * array containing column name of the catalog.
-     * @see master table file from http://irsa.ipac.caltech.edu/cgi-bin/Gator/nph-scan?mode=ascii
+     * @see master table file from https://irsa.ipac.caltech.edu/cgi-bin/Gator/nph-scan?mode=ascii
      * @param {Object} master table model
      * @returns {XML} set the state to include master table
      */

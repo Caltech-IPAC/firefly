@@ -53,7 +53,7 @@ public class Query2MassSIA extends QueryVOTABLE  {
     public static final String SCAN_KEY = "scan";
 
     private static final String TM_URL = AppProperties.getProperty("2mass.url.catquery",
-                                                      "http://irsa.ipac.caltech.edu/cgi-bin/2MASS/IM/nph-im_sia?FORMAT=image/fits");
+                                                      "https://irsa.ipac.caltech.edu/cgi-bin/2MASS/IM/nph-im_sia?FORMAT=image/fits");
     @Override
     protected String getWspaceSaveDirectory() {
         return "/" + WorkspaceManager.SEARCH_DIR + "/" + WspaceMeta.IMAGESET;

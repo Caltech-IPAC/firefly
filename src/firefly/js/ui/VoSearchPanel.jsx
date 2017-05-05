@@ -98,7 +98,7 @@ var voSearchArea = () => {
                               /*validator: {urlValidator}*/
                           }}
             size={60}
-            placeholder='Ex. http://irsa.ipac.caltech.edu/SCS?table=allwise_p3as_psd&'
+            placeholder='Ex. https://irsa.ipac.caltech.edu/SCS?table=allwise_p3as_psd&'
             actOn={['blur','enter']}
             wrapperStyle={{margin: '5px 0'}}
         />

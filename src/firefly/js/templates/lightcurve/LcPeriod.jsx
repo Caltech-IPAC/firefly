@@ -222,7 +222,7 @@ const PeriodStandardView = (props) => {
         <FieldGroup groupKey={pfinderkey} style={{display: 'flex', flexDirection: 'column', position: 'relative', flexGrow: 1, minHeight: 500}}
                     reducerFunc={LcPFReducer(initState)}  keepState={true}>
             <div style={{flexGrow: 1, position: 'relative'}}>
-                <SplitPane split='horizontal' primary='second' maxSize={-100} minSize={100} defaultSize={400}>
+                <SplitPane split='horizontal' primary='second' maxSize={-100} minSize={100} defaultSize={200}>
                     <SplitContent>
                         <div className='phaseFolded'>
                             <div className='phaseFolded__options'>

@@ -346,7 +346,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
     private void setupDS(String ibeHost, String baseFsPath, DataProduct ds) {
 
         if (StringUtils.isEmpty(ibeHost)) {
-            ibeHost = AppProperties.getProperty("wise.ibe.host", "http://irsa.ipac.caltech.edu/ibe");
+            ibeHost = AppProperties.getProperty("wise.ibe.host", "https://irsa.ipac.caltech.edu/ibe");
         }
 
         setIbeHost(ibeHost);
