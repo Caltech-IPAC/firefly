@@ -126,7 +126,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
 
     const converterId = get(settingBox, ['props', 'missionEntries', LC.META_MISSION]);
     const convertData = getConverter(converterId);
-    const cutoutSize = get(convertData, 'noImageCutout') ? undefined : get(settingBox, 'props.generalEntries.cutoutSize', '0.3');
+    const cutoutSize = get(convertData, 'noImageCutout') ? undefined : get(settingBox, 'props.generalEntries.cutoutSize', '5');
     const mission = getMissionName(converterId) || 'Mission';
     const showImages = isEmpty(imagePlot);
 

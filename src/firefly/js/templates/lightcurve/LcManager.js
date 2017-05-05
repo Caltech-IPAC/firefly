@@ -76,7 +76,7 @@ export const LC = {
 const plotIdRoot= 'LC_FRAME-';
 
 
-var defaultCutout = '0.2';
+var defaultCutout = '5';
 //var defaultFlux = '';
 
 function getFluxBandName(layoutInfo) {
@@ -282,7 +282,7 @@ function updateRawTableChart(timeCName, fluxCName, converterId) {
 
     if (timeCName && fluxCName) {
 
-        const title =getConverter(converterId).showPlotTitle?getConverter(converterId).showPlotTitle(LC.RAW_TABLE):''
+        const title =getConverter(converterId).showPlotTitle?getConverter(converterId).showPlotTitle(LC.RAW_TABLE):'';
 
         const xyPlotParams = {x: {columnOrExpr: timeCName}, y: {columnOrExpr: fluxCName, options: 'grid,flip'}, plotTitle:title};
 

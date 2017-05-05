@@ -126,7 +126,7 @@ const lsstSdssReducer = (missionEntries, generalEntries) => {
                 {validator: fldValidator(LC.META_FLUX_NAMES)}),
             ['cutoutSize']: Object.assign(getTypeData('cutoutSize', '',
                 'image cutout size',
-                'Cutout Size (deg):', labelWidth)),
+                'Cutout Size (arcmin):', labelWidth)),
             [LC.META_ERR_CNAME]: Object.assign(getTypeData(LC.META_ERR_CNAME, '',
                 'flux error column name',
                 'Error Column:', labelWidth))

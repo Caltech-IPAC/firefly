@@ -185,7 +185,7 @@ export const wiseOptionsReducer = (missionEntries, generalEntries) => {
                 {validator: null}),
             ['cutoutSize']: Object.assign(getTypeData('cutoutSize', '',
                 'image cutout size',
-                'Cutout Size (deg):', 100)),
+                'Cutout Size (arcmin):', 100)),
             [LC.META_URL_CNAME]: Object.assign(getTypeData(LC.META_URL_CNAME, '',
                 'WISE Image identifier column name (frame_id)',
                 'Image Column:', labelWidth)),
