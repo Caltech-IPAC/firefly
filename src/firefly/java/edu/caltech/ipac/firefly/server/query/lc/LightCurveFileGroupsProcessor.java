@@ -104,7 +104,7 @@ public class LightCurveFileGroupsProcessor extends FileGroupsProcessor {
         String pl = request.getSafeParam("ProductLevel");
         String productLevel = pl != null ? pl : "1b";
         IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
-                selectedRows, "source_id_mf", "frame_id", "ra", "dec");
+                selectedRows, "source_id_mf", "source_id", "frame_id", "scan_id", "frame_num", "ra", "dec");
 
 
         String frameidRegex = "(\\d+)([0-9][a-z])(\\w+)";
@@ -117,20 +117,42 @@ public class LightCurveFileGroupsProcessor extends FileGroupsProcessor {
         for (int rowIdx : selectedRows) {
             srcId = (String) dgData.get(rowIdx, "source_id_mf");// should be only one source!
             String frameId = (String) dgData.get(rowIdx, "frame_id");
+            String sourceId = (String) dgData.get(rowIdx, "source_id");
 
 // find scan id , scan group and frame num
-            Matcher matcher = pattern.matcher(frameId);
+            Matcher matcher = null;
+
             String scanId = null, scanGrp = null;
             Integer frameNum = null;
-
-            if (matcher.matches()) {
-                scanId = matcher.group(1) + matcher.group(2);
-                scanGrp = matcher.group(2);
-                frameNum = Integer.parseInt(matcher.group(3));
+            String id = null;
+            if (frameId != null) {
+                id = frameId;
+            } else if (sourceId != null) {
+                id = sourceId.substring(0, sourceId.indexOf('-'));
+            }
+            if (id != null) {
+                matcher = pattern.matcher(id);
+                if (matcher.matches()) {
+                    scanId = matcher.group(1) + matcher.group(2);
+                    scanGrp = matcher.group(2);
+                    frameNum = Integer.parseInt(matcher.group(3));
+                }else{
+                    throw new DataAccessException("frame_id or source_id used doesn't have the right WISE format "+id);
+                }
+            } else {
+                scanId = (String) dgData.get(rowIdx, "scan_id");
+                frameNum = (Integer) dgData.get(rowIdx, "frame_num");
+                if(scanId ==null || frameNum ==null){
+                    throw new DataAccessException("Missing column name for downnloading images");
+                }
             }
 
             Double ra = (Double) dgData.get(rowIdx, "ra");
             Double dec = (Double) dgData.get(rowIdx, "dec");
+
+            if(dec==null || ra==null){
+                cutFlag = false; // ra,dec not present in table, return original images instead
+            }
 
             List<Integer> availableBands = CollectionUtil.asList(WiseRequest.getAvailableBandsForScanID(scanId, schemaGroup));
             for (int i = 1; i < 5; i++) {
