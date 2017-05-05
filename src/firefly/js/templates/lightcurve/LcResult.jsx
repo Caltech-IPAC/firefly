@@ -26,6 +26,7 @@ import {dispatchMultiValueChange, dispatchRestoreDefaults}  from '../../fieldGro
 import {logError} from '../../util/WebUtil.js';
 import {getConverter, getMissionName} from './LcConverterFactory.js';
 import {ERROR_MSG_KEY} from '../lightcurve/generic/errorMsg.js';
+import {convertAngle} from '../../visualize/VisUtil.js';
 
 const resultItems = ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'searchDesc', 'images',
     LC.MISSION_DATA, LC.GENERAL_DATA, 'periodState'];
@@ -126,9 +127,12 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
 
     const converterId = get(settingBox, ['props', 'missionEntries', LC.META_MISSION]);
     const convertData = getConverter(converterId);
-    const cutoutSize = get(convertData, 'noImageCutout') ? undefined : get(settingBox, 'props.generalEntries.cutoutSize', '0.3');
+    const cutoutSize = get(convertData, 'noImageCutout') ? undefined : get(settingBox, 'props.generalEntries.cutoutSize', '5');
     const mission = getMissionName(converterId) || 'Mission';
     const showImages = isEmpty(imagePlot);
+
+    // convert the default Cutout size in arcmin to deg for WebPlotRequest, expected to be string in download panel
+    var cutoutSizeInDeg = (convertAngle('arcmin','deg', cutoutSize)).toString();
 
     var tsView = (err) => {
 
@@ -174,7 +178,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                 <div>
                     <DownloadButton>
                         <DownloadOptionPanel
-                            cutoutSize={cutoutSize}
+                            cutoutSize={cutoutSizeInDeg}
                             title={'Image Download Option'}
                             dlParams={{
                                     MaxBundleSize: 200*1024*1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb

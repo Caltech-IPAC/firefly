@@ -167,7 +167,7 @@ export const defaultOptionsReducer = (missionEntries, generalEntries, typeColumn
                 {validator: null}),
             ['cutoutSize']: Object.assign(getTypeData('cutoutSize', '',
                 'image cutout size',
-                'Cutout Size (deg):', 100)),
+                'Cutout Size (arcmin):', 100)),
             [LC.META_ERR_CNAME]: Object.assign(getTypeData(LC.META_ERR_CNAME, '',
                 'flux error column name',
                 'Error Column:', labelWidth)),

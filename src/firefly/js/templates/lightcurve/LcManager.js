@@ -26,6 +26,8 @@ import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeMissionEntries, keepHighlightedRowSynced} from './LcUtil.jsx';
 import {dispatchMountFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
+import {convertAngle} from '../../visualize/VisUtil.js';
+
 
 
 export const LC = {
@@ -76,7 +78,7 @@ export const LC = {
 const plotIdRoot= 'LC_FRAME-';
 
 
-var defaultCutout = '0.2';
+var defaultCutout = '5';     //5 arcsec
 //var defaultFlux = '';
 
 function getFluxBandName(layoutInfo) {
@@ -282,7 +284,7 @@ function updateRawTableChart(timeCName, fluxCName, converterId) {
 
     if (timeCName && fluxCName) {
 
-        const title =getConverter(converterId).showPlotTitle?getConverter(converterId).showPlotTitle(LC.RAW_TABLE):''
+        const title =getConverter(converterId).showPlotTitle?getConverter(converterId).showPlotTitle(LC.RAW_TABLE):'';
 
         const xyPlotParams = {x: {columnOrExpr: timeCName}, y: {columnOrExpr: fluxCName, options: 'grid,flip'}, plotTitle:title};
 
@@ -679,6 +681,7 @@ export function setupImages(layoutInfo) {
     const newPlotIdAry = makePlotIds(tableModel.highlightedRow, tableModel.totalRows, count);
     const maxPlotIdAry = makePlotIds(tableModel.highlightedRow, tableModel.totalRows, LC.MAX_IMAGE_CNT);
     const cutoutSize = getCutoutSize(layoutInfo);
+
     try {
         newPlotIdAry.forEach((plotId) => {
             var pv = getPlotViewById(vr, plotId);

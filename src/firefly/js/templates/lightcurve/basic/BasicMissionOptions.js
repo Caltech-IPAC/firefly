@@ -167,7 +167,7 @@ export const basicOptionsReducer = (missionEntries, generalEntries, typeColumns)
                 {validator: null}),
             ['cutoutSize']: Object.assign(getTypeData('cutoutSize', '',
                 'image cutout size',
-                'Cutout Size (deg):', 100)),
+                'Cutout Size (arcmin):', 100)),
             [LC.META_URL_CNAME]: Object.assign(getTypeData(LC.META_URL_CNAME, '',
                 'Image url column name',
                 'Source Column:', labelWidth))

@@ -10,6 +10,7 @@ import {isNil, isEmpty} from 'lodash';
 import {ERROR_MSG_KEY} from '../generic/errorMsg.js';
 
 import {addCommonReqParams} from '../LcConverterFactory.js';
+import {convertAngle} from '../../../visualize/VisUtil.js';
 
 export function makeWisePlotRequest(table, rowIdx, cutoutSize) {
     const ra = getCellValue(table, rowIdx, 'ra');
@@ -26,15 +27,18 @@ export function makeWisePlotRequest(table, rowIdx, cutoutSize) {
     /*the following should be from reading in the url column returned from LC search
      we are constructing the url for wise as the LC table does
      not have the url column yet
-     It is only for WISE, using default cutout size 0.3 deg
+     set default cutout size 5 arcmin
      const url = `http://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w1-int-1b.fits`;
      */
-    const serverinfo = 'https://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/';
-    const centerandsize = cutoutSize ? `?center=${ra},${dec}&size=${cutoutSize}&gzip=false` : '';
+    // convert the default Cutout size in arcmin to deg for WebPlotRequest
+    const cutoutSizeInDeg = convertAngle('arcmin','deg', cutoutSize);
+
+    const serverinfo = 'http://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/';
+    const centerandsize = cutoutSize ? `?center=${ra},${dec}&size=${cutoutSizeInDeg}&gzip=false` : '';
     const url = `${serverinfo}${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w${band}-int-1b.fits${centerandsize}`;
     const plot_desc = `WISE-${frameId}`;
     const reqParams = WebPlotRequest.makeURLPlotRequest(url, plot_desc);
-    const title = 'WISE-' + frameId + (cutoutSize ? ` size: ${cutoutSize}(deg)` : '');
+    const title = 'WISE-' + frameId + (cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
     return addCommonReqParams(reqParams, title, makeWorldPt(ra, dec, CoordinateSys.EQ_J2000));
 }
 
@@ -61,6 +65,9 @@ export function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, param
     const frameNum = getCellValue(tableModel, hlrow, 'frame_num');
     const scanId = getCellValue(tableModel, hlrow, 'scan_id');
     const sourceId = getCellValue(tableModel, hlrow, 'source_id');
+
+    // convert the default Cutout size in arcmin to deg for WebPlotRequest
+    const cutoutSizeInDeg = convertAngle('arcmin','deg', cutoutSize);
 
     try {
         var wise_sexp_ibe = /(\d+)([0-9][a-z])(\w+)/g;
@@ -108,9 +115,9 @@ export function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, param
             sr.setParam('in_dec', `${dec}`);
             wp = makeWorldPt(ra, dec, CoordinateSys.EQ_J2000);
             sr.setParam('doCutout', 'true');
-            sr.setParam('size', `${cutoutSize}`);
-            sr.setParam('subsize', `${cutoutSize}`);
-            title = 'WISE-W' + band + '-' + tmpId + (cutoutSize ? ` size: ${cutoutSize}(deg)` : '');
+            sr.setParam('size', `${cutoutSizeInDeg}`);
+            sr.setParam('subsize', `${cutoutSizeInDeg}`);
+            title = 'WISE-W' + band + '-' + tmpId + (cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
         }
 
         const reqParams = WebPlotRequest.makeProcessorRequest(sr, 'wise');
