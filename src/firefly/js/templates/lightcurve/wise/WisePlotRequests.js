@@ -30,8 +30,12 @@ export function makeWisePlotRequest(table, rowIdx, cutoutSize) {
      set default cutout size 5 arcmin
      const url = `http://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w1-int-1b.fits`;
      */
+
+    // convert the default Cutout size in arcmin to deg for WebPlotRequest
+    const cutoutSizeInDeg = convertAngle('arcmin','deg', cutoutSize);
+
     const serverinfo = 'http://irsa.ipac.caltech.edu/ibe/data/wise/merge/merge_p1bm_frm/';
-    const centerandsize = cutoutSize ? `?center=${ra},${dec}&size=${cutoutSize}&gzip=false` : '';
+    const centerandsize = cutoutSize ? `?center=${ra},${dec}&size=${cutoutSizeInDeg}&gzip=false` : '';
     const url = `${serverinfo}${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w${band}-int-1b.fits${centerandsize}`;
     const plot_desc = `WISE-${frameId}`;
     const reqParams = WebPlotRequest.makeURLPlotRequest(url, plot_desc);
