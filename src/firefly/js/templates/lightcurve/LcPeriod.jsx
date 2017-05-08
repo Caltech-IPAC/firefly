@@ -24,7 +24,7 @@ import {LC, updateLayoutDisplay, getValidValueFrom, getFullRawTable} from './LcM
 import {doPFCalculate, getPhase} from './LcPhaseTable.js';
 import {LcPeriodogram, cancelPeriodogram, popupId} from './LcPeriodogram.jsx';
 import {ReadOnlyText, getTypeData} from './LcUtil.jsx';
-import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
+import {LO_VIEW, getLayouInfo,dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 import {isDialogVisible, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {updateSet} from '../../util/WebUtil.js';
 import ReactHighcharts from 'react-highcharts';
@@ -222,7 +222,7 @@ const PeriodStandardView = (props) => {
         <FieldGroup groupKey={pfinderkey} style={{display: 'flex', flexDirection: 'column', position: 'relative', flexGrow: 1, minHeight: 500}}
                     reducerFunc={LcPFReducer(initState)}  keepState={true}>
             <div style={{flexGrow: 1, position: 'relative'}}>
-                <SplitPane split='horizontal' primary='second' maxSize={-100} minSize={100} defaultSize={400}>
+                <SplitPane split='horizontal' primary='second' maxSize={-100} minSize={100} defaultSize={200}>
                     <SplitContent>
                         <div className='phaseFolded'>
                             <div className='phaseFolded__options'>
@@ -233,22 +233,6 @@ const PeriodStandardView = (props) => {
                     </SplitContent>
                     <LcPeriodogram displayMode={displayMode}/>
                 </SplitPane>
-            </div>
-            <div style={{flexGrow: 0, display: 'inline-flex', justifyContent: 'flex-end', height: 40}}>
-                <div style={{marginTop:7, marginRight:10}}>
-                    <HelpIcon helpId={'findpTSV.acceptp'}/>
-                </div>
-                <div style={{margin: 5}}>
-                    <button type='button' className='button std hl' onClick={()=>cancelStandard()}>Cancel</button>
-                </div>
-                <CompleteButton
-                    style={aroundButton}
-                    groupKey={[pfinderkey]}
-                    onSuccess={setPFTableSuccess()}
-                    onFail={setPFTableFail()}
-                    text={acceptPeriodTxt}
-                    includeUnmounted={true}
-                />
             </div>
         </FieldGroup>
     );
@@ -608,25 +592,44 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
     var marks = getSliderMarks(minPerN, maxPerN, sliderMin, sliderMax, NOMark);
     var offset = 16;
     var highlightW = PanelResizableStyle.width-panelSpace - offset;
-    var pSize = panelSpace/2 - 5;
-
+    var pSize = panelSpace / 2 - 5;
+    let styleItem = {display: 'list-item', marginLeft: '10px', paddingBottom:'20px'};
+    let innerItem = {display: 'inline-flex', maxWidth: '100%', alignItems: 'center'};
     return (<div style={{width: PanelResizableStyle.width - offset}}>
-                <div style={{display:'flex', flexDirection:'row-reverse', justifyContent:'space-between'}}>
-                    <HelpIcon helpId={'findpTSV.settings'}/>
+            <div style={{display:'flex', flexDirection:'row-reverse', justifyContent:'space-between'}}>
+                <HelpIcon helpId={'findpTSV.settings'}/>
+            </div>
+            {'Vary period and time offset while visualizing phase folded plot. ' +
+            'Optionally calculate periodogram. ' +
+            'When satisfied, click Accept to return to Time Series Viewer with phase folded table.'}
+            <br/>
+            <br/>
+            <br/>
+            {ReadOnlyText({
+                label: get(defValues, [fKeyDef.time.fkey, 'label']),
+                labelWidth: get(defValues, [fKeyDef.time.fkey, 'labelWidth']),
+                content: get(fields, [fKeyDef.time.fkey, 'value'])
+            })}
+            <br/>
+            {ReadOnlyText({
+                label: get(defValues, [fKeyDef.flux.fkey, 'label']),
+                labelWidth: get(defValues, [fKeyDef.flux.fkey, 'labelWidth']),
+                content: get(fields, [fKeyDef.flux.fkey, 'value'])
+            })}
+            <br/>
+            <h3>{'Set Period'}</h3>
+            <div style={styleItem}>
+                <div style={innerItem}>
+                    <ValidationField fieldKey={fKeyDef.period.fkey} label='Enter manually:'/>
+                    <button type='button' className='button std hl'
+                            onClick={() => resetPeriodDefaults(defPeriod)}>
+                        <b>Reset</b>
+                    </button>
                 </div>
-                <br/>
-                {ReadOnlyText({label: get(defValues, [fKeyDef.time.fkey, 'label']),
-                               labelWidth: get(defValues, [fKeyDef.time.fkey, 'labelWidth']),
-                               content: get(fields, [fKeyDef.time.fkey, 'value'])})}
-                <br/>
-                {ReadOnlyText({label: get(defValues, [fKeyDef.flux.fkey, 'label']),
-                               labelWidth: get(defValues, [fKeyDef.flux.fkey, 'labelWidth']),
-                               content: get(fields, [fKeyDef.flux.fkey, 'value'])})}
-                <br/>
-                <ValidationField fieldKey={fKeyDef.tz.fkey} />
-                <br/>
-                <br/>
-                <div style={{display: 'flex', alignItems: 'center'}}>
+            </div>
+            <div style={styleItem}>
+                <div>{'Slide to select:'}</div>
+                <div style={innerItem}>
                     <ValidationField fieldKey={fKeyDef.min.fkey} style={{width: pSize}}/>
                     <RangeSlider fieldKey={fKeyDef.period.fkey}
                                  min={sliderMin}
@@ -643,25 +646,30 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
                     />
                     <ValidationField fieldKey={fKeyDef.max.fkey} style={{width: pSize}}/>
                 </div>
-                <br/>
-                <div style={{display: 'flex', alignItems: 'center', marginTop: 20 }}>
-                    <div style={{padding: 10, width: highlightW - 10,
-                                 display: 'flex', justifyContent: 'space-between',
-                                 border: highlightBorder}}>
-                        <ValidationField fieldKey={fKeyDef.period.fkey} />
-                        <div>
-                            {/*<button type='button' className='button std hl' onClick={revertPeriod}>
-                                {revertPeriodTxt}
-                            </button>*/}
-                        </div>
-                    </div>
-                    <div style={{marginLeft: 30}} >
-                        <button type='button' className='button std hl'  onClick={() => resetPeriodDefaults(defPeriod)}>
-                            <b>Reset</b>
-                        </button>
-                    </div>
+            </div>
+            <div style={styleItem}>
+                <div style={innerItem}>
+                    {'Calculate periodogram (below) and click to select period.'}
                 </div>
             </div>
+            <div style={{display:'flex', alignItems:'center'}}>
+                <h3>{'Set Time Offset:'}</h3><ValidationField style={{marginLeft:'20px'}} fieldKey={fKeyDef.tz.fkey} label=''/>
+            </div>
+            <br/>
+            <div style={{display: 'flex', alignItems:'center'}}>
+                <CompleteButton
+                    groupKey={[pfinderkey]}
+                    onSuccess={setPFTableSuccess()}
+                    onFail={setPFTableFail()}
+                    text={'Accept'}
+                    includeUnmounted={true}
+                />
+                <div style={{margin: 5}}>
+                    <button type='button' className='button std hl' onClick={()=>cancelStandard()}>Cancel</button>
+                </div>
+                <HelpIcon helpId={'findpTSV.acceptp'}/>
+            </div>
+        </div>
     );
 }
 
@@ -692,7 +700,7 @@ var LcPFReducer= (initState) => {
                 set(defV, [fKeyDef.max.fkey, 'value'], `${max}`);
                 set(defV, [fKeyDef.time.fkey, 'value'], time);
                 set(defV, [fKeyDef.flux.fkey, 'value'], flux);
-                set(defV, [fKeyDef.period.fkey, 'value'], `${min}`);
+                //set(defV, [fKeyDef.period.fkey, 'value'], `${min}`);
                 set(defV, [fKeyDef.tz.fkey, 'value'], `${tzero}`);
                 set(defV, [fKeyDef.tzmax.fkey, 'value'], `${tzeroMax}`);
 
@@ -905,11 +913,21 @@ function setPFTableSuccess() {
     return (request) => {
         const reqData = get(request, pfinderkey);
         const timeName = get(reqData, fKeyDef.time.fkey);
-        const period = get(reqData, fKeyDef.period.fkey);
         const flux = get(reqData, fKeyDef.flux.fkey);
         const tzero = get(reqData, fKeyDef.tz.fkey);
+        const period = get(reqData, fKeyDef.period.fkey);
 
         doPFCalculate(flux, timeName, period, tzero);
+
+        const min = get(reqData, fKeyDef.min.fkey,defPeriod.min );
+        const max = get(reqData, fKeyDef.max.fkey, defPeriod.max);
+        const tzeroMax = get(reqData, fKeyDef.tzmax.fkey.fkey, defPeriod.tzeroMax);
+
+        const layoutInfo = getLayouInfo();
+        dispatchUpdateLayoutInfo(Object.assign({}, layoutInfo, {
+
+            periodRange: {min, max, tzero, tzeroMax, period}
+        }));
 
         if (isDialogVisible(popupId)) {
             cancelPeriodogram();
@@ -979,5 +997,6 @@ export function resetPeriodDefaults(defPeriod) {
     if (multiVals.length > 0) {
         dispatchMultiValueChange(pfinderkey, multiVals);
     }
+
 }
 

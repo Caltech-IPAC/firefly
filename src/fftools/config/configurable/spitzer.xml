@@ -10,7 +10,7 @@
         <Title>SEIP Super Mosaics</Title>
         <Desc>Spitzer Enhances Imaging Products: Super Mosaics</Desc>
         <DataSource searchProcId="RTreeInventory">
-            <Param key="serviceurl" value="http://irsa.ipac.caltech.edu/cgi-bin/SSCDemo/nph-sscdemo"/>
+            <Param key="serviceurl" value="https://irsa.ipac.caltech.edu/cgi-bin/SSCDemo/nph-sscdemo"/>
             <Param key="dataset" value="ivo://irsa.ipac/spitzer.enhancedImages"/>
         </DataSource>
         <Form>

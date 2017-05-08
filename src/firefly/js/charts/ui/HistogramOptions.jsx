@@ -76,70 +76,79 @@ var columnNameReducer= (colValStats) => {
         }
         let fieldKey = undefined;
         if (!isEmpty(colValStats) && action.type === VALUE_CHANGE) {
-            // when column name changes, update the min/max input
             fieldKey = get(action.payload, 'fieldKey');
-            switch (fieldKey){
-                case 'columnOrExpr':
-                    const colName = action.payload.value;
-                    if (colName ) {
-                        if (isSingleColumn(colName, colValStats)) {
-                            for (var i=0; i<colValStats.length; i++){
-                                if (colName=== colValStats[i].name) {
-                                    const dataMin = colValStats[i].min;
-                                    const dataMax = colValStats[i].max;
-                                    const numBins = get(inFields, ['numBins','value'], 50);
-                                    var  binWidth =((dataMax - dataMin) /numBins).toFixed(6);
+            switch (fieldKey) {
+                // when column name changes, update the min/max input
+                case 'columnOrExpr': {
+                      const numBins = get(inFields, ['numBins', 'value'], 50);
+                      const colName = action.payload.value;
+                       if (colName) {
+                           if (isSingleColumn(colName, colValStats)) {
+                               for (var i = 0; i < colValStats.length; i++) {
+                                   if (colName === colValStats[i].name) {
+                                       const dataMin = colValStats[i].min;
+                                       const dataMax = colValStats[i].max;
+                                       var binWidth = ((dataMax - dataMin) / numBins).toFixed(6);
+                                       inFields = updateSet(inFields, ['minCutoff', 'value'], `${dataMin}`);
+                                       inFields = updateSet(inFields, ['maxCutoff', 'value'], `${dataMax}`);
+                                       inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
+                                       break;
+                                   }
+                               }
+                           }
+                           else {
+                               inFields = updateSet(inFields, ['minCutoff', 'value'], undefined);
+                               inFields = updateSet(inFields, ['maxCutoff', 'value'], undefined);
+                               inFields = updateSet(inFields, ['binWidth', 'value'], undefined);
+                           }
+                         }
 
-                                    inFields = updateSet(inFields, ['minCutoff', 'value'], `${dataMin}`);
-                                    inFields = updateSet(inFields, ['maxCutoff', 'value'], `${dataMax}`);
-                                    if (isFinite(parseFloat(binWidth)) ){
-                                        inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
-                                    }
-                                    else {
-                                        inFields = updateSet(inFields, ['binWidth', 'value'], '');
-                                    }
-
-                                    break;
-
-                                }
-                            }
-
-                        }
-                        else {
-                            inFields = updateSet(inFields, ['minCutoff', 'value'], undefined);
-                            inFields = updateSet(inFields, ['maxCutoff', 'value'], undefined);
-                            inFields = updateSet(inFields, ['binWidth', 'value'], undefined);
-                        }
                     }
-
                     break;
-                case 'numBins':
+               //When numBins changes, update binWidth
+                case 'numBins':  {
+                         const numBins = get(inFields, ['numBins', 'value'], 50);
+                         const min = get(inFields, ['minCutoff', 'value'], '');
+                         const max = get(inFields, ['maxCutoff', 'value'], '');
+                         const binWidth = (max - min) / numBins;
+                         inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
+                    }
+                    break;
+                //when binWidth changes, update the numBins
+                case 'binWidth': {
+                         const binWidth = get(inFields, ['binWidth', 'value'], '');
+                         const min = get(inFields, ['minCutoff', 'value'], '');
+                         const max = get(inFields, ['maxCutoff', 'value'], '');
+                         const numBins =Math.ceil((max - min) / binWidth);
+                         inFields = updateSet(inFields, ['numBins', 'value'], `${numBins}`);
+                    }
+                    break;
+                //when minCutOff or maxCutOff change, update numBins
                 case 'minCutoff':
-                case 'maxCutoff':
-                    const numBins = get(inFields, ['numBins','value'], 50);
-                    const cName   = get(inFields, ['columnOrExpr','value'], undefined);
-                    if (!cName) break;
-                    for (let i=0; i<colValStats.length; i++){
-                        if (cName=== colValStats[i].name){
-                            const dataMin = get(inFields,['minCutoff','value'], colValStats[i].min);
-                            const dataMax = get(inFields,['maxCutoff','value'],  colValStats[i].max);
-                            var  binWidth = ((dataMax - dataMin)/numBins).toFixed(6);
+                case 'maxCutoff':   {
 
-                            inFields = updateSet(inFields, ['minCutoff', 'value'],`${dataMin}`);
-                            inFields = updateSet(inFields, ['maxCutoff', 'value'], `${dataMax}`);
-                           // inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
-                            if (isFinite(parseFloat(binWidth)) ){
-                                inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
-                            }
-                            else {
-                                inFields = updateSet(inFields, ['binWidth', 'value'], '');
-                            }
-                            break;
+                    const fixedBinSizeSelection = get(inFields, ['fixedBinSizeSelection', 'value']);
+                    var numBins, min, max, binWidth;
+                    if (fixedBinSizeSelection==='numBins'){
+                        numBins = get(inFields, ['numBins', 'value'], 50);
+                        min = get(inFields, ['minCutoff', 'value'], '');
+                        max = get(inFields, ['maxCutoff', 'value'], '');
+                        binWidth = (max - min) / numBins;
+                        inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
 
-                        }
                     }
+                    else {
+                         binWidth = get(inFields, ['binWidth', 'value'], '');
+                         numBins = get(inFields, ['numBins', 'value'], 50);
 
+                         min = get(inFields, ['minCutoff', 'value'], '');
+                         max = get(inFields, ['maxCutoff', 'value'], '');
+
+                         numBins = Math.ceil((max - min) / binWidth);
+                        inFields = updateSet(inFields, ['numBins', 'value'], `${numBins}`);
+                    }
                     break;
+                }
                 default:
                     break;
             }
@@ -320,7 +329,7 @@ export class HistogramOptions extends React.Component {
                                 options={[
                                     {label: 'reverse', value: 'flip'},
                                     {label: 'top', value: 'opposite'},
-                                    {label: 'log', value: 'log'}
+                                    /*{label: 'log', value: 'log'}*/
                                 ]}
                                 fieldKey='x'
                             />
@@ -381,7 +390,7 @@ function renderFixedBinSizeOptions(groupKey, histogramParams, disabled){
                  style={{width: 80}}
                  initialState= {{
                                   value: get(histogramParams, 'numBins', '50'),
-                                  validator:Validate.intRange.bind(null, 1, 500, 'numBins'),
+                                  validator:Validate.intRange.bind('number of bins ', 1, 500, 'numBins', false),
                                   tooltip: 'Number of bins'
 
                              }}
@@ -394,7 +403,7 @@ function renderFixedBinSizeOptions(groupKey, histogramParams, disabled){
                  style={{width: 80}}
                  initialState= {{
                                   value: get(histogramParams, 'binWidth', ''),
-                                  validator:Validate.isFloat.bind(null,  'binWidth'),
+                                  validator:Validate.isFloat.bind('bin width',  'binWidth'),
                                   tooltip: 'Bin width'
 
                              }}

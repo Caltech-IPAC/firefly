@@ -10,7 +10,6 @@ import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
 import {dispatchHideDropDown, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
 import {lcManager, LC} from './LcManager.js';
-import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
 import {LcResult} from './LcResult.jsx';
 import {LcPeriod} from './LcPeriod.jsx';
 import {LcPeriodPlotly} from './LcPeriodPlotly.jsx';
@@ -28,8 +27,12 @@ import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {HelpIcon} from './../../ui/HelpIcon.jsx';
+import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
+import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 
+import {HelpText} from './../../ui/HelpText.jsx';
+import {HELP_LOAD} from '../../core/AppDataCntlr.js';
 
 const vFileKey = LC.FG_FILE_FINDER;
 /**
@@ -136,7 +139,7 @@ export class LcViewer extends Component {
         };
         let title = appTitle;
         if (displayMode && displayMode.startsWith('period')) {
-            title = appTitle + ': Period Finder'
+            title = appTitle + ': Period Finder';
 
         } else if(displayMode && !displayMode.startsWith('period')){
             title = appTitle + ': Viewer';
@@ -221,14 +224,23 @@ BannerSection.propTypes = {
  * @param {Object} props react component's props
  */
 export function UploadPanel(props) {
-    const wrapperStyle = {margin: '5px 0'};
+    const wrapperStyle = {color:'inherit', margin: '5px 0'};
     const {missionOptions=getAllConverterIds()} = props || {};
+
+    let instruction = 'Plot time series data, view associated images, find period, and phase fold.';
 
     const options = missionOptions.map((id) => {
         return {label: getMissionName(id) || capitalize(id), value: id};
     });
+    var helpClick = (helpId) => {
+        flux.process({
+            type: HELP_LOAD,
+            payload: {helpId}
+        });
+    };
     return (
         <div style={{padding: 10}}>
+            <div style={{margin: '0px 5px 5px'}}>{instruction}</div>
             <FormPanel
                 groupKey={vFileKey}
                 onSubmit={(request) => onSearchSubmit(request)}
@@ -236,24 +248,43 @@ export function UploadPanel(props) {
                 submitText={'Upload'}
                 help_id={'loadingTSV'}>
                 <FieldGroup groupKey={vFileKey} validatorFunc={null} keepState={true}>
-                    <FileUpload
-                        wrapperStyle={wrapperStyle}
-                        fieldKey='rawTblSource'
-                        initialState={{
+                    <div
+                        style={{padding:5 }}>
+                        <div
+                            style={{padding:5, display:'flex', flexDirection:'row', alignItems:'center' }}>
+                            <div
+                                style={{display:'flex', flexDirection:'column', alignItems: 'flex-end', margin:'0px 13px'}}>
+                                <div> {'Upload time series table:'} </div>
+                                <HelpText helpId={'loadingTSV'} linkText={'(See requirements)'} />
+                                </div>
+                            <FileUpload
+                                wrapperStyle={wrapperStyle}
+                                fieldKey='rawTblSource'
+                                initialState={{
                             tooltip: 'Select a Time Series Table file to upload',
-                            label: 'Time Series Table:'
+                            label: ''
                         }}
-                    />
-                    <ListBoxInputField fieldKey='mission'
-                                       wrapperStyle={wrapperStyle}
-                                       initialState={{
+                            />
+                        </div>
+                        <div
+                            style={{padding:5,display:'flex', flexDirection:'row', alignItems:'center' }}>
+                            <div
+                                style={{display:'flex', flexDirection:'column', alignItems: 'flex-end', margin:'0px 10px'}}>
+                                    <div>{'Choose mission'}</div>
+                                    <div>{'to view associated images:'}</div>
+                                </div>
+                            <ListBoxInputField fieldKey='mission'
+                                               wrapperStyle={wrapperStyle}
+                                               initialState={{
                             value: 'wise',
-                            tooltip: 'Enter the name of the mission',
-                            label : 'Mission:',
-                            labelWidth : 45
+                            tooltip: 'Choose mission to view associated images',
+                            label : '',
+                            labelWidth : 0
                         }}
-                                       options={options}
-                    />
+                                               options={options}
+                            />
+                        </div>
+                    </div>
                 </FieldGroup>
             </FormPanel>
         </div>
@@ -274,7 +305,11 @@ function onSearchSubmit(request) {
         const converter = getConverter(request.mission);
         if (!converter) return;
 
-        const treq = converter.rawTableRequest(converter, request.rawTblSource);
+        var fields = FieldGroupUtils.getGroupFields(vFileKey);
+        const displayName = fields.rawTblSource.displayValue.split('\\');
+        const uploadedFileName = displayName[displayName.length-1];
+        const treq = converter.rawTableRequest(converter, request.rawTblSource,uploadedFileName);
+
         dispatchTableSearch(treq, {removable: true});
         dispatchHideDropDown();
     }

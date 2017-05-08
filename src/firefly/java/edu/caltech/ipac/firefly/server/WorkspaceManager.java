@@ -44,7 +44,7 @@ public class WorkspaceManager {
     public static final String WS_ROOT_DIR = AppProperties.getProperty("workspace.root.dir", "/work");
     public static final String WS_HOST_URL = AppProperties.getProperty("workspace.host.url", "https://irsa.ipac.caltech.edu");
 
-    private static final Namespace IRSA_NS = Namespace.getNamespace("irsa", "http://irsa.ipac.caltech.edu/namespace/");
+    private static final Namespace IRSA_NS = Namespace.getNamespace("irsa", "https://irsa.ipac.caltech.edu/namespace/");
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
     public enum Partition { PUBSPACE, SSOSPACE;

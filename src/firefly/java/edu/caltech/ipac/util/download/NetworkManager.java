@@ -51,11 +51,11 @@ public class NetworkManager {
        addServerWithProp(SKYVIEW_SERVER,       "skys.gsfc.nasa.gov",       80);
        addServerWithProp(HEASARC_SERVER,       "heasarc.gsfc.nasa.gov",    80);
        addServerWithProp(VIZIER_SERVER,        "vizier.u-strasbg.fr",      80);
-       addServerWithProp(IRSA,                 "irsa.ipac.caltech.edu",    80);
+       addServerWithProp(IRSA,                 "irsa.ipac.caltech.edu",    443);
        addServerWithProp(AUTO_UPDATE_SERVER,   "soas.ipac.caltech.edu",    80);
        addServerWithProp(SPITZER_ARCHIVE,     "archive.spitzer.caltech.edu",80);
        addServerWithProp(SPIZTER_POPULAR,      "data.spitzer.caltech.edu",80);
-       addServerWithProp(HORIZONS_NAIF,        "ssd.jpl.nasa.gov"         ,443);
+       addServerWithProp(HORIZONS_NAIF,        "ssd.jpl.nasa.gov"          ,443);
        addServerWithProp(SDSS_SERVER,          "cas.sdss.org"             ,80);
      }
 

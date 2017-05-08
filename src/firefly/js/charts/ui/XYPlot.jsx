@@ -255,6 +255,6 @@ XYPlot.defaultProps = {
     onHighlightChange: undefined,
     onSelection: undefined,
     height: 300,
-    desc: 'Sample XY Plot'
+    desc: ''
 };
 

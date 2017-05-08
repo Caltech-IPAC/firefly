@@ -26,6 +26,7 @@ import {dispatchMultiValueChange, dispatchRestoreDefaults}  from '../../fieldGro
 import {logError} from '../../util/WebUtil.js';
 import {getConverter, getMissionName} from './LcConverterFactory.js';
 import {ERROR_MSG_KEY} from '../lightcurve/generic/errorMsg.js';
+import {convertAngle} from '../../visualize/VisUtil.js';
 
 const resultItems = ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'searchDesc', 'images',
     LC.MISSION_DATA, LC.GENERAL_DATA, 'periodState'];
@@ -94,7 +95,7 @@ export class LcResult extends Component {
 
         content.settingBox = (<SettingBox generalEntries={generalEntries}
                                           missionEntries={missionEntries}
-                                          periodState={periodState} />);
+                                          periodState={periodState}  />);
 
 
         expanded = LO_VIEW.get(expanded) || LO_VIEW.none;
@@ -126,9 +127,12 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
 
     const converterId = get(settingBox, ['props', 'missionEntries', LC.META_MISSION]);
     const convertData = getConverter(converterId);
-    const cutoutSize = get(convertData, 'noImageCutout') ? undefined : get(settingBox, 'props.generalEntries.cutoutSize', '0.3');
+    const cutoutSize = get(convertData, 'noImageCutout') ? undefined : get(settingBox, 'props.generalEntries.cutoutSize', '5');
     const mission = getMissionName(converterId) || 'Mission';
     const showImages = isEmpty(imagePlot);
+
+    // convert the default Cutout size in arcmin to deg for WebPlotRequest, expected to be string in download panel
+    var cutoutSizeInDeg = (convertAngle('arcmin','deg', cutoutSize)).toString();
 
     var tsView = (err) => {
 
@@ -174,7 +178,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                 <div>
                     <DownloadButton>
                         <DownloadOptionPanel
-                            cutoutSize={cutoutSize}
+                            cutoutSize={cutoutSizeInDeg}
                             title={'Image Download Option'}
                             dlParams={{
                                     MaxBundleSize: 200*1024*1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
@@ -230,24 +234,27 @@ class SettingBox extends Component {
 
         const groupKey = getViewerGroupKey(missionEntries);
         return (
-            <div style={{position: 'relative', display: 'inline-flex', justifyContent: 'space-between', width: '100%'}}>
-                <div style={{alignSelf: 'flex-end'}}>
-                    <MissionOptions {...{missionEntries, generalEntries}}/>
-                </div>
+            <div>
+                <div style={{position: 'relative', display: 'inline-flex', justifyContent: 'space-between', width: '100%'}}>
+                  <div style={{alignSelf: 'flex-end'}}>
+                      <MissionOptions {...{missionEntries, generalEntries}}/>
+                  </div>
 
-                <div style={{alignSelf: 'flex-end', marginLeft: 10}}>
-                    <CompleteButton
-                        style={{marginLeft: 10}}
-                        groupKey={groupKey}
-                        onSuccess={setViewerSuccess(periodState)}
-                        onFail={setViewerFail()}
-                        text={'Find Period'}
-                    />
-                </div>
-                <div style={{display: 'flex', flexDirection: 'row-reverse'}}>
-                    <HelpIcon helpId={'main1TSV.settings'}/>
-                </div>
-            </div>
+                  <div style={{display: 'flex', flexDirection: 'row-reverse'}}>
+                      <HelpIcon helpId={'main1TSV.settings'}/>
+                  </div>
+
+              </div>
+              <div >
+                <CompleteButton
+                     style={{ width:'1200px'}}
+                     groupKey={groupKey}
+                     onSuccess={setViewerSuccess(periodState)}
+                     onFail={setViewerFail()}
+                     text={'Period Finder...'}
+                 />
+              </div>
+          </div>
         );
     }
 }
@@ -295,6 +302,9 @@ function updateFullRawTable(callback) {
         var max = 365;
         var min = Math.pow(10, -3);   // 0.001
 
+       // var period = get( FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER), ['period', 'value'], '');
+
+        const period = '';
         var fields = FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER);
         var initState;
 
@@ -304,7 +314,7 @@ function updateFullRawTable(callback) {
                 {fieldKey: 'flux', value: get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME])},
                 {fieldKey: 'periodMin', value: `${min}`},
                 {fieldKey: 'periodMax', value: `${max}`},
-                {fieldKey: 'period', value: `${min}`},
+                {fieldKey: 'period', value: `${period}`},
                 {fieldKey: 'tzero', value: `${tzero}`},
                 {fieldKey: 'tzeroMax', value: `${tzeroMax}`}];
 
@@ -317,7 +327,7 @@ function updateFullRawTable(callback) {
 
         dispatchUpdateLayoutInfo(Object.assign({}, layoutInfo, {
             fullRawTable,
-            periodRange: {min, max, tzero, tzeroMax}
+            periodRange: {min, max, tzero, tzeroMax, period}
         }));
         callback && callback();
     };

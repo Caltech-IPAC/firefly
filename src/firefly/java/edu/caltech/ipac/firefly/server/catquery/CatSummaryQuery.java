@@ -42,7 +42,7 @@ public class CatSummaryQuery  extends DynQueryProcessor {
 
 
     private static final String DEF_HOST    = AppProperties.getProperty("irsa.catSummary.hostname", "");
-    private static final String URL_FORMAT  = "http://%s/%s?%s";
+    private static final String URL_FORMAT  = "%s/%s?%s";
 
 
     protected File loadDynDataFile(TableServerRequest req) throws IOException, DataAccessException {

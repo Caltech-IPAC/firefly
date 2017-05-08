@@ -170,9 +170,12 @@ PeriodogramButton.propTypes = {
 
 function ChangePeriodogram() {
     return (
-        <button type='button' className='button std hl'
-                 onClick={startPeriodogramPopup(LC.FG_PERIODOGRAM_FINDER)}>Recalculate Periodogram
-        </button>
+        <div style = {{display:'flex', justifyContent:'space-between', alignItems:'center', marginRight:'10px'}}>
+            <button type='button' className='button std hl'
+                    onClick={startPeriodogramPopup(LC.FG_PERIODOGRAM_FINDER)}>Recalculate Periodogram
+            </button>
+            {'Click on plot or table to choose period.'}
+        </div>
     );
 }
 
@@ -201,7 +204,7 @@ export var startPeriodogramPopup = (groupKey) =>  {
                                 groupKey={groupKey}
                                 onSuccess={periodogramSuccess(popupId, true)}
                                 onFail={periodogramFail(popupId, true)}
-                                text={'Periodogram Calculation'} />
+                                text={'Calculate'} />
                     </div>
                     <div style={{marginTop:17}}>
                         <HelpIcon helpId={'findpTSV.pgramresults'}/>
@@ -524,7 +527,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             peaks: get(request, [pKeyDef.peaks.fkey]),
             table_name: LC.PEAK_TABLE,
             sortInfo: sortInfoString('SDE', false)                 // sort peak table by column SDE, descending
-        }, {tbl_id: LC.PEAK_TABLE, pageSize: parseInt(peak), noPeriodUpdate: true});
+        }, {tbl_id: LC.PEAK_TABLE, pageSize: parseInt(peak)}); //, noPeriodUpdate: true //see LcManager#getPeriodFromTable
 
         var tReq = makeTblRequest('LightCurveProcessor', LC.PERIODOGRAM_TABLE, {
             original_table: srcFile,
@@ -548,7 +551,9 @@ function periodogramSuccess(popupId, hideDropDown = false) {
                 userSetBoundaries: {yMin: 0},
                 x: {columnOrExpr: LC.PERIOD_CNAME, options: 'grid,log'},
                 y: {columnOrExpr: LC.POWER_CNAME, options: 'grid'},
-                plotStyle: 'linepoints'
+                plotStyle: 'linepoints',
+                plotTitle: 'Periodogram'
+
             };
             loadXYPlot({
                 chartId: LC.PERIODOGRAM_TABLE,
@@ -563,7 +568,8 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             const xyPlotParams = {
                 x: {columnOrExpr: LC.PEAK_CNAME, options: 'grid'},
                 y: {columnOrExpr: LC.POWER_CNAME, options: 'grid'},
-                plotStyle: 'linepoints'
+                plotStyle: 'linepoints',
+                plotTitle: `First ${get(request, [pKeyDef.peaks.fkey])} Peaks`
 
             };
             loadXYPlot({chartId: LC.PEAK_TABLE, tblId: LC.PEAK_TABLE, xyPlotParams, help_id: 'findpTSV.pgramresults'});

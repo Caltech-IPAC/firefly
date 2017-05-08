@@ -73,7 +73,7 @@ public class IrsaImageGetter {
         File                  file= new File(fileName);
         String                req;
 
-        req = "http://" + hp.getHost() + ":" + hp.getPort() + app;
+        req = "https://" + hp.getHost() + ":" + hp.getPort() + app;
 
         if(parms.getLength() > 0)
         {

@@ -32,7 +32,7 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle, messag
                 style = {style}
                 wrapperStyle = {wrapperStyle}
             />
-            {fileName && <div style={{display:'inline-block', marginLeft: -170}}>{fileName}</div>}
+            {fileName && <div style={{display:'inline-block', marginLeft: -150}}>{fileName}</div>}
             {isLoading && <img style={{position: 'inline-block', marginLeft: 10, width:14,height:14}} src={LOADING}/> }
         </div>
     );

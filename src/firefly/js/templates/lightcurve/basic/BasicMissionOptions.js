@@ -6,7 +6,7 @@ import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
 import {makeFileRequest} from '../../../tables/TableUtil.js';
-import {getColumnIdx, smartMerge, getNumericColNames, getStringColNames} from '../../../tables/TableUtil.js';
+import {getColumnIdx, smartMerge, getNumericColNames, getStringColNames,getTblById} from '../../../tables/TableUtil.js';
 import {ReadOnlyText, getTypeData} from '../LcUtil.jsx';
 import {LC, getViewerGroupKey, onTimeColumnChange} from '../LcManager.js';
 import {getMissionName} from '../LcConverterFactory.js';
@@ -58,6 +58,7 @@ export class BasicSettingBox extends Component {
         var {generalEntries, missionEntries} = this.props;
         var {tblColumns, numColumns, charColumns} = this.state;
 
+
         if (isEmpty(tblColumns) || isEmpty(generalEntries) || isEmpty(missionEntries)) return false;
 
         const wrapperStyle = {margin: '3px 0'};
@@ -95,9 +96,22 @@ export class BasicSettingBox extends Component {
         const converterId = get(missionEntries, LC.META_MISSION);
         const typeColumns = {charColumns, numColumns};
 
+        const layoutInfo = getLayouInfo();
+
+        const tblModel = getTblById(LC.RAW_TABLE);
+        const title = get(tblModel, 'request.uploadFileName','');
+        const uploadedFileName =( title && title.length>20)?title.substring(0, 20)+'...':title;
+
+        var period = get(layoutInfo, ['periodRange','period'], '');
         return (
             <FieldGroup groupKey={groupKey}
                         reducerFunc={basicOptionsReducer(missionEntries, generalEntries, typeColumns)} keepState={true}>
+
+                <div >
+                    <div style={{ with:{labelWidth}, fontWeight:'bold', display:'inline-block', margin: '3px 0 6px 0'}} > Column Selection</div>
+                    <label style = {{width: '170px', paddingLeft: '10px', display:'inline-block'}} title={title}>{uploadedFileName}</label>
+
+                </div>
                 <div style={{display: 'flex', flexDirection: 'column'}}>
                     {getMissionName(converterId) !== '' &&
                     <ReadOnlyText label='Mission:' content={getMissionName(converterId)}
@@ -109,6 +123,9 @@ export class BasicSettingBox extends Component {
                         </div>
                     </div>
                 </div>
+                <ReadOnlyText label='Period:' content={period}
+                              labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>
+
             </FieldGroup>
         );
     }
@@ -150,7 +167,7 @@ export const basicOptionsReducer = (missionEntries, generalEntries, typeColumns)
                 {validator: null}),
             ['cutoutSize']: Object.assign(getTypeData('cutoutSize', '',
                 'image cutout size',
-                'Cutout Size (deg):', 100)),
+                'Cutout Size (arcmin):', 100)),
             [LC.META_URL_CNAME]: Object.assign(getTypeData(LC.META_URL_CNAME, '',
                 'Image url column name',
                 'Source Column:', labelWidth))
@@ -265,14 +282,17 @@ export function basicOnNewRawTable(rawTable, missionEntries, generalEntries, con
     return {newLayoutInfo, shouldContinue: true};
 }
 
-export function basicRawTableRequest(converter, source) {
+export function basicRawTableRequest(converter, source, uploadFileName='') {
     const options = {
         tbl_id: LC.RAW_TABLE,
         tblType: 'notACatalog',
         META_INFO: {[LC.META_MISSION]: converter.converterId},
-        pageSize: LC.TABLE_PAGESIZE
+        pageSize: LC.TABLE_PAGESIZE,
+        uploadFileName
     };
-    return makeFileRequest('Input Data', source, null, options);
+
+   return  makeFileRequest('Input Data', source, null, options);
+
 
 }
 

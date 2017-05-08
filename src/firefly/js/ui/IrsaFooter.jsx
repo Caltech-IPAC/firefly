@@ -17,8 +17,8 @@ export function IrsaFooter() {
             <div className='DD-ToolBar__footer--links'>
                 <ul>
                     <li><a href='https://irsasupport.ipac.caltech.edu/' target='helpdesk'>Contact</a></li>
-                    <li><a href='http://irsa.ipac.caltech.edu/privacy.html' target='privacy'>Privacy Policy</a></li>
-                    <li><a href='http://irsa.ipac.caltech.edu/ack.html' target='ack'>Acknowledge IRSA</a></li>
+                    <li><a href='https://irsa.ipac.caltech.edu/privacy.html' target='privacy'>Privacy Policy</a></li>
+                    <li><a href='https://irsa.ipac.caltech.edu/ack.html' target='ack'>Acknowledge IRSA</a></li>
                 </ul>
             </div>
             <div className='DD-ToolBar__footer--icons'>

@@ -572,7 +572,7 @@ function getSubProjectOptions(catmaster, project) {
  * @param catmaster master table data
  * @param project project name
  * @param subproject name of the category under project
- * @example cat object example: ["WISE", "AllWISE Database", "AllWISE Source Catalog", "WISE_AllWISE", "allwise_p3as_psd", "334", "747634026", "3600", "<a href='http://irsa.ipac.caltech.edu/Missions/wise.html' target='info'>info</a>", "<a href='http://wise2.ipac.caltech.edu/docs/release/allwise/expsup/sec2_1a.html' target='Column Def'>Column Def</a>", "GatorQuery", "GatorDD"]
+ * @example cat object example: ["WISE", "AllWISE Database", "AllWISE Source Catalog", "WISE_AllWISE", "allwise_p3as_psd", "334", "747634026", "3600", "<a href='https://irsa.ipac.caltech.edu/Missions/wise.html' target='info'>info</a>", "<a href='https://wise2.ipac.caltech.edu/docs/release/allwise/expsup/sec2_1a.html' target='Column Def'>Column Def</a>", "GatorQuery", "GatorDD"]
  * @returns {Object} array with ith element is an object which option values and an object with n attribute which ith attribute is corresponding
  * to ith columns in cols of master table and its value, i.e. ith = 0, 0:'WISE', where cols[0]=projectshort
  */
