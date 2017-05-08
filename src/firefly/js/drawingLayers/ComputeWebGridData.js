@@ -11,7 +11,7 @@
  *   Cleaned up the codes 
  */
 
-import { makeWorldPt, makeImagePt,makeImageWorkSpacePt} from '../visualize/Point.js';
+import {makeDevicePt, makeWorldPt, makeImagePt,makeImageWorkSpacePt} from '../visualize/Point.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import CoordUtil from '../visualize/CoordUtil.js';
@@ -25,7 +25,7 @@ var userDefinedDistance = false;
 import {Regrid} from '../util/Interp/Regrid.js';
 
 const nPoints=20;
-
+const textHeight=12;
 /**
  * This method does the calculation for drawing data array
  * @param plot - primePlot object
@@ -34,7 +34,7 @@ const nPoints=20;
  * @param numOfGridLines
  * @return a DrawData object
  */
-export function makeGridDrawData (plot,  cc, useLabels, numOfGridLines=10){
+export function makeGridDrawData (plot,  cc, useLabels, numOfGridLines=11){
 
 
     const {width, height, screenWidth, csys,labelFormat} = getDrawLayerParameters(plot);
@@ -51,9 +51,7 @@ export function makeGridDrawData (plot,  cc, useLabels, numOfGridLines=10){
         const {xLines, yLines} = computeLines(cc, csys, range, levels, screenWidth);
         const wpt = cc.getWorldCoords(makeImageWorkSpacePt(1, 1), csys);
         const aitoff = (!wpt);
-        const deltaX = (levels[0][1]-levels[0][0])/10.0;
-        const deltaY = (levels[1][1]-levels[1][0]) /10.0;
-        return  drawLines(bounds, labels, xLines, yLines, aitoff, screenWidth, useLabels, cc, deltaX, deltaY);
+        return  drawLines(bounds, labels, xLines, yLines, aitoff, screenWidth, useLabels, cc,plot);
 
     }
 }
@@ -672,8 +670,7 @@ function count(array,val){
     return result;
 }
 
-
-function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidth, useLabels,cc, deltaX, deltaY){
+function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidth, useLabels,cc,plot){
 
 
     //add the  draw line data to the drawData
@@ -699,16 +696,13 @@ function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidt
 
                 //find the middle point of the line, index from 0, so minus 1
                 if (i===Math.round(x.length/2)-1 ) {
-
                     var wpt1 = cc.getScreenCoords(ipt0);
                     var wpt2 = cc.getScreenCoords(ipt1);
                     const slope = (wpt2.y - wpt1.y) / (wpt2.x - wpt1.x);
                     slopAngle =  Math.atan(slope) * 180 / Math.PI;
-
-                    //difficult to find a padding to work for all coordinates. Adding deltaX(Y) does not make a big difference
-                    labelPoint = makeImageWorkSpacePt(x[i]+deltaX , y[i]+deltaY);
-
+                    labelPoint = wpt1 ; // both screen coordinates or ImageWorkSpacePt are OK.
                 }
+
             }
         } //if
     } // for
@@ -720,7 +714,7 @@ function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidt
     }
 }
 
-function drawLines(bounds, labels, xLines,yLines, aitoff,screenWidth, useLabels,cc, deltaX, deltaY) {
+function drawLines(bounds, labels, xLines,yLines, aitoff,screenWidth, useLabels,cc,plot) {
     // Draw the lines previously computed.
     //get the locations where to put the labels
     var drawData=[];
@@ -728,7 +722,7 @@ function drawLines(bounds, labels, xLines,yLines, aitoff,screenWidth, useLabels,
     var  lineCount = xLines.length;
     for (let i=0; i<lineCount; i+=1) {
             drawLabeledPolyLine(drawData, bounds, labels[i] ,
-            xLines[i], yLines[i], aitoff,screenWidth, useLabels,cc,deltaX, deltaY);
+            xLines[i], yLines[i], aitoff,screenWidth, useLabels,cc,plot);
     }
     return drawData;
 

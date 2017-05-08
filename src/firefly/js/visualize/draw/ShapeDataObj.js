@@ -657,7 +657,7 @@ export function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
         const pv = getPlotViewById(visRoot(), plot.plotId);
         var pvAngle =pv.rotation;
         if (pv.flipY){
-           angle = 180 + (pvAngle-lineAngle);
+           angle = (pvAngle-lineAngle);
         }
         else {
             angle = pvAngle + lineAngle;
