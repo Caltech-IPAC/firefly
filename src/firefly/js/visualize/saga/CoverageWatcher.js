@@ -222,9 +222,9 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
         pageSize : 1000000,
         inclCols : getCovColumnsForQuery(options, table)
     };
-    var dataTooBigForSelection= false;
+    //var dataTooBigForSelection= false;
     if (table.totalRows>10000) {
-        const cenCol= options.getCenterColumns(table)
+        const cenCol= options.getCenterColumns(table);
         params.decimate=  serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000);
     }
 
@@ -463,11 +463,16 @@ function getBoxAryFromTable(options,table, usesRadians){
             .map( (cDef) => makeWorldPt(row[cDef.lonIdx], row[cDef.latIdx], cDef.csys)) );
 }
 
-
+/**
+ * @summary check if there is center column or corner columns defined
+ * @param options
+ * @param table
+ * @returns {boolean}
+ */
 function hasCoverageData(options, table) {
     if (!get(table, 'totalRows')) return false;
     if (!options.multiCoverage && table.tableMeta[MetaConst.CATALOG_OVERLAY_TYPE]) return false;
-    return !isEmpty(options.getCenterColumns(table));
+    return !isEmpty(options.getCenterColumns(table)) || !isEmpty(options.getCornersColumns(table));
 }
 
 
@@ -478,7 +483,10 @@ function defaultCanDoCorners(table) {// eslint-disable-line no-unused-vars
 
 function getCovColumnsForQuery(options, table) {
     const cAry= [...options.getCornersColumns(table), options.getCenterColumns(table)];
-    const base= cAry.reduce( (s,c,idx)=> s+`${idx>0?',':''}${c.lonCol},${c.latCol}`,'');
+    const base= cAry.reduce( (s,c,idx)=> {
+                    s += (c ? `${idx > 0 ? ',' : ''}${c.lonCol},${c.latCol}` : '');
+                    return s;
+                }, '');
     return base+',ROWID';
 }
 
@@ -526,7 +534,7 @@ function makeCoordCol(def, table) {
     if (s.length!== 3 && s.length!==2) return null;
     const s0Idx= getColumnIdx(table,s[0]);
     const s1Idx= getColumnIdx(table,s[1]);
-    if (s0Idx===-1 || s0Idx=== -1) return null;
+    if (s0Idx===-1 || s1Idx=== -1) return null;
     return {
         lonCol: s[0],
         latCol: s[1],

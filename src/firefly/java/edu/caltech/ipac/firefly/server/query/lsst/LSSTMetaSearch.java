@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.query.lsst;
 
+import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -45,7 +46,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
      private static final String HOST = AppProperties.getProperty("lsst.dd.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
     //TODO how to handle the database name??
     // private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "gapon_sdss_stripe92_patch366_0");
-    private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "");
+    //private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "");
     //set default timeout to 30seconds
     int timeout  = new Integer( AppProperties.getProperty("lsst.database.timeoutLimit" , "30")).intValue();
 
@@ -58,16 +59,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
     private DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
 
-
-        String tableName = request.getParam("table_name");
-        String catTable = request.getParam(CatalogRequest.CATALOG);
-        if (catTable == null) {
-            catTable =DATABASE_NAME.length()==0?tableName: DATABASE_NAME+"."+ tableName;
-        }
-
-
-         String sql =  "query=" + URLEncoder.encode("SHOW COLUMNS FROM " + catTable+ ";", "UTF-8");
-
+         String sql = "query=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
 
          long cTime = System.currentTimeMillis();
          _log.briefDebug("Executing SQL query: " + sql);
@@ -105,17 +97,14 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
               e.printStackTrace();
               throw new DataAccessException("ERROR:" + e.getMessage());
          }
-
-
-
     }
 
     /**
      * This method processes the input JSONArray and then return a DataType array.
      * Since there is no unit data,this method fakes the unit and description.
      *
-     * @param metaData
-     * @return
+     * @param metaData meta data
+     * @return DataType[] data type with fake unit and description
      */
     private DataType[] getDataType(JSONArray metaData){
         DataType[] dataTypes = new DataType[metaData.size()+2];//add unit and descriptions
@@ -131,8 +120,8 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
     /**
      * This method reads the json file from DAX and process it. The output is a DataGroup of the Meta data
-     * @param file
-     * @return
+     * @param file json file
+     * @return DataGroup  DataGroup of the Meta data
      * @throws IOException
      * @throws ParseException
      */
@@ -157,7 +146,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
                 row.setDataElement(dataTypes[j], ( (JSONArray)data.get(i)).get(j));
             }
             row.setDataElement(dataTypes[dataTypes.length-2], "dummyUnit1");
-            row.setDataElement(dataTypes[dataTypes.length-1], "description of "+  ( (JSONArray)data.get(i)).get(0).toString()  );
+            row.setDataElement(dataTypes[dataTypes.length-1], "description of "+ ((JSONArray)data.get(i)).get(0).toString());
             dg.add(row);
         }
 
@@ -165,6 +154,16 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
     }
 
 
+    String buildSqlQueryString(TableServerRequest request) throws Exception {
+        String dbTable = String.join(".", LSSTQuery.getDBTableNameFromRequest(request));
+
+        String sql = "SHOW COLUMNS FROM " + dbTable + ";";
+        if (dbTable.length() <= 0) {
+            throw new EndUserException("Error: Search without table name will cause database hanging!!!", sql);
+        } else {
+            return sql;
+        }
+    }
 
     @Override
     protected String getFilePrefix(TableServerRequest request) {

@@ -4,7 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {isEmpty, get, merge, isNil, isArray, cloneDeep, set, has, isUndefined} from 'lodash';
+import {isEmpty, get, merge, isNil, isArray, cloneDeep, has}from 'lodash';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {fetchTable} from '../../rpc/SearchServicesJson.js';
@@ -30,7 +30,8 @@ function makeFormType(showForm, short_dd) {
 }
 
 export function getTblId(catName, dd_short) {
-    return `${catName}${dd_short ? '-' : ''}${dd_short}-dd-table-constraint`;
+    const dds = dd_short ? `-${dd_short}` : '';
+    return catName ? `${catName}${dds}-dd-table-constraint` : '';
 }
 
 /**
@@ -79,7 +80,7 @@ export class CatalogConstraintsPanel extends PureComponent {
             this.fetchDD(np.catname, ddShort, np.createDDRequest, true, this.afterFetchDD);   //column selection or constraint needs update
         } else if (this.state.tableModel) {      // TODO: when will this case happen
             var tblid = np.tbl_id ? np.tbl_id : getTblId(np.catname, ddShort);
-            if (tblid !== this.state.tableModel.tbl_id) {
+            if (tblid && tblid !== this.state.tableModel.tbl_id) {
                 this.afterFetchDD({tableModel: getTblById(tblid)});
             }
         }
@@ -108,7 +109,7 @@ export class CatalogConstraintsPanel extends PureComponent {
 
         var formTypeList = () => {
                 return (
-                   <ListBoxInputField fieldKey={'ddform'} inline={true} labelWidth={0}
+                   <ListBoxInputField fieldKey={'ddform'} inline={true}
                        initialState={{
                             tooltip: 'Select form',
                             value: 'false'
@@ -176,7 +177,6 @@ export class CatalogConstraintsPanel extends PureComponent {
         const request = createDDRequest(); //Fetch DD master table
         const urlDef = get(FieldGroupUtils.getGroupFields(this.props.groupKey), ['cattable', 'coldef'], 'null');
 
-        //console.log('fetch DD: ' + JSON.stringify(request));
         fetchTable(request).then((tableModel) => {
             const tableModelFetched = tableModel;
 
@@ -191,7 +191,6 @@ export class CatalogConstraintsPanel extends PureComponent {
             TblCntlr.dispatchTableReplace(tableModel);
             afterFetch&&afterFetch({tableModel: tableModelFetched});
         }).catch((reason) => {
-                //console.log(reason.message);
                 const errTable = TblUtil.createErrorTbl(tblid, `Catalog Fetch Error: ${reason.message}`);
 
                 TblCntlr.dispatchTableReplace(errTable);
@@ -217,13 +216,12 @@ function updateColumnWidth(anyTableModel, colName, colWidth) {
 
         if (idx >= 0) {
             if (colWidth < 0) {
-                var w = anyTableModel.tableData.data.reduce((prev, d) => {
+                colWidth = anyTableModel.tableData.data.reduce((prev, d) => {
                     if (d[idx].length > prev)  {
                         prev = d[idx].length;
                     }
                     return prev;
                 }, colWidth);
-                colWidth = w;
             }
             anyTableModel.tableData.columns[idx].width = colWidth;
         }
@@ -472,7 +470,7 @@ function handleOnTableChanged(params, fireValueChange) {
 
     const tbl_data = tbl.tableData.data;
     const sel_info  =  tbl.selectInfo;
-    let filters = {};
+    const filters = {};
     let sqlTxt = '';
     let errors = '';
 

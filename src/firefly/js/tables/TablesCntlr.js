@@ -408,7 +408,7 @@ function tableFetch(action) {
                 const type = tableModel.origTableModel ? TABLE_REPLACE : TABLE_UPDATE;
                 dispatch( {type, payload: tableModel} );
             }).catch( (error) => {
-                dispatch({type: TABLE_LOADED, payload: TblUtil.createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
+                dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
             });
             TblUtil.onTableLoaded(tbl_id).then( (tableModel) => dispatchTableLoaded(Object.assign(TblUtil.getTblInfo(tableModel), {invokedBy})) );
         }

@@ -18,6 +18,7 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.firefly.data.table.MetaConst;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -46,7 +47,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
     private static final String PORT = "5000";
     private static final String HOST = AppProperties.getProperty("lsst.dd.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
     //TODO how to handle the database name??
-    protected static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "");
+    //protected static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "");
     //set default timeout to 180 seconds
     private int timeout  = Integer.parseInt(AppProperties.getProperty("lsst.database.timeoutLimit", "180"));
 
@@ -75,13 +76,14 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
 
     DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
 
-
         String sql = "query=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
 
 
         long cTime = System.currentTimeMillis();
         _log.briefDebug("Executing SQL query: " + sql);
-        String url = "http://"+HOST +":"+PORT+"/db/v0/tap/sync";
+        String url = "http://"+HOST +":"+PORT+"/" + LSSTQuery.getDatasetInfo(request.getParam("database"),
+                                                                            request.getParam("table_name"),
+                                                                            new String[]{"meta"});
 
         File file = createFile(request, ".json");
         Map<String, String> requestHeader=new HashMap<>();
@@ -167,9 +169,9 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
 
     /**
      * This method add a number to a DataObject
-     * @param dataType
-     * @param nd
-     * @param row
+     * @param dataType data type
+     * @param nd       number object
+     * @param row      row object
      */
     private void addNumberToRow(DataType dataType, Number nd,DataObject row ) {
         switch (dataType.getDataType().getSimpleName()){
@@ -197,9 +199,9 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
 
     /**
      * This method adds a String to a DataObject
-     * @param dataType
-     * @param sd
-     * @param row
+     * @param dataType data type
+     * @param sd       string to be added
+     * @param row      row object
      */
     private void addStringToRow(DataType dataType, String sd,DataObject row){
         switch (dataType.getDataType().getSimpleName()) {
@@ -250,6 +252,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         if (request.getParam("meta_table") != null) {
             TableServerRequest metaRequest = new TableServerRequest("LSSTMetaSearch");
             metaRequest.setParam("table_name", request.getParam("meta_table"));
+            metaRequest.setParam("database", request.getParam("database"));
             metaRequest.setPageSize(Integer.MAX_VALUE);
             //call LSSTMetaSearch processor to get the meta data as a DataGroup
             DataGroup metaData = getMeta(metaRequest);
@@ -421,4 +424,188 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
 
     }
 
+    private static JSONObject jsonDataSet = LSSTQuery.getDataSet();
+    private static JSONObject getDataSet() {
+        JSONObject obj = new JSONObject();
+
+        // LSST dataset information for making table search request
+        String lsstDataSet = "{"
+                +"  \"SDSS\": {\"catalog\":"
+                +"                         [{\"tables\": [\"RunDeepSource\", \"RunDeepForcedSource\"],"
+                +"                           \"meta\": \"db/v0/tap/sync\","
+                +"                           \"database\": \"sdss_stripe82_00\","
+                +"                           \"datatype\": \"catalog\","
+                +"                           \"ra\": \"coord_ra\","
+                +"                           \"dec\": \"coord_decl\"}],"
+                +"             \"imagemeta\":"
+                +"                          [{\"tables\": [\"DeepCoadd\", \"Science_Ccd_Exposure\"],"
+                +"                            \"meta\": \"db/v0/tap/sync\","
+                +"                            \"database\": \"sdss_stripe82_00\","
+                +"                           \"datatype\": \"imagemeta\","
+                +"                           \"" + MetaConst.DATASET_CONVERTER + "\": \"lsst_sdss\","
+                +"                           \"ra\": [\"corner1Ra\",\"corner2Ra\", \"corner3Ra\", \"corner4Ra\"],"
+                +"                           \"dec\": [\"corner1Decl\",\"corner2Decl\", \"corner3Decl\", \"corner4Decl\"]}]},"
+                +" \"WISE\": {\"catalog\":"
+                +"                    [{\"tables\": [\"allwise_p3as_psd\", \"allwise_p3as_mep\","
+                +"                                   \"allsky_4band_p1bs_psd\", \"allsky_3band_p1bs_psd\", \"allsky_2band_p1bs_psd\"],"
+                +"                      \"meta\": \"db/v0/tap/sync\","
+                +"                      \"database\": \"wise_00\","
+                +"                      \"datatype\": \"catalog\","
+                +"                      \"ra\": \"ra\","
+                +"                      \"dec\": \"decl\"},"
+                +"                     {\"tables\": [\"allwise_p3as_psr\"],"
+                +"                      \"meta\": \"db/v0/tap/sync\","
+                +"                      \"database\": \"wise_ext_00\","
+                +"                      \"ra\": \"ra\","
+                +"                      \"dec\": \"decl\"}],"
+                +"            \"imagemeta\":"
+                +"                    [{\"tables\": [\"allwise_p3am_cdd\", \"allwise_p3as_cdd\","
+                +"                                   \"allsky_4band_p1bm_frm\", \"allsky_3band_p1bm_frm\", \"allsky_2band_p1bm_frm\"],"
+                +"                      \"meta\": \"db/v0/tap/sync\","
+                +"                      \"database\": \"wise_00\","
+                +"                      \"datatype\": \"imagemeta\","
+                +"                      \"" + MetaConst.DATASET_CONVERTER + "\": \"lsst_wise\","
+                +"                      \"ra\": [\"ra1\", \"ra2\", \"ra3\", \"ra4\"],"
+                +"                      \"dec\": [\"dec1\", \"dec2\", \"dec3\", \"dec4\"],"
+                +"                      \"mission\": \"wise\","
+                +"                      \"schema\":{"
+                +"                          \"allwise-multiband\": {"
+                +"                              \"tables\": [\"allwise_p3am_cdd\", \"allwise_p3as_cdd\"],"
+                +"                              \"params\": {\"ImageSet\": \"allwise-multiband\","
+                +"                                           \"ProductLevel\": \"3a\","
+                +"                                           \"title\": \"AllWISE\"}},"
+                +"                          \"allsky_4band-1b\": {"
+                +"                              \"tables\": [\"allsky_4band_p1bm_frm\"],"
+                +"                              \"params\": {\"ImageSet\": \"allsky-4band\","
+                +"                                           \"ProductLevel\": \"1b\","
+                +"                                           \"title\": \"AllSky - Single\"}},"
+                +"                          \"allsky_4band-3a\": {"
+                +"                              \"tables\": [],"
+                +"                              \"params\": {\"ImageSet\": \"allsky-4band\","
+                +"                                           \"ProductLevel\": \"3a\","
+                +"                                           \"title\": \"AllSky - Atlas\"}},"
+                +"                          \"cryo_3band-1b\": {"
+                +"                              \"tables\": [\"allsky_3band_p1bm_frm\"],"
+                +"                              \"params\": {\"ImageSet\": \"cryo_3band\","
+                +"                                           \"ProductLevel\": \"1b\","
+                +"                                           \"title\": \"3-Band Single\"}},"
+                +"                          \"cryo_3band-1b-3a\": {"
+                +"                              \"tables\": [],"
+                +"                              \"params\": {\"ImageSet\": \"cryo_3band\","
+                +"                                           \"ProductLevel\": \"3a\","
+                +"                                           \"title\": \"3-Band Atlas\"}},"
+                +"                         \"postcryo-1b\": {"
+                +"                              \"tables\": [\"allsky_2band_p1bm_frm\"],"
+                +"                              \"params\": {\"ImageSet\": \"postcryo\","
+                +"                                           \"ProductLevel\": \"1b\","
+                +"                                           \"title\": \"Post-Cryo\"}},"
+                +"                        \"neowiser-1b\": {"
+                +"                             \"tables\": [],"
+                +"                             \"params\": {\"ImageSet\": \"neowiser\","
+                +"                                          \"ProductLevel\": \"1b\","
+                +"                                          \"title\": \"NeoWISER\"}}"
+                +"                        }}]}}";
+
+
+        try {
+            obj = (JSONObject) new JSONParser().parse(lsstDataSet);
+        } catch (ParseException e) {
+            LOGGER.error(e);
+        }
+        return obj;
+    }
+
+    public static Object getDatasetInfo(String databaseName, String tableName, String[] pathAry) {
+        for (Object key : jsonDataSet.keySet()) {     // test SDSS or WISE
+            JSONObject missionObj = (JSONObject)jsonDataSet.get(key);
+            String[]   dataSet = {"catalog", "imagemeta"};
+
+            for (Object dataType : dataSet) {      // test imagemeta or catalog
+                JSONArray missionTableSet = (JSONArray)missionObj.get(dataType);
+
+                for (Object missionData : missionTableSet) {   // find table group
+
+                    if (!(missionData instanceof JSONObject)) continue;
+                    if (!(((JSONObject)missionData).get("database")).equals(databaseName)) {
+                        continue;
+                    }
+                    Object tables = ((JSONObject)missionData).get("tables");
+                    if ((tables instanceof JSONArray) &&
+                        ((JSONArray)tables).contains(tableName)) {
+
+                        Object pathObj = missionData;
+
+                        for (String path : pathAry) {
+                            if (pathObj instanceof JSONObject) {
+                                pathObj = ((JSONObject) pathObj).get(path);
+                            } else {
+                                pathObj = null;
+                                break;
+                            }
+                        }
+                        return pathObj;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static Object getImageMetaSchema(String database, String tableName) {
+        for (Object key : jsonDataSet.keySet()) {
+            JSONObject missionObj = (JSONObject)jsonDataSet.get(key);
+            Object   imageDataSets = missionObj.get("imagemeta");
+            Object   foundImageSet = null;
+
+            if (imageDataSets == null || !(imageDataSets instanceof JSONArray)) {
+                continue;
+            }
+
+            for (Object imageDataset : (JSONArray)imageDataSets) {
+                if (database.equals(((JSONObject)imageDataset).get("database"))) {
+                    Object tables = ((JSONObject) imageDataset).get("tables");
+                    if ((tables instanceof JSONArray) &&
+                        ((JSONArray)tables).contains(tableName)) {
+                            foundImageSet = imageDataset;
+                            break;
+                    }
+                }
+            }
+
+            if (foundImageSet == null) continue;
+
+            Object schemaObj = ((JSONObject)foundImageSet).get("schema");
+
+            if (schemaObj instanceof JSONObject) {
+                for (Object schemaKey : ((JSONObject)schemaObj).keySet()) {
+                    Object schema = ((JSONObject)schemaObj).get(schemaKey);
+                    JSONArray tables = (JSONArray)((JSONObject) schema).get("tables");
+
+                    if (tables.contains(tableName)) {
+                        return ((JSONObject)schema).get("params");
+                    }
+                }
+                break;   // no schema group is found
+            }
+        }
+        return null;
+    }
+
+    static String[] getDBTableNameFromRequest(TableServerRequest request) {
+        String tableName = request.getParam("table_name");
+        String catTable = request.getParam(CatalogRequest.CATALOG);
+        String database = request.getParam(CatalogRequest.DATABASE);
+
+        if (catTable == null || catTable.length() == 0) {
+            catTable = tableName;
+        }
+
+        return new String[]{database, catTable};
+    }
+
+    static Boolean isCatalogTable(String database, String catTable) {
+        String type = (String)LSSTQuery.getDatasetInfo(database, catTable, new String[]{"datatype"});
+        return (type != null)&&type.startsWith("catalog");
+    }
 }

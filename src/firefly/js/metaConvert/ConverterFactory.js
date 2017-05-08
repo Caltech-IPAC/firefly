@@ -3,10 +3,10 @@
  */
 
 
-import {get, has, isEmpty} from 'lodash';
+import {get, isEmpty} from 'lodash';
 import {makeWisePlotRequest} from './WiseRequestList.js';
 import {make2MassPlotRequest} from './TwoMassRequestList.js';
-import {makeLsstSdssPlotRequest} from './LsstSdssRequestList.js';
+import {makeLsstSdssPlotRequest, makeLsstWisePlotRequest} from './LsstSdssRequestList.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
 import {Band} from '../visualize/Band';
@@ -16,7 +16,7 @@ import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
 
 
-const URL= 'URL';
+//const URL= 'URL';
 const FILE= 'FILE';
 const dataSourceUpper= 'DATASOURCE';
 
@@ -62,6 +62,19 @@ export const converters = {
             r : {color : Band.GREEN, title: 'r'},
             i : {color : null,  title: 'i'},
             z : {color : Band.BLUE, title: 'z'}
+        }
+    },
+    'lsst_wise' : {
+        threeColor : true,
+        hasRelatedBands : true,
+        canGrid : true,
+        maxPlots : 12,
+        makeRequest : makeLsstWisePlotRequest,
+        threeColorBands : {
+            b1 : {color : Band.RED, title: 'Band 1'},
+            b2 : {color : Band.GREEN, title: 'Band 2'},
+            b3 : {color : null, title: 'Band 3'},
+            b4 : {color : Band.BLUE, title: 'Band 4'}
         }
     },
     'UNKNOWN' : {

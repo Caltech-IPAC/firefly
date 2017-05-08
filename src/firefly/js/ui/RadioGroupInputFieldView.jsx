@@ -12,7 +12,7 @@ function makeOptions(options,alignment ,value,onChange,tooltip) {
     const labelStyle= alignment==='vertical' ? vStyle : hStyle;
     return options.map((option) => (
         <span key={option.value}>
-            <div style={{display:'inline-block'}} title={tooltip}>
+            <div style={{display:'inline-block'}} title={option.tooltip || tooltip}>
                 <input type='radio'
                        title={tooltip}
                        value={option.value}
