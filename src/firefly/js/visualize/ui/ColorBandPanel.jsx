@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import numeral from 'numeral';
 
 import {ValidationField} from '../../ui/ValidationField.jsx';
@@ -49,7 +50,7 @@ const maskWrapper= {
 
 const textPadding= {paddingBottom:3};
 
-export class ColorBandPanel extends Component {
+export class ColorBandPanel extends PureComponent {
 
     constructor(props) {
         super(props);

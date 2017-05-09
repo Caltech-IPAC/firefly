@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {isEmpty, get} from 'lodash';
 
 import {flux} from '../../Firefly.js';
@@ -17,7 +17,7 @@ import {LO_VIEW, LO_MODE, dispatchSetLayoutMode, getExpandedMode} from '../../co
 import {CloseButton} from '../../ui/CloseButton.jsx';
 
 
-export class TablesContainer extends Component {
+export class TablesContainer extends PureComponent {
     constructor(props) {
         super(props);
         this.state = this.nextState(props);
@@ -30,10 +30,6 @@ export class TablesContainer extends Component {
     componentWillUnmount() {
         this.removeListener && this.removeListener();
         this.isUnmounted = true;
-    }
-
-    shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
     }
 
     nextState(props) {

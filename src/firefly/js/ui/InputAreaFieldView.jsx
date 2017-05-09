@@ -1,5 +1,5 @@
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {PointerPopup} from '../ui/PointerPopup.jsx';
 import {InputFieldLabel} from './InputFieldLabel.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
@@ -47,15 +47,12 @@ const ICON_SPACE_STYLE= {
     display:'inline-block'};
 
 
-export class InputAreaFieldView extends Component {
+export class InputAreaFieldView extends PureComponent {
     constructor(props) {
         super(props);
         this.warnIcon = null;
         this.state = { hasFocus: false, infoPopup: false };
     }
-
-    shouldComponentUpdate(np, ns) { return sCompare(this, np, ns); }
-
 
     componentDidUpdate() {
         var {infoPopup}= this.state;

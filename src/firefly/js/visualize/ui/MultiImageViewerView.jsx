@@ -3,7 +3,8 @@
  */
 
 
-import React, {PropTypes} from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import {omit} from 'lodash';
 import {SINGLE, GRID} from '../MultiViewCntlr.js';
 import {MultiItemViewerView} from './MultiItemViewerView.jsx';

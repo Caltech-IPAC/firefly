@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {visRoot } from '../ImagePlotCntlr.js';
@@ -222,7 +223,7 @@ function getAllGroupFields(...keys) {
  *  container component for image select panel
  *
  */
-export class ImageSelection extends Component {
+export class ImageSelection extends PureComponent {
      constructor(props) {
          super(props);
 
@@ -347,7 +348,7 @@ export function isOnThreeColorSetting(pMode, fields) {
     return false;
 }
 
-class ImageSelectionView extends Component {
+class ImageSelectionView extends PureComponent {
 
     constructor(props) {
         super(props);

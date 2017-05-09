@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import {COMMAND, getMenu} from '../core/AppDataCntlr.js';
 import {flux} from '../Firefly.js';
@@ -48,15 +48,12 @@ export function  makeMenuItem(menuItem, isSelected, isWorking, badgeCount) {
     );
 }
 
-export class Menu extends Component {
+export class Menu extends PureComponent {
 
     constructor(props) {
         super(props);
     }
 
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
 
     // componentDidUpdate(prevProps, prevState) {
     //     deepDiff({props: prevProps, state: prevState},

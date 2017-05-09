@@ -7,7 +7,8 @@
  *
  */
 
-import React, { PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
@@ -92,7 +93,7 @@ function doDispatch(fieldGroup,  fieldKey){
 /**
  *  create a popup dialog
  */
-class MouseReadoutOptionDialog extends React.Component {
+class MouseReadoutOptionDialog extends PureComponent {
 
 	constructor(props) {
 		super(props);

@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 
 function generateText(textDrawAry) {
     return textDrawAry.map( (t,idx) => ( <div style={t.style} key={idx}>{t.text}</div>) );
@@ -27,9 +28,9 @@ function TextDrawer({textDrawAry,width,height}) {
 }
 
 TextDrawer.propTypes= {
-    textDrawAry : React.PropTypes.array.isRequired,
-    width : React.PropTypes.number.isRequired,
-    height : React.PropTypes.number.isRequired
+    textDrawAry : PropTypes.array.isRequired,
+    width : PropTypes.number.isRequired,
+    height : PropTypes.number.isRequired
 };
 
 export default TextDrawer;

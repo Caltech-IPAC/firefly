@@ -3,8 +3,9 @@
  */
 
 
+import React from 'react';
+import PropTypes from 'prop-types';
 import Enum from 'enum';
-import React, {PropTypes} from 'react';
 import numeral from 'numeral';
 import {convertZoomToString} from '../ZoomUtil.js';
 import {primePlot} from '../PlotViewUtil.js';

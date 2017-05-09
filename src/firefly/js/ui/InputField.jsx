@@ -1,4 +1,5 @@
-import React, {PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {has, get, isNil} from 'lodash';
 
 import {InputFieldView} from './InputFieldView.jsx';
@@ -19,7 +20,7 @@ function newState({fieldKey='undef', valid=true, message='', value=''}) {
     return {fieldKey, valid, message, value};
 }
 
-export class InputField extends React.Component {
+export class InputField extends PureComponent {
     constructor(props) {
         super(props);
 

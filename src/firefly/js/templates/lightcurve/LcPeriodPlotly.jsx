@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 
-import sCompare from 'react-addons-shallow-compare';
 import {get, set,  pick,  debounce, defer} from 'lodash';
 import SplitPane from 'react-split-pane';
 import {flux} from '../../Firefly.js';
@@ -108,7 +108,7 @@ function lastFrom(strAry) {
 /**
  * class for creating component for light curve period finding
  */
-export class LcPeriodPlotly extends Component {
+export class LcPeriodPlotly extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -125,10 +125,6 @@ export class LcPeriodPlotly extends Component {
 
             return Object.assign({}, layout, {fields});
         };
-    }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
     }
 
     componentDidMount() {
@@ -279,7 +275,7 @@ PeriodExpandedView.propTypes = {
 /**
  * @summary 2D xyplot component on phase folding
  */
-class PhaseFoldingChart extends Component {
+class PhaseFoldingChart extends PureComponent {
     constructor(props) {
         super(props);
 
@@ -383,10 +379,6 @@ class PhaseFoldingChart extends Component {
                   }
             }
         };
-    }
-
-    shouldComponentUpdate(np,ns) {
-        return sCompare(np, ns);
     }
 
     componentWillUnmount() {
@@ -526,7 +518,7 @@ function getPhaseFlux(fields) {
 /**
  * @summary Phase folding finder component containing period finding parameters
  */
-class LcPFOptionsBox extends Component {
+class LcPFOptionsBox extends PureComponent {
     constructor(props) {
         super(props);
         var fields = FieldGroupUtils.getGroupFields(pfinderkey);
@@ -534,10 +526,6 @@ class LcPFOptionsBox extends Component {
         const period = getValidValueFrom(fields, 'period');       // same as for 'accept period'
         const lastPeriod = '';                                    // used for 'revert to' button display
         this.state = {fields, period, lastPeriod, periodList: []};
-    }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
     }
 
     componentWillUnmount() {

@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
 import {VisHeaderView, VisPreview} from './VisHeaderView.jsx';
@@ -12,13 +12,11 @@ import {readoutRoot, dispatchReadoutData, makeValueReadoutItem, makePointReadout
     makeDescriptionItem, isLockByClick} from '../../visualize/MouseReadoutCntlr.js';
 
 
-export class VisHeader_old extends React.Component {
+export class VisHeader_old extends PureComponent {
     constructor(props) {
         super(props);
         this.state= {visRoot:visRoot(), currMouseState:lastMouseCtx()};
     }
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentWillUnmount() {
         if (this.removeListener) this.removeListener();
@@ -45,13 +43,11 @@ export class VisHeader_old extends React.Component {
 
 
 
-export class VisHeader extends React.Component {
+export class VisHeader extends PureComponent {
     constructor(props) {
         super(props);
         this.state= {visRoot:visRoot(), currMouseState:lastMouseCtx(), readout:readoutRoot()};
     }
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentWillUnmount() {
         if (this.removeListener) this.removeListener();
@@ -86,7 +82,7 @@ export class VisHeader extends React.Component {
 }
 
 VisHeader.propTypes= {
-    showHeader : React.PropTypes.bool,
-    showPreview :React.PropTypes.bool,
+    showHeader : PropTypes.bool,
+    showPreview :PropTypes.bool,
 };
 

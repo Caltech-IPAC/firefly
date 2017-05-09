@@ -3,8 +3,8 @@
  */
 
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import './ToolbarButton.css';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
@@ -65,7 +65,7 @@ function handleClick(onClick, dropdownCB ,divElement) {
  */
 
 
-export class ToolbarButton extends Component {
+export class ToolbarButton extends PureComponent {
     constructor(props) {
         super(props);
         this.click= this.click.bind(this);
@@ -73,9 +73,6 @@ export class ToolbarButton extends Component {
         this.mouseOut= this.mouseOut.bind(this);
         this.setupRef= this.setupRef.bind(this);
     }
-    
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
-
     click() {
         var { dropDownCB, onClick} = this.props;
         handleClick(onClick,dropDownCB,this.divElement);

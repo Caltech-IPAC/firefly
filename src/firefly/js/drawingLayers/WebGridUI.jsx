@@ -3,7 +3,8 @@
  * Lijun
  * 4/15/16
  */
-import React, {PropTypes} from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import {dispatchModifyCustomField} from '../visualize/DrawLayerCntlr.js';
 import {dispatchAddPreference,getPreference} from '../core/AppDataCntlr.js';
 import {get} from 'lodash';

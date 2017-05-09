@@ -1,4 +1,5 @@
-import React, {PropTypes}  from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import {isEmpty}  from 'lodash';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 
@@ -58,7 +59,7 @@ ListBoxInputFieldView.propTypes= {
     multiple : PropTypes.bool,
     label:  PropTypes.string,
     tooltip:  PropTypes.string,
-    labelWidth : React.PropTypes.number,
+    labelWidth : PropTypes.number,
     selectStyle: PropTypes.object,
     wrapperStyle: PropTypes.object
 };
@@ -96,10 +97,10 @@ function handleOnChange(ev, params, fireValueChange) {
 
 
 const propTypes= {
-    inline : React.PropTypes.bool,
-    options : React.PropTypes.array.isRequired,
-    multiple : React.PropTypes.bool,
-    labelWidth : React.PropTypes.number
+    inline : PropTypes.bool,
+    options : PropTypes.array.isRequired,
+    multiple : PropTypes.bool,
+    labelWidth : PropTypes.number
 };
 
 function checkForUndefined(v,props) {

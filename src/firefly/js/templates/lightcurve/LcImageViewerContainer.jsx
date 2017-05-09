@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PropTypes} from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import {MultiViewStandardToolbar} from '../../visualize/ui/MultiViewStandardToolbar.jsx';
 import {MultiImageViewer} from '../../visualize/ui/MultiImageViewer.jsx';
 import {DEFAULT_FITS_VIEWER_ID, NewPlotMode} from '../../visualize/MultiViewCntlr.js';

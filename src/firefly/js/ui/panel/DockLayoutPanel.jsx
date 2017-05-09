@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import SplitPane from 'react-split-pane';
 
 /**
@@ -170,12 +171,12 @@ const DockLayoutPanel = function (props) {
 };
 
 DockLayoutPanel.propTypes = {
-    north: React.PropTypes.number,
-    south: React.PropTypes.number,
-    east: React.PropTypes.number,
-    west: React.PropTypes.number,
-    center: React.PropTypes.number,
-    config: React.PropTypes.object
+    north: PropTypes.number,
+    south: PropTypes.number,
+    east: PropTypes.number,
+    west: PropTypes.number,
+    center: PropTypes.number,
+    config: PropTypes.object
 };
 
 

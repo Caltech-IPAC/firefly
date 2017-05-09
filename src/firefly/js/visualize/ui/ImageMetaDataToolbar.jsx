@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {isEmpty,omit} from 'lodash';
 import {flux} from '../../Firefly.js';
 import shallowequal from 'shallowequal';
@@ -64,7 +65,7 @@ export class ImageMetaDataToolbar extends Component {
 }
 
 ImageMetaDataToolbar.propTypes= {
-    dlAry : PropTypes.arrayOf(React.PropTypes.object),
+    dlAry : PropTypes.arrayOf(PropTypes.object),
     visRoot : PropTypes.object,
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string.isRequired,

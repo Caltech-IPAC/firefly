@@ -5,7 +5,7 @@
 /**
  * This Object contains the specifications of the DS9 region
  */
-import React, {Component} from 'react';
+import React, {PureComponent} from 'react';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {dispatchCreateRegionLayer} from '../DrawLayerCntlr.js';
@@ -109,7 +109,7 @@ function uploadAndProcessRegion(request, rgComp, drawLayerId) {
 /**
  * popup panel for upload region file
  */
-class RegionUpload extends Component {
+class RegionUpload extends PureComponent {
 
     constructor(props) {
         super(props);

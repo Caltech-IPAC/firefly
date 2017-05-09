@@ -13,7 +13,8 @@
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
-import React, { Component, PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {flux} from '../Firefly.js';
 import {visRoot } from '../visualize/ImagePlotCntlr.js';
 import {FormPanel} from './FormPanel.jsx';
@@ -41,7 +42,7 @@ const maskWrapper= {
  * @return {XML}
  * @constructor
  */
-export class ImageSelectDropdown extends Component {
+export class ImageSelectDropdown extends PureComponent {
     constructor(props) {
         super(props);
 

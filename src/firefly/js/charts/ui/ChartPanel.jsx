@@ -1,6 +1,6 @@
 import './ChartPanel.css';
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import Resizable from 'react-component-resizable';
 import {flux} from '../../Firefly.js';
 import {get, debounce, defer} from 'lodash';
@@ -10,7 +10,7 @@ import * as ChartsCntlr from '../ChartsCntlr.js';
 
 import DELETE from 'html/images/blue_delete_10x10.png';
 
-class ChartPanelView extends Component {
+class ChartPanelView extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -39,10 +39,6 @@ class ChartPanelView extends Component {
         };
 
         this.toggleOptions = this.toggleOptions.bind(this);
-    }
-
-    shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
     }
 
     toggleOptions(key) {
@@ -222,23 +218,13 @@ ErrorPanel.propTypes = {
         }))
 };
 
-export class ChartPanel extends Component {
+export class ChartPanel extends PureComponent {
 
     constructor(props) {
         super(props);
         this.state = this.getNextState();
         this.test = props;
     }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
-
-    // componentDidUpdate(prevProps, prevState) {
-    //     deepDiff({props: prevProps, state: prevState},
-    //         {props: this.props, state: this.state},
-    //         this.constructor.name);
-    // }
 
     componentDidMount() {
         this.removeListener = flux.addListener(() => this.storeUpdate());

@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import FixedDataTable from 'fixed-data-table-2';
 import Resizable from 'react-component-resizable';
 import {debounce, defer, get, isEmpty} from 'lodash';
@@ -18,7 +18,7 @@ import './TablePanel.css';
 
 const {Table, Column} = FixedDataTable;
 
-export class BasicTableView extends React.Component {
+export class BasicTableView extends PureComponent {
     constructor(props) {
         super(props);
         this.state = {
@@ -75,16 +75,6 @@ export class BasicTableView extends React.Component {
         this.isUnmounted = true;
     }
 
-    /*
-    componentDidUpdate(){
-        const {onTableChanged} = this.props;
-        onTableChanged && onTableChanged();
-    }
-    */
-
-    shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
-    }
 
     onKeyDown(e) {
         const {callbacks, hlRowIdx, currentPage} = this.props;

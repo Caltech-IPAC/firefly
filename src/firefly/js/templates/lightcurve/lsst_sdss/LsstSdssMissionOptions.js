@@ -1,5 +1,5 @@
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {get, isEmpty, set, pick, cloneDeep, defer} from 'lodash';
 import {getLayouInfo} from '../../../core/LayoutCntlr.js';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
@@ -16,16 +16,10 @@ import {getTypeData} from './../LcUtil.jsx';
 
 const labelWidth = 100;
 
-export class LsstSdssSettingBox extends Component {
+export class LsstSdssSettingBox extends PureComponent {
     constructor(props) {
         super(props);
     }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
-
-
     render() {
         const {generalEntries, missionEntries} = this.props;
 

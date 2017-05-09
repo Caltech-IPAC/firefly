@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import { get, set, has} from 'lodash';
 import SplitPane from 'react-split-pane';
 import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
@@ -220,17 +220,12 @@ export var startPeriodogramPopup = (groupKey) =>  {
 /**
  * class for periodogram dialog content
  */
-class PeriodogramOptionsBox extends Component {
+class PeriodogramOptionsBox extends PureComponent {
     constructor(props) {
         super(props);
 
         this.state = {fields: FieldGroupUtils.getGroupFields(props.groupKey)};
     }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
-
     componentWillUnmount() {
         this.iAmMounted = false;
         if (this.unbinder) this.unbinder();

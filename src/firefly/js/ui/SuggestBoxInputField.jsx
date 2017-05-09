@@ -1,4 +1,5 @@
-import React, {Component, PropTypes}  from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import {get, isArray, isUndefined, debounce} from 'lodash';
 
@@ -103,7 +104,7 @@ const SuggestBox = (props) => {
     );
 };
 
-class SuggestBoxInputFieldView extends Component {
+class SuggestBoxInputFieldView extends PureComponent {
     constructor(props) {
         super(props);
         this.state = {
@@ -259,7 +260,7 @@ SuggestBoxInputFieldView.propTypes = {
     inline : PropTypes.bool,
     label:  PropTypes.string,
     tooltip:  PropTypes.string,
-    labelWidth : React.PropTypes.number,
+    labelWidth : PropTypes.number,
     wrapperStyle: PropTypes.object,     //style to merge into the container div
     getSuggestions : PropTypes.func,   //suggestionsArr = getSuggestions(displayValue)
     valueOnSuggestion : PropTypes.func, //newDisplayValue = valueOnSuggestion(prevValue, suggestion),

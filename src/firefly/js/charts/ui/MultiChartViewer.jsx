@@ -4,9 +4,9 @@
 
 import './ChartPanel.css';
 
-import React, {Component,PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {isEmpty, isUndefined} from 'lodash';
-import sCompare from 'react-addons-shallow-compare';
 import {flux} from '../../Firefly.js';
 
 import {CloseButton} from '../../ui/CloseButton.jsx';
@@ -21,14 +21,12 @@ import {getToolbarUI} from '../ChartUtil.js';
 
 import {MultiChartToolbarStandard, MultiChartToolbarExpanded} from './MultiChartToolbar.jsx';
 
-export class MultiChartViewer extends Component {
+export class MultiChartViewer extends PureComponent {
 
     constructor(props) {
         super(props);
         this.state= {viewer : null};
     }
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentWillReceiveProps(nextProps) {
         if (this.props.viewerId!==nextProps.viewerId) {

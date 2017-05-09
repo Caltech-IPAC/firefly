@@ -2,21 +2,19 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {dispatchHideDialog,isDialogVisible} from '../core/ComponentCntlr.js';
-import sCompare from 'react-addons-shallow-compare';
 import {flux} from '../Firefly.js';
 
 
-export class PopupStoreConnection extends Component {
+export class PopupStoreConnection extends PureComponent {
 
     constructor(props)  {
         super(props);
         var visible= isDialogVisible(props.dialogId);
         this.state = { visible};
     }
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentWillUnmount() {
         if (this.storeListenerRemove) this.storeListenerRemove();

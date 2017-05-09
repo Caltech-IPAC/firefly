@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {FormPanel} from '../../ui/FormPanel.jsx';
 import { get, merge, isEmpty, isFunction} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
@@ -51,7 +51,7 @@ const constraintskey = 'inputconstraint';
  */
 var catmaster = [], cols = [];
 
-export class CatalogSelectViewPanel extends Component {
+export class CatalogSelectViewPanel extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -70,10 +70,6 @@ export class CatalogSelectViewPanel extends Component {
                 this.setState({fields});
             }
         });
-    }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
     }
 
     render() {
@@ -268,7 +264,7 @@ function doLoadTable(request) {
  *
  * @type {ClassicComponentClass<P>}
  */
-class CatalogSelectView extends Component {
+class CatalogSelectView extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -584,15 +580,11 @@ function getCatalogOptions(catmaster, project, subproject) {
     });
 }
 
-class CatalogDDList extends Component {
+class CatalogDDList extends PureComponent {
 
     constructor(props) {
         super(props);
         this.state = Object.assign({...this.state}, {...this.props}, {optList: ''});
-    }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
     }
 
     render() {

@@ -2,8 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
-import lodash from 'lodash';
+import React, {PureComponent} from 'react';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
@@ -26,7 +25,7 @@ import {RED_PANEL,
         colorPanelChange} from './ColorPanelReducer.js';
 
 
-import { RangeValues, ZSCALE,STRETCH_ASINH, STRETCH_POWERLAW_GAMMA}from '../RangeValues.js';
+import { RangeValues, ZSCALE}from '../RangeValues.js';
 
 
 export function showColorDialog() {
@@ -44,7 +43,7 @@ export function showColorDialog() {
     dispatchShowDialog('ColorStretchDialog');
 }
 
-class ColorDialog extends Component {
+class ColorDialog extends PureComponent {
 
     constructor(props) {
         super(props);

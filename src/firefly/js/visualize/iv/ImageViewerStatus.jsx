@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {omit} from 'lodash';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
 
@@ -51,7 +52,7 @@ const maskWrapper= {
 const statusTextAlpha= Object.assign({},statusText,  {backgroundColor: 'rgba(200,200,200,.8)'});
 const statusTextCellWithClear= Object.assign({},statusTextCell,  {flex: '10 10 auto'});
 
-export class ImageViewerStatus extends Component {
+export class ImageViewerStatus extends PureComponent {
     constructor(props) {
         super(props);
         const {messageWaitTimeMS=0, maskWaitTimeMS=0} = this.props;

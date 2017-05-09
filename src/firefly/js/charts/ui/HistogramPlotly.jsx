@@ -2,8 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
+import shallowequal from 'shallowequal';
 import {get} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
@@ -18,7 +19,7 @@ const LINEAR = 'linear';
 const REV = 'reversed';
 const OPP = 'opposite';
 
-export class HistogramPlotly extends React.Component {
+export class HistogramPlotly extends Component {
 
     /**
      * @summary React Component to display histogram using Plotly
@@ -194,7 +195,7 @@ export class HistogramPlotly extends React.Component {
     }
 
     shouldComponentUpdate(nextProps, ns) {
-        const bUpdate = sCompare(this, nextProps, ns);
+        const bUpdate = !shallowequal(this.props,nextProps) || !shallowequal(this.state,ns);
 
         if (bUpdate && nextProps !== this.props) {
             this.chartingInfo = this.regenData(nextProps);

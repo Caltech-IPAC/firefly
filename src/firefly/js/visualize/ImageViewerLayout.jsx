@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {Component, PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {xor,isEmpty,get, isString, isFunction, throttle} from 'lodash';
 import {ImageRender} from './iv/ImageRender.jsx';
 import {EventLayer} from './iv/EventLayer.jsx';
@@ -83,7 +83,7 @@ const rootStyle= {
     overflow:'hidden'
 };
 
-export class ImageViewerLayout extends Component {
+export class ImageViewerLayout extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -92,8 +92,6 @@ export class ImageViewerLayout extends Component {
         this.eventCB= this.eventCB.bind(this);
         this.state= {cursor:DEFAULT_CURSOR};
     }
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentDidMount() {
         const {width,height, plotView:pv}= this.props;

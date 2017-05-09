@@ -3,8 +3,9 @@
  */
 
 
+import React from 'react';
+import PropTypes from 'prop-types';
 import {get} from 'lodash';
-import React, {PropTypes} from 'react';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {getPlotViewById, getAllDrawLayersForPlot} from '../../visualize/PlotViewUtil.js';
 import {WcsMatchType, visRoot, dispatchWcsMatch} from '../../visualize/ImagePlotCntlr.js';
@@ -131,7 +132,7 @@ function changeSize(viewerId, value) {
 // onClick={() => dispatchChangeViewerLayout(viewerId,'grid',GRID_FULL)}/>
 
 LcImageToolbarView.propTypes= {
-    dlAry : PropTypes.arrayOf(React.PropTypes.object),
+    dlAry : PropTypes.arrayOf(PropTypes.object),
     activePlotId : PropTypes.string,
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string.isRequired,

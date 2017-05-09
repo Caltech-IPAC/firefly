@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {get} from 'lodash';
 
 import {ValidationField} from '../ui/ValidationField.jsx';
@@ -31,7 +32,7 @@ import './CatalogSearchMethodType.css';
  Component which suppose to handle the catalog method search such as cone, elliptical,etc.
  each of the option has different option panel associated
  */
-export class CatalogSearchMethodType extends Component {
+export class CatalogSearchMethodType extends PureComponent {
 
     constructor(props) {
         super(props);

@@ -1,9 +1,7 @@
-/*eslint "prefer-template": 0*/
-
-import React, {Component, PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import defer from 'lodash/defer';
 import ReactDOM from 'react-dom';
-import sCompare from 'react-addons-shallow-compare';
 import './PointerPopup.css';
 import UP_POPUP_POINTER from 'html/images/up-pointer.gif';
 import DOWN_POPUP_POINTER from 'html/images/down-pointer.gif';
@@ -16,9 +14,9 @@ const SOUTH = 'south';
 
 
 function computePosition(e,dir,tgtX,tgtY) {
-    var {left,top} = e.getBoundingClientRect();
-    var x= tgtX-left;
-    var y= tgtY-top;
+    const {left,top} = e.getBoundingClientRect();
+    const x= tgtX-left;
+    const y= tgtY-top;
     if (dir===NORTH) {
         return {x,y:y+18};
     } else if (dir===SOUTH) {
@@ -32,7 +30,7 @@ function computePosition(e,dir,tgtX,tgtY) {
 
 
 
-export class PointerPopup extends Component {
+export class PointerPopup extends PureComponent {
     constructor(props) {
         super(props);
         this.state= {
@@ -40,14 +38,12 @@ export class PointerPopup extends Component {
         };
     }
 
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
-
     componentDidMount() { this.updatePosition(); }
     componentDidUpdate() { this.updateOffsets(ReactDOM.findDOMNode(this)); }
 
 
     computeDir(e) {
-        var elemRect = e.getBoundingClientRect();
+        const elemRect = e.getBoundingClientRect();
         if ((this.props.y-window.scrollY)+elemRect.height+35>window.innerHeight) {
             if (this.props.x-window.scrollX+elemRect.width+35>window.innerWidth) {
                 this.setState({dir: SOUTH});
@@ -61,60 +57,60 @@ export class PointerPopup extends Component {
     }
 
     updateOffsets(e) {
-        var {dir}= this.state;
-        var {x,y}= this.props;
-        var {innerWidth, scrollX,scrollY}= window;
-        var pos = computePosition(e, dir, x, y);
+        const {dir}= this.state;
+        const {x,y}= this.props;
+        const {innerWidth, scrollX,scrollY}= window;
+        const pos = computePosition(e, dir, x, y);
         if (dir === NORTH) {
-            var left = pos.x - e.offsetWidth / 2 - scrollX;
-            var adjust = 0;
+            let left = pos.x - e.offsetWidth / 2 - scrollX;
+            let adjust = 0;
             if (left < 5) {
                 adjust = (left - 5);
                 left = 5;
             } else if (left > innerWidth - e.offsetWidth) {
-                var newLeft = innerWidth - e.offsetWidth - 20;
+                const newLeft = innerWidth - e.offsetWidth - 20;
                 adjust = left - newLeft;
                 left = newLeft;
             }
             e.style.left = left + 'px';
             e.style.top = (pos.y - scrollY) + 'px';
-            var upPointer = ReactDOM.findDOMNode(this.refs.upPointer);
+            const upPointer = ReactDOM.findDOMNode(this.refs.upPointer);
             upPointer.style.paddingLeft = (((e.offsetWidth / 2) + adjust) - 15) + 'px';
             upPointer.style.display = 'block';
             upPointer.style.marginBottom = '3px';
             e.style.visibility = 'visible';
         } else if (dir === SOUTH) {
-            var left = pos.x - e.offsetWidth / 2 - scrollX;
-            var adjust = 0;
+            let left = pos.x - e.offsetWidth / 2 - scrollX;
+            let adjust = 0;
             if (left < 5) {
                 adjust = (left - 5);
                 left = 5;
             } else if (left > innerWidth - e.offsetWidth) {
-                var newLeft = innerWidth - e.offsetWidth - 20;
+                const newLeft = innerWidth - e.offsetWidth - 20;
                 adjust = left - newLeft;
                 left = newLeft;
             }
             e.style.left = left + 'px';
-            var top= pos.y - (e.offsetHeight/2+5);
+            let top= pos.y - (e.offsetHeight/2+5);
             top= top<5 ? 5 : top;
             e.style.top = (top - scrollY) + 'px';
-            var downPointer = ReactDOM.findDOMNode(this.refs.downPointer);
+            const downPointer = ReactDOM.findDOMNode(this.refs.downPointer);
             downPointer.style.paddingLeft = (((e.offsetWidth / 2) + adjust) - 15) + 'px';
             downPointer.style.display = 'block';
             downPointer.style.marginBottom = '3px';
             e.style.visibility = 'visible';
         } else if (dir===SOUTH_WEST) {
-            var left= pos.x+20 - scrollX;
-            var pointerVisible= true;
+            let left= pos.x+20 - scrollX;
+            let pointerVisible= true;
             if (left > innerWidth - e.offsetWidth) {
                 left = innerWidth-e.offsetWidth-20;
                 pointerVisible = false;
             }
             e.style.left= left +'px';
-            var top= pos.y - (e.offsetHeight/2+15);
+            let top= pos.y - (e.offsetHeight/2+15);
             top= top<5 ? 5 : top;
             e.style.top= (top-scrollY)+'px';
-            var leftDownPointer= ReactDOM.findDOMNode(this.refs.leftDownPointer);
+            const leftDownPointer= ReactDOM.findDOMNode(this.refs.leftDownPointer);
             leftDownPointer.style.left= -20+'px';
             leftDownPointer.style.top= 8+'px';
             leftDownPointer.style.paddingLeft= 0;
@@ -125,7 +121,7 @@ export class PointerPopup extends Component {
     }
 
     updatePosition() {
-        var e= ReactDOM.findDOMNode(this);
+        const e= ReactDOM.findDOMNode(this);
         this.updateOffsets(e);
         defer(function() {
             this.computeDir(e);
@@ -135,7 +131,7 @@ export class PointerPopup extends Component {
 
 
     render() {
-        var {x,y,message}= this.props;
+        const {x,y,message}= this.props;
         if (!x && !y) return;
         if (this.state.dir===NORTH || this.state.dir===NONE) {
             return (

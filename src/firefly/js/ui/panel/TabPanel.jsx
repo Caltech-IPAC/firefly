@@ -3,8 +3,8 @@
  */
 
 import './TabPanel.css';
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import Resizable from 'react-component-resizable';
 import {debounce} from 'lodash';
 import {fieldGroupConnector} from '../FieldGroupConnector.jsx';
@@ -28,7 +28,7 @@ function tabsStateFromProps(props) {
 }
 
 
-class TabsHeader extends Component {
+class TabsHeader extends PureComponent {
     constructor(props) {
         super(props);
         this.state = {widthPx: 0};
@@ -37,10 +37,6 @@ class TabsHeader extends Component {
                 this.setState({widthPx: size.width});
             }
         }, 100).bind(this);
-    }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
     }
 
     componentWillUnmount() {
@@ -77,7 +73,7 @@ TabsHeader.propTypes= {
     resizable: PropTypes.bool
 };
 
-export class Tabs extends Component {
+export class Tabs extends PureComponent {
 
 
     constructor(props) {
@@ -89,10 +85,6 @@ export class Tabs extends Component {
         this.state= tabsStateFromProps(nextProps);
     }
     
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
-
     componentWillUnmount() {
         this.isUnmounted = true;
     }
@@ -165,15 +157,10 @@ Tabs.defaultProps= {
 };
 
 
-export class Tab extends Component {
+export class Tab extends PureComponent {
     constructor(props) {
         super(props);
     }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
-
 
     componentWillMount() {
         const {selected, onSelect, id, name} = this.props;

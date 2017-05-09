@@ -1,7 +1,8 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React, {Component, PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {flux} from '../Firefly.js';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
@@ -68,7 +69,7 @@ function getInitialPlotState() {
 
 }
 
-class ZoomOptionsPopup extends Component {
+class ZoomOptionsPopup extends PureComponent {
 
     constructor(props)  {
         super(props);

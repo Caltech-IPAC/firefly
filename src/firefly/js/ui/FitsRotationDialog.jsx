@@ -1,23 +1,20 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React, {Component} from 'react';
+import React, {PureComponent} from 'react';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import Validate from '../util/Validate.js';
 import {ValidationField} from './ValidationField.jsx';
-import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
-import {showInfoPopup} from './PopupUtil.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {visRoot, dispatchRotate} from '../visualize/ImagePlotCntlr.js';
 import {RotateType} from '../visualize/PlotState.js';
-import {isOverlayLayersActive} from '../visualize/RelatedDataUtil.js';
 
 import HelpIcon from './HelpIcon.jsx';
 
@@ -77,7 +74,7 @@ function getInitialPlotState() {
 
 
 
-class FitsRotationDialog extends Component {
+class FitsRotationDialog extends PureComponent {
 
     constructor(props)  {
         super(props);

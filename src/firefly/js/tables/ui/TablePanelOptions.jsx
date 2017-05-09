@@ -2,31 +2,20 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
 
 import {FilterEditor} from './FilterEditor.jsx';
 import {InputField} from '../../ui/InputField.jsx';
 import {intValidator} from '../../util/Validate.js';
-// import {deepDiff} from '../../util/WebUtil.js';
 
 const labelStyle = {display: 'inline-block', width: 70};
 
-export class TablePanelOptions extends React.Component {
+export class TablePanelOptions extends PureComponent {
     constructor(props) {
         super(props);
     }
-
-    shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
-    }
-
-    // componentDidUpdate(prevProps, prevState) {
-    //     deepDiff({props: prevProps, state: prevState},
-    //         {props: this.props, state: this.state},
-    //         'TablePanelOptions');
-    // }
 
     render() {
         const {columns, pageSize, showUnits, showFilters, showToolbar=true, onChange, onOptionReset, optSortInfo, filterInfo, toggleOptions} = this.props;
@@ -92,16 +81,16 @@ export class TablePanelOptions extends React.Component {
 }
 
 TablePanelOptions.propTypes = {
-    columns: React.PropTypes.arrayOf(React.PropTypes.object),
-    optSortInfo: React.PropTypes.string,
-    filterInfo: React.PropTypes.string,
-    pageSize: React.PropTypes.number,
-    showUnits: React.PropTypes.bool,
-    showFilters: React.PropTypes.bool,
-    showToolbar: React.PropTypes.bool,
-    onChange: React.PropTypes.func,
-    onOptionReset: React.PropTypes.func,
-    toggleOptions: React.PropTypes.func
+    columns: PropTypes.arrayOf(PropTypes.object),
+    optSortInfo: PropTypes.string,
+    filterInfo: PropTypes.string,
+    pageSize: PropTypes.number,
+    showUnits: PropTypes.bool,
+    showFilters: PropTypes.bool,
+    showToolbar: PropTypes.bool,
+    onChange: PropTypes.func,
+    onOptionReset: PropTypes.func,
+    toggleOptions: PropTypes.func
 };
 
 function makeCallbacks(onChange) {

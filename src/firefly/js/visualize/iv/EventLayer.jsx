@@ -2,16 +2,16 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
-import sCompare from 'react-addons-shallow-compare';
 import {makeScreenPt} from '../Point.js';
 import {MouseState}  from '../VisMouseSync.js';
 import {Matrix} from 'transformation-matrix-js';
 
 const style={left:0,top:0,right:0, bottom:0,position:'absolute'};
 
-export class EventLayer extends Component {
+export class EventLayer extends PureComponent {
     constructor(props) {
         super(props);
         this.mouseDown= false;
@@ -44,8 +44,6 @@ export class EventLayer extends Component {
         document.removeEventListener('mousemove', this.docMouseMoveCallback);
         document.removeEventListener('mouseup', this.docMouseUpCallback);
     }
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     fireEvent(ev,transform, plotId,mouseState) {
         ev.preventDefault();

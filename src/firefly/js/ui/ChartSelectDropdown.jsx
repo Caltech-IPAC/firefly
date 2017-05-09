@@ -2,10 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, { Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {Component, PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {get} from 'lodash';
-// import {deepDiff} from '../util/WebUtil.js';
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from '../tables/TableUtil.js';
@@ -18,8 +17,6 @@ import {XYPlotOptions, resultsSuccess as onXYPlotOptsSelected,
 import {DT_HISTOGRAM} from '../charts/dataTypes/HistogramCDT.js';
 import {HistogramOptions, resultsSuccess as onHistogramOptsSelected,
                           setOptions as HistogramSetOptions} from '../charts/ui/HistogramOptions.jsx';
-
-//import {uniqueChartId} from '../charts/ChartUtil.js';
 
 import {FormPanel} from './FormPanel.jsx';
 import CompleteButton from './CompleteButton.jsx';
@@ -45,7 +42,7 @@ export function getFormName(chartType) {
  * @return {XML}
  * @constructor
  */
-class ChartSelect extends Component {
+class ChartSelect extends PureComponent {
     constructor(props) {
         super(props);
 
@@ -144,20 +141,10 @@ function hideSearchPanel() {
     dispatchHideDropDown();
 }
 
-export class OptionsWrapper extends React.Component {
+export class OptionsWrapper extends Component {
     constructor(props) {
         super(props);
     }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
-
-    // componentDidUpdate(prevProps, prevState) {
-    //     deepDiff({props: prevProps, state: prevState},
-    //         {props: this.props, state: this.state},
-    //         this.constructor.name);
-    // }
 
     render() {
         const {tblStatsData, chartType} = this.props;
@@ -192,22 +179,12 @@ OptionsWrapper.propTypes = {
 
 
 
-export class ChartSelectDropdown extends Component {
+export class ChartSelectDropdown extends PureComponent {
 
     constructor(props) {
         super(props);
         this.state = this.getNextState();
     }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
-
-    // componentDidUpdate(prevProps, prevState) {
-    //     deepDiff({props: prevProps, state: prevState},
-    //         {props: this.props, state: this.state},
-    //         this.constructor.name);
-    // }
 
     componentDidMount() {
         this.removeListener = flux.addListener(() => this.storeUpdate());

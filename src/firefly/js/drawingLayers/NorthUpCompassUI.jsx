@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
 import {dispatchModifyCustomField, dispatchForceDrawLayerUpdate} from '../visualize/DrawLayerCntlr.js';
 
@@ -48,7 +49,7 @@ function changeOverlayPref(drawLayer,pv,value) {
 
 
 NorthUpCompassUI.propTypes= {
-    drawLayer     : React.PropTypes.object.isRequired,
-    pv            : React.PropTypes.object.isRequired
+    drawLayer     : PropTypes.object.isRequired,
+    pv            : PropTypes.object.isRequired
 };
 

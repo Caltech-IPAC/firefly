@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {PopupPanel} from './PopupPanel.jsx';
 import CompleteButton from './CompleteButton.jsx';
@@ -39,8 +40,8 @@ function ColorPickerWrapper ({callback,color,callbackOnOKOnly, callbackOnBoth}) 
 }
 
 ColorPickerWrapper.propTypes= {
-    callback: React.PropTypes.func.isRequired,
-    color: React.PropTypes.string.isRequired,
-    callbackOnOKOnly: React.PropTypes.bool.isRequired,
-    callbackOnBoth: React.PropTypes.bool.isRequired
+    callback: PropTypes.func.isRequired,
+    color: PropTypes.string.isRequired,
+    callbackOnOKOnly: PropTypes.bool.isRequired,
+    callbackOnBoth: PropTypes.bool.isRequired
 };

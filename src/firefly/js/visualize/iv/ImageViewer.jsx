@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {omit} from 'lodash';
 import shallowequal from 'shallowequal';
 import {getPlotViewById,getAllDrawLayersForPlot} from '../PlotViewUtil.js';
@@ -18,7 +18,7 @@ import {flux} from '../../Firefly.js';
 
 
 
-export class ImageViewer extends Component {
+export class ImageViewer extends PureComponent {
 
 
     constructor(props) {
@@ -33,8 +33,6 @@ export class ImageViewer extends Component {
         this.alive= true;
         this.state= {plotView, dlAry, allPlots, drawLayersAry,extRoot, mousePlotId};
     }
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentWillUnmount() {
         this.alive= false;

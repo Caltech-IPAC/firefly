@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import Point, {parseWorldPt, isValidPoint} from '../Point.js';
 import CoordinateSys from '../CoordSys.js';

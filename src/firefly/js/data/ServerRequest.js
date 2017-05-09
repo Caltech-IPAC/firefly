@@ -3,10 +3,9 @@
  */
 
 import {has} from 'lodash';
-import replaceAll from 'underscore.string/replaceAll';
-import words from 'underscore.string/words';
 import validator from 'validator';
 import {parseWorldPt} from '../visualize/Point.js';
+import {replaceAll} from '../util/WebUtil.js';
 
 
 const REQUEST_CLASS= 'RequestClass';
@@ -159,7 +158,8 @@ export class ServerRequest {
      */
     static parse(str,req) {
         if (!str) return null;
-        words(str,PARAM_SEP).forEach((p) => {
+        str.split(PARAM_SEP).forEach((p) => {
+            if (!p) return;
             var outParam= p.split(/=(.+)?/,2);
             if (outParam.length===2) {
                 var newParam= {name : outParam[0], value:outParam[1]};

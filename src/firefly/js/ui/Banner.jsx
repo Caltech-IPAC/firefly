@@ -2,19 +2,16 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import './Banner.css';
 
-export const Banner = React.createClass({
 
-    propTypes: {
-        menu: React.PropTypes.object,
-        readout: React.PropTypes.object,
-        appIcon: React.PropTypes.string,
-        visPreview: React.PropTypes.object,
-        appTitle: React.PropTypes.string,
-        additionalTitleStyle: React.PropTypes.object
-    },
+export class Banner extends PureComponent {
+
+    constructor(props) {
+        super(props);
+    }
 
     render() {
         const {menu, readout, appIcon, visPreview, appTitle, additionalTitleStyle = {marginLeft:'10px'}} = this.props;
@@ -39,4 +36,15 @@ export const Banner = React.createClass({
             </div>
         );
     }
-});
+}
+
+Banner.propTypes= {
+    menu: PropTypes.object,
+    readout: PropTypes.object,
+    appIcon: PropTypes.string,
+    visPreview: PropTypes.object,
+    appTitle: PropTypes.string,
+    additionalTitleStyle: PropTypes.object
+};
+
+

@@ -1,8 +1,8 @@
 /*eslint "prefer-template": 0*/
 
-import React, {Component, PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
-import sCompare from 'react-addons-shallow-compare';
 import './DropDownMenu.css';
 
 
@@ -34,12 +34,10 @@ export function SingleColumnMenu({children}) {
 
 
 
-export class DropDownMenuWrapper extends Component {
+export class DropDownMenuWrapper extends PureComponent {
     constructor(props) {
         super(props);
     }
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentDidMount() {
         var {x,y}= this.props;

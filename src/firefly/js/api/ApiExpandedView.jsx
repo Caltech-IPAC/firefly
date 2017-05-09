@@ -2,9 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component} from 'react';
-import sCompare from 'react-addons-shallow-compare';
-
+import React, {PureComponent} from 'react';
 import {flux} from '../Firefly.js';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
@@ -13,9 +11,8 @@ import {dispatchChangeExpandedMode, ExpandType} from '../visualize/ImagePlotCntl
 import {dispatchSetLayoutMode, getExpandedMode, LO_MODE, LO_VIEW} from '../core/LayoutCntlr.js';
 import {getExpandedChartProps} from '../charts/ChartsCntlr.js';
 
-// import {deepDiff} from '../util/WebUtil.js';
 
-export class ApiExpandedView extends Component {
+export class ApiExpandedView extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -35,10 +32,6 @@ export class ApiExpandedView extends Component {
     componentWillUnmount() {
         this.removeListener && this.removeListener();
         this.isUnmounted = true;
-    }
-
-    shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
     }
 
     storeUpdate() {

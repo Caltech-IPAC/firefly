@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {isEmpty, get, merge, isNil, isArray, cloneDeep, set, has, isUndefined} from 'lodash';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
@@ -44,7 +44,7 @@ function resetConstraints(gkey, fieldKey) {
     dispatchValueChange(modPayload);
 }
 
-export class CatalogConstraintsPanel extends React.Component {
+export class CatalogConstraintsPanel extends PureComponent {
 
     /**
      *
@@ -58,11 +58,6 @@ export class CatalogConstraintsPanel extends React.Component {
         this.afterFetchDD = this.afterFetchDD.bind(this);
     }
 
-    //shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
 
     componentWillUnmount() {
         this.iAmMounted = false;
@@ -363,7 +358,7 @@ CatalogConstraintsPanel.defaultProps = {
  * @summary compoent to display the data restrictions into a tabular format
  * @returns {Object} constraint table
  */
-class ConstraintPanel extends Component {
+class ConstraintPanel extends PureComponent {
 
     constructor(props) {
         super(props);

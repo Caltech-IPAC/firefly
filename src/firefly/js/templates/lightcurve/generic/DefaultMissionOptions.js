@@ -1,5 +1,5 @@
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {get, has, isEmpty, set} from 'lodash';
 import {flux} from '../../../Firefly.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
@@ -13,7 +13,7 @@ import {getLayouInfo} from '../../../core/LayoutCntlr.js';
 
 const labelWidth = 90;
 
-export class DefaultSettingBox extends Component {
+export class DefaultSettingBox extends PureComponent {
     constructor(props) {
         super(props);
 
@@ -26,11 +26,6 @@ export class DefaultSettingBox extends Component {
         const charColumns = getStringColNames(tblColumns);
         this.state = {tblColumns, charColumns, numColumns};
     }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
-
 
     componentWillUnmount() {
         this.iAmMounted = false;

@@ -4,7 +4,7 @@
 
 import {flux} from '../Firefly.js';
 import {get} from 'lodash';
-import update from 'react-addons-update';
+import update from 'immutability-helper';
 
 export const DIALOG_OR_COMPONENT_KEY = 'dialogOrComponent';
 

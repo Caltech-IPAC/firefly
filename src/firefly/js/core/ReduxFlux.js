@@ -5,7 +5,7 @@
 
 import createSagaMiddleware from 'redux-saga';
 import thunkMiddleware from 'redux-thunk';
-import loggerMiddleware from 'redux-logger';
+import {createLogger} from 'redux-logger';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
 import {masterSaga, dispatchAddSaga} from './MasterSaga.js';
 import AppDataCntlr  from './AppDataCntlr.js';
@@ -184,23 +184,23 @@ window.enableFireflyReduxLogging= false;
  * @param action
  * @return {boolean}
  */
-function logFilter(getState,action) {
-    const {type}= action;
-    if (!type) return false;
-    if (type.startsWith('VisMouseCntlr')) return false;
-    if (type.startsWith('EFFECT')) return false;
-    if (type.startsWith('FieldGroupCntlr')) return false;
-    if (type.startsWith('layout')) return false;
-    if (type.startsWith('table_space')) return false;
-    if (type.startsWith('tblstats')) return false;
-    if (type.startsWith('table_ui')) return false;
-    if (type.startsWith('app_data')) return false;
-    return window.enableFireflyReduxLogging;;
-}
-
 // function logFilter(getState,action) {
+//     const {type}= action;
+//     if (!type) return false;
+//     if (type.startsWith('VisMouseCntlr')) return false;
+//     if (type.startsWith('EFFECT')) return false;
+//     if (type.startsWith('FieldGroupCntlr')) return false;
+//     if (type.startsWith('layout')) return false;
+//     if (type.startsWith('table_space')) return false;
+//     if (type.startsWith('tblstats')) return false;
+//     if (type.startsWith('table_ui')) return false;
+//     if (type.startsWith('app_data')) return false;
 //     return window.enableFireflyReduxLogging;
 // }
+
+function logFilter(getState,action) {
+    return window.enableFireflyReduxLogging;
+}
 
 
 function collapsedFilter(getState,action) {
@@ -209,7 +209,7 @@ function collapsedFilter(getState,action) {
 
 
 // eslint-disable-next-line
-var logger= loggerMiddleware({duration:true, predicate:logFilter, collapsed:collapsedFilter}); // developer can add for debugging
+const logger= createLogger({duration:true, predicate:logFilter, collapsed:collapsedFilter}); // developer can add for debugging
 
 
 function createRedux() {

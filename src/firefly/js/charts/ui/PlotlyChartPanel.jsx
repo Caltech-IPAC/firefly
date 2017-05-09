@@ -1,6 +1,6 @@
 import './ChartPanel.css';
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import Resizable from 'react-component-resizable';
 import {flux} from '../../Firefly.js';
 import {get, debounce, defer} from 'lodash';
@@ -48,7 +48,7 @@ PlotlyChartPanel.propTypes = {
     showToolbar: PropTypes.bool
 };
 
-export class ChartArea extends Component {
+export class ChartArea extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -73,10 +73,6 @@ export class ChartArea extends Component {
                 debounced(size);
             }
         };
-    }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
     }
 
     componentDidMount() {

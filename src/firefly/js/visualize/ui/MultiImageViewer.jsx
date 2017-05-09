@@ -2,24 +2,22 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {isEmpty,omit} from 'lodash';
-import sCompare from 'react-addons-shallow-compare';
 import {flux} from '../../Firefly.js';
-import {NewPlotMode, dispatchAddViewer, dispatchViewerMounted, dispatchViewerUnmounted,
+import {NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted,
         getMultiViewRoot, getViewer, getLayoutType, IMAGE} from '../MultiViewCntlr.js';
 import {MultiImageViewerView} from './MultiImageViewerView.jsx';
 import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 
-export class MultiImageViewer extends Component {
+export class MultiImageViewer extends PureComponent {
 
     constructor(props) {
         super(props);
         this.state= {viewer : null};
     }
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentWillReceiveProps(nextProps) {
         if (this.props.viewerId!==nextProps.viewerId) {

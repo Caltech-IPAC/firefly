@@ -1,13 +1,13 @@
-import React, {Component, PropTypes}  from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {get, has, isNumber, isString, isObject, isNaN} from 'lodash';
-
 import Slider from 'rc-slider';
 import './rc-slider.css';
 
 /**
  * @summary slider component
  */
-export class RangeSliderView extends Component {
+export class RangeSliderView extends PureComponent {
     constructor(props) {
         super(props);
 

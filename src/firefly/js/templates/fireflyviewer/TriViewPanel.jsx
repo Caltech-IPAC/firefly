@@ -2,9 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
-
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {pick} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {LO_VIEW, LO_MODE, getLayouInfo, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
@@ -14,15 +13,11 @@ import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {TriViewImageSection} from '../../visualize/ui/TriViewImageSection.jsx';
 
-export class TriViewPanel extends Component {
+export class TriViewPanel extends PureComponent {
 
     constructor(props) {
         super(props);
         this.state = {};
-    }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
     }
 
     componentDidMount() {

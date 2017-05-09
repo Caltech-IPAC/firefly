@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {TextLocation} from '../visualize/draw/DrawingDef.js';
 import {flux} from '../Firefly.js';
 import {dispatchModifyCustomField, DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
@@ -15,7 +15,7 @@ export const getMarkerToolUIComponent = (drawLayer,pv) => <MarkerToolUI drawLaye
 //export const defaultMarkerTextLoc = TextLocation.CIRCLE_SE;
 export const defaultMarkerTextLoc = TextLocation.REGION_SE;
 
-class MarkerToolUI extends React.Component {
+class MarkerToolUI extends PureComponent {
     constructor(props) {
         super(props);
 
@@ -28,8 +28,6 @@ class MarkerToolUI extends React.Component {
         this.changeMarkerText = this.changeMarkerText.bind(this);
         this.changeMarkerTextLocation = this.changeMarkerTextLocation.bind(this);
     }
-
-    shouldComponentUpdate(np, ns) {return sCompare(this, np, ns); }
 
     componentWillUnmount() {
         this.iAmMounted= false;
@@ -124,6 +122,6 @@ class MarkerToolUI extends React.Component {
 
 
 MarkerToolUI.propTypes= {
-    drawLayer     : React.PropTypes.object.isRequired,
-    pv            : React.PropTypes.object.isRequired
+    drawLayer     : PropTypes.object.isRequired,
+    pv            : PropTypes.object.isRequired
 };

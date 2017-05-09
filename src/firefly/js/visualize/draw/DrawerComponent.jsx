@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {xor,isEqual} from 'lodash';
-import sCompare from 'react-addons-shallow-compare';
 import CanvasWrapper from './CanvasWrapper.jsx';
 import TextDrawer from './TextDrawer.jsx';
 import {getDrawLayerById} from '../PlotViewUtil.js';
@@ -25,7 +25,7 @@ function makeTextDrawIfNecessary(textDrawAry,width,height) {
 }
 
 
-export class DrawerComponent extends React.Component {
+export class DrawerComponent extends PureComponent {
     constructor(props)  {
         super(props);
         const {drawLayerId, plot}=  props;
@@ -33,9 +33,6 @@ export class DrawerComponent extends React.Component {
         this.state= {textDrawAry:[], drawLayer};
         this.getDrawLayer= this.getDrawLayer.bind(this);
     }
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
-
 
     componentWillUnmount() {
         this.iAmMounted= false;
@@ -106,12 +103,12 @@ export class DrawerComponent extends React.Component {
 }
 
 DrawerComponent.propTypes= {
-    width: React.PropTypes.number.isRequired,
-    height: React.PropTypes.number.isRequired,
-    plot: React.PropTypes.object, // plot is not used if drawLayer is not passed
-    drawLayerId : React.PropTypes.string, //drawLayer or drawData is Required
-    getDrawLayer : React.PropTypes.func,
-    setSimpleUpdateNotify : React.PropTypes.func
+    width: PropTypes.number.isRequired,
+    height: PropTypes.number.isRequired,
+    plot: PropTypes.object, // plot is not used if drawLayer is not passed
+    drawLayerId : PropTypes.string, //drawLayer or drawData is Required
+    getDrawLayer : PropTypes.func,
+    setSimpleUpdateNotify : PropTypes.func
 };
 
 
@@ -120,10 +117,10 @@ export function PlotDrawer(props) {
 }
 
 PlotDrawer.propTypes= {
-    width: React.PropTypes.number.isRequired,
-    height: React.PropTypes.number.isRequired,
-    plot: React.PropTypes.object, // plot is not used if drawLayer is not passed
-    drawLayer : React.PropTypes.object.isRequired //drawLayer or drawData is Required
+    width: PropTypes.number.isRequired,
+    height: PropTypes.number.isRequired,
+    plot: PropTypes.object, // plot is not used if drawLayer is not passed
+    drawLayer : PropTypes.object.isRequired //drawLayer or drawData is Required
 };
 
 export function AnyDrawer(props) {
@@ -131,9 +128,9 @@ export function AnyDrawer(props) {
 }
 
 AnyDrawer.propTypes= {
-    width: React.PropTypes.number.isRequired,
-    height: React.PropTypes.number.isRequired,
-    getDrawLayer : React.PropTypes.func.isRequired
+    width: PropTypes.number.isRequired,
+    height: PropTypes.number.isRequired,
+    getDrawLayer : PropTypes.func.isRequired
 };
 
 

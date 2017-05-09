@@ -1,6 +1,6 @@
-import React, {Component, PropTypes}  from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {get} from 'lodash';
-
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 import {convertAngle} from '../visualize/VisUtil.js';
 import {InputFieldView} from './InputFieldView.jsx';
@@ -101,7 +101,7 @@ const propTypes={
  *
  */
 
-class SizeInputFieldView extends Component {
+class SizeInputFieldView extends PureComponent {
     constructor(props) {
         super(props);
 

@@ -1,7 +1,7 @@
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {isUndefined, get, has, omit} from 'lodash';
 import shallowequal from 'shallowequal';
-import React, {PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
 
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 
@@ -417,7 +417,7 @@ function getTraceIdx(chartingInfo, name) {
 }
 
 
-export class XYPlotPlotly extends React.Component {
+export class XYPlotPlotly extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -599,10 +599,6 @@ export class XYPlotPlotly extends React.Component {
             }
         }
         return true;
-    }
-
-    shouldComponentUpdate(nextProps, nextState) {
-        return sCompare(this, nextProps, nextState);
     }
 
     /**

@@ -2,9 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
-
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {flux} from '../Firefly.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
@@ -35,7 +34,7 @@ export function showScriptDownloadDialog(props) {
 }
 
 
-class ScripDownloadPanel extends Component {
+class ScripDownloadPanel extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -52,9 +51,6 @@ class ScripDownloadPanel extends Component {
         this.isUnmounted = true;
     }
 
-    shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
-    }
 
     storeUpdate() {
         if (!this.isUnmounted) {

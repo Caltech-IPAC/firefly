@@ -1,14 +1,13 @@
-import {Component} from 'react';
+import {PureComponent} from 'react';
 import {get} from 'lodash';
 
 import {flux} from '../../Firefly.js';
-import sCompare from 'react-addons-shallow-compare';
 import {getBackgroundInfo, isActive} from './BackgroundUtil.js';
 import {BG_MONITOR_SHOW} from './BackgroundCntlr.js';
 import {makeMenuItem} from '../../ui/Menu.jsx';
 
 
-export class BgMonitorButton extends Component {
+export class BgMonitorButton extends PureComponent {
     constructor(props) {
         super(props);
         this.bgAction = { type:'COMMAND',
@@ -25,10 +24,6 @@ export class BgMonitorButton extends Component {
     componentWillUnmount() {
         this.removeListener && this.removeListener();
         this.isUnmounted = true;
-    }
-
-    shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
     }
 
     storeUpdate() {

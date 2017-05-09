@@ -3,8 +3,8 @@
  */
 
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import uniqueId from 'lodash/uniqueId';
 import delay from 'lodash/delay';
 import {flux} from '../Firefly.js';
@@ -15,17 +15,17 @@ import {ToolbarButton} from './ToolbarButton.jsx';
 
 
 function computeDropdownXY(divElement) {
-    var bodyRect = document.body.parentElement.getBoundingClientRect();
-    var elemRect = divElement.getBoundingClientRect();
-    var x = (elemRect.left - bodyRect.left);
-    var y = elemRect.top - bodyRect.top;
+    const bodyRect = document.body.parentElement.getBoundingClientRect();
+    const elemRect = divElement.getBoundingClientRect();
+    const x = (elemRect.left - bodyRect.left);
+    const y = elemRect.top - bodyRect.top;
     return {x,y};
 }
 
 
 function showDialog(divElement,dropDown,ownerId,offButtonCB) {
-    var {x,y}= computeDropdownXY(divElement);
-    var dd= <DropDownMenuWrapper x={x} y={y} content={dropDown}/>;
+    const {x,y}= computeDropdownXY(divElement);
+    const dd= <DropDownMenuWrapper x={x} y={y} content={dropDown}/>;
     DialogRootContainer.defineDialog(DROP_DOWN_KEY,dd);
     dispatchShowDialog(DROP_DOWN_KEY,ownerId);
     document.addEventListener('mousedown', offButtonCB);
@@ -36,15 +36,12 @@ function showDialog(divElement,dropDown,ownerId,offButtonCB) {
 export const DROP_DOWN_KEY= 'toolbar-dropDown';
 const OWNER_ROOT= 'toolbar-dropDown';
 
-export class DropDownToolbarButton extends Component {
+export class DropDownToolbarButton extends PureComponent {
     constructor(props) {
         super(props);
         this.state= {dropDownVisible:false, dropDownOwnerId:null };
         this.ownerId= uniqueId(OWNER_ROOT);
     }
-
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentWillUnmount() {
         if (this.storeListenerRemove) this.storeListenerRemove();
@@ -57,10 +54,10 @@ export class DropDownToolbarButton extends Component {
     }
 
     update() {
-        var v= isDialogVisible(DROP_DOWN_KEY);
-        var ownerId= v ? getDialogOwner(DROP_DOWN_KEY) : null;
-        var {dropDownVisible, dropDownOwnerId}= this.state;
-        if (v!==dropDownVisible || ownerId!=dropDownOwnerId) {
+        const v= isDialogVisible(DROP_DOWN_KEY);
+        const ownerId= v ? getDialogOwner(DROP_DOWN_KEY) : null;
+        const {dropDownVisible, dropDownOwnerId}= this.state;
+        if (v!==dropDownVisible || ownerId!==dropDownOwnerId) {
             this.setState({dropDownVisible:v, dropDownOwnerId:ownerId});
         }
     }
@@ -68,7 +65,7 @@ export class DropDownToolbarButton extends Component {
     offButtonCallback() {
         delay( () => {
             document.removeEventListener('mousedown', this.docMouseDownCallback);
-            var {dropDownVisible, dropDownOwnerId}= this.state;
+            const {dropDownVisible, dropDownOwnerId}= this.state;
             if (dropDownVisible && dropDownOwnerId===this.ownerId) {
                 dispatchHideDialog(DROP_DOWN_KEY);
             }
@@ -78,7 +75,7 @@ export class DropDownToolbarButton extends Component {
 
     handleDropDown(divElement,dropDown) {
         if (divElement) {
-            var {dropDownVisible, dropDownOwnerId}= this.state;
+            const {dropDownVisible, dropDownOwnerId}= this.state;
             if (dropDownVisible) {
                 if (dropDownOwnerId===this.ownerId) {
                     dispatchHideDialog(DROP_DOWN_KEY);
@@ -97,8 +94,8 @@ export class DropDownToolbarButton extends Component {
 
 
     render() {
-        var {dropDown}= this.props;
-        var {dropDownVisible, dropDownOwnerId}= this.state;
+        const {dropDown}= this.props;
+        const {dropDownVisible, dropDownOwnerId}= this.state;
         return (<ToolbarButton {...this.props} active={dropDownVisible && dropDownOwnerId===this.ownerId}
             dropDownCB={(divElement)=> this.handleDropDown(divElement,dropDown)}/>);
     }

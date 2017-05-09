@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {pick, get, isEmpty, cloneDeep} from 'lodash';
 import SplitPane from 'react-split-pane';
 import {flux} from '../../Firefly.js';
@@ -32,17 +32,12 @@ const resultItems = ['title', 'mode', 'showTables', 'showImages', 'showXyPlots',
     LC.MISSION_DATA, LC.GENERAL_DATA, 'periodState'];
 
 
-export class LcResult extends Component {
+export class LcResult extends PureComponent {
 
     constructor(props) {
         super(props);
 
         this.state = Object.assign({}, pick(getLayouInfo(), resultItems));
-    }
-
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
     }
 
     componentDidMount() {
@@ -211,13 +206,9 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
 };
 
 
-class SettingBox extends Component {
+class SettingBox extends PureComponent {
     constructor(props) {
         super(props);
-    }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
     }
 
     render() {

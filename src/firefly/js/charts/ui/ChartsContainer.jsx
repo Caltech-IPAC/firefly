@@ -2,9 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
-
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {LO_VIEW, LO_MODE, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 
@@ -18,14 +17,10 @@ import {PlotlyChartPanel} from '../ui/PlotlyChartPanel.jsx';
 /**
  * Default viewer
  */
-export class ChartsContainer extends Component {
+export class ChartsContainer extends PureComponent {
     constructor(props) {
         super(props);
 
-    }
-
-    shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
     }
 
     render() {

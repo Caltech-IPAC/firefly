@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {flux} from '../Firefly.js';
-import sCompare from 'react-addons-shallow-compare';
 import {convertAngle} from '../visualize/VisUtil.js';
 import {TextLocation} from '../visualize/draw/DrawingDef.js';
 import {dispatchModifyCustomField, DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
@@ -24,7 +24,7 @@ export const defaultFootprintTextLoc = TextLocation.REGION_SE;
 
 const precision = '0.0';
 
-class FootprintToolUI extends React.Component {
+class FootprintToolUI extends PureComponent {
     constructor(props) {
         super(props);
 
@@ -43,10 +43,6 @@ class FootprintToolUI extends React.Component {
         this.changeFootprintAngle = this.changeFootprintAngle.bind(this);
     }
 
-    shouldComponentUpdate(np, ns) {
-
-        return sCompare(this, np, ns);
-    }
 
     componentWillUnmount() {
         this.iAmMounted= false;
@@ -200,8 +196,8 @@ class FootprintToolUI extends React.Component {
 
 
 FootprintToolUI.propTypes= {
-    drawLayer     : React.PropTypes.object.isRequired,
-    pv            : React.PropTypes.object.isRequired
+    drawLayer     : PropTypes.object.isRequired,
+    pv            : PropTypes.object.isRequired
 };
 
 function convertWorldLonToString(pt) {

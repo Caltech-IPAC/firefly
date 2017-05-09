@@ -1,4 +1,5 @@
-import React, {Component, PropTypes}  from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import { has, isNaN} from 'lodash';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 import {dispatchValueChange} from '../fieldGroup/FieldGroupCntlr.js';

@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 
 
 
@@ -11,7 +11,7 @@ function drawOnCanvas(c,drawIt) {
     drawIt(c);
 }
 
-export class SimpleCanvas extends React.Component {
+export class SimpleCanvas extends PureComponent {
 
 
     constructor(props) {
@@ -19,21 +19,13 @@ export class SimpleCanvas extends React.Component {
         this.drawer= null;
     }
 
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
-
-    //componentDidUpdate() {
-    //    if (this.canvas) {
-    //        drawOnCanvas(this.canvas,this.props.drawIt);
-    //    }
-    //}
-
     setUpCanvas(c) {
         this.canvas= c;
         drawOnCanvas(c,this.props.drawIt);
     }
 
     render() {
-        var {drawIt, width, height, backgroundColor}= this.props;
+        const {width, height, backgroundColor}= this.props;
         return (
             <canvas width={width+''} height={height+''} style={{backgroundColor}} ref={(c) => this.setUpCanvas(c)}/>
         );
@@ -41,10 +33,10 @@ export class SimpleCanvas extends React.Component {
 }
 
 SimpleCanvas.propTypes= {
-    drawIt : React.PropTypes.func.isRequired,
-    width : React.PropTypes.number.isRequired,
-    height : React.PropTypes.number.isRequired,
-    backgroundColor: React.PropTypes.string
+    drawIt : PropTypes.func.isRequired,
+    width : PropTypes.number.isRequired,
+    height : PropTypes.number.isRequired,
+    backgroundColor: PropTypes.string
 };
 
 

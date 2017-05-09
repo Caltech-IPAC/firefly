@@ -3,9 +3,9 @@
  */
 
 import './CollapsiblePanel.css';
-import React, {Component, PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {isBoolean} from 'lodash';
-import sCompare from 'react-addons-shallow-compare';
 import {fieldGroupConnector} from '../FieldGroupConnector.jsx';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 
@@ -35,7 +35,7 @@ function collapsibleStateFromProps(props) {
     return {isOpen};
 }
 
-export class CollapsiblePanel extends Component {
+export class CollapsiblePanel extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -48,10 +48,6 @@ export class CollapsiblePanel extends Component {
 
     componentWillReceiveProps(nextProps) {
         this.state= collapsibleStateFromProps(nextProps);
-    }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
     }
 
     handleClick() {

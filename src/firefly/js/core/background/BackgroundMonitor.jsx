@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
+import React, {PureComponent} from 'react';
 import {get, set} from 'lodash';
 
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
@@ -13,8 +13,7 @@ import Validate from '../../util/Validate.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {flux} from '../../Firefly.js';
-import sCompare from 'react-addons-shallow-compare';
-import {getBackgroundInfo, BG_STATE, isActive, isDone, isSuccess, emailSent, canCreateScript, SCRIPT_ATTRIB} from './BackgroundUtil.js';
+import {getBackgroundInfo, BG_STATE, isActive, isDone, isSuccess, emailSent, canCreateScript} from './BackgroundUtil.js';
 import {dispatchBgStatus, dispatchJobRemove, dispatchBgSetEmail, dispatchJobCancel} from './BackgroundCntlr.js';
 import {downloadWithProgress} from '../../util/WebUtil.js';
 import {DownloadProgress} from '../../rpc/SearchServicesJson.js';
@@ -41,7 +40,7 @@ export function showBackgroundMonitor(show=true) {
     }
 }
 
-class BackgroundMonitor extends Component {
+class BackgroundMonitor extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -55,10 +54,6 @@ class BackgroundMonitor extends Component {
     componentWillUnmount() {
         this.removeListener && this.removeListener();
         this.isUnmounted = true;
-    }
-
-    shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
     }
 
     storeUpdate() {
@@ -85,11 +80,7 @@ class BackgroundMonitor extends Component {
     }
 }
 
-class BgFooter extends Component {
-
-    shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
-    }
+class BgFooter extends PureComponent {
 
     onHide() {
         showBackgroundMonitor(false);
