@@ -84,7 +84,7 @@ export const  LinearInterpolator = (x, y, allowExtrapolation) => {
     };
 
     /**
-     * @desc to find the output value beyong the input data range.
+     * @desc to find the output value beyond the input data range.
      * @param xVal
      * @param j
      * @param k

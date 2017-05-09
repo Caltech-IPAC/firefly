@@ -652,10 +652,11 @@ export function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
     const {text, textOffset, renderOptions, rotationAngle}= drawObj;
     //the angle of the grid line
     var angle=undefined;
+    var pvAngle=undefined;
     if (rotationAngle){
         const lineAngle = parseInt( rotationAngle.substring(0,  rotationAngle.length-3));
         const pv = getPlotViewById(visRoot(), plot.plotId);
-        var pvAngle =pv.rotation;
+        pvAngle =pv.rotation;
         if (pv.flipY){
            angle = (pvAngle-lineAngle);
         }
@@ -681,11 +682,14 @@ export function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
             textHeight = parseFloat(fontSize.substring(0, fontSize.length - 2)) * 14 / 10;
         }
 
+
         const textWidth = textHeight*text.length*8/20;
         if (textOffset) {
             x+=textOffset.x;
             y+=textOffset.y;
         }
+
+
         if (x<2) {
             if (x<=-textWidth) return; // don't draw
             x = 2;
@@ -708,6 +712,18 @@ export function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
             y = south;
         }
 
+      /*  if (pvAngle<90) { //adjust the text location after rotation
+
+            if (x > east / 2.0) {
+                x +=textHeight;
+            }
+        }
+        else {
+            if (y > south/2.0) {
+                y+=textHeight;
+            }
+
+        }*/
         DrawUtil.drawText(drawTextAry, text, x, y, color, renderOptions,
                 fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle,null,null,angle);
         drawObj.textWorldLoc = plot.getImageCoords(makeDevicePt(x, y));

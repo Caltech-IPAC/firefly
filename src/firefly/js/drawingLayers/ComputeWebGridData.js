@@ -25,7 +25,7 @@ var userDefinedDistance = false;
 import {Regrid} from '../util/Interp/Regrid.js';
 
 const nPoints=20;
-const textHeight=12;
+const allowExtrapolation=true;
 /**
  * This method does the calculation for drawing data array
  * @param plot - primePlot object
@@ -45,13 +45,13 @@ export function makeGridDrawData (plot,  cc, useLabels, numOfGridLines=11){
         const range = getRange(csys, width, height, cc);
         //calculate the levels
         const levelsCalcualted = getLevels(range, factor);
-        //regrid the levels if the line counts is less than 10
+        //regrid the levels if the line counts is less than 11, the default value
         const levels = adjustLevels(levelsCalcualted, numOfGridLines);
         const labels = getLabels(levels, csys, labelFormat);
         const {xLines, yLines} = computeLines(cc, csys, range, levels, screenWidth);
         const wpt = cc.getWorldCoords(makeImageWorkSpacePt(1, 1), csys);
         const aitoff = (!wpt);
-        return  drawLines(bounds, labels, xLines, yLines, aitoff, screenWidth, useLabels, cc,plot);
+        return  drawLines(bounds, labels, xLines, yLines, aitoff, screenWidth, useLabels, cc);
 
     }
 }
@@ -61,10 +61,10 @@ function adjustLevels(levels,numOfGridLines){
     const nL1 = levels[1].length;
     var newLevels = levels;
     if (nL0<numOfGridLines){
-        newLevels[0] = Regrid(levels[0], numOfGridLines);
+        newLevels[0] = Regrid(levels[0], numOfGridLines,allowExtrapolation);
     }
     if (nL1<numOfGridLines){
-        newLevels[1] = Regrid( levels[1], numOfGridLines);
+        newLevels[1] = Regrid( levels[1], numOfGridLines,allowExtrapolation);
     }
     return newLevels;
 }
@@ -389,10 +389,34 @@ function getLevels(ranges,factor){
             else {
 
                 delta =calculateDelta (min, max,factor);
+
+
+                /*
+                The algorithm previous used (commented ) missed one line. I don't understand the purpose of
+                the algorithm.  The levels can be simply defined as the loop below
+                */
+               /* levels[i] = [];
+                min=(max<min)?min-360:min;
+                var count = Math.ceil ( (max -min)/delta);
+                for (let j=0; j<count; j++){
+                    levels[i][j] = j*delta + min;
+                    if (!i && levels[i][j] > 360){
+                        levels[i][j] -= 360;
+                    }
+                    else if (!i && levels[i][j] < 0){
+                        levels[i][j] += 360;
+                    }
+
+                }
+*/
+
+                /* We've now got the increment between levels.
+                 * Now find all the levels themselves.
+                 */
                 min=(max<min)?min-360:min;
                 val = min<0? min-min%delta : min + delta-min%delta;
                 count=0;
-                while (val + count*delta < max){
+                while (val + count*delta <= max){
                     count++;
                 }
                 if (count<=2){
@@ -557,7 +581,7 @@ function findLine(cc,csys, direction, value, range, screenWidth){
     const points = fixPoints(npoints);
     //regrid the points found to 20 points
     if (points.length<20){
-        return  Regrid(findPoints, nPoints);
+        return  Regrid(findPoints, nPoints,allowExtrapolation);
     }
 
     return points;
@@ -657,20 +681,12 @@ function fixPoints(points){
         points[1][i] = -10000;
 
     }
+
     return points;
 }
 
-function count(array,val){
-    var result=0;
-    for(var a in array) {
-        if (array[a] == val) {
-            result++;
-        }
-    }
-    return result;
-}
 
-function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidth, useLabels,cc,plot){
+function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidth, useLabels,cc){
 
 
     //add the  draw line data to the drawData
@@ -714,15 +730,16 @@ function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidt
     }
 }
 
-function drawLines(bounds, labels, xLines,yLines, aitoff,screenWidth, useLabels,cc,plot) {
+function drawLines(bounds, labels, xLines,yLines, aitoff,screenWidth, useLabels,cc) {
     // Draw the lines previously computed.
     //get the locations where to put the labels
     var drawData=[];
 
     var  lineCount = xLines.length;
-    for (let i=0; i<lineCount; i+=1) {
+
+   for (let i=0; i<lineCount; i++) {
             drawLabeledPolyLine(drawData, bounds, labels[i] ,
-            xLines[i], yLines[i], aitoff,screenWidth, useLabels,cc,plot);
+            xLines[i], yLines[i], aitoff,screenWidth, useLabels,cc);
     }
     return drawData;
 
