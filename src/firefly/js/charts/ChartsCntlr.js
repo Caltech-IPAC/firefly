@@ -11,7 +11,7 @@ import {getTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {logError} from '../util/WebUtil.js';
 import {dispatchAddViewer, dispatchAddViewerItems} from '../visualize/MultiViewCntlr.js';
-import {handleTableSourceConnections, clearChartConn, newTraceFrom, HIGHLIGHTED_COLOR, SELECTED_COLOR} from './ChartUtil.js';
+import {handleTableSourceConnections, clearChartConn, newTraceFrom, applyDefaults, HIGHLIGHTED_COLOR, SELECTED_COLOR} from './ChartUtil.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 
@@ -593,6 +593,7 @@ function reduceData(state={}, action={}) {
             const nMounted = isUndefined(mounted) ? get(state, [chartId, 'mounted']) : mounted;
             if (chartType==='plot.ly') {
                 rest['_original'] = cloneDeep(action.payload);
+                applyDefaults(rest);
             }
             state = updateSet(state, chartId,
                 omitBy({
@@ -613,6 +614,7 @@ function reduceData(state={}, action={}) {
         case (CHART_REMOVE)  :
         {
             const {chartId} = action.payload;
+            clearChartConn(chartId);
             return omit(state, chartId);
         }
         case (CHART_DATA_FETCH)  :
@@ -694,7 +696,7 @@ function reduceData(state={}, action={}) {
             let newState=state;
             Object.keys(state).forEach((cid) => {
                 let chartDataElements = state[cid].chartDataElements || [];
-                Object.keys(state[cid].chartDataElements).forEach( (id) => {
+                Object.keys(chartDataElements).forEach( (id) => {
                     if (chartDataElements[id].tblId === tbl_id) {
                         chartDataElements = omit(chartDataElements, id);
                         newState = updateSet(newState, [cid, 'chartDataElements'], chartDataElements);

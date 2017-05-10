@@ -122,11 +122,11 @@
 }
 
 .ChartToolbar__expand {
-    background-image: url("/images/icons-2014/24x24_ExpandArrows.png");
+    background-image: url("/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png");
 }
 
-.ChartToolbar__auto-scale {
-    background-image: url("/images/icons-2014/Zoom1x.png");
+.ChartToolbar__reset-zoom {
+    background-image: url("/images/icons-2014/Zoom1x-24x24-tmp.png");
 }
 
 .ChartToolbar__filter {

@@ -128,11 +128,20 @@ export function OptionTopBar({groupKey, activeTrace, chartId, tbl_id}) {
     );
 }
 
-function submitChanges(chartId, fields, tbl_id) {
+/**
+ * This is a default implementation of an option pane's apply changes function.
+ * It assume the fieldId is the 'path' to the chart data and the value of the field is the value you want to change.
+ * For fields that are mapped to tables, it assumes that they starts with '_tables'.  In this case, it will prepend
+ * 'tables::tbl_id,' to the value.
+ * @param {string} chartId
+ * @param {object} fields
+ * @param {string} tbl_id
+ */
+export function submitChanges(chartId, fields, tbl_id) {
     if (!fields) return;                // fields failed validations..  quick/dirty.. may need to separate the logic later.
     const changes = {showOptions: false};
     Object.entries(fields).forEach( ([k,v]) => {
-        if (k.startsWith('_tables.')) {
+        if (tbl_id && k.startsWith('_tables.')) {
             k = k.replace('_tables.', '');
             v = v ? `tables::${tbl_id},${v}` : undefined;
         }

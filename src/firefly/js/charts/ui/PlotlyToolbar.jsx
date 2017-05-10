@@ -31,7 +31,7 @@ export class ScatterToolbar extends SimpleComponent {
                 <SelectionPart {...{chartId, hasFilter, activeTrace, hasSelection, hasSelected, tbl_id}}/>
                 <DragModePart {...{chartId, tbl_id, dragmode}}/>
                 <div className='ChartToolbar__buttons'>
-                    <AutoScaleBtn style={{marginLeft: 10}} {...{chartId}} />
+                    <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />
                     <OptionsBtn {...{chartId, showOptions}} />
                     {expandable && <ExpandBtn {...{chartId}} />}
                 </div>
@@ -55,7 +55,7 @@ export class BasicToolbar extends SimpleComponent {
                 <ActiveTraceSelect style={{marginRight: 20}} {...{chartId, activeTrace}}/>
                 <DragModePart {...{chartId, tbl_id, dragmode}}/>
                 <div className='ChartToolbar__buttons'>
-                    <AutoScaleBtn style={{marginLeft: 10}} {...{chartId}} />
+                    <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />
                     <OptionsBtn {...{chartId, showOptions}} />
                     {expandable && <ExpandBtn {...{chartId}} />}
                 </div>
@@ -114,11 +114,20 @@ function SelectBtn({style={}, chartId, dragmode}) {
     );
 }
 
-function AutoScaleBtn({style={}, chartId}) {
+function ResetZoomBtn({style={}, chartId}) {
+    const {_original} = getChartData(chartId) || {};
+    const doClick = () => {
+        const changes = ['xaxis','yaxis','zaxis'].reduce((pv, axis) => {
+            pv[`layout.${axis}.autorange`]  = get(_original, `layout.${axis}.autorange`);
+            pv[`layout.${axis}.range`]      = get(_original, `layout.${axis}.range`);
+            return pv;
+        }, {});
+        dispatchChartUpdate({chartId, changes});
+    };
     return (
-        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.xaxis.autorange': true, 'layout.yaxis.autorange': true}})}
+        <div style={style} onClick={doClick}
              title='Autoscale'
-             className='ChartToolbar__auto-scale'/>
+             className='ChartToolbar__reset-zoom'/>
     );
 }
 

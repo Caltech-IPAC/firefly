@@ -7,12 +7,12 @@
  * Utilities related to charts
  * Created by tatianag on 3/17/16.
  */
-import {get, uniqueId, isUndefined, omitBy, zip, isEmpty, range, set, isObject, pick, cloneDeep} from 'lodash';
+import {get, uniqueId, isUndefined, omitBy, zip, isEmpty, range, set, isObject, pick, cloneDeep, merge} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import {getAppOptions} from '../core/AppDataCntlr.js';
 import {getTblById, getColumnIdx, getCellValue, cloneRequest, doFetchTable, watchTableChanges, MAX_ROW} from '../tables/TableUtil.js';
-import {TABLE_FILTER, TABLE_SORT, TABLE_HIGHLIGHT, TABLE_SELECT} from '../tables/TablesCntlr.js';
+import {TABLE_FILTER, TABLE_SORT, TABLE_HIGHLIGHT, TABLE_SELECT, TABLE_REMOVE} from '../tables/TablesCntlr.js';
 import {dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, getChartData} from './ChartsCntlr.js';
 import {Expression} from '../util/expr/Expression.js';
 import {logError, flattenObject} from '../util/WebUtil.js';
@@ -311,7 +311,7 @@ export function handleTableSourceConnections({chartId, data}) {
             if (oldTraceTS && oldTraceTS._cancel) oldTraceTS._cancel();   // cancel the previous watcher if exists
             //creates a new one.. and save the cancel handle
             updateChartData(tbl_id, chartId, idx, rest);
-            traceTS._cancel = watchTableChanges(tbl_id, [TABLE_FILTER, TABLE_SORT, TABLE_HIGHLIGHT, TABLE_SELECT], (action) => updateChartData(tbl_id, chartId, idx, rest, action));
+            traceTS._cancel = watchTableChanges(tbl_id, [TABLE_FILTER, TABLE_SORT, TABLE_HIGHLIGHT, TABLE_SELECT, TABLE_REMOVE], (action) => updateChartData(tbl_id, chartId, idx, rest, action));
             tablesources[idx] = traceTS;
         }
     });
@@ -327,6 +327,13 @@ function updateChartData(tbl_id, chartId, traceNum, mappings, action={}) {
         const selectInfoCls = SelectInfo.newInstance(selectInfo);
         const selIndexes = Array.from(selectInfoCls.getSelected());
         dispatchChartSelect({chartId, selIndexes});
+    } else if (action.type === TABLE_REMOVE) {
+        const changes = {};
+        Object.entries(mappings).forEach(([k,v]) => {
+            changes[`data.${traceNum}.${k}`] = [];
+        });
+        dispatchChartUpdate({chartId, changes});
+        dispatchChartHighlighted({chartId, highlighted: undefined}); 
     } else {
         const {request, highlightedRow} = getTblById(tbl_id) || {};
         const sreq = cloneRequest(request, {startIdx: 0, pageSize: MAX_ROW, inclCols: Object.values(mappings).join(',')});
@@ -369,7 +376,9 @@ function makeTableSources(data=[]) {
 
 
 
-
+export function applyDefaults(chartData={}) {
+    chartData.layout = merge({xaxis:{autorange:true}, yaxis:{autorange:true}}, chartData.layout);
+}
 
 
 

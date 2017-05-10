@@ -14,6 +14,7 @@ import {updateSet} from '../../../util/WebUtil.js';
 import {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {TableSourcesOptions} from './ScatterOptions.jsx';
+import {submitChanges} from './BasicOptions.jsx';
 
 const fieldProps = {labelWidth: 62, size: 15};
 
@@ -33,6 +34,7 @@ export class NewTracePanel extends SimpleComponent {
         const {groupKey, activeTrace, type} = this.state;
         const {data, layout, tablesources} = getChartData(chartId);
         const doAdd = (flds) => {
+            flds = Object.assign({activeTrace}, flds);  // make the newly added trace active
             submitChanges(chartId, flds, tbl_id);
             dispatchHideDialog('ScatterNewTracePanel');
         };
@@ -87,22 +89,6 @@ export function NewTracePanelBtn({tbl_id, chartId}) {
     return (
         <button type='button' className='button std' onClick={showNewTracePanel}>Add Series</button>
     );
-}
-
-function submitChanges(chartId, fields, tbl_id) {
-    if (!fields) return;                // fields failed validations..  quick/dirty.. may need to separate the logic later.
-    const changes = {showOptions: false};
-    Object.entries(fields).forEach( ([k,v]) => {
-        if (k.startsWith('_tables.')) {
-            k = k.replace('_tables.', '');
-            v = v ? `tables::${tbl_id},${v}` : undefined;
-        }
-        if (!changes[k]) {
-            changes[k] = v;
-        }
-
-    });
-    dispatchChartUpdate({chartId, changes});
 }
 
 function fieldReducer({data, layout, activeTrace, tablesources={}}) {
