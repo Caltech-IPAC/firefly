@@ -170,7 +170,7 @@ export function computeCentralPointAndRadius(inPoints) {
  * @param {number} dec  the equatorial DEC in degrees of the second object
  * @return {number} position angle in degrees between the two objects
  */
-function getPositionAngle(ra0, dec0, ra, dec) {
+export function getPositionAngle(ra0, dec0, ra, dec) {
     let sind, sinpa, cospa;
 
     const alf = ra * DtoR;
@@ -200,7 +200,7 @@ function getPositionAngle(ra0, dec0, ra, dec) {
     if (dec0===-90) pa = 0.0;
 
     return pa;
-};
+}
 
 /**
  * Rotates the given input position and returns the result. The rotation
@@ -338,12 +338,42 @@ export const getRotationAngle= function(plot) {
     const iy = iHeight / 2;
     const cc= CysConverter.make(plot);
     const wptC = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy));
-    const wpt2 = cc.getWorldCoords(makeImageWorkSpacePt(ix, iHeight/4));
+    const wpt2 = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy+iHeight/4));
     if (wptC && wpt2) {
         retval = getPositionAngle(wptC.getLon(), wptC.getLat(), wpt2.getLon(), wpt2.getLat());
     }
     return retval;
 };
+
+
+/**
+ * Return true if the plot in both PlotViews are rotated the same
+ * @param {PlotView} pv1
+ * @param {PlotView} pv2
+ * @return {boolean}
+ */
+export function isRotationMatching(pv1, pv2) {
+    const p1= primePlot(pv1);
+    const p2= primePlot(pv2);
+
+    if (!p1 || !p2) return false;
+
+    if (isNorthCountingRotation(pv1) && isNorthCountingRotation(pv2)) {
+        return true;
+    }
+    else {
+        const r1= getRotationAngle(p1) + pv1.rotation;
+        const r2= getRotationAngle(p2) + pv2.rotation;
+        return Math.abs(r1-r2) < .9;
+    }
+}
+
+function isNorthCountingRotation(pv) {
+    const plot= primePlot(pv);
+    if (!plot) return false;
+    return (pv.plotViewCtx.rotateNorthLock || (isPlotNorth(plot) && !pv.rotation) );
+}
+
 
 /**
  * Is the image positioned so that north is up.
