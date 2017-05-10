@@ -2,7 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {take, fork, cancel} from 'redux-saga/effects';
 import {get, unset, has, isEmpty, isUndefined, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray, padEnd} from 'lodash';
+
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {FilterInfo} from './FilterInfo.js';
@@ -13,6 +15,7 @@ import {fetchTable, findTableIndex} from '../rpc/SearchServicesJson.js';
 import {DEF_BASE_URL} from '../core/JsonUtils.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {doUpload} from '../ui/FileUpload.jsx';
+import {dispatchAddSaga} from '../core/MasterSaga.js';
 
 export const MAX_ROW = Math.pow(2,31) - 1;
 /* TABLE_REQUEST should match QueryUtil on the server-side */
@@ -221,6 +224,26 @@ export function doFetchTable(tableRequest, hlRowIdx) {
     }
 }
 
+
+/**
+ * return a promise of a tableModel for the given tbl_id.
+ * @param {string} tbl_id the table ID to watch for.
+ * @returns {Promise.<TableModel>}
+ * @public
+ * @func onTableLoad
+ * @memberof firefly.util.table
+ */
+export function onTableLoaded(tbl_id) {
+    if (isFullyLoaded(tbl_id)) {
+        return Promise.resolve(getTblById(tbl_id));
+    } else {
+        return new Promise((resolve) => {
+            dispatchAddSaga( doOnTblLoaded, {tbl_id,
+                callback:resolve});
+        });
+    }
+}
+
 /**
  * returns true is there is data within the given range.  this is needed because
  * of paging table not loading the full table.
@@ -419,10 +442,9 @@ export function getFilterCount(tableModel) {
 }
 
 export function clearFilters(tableModel) {
-    const request = get(tableModel, 'request');
+    const {request, tbl_id} = tableModel || {};
     if (request && request.filters) {
-        const newRequest = Object.assign({}, request, {filters: ''});
-        TblCntlr.dispatchTableFilter(newRequest, 0);
+        TblCntlr.dispatchTableFilter({tbl_id, filters: ''}, 0);
     }
 }
 
@@ -881,3 +903,64 @@ export function getStringColNames(tblColumns) {
                     .filter((tblCol) => (CharTypes.includes(tblCol.type)))
                     .map((tblCol) => (tblCol.name));
 }
+
+/**
+ * this function invoke the given callback when changes are made to the given tbl_id
+ * @param {string}   tbl_id  table id to watch
+ * @param {Object}   actions  an array of table actions to watch
+ * @param {function} callback  callback to execute when table is loaded.
+ * @return {function} returns a function used to cancel
+ */
+export function watchTableChanges(tbl_id, actions, callback) {
+    if (!Array.isArray(actions) || actions.length === 0 || !callback) return;
+
+    var stopWatching = false;
+    const watcher = function* () {
+        const task = yield fork(function* () {
+            while (true) {
+                const action = yield take(actions);
+                if (tbl_id === get(action, 'payload.tbl_id') || get(action, 'payload.request.tbl_id')) {
+                    callback && callback(action);
+                }
+            };
+        });
+        while(!stopWatching) {
+            yield take();  // watch for all actions
+            if (stopWatching) {
+                yield cancel(task);
+            }
+        }
+    };
+    dispatchAddSaga(watcher);
+    return () => stopWatching = true;
+}
+
+/*-------------------------------------private------------------------------------------------*/
+/**
+ * this saga watches for table update and invoke the given callback when
+ * the table given by tbl_id is fully loaded.
+ * @param {Object}   p  parameters object
+ * @param {string}   p.tbl_id  table id to watch
+ * @param {function} p.callback  callback to execute when table is loaded.
+ */
+function* doOnTblLoaded({tbl_id, callback}) {
+
+    var isLoaded = false, hasData = false;
+    while (!(isLoaded && hasData)) {
+        const action = yield take([TblCntlr.TABLE_UPDATE, TblCntlr.TABLE_REPLACE]);
+        const a_id = get(action, 'payload.tbl_id');
+        if (tbl_id === a_id) {
+            const tableModel = getTblById(tbl_id);
+            isLoaded = isLoaded || isTableLoaded(tableModel);
+            hasData = hasData || get(tableModel, 'tableData.columns.length');
+            if (get(tableModel, 'error')) {
+                // there was an error loading this table.
+                callback(createErrorTbl(tbl_id, tableModel.error));
+                return;
+            }
+        }
+    }
+    callback && callback(getTblInfoById(tbl_id));
+}
+
+

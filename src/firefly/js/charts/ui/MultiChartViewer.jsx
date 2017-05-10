@@ -16,6 +16,8 @@ import {dispatchAddViewer, dispatchViewerUnmounted, dispatchUpdateCustom,
         getMultiViewRoot, getViewer, getLayoutType,PLOT2D} from '../../visualize/MultiViewCntlr.js';
 import {getExpandedChartProps, getChartData} from '../ChartsCntlr.js';
 import {LO_VIEW, LO_MODE, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
+import {PlotlyChartPanel} from './PlotlyChartPanel.jsx';
+import {getToolbarUI} from '../ChartUtil.js';
 
 import {MultiChartToolbarStandard, MultiChartToolbarExpanded} from './MultiChartToolbar.jsx';
 
@@ -83,13 +85,11 @@ export class MultiChartViewer extends Component {
 
         const makeItemViewer = (chartId) => (
             <div className={chartId === activeItemId ? 'ChartPanel ChartPanel--active' : 'ChartPanel'} onClick={()=>onChartSelect(chartId)}>
-                <ChartPanel key={chartId} showToolbar={false} chartId={chartId}/>;
+                {getChartPanel(chartId)};
             </div>
         );
 
-        const makeItemViewerFull = (chartId) => (
-            <ChartPanel key={chartId} showToolbar={false} chartId={chartId}/>
-        );
+        const makeItemViewerFull = (chartId) => getChartPanel(chartId);
 
         const newProps = {
             viewerItemIds: viewer.itemIdAry,
@@ -104,7 +104,7 @@ export class MultiChartViewer extends Component {
         <div className='ChartPanel__container'>
             <div className='ChartPanel__wrapper'>
                 {expandedMode ? <MultiChartToolbarExpanded {...{closeable, viewerId, layoutType, activeItemId}}/> : <MultiChartToolbarStandard {...{viewerId, layoutType, activeItemId}}/>}
-                <ChartPanel key={'toolbar-'+activeItemId} expandedMode={expandedMode} expandable={!expandedMode}  showChart={false} chartId={activeItemId}/>
+                <ToolBar expandedMode={expandedMode} chartId={activeItemId}/>
 
                 <div className='ChartPanel__chartarea--withToolbar'>
                     <MultiItemViewerView {...this.props} {...newProps}/>
@@ -114,6 +114,23 @@ export class MultiChartViewer extends Component {
         </div>
 
         );
+    }
+}
+
+function getChartPanel(chartId) {
+    const {chartType} = getChartData(chartId) || {};
+    return chartType === 'plot.ly' ?
+        <PlotlyChartPanel key={chartId} showToolbar={false} chartId={chartId}/>:
+        <ChartPanel key={chartId} showToolbar={false} chartId={chartId}/>;
+}
+
+function ToolBar({chartId, expandedMode}) {
+    const {chartType} = getChartData(chartId) || {};
+    if (chartType === 'plot.ly') {
+        const ToolbarUI = getToolbarUI(chartId) || (() => null);
+        return <ToolbarUI chartId={chartId} expandable={!expandedMode}/>;
+    } else {
+        return <ChartPanel key={'toolbar-'+chartId} expandedMode={expandedMode} expandable={!expandedMode}  showChart={false} chartId={chartId}/>;
     }
 }
 
