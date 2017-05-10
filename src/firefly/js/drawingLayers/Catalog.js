@@ -361,10 +361,7 @@ export function filterCatalog(pv,dlAry) {
 
 
 function doClearFilter(dl) {
-    const tbl= getTblById(dl.drawLayerId);
-    if (!tbl) return;
-    const newRequest = Object.assign({}, tbl.request, {filters: ''});
-    dispatchTableFilter(newRequest);
+    dispatchTableFilter({tbl_id: dl.drawLayerId, filters: ''});
 }
 
 
@@ -383,7 +380,7 @@ function doFilter(dl,p,sel) {
             .map( (idx) => dl.tableData.data[idx][decimateIdx]);
         filter= `IN (${idxs.toString()})`;
         filterInfoCls.addFilter(dl.tableMeta['decimate_key'], filter);
-        newRequest = Object.assign({}, tbl.request, {filters: filterInfoCls.serialize()});
+        newRequest = {tbl_id: tbl.tbl_id, filters: filterInfoCls.serialize()};
         dispatchTableFilter(newRequest);
         console.log(newRequest);
         console.log(idxs);
@@ -395,7 +392,7 @@ function doFilter(dl,p,sel) {
         filter= `IN (${idxs.toString()})`;
         // filterInfoCls.setFilter(filter);
         filterInfoCls.setFilter('ROWID', filter);
-        newRequest = Object.assign({}, tbl.request, {filters: filterInfoCls.serialize()});
+        newRequest = {tbl_id: tbl.tbl_id, filters: filterInfoCls.serialize()};
         dispatchTableFilter(newRequest);
     }
 

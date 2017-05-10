@@ -24,7 +24,7 @@ export function ListBoxInputFieldView({inline, value, onChange, fieldKey, option
     const style = Object.assign({whiteSpace:'nowrap', display: inline?'inline-block':'block'}, wrapperStyle);
     return (
         <div style={style}>
-            <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} />
+            {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} />}
             <select name={fieldKey}
                     title={tooltip}
                     style={selectStyle}
@@ -32,12 +32,13 @@ export function ListBoxInputFieldView({inline, value, onChange, fieldKey, option
                     onChange={onChange}
                     value={multiple ? vAry : value}>
                 {options.map(( (option) => {
+                    const optLabel = option.label || option.value;
                     return (
                         <option value={option.value}
                                 key={option.value}
                                 style={{paddingLeft: 5, paddingRight: 3}}
                                 disabled={option.disabled ? 'disabled' : false}>
-                            {option.label}
+                            {optLabel}
                         </option>
                     );
                 }))}

@@ -255,6 +255,7 @@ export class ChartPanel extends Component {
         const chartData =  ChartsCntlr.getChartData(chartId);
         if (chartData) {
             const chartType = get(chartData, 'chartType');
+            if (chartType === 'plot.ly') return {};
             const {Chart,Options,Toolbar,getChartProperties,updateOnStoreChange} = reduxFlux.getChartType(chartType);
             return {
                 chartId, ...getChartProperties(chartId),

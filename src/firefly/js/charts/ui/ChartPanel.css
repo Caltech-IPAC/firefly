@@ -76,3 +76,82 @@
     overflow: auto;
     box-shadow: -2px 0 2px 0 rgba(0,0,0,0.50);
 }
+
+
+.ChartToolbar {
+    display: inline-flex;
+    flex-direction: row;
+    width: 100%;
+    height: 30px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.ChartToolbar__buttons {
+    display: inline-flex;
+}
+
+.ChartToolbar__buttons > * {
+    width: 24px;
+    height: 24px;
+    margin: 0 1px;
+    cursor: pointer;
+}
+
+.ChartToolbar__buttons > *.selected {
+    box-shadow: 0 3px 0 darkred;
+}
+
+.ChartToolbar__buttons > *:hover {
+    background-color: rgba(0,0,0, .15);
+}
+
+.ChartToolbar__zoom {
+    background-image: url("/images/icons-2014/24x24_ZoomIn.png");
+}
+
+.ChartToolbar__pan {
+    background-image: url("/images/icons-2014/pan.png");
+}
+.ChartToolbar__select {
+    background-image: url("/images/icons-2014/select.png");
+}
+
+.ChartToolbar__options {
+    background-image: url("/images/icons-2014/24x24_GearsNEW.png");
+}
+
+.ChartToolbar__expand {
+    background-image: url("/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png");
+}
+
+.ChartToolbar__reset-zoom {
+    background-image: url("/images/icons-2014/Zoom1x-24x24-tmp.png");
+}
+
+.ChartToolbar__filter {
+    background-image: url("/images/icons-2014/24x24_FilterAdd.png");
+}
+
+.ChartToolbar__clear-filters {
+    background-image: url("/images/icons-2014/24x24_FilterOff_Circle.png");
+}
+
+.ChartToolbar__selected {
+    background-image: url("/images/icons-2014/24x24_Checkmark.png");
+}
+
+.ChartToolbar__clear-selected {
+    background-image: url("/images/icons-2014/24x24_CheckmarkOff_Circle.png");
+}
+
+.ChartOptions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 200px;
+    height: 100%;
+    background-color: beige;
+}
+
+

@@ -7,15 +7,26 @@
  * Utilities related to charts
  * Created by tatianag on 3/17/16.
  */
-import {get, uniqueId, isUndefined, omitBy} from 'lodash';
+import {get, uniqueId, isUndefined, omitBy, zip, isEmpty, range, set, isObject, pick, cloneDeep, merge} from 'lodash';
 
+import {flux} from '../Firefly.js';
 import {getAppOptions} from '../core/AppDataCntlr.js';
-import {getTblById, getColumnIdx, getCellValue} from '../tables/TableUtil.js';
+import {getTblById, getColumnIdx, getCellValue, cloneRequest, doFetchTable, watchTableChanges, MAX_ROW} from '../tables/TableUtil.js';
+import {TABLE_FILTER, TABLE_SORT, TABLE_HIGHLIGHT, TABLE_SELECT, TABLE_REMOVE} from '../tables/TablesCntlr.js';
+import {dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, getChartData} from './ChartsCntlr.js';
 import {Expression} from '../util/expr/Expression.js';
-import {logError} from '../util/WebUtil.js';
+import {logError, flattenObject} from '../util/WebUtil.js';
+import {UI_PREFIX} from './ChartsCntlr.js';
+import {ScatterOptions} from './ui/options/ScatterOptions.jsx';
+import {BasicOptions} from './ui/options/BasicOptions.jsx';
+import {ScatterToolbar, BasicToolbar} from './ui/PlotlyToolbar';
+import {SelectInfo} from '../tables/SelectInfo.js';
 
 export const SCATTER = 'scatter';
 export const HISTOGRAM = 'histogram';
+
+export const SELECTED_COLOR = '#ffc800';
+export const HIGHLIGHTED_COLOR = '#ffa500';
 
 export function isPlotly() {
     return get(getAppOptions(), 'charts.chartEngine')==='plotly';
@@ -215,3 +226,164 @@ export function makeHistogramParams(params) {
         return histogramParams;
     }
 }
+
+export function getChartUi(chartId) {
+    return get(flux.getState(), `${UI_PREFIX}.${chartId}`);
+}
+
+export function getOptionsUI(chartId) {
+    // based on chartData, determine what options to display
+    const {data, activeTrace=0} = getChartData(chartId);
+    const type = get(data, [activeTrace, 'type'], 'scatter');
+    switch (type) {
+        case 'scatter':
+            return ScatterOptions;
+        default:
+            return BasicOptions;
+    }
+}
+
+export function getToolbarUI(chartId, activeTrace=0) {
+    const {data} =  getChartData(chartId);
+    const type = get(data, [activeTrace, 'type'], '');
+    if (type === 'scatter') {
+        return ScatterToolbar;
+    } else {
+        return BasicToolbar;
+    }
+}
+
+export function clearChartConn({chartId}) {
+    var oldTablesources = get(getChartData(chartId), 'tablesources',[]);
+    if (Array.isArray(oldTablesources)) {
+        oldTablesources.forEach( (traceTS, idx) => {
+            if (traceTS._cancel) traceTS._cancel();   // cancel the previous watcher if exists
+        });
+    }
+}
+
+export function newTraceFrom(data, selIndexes, color) {
+
+    const sdata = cloneDeep(pick(data, ['x', 'y', 'error_x', 'error_y', 'marker']));
+    Object.assign(sdata, {showlegend: false, type: 'scatter', mode: 'markers'});
+
+    // walk through object and replace values where there's an array with only the selected indexes.
+    function deepReplace(obj) {
+        Object.entries(obj).forEach( ([k,v]) => {
+            if (Array.isArray(v) && v.length > selIndexes.length) {
+                obj[k] = selIndexes.reduce((p, sIdx) => {
+                    p.push(v[sIdx]);
+                    return p;
+                }, []);
+            } else if (isObject(v)) {
+                deepReplace(v);
+            }
+        });
+    };
+    deepReplace(sdata);
+    set(sdata, 'marker.color', color);
+    return sdata;
+}
+
+/**
+ *
+ * @param {object} p
+ * @param {string} p.chartId
+ * @param {object[]} p.data
+ */
+export function handleTableSourceConnections({chartId, data}) {
+    var tablesources = makeTableSources(data);
+    var oldTablesources = get(getChartData(chartId), 'tablesources',[]);
+
+    const hasTablesources = Array.isArray(tablesources) && tablesources.find((ts) => !isEmpty(ts));
+    if (!hasTablesources) return;
+
+    const numTraces = Math.max(tablesources.length, oldTablesources.length);
+    range(numTraces).forEach( (idx) => {            // range instead of for-loop is to avoid the idx+1 JS's closure problem
+        const traceTS = tablesources[idx];
+        const oldTraceTS = oldTablesources[idx] || {};
+        if (isEmpty(traceTS)) {
+            tablesources[idx] = oldTraceTS;     // if no updates.. move the previous one into the new tablesources
+        } else {
+            const {tbl_id, ...rest} = traceTS;
+            if (!getTblById(tbl_id)) return;
+
+            if (oldTraceTS && oldTraceTS._cancel) oldTraceTS._cancel();   // cancel the previous watcher if exists
+            //creates a new one.. and save the cancel handle
+            updateChartData(tbl_id, chartId, idx, rest);
+            traceTS._cancel = watchTableChanges(tbl_id, [TABLE_FILTER, TABLE_SORT, TABLE_HIGHLIGHT, TABLE_SELECT, TABLE_REMOVE], (action) => updateChartData(tbl_id, chartId, idx, rest, action));
+            tablesources[idx] = traceTS;
+        }
+    });
+    dispatchChartUpdate({chartId, changes:{tablesources}});
+}
+
+function updateChartData(tbl_id, chartId, traceNum, mappings, action={}) {
+    if (action.type === TABLE_HIGHLIGHT) {
+        const {highlightedRow} = action.payload;
+        dispatchChartHighlighted({chartId, highlighted: highlightedRow});
+    } else if (action.type === TABLE_SELECT) {
+        const {selectInfo={}} = action.payload;
+        const selectInfoCls = SelectInfo.newInstance(selectInfo);
+        const selIndexes = Array.from(selectInfoCls.getSelected());
+        dispatchChartSelect({chartId, selIndexes});
+    } else if (action.type === TABLE_REMOVE) {
+        const changes = {};
+        Object.entries(mappings).forEach(([k,v]) => {
+            changes[`data.${traceNum}.${k}`] = [];
+        });
+        dispatchChartUpdate({chartId, changes});
+        dispatchChartHighlighted({chartId, highlighted: undefined}); 
+    } else {
+        const {request, highlightedRow} = getTblById(tbl_id) || {};
+        const sreq = cloneRequest(request, {startIdx: 0, pageSize: MAX_ROW, inclCols: Object.values(mappings).join(',')});
+        doFetchTable(sreq).then(
+            (tableModel) => {
+                if (tableModel.tableData && tableModel.tableData.data) {
+                    const cols = tableModel.tableData.columns.map( (c) => c.name);
+                    const transposed = zip(...tableModel.tableData.data);
+                    const changes = {};
+                    Object.entries(mappings).forEach(([k,v]) => {
+                        changes[`data.${traceNum}.${k}`] = transposed[cols.indexOf(v)];
+                    });
+                    dispatchChartUpdate({chartId, changes});
+                    dispatchChartHighlighted({chartId, highlighted: highlightedRow});   // update highlighted point in chart
+                }
+            }
+        ).catch(
+            (reason) => {
+                console.error(`Failed to fetch table: ${reason}`);
+            }
+        );
+    }
+}
+
+function makeTableSources(data=[]) {
+
+    const convertToDS = (flattenData) =>
+                        Object.entries(flattenData)
+                                .filter(([k,v]) => typeof v === 'string' && v.startsWith('tables::'))
+                                .reduce( (p, [k,v]) => {
+                                    const [,tbl_id, colExp] = v.match(/^tables::(.+),(.+)/) || [];
+                                    if (tbl_id) p.tbl_id = tbl_id;
+                                    if (colExp) p[k] = colExp;
+                                    return p;
+                                }, {});
+
+    return data.map((d) => convertToDS(flattenObject(d)));
+}
+
+
+
+
+export function applyDefaults(chartData={}) {
+    chartData.layout = merge({xaxis:{autorange:true}, yaxis:{autorange:true}}, chartData.layout);
+}
+
+
+
+
+
+
+
+

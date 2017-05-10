@@ -26,6 +26,10 @@
 <div id="histogramHere" style="width: 800px; height: 550px; border: solid 1px"></div>
 <br/><br/>
 <div id="xyplotHere" style="width: 800px; height: 550px; border: solid 1px;"></div>
+<br/><br/>
+<div id="plotly" style="resize: both; overflow: auto; padding: 5px; width: 800px; height: 550px; border: solid 1px gray;"></div>
+<br/><br/>
+<div id="table-1" style="width: 800px; height: 550px; border: solid 1px;"></div>
 
 <script type="text/javascript">
     if (!window.firefly) window.firefly= {};
@@ -95,6 +99,41 @@
                 yCol: 'dec1'
             };
             firefly.showXYPlot('xyplotHere', chartParams);
+
+
+            var trace1 = {
+                x: [1, 2, 3, 4],
+                y: [10, 15, 13, 17],
+                mode: 'markers',
+                type: 'scatter'
+            };
+
+            var trace2 = {
+                x: [2, 3, 4, 5],
+                y: [16, 5, 11, 9],
+                mode: 'lines',
+                type: 'scatter'
+            };
+
+            var data = [trace1, trace2];
+            firefly.showPlot('plotly', {chartId: 'test', chartType: 'plot.ly', data: data});
+
+
+            var tblReq = firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
+                    {   position: '202.48;47.23;EQ_J2000',
+                        SearchMethod: 'Cone',
+                        radius: 30,
+                    }, {tbl_id: 'test-tbl'});
+            firefly.showTable('table-1', tblReq);
+
+            trace1 = {
+                x: "tables::test-tbl,ra",
+                y: "tables::test-tbl,dec",
+                mode: 'markers',
+                type: 'scatter'
+            };
+
+            firefly.showPlot('plotly', {chartId: 'plotly-tbl', chartType: 'plot.ly', data: [trace1]});
 
         }
     }

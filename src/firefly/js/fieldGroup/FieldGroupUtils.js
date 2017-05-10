@@ -133,6 +133,10 @@ export const getFieldGroupState= function(groupKey) {
     return fieldGroupMap[groupKey] ? fieldGroupMap[groupKey] : null;
 };
 
+export function getFieldVal(groupKey, fldName, defval=undefined) {
+    return get(getGroupFields(groupKey), [fldName, 'value'], defval);
+};
+
 /**
  * Get the group fields for a key
  *
@@ -147,7 +151,6 @@ const getGroupFields= function(groupKey) {
 const getFldValue= function(fields, fldName, defval=undefined) {
     return (fields? get(fields, [fldName, 'value'], defval) : defval);
 };
-
 
 /**
  *
