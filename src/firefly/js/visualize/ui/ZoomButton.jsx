@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {dispatchZoom} from '../ImagePlotCntlr.js';
@@ -83,8 +84,8 @@ export function ZoomButton({plotView:pv,zoomType,visible}) {
 
 
 ZoomButton.propTypes= {
-    plotView : React.PropTypes.object,
-    visible : React.PropTypes.bool.isRequired,
-    zoomType : React.PropTypes.oneOf([ZoomType.UP,ZoomType.DOWN,ZoomType.ONE,ZoomType.FIT,ZoomType.FILL])
+    plotView : PropTypes.object,
+    visible : PropTypes.bool.isRequired,
+    zoomType : PropTypes.oneOf([ZoomType.UP,ZoomType.DOWN,ZoomType.ONE,ZoomType.FIT,ZoomType.FILL])
 };
 

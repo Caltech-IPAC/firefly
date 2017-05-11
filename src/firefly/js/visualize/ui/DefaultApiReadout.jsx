@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
 // import {currMouseState} from '../VisMouseCntlr.js';
@@ -38,13 +38,11 @@ var minimalStyle= {
     whiteSpace : 'nowrap',
     overflow : 'hidden'
 };
-export class DefaultApiReadout extends Component {
+export class DefaultApiReadout extends PureComponent {
     constructor(props) {
         super(props);
         this.state= {visRoot:visRoot(), currMouseState:lastMouseCtx(), readout:readoutRoot()};
     }
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentWillUnmount() {
         this.iAmMounted= false;

@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {debounce, defer} from 'lodash';
 import Resizable from 'react-component-resizable';
 import {ImageViewerDecorate} from './ImageViewerDecorate.jsx';
@@ -16,7 +16,7 @@ const style= {
 };
 
 
-export class ImageViewerView extends Component {
+export class ImageViewerView extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -38,10 +38,8 @@ export class ImageViewerView extends Component {
         };
     }
 
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
-
     render() {
-        var {width,height}= this.state;
+        const {width,height}= this.state;
 
         return (
             <Resizable id='imageViewerResizer' onResize={this.onResize} style={style}>

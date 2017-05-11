@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PropTypes} from 'react';
-
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {getDlAry} from '../DrawLayerCntlr.js';
@@ -228,7 +228,7 @@ ImageAreaStatsTable.propTypes = {
  *
  */
 
-class ImageAreaStatsTableRow extends React.Component {
+class ImageAreaStatsTableRow extends PureComponent {
 
     constructor(props) {
         super(props);

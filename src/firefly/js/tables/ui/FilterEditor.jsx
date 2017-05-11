@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {isEmpty, cloneDeep, get} from 'lodash';
 
 import {BasicTableView} from './BasicTableView.jsx';
@@ -18,20 +18,10 @@ import {NOT_CELL_DATA} from './TableRenderer.js';
 const wrapperStyle = {display: 'block', flexGrow: 0};
 const style = {display: 'block', width: '100%', resize: 'none', boxSizing: 'border-box', backgroundColor: 'white'};
 
-export class FilterEditor extends React.Component {
+export class FilterEditor extends PureComponent {
     constructor(props) {
         super(props);
     }
-
-    shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
-    }
-
-    // componentDidUpdate(prevProps, prevState) {
-    //     deepDiff({props: prevProps, state: prevState},
-    //         {props: this.props, state: this.state},
-    //         'FilterEditor');
-    // }
 
     render() {
         const {columns, selectable, onChange, sortInfo, filterInfo= ''} = this.props;
@@ -72,7 +62,7 @@ export class FilterEditor extends React.Component {
 }
 
 FilterEditor.propTypes = {
-    columns: PropTypes.arrayOf(React.PropTypes.object),
+    columns: PropTypes.arrayOf(PropTypes.object),
     selectable: PropTypes.bool,
     sortInfo: PropTypes.string,
     filterInfo: PropTypes.string,

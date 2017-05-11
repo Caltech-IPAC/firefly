@@ -3,7 +3,8 @@
  */
 
 import {get, defer} from 'lodash';
-import React, {PropTypes} from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 
 import * as TablesCntlr from '../../tables/TablesCntlr.js';
 import * as TblUtil from '../../tables/TableUtil.js';
@@ -52,7 +53,7 @@ function Chart(props) {
     return <ChartComp {...props}/>;
 }
 
-class ChartComp extends React.Component {
+class ChartComp extends Component {
 
     constructor(props) {
         super(props);

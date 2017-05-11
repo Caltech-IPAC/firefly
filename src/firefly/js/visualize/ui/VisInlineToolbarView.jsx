@@ -2,17 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
-import {primePlot } from '../PlotViewUtil.js';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LayerButton} from './VisToolbarView.jsx';
-import {VisToolbar,showTools} from './VisToolbar.jsx';
-import {LayoutType, PopupPanel} from '../../ui/PopupPanel.jsx'
+import {showTools} from './VisToolbar.jsx';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
-import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
-import {dispatchShowDialog,dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {dispatchChangeExpandedMode, dispatchChangeActivePlotView, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
 
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
@@ -53,16 +49,12 @@ const rS= {
 
 
 
-export class VisInlineToolbarView extends Component {
+export class VisInlineToolbarView extends PureComponent {
     constructor(props) {
         super(props);
         this.deleteClick= this.deleteClick.bind(this);
         this.expandClick= this.expandClick.bind(this);
         // this.showToolsClick= this.showToolsClick.bind(this);
-    }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
     }
 
     deleteClick() {dispatchDeletePlotView({plotId:this.props.pv && this.props.pv.plotId});}
@@ -104,8 +96,8 @@ export class VisInlineToolbarView extends Component {
 
 VisInlineToolbarView.propTypes= {
     pv : PropTypes.object,
-    dlAry : PropTypes.arrayOf(React.PropTypes.object),
-    extensionAry : PropTypes.arrayOf(React.PropTypes.object),
+    dlAry : PropTypes.arrayOf(PropTypes.object),
+    extensionAry : PropTypes.arrayOf(PropTypes.object),
     showLayer : PropTypes.bool,
     showExpand : PropTypes.bool,
     showDelete : PropTypes.bool,

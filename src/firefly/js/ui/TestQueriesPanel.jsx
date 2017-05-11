@@ -13,8 +13,9 @@
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
-import React, {Component, PropTypes} from 'react';
-import {get,omit} from 'lodash';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
+import {get} from 'lodash';
 
 import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
@@ -36,12 +37,11 @@ import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {FileUpload} from '../ui/FileUpload.jsx';
 import {parseWorldPt} from '../visualize/Point.js';
-import {makeTblRequest, makeFileRequest, makeIrsaCatalogRequest} from '../tables/TableUtil.js';
+import {makeTblRequest, makeIrsaCatalogRequest} from '../tables/TableUtil.js';
 import {dispatchAddViewerItems,getAViewFromMultiView,getMultiViewRoot, IMAGE} from '../visualize/MultiViewCntlr.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage} from '../visualize/ImagePlotCntlr.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
-import {Region} from '../visualize/region/Region.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
 
 const options = [
@@ -51,7 +51,7 @@ const options = [
 ];
 
 
-export class TestQueriesPanel extends Component {
+export class TestQueriesPanel extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -142,7 +142,7 @@ function renderPeriodogram(fields) {
 
     /**
      *
-     * @param isPeriodogram
+     * @param opt
      */
     function lightCurveSubmit(opt) {
         console.log('periodogram...');

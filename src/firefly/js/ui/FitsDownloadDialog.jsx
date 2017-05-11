@@ -11,7 +11,7 @@
  *  DM-9500
  *  DM-8963
  */
-import React from 'react';
+import React, {PureComponent} from 'react';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import {getRootURL} from '../util/BrowserUtil.js';
@@ -115,7 +115,7 @@ function getInitialPlotState() {
 }
 
 
-class FitsDownloadDialog extends React.Component {
+class FitsDownloadDialog extends PureComponent {
 
     constructor(props) {
         super(props);

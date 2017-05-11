@@ -1,9 +1,10 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {get, omit} from 'lodash';
 import shallowequal from 'shallowequal';
-import React, {PropTypes} from 'react';
 import {isPlotly} from '../ChartUtil.js';
 import {XYPlotHighcharts} from './XYPlotHighcharts.jsx';
 import {XYPlotPlotly} from './XYPlotPlotly.jsx';
@@ -186,7 +187,7 @@ export const formatError = function(val, err, errLow, errHigh) {
 };
 
 
-export class XYPlot extends React.Component {
+export class XYPlot extends Component {
 
     constructor(props) {
         super(props);

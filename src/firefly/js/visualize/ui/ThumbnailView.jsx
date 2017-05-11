@@ -2,13 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {isPlotNorth,getCenterPtOfPlot} from '../VisUtil.js';
 import {encodeServerUrl} from '../../util/WebUtil.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
 import {DrawerComponent} from '../draw/DrawerComponent.jsx';
-import {makeScreenPt,makeImagePt,makeWorldPt, makeDevicePt} from '../Point.js';
+import {makeScreenPt,makeWorldPt, makeDevicePt} from '../Point.js';
 import {CysConverter} from '../CsysConverter.js';
 import DirectionArrowDrawObj from '../draw/DirectionArrowDrawObj.js';
 import FootprintObj from '../draw/FootprintObj.js';
@@ -22,7 +22,7 @@ import {makeTransform,makeThumbnailTransformCSS} from '../PlotTransformUtils.js'
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
 
 
-export class ThumbnailView extends Component {
+export class ThumbnailView extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -35,8 +35,6 @@ export class ThumbnailView extends Component {
         this.state= {imWidth:0,imHeight:0};
     }
 
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
-    
     getDrawData() {
         return this.drawData;
     }

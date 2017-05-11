@@ -2,23 +2,21 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {visRoot, dispatchChangeExpandedMode, ExpandType} from '../ImagePlotCntlr.js';
 import {getMultiViewRoot, getExpandedViewerItemIds} from '../MultiViewCntlr.js';
 import {flux} from '../../Firefly.js';
 import {ExpandedTools} from './ExpandedTools.jsx';
 import {MultiImageViewerView} from '../ui/MultiImageViewerView.jsx';
 
-export class ExpandedModeDisplay extends Component {
+export class ExpandedModeDisplay extends PureComponent {
 
 
     constructor(props) {
         super(props);
         this.state= {visRoot:visRoot(), multiViewRoot:getMultiViewRoot()};
     }
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentWillUnmount() {
         if (this.removeListener) this.removeListener();

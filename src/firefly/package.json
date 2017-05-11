@@ -1,9 +1,11 @@
 {
-  "scripts":
-    {
-      "build" : "../../node_modules/webpack/bin/webpack.js",
-      "lint"  : "DO_LINT=true yarn run build",
-      "dev"   : "DEBUG=true yarn run build -- -w -d --no-color",
-      "test-unit": "node ../../node_modules/mocha/bin/mocha --require ../../buildScript/mocha-init.js **/__test__/*test.js"
-    }
+  "scripts": {
+    "build": "../../node_modules/webpack/bin/webpack.js",
+    "lint": "DO_LINT=true yarn run build",
+    "dev": "DEBUG=true yarn run build -- -w -d --no-color",
+    "test-unit": "node ../../node_modules/mocha/bin/mocha --require ../../buildScript/mocha-init.js **/__test__/*test.js"
+  },
+  "dependencies": {
+    "immutability-helper": "^2.2.0"
+  }
 }

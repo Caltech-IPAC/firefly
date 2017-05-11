@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent, Component} from 'react';
+import PropTypes from 'prop-types';
 import {isEmpty, get} from 'lodash';
 import {fieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
 import './CatalogTableListField.css';
@@ -132,7 +132,7 @@ function itemMarkupTransform(element, cols) {
     return html;
 }
 
-class CatalogTableItem extends Component {
+class CatalogTableItem extends PureComponent {
 
     /**
      *
@@ -142,9 +142,6 @@ class CatalogTableItem extends Component {
         super(props);
     }
 
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
 
     render() {
         const {itemData, onClick, isClicked, cols, indexItem} = this.props;

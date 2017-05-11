@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 
 import {flux} from '../Firefly.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
@@ -63,7 +63,7 @@ const DOWNLOAD_DIALOG_ID = 'Download Options';
  *     </DownloadButton>
  * </code>
  */
-export class DownloadButton extends Component {
+export class DownloadButton extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -80,9 +80,6 @@ export class DownloadButton extends Component {
         this.isUnmounted = true;
     }
 
-    shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
-    }
 
     storeUpdate() {
         if (!this.isUnmounted) {
@@ -125,7 +122,7 @@ DownloadButton.propTypes = {
 };
 
 
-export class DownloadOptionPanel extends Component {
+export class DownloadOptionPanel extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -141,10 +138,6 @@ export class DownloadOptionPanel extends Component {
     componentWillUnmount() {
         this.removeListener && this.removeListener();
         this.isUnmounted = true;
-    }
-
-    shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
     }
 
     storeUpdate() {
@@ -274,7 +267,7 @@ DownloadOptionPanel.defaultProps= {
 
 /**
  * creates and show the DownloadDialog.
- * @param {React.Component}  panel  the panel to show in the popup.
+ * @param {Component}  panel  the panel to show in the popup.
  * @param {boolean} [show=true] show or hide this dialog
  */
 function showDownloadDialog(panel, show=true) {

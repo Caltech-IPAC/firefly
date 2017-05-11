@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PropTypes} from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import ReactHighcharts from 'react-highcharts';
 import numeral from 'numeral';
 import {get, set} from 'lodash';
@@ -42,7 +43,7 @@ function allBinsZeroWidth(data) {
     return data.every((row) => {return row[1]===row[2];});
 }
 
-export class HistogramHighcharts extends React.Component {
+export class HistogramHighcharts extends Component {
 
     /**
      * @summary React Component to display histogram.

@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {getActivePlotView,
     primePlot,
     hasGroupLock,
@@ -28,7 +29,6 @@ import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 import NorthUpCompass from '../../drawingLayers/NorthUpCompass.js';
 import { fitsHeaderView} from './FitsHeaderView.jsx';
-import sCompare from 'react-addons-shallow-compare';
 import { getDlAry } from '../DrawLayerCntlr.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
 import {showRegionFileUploadPanel} from '../region/RegionFileUploadView.jsx';
@@ -145,13 +145,9 @@ VisToolbarViewWrapper.propTypes= {
  */
 
 
-export class VisToolbarView extends Component {
+export class VisToolbarView extends PureComponent {
     constructor(props) {
         super(props);
-    }
-
-    shouldComponentUpdate(np,ns) {
-        return sCompare(this,np,ns);
     }
 
     render() {

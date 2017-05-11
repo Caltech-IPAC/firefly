@@ -3,7 +3,8 @@
  */
 
 
-import React, {PropTypes} from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import {dispatchChangeViewerLayout} from '../MultiViewCntlr.js';
 import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {VisInlineToolbarView} from './VisInlineToolbarView.jsx';
@@ -127,7 +128,7 @@ function makeInlineRightToolbar(visRoot,pv,dlAry){
 
 
 MultiViewStandardToolbar.propTypes= {
-    dlAry : PropTypes.arrayOf(React.PropTypes.object),
+    dlAry : PropTypes.arrayOf(PropTypes.object),
     visRoot : PropTypes.object,
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string,

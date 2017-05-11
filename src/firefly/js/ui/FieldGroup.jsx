@@ -4,20 +4,17 @@
 
 
 
-import React, {Component,PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {dispatchMountFieldGroup} from '../fieldGroup/FieldGroupCntlr.js';
 
 
-export class FieldGroup extends Component {
+export class FieldGroup extends PureComponent {
 
     constructor(props, context) {
         super(props, context);
     }
 
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
     getChildContext() {
             return {groupKey: this.props.groupKey};
     }

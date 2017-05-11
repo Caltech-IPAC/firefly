@@ -2,8 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
+import shallowequal from 'shallowequal';
 
 import {flux} from '../../Firefly.js';
 import {getTblInfoById, getActiveTableId} from '../TableUtil.js';
@@ -16,7 +17,7 @@ import {getTblInfoById, getActiveTableId} from '../TableUtil.js';
  *                                     The returned object of this function will be set into state.
  *                                     Props like show or title can be changed via this function.
  */
-export class ActiveTableButton extends Component {
+export class ActiveTableButton extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -38,8 +39,9 @@ export class ActiveTableButton extends Component {
             var {tbl_id, tbl_grp, onChange} = this.props;
             tbl_id = tbl_id || getActiveTableId(tbl_grp);
             const {highlightedRow} = getTblInfoById(tbl_id);
+            const nextState= Object.assign({}, this.state, {tbl_id, highlightedRow});
 
-            if (sCompare(this, this.props, Object.assign({}, this.state, {tbl_id, highlightedRow}))) {
+            if (!shallowequal(this.state, nextState)) {
                 this.setState({tbl_id, highlightedRow});
                 onChange && this.setState(onChange({tbl_id, highlightedRow}));
             }

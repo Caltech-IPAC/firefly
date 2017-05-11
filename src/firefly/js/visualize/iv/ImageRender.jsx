@@ -1,8 +1,9 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React, {PropTypes, Component} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
+import shallowequal from 'shallowequal';
 import {SimpleCanvas}  from '../draw/SimpleCanvas.jsx';
 import {initTileDrawer}  from './CanvasTileDrawer.js';
 
@@ -45,7 +46,7 @@ export class ImageRender extends Component {
             return false;
         }
 
-        const result= sCompare(this,np,ns);
+        const result = !shallowequal(this.props,np) || !shallowequal(this.state,ns);
         return result;
     }
 

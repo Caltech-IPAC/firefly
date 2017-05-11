@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
 import {makeScreenPt,makeImagePt,makeWorldPt} from '../Point.js';
 import {MouseState} from '../VisMouseSync.js';
@@ -46,9 +47,9 @@ export function MagnifiedView({plotView:pv,size,mouseState}) {
 
 
 MagnifiedView.propTypes= {
-    plotView: React.PropTypes.object,
-    size: React.PropTypes.number.isRequired,
-    mouseState: React.PropTypes.object
+    plotView: PropTypes.object,
+    size: PropTypes.number.isRequired,
+    mouseState: PropTypes.object
 };
 
 

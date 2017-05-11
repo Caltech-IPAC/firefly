@@ -3,10 +3,9 @@
  */
 
 
-import React from 'react';
+import React, {PureComponent} from 'react';
 import {get} from 'lodash';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
-import sCompare from 'react-addons-shallow-compare';
 import {getActivePlotView, getAllDrawLayersForPlot, primePlot} from '../PlotViewUtil.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
@@ -50,15 +49,13 @@ export function hideDrawingLayerPopup() {
 }
 
 
-class DrawLayerPanel extends React.Component {
+class DrawLayerPanel extends PureComponent {
 
     constructor(props) {
         super(props);
         var activePv= getActivePlotView(visRoot());
         this.state= {dlAry:getDlAry(),activePv, mouseOverMaskValue:0};
     }
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentWillUnmount() {
         if (this.removeListener) this.removeListener();

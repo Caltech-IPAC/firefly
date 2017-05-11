@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {PureComponent} from 'react';
 import {TargetPanel} from '../ui/TargetPanel.jsx';
 import {SizeInputFields} from './SizeInputField.jsx';
 import {ValidationField} from './ValidationField.jsx';
@@ -13,7 +13,7 @@ import {HelpIcon} from '../ui/HelpIcon.jsx';
 
 import './VoSearchPanel.css';
 
-export class VoSearchPanel extends React.Component {
+export class VoSearchPanel extends PureComponent {
 
     constructor(props) {
         super(props);

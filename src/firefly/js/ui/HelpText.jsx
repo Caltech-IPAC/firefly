@@ -2,19 +2,15 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PropTypes} from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import {flux} from '../Firefly.js';
 import {HELP_LOAD} from '../core/AppDataCntlr.js';
 
 export function HelpText({helpId, linkText, linkStyle}) {
 
 
-    var onClick = () => {
-        flux.process({
-            type: HELP_LOAD,
-            payload: {helpId}
-        });
-    };
+    const onClick = () => flux.process({ type: HELP_LOAD, payload: {helpId} });
 
     return (
         <div>
@@ -29,6 +25,3 @@ HelpText.propTypes = {
     linkText: PropTypes.string,
     linkStyle: PropTypes.object
 };
-
-
-export default HelpText;

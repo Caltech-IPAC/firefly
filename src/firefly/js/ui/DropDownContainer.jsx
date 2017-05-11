@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {Component, PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 import {get, pick} from 'lodash';
 
@@ -18,8 +18,6 @@ import {LSSTCatalogSelectViewPanel} from '../visualize/ui/LSSTCatalogSelectViewP
 import {getAlerts} from '../core/AppDataCntlr.js';
 
 import './DropDownContainer.css';
-// import {deepDiff} from '../util/WebUtil.js';
-
 
 const dropDownMap = {
     AnyDataSetSearch: <SearchPanel />,
@@ -77,12 +75,6 @@ export class DropDownContainer extends Component {
         return !shallowequal(pick(nState, check), pick(this.state, check));
    }
 
-    // componentDidUpdate(prevProps, prevState) {
-    //     deepDiff({props: prevProps, state: prevState},
-    //         {props: this.props, state: this.state},
-    //         this.constructor.name);
-    // }
-
     storeUpdate() {
         if (this.iAmMounted) {
             const {visible, view} = getDropDownInfo();
@@ -94,8 +86,8 @@ export class DropDownContainer extends Component {
 
     render() {
         const {footer, alerts} = this.props;
-        var { visible, selected }= this.state;
-        var view = dropDownMap[selected];
+        const { visible, selected }= this.state;
+        const view = dropDownMap[selected];
 
         if (!visible) return <div/>;
         return (
@@ -130,7 +122,7 @@ DropDownContainer.defaultProps = {
     visible: false
 };
 
-export class Alerts extends Component {
+export class Alerts extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -145,10 +137,6 @@ export class Alerts extends Component {
     componentWillUnmount() {
         this.iAmMounted = false;
         this.removeListener && this.removeListener();
-    }
-
-    shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
     }
 
     storeUpdate() {

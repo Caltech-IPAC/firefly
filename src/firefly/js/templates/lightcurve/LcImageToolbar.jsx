@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {omit} from 'lodash';
 import {flux} from '../../Firefly.js';
 import shallowequal from 'shallowequal';
@@ -60,11 +61,11 @@ export class LcImageToolbar extends Component {
 }
 
 LcImageToolbar.propTypes= {
-    dlAry : PropTypes.arrayOf(React.PropTypes.object),
+    dlAry : PropTypes.arrayOf(PropTypes.object),
     visRoot : PropTypes.object,
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string.isRequired,
     tableId: PropTypes.string,
-    viewerPlotIds : PropTypes.arrayOf(React.PropTypes.string),
+    viewerPlotIds : PropTypes.arrayOf(PropTypes.string),
     closeFunc : PropTypes.func
 };

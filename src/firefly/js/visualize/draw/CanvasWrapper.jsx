@@ -2,11 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
-import {omit} from 'lodash';
-import shallowequal from 'shallowequal';
-import DrawLayer from './DrawLayer.js';
-import sCompare from 'react-addons-shallow-compare';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import Drawer from './Drawer.js';
 import {makeDrawingDef} from './DrawingDef.js';
 
@@ -86,7 +83,7 @@ export function makeDummyDrawLayer(drawData) {
 }
 
 
-class CanvasWrapper extends React.Component {
+class CanvasWrapper extends Component {
 
 
     constructor(props) {
@@ -95,11 +92,6 @@ class CanvasWrapper extends React.Component {
         this.lastDrawLayer= null;
         
     }
-
-    // shouldComponentUpdate(np,ns) {
-    //     return sCompare(this,np,ns);
-    // }
-
 
     shouldComponentUpdate(nProps) {
 
@@ -167,12 +159,12 @@ class CanvasWrapper extends React.Component {
 }
 
 CanvasWrapper.propTypes= {
-    textUpdateCallback : React.PropTypes.func.isRequired,
-    width: React.PropTypes.number.isRequired,
-    height: React.PropTypes.number.isRequired,
-    plot : React.PropTypes.object,
-    drawLayer : React.PropTypes.object, //drawLayer or drawData is Required
-    getDrawLayer: React.PropTypes.func  // can be used instead of passing the data
+    textUpdateCallback : PropTypes.func.isRequired,
+    width: PropTypes.number.isRequired,
+    height: PropTypes.number.isRequired,
+    plot : PropTypes.object,
+    drawLayer : PropTypes.object, //drawLayer or drawData is Required
+    getDrawLayer: PropTypes.func  // can be used instead of passing the data
 };
 
 export default CanvasWrapper;

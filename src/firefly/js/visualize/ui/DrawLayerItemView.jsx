@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import {SimpleCanvas} from '../draw/SimpleCanvas.jsx';
 import DrawUtil from '../draw/DrawUtil.js';
 import {DrawSymbol} from '../draw/PointDataObj.js';
@@ -65,20 +66,20 @@ function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
 
 
 DrawLayerItemView.propTypes= {
-    maxTitleChars : React.PropTypes.number.isRequired,
-    lastItem      : React.PropTypes.bool.isRequired,
-    visible       : React.PropTypes.bool.isRequired,
-    canUserChangeColor : React.PropTypes.any.isRequired,
-    color         : React.PropTypes.string.isRequired,
-    title         : React.PropTypes.any.isRequired,
-    helpLine      : React.PropTypes.string.isRequired,
-    canUserDelete : React.PropTypes.bool.isRequired,
-    isPointData   : React.PropTypes.bool.isRequired,
-    drawingDef    : React.PropTypes.object,
-    deleteLayer   : React.PropTypes.func,
-    changeVisible : React.PropTypes.func,
-    modifyColor   : React.PropTypes.func,
-    UIComponent   : React.PropTypes.object
+    maxTitleChars : PropTypes.number.isRequired,
+    lastItem      : PropTypes.bool.isRequired,
+    visible       : PropTypes.bool.isRequired,
+    canUserChangeColor : PropTypes.any.isRequired,
+    color         : PropTypes.string.isRequired,
+    title         : PropTypes.any.isRequired,
+    helpLine      : PropTypes.string.isRequired,
+    canUserDelete : PropTypes.bool.isRequired,
+    isPointData   : PropTypes.bool.isRequired,
+    drawingDef    : PropTypes.object,
+    deleteLayer   : PropTypes.func,
+    changeVisible : PropTypes.func,
+    modifyColor   : PropTypes.func,
+    UIComponent   : PropTypes.object
 };
 
 

@@ -1,10 +1,10 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React, {PropTypes} from 'react';
 
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {defer, get, isEmpty, isUndefined, omitBy, set} from 'lodash';
-
 import ColValuesStatistics from '../ColValuesStatistics.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -260,7 +260,7 @@ function getOption(options, opt) {
 }
 
 
-export class XYPlotOptions extends React.Component {
+export class XYPlotOptions extends Component {
 
     constructor(props) {
         super(props);
@@ -625,7 +625,7 @@ XYPlotOptions.propTypes = {
 };
 
 
-class Errors extends React.Component {
+class Errors extends Component {
 
     constructor(props) {
         super(props);

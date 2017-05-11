@@ -8,8 +8,8 @@
  * REDUCER USE ONLY
  */
 
-import update from 'react-addons-update';
-import {WebPlot, PlotAttribute} from './../WebPlot.js';
+import update from 'immutability-helper';
+import {PlotAttribute} from './../WebPlot.js';
 import {get, isString, isUndefined} from 'lodash';
 import {clone} from '../../util/WebUtil.js';
 import {WPConst} from './../WebPlotRequest.js';

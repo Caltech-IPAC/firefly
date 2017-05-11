@@ -2,9 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {Component, PureComponent} from 'react';
 import FixedDataTable from 'fixed-data-table-2';
-import sCompare from 'react-addons-shallow-compare';
 import {set, get, isEqual, pick} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS} from '../FilterInfo.js';
@@ -43,21 +42,11 @@ function SortSymbol({sortDir}) {
     return <img style={{marginLeft: 2}} src={sortDir === SORT_ASC ? ASC_ICO : DESC_ICO}/>;
 };
 
-export class HeaderCell extends React.Component {
+export class HeaderCell extends PureComponent {
     constructor(props) {
         super(props);
     }
 
-    shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
-    }
-
-    // componentDidUpdate(prevProps, prevState) {
-    //     deepDiff({props: prevProps, state: prevState},
-    //         {props: this.props, state: this.state},
-    //         this.constructor.name);
-    // }
-    //
     render() {
         const {col, showUnits, showFilters, filterInfo, sortInfo, onSort, onFilter, style} = this.props;
         const cname = col.name;
@@ -89,7 +78,7 @@ export class HeaderCell extends React.Component {
     }
 }
 
-export class SelectableHeader extends React.Component {
+export class SelectableHeader extends Component {
     constructor(props) {
         super(props);
     }
@@ -123,7 +112,7 @@ export class SelectableHeader extends React.Component {
     }
 }
 
-export class SelectableCell extends React.Component {
+export class SelectableCell extends Component {
     constructor(props) {
         super(props);
     }
@@ -159,7 +148,7 @@ function getValue(props) {
     return get(data, [rowIndex, columnKey], 'undef');
 }
 
-export class TextCell extends React.Component {
+export class TextCell extends Component {
     constructor(props) {
         super(props);
     }

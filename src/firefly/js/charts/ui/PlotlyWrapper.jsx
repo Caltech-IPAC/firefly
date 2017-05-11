@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import {getPlotLy} from '../PlotlyConfig.js';
 import {logError} from '../../util/WebUtil.js';

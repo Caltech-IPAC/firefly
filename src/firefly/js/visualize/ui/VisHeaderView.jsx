@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import {ThumbnailView} from './ThumbnailView.jsx';
 import {MagnifiedView} from './MagnifiedView.jsx';
 import {getActivePlotView, getPlotViewById} from '../PlotViewUtil.js';
@@ -43,7 +44,7 @@ export function VisHeaderView({readout}) {
 }
 
 VisHeaderView.propTypes= {
-    readout:  React.PropTypes.object.isRequired,
+    readout:  PropTypes.object.isRequired,
 };
 
 
@@ -66,6 +67,6 @@ export function VisPreview({visRoot,currMouseState}) {
 }
 
 VisPreview.propTypes= {
-    visRoot : React.PropTypes.object.isRequired,
-    currMouseState :React.PropTypes.object,
+    visRoot : PropTypes.object.isRequired,
+    currMouseState :PropTypes.object,
 };

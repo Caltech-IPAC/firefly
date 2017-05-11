@@ -3,7 +3,8 @@
  */
 
 import {get, isEmpty, set} from 'lodash';
-import React, {PropTypes} from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import * as TblUtil from '../../tables/TableUtil.js';
 
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';

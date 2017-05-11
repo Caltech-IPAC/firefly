@@ -1,9 +1,9 @@
-import React, {Component,PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {get,omit} from 'lodash';
 import {dispatchMountComponent,dispatchValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import FieldGroupUtils, {getFieldGroupState} from '../fieldGroup/FieldGroupUtils.js';
 import {flux} from '../Firefly.js';
-import sCompare from 'react-addons-shallow-compare';
 
 const defaultConfirmInitValue= (v) => v;
 
@@ -36,7 +36,7 @@ export function fieldGroupConnector(FieldComponent,
                                     connectorPropTypes=undefined,
                                     connectorDefProps=undefined,
                                     confirmInitialValue= defaultConfirmInitValue ) {
-    class FGConnector extends Component {
+    class FGConnector extends PureComponent {
 
         constructor(props, context) {
             super(props, context);
@@ -52,10 +52,6 @@ export function fieldGroupConnector(FieldComponent,
                 fieldState = FieldGroupUtils.getGroupFields(groupKey)[fieldKey] || props.initialState;
             }
             this.state = {fieldState};
-        }
-
-        shouldComponentUpdate(np, ns) {
-            return sCompare(this, np, ns);
         }
 
         fireValueChange(payload) {

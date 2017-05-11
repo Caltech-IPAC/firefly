@@ -3,10 +3,10 @@
  */
 
 
-import React, {Component, PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {take} from 'redux-saga/effects';
 import {omit,pick} from 'lodash';
-import sCompare from 'react-addons-shallow-compare';
 import shallowequal from 'shallowequal';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
@@ -23,7 +23,7 @@ import {dispatchAddSaga} from '../../core/MasterSaga.js';
 const omList= ['plotViewAry'];
 const pvPickList= ['plotViewCtx','primeIdx', 'flipY'];
 
-export class VisToolbar extends Component {
+export class VisToolbar extends PureComponent {
     constructor(props) {
         super(props);
         this.state= {visRoot:visRoot(), dlCount:0, tip:''};
@@ -31,26 +31,15 @@ export class VisToolbar extends Component {
         this.tipOff= () => this.setState({tip:null});
     }
 
-    shouldComponentUpdate(np,ns) {
-        return sCompare(this,np,ns);
-    }
-
-    // componentDidUpdate(prevProps, prevState) {
-        // deepDiff({props: prevProps, state: prevState},
-        //     {props: this.props, state: this.state},
-        //     '---------- vis tool bar', true);
-    // }
 
     getChildContext() {
         return {tipOnCB: this.tipOn, tipOffCB: this.tipOff};
     }
 
-
     componentWillUnmount() {
         this.iAmMounted= false;
         if (this.removeListener) this.removeListener();
     }
-
 
     componentDidMount() {
         this.iAmMounted= true;
@@ -68,7 +57,7 @@ export class VisToolbar extends Component {
      */
     storeUpdate() {
         const vr= visRoot();
-        var dlCount= 0;
+        let dlCount= 0;
         const newPv= getActivePlotView(vr);
         if (vr.activePlotId) {
             dlCount= getAllDrawLayersForPlot(getDlAry(),vr.activePlotId).length + newPv.overlayPlotViews.length;
@@ -76,7 +65,7 @@ export class VisToolbar extends Component {
 
         if (vr===this.state.visRoot && dlCount===this.state.dlCount) return;
 
-        var needsUpdate= dlCount!==this.state.dlCount;
+        let needsUpdate= dlCount!==this.state.dlCount;
         if (!needsUpdate) needsUpdate= vr.activePlotId!==this.state.visRoot.activePlotId;
 
         if (!needsUpdate) needsUpdate= !shallowequal(omit(vr,omList),omit(this.state.visRoot,omList));
@@ -93,7 +82,7 @@ export class VisToolbar extends Component {
 
     render() {
         const {messageUnder}= this.props;
-        var {visRoot,tip,dlCount}= this.state;
+        const {visRoot,tip,dlCount}= this.state;
         return (
             <VisToolbarViewWrapper visRoot={visRoot} toolTip={tip} dlCount={dlCount} 
                                       messageUnder={messageUnder}/>

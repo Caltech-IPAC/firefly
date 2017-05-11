@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {flux} from '../Firefly.js';
-import sCompare from 'react-addons-shallow-compare';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {PopupPanel} from './PopupPanel.jsx';
 import {DrawSymbol} from '../visualize/draw/PointDataObj.js';
@@ -53,7 +53,7 @@ export function showPointShapeSizePickerDialog(dl, plotId) {
     }
 }
 
-class ShapePickerWrapper extends Component {
+class ShapePickerWrapper extends PureComponent {
     constructor(props) {
         super(props);
 
@@ -82,8 +82,6 @@ class ShapePickerWrapper extends Component {
         this.displayGroupId = nextProps.displayGroupId;
         this.plotId = nextProps.plotId;
     }
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentDidMount() {
         this.iAmMounted = true;

@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import {parseTarget, getFeedback, formatPosForTextField} from './TargetPanelWorker.js';
 import {TargetFeedback} from './TargetFeedback.jsx';
@@ -20,7 +21,7 @@ const RESOLVER= 'resolverSource';
 const nedThenSimbad= 'nedthensimbad';
 const simbadThenNed= 'simbadthenned';
 
-class TargetPanelView extends Component {
+class TargetPanelView extends PureComponent {
 
     componentWillUnmount() {
         const {onUnmountCB, fieldKey, groupKey}= this.props;
@@ -29,7 +30,7 @@ class TargetPanelView extends Component {
 
     render() {
         const {showHelp, feedback, valid, message, onChange, value, labelWidth, children, resolver}= this.props;
-        var positionField = (<InputFieldView
+        let positionField = (<InputFieldView
                                 valid={valid}
                                 visible= {true}
                                 message={message}

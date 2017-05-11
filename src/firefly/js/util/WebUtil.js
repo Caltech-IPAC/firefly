@@ -5,11 +5,19 @@
 /*global __MODULE_NAME__*/
 
 import Enum from 'enum';
-import update from 'react-addons-update';
 import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil, last, isPlainObject} from 'lodash';
-import { getRootURL } from './BrowserUtil.js';
+import {getRootURL} from './BrowserUtil.js';
 import {getWsConnId, getWsChannel} from '../core/messaging/WebSocketClient.js';
 import {getDownloadProgress, DownloadProgress} from '../rpc/SearchServicesJson.js';
+
+// todo: we want to replace react-addons-update with immutability-helper. However there is some behavior difference with error
+// todo: handling, I observed it when updateMerge is called from ChartsCntrl.js,reduceData,case CHART_DATA_FETCH, line 415
+// todo: In this case can an exception is thrown. to reproduce: just do catalog search
+// todo: import update from 'immutability-helper';
+import update from 'react-addons-update';
+
+
+
 
 const  MEG          = 1048576;
 const GIG          = 1048576 * 1024;
@@ -177,6 +185,7 @@ export const encodeServerUrl= function(url, params) {
  *                                  be encoded.  Base on the method used, it will be handled internally.
  * @param {string} options.method can be one of get, post, or multipart
  *                                when 'multipart', it will post with 'multipart/form-data' encoding.
+ * @param {boolean} doValidation
  * @return {Promise} a promise of the response when successful, or reject with an Error.
  */
 export function fetchUrl(url, options, doValidation= true) {
@@ -557,6 +566,17 @@ export function toBoolean(val, def=undefined) {
     return val === undefined ? def :
         typeof val === 'boolean'? val :
         String(val).toLowerCase() === 'true';
+}
+
+/**
+ * replace all occurrences of a string with another string
+ * @param {string} str - string to operate on
+ * @param {string} find - string to search for
+ * @param {string} replace - replacement string
+ * @return {string} updated strign
+ */
+export function replaceAll(str, find, replace) {
+    return str.replace(new RegExp(find, 'g'), replace);
 }
 
 /**

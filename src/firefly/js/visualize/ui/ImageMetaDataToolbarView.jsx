@@ -3,7 +3,8 @@
  */
 
 
-import React, {PropTypes} from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {getPlotViewById, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {dispatchChangeActivePlotView, visRoot} from '../ImagePlotCntlr.js';
@@ -109,7 +110,7 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds,
 }
 
 ImageMetaDataToolbarView.propTypes= {
-    dlAry : PropTypes.arrayOf(React.PropTypes.object),
+    dlAry : PropTypes.arrayOf(PropTypes.object),
     activePlotId : PropTypes.string,
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string.isRequired,

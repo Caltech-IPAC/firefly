@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {validateFieldGroup, getFieldGroupResults} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 
@@ -71,7 +72,7 @@ CompleteButton.propTypes= {
 };
 
 CompleteButton.contextTypes= {
-    groupKey: React.PropTypes.string
+    groupKey: PropTypes.string
 };
 
 CompleteButton.defaultProps= { includeUnmounted : false };

@@ -1,4 +1,5 @@
-import React, {PropTypes}  from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import {isEmpty}  from 'lodash';
 import {RadioGroupInputFieldView} from './RadioGroupInputFieldView.jsx';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';

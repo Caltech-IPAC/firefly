@@ -14,7 +14,7 @@ import WebPlotRequest from '../../visualize/WebPlotRequest.js';
 import BackgroundState from './BackgroundState.js';
 import PackageProgress from './PackageProgress.js';
 import ServerRequest from '../../data/ServerRequest.js';
-import replaceAll from 'underscore.string/replaceAll';
+import {replaceAll} from '../../util/WebUtil.js';
 import validator from 'validator';
 
 export const BgType = new Enum(['SEARCH', 'PACKAGE', 'UNKNOWN', 'PERSISTENT']);

@@ -6,7 +6,8 @@
  *   3/2/16
  *     DM-4789
  */
-import React, {PropTypes} from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
 import CoordinateSys from '../CoordSys.js';

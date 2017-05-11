@@ -3,7 +3,8 @@
  */
 
 
-import React, {Component,PropTypes} from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 import {get,isEmpty,omit} from 'lodash';
 import {getPlotGroupById}  from '../PlotGroup.js';

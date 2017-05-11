@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
-import sCompare from 'react-addons-shallow-compare';
 import {primePlot,isMultiImageFitsWithSameArea} from '../PlotViewUtil.js';
 import {CysConverter} from '../CsysConverter.js';
 import {PlotAttribute} from '../WebPlot.js';
@@ -278,15 +278,12 @@ function zoomIntoSelection(pv) {
  * @constructor
  */
 
-export class VisCtxToolbarView extends Component {
+export class VisCtxToolbarView extends PureComponent {
 
     constructor(props) {
         super(props);
     }
 
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
 
 
     render() {
@@ -376,8 +373,8 @@ export class VisCtxToolbarView extends Component {
 
 VisCtxToolbarView.propTypes= {
     plotView : PropTypes.object.isRequired,
-    dlAry : PropTypes.arrayOf(React.PropTypes.object),
-    extensionAry : PropTypes.arrayOf(React.PropTypes.object),
+    dlAry : PropTypes.arrayOf(PropTypes.object),
+    extensionAry : PropTypes.arrayOf(PropTypes.object),
     showSelectionTools : PropTypes.bool,
     showCatSelect : PropTypes.bool,
     showCatUnSelect : PropTypes.bool,

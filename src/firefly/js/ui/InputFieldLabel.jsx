@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 /**
  *
@@ -27,10 +28,10 @@ export const InputFieldLabel= function( { label= '', tooltip= '', labelStyle, la
 
 
 InputFieldLabel.propTypes= {
-    label : React.PropTypes.string.isRequired,
-    labelStyle : React.PropTypes.object,
-    labelWidth : React.PropTypes.number,
-    tooltip : React.PropTypes.string,
+    label : PropTypes.string.isRequired,
+    labelStyle : PropTypes.object,
+    labelWidth : PropTypes.number,
+    tooltip : PropTypes.string,
 };
 
 export default InputFieldLabel;

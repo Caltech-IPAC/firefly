@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {isEmpty, truncate, get} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {download} from '../../util/WebUtil.js';
@@ -29,7 +29,7 @@ const TT_CLEAR_FILTER = 'Remove all filters';
 const TT_SHOW_FILTER = 'The Filter Panel can be used to remove unwanted data from the search results';
 const TT_EXPAND = 'Expand this panel to take up a larger area';
 
-export class TablePanel extends Component {
+export class TablePanel extends PureComponent {
     constructor(props) {
         super(props);
         var {tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize} = props;
@@ -63,10 +63,6 @@ export class TablePanel extends Component {
     componentWillUnmount() {
         this.removeListener && this.removeListener();
         this.isUnmounted = true;
-    }
-
-    shouldComponentUpdate(nProps, nState) {
-        return sCompare(this, nProps, nState);
     }
 
     storeUpdate() {

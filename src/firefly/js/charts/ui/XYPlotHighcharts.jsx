@@ -1,9 +1,11 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {isUndefined, debounce, get, has, omit} from 'lodash';
 import shallowequal from 'shallowequal';
-import React, {PropTypes} from 'react';
 import ReactHighcharts from 'react-highcharts';
 import {xyErrorBarExtension} from '../highcharts/XYErrorBars.js';
 
@@ -85,7 +87,7 @@ const getDeciSymbolSize = function(chart, decimateKeyStr) {
 };
 
 
-export class XYPlotHighcharts extends React.Component {
+export class XYPlotHighcharts extends Component {
 
     constructor(props) {
         super(props);

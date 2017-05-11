@@ -3,8 +3,8 @@
  */
 
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {pickBy} from 'lodash';
 
 import {flux, firefly} from '../../Firefly.js';
@@ -41,7 +41,7 @@ import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-75x75.png';
  * <li><b>views</b>:  The type of result view.  Choices are 'images', 'tables', and 'xyPlots'.  They can be combined with ' | ', i.e.  'images | tables'</li>
  *
  */
-export class FireflyViewer extends Component {
+export class FireflyViewer extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -61,22 +61,12 @@ export class FireflyViewer extends Component {
             {menu, isReady, ...layoutInfo});
     }
 
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
-
     componentDidMount() {
         dispatchOnAppReady((state) => {
             onReady({state, menu: this.props.menu, views: this.props.views});
         });
         this.removeListener = flux.addListener(() => this.storeUpdate());
     }
-
-    // componentDidUpdate(prevProps, prevState) {
-    //     deepDiff({props: prevProps, state: prevState},
-    //         {props: this.props, state: this.state},
-    //         this.constructor.name);
-    // }
 
     componentWillUnmount() {
         this.removeListener && this.removeListener();

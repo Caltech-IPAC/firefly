@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
 import {dispatchModifyCustomField, dispatchForceDrawLayerUpdate} from '../visualize/DrawLayerCntlr.js';
 import * as AppDataCntlr from '../core/AppDataCntlr.js';
@@ -60,7 +61,7 @@ function changeReadoutPref(drawLayer,pv,value) {
 }
 
 DistanceToolUI.propTypes= {
-    drawLayer     : React.PropTypes.object.isRequired,
-    pv            : React.PropTypes.object.isRequired
+    drawLayer     : PropTypes.object.isRequired,
+    pv            : PropTypes.object.isRequired
 };
 

@@ -3,8 +3,8 @@
  */
 
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {pickBy, get, isEmpty, capitalize} from 'lodash';
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
@@ -38,7 +38,7 @@ const vFileKey = LC.FG_FILE_FINDER;
 /**
  * This is a light curve viewer.
  */
-export class LcViewer extends Component {
+export class LcViewer extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -57,10 +57,6 @@ export class LcViewer extends Component {
             {menu, isReady, ...layoutInfo});
     }
 
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
-
     componentDidMount() {
         this.iAmMounted = true;
         dispatchOnAppReady((state) => {
@@ -68,12 +64,6 @@ export class LcViewer extends Component {
         });
         this.removeListener = flux.addListener(() => this.storeUpdate());
     }
-
-    // componentDidUpdate(prevProps, prevState) {
-    //     deepDiff({props: prevProps, state: prevState},
-    //         {props: this.props, state: this.state},
-    //         this.constructor.name);
-    // }
 
     componentWillUnmount() {
         this.iAmMounted = false;

@@ -2,13 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {pick, filter} from 'lodash';
 
 import DockLayoutPanel from '../../ui/panel/DockLayoutPanel.jsx';
 import {LO_VIEW} from '../../core/LayoutCntlr.js';
-// import {deepDiff} from '../util/WebUtil.js';
 
 const wrapperStyle = { flex: 'auto', display: 'flex', flexFlow: 'column', overflow: 'hidden'};
 const eastWest = {east: {index: 0,  defaultSize: '50%'}, west: {index: 1} };
@@ -17,21 +16,11 @@ const triView = {east: {index: 0, defaultSize: '50%'}, west: {index: 1}, south: 
 const singleView = {center: {index: 0,  defaultSize: '100%',  resize: false}};
 
 
-export class ResultsPanel extends Component {
+export class ResultsPanel extends PureComponent {
 
     constructor(props) {
         super(props);
     }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
-
-    // componentDidUpdate(prevProps, prevState) {
-    //     deepDiff({props: prevProps, state: prevState},
-    //         {props: this.props, state: this.state},
-    //         this.constructor.name);
-    // }
 
     render() {
         var {expanded=LO_VIEW.none} = this.props;
@@ -49,12 +38,12 @@ ResultsPanel.propTypes = {
     visToolbar: PropTypes.element,
     searchDesc: PropTypes.element,
     title: PropTypes.string,
-    expanded: React.PropTypes.oneOfType([
-                React.PropTypes.string,
-                React.PropTypes.object]),
-    standard: React.PropTypes.oneOfType([
-                React.PropTypes.string,
-                React.PropTypes.object]),
+    expanded: PropTypes.oneOfType([
+                PropTypes.string,
+                PropTypes.object]),
+    standard: PropTypes.oneOfType([
+                PropTypes.string,
+                PropTypes.object]),
     imagePlot: PropTypes.element,
     xyPlot: PropTypes.element,
     tables: PropTypes.element

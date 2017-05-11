@@ -1,5 +1,5 @@
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {get, has, isEmpty, set, isNil} from 'lodash';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
@@ -16,15 +16,11 @@ import {getMissionName} from '../LcConverterFactory.js';
 
 const labelWidth = 80;
 
-export class WiseSettingBox extends Component {
+export class WiseSettingBox extends PureComponent {
     constructor(props) {
         super(props);
 
 
-    }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
     }
 
     render() {

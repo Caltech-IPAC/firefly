@@ -1,4 +1,5 @@
-import React, {PropTypes} from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 
 import {get, defer, isEmpty} from 'lodash';
 import ColValuesStatistics from './../ColValuesStatistics.js';
@@ -161,7 +162,7 @@ var columnNameReducer= (colValStats) => {
 
     };
 };
-export class HistogramOptions extends React.Component {
+export class HistogramOptions extends Component {
 
     constructor(props) {
         super(props);

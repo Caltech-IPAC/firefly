@@ -13,7 +13,8 @@
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
-import React, {Component, PropTypes} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {get} from 'lodash';
 
 import {InputGroup} from '../ui/InputGroup.jsx';
@@ -28,7 +29,7 @@ const mcenTip= `Specifies whether to return only the most centered (in pixel spa
  image-set for the given input position.  In multi-input mode, this
  flag applies only for input tables without a best column.`;
 
-export class IbeSpacialType extends Component {
+export class IbeSpacialType extends PureComponent {
 
     constructor(props) {
         super(props);

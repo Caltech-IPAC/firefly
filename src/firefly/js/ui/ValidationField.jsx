@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {has} from 'lodash';
 
 import {InputFieldView} from './InputFieldView.jsx';
@@ -22,7 +23,7 @@ function getProps(params, fireValueChange) {
 }
 
 const propTypes= {
-      inline : React.PropTypes.bool
+      inline : PropTypes.bool
 };
 
 export const ValidationField= fieldGroupConnector(InputFieldView,getProps,propTypes);

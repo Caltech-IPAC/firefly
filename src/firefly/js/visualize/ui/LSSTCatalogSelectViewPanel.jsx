@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import { get,set, merge, isEmpty, capitalize} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {FormPanel} from '../../ui/FormPanel.jsx';
@@ -101,7 +101,7 @@ var catmaster = [];
 /**
  * @summary component for LSST catalog search panel
  */
-export class LSSTCatalogSelectViewPanel extends Component {
+export class LSSTCatalogSelectViewPanel extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -127,9 +127,6 @@ export class LSSTCatalogSelectViewPanel extends Component {
         });
     }
 
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
 
     render() {
         var {cattable, cattype}= this.state;
@@ -413,7 +410,7 @@ function doLoadTable(request) {
  * @summary class LSSTCatalogSelectView for selecting and handling LSST catalog
  * state: {master: {catmaster[] = [{project, catalogs[]},... {project, catalogs[]}], cols[]}}
  */
-class LSSTCatalogSelectView extends Component {
+class LSSTCatalogSelectView extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -423,10 +420,6 @@ class LSSTCatalogSelectView extends Component {
             this.state = {master: {}};
         }
 
-    }
-
-    shouldComponentUpdate(np,ns) {
-        return sCompare(this, np, ns);
     }
 
     componentWillMount() {
@@ -661,18 +654,13 @@ function getLSSTCatalogRadius(catmaster, catName) {
 /**
  * @summary component of the constraint table for catalog search, get 'cattable' and 'master' from the parent
  */
-class LsstCatalogDDList extends Component {
+class LsstCatalogDDList extends PureComponent {
 
     constructor(props) {
         super(props);
        // this.state = Object.assign({...this.props}, {optList: ''});
         this.state = Object.assign({...this.state}, {...this.props}, {optList: ''});
     }
-
-    shouldComponentUpdate(np, ns) {
-        return sCompare(this, np, ns);
-    }
-
 
     render() {
         const {catmaster} = this.state.master;

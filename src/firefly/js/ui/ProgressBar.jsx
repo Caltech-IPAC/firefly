@@ -2,12 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
-
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import './ProgressBar.css';
 
-export class ProgressBar extends Component {
+export class ProgressBar extends PureComponent {
 
     constructor(props) {
         super(props);

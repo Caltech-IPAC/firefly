@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component,PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
 import {VisHeaderView} from './VisHeaderView.jsx';
@@ -13,13 +13,11 @@ import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
 
 
 
-export class ApiExpandedDisplay extends Component {
+export class ApiExpandedDisplay extends PureComponent {
     constructor(props) {
         super(props);
         this.state= {visRoot:visRoot(), currMouseState:lastMouseCtx(), readout:readoutRoot()};
     }
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentWillUnmount() {
         if (this.removeListener) this.removeListener();
@@ -46,7 +44,7 @@ export class ApiExpandedDisplay extends Component {
      */
     render() {
         const {closeFunc}= this.props;
-        var {visRoot,currMouseState, readout}= this.state;
+        const {visRoot,currMouseState, readout}= this.state;
         return (
             <div style={{width:'100%', height:'100%', display:'flex', flexWrap:'nowrap',
                          alignItems:'stretch', flexDirection:'column'}}>
