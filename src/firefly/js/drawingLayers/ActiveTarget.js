@@ -27,7 +27,7 @@ var idCnt=0;
 
 
 function creator(initPayload, presetDefaults) {
-    var drawingDef= makeDrawingDef('blue');
+    var drawingDef= makeDrawingDef('red');
     drawingDef.symbol= DrawSymbol.CIRCLE;
     drawingDef.size= 6;
     drawingDef= Object.assign(drawingDef,presetDefaults);
