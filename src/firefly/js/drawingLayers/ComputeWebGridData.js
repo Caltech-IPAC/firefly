@@ -58,12 +58,25 @@ export function makeGridDrawData (plot,  cc, useLabels, numOfGridLines=11){
 }
 
 function adjustLevels(levels,numOfGridLines){
+
     const nL0 = levels[0].length;
+
     const nL1 = levels[1].length;
     var newLevels = levels;
    
-    if (nL0<numOfGridLines){
-        newLevels[0] = Regrid(levels[0], numOfGridLines,allowExtrapolation);
+    if (nL0<numOfGridLines) {
+        newLevels[0] = Regrid(levels[0], numOfGridLines, allowExtrapolation);
+    }
+
+    //adjust ra's range in 0-360, regrid first and then change the range, this way takes are of the discontinuity
+    for (let i = 0; i < newLevels[0].length; i++) {
+        if (newLevels[0][i] > 360) {
+            newLevels[0][i] -= 360;
+        }
+        if (newLevels[0][i] < 0) {
+            newLevels[0][i] += 360;
+        }
+
     }
 
     if (nL1<numOfGridLines){
@@ -392,7 +405,7 @@ function getLevels(ranges,factor){
             }
             else {
 
-                delta =calculateDelta (min, max,factor);
+
 
 
                /* LZ DM-10491: introduced this simple algorithm to calculate the intervals.  The previous one
@@ -403,16 +416,14 @@ function getLevels(ranges,factor){
                 */
                 levels[i] = [];
                 min=(max<min)?min-360:min;
+                delta =calculateDelta (min, max,factor);
                 var count = Math.ceil ( (max -min)/delta);
+                if (count<=2){
+                    delta=delta/2.0;
+                    count=2*count;
+                }
                 for (let j=0; j<count; j++){
                     levels[i][j] = j*delta + min;
-                    if (!i && levels[i][j] > 360){
-                        levels[i][j] -= 360;
-                    }
-                    else if (!i && levels[i][j] < 0){
-                        levels[i][j] += 360;
-                    }
-
                 }
 
                 /* We've now got the increment between levels.
