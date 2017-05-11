@@ -99,12 +99,13 @@ function drawInnerRecWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2) 
  * @param fontStyle
  * @param backGroundColor
  * @param padDing
+ * @param rotationAngle
  */
 function drawText(drawTextAry,text, x,y,color,
                   renderOptions,
                   fontFamily='helvetica', size='9px',
                   fontWeight='normal', fontStyle='normal',
-                  backGroundColor, padDing) {
+                  backGroundColor, padDing,rotationAngle=undefined ) {
 
 
     //todo
@@ -126,10 +127,11 @@ function drawText(drawTextAry,text, x,y,color,
         fontStyle,
         'MozBorderRadius': '1px',
         'borderRadius': '1px',
-        'WebkitBorderRadius': '1px'
+        'WebkitBorderRadius': '1px',
     };
 
     if (backGroundColor) style.backgroundColor = backGroundColor;
+    if (rotationAngle) style.transform = 'rotate('+rotationAngle+')';
     if (padDing) style.padding = padDing;
 
     drawTextAry.push({text,style});
@@ -512,7 +514,7 @@ function getDrawingSize(size, symbol) {
     }
     width = Math.ceil(width);
     height = width;
-    return {width, height}
+    return {width, height};
 }
 
 /**

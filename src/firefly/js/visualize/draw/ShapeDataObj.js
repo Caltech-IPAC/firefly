@@ -68,7 +68,7 @@ export function getPVRotateAngle(plot, angle) {
      if (pv.flipY) {
          angleInRadian = Math.PI - (angle - angleInRadian);
      } else {
-         angleInRadian += angle
+         angleInRadian += angle;
      }
 
      const twoPI = Math.PI * 2;
@@ -214,13 +214,14 @@ function makePolygon(ptAry, drawObjAry=null) {
 }
 
 /**
- *
- * @param pt
- * @param text
+ * @desc make a text
+ *  @param   pt
+ *  @param  text
+ *  @param  rotationAngle - the rotation angle + deg
  * @return {*}
  */
-function makeText(pt, text) {
-    return Object.assign(make(ShapeType.Text), {pts:[pt],text});
+function makeText(pt, text, rotationAngle=undefined) {
+    return Object.assign(make(ShapeType.Text), {pts:[pt],text, rotationAngle});
 }
 
 function makeTextWithOffset(textOffset, pt, text) {
@@ -229,14 +230,15 @@ function makeTextWithOffset(textOffset, pt, text) {
 
 
 function makeDrawParams(drawObj,def={}) {
-    const style= drawObj.style || def.style || Style.STANDARD;
-    const lineWidth= drawObj.lineWidth || def.lineWidth || DEF_WIDTH;
-    const textLoc= drawObj.textLoc || def.textLoc || TextLocation.DEFAULT;
-    const unitType= drawObj.unitType || def.unitType || UnitType.PIXEL;
-    const fontName= drawObj.fontName || def.fontName || 'helvetica';
-    const fontSize= drawObj.fontSize || def.fontSize || DEFAULT_FONT_SIZE;
-    const fontWeight= drawObj.fontWeight || def.fontWeight || 'normal';
-    const fontStyle= drawObj.fontStyle || def.fontStyle || 'normal';
+    var style= drawObj.style || def.style || Style.STANDARD;
+    var lineWidth= drawObj.lineWidth || def.lineWidth || DEF_WIDTH;
+    var textLoc= drawObj.textLoc || def.textLoc || TextLocation.DEFAULT;
+    var unitType= drawObj.unitType || def.unitType || UnitType.PIXEL;
+    var fontName= drawObj.fontName || def.fontName || 'helvetica';
+    var fontSize= drawObj.fontSize || def.fontSize || DEFAULT_FONT_SIZE;
+    var fontWeight= drawObj.fontWeight || def.fontWeight || 'normal';
+    var fontStyle= drawObj.fontStyle || def.fontStyle || 'normal';
+    var rotationAngle = drawObj.rotationAngle||undefined;
     return {
         color: DrawUtil.getColor(drawObj.color,def.color),
         lineWidth,
@@ -246,7 +248,8 @@ function makeDrawParams(drawObj,def={}) {
         fontName,
         fontSize,
         fontWeight,
-        fontStyle
+        fontStyle,
+        rotationAngle
     };
 }
 
@@ -636,7 +639,6 @@ function drawCircle(drawObj, ctx, drawTextAry, plot, drawParams) {
     }
 }
 
-
 /**
  * @param drawObj
  * @param drawTextAry
@@ -647,7 +649,26 @@ function drawCircle(drawObj, ctx, drawTextAry, plot, drawParams) {
 export function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
     if (!inPt) return;
     
-    const {text, textOffset, renderOptions}= drawObj;
+    const {text, textOffset, renderOptions, rotationAngle}= drawObj;
+    //the angle of the grid line
+    var angle=undefined;
+    var pvAngle=undefined;
+    if (rotationAngle){
+        const lineAngle = parseInt( rotationAngle.substring(0,  rotationAngle.length-3));
+        const pv = getPlotViewById(visRoot(), plot.plotId);
+        pvAngle =pv.rotation;
+        if (pv.flipY){
+           angle = (pvAngle-lineAngle);
+        }
+        else {
+            angle = pvAngle + lineAngle;
+        }
+        if (angle){
+            angle = angle>360? (angle-360)+'deg' : angle+'deg';
+        }
+
+    }
+
     const {fontName, fontSize, fontWeight, fontStyle}= drawParams;
     const color = drawParams.color || drawObj.color || 'black';
 
@@ -661,11 +682,14 @@ export function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
             textHeight = parseFloat(fontSize.substring(0, fontSize.length - 2)) * 14 / 10;
         }
 
+
         const textWidth = textHeight*text.length*8/20;
         if (textOffset) {
             x+=textOffset.x;
             y+=textOffset.y;
         }
+
+
         if (x<2) {
             if (x<=-textWidth) return; // don't draw
             x = 2;
@@ -688,8 +712,20 @@ export function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
             y = south;
         }
 
+      /*  if (pvAngle<90) { //adjust the text location after rotation
+
+            if (x > east / 2.0) {
+                x +=textHeight;
+            }
+        }
+        else {
+            if (y > south/2.0) {
+                y+=textHeight;
+            }
+
+        }*/
         DrawUtil.drawText(drawTextAry, text, x, y, color, renderOptions,
-                fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle);
+                fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle,null,null,angle);
         drawObj.textWorldLoc = plot.getImageCoords(makeDevicePt(x, y));
     }
 }

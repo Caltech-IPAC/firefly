@@ -48,7 +48,7 @@ const  DEF_GRID_COLOR = 'green';
 var idCnt=0;
 
 /**
- *
+ *  @param  params
  * @return {Function}
  */
 function creator(params) {

@@ -1,53 +1,73 @@
-/*
+/**
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  * Lijun
  * 4/14/16
+ *
+ * 05/02/17
+ * DM-6501
+ *   Add the Regrid and LinearInterpolator in the utility
+ *   Use the Regrid to adding more gride lines and the number of the points in the line
+ *   Rotate the labels based on the angles
+ *   Cleaned up the codes 
  */
 
-import { makeWorldPt, makeImagePt,makeImageWorkSpacePt} from '../visualize/Point.js';
+import {makeDevicePt, makeWorldPt, makeImagePt,makeImageWorkSpacePt} from '../visualize/Point.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import CoordUtil from '../visualize/CoordUtil.js';
 import numeral from 'numeral';
 import { getDrawLayerParameters} from './WebGrid.js';
 const precision3Digit = '0.000';
-
 const RANGE_THRESHOLD = 1.02;
-
-//const sortAscending = (a,b)=>{return (a-b);} ;
-
 const minUserDistance= 0.25;   // user defined max dist. (deg)
 const maxUserDistance= 3.00;   // user defined min dist. (deg)
-
-// var useLabels= true;
 var userDefinedDistance = false;
+import {Regrid} from '../util/Interp/Regrid.js';
 
-
+const nPoints=20;
+const allowExtrapolation=true;
 /**
  * This method does the calculation for drawing data array
  * @param plot - primePlot object
  * @param cc - the CoordinateSys object
  * @param useLabels - use Labels
+ * @param numOfGridLines
  * @return a DrawData object
  */
-export function makeGridDrawData (plot,  cc, useLabels){
+export function makeGridDrawData (plot,  cc, useLabels, numOfGridLines=11){
+
 
     const {width, height, screenWidth, csys,labelFormat} = getDrawLayerParameters(plot);
     if (width > 0 && height >0) {
-        var bounds = new Rectangle(0, 0, width, height);
+        const bounds = new Rectangle(0, 0, width, height);
         var factor =  plot.zoomFactor;
         if (factor < 1.0) factor = 1.0;
-        var range = getRange(csys, width, height, cc);
-        var levels = getLevels(range, factor);
-        var labels = getLabels(levels, csys, labelFormat);
-        var {xLines, yLines} = computeLines(cc, csys, range, levels, screenWidth);
-        var wpt = cc.getWorldCoords(makeImageWorkSpacePt(1, 1), csys);
-        var aitoff = (!wpt);
-        return  drawLines(csys, bounds, labels, xLines, yLines, levels[0].length, levels[1].length, 
-                          aitoff, screenWidth, useLabels);
+        const range = getRange(csys, width, height, cc);
+        //calculate the levels
+        const levelsCalcualted = getLevels(range, factor);
+        //regrid the levels if the line counts is less than 11, the default value
+        const levels = adjustLevels(levelsCalcualted, numOfGridLines);
+        const labels = getLabels(levels, csys, labelFormat);
+        const {xLines, yLines} = computeLines(cc, csys, range, levels, screenWidth);
+        const wpt = cc.getWorldCoords(makeImageWorkSpacePt(1, 1), csys);
+        const aitoff = (!wpt);
+        return  drawLines(bounds, labels, xLines, yLines, aitoff, screenWidth, useLabels, cc);
+
     }
 }
 
+function adjustLevels(levels,numOfGridLines){
+    const nL0 = levels[0].length;
+    const nL1 = levels[1].length;
+    var newLevels = levels;
+    if (nL0<numOfGridLines){
+        newLevels[0] = Regrid(levels[0], numOfGridLines,allowExtrapolation);
+    }
+    if (nL1<numOfGridLines){
+        newLevels[1] = Regrid( levels[1], numOfGridLines,allowExtrapolation);
+    }
+    return newLevels;
+}
 /**
  * Define a rectangle object
  * @param x - the x coordinate
@@ -227,10 +247,10 @@ function  testEdge( xrange, trange)
 }
 /**
  * Get the line ranges
- * @param width - the width of the image
- * @param height - the height of the image
- * @param csys - the coordinate system the grid is drawing with
- * @param cc - the CoordinateSys object
+ * @param  {object} csys - the coordinate system the grid is drawing with
+ * @param  {double} width - the width of the image
+ * @param  {double} height - the height of the image
+ * @param  {object} cc - the CoordinateSys object
  * @returns the range array
  */
 function getRange( csys, width, height, cc) {
@@ -345,14 +365,14 @@ function getRange( csys, width, height, cc) {
  *
  * @param ranges - two -dimension array of the x and y ranges
  * @param factor - zoom factor
- * @returns number of line intervals
+ * @returns  levels {array} number of line intervals
  */
 function getLevels(ranges,factor){
 
     var levels=[];
     var  min, max, delta;
     var val, count;
-    for (let i=0; i<ranges.length; i+=1){
+    for (let i=0; i<ranges.length; i++){
         /* Expect max and min for each dimension */
         if (ranges[i].length!==2){
             levels[i]=[];
@@ -369,10 +389,34 @@ function getLevels(ranges,factor){
             else {
 
                 delta =calculateDelta (min, max,factor);
+
+
+                /*
+                The algorithm previous used (commented ) missed one line. I don't understand the purpose of
+                the algorithm.  The levels can be simply defined as the loop below
+                */
+               /* levels[i] = [];
+                min=(max<min)?min-360:min;
+                var count = Math.ceil ( (max -min)/delta);
+                for (let j=0; j<count; j++){
+                    levels[i][j] = j*delta + min;
+                    if (!i && levels[i][j] > 360){
+                        levels[i][j] -= 360;
+                    }
+                    else if (!i && levels[i][j] < 0){
+                        levels[i][j] += 360;
+                    }
+
+                }
+*/
+
+                /* We've now got the increment between levels.
+                 * Now find all the levels themselves.
+                 */
                 min=(max<min)?min-360:min;
                 val = min<0? min-min%delta : min + delta-min%delta;
                 count=0;
-                while (val + count*delta < max){
+                while (val + count*delta <= max){
                     count++;
                 }
                 if (count<=2){
@@ -380,7 +424,7 @@ function getLevels(ranges,factor){
                     count=2*count;
                 }
                 levels[i] = [];
-                for (let j=0; j<count; j+=1){
+                for (let j=0; j<count; j++){
                     levels[i][j] = j*delta + val;
                     if (!i && levels[i][j] > 360){
                         levels[i][j] -= 360;
@@ -399,9 +443,9 @@ function getLevels(ranges,factor){
 
 function lookup(val, factor){
 
-    var conditions=[val < 1,val > 90,val > 60 ,val > 30,val > 23,val > 18,val > 6, val > 3];
+    const conditions=[val < 1,val > 90,val > 60 ,val > 30,val > 23,val > 18,val > 6, val > 3];
+    const index = conditions.indexOf(true);
     var values =[val, 30, 20, 10, 6, 5, 2, 1] ;
-    var index = conditions.indexOf(true);
     var retval = (index && index>=0)? values[index] :0.5;
     if (factor >=4.0) {
         retval = retval/2.0;
@@ -455,60 +499,44 @@ function getLabels(levels,csys, labelFormat) {
     var offset = 0;
     var delta;
 
-    var sexigesimal = (csys===CoordinateSys.EQ_J2000 || csys===CoordinateSys.EQ_B1950);
-    for (let i=0; i < 2; i += 1){
+    var sexigesimal = (csys.toString()===CoordinateSys.EQ_J2000 || csys.toString()===CoordinateSys.EQ_B1950);
+    for (let i=0; i < 2; i++){
 
-        if (levels[i].length >=2){
+         if (levels[i].length >=2){
             delta = levels[i][1]-levels[i][0];
             delta = delta<0?delta+360:delta;
-        }
+         }
 
-        var lon, lat,num;
-        for (let j=0; j < levels[i].length; j += 1) {
-
-            if (sexigesimal) {
-                try {
-                    switch (i) {
-                        case 0:
-                            lon = CoordUtil.convertLonToString(levels[i][j], csys);
-                            //num = labelFormat === 'hms' ? lon : CoordUtil.convertStringToLon(lon, csys);
-                            //labels[offset] =labelFormat === 'hms'?num:`${numeral(num).format(precision3Digit)}`;
-                            //above two lines do the same thing as a line below, I still prefer to use toFixed instead
-                            labels[offset] = labelFormat === 'hms' ? lon : CoordUtil.convertStringToLon(lon, csys).toFixed(3);
-
-                            break;
-                        case 1:
-                            lat = CoordUtil.convertLatToString(levels[i][j], csys);
-                           // num = labelFormat === 'hms' ? lat : CoordUtil.convertStringToLat(lat, csys);
-                            // labels[offset] =labelFormat === 'hms'?num:`${numeral(num).format(precision3Digit)}`;
-                            //above two lines do the same thing as a line below, I still prefer to use toFixed instead
-                            labels[offset] = labelFormat === 'hms' ? lat : CoordUtil.convertStringToLat(lat, csys).toFixed(3);
-
-                            break;
-                    }
-
-                }catch (err) {
-                    labels[offset] = levels[i][j]<1000?  `${numeral(levels[i][j]).format(precision3Digit)}`:levels[i][j].toExponential(1).replace('e+', 'E');
-                }
-
-            }
-            else {
-                labels[offset] = `${numeral(levels[i][j]).format(precision3Digit)}`;
-            }
-            offset += 1;
+         var lon, lat;
+         for (let j=0; j < levels[i].length; j++) {
+              if (sexigesimal) {
+                  if (i === 0) { //ra labels
+                      lon = CoordUtil.convertLonToString(levels[i][j], csys);
+                      labels[offset] = labelFormat === 'hms' ? lon : CoordUtil.convertStringToLon(lon, csys).toFixed(3);
+                  }
+                  else {
+                      lat = CoordUtil.convertLatToString(levels[i][j], csys);
+                      labels[offset] = labelFormat === 'hms' ? lat : CoordUtil.convertStringToLat(lat, csys).toFixed(3);
+                  }
+              }
+              else {
+                  labels[offset] = `${numeral(levels[i][j]).format(precision3Digit)}`;
+              }
+             offset += 1;
         }
     }
 
     return labels;
 }
 /**
- * calculate lines
- * @param csys - the coordinate system the grid is drawing with
- * @param cc - the CoordinateSys object
- * @param direction - an integer,  0 and 1 to indicate which direction the lines are
- * @param value - x or y value in the image
- * @param range
- * @param screenWidth - a screen width
+ * @desc calculate lines
+ *
+ * @param  {object} cc - the CoordinateSys object
+ * @param  {object} csys - the coordinate system the grid is drawing with
+ * @param {object} direction - an integer,  0 and 1 to indicate which direction the lines are
+ * @param {double} value - x or y value in the image
+ * @param {object} range
+ * @param {double} screenWidth - a screen width
  * @return the points found
  */
 function findLine(cc,csys, direction, value, range, screenWidth){
@@ -550,8 +578,13 @@ function findLine(cc,csys, direction, value, range, screenWidth){
         intervals *= 2;
     }
 
-    return fixPoints(npoints);
+    const points = fixPoints(npoints);
+    //regrid the points found to 20 points
+    if (points.length<20){
+        return  Regrid(findPoints, nPoints,allowExtrapolation);
+    }
 
+    return points;
 }
 
 function isStraight(points){
@@ -648,91 +681,18 @@ function fixPoints(points){
         points[1][i] = -10000;
 
     }
+
     return points;
 }
 
-function count(array,val){
-    var result=0;
-    for(var a in array) {
-        if (array[a] == val) {
-            result++;
-        }
-    }
-    return result;
-}
 
-function getFrequentValInArray(array){
-    var max=0;
-    var checked=[];
-    var result;
-    for (let i=0; i<array.length; i++){
-        if (checked.includes( array[i])) continue;
-        checked.push(array[i]);
-        if (count(array, array[i])>max){
-            max= count(array, array[i]);
-            result=array[i];
-        }
-    }
-    return result;
-}
-function getXYMiddles (xLines, nLevel0, nLevel1){
-
-    var xArray=[];
-    for (let i=0; i<nLevel0; i++){
-        xArray.push(xLines[0].length);
-    }
-    var yArray=[];
-    for (let i=0; i<nLevel1; i++){
-        yArray.push(xLines[nLevel0+i].length);
-    }
-
-    var hM = Math.trunc(getFrequentValInArray(xArray)/2);
-    var vM= Math.trunc(getFrequentValInArray(yArray)/2);
-
-    return {hM, vM};
-}
-function getLabelPoints(bounds, csys, xLines, yLines, nLevel0, nLevel1) {
-
-    var points = [];
-    if (csys.toString().startsWith('EQ')) {
-        var lineCount = xLines.length;
-        for (let i = 0; i<lineCount; i+=1) {
-            if (i< nLevel0){
-                points[i] = makeImageWorkSpacePt(xLines[i][0], bounds.y);
-            }
-            else {
-                points[i] = makeImageWorkSpacePt(bounds.x, yLines[i][0]);
-            }
-        }
-
-    }
-    else {
-        //find the line's middle points for both directions, then put the labels there
-        /*
-         oneLine = [xLines[i],yLines[i]] is an one dimensional array.  Its middle point is hM when i<nLevel0
-         and vM when i>=nLevel0
-         */
-
-        //This is simple solution before the regrid is implemented. 
-        const {hM, vM} = getXYMiddles(xLines, nLevel0, nLevel1);
-
-        for (let i=0; i< nLevel0; i++){
-            points[i] = makeImageWorkSpacePt(xLines[i][hM],yLines[i][hM]);
-        }
-
-        for (let i=0; i< nLevel1; i++){
-            points[i+ nLevel0] = makeImageWorkSpacePt(xLines[nLevel0 +i][vM], yLines[nLevel0 +i][vM]);
-        }
-    }
-    return  points;
-}
-
-
-function drawLabeledPolyLine (drawData, bounds, nLevel0,  label, labelLocations, x, y, count, aitoff,screenWidth, useLabels){
+function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidth, useLabels,cc){
 
 
     //add the  draw line data to the drawData
     var ipt0, ipt1;
+    var slopAngle;
+    var labelPoint;
     for (let i=0; i<x.length-1; i+=1) {
         //check the x[i] and y[i] are inside the image screen
         if (x[i] > -1000 && x[i+1] > -1000 &&
@@ -748,31 +708,38 @@ function drawLabeledPolyLine (drawData, bounds, nLevel0,  label, labelLocations,
             ipt0= makeImageWorkSpacePt(x[i],y[i]);
             ipt1= makeImageWorkSpacePt(x[i+1], y[i+1]);
             if (!aitoff  ||  ((Math.abs(ipt1.x-ipt0.x) <screenWidth /8 ) && (aitoff))) {
-                drawData.push(ShapeDataObj.makeLine(ipt0,ipt1));
+                drawData.push(ShapeDataObj.makeLine(ipt0, ipt1));
+
+                //find the middle point of the line, index from 0, so minus 1
+                if (i===Math.round(x.length/2)-1 ) {
+                    var wpt1 = cc.getScreenCoords(ipt0);
+                    var wpt2 = cc.getScreenCoords(ipt1);
+                    const slope = (wpt2.y - wpt1.y) / (wpt2.x - wpt1.x);
+                    slopAngle =  Math.atan(slope) * 180 / Math.PI;
+                    labelPoint = wpt1 ; // both screen coordinates or ImageWorkSpacePt are OK.
+                }
+
             }
         } //if
     } // for
 
+
     // draw the label.
-    if (useLabels){
-        if (count< nLevel0) { //vertical line labels
-            drawData.push(ShapeDataObj.makeText(labelLocations[count], label));
-        }
-        else { //Horizontal line labels
-            drawData.push(ShapeDataObj.makeText(labelLocations[count], label));
-        }
+    if (useLabels  ){
+        drawData.push(ShapeDataObj.makeText(labelPoint, label, slopAngle+'deg'));
     }
 }
 
-function drawLines(csys,bounds, labels, xLines,yLines, nLevel0, nLevel1, aitoff,screenWidth, useLabels) {
+function drawLines(bounds, labels, xLines,yLines, aitoff,screenWidth, useLabels,cc) {
     // Draw the lines previously computed.
     //get the locations where to put the labels
-    var labelLocations =getLabelPoints(bounds, csys, xLines, yLines, nLevel0, nLevel1);
     var drawData=[];
+
     var  lineCount = xLines.length;
-    for (let i=0; i<lineCount; i+=1) {
-        drawLabeledPolyLine(drawData, bounds,nLevel0, labels[i],labelLocations ,
-            xLines[i], yLines[i], i, aitoff,screenWidth, useLabels);
+
+   for (let i=0; i<lineCount; i++) {
+            drawLabeledPolyLine(drawData, bounds, labels[i] ,
+            xLines[i], yLines[i], aitoff,screenWidth, useLabels,cc);
     }
     return drawData;
 
