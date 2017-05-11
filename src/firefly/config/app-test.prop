@@ -5,7 +5,7 @@
 #irsa.gator.service.periodogram.url=http://web.ipac.caltech.edu/staff/ejoliet/demo/irsa-lc-sample-result-test.xml
 
 # In case the dev API is avialble, test with the follwoing (uncomment!) and comment the above prop
-irsa.gator.service.periodogram.url=https://irsa/cgi-bin/periodogram/nph-periodogram_api
+irsa.gator.service.periodogram.url=https://irsa.ipac.caltech.edu/cgi-bin/periodogram/nph-periodogram_api
 
 # Periodogram API request parameter list definition, separated by space
 irsa.gator.service.periodogram.keys=x y alg peaks
