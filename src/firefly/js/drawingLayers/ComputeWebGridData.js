@@ -45,6 +45,7 @@ export function makeGridDrawData (plot,  cc, useLabels, numOfGridLines=11){
         const range = getRange(csys, width, height, cc);
         //calculate the levels
         const levelsCalcualted = getLevels(range, factor);
+
         //regrid the levels if the line counts is less than 11, the default value
         const levels = adjustLevels(levelsCalcualted, numOfGridLines);
         const labels = getLabels(levels, csys, labelFormat);
@@ -60,12 +61,15 @@ function adjustLevels(levels,numOfGridLines){
     const nL0 = levels[0].length;
     const nL1 = levels[1].length;
     var newLevels = levels;
+   
     if (nL0<numOfGridLines){
         newLevels[0] = Regrid(levels[0], numOfGridLines,allowExtrapolation);
     }
+
     if (nL1<numOfGridLines){
         newLevels[1] = Regrid( levels[1], numOfGridLines,allowExtrapolation);
     }
+
     return newLevels;
 }
 /**
@@ -391,11 +395,13 @@ function getLevels(ranges,factor){
                 delta =calculateDelta (min, max,factor);
 
 
-                /*
-                The algorithm previous used (commented ) missed one line. I don't understand the purpose of
+               /* LZ DM-10491: introduced this simple algorithm to calculate the intervals.  The previous one
+               commented below caused line missing. For example, 45,0 wise, 45, 90 wise etc.
+
+               The algorithm previous used (commented ) missed one line. I don't understand the purpose of
                 the algorithm.  The levels can be simply defined as the loop below
                 */
-               /* levels[i] = [];
+                levels[i] = [];
                 min=(max<min)?min-360:min;
                 var count = Math.ceil ( (max -min)/delta);
                 for (let j=0; j<count; j++){
@@ -408,12 +414,12 @@ function getLevels(ranges,factor){
                     }
 
                 }
-*/
 
                 /* We've now got the increment between levels.
                  * Now find all the levels themselves.
                  */
-                min=(max<min)?min-360:min;
+                //LZ comment out the original algorithm to calculate the intervals
+               /* min=(max<min)?min-360:min;
                 val = min<0? min-min%delta : min + delta-min%delta;
                 count=0;
                 while (val + count*delta <= max){
@@ -433,7 +439,7 @@ function getLevels(ranges,factor){
                         levels[i][j] += 360;
                     }
 
-                }
+                }*/
             }
         }
 
@@ -686,7 +692,7 @@ function fixPoints(points){
 }
 
 
-function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidth, useLabels,cc){
+function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidth, useLabels,cc, isRaLine){
 
 
     //add the  draw line data to the drawData
@@ -716,6 +722,19 @@ function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidt
                     var wpt2 = cc.getScreenCoords(ipt1);
                     const slope = (wpt2.y - wpt1.y) / (wpt2.x - wpt1.x);
                     slopAngle =  Math.atan(slope) * 180 / Math.PI;
+                    //since atan is multi-value function, the slopAngle is unique, for raLine, I set it is in the range of 0-180
+                    if (isRaLine && slopAngle<0){
+                        slopAngle+=180;
+                    }
+
+                    //for dec line, I set it to -90 to 90
+                    if (!isRaLine  && slopAngle>90){
+                        slopAngle = 180 - slopAngle;
+                    }
+                    if (!isRaLine  && slopAngle<-90){
+                        slopAngle = 180 + slopAngle;
+                    }
+
                     labelPoint = wpt1 ; // both screen coordinates or ImageWorkSpacePt are OK.
                 }
 
@@ -737,9 +756,10 @@ function drawLines(bounds, labels, xLines,yLines, aitoff,screenWidth, useLabels,
 
     var  lineCount = xLines.length;
 
-   for (let i=0; i<lineCount; i++) {
+
+    for (let i=0; i<lineCount; i++) {
             drawLabeledPolyLine(drawData, bounds, labels[i] ,
-            xLines[i], yLines[i], aitoff,screenWidth, useLabels,cc);
+            xLines[i], yLines[i], aitoff,screenWidth, useLabels,cc, i<lineCount/2);
     }
     return drawData;
 
