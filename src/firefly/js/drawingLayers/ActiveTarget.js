@@ -3,7 +3,7 @@
  */
 
 
-import {isEmpty} from 'lodash'
+import {isEmpty} from 'lodash';
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
@@ -27,7 +27,7 @@ var idCnt=0;
 
 
 function creator(initPayload, presetDefaults) {
-    var drawingDef= makeDrawingDef('red');
+    var drawingDef= makeDrawingDef('magenta');
     drawingDef.symbol= DrawSymbol.CIRCLE;
     drawingDef.size= 6;
     drawingDef= Object.assign(drawingDef,presetDefaults);
