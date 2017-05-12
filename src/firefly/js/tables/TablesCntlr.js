@@ -169,10 +169,11 @@ export function dispatchTableInsert(tableModel, options, addUI=true, dispatcher=
  * Fetch table data from the server.
  * @param request a table request params object.
  * @param hlRowIdx set the highlightedRow.  default to startIdx.
+ * @param invokedBy used to indicate what trigger the fetch.
  * @param {function} dispatcher only for special dispatching uses such as remote
  */
-export function dispatchTableFetch(request, hlRowIdx, dispatcher= flux.process) {
-    dispatcher( {type: TABLE_FETCH, payload: {request, hlRowIdx} });
+export function dispatchTableFetch(request, hlRowIdx, invokedBy, dispatcher= flux.process) {
+    dispatcher( {type: TABLE_FETCH, payload: {request, hlRowIdx, invokedBy} });
 }
 
 /**
@@ -398,10 +399,9 @@ function tableSelect(action) {
 function tableFetch(action) {
     return (dispatch) => {
         if (!action.err) {
-            var {request, hlRowIdx} = action.payload;
+            var {request, hlRowIdx, invokedBy=TABLE_FETCH} = action.payload;
             const {tbl_id} = request;
 
-            TblUtil.onTableLoaded(tbl_id).then( (tableModel) => dispatchTableLoaded(Object.assign(TblUtil.getTblInfoById(tableModel.tbl_id), {invokedBy: action.type})) );
             dispatch( updateMerge(action, 'payload', {tbl_id}) );
             request.startIdx = 0;
             TblUtil.doFetchTable(request, hlRowIdx).then ( (tableModel) => {
@@ -410,6 +410,7 @@ function tableFetch(action) {
             }).catch( (error) => {
                 dispatch({type: TABLE_LOADED, payload: TblUtil.createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
             });
+            TblUtil.onTableLoaded(tbl_id).then( (tableModel) => dispatchTableLoaded(Object.assign(TblUtil.getTblInfo(tableModel), {invokedBy})) );
         }
     };
 }
@@ -419,7 +420,7 @@ function tableSort(action) {
         if (!action.err) {
             var {request, hlRowIdx} = action.payload;
             const {tbl_id} = request;
-            dispatchTableFetch(request, hlRowIdx);
+            dispatchTableFetch(request, hlRowIdx, TABLE_SORT);
             TblUtil.onTableLoaded(tbl_id).then( () => dispatch(action) );
         }
     };
@@ -433,7 +434,7 @@ function tableFilter(action) {
             const oreq = get(TblUtil.getTblById(tbl_id), 'request');
             if (!oreq) return;
             const nreq = Object.assign({}, oreq, request);
-            dispatchTableFetch(nreq, hlRowIdx);
+            dispatchTableFetch(nreq, hlRowIdx, TABLE_FILTER);
             TblUtil.onTableLoaded(tbl_id).then( () => dispatch(action) );
         }
     };

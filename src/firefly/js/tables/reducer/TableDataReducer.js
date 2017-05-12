@@ -42,8 +42,6 @@ export function dataReducer(state={data:{}}, action={}) {
             return TblUtil.smartMerge(root, updates);
         }
         case (Cntlr.TABLE_FETCH)      :
-        case (Cntlr.TABLE_FILTER)      :
-        case (Cntlr.TABLE_SORT)     :
         {
             const {tbl_id} = action.payload || {};
             const nTable = Object.assign({isFetching:true, selectInfo: SelectInfo.newInstance({rowCount:0}).data}, action.payload);
