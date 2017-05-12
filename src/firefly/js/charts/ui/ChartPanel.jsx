@@ -5,6 +5,7 @@ import Resizable from 'react-component-resizable';
 import {flux} from '../../Firefly.js';
 import {get, debounce, defer} from 'lodash';
 import {reduxFlux} from '../../core/ReduxFlux.js';
+import {isPlotly} from '../ChartUtil.js';
 
 import * as ChartsCntlr from '../ChartsCntlr.js';
 
@@ -30,8 +31,9 @@ class ChartPanelView extends PureComponent {
             }
         };
         const debounced = debounce(normal, 100);
+
         this.onResize = (size) => {
-            if (this.state.widthPx === 0) {
+            if (this.state.widthPx === 0 || isPlotly()) {
                 defer(normal, size);
             } else {
                 debounced(size);

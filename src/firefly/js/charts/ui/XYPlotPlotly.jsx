@@ -426,7 +426,8 @@ export class XYPlotPlotly extends PureComponent {
         this.state = {
             dataUpdateTraces: undefined,
             dataUpdate: undefined,
-            layoutUpdate: undefined
+            layoutUpdate: undefined,
+            doingResize: false
         };
 
         this.afterRedraw = this.afterRedraw.bind(this);
@@ -446,8 +447,13 @@ export class XYPlotPlotly extends PureComponent {
 
         const {data, width, height, params, highlighted, selectInfo, desc} = this.props;
 
+
+        const doingResize= (width!==nextProps.width || height!==nextProps.height);
+        if (doingResize!==this.state.doingResize) this.setState({doingResize});
+
         // re-calculate charting info when the plot data change or an error occurs
         // shading change for density plot changes series
+
         if (nextProps.data !== data ||
             get(params, 'plotStyle') !== get(nextProps.params, 'plotStyle') ||
             plotErrors(params, 'x') !== plotErrors(nextProps.params, 'x') ||
@@ -781,7 +787,7 @@ export class XYPlotPlotly extends PureComponent {
             this.chartingInfo = getChartingInfo(this.props);
         }
         const {plotlyData, plotlyLayout, plotlyDivStyle} = this.chartingInfo;
-        const {dataUpdateTraces, dataUpdate, layoutUpdate} = this.state;
+        const {dataUpdateTraces, dataUpdate, layoutUpdate, doingResize} = this.state;
 
         return (
             <div style={{float: 'left'}}>
@@ -790,6 +796,7 @@ export class XYPlotPlotly extends PureComponent {
                                dataUpdate={dataUpdate}
                                layoutUpdate={layoutUpdate}
                                config={PLOTLY_CONFIG}
+                               handleRenderAsResize={doingResize}
                                newPlotCB={this.afterRedraw}
                 />
             </div>

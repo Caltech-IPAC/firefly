@@ -65,13 +65,8 @@ export class ChartArea extends PureComponent {
                 }
             }
         };
-        const debounced = debounce(normal, 100);
         this.onResize = (size) => {
-            if (this.state.widthPx === 0) {
-                defer(normal, size);
-            } else {
-                debounced(size);
-            }
+            defer(normal, size);
         };
     }
 
@@ -104,8 +99,15 @@ export class ChartArea extends PureComponent {
 
     render() {
         const {chartId} = this.props;
-        const {data=[], highlighted, selected, layout={}, showOptions, widthPx, heightPx} = this.state;
-        Object.assign(layout, {width: widthPx, height: heightPx});
+        const {data=[], highlighted, selected, layout, showOptions, widthPx, heightPx} = this.state;
+        const layoutDim=  {width: widthPx, height: heightPx};
+
+
+        // if (layout && (!layout.width || !layout.height)) Object.assign(layout, layoutDim);
+        const handleAsResize= (layout && (layout.width!==widthPx || layout.height!==heightPx));
+        Object.assign(layout,layoutDim);
+
+
         const OptionsUI = getOptionsUI(chartId);
         const showlegend = data.length > 1;
         let pdata = data;
@@ -115,7 +117,8 @@ export class ChartArea extends PureComponent {
 
         return (
             <Resizable className='ChartPanel__chartresizer' onResize={this.onResize}>
-                <PlotlyWrapper newPlotCB={this.afterRedraw} data={pdata} layout={playout}/>
+                <PlotlyWrapper newPlotCB={this.afterRedraw} data={pdata} layout={playout}
+                               handleRenderAsResize={handleAsResize}/>
                 {showOptions && <OptionsUI {...{chartId}}/>}
             </Resizable>
         );
