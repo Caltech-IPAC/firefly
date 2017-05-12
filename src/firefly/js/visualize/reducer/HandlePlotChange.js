@@ -12,7 +12,7 @@ import {replacePlotView, replacePrimaryPlot, changePrimePlot,
 import {WebPlot, clonePlotWithZoom, PlotAttribute} from '../WebPlot.js';
 import {logError, updateSet} from '../../util/WebUtil.js';
 import {CCUtil, CysConverter} from '../CsysConverter.js';
-import {isPlotNorth, getRotationAngle} from '../VisUtil.js';
+import {isPlotNorth, getRotationAngle, isRotationMatching} from '../VisUtil.js';
 import {PlotPref} from './../PlotPref.js';
 import {primePlot,
         clonePvAry,
@@ -272,6 +272,21 @@ function rotatePv(pv, targetAngle, rotateNorthLock) {
 
 }
 
+function rotatePvToMatch(pv, matchToPv, rotateNorthLock) {
+    if (isRotationMatching(pv,matchToPv)) return pv;
+    const plot= primePlot(pv);
+    const matchToPlot= primePlot(matchToPv);
+    if (!plot || !matchToPlot) return pv;
+    const masterRot= matchToPv.rotation * (matchToPv.flipY ? -1 : 1);
+    let targetRotation= ((getRotationAngle(matchToPlot)+  masterRot)  - (getRotationAngle(plot))) *
+        (matchToPv.flipY ? 1 : -1);
+    targetRotation= targetRotation ? 360- targetRotation : 0;
+    pv= clone(pv);
+    pv.plotViewCtx= clone(pv.plotViewCtx, {rotateNorthLock});
+    pv.rotation= (360 + targetRotation) % 360;
+    return updateTransform(pv);
+}
+
 
 function updateClientRotation(state,action) {
     const {plotId,angle, rotateType, actionScope}= action.payload;
@@ -305,10 +320,18 @@ function updateClientRotation(state,action) {
     // const realAngle= (360-targetAngle) % 360;
 
     const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
-
-    plotViewAry= actionScope===ActionScope.GROUP ?
-               applyToOnePvOrGroup(plotViewAry,plotId,plotGroup, (pv) => rotatePv(pv,targetAngle, rotateNorthLock)) :
-               clonePvAryWithPv(plotViewAry, rotatePv(pv,targetAngle,rotateNorthLock));
+    const masterPv= rotatePv(pv,targetAngle,rotateNorthLock);
+    if (state.wcsMatchType || rotateType===RotateType.NORTH) {
+        plotViewAry= clonePvAryWithPv(plotViewAry, masterPv);
+        if (actionScope===ActionScope.GROUP) {
+            plotViewAry= matchPlotView(masterPv,plotViewAry, plotGroup, (pv) => rotatePvToMatch(pv,masterPv, rotateNorthLock));
+        }
+    }
+    else {
+        plotViewAry= actionScope===ActionScope.GROUP ?
+            applyToOnePvOrGroup(plotViewAry,plotId,plotGroup, (pv) => rotatePv(pv,targetAngle, rotateNorthLock)) :
+            clonePvAryWithPv(plotViewAry, masterPv);
+    }
 
     return clone(state,{plotViewAry});
 }

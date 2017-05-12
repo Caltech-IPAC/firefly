@@ -9,7 +9,7 @@ import ImagePlotCntlr, {WcsMatchType, IMAGE_PLOT_KEY,
                        dispatchUpdateViewSize, dispatchRecenter, ActionScope} from '../ImagePlotCntlr.js';
 import {getPlotViewById, primePlot, applyToOnePvOrGroup, findPlotGroup} from '../PlotViewUtil.js';
 import {PlotAttribute} from '../WebPlot.js';
-import {FullType, isPlotNorth, isEastLeftOfNorth, getRotationAngle} from '../VisUtil.js';
+import {FullType, isPlotNorth, isEastLeftOfNorth, getRotationAngle, isRotationMatching} from '../VisUtil.js';
 import {getEstimatedFullZoomFactor, getArcSecPerPix, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import {CCUtil} from '../CsysConverter.js';
@@ -83,8 +83,9 @@ export function wcsMatchActionCreator(action) {
                 );
             }
             else {
+                dispatchRotate({ plotId, rotateType: RotateType.UNROTATE, actionScope: ActionScope.GROUP});
                 applyToOnePvOrGroup(visRoot.plotViewAry, masterPv.plotId, group,
-                    (pv) => dispatchUpdateViewSize(pv.plotId));
+                    (pv) => dispatchUpdateViewSize(pv.plotId) );
             }
             return;
         }
@@ -164,7 +165,7 @@ function syncPlotToLevel(pv, masterPv, targetASpix) {
     if (!isFlipYMatching(pv, masterPv)) dispatchFlip({plotId:pv.plotId, actionScope: ActionScope.SINGLE});
 
 
-    if (!isRotationMatching(pv, masterPv)) rotateToMatch(pv, masterPv, masterPv.flipY);
+    if (!isRotationMatching(pv, masterPv)) rotateToMatch(pv, masterPv);
     zoomToLevel(plot, newZoomLevel);
 }
 
@@ -182,13 +183,13 @@ function zoomToLevel(plot, newZoomLevel) {
     }
 }
 
-function rotateToMatch(pv, masterPv, flipY) {
+function rotateToMatch(pv, masterPv) {
     const plot= primePlot(pv);
     const masterPlot= primePlot(masterPv);
     if (!plot) return;
-    const masterRot= masterPv.rotation * (flipY ? -1 : 1);
-    var targetRotation= ((getRotationAngle(masterPlot)+  masterRot)  -
-                           (getRotationAngle(plot))) * (flipY ? 1 : -1);
+    const masterRot= masterPv.rotation * (masterPv.flipY ? -1 : 1);
+    let targetRotation= ((getRotationAngle(masterPlot)+  masterRot)  -
+                           (getRotationAngle(plot))) * (masterPv.flipY ? 1 : -1);
     if (targetRotation<0) targetRotation+= 360;
     dispatchRotate({
         plotId: plot.plotId,
@@ -211,28 +212,6 @@ function isEast(pv) {
     return (imageDataEast && !pv.flipY) || (!imageDataEast && pv.flipY);
 }
 
-
-function isNorth(pv) {
-    const plot= primePlot(pv);
-    if (!plot) return false;
-    return (pv.plotViewCtx.rotateNorthLock || (isPlotNorth(plot) && !pv.rotation) );
-}
-
-function isRotationMatching(pv1, pv2) {
-    const p1= primePlot(pv1);
-    const p2= primePlot(pv2);
-
-    if (!p1 || !p2) return false;
-
-    if (isNorth(pv1) && isNorth(pv2)) {
-        return true;
-    }
-    else {
-        const r1= getRotationAngle(p1) + pv1.rotation;
-        const r2= getRotationAngle(p2) + pv1.rotation;
-        return Math.abs(r1-r2) < .9;
-    }
-}
 
 /**
  *
