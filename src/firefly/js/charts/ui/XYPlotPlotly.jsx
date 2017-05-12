@@ -34,6 +34,7 @@ const selectionRectColorGray = 'rgba(165, 165, 165, 0.5)';
 
 const Y_TICKLBL_PX = 90;
 const X_TICKLBL_PX = 60;
+const TITLE_PX = 30;
 const MIN_MARGIN_PX = 10;
 const MIN_YLBL_PX = 30;
 const FSIZE = 12;
@@ -396,7 +397,7 @@ function getChartingInfo(props) {
             l: yOpposite ? MIN_MARGIN_PX : Y_TICKLBL_PX,
             r: yOpposite ? Y_TICKLBL_PX : MIN_MARGIN_PX,
             b: xOpposite ? MIN_MARGIN_PX: X_TICKLBL_PX,
-            t: xOpposite ? X_TICKLBL_PX: MIN_MARGIN_PX,
+            t: (xOpposite ? X_TICKLBL_PX: MIN_MARGIN_PX)+(desc ? TITLE_PX: 0),
             pad: 2
         }
     };
@@ -467,10 +468,6 @@ export class XYPlotPlotly extends PureComponent {
 
                 const {params:newParams, width:newWidth, height:newHeight, highlighted:newHighlighted, selectInfo:newSelectInfo, desc:newDesc } = nextProps;
 
-                if (newDesc !== desc) {
-                    this.setState({layoutUpdate: {title: newDesc}});
-                }
-
                 // selection change (selection is not supported for decimated data)
                 if (data && data.rows && !data.decimateKey && newSelectInfo !== selectInfo) {
                     let selectedData = [];
@@ -524,7 +521,7 @@ export class XYPlotPlotly extends PureComponent {
                 }
 
                 // plot parameters change
-                if (params !== newParams) {
+                if (params !== newParams || newDesc !== desc) {
                     const dataUpdate = {};
                     const layoutUpdate = {};
                     let dataUpdateTraces = 0;
@@ -532,13 +529,21 @@ export class XYPlotPlotly extends PureComponent {
                     const newYOptions = getYAxisOptions(newParams);
                     const oldXOptions = getXAxisOptions(params);
                     const oldYOptions = getYAxisOptions(params);
+
+                    if (newDesc !== desc) {
+                         layoutUpdate['title'] =  newDesc;
+                         if (!newDesc || !desc) {
+                             layoutUpdate['margin.t'] = (newXOptions.xOpposite ? X_TICKLBL_PX : MIN_MARGIN_PX)+(newDesc ? TITLE_PX: 0);
+                         }
+                     }
+
                     if (!shallowequal(oldXOptions, newXOptions)) {
                         layoutUpdate['xaxis.title'] = newXOptions.xTitle;
                         layoutUpdate['xaxis.showgrid'] = newXOptions.xGrid;
                         layoutUpdate['xaxis.side'] = newXOptions.xOpposite ? 'top' : 'bottom';
                         layoutUpdate['xaxis.type'] = newXOptions.xLog ? 'log' : 'linear';
                         layoutUpdate['margin.b'] = newXOptions.xOpposite ? MIN_MARGIN_PX : X_TICKLBL_PX;
-                        layoutUpdate['margin.t'] = newXOptions.xOpposite ? X_TICKLBL_PX : MIN_MARGIN_PX;
+                        layoutUpdate['margin.t'] = (newXOptions.xOpposite ? X_TICKLBL_PX : MIN_MARGIN_PX)+(newDesc ? TITLE_PX: 0);
                     }
                     if (!shallowequal(oldYOptions, newYOptions)) {
                         layoutUpdate['yaxis.title'] = newYOptions.yTitle;
@@ -573,7 +578,7 @@ export class XYPlotPlotly extends PureComponent {
 
                     if (!shallowequal(params.selection, newParams.selection)) {
                         if (newParams.selection) {
-                            this.updateSelectionRect(newParams.selection, newXOptions.xLog, newYOptions.yLog);
+                            this.updateSelectionRect(newParams.selection);
                             return false;
                         } else {
                             layoutUpdate['shapes'] = [];
@@ -645,10 +650,8 @@ export class XYPlotPlotly extends PureComponent {
      * User can filter, zoom, or select the points in the selection rectangle.
      * While the selection rectangle is present, tooltips should be disabled
      * @param selection
-     * @param {boolean} xLog
-     * @param {boolean} yLog
      */
-    updateSelectionRect(selection, xLog, yLog) {
+    updateSelectionRect(selection) {
 
         if (this.selectionRect) {
             this.selectionRect.destroy();
@@ -663,10 +666,10 @@ export class XYPlotPlotly extends PureComponent {
                     type: 'rect',
                     xref: 'x',
                     yref: 'y',
-                    x0: xLog ? Math.log10(xMin) : xMin,
-                    y0: yLog ? Math.log10(yMin) : yMin,
-                    x1: xLog ? Math.log10(xMax) : xMax,
-                    y1: yLog ? Math.log10(yMax) : yMax,
+                    x0: xMin,
+                    y0: yMin,
+                    x1: xMax,
+                    y1: yMax,
                     fillcolor: selColor,
                     opacity: 0.5,
                     line: {
@@ -705,7 +708,7 @@ export class XYPlotPlotly extends PureComponent {
 
         // new plot adjustments
         if (params.selection) {
-            this.updateSelectionRect(get(params, 'selection'), getXAxisOptions(params).xLog, getYAxisOptions(params).yLog);
+            this.updateSelectionRect(get(params, 'selection'));
         }
         this.adjustYMargin(chart);
 
