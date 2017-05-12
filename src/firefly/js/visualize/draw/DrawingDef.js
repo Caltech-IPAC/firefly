@@ -88,7 +88,7 @@ export function makeDrawingDef(color= 'red', presetDefaults= {}) {
     const def= {
         color,
         symbol: DrawSymbol.X,
-        lineWidth:1,
+        lineWidt:1,
         size : 4,
         renderOptions: {shadow:null,rotAngle:null,translation:null},
         textLoc: TextLocation.DEFAULT,
