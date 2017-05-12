@@ -27,11 +27,8 @@ var idCnt=0;
 
 
 function creator(initPayload, presetDefaults) {
-    var drawingDef= makeDrawingDef('magenta',4 );
-    drawingDef.symbol= DrawSymbol.CIRCLE;
-    drawingDef.size= 6;
-    drawingDef.fontWeight='bolder';
-    drawingDef.lineWidth=4;
+
+    var drawingDef= makeDrawingDef('magenta', {lineWidth:1, size:6, fontWeight:'bolder', symbol: DrawSymbol.CIRCLE } );
     drawingDef= Object.assign(drawingDef,presetDefaults);
 
 

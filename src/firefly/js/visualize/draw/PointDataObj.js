@@ -163,7 +163,7 @@ function makeDrawParams(pointDataObj,def) {
     const fontWeight= pointDataObj.fontWeight || def.fontWeight || 'normal';
     const fontStyle= pointDataObj.fontStyle || def.fontStyle || 'normal';
     const textLoc= pointDataObj.textLoc || def.textLoc || TextLocation.DEFAULT;
-    const lineWidth =pointDataObj.lineWidth || def.lineWidth || '1';
+    const lineWidth =pointDataObj.lineWidth || def.lineWidth || 1;
 
     return {
         color: DrawUtil.getColor(pointDataObj.color,def.color),
