@@ -388,13 +388,13 @@ class PhaseFoldingChart extends PureComponent {
         this.iAmMounted = true;
         this.unbinder= FieldGroupUtils.bindToStore(pfinderkey, (fields) => {
             if (this && this.iAmMounted && isPhaseChanged(fields, this.state.fields)) {
-                this.setState({fields});
+                this.chartingInfo= this.regenData(fields);
                 // chart.setTitle({text: period ? `period=${period}(day)`:'period='});
                 // chart.series[0].setData(data);
                 // chart.xAxis[0].update({min: minPhase - Margin,
                 //     max: minPhase + 2.0 + Margin});
                 // chart.yAxis[0].setTitle({text: `${flux}(mag)`});
-                this.chartingInfo= this.regenData(fields);
+                this.setState({fields});
             }
         });
     }
