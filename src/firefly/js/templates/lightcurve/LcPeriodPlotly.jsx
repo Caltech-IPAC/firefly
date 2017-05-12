@@ -229,22 +229,6 @@ const PeriodStandardView = (props) => {
                     <LcPeriodogram displayMode={displayMode}/>
                 </SplitPane>
             </div>
-            <div style={{flexGrow: 0, display: 'inline-flex', justifyContent: 'flex-end', height: 40}}>
-                <div style={{marginTop:7, marginRight:10}}>
-                    <HelpIcon helpId={'findpTSV.acceptp'}/>
-                </div>
-                <div style={{margin: 5}}>
-                    <button type='button' className='button std hl' onClick={()=>cancelStandard()}>Cancel</button>
-                </div>
-                <CompleteButton
-                    style={aroundButton}
-                    groupKey={[pfinderkey]}
-                    onSuccess={setPFTableSuccess()}
-                    onFail={setPFTableFail()}
-                    text={acceptPeriodTxt}
-                    includeUnmounted={true}
-                />
-            </div>
         </FieldGroup>
     );
 };
@@ -638,24 +622,43 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
     var offset = 16;
     var highlightW = PanelResizableStyle.width-panelSpace - offset;
     var pSize = panelSpace/2 - 5;
-
+    let styleItem = {display: 'list-item', marginLeft: '10px', paddingBottom:'20px'};
+    let innerItem = {display: 'inline-flex', maxWidth: '100%', alignItems: 'center'};
     return (<div style={{width: PanelResizableStyle.width - offset}}>
                 <div style={{display:'flex', flexDirection:'row-reverse', justifyContent:'space-between'}}>
                     <HelpIcon helpId={'findpTSV.settings'}/>
                 </div>
+            {'Vary period and time offset while visualizing phase folded plot. ' +
+            'Optionally calculate periodogram. ' +
+            'When satisfied, click Accept to return to Time Series Viewer with phase folded table.'}
                 <br/>
-                {ReadOnlyText({label: get(defValues, [fKeyDef.time.fkey, 'label']),
+            <br/>
+            <br/>
+            {ReadOnlyText({
+                label: get(defValues, [fKeyDef.time.fkey, 'label']),
                                labelWidth: get(defValues, [fKeyDef.time.fkey, 'labelWidth']),
-                               content: get(fields, [fKeyDef.time.fkey, 'value'])})}
+                content: get(fields, [fKeyDef.time.fkey, 'value'])
+            })}
                 <br/>
-                {ReadOnlyText({label: get(defValues, [fKeyDef.flux.fkey, 'label']),
+            {ReadOnlyText({
+                label: get(defValues, [fKeyDef.flux.fkey, 'label']),
                                labelWidth: get(defValues, [fKeyDef.flux.fkey, 'labelWidth']),
-                               content: get(fields, [fKeyDef.flux.fkey, 'value'])})}
+                content: get(fields, [fKeyDef.flux.fkey, 'value'])
+            })}
                 <br/>
-                <ValidationField fieldKey={fKeyDef.tz.fkey} />
-                <br/>
-                <br/>
-                <div style={{display: 'flex', alignItems: 'center'}}>
+            <h3>{'Set Period'}</h3>
+            <div style={styleItem}>
+                <div style={innerItem}>
+                    <ValidationField fieldKey={fKeyDef.period.fkey} label='Enter manually:'/>
+                    <button type='button' className='button std hl'
+                            onClick={() => resetPeriodDefaults(defPeriod)}>
+                        <b>Reset</b>
+                    </button>
+                </div>
+            </div>
+            <div style={styleItem}>
+                <div>{'Slide to select:'}</div>
+                <div style={innerItem}>
                     <ValidationField fieldKey={fKeyDef.min.fkey} style={{width: pSize}}/>
                     <RangeSlider fieldKey={fKeyDef.period.fkey}
                                  min={sliderMin}
@@ -672,23 +675,28 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
                     />
                     <ValidationField fieldKey={fKeyDef.max.fkey} style={{width: pSize}}/>
                 </div>
-                <br/>
-                <div style={{display: 'flex', alignItems: 'center', marginTop: 20 }}>
-                    <div style={{padding: 10, width: highlightW - 10,
-                                 display: 'flex', justifyContent: 'space-between',
-                                 border: highlightBorder}}>
-                        <ValidationField fieldKey={fKeyDef.period.fkey} />
-                        <div>
-                            {/*<button type='button' className='button std hl' onClick={revertPeriod}>
-                                {revertPeriodTxt}
-                            </button>*/}
                         </div>
+            <div style={styleItem}>
+                <div style={innerItem}>
+                    {'Calculate periodogram (below) and click to select period.'}
                     </div>
-                    <div style={{marginLeft: 30}} >
-                        <button type='button' className='button std hl'  onClick={() => resetPeriodDefaults(defPeriod)}>
-                            <b>Reset</b>
-                        </button>
                     </div>
+            <div style={{display:'flex', alignItems:'center'}}>
+                <h3>{'Set Time Offset:'}</h3><ValidationField style={{marginLeft:'20px'}} fieldKey={fKeyDef.tz.fkey} label=''/>
+            </div>
+            <br/>
+            <div style={{display: 'flex', alignItems:'center'}}>
+                <CompleteButton
+                    groupKey={[pfinderkey]}
+                    onSuccess={setPFTableSuccess()}
+                    onFail={setPFTableFail()}
+                    text={'Accept'}
+                    includeUnmounted={true}
+                />
+                <div style={{margin: 5}}>
+                    <button type='button' className='button std hl' onClick={()=>cancelStandard()}>Cancel</button>
+                </div>
+                <HelpIcon helpId={'findpTSV.acceptp'}/>
                 </div>
             </div>
     );
@@ -721,7 +729,7 @@ var LcPFReducer= (initState) => {
                 set(defV, [fKeyDef.max.fkey, 'value'], `${max}`);
                 set(defV, [fKeyDef.time.fkey, 'value'], time);
                 set(defV, [fKeyDef.flux.fkey, 'value'], flux);
-                set(defV, [fKeyDef.period.fkey, 'value'], `${min}`);
+                //set(defV, [fKeyDef.period.fkey, 'value'], `${min}`);
                 set(defV, [fKeyDef.tz.fkey, 'value'], `${tzero}`);
                 set(defV, [fKeyDef.tzmax.fkey, 'value'], `${tzeroMax}`);
 
