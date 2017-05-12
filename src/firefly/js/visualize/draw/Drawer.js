@@ -624,7 +624,7 @@ function drawConnector(ctx, def, csysConv, dc, obj, lastObj) {
 
 function drawChunkOptimized(drawList, params, ctx) {
     if (!drawList.length) return;
-    DrawUtil.beginPath(ctx,params.drawingDef.color,1);
+    DrawUtil.beginPath(ctx,params.drawingDef.color,params.drawingDef.lineWidth);
     for(var obj of drawList) {
         drawObj(ctx, params.drawTextAry, params.drawingDef, params.csysConv, obj,params.vpPtM, true);
     }
