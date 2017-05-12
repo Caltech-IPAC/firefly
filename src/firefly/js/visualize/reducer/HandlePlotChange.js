@@ -272,7 +272,7 @@ function rotatePv(pv, targetAngle, rotateNorthLock) {
 
 }
 
-function rotatePvToMatch(pv, matchToPv) {
+function rotatePvToMatch(pv, matchToPv, rotateNorthLock) {
     if (isRotationMatching(pv,matchToPv)) return pv;
     const plot= primePlot(pv);
     const matchToPlot= primePlot(matchToPv);
@@ -282,6 +282,7 @@ function rotatePvToMatch(pv, matchToPv) {
         (matchToPv.flipY ? 1 : -1);
     targetRotation= targetRotation ? 360- targetRotation : 0;
     pv= clone(pv);
+    pv.plotViewCtx= clone(pv.plotViewCtx, {rotateNorthLock});
     pv.rotation= (360 + targetRotation) % 360;
     return updateTransform(pv);
 }
@@ -320,10 +321,10 @@ function updateClientRotation(state,action) {
 
     const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
     const masterPv= rotatePv(pv,targetAngle,rotateNorthLock);
-    if (state.wcsMatchType) {
+    if (state.wcsMatchType || rotateType===RotateType.NORTH) {
         plotViewAry= clonePvAryWithPv(plotViewAry, masterPv);
         if (actionScope===ActionScope.GROUP) {
-            plotViewAry= matchPlotView(masterPv,plotViewAry, plotGroup, (pv) => rotatePvToMatch(pv,masterPv));
+            plotViewAry= matchPlotView(masterPv,plotViewAry, plotGroup, (pv) => rotatePvToMatch(pv,masterPv, rotateNorthLock));
         }
     }
     else {

@@ -83,6 +83,10 @@ function purgeLoadedImages(loadedImages) {
     }
 }
 
+
+const noOp= { drawerTile : () => undefined,
+              abort : () => undefined };
+
 /**
  *
  * @param {PlotView} plotView
@@ -102,7 +106,16 @@ function purgeLoadedImages(loadedImages) {
 function makeDrawer(plotView, plot, targetCanvas, totalCnt, loadedImages,
                     offsetX,offsetY, scale, opacity, tileAttributes, shouldProcess, processor) {
 
-    if (!targetCanvas) return;
+    if (!targetCanvas) return noOp;
+
+    if (!totalCnt) {
+        window.requestAnimationFrame(() => {
+            targetCanvas.getContext('2d').clearRect(0,0,targetCanvas.width, targetCanvas.height);
+        });
+        return noOp;
+    }
+
+
     const offscreenCanvas = document.createElement('canvas');
     const offscreenCtx = offscreenCanvas.getContext('2d');
 
@@ -130,6 +143,7 @@ function makeDrawer(plotView, plot, targetCanvas, totalCnt, loadedImages,
     offscreenCtx.strokeStyle='rgba(0,0,0,.2)';
     offscreenCtx.textAlign= 'center';
     offscreenCtx.lineWidth= 1;
+
 
     const renderImage= () => renderToScreen(plotView, targetCanvas, offscreenCanvas, opacity, offsetX, offsetY);
 
