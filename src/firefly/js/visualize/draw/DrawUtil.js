@@ -284,8 +284,8 @@ function rotateAroundScreenPt(worldPt, plot, angle, centerScreenPt) {
 
 
 
-function drawX(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
-    if (!onlyAddToPath) beginPath(ctx,color,1, renderOptions);
+function drawX(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath) {
+    if (!onlyAddToPath) beginPath(ctx,color,lineWidth, renderOptions);
     ctx.moveTo(x - size, y - size);
     ctx.lineTo(x + size, y + size);
     ctx.moveTo(x-size,y+size);
@@ -293,33 +293,33 @@ function drawX(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
     if (!onlyAddToPath) stroke(ctx);
 }
 
-function drawSquareX(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
-    if (!onlyAddToPath) beginPath(ctx,color,1, renderOptions);
-    drawX(ctx,x,y,color,size,renderOptions, onlyAddToPath);
-    drawSquare(ctx,x,y,color,size,renderOptions, true);
+function drawSquareX(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath) {
+    if (!onlyAddToPath) beginPath(ctx,color,lineWidth, renderOptions);
+    drawX(ctx,x,y,color,size,lineWidth,renderOptions, onlyAddToPath);
+    drawSquare(ctx,x,y,color,size,lineWidth,renderOptions, true);
     if (!onlyAddToPath) stroke(ctx);
 }
 
-function drawSquare(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
+function drawSquare(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath) {
     if (onlyAddToPath) {
         ctx.rect(x - size, y - size, 2 * size, 2 * size);
     }
     else {
-        strokeRec(ctx,color,1,x-size,y-size, 2*size, 2*size,renderOptions);
+        strokeRec(ctx,color,lineWidth,x-size,y-size, 2*size, 2*size,renderOptions);
     }
 }
 
 
-function drawEmpSquareX(ctx, x, y, color, size, renderOptions, c1, c2) {
-    drawX(ctx,x,y,color, size, renderOptions, false);
+function drawEmpSquareX(ctx, x, y, color, size,lineWidth, renderOptions, c1, c2) {
+    drawX(ctx,x,y,color, size,lineWidth, renderOptions, false);
     drawSquare(ctx,x,y,c1,size, renderOptions,  false);
     drawSquare(ctx,x,y,c2, size+2,renderOptions, false);
 }
 
 
 
-function drawCross(ctx, x, y, color, size,renderOptions, onlyAddToPath) {
-    if (!onlyAddToPath) beginPath(ctx,color,1, renderOptions);
+function drawCross(ctx, x, y, color, size,lineWidth,renderOptions, onlyAddToPath) {
+    if (!onlyAddToPath) beginPath(ctx,color,lineWidth, renderOptions);
     ctx.moveTo(x-size,y);
     ctx.lineTo(x+size,y);
     ctx.moveTo(x,y-size);
@@ -328,22 +328,22 @@ function drawCross(ctx, x, y, color, size,renderOptions, onlyAddToPath) {
 }
 
 
-function drawEmpCross(ctx, x, y, size,renderOptions, color1, color2) {
+function drawEmpCross(ctx, x, y, size,lineWidth,renderOptions, color1, color2) {
 
-    drawLine(ctx, color1, 1, x-size,y, x+size, y, renderOptions);
-    drawLine(ctx, color1, 1, x,y-size, x, y+size, renderOptions);
+    drawLine(ctx, color1, lineWidth, x-size,y, x+size, y, renderOptions);
+    drawLine(ctx, color1, lineWidth, x,y-size, x, y+size, renderOptions);
 
-    drawLine(ctx, color2, 1, x-(size+1),y, x-(size+2), y, renderOptions);
-    drawLine(ctx, color2, 1, x+(size+1),y, x+(size+2), y, renderOptions);
+    drawLine(ctx, color2, lineWidth, x-(size+1),y, x-(size+2), y, renderOptions);
+    drawLine(ctx, color2, lineWidth, x+(size+1),y, x+(size+2), y, renderOptions);
 
-    drawLine(ctx, color2, 1, x,y-(size+1), x, y-(size+2), renderOptions);
-    drawLine(ctx, color2, 1, x,y+(size+1), x, y+(size+2), renderOptions);
+    drawLine(ctx, color2, lineWidth, x,y-(size+1), x, y-(size+2), renderOptions);
+    drawLine(ctx, color2, lineWidth, x,y+(size+1), x, y+(size+2), renderOptions);
 }
 
 
-function drawDiamond(ctx, x, y, color, size,renderOptions, onlyAddToPath) {
+function drawDiamond(ctx, x, y, color, size,lineWidth,renderOptions, onlyAddToPath) {
 
-    if (!onlyAddToPath) beginPath(ctx,color,1, renderOptions);
+    if (!onlyAddToPath) beginPath(ctx,color,lineWidth, renderOptions);
     ctx.moveTo(x,y-size);
     ctx.lineTo(x+size, y);
     ctx.moveTo(x+size, y);
@@ -357,11 +357,11 @@ function drawDiamond(ctx, x, y, color, size,renderOptions, onlyAddToPath) {
 
 
 
-function drawDot(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
+function drawDot(ctx, x, y, color, size, lineWidth,renderOptions, onlyAddToPath) {
     var begin= size>1 ? y- (size/2) : y;
     var end= size>1 ? y+ (size/2) : y;
 
-    if (!onlyAddToPath) beginPath(ctx,color,1, renderOptions);
+    if (!onlyAddToPath) beginPath(ctx,color,lineWidth, renderOptions);
     for(var i=begin; (i<=end); i++) {
         ctx.moveTo(x-size/2,i);
         ctx.lineTo(x+size/2,i);
@@ -371,13 +371,13 @@ function drawDot(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
 }
 
 
-function drawBoxcircle(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
-    drawSquare(ctx, x, y, color, size, renderOptions, onlyAddToPath);
-    drawCircle(ctx, x, y, color, 1, size, renderOptions, onlyAddToPath);
+function drawBoxcircle(ctx, x, y, color, size,  renderOptions, onlyAddToPath, lineWidth) {
+    drawSquare(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath);
+    drawCircle(ctx, x, y, color, lineWidth, size, renderOptions, onlyAddToPath);
 }
 
-function drawArrow(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
-    if (!onlyAddToPath) beginPath(ctx,color, 1, renderOptions);
+function drawArrow(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath) {
+    if (!onlyAddToPath) beginPath(ctx,color, lineWidth, renderOptions);
     ctx.moveTo(x,y);
     ctx.lineTo(x-size, y-size);
     ctx.moveTo(x, y);
@@ -388,17 +388,17 @@ function drawArrow(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
 }
 
 /**
- * draw rotate symbol in the western location
+ * @desc draw rotate symbol in the western location
  * @param ctx
- * @param x   (x, y) point to the end of the bar of rotate symbol
+ * @param x (x, y) point to the end of the bar of rotate symbol
  * @param y
  * @param color
  * @param size
+ * @param lineWidth
  * @param renderOptions
  * @param onlyAddToPath
- * @morePt
  */
-function drawRotate(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
+function drawRotate(ctx, x, y, color, size, lineWidth,renderOptions, onlyAddToPath) {
     var r = size/4;
     var aoff = (r/2 < 1) ? 1 : r/2;
     var xc = 3*r;
@@ -408,7 +408,7 @@ function drawRotate(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
         set(renderOptions, 'translation', {x, y});
     }
 
-    if (!onlyAddToPath) beginPath(ctx, color, 1, renderOptions);
+    if (!onlyAddToPath) beginPath(ctx, color, lineWidth, renderOptions);
     //ctx.translate(x, y);
     ctx.arc(xc, yc, r, 0, 2*Math.PI);
     ctx.moveTo(xc+r, yc);
@@ -423,13 +423,15 @@ function drawRotate(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
     //ctx.rect(0, yc-2*r, size, size);
     if (!onlyAddToPath) stroke(ctx);
 }
+
 /**
  *
  * @param ctx
- * @param x: center
+ * @param x
  * @param y
  * @param color
- * @param r1  axis
+ * @param lineWidth
+ * @param r1
  * @param r2
  * @param angle rotation angle in radian
  * @param renderOptions
@@ -443,43 +445,43 @@ function drawEllipse(ctx, x, y, color, lineWidth, r1, r2, angle, renderOptions, 
 }
 
 function drawSymbol(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
-    var {color,size}= drawParams;
+    var {color,size, lineWidth}= drawParams;
     switch (drawParams.symbol) {
         case DrawSymbol.X :
-            drawX(ctx, x, y, color, size, renderOptions, onlyAddToPath);
+            drawX(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath);
             break;
         case DrawSymbol.EMP_CROSS :
-            drawEmpCross(ctx, x, y, color,size,renderOptions,   'white');
+            drawEmpCross(ctx, x, y, color,size,lineWidth,renderOptions,   'white');
             break;
         case DrawSymbol.EMP_SQUARE_X:
-            drawEmpSquareX(ctx, x, y, color, size,renderOptions,  'black', 'white');
+            drawEmpSquareX(ctx, x, y, color, size,lineWidth,renderOptions,  'black', 'white');
             break;
         case DrawSymbol.CROSS :
-            drawCross(ctx, x, y, color, size,renderOptions,  onlyAddToPath);
+            drawCross(ctx, x, y, color, size,lineWidth,renderOptions,  onlyAddToPath);
             break;
         case DrawSymbol.SQUARE :
-            drawSquare(ctx, x, y, color, size,renderOptions,  onlyAddToPath);
+            drawSquare(ctx, x, y, color, size,lineWidth,renderOptions,  onlyAddToPath);
             break;
         case DrawSymbol.SQUARE_X :
-            drawSquareX(ctx, x, y, color, size,renderOptions,  onlyAddToPath);
+            drawSquareX(ctx, x, y, color, size,lineWidth,renderOptions,  onlyAddToPath);
             break;
         case DrawSymbol.DIAMOND :
             drawDiamond(ctx, x, y, color, size,renderOptions,  onlyAddToPath);
             break;
         case DrawSymbol.DOT :
-            drawDot(ctx, x, y, color, size,renderOptions,  onlyAddToPath);
+            drawDot(ctx, x, y, color, size,lineWidth,renderOptions,  onlyAddToPath);
             break;
         case DrawSymbol.CIRCLE :
-            drawCircle(ctx, x, y, color, 1, size, renderOptions, onlyAddToPath);
+            drawCircle(ctx, x, y, color,   size,lineWidth, renderOptions, onlyAddToPath);
             break;
         case DrawSymbol.BOXCIRCLE :
-            drawBoxcircle(ctx, x, y, color, size, renderOptions, onlyAddToPath);
+            drawBoxcircle(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath);
             break;
         case DrawSymbol.ARROW :
-            drawArrow(ctx, x, y, color, size, renderOptions, onlyAddToPath);
+            drawArrow(ctx, x, y, color, size, lineWidth, renderOptions, onlyAddToPath);
             break;
         case DrawSymbol.ROTATE :
-            drawRotate(ctx, x, y, color, size, renderOptions, onlyAddToPath);
+            drawRotate(ctx, x, y, color, size, lineWidth, renderOptions, onlyAddToPath);
             break;
         default :
             break;
@@ -566,12 +568,12 @@ function getSymbolSizeBasedOn(symbol, drawingDef) {
  * @param x
  * @param y
  * @param color
- * @param lineWidth
  * @param size
+ * @param lineWidth
  * @param renderOptions
  * @param onlyAddToPath
  */
-function drawCircle(ctx, x, y, color, lineWidth, size, renderOptions= null, onlyAddToPath= false) {
+function drawCircle(ctx, x, y, color,  size,lineWidth, renderOptions= null, onlyAddToPath= false) {
     var radius= size;
     if (onlyAddToPath) {
         ctx.moveTo(x+radius,y);

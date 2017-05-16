@@ -163,6 +163,7 @@ function makeDrawParams(pointDataObj,def) {
     const fontWeight= pointDataObj.fontWeight || def.fontWeight || 'normal';
     const fontStyle= pointDataObj.fontStyle || def.fontStyle || 'normal';
     const textLoc= pointDataObj.textLoc || def.textLoc || TextLocation.DEFAULT;
+    const lineWidth =pointDataObj.lineWidth || def.lineWidth || 1;
 
     return {
         color: DrawUtil.getColor(pointDataObj.color,def.color),
@@ -172,6 +173,7 @@ function makeDrawParams(pointDataObj,def) {
         fontWeight,
         fontStyle,
         size,
+        lineWidth,
         symbol
     };
 }
@@ -331,42 +333,42 @@ function drawXY(ctx, drawTextAry, pt, plot, drawObj, drawParams,renderOptions, o
  }
 
 function drawSymbolOnPlot(ctx, x, y, drawParams, renderOptions, onlyAddToPath, plot) {
-    var {color,size}= drawParams;
+    var {color,size, lineWidth}= drawParams;
 
 
     switch (drawParams.symbol) {
         case DrawSymbol.X :
-            DrawUtil.drawX(ctx, x, y, color, size, renderOptions, onlyAddToPath);
+            DrawUtil.drawX(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath);
             break;
         case DrawSymbol.EMP_CROSS :
-            DrawUtil.drawEmpCross(ctx, x, y, color,size,renderOptions,   'white');
+            DrawUtil.drawEmpCross(ctx, x, y, color,size,lineWidth,renderOptions,   'white');
             break;
         case DrawSymbol.EMP_SQUARE_X:
-            DrawUtil.drawEmpSquareX(ctx, x, y, color, size,renderOptions,  'black', 'white');
+            DrawUtil.drawEmpSquareX(ctx, x, y, color, size,lineWidth,renderOptions,  'black', 'white');
             break;
         case DrawSymbol.CROSS :
-            DrawUtil.drawCross(ctx, x, y, color, size,renderOptions,  onlyAddToPath);
+            DrawUtil.drawCross(ctx, x, y, color, size,lineWidth,renderOptions,  onlyAddToPath);
             break;
         case DrawSymbol.SQUARE :
-            DrawUtil.drawSquare(ctx, x, y, color, size,renderOptions,  onlyAddToPath);
+            DrawUtil.drawSquare(ctx, x, y, color, size,lineWidth,renderOptions,  onlyAddToPath);
             break;
         case DrawSymbol.SQUARE_X :
-            DrawUtil.drawSquareX(ctx, x, y, color, size,renderOptions,  onlyAddToPath);
+            DrawUtil.drawSquareX(ctx, x, y, color, size,lineWidth,renderOptions,  onlyAddToPath);
             break;
         case DrawSymbol.DIAMOND :
-            DrawUtil.drawDiamond(ctx, x, y, color, size,renderOptions,  onlyAddToPath);
+            DrawUtil.drawDiamond(ctx, x, y, color, size,lineWidth,renderOptions,  onlyAddToPath);
             break;
         case DrawSymbol.DOT :
-            DrawUtil.drawDot(ctx, x, y, color, size,renderOptions,  onlyAddToPath);
+            DrawUtil.drawDot(ctx, x, y, color, size,lineWidth,renderOptions,  onlyAddToPath);
             break;
         case DrawSymbol.CIRCLE :
-            DrawUtil.drawCircle(ctx, x, y, color, 1, size, renderOptions, onlyAddToPath);
+            DrawUtil.drawCircle(ctx, x, y, color, size, lineWidth, renderOptions, onlyAddToPath);
             break;
         case DrawSymbol.BOXCIRCLE :
-            DrawUtil.drawBoxcircle(ctx, x, y, color, size, renderOptions, onlyAddToPath);
+            DrawUtil.drawBoxcircle(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath);
             break;
         case DrawSymbol.ARROW :
-            DrawUtil.drawArrow(ctx, x, y, color, size, renderOptions, onlyAddToPath);
+            DrawUtil.drawArrow(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath);
             break;
         case DrawSymbol.ROTATE:
             var rotAngle = get(renderOptions, 'rotAngle', 0.0);
@@ -374,7 +376,7 @@ function drawSymbolOnPlot(ctx, x, y, drawParams, renderOptions, onlyAddToPath, p
 
             renderOptions = Object.assign({}, renderOptions, {rotAngle});
 
-            DrawUtil.drawRotate(ctx, x, y, color, size, renderOptions, onlyAddToPath);
+            DrawUtil.drawRotate(ctx, x, y, color, size, lineWidth, renderOptions, onlyAddToPath);
             break;
         default :
             break;
