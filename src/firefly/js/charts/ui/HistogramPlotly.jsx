@@ -290,6 +290,7 @@ export class HistogramPlotly extends Component {
                            layoutUpdate={layoutUpdate}
                            divUpdateCB={(div) => this.chart= div}
                            config={config}
+                           autoDetectResizing={true}
                            newPlotCB={this.afterRedraw}
             />
         );

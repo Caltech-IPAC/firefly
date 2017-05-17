@@ -271,7 +271,7 @@ class PhaseFoldingChart extends PureComponent {
                 var heightPx = size.height;
 
                 if (widthPx !== this.state.widthPx || heightPx !== this.state.heightPx) {
-                    this.setState({widthPx, heightPx, doingResize:true});
+                    this.setState({widthPx, heightPx});
                 }
             }
         };
@@ -288,7 +288,7 @@ class PhaseFoldingChart extends PureComponent {
 
         this.doRegenData= (fields) => {
             this.chartingInfo= this.regenData(fields);
-            this.setState(() => ({fields, doingResize:false}));
+            this.setState(() => ({fields}));
         };
         this.doRegenData= this.doRegenData.bind(this);
         this.doRegenDataDebounced= debounce(this.doRegenData,250);
@@ -418,14 +418,14 @@ class PhaseFoldingChart extends PureComponent {
             `${this.lastFluxCol} = ${lastData[pointNumber][1]} mag <br>` +
             '</span>';
 
-            this.setState( { dataUpdate: { text : str }, doingResize:false } );
+            this.setState( { dataUpdate: { text : str }} );
         });
 
     }
 
 
     render() {
-        const {dataUpdate, doingResize} = this.state;
+        const {dataUpdate} = this.state;
         const {plotlyData, plotlyDivStyle, plotlyLayout}= this.chartingInfo;
 
         return (
@@ -433,7 +433,8 @@ class PhaseFoldingChart extends PureComponent {
                        onResize={this.onResize}>
                 <PlotlyWrapper data={plotlyData} layout={plotlyLayout}  style={plotlyDivStyle}
                                dataUpdate={dataUpdate}
-                               handleRenderAsResize={doingResize}
+                               autoSizePlot={true}
+                               autoDetectResizing={true}
                                divUpdateCB={(div) => this.chart= div}
                                newPlotCB={this.afterRedraw}
                 />

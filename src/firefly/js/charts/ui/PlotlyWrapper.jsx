@@ -13,7 +13,8 @@ import Enum from 'enum';
 const PLOTLY_BASE_ID= 'plotly-plot';
 var counter= 0;
 
-export const RenderType= new Enum([ 'RESIZE', 'UPDATE', 'RESTYLE', 'RELAYOUT', 'RESTYLE_AND_RELAYOUT', 'NEW_PLOT', 'PAUSE_DRAWING' ],
+export const RenderType= new Enum([ 'RESIZE', 'UPDATE', 'RESTYLE', 'RELAYOUT',
+                                    'RESTYLE_AND_RELAYOUT', 'NEW_PLOT', 'PAUSE_DRAWING' ],
              { ignoreCase: true });
 
 
@@ -64,6 +65,8 @@ export class PlotlyWrapper extends Component {
         this.refUpdate= this.refUpdate.bind(this);
         this.renderType= RenderType.NEW_PLOT;
         this.state= {showMask:false};
+        this.lastWidth= 0;
+        this.lastHeight= 0;
 
 
         this.resizeUpdate= (postResizeRenderType) => {
@@ -104,33 +107,45 @@ export class PlotlyWrapper extends Component {
 
     shouldComponentUpdate(np, ns) {
 
-        const {data,layout, config, dataUpdate, layoutUpdate}= this.props;
-        const { maskOnLayout, maskOnRestyle, maskOnResize, maskOnNewPlot, autoResize, handleRenderAsResize}= np;
-
-        if (this.state.showMask!==ns.showMask) { //special case: detect when only masking is changing
-            this.renderType = RenderType.PAUSE_DRAWING;
+        let detectedResize= false;
+        const rec= this.div.getBoundingClientRect();
+        if (this.lastWidth!==rec.width || this.lastHeight!==rec.height) {
+            this.lastWidth= rec.width;
+            this.lastHeight=rec.height;
+            detectedResize= true;
         }
-        else if (data===np.data && layout===np.layout && config===np.config) {  // these are the update cases
+
+        const {data,layout, config, dataUpdate, layoutUpdate}= this.props;
+        const { maskOnLayout, maskOnRestyle, maskOnResize, maskOnNewPlot,
+                autoSizePlot, doingResize, autoDetectResizing }= np;
+
+        const treatAsResize= doingResize || (autoDetectResizing && detectedResize);
+
+        if (data===np.data && layout===np.layout && config===np.config) {  // these are the update cases
 
             const doRestyle= np.dataUpdate && dataUpdate!==np.dataUpdate;
             const doRelayout=np.layoutUpdate && layoutUpdate!==np.layoutUpdate;
 
             if (doRestyle && doRelayout) {
-                this.updateRenderType(maskOnRestyle, handleRenderAsResize, RenderType.RESTYLE_AND_RELAYOUT);
+                this.updateRenderType(maskOnRestyle, treatAsResize, RenderType.RESTYLE_AND_RELAYOUT);
             }
             else if (doRestyle) {
-                this.updateRenderType(maskOnRestyle, handleRenderAsResize, RenderType.RESTYLE);
+                this.updateRenderType(maskOnRestyle, treatAsResize, RenderType.RESTYLE);
             }
             else if (doRelayout) {
-                this.updateRenderType(maskOnLayout, handleRenderAsResize, RenderType.RELAYOUT);
+                this.updateRenderType(maskOnLayout, treatAsResize, RenderType.RELAYOUT);
             }
-            else { // we must just be resized
-                if (autoResize) this.updateRenderType(maskOnResize, true, RenderType.RESIZE);
-                else            this.updateRenderType(maskOnResize, handleRenderAsResize, RenderType.RESIZE);
+            else if (detectedResize && autoSizePlot) {
+                this.updateRenderType(maskOnResize, true, RenderType.RESIZE);
+            }
+            else { // in this case- the important props have not changed, therefore return on state (showMask) change
+                   // everywhere else the props have changed so we return true
+                this.renderType= RenderType.PAUSE_DRAWING;
+                return this.state.showMask!==ns.showMask;
             }
         }
-        else { // fallthrough new plot case
-            this.updateRenderType(maskOnNewPlot, handleRenderAsResize, RenderType.NEW_PLOT);
+        else { // new plot case
+            this.updateRenderType(maskOnNewPlot, treatAsResize, RenderType.NEW_PLOT);
         }
         return true;
     }
@@ -168,9 +183,12 @@ export class PlotlyWrapper extends Component {
                             chart.on('plotly_click', () => chart.parentElement.click());
                             chart.on('plotly_afterplot', () => this.showMask(false));
                             chart.on('plotly_autosize', () => this.showMask(false));
+                            chart.on('plotly_relayout', () => this.showMask(false));
+                            chart.on('plotly_restyle', () => this.showMask(false));
+                            chart.on('plotly_redraw', () => this.showMask(false));
                         }
                         else {
-                            this.showMask(false)
+                            this.showMask(false);
                         }
                         if (newPlotCB) newPlotCB(this.div, Plotly);
 
@@ -186,6 +204,11 @@ export class PlotlyWrapper extends Component {
     refUpdate(ref) {
         const {divUpdateCB}= this.props;
         this.div= ref;
+        if (this.div) {
+            const rec= this.div.getBoundingClientRect();
+            this.lastWidth= rec.width;
+            this.lastHeight= rec.height;
+        }
         if (divUpdateCB) {
             getPlotLy().then( (Plotly) => {
                 divUpdateCB(this.div,Plotly);
@@ -230,8 +253,10 @@ PlotlyWrapper.propTypes = {
     maskOnRestyle :PropTypes.bool,
     maskOnResize : PropTypes.bool,
     maskOnNewPlot : PropTypes.bool,
-    autoResize : PropTypes.bool,
-    handleRenderAsResize: PropTypes.bool
+
+    autoSizePlot : PropTypes.bool,
+    autoDetectResizing : PropTypes.bool,
+    doingResize: PropTypes.bool
 };
 
 PlotlyWrapper.defaultProps = {
@@ -239,6 +264,8 @@ PlotlyWrapper.defaultProps = {
     maskOnRestyle : false,
     maskOnResize : true,
     maskOnNewPlot : true,
-    autoResize : false,
-    handleRenderAsResize: false
+
+    autoSizePlot : false,
+    autoDetectResizing : false,
+    doingResize: false
 };

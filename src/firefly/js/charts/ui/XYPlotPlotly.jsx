@@ -796,7 +796,8 @@ export class XYPlotPlotly extends PureComponent {
                                dataUpdate={dataUpdate}
                                layoutUpdate={layoutUpdate}
                                config={PLOTLY_CONFIG}
-                               handleRenderAsResize={doingResize}
+                               doingResize={doingResize}
+                               autoDetectResizing={false}
                                newPlotCB={this.afterRedraw}
                 />
             </div>
