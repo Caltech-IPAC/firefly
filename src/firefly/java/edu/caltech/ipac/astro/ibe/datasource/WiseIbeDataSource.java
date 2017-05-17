@@ -7,6 +7,7 @@ import edu.caltech.ipac.astro.ibe.BaseIbeDataSource;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataParam;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
+import edu.caltech.ipac.firefly.data.WiseRequest;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -50,7 +51,9 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
         CRYO_3BAND_3A("cryo_3band", "3band_p3am_cdd", "p3as_psd", "links-3band/l3a-3band/"),  // currently they are different: p1bm_frm and p3am_cdd
         POSTCRYO_1B("postcryo", "2band_p1bm_frm", "2band_p1bs_psd", "links-postcryo/l1b-2band/"),
         MERGE_1B("merge", "merge_p1bm_frm", "merge_p1bs_psd", "links-allsky/l1b-merge/"),         // exists under links-allsky
+        MERGE_INT_1B("merge_int", "merge_i1bm_frm", "merge_i1bs_psd", "links-merge/l1b/"),
         MERGE_3A("merge", "merge_p3am_cdd", "merge_p3as_psd", "links-allwise/l3a-merge/"),       // exists under links-allwise
+        MERGE_INT_3A("merge_int", "merge_p3am_cdd", "merge_p3as_psd", "links-merge/l3a/"),
         NEOWISER_PROV_1B("neowiser_prov", "i1bm_frm", "i1bs_psd", "links-nprov/l1b/"),
         NEOWISER_YR1_1B("neowiser_yr1", "yr1_p1bm_frm", "yr1_p1bs_psd", "links-neowiser/l1b-yr1/"),
         NEOWISER_1B("neowiser", "i1bm_frm", "i1bs_psd", "links-neowiser/l1b/"),
@@ -115,11 +118,15 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
     public void initialize(Map<String, String> dsInfo) {
         String host = dsInfo.get("host");
         String baseFsPath = AppProperties.getProperty("wise.filesystem_basepath");
+        String mergeSchemaFromProp = AppProperties.getBooleanProperty("ibe.public_release", true) ? WiseRequest.MERGE : WiseRequest.MERGE_INT;
 
         String imageset = dsInfo.get("ImageSet");
         if (StringUtils.isEmpty(imageset)) {
             // hydra uses schema while fuse uses ImageSet.
             imageset = dsInfo.get("schema");
+            if(StringUtils.isEmpty(imageset)) {
+                imageset = mergeSchemaFromProp;//WiseRequest.getTrueSchema(request.getSearchRequest());
+            }
         }
 
         String productLevel = dsInfo.get("ProductLevel");
@@ -135,7 +142,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
         String ds = imageset.replaceAll("-", "_").toUpperCase();
         String dt = productLevel.toUpperCase();
         if (imageset.contains(",")) {
-            ds = "MERGE";
+            ds = mergeSchemaFromProp.toUpperCase();
             mergeImageSet = imageset;
         }
         DataProduct dsource = DataProduct.valueOf(ds + "_" + dt);

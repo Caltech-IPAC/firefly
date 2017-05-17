@@ -97,7 +97,7 @@ public class WiseRequest extends TableServerRequest {
 
     // mappings of the dataset selected to the wise table and table source values.
     // table name is in the first entry, table source is in the 2nd
-    private static HashMap<String, String[]> TABLE_MAP = new HashMap<String, String[]>(){
+    public static HashMap<String, String[]> TABLE_MAP = new HashMap<String, String[]>(){
         {
             put(PRELIM+"|1b", new String[]{"p1bm_frm", "p1bs_psd"});
             put(PRELIM+"|3a", new String[]{"p3am_cdd", "p3as_psd"});
