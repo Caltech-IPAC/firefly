@@ -141,6 +141,8 @@ export const ServerParams = {
         TABLE_SAVE: 'tableSave',
         UPLOAD: 'upload',
         JSON_SEARCH: 'jsonSearch',
+        LOG_OUT: 'CmdLogout',
+        INIT_APP: 'CmdInitApp',
 
         VIS_PUSH_ALIVE_CHECK: 'pushAliveCheck',
         VIS_PUSH_ALIVE_COUNT: 'pushAliveCount',

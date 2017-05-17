@@ -25,6 +25,8 @@ const MEG_TENTH    = MEG / 10;
 const GIG_HUNDREDTH= GIG / 100;
 const K            = 1024;
 
+export const REQUEST_WITH = 'X-Requested-With';
+export const AJAX_REQUEST = 'XMLHttpRequest';
 export const WS_CHANNEL_HD = 'FF-channel';
 export const WS_CONNID_HD  = 'FF-connID';
 export const ParamType= new Enum(['POUND', 'QUESTION_MARK']);
@@ -203,7 +205,8 @@ export function fetchUrl(url, options, doValidation= true) {
 
     const headers = {
         [WS_CHANNEL_HD]: getWsChannel(),
-        [WS_CONNID_HD]: getWsConnId()
+        [WS_CONNID_HD]: getWsConnId(),
+        [REQUEST_WITH]: AJAX_REQUEST
     };
     options.headers = Object.assign(headers, options.headers);
 
@@ -238,6 +241,8 @@ export function fetchUrl(url, options, doValidation= true) {
             if (!doValidation) return response;
             if (response.ok) {
                 return response;
+            } else if(response.status === 401){
+                return new Error('You are no longer logged in');
             } else {
                 return new Error(`${url} failed with status: ${response}.statusText`);
             }

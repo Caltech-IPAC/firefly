@@ -22,11 +22,15 @@ public class JossoUtil {
     private static String jossoServerUrl;
     private static String contextPath;
     private static String userProfileUrl;
+    private static boolean isInit = false;
 
     public static void init(String jossoServerUrl, String contextPath, String userProfileUrl) {
-        JossoUtil.contextPath = contextPath;
-        JossoUtil.jossoServerUrl = jossoServerUrl;
-        JossoUtil.userProfileUrl = userProfileUrl;
+        if (!isInit) {
+            isInit = true;
+            JossoUtil.contextPath = contextPath;
+            JossoUtil.jossoServerUrl = jossoServerUrl;
+            JossoUtil.userProfileUrl = userProfileUrl;
+        }
     }
 
     public static String makeLoginUrl(String backTo) {

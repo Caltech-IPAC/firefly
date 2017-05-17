@@ -26,29 +26,27 @@ public abstract class BaseHttpServlet extends HttpServlet {
 
     private static final String FAILURE_MSG_TMPL = "\nThe call failed on the server:\n%s" + "\n\nService: %s\n";
 
-    private boolean allowAccess = false;
+    private boolean allowAccess = true;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         VersionUtil.initVersion(config.getServletContext());  // can be called multiple times, only inits on the first call
         String allowFromValue = config.getInitParameter("AllowFrom");
-        String serveltContextName = config.getServletContext().getServletContextName();
         if (allowFromValue!=null) {
+            allowAccess = false;        // if allowFromValue is given.. access is given based on it.
+            String servletContextName = config.getServletContext().getServletContextName();
             if (allowFromValue.contains(",")) {
                 for (String value: allowFromValue.split(",")) {
-                    if (ComparisonUtil.equals(value, serveltContextName)) {
+                    if (ComparisonUtil.equals(value, servletContextName)) {
                         allowAccess = true;
                         break;
                     }
                 }
             } else {
-                allowAccess = ComparisonUtil.equals(allowFromValue, serveltContextName);
+                allowAccess = ComparisonUtil.equals(allowFromValue, servletContextName);
             }
-        } else {
-            allowAccess = true; // if AllowFrom is not defined in web.xml <servlet>'s <init-param> tag, set it to true.
         }
-
     }
 
     /**

@@ -166,5 +166,8 @@ public class ServerParams {
     public static final String TABLE_SAVE = "tableSave";
     public static final String UPLOAD = "upload";
     public static final String JSON_SEARCH = "jsonSearch";
+
+    public static final String INIT_APP = "CmdInitApp";
+    public static final String LOGOUT = "CmdLogout";
 }
 

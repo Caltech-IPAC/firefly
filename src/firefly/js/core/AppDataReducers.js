@@ -32,6 +32,9 @@ export function appDataReducer(state, action={}) {
         case AppDataCntlr.REMOVE_PREF  :
             return removePreference(state,action);
 
+        case AppDataCntlr.SET_USER_INFO  :
+            return setUserInfo(state,action);
+
         case AppDataCntlr.ROOT_URL_PATH :
             return Object.assign({},state, {rootUrlPath:action.payload.rootUrlPath});
 
@@ -113,6 +116,11 @@ function removePreference(state,action) {
     BrowserCache.put(APP_PREFERENCES,preferences);
     return Object.assign({},state,{preferences});
 }
+
+function setUserInfo(state,action) {
+    const userInfo = action.payload;
+    return Object.assign({}, state, {userInfo});
+};
 
 
 /**

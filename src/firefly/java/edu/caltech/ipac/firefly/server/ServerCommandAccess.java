@@ -100,6 +100,9 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.VIS_PUSH_ALIVE_COUNT,   new PushCommands.PushAliveCount());
         _cmdMap.put(ServerParams.VIS_PUSH_ACTION,        new PushCommands.PushAction());
 
+        _cmdMap.put(ServerParams.LOGOUT,        new AppServerCommands.Logout());
+        _cmdMap.put(ServerParams.INIT_APP,      new AppServerCommands.InitApp());
+
         // maybe temporary
         _cmdMap.put(ServerParams.STATIC_JSON_DATA,           new JsonDataCommands.StaticJsonData());
     }

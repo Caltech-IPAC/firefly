@@ -3,8 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server;
 
-import edu.caltech.ipac.firefly.data.userdata.UserInfo;
-import edu.caltech.ipac.firefly.server.security.JOSSOAdapter;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -27,28 +25,37 @@ import java.util.Map;
  */
 public class RequestAgent {
 
-    private Map<String, String> cookies;
+    private Map<String, Cookie> cookies;
     private String protocol;
     private String requestUrl;
     private String baseUrl;
     private String remoteIP;
+    private String sessId;
 
-    public void setCookies(Map<String, String> cookies) {
+    public void setCookies(Map<String, Cookie> cookies) {
         this.cookies = cookies;
     }
 
-    public Map<String, String> getCookies() {
+    public Map<String, Cookie> getCookies() {
         if (cookies == null) {
             cookies = extractCookies();
         }
         return cookies;
     }
 
+    public String getSessId() {
+        return sessId;
+    }
+
+    public void setSessId(String sessId) {
+        this.sessId = sessId;
+    }
+
     public String getProtocol() {
         return protocol;
     }
 
-    public void setProtocol(String protocol) {
+    void setProtocol(String protocol) {
         this.protocol = protocol;
     }
 
@@ -56,7 +63,7 @@ public class RequestAgent {
         return requestUrl;
     }
 
-    public void setRequestUrl(String requestUrl) {
+    void setRequestUrl(String requestUrl) {
         this.requestUrl = requestUrl;
     }
 
@@ -64,7 +71,7 @@ public class RequestAgent {
         return baseUrl;
     }
 
-    public void setBaseUrl(String baseUrl) {
+    void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
     }
 
@@ -72,28 +79,38 @@ public class RequestAgent {
         return remoteIP;
     }
 
-    public void setRemoteIP(String remoteIP) {
+    void setRemoteIP(String remoteIP) {
         this.remoteIP = remoteIP;
     }
 
-    public void sendCookie(Cookie cookie) {}
+    public Cookie getCookie(String name) { return getCookies().get(name);}
 
-    public String getCookie(String name) {
-        return getCookies().get(name);
+    public String getCookieVal(String name) { return getCookieVal(name, null); }
+
+    public String getCookieVal(String name, String def) {
+        Cookie c = getCookie(name);
+        String val = c == null ? def : c.getValue();
+        return val == null ? def : val;
     }
+
+    public void sendCookie(Cookie cookie) {}
 
     public String getRealPath(String relPath) {
         return null;
     }
 
     public String getHeader(String name) {
+        return getHeader(name, null);
+    }
+
+    public String getHeader(String name, String def) {
         return null;
     }
 
     public void sendRedirect(String url) {}
 
-    protected Map<String, String> extractCookies() {
-        return new HashMap<String, String>(0);
+    protected Map<String, Cookie> extractCookies() {
+        return new HashMap<>(0);
     }
 
 
@@ -101,11 +118,6 @@ public class RequestAgent {
     //  Authentication section
     //====================================================================
     public String getAuthKey() { return null; }
-    public String getAuthToken() { return null;}
-    public UserInfo getUserInfo() { return null; }
-    public void clearAuthInfo() {}
-    public Map<String, String> getIdentities() { return null; }
-    public void updateAuthInfo(String authToken) {}
 
 
 //====================================================================
@@ -124,24 +136,29 @@ public class RequestAgent {
             this.request = request;
             this.response = response;
 
-            String remoteIP = request.getHeader("X-Forwarded-For");
-            if (StringUtils.isEmpty(remoteIP)) {
-                remoteIP = request.getRemoteAddr();
-            }
-            setRemoteIP(remoteIP);
-            setProtocol(request.getProtocol());
-            setRequestUrl(request.getRequestURL().toString());
+            String remoteIP = getHeader("X-Forwarded-For", request.getRemoteAddr());
+            String protocol = getHeader("X-Forwarded-Proto", request.getProtocol());
+            String serverName = request.getServerName();
+            int serverPort = request.getServerPort();
+            String serverPortDesc = serverPort == 80 || serverPort == 443 ? "" : ":" + serverPort;
 
-            setBaseUrl(request.getRequestURL().toString().replace(request.getRequestURI(), request.getContextPath()) + "/");
+            String baseUrl = String.format("%s://%s%s%s/", protocol, serverName, serverPortDesc, request.getContextPath());
+            String requestUrl = String.format("%s://%s%s%s", protocol, serverName, serverPortDesc, request.getRequestURI());
+
+            setRemoteIP(remoteIP);
+            setProtocol(protocol);
+            setRequestUrl(requestUrl);
+            setBaseUrl(baseUrl);
+            setSessId(request.getSession(true).getId());
         }
 
         @Override
-        protected Map<String, String> extractCookies() {
-            HashMap<String, String> cookies = new HashMap<String, String>();
+        protected Map<String, Cookie> extractCookies() {
+            HashMap<String, Cookie> cookies = new HashMap<>();
             if (request != null) {
                 if (request.getCookies() != null) {
                     for (javax.servlet.http.Cookie c : request.getCookies()) {
-                        cookies.put(c.getName(), c.getValue());
+                        cookies.put(c.getName(), c);
                     }
                 }
             }
@@ -161,8 +178,9 @@ public class RequestAgent {
         }
 
         @Override
-        public String getHeader(String name) {
-            return request != null ? request.getHeader(name) : null;
+        public String getHeader(String name, String def) {
+            String retval = request != null ? request.getHeader(name) : null;
+            return StringUtils.isEmpty(retval) ? def : retval;
         }
 
         @Override
@@ -183,50 +201,5 @@ public class RequestAgent {
             return AUTH_KEY;
         }
 
-        @Override
-        public Map<String, String> getIdentities() {
-            HashMap<String, String> idCookies = new HashMap<String, String>();
-            for (String name : ID_COOKIE_NAMES) {
-                String value = getCookie(name);
-                if (!StringUtils.isEmpty(value)) {
-                    idCookies.put(name, value);
-                }
-            }
-            return idCookies.size() == 0 ? null : idCookies;
-        }
-
-        @Override
-        public UserInfo getUserInfo() {
-            String authToken = getAuthToken();
-            return StringUtils.isEmpty(authToken) ? null :
-                    JOSSOAdapter.getUserInfo(authToken);
-        }
-
-        @Override
-        public String getAuthToken() {
-            return getCookie(AUTH_KEY);
-        }
-
-        @Override
-        public void updateAuthInfo(String authToken) {
-            Cookie c = new Cookie(AUTH_KEY, authToken);
-            c.setMaxAge(authToken == null ? 0 : 60 * 60 * 24 * 14);
-            c.setValue(authToken);
-            c.setPath("/");
-            sendCookie(c);
-
-        }
-
-        @Override
-        public void clearAuthInfo() {
-            if (getAuthToken() != null) {
-                Cookie c = new Cookie(AUTH_KEY, "");
-                c.setMaxAge(0);
-                c.setValue(TO_BE_DELETE);
-                c.setDomain(".ipac.caltech.edu");
-                c.setPath("/");
-                sendCookie(c);
-            }
-        }
     }
 }

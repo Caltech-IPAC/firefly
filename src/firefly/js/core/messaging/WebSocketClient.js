@@ -18,6 +18,7 @@ var listenters = [];
 var wsConn;
 
 const wsClient = {send: wsSend, addListener};
+var connected;
 
 export function wsConnect(baseUrl=getRootURL()) {
     baseUrl = baseUrl.replace('https:', 'wss:').replace('http:', 'ws:');
@@ -37,7 +38,10 @@ export function wsConnect(baseUrl=getRootURL()) {
     wsConn.onclose = onClose;
     wsConn.onmessage = onMessage;
     
-    return wsClient;
+    return new Promise((resolve) => {
+        connected = resolve;
+    });
+
 }
 
 /**
@@ -90,13 +94,15 @@ function onClose(event) {
 
 function onMessage(event) {
     const eventData = event.data && JSON.parse(event.data);
+
     if (eventData) {
         // console.log('ws message: ' + JSON.stringify(eventData));
         if (eventData.name === 'EVT_CONN_EST') {
             // connection established.. doing handshake.
             [connId, channel] = [eventData.data.connID, eventData.data.channel];
             dispatchUpdateAppData({channel});
-            console.log(`WebSocket connected.  connId:${connId} channel:${channel}`); 
+            console.log(`WebSocket connected.  connId:${connId} channel:${channel}`);
+            connected && connected(wsClient);
         } else {
             listenters.forEach( (l) => {
                 if (!l.matches || l.matches(eventData)) {

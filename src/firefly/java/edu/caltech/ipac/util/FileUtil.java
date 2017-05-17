@@ -937,6 +937,17 @@ public class FileUtil
         return new BufferedReader(isr);
     }
 
+    public static void readInputStream(InputStream input, OutputStream output) throws IOException {
+        BufferedInputStream bis = new BufferedInputStream(input, BUFFER_SIZE);
+        BufferedOutputStream bos = new BufferedOutputStream(output, BUFFER_SIZE);
+        int b;
+        while ((b = bis.read()) != -1) {
+            bos.write(b);
+        }
+        bos.flush();
+        bos.close();
+    }
+
     private static URL getThisClassURL() {
         return FileUtil.class.getClassLoader().getResource(getThisClassFileName());
     }

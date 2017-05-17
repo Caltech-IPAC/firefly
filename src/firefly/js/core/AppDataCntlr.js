@@ -29,6 +29,7 @@ export const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
 export const REINIT_RESULT_VIEW = `${APP_DATA_PATH}.reinitResultView`;
 export const ROOT_URL_PATH = `${APP_DATA_PATH}.rootUrlPath`;
 export const SET_ALERTS = `${APP_DATA_PATH}.setAlerts`;
+export const SET_USER_INFO = `${APP_DATA_PATH}.setUserInfo`;
 export const HELP_LOAD = `${APP_DATA_PATH}.helpLoad`;
 
 /** fired when there's a connection is added/removed from this channel.  useful for tracking connections in channel, etc   */
@@ -168,6 +169,10 @@ export function getRootUrlPath() {
 
 export function getAppOptions() {
     return flux.getState()[APP_DATA_PATH].appOptions;
+}
+
+export function getUserInfo() {
+    return flux.getState()[APP_DATA_PATH].userInfo;
 }
 
 /**
