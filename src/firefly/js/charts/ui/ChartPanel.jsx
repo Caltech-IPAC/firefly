@@ -34,7 +34,7 @@ class ChartPanelView extends PureComponent {
 
         this.onResize = (size) => {
             if (this.state.widthPx === 0 || isPlotly()) {
-                defer(normal, size);
+            defer(normal, size);
             } else {
                 debounced(size);
             }
@@ -110,13 +110,11 @@ class ChartPanelView extends PureComponent {
                                 </div>}
                                 <Resizable id='chart-resizer' onResize={this.onResize}
                                            className='ChartPanel__chartresizer'>
-                                    <div style={{overflow:'auto',width:widthPx,height:heightPx}}>
-                                        {knownSize ?
-                                            errors.length > 0 ?
-                                                <ErrorPanel errors={errors}/> :
-                                                <Chart {...Object.assign({}, this.props, {widthPx, heightPx})}/> :
-                                            <div/>}
-                                    </div>
+                                    {knownSize ?
+                                        errors.length > 0 ?
+                                            <ErrorPanel errors={errors}/> :
+                                            <Chart {...Object.assign({}, this.props, {widthPx, heightPx})}/> :
+                                        <div/>}
                                 </Resizable>
                                 { !optionsShown && deletable &&
                                 <img style={{display: 'inline-block', position: 'absolute', top: 29, right: 0, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
@@ -135,14 +133,12 @@ class ChartPanelView extends PureComponent {
                         <div className='ChartPanel__chartarea'>
                             <Resizable id='chart-resizer' onResize={this.onResize}
                                        className='ChartPanel__chartresizer'>
-                                <div style={{overflow:'auto',width:widthPx,height:heightPx}}>
-                                    {knownSize ?
-                                        errors.length > 0 ?
-                                            <ErrorPanel errors={errors}/> :
-                                            <Chart {...Object.assign({}, this.props, {widthPx, heightPx})}/> :
+                                {knownSize ?
+                                    errors.length > 0 ?
+                                        <ErrorPanel errors={errors}/> :
+                                        <Chart {...Object.assign({}, this.props, {widthPx, heightPx})}/> :
 
-                                        <div/>}
-                                </div>
+                                    <div/>}
                             </Resizable>
                             {deletable &&
                             <img style={{display: 'inline-block', position: 'absolute', top: 0, right: 0, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
