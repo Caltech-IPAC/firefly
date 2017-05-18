@@ -205,7 +205,7 @@ export class XYPlot extends Component {
 
     render() {
 
-        const {data, params} = this.props;
+        const {data, params, width, height} = this.props;
 
         // validate parameters for the given data
         const errors = validate(params, data);
@@ -222,8 +222,15 @@ export class XYPlot extends Component {
                 </div>
             );
         } else {
-            const XYPlotInstance=  isPlotly() ? XYPlotPlotly : XYPlotHighcharts;
-            return (<XYPlotInstance {...this.props}/>);
+            if (isPlotly()) {
+                return <XYPlotPlotly {...this.props}/>;
+            } else {
+                return (
+                    <div style={{overflow:'auto',width,height}}>
+                        <XYPlotHighcharts {...this.props}/>
+                    </div>
+                );
+            }
         }
     }
 }

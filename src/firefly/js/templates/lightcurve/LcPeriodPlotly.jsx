@@ -28,6 +28,7 @@ import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
 import {isDialogVisible, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {updateSet} from '../../util/WebUtil.js';
 import {PlotlyWrapper} from '../../charts/ui/PlotlyWrapper.jsx';
+import BrowserInfo from '../../util/BrowserInfo.js';
 import Resizable from 'react-component-resizable';
 import './LCPanels.css';
 
@@ -274,13 +275,8 @@ class PhaseFoldingChart extends PureComponent {
                 }
             }
         };
-        const debounced = debounce(normal, 100);
         this.onResize = (size) => {
-            if (this.state.widthPx === 0) {
-                defer(normal, size);
-            } else {
-                debounced(size);
-           }
+            defer(normal, size);
         };
         this.afterRedraw= this.afterRedraw.bind(this);
 
@@ -289,6 +285,15 @@ class PhaseFoldingChart extends PureComponent {
             fields,
             dataUpdate: null
         };
+
+        this.doRegenData= (fields) => {
+            this.chartingInfo= this.regenData(fields);
+            this.setState(() => ({fields}));
+        };
+        this.doRegenData= this.doRegenData.bind(this);
+        this.doRegenDataDebounced= debounce(this.doRegenData,250);
+
+
     }
 
     regenData(fields) {
@@ -388,13 +393,18 @@ class PhaseFoldingChart extends PureComponent {
         this.iAmMounted = true;
         this.unbinder= FieldGroupUtils.bindToStore(pfinderkey, (fields) => {
             if (this && this.iAmMounted && isPhaseChanged(fields, this.state.fields)) {
-                this.chartingInfo= this.regenData(fields);
+                // this.setState(() => ({fields}));
                 // chart.setTitle({text: period ? `period=${period}(day)`:'period='});
                 // chart.series[0].setData(data);
                 // chart.xAxis[0].update({min: minPhase - Margin,
                 //     max: minPhase + 2.0 + Margin});
                 // chart.yAxis[0].setTitle({text: `${flux}(mag)`});
-                this.setState({fields});
+                if (BrowserInfo.isFirefox() || (get(getFullRawTable(), 'tableData.data.length',0)>500)) {
+                    this.doRegenDataDebounced(fields);
+                }
+                else {
+                    this.doRegenData(fields);
+                }
             }
         });
     }
@@ -408,9 +418,7 @@ class PhaseFoldingChart extends PureComponent {
             `${this.lastFluxCol} = ${lastData[pointNumber][1]} mag <br>` +
             '</span>';
 
-            this.setState( {
-                dataUpdate: { text : str }
-            } );
+            this.setState( { dataUpdate: { text : str }} );
         });
 
     }
@@ -425,6 +433,8 @@ class PhaseFoldingChart extends PureComponent {
                        onResize={this.onResize}>
                 <PlotlyWrapper data={plotlyData} layout={plotlyLayout}  style={plotlyDivStyle}
                                dataUpdate={dataUpdate}
+                               autoSizePlot={true}
+                               autoDetectResizing={true}
                                divUpdateCB={(div) => this.chart= div}
                                newPlotCB={this.afterRedraw}
                 />

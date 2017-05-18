@@ -333,9 +333,7 @@ function getChartingInfo(props) {
 
     const plotlyDivStyle = {
         border: '1px solid a5a5a5',
-        borderRadius: 5,
-        width: '100%',
-        height: '100%'
+        borderRadius: 5
     };
 
     const {plotlyData, selectedRows, toRowIdx} = makeSeries(props);
@@ -426,7 +424,8 @@ export class XYPlotPlotly extends PureComponent {
         this.state = {
             dataUpdateTraces: undefined,
             dataUpdate: undefined,
-            layoutUpdate: undefined
+            layoutUpdate: undefined,
+            doingResize: false
         };
 
         this.afterRedraw = this.afterRedraw.bind(this);
@@ -446,8 +445,11 @@ export class XYPlotPlotly extends PureComponent {
 
         const {data, width, height, params, highlighted, selectInfo, desc} = this.props;
 
+        let doingResize= false;
+
         // re-calculate charting info when the plot data change or an error occurs
         // shading change for density plot changes series
+
         if (nextProps.data !== data ||
             get(params, 'plotStyle') !== get(nextProps.params, 'plotStyle') ||
             plotErrors(params, 'x') !== plotErrors(nextProps.params, 'x') ||
@@ -599,11 +601,15 @@ export class XYPlotPlotly extends PureComponent {
                 if (newWidth !== width || newHeight !== height ||
                     newParams.xyRatio !== params.xyRatio || newParams.stretch !== params.stretch) {
                     const {chartWidth, chartHeight} = calculateChartSize(newWidth, newHeight, nextProps);
-                    this.setState({layoutUpdate: {height: chartHeight, width: chartWidth }});
+                    const {chartWidth:oldWidth, chartHeight:oldHeight} =  calculateChartSize(width, height, this.props);
+                    if (oldWidth !== chartWidth || oldHeight !== chartHeight) {
+                        this.setState({layoutUpdate: {height: chartHeight, width: chartWidth}});
+                        doingResize = true;
+                    }
                 }
             }
         }
-        return true;
+        if (doingResize!==this.state.doingResize) this.setState({doingResize});
     }
 
     /**
@@ -781,15 +787,23 @@ export class XYPlotPlotly extends PureComponent {
             this.chartingInfo = getChartingInfo(this.props);
         }
         const {plotlyData, plotlyLayout, plotlyDivStyle} = this.chartingInfo;
-        const {dataUpdateTraces, dataUpdate, layoutUpdate} = this.state;
+        const {dataUpdateTraces, dataUpdate, layoutUpdate, doingResize} = this.state;
 
+        const style = {float: 'left'};
+        const chartWidth = get(layoutUpdate, 'width') || plotlyLayout.width;
+        const chartHeight = get(layoutUpdate, 'height') || plotlyLayout.height;
+        if (chartWidth > this.props.width || chartHeight > this.props.height) {
+            Object.assign(style, {overflow:'auto',width:this.props.width,height:this.props.height});
+        }
         return (
-            <div style={{float: 'left'}}>
+            <div style={style}>
                 <PlotlyWrapper chartId={this.props.chartId} data={plotlyData} layout={plotlyLayout}  style={plotlyDivStyle}
                                dataUpdateTraces={dataUpdateTraces}
                                dataUpdate={dataUpdate}
                                layoutUpdate={layoutUpdate}
                                config={PLOTLY_CONFIG}
+                               doingResize={doingResize}
+                               autoDetectResizing={false}
                                newPlotCB={this.afterRedraw}
                 />
             </div>
