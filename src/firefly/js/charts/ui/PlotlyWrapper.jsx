@@ -4,14 +4,15 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {get,isEmpty,xor,debounce} from 'lodash';
+import {get,debounce} from 'lodash';
 import {getPlotLy} from '../PlotlyConfig.js';
 import {logError} from '../../util/WebUtil.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import Enum from 'enum';
 
 const PLOTLY_BASE_ID= 'plotly-plot';
-var counter= 0;
+const MASKING_DELAY= 400;
+let counter= 0;
 
 export const RenderType= new Enum([ 'RESIZE', 'UPDATE', 'RESTYLE', 'RELAYOUT',
                                     'RESTYLE_AND_RELAYOUT', 'NEW_PLOT', 'PAUSE_DRAWING' ],
@@ -64,9 +65,10 @@ export class PlotlyWrapper extends Component {
         this.div= null;
         this.refUpdate= this.refUpdate.bind(this);
         this.renderType= RenderType.NEW_PLOT;
-        this.state= {showMask:false};
+        this.state= {preMask: false, showMask:false};
         this.lastWidth= 0;
         this.lastHeight= 0;
+        this.preMask= false;
 
 
         this.resizeUpdate= (postResizeRenderType) => {
@@ -80,12 +82,23 @@ export class PlotlyWrapper extends Component {
 
     }
 
+
     showMask(show) {
-        setTimeout( () => {
-            if (show!==this.state.showMask) {
-                this.setState(() => ({showMask:show}));
-            }
-        },0);
+        this.preMask= show;
+        if (show) {
+            setTimeout( () => {
+                if (!this.state.showMask && this.preMask) {
+                    this.setState(() => ({showMask:true}));
+                }
+            }, MASKING_DELAY);
+        }
+        else {
+            setTimeout( () => {
+                if (this.state.showMask) {
+                    this.setState(() => ({showMask:false}));
+                }
+            },0);
+        }
     }
 
     /**
