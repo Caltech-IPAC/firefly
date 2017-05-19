@@ -4,16 +4,15 @@
 package edu.caltech.ipac.visualize.net;
 
 
-import edu.caltech.ipac.util.download.CacheHelper;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.FileRetrieveException;
-import edu.caltech.ipac.util.download.HostPort;
-import edu.caltech.ipac.util.download.NetworkManager;
-import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.VoTableUtil;
+import edu.caltech.ipac.util.download.CacheHelper;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.HostPort;
+import edu.caltech.ipac.util.download.NetworkManager;
+import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,8 +70,8 @@ public class SloanDssImageGetter {
                 URLDownload.getDataToFile(new URL(urlString), outFile, null, false, true);
             }
             else {
-                throw new FileRetrieveException("Area not covered",
-                                                "votable returned not results, probably area is not covered: ", "SDSS");
+                throw new FailedRequestException("SDSS: Area not covered",
+                                                "votable returned not results, probably area is not covered: ");
             }
 
 

@@ -429,12 +429,12 @@ public class URLDownload {
             netCopy(in, out, conn, maxFileSize, dl);
 
             long elapse = System.currentTimeMillis() - start;
-            outFileData = new FileInfo(f, suggested, responseCode);
+            outFileData = new FileInfo(f, suggested, responseCode, ResponseMessage.getMessage(responseCode));
             logDownload(outFileData, conn.getURL().toString(), elapse );
 
             if (responseCode>=300 && responseCode<400) {
                 DException de= new DException(outFileData, responseCode, null);
-                throw new FailedRequestException("Network request failed", "Error: "+responseCode, de);
+                throw new FailedRequestException(ResponseMessage.getMessage(responseCode), "Error: "+responseCode, de);
             }
 
             return outFileData;
@@ -511,7 +511,8 @@ public class URLDownload {
                 urlConn.setIfModifiedSince(outfile.lastModified());
                 if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
                     ClientLog.message("Not downloading, already have current version");
-                    retval = new FileInfo(outfile, getSugestedFileName(urlConn), HttpURLConnection.HTTP_NOT_MODIFIED);
+                    retval = new FileInfo(outfile, getSugestedFileName(urlConn), HttpURLConnection.HTTP_NOT_MODIFIED,
+                                     ResponseMessage.getMessage(HttpURLConnection.HTTP_NOT_MODIFIED));
                     retval.putAttribute(FileInfo.FILE_DOWNLOADED,false+"");
                 }
             }
@@ -604,8 +605,6 @@ public class URLDownload {
         downloader.setDownloadListener(dl);
         try {
             downloader.download();
-        } catch (VetoDownloadException de) {
-            throw new FailedRequestException("The download was aborted");
         } finally {
             FileUtil.silentClose(in);
             FileUtil.silentClose(out);

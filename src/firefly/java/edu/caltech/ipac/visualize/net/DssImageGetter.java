@@ -4,13 +4,12 @@
 package edu.caltech.ipac.visualize.net;
 
 
+import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.FileRetrieveException;
 import edu.caltech.ipac.util.download.HostPort;
 import edu.caltech.ipac.util.download.NetworkManager;
 import edu.caltech.ipac.util.download.URLDownload;
-import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.ClientLog;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,11 +49,10 @@ public class DssImageGetter {
          URLDownload.logHeader(conn);
 
          if (contentType != null && contentType.startsWith("text/")) {
-               String htmlErr= URLDownload.getStringFromOpenURL(conn,null);
-               throw new FileRetrieveException(
-                         htmlErr,
+               throw new FailedRequestException(
+                         "DSS service failed",
                          "The Dss server is reporting an error- " +
-                         "the DSS error message was displayed to the user.", "DSS");
+                         "the DSS error message was displayed to the user.");
          }
 
 
@@ -64,9 +62,7 @@ public class DssImageGetter {
           if (outFile.exists() && outFile.canWrite()) {
               outFile.delete();
           }
-          throw new FileRetrieveException(
-                  FailedRequestException.SERVICE_FAILED,
-                  "Timeout", timeOutE, "DSS" );
+          throw new FailedRequestException( "DSS service timeout", "Timeout", timeOutE);
       } catch (MalformedURLException me){
           ClientLog.warning(me.toString());
           throw new FailedRequestException(

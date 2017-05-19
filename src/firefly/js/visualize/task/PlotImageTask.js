@@ -292,7 +292,7 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
         resultPayload= Object.assign({},payload);
         // todo: add failure stuff to resultPayload here
         resultPayload.briefDescription= data.briefFailReason;
-        resultPayload.description= 'Plot Failed- ' + data.userFailReason;
+        resultPayload.description= 'Failed- ' + data.userFailReason;
         resultPayload.detailFailReason= data.detailFailReason;
         resultPayload.plotId= data.plotId;
         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload:resultPayload} );

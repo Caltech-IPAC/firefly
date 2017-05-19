@@ -155,10 +155,11 @@ public class ServiceRetriever implements FileRetriever {
             return fi.copyWithDesc("MSX Image");
         } catch (FailedRequestException e) {
             if (e.getUserMessage().contains("does not lie on an image")) {
-                throw new FailedRequestException("Location not covered by MSX",
+                throw new FailedRequestException("MSX: Area not covered",
                                                  e.getUserMessage() + " --- " + e.getDetailMessage());
             } else {
-                throw e;
+                throw new FailedRequestException("MSX service failed",
+                        e.getUserMessage() + " --- " + e.getDetailMessage());
             }
         }
     }
@@ -210,7 +211,7 @@ public class ServiceRetriever implements FileRetriever {
         try {
             return LockingVisNetwork.retrieve(params);
         } catch (SecurityException e) {
-            throw new FailedRequestException("Error cause by failed reprojection", "Geom failed", e);
+            throw new FailedRequestException("Reprojection failed", "Geom failed", e);
         }
     }
 

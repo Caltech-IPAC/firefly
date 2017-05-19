@@ -81,7 +81,7 @@ public class LockingVisNetwork {
                     fd = VisNetwork.getImage(params, dl);
                 }
 
-                if (unzip) retval= new FileInfo(unzip(fd.getFile()),fd.getExternalName(),fd.getResponseCode());
+                if (unzip) retval= new FileInfo(unzip(fd.getFile()),fd.getExternalName(),fd.getResponseCode(), fd.getResponseCodeMsg());
                 else       retval= fd;
 
             }

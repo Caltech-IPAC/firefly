@@ -14,7 +14,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.SocketException;
 import java.net.URL;
+import java.net.UnknownHostException;
 
 
 /**
@@ -35,20 +37,20 @@ public class AnyUrlGetter {
                                              params.getMaxSizeToDownload());
       } catch (MalformedURLException me) {
           ClientLog.warning(me.toString());
-          throw new FailedRequestException(FailedRequestException.SERVICE_FAILED,
-                           "Details in exception", me);
+          throw new FailedRequestException("Invalid URL", "Details in exception", me);
       } catch (FileNotFoundException fne) {
-          throw new FailedRequestException("Could not find file",
-                                           "URL not found: " + params.getURL() , fne);
+          throw new FailedRequestException("Could not find file", "URL not found: " + params.getURL() , fne);
+      } catch (UnknownHostException ioe) {
+          throw new FailedRequestException("Unknown host: "+ ioe.getMessage(), "Details in exception", ioe);
+      } catch (SocketException ioe) {
+          throw new FailedRequestException("Could not connect to service", "Details in exception", ioe);
       } catch (IOException ioe) {
           if(ioe.getCause() instanceof EOFException) {
-              throw new FailedRequestException("Could not find any data for this URL",
-                                  "No data could be downloaded from this URL\n"+
-                                  params.getURL().toString());
+              throw new FailedRequestException("No data returned",
+                                  "No data could be downloaded from this URL\n"+ params.getURL().toString());
           }
           else {
-              throw new FailedRequestException("IO problem",
-                                               "Details in exception", ioe);
+              throw new FailedRequestException("IO problem", "Details in exception", ioe);
           }
       }
       return outFiles;

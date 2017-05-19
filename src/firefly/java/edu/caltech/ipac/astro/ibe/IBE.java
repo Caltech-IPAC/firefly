@@ -178,7 +178,7 @@ public class IBE {
             }
             return URLFileInfoProcessor.retrieveViaURL(url,dir, progressKey, plotId, null, null);
         } catch (DataAccessException e) {
-            throw new IOException("Request Failed", e);
+            throw new IOException(e.getMessage(), e);
         }
     }
 

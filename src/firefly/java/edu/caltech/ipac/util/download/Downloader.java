@@ -55,7 +55,7 @@ public class Downloader {
 
     public void setMaxDownloadSize(long maxDownloadSize) { _maxDownloadSize= maxDownloadSize; }
 
-    public void download() throws IOException, VetoDownloadException, FailedRequestException {
+    public void download() throws IOException, FailedRequestException {
 
         Assert.tst((_out != null && _in != null),
                    "Attempting to call URLDownload twice, an instance is " +

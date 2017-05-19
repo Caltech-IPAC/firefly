@@ -138,9 +138,10 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
             }
         } catch (FailedRequestException e) {
             _logger.warn(e, "Could not retrieve URL");
+            throw new DataAccessException(e.getMessage(), e);
         } catch (MalformedURLException e) {
             _logger.warn(e, "Could not compute URL");
-
+            throw new DataAccessException("invalid URL", e);
         }
         return retval;
 

@@ -74,6 +74,13 @@ public class URLFileRetriever implements FileRetriever {
             PlotServUtils.updatePlotCreateProgress(request, ProgressStat.PType.READING, PlotServUtils.READ_PERCENT_MSG);
 
             fitsFileInfo = LockingVisNetwork.retrieve(params);
+
+            int responseCode= fitsFileInfo.getResponseCode();
+            if (responseCode>=400) {
+                throw new FailedRequestException(fitsFileInfo.getResponseCodeMsg());
+            }
+
+
         } catch (MalformedURLException e) {
             throw new FailedRequestException("Bad URL", null, e);
         } catch (FailedRequestException e) {

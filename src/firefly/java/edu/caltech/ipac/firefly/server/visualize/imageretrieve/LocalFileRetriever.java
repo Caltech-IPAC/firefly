@@ -42,14 +42,19 @@ public class LocalFileRetriever implements FileRetriever {
             }
             if (f==null) {
                 if (fStr.charAt(0)==File.separatorChar) {
-                    throw new FailedRequestException("Could not find your requested file, "+
-                                                     "the file: " + request.getFileName() +
-                                                             " is not in the path specified by " +
-                                                             "visualize.fits.search.path"+
-                                                             " in the configuration file");
+                    if (new File(fStr).canRead()) {
+                        throw new FailedRequestException("Could read file, "+
+                                request.getFileName() +
+                                " is not in the path specified by " +
+                                "visualize.fits.search.path in the configuration file");
+                    }
+                    else {
+                        throw new FailedRequestException("File not found", "Could not find your requested file, "+
+                                "the file: " + request.getFileName() + " is was not found");
+                    }
                 }
                 else {
-                    throw new FailedRequestException("Could not find your requested file, "+
+                    throw new FailedRequestException("File not found", "Could not find your requested file, "+
                                                      "the file: " + request.getFileName() +
                                                              " could not be converted to an absolute path");
                 }
@@ -58,12 +63,12 @@ public class LocalFileRetriever implements FileRetriever {
                 return new FileInfo(f, (uFI!=null && uFI.getFileName()!=null)? uFI.getFileName(): f.getName() );
             }
             else {
-                throw new FailedRequestException("Could not read ",
+                throw new FailedRequestException("No read access for file",
                                                  "the file: " + request.getFileName());
             }
         }
         else {
-            throw new FailedRequestException("You did not requests a file, request.getFileName() is returning null");
+            throw new FailedRequestException("No file specified");
         }
     }
 }
