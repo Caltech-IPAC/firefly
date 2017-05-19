@@ -99,13 +99,14 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
 }
 
 function makeCompass(plotId, action){
-    var plot= primePlot(visRoot(),plotId);
+    const plot= primePlot(visRoot(),plotId);
+    if (!plot) return null;
     if (!plot.projection.isImplemented()) return null;
 
-    var cc= CsysConverter.make(plot);
+    const cc= CsysConverter.make(plot);
     if (!cc) return null;
 
-    var pv= getPlotViewById(visRoot(),plotId);
+    const pv= getPlotViewById(visRoot(),plotId);
 
     // const dist = 60;
     const px = 30;

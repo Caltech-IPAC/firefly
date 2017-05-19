@@ -178,8 +178,6 @@ function makeDrawer(plotView, plot, targetCanvas, totalCnt, loadedImages,
 
             const p = retrieveAndProcessImage(tileData, tileAttributes, shouldProcess, processor);
             p.then((imageData) => {
-                offscreenCtx.drawImage(imageData.image, x, y, w, h);
-
                 loadedImages.cachedImageData[tileIdx] = clone(loadedImages.serverData[tileIdx],
                                                     {dataUrl:null, tileAttributes:imageData.tileAttributes, image:imageData.image});
 

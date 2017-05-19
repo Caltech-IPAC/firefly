@@ -51,6 +51,7 @@ export class RangeSliderView extends PureComponent {
         } else if (maxStop && val > maxStop) {
             val = maxStop;
         }
+        if (isNaN(val)) val= minStop || min || 0;
 
         return (
             <div style={wrapperStyle}>
