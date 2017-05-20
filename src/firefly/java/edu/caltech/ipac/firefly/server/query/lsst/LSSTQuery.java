@@ -456,6 +456,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
                 +"                     {\"tables\": [\"allwise_p3as_psr\"],"
                 +"                      \"meta\": \"db/v0/tap/sync\","
                 +"                      \"database\": \"wise_ext_00\","
+                +"                      \"datatype\": \"catalog\","
                 +"                      \"ra\": \"ra\","
                 +"                      \"dec\": \"decl\"}],"
                 +"            \"imagemeta\":"
