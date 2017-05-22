@@ -14,11 +14,21 @@ package edu.caltech.ipac.util.download;
  */
 
 
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
+
+import java.io.EOFException;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+
 /**
  * @author Trey Roby
  */
 public class ResponseMessage {
-    public static String getMessage(int reponseCode) {
+    public static String getHttpResponseMessage(int reponseCode) {
         switch (reponseCode) {
             case  100 : return "Continue";
             case  101 : return "Switching Protocols";
@@ -66,4 +76,47 @@ public class ResponseMessage {
     }
 
 
+    public static FailedRequestException simplifyNetworkCallException(Exception e) {
+
+        if (e instanceof FailedRequestException) {
+            return (FailedRequestException)e;
+        }
+        else if (e.getCause() instanceof FailedRequestException) {
+            return new FailedRequestException(e.getCause().getMessage(), "", e);
+        }
+        else {
+            return new FailedRequestException(getNetworkCallFailureMessage(e), "", e);
+        }
+    }
+
+    public static String getNetworkCallFailureMessage(Exception e) {
+        if (e.getCause() instanceof FailedRequestException) {
+            return e.getCause().getMessage();
+        }
+        else if (e instanceof DataAccessException) {
+            return e.getMessage();
+        }
+        else if (e instanceof MalformedURLException) {
+            return "Invalid URL";
+        }
+        else if (e instanceof FileNotFoundException) {
+            return "URL File not found";
+        }
+        else if (e instanceof UnknownHostException) {
+            return "Unknown host: "+ e.getMessage();
+        }
+        else if (e instanceof SocketTimeoutException) {
+            return "Retrieval Timed out";
+        }
+        else if (e instanceof SocketException) {
+            return "Could not connect to service";
+        }
+        else if (e instanceof IOException) {
+            return (e.getCause() instanceof EOFException) ? "No data returned" : "IO problem";
+        }
+        else {
+            return e.getMessage();
+        }
+
+    }
 }

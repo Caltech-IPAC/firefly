@@ -67,8 +67,7 @@ public class HorizonsEphFile {
             throw new FailedRequestException(
                     htmlErr,
                     "The Horizons server is reporting an error- " +
-                            "the Horizons error message was displayed to the user.",
-                    true, null );
+                            "the Horizons error message was displayed to the user.");
         }
         suggested_filename = URLDownload.getSugestedFileName(conn);
         if (SUTDebug.isDebug())

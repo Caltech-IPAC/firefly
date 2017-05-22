@@ -426,8 +426,6 @@ public class SDSSQuery extends IpacTablePartProcessor {
             URLDownload.getDataToFile(conn, new File("/tmp/a.csv"));
         } catch (FailedRequestException e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
     }

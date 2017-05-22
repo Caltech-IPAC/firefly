@@ -89,7 +89,6 @@ public class FileInfo implements HasAccessInfo, Serializable {
 
     public File getFile() {  return new File(attributes.get(INTERNAL_NAME)); }
     public String getDesc() { return attributes.get(DESC); }
-    public boolean isDownloaded() { return StringUtils.getBoolean(attributes.get(FILE_DOWNLOADED), true); }
     public boolean isBlank() { return StringUtils.getBoolean(attributes.get(BLANK), false); }
     public int getResponseCode() { return StringUtils.getInt(attributes.get(RESPONSE_CODE), 200); }
     public String getResponseCodeMsg() { return attributes.get(RESPONSE_CODE_MSG); }

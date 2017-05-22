@@ -17,11 +17,11 @@ import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.ResponseMessage;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
 import edu.caltech.ipac.visualize.plot.GeomException;
 
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Arrays;
@@ -62,7 +62,6 @@ public class URLFileRetriever implements FileRetriever {
                 }
             }
             if (!ro.getUserInfo().isGuestUser()) {
-                params.setCacheLifespanInSec(EXPIRE_IN_SEC);
                 params.setLoginName(ro.getUserInfo().getLoginName());
                 params.setSecurityCookie(ro.getRequestAgent().getAuthKey());
             }
@@ -80,13 +79,8 @@ public class URLFileRetriever implements FileRetriever {
                 throw new FailedRequestException(fitsFileInfo.getResponseCodeMsg());
             }
 
-
-        } catch (MalformedURLException e) {
-            throw new FailedRequestException("Bad URL", null, e);
-        } catch (FailedRequestException e) {
-            throw e;
         } catch (Exception e) {
-            throw new FailedRequestException("No data", null, e);
+            throw ResponseMessage.simplifyNetworkCallException(e);
         }
         return fitsFileInfo.copyWithDesc(urlStr);
     }

@@ -5,7 +5,6 @@ package edu.caltech.ipac.visualize.net;
 
 
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.VoTableUtil;
 import edu.caltech.ipac.util.download.CacheHelper;
@@ -76,17 +75,10 @@ public class SloanDssImageGetter {
 
 
         } catch (SocketTimeoutException timeOutE) {
-            if (outFile.exists() && outFile.canWrite()) {
-                outFile.delete();
-            }
-            throw new FailedRequestException(
-                    FailedRequestException.SERVICE_FAILED,
-                    "Timeout", timeOutE);
+            if (outFile.exists() && outFile.canWrite()) outFile.delete();
+            throw timeOutE;
         } catch (MalformedURLException me) {
-            ClientLog.warning(me.toString());
-            throw new FailedRequestException(
-                    FailedRequestException.SERVICE_FAILED,
-                    "Details in exception", me);
+            throw new FailedRequestException( "Invalid URL", "Details in exception", me );
         }
 
     }

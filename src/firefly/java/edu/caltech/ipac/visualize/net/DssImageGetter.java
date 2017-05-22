@@ -5,7 +5,6 @@ package edu.caltech.ipac.visualize.net;
 
 
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.HostPort;
 import edu.caltech.ipac.util.download.NetworkManager;
@@ -64,10 +63,7 @@ public class DssImageGetter {
           }
           throw new FailedRequestException( "DSS service timeout", "Timeout", timeOutE);
       } catch (MalformedURLException me){
-          ClientLog.warning(me.toString());
-          throw new FailedRequestException(
-                          FailedRequestException.SERVICE_FAILED,
-                          "Details in exception", me );
+          throw new FailedRequestException( "Invalid URL", "Details in exception", me );
       }
     }
 

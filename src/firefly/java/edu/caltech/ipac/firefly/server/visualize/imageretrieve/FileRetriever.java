@@ -12,7 +12,5 @@ import edu.caltech.ipac.visualize.plot.GeomException;
  * @author Trey Roby
  */
 public interface FileRetriever {
-
     FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException;
 }
-

@@ -193,7 +193,7 @@ public class IBE {
             uc.setRequestProperty("Accept", "text/plain");
             URLDownload.getDataToFile(uc, results, dl);
         } catch (FailedRequestException e) {
-            throw new IOException("Request Failed", e);
+            throw new IOException(e.getUserMessage(),  e);
         }
     }
 
