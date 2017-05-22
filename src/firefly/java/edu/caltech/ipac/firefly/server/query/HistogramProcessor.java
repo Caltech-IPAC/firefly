@@ -61,7 +61,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     private double max = Double.NaN;
     private String columnExpression;
     private double falsePostiveRate = 0.05;
-    private boolean showEmptyBin=false;
+    private boolean showEmptyBin= true;
 
     private static String[] getInputFilePath(String inputFileName) {
         String[] dirs = inputFileName.split("/");
