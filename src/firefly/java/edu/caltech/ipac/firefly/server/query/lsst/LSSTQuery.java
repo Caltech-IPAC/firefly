@@ -19,6 +19,7 @@ import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
+import edu.caltech.ipac.util.FileUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -27,6 +28,7 @@ import org.json.simple.parser.ParseException;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -428,89 +430,13 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
     private static JSONObject getDataSet() {
         JSONObject obj = new JSONObject();
 
-        // LSST dataset information for making table search request
-        String lsstDataSet = "{"
-                +"  \"SDSS\": {\"catalog\":"
-                +"                         [{\"tables\": [\"RunDeepSource\", \"RunDeepForcedSource\"],"
-                +"                           \"meta\": \"db/v0/tap/sync\","
-                +"                           \"database\": \"sdss_stripe82_00\","
-                +"                           \"datatype\": \"catalog\","
-                +"                           \"ra\": \"coord_ra\","
-                +"                           \"dec\": \"coord_decl\"}],"
-                +"             \"imagemeta\":"
-                +"                          [{\"tables\": [\"DeepCoadd\", \"Science_Ccd_Exposure\"],"
-                +"                            \"meta\": \"db/v0/tap/sync\","
-                +"                            \"database\": \"sdss_stripe82_00\","
-                +"                           \"datatype\": \"imagemeta\","
-                +"                           \"" + MetaConst.DATASET_CONVERTER + "\": \"lsst_sdss\","
-                +"                           \"ra\": [\"corner1Ra\",\"corner2Ra\", \"corner3Ra\", \"corner4Ra\"],"
-                +"                           \"dec\": [\"corner1Decl\",\"corner2Decl\", \"corner3Decl\", \"corner4Decl\"]}]},"
-                +" \"WISE\": {\"catalog\":"
-                +"                    [{\"tables\": [\"allwise_p3as_psd\", \"allwise_p3as_mep\","
-                +"                                   \"allsky_4band_p1bs_psd\", \"allsky_3band_p1bs_psd\", \"allsky_2band_p1bs_psd\"],"
-                +"                      \"meta\": \"db/v0/tap/sync\","
-                +"                      \"database\": \"wise_00\","
-                +"                      \"datatype\": \"catalog\","
-                +"                      \"ra\": \"ra\","
-                +"                      \"dec\": \"decl\"},"
-                +"                     {\"tables\": [\"allwise_p3as_psr\"],"
-                +"                      \"meta\": \"db/v0/tap/sync\","
-                +"                      \"database\": \"wise_ext_00\","
-                +"                      \"datatype\": \"catalog\","
-                +"                      \"ra\": \"ra\","
-                +"                      \"dec\": \"decl\"}],"
-                +"            \"imagemeta\":"
-                +"                    [{\"tables\": [\"allwise_p3am_cdd\", \"allwise_p3as_cdd\","
-                +"                                   \"allsky_4band_p1bm_frm\", \"allsky_3band_p1bm_frm\", \"allsky_2band_p1bm_frm\"],"
-                +"                      \"meta\": \"db/v0/tap/sync\","
-                +"                      \"database\": \"wise_00\","
-                +"                      \"datatype\": \"imagemeta\","
-                +"                      \"" + MetaConst.DATASET_CONVERTER + "\": \"lsst_wise\","
-                +"                      \"ra\": [\"ra1\", \"ra2\", \"ra3\", \"ra4\"],"
-                +"                      \"dec\": [\"dec1\", \"dec2\", \"dec3\", \"dec4\"],"
-                +"                      \"mission\": \"wise\","
-                +"                      \"schema\":{"
-                +"                          \"allwise-multiband\": {"
-                +"                              \"tables\": [\"allwise_p3am_cdd\", \"allwise_p3as_cdd\"],"
-                +"                              \"params\": {\"ImageSet\": \"allwise-multiband\","
-                +"                                           \"ProductLevel\": \"3a\","
-                +"                                           \"title\": \"AllWISE\"}},"
-                +"                          \"allsky_4band-1b\": {"
-                +"                              \"tables\": [\"allsky_4band_p1bm_frm\"],"
-                +"                              \"params\": {\"ImageSet\": \"allsky-4band\","
-                +"                                           \"ProductLevel\": \"1b\","
-                +"                                           \"title\": \"AllSky - Single\"}},"
-                +"                          \"allsky_4band-3a\": {"
-                +"                              \"tables\": [],"
-                +"                              \"params\": {\"ImageSet\": \"allsky-4band\","
-                +"                                           \"ProductLevel\": \"3a\","
-                +"                                           \"title\": \"AllSky - Atlas\"}},"
-                +"                          \"cryo_3band-1b\": {"
-                +"                              \"tables\": [\"allsky_3band_p1bm_frm\"],"
-                +"                              \"params\": {\"ImageSet\": \"cryo_3band\","
-                +"                                           \"ProductLevel\": \"1b\","
-                +"                                           \"title\": \"3-Band Single\"}},"
-                +"                          \"cryo_3band-1b-3a\": {"
-                +"                              \"tables\": [],"
-                +"                              \"params\": {\"ImageSet\": \"cryo_3band\","
-                +"                                           \"ProductLevel\": \"3a\","
-                +"                                           \"title\": \"3-Band Atlas\"}},"
-                +"                         \"postcryo-1b\": {"
-                +"                              \"tables\": [\"allsky_2band_p1bm_frm\"],"
-                +"                              \"params\": {\"ImageSet\": \"postcryo\","
-                +"                                           \"ProductLevel\": \"1b\","
-                +"                                           \"title\": \"Post-Cryo\"}},"
-                +"                        \"neowiser-1b\": {"
-                +"                             \"tables\": [],"
-                +"                             \"params\": {\"ImageSet\": \"neowiser\","
-                +"                                          \"ProductLevel\": \"1b\","
-                +"                                          \"title\": \"NeoWISER\"}}"
-                +"                        }}]}}";
-
-
         try {
-            obj = (JSONObject) new JSONParser().parse(lsstDataSet);
+            InputStream lsstMetaInfo = LSSTQuery.class.getResourceAsStream("/edu/caltech/ipac/firefly/resources/LSSTMetaInfo.json");
+            String lsstMetaStr = FileUtil.readFile(lsstMetaInfo);
+            obj = (JSONObject) new JSONParser().parse(lsstMetaStr);
         } catch (ParseException e) {
+            LOGGER.error(e);
+        } catch (Exception e) {
             LOGGER.error(e);
         }
         return obj;

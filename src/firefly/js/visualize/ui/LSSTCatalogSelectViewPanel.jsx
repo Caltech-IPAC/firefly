@@ -61,7 +61,7 @@ const LSSTTables = [
             catalogs: [
                 {
                     id: SOURCE,
-                    label: 'Measurements on coadds',
+                    label: 'Object(Measurements on coadds)',
                     value: 'RunDeepSource',
                     type: CATTYPE
                 },
@@ -99,7 +99,7 @@ const LSSTTables = [
             catalogs: [
                 {
                     id: OBJECT,
-                    label: 'AllWISE source Catalog',
+                    label: 'AllWISE Source Catalog',
                     value: 'allwise_p3as_psd',
                     type: CATTYPE
                 },
@@ -131,35 +131,28 @@ const LSSTTables = [
             images: [
                 {
                     id: COADD,
-                    label: ' AllWISE Atlas Image Inventory Table',
+                    label: ' AllWISE Atlas Image',
                     value: 'allwise_p3am_cdd',
                     type: IMAGETYPE,
                     cat: {}
                 },
                 {
-                    id: COADD,
-                    label: 'AllWISE Atlas Metadata Table',
-                    value: 'allwise_p3as_cdd',
-                    type: IMAGETYPE,
-                    cat: {}
-                },
-                {
                     id: CCDEXPOSURE,
-                    label: 'WISE All-Sky Single Exposure (L1b) Image Inventory Table',
+                    label: 'WISE All-Sky Single Exposure (L1b) Image',
                     value: 'allsky_4band_p1bm_frm',
                     type: IMAGETYPE,
                     cat: {}
                 },
                 {
                     id: CCDEXPOSURE,
-                    label: 'WISE 3-Band Cryo Single Exposure (L1b) Image Inventory Table',
+                    label: 'WISE 3-Band Cryo Single Exposure (L1b) Image',
                     value: 'allsky_3band_p1bm_frm',
                     type: IMAGETYPE,
                     cat: {}
                 },
                 {
                     id: CCDEXPOSURE,
-                    label: 'WISE Post-Cryo Single Exposure (L1b) Image Inventory Table',
+                    label: 'WISE Post-Cryo Single Exposure (L1b) Image',
                     value: 'allsky_2band_p1bm_frm',
                     type: IMAGETYPE,
                     cat: {}
