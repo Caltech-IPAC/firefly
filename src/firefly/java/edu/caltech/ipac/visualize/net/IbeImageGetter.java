@@ -14,7 +14,6 @@ import edu.caltech.ipac.astro.ibe.datasource.TwoMassIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.IpacTableUtil;
@@ -114,18 +113,11 @@ public class IbeImageGetter {
               return new File(result.getInternalFilename());
           }
           else {
-              throw new FailedRequestException("No results found for this location");
+              throw new FailedRequestException("Area not covered");
           }
 
-
-
-
-
       } catch (IpacTableException me){
-          ClientLog.warning(me.toString());
-          throw new FailedRequestException(
-                          FailedRequestException.SERVICE_FAILED,
-                          "Details in exception", me );
+          throw new FailedRequestException( "Could not parse results", "Details in exception", me );
       }
 
     }

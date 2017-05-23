@@ -21,7 +21,6 @@ import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.FileRetrieveException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.GeomException;
@@ -178,18 +177,15 @@ public class WebPlotFactory {
             logSuccess(pInfo[0].getState(), elapse,
                        allPlots.getFindElapse(), allPlots.getReadElapse(),
                        false, null, true);
-        } catch (FileRetrieveException e) {
-            updateProgressIsFailure(saveRequest);
-            throw e;
         } catch (FailedRequestException e) {
             updateProgressIsFailure(saveRequest);
-            throw new FailedRequestException("Could not create plot. " , e.getDetailMessage() + ": "+ e.getMessage(),e);
+            throw e;
         } catch (FitsException e) {
             updateProgressIsFailure(saveRequest);
-            throw new FailedRequestException("Could not create plot. Invalid FITS File format.", e.getMessage(),e);
+            throw new FailedRequestException("Invalid FITS File format", e.getMessage(),e);
         } catch (Exception e) {
             updateProgressIsFailure(saveRequest);
-            throw new FailedRequestException("Could not create plot.", e.getMessage(), e);
+            throw new FailedRequestException("Could not create plot", e.getMessage(), e);
         }
         return retval;
 

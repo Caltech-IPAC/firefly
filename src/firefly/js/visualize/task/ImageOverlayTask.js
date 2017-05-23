@@ -245,7 +245,7 @@ function processMaskSuccessResponse(dispatcher, payload, result) {
         const resultPayload= Object.assign({},payload);
         // todo: add failure stuff to resultPayload here
         resultPayload.briefDescription= result.briefFailReason;
-        resultPayload.description= 'Plot Failed- ' + result.userFailReason;
+        resultPayload.description= 'Failed- ' + result.userFailReason;
         resultPayload.detailFailReason= result.detailFailReason;
         dispatcher( { type: ImagePlotCntlr.PLOT_MASK_FAIL, payload:resultPayload} );
     }

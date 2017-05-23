@@ -40,7 +40,6 @@ import edu.caltech.ipac.util.dd.RegParseException;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionFileElement;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.FileRetrieveException;
 import edu.caltech.ipac.visualize.draw.AreaStatisticsUtil;
 import edu.caltech.ipac.visualize.draw.ColorDisplay;
 import edu.caltech.ipac.visualize.draw.HistogramDisplay;
@@ -1305,10 +1304,7 @@ public class VisServerOps {
             }
         }
 
-        if (e instanceof FileRetrieveException) {
-            FileRetrieveException fe = (FileRetrieveException) e;
-            retval = WebPlotResult.makeFail("Retrieve failed", "Could not retrieve fits file", fe.getDetailMessage(), progressKey, plotId);
-        } else if (e instanceof FailedRequestException) {
+        if (e instanceof FailedRequestException) {
             FailedRequestException fe = (FailedRequestException) e;
             retval = WebPlotResult.makeFail(fe.getUserMessage(), fe.getUserMessage(), fe.getDetailMessage(), progressKey, plotId);
             userAbort = VisContext.PLOT_ABORTED.equals(fe.getDetailMessage());
@@ -1344,9 +1340,8 @@ public class VisServerOps {
 
         if (userAbort) {
             _log.info(logMsg + ": " + VisContext.PLOT_ABORTED);
-        } else if (e instanceof FileRetrieveException) {
-            _log.info(logMsg + ": " + ((FileRetrieveException) e).getRetrieveServiceID() + ": File retrieve failed");
-        } else {
+        }
+        else {
             _log.warn(e, messages.toArray(new String[messages.size()]));
         }
 

@@ -49,7 +49,7 @@ public class IbeFileRetrieve extends BaseFileInfoProcessor {
                 return ofile;
             }
         } catch (Exception e) {
-            throw new DataAccessException("Fail to retrieve file from IBE.", e);
+            throw new DataAccessException(e.getMessage(), e);
         }
     }
 

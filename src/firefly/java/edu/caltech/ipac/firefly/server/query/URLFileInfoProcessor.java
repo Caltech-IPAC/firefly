@@ -29,49 +29,6 @@ import java.util.Map;
  */
 abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
 
-    protected FileInfo loadDataTEMP(ServerRequest sr) throws IOException, DataAccessException {
-        FileInfo retval= null;
-        try {
-            URL url= getURL(sr);
-            if (url==null) throw new MalformedURLException("computed url is null");
-
-            String progressKey= sr.getParam(WebPlotRequest.PROGRESS_KEY);
-            String plotId= sr.getParam(WebPlotRequest.PLOT_ID);
-            AnyUrlParams params = new AnyUrlParams(url,progressKey,plotId);
-            if (!StringUtils.isEmpty(getFileExtension())) {
-                params.setLocalFileExtensions(Arrays.asList(getFileExtension()));
-            }
-            if (identityAware()) {
-                Map<String, String> cookies = ServerContext.getRequestOwner().getIdentityCookies();
-                if (cookies != null && cookies.size() > 0) {
-                    for (String key : cookies.keySet()) {
-                        params.addCookie(key, cookies.get(key));
-                    }
-                }
-            }
-            retval= LockingVisNetwork.retrieve(params);
-            if (retval.getResponseCode()>=500) {
-                File f= new File(retval.getInternalFilename());
-                if (f.length()<800) {
-                    String fileData= FileUtil.readFile(f);
-                    _logger.warn("Could not retrieve URL, status: "+ retval.getResponseCode(),
-                                 "response: "+ fileData);
-                    f.delete();
-                    throw new DataAccessException("Could not retrieve file: "+ fileData);
-                }
-                else {
-                    _logger.warn("Could not retrieve URL, status: "+ retval.getResponseCode());
-                    throw new DataAccessException("Could not retrieve file");
-                }
-            }
-        } catch (FailedRequestException e) {
-            _logger.warn(e, "Could not retrieve URL");
-        } catch (MalformedURLException e) {
-            _logger.warn(e, "Could not compute URL");
-
-        }
-        return retval;
-    }
 
     protected FileInfo loadData(ServerRequest sr) throws IOException, DataAccessException {
         URL url= getURL(sr);
@@ -109,7 +66,7 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
                                                  throws IOException, DataAccessException {
         FileInfo retval= null;
         try {
-            if (url==null) throw new MalformedURLException("computed url is null");
+            if (url==null) throw new MalformedURLException("Invalid URL");
 
             AnyUrlParams params = new AnyUrlParams(url,progressKey,plotId);
             if (dir!=null) params.setFileDir(dir);
@@ -126,21 +83,24 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
                 File f= new File(retval.getInternalFilename());
                 if (f.length()<800) {
                     String fileData= FileUtil.readFile(f);
+                    f.delete();
                     _logger.warn("Could not retrieve URL, status: "+ retval.getResponseCode(),
                             "response: "+ fileData);
-                    f.delete();
-                    throw new DataAccessException("Could not retrieve file: "+ fileData);
                 }
                 else {
                     _logger.warn("Could not retrieve URL, status: "+ retval.getResponseCode());
-                    throw new DataAccessException("Could not retrieve file");
                 }
+                throw new DataAccessException("Service Error");
+            }
+            else if (retval.getResponseCode()>400) {
+                throw new DataAccessException(retval.getResponseCodeMsg());
             }
         } catch (FailedRequestException e) {
             _logger.warn(e, "Could not retrieve URL");
+            throw new DataAccessException(e.getMessage(), e);
         } catch (MalformedURLException e) {
             _logger.warn(e, "Could not compute URL");
-
+            throw new DataAccessException("invalid URL", e);
         }
         return retval;
 

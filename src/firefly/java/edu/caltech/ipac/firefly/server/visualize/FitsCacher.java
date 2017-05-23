@@ -48,14 +48,7 @@ public class FitsCacher {
                 // we want to lock here to give the second one a change to get it from cache
                 // if the first reader reads and caches it.
             try {
-                Object lockKey= activeRequest.get(key);
-                if (lockKey==null) {
-                    lockKey= new Object();
-                    activeRequest.put(key,lockKey);
-                }
-                else {
-                    _log.briefInfo("Found lock key for:"+ key);
-                }
+                Object lockKey= activeRequest.computeIfAbsent(key, k -> new Object());
                 synchronized (lockKey) {
                     frAry= getFromCache(key);
                     if (frAry!=null) {

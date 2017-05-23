@@ -5,7 +5,6 @@ package edu.caltech.ipac.visualize.net;
 
 
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.HostPort;
 import edu.caltech.ipac.util.download.NetworkManager;
@@ -17,10 +16,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
-import static edu.caltech.ipac.visualize.net.IrsaImageParams.IrsaTypes.IRIS;
-import static edu.caltech.ipac.visualize.net.IrsaImageParams.IrsaTypes.ISSA;
-import static edu.caltech.ipac.visualize.net.IrsaImageParams.IrsaTypes.MSX;
-import static edu.caltech.ipac.visualize.net.IrsaImageParams.IrsaTypes.TWOMASS;
+import static edu.caltech.ipac.visualize.net.IrsaImageParams.IrsaTypes.*;
 
 /**
  * @author Trey Roby
@@ -29,12 +25,7 @@ import static edu.caltech.ipac.visualize.net.IrsaImageParams.IrsaTypes.TWOMASS;
 public class IrsaImageGetter {
 
 
-    public static String lowlevelGetIrsaImage(IrsaImageParams params,
-                                            File            outFile) 
-                                           throws FailedRequestException,
-                                                  IOException {
-        ClientLog.message("Retrieving image from IRSA");
-
+    public static void lowlevelGetIrsaImage(IrsaImageParams params, File outFile) throws FailedRequestException, IOException {
         HostPort hp= NetworkManager.getInstance().getServer(NetworkManager.IRSA);
         String cgiapp= null;
 
@@ -57,17 +48,14 @@ public class IrsaImageGetter {
 
         String file = outFile.getPath();
 
-        String sugestedFileName= getURL(hp, cgiapp, parms, file);
-
-        return sugestedFileName;
+        getURL(hp, cgiapp, parms, file, params.getType());
     }
 
-    public static String getURL(HostPort         hp,
-                                String           app,
-                                URLParms         parms,
-                                String           fileName) throws IOException,
-                                                                  FailedRequestException {
-        String                retval= null;
+    public static void getURL(HostPort         hp,
+                              String           app,
+                              URLParms         parms,
+                              String           fileName,
+                              IrsaImageParams.IrsaTypes type) throws IOException, FailedRequestException {
         URL url;
         URLConnection conn;
         File                  file= new File(fileName);
@@ -75,12 +63,10 @@ public class IrsaImageGetter {
 
         req = "https://" + hp.getHost() + ":" + hp.getPort() + app;
 
-        if(parms.getLength() > 0)
-        {
+        if(parms.getLength() > 0) {
             req = req + "?";
 
-            for(int i=0; i<parms.getLength(); ++i)
-            {
+            for(int i=0; i<parms.getLength(); ++i) {
                 if(i != 0)
                     req = req + "&";
 
@@ -93,30 +79,42 @@ public class IrsaImageGetter {
         try {
             url  = new URL(req);
             conn = url.openConnection();
-            retval= URLDownload.getSugestedFileName(conn);
             String contentType = conn.getContentType();
-            ClientLog.message(true,"fileName: " + fileName);
 
             if (contentType != null && contentType.startsWith("text/")) {
                 String htmlErr= URLDownload.getStringFromOpenURL(conn,null);
-                throw new FailedRequestException(
-                        htmlErr,
-                        "The IRSA server is reporting an error- " +
-                                "the IRSA error message was displayed to the user.",
-                        true, null );
+                String msg;
+
+                switch (type) {
+                    case ISSA:
+                        msg= "ISSA service failed";
+                        break;
+                    case TWOMASS:
+                        msg= "2MASS service failed";
+                        break;
+                    case IRIS:
+                        msg= "IRSA service failed";
+                        break;
+                    case MSX:
+                        if (htmlErr.contains("does not lie on an image")) {
+                            msg= "MSX: Area not covered";
+                        } else {
+                            msg= "MSX service failed";
+                        }
+                        break;
+                    default:
+                        msg= "Service failed";
+                        break;
+                }
+                throw new FailedRequestException( msg, "The IRSA server is reporting an error- " + htmlErr );
             }
 
             URLDownload.getDataToFile(conn, file, null);
 
 
-        } catch (MalformedURLException me){
-            ClientLog.warning(true,me.toString());
-            throw new FailedRequestException(
-                    FailedRequestException.SERVICE_FAILED,
-                    "detail in exception", me );
+        } catch (MalformedURLException e){
+            throw e;
         }
-
-        return retval;
     }
 
 }

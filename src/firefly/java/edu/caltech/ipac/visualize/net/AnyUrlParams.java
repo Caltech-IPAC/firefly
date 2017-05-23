@@ -4,7 +4,6 @@
 package edu.caltech.ipac.visualize.net;
 
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.download.BaseNetParams;
 
 import java.io.File;
@@ -20,7 +19,6 @@ public class AnyUrlParams extends BaseNetParams {
     private Map<String,String> cookies= null;
     private String _loginName= null;
     private String _securityCookie= null;
-    private long _cacheLifespan = 0;
     private boolean _checkForNewer= false;
     private List<String> _localFileExtensions = null;
     private String _desc = null;
@@ -71,7 +69,6 @@ public class AnyUrlParams extends BaseNetParams {
 
     public void setLoginName(String name) { _loginName= name; }
     public void setSecurityCookie(String cookieName) { _securityCookie= cookieName; }
-    public void setCacheLifespanInSec(long lifeSpan) { _cacheLifespan= lifeSpan; }
     public void setMaxSizeToDownload(long max) {_maxSizeToDownload= max;}
     public long getMaxSizeToDownload() {return _maxSizeToDownload;}
     public void setFileDir(File dir) {_dir= dir;}
@@ -82,20 +79,6 @@ public class AnyUrlParams extends BaseNetParams {
 
     public boolean isCompressedFileName() {
         return getUniqueString().toLowerCase().endsWith(FileUtil.GZ);
-    }
-
-    public CacheKey getUncompressedKey() {
-        if (isCompressedFileName()) {
-            return new CacheKey() {
-                public String getUniqueString() {
-                    return  FileUtil.getBase(AnyUrlParams.this.getUniqueString());
-                }
-            };
-        }
-        else {
-            return this;
-        }
-
     }
 
     public void addCookie(String key, String value) {

@@ -29,7 +29,7 @@ public class VisContext {
 
     public static final String PLOT_ABORTED= "Plot aborted by client";
     public static final long   FITS_MAX_SIZE = AppProperties.getLongProperty("visualize.fits.MaxSizeInBytes",
-                                                                              (long)(FileUtil.GIG*2));
+                                                                              (long)(FileUtil.GIG*10));
 
     private static boolean _initialized= false;
     private static boolean _initializedCounters= false;

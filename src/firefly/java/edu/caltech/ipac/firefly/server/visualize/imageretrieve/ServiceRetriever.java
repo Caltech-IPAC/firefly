@@ -60,7 +60,7 @@ public class ServiceRetriever implements FileRetriever {
                 retval = getSloanDSSPlot(request);
                 break;
             case WISE:
-                retval = getWisePlotNEW(request);
+                retval = getWisePlot(request);
                 break;
             default:
                 retval = null;
@@ -150,17 +150,8 @@ public class ServiceRetriever implements FileRetriever {
     }
 
     private FileInfo getMsxPlot(WebPlotRequest request) throws FailedRequestException, GeomException {
-        try {
-            FileInfo fi= getIrsaPlot(request, IrsaImageParams.IrsaTypes.MSX);
-            return fi.copyWithDesc("MSX Image");
-        } catch (FailedRequestException e) {
-            if (e.getUserMessage().contains("does not lie on an image")) {
-                throw new FailedRequestException("Location not covered by MSX",
-                                                 e.getUserMessage() + " --- " + e.getDetailMessage());
-            } else {
-                throw e;
-            }
-        }
+        FileInfo fi= getIrsaPlot(request, IrsaImageParams.IrsaTypes.MSX);
+        return fi.copyWithDesc("MSX Image");
     }
 
     private FileInfo getIrsaPlot(WebPlotRequest request,
@@ -187,7 +178,7 @@ public class ServiceRetriever implements FileRetriever {
 
 
 
-    private FileInfo getWisePlotNEW(WebPlotRequest r) throws FailedRequestException, GeomException {
+    private FileInfo getWisePlot(WebPlotRequest r) throws FailedRequestException, GeomException {
         Circle circle = PlotServUtils.getRequestArea(r);
         WorldPt wp = circle.getCenter();
         wp = Plot.convert(wp, CoordinateSys.EQ_J2000);
@@ -210,7 +201,7 @@ public class ServiceRetriever implements FileRetriever {
         try {
             return LockingVisNetwork.retrieve(params);
         } catch (SecurityException e) {
-            throw new FailedRequestException("Error cause by failed reprojection", "Geom failed", e);
+            throw new FailedRequestException("Reprojection failed", "Geom failed", e);
         }
     }
 

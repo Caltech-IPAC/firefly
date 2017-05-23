@@ -7,9 +7,9 @@
  */
 package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -18,6 +18,7 @@ import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.GeomException;
 
 import java.io.File;
+import java.net.SocketException;
 
 /**
  * @author tatianag
@@ -44,10 +45,22 @@ public class ProcessorFileRetriever implements FileRetriever {
             if (!fi.hasAccess()) {
                 throw new SecurityException("Access is not permitted.");
             }
+
+            int responseCode= fi.getResponseCode();
+            if (responseCode>=300) {
+                throw new FailedRequestException(fi.getResponseCodeMsg());
+            }
             File f= new File(fi.getInternalFilename());
             return new FileInfo(f, f.getName());
         } catch (DataAccessException dae) {
-            throw new FailedRequestException("Unable to get file location info", dae.getMessage(), dae);
+            if (dae.getCause() instanceof SocketException) {
+                throw new FailedRequestException("FITS URL server unavailable", "Details in exception", dae);
+            }
+            else {
+                throw new FailedRequestException(dae.getMessage(), dae.getMessage(), dae);
+            }
+        } catch (FailedRequestException e) {
+            throw e;
         } catch (Exception e) {
             throw new FailedRequestException("Unable to get file location info", e.getMessage(), e);
         }

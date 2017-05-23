@@ -11,14 +11,14 @@ package edu.caltech.ipac.util.download;
 public class FailedRequestException extends Exception {
 
     static public final String SERVICE_FAILED=  "Service Failed";
-    private String     _detailMessage;
+    private String detailMessage;
 
     /**
      * Create a new FailedRequestException Exception.
      * @param userMessage the error message.
      */
     public FailedRequestException(String userMessage) {
-        this(userMessage, null);
+        this(userMessage, "", null);
     }
 
     /**
@@ -29,35 +29,29 @@ public class FailedRequestException extends Exception {
     public FailedRequestException(String mess, String detailMessage) {
         this(mess, detailMessage, null);
     }
+
+    /**
+     * Create a new FailedRequestException Exception. The detail message will be the cause message
+     * @param mess the error message.
+     * @param e the original Exception
+     */
+    public FailedRequestException(String mess, Throwable e) {
+        this(mess,e!=null ? e.getMessage() : "", e);
+    }
+
     /**
      * Create a new FailedRequestException Exception.
      * @param mess the error message.
      * @param detailMessage the user message
      * @param e the original Exception
      */
-    public FailedRequestException(String    mess, 
-                                  String    detailMessage, 
-                                  Throwable e) {
-        
-        this(mess, detailMessage, false, e);
+    public FailedRequestException(String mess, String detailMessage, Throwable e) {
+        super(mess,e);
+        this.detailMessage = detailMessage;
     }
 
-    /**
-     * Create a new FailedRequestException Exception.
-     * @param userMessage the error message.
-     * @param detailMessage the user message
-     * @param userMessageHtml html flag 
-     * @param e the original Exception
-     */
-    public FailedRequestException(String     userMessage, 
-                                  String     detailMessage,
-                                  boolean    userMessageHtml,
-                                  Throwable  e) {
-        super(userMessage,e);
-        _detailMessage      = detailMessage;
-    }
 
     public String     getUserMessage()       { return getMessage(); }
-    public String     getDetailMessage()     { return _detailMessage; }
+    public String     getDetailMessage()     { return detailMessage; }
 
 }

@@ -16,7 +16,8 @@ public class FileInfo implements HasAccessInfo, Serializable {
 
     public static final String INTERNAL_NAME= "internalName";
     public static final String EXTERNAL_NAME= "externalName";
-    public static final String RESPONSE_CODE = "responseCode ";
+    public static final String RESPONSE_CODE = "responseCode";
+    public static final String RESPONSE_CODE_MSG = "responseCodeMsg";
     public static final String FILE_DOWNLOADED= "fileDownloaded";
     public static final String SIZE_IN_BYTES= "sizeInBytes";
     public static final String DESC="desc";
@@ -47,17 +48,18 @@ public class FileInfo implements HasAccessInfo, Serializable {
         this.resolver = resolver;
     }
 
-    public FileInfo(File file, String desc) { this(file, null, desc, 200); }
+    public FileInfo(File file, String desc) { this(file, null, desc, 200, "OK"); }
 
-    public FileInfo(File file) { this(file, file.getName(), 200); }
+    public FileInfo(File file) { this(file, file.getName(), 200, "OK"); }
 
-    public FileInfo(File file, String externalName, int responseCode) {
-        this(file, externalName, externalName, responseCode);
+    public FileInfo(File file, String externalName, int responseCode, String responseCodeMsg) {
+        this(file, externalName, externalName, responseCode, responseCodeMsg);
     }
 
-    private FileInfo(File file, String externalName, String desc, int responseCode) {
+    private FileInfo(File file, String externalName, String desc, int responseCode, String responseCodeMsg) {
         setInternalName( file != null ? file.getAbsolutePath() : null);
         putAttribute(RESPONSE_CODE, responseCode + "");
+        putAttribute(RESPONSE_CODE_MSG, responseCodeMsg!=null ? responseCodeMsg : "");
         setSizeInBytes(file != null ? file.length()  : -1 );
 
         if (externalName != null) {
@@ -87,9 +89,9 @@ public class FileInfo implements HasAccessInfo, Serializable {
 
     public File getFile() {  return new File(attributes.get(INTERNAL_NAME)); }
     public String getDesc() { return attributes.get(DESC); }
-    public boolean isDownloaded() { return StringUtils.getBoolean(attributes.get(FILE_DOWNLOADED), true); }
     public boolean isBlank() { return StringUtils.getBoolean(attributes.get(BLANK), false); }
     public int getResponseCode() { return StringUtils.getInt(attributes.get(RESPONSE_CODE), 200); }
+    public String getResponseCodeMsg() { return attributes.get(RESPONSE_CODE_MSG); }
 
     public void addRelatedData(RelatedData rData) {
         if (relatedData==null) relatedData= new ArrayList<>();

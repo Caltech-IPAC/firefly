@@ -16,8 +16,7 @@ import java.util.Map;
 public final class ImageFileRetrieverFactory {
 
     private static final ImageFileRetrieverFactory _instance= new ImageFileRetrieverFactory();
-    private final Map<RequestType, FileRetriever> _types=
-                      new HashMap<RequestType, FileRetriever>();
+    private final Map<RequestType, FileRetriever> _types= new HashMap<>();
 
     private ImageFileRetrieverFactory() {
         _types.put(RequestType.FILE,      new LocalFileRetriever());
@@ -45,6 +44,4 @@ public final class ImageFileRetrieverFactory {
         }
         return _instance._types.get(type);
     }
-
 }
-

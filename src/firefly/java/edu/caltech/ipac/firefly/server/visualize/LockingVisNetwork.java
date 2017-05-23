@@ -4,14 +4,15 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.download.BaseNetParams;
 import edu.caltech.ipac.util.download.CacheHelper;
 import edu.caltech.ipac.util.download.DownloadEvent;
 import edu.caltech.ipac.util.download.DownloadListener;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.visualize.net.AnyUrlGetter;
+import edu.caltech.ipac.util.download.ResponseMessage;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
 import edu.caltech.ipac.visualize.net.VisNetwork;
 
@@ -21,12 +22,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-/**
- * User: roby
- * Date: Feb 26, 2010
- * Time: 10:43:21 AM
- */
-
+import java.util.Objects;
 
 /**
  * This class will download files via VisNetwork.  However it also locks so that two of the same request do not happen
@@ -57,16 +53,10 @@ public class LockingVisNetwork {
 
     private static FileInfo lockingRetrieve(BaseNetParams params, boolean unzip)
             throws FailedRequestException, SecurityException {
-        FileInfo retval = null;
+        Objects.requireNonNull(params);
+        FileInfo retval;
         try {
-            Object lockKey;
-            synchronized (_activeRequest) {
-                lockKey= _activeRequest.get(params);
-                if (lockKey==null) {
-                    lockKey= new Object();
-                    _activeRequest.put(params,lockKey);
-                }
-            }
+            Object lockKey= _activeRequest.computeIfAbsent(params, k -> new Object());
             synchronized (lockKey) {
                 DownloadListener dl = null;
                 if (params.getStatusKey() != null) { // todo: the download listener has very specific behavior
@@ -81,12 +71,12 @@ public class LockingVisNetwork {
                     fd = VisNetwork.getImage(params, dl);
                 }
 
-                if (unzip) retval= new FileInfo(unzip(fd.getFile()),fd.getExternalName(),fd.getResponseCode());
+                if (unzip) retval= new FileInfo(unzip(fd.getFile()),fd.getExternalName(),fd.getResponseCode(), fd.getResponseCodeMsg());
                 else       retval= fd;
 
             }
         } finally {
-            if (params != null) _activeRequest.remove(params);
+            _activeRequest.remove(params);
         }
         return retval;
     }
@@ -118,28 +108,21 @@ public class LockingVisNetwork {
      * @return a FileInfo of file returned from this URL.
      * @throws FailedRequestException when request fails
      */
-    private static FileInfo retrieveURL(AnyUrlParams params, DownloadListener dl)
-            throws FailedRequestException {
-        FileInfo retval= CacheHelper.getFileData(params);
-        File fileName= (retval==null) ? CacheHelper.makeFile(params.getFileDir(), params.getUniqueString()) : retval.getFile();
+    private static FileInfo retrieveURL(AnyUrlParams params, DownloadListener dl) throws FailedRequestException {
+        FileInfo fileInfo= CacheHelper.getFileData(params);
+        if (fileInfo!=null && !params.getCheckForNewer()) return fileInfo;
 
-        if (retval == null || params.getCheckForNewer())  {          // if not in cache or is in cache & we want to see if there is a newer version
-            FileInfo fd= AnyUrlGetter.lowlevelGetUrlToFile(params,fileName,false,dl);
-
-            CacheKey saveKey= params;
-            if (fd.isDownloaded() || retval==null) {
-                retval= fd;
-                CacheHelper.putFile(saveKey,fd);
-            }
+        try {
+            File fileName= (fileInfo==null) ? CacheHelper.makeFile(params.getFileDir(), params.getUniqueString()) : fileInfo.getFile();
+            fileInfo= URLDownload.getDataToFile(params.getURL(), fileName, params.getCookies(), null,
+                                                dl, false,true, params.getMaxSizeToDownload());
+            if (fileInfo.getResponseCode()==200) CacheHelper.putFile(params,fileInfo);
+            return fileInfo;
+        } catch (Exception e) {
+            ClientLog.warning(e.toString());
+            throw ResponseMessage.simplifyNetworkCallException(e);
         }
-        return retval;
     }
-
-
-
-    //======================================
-    //======================================
-    //======================================
 
 
 

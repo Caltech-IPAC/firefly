@@ -42,12 +42,12 @@ public class URLDownload {
     /**
      * Date format pattern used to parse HTTP date headers in RFC 1036 format.
      */
-    public static final String PATTERN_RFC1036 = "EEEE, dd-MMM-yy HH:mm:ss zzz";
+    private static final String PATTERN_RFC1036 = "EEEE, dd-MMM-yy HH:mm:ss zzz";
 
     /**
      * Date format pattern used to parse HTTP date headers in ANSI C
      */
-    public static final String PATTERN_ASCTIME = "EEE MMM d HH:mm:ss yyyy";
+    private static final String PATTERN_ASCTIME = "EEE MMM d HH:mm:ss yyyy";
 
     public static final String DEFAULT_PATTERNS[] = {PATTERN_ASCTIME, PATTERN_RFC1036, PATTERN_RFC1123};
     private static final int BUFFER_SIZE = FileUtil.BUFFER_SIZE;
@@ -71,16 +71,14 @@ public class URLDownload {
      * @param outfile  write the url data to this file
      * @param dl       listen for progress and cancel if necessary
      * @return an array of FileInfo objects
-     * @throws FailedRequestException Stop externally probably by user
-     * @throws IOException            any network or file error
+     * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
      */
     public static FileInfo getDataToFileUsingPost(URL url,
                                                   String postData,
                                                   Map<String, String> cookies,
                                                   Map<String, String> requestHeader,
                                                   File outfile,
-                                                  DownloadListener dl, int timeout)
-            throws FailedRequestException, IOException {
+                                                  DownloadListener dl, int timeout) throws FailedRequestException {
         try {
             URLConnection c = makeConnection(url, cookies, requestHeader, false);
             //TODO test the timeout for sql query, added by LZ
@@ -95,7 +93,7 @@ public class URLDownload {
             }
         } catch (IOException e) {
             logError(url, postData, e);
-            throw e;
+            throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e);
         }
     }
 
@@ -196,10 +194,9 @@ public class URLDownload {
      * @param url     the url to get data from
      * @param outfile The name of the file to write the data to. uncompress it first
      * @return an array of FileInfo objects
-     * @throws FailedRequestException Stop externally probably by user
-     * @throws IOException            any network or file error
+     * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
      */
-    public static FileInfo getDataToFile(URL url, File outfile) throws FailedRequestException, IOException {
+    public static FileInfo getDataToFile(URL url, File outfile) throws FailedRequestException {
         return getDataToFile(url, outfile, null, false, true);
     }
 
@@ -208,11 +205,9 @@ public class URLDownload {
      * @param outfile write the url data to this file
      * @param dl      listen for progress and cancel if necessary
      * @return an array of FileInfo objects
-     * @throws FailedRequestException Stop externally probably by user
-     * @throws IOException            any network or file error
+     * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
      */
-    public static FileInfo getDataToFile(URL url, File outfile, DownloadListener dl) throws FailedRequestException,
-            IOException {
+    public static FileInfo getDataToFile(URL url, File outfile, DownloadListener dl) throws FailedRequestException {
         return getDataToFile(url, outfile, dl, false, true);
     }
 
@@ -221,11 +216,9 @@ public class URLDownload {
      * @param outfile    The name of the file to write the data to.
      * @param uncompress if this data appears to be compressed then uncompress it first
      * @return an array of FileInfo objects
-     * @throws FailedRequestException Stop externally probably by user
-     * @throws IOException            any network or file error
+     * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
      */
-    public static FileInfo getDataToFile(URL url, File outfile, boolean uncompress) throws FailedRequestException,
-            IOException {
+    public static FileInfo getDataToFile(URL url, File outfile, boolean uncompress) throws FailedRequestException {
         return getDataToFile(url, outfile, null, null, null, false, uncompress, 0);
     }
 
@@ -240,15 +233,13 @@ public class URLDownload {
      *                             the directory. if false then the outfile parameter specifies the filename
      * @param uncompress           if this data appears to be compressed then uncompress it first
      * @return an array of FileInfo objects
-     * @throws FailedRequestException Stop externally probably by user
-     * @throws IOException            any network or file error
+     * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
      */
     public static FileInfo getDataToFile(URL url,
                                            File outfile,
                                            DownloadListener dl,
                                            boolean useSuggestedFilename,
-                                           boolean uncompress) throws FailedRequestException,
-            IOException {
+                                           boolean uncompress) throws FailedRequestException {
         return getDataToFile(url, outfile, null, null, dl, useSuggestedFilename, uncompress, 0L);
     }
 
@@ -264,8 +255,7 @@ public class URLDownload {
      *                             the directory. if false then the outfile parameter specifies the filename
      * @param uncompress           if this data appears to be compressed then uncompress it first
      * @return an array of FileInfo objects
-     * @throws FailedRequestException Stop externally probably by user
-     * @throws IOException            any network or file error
+     * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
      */
     public static FileInfo getDataToFile(URL url,
                                            File outfile,
@@ -274,11 +264,13 @@ public class URLDownload {
                                            DownloadListener dl,
                                            boolean useSuggestedFilename,
                                            boolean uncompress,
-                                           long maxFileSize) throws FailedRequestException,
-            IOException {
-        URLConnection conn = makeConnection(url, cookies, requestProperties, true);
-        return getDataToFile(conn, outfile, dl,
-                useSuggestedFilename, uncompress, true, maxFileSize);
+                                           long maxFileSize) throws FailedRequestException {
+        try {
+            URLConnection conn = makeConnection(url, cookies, requestProperties, true);
+            return getDataToFile(conn, outfile, dl, useSuggestedFilename, uncompress, true, maxFileSize);
+        } catch (IOException e) {
+            throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e);
+        }
     }
 
 //================================================================================
@@ -291,11 +283,9 @@ public class URLDownload {
      * @param conn    the URLConnection
      * @param outfile write the url data to this file
      * @return an array of FileInfo objects
-     * @throws FailedRequestException Stop externally probably by user
-     * @throws IOException            any network or file error
+     * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
      */
-    public static FileInfo getDataToFile(URLConnection conn, File outfile)
-            throws FailedRequestException, IOException {
+    public static FileInfo getDataToFile(URLConnection conn, File outfile) throws FailedRequestException{
         return getDataToFile(conn, outfile, true);
     }
 
@@ -305,11 +295,10 @@ public class URLDownload {
      * @param outfile    write the url data to this file
      * @param uncompress if this data appears to be compressed then uncompress it first
      * @return an array of FileInfo objects
-     * @throws FailedRequestException Stop externally probably by user
-     * @throws IOException            any network or file error
+     * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
      */
     public static FileInfo getDataToFile(URLConnection conn, File outfile, boolean uncompress)
-            throws FailedRequestException, IOException {
+            throws FailedRequestException {
         return getDataToFile(conn, outfile, null, false, uncompress, true, 0L,null);
     }
 
@@ -318,11 +307,10 @@ public class URLDownload {
      * @param outfile write the url data to this file
      * @param dl      listen for progress and cancel if necessary
      * @return an array of FileInfo objects
-     * @throws FailedRequestException Stop externally probably by user
-     * @throws IOException            any network or file error
+     * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
      */
     public static FileInfo getDataToFile(URLConnection conn, File outfile, DownloadListener dl)
-            throws FailedRequestException, IOException {
+            throws FailedRequestException {
         return getDataToFile(conn, outfile, dl, false, true, true, 0L,null);
     }
 
@@ -332,7 +320,7 @@ public class URLDownload {
                                          boolean useSuggestedFilename,
                                          boolean uncompress,
                                          boolean onlyIfModified,
-                                         long maxFileSize) throws FailedRequestException, IOException {
+                                         long maxFileSize) throws FailedRequestException {
         return getDataToFile(conn, outfile, dl, useSuggestedFilename, uncompress, onlyIfModified, maxFileSize,null);
     }
 
@@ -351,8 +339,7 @@ public class URLDownload {
      * @param maxFileSize          maximum that can be downloaded
      * @param postData             If non-null then send as post data
      * @return an array of FileInfo objects
-     * @throws FailedRequestException Stop externally probably by user
-     * @throws IOException            any network or file error
+     * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
      */
     public static FileInfo getDataToFile(URLConnection conn,
                                          File outfile,
@@ -361,7 +348,7 @@ public class URLDownload {
                                          boolean uncompress,
                                          boolean onlyIfModified,
                                          long maxFileSize,
-                                         String postData) throws FailedRequestException, IOException {
+                                         String postData) throws FailedRequestException {
         try {
             FileInfo outFileData;
             int responseCode= 200;
@@ -429,18 +416,18 @@ public class URLDownload {
             netCopy(in, out, conn, maxFileSize, dl);
 
             long elapse = System.currentTimeMillis() - start;
-            outFileData = new FileInfo(f, suggested, responseCode);
+            outFileData = new FileInfo(f, suggested, responseCode, ResponseMessage.getHttpResponseMessage(responseCode));
             logDownload(outFileData, conn.getURL().toString(), elapse );
 
             if (responseCode>=300 && responseCode<400) {
-                DException de= new DException(outFileData, responseCode, null);
-                throw new FailedRequestException("Network request failed", "Error: "+responseCode, de);
+                throw new FailedRequestException(ResponseMessage.getHttpResponseMessage(responseCode),
+                                                 "Response Code: "+responseCode);
             }
 
             return outFileData;
         } catch (IOException e) {
             logError(conn.getURL(), e);
-            throw e;
+            throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e),e);
         }
     }
 
@@ -486,8 +473,8 @@ public class URLDownload {
         long contLen = conn.getContentLength();
         if (maxFileSize > 0 && contLen > 0 && contLen > maxFileSize) {
             throw new FailedRequestException(
-                    "File too big to download, File Size: " + FileUtil.getSizeAsString(contLen) +
-                            ", Max Size: " + FileUtil.getSizeAsString(maxFileSize),
+                    "File too big to download, " + FileUtil.getSizeAsString(contLen) +
+                            ", Max: " + FileUtil.getSizeAsString(maxFileSize),
                     "URL content length header reports content size greater then max size passed as parameter. " +
                             "Content length:  " + contLen + ", maxFileSize: " + maxFileSize);
         }
@@ -511,7 +498,8 @@ public class URLDownload {
                 urlConn.setIfModifiedSince(outfile.lastModified());
                 if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
                     ClientLog.message("Not downloading, already have current version");
-                    retval = new FileInfo(outfile, getSugestedFileName(urlConn), HttpURLConnection.HTTP_NOT_MODIFIED);
+                    retval = new FileInfo(outfile, getSugestedFileName(urlConn), HttpURLConnection.HTTP_NOT_MODIFIED,
+                                     ResponseMessage.getHttpResponseMessage(HttpURLConnection.HTTP_NOT_MODIFIED));
                     retval.putAttribute(FileInfo.FILE_DOWNLOADED,false+"");
                 }
             }
@@ -604,8 +592,6 @@ public class URLDownload {
         downloader.setDownloadListener(dl);
         try {
             downloader.download();
-        } catch (VetoDownloadException de) {
-            throw new FailedRequestException("The download was aborted");
         } finally {
             FileUtil.silentClose(in);
             FileUtil.silentClose(out);
@@ -756,40 +742,6 @@ public class URLDownload {
 
 
 //======================================================================
-//------------------ Package Methods -----------------------------------
-//======================================================================
-
-
-//    static String getContentTypeExtension(String contentType) {
-//        String retval = null;
-//        if (contentType != null && contentType.indexOf('/') > 2) {
-//            String s[] = contentType.split("/");
-//            if (s.length == 2) {
-//                String ext = s[1];
-//                if (!ext.equals("octet-stream")) retval = ext;
-//            }
-//        }
-//        return retval;
-//    }
-//
-//
-//    public static String getHeaderIgnoreCase(URLConnection conn, String header) {
-//        String retval = null;
-//        Set hSet = conn.getHeaderFields().entrySet();
-//        Map.Entry entry;
-//        String key;
-//        for (Iterator j = hSet.iterator(); (j.hasNext() && retval == null); ) {
-//            entry = (Map.Entry) j.next();
-//            key = (String) entry.getKey();
-//            if (key != null && key.equalsIgnoreCase(header)) {
-//                retval = (String) ((List) entry.getValue()).get(0);
-//            }
-//        }
-//        return retval;
-//    }
-
-
-//======================================================================
 //------------------ Private / Protected / Methods -----------------------
 //======================================================================
 
@@ -838,33 +790,6 @@ public class URLDownload {
             retval = new File(outfile.getParentFile(), fStr);
         }
         return retval;
-    }
-
-//    private static File adjustExt(URLConnection conn, File originalFile) {
-//        File retval = originalFile;
-//        String ctExt = getContentTypeExtension(conn.getContentType());
-//        if (ctExt != null) {
-//            String base = FileUtil.getBase(originalFile);
-//            File path = originalFile.getParentFile();
-//            retval = new File(path, base + "." + ctExt);
-//        }
-//        return retval;
-//    }
-
-
-    public static class DException extends IOException {
-        private FileInfo fileInfo;
-        private int responseCode;
-
-        public DException(FileInfo fi, int responseCode, Throwable cause) {
-            super(cause);
-            this.fileInfo = fi;
-            this.responseCode= responseCode;
-        }
-
-
-        public FileInfo getFileInfo() { return fileInfo; }
-        public int getResponseCode() { return responseCode; }
     }
 
 }
