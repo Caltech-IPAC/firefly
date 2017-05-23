@@ -188,7 +188,7 @@ function evaluateBrowser(ua,p) {
             retValue.majorV= 6;
         }
     }
-    else if (ua.includes('trident') && !ua.contains('edge')) {
+    else if (ua.includes('trident') && !ua.includes('edge')) {
         retValue= parseVersion(ua,IE_11_KEY);
         retValue.browser= Browser.IE;
     }else if (ua.includes('edge')) {
