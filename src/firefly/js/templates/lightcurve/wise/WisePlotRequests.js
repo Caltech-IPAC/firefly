@@ -101,7 +101,7 @@ export function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, param
 
         // TODO the value ImageSet should be collected in the server or passed in here from properties,
         // specially to handle WISE internal case
-        sr.setParam('ImageSet', 'merge');
+        //sr.setParam('ImageSet', 'merge'); // see property 'ibe.public_release'
 
         sr.setParam('band', `${band}`);
         sr.setParam('scangrp', `${scangrp}`);

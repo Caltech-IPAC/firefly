@@ -40,6 +40,9 @@ public class LightCurveFileGroupsProcessor extends FileGroupsProcessor {
 
     private final String IBE_HOST = AppProperties.getProperty("wise.ibe.host");
 
+    // list (CSV) of image datasets, i.e. 'merge' or 'newowiser_yr1, allsky'
+    private final String IBE_IMAGESET = AppProperties.getProperty("wise.ibe.imageSet");
+
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         try {
             DownloadRequest dlReq = (DownloadRequest) request;
@@ -94,9 +97,9 @@ public class LightCurveFileGroupsProcessor extends FileGroupsProcessor {
         String baseFilename = WiseFileRetrieve.WISE_FILESYSTEM_BASEPATH;
 
         //TODO this should come from the request but how dealing with public and internal here
-        String schemaGroup = request.getBooleanParam("wise_public_release", true) ? "merge" : "merge_int";//WiseRequest.getTrueSchema(request.getSearchRequest());
+        String schemaGroup = AppProperties.getBooleanProperty("ibe.public_release", true) ? WiseRequest.MERGE : WiseRequest.MERGE_INT;//WiseRequest.getTrueSchema(request.getSearchRequest());
 
-        String tableSchema = schemaGroup.equals("merge") ? "merge_p1bm_frm" : "merge_i1bm_frm";
+        String tableSchema = getTable(schemaGroup);
 
         request.setParam(WiseRequest.SCHEMA, schemaGroup);
 
@@ -306,7 +309,7 @@ public class LightCurveFileGroupsProcessor extends FileGroupsProcessor {
                         estSize = L1B_FITS_SIZE_ART;
                     }
                     String zipPath = "";
-                    filenameInfo = srcId + "-" + filenameInfo;
+                    filenameInfo = (srcId==null?"":srcId + "-") + filenameInfo;
                     if (zipFolders) {
                         zipPath = WiseFileRetrieve.createZipPath_1b(productLevel, scanId, frameNum);
                     }
@@ -329,6 +332,20 @@ public class LightCurveFileGroupsProcessor extends FileGroupsProcessor {
 
 
         return fgArr;
+    }
+
+
+    /**
+     * Get level 1 wise table from WiseRequest.TABLE_MAP
+     * The name can change, better to take from unique place
+     * @param schema schema name merge or merge_int
+     * @return table name
+     * @see WiseRequest
+     */
+    public String getTable(String schema) {
+        String imageSet = schema;
+        String[] names = WiseRequest.TABLE_MAP.get(imageSet + "|" + "1b");
+        return names == null || names.length < 2 ? null : names[0];
     }
 }
 
