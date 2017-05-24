@@ -4,7 +4,7 @@
 
 import {take} from 'redux-saga/effects';
 import Enum from 'enum';
-import {has,get,isEmpty,isString,isObject, flattenDeep,values, isUndefined} from 'lodash';
+import {get,isEmpty,isObject, flattenDeep,values, isUndefined} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
 import {TitleOptions, isImageDataRequeestedEqual} from '../WebPlotRequest.js';
 import {CoordinateSys} from '../CoordSys.js';
@@ -12,10 +12,10 @@ import {cloneRequest} from '../../tables/TableUtil.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE, TABLE_SORT} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
-import {primePlot, getPlotViewById, getDrawLayerByType} from '../PlotViewUtil.js';
+import {primePlot, getPlotViewById} from '../PlotViewUtil.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
 import {doFetchTable, getTblById, getActiveTableId, getColumnIdx, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
-import MultiViewCntlr, {getViewerItemIds, dispatchAddViewerItems, getMultiViewRoot, getViewer, IMAGE} from '../MultiViewCntlr.js';
+import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {DrawSymbol} from '../draw/PointDataObj.js';
 import {computeCentralPointAndRadius} from '../VisUtil.js';
@@ -31,18 +31,18 @@ export const CoverageType = new Enum(['X', 'BOX', 'BOTH', 'GUESS']);
 export const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
 
 const DEF_CORNER_COLS= ['ra1;dec1', 'ra2;dec2', 'ra3;dec3', 'ra4;dec4'];
-// const DEF_CENTER_COL= 'ra;dec;EQ_J2000';
 
 const COVERAGE_TARGET = 'COVERAGE_TARGET';
 const COVERAGE_RADIUS = 'COVERAGE_RADIUS';
 const COVERAGE_TABLE = 'COVERAGE_TABLE';
+const COVERAGE_CREATED = 'COVERAGE_CREATED';
 
 const PLOT_ID= 'CoveragePlot';
 
 
 const opStrList= [ 'title', 'tip', 'coveragetype', 'symbol', 'symbolSize', 'overlayPosition',
-                    'color', 'highlightedColor', 'multiCoverage', 'gridOn', 'useBlankPlot', 'fitType',
-                    'ignoreCatalogs',
+                   'color', 'highlightedColor', 'multiCoverage', 'gridOn', 'useBlankPlot', 'fitType',
+                   'ignoreCatalogs',
 ];
 
 /**
@@ -90,27 +90,18 @@ const overlayCoverageDrawing= makeOverlayCoverageDrawing();
 
 
 /**
- * this saga does the following:
- * <ul>
- *     <li>Then loops:
- *     <ul>
- *         <li>
- *         <li>
- *     </ul>
- * </ul>
- * @param viewerId
- * @param options
+ * Watch the tables and udpate coverage display
+ * @param {Object} options
  */
-
 export function* watchCoverage(options) {
 
     const {viewerId='DefCoverageId'}= options;
-    var decimatedTables=  {};
-    var tbl_id;
-    var paused= !get(getViewer(getMultiViewRoot(), viewerId), 'mounted' , false);
+    const decimatedTables=  {};
+    let tbl_id;
+    let paused= !get(getViewer(getMultiViewRoot(), viewerId), 'mounted' , false);
     options= Object.assign(defOptions,cleanUpOptions(options));
-    var displayedTableId= null;
-    var previousDisplayedTableId;
+    let displayedTableId= null;
+    let previousDisplayedTableId;
     while (true) {
         previousDisplayedTableId= displayedTableId;
         const action= yield take([TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,
@@ -202,10 +193,10 @@ function removeCoverage(tbl_id, decimatedTables) {
 
 /**
  * 
- * @param tbl_id
- * @param viewerId
+ * @param {string} tbl_id
+ * @param {string} viewerId
  * @param decimatedTables
- * @param options
+ * @param {CoverageOptions} options
  * @return {Array}
  */
 function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
@@ -222,7 +213,6 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
         pageSize : 1000000,
         inclCols : getCovColumnsForQuery(options, table)
     };
-    //var dataTooBigForSelection= false;
     if (table.totalRows>10000) {
         const cenCol= options.getCenterColumns(table);
         params.decimate=  serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000);
@@ -256,7 +246,16 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
 }
 
 
-
+/**
+ *
+ * @param {string} viewerId
+ * @param {TableData} table
+ * @param {CoverageOptions} options
+ * @param {string} tbl_id
+ * @param allRowsTable
+ * @param decimatedTables
+ * @param usesRadians
+ */
 function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, decimatedTables, usesRadians) {
     const {centralPoint, maxRadius}= computeSize(options, decimatedTables, allRowsTable, usesRadians);
 
@@ -287,7 +286,8 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
                     attributes: {
                         [COVERAGE_TARGET]: centralPoint,
                         [COVERAGE_RADIUS]: maxRadius,
-                        [COVERAGE_TABLE]: tbl_id
+                        [COVERAGE_TABLE]: tbl_id,
+                        [COVERAGE_CREATED]: true,
                     },
                     pvOptions: { userCanDeletePlots: false}
                 }
@@ -297,11 +297,22 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
 }
 
 
+/**
+ * Determine if the plotted request match the passed request.  If the plotted request is not plotter by this
+ * file then return true anyway.
+ * @param {WebPlotRequest} r
+ * @return {boolean}
+ */
 function isPlotted(r) {
     const pv= getPlotViewById(visRoot(),r.getPlotId());
     const plot= primePlot(pv);
     if (plot) {
-        return isImageDataRequeestedEqual(plot.plotState.getWebPlotRequest(), r);
+        if (plot.attributes[COVERAGE_CREATED]) {
+            return isImageDataRequeestedEqual(plot.plotState.getWebPlotRequest(), r);
+        }
+        else {
+            return true;
+        }
     }
     else if (get(pv,'request')) {
         return isImageDataRequeestedEqual(pv.request,r);
@@ -312,14 +323,20 @@ function isPlotted(r) {
 }
 
 
-
-
+/**
+ *
+ * @param {CoverageOptions} options
+ * @param decimatedTables
+ * @param allRowsTable
+ * @param usesRadians
+ * @return {*}
+ */
 function computeSize(options, decimatedTables,allRowsTable, usesRadians) {
     const ary= options.multiCoverage ? values(decimatedTables) : [allRowsTable];
-    var testAry= ary
+    let testAry= ary
         .filter( (t) => t && t!=='WORKING')
         .map( (t) => {
-            var ptAry= [];
+            let ptAry= [];
             const covType= getCoverageType(options,t);
             switch (covType) {
                 case CoverageType.X:
@@ -353,7 +370,7 @@ function makeOverlayCoverageDrawing() {
     /**
      *
      * @param decimatedTables
-     * @param options
+     * @param {CoverageOptions} options
      */
     return (decimatedTables, options) => {
         const plot=  primePlot(visRoot(),PLOT_ID);
@@ -382,6 +399,14 @@ function makeOverlayCoverageDrawing() {
 }
 
 
+/**
+ *
+ * @param {string} plotId
+ * @param {CoverageOptions} options
+ * @param {TableData} table
+ * @param {TableData} allRowsTable
+ * @param {string} color
+ */
 function addToCoverageDrawing(plotId, options, table, allRowsTable, color) {
 
     if (allRowsTable==='WORKING') return;
@@ -415,15 +440,14 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, color) {
     }
 }
 
-// function lookupColor(color, tbl_id) {
-//     if (!color) return undefined;
-//     return isString(color) ? color : color[tbl_id];
-// }
-// function lookupSymbol(symbol, tbl_id) {
-//     if (!symbol) return undefined;
-//     return !isObject(symbol) ? symbol[tbl_id] : symbol;
-// }
 
+/**
+ * look up a value from the CoverageOptions
+ * @param {CoverageOptions} options
+ * @param {string} key
+ * @param {string} tbl_id
+ * @return {*}
+ */
 function lookupOption(options, key, tbl_id) {
     const value= options[key];
     if (!value) return undefined;
@@ -515,7 +539,6 @@ function getCenterColumns(table) {
 
 
 function guessDefColumns(table) {
-    const DEF_CENTER_COL= 'ra;dec;EQ_J2000';
     const {columns}= table.tableData;
     const colList= columns.map( (c) => c.name.toLowerCase());
     if (colList.includes('ra') && colList.includes('dec')) return 'ra;dec;EQ_J2000';

@@ -92,7 +92,7 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
                 }
                 throw new DataAccessException("Service Error");
             }
-            else if (retval.getResponseCode()>400) {
+            else if (retval.getResponseCode()>305) {
                 throw new DataAccessException(retval.getResponseCodeMsg());
             }
         } catch (FailedRequestException e) {

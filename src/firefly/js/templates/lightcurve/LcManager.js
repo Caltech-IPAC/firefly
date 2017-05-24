@@ -549,7 +549,7 @@ function handleTableActive(layoutInfo, action) {
 
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
-        clearLcImages();
+        // clearLcImages();
         layoutInfo = setupImages(layoutInfo);
     }
 

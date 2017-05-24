@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {get} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, operateOnOthersInGroup,getPlotStateAry} from '../PlotViewUtil.js';
@@ -29,12 +30,12 @@ export function colorChangeActionCreator(rawAction) {
 
 
         if (!primePlot(pv).plotState.isThreeColor()) {
-            doColorChange(dispatcher,store,plotId,cbarId);
+            doColorChange(dispatcher,getState, store,plotId,cbarId);
         }
         operateOnOthersInGroup(store,pv, (pv) => {
             const p= primePlot(pv);
             if (p && !p.plotState.isThreeColor()) { // only do others that are not three color
-                doColorChange(dispatcher,store,pv.plotId,cbarId);
+                doColorChange(dispatcher,getState, store,pv.plotId,cbarId);
             }
         });
 
@@ -60,11 +61,11 @@ export function stretchChangeActionCreator(rawAction) {
         dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_START, payload: {plotId} } );
 
         const threeColor= plot.plotState.isThreeColor();
-        doStretch(dispatcher,store,plotId,stretchData);
+        doStretch(dispatcher,getState, store,plotId,stretchData);
         operateOnOthersInGroup(store,pv, (pv) => {
             const p= primePlot(pv);
             if (p && p.plotState.isThreeColor()===threeColor) { // only do others that are similar
-                doStretch(dispatcher,store,pv.plotId,stretchData);
+                doStretch(dispatcher,getState, store,pv.plotId,stretchData);
             }
         });
     };
@@ -126,12 +127,12 @@ function doCrop(dispatcher,pv,imagePt1, imagePt2, cropMultiAll) {
 
 
 
-function doStretch(dispatcher,store,plotId,stretchData) {
+function doStretch(dispatcher,getState, store,plotId,stretchData) {
 
     const plot= primePlot(store,plotId);
     dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_START, payload: {plotId, message:'Changing Stretch...'} } );
     callRecomputeStretch(plot.plotState,stretchData)
-        .then( (wpResult) => processPlotUpdate(dispatcher,plotId,wpResult,
+        .then( (wpResult) => processPlotUpdate(dispatcher,getState, store, plotId,wpResult,
                                    ImagePlotCntlr.STRETCH_CHANGE, ImagePlotCntlr.STRETCH_CHANGE_FAIL) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_FAIL, 
@@ -142,12 +143,12 @@ function doStretch(dispatcher,store,plotId,stretchData) {
 
 
 
-function doColorChange(dispatcher,store,plotId,cbarId) {
+function doColorChange(dispatcher,getState, store,plotId,cbarId) {
 
     const plot= primePlot(store,plotId);
     dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_START, payload: {plotId, message:'Changing Color...'} } );
     callChangeColor(plot.plotState,cbarId)
-        .then( (wpResult) => processPlotUpdate(dispatcher,plotId,wpResult,
+        .then( (wpResult) => processPlotUpdate(dispatcher,getState, store, plotId,wpResult,
                                       ImagePlotCntlr.COLOR_CHANGE, ImagePlotCntlr.COLOR_CHANGE_FAIL) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_FAIL, 
@@ -217,13 +218,23 @@ function makePlot(wpInit,pv) {
 /**
  *
  * @param dispatcher
+ * @param {Function} getState
+ * @param {VisRoot} oldStore
  * @param plotId
  * @param result
  * @param succActionType
  * @param failActionType
  */
-function processPlotUpdate(dispatcher, plotId, result, succActionType, failActionType) {
+function processPlotUpdate(dispatcher, getState, oldStore, plotId, result, succActionType, failActionType) {
     if (result.success) {
+
+        const currentVisRoot= getState()[IMAGE_PLOT_KEY];
+        const originalPlot= primePlot(oldStore,plotId);
+        const plot= primePlot(currentVisRoot,plotId);
+        if (originalPlot.plotImageId!==get(plot,'plotImageId')) {
+            return; //abort: plot has been replaced since this update was started
+        }
+
         dispatcher( {
             type: succActionType,
             payload: {
