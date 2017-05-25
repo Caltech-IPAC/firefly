@@ -2,14 +2,14 @@
   "SDSS": {"catalog":
                          [{"tables": ["RunDeepSource", "RunDeepForcedSource"],
                            "meta": "db/v0/tap/sync",
-                           "database": "sdss_stripe82_00",
+                           "database": "sdss_stripe82_01",
                            "datatype": "catalog",
                            "ra": "coord_ra",
                            "dec": "coord_decl"}],
              "imagemeta":
                           [{"tables": ["DeepCoadd", "Science_Ccd_Exposure"],
                             "meta": "db/v0/tap/sync",
-                            "database": "sdss_stripe82_00",
+                            "database": "sdss_stripe82_01",
                            "datatype": "imagemeta",
                            "datasetInfoConverterId": "lsst_sdss",
                            "ra": ["corner1Ra","corner2Ra", "corner3Ra", "corner4Ra"],

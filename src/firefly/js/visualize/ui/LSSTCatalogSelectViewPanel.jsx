@@ -55,7 +55,7 @@ const LSSTTables = [
         project: 'SSDS',
         label: 'SDSS',
         subproject: [{
-            database: 'sdss_stripe82_00',
+            database: 'sdss_stripe82_01',
             label: 'SSDS Stripe 82',
             project: 'SDSS',
             catalogs: [
