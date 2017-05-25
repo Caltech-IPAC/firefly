@@ -61,7 +61,7 @@ const LSSTTables = [
             catalogs: [
                 {
                     id: SOURCE,
-                    label: 'Object(Measurements on coadds)',
+                    label: 'Object (Measurements on coadds)',
                     value: 'RunDeepSource',
                     type: CATTYPE
                 },
