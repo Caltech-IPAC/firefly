@@ -3,7 +3,7 @@
  */
 
 import {take, fork, cancel} from 'redux-saga/effects';
-import {get, unset, has, isEmpty, isUndefined, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray, padEnd} from 'lodash';
+import {get, set, unset, has, isEmpty, isUndefined, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray, padEnd} from 'lodash';
 
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
@@ -135,6 +135,7 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
  * creates the request to query LSST catalogs.  // TODO: more detail to be updated based on the LSST catalog DD content
  * @param {string} title    title to be displayed with this table result
  * @param {string} project
+ * @param {string} database
  * @param {string} catalog  the catalog name to search
  * @param {ConeParams|BoxParams|ElipParams} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
  * @param {TableRequest} [options]
@@ -143,7 +144,7 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
  * @func makeLsstCatalogRequest
  *  @memberof firefly.util.table
  */
-export function makeLsstCatalogRequest(title, project, catalog, params={}, options={}) {
+export function makeLsstCatalogRequest(title, project, database, catalog, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
 
     title = title || catalog;
@@ -160,11 +161,11 @@ export function makeLsstCatalogRequest(title, project, catalog, params={}, optio
     params = omit(params, 'position');
 
     return omitBy(Object.assign(req, options, params,
-                                {id, tbl_id, META_INFO, UserTargetWorldPt, table_name, meta_table, project}), isNil);
+                                {id, tbl_id, META_INFO, UserTargetWorldPt, database, table_name, meta_table, project}), isNil);
 }
 
 /**
- * creates the request to query VO catalog
+ * creates the request to query VO catalogmakeLsstCatalogRequest
  * @param {string} title    title to be displayed with this table result
  * @param {ConeParams|BoxParams|ElipParams} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
  * @param {TableRequest} [options]
@@ -872,7 +873,7 @@ export function isTableUsingRadians(tableOrMeta) {
 }
 
 export function createErrorTbl(tbl_id, error) {
-    return {tbl_id, error};
+    return set({tbl_id, error}, 'tableMeta.Loading-Status', 'COMPLETED');
 }
 
 

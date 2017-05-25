@@ -14,6 +14,8 @@ import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import java.util.List;
 import java.util.Locale;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 
 /**
@@ -49,12 +51,11 @@ public class LSSTCataLogSearch extends LSSTQuery {
      * will be thrown
      *
      * @param req table request
-     * @param catalog catalog
      * @return a string defining area constraint for the where clause of the query
      * @throws Exception
      */
 
-    protected String getSearchMethodCatalog(TableServerRequest req, String catalog)throws Exception { //, String raCol, String decCol) throws Exception {
+    protected String getSearchMethodCatalog(TableServerRequest req)throws Exception { //, String raCol, String decCol) throws Exception {
 
         String method = req.getParam("SearchMethod");
         if (method.equalsIgnoreCase("allSky")){
@@ -64,7 +65,6 @@ public class LSSTCataLogSearch extends LSSTQuery {
         String ra =radec!=null? radec[0]:"";
         String dec = radec!=null?radec[1]:"";
 
-        boolean isRunDeep = (catalog != null && catalog.contains("RunDeep"));
         switch (method.toUpperCase()) {
             case "BOX":
                 //The unit is degree for all the input
@@ -76,65 +76,52 @@ public class LSSTCataLogSearch extends LSSTQuery {
                 String upperLeft = String.format(Locale.US, "%8.6f,%8.6f", corners.getUpperLeft().getLon(), corners.getUpperLeft().getLat());
                 String lowerRight = String.format(Locale.US, "%8.6f,%8.6f", corners.getLowerRight().getLon(), corners.getLowerRight().getLat());
 
-                if (isRunDeep) {
-                    return "qserv_areaspec_box(" +  lowerRight + "," +upperLeft + ")";
-                }
-                else {
-                    return "scisql_s2PtInBox("+ getRA(catalog)+"," + getDEC(catalog)+"," +  lowerRight + "," +upperLeft + ")=1";
-                }
+                return "qserv_areaspec_box(" +  lowerRight + "," +upperLeft + ")";
+                //return "scisql_s2PtInBox("+ radecCol + "," +  lowerRight + "," +upperLeft + ")=1";
 
             case "CONE":
                 //The unit is degree for all the input
                 String radius = req.getParam(CatalogRequest.RADIUS);
-                if (isRunDeep) {
-                    return "qserv_areaspec_circle(" + ra + "," + dec + "," + radius + ")";
-                }
-                else {
-                    return "scisql_s2PtInCircle("+ getRA(catalog)+"," + getDEC(catalog)+","+ra +","+dec+","+radius +")=1";
-                }
+
+                return "qserv_areaspec_circle(" + ra + "," + dec + "," + radius + ")";
+                //return "scisql_s2PtInCircle("+ radecCol + ","+ra +","+dec+","+radius +")=1";
            case "ELIPTICAL":
                //RA (degree), DEC (degree), positionAngle (degree), semi-majorAxis (arcsec), semi-minorAxis(arcsec),
                double semiMajorAxis = Double.parseDouble(req.getParam("radius")) * 3600;
                double ratio = Double.parseDouble(req.getParam(CatalogRequest.RATIO));
                Double semiMinorAxis = semiMajorAxis*ratio;
                String positionAngle = req.getParam("posang");
-               if (isRunDeep) {
-                   return "qserv_areaspec_ellipse(" + ra + "," + dec + "," + semiMajorAxis + "," +
-                           semiMinorAxis + "," + positionAngle + ")";
-               }
-               else {
-                   return  "scisql_s2PtInEllipse("+ getRA(catalog)+"," + getDEC(catalog)+"," + ra + "," + dec + "," + semiMajorAxis + "," +
-                           semiMinorAxis + "," + positionAngle + ")=1";
-               }
+
+               return "qserv_areaspec_ellipse(" + ra + "," + dec + "," + semiMajorAxis + "," +
+                                               semiMinorAxis + "," + positionAngle + ")";
+
+               // return  "scisql_s2PtInEllipse("+ radecCol + "," + ra + "," + dec + "," + semiMajorAxis + "," +
+               //                               semiMinorAxis + "," + positionAngle + ")=1";
+
             case "POLYGON":
                 //The unit is degree for all the input
                 String radecList = req.getParam(CatalogRequest.POLYGON);
                 String[] sArray = radecList.split(",");
-                String polygoneStr;
-                if (isRunDeep) {
-                     polygoneStr = "qserv_areaspec_poly(";
-                }
-                else {
-                    polygoneStr = "scisql_s2PtInCPoly("+ getRA(catalog)+"," + getDEC(catalog)+",";
-                }
+                StringBuilder polygoneStr = new StringBuilder();
+
+                polygoneStr.append("qserv_areaspec_poly(");
+
+                //polygoneStr = "scisql_s2PtInCPoly("+ radecCol +",";
+
                 for (int i=0; i<sArray.length; i++){
                     String[] radecPair = sArray[i].trim().split("\\s+");
                     if (radecPair.length!=2){
                         throw new Exception("wrong data entered");
                     }
                     if (i==sArray.length-1) {
-                        if (isRunDeep) {
-                            polygoneStr = polygoneStr + radecPair[0] + "," + radecPair[1] + ")";
-                        }
-                        else {
-                            polygoneStr = polygoneStr + radecPair[0] + "," + radecPair[1] + ")=1";
-                        }
+                        polygoneStr.append(radecPair[0] + "," + radecPair[1] + ")");
+                        //polygoneStr.append(radecPair[0] + "," + radecPair[1] + ")=1");
                     }
                     else {
-                        polygoneStr = polygoneStr + radecPair[0] + "," + radecPair[1] + ",";
+                        polygoneStr.append(radecPair[0] + "," + radecPair[1] + ",");
                     }
                 }
-                return polygoneStr;
+                return polygoneStr.toString();
 
             case "TABLE":
                 //TODO what to do in multi-obj
@@ -147,7 +134,13 @@ public class LSSTCataLogSearch extends LSSTQuery {
 
     }
 
-    protected String getMethodOnSearchType(TableServerRequest req)throws Exception {
+    /**
+     * image search (only for SDSS)
+     * @param req request for image metadata search method
+     * @return request based on search method
+     * @throws Exception
+     */
+    protected String getSearchMethodImageMeta(TableServerRequest req)throws Exception {
 
 
         String searchType = req.getParam("intersect");
@@ -155,7 +148,7 @@ public class LSSTCataLogSearch extends LSSTQuery {
             return "";
         }
         String[]  radec = req.getParam("UserTargetWorldPt")!=null? req.getParam("UserTargetWorldPt").split(";"):null;
-        String ra =radec!=null? radec[0]:"";
+        String ra = radec!=null? radec[0]:"";
         String dec = radec!=null?radec[1]:"";
 
         VisUtil.Corners corners=null;
@@ -166,10 +159,14 @@ public class LSSTCataLogSearch extends LSSTQuery {
             corners = VisUtil.getCorners(wpt, Double.parseDouble(side) / 2.0 * 3600.0);
         }
 
+        String[] cornerRa = getCorners(req.getParam("database"), req.getParam("table_name"), "ra");
+        String[] cornerDec = getCorners(req.getParam("database"), req.getParam("table_name"), "dec");
+        String cornerStr = "";
+
         switch (searchType.toUpperCase()) {
             case "CENTER":
-                return "(scisql_s2PtInCPoly(" + ra + "," + dec + ",corner1Ra, corner1Decl, corner2Ra, corner2Decl, " +
-                        "corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1)";
+                cornerStr = getCornerStr(cornerRa, cornerDec);
+                return "(scisql_s2PtInCPoly(" + ra + "," + dec + "," + cornerStr + ")=1)";
 
             case "COVERS":
                 assert corners != null;
@@ -178,17 +175,12 @@ public class LSSTCataLogSearch extends LSSTQuery {
                 String lowerLeft = String.format(Locale.US, "%8.6f,%8.6f", corners.getLowerLeft().getLon(), corners.getLowerLeft().getLat());
                 String lowerRight = String.format(Locale.US, "%8.6f,%8.6f", corners.getLowerRight().getLon(), corners.getLowerRight().getLat());
 
-                return "(scisql_s2PtInCPoly(" + lowerRight + ", corner1Ra, corner1Decl, corner2Ra, corner2Decl, " +
-                        "corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1) AND" +
-                        "(scisql_s2PtInCPoly(" + lowerLeft + ", corner1Ra, corner1Decl, corner2Ra, corner2Decl, " +
-                        "corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1) AND" +
-                        "(scisql_s2PtInCPoly(" + upperLeft + ", corner1Ra, corner1Decl, corner2Ra, corner2Decl, " +
-                        "corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1) AND" +
-                        "(scisql_s2PtInCPoly(" + upperRight + ", corner1Ra, corner1Decl, corner2Ra, corner2Decl, " +
-                        "corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1) ";
-
+                cornerStr = getCornerStr(cornerRa, cornerDec);
+                return "(scisql_s2PtInCPoly(" + lowerRight + ", " + cornerStr + ")=1) AND" +
+                        "(scisql_s2PtInCPoly(" + lowerLeft + ", " + cornerStr + ")=1) AND" +
+                        "(scisql_s2PtInCPoly(" + upperLeft + ", " + cornerStr + ")=1) AND" +
+                        "(scisql_s2PtInCPoly(" + upperRight + ", " + cornerStr + ")=1) ";
             case "ENCLOSED":
-
                 assert corners != null;
                 double minRa = corners.getLowerRight().getLon();
                 double minDec = corners.getLowerRight().getLat();
@@ -196,10 +188,10 @@ public class LSSTCataLogSearch extends LSSTQuery {
                 double maxDec = corners.getUpperLeft().getLat();
 
                 return
-                        "(scisql_s2PtInBox(corner1Ra, corner1Decl," + minRa + "," + minDec + "," + maxRa + "," + maxDec + ")=1) AND " +
-                                "(scisql_s2PtInBox(corner2Ra, corner2Decl," + minRa + "," + minDec + "," + maxRa + "," + maxDec + ")=1) AND " +
-                                "(scisql_s2PtInBox(corner3Ra, corner3Decl," + minRa + "," + minDec + "," + maxRa + "," + maxDec + ")=1) AND " +
-                                "(scisql_s2PtInBox(corner4Ra, corner4Decl, " + minRa + "," + minDec + "," + maxRa + "," + maxDec + ")=1)";
+                        "(scisql_s2PtInBox(" + getCornerWithLimit(cornerRa, cornerDec, 0, minRa, minDec, maxRa, maxDec) + ")=1) AND " +
+                        "(scisql_s2PtInBox(" + getCornerWithLimit(cornerRa, cornerDec, 1, minRa, minDec, maxRa, maxDec) + ")=1) AND " +
+                        "(scisql_s2PtInBox(" + getCornerWithLimit(cornerRa, cornerDec, 2, minRa, minDec, maxRa, maxDec) + ")=1) AND " +
+                        "(scisql_s2PtInBox(" + getCornerWithLimit(cornerRa, cornerDec, 3, minRa, minDec, maxRa, maxDec) + ")=1)";
 
             default:
                 // should only be happened if a new method was added and not added here
@@ -207,6 +199,45 @@ public class LSSTCataLogSearch extends LSSTQuery {
         }
 
     }
+
+
+    String getCornerStr(String[] cornerRa, String[] cornerDec) {
+        String cornerStr = "";
+
+        if ((cornerRa != null) && (cornerDec != null)) {
+            for (int i = 0; i < cornerRa.length; i++) {
+                cornerStr +=  cornerRa[i] + ", " + cornerDec[i];
+                if (i < cornerRa.length -1) {
+                    cornerStr += ", ";
+                }
+            }
+        }
+        return cornerStr;
+    }
+
+    String[] getCorners(String database, String catalog, String key) {
+        Object corners = LSSTQuery.getDatasetInfo(database, catalog, new String[]{key});
+
+        if (corners == null || !(corners instanceof JSONArray))
+            return null;
+
+        JSONArray jcorners = (JSONArray)corners;
+        String[] strAry = new String[jcorners.size()];
+        for (int i = 0; i < jcorners.size(); i++) {
+            strAry[i] = jcorners.get(i).toString();
+        }
+        return strAry;
+    }
+
+    String getCornerWithLimit(String[] cornerRa, String[] cornerDec, int idx, double minRa, double minDec, double maxRa, double maxDec) {
+        String cornerStr = "";
+
+        if ((cornerRa != null) && (cornerDec != null) && idx < cornerRa.length) {
+            return cornerRa[idx] + ", " + cornerDec[idx] + ", " + minRa + "," + minDec + "," + maxRa + "," + maxDec;
+        }
+        return cornerStr;
+    }
+
 
     String getConstraints(TableServerRequest request) {
         String constraints = request.getParam(CatalogRequest.CONSTRAINTS);
@@ -218,15 +249,8 @@ public class LSSTCataLogSearch extends LSSTQuery {
 
     String buildSqlQueryString(TableServerRequest request) throws Exception {
 
-        String tableName = request.getParam("table_name");
-        String catTable = request.getParam(CatalogRequest.CATALOG);
-        if (catTable == null) {
-            //throw new RuntimeException(CatalogRequest.CATALOG + " parameter is required");
-            catTable = DATABASE_NAME.length()==0?tableName: DATABASE_NAME+"."+ tableName;
-        }
-
-
-        boolean isCatalogTable = (tableName != null && tableName.contains("RunDeep"));
+        String[] dbTable = LSSTQuery.getDBTableNameFromRequest(request);
+        boolean isCatalogTable = LSSTQuery.isCatalogTable(dbTable[0], dbTable[1]);
 
         String columns = request.getParam(CatalogRequest.SELECTED_COLUMNS);
         if (columns==null){
@@ -237,7 +261,8 @@ public class LSSTCataLogSearch extends LSSTQuery {
         String constraints =  getConstraints(request);
         //get the search method
 
-        String searchMethod = isCatalogTable ? getSearchMethodCatalog( request, tableName):getMethodOnSearchType(request);
+        String searchMethod = isCatalogTable ? getSearchMethodCatalog(request)
+                                             : getSearchMethodImageMeta(request);
 
         //build where clause
         String whereStr;
@@ -254,7 +279,7 @@ public class LSSTCataLogSearch extends LSSTQuery {
             whereStr="";
         }
 
-        String sql = "SELECT " + columns + " FROM " + catTable;
+        String sql = "SELECT " + columns + " FROM " + String.join(".", dbTable);
         //add the guard to prevent from seaching the whole database when users do not enter a constrain
         if (whereStr.length()>0){
             return sql +  " WHERE " + whereStr + ";";
@@ -266,7 +291,6 @@ public class LSSTCataLogSearch extends LSSTQuery {
 
     }
 
-
     @Override
     protected String getFilePrefix(TableServerRequest request) {
         String catTable = request.getParam(CatalogRequest.CATALOG);
@@ -277,45 +301,65 @@ public class LSSTCataLogSearch extends LSSTQuery {
         }
 
     }
-   String getRA(String catalog) {
-        if (catalog != null && catalog.contains("RunDeep")) {
-            return "coord_ra";
-        } else {
-            return "ra";
-        }
+
+    /**
+     * get ra (or ra corners) column name given the database and table name
+     * @param database database name
+     * @param catalog  table name
+     * @return  ra related column(s)
+     */
+    Object getRA(String database, String catalog) {
+        return LSSTQuery.getDatasetInfo(database, catalog, new String[]{"ra"});
     }
 
-     String getDEC(String catalog) {
-        if (catalog != null && catalog.contains("RunDeep")) {
-            return "coord_decl";
-        } else {
-            return "decl";
-        }
+    /**
+     * get dec (or dec corners) columne name given the database and table name
+     * @param database database name
+     * @param catalog  table name
+     * @return dec related column(s)
+     */
+    Object getDEC(String database, String catalog) {
+         return LSSTQuery.getDatasetInfo(database, catalog, new String[]{"dec"});
+
     }
+
 
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
 
         super.prepareTableMeta(meta, columns, request);
         String catTable = request.getParam("table_name");
-        String tUp=catTable.toUpperCase();
+        String database = request.getParam("database");
 
-        String RA = getRA(catTable);
-        String DEC = getDEC(catTable);
-        TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns(RA, DEC, CoordinateSys.EQ_J2000);
-        meta.setCenterCoordColumns(llc);
+        if (LSSTQuery.isCatalogTable(database, catTable)) {
+            Object RA = getRA(database, catTable);
+            Object DEC = getDEC(database, catTable);
 
-        if (tUp.equals("SCIENCE_CCD_EXPOSURE") || tUp.equals("DEEPCOADD")) {
-            TableMeta.LonLatColumns c1= new TableMeta.LonLatColumns("corner1Ra", "corner1Decl", CoordinateSys.EQ_J2000);
-            TableMeta.LonLatColumns c2= new TableMeta.LonLatColumns("corner2Ra", "corner2Decl", CoordinateSys.EQ_J2000);
-            TableMeta.LonLatColumns c3= new TableMeta.LonLatColumns("corner3Ra", "corner3Decl", CoordinateSys.EQ_J2000);
-            TableMeta.LonLatColumns c4= new TableMeta.LonLatColumns("corner4Ra", "corner4Decl", CoordinateSys.EQ_J2000);
-            meta.setCorners(c1, c2, c3, c4);
-            meta.setAttribute(MetaConst.DATASET_CONVERTER, "lsst_sdss");
-        }
-        else {
+            TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns((String) RA, (String) DEC, CoordinateSys.EQ_J2000);
+            meta.setCenterCoordColumns(llc);
             meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "LSST");
+        } else {
+            String[] RAs = getCorners(database, catTable, "ra");
+            String[] DECs = getCorners(database, catTable, "dec");
+            TableMeta.LonLatColumns[] c = new TableMeta.LonLatColumns[4];
+
+            for (int i = 0; i < 4; i++) {
+                c[i] = new TableMeta.LonLatColumns(RAs[i], DECs[i],  CoordinateSys.EQ_J2000);
+            }
+
+            meta.setCorners(c[0], c[1], c[2], c[3]);
+            meta.setAttribute(MetaConst.DATASET_CONVERTER,
+                              (String)LSSTQuery.getDatasetInfo(database, catTable, new String[]{MetaConst.DATASET_CONVERTER}));
+            meta.setAttribute("mission", (String)LSSTQuery.getDatasetInfo(database, catTable, new String[]{"mission"}));
+
+            Object schemaParams = LSSTQuery.getImageMetaSchema(database, catTable);
+            if (schemaParams instanceof JSONObject) {
+                for (Object key : ((JSONObject)schemaParams).keySet()) {
+                    meta.setAttribute((String)key, (String)((JSONObject)schemaParams).get(key));
+                }
+            }
         }
+
         super.prepareTableMeta(meta, columns, request);
     }
 

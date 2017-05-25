@@ -9,6 +9,7 @@ import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {toMaxFixed} from '../util/MathUtil.js';
+import {makeWisePlotRequest} from './WiseRequestList';
 
 /**
  * This method returns a WebRequest object
@@ -145,3 +146,6 @@ export function makeLsstSdssPlotRequest(table, row, includeSingle, includeStanda
     return retval;
 }
 
+export function makeLsstWisePlotRequest(table, row, includeSingle, includeStandard, threeColorOps) {
+   return makeWisePlotRequest(table, row, includeSingle, includeStandard, threeColorOps);
+}
