@@ -166,16 +166,6 @@ function makeDrawer(plotView, plot, targetCanvas, totalCnt, loadedImages,
             }
             else tileData=src;
 
-            if (!beginRender && opacity===1) {
-                beginRender= true;
-                const intervalId= setTimeout( () => {
-                    if (!abortRender && !renderComplete)  {
-                        clearTimeout(intervalId);
-                    }
-                }, 100);
-            }
-
-
             const p = retrieveAndProcessImage(tileData, tileAttributes, shouldProcess, processor);
             p.then((imageData) => {
                 loadedImages.cachedImageData[tileIdx] = clone(loadedImages.serverData[tileIdx],
@@ -202,7 +192,7 @@ function makeDrawer(plotView, plot, targetCanvas, totalCnt, loadedImages,
 
         abort()  {
             abortRender = true;
-            if (opacity===1) renderImage();
+            if (opacity===1 && !renderComplete) renderImage();
         }
     };
 }

@@ -4,6 +4,7 @@
 
 
 import Enum from 'enum';
+import {get} from 'lodash';
 import numeral from 'numeral';
 import {logError} from '../util/WebUtil.js';
 import {PlotAttribute} from './WebPlot.js';
@@ -108,8 +109,9 @@ export function zoomActionCreator(rawAction) {
 
         if (goodParams) {
             visRoot= getState()[IMAGE_PLOT_KEY];
-            doZoom(dispatcher,visRoot, plotId,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
-            const matchFunc= makeZoomLevelMatcher(dispatcher, visRoot,pv,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
+            doZoom(dispatcher,visRoot, plotId,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay,getState);
+            const matchFunc= makeZoomLevelMatcher(dispatcher, visRoot,pv,level,isFullScreen,
+                                                   zoomLockingEnabled,userZoomType,useDelay, getState);
             if (actionScope===ActionScope.GROUP) {
                 operateOnOthersInGroup(getState()[IMAGE_PLOT_KEY],pv, matchFunc);
             }
@@ -141,7 +143,7 @@ function alignWCS(visRoot, pv) {
 }
 
 
-function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay) {
+function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay,getState) {
     const selectedPlot= primePlot(sourcePv);
     const targetArcSecPix= getArcSecPerPix(selectedPlot, level);
 
@@ -156,7 +158,7 @@ function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,isFullScreen,z
             // if the new level is only slightly different then use the target level
            newZoomLevel= (Math.abs(plotLevel-level)<.01) ? level : plotLevel;
         }
-        doZoom(dispatcher,visRoot,pv.plotId,newZoomLevel,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
+        doZoom(dispatcher,visRoot,pv.plotId,newZoomLevel,isFullScreen,zoomLockingEnabled,userZoomType,useDelay,getState);
     };
 }
 
@@ -172,8 +174,9 @@ function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,isFullScreen,z
  * @param zoomLockingEnabled
  * @param userZoomType
  * @param useDelay
+ * @param {Function} getState
  */
-function doZoom(dispatcher,visRoot,plotId,zoomLevel,isFullScreen, zoomLockingEnabled, userZoomType,useDelay) {
+function doZoom(dispatcher,visRoot,plotId,zoomLevel,isFullScreen, zoomLockingEnabled, userZoomType,useDelay,getState) {
     dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_START,
                   payload:{plotId,zoomLevel, zoomLockingEnabled,userZoomType} } );
 
@@ -189,7 +192,7 @@ function doZoom(dispatcher,visRoot,plotId,zoomLevel,isFullScreen, zoomLockingEna
 
     const zoomWait= useDelay ? ZOOM_WAIT_MS : 5;
 
-    const timerId= setTimeout(zoomPlotIdNow, zoomWait, dispatcher,visRoot,plotId,zoomLevel,isFullScreen);
+    const timerId= setTimeout(zoomPlotIdNow, zoomWait, dispatcher,visRoot,plotId,zoomLevel,isFullScreen,getState);
     zoomTimers.push({plotId,timerId});
 }
 
@@ -201,14 +204,15 @@ function doZoom(dispatcher,visRoot,plotId,zoomLevel,isFullScreen, zoomLockingEna
  * @param plotId
  * @param zoomLevel
  * @param isFullScreen
+ * @param {Function} getState
  */
-function zoomPlotIdNow(dispatcher,visRoot,plotId,zoomLevel,isFullScreen) {
+function zoomPlotIdNow(dispatcher,visRoot,plotId,zoomLevel,isFullScreen,getState) {
     zoomTimers= zoomTimers.filter((t) => t.plotId!==plotId);
 
     const pv= getPlotViewById(visRoot,plotId);
     if (!primePlot(pv)) return;  // the plot was deleted, abort zoom
     callSetZoomLevel(getPlotStateAry(pv),zoomLevel,isFullScreen)
-        .then( (wpResult) => processZoomSuccess(dispatcher,visRoot,plotId,zoomLevel,wpResult) )
+        .then( (wpResult) => processZoomSuccess(dispatcher,visRoot,plotId,zoomLevel,wpResult,getState) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_FAIL, payload: {plotId, zoomLevel, error:e} } );
             logError(`plot error, plotId: ${pv.plotId}`, e);
@@ -220,20 +224,28 @@ function zoomPlotIdNow(dispatcher,visRoot,plotId,zoomLevel,isFullScreen) {
 /**
  * The server appears to have returned a successful zoom
  * @param dispatcher
- * @param visRoot
+ * @param originalVisRoot
  * @param plotId
  * @param zoomLevel
  * @param result
+ * @param {Function} getState
  */
-function processZoomSuccess(dispatcher, visRoot, plotId, zoomLevel, result) {
+function processZoomSuccess(dispatcher, originalVisRoot, plotId, zoomLevel, result, getState) {
     let successSent= false;
     if (result.success) {
         const resultAry = result[WebPlotResult.RESULT_ARY];
         if (resultAry[0].success) {
             const overlayUpdateAry= [];
 
-            const pv= getPlotViewById(visRoot,plotId);
-            if (!pv) return;
+            const currentVisRoot= getState()[IMAGE_PLOT_KEY];
+            const pv= getPlotViewById(currentVisRoot,plotId);
+
+            const originalPlot= primePlot(originalVisRoot,plotId);
+            const plot= primePlot(currentVisRoot,plotId);
+            if (originalPlot.plotImageId!==get(plot,'plotImageId')) {
+                return; //abort: plot has been replaced since this zoom was started
+            }
+
             const existingOverlayPlotViews = pv.overlayPlotViews.filter((opv) => opv.plot);
 
             resultAry.forEach( (r,i) => {

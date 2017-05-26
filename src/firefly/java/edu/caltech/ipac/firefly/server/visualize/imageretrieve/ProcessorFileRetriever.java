@@ -15,10 +15,10 @@ import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.ResponseMessage;
 import edu.caltech.ipac.visualize.plot.GeomException;
 
 import java.io.File;
-import java.net.SocketException;
 
 /**
  * @author tatianag
@@ -34,12 +34,8 @@ public class ProcessorFileRetriever implements FileRetriever {
             } else {
                 sreq= QueryUtil.assureType(TableServerRequest.class, request);
             }
-//            sreq= makeDataOnlyRequestString(sreq);
             FileInfo fi = new SearchManager().getFileInfo(sreq);
-            if (fi == null) {
-                throw new FailedRequestException("Unable to get file location info");
-            }
-            if (fi.getInternalFilename()== null) {
+            if (fi == null || fi.getInternalFilename()== null) {
                 throw new FailedRequestException("File not available");
             }
             if (!fi.hasAccess()) {
@@ -47,18 +43,13 @@ public class ProcessorFileRetriever implements FileRetriever {
             }
 
             int responseCode= fi.getResponseCode();
-            if (responseCode>=300) {
+            if (responseCode>=305) {
                 throw new FailedRequestException(fi.getResponseCodeMsg());
             }
             File f= new File(fi.getInternalFilename());
             return new FileInfo(f, f.getName());
         } catch (DataAccessException dae) {
-            if (dae.getCause() instanceof SocketException) {
-                throw new FailedRequestException("FITS URL server unavailable", "Details in exception", dae);
-            }
-            else {
-                throw new FailedRequestException(dae.getMessage(), dae.getMessage(), dae);
-            }
+            throw ResponseMessage.simplifyNetworkCallException(dae);
         } catch (FailedRequestException e) {
             throw e;
         } catch (Exception e) {

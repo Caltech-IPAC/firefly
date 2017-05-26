@@ -75,7 +75,6 @@ export function reducer(state, action) {
             retState= endServerCallFail(state,action);
             break;
 
-        case Cntlr.ROTATE  :
         case Cntlr.CROP:
             retState= addPlot(state,action, false, false);
             break;
