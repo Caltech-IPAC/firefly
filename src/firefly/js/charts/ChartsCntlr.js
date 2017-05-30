@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {cloneDeep, has, get, isEmpty, isUndefined, omit, omitBy, set, pick, isObject} from 'lodash';
+import {cloneDeep, has, get, isEmpty, isUndefined, omit, omitBy, set} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
@@ -11,7 +11,7 @@ import {getTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {logError} from '../util/WebUtil.js';
 import {dispatchAddViewer, dispatchAddViewerItems} from '../visualize/MultiViewCntlr.js';
-import {handleTableSourceConnections, clearChartConn, newTraceFrom, applyDefaults, HIGHLIGHTED_COLOR, SELECTED_COLOR} from './ChartUtil.js';
+import {getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom, applyDefaults, HIGHLIGHTED_PROPS, SELECTED_PROPS} from './ChartUtil.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 
@@ -129,6 +129,7 @@ export function dispatchChartDataFetch({chartId, chartDataElement, newOptions, i
  * @summary Update chart data.
  *  @param {Object} p - dispatch parameetrs
  *  @param {string} p.chartId - chart id
+ *  @param {Object} p.changes - object with the path-string keys and values of the changed props
  *  @param {Function} [p.dispatcher=flux.process] - only for special dispatching uses such as remote
  *  @public
  *  @function dispatchChartUpdate
@@ -144,10 +145,11 @@ export function dispatchChartUpdate({chartId, changes, dispatcher=flux.process})
  * @param {string} p.chartId      required.  
  * @param {number} p.highlighted  index of the current data array
  * @param {number} [p.activeTrace]
+ * @param {boolean} [p.chartTrigger] - action is triggered by chart
  * @param {function} [p.dispatcher]
  */
-export function dispatchChartHighlighted({chartId, highlighted, activeTrace, dispatcher=flux.process}) {
-    dispatcher({type: CHART_HIGHLIGHT, payload: {chartId, highlighted, activeTrace}});
+export function dispatchChartHighlighted({chartId, highlighted, activeTrace, chartTrigger, dispatcher=flux.process}) {
+    dispatcher({type: CHART_HIGHLIGHT, payload: {chartId, highlighted, activeTrace, chartTrigger}});
 }
 
 /**
@@ -166,10 +168,11 @@ export function dispatchChartFilterSelection({chartId, highlighted, dispatcher=f
  * @param {object} p parameter object
  * @param {string} p.chartId      required.
  * @param {number[]} p.selIndexes required.  An array of indexes to select.
+ * @param {boolean} p.chartTrigger - action is triggered by chart
  * @param {function} [p.dispatcher]
  */
-export function dispatchChartSelect({chartId, selIndexes, dispatcher=flux.process}) {
-    dispatcher({type: CHART_SELECT, payload: {chartId, selIndexes}});
+export function dispatchChartSelect({chartId, selIndexes, chartTrigger, dispatcher=flux.process}) {
+    dispatcher({type: CHART_SELECT, payload: {chartId, selIndexes, chartTrigger}});
 }
 
 /**
@@ -319,48 +322,74 @@ function chartAdd(action) {
 
 function chartUpdate(action) {
     return (dispatch) => {
+        const {chartId, changes} = action.payload;
+        const oldData = get(getChartData(chartId), 'data');
         dispatch(action);
-        let {chartId, changes} = action.payload;
+
         const {data} = Object.entries(changes)
                              .filter(([k,v]) => k.startsWith('data'))
-                             .reduce( (p, [k,v]) => set(p, k, v), {});          // take all of the data changes and create an object from it.
-        handleTableSourceConnections({chartId, data});
+                             .reduce( (p, [k,v]) => set(p, k, v), {}); // take all of the data changes and create an object from it.
+        handleTableSourceConnections({chartId, data, oldData});
     };
 }
 
 function chartHighlight(action) {
     return (dispatch) => {
-        const {chartId, highlighted=0} = action.payload;
-        // TODO: activeTrace is not implmented.  switch to trace.. then highlight(?)
-        const {activeTrace=0, data, tablesources} = getChartData(chartId);
+        const {chartId, highlighted=0, chartTrigger=false} = action.payload;
+        // TODO: activeTrace is not implemented.  switch to trace.. then highlight(?)
+        const {data, tablesources, activeTrace:activeDataTrace=0} = getChartData(chartId);
+        const {activeTrace=activeDataTrace} = action.payload; // activeTrace can be selected or highlighted trace of the data trace
         const ttype = get(data, [activeTrace, 'type'], 'scatter');
 
         if (!isEmpty(tablesources) && ttype === 'scatter') {
-            const {tbl_id} = tablesources[activeTrace] || {};
+            // activeTrace is different from activeDataTrace if a selected point highlighted, for example
+            const {tbl_id} = tablesources[activeDataTrace] || {};
             if (!tbl_id) return;
-            const hlTrace = newTraceFrom(data[activeTrace], [highlighted], HIGHLIGHTED_COLOR);
-            dispatchChartUpdate({chartId, changes:{highlighted: hlTrace}});
-            TablesCntlr.dispatchTableHighlight(tbl_id, highlighted);
+            // avoid updating chart twice
+            // update only as a response to table highlight change
+            if (!chartTrigger) {
+                const hlTrace = newTraceFrom(data[activeTrace], [highlighted], HIGHLIGHTED_PROPS);
+                dispatchChartUpdate({chartId, changes: {highlighted: hlTrace}});
+            }
+            let traceData = data[activeTrace];
+
+            if (activeTrace !== activeDataTrace) {
+                // workaround for highlighting selected point - we do not store selected trace data, but plotly does
+                const chartDivAll = document.querySelectorAll(`#${chartId}`);
+                if (chartId && chartDivAll && chartDivAll.length > 0) {
+                    const chartDiv = chartDivAll[chartDivAll.length - 1];
+                    traceData = get(chartDiv, `data.${activeTrace}`) || chartId;
+                }
+            }
+            const highlightedRowIdx = getRowIdx(traceData, highlighted);
+            TablesCntlr.dispatchTableHighlight(tbl_id, highlightedRowIdx);
         }
     };
 }
 
 function chartSelect(action) {
     return (dispatch) => {
-        const {chartId, selIndexes=[]} = action.payload;
+        const {chartId, selIndexes=[], chartTrigger=false} = action.payload;
         const {activeTrace=0, data, tablesources} = getChartData(chartId);
         let selected = undefined;
-        if (!isEmpty(tablesources) && selIndexes.length > 0) {
-            selected = newTraceFrom(data[activeTrace], selIndexes, SELECTED_COLOR);
+        if (!isEmpty(tablesources)) {
             const {tbl_id} = tablesources[activeTrace] || {};
             const {totalRows} = getTblById(tbl_id);
             const selectInfoCls = SelectInfo.newInstance({rowCount: totalRows});
+
             selIndexes.forEach((idx) => {
-                selectInfoCls.setRowSelect(idx, true);
+                selectInfoCls.setRowSelect(getRowIdx(data[activeTrace], idx), true);
             });
             TablesCntlr.dispatchTableSelect(tbl_id, selectInfoCls.data);
         }
-        dispatchChartUpdate({chartId, changes:{selected, selection: undefined}});
+        // avoid updating chart twice
+        // don't update before table select
+        if (!chartTrigger) {
+            if (!isEmpty(selIndexes)) {
+                selected = newTraceFrom(data[activeTrace], selIndexes, SELECTED_PROPS);
+            }
+            dispatchChartUpdate({chartId, changes: {selected, selection: undefined}});
+        }
     };
 }
 
@@ -369,7 +398,8 @@ function chartFilterSelection(action) {
         const {chartId} = action.payload;
         const {activeTrace=0, selection, tablesources} = getChartData(chartId);
         if (!isEmpty(tablesources)) {
-            const {tbl_id, x, y} = tablesources[activeTrace];
+            const {tbl_id, mappings} = tablesources[activeTrace];
+            const {x,y} = mappings;
             const [xMin, xMax] = get(selection, 'range.x', []);
             const [yMin, yMax] = get(selection, 'range.y', []);
             const {request} = getTblById(tbl_id);
@@ -398,12 +428,12 @@ function setActiveTrace(action) {
             const {selectInfo, highlightedRow} = getTblById(tbl_id) || {};
             if (selectInfo) {
                 const selectInfoCls = SelectInfo.newInstance(selectInfo);
-                const selIndexes = Array.from(selectInfoCls.getSelected());
+                const selIndexes = Array.from(selectInfoCls.getSelected()).map((e)=>getPointIdx(data[activeTrace], e));;
                 if (selIndexes.length > 0) {
-                    selected = newTraceFrom(data[activeTrace], selIndexes, SELECTED_COLOR);
+                    selected = newTraceFrom(data[activeTrace], selIndexes, SELECTED_PROPS);
                 }
             }
-            highlighted = newTraceFrom(data[activeTrace], [highlightedRow], HIGHLIGHTED_COLOR);
+            highlighted = newTraceFrom(data[activeTrace], [getPointIdx(data[activeTrace], highlightedRow)], HIGHLIGHTED_PROPS);
         }
         dispatchChartUpdate({chartId, changes:{activeTrace, selected, highlighted, selection: undefined}});
     };
@@ -784,11 +814,23 @@ export function getNumCharts(tblId, mounted, groupId) {
         if ((isUndefined(mounted) || (Boolean(state[cid].mounted) === mounted)) &&
             (isUndefined(groupId) || (state[cid].groupId === groupId))) {
             const chartDataElements = state[cid].chartDataElements;
-            const dependsOnTblId = isUndefined(tblId) ? true :
-                Object.keys(chartDataElements).some((id) => {
-                    return (chartDataElements[id].tblId === tblId);
-                });
-            if (dependsOnTblId) { numRelated++; }
+            let dependsOnTblId = isUndefined(tblId) ? true : undefined;
+            if (dependsOnTblId === undefined) {
+                if (chartDataElements) {
+                    dependsOnTblId =
+                        Object.keys(chartDataElements).some((id) => {
+                            return (chartDataElements[id].tblId === tblId);
+                        });
+                } else {
+                    const {tablesources, activeTrace=0} = getChartData(cid);
+                    const tablesource = get(tablesources, [activeTrace]);
+                    const tbl_id = get(tablesource, 'tbl_id');
+                    dependsOnTblId = (tbl_id === tblId);
+                }
+            }
+            if (dependsOnTblId) {
+                numRelated++;
+            }
         }
     });
     return numRelated;
@@ -815,11 +857,13 @@ export function updateRelatedData(tblId, invokedBy) {
     Object.keys(state).forEach((cid) => {
         if (isChartMounted(cid)) {
             const chartDataElements = state[cid].chartDataElements;
-            Object.keys(chartDataElements).forEach((id) => {
-                if (chartDataElements[id].tblId === tblId) {
-                    dispatchChartDataFetch({chartId: cid, chartDataElement: chartDataElements[id], invokedBy});
-                }
-            });
+            if (chartDataElements) {
+                Object.keys(chartDataElements).forEach((id) => {
+                    if (chartDataElements[id].tblId === tblId) {
+                        dispatchChartDataFetch({chartId: cid, chartDataElement: chartDataElements[id], invokedBy});
+                    }
+                });
+            }
         }
     });
 }

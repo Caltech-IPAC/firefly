@@ -3,7 +3,7 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import Resizable from 'react-component-resizable';
 import {flux} from '../../Firefly.js';
-import {get, debounce, defer} from 'lodash';
+import {debounce, defer} from 'lodash';
 import {reduxFlux} from '../../core/ReduxFlux.js';
 import {isPlotly} from '../ChartUtil.js';
 
@@ -15,10 +15,7 @@ class ChartPanelView extends PureComponent {
 
     constructor(props) {
         super(props);
-        this.state = {
-            optionsShown: false,
-            componentKey: undefined // used when there are multiple 'options' components
-        };
+        this.state = {};
 
         const normal = (size) => {
             if (size && this.iAmMounted) {
@@ -34,7 +31,7 @@ class ChartPanelView extends PureComponent {
 
         this.onResize = (size) => {
             if (this.state.widthPx === 0 || isPlotly()) {
-            defer(normal, size);
+                defer(normal, size);
             } else {
                 debounced(size);
             }
@@ -44,15 +41,15 @@ class ChartPanelView extends PureComponent {
     }
 
     toggleOptions(key) {
-        const {optionsShown, componentKey} = this.state;
-        if (key === componentKey) {
-            const newShowOptions = !optionsShown;
+        const {chartId, showOptions, optionsKey} = this.props;
+        if (key === optionsKey) {
+            const newShowOptions = !showOptions;
             const newKey = newShowOptions ? key : undefined;
-            this.setState({optionsShown: newShowOptions, key: newKey});
+            ChartsCntlr.dispatchChartUpdate({chartId, changes: {showOptions: newShowOptions, optionsKey: newKey}});
         } else if (key) {
-            this.setState({optionsShown: true, componentKey: key});
+            ChartsCntlr.dispatchChartUpdate({chartId, changes: {showOptions: true, optionsKey: key}});
         } else {
-            this.setState({optionsShown: false, componentKey: key});
+            ChartsCntlr.dispatchChartUpdate({chartId, changes: {showOptions: false, optionsKey: key}});
         }
     }
 
@@ -69,7 +66,6 @@ class ChartPanelView extends PureComponent {
         if (chartId !== this.props.chartId) {
             ChartsCntlr.dispatchChartUnmounted(this.props.chartId);
             ChartsCntlr.dispatchChartMounted(chartId);
-            this.setState({optionsShown: false});
         }
     }
 
@@ -80,13 +76,15 @@ class ChartPanelView extends PureComponent {
     }
 
     render() {
-        const {chartId, chartData, deletable, expandable, expandedMode, Chart, Options, Toolbar, showToolbar, showChart} = this.props;
-
+        const {chartId, deletable, expandable, expandedMode, Chart, Options, Toolbar, showToolbar, showChart, showOptions, optionsKey} = this.props;
+        const chartData =  ChartsCntlr.getChartData(chartId);
         if (!chartData) {
-            return (<div/>);
+            return (
+                <div/>
+            );
         }
 
-        var {widthPx, heightPx, componentKey, optionsShown} = this.state;
+        var {widthPx, heightPx} = this.state;
         const knownSize = widthPx && heightPx;
         const errors  = ChartsCntlr.getErrors(chartId);
 
@@ -98,7 +96,7 @@ class ChartPanelView extends PureComponent {
                         <div className='ChartPanel__wrapper'>
                             <Toolbar {...{chartId, expandable, expandedMode, toggleOptions: this.toggleOptions}}/>
                             <div className='ChartPanel__chartarea--withToolbar'>
-                                {optionsShown &&
+                                {showOptions &&
                                 <div className='ChartPanelOptions'>
                                     <div style={{height: 14}}>
                                         <div style={{ right: -6, float: 'right'}}
@@ -106,7 +104,7 @@ class ChartPanelView extends PureComponent {
                                              title='Remove Panel'
                                              onClick={() => this.toggleOptions()}/>
                                     </div>
-                                    <Options {...{chartId, optionsKey: componentKey}}/>
+                                    <Options {...{chartId, optionsKey}}/>
                                 </div>}
                                 <Resizable id='chart-resizer' onResize={this.onResize}
                                            className='ChartPanel__chartresizer'>
@@ -116,7 +114,7 @@ class ChartPanelView extends PureComponent {
                                             <Chart {...Object.assign({}, this.props, {widthPx, heightPx})}/> :
                                         <div/>}
                                 </Resizable>
-                                { !optionsShown && deletable &&
+                                { !showOptions && deletable &&
                                 <img style={{display: 'inline-block', position: 'absolute', top: 29, right: 0, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
                                      title='Delete this chart'
                                      src={DELETE}
@@ -156,7 +154,7 @@ class ChartPanelView extends PureComponent {
                 <div className='ChartPanel__chartarea'>
                     <Toolbar {...{chartId, expandable, expandedMode, toggleOptions: this.toggleOptions}}/>
                     <div className='ChartPanel__chartarea--withToolbar'>
-                        {optionsShown &&
+                        {showOptions &&
                         <div className='ChartPanelOptions'>
                             <div style={{height: 14}}>
                                 <div style={{ right: -6, float: 'right'}}
@@ -164,7 +162,7 @@ class ChartPanelView extends PureComponent {
                                      title='Remove Panel'
                                      onClick={() => this.toggleOptions()}/>
                             </div>
-                            <Options {...{chartId, optionsKey: componentKey}}/>
+                            <Options {...{chartId, optionsKey}}/>
                         </div>
                         }
                     </div>
@@ -180,6 +178,8 @@ ChartPanelView.propTypes = {
     deletable: PropTypes.bool,
     expandable: PropTypes.bool,
     expandedMode: PropTypes.bool,
+    showOptions: PropTypes.bool,
+    optionsKey: PropTypes.string,
     showToolbar: PropTypes.bool,
     showChart: PropTypes.bool,
     Chart: PropTypes.func,
@@ -236,13 +236,13 @@ export class ChartPanel extends PureComponent {
 
     getNextState() {
         const {chartId} = this.props;
-        const chartData =  ChartsCntlr.getChartData(chartId);
+        const chartData =  ChartsCntlr.getChartData(chartId) || {};
         if (chartData) {
-            const chartType = get(chartData, 'chartType');
-            if (chartType === 'plot.ly') return {};
+            const {chartType, showOptions, optionsKey} = chartData;
+            //if (chartType === 'plot.ly') return {};
             const {Chart,Options,Toolbar,getChartProperties,updateOnStoreChange} = reduxFlux.getChartType(chartType);
             return {
-                chartId, ...getChartProperties(chartId),
+                chartId, showOptions, optionsKey, ...getChartProperties(chartId),
                 Chart,
                 Options,
                 Toolbar,
@@ -258,12 +258,16 @@ export class ChartPanel extends PureComponent {
             const {updateOnStoreChange} = this.state;
             if (!updateOnStoreChange || updateOnStoreChange(this.state)) {
                     this.setState(this.getNextState());
+            }  else {
+                const {showOptions, optionsKey} = ChartsCntlr.getChartData(this.props.chartId);
+                if (showOptions !== this.state.showOptions || optionsKey !== this.state.optionsKey) {
+                    this.setState({showOptions, optionsKey});
+                }
             }
         }
     }
 
     render() {
-
         return (
             <ChartPanelView {...this.props} {...this.state}/>
         );

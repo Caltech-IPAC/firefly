@@ -73,7 +73,9 @@
     border-left: 1px solid #CCC;
     z-index: 100;
     flex: 0 0 auto;
-    overflow: auto;
+    overflow-x: auto;
+    overflow-y: scroll;
+    margin-right: -17px;
     box-shadow: -2px 0 2px 0 rgba(0,0,0,0.50);
 }
 
@@ -119,6 +121,10 @@
 
 .ChartToolbar__options {
     background-image: url("/images/icons-2014/24x24_GearsNEW.png");
+}
+
+.ChartToolbar__save {
+    background-image: url("/images/icons-2014/24x24_Save.png");
 }
 
 .ChartToolbar__expand {

@@ -609,13 +609,20 @@ export const requestIdleCallback =
 
 export const cancelIdleCallback = window.cancelIdleCallback || ((id) => clearTimeout(id));
 
-export function flattenObject(object) {
+/**
+ *
+ * @param object
+ * @param testFunc - test function to decide which entries should be flattened
+ * @returns {*}
+ */
+export function flattenObject(object, testFunc=isObject) {
     return Object.assign( {}, ...function _flatten( objectBit, path = '' ) {  //spread the result into our return object
         return [].concat(                                                     //concat everything into one level
             ...Object.keys( objectBit ).map(                                  //iterate over object
                 (key) => {
                     const fullKey = path === '' ? key : `${ path }.${ key }`;
-                    return  (objectBit[ key ] && typeof objectBit[ key ] === 'object') ?            //check if there is a nested object
+                    //check if there is a nested object
+                    return  (objectBit[ key ] && testFunc(objectBit[ key ])) ?
                         _flatten( objectBit[ key ], fullKey ) :               //call itself if there is
                         ( { [ fullKey ]: objectBit[ key ] } );                //append object with its path as key
                 }
