@@ -32,4 +32,5 @@
     <Valve className="org.apache.catalina.valves.CometConnectionManagerValve" />
     -->
 
+    <Loader delegate="true"/>
 </Context>
