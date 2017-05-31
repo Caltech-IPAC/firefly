@@ -13,9 +13,9 @@ public class AppServerCommands {
     private static final String SPA_NAME = "spaName";
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
-    public static class InitApp extends BaseJsonCmd {
+    public static class InitApp extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             String spaName = params.getRequired(SPA_NAME);
 
             // check for alerts
@@ -30,9 +30,9 @@ public class AppServerCommands {
         }
     }
 
-    public static class Logout extends BaseJsonCmd {
+    public static class Logout extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             // should handle logout request.
             String authToken = SsoAdapter.getAdapter().getAuthTokenId();
             if (authToken != null) {

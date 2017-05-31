@@ -15,7 +15,7 @@ import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
-import edu.caltech.ipac.firefly.server.BaseJsonCmd;
+import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
 import edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl;
@@ -41,9 +41,9 @@ public class SearchServerCommands {
 
 
 
-    public static class TableSearch extends BaseJsonCmd {
+    public static class TableSearch extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             TableServerRequest tsr = params.getTableServerRequest();
             DataGroupPart dgp = new SearchManager().getDataGroup(tsr);
             JSONObject json = JsonTableUtil.toJsonTableModel(dgp, tsr);
@@ -51,9 +51,9 @@ public class SearchServerCommands {
         }
     }
 
-    public static class TableFindIndex extends BaseJsonCmd {
+    public static class TableFindIndex extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             TableServerRequest tsr = params.getTableServerRequest();
             List<String> filterInfo = Arrays.asList(params.getRequired("filterInfo").split(";"));
             tsr.setPageSize(Integer.MAX_VALUE);
@@ -64,9 +64,9 @@ public class SearchServerCommands {
         }
     }
 
-    public static class SelectedValues extends BaseJsonCmd {
+    public static class SelectedValues extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             String filePath = params.getRequired("filePath");
             try {
                 String selRows = params.getRequired("selectedRows");
@@ -82,9 +82,9 @@ public class SearchServerCommands {
         }
     }
 
-    public static class JsonSearch extends BaseJsonCmd {
+    public static class JsonSearch extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             TableServerRequest tsr = params.getTableServerRequest();
             SearchProcessor processor = new SearchManager().getProcessor(tsr.getRequestId());
             if (processor instanceof JsonDataProcessor) {
@@ -95,9 +95,9 @@ public class SearchServerCommands {
         }
     }
 
-    public static class GetJSONData extends BaseJsonCmd {
+    public static class GetJSONData extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             String reqString = params.getRequired(ServerParams.REQUEST);
             ServerRequest request = ServerRequest.parse(reqString, new ServerRequest());
             return new SearchManager().getJSONData(request);
@@ -105,9 +105,9 @@ public class SearchServerCommands {
 
     }
 
-    public static class PackageRequest extends BaseJsonCmd {
+    public static class PackageRequest extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             String tableReqStr = params.getRequired(ServerParams.REQUEST);
             String selInfoStr = params.getOptional(ServerParams.SELECTION_INFO);
             String dlReqStr = params.getOptional(ServerParams.DOWNLOAD_REQUEST);
@@ -125,9 +125,9 @@ public class SearchServerCommands {
         }
     }
 
-    public static class ChkFileStatus extends BaseJsonCmd {
+    public static class ChkFileStatus extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             File f= new File(params.getRequired(ServerParams.SOURCE));
             FileStatus fstatus = new SearchManager().getFileStatus(f);
             return fstatus.toString();
@@ -135,9 +135,9 @@ public class SearchServerCommands {
 
     }
 
-    public static class GetEnumValues extends BaseJsonCmd {
+    public static class GetEnumValues extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             File f= new File(params.getRequired(ServerParams.SOURCE));
             RawDataSet data = new SearchManager().getEnumValues(f);
             return data.serialize();
@@ -146,9 +146,9 @@ public class SearchServerCommands {
     }
 
 
-    public static class SubmitBackgroundSearch extends BaseJsonCmd {
+    public static class SubmitBackgroundSearch extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             String servReqStr = params.getRequired(ServerParams.REQUEST);
             int waitMil = params.getRequiredInt(ServerParams.WAIT_MILS);
 
@@ -164,60 +164,60 @@ public class SearchServerCommands {
         }
     }
 
-    public static class GetStatus extends BaseJsonCmd {
+    public static class GetStatus extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             BackgroundStatus bgStat= new SearchServicesImpl().getStatus(params.getID(),
                     params.getRequiredBoolean(ServerParams.POLLING));
             return bgStat.serialize();
         }
     }
 
-    public static class AddIDToPushCriteria extends BaseJsonCmd {
+    public static class AddIDToPushCriteria extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             new SearchServicesImpl().addIDToPushCriteria(params.getID());
             return "true";
         }
     }
 
-    public static class RemoveBgJob extends BaseJsonCmd {
+    public static class RemoveBgJob extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             BackgroundEnv.removeUserBackgroundInfo(params.getID());
             return "true";
         }
     }
 
-    public static class Cancel extends BaseJsonCmd {
+    public static class Cancel extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             BackgroundEnv.cancel(params.getID());
             return "true";
         }
     }
 
-    public static class CleanUp extends BaseJsonCmd {
+    public static class CleanUp extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             new SearchServicesImpl().cleanup(params.getID());
             return "true";
         }
     }
 
-    public static class DownloadProgress extends BaseJsonCmd {
+    public static class DownloadProgress extends ServCommand {
         public boolean getCanCreateJson() { return false; }
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             String file= params.getRequired(ServerParams.FILE);
             SearchServices.DownloadProgress dp= new SearchServicesImpl().getDownloadProgress(file);
             return dp.toString();
         }
     }
 
-    public static class SetEmail extends BaseJsonCmd {
+    public static class SetEmail extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             List<String> idList = params.getIDList();
             String email = params.getRequired(ServerParams.EMAIL);
             BackgroundEnv.setEmail(idList,email);
@@ -225,9 +225,9 @@ public class SearchServerCommands {
         }
     }
 
-    public static class SetAttribute extends BaseJsonCmd  {
+    public static class SetAttribute extends ServCommand  {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             List<String> idList= params.getIDList();
             String attStr= params.getRequired(ServerParams.ATTRIBUTE);
             JobAttributes att= StringUtils.getEnum(attStr, JobAttributes.Unknown);
@@ -236,17 +236,17 @@ public class SearchServerCommands {
         }
     }
 
-    public static class GetEmail extends BaseJsonCmd {
+    public static class GetEmail extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             String id = params.getID();
             return BackgroundEnv.getEmail(id);
         }
     }
 
-    public static class ResendEmail extends BaseJsonCmd {
+    public static class ResendEmail extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             String email= params.getRequired(ServerParams.EMAIL);
             List<String> idList = BackgroundEnv.getUserBackgroundInfo().stream()
                     .filter(BackgroundInfoCacher::isSuccess)
@@ -257,9 +257,9 @@ public class SearchServerCommands {
         }
     }
 
-    public static class ClearPushEntry extends BaseJsonCmd {
+    public static class ClearPushEntry extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             String id= params.getRequired(ServerParams.ID);
             int idx=   params.getRequiredInt(ServerParams.IDX);
             new SearchServicesImpl().clearPushEntry(id,idx);
@@ -267,9 +267,9 @@ public class SearchServerCommands {
         }
     }
 
-    public static class ReportUserAction extends BaseJsonCmd {
+    public static class ReportUserAction extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             String channel= params.getRequired(ServerParams.CHANNEL_ID);
             String desc= params.getRequired(ServerParams.DESC);
             String data= params.getRequired(ServerParams.DATA);
@@ -278,11 +278,11 @@ public class SearchServerCommands {
         }
     }
 
-    public static class CreateDownloadScript extends BaseJsonCmd  {
+    public static class CreateDownloadScript extends ServCommand  {
         public boolean getCanCreateJson() { return false; }
 
         @Override
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             String id = params.getID();
             String file = params.getRequired(ServerParams.FILE);
             String source = params.getRequired(ServerParams.SOURCE);
@@ -296,9 +296,9 @@ public class SearchServerCommands {
         }
     }
 
-    public static class GetDataFileValues extends BaseJsonCmd {
+    public static class GetDataFileValues extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             String filePath = params.getRequired(ServerParams.SOURCE);
             String rowsStr = params.getRequired(ServerParams.ROWS);
             List<Integer> rows = new ArrayList<Integer>();
@@ -312,9 +312,9 @@ public class SearchServerCommands {
     }
 
     @Deprecated
-    public static class GetRawDataSet extends BaseJsonCmd {
+    public static class GetRawDataSet extends ServCommand {
 
-        public String execute(SrvParam params) throws Exception {
+        public String doCommand(SrvParam params) throws Exception {
             String reqString = params.getRequired(ServerParams.REQUEST);
             TableServerRequest request = TableServerRequest.parse(reqString);
             RawDataSet dataSet = new SearchManager().getRawDataSet(request);

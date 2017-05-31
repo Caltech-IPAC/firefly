@@ -24,7 +24,7 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
 
         String jsonData;
         try {
-            String result = doCommand(sp.getParamMap());
+            String result = doCommand(new SrvParam(sp.getParamMap()));
 
             if (getCanCreateJson()) {
                 jsonData = result;
@@ -88,7 +88,7 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
     }
 
     public boolean getCanCreateJson() { return true; }
-    public abstract String doCommand(Map<String, String[]> paramMap) throws Exception;
+    public abstract String doCommand(SrvParam params) throws Exception;
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

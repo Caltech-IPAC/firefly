@@ -34,9 +34,8 @@ public class JsonDataCommands {
     public static class StaticJsonData extends ServCommand {
 
 
-        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+        public String doCommand(SrvParam sp) throws Exception {
 
-            SrvParam sp= new SrvParam(paramMap);
             String url = sp.getRequired(ServerParams.URL);
             String name = sp.getRequired(ServerParams.FILE);
             String retval= "";
