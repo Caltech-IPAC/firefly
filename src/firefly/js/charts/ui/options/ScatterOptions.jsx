@@ -34,7 +34,7 @@ export class ScatterOptions extends SimpleComponent {
 
         return (
             <div style={{padding:'0 5px 7px'}}>
-                <OptionTopBar {...{groupKey, chartId, tbl_id, submitChangesScatter}}/>
+                <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id, submitChangesFunc: submitChangesScatter}}/>
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({data, layout, activeTrace, tablesources})}>
                     <BasicOptionFields {...{layout, data, activeTrace}}/>
                     <ListBoxInputField fieldKey={`data.${activeTrace}.mode`} options={[{value:'markers'}, {value:'lines'}, {value:'lines+markers'}]}/>
@@ -191,7 +191,13 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
 export function submitChangesScatter({chartId, activeTrace, fields, tbl_id}) {
     const colorMap = get(fields, `_tables.data.${activeTrace}.marker.color`);
     const sizeMap = get(fields, `_tables.data.${activeTrace}.marker.size`);
-    const changes = {[`data.${activeTrace}.firefly.dataType`] : (colorMap || sizeMap) ? 'scatter' : 'fireflyScatter'};
+
+    const dataType = (colorMap || sizeMap) ? 'scatter' : 'fireflyScatter';
+    const changes = {[`data.${activeTrace}.firefly.dataType`] : dataType};
+    if (dataType === 'fireflyScatter') {
+        // add a mapping for rowIdx
+        changes[`_tables.data.${activeTrace}.firefly.rowIdx`] = 'rowIdx'; // rowIdx is mapping table rows to data points
+    }
     Object.assign(changes, fields);
     submitChanges({chartId, fields: changes, tbl_id});
 }

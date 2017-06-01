@@ -16,15 +16,12 @@ import {FilterEditorWrapper} from './TblView.jsx';
 
 export const PLOTLY_CHART = {
     id : 'plot.ly',
-    Chart,
+    Chart: PlotlyChartArea,
     Options,
     Toolbar,
     getChartProperties
 };
 
-function Chart(props) {
-    return <PlotlyChartArea {...props}/>;
-}
 
 
 function Options({chartId, optionsKey}) {

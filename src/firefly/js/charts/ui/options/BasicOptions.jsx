@@ -28,7 +28,7 @@ export class BasicOptions extends SimpleComponent {
         const tbl_id = get(tablesource, 'tbl_id');
         return (
             <div style={{minWidth: 250, padding:'0 5px 7px'}}>
-                <OptionTopBar {...{groupKey, chartId, tbl_id}}/>
+                <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id}}/>
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey}
                             reducerFunc={basicFieldReducer({data, layout, activeTrace, tablesources})}>
                     <BasicOptionFields {...{layout, data, activeTrace}}/>

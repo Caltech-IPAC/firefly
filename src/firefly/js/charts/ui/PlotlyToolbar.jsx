@@ -34,6 +34,7 @@ export class ScatterToolbar extends SimpleComponent {
                 <div className='ChartToolbar__buttons'>
                     <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />
                     <SaveBtn {...{chartId}} />
+                    {tbl_id && <FiltersBtn {...{chartId, toggleOptions}} />}
                     <OptionsBtn {...{chartId, toggleOptions}} />
                     {expandable && <ExpandBtn {...{chartId}} />}
                 </div>
@@ -60,6 +61,7 @@ export class BasicToolbar extends SimpleComponent {
                 <div className='ChartToolbar__buttons'>
                     <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />
                     <SaveBtn {...{chartId}} />
+                    {tbl_id && <FiltersBtn {...{chartId, toggleOptions}} />}
                     <OptionsBtn {...{chartId, toggleOptions}} />
                     {expandable && <ExpandBtn {...{chartId}} />}
                 </div>
@@ -140,6 +142,14 @@ function SaveBtn({style={}, chartId}) {
         <div style={style} onClick={() => { downloadChart(chartId);}}
              title='Download the chart as a PNG image'
              className='ChartToolbar__save'/>
+    );
+}
+
+function FiltersBtn({style={}, chartId, toggleOptions}) {
+    return (
+        <div style={style} onClick={() => toggleOptions('filters')}
+             title='Show/edit filters'
+             className='ChartToolbar__tblfilters'/>
     );
 }
 

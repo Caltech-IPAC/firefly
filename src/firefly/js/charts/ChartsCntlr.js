@@ -324,16 +324,16 @@ function chartAdd(action) {
 function chartUpdate(action) {
     return (dispatch) => {
         var {chartId, changes} = action.payload;
+        // remove any table's mappings from changes because it will be applied by the connectors.
+        const changesWithoutTblMappings = omitBy(changes, (v) => isString(v) && v.match(TBL_SRC_PATTERN));
+        set(action, 'payload.changes', changesWithoutTblMappings);
+        dispatch(action);
+
 
         const {data} = Object.entries(changes)
                              .filter(([k,v]) => k.startsWith('data'))
                              .reduce( (p, [k,v]) => set(p, k, v), {}); // take all of the data changes and create an object from it.
         handleTableSourceConnections({chartId, data});
-
-        // remove any table's mappings from changes because it will be applied by the connectors.
-        changes = omitBy(changes, (v) => isString(v) && v.match(TBL_SRC_PATTERN));
-        set(action, 'payload.changes', changes);
-        dispatch(action);
     };
 }
 

@@ -27,8 +27,19 @@ import {getTraceTSEntries as scatterTSGetter} from './dataTypes/FireflyScatter.j
 export const SCATTER = 'scatter';
 export const HISTOGRAM = 'histogram';
 
-export const SELECTED_PROPS = {marker: {color: '#ffc800'}};
-export const HIGHLIGHTED_PROPS = {marker: {color: '#ffa500', line: {width: 2, color: '#ffa500'}}}; // increase highlight marker with line border
+export const SELECTED_COLOR = '#ffc800';
+export const SELECTED_PROPS = {
+    marker: {color: SELECTED_COLOR},
+    error_x: {color: SELECTED_COLOR},
+    error_y: {color: SELECTED_COLOR}
+};
+
+export const HIGHLIGHTED_COLOR = '#ffa500';
+export const HIGHLIGHTED_PROPS = {
+    marker: {color: HIGHLIGHTED_COLOR, line: {width: 2, color: '#ffa500'}}, // increase highlight marker with line border
+    error_x: {color: HIGHLIGHTED_COLOR},
+    error_y: {color: HIGHLIGHTED_COLOR}
+};
 
 const FSIZE = 12;
 
@@ -346,6 +357,8 @@ export function handleTableSourceConnections({chartId, data}) {
                 //creates a new one.. and save the cancel handle
                 updateChartData(chartId, idx, traceTS);
                 traceTS._cancel = watchTableChanges(tbl_id, [TABLE_LOADED, TABLE_HIGHLIGHT, TABLE_SELECT, TABLE_REMOVE], (action) => updateChartData(chartId, idx, traceTS, action));
+            } else {
+                tablesources[idx] = oldTraceTS;
             }
         }
     });

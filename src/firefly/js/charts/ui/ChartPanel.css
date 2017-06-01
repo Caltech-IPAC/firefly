@@ -119,6 +119,10 @@
     background-image: url("/images/icons-2014/select.png");
 }
 
+.ChartToolbar__tblfilters {
+    background-image: url("/images/icons-2014/24x24_Filter.png");
+}
+
 .ChartToolbar__options {
     background-image: url("/images/icons-2014/24x24_GearsNEW.png");
 }

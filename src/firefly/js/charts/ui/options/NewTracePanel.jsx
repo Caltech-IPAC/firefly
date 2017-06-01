@@ -15,6 +15,7 @@ import {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {TableSourcesOptions, submitChangesScatter} from './ScatterOptions.jsx';
 import {submitChanges} from './BasicOptions.jsx';
+import {errorFieldKey, errorMinusFieldKey} from './Errors.jsx';
 
 const fieldProps = {labelWidth: 62, size: 15};
 
@@ -38,8 +39,10 @@ export class NewTracePanel extends SimpleComponent {
             const submitChangesFunc =  (traceType === 'scatter') ? submitChangesScatter : submitChanges;
 
             fields = Object.assign({activeTrace}, fields);  // make the newly added trace active
-            submitChangesFunc({chartId, activeTrace, fields, tbl_id});
+            // need to hide before the changes are submitted to avoid React Internal error too much recursion (mounting/unmouting fields)
             dispatchHideDialog('ScatterNewTracePanel');
+            submitChangesFunc({chartId, activeTrace, fields, tbl_id});
+
         };
 
         const ScatterOpt = () => (
@@ -141,32 +144,24 @@ function fieldReducer({data, layout, activeTrace, tablesources={}}) {
              label: 'Y:',
              ...fieldProps
          },
-         [`_tables.data.${activeTrace}.error_x.array`]: {
-             fieldKey: `_tables.data.${activeTrace}.error_x.array`,
+         [errorFieldKey(activeTrace, 'x')]: {
+             fieldKey: errorFieldKey(activeTrace, 'x'),
              value: get(tablesourceMappings, ['error_x.array'], ''),
-             //tooltip: 'X error',
-             label: 'X error\u2191:',
              ...fieldProps
          },
-         [`_tables.data.${activeTrace}.error_x.arrayminus`]: {
-             fieldKey: `_tables.data.${activeTrace}.error_x.arrayminus`,
+         [errorMinusFieldKey(activeTrace, 'x')]: {
+             fieldKey: errorMinusFieldKey(activeTrace, 'x'),
              value: get(tablesourceMappings, ['error_x.arrayminus'], ''),
-             //tooltip: 'X error',
-             label: 'X Err\u2193:',
              ...fieldProps
          },
-         [`_tables.data.${activeTrace}.error_y.array`]: {
-             fieldKey: `_tables.data.${activeTrace}.error_y.array`,
+         [errorFieldKey(activeTrace, 'y')]: {
+             fieldKey: errorFieldKey(activeTrace, 'y'),
              value: get(tablesourceMappings, ['error_y.array'], ''),
-             //tooltip: '',
-             label: 'Y error\u2191:',
              ...fieldProps
          },
-         [`_tables.data.${activeTrace}.error_y.arrayminus`]: {
-             fieldKey: `_tables.data.${activeTrace}.error_y.arrayminus`,
+         [errorMinusFieldKey(activeTrace, 'y')]: {
+             fieldKey: errorMinusFieldKey(activeTrace, 'x'),
              value: get(tablesourceMappings, ['error_y.arrayminus'], ''),
-             //tooltip: 'Y error',
-             label: 'Y error\u2193:',
              ...fieldProps
          },
          [`_tables.data.${activeTrace}.marker.color`]: {
