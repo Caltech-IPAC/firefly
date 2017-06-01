@@ -16,12 +16,14 @@ import java.util.List;
  * @author tatianag
  */
 
-@SearchProcessorImpl(id = "LSSTLightCurveQuery")
+@SearchProcessorImpl(id="LSSTLightCurveQuery")
 public class LSSTLightCurveQuery extends LSSTQuery {
 
     @Override
     String buildSqlQueryString(TableServerRequest request) throws Exception {
         //Sample query from https://confluence.lsstcorp.org/display/DM/PDAC+sample+queries+and+test+cases :
+        //get time series table based on the objectId (id in RunDeepSource and cntr in allwise_p3as_psd) from the object table
+        //for sdss:
         //SELECT objectId, id, fsrc.exposure_id, fsrc.exposure_time_mid, exp.run,
         //   scisql_dnToAbMag(fsrc.flux_psf,exp.fluxMag0) AS g,
         //   scisql_dnToAbMagSigma(fsrc.flux_psf, fsrc.flux_psf_err, exp.fluxMag0, exp.fluxMag0Sigma) AS gErr
@@ -29,24 +31,69 @@ public class LSSTLightCurveQuery extends LSSTQuery {
         // WHERE exp.scienceCcdExposureId = fsrc.exposure_id
         //   AND fsrc.exposure_filter_id=1 AND objectId=3448068867358968
         // ORDER BY exposure_time_mid
-        String objectId = request.getParam("objectId");
-        String filterId = request.getParam("filterId");
+        //for wise:
+        //SELECT *
+        //FROM  wise_00.allwise_p3as_mep
+        //WHERE <inherit sql constraints and geometric constraints from object table search> AND cntr_mf=<objectId>
 
+        String database = request.getParam("database");
+        String tableName = request.getParam("table_name");
+        String forcedTable = LSSTQuery.getTableColumn(database, tableName, "forcedSourceTable");
+        String fsrc = (database != null && forcedTable != null) ?  database+'.'+forcedTable : null;
+
+        if (fsrc == null) {
+            throw new EndUserException("Invalid paramter", "Missing forced source table");
+        }
+
+        String objectId = request.getParam("objectId");
         if (objectId == null) {
             throw new EndUserException("Invalid parameter", "Missing objectId");
         }
 
-        // flags are not yet checked
-        return "SELECT fsrc.exposure_time_mid, fsrc.coord_ra, fsrc.coord_decl, "+
-                "scisql_dnToFlux(fsrc.flux_psf, exp.fluxMag0) AS tsv_flux, "+
-                "scisql_dnToFluxSigma(fsrc.flux_psf, fsrc.flux_psf_err, exp.fluxMag0, exp.fluxMag0Sigma) AS tsv_fluxErr, "+
-                "scisql_dnToAbMag(fsrc.flux_psf,exp.fluxMag0) AS mag, "+
-                "scisql_dnToAbMagSigma(fsrc.flux_psf, fsrc.flux_psf_err, exp.fluxMag0, exp.fluxMag0Sigma) AS magErr, "+
-                "exp.run, exp.camcol, exp.field, exp.filterName, exp.scienceCcdExposureId, objectId, id "+
-                " FROM RunDeepForcedSource AS fsrc, Science_Ccd_Exposure AS exp "+
-                " WHERE exp.scienceCcdExposureId = fsrc.exposure_id "+
-                " AND objectId="+objectId+(filterId == null ? "" : " AND fsrc.exposure_filter_id="+filterId)+
-                " ORDER BY exposure_time_mid";
+        String forcedObjectColumn = LSSTQuery.getTableColumn(database, forcedTable, "objectColumn");
+        String forcedFilterColumn = LSSTQuery.getTableColumn(database, forcedTable, "filterColumn");
+        String filterId = forcedFilterColumn != null ? request.getParam("filterId") : null;
+
+        String requestStr = new String();
+        String mission = (String)LSSTQuery.getDatasetInfo(database, tableName, new String[]{MetaConst.DATASET_CONVERTER});
+
+        if (mission.toLowerCase().contains("sdss")) {
+            String exp = database + ".Science_Ccd_Exposure";
+            requestStr = "SELECT fsrc.exposure_time_mid, fsrc.coord_ra, fsrc.coord_decl, "+
+                    "scisql_dnToFlux(fsrc.flux_psf, exp.fluxMag0) AS tsv_flux, "+
+                    "scisql_dnToFluxSigma(fsrc.flux_psf, fsrc.flux_psf_err, exp.fluxMag0, exp.fluxMag0Sigma) AS tsv_fluxErr, "+
+                    "scisql_dnToAbMag(fsrc.flux_psf,exp.fluxMag0) AS mag, "+
+                    "scisql_dnToAbMagSigma(fsrc.flux_psf, fsrc.flux_psf_err, exp.fluxMag0, exp.fluxMag0Sigma) AS magErr, "+
+                    "exp.run, exp.camcol, exp.field, exp.filterName, exp.scienceCcdExposureId, " + forcedObjectColumn + ", id "+
+                    " FROM " + fsrc + " AS fsrc, " +  exp + " AS exp "+
+                    " WHERE exp.scienceCcdExposureId = fsrc.exposure_id "+
+                    " AND " + forcedObjectColumn+"="+objectId+(filterId == null ? "" : " AND fsrc." + forcedFilterColumn + "=" + filterId)+
+                    " ORDER BY exposure_time_mid";
+        } else if (mission.toLowerCase().contains("wise")) {
+            String objectIdConstraints = forcedObjectColumn+" = "+objectId;
+            String constraints = buildExistingConstraints(request, objectIdConstraints );
+
+            requestStr  = "SELECT *" +
+                          " FROM " + fsrc +
+                          " WHERE " + constraints +";";
+        }
+        return requestStr;
+    }
+
+    String buildExistingConstraints(TableServerRequest request, String objectIdConstraints) throws Exception {
+        String constraints = LSSTCataLogSearch.getConstraints(request);
+        String searchMethod = LSSTCataLogSearch.getSearchMethodCatalog(request);
+        String whereStr;
+
+        if (searchMethod.length()==0 && constraints.length()==0) {
+            return objectIdConstraints;
+        } else if (searchMethod.length()>0 && constraints.length()>0){
+            whereStr = searchMethod +  " AND " + constraints;
+        } else {
+            whereStr = (searchMethod.length() > 0) ? searchMethod : constraints;
+        }
+
+        return whereStr + " AND " + objectIdConstraints;
     }
 
     @Override

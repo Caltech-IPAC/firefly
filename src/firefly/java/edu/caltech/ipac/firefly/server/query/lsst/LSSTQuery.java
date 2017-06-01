@@ -33,6 +33,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Arrays;
 
 /**
  * This is a base class for LSSTCatlogSearch and LSSTLightCurveQuery
@@ -516,6 +517,33 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
                 break;   // no schema group is found
             }
         }
+        return null;
+    }
+
+    // get table depenent column name
+    // columnType: "objectColumn", "filterColumn"
+    public static String getTableColumn(String database, String tableName, String columnType) {
+        Object tables = getDatasetInfo(database, tableName, new String[]{"tables"});
+        if (tables instanceof JSONArray) {
+            JSONArray jTables = (JSONArray)tables;
+            int tableIdx = -1;
+
+            for (int i = 0; i < jTables.size(); i++) {
+                if (jTables.get(i).toString().equals(tableName)) {
+                    tableIdx = i;
+                    break;
+                }
+            }
+
+            if (tableIdx >= 0) {
+                Object cols = getDatasetInfo(database, tableName, new String[]{columnType});
+
+                if ((cols instanceof JSONArray) && (((JSONArray)cols).size() > tableIdx) ) {
+                    return ((JSONArray)cols).get(tableIdx).toString();
+                }
+            }
+        }
+
         return null;
     }
 

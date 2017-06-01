@@ -55,7 +55,7 @@ public class LSSTCataLogSearch extends LSSTQuery {
      * @throws Exception
      */
 
-    protected String getSearchMethodCatalog(TableServerRequest req)throws Exception { //, String raCol, String decCol) throws Exception {
+    public static String getSearchMethodCatalog(TableServerRequest req)throws Exception { //, String raCol, String decCol) throws Exception {
 
         String method = req.getParam("SearchMethod");
         if (method.equalsIgnoreCase("allSky")){
@@ -87,10 +87,10 @@ public class LSSTCataLogSearch extends LSSTQuery {
                 //return "scisql_s2PtInCircle("+ radecCol + ","+ra +","+dec+","+radius +")=1";
            case "ELIPTICAL":
                //RA (degree), DEC (degree), positionAngle (degree), semi-majorAxis (arcsec), semi-minorAxis(arcsec),
-               double semiMajorAxis = Double.parseDouble(req.getParam("radius")) * 3600;
+               double semiMajorAxis = Double.parseDouble(req.getParam(CatalogRequest.RADIUS)) * 3600;
                double ratio = Double.parseDouble(req.getParam(CatalogRequest.RATIO));
                Double semiMinorAxis = semiMajorAxis*ratio;
-               String positionAngle = req.getParam("posang");
+               String positionAngle = req.getParam(CatalogRequest.PA);
 
                return "qserv_areaspec_ellipse(" + ra + "," + dec + "," + semiMajorAxis + "," +
                                                semiMinorAxis + "," + positionAngle + ")";
@@ -239,13 +239,14 @@ public class LSSTCataLogSearch extends LSSTQuery {
     }
 
 
-    String getConstraints(TableServerRequest request) {
+    public static String getConstraints(TableServerRequest request) {
         String constraints = request.getParam(CatalogRequest.CONSTRAINTS);
         if (!StringUtils.isEmpty(constraints) && constraints.contains(CatalogRequest.CONSTRAINTS_SEPARATOR)) {
             constraints = constraints.replace(CatalogRequest.CONSTRAINTS_SEPARATOR, " and ");
         }
         return constraints;
     }
+
 
     String buildSqlQueryString(TableServerRequest request) throws Exception {
 
@@ -338,6 +339,15 @@ public class LSSTCataLogSearch extends LSSTQuery {
             TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns((String) RA, (String) DEC, CoordinateSys.EQ_J2000);
             meta.setCenterCoordColumns(llc);
             meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "LSST");
+            String col = LSSTQuery.getTableColumn(database, catTable, "objectColumn");
+            if (col != null) {
+                meta.setAttribute("objectIdColumn", col);
+            }
+            col =  LSSTQuery.getTableColumn(database, catTable, "filterColumn");
+
+            if (col != null) {
+                meta.setAttribute("filterIdColumn", col);
+            }
         } else {
             String[] RAs = getCorners(database, catTable, "ra");
             String[] DECs = getCorners(database, catTable, "dec");
@@ -348,10 +358,9 @@ public class LSSTCataLogSearch extends LSSTQuery {
             }
 
             meta.setCorners(c[0], c[1], c[2], c[3]);
+            // only set for image meta table
             meta.setAttribute(MetaConst.DATASET_CONVERTER,
-                              (String)LSSTQuery.getDatasetInfo(database, catTable, new String[]{MetaConst.DATASET_CONVERTER}));
-            meta.setAttribute("mission", (String)LSSTQuery.getDatasetInfo(database, catTable, new String[]{"mission"}));
-
+                    (String)LSSTQuery.getDatasetInfo(database, catTable, new String[]{MetaConst.DATASET_CONVERTER}));
             Object schemaParams = LSSTQuery.getImageMetaSchema(database, catTable);
             if (schemaParams instanceof JSONObject) {
                 for (Object key : ((JSONObject)schemaParams).keySet()) {
@@ -359,7 +368,11 @@ public class LSSTCataLogSearch extends LSSTQuery {
                 }
             }
         }
-
+        meta.setAttribute("database", database);
+        meta.setAttribute("tableName", catTable);
+        meta.setAttribute("mission",
+                          (String)LSSTQuery.getDatasetInfo(database, catTable, new String[]{MetaConst.DATASET_CONVERTER}));
+        meta.setAttribute("tableType", (String)LSSTQuery.getTableColumn(database, catTable, "tableType"));
         super.prepareTableMeta(meta, columns, request);
     }
 
