@@ -32,6 +32,8 @@ export const HIGHLIGHTED_PROPS = {marker: {color: '#ffa500', line: {width: 2, co
 
 const FSIZE = 12;
 
+export const TBL_SRC_PATTERN = /^tables::(.+),(.+)/;
+
 export function isPlotly() {
     return get(getAppOptions(), 'charts.chartEngine')==='plotly';
 }
@@ -318,7 +320,7 @@ export function newTraceFrom(data, selIndexes, newTraceProps) {
  * @param {string} p.chartId
  * @param {object[]} p.data
  */
-export function handleTableSourceConnections({chartId, data, oldData}) {
+export function handleTableSourceConnections({chartId, data}) {
     var tablesources = makeTableSources(data);
     var oldTablesources = get(getChartData(chartId), 'tablesources',[]);
 
@@ -337,11 +339,7 @@ export function handleTableSourceConnections({chartId, data, oldData}) {
             const traceSpecificEntries = getTraceTSEntries(traceTS, chartId, idx);
             Object.assign(traceTS, traceSpecificEntries);
 
-            if (oldData && oldData[idx] && tablesourcesEqual(traceTS, oldTraceTS)) {
-                // trace data changed, but mappings stayed the same
-                tablesources[idx] = oldTraceTS;
-                useOldChartData(chartId, idx, oldData, oldTraceTS);
-            } else {
+            if (!tablesourcesEqual(traceTS, oldTraceTS)) {
                 const {tbl_id} = traceTS;
 
                 if (oldTraceTS && oldTraceTS._cancel) oldTraceTS._cancel();   // cancel the previous watcher if exists
@@ -360,17 +358,6 @@ function tablesourcesEqual(newTS, oldTS) {
         get(newTS, 'tblFilePath') === get(oldTS, 'tblFilePath') &&
         shallowequal(get(newTS, 'mappings'), get(oldTS, 'mappings')) &&
         shallowequal(get(newTS, 'options'), get(oldTS, 'options'));
-}
-
-function useOldChartData(chartId, traceNum, oldData, tablesource) {
-    const {tbl_id, mappings} = tablesource;
-    const changes = {};
-    Object.entries(mappings).forEach(([k,v]) => {
-        changes[`data.${traceNum}.${k}`] = get(oldData,`${traceNum}.${k}`);
-    });
-    dispatchChartUpdate({chartId, changes});
-    const {highlightedRow} = getTblById(tbl_id) || {};
-    dispatchChartHighlighted({chartId, highlighted: highlightedRow});
 }
 
 function updateChartData(chartId, traceNum, tablesource, action={}) {
@@ -461,7 +448,7 @@ function makeTableSources(data=[]) {
                         Object.entries(flattenData)
                                 .filter(([k,v]) => typeof v === 'string' && v.startsWith('tables::'))
                                 .reduce( (p, [k,v]) => {
-                                    const [,tbl_id, colExp] = v.match(/^tables::(.+),(.+)/) || [];
+                                    const [,tbl_id, colExp] = v.match(TBL_SRC_PATTERN) || [];
                                     if (tbl_id) p.tbl_id = tbl_id;
                                     if (colExp) set(p, ['mappings',k], colExp);
                                     return p;

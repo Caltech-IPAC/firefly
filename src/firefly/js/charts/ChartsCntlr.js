@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {cloneDeep, has, get, isEmpty, isUndefined, omit, omitBy, set} from 'lodash';
+import {cloneDeep, has, get, isEmpty, isString, isUndefined, omit, omitBy, set} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
@@ -11,7 +11,8 @@ import {getTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {logError} from '../util/WebUtil.js';
 import {dispatchAddViewer, dispatchAddViewerItems} from '../visualize/MultiViewCntlr.js';
-import {getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom, applyDefaults, HIGHLIGHTED_PROPS, SELECTED_PROPS} from './ChartUtil.js';
+import {getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom,
+        applyDefaults, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN} from './ChartUtil.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 
@@ -322,14 +323,17 @@ function chartAdd(action) {
 
 function chartUpdate(action) {
     return (dispatch) => {
-        const {chartId, changes} = action.payload;
-        const oldData = get(getChartData(chartId), 'data');
-        dispatch(action);
+        var {chartId, changes} = action.payload;
 
         const {data} = Object.entries(changes)
                              .filter(([k,v]) => k.startsWith('data'))
                              .reduce( (p, [k,v]) => set(p, k, v), {}); // take all of the data changes and create an object from it.
-        handleTableSourceConnections({chartId, data, oldData});
+        handleTableSourceConnections({chartId, data});
+
+        // remove any table's mappings from changes because it will be applied by the connectors.
+        changes = omitBy(changes, (v) => isString(v) && v.match(TBL_SRC_PATTERN));
+        set(action, 'payload.changes', changes);
+        dispatch(action);
     };
 }
 
