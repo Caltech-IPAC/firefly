@@ -1,7 +1,7 @@
 import React from 'react';
 import {get} from 'lodash';
 
-import {dispatchChartUpdate, getChartData} from '../../ChartsCntlr.js';
+import {getChartData} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
@@ -13,8 +13,9 @@ import {PopupPanel} from '../../../ui/PopupPanel.jsx';
 import {updateSet} from '../../../util/WebUtil.js';
 import {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
-import {TableSourcesOptions} from './ScatterOptions.jsx';
+import {TableSourcesOptions, submitChangesScatter} from './ScatterOptions.jsx';
 import {submitChanges} from './BasicOptions.jsx';
+import {errorFieldKey, errorMinusFieldKey} from './Errors.jsx';
 
 const fieldProps = {labelWidth: 62, size: 15};
 
@@ -25,7 +26,7 @@ export class NewTracePanel extends SimpleComponent {
         const {data} = getChartData(chartId);
         const activeTrace = data.length;        //setting activeTrace to next available index.
         const groupKey = `${chartId}-new-trace-${activeTrace}`;
-        const type = getFieldVal(groupKey, `data.${activeTrace}.type`);
+        const type = getFieldVal(groupKey, `data.${activeTrace-1}.type`);
         return {groupKey, activeTrace, type};
     }
 
@@ -33,16 +34,21 @@ export class NewTracePanel extends SimpleComponent {
         const {tbl_id, chartId} = this.props;
         const {groupKey, activeTrace, type} = this.state;
         const {data, layout, tablesources} = getChartData(chartId);
-        const doAdd = (flds) => {
-            flds = Object.assign({activeTrace}, flds);  // make the newly added trace active
-            submitChanges(chartId, flds, tbl_id);
+        const doAdd = (fields) => {
+            const traceType = get(fields, `data.${activeTrace}.type`);
+            const submitChangesFunc =  (traceType === 'scatter') ? submitChangesScatter : submitChanges;
+
+            fields = Object.assign({activeTrace}, fields);  // make the newly added trace active
+            // need to hide before the changes are submitted to avoid React Internal error too much recursion (mounting/unmouting fields)
             dispatchHideDialog('ScatterNewTracePanel');
+            submitChangesFunc({chartId, activeTrace, fields, tbl_id});
+
         };
 
         const ScatterOpt = () => (
             <div className='FieldGroup__vertical'>
                 <ListBoxInputField fieldKey={`data.${activeTrace}.mode`} options={[{value:'markers'}, {value:'lines'}, {value:'lines+markers'}]}/>
-                <TableSourcesOptions activeTrace={activeTrace}/>
+                <TableSourcesOptions tablesource={{tbl_id}} activeTrace={activeTrace} groupKey={groupKey}/>
             </div>
         );
         const HistogramOpt = () => (
@@ -92,7 +98,7 @@ export function NewTracePanelBtn({tbl_id, chartId}) {
 }
 
 function fieldReducer({data, layout, activeTrace, tablesources={}}) {
-    const tablesource = tablesources[activeTrace];
+    const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
     let color = get(data, `${activeTrace}.marker.color`, '');
     color = Array.isArray(color) ? '' : color;
     const fields = {
@@ -125,47 +131,53 @@ function fieldReducer({data, layout, activeTrace, tablesources={}}) {
             ...fieldProps,
         },
         [`_tables.data.${activeTrace}.x`]: {
-            fieldKey: `_tables.data.${activeTrace}.x`,
-            value: get(tablesource, 'x', ''),
-            tooltip: 'X axis',
-            label : 'x:',
-            ...fieldProps,
-        },
-        [`_tables.data.${activeTrace}.y`]: {
-            fieldKey: `_tables.data.${activeTrace}.y`,
-            value: get(tablesource, 'y', ''),
-            tooltip: 'Y axis',
-            label : 'y:',
-            ...fieldProps,
-        },
-        [`_tables.data.${activeTrace}.error_x.array`]: {
-            fieldKey: `_tables.data.${activeTrace}.error_x.array`,
-            value: get(tablesource, ['error_x.array'], ''),
-            tooltip: 'X error',
-            label : 'error_x:',
-            ...fieldProps,
-        },
-        [`_tables.data.${activeTrace}.error_y.array`]: {
-            fieldKey: `_tables.data.${activeTrace}.error_y.array`,
-            value: get(tablesource, ['error_y.array'], ''),
-            tooltip: 'Y error',
-            label : 'error_y:',
-            ...fieldProps,
-        },
-        [`_tables.data.${activeTrace}.marker.color`]: {
-            fieldKey: `_tables.data.${activeTrace}.marker.color`,
-            value: get(tablesource, 'marker.color', ''),
-            tooltip: 'Use a column for color map',
-            label : 'Color Map:',
-            ...fieldProps,
-        },
-        [`_tables.data.${activeTrace}.marker.size`]: {
-            fieldKey: `_tables.data.${activeTrace}.marker.size`,
-            value: get(tablesource, 'marker.size', ''),
-            tooltip: 'Use a column for size map',
-            label : 'Size Map:',
-            ...fieldProps,
-        }
+             fieldKey: `_tables.data.${activeTrace}.x`,
+             value: get(tablesourceMappings, 'x', ''),
+             //tooltip: 'X axis',
+             label: 'X:',
+             ...fieldProps
+         },
+         [`_tables.data.${activeTrace}.y`]: {
+             fieldKey: `_tables.data.${activeTrace}.y`,
+             value: get(tablesourceMappings, 'y', ''),
+             //tooltip: 'Y axis',
+             label: 'Y:',
+             ...fieldProps
+         },
+         [errorFieldKey(activeTrace, 'x')]: {
+             fieldKey: errorFieldKey(activeTrace, 'x'),
+             value: get(tablesourceMappings, ['error_x.array'], ''),
+             ...fieldProps
+         },
+         [errorMinusFieldKey(activeTrace, 'x')]: {
+             fieldKey: errorMinusFieldKey(activeTrace, 'x'),
+             value: get(tablesourceMappings, ['error_x.arrayminus'], ''),
+             ...fieldProps
+         },
+         [errorFieldKey(activeTrace, 'y')]: {
+             fieldKey: errorFieldKey(activeTrace, 'y'),
+             value: get(tablesourceMappings, ['error_y.array'], ''),
+             ...fieldProps
+         },
+         [errorMinusFieldKey(activeTrace, 'y')]: {
+             fieldKey: errorMinusFieldKey(activeTrace, 'x'),
+             value: get(tablesourceMappings, ['error_y.arrayminus'], ''),
+             ...fieldProps
+         },
+         [`_tables.data.${activeTrace}.marker.color`]: {
+             fieldKey: `_tables.data.${activeTrace}.marker.color`,
+             value: get(tablesourceMappings, 'marker.color', ''),
+             //tooltip: 'Use a column for color map',
+             label: 'Color Map:',
+             ...fieldProps
+         },
+         [`_tables.data.${activeTrace}.marker.size`]: {
+             fieldKey: `_tables.data.${activeTrace}.marker.size`,
+             value: get(tablesourceMappings, 'marker.size', ''),
+             //tooltip: 'Use a column for size map',
+             label: 'Size Map:',
+             ...fieldProps
+         }
     };
     return (inFields, action) => {
         if (!inFields) {

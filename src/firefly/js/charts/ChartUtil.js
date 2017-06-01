@@ -7,12 +7,13 @@
  * Utilities related to charts
  * Created by tatianag on 3/17/16.
  */
-import {get, uniqueId, isUndefined, omitBy, zip, isEmpty, range, set, isObject, pick, cloneDeep, merge} from 'lodash';
+import {get, uniqueId, isUndefined, omitBy, zip, isEmpty, range, set, isObject, isPlainObject, pick, cloneDeep, merge} from 'lodash';
+import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
 import {getAppOptions} from '../core/AppDataCntlr.js';
-import {getTblById, getColumnIdx, getCellValue, cloneRequest, doFetchTable, watchTableChanges, MAX_ROW} from '../tables/TableUtil.js';
-import {TABLE_FILTER, TABLE_SORT, TABLE_HIGHLIGHT, TABLE_SELECT, TABLE_REMOVE} from '../tables/TablesCntlr.js';
+import {getTblById, getColumnIdx, getCellValue, cloneRequest, doFetchTable, isFullyLoaded, watchTableChanges, MAX_ROW} from '../tables/TableUtil.js';
+import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_REMOVE} from '../tables/TablesCntlr.js';
 import {dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, getChartData} from './ChartsCntlr.js';
 import {Expression} from '../util/expr/Expression.js';
 import {logError, flattenObject} from '../util/WebUtil.js';
@@ -21,12 +22,28 @@ import {ScatterOptions} from './ui/options/ScatterOptions.jsx';
 import {BasicOptions} from './ui/options/BasicOptions.jsx';
 import {ScatterToolbar, BasicToolbar} from './ui/PlotlyToolbar';
 import {SelectInfo} from '../tables/SelectInfo.js';
+import {getTraceTSEntries as scatterTSGetter} from './dataTypes/FireflyScatter.js';
 
 export const SCATTER = 'scatter';
 export const HISTOGRAM = 'histogram';
 
 export const SELECTED_COLOR = '#ffc800';
+export const SELECTED_PROPS = {
+    marker: {color: SELECTED_COLOR},
+    error_x: {color: SELECTED_COLOR},
+    error_y: {color: SELECTED_COLOR}
+};
+
 export const HIGHLIGHTED_COLOR = '#ffa500';
+export const HIGHLIGHTED_PROPS = {
+    marker: {color: HIGHLIGHTED_COLOR, line: {width: 2, color: '#ffa500'}}, // increase highlight marker with line border
+    error_x: {color: HIGHLIGHTED_COLOR},
+    error_y: {color: HIGHLIGHTED_COLOR}
+};
+
+const FSIZE = 12;
+
+export const TBL_SRC_PATTERN = /^tables::(.+),(.+)/;
 
 export function isPlotly() {
     return get(getAppOptions(), 'charts.chartEngine')==='plotly';
@@ -231,6 +248,28 @@ export function getChartUi(chartId) {
     return get(flux.getState(), `${UI_PREFIX}.${chartId}`);
 }
 
+/**
+ * For a given plotly point index, get rowIdx connecting a given plotly point to the table row.
+ * @param traceData
+ * @param pointIdx
+ * @returns {number}
+ */
+export function getRowIdx(traceData, pointIdx) {
+    // firefly.rowIdx array in the trace data connects plotly points to table row indexes
+    return Number(get(traceData, `firefly.rowIdx.${pointIdx}`, pointIdx));
+}
+
+/**
+ * For a given table row index, get plotly point index
+ * @param traceData
+ * @param rowIdx
+ * @returns {number}
+ */
+export function getPointIdx(traceData, rowIdx) {
+    const rowIdxArray = get(traceData, 'firefly.rowIdx');
+    return rowIdxArray ? rowIdxArray.findIndex((e) => e == rowIdx) : rowIdx;
+}
+
 export function getOptionsUI(chartId) {
     // based on chartData, determine what options to display
     const {data, activeTrace=0} = getChartData(chartId);
@@ -256,15 +295,15 @@ export function getToolbarUI(chartId, activeTrace=0) {
 export function clearChartConn({chartId}) {
     var oldTablesources = get(getChartData(chartId), 'tablesources',[]);
     if (Array.isArray(oldTablesources)) {
-        oldTablesources.forEach( (traceTS, idx) => {
+        oldTablesources.forEach( (traceTS) => {
             if (traceTS._cancel) traceTS._cancel();   // cancel the previous watcher if exists
         });
     }
 }
 
-export function newTraceFrom(data, selIndexes, color) {
+export function newTraceFrom(data, selIndexes, newTraceProps) {
 
-    const sdata = cloneDeep(pick(data, ['x', 'y', 'error_x', 'error_y', 'marker']));
+    const sdata = cloneDeep(pick(data, ['x', 'y', 'error_x', 'error_y', 'text', 'marker', 'hoverinfo', 'firefly' ]));
     Object.assign(sdata, {showlegend: false, type: 'scatter', mode: 'markers'});
 
     // walk through object and replace values where there's an array with only the selected indexes.
@@ -279,9 +318,10 @@ export function newTraceFrom(data, selIndexes, color) {
                 deepReplace(v);
             }
         });
-    };
+    }
     deepReplace(sdata);
-    set(sdata, 'marker.color', color);
+    const flatprops = flattenObject(newTraceProps, isPlainObject);
+    Object.entries(flatprops).forEach(([k,v]) => set(sdata, k, v));
     return sdata;
 }
 
@@ -299,34 +339,54 @@ export function handleTableSourceConnections({chartId, data}) {
     if (!hasTablesources) return;
 
     const numTraces = Math.max(tablesources.length, oldTablesources.length);
-    range(numTraces).forEach( (idx) => {            // range instead of for-loop is to avoid the idx+1 JS's closure problem
+    range(numTraces).forEach( (idx) => {  // range instead of for-loop is to avoid the idx+1 JS's closure problem
         const traceTS = tablesources[idx];
         const oldTraceTS = oldTablesources[idx] || {};
         if (isEmpty(traceTS)) {
             tablesources[idx] = oldTraceTS;     // if no updates.. move the previous one into the new tablesources
         } else {
-            const {tbl_id, ...rest} = traceTS;
-            if (!getTblById(tbl_id)) return;
 
-            if (oldTraceTS && oldTraceTS._cancel) oldTraceTS._cancel();   // cancel the previous watcher if exists
-            //creates a new one.. and save the cancel handle
-            updateChartData(tbl_id, chartId, idx, rest);
-            traceTS._cancel = watchTableChanges(tbl_id, [TABLE_FILTER, TABLE_SORT, TABLE_HIGHLIGHT, TABLE_SELECT, TABLE_REMOVE], (action) => updateChartData(tbl_id, chartId, idx, rest, action));
-            tablesources[idx] = traceTS;
+            // setup trace table source object to be able to handle chart data
+            const traceSpecificEntries = getTraceTSEntries(traceTS, chartId, idx);
+            Object.assign(traceTS, traceSpecificEntries);
+
+            if (!tablesourcesEqual(traceTS, oldTraceTS)) {
+                const {tbl_id} = traceTS;
+
+                if (oldTraceTS && oldTraceTS._cancel) oldTraceTS._cancel();   // cancel the previous watcher if exists
+                //creates a new one.. and save the cancel handle
+                updateChartData(chartId, idx, traceTS);
+                traceTS._cancel = watchTableChanges(tbl_id, [TABLE_LOADED, TABLE_HIGHLIGHT, TABLE_SELECT, TABLE_REMOVE], (action) => updateChartData(chartId, idx, traceTS, action));
+            } else {
+                tablesources[idx] = oldTraceTS;
+            }
         }
     });
     dispatchChartUpdate({chartId, changes:{tablesources}});
 }
 
-function updateChartData(tbl_id, chartId, traceNum, mappings, action={}) {
+function tablesourcesEqual(newTS, oldTS) {
+    //shallowequal(newTS, omit(oldTS, '_cancel'));
+    return get(newTS, 'tbl_id') === get(oldTS, 'tbl_id') &&
+        get(newTS, 'tblFilePath') === get(oldTS, 'tblFilePath') &&
+        shallowequal(get(newTS, 'mappings'), get(oldTS, 'mappings')) &&
+        shallowequal(get(newTS, 'options'), get(oldTS, 'options'));
+}
+
+function updateChartData(chartId, traceNum, tablesource, action={}) {
+    const {tbl_id, tblFilePath, mappings} = tablesource;
     if (action.type === TABLE_HIGHLIGHT) {
+        // ignore if traceNum is not active
+        const {activeTrace=0} = getChartData(chartId);
+        if (traceNum !== activeTrace) return;
         const {highlightedRow} = action.payload;
-        dispatchChartHighlighted({chartId, highlighted: highlightedRow});
+        const traceData = get(getChartData(chartId), `data.${traceNum}`);
+        dispatchChartHighlighted({chartId, highlighted: getPointIdx(traceData,highlightedRow)});
     } else if (action.type === TABLE_SELECT) {
+        const {activeTrace=0} = getChartData(chartId);
+        if (traceNum !== activeTrace) return;
         const {selectInfo={}} = action.payload;
-        const selectInfoCls = SelectInfo.newInstance(selectInfo);
-        const selIndexes = Array.from(selectInfoCls.getSelected());
-        dispatchChartSelect({chartId, selIndexes});
+        updateSelected(chartId, selectInfo);
     } else if (action.type === TABLE_REMOVE) {
         const changes = {};
         Object.entries(mappings).forEach(([k,v]) => {
@@ -335,27 +395,64 @@ function updateChartData(tbl_id, chartId, traceNum, mappings, action={}) {
         dispatchChartUpdate({chartId, changes});
         dispatchChartHighlighted({chartId, highlighted: undefined}); 
     } else {
-        const {request, highlightedRow} = getTblById(tbl_id) || {};
-        const sreq = cloneRequest(request, {startIdx: 0, pageSize: MAX_ROW, inclCols: Object.values(mappings).join(',')});
-        doFetchTable(sreq).then(
-            (tableModel) => {
-                if (tableModel.tableData && tableModel.tableData.data) {
-                    const cols = tableModel.tableData.columns.map( (c) => c.name);
-                    const transposed = zip(...tableModel.tableData.data);
-                    const changes = {};
-                    Object.entries(mappings).forEach(([k,v]) => {
-                        changes[`data.${traceNum}.${k}`] = transposed[cols.indexOf(v)];
-                    });
-                    dispatchChartUpdate({chartId, changes});
-                    dispatchChartHighlighted({chartId, highlighted: highlightedRow});   // update highlighted point in chart
+        if (!isFullyLoaded(tbl_id)) return;
+        const tableModel = getTblById(tbl_id);
+
+        // save original table file path
+        const tblFilePathNow = get(tableModel, 'tableMeta.tblFilePath');
+        if (tblFilePathNow !== tblFilePath) {
+            const changes = {[`tablesources.${traceNum}.tblFilePath`]: tblFilePathNow};
+            dispatchChartUpdate({chartId, changes});
+        }
+
+        // fetch data
+        if (tablesource.fetchData) {
+            tablesource.fetchData();
+        } else {
+            // default behavior
+            const {request, highlightedRow, selectInfo={}} = tableModel || {};
+            const sreq = cloneRequest(request, {
+                startIdx: 0,
+                pageSize: MAX_ROW,
+                inclCols: Object.values(mappings).join(',')
+            });
+            doFetchTable(sreq).then(
+                (tableModel) => {
+                    if (tableModel.tableData && tableModel.tableData.data) {
+                        const changes = getDataChangesForMappings({tableModel, mappings, traceNum});
+                        dispatchChartUpdate({chartId, changes});
+                        const traceData = get(getChartData(chartId), `data.${traceNum}`);
+                        dispatchChartHighlighted({chartId, highlighted: getPointIdx(traceData,highlightedRow)});   // update highlighted point in chart
+                        updateSelected(chartId, selectInfo);
+                    }
                 }
-            }
-        ).catch(
-            (reason) => {
-                console.error(`Failed to fetch table: ${reason}`);
-            }
-        );
+            ).catch(
+                (reason) => {
+                    console.error(`Failed to fetch table: ${reason}`);
+                }
+            );
+        }
     }
+}
+
+export function updateSelected(chartId, selectInfo) {
+    const selectInfoCls = SelectInfo.newInstance(selectInfo);
+    const {data, activeTrace=0} = getChartData(chartId);
+    const traceData = data[activeTrace];
+    const selIndexes = Array.from(selectInfoCls.getSelected()).map((e)=>getPointIdx(traceData, e));
+    if (selIndexes) {
+        dispatchChartSelect({chartId, selIndexes});
+    }
+}
+
+export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
+    const cols = tableModel.tableData.columns.map( (c) => c.name);
+    const transposed = zip(...tableModel.tableData.data);
+    const changes = {};
+    Object.entries(mappings).forEach(([k,v]) => {
+        changes[`data.${traceNum}.${k}`] = transposed[cols.indexOf(v)];
+    });
+    return changes;
 }
 
 function makeTableSources(data=[]) {
@@ -364,23 +461,76 @@ function makeTableSources(data=[]) {
                         Object.entries(flattenData)
                                 .filter(([k,v]) => typeof v === 'string' && v.startsWith('tables::'))
                                 .reduce( (p, [k,v]) => {
-                                    const [,tbl_id, colExp] = v.match(/^tables::(.+),(.+)/) || [];
+                                    const [,tbl_id, colExp] = v.match(TBL_SRC_PATTERN) || [];
                                     if (tbl_id) p.tbl_id = tbl_id;
-                                    if (colExp) p[k] = colExp;
+                                    if (colExp) set(p, ['mappings',k], colExp);
                                     return p;
                                 }, {});
 
-    return data.map((d) => convertToDS(flattenObject(d)));
+    return data.map((d) => {
+        const ds = convertToDS(flattenObject(d, isPlainObject)); //avoid flattening arrays
+        if (ds.tbl_id) {
+            const tableModel = getTblById(ds.tbl_id);
+            ds.tblFilePath = get(tableModel, 'tableMeta.tblFilePath');
+        }
+        return ds;
+    });
 }
 
-
+export function getTraceTSEntries(traceTS, chartId, traceNum) {
+    const {data} = getChartData(chartId) || {};
+    const chartDataType = get(data[traceNum], 'firefly.dataType');
+    if (!chartDataType) {
+        // default behavior
+        return {};
+    } else if (chartDataType === 'fireflyScatter') {
+        return scatterTSGetter(traceTS, chartId, traceNum);
+    }
+}
 
 
 export function applyDefaults(chartData={}) {
-    chartData.layout = merge({xaxis:{autorange:true}, yaxis:{autorange:true}}, chartData.layout);
+    const defaultLayout = {
+        hovermode: 'closest',
+        dragmode: 'select',
+        legend: {
+            font: {size: FSIZE},
+            orientation: 'v',
+            yanchor: 'top'
+        },
+        xaxis: {
+            autorange:true,
+            gridLineWidth: 1,
+            lineColor: '#e9e9e9',
+            tickwidth: 1,
+            ticklen: 5,
+            titlefont: {
+                size: FSIZE
+            },
+            tickfont: {
+                size: FSIZE
+            },
+            showline: true,
+            zeroline: false
+        },
+        yaxis: {
+            autorange:true,
+            gridLineWidth: 1,
+            lineColor: '#e9e9e9',
+            tickwidth: 1,
+            ticklen: 5,
+            titlefont: {
+                size: FSIZE
+            },
+            tickfont: {
+                size: FSIZE
+            },
+            showline: true,
+            zeroline: false
+        }
+    };
+    chartData.layout = merge(defaultLayout, chartData.layout);
 }
-
-
 
 
 

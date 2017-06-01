@@ -119,18 +119,24 @@
             firefly.showPlot('plotly', {chartId: 'test', chartType: 'plot.ly', data: data});
 
 
-            var tblReq = firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
-                    {   position: '202.48;47.23;EQ_J2000',
+            var tblReq =  firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
+                    {   position: '10.68479;41.26906;EQ_J2000',
                         SearchMethod: 'Cone',
-                        radius: 30,
-                    }, {tbl_id: 'test-tbl'});
+                        radius: 300
+                    },
+//                    {   position: '202.48;47.23;EQ_J2000',
+//                        SearchMethod: 'Cone',
+//                        radius: 30,
+//                    },
+                    {tbl_id: 'test-tbl'});
             firefly.showTable('table-1', tblReq);
 
             trace1 = {
                 x: "tables::test-tbl,ra",
                 y: "tables::test-tbl,dec",
                 mode: 'markers',
-                type: 'scatter'
+                type: 'scatter',
+                firefly: {dataType: 'fireflyScatter'}
             };
 
             firefly.showPlot('plotly', {chartId: 'plotly-tbl', chartType: 'plot.ly', data: [trace1]});

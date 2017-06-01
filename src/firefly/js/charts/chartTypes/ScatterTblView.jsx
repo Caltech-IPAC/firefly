@@ -101,7 +101,7 @@ class ChartComp extends Component {
                        }
                         selectInfo={sInfo}
                         onSelection={(selection) => {
-                        if (selectionNotEmpty(chartId, selection)) {defer(setXYSelection, chartId, undefined, selection);}
+                        if (selectionNotEmpty(chartId, selection)) {defer( setXYSelection, chartId, undefined, selection);}
                     }}
                 />
             );
@@ -323,7 +323,8 @@ function selectionNotEmpty(chartId, selection) {
             });
             return Boolean(aPt);
         } else {
-            return true; // empty selection replacing non-empty
+            // empty selection should replace non-empty
+            return Boolean(get(chartDataElement, 'options.selection'));
         }
     } else {
         return false;

@@ -23,6 +23,7 @@ import ChartsCntlrDef from '../charts/ChartsCntlr.js';
 import TablesCntlr from '../tables/TablesCntlr';
 
 import {chartTypeFactory} from '../charts/ChartType.js';
+import {PLOTLY_CHART} from '../charts/chartTypes/PlotlyChart.jsx';
 import {SCATTER_TBLVIEW} from '../charts/chartTypes/ScatterTblView.jsx';
 import {HISTOGRAM_TBLVIEW} from '../charts/chartTypes/HistogramTblView.jsx';
 import {chartDataTypeFactory} from '../charts/ChartDataType.js';
@@ -109,7 +110,7 @@ const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,Dis
                                                      Catalog, WebGrid, RegionPlot, MarkerTool, FootprintTool);
 
 const cdtFactory= chartDataTypeFactory([DATATYPE_XYCOLS, DATATYPE_HISTOGRAM]);
-const chartsFactory= chartTypeFactory([SCATTER_TBLVIEW, HISTOGRAM_TBLVIEW]);
+const chartsFactory= chartTypeFactory([PLOTLY_CHART, SCATTER_TBLVIEW, HISTOGRAM_TBLVIEW]);
 
 
 /**

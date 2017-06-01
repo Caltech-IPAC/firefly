@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import {Expression} from '../../util/expr/Expression.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 import ColValuesStatistics from '../ColValuesStatistics.js';
 import {showColSelectPopup} from './ColSelectView.jsx';
@@ -68,14 +69,16 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
         return priorContent+colValStats[idx].name;
     };
 
-    var val = get(params, fldPath);
+    const value = params ? get(params, fldPath) : getFieldVal(groupKey, fldPath);
+    const colValidator = getColValidator(colValStats,!nullAllowed);
+    const {valid=true, message=''} = value ? colValidator(value) : {};
+
+    var val = value;
     const onColSelected = (colName) => {
         val = colName;
         dispatchValueChange({fieldKey: fldPath, groupKey, value: colName, valid: true});
     };
-    const colValidator = getColValidator(colValStats,!nullAllowed);
-    const value = get(params, fldPath);
-    const {valid=true, message=''} = value ? colValidator(value) : {};
+
     // http://www.charbase.com/1f50d-unicode-left-pointing-magnifying-glass
     // http://www.charbase.com/1f50e-unicode-right-pointing-magnifying-glass
     const cols = '\ud83d\udd0e';

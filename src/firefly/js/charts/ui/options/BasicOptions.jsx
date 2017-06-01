@@ -27,8 +27,8 @@ export class BasicOptions extends SimpleComponent {
         const tablesource = get(tablesources, [activeTrace]);
         const tbl_id = get(tablesource, 'tbl_id');
         return (
-            <div className='TablePanelOptions' style={{minWidth: 250, width: 'auto', border: 'solid 1px #bbb'}}>
-                <OptionTopBar {...{groupKey, chartId, tbl_id}}/>
+            <div style={{minWidth: 250, padding:'0 5px 7px'}}>
+                <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id}}/>
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey}
                             reducerFunc={basicFieldReducer({data, layout, activeTrace, tablesources})}>
                     <BasicOptionFields {...{layout, data, activeTrace}}/>
@@ -111,16 +111,18 @@ export function BasicOptionFields({activeTrace, align='vertical'}) {
     );
 }
 
-export function OptionTopBar({groupKey, activeTrace, chartId, tbl_id}) {
+export function OptionTopBar({groupKey, activeTrace, chartId, tbl_id, submitChangesFunc=submitChanges}) {
     return (
-        <div style={{display: 'inline-flex', marginBottom: 10, justifyContent: 'space-between'}}>
-            <CompleteButton groupKey={groupKey}
-                            onSuccess={(flds) => submitChanges(chartId, flds, tbl_id)}
+        <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
+            <CompleteButton style={{flexGrow: 0}}
+                            groupKey={groupKey}
+                            onSuccess={(fields) => submitChangesFunc({chartId, activeTrace, fields, tbl_id})}
                             onFail={() => alert('to be implemented')}
                             text = 'Apply'
             />
-            {tbl_id && <NewTracePanelBtn {...{chartId, tbl_id}}/>}
-            <div>
+            <div style={{flexGrow: 1}}/>
+            {tbl_id && <div style={{flexGrow: 0}}><NewTracePanelBtn {...{chartId, tbl_id}}/></div>}
+            <div style={{flexGrow: 0}}>
                 <button type='button' className='button std' onClick={() => resetChart(chartId)}>Reset</button>
             </div>
         </div>
@@ -133,11 +135,12 @@ export function OptionTopBar({groupKey, activeTrace, chartId, tbl_id}) {
  * It assume the fieldId is the 'path' to the chart data and the value of the field is the value you want to change.
  * For fields that are mapped to tables, it assumes that they starts with '_tables'.  In this case, it will prepend
  * 'tables::tbl_id,' to the value.
- * @param {string} chartId
- * @param {object} fields
- * @param {string} tbl_id
+ * @param {pbject} p
+ * @param {string} p.chartId
+ * @param {object} p.fields
+ * @param {string} p.tbl_id
  */
-export function submitChanges(chartId, fields, tbl_id) {
+export function submitChanges({chartId, fields, tbl_id}) {
     if (!fields) return;                // fields failed validations..  quick/dirty.. may need to separate the logic later.
     const changes = {showOptions: false};
     Object.entries(fields).forEach( ([k,v]) => {

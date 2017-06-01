@@ -10,8 +10,6 @@ import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {ChartPanel} from './ChartPanel.jsx';
 import {MultiChartViewer} from './MultiChartViewer.jsx';
-import {getChartData} from '../ChartsCntlr.js';
-import {PlotlyChartPanel} from '../ui/PlotlyChartPanel.jsx';
 
 
 /**
@@ -47,12 +45,10 @@ ChartsContainer.propTypes = {
 
 function ExpandedView(props) {
     const {closeable, chartId} = props;
-    const {chartType} = getChartData(chartId);
-    const Content = chartType === 'plot.ly' ? PlotlyChartPanel : ChartPanel;
 
     return (
         <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0}}>
-            <Content key={'expanded-'+chartId} expandedMode={true} expandable={false} chartId={chartId}/>
+            <ChartPanel key={'expanded-'+chartId} expandedMode={true} expandable={false} chartId={chartId}/>
             {closeable && <CloseButton style={{position: 'absolute', top: 0, left: 0, paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
         </div>
     );

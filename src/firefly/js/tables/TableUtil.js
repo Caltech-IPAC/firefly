@@ -920,7 +920,7 @@ export function watchTableChanges(tbl_id, actions, callback) {
         const task = yield fork(function* () {
             while (true) {
                 const action = yield take(actions);
-                if (tbl_id === get(action, 'payload.tbl_id') || get(action, 'payload.request.tbl_id')) {
+                if (tbl_id === (get(action, 'payload.tbl_id') || get(action, 'payload.request.tbl_id'))) {
                     callback && callback(action);
                 }
             };

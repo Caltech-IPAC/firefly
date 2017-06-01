@@ -41,10 +41,13 @@ function isSlowResize() {
     return BrowserInfo.isFirefox();
 }
 
+
 export function downloadChart(chartId) {
     getPlotLy().then( (Plotly) => {
-        const chartDiv = document.getElementById(chartId);
-        if (chartId && chartDiv) {
+        // in API we can have same chart unexpanded and expanded
+        const chartDivAll = document.querySelectorAll(`#${chartId}`);
+        if (chartId && chartDivAll && chartDivAll.length > 0) {
+            const chartDiv = chartDivAll[chartDivAll.length-1];
             const filename = get(chartDiv, 'layout.title') || chartId;
             Plotly.downloadImage(chartDiv, {
                 format: 'png',
