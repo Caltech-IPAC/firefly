@@ -1,6 +1,0 @@
-setupRequired(gradle)
-setupRequired(tomcat)
-setupRequired(node)
-
-envPrepend(PATH, ${PRODUCT_DIR}/bin)
-envPrepend(PYTHONPATH, ${PRODUCT_DIR}/src/fftools/python/display)
