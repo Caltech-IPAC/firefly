@@ -7,7 +7,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    height: calc(100% - 76px);
+    height: calc(100% - 75px);
 }
 
 .DD-ToolBar__content {
@@ -26,12 +26,13 @@
     margin-bottom: 10px;
     min-height: 25px;
     width: 100%;
+    position: relative;
 }
 
 .DD-ToolBar__version {
     color: rgba(256,256,256,0.2);
     position: absolute;
-    bottom: 15px;
+    top: 6px;
     right: 15px;}
 
 .DD-ToolBar__footer--icons {
