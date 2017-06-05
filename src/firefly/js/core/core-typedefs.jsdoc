@@ -51,6 +51,10 @@
  *                              In this context, view a string to denote what to show, ie.  'tables', 'images', or 'tables | images' ( tables and images).
  * @prop {string}   mode.expanded   if not nil/empty, show this view in expanded mode
  * @prop {string}   mode.standard   the current standard view.
+ * @prop {boolean}  showForm    show form panel
+ * @prop {boolean}  showTables  show tables panel
+ * @prop {boolean}  showXyPlots show charts panel
+ * @prop {boolean}  showImages  show images panel
  */
 
 

@@ -11,6 +11,7 @@ import {visRoot, dispatchDeletePlotView} from '../../visualize/ImagePlotCntlr.js
 import {removeTablesFromGroup, getAllTableGroupIds, smartMerge} from '../../tables/TableUtil.js';
 import {getSearchInfo} from '../../core/AppDataCntlr.js';
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
+import {deleteAllDrawLayers} from '../../visualize/PlotViewUtil.js';
 import {CHART_ADD} from '../../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../../visualize/MultiViewCntlr.js';
 
@@ -45,12 +46,6 @@ export function* hydraManager() {
          * This is the current state of the layout store.  Action handlers should return newLayoutInfo if state changes
          * If state has changed, it will be dispatched into the flux.
          * @type {LayoutInfo}
-         * @prop {boolean}  layoutInfo.showForm    show form panel
-         * @prop {boolean}  layoutInfo.showTables  show tables panel
-         * @prop {boolean}  layoutInfo.showXyPlots show charts panel
-         * @prop {boolean}  layoutInfo.showImages  show images panel
-         * @prop {Object}   layoutInfo.images      images specific states
-         * @prop {string}   layoutInfo.images.activeTableId  last active table id that images responded to
          * @prop {string}   layoutInfo.currentSearch  the current selected search
          *
          */
@@ -92,6 +87,8 @@ function handleNewSearch(layoutInfo, action) {
         groups.forEach((k) => removeTablesFromGroup(k));
         // remove all plots
         visRoot().plotViewAry.forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId}));
+        // remove all drawing layers
+        deleteAllDrawLayers();
         // remove all charts
         removeChartsInGroup();
         showTables=showXyPlots=showImages=true;

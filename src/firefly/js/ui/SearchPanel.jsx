@@ -66,14 +66,14 @@ function SideBar({activeSearch, groups=[]}) {
 function SearchGroup({group, activeSearch}) {
     const {title, searchItems} = group;
     return (
-        <ol className='SearchPanel__group'>{title}
+        <div className='SearchPanel__group'>{title}
             {
                 Object.values(searchItems)
                     .map( (search) => {
                         return <SearchItem  key={search.name} {...{search, activeSearch}}/>;
                     })
             }
-        </ol>
+        </div>
     );
 }
 
@@ -82,5 +82,5 @@ function SearchItem({search, activeSearch}) {
     const label = search.title || search.name;
     const clsname = search.name ===  activeSearch ? 'SearchPanel__searchItem--selected' : 'SearchPanel__searchItem';
     const onClick = () => dispatchUpdateAppData(set({}, ['searches', 'activeSearch'], search.name));
-    return <li className={clsname} onClick={onClick} title={ttips}><span style={{marginLeft: -10}}>{label}</span></li>;
+    return <div className={clsname} onClick={onClick} title={ttips}><span>{label}</span></div>;
 }

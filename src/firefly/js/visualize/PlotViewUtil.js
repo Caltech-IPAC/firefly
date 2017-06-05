@@ -6,6 +6,7 @@ import {getPlotGroupById} from './PlotGroup.js';
 import {makeImagePt, pointEquals} from './Point.js';
 import {CysConverter} from './CsysConverter.js';
 import {clone} from '../util/WebUtil.js';
+import {getDlAry, dispatchDestroyDrawLayer} from './DrawLayerCntlr.js';
 
 
 /**
@@ -284,6 +285,13 @@ export function isDrawLayerAttached(dl, plotId) { return dl ? dl.plotIdAry.inclu
  * @return {*}
  */
 export function getLayerTitle(plotId,dl) { return (typeof dl.title === 'string') ? dl.title : dl.title[plotId]; }
+
+
+export function deleteAllDrawLayers() {
+    (getDlAry() || [])
+        .filter((l) => l.drawLayerId)
+        .forEach((id) => dispatchDestroyDrawLayer(id));
+}
 
 //--------------------------------------------------------------
 //--------------------------------------------------------------
