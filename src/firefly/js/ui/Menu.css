@@ -82,26 +82,28 @@
     list-style: inside circle;
 }
 
-.SearchPanel__group > * {
+.SearchPanel__form {
+    flex-grow: 1;
+    padding: 5px 5px 1px;
+}
+
+.SearchPanel__searchItem .selected {
+    font-weight: bold;
+    cursor: inherit;
+}
+
+.SearchPanel__searchItem {
     font-style: italic;
     font-weight: normal;
     text-decoration: underline;
     color: #005da4;
     padding: 3px 10px;
     margin-left: -5px;
-}
-
-.SearchPanel__form {
-    flex-grow: 1;
-    padding: 5px 5px 1px;
-}
-
-.SearchPanel__searchItem--selected {
-    font-weight: bold;
-}
-
-.SearchPanel__searchItem {
     cursor: pointer;
+}
+
+.SearchPanel__searchItem:before {
+    content: "\2605";
 }
 
 .SearchPanel__searchItem:hover{
