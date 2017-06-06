@@ -80,7 +80,7 @@ function SearchGroup({group, activeSearch}) {
 function SearchItem({search, activeSearch}) {
     const ttips = search.desc || search.title || search.name;
     const label = search.title || search.name;
-    const clsname = search.name ===  activeSearch ? 'SearchPanel__searchItem selected' : 'SearchPanel__searchItem';
+    const clsname = search.name ===  activeSearch ? 'selected' : 'normal';
     const onClick = () => dispatchUpdateAppData(set({}, ['searches', 'activeSearch'], search.name));
-    return <div className={clsname} onClick={onClick} title={ttips}>{label}</div>;
+    return <div className='SearchPanel__searchItem' onClick={onClick} title={ttips}><span className={clsname}>{label}</span></div>;
 }

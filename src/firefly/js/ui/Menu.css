@@ -79,7 +79,6 @@
     font-weight: bold;
     margin-bottom: 20px;
     padding-left: 0;
-    list-style: inside circle;
 }
 
 .SearchPanel__form {
@@ -87,25 +86,29 @@
     padding: 5px 5px 1px;
 }
 
-.SearchPanel__searchItem .selected {
-    font-weight: bold;
-    cursor: inherit;
-}
-
 .SearchPanel__searchItem {
     font-style: italic;
     font-weight: normal;
-    text-decoration: underline;
     color: #005da4;
-    padding: 3px 10px;
-    margin-left: -5px;
-    cursor: pointer;
+    padding: 3px;
 }
 
 .SearchPanel__searchItem:before {
-    content: "\2605";
+    content: "\25CF";
 }
 
-.SearchPanel__searchItem:hover{
+.SearchPanel__searchItem .selected {
+    margin-left: 5px;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.SearchPanel__searchItem .normal {
+    margin-left: 5px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.SearchPanel__searchItem:hover .normal{
     color: #49a344;
 }

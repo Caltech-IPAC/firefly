@@ -20,8 +20,12 @@ import {ValidationField} from '../../ui/ValidationField.jsx';
 import Validate from '../../util/Validate.js';
 import {TriViewImageSection} from '../../visualize/ui/TriViewImageSection.jsx';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
+import {dispatchLoadSearches} from '../../core/AppDataCntlr.js';
 
 
+export function sampleHydra () {
+    dispatchLoadSearches(sampleSearches);
+}
 
 const params = {
     id: 'GatorQuery',
@@ -87,7 +91,7 @@ const group2 = {
     }
 };
 
-export const sampleSearches = [group1, group2];
+const sampleSearches = [group1, group2];
 
 
 function WiseForm (searchItem) {

@@ -21,7 +21,7 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
     return (request={}) => {
         request = Object.assign({}, params, request);
         const reqTitle = title && (typeof title === 'function') ? title(request) : title;
-        request = makeTblRequest(request.id, reqTitle || request.title, request);
+        request = makeTblRequest(request.id, reqTitle || request.title, request, params);
 
         if (action) {
             if (typeof action === 'function') {
