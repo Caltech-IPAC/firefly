@@ -4,12 +4,40 @@
 
 
 /**
- * Application-level data.
- * @typedef {Object} AppData
- * @prop {string} alerts  system notification message.
+ * Information related to searches
+ * @typedef {Object} SearchInfo
+ * @prop {Object.<string,Search>} allSearchItems  flatten maps of searches keyed by name
+ * @prop {SearchGroup[]}          groups   search group
  */
 
+/**
+ * Search group information.
+ * @typedef {object} SearchGroup
+ * @prop {string} title search if any
+ * @prop {Object.<string,Search>} searchItems   searches keyed by name
+ */
 
+/**
+ * Search information.
+ * @typedef {object} Search
+ * @prop {string} name  name of the search
+ * @prop {string} title title of the search
+ * @prop {string} desc  desc of the search
+ * @prop {SearchForm} form  define form info
+ * @prop {function} results  a function that returns the search results.
+ * @prop {function} download  a function that returns the download dialog.
+ */
+
+/**
+ * Search information.
+ * @typedef {object} SearchForm
+ * @prop {function} render    a function that returns the search form.
+ * @prop {string[]} actions
+ * @prop {object} params  additional parameters to be sent with the search request.
+ * @prop {string|function} title description of the search results.  if a function, the request will be passed in. 
+ * @prop {string} [helpId] help ID if available
+ * @prop {function} [onSubmit]  a function that handle the form submit.
+ */
 
 /**
  * Common Layout information used to control generic behavior, ie drop-down panel, expanded/collapsed state, etc
@@ -23,6 +51,10 @@
  *                              In this context, view a string to denote what to show, ie.  'tables', 'images', or 'tables | images' ( tables and images).
  * @prop {string}   mode.expanded   if not nil/empty, show this view in expanded mode
  * @prop {string}   mode.standard   the current standard view.
+ * @prop {boolean}  showForm    show form panel
+ * @prop {boolean}  showTables  show tables panel
+ * @prop {boolean}  showXyPlots show charts panel
+ * @prop {boolean}  showImages  show images panel
  */
 
 

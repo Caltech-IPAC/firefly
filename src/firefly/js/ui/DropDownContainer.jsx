@@ -10,6 +10,7 @@ import {get, pick} from 'lodash';
 import {getDropDownInfo} from '../core/LayoutCntlr.js';
 import {flux, getVersion} from '../Firefly.js';
 import {SearchPanel} from '../ui/SearchPanel.jsx';
+import {TestSearchPanel} from '../ui/TestSearchPanel.jsx';
 import {TestQueriesPanel} from '../ui/TestQueriesPanel.jsx';
 import {ImageSelectDropdown} from '../ui/ImageSelectDropdown.jsx';
 import {ChartSelectDropdown} from '../ui/ChartSelectDropdown.jsx';
@@ -19,8 +20,9 @@ import {getAlerts} from '../core/AppDataCntlr.js';
 
 import './DropDownContainer.css';
 
-const dropDownMap = {
-    AnyDataSetSearch: <SearchPanel />,
+export const dropDownMap = {
+    Search: <SearchPanel />,
+    TestSearch: <TestSearchPanel />,
     TestSearches: <TestQueriesPanel />,
     ImageSelectDropDownCmd: <ImageSelectDropdown />,
     ChartSelectDropDownCmd: <ChartSelectDropdown />,

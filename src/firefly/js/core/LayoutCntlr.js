@@ -2,6 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {take} from 'redux-saga/effects';
+
 import {get, isEmpty, filter, pick} from 'lodash';
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
@@ -10,9 +12,8 @@ import {smartMerge} from '../tables/TableUtil.js';
 import {getDropDownNames} from '../ui/Menu.jsx';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import {TBL_RESULTS_ADDED, TABLE_REMOVE} from '../tables/TablesCntlr.js';
-import {CHART_ADD} from '../charts/ChartsCntlr.js';
+import {CHART_ADD, CHART_REMOVE} from '../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../visualize/MultiViewCntlr.js';
-import {updateSet} from '../util/WebUtil.js';
 
 export const LAYOUT_PATH = 'layout';
 
@@ -151,4 +152,33 @@ export function dropDownHandler(layoutInfo, action) {
             break;
     }
     return layoutInfo;
+}
+
+
+
+/**
+ * This handles the general use case of the drop-down panel.
+ * It will collapse the drop-down panel when new tables or images are added.
+ * It will expand the drop-down panel when there is no results to be shown.
+ */
+export function* dropDownManager() {
+    while (true) {
+        const action = yield take([
+            ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE,
+            REPLACE_VIEWER_ITEMS,
+            TABLE_REMOVE, TBL_RESULTS_ADDED,
+            CHART_ADD, CHART_REMOVE,
+            SHOW_DROPDOWN, SET_LAYOUT_MODE
+        ]);
+
+        /**
+         * @type {LayoutInfo}
+         * @prop {boolean}  layoutInfo.dropDown.visible  show or hide the drop-down panel
+         */
+        var layoutInfo = getLayouInfo();
+        var newLayoutInfo = dropDownHandler(layoutInfo, action);
+        if (newLayoutInfo !== layoutInfo) {
+            dispatchUpdateLayoutInfo(newLayoutInfo);
+        }
+    }
 }

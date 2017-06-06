@@ -2,105 +2,85 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
+import {set} from 'lodash';
+import {dispatchUpdateAppData} from '../core/AppDataCntlr.js';
+import {getSearchInfo} from '../core/AppDataCntlr.js';
 import {FormPanel} from './FormPanel.jsx';
-import {FieldGroup} from '../ui/FieldGroup.jsx';
-import {ValidationField} from '../ui/ValidationField.jsx';
-import Validate from '../util/Validate.js';
-import {download} from '../util/WebUtil.js';
-import {getRootURL} from '../util/BrowserUtil.js';
-import {FileUpload} from '../ui/FileUpload.jsx';
+import {SimpleComponent} from './SimpleComponent.jsx';
 
-import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
+export class SearchPanel extends SimpleComponent {
 
-import {dispatchTableSearch} from '../tables/TablesCntlr.js';
-import * as TblUtil from '../tables/TableUtil.js';
+    getNextState() {
+        return getSearchInfo();
+    }
 
+    render() {
+        const {style={}} = this.props;
+        const {activeSearch, groups} = this.state;
+        if (!groups) return null;
+        const {allSearchItems} = getSearchInfo();
 
-export const SearchPanel = (props) => {
-    return (
-        <div style={{padding: 10}}>
-            <FormPanel
-                width='640px' height='300px'
-                groupKey='TBL_BY_URL_PANEL'
-                onSubmit={(request) => onSearchSubmit(request)}
-                onCancel={hideSearchPanel}>
-                <p>
-                    <input type='button' name='dowload' value='Download Sample File' onClick={doFileDownload} />
-                </p>
-                <FieldGroup groupKey='TBL_BY_URL_PANEL' validatorFunc={null} keepState={true}>
-                    <ValidationField style={{width:500}}
-                                     fieldKey='srcTable'
-                                     groupKey='TBL_BY_URL_PANEL'
-                                     initialState= {{
-                                                                value: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
-                                                                validator: Validate.validateUrl.bind(null, 'Source Table'),
-                                                                tooltip: 'The URL to the source table',
-                                                                label : 'Source Table:',
-                                                                labelWidth : 120
-                                                             }}
-                    />
-                    <ValidationField style={{width:500}}
-                                     fieldKey='filters'
-                                     groupKey='TBL_BY_URL_PANEL'
-                                     initialState= {{
-                                                                placeholder: 'Apply this filter on the table above',
-                                                                value: '',
-                                                                label : 'Filters:',
-                                                                labelWidth : 120
-                                                             }}
-                    />
+        const sideBar = Object.keys(allSearchItems).length > 1 ? <SideBar {...{activeSearch, groups}}/> : null;
+        const searchItem = allSearchItems[activeSearch];
 
-                    <FileUpload
-                        wrapperStyle = {{margin: '5px 0'}}
-                        fieldKey = 'fileUpload'
-                        groupKey='TBL_BY_URL_PANEL'
-                        initialState= {{
-                                tooltip: 'Select a file to upload',
-                                label: 'Upload File:'
-                            }}
-                    />
-                    <ValidationField fieldKey='tbl_index'
-                                     groupKey='TBL_BY_URL_PANEL'
-                                     initialState= {{
-                                            value: 0,
-                                            size: 4,
-                                            validator: Validate.intRange.bind(null, 0, 100000),
-                                            label : 'Table Index:',
-                                            labelWidth : 60
-                                         }}
-                    />
-                </FieldGroup>
-            </FormPanel>
-        </div>
-    );
-};
-
-SearchPanel.propTypes = {
-    name: PropTypes.oneOf(['AnyDataSetSearch'])
-};
-
-SearchPanel.defaultProps = {
-    name: 'AnyDataSetSearch',
-};
-
-
-function doFileDownload() {
-    download(getRootURL() + 'samplehistdata.csv');
-}
-
-function hideSearchPanel() {
-    dispatchHideDropDown();
-}
-
-function onSearchSubmit(request) {
-    if (request.fileUpload) {
-        const treq = TblUtil.makeFileRequest(null, request.fileUpload, null, {...request});
-        dispatchTableSearch(treq);
-    } else if (request.srcTable) {
-        const treq = TblUtil.makeFileRequest(null, request.srcTable, null, {filters: request.filters});
-        dispatchTableSearch(treq);
+        return (
+            <div className='SearchPanel' style={style}>
+                {sideBar}
+                {searchItem &&
+                    <div className='SearchPanel__form'>
+                        <SearchForm searchItem={searchItem} />
+                    </div>
+                }
+            </div>
+        );
     }
 }
 
+SearchPanel.propTypes = {
+    style:      PropTypes.object
+};
+
+
+function SearchForm({searchItem}) {
+    const {name, form, } = searchItem;
+    const {render, ...rest} = form;
+    return (
+        <FormPanel groupKey={name} {...rest}>
+            {render(searchItem)}
+        </FormPanel>
+    );
+}
+
+function SideBar({activeSearch, groups=[]}) {
+    return (
+        <div className='SearchPanel__sidebar'>
+        {
+            groups.map( (group, idx) => <SearchGroup key={group.title || idx} {...{group, activeSearch}}/>)
+        }
+        </div>
+    );
+}
+
+function SearchGroup({group, activeSearch}) {
+    const {title, searchItems} = group;
+    return (
+        <div className='SearchPanel__group'>{title}
+            {
+                Object.values(searchItems)
+                    .map( (search) => {
+                        return <SearchItem  key={search.name} {...{search, activeSearch}}/>;
+                    })
+            }
+        </div>
+    );
+}
+
+function SearchItem({search, activeSearch}) {
+    const ttips = search.desc || search.title || search.name;
+    const label = search.title || search.name;
+    const clsname = search.name ===  activeSearch ? 'selected' : 'normal';
+    const onClick = () => dispatchUpdateAppData(set({}, ['searches', 'activeSearch'], search.name));
+    return <div className='SearchPanel__searchItem' onClick={onClick} title={ttips}><span className={clsname}>{label}</span></div>;
+}

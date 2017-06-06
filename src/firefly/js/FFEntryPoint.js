@@ -6,6 +6,7 @@
 import {get} from 'lodash';
 import {firefly, Templates} from './Firefly.js';
 import {HELP_LOAD} from './core/AppDataCntlr.js';
+import {sampleHydra} from './templates/hydra/SampleHydra.jsx';
 
 
 /**
@@ -52,7 +53,9 @@ import {HELP_LOAD} from './core/AppDataCntlr.js';
 const defaults = {
     div: 'app',
     template: 'FireflyViewer',
-    menu: [ {label:'Data Sets: Catalogs & Images', action:'AnyDataSetSearch'},
+    menu: [
+        {label:'Search', action:'Search'},
+        {label:'Data Sets: Catalogs & Images', action:'TestSearch'},
         {label:'Catalogs CLASSIC', action:'IrsaCatalogDropDown'},
         {label:'Test Searches', action:'TestSearches'},
         {label:'Images', action:'ImageSelectDropDownCmd'},
@@ -71,5 +74,8 @@ if (app.template) {
 
 const options= get(window, 'firefly.app.options') || get(window, 'firefly.options');
 
-firefly.bootstrap(options, viewer, props);
+firefly.bootstrap(options, viewer, props)
+    .then(() => {
+        if (app.template === 'HydraViewer') sampleHydra();
+    });
 

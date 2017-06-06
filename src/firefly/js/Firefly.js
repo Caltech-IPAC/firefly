@@ -12,6 +12,7 @@ import 'styles/global.css';
 import {APP_LOAD} from './core/AppDataCntlr.js';
 import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
+import {HydraViewer} from './templates/hydra/HydraViewer.jsx';
 import {initApi} from './api/ApiBuild.js';
 
 import {ServerRequest } from './data/ServerRequest.js';
@@ -36,7 +37,8 @@ export const Templates = {
      * They can be combined with ' | ', i.e.  'images | tables'
      */
     FireflyViewer,
-    LightCurveViewer : LcViewer
+    LightCurveViewer : LcViewer,
+    HydraViewer
 };
 
 
@@ -119,24 +121,26 @@ export const firefly = {
  */
 function bootstrap(options, viewer, props) {
 
-    fireflyInit();
-    flux.process( {type : APP_LOAD} );
+    return  new Promise((resolve) => {
 
-    if (options) {
-        const defOps = {
-            MenuItemKeys: {},
-            imageTabs: undefined,
-            irsaCatalogFilter: undefined,
-            catalogSpacialOp: undefined
-        };
-        dispatchAppOptions(Object.assign({},defOps, options));
-    }
-    if (viewer) {
-        ReactDOM.render(React.createElement(viewer, props),
-            document.getElementById(props.div));
-    } else {
-        initApi();
+        fireflyInit();
+        flux.process( {type : APP_LOAD} );
+        resolve && resolve();
 
-    }
-    return Promise.resolve(true);
+        if (options) {
+            const defOps = {
+                MenuItemKeys: {},
+                imageTabs: undefined,
+                irsaCatalogFilter: undefined,
+                catalogSpacialOp: undefined
+            };
+            dispatchAppOptions(Object.assign({},defOps, options));
+        }
+        if (viewer) {
+            ReactDOM.render(React.createElement(viewer, props),
+                document.getElementById(props.div));
+        } else {
+            initApi();
+        }
+    });
 }

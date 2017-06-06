@@ -502,30 +502,3 @@ function getRowIdFor(filePath, selected) {
     return selectedValues(params);
 }
 
-/**
- * this saga watches for table update and invoke the given callback when
- * the table given by tbl_id is fully loaded.
- * @param {Object}   p  parameters object
- * @param {string}   p.tbl_id  table id to watch
- * @param {function} p.callback  callback to execute when table is loaded.
- */
-function* doOnTblLoaded({tbl_id, callback}) {
-
-    var isLoaded = false, hasData = false;
-    while (!(isLoaded && hasData)) {
-        const action = yield take([TABLE_UPDATE, TABLE_REPLACE]);
-        const a_id = get(action, 'payload.tbl_id');
-        if (tbl_id === a_id) {
-            const tableModel = TblUtil.getTblById(tbl_id);
-            isLoaded = isLoaded || TblUtil.isTableLoaded(tableModel);
-            hasData = hasData || get(tableModel, 'tableData.columns.length');
-            if (get(tableModel, 'error')) {
-                // there was an error loading this table.
-                callback(TblUtil.createErrorTbl(tbl_id, tableModel.error));
-                return;
-            }
-        }
-    }
-    callback && callback(TblUtil.getTblInfoById(tbl_id));
-}
-
