@@ -167,7 +167,7 @@ task devMode (dependsOn: loadConfig) {
   outputs.upToDateWhen { false }
 
   doLast {
-    def res = project.ext.NODE 'yarn', 'run', 'dev', "--", "baseWarName=${webapp.baseWarName}"
+    def res = project.ext.NODE 'yarn', 'run', 'dev', "--", "-baseWarName=${webapp.baseWarName}"
     if (res.getExitValue() == 0) {
       throw new GradleException("Fail to run dev mode")
     }
