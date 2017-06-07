@@ -77,7 +77,7 @@ export class FireflyViewer extends PureComponent {
     }
 
     render() {
-        var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown,
+        var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown, showUserInfo,
                 dropdownPanels, views, footer, style, showViewsSwitch, leftButtons, centerButtons, rightButtons} = this.state;
         const {visible, view} = dropDown || {};
 
@@ -87,7 +87,7 @@ export class FireflyViewer extends PureComponent {
             return (
                 <div id='App' className='rootStyle' style={style}>
                     <header>
-                        <BannerSection {...{menu, appTitle, appIcon, altAppIcon}}/>
+                        <BannerSection {...{menu, showUserInfo, appTitle, appIcon, altAppIcon}}/>
                         <DropDownContainer
                             key='dropdown'
                             footer={footer}
@@ -115,6 +115,7 @@ FireflyViewer.propTypes = {
     appTitle: PropTypes.string,
     appIcon: PropTypes.string,
     altAppIcon: PropTypes.string,
+    showUserInfo: PropTypes.bool,
     footer: PropTypes.element,
     dropdownPanels: PropTypes.arrayOf(PropTypes.element),
     views: PropTypes.string,     // combination of LO_VIEW separated by ' | '.  ie. 'images | tables'.

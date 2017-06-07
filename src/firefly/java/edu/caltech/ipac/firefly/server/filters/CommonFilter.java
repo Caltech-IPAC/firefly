@@ -10,12 +10,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.util.cache.CacheManager;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -28,21 +23,12 @@ import java.io.IOException;
  * @version $Id: CommonFilter.java,v 1.39 2012/09/07 18:04:02 loi Exp $
  */
 public class CommonFilter implements Filter {
-    public static final String WEBAPP_CONFIG_DIR = "webapp-confi-dir";
-    public static final String APP_NAME = "app.name";
-    private static final Logger.LoggerImpl logger =  Logger.getLogger();
-    boolean isInit = false;
-
+    public static final String WEBAPP_CONFIG_LOC = "/WEB-INF/config";
 
     public void init(FilterConfig filterConfig) throws ServletException {
         try {
-            System.setProperty(WEBAPP_CONFIG_DIR, filterConfig.getServletContext().getRealPath("/WEB-INF/config"));
-            String appName = filterConfig.getServletContext().getServletContextName();
-            System.setProperty(APP_NAME, appName);
-            if (!isInit) {
-                ServerContext.init(); // just a way to initializes ServerContext
-                isInit = true;
-            }
+            ServletContext cntx = filterConfig.getServletContext();
+            ServerContext.init(cntx.getContextPath(), cntx.getServletContextName(), cntx.getRealPath(WEBAPP_CONFIG_LOC));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -65,7 +51,6 @@ public class CommonFilter implements Filter {
 
     public static void setupRequestOwner(HttpServletRequest request, HttpServletResponse response) {
 
-        String sessId = request.getSession().getId();
         RequestOwner owner = ServerContext.getRequestOwner();   // establish a new one.
         owner.setRequestAgent(ServerContext.getHttpRequestAgent(request, response));
         owner.getUserKey();

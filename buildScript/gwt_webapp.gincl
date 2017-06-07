@@ -53,6 +53,8 @@ test {
   // set a system property for the test JVM(s)
   systemProperty 'some.prop', 'value'
 
+  workingDir = rootDir
+
   // explicitly include or exclude tests
   include 'edu/**'
 

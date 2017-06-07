@@ -9,7 +9,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import 'styles/global.css';
 
-import {APP_LOAD} from './core/AppDataCntlr.js';
+import {APP_LOAD, getUserInfo} from './core/AppDataCntlr.js';
 import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
 import {HydraViewer} from './templates/hydra/HydraViewer.jsx';
@@ -24,6 +24,7 @@ import {reduxFlux} from './core/ReduxFlux.js';
 import {wsConnect} from './core/messaging/WebSocketClient.js';
 import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
 import {dispatchAppOptions} from './core/AppDataCntlr.js';
+import {init} from './rpc/CoreServices.js';
 
 export const flux = reduxFlux;
 
@@ -86,9 +87,11 @@ function fireflyInit() {
         window.firefly.initialized = true;
 
         // start WebSocketClient
-        const wsClient = wsConnect();
-        wsClient.addListener(ActionEventHandler);
-        window.firefly.wsClient = wsClient;
+        wsConnect().then((client) => {
+            client.addListener(ActionEventHandler);
+            window.firefly.wsClient = client;
+            init();    //TODO.. need to add spaName when we decide to support it.
+        });
     }
 }
 

@@ -18,7 +18,7 @@ public class ResourceServerCommands {
 
     public static class UserKey extends ServCommand {
 
-        public String doCommand(Map<String,String[]> paramMap)  throws IllegalArgumentException {
+        public String doCommand(SrvParam sp)  throws IllegalArgumentException {
             return new ResourceServicesImpl().getUserKey();
         }
 
@@ -27,8 +27,7 @@ public class ResourceServerCommands {
 
     public static class GetVersion extends ServCommand   {
 
-        public String doCommand(Map<String,String[]> paramMap)  throws IllegalArgumentException {
-            SrvParam sp= new SrvParam(paramMap);
+        public String doCommand(SrvParam sp)  throws IllegalArgumentException {
             Version v= new ResourceServicesImpl().getVersion(sp.getRequired(ServerParams.USER_AGENT));
             return v.serialize();
         }

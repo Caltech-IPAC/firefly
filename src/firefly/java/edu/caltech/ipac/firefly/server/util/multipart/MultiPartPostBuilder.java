@@ -4,7 +4,6 @@
 package edu.caltech.ipac.firefly.server.util.multipart;
 
 import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.StringUtils;
@@ -16,14 +15,9 @@ import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
 import org.apache.commons.httpclient.methods.multipart.Part;
 import org.apache.commons.httpclient.methods.multipart.StringPart;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -131,7 +125,7 @@ public class MultiPartPostBuilder {
                                                 filePost.getStatusCode(),
                                                 filePost.getStatusText());
             if (responseBody != null) {
-                readBody(responseBody, filePost.getResponseBodyAsStream());
+                HttpServices.handleResults(filePost, responseBody);
             }
             return resp;
 
@@ -140,22 +134,6 @@ public class MultiPartPostBuilder {
             return null;
         } finally {
             filePost.releaseConnection();
-        }
-    }
-
-    static void readBody(OutputStream os, InputStream body) {
-        BufferedInputStream bis = new BufferedInputStream(body);
-        BufferedOutputStream bos = new BufferedOutputStream(os);
-        try {
-            int b;
-            while ((b = bis.read()) != -1) {
-                bos.write(b);
-            }
-
-            bos.flush();
-
-        } catch (IOException e) {
-            LOG.error(e, "Error while reading response body");
         }
     }
 

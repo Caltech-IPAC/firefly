@@ -5,6 +5,7 @@
 package edu.caltech.ipac.firefly.server.events;
 
 import edu.caltech.ipac.firefly.data.ServerEvent;
+import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.AlertsMonitor;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
@@ -142,12 +143,6 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
         ServerContext.getRequestOwner().setWsConnInfo(connId, channel);
         // notify clients within the same channel
         updateClientConnections(CONN_UPDATED, channel, userKey);
-        // check for alerts
-        AlertsMonitor.checkAlerts(true);
-        // check for background jobs
-        BackgroundEnv.getUserBackgroundInfo().stream()
-                    .forEach(bgc -> bgc.fireBackgroundJobAdd());
-
     }
 
 }

@@ -37,8 +37,7 @@ public class PushCommands {
 
     public static class PushAliveCheck extends BaseVisPushCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws Exception {
-            SrvParam sp= new SrvParam(paramMap);
+        public String doCommand(SrvParam sp) throws Exception {
             String channel= sp.getOptional(ServerParams.CHANNEL_ID);
             boolean active= getBrowserClientActiveCount(channel,0)>1;
             JSONObject map = new JSONObject();
@@ -52,8 +51,7 @@ public class PushCommands {
 
     public static class PushAliveCount extends BaseVisPushCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws Exception {
-            SrvParam sp= new SrvParam(paramMap);
+        public String doCommand(SrvParam sp) throws Exception {
             String channel= sp.getOptional(ServerParams.CHANNEL_ID);
             int tryTime= sp.getOptionalInt(ServerParams.TRY_MS,0);
             int activeCount= getBrowserClientActiveCount(channel,tryTime);
@@ -68,9 +66,8 @@ public class PushCommands {
 
 
     public static class PushAction extends BaseVisPushCommand {
-        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+        public String doCommand(SrvParam sp) throws Exception {
 
-            SrvParam sp= new SrvParam(paramMap);
             String action= sp.getRequired(ServerParams.ACTION);
             String channel= sp.getRequired(ServerParams.CHANNEL_ID);
             ServerEventManager.fireJsonAction(action, new ServerEvent.EventTarget(ServerEvent.Scope.CHANNEL, null, channel, null));

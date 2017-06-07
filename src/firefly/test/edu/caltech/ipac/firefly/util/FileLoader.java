@@ -27,7 +27,7 @@ import java.lang.reflect.Type;
  */
 public class FileLoader {
 
-    private static final String TEST_DATA_ROOT = "firefly_test_data/";
+    public static final String TEST_DATA_ROOT = "firefly_test_data/";
 
     /**
      * This method returns the data path for where the test class is located and where is the data is stored.

@@ -5,6 +5,9 @@ package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
+import edu.caltech.ipac.firefly.server.events.FluxAction;
+import edu.caltech.ipac.firefly.server.events.ServerEventManager;
+import edu.caltech.ipac.firefly.server.security.SsoAdapter;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
@@ -34,6 +37,7 @@ public class RequestOwner implements Cloneable {
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     public static String USER_KEY = "usrkey";
+    public static final String SET_USERINFO_ACTION = "app_data.setUserInfo";
 //    private static final String[] ID_COOKIE_NAMES = new String[]{WebAuthModule.AUTH_KEY, "ISIS"};
     private static boolean ignoreAuth = AppProperties.getBooleanProperty("ignore.auth", false);
     private RequestAgent requestAgent;
@@ -89,20 +93,16 @@ public class RequestOwner implements Cloneable {
 
     public String getUserKey() {
         if (userKey == null) {
-            String userKeyAndName = requestAgent == null ? null : requestAgent.getCookie(USER_KEY);
+            String userKeyAndName = requestAgent == null ? null : requestAgent.getCookieVal(USER_KEY);
             userKey = userKeyAndName == null ? null :
                     userKeyAndName.split("/", 2)[0];
 
             if (userKey == null) {
                 userKey = newUserKey();
-                updateUserKey("Guest");
+                updateUserKey(new UserInfo("Guest", ""));
             }
         }
         return userKey;
-    }
-
-    public String getAuthToken() {
-        return requestAgent.getAuthToken();
     }
 
     public String getRemoteIP() {
@@ -114,7 +114,15 @@ public class RequestOwner implements Cloneable {
     }
 
     public Map<String, String> getCookieMap() {
-        return requestAgent.getCookies();
+        Map<String, Cookie> cookies = requestAgent.getCookies();
+        Map<String, String> cmap = new HashMap<>(cookies.size());
+        for(Cookie c : cookies.values()) {
+            String v = c == null ? null : c.getValue();
+            if (v != null) {
+                cmap.put(c.getName(), c.getValue());
+            }
+        }
+        return cmap;
     }
 
     public File getWorkingDir() {
@@ -138,21 +146,20 @@ public class RequestOwner implements Cloneable {
     }
 
     public Map<String, String> getIdentityCookies() {
-        return requestAgent.getIdentities();
+        return SsoAdapter.getAdapter().getIdentities();
     }
 
     public boolean isAuthUser() {
-        return !StringUtils.isEmpty(getAuthToken());
+        return !StringUtils.isEmpty(SsoAdapter.getAdapter().getAuthTokenId());
     }
 
     public UserInfo getUserInfo() {
         if (userInfo == null) {
             if (isAuthUser() && !ignoreAuth) {
-                userInfo = requestAgent.getUserInfo();
+                SsoAdapter sso = SsoAdapter.getAdapter();
+                userInfo = sso.getUserInfo();
                 if (userInfo == null) {
-                    requestAgent.clearAuthInfo();
-                } else {
-                    updateUserKey(userInfo.getLoginName());
+                    sso.clearAuthInfo();
                 }
             }
 
@@ -164,6 +171,7 @@ public class RequestOwner implements Cloneable {
                     cache.put(new StringKey(getUserKey()), userInfo);
                 }
             }
+            updateUserKey(userInfo);
         }
         return userInfo;
     }
@@ -234,11 +242,21 @@ public class RequestOwner implements Cloneable {
         return userKey;
     }
 
-    private void updateUserKey(String userName) {
+    private void updateUserKey(UserInfo userInfo) {
+        // send UserInfo to client
+        FluxAction action = new FluxAction(SET_USERINFO_ACTION);
+        action.setValue(userInfo.getLoginName(), "loginName");
+        action.setValue(userInfo.getFirstName(), "firstName");
+        action.setValue(userInfo.getLastName(), "lastName");
+        action.setValue(userInfo.getInstitute(), "institute");
+        action.setValue(SsoAdapter.getAdapter().makeAuthCheckUrl(""), "login_url");
+        ServerEventManager.fireAction(action);
+
+        String userName = userInfo.getName();
         String nVal = userKey + "/" + userName;
         if (requestAgent != null) {
-            String cVal = requestAgent.getCookie(USER_KEY);
-            if (!nVal.equals(String.valueOf(cVal))) {
+            String cVal = requestAgent.getCookieVal(USER_KEY, "");
+            if (!nVal.equals(cVal)) {
                 Cookie cookie = new Cookie(USER_KEY, userKey + "/" + userName);
                 cookie.setMaxAge(3600 * 24 * 7 * 2);      // to live for two weeks
                 cookie.setPath("/"); // to make it available to all subpasses within base URL

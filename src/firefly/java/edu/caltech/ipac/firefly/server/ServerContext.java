@@ -30,6 +30,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * @version $Id: ServerContext.java,v 1.26 2012/10/19 23:02:33 tatianag Exp $
  */
 public class ServerContext {
+    public static final String WEBAPP_CONFIG_DIR = "webapp-confi-dir";
+    public static final String APP_NAME = "app.name";
+
     public static final String CACHE_DIR_PREFIX       = "${cache-dir}";
     public static final String UPLOAD_DIR_PREFIX      = "${upload-dir}";
     public static final String USER_IMAGES_DIR_PREFIX = "${user-images-dir}";
@@ -59,11 +62,14 @@ public class ServerContext {
 
     private static RequestOwnerThreadLocal owner = new RequestOwnerThreadLocal();
     private static String appName;
+    private static String webappConfigPath;
+    private static String contextName;
+    private static String contextPath;
     private static File workingDir;
     private static File appConfigDir;
     private static File webappConfigDir;
     private static File[] visSearchPath = null;
-
+    private static boolean isInit = false;
 
     private volatile static String PERM_FILE_PATH_STR;
     private volatile static String TEMP_FILE_PATH_STR;
@@ -74,46 +80,52 @@ public class ServerContext {
 
 
 
+
     private static final Logger.LoggerImpl log= Logger.getLogger();
 
-    public static void init() {
-        
-        configInit();
+    public static void init(String contextPath, String contextName, String webappConfigPath) {
+        if (!isInit) {
+            isInit = true;
+            ServerContext.contextPath = contextPath;
+            ServerContext.webappConfigPath = webappConfigPath;
+            ServerContext.contextName = contextName;
 
-        initVisSearchPath();
+            configInit();
 
-        PERM_FILE_PATH_STR = getPermWorkDir().getPath();
-        TEMP_FILE_PATH_STR = getTempWorkDir().getPath();
-        STAGE_FILE_PATH_STR = getStageWorkDir().getPath();
-        VIS_UPLOAD_PATH_STR = getVisUploadDir().getPath();
-        CACHE_PATH_STR = getVisCacheDir().getPath();
-        IRSA_ROOT_PATH_STR = getIrsaRoot().getPath();
+            initVisSearchPath();
 
-        VisContext.init();
+            PERM_FILE_PATH_STR = getPermWorkDir().getPath();
+            TEMP_FILE_PATH_STR = getTempWorkDir().getPath();
+            STAGE_FILE_PATH_STR = getStageWorkDir().getPath();
+            VIS_UPLOAD_PATH_STR = getVisUploadDir().getPath();
+            CACHE_PATH_STR = getVisCacheDir().getPath();
+            IRSA_ROOT_PATH_STR = getIrsaRoot().getPath();
 
-        // initialize search processors
-        SearchProcessorFactory.init();
+            VisContext.init();
 
-        // alerts monitoring
-        AlertsMonitor.startMonitor();
+            // initialize search processors
+            SearchProcessorFactory.init();
+
+            // alerts monitoring
+            AlertsMonitor.startMonitor();
+        }
     }
 
     public static void configInit() {
         // load configurational properties...
         Assert.setServerMode(true);
         String configDirname = System.getProperty(CONFIG_DIR, System.getenv(CONFIG_DIR));
-        String webappConfigDirname = System.getProperty(CommonFilter.WEBAPP_CONFIG_DIR);
-        appName = AppProperties.getProperty(CommonFilter.APP_NAME, System.getProperty(CommonFilter.APP_NAME));
+        appName = AppProperties.getProperty(APP_NAME, contextName);
         configDirname = configDirname + "/" + appName;
 
         if (StringUtils.isEmpty(appName)) {
-            String errmsg = CommonFilter.APP_NAME + " is not setup correctly.  System will not function properly";
+            String errmsg = " is not setup correctly.  System will not function properly";
             throw new RuntimeException(errmsg);
         };
 
         // load properties from WEBAPP_CONFIG_DIR.
-        if (loadProperties(webappConfigDirname)) {
-            webappConfigDir = new File(webappConfigDirname);
+        if (loadProperties(webappConfigPath)) {
+            webappConfigDir = new File(webappConfigPath);
         }
 
         // load properties from CONFIG_DIR
@@ -257,6 +269,12 @@ public class ServerContext {
 
     public static String getAppName() {
         return appName;
+    }
+    public static String getContextName() {
+        return contextName;
+    }
+    public static String getContextPath() {
+        return contextPath;
     }
 
     public static void clearRequestOwner() {

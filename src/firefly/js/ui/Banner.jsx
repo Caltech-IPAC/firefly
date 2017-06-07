@@ -4,6 +4,9 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
+import {SimpleComponent} from './SimpleComponent.jsx';
+import {getUserInfo} from '../core/AppDataCntlr.js';
+import {logout} from '../rpc/CoreServices.js';
 import './Banner.css';
 
 
@@ -14,7 +17,7 @@ export class Banner extends PureComponent {
     }
 
     render() {
-        const {menu, readout, appIcon, visPreview, appTitle, additionalTitleStyle = {marginLeft:'10px'}} = this.props;
+        const {menu, readout, appIcon, visPreview, appTitle, additionalTitleStyle = {marginLeft:'10px'}, showUserInfo=false} = this.props;
 
         return (
             <div className='banner__main'>
@@ -33,6 +36,7 @@ export class Banner extends PureComponent {
                 <div className='banner__right'>
                     {visPreview}
                 </div>
+                {showUserInfo && <UserInfo />}
             </div>
         );
     }
@@ -44,7 +48,29 @@ Banner.propTypes= {
     appIcon: PropTypes.string,
     visPreview: PropTypes.object,
     appTitle: PropTypes.string,
-    additionalTitleStyle: PropTypes.object
+    additionalTitleStyle: PropTypes.object,
+    showUserInfo: PropTypes.bool,
 };
 
 
+
+export class UserInfo extends SimpleComponent {
+
+    getNextState(np) {
+        return getUserInfo() || {};
+    }
+
+    render() {
+        const {loginName='Guest', firstName, lastName, login_url} = this.state || {};
+        const isGuest = loginName === 'Guest';
+        const onLogin = () => login_url && (window.location = login_url);
+
+        return (
+            <div className='banner__user-info'>
+                <span>{loginName}</span>
+                {!isGuest && <div className='banner__user-info--links' onClick={logout}>Logout</div>}
+                {isGuest && <div className='banner__user-info--links' onClick={onLogin}>Login</div>}
+            </div>
+        );
+    }
+}

@@ -22,9 +22,8 @@ public class ResolveServerCommands {
     public static class ResolveName extends ServCommand {
 
 
-        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+        public String doCommand(SrvParam sp) throws Exception {
 
-            SrvParam sp= new SrvParam(paramMap);
             Resolver resolver= Resolver.NedThenSimbad;
             String name = sp.getRequired(ServerParams.OBJ_NAME);
             String resStr = sp.getOptional(ServerParams.RESOLVER);

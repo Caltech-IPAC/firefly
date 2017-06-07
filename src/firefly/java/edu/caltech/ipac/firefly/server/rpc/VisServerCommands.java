@@ -48,8 +48,7 @@ import java.util.Map;
 public class VisServerCommands {
 
     public static class FileFluxCmd extends ServCommand {
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            SrvParam sp= new SrvParam(paramMap);
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
             List<FileAndHeaderInfo> list = new ArrayList<FileAndHeaderInfo>(3);
             FileAndHeaderInfo fh;
             fh = FileAndHeaderInfo.parse(sp.getOptional("fah0"));
@@ -79,10 +78,9 @@ public class VisServerCommands {
 
 
     public static class FileFluxCmdJson extends ServCommand {
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
 
 
-            SrvParam sp= new SrvParam(paramMap);
 //            PlotState state= sp.getState();
             PlotState stateAry[]= sp.getStateAry();
             PlotState state= stateAry[0];
@@ -142,10 +140,9 @@ public class VisServerCommands {
 
     public static class GetWebPlotCmd extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
 
 
-            SrvParam sp= new SrvParam(paramMap);
             WebPlotRequest red  =     sp.getOptionalWebPlotRequest(ServerParams.RED_REQUEST);
             WebPlotRequest green=     sp.getOptionalWebPlotRequest(ServerParams.GREEN_REQUEST);
             WebPlotRequest blue =     sp.getOptionalWebPlotRequest(ServerParams.BLUE_REQUEST);
@@ -173,10 +170,9 @@ public class VisServerCommands {
 
     public static class GetWebPlotGroupCmd extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
 
 
-            SrvParam sp= new SrvParam(paramMap);
             String key = sp.getRequired(ServerParams.PROGRESS_KEY);
             List<WebPlotRequest> reqList= sp.getRequestList();
             WebPlotResult resultAry[] = VisServerOps.createPlotGroup(reqList,key);
@@ -187,9 +183,8 @@ public class VisServerCommands {
 
     public static class ZoomCmd extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
 
-            SrvParam sp= new SrvParam(paramMap);
 
             PlotState stateAry[]= sp.getStateAry();
             float level= sp.getRequiredFloat(ServerParams.LEVEL);
@@ -203,9 +198,8 @@ public class VisServerCommands {
 
     public static class GetBetaCmd extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
 
-            SrvParam sp= new SrvParam(paramMap);
             PlotState state= sp.getState();
             double resultAry[]= VisServerOps.getBeta(state);
 
@@ -228,9 +222,8 @@ public class VisServerCommands {
 
     public static class StretchCmd extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
 
-            SrvParam sp= new SrvParam(paramMap);
             PlotState state= sp.getState();
             boolean jsonDeep= sp.getOptionalBoolean(ServerParams.JSON_DEEP,false);
             List<StretchData> list = new ArrayList<>(3);
@@ -260,8 +253,8 @@ public class VisServerCommands {
 
     public static class RemoveBandCmd extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            SrvParam sp= new SrvParam(paramMap);
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
+            
             PlotState state= sp.getState();
             Band band = Band.parse(sp.getRequired(ServerParams.BAND));
             WebPlotResult result = VisServerOps.deleteColorBand(state, band);
@@ -272,8 +265,8 @@ public class VisServerCommands {
 
     public static class ChangeColor extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            SrvParam sp= new SrvParam(paramMap);
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
+            
             PlotState state= sp.getState();
             int idx= sp.getRequiredInt(ServerParams.COLOR_IDX);
             WebPlotResult result = VisServerOps.changeColor(state, idx);
@@ -283,12 +276,12 @@ public class VisServerCommands {
 
     public static class Crop extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            SrvParam sp= new SrvParam(paramMap);
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
+            
             ImagePt pt1= sp.getRequiredImagePt(ServerParams.PT1);
             ImagePt pt2= sp.getRequiredImagePt(ServerParams.PT2);
             boolean cropMultiAll= sp.getOptionalBoolean(ServerParams.CRO_MULTI_ALL, false);
-            if (paramMap.containsKey(ServerParams.STATE)) {
+            if (sp.contains(ServerParams.STATE)) {
                 PlotState state= sp.getState();
                 WebPlotResult result = VisServerOps.crop(state, pt1, pt2, cropMultiAll);
                 return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
@@ -303,8 +296,8 @@ public class VisServerCommands {
 
     public static class AreaStat extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            SrvParam sp= new SrvParam(paramMap);
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
+            
             PlotState state= sp.getState();
             ImagePt pt1= sp.getRequiredImagePt(ServerParams.PT1);
             ImagePt pt2= sp.getRequiredImagePt(ServerParams.PT2);
@@ -317,8 +310,8 @@ public class VisServerCommands {
 
     public static class Header extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            SrvParam sp= new SrvParam(paramMap);
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
+            
             PlotState state= sp.getState();
             return WebPlotResultSerializer.createJson(VisServerOps.getFitsHeaderInfo(state), sp.isJsonDeep());
         }
@@ -332,11 +325,10 @@ public class VisServerCommands {
 
     public static class FitsHeader extends ServCommand  {
 
-       public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException, FitsException, IOException {
+       public String doCommand(SrvParam sp) throws IllegalArgumentException, FitsException, IOException {
 
-            SrvParam sp= new SrvParam(paramMap);
 
-            String tableID = paramMap.get("tableId")[0];
+            String tableID = sp.getParamMap().get("tableId")[0];
 
 
             //TableServerRequest req=TableServerRequest.parse(sp.getRequired(ServerParams.FITS_HEADER));
@@ -355,11 +347,10 @@ public class VisServerCommands {
     }
     public static class GetImagePng extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
 
-            SrvParam sp= new SrvParam(paramMap);
             PlotState state= sp.getState();
-            String drawInfoStrAry[] = paramMap.get(ServerParams.DRAW_INFO);
+            String drawInfoStrAry[] = sp.getParamMap().get(ServerParams.DRAW_INFO);
             List<StaticDrawInfo> drawInfoList;
             try {
                 if (drawInfoStrAry != null && drawInfoStrAry.length > 0) {
@@ -386,9 +377,8 @@ public class VisServerCommands {
 
     public static class GetImagePngWithRegion extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
 
-            SrvParam sp= new SrvParam(paramMap);
             PlotState state= sp.getState();
             String data = sp.getRequired(ServerParams.REGION_DATA);
             boolean isNorth = sp.getRequiredBoolean(ServerParams.CLIENT_IS_NORTH);
@@ -402,8 +392,8 @@ public class VisServerCommands {
 
     public static class ColorHistogram extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            SrvParam sp= new SrvParam(paramMap);
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
+            
             PlotState state= sp.getState();
             Band band= Band.parse(sp.getRequired(ServerParams.BAND));
             int width= sp.getRequiredInt(ServerParams.WIDTH);
@@ -416,8 +406,8 @@ public class VisServerCommands {
 
     public static class DeletePlot extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            String ctxStr = new SrvParam(paramMap).getRequired(ServerParams.CTXSTR);
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
+            String ctxStr = sp.getRequired(ServerParams.CTXSTR);
             VisServerOps.deletePlot(ctxStr);
             return "";
         }
@@ -427,8 +417,7 @@ public class VisServerCommands {
 
     public static class GetProgress extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            SrvParam sp= new SrvParam(paramMap);
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
             String key = sp.getRequired(ServerParams.PROGRESS_KEY);
             WebPlotResult result= VisServerOps.checkPlotProgress(key);
             return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
@@ -438,8 +427,7 @@ public class VisServerCommands {
     public static class DS9Region extends ServCommand {
         private static final String footprintKey = "${footprintDef}";
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException, IOException {
-            SrvParam sp = new SrvParam(paramMap);
+        public String doCommand(SrvParam sp) throws IllegalArgumentException, IOException {
             String fileKey = sp.getRequired(ServerParams.FILE_KEY);
             WebPlotResult result;
 
@@ -454,8 +442,7 @@ public class VisServerCommands {
 
     public static class SaveDS9Region extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            SrvParam sp= new SrvParam(paramMap);
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
             String data = sp.getRequired(ServerParams.REGION_DATA);
             WebPlotResult result= VisServerOps.saveDS9RegionFile(data);
             return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
@@ -464,8 +451,7 @@ public class VisServerCommands {
 
     public static class AddSavedRequest extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            SrvParam sp= new SrvParam(paramMap);
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
             String saveKey = sp.getRequired(ServerParams.SAVE_KEY);
             WebPlotRequest req= WebPlotRequest.parse(sp.getRequired(ServerParams.REQUEST));
             VisServerOps.addSavedRequest(saveKey,req);
@@ -475,8 +461,7 @@ public class VisServerCommands {
 
     public static class GetAllSavedRequest extends ServCommand {
 
-        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            SrvParam sp= new SrvParam(paramMap);
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
             String saveKey = sp.getRequired(ServerParams.SAVE_KEY);
             WebPlotResult result= VisServerOps.getAllSavedRequest(saveKey);
             return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());

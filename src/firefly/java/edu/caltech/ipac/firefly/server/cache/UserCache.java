@@ -22,77 +22,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author loi
  * @version $Id: UserCache.java,v 1.5 2009/03/23 23:55:16 loi Exp $
  */
-public class UserCache implements Cache {
+public class UserCache extends KeyBasedCache {
 
-    private Cache cache;
-    private StringKey userKey;
-
-    public static final Cache getInstance(){
+    public static Cache getInstance(){
         return new UserCache();
     }
 
     private UserCache() {
-        userKey = new StringKey(ServerContext.getRequestOwner().getUserKey());
-        cache = CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
-    }
-
-    public StringKey getUserKey() {
-        return userKey;
-    }
-
-    public void put(CacheKey key, Object value) {
-        if (key == null || value == null) {
-            throw  new NullPointerException("key or value must not be null.");
-        }
-        Map<CacheKey, Object> map = getSessionMap();
-        map.put(key, value);
-        cache.put(userKey, map);
-    }
-
-    public void put(CacheKey key, Object value, int lifespanInSecs) {
-        throw new UnsupportedOperationException(
-                "This cache is used to store session related information.  This operation is not supported.");
-    }
-
-    public Object get(CacheKey key) {
-        return key == null ? null : getSessionMap().get(key);
-    }
-
-    public boolean isCached(CacheKey key) {
-        return key != null && getSessionMap().containsKey(key);
-    }
-
-    public List<String> getKeys() {
-        Set<CacheKey> keys = getSessionMap().keySet();
-        ArrayList<String> list = new ArrayList<String>(keys.size());
-        for(CacheKey ck : keys) {
-            list.add(ck.getUniqueString());
-        }
-        return list;
-    }
-
-    public int getSize() {
-        return getSessionMap().size();
-    }
-
-    public static boolean exists(StringKey userKey) {
-        Cache cache = CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
-        return cache.isCached(userKey);
-    }
-
-    public static void create(StringKey userKey) {
-        Cache cache = CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
-        cache.put(userKey, null);
-    }
-//====================================================================
-//
-//====================================================================
-
-    private Map<CacheKey, Object> getSessionMap() {
-        Map<CacheKey, Object> map = (Map<CacheKey, Object>) cache.get(userKey);
-        if (map == null) {
-            map = new ConcurrentHashMap<CacheKey, Object>(100);
-        }
-        return map;
+        super(ServerContext.getRequestOwner().getUserKey());
     }
 }

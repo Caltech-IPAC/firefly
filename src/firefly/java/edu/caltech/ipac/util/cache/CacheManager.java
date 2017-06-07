@@ -3,6 +3,9 @@
  */
 package edu.caltech.ipac.util.cache;
 
+import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.cache.KeyBasedCache;
+
 import java.util.List;
 
 /**
@@ -59,7 +62,16 @@ public class CacheManager {
         isDisabled = disabled;
     }
 
-//====================================================================
+    public static Cache getSessionCache() {
+        return new KeyBasedCache(ServerContext.getRequestOwner().getRequestAgent().getSessId());
+    }
+
+    public static Cache getUserCache() {
+        return new KeyBasedCache(ServerContext.getRequestOwner().getUserKey());
+    }
+
+
+    //====================================================================
 //  helper functions
 //====================================================================
     private static Cache.Provider newInstanceOf(String className) {
