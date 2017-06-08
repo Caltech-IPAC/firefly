@@ -22,8 +22,8 @@ import java.util.logging.LogManager;
  */
 public class ConfigTest {
 
-    public static String LOG4J_PROP_FILE = "../../config/log4j-test.properties";
-    public static String LOGGING_PROP_FILE = "../../config/logging-test.properties";
+    public static String LOG4J_PROP_FILE = "./config/log4j-test.properties";
+    public static String LOGGING_PROP_FILE = "./config/logging-test.properties";
     public static String TEST_PROP_FILE = "./config/app-test.prop";
 
     /**
@@ -40,7 +40,7 @@ public class ConfigTest {
             File propFile = new File(LOG4J_PROP_FILE);
             if (!propFile.canRead())
                 throw new FileNotFoundException(propFile + " not found, continue without logs...");
-            PropertyConfigurator.configure(LOG4J_PROP_FILE);
+            PropertyConfigurator.configure(propFile.getAbsolutePath());
         } catch (Exception e) {
             System.err.println(ConfigTest.class.getCanonicalName() + ": " + LOG4J_PROP_FILE + " not found, continue without logs...");
         }
@@ -53,7 +53,7 @@ public class ConfigTest {
                 throw new FileNotFoundException(propFile + " not found, continue without logs...");
             // Set in logging.properties the level where java.util.logging logger is used instead of log4j
             // to INFO to see more logs
-            LogManager.getLogManager().readConfiguration(new FileInputStream(new File(LOGGING_PROP_FILE)));
+            LogManager.getLogManager().readConfiguration(new FileInputStream(propFile));
         } catch (Exception e) {
             System.err.println(LOGGING_PROP_FILE + " not found, continue with default logging level");
         }
