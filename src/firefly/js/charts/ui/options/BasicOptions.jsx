@@ -7,7 +7,7 @@ import {ValidationField} from '../../../ui/ValidationField.jsx';
 import CompleteButton from '../../../ui/CompleteButton.jsx';
 import {NewTracePanelBtn} from './NewTracePanel.jsx';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
-
+import Validate from '../../../util/Validate.js';
 
 const fieldProps = {labelWidth: 62, size: 15};
 
@@ -47,43 +47,51 @@ export function basicFieldReducer({data, layout, activeTrace, tablesources}) {
             value: get(layout, 'title'),
             tooltip: 'Plot title',
             label : 'Plot Title:',
-            ...fieldProps,
+            ...fieldProps
         },
         [`data.${activeTrace}.name`]: {
             fieldKey: `data.${activeTrace}.name`,
             value: get(data, `${activeTrace}.name`, 'trace ' + activeTrace),
             tooltip: 'The name of this new series',
             label : 'Series name:',
-            ...fieldProps,
+            ...fieldProps
         },
         [`data.${activeTrace}.marker.color`]: {
             fieldKey: `data.${activeTrace}.marker.color`,
             value: color,
             tooltip: 'Set series color',
             label : 'Color:',
-            ...fieldProps,
+            ...fieldProps
+        },
+        [`data.${activeTrace}.opacity`]: {
+            fieldKey: `data.${activeTrace}.opacity`,
+            value: get(data, `${activeTrace}.opacity`, ''),
+            validator: Validate.floatRange.bind(null, 0.1, 1.0, 2,'opacity'),
+            tooltip: 'Set trace opacity',
+            label : 'Opacity:',
+            ...fieldProps
         },
         ['layout.showlegend']: {
             fieldKey: 'layout.showlegend',
             value: get(layout, 'showlegend', ''),
             tooltip: 'Show legend',
             label : 'Legend:',
-            ...fieldProps,
+            ...fieldProps
         },
         ['layout.xaxis.title']: {
             fieldKey: 'layout.xaxis.title',
             value: get(layout, 'xaxis.title'),
             tooltip: 'X axis title',
             label : 'Xaxis Title:',
-            ...fieldProps,
+            ...fieldProps
         },
         ['layout.yaxis.title']: {
             fieldKey: 'layout.yaxis.title',
             value: get(layout, 'yaxis.title'),
             tooltip: 'Y axis title',
             label : 'Yaxis Title:',
-            ...fieldProps,
-        },
+            ...fieldProps
+        }
     };
 
     return (inFields, action) => {
@@ -97,16 +105,19 @@ export function basicFieldReducer({data, layout, activeTrace, tablesources}) {
 
 
 export function BasicOptionFields({activeTrace, align='vertical'}) {
+    // TODO: need color input field
     return (
         <div className={`FieldGroup__${align}`}>
             <ValidationField fieldKey={'layout.title'}/>
             <ValidationField fieldKey={`data.${activeTrace}.name`}/>
             <ValidationField fieldKey={`data.${activeTrace}.marker.color`}/>
+            <ValidationField fieldKey={`data.${activeTrace}.opacity`}/>
 {/* checkboxgroup is not working right when there's only 1 .. will add in later
             <CheckboxGroupInputField fieldKey={'layout.showlegend'}/>
 */}
             <ValidationField fieldKey={'layout.xaxis.title'}/>
             <ValidationField fieldKey={'layout.yaxis.title'}/>
+            <br/>
         </div>
     );
 }

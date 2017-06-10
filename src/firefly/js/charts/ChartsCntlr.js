@@ -310,13 +310,13 @@ export function makeChartDataFetch (getChartDataType) {
 
 function chartAdd(action) {
     return (dispatch) => {
-        const {chartId, chartType, viewerId='main', data} = action.payload;
+        const {chartId, chartType, viewerId='main', data, fireflyData} = action.payload;
         clearChartConn({chartId});
         dispatch(action);
         if (chartType === 'plot.ly') {
             dispatchAddViewer(viewerId,true,'plot2d',true);
             dispatchAddViewerItems(viewerId, [chartId], 'plot2d');
-            handleTableSourceConnections({chartId, data});
+            handleTableSourceConnections({chartId, data, fireflyData});
         }
     };
 }
@@ -330,10 +330,10 @@ function chartUpdate(action) {
         dispatch(action);
 
 
-        const {data} = Object.entries(changes)
-                             .filter(([k,v]) => k.startsWith('data'))
+        const {data, fireflyData} = Object.entries(changes)
+                             .filter(([k,v]) => (k.startsWith('data') || k.startsWith('fireflyData')))
                              .reduce( (p, [k,v]) => set(p, k, v), {}); // take all of the data changes and create an object from it.
-        handleTableSourceConnections({chartId, data});
+        handleTableSourceConnections({chartId, data, fireflyData});
     };
 }
 
@@ -439,7 +439,10 @@ function setActiveTrace(action) {
             }
             highlighted = newTraceFrom(data[activeTrace], [getPointIdx(data[activeTrace], highlightedRow)], HIGHLIGHTED_PROPS);
         }
-        dispatchChartUpdate({chartId, changes:{activeTrace, selected, highlighted, selection: undefined}});
+        const changes = {activeTrace, selected, highlighted, selection: undefined};
+        // every chart supports zoom, only scatter has actions for selection
+        changes['layout.dragmode'] = 'zoom';
+        dispatchChartUpdate({chartId, changes});
     };
 }
 

@@ -33,8 +33,8 @@ export class PlotlyChartArea extends PureComponent {
 
     getNextState() {
         const {chartId} = this.props;
-        const {data, highlighted, layout, selected} = getChartData(chartId);
-        return  {data, highlighted, selected, layout};
+        const {data, highlighted, layout, selected, activeTrace} = getChartData(chartId);
+        return  {data, highlighted, selected, layout, activeTrace};
     }
 
     storeUpdate() {
@@ -54,13 +54,16 @@ export class PlotlyChartArea extends PureComponent {
 
     render() {
         const {widthPx, heightPx} = this.props;
-        const {data=[], highlighted, selected, layout={}} = this.state;
+        const {data=[], highlighted, selected, layout={}, activeTrace=0} = this.state;
         const doingResize= (layout && (layout.width!==widthPx || layout.height!==heightPx));
         const showlegend = data.length > 1;
         let pdata = data;
         // TODO: change highlight or selected without forcing new plot
-        pdata = selected ? pdata.concat([selected]) : pdata;
-        pdata = highlighted ? pdata.concat([highlighted]) : pdata;
+        if (!data[activeTrace] || get(data[activeTrace], 'type') === 'scatter') {
+            // highlight makes sence only for scatter at the moment
+            pdata = selected ? pdata.concat([selected]) : pdata;
+            pdata = highlighted ? pdata.concat([highlighted]) : pdata;
+        }
         const playout = Object.assign({showlegend}, layout, {width: widthPx, height: heightPx});
         return (
             <PlotlyWrapper newPlotCB={this.afterRedraw} data={pdata} layout={playout}

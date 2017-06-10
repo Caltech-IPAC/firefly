@@ -69,11 +69,11 @@ function isSingleColumn(colName, colValStats) {
     }
     return false;
 }
-var columnNameReducer= (colValStats) => {
+var columnNameReducer= (colValStats, basicFieldsReducer) => {
     return (inFields, action) => {
 
         if (!inFields) {
-            return {};
+            return basicFieldsReducer ? basicFieldsReducer(null) : {};
         }
         let fieldKey = undefined;
         if (!isEmpty(colValStats) && action.type === VALUE_CHANGE) {
@@ -229,21 +229,20 @@ export class HistogramOptions extends Component {
         var algorithm =  FieldGroupUtils.getFldValue(fields, 'algorithm', 'fixedSizeBins');
 
         if (algorithm === 'bayesianBlocks') {
+            // if label is in initialState, it does not show when first time displayed
             return (
-                <div>
                 <ValidationField
                     style={{width: 30}}
                     initialState= {{
                         value: get(histogramParams, 'falsePositiveRate','0.05'),
                         validator: Validate.floatRange.bind(null, 0.01, 0.5, 2,'falsePositiveRate'),
-                        tooltip: 'Acceptable false positive rate',
-                        label : 'False Positive Rate:'
+                        tooltip: 'Acceptable false positive rate'
                     }}
                     fieldKey='falsePositiveRate'
                     groupKey={groupKey}
                     labelWidth={100}
+                    label='False Positive Rate:'
                 />
-                </div>
             );
         } else { // fixedSizeBins
 
@@ -252,7 +251,7 @@ export class HistogramOptions extends Component {
              FieldGroupUtils.getFldValue(this.state.fields, 'fixedBinSizeSelection')!=='numBins':false;
 
          return (
-               <div >
+               <div key='fixedsize'>
                    {renderFixedBinSizeOptions(groupKey, histogramParams, disabled) }
 
                    <ValidationField
@@ -288,7 +287,7 @@ export class HistogramOptions extends Component {
     }
 
     render() {
-        const { colValStats, groupKey, histogramParams, defaultParams, onOptionsSelected} = this.props;
+        const { colValStats, groupKey, histogramParams, defaultParams, onOptionsSelected, basicFieldsReducer, basicFields} = this.props;
         const {fixedAlgorithm=false} = this.state;
         const xProps = {colValStats,params:histogramParams,groupKey,fldPath:'columnOrExpr',label:'Column or expression:',labelWidth:120,name: 'X',tooltip:'X Axis',nullAllowed:false};
 
@@ -298,8 +297,8 @@ export class HistogramOptions extends Component {
         // to avoid width change due to scroll bar appearing when full height suggest box is rendered
         return (
             <div style={{padding:'0 5px', minHeight: 250}}>
-                <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}
-                            reducerFunc={columnNameReducer(colValStats)}>
+                <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={!Boolean(basicFieldsReducer)}
+                            reducerFunc={columnNameReducer(colValStats,basicFieldsReducer)}>
 
                     {onOptionsSelected &&
                     <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
@@ -315,6 +314,7 @@ export class HistogramOptions extends Component {
                             <button type='button' className='button std' onClick={() => setOptions(groupKey, defaultParams)}>Reset</button>
                         </div>
                     </div>}
+                    {basicFields}
                     <ColumnOrExpression {...xProps}/>
 
                     <FieldGroupCollapsible  header='Options'
@@ -426,5 +426,7 @@ HistogramOptions.propTypes = {
     onOptionsSelected: PropTypes.func,
     histogramParams: histogramParamsShape,
     defaultParams: histogramParamsShape,
-    fixedAlgorithm: PropTypes.bool
+    fixedAlgorithm: PropTypes.bool,
+    basicFieldsReducer: PropTypes.func,
+    basicFields: PropTypes.element
 };

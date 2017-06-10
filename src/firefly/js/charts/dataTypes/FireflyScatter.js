@@ -3,18 +3,26 @@
  */
 import {get} from 'lodash';
 import {getTblById, getColumn, cloneRequest, doFetchTable, makeTblRequest, MAX_ROW} from '../../tables/TableUtil.js';
-import {dispatchChartUpdate, dispatchChartHighlighted} from '../ChartsCntlr.js';
+import {dispatchChartUpdate, dispatchChartHighlighted, getChartData} from '../ChartsCntlr.js';
 import {getDataChangesForMappings, getPointIdx, updateSelected} from '../ChartUtil.js';
 
-
-export function getTraceTSEntries(traceTS, chartId, traceNum) {
-    const {tbl_id, mappings} = traceTS;
+/**
+ * This function creates table source entries to get firefly scatter and error data from the server
+ * (The search processor knows how to handle expressions and eliminates null x or y)
+ *
+ * @param p
+ * @param p.traceTS
+ * @param p.chartId
+ * @param p.traceNum
+ */
+export function getTraceTSEntries({traceTS}) {
+    const {mappings} = traceTS;
 
     const options = {
         xColOrExpr: get(mappings, 'x'),
         yColOrExpr: get(mappings, 'y')
     };
-    //const xErrorType = get(data, [`${traceNum}.firefly.error_x.errorsType`]);
+    //const xErrorType = get(data, [`${traceNum}.fireflyData.options.error_x.errorsType`]);
     const xErrLowColOrExpr = get(mappings, ['error_x.arrayminus']);
     if (xErrLowColOrExpr) {
         options['xErrLowColOrExpr'] = xErrLowColOrExpr;
@@ -22,7 +30,7 @@ export function getTraceTSEntries(traceTS, chartId, traceNum) {
     } else {
         options['xErrColOrExpr'] = get(mappings, ['error_x.array']);
     }
-    //const yErrorType = get(data, [`${traceNum}.firefly.error_y.errorsType`]);
+    //const yErrorType = get(data, [`${traceNum}.fireflyData.options.error_y.errorsType`]);
     const yErrLowColOrExpr = get(mappings, ['error_y.arrayminus']);
     if (yErrLowColOrExpr) {
         options['yErrLowColOrExpr'] = yErrLowColOrExpr;
@@ -31,50 +39,53 @@ export function getTraceTSEntries(traceTS, chartId, traceNum) {
         options['yErrColOrExpr'] = get(mappings, ['error_y.array']);
     }
 
-    const fetchData = () => {
-        const tableModel = getTblById(tbl_id);
-        const {request, highlightedRow, selectInfo} = tableModel;
-        const sreq = cloneRequest(request, {startIdx: 0, pageSize: MAX_ROW});
-        const req = makeTblRequest('XYWithErrors');
-        req.searchRequest = JSON.stringify(sreq);
-        req.startIdx = 0;
-        req.pageSize = MAX_ROW;
-        Object.entries(options).forEach(([k,v]) => req[k] = v);
-        doFetchTable(req).then((tableModel) => {
-            if (tableModel.tableData && tableModel.tableData.data) {
-                const xLabel = get(mappings, 'x'); // default axis label for the first trace
-                const yLabel = get(mappings, 'y'); // default axis label for the first trace
-                const xTipLabel = xLabel.length>20 ? 'x' : xLabel;
-                const yTipLabel = yLabel.length>20 ? 'y' : yLabel;
-
-                const {tableMeta} = tableModel;
-                const validCols = ['rowIdx', 'x', 'y', 'sortBy', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh'];
-                tableModel.tableData.columns.forEach((col) => {
-                    const name = col.name;
-                    if (validCols.includes(col.name) && tableMeta[name]) {
-                        col.name = tableMeta[name];
-                    }
-                });
-                mappings['firefly.rowIdx'] = 'rowIdx'; // save row idx
-                const changes = getDataChangesForMappings({tableModel, mappings, traceNum});
-
-                const xColumn = getColumn(tableModel, get(mappings, 'x'));
-                const xUnit = get(xColumn, 'units', '');
-                const yColumn = getColumn(tableModel, get(mappings, 'y'));
-                const yUnit = get(yColumn, 'units', '');
-
-                addOtherChanges({changes, xLabel, xTipLabel, xUnit, yLabel, yTipLabel, yUnit, chartId, traceNum});
-                dispatchChartUpdate({chartId, changes});
-                dispatchChartHighlighted({chartId, highlighted: getPointIdx(highlightedRow)});   // update highlighted point in chart
-                updateSelected(chartId, selectInfo);
-            }
-        }).catch(
-            (reason) => {
-                console.error(`Failed to fetch scatter data for ${chartId} trace ${traceNum}: ${reason}`);
-            }
-        );
-    };
     return {options, fetchData};
+}
+
+function fetchData(chartId, traceNum, tablesource) {
+
+    const {tbl_id, options, mappings} = tablesource;
+    const tableModel = getTblById(tbl_id);
+    const {request, highlightedRow, selectInfo} = tableModel;
+    const sreq = cloneRequest(request, {startIdx: 0, pageSize: MAX_ROW});
+    const req = makeTblRequest('XYWithErrors');
+    req.searchRequest = JSON.stringify(sreq);
+    req.startIdx = 0;
+    req.pageSize = MAX_ROW;
+    Object.entries(options).forEach(([k,v]) => req[k] = v);
+    doFetchTable(req).then((tableModel) => {
+        if (tableModel.tableData && tableModel.tableData.data) {
+            const xLabel = get(mappings, 'x'); // default axis label for the first trace
+            const yLabel = get(mappings, 'y'); // default axis label for the first trace
+            const xTipLabel = xLabel.length > 20 ? 'x' : xLabel;
+            const yTipLabel = yLabel.length > 20 ? 'y' : yLabel;
+
+            const {tableMeta} = tableModel;
+            const validCols = ['rowIdx', 'x', 'y', 'sortBy', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh'];
+            tableModel.tableData.columns.forEach((col) => {
+                const name = col.name;
+                if (validCols.includes(col.name) && tableMeta[name]) {
+                    col.name = tableMeta[name];
+                }
+            });
+            mappings['firefly.rowIdx'] = 'rowIdx'; // save row idx
+            const changes = getDataChangesForMappings({tableModel, mappings, traceNum});
+
+            const xColumn = getColumn(tableModel, get(mappings, 'x'));
+            const xUnit = get(xColumn, 'units', '');
+            const yColumn = getColumn(tableModel, get(mappings, 'y'));
+            const yUnit = get(yColumn, 'units', '');
+
+            addOtherChanges({changes, xLabel, xTipLabel, xUnit, yLabel, yTipLabel, yUnit, chartId, traceNum});
+            dispatchChartUpdate({chartId, changes});
+            dispatchChartHighlighted({chartId, highlighted: getPointIdx(highlightedRow)});   // update highlighted point in chart
+            updateSelected(chartId, selectInfo);
+        }
+    }).catch(
+        (reason) => {
+            console.error(`Failed to fetch scatter data for ${chartId} trace ${traceNum}: ${reason}`);
+        }
+    );
 }
 
 function addOtherChanges({changes, xLabel, xTipLabel, xUnit, yLabel, yTipLabel, yUnit, chartId, traceNum}) {

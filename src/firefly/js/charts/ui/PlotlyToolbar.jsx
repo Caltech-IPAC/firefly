@@ -175,7 +175,7 @@ function ExpandBtn({style={}, chartId}) {
 function ActiveTraceSelect({style={}, chartId, activeTrace}) {
     const {data} = getChartData(chartId) || [];
     const selected = get(data, [activeTrace, 'name']) || `trace ${activeTrace}`;
-    if (data.length < 2) return null;
+    if (!data || data.length < 2) return null;
 
     return (
         <div style={{width:100, height:20, ...style}} className='styled-select semi-square'>
