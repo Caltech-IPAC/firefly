@@ -29,7 +29,7 @@ export class FireflyHistogramOptions extends SimpleComponent {
 
         const histogramParams = toHistogramOptions(chartId, activeTrace);
 
-        const basicFields = BasicOptionFields({layout, data, activeTrace});
+        const basicFields = BasicOptionFields({layout, data, activeTrace, xNoLog: true});
         const basicFieldsReducer = basicFieldReducer({data, layout, activeTrace, tablesources});
         return (
             <div style={{padding:'0 5px 7px'}}>
@@ -46,13 +46,13 @@ export function submitChangesFFHistogram({chartId, activeTrace, fields, tbl_id})
 }
 
 function histogramOptionsToChanges(chartId, activeTrace, fields, tbl_id) {
-    const {layout} = getChartData(chartId);
+    const {layout={}} = getChartData(chartId);
     const changes = {};
     changes[`fireflyData.${activeTrace}.dataType`] = 'fireflyHistogram';
     changes[`fireflyData.${activeTrace}.tbl_id`] = tbl_id;
     const options = {};
     Object.entries(fields).forEach( ([k,v]) => {
-        if (k.startsWith('data') || k.startsWith('layout')) {
+        if (k.startsWith('data') || k.startsWith('layout') || k.startsWith('_')) {
             changes[k] = v;
         } else {
             options[`${k}`] = v;
@@ -60,36 +60,12 @@ function histogramOptionsToChanges(chartId, activeTrace, fields, tbl_id) {
     });
     changes[`fireflyData.${activeTrace}.options`] = options;
 
-    ['x', 'y'].forEach((a) => {
-        const opts = get(fields, a, '');
-        const range = get(layout, `${a}axis.range`);
-        if (opts.includes('flip')) {
-            if (range) {
-                if (range[0]<range[1]) changes[`layout.${a}axis.range`] = reverse(range);
-            } else {
-                changes[`layout.${a}axis.autorange`] = 'reversed';
-            }
-
-        } else {
-            if (range) {
-                if (range[1]<range[0]) changes[`layout.${a}axis.range`] = reverse(range);
-            } else {
-                changes[`layout.${a}axis.autorange`] = true;
-            }
-        }
-        if (opts.includes('opposite')) {
-            changes[`layout.${a}axis.side`] = (a==='x'?'top':'right');
-        } else {
-            changes[`layout.${a}axis.side`] = (a==='x'?'bottom':'left');
-        }
-        changes[`layout.${a}axis.type`]  = opts.includes('log') ? 'log' : 'linear';
-    });
     changes['activeTrace'] = activeTrace;
     return changes;
 }
 
 function toHistogramOptions(chartId, activeTrace=0) {
-    const {fireflyData, layout} = getChartData(chartId);
+    const {fireflyData, layout={}} = getChartData(chartId);
     const options = get(fireflyData, `${activeTrace}.options`, {});
     const histogramOptions = {};
     Object.entries(options).forEach( ([k,v]) => {

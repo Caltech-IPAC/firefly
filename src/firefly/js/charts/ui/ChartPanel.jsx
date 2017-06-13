@@ -236,7 +236,7 @@ export class ChartPanel extends PureComponent {
 
     getNextState() {
         const {chartId} = this.props;
-        const chartData =  ChartsCntlr.getChartData(chartId) || {};
+        const chartData =  ChartsCntlr.getChartData(chartId);
         if (chartData) {
             const {chartType, activeTrace, showOptions, optionsKey} = chartData;
             //if (chartType === 'plot.ly') return {};
@@ -259,7 +259,7 @@ export class ChartPanel extends PureComponent {
             if (!updateOnStoreChange || updateOnStoreChange(this.state)) {
                     this.setState(this.getNextState());
             }  else {
-                const {showOptions, optionsKey} = ChartsCntlr.getChartData(this.props.chartId);
+                const {showOptions, optionsKey} = ChartsCntlr.getChartData(this.props.chartId) || {};
                 if (showOptions !== this.state.showOptions || optionsKey !== this.state.optionsKey) {
                     this.setState({showOptions, optionsKey});
                 }

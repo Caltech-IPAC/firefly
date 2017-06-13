@@ -11,7 +11,7 @@ import {PopupPanel} from '../../../ui/PopupPanel.jsx';
 import {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {ScatterOptions, submitChangesScatter} from './ScatterOptions.jsx';
-import {HistogramOptions} from './HistogramOptions.jsx';
+import {HistogramOptions} from './PlotlyHistogramOptions.jsx';
 import {FireflyHistogramOptions, submitChangesFFHistogram} from './FireflyHistogramOptions.jsx';
 import {BasicOptionFields, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
 
@@ -40,9 +40,9 @@ function getOptionsComponent({traceType, chartId, activeTrace, groupKey}) {
         default:
             return (
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({data, layout, activeTrace})}>
-                    <BasicOptionFields {...{activeTrace}}/>
                     <ValidationField fieldKey={`_tables.data.${activeTrace}.x`}/>
                     <ValidationField fieldKey={`_tables.data.${activeTrace}.y`}/>
+                    <BasicOptionFields {...{activeTrace}}/>
                 </FieldGroup>
             );
     }
@@ -77,9 +77,10 @@ export class NewTracePanel extends SimpleComponent {
 
         return (
             <div style={{padding: 10}}>
-                <FieldGroup className='FieldGroup__vertical' keepState={true} groupKey='new-trace'>
+                <FieldGroup className='FieldGroup__vertical' style={{padding: 5}} keepState={true} groupKey='new-trace'>
                     <ListBoxInputField fieldKey='type' tooltip='Select plot type' label='Plot Type:' options={[{value:'scatter'}, {value:'fireflyHistogram'}, {value:'histogram'}]} {...fieldProps} />
                 </FieldGroup>
+                <br/>
                 {getOptionsComponent({traceType:type, chartId, activeTrace, groupKey})}
                 <div style={{display: 'inline-flex', marginTop: 10, justifyContent: 'space-between'}}>
                     <CompleteButton groupKey={groupKey}

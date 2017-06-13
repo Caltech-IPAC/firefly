@@ -20,7 +20,7 @@ import {logError, flattenObject} from '../util/WebUtil.js';
 import {UI_PREFIX} from './ChartsCntlr.js';
 import {ScatterOptions} from './ui/options/ScatterOptions.jsx';
 import {FireflyHistogramOptions} from './ui/options/FireflyHistogramOptions.jsx';
-import {HistogramOptions} from './ui/options/HistogramOptions.jsx';
+import {HistogramOptions} from './ui/options/PlotlyHistogramOptions.jsx';
 import {BasicOptions} from './ui/options/BasicOptions.jsx';
 import {ScatterToolbar, BasicToolbar} from './ui/PlotlyToolbar';
 import {SelectInfo} from '../tables/SelectInfo.js';
@@ -516,7 +516,7 @@ export function applyDefaults(chartData={}) {
         },
         xaxis: {
             autorange:true,
-            gridLineWidth: 1,
+            showgrid: false,
             lineColor: '#e9e9e9',
             tickwidth: 1,
             ticklen: 5,
@@ -531,7 +531,7 @@ export function applyDefaults(chartData={}) {
         },
         yaxis: {
             autorange:true,
-            gridLineWidth: 1,
+            showgrid: true,
             lineColor: '#e9e9e9',
             tickwidth: 1,
             ticklen: 5,

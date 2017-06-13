@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 
-import {get, defer, isEmpty} from 'lodash';
+import {get, isEmpty} from 'lodash';
 import ColValuesStatistics from './../ColValuesStatistics.js';
 import {DATATYPE_HISTOGRAM} from '../dataTypes/HistogramCDT.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
@@ -214,9 +214,11 @@ export class HistogramOptions extends Component {
             }
             dispatchValueChange(payload);
             if (histogramParams) {
-                defer(setOptions, groupKey, histogramParams);
+                setOptions(groupKey, histogramParams);
+                //defer(setOptions, groupKey, histogramParams);
             }
         }
+
 
         this.iAmMounted= true;
     }
@@ -314,10 +316,9 @@ export class HistogramOptions extends Component {
                             <button type='button' className='button std' onClick={() => setOptions(groupKey, defaultParams)}>Reset</button>
                         </div>
                     </div>}
-                    {basicFields}
                     <ColumnOrExpression {...xProps}/>
 
-                    <FieldGroupCollapsible  header='Options'
+                    {!basicFields && <FieldGroupCollapsible  header='Options'
                                             initialState= {{ value:'closed' }}
                                             fieldKey='plotoptions'>
                         <InputGroup labelWidth={20}>
@@ -348,7 +349,7 @@ export class HistogramOptions extends Component {
                                 fieldKey='y'
                             />
                         </InputGroup>
-                    </FieldGroupCollapsible>
+                    </FieldGroupCollapsible>}
                     <br/>
                     <InputGroup labelWidth={60}>
                         <RadioGroupInputField
@@ -365,6 +366,8 @@ export class HistogramOptions extends Component {
                     <br/>
                     {this.renderAlgorithmParameters()}
                     <br/>
+                    {basicFields && <br/>}
+                    {basicFields}
                 </FieldGroup>
 
             </div>

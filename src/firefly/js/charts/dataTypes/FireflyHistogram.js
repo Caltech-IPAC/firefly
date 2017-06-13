@@ -24,11 +24,11 @@ export function getTraceTSEntries({chartId, traceNum}) {
 
     const options = {};
 
-    // histogram parameters
-    const {fireflyData} = getChartData(chartId) || {};
+    // server call parameters
+    const {fireflyData, layout} = getChartData(chartId) || {};
     const histogramParams = get(fireflyData, `${traceNum}.options`);
     options['columnExpression'] = histogramParams.columnOrExpr;
-    if (histogramParams.x && histogramParams.x.includes('log')) {
+    if (get(layout, 'xaxis.type') === 'log') {
         options.columnExpression = 'log('+histogramParams.columnOrExpr+')';
     }
     if (histogramParams.fixedBinSizeSelection) { // fixed size bins
@@ -90,10 +90,17 @@ function fetchData(chartId, traceNum, tablesource) {
                 }, []);
 
             }
-            const {data} = getChartData(chartId);
+            const {data, layout={}} = getChartData(chartId);
             let binColor = get(data, `${traceNum}.marker.color`);
             if (isArray(binColor)) binColor = binColor[0];
             const changes = getChanges({histogramData, binColor, traceNum});
+
+            if (!layout.barmode) {
+                // use overlay mode for Plotly charts, based on bars
+                // this is to make sure plotly histogram displays fine with firefly histogram
+                changes['layout.barmode'] = 'overlay';
+            }
+
             dispatchChartUpdate({chartId, changes});
         }
     ).catch(

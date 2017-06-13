@@ -39,12 +39,13 @@ export class ScatterOptions extends SimpleComponent {
             <div style={{padding:'0 5px 7px'}}>
                 {isUndefined(this.props.activeTrace) && <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id, submitChangesFunc: submitChangesScatter}}/>}
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({data, layout, activeTrace, tablesources})}>
-                    <BasicOptionFields {...{layout, data, activeTrace}}/>
                     <ListBoxInputField fieldKey={`data.${activeTrace}.mode`} options={[{value:'markers'}, {value:'lines'}, {value:'lines+markers'}]}/>
                     <ListBoxInputField fieldKey={`data.${activeTrace}.marker.symbol`}
                                        options={[{value:'circle'}, {value:'circle-open'}, {value:'square'}, {value:'square-open'}, {value:'diamond'}, {value:'diamond-open'},
                                                  {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
                     {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
+                    <br/>
+                    <BasicOptionFields {...{layout, data, activeTrace}}/>
                 </FieldGroup>
             </div>
         );

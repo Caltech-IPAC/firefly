@@ -440,8 +440,6 @@ function setActiveTrace(action) {
             highlighted = newTraceFrom(data[activeTrace], [getPointIdx(data[activeTrace], highlightedRow)], HIGHLIGHTED_PROPS);
         }
         const changes = {activeTrace, selected, highlighted, selection: undefined};
-        // every chart supports zoom, only scatter has actions for selection
-        changes['layout.dragmode'] = 'zoom';
         dispatchChartUpdate({chartId, changes});
     };
 }

@@ -41,13 +41,14 @@ export class HistogramOptions extends SimpleComponent {
             <div style={{padding:'0 5px 7px'}}>
                 {isUndefined(this.props.activeTrace) && <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id, submitChangesFunc: submitChanges}}/>}
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({data, layout, activeTrace, tablesources})}>
-                    <BasicOptionFields {...{layout, data, activeTrace}}/>
                     <ColumnOrExpression {...xProps}/>
                     <ListBoxInputField fieldKey={`data.${activeTrace}.histfunc`} options={[{value:'count'}, {value:'sum'}, {value:'avg'}, {value:'min'}, {value:'max'}]}/>
                     <ValidationField fieldKey={`data.${activeTrace}.nbinsx`}/>
                     <ValidationField fieldKey={`data.${activeTrace}.xbins.size`}/>
                     <ValidationField fieldKey={`data.${activeTrace}.xbins.start`}/>
                     <ValidationField fieldKey={`data.${activeTrace}.xbins.end`}/>
+                    <br/>
+                    <BasicOptionFields {...{layout, data, activeTrace}}/>
                 </FieldGroup>
             </div>
         );

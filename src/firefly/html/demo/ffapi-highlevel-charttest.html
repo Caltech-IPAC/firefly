@@ -91,32 +91,34 @@
 //             **/
 //            firefly.util.renderDOM('histogramHere', firefly.ui.Histogram, props);
 
-            var dataH = [{marker: {color: '#993399'},opacity: 0.8},
-                          {marker: {color: '#669900'},opacity: 0.7}];
+            var dataH = [
+                {name: 'dec-0.02', marker: {color: 'rgba(153, 51, 153, 0.8)'}},
+                {name: 'dec+0.02', marker: {color: 'rgba(102,153,0, 0.7)'}}
+            ];
 
-             var fireflyDataH = [
-                 {
-                     dataType: 'fireflyHistogram',
-                     tbl_id: 'test-tbl',
-                     options: {
-                         algorithm: 'fixedSizeBins',
-                         fixedBinSizeSelection: 'numBins',
-                         numBins: 30,
-                         columnOrExpr: 'dec'
-                     }
-                 },
-                 {
-                     dataType: 'fireflyHistogram',
-                     tbl_id: 'test-tbl',
-                     options: {
-                         algorithm: 'fixedSizeBins',
-                         fixedBinSizeSelection: 'numBins',
-                         numBins: 40,
-                         columnOrExpr: 'dec-0.05'   // same column but shifted
-                     }
-                 }
-             ];
-             firefly.showPlot('histogramHere', {chartId: 'firefly-hist-tbl', chartType: 'plot.ly', data: dataH, fireflyData: fireflyDataH});
+            var fireflyDataH = [
+                {
+                    dataType: 'fireflyHistogram',
+                    tbl_id: 'test-tbl',
+                    options: {
+                        algorithm: 'fixedSizeBins',
+                        fixedBinSizeSelection: 'numBins',
+                        numBins: 30,
+                        columnOrExpr: 'dec-0.02'
+                    }
+                },
+                {
+                    dataType: 'fireflyHistogram',
+                    tbl_id: 'test-tbl',
+                    options: {
+                        algorithm: 'fixedSizeBins',
+                        fixedBinSizeSelection: 'numBins',
+                        numBins: 40,
+                        columnOrExpr: 'dec+0.02'   // same column but shifted
+                    }
+                }
+            ];
+            firefly.showPlot('histogramHere', {chartId: 'firefly-hist-tbl', chartType: 'plot.ly', data: dataH, fireflyData: fireflyDataH});
 
 
             // show scatter chart
