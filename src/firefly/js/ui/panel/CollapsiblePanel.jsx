@@ -126,7 +126,7 @@ CollapsiblePanel.defaultProps= {
 function getProps(params, fireValueChange) {
     return Object.assign({}, params, {
         onToggle: (isOpen) => fireValueChange({value: isOpen?'open':'closed'}),
-        isOpen: (params.value && params.value==='open')
+        isOpen: Boolean(params.value && params.value==='open')
     });
 }
 

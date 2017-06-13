@@ -1,5 +1,5 @@
 import React from 'react';
-import {get} from 'lodash';
+import {get, isUndefined} from 'lodash';
 
 import {getChartData} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
@@ -20,28 +20,32 @@ export class ScatterOptions extends SimpleComponent {
 
     getNextState() {
         const {chartId} = this.props;
-        const {activeTrace} = getChartData(chartId);
+        const {activeTrace:cActiveTrace} = getChartData(chartId);
+        // activeTrace is passed via property, when used from NewTracePanel
+        const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
         return {activeTrace};
     }
 
     render() {
         const {chartId} = this.props;
         //const {activeTrace=0} = this.state;
-        const {tablesources, data, layout, activeTrace=0} = getChartData(chartId);
-        const groupKey = `${chartId}-scatter-${activeTrace}`;
-        const tablesource = get(tablesources, [activeTrace]);
+        const {tablesources, data, layout, activeTrace:cActiveTrace=0} = getChartData(chartId);
+        const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
+        const groupKey = this.props.groupKey || `${chartId}-scatter-${activeTrace}`;
+        const tablesource = get(tablesources, [cActiveTrace]);
         const tbl_id = get(tablesource, 'tbl_id');
 
         return (
             <div style={{padding:'0 5px 7px'}}>
-                <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id, submitChangesFunc: submitChangesScatter}}/>
+                {isUndefined(this.props.activeTrace) && <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id, submitChangesFunc: submitChangesScatter}}/>}
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({data, layout, activeTrace, tablesources})}>
-                    <BasicOptionFields {...{layout, data, activeTrace}}/>
                     <ListBoxInputField fieldKey={`data.${activeTrace}.mode`} options={[{value:'markers'}, {value:'lines'}, {value:'lines+markers'}]}/>
                     <ListBoxInputField fieldKey={`data.${activeTrace}.marker.symbol`}
                                        options={[{value:'circle'}, {value:'circle-open'}, {value:'square'}, {value:'square-open'}, {value:'diamond'}, {value:'diamond-open'},
                                                  {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
                     {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
+                    <br/>
+                    <BasicOptionFields {...{layout, data, activeTrace}}/>
                 </FieldGroup>
             </div>
         );
@@ -68,11 +72,11 @@ export function fieldReducer({data, layout, activeTrace, tablesources={}}) {
         },
         [errorTypeFieldKey(activeTrace, 'x')]: {
             fieldKey: errorTypeFieldKey(activeTrace, 'x'),
-            value: get(data, `${activeTrace}.firefly.error_x.errorsType`, 'none')
+            value: get(data, `${activeTrace}.fireflyData.options.error_x.errorsType`, 'none')
         },
         [errorTypeFieldKey(activeTrace, 'y')]: {
             fieldKey: errorTypeFieldKey(activeTrace, 'y'),
-            value: get(data, `${activeTrace}.firefly.error_y.errorsType`, 'none')
+            value: get(data, `${activeTrace}.fireflyData.options.error_y.errorsType`, 'none')
         },
         ...basicReducer(null)
     };
@@ -193,7 +197,7 @@ export function submitChangesScatter({chartId, activeTrace, fields, tbl_id}) {
     const sizeMap = get(fields, `_tables.data.${activeTrace}.marker.size`);
 
     const dataType = (colorMap || sizeMap) ? 'scatter' : 'fireflyScatter';
-    const changes = {[`data.${activeTrace}.firefly.dataType`] : dataType};
+    const changes = {[`fireflyData.${activeTrace}.dataType`] : dataType};
     if (dataType === 'fireflyScatter') {
         // add a mapping for rowIdx
         changes[`_tables.data.${activeTrace}.firefly.rowIdx`] = 'rowIdx'; // rowIdx is mapping table rows to data points

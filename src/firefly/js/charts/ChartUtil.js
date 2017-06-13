@@ -19,10 +19,13 @@ import {Expression} from '../util/expr/Expression.js';
 import {logError, flattenObject} from '../util/WebUtil.js';
 import {UI_PREFIX} from './ChartsCntlr.js';
 import {ScatterOptions} from './ui/options/ScatterOptions.jsx';
+import {FireflyHistogramOptions} from './ui/options/FireflyHistogramOptions.jsx';
+import {HistogramOptions} from './ui/options/PlotlyHistogramOptions.jsx';
 import {BasicOptions} from './ui/options/BasicOptions.jsx';
 import {ScatterToolbar, BasicToolbar} from './ui/PlotlyToolbar';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {getTraceTSEntries as scatterTSGetter} from './dataTypes/FireflyScatter.js';
+import {getTraceTSEntries as histogramTSGetter} from './dataTypes/FireflyHistogram.js';
 
 export const SCATTER = 'scatter';
 export const HISTOGRAM = 'histogram';
@@ -272,18 +275,22 @@ export function getPointIdx(traceData, rowIdx) {
 
 export function getOptionsUI(chartId) {
     // based on chartData, determine what options to display
-    const {data, activeTrace=0} = getChartData(chartId);
+    const {data, fireflyData, activeTrace=0} = getChartData(chartId);
     const type = get(data, [activeTrace, 'type'], 'scatter');
-    switch (type) {
-        case 'scatter':
-            return ScatterOptions;
-        default:
-            return BasicOptions;
+    const dataType = get(fireflyData, [activeTrace, 'dataType'], '');
+    if (type === 'scatter') {
+        return ScatterOptions;
+    } else if (type === 'histogram') {
+        return HistogramOptions;
+    } else if (dataType === 'fireflyHistogram') {
+            return FireflyHistogramOptions;
+    } else {
+        return BasicOptions;
     }
 }
 
 export function getToolbarUI(chartId, activeTrace=0) {
-    const {data} =  getChartData(chartId);
+    const {data, fireflyData} =  getChartData(chartId);
     const type = get(data, [activeTrace, 'type'], '');
     if (type === 'scatter') {
         return ScatterToolbar;
@@ -331,8 +338,8 @@ export function newTraceFrom(data, selIndexes, newTraceProps) {
  * @param {string} p.chartId
  * @param {object[]} p.data
  */
-export function handleTableSourceConnections({chartId, data}) {
-    var tablesources = makeTableSources(data);
+export function handleTableSourceConnections({chartId, data, fireflyData}) {
+    var tablesources = makeTableSources(chartId, data, fireflyData);
     var oldTablesources = get(getChartData(chartId), 'tablesources',[]);
 
     const hasTablesources = Array.isArray(tablesources) && tablesources.find((ts) => !isEmpty(ts));
@@ -345,11 +352,6 @@ export function handleTableSourceConnections({chartId, data}) {
         if (isEmpty(traceTS)) {
             tablesources[idx] = oldTraceTS;     // if no updates.. move the previous one into the new tablesources
         } else {
-
-            // setup trace table source object to be able to handle chart data
-            const traceSpecificEntries = getTraceTSEntries(traceTS, chartId, idx);
-            Object.assign(traceTS, traceSpecificEntries);
-
             if (!tablesourcesEqual(traceTS, oldTraceTS)) {
                 const {tbl_id} = traceTS;
 
@@ -407,7 +409,7 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
 
         // fetch data
         if (tablesource.fetchData) {
-            tablesource.fetchData();
+            tablesource.fetchData(chartId, traceNum, tablesource);
         } else {
             // default behavior
             const {request, highlightedRow, selectInfo={}} = tableModel || {};
@@ -455,7 +457,7 @@ export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
     return changes;
 }
 
-function makeTableSources(data=[]) {
+function makeTableSources(chartId, data=[], fireflyData=[]) {
 
     const convertToDS = (flattenData) =>
                         Object.entries(flattenData)
@@ -467,32 +469,46 @@ function makeTableSources(data=[]) {
                                     return p;
                                 }, {});
 
-    return data.map((d) => {
-        const ds = convertToDS(flattenObject(d, isPlainObject)); //avoid flattening arrays
+
+    // for some firefly specific chart types the data are
+    const currentData = (data.length < fireflyData.length) ? fireflyData : data;
+
+    return currentData.map((d, traceNum) => {
+        const ds = data[traceNum] ? convertToDS(flattenObject(data[traceNum], isPlainObject)) : {}; //avoid flattening arrays
+        if (!ds.tbl_id) {
+            // table id can be a part of fireflyData
+            const tbl_id = get(fireflyData, `${traceNum}.tbl_id`);
+            if (tbl_id) ds.tbl_id = tbl_id;
+        }
+        // we use tblFilePath to see if the table has changed (sorted, filtered, etc.)
         if (ds.tbl_id) {
             const tableModel = getTblById(ds.tbl_id);
             ds.tblFilePath = get(tableModel, 'tableMeta.tblFilePath');
+        }
+        // set up table server request parameters (options) for firefly specific charts
+        const chartDataType = get(fireflyData[traceNum], 'dataType');
+        if (chartDataType) {
+            Object.assign(ds, getTraceTSEntries({chartDataType, traceTS: ds, chartId, traceNum}));
         }
         return ds;
     });
 }
 
-export function getTraceTSEntries(traceTS, chartId, traceNum) {
-    const {data} = getChartData(chartId) || {};
-    const chartDataType = get(data[traceNum], 'firefly.dataType');
-    if (!chartDataType) {
-        // default behavior
+function getTraceTSEntries({chartDataType, traceTS, chartId, traceNum}) {
+    if (chartDataType === 'fireflyScatter') {
+        return scatterTSGetter({traceTS, chartId, traceNum});
+    } else if (chartDataType === 'fireflyHistogram') {
+            return histogramTSGetter({traceTS, chartId, traceNum});
+    } else {
         return {};
-    } else if (chartDataType === 'fireflyScatter') {
-        return scatterTSGetter(traceTS, chartId, traceNum);
     }
 }
 
-
+// does the default depend on the chart type?
 export function applyDefaults(chartData={}) {
     const defaultLayout = {
         hovermode: 'closest',
-        dragmode: 'select',
+        dragmode: 'zoom',
         legend: {
             font: {size: FSIZE},
             orientation: 'v',
@@ -500,7 +516,7 @@ export function applyDefaults(chartData={}) {
         },
         xaxis: {
             autorange:true,
-            gridLineWidth: 1,
+            showgrid: false,
             lineColor: '#e9e9e9',
             tickwidth: 1,
             ticklen: 5,
@@ -515,7 +531,7 @@ export function applyDefaults(chartData={}) {
         },
         yaxis: {
             autorange:true,
-            gridLineWidth: 1,
+            showgrid: true,
             lineColor: '#e9e9e9',
             tickwidth: 1,
             ticklen: 5,

@@ -9,11 +9,12 @@ import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from '../../core/LayoutCntlr.js
 import {downloadChart} from './PlotlyWrapper.jsx';
 
 function getToolbarStates(chartId) {
-    const {selection, selected, activeTrace=0, tablesources, layout} = getChartData(chartId);
+    const {selection, selected, activeTrace=0, tablesources, layout, data={}} = getChartData(chartId);
     const {tbl_id} = get(tablesources, [activeTrace], {});
     const hasFilter = tbl_id && !isEmpty(get(getTblById(tbl_id), 'request.filters'));
     const hasSelection = !isEmpty(selection);
-    return {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected: !!selected, dragmode: get(layout, 'dragmode')};
+    const traceNames = data.map((t) => t.name).toString();
+    return {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected: !!selected, dragmode: get(layout, 'dragmode'), traceNames};
 }
 
 export class ScatterToolbar extends SimpleComponent {
@@ -175,7 +176,7 @@ function ExpandBtn({style={}, chartId}) {
 function ActiveTraceSelect({style={}, chartId, activeTrace}) {
     const {data} = getChartData(chartId) || [];
     const selected = get(data, [activeTrace, 'name']) || `trace ${activeTrace}`;
-    if (data.length < 2) return null;
+    if (!data || data.length < 2) return null;
 
     return (
         <div style={{width:100, height:20, ...style}} className='styled-select semi-square'>
