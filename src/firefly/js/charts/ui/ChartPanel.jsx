@@ -236,7 +236,7 @@ export class ChartPanel extends PureComponent {
 
     getNextState() {
         const {chartId} = this.props;
-        const chartData =  ChartsCntlr.getChartData(chartId) || {};
+        const chartData =  ChartsCntlr.getChartData(chartId);
         if (chartData) {
             const {chartType, showOptions, optionsKey} = chartData;
             //if (chartType === 'plot.ly') return {};
