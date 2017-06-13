@@ -59,7 +59,7 @@ COPY setenv.sh /usr/local/tomcat/bin/
 # 8080 - http
 # 5050 - debug
 # 9050 - jmx (jconsole)
-EXPOSE 8080 5050 9050 
+EXPOSE 8080 5050 9050 7011
 
 
 # ----------------------------------------------------------

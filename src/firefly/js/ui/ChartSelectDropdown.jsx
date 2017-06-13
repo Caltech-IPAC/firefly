@@ -187,6 +187,17 @@ export class ChartSelectDropdown extends PureComponent {
     }
 
     componentDidMount() {
+
+
+        const tblId = TblUtil.getActiveTableId(this.props.tblGroup);
+        const tblStatsData = tblId && flux.getState()[TableStatsCntlr.TBLSTATS_DATA_KEY][tblId];
+        const table= TblUtil.getTblById(tblId);
+        if (!tblStatsData && table) {
+            TableStatsCntlr.dispatchLoadTblStats(table['request']);
+        }
+
+
+
         this.removeListener = flux.addListener(() => this.storeUpdate());
         this.iAmMounted= true;
     }

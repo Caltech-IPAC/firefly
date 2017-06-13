@@ -105,6 +105,7 @@ export class TablePanel extends PureComponent {
         this.tableConnector.onOptionReset();
     }
 
+
     render() {
         const {selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
                 showToolbar, showTitle, showOptionButton, showPaging, showSave, showFilterButton} = this.state;
@@ -171,20 +172,24 @@ export class TablePanel extends PureComponent {
                             </div>
                         </div>
                     }
-                    <div className='TablePanel__table' style={{top: tableTopPos}}>
-                        <BasicTableView
-                            callbacks={tableConnector}
-                            { ...{columns, data, hlRowIdx, rowHeight, selectable, showUnits, showFilters,
-                                  selectInfoCls, filterInfo, sortInfo, textView, showMask, currentPage,
-                                  tableConnector, renderers} }
-                        />
-                        {showOptionButton && !showToolbar &&
+                    <div className='TablePanel__table' style={{top: tableTopPos}}
+                        onClick={stopPropagation}
+                        onTouchStart={stopPropagation}
+                        onMouseDown={stopPropagation}
+                    >
+                            <BasicTableView
+                                callbacks={tableConnector}
+                                { ...{columns, data, hlRowIdx, rowHeight, selectable, showUnits, showFilters,
+                                    selectInfoCls, filterInfo, sortInfo, textView, showMask, currentPage,
+                                    tableConnector, renderers} }
+                            />
+                            {showOptionButton && !showToolbar &&
                             <img className='TablePanel__options--small'
                                  src={OPTIONS}
                                  title={TT_OPTIONS}
                                  onClick={this.toggleOptions}/>
-                        }
-                        {showOptions &&
+                            }
+                            {showOptions &&
                             <TablePanelOptions
                                 onChange={this.onOptionUpdate}
                                 onOptionReset={this.onOptionReset}
@@ -198,6 +203,8 @@ export class TablePanel extends PureComponent {
         );
     }
 }
+
+const stopPropagation= (ev) => ev.stopPropagation();
 
 
 TablePanel.propTypes = {

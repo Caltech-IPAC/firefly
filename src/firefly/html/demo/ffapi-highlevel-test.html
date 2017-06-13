@@ -315,7 +315,12 @@
 //
             firefly.showImage('imageViewHere', {
                 url:'http://bacchus1.ipac.caltech.edu:9070/cgi-bin/Subimage/nph-subimage?origfile=/irsadata/COSMOS//images%2Facs_2.0%2FI%2Facs_I_095921%2B0228_unrot_wht_20.fits&ra=149.858180&dec=2.479260&xsize=0.200000',
-                plotId: 'badURLTest'
+                plotId: 'badURLTest',
+                title     : 'Failure Test',
+            });
+            firefly.showImage('imageViewHere', {
+                file : '/external/wise-m31-level1-3.fits',
+                title     : 'From a Container',
             });
 
             firefly.showCoverage('coverageHere', {gridOn:true});
@@ -590,6 +595,7 @@
    
 </script>
 
+<!-- to try a container: <script  type="text/javascript" src="http://localhost:8090/firefly/firefly_loader.js"></script>-->
 
 <script  type="text/javascript" src="../firefly_loader.js"></script>
 

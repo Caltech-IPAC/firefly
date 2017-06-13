@@ -81,11 +81,11 @@ export class VisToolbar extends PureComponent {
     }
 
     render() {
-        const {messageUnder}= this.props;
+        const {messageUnder, style}= this.props;
         const {visRoot,tip,dlCount}= this.state;
         return (
             <VisToolbarViewWrapper visRoot={visRoot} toolTip={tip} dlCount={dlCount} 
-                                      messageUnder={messageUnder}/>
+                                      messageUnder={messageUnder} style={style}/>
         );
     }
 
@@ -98,7 +98,8 @@ VisToolbar.childContextTypes= {
 };
 
 VisToolbar.propTypes= {
-    messageUnder : PropTypes.bool
+    messageUnder : PropTypes.bool,
+    style : PropTypes.object
 };
 
 VisToolbar.defaultProps= {

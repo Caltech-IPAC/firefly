@@ -93,7 +93,6 @@ public class RequestConverter {
                                    WebPlotRequest.POST_CROP,
                                    WebPlotRequest.ALLOW_IMAGE_SELECTION,
                                    WebPlotRequest.POST_CROP_AND_CENTER,
-                                   WebPlotRequest.MULTI_IMAGE_FITS,
                                    WebPlotRequest.HIDE_TITLE_DETAIL,
                                    WebPlotRequest.MINIMAL_READOUT,
                                    WebPlotRequest.FLIP_X,

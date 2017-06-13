@@ -41,8 +41,6 @@ export function MultiImageViewerView(props) {
     );
 }
 
-//{Toolbar ? <div style={flexContainerStyle}><Toolbar/> </div> : ''}
-
 MultiImageViewerView.propTypes= {
     visRoot : PropTypes.object,
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
@@ -50,7 +48,7 @@ MultiImageViewerView.propTypes= {
 
     Toolbar : PropTypes.func,
     viewerId : PropTypes.string.isRequired,
-    additionalStyle : PropTypes.object,    
+    style : PropTypes.object,
     defaultDecoration : PropTypes.bool,
     layoutType : PropTypes.oneOf([GRID,SINGLE]),
     forceRowSize : PropTypes.number,   //optional - force a certain number of rows

@@ -11,9 +11,11 @@ import 'styles/global.css';
 
 import {APP_LOAD, getUserInfo} from './core/AppDataCntlr.js';
 import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
+import {FireflySlate} from './templates/fireflyslate/FireflySlate.jsx';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
 import {HydraViewer} from './templates/hydra/HydraViewer.jsx';
 import {initApi} from './api/ApiBuild.js';
+import {dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
 
 import {ServerRequest } from './data/ServerRequest.js';
 import PlotState from './visualize/PlotState.js';
@@ -38,6 +40,7 @@ export const Templates = {
      * They can be combined with ' | ', i.e.  'images | tables'
      */
     FireflyViewer,
+    FireflySlate,
     LightCurveViewer : LcViewer,
     HydraViewer
 };
@@ -66,7 +69,7 @@ function fireflyInit() {
 
     if (! (window.firefly && window.firefly.initialized) ) {
         flux.bootstrap();
-        var touch= false; // ToDo: determine if we are on a touch device
+        const touch= false; // ToDo: determine if we are on a touch device
         if (touch) {
             React.initializeTouchEvents(true);
         }
@@ -138,6 +141,10 @@ function bootstrap(options, viewer, props) {
                 catalogSpacialOp: undefined
             };
             dispatchAppOptions(Object.assign({},defOps, options));
+            if (options.disableDefaultDropDown) {
+                dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
+            }
+
         }
         if (viewer) {
             ReactDOM.render(React.createElement(viewer, props),

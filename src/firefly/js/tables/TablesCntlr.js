@@ -351,8 +351,9 @@ function tblResultsAdded(action) {
 
 function tblRemove(action) {
     return (dispatch) => {
-        dispatch(action);
         const {tbl_id} = action.payload;
+        const tbl_group= TblUtil.findGroupByTblId(tbl_id);
+        dispatch({type:action.type, payload:Object.assign({},action.payload, {tbl_group})});
         const results = get(flux.getState(), [TABLE_SPACE_PATH, 'results'], {});
         Object.keys(results).forEach( (tbl_group) => {
             if (get(results, [tbl_group, 'active']) === tbl_id) {

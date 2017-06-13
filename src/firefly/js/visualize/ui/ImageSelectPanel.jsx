@@ -28,6 +28,7 @@ import {resultSuccess, resultFail} from './ImageSelectPanelResult.js';
 import {getActivePlotView, primePlot} from '../PlotViewUtil.js';
 import {FieldGroupCollapsible, CollapseBorder, CollapseHeaderCorner} from '../../ui/panel/CollapsiblePanel.jsx';
 import {ImageSelPanelChangeOneColor, ImageSelPanelChange} from './ImageSelectPanelReducer.js';
+import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 
 import './ImageSelectPanel.css';
 
@@ -54,7 +55,8 @@ export const keyMap = {
     'fitsextinput':'SELECTIMAGEPANEL_FITS_extinput',
     'fitsupload':  'SELECTIMAGEPANEL_FITS_upload',
     'sizefield': 'SELECTIMAGEPANEL_ImgFeature_radius',
-    'plotmode':    'SELECTIMAGEPANEL_targetplot'
+    'plotmode':    'SELECTIMAGEPANEL_targetplot',
+    'createNewCell':    'createNewCell'
 };
 
 const maskWrapper= {
@@ -292,9 +294,9 @@ export class ImageSelection extends PureComponent {
     }
 
     render() {
-        var {loadButton} = this.props;
+        var {loadButton,gridSupport} = this.props;
         var {plotId, viewerId, plotMode} = getPlotInfo(this.state.visroot);
-        var params = Object.assign({}, this.state, {plotId, viewerId, plotMode, loadButton});
+        var params = Object.assign({}, this.state, {plotId, viewerId, plotMode, loadButton, gridSupport});
 
         return <ImageSelectionView {...params}/>;
 
@@ -303,7 +305,8 @@ export class ImageSelection extends PureComponent {
 
 ImageSelection.propTypes = {
     catalogId: PropTypes.arrayOf(PropTypes.number),
-    loadButton: PropTypes.bool
+    loadButton: PropTypes.bool,
+    gridSupport: PropTypes.bool
 };
 
 // detect if create new plot or new 3 color plots according to the option selected
@@ -507,6 +510,8 @@ class ImageSelectionView extends PureComponent {
                 }
         };
 
+        const {gridSupport}= this.props;
+
         /*
          * top: target panel
          * middle: tab panel for catalogs
@@ -523,8 +528,9 @@ class ImageSelectionView extends PureComponent {
                         {targetPanelArea()}
                     </div>
                     { tabsArea() }
-                    <div className={'size'}>
+                    <div className={'size'} style={{height:gridSupport ? 85:60}}>
                         { sizeArea()}
+                        { addGridSupport(gridSupport) }
                     </div>
                     { loadButtonArea() }
                 </div>
@@ -544,12 +550,32 @@ ImageSelectionView.propTypes={
     plotId: PropTypes.string,
     viewerId: PropTypes.string,
     plotMode: PropTypes.number,
-    loadButton: PropTypes.bool
+    loadButton: PropTypes.bool,
+    gridSupport : PropTypes.bool
+
 };
 
 ImageSelectionView.defaultProps={
    loadButton: true
 };
+
+
+function addGridSupport(on) {
+    if (!on) return <div/>;
+
+    return (
+            <CheckboxGroupInputField
+                wrapperStyle={{marginTop: 10}}
+                fieldKey='createNewCell'
+                initialState= {{label : ''}}
+                options={[
+                    {label: 'Add a new grid cell', value: 'newCell'}
+                ]}
+                labelWidth = {0}
+            />
+    );
+
+}
 
 /**
  * top row for target panel
