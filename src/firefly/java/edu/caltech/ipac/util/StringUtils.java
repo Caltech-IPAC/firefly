@@ -687,7 +687,16 @@ public class StringUtils {
                     break;
 
                 default:
-                    if (origCharAsInt>127) sbOriginal.setCharAt(isb, '?');
+                    if (origCharAsInt >= 127) {
+                        sbOriginal.setCharAt(isb, '?');
+                    } else if (origCharAsInt < 32) {
+                        // change TAB, LF, VT, FF, CR to be space
+                        if (origCharAsInt >= 9 && origCharAsInt <= 13) {
+                            sbOriginal.setCharAt(isb, ' ');
+                        } else {
+                            sbOriginal.setCharAt(isb, '?');
+                        }
+                    }
                     break;
             }
         }
