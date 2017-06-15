@@ -100,6 +100,9 @@ public class IpacTableUtil {
             if (v == null && dt.getKeyName().equals(DataGroup.ROWID_NAME)) {
                 v = dt.getFormatInfo().formatData(row.getRowIdx());
             }
+            if (dt.getDataType() == String.class && v != null) {
+                v =  StringUtils.convertExtendedAscii(new StringBuilder(v));
+            }
             writer.print(" " + v);
         }
         writer.println(" ");

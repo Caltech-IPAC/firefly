@@ -38,7 +38,7 @@ public class DataGroupReader {
             return read(inf, false, false);
         } else if (format == Format.VO_TABLE) {
             DataGroup[] tables = VoTableUtil.voToDataGroups(inf.getAbsolutePath());
-            if (tables.length > tableIndex -1) {
+            if (tables.length > tableIndex) {
                 return tables[tableIndex];
             } else return null;
         } else if (format == Format.CSV || format == Format.TSV) {
