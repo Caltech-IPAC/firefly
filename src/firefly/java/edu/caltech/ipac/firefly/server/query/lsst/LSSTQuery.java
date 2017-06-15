@@ -520,7 +520,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         return null;
     }
 
-    // get table depenent column name
+    // get table dependent column name
     // columnType: "objectColumn", "filterColumn"
     public static String getTableColumn(String database, String tableName, String columnType) {
         Object tables = getDatasetInfo(database, tableName, new String[]{"tables"});
