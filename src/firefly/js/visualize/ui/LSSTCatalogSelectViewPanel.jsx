@@ -41,11 +41,19 @@ const constraintskey = 'inputconstraint';
 const projectName = 'Lsst';
 const RADIUS_COL = '7';
 
-const SOURCE = 0;
-const FORCEDSOURCE = 1;
-const COADD = 2;
-const CCDEXPOSURE = 3;
-const OBJECT = 4;
+export const SOURCE = 0;
+export const FORCEDSOURCE = 1;
+export const SINGLEEXPSOURCE = 2;
+export const COADD = 3;
+export const CCDEXPOSURE = 4;
+
+export const LSSTCatalogTableType = {
+    [SOURCE]: 'source',
+    [FORCEDSOURCE]: 'forcedSource',
+    [SINGLEEXPSOURCE]: 'singleExpSource'
+};
+
+
 const CATTYPE = '0';
 const IMAGETYPE = '1';
 
@@ -98,7 +106,7 @@ const LSSTTables = [
 
             catalogs: [
                 {
-                    id: OBJECT,
+                    id: SOURCE,
                     label: 'AllWISE Source Catalog',
                     value: 'allwise_p3as_psd',
                     type: CATTYPE
@@ -110,19 +118,19 @@ const LSSTTables = [
                     type: CATTYPE
                 },
                 {
-                    id: FORCEDSOURCE,
+                    id: SINGLEEXPSOURCE,
                     label: 'WISE All-Sky Single Exposure (L1b) Source Table',
                     value: 'allsky_4band_p1bs_psd',
                     type: CATTYPE
                 },
                 {
-                    id: FORCEDSOURCE,
+                    id: SINGLEEXPSOURCE,
                     label: 'WISE 3-Band Cryo Single Exposure (L1b) Source Table',
                     value: 'allsky_3band_p1bs_psd',
                     type: CATTYPE
                 },
                 {
-                    id: FORCEDSOURCE,
+                    id: SINGLEEXPSOURCE,
                     label: 'WISE Post-Cryo Single Exposure (L1b) Source Table',
                     value: 'allsky_2band_p1bs_psd',
                     type: IMAGETYPE
@@ -166,7 +174,7 @@ const LSSTTables = [
 
             catalogs: [
                 {
-                    id: OBJECT,
+                    id: SOURCE,
                     label: 'AllWISE Reject Table',
                     value: 'allwise_p3as_psr',
                     type: CATTYPE
@@ -177,6 +185,7 @@ const LSSTTables = [
     }
 ];
 
+
 const LSSTTableTypes = {
    [CATTYPE]: 'Catalogs',
    [IMAGETYPE]: 'Images'
@@ -185,7 +194,11 @@ const LSSTTableTypes = {
 const LSSTDDPID = 'LSSTMetaSearch';
 
 //var catmaster = [{masterProject: projectName, missions:: LSSTTables}];
-var catmaster = [];
+
+function getLSSTMasterTable() {
+    return [{projectMaster: projectName, missions: LSSTTables}];
+}
+
 /**
  * @summary component for LSST catalog search panel
  */
@@ -194,10 +207,11 @@ export class LSSTCatalogSelectViewPanel extends PureComponent {
     constructor(props) {
         super(props);
 
+        this.catmaster = getLSSTMasterTable();
         const fields = FieldGroupUtils.getGroupFields(gkey);
-        const project = get(fields, ['project', 'value'], getDefaultProjectName(catmaster));  // associated with database name
+        const project = get(fields, ['project', 'value'], getDefaultProjectName(this.catmaster));  // associated with database name
         const cattype = get(fields, ['cattype', 'value'], CATTYPE);
-        const cattable = get(fields, ['cattable', 'value'], getDefaultTableName(catmaster, project, cattype));
+        const cattable = get(fields, ['cattable', 'value'], getDefaultTableName(this.catmaster, project, cattype));
 
             // cattable: table selected from select view, cattype: catalog/image from select view
         this.state = { project, cattype, cattable};
@@ -227,9 +241,9 @@ export class LSSTCatalogSelectViewPanel extends PureComponent {
                 <FormPanel
                     width='auto' height='auto'
                     groupKey={[gkey,gkeySpatial]}
-                    onSubmit={(request) => onSearchSubmit(request)}
+                    onSubmit={onSearchSubmit()}
                     onCancel={hideSearchPanel}>
-                    <LSSTCatalogSelectView cattype={cattype} cattable={cattable} project={project}/>
+                    <LSSTCatalogSelectView cattype={cattype} cattable={cattable} project={project} master={this.catmaster}/>
                 </FormPanel>
             </div>
 
@@ -239,86 +253,87 @@ export class LSSTCatalogSelectViewPanel extends PureComponent {
 
 /**
  * @summary call back funciton on search button
- * @param {Object} request
  */
-function onSearchSubmit(request) {
-    if (request[gkey].Tabs === 'catalogLsst') {
-        const {cattype} = request[gkey];
+function onSearchSubmit() {
+    return (request) => {
+        if (request[gkey].Tabs === 'catalogLsst') {
+            const {cattype} = request[gkey];
 
-        if (cattype === CATTYPE) {
+            if (cattype === CATTYPE) {
 
-            const catalogState = FieldGroupUtils.getGroupFields(gkeySpatial);
-            const spatial = get(catalogState, ['spatial', 'value']);
+                const catalogState = FieldGroupUtils.getGroupFields(gkeySpatial);
+                const spatial = get(catalogState, ['spatial', 'value']);
 
-            if (spatial === SpatialMethod.Cone.value ||
-                spatial === SpatialMethod.Box.value ||
-                spatial === SpatialMethod.Elliptical.value) {
+                if (spatial === SpatialMethod.Cone.value ||
+                    spatial === SpatialMethod.Box.value ||
+                    spatial === SpatialMethod.Elliptical.value) {
 
-                const wp = get(catalogState, [ServerParams.USER_TARGET_WORLD_PT, 'value']);
-                if (!wp) {
+                    const wp = get(catalogState, [ServerParams.USER_TARGET_WORLD_PT, 'value']);
+                    if (!wp) {
+                        showInfoPopup('Target is required');
+                        return;
+                    }
+                    if (!get(catalogState, ['conesize', 'valid'])) {
+                        showInfoPopup('invalid size');
+                        return;
+                    }
+
+                } else if (spatial === SpatialMethod.Polygon.value) {
+                    if (!get(catalogState, ['polygoncoords', 'value'])) {
+                        showInfoPopup('polygon coordinate is required');
+                        return;
+                    }
+                } else if (spatial === SpatialMethod.get('Multi-Object').value) {
+                    if (!get(catalogState, ['fileUpload', 'value'])) {
+                        showInfoPopup('multi-object file is required');
+                        return;
+                    }
+                }
+                if (validateConstraints(gkey)) {
+                    validateFieldGroup(gkeySpatial).then((valid) => {
+                        if (!valid) {
+                            showInfoPopup('invalid input');
+                            return;
+                        }
+                        doCatalog(request, catalogState);
+                    });
+                }
+
+            } else if (cattype === IMAGETYPE) {
+
+                const imageState = FieldGroupUtils.getGroupFields(gkeyImageSpatial);
+                const wp = get(imageState, [ServerParams.USER_TARGET_WORLD_PT, 'value']);
+                const intersect = get(imageState, ['intersect', 'value']);
+
+                if (!wp && intersect !== 'ALLSKY') {
                     showInfoPopup('Target is required');
                     return;
                 }
-                if (!get(catalogState, ['conesize', 'valid'])) {
-                    showInfoPopup('invalid size');
-                    return;
-                }
 
-            } else if (spatial === SpatialMethod.Polygon.value) {
-                if (!get(catalogState, ['polygoncoords', 'value'])) {
-                    showInfoPopup('polygon coordinate is required');
-                    return;
-                }
-            } else if (spatial === SpatialMethod.get('Multi-Object').value) {
-                if (!get(catalogState, ['fileUpload', 'value'])) {
-                    showInfoPopup('multi-object file is required');
-                    return;
-                }
-            }
-            if (validateConstraints(gkey)) {
-                validateFieldGroup(gkeySpatial).then((valid) => {
-                    if (!valid) {
-                        showInfoPopup('invalid input');
+                if (intersect !== 'CENTER' && intersect !== 'ALLSKY') {
+                    if (!get(imageState, ['size', 'valid'])) {
+                        showInfoPopup('box size is required');
                         return;
                     }
-                    doCatalog(request, catalogState);
-                });
-            }
-
-        } else if (cattype === IMAGETYPE) {
-
-            const imageState = FieldGroupUtils.getGroupFields(gkeyImageSpatial);
-            const wp = get(imageState, [ServerParams.USER_TARGET_WORLD_PT, 'value']);
-            const intersect = get(imageState, ['intersect', 'value']);
-
-            if (!wp && intersect !== 'ALLSKY') {
-                showInfoPopup('Target is required');
-                return;
-            }
-
-            if (intersect !== 'CENTER' && intersect !== 'ALLSKY') {
-                if (!get(imageState, ['size', 'valid'])) {
-                    showInfoPopup('box size is required');
-                    return;
                 }
-            }
-            if (validateConstraints(gkey)) {
-                validateFieldGroup(gkeyImageSpatial).then((valid) => {
-                    if (!valid) {
-                        showInfoPopup('invalid input');
-                        return;
-                    }
-                    doImage(request, imageState);
-                });
+                if (validateConstraints(gkey)) {
+                    validateFieldGroup(gkeyImageSpatial).then((valid) => {
+                        if (!valid) {
+                            showInfoPopup('invalid input');
+                            return;
+                        }
+                        doImage(request, imageState);
+                    });
+                }
             }
         }
-    }
-    else if (request[gkey].Tabs === 'loadcatLsst') {
-        doLoadTable(request[gkey]);
-    }
-    else {
-        console.log('request not supported');
-    }
+        else if (request[gkey].Tabs === 'loadcatLsst') {
+            doLoadTable(request[gkey]);
+        }
+        else {
+            console.log('request not supported');
+        }
+    };
 }
 /**
  * @summary callback function for search cancel button
@@ -500,42 +515,15 @@ function doLoadTable(request) {
 
 /**
  * @summary class LSSTCatalogSelectView for selecting and handling LSST catalog
- * state: {master: {catmaster[] = [{project, catalogs[]},... {project, catalogs[]}], cols[]}}
  */
 class LSSTCatalogSelectView extends PureComponent {
 
     constructor(props) {
         super(props);
-        if (!isEmpty(catmaster)) {
-            this.state = {master: {catmaster}};
-        } else {
-            this.state = {master: {}};
-        }
-
-    }
-
-    componentWillMount() {
-        if (isEmpty(catmaster)) {
-            this.loadMasterCatalogTable();
-        }
-    }
-
-    /**
-     * tentative lsst master table: 'projectMaster' is named for various LSST data set, missions is made for various
-     * mission, such as SSDS & WISE.
-     */
-    loadMasterCatalogTable() {
-        catmaster.push({projectMaster: projectName, missions: LSSTTables});
-        this.setMaster({catmaster});
-    }
-
-    setMaster(master = {}) {
-        this.setState({master});
     }
 
     render() {
-        const {master={}} = this.state;
-        var  {cattable, project, cattype} = this.props;
+        var  {cattable, project, cattype, master} = this.props;
 
         if (isEmpty(master)) {
             return (
@@ -546,16 +534,16 @@ class LSSTCatalogSelectView extends PureComponent {
         }
 
 
-        var tblId = getTblId((cattable ? cattable : getDefaultTableName(master.catmaster, project, cattype)));
+        var tblId = getTblId((cattable ? cattable : getDefaultTableName(master, project, cattype)));
 
         // pass cattable and master to  LsstCatalogDDList
         return (
             <FieldGroup groupKey={gkey}
-                        reducerFunc={userChangeLsstDispatch(tblId)}
+                        reducerFunc={userChangeLsstDispatch(tblId, master)}
                         keepState={true}>
                 <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs' resizable={true}>
                     <Tab name='Search' id='catalogLsst'>
-                        <LsstCatalogDDList {...this.props} {...this.state} />
+                        <LsstCatalogDDList {...this.props}/>
                     </Tab>
                     <Tab name='Load Catalog' id='loadcatLsst'>
                         <CatalogLoad forGroup={gkey} />
@@ -566,18 +554,21 @@ class LSSTCatalogSelectView extends PureComponent {
     }
 }
 
+// master: [{masterProject: 'xxx', missions: [{project: 'SDSS', ...}, {project:'WISE', ....}]}, {masterProject: 'xxx', ....}]
 LSSTCatalogSelectView.propTypes = {
     cattable: PropTypes.string,
     cattype: PropTypes.string,
-    project: PropTypes.string
+    project: PropTypes.string,
+    master: PropTypes.arrayOf(PropTypes.shape({masterProject: PropTypes.string, missions: PropTypes.arrayOf(PropTypes.object)}))
 };
 
 /**
  * @summary Reducer from field group component, should return updated catalog selection
  * @param {string} tblId
+ * @param {array} catmaster
  * @returns {Function} reducer to change fields when user interact with the dialog
  */
-var userChangeLsstDispatch = function (tblId) {
+var userChangeLsstDispatch = function (tblId, catmaster) {
 
     return (inFields, action) => {
 
@@ -780,11 +771,10 @@ class LsstCatalogDDList extends PureComponent {
     }
 
     render() {
-        const {catmaster} = this.state.master;
-        if (!catmaster) return false;
+        const {master:catmaster} = this.state;
+        if (isEmpty(catmaster)) return false;
 
         var {cattable, cattype, project} = this.props;
-        //if (!cattype || !project) return false;
 
         const spatialH = 300;
         const spatialPanelStyle = {height: spatialH, width: 550, paddingLeft: 2, paddingRight: 2};
@@ -892,7 +882,7 @@ LsstCatalogDDList.propTypes = {
     cattable: PropTypes.string,
     cattype: PropTypes.string,
     project: PropTypes.string,
-    master: PropTypes.object
+    master: PropTypes.arrayOf(PropTypes.object)
 };
 
 /**

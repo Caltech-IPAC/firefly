@@ -13,7 +13,7 @@ export const ABSOLUTE_STR   = 'absolute';
 export const SIGMA_STR      = 'sigma';
 
 export const PERCENTAGE = 88;
-export const MAXMIN     = 89;
+export const MINMAX     = 89;
 export const ABSOLUTE   = 90;
 export const ZSCALE     = 91;
 export const SIGMA      = 92;
@@ -36,7 +36,7 @@ export const STRETCH_LOGLOG= 46;
 export const STRETCH_EQUAL = 47;
 export const STRETCH_SQUARED = 48;
 export const STRETCH_SQRT    = 49;
-export const  STRETCH_ASINH   = 50;
+export const STRETCH_ASINH   = 50;
 export const STRETCH_POWERLAW_GAMMA   = 51;
 
 const BYTE_MAX_VALUE= 127;

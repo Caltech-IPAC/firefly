@@ -55,11 +55,11 @@ export class ActiveTableButton extends PureComponent {
     }
 
     render() {
-        const {show=true, title, style, type='standard'} = this.state;
+        const {show=true, enable=true, title, style, type='standard'} = this.state;
         const astyle = Object.assign({textOverflow: 'ellipsis', maxWidth: 200, overflow: 'hidden'}, style);
         const className = type === 'standard' ? 'button std' : 'button std hl';
         return show && (
-            <button type = 'button' className={className} onClick = {this.onClick}>
+            <button type = 'button' className={className} onClick = {this.onClick} disabled={!enable}>
                 <div title={title} style={astyle}>{title}</div>
             </button>
         );
