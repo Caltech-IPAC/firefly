@@ -40,14 +40,24 @@ fi
 
 if [ "$1" = "--help" ] || [ "$1" = "-help" ] || [ "$1" = "-h" ]; then
     echo
-	echo "examples:"
-	echo '        docker run -p 8055:8080 -p 5050:5050 -p 9050:9050 -e "MAX_JVM_SIZE=4G" -e "ADMIN_PASSWORD=sam" -e "LOG_FILE_TO_CONSOLE=firefly.log"  --rm --name firefly ipac/firefly'
+	echo "   --------- EXAMPLES ---------"
+	echo "Simple:"
+	echo '> docker run -p 8090:8080  -e "MAX_JVM_SIZE=8G"   --rm ipac/firefly'
     echo
-	echo "or:"
-	echo '        docker run -p 8055:8080 -p 5050:5050 -p 9050:9050 -e "MAX_JVM_SIZE=8G" -e "ADMIN_PASSWORD=sam" -e "LOG_FILE_TO_CONSOLE=firefly.log"  --rm --name aServer ipac/firefly'
+	echo "Map a directory for direct file reading:"
+	echo '> docker run -p 8090:8080  -v /local/data:/external -e "MAX_JVM_SIZE=8G"   --rm ipac/firefly'
     echo
-	echo "or (production like):"
-	echo '        docker run -p 8055:8080 -p 9050:9050 -e "MAX_JVM_SIZE=30G" -e "ADMIN_PASSWORD=sam" -e SHARE_CACHE="TRUE" -e DEBUG="FALSE" -e "jvmRoute=MyHostName" --name productionServer ipac/firefly'
+	echo "Simple (background):"
+	echo '> docker run -p 8090:8080  -e "MAX_JVM_SIZE=8G"   --rm ipac/firefly >& my.log &'
+    echo
+	echo "View log file:"
+	echo '> docker run -p 8090:8080  -e "MAX_JVM_SIZE=8G" "LOG_FILE_TO_CONSOLE=firefly.log"   --rm ipac/firefly'
+    echo
+	echo "Debugging:"
+	echo '> docker run -p 8055:8080 -p 5050:5050 -p 9050:9050 -e "MAX_JVM_SIZE=4G" -e "ADMIN_PASSWORD=sam" -e "LOG_FILE_TO_CONSOLE=firefly.log"  --rm --name firefly ipac/firefly'
+    echo
+	echo "Production like:"
+	echo '> docker run -p 8055:8080 -p 9050:9050 -e "MAX_JVM_SIZE=30G" -e "ADMIN_PASSWORD=sam" -e SHARE_CACHE="TRUE" -e DEBUG="FALSE" -e "jvmRoute=MyHostName" --name productionServer ipac/firefly'
     exit 0
 fi
 echo "========================================================================="

@@ -26,6 +26,8 @@ ENV CATALINA_PID=${CATALINA_BASE}/bin/catalina.pid
 # in the case make sure the directories exist
 ENV SERVER_CONFIG_DIR=/usr/local/tomcat/firefly-config
 ENV FIREFLY_WORK_DIR=/usr/local/tomcat/firefly-work
+ENV EXTERNAL_MOUNT_POINT=/external
+ENV VISUALIZE_FITS_SEARCH_PATH=${EXTERNAL_MOUNT_POINT}
 
 COPY launchTomcat.sh /usr/local/tomcat
 COPY setupSharedCacheJars.sh /usr/local/tomcat
@@ -33,7 +35,8 @@ RUN chmod +x /usr/local/tomcat/launchTomcat.sh /usr/local/tomcat/setupSharedCach
     mv /usr/local/tomcat/conf/context.xml /usr/local/tomcat/conf/context.xml.bak; \
     mv /usr/local/tomcat/conf/tomcat-users.xml /usr/local/tomcat/conf/tomcat-users.xml.bak; \
     mkdir -p ${SERVER_CONFIG_DIR}; \
-    mkdir -p ${FIREFLY_WORK_DIR}
+    mkdir -p ${FIREFLY_WORK_DIR}; \
+    mkdir -p ${EXTERNAL_MOUNT_POINT}
 
 COPY tomcat-users.xml /usr/local/tomcat/conf
 COPY context.xml /usr/local/tomcat/conf
