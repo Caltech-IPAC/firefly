@@ -174,8 +174,10 @@ public class UserInfo implements Serializable, Cloneable {
     }
 
     public String toString() {
-        String userInfo = String.format("{loginId: %s, first: %s, last: %s, email: %s}",
-                            getLastName(), getFirstName(), getLastName(), getEmail());
+        String userInfo = "{loginId: " + getLoginName() +
+                           ", first: " + getFirstName() +
+                           ", last: " + getLastName() +
+                           ", email: " + getEmail() + "}";
         String preferences = null;
             Map<String, String> prefs = getPreferences();
             for (String k : prefs.keySet()) {
@@ -197,3 +199,4 @@ public class UserInfo implements Serializable, Cloneable {
     }
 
 }
+
