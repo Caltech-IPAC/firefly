@@ -196,7 +196,7 @@ export function submitChangesScatter({chartId, activeTrace, fields, tbl_id}) {
     const colorMap = get(fields, `_tables.data.${activeTrace}.marker.color`);
     const sizeMap = get(fields, `_tables.data.${activeTrace}.marker.size`);
 
-    const dataType = (colorMap || sizeMap) ? 'scatter' : 'fireflyScatter';
+    const dataType = (!tbl_id || colorMap || sizeMap) ? 'scatter' : 'fireflyScatter';
     const changes = {[`fireflyData.${activeTrace}.dataType`] : dataType};
     if (dataType === 'fireflyScatter') {
         // add a mapping for rowIdx
