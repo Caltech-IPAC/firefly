@@ -33,8 +33,8 @@ export class PlotlyChartArea extends PureComponent {
 
     getNextState() {
         const {chartId} = this.props;
-        const {data, highlighted, layout, selected, activeTrace} = getChartData(chartId);
-        return  {data, highlighted, selected, layout, activeTrace};
+        const {data, highlighted, layout, fireflyLayout={}, selected, activeTrace} = getChartData(chartId);
+        return  {data, highlighted, selected, layout, activeTrace, xyratio: fireflyLayout.xyratio, stretch: fireflyLayout.stretch};
     }
 
     storeUpdate() {
@@ -53,9 +53,9 @@ export class PlotlyChartArea extends PureComponent {
     }
 
     render() {
-        const {widthPx, heightPx} = this.props;
-        const {data=[], highlighted, selected, layout={}, activeTrace=0} = this.state;
-        const doingResize= (layout && (layout.width!==widthPx || layout.height!==heightPx));
+        var {widthPx, heightPx} = this.props;
+        const {data=[], highlighted, selected, layout={}, activeTrace=0, xyratio, stretch} = this.state;
+
         const showlegend = data.length > 1;
         let pdata = data;
         // TODO: change highlight or selected without forcing new plot
@@ -64,12 +64,22 @@ export class PlotlyChartArea extends PureComponent {
             pdata = selected ? pdata.concat([selected]) : pdata;
             pdata = highlighted ? pdata.concat([highlighted]) : pdata;
         }
-        const playout = Object.assign({showlegend}, layout, {width: widthPx, height: heightPx});
+        const {chartWidth, chartHeight} = calculateChartSize(widthPx, heightPx, xyratio, stretch);
+        const doingResize= (layout && (layout.width!==chartWidth || layout.height!==chartHeight));
+        const playout = Object.assign({showlegend}, layout, {width: chartWidth, height: chartHeight});
+
+        const style = {float: 'left'};
+        if (chartWidth > widthPx || chartHeight > heightPx) {
+            Object.assign(style, {overflow: 'auto', width: widthPx, height: heightPx});
+        }
+
         return (
-            <PlotlyWrapper newPlotCB={this.afterRedraw} data={pdata} layout={playout}
-                           chartId={this.props.chartId}
-                           autoDetectResizing={false}
-                           doingResize={doingResize}/>
+            <div style={style}>
+                <PlotlyWrapper newPlotCB={this.afterRedraw} data={pdata} layout={playout}
+                               chartId={this.props.chartId}
+                               autoDetectResizing={false}
+                               doingResize={doingResize}/>
+            </div>
         );
     }
 }
@@ -79,6 +89,30 @@ PlotlyChartArea.propTypes = {
     widthPx: PropTypes.number,
     heightPx: PropTypes.number
 };
+
+function calculateChartSize(widthPx, heightPx, xyratio, stretch) {
+
+    let chartWidth = undefined, chartHeight = undefined;
+    if (xyratio) {
+        if (stretch === 'fit') {
+            chartHeight = Number(heightPx);
+            chartWidth = Number(xyratio) * Number(chartHeight);
+            if (chartWidth > Number(widthPx)) {
+                chartHeight -= 15; // to accommodate scroll bar
+            }
+        } else {
+            chartWidth = Number(widthPx);
+            chartHeight = Number(widthPx) / Number(xyratio);
+            if (chartHeight > Number(heightPx)) {
+                chartWidth -= 15; // to accommodate scroll bar
+            }
+        }
+    } else {
+        chartWidth = Number(widthPx);
+        chartHeight = Number(heightPx);
+    }
+    return {chartWidth, chartHeight};
+}
 
 function onClick(chartId) {
     return (evData) => {

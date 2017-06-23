@@ -38,6 +38,14 @@ export function getTraceTSEntries({traceTS}) {
     } else {
         options['yErrColOrExpr'] = get(mappings, ['error_y.array']);
     }
+    const colorColOrExpr = get(mappings, ['marker.color']);
+    if (colorColOrExpr) {
+        options['colorColOrExpr'] = colorColOrExpr;
+    }
+    const sizeColOrExpr = get(mappings, ['marker.size']);
+    if (sizeColOrExpr) {
+        options['sizeColOrExpr'] = sizeColOrExpr;
+    }
 
     return {options, fetchData};
 }
@@ -61,7 +69,7 @@ function fetchData(chartId, traceNum, tablesource) {
             const yTipLabel = yLabel.length > 20 ? 'y' : yLabel;
 
             const {tableMeta} = tableModel;
-            const validCols = ['rowIdx', 'x', 'y', 'sortBy', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh'];
+            const validCols = ['rowIdx', 'x', 'y', 'sortBy', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh', 'color', 'size'];
             tableModel.tableData.columns.forEach((col) => {
                 const name = col.name;
                 if (validCols.includes(col.name) && tableMeta[name]) {
@@ -70,6 +78,26 @@ function fetchData(chartId, traceNum, tablesource) {
             });
             mappings['firefly.rowIdx'] = 'rowIdx'; // save row idx
             const changes = getDataChangesForMappings({tableModel, mappings, traceNum});
+
+            // TODO: colorbar needs more work:
+            // it does not get updated when color scale is changing,
+            // also ticks labels are intermixed with integers,
+            // color bar and yaxis should be displayed on the opposite sides of the chart
+
+            // if color map is used, show the scale
+            //const colorMapColOrExpr = mappings['marker.color'];
+            //changes[`data.${traceNum}.marker.autoscale`] = false;
+            //changes[`data.${traceNum}.marker.showscale`] = Boolean(colorMapColOrExpr);
+            //if (colorMapColOrExpr) {
+            //    changes[`data.${traceNum}.marker.colorbar`] = {
+            //        //xanchor: yOpposite ? 'right' : 'left',
+            //        //x: yOpposite ? -0.02 : 1.02,
+            //        showticklabels: false,
+            //        thickness: 5,
+            //        outlinewidth: 0,
+            //        title: colorMapColOrExpr
+            //    };
+            //}
 
             const xColumn = getColumn(tableModel, get(mappings, 'x'));
             const xUnit = get(xColumn, 'units', '');
@@ -90,20 +118,19 @@ function fetchData(chartId, traceNum, tablesource) {
 
 function addOtherChanges({changes, xLabel, xTipLabel, xUnit, yLabel, yTipLabel, yUnit, chartId, traceNum}) {
 
-    // TODO: if we set the default label when there is only one trace, it needs to be cleared when we add more traces
     // set default title if it's the first trace
     // and no title is set by the user
-    //if (traceNum === 0) {
-    //    const {layout} = getChartData(chartId) || {};
-    //    const xAxisLabel = get(layout, 'xaxis.title');
-    //    if (!xAxisLabel) {
-    //        changes['layout.xaxis.title'] = xLabel + (xUnit ? ` (${xUnit})` : '');
-    //    }
-    //    const yAxisLabel = get(layout, 'yaxis.title');
-    //    if (!yAxisLabel) {
-    //        changes['layout.yaxis.title'] = yLabel + (yUnit ? ` (${yUnit})` : '');
-    //    }
-    //}
+    if (traceNum === 0) {
+        const {layout} = getChartData(chartId) || {};
+        const xAxisLabel = get(layout, 'xaxis.title');
+        if (!xAxisLabel) {
+            changes['layout.xaxis.title'] = xLabel + (xUnit ? ` (${xUnit})` : '');
+        }
+        const yAxisLabel = get(layout, 'yaxis.title');
+        if (!yAxisLabel) {
+            changes['layout.yaxis.title'] = yLabel + (yUnit ? ` (${yUnit})` : '');
+        }
+    }
 
     // set tooltips
     const x = get(changes, [`data.${traceNum}.x`]);
@@ -129,8 +156,7 @@ function addOtherChanges({changes, xLabel, xTipLabel, xUnit, yLabel, yTipLabel, 
         const xerr = hasXErrors ? formatError(xval, xErr[idx], xErrLow[idx], xErrHigh[idx]) : '';
         const yerr = hasYErrors ? formatError(yval, yErr[idx], yErrLow[idx], yErrHigh[idx]) : '';
         return `<span> ${xTipLabel} = ${xval}${xerr} ${xUnit} <br>` +
-            ` ${yTipLabel} = ${yval}${yerr} ${yUnit} ` +
-            ' </span>';
+            ` ${yTipLabel} = ${yval}${yerr} ${yUnit} </span>`;
     });
     changes[`data.${traceNum}.text`] = text;
     changes[`data.${traceNum}.hoverinfo`] = 'text';

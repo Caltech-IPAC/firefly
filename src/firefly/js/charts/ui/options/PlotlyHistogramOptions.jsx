@@ -30,7 +30,7 @@ export class HistogramOptions extends SimpleComponent {
 
     render() {
         const {chartId} = this.props;
-        const {tablesources, layout, data, activeTrace:cActiveTrace=0} = getChartData(chartId);
+        const {tablesources, activeTrace:cActiveTrace=0} = getChartData(chartId);
         const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
         const groupKey = this.props.groupKey || `${chartId}-ffhist-${activeTrace}`;
         const tablesource = get(tablesources, [cActiveTrace]);
@@ -40,7 +40,7 @@ export class HistogramOptions extends SimpleComponent {
         return (
             <div style={{padding:'0 5px 7px'}}>
                 {isUndefined(this.props.activeTrace) && <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id, submitChangesFunc: submitChanges}}/>}
-                <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({data, layout, activeTrace, tablesources})}>
+                <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
                     <ColumnOrExpression {...xProps}/>
                     <ListBoxInputField fieldKey={`data.${activeTrace}.histfunc`} options={[{value:'count'}, {value:'sum'}, {value:'avg'}, {value:'min'}, {value:'max'}]}/>
                     <ValidationField fieldKey={`data.${activeTrace}.nbinsx`}/>
@@ -48,16 +48,17 @@ export class HistogramOptions extends SimpleComponent {
                     <ValidationField fieldKey={`data.${activeTrace}.xbins.start`}/>
                     <ValidationField fieldKey={`data.${activeTrace}.xbins.end`}/>
                     <br/>
-                    <BasicOptionFields {...{layout, data, activeTrace}}/>
+                    <BasicOptionFields {...{activeTrace, groupKey}}/>
                 </FieldGroup>
             </div>
         );
     }
 }
 
-export function fieldReducer({data, layout, activeTrace, tablesources={}}) {
+export function fieldReducer({chartId, activeTrace}) {
+    const {data, tablesources={}} = getChartData(chartId);
     const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
-    const basicReducer = basicFieldReducer({data, layout, activeTrace, tablesources});
+    const basicReducer = basicFieldReducer({chartId, activeTrace, tablesources});
     const fields = {
         [`_tables.data.${activeTrace}.x`]: {
             fieldKey: `_tables.data.${activeTrace}.x`,
