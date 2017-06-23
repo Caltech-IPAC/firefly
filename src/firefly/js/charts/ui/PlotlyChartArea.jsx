@@ -55,11 +55,16 @@ export class PlotlyChartArea extends PureComponent {
     render() {
         const {widthPx, heightPx} = this.props;
         const {data=[], highlighted, selected, layout={}, activeTrace=0} = this.state;
-        const doingResize= (layout && (layout.width!==widthPx || layout.height!==heightPx));
+        let doingResize = false;
+        if (widthPx !== this.widthPx || heightPx !== this.heightPx) {
+            this.widthPx = widthPx;
+            this.heightPx = heightPx;
+            doingResize = true;
+        }
         const showlegend = data.length > 1;
         let pdata = data;
         // TODO: change highlight or selected without forcing new plot
-        if (!data[activeTrace] || get(data[activeTrace], 'type') === 'scatter') {
+        if (!data[activeTrace] || get(data[activeTrace], 'type', '').includes('scatter')) {
             // highlight makes sence only for scatter at the moment
             pdata = selected ? pdata.concat([selected]) : pdata;
             pdata = highlighted ? pdata.concat([highlighted]) : pdata;

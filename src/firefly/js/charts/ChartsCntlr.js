@@ -345,7 +345,7 @@ function chartHighlight(action) {
         const {activeTrace=activeDataTrace} = action.payload; // activeTrace can be selected or highlighted trace of the data trace
         const ttype = get(data, [activeTrace, 'type'], 'scatter');
 
-        if (!isEmpty(tablesources) && ttype === 'scatter') {
+        if (!isEmpty(tablesources) && ttype.includes('scatter')) {
             // activeTrace is different from activeDataTrace if a selected point highlighted, for example
             const {tbl_id} = tablesources[activeDataTrace] || {};
             if (!tbl_id) return;
@@ -613,6 +613,11 @@ export function reducer(state={ui:{}, data:{}}, action={}) {
 //    TablesCntlr.TABLE_REMOVE, TablesCntlr.TABLE_SELECT];
 
 
+function changeToScatterGL(chartData) {
+    get(chartData, 'data', []).forEach((d) => d.type === 'scatter' && (d.type = 'scattergl'));  // use scattergl instead of scatter
+    ['selected', 'highlighted'].map((k) => get(chartData, k, {})).forEach((d) => d.type === 'scatter' && (d.type = 'scattergl'));
+}
+
 /**
  * @param state - ui part of chart state
  * @param action - action
@@ -629,6 +634,9 @@ function reduceData(state={}, action={}) {
             if (chartType==='plot.ly') {
                 rest['_original'] = cloneDeep(action.payload);
                 applyDefaults(rest);
+                if (!sessionStorage.getItem('noScatterGL')) {
+                    changeToScatterGL(rest);
+                }
             }
             state = updateSet(state, chartId,
                 omitBy({
@@ -644,6 +652,10 @@ function reduceData(state={}, action={}) {
             const {chartId, changes}  = action.payload;
             var chartData = getChartData(chartId) || {};
             chartData = updateObject(chartData, changes);
+
+            if (!sessionStorage.getItem('noScatterGL')) {
+                changeToScatterGL(chartData);
+            }
             return updateSet(state, chartId, chartData);
         }
         case (CHART_REMOVE)  :

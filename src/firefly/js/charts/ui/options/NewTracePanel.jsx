@@ -1,6 +1,7 @@
 import React from 'react';
 
 import {getChartData} from '../../ChartsCntlr.js';
+import {getNewTraceDefaults} from '../../ChartUtil.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
@@ -20,6 +21,7 @@ const fieldProps = {labelWidth: 62, size: 15};
 function getSubmitChangesFunc(traceType) {
     switch(traceType) {
         case 'scatter':
+        case 'scattergl':
             return submitChangesScatter;
         case 'fireflyHistogram':
             return submitChangesFFHistogram;
@@ -32,6 +34,7 @@ function getOptionsComponent({traceType, chartId, activeTrace, groupKey}) {
     const {data, layout} = getChartData(chartId);
     switch(traceType) {
         case 'scatter':
+        case 'scattergl':
             return (<ScatterOptions {...{chartId, activeTrace, groupKey}}/>);
         case 'fireflyHistogram':
             return (<FireflyHistogramOptions {...{chartId, activeTrace, groupKey}}/>);
@@ -70,6 +73,11 @@ export class NewTracePanel extends SimpleComponent {
 
             fields = Object.assign({activeTrace}, fields);  // make the newly added trace active
             fields[`data.${activeTrace}.type`] = type; //make sure trace type is set
+
+            // apply defaults settings
+            Object.entries(getNewTraceDefaults(type, activeTrace))
+                    .forEach(([k,v]) => !fields[k] && (fields[k] = v));
+            
             // need to hide before the changes are submitted to avoid React Internal error too much recursion (mounting/unmouting fields)
             dispatchHideDialog('ScatterNewTracePanel');
             submitChangesFunc({chartId, activeTrace, fields, tbl_id});

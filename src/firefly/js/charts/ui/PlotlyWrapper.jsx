@@ -4,9 +4,10 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {get,debounce} from 'lodash';
+import {get, debounce, isEmpty, set, omit} from 'lodash';
 import {getPlotLy} from '../PlotlyConfig.js';
-import {logError} from '../../util/WebUtil.js';
+import {getChartData} from '../ChartsCntlr.js';
+import {logError, deltas, flattenObject} from '../../util/WebUtil.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import Enum from 'enum';
 
@@ -166,24 +167,58 @@ export class PlotlyWrapper extends Component {
         return true;
     }
 
-    draw() {
-        const renderType = this.renderType;
-        if (renderType===RenderType.PAUSE_DRAWING) return;
+    optimize(graphDiv, renderType, {chartId, data, layout, dataUpdate, layoutUpdate, dataUpdateTraces, ...rest}) {
+        const {lastInputTime} = layout;
+        if (lastInputTime && renderType ===  RenderType.NEW_PLOT && graphDiv.data) {
+            // omitting 'firefly' from data[*] for now
+            data = data.map((d) => omit(d, 'firefly'));
+            layout = omit(layout, 'lastInputTime');
 
-        const {data,layout, config= defaultConfig, newPlotCB, dataUpdate, layoutUpdate, dataUpdateTraces}= this.props;
+            const dataDelta = deltas(data, graphDiv.data || {});
+            const layoutDelta = flattenObject(deltas(layout, graphDiv.layout || {}, false));
+
+            const hasLayout = !isEmpty(layoutDelta);
+            const hasData = !isEmpty(dataDelta);
+            if(hasData) {
+                dataUpdate = Object.values(dataDelta).map((d) => flattenObject(d));
+                dataUpdateTraces = Object.keys(dataDelta).map((k) => parseInt(k));
+                renderType = RenderType.RESTYLE;
+            }
+            if (hasLayout) {
+                layoutUpdate = layoutDelta;
+                renderType = RenderType.RELAYOUT;
+            }
+            if (hasData && hasLayout) {
+                renderType = RenderType.RESTYLE_AND_RELAYOUT;
+            }
+        }
+
+        return {renderType, chartId, data, layout, dataUpdate, layoutUpdate, dataUpdateTraces, ...rest};
+    }
+
+    draw() {
+        let renderType = this.renderType;
+        if (renderType===RenderType.PAUSE_DRAWING) return;
 
         getPlotLy().then( (Plotly) => {
 
+            const optimized =  sessionStorage.getItem('chartRedraw') ? Object.assign({renderType}, this.props) :
+                                (this.optimize(this.div || {}, renderType, this.props));
+
+            const {chartId, data,layout, config= defaultConfig, newPlotCB, dataUpdate, layoutUpdate, dataUpdateTraces} = optimized;
+            renderType = optimized.renderType;
+
             if (this.div) { // make sure the div is still there
+const now = Date.now();
                 switch (renderType) {
                     case RenderType.RESTYLE:
-                        Plotly.restyle(this.div, dataUpdate, dataUpdateTraces);
+                        this.restyle(this.div, Plotly, dataUpdate, dataUpdateTraces);
                         break;
                     case RenderType.RELAYOUT:
                         Plotly.relayout(this.div, layoutUpdate);
                         break;
                     case RenderType.RESTYLE_AND_RELAYOUT:
-                        Plotly.restyle(this.div, dataUpdate, dataUpdateTraces);
+                        this.restyle(this.div, Plotly, dataUpdate, dataUpdateTraces);
                         Plotly.relayout(this.div, layoutUpdate);
                         break;
                     case RenderType.RESIZE:
@@ -202,6 +237,7 @@ export class PlotlyWrapper extends Component {
                             chart.on('plotly_relayout', () => this.showMask(false));
                             chart.on('plotly_restyle', () => this.showMask(false));
                             chart.on('plotly_redraw', () => this.showMask(false));
+                            chart.on('plotly_relayout', (changes) => this.syncLayout(chartId, changes));
                         }
                         else {
                             this.showMask(false);
@@ -210,11 +246,48 @@ export class PlotlyWrapper extends Component {
 
                         break;
                 }
+                this.syncLayout(chartId, {lastInputTime: Date.now()});
+console.log(`redraw elapsed: ${Date.now() - now}`);
             }
         } ).catch( (e) => {
             console.log('Plotly not loaded',e);
         });
+    }
 
+    /**
+     * This function sync the div.layout with chart's layout.
+     * Will use direct object update instead of dispatch chart update to avoid
+     * unneeded render/comparison.
+     * @param chartId
+     * @param changes
+     */
+    syncLayout(chartId, changes) {
+        const {layout} = getChartData(chartId) || {};
+        if (layout) {
+            Object.entries(changes).forEach( ([k, v]) => {
+                if (k === 'xaxis' && Array.isArray(v)) {
+                    set(layout, 'xaxis.range', v);
+                    set(layout, 'xaxis.autorange', false);
+                } else if (k === 'yaxis' && Array.isArray(v)) {
+                    set(layout, 'yaxis.range', v);
+                    set(layout, 'yaxis.autorange', false);
+                } else {
+                    set(layout, k, v);
+                }
+            });
+        }
+    }
+
+    restyle(div, Plotly, dataUpdate, dataUpdateTraces) {
+        if (Array.isArray(dataUpdate)) {
+            dataUpdate.forEach((v,idx) => this.restyle(div, Plotly, v, dataUpdateTraces[idx]));
+        } else {
+            if (dataUpdateTraces >= get(div, 'data.length', 0)) {
+                Plotly.addTraces(div, dataUpdate, dataUpdateTraces);
+            } else {
+                Plotly.restyle(div, dataUpdate, dataUpdateTraces);
+            }
+        }
     }
 
     refUpdate(ref) {
@@ -279,7 +352,7 @@ PlotlyWrapper.defaultProps = {
     maskOnLayout : true,
     maskOnRestyle : false,
     maskOnResize : true,
-    maskOnNewPlot : true,
+    maskOnNewPlot : false,
 
     autoSizePlot : false,
     autoDetectResizing : false,
