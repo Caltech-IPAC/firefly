@@ -180,7 +180,7 @@ export function basicFieldReducer({chartId, activeTrace}) {
         [xyratioFldName]: {
             fieldKey: xyratioFldName,
             value: get(fireflyLayout, 'xyratio'),
-            validator: Validate.floatRange.bind(null, 1, 10, 1, 'X/Y ratio'),
+            validator: Validate.floatRange.bind(null, 0.1, 10, 1, 'X/Y ratio'),
             tooltip: 'X/Y ratio',
             label : 'X/Y ratio:',
             labelWidth: 50
@@ -318,13 +318,19 @@ export class BasicOptionFields extends Component {
                 <div style={helpStyle}>
                     Set plot boundaries if different from data range.
                 </div>
-                <div style={{display: 'flex', flexDirection: 'row', padding: '5px 15px 15px'}}>
+                <div style={{display: 'flex', flexDirection: 'row', padding: '5px 15px 0'}}>
                     <div style={{paddingRight: 5}}>
                         <ValidationField fieldKey={'fireflyLayout.xaxis.min'}/>
-                        <ValidationField fieldKey={'fireflyLayout.yaxis.min'}/>
                     </div>
                     <div style={{paddingRight: 5}}>
                         <ValidationField fieldKey={'fireflyLayout.xaxis.max'}/>
+                    </div>
+                </div>
+                <div style={{display: 'flex', flexDirection: 'row', padding: '0px 15px 15px'}}>
+                    <div style={{paddingRight: 5}}>
+                        <ValidationField fieldKey={'fireflyLayout.yaxis.min'}/>
+                    </div>
+                    <div style={{paddingRight: 5}}>
                         <ValidationField fieldKey={'fireflyLayout.yaxis.max'}/>
                     </div>
                 </div>

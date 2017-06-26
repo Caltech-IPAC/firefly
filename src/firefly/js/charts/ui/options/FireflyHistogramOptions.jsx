@@ -1,5 +1,5 @@
 import React from 'react';
-import {get, isUndefined, set, reverse} from 'lodash';
+import {get, isUndefined, set} from 'lodash';
 
 import {BasicOptionFields, OptionTopBar, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
 import {HistogramOptions} from '../HistogramOptions.jsx';
@@ -29,7 +29,7 @@ export class FireflyHistogramOptions extends SimpleComponent {
 
         const histogramParams = toHistogramOptions(chartId, activeTrace);
 
-        const basicFields = BasicOptionFields({activeTrace, groupKey, xNoLog: true});
+        const basicFields = <BasicOptionFields {...{activeTrace, groupKey, xNoLog: true}}/>;
         const basicFieldsReducer = basicFieldReducer({chartId, activeTrace});
         return (
             <div style={{padding:'0 5px 7px'}}>
