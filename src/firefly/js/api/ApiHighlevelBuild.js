@@ -328,7 +328,7 @@ function makePlotSimple(llApi, plotId) {
 function showImageInMultiViewer(llApi, targetDiv, request) {
     const {dispatchPlotImage, dispatchAddViewer, dispatchAddImages}= llApi.action;
     const {findInvalidWPRKeys,confirmPlotRequest}= llApi.util.image;
-    const {renderDOM,debug}= llApi.util;
+    const {renderDOM,debug, getWsConnId, getWsChannel}= llApi.util;
     const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
 
     highlevelImageInit(llApi);
@@ -337,7 +337,7 @@ function showImageInMultiViewer(llApi, targetDiv, request) {
         const badList= findInvalidWPRKeys(r);
         if (badList.length) debug(`plot request has the following bad keys: ${badList}`);
     });
-    request= confirmPlotRequest(request,globalImageViewDefParams,targetDiv,makePlotId);
+    request= confirmPlotRequest(request,globalImageViewDefParams,targetDiv,makePlotId(getWsConnId));
 
     const plotId= !Array.isArray(request) ? request.plotId : request.find( (r) => r.plotId).plotId;
     dispatchAddViewer(targetDiv,'create_replace');
@@ -359,7 +359,7 @@ function initCoverage(llApi, targetDiv,options= {}) {
 
     renderDOM(targetDiv, MultiImageViewer,
         {viewerId:targetDiv, canReceiveNewPlots, canDelete:false, Toolbar:MultiViewStandardToolbar });
-    options= Object.assign({},options, {viewerId:targetDiv})
+    options= Object.assign({},options, {viewerId:targetDiv});
     dispatchAddSaga(watchCoverage, options);
 }
 
@@ -377,9 +377,11 @@ function highlevelImageInit(llApi) {
 
 var plotCnt= 0;
 
-function makePlotId() {
-    plotCnt++;
-    return 'apiPlot-'+plotCnt;
+function makePlotId(wsConnIdGetter) {
+    return () => {
+        plotCnt++;
+        return `apiPlot-${wsConnIdGetter()}-${plotCnt}`;
+    };
 }
 
 //================================================================

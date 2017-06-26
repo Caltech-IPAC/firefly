@@ -25,6 +25,7 @@ import {take,race,call} from 'redux-saga/effects';
 export {getBoolean} from '../util/WebUtil.js';
 export {toBoolean} from '../util/WebUtil.js';
 
+export {getWsConnId, getWsChannel} from '../core/messaging/WebSocketClient.js';
 
 /**
  * Is in debug mode
