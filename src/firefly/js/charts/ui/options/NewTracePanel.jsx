@@ -29,7 +29,6 @@ function getSubmitChangesFunc(traceType) {
 }
 
 function getOptionsComponent({traceType, chartId, activeTrace, groupKey}) {
-    const {data, layout} = getChartData(chartId);
     switch(traceType) {
         case 'scatter':
             return (<ScatterOptions {...{chartId, activeTrace, groupKey}}/>);
@@ -39,10 +38,10 @@ function getOptionsComponent({traceType, chartId, activeTrace, groupKey}) {
             return (<HistogramOptions {...{chartId, activeTrace, groupKey}}/>);
         default:
             return (
-                <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({data, layout, activeTrace})}>
+                <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
                     <ValidationField fieldKey={`_tables.data.${activeTrace}.x`}/>
                     <ValidationField fieldKey={`_tables.data.${activeTrace}.y`}/>
-                    <BasicOptionFields {...{activeTrace}}/>
+                    <BasicOptionFields {...{activeTrace, groupKey}}/>
                 </FieldGroup>
             );
     }
@@ -112,8 +111,8 @@ export function NewTracePanelBtn({tbl_id, chartId}) {
     );
 }
 
-function fieldReducer({data, layout, activeTrace}) {
-    const basicReducer = basicFieldReducer({data, layout, activeTrace});
+function fieldReducer({chartId, activeTrace}) {
+    const basicReducer = basicFieldReducer({chartId, activeTrace});
     const fields = {
         [`_tables.data.${activeTrace}.x`]: {
             fieldKey: `_tables.data.${activeTrace}.x`,

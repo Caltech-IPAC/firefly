@@ -28,6 +28,8 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
     private static final String YERR_COL_EXPR = "yErrColOrExpr";
     private static final String YERR_LOW_COL_EXPR = "yErrLowColOrExpr";
     private static final String YERR_HIGH_COL_EXPR = "yErrHighColOrExpr";
+    private static final String COLOR_COL_EXPR = "colorColOrExpr";
+    private static final String SIZE_COL_EXPR = "sizeColOrExpr";
     private static final String SORT_COL_OR_EXPR = "sortColOrExpr";
 
 
@@ -43,6 +45,8 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
         String yErrColOrExpr = request.getParam(YERR_COL_EXPR);
         String yErrLowColOrExpr = request.getParam(YERR_LOW_COL_EXPR);
         String yErrHighColOrExpr = request.getParam(YERR_HIGH_COL_EXPR);
+        String colorColOrExpr = request.getParam(COLOR_COL_EXPR);
+        String sizeColOrExpr = request.getParam(SIZE_COL_EXPR);
         String sortColOrExpr = request.getParam(SORT_COL_OR_EXPR);
 
         boolean hasXError = !StringUtils.isEmpty(xErrColOrExpr);
@@ -64,9 +68,18 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
 
         // create the array of getters, which know how to get double values
         ArrayList<Col> colsLst = new ArrayList<>();
-        Col xCol = getCol(dataTypes, xColOrExpr,"x", false);
+        Col xCol = getCol(dataTypes, xColOrExpr, "x", false);
         colsLst.add(xCol);
         colsLst.add(getCol(dataTypes, yColOrExpr, "y", false));
+
+        // columns for color and size maps
+        if (!StringUtils.isEmpty(colorColOrExpr)) {
+            colsLst.add(getCol(dataTypes, colorColOrExpr, "color", true));
+        }
+        if (!StringUtils.isEmpty(sizeColOrExpr)) {
+            colsLst.add(getCol(dataTypes, sizeColOrExpr, "size", true));
+        }
+
 
         Col sortCol = null;
         if (hasSortCol) {

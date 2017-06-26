@@ -1,6 +1,7 @@
 import React from 'react';
-import {get, isUndefined} from 'lodash';
+import {get, isUndefined, omit} from 'lodash';
 
+import {Expression} from '../../../util/expr/Expression.js';
 import {getChartData} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
@@ -29,7 +30,7 @@ export class ScatterOptions extends SimpleComponent {
     render() {
         const {chartId} = this.props;
         //const {activeTrace=0} = this.state;
-        const {tablesources, data, layout, activeTrace:cActiveTrace=0} = getChartData(chartId);
+        const {tablesources, activeTrace:cActiveTrace=0} = getChartData(chartId);
         const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
         const groupKey = this.props.groupKey || `${chartId}-scatter-${activeTrace}`;
         const tablesource = get(tablesources, [cActiveTrace]);
@@ -38,23 +39,24 @@ export class ScatterOptions extends SimpleComponent {
         return (
             <div style={{padding:'0 5px 7px'}}>
                 {isUndefined(this.props.activeTrace) && <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id, submitChangesFunc: submitChangesScatter}}/>}
-                <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({data, layout, activeTrace, tablesources})}>
+                <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
                     <ListBoxInputField fieldKey={`data.${activeTrace}.mode`} options={[{value:'markers'}, {value:'lines'}, {value:'lines+markers'}]}/>
                     <ListBoxInputField fieldKey={`data.${activeTrace}.marker.symbol`}
                                        options={[{value:'circle'}, {value:'circle-open'}, {value:'square'}, {value:'square-open'}, {value:'diamond'}, {value:'diamond-open'},
                                                  {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
                     {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
                     <br/>
-                    <BasicOptionFields {...{layout, data, activeTrace}}/>
+                    <BasicOptionFields {...{activeTrace, groupKey}}/>
                 </FieldGroup>
             </div>
         );
     }
 }
 
-export function fieldReducer({data, layout, activeTrace, tablesources={}}) {
+export function fieldReducer({chartId, activeTrace}) {
+    const {data, tablesources={}} = getChartData(chartId);
     const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
-    const basicReducer = basicFieldReducer({data, layout, activeTrace, tablesources});
+    const basicReducer = basicFieldReducer({chartId, activeTrace, tablesources});
     const fields = {
         [`data.${activeTrace}.mode`]: {
             fieldKey: `data.${activeTrace}.mode`,
@@ -70,13 +72,20 @@ export function fieldReducer({data, layout, activeTrace, tablesources={}}) {
             label: 'Symbol:',
             ...fieldProps
         },
+        [`data.${activeTrace}.marker.colorscale`]: {
+            fieldKey: `data.${activeTrace}.marker.colorscale`,
+            value: get(data, `${activeTrace}.marker.colorscale`),
+            tooltip: 'Select colorscale for color map',
+            label: 'Color Scale:',
+            ...fieldProps
+        },
         [errorTypeFieldKey(activeTrace, 'x')]: {
             fieldKey: errorTypeFieldKey(activeTrace, 'x'),
-            value: get(data, `${activeTrace}.fireflyData.options.error_x.errorsType`, 'none')
+            value: get(data, errorTypeFieldKey(activeTrace, 'x').replace(/^data./, ''), 'none')
         },
         [errorTypeFieldKey(activeTrace, 'y')]: {
             fieldKey: errorTypeFieldKey(activeTrace, 'y'),
-            value: get(data, `${activeTrace}.fireflyData.options.error_y.errorsType`, 'none')
+            value: get(data, errorTypeFieldKey(activeTrace, 'y').replace(/^data./, ''), 'none')
         },
         ...basicReducer(null)
     };
@@ -143,16 +152,28 @@ export function fieldReducer({data, layout, activeTrace, tablesources={}}) {
             return tablesourceMappings? Object.assign({}, fields, tblRelFields) : fields;
         }
 
+        inFields = basicReducer(inFields, action);
+
         const {payload:{fieldKey='', value=''}, type} = action;
 
-        if (fieldKey.endsWith('marker.color') && type === VALUE_CHANGE && value.length === 1) {
-            if (fieldKey.startsWith('_tables')) {
-                const colorKey = Object.keys(inFields).find((k) => k.match(/data.+.marker.color/)) || '';
-                if (colorKey) inFields = updateSet(inFields, [colorKey, 'value'], '');     // blanks out color when a color map is entered
-            } else {
-                const colorMapKey = Object.keys(inFields).find((k) => k.match(/_tables.+.marker.color/)) || '';
-                if (colorMapKey) inFields = updateSet(inFields, [colorMapKey, 'value'], '');   // blanks out color map when a color is entered
+        if (type === VALUE_CHANGE) {
+            if (fieldKey.endsWith('marker.color') && value.length === 1) {
+                if (fieldKey.startsWith('_tables')) {
+                    const colorKey = Object.keys(inFields).find((k) => k.match(/data.+.marker.color$/)) || '';
+                    if (colorKey) inFields = updateSet(inFields, [colorKey, 'value'], '');     // blanks out color when a color map is entered
+                } else {
+                    const colorMapKey = Object.keys(inFields).find((k) => k.match(/_tables.+.marker.color$/)) || '';
+                    if (colorMapKey) inFields = updateSet(inFields, [colorMapKey, 'value'], '');   // blanks out color map when a color is entered
+                }
             }
+            // when field changes, clear error fields
+            ['x','y'].forEach((a) => {
+                if (fieldKey === `_tables.data.${activeTrace}.${a}`) {
+                    inFields = updateSet(inFields, [errorTypeFieldKey(activeTrace, `${a}`), 'value'], 'none');
+                    inFields = updateSet(inFields, [errorFieldKey(activeTrace, `${a}`), 'value'], undefined);
+                    inFields = updateSet(inFields, [errorMinusFieldKey(activeTrace, `${a}`), 'value'], undefined);
+                }
+            });
         }
         return inFields;
 
@@ -168,11 +189,13 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
     const yProps = {fldPath:`_tables.data.${activeTrace}.y`, label: 'Y:', name: 'Y', nullAllowed: false, colValStats, groupKey, labelWidth};
 
     const commonProps = {colValStats, groupKey, labelWidth: 62, nullAllowed: true};
+    const sizemapTooltip = 'marker size. Please use expression to convert column value to valid pixels';
     const flds = [
-        {fldPath:`_tables.data.${activeTrace}.marker.color`,label: 'Color Map:', name: 'Color Map'},
-        {fldPath:`_tables.data.${activeTrace}.marker.size`,label: 'Size Map:', name: 'Size Map'}
+        {key: 'colorMap', fldPath:`_tables.data.${activeTrace}.marker.color`,label: 'Color Map:', name: 'Color Map'},
+        {key: 'sizeMap', fldPath:`_tables.data.${activeTrace}.marker.size`,label: 'Size Map:', name: 'Size Map', tooltip: sizemapTooltip}
     ].map((e) => {return Object.assign(e, commonProps);});
-
+    const colorMapProps = flds[0];
+    const sizeMapProps = flds[1];
 
     return (
         <div className='FieldGroup__vertical'>
@@ -183,25 +206,37 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
             <ColumnOrExpression {...yProps}/>
             <Errors axis='y' {...{groupKey, colValStats, activeTrace, labelWidth}}/>
             <br/>
-            {
-                flds.map((props,idx) => {
-                    return <ColumnOrExpression key={idx} {...props}/>;
-                })
-            }
+            <ColumnOrExpression {...sizeMapProps}/>
+            <ColumnOrExpression {...colorMapProps}/>
+            <ListBoxInputField fieldKey={`data.${activeTrace}.marker.colorscale`}
+                               options={[{value:'Default'}, {value:'Bluered'}, {value:'Blues'}, {value:'Earth'}, {value:'Electric'}, {value:'Greens'},
+                                         {value:'Greys'}, {value:'Hot'}, {value:'Jet'}, {value:'Picnic'}, {value:'Portland'}, {value:'Rainbow'},
+                                         {value:'RdBu'}, {value:'Reds'}, {value:'Viridis'}, {value:'YlGnBu'}, {value:'YlOrRd'}]}/>
         </div>
     );
 }
 
 export function submitChangesScatter({chartId, activeTrace, fields, tbl_id}) {
-    const colorMap = get(fields, `_tables.data.${activeTrace}.marker.color`);
-    const sizeMap = get(fields, `_tables.data.${activeTrace}.marker.size`);
-
-    const dataType = (!tbl_id || colorMap || sizeMap) ? 'scatter' : 'fireflyScatter';
+    const dataType = (!tbl_id) ? 'scatter' : 'fireflyScatter';
     const changes = {[`fireflyData.${activeTrace}.dataType`] : dataType};
     if (dataType === 'fireflyScatter') {
         // add a mapping for rowIdx
         changes[`_tables.data.${activeTrace}.firefly.rowIdx`] = 'rowIdx'; // rowIdx is mapping table rows to data points
     }
+
+    // check if size field is a constant
+    const sizeMap = fields[`_tables.data.${activeTrace}.marker.size`];
+    if (sizeMap) {
+        const colValStats = getColValStats(tbl_id);
+        const colNames = colValStats.map((colVal) => {return colVal.name;});
+        const expr = new Expression(sizeMap, colNames);
+        if (expr.isValid() && (expr.getParsedVariables().length === 0)) {
+            const symSize = expr.getValue();
+            changes[`data.${activeTrace}.marker.size`] = symSize;
+            fields = omit(fields, `_tables.data.${activeTrace}.marker.size`);
+        }
+    }
+
     Object.assign(changes, fields);
     submitChanges({chartId, fields: changes, tbl_id});
 }
