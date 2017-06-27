@@ -1,0 +1,31 @@
+   _________________________ EXAMPLES ________________________
+
+-e  : Define environment variable in the container
+-p  : Map a local port to a the container port (8080 is required)
+-v  : Map a local directory to the container directory
+-rm : Remove the image after the run (recommended)
+
+
+-------------------- Very Simple - try this one first:
+
+   docker run -p 8090:8080  -e "MAX_JVM_SIZE=8G" --rm ipac/firefly
+
+-------------------- More advanced:
+
+Background:
+   docker run -p 8090:8080  -e "MAX_JVM_SIZE=8G" --rm ipac/firefly >& my.log &
+
+Map a directory for direct file reading:
+   docker run -p 8090:8080  -v /local/data:/external -e "MAX_JVM_SIZE=8G" --rm ipac/firefly
+
+Write to logging directory outside of docker image:
+   docker run -p 8090:8080 -v /local/myLogDir:/usr/local/tomcat/logs -e "MAX_JVM_SIZE=8G" --rm ipac/firefly
+
+View log file:
+   docker run -p 8090:8080  -e "MAX_JVM_SIZE=8G" "LOG_FILE_TO_CONSOLE=firefly.log" --rm ipac/firefly
+
+Debugging:
+   docker run -p 8055:8080 -p 5050:5050 -p 9050:9050 -e "MAX_JVM_SIZE=4G" -e "ADMIN_PASSWORD=myPassword" -e DEBUG="TRUE" -e "LOG_FILE_TO_CONSOLE=firefly.log" --rm --name firefly ipac/firefly
+
+Production like:
+   docker run -p 8055:8080 -p 9050:9050 -e "MAX_JVM_SIZE=30G" -e "ADMIN_PASSWORD=myPassword" -e SHARE_CACHE="TRUE" -e DEBUG="FALSE" -e "jvmRoute=MyHostName" --name productionServer ipac/firefly

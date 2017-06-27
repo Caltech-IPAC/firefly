@@ -3,6 +3,30 @@
 DEF_JVM_ROUTE=`hostname`
 JVM_ROUTE=${jvmRoute:-$DEF_JVM_ROUTE}
 
+
+if [ "x$BUILD_TIME_NAME" != "x" ]; then
+   NAME=${BUILD_TIME_NAME}
+else
+   NAME="ipac/firefly"
+fi
+
+
+echo
+echo
+echo "============================================================"
+echo "============================================================"
+echo "==================== For Help =============================="
+echo
+echo "docker run --rm ${NAME} --help"
+echo
+echo "============================================================"
+echo "============================================================"
+echo "============================================================"
+echo
+echo
+echo
+echo
+
 echo "========== Information:  you can set properties using -e on docker run line =====  "
 echo 
 echo "Properties: "
@@ -23,8 +47,12 @@ echo "        8080 - http"
 echo "        5050 - debug"
 echo "        9050 - jmx (jconsole)"
 echo
+echo "Volume Mount Points: "
+echo "        Log directory : /usr/local/tomcat/logs : Directory for logs files"
+echo "        Local Images  : /local/data : Root directory for images and tables that firefly can read"
+echo
 echo "Command line options: "
-echo "        --help  : show help message and stop"
+echo "        --help  : show help message, examples, stop"
 echo "        --debug : start in debug mode"
 
 
@@ -40,24 +68,7 @@ fi
 
 if [ "$1" = "--help" ] || [ "$1" = "-help" ] || [ "$1" = "-h" ]; then
     echo
-	echo "   --------- EXAMPLES ---------"
-	echo "Simple:"
-	echo '> docker run -p 8090:8080  -e "MAX_JVM_SIZE=8G"   --rm ipac/firefly'
-    echo
-	echo "Map a directory for direct file reading:"
-	echo '> docker run -p 8090:8080  -v /local/data:/external -e "MAX_JVM_SIZE=8G"   --rm ipac/firefly'
-    echo
-	echo "Simple (background):"
-	echo '> docker run -p 8090:8080  -e "MAX_JVM_SIZE=8G"   --rm ipac/firefly >& my.log &'
-    echo
-	echo "View log file:"
-	echo '> docker run -p 8090:8080  -e "MAX_JVM_SIZE=8G" "LOG_FILE_TO_CONSOLE=firefly.log"   --rm ipac/firefly'
-    echo
-	echo "Debugging:"
-	echo '> docker run -p 8055:8080 -p 5050:5050 -p 9050:9050 -e "MAX_JVM_SIZE=4G" -e "ADMIN_PASSWORD=sam" -e "LOG_FILE_TO_CONSOLE=firefly.log"  --rm --name firefly ipac/firefly'
-    echo
-	echo "Production like:"
-	echo '> docker run -p 8055:8080 -p 9050:9050 -e "MAX_JVM_SIZE=30G" -e "ADMIN_PASSWORD=sam" -e SHARE_CACHE="TRUE" -e DEBUG="FALSE" -e "jvmRoute=MyHostName" --name productionServer ipac/firefly'
+    sed "s:ipac/firefly:${NAME}:" ./start-examples.txt
     exit 0
 fi
 echo "========================================================================="

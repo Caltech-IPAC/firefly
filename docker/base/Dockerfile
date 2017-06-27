@@ -1,12 +1,13 @@
-#FROM tomcat:8.0.20-jre8
 #FROM tomcat:7.0-jre8
 FROM tomcat:8.0-jre8
 
-# To build: docker build -t ipac/firefly . 
+#-----------------------------------------------------------------------------
+# To build: docker build -t ipac/firefly --build-arg IMAGE_NAME=ipac/firefly .
 # For help in running: docker run --rm  ipac/firefly --help
+#-----------------------------------------------------------------------------
 
-# support single server, single webapp deployments
-# for multi server we need to look at multicast issues
+# Support single server deployments
+# For multi server we need to look at multicast issues so ehcache can communicate
 
 
 # add packages: vim, etc
@@ -29,8 +30,16 @@ ENV FIREFLY_WORK_DIR=/usr/local/tomcat/firefly-work
 ENV EXTERNAL_MOUNT_POINT=/external
 ENV VISUALIZE_FITS_SEARCH_PATH=${EXTERNAL_MOUNT_POINT}
 
-COPY launchTomcat.sh /usr/local/tomcat
-COPY setupSharedCacheJars.sh /usr/local/tomcat
+# container has access to the image name, used for help only
+ARG IMAGE_NAME=''
+ENV BUILD_TIME_NAME=${IMAGE_NAME}
+
+# These are the file there are executed at startup, they start tomcat
+COPY launchTomcat.sh \
+     start-examples.txt \
+     setupSharedCacheJars.sh /usr/local/tomcat/
+
+# Make directories, make scripts executable, save old tomcat config files
 RUN chmod +x /usr/local/tomcat/launchTomcat.sh /usr/local/tomcat/setupSharedCacheJars.sh; \
     mv /usr/local/tomcat/conf/context.xml /usr/local/tomcat/conf/context.xml.bak; \
     mv /usr/local/tomcat/conf/tomcat-users.xml /usr/local/tomcat/conf/tomcat-users.xml.bak; \
@@ -38,9 +47,14 @@ RUN chmod +x /usr/local/tomcat/launchTomcat.sh /usr/local/tomcat/setupSharedCach
     mkdir -p ${FIREFLY_WORK_DIR}; \
     mkdir -p ${EXTERNAL_MOUNT_POINT}
 
-COPY tomcat-users.xml /usr/local/tomcat/conf
-COPY context.xml /usr/local/tomcat/conf
-COPY setenv.sh /usr/local/tomcat/bin
+
+# Tomcat config files, tomcat-users is for the admin username and password
+# context.xml set delegate to true for we can use the classpath of tomcat
+COPY tomcat-users.xml \
+     context.xml  /usr/local/tomcat/conf/
+
+# setenv.sh is used to defined CATALINA_OPTS and JAVA_OPTS
+COPY setenv.sh /usr/local/tomcat/bin/
 
 # 8080 - http
 # 5050 - debug
