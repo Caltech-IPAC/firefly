@@ -6,7 +6,7 @@ import {cloneDeep, has, get, isEmpty, isString, isUndefined, omit, omitBy, set} 
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
-import {updateSet, updateMerge, updateObject} from '../util/WebUtil.js';
+import {updateSet, updateMerge, updateObject, isBooleanString} from '../util/WebUtil.js';
 import {getTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {logError} from '../util/WebUtil.js';
@@ -20,6 +20,8 @@ export const CHART_SPACE_PATH = 'charts';
 export const UI_PREFIX = `${CHART_SPACE_PATH}.ui`;
 export const DATA_PREFIX = `${CHART_SPACE_PATH}.data`;
 
+export const useScatterGL = isBooleanString(sessionStorage.getItem('scatterGL'));       // defaults to false
+export const useChartRedraw = isBooleanString(sessionStorage.getItem('chartRedraw'));   // defaults to false
 
 /*---------------------------- ACTIONS -----------------------------*/
 export const CHART_ADD = `${DATA_PREFIX}/chartAdd`;
@@ -638,9 +640,7 @@ function reduceData(state={}, action={}) {
             if (chartType==='plot.ly') {
                 rest['_original'] = cloneDeep(action.payload);
                 applyDefaults(rest);
-                if (!sessionStorage.getItem('noScatterGL')) {
-                    changeToScatterGL(rest);
-                }
+                useScatterGL && changeToScatterGL(rest);
             }
             state = updateSet(state, chartId,
                 omitBy({
@@ -656,10 +656,8 @@ function reduceData(state={}, action={}) {
             const {chartId, changes}  = action.payload;
             var chartData = getChartData(chartId) || {};
             chartData = updateObject(chartData, changes);
+            useScatterGL && changeToScatterGL(chartData);
 
-            if (!sessionStorage.getItem('noScatterGL')) {
-                changeToScatterGL(chartData);
-            }
             return updateSet(state, chartId, chartData);
         }
         case (CHART_REMOVE)  :

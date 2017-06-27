@@ -6,7 +6,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {get, debounce, isEmpty, set, omit} from 'lodash';
 import {getPlotLy} from '../PlotlyConfig.js';
-import {getChartData} from '../ChartsCntlr.js';
+import {getChartData, useChartRedraw, useScatterGL} from '../ChartsCntlr.js';
 import {logError, deltas, flattenObject} from '../../util/WebUtil.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import Enum from 'enum';
@@ -14,6 +14,8 @@ import Enum from 'enum';
 const PLOTLY_BASE_ID= 'plotly-plot';
 const MASKING_DELAY= 400;
 let counter= 0;
+
+const isDebug = () => get(window, 'firefly.debug', false);
 
 export const RenderType= new Enum([ 'RESIZE', 'UPDATE', 'RESTYLE', 'RELAYOUT',
                                     'RESTYLE_AND_RELAYOUT', 'NEW_PLOT', 'PAUSE_DRAWING' ],
@@ -167,15 +169,15 @@ export class PlotlyWrapper extends Component {
         return true;
     }
 
-    optimize(graphDiv, renderType, {chartId, data, layout, dataUpdate, layoutUpdate, dataUpdateTraces, ...rest}) {
+    optimize(graphDiv, renderType, {chartId, data, layout, dataUpdate=[], layoutUpdate, dataUpdateTraces, ...rest}) {
         const {lastInputTime} = layout;
-        if (lastInputTime && renderType ===  RenderType.NEW_PLOT && graphDiv.data) {
+        if (!useChartRedraw && lastInputTime && renderType ===  RenderType.NEW_PLOT && graphDiv.data) {
             // omitting 'firefly' from data[*] for now
-            data = data.map((d) => omit(d, 'firefly'));
-            layout = omit(layout, 'lastInputTime');
+            const ndata = data.map((d) => omit(d, 'firefly'));
+            const nlayout = omit(layout, 'lastInputTime');
 
-            const dataDelta = deltas(data, graphDiv.data || {});
-            const layoutDelta = flattenObject(deltas(layout, graphDiv.layout || {}, false));
+            const dataDelta = deltas(ndata, graphDiv.data || {});
+            const layoutDelta = flattenObject(deltas(nlayout, graphDiv.layout || {}, false));
 
             const hasLayout = !isEmpty(layoutDelta);
             const hasData = !isEmpty(dataDelta);
@@ -191,6 +193,13 @@ export class PlotlyWrapper extends Component {
             if (hasData && hasLayout) {
                 renderType = RenderType.RESTYLE_AND_RELAYOUT;
             }
+
+            if (!useScatterGL) {
+                // when using SVG, it's actually faster to redraw then to do multiple updates
+                if (renderType === RenderType.RESTYLE_AND_RELAYOUT || dataUpdate.length > 1) {
+                    renderType = RenderType.NEW_PLOT;
+                }
+            }
         }
 
         return {renderType, chartId, data, layout, dataUpdate, layoutUpdate, dataUpdateTraces, ...rest};
@@ -202,8 +211,7 @@ export class PlotlyWrapper extends Component {
 
         getPlotLy().then( (Plotly) => {
 
-            const optimized =  sessionStorage.getItem('chartRedraw') ? Object.assign({renderType}, this.props) :
-                                (this.optimize(this.div || {}, renderType, this.props));
+            const optimized = this.optimize(this.div || {}, renderType, this.props);
 
             const {chartId, data,layout, config= defaultConfig, newPlotCB, dataUpdate, layoutUpdate, dataUpdateTraces} = optimized;
             renderType = optimized.renderType;
@@ -247,7 +255,7 @@ const now = Date.now();
                         break;
                 }
                 this.syncLayout(chartId, {lastInputTime: Date.now()});
-console.log(`redraw elapsed: ${Date.now() - now}`);
+isDebug() && console.log(`${renderType.toString()} elapsed: ${Date.now() - now}`);
             }
         } ).catch( (e) => {
             console.log('Plotly not loaded',e);
@@ -270,6 +278,12 @@ console.log(`redraw elapsed: ${Date.now() - now}`);
                     set(layout, 'xaxis.autorange', false);
                 } else if (k === 'yaxis' && Array.isArray(v)) {
                     set(layout, 'yaxis.range', v);
+                    set(layout, 'yaxis.autorange', false);
+                } else if (k.includes('xaxis.range')) {
+                    set(layout, k, v);
+                    set(layout, 'xaxis.autorange', false);
+                } else if (k.includes('yaxis.range')) {
+                    set(layout, k, v);
                     set(layout, 'yaxis.autorange', false);
                 } else {
                     set(layout, k, v);
@@ -352,7 +366,7 @@ PlotlyWrapper.defaultProps = {
     maskOnLayout : true,
     maskOnRestyle : false,
     maskOnResize : true,
-    maskOnNewPlot : false,
+    maskOnNewPlot : true,
 
     autoSizePlot : false,
     autoDetectResizing : false,
