@@ -550,7 +550,11 @@ export function applyDefaults(chartData={}) {
     chartData.layout = merge(defaultLayout, chartData.layout);
 }
 
-const TRACE_COLORS = ['lightblue', 'green', 'purple', 'brown', 'yellow', 'red'];
+// color-blind friendly colors
+const TRACE_COLORS = [  '#333333', '#ff3333', '#00ccff','#336600',
+                        '#9900cc', '#ff9933', '#009999', '#66ff33', '#cc9999',
+                        '#333333', '#b22424', '#008fb2', '#244700',
+                        '#6b008f', '#b26b24', '#006b6b', '#47b224', '8F6B6B'];
 export function getNewTraceDefaults(type='', traceNum=0) {
     if (type.includes(SCATTER)) {
         return {
@@ -562,7 +566,10 @@ export function getNewTraceDefaults(type='', traceNum=0) {
             ['layout.yaxis.range'] : undefined, //clear out fixed range
         };
     } else {
-        return {};
+        return {
+            [`data.${traceNum}.marker.color`]: TRACE_COLORS[traceNum] || undefined,
+            [`data.${traceNum}.showlegend`]: true
+        };
     }
 }
 

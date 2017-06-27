@@ -4,6 +4,8 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
+import shallowequal from 'shallowequal';
+
 import {get, debounce, isEmpty, set, omit} from 'lodash';
 import {getPlotLy} from '../PlotlyConfig.js';
 import {getChartData, useChartRedraw, useScatterGL} from '../ChartsCntlr.js';
@@ -140,7 +142,7 @@ export class PlotlyWrapper extends Component {
 
         const treatAsResize= doingResize || (autoDetectResizing && detectedResize);
 
-        if (data===np.data && layout===np.layout && config===np.config) {  // these are the update cases
+        if (shallowequal(data, np.data) && shallowequal(layout, np.layout) && shallowequal(config, np.config)) {  // these are the update cases
 
             const doRestyle= np.dataUpdate && dataUpdate!==np.dataUpdate;
             const doRelayout=np.layoutUpdate && layoutUpdate!==np.layoutUpdate;
@@ -170,8 +172,9 @@ export class PlotlyWrapper extends Component {
     }
 
     optimize(graphDiv, renderType, {chartId, data, layout, dataUpdate=[], layoutUpdate, dataUpdateTraces, ...rest}) {
-        const {lastInputTime} = layout;
-        if (!useChartRedraw && lastInputTime && renderType ===  RenderType.NEW_PLOT && graphDiv.data) {
+        const {lastUpdated} = getChartData(chartId) || {};
+
+        if (!useChartRedraw && lastUpdated && renderType ===  RenderType.NEW_PLOT && graphDiv.data) {
             // omitting 'firefly' from data[*] for now
             const ndata = data.map((d) => omit(d, 'firefly'));
             const nlayout = omit(layout, 'lastInputTime');
@@ -220,7 +223,7 @@ export class PlotlyWrapper extends Component {
 const now = Date.now();
                 switch (renderType) {
                     case RenderType.RESTYLE:
-                        this.restyle(this.div, Plotly, dataUpdate, dataUpdateTraces);
+                        this.restyle(this.div, Plotly, data, dataUpdate, dataUpdateTraces);
                         break;
                     case RenderType.RELAYOUT:
                         Plotly.relayout(this.div, layoutUpdate);
@@ -254,7 +257,7 @@ const now = Date.now();
 
                         break;
                 }
-                this.syncLayout(chartId, {lastInputTime: Date.now()});
+                set(getChartData(chartId), 'lastUpdated', Date.now());
 isDebug() && console.log(`${renderType.toString()} elapsed: ${Date.now() - now}`);
             }
         } ).catch( (e) => {
@@ -292,12 +295,12 @@ isDebug() && console.log(`${renderType.toString()} elapsed: ${Date.now() - now}`
         }
     }
 
-    restyle(div, Plotly, dataUpdate, dataUpdateTraces) {
+    restyle(div, Plotly, data, dataUpdate, dataUpdateTraces) {
         if (Array.isArray(dataUpdate)) {
-            dataUpdate.forEach((v,idx) => this.restyle(div, Plotly, v, dataUpdateTraces[idx]));
+            dataUpdate.forEach((v,idx) => this.restyle(div, Plotly, data, v, dataUpdateTraces[idx]));
         } else {
             if (dataUpdateTraces >= get(div, 'data.length', 0)) {
-                Plotly.addTraces(div, dataUpdate, dataUpdateTraces);
+                Plotly.addTraces(div, data[dataUpdateTraces]);      // addTraces structure is similar to newplot.. not updates
             } else {
                 Plotly.restyle(div, dataUpdate, dataUpdateTraces);
             }
