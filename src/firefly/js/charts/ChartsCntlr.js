@@ -6,7 +6,7 @@ import {cloneDeep, has, get, isEmpty, isString, isUndefined, omit, omitBy, set} 
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
-import {updateSet, updateMerge, updateObject, isBooleanString} from '../util/WebUtil.js';
+import {updateSet, updateMerge, updateObject, toBoolean} from '../util/WebUtil.js';
 import {getTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {logError} from '../util/WebUtil.js';
@@ -20,8 +20,8 @@ export const CHART_SPACE_PATH = 'charts';
 export const UI_PREFIX = `${CHART_SPACE_PATH}.ui`;
 export const DATA_PREFIX = `${CHART_SPACE_PATH}.data`;
 
-export const useScatterGL = isBooleanString(sessionStorage.getItem('scatterGL'));       // defaults to false
-export const useChartRedraw = isBooleanString(sessionStorage.getItem('chartRedraw'));   // defaults to false
+export const useScatterGL = toBoolean(sessionStorage.getItem('scatterGL'));       // defaults to false
+export const useChartRedraw = toBoolean(sessionStorage.getItem('chartRedraw'));   // defaults to false
 
 /*---------------------------- ACTIONS -----------------------------*/
 export const CHART_ADD = `${DATA_PREFIX}/chartAdd`;
