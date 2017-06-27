@@ -145,12 +145,13 @@ export function dispatchChartUpdate({chartId, changes, dispatcher=flux.process})
  * @param {object} p parameter object
  * @param {string} p.chartId      required.  
  * @param {number} p.highlighted  index of the current data array
- * @param {number} [p.activeTrace]
+ * @param {number} [p.traceNum] - highlighted trace number
+ * @param {number} [p.traceName] - highlighted trace name
  * @param {boolean} [p.chartTrigger] - action is triggered by chart
  * @param {function} [p.dispatcher]
  */
-export function dispatchChartHighlighted({chartId, highlighted, activeTrace, chartTrigger, dispatcher=flux.process}) {
-    dispatcher({type: CHART_HIGHLIGHT, payload: {chartId, highlighted, activeTrace, chartTrigger}});
+export function dispatchChartHighlighted({chartId, highlighted, traceNum, traceName, chartTrigger, dispatcher=flux.process}) {
+    dispatcher({type: CHART_HIGHLIGHT, payload: {chartId, highlighted, traceNum, traceName, chartTrigger}});
 }
 
 /**
@@ -341,9 +342,9 @@ function chartHighlight(action) {
     return (dispatch) => {
         const {chartId, highlighted=0, chartTrigger=false} = action.payload;
         // TODO: activeTrace is not implemented.  switch to trace.. then highlight(?)
-        const {data, tablesources, activeTrace:activeDataTrace=0} = getChartData(chartId);
-        const {activeTrace=activeDataTrace} = action.payload; // activeTrace can be selected or highlighted trace of the data trace
-        const ttype = get(data, [activeTrace, 'type'], 'scatter');
+        const {data, tablesources, activeTrace:activeDataTrace=0, selected} = getChartData(chartId);
+        const {traceNum=activeDataTrace, traceName} = action.payload; // highlighted trace can be selected or highlighted trace of the data trace
+        const ttype = get(data, [traceNum, 'type'], 'scatter');
 
         if (!isEmpty(tablesources) && ttype.includes('scatter')) {
             // activeTrace is different from activeDataTrace if a selected point highlighted, for example
@@ -352,21 +353,24 @@ function chartHighlight(action) {
             // avoid updating chart twice
             // update only as a response to table highlight change
             if (!chartTrigger) {
-                const hlTrace = newTraceFrom(data[activeTrace], [highlighted], HIGHLIGHTED_PROPS);
+                const hlTrace = newTraceFrom(data[traceNum], [highlighted], HIGHLIGHTED_PROPS);
                 dispatchChartUpdate({chartId, changes: {highlighted: hlTrace}});
             }
-            let traceData = data[activeTrace];
+            let traceData = data[traceNum];
 
-            if (activeTrace !== activeDataTrace) {
-                // workaround for highlighting selected point - we do not store selected trace data, but plotly does
-                const chartDivAll = document.querySelectorAll(`#${chartId}`);
-                if (chartId && chartDivAll && chartDivAll.length > 0) {
-                    const chartDiv = chartDivAll[chartDivAll.length - 1];
-                    traceData = get(chartDiv, `data.${activeTrace}`) || chartId;
+            if (traceNum !== activeDataTrace) {
+                if (traceName === SELECTED_PROPS.name) {
+                    // highlighting selected point
+                    traceData = selected;
+                } else if (traceName === HIGHLIGHTED_PROPS.name) {
+                    // no need to highlight highlighted
+                    return;
                 }
             }
-            const highlightedRowIdx = getRowIdx(traceData, highlighted);
-            TablesCntlr.dispatchTableHighlight(tbl_id, highlightedRowIdx);
+            if (traceData) {
+                const highlightedRowIdx = getRowIdx(traceData, highlighted);
+                TablesCntlr.dispatchTableHighlight(tbl_id, highlightedRowIdx);
+            }
         }
     };
 }

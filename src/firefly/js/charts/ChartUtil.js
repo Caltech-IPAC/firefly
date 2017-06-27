@@ -32,6 +32,7 @@ export const HISTOGRAM = 'histogram';
 
 export const SELECTED_COLOR = '#ffc800';
 export const SELECTED_PROPS = {
+    name: '__SELECTED',
     marker: {color: SELECTED_COLOR},
     error_x: {color: SELECTED_COLOR},
     error_y: {color: SELECTED_COLOR}
@@ -39,6 +40,7 @@ export const SELECTED_PROPS = {
 
 export const HIGHLIGHTED_COLOR = '#ffa500';
 export const HIGHLIGHTED_PROPS = {
+    name: '__HIGHLIGHTED',
     marker: {color: HIGHLIGHTED_COLOR, line: {width: 2, color: '#ffa500'}}, // increase highlight marker with line border
     error_x: {color: HIGHLIGHTED_COLOR},
     error_y: {color: HIGHLIGHTED_COLOR}
@@ -559,6 +561,8 @@ export function getNewTraceDefaults(type='', traceNum=0) {
             ['layout.xaxis.range'] : undefined, //clear out fixed range
             ['layout.yaxis.range'] : undefined, //clear out fixed range
         };
+    } else {
+        return {};
     }
 }
 

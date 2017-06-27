@@ -62,10 +62,9 @@ export class PlotlyChartArea extends PureComponent {
             doingResize = true;
         }
         const showlegend = data.length > 1;
-        let pdata = data;
-        // TODO: change highlight or selected without forcing new plot
+        let pdata = [].concat(data);
         if (!data[activeTrace] || get(data[activeTrace], 'type', '').includes('scatter')) {
-            // highlight makes sence only for scatter at the moment
+            // highlight makes sense only for scatter at the moment
             pdata = selected ? pdata.concat([selected]) : pdata;
             pdata = highlighted ? pdata.concat([highlighted]) : pdata;
         }
@@ -91,7 +90,8 @@ function onClick(chartId) {
         // we should have active trace, its related selected, and its highlight traces on top
         const curveNumber = get(evData.points, `${0}.curveNumber`);
         const highlighted = get(evData.points, `${0}.pointNumber`);
-        dispatchChartHighlighted({chartId, activeTrace: curveNumber, highlighted, chartTrigger: true});
+        const curveName = get(evData.points, `${0}.data.name`);
+        dispatchChartHighlighted({chartId, traceNum: curveNumber, traceName: curveName, highlighted, chartTrigger: true});
     };
 }
 
