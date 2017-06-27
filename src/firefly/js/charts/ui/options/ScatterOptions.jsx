@@ -41,10 +41,10 @@ export class ScatterOptions extends SimpleComponent {
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({data, layout, activeTrace, tablesources})}>
                     <ListBoxInputField fieldKey={`data.${activeTrace}.mode`} options={[{value:'markers'}, {value:'lines'}, {value:'lines+markers'}]}/>
                     <ListBoxInputField fieldKey={`data.${activeTrace}.marker.symbol`}
-                                       options={[{value:'circle'}, {value:'square'}, {value:'diamond'},
+                                       options={[{value:'circle'}, {value:'circle-open'}, {value:'square'}, {value:'square-open'}, {value:'diamond'}, {value:'diamond-open'},
                                                  {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
 {/* TODO: scattergl does not support 'open' symbols as of v1..28.2.  we'll add them back at a later time when they do.
-                                       options={[{value:'circle'}, {value:'circle-open'}, {value:'square'}, {value:'square-open'}, {value:'diamond'}, {value:'diamond-open'},
+                                       options={[{value:'circle'}, {value:'square'}, {value:'diamond'},
                                                  {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
 */}
                     {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}

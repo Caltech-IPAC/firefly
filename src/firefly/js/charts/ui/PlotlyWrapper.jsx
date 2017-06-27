@@ -229,7 +229,7 @@ const now = Date.now();
                         Plotly.relayout(this.div, layoutUpdate);
                         break;
                     case RenderType.RESTYLE_AND_RELAYOUT:
-                        this.restyle(this.div, Plotly, dataUpdate, dataUpdateTraces);
+                        this.restyle(this.div, Plotly, data, dataUpdate, dataUpdateTraces);
                         Plotly.relayout(this.div, layoutUpdate);
                         break;
                     case RenderType.RESIZE:
