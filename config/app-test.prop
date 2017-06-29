@@ -9,3 +9,12 @@ irsa.gator.service.periodogram.url=https://irsa.ipac.caltech.edu/cgi-bin/periodo
 
 # Periodogram API request parameter list definition, separated by space
 irsa.gator.service.periodogram.keys=x y alg peaks
+
+workspace.host.url=https://zeus2.ipac.caltech.edu
+workspace.root.dir=.
+workspace.protocol.irsa=webdav
+workspace.protocol.irsa.webdav=edu.caltech.ipac.firefly.server.WebDAVWorkspaceManager
+
+# Another Impl?-> See edu.caltech.ipac.firefly.server.ws.WebDAVWorkspaceHandler#withCredentials
+# workspace.protocol.irsa.webdav=edu.caltech.ipac.firefly.server.ws.WebdavImpl
+

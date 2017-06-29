@@ -25,7 +25,7 @@ public class ConfigTest {
     public static String LOG4J_PROP_FILE = "./config/log4j-test.properties";
     public static String LOGGING_PROP_FILE = "./config/logging-test.properties";
     public static String TEST_PROP_FILE = "./config/app-test.prop";
-
+    public static String WS_USER_ID = "test-ws";
     /**
      * Use the logger in the test case that would extends this class.
      */

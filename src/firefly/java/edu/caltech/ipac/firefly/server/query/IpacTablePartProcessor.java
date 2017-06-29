@@ -8,12 +8,7 @@ import edu.caltech.ipac.astro.InvalidStatementException;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
-import edu.caltech.ipac.firefly.data.DecimateInfo;
-import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.SortInfo;
-import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.WspaceMeta;
+import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -23,13 +18,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.ipactable.*;
-import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
-import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
@@ -38,23 +27,12 @@ import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.expr.Expression;
 import org.apache.commons.httpclient.HttpStatus;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -549,7 +527,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 cache.put(key, cfile);
                 if (useWorkspace) {
                     WorkspaceManager ws = ServerContext.getRequestOwner().getWsManager();
-                    WspaceMeta meta = ws.newMeta(cfile, WspaceMeta.TYPE, request.getRequestId());
+                    WspaceMeta meta = ws.newLocalWsMeta(cfile, WspaceMeta.TYPE, request.getRequestId());
                     meta.setProperty(WspaceMeta.DESC, getDescResolver().getDesc(request));
                     ws.setMeta(meta);
                 }
@@ -616,11 +594,22 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     protected File createFile(TableServerRequest request, String fileExt) throws IOException {
-        File file;
+        File file = null;
         if (doCache()) {
             if (useWorkspace) {
-                file = ServerContext.getRequestOwner().getWsManager().createFile(
-                        getWspaceSaveDirectory(), getFilePrefix(request), fileExt);
+                //TODO can we discuss if this is the right behaviour to put the temp file in ws?
+                //TODO The idea was to use maybe pubspace for temp but the user ws should be populated only if the user request it
+                //TODO Meaning that the UI needs to expose a control for that
+                // Put it in WS via local FS
+                ServerContext.getRequestOwner().getWsManager().createWsLocalFile(getWspaceSaveDirectory(), getFilePrefix(request), fileExt);
+//              try{
+//                // TODO Put it in WS via http?
+//                  file = File.createTempFile(getFilePrefix(request), fileExt, ServerContext.getTempWorkDir());
+//                  ServerContext.getRequestOwner().getWsManager().putFile(
+//                            getWspaceSaveDirectory(), file, ContentType.DEFAULT_BINARY.getMimeType()//**TODO is this the right mime-type?**/);
+//                } catch (WsException e) {
+//                  LOGGER.error("Couldn't upload file " + file.getAbsolutePath() + " to ws " + ServerContext.getRequestOwner().getWsManager().getProp(WorkspaceManager.PROPS.ROOT_URL));
+//                }
             } else {
                 file = File.createTempFile(getFilePrefix(request), fileExt, ServerContext.getPermWorkDir());
             }
