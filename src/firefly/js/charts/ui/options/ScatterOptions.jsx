@@ -44,6 +44,10 @@ export class ScatterOptions extends SimpleComponent {
                     <ListBoxInputField fieldKey={`data.${activeTrace}.marker.symbol`}
                                        options={[{value:'circle'}, {value:'circle-open'}, {value:'square'}, {value:'square-open'}, {value:'diamond'}, {value:'diamond-open'},
                                                  {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
+{/* TODO: scattergl does not support 'open' symbols as of v1..28.2.  we'll add them back at a later time when they do.
+                                       options={[{value:'circle'}, {value:'square'}, {value:'diamond'},
+                                                 {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
+*/}
                     {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
                     <br/>
                     <BasicOptionFields {...{activeTrace, groupKey}}/>

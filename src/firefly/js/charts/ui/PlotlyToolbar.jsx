@@ -124,8 +124,9 @@ function SelectBtn({style={}, chartId, dragmode}) {
 function ResetZoomBtn({style={}, chartId}) {
     const {_original} = getChartData(chartId) || {};
     const doClick = () => {
-        const changes = ['xaxis','yaxis','zaxis'].reduce((pv, axis) => {
-            pv[`layout.${axis}.autorange`]  = get(_original, `layout.${axis}.autorange`);
+        // TODO:  this only handles chart with 2 axes
+        const changes = ['xaxis','yaxis'].reduce((pv, axis) => {
+            pv[`layout.${axis}.autorange`]  = get(_original, `layout.${axis}.autorange`, true);
             pv[`layout.${axis}.range`]      = get(_original, `layout.${axis}.range`);
             return pv;
         }, {});

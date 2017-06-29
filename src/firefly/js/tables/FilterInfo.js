@@ -179,6 +179,7 @@ export class FilterInfo {
         val = op === 'in' ? val.replace(/[()]/g, '').split(',').map((s) => s.trim()) : val;
 
         return (row, idx) => {
+            if (!row) return false;
             var compareTo = noROWID ? idx : row[cidx];
             if (isUndefined(compareTo)) return false;
 

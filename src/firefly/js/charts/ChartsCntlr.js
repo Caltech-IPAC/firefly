@@ -6,7 +6,7 @@ import {cloneDeep, has, get, isEmpty, isString, isUndefined, omit, omitBy, set} 
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
-import {updateSet, updateMerge, updateObject} from '../util/WebUtil.js';
+import {updateSet, updateMerge, updateObject, toBoolean} from '../util/WebUtil.js';
 import {getTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {logError} from '../util/WebUtil.js';
@@ -20,6 +20,8 @@ export const CHART_SPACE_PATH = 'charts';
 export const UI_PREFIX = `${CHART_SPACE_PATH}.ui`;
 export const DATA_PREFIX = `${CHART_SPACE_PATH}.data`;
 
+export const useScatterGL = toBoolean(sessionStorage.getItem('scatterGL'));       // defaults to false
+export const useChartRedraw = toBoolean(sessionStorage.getItem('chartRedraw'));   // defaults to false
 
 /*---------------------------- ACTIONS -----------------------------*/
 export const CHART_ADD = `${DATA_PREFIX}/chartAdd`;
@@ -145,12 +147,13 @@ export function dispatchChartUpdate({chartId, changes, dispatcher=flux.process})
  * @param {object} p parameter object
  * @param {string} p.chartId      required.  
  * @param {number} p.highlighted  index of the current data array
- * @param {number} [p.activeTrace]
+ * @param {number} [p.traceNum] - highlighted trace number
+ * @param {number} [p.traceName] - highlighted trace name
  * @param {boolean} [p.chartTrigger] - action is triggered by chart
  * @param {function} [p.dispatcher]
  */
-export function dispatchChartHighlighted({chartId, highlighted, activeTrace, chartTrigger, dispatcher=flux.process}) {
-    dispatcher({type: CHART_HIGHLIGHT, payload: {chartId, highlighted, activeTrace, chartTrigger}});
+export function dispatchChartHighlighted({chartId, highlighted, traceNum, traceName, chartTrigger, dispatcher=flux.process}) {
+    dispatcher({type: CHART_HIGHLIGHT, payload: {chartId, highlighted, traceNum, traceName, chartTrigger}});
 }
 
 /**
@@ -341,32 +344,35 @@ function chartHighlight(action) {
     return (dispatch) => {
         const {chartId, highlighted=0, chartTrigger=false} = action.payload;
         // TODO: activeTrace is not implemented.  switch to trace.. then highlight(?)
-        const {data, tablesources, activeTrace:activeDataTrace=0} = getChartData(chartId);
-        const {activeTrace=activeDataTrace} = action.payload; // activeTrace can be selected or highlighted trace of the data trace
-        const ttype = get(data, [activeTrace, 'type'], 'scatter');
+        const {data, tablesources, activeTrace:activeDataTrace=0, selected} = getChartData(chartId);
+        const {traceNum=activeDataTrace, traceName} = action.payload; // highlighted trace can be selected or highlighted trace of the data trace
+        const ttype = get(data, [traceNum, 'type'], 'scatter');
 
-        if (!isEmpty(tablesources) && ttype === 'scatter') {
+        if (!isEmpty(tablesources) && ttype.includes('scatter')) {
             // activeTrace is different from activeDataTrace if a selected point highlighted, for example
             const {tbl_id} = tablesources[activeDataTrace] || {};
             if (!tbl_id) return;
             // avoid updating chart twice
             // update only as a response to table highlight change
             if (!chartTrigger) {
-                const hlTrace = newTraceFrom(data[activeTrace], [highlighted], HIGHLIGHTED_PROPS);
+                const hlTrace = newTraceFrom(data[traceNum], [highlighted], HIGHLIGHTED_PROPS);
                 dispatchChartUpdate({chartId, changes: {highlighted: hlTrace}});
             }
-            let traceData = data[activeTrace];
+            let traceData = data[traceNum];
 
-            if (activeTrace !== activeDataTrace) {
-                // workaround for highlighting selected point - we do not store selected trace data, but plotly does
-                const chartDivAll = document.querySelectorAll(`#${chartId}`);
-                if (chartId && chartDivAll && chartDivAll.length > 0) {
-                    const chartDiv = chartDivAll[chartDivAll.length - 1];
-                    traceData = get(chartDiv, `data.${activeTrace}`) || chartId;
+            if (traceNum !== activeDataTrace) {
+                if (traceName === SELECTED_PROPS.name) {
+                    // highlighting selected point
+                    traceData = selected;
+                } else if (traceName === HIGHLIGHTED_PROPS.name) {
+                    // no need to highlight highlighted
+                    return;
                 }
             }
-            const highlightedRowIdx = getRowIdx(traceData, highlighted);
-            TablesCntlr.dispatchTableHighlight(tbl_id, highlightedRowIdx);
+            if (traceData) {
+                const highlightedRowIdx = getRowIdx(traceData, highlighted);
+                TablesCntlr.dispatchTableHighlight(tbl_id, highlightedRowIdx);
+            }
         }
     };
 }
@@ -613,6 +619,11 @@ export function reducer(state={ui:{}, data:{}}, action={}) {
 //    TablesCntlr.TABLE_REMOVE, TablesCntlr.TABLE_SELECT];
 
 
+function changeToScatterGL(chartData) {
+    get(chartData, 'data', []).forEach((d) => d.type === 'scatter' && (d.type = 'scattergl'));  // use scattergl instead of scatter
+    ['selected', 'highlighted'].map((k) => get(chartData, k, {})).forEach((d) => d.type === 'scatter' && (d.type = 'scattergl'));
+}
+
 /**
  * @param state - ui part of chart state
  * @param action - action
@@ -629,6 +640,7 @@ function reduceData(state={}, action={}) {
             if (chartType==='plot.ly') {
                 rest['_original'] = cloneDeep(action.payload);
                 applyDefaults(rest);
+                useScatterGL && changeToScatterGL(rest);
             }
             state = updateSet(state, chartId,
                 omitBy({
@@ -644,6 +656,8 @@ function reduceData(state={}, action={}) {
             const {chartId, changes}  = action.payload;
             var chartData = getChartData(chartId) || {};
             chartData = updateObject(chartData, changes);
+            useScatterGL && changeToScatterGL(chartData);
+
             return updateSet(state, chartId, chartData);
         }
         case (CHART_REMOVE)  :

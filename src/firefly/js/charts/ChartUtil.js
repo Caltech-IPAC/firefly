@@ -7,7 +7,7 @@
  * Utilities related to charts
  * Created by tatianag on 3/17/16.
  */
-import {get, uniqueId, isUndefined, omitBy, zip, isEmpty, range, set, isObject, isPlainObject, pick, cloneDeep, merge} from 'lodash';
+import {get, uniqueId, isUndefined, omitBy, zip, isEmpty, range, set, isObject, pick, cloneDeep, merge} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
@@ -32,6 +32,7 @@ export const HISTOGRAM = 'histogram';
 
 export const SELECTED_COLOR = '#ffc800';
 export const SELECTED_PROPS = {
+    name: '__SELECTED',
     marker: {color: SELECTED_COLOR},
     error_x: {color: SELECTED_COLOR},
     error_y: {color: SELECTED_COLOR}
@@ -39,6 +40,7 @@ export const SELECTED_PROPS = {
 
 export const HIGHLIGHTED_COLOR = '#ffa500';
 export const HIGHLIGHTED_PROPS = {
+    name: '__HIGHLIGHTED',
     marker: {color: HIGHLIGHTED_COLOR, line: {width: 2, color: '#ffa500'}}, // increase highlight marker with line border
     error_x: {color: HIGHLIGHTED_COLOR},
     error_y: {color: HIGHLIGHTED_COLOR}
@@ -278,7 +280,7 @@ export function getOptionsUI(chartId) {
     const {data, fireflyData, activeTrace=0} = getChartData(chartId);
     const type = get(data, [activeTrace, 'type'], 'scatter');
     const dataType = get(fireflyData, [activeTrace, 'dataType'], '');
-    if (type === 'scatter') {
+    if (type.includes('scatter')) {
         return ScatterOptions;
     } else if (type === 'histogram') {
         return HistogramOptions;
@@ -292,7 +294,7 @@ export function getOptionsUI(chartId) {
 export function getToolbarUI(chartId, activeTrace=0) {
     const {data, fireflyData} =  getChartData(chartId);
     const type = get(data, [activeTrace, 'type'], '');
-    if (type === 'scatter') {
+    if (type.includes('scatter')) {
         return ScatterToolbar;
     } else {
         return BasicToolbar;
@@ -327,7 +329,7 @@ export function newTraceFrom(data, selIndexes, newTraceProps) {
         });
     }
     deepReplace(sdata);
-    const flatprops = flattenObject(newTraceProps, isPlainObject);
+    const flatprops = flattenObject(newTraceProps);
     Object.entries(flatprops).forEach(([k,v]) => set(sdata, k, v));
     return sdata;
 }
@@ -474,7 +476,7 @@ function makeTableSources(chartId, data=[], fireflyData=[]) {
     const currentData = (data.length < fireflyData.length) ? fireflyData : data;
 
     return currentData.map((d, traceNum) => {
-        const ds = data[traceNum] ? convertToDS(flattenObject(data[traceNum], isPlainObject)) : {}; //avoid flattening arrays
+        const ds = data[traceNum] ? convertToDS(flattenObject(data[traceNum])) : {}; //avoid flattening arrays
         if (!ds.tbl_id) {
             // table id can be a part of fireflyData
             const tbl_id = get(fireflyData, `${traceNum}.tbl_id`);
@@ -548,6 +550,28 @@ export function applyDefaults(chartData={}) {
     chartData.layout = merge(defaultLayout, chartData.layout);
 }
 
+// color-blind friendly colors
+const TRACE_COLORS = [  '#333333', '#ff3333', '#00ccff','#336600',
+                        '#9900cc', '#ff9933', '#009999', '#66ff33', '#cc9999',
+                        '#333333', '#b22424', '#008fb2', '#244700',
+                        '#6b008f', '#b26b24', '#006b6b', '#47b224', '8F6B6B'];
+export function getNewTraceDefaults(type='', traceNum=0) {
+    if (type.includes(SCATTER)) {
+        return {
+            [`data.${traceNum}.type`] : type, //make sure trace type is set
+            [`data.${traceNum}.marker.color`]: TRACE_COLORS[traceNum] || undefined,
+            [`data.${traceNum}.marker.line`]: 'none',
+            [`data.${traceNum}.showlegend`]: true,
+            ['layout.xaxis.range'] : undefined, //clear out fixed range
+            ['layout.yaxis.range'] : undefined, //clear out fixed range
+        };
+    } else {
+        return {
+            [`data.${traceNum}.marker.color`]: TRACE_COLORS[traceNum] || undefined,
+            [`data.${traceNum}.showlegend`]: true
+        };
+    }
+}
 
 
 

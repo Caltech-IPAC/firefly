@@ -72,7 +72,7 @@ export default Plotly;
 
 
 
-const PLOTLY_SCRIPT= 'plotly-1.27.1.min.js';
+const PLOTLY_SCRIPT= 'plotly-1.28.2.min.js';
 const LOAD_ERR_MSG= 'Load Failed: could not load Plotly';
 
 function initPlotLyRetriever(loadNow) {

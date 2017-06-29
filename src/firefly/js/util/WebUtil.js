@@ -5,7 +5,10 @@
 /*global __MODULE_NAME__*/
 
 import Enum from 'enum';
-import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil, last, isPlainObject} from 'lodash';
+import shallowequal from 'shallowequal';
+import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil,
+        last, isPlainObject, forEach, isEmpty, find, omitBy} from 'lodash';
+
 import {getRootURL} from './BrowserUtil.js';
 import {getWsConnId, getWsChannel} from '../core/messaging/WebSocketClient.js';
 import {getDownloadProgress, DownloadProgress} from '../rpc/SearchServicesJson.js';
@@ -617,10 +620,10 @@ export const cancelIdleCallback = window.cancelIdleCallback || ((id) => clearTim
 /**
  *
  * @param object
- * @param testFunc - test function to decide which entries should be flattened
+ * @param testFunc - test function to decide which entries should be flattened.  defaults to isPlainObject
  * @returns {*}
  */
-export function flattenObject(object, testFunc=isObject) {
+export function flattenObject(object, testFunc=isPlainObject) {
     return Object.assign( {}, ...function _flatten( objectBit, path = '' ) {  //spread the result into our return object
         return [].concat(                                                     //concat everything into one level
             ...Object.keys( objectBit ).map(                                  //iterate over object
@@ -635,3 +638,42 @@ export function flattenObject(object, testFunc=isObject) {
         );
     }( object ) );
 };
+
+
+export function deltas(a, b, wrapArray=true) {
+
+    const diff = (a1, b1, wrapArray) => {
+        var r = {};
+        doDiff(a1, b1, r, wrapArray);
+        return r;
+    };
+
+    const doDiff = (a2, b2, r, wrapArray) => {
+        forEach(a2, function(v, k) {
+            // already checked this or equal or original has no value...
+            if (b2 && (r.hasOwnProperty(k) || shallowequal(b2[k], v))) return;
+            // but what if it returns an empty object? still attach?
+            r[k] = b2 && isPlainObject(v) ? diff(v, b2[k], wrapArray) : v;
+            if (wrapArray && Array.isArray(r[k])) {
+                r[k] = [r[k]];
+            }
+        });
+    };
+
+    const rval = diff(a, b, wrapArray);
+    removeEmpties(rval);
+    return rval;
+}
+
+function removeEmpties(o) {
+    for (const k in o) {
+        if (!o[k] || !isPlainObject(o[k])) {
+            continue; // If null or not an object, skip to the next iteration
+        }
+        // The property is an object
+        removeEmpties(o[k]); // <-- Make a recursive call on the nested object
+        if (Object.keys(o[k]).length === 0) {
+            delete o[k]; // The object had no properties, so delete that property
+        }
+    }
+}
