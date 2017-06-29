@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 
 import static edu.caltech.ipac.firefly.visualize.Band.*;
 
@@ -261,12 +262,49 @@ public class ImagePlotBuilder {
             case USE_IDX:
                 WebPlotRequest r= requestMap.get(NO_BAND);
                 int idx= r.getMultiImageIdx();
-                state = makeState(requestMap.get(NO_BAND), readInfoMap.get(NO_BAND)[0], multiAction);
+                state = makeState(requestMap.get(NO_BAND), readInfoMap.get(NO_BAND)[idx], multiAction);
                 state.setOriginalImageIdx(idx, NO_BAND);
                 state.setImageIdx(idx, NO_BAND);
                 state.setMultiImageFile(true,Band.NO_BAND);
                 //todo: here
                 plotInfo[0] = ImagePlotCreator.makeOneImagePerBand(state, readInfoMap, zoomChoice);
+                break;
+            case USE_EXTS:
+                if (!readInfoMap.containsKey(NO_BAND) || threeColor) {
+                    throw new FailedRequestException("Cannot create plot",
+                            "Cannot yet use the MultiImageAction.USE_ALL action with three color");
+                }
+                WebPlotRequest rs = requestMap.get(NO_BAND);
+                List<String> idxs = new ArrayList<String>(Arrays.asList((rs.getMultiImageIdxs()).split(",")));
+                Integer[] idxsInt = new Integer[idxs.size()];
+
+                Integer maxIdx = -1;
+                for (int i = 0; i < idxs.size(); i++) {
+                    idxsInt[i] = Integer.parseInt(idxs.get(i));
+                    if (idxsInt[i] > maxIdx) {
+                        maxIdx = idxsInt[i];
+                    }
+                }
+
+                ArrayList<Integer> infoList = new ArrayList<>();
+                List<Integer> idxsList = Arrays.asList(idxsInt);
+                FileReadInfo[] frInfo = readInfoMap.get(NO_BAND);
+
+                for (int i = 0; i < frInfo.length; i++) {
+                    Integer extNo = frInfo[i].getFitsRead().getExtensionNumber();
+                    if (idxsList.contains(extNo)) {
+                        infoList.add(i);
+                    } else if(extNo > maxIdx) {
+                        break;
+                    }
+                }
+
+                PlotState stateArys[] = makeNoBandMultiImagePlotStateOnList(rs, readInfoMap.get(NO_BAND), infoList);
+                plotInfo = new ImagePlotInfo[stateArys.length];
+                for (int i = 0; i < stateArys.length; i++) {
+                    plotInfo[i] = ImagePlotCreator.makeOneImagePerBand(stateArys[i], readInfoMap, zoomChoice);
+                }
+
                 break;
             case USE_ALL:
                 if (!readInfoMap.containsKey(NO_BAND) || threeColor) {
@@ -344,6 +382,38 @@ public class ImagePlotBuilder {
         return stateAry;
     }
 
+    private static PlotState[] makeNoBandMultiImagePlotStateOnList(WebPlotRequest request,
+                                                             FileReadInfo info[], ArrayList<Integer> infoList) {
+        boolean cube=false;
+        for (int i = 0; i < infoList.size(); i++) {
+            cube = info[infoList.get(i)].getFitsRead().getPlaneNumber() > 1;
+            if (cube) break;
+        }
+
+        int cubePlane= 1;
+        int cubeCnt= 0;
+        PlotState stateAry[] = new PlotState[infoList.size()];
+        for (int i = 0; (i < stateAry.length); i++) {
+            stateAry[i] = PlotStateUtil.create(request);
+            stateAry[i].setMultiImageAction(PlotState.MultiImageAction.USE_EXTS);
+            initState(stateAry[i], info[infoList.get(i)], NO_BAND, request);
+            stateAry[i].setOriginalImageIdx(infoList.get(i), NO_BAND);
+            stateAry[i].setImageIdx(infoList.get(i), NO_BAND);
+
+            if (cube) {
+                if (info[infoList.get(i)].getFitsRead().getPlaneNumber() == 1) {
+                    cubePlane = 1;
+                    cubeCnt++;
+                }
+
+                stateAry[i].setCubeCnt(cubeCnt,Band.NO_BAND);
+                stateAry[i].setCubePlaneNumber(cubePlane,Band.NO_BAND);
+                cubePlane++;
+            }
+        }
+        return stateAry;
+    }
+
     private static void initMultiImageInfo(PlotState stateAry[],  FileReadInfo infoAry[]) {
         if (stateAry.length!=infoAry.length && stateAry.length>1) return;
         boolean multiImageFile= stateAry.length>1;
@@ -353,6 +423,7 @@ public class ImagePlotBuilder {
             cube=info.getFitsRead().getPlaneNumber()>1;
             if (cube) break;
         }
+
 
         int cubePlane= 1;
         int cubeCnt= 0;
@@ -371,11 +442,8 @@ public class ImagePlotBuilder {
                 stateAry[i].setCubePlaneNumber(cubePlane,Band.NO_BAND);
                 cubePlane++;
             }
-
-
         }
     }
-
 
     static void initState(PlotState state,
                           FileReadInfo fi,

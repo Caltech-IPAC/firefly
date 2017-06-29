@@ -75,6 +75,7 @@ const C= {
     INIT_COLOR_TABLE : 'ColorTable',
     MULTI_IMAGE_FITS : 'MultiImageFits',
     MULTI_IMAGE_IDX : 'MultiImageIdx',
+    MULTI_IMAGE_EXTS: 'MultiImageExts',
     ZOOM_TO_WIDTH : 'ZoomToWidth',
     ZOOM_TO_HEIGHT : 'ZoomToHeight',
     ZOOM_ARCSEC_PER_SCREEN_PIX : 'ZoomArcsecPerScreenPix',
@@ -1053,10 +1054,13 @@ export class WebPlotRequest extends ServerRequest {
 
     setMultiImageIdx(idx) { this.setParam(C.MULTI_IMAGE_IDX, idx + ''); }
 
+    setMultiImageExts(idx) { this.setParam(C.MULTI_IMAGE_EXTS, idx); }
     /**
      * @return number index of image
      */
     getMultiImageIdx() { return this.getIntParam(C.MULTI_IMAGE_IDX,0); }
+
+    getMultiImageExts() { return this.getParam(C.MULTI_IMAGE_EXTS); }
 
     /**
      * key to store preferences in local cache

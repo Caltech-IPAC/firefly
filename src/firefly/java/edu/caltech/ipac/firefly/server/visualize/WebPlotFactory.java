@@ -103,6 +103,8 @@ public class WebPlotFactory {
         PlotState.MultiImageAction multiAction= PlotState.MultiImageAction.USE_ALL;
         if (request.containsParam(WebPlotRequest.MULTI_IMAGE_IDX)) {
             multiAction= PlotState.MultiImageAction.USE_IDX;
+        } else if (request.containsParam(WebPlotRequest.MULTI_IMAGE_EXTS)) {
+            multiAction = PlotState.MultiImageAction.USE_EXTS;
         }
         return create(requestMap, multiAction, null, false);
     }

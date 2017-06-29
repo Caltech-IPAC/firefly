@@ -63,27 +63,27 @@ function getProps(params, fireValueChange) {
     return Object.assign({}, params,
         {
             value: params.displayValue,
-            onChange: (ev) => handleChange(ev, fireValueChange, params.fileType)
+            onChange: (ev) => handleChange(ev, fireValueChange, params.fileType, params.fileAnalysis)
         });
 }
 
-function handleChange(ev, fireValueChange, type) {
+function handleChange(ev, fireValueChange, type, fileAnalysis) {
     var file = get(ev, 'target.files.0');
     var displayValue = get(ev, 'target.value');
 
     fireValueChange({
         displayValue,
-        value: makeDoUpload(file, type)
+        value: !fileAnalysis ? makeDoUpload(file, type) : makeDoUpload(file, type, fileAnalysis)()
     });
 }
 
-function makeDoUpload(file, type) {
+function makeDoUpload(file, type, fileAnalysis) {
     return () => {
-        return doUpload(file, {type}).then( ({status, message, cacheKey}) => {
+        return doUpload(file, {type, fileAnalysis}).then(({status, message, cacheKey, analysisResult}) => {
             const valid = status === '200';
-            return {isLoading: false, valid, message, value:cacheKey};
+            return {isLoading: false, valid, message, value: cacheKey, analysisResult};
         }).catch((err) => {
-            return { isLoading: false, valid: false, message: `Unable to upload file: ${get(file, 'name')}`};
+            return {isLoading: false, valid: false, message: `Unable to upload file: ${get(file, 'name')}`};
         });
     };
 }
@@ -102,8 +102,8 @@ export function doUpload(file, params={}) {
     return fetchUrl(UL_URL, options).then( (response) => {
         return response.text().then( (text) => {
             // text is in format ${status}::${message}::${cacheKey}
-            const [status, message, cacheKey] =  text.split('::');
-            return {status, message, cacheKey};
+            const [status, message, cacheKey, analysisResult] =  text.split('::');
+            return {status, message, cacheKey, analysisResult};
         });
     });
 }

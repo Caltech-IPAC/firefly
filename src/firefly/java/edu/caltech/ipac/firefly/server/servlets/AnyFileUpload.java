@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
@@ -10,6 +11,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
+import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.FileUtil;
@@ -24,6 +26,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.HashMap;
+import org.json.simple.JSONObject;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Map;
 
 /**
  * Date: Feb 16, 2011
@@ -72,6 +78,7 @@ public class AnyFileUpload extends BaseHttpServlet {
         String preload = getParam(PRELOAD_PARAM, params, req);
         String overrideCacheKey= getParam(CACHE_KEY, params, req);
         String fileType= getParam(FILE_TYPE, params, req);
+        String fileAnalysis = getParam("fileAnalysis", params, req);
 
         if (file != null) {
             String fileName = file.getName();
@@ -86,6 +93,28 @@ public class AnyFileUpload extends BaseHttpServlet {
 
             UploadFileInfo fi= new UploadFileInfo(rPathInfo,uf,fileName,file.getContentType());
             FileUtil.writeToFile(inStream, uf);
+
+            JSONObject analysisModel = null;
+            DataGroupReader.Format fileFormat = null;
+            DataGroup dgAnalysis = null;
+            String analysisSummary = "";
+            if (fileAnalysis != null && fileAnalysis.toLowerCase().equals("true")) {
+                // read header from votable and fits and write into DataGroup
+                fileFormat = DataGroupReader.guessFormat(fi.getFile());
+                dgAnalysis = DataGroupReader.readAnyFormatHeader(fi.getFile(), fileFormat);
+                if (dgAnalysis != null) {
+                    analysisSummary = dgAnalysis.getTitle();
+                    if(!analysisSummary.contains("invalid")) {
+                        analysisModel = toJsonAnalysisTableModel(dgAnalysis, fileFormat);
+                    }
+                } else {
+                    analysisSummary = "invalid " + fileFormat.toString() + " file";
+                }
+                if (analysisSummary.startsWith("invalid")) {
+                    throw new Exception(analysisSummary);
+                }
+            }
+
             if (fType == FileType.TABLE) {
                 uf = File.createTempFile("upload_", ".tbl", destDir); // cleaned ipac file.
                 rPathInfo = ServerContext.replaceWithPrefix(uf);
@@ -96,7 +125,22 @@ public class AnyFileUpload extends BaseHttpServlet {
             String fileCacheKey= overrideCacheKey!=null ? overrideCacheKey : rPathInfo;
             UserCache.getInstance().put(new StringKey(fileCacheKey), fi);
 
-            sendReturnMsg(res, 200, null, fileCacheKey);
+            if ( fileFormat != null) {        // do file analysis
+                JSONObject analysisResult = new JSONObject();
+
+                analysisResult.put("status", 200);
+                analysisResult.put("message", "");
+                analysisResult.put("fileCacheKey", fileCacheKey);
+                analysisResult.put("fileFormat", fileFormat.toString());
+                analysisResult.put("analysisSummary", analysisSummary);
+                if (analysisModel != null) {
+                    analysisResult.put("analysisModel", analysisModel);
+                }
+
+                sendReturnMsg(res, 200, null, fileCacheKey, analysisResult.toJSONString());
+            } else {
+                sendReturnMsg(res, 200, null, fileCacheKey);
+            }
             Counters.getInstance().increment(Counters.Category.Upload, fi.getContentType());
 
         }
@@ -171,6 +215,31 @@ public class AnyFileUpload extends BaseHttpServlet {
         }
     }
 
+    private static JSONObject toJsonAnalysisTableModel(DataGroup dg, DataGroupReader.Format ff ) {
+        JSONObject tableModel = new JSONObject();
+        JSONObject tableData = JsonTableUtil.toJsonTableData(dg, null);
+        String tblId =  "UPLOAD_ANALYSIS";
+
+        tableModel.put("tableData", tableData);
+        tableModel.put("tbl_id", tblId);
+        tableModel.put("title", dg.getTitle());
+        tableModel.put("totalRows", dg.values().size());
+        tableModel.put("fileFormat", ff.toString());
+        tableModel.put("highlightedRow", 0);
+
+        JSONObject tableMeta = new JSONObject();
+        Iterator<Entry<String, DataGroup.Attribute>> attributes = dg.getAttributes().entrySet().iterator();
+
+        while( attributes.hasNext() ) {
+            Map.Entry<String, DataGroup.Attribute> entry = (Map.Entry<String, DataGroup.Attribute>) attributes.next();
+            DataGroup.Attribute att = entry.getValue();
+
+            tableMeta.put(att.getKey(), att.getValue());
+        }
+
+        tableModel.put("tableMeta", tableMeta);
+        return tableModel;
+    }
 
 }
 

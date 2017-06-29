@@ -110,18 +110,20 @@ public class JsonTableUtil {
         // also set flag to recalculate the max width of column's data
         boolean formatChanged = false;
         DataType[] columns = data.getDataDefinitions();
-        for (int colIdx = 0; colIdx < columns.length; colIdx++) {
-            DataType dt = columns[colIdx];
-            String fkey = DataSetParser.makeAttribKey(DataSetParser.FORMAT_DISP_TAG, dt.getKeyName());
-            if (tableDef.contains(fkey)) {
-                dt.getFormatInfo().setDataFormat(tableDef.getAttribute(fkey).getValue());
-                String[] headers = new String[] {dt.getKeyName(), dt.getTypeDesc(), dt.getDataUnit(), dt.getNullString()};
-                int maxLength =  Arrays.stream(headers).mapToInt(s -> s == null ? 0 : s.length()).max().getAsInt();
-                dt.getFormatInfo().setWidth(maxLength);
-                formatChanged = true;
+
+        if (tableDef != null) {
+            for (int colIdx = 0; colIdx < columns.length; colIdx++) {
+                DataType dt = columns[colIdx];
+                String fkey = DataSetParser.makeAttribKey(DataSetParser.FORMAT_DISP_TAG, dt.getKeyName());
+                if (tableDef.contains(fkey)) {
+                    dt.getFormatInfo().setDataFormat(tableDef.getAttribute(fkey).getValue());
+                    String[] headers = new String[]{dt.getKeyName(), dt.getTypeDesc(), dt.getDataUnit(), dt.getNullString()};
+                    int maxLength = Arrays.stream(headers).mapToInt(s -> s == null ? 0 : s.length()).max().getAsInt();
+                    dt.getFormatInfo().setWidth(maxLength);
+                    formatChanged = true;
+                }
             }
         }
-
 
         List<List<String>> tableData = new ArrayList<>();
         for (int i = 0; i < data.size(); i++) {
@@ -166,7 +168,7 @@ public class JsonTableUtil {
 
     private static List<JSONObject> toJsonTableColumn(DataGroup dataGroup, TableDef tableDef) {
 
-        DataType[] dataTypes = tableDef.getCols().size() > 0 ? tableDef.getCols().toArray(new DataType[0]) : dataGroup.getDataDefinitions();
+        DataType[] dataTypes = (tableDef != null && tableDef.getCols().size() > 0) ? tableDef.getCols().toArray(new DataType[0]) : dataGroup.getDataDefinitions();
 
         ArrayList<JSONObject> cols = new ArrayList<JSONObject>();
         for (DataType dt :dataTypes) {
@@ -185,53 +187,57 @@ public class JsonTableUtil {
                 c.put("desc", dt.getShortDesc());
             }
 
-            // modify column's attributes based on meta
-            String label = getColAttr(tableDef, LABEL_TAG, cname);
-            if (!StringUtils.isEmpty(label)) {
-                c.put("label", label);
-            }
-            String desc = getColAttr(tableDef, DESC_TAG, cname);
-            if (!StringUtils.isEmpty(desc)) {
-                c.put("desc", desc);
-            }
-            String visibility = getColAttr(tableDef, VISI_TAG, cname);
-            if (!StringUtils.isEmpty(visibility)) {
-                c.put("visibility", visibility);
-            }
-            String width = getColAttr(tableDef, WIDTH_TAG, cname);
-            if (!StringUtils.isEmpty(width)) {
-                c.put("width", width);
-            }
-            String prefWidth = getColAttr(tableDef, PREF_WIDTH_TAG, cname);
-            if (!StringUtils.isEmpty(prefWidth)) {
-                c.put("prefWidth", prefWidth);
-            }
-            String sortable = getColAttr(tableDef, SORTABLE_TAG, cname);
-            if (!StringUtils.isEmpty(sortable)) {
-                c.put("sortable", Boolean.parseBoolean(sortable));
-            }
-            String filterable = getColAttr(tableDef, FILTERABLE_TAG, cname);
-            if (!StringUtils.isEmpty(filterable)) {
-                c.put("filterable", Boolean.parseBoolean(filterable));
-            }
-            String units = getColAttr(tableDef, UNIT_TAG, cname);
-            if (!StringUtils.isEmpty(units)) {
-                c.put("units", units);
-            }
-            String items = getColAttr(tableDef, ITEMS_TAG, cname);
-            if (!StringUtils.isEmpty(items)) {
-                c.put("items", items);
-            }
-            String sortBy = getColAttr(tableDef, SORT_BY_TAG, cname);
-            if (!StringUtils.isEmpty(sortBy)) {
-                c.put("sortByCols", sortBy);
+            if (tableDef != null) {
+                // modify column's attributes based on meta
+                String label = getColAttr(tableDef, LABEL_TAG, cname);
+                if (!StringUtils.isEmpty(label)) {
+                    c.put("label", label);
+                }
+                String desc = getColAttr(tableDef, DESC_TAG, cname);
+                if (!StringUtils.isEmpty(desc)) {
+                    c.put("desc", desc);
+                }
+                String visibility = getColAttr(tableDef, VISI_TAG, cname);
+                if (!StringUtils.isEmpty(visibility)) {
+                    c.put("visibility", visibility);
+                }
+                String width = getColAttr(tableDef, WIDTH_TAG, cname);
+                if (!StringUtils.isEmpty(width)) {
+                    c.put("width", width);
+                }
+                String prefWidth = getColAttr(tableDef, PREF_WIDTH_TAG, cname);
+                if (!StringUtils.isEmpty(prefWidth)) {
+                    c.put("prefWidth", prefWidth);
+                }
+                String sortable = getColAttr(tableDef, SORTABLE_TAG, cname);
+                if (!StringUtils.isEmpty(sortable)) {
+                    c.put("sortable", Boolean.parseBoolean(sortable));
+                }
+                String filterable = getColAttr(tableDef, FILTERABLE_TAG, cname);
+                if (!StringUtils.isEmpty(filterable)) {
+                    c.put("filterable", Boolean.parseBoolean(filterable));
+                }
+                String units = getColAttr(tableDef, UNIT_TAG, cname);
+                if (!StringUtils.isEmpty(units)) {
+                    c.put("units", units);
+                }
+                String items = getColAttr(tableDef, ITEMS_TAG, cname);
+                if (!StringUtils.isEmpty(items)) {
+                    c.put("items", items);
+                }
+                String sortBy = getColAttr(tableDef, SORT_BY_TAG, cname);
+                if (!StringUtils.isEmpty(sortBy)) {
+                    c.put("sortByCols", sortBy);
+                }
             }
             cols.add(c);
-        }
-        for (DataGroup.Attribute att :  tableDef.getAttributes()) {
-            // clean up all of the column's attributes since we already set it to the columns
-            if (att.getKey().startsWith("col.")) {
-                tableDef.removeAttribute(att.getKey());
+            if (tableDef != null) {
+                for (DataGroup.Attribute att : tableDef.getAttributes()) {
+                    // clean up all of the column's attributes since we already set it to the columns
+                    if (att.getKey().startsWith("col.")) {
+                        tableDef.removeAttribute(att.getKey());
+                    }
+                }
             }
         }
         return cols;
@@ -261,6 +267,7 @@ public class JsonTableUtil {
         for (Object key : dataMap.keySet()) {
             DataGroupPart dp = QueryUtil.convertToDataGroupPart(dataMap.get(key), 0, Integer.MAX_VALUE);
             JSONObject aJsonTable = JsonTableUtil.toJsonTableModel(dp, request);
+
 
             jsoObj.put(key, aJsonTable);
 

@@ -16,6 +16,7 @@ import {ImageSelectDropdown} from '../ui/ImageSelectDropdown.jsx';
 import {ChartSelectDropdown} from '../ui/ChartSelectDropdown.jsx';
 import {CatalogSelectViewPanel} from '../visualize/ui/CatalogSelectViewPanel.jsx';
 import {LSSTCatalogSelectViewPanel} from '../visualize/ui/LSSTCatalogSelectViewPanel.jsx';
+import {FileUploadDropdown} from '../ui/FileUploadDropdown.jsx';
 import {getAlerts} from '../core/AppDataCntlr.js';
 
 import './DropDownContainer.css';
@@ -27,7 +28,8 @@ export const dropDownMap = {
     ImageSelectDropDownCmd: <ImageSelectDropdown />,
     ChartSelectDropDownCmd: <ChartSelectDropdown />,
     IrsaCatalogDropDown: <CatalogSelectViewPanel/>,
-    LsstCatalogDropDown: <LSSTCatalogSelectViewPanel/>
+    LsstCatalogDropDown: <LSSTCatalogSelectViewPanel/>,
+    FileUploadDropDownCmd: <FileUploadDropdown />
 };
 
 

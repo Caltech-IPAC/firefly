@@ -4,15 +4,23 @@
 package edu.caltech.ipac.util;
 
 import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.firefly.server.packagedata.PackagedBundle;
+import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import uk.ac.starlink.table.*;
 import uk.ac.starlink.util.DataSource;
 import uk.ac.starlink.votable.VOStarTable;
 import uk.ac.starlink.votable.VOTableBuilder;
+import uk.ac.starlink.votable.VOTableWriter;
+import uk.ac.starlink.votable.DataFormat;
+import uk.ac.starlink.votable.VOTableVersion;
+import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
+
 
 /**
  * Date: Dec 5, 2011
@@ -30,11 +38,13 @@ public class VoTableUtil {
         VOTableBuilder votBuilder = new VOTableBuilder();
         List<DataGroup> groups = new ArrayList<DataGroup>();
         try {
-            DataSource datsrc = DataSource.makeDataSource(voTableFile);
-            StoragePolicy policy = StoragePolicy.getDefaultPolicy();
-            TableSequence tseq = votBuilder.makeStarTables( datsrc, policy );
+            //DataSource datsrc = DataSource.makeDataSource(voTableFile);
+            //StoragePolicy policy = StoragePolicy.getDefaultPolicy();
+            //TableSequence tseq = votBuilder.makeStarTables( datsrc, policy );
+            StarTableFactory stFactory = new StarTableFactory();
+            TableSequence tseq = stFactory.makeStarTables(voTableFile, null);
+
             for ( StarTable table; ( table = tseq.nextTable() ) != null; ) {
-                //System.out.println("table found:" + table.getName());
                 DataGroup dg = convertToDataGroup(table, headerOnly);
                 groups.add( dg );
             }
@@ -44,6 +54,134 @@ public class VoTableUtil {
 
         return groups.toArray(new DataGroup[groups.size()]);
     }
+
+    private enum MetaInfo {
+        INDEX("Index", "Index", Integer.class, "table index", false),
+        TABLE("Table", "Table", String.class, "table name", false),
+        TYPE("Type", "Type", String.class, "table type", false),
+        NAME("Name", "Name", String.class, "table name", true),
+        ROW("Rows", "Total Rows", Long.class, "total rows", true),
+        COLUMN("Columns", "Total Columns", Integer.class, "total columns", true);
+
+        String keyName;
+        String title;
+        Class  metaClass;
+        String description;
+        boolean bRowInfo;
+
+        MetaInfo(String key, String title, Class c, String des, boolean rowInfo) {
+            this.keyName = key;
+            this.title = title;
+            this.metaClass = c;
+            this.description = des;
+            this.bRowInfo = rowInfo;
+        }
+
+        List<Object> getInfo() {
+            return Arrays.asList(keyName, title, metaClass, description);
+        }
+
+        String getKey() {
+            return keyName;
+        }
+
+        String getTitle() {
+            return title;
+        }
+
+        Class getMetaClass() {
+            return metaClass;
+        }
+
+        String getDescription() {
+            return description;
+        }
+
+        JSONObject addEntryToJson(Object value) {
+            JSONObject oneObj = new JSONObject();
+
+            oneObj.put("key", getTitle());
+            oneObj.put("value", value);
+            return oneObj;
+        }
+
+        boolean isRowInfo() { return bRowInfo; }
+
+    }
+
+    public static DataGroup voHeaderToDataGroup(String voTableFile) {
+        List<DataType> cols = new ArrayList<DataType>();
+
+        for ( MetaInfo meta : MetaInfo.values()) {    // index, name, row, column
+            if (meta.isRowInfo()) continue;
+            DataType dt = new DataType(meta.getKey(), meta.getTitle(), meta.getMetaClass());
+            dt.setShortDesc(meta.getDescription());
+            cols.add(dt);
+        }
+        DataGroup dg = new DataGroup("votable", cols);
+        String invalidMsg = "invalid votable file";
+
+        try {
+            StarTableFactory stFactory = new StarTableFactory();
+            TableSequence tseq = stFactory.makeStarTables(voTableFile, null);
+
+
+            int index = 0;
+            List<JSONObject> rowDetails = new ArrayList<>();
+
+            for ( StarTable table; ( table = tseq.nextTable() ) != null; ) {
+                String title = table.getName();
+                Long rowNo = new Long(table.getRowCount());
+                Integer columnNo = new Integer(table.getColumnCount());
+                String tableId = "table-" + index;
+
+                JSONObject rowInfo = new JSONObject();
+
+                //{rowId: , rowInfo: [{name: }, {total_row: }, {total_column: }]}
+                rowInfo.put("rowId", index);
+
+                List<JSONObject> rowStats = new ArrayList<>();
+                JSONObject oneStat;
+                MetaInfo meta;
+
+                meta = MetaInfo.NAME;
+                oneStat = meta.addEntryToJson(title);
+                rowStats.add(oneStat);
+
+                meta = MetaInfo.ROW;
+                oneStat = meta.addEntryToJson(rowNo);
+                rowStats.add(oneStat);
+
+                meta = MetaInfo.COLUMN;
+                oneStat = meta.addEntryToJson(columnNo);
+                rowStats.add(oneStat);
+
+                rowInfo.put("rowInfo", rowStats);
+                rowDetails.add(rowInfo);
+
+                DataObject row = new DataObject(dg);
+                row.setDataElement(cols.get(0), index);
+                row.setDataElement(cols.get(1),tableId );
+                row.setDataElement(cols.get(2), "Table");
+                row.setRowIdx(index);
+                dg.add(row);
+                dg.addAttribute(Integer.toString(index), rowInfo.toJSONString());
+                index++;
+            }
+
+            if (index == 0) {
+                throw new IOException(invalidMsg);
+            } else {
+                dg.setTitle("a votable with " + index + (index > 1 ? " tables" : " table"));
+            }
+        } catch (IOException e) {
+            dg.setTitle(invalidMsg);
+            e.printStackTrace();
+        }
+
+        return dg;
+    }
+
 
     private static DataGroup convertToDataGroup(StarTable table, boolean headerOnly) {
         String title = table.getName();
