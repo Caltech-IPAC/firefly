@@ -24,7 +24,7 @@ import {DT_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
 import {DT_HISTOGRAM} from '../charts/dataTypes/HistogramCDT.js';
 import {makeFileRequest}  from '../tables/TableUtil.js';
 import {makeXYPlotParams, makeHistogramParams, uniqueChartId} from '../charts/ChartUtil.js';
-import {getWsChannel} from '../core/messaging/WebSocketClient.js';
+import {getWsChannel, getWsConnId} from '../core/messaging/WebSocketClient.js';
 import {getConnectionCount, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS} from '../core/AppDataCntlr.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
@@ -324,5 +324,5 @@ var plotCnt= 0;
 
 function makePlotId() {
     plotCnt++;
-    return 'apiPlotRemote-'+plotCnt;
+    return `apiPlot-${getWsConnId()}-${plotCnt}`;
 }

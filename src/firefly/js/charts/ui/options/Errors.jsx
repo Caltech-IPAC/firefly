@@ -15,7 +15,7 @@ const ERR_TYPE_OPTIONS = [
 
 ];
 
-export function errorTypeFieldKey(activeTrace, axis) { return `data.${activeTrace}.firefly.error_${axis}.errorsType`; }
+export function errorTypeFieldKey(activeTrace, axis) { return `data.${activeTrace}.fireflyData.error_${axis}.errorsType`; }
 export function errorFieldKey(activeTrace, axis) { return `_tables.data.${activeTrace}.error_${axis}.array`; }
 export function errorMinusFieldKey(activeTrace, axis) { return `_tables.data.${activeTrace}.error_${axis}.arrayminus`; }
 
