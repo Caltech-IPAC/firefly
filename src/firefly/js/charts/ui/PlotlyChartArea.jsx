@@ -69,7 +69,6 @@ export class PlotlyChartArea extends PureComponent {
             pdata = highlighted ? pdata.concat([highlighted]) : pdata;
         }
         const {chartWidth, chartHeight} = calculateChartSize(widthPx, heightPx, xyratio, stretch);
-        const doingResize= (layout && (layout.width!==chartWidth || layout.height!==chartHeight));
         const playout = Object.assign({showlegend}, layout, {width: chartWidth, height: chartHeight});
 
         const style = {float: 'left'};
