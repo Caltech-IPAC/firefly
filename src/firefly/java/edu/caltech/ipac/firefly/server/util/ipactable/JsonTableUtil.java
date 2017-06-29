@@ -181,6 +181,9 @@ public class JsonTableUtil {
             if (!StringUtils.isEmpty(dt.getDataUnit())) {
                 c.put("units", dt.getDataUnit());
             }
+            if (!StringUtils.isEmpty(dt.getNullString())) {
+                c.put("nullString", dt.getNullString());
+            }
             if (!StringUtils.isEmpty(dt.getShortDesc())) {
                 c.put("desc", dt.getShortDesc());
             }
