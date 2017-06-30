@@ -11,8 +11,6 @@ irsa.gator.service.periodogram.url=https://irsa.ipac.caltech.edu/cgi-bin/periodo
 irsa.gator.service.periodogram.keys=x y alg peaks
 
 workspace.host.url=https://irsa.ipac.caltech.edu
-# USE FOR SSO Test:
-#workspace.host.url=https://irsadev.ipac.caltech.edu
 workspace.root.dir=/work
 workspace.protocol.irsa=webdav
 workspace.protocol.irsa.webdav=edu.caltech.ipac.firefly.server.WebDAVWorkspaceManager

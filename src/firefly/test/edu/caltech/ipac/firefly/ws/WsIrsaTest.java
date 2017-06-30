@@ -35,14 +35,13 @@ public class WsIrsaTest extends ConfigTest {
         WsCredentials cred = new WsCredentials(WS_USER_ID);
         f = pickFile(0);
 
-        //TODO For TESTING SSOspace, uncomment 2 lines below and add proper password
-//      cred = new WsCredentials("ejoliet@ipac.caltech.edu", "xxx");
-//      f = FileLoader.resolveFile(WsIrsaTest.class, "wstest.fits"); // Test adding fits >1Mb (only SSO quota ok)
+        //For TESTING SSOspace, uncomment 2 lines below and add proper password
+      //cred = new WsCredentials("test@ipac.caltech.edu", "Ask irsa");
+      //f = FileLoader.resolveFile(WsIrsaTest.class, "wstest.fits"); // Test adding fits >1Mb (only SSO quota ok)
 
 
-        //SSOSPACE is only available in irsadev for now. - PUBSPACE will also work with same prop
-        //TODO this doesn't overwrite, use ./config/app-test.prop instead
-        AppProperties.setProperty("workspace.host.url", "https://irsadev.ipac.caltech.edu");
+        //TODO this doesn't overwrite, use ./config/app-test.prop if you need
+        //AppProperties.setProperty("workspace.host.url", "https://irsadev.ipac.caltech.edu");
 
         workspaceManager = WorkspaceFactory.getWorkspaceHandler().withCredentials(cred);
 
