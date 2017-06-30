@@ -15,13 +15,11 @@ import {dispatchTableReplace, dispatchTableSearch} from '../../tables/TablesCntl
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
 import WebPlotRequest from '../WebPlotRequest.js';
-import {ZoomType} from '../ZoomType.js';
 import {dispatchPlotImage } from '../ImagePlotCntlr.js';
 
 import './ImageSelectPanel.css';
 
 export const panelKey = 'FileUploadAnalysis';
-export const summaryTableId = 'UPLOAD_SUMMARY_TABLE';
 const  summaryTableGroup = 'UPLOAD_SUMMARY_GROUP';
 
 const  isFitsFile = (analysisModel) => {
@@ -34,8 +32,6 @@ const emptyModel = (model) => {
     return (isNil(row) || row === 0);
 };
 
-var tblId = 0;
-
 export class FileUploadViewPanel extends PureComponent {
 
     constructor(props) {
@@ -47,6 +43,7 @@ export class FileUploadViewPanel extends PureComponent {
             const analysisResultObj = currentAnaResult ? JSON.parse(currentAnaResult) : {};
             const {analysisModel=null, analysisSummary=''} = analysisResultObj;
             const highlightedRow = analysisModel ? get(analysisModel, 'highlightedRow', 0) : -1;
+
             return {analysisModel, analysisResult: currentAnaResult, analysisSummary, highlightedRow};
         };
 
@@ -149,7 +146,7 @@ export class FileUploadViewPanel extends PureComponent {
 
         const displayTable = () => {
             const hlTbl = Object.assign({}, analysisModel, {highlightedRow});
-            const tbl_ui_id = hlTbl.tbl_id || `${summaryTableId}_${tblId++}`;
+            const tbl_ui_id = hlTbl.tbl_id;
             const {columns, data} = get(hlTbl, 'tableData') || {};
 
 
