@@ -45,8 +45,10 @@ export class FireflyViewer extends PureComponent {
 
     constructor(props) {
         super(props);
+        const views = LO_VIEW.get(props.views) || LO_VIEW.none;
         this.state = this.getNextState();
         dispatchAddSaga(watchCatalogs);
+        if (views.has(LO_VIEW.images) ) launchImageMetaDataSega();
         dispatchAddSaga(layoutManager,{views: props.views});
         dispatchAddSaga(syncChartViewer);
         dispatchAddSaga(addDefaultScatter);
@@ -132,12 +134,8 @@ FireflyViewer.defaultProps = {
 };
 
 function onReady({menu, views}) {
-    views = LO_VIEW.get(views) || LO_VIEW.none;
     if (menu) {
         dispatchSetMenu({menuItems: menu});
-    }
-    if (views.has(LO_VIEW.images) ) {
-        launchImageMetaDataSega();
     }
     const {hasImages, hasTables, hasXyPlots} = getLayouInfo();
     if (!(hasImages || hasTables || hasXyPlots)) {

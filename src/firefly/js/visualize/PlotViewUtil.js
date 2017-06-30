@@ -365,10 +365,11 @@ export function findPlotGroup(plotGroupId, plotGroupAry) {
  * @param {Array.<PlotView>} plotViewAry
  * @param {string} plotId
  * @param {PlotGroup} plotGroup
+ * @param {boolean} forceAllInGroup
  * @return {Array.<PlotView>}
  */
-export function getOnePvOrGroup(plotViewAry, plotId,plotGroup) {
-    const groupLock= hasGroupLock(getPlotViewById(plotViewAry,plotId),plotGroup);
+export function getOnePvOrGroup(plotViewAry, plotId,plotGroup, forceAllInGroup= false) {
+    const groupLock= hasGroupLock(getPlotViewById(plotViewAry,plotId),plotGroup) || forceAllInGroup;
     return groupLock ?
         plotViewAry.filter( (pv) => pv.plotGroupId===plotGroup.plotGroupId) :
         [getPlotViewById(plotViewAry,plotId)];
