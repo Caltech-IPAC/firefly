@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.server.ws.WsCredentials;
 import edu.caltech.ipac.firefly.server.ws.WsException;
 import edu.caltech.ipac.firefly.server.ws.WsResponse;
 import edu.caltech.ipac.firefly.server.ws.WsUtil;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
 import org.apache.commons.httpclient.methods.RequestEntity;
@@ -46,6 +47,9 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
      * TODO is this used currently or should/will it be used in the future?
      */
     private static final Namespace IRSA_NS = Namespace.getNamespace("irsa", "https://irsa.ipac.caltech.edu/namespace/");
+    //TODO We might need to change those properties if we need to deal with 2 or more workspaces at the same time
+    private String WS_ROOT_DIR = AppProperties.getProperty("workspace.root.dir", "/work");
+    private String WS_HOST_URL = AppProperties.getProperty("workspace.host.url", "https://irsa.ipac.caltech.edu");
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private WsCredentials creds;
@@ -85,8 +89,12 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
     private String userHome;
     private Map<String, String> cookies;
 
+    /**
+     * Used by {@link edu.caltech.ipac.firefly.server.ws.WebDAVWorkspaceHandler#withCredentials(WsCredentials)}}
+     * @param cred {@link WsCredentials}
+     */
     public WebDAVWorkspaceManager(WsCredentials cred) {
-        this(Partition.PUBSPACE, cred, true);
+        this(cred.getPassword()!=null?Partition.SSOSPACE:Partition.PUBSPACE, cred, true);
     }
 
     public WebDAVWorkspaceManager(String pubspaceId) {
@@ -96,6 +104,10 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
     public WebDAVWorkspaceManager(String ssospaceId, Map<String, String> cookies) {
         this(Partition.SSOSPACE, new WsCredentials(ssospaceId, cookies), false);
 
+    }
+
+    public WebDAVWorkspaceManager(String ssospaceId, String pass) {
+        this(Partition.SSOSPACE, new WsCredentials(ssospaceId, pass), false);
     }
 
     public WebDAVWorkspaceManager(Partition partition, WsCredentials cred, boolean initialize) {
@@ -607,7 +619,7 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
     private boolean executeMethod(DavMethod method, boolean releaseConnection) {
         try {
             return partition.equals(Partition.PUBSPACE) ? HttpServices.executeMethod(method) :
-                    HttpServices.executeMethod(method, "xxx", "xx", cookies);
+                    HttpServices.executeMethod(method, getCredentials().getWsId(), getCredentials().getPassword(), getCredentials().getCookies());
         } finally {
             if (releaseConnection && method != null) {
                 method.releaseConnection();
@@ -617,45 +629,45 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
 
     }
 
-    public static void main(String[] args) {
-        WebDAVWorkspaceManager man = null;
-//        man = (WebDAVWorkspaceManager) ServerContext.getRequestOwner().getWsManager();
-
-        man = new WebDAVWorkspaceManager("ejoliet-tmp2");
-
-        simpleTest(man);
-
-//        AppProperties.setProperty("sso.server.url", "http://irsa.ipac.caltech.edu/account/");
-//        String session = JOSSOAdapter.createSession("", "");
-//        Map<String, String> cookies = new HashMap<String, String>();
-//        cookies.put(WebAuthModule.AUTH_KEY, session);
-//        WorkspaceManager man = new WorkspaceManager("<someuser>@ipac.caltech.edu", cookies);
+//    public static void main(String[] args) {
+//        WebDAVWorkspaceManager man = null;
+////        man = (WebDAVWorkspaceManager) ServerContext.getRequestOwner().getWsManager();
+//
+//        man = new WebDAVWorkspaceManager("ejoliet-tmp2");
+//
 //        simpleTest(man);
-    }
-
-    private static void simpleTest(WebDAVWorkspaceManager man) {
-        String relPath = "124/";
-        File f = man.davMakeDir(relPath);
-        System.out.println("new directory: " + String.valueOf(f));
-
-        WspaceMeta m = new WspaceMeta(null, relPath);
-        m.setProperty("test1", "an awesome idea");
-        m.setProperty("test", null);
-        man.setMeta(m);
-
-        String ufilePath = relPath + "gaia-binary.vot";
-        WsResponse wsResponse = man.davPut(new File("/Users/ejoliet/devspace/branch/dev/firefly_test_data/edu/caltech/ipac/firefly/ws/gaia-binary.vot"), ufilePath, null);
-
-        System.out.println(wsResponse);
-
-        WspaceMeta meta = new WspaceMeta(null, ufilePath);
-        meta.setProperty("added_by", man.userHome);
-        man.setMeta(meta);
-        man.setMeta(ufilePath, "added_by", man.userHome);
-
-        WspaceMeta meta2 = man.getMeta("/", WspaceMeta.Includes.ALL_PROPS);
-        System.out.println(meta2.getNodesAsString());
-    }
+//
+////        AppProperties.setProperty("sso.server.url", "http://irsa.ipac.caltech.edu/account/");
+////        String session = JOSSOAdapter.createSession("", "");
+////        Map<String, String> cookies = new HashMap<String, String>();
+////        cookies.put(WebAuthModule.AUTH_KEY, session);
+////        WorkspaceManager man = new WorkspaceManager("<someuser>@ipac.caltech.edu", cookies);
+////        simpleTest(man);
+//    }
+//
+//    private static void simpleTest(WebDAVWorkspaceManager man) {
+//        String relPath = "124/";
+//        File f = man.davMakeDir(relPath);
+//        System.out.println("new directory: " + String.valueOf(f));
+//
+//        WspaceMeta m = new WspaceMeta(null, relPath);
+//        m.setProperty("test1", "an awesome idea");
+//        m.setProperty("test", null);
+//        man.setMeta(m);
+//
+//        String ufilePath = relPath + "gaia-binary.vot";
+//        WsResponse wsResponse = man.davPut(new File("/Users/ejoliet/devspace/branch/dev/firefly_test_data/edu/caltech/ipac/firefly/ws/gaia-binary.vot"), ufilePath, null);
+//
+//        System.out.println(wsResponse);
+//
+//        WspaceMeta meta = new WspaceMeta(null, ufilePath);
+//        meta.setProperty("added_by", man.userHome);
+//        man.setMeta(meta);
+//        man.setMeta(ufilePath, "added_by", man.userHome);
+//
+//        WspaceMeta meta2 = man.getMeta("/", WspaceMeta.Includes.ALL_PROPS);
+//        System.out.println(meta2.getNodesAsString());
+//    }
 
 
     class WebDAVGetMethod extends DavMethodBase {

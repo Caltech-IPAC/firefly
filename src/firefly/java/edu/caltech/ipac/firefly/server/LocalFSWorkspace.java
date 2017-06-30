@@ -6,6 +6,7 @@ import edu.caltech.ipac.firefly.server.ws.WsCredentials;
 import edu.caltech.ipac.firefly.server.ws.WsException;
 import edu.caltech.ipac.firefly.server.ws.WsResponse;
 import edu.caltech.ipac.firefly.server.ws.WsUtil;
+import edu.caltech.ipac.util.AppProperties;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -21,6 +22,8 @@ import java.nio.file.Paths;
  * Created by ejoliet on 6/21/17.
  */
 public class LocalFSWorkspace implements WorkspaceManager {
+    //TODO We might need to change those properties if we need to deal with 2 or more workspaces at the same time
+    String WS_HOST_URL = AppProperties.getProperty("workspace.host.url", "https://irsa.ipac.caltech.edu");
 
 
     private final WsCredentials wscred;

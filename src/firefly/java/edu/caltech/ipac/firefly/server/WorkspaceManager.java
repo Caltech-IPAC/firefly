@@ -17,11 +17,6 @@ public interface WorkspaceManager extends Workspaces {
 
     String SEARCH_DIR = WspaceMeta.SEARCH_DIR;
 
-    //TODO We might need to change those properties if we need to deal with 2 or more workspaces at the same time
-    String WS_ROOT_DIR = AppProperties.getProperty("workspace.root.dir", "/work");
-    String WS_HOST_URL = AppProperties.getProperty("workspace.host.url", "https://irsa.ipac.caltech.edu");
-
-
     WsCredentials getCredentials();
 
     String getWsHome();

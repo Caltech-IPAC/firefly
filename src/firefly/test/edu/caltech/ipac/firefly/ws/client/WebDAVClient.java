@@ -1,15 +1,19 @@
 package edu.caltech.ipac.firefly.ws.client;
 
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import edu.caltech.ipac.firefly.data.WspaceMeta;
+import edu.caltech.ipac.firefly.server.WorkspaceManager;
+import edu.caltech.ipac.firefly.server.ws.WorkspaceFactory;
+import edu.caltech.ipac.firefly.server.ws.WsCredentials;
+import edu.caltech.ipac.firefly.server.ws.WsResponse;
+import edu.caltech.ipac.firefly.util.FileLoader;
+import edu.caltech.ipac.firefly.ws.WsIrsaTest;
+import edu.caltech.ipac.util.AppProperties;
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
@@ -277,10 +281,47 @@ public class WebDAVClient {
     }
 
     public static void main(String[] args) throws Exception {
-        WebDAVClient client = new WebDAVClient("http://test.cyberduck.ch/dav/anon/sardine/",80,"","");
+//        WebDAVClient client = new WebDAVClient("http://test.cyberduck.ch/dav/anon/sardine/", 80, "", "");
 
-        WebDAVResponse webDAVResponse = client.listFolder("http://test.cyberduck.ch/dav/anon/sardine/");
-        LOGGER.info(webDAVResponse.getResponse());
+//        WebDAVResponse webDAVResponse = client.listFolder("http://test.cyberduck.ch/dav/anon/sardine/");
+//        LOGGER.info(webDAVResponse.getResponse());
+
+
+        WsCredentials cred = new WsCredentials("ejoliet@ipac.caltech.edu", "ASK ME");
+        WebDAVClient client = new WebDAVClient("https://irsadev.ipac.caltech.edu", 80, cred.getWsId(), cred.getPassword());
+
+        WebDAVResponse webDAVResponse = client.listFolder("https://irsadev.ipac.caltech.edu/ssospace/ejoliet@ipac.caltech.edu");
+        //LOGGER.info(webDAVResponse.getResponse());
+
+        AppProperties.setProperty("workspace.host.url", "https://irsadev.ipac.caltech.edu");
+        WorkspaceManager workspaceManager = WorkspaceFactory.getWorkspaceHandler().withCredentials(cred);
+        File f = pickFile(0);
+        workspaceManager.putFile("", f, null);
+        WsResponse r = workspaceManager.getList("", 1);
+
+        List<WspaceMeta> wsmeta = r.getWspaceMeta();
+
+        for (WspaceMeta meta : wsmeta) {
+            LOGGER.info(meta.getNodesAsString());
+        }
+
+    }
+
+    private static File pickFile(int idx) throws ClassNotFoundException {
+        if (idx < 0) {
+            throw new IllegalArgumentException("index is negative " + idx);
+        }
+        File testPath = new File(FileLoader.getDataPath(WsIrsaTest.class));
+        File[] allFilesButFits = testPath.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return !name.endsWith(".fits"); // Can't use fits in pubspace because > 1Mb irsa policy storage
+            }
+        });
+        if (idx > allFilesButFits.length) {
+            idx = 0;
+        }
+        return allFilesButFits[idx];
     }
 }
 

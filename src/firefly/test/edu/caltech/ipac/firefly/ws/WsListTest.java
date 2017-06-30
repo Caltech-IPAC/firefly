@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.ws;
 
+import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.server.WorkspaceManager;
 import edu.caltech.ipac.firefly.server.ws.*;
@@ -15,14 +16,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.ConfigTest.LOG;
-import static edu.caltech.ipac.firefly.ConfigTest.WS_USER_ID;
 import static org.junit.Assert.assertTrue;
 
 /**
  * Created by ejoliet on 6/26/17.
  */
-public class WsListTest {
+public class WsListTest extends ConfigTest {
 
     private static WorkspaceManager m;
     private static File[] testFile = new File[2];
@@ -30,6 +29,8 @@ public class WsListTest {
     private static String[] relFolder = new String[2];
     private static ArrayList testFolders;
     private static ArrayList testFiles;
+    private static WorkspaceHandler handler;
+
 
     @Before
     public void init() throws WsException, ClassNotFoundException {
@@ -38,8 +39,8 @@ public class WsListTest {
         testFiles = new ArrayList<>();
         relFolder[0] = createFolder("/tmp1/");
         relFolder[1] = createFolder("/tmp2/");
-
-        m = WorkspaceFactory.getWorkspaceHandler().withCredentials(new WsCredentials(key));
+        handler = WorkspaceFactory.getWorkspaceHandler();
+        m = handler.withCredentials(new WsCredentials(key));
 
         testFile[0] = pickFile(0);
         testFile[1] = pickFile(1);
@@ -135,12 +136,15 @@ public class WsListTest {
         // Gets children folder meta under user home ws.
         // Equivalent to WsResponse wsResponse = m.getList("/", 1);
         //
-        List<WspaceMeta> metas = m.getMeta("/", WspaceMeta.Includes.CHILDREN).getChildNodes();//wsResponse.getWspaceMeta();
+        WspaceMeta mMeta = m.getMeta("/", WspaceMeta.Includes.CHILDREN);
+        if (mMeta != null) {
+            List<WspaceMeta> metas = mMeta.getChildNodes();//wsResponse.getWspaceMeta();
 
-        for (WspaceMeta meta : metas) {
-            WsResponse response = m.delete(meta.getRelPath());
-            if (response.getStatusCode().equals("304")) { //Parent is home, try to delete file then
-                m.delete(meta.getRelPath());
+            for (WspaceMeta meta : metas) {
+                WsResponse response = m.delete(meta.getRelPath());
+                if (response.getStatusCode().equals("304")) { //Parent is home, try to delete file then
+                    m.delete(meta.getRelPath());
+                }
             }
         }
     }

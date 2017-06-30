@@ -1,11 +1,13 @@
 package edu.caltech.ipac.firefly.server.ws;
 
+import edu.caltech.ipac.firefly.data.WspaceMeta;
+
 import java.util.List;
 
 /**
  * Created by ejoliet on 6/16/17.
  */
-public class WsResponse<WspaceMeta>{
+public class WsResponse {
 
     private String statusCode = "";
     private String statusText = "";
