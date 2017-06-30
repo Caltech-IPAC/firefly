@@ -27,21 +27,27 @@
 /** Unary operator: cosine    */       export const COS   = 105;
 /** Unary operator: e to the x*/       export const EXP   = 106;
 /** Unary operator: floor     */       export const FLOOR = 107;
-/** Unary operator: log 10 */          export const LOG   = 108;
+/** Unary operator: natural log */     export const LOG   = 108;
 /** Unary operator: negation  */       export const NEG   = 109;
 /** Unary operator: rounding  */       export const ROUND = 110;
 /** Unary operator: sine      */       export const SIN   = 111;
 /** Unary operator: square root */     export const SQRT  = 112;
 /** Unary operator: tangent */         export const TAN   = 113;
-/** Unary operator: natural log*/      export const LN    = 114;
+/** Unary operator: natural log */     export const LN    = 114;
+/** Unary operator: log 10 */          export const LOG10 = 115;
+/** Unary operator: log 10 */          export const LG    = 116;
 
-/** Make a literal expression.
+/**
+ * Make a literal expression.
  * @param {number} v the constant value of the expression
- * @return an expression whose value is always v */
+ * @return an expression whose value is always v
+ */
 export function makeLiteral(v) {
     return new LiteralExpr(v);
 }
-/** Make an expression that applies a unary operator to an operand.
+
+/**
+ * Make an expression that applies a unary operator to an operand.
  * @param {number} rator (int) a code for a unary operator
  * @param rand operand (Expr)
  * @return an expression meaning rator(rand)
@@ -52,10 +58,11 @@ export function makeApp1(rator, rand) {
             ? new LiteralExpr(app.value())
             : app;
 }
-/** Make an expression that applies a binary operator to two operands.
- * @param rator (int) a code for a binary operator
- * @param rand0 (Expr) left operand
- * @param rand1 (Expr) right operand
+/**
+ * Make an expression that applies a binary operator to two operands.
+ * @param {number} rator - a code for a binary operator
+ * @param {Expr} rand0 - left operand
+ * @param {Expr} rand1  right operand
  * @return an expression meaning rator(rand0, rand1)
  */
 export function makeApp2(rator, rand0, rand1) {
@@ -64,12 +71,12 @@ export function makeApp2(rator, rand0, rand1) {
             ? new LiteralExpr(app.value())
             : app;
 }
-/** Make a conditional expression.
+/**
+ * Make a conditional expression.
  * @param test (Expr) `if' part
  * @param consequent (Expr) `then' part
  * @param alternative (Expr) `else' part
- * @return an expression meaning `if test, then consequent, else
- *         alternative' 
+ * @return an expression meaning `if test, then consequent, else alternative'
  */
 export function makeIfThenElse(test,
                         consequent,
@@ -110,8 +117,10 @@ class UnaryExpr {
             case COS:   return Math.cos(arg);
             case EXP:   return Math.exp(arg);
             case FLOOR: return Math.floor(arg);
-            case LOG:   return Math.log10(arg);
-            case LN:   return Math.log(arg);
+            case LOG:   return Math.log(arg);
+            case LN:    return Math.log(arg);
+            case LOG10: return Math.log10(arg);
+            case LG:    return Math.log10(arg);
             case NEG:   return -arg;
             case ROUND: return Math.round(arg);
             case SIN:   return Math.sin(arg);
@@ -143,12 +152,12 @@ class BinaryExpr {
             case MIN:   return arg0 < arg1 ? arg0 : arg1;
             case LT:    return arg0 <  arg1 ? 1.0 : 0.0;
             case LE:    return arg0 <= arg1 ? 1.0 : 0.0;
-            case EQ:    return arg0 == arg1 ? 1.0 : 0.0;
-            case NE:    return arg0 != arg1 ? 1.0 : 0.0;
+            case EQ:    return arg0 === arg1 ? 1.0 : 0.0;
+            case NE:    return arg0 !== arg1 ? 1.0 : 0.0;
             case GE:    return arg0 >= arg1 ? 1.0 : 0.0;
             case GT:    return arg0  > arg1 ? 1.0 : 0.0;
-            case AND:   return arg0 != 0 && arg1 != 0 ? 1.0 : 0.0;
-            case OR:    return arg0 != 0 || arg1 != 0 ? 1.0 : 0.0;
+            case AND:   return arg0 !== 0 && arg1 !== 0 ? 1.0 : 0.0;
+            case OR:    return arg0 !== 0 || arg1 !== 0 ? 1.0 : 0.0;
             default: throw 'BUG: bad rator: '+this.rator;
         }
     }
