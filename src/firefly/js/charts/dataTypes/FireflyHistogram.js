@@ -29,7 +29,7 @@ export function getTraceTSEntries({chartId, traceNum}) {
     const histogramParams = get(fireflyData, `${traceNum}.options`);
     options['columnExpression'] = histogramParams.columnOrExpr;
     if (get(layout, 'xaxis.type') === 'log') {
-        options.columnExpression = 'log('+histogramParams.columnOrExpr+')';
+        options.columnExpression = 'lg('+histogramParams.columnOrExpr+')';
     }
     if (histogramParams.fixedBinSizeSelection) { // fixed size bins
         options.fixedBinSizeSelection=histogramParams.fixedBinSizeSelection;

@@ -106,7 +106,7 @@ function fetchColData(dispatch, chartId, chartDataElementId) {
     // histogram parameters
     req.columnExpression = histogramParams.columnOrExpr;
     if (histogramParams.x && histogramParams.x.includes('log')) {
-        req.columnExpression = 'log('+req.columnExpression+')';
+        req.columnExpression = 'lg('+req.columnExpression+')';
     }
     if (histogramParams.fixedBinSizeSelection) { // fixed size bins
         req.fixedBinSizeSelection=histogramParams.fixedBinSizeSelection;
