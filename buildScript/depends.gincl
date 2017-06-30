@@ -111,7 +111,7 @@ task buildClient (dependsOn: loadConfig) {
   description= 'Build JavaScript portion of the application.'
   group = MISC_GROUP
 
-  outputs.dir "${buildDir}/gwt/${project['app-name']}"
+  outputs.dir "${buildDir}/war"
   inputs.dir "${projectDir}/js"
   inputs.dir "${fireflyPath}/src/firefly/js"
 
@@ -131,7 +131,7 @@ task buildJsDoc (dependsOn: loadConfig) {
   description= 'Build JSDoc.'
   group = MISC_GROUP
 
-  def outdir = "${buildDir}/gwt/${project['app-name']}"
+  def outdir = "${buildDir}/war"
 
   outputs.dir outdir
   inputs.dir "${projectDir}"
@@ -154,7 +154,7 @@ task publishJsDocs (dependsOn: loadConfig) {
   description = 'Publish js docs to firefly.lsst.io'
   group = MISC_GROUP
 
-  def docsDir = "${buildDir}/gwt/${project['app-name']}/docs/js"
+  def docsDir = "${buildDir}/war/docs/js"
   doLast {
     def res = project.ext.publishDocs docsDir, 'firefly'
     if (res.getExitValue() != 0) {
@@ -167,7 +167,7 @@ task publishPythonDocs (dependsOn: loadConfig) {
   description = 'Publish python docs to firefly_client.lsst.io'
   group = MISC_GROUP
 
-  def docsDir = "${buildDir}/gwt/${project['app-name']}/docs/python"
+  def docsDir = "${buildDir}/war/docs/python"
   doLast {
     def res = project.ext.publishDocs docsDir, 'firefly_client'
     if (res.getExitValue() != 0) {
@@ -176,11 +176,91 @@ task publishPythonDocs (dependsOn: loadConfig) {
   }
 }
 
+
+task dockerImage (dependsOn: loadConfig) {
+  description = 'Create a docker image'
+  group = MISC_GROUP
+
+  ext.docker_repo = "ipac/firefly"
+  ext.docker_registry = ''
+  ext.docker_tag = 'latest'
+
+  doLast {
+    // copy artifacts to staging directory
+    copy {
+      from ("${project.distDir}") { include '*.war' }
+      from ("${fireflyPath}/docker/base") { include '*' }
+      into "${buildDir}/docker"
+    }
+
+    try {
+      "docker --version".execute()
+    } catch (Exception e) {
+      println ">> docker is not installed.  This task required docker"
+      throw new GradleException("docker is not installed.  This task required docker", e)
+    }
+
+    if (!file("${buildDir}/docker/Dockerfile").exists()) {
+      println ">> Dockerfile not found. Fail to create docker image"
+      throw new GradleException("Dockerfile not found. Fail to create docker image")
+    }
+
+    docker_repo = project.appConfigProps.docker_repo ?: docker_repo
+    docker_tag = project.appConfigProps.docker_tag ?: docker_tag
+    docker_registry = project.appConfigProps.docker_registry ?: docker_registry
+    docker_registry = docker_registry == '' || docker_registry.endsWith('/') ? docker_registry : docker_registry + '/'
+
+    def res = exec {
+      workingDir "${buildDir}/docker"
+      commandLine "docker build -t ${docker_registry}${docker_repo}:${docker_tag} --build-arg IMAGE_NAME=${docker_registry}${docker_repo} .".split(' ')
+    }
+    if (res.getExitValue() != 0) {
+      throw new GradleException("Fail to create docker image")
+    }
+    return res;
+  }
+}
+
+task dockerPublish (dependsOn: dockerImage) {
+  description = 'Create a docker image'
+  group = MISC_GROUP
+
+  doLast {
+
+    try {
+      "docker --version".execute()
+    } catch (Exception e) {
+      println ">> docker is not installed.  This task required docker"
+      throw new GradleException("docker is not installed.  This task required docker", e)
+    }
+
+    if (project.appConfigProps.docker_user != '') {
+      def proc = "docker login --username ${project.appConfigProps.docker_user} --password ${project.appConfigProps.docker_passwd}".execute()
+      proc.waitForOrKill(10000)
+      println ">> docker login as ${project.appConfigProps.docker_user} with exit status ${proc.exitValue()}"
+    }
+
+    def docker_repo = project.appConfigProps.docker_repo ?: dockerImage.docker_repo
+    def docker_tag = project.appConfigProps.docker_tag ?: dockerImage.docker_tag
+    def docker_registry = project.appConfigProps.docker_registry ?: dockerImage.docker_registry
+    docker_registry = docker_registry == '' || docker_registry.endsWith('/') ? docker_registry : docker_registry + '/'
+
+    def res = exec {
+      workingDir "${buildDir}/docker"
+      commandLine "docker push ${docker_registry}${docker_repo}:${docker_tag}".split(' ')
+    }
+    if (res.getExitValue() != 0) {
+      throw new GradleException("Fail to push docker image")
+    }
+    return res;
+  }
+}
+
 /**
  * this function setup node.js environment then run the given command.
  */
 ext.NODE = { ...cmd ->
-  def wpBuildDir = "${buildDir}/gwt/${project['app-name']}"
+  def wpBuildDir = "${buildDir}/war"
   def tag = "v" + getVersionTag() + ' Built On:' + build_time;
 
   try {

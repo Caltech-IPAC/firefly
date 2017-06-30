@@ -2,8 +2,8 @@
 task gwt {
   outputs.upToDateWhen { false }
 
-  ext.buildDir = "${project.buildDir}/gwt"
-  ext.warDir = "$buildDir/${project['app-name']}"
+  ext.buildDir = "${project.buildDir}"
+  ext.warDir = "$buildDir/war"
   ext.modules = "<UNDEFINED>"
   ext.module_name = project.projectDir.name
   ext.startupUrl = "${project['app-name']}.html"
