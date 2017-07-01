@@ -37,7 +37,7 @@ describe('A test suite for expr/Expression.js', function () {
      * Supported functions:
      *       abs, acos, asin, atan,
      *       ceil, cos, exp, floor,
-     *       log, ln, round, sin, sqrt,
+     *       lg, ln, round, sin, sqrt,
      *       tan, atan2, max, min
      * Supported conditional if(condition, then, alternative)
      * Supported constants: pi
@@ -55,7 +55,9 @@ describe('A test suite for expr/Expression.js', function () {
                 {e: 'cos(x)', r: Math.cos(x)},
                 {e: 'exp(x)', r: Math.exp(x)},
                 {e: 'floor(x)', r: Math.floor(x)},
-                {e: 'log(x)', r: Math.log10(x)},
+                {e: 'lg(x)', r: Math.log10(x)},
+                {e: 'log10(x)', r: Math.log10(x)},
+                {e: 'log(x)', r: Math.log(x)},
                 {e: 'ln(x)', r: Math.log(x)},
                 {e: 'round(x)', r: Math.round(x)},
                 {e: 'sin(x)', r: Math.sin(x)},
