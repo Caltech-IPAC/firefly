@@ -29,7 +29,7 @@ public class WsIrsaTest extends ConfigTest {
     private static WorkspaceManager workspaceManager;
 
     @Before
-    public void init() throws ClassNotFoundException {
+    public void init() throws Exception {
 
         //TESTING PUBSPACE
         WsCredentials cred = new WsCredentials(WS_USER_ID);
@@ -78,7 +78,7 @@ public class WsIrsaTest extends ConfigTest {
 
     }
 
-    private static File pickFile(int idx) throws ClassNotFoundException {
+    private static File pickFile(int idx) throws Exception {
         File testPath = new File(FileLoader.getDataPath(WsIrsaTest.class));
         File file = testPath.listFiles(new FilenameFilter() {
             @Override
