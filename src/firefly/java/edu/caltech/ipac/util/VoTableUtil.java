@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Date: Dec 5, 2011
@@ -21,6 +22,13 @@ import java.util.List;
  * @version $Id: VoTableUtil.java,v 1.4 2013/01/07 22:10:01 tatianag Exp $
  */
 public class VoTableUtil {
+
+    private static final Pattern HMS_UCD_PATTERN =
+            Pattern.compile( "POS_EQ_RA.*|pos\\.eq\\.ra.*",
+                    Pattern.CASE_INSENSITIVE );
+    private static final Pattern DMS_UCD_PATTERN =
+            Pattern.compile( "POS_EQ_DEC.*|pos\\.eq\\.dec.*",
+                    Pattern.CASE_INSENSITIVE );
 
     public static DataGroup[] voToDataGroups(String voTableFile) {
         return voToDataGroups(voTableFile,false);
@@ -69,10 +77,10 @@ public class VoTableUtil {
             }
             String ucd = cinfo.getUCD();
             if ( ucd != null) { // should we save all UCDs?
-                if (ucd.equals("POS_EQ_RA_MAIN")) {
+                if (HMS_UCD_PATTERN.matcher( ucd ).matches()) {
                     raCol = cinfo.getName();
                 }
-                if (ucd.equals("POS_EQ_DEC_MAIN")) {
+                if (DMS_UCD_PATTERN.matcher( ucd ).matches()) {
                     decCol = cinfo.getName();
                 }
             }
