@@ -23,8 +23,6 @@ import java.util.*;
  */
 abstract public class JsonDataProcessor implements SearchProcessor<String> {
 
-    public static final boolean useWorkspace = AppProperties.getBooleanProperty("useWorkspace", false);
-
     public static final Logger.LoggerImpl SEARCH_LOGGER = Logger.getLogger(Logger.SEARCH_LOGGER);
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 

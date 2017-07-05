@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * WebDAV implementation for IRSA
@@ -347,6 +348,11 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
         } catch (IOException e) {
             throw new WsException("Fail to get the file " + fileUri);
         }
+    }
+
+    @Override
+    public WsResponse getFile(String fileUri, Consumer consumer) throws WsException {
+        throw new IllegalArgumentException("not implemented");
     }
 
     @Override

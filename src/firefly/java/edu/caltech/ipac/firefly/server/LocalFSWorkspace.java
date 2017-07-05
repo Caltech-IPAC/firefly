@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Consumer;
 
 /**
  * LOCAL filesystem implementation of workspace- NOT FULLY IMPLEMENTED
@@ -75,6 +76,11 @@ public class LocalFSWorkspace implements WorkspaceManager {
 
     @Override
     public WsResponse getList(String parentUri, int depth) throws IOException {
+        throw new IllegalArgumentException("not implemented");
+    }
+
+    @Override
+    public WsResponse getFile(String fileUri, Consumer consumer) throws WsException {
         throw new IllegalArgumentException("not implemented");
     }
 

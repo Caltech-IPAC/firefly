@@ -43,8 +43,6 @@ import java.util.*;
  */
 abstract public class IpacTablePartProcessor implements SearchProcessor<DataGroupPart> {
 
-    public static final boolean useWorkspace = AppProperties.getBooleanProperty("useWorkspace", false);
-
     public static final Logger.LoggerImpl SEARCH_LOGGER = Logger.getLogger(Logger.SEARCH_LOGGER);
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     //public static long logCounter = 0;
@@ -288,8 +286,8 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
     private String createUniqueId(String reqId, List<Param> params) {
         String uid = reqId + "-";
-        if ( useWorkspace || (isSecurityAware() &&
-                ServerContext.getRequestOwner().isAuthUser()) ) {
+        if ( isSecurityAware() &&
+                ServerContext.getRequestOwner().isAuthUser() ) {
             uid = uid + ServerContext.getRequestOwner().getUserKey();
         }
 
@@ -525,12 +523,6 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
             if (doCache()) {
                 cache.put(key, cfile);
-                if (useWorkspace) {
-                    WorkspaceManager ws = ServerContext.getRequestOwner().getWsManager();
-                    WspaceMeta meta = ws.newLocalWsMeta(cfile, WspaceMeta.TYPE, request.getRequestId());
-                    meta.setProperty(WspaceMeta.DESC, getDescResolver().getDesc(request));
-                    ws.setMeta(meta);
-                }
             }
             isFromCache = false;
         }
@@ -596,23 +588,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     protected File createFile(TableServerRequest request, String fileExt) throws IOException {
         File file = null;
         if (doCache()) {
-            if (useWorkspace) {
-                //TODO can we discuss if this is the right behaviour to put the temp file in ws?
-                //TODO The idea was to use maybe pubspace for temp but the user ws should be populated only if the user request it
-                //TODO Meaning that the UI needs to expose a control for that
-                // Put it in WS via local FS
-                ServerContext.getRequestOwner().getWsManager().createWsLocalFile(getWspaceSaveDirectory(), getFilePrefix(request), fileExt);
-//              try{
-//                // TODO Put it in WS via http?
-//                  file = File.createTempFile(getFilePrefix(request), fileExt, ServerContext.getTempWorkDir());
-//                  ServerContext.getRequestOwner().getWsManager().putFile(
-//                            getWspaceSaveDirectory(), file, ContentType.DEFAULT_BINARY.getMimeType()//**TODO is this the right mime-type?**/);
-//                } catch (WsException e) {
-//                  LOGGER.error("Couldn't upload file " + file.getAbsolutePath() + " to ws " + ServerContext.getRequestOwner().getWsManager().getProp(WorkspaceManager.PROPS.ROOT_URL));
-//                }
-            } else {
-                file = File.createTempFile(getFilePrefix(request), fileExt, ServerContext.getPermWorkDir());
-            }
+            file = File.createTempFile(getFilePrefix(request), fileExt, ServerContext.getPermWorkDir());
         } else {
             file = File.createTempFile(getFilePrefix(request), fileExt, ServerContext.getTempWorkDir());
         }

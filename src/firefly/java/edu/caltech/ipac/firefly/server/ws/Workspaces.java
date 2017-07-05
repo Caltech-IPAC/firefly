@@ -4,6 +4,8 @@ import edu.caltech.ipac.firefly.data.WspaceMeta;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.function.Consumer;
 
 /**
  * Define workspaces API that will be used by UI client to connect to WS
@@ -35,6 +37,15 @@ public interface Workspaces {
     WsResponse getFile(String wspaceRelFile, File outputFile) throws WsException;
 
     /**
+     * Get file via a consumer
+     * @param wspaceRelFile remote URI relative file path , i.e. "x/y/z/aaa.tbl" will be located under WS_HOME at WS_URL
+     * @param consumer consumer should take care of the incoming result supplied
+     * @return {@link WsResponse} TODO could contain more metadata
+     * @throws WsException
+     */
+    WsResponse getFile(String wspaceRelFile, Consumer<?> consumer) throws WsException;
+
+    /**
      * Put the file item in a relative remote location from home directory with same name as file item
      *
      * @param wspaceRelPath relative path location to ws home
@@ -56,7 +67,7 @@ public interface Workspaces {
     WsResponse delete(String wspaceRelPath) throws WsException;
 
     /**
-     * Create parent folder relative to ws home under
+     * Create path to parent folder relative to ws home under, auto creating the necessary intermediate folders.
      *
      * @param newRelativeFolderPath relative to ws home folder path
      * @return {@link WsResponse}

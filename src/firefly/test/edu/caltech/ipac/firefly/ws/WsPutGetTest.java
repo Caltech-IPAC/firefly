@@ -9,7 +9,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.jackrabbit.webdav.DavMethods;
 import org.apache.jackrabbit.webdav.client.methods.DavMethodBase;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,14 +30,14 @@ public class WsPutGetTest extends ConfigTest {
     private String testRelPathFolder;
     private String testFileName;
     private File testFile;
-    private long size;
+    private long sizeTest;
 
     @Before
     public void putInit() throws WsException {
         cred = new WsCredentials(WS_USER_ID);
         testFileName = "gaia-binary.vot";
         testFile = resolveFile(WsPutGetTest.class, testFileName);
-        size = testFile.length();
+        sizeTest = testFile.length();
         testRelPathFolder = "tmp-" + UUID.randomUUID().toString() + "/tmp1/tmp2/tmp3";//
         // TODO with special chars irt throws 301-move permanently status "/tmp1?/t2#$%^&*9"; ??
         wsm = WorkspaceFactory.getWorkspaceHandler().withCredentials(cred);
@@ -52,7 +51,7 @@ public class WsPutGetTest extends ConfigTest {
     }
 
     @Test
-    public void testPutGet() throws WsException {
+    public void testPut() throws WsException {
 
         WsResponse wsResponse = wsm.putFile(testRelPathFolder,
                 testFile,
@@ -64,8 +63,8 @@ public class WsPutGetTest extends ConfigTest {
 
         testUrl = wsm.getMeta(WsUtil.ensureUriFolderPath(testRelPathFolder) + testFile.getName(), WspaceMeta.Includes.NONE).getUrl();
         try {
-            byte[] bytes = jackrabbitGet(testUrl);
-            assertTrue("Size uploaded " + size + " not the same found " + bytes.length, bytes.length == size);
+            byte[] bytesUploaded = jackrabbitGet(testUrl);
+            assertTrue("Size uploaded " + sizeTest + " not the same found " + bytesUploaded.length, bytesUploaded.length == sizeTest);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -84,6 +83,35 @@ public class WsPutGetTest extends ConfigTest {
             return resp;
         }
         return new byte[0];
+    }
+
+    @Test
+    public void testGet() throws WsException {
+
+        WsResponse wsResponse = wsm.putFile(testRelPathFolder,
+                testFile,
+                ContentType.DEFAULT_BINARY.getMimeType());
+
+        assertTrue("Upload went wrong, status code <200 " + wsResponse.getStatusCode(), Integer.parseInt(wsResponse.getStatusCode()) == 201);
+        assertTrue("Uploaded file name is wrong " + wsResponse.getResponse(), wsResponse.getStatusText().equals("Created"));
+
+
+        String rel = wsm.getMeta(WsUtil.ensureUriFolderPath(testRelPathFolder) + testFile.getName(), WspaceMeta.Includes.NONE).getRelPath();
+        try {
+            File fDownloaded = managerGet(rel);
+            fDownloaded.deleteOnExit();
+            assertTrue("Size uploaded " + sizeTest + " not the same found " + fDownloaded.length(), fDownloaded.length() == sizeTest);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+    private File managerGet(String relFolder) throws Exception {
+        File f = File.createTempFile("test-", "xyz");
+        WsResponse wsResponse = wsm.getFile(relFolder, f);
+        return f;
     }
 
     @Test
