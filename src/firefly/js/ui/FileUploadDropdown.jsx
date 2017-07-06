@@ -7,9 +7,17 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {FormPanel} from './FormPanel.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
-import {FileUploadViewPanel, panelKey, resultSuccess, resultFail} from '../visualize/ui/FileUploadViewPanel.jsx';
+import {FileUploadViewPanel, panelKey, resultSuccess, resultFail, validateModelSelection} from '../visualize/ui/FileUploadViewPanel.jsx';
 
 const dropdownName = 'FileUploadDropDownCmd';
+
+const maskWrapper= {
+    position:'absolute',
+    left:0,
+    top:0,
+    width:'100%',
+    height:'100%'
+};
 
 
 /**
@@ -21,11 +29,9 @@ const dropdownName = 'FileUploadDropDownCmd';
 export class FileUploadDropdown extends PureComponent {
     constructor(props) {
         super(props);
-/*
-        this.state = {
-            fields: FieldGroupUtils.getGroupFields(panelKey)
-        };
-*/
+
+        this.state = {doMask: false};
+        this.changeMasking= (doMask) => this.setState(() => ({doMask}));
     }
 
     render() {
@@ -33,11 +39,15 @@ export class FileUploadDropdown extends PureComponent {
             <div style={{padding: 10}}>
                 <FormPanel
                     groupKey={panelKey}
+                    width={'1000px'}
                     onSubmit={resultSuccess()}
                     onError={resultFail()}
-                    onCancel={hideSearchPanel}>
+                    onCancel={hideSearchPanel}
+                    params={{hideOnInvalid: false}}
+                    changeMasking={this.changeMasking}>
                     <FileUploadViewPanel />
                 </FormPanel>
+                {this.state.doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
             </div>
         );
     }

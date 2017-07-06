@@ -71,11 +71,10 @@ public class DataGroupReader {
             dg = VoTableUtil.voHeaderToDataGroup(inf.getAbsolutePath());
         } else if (format == Format.FITS) {
             dg = FitsHDUUtil.fitsHeaderToDataGroup(inf.getAbsolutePath());
-        } else if (format == Format.JSON){
-            dg = new DataGroup("invalid file foramt: JSON file is not supported", new ArrayList<DataType>());
-        } else if (format == Format.CSV || format == Format.TSV || format == Format.IPACTABLE) {
-            String A = (format == Format.IPACTABLE) ? "an " : "a ";
-            dg = new DataGroup(A + format.toString() + " file", new ArrayList<DataType>());
+        } else if (format == Format.CSV || format == Format.TSV || format == Format.IPACTABLE || format == Format.JSON) {
+            String A = (format == Format.IPACTABLE) ? "An IPAC Table" : "A "+format.toString();
+            String title = String.format("%s file: the file size is %,d bytes.", A, inf.length());
+            dg = new DataGroup(title, new ArrayList<DataType>());
         } else {
             dg = new DataGroup("invalid file format", new ArrayList<DataType>());
         }
@@ -203,9 +202,8 @@ public class DataGroupReader {
                 return Format.JSON;
             } else if (line.startsWith("SIMPLE  = ")) {
                 return Format.FITS;
-            } else if (line.startsWith("<?xml") || line.startsWith("<VOTABLE")) {
-                return Format.VO_TABLE;
             }
+
             int[][] counts = new int[readAhead][2];
             int csvIdx = 0, tsvIdx = 1;
             while (line != null && row < readAhead) {
@@ -218,6 +216,8 @@ public class DataGroupReader {
                     //EQUINOX: xxx
                     //NAME-RESOLVER: xxx
                     return Format.FIXEDTARGETS;
+                } else if (line.startsWith("<VOTABLE")) {
+                    return Format.VO_TABLE;
                 }
 
                 counts[row][csvIdx] = CSVFormat.DEFAULT.parse(new StringReader(line)).iterator().next().size();

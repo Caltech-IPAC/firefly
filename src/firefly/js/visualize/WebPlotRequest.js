@@ -1054,12 +1054,22 @@ export class WebPlotRequest extends ServerRequest {
 
     setMultiImageIdx(idx) { this.setParam(C.MULTI_IMAGE_IDX, idx + ''); }
 
-    setMultiImageExts(idx) { this.setParam(C.MULTI_IMAGE_EXTS, idx); }
     /**
      * @return number index of image
      */
     getMultiImageIdx() { return this.getIntParam(C.MULTI_IMAGE_IDX,0); }
 
+
+    /**
+     * image extension list. ex: '3,4,5' for extension 3, 4, 5
+     * @param idxS
+     */
+    setMultiImageExts(idxS) { this.setParam(C.MULTI_IMAGE_EXTS, idxS); }
+
+    /**
+     * return image extension list
+     * @returns {*}
+     */
     getMultiImageExts() { return this.getParam(C.MULTI_IMAGE_EXTS); }
 
     /**

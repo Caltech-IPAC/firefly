@@ -56,25 +56,20 @@ public class VoTableUtil {
     }
 
     private enum MetaInfo {
-        INDEX("Index", "Index", Integer.class, "table index", false),
-        TABLE("Table", "Table", String.class, "table name", false),
-        TYPE("Type", "Type", String.class, "table type", false),
-        NAME("Name", "Name", String.class, "table name", true),
-        ROW("Rows", "Total Rows", Long.class, "total rows", true),
-        COLUMN("Columns", "Total Columns", Integer.class, "total columns", true);
+        INDEX("Index", "Index", Integer.class, "table index"),
+        TABLE("Table", "Table", String.class, "table name"),
+        TYPE("Type", "Type", String.class, "table type");
 
         String keyName;
         String title;
         Class  metaClass;
         String description;
-        boolean bRowInfo;
 
-        MetaInfo(String key, String title, Class c, String des, boolean rowInfo) {
+        MetaInfo(String key, String title, Class c, String des) {
             this.keyName = key;
             this.title = title;
             this.metaClass = c;
             this.description = des;
-            this.bRowInfo = rowInfo;
         }
 
         List<Object> getInfo() {
@@ -96,24 +91,12 @@ public class VoTableUtil {
         String getDescription() {
             return description;
         }
-
-        JSONObject addEntryToJson(Object value) {
-            JSONObject oneObj = new JSONObject();
-
-            oneObj.put("key", getTitle());
-            oneObj.put("value", value);
-            return oneObj;
-        }
-
-        boolean isRowInfo() { return bRowInfo; }
-
     }
 
     public static DataGroup voHeaderToDataGroup(String voTableFile) {
         List<DataType> cols = new ArrayList<DataType>();
 
         for ( MetaInfo meta : MetaInfo.values()) {    // index, name, row, column
-            if (meta.isRowInfo()) continue;
             DataType dt = new DataType(meta.getKey(), meta.getTitle(), meta.getMetaClass());
             dt.setShortDesc(meta.getDescription());
             cols.add(dt);
@@ -125,54 +108,69 @@ public class VoTableUtil {
             StarTableFactory stFactory = new StarTableFactory();
             TableSequence tseq = stFactory.makeStarTables(voTableFile, null);
 
-
             int index = 0;
-            List<JSONObject> rowDetails = new ArrayList<>();
+            List<JSONObject> headerColumns = FitsHDUUtil.createHeaderTableColumns(true);
 
             for ( StarTable table; ( table = tseq.nextTable() ) != null; ) {
                 String title = table.getName();
                 Long rowNo = new Long(table.getRowCount());
                 Integer columnNo = new Integer(table.getColumnCount());
-                String tableId = "table-" + index;
 
-                JSONObject rowInfo = new JSONObject();
+                String tableName = String.format("%d cols x %d rows", columnNo, rowNo) ;
+                List<List<String>> headerRows = new ArrayList<>();
 
-                //{rowId: , rowInfo: [{name: }, {total_row: }, {total_column: }]}
-                rowInfo.put("rowId", index);
+                List<DescribedValue> tblParams = table.getParameters();
+                int rowIdx = 0;
 
-                List<JSONObject> rowStats = new ArrayList<>();
-                JSONObject oneStat;
-                MetaInfo meta;
+                List<String> rowStats = new ArrayList<>();
+                rowStats.add(Integer.toString(rowIdx++));
+                rowStats.add("Name");
+                rowStats.add(title);
+                rowStats.add("Table name");
+                headerRows.add(rowStats);
 
-                meta = MetaInfo.NAME;
-                oneStat = meta.addEntryToJson(title);
-                rowStats.add(oneStat);
+                for (DescribedValue dv : tblParams) {
+                    ValueInfo vInfo = dv.getInfo();
 
-                meta = MetaInfo.ROW;
-                oneStat = meta.addEntryToJson(rowNo);
-                rowStats.add(oneStat);
+                    rowStats = new ArrayList<>();
+                    rowStats.add(Integer.toString(rowIdx++));
+                    rowStats.add(vInfo.getName());
+                    rowStats.add(dv.getValueAsString(200));
 
-                meta = MetaInfo.COLUMN;
-                oneStat = meta.addEntryToJson(columnNo);
-                rowStats.add(oneStat);
+                    String desc = vInfo.getDescription();
+                    if (desc == null) {
+                        desc = "";
+                    }
+                    rowStats.add(desc);
 
-                rowInfo.put("rowInfo", rowStats);
-                rowDetails.add(rowInfo);
+                    headerRows.add(rowStats);
+                }
+
+                JSONObject voParamsHeader = FitsHDUUtil.createHeaderTable(headerColumns, headerRows,
+                                               "Information of table with index " + index);
+
 
                 DataObject row = new DataObject(dg);
                 row.setDataElement(cols.get(0), index);
-                row.setDataElement(cols.get(1),tableId );
+                row.setDataElement(cols.get(1),tableName );
                 row.setDataElement(cols.get(2), "Table");
                 row.setRowIdx(index);
                 dg.add(row);
-                dg.addAttribute(Integer.toString(index), rowInfo.toJSONString());
+                dg.addAttribute(Integer.toString(index), voParamsHeader.toJSONString());
                 index++;
             }
 
             if (index == 0) {
                 throw new IOException(invalidMsg);
             } else {
-                dg.setTitle("a votable with " + index + (index > 1 ? " tables" : " table"));
+                File ff = new File(voTableFile);
+
+                String title = "A VOTable file with " + index + (index > 1 ? " tables" : " table");
+
+                title = String.format("%s: the file size is %,d bytes." +
+                        "-- The following left table shows the file summary and the right table shows the information of " +
+                        "the table which is highlighted in the file summary.", title, ff.length());
+                dg.setTitle(title);
             }
         } catch (IOException e) {
             dg.setTitle(invalidMsg);

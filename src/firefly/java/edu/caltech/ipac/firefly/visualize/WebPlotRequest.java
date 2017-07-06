@@ -138,7 +138,8 @@ public class WebPlotRequest extends ServerRequest {
                                               SERVICE, USER_DESC, INIT_ZOOM_LEVEL,
                                               TITLE, ROTATE_NORTH, ROTATE_NORTH_TYPE, ROTATE, ROTATION_ANGLE,
                                               HEADER_KEY_FOR_TITLE,
-                                              INIT_RANGE_VALUES, INIT_COLOR_TABLE, MULTI_IMAGE_FITS,MULTI_IMAGE_IDX, MULTI_IMAGE_EXTS,
+                                              INIT_RANGE_VALUES, INIT_COLOR_TABLE, MULTI_IMAGE_FITS,
+                                              MULTI_IMAGE_IDX, MULTI_IMAGE_EXTS,
                                               ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT,
                                               POST_CROP, POST_CROP_AND_CENTER, FLIP_X, FLIP_Y,
                                               HAS_MAX_ZOOM_LEVEL,
@@ -750,8 +751,6 @@ public class WebPlotRequest extends ServerRequest {
     }
 
 
-
-
     public void setPostCropAndCenter(boolean postCrop) {
         setParam(POST_CROP_AND_CENTER, postCrop + "");
     }
@@ -993,11 +992,11 @@ public class WebPlotRequest extends ServerRequest {
 
     public void setMultiImageIdx(int idx) { setParam(MULTI_IMAGE_IDX, idx + "");  }
 
-    public void setMultiImageIdxs(String idxs) { setParam(MULTI_IMAGE_IDX, idxs);  }
+    public void setMultiImageExts(String idxs) { setParam(MULTI_IMAGE_EXTS, idxs);  }
 
     public int getMultiImageIdx() { return getIntParam(MULTI_IMAGE_IDX,0); }
 
-    public String getMultiImageIdxs() { return getParam(MULTI_IMAGE_EXTS); }
+    public String getMultiImageExts() { return getParam(MULTI_IMAGE_EXTS); }
 
     public void setPreferenceColorKey(String key) {
         setParam(PREFERENCE_COLOR_KEY, key);

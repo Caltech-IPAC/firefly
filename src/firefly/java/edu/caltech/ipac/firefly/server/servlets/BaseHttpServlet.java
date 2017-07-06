@@ -69,17 +69,6 @@ public abstract class BaseHttpServlet extends HttpServlet {
 
     }
 
-    protected static void sendReturnMsg(HttpServletResponse res, int status, String msg, String value, String analysis ) throws IOException {
-
-        String retstr = status + "::" + (msg == null ? "": msg.replace("\n", "<br>")) + "::" + (value == null ? "" : value) +
-                        "::" + (analysis == null ? "" : analysis);
-        res.setStatus(status);
-        res.setContentLength(retstr.length());
-        res.setContentType("text/html");
-        res.setCharacterEncoding("utf-8");
-        res.getOutputStream().print(retstr);
-    }
-
     @Override
     protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         enableCors(req, resp);

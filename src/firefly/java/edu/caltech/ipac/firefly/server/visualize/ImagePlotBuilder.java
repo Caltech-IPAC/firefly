@@ -275,31 +275,12 @@ public class ImagePlotBuilder {
                             "Cannot yet use the MultiImageAction.USE_ALL action with three color");
                 }
                 WebPlotRequest rs = requestMap.get(NO_BAND);
-                List<String> idxs = new ArrayList<String>(Arrays.asList((rs.getMultiImageIdxs()).split(",")));
-                Integer[] idxsInt = new Integer[idxs.size()];
 
-                Integer maxIdx = -1;
-                for (int i = 0; i < idxs.size(); i++) {
-                    idxsInt[i] = Integer.parseInt(idxs.get(i));
-                    if (idxsInt[i] > maxIdx) {
-                        maxIdx = idxsInt[i];
-                    }
-                }
+                ArrayList<Integer> infoList = getFileReadList(rs.getMultiImageExts(), readInfoMap.get(NO_BAND));
 
-                ArrayList<Integer> infoList = new ArrayList<>();
-                List<Integer> idxsList = Arrays.asList(idxsInt);
-                FileReadInfo[] frInfo = readInfoMap.get(NO_BAND);
-
-                for (int i = 0; i < frInfo.length; i++) {
-                    Integer extNo = frInfo[i].getFitsRead().getExtensionNumber();
-                    if (idxsList.contains(extNo)) {
-                        infoList.add(i);
-                    } else if(extNo > maxIdx) {
-                        break;
-                    }
-                }
-
-                PlotState stateArys[] = makeNoBandMultiImagePlotStateOnList(rs, readInfoMap.get(NO_BAND), infoList);
+                PlotState stateArys[] = makeNoBandMultiImagePlotStateOnList(rs, readInfoMap.get(NO_BAND),
+                                                                        PlotState.MultiImageAction.USE_EXTS,
+                                                                        infoList);
                 plotInfo = new ImagePlotInfo[stateArys.length];
                 for (int i = 0; i < stateArys.length; i++) {
                     plotInfo[i] = ImagePlotCreator.makeOneImagePerBand(stateArys[i], readInfoMap, zoomChoice);
@@ -337,6 +318,33 @@ public class ImagePlotBuilder {
         return plotInfo;
     }
 
+    private static ArrayList<Integer> getFileReadList(String extList, FileReadInfo frInfo[]) {
+        List<String> idxs = new ArrayList(Arrays.asList(extList.split(",")));
+        List<Integer> idxsInt = new ArrayList<>();
+
+        Integer maxIdx = -1;
+        for (String idxStr : idxs) {
+            Integer idx = Integer.parseInt(idxStr);
+            idxsInt.add(idx);
+            if (idx > maxIdx) {
+                maxIdx = idx;
+            }
+        }
+
+        ArrayList<Integer> infoList = new ArrayList<>();
+
+        for (int i = 0; i < frInfo.length; i++) {
+            Integer extNo = frInfo[i].getFitsRead().getExtensionNumber();
+            if (idxsInt.contains(extNo)) {
+                infoList.add(i);
+            } else if(extNo > maxIdx) {
+                break;
+            }
+        }
+
+        return infoList;
+    }
+
     private static PlotState makeState(WebPlotRequest request,
                                        FileReadInfo readInfo,
                                        PlotState.MultiImageAction multiAction) {
@@ -370,71 +378,50 @@ public class ImagePlotBuilder {
 
     private static PlotState[] makeNoBandMultiImagePlotState(WebPlotRequest request,
                                                              FileReadInfo info[]) {
-        PlotState stateAry[] = new PlotState[info.length];
-        for (int i = 0; (i < stateAry.length); i++) {
-            stateAry[i] = PlotStateUtil.create(request);
-            stateAry[i].setMultiImageAction(PlotState.MultiImageAction.USE_ALL);
-            initState(stateAry[i], info[i], NO_BAND, request);
-            stateAry[i].setOriginalImageIdx(i, NO_BAND);
-            stateAry[i].setImageIdx(i, NO_BAND);
+
+        ArrayList<Integer> infoList = new ArrayList<>();
+        for (int i = 0; i < info.length; i++) {
+            infoList.add(i);
         }
-        initMultiImageInfo(stateAry,info);
+
+        PlotState stateAry[] = makeNoBandMultiImagePlotStateOnList(request, info, PlotState.MultiImageAction.USE_ALL, infoList);
         return stateAry;
     }
 
     private static PlotState[] makeNoBandMultiImagePlotStateOnList(WebPlotRequest request,
-                                                             FileReadInfo info[], ArrayList<Integer> infoList) {
-        boolean cube=false;
-        for (int i = 0; i < infoList.size(); i++) {
-            cube = info[infoList.get(i)].getFitsRead().getPlaneNumber() > 1;
-            if (cube) break;
-        }
-
-        int cubePlane= 1;
-        int cubeCnt= 0;
+                                                             FileReadInfo info[],
+                                                             PlotState.MultiImageAction action,
+                                                             ArrayList<Integer> infoList ) {
         PlotState stateAry[] = new PlotState[infoList.size()];
         for (int i = 0; (i < stateAry.length); i++) {
+            int n = infoList.get(i);
+
             stateAry[i] = PlotStateUtil.create(request);
-            stateAry[i].setMultiImageAction(PlotState.MultiImageAction.USE_EXTS);
-            initState(stateAry[i], info[infoList.get(i)], NO_BAND, request);
-            stateAry[i].setOriginalImageIdx(infoList.get(i), NO_BAND);
-            stateAry[i].setImageIdx(infoList.get(i), NO_BAND);
-
-            if (cube) {
-                if (info[infoList.get(i)].getFitsRead().getPlaneNumber() == 1) {
-                    cubePlane = 1;
-                    cubeCnt++;
-                }
-
-                stateAry[i].setCubeCnt(cubeCnt,Band.NO_BAND);
-                stateAry[i].setCubePlaneNumber(cubePlane,Band.NO_BAND);
-                cubePlane++;
-            }
+            stateAry[i].setMultiImageAction(action);
+            initState(stateAry[i], info[n], NO_BAND, request);
+            stateAry[i].setOriginalImageIdx(n, NO_BAND);
+            stateAry[i].setImageIdx(n, NO_BAND);
         }
+        initMultiImageInfoOnList(stateAry,info, infoList);
         return stateAry;
     }
 
-    private static void initMultiImageInfo(PlotState stateAry[],  FileReadInfo infoAry[]) {
-        if (stateAry.length!=infoAry.length && stateAry.length>1) return;
+    private static void initMultiImageInfoOnList(PlotState stateAry[],  FileReadInfo infoAry[], ArrayList<Integer>infoList) {
+        if (stateAry.length!=infoList.size() && stateAry.length>1) return;
         boolean multiImageFile= stateAry.length>1;
 
         boolean cube= false;
-        for(FileReadInfo info : infoAry) {
-            cube=info.getFitsRead().getPlaneNumber()>1;
+        for (int i = 0; i < infoList.size(); i++) {
+            cube = infoAry[infoList.get(i)].getFitsRead().getPlaneNumber() > 1;
             if (cube) break;
         }
-
 
         int cubePlane= 1;
         int cubeCnt= 0;
         for (int i = 0; (i < stateAry.length); i++) {
-            stateAry[i].setOriginalImageIdx(i, NO_BAND);
-            stateAry[i].setImageIdx(i, NO_BAND);
             stateAry[i].setMultiImageFile(multiImageFile, NO_BAND);
-
-
             if (cube) {
-                if (infoAry[i].getFitsRead().getPlaneNumber()==1) {
+                if (infoAry[infoList.get(i)].getFitsRead().getPlaneNumber()==1) {
                     cubePlane=1;
                     cubeCnt++;
                 }
