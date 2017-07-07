@@ -130,11 +130,8 @@ export function* watchCoverage(options) {
 
             case TABLE_LOADED:
                 if (!getTableInGroup(tbl_id)) continue;
-                if (get(action, 'payload.invokedBy') !== TABLE_SORT) {
-                    // no need to update coverage on table sort.. data have not changed.
-                    decimatedTables[tbl_id]= null;
-                    displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
-                }
+                decimatedTables[tbl_id]= null;
+                displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
                 break;
 
             case TBL_RESULTS_ACTIVE:
