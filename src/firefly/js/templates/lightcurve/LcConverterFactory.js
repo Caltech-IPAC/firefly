@@ -5,14 +5,17 @@
 import {get, isNil} from 'lodash';
 import {TitleOptions} from '../../visualize/WebPlotRequest.js';
 import {logError} from '../../util/WebUtil.js';
+import {getWebPlotRequestViaPTFIbe} from './ptf/PTFPlotRequests.js';
 import {getWebPlotRequestViaWISEIbe} from './wise/WisePlotRequests.js';
 import {makeLsstSdssPlotRequest} from './lsst_sdss/LsstSdssPlotRequests.js';
 import {makeURLPlotRequest} from './generic/DefaultPlotRequests.js';
 import {basicURLPlotRequest} from './basic/BasicPlotRequests';
 import {LsstSdssSettingBox, lsstSdssOnNewRawTable, lsstSdssOnFieldUpdate, lsstSdssRawTableRequest} from './lsst_sdss/LsstSdssMissionOptions.js';
-import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest, isBasicTableUploadValid} from './wise/WiseMissionOptions.js';
 import {DefaultSettingBox, defaultOnNewRawTable, defaultOnFieldUpdate, defaultRawTableRequest} from './generic/DefaultMissionOptions.js';
 import {BasicSettingBox, basicOnNewRawTable, basicOnFieldUpdate, basicRawTableRequest, imagesShouldBeDisplayed} from './basic/BasicMissionOptions.js';
+import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest, isBasicTableUploadValid} from './wise/WiseMissionOptions.js';
+import {PTFSettingBox, ptfOnNewRawTable, ptfOnFieldUpdate, ptfRawTableRequest} from './PTF/PTFMissionOptions.js';
+
 import {LC} from './LcManager.js';
 
 export const UNKNOWN_MISSION = 'generic';
@@ -113,6 +116,25 @@ const converters = {
         shouldImagesBeDisplayed: () => {return true;},
         isTableUploadValid: () => {return true;},
         yNamesChangeImage: []
+    },
+    'ptf': {
+        converterId: 'ptf',
+        defaultImageCount: 5,
+        defaultTimeCName: 'obsmjd',
+        defaultYCname: 'mag_autocorr',
+        defaultYErrCname: '',
+        missionName: 'PTF',
+        MissionOptions: PTFSettingBox,
+        onNewRawTable: ptfOnNewRawTable,
+        onFieldUpdate: ptfOnFieldUpdate,
+        rawTableRequest: ptfRawTableRequest,
+        yErrNames: '',
+        dataSource: 'pid',
+        webplotRequestCreator: getWebPlotRequestViaPTFIbe,
+        shouldImagesBeDisplayed: () => {return true;},
+        isTableUploadValid:() => {return true;},
+        yNamesChangeImage: [],
+        showPlotTitle:getPlotTitle
     },
     [UNKNOWN_MISSION]: {
         converterId: UNKNOWN_MISSION,

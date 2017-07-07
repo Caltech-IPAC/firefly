@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {get} from 'lodash';
+import {get, has} from 'lodash';
 import {LC} from './LcManager.js';
 import {getConverter} from './LcConverterFactory.js';
 import {getCellValue, getTblById, findIndex} from '../../tables/TableUtil.js';
@@ -14,6 +14,23 @@ export function getTypeData(key, val='', tip = '', labelV='', labelW) {
         tooltip: tip,
         labelWidth: labelW
     };
+}
+
+/**
+ * Returns only numerical column names form raw lc table
+ * @param {Object} rawTbl
+ * @returns {TableColumn[]} - array of table columns objects
+ */
+export function getOnlyNumericalCol(rawTbl) {
+
+    var colType = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
+    return get(rawTbl, ['tableData', 'columns']).reduce((prev, col) => {
+        if ((colType.includes(col.type)) &&
+            (!has(col, 'visibility') || get(col, 'visibility') !== 'hidden')) {
+            prev.push(col.name);
+        }
+        return prev;
+    }, []);
 }
 
 export var ReadOnlyText = ({label, content, labelWidth, wrapperStyle}) => {

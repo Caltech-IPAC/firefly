@@ -15,7 +15,6 @@ import {deleteAllDrawLayers} from '../../visualize/PlotViewUtil.js';
 import {CHART_ADD} from '../../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../../visualize/MultiViewCntlr.js';
 
-
 /**
  * Configurable part of this template
  * @typedef {object} Config

@@ -16,7 +16,7 @@ import {getMissionName} from '../LcConverterFactory.js';
 
 const labelWidth = 80;
 
-export class WiseSettingBox extends PureComponent {
+export class PTFSettingBox extends PureComponent {
     constructor(props) {
         super(props);
 
@@ -30,11 +30,7 @@ export class WiseSettingBox extends PureComponent {
 
         const wrapperStyle = {margin: '3px 0'};
 
-
         const tblModel = getTblById(LC.RAW_TABLE);
-        //const validTimes = get(missionEntries, LC.META_FLUX_NAMES, []);
-        //const validValues = gnTablet(missionEntries, LC.META_FLUX_NAMES, []);
-
         var getList = (val, type) => {
             var colType = (!type || type === 'numeric') ?
                 ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'] : ['char', 'c', 's', 'str', 'double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
@@ -54,49 +50,20 @@ export class WiseSettingBox extends PureComponent {
         );
 
         const missionKeys = [LC.META_TIME_CNAME, LC.META_FLUX_CNAME];
-        const missionOtherKeys = [LC.META_ERR_CNAME];
-        const imageDataSource = [LC.META_URL_CNAME]; // use meta_url from generic case, see LcManager.js:320 for why
-        const missionListKeys = [LC.META_TIME_NAMES, LC.META_FLUX_NAMES];
+
         const topZ = 3;
         var missionInputs = missionKeys.map((key, index) =>
             <SuggestBoxInputField key={key} fieldKey={key} wrapperStyle={wrapperStyle} popupIndex={topZ}
                                   getSuggestions={(val) => getList(val, 'numeric')}/>
         );
 
-        var missionData = imageDataSource.map((key) =>
-            <SuggestBoxInputField key={key} fieldKey={key} wrapperStyle={wrapperStyle} popupIndex={topZ}
-                                  getSuggestions={(val) => getList(val)}/>
-        );
-
-
-        //var period = getTblById(LC.PHASE_FOLDED)? get( FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER), ['period', 'value'], ''):'';
-
-
-
-        //const frameId = getColumnIdx(tblModel, 'frame_id');
-        //var missionOthers = (frameId) => {
-        //    if (frameId > -1) {
-        //        return <RadioGroupInputField key='band'
-        //                                     fieldKey='band' wrapperStyle={wrapperStyle}
-        //                                     alignment='horizontal'
-        //                                     options={[
-        //            {label: 'W1', value: 'w1'},
-        //            {label: 'W2', value: 'w2'},
-        //            {label: 'W3', value: 'w3'},
-        //            {label: 'W4', value: 'w4'}
-        //        ]}/>;
-        //    } else {
-        //        return <div><em>frame_id</em> column is missing, no images will be displayed </div>;
-        //    }
-        //};
         var missionOthers = (<RadioGroupInputField key='band'
                                                   fieldKey={LC.META_FLUX_BAND} wrapperStyle={wrapperStyle}
                                                   alignment='horizontal'
                                                   options={[
                     {label: 'W1', value: 'w1'},
                     {label: 'W2', value: 'w2'},
-                    {label: 'W3', value: 'w3'},
-                    {label: 'W4', value: 'w4'}
+
                 ]}/>);
         const groupKey = getViewerGroupKey(missionEntries);
 
@@ -112,7 +79,7 @@ export class WiseSettingBox extends PureComponent {
 
         return (
             <FieldGroup groupKey={groupKey}
-                        reducerFunc={wiseOptionsReducer(missionEntries, generalEntries)} keepState={true}>
+                        reducerFunc={ptfOptionsReducer(missionEntries, generalEntries)} keepState={true}>
 
                 <div >
                     <div style={{ with:{labelWidth}, fontWeight:'bold', display:'inline-block', margin: '3px 0 6px 0'}} > Column Selection</div>
@@ -142,28 +109,22 @@ export class WiseSettingBox extends PureComponent {
     }
 }
 
-WiseSettingBox.propTypes = {
+PTFSettingBox.propTypes = {
     generalEntries: PropTypes.object,
     missionEntries: PropTypes.object
 };
 
 
-export const wiseOptionsReducer = (missionEntries, generalEntries) => {
+export const ptfOptionsReducer = (missionEntries, generalEntries) => {
     return (inFields, action) => {
         if (inFields) {
             return inFields;
         }
 
-        // defValues used to keep the initial values for parameters in the field group of result page
-        // time: time column
-        // flux: flux column
-        // timecols:  time column candidates
-        // fluxcols:  flux column candidates
-        // errorcolumm: error column
-        // cutoutsize: image cutout size
+
         const defValues = {
             [LC.META_FLUX_BAND]: Object.assign(getTypeData(LC.META_FLUX_BAND, '',
-                'Select WISE band for images to be displayed',
+                'Select PTF band for images to be displayed',
                 'Image display:', 70)),
             [LC.META_TIME_CNAME]: Object.assign(getTypeData(LC.META_TIME_CNAME, '',
                 'time column name',
@@ -182,9 +143,6 @@ export const wiseOptionsReducer = (missionEntries, generalEntries) => {
             ['cutoutSize']: Object.assign(getTypeData('cutoutSize', '',
                 'image cutout size',
                 'Cutout Size (arcmin):', 100)),
-            [LC.META_URL_CNAME]: Object.assign(getTypeData(LC.META_URL_CNAME, '',
-                'WISE Image identifier column name (frame_id)',
-                'Image Column:', labelWidth)),
             [LC.META_ERR_CNAME]: Object.assign(getTypeData(LC.META_ERR_CNAME, '',
                 'value error column name',
                 'Error Column:', labelWidth))
@@ -220,7 +178,7 @@ function getFieldValidators(missionEntries) {
         {key: LC.META_TIME_CNAME, vkey: LC.META_TIME_NAMES},
         {key: LC.META_FLUX_CNAME, vkey: LC.META_FLUX_NAMES},
         {key: LC.META_URL_CNAME}
-        //{key: LC.META_ERR_CNAME, vkey: LC.META_ERR_NAMES} // error can have no value
+
     ];
     return fldsWithValidators.reduce((all, fld) => {
         all[fld.key] =
@@ -235,90 +193,42 @@ function getFieldValidators(missionEntries) {
         return all;
     }, {});
 }
-/*
- function setFields(missionEntries, generalEntries) {
- const groupKey = getViewerGroupKey(missionEntries);
- const fields = FieldGroupUtils.getGroupFields(groupKey);
- const validators = getFieldValidators(missionEntries);
- if (fields) {
- const initState = Object.keys(fields).reduce((prev, fieldKey) => {
- if (has(missionEntries, fieldKey)) {
- prev.push({fieldKey, value: get(missionEntries, fieldKey), validator: validators[fieldKey]});
- } else if (has(generalEntries,fieldKey)) {
- prev.push({fieldKey, value: get(generalEntries, fieldKey)});
- }
- return prev;
- }, []);
- dispatchMultiValueChange(groupKey, initState);
- }
- }
- */
 
-
-/**
- * Check if this is WISE MEP table on upload, otherise bailout
- * @returns {boolean} error message to be picked up by UI
- */
-export function isBasicTableUploadValid() {
-
-    const tableModel = getTblById(LC.RAW_TABLE);
-    // For wcs target match and overlay
-    const ra = getCellValue(tableModel, 0, 'ra');
-    const dec = getCellValue(tableModel, 0, 'dec');
-
-    // For images from AllWise:
-    const frameId = getCellValue(tableModel, 0, 'frame_id');
-
-    // For other single exposure tables (NEOWISE, etc)
-    const frameNum = getCellValue(tableModel, 0, 'frame_num');
-    const scanId = getCellValue(tableModel, 0, 'scan_id');
-    const sourceId = getCellValue(tableModel, 0, 'source_id');
-
-    // For now, bailout when images fetched will fail:
-    if(isNil(frameId)){
-        if(isNil(sourceId)){
-           return (!isNil(scanId) && !isNil(frameNum));
-        }else{
-            return true;
-        }
-    }else{
-        return true;
-    }
-}
 
 /**
  * Pregex pattern for wise, at least to find mjd and w1mpro if present
  * @type {string[]}
  */
 const xyColPattern = ['\\w*jd\\w*', 'w[1-4]mpro\\w*'];
-export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo) {
+export function ptfOnNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo) {
 
     // Update default values AND sortInfo and
     const metaInfo = rawTable && rawTable.tableMeta;
 
-    let error = '';
-    if(!isBasicTableUploadValid()){
-        const frameId = getCellValue(rawTable, 0, 'frame_id');
-        const sourceId = getCellValue(rawTable, 0, 'source_id');
-        const frameNum = getCellValue(rawTable, 0, 'frame_num');
-        const scanId = getCellValue(rawTable, 0, 'scan_id');
-        var a = [];
-        isNil(frameId) ? a.push('frame_id') :'';
-        isNil(sourceId) ? a.push('source_id'):'';
-        isNil(scanId) ? a.push('scan_id') : '';
-        isNil(frameNum) ? a.push('frame_num'):'';
+    // For wcs target match and overlay
+    const ra = getCellValue(rawTable, 0, 'ra');
+    const dec = getCellValue(rawTable, 0, 'dec');
 
-        for (let i=0; i< a.length-1;i++){
-            error+= a[i]+', ';
-        }
-        error+= a[a.length-1];
+    const pid = getCellValue(rawTable, 0, 'pid');
+
+    var a = [];
+
+    isNil(pid) ? a.push('pid') : '';
+    isNil(ra) ? a.push('ra') : '';
+    isNil(dec) ? a.push('dec') : '';
+    let error = '';
+    if (a.length > 0) {
+         for (let i = 0; i < a.length - 1; i++) {
+             error += a[i] + ', ';
+         }
+         error += a[a.length - 1];
     }
+
 
 
     let numericalCols = getOnlyNumericalCol(rawTable);
 
     //Find column based on a pattern, if not, just get the constant value from the converter (=mjd, =w1mpro_ep)
-
     let defaultCTimeName = (getColumnIdx(rawTable, converterData.defaultTimeCName) > 0) ? converterData.defaultTimeCName : numericalCols[0];
     let defaultYColName = (getColumnIdx(rawTable, converterData.defaultYCname) > 0) ? converterData.defaultYCname : numericalCols[1];
     let defaultDataSource = (getColumnIdx(rawTable, converterData.dataSource) > 0) ? converterData.dataSource : numericalCols[3];
@@ -344,21 +254,13 @@ export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, conv
     };
 
     missionEntries = Object.assign({}, missionEntries, defaultValues);
-    //
-    //
-    //var {rawTableRequest} = layoutInfo;
-    //rawTableRequest = cloneDeep(rawTable.request);
-    //const options = {
-    //    sortInfo: sortInfoString(defaultCTimeName),
-    //    META_INFO: {...pick(missionEntries, [LC.META_MISSION, LC.META_TIME_CNAME, LC.META_FLUX_CNAME])}
-    //};
 
 
     const newLayoutInfo = smartMerge(layoutInfo, {missionEntries, generalEntries, error});
     return {newLayoutInfo, shouldContinue: false};
 }
 
-export function wiseRawTableRequest(converter, source, uploadFileName='') {
+export function ptfRawTableRequest(converter, source, uploadFileName='') {
     const timeCName = converter.defaultTimeCName;
     const mission = converter.converterId;
     const options = {
@@ -376,7 +278,7 @@ export function wiseRawTableRequest(converter, source, uploadFileName='') {
 
 }
 
-export function wiseOnFieldUpdate(fieldKey, value) {
+export function ptfOnFieldUpdate(fieldKey, value) {
     // images are controlled by radio button -> band w1,w2,w3,w4.
     if (fieldKey === LC.META_TIME_CNAME) {
         const {missionEntries} = getLayouInfo() || {};
