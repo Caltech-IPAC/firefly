@@ -42,7 +42,7 @@ public class NedNameResolver {
        try {
 
 
-           String urlStr = "http://" + hp.getHost() + ":" + hp.getPort() + CGI_CMD + URLEncoder.encode(objname, "UTF-8");
+           String urlStr = "https://" + hp.getHost() + ":" + hp.getPort() + CGI_CMD + URLEncoder.encode(objname, "UTF-8");
            System.out.printf("url: %s%n", urlStr);
 
            URL url = new URL(urlStr);
