@@ -157,7 +157,7 @@ function buildTablePart(channel,file,dispatch) {
 
     const fetchTable= (request, hlRowIdx) => {
         doViewerOperation(channel,file, () => {
-            dispatchTableFetch(request, hlRowIdx, dispatch);
+            dispatchTableFetch(request, hlRowIdx, undefined, dispatch);
         });
     };
 
@@ -242,7 +242,7 @@ function plotRemoteXYPlot(params, dispatch) {
                 {pageSize: 0} // table options
             );
             tblId = searchRequest.tbl_id;
-            dispatchTableFetch(searchRequest, 0, dispatch);
+            dispatchTableFetch(searchRequest, 0, undefined, dispatch);
         } else {
             logError('Either tbl_id or source must be specified in the parameters');
             return;
@@ -278,7 +278,7 @@ function plotRemoteHistogram(params, dispatch) {
                 {pageSize: 0} // table options
             );
             tblId = searchRequest.tbl_id;
-            dispatchTableFetch(searchRequest, 0, dispatch);
+            dispatchTableFetch(searchRequest, 0, undefined, dispatch);
         } else {
             logError('Either tbl_id or source must be specified in the parameters');
             return;
