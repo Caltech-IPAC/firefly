@@ -9,6 +9,8 @@ import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.ws.WorkspaceFactory;
+import edu.caltech.ipac.firefly.server.ws.WsCredentials;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
@@ -83,9 +85,9 @@ public class RequestOwner implements Cloneable {
         if (wsManager == null) {
             getUserInfo();
             if (userInfo.isGuestUser()) {
-                wsManager = new WorkspaceManager(getUserKey());
+                wsManager = WorkspaceFactory.getWorkspaceHandler().withCredentials(new WsCredentials(getUserKey()));
             } else {
-                wsManager = new WorkspaceManager(userInfo.getLoginName(), getIdentityCookies());
+                wsManager = WorkspaceFactory.getWorkspaceHandler().withCredentials(new WsCredentials(userInfo.getLoginName(), getIdentityCookies()));
             }
         }
         return wsManager;

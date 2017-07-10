@@ -150,4 +150,10 @@ export const ServerParams = {
 
 
         USER_TARGET_WORLD_PT : 'UserTargetWorldPt',
+
+
+        WS_LIST : "wsList",
+        WS_GET_FILE : "wsGet",
+        WS_PUT_FILE : "wsPut"
+
 };

@@ -15,6 +15,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Created by zhang on 10/19/16.
@@ -35,14 +37,13 @@ public class FileLoader {
      * @return
      * @throws ClassNotFoundException
      */
-    public static String getDataPath(Class cls) throws ClassNotFoundException {
+    public static String getDataPath(Class cls) {
 
-        String testTreePath =  cls.getProtectionDomain().getCodeSource().getLocation().getPath();
-        String  rootPath = testTreePath.split("firefly")[0];
+        String rootPath = Paths.get("").toAbsolutePath().getParent().toUri().getPath();
         String testDataPath = TEST_DATA_ROOT+cls.getCanonicalName().replaceAll("\\.", "/")
                 .replace(cls.getSimpleName(), "");
 
-        String dataPath = rootPath+ testDataPath;
+        String dataPath = rootPath + testDataPath;
         return dataPath;
     }
 

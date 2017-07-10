@@ -8,12 +8,7 @@ import edu.caltech.ipac.astro.InvalidStatementException;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
-import edu.caltech.ipac.firefly.data.DecimateInfo;
-import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.SortInfo;
-import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.WspaceMeta;
+import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -23,13 +18,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.ipactable.*;
-import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
-import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
@@ -38,23 +27,12 @@ import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.expr.Expression;
 import org.apache.commons.httpclient.HttpStatus;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -64,8 +42,6 @@ import java.util.Map;
  * @version $Id: IpacTablePartProcessor.java,v 1.33 2012/10/23 18:37:22 loi Exp $
  */
 abstract public class IpacTablePartProcessor implements SearchProcessor<DataGroupPart> {
-
-    public static final boolean useWorkspace = AppProperties.getBooleanProperty("useWorkspace", false);
 
     public static final Logger.LoggerImpl SEARCH_LOGGER = Logger.getLogger(Logger.SEARCH_LOGGER);
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
@@ -310,8 +286,8 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
     private String createUniqueId(String reqId, List<Param> params) {
         String uid = reqId + "-";
-        if ( useWorkspace || (isSecurityAware() &&
-                ServerContext.getRequestOwner().isAuthUser()) ) {
+        if ( isSecurityAware() &&
+                ServerContext.getRequestOwner().isAuthUser() ) {
             uid = uid + ServerContext.getRequestOwner().getUserKey();
         }
 
@@ -547,12 +523,6 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
             if (doCache()) {
                 cache.put(key, cfile);
-                if (useWorkspace) {
-                    WorkspaceManager ws = ServerContext.getRequestOwner().getWsManager();
-                    WspaceMeta meta = ws.newMeta(cfile, WspaceMeta.TYPE, request.getRequestId());
-                    meta.setProperty(WspaceMeta.DESC, getDescResolver().getDesc(request));
-                    ws.setMeta(meta);
-                }
             }
             isFromCache = false;
         }
@@ -616,14 +586,9 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     protected File createFile(TableServerRequest request, String fileExt) throws IOException {
-        File file;
+        File file = null;
         if (doCache()) {
-            if (useWorkspace) {
-                file = ServerContext.getRequestOwner().getWsManager().createFile(
-                        getWspaceSaveDirectory(), getFilePrefix(request), fileExt);
-            } else {
-                file = File.createTempFile(getFilePrefix(request), fileExt, ServerContext.getPermWorkDir());
-            }
+            file = File.createTempFile(getFilePrefix(request), fileExt, ServerContext.getPermWorkDir());
         } else {
             file = File.createTempFile(getFilePrefix(request), fileExt, ServerContext.getTempWorkDir());
         }

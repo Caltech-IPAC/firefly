@@ -17,6 +17,7 @@ import edu.caltech.ipac.firefly.server.rpc.ResourceServerCommands;
 import edu.caltech.ipac.firefly.server.rpc.VisServerCommands;
 import edu.caltech.ipac.firefly.server.servlets.HttpServCommands;
 import edu.caltech.ipac.firefly.server.query.SearchServerCommands;
+import edu.caltech.ipac.firefly.server.ws.WsServerCommands;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -66,6 +67,11 @@ public class ServerCommandAccess {
 
         _cmdMap.put(ServerParams.USER_KEY,   new ResourceServerCommands.UserKey());
         _cmdMap.put(ServerParams.VERSION,      new ResourceServerCommands.GetVersion());
+
+        //Workspaces
+        _cmdMap.put(ServerParams.WS_LIST,               new WsServerCommands.WsList());
+        _cmdMap.put(ServerParams.WS_GET_FILE,           new WsServerCommands.WsGetFile());
+        _cmdMap.put(ServerParams.WS_PUT_FILE,           new WsServerCommands.WsPutFile());
 
         _cmdMap.put(ServerParams.RAW_DATA_SET,           new SearchServerCommands.GetRawDataSet());
         _cmdMap.put(ServerParams.JSON_DATA,              new SearchServerCommands.GetJSONData());

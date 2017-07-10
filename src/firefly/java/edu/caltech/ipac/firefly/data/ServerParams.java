@@ -169,5 +169,10 @@ public class ServerParams {
 
     public static final String INIT_APP = "CmdInitApp";
     public static final String LOGOUT = "CmdLogout";
+
+    //Workspaces
+    public static final String WS_LIST = "wsList";
+    public static final String WS_GET_FILE = "wsGet";
+    public static final String WS_PUT_FILE = "wsPut";
 }
 
