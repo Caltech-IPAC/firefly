@@ -4,6 +4,7 @@ ext.MISC_GROUP = "~ Misc"
 
 project.ext["app-name"] = name
 project.ext.buildRoot = "$rootDir/build"
+project.ext.distDir = "${rootDir}/build/dist"
 buildDir = "$buildRoot/${project.ext["app-name"]}"
 
 
