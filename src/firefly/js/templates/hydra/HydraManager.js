@@ -4,7 +4,7 @@
 import {take, fork} from 'redux-saga/effects';
 
 import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
-    dispatchUpdateLayoutInfo, dropDownManager} from '../../core/LayoutCntlr.js';
+        dispatchUpdateLayoutInfo, dropDownManager} from '../../core/LayoutCntlr.js';
 import {removeChartsInGroup} from '../../charts/ChartsCntlr.js';
 import {TABLE_SEARCH, TBL_RESULTS_ADDED, TABLE_REMOVE} from '../../tables/TablesCntlr.js';
 import {visRoot, dispatchDeletePlotView} from '../../visualize/ImagePlotCntlr.js';
@@ -14,6 +14,7 @@ import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
 import {deleteAllDrawLayers} from '../../visualize/PlotViewUtil.js';
 import {CHART_ADD} from '../../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../../visualize/MultiViewCntlr.js';
+
 
 /**
  * Configurable part of this template
