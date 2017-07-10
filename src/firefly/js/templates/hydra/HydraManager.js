@@ -4,7 +4,7 @@
 import {take, fork} from 'redux-saga/effects';
 
 import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
-        dispatchUpdateLayoutInfo, dropDownManager} from '../../core/LayoutCntlr.js';
+    dispatchUpdateLayoutInfo, dropDownManager} from '../../core/LayoutCntlr.js';
 import {removeChartsInGroup} from '../../charts/ChartsCntlr.js';
 import {TABLE_SEARCH, TBL_RESULTS_ADDED, TABLE_REMOVE} from '../../tables/TablesCntlr.js';
 import {visRoot, dispatchDeletePlotView} from '../../visualize/ImagePlotCntlr.js';
@@ -14,7 +14,6 @@ import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
 import {deleteAllDrawLayers} from '../../visualize/PlotViewUtil.js';
 import {CHART_ADD} from '../../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../../visualize/MultiViewCntlr.js';
-
 
 /**
  * Configurable part of this template
@@ -82,13 +81,7 @@ function handleNewSearch(layoutInfo, action) {
     var {showTables=true, showXyPlots=true, showImages=true, images={}} = layoutInfo;
 
     if (currentSearch && currentSearch !== activeSearch) {
-        // remove all tables
-        const groups = getAllTableGroupIds() || [];
-        groups.forEach((k) => removeTablesFromGroup(k));
-        // remove all plots
-        visRoot().plotViewAry.forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId}));
-        // remove all drawing layers
-        deleteAllDrawLayers();
+        cleanup();
         // remove all charts
         removeChartsInGroup();
         showTables=showXyPlots=showImages=true;
@@ -99,3 +92,15 @@ function handleNewSearch(layoutInfo, action) {
     return layoutInfo;
 }
 
+
+export function cleanup() {
+
+    // remove all tables
+    const groups = getAllTableGroupIds() || [];
+    groups.forEach((k) => removeTablesFromGroup(k));
+    // remove all plots
+    visRoot().plotViewAry.forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId}));
+    // remove all drawing layers
+    deleteAllDrawLayers();
+
+}
