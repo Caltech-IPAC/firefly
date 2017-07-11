@@ -61,8 +61,8 @@ export class PTFSettingBox extends PureComponent {
                                                   fieldKey={LC.META_FLUX_BAND} wrapperStyle={wrapperStyle}
                                                   alignment='horizontal'
                                                   options={[
-                    {label: 'W1', value: 'w1'},
-                    {label: 'W2', value: 'w2'},
+                    {label: 'G', value: 'g'},
+                    {label: 'R', value: 'r'},
 
                 ]}/>);
         const groupKey = getViewerGroupKey(missionEntries);
