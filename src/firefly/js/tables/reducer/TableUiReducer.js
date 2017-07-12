@@ -20,6 +20,7 @@ export function uiReducer(state={ui:{}}, action={}) {
             return updateAllUi(root, tbl_id, tbl_ui_id, action.payload);
         }
         case (Cntlr.TABLE_REMOVE)    :
+        case (Cntlr.TBL_RESULTS_REMOVE)    :
             return removeTable(root, action);
 
         case (Cntlr.TBL_RESULTS_ADDED) :

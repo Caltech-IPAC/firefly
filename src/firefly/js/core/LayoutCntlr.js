@@ -11,7 +11,7 @@ import {clone} from '../util/WebUtil.js';
 import {smartMerge} from '../tables/TableUtil.js';
 import {getDropDownNames} from '../ui/Menu.jsx';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
-import {TBL_RESULTS_ADDED, TABLE_REMOVE} from '../tables/TablesCntlr.js';
+import {TBL_RESULTS_ADDED, TBL_RESULTS_REMOVE, TABLE_REMOVE} from '../tables/TablesCntlr.js';
 import {CHART_ADD, CHART_REMOVE} from '../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../visualize/MultiViewCntlr.js';
 
@@ -239,6 +239,7 @@ export function dropDownHandler(layoutInfo, action) {
 
         case SHOW_DROPDOWN:
         case TABLE_REMOVE:
+        case TBL_RESULTS_REMOVE:
         case ImagePlotCntlr.DELETE_PLOT_VIEW:
             if (!get(layoutInfo, 'dropDown.visible', false)) {
                 if (count===0) {
@@ -262,7 +263,7 @@ export function* dropDownManager() {
         const action = yield take([
             ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE,
             REPLACE_VIEWER_ITEMS,
-            TABLE_REMOVE, TBL_RESULTS_ADDED,
+            TABLE_REMOVE, TBL_RESULTS_ADDED, TBL_RESULTS_REMOVE,
             CHART_ADD, CHART_REMOVE,
             SHOW_DROPDOWN, SET_LAYOUT_MODE
         ]);

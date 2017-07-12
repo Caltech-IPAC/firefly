@@ -149,18 +149,12 @@ public class SearchServerCommands {
     public static class SubmitBackgroundSearch extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            String servReqStr = params.getRequired(ServerParams.REQUEST);
+            TableServerRequest serverRequest = params.getTableServerRequest();
             int waitMil = params.getRequiredInt(ServerParams.WAIT_MILS);
 
-            TableServerRequest serverRequest= ServerRequest.parse(servReqStr, new TableServerRequest());
-            Request clientRequest= null;
-            if (params.contains(ServerParams.CLIENT_REQUEST))  {
-                clientRequest= ServerRequest.parse(params.getOptional(ServerParams.CLIENT_REQUEST),
-                        new Request());
-            }
             BackgroundStatus bgStat= new SearchServicesImpl().submitBackgroundSearch(
-                    serverRequest,clientRequest,waitMil);
-            return bgStat.serialize();
+                    serverRequest, null,waitMil);
+            return QueryUtil.convertToJsonObject(bgStat).toJSONString();
         }
     }
 
@@ -169,7 +163,7 @@ public class SearchServerCommands {
         public String doCommand(SrvParam params) throws Exception {
             BackgroundStatus bgStat= new SearchServicesImpl().getStatus(params.getID(),
                     params.getRequiredBoolean(ServerParams.POLLING));
-            return bgStat.serialize();
+            return QueryUtil.convertToJsonObject(bgStat).toJSONString();
         }
     }
 
@@ -177,6 +171,15 @@ public class SearchServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             new SearchServicesImpl().addIDToPushCriteria(params.getID());
+            return "true";
+        }
+    }
+
+    public static class AddBgJob extends ServCommand {
+
+        public String doCommand(SrvParam params) throws Exception {
+            BackgroundStatus bgStatus = QueryUtil.convertToBackgroundStatus(params.getRequired("bgStats"));
+            BackgroundEnv.addUserBackgroundInfo(bgStatus);
             return "true";
         }
     }

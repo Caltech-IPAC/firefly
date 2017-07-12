@@ -8,7 +8,7 @@ import {isEmpty, truncate, get} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {download} from '../../util/WebUtil.js';
 import * as TblUtil from '../TableUtil.js';
-import {dispatchTableRemove, dispatchTblExpanded} from '../TablesCntlr.js';
+import {dispatchTableRemove, dispatchTblExpanded, dispatchTblResultsRemove} from '../TablesCntlr.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableConnector} from '../TableConnector.js';
@@ -17,6 +17,7 @@ import {PagingBar} from '../../ui/PagingBar.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
+import {dispatchJobAdd} from '../../core/background/BackgroundCntlr.js';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
@@ -107,16 +108,16 @@ export class TablePanel extends PureComponent {
 
 
     render() {
-        const {selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
-                showToolbar, showTitle, showOptionButton, showPaging, showSave, showFilterButton} = this.state;
-        var {totalRows, showLoading, columns, showOptions, showUnits, showFilters, textView, optSortInfo, leftButtons, rightButtons} = this.state;
-        const {tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
-                filterInfo, filterCount, sortInfo, data} = this.state;
         const {tableConnector} = this;
-
+        const { selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
+                showToolbar, showTitle, showOptionButton, showPaging, showSave, showFilterButton,
+                totalRows, showLoading, columns, showOptions, showUnits, showFilters, textView, optSortInfo,
+                tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
+                filterInfo, filterCount, sortInfo, data, bgStatus} = this.state;
+        var {leftButtons, rightButtons} =  this.state;
 
         if (error) return <div className='TablePanel__error'>{error}</div>;
-        if (isEmpty(columns)) return <Loading {...{showTitle, tbl_id, title, removable}}/>;
+        if (isEmpty(columns)) return <Loading {...{showTitle, tbl_id, title, removable, bgStatus}}/>;
 
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
         const viewIcoStyle = 'PanelToolbar__button ' + (textView ? 'tableView' : 'textView');
@@ -277,11 +278,21 @@ function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
 }
 
 // eslint-disable-next-line
-function Loading({showTitle, tbl_id, title, removable}) {
+function Loading({showTitle, tbl_id, title, removable, bgStatus}) {
+    const toBg = () => {
+        dispatchTblResultsRemove(tbl_id);
+        dispatchJobAdd(bgStatus);
+    };
+    
     return (
         <div style={{position: 'relative', width: '100%', height: '100%'}}>
             <div className='loading-mask'/>
             <div style={{padding: '2px 4px'}}>{showTitle ? title : ''}</div>
+            {bgStatus &&
+                <div className='TablePanel__mask'>
+                    <button type='button' className='TablePanel__mask--button button std' onClick={toBg}>Send to background</button>
+                </div>
+            }
         </div>
     );
 }

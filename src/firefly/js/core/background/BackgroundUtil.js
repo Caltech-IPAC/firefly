@@ -27,6 +27,14 @@ export function getBackgroundJobs() {
 }
 
 /**
+ * returns background status for the given id.
+ * @returns {BgStatus}
+ */
+export function getBgStatusById(id) {
+    return get(flux.getState(), [BACKGROUND_PATH, 'jobs', id]);
+}
+
+/**
  * returns the email used for background status notification.
  * @returns {string}
  */
@@ -57,6 +65,12 @@ export function isSuccess(state) {
 
 export function isActive(state) {
     return BG_STATE.get('WAITING | WORKING | STARTING').has(state);
+}
+
+export function getErrMsg(bgStatus) {
+    return Object.entries(bgStatus).filter( ([k,v]) => k.startsWith('MESSAGE_'))
+                            .map(([k,v]) => v)
+                            .join('; ');
 }
 
 
