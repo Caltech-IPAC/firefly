@@ -74,6 +74,7 @@ function enableSpecialViewer(state,payload) {
 
 function addCell(state,payload) {
     const {row=0, col=0, width=1, height=1, cellId}= payload;
+    console.log(`action: addCell: r:${row},c:${col},w:${width},   h:${height}, `);
     const type= LO_VIEW.get(payload.type);
     if (!type || !cellId) return state; // row, col, type, cellId must be defined
 
@@ -87,7 +88,12 @@ function addCell(state,payload) {
     gridView= c ? gridView.map( (entry) => entry.cellId===cellId ? newEntry : entry) :
                   [...gridView, newEntry];
 
-    return clone(state, {gridView});
+
+    const dim= getGridDim(gridView);
+    const cols= state.gridColumns || 1;
+
+
+    return clone(state, {gridView, gridColumns: cols>dim.cols ? cols : dim.cols});
 }
 
 function removeCell(state,payload) {

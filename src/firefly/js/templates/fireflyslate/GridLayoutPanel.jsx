@@ -19,7 +19,7 @@ import {NewPlotMode} from '../../visualize/MultiViewCntlr.js';
 import './react-grid-layout_styles.css';
 import './react-resizable_styles.css';
 
-const CV= 5;
+const CV= 1;
 const CELL_MARGIN=2;
 
  //Some of the docs from size me are included here
@@ -67,15 +67,14 @@ class SlateView extends PureComponent {
     }
 
     shouldComponentUpdate(nP) {
-        const {gridView, size:{width}}= this.props;
+        const {gridView, size:{width,height}}= this.props;
         if (this.renderedGridView.length!==nP.gridView.length) {
             this.doCollapse= false;
         }
-        return (nP.gridView!==gridView || nP.size.width!==width || this.renderedGridView!==nP.gridView);
-
-        const normalLayout= makeNormalLayout(this.props.gridView);
-        const nextNormalLayout= makeNormalLayout(nP.gridView);
-        // todo compare them - make sure everything are integers
+        return (nP.gridView!==gridView ||
+                nP.size.width!==width ||
+                nP.size.height!==height
+                || this.renderedGridView!==nP.gridView);
     }
 
     renderedLayoutUpdated(layout) {
@@ -103,7 +102,7 @@ class SlateView extends PureComponent {
     }
 
     render() {
-        const {gridView,size:{width,height}}= this.props;
+        const {gridView,size:{width,height}, gridColumns}= this.props;
         this.renderedGridView= gridView;
 
 
@@ -122,7 +121,7 @@ class SlateView extends PureComponent {
         }
 
         const breakpoints= {xxs: 0, small: 400, normalLayout:600};
-        const cols=        {xxs: CV, small:CV, normalLayout: maxSize.cols};
+        const cols=        {xxs: CV, small:CV, normalLayout: gridColumns};
         const layouts=     {xxs: small, small, normalLayout};
 
         this.normalLayoutTMP= normalLayout;
@@ -151,6 +150,7 @@ class SlateView extends PureComponent {
 SlateView.propTypes= {
     gridView : PropTypes.array.isRequired,
     size: PropTypes.object.isRequired,
+    gridColumns : PropTypes.number.isRequired
 };
 
 const sizeMeHOC = sizeMe(config);
@@ -158,7 +158,8 @@ const sizeMeHOC = sizeMe(config);
 export const GridLayoutPanel= sizeMeHOC(SlateView);
 
 GridLayoutPanel.propTypes= {
-    gridView : PropTypes.array.isRequired
+    gridView : PropTypes.array.isRequired,
+    gridColumns : PropTypes.number.isRequired
 };
 
 
@@ -168,7 +169,7 @@ GridLayoutPanel.propTypes= {
 
 function makeNormalLayout(gridView) {
     return gridView.map ( (c) => ({ x : c.col*CV, y : c.row*CV, w : c.width*CV, h : c.height*CV,
-                                    i : c.cellId, minW:CV/2, minH:CV/2 }));
+                                    i : c.cellId, minW:CV, minH:CV }));
 }
 
 function makeSmallLayout(gridView) {
@@ -199,6 +200,7 @@ function makeComponent(g) {
                     <MultiImageViewer key={g.cellId} viewerId= {g.cellId}
                                       insideFlex={true}
                                       canReceiveNewPlots={NewPlotMode.replace_only.key}
+                                      alwaysShowToolbar={true}
                                       Toolbar={MultiViewStandardToolbar}/>
                 </div>
             );

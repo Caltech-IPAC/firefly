@@ -80,7 +80,7 @@ export class FireflySlate extends PureComponent {
     }
 
     render() {
-        const {isReady, mode, gridView= [], menu={}, appTitle, appIcon, altAppIcon, dropDown,
+        const {isReady, mode, gridView= [], gridColumns=1,  menu={}, appTitle, appIcon, altAppIcon, dropDown,
                 dropdownPanels, footer, style, showViewsSwitch,
                 leftButtons, centerButtons, rightButtons} = this.state;
         const {expanded} = mode || {};
@@ -101,7 +101,7 @@ export class FireflySlate extends PureComponent {
                             {...{dropdownPanels} } />
                     </header>
                     <main style={{height:'100%'}}>
-                        {mainView({expanded, gridView})}
+                        {mainView({expanded, gridView, gridColumns})}
                     </main>
                 </div>
             );
@@ -124,7 +124,7 @@ const closeExpanded= () => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)
  * @param props.rightButtons
  * @return {*}
  */
-function mainView({expanded,gridView, leftButtons, centerButtons, rightButtons}) {
+function mainView({expanded,gridView, gridColumns, leftButtons, centerButtons, rightButtons}) {
 
     switch (expanded) {
         case LO_VIEW.images:
@@ -139,17 +139,17 @@ function mainView({expanded,gridView, leftButtons, centerButtons, rightButtons})
             return <TablesContainer mode='both' closeable={true} expandedMode={true} />;
             break;
         default:
-            return isEmpty(gridView) ? showEmptyMessage()  : normalMainView({gridView});
+            return isEmpty(gridView) ? showEmptyMessage()  : normalMainView({gridView, gridColumns});
     }
 }
 
 
-function normalMainView({gridView, leftButtons, centerButtons, rightButtons}) {
+function normalMainView({gridView, gridColumns, leftButtons, centerButtons, rightButtons}) {
 
     return (
         <div key='normalMainView' style={{flex: '1 1 auto', display: 'flex', flexDirection:'column', justifyContent: 'flex-start'}}>
             <VisToolbar style={{paddingBottom:6, borderBottom: '1px solid rgba(0,0,0,.2)'}}/>
-            <GridLayoutPanel gridView={gridView||[]}/>
+            <GridLayoutPanel gridView={gridView||[]} gridColumns={gridColumns}/>
         </div>
     );
 }

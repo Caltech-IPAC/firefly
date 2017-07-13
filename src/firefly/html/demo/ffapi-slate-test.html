@@ -69,7 +69,7 @@ Add Some Tables
 Add Different types of image displays
 <ul>
     <li>
-        <a href="javascript:loadImageDataDisplay(2, 0,4,2)">Image meta data viewer</a> display <span class='smallCoords'>at row: 2, col: 1, w:4 h: 2</span>
+        <a href="javascript:loadImageDataDisplay(2, 0,4,2)">Image meta data viewer</a> display <span class='smallCoords'>at row: 2, col: 0, w:4 h: 2</span>
     </li>
     <li>
         <a href="javascript:load3C(0,4,2,2)">3 Color</a> in cell <span class='smallCoords'>at row: 0, col: 4, w:2 h: 2</span>
@@ -230,7 +230,7 @@ Add more images
     {
         onFireflyLoaded= function(firefly) {
 
-            firefly.setDefaultViewerFile('slate.html');
+            firefly.setViewerConfig(firefly.ViewerType.Grid);
             window.ffViewer= firefly.getViewer();
 
             firefly.setGlobalImageDef({

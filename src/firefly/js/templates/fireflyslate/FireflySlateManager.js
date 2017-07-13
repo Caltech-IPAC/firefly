@@ -61,10 +61,12 @@ export function* layoutManager({title}) {
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;
 
+        console.log(`action: ${action.type}`);
         switch (action.type) {
             case ImagePlotCntlr.PLOT_IMAGE_START:
             case ImagePlotCntlr.PLOT_IMAGE :
             case REPLACE_VIEWER_ITEMS:
+
                 newLayoutInfo = handleNewImage(newLayoutInfo, action);
                 break;
             case ImagePlotCntlr.DELETE_PLOT_VIEW:
