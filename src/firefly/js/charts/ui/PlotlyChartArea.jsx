@@ -62,7 +62,7 @@ export class PlotlyChartArea extends PureComponent {
             doingResize = true;
         }
         const showlegend = data.length > 1;
-        let pdata = [].concat(data);
+        let pdata = data.map((e) => Object.assign({}, e)); // create shallow copy of data elements to avoid sharing x,y,z arrays
         if (!data[activeTrace] || get(data[activeTrace], 'type', '').includes('scatter')) {
             // highlight makes sense only for scatter at the moment
             pdata = selected ? pdata.concat([selected]) : pdata;

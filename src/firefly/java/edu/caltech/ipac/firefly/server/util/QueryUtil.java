@@ -638,7 +638,8 @@ public class QueryUtil {
 
         int maxPoints = decimateInfo.getMaxPoints() == 0 ? DECI_DEF_MAX_POINTS : decimateInfo.getMaxPoints();
 
-        boolean doDecimation = dg.size() >= DECI_ENABLE_SIZE;
+        int deciEnableSize = decimateInfo.getDeciEnableSize() > -1 ? decimateInfo.getDeciEnableSize() : DECI_ENABLE_SIZE;
+        boolean doDecimation = dg.size() >= deciEnableSize;
 
         DataType[] columns = new DataType[doDecimation ? 5 : 3];
         Class xColClass = Double.class;
@@ -739,7 +740,7 @@ public class QueryUtil {
                 if (yDeciMax < yMax) { yMax = yDeciMax; checkLimits = true; }
             }
 
-            if (outRows < DECI_ENABLE_SIZE) {
+            if (outRows < deciEnableSize) {
                 // no decimation needed
                 // because the number of rows in the output
                 // is less than decimation limit

@@ -16,6 +16,7 @@ import {NewTracePanelBtn} from './NewTracePanel.jsx';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {updateSet} from '../../../util/WebUtil.js';
 import {hideColSelectPopup} from '../ColSelectView.jsx';
+import {addColorbarChanges} from '../../dataTypes/FireflyHeatmap.js';
 
 const fieldProps = {labelWidth: 50, size: 25};
 const boundariesFieldProps = {labelWidth: 35, size: 10};
@@ -210,7 +211,7 @@ export function basicFieldReducer({chartId, activeTrace}) {
                         const optFldName = `__${a}options`;
                         const currOptions = get(inFields, [optFldName, 'value']);
                         // do not reset grid selection
-                        inFields = updateSet(inFields, [optFldName, 'value'], getOption(currOptions, 'grid'));
+                        inFields = updateSet(inFields, [optFldName, 'value'], filterOptions(currOptions, ['grid', 'opposite']));
                     }
                 });
             }
@@ -247,7 +248,6 @@ export function basicFieldReducer({chartId, activeTrace}) {
 }
 
 
-//export function BasicOptionFields({activeTrace, groupKey, align='vertical', xNoLog}) {
 export class BasicOptionFields extends Component {
 
     constructor(props) {
@@ -404,7 +404,7 @@ OptionTopBar.propTypes = {
  */
 export function submitChanges({chartId, fields, tbl_id}) {
     if (!fields) return;                // fields failed validations..  quick/dirty.. may need to separate the logic later.
-    const {layout={}} = getChartData(chartId);
+    const {layout={}, data} = getChartData(chartId);
     const changes = {showOptions: false};
     Object.entries(fields).forEach( ([k,v]) => {
         if (tbl_id && k.startsWith('_tables.')) {
@@ -442,10 +442,22 @@ export function submitChanges({chartId, fields, tbl_id}) {
                 }
             });
         }
+
+        // move colorbar to the other side of the chart
+        const yOpposite = get(fields, '__yoptions', '').includes('opposite');
+        let cnt = 0;
+        data.forEach( (d, i) => {
+            if (get(d, 'colorbar') && get(d, 'showscale', true)) {
+                addColorbarChanges(changes, yOpposite, i, cnt);
+                cnt++;
+            }
+        });
+
         // omit fields, that start with '__'
         if (!k.startsWith('__') && !changes[k]) {
             changes[k] = v;
         }
+
     });
     adjustAxesRange(layout, changes);
     dispatchChartUpdate({chartId, changes});
@@ -458,7 +470,7 @@ function adjustAxesRange(layout, changes) {
         if (!Number.isNaN(minUser) || !Number.isNaN(maxUser)) {
             if (Number.isNaN(minUser) || Number.isNaN(maxUser)) {
                 // range values of a log axis are logs - convert them back
-                const range = get(layout, `${a}axis.range`, {}).map(get(layout, `${a}axis.type`) === 'log' ? (e)=>Math.pow(10, e) : (e)=>e);
+                const range = get(layout, `${a}axis.range`, []).map(get(layout, `${a}axis.type`) === 'log' ? (e)=>Math.pow(10, e) : (e)=>e);
                 if (Number.isNaN(minUser)) {
                     minUser = Math.min(range[0], range[1]);
                 } else if (Number.isNaN(maxUser)) {
@@ -490,9 +502,16 @@ function getRange(min, max, isLog, isReversed) {
     return isLog ? [Math.log10(r1), Math.log10(r2)] : [r1, r2];
 }
 
-function getOption(options, opt) {
-    // returns opt if it's included into options
-    return (options && (options.includes(opt)||options.includes('_all_'))) ? opt : undefined;
+/**
+ * Filter options string, so that it contains only the listed options
+ * @param options - original options
+ * @param opts - array of options that are OK to leave
+ * @returns {*} - filtered options
+ */
+function filterOptions(options, opts) {
+    if (!options) return undefined;
+
+    return opts.filter((opt) => options.includes(opt) || options.includes('_all_')).toString();
 }
 
 function resetChart(chartId) {
