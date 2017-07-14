@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import {get, isEmpty, isUndefined} from 'lodash';
 import {take} from 'redux-saga/effects';
 
-import {ExpandedModeDisplay} from '../iv/ExpandedModeDisplay.jsx';
+import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
 import {Tab, Tabs} from '../../ui/panel/TabPanel.jsx';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
 import {ImageMetaDataToolbar} from './ImageMetaDataToolbar.jsx';
@@ -42,9 +42,8 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
                                      metaDataTableId}) {
 
     if (imageExpandedMode) {
-        return  ( <ExpandedModeDisplay
+        return  ( <ImageExpandedMode
                         key='results-plots-expanded'
-                        forceExpandedMode={true}
                         closeFunc={closeable ? closeExpanded : null}/>
                 );
     }

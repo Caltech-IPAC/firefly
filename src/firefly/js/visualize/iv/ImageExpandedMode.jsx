@@ -10,7 +10,7 @@ import {flux} from '../../Firefly.js';
 import {ExpandedTools} from './ExpandedTools.jsx';
 import {MultiImageViewerView} from '../ui/MultiImageViewerView.jsx';
 
-export class ExpandedModeDisplay extends PureComponent {
+export class ImageExpandedMode extends PureComponent {
 
 
     constructor(props) {
@@ -60,7 +60,7 @@ export class ExpandedModeDisplay extends PureComponent {
                                   Toolbar={ExpandedTools}
                                   viewerId={'EXPANDED_VIEW'}
                                   visRoot={vr}
-                                  additionalStyle={{flex:'1 1 auto'}}
+                                  style={{flex:'1 1 auto'}}
                                   closeFunc={closeFunc}
                                   defaultDecoration={false} 
                                   showWhenExpanded={true}
@@ -70,15 +70,15 @@ export class ExpandedModeDisplay extends PureComponent {
     }
 }
 
-ExpandedModeDisplay.propTypes= {
+ImageExpandedMode.propTypes= {
     forceExpandedMode : PropTypes.bool,
     closeFunc: PropTypes.func,
     insideFlex: PropTypes.bool
 };
 
-ExpandedModeDisplay.defaultProps= {
-    forceExpandedMode : false,
+ImageExpandedMode.defaultProps= {
+    forceExpandedMode : true,
     closeFunc:null,
-    insideFlex:false
+    insideFlex:true
 };
 

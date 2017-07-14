@@ -27,7 +27,7 @@ export function* syncCharts() {
                 const {chartId} = action.payload;
                 ChartsCntlr.getRelatedTblIds(chartId).forEach((tblId) => {
                     if (TableUtil.isFullyLoaded(tblId)) {
-                        if (ChartsCntlr.getNumCharts(tblId) === 1) {
+                        if (!TableStatsCntlr.getColValStats(tblId) && ChartsCntlr.getNumCharts(tblId) === 1) {
                             TableStatsCntlr.dispatchLoadTblStats(TableUtil.getTblById(tblId)['request']);
                         }
                         ChartsCntlr.updateChartData(chartId, tblId);

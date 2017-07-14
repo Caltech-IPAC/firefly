@@ -39,6 +39,7 @@ function *newPlotIdMaker() {
 
 var plotidGen = newPlotIdMaker();
 var outputMessage = (errMsg) => errMsg&&showInfoPopup(errMsg, 'Load Selected Image Error');
+var newCellCnt=0;
 
 // image plot on specified url
 function imagePlotOnURL(request) {
@@ -348,13 +349,18 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
             });
         }
 
+        if (request[panelKey].createNewCell==='newCell' && request[panelKey][keyMap['plotmode']].startsWith('create'))  {
+            newCellCnt++;
+            viewerIdOnPlot= `autoCreatedCell--${newCellCnt}`;
+        }
+
 
         if (hideDropdown) {
             dispatchHideDropDown();
         }
 
         dispatchPlotImage({plotId:nPlotId,
-                          wpRequest:(plotInfo.isThreeColor) ? wpSet : wpSet[0],
+            wpRequest:(plotInfo.isThreeColor) ? wpSet : wpSet[0],
                           viewerId: viewerIdOnPlot});
     };
 }

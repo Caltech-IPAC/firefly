@@ -93,7 +93,7 @@ export class ImageSelectDropdown extends PureComponent {
                     onError={resultFail()}
                     onCancel={hideSearchPanel}
                     changeMasking={this.changeMasking}>
-                    <ImageSelection loadButton={false} />
+                    <ImageSelection loadButton={false} gridSupport={this.props.gridSupport}/>
                 </FormPanel>
                 {this.state.doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
             </div>);
@@ -101,11 +101,13 @@ export class ImageSelectDropdown extends PureComponent {
 }
 
 ImageSelectDropdown.propTypes = {
-    name: PropTypes.oneOf([dropdownName])
+    name: PropTypes.oneOf([dropdownName]),
+    gridSupport : PropTypes.bool
 };
 
 ImageSelectDropdown.defaultProps = {
-    name: dropdownName
+    name: dropdownName,
+    gridSupport: false
 };
 
 

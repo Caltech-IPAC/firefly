@@ -138,6 +138,12 @@ var initTargetSize = (crtCatalogId) => {
             min: sizeR.min,
             max: sizeR.max,
             value: dv
+        },
+        [keyMap['createNewCell']]: {
+            fieldKey:'createNewCell',
+            labelWidth: computeLabelWidth(size),
+            label:'',
+            value:''
         }
     });
 };

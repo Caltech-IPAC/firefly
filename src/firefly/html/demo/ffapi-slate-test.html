@@ -1,0 +1,364 @@
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Demo of Firefly Tools</title>
+        <style type="text/css">
+            .smallCoords {
+                font-size: 10pt;
+            }
+        </style>
+    </head>
+</head>
+
+<body>
+
+
+<div style="width: 500px; padding: 10px 0 0 20px;">
+</div>
+
+
+<div style="font-size: 16pt; padding:0 0 10px 10px;">
+    Test Firefly Blank Slate Viewer
+</div>
+
+<pre>
+    Slate function calls from firefly.getViewer()
+
+        v.addCell
+
+        v.showCoverage
+        v.showImageMetaDataViewer
+        v.showTable
+        v.showImage
+        v.showXYPlot
+        v.showHistogram
+
+    flow:
+       call v.addCell with position, type and cellId - type must be one of 'tables', 'images', 'xyPlots', 'tableImageMeta', 'coverageImage'
+       call v.showTable, v.showImage, v.showXYPlot, v.showHistogram, v.showCoverage, or v.showImageMetaDataViewer
+</pre>
+
+
+Add Some Tables
+<ul>
+    <li>
+        <a href="javascript:loadMovingTable(0, 0,4,2)">load Moving Table</a> <span class='smallCoords'>at row: 0, col: 0, w:4 h: 2<span>
+    </li>
+    <li>
+        <a href="javascript:addSimpleM31ImageTable()">load m31 image Table</a> in same cell
+    </li>
+    <li>
+        <a href="javascript:addSimpleImageTable()">load image Table</a> in same cell
+    </li>
+    <li>More tables in default cell:
+        <a href='javascript:firefly.getViewer().showTable(tblReq3)'>Open a table</a>
+        <a href='javascript:firefly.getViewer().showTable(tblReq1)'>Open allwise</a>
+    </li>
+</ul>
+
+Add Different types of image displays
+<ul>
+    <li>
+        <a href="javascript:loadImageDataDisplay(2, 0,4,2)">Image meta data viewer</a> display <span class='smallCoords'>at row: 2, col: 0, w:4 h: 2</span>
+    </li>
+    <li>
+        <a href="javascript:load3C(0,4,2,2)">3 Color</a> in cell <span class='smallCoords'>at row: 0, col: 4, w:2 h: 2</span>
+    </li>
+    <li>
+        <a href="javascript:loadMoving(2, 4,2,2)">load Moving Images</a> <span class='smallCoords'>at row: 4, col: 1, w:4 h: 2</span>
+    </li>
+</ul>
+
+Add Charts
+<ul>
+    <li>XYPlot from API calls:
+        <a href='javascript:loadXY(4,0,2,3)'>Show XY Plot</a> <span class='smallCoords'>at row: 4, col: 0, w:2 h: 2</span>
+    </li>
+    <li>XYPlot from API calls:
+        <a href='javascript:loadHistogram(4,2,2,3)'>Show Histogram</a> <span class='smallCoords'>at row: 4, col: 2, w:2 h: 2</span>
+    </li>
+</ul>
+
+
+
+Add more images
+<ul>
+    <li>
+        <a href="javascript:loadCoverageImage(4, 4,3,3)">Enable Coverage Image</a> display <span class='smallCoords'>at row: 6, col: 0, w:3 h: 3</span>
+    </li>
+    <li>
+        <a href='javascript:firefly.getViewer().plotURL("http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits")'>Image</a> in random cell
+    </li>
+    <li>
+        <a href="javascript:plotRemote()">Second image</a> in same random cell
+    </li>
+</ul>
+
+
+<script type="text/javascript">
+    if (!window.firefly) window.firefly= {};
+    window.firefly.options= {charts: {chartEngine: 'plotly'}};
+</script>
+
+
+
+<script type="text/javascript">
+    {
+
+
+        function loadXY(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'chart-cell-xy');
+            firefly.getViewer().showXYPlot(xyPlotOpsReq3, 'chart-cell-xy');
+
+        }
+        function loadHistogram(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'chart-cell-hist');
+            firefly.getViewer().showHistogram(histogramOpsReq3, 'chart-cell-hist');
+
+        }
+
+        function loadImageDataDisplay(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'tableImageMeta', 'image-data');
+            firefly.getViewer().showImageMetaDataViewer('image-data');
+        }
+
+        function loadCoverageImage(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'coverageImage', 'image-coverage');
+            firefly.getViewer().showCoverage('image-coverage');
+        }
+
+        function load3C(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'images', '3C');
+            firefly.getViewer().showImage(window.threeC, '3C');
+        }
+
+        function loadMoving(r,c,w,h) {
+            var viewer= firefly.getViewer();
+            viewer.addCell(r,c,w,h,  'images', 'movingStuff');
+
+            var m49025b_143_2= {
+                url: 'http://web.ipac.caltech.edu/staff/roby/demo/moving/49025b143-w2-int-1b.fits',
+                plotId: 'm49025b_143_2',
+                OverlayPosition : '330.347003;-2.774482;EQ_J2000',
+                ZoomType : 'TO_WIDTH_HEIGHT',
+                Title: '49025b143-w2',
+                plotGroupId : 'movingGroup',
+            };
+            var m49273b_134_2= {
+                url: 'http://web.ipac.caltech.edu/staff/roby/demo/moving/49273b134-w2-int-1b.fits',
+                plotId: 'm49273b_134_2',
+                OverlayPosition : '333.539702;-0.779310;EQ_J2000',
+                ZoomType : 'TO_WIDTH_HEIGHT',
+                Title: '49273b134-w2',
+                plotGroupId : 'movingGroup',
+            };
+            var m49277b_135_1= {
+                url: 'http://web.ipac.caltech.edu/staff/roby/demo/moving/49277b135-w1-int-1b.fits',
+                plotId: 'm49277b_135_1',
+                OverlayPosition : '333.589054;-0.747251;EQ_J2000',
+                ZoomType : 'TO_WIDTH_HEIGHT',
+                Title: '49277b135-w1',
+                plotGroupId : 'movingGroup',
+            };
+            var m49289b_134_2= {
+                url: 'http://web.ipac.caltech.edu/staff/roby/demo/moving/49289b134-w2-int-1b.fits',
+                plotId: 'm49289b_134_2',
+                OverlayPosition : '333.736578;-0.651222;EQ_J2000',
+                ZoomType : 'TO_WIDTH_HEIGHT',
+                Title: '49289b134-w2',
+                plotGroupId : 'movingGroup',
+            };
+
+            viewer.showImage( m49025b_143_2, 'movingStuff');
+            viewer.showImage( m49273b_134_2, 'movingStuff');
+            viewer.showImage( m49277b_135_1, 'movingStuff');
+            viewer.showImage( m49289b_134_2, 'movingStuff');
+        }
+
+        function loadMovingTable(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'tables');
+            var req = firefly.util.table.makeFileRequest('A moving object table',
+                    'http://web.ipac.caltech.edu/staff/roby/demo/moving/MOST_results-sample.tbl',null,
+                    { pageSize: 15,
+                        META_INFO: {
+                            datasetInfoConverterId : 'SimpleMoving',
+                            positionCoordColumns: 'ra_obj;dec_obj;EQ_J2000',
+                            datasource: 'image_url'
+                        }
+                    });
+            firefly.getViewer().showTable( req, {removable: true, showUnits: false, showFilters: true});
+        }
+
+        function addSimpleImageTable() {
+            var req = firefly.util.table.makeFileRequest('A table of images',
+                    'http://web.ipac.caltech.edu/staff/roby/demo/test-table4.tbl',null,
+                    { pageSize: 15,
+                        META_INFO: {
+                            datasource: 'FITS'
+                        }
+                    });
+            firefly.getViewer().showTable( req, {removable: true, showUnits: false, showFilters: true});
+        }
+        function addSimpleM31ImageTable() {
+            var req = firefly.util.table.makeFileRequest('A table of images',
+                    'http://web.ipac.caltech.edu/staff/roby/demo/test-table-m31.tbl',null,
+                    { pageSize: 15,
+                        META_INFO: {
+                            positionCoordColumns: 'ra_obj;dec_obj;EQ_J2000',
+                            datasource: 'FITS'
+                        }
+                    });
+            firefly.getViewer().showTable( req, {removable: true, showUnits: false, showFilters: true});
+        }
+    }
+</script>
+
+
+
+
+<script type="text/javascript">
+    {
+        onFireflyLoaded= function(firefly) {
+
+            firefly.setViewerConfig(firefly.ViewerType.Grid);
+            window.ffViewer= firefly.getViewer();
+
+            firefly.setGlobalImageDef({
+                ZoomType  : 'TO_WIDTH'
+            } );
+
+            firefly.debug= true;
+
+            var util= firefly.util;
+            var ui= firefly.ui;
+            // ----------------- to use minimal readout, do the following
+            //  util.image.initAutoReadout(ui.DefaultApiReadout,
+            //         {MouseReadoutComponent:ui.PopupMouseReadoutMinimal, showThumb:false,showMag:false});
+            // -----------------
+
+            var req= {
+                plotId: 'xxq',
+                Type      : 'SERVICE',
+                plotGroupId : 'myGroup',
+                Service   : 'TWOMASS',
+                Title     : '2mass from service',
+                GridOn     : true,
+//                GridOn     : 'TRUE_LABELS_FALSE',
+                SurveyKey  : 'k',
+                WorldPt    : '10.68479;41.26906;EQ_J2000',
+                SizeInDeg  : '.12',
+                AllowImageSelection : true
+            };
+
+            var req2= {
+                Type      : 'SERVICE',
+                plotGroupId : 'myGroup',
+                Service  : 'WISE',
+                Title     : 'Wise',
+                GridOn     : true,
+//                GridOn     : 'TRUE_LABELS_FALSE',
+                SurveyKey  : 'Atlas',
+                bad1  : 'hello',
+                bad2  : 'bye',
+                bad3  : 'again',
+                SurveyKeyBand  : '2',
+                WorldPt    : '10.68479;41.26906;EQ_J2000',
+                SizeInDeg  : '.12',
+                RangeValues : firefly.util.image.RangeValues.serializeSimple('Sigma',-2,8,'Linear'),
+                AllowImageSelection : true };
+
+
+
+            window.threeC= [
+                {
+                    type      : 'SERVICE',
+//                    plotGroupId : 'myGroup',
+                    Service   : 'TWOMASS',
+                    Title     : '3 color',
+                    SurveyKey  : 'j',
+                    WorldPt    : '10.68479;41.26906;EQ_J2000',
+                    SizeInDeg  : '.12'
+                },
+                {
+                    Type      : 'SERVICE',
+//                    PLOTgroupId : 'myGroup',
+                    Service   : 'TWOMASS',
+                    Title     : '3 color',
+                    SurveyKey  : 'h',
+                    WorldPt    : '10.68479;41.26906;EQ_J2000',
+                    SizeInDeg  : '.12'
+                },
+                {
+                    Type      : 'SERVICE',
+//                    plotGroupId : 'myGroup',
+                    Service   : 'TWOMASS',
+                    title     : '3 color',
+                    SurveyKey  : 'k',
+                    WorldPt    : '10.68479;41.26906;EQ_J2000',
+                    moreBadKeys : 'qqq',
+                    SizeInDeg  : '.12'
+                }
+            ];
+
+            //util.image.setDrawLayerDefaults('ACTIVE_TARGET_TYPE', {symbol:'x', color:'pINk'});
+            //util.image.setDrawLayerDefaults('CATALOG_TYPE', {symbol:'ARROW', color:'pink', size:10});
+
+
+            //-----------------  TABLE DEMO ------------------------//
+            tblReq1 = firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
+                {   position: '148.9;68.8;EQ_J2000',
+                    SearchMethod: 'Cone',
+                    radius: 300
+                });
+            tblReq2 = firefly.util.table.makeIrsaCatalogRequest('another wise catalog', 'WISE', 'allwise_p3as_psd',
+                {   position: '10.68479;41.26906;EQ_J2000',
+                    SearchMethod: 'Cone',
+                    radius: 300
+                });
+            tblReq3 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+                { pageSize: 15,
+                    META_INFO: {CENTER_COLUMN: 'crval1;crval2;EQJ2000'}
+                });
+
+            xyPlotOpsReq3 = {source: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl', xCol: 'ra1', yCol: 'dec1'};
+            histogramOpsReq3 = {source: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
+                               col: 'modeint', xOptions: 'log'};
+
+
+        };
+
+
+
+
+
+        plotRemote= function() {
+            firefly.getViewer().showImage({plotId: 'xxq',
+                Service: 'TWOMASS',
+                Title  : '2mass from service',
+                ZoomType : 'LEVEL',
+                initZoomLevel : 2,
+                SurveyKey  : 'k',
+                WorldPt    : '10.68479;41.26906;EQ_J2000',
+                RangeValues : firefly.util.image.serializeSimpleRangeValues("Sigma",-1,2,"Linear"),
+                SizeInDeg  : '.12'
+            })
+        }
+   }
+   
+</script>
+
+<!-- to try a container: <script  type="text/javascript" src="http://localhost:8090/firefly/firefly_loader.js"></script>-->
+
+<script  type="text/javascript" src="../firefly_loader.js"></script>
+
+

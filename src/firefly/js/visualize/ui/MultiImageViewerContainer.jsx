@@ -4,7 +4,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {ExpandedModeDisplay} from '../iv/ExpandedModeDisplay.jsx';
+import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {DEFAULT_FITS_VIEWER_ID, NewPlotMode} from '../MultiViewCntlr.js';
@@ -25,9 +25,9 @@ export function MultiImageViewerContainer({viewerId, imageExpandedMode=false, cl
                                            forceRowSize, Toolbar= MultiViewStandardToolbar}) {
     
     if (imageExpandedMode) {
-        return  ( <ExpandedModeDisplay
+        return  ( <ImageExpandedMode
                         key='results-plots-expanded'
-                        forceExpandedMode={true}
+                        insideFlex = {insideFlex}
                         closeFunc={closeable ? closeExpanded : null}/>
                 );
     } else {
