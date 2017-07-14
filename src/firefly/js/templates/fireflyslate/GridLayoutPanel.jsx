@@ -57,9 +57,10 @@ const config = {
 class SlateView extends PureComponent {
 
 
-    SlateView(props) {
-        this.state= {renderedLayout:{}};
+    constructor(props) {
+        super(props);
         this.renderedLayoutUpdated= this.renderedLayoutUpdated.bind(this);
+        this.dragStart= this.dragStart.bind(this);
 
         this.doCollapse= false;
         this.renderedGridView= props.gridView;
@@ -78,9 +79,6 @@ class SlateView extends PureComponent {
     }
 
     renderedLayoutUpdated(layout) {
-        console.log('onLayoutChange');
-        console.log(layout);
-        console.log(this.normalLayoutTMP);
 
         const {gridView}= this.props;
 
@@ -98,9 +96,6 @@ class SlateView extends PureComponent {
         this.doCollapse= true;
     }
 
-    dragStop() {
-    }
-
     render() {
         const {gridView,size:{width,height}, gridColumns}= this.props;
         this.renderedGridView= gridView;
@@ -113,7 +108,6 @@ class SlateView extends PureComponent {
         const small= makeSmallLayout(gridView);
         const normalLayout= makeNormalLayout(gridView);
 
-        // const rowHeight= height/maxSize.rows - CELL_MARGIN*maxSize.rows;
         if (!this.doCollapse) {
             this.rowHeight= sourceGridDim.rows<=2 ?
                 Math.max(((height-25)/maxSize.rows), 5) :
@@ -124,18 +118,16 @@ class SlateView extends PureComponent {
         const cols=        {xxs: CV, small:CV, normalLayout: gridColumns};
         const layouts=     {xxs: small, small, normalLayout};
 
-        this.normalLayoutTMP= normalLayout;
+        // console.log(`GridLayoutPanel, Render: doCollapse: ${this.doCollapse}, w: ${width}, h:${height}, row Height:${this.rowHeight}, rows: ${maxSize.rows}`);
 
-        console.log(`GridLayoutPanel: w: ${width}, h:${height}, row Height:${this.rowHeight}, rows: ${maxSize.rows}`);
 
         return (
             <div className= 'GridLayoutPanel' style={{flex: '1 1 auto', overflow: 'auto'}}>
                 <Responsive width={width-14} cols={cols} rowHeight={this.rowHeight}
                             verticalCompact={this.doCollapse}
                             breakpoints={breakpoints} layouts={layouts} margin={[CELL_MARGIN,CELL_MARGIN]}
-                            onLayoutChange={(layout) => this.renderedLayoutUpdated(layout)}
-                            onDragStart={(layout) => this.dragStart(layout)}
-                            onDragStop={(layout) => this.dragStop(layout)}
+                            onLayoutChange={this.renderedLayoutUpdated}
+                            onDragStart={this.dragStart}
                 >
                     {gridView.map ( makeComponent)}
                 </Responsive>
@@ -143,7 +135,6 @@ class SlateView extends PureComponent {
         );
 
     }
-    // onBreakpointChange={(newBreakpoint) => console.log(`bp: ${newBreakpoint}`)}
 }
 
 

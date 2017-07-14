@@ -74,7 +74,6 @@ function enableSpecialViewer(state,payload) {
 
 function addCell(state,payload) {
     const {row=0, col=0, width=1, height=1, cellId}= payload;
-    console.log(`action: addCell: r:${row},c:${col},w:${width},   h:${height}, `);
     const type= LO_VIEW.get(payload.type);
     if (!type || !cellId) return state; // row, col, type, cellId must be defined
 

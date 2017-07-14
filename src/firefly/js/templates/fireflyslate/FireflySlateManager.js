@@ -61,7 +61,6 @@ export function* layoutManager({title}) {
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;
 
-        console.log(`action: ${action.type}`);
         switch (action.type) {
             case ImagePlotCntlr.PLOT_IMAGE_START:
             case ImagePlotCntlr.PLOT_IMAGE :
@@ -72,7 +71,6 @@ export function* layoutManager({title}) {
             case ImagePlotCntlr.DELETE_PLOT_VIEW:
                 newLayoutInfo = handlePlotDelete(newLayoutInfo, action);
                 break;
-            // case TABLE_LOADED:
             case TBL_RESULTS_ADDED:
                 newLayoutInfo = handleNewTable(newLayoutInfo, action);
                 break;
@@ -86,7 +84,7 @@ export function* layoutManager({title}) {
                 newLayoutInfo = handleChartDelete(newLayoutInfo, action);
                 break;
             case ENABLE_SPECIAL_VIEWER:
-                const startCellId= startSepcialViewerSaga(action, alreadyStartSagas);
+                const startCellId= startSpecialViewerSaga(action, alreadyStartSagas);
                 if (startCellId) alreadyStartSagas= [...alreadyStartSagas,startCellId];
                 break;
         }
@@ -99,7 +97,7 @@ export function* layoutManager({title}) {
 }
 
 
-function startSepcialViewerSaga(action, alreadyStarted) {
+function startSpecialViewerSaga(action, alreadyStarted) {
     const {cellId}= action.payload;
 
     if (alreadyStarted.includes(cellId)) return undefined;
@@ -125,8 +123,8 @@ function handleNewTable(layoutInfo, action) {
     if (tbl_group) {
         const item= gridView.find( (g) => g.cellId===tbl_group);
         if (!item) {
-            const cell= getNextCell(gridView,1,1);
-            dispatchAddCell({row:cell.row,col:cell.col,width:1,height:1,cellId:tbl_group,type:LO_VIEW.tables});
+            const cell= getNextCell(gridView,2,1);
+            dispatchAddCell({row:cell.row,col:cell.col,width:2,height:1,cellId:tbl_group,type:LO_VIEW.tables});
         }
     }
     return layoutInfo;
@@ -183,8 +181,8 @@ function handleNewImage(layoutInfo, action) {
         if (viewer) {
              const item= gridView.find( (g) => g.cellId===viewer);
              if (!item) {
-                 const cell= getNextCell(gridView,1,1);
-                 dispatchAddCell({row:cell.row,col:cell.col,width:1,height:1,cellId:viewer,type:LO_VIEW.images});
+                 const cell= getNextCell(gridView,2,2);
+                 dispatchAddCell({row:cell.row,col:cell.col,width:2,height:2,cellId:viewer,type:LO_VIEW.images});
              }
         }
     });
@@ -208,7 +206,7 @@ function handleNewChart(layoutInfo, action) {
         const item= gridView.find( (g) => g.cellId===groupId);
         if (!item) {
             viewer= findViewerWithItemId(getMultiViewRoot(), chartId, PLOT2D);
-            const cell= getNextCell(gridView,1,1);
+            const cell= getNextCell(gridView,3,1);
             dispatchAddCell({row:cell.row,col:cell.col,width:1,height:1,cellId:viewer,type:LO_VIEW.xyPlots});
         }
     }
