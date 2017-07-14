@@ -345,7 +345,8 @@ class PhaseFoldingChart extends PureComponent {
                         },
                     tickfont: {
                         size: 12
-                    }
+                    },
+                    exponentformat:'e'
                 },
                 yaxis: {
                     title: `${flux} (mag)`,
@@ -357,7 +358,8 @@ class PhaseFoldingChart extends PureComponent {
                     autorange: 'reversed',
                     titlefont: {
                         size: 12
-                    }
+                    },
+                    exponentformat:'e'
                 },
                 margin: {
                     l: 50,
