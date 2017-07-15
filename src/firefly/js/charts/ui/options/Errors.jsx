@@ -8,9 +8,9 @@ import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
 import ColValuesStatistics from '../../ColValuesStatistics.js';
 
 
-const ERR_TYPE_OPTIONS = [
+export const ERR_TYPE_OPTIONS = [
     {label: 'None', value: 'none'},
-    {label: 'Sym', value: 'sym'},
+    {label: 'Symm', value: 'sym'},
     {label: 'Asym', value: 'asym'}
 
 ];

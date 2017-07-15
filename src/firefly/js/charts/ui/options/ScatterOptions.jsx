@@ -119,7 +119,7 @@ export function fieldReducer({chartId, activeTrace}) {
             fieldKey: errorMinusFieldKey(activeTrace, 'x'),
             value: get(tablesourceMappings, ['error_x.arrayminus'], ''),
             //tooltip: 'X error',
-            label: 'X Err\u2193:',
+            label: 'Error\u2193:',
             ...fieldProps
         },
         [errorFieldKey(activeTrace, 'y')]: {
