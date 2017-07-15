@@ -134,7 +134,7 @@ public class WsListTest extends ConfigTest {
     public void tearDown() throws IOException {
 
         // Gets children folder meta under user home ws.
-        // Equivalent to WsResponse wsResponse = m.getList("/", 1);
+        // Equivalent to WsResponse wsResponse = m.getSuggestedList("/", 1);
         //
         WspaceMeta mMeta = m.getMeta("/", WspaceMeta.Includes.CHILDREN);
         if (mMeta != null) {

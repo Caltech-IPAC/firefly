@@ -13,8 +13,8 @@ import {basicURLPlotRequest} from './basic/BasicPlotRequests';
 import {LsstSdssSettingBox, lsstSdssOnNewRawTable, lsstSdssOnFieldUpdate, lsstSdssRawTableRequest} from './lsst_sdss/LsstSdssMissionOptions.js';
 import {DefaultSettingBox, defaultOnNewRawTable, defaultOnFieldUpdate, defaultRawTableRequest} from './generic/DefaultMissionOptions.js';
 import {BasicSettingBox, basicOnNewRawTable, basicOnFieldUpdate, basicRawTableRequest, imagesShouldBeDisplayed} from './basic/BasicMissionOptions.js';
-import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest, isBasicTableUploadValid} from './wise/WiseMissionOptions.js';
-import {PTFSettingBox, ptfOnNewRawTable, ptfOnFieldUpdate, ptfRawTableRequest} from './PTF/PTFMissionOptions.js';
+import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest,isValidWiseTable} from './wise/WiseMissionOptions.js';
+import {PTFSettingBox, ptfOnNewRawTable, ptfOnFieldUpdate, isValidPTFTable} from './ptf/PTFMissionOptions.js';
 
 import {LC} from './LcManager.js';
 
@@ -24,7 +24,6 @@ export const coordSysOptions = 'coordSysOptions';
 /**
  * A function to create a WebPlotRequest from the given parameters
  * @callback WebplotRequestCreator
- * @param {TableModel} tableModel
  * @param {number} hlrow
  * @param {number} cutoutSize
  * @param {Object} params - mission specific parameters
@@ -94,7 +93,7 @@ const converters = {
         dataSource: 'frame_id',
         webplotRequestCreator: getWebPlotRequestViaWISEIbe,
         shouldImagesBeDisplayed: () => {return true;},
-        isTableUploadValid: isBasicTableUploadValid,
+        isTableUploadValid: isValidWiseTable,
         yNamesChangeImage: [],
         showPlotTitle:getPlotTitle
     },
@@ -114,7 +113,7 @@ const converters = {
         yErrNames: ['magErr', 'tsv_fluxErr'],
         webplotRequestCreator: makeLsstSdssPlotRequest,
         shouldImagesBeDisplayed: () => {return true;},
-        isTableUploadValid: () => {return true;},
+        isTableUploadValid: () => {return {errorMsg:undefined, isValid:true};},
         yNamesChangeImage: []
     },
     'ptf': {
@@ -126,13 +125,13 @@ const converters = {
         missionName: 'PTF',
         MissionOptions: PTFSettingBox,
         onNewRawTable: ptfOnNewRawTable,
-        onFieldUpdate: ptfOnFieldUpdate,
-        rawTableRequest: ptfRawTableRequest,
+        onFieldUpdate: wiseOnFieldUpdate,  //same as in wise
+        rawTableRequest: wiseRawTableRequest, //the request is same now.
         yErrNames: '',
         dataSource: 'pid',
         webplotRequestCreator: getWebPlotRequestViaPTFIbe,
         shouldImagesBeDisplayed: () => {return true;},
-        isTableUploadValid:() => {return true;},
+        isTableUploadValid:isValidPTFTable,
         yNamesChangeImage: [],
         showPlotTitle:getPlotTitle
     },
@@ -154,7 +153,7 @@ const converters = {
         [coordSysOptions]: COORD_SYSTEM_OPTIONS,
         webplotRequestCreator: makeURLPlotRequest,
         shouldImagesBeDisplayed: () => {return true;},
-        isTableUploadValid: () => {return true;},
+        isTableUploadValid: () => {return {errorMsg:undefined, isValid:true};},
         yNamesChangeImage: [],     // TODO: y columns which will affect the image display
         noImageCutout: true        // no image cutout is used
     },
@@ -177,7 +176,7 @@ const converters = {
         [coordSysOptions]: COORD_SYSTEM_OPTIONS,
         webplotRequestCreator: basicURLPlotRequest,
         shouldImagesBeDisplayed: imagesShouldBeDisplayed,
-        isTableUploadValid: () => {return true;},
+        isTableUploadValid: () => {return {errorMsg:undefined, isValid:true}; },
         yNamesChangeImage: [],
         showPlotTitle:getPlotTitle
     }

@@ -78,7 +78,7 @@ export class LcViewer extends PureComponent {
 
     render() {
         var {isReady, menu={}, appTitle, appIcon, altAppIcon, additionalTitleStyle, dropDown, missionOptions,
-            dropdownPanels=[], footer, style, displayMode, missionEntries, error} = this.state;
+            dropdownPanels=[], footer, style, displayMode, missionEntries} = this.state;
         const {visible, view} = dropDown || {};
         const periodProps = {
             displayMode, timeColName: get(missionEntries, [LC.META_TIME_CNAME]),
@@ -86,35 +86,18 @@ export class LcViewer extends PureComponent {
         };
 
         dropdownPanels.push(<UploadPanel {...{missionOptions}}/>);
-        //let title = 'Time Series Tool';
-        //if (displayMode && displayMode.startsWith('period')) {
-        //    title = 'Time Series Tool: Period Finder';
-        //}else{
-        //    title= 'Time Series Tool: Viewer';
-        //}
+
 
         const LcPeriodInstance=  get(getAppOptions(), 'charts.chartEngine')==='plotly' ? LcPeriodPlotly : LcPeriod;
 
-        var mainView = (err,converterId) => {
-            if (error!='undefined' && !isEmpty(error) && converterId) {
-
-                let errorMsg = `Table uploaded is not ${getMissionName(converterId)} valid, missing columns: ${error}.
-                      Please, select option 'Other' for general table upload.`;
-
-                if (converterId === 'wise') {
-                    errorMsg = `The uploaded table is not valid. The ${getMissionName(converterId)} option requires frame_id, source_id, or both scan_id and frame_num.
-                    Please select the "Other" upload option for tables that do not meet these requirements.`;
-                }
-
-                if (converterId === 'ptf') {
-                    errorMsg = `The uploaded table is not valid. The ${getMissionName(converterId)} option requires pid.
-                    Please select the "Other" upload option for tables that do not meet these requirements.`;
-                }
+        var mainView = (converterId) => {
+            const converter = getConverter(converterId);
+            if (!converter.isTableUploadValid().isValid){
 
                 return (
                     <div
                         style={{display:'flex', position:'absolute', border: '1px solid #a3aeb9', padding:20, fontSize:'150%'}}>
-                        {errorMsg}
+                        {converter.isTableUploadValid().errorMsg}
                         <div>
                             <HelpIcon helpId={'loadingTSV'}/>
                         </div>
@@ -133,6 +116,7 @@ export class LcViewer extends PureComponent {
             }
 
         };
+
         let title = appTitle;
         if (displayMode && displayMode.startsWith('period')) {
             title = appTitle + ': Period Finder';
@@ -157,7 +141,7 @@ export class LcViewer extends PureComponent {
                             {...{dropdownPanels} } />
                     </header>
                     <main>
-                        {mainView(error,converterId)}
+                        {mainView(converterId)}
                     </main>
                 </div>
             );

@@ -1,111 +1,38 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {get, has, isEmpty, set, isNil} from 'lodash';
-import {FieldGroup} from '../../../ui/FieldGroup.jsx';
-import {ValidationField} from '../../../ui/ValidationField.jsx';
-import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
+import {get, has,  set, isNil} from 'lodash';
 import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
 import {getLayouInfo} from '../../../core/LayoutCntlr.js';
-import {makeFileRequest, getCellValue, getTblById, getColumnIdx, smartMerge} from '../../../tables/TableUtil.js';
+import {makeFileRequest, getCellValue, getTblById, getColumnIdx, smartMerge,getOnlyNumericalColNames} from '../../../tables/TableUtil.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
-import {ReadOnlyText, getTypeData,getOnlyNumericalCol} from '../LcUtil.jsx';
-import {LC, getViewerGroupKey, onTimeColumnChange} from '../LcManager.js';
+import {getInitialDefaultValues,renderMissionView,validate,getTimeAndYColInfo,fileUpdateOnTimeColumn,setValueAndValidator} from '../LcUtil.jsx';
+import {LC,  onTimeColumnChange} from '../LcManager.js';
 
-
-import {getMissionName} from '../LcConverterFactory.js';
 
 const labelWidth = 80;
-
 export class PTFSettingBox extends PureComponent {
     constructor(props) {
         super(props);
-
 
     }
 
     render() {
         var {generalEntries, missionEntries} = this.props;
-
-        if (isEmpty(generalEntries) || isEmpty(missionEntries)) return false;
-
+        const tblModel = getTblById(LC.RAW_TABLE);
         const wrapperStyle = {margin: '3px 0'};
 
-        const tblModel = getTblById(LC.RAW_TABLE);
-        var getList = (val, type) => {
-            var colType = (!type || type === 'numeric') ?
-                ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'] : ['char', 'c', 's', 'str', 'double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
-
-            return get(tblModel, ['tableData', 'columns']).reduce((prev, col) => {
-                if ((colType.includes(col.type)) &&
-                    (!has(col, 'visibility') || get(col, 'visibility') !== 'hidden') &&
-                    (col.name.startsWith(val))) {
-                    prev.push(col.name);
-                }
-                return prev;
-            }, []);
-        };
-        var allCommonEntries = Object.keys(generalEntries).map((key) =>
-            <ValidationField key={key} fieldKey={key} wrapperStyle={wrapperStyle}
-                             style={{width: 80}}/>
-        );
-
-        const missionKeys = [LC.META_TIME_CNAME, LC.META_FLUX_CNAME];
-
-        const topZ = 3;
-        var missionInputs = missionKeys.map((key, index) =>
-            <SuggestBoxInputField key={key} fieldKey={key} wrapperStyle={wrapperStyle} popupIndex={topZ}
-                                  getSuggestions={(val) => getList(val, 'numeric')}/>
-        );
-
-        var missionOthers = (<RadioGroupInputField key='band'
+        var missionFilters = (<RadioGroupInputField key='band'
                                                   fieldKey={LC.META_FLUX_BAND} wrapperStyle={wrapperStyle}
                                                   alignment='horizontal'
                                                   options={[
-                    {label: 'G', value: 'g'},
-                    {label: 'R', value: 'r'},
+                    {label: 'g', value: 'g'},
+                    {label: 'R', value: 'r'}
 
                 ]}/>);
-        const groupKey = getViewerGroupKey(missionEntries);
+
+        return renderMissionView(generalEntries,missionEntries, missionFilters,tblModel,wrapperStyle,labelWidth , ptfOptionsReducer);
 
 
-        const converterId = get(missionEntries, LC.META_MISSION);
-        var missionName = getMissionName(converterId) || 'Mission';
-        const layoutInfo = getLayouInfo();
-        var period =  get(layoutInfo, ['periodRange','period'], '');
-        const title = get(tblModel, 'request.uploadFileName','');
-        //if the name is too long, truncates it and displays it as a tip
-        const uploadedFileName =( title && title.length>20)?title.substring(0, 20)+'...':title;
-
-
-        return (
-            <FieldGroup groupKey={groupKey}
-                        reducerFunc={ptfOptionsReducer(missionEntries, generalEntries)} keepState={true}>
-
-                <div >
-                    <div style={{ with:{labelWidth}, fontWeight:'bold', display:'inline-block', margin: '3px 0 6px 0'}} > Column Selection</div>
-                    <label style = {{width: '170px', paddingLeft: '10px', display:'inline-block'}} title={title}>{uploadedFileName}</label>
-                    <div style = {{fontWeight:'bold',paddingLeft:'13px', display:'inline-block'}}>Images</div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'flex-end'}}>
-                     <div >
-                        <ReadOnlyText label='Mission:' content={missionName}
-                                      labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>
-                        {missionInputs}
-                        {/*missionData*/}
-                    </div>
-                    <div style={{ padding: '0 6px 0 6px', border: '1px solid #a3aeb9', marginLeft: '54px'}}>
-                        {missionOthers}
-                        {allCommonEntries}
-                    </div>
-                </div>
-                <div >
-                    <ReadOnlyText label='Period:' content={period}
-                                  labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>
-
-                </div>
-            </FieldGroup>
-        );
     }
 }
 
@@ -114,39 +41,15 @@ PTFSettingBox.propTypes = {
     missionEntries: PropTypes.object
 };
 
-
+//TODO, this is copied from WISE, need to refactor it after the images and other information are updated.
 export const ptfOptionsReducer = (missionEntries, generalEntries) => {
-    return (inFields, action) => {
+    return (inFields) => {
         if (inFields) {
             return inFields;
         }
 
 
-        const defValues = {
-            [LC.META_FLUX_BAND]: Object.assign(getTypeData(LC.META_FLUX_BAND, '',
-                'Select PTF band for images to be displayed',
-                'Image display:', 70)),
-            [LC.META_TIME_CNAME]: Object.assign(getTypeData(LC.META_TIME_CNAME, '',
-                'time column name',
-                'Time Column:', labelWidth),
-                {validator: null}),
-            [LC.META_FLUX_CNAME]: Object.assign(getTypeData(LC.META_FLUX_CNAME, '',
-                'value column name',
-                'Value Column:', labelWidth),
-                {validator: null}),
-            [LC.META_TIME_NAMES]: Object.assign(getTypeData(LC.META_TIME_NAMES, '',
-                'time column suggestion'),
-                {validator: null}),
-            [LC.META_FLUX_NAMES]: Object.assign(getTypeData(LC.META_FLUX_NAMES, '',
-                'value column suggestion'),
-                {validator: null}),
-            ['cutoutSize']: Object.assign(getTypeData('cutoutSize', '',
-                'image cutout size',
-                'Cutout Size (arcmin):', 100)),
-            [LC.META_ERR_CNAME]: Object.assign(getTypeData(LC.META_ERR_CNAME, '',
-                'value error column name',
-                'Error Column:', labelWidth))
-        };
+        const defValues =getInitialDefaultValues(labelWidth,'ptf');
 
         var defV = Object.assign({}, defValues);
 
@@ -154,17 +57,7 @@ export const ptfOptionsReducer = (missionEntries, generalEntries) => {
         const missionListKeys = [LC.META_TIME_NAMES, LC.META_FLUX_NAMES];
         const validators = getFieldValidators(missionEntries);
 
-        missionListKeys.forEach((key) => {
-            set(defV, [key, 'value'], get(missionEntries, key, []));
-        });
-
-        // set value and validator
-        missionKeys.forEach((key) => {
-            set(defV, [key, 'value'], get(missionEntries, key, ''));
-            if (has(validators, key)) {
-                set(defV, [key, 'validator'], validators[key]);
-            }
-        });
+        setValueAndValidator(missionListKeys, missionEntries,missionKeys, validators, defV);
         Object.keys(generalEntries).forEach((key) => {
             set(defV, [key, 'value'], get(generalEntries, key, ''));
         });
@@ -172,7 +65,7 @@ export const ptfOptionsReducer = (missionEntries, generalEntries) => {
     };
 };
 
-
+//TODO, after the PTF images loaded, this function can be updated.  It is the place holder for now.
 function getFieldValidators(missionEntries) {
     const fldsWithValidators = [
         {key: LC.META_TIME_CNAME, vkey: LC.META_TIME_NAMES},
@@ -180,20 +73,25 @@ function getFieldValidators(missionEntries) {
         {key: LC.META_URL_CNAME}
 
     ];
-    return fldsWithValidators.reduce((all, fld) => {
-        all[fld.key] =
-            (val) => {
-                let retVal = {valid: true, message: ''};
-                const cols = get(missionEntries, fld.vkey, []);
-                if (cols.length !== 0 && !cols.includes(val)) {
-                    retVal = {valid: false, message: `${val} is not a valid column name`};
-                }
-                return retVal;
-            };
-        return all;
-    }, {});
+    return validate(fldsWithValidators, missionEntries);
+
 }
 
+
+export function isValidPTFTable() {
+
+    const tableModel = getTblById(LC.RAW_TABLE);
+
+    const pid = getCellValue(tableModel, 0, 'pid');
+    if (!isNil(pid)) {
+        return {errorMsg: undefined, isValid: true};
+    }
+    else {
+         const errorMsg = `The uploaded table is not valid. The PTF  option requires pid.
+                        Please select the "Other" upload option for tables that do not meet these requirements.`;
+        return {errorMsg, isValid:false};
+   }
+}
 
 /**
  * Pregex pattern for wise, at least to find mjd and w1mpro if present
@@ -205,87 +103,31 @@ export function ptfOnNewRawTable(rawTable, missionEntries, generalEntries, conve
     // Update default values AND sortInfo and
     const metaInfo = rawTable && rawTable.tableMeta;
 
-    // For wcs target match and overlay
-    const ra = getCellValue(rawTable, 0, 'ra');
-    const dec = getCellValue(rawTable, 0, 'dec');
-
-    const pid = getCellValue(rawTable, 0, 'pid');
-
-    var a = [];
-
-    isNil(pid) ? a.push('pid') : '';
-    isNil(ra) ? a.push('ra') : '';
-    isNil(dec) ? a.push('dec') : '';
-    let error = '';
-    if (a.length > 0) {
-         for (let i = 0; i < a.length - 1; i++) {
-             error += a[i] + ', ';
-         }
-         error += a[a.length - 1];
-    }
-
-
-
-    let numericalCols = getOnlyNumericalCol(rawTable);
-
-    //Find column based on a pattern, if not, just get the constant value from the converter (=mjd, =w1mpro_ep)
-    let defaultCTimeName = (getColumnIdx(rawTable, converterData.defaultTimeCName) > 0) ? converterData.defaultTimeCName : numericalCols[0];
-    let defaultYColName = (getColumnIdx(rawTable, converterData.defaultYCname) > 0) ? converterData.defaultYCname : numericalCols[1];
+    let numericalCols = getOnlyNumericalColNames(rawTable);
     let defaultDataSource = (getColumnIdx(rawTable, converterData.dataSource) > 0) ? converterData.dataSource : numericalCols[3];
 
-    defaultYColName = numericalCols.filter((el) => {
-            if (el.toLocaleLowerCase().match(xyColPattern[1]) != null) {
-                return el;
-            }
-        })[0] || defaultYColName;
-    defaultCTimeName = numericalCols.filter((el) => {
-            if (el.toLocaleLowerCase().match(xyColPattern[0]) != null) {
-                return el;
-            }
-        })[0] || defaultCTimeName;
+    const {defaultCTimeName,defaultYColName } = getTimeAndYColInfo(numericalCols,xyColPattern,rawTable,converterData );
+
     const defaultValues = {
         [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, defaultCTimeName),
         [LC.META_FLUX_CNAME]: get(metaInfo, LC.META_FLUX_CNAME, defaultYColName),
         [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES, numericalCols),
         [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, numericalCols),
         [LC.META_URL_CNAME]: get(metaInfo, LC.META_URL_CNAME, defaultDataSource),
-        [LC.META_FLUX_BAND]: get(metaInfo, LC.META_FLUX_BAND, 'w1'),
+        [LC.META_FLUX_BAND]: get(metaInfo, LC.META_FLUX_BAND, 'g'),
 
     };
 
     missionEntries = Object.assign({}, missionEntries, defaultValues);
+    const newLayoutInfo = smartMerge(layoutInfo, {missionEntries, generalEntries});
 
-
-    const newLayoutInfo = smartMerge(layoutInfo, {missionEntries, generalEntries, error});
     return {newLayoutInfo, shouldContinue: false};
-}
-
-export function ptfRawTableRequest(converter, source, uploadFileName='') {
-    const timeCName = converter.defaultTimeCName;
-    const mission = converter.converterId;
-    const options = {
-        tbl_id: LC.RAW_TABLE,
-        sortInfo: sortInfoString(timeCName), // if present, it will skip LcManager.js#ensureValidRawTable
-        META_INFO: {[LC.META_MISSION]: mission, timeCName},
-        pageSize: LC.TABLE_PAGESIZE,
-        uploadFileName
-
-    };
-
-    var req=makeFileRequest('Input Data', source, null, options);
-    return req;
-
-
 }
 
 export function ptfOnFieldUpdate(fieldKey, value) {
     // images are controlled by radio button -> band w1,w2,w3,w4.
     if (fieldKey === LC.META_TIME_CNAME) {
-        const {missionEntries} = getLayouInfo() || {};
-        if (!missionEntries) return;
-
-        onTimeColumnChange(missionEntries[fieldKey], value);
-        return {[fieldKey]: value};
+       return fileUpdateOnTimeColumn(fieldKey, value);
     } else if ([LC.META_FLUX_CNAME, LC.META_ERR_CNAME, LC.META_URL_CNAME, LC.META_FLUX_BAND].includes(fieldKey)) {
         return {[fieldKey]: value};
     }

@@ -896,33 +896,6 @@ export function createErrorTbl(tbl_id, error) {
 }
 
 
-/**
- * @summary get column names from the column of numeric type
- * @param {Array} tblColumns
- * @returns {Array}
- */
-export function getNumericColNames(tblColumns) {
-    const NumTypes = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
-
-    return isEmpty(tblColumns) ? [] :
-                tblColumns.filter((tblCol) => (get(tblCol, 'visibility', '') !== 'hidden'))
-                    .filter((tblCol) => (NumTypes.includes(tblCol.type)))
-                    .map((tblCol) => (tblCol.name));
-}
-
-/**
- * @summary get column names from the column of string or char type
- * @param {Array} tblColumns
- * @returns {Array}
- */
-export function getStringColNames(tblColumns) {
-    const CharTypes = ['char', 'c', 's', 'str'];
-
-    return isEmpty(tblColumns) ? [] :
-                tblColumns.filter((tblCol) => (get(tblCol, 'visibility', '') !== 'hidden'))
-                    .filter((tblCol) => (CharTypes.includes(tblCol.type)))
-                    .map((tblCol) => (tblCol.name));
-}
 
 /**
  * this function invoke the given callback when changes are made to the given tbl_id
@@ -984,3 +957,81 @@ function* doOnTblLoaded({tbl_id, callback}) {
 }
 
 
+
+/**
+ * Returns only numerical column names form raw lc table
+ * @param {Object} rawTbl
+ * @returns {string[]} - array of table columns objects
+ */
+export function getOnlyNumericalColNames(rawTbl) {
+    const cols = get(rawTbl, ['tableData', 'columns']);
+    const colType = getColumnTypes(cols, 'numeric');
+    return get(rawTbl, ['tableData', 'columns']).reduce((prev, col) => {
+        if ((colType.includes(col.type)) ) {
+            prev.push(col.name);
+        }
+        return prev;
+    }, []);
+}
+
+
+/**
+ * @summary get column names from the column of string or char type
+ * @param {Array} tblColumns
+ * @returns {Array}
+ */
+export function getStringColNames(tblColumns) {
+    const CharTypes = ['char', 'c', 's', 'str'];
+
+    return isEmpty(tblColumns) ? [] :
+        tblColumns.filter((tblCol) => (get(tblCol, 'visibility', '') !== 'hidden'))
+            .filter((tblCol) => (CharTypes.includes(tblCol.type)))
+            .map((tblCol) => (tblCol.name));
+}
+
+/**
+ * @summary get column names from the column of numeric type
+ * @param {Array} tblColumns
+ * @returns {Array}
+ */
+export function getNumericColNames(tblColumns) {
+    const NumTypes = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
+
+    return isEmpty(tblColumns) ? [] :
+        tblColumns.filter((tblCol) => (get(tblCol, 'visibility', '') !== 'hidden'))
+            .filter((tblCol) => (NumTypes.includes(tblCol.type)))
+            .map((tblCol) => (tblCol.name));
+}
+
+export function getColNames(tblColumns, colTypes) {
+    return isEmpty(tblColumns)?[]:
+     tblColumns.reduce((prev, col) => {
+        if ( colTypes && colTypes.includes(col.type)  ) {
+            prev.push(col.name);
+        }
+         else {
+            prev.push(col.name);
+        }
+        return prev;
+    }, []);
+}
+
+export function getColumnTypes (cols, type=undefined){
+   // const cols = get(tblModel, ['tableData', 'columns']);
+    var types =[];
+    for (let i=0; i<cols.length; i++){
+        if (types.indexOf(cols[i].type)>-1) continue;
+        if(!has(cols[i], 'visibility') || get(cols[i], 'visibility') !== 'hidden') {
+            if (!type || type === 'numeric') {
+                if (cols[i].type!=='char' && cols[i].type.toLowerCase()!=='string' ) {
+                    types[i] = cols[i].type;
+                }
+            }
+            else {
+                types[i] = cols[i].type;
+            }
+        }
+    }
+    return types;
+
+}

@@ -134,9 +134,11 @@ const lsstSdssReducer = (missionEntries, generalEntries) => {
         missionKeys.forEach((key) => {
             set(defV, [key, 'value'], get(missionEntries, key, ''));
         });
+
         Object.keys(generalEntries).forEach((key) => {
             set(defV, [key, 'value'], get(generalEntries, key, ''));
         });
+
         return defV;
     };
 };

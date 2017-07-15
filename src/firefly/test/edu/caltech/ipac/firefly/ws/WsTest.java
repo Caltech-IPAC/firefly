@@ -177,7 +177,7 @@ public class WsTest extends ConfigTest {
 //        }
 //
 
-        // OR using getList from manager get children of root
+        // OR using getSuggestedList from manager get children of root
 
         WsResponse response = man.getList("/", 1);
         List meta = response.getWspaceMeta();
