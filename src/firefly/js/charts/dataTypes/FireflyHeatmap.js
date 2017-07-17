@@ -162,24 +162,56 @@ function getChanges({tableModel, mappings, chartId, traceNum}) {
     }
 
     // color bar
+    // this is the default behavior for new heatmap trace with no colorbar props
+    // each new default colorbar affects positioning of the previous
     if (!get(data, `${traceNum}.colorbar`)) {
         changes[`data.${traceNum}.colorbar.thickness`] = 10;
         changes[`data.${traceNum}.colorbar.outlinewidth`] = 0;
-        changes[`data.${traceNum}.colorbar.title`] = 'pts'; //`(${traceNum})`;
-    }
+        changes[`data.${traceNum}.colorbar.title`] = get(data, `${traceNum}.name`, 'pts');
 
-    if (!get(data, `${traceNum}.colorbar.x`)) {
+        const nbars = data.filter((d) => get(d, 'colorbar') && get(d, 'showscale', true)).length + 1;
+
         const yside = get(layout, 'yaxis.side');
         const yOpposite = (yside === 'right');
-        const colorBarIdx = data.filter((d) => get(d, 'colorbar') && get(d, 'showscale', true)).length;
-        addColorbarChanges(changes, yOpposite, traceNum, colorBarIdx);
+        let cnt = 1;
+        let traceNotHandled = true;
+        data.forEach( (d, i) => {
+            if (get(d, 'colorbar') && get(d, 'showscale', true)) {
+                // if the trace data come out of order, we still want colorbars ordered
+                if (traceNum<i && traceNotHandled) {
+                    addColorbarLengthChanges(changes, yOpposite, nbars, traceNum, cnt);
+                    traceNotHandled = false;
+                    cnt++;
+                }
+                addColorbarLengthChanges(changes, yOpposite, nbars, i, cnt);
+                cnt++;
+            }
+        });
+        if (traceNotHandled) {
+            addColorbarLengthChanges(changes, yOpposite, nbars, traceNum, cnt);
+        }
     }
 
     return changes;
 }
 
-export function addColorbarChanges(changes, yOpposite, traceNum, idx) {
-    const f = 0.08; // colorbar shift in plot fractions
-    changes[`data.${traceNum}.colorbar.xanchor`] = yOpposite ? 'right' : 'left';
-    changes[`data.${traceNum}.colorbar.x`]  = yOpposite ? -0.02-idx*f : (1.02+idx*f);
+function addColorbarLengthChanges(changes, yOpposite, nbars, traceNum, cnt) {
+    changes[`data.${traceNum}.colorbar.yanchor`] = 'bottom';
+    changes[`data.${traceNum}.colorbar.len`] = 1/nbars;
+    changes[`data.${traceNum}.colorbar.y`] = 1-cnt/nbars; // first trace on top
+    addColorbarChanges(changes, yOpposite, traceNum);
+    changes['layout.legend.orientation'] = 'h'; // horizontal legend at the bottom
+}
+
+// colorbar needs to be on the opposite size of the axis
+// x is between -2 and 3, negative if yaxis is on the left (default)
+// positive and bigger than 1 when yaxis is on the right (opposite)
+export function addColorbarChanges(changes, yOpposite, traceNum, x=1.02) {
+    if (yOpposite) {
+        changes[`data.${traceNum}.colorbar.xanchor`] = 'right';
+        changes[`data.${traceNum}.colorbar.x`] = x>0 ? 1-x : x;
+    } else {
+        changes[`data.${traceNum}.colorbar.xanchor`] = 'left';
+        changes[`data.${traceNum}.colorbar.x`] = x>0 ? x : 1-x;
+    }
 }

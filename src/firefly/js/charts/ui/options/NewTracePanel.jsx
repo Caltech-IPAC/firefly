@@ -15,7 +15,7 @@ import {ScatterOptions, submitChangesScatter} from './ScatterOptions.jsx';
 import {HeatmapOptions, submitChangesHeatmap} from './HeatmapOptions.jsx';
 import {HistogramOptions} from './PlotlyHistogramOptions.jsx';
 import {FireflyHistogramOptions, submitChangesFFHistogram} from './FireflyHistogramOptions.jsx';
-import {BasicOptionFields, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
+import {BasicOptionFields, basicFieldReducer, submitChanges, hasMarkerColor} from './BasicOptions.jsx';
 
 const fieldProps = {labelWidth: 62, size: 15};
 const dialogNameNewTrace = 'NewTracePanel';
@@ -35,6 +35,7 @@ function getSubmitChangesFunc(traceType) {
 }
 
 function getOptionsComponent({traceType, chartId, activeTrace, groupKey}) {
+    const noColor = !hasMarkerColor(traceType);
     switch(traceType) {
         case 'scatter':
         case 'scattergl':
@@ -50,7 +51,7 @@ function getOptionsComponent({traceType, chartId, activeTrace, groupKey}) {
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
                     <ValidationField fieldKey={`_tables.data.${activeTrace}.x`}/>
                     <ValidationField fieldKey={`_tables.data.${activeTrace}.y`}/>
-                    <BasicOptionFields {...{activeTrace, groupKey}}/>
+                    <BasicOptionFields {...{activeTrace, groupKey, noColor}}/>
                 </FieldGroup>
             );
     }

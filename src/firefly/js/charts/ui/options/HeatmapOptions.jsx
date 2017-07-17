@@ -4,15 +4,16 @@ import {get, isUndefined} from 'lodash';
 import {getChartData} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 
+import {toBoolean} from '../../../util/WebUtil.js';
 import {intValidator} from '../../../util/Validate.js';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
 import {CheckboxGroupInputField} from '../../../ui/CheckboxGroupInputField.jsx';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {BasicOptionFields, OptionTopBar, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
-import {addColorbarChanges} from '../../dataTypes/FireflyHeatmap.js';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
+
 
 
 const fieldProps = {labelWidth: 62, size: 15};
@@ -41,7 +42,7 @@ export class HeatmapOptions extends SimpleComponent {
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
                     {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
                     <br/>
-                    <BasicOptionFields {...{activeTrace, groupKey}}/>
+                    <BasicOptionFields {...{activeTrace, groupKey, noColor: true}}/>
                 </FieldGroup>
             </div>
         );
@@ -158,7 +159,7 @@ export function submitChangesHeatmap({chartId, activeTrace, fields, tbl_id}) {
     Object.assign(changes, fields);
 
     // reversescale is boolean
-    changes[`data.${activeTrace}.reversescale`] = get(fields, `data.${activeTrace}.reversescale`, '').includes('true');
+    changes[`data.${activeTrace}.reversescale`] = toBoolean(get(fields, `data.${activeTrace}.reversescale`));
 
     submitChanges({chartId, fields: changes, tbl_id});
 }

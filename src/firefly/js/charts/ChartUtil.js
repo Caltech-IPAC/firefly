@@ -575,9 +575,6 @@ export function getNewTraceDefaults(type='', traceNum=0) {
         };
     } else if (type.includes(HEATMAP)) {
         return {
-            [`data.${traceNum}.colorbar.thickness`]: 10,
-            [`data.${traceNum}.colorbar.outlinewidth`]: 0,
-            [`data.${traceNum}.colorbar.title`]: 'pts',
             [`data.${traceNum}.showlegend`]: true,
             ['layout.xaxis.range']: undefined, //clear out fixed range
             ['layout.yaxis.range']: undefined //clear out fixed range

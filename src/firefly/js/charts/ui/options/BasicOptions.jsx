@@ -58,6 +58,13 @@ function getOptions(a, layout) {
     return opts.toString();
 }
 
+/**
+ * @param type - Plotly chart type
+ */
+export function hasMarkerColor(type) {
+    return type.startsWith('scatter') || type.startsWith('histogram') || type === 'box' || type === 'bar' || type === 'area' || type === 'pointcloud';
+}
+
 export class BasicOptions extends SimpleComponent {
 
     getNextState() {
@@ -69,16 +76,17 @@ export class BasicOptions extends SimpleComponent {
     render() {
         const {chartId} = this.props;
         const {activeTrace=0} = this.state;
-        const {tablesources} = getChartData(chartId);
+        const {tablesources, data={}} = getChartData(chartId);
         const groupKey = `${chartId}-basic-${activeTrace}`;
         const tablesource = get(tablesources, [activeTrace]);
         const tbl_id = get(tablesource, 'tbl_id');
+        const noColor = hasMarkerColor(get(data, 'type', 'scatter'));
         return (
             <div style={{minWidth: 250, padding:'0 5px 7px'}}>
                 <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id}}/>
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey}
                             reducerFunc={basicFieldReducer({chartId, activeTrace})}>
-                    <BasicOptionFields {...{activeTrace, groupKey}}/>
+                    <BasicOptionFields {...{activeTrace, groupKey, noColor}}/>
                 </FieldGroup>
             </div>
         );
@@ -279,7 +287,7 @@ export class BasicOptionFields extends Component {
     }
 
     render() {
-        const {activeTrace, groupKey, align='vertical', xNoLog} = this.props;
+        const {activeTrace, groupKey, align='vertical', noColor, xNoLog} = this.props;
 
         // TODO: need color input field
         const colorFldPath = `data.${activeTrace}.marker.color`;
@@ -288,7 +296,7 @@ export class BasicOptionFields extends Component {
             <div className={`FieldGroup__${align}`}
                  style={{padding: '15px 10px 0', border: '2px solid #a5a5a5', borderRadius: 10}}>
                 <ValidationField fieldKey={`data.${activeTrace}.name`}/>
-                <div style={{whiteSpace: 'nowrap'}}>
+                {!noColor && <div style={{whiteSpace: 'nowrap'}}>
                     <ValidationField inline={true} fieldKey={colorFldPath}/>
                     <div
                         style={{display: 'inline-block', cursor:'pointer', paddingLeft: 3, verticalAlign: 'middle', fontSize: 'larger'}}
@@ -301,7 +309,7 @@ export class BasicOptionFields extends Component {
                              }, groupKey)}>
                         {'\ud83d\udd0e'}
                     </div>
-                </div>
+                </div>}
                 <br/>
                 <ValidationField fieldKey={'layout.title'}/>
                 <br/>
@@ -360,6 +368,7 @@ BasicOptionFields.propTypes = {
     groupKey: PropTypes.string.isRequired,
     activeTrace: PropTypes.number.isRequired,
     align: PropTypes.oneOf(['vertical', 'horizontal']),
+    noColor: PropTypes.bool,
     xNoLog: PropTypes.bool
 };
 
@@ -445,11 +454,9 @@ export function submitChanges({chartId, fields, tbl_id}) {
 
         // move colorbar to the other side of the chart
         const yOpposite = get(fields, '__yoptions', '').includes('opposite');
-        let cnt = 0;
         data.forEach( (d, i) => {
             if (get(d, 'colorbar') && get(d, 'showscale', true)) {
-                addColorbarChanges(changes, yOpposite, i, cnt);
-                cnt++;
+                addColorbarChanges(changes, yOpposite, i, get(d, 'colorbar.x'));
             }
         });
 
