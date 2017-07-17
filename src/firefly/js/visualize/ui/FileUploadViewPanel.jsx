@@ -24,11 +24,10 @@ import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import './ImageSelectPanel.css';
 
 export const panelKey = 'FileUploadAnalysis';
-const  summaryTableGroup = 'UPLOAD_SUMMARY_GROUP';
-const  headerTableGroup = 'HEADER_SUMMARY_GROUP';
 const  fileId = 'fileUpload';
 const  urlId = 'urlUpload';
 
+const SUMMARY_INDEX_COL = 0;
 const SUMMARY_TYPE_COL = 2;
 const HEADER_KEY_COL = 1;
 const HEADER_VAL_COL = 2;
@@ -39,6 +38,11 @@ const  isFitsFile = (analysisModel) => {
             return analysisModel && get(analysisModel, 'fileFormat', '').toLowerCase().includes('fits');
 };
 
+/**
+ * check if table model contain data
+ * @param model
+ * @returns {*|boolean}
+ */
 const isNoDataInModel = (model) => {
     const row = model && get(model, ['totalRows']);
 
@@ -61,6 +65,52 @@ function makeHeaderTable(model, highlightedRow) {
     return hlTable;
 }
 
+/**
+ * compute highlightedRow to be the row in original table
+ * @param tableModel
+ * @param highlightedRow
+ * @returns {*}
+ */
+function adjustHighlightedRow(tableModel, highlightedRow) {
+    const {data} = get(tableModel, 'tableData');
+
+    if (!isNil(highlightedRow)) {
+        return parseInt(data[highlightedRow][SUMMARY_INDEX_COL]);
+    }
+
+    return -1;
+}
+
+/**
+ * compute the selected row to be the row in the original table
+ * @param tableModel
+ * @param selectInfo
+ * @returns {*}
+ */
+function adjustSelectInfo(tableModel, selectInfo) {
+    const selectInfoCls = SelectInfo.newInstance(selectInfo);
+    const newSelectCls = new SelectInfo.newInstance({rowCount: tableModel.totalRows}, selectInfoCls.offset);
+
+    let   bNew = false;
+
+    Array.from(selectInfoCls.getSelected()).forEach((idx) => {
+         const newIdx = adjustHighlightedRow(tableModel, idx);
+
+         newSelectCls.setRowSelect(newIdx, true);
+         if (idx !== newIdx) {
+             bNew = true;
+         }
+    });
+
+    return bNew ? newSelectCls.data : selectInfo;
+}
+
+/**
+ * analyze the selected units - image, table, no data contained, exceeding the limit
+ * @param model
+ * @param limit
+ * @returns {{image: Array, table: Array, noDataUnit: Array, extra: Array}}
+ */
 const getSelectionResult = (model, limit) => {
     const {selectInfo} = model || {};
     let   results = {image: [], table: [], noDataUnit: [], extra:[]};
@@ -105,6 +155,7 @@ export class FileUploadViewPanel extends PureComponent {
             if (!analysisFields) analysisFields = FieldGroupUtils.getGroupFields(panelKey);
 
             const uploadSrc = get(analysisFields, ['uploadTabs', 'value']);
+            const displayValue = get(analysisFields, [uploadSrc, 'displayValue']);
             const currentAnaResult = get(analysisFields, [uploadSrc, 'analysisResult'], '');
             const analysisResultObj = currentAnaResult ? JSON.parse(currentAnaResult) : {};
             const {analysisSummary=''} = analysisResultObj;
@@ -126,6 +177,7 @@ export class FileUploadViewPanel extends PureComponent {
                 updatePreferColumnWidth(analysisModel);
 
                 const tblInfo =  getTblInfoById(crtAnalysisId);
+
                 let selectInfo = get(tblInfo, 'selectInfo', null);
 
                 if (!selectInfo) {
@@ -138,7 +190,7 @@ export class FileUploadViewPanel extends PureComponent {
             }
 
             return {analysisModel, analysisResult: currentAnaResult, analysisSummary, highlightedRow, hlHeaderTable,
-                    crtAnalysisId, isUploading: false};
+                    crtAnalysisId, isUploading: false, displayValue};
         };
 
         this.state = this.getNextState();
@@ -159,27 +211,46 @@ export class FileUploadViewPanel extends PureComponent {
         if (this.iAmMounted) {
             const analysisFields = FieldGroupUtils.getGroupFields(panelKey);
             const uploadSrc = get(analysisFields, ['uploadTabs', 'value']);
-            const {analysisResult='', valid=true} = get(analysisFields, uploadSrc) || {};
+            const {analysisResult='', valid=true, displayValue} = get(analysisFields, uploadSrc) || {};
 
             if (!valid) {  // upload fails
-                this.setState({isUploading: false, analysisModel: null, analysisResult: '', analysisSummary: '', highlightedRow: -1,
-                               hlHeaderTable: null});
+                this.setState({
+                    isUploading: false,
+                    analysisModel: null,
+                    analysisResult: '',
+                    analysisSummary: '',
+                    highlightedRow: -1,
+                    hlHeaderTable: null
+                });
+            } else if ((displayValue && displayValue !== this.state.displayValue) && uploadSrc === fileId) {  // in uploading the new file
+                this.setState({
+                    isUploading: true,
+                    displayValue
+                });
             } else if (analysisResult !== this.state.analysisResult) {  // a new file is successfully loaded
                 this.setState(this.getNextState(analysisFields));
             } else if (this.state.analysisModel) {                 // check if highlight or selection is changed
                 const {crtAnalysisId} = this.state;
 
                 if (getTblById(crtAnalysisId)) {
-                    const {highlightedRow, selectInfo} = getTblInfoById(crtAnalysisId);
+                    let {highlightedRow, selectInfo} = getTblInfoById(crtAnalysisId);
+                    const {tableModel} = getTblInfoById(crtAnalysisId);
 
-                    if (highlightedRow !== this.state.highlightedRow) {
-                        const hlHeaderTable = makeHeaderTable(this.state.analysisModel, highlightedRow);
+                    if (tableModel && tableModel.tableData) {
+                        highlightedRow = adjustHighlightedRow(tableModel, highlightedRow);
+                        if (highlightedRow !== this.state.highlightedRow) {
+                            const hlHeaderTable = makeHeaderTable(this.state.analysisModel, highlightedRow);
 
-                        this.setState({highlightedRow, hlHeaderTable});
-                    }
-                    if (selectInfo && !isEqual(selectInfo, get(this.state.analysisModel, 'selectInfo'))){
-                         const analysisModel = Object.assign({}, this.state.analysisModel, {selectInfo});
-                         this.setState({analysisModel});
+                            this.setState({highlightedRow, hlHeaderTable});
+                        }
+
+                        selectInfo = adjustSelectInfo(tableModel, selectInfo);
+                        if (selectInfo && !isEqual(selectInfo, get(this.state.analysisModel, 'selectInfo'))) {
+                            const analysisModel = Object.assign({}, this.state.analysisModel, {selectInfo});
+                            this.setState({analysisModel});
+
+                        }
+
                     }
                 }
             }
@@ -200,39 +271,41 @@ export class FileUploadViewPanel extends PureComponent {
 
         var displayHeaderTable = () => {
 
-            if (hlHeaderTable) {
-                const title = hlHeaderTable.title;
-                const {columns, data} = get(hlHeaderTable, 'tableData') || {};
-
-                if (columns && data) {
-                    const widths = calcColumnWidths(columns, data);
-
-                    columns.forEach((col, idx) => {
-                        col.prefWidth = widths[idx] + 4;
-                    });
-                }
-
-                return  (
-                    <div style={{ width: (widthTotal-w1), ...summaryStyle}}>
-                        <p style={pStyle}>{title}</p>
-                        <div style={tableStyle}>
-                        <TablePanel
-                            key={headerTableGroup+nowTime()}
-                            tbl_ui_id={hlHeaderTable.tbl_id}
-                            showToolbar={false}
-                            showOptionButton={false}
-                            selectable={false}
-                            tableModel={hlHeaderTable}
-                        />
-                        </div>
-                    </div>
-                );
-            } else {
+            if (!hlHeaderTable) {
                 return false;
             }
+            const {columns, data} = get(hlHeaderTable, 'tableData') || {};
+
+            if (columns && data) {
+                const widths = calcColumnWidths(columns, data);
+
+                columns.forEach((col, idx) => {
+                    col.prefWidth = widths[idx] + 4;
+                });
+            }
+
+            return  (
+                <div style={{ width: (widthTotal-w1), ...summaryStyle}}>
+                    <p style={pStyle}>{hlHeaderTable.title}</p>
+                    <div style={tableStyle}>
+                    <TablePanel
+                        key={hlHeaderTable.tbl_id}
+                        tbl_ui_id={hlHeaderTable.tbl_id}
+                        showToolbar={false}
+                        showOptionButton={false}
+                        selectable={false}
+                        tableModel={hlHeaderTable}
+                    />
+                    </div>
+                </div>
+            );
         };
 
         var displayTable = () => {
+            if (!analysisModel) {
+                return false;
+            }
+
             let {selectInfo} = analysisModel || getTblInfoById(analysisModel.tbl_id) || {};
             if (isNil(selectInfo)) {
                 selectInfo = selectRowFromSummaryTable(analysisModel);
@@ -255,7 +328,7 @@ export class FileUploadViewPanel extends PureComponent {
                     <p style={pStyle}>File Summary</p>
                     <div style={tableStyle}>
                     <TablePanel
-                        key={summaryTableGroup}
+                        key={hlTbl.tbl_id}
                         tbl_ui_id={hlTbl.tbl_id}
                         showToolbar={false}
                         showOptionButton={false}
@@ -470,7 +543,7 @@ export function validateModelSelection(uploadTabs) {
         }
 
         const crtAnalysisId = analysisTblIds[analysisTblIds.length-1];
-        const {selectInfo} = getTblInfoById(crtAnalysisId); // check if no valid extension or table selected
+        const {selectInfo, tableModel} = getTblInfoById(crtAnalysisId); // check if no valid extension or table selected
         const selectInfoCls = SelectInfo.newInstance(selectInfo);
         const bFits = isFitsFile(analysisModel);
         const selList = selectInfoCls.getSelected();
@@ -482,7 +555,7 @@ export function validateModelSelection(uploadTabs) {
             });
         }
 
-        const resultModel = Object.assign({}, analysisModel, {selectInfo});
+        const resultModel = Object.assign({}, analysisModel, {selectInfo: adjustSelectInfo(tableModel, selectInfo)});
         const limit = 20;
         const selectResults = getSelectionResult(resultModel, limit); // a search limit is set
 

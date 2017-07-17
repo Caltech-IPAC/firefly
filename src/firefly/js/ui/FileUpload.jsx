@@ -43,7 +43,7 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  messa
             return (
                 <button type='button' className='button std hl'
                         onClick={() =>  onUrlAnalysis(value)}
-                        style={{display: 'inline-block'}}>{'Load'}</button>
+                        style={{display: 'inline-block'}}>{'Upload'}</button>
             );
         } else {
             return (
