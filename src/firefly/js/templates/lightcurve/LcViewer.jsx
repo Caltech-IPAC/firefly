@@ -5,7 +5,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {pickBy, get, isEmpty, capitalize} from 'lodash';
+import {pickBy, get, capitalize} from 'lodash';
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
 import {dispatchHideDropDown, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
@@ -30,9 +30,8 @@ import {HelpIcon} from './../../ui/HelpIcon.jsx';
 import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
-
 import {HelpText} from './../../ui/HelpText.jsx';
-import {HELP_LOAD} from '../../core/AppDataCntlr.js';
+//import {HELP_LOAD} from '../../core/AppDataCntlr.js';
 
 const vFileKey = LC.FG_FILE_FINDER;
 /**
@@ -207,17 +206,17 @@ export function UploadPanel(props) {
     const wrapperStyle = {color:'inherit', margin: '5px 0'};
     const {missionOptions=getAllConverterIds()} = props || {};
 
-    let instruction = 'Plot time series data, view associated images, find period, and phase fold.';
+    const instruction = 'Plot time series data, view associated images, find period, and phase fold.';
 
     const options = missionOptions.map((id) => {
         return {label: getMissionName(id) || capitalize(id), value: id};
     });
-    var helpClick = (helpId) => {
+   /* var helpClick = (helpId) => {
         flux.process({
             type: HELP_LOAD,
             payload: {helpId}
         });
-    };
+    };*/
     return (
         <div style={{padding: 10}}>
             <div style={{margin: '0px 5px 5px'}}>{instruction}</div>
@@ -281,7 +280,6 @@ UploadPanel.defaultProps = {
 
 function onSearchSubmit(request) {
     if (request.rawTblSource) {
-        const {mission} = request;
         const converter = getConverter(request.mission);
         if (!converter) return;
 

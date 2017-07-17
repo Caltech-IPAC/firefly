@@ -1,12 +1,11 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {get, has,  set, isNil} from 'lodash';
+import {get,  set, isNil} from 'lodash';
 import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
-import {getLayouInfo} from '../../../core/LayoutCntlr.js';
 import {makeFileRequest, getCellValue, getTblById, getColumnIdx, smartMerge,getOnlyNumericalColNames} from '../../../tables/TableUtil.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {getInitialDefaultValues,renderMissionView,validate,getTimeAndYColInfo,fileUpdateOnTimeColumn,setValueAndValidator} from '../LcUtil.jsx';
-import {LC,  onTimeColumnChange} from '../LcManager.js';
+import {LC} from '../LcManager.js';
 
 
 const labelWidth = 80;
@@ -43,7 +42,7 @@ PTFSettingBox.propTypes = {
 
 //TODO, this is copied from WISE, need to refactor it after the images and other information are updated.
 export const ptfOptionsReducer = (missionEntries, generalEntries) => {
-    return (inFields) => {
+    return (inFields, action) => {
         if (inFields) {
             return inFields;
         }
@@ -103,8 +102,8 @@ export function ptfOnNewRawTable(rawTable, missionEntries, generalEntries, conve
     // Update default values AND sortInfo and
     const metaInfo = rawTable && rawTable.tableMeta;
 
-    let numericalCols = getOnlyNumericalColNames(rawTable);
-    let defaultDataSource = (getColumnIdx(rawTable, converterData.dataSource) > 0) ? converterData.dataSource : numericalCols[3];
+    const numericalCols = getOnlyNumericalColNames(rawTable);
+    const defaultDataSource = (getColumnIdx(rawTable, converterData.dataSource) > 0) ? converterData.dataSource : numericalCols[3];
 
     const {defaultCTimeName,defaultYColName } = getTimeAndYColInfo(numericalCols,xyColPattern,rawTable,converterData );
 
@@ -114,7 +113,7 @@ export function ptfOnNewRawTable(rawTable, missionEntries, generalEntries, conve
         [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES, numericalCols),
         [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, numericalCols),
         [LC.META_URL_CNAME]: get(metaInfo, LC.META_URL_CNAME, defaultDataSource),
-        [LC.META_FLUX_BAND]: get(metaInfo, LC.META_FLUX_BAND, 'g'),
+        [LC.META_FLUX_BAND]: get(metaInfo, LC.META_FLUX_BAND, 'g')
 
     };
 
@@ -124,11 +123,30 @@ export function ptfOnNewRawTable(rawTable, missionEntries, generalEntries, conve
     return {newLayoutInfo, shouldContinue: false};
 }
 
+export function ptfRawTableRequest(converter, source, uploadFileName='') {
+    const timeCName = converter.defaultTimeCName;
+    const mission = converter.converterId;
+    const options = {
+        tbl_id: LC.RAW_TABLE,
+        sortInfo: sortInfoString(timeCName), // if present, it will skip LcManager.js#ensureValidRawTable
+        META_INFO: {[LC.META_MISSION]: mission, timeCName},
+        pageSize: LC.TABLE_PAGESIZE,
+        uploadFileName
+
+    };
+    return makeFileRequest('Input Data', source, null, options);
+
+}
+
+
 export function ptfOnFieldUpdate(fieldKey, value) {
     // images are controlled by radio button -> band w1,w2,w3,w4.
     if (fieldKey === LC.META_TIME_CNAME) {
-       return fileUpdateOnTimeColumn(fieldKey, value);
-    } else if ([LC.META_FLUX_CNAME, LC.META_ERR_CNAME, LC.META_URL_CNAME, LC.META_FLUX_BAND].includes(fieldKey)) {
+        return fileUpdateOnTimeColumn(fieldKey, value);
+    } else if ([LC.META_FLUX_CNAME, LC.META_ERR_CNAME,  LC.META_FLUX_BAND].includes(fieldKey)) {
         return {[fieldKey]: value};
     }
+
+
 }
+

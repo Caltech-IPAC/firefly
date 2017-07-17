@@ -1,12 +1,11 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {get, has,  set, isNil} from 'lodash';
+import {get,  set, isNil} from 'lodash';
 import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
-import {getLayouInfo} from '../../../core/LayoutCntlr.js';
 import {makeFileRequest, getCellValue, getTblById, getColumnIdx, smartMerge,getOnlyNumericalColNames} from '../../../tables/TableUtil.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {getInitialDefaultValues,renderMissionView,validate,getTimeAndYColInfo,fileUpdateOnTimeColumn,setValueAndValidator} from '../LcUtil.jsx';
-import {LC,  onTimeColumnChange} from '../LcManager.js';
+import {LC} from '../LcManager.js';
 
 
 const labelWidth = 80;
@@ -49,7 +48,7 @@ export const wiseOptionsReducer = (missionEntries, generalEntries) => {
 
     const labelWidth = 80;
 
-    return (inFields) => {
+    return (inFields, action) => {
         if (inFields) {
             return inFields;
         }
@@ -117,7 +116,7 @@ export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, conv
 
     // Update default values AND sortInfo and
     const metaInfo = rawTable && rawTable.tableMeta;
-    let numericalCols = getOnlyNumericalColNames(rawTable);
+    const numericalCols = getOnlyNumericalColNames(rawTable);
     let defaultDataSource = (getColumnIdx(rawTable, converterData.dataSource) > 0) ? converterData.dataSource : numericalCols[3];
 
     const {defaultCTimeName,defaultYColName } = getTimeAndYColInfo(numericalCols,xyColPattern,rawTable,converterData );
@@ -127,7 +126,7 @@ export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, conv
         [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES, numericalCols),
         [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, numericalCols),
         [LC.META_URL_CNAME]: get(metaInfo, LC.META_URL_CNAME, defaultDataSource),
-        [LC.META_FLUX_BAND]: get(metaInfo, LC.META_FLUX_BAND, 'w1'),
+        [LC.META_FLUX_BAND]: get(metaInfo, LC.META_FLUX_BAND, 'w1')
 
     };
 

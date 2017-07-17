@@ -14,7 +14,7 @@ import {LsstSdssSettingBox, lsstSdssOnNewRawTable, lsstSdssOnFieldUpdate, lsstSd
 import {DefaultSettingBox, defaultOnNewRawTable, defaultOnFieldUpdate, defaultRawTableRequest} from './generic/DefaultMissionOptions.js';
 import {BasicSettingBox, basicOnNewRawTable, basicOnFieldUpdate, basicRawTableRequest, imagesShouldBeDisplayed} from './basic/BasicMissionOptions.js';
 import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest,isValidWiseTable} from './wise/WiseMissionOptions.js';
-import {PTFSettingBox, ptfOnNewRawTable, ptfOnFieldUpdate, isValidPTFTable} from './ptf/PTFMissionOptions.js';
+import {PTFSettingBox, ptfOnNewRawTable, ptfOnFieldUpdate, ptfRawTableRequest,isValidPTFTable} from './ptf/PTFMissionOptions.js';
 
 import {LC} from './LcManager.js';
 
@@ -125,8 +125,8 @@ const converters = {
         missionName: 'PTF',
         MissionOptions: PTFSettingBox,
         onNewRawTable: ptfOnNewRawTable,
-        onFieldUpdate: wiseOnFieldUpdate,  //same as in wise
-        rawTableRequest: wiseRawTableRequest, //the request is same now.
+        onFieldUpdate: ptfOnFieldUpdate,
+        rawTableRequest: wiseRawTableRequest, //the r
         yErrNames: '',
         dataSource: 'pid',
         webplotRequestCreator: getWebPlotRequestViaPTFIbe,

@@ -1,16 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {flux} from '../../../Firefly.js';
-import {get, has, isEmpty, set} from 'lodash';
+import {get,isEmpty} from 'lodash';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
-import {ValidationField} from '../../../ui/ValidationField.jsx';
-import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
 import {makeFileRequest} from '../../../tables/TableUtil.js';
-import {getColumnIdx, smartMerge,  getColNames,getTblById,getColumnTypes,getStringColNames} from '../../../tables/TableUtil.js';
-import {ReadOnlyText, getTypeData,getSuggestedList,getInitialDefaultValues,getMissionInput,getMissionInfo,validate,fileUpdateOnTimeColumn, setValueAndValidator} from '../LcUtil.jsx';
-import {LC, getViewerGroupKey, onTimeColumnChange} from '../LcManager.js';
+import {getColumnIdx, smartMerge,  getColNames,getColumnTypes} from '../../../tables/TableUtil.js';
+import {ReadOnlyText, getInitialDefaultValues,getMissionInput,getMissionInfo,validate,fileUpdateOnTimeColumn, setValueAndValidator} from '../LcUtil.jsx';
+import {LC, getViewerGroupKey} from '../LcManager.js';
 import {getMissionName} from '../LcConverterFactory.js';
-import {getLayouInfo} from '../../../core/LayoutCntlr.js';
 import {SettingBox} from '../SettingBox.jsx';
 const labelWidth = 90;
 

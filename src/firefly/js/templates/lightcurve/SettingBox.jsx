@@ -4,6 +4,9 @@ import {getLayouInfo} from '../../core/LayoutCntlr.js';
 import {flux} from '../../Firefly.js';
 import {get} from 'lodash';
 
+/**
+ * @desc This is the base class that is used by DefaultMissionOption and BasicMissionOption.
+ */
 
 export class SettingBox extends PureComponent {
     constructor(props) {

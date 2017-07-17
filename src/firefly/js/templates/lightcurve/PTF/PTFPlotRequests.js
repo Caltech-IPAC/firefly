@@ -6,7 +6,7 @@ import {WebPlotRequest} from '../../../visualize/WebPlotRequest.js';
 import {makeWorldPt} from '../../../visualize/Point.js';
 import {CoordinateSys} from '../../../visualize/CoordSys.js';
 import {ServerRequest} from '../../../data/ServerRequest.js';
-import {isNil, isEmpty} from 'lodash';
+import {isNil} from 'lodash';
 import {ERROR_MSG_KEY} from '../generic/errorMsg.js';
 
 import {addCommonReqParams} from '../LcConverterFactory.js';
@@ -37,7 +37,7 @@ export function makePTFPlotRequest(table, rowIdx, cutoutSize) {
     return addCommonReqParams(reqParams, title, makeWorldPt(ra, dec, CoordinateSys.EQ_J2000));
 }
 
-
+//TODO to be implemented
 /**
  *
  * @param tableModel

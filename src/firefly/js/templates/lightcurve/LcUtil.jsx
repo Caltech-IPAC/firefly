@@ -39,7 +39,12 @@ ReadOnlyText.propTypes = {
     wrapperStyle: PropTypes.object
 };
 
-
+/**
+ * @desc This method is created a mission entries for all missions
+ * @param   {object} tableMeta - the meta data in the IpacTable Object
+ * @param   {object} layoutInfo - the layout of the UI
+ * @returns {{converterData: *, missionEntries: (*|{})}}
+ */
 export function makeMissionEntries(tableMeta, layoutInfo={}) {
     var converterData = getConverter(get(tableMeta, LC.META_MISSION)) || getConverter();
     var missionEntries = layoutInfo.missionEntries || {};
@@ -78,7 +83,13 @@ export function keepHighlightedRowSynced(tbl_id, highlightedRow=0) {
             });
     }
 }
-
+/**
+ * @desc This method returns a suggested list of the column names based on the val entered and the defaultVal if provided.
+ * @param {string} val - the input in the text field
+ * @param {array} columnNames - the array of string
+ * @param {string} defaultVal - the default value, it can be null.
+ * @returns {*}
+ */
 export function getSuggestedList (val, columnNames, defaultVal) {
     return columnNames.reduce((prev, name) => {
         if (  name.startsWith(val) || (defaultVal && val===defaultVal)) {
@@ -146,6 +157,13 @@ export function getInitialDefaultValues(labelWidth, missionName) {
     }
 
 }
+
+/**
+ *
+ * @param  {array} numColumns - the array of numerical column names
+ * @param  {object} wrapperStyle
+ * @returns {Array}
+ */
 export function getMissionInput (numColumns, wrapperStyle){
     const missionKeys = [LC.META_TIME_CNAME, LC.META_FLUX_CNAME];
 
@@ -156,6 +174,15 @@ export function getMissionInput (numColumns, wrapperStyle){
     );
 
 }
+
+/**
+ * @desc This method returns the common entries nd the missionInout UI's
+ * @param {object} generalEntries
+ * @param {object}  missionEntries
+ * @param {array} tblColumns
+ * @param wrapperStyle
+ * @returns {*}
+ */
 export function getMissionEntries(generalEntries, missionEntries,tblColumns,wrapperStyle){
 
     if (isEmpty(generalEntries) || isEmpty(missionEntries)) return false;
@@ -171,7 +198,12 @@ export function getMissionEntries(generalEntries, missionEntries,tblColumns,wrap
     var missionInputs = getMissionInput(numColumns, wrapperStyle);
     return {allCommonEntries, missionInputs};
 }
-
+/**
+ * @desc This method returns the mission's information, such as missName, period, title, and uploaded file name.
+ * @param {object} missionEntries
+ * @param {TableModel} tblModel
+ * @returns {{missionName: (*|string), period: *, title: *, uploadedFileName: string}}
+ */
 export function getMissionInfo(missionEntries, tblModel){
     const converterId = get(missionEntries, LC.META_MISSION);
     var missionName = getMissionName(converterId) || 'Mission';
@@ -184,6 +216,8 @@ export function getMissionInfo(missionEntries, tblModel){
 
     return {missionName, period, title, uploadedFileName};
 }
+
+
 export function renderMissionView(generalEntries,missionEntries,missionBands,tblModel, wrapperStyle,labelWidth,callback ){
 
     //const wrapperStyle = {margin: '3px 0'};
@@ -222,7 +256,13 @@ export function renderMissionView(generalEntries,missionEntries,missionBands,tbl
     );
 }
 
-
+/**
+ * @desc This method is validating if the fields are valid entries.
+ * @param fldsWithValidators
+ * @param missionEntries
+ * @param typeColumns
+ * @returns {*}
+ */
 export function validate(fldsWithValidators, missionEntries, typeColumns ){
     return fldsWithValidators.reduce((all, fld) => {
         all[fld.key] =
@@ -250,12 +290,12 @@ export function getTimeAndYColInfo(numericalCols, xyColPattern, rawTable, conver
     let defaultYColName = (getColumnIdx(rawTable, converterData.defaultYCname) > 0) ? converterData.defaultYCname : numericalCols[1];
 
     defaultYColName = numericalCols.filter((el) => {
-            if (el.toLocaleLowerCase().match(xyColPattern[1]) != null) {
+            if (el.toLocaleLowerCase().match(xyColPattern[1]) !== null) {
                 return el;
             }
         })[0] || defaultYColName;
     defaultCTimeName = numericalCols.filter((el) => {
-            if (el.toLocaleLowerCase().match(xyColPattern[0]) != null) {
+            if (el.toLocaleLowerCase().match(xyColPattern[0]) !== null) {
                 return el;
             }
         })[0] || defaultCTimeName;
@@ -271,6 +311,15 @@ export function fileUpdateOnTimeColumn(fieldKey, value){
     return {[fieldKey]: value};
 }
 
+/**
+ *
+ * @desc This method is updating the defV based on the input.  The defV is an object, thus, its value can be modified.
+ * @param missionListKeys
+ * @param missionEntries
+ * @param missionKeys
+ * @param validators
+ * @param defV
+ */
 export function setValueAndValidator(missionListKeys, missionEntries,missionKeys,  validators, defV){
     missionListKeys.forEach((key) => {
         set(defV, [key, 'value'], get(missionEntries, key, []));
