@@ -367,7 +367,8 @@ function getChartingInfo(props) {
             tickfont: {
                 size: FSIZE
             },
-            zeroline: false
+            zeroline: false,
+            exponentformat:'e'
         },
         yaxis: {
             autorange: false,
@@ -389,7 +390,9 @@ function getChartingInfo(props) {
             tickfont: {
                 size: FSIZE
             },
-            zeroline: false
+            zeroline: false,
+            exponentformat:'e'
+
         },
         margin: {
             l: yOpposite ? MIN_MARGIN_PX : Y_TICKLBL_PX,
