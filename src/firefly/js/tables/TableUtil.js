@@ -18,7 +18,7 @@ import {ServerParams} from '../data/ServerParams.js';
 import {doUpload} from '../ui/FileUpload.jsx';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 
-export const COL_TYPE = new Enum(['NUMBER', 'TEXT']);
+export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT']);
 export const MAX_ROW = Math.pow(2,31) - 1;
 /* TABLE_REQUEST should match QueryUtil on the server-side */
 
@@ -934,25 +934,28 @@ export function watchTableChanges(tbl_id, actions, callback) {
 
 
 /**
- * @summary returns the columns array of the given table.
+ * @summary returns the non-hidden columns of the given table.  If type is given, it
+ * will only return columns that match type.
  * @param {TableModel} tableModel
+ * @param {COL_TYPE} type  one of predefined COL_TYPE.  defaults to 'ALL'.
  * @returns {Array<TableColumn>}
  */
-export function getColumns(tableModel) {
-    return get(tableModel, 'tableData.columns', []);
+export function getColumns(tableModel, type=COL_TYPE.ALL) {
+    return getColsByType(get(tableModel, 'tableData.columns', []), type);
 }
 
 /**
- * @summary returns only the visible columns matching the given type.
+ * @summary returns only the non-hidden columns matching the given type.
  * @param {Array<TableColumn>} tblColumns
- * @param {COL_TYPE} type  one of predefined COL_TYPE('NUMBER' | 'TEXT').  defaults to 'NUMBER'.
+ * @param {COL_TYPE} type  one of predefined COL_TYPE.  defaults to 'ALL'.
  * @returns {Array<TableColumn>}
  */
-export function getColsByType(tblColumns=[], type=COL_TYPE.NUMBER) {
+export function getColsByType(tblColumns=[], type=COL_TYPE.ALL) {
     const charTypes = ['char', 'c', 's', 'str'];
     const numTypes = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
     const matcher = type === COL_TYPE.TEXT ? charTypes : numTypes;
-    return tblColumns.filter((col) => get(col, 'visibility') !== 'hidden' && matcher.includes(col.type));
+    return tblColumns.filter((col) => get(col, 'visibility') !== 'hidden'
+                        && (type === COL_TYPE.ALL || matcher.includes(col.type)));
 }
 
 
