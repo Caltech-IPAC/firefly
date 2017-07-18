@@ -126,7 +126,7 @@ const converters = {
         MissionOptions: PTFSettingBox,
         onNewRawTable: ptfOnNewRawTable,
         onFieldUpdate: ptfOnFieldUpdate,
-        rawTableRequest: wiseRawTableRequest, //the r
+        rawTableRequest: ptfRawTableRequest, //the r
         yErrNames: '',
         dataSource: 'pid',
         webplotRequestCreator: getWebPlotRequestViaPTFIbe,

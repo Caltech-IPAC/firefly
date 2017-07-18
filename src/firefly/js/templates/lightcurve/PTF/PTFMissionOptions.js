@@ -123,6 +123,7 @@ export function ptfOnNewRawTable(rawTable, missionEntries, generalEntries, conve
     return {newLayoutInfo, shouldContinue: false};
 }
 
+//TODO if ptfRawTableRequest and ptfOnFieldUpdate are nothing different from the ones in wiseMssionOption, these two can be replaced.
 export function ptfRawTableRequest(converter, source, uploadFileName='') {
     const timeCName = converter.defaultTimeCName;
     const mission = converter.converterId;
