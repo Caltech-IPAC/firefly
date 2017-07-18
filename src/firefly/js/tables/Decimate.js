@@ -22,10 +22,11 @@ const DECIMATE_TAG='decimate';
  * @param {number} optional max x limit
  * @param {number} optional min y limit
  * @param {number} optional max y limit
+ * @param {number} optional minimum number of points to enable decimation
  * @returns {string}
  */
-export const serializeDecimateInfo = function(xColumnName, yColumnName, maxPoints=10000, xyRatio=1, xMin, xMax, yMin, yMax) {
-    const orderedNumericProps = [maxPoints, xyRatio, xMin, xMax, yMin, yMax];
+export const serializeDecimateInfo = function(xColumnName, yColumnName, maxPoints=10000, xyRatio=1, xMin, xMax, yMin, yMax, deciEnableLimit=Number.NaN) {
+    const orderedNumericProps = [maxPoints, xyRatio, xMin, xMax, yMin, yMax, deciEnableLimit];
     const deciStrStart = `${DECIMATE_TAG}=${xColumnName},${yColumnName}`;
     return orderedNumericProps.reduce((sres, val)=>{
         return sres + ',' + (Number.isFinite(val) ? val : '');
@@ -42,7 +43,7 @@ export const parseDecimateInfo = function(str) {
 
     const kv = str.split('=', 2);
     if (kv && kv.length === 2 && kv[0]===DECIMATE_TAG) {
-        const [xColumnName,yColumnName,maxPoints,xyRatio,xMin,xMax,yMin,yMax] = kv[1].split(',');
+        const [xColumnName,yColumnName,maxPoints,xyRatio,xMin,xMax,yMin,yMax,deciEnableLimit='-1'] = kv[1].split(',');
         if (xColumnName && yColumnName) {
             return {
                 xColumnName,
@@ -52,7 +53,8 @@ export const parseDecimateInfo = function(str) {
                 xMin: Number.parseFloat(xMin),
                 xMax: Number.parseFloat(xMax),
                 yMin: Number.parseFloat(yMin),
-                yMax: Number.parseFloat(yMax)
+                yMax: Number.parseFloat(yMax),
+                deciEnableLimit: Number.parseInt(deciEnableLimit)
             };
         }
     }
@@ -73,7 +75,7 @@ export const parseDecimateKey = function(str) {
     if (v.length < 3) return null;
     v = v.substring(1,v.length-1); // remove outer braces
     const parts = v.split(',');
-    if (parts.length == 8) {
+    if (parts.length === 8) {
         const xColNameOrExpr= parts[0];
         const yColNameOrExpr = parts[1];
         const xMin = Number(parts[2]);

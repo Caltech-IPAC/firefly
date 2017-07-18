@@ -120,8 +120,8 @@ function addOtherChanges({changes, xLabel, xTipLabel, xUnit, yLabel, yTipLabel, 
 
     // set default title if it's the first trace
     // and no title is set by the user
-    if (traceNum === 0) {
-        const {layout} = getChartData(chartId) || {};
+    const {layout, data} = getChartData(chartId) || {};
+    if (data && data.length===1) {
         const xAxisLabel = get(layout, 'xaxis.title');
         if (!xAxisLabel) {
             changes['layout.xaxis.title'] = xLabel + (xUnit ? ` (${xUnit})` : '');
