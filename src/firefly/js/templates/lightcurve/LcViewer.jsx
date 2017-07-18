@@ -31,7 +31,6 @@ import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFac
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {HelpText} from './../../ui/HelpText.jsx';
-//import {HELP_LOAD} from '../../core/AppDataCntlr.js';
 
 const vFileKey = LC.FG_FILE_FINDER;
 /**
@@ -211,12 +210,7 @@ export function UploadPanel(props) {
     const options = missionOptions.map((id) => {
         return {label: getMissionName(id) || capitalize(id), value: id};
     });
-   /* var helpClick = (helpId) => {
-        flux.process({
-            type: HELP_LOAD,
-            payload: {helpId}
-        });
-    };*/
+
     return (
         <div style={{padding: 10}}>
             <div style={{margin: '0px 5px 5px'}}>{instruction}</div>
