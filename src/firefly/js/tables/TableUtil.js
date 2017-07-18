@@ -4,6 +4,7 @@
 
 import {take, fork, cancel} from 'redux-saga/effects';
 import {get, set, unset, has, isEmpty, isUndefined, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray, padEnd} from 'lodash';
+import Enum from 'enum';
 
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
@@ -17,10 +18,13 @@ import {ServerParams} from '../data/ServerParams.js';
 import {doUpload} from '../ui/FileUpload.jsx';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 
+export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT']);
 export const MAX_ROW = Math.pow(2,31) - 1;
 /* TABLE_REQUEST should match QueryUtil on the server-side */
 
 const LSSTQueryPID = 'LSSTCataLogSearch';
+
+
 /**
  *  @public
  */
@@ -896,33 +900,6 @@ export function createErrorTbl(tbl_id, error) {
 }
 
 
-/**
- * @summary get column names from the column of numeric type
- * @param {Array} tblColumns
- * @returns {Array}
- */
-export function getNumericColNames(tblColumns) {
-    const NumTypes = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
-
-    return isEmpty(tblColumns) ? [] :
-                tblColumns.filter((tblCol) => (get(tblCol, 'visibility', '') !== 'hidden'))
-                    .filter((tblCol) => (NumTypes.includes(tblCol.type)))
-                    .map((tblCol) => (tblCol.name));
-}
-
-/**
- * @summary get column names from the column of string or char type
- * @param {Array} tblColumns
- * @returns {Array}
- */
-export function getStringColNames(tblColumns) {
-    const CharTypes = ['char', 'c', 's', 'str'];
-
-    return isEmpty(tblColumns) ? [] :
-                tblColumns.filter((tblCol) => (get(tblCol, 'visibility', '') !== 'hidden'))
-                    .filter((tblCol) => (CharTypes.includes(tblCol.type)))
-                    .map((tblCol) => (tblCol.name));
-}
 
 /**
  * this function invoke the given callback when changes are made to the given tbl_id
@@ -955,6 +932,34 @@ export function watchTableChanges(tbl_id, actions, callback) {
     return () => stopWatching = true;
 }
 
+
+/**
+ * @summary returns the non-hidden columns of the given table.  If type is given, it
+ * will only return columns that match type.
+ * @param {TableModel} tableModel
+ * @param {COL_TYPE} type  one of predefined COL_TYPE.  defaults to 'ALL'.
+ * @returns {Array<TableColumn>}
+ */
+export function getColumns(tableModel, type=COL_TYPE.ALL) {
+    return getColsByType(get(tableModel, 'tableData.columns', []), type);
+}
+
+/**
+ * @summary returns only the non-hidden columns matching the given type.
+ * @param {Array<TableColumn>} tblColumns
+ * @param {COL_TYPE} type  one of predefined COL_TYPE.  defaults to 'ALL'.
+ * @returns {Array<TableColumn>}
+ */
+export function getColsByType(tblColumns=[], type=COL_TYPE.ALL) {
+    const charTypes = ['char', 'c', 's', 'str'];
+    const numTypes = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
+    const matcher = type === COL_TYPE.TEXT ? charTypes : numTypes;
+    return tblColumns.filter((col) => get(col, 'visibility') !== 'hidden'
+                        && (type === COL_TYPE.ALL || matcher.includes(col.type)));
+}
+
+
+
 /*-------------------------------------private------------------------------------------------*/
 /**
  * this saga watches for table update and invoke the given callback when
@@ -982,5 +987,3 @@ function* doOnTblLoaded({tbl_id, callback}) {
     }
     callback && callback(getTblInfoById(tbl_id));
 }
-
-

@@ -5,7 +5,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {pickBy, get, isEmpty, capitalize} from 'lodash';
+import {pickBy, get, capitalize} from 'lodash';
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
 import {dispatchHideDropDown, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
@@ -30,9 +30,7 @@ import {HelpIcon} from './../../ui/HelpIcon.jsx';
 import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
-
 import {HelpText} from './../../ui/HelpText.jsx';
-import {HELP_LOAD} from '../../core/AppDataCntlr.js';
 
 const vFileKey = LC.FG_FILE_FINDER;
 /**
@@ -78,7 +76,7 @@ export class LcViewer extends PureComponent {
 
     render() {
         var {isReady, menu={}, appTitle, appIcon, altAppIcon, additionalTitleStyle, dropDown, missionOptions,
-            dropdownPanels=[], footer, style, displayMode, missionEntries, error} = this.state;
+            dropdownPanels=[], footer, style, displayMode, missionEntries} = this.state;
         const {visible, view} = dropDown || {};
         const periodProps = {
             displayMode, timeColName: get(missionEntries, [LC.META_TIME_CNAME]),
@@ -86,29 +84,18 @@ export class LcViewer extends PureComponent {
         };
 
         dropdownPanels.push(<UploadPanel {...{missionOptions}}/>);
-        //let title = 'Time Series Tool';
-        //if (displayMode && displayMode.startsWith('period')) {
-        //    title = 'Time Series Tool: Period Finder';
-        //}else{
-        //    title= 'Time Series Tool: Viewer';
-        //}
+
 
         const LcPeriodInstance=  get(getAppOptions(), 'charts.chartEngine')==='plotly' ? LcPeriodPlotly : LcPeriod;
 
-        var mainView = (err,converterId) => {
-            if (!isEmpty(error) && converterId) {
+        var mainView = (converterId) => {
+            const converter = getConverter(converterId);
+            if (!converter.isTableUploadValid().isValid){
 
-                let errorMsg = `Table uploaded is not ${getMissionName(converterId)} valid, missing columns: ${error}.
-                      Please, select option 'Other' for general table upload.`;
-
-                if (converterId === 'wise') {
-                    errorMsg = `The uploaded table is not valid. The ${getMissionName(converterId)} option requires frame_id, source_id, or both scan_id and frame_num.
-                    Please select the "Other" upload option for tables that do not meet these requirements.`;
-                }
                 return (
                     <div
                         style={{display:'flex', position:'absolute', border: '1px solid #a3aeb9', padding:20, fontSize:'150%'}}>
-                        {errorMsg}
+                        {converter.isTableUploadValid().errorMsg}
                         <div>
                             <HelpIcon helpId={'loadingTSV'}/>
                         </div>
@@ -127,6 +114,7 @@ export class LcViewer extends PureComponent {
             }
 
         };
+
         let title = appTitle;
         if (displayMode && displayMode.startsWith('period')) {
             title = appTitle + ': Period Finder';
@@ -151,7 +139,7 @@ export class LcViewer extends PureComponent {
                             {...{dropdownPanels} } />
                     </header>
                     <main>
-                        {mainView(error,converterId)}
+                        {mainView(converterId)}
                     </main>
                 </div>
             );
@@ -217,17 +205,12 @@ export function UploadPanel(props) {
     const wrapperStyle = {color:'inherit', margin: '5px 0'};
     const {missionOptions=getAllConverterIds()} = props || {};
 
-    let instruction = 'Plot time series data, view associated images, find period, and phase fold.';
+    const instruction = 'Plot time series data, view associated images, find period, and phase fold.';
 
     const options = missionOptions.map((id) => {
         return {label: getMissionName(id) || capitalize(id), value: id};
     });
-    var helpClick = (helpId) => {
-        flux.process({
-            type: HELP_LOAD,
-            payload: {helpId}
-        });
-    };
+
     return (
         <div style={{padding: 10}}>
             <div style={{margin: '0px 5px 5px'}}>{instruction}</div>
@@ -291,7 +274,6 @@ UploadPanel.defaultProps = {
 
 function onSearchSubmit(request) {
     if (request.rawTblSource) {
-        const {mission} = request;
         const converter = getConverter(request.mission);
         if (!converter) return;
 

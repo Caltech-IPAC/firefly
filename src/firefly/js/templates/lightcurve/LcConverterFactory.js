@@ -5,14 +5,17 @@
 import {get, isNil} from 'lodash';
 import {TitleOptions} from '../../visualize/WebPlotRequest.js';
 import {logError} from '../../util/WebUtil.js';
+import {getWebPlotRequestViaPTFIbe} from './ptf/PTFPlotRequests.js';
 import {getWebPlotRequestViaWISEIbe} from './wise/WisePlotRequests.js';
 import {makeLsstSdssPlotRequest} from './lsst_sdss/LsstSdssPlotRequests.js';
 import {makeURLPlotRequest} from './generic/DefaultPlotRequests.js';
 import {basicURLPlotRequest} from './basic/BasicPlotRequests';
 import {LsstSdssSettingBox, lsstSdssOnNewRawTable, lsstSdssOnFieldUpdate, lsstSdssRawTableRequest} from './lsst_sdss/LsstSdssMissionOptions.js';
-import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest, isBasicTableUploadValid} from './wise/WiseMissionOptions.js';
 import {DefaultSettingBox, defaultOnNewRawTable, defaultOnFieldUpdate, defaultRawTableRequest} from './generic/DefaultMissionOptions.js';
 import {BasicSettingBox, basicOnNewRawTable, basicOnFieldUpdate, basicRawTableRequest, imagesShouldBeDisplayed} from './basic/BasicMissionOptions.js';
+import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest,isValidWiseTable} from './wise/WiseMissionOptions.js';
+import {PTFSettingBox, ptfOnNewRawTable, ptfOnFieldUpdate, ptfRawTableRequest,isValidPTFTable} from './ptf/PTFMissionOptions.js';
+
 import {LC} from './LcManager.js';
 
 export const UNKNOWN_MISSION = 'generic';
@@ -21,7 +24,6 @@ export const coordSysOptions = 'coordSysOptions';
 /**
  * A function to create a WebPlotRequest from the given parameters
  * @callback WebplotRequestCreator
- * @param {TableModel} tableModel
  * @param {number} hlrow
  * @param {number} cutoutSize
  * @param {Object} params - mission specific parameters
@@ -91,7 +93,7 @@ const converters = {
         dataSource: 'frame_id',
         webplotRequestCreator: getWebPlotRequestViaWISEIbe,
         shouldImagesBeDisplayed: () => {return true;},
-        isTableUploadValid: isBasicTableUploadValid,
+        isTableUploadValid: isValidWiseTable,
         yNamesChangeImage: [],
         showPlotTitle:getPlotTitle
     },
@@ -111,8 +113,27 @@ const converters = {
         yErrNames: ['magErr', 'tsv_fluxErr'],
         webplotRequestCreator: makeLsstSdssPlotRequest,
         shouldImagesBeDisplayed: () => {return true;},
-        isTableUploadValid: () => {return true;},
+        isTableUploadValid: () => {return {errorMsg:undefined, isValid:true};},
         yNamesChangeImage: []
+    },
+    'ptf': {
+        converterId: 'ptf',
+        defaultImageCount: 5,
+        defaultTimeCName: 'obsmjd',
+        defaultYCname: 'mag_autocorr',
+        defaultYErrCname: '',
+        missionName: 'PTF',
+        MissionOptions: PTFSettingBox,
+        onNewRawTable: ptfOnNewRawTable,
+        onFieldUpdate: ptfOnFieldUpdate,
+        rawTableRequest: ptfRawTableRequest, //the r
+        yErrNames: '',
+        dataSource: 'pid',
+        webplotRequestCreator: getWebPlotRequestViaPTFIbe,
+        shouldImagesBeDisplayed: () => {return true;},
+        isTableUploadValid:isValidPTFTable,
+        yNamesChangeImage: [],
+        showPlotTitle:getPlotTitle
     },
     [UNKNOWN_MISSION]: {
         converterId: UNKNOWN_MISSION,
@@ -132,7 +153,7 @@ const converters = {
         [coordSysOptions]: COORD_SYSTEM_OPTIONS,
         webplotRequestCreator: makeURLPlotRequest,
         shouldImagesBeDisplayed: () => {return true;},
-        isTableUploadValid: () => {return true;},
+        isTableUploadValid: () => {return {errorMsg:undefined, isValid:true};},
         yNamesChangeImage: [],     // TODO: y columns which will affect the image display
         noImageCutout: true        // no image cutout is used
     },
@@ -155,7 +176,7 @@ const converters = {
         [coordSysOptions]: COORD_SYSTEM_OPTIONS,
         webplotRequestCreator: basicURLPlotRequest,
         shouldImagesBeDisplayed: imagesShouldBeDisplayed,
-        isTableUploadValid: () => {return true;},
+        isTableUploadValid: () => {return {errorMsg:undefined, isValid:true}; },
         yNamesChangeImage: [],
         showPlotTitle:getPlotTitle
     }

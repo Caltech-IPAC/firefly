@@ -1,14 +1,13 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, has, isEmpty, isNil, set, cloneDeep, defer} from 'lodash';
+import {get, has, isEmpty, isNil, cloneDeep, defer} from 'lodash';
 import {take, fork} from 'redux-saga/effects';
 import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
         dispatchUpdateLayoutInfo, dropDownManager} from '../../core/LayoutCntlr.js';
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, TABLE_SEARCH, TABLE_FETCH,
         dispatchTableRemove, dispatchTableHighlight, dispatchTableFetch, dispatchTableSort} from '../../tables/TablesCntlr.js';
 import {getCellValue, getTblById, getTblIdsByGroup, getActiveTableId, smartMerge, getColumnIdx, removeTablesFromGroup} from '../../tables/TableUtil.js';
-import {dispatchTableReplace} from '../../tables/TablesCntlr.js';
 import {updateSet, updateMerge, logError} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {dispatchPlotImage, visRoot, dispatchDeletePlotView,
         dispatchChangeActivePlotView,
@@ -25,8 +24,6 @@ import {getConverter} from './LcConverterFactory.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeMissionEntries, keepHighlightedRowSynced} from './LcUtil.jsx';
 import {dispatchMountFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
-import {ServerParams} from '../../data/ServerParams.js';
-import {convertAngle} from '../../visualize/VisUtil.js';
 
 
 
@@ -466,6 +463,7 @@ function handleRawTableLoad(layoutInfo, tblId) {
         return;
     }
 
+    //TODO LZ How validTable is used, the onNewRawtable has its value to false.  But it was never used here???
     let {newLayoutInfo, shouldContinue, validTable} = converterData.onNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo);
     const newMissionEntries = get(newLayoutInfo, ['missionEntries']); // missionEntries could have changed after calling specific mission onRaw
     newLayoutInfo = updateSet(newLayoutInfo, 'rawTableColumns', get(rawTable, ['tableData', 'columns']));
