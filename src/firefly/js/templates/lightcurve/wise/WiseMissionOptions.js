@@ -2,7 +2,7 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get,  set, isNil} from 'lodash';
 import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
-import {makeFileRequest, getCellValue, getTblById, getColumnIdx, smartMerge,getOnlyNumericalColNames} from '../../../tables/TableUtil.js';
+import {makeFileRequest, getCellValue, getTblById, getColumnIdx, smartMerge, getColumns, getColsByType, COL_TYPE} from '../../../tables/TableUtil.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {getInitialDefaultValues,renderMissionView,validate,getTimeAndYColInfo,fileUpdateOnTimeColumn,setValueAndValidator} from '../LcUtil.jsx';
 import {LC} from '../LcManager.js';
@@ -116,7 +116,7 @@ export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, conv
 
     // Update default values AND sortInfo and
     const metaInfo = rawTable && rawTable.tableMeta;
-    const numericalCols = getOnlyNumericalColNames(rawTable);
+    const numericalCols = getColsByType(getColumns(rawTable), COL_TYPE.NUMBER).map((c) => c.name);
     let defaultDataSource = (getColumnIdx(rawTable, converterData.dataSource) > 0) ? converterData.dataSource : numericalCols[3];
 
     const {defaultCTimeName,defaultYColName } = getTimeAndYColInfo(numericalCols,xyColPattern,rawTable,converterData );

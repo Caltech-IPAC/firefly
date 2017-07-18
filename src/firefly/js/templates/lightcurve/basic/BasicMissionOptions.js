@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {get,isEmpty} from 'lodash';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {makeFileRequest} from '../../../tables/TableUtil.js';
-import {getColumnIdx, smartMerge,  getColNames,getColumnTypes} from '../../../tables/TableUtil.js';
+import {getColumnIdx, smartMerge,  getColsByType, COL_TYPE} from '../../../tables/TableUtil.js';
 import {ReadOnlyText, getInitialDefaultValues,getMissionInput,getMissionInfo,validate,fileUpdateOnTimeColumn, setValueAndValidator} from '../LcUtil.jsx';
 import {LC, getViewerGroupKey} from '../LcManager.js';
 import {getMissionName} from '../LcConverterFactory.js';
@@ -133,8 +133,7 @@ export function basicOnNewRawTable(rawTable, missionEntries, generalEntries, con
     // Update default values AND sortInfo and
     const metaInfo = rawTable && rawTable.tableMeta;
     const tblColumns = get(rawTable, ['tableData', 'columns'], []);
-    const numericColTypes = getColumnTypes(tblColumns, 'numeric');
-    const numericalCols = getColNames(tblColumns,numericColTypes);
+    const numericalCols = getColsByType(tblColumns, COL_TYPE.NUMBER).map((c) => c.name);
 
     //let strCols = getStringCol(rawTable);
     //strCols.push('');// Empty means no images

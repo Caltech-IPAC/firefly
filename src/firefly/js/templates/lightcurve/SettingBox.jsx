@@ -1,5 +1,5 @@
 import {PureComponent} from 'react';
-import { getColNames,getColumnTypes,getStringColNames} from '../../tables/TableUtil.js';
+import { getColsByType, COL_TYPE} from '../../tables/TableUtil.js';
 import {getLayouInfo} from '../../core/LayoutCntlr.js';
 import {flux} from '../../Firefly.js';
 import {get} from 'lodash';
@@ -17,9 +17,8 @@ export class SettingBox extends PureComponent {
         };
 
         const {tblColumns} = this.getNextState();
-        const numericColTypes = getColumnTypes(tblColumns, 'numeric');
-        const numColumns = getColNames(tblColumns, numericColTypes);
-        const charColumns = getStringColNames(tblColumns);//(tblColumns, ['char', 'c', 's', 'str']);
+        const numColumns = getColsByType(tblColumns, COL_TYPE.NUMBER).map((c) => c.name);
+        const charColumns = getColsByType(tblColumns, COL_TYPE.TEXT).map((c) => c.name);//(tblColumns, ['char', 'c', 's', 'str']);
         this.state = {tblColumns, charColumns, numColumns};
     }
 
@@ -38,9 +37,8 @@ export class SettingBox extends PureComponent {
             const {tblColumns} = this.getNextState();
 
             if (tblColumns !== this.state.tblColumns) {
-                const numericColTypes = getColumnTypes(tblColumns, 'numeric');
-                const numColumns = getColNames(tblColumns, numericColTypes);
-                const charColumns = getStringColNames(tblColumns);
+                const numColumns = getColsByType(tblColumns, COL_TYPE.NUMBER).map((c) => c.name);
+                const charColumns = getColsByType(tblColumns, COL_TYPE.TEXT).map((c) => c.name);
                 ;//getColNames(tblColumns, ['char', 'c', 's', 'str']);
                 this.setState({tblColumns, charColumns, numColumns});
             }

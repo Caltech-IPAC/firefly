@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {get, has, set, isEmpty} from 'lodash';
 import {LC} from './LcManager.js';
 import {getConverter} from './LcConverterFactory.js';
-import {getCellValue, getTblById, findIndex, getColumnTypes,getColNames,getColumnIdx} from '../../tables/TableUtil.js';
+import {getCellValue, getTblById, findIndex, getColsByType, getColumnIdx, COL_TYPE} from '../../tables/TableUtil.js';
 import {dispatchTableHighlight} from '../../tables/TablesCntlr.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
@@ -146,10 +146,10 @@ export function getInitialDefaultValues(labelWidth, missionName) {
             return commonDefault;
         case 'wise':
             const wiseDefault = {
-                [LC.META_FLUX_BAND]: Object.assign(getTypeData(LC.META_FLUX_BAND, '',         '' +
-                    'Select WISE band for images to be displayed',         'Image display:', 70)),
-                [LC.META_ERR_CNAME]: Object.assign(getTypeData(LC.META_ERR_CNAME, '', 
-                    'value error column name',        'Error Column:', labelWidth))
+                [LC.META_FLUX_BAND]: Object.assign(getTypeData(LC.META_FLUX_BAND, '',        '' +
+                    'Select WISE band for images to be displayed',        'Image display:', 70)),
+                [LC.META_ERR_CNAME]: Object.assign(getTypeData(LC.META_ERR_CNAME, '',
+                    'value error column name',       'Error Column:', labelWidth))
             };
             return Object.assign ({},commonDefault, wiseDefault );
         case 'ptf':
@@ -187,9 +187,7 @@ export function getMissionEntries(generalEntries, missionEntries,tblColumns,wrap
 
     if (isEmpty(generalEntries) || isEmpty(missionEntries)) return false;
 
-    const numericColTypes = getColumnTypes( tblColumns, 'numeric');
-
-    const numColumns = getColNames(tblColumns,  numericColTypes);
+    const numColumns = getColsByType(tblColumns, COL_TYPE.NUMBER).map( (c) => c.name);
 
     var allCommonEntries = Object.keys(generalEntries).map((key) =>
         <ValidationField key={key} fieldKey={key} wrapperStyle={wrapperStyle}

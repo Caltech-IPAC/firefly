@@ -4,6 +4,7 @@
 
 import {take, fork, cancel} from 'redux-saga/effects';
 import {get, set, unset, has, isEmpty, isUndefined, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray, padEnd} from 'lodash';
+import Enum from 'enum';
 
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
@@ -17,10 +18,13 @@ import {ServerParams} from '../data/ServerParams.js';
 import {doUpload} from '../ui/FileUpload.jsx';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 
+export const COL_TYPE = new Enum(['NUMBER', 'TEXT']);
 export const MAX_ROW = Math.pow(2,31) - 1;
 /* TABLE_REQUEST should match QueryUtil on the server-side */
 
 const LSSTQueryPID = 'LSSTCataLogSearch';
+
+
 /**
  *  @public
  */
@@ -928,6 +932,31 @@ export function watchTableChanges(tbl_id, actions, callback) {
     return () => stopWatching = true;
 }
 
+
+/**
+ * @summary returns the columns array of the given table.
+ * @param {TableModel} tableModel
+ * @returns {Array<TableColumn>}
+ */
+export function getColumns(tableModel) {
+    return get(tableModel, 'tableData.columns', []);
+}
+
+/**
+ * @summary returns only the visible columns matching the given type.
+ * @param {Array<TableColumn>} tblColumns
+ * @param {COL_TYPE} type  one of predefined COL_TYPE('NUMBER' | 'TEXT').  defaults to 'NUMBER'.
+ * @returns {Array<TableColumn>}
+ */
+export function getColsByType(tblColumns=[], type=COL_TYPE.NUMBER) {
+    const charTypes = ['char', 'c', 's', 'str'];
+    const numTypes = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
+    const matcher = type === COL_TYPE.TEXT ? charTypes : numTypes;
+    return tblColumns.filter((col) => get(col, 'visibility') !== 'hidden' && matcher.includes(col.type));
+}
+
+
+
 /*-------------------------------------private------------------------------------------------*/
 /**
  * this saga watches for table update and invoke the given callback when
@@ -954,84 +983,4 @@ function* doOnTblLoaded({tbl_id, callback}) {
         }
     }
     callback && callback(getTblInfoById(tbl_id));
-}
-
-
-
-/**
- * Returns only numerical column names form raw lc table
- * @param {Object} rawTbl
- * @returns {string[]} - array of table columns objects
- */
-export function getOnlyNumericalColNames(rawTbl) {
-    const cols = get(rawTbl, ['tableData', 'columns']);
-    const colType = getColumnTypes(cols, 'numeric');
-    return get(rawTbl, ['tableData', 'columns']).reduce((prev, col) => {
-        if ((colType.includes(col.type)) ) {
-            prev.push(col.name);
-        }
-        return prev;
-    }, []);
-}
-
-
-/**
- * @summary get column names from the column of string or char type
- * @param {Array} tblColumns
- * @returns {Array}
- */
-export function getStringColNames(tblColumns) {
-    const CharTypes = ['char', 'c', 's', 'str'];
-
-    return isEmpty(tblColumns) ? [] :
-        tblColumns.filter((tblCol) => (get(tblCol, 'visibility', '') !== 'hidden'))
-            .filter((tblCol) => (CharTypes.includes(tblCol.type)))
-            .map((tblCol) => (tblCol.name));
-}
-
-/**
- * @summary get column names from the column of numeric type
- * @param {Array} tblColumns
- * @returns {Array}
- */
-export function getNumericColNames(tblColumns) {
-    const NumTypes = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
-
-    return isEmpty(tblColumns) ? [] :
-        tblColumns.filter((tblCol) => (get(tblCol, 'visibility', '') !== 'hidden'))
-            .filter((tblCol) => (NumTypes.includes(tblCol.type)))
-            .map((tblCol) => (tblCol.name));
-}
-
-export function getColNames(tblColumns, colTypes) {
-    return isEmpty(tblColumns)?[]:
-     tblColumns.reduce((prev, col) => {
-        if ( colTypes && colTypes.includes(col.type)  ) {
-            prev.push(col.name);
-        }
-         else {
-            prev.push(col.name);
-        }
-        return prev;
-    }, []);
-}
-
-export function getColumnTypes (cols, type=undefined){
-   // const cols = get(tblModel, ['tableData', 'columns']);
-    var types =[];
-    for (let i=0; i<cols.length; i++){
-        if (types.indexOf(cols[i].type)>-1) continue;
-        if(!has(cols[i], 'visibility') || get(cols[i], 'visibility') !== 'hidden') {
-            if (!type || type === 'numeric') {
-                if (cols[i].type!=='char' && cols[i].type.toLowerCase()!=='string' ) {
-                    types[i] = cols[i].type;
-                }
-            }
-            else {
-                types[i] = cols[i].type;
-            }
-        }
-    }
-    return types;
-
 }
