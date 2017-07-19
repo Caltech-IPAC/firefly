@@ -99,7 +99,7 @@ class ColorDialog extends PureComponent {
 
 function renderThreeColorView(plot,rFields,gFields,bFields) {
     const {plotState}= plot;
-
+    const usedBands = plotState? plotState.usedBands:null;
     return (
         <div style={{paddingTop:4}}>
             <FieldGroup groupKey={'colorDialogTabs'} keepState={false}>
@@ -135,7 +135,7 @@ function renderThreeColorView(plot,rFields,gFields,bFields) {
                     groupKey={['colorDialogTabs',RED_PANEL,GREEN_PANEL,BLUE_PANEL]}
                     closeOnValid={false}
                     style={{padding: '2px 0 7px 10px'}}
-                    onSuccess={replot}
+                    onSuccess={replot(usedBands)}
                     onFail={invalidMessage}
                     text='Refresh'
                     dialogId='ColorStretchDialog'
@@ -159,7 +159,7 @@ function renderStandardView(plot,fields) {
                 <CompleteButton
                     closeOnValid={false}
                     style={{padding: '2px 0 7px 10px'}}
-                    onSuccess={replot}
+                    onSuccess={replot()}
 
                     onFail={invalidMessage}
                     text='Refresh'
@@ -171,23 +171,30 @@ function renderStandardView(plot,fields) {
        );
 }
 
-function replot(request) {
-    if (request.colorDialogTabs) {
-        replot3Color(
-            request.redPanel,request.greenPanel,
+//TODO check request here to see it it has tab information
+//the request does not pass it here correctly
+function replot(usedBands=null) {
+
+    return (request)=> {
+
+        if (request.colorDialogTabs) {
+
+         replot3Color(
+            request.redPanel, request.greenPanel,
             request.bluePanel,
-            request.colorDialogTabs.colorTabs);
-    }
+            request.colorDialogTabs.colorTabs, usedBands);
+       }
     else {
         replotStandard(request);
-    }
-
+      }
+   };
 }
 
 
 function invalidMessage() {
     showInfoPopup('One or more fields are not valid', 'Invalid Data');
 }
+
 
 function replotStandard(request) {
     // console.log(request);
@@ -204,17 +211,37 @@ function replotStandard(request) {
  * @param greenReq
  * @param blueReq
  * @param activeTab - which tab is active, might be used in future
+ *  @param usedBands
  */
-function replot3Color(redReq,greenReq,blueReq,activeTab) {
+function replot3Color(redReq,greenReq,blueReq,activeTab, usedBands) {
     // console.log('activeTab',activeTab);
     // console.log('red',redReq);
     // console.log('green',greenReq);
     // console.log('blue',blueReq);
     const stretchData= [];
 
-    if (redReq)   stretchData.push({band : Band.RED.key, rv : makeSerializedRv(redReq) , bandVisible: true });
-    if (greenReq) stretchData.push({band : Band.GREEN.key, rv : makeSerializedRv(greenReq) , bandVisible: true });
-    if (blueReq)  stretchData.push({band : Band.BLUE.key, rv : makeSerializedRv(blueReq) , bandVisible: true });
+   //IRSA-572: Since only one band type is selected for stretch, only one stretchData is needed.
+   //Only when the band equals to the active band, its data is stored to the stretchData and send to the server.
+    for (let i=0; i<usedBands.length; i++){
+        if( activeTab===usedBands[i].key.toLowerCase() ) {
+            switch (usedBands[i].key.toLowerCase()) {
+                case 'red':
+
+                    stretchData.push({band: Band.RED.key, rv: makeSerializedRv(redReq), bandVisible: true});
+
+                    break;
+                case 'green':
+                     stretchData.push({band: Band.GREEN.key, rv: makeSerializedRv(greenReq), bandVisible: true});
+
+                    break;
+                case 'blue':
+                     stretchData.push({band: Band.BLUE.key, rv: makeSerializedRv(blueReq), bandVisible: true});
+
+                    break;
+            }
+            break;
+        }
+    }
 
     const pv= getActivePlotView(visRoot());
     if (pv) dispatchStretchChange({plotId:pv.plotId,stretchData});
