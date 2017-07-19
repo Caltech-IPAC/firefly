@@ -18,6 +18,7 @@ import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -28,8 +29,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Date: May 15, 2017
@@ -68,6 +73,8 @@ public class OidcAdapter implements SsoAdapter {
     private static final String USER_INFO_URL = ssoServerUrl + "/oauth2/userinfo";
     private static final String VERIFY_URL = "oidc/verify";
     private static final String SCOPE = "openid profile email org.cilogon.userinfo edu.uiuc.ncsa.myproxy.getcert";
+    private static final String ROLE_CLAIM = "isMemberOf";
+
 
     /**
      * returns the number of seconds before this session expires.  0 if session is not valid, or it's already expires.
@@ -229,6 +236,7 @@ public class OidcAdapter implements SsoAdapter {
             userInfo.setInstitute(getString(ans, AFFILIATION, ""));
             userInfo.setProperty(IDP_NAME, getString(ans, IDP_NAME, ""));
             userInfo.setProperty(IDP, getString(ans, IDP, ""));
+            userInfo.setRoles(getRoleList(getList(ans, ROLE_CLAIM)));
             return userInfo;
         } catch (ParseException e) {
             LOGGER.error(e);
@@ -245,6 +253,20 @@ public class OidcAdapter implements SsoAdapter {
 
     private static String makeVerifyUrl() {
         return   ServerContext.getRequestOwner().getRequestAgent().getBaseUrl() + VERIFY_URL;
+    }
+
+    @NotNull
+    private static List<String> getList(JSONObject obj, String key) {
+        return toList(obj.get(key));
+    }
+
+    private static List<String> toList(Object obj) {
+        if (obj != null && obj instanceof JSONArray) {
+            JSONArray ary = (JSONArray) obj;
+            return Arrays.stream(ary.toArray()).map(String::valueOf)
+                    .collect(Collectors.toList());
+        }
+        return new ArrayList<>();
     }
 
     private static String getString(JSONObject obj, String key, String def) {
@@ -291,7 +313,11 @@ public class OidcAdapter implements SsoAdapter {
             if (validateClaims(jwt.getJWTClaimsSet())) {
                 Map<String, Object> claimset = jwt.getJWTClaimsSet().getClaims();
                 for (String key : claimset.keySet()) {
-                    claims.put(key, String.valueOf(claimset.get(key)));
+                    if (key.equals(ROLE_CLAIM)) {
+                        claims.put(key, StringUtils.toString(toList(claimset.get(key))));
+                    } else {
+                        claims.put(key, String.valueOf(claimset.get(key)));
+                    }
                 }
             }
         } catch (java.text.ParseException e) {
@@ -307,4 +333,30 @@ public class OidcAdapter implements SsoAdapter {
                 && claimsSet.getExpirationTime().getTime() > System.currentTimeMillis()
                 && claimsSet.getIssueTime().getTime() < System.currentTimeMillis();
     }
+
+    @NotNull
+    private static RoleList getRoleList(List<String> isMemberOf) {
+        RoleList roleList = new RoleList();
+        for (String r : isMemberOf) {
+            String cn=null, ou=null, dc=null;
+            for(String s : r.split(",")) {
+                String[] kv = s.split("=");
+                if (kv.length > 1) {
+                    if (kv[0].equalsIgnoreCase("cn")) {
+                        cn = cn == null ? kv[1] : cn;
+                    } else if (kv[0].equalsIgnoreCase("ou")) {
+                        ou = ou == null ? kv[1] : ou;
+                    } else if (kv[0].equalsIgnoreCase("dc")) {
+                        dc = dc == null ? kv[1] : dc;
+                    }
+                }
+            }
+            if (dc != null && cn != null) {
+                roleList.add(new RoleList.RoleEntry(dc, dc.hashCode(), cn, cn.hashCode(), ""));
+            }
+        }
+
+        return roleList;
+    }
+
 }
