@@ -14,7 +14,7 @@ import {LsstSdssSettingBox, lsstSdssOnNewRawTable, lsstSdssOnFieldUpdate, lsstSd
 import {DefaultSettingBox, defaultOnNewRawTable, defaultOnFieldUpdate, defaultRawTableRequest} from './generic/DefaultMissionOptions.js';
 import {BasicSettingBox, basicOnNewRawTable, basicOnFieldUpdate, basicRawTableRequest, imagesShouldBeDisplayed} from './basic/BasicMissionOptions.js';
 import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest,isValidWiseTable} from './wise/WiseMissionOptions.js';
-import {PTFSettingBox, ptfOnNewRawTable, ptfOnFieldUpdate, ptfRawTableRequest,isValidPTFTable} from './ptf/PTFMissionOptions.js';
+import {PTFSettingBox, ptfOnNewRawTable, ptfOnFieldUpdate, ptfRawTableRequest, isValidPTFTable, ptfDownloaderOptPanel} from './PTF/PTFMissionOptions.js';
 
 import {LC} from './LcManager.js';
 
@@ -70,6 +70,7 @@ export const coordSysOptions = 'coordSysOptions';
  * @prop {boolean} shouldImagesBeDisplayed a function that return true if user inputs make sense to the mission
  *                  to show images
  * @prop {function} isTableUploadValid - check table on upload if make sens with mission selected
+ * @prop {function} downloadOptions - return the option panel for download dialog
  */
 
 /**
@@ -132,6 +133,7 @@ const converters = {
         webplotRequestCreator: getWebPlotRequestViaPTFIbe,
         shouldImagesBeDisplayed: () => {return true;},
         isTableUploadValid:isValidPTFTable,
+        downloadOptions: ptfDownloaderOptPanel,
         yNamesChangeImage: [],
         showPlotTitle:getPlotTitle
     },

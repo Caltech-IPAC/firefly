@@ -17,14 +17,14 @@ import {LC, getViewerGroupKey, updateLayoutDisplay} from './LcManager.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {LcImageToolbar} from './LcImageToolbar.jsx';
-import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
+import {DownloadOptionPanel, DownloadButton} from '../../ui/DownloadDialog.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {getTblById, doFetchTable, isTblDataAvail, MAX_ROW} from '../../tables/TableUtil.js';
 import {dispatchMultiValueChange, dispatchRestoreDefaults}  from '../../fieldGroup/FieldGroupCntlr.js';
 import {logError} from '../../util/WebUtil.js';
-import {getConverter, getMissionName} from './LcConverterFactory.js';
+import {getConverter, getMissionName, defaultDownloaderOptPanel} from './LcConverterFactory.js';
 import {ERROR_MSG_KEY} from '../lightcurve/generic/errorMsg.js';
 import {convertAngle} from '../../visualize/VisUtil.js';
 
@@ -127,9 +127,43 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
     const showImages = isEmpty(imagePlot);
 
     // convert the default Cutout size in arcmin to deg for WebPlotRequest, expected to be string in download panel
-    var cutoutSizeInDeg = (convertAngle('arcmin','deg', cutoutSize)).toString();
+    const cutoutSizeInDeg = (convertAngle('arcmin','deg', cutoutSize)).toString();
 
-    var tsView = (err) => {
+
+    let downloaderOptPanel = (m, c) => {
+        return convertData.downloadOptions(m, c)
+    };
+
+    const defaultOptPanel = (m, c) => {
+        return (
+            <DownloadButton>
+                <DownloadOptionPanel
+                    cutoutSize={c}
+                    title={'Image Download Option'}
+                    dlParams={{
+                        MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
+                        FilePrefix: `${m}_Files`,
+                        BaseFileName: `${m}_Files`,
+                        DataSource: `${m} images`,
+                        FileGroupProcessor: 'LightCurveFileGroupsProcessor'
+                    }}>
+                    <ValidationField
+                        initialState={{
+                            value: 'A sample download',
+                            label: 'Title for this download:'
+                        }}
+                        fieldKey='Title'
+                        labelWidth={110}/>
+                </DownloadOptionPanel>
+            </DownloadButton>
+        )
+    };
+
+    if(!convertData.downloadOptions){
+        downloaderOptPanel = defaultOptPanel;
+    }
+
+    let tsView = (err) => {
 
         if (!err) {
             return (
@@ -171,26 +205,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
             <div style={{display: 'inline-flex', justifyContent: 'space-between', alignItems: 'center'}}>
                 <div>{visToolbar}</div>
                 <div>
-                    <DownloadButton>
-                        <DownloadOptionPanel
-                            cutoutSize={cutoutSizeInDeg}
-                            title={'Image Download Option'}
-                            dlParams={{
-                                    MaxBundleSize: 200*1024*1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
-                                    FilePrefix: `${mission}_Files`,
-                                    BaseFileName: `${mission}_Files`,
-                                    DataSource: `${mission} images`,
-                                    FileGroupProcessor: 'LightCurveFileGroupsProcessor'
-                                }}>
-                            <ValidationField
-                                initialState={{
-                                               value: 'A sample download',
-                                               label : 'Title for this download:'
-                                                   }}
-                                fieldKey='Title'
-                                labelWidth={110}/>
-                        </DownloadOptionPanel>
-                    </DownloadButton>
+                    {downloaderOptPanel(mission, cutoutSizeInDeg)}
                 </div>
             </div>
             }

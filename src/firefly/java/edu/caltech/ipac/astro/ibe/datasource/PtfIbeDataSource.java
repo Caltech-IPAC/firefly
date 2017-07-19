@@ -7,12 +7,14 @@ import edu.caltech.ipac.astro.ibe.BaseIbeDataSource;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataParam;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
+import edu.caltech.ipac.firefly.server.query.ptf.PtfIbeResolver;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -27,6 +29,7 @@ public class PtfIbeDataSource extends BaseIbeDataSource {
     private final static String HOST    = "host";
     private final static String SCHEMA  = "schema";
     private final static String TABLE   = "table";
+    private PtfIbeResolver ptfResolver = null;
 
     public static enum DATA_TYPE {
         INTENSITY, MASK, UNCERTAINTY, COVERAGE
@@ -49,7 +52,7 @@ public class PtfIbeDataSource extends BaseIbeDataSource {
         public String getTable() { return table;}
     }
 
-    public PtfIbeDataSource() {}
+    public PtfIbeDataSource() { ptfResolver = new PtfIbeResolver();}
 
     public PtfIbeDataSource(DataProduct ds) {
         this(null, ds);
@@ -90,7 +93,17 @@ public class PtfIbeDataSource extends BaseIbeDataSource {
 
             dataParam.setFilePath("/d" + fieldId + "/f" + filterId + "/c" + ccdId + "/" + filename);
         } else {
-            dataParam.setFilePath(pathInfo.get("pfilename"));
+            if(pathInfo.get("pfilename")!=null){
+                dataParam.setFilePath(pathInfo.get("pfilename"));
+            }else{
+                long pid = Long.parseLong(pathInfo.get("pid"));
+                try {
+                    String pfilename = ptfResolver.getListPfilenames(new long[]{pid})[0];
+                    dataParam.setFilePath(pfilename);
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         // check cutout params

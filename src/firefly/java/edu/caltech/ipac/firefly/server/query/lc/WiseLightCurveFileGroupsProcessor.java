@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
  * WARNING / TODO Dealing only with WISE download for now, client should use the downalod based on the mission name
  */
 @SearchProcessorImpl(id = "LightCurveFileGroupsProcessor")
-public class LightCurveFileGroupsProcessor extends FileGroupsProcessor {
+public class WiseLightCurveFileGroupsProcessor extends FileGroupsProcessor {
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     private final int L1B_FITS_SIZE = 4167360;
     private final int L1B_FITS_SIZE_W4 = 1071360;

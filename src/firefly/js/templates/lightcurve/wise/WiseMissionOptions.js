@@ -160,3 +160,26 @@ export function wiseOnFieldUpdate(fieldKey, value) {
         return {[fieldKey]: value};
     }
 }
+
+export function wiseDowloadOptionPanel (mission, cutoutSizeInDeg){
+    return (
+        <DownloadOptionPanel
+            cutoutSize={cutoutSizeInDeg}
+            title={'Image Download Option'}
+            dlParams={{
+                MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
+                FilePrefix: `${mission}_Files`,
+                BaseFileName: `${mission}_Files`,
+                DataSource: `${mission} images`,
+                FileGroupProcessor: 'LightCurveFileGroupsProcessor'
+            }}>
+            <ValidationField
+                initialState={{
+                    value: 'A sample download',
+                    label: 'Title for this download:'
+                }}
+                fieldKey='Title'
+                labelWidth={110}/>
+        </DownloadOptionPanel>
+    );
+}
