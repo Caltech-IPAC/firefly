@@ -30,6 +30,14 @@ import java.util.List;
  * It works for two algorithm, fixed bin size algorithm and variable bin size algorithm.  If the bin size is available
  * from the input parameter, it will calculate the fixed bin size histogram.  If the bin size is not available, it will
  * calculate variable bin size histogram.
+ *
+ * By default it keeps empty bins if any.  This could be controlled by a parameter, reserveEmptyBins in the UI if needed.
+ *
+ * CHANGE HISTORY:
+ *
+ * 5/23/17
+ * IRSA-371 Changed the showEmptyBin to true.  It was false previously.
+ *
  */
 public class HistogramProcessor extends IpacTablePartProcessor {
     private static final String SEARCH_REQUEST = "searchRequest";
@@ -52,6 +60,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     // private final String ALGORITHM = "algorithm";
     private final String FALSEPOSTIVERATE = "falsePositiveRate";
     private final String PRESERVE_EMPTY_BIN="preserveEmptyBins";
+    private boolean showEmptyBin= true;
     private String algorithm = null;// FIXED_SIZE_ALGORITHM;
     private int numBins=0;
     private double binWidth=0.0;
@@ -61,7 +70,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     private double max = Double.NaN;
     private String columnExpression;
     private double falsePostiveRate = 0.05;
-    private boolean showEmptyBin=false;
+
 
     private static String[] getInputFilePath(String inputFileName) {
         String[] dirs = inputFileName.split("/");
@@ -170,11 +179,15 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             else if (name.equalsIgnoreCase(FALSEPOSTIVERATE)) {
                 falsePostiveRate =  Double.parseDouble(value);
             }
+            /*05/23/17
+              The UI does not have this parameter specified and passed.
+              The default now changed to show all the bins.  The code
+              leave as is in case UI may need this field in the future.
+            */
             else if (name.equalsIgnoreCase(PRESERVE_EMPTY_BIN) ){
                 showEmptyBin= Boolean.parseBoolean(value);
             }
         }
-
 
         if (binSelection!=null ){
             if (binSelection.equalsIgnoreCase("numBins")) {
@@ -260,7 +273,6 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
         int nBins = numBins>0? numBins : (int) Math.ceil((max-min)/binSize);
 
-       // double delta =( max -min)/100*numBins;
         long[] numPointsInBin = new long[nBins];
         double[] binMin = new double[nBins];
 
@@ -421,15 +433,10 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             binMin[0] = min;
             //assign the left edge to the binMin
             System.arraycopy(bins, 0, binMin, 1, nBin-1);
-//            for (int i = 1; i < nBin; i++) {
-//                binMin[i] = bins[i - 1];
-//              }
 
             //assign the right edge to the binMax
             System.arraycopy(bins, 0, binMax, 0, nBin);
-//            for (int i = 0; i < nBin; i++) {
-//                binMax[i] = bins[i];
-//            }
+
         }
 
         if (showEmptyBin){
@@ -500,7 +507,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         }
 
         //-----------------------------------------------------------------
-        // Recover changepoints by iteratively peeling off the last block
+        // Recover change points by iteratively peeling off the last block
         //-----------------------------------------------------------------
         ArrayList<Integer> changePointList = new ArrayList<>();
         int ind = n;
