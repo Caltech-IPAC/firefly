@@ -168,7 +168,7 @@ public class PackageMaster  {
                                                        req.getTitle(),req.getEmail(),
                                                        req.getDataSource(),
                                                        ServerContext.getRequestOwner());
-        BackgroundStatus bgStat= BackgroundEnv.backgroundProcess(WAIT_MILLS,backProcess);
+        BackgroundStatus bgStat= BackgroundEnv.backgroundProcess(WAIT_MILLS,backProcess, BgType.PACKAGE);
         checkForLongQueue(bgStat);
         return bgStat;
 

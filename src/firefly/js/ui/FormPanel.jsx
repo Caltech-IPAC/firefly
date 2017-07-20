@@ -47,9 +47,9 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
 
 export const FormPanel = function (props) {
     var {children, onSubmit, onCancel, onError, groupKey, action, params, title,
-        width='100%', height='100%', submitText='Search', help_id, changeMasking} = props;
+        submitText='Search', help_id, changeMasking} = props;
 
-    const style = { width, height,
+    const style = {
         backgroundColor: 'white',
         border: '1px solid rgba(0,0,0,0.2)',
         padding: 5,

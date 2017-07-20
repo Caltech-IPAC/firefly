@@ -3,7 +3,7 @@
  */
 
 import React, {PureComponent} from 'react';
-import {get, set} from 'lodash';
+import {get, set, isEmpty, unset} from 'lodash';
 
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
@@ -12,12 +12,13 @@ import {ProgressBar} from '../../ui/ProgressBar.jsx';
 import Validate from '../../util/Validate.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
-import {flux} from '../../Firefly.js';
 import {getBackgroundInfo, BG_STATE, isActive, isDone, isSuccess, emailSent, canCreateScript} from './BackgroundUtil.js';
 import {dispatchBgStatus, dispatchJobRemove, dispatchBgSetEmail, dispatchJobCancel} from './BackgroundCntlr.js';
 import {downloadWithProgress} from '../../util/WebUtil.js';
 import {DownloadProgress} from '../../rpc/SearchServicesJson.js';
 import {showScriptDownloadDialog} from '../../ui/ScriptDownloadDialog.jsx';
+import {SimpleComponent} from '../../ui/SimpleComponent.jsx';
+import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 
 import LOADING from 'html/images/gxt/loading.gif';
 import CANCEL from 'html/images/stop.gif';
@@ -40,39 +41,35 @@ export function showBackgroundMonitor(show=true) {
     }
 }
 
-class BackgroundMonitor extends PureComponent {
+class BackgroundMonitor extends SimpleComponent {
 
-    constructor(props) {
-        super(props);
-        this.state = getBackgroundInfo();
-    }
-
-    componentDidMount() {
-        this.removeListener= flux.addListener(() => this.storeUpdate());
-    }
-
-    componentWillUnmount() {
-        this.removeListener && this.removeListener();
-        this.isUnmounted = true;
-    }
-
-    storeUpdate() {
-        if (!this.isUnmounted) {
-            this.setState(getBackgroundInfo());
-        }
+    getNextState(np) {
+        return getBackgroundInfo();
     }
 
     render() {
         const {jobs={}, email='', help_id} = this.state || {};
-        const statuses = Object.entries(jobs)
-                        // .filter(([id, job]) => get(job, 'TYPE') === 'PACKAGE')
+        const packages = Object.entries(jobs)
+                        .filter(([id, job]) => get(job, 'TYPE') === 'PACKAGE')
                         .map( ([id, job]) => {
                             return (<PackageStatus key={id} {...job} />);
                         });
+        const searches = Object.entries(jobs)
+            .filter(([id, job]) => get(job, 'TYPE') === 'SEARCH')
+            .map( ([id, job]) => {
+                return (<SearchItem key={id} {...job} />);
+            });
+        const unknown = Object.entries(jobs)
+            .filter(([id, job]) => get(job, 'TYPE') === 'UNKNOWN')
+            .map( ([id, job]) => {
+                return (<SearchItem key={id} {...job} />);
+            });                                                         // failed requests..  should not happen.  Not sure what to do with this yet.
         return (
             <div className='BGMon'>
                 <div className='BGMon__content'>
-                    {statuses}
+                    {!isEmpty(packages) && packages}
+                    {!isEmpty(searches) && searches}
+                    {!isEmpty(unknown) && unknown}
                 </div>
                 <BgFooter {...{help_id, email}}/>
             </div>
@@ -116,6 +113,44 @@ class BgFooter extends PureComponent {
             </div>
         );
     }
+}
+
+function SearchItem(bgStatus) {
+    const {ID, STATE, SERVER_REQ, Title='unknown'} = bgStatus;
+    const emailed = emailSent(bgStatus);    // this is not implemented yet.
+    return (
+        <div className='BGMon__package'>
+            <div className='BGMon__package--box'>
+                <SearchStatus {...{ID, STATE, Title, SERVER_REQ}}/>
+                { emailed &&
+                    <div className='BGMon__package--status'>
+                        <div>Notification email sent</div>
+                    </div>
+                }
+            </div>
+        </div>
+    );
+}
+
+// eslint-disable-next-line
+function SearchStatus({ID, STATE, Title, SERVER_REQ}) {
+    var progress;
+    if (BG_STATE.WAITING.is(STATE)) {
+        progress = <div className='BGMon__header--waiting'>In progress... <img style={{marginLeft: 3}} src={LOADING}/></div>;
+    } else if (BG_STATE.CANCELED.is(STATE)) {
+        progress = <div>User aborted this request</div>;
+    } else {
+        if (isEmpty(SERVER_REQ)) {
+            progress = <div className='BGMon__header--waiting'>unexpected error</div>;
+        } else {
+            const request = JSON.parse(SERVER_REQ);
+            unset(request, 'META_INFO.backgroundable');
+            progress = <div className='BGMon__packageItem--url' onClick={() => dispatchTableSearch(request, {backgroundable: false})}>Show results</div>;
+        }
+    }
+    return (
+        <PackageHeader {...{ID, Title, progress, STATE}} />
+    );
 }
 
 function PackageStatus(bgStatus) {

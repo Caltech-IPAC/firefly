@@ -1,11 +1,13 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {get, set, omitBy, pickBy, isNil, cloneDeep, findKey, isEqual, unset} from 'lodash';
 import {take} from 'redux-saga/effects';
-import {get, set, omitBy, pickBy, isNil, cloneDeep, findKey, isEqual} from 'lodash';
 
 import {flux} from '../Firefly.js';
+import {dispatchAddSaga} from '../core/MasterSaga.js';
 import * as TblUtil from './TableUtil.js';
+import {submitBackgroundSearch} from '../rpc/SearchServicesJson.js';
 import shallowequal from 'shallowequal';
 import {dataReducer} from './reducer/TableDataReducer.js';
 import {uiReducer} from './reducer/TableUiReducer.js';
@@ -13,6 +15,8 @@ import {resultsReducer} from './reducer/TableResultsReducer.js';
 import {updateMerge} from '../util/WebUtil.js';
 import {FilterInfo} from './FilterInfo.js';
 import {selectedValues} from '../rpc/SearchServicesJson.js';
+import {BG_STATUS, BG_JOB_ADD} from '../core/background/BackgroundCntlr.js';
+import {isSuccess, isFail, getErrMsg, getBgStatusById} from '../core/background/BackgroundUtil.js';
 
 export const TABLE_SPACE_PATH = 'table_space';
 export const TABLE_RESULTS_PATH = 'table_space.results.tables';
@@ -83,6 +87,11 @@ export const TABLE_SEARCH = `${DATA_PREFIX}.search`;
 export const TBL_RESULTS_ADDED = `${RESULTS_PREFIX}.added`;
 
 /**
+ * Remove the table UI.  Table model will remain.
+ */
+export const TBL_RESULTS_REMOVE = `${RESULTS_PREFIX}.remove`;
+
+/**
  * Add the table into the UI given information from the payload.
  */
 export const TBL_RESULTS_UPDATE = `${RESULTS_PREFIX}.update`;
@@ -128,7 +137,8 @@ function actionCreators() {
         [TABLE_FILTER]:     tableFilter,
         [TABLE_FILTER_SELROW]:  tableFilterSelrow,
         [TBL_RESULTS_ADDED]:    tblResultsAdded,
-        [TABLE_REMOVE]:     tblRemove
+        [TABLE_REMOVE]:     tblRemove,
+        [TBL_RESULTS_REMOVE]:     tblResultRemove
     };
 }
 
@@ -263,6 +273,14 @@ export function dispatchTblResultsAdded(tbl_id, title, options, tbl_ui_id) {
 }
 
 /**
+ * Remove table UI from the results area.
+ * @param {string} tbl_id     table id
+ */
+export function dispatchTblResultsRemove(tbl_id) {
+    flux.process( {type: TBL_RESULTS_REMOVE, payload: {tbl_id}});
+}
+
+/**
  * request to have table in expanded mode.
  * @param tbl_ui_id
  * @param tbl_id
@@ -298,13 +316,16 @@ function tableSearch(action) {
         if (!action.err) {
             dispatch(action);
             var {request={}, options={}} = action.payload;
-            const {tbl_ui_id} = options;
+            const {tbl_ui_id, backgroundable = true} = options;
             const {tbl_id} = request;
             const title = get(request, 'META_INFO.title');
             request.pageSize = options.pageSize = options.pageSize || request.pageSize || 100;
             if (TblUtil.getTblById(tbl_id)) {
                 // table exists... this is a new search.  old data should be removed.
                 dispatchTableRemove(tbl_id);
+            }
+            if (backgroundable) {
+                request = set(request, 'META_INFO.backgroundable', true);
             }
             dispatchTableFetch(request);
             dispatchTblResultsAdded(tbl_id, title, options, tbl_ui_id);
@@ -347,6 +368,10 @@ function tblResultsAdded(action) {
             dispatchActiveTableChanged(tbl_id, options.tbl_group);
         }
     };
+}
+
+function tblResultRemove(action) {
+    return tblRemove(action);   // same logic.. update active table.
 }
 
 function tblRemove(action) {
@@ -405,12 +430,13 @@ function tableFetch(action) {
 
             dispatch( updateMerge(action, 'payload', {tbl_id}) );
             request.startIdx = 0;
-            TblUtil.doFetchTable(request, hlRowIdx).then ( (tableModel) => {
-                const type = tableModel.origTableModel ? TABLE_REPLACE : TABLE_UPDATE;
-                dispatch( {type, payload: tableModel} );
-            }).catch( (error) => {
-                dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
-            });
+
+            const backgroundable = get(request, 'META_INFO.backgroundable', false);
+            if (backgroundable) {
+                asyncFetch(request, hlRowIdx, invokedBy, dispatch);
+            } else {
+                syncFetch(request, hlRowIdx, invokedBy, dispatch);
+            }
             TblUtil.onTableLoaded(tbl_id).then( (tableModel) => dispatchTableLoaded(Object.assign(TblUtil.getTblInfo(tableModel), {invokedBy})) );
         }
     };
@@ -503,3 +529,50 @@ function getRowIdFor(filePath, selected) {
     return selectedValues(params);
 }
 
+function syncFetch(request, hlRowIdx, invokedBy, dispatch) {
+    unset(request, 'META_INFO.backgroundable');
+    TblUtil.doFetchTable(request, hlRowIdx).then ( (tableModel) => {
+        const type = tableModel.origTableModel ? TABLE_REPLACE : TABLE_UPDATE;
+        dispatch( {type, payload: tableModel} );
+    }).catch( (error) => {
+        dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(request.tbl_id, `Fail to load table. \n   ${error}`)});
+    });
+}
+
+
+function asyncFetch(request, hlRowIdx, invokedBy, dispatch) {
+    const {tbl_id} = request;
+    submitBackgroundSearch(request, request, 1000).then ( (bgStatus) => {
+        const {ID, STATE} = bgStatus || {};
+        if (isSuccess(STATE)) {
+            syncFetch(request, hlRowIdx, invokedBy, dispatch);
+        } else {
+            dispatchAddSaga( trackFetch, {request, hlRowIdx, invokedBy, bgID:ID, dispatch});
+            dispatch({type: TABLE_UPDATE, payload: {tbl_id, bgStatus}});
+        }
+    }).catch( (error) => {
+        dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
+    });
+}
+
+
+function* trackFetch({request, hlRowIdx, invokedBy, bgID, dispatch}) {
+
+    while (true) {
+        const action = yield take([TABLE_UPDATE, BG_STATUS, BG_JOB_ADD]);
+        const {ID, STATE} = action.payload || {};
+        if (isSuccess(STATE)) {
+            syncFetch(request, hlRowIdx, invokedBy, dispatch);
+            break;
+        } else if (isFail(STATE)) {
+            const error = getErrMsg(action.payload);
+            const {tbl_id} = request;
+            dispatch({ type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
+            break;
+        } else if (action.type === BG_JOB_ADD && ID === bgID) {
+            // sent to background... no need to track this anymore.
+            console.log(`${ID} is sent to background`);
+            break;
+        }
+    }
+}

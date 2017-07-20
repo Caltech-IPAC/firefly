@@ -17,6 +17,7 @@ import {DEF_BASE_URL} from '../core/JsonUtils.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {doUpload} from '../ui/FileUpload.jsx';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
+import {getWsConnId} from '../core/messaging/WebSocketClient.js';
 
 export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT']);
 export const MAX_ROW = Math.pow(2,31) - 1;
@@ -674,7 +675,7 @@ export function getTblInfoById(tbl_id, aPageSize) {
  * collects all available table information given the tableModel.
  * @param {TableModel} tableModel
  * @param {number} aPageSize  use this pageSize instead of the one in the request.
- * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error}}
+ * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error, bgStatus}}
  * @public
  * @memberof firefly.util.table
  * @func getTblInfo
@@ -693,8 +694,9 @@ export function getTblInfo(tableModel, aPageSize) {
     const hlRowIdx = highlightedRow >= 0 ? highlightedRow % pageSize : 0;
     const startIdx = (currentPage-1) * pageSize;
     const endIdx = Math.min(startIdx+pageSize, totalRows) || get(tableModel,'tableData.data.length', startIdx) ;
-    var totalPages = Math.ceil((totalRows || 0)/pageSize);
-    return { tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow, selectInfo, error};
+    const totalPages = Math.ceil((totalRows || 0)/pageSize);
+    const bgStatus = get(tableModel, 'bgStatus');
+    return { tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow, selectInfo, error, bgStatus};
 }
 
 
@@ -863,7 +865,8 @@ export function calcColumnWidths(columns, dataAry) {
  * @func uniqueTblId
  */
 export function uniqueTblId() {
-    const id = uniqueId('tbl_id-');
+    const uid = getWsConnId();
+    const id = uniqueId(`tbl_id-c${uid}-`);
     if (getTblById(id)) {
         return uniqueTblId();
     } else {
@@ -879,7 +882,13 @@ export function uniqueTblId() {
  * @func uniqueTblUiId
  */
 export function uniqueTblUiId() {
-    return uniqueId('tbl_ui_id-');
+    const uid = getWsConnId();
+    const id = uniqueId(`tbl_ui_id-c${uid}-`);
+    if (getTableUiById(id)) {
+        return uniqueTblUiId();
+    } else {
+        return id;
+    }
 }
 /**
  *  This function provides a patch until we can reliably determine that the ra/dec columns use radians or degrees.
@@ -909,6 +918,18 @@ export function createErrorTbl(tbl_id, error) {
  * @return {function} returns a function used to cancel
  */
 export function watchTableChanges(tbl_id, actions, callback) {
+    const accept = (a) => tbl_id === (get(a, 'payload.tbl_id') || get(a, 'payload.request.tbl_id'));
+    return monitorChanges(actions, accept, callback);
+}
+
+/**
+ * this function invoke the given callback when the given actions occur.
+ * @param {Object}   actions  an array of actions to watch
+ * @param {function} accept  a function used to filter incoming actions.  if not given, it will accept all.
+ * @param {function} callback  callback to execute when action occurs.
+ * @return {function} returns a function used to cancel
+ */
+export function monitorChanges(actions, accept, callback) {
     if (!Array.isArray(actions) || actions.length === 0 || !callback) return;
 
     var stopWatching = false;
@@ -916,7 +937,7 @@ export function watchTableChanges(tbl_id, actions, callback) {
         const task = yield fork(function* () {
             while (true) {
                 const action = yield take(actions);
-                if (tbl_id === (get(action, 'payload.tbl_id') || get(action, 'payload.request.tbl_id'))) {
+                if (!accept || accept(action)) {
                     callback && callback(action);
                 }
             };

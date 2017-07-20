@@ -31,7 +31,8 @@ export function resultsReducer(state={results:{}}, action={}) {
             const {tbl_id, tbl_group} = action.payload;
             return updateSet(root, [tbl_group,'active'], tbl_id);
         }
-        case (Cntlr.TABLE_REMOVE)    :
+        case Cntlr.TABLE_REMOVE    :
+        case Cntlr.TBL_RESULTS_REMOVE    :
             return removeTable(root, action);
         
         default:

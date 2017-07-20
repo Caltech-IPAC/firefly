@@ -110,6 +110,23 @@ public class QueryUtil {
         return retval;
     }
 
+    public static BackgroundStatus convertToBackgroundStatus(String jsonBgStatus) {
+        BackgroundStatus retval = new BackgroundStatus();
+        if (!StringUtils.isEmpty(jsonBgStatus)) {
+            try {
+                JSONObject jsonReq = (JSONObject) new JSONParser().parse(jsonBgStatus);
+                for (Object key : jsonReq.keySet()) {
+                    String skey = String.valueOf(key);
+                    Object val = jsonReq.get(key);
+                    retval.setParam(skey, String.valueOf(val));
+                }
+            } catch (ParseException e) {
+                LOGGER.error(e);
+            }
+        }
+        return retval;
+    }
+
     public static JSONObject convertToJsonObject(BackgroundStatus bgStat) {
         List<String> intParams = Arrays.asList(MESSAGE_CNT, PACKAGE_CNT, TOTAL_BYTES, RESPONSE_CNT, ACTIVE_REQUEST_CNT);
 

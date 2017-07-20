@@ -290,21 +290,22 @@ public class BackgroundEnv {
         }
         return retval;
     }
-
-
     public static BackgroundStatus backgroundProcess(int waitMills, BackgroundProcessor processor) {
+        return backgroundProcess(waitMills, processor, null);
+    }
+
+    public static BackgroundStatus backgroundProcess(int waitMills, BackgroundProcessor processor, BackgroundStatus.BgType type) {
         String bid= processor.getBID();
         runBackgroundThread(waitMills, processor);
         Logger.briefDebug("Background thread returned");
         BackgroundStatus bgStat= processor.getBackgroundStatus();
         if (bgStat==null) {
             bgStat = processor.getPiCacher().getStatus();
-            bgStat = bgStat == null ? new BackgroundStatus(bid, BackgroundState.WAITING) : bgStat;
+            bgStat = bgStat == null ? new BackgroundStatus(bid, BackgroundState.WAITING, type) : bgStat;
         }
         if (!bgStat.isDone()) {
             // it's not done within the same request.. add it to background and enable email notification.
             bgStat.addAttribute(JobAttributes.CanSendEmail);
-            BackgroundEnv.addUserBackgroundInfo(bgStat);
         }
         processor.getPiCacher().setStatus(bgStat);
         Logger.briefDebug("Background report returned");

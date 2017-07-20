@@ -50,8 +50,10 @@ public class BackgroundInfoCacher {
     }
 
     public static void fireBackgroundJobAdd(BackgroundStatus bgStat) {
-        FluxAction addAction = new FluxAction("background.bgJobAdd", QueryUtil.convertToJsonObject(bgStat));
-        ServerEventManager.fireAction(addAction, ServerEvent.Scope.USER);
+        if (bgStat != null) {
+            FluxAction addAction = new FluxAction("background.bgJobAdd", QueryUtil.convertToJsonObject(bgStat));
+            ServerEventManager.fireAction(addAction, ServerEvent.Scope.USER);
+        }
     }
 
     //======================================================================

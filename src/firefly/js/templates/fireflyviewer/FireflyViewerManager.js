@@ -7,7 +7,7 @@ import {filter} from 'lodash';
 
 import {LO_VIEW, SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo, dispatchUpdateLayoutInfo, dropDownManager} from '../../core/LayoutCntlr.js';
 import {smartMerge} from '../../tables/TableUtil.js';
-import {TBL_RESULTS_ADDED, TABLE_LOADED, TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
+import {TBL_RESULTS_ADDED, TABLE_LOADED, TABLE_REMOVE, TBL_RESULTS_ACTIVE, TBL_RESULTS_REMOVE} from '../../tables/TablesCntlr.js';
 import {CHART_ADD, CHART_REMOVE} from '../../charts/ChartsCntlr.js';
 
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
@@ -31,7 +31,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         const action = yield take([
             ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE,
             ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS,
-            TABLE_REMOVE, TABLE_LOADED, TBL_RESULTS_ADDED, TBL_RESULTS_ACTIVE,
+            TABLE_REMOVE, TABLE_LOADED, TBL_RESULTS_ADDED, TBL_RESULTS_ACTIVE, TBL_RESULTS_REMOVE,
             CHART_ADD, CHART_REMOVE,
             SHOW_DROPDOWN, SET_LAYOUT_MODE
         ]);
@@ -87,6 +87,7 @@ function onAnyAction(layoutInfo, action, views) {
     switch (action.type) {
         case TABLE_REMOVE:
         case TBL_RESULTS_ADDED:
+        case TBL_RESULTS_REMOVE:
         case REPLACE_VIEWER_ITEMS:
         case ImagePlotCntlr.PLOT_IMAGE_START :
         case ImagePlotCntlr.DELETE_PLOT_VIEW:
