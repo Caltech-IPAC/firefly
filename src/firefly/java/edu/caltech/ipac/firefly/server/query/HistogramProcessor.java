@@ -60,16 +60,18 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     // private final String ALGORITHM = "algorithm";
     private final String FALSEPOSTIVERATE = "falsePositiveRate";
     private final String PRESERVE_EMPTY_BIN="preserveEmptyBins";
-    private boolean showEmptyBin= true;
     private String algorithm = null;// FIXED_SIZE_ALGORITHM;
-    private int numBins=0;
     private double binWidth=0.0;
     private String binSelection=null;
     private String binSize;
-    private double min = Double.NaN;
-    private double max = Double.NaN;
     private String columnExpression;
     private double falsePostiveRate = 0.05;
+
+    //change to protected so that they can be set by unit test class
+    protected boolean showEmptyBin= true;
+    protected int numBins=0;
+    protected double min = Double.NaN;
+    protected double max = Double.NaN;
 
 
     private static String[] getInputFilePath(String inputFileName) {
