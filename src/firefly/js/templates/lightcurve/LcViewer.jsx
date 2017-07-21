@@ -33,6 +33,7 @@ import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {HelpText} from './../../ui/HelpText.jsx';
 
 const vFileKey = LC.FG_FILE_FINDER;
+const DEFAULT_TITLE = 'Time Series Tool';
 /**
  * This is a light curve viewer.
  */
@@ -115,12 +116,12 @@ export class LcViewer extends PureComponent {
 
         };
 
-        let title = appTitle;
+        let title = appTitle ? appTitle : DEFAULT_TITLE; // use default title when appTitle is undefined or ''
         if (displayMode && displayMode.startsWith('period')) {
-            title = appTitle + ': Period Finder';
+            title += ': Period Finder';
 
         } else if(displayMode && !displayMode.startsWith('period')){
-            title = appTitle + ': Viewer';
+            title += ': Viewer';
         }
         if (!isReady) {
             return (<div style={{top: 0}} className='loading-mask'/>);
@@ -164,9 +165,6 @@ LcViewer.propTypes = {
     style: PropTypes.object
 };
 
-LcViewer.defaultProps = {
-    appTitle: 'Time Series Tool'
-};
 
 function onReady({menu}) {
     if (menu) {
