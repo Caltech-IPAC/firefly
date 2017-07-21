@@ -57,7 +57,11 @@ export function getWebPlotRequestViaPTFIbe(tableModel, hlrow, cutoutSize, params
 
     // convert the default Cutout size in arcmin to deg for WebPlotRequest
     const cutoutSizeInDeg = convertAngle('arcmin','deg', cutoutSize);
+
     // pfilename should be resolved using PtfibeResolver by ej
+    // PtfIbeResolver res = new PtfIbeResolver();
+    // String fs = res.getValuesFromColumn(pids, "pfilename");
+
     const pfilename = 'proc/2013/06/16/f2/c4/p5/v1/PTF_201306163445_i_p_scie_t081605_u016406820_f02_p005137_c04.fits';
     try {
 
@@ -73,6 +77,7 @@ export function getWebPlotRequestViaPTFIbe(tableModel, hlrow, cutoutSize, params
         sr.setParam('schema', 'images');
         sr.setParam('table', 'level1');
         sr.setParam('pfilename', `${pfilename}`);
+        //  sr.setParam('pfilename', `${fs}`);
 
         var wp = null;
         sr.setParam('doCutout', 'false');
