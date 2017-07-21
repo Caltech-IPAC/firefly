@@ -5,7 +5,7 @@
 import {get, isNil} from 'lodash';
 import {TitleOptions} from '../../visualize/WebPlotRequest.js';
 import {logError} from '../../util/WebUtil.js';
-import {getWebPlotRequestViaPTFIbe} from './ptf/PTFPlotRequests.js';
+import {makePTFPlotRequest,getWebPlotRequestViaPTFIbe} from './ptf/PTFPlotRequests.js';
 import {getWebPlotRequestViaWISEIbe} from './wise/WisePlotRequests.js';
 import {makeLsstSdssPlotRequest} from './lsst_sdss/LsstSdssPlotRequests.js';
 import {makeURLPlotRequest} from './generic/DefaultPlotRequests.js';
@@ -126,7 +126,7 @@ const converters = {
         MissionOptions: PTFSettingBox,
         onNewRawTable: ptfOnNewRawTable,
         onFieldUpdate: ptfOnFieldUpdate,
-        rawTableRequest: ptfRawTableRequest, //the r
+        rawTableRequest: ptfRawTableRequest,
         yErrNames: '',
         dataSource: 'pid',
         webplotRequestCreator: getWebPlotRequestViaPTFIbe,
