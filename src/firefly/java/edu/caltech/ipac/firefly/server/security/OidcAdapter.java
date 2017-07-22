@@ -334,6 +334,12 @@ public class OidcAdapter implements SsoAdapter {
                 && claimsSet.getIssueTime().getTime() < System.currentTimeMillis();
     }
 
+    /**
+     * Convert a list of isMemberOf strings to a RoleList.  This is specific to CILogon.
+     * The values look like it came from an LDAP service. ["cn=val,ou=val,dc=val1,dc=val2,dc=val3","cn=val,ou=val,dc=val1,dc=val2,dc=val3"]
+     * @param isMemberOf
+     * @return
+     */
     @NotNull
     private static RoleList getRoleList(List<String> isMemberOf) {
         RoleList roleList = new RoleList();
