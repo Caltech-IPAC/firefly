@@ -36,7 +36,7 @@ public class SsoVerifyServlet extends BaseHttpServlet {
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
 
         String id = req.getParameter(ssoAdapter.getAssertKey());
-        SsoAdapter.Token token = ssoAdapter.resolveAuthToken(id);
+        SsoAdapter.Token token = id == null ? null : ssoAdapter.resolveAuthToken(id);
         if (token != null) {
             logger.debug("Verifying user with verId=" + id + "  ==> returned auth token:" + token);
 
@@ -45,6 +45,8 @@ public class SsoVerifyServlet extends BaseHttpServlet {
                 backTo = ServerContext.getRequestOwner().getRequestAgent().getBaseUrl();
             }
             res.sendRedirect(backTo);
+        } else {
+            res.sendError(401);
         }
     }
 }
