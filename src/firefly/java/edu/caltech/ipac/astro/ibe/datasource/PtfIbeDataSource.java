@@ -29,7 +29,7 @@ public class PtfIbeDataSource extends BaseIbeDataSource {
     private final static String TABLE   = "table";
 
     public static enum DATA_TYPE {
-        INTENSITY, MASK, UNCERTAINTY, COVERAGE, DIFF_SPIKES, HALOS, OPT_GHOSTS, LATENTS
+        INTENSITY, MASK, UNCERTAINTY, COVERAGE
     }
 
     public enum DataProduct {
@@ -60,7 +60,7 @@ public class PtfIbeDataSource extends BaseIbeDataSource {
     }
 
 //====================================================================
-//  WISE implementation of IBE services
+//  PTF implementation of IBE services
 //====================================================================
 
     /**

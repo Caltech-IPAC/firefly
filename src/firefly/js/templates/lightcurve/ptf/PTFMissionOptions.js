@@ -93,10 +93,10 @@ export function isValidPTFTable() {
 }
 
 /**
- * Pregex pattern for wise, at least to find mjd and w1mpro if present
+ * Pregex pattern for ptf, at least to find obsmjd and mag_autocorr if present
  * @type {string[]}
  */
-const xyColPattern = ['\\w*jd\\w*', 'w[1-4]mpro\\w*'];
+const xyColPattern = ['obsmjd', 'mag_autocorr'];
 export function ptfOnNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo) {
 
     // Update default values AND sortInfo and
@@ -141,7 +141,7 @@ export function ptfRawTableRequest(converter, source, uploadFileName='') {
 
 
 export function ptfOnFieldUpdate(fieldKey, value) {
-    // images are controlled by radio button -> band w1,w2,w3,w4.
+    // images are controlled by radio button -> filter g, R.
     if (fieldKey === LC.META_TIME_CNAME) {
         return fileUpdateOnTimeColumn(fieldKey, value);
     } else if ([LC.META_FLUX_CNAME, LC.META_ERR_CNAME,  LC.META_FLUX_BAND].includes(fieldKey)) {

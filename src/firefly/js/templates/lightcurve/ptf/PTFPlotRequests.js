@@ -16,21 +16,19 @@ export function makePTFPlotRequest(table, rowIdx, cutoutSize) {
     const ra = getCellValue(table, rowIdx, 'ra');
     const dec = getCellValue(table, rowIdx, 'dec');
     const pid = getCellValue(table, rowIdx, 'pid');
-
-    var ptf_sexp_ibe = /(\d+)([0-9][a-z])(\w+)/g;
-    var res = ptf_sexp_ibe.exec(pid);
-    const scan_id = res[1] + res[2];
-    const scangrp = res[2];
-    const frame_num = res[3];
-    //const band=`${params.fluxCol}`.match(/\d/g);
-    const band = 1;
+    const band = 'g';
 
     // convert the default Cutout size in arcmin to deg for WebPlotRequest
     const cutoutSizeInDeg = convertAngle('arcmin','deg', cutoutSize);
 
-    const serverinfo = 'http://irsa.ipac.caltech.edu/ibe/data/ptf/merge/merge_p1bm_frm/';
+    //http://irsa.ipac.caltech.edu/ibe/search/ptf/images/level1?where=pid=16406820
+
+    const ibeserverinfo = 'http://irsa.ipac.caltech.edu/ibe/search/ptf/images/level1?';
+
+    const dataserverinfo = 'http://irsatest.ipac.caltech.edu/ibe/data/ptf/images/level1/';
+    const pfilename = 'proc/2013/06/16/f2/c4/p5/v1/PTF_201306163445_i_p_scie_t081605_u016406820_f02_p005137_c04.fits';
     const centerandsize = cutoutSize ? `?center=${ra},${dec}&size=${cutoutSizeInDeg}&gzip=false` : '';
-    const url = `${serverinfo}${scangrp}/${scan_id}/${frame_num}/${scan_id}${frame_num}-w${band}-int-1b.fits${centerandsize}`;
+    const url = `${dataserverinfo}${pfilename}/${centerandsize}`;
     const plot_desc = `PTF-${pid}`;
     const reqParams = WebPlotRequest.makeURLPlotRequest(url, plot_desc);
     const title = 'PTF-' + pid + (cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
@@ -47,9 +45,9 @@ export function makePTFPlotRequest(table, rowIdx, cutoutSize) {
  * @returns {WebPlotRequest}
  */
 export function getWebPlotRequestViaPTFIbe(tableModel, hlrow, cutoutSize, params = {
-    bandName: 'w1',
+    bandName: 'g',
     fluxCol: 'mag_autocorr',
-    dataSource: 'frame_id'
+    dataSource: 'pid'
 }) {
     const ra = getCellValue(tableModel, hlrow, 'ra');
     const dec = getCellValue(tableModel, hlrow, 'dec');
@@ -60,28 +58,26 @@ export function getWebPlotRequestViaPTFIbe(tableModel, hlrow, cutoutSize, params
     // convert the default Cutout size in arcmin to deg for WebPlotRequest
     const cutoutSizeInDeg = convertAngle('arcmin','deg', cutoutSize);
 
-    try {
-        var ptf_sexp_ibe = /(\d+)([0-9][a-z])(\w+)/g;
-        var tmpId = '';
-        var res;
-        if (!isNil(pid)) {
-            res = ptf_sexp_ibe.exec(pid);
-            tmpId = pid;
-        }
+    // pfilename should be resolved using PtfibeResolver by ej
+    // PtfIbeResolver res = new PtfIbeResolver();
+    // String fs = res.getValuesFromColumn(pids, "pfilename");
 
+    const pfilename = 'proc/2013/06/16/f2/c4/p5/v1/PTF_201306163445_i_p_scie_t081605_u016406820_f02_p005137_c04.fits';
+    try {
 
         // flux/value column control this | unless UI has radio button band enabled, put bandName back here to match band
-        const band = `${params.bandName}`.match(/[1-4]/i);// `${params.fluxCol}`.match(/w[1-4]/i); //check if name has wW[1-4] in name
+        const band = `${params.bandName}`;
+        var tmpId = pid;
 
-
-        let title = 'PTFE-W' + band + '-' + tmpId;
+        let title = 'PTF-W' + band + '-' + tmpId;
 
         const sr = new ServerRequest('ibe_file_retrieve');
-        sr.setParam('mission', 'PTF');
+        sr.setParam('mission', 'ptf');
         sr.setParam('PROC_ID', 'ibe_file_retrieve');
-        sr.setParam('ProductLevel', '1b');
-
-        sr.setParam('band', `${band}`);
+        sr.setParam('schema', 'images');
+        sr.setParam('table', 'level1');
+        sr.setParam('pfilename', `${pfilename}`);
+        //  sr.setParam('pfilename', `${fs}`);
 
         var wp = null;
         sr.setParam('doCutout', 'false');
@@ -93,7 +89,7 @@ export function getWebPlotRequestViaPTFIbe(tableModel, hlrow, cutoutSize, params
             sr.setParam('doCutout', 'true');
             sr.setParam('size', `${cutoutSizeInDeg}`);
             sr.setParam('subsize', `${cutoutSizeInDeg}`);
-            title = 'PTF-W' + band + '-' + tmpId + (cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
+            title = 'PTF-' + band + '-' + pid + (cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
         }
 
         const reqParams = WebPlotRequest.makeProcessorRequest(sr, 'ptf');
