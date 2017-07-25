@@ -72,7 +72,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
          FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null,timeout);
          if (fileData.getResponseCode()>=500) {
             // throw new DataAccessException("ERROR:" + sql + ";"+ getErrorMessageFromFile(file));
-             throw new DataAccessException("DAX Error: "+ getErrorMessageFromFile(file));
+             throw new DataAccessException("[DAX] "+ getErrorMessageFromFile(file));
          }
          DataGroup dg =  getMetaData(file);
          _log.briefDebug("SHOW COLUMNS took " + (System.currentTimeMillis() - cTime) + "ms");
@@ -84,19 +84,21 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
-          DataGroup dg;
-          try {
-               dg = getDataFromURL(request);
-              File outFile = createFile(request, ".tbl");
-              dg.shrinkToFitData();
-              DataGroupWriter.write(outFile, dg);
-              return outFile;
-          }
-          catch (Exception e) {
-              _log.error("load table failed");
-              e.printStackTrace();
-              throw new DataAccessException("ERROR:" + e.getMessage());
-         }
+        DataGroup dg;
+        try {
+            dg = getDataFromURL(request);
+            File outFile = createFile(request, ".tbl");
+            dg.shrinkToFitData();
+            DataGroupWriter.write(outFile, dg);
+            return outFile;
+
+        } catch (IOException | DataAccessException ee) {
+            throw ee;
+        } catch (Exception e) {
+            _log.error("load table failed: "+e.getMessage());
+            throw new DataAccessException(e.getMessage(), e);
+        }
+
     }
 
     /**

@@ -7,7 +7,6 @@ import edu.caltech.ipac.util.StringUtils;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Map;
 
 /**
  * Date: 10/24/16
@@ -52,7 +51,7 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
             sb.append("\"success\" :  \"").append(false).append("\",");
 
             // need to escape double quotes - otherwise JSON will be messed
-            sb.append("\"error\" : \"").append(e.toString().replace("\"", "\\\"")).append("\"");
+            sb.append("\"error\" : \"").append(e.getMessage().replace("\"", "\\\"")).append("\"");
 
             int cnt = 1;
             for (Throwable t = e.getCause(); (t != null); t = t.getCause()) {

@@ -103,10 +103,14 @@ public class SearchManager {
                 dgp.getTableDef().getMetaFrom(meta);
                 return dgp;
             } catch (Exception ex) {
-                String source = dgp != null && dgp.getTableDef() != null ? dgp.getTableDef().getSource() : "unknown";
-                String errMsg = ex.getClass().getSimpleName() + ":" + ex.getMessage() + " from:" + source;
-                LOGGER.error(ex, errMsg);
-                throw new DataAccessException(errMsg, ex);
+                String source = dgp != null && dgp.getTableDef() != null ? dgp.getTableDef().getSource() : null;
+                if (source != null || !(ex instanceof DataAccessException)) {
+                    String errMsg = ex.getClass().getSimpleName() + ":" + ex.getMessage() + " from:" + source;
+                    LOGGER.error(ex, errMsg);
+                    throw new DataAccessException(errMsg, ex);
+                } else {
+                    throw ex;
+                }
             }
         } else {
             throw new DataAccessException("Request fail inspection.  Operation aborted.");

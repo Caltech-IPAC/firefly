@@ -13,13 +13,8 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.firefly.util.DataSetParser;
-import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.download.URLDownload;
-import edu.caltech.ipac.firefly.data.table.MetaConst;
-import edu.caltech.ipac.util.FileUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -33,7 +28,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Arrays;
 
 /**
  * This is a base class for LSSTCatlogSearch and LSSTLightCurveQuery
@@ -61,19 +55,19 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
 
         try {
             DataGroup dg = getDataFromURL(request);
-            //DM-9964 : TODO this is a tempoary solution until the meta server is up
-            if (dg==null){
+            //DM-9964 : TODO this is a temporary solution until the meta server is up
+            if (dg == null) {
                 throw new DataAccessException("No data is found in the search range");
             }
             dg.shrinkToFitData();
             File outFile = createFile(request, ".tbl");
             DataGroupWriter.write(outFile, dg);
             _log.info("table loaded");
-            return  outFile;
-
-         } catch (Exception e) {
-            e.printStackTrace();
-            throw new DataAccessException("ERROR:" + e.getMessage(), e);
+            return outFile;
+        } catch (IOException | DataAccessException ee) {
+            throw ee;
+        } catch (Exception e) {
+            throw new DataAccessException(e.getMessage(), e);
         }
     }
 
@@ -94,7 +88,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null, timeout);
 
         if (fileData.getResponseCode()>=500) {
-            throw new DataAccessException("DAX Error: "+ LSSTMetaSearch.getErrorMessageFromFile(file));
+            throw new DataAccessException("[DAX] "+ LSSTMetaSearch.getErrorMessageFromFile(file));
 
         }
 

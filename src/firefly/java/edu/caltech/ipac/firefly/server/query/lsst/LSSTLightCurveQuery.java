@@ -42,7 +42,7 @@ public class LSSTLightCurveQuery extends LSSTQuery {
         String fsrc = (database != null && forcedTable != null) ?  database+'.'+forcedTable : null;
 
         if (fsrc == null) {
-            throw new EndUserException("Invalid paramter", "Missing forced source table");
+            throw new EndUserException("Invalid parameter", "Missing forced source table");
         }
 
         String objectId = request.getParam("objectId");
