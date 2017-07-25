@@ -16,7 +16,7 @@ import {updateMerge} from '../util/WebUtil.js';
 import {FilterInfo} from './FilterInfo.js';
 import {selectedValues} from '../rpc/SearchServicesJson.js';
 import {BG_STATUS, BG_JOB_ADD} from '../core/background/BackgroundCntlr.js';
-import {isSuccess, isFail, getErrMsg, getBgStatusById} from '../core/background/BackgroundUtil.js';
+import {isSuccess, isFail, getErrMsg} from '../core/background/BackgroundUtil.js';
 
 export const TABLE_SPACE_PATH = 'table_space';
 export const TABLE_RESULTS_PATH = 'table_space.results.tables';
@@ -525,8 +525,10 @@ function reducer(state={data:{}, results: {}, ui:{}}, action={}) {
 
 
 function getRowIdFor(filePath, selected) {
-    const params = {columnName: 'ROWID', filePath, selectedRows: String(selected)};
-    return selectedValues(params);
+    const params = {columnNames: ['ROWID'], filePath, selectedRows: selected};
+    return selectedValues(params).then((tableModel) => {
+        return TblUtil.getColumnValues(tableModel, 'ROWID');
+    });
 }
 
 function syncFetch(request, hlRowIdx, invokedBy, dispatch) {

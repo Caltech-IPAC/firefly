@@ -84,19 +84,19 @@ export function findTableIndex(tableRequest, filterInfo) {
 }
 
 /**
- * returns the values of the data from the given parameters
+ * returns the table data for the given parameters
  * @param {Object} p  parameters object
- * @param {string} p.columnName name of the column
+ * @param {string[]} p.columnNames an array of column names
  * @param {string} p.filePath   location of the file on the server
  * @param {string} p.selectedRows   a comma-separated string of indices of the rows to get the data from
- * @return {Promise}
+ * @return {Promise<TableModel>}
  */
-export const selectedValues = function({columnName, filePath, selectedRows}) {
-    return doJsonRequest(ServerParams.SELECTED_VALUES, {columnName, filePath, selectedRows})
-            .then((data) => {
-                // JsonUtil may not interpret array values correctly due to error-checking.
-                // returning array as a prop 'values' inside an object instead.
-                return get(data, 'values');
+export const selectedValues = function({columnNames, filePath, selectedRows}) {
+    columnNames = Array.isArray(columnNames) ? columnNames.join() : String(columnNames);
+    selectedRows = Array.isArray(selectedRows) ? selectedRows.join() : String(selectedRows);
+    return doJsonRequest(ServerParams.SELECTED_VALUES, {columnNames, filePath, selectedRows})
+            .then((tableModel) => {
+                return tableModel;
             });
 };
 
@@ -191,21 +191,6 @@ export const cancel= function(id) {
     paramList.push({name: ServerParams.ID, value: id});
     return doJsonRequest(ServerParams.CANCEL, paramList
     ).then( () => true);
-};
-
-/**
- *
- * @param {string} id background id
- * @return {Promise}
- * @deprecated
- */
-export const addIDToPushCriteria= function(id) {
-    // not used in converted code.
-
-    // var paramList = [];
-    // paramList.push({name: ServerParams.ID, value: id});
-    // return doJsonRequest(ServerParams.ADD_ID_TO_CRITERIA, paramList
-    // ).then( () => true);
 };
 
 /**

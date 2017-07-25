@@ -53,6 +53,14 @@ public class TableDef {
         return cols;
     }
 
+    public DataType getColByName(String name) {
+        name = name == null ? "" : name;
+        for(DataType dt : cols) {
+            if (dt.getKeyName().equals(name)) return dt;
+        }
+        return null;
+    }
+
     public void setCols(List<DataType> cols) { this.cols = cols; }
 
     /**

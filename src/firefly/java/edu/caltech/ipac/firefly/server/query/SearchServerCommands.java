@@ -21,9 +21,11 @@ import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
 import edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
@@ -70,12 +72,16 @@ public class SearchServerCommands {
             String filePath = params.getRequired("filePath");
             try {
                 String selRows = params.getRequired("selectedRows");
-                String columnName = params.getRequired("columnName");
+                List<String> columnNames = StringUtils.asList(params.getRequired("columnNames"), ",");
                 List<Integer> rows = StringUtils.convertToListInteger(selRows, ",");
-                List<String> values =  new SearchManager().getDataFileValues(ServerContext.convertToFile(filePath), rows, columnName);
-                Map<String, List<String>> rval = new HashMap<>(1);
-                rval.put("values", values);
-                return QueryUtil.toJsonObject(rval).toJSONString();
+                File file = ServerContext.convertToFile(filePath);
+
+                if (!file.canRead() ||
+                        !file.getAbsolutePath().startsWith(ServerContext.getWorkingDir().getAbsolutePath())) {
+                    throw new DataAccessException("Unable to access this file:" + file.getAbsolutePath());
+                }
+                DataGroup data = IpacTableParser.getSelectedData(file, rows, columnNames.toArray(new String[0]));
+                return JsonTableUtil.toJsonTableModel(new DataGroupPart(null, data, 0, data.size()), null).toJSONString();
             } catch (IOException e) {
                 throw new DataAccessException("Unable to resolve a search processor for this request.  SelectedValues aborted.");
             }
