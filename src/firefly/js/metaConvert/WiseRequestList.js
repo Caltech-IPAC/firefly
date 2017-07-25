@@ -7,6 +7,8 @@ import {get} from 'lodash';
 import {makeServerRequestBuilder} from './converterUtils.js';
 import {RangeValues,STRETCH_LINEAR,SIGMA} from '../visualize/RangeValues.js';
 import {getCellValue} from '../tables/TableUtil.js';
+import {parseWorldPt} from '../visualize/Point.js';
+import {convertAngle} from '../visualize/VisUtil.js';
 
 const colToUse= ['scan_id', 'frame_num', 'coadd_id', 'in_ra', 'in_dec', 'image_set'];
 const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
@@ -23,7 +25,7 @@ const bandMap= {b1:'1', b2:'2',b3:'3',b4:'4'};
  * @return {{}}
  */
 export function makeWisePlotRequest(table, row, includeSingle, includeStandard, threeColorOps) {
-    
+
     const overlap= get(table, 'request.intersect', '').toUpperCase()==='OVERLAPS';
     var headerParams= overlap ? ['mission', 'ImageSet', 'ProductLevel'] :
                                 ['mission', 'ImageSet', 'ProductLevel', 'subsize'];
@@ -32,6 +34,19 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
     const builder = (plotId, reqKey, title, rowNum, extraParams) => {
         const req= svcBuilder(plotId, reqKey, title, rowNum, extraParams);
         req.setPreferenceColorKey('wise-color-pref');
+        const subsize = get(table, 'request.subsize');
+        if (subsize) {
+            const {UserTargetWorldPt, sizeUnit} = get(table, 'request', {});
+            if (UserTargetWorldPt && sizeUnit) {
+                const wp = parseWorldPt(UserTargetWorldPt);
+                // cutout is requested when in_ra, in_dec, and subsize are set (see WiseIbeDataSource)
+                req.setParam('center', `${wp.getLon()},${wp.getLat()}`); // degrees assumed if no unit
+                req.setParam('in_ra', `${wp.getLon()}`);
+                req.setParam('in_dec', `${wp.getLat()}`);
+                const newSize = convertAngle(sizeUnit, 'deg', subsize);
+                req.setParam('subsize', `${newSize}`);
+            }
+        }
         return req;
     };
 

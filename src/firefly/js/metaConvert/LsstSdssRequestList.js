@@ -74,7 +74,7 @@ function makeCcdReqBuilder(table, rowIdx) {
  * @param rowIdx - {int}
  * @returns {Function}
  */
-function makeCoadReqBuilder(table, rowIdx) {
+function makeCoaddReqBuilder(table, rowIdx) {
 
     const tract= getCellValue(table, rowIdx, 'tract');
     const patch= getCellValue(table, rowIdx, 'patch');
@@ -117,7 +117,7 @@ export function makeLsstSdssPlotRequest(table, row, includeSingle, includeStanda
         id= Number(getCellValue(table, row, 'scienceCcdExposureId'));
     }
     else {
-        builder= makeCoadReqBuilder(table, row);
+        builder= makeCoaddReqBuilder(table, row);
         const deepCoaddId= Number(getCellValue(table, row, 'deepCoaddId'));
         id = deepCoaddId - deepCoaddId%8;
 
