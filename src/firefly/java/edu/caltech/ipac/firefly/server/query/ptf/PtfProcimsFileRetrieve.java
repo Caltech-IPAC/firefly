@@ -21,7 +21,7 @@ import static edu.caltech.ipac.firefly.server.query.ptf.PtfFileRetrieve.IBE_HOST
  */
 
 
-@SearchProcessorImpl(id = "PtfProcimsFileRetrieve")
+@SearchProcessorImpl(id = "PtfProcImagesFileRetrieve")
 public class PtfProcimsFileRetrieve extends URLFileInfoProcessor {
 
     // example: http://irsadev.ipac.caltech.edu:9006/data/ptf/dev/process/{pfilename}?lon={center lon}&lat={center lat}&size={subsize}
@@ -35,10 +35,11 @@ public class PtfProcimsFileRetrieve extends URLFileInfoProcessor {
 
     public static String getBaseURL(ServerRequest sr) {
         String host = sr.getSafeParam("host") != null ? sr.getSafeParam("host") : IBE_HOST;
+        String schemaGroup = sr.getSafeParam("schemaGroup")!= null ? sr.getSafeParam("schemaGroup"):"ptf";
         String schema = sr.getSafeParam("schema");
         String table = sr.getSafeParam("table");
 
-        return QueryUtil.makeUrlBase(host) + "/data/ptf/" + schema + "/" + table + "/";
+        return QueryUtil.makeUrlBase(host) + "/data/" + schemaGroup + "/" + schema + "/" + table + "/";
     }
 
     private static URL getIbeURL(ServerRequest sr, boolean doCutOut) throws MalformedURLException {

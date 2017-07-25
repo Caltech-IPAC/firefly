@@ -21,7 +21,7 @@ import static edu.caltech.ipac.firefly.server.query.ptf.PtfFileRetrieve.IBE_HOST
  */
 
 
-@SearchProcessorImpl(id = "PtfRefimsFileRetrieve")
+@SearchProcessorImpl(id = "PtfRefImagesFileRetrieve")
 public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
 
     // example: http://irsadev.ipac.caltech.edu:6001/data/ptf/dev_refims/ptf_ref_img/ptffiled/f#/c#/filename?lon={center lon}&lat={center lat}&size={subsize}
