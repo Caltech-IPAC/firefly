@@ -33,7 +33,7 @@ const Keys= {
     DATA_SOURCE: 'DATA_SOURCE',
     MESSAGE_BASE: 'MESSAGE_',
     MESSAGE_CNT: 'MESSAGE_CNT',
-    PACKAGE_PROGRESS_BASE: 'PACKAGE_PROGRESS_',
+    ITEMS: 'ITEMS_',
     PACKAGE_CNT: 'PACKAGE_CNT',
     CLIENT_REQ: 'CLIENT_REQ',
     SERVER_REQ: 'SERVER_REQ',
@@ -372,7 +372,7 @@ export class BackgroundStatus {
      * @return {PackageProgress}
      */
     getPartProgress(i) {
-        var s= this.getParam(Keys.PACKAGE_PROGRESS_BASE+i);
+        var s= this.getParam(Keys.ITEMS+i);
         var retval= PackageProgress.parse(s);
         if (!retval) retval= new PackageProgress();
         return retval;
@@ -423,7 +423,7 @@ export class BackgroundStatus {
      * @param i
      */
     setPartProgress(progress, i) {
-        this.setParam(Keys.PACKAGE_PROGRESS_BASE+i,progress.serialize());
+        this.setParam(Keys.ITEMS+i,progress.serialize());
     }
 
 

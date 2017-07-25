@@ -82,7 +82,7 @@
  */
 
 /**
- * Background status of one job.  Packages info for this job are stored as PACKAGE_PROGRESS_n,
+ * Background status of one job.  Packages info for this job are stored as ITEMS_n,
  * where n is a sequential integer.
  * @typedef {Object.<string, PackageStatus>} BgStatus
  * @prop {string} TYPE  type of job.  ie. 'PACKAGE'
@@ -96,7 +96,7 @@
  */
 
 /**
- * Background status of one job.  Packages info for this job are stored as PACKAGE_PROGRESS_n,
+ * Background status of one job.  Packages info for this job are stored as ITEMS_n,
  * where n is a sequential integer.
  * @typedef {Object} PackageStatus
  * @prop {number} processedBytes  type of job.  ie. 'PACKAGE'

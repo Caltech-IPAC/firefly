@@ -37,7 +37,7 @@ public class BackgroundStatus implements Serializable {
     public static final String DATA_SOURCE = "DATA_SOURCE";
     public static final String MESSAGE_BASE = "MESSAGE_";
     public static final String MESSAGE_CNT = "MESSAGE_CNT";
-    public static final String PACKAGE_PROGRESS_BASE = "PACKAGE_PROGRESS_";
+    public static final String ITEMS = "ITEMS_";
     public static final String PACKAGE_CNT = "PACKAGE_CNT";
     public static final String CLIENT_REQ = "CLIENT_REQ";
     public static final String SERVER_REQ = "SERVER_REQ";
@@ -361,7 +361,7 @@ public class BackgroundStatus implements Serializable {
     }
 
     public PackageProgress getPartProgress(int i) {
-        String s= getParam(PACKAGE_PROGRESS_BASE+i);
+        String s= getParam(ITEMS +i);
         PackageProgress retval= PackageProgress.parse(s);
         if (retval==null) retval= new PackageProgress();
         return retval;
@@ -397,7 +397,7 @@ public class BackgroundStatus implements Serializable {
     }
 
     public void setPartProgress(PackageProgress progress, int i) {
-        setParam(PACKAGE_PROGRESS_BASE+i,progress.serialize());
+        setParam(ITEMS +i,progress.serialize());
     }
 
     public Request getClientRequest() {
