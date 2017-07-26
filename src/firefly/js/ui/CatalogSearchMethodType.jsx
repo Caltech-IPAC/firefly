@@ -200,7 +200,8 @@ function radiusInField({label = 'Radius:'}) {
                          wrapperStyle={{padding:5, margin: '5px 0 5px 0'}}
                          initialState={{
                                                unit: 'arcsec',
-                                               labelWidth : 100
+                                               labelWidth : 100,
+                                               nullAllowed: false
                                            }}
                          label={label}/>
     );
