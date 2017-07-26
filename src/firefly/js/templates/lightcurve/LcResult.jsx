@@ -129,11 +129,6 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
     // convert the default Cutout size in arcmin to deg for WebPlotRequest, expected to be string in download panel
     const cutoutSizeInDeg = (convertAngle('arcmin','deg', cutoutSize)).toString();
 
-
-    // let downloaderOptPanel = (m, c) => {
-    //     return convertData.downloadOptions(m, c)
-    // };
-
     const defaultOptPanel = (m, c) => {
         return (
             <DownloadButton>
@@ -160,9 +155,6 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
     };
 
     const downloaderOptPanel = convertData.downloadOptions || defaultOptPanel;
-    // if(!convertData.downloadOptions){
-    //     downloaderOptPanel = defaultOptPanel;
-    // }
 
     let tsView = (err) => {
 
