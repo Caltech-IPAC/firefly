@@ -15,6 +15,7 @@ import {FieldGroup} from './FieldGroup.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
+import {SCRIPT_ATTRIB} from '../core/background/BackgroundUtil.js';
 
 
 const SCRIPT_DOWNLOAD_ID = 'Download Retrieval Script';
@@ -62,7 +63,7 @@ class ScripDownloadPanel extends PureComponent {
 
     onSubmit(request) {
         const {ID, Title, DATA_SOURCE} = this.props;
-        const attributes = Object.values(request).filter((v) => v && v !== '-');
+        const attributes = Object.values(request).filter((v) => SCRIPT_ATTRIB.get(String(v)));
         createDownloadScript(ID, Title.replace(/\s/g, '_'), DATA_SOURCE, attributes)
             .then((url) => {
                 download(url);

@@ -6,6 +6,8 @@ import {makeFileRequest, getCellValue, getTblById, getColumnIdx, smartMerge, get
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {getInitialDefaultValues,renderMissionView,validate,getTimeAndYColInfo,fileUpdateOnTimeColumn,setValueAndValidator} from '../LcUtil.jsx';
 import {LC} from '../LcManager.js';
+import {DownloadOptionPanel, DownloadButton} from '../../../ui/DownloadDialog.jsx';
+import {ValidationField} from '../../../ui/ValidationField.jsx';
 
 
 const labelWidth = 80;
@@ -151,3 +153,38 @@ export function ptfOnFieldUpdate(fieldKey, value) {
 
 }
 
+/**
+ *
+ * Gets the download option panel for PTF with specific file processor id 'PtfDownload'
+ * @param mission
+ * @param cutoutSizeInDeg
+ * @returns {XML}
+ */
+export function ptfDownloaderOptPanel (mission, cutoutSizeInDeg) {
+
+    return (
+        <DownloadButton>
+            <DownloadOptionPanel
+                cutoutSize={cutoutSizeInDeg}
+                title={'Image Download Option'}
+                dlParams={{
+                    MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
+                    FilePrefix: `${mission}_Files`,
+                    BaseFileName: `${mission}_Files`,
+                    DataSource: `${mission} images`,
+                    FileGroupProcessor: 'PtfLcDownload',
+                    ProductLevel:'l1',
+                    schema:'images',
+                    table:'level1'
+                }}>
+                <ValidationField
+                    initialState={{
+                        value: 'A sample download',
+                        label: 'Title for this download:'
+                    }}
+                    fieldKey='Title'
+                    labelWidth={110}/>
+            </DownloadOptionPanel>
+        </DownloadButton>
+    );
+}

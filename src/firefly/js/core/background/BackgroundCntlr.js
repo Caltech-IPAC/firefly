@@ -248,13 +248,13 @@ function handleBgJobRemove(state, action) {
  */
 function transform(bgstats) {
     const ITEMS = Object.keys(bgstats)
-        .filter( (k) => k.startsWith('PACKAGE_PROGRESS_') )
+        .filter( (k) => k.startsWith('ITEMS_') )
         .map( (k) => {
-            const [,,index] = k.split('_');
+            const [,index] = k.split('_');
             const INDEX = Number(index);
             return {INDEX, ...bgstats[k]};
         }).sort((a, b) => a.INDEX - b.INDEX);
-    const REST = pick(bgstats,  Object.keys(bgstats).filter( (k) => !k.startsWith('PACKAGE_PROGRESS_')));
+    const REST = pick(bgstats,  Object.keys(bgstats).filter( (k) => !k.startsWith('ITEMS_')));
 
     return {ITEMS, ...REST};
 }

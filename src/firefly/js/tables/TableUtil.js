@@ -602,7 +602,7 @@ export function isTableLoaded(tableModel) {
 export function smartMerge(target, source) {
     if (!target) return source;
 
-    if (isPlainObject(source)) {
+    if (isPlainObject(source) && isPlainObject(target)) {
         const objChanges = {};
         Object.keys(source).forEach((k) => {
             const nval = smartMerge(target[k], source[k]);
@@ -611,7 +611,7 @@ export function smartMerge(target, source) {
             }
         });
         return (isEmpty(objChanges)) ? target : Object.assign({}, target, objChanges);
-    } else if (isArray(source)){
+    } else if (isArray(source) && isArray(target)){
         const aryChanges = [];
         source.forEach((v, idx) => {
             const nval = smartMerge(target[idx], source[idx]);
