@@ -38,7 +38,7 @@ public class PtfFileRetrieve extends URLFileInfoProcessor {
         }
 
     }
-    public String getBaseURL(ServerRequest sr) throws MalformedURLException {
+    public static String getBaseURL(ServerRequest sr) throws MalformedURLException {
         String productLevel = sr.getSafeParam("ProductLevel");
 
         if (productLevel.equalsIgnoreCase("l2")) {

@@ -52,7 +52,7 @@ public class PtfIbeDataSource extends BaseIbeDataSource {
         public String getTable() { return table;}
     }
 
-    public PtfIbeDataSource() { ptfResolver = new PtfIbeResolver();}
+    public PtfIbeDataSource() {}
 
     public PtfIbeDataSource(DataProduct ds) {
         this(null, ds);
@@ -188,6 +188,8 @@ public class PtfIbeDataSource extends BaseIbeDataSource {
         setMission(PTF);
         setDataset(dataset);
         setTableName(table);
+
+        ptfResolver = new PtfIbeResolver();
     }
 
     private String processConstraints(Map<String, String> queryInfo) {

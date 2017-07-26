@@ -68,7 +68,7 @@ public class PtfIbeResolver {
         }
 
 
-        DataGroup dataObjects = DataGroupReader.readAnyFormat(tempFile);
+        DataGroup dataObjects = DataGroupReader.read(tempFile);
         Iterator<DataObject> iterator = dataObjects.iterator();
         int size = dataObjects.size();
         List<String> lstFiles = new ArrayList<String>();

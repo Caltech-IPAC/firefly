@@ -130,9 +130,9 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
     const cutoutSizeInDeg = (convertAngle('arcmin','deg', cutoutSize)).toString();
 
 
-    let downloaderOptPanel = (m, c) => {
-        return convertData.downloadOptions(m, c)
-    };
+    // let downloaderOptPanel = (m, c) => {
+    //     return convertData.downloadOptions(m, c)
+    // };
 
     const defaultOptPanel = (m, c) => {
         return (
@@ -159,9 +159,10 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
         )
     };
 
-    if(!convertData.downloadOptions){
-        downloaderOptPanel = defaultOptPanel;
-    }
+    const downloaderOptPanel = convertData.downloadOptions || defaultOptPanel;
+    // if(!convertData.downloadOptions){
+    //     downloaderOptPanel = defaultOptPanel;
+    // }
 
     let tsView = (err) => {
 
