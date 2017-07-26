@@ -12,7 +12,7 @@ import {FilterInfo} from './FilterInfo.js';
 import {SelectInfo} from './SelectInfo.js';
 import {flux} from '../Firefly.js';
 import {encodeServerUrl} from '../util/WebUtil.js';
-import {fetchTable, findTableIndex} from '../rpc/SearchServicesJson.js';
+import {fetchTable, findTableIndex, selectedValues} from '../rpc/SearchServicesJson.js';
 import {DEF_BASE_URL} from '../core/JsonUtils.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {doUpload} from '../ui/FileUpload.jsx';
@@ -62,7 +62,7 @@ export function makeTblRequest(id, title, params={}, options={}) {
  * @returns {TableRequest}
  * @public
  * @func makeFileRequest
- *  @memberof firefly.util.table
+ * @memberof firefly.util.table
  */
 export function makeFileRequest(title, source, alt_source, options={}) {
     const id = 'IpacTableFromSource';
@@ -116,9 +116,9 @@ export function makeFileRequest(title, source, alt_source, options={}) {
  * @param {ConeParams|BoxParams|ElipParams} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
  * @param {TableRequest} [options]
  * @returns {TableRequest}
- * @access public
+ * @public
  * @func makeIrsaCatalogRequest
- *  @memberof firefly.util.table
+ * @memberof firefly.util.table
  */
 export function makeIrsaCatalogRequest(title, project, catalog, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
@@ -145,9 +145,8 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
  * @param {ConeParams|BoxParams|ElipParams} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
  * @param {TableRequest} [options]
  * @returns {TableRequest}
- * @access public
  * @func makeLsstCatalogRequest
- *  @memberof firefly.util.table
+ * @memberof firefly.util.table
  */
 export function makeLsstCatalogRequest(title, project, database, catalog, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
@@ -175,9 +174,8 @@ export function makeLsstCatalogRequest(title, project, database, catalog, params
  * @param {ConeParams|BoxParams|ElipParams} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
  * @param {TableRequest} [options]
  * @returns {TableRequest}
- * @public
  * @func makeVOCatalogRequest
- *  @memberof firefly.util.table
+ * @memberof firefly.util.table
  */
 export function makeVOCatalogRequest(title, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
@@ -257,7 +255,6 @@ export function onTableLoaded(tbl_id) {
  * @param {number} endIdx
  * @param {TableModel} tableModel
  * @returns {boolean}
- * @public
  * @func isTblDataAvail
  * @memberof firefly.util.table
  */
@@ -275,6 +272,7 @@ export function isTblDataAvail(startIdx, endIdx, tableModel) {
  * returns the table model with the given tbl_id
  * @param tbl_id
  * @returns {TableModel}
+ * @public
  * @func getTblById
  * @memberof firefly.util.table
  */
@@ -285,7 +283,6 @@ export function getTblById(tbl_id) {
 /**
  * returns all table group IDs
  * @returns {string[]}
- * @public
  * @memberof firefly.util.table
  * @func getAllTableGroupIds
  */
@@ -360,9 +357,8 @@ export function getTableInGroup(tbl_id, tbl_group='main') {
  * get the table working state by tbl_ui_id
  * @param {string} tbl_ui_id     table UI id.
  * @returns {Object}
- * @public
- *  @memberof firefly.util.table
- *  @func  getTableUiById
+ * @memberof firefly.util.table
+ * @func  getTableUiById
  */
 export function getTableUiById(tbl_ui_id) {
     return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui', tbl_ui_id]);
@@ -372,8 +368,9 @@ export function getTableUiById(tbl_ui_id) {
  * returns the first table working state for the given tbl_id
  * @param {string} tbl_id
  * @returns {Object}
- * @memberof firefly.util.table
+ * @public
  * @func getTableUiByTblId
+ * @memberof firefly.util.table
  */
 export function getTableUiByTblId(tbl_id) {
     const uiRoot = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui'], {});
@@ -386,7 +383,6 @@ export function getTableUiByTblId(tbl_id) {
 /**
  * returns the working state of the currently expanded table.
  * @returns {Object}
- * @public
  * @memberof firefly.util.table
  * @func getTblExpandedInfo
  */
@@ -398,7 +394,6 @@ export function getTblExpandedInfo() {
  * returns true if the table referenced by the given tbl_id is fully loaded.
  * @param {string} tbl_id
  * @returns {boolean}
- * @public
  * @memberof firefly.util.table
  * @func  isFullyLoaded
  */
@@ -412,7 +407,6 @@ export function isFullyLoaded(tbl_id) {
  * @param {string} tbl_id the tbl_id of the table to search on.
  * @param {string} filterInfo filter info string used to find the first row that matches it.
  * @returns {Promise.<number>} Returns the index of the found row, else -1.
- * @public
  * @func findIndex
  * @memberof firefly.util.table
  */
@@ -435,8 +429,9 @@ export function findIndex(tbl_id, filterInfo) {
  * @param {TableModel} tableModel
  * @param {string} colName
  * @returns {number}
- * @memberof firefly.util.table
+ * @public
  * @func getColumnIdx
+ * @memberof firefly.util.table
  */
 export function getColumnIdx(tableModel, colName) {
     const cols = get(tableModel, 'tableData.columns', []);
@@ -450,8 +445,9 @@ export function getColumnIdx(tableModel, colName) {
  * @param {TableModel} tableModel
  * @param {string} colName
  * @returns {TableColumn}
- * @memberof firefly.util.table
+ * @public
  * @func getColumn
+ * @memberof firefly.util.table
  */
 export function getColumn(tableModel, colName) {
     const colIdx = getColumnIdx(tableModel, colName);
@@ -498,8 +494,9 @@ export function getActiveTableId(tbl_group='main') {
  * @param {number} rowIdx
  * @param {string} colName
  * @return {string}
- * @memberof firefly.util.table
+ * @public
  * @func getCellValue
+ * @memberof firefly.util.table
  */
 export function getCellValue(tableModel, rowIdx, colName) {
     if (get(tableModel, 'tableData.data.length', 0) > 0) {
@@ -512,13 +509,76 @@ export function getCellValue(tableModel, rowIdx, colName) {
     }
 }
 
+/**
+ * returns an array of all the values for a column
+ * @param {TableModel} tableModel
+ * @param {string} colName
+ * @return {Object[]}
+ * @func getColumnValues
+ * @public
+ * @memberof firefly.util.table
+ */
+export function getColumnValues(tableModel, colName) {
+    const colIdx = getColumnIdx(tableModel, colName);
+    if (colIdx >= 0 && colIdx < get(tableModel, 'tableData.data.length', 0)) {
+        return get(tableModel, 'tableData.data').map( (r) => r[colIdx]);
+    } else {
+        return [];
+    }
+}
+
+/**
+ * returns an array of all the values for a row
+ * @param {TableModel} tableModel
+ * @param {number} rowIdx
+ * @return {Object[]}
+ * @public
+ * @memberof firefly.util.table
+ * @func getRowValues
+ */
+export function getRowValues(tableModel, rowIdx) {
+    return get(tableModel, ['tableData', 'data', rowIdx], []);
+}
+
+/**
+ * returns an array of all the values for a columns
+ * @param {string} tbl_id
+ * @param {string[]} columnNames  defaults to all columns
+ * @return {Promise.<TableModel>}
+ * @func getSelectedData
+ * @public
+ * @memberof firefly.util.table
+ */
+export function getSelectedData(tbl_id, columnNames=[]) {
+    const {tableModel, tableMeta, totalRows, selectInfo} = getTblInfoById(tbl_id);
+    const selectedRows = [...SelectInfo.newInstance(selectInfo).getSelected()];  // get selected row idx as an array
+    if (columnNames.length === 0) {
+        columnNames = getColumns(tableModel).map( (c) => c.name);       // return all columns
+    }
+
+    if (selectedRows.length === 0 || isTblDataAvail(0, totalRows -1, tableModel)) {
+        const meta = cloneDeep(tableMeta);
+        const columns = tableModel.tableData.columns
+                            .filter((c) => columnNames.includes(c.name))
+                            .map( (c) => cloneDeep(c));
+
+        const data = selectedRows.sort()
+                            .map( (rIdx) => columnNames.reduce( (rval, c) => {
+                                    rval.push(getCellValue(tableModel, rIdx, c));
+                                    return rval;
+                                }, []));
+        return Promise.resolve({tableMeta: meta, totalRows: data.length, tableData: {columns, data}});
+    } else {
+        const {tblFilePath:filePath} = tableMeta;
+        return selectedValues({columnNames, filePath, selectedRows});
+    }
+}
 
 /**
  * return true if the given table is fully loaded.
  * @param {TableModel} tableModel
  * @returns {boolean}
- * @public
- *  @memberof ffirefly.util.table
+ * @memberof ffirefly.util.table
  * @func isTableLoaded
  */
 export function isTableLoaded(tableModel) {
@@ -642,11 +702,9 @@ export function processRequest(origTableModel, tableRequest, hlRowIdx) {
         filterTable(nTable, filters);
     }
     if (sortInfo) {
-        let {data, columns} = nTable.tableData;
         data = sortTableData(data, columns, sortInfo);
     }
     if (inclCols) {
-        let {data, columns} = nTable.tableData;
         const colAry = inclCols.split(',').map((s) => s.trim());
         columns = columns.filters( (c) => colAry.includes(c));
         const inclIdices = columns.map( (c) => origTableModel.tableData.indexOf(c));
@@ -661,7 +719,7 @@ export function processRequest(origTableModel, tableRequest, hlRowIdx) {
  * collects all available table information given the tbl_id
  * @param {string} tbl_id
  * @param {number} aPageSize  use this pageSize instead of the one in the request.
- * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error}}
+ * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error, tableMeta, bgStatus}}
  * @public
  * @memberof firefly.util.table
  * @func getTblInfoById
@@ -675,7 +733,7 @@ export function getTblInfoById(tbl_id, aPageSize) {
  * collects all available table information given the tableModel.
  * @param {TableModel} tableModel
  * @param {number} aPageSize  use this pageSize instead of the one in the request.
- * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error, bgStatus}}
+ * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error, tableMeta, bgStatus}}
  * @public
  * @memberof firefly.util.table
  * @func getTblInfo
@@ -696,7 +754,7 @@ export function getTblInfo(tableModel, aPageSize) {
     const endIdx = Math.min(startIdx+pageSize, totalRows) || get(tableModel,'tableData.data.length', startIdx) ;
     const totalPages = Math.ceil((totalRows || 0)/pageSize);
     const bgStatus = get(tableModel, 'bgStatus');
-    return { tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow, selectInfo, error, bgStatus};
+    return { tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow, selectInfo, error, tableMeta, bgStatus};
 }
 
 
@@ -705,6 +763,9 @@ export function getTblInfo(tableModel, aPageSize) {
  * @param {TableModel} tableModel
  * @param {Number} [rowIdx] = the index of the row to return, default to highlighted row
  * @return {Object<String,String>} the values of the row keyed by the column name
+ * @public
+ * @memberof firefly.util.table
+ * @func getTblRowAsObj
  */
 export function getTblRowAsObj(tableModel, rowIdx= undefined) {
     if (!tableModel) return {};
@@ -841,7 +902,6 @@ export function tableTextView(columns, dataAry, showUnits=false, tableMeta) {
  * @param {TableColumn[]} columns  array of column object
  * @param {TableData} dataAry  array of array.
  * @returns {Object.<string,number>} a map of cname -> width
- * @public
  * @memberof firefly.util.table
  * @func calcColumnWidths
  */
@@ -893,7 +953,6 @@ export function uniqueTblUiId() {
 /**
  *  This function provides a patch until we can reliably determine that the ra/dec columns use radians or degrees.
  * @param tableOrMeta the table object or the tableMeta object
- * @public
  * @memberof firefly.util.table
  * @func isTableUsingRadians
  *
@@ -960,6 +1019,9 @@ export function monitorChanges(actions, accept, callback) {
  * @param {TableModel} tableModel
  * @param {COL_TYPE} type  one of predefined COL_TYPE.  defaults to 'ALL'.
  * @returns {Array<TableColumn>}
+ * @public
+ * @memberof firefly.util.table
+ * @func getColumns
  */
 export function getColumns(tableModel, type=COL_TYPE.ALL) {
     return getColsByType(get(tableModel, 'tableData.columns', []), type);

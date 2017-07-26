@@ -36,7 +36,8 @@ public class JsonTableUtil {
      */
     public static JSONObject toJsonTableModel(DataGroupPart page, TableServerRequest request) throws IOException {
 
-        TableDef meta = page.getTableDef().clone();
+        TableDef meta = mergeAttributes(page.getTableDef(), page.getData());
+
         if (request != null && request.getMeta() != null) {
             for (String key : request.getMeta().keySet()) {
                 meta.setAttribute(key, request.getMeta(key));
@@ -52,7 +53,7 @@ public class JsonTableUtil {
         tableModel.put("totalRows", page.getRowCount());
 
         if (page.getData() != null ) {
-            tableModel.put("tableData", toJsonTableData(page.getData(), page.getTableDef()));
+            tableModel.put("tableData", toJsonTableData(page.getData(), meta));
         }
         
 
@@ -94,6 +95,22 @@ public class JsonTableUtil {
         }
 
         return treq;
+    }
+
+    private static TableDef mergeAttributes(TableDef tblDef, DataGroup data) {
+        if (tblDef == null) {
+            tblDef = new TableDef();
+        }
+
+        List<DataGroup.Attribute> dataAttributes = data.getKeywords();
+        if (dataAttributes != null) {
+            for (DataGroup.Attribute a : dataAttributes) {
+                if (!tblDef.contains(a.getKey())) {
+                    tblDef.setAttribute(a.getKey(), a.getValue());
+                }
+            }
+        }
+        return tblDef;
     }
 
     /**

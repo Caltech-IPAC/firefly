@@ -6,7 +6,6 @@ import {isEmpty, omitBy, isUndefined, cloneDeep, get, set} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
 import * as TblUtil from './TableUtil.js';
 import {SelectInfo} from './SelectInfo.js';
-import {selectedValues} from '../rpc/SearchServicesJson.js';
 
 export class TableConnector {
     

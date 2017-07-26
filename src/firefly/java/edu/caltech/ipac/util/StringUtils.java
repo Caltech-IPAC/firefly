@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.util;
 
+import javax.validation.constraints.NotNull;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -129,8 +130,9 @@ public class StringUtils {
         return intAry;
     }
 
+    @NotNull
     public static List<Integer> convertToListInteger(String str, String regExp) throws NumberFormatException {
-        if (isEmpty(str)) return null;
+        if (isEmpty(str)) return new ArrayList<>();
         String[] reqkeys = str.split(regExp);
         ArrayList<Integer> list = new ArrayList<Integer>(reqkeys.length);
         for (int i = 0; i < reqkeys.length; i++) {
