@@ -177,8 +177,10 @@ export function doUpload(file, params={}) {
 
     return fetchUrl(UL_URL, options).then( (response) => {
         return response.text().then( (text) => {
-            // text is in format ${status}::${message}::${cacheKey}
-            const [status, message, cacheKey, fileFormat, analysisResult] =  text.split('::');
+            // text is in format ${status}::${message}::${message}::${cacheKey}::${analysisResult}
+            const result = text.split('::');
+            const [status, message, cacheKey, fileFormat] = result.slice(0, 4);
+            const analysisResult = result.slice(4).join('::');
             return {status, message, cacheKey, fileFormat, analysisResult};
         });
     });
