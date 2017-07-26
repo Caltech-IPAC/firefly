@@ -100,13 +100,13 @@ public class ResponseMessage {
             return "Invalid URL";
         }
         else if (e instanceof FileNotFoundException) {
-            return "URL File not found";
+            return "URL file not found";
         }
         else if (e instanceof UnknownHostException) {
             return "Unknown host: "+ e.getMessage();
         }
         else if (e instanceof SocketTimeoutException) {
-            return "Retrieval Timed out";
+            return "Retrieval timed out";
         }
         else if (e instanceof SocketException) {
             return "Could not connect to service";

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get} from 'lodash';
+import {get, omit} from 'lodash';
 import Enum from 'enum';
 
 import {flux} from '../../Firefly.js';
@@ -68,7 +68,7 @@ export function isActive(state) {
 }
 
 export function getErrMsg(bgStatus) {
-    return Object.entries(bgStatus).filter( ([k,v]) => k.startsWith('MESSAGE_'))
+    return Object.entries(omit(bgStatus, 'MESSAGE_CNT')).filter( ([k,v]) => k.startsWith('MESSAGE_'))
                             .map(([k,v]) => v)
                             .join('; ');
 }

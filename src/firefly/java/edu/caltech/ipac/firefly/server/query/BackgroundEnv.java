@@ -16,7 +16,6 @@ import edu.caltech.ipac.firefly.server.packagedata.PackagedEmail;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.DownloadScript;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -354,12 +353,12 @@ public class BackgroundEnv {
             _log.error(e,
                        "Background ID: " + bid,
                        "Thread: "+ t.getName(),
-                       "Thread abort during FileGroup creation",
+                       "Thread completed with exception",
                        "Exception: " + e.toString(),
                        "Traceback follows");
 
             bgStat = new BackgroundStatus(bid, BackgroundState.FAIL);
-            bgStat.addMessage("Packaging Failed with exception: " + e.getMessage());
+            bgStat.addMessage(e.getMessage());
             setReportToCache(bid,bgStat);
         } catch (Throwable e1) {
             _log.error(e1,
