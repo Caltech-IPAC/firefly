@@ -116,7 +116,6 @@ export class TablePanel extends PureComponent {
                 filterInfo, filterCount, sortInfo, data, bgStatus} = this.state;
         var {leftButtons, rightButtons} =  this.state;
 
-        if (get(bgStatus, 'STATE') === 'FAIL') return <div className='TablePanel__error'>{get(bgStatus, 'MESSAGE_0', '')}</div>
         if (error) return <div className='TablePanel__error'>{error}</div>;
         if (isEmpty(columns)) return <Loading {...{showTitle, tbl_id, title, removable, bgStatus}}/>;
 

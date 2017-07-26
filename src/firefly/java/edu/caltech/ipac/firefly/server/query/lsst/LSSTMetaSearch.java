@@ -54,7 +54,13 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         JSONParser parser = new JSONParser();
 
         JSONObject obj = ( JSONObject) parser.parse(new FileReader(file ));
-        return  obj.get("error").toString();
+        String message = obj.get("message").toString();
+        String error = obj.get("error").toString();
+        if (error != null && message != null) {
+            return message.contains(error) ? message : error + " " + message;
+        } else {
+            return error;
+        }
     }
 
     private DataGroup  getDataFromURL(TableServerRequest request) throws Exception {

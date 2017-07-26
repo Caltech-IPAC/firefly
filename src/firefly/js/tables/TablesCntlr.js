@@ -406,7 +406,7 @@ function highlightRow(action) {
             TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
                 dispatch( {type:TABLE_HIGHLIGHT, payload: tableModel} );
             }).catch( (error) => {
-                dispatch({type: TABLE_HIGHLIGHT, payload: TblUtil.createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
+                dispatch({type: TABLE_HIGHLIGHT, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n   ${error}`)});
             });
         }
     };
@@ -535,7 +535,7 @@ function syncFetch(request, hlRowIdx, invokedBy, dispatch) {
         const type = tableModel.origTableModel ? TABLE_REPLACE : TABLE_UPDATE;
         dispatch( {type, payload: tableModel} );
     }).catch( (error) => {
-        dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(request.tbl_id, `Fail to load table. \n   ${error}`)});
+        dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(request.tbl_id, `Failed to load table. \n   ${error}`)});
     });
 }
 
@@ -546,12 +546,19 @@ function asyncFetch(request, hlRowIdx, invokedBy, dispatch) {
         const {ID, STATE} = bgStatus || {};
         if (isSuccess(STATE)) {
             syncFetch(request, hlRowIdx, invokedBy, dispatch);
+        } else if (isFail(STATE)) {
+            const error = getErrMsg(bgStatus);
+            const {tbl_id} = request;
+            dispatch({
+                type: TABLE_UPDATE,
+                payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n   ${error}`)
+            });
         } else {
             dispatchAddSaga( trackFetch, {request, hlRowIdx, invokedBy, bgID:ID, dispatch});
             dispatch({type: TABLE_UPDATE, payload: {tbl_id, bgStatus}});
         }
     }).catch( (error) => {
-        dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
+        dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n   ${error}`)});
     });
 }
 
@@ -567,7 +574,7 @@ function* trackFetch({request, hlRowIdx, invokedBy, bgID, dispatch}) {
         } else if (isFail(STATE)) {
             const error = getErrMsg(action.payload);
             const {tbl_id} = request;
-            dispatch({ type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Fail to load table. \n   ${error}`)});
+            dispatch({ type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n   ${error}`)});
             break;
         } else if (action.type === BG_JOB_ADD && ID === bgID) {
             // sent to background... no need to track this anymore.
