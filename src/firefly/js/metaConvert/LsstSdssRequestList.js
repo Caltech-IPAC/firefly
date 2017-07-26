@@ -51,7 +51,7 @@ function makeCcdReqBuilder(table, rowIdx) {
     sr.setParam('run', `${run}`);
     sr.setParam('camcol', `${camcol}`);
     sr.setParam('field', `${field}`);
-    if (subsize) {
+    if (subsize && subsize>0) {
         sr.setParam('subsize', `${subsize}`);
         sr.setParam([ServerParams.USER_TARGET_WORLD_PT], get(table, ['request', [ServerParams.USER_TARGET_WORLD_PT]]));
         sr.setParam('imageId', getCellValue(table, rowIdx, 'scienceCcdExposureId'));
@@ -83,7 +83,7 @@ function makeCoaddReqBuilder(table, rowIdx) {
     const sr= new ServerRequest('LSSTImageSearch');
     sr.setParam('tract', `${tract}`);
     sr.setParam('patch', `${patch}`);
-    if (subsize) {
+    if (subsize && subsize>0) {
         sr.setParam('subsize', `${subsize}`);
         sr.setParam([ServerParams.USER_TARGET_WORLD_PT], get(table, ['request', [ServerParams.USER_TARGET_WORLD_PT]]));
         sr.setParam('imageId', getCellValue(table, rowIdx, 'deepCoaddId'));

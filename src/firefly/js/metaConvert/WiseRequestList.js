@@ -35,7 +35,7 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
         const req= svcBuilder(plotId, reqKey, title, rowNum, extraParams);
         req.setPreferenceColorKey('wise-color-pref');
         const subsize = get(table, 'request.subsize');
-        if (subsize) {
+        if (subsize && subsize>0) {
             const {UserTargetWorldPt, sizeUnit} = get(table, 'request', {});
             if (UserTargetWorldPt && sizeUnit) {
                 const wp = parseWorldPt(UserTargetWorldPt);

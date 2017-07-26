@@ -98,7 +98,8 @@ function renderSearchRegion(visible) {
                                            tooltip: 'Please select an option',
                                            unit: 'arcsec',
                                            min:  1/3600,
-                                           max:  43200/3600
+                                           max:  43200/3600,
+                                           nullAllowed: false
                                  }}
                          label='Search Region (Square) Size:' />
     );
@@ -118,7 +119,8 @@ function renderImageSize(visible, disable) {
                                            tooltip: 'Please select an option',
                                            unit: 'arcsec',
                                            min:  1/3600,
-                                           max:  7200/3600
+                                           max:  7200/3600,
+                                           nullAllowed: true
                                         }}
                         label='Return Image Size (leave blank for full images):'
                         />

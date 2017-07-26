@@ -57,7 +57,8 @@ export function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, param
     dataSource: 'frame_id'
 }) {
     const ra = getCellValue(tableModel, hlrow, 'ra');
-    const dec = getCellValue(tableModel, hlrow, 'dec');
+    const dec = getCellValue(tableModel, hlrow, 'dec') || getCellValue(tableModel, hlrow, 'decl'); // LSST WISE convention is 'decl'
+
 
     //For images from AllWise:
     const frameId = getCellValue(tableModel, hlrow, 'frame_id');
