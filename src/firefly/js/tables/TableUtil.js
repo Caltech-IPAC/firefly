@@ -741,7 +741,7 @@ export function getTblInfoById(tbl_id, aPageSize) {
 export function getTblInfo(tableModel, aPageSize) {
     if (!tableModel) return {};
     var {tbl_id, request, highlightedRow=0, totalRows=0, tableMeta={}, selectInfo, error} = tableModel;
-    const {title} = tableMeta;
+    const title = tableMeta.title || get(request, 'META_INFO.title');
     const pageSize = aPageSize || get(request, 'pageSize', MAX_ROW);  // there should be a pageSize.. default to 1 in case of error.  pageSize cannot be 0 because it'll overflow.
     if (highlightedRow < 0 ) {
         highlightedRow = 0;

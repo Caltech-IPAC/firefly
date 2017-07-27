@@ -16,7 +16,7 @@ import {updateMerge} from '../util/WebUtil.js';
 import {FilterInfo} from './FilterInfo.js';
 import {selectedValues} from '../rpc/SearchServicesJson.js';
 import {BG_STATUS, BG_JOB_ADD} from '../core/background/BackgroundCntlr.js';
-import {isSuccess, isFail, getErrMsg} from '../core/background/BackgroundUtil.js';
+import {isSuccess, isDone, getErrMsg} from '../core/background/BackgroundUtil.js';
 
 export const TABLE_SPACE_PATH = 'table_space';
 export const TABLE_RESULTS_PATH = 'table_space.results.tables';
@@ -475,7 +475,7 @@ function tableFilter(action) {
  * @returns {function}
  */
 function tableFilterSelrow(action) {
-    return (dispatch) => {
+    return () => {
         var {request={}, hlRowIdx, selected=[]} = action.payload || {};
         const {tbl_id, filters} = request;
         const tableModel = TblUtil.getTblById(tbl_id);
@@ -545,17 +545,8 @@ function syncFetch(request, hlRowIdx, invokedBy, dispatch) {
 function asyncFetch(request, hlRowIdx, invokedBy, dispatch) {
     const {tbl_id} = request;
     submitBackgroundSearch(request, request, 1000).then ( (bgStatus) => {
-        const {ID, STATE} = bgStatus || {};
-        if (isSuccess(STATE)) {
-            syncFetch(request, hlRowIdx, invokedBy, dispatch);
-        } else if (isFail(STATE)) {
-            const error = getErrMsg(bgStatus);
-            const {tbl_id} = request;
-            dispatch({
-                type: TABLE_UPDATE,
-                payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n   ${error}`)
-            });
-        } else {
+        const {ID} = bgStatus;
+        if (!handleAsynFetch({request, hlRowIdx, invokedBy, dispatch, action:{type: BG_STATUS, payload: bgStatus}})) {
             dispatchAddSaga( trackFetch, {request, hlRowIdx, invokedBy, bgID:ID, dispatch});
             dispatch({type: TABLE_UPDATE, payload: {tbl_id, bgStatus}});
         }
@@ -564,24 +555,40 @@ function asyncFetch(request, hlRowIdx, invokedBy, dispatch) {
     });
 }
 
+function handleAsynFetch({request, hlRowIdx, invokedBy, bgID, dispatch, action}) {
+    const {type} = action;
+    const {ID, STATE, tbl_id, error} = action.payload || {};
+    switch (type) {
+        case TABLE_UPDATE :
+            if (request.tbl_id === tbl_id && error) {
+                return true;
+            }
+            break;
+        case  BG_STATUS :
+            if (isDone(STATE)) {
+                if (isSuccess(STATE)) {
+                    syncFetch(request, hlRowIdx, invokedBy, dispatch);
+                } else {
+                    dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(request.tbl_id, `Failed to load table. \n   ${getErrMsg(action.payload)}`)});
+                }
+                return true;
+            }
+            break;
+        case BG_JOB_ADD :
+            if (ID === bgID) {
+                // sent to background... no need to track this anymore.
+                return true;
+            }
+            break;
+    }
+    return false;
+}
 
 function* trackFetch({request, hlRowIdx, invokedBy, bgID, dispatch}) {
-
-    while (true) {
+    var stop = false;
+    while (!stop) {
         const action = yield take([TABLE_UPDATE, BG_STATUS, BG_JOB_ADD]);
-        const {ID, STATE} = action.payload || {};
-        if (isSuccess(STATE)) {
-            syncFetch(request, hlRowIdx, invokedBy, dispatch);
-            break;
-        } else if (isFail(STATE)) {
-            const error = getErrMsg(action.payload);
-            const {tbl_id} = request;
-            dispatch({ type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n   ${error}`)});
-            break;
-        } else if (action.type === BG_JOB_ADD && ID === bgID) {
-            // sent to background... no need to track this anymore.
-            console.log(`${ID} is sent to background`);
-            break;
-        }
+        stop = handleAsynFetch({request, hlRowIdx, invokedBy, bgID, dispatch, action});
     }
 }
+

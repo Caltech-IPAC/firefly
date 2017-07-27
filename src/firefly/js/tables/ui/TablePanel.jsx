@@ -261,18 +261,23 @@ function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
     }
     return (
         <div style={style}>
-            { showTitle &&
-                <div className='TablePanel__title'>
-                    <div style={{display: 'inline-block', marginLeft: 5, marginTop: 2}}
-                         title={title}>{truncate(title)}</div>
-                    {removable &&
-                    <div style={{right: -5}} className='btn-close'
-                         title='Remove Tab'
-                         onClick={() => dispatchTableRemove(tbl_id)}/>
-                    }
-                </div>
-            }
+            { showTitle && <Title {...{title, removable, tbl_id}}/>}
             {leftButtons && <div>{leftButtons}</div>}
+        </div>
+    );
+}
+
+// eslint-disable-next-line
+function Title({title, removable, tbl_id}) {
+    return (
+        <div className='TablePanel__title'>
+            <div style={{display: 'inline-block', marginLeft: 5, marginTop: 2}}
+                 title={title}>{truncate(title)}</div>
+            {removable &&
+            <div style={{right: -5}} className='btn-close'
+                 title='Remove Tab'
+                 onClick={() => dispatchTableRemove(tbl_id)}/>
+            }
         </div>
     );
 }
@@ -283,16 +288,19 @@ function Loading({showTitle, tbl_id, title, removable, bgStatus}) {
         dispatchTblResultsRemove(tbl_id);
         dispatchJobAdd(bgStatus);
     };
+    const height = showTitle ? 'calc(100% - 20px)': '100%';
     
     return (
-        <div style={{position: 'relative', width: '100%', height: '100%'}}>
-            <div className='loading-mask'/>
-            <div style={{padding: '2px 4px'}}>{showTitle ? title : ''}</div>
-            {bgStatus &&
+        <div style={{position: 'relative', width: '100%', height: '100%', border: 'solid 1px rgba(0,0,0,.2)', boxSizing: 'border-box'}}>
+            {showTitle && <Title {...{title, removable, tbl_id}}/>}
+            <div style={{height, position: 'relative'}}>
+                <div className='loading-mask'/>
+                {bgStatus &&
                 <div className='TablePanel__mask'>
                     <button type='button' className='TablePanel__mask--button button std' onClick={toBg}>Send to background</button>
                 </div>
-            }
+                }
+            </div>
         </div>
     );
 }
