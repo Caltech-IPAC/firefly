@@ -92,7 +92,6 @@ function doShowTable(llApi, targetDiv, request, options={}) {
     const {dispatchTableSearch}= llApi.action;
     const {renderDOM}= llApi.util;
     const {TablesContainer}= llApi.ui;
-    var contProps = {};
 
     if ((typeof targetDiv).match(/string|HTMLDivElement/) === null) {
         // old api.. need to setup request and options before continue.
@@ -101,8 +100,8 @@ function doShowTable(llApi, targetDiv, request, options={}) {
         request = oldApi(llApi, params, options);
     }
 
-    options.tbl_group = options.tbl_group || divToGrp(targetDiv);
-    contProps.tbl_group = options.tbl_group;
+    options = Object.assign({tbl_group: divToGrp(targetDiv), backgroundable:false}, options);
+    const contProps = {tbl_group: options.tbl_group};
 
     Object.keys(options).forEach( (k) => {
         if (options[k] === undefined) {
