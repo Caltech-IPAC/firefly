@@ -22,16 +22,11 @@ export class PTFSettingBox extends PureComponent {
         const tblModel = getTblById(LC.RAW_TABLE);
         const wrapperStyle = {margin: '3px 0'};
 
-        var missionFilters = (<RadioGroupInputField key='band'
-                                                  fieldKey={LC.META_FLUX_BAND} wrapperStyle={wrapperStyle}
-                                                  alignment='horizontal'
-                                                  options={[
-                    {label: 'g', value: 'g'},
-                    {label: 'R', value: 'r'}
+        var missionFilters = ( <div style={{ with:{labelWidth}, display:'inline-block', margin: '3px 0 6px 0'}} >
+            <br /> </div>);
 
-                ]}/>);
 
-        return renderMissionView(generalEntries,missionEntries, missionFilters,tblModel,wrapperStyle,labelWidth , ptfOptionsReducer);
+        return renderMissionView(generalEntries,missionEntries,missionFilters,tblModel,wrapperStyle,labelWidth , ptfOptionsReducer);
 
 
     }
@@ -42,7 +37,6 @@ PTFSettingBox.propTypes = {
     missionEntries: PropTypes.object
 };
 
-//TODO, this is copied from WISE, need to refactor it after the images and other information are updated.
 export const ptfOptionsReducer = (missionEntries, generalEntries) => {
     return (inFields, action) => {
         if (inFields) {
@@ -66,7 +60,6 @@ export const ptfOptionsReducer = (missionEntries, generalEntries) => {
     };
 };
 
-//TODO, after the PTF images loaded, this function can be updated.  It is the place holder for now.
 function getFieldValidators(missionEntries) {
     const fldsWithValidators = [
         {key: LC.META_TIME_CNAME, vkey: LC.META_TIME_NAMES},
@@ -125,7 +118,7 @@ export function ptfOnNewRawTable(rawTable, missionEntries, generalEntries, conve
     return {newLayoutInfo, shouldContinue: false};
 }
 
-//TODO if ptfRawTableRequest and ptfOnFieldUpdate are nothing different from the ones in wiseMssionOption, these two can be replaced.
+//TODO if ptfRawTableRequest and ptfOnFieldUpdate are nothing different from the ones in ptfMssionOption, these two can be replaced.
 export function ptfRawTableRequest(converter, source, uploadFileName='') {
     const timeCName = converter.defaultTimeCName;
     const mission = converter.converterId;
@@ -168,7 +161,7 @@ export function ptfDownloaderOptPanel (mission, cutoutSizeInDeg) {
                 cutoutSize={cutoutSizeInDeg}
                 title={'Image Download Option'}
                 dlParams={{
-                    MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
+                    MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each ptf image is ~33mb
                     FilePrefix: `${mission}_Files`,
                     BaseFileName: `${mission}_Files`,
                     DataSource: `${mission} images`,

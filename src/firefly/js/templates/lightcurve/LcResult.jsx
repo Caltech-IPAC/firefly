@@ -151,7 +151,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                         labelWidth={110}/>
                 </DownloadOptionPanel>
             </DownloadButton>
-        )
+        );
     };
 
     const downloaderOptPanel = convertData.downloadOptions || defaultOptPanel;
