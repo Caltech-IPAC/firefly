@@ -230,7 +230,7 @@ export class RangeValues {
             a= alStrToConst[algorithm.toLowerCase()];
         }
 
-        return new RangeValues.make( btValue, lowerValue, btValue, upperValue,1.0,0,1,2, a);
+        return new RangeValues.make( btValue, lowerValue, btValue, upperValue,NaN,2, a);
 
     }
 

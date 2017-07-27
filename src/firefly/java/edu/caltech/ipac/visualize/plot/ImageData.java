@@ -39,6 +39,7 @@ public class ImageData implements Serializable {
     private final int       _height;
     private final int       _lastPixel;
     private final int       _lastLine;
+    private int _idx; //IRSA-572, save the band index so only this band is going to be stretched
 
     private AtomicInteger inUseCnt= new AtomicInteger(0);
 
@@ -166,12 +167,16 @@ public class ImageData implements Serializable {
 
     public boolean isImageOutOfDate() { return _imageOutOfDate; }
 
-    public void recomputeStretch(FitsRead fitsReadAry[], int idx, RangeValues rangeValues, boolean force) {
+    public void recomputeStretch(FitsRead fitsReadAry[], int idx, RangeValues updatedRangeValues, boolean force) {
 
 
         inUseCnt.incrementAndGet();
         boolean mapBlankPixelToZero= (_imageType == ImageType.TYPE_24_BIT);
 
+        //IRSA-219, IRSA-571
+        // update the range values when the new rangeValues is passed. For 8 bit image, the stretch is done without
+        //recreating the image, for 24 bit images, it needs the new rangeValues to computer the stretch and then to
+        //build the image.
 
         // if this is an 8 bit image I can recompute the stretch without rebuilding the image
         // if it is 24 bit, I will have to restretch and rebuild so don't both restretching now,
@@ -180,13 +185,17 @@ public class ImageData implements Serializable {
 
         if (_raster!=null || _imageOutOfDate) {  // raster!=null means a 24 bit image (3 color)
             _imageOutOfDate= true;
+            //these two parameters are for color stretch
+            rangeValues = updatedRangeValues;
+            _idx = idx;
+
             if (force) {
                 fitsReadAry[idx].doStretch(rangeValues, getDataArray(idx),
                              mapBlankPixelToZero, _x, _lastPixel, _y, _lastLine);
             }
         }
         else {
-            fitsReadAry[idx].doStretch(rangeValues, getDataArray(idx),
+            fitsReadAry[idx].doStretch(updatedRangeValues, getDataArray(idx),
                                        mapBlankPixelToZero, _x, _lastPixel, _y, _lastLine);
         }
         inUseCnt.decrementAndGet();
@@ -194,48 +203,7 @@ public class ImageData implements Serializable {
 
 
 
-
-    private void constructImage_orig(FitsRead fitsReadAry[]) {
-
-        inUseCnt.incrementAndGet();
-        if (_imageType==ImageType.TYPE_8_BIT) {
-            _raster= null;
-            _bufferedImage= new BufferedImage(_width,_height,
-                                              BufferedImage.TYPE_BYTE_INDEXED, _cm);
-
-            //LZ comment for my only understanding here
-            /*the BufferedImage has a raster associated with it.  The getDataArray(0), point to the same data buffer
-              db= (DataBufferByte) _bufferedImage.getRaster().getDataBuffer();
-              when the array = getDataArray(0) is updated, the same data buffer is updated.
-            */
-
-            fitsReadAry[0].doStretch(rangeValues, getDataArray(0),false, _x,_lastPixel, _y, _lastLine);
-        }
-        else if (_imageType==ImageType.TYPE_24_BIT) {
-            _bufferedImage= new BufferedImage(_width,_height,BufferedImage.TYPE_INT_RGB);
-
-            for(int i=0; (i<fitsReadAry.length); i++) {
-                byte array[]= getDataArray(i);
-                if(fitsReadAry[i]!=null) {
-                    fitsReadAry[i].doStretch(rangeValues, array,true, _x,_lastPixel, _y, _lastLine);
-                }
-                else {
-                    for(int j=0; j<array.length; j++) array[j]= 0;
-                }
-            }
-            _bufferedImage.setData(_raster);
-
-
-        }
-        else {
-            Assert.tst(false, "image type must be TYPE_8_BIT or TYPE_24_BIT");
-        }
-        _imageOutOfDate=false;
-        inUseCnt.decrementAndGet();
-
-    }
    // Testing Mask 07/16/16 LZ
-
     /**
      * Build a dynamic IndexColorModel which contains the colors defined in the imageMask array plus a white background color.
      * The background color should be transparent.  The lsstMasks is sorted according to the index.  mask0=lsstMasks[0].getIndex()=1
@@ -303,6 +271,7 @@ public class ImageData implements Serializable {
             _bufferedImage= new BufferedImage(_width,_height,BufferedImage.TYPE_INT_RGB);
 
             for(int i=0; (i<fitsReadAry.length); i++) {
+                if (i!=_idx) continue;
                 byte array[]= getDataArray(i);
                 if(fitsReadAry[i]!=null) {
                     fitsReadAry[i].doStretch(rangeValues, array,true, _x,_lastPixel, _y, _lastLine);
