@@ -72,8 +72,8 @@ public class DataGroupReader {
         } else if (format == Format.FITS) {
             dg = FitsHDUUtil.fitsHeaderToDataGroup(inf.getAbsolutePath());
         } else if (format == Format.CSV || format == Format.TSV || format == Format.IPACTABLE || format == Format.JSON) {
-            String A = (format == Format.IPACTABLE) ? "An IPAC Table" : "A "+format.toString();
-            String title = String.format("%s file: the file size is %,d bytes.", A, inf.length());
+            String A = (format == Format.IPACTABLE) ? "IPAC Table" : format.toString();
+            String title = String.format("%s", A);
             dg = new DataGroup(title, new ArrayList<DataType>());
         } else {
             dg = new DataGroup("invalid file format", new ArrayList<DataType>());

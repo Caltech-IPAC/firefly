@@ -12,8 +12,9 @@ import LOADING from 'html/images/gxt/loading.gif';
 const UL_URL = `${getRootURL()}sticky/CmdSrv?${ServerParams.COMMAND}=${ServerParams.UPLOAD}`;
 
 
-function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  message, onChange, value, labelWidth, innerStyle, isFromURL, onUrlAnalysis}) {
-    var style = !isFromURL ? {color: 'transparent', border: 'none', background: 'none'} : (innerStyle || {});
+function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  message, onChange, value, labelWidth,
+                         innerStyle, isFromURL, onUrlAnalysis, fileNameStyle}) {
+    var style = !isFromURL ? Object.assign({color: 'transparent', border: 'none', background: 'none'}, innerStyle) : (innerStyle || {});
     var fileName = (!isFromURL && value) ?  value.split(/(\\|\/)/g).pop() : 'No file chosen';
 
     const inputEntry = () => {
@@ -41,13 +42,17 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  messa
     const actionPart = () => {
         if (isFromURL) {
             return (
-                <button type='button' className='button std hl'
-                        onClick={() =>  onUrlAnalysis(value)}
-                        style={{display: 'inline-block'}}>{'Upload'}</button>
+                <div style={{display:'inline-block', whiteSpace:'nowrap'}}>
+                    <button type='button' className='button std hl'
+                            onClick={() =>  onUrlAnalysis(value)}>{'Upload'}</button>
+                </div>
             );
         } else {
+            let fPos = {marginLeft: -150};
+
+            if (!isNil(fileNameStyle)) fPos = Object.assign(fPos, fileNameStyle);
             return (
-                fileName && <div style={{display:'inline-block', marginLeft: -150}}>{fileName}</div>
+                fileName && <div style={{display:'inline-block', ...fPos}}>{fileName}</div>
             );
         }
     };
@@ -56,7 +61,7 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  messa
         <div>
             {inputEntry() }
             {actionPart() }
-            {isLoading && <img style={{position: 'inline-block', marginLeft: 10, width:14,height:14}} src={LOADING}/> }
+            {isLoading && <img style={{display: 'inline-block', marginLeft: 10, width:14,height:14}} src={LOADING}/> }
         </div>
     );
 }
@@ -74,7 +79,8 @@ FileUploadView.propTypes = {
     valid: PropTypes.bool,
     wrapperStyle: PropTypes.object,
     isFromURL: PropTypes.bool.isRequired,
-    onUrlAnalysis: PropTypes.func
+    onUrlAnalysis: PropTypes.func,
+    fileNameStyle: PropTypes.object
 };
 
 FileUploadView.defaultProps = {

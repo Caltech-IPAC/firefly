@@ -180,11 +180,11 @@ public class FitsHDUUtil {
                 throw new FitsException(invalidMsg);
             } else {
                 File ff = new File(fitsFile);
-                String title = index == 1 ? "A FITS file" :
-                                            "A FITS with " + (index - 1) + ((index > 2) ? " extensions" : " extension");
-                title = String.format("%s: the file size is %,d bytes." +
+                //String title = index == 1 ? "A FITS file" :
+                //                            "A FITS with " + (index - 1) + ((index > 2) ? " extensions" : " extension");
+                String title = String.format("FITS" +
                                       "-- The following left table shows the file summary and the right table shows the header content of " +
-                                      "the primary HDU or extension HDU which is highlighted in the file summary.", title, ff.length());
+                                      "the primary HDU or extension HDU which is highlighted in the file summary.");
 
                 dg.setTitle(title);
             }

@@ -19,7 +19,8 @@ import {dispatchPlotImage } from '../ImagePlotCntlr.js';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import HelpIcon from '../../ui/HelpIcon.jsx';
-import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
+import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
+import {updateMerge, getSizeAsString} from '../../util/WebUtil.js';
 
 import './ImageSelectPanel.css';
 
@@ -154,7 +155,7 @@ export class FileUploadViewPanel extends PureComponent {
             const bInit = !analysisFields;
             if (!analysisFields) analysisFields = FieldGroupUtils.getGroupFields(panelKey);
 
-            const uploadSrc = get(analysisFields, ['uploadTabs', 'value']);
+            const uploadSrc = get(analysisFields, ['uploadTabs', 'value'], fileId);
             const displayValue = get(analysisFields, [uploadSrc, 'displayValue']);
             const currentAnaResult = get(analysisFields, [uploadSrc, 'analysisResult'], '');
             const analysisResultObj = currentAnaResult ? JSON.parse(currentAnaResult) : {};
@@ -190,7 +191,7 @@ export class FileUploadViewPanel extends PureComponent {
             }
 
             return {analysisModel, analysisResult: currentAnaResult, analysisSummary, highlightedRow, hlHeaderTable,
-                    crtAnalysisId, isUploading: false, displayValue};
+                    crtAnalysisId, isUploading: false, displayValue, uploadSrc};
         };
 
         this.state = this.getNextState();
@@ -220,8 +221,11 @@ export class FileUploadViewPanel extends PureComponent {
                     analysisResult: '',
                     analysisSummary: '',
                     highlightedRow: -1,
-                    hlHeaderTable: null
+                    hlHeaderTable: null,
+                    uploadSrc
                 });
+            } else if (uploadSrc !== this.state.uploadSrc) {
+                this.setState(this.getNextState(analysisFields));
             } else if ((displayValue && displayValue !== this.state.displayValue) && uploadSrc === fileId) {  // in uploading the new file
                 this.setState({
                     isUploading: true,
@@ -263,11 +267,10 @@ export class FileUploadViewPanel extends PureComponent {
 
     render() {
         const {analysisSummary, analysisModel, highlightedRow, hlHeaderTable, isUploading=false} = this.state;
-        const widthTotal = 970;
-        const tableStyle = {width: '100%', height:'calc(100% - 38px)' , overflow: 'hidden'};
-        const pStyle = {fontWeight: 'bold', marginLeft:2, textAlign: 'center', height: 16};
-        const summaryStyle = {height: 'calc(100% - 2px)', overflow: 'hidden', border: '1px solid #b3b3b3'};
-        let    w1;
+        const tableStyle = {width: '100%', height:'calc(100% - 40px)', overflow: 'hidden'};
+        const pStyle = {fontWeight: 'bold', fontSize: 12, marginLeft:2, textAlign: 'center', height: 16};
+        const summaryStyle = {height: 'calc(100% - 2px)', overflow: 'hidden'};
+        let   w1;
 
         var displayHeaderTable = () => {
 
@@ -285,17 +288,17 @@ export class FileUploadViewPanel extends PureComponent {
             }
 
             return  (
-                <div style={{ width: (widthTotal-w1), ...summaryStyle}}>
+                <div style={{ width: `calc(100% - ${w1}px)`, ...summaryStyle, paddingLeft: 3}}>
                     <p style={pStyle}>{hlHeaderTable.title}</p>
                     <div style={tableStyle}>
-                    <TablePanel
-                        key={hlHeaderTable.tbl_id}
-                        tbl_ui_id={hlHeaderTable.tbl_id}
-                        showToolbar={false}
-                        showOptionButton={false}
-                        selectable={false}
-                        tableModel={hlHeaderTable}
-                    />
+                        <TablePanel
+                            key={hlHeaderTable.tbl_id}
+                            tbl_ui_id={hlHeaderTable.tbl_id}
+                            showToolbar={false}
+                            showOptionButton={false}
+                            selectable={false}
+                            tableModel={hlHeaderTable}
+                        />
                     </div>
                 </div>
             );
@@ -323,25 +326,36 @@ export class FileUploadViewPanel extends PureComponent {
 
             w1 = (w1 + 1) * 8;
 
+            const getExtensionInfo = () => {
+                const rows = get(analysisModel, 'totalRows');
+
+                if (isFitsFile(analysisModel)) {
+                    return rows > 1 ? `${rows-1} extension${rows > 2 ? 's' : ''}` : '';
+                } else {
+                    return `${rows} table${rows > 1 ? 's': ''}`;
+                }
+            };
+
             return (
                 <div style={{width: w1, ...summaryStyle}} >
-                    <p style={pStyle}>File Summary</p>
+                    <p style={pStyle}>{`File Summary ${getExtensionInfo()}`}</p>
                     <div style={tableStyle}>
-                    <TablePanel
-                        key={hlTbl.tbl_id}
-                        tbl_ui_id={hlTbl.tbl_id}
-                        showToolbar={false}
-                        showOptionButton={false}
-                        tableModel={hlTbl}
-                    />
+                        <TablePanel
+                            key={hlTbl.tbl_id}
+                            tbl_ui_id={hlTbl.tbl_id}
+                            showToolbar={false}
+                            showOptionButton={false}
+                            tableModel={hlTbl}
+                        />
                     </div>
                 </div>
             );
         };
 
         const fileResultArea = () => {
-            const tableStyle = {boxSizing: 'border-box', width: '100%', height: 400,
-                                overflow: 'hidden', resize:'none', display: 'flex', marginTop: 10, marginBottom: 10};
+            const tableStyle = {boxSizing: 'border-box', width: '100%', height: 'calc(100% - 40px)',
+                                overflow: 'hidden', display: 'flex', resize:'none', marginTop: 10, marginBottom: 10};
+
             var showTable = () => {
                 return (
                     <div style={tableStyle}>
@@ -351,16 +365,7 @@ export class FileUploadViewPanel extends PureComponent {
                 );
             };
 
-            const showSummary = () => {
-                return analysisSummary.split('--').map((oneLine, key) => {
-                    return (
-                        <div key={key} style={{height: lineH, marginBottom: 0}}>
-                            {oneLine}
-                            <br/>
-                        </div>
-                    );
-                });
-            };
+
 
             const isMultipleImageSelected = () => {
                 const selResults = getSelectionResult(analysisModel);
@@ -377,7 +382,7 @@ export class FileUploadViewPanel extends PureComponent {
                         initialState={{fieldKey: 'imageDisplay',
                                        tooltip: 'display image extensions in one window or multiple windows'}}
                         fieldKey={'imageDisplay'}
-                        wrapperStyle={{height: imageOptH}}
+                        wrapperStyle={{height: imageOptH, fontSize: 12}}
                         options={imgOptions}
                     />
                 );
@@ -385,22 +390,18 @@ export class FileUploadViewPanel extends PureComponent {
 
             const bShowImageOptions = isMultipleImageSelected();
             const imageOptH = 20;
-            const count = (analysisSummary.match(/--/g) || []).length;
-            const lineH = 16;
-            const summaryH = lineH * (count+1);
             const isTable = !isNoDataInModel(analysisModel);
-            const allH = isTable ? (420 + count * lineH + imageOptH): (summaryH + 100);
+            const allH = isTable ? 420+imageOptH : 100;
 
             if (isUploading) {
                 return (
-                    <div style={{height: allH, width: widthTotal, margin: 10}}>
+                    <div style={{height: allH, width: '100%', margin: 10}}>
                         {loadingBox()}
                     </div>
                 );
             } else {
                 return (
-                    <div style={{height: allH, width: widthTotal, margin: 10}}>
-                        <div style={{height: summaryH}}>{showSummary()}</div>
+                    <div style={{height: allH, width: 'calc(100% - 10px)', marginLeft: 5, marginRight: 5}}>
                         {isNoDataInModel(analysisModel) ? false : showTable()}
                         {bShowImageOptions ? showImageButtons() : false}
                     </div>
@@ -432,42 +433,68 @@ export class FileUploadViewPanel extends PureComponent {
             );
         };
 
-        const tabH = 80;
-        const tabW = widthTotal*2/3;
-        const uploadStyle = {margin: '15px 10px 21px 10px'};
+        const uploadStyle = {marginTop: 12, marginBottom: 20};
+        const uploadMethod = [{value: fileId, label: 'Upload file'},
+                              {value: urlId, label: 'Upload from URL'}];
+        const {uploadSrc} = this.state;
+        const lineH = 16;
+
+        const uploadSection = () => {
+            if (uploadSrc === fileId) {
+                return (
+                        <FileUpload
+                            wrapperStyle={{...uploadStyle, marginRight: 16}}
+                            fileNameStyle={{marginLeft: 0, fontSize: 12}}
+                            fieldKey={fileId}
+                            fileAnalysis={this.onLoading}
+                            innerStyle={{width: 80}}
+                            initialState={{tooltip: 'Select a file with FITS, VOTABLE, CSV, TSV, or IPAC format',
+                                           label: ''
+                                           }}/>
+                );
+            } else if (uploadSrc === urlId) {
+                return (
+                        <FileUpload
+                            wrapperStyle={{...uploadStyle, marginRight: 32, width: '50%'}}
+                            fieldKey={urlId}
+                            fileAnalysis={this.onLoading}
+                            isFromURL={true}
+                            innerStyle={{width: '70%'}}
+                            initialState={{tooltip: 'Select a URL with file in FITS, VOTABLE, CSV, TSV, or IPAC format',
+                                           label: 'Enter URL of a file:'
+                                         }}/>
+                );
+            }
+        };
+
+        const showSummary = () => {
+            let summaryLine = analysisSummary ? analysisSummary.split('--', 1): ''; // only get one line summary
+            if (summaryLine) {
+                summaryLine += (analysisModel&&analysisModel.size ? `: ${getSizeAsString(analysisModel.size)} Bytes` : '');
+            }
+
+            return (
+                    <div style={{height: lineH*2, paddingLeft: 2, fontSize: 12}}>
+                        {summaryLine}
+                        <br/>
+                    </div>
+                );
+        };
 
         return (
             <FieldGroup groupKey={panelKey}
+                        reducerFunc={fieldReducer()}
                         keepState={true}>
-                <div style={{width:'80%', height:'calc(100%-20px)'}}>
-                    <div style={{paddingLeft: '25%', marginTop: 10}}>
-                        <FieldGroupTabs initialState={{ value:fileId }} fieldKey='uploadTabs' resizable={true}>
-                            <Tab name='File' id={fileId}>
-                                <div style={{height: tabH, width: tabW}} >
-                                    <FileUpload
-                                        wrapperStyle={uploadStyle}
-                                        fieldKey={fileId}
-                                        fileAnalysis={this.onLoading}
-                                        initialState={{tooltip: 'Select a file with FITS, VOTABLE, CSV, TSV, or IPAC format',
-                                                       label: 'File:'
-                                                       }}/>
-                                </div>
-                            </Tab>
-                            <Tab name='URL' id={urlId}>
-                                <div style={{height: tabH, width: tabW}} >
-                                    <FileUpload
-                                        wrapperStyle={{...uploadStyle, width: '80%'}}
-                                        fieldKey={urlId}
-                                        fileAnalysis={this.onLoading}
-                                        isFromURL={true}
-                                        innerStyle={{width: '70%'}}
-                                        initialState={{tooltip: 'Select a URL with file in FITS, VOTABLE, CSV, TSV, or IPAC format',
-                                                       label: 'Enter URL of a file:'
-                                                       }}
-                                    />
-                                </div>
-                            </Tab>
-                        </FieldGroupTabs>
+                <div style={{width:'100%', height:'calc(100% - 20px)'}}>
+                    <div style={{display:'flex',  flexDirection: 'column', marginTop: 10, paddingLeft: '30%'}}>
+                        <RadioGroupInputField
+                            initialState={{value: uploadMethod[0].value}}
+                            fieldKey='uploadTabs'
+                            alignment={'horizontal'}
+                            options={uploadMethod}
+                            wrapperStyle={{fontWeight: 'bold', fontSize: 12}}/>
+                         {uploadSection()}
+                         {showSummary()}
                     </div>
                     {fileResultArea(fileId) }
                 </div>
@@ -799,4 +826,58 @@ function removeAnalysisTable(noRemoved) {
             dispatchTableRemove(id);
         }
     }
+}
+
+const fieldReducer = function () {
+    return (inFields, action) => {
+        if (!inFields) return fieldInit();
+
+        // remove previous  invalid upload which switch the upload method or be back to upload dropdown
+        switch (action.type) {
+            case FieldGroupCntlr.VALUE_CHANGE:
+
+                const {fieldKey, value} = action.payload;
+
+                if (fieldKey === 'uploadTabs' && (!get(inFields, [value, 'valid'], true))) {
+                    inFields = updateMerge(inFields, value,
+                                           {value: '', displayValue: '', analysisResult: '', valid: true});
+                }
+                break;
+            case FieldGroupCntlr.MOUNT_FIELD_GROUP:
+
+                const {value: uploadMethod} = get(inFields, 'uploadTabs');
+
+                if (uploadMethod && (!get(inFields, [uploadMethod, 'valid'], true))) {
+                    inFields = updateMerge(inFields, uploadMethod,
+                        {value: '', displayValue: '', analysisResult: '', valid: true});
+                }
+                break;
+            default:
+                break;
+        }
+        return inFields;
+    };
+};
+
+function fieldInit() {
+    return (
+        {
+            'imageDisplay': {
+                fieldKey: 'imageDisplay',
+                value: 'oneWindow'
+            },
+            'uploadTabs': {
+                fieldKey: 'uploadTabs',
+                value: fileId
+            },
+            [fileId]: {
+                fieldKey: fileId,
+                value: ''
+            },
+            [urlId]: {
+                fieldKey: urlId,
+                value: ''
+            }
+        }
+    );
 }

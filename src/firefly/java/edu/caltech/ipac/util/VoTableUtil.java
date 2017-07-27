@@ -163,13 +163,13 @@ public class VoTableUtil {
             if (index == 0) {
                 throw new IOException(invalidMsg);
             } else {
-                File ff = new File(voTableFile);
+                //File ff = new File(voTableFile);
 
-                String title = "A VOTable file with " + index + (index > 1 ? " tables" : " table");
+                //String title = "A VOTable file with " + index + (index > 1 ? " tables" : " table");
 
-                title = String.format("%s: the file size is %,d bytes." +
+                String title = String.format("VOTable" +
                         "-- The following left table shows the file summary and the right table shows the information of " +
-                        "the table which is highlighted in the file summary.", title, ff.length());
+                        "the table which is highlighted in the file summary.");
                 dg.setTitle(title);
             }
         } catch (IOException e) {

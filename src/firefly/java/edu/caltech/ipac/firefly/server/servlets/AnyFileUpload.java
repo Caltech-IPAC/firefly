@@ -163,13 +163,15 @@ public class AnyFileUpload extends BaseHttpServlet {
         String analysisSummary = "";
 
         JSONObject analysisResult = new JSONObject();
+        File f = fi.getFile();
+        long size = f.length();
 
-        fileFormat = DataGroupReader.guessFormat(fi.getFile());
-        dgAnalysis = DataGroupReader.readAnyFormatHeader(fi.getFile(), fileFormat);
+        fileFormat = DataGroupReader.guessFormat(f);
+        dgAnalysis = DataGroupReader.readAnyFormatHeader(f, fileFormat);
         if (dgAnalysis != null) {
             analysisSummary = dgAnalysis.getTitle();
             if (!analysisSummary.contains("invalid")) {
-                analysisModel = toJsonAnalysisTableModel(dgAnalysis, fileFormat);
+                analysisModel = toJsonAnalysisTableModel(dgAnalysis, fileFormat, size);
             }
         } else {
             analysisSummary = "invalid " + fileFormat.toString() + " file";
@@ -260,7 +262,7 @@ public class AnyFileUpload extends BaseHttpServlet {
         }
     }
 
-    private static JSONObject toJsonAnalysisTableModel(DataGroup dg, DataGroupReader.Format ff ) {
+    private static JSONObject toJsonAnalysisTableModel(DataGroup dg, DataGroupReader.Format ff, long size ) {
         JSONObject tableModel = new JSONObject();
         JSONObject tableData = JsonTableUtil.toJsonTableData(dg, null);
         String tblId =  "UPLOAD_ANALYSIS";
@@ -271,6 +273,7 @@ public class AnyFileUpload extends BaseHttpServlet {
         tableModel.put("totalRows", dg.values().size());
         tableModel.put("fileFormat", ff.toString());
         tableModel.put("highlightedRow", 0);
+        tableModel.put("size", size);
 
         JSONObject tableMeta = new JSONObject();
         Iterator<Entry<String, DataGroup.Attribute>> attributes = dg.getAttributes().entrySet().iterator();
