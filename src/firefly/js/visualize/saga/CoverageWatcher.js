@@ -12,7 +12,7 @@ import {cloneRequest} from '../../tables/TableUtil.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE, TABLE_SORT} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
-import {primePlot, getPlotViewById} from '../PlotViewUtil.js';
+import {primePlot, getPlotViewById, getDrawLayerById} from '../PlotViewUtil.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
 import {doFetchTable, getTblById, getActiveTableId, getColumnIdx, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
 import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
@@ -99,12 +99,15 @@ export function* watchCoverage(options) {
     let {paused=true}= options;
     const decimatedTables=  {};
     let tbl_id;
-    paused= paused || !get(getViewer(getMultiViewRoot(), viewerId), 'mounted' , false);
+
+    if (paused) {
+        paused= !get(getViewer(getMultiViewRoot(), viewerId),'mounted', false);
+    }
     options= Object.assign(defOptions,cleanUpOptions(options));
     let displayedTableId= null;
     let previousDisplayedTableId;
 
-    if (!paused) {
+    if (paused) {
         const firstId= getActiveTableId();
         if (firstId) displayedTableId = updateCoverage(firstId, viewerId, decimatedTables, options);
     }
@@ -372,7 +375,7 @@ function isOnePoint(wpList) {
 
 
 function makeOverlayCoverageDrawing() {
-    const colors= {};
+    const drawingOptions= {};
     /**
      *
      * @param decimatedTables
@@ -389,16 +392,23 @@ function makeOverlayCoverageDrawing() {
 
         const allRowsTable= decimatedTables[tbl_id];
 
-        dispatchDestroyDrawLayer(tbl_id);
+        const layer= getDrawLayerById(getDlAry(), tbl_id);
+        if (layer) {
+            drawingOptions[tbl_id]= layer.drawingDef;
+            dispatchDestroyDrawLayer(tbl_id);
+        }
+        else {
+            drawingOptions[tbl_id]= {};
+        }
 
         const overlayAry=  options.multiCoverage ? Object.keys(decimatedTables) : [allRowsTable.tbl_id];
 
         overlayAry.forEach( (id) => {
             // if (id!==tbl_id) return;
-            if (!colors[id]) colors[id]= lookupOption(options,'color',id) || getNextColor();
+            if (!drawingOptions[id].color) drawingOptions[id].color= lookupOption(options,'color',id) || getNextColor();
             const oriTable= getTblById(id);
             const arTable= decimatedTables[id];
-            if (oriTable && arTable) addToCoverageDrawing(PLOT_ID, options, oriTable, arTable, colors[id]);
+            if (oriTable && arTable) addToCoverageDrawing(PLOT_ID, options, oriTable, arTable, drawingOptions[id]);
 
         });
     };
@@ -413,7 +423,7 @@ function makeOverlayCoverageDrawing() {
  * @param {TableData} allRowsTable
  * @param {string} color
  */
-function addToCoverageDrawing(plotId, options, table, allRowsTable, color) {
+function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp) {
 
     if (allRowsTable==='WORKING') return;
     const covType= getCoverageType(options,allRowsTable);
@@ -428,15 +438,15 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, color) {
         dispatchCreateDrawLayer(Catalog.TYPE_ID, {
             catalogId: table.tbl_id,
             title: `Coverage: ${table.title || table.tbl_id}`,
-            color,
+            color: drawOp.color,
             tableData,
             tableMeta,
             tableRequest: table.request,
             highlightedRow: table.highlightedRow,
             catalog: !boxData,
             columns,
-            symbol: lookupOption(options,'symbol',tbl_id),
-            size: lookupOption(options,'symbolSize',tbl_id),
+            symbol: drawOp.symbol || lookupOption(options,'symbol',tbl_id),
+            size: drawOp.size || lookupOption(options,'symbolSize',tbl_id),
             boxData,
             selectInfo: table.selectInfo,
             angleInRadian,
