@@ -68,7 +68,7 @@ CompleteButton.propTypes= {
     dialogId: PropTypes.string,
     style: PropTypes.object,
     includeUnmounted : PropTypes.bool,
-    changeMasking: PropTypes.func,
+    changeMasking: PropTypes.func
 };
 
 CompleteButton.contextTypes= {

@@ -45,8 +45,8 @@ export function PlotTitle({plotView:pv, titleType, brief}) {
     const showWorking= getTaskCount(pv.plotId);
 
     return (
-        <div className={styleName}>
-            <div className='plot-title-title' >{plot.title}</div>
+        <div className={styleName} title={plot.title}>
+            <div className='plot-title-title'>{plot.title}</div>
             {!brief ? <div className='plot-title-zoom'>{zlStr}</div> : ''}
             {!brief && rotString ? <div className='plot-title-rotation'>{rotString}</div> : ''}
             {showWorking ?<img style={{width:14,height:14,padding:'0 3px 0 5px'}} src={LOADING}/> : ''}

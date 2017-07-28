@@ -63,6 +63,24 @@ public class DataGroupReader {
         }
     }
 
+    public static DataGroup readAnyFormatHeader(File inf, Format ff) throws IOException {
+        Format format = ff == null ? guessFormat(inf) : ff;
+        DataGroup dg = null;
+
+        if (format == Format.VO_TABLE) {
+            dg = VoTableUtil.voHeaderToDataGroup(inf.getAbsolutePath());
+        } else if (format == Format.FITS) {
+            dg = FitsHDUUtil.fitsHeaderToDataGroup(inf.getAbsolutePath());
+        } else if (format == Format.CSV || format == Format.TSV || format == Format.IPACTABLE || format == Format.JSON) {
+            String A = (format == Format.IPACTABLE) ? "IPAC Table" : format.toString();
+            String title = String.format("%s", A);
+            dg = new DataGroup(title, new ArrayList<DataType>());
+        } else {
+            dg = new DataGroup("invalid file format", new ArrayList<DataType>());
+        }
+        return dg;
+    }
+
     public static DataGroup read(File inf, String... onlyColumns) throws IOException {
         return read(inf, false, onlyColumns);
 
@@ -182,7 +200,10 @@ public class DataGroupReader {
             String line = reader.readLine();
             if (line.startsWith("{")) {
                 return Format.JSON;
+            } else if (line.startsWith("SIMPLE  = ")) {
+                return Format.FITS;
             }
+
             int[][] counts = new int[readAhead][2];
             int csvIdx = 0, tsvIdx = 1;
             while (line != null && row < readAhead) {
@@ -195,6 +216,8 @@ public class DataGroupReader {
                     //EQUINOX: xxx
                     //NAME-RESOLVER: xxx
                     return Format.FIXEDTARGETS;
+                } else if (line.startsWith("<VOTABLE")) {
+                    return Format.VO_TABLE;
                 }
 
                 counts[row][csvIdx] = CSVFormat.DEFAULT.parse(new StringReader(line)).iterator().next().size();
@@ -309,8 +332,6 @@ public class DataGroupReader {
         return outData;
 
     }
-
-
 
 //====================================================================
 //

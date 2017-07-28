@@ -151,7 +151,7 @@ var canNotUpdatePlot = (viewer) => (viewer.viewerId.includes('RESERVED') || (vie
 
 // if there is plotID, find the viewer (plotId & viewerId => replace or create)
 //                                     (plotId & no viewerid => replace)
-// if there is no plotID, find an avaiable multiImageViewer (no plotId & viewerId => create)
+// if there is no plotID, find an available multiImageViewer (no plotId & viewerId => create)
 export function getPlotInfo( vr ) {
     var visroot = !vr ? visRoot() : vr;
     var mvroot = getMultiViewRoot();
@@ -164,7 +164,7 @@ export function getPlotInfo( vr ) {
     if (viewerId ) {
         viewer = getViewer(mvroot, viewerId);
 
-        // find another viwer which can not either receive new plots or replace the plot
+        // find another viewer which can not either receive new plots or replace the plot
         if (!viewer || canNotUpdatePlot(viewer)) {
             plotId = null;
         }

@@ -12,6 +12,7 @@ import {makeTblRequest, onTableLoaded} from '../tables/TableUtil.js';
 import {getDefaultXYPlotOptions, DT_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
 import {SCATTER} from '../charts/ChartUtil.js';
 import * as ChartsCntlr from '../charts/ChartsCntlr.js';
+import {isNil, get} from 'lodash';
 
 function handleFailfure() {
 
@@ -38,10 +39,15 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
             }
         }
 
+        let submitResult;
         if (onSubmit) {
-            onSubmit(request);
+            submitResult = onSubmit(request);
         }
-        dispatchHideDropDown();
+
+        // submitResult is not defined, or it is true, or it is false and hideOnInValid is true
+        if (isNil(submitResult) || submitResult || (!submitResult&&get(params, 'hideOnInvalid', true))) {
+            dispatchHideDropDown();
+        }
     };
 }
 

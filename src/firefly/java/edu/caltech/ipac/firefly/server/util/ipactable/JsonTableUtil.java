@@ -122,6 +122,8 @@ public class JsonTableUtil {
      */
     public static JSONObject toJsonTableData(DataGroup data, TableDef tableDef) {
 
+        tableDef = mergeAttributes(tableDef, data);
+
         // set display format if exists.  this modifies DataType directly because it assumes it will no longer be used.
         // if that is not the case, DataType will have to be cloned.
         // also set flag to recalculate the max width of column's data
@@ -182,6 +184,8 @@ public class JsonTableUtil {
 //====================================================================
 
     private static List<JSONObject> toJsonTableColumn(DataGroup dataGroup, TableDef tableDef) {
+
+        tableDef = mergeAttributes(tableDef, dataGroup);
 
         DataType[] dataTypes = tableDef.getCols().size() > 0 ? tableDef.getCols().toArray(new DataType[0]) : dataGroup.getDataDefinitions();
 

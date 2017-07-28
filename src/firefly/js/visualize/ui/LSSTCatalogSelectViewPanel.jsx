@@ -60,11 +60,11 @@ const IMAGETYPE = '1';
 const DEC = 3;
 const LSSTTables = [
     {
-        project: 'SSDS',
+        project: 'SDSS',
         label: 'SDSS',
         subproject: [{
             database: 'sdss_stripe82_01',
-            label: 'SSDS Stripe 82',
+            label: 'SDSS Stripe 82',
             project: 'SDSS',
             catalogs: [
                 {
