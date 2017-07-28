@@ -36,7 +36,7 @@ export class FileUploadDropdown extends PureComponent {
 
     render() {
         return (
-            <div style={{padding: 10, width: 1000}}>
+            <div style={{padding: 10}}>
                 <FormPanel
                     groupKey={panelKey}
                     onSubmit={resultSuccess()}

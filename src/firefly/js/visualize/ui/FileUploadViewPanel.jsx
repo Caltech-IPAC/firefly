@@ -485,7 +485,7 @@ export class FileUploadViewPanel extends PureComponent {
             <FieldGroup groupKey={panelKey}
                         reducerFunc={fieldReducer()}
                         keepState={true}>
-                <div style={{width:'100%', height:'calc(100% - 20px)'}}>
+                <div style={{width:988, height:'calc(100% - 20px)'}}>
                     <div style={{display:'flex',  flexDirection: 'column', marginTop: 10, paddingLeft: '30%'}}>
                         <RadioGroupInputField
                             initialState={{value: uploadMethod[0].value}}
