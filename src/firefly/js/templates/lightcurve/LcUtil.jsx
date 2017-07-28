@@ -216,12 +216,13 @@ export function getMissionInfo(missionEntries, tblModel){
 }
 
 
-export function renderMissionView(generalEntries,missionEntries,missionBands,tblModel, wrapperStyle,labelWidth,callback ){
+export function renderMissionView({generalEntries,missionEntries,missionBands,tblModel, wrapperStyle, imageEntriesStyle, labelWidth,callback}){
 
     //const wrapperStyle = {margin: '3px 0'};
     const tblColumns = get(tblModel, ['tableData', 'columns'], []);
     const groupKey = getViewerGroupKey(missionEntries);
     const {allCommonEntries, missionInputs} = getMissionEntries(generalEntries, missionEntries,tblColumns ,wrapperStyle);
+    const imageStyle = imageEntriesStyle || { padding: '0 6px 0 6px', border: '1px solid #a3aeb9', marginLeft: '54px'};
 
     const {missionName, period, title, uploadedFileName} = getMissionInfo(missionEntries, tblModel);
     return (
@@ -229,7 +230,7 @@ export function renderMissionView(generalEntries,missionEntries,missionBands,tbl
                     reducerFunc={callback(missionEntries, generalEntries)} keepState={true}>
 
             <div >
-                <div style={{ with:{labelWidth}, fontWeight:'bold', display:'inline-block', margin: '3px 0 6px 0'}} > Column Selection</div>
+                <div style={{ width:{labelWidth}, fontWeight:'bold', display:'inline-block', margin: '3px 0 6px 0'}} > Column Selection</div>
                 <label style = {{width: '170px', paddingLeft: '10px', display:'inline-block'}} title={title}>{uploadedFileName}</label>
                 <div style = {{fontWeight:'bold',paddingLeft:'13px', display:'inline-block'}}>Images</div>
             </div>
@@ -240,7 +241,7 @@ export function renderMissionView(generalEntries,missionEntries,missionBands,tbl
                                   labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>
                     {missionInputs}
                 </div>
-                <div style={{ padding: '0 6px 0 6px', border: '1px solid #a3aeb9', marginLeft: '54px'}}>
+                <div style={imageStyle}>
                     {missionBands}
                     {allCommonEntries}
                 </div>

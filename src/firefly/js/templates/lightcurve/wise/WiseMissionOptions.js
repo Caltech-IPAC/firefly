@@ -32,7 +32,7 @@ export class WiseSettingBox extends PureComponent {
                     {label: 'W4', value: 'w4'}
                 ]}/>);
 
-         return renderMissionView(generalEntries,missionEntries,missionBands,tblModel,wrapperStyle,labelWidth, wiseOptionsReducer );
+         return renderMissionView({generalEntries,missionEntries,missionBands,tblModel,wrapperStyle,labelWidth, callback:wiseOptionsReducer });
 
 
     }
