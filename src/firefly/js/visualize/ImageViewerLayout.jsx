@@ -4,7 +4,7 @@
 
 import React, {Component, PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {xor,isEmpty,get, isString, isFunction, throttle} from 'lodash';
+import {xor,isNil, isEmpty,get, isString, isFunction, throttle} from 'lodash';
 import {ImageRender} from './iv/ImageRender.jsx';
 import {EventLayer} from './iv/EventLayer.jsx';
 import {ImageViewerStatus} from './iv/ImageViewerStatus.jsx';
@@ -273,6 +273,7 @@ function isImageOnScreen(plotView) {
     const {viewDim}= plotView;
     const plot= primePlot(plotView);
 
+    if (isNil(plotView.scrollX) || isNil(plotView.scrollY)) return false;
     const cc= CysConverter.make(plot);
     const {screenSize}= plot;
     const devAsScreenAry= [
@@ -486,11 +487,15 @@ class DrawingLayers extends Component {
 
     shouldComponentUpdate(np) {
         const p= this.props;
-        return np.plot!==p.plot || !isEmpty(xor(np.drawLayersIdAry,p.drawLayersIdAry));
+        return np.plot!==p.plot || !isEmpty(xor(np.drawLayersIdAry,p.drawLayersIdAry)) ||
+              np.plotView.scrollX!==p.plotView.scrollX || np.plotView.scrollY!==p.plotView.scrollY;
     }
-    
+
     render() {
         const {plotView:pv, plot, drawLayersIdAry:dlIdAry}= this.props;
+        const {scrollX, scrollY}= pv;
+        const draw= !isNil(scrollX) && !isNil(scrollY);
+        if (!draw) return null;
         let drawingAry= null;
         const {width,height}= pv.viewDim;
         if (dlIdAry) {

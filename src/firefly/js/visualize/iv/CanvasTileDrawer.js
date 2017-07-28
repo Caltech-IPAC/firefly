@@ -3,6 +3,7 @@
  */
 
 import CsysConverter from '../CsysConverter.js';
+import {isNil} from 'lodash';
 import {makeDevicePt} from '../Point.js';
 import {createImageUrl,isTileVisible} from './TileDrawHelper.jsx';
 import {makeTransform} from '../PlotTransformUtils.js';
@@ -222,9 +223,11 @@ function renderToScreen(plotView, targetCanvas, offscreenCanvas, opacity, offset
         const {scrollX, scrollY, flipX,flipY, viewDim, rotation}= plotView;
         if (flipY) offsetX*=-1;
 
-        const affTrans= makeTransform(offsetX,offsetY, scrollX, scrollY, rotation, flipX, flipY, viewDim);
-        ctx.setTransform(affTrans.a, affTrans.b, affTrans.c, affTrans.d, affTrans.e, affTrans.f);
-        ctx.drawImage(offscreenCanvas, 0,0);
+        if (!isNil(plotView.scrollX) && !isNil(plotView.scrollY)) {
+            const affTrans= makeTransform(offsetX,offsetY, scrollX, scrollY, rotation, flipX, flipY, viewDim);
+            ctx.setTransform(affTrans.a, affTrans.b, affTrans.c, affTrans.d, affTrans.e, affTrans.f);
+            ctx.drawImage(offscreenCanvas, 0,0);
+        }
         ctx.restore();
     });
 }

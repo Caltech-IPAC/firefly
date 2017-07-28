@@ -6,7 +6,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get} from 'lodash';
+import {get, isNil} from 'lodash';
 import {Matrix} from 'transformation-matrix-js';
 import {primePlot} from './PlotViewUtil.js';
 import {clone, updateSet} from '../util/WebUtil.js';
@@ -57,6 +57,7 @@ export function updateTransform(pv) {
  * @return {Matrix}
  */
 export function makeTransform(offsetX,offsetY,scrollX,scrollY, rotation, flipX, flipY, viewDim) {
+    if (isNil(scrollX) || isNil(scrollY)) return undefined;
     const left= offsetX-scrollX;
     const top= offsetY-scrollY;
     const {width:w, height:h}= viewDim;

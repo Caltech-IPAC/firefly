@@ -259,7 +259,8 @@ export function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, newPlo
  * @return {PlotView} new copy of plotView
  */
 export function updatePlotViewScrollXY(plotView,newScrollPt) {
-    if (!plotView || !newScrollPt) return plotView;
+    if (!plotView) return plotView;
+    if (!newScrollPt) return Object.assign({},plotView, {scrollX:undefined, scrollY:undefined});
 
     const plot= primePlot(plotView);
     if (!plot) return plotView;
@@ -532,13 +533,18 @@ export function findScrollPtToCenterImagePt(plotView, ipt) {
  */
 export function findScrollPtToPlaceOnDevPt(pv, ipt, targetDevPtPos) {
     const plot= primePlot(pv);
-    const point= CCUtil.getScreenCoords(plot, ipt);
 
-    const target= CCUtil.getScreenCoords(plot, targetDevPtPos);
+    const altAffTrans= makeTransform(0,0, 0, 0, pv.rotation, pv.flipX, pv.flipY, pv.viewDim);
+    const cc= CysConverter.make(plot,altAffTrans);
+
+    const point= cc.getScreenCoords(ipt);
+    if (!point) return null;
+
+    const target= cc.getScreenCoords(targetDevPtPos);
+    if (!target) return null;
 
     const x= point.x - target.x;
     const y= point.y - target.y;
 
-
-    return makeScreenPt(pv.flipY ? pv.scrollX-x : pv.scrollX+x,pv.flipX ? pv.scrollY-y : pv.scrollY+y);
+    return makeScreenPt(pv.flipY ? -x : x,pv.flipX ? -y : y);
 }
