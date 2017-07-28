@@ -100,7 +100,7 @@ function doShowTable(llApi, targetDiv, request, options={}) {
         request = oldApi(llApi, params, options);
     }
 
-    options = Object.assign({tbl_group: divToGrp(targetDiv), backgroundable:false}, options);
+    options = Object.assign({tbl_group: divToGrp(targetDiv)}, options);
     const contProps = {tbl_group: options.tbl_group};
 
     Object.keys(options).forEach( (k) => {

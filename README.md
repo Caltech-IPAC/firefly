@@ -47,7 +47,7 @@ There are several branches the this repository.  Here are the ones that you shou
  -  [Java 1.8] http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
     This is the version we are using to compile and run Firefly.  
 
- -  [Gradle 2.3+] (https://gradle.org/downloads)
+ -  [Gradle 3.x] (https://gradle.org/downloads)
     Gradle is an open source build automation system.
 
 
