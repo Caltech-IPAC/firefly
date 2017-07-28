@@ -130,14 +130,18 @@ function makePlotImageAction(rawAction) {
             payload= makeSinglePlotPayload(vr, rawAction.payload, requestKey);
         }
         else {
+            const {viewerId=DEFAULT_FITS_VIEWER_ID, attributes,
+                   setNewPlotAsActive= true, pvOptions= {},
+                   addToHistory= false,useContextModifications= true}= rawAction.Payload;
             payload= {
                 wpRequestAry:ensureWPR(wpRequestAry),
-                viewerId:rawAction.payload.viewerId,
-                attributes:rawAction.payload.attributes,
-                pvOptions: rawAction.payload.pvOptions,
+                viewerId,
+                attributes,
+                pvOptions,
+                setNewPlotAsActive,
                 threeColor:false,
-                addToHistory:false,
-                useContextModifications:true,
+                addToHistory,
+                useContextModifications,
                 groupLocked:true,
                 requestKey
             };

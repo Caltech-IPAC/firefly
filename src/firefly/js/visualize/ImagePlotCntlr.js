@@ -892,11 +892,11 @@ function restoreDefaultsActionCreator(rawAction) {
                     if (def.threeColor) {
                         dispatchPlotImage({plotId:pv.plotId,
                                            viewerId, wpRequest:[def.redReq,def.greenReq,def.blueReq],
-                                           threeColor:true,
+                                           threeColor:true, setNewPlotAsActive:false,
                                            useContextModifications:false});
                     }
                     else {
-                        dispatchPlotImage({plotId:pv.plotId, wpRequest:def.wpRequest,
+                        dispatchPlotImage({plotId:pv.plotId, wpRequest:def.wpRequest, setNewPlotAsActive:false,
                                            viewerId, useContextModifications:false});
                     }
                 }
