@@ -33,6 +33,19 @@ const TT_EXPAND = 'Expand this panel to take up a larger area';
 export class TablePanel extends PureComponent {
     constructor(props) {
         super(props);
+        this.componentWillReceiveProps(props);
+
+        this.toggleFilter = this.toggleFilter.bind(this);
+        this.toggleTextView = this.toggleTextView.bind(this);
+        this.clearFilter = this.clearFilter.bind(this);
+        this.saveTable = this.saveTable.bind(this);
+        this.toggleOptions = this.toggleOptions.bind(this);
+        this.expandTable = this.expandTable.bind(this);
+        this.onOptionUpdate = this.onOptionUpdate.bind(this);
+        this.onOptionReset = this.onOptionReset.bind(this);
+    }
+
+    componentWillReceiveProps(props) {
         var {tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize} = props;
 
         if (!tbl_id && tableModel) {
@@ -45,15 +58,6 @@ export class TablePanel extends PureComponent {
         this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize);
         const uiState = TblUtil.getTableUiById(tbl_ui_id);
         this.state = Object.assign({}, this.props, uiState);
-
-        this.toggleFilter = this.toggleFilter.bind(this);
-        this.toggleTextView = this.toggleTextView.bind(this);
-        this.clearFilter = this.clearFilter.bind(this);
-        this.saveTable = this.saveTable.bind(this);
-        this.toggleOptions = this.toggleOptions.bind(this);
-        this.expandTable = this.expandTable.bind(this);
-        this.onOptionUpdate = this.onOptionUpdate.bind(this);
-        this.onOptionReset = this.onOptionReset.bind(this);
     }
 
     componentDidMount() {

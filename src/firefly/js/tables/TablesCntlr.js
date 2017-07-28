@@ -316,7 +316,7 @@ function tableSearch(action) {
         if (!action.err) {
             dispatch(action);
             var {request={}, options={}} = action.payload;
-            const {tbl_ui_id, backgroundable = true} = options;
+            const {tbl_ui_id, backgroundable = false} = options;
             const {tbl_id} = request;
             const title = get(request, 'META_INFO.title');
             request.pageSize = options.pageSize = options.pageSize || request.pageSize || 100;

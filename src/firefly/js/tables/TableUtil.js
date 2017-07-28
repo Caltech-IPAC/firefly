@@ -19,11 +19,13 @@ import {doUpload} from '../ui/FileUpload.jsx';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {getWsConnId} from '../core/messaging/WebSocketClient.js';
 
+export const TableTagMeta = 'META_INFO.TableTag'; // a tag describing the content of this table.  ie. 'catalog', 'imagemeta'
 export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT']);
 export const MAX_ROW = Math.pow(2,31) - 1;
 /* TABLE_REQUEST should match QueryUtil on the server-side */
 
-const LSSTQueryPID = 'LSSTCataLogSearch';
+
+
 
 
 /**
@@ -154,7 +156,7 @@ export function makeLsstCatalogRequest(title, project, database, catalog, params
     title = title || catalog;
     options.use = options.use || 'lsst_catalog_overlay';
     const tbl_id = options.tbl_id || uniqueTblId();
-    const id = get(params, 'SearchMethod')==='Table'?'LSSTMultiObjectSearch':LSSTQueryPID;
+    const id = get(params, 'SearchMethod')==='Table'?'LSSTMultiObjectSearch':'LSSTCataLogSearch';
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
     const table_name = catalog;
     const meta_table = catalog;
