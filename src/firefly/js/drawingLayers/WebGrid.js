@@ -60,7 +60,8 @@ function creator(params) {
         hasPerPlotData:true,
         isPointData:false,
         useLabels,
-        canUserChangeColor: ColorChangeType.DYNAMIC
+        canUserChangeColor: ColorChangeType.DYNAMIC,
+        destroyWhenAllDetached: true
     };
     
     return DrawLayer.makeDrawLayer( id, TYPE_ID, 'grid', options , drawingDef);

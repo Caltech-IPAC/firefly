@@ -48,6 +48,7 @@ export const ColorChangeType= {DISABLE,DYNAMIC,STATIC};
  * @prop {Boolean} canUserDelete  default: true
  * @prop {Boolean} destroyWhenAllDetached default: false ,hint to controller, when all plots have been detached, destroy this layer
  * @prop {String} helpLine   default: '', a one line string describing the operation, for the end user to see
+ * @prop {Boolean} canAttachNewPlot default: true, can be attached to the new plot created after the drawing layer is created
  *
  * @prop {Object} drawData   the data to draw
  * @prop {Object} mouseEventMap,
@@ -106,6 +107,7 @@ export const ColorChangeType= {DISABLE,DYNAMIC,STATIC};
  *                                   can be DISABLE,DYNAMIC, or STATIC, default: STATIC
  * @param {boolean} [options.canUserDelete] drawing layer can be deleted by the user, default: true
  * @param {string} [options.helpLine] a one line string describing the operation, for the end user to see
+ * @param {boolean} [options.canAttachNewPlot] can be attached to new plot created after the drawing layer is created
  *
  * @param {object} drawingDef  the defaults that the drawer will use if not overridden by the object @see DrawingDef
  * @param {Array} actionTypeAry extra [actions] that are allow though to the drawing layer reducer
@@ -171,6 +173,7 @@ function makeDrawLayer(drawLayerId,
         destroyWhenAllDetached : false, // hint to controller, when all plots have been detached, destroy this layer
         helpLine : '',
         decimate: false, // enable decimation
+        canAttachNewPlot: true,
 
            // drawData contains the components that may be drawn.
            // Three keys are supported data, highlightData, selectedIdxAry

@@ -21,11 +21,10 @@ import {WPConst, DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import {Band} from '../Band.js';
 import {PlotPref} from '../PlotPref.js';
 import ActiveTarget  from '../../drawingLayers/ActiveTarget.js';
-import PointSelection  from '../../drawingLayers/PointSelection.js';
 import * as DrawLayerCntlr from '../DrawLayerCntlr.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddViewerItems, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
-import {getPlotViewById, getDrawLayerByType, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
+import {getPlotViewById, getDrawLayerByType, getDrawLayersByType, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
 import {enableMatchingRelatedData} from '../RelatedDataUtil.js';
 import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
@@ -308,28 +307,24 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
 function addDrawLayers(request, plot ) {
     const {plotId}= plot;
     request.getOverlayIds().forEach((drawLayerTypeId)=> {
-        const dl = getDrawLayerByType(dlRoot(), drawLayerTypeId);
-        if (dl) {
+        const dls = getDrawLayersByType(dlRoot(), drawLayerTypeId);
+        dls.forEach((dl) => {
             if (dl.drawLayerTypeId===ActiveTarget.TYPE_ID) {
                 const pt= plot.attributes[PlotAttribute.FIXED_TARGET];
                 if (pt && pt.type===Point.W_PT) {
                     DrawLayerCntlr.dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
                 }
+            } else if (dl.canAttachNewPlot) {
+                DrawLayerCntlr.dispatchAttachLayerToPlot(dl.drawLayerId, plotId, false, false, true);
             }
-            else {
-                DrawLayerCntlr.dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
-            }
-            if (dl.drawLayerTypeId===PointSelection.TYPE_ID) {
-                DrawLayerCntlr.dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
-            }
-        }
+        });
     });
 
     if (request.getGridOn()!==GridOnStatus.FALSE) {
         const dl = getDrawLayerByType(dlRoot(), WebGrid.TYPE_ID);
         const useLabels= request.getGridOn()===GridOnStatus.TRUE;
         if (!dl) dispatchCreateDrawLayer(WebGrid.TYPE_ID, {useLabels});
-        dispatchAttachLayerToPlot(WebGrid.TYPE_ID, plotId, true);
+        dispatchAttachLayerToPlot(WebGrid.TYPE_ID, plotId, true, true);
     }
 }
 

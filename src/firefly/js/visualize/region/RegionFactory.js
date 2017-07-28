@@ -13,10 +13,7 @@ import CoordUtil from '../CoordUtil.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {makeWorldPt, makeImagePt} from '../Point.js';
 import {convertAngle} from '../VisUtil.js';
-import CsysConverter from '../CsysConverter.js';
-import {primePlot} from '../PlotViewUtil.js';
-import {visRoot } from '../ImagePlotCntlr.js';
-import {logError} from '../../util/WebUtil.js'
+import {logError} from '../../util/WebUtil.js';
 
 import {set, unset, has, get, isEmpty} from 'lodash';
 import Enum from 'enum';

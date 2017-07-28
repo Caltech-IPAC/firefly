@@ -224,7 +224,7 @@ export function getConnectedPlotsIds(ref, drawLayerId) {
 
 
 /**
- *
+ * get the first found drawing layer of type 'typeId'
  * @param {DrawLayer[]|DrawLayerRoot} ref - the root of the drawing layer controller or the master array of all drawing layers
  * @param typeId
  * @return {object} the draw layer
@@ -232,6 +232,17 @@ export function getConnectedPlotsIds(ref, drawLayerId) {
 export function getDrawLayerByType(ref,typeId) {
     const dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
     return dlAry.find( (dl) => dl.drawLayerTypeId===typeId);
+}
+
+/**
+ * get all drawing layers of type 'typeId'
+ * @param {DrawLayer[]|DrawLayerRoot} ref - the root of the drawing layer controller or the master array of all drawing layers
+ * @param typeId
+ * @return {object} the draw layer
+ */
+export function getDrawLayersByType(ref,typeId) {
+    const dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
+    return dlAry.filter( (dl) => dl.drawLayerTypeId===typeId);
 }
 
 /**

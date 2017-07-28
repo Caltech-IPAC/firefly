@@ -70,7 +70,7 @@ public class LSSTMultiObjectSearch extends LSSTCataLogSearch{
 
         String tableName = request.getParam("table_name");
         String database = request.getParam("database");
-       return ConcurrentSearchUtil.doSearch(workers, nThread, inDg, (String)getRA(database, tableName), (String)getDEC(database, tableName));
+       return ConcurrentSearchUtil.doSearch(workers, nThread, inDg, (String)LSSTQuery.getRA(database, tableName), (String)LSSTQuery.getDEC(database, tableName));
 
     }
 

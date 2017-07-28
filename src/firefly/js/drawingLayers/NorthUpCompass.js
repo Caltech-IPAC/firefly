@@ -53,7 +53,8 @@ function creator() {
     var options= {
         hasPerPlotData:true,
         isPointData:false,
-        canUserChangeColor: ColorChangeType.DYNAMIC
+        canUserChangeColor: ColorChangeType.DYNAMIC,
+        destroyWhenAllDetached: true
     };
 
     var id = `${ID}-${idCnt}`;

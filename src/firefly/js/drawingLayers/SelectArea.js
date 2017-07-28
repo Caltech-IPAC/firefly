@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isEmpty} from 'lodash';
+import {isEmpty, get} from 'lodash';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
@@ -84,7 +84,7 @@ function creator() {
         [MouseState.MOVE.key]: DrawLayerCntlr.SELECT_MOUSE_LOC,
         [MouseState.DRAG.key]: DrawLayerCntlr.SELECT_AREA_MOVE,
         [MouseState.DOWN.key]: DrawLayerCntlr.SELECT_AREA_START,
-        [MouseState.UP.key]: DrawLayerCntlr.SELECT_AREA_END,
+        [MouseState.UP.key]: DrawLayerCntlr.SELECT_AREA_END
     };
 
     const actionTypes= [DrawLayerCntlr.SELECT_AREA_START,
@@ -152,7 +152,9 @@ function getLayerChanges(drawLayer, action) {
             return end(drawLayer,action);
             break;
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-            return attach();
+            if (!get(action.payload, 'isExistingDrawLayer', false)) {
+                return attach();
+            }
             break;
         case DrawLayerCntlr.SELECT_MOUSE_LOC:
             return moveMouse(drawLayer,action);
