@@ -21,7 +21,6 @@ import {convertAngle} from '../../../visualize/VisUtil.js';
  * @returns {WebPlotRequest}
  */
 export function getWebPlotRequestViaPTFIbe(tableModel, hlrow, cutoutSize, params = {
-    bandName: 'g',
     fluxCol: 'mag_autocorr',
     dataSource: 'pid'
 }) {
@@ -37,9 +36,9 @@ export function getWebPlotRequestViaPTFIbe(tableModel, hlrow, cutoutSize, params
     try {
 
         // flux/value column control this | unless UI has radio button band enabled, put bandName back here to match band
-        const band = `${params.bandName}`;
+        //const band = `${params.bandName}`;
 
-        let title = 'PTF-W' + band + '-' + pid;
+        let title = 'PTF-' + pid;
 
         const sr = new ServerRequest('ibe_file_retrieve');
         sr.setParam('mission', 'ptf');
@@ -59,7 +58,7 @@ export function getWebPlotRequestViaPTFIbe(tableModel, hlrow, cutoutSize, params
             sr.setParam('doCutout', 'true');
             sr.setParam('size', `${cutoutSizeInDeg}`);
             sr.setParam('subsize', `${cutoutSizeInDeg}`);
-            title = 'PTF-' + band + '-' + pid + (cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
+            title = 'PTF-' + pid + (cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
         }
 
         const reqParams = WebPlotRequest.makeProcessorRequest(sr, 'ptf');
