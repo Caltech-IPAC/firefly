@@ -397,14 +397,12 @@ function makeOverlayCoverageDrawing() {
             drawingOptions[tbl_id]= layer.drawingDef;
             dispatchDestroyDrawLayer(tbl_id);
         }
-        else {
-            drawingOptions[tbl_id]= {};
-        }
 
         const overlayAry=  options.multiCoverage ? Object.keys(decimatedTables) : [allRowsTable.tbl_id];
 
         overlayAry.forEach( (id) => {
             // if (id!==tbl_id) return;
+            if (!drawingOptions[id]) drawingOptions[id]= {};
             if (!drawingOptions[id].color) drawingOptions[id].color= lookupOption(options,'color',id) || getNextColor();
             const oriTable= getTblById(id);
             const arTable= decimatedTables[id];
@@ -421,7 +419,7 @@ function makeOverlayCoverageDrawing() {
  * @param {CoverageOptions} options
  * @param {TableData} table
  * @param {TableData} allRowsTable
- * @param {string} color
+ * @param {string} drawOp
  */
 function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp) {
 
