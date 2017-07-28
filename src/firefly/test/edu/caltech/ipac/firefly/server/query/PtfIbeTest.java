@@ -11,6 +11,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Map;
 
 /**
  * Created by ejoliet on 7/20/17.
@@ -36,6 +37,11 @@ public class PtfIbeTest extends ConfigTest {
              */
             protected File getTempFile() throws IOException {
                 return f;
+            }
+
+            @Override
+            public Map<String, String> getCookies() {
+                return null;
             }
         };
         String[] fs = res.getValuesFromColumn(pids, "pfilename");

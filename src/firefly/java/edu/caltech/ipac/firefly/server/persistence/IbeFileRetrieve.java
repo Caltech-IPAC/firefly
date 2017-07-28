@@ -46,6 +46,8 @@ public class IbeFileRetrieve extends BaseFileInfoProcessor {
             if (ofile == null ||  ofile.getSizeInBytes() == 0) {
                 return null;
             } else {
+                Map<String, String> cookies = ServerContext.getRequestOwner().getIdentityCookies();
+                ofile.setCookies(cookies);
                 return ofile;
             }
         } catch (Exception e) {

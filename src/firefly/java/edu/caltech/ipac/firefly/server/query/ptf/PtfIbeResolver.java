@@ -20,6 +20,7 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Utility class to get metadata from PTF pids using IBE API.
@@ -60,7 +61,7 @@ public class PtfIbeResolver {
     public String[] getValuesFromColumn(long pid[], String colName) throws IOException {
         File tempFile = getTempFile();
         try {
-            URLConnection aconn = URLDownload.makeConnection(createURL(pid));
+            URLConnection aconn = URLDownload.makeConnection(createURL(pid), getCookies());
             aconn.setRequestProperty("Accept", "*/*");
             URLDownload.getDataToFile(aconn, tempFile);
         } catch (Exception e) {
@@ -105,5 +106,10 @@ public class PtfIbeResolver {
             f.deleteOnExit();
         }
         return f;
+    }
+
+    public Map<String,String> getCookies() {
+        if(isTestMode) return null;//or overwrite in test unit
+        return ServerContext.getRequestOwner().getIdentityCookies();
     }
 }
