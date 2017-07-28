@@ -337,9 +337,7 @@ export function dispatchPlotProgressUpdate(plotId, message, done, requestKey ) {
  * @param {number} height this parameter should be the offsetHeight of the dom element
  */
 export function dispatchUpdateViewSize(plotId,width,height) {
-    flux.process({type: UPDATE_VIEW_SIZE,
-        payload: {plotId, width, height}
-    });
+    flux.process({type: UPDATE_VIEW_SIZE, payload: {plotId, width, height} });
 }
 
 /**
@@ -377,7 +375,7 @@ export function dispatchChangePrimePlot({plotId, primeIdx, dispatcher= flux.proc
  * @param {Object}  obj
  * @param {string} obj.plotId
  * @param {number} obj.cbarId must be in the range, 0 - 21, each number represents different colorbar
- * @param {ActionScope} [obj.actionScope] default to group
+ * @param {string|ActionScope} [obj.actionScope] default to group
  * @param {Function} [obj.dispatcher] only for special dispatching uses such as remote
  *
  *
@@ -439,7 +437,7 @@ export function dispatchWcsMatch({plotId, matchType, dispatcher= flux.process} )
  * @param {string} p.plotId
  * @param {Enum} p.rotateType enum RotateType
  * @param {number} p.angle
- * @param {ActionScope} p.actionScope enum ActionScope
+ * @param {string|ActionScope} p.actionScope enum ActionScope
  * @param {Function} p.dispatcher only for special dispatching uses such as remote
  *
  * @public
@@ -461,7 +459,7 @@ export function dispatchRotate({plotId, rotateType, angle=-1,
  * @param {Object}  p
  * @param {string} p.plotId
  * @param {boolean} p.isY
- * @param {ActionScope} p.actionScope enum ActionScope
+ * @param {string|ActionScope} p.actionScope enum ActionScope
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  *
  * @public
@@ -547,7 +545,7 @@ export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
  * Note - function parameter is a single object
  * @param {Object}  p
  * @param {string} [p.plotId] is required unless defined in the WebPlotRequest
- * @param {WebPlotRequest|Array} p.wpRequest -  plotting parameters, required or for 3 color pass an array of WebPlotRequest
+ * @param {Object|WebPlotRequest|Array} p.wpRequest -  plotting parameters, required or for 3 color pass an array of WebPlotRequest
  * @param {boolean} [p.threeColor] is a three color request, if true the wpRequest should be an array
  * @param {boolean} [p.addToHistory=true] add this request to global history of plots, may be deprecated in the future
  * @param {boolean} [p.useContextModifications=true] it true the request will be modified to use preferences, rotation, etc
@@ -664,12 +662,12 @@ export function dispatchOverlayPlotChangeAttributes({plotId,imageOverlayId, attr
  * Note - function parameter is a single object
  * @param {Object}  p this function takes a single parameter
  * @param {string} p.plotId
- * @param {UserZoomTypes} p.userZoomType (one of ['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV')
+ * @param {string|UserZoomTypes} p.userZoomType (one of ['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV')
  * @param {boolean} [p.maxCheck]
  * @param {boolean} [p.zoomLockingEnabled]
  * @param {boolean} [p.forceDelay]
  * @param {number} [p.level] the level to zoom to, used only userZoomType 'LEVEL'
- * @param {ActionScope} [p.actionScope] default to group
+ * @param {string|ActionScope} [p.actionScope] default to group
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  *
  * @public
@@ -780,7 +778,7 @@ export function dispatchChangeExpandedMode(expandedMode) {
         const pv= getPlotViewById(vr,plotId);
         if (pv) {
             const group= getPlotGroupById(vr,pv.plotGroupId);
-            const plotIdAry= getOnePvOrGroup(vr.plotViewAry,plotId,group).map( (pv) => pv.plotId);
+            const plotIdAry= getOnePvOrGroup(vr.plotViewAry,plotId,group, true).map( (pv) => pv.plotId);
             dispatchReplaceViewerItems(EXPANDED_MODE_RESERVED,plotIdAry);
         }
     }
@@ -825,7 +823,9 @@ export function dispatchExpandedAutoPlay(autoPlayOn) {
 /**
  *
  * @param plotId
+ * @param imageOverlayId
  * @param plotImageId
+ * @param zoomFactor
  * @param clientTileAry
  */
 export function dispatchAddProcessedTiles(plotId, imageOverlayId, plotImageId, zoomFactor, clientTileAry) {
@@ -852,10 +852,12 @@ function changePrimeActionCreator(rawAction) {
 function deletePlotViewActionCreator(rawAction) {
     return (dispatcher, getState) => {
         const vr= getState()[IMAGE_PLOT_KEY];
+        const viewerId= findViewerWithItemId(getMultiViewRoot(), rawAction.payload.plotId, IMAGE);
+
         if (vr.wcsMatchType && !rawAction.payload.holdWcsMatch) {
             dispatcher({ type: WCS_MATCH, payload: {wcsMatchType:false} });
         }
-        dispatcher(rawAction);
+        dispatcher({type:rawAction.type, payload: clone(rawAction.payload, {viewerId})} );
     };
 }
 

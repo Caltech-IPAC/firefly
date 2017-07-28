@@ -4,33 +4,37 @@
 
 import {take} from 'redux-saga/effects';
 
-import {get, isEmpty, filter, pick} from 'lodash';
+import {get, isEqual, isEmpty, filter, pick, uniqBy} from 'lodash';
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
 import {smartMerge} from '../tables/TableUtil.js';
 import {getDropDownNames} from '../ui/Menu.jsx';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
-import {TBL_RESULTS_ADDED, TABLE_REMOVE} from '../tables/TablesCntlr.js';
+import {TBL_RESULTS_ADDED, TBL_RESULTS_REMOVE, TABLE_REMOVE} from '../tables/TablesCntlr.js';
 import {CHART_ADD, CHART_REMOVE} from '../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../visualize/MultiViewCntlr.js';
 
 export const LAYOUT_PATH = 'layout';
 
 // this enum is flaggable, therefore you can use any combination of the 3, i.e. 'tables | images'.
-export const LO_VIEW = new Enum(['none', 'tables', 'images', 'xyPlots'], { ignoreCase: true });
+export const LO_VIEW = new Enum(['none', 'tables', 'images', 'xyPlots', 'tableImageMeta', 'coverageImage'], { ignoreCase: true });
 export const LO_MODE = new Enum(['expanded', 'standard']);
+export const SPECIAL_VIEWER = new Enum(['tableImageMeta', 'coverageImage'], { ignoreCase: true });
 
 /*---------------------------- Actions ----------------------------*/
 
 export const SET_LAYOUT         = `${LAYOUT_PATH}.setLayout`;
 export const SET_LAYOUT_MODE    = `${LAYOUT_PATH}.setLayoutMode`;
 export const SHOW_DROPDOWN      = `${LAYOUT_PATH}.showDropDown`;
+export const ADD_CELL           = `${LAYOUT_PATH}.addCell`;
+export const REMOVE_CELL        = `${LAYOUT_PATH}.removeCell`;
+export const ENABLE_SPECIAL_VIEWER= `${LAYOUT_PATH}.enableSpecialViewer`;
 
 /*---------------------------- Reducers ----------------------------*/
 
 export function reducer(state={}, action={}) {
-    var {mode, view} = action.payload || {};
+    const {mode, view} = action.payload || {};
 
     switch (action.type) {
         case SET_LAYOUT :
@@ -44,14 +48,60 @@ export function reducer(state={}, action={}) {
             return smartMerge(state, {mode: {[mode]: view}});
 
         case SHOW_DROPDOWN :
-            var {visible = true} = action.payload;
+            const {visible = !state.disableDefaultDropDown} = action.payload;
             return smartMerge(state, {dropDown: {visible, view: getSelView(state, action.payload)}});
-
+        case ADD_CELL :
+            return addCell(state, action.payload);
+        case REMOVE_CELL :
+            return removeCell(state, action.payload);
+        case ENABLE_SPECIAL_VIEWER :
+            return enableSpecialViewer(state,action.payload);
         default:
             return state;
     }
 
 }
+
+/*---------------------------- Reducer helpers -----------------------------*/
+
+function enableSpecialViewer(state,payload) {
+    const {viewerType, cellId}= payload;
+    const vType= SPECIAL_VIEWER.get(viewerType);
+    if (!vType || !cellId) return state;
+    const newVal= state[vType.key] ? [...state[vType.key], cellId] : [cellId];
+    return Object.assign({}, state, {[vType.key]: newVal});
+}
+
+function addCell(state,payload) {
+    const {row=0, col=0, width=1, height=1, cellId}= payload;
+    const type= LO_VIEW.get(payload.type);
+    if (!type || !cellId) return state; // row, col, type, cellId must be defined
+
+    let {gridView=[]}=  state;
+
+    const c= gridView.find((entry) => entry.cellId===cellId);
+    const newEntry= { cellId, row, col, width, height, type };
+    if (isEqual(c,newEntry)) return state; // no changes
+
+                     // either update or add the new cell
+    gridView= c ? gridView.map( (entry) => entry.cellId===cellId ? newEntry : entry) :
+                  [...gridView, newEntry];
+
+
+    const dim= getGridDim(gridView);
+    const cols= state.gridColumns || 1;
+
+
+    return clone(state, {gridView, gridColumns: cols>dim.cols ? cols : dim.cols});
+}
+
+function removeCell(state,payload) {
+    const {cellId}= payload;
+    const {gridView}=  state;
+    if (isEmpty(gridView) || !cellId) return state;
+    return clone(state, {gridView: gridView.filter( (g) => g.cellId!==cellId)});
+}
+
 
 /*---------------------------- DISPATCHERS -----------------------------*/
 
@@ -87,6 +137,43 @@ export function dispatchHideDropDown() {
     flux.process({type: SHOW_DROPDOWN, payload: {visible: false}});
 }
 
+/**
+ * Add a cell definition to the LayoutInfo
+ *
+ * @param {Object} p
+ * @param {number} p.row
+ * @param {number} p.col
+ * @param {number} p.width
+ * @param {number} p.height
+ * @param {LO_VIEW|string} p.type
+ * @param {string} p.cellId
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchAddCell({row,col,width,height,type, cellId, dispatcher= flux.process}) {
+    dispatcher({type: ADD_CELL,   payload: {row,col,width,height,type, cellId}});
+}
+
+/**
+ * remove a cell definition from the LayoutInfo
+ *
+ * @param {Object} p
+ * @param {string} p.cellId
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchRemoveCell({cellId, dispatcher= flux.process}) {
+    dispatcher({type: REMOVE_CELL,   payload: {cellId}});
+}
+
+/**
+ *
+ * @param {Object} p
+ * @param p.viewerType
+ * @param p.cellId
+ * @param p.dispatcher
+ */
+export function dispatchEnableSpecialViewer({viewerType, cellId, dispatcher= flux.process}) {
+    dispatcher({type: ENABLE_SPECIAL_VIEWER,  payload: {viewerType, cellId}});
+}
 
 /*------------------------- Util functions -------------------------*/
 export function getExpandedMode() {
@@ -101,6 +188,15 @@ export function getDropDownInfo() {
     return get(flux.getState(), 'layout.dropDown', {visible: false});
 }
 
+export function getGridCell(cellId) {
+    const {gridView=[]}= getLayoutRoot();
+    return gridView.find( (entry) => entry.cellId===cellId);
+}
+
+export function getLayoutRoot() {
+    return get(flux.getState(), [LAYOUT_PATH]);
+}
+
 /**
  * @returns {LayoutInfo} returns the layout information of the application
  */
@@ -113,7 +209,7 @@ export function getLayouInfo() {
 }
 
 function getSelView(state, dropDown) {
-    var {visible=true, view} = dropDown || {};
+    var {visible=!state.disableDefaultDropDown, view} = dropDown || {};
     if (visible && !view) {
         return get(state, 'layout.dropDown.view') || getDropDownNames()[0];
     }
@@ -143,6 +239,7 @@ export function dropDownHandler(layoutInfo, action) {
 
         case SHOW_DROPDOWN:
         case TABLE_REMOVE:
+        case TBL_RESULTS_REMOVE:
         case ImagePlotCntlr.DELETE_PLOT_VIEW:
             if (!get(layoutInfo, 'dropDown.visible', false)) {
                 if (count===0) {
@@ -166,7 +263,7 @@ export function* dropDownManager() {
         const action = yield take([
             ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE,
             REPLACE_VIEWER_ITEMS,
-            TABLE_REMOVE, TBL_RESULTS_ADDED,
+            TABLE_REMOVE, TBL_RESULTS_ADDED, TBL_RESULTS_REMOVE,
             CHART_ADD, CHART_REMOVE,
             SHOW_DROPDOWN, SET_LAYOUT_MODE
         ]);
@@ -175,10 +272,78 @@ export function* dropDownManager() {
          * @type {LayoutInfo}
          * @prop {boolean}  layoutInfo.dropDown.visible  show or hide the drop-down panel
          */
-        var layoutInfo = getLayouInfo();
-        var newLayoutInfo = dropDownHandler(layoutInfo, action);
+        const layoutInfo = getLayouInfo();
+        const newLayoutInfo = dropDownHandler(layoutInfo, action);
         if (newLayoutInfo !== layoutInfo) {
             dispatchUpdateLayoutInfo(newLayoutInfo);
         }
     }
 }
+
+/**
+ * get the Dimensions of the grid
+ * @param {Array.<GridViewEntry>} gridView used only with the grid view, undefined for other views
+ * @param {number} sizeFactor
+ * @return {{rows: number, cols: number}}
+ */
+export function getGridDim(gridView, sizeFactor=1) {
+    const maxRow= gridView.reduce( (largest,c) => largest > c.height+c.row ? largest : c.height+c.row, 0 );
+    const maxCol= gridView.reduce( (largest,c) => largest > c.width+c.col ? largest : c.width+c.col, 0 );
+    return {rows: maxRow*sizeFactor, cols: maxCol*sizeFactor};
+}
+
+export function getNextRow(gridView, col) {
+    return gridView.filter( (g) => g.col===col)
+        .reduce( (sum,c) => sum+ c.height, 0 );
+}
+
+export function getNextColumn(gridView, row) {
+    return gridView.filter( (g) => g.row===row)
+        .reduce( (sum,c) => sum+ c.width, 0 );
+}
+
+export function getNextCell(gridView, w, h) {
+    const dim= getGridDim(gridView);
+    if (dim.rows===0 && dim.cols===0) return {row:0, col:dim.cols};
+
+    const rows= uniqBy(gridView, 'row').map( (g) => g.row);
+    let fitCol;
+    for(let i=0; (i<rows.length); i++) {
+        fitCol= getColFitIdx(gridView,rows[i], i, dim.cols,w);
+        if (fitCol>-1) return {row:rows[i], col:fitCol};
+    }
+
+    if (dim.rows===dim.cols) {
+        return {row:0, col:dim.cols};
+    }
+    else {
+        return {row:dim.rows, col:0};
+    }
+
+}
+
+
+
+function getColFitIdx(gridView, row, testIdx, gridColumns, testWidth) {
+    const rowData= gridView.filter( (g) => g.row===row);
+    return rowData.reduce( (fitIdx,g,idx) =>  {
+        if (fitIdx>-1) {
+            return fitIdx;
+        }
+        else if (idx+1===rowData.length) {
+            if ( gridColumns- (g.col+g.width) >= testWidth) {
+               fitIdx= g.col+g.width;
+            }
+        }
+        else {
+            if ( rowData[idx+1].col -  (g.col+g.width) >= testWidth) {
+                fitIdx= g.col+g.width;
+            }
+        }
+        return fitIdx;
+    }   ,-1);
+
+
+}
+
+

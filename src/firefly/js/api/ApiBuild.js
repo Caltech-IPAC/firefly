@@ -15,6 +15,7 @@ import * as MultiViewCntlr from '../visualize/MultiViewCntlr.js';
 import * as AppDataCntlr from '../core/AppDataCntlr.js';
 import * as DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {ApiExpandedView} from './ApiExpandedView.jsx';
+import {dispatchAddCell, dispatchRemoveCell, dispatchEnableSpecialViewer} from '../core/LayoutCntlr.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 
 // Parts of the lowlevel api
@@ -28,7 +29,7 @@ import {MultiImageViewer} from '../visualize/ui/MultiImageViewer.jsx';
 import {ImageViewer} from '../visualize/iv/ImageViewer.jsx';
 import {ImageMetaDataToolbar} from '../visualize/ui/ImageMetaDataToolbar.jsx';
 import {MultiViewStandardToolbar} from '../visualize/ui/MultiViewStandardToolbar.jsx';
-import {ExpandedModeDisplay} from '../visualize/iv/ExpandedModeDisplay.jsx';
+import {ImageExpandedMode} from '../visualize/iv/ImageExpandedMode.jsx';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {TablePanel} from '../tables/ui/TablePanel.jsx';
@@ -172,6 +173,7 @@ export function buildLowlevelAPI() {
         findDispatch(ImPlotCntlr),
         findDispatch(AppDataCntlr),
         findDispatch(DrawLayerCntlr),
+        {dispatchAddCell, dispatchRemoveCell, dispatchEnableSpecialViewer},
         {dispatchAddSaga}
     );
 
@@ -180,7 +182,7 @@ export function buildLowlevelAPI() {
         MultiImageViewer,
         MultiViewStandardToolbar,
         ApiExpandedDisplay,
-        ExpandedModeDisplay,
+        ImageExpandedMode,
         ImageMetaDataToolbar,
         TablesContainer,
         TablePanel,

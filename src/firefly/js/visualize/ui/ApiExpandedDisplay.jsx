@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
 import {VisHeaderView} from './VisHeaderView.jsx';
-import {ExpandedModeDisplay} from '../iv/ExpandedModeDisplay.jsx';
+import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
 import {addMouseListener, lastMouseCtx} from '../VisMouseSync.js';
 import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
 
@@ -52,7 +52,7 @@ export class ApiExpandedDisplay extends PureComponent {
                     <VisHeaderView visRoot={visRoot} currMouseState={currMouseState} readout={readout}/>
                 </div>
                 <div style={{flex: '1 1 auto', display:'flex'}}>
-                    <ExpandedModeDisplay   {...{key:'results-plots-expanded', closeFunc, insideFlex:true}}/>
+                    <ImageExpandedMode   {...{key:'results-plots-expanded', closeFunc}}/>
                 </div>
             </div>
             );

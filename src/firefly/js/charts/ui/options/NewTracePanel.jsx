@@ -12,17 +12,21 @@ import {PopupPanel} from '../../../ui/PopupPanel.jsx';
 import {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {ScatterOptions, submitChangesScatter} from './ScatterOptions.jsx';
+import {HeatmapOptions, submitChangesHeatmap} from './HeatmapOptions.jsx';
 import {HistogramOptions} from './PlotlyHistogramOptions.jsx';
 import {FireflyHistogramOptions, submitChangesFFHistogram} from './FireflyHistogramOptions.jsx';
-import {BasicOptionFields, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
+import {BasicOptionFields, basicFieldReducer, submitChanges, hasMarkerColor} from './BasicOptions.jsx';
 
 const fieldProps = {labelWidth: 62, size: 15};
+const dialogNameNewTrace = 'NewTracePanel';
 
 function getSubmitChangesFunc(traceType) {
     switch(traceType) {
         case 'scatter':
         case 'scattergl':
             return submitChangesScatter;
+        case 'heatmap':
+            return submitChangesHeatmap;
         case 'fireflyHistogram':
             return submitChangesFFHistogram;
         default:
@@ -31,10 +35,13 @@ function getSubmitChangesFunc(traceType) {
 }
 
 function getOptionsComponent({traceType, chartId, activeTrace, groupKey}) {
+    const noColor = !hasMarkerColor(traceType);
     switch(traceType) {
         case 'scatter':
         case 'scattergl':
             return (<ScatterOptions {...{chartId, activeTrace, groupKey}}/>);
+        case 'heatmap':
+            return (<HeatmapOptions {...{chartId, activeTrace, groupKey}}/>);
         case 'fireflyHistogram':
             return (<FireflyHistogramOptions {...{chartId, activeTrace, groupKey}}/>);
         case 'histogram':
@@ -44,7 +51,7 @@ function getOptionsComponent({traceType, chartId, activeTrace, groupKey}) {
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
                     <ValidationField fieldKey={`_tables.data.${activeTrace}.x`}/>
                     <ValidationField fieldKey={`_tables.data.${activeTrace}.y`}/>
-                    <BasicOptionFields {...{activeTrace, groupKey}}/>
+                    <BasicOptionFields {...{activeTrace, groupKey, noColor}}/>
                 </FieldGroup>
             );
     }
@@ -58,8 +65,6 @@ export class NewTracePanel extends SimpleComponent {
         const activeTrace = data.length;        //setting activeTrace to next available index.
         const type = getFieldVal('new-trace', 'type') || 'scatter';
         const groupKey = `${chartId}-new-trace-${type}`;
-        //const groupKey = `${chartId}-new-trace-${activeTrace}`;
-        //const type = getFieldVal(groupKey, `data.${activeTrace}.type`) || 'scatter';
         return {groupKey, activeTrace, type};
     }
 
@@ -71,21 +76,28 @@ export class NewTracePanel extends SimpleComponent {
             const submitChangesFunc =  getSubmitChangesFunc(traceType);
 
             fields = Object.assign({activeTrace}, fields);  // make the newly added trace active
-            fields[`data.${activeTrace}.type`] = type; //make sure trace type is set
+            fields[`data.${activeTrace}.type`] = type; // make sure trace type is set
 
             // apply defaults settings
             Object.entries(getNewTraceDefaults(type, activeTrace))
                     .forEach(([k,v]) => !fields[k] && (fields[k] = v));
             
             // need to hide before the changes are submitted to avoid React Internal error too much recursion (mounting/unmouting fields)
-            dispatchHideDialog('ScatterNewTracePanel');
+            dispatchHideDialog(dialogNameNewTrace);
             submitChangesFunc({chartId, activeTrace, fields, tbl_id});
         };
 
         return (
             <div style={{padding: 10}}>
                 <FieldGroup className='FieldGroup__vertical' style={{padding: 5}} keepState={true} groupKey='new-trace'>
-                    <ListBoxInputField fieldKey='type' tooltip='Select plot type' label='Plot Type:' options={[{value:'scatter'}, {value:'fireflyHistogram'}, {value:'histogram'}]} {...fieldProps} />
+                    <ListBoxInputField fieldKey='type' tooltip='Select plot type' label='Plot Type:'
+                        options={[
+                            {label: 'Scatter', value: 'scatter'},
+                            {label: 'Heatmap', value: 'heatmap'},
+                            {label: 'Firefly histogram', value: 'fireflyHistogram'},
+                            {label: 'Plotly histogram', value: 'histogram'}
+                        ]}
+                        {...fieldProps} />
                 </FieldGroup>
                 <br/>
                 {getOptionsComponent({traceType:type, chartId, activeTrace, groupKey})}
@@ -96,7 +108,7 @@ export class NewTracePanel extends SimpleComponent {
                                     text='ADD'
                     />
                     <button type='button' className='button std'
-                            onClick={() => dispatchHideDialog('ScatterNewTracePanel')}>Cancel
+                            onClick={() => dispatchHideDialog(dialogNameNewTrace)}>Cancel
                     </button>
                 </div>
             </div>
@@ -111,8 +123,8 @@ export function NewTracePanelBtn({tbl_id, chartId}) {
                 <NewTracePanel {...{tbl_id, chartId}}/>
             </PopupPanel>
         );
-        DialogRootContainer.defineDialog('ScatterNewTracePanel', content);
-        dispatchShowDialog('ScatterNewTracePanel');
+        DialogRootContainer.defineDialog(dialogNameNewTrace, content);
+        dispatchShowDialog(dialogNameNewTrace);
     }
     return (
         <button type='button' className='button std' onClick={showNewTracePanel}>Add Series</button>

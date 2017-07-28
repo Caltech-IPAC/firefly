@@ -79,14 +79,20 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
             }
         }
 
-        String imageType = request.getParam("imageType"); // calexp
-        if (!imageType.equals("calexp")) {
-            throw new DataAccessException("Only calexp cutouts are supported at the moment");
-        }
-        String imageId = request.getParam("imageId");
-
+        String imageType = request.getParam("imageType"); // calexp or coadd
         double subsizeArcSec = MathUtil.convert(MathUtil.Units.DEGREE, MathUtil.Units.ARCSEC, request.getDoubleParam("subsize"));
-        return new URL(DAX_URL+imageType+"/"+imageId+"/cutout?ra="+ra+"&dec="+dec+"&widthAng="+subsizeArcSec+"&heightAng="+subsizeArcSec);
+        if (imageType.equals("calexp")) {
+            String imageId = request.getParam("imageId");
+            // width and height in arcseconds
+            return new URL(DAX_URL+imageType+"/"+imageId+"/cutout?ra="+ra+"&dec="+dec+"&widthAng="+subsizeArcSec+"&heightAng="+subsizeArcSec);
+        } else {
+            // coadd
+            String filterName = request.getParam("filterName");
+            // width and height in arcseconds, for pixels use cutoutPixel instead of cutout
+            return new URL(DAX_URL+imageType+"/cutout?ra="+ra+"&dec="+dec+"&filter="+filterName+"&width="+subsizeArcSec+"&height="+subsizeArcSec);
+        }
+
+
     }
 
     private void validateRequiredParams(ServerRequest request, String [] requiredParams) throws DataAccessException {

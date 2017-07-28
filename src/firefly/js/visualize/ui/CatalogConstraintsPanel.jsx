@@ -191,7 +191,7 @@ export class CatalogConstraintsPanel extends PureComponent {
             TblCntlr.dispatchTableReplace(tableModel);
             afterFetch&&afterFetch({tableModel: tableModelFetched});
         }).catch((reason) => {
-                const errTable = TblUtil.createErrorTbl(tblid, `Catalog Fetch Error: ${reason.message}`);
+                const errTable = TblUtil.createErrorTbl(tblid, `Failed to fetch catalog fields: ${reason.message}`);
 
                 TblCntlr.dispatchTableReplace(errTable);
                 afterFetch&&afterFetch({tableModel: errTable});

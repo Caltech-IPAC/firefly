@@ -16,7 +16,6 @@ import edu.caltech.ipac.firefly.server.packagedata.PackagedEmail;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.DownloadScript;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -290,21 +289,22 @@ public class BackgroundEnv {
         }
         return retval;
     }
-
-
     public static BackgroundStatus backgroundProcess(int waitMills, BackgroundProcessor processor) {
+        return backgroundProcess(waitMills, processor, null);
+    }
+
+    public static BackgroundStatus backgroundProcess(int waitMills, BackgroundProcessor processor, BackgroundStatus.BgType type) {
         String bid= processor.getBID();
         runBackgroundThread(waitMills, processor);
         Logger.briefDebug("Background thread returned");
         BackgroundStatus bgStat= processor.getBackgroundStatus();
         if (bgStat==null) {
             bgStat = processor.getPiCacher().getStatus();
-            bgStat = bgStat == null ? new BackgroundStatus(bid, BackgroundState.WAITING) : bgStat;
+            bgStat = bgStat == null ? new BackgroundStatus(bid, BackgroundState.WAITING, type) : bgStat;
         }
         if (!bgStat.isDone()) {
             // it's not done within the same request.. add it to background and enable email notification.
             bgStat.addAttribute(JobAttributes.CanSendEmail);
-            BackgroundEnv.addUserBackgroundInfo(bgStat);
         }
         processor.getPiCacher().setStatus(bgStat);
         Logger.briefDebug("Background report returned");
@@ -353,12 +353,12 @@ public class BackgroundEnv {
             _log.error(e,
                        "Background ID: " + bid,
                        "Thread: "+ t.getName(),
-                       "Thread abort during FileGroup creation",
+                       "Thread completed with exception",
                        "Exception: " + e.toString(),
                        "Traceback follows");
 
             bgStat = new BackgroundStatus(bid, BackgroundState.FAIL);
-            bgStat.addMessage("Packaging Failed with exception: " + e.getMessage());
+            bgStat.addMessage(e.getMessage());
             setReportToCache(bid,bgStat);
         } catch (Throwable e1) {
             _log.error(e1,

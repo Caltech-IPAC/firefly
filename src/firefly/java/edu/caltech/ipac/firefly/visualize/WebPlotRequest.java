@@ -72,7 +72,6 @@ public class WebPlotRequest extends ServerRequest {
     public static final String HEADER_KEY_FOR_TITLE = "HeaderKeyForTitle";
     public static final String INIT_RANGE_VALUES = "RangeValues";
     public static final String INIT_COLOR_TABLE = "ColorTable";
-    public static final String MULTI_IMAGE_FITS = "MultiImageFits";
     public static final String MULTI_IMAGE_IDX = "MultiImageIdx";
     public static final String MULTI_IMAGE_EXTS = "MultiImageExts";
     public static final String ZOOM_TO_WIDTH = "ZoomToWidth";
@@ -981,14 +980,6 @@ public class WebPlotRequest extends ServerRequest {
 //======================================================================
 //----------------------- Other Settings --------------------------------
 //======================================================================
-
-    public void setMultiImageSupport(boolean multi) {
-        setParam(MULTI_IMAGE_FITS, multi + "");
-    }
-
-    public boolean getMultiImageSupport() {
-        return getBooleanParam(MULTI_IMAGE_FITS);
-    }
 
     public void setMultiImageIdx(int idx) { setParam(MULTI_IMAGE_IDX, idx + "");  }
 

@@ -73,7 +73,6 @@ const C= {
     HEADER_KEY_FOR_TITLE : 'HeaderKeyForTitle',
     INIT_RANGE_VALUES : 'RangeValues',
     INIT_COLOR_TABLE : 'ColorTable',
-    MULTI_IMAGE_FITS : 'MultiImageFits',
     MULTI_IMAGE_IDX : 'MultiImageIdx',
     MULTI_IMAGE_EXTS: 'MultiImageExts',
     ZOOM_TO_WIDTH : 'ZoomToWidth',
@@ -1045,12 +1044,6 @@ export class WebPlotRequest extends ServerRequest {
 //----------------------- Other Settings --------------------------------
 //======================================================================
 
-    /**
-     * @param multi boolean
-     */
-    setMultiImageSupport(multi) { this.setParam(C.MULTI_IMAGE_FITS, multi + ''); }
-
-    getMultiImageSupport() { return this.getBooleanParam(C.MULTI_IMAGE_FITS); }
 
     setMultiImageIdx(idx) { this.setParam(C.MULTI_IMAGE_IDX, idx + ''); }
 

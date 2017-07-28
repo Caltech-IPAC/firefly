@@ -1,55 +1,19 @@
-import React, {PureComponent} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import {flux} from '../../../Firefly.js';
-import {get, has, isEmpty, set} from 'lodash';
+import {get,isEmpty} from 'lodash';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
-import {ValidationField} from '../../../ui/ValidationField.jsx';
-import {SuggestBoxInputField} from '../../../ui/SuggestBoxInputField.jsx';
 import {makeFileRequest} from '../../../tables/TableUtil.js';
-import {getColumnIdx, smartMerge, getNumericColNames, getStringColNames,getTblById} from '../../../tables/TableUtil.js';
-import {ReadOnlyText, getTypeData} from '../LcUtil.jsx';
-import {LC, getViewerGroupKey, onTimeColumnChange} from '../LcManager.js';
+import {getColumnIdx, smartMerge,  getColsByType, COL_TYPE} from '../../../tables/TableUtil.js';
+import {ReadOnlyText, getInitialDefaultValues,getMissionInput,getMissionInfo,validate,fileUpdateOnTimeColumn, setValueAndValidator} from '../LcUtil.jsx';
+import {LC, getViewerGroupKey} from '../LcManager.js';
 import {getMissionName} from '../LcConverterFactory.js';
-import {getLayouInfo} from '../../../core/LayoutCntlr.js';
-
+import {SettingBox} from '../SettingBox.jsx';
 const labelWidth = 90;
 
-export class BasicSettingBox extends PureComponent {
+export class BasicSettingBox extends SettingBox {
     constructor(props) {
         super(props);
-
-        this.getNextState = () => {
-            return Object.assign({}, {tblColumns: get(getLayouInfo(), 'rawTableColumns', [])});
-        };
-
-        const {tblColumns} = this.getNextState();
-        const numColumns = getNumericColNames(tblColumns);
-        const charColumns = getStringColNames(tblColumns);
-        this.state = {tblColumns, charColumns, numColumns};
     }
-
-    componentWillUnmount() {
-        this.iAmMounted = false;
-        this.removeListener && this.removeListener();
-    }
-
-    componentDidMount() {
-        this.iAmMounted = true;
-        this.removeListener = flux.addListener(() => this.storeUpdate());
-    }
-
-    storeUpdate() {
-        if (this.iAmMounted) {
-            const {tblColumns} = this.getNextState();
-
-            if (tblColumns !== this.state.tblColumns) {
-                const numColumns = getNumericColNames(tblColumns);
-                const charColumns = getStringColNames(tblColumns);
-                this.setState({tblColumns, charColumns, numColumns});
-            }
-        }
-    }
-
     render() {
         var {generalEntries, missionEntries} = this.props;
         var {tblColumns, numColumns, charColumns} = this.state;
@@ -58,47 +22,13 @@ export class BasicSettingBox extends PureComponent {
         if (isEmpty(tblColumns) || isEmpty(generalEntries) || isEmpty(missionEntries)) return false;
 
         const wrapperStyle = {margin: '3px 0'};
-        const missionKeys = [LC.META_TIME_CNAME, LC.META_FLUX_CNAME];
-        const missionUrl = [LC.META_URL_CNAME];
-        const missionOtherKeys = [LC.META_ERR_CNAME];
-        const topZ = 3;
 
-        var getList = (val, type, valDefault) => {
-            const selCols = (!type || (type === 'numeric')) ? numColumns : charColumns;
-
-            return selCols.reduce((prev, col) => {
-                if ((col.startsWith(val) || val === valDefault)) {
-                    prev.push(col);
-                }
-                return prev;
-            }, []);
-        };
-
-        var missionInputs = missionKeys.map((key) =>
-            <SuggestBoxInputField key={key} fieldKey={key} wrapperStyle={wrapperStyle} popupIndex={topZ}
-                                  getSuggestions={(val) => getList(val)}/>
-        );
-
-        var missionData = missionUrl.map((key) =>
-            <SuggestBoxInputField key={key} fieldKey={key} wrapperStyle={wrapperStyle} popupIndex={topZ}
-                                  getSuggestions={(val) => getList(val, 'char', '')}/>
-        );
-
-        var missionOthers = missionOtherKeys.map((key) =>
-            <ValidationField key={key} fieldKey={key} wrapperStyle={wrapperStyle}/>
-        );
-
+        const  missionInputs=getMissionInput (numColumns, wrapperStyle);
         const groupKey = getViewerGroupKey(missionEntries);
-        const converterId = get(missionEntries, LC.META_MISSION);
         const typeColumns = {charColumns, numColumns};
 
-        const layoutInfo = getLayouInfo();
+        const {missionName, period, title, uploadedFileName} = getMissionInfo(missionEntries, typeColumns);
 
-        const tblModel = getTblById(LC.RAW_TABLE);
-        const title = get(tblModel, 'request.uploadFileName','');
-        const uploadedFileName =( title && title.length>20)?title.substring(0, 20)+'...':title;
-
-        var period = get(layoutInfo, ['periodRange','period'], '');
         return (
             <FieldGroup groupKey={groupKey}
                         reducerFunc={basicOptionsReducer(missionEntries, generalEntries, typeColumns)} keepState={true}>
@@ -109,13 +39,13 @@ export class BasicSettingBox extends PureComponent {
 
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column'}}>
-                    {getMissionName(converterId) !== '' &&
-                    <ReadOnlyText label='Mission:' content={getMissionName(converterId)}
+                    {getMissionName(missionName) !== '' &&
+                    <ReadOnlyText label='Mission:' content={getMissionName(missionName)}
                                   labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>}
                     <div style={{display: 'flex'}}>
                         <div>
                             {missionInputs}
-                            {/*missionData*/}
+
                         </div>
                     </div>
                 </div>
@@ -146,28 +76,7 @@ export const basicOptionsReducer = (missionEntries, generalEntries, typeColumns)
         // fluxcols:  flux column candidates
         // errorcolumm: error column
         // cutoutsize: image cutout size
-        const defValues = {
-            [LC.META_TIME_CNAME]: Object.assign(getTypeData(LC.META_TIME_CNAME, '',
-                'Time column name',
-                'Time Column:', labelWidth),
-                {validator: null}),
-            [LC.META_FLUX_CNAME]: Object.assign(getTypeData(LC.META_FLUX_CNAME, '',
-                'Value column name',
-                'Value Column:', labelWidth),
-                {validator: null}),
-            [LC.META_TIME_NAMES]: Object.assign(getTypeData(LC.META_TIME_NAMES, '',
-                'Value column suggestion'),
-                {validator: null}),
-            [LC.META_FLUX_NAMES]: Object.assign(getTypeData(LC.META_FLUX_NAMES, '',
-                'Value column suggestion'),
-                {validator: null}),
-            ['cutoutSize']: Object.assign(getTypeData('cutoutSize', '',
-                'image cutout size',
-                'Cutout Size (arcmin):', 100)),
-            [LC.META_URL_CNAME]: Object.assign(getTypeData(LC.META_URL_CNAME, '',
-                'Image url column name',
-                'Source Column:', labelWidth))
-        };
+        const defValues =getInitialDefaultValues(labelWidth, 'other');
 
         var defV = Object.assign({}, defValues);
         const validators = getFieldValidators(missionEntries, typeColumns);
@@ -176,23 +85,9 @@ export const basicOptionsReducer = (missionEntries, generalEntries, typeColumns)
             LC.META_COORD_XNAME, LC.META_COORD_YNAME, LC.META_COORD_SYS];
         const missionListKeys = [LC.META_TIME_NAMES, LC.META_FLUX_NAMES];
 
-        missionListKeys.forEach((key) => {
-            set(defV, [key, 'value'], get(missionEntries, key, []));
-        });
 
-        // set value and validator
-        missionKeys.forEach((key) => {
-            set(defV, [key, 'value'], get(missionEntries, key, ''));
-            if (has(validators, key)) {
-                set(defV, [key, 'validator'], validators[key]);
-            }
-        });
 
-        /*
-         Object.keys(generalEntries).forEach((key) => {
-         set(defV, [key, 'value'], get(generalEntries, key, ''));
-         });
-         */
+        setValueAndValidator(missionListKeys, missionEntries,missionKeys, validators, defV);
         return defV;
     };
 };
@@ -206,25 +101,8 @@ function getFieldValidators(missionEntries, typeColumns) {
         {key: LC.META_URL_CNAME, vkey: LC.META_URL_NAMES, type:'char'}
     ];
 
-    return fldsWithValidators.reduce((all, fld) => {
-        all[fld.key] =
-            (val) => {
-                let valid = true;
-                const cols = get(missionEntries, fld.vkey, []);
+    return validate(fldsWithValidators, missionEntries, typeColumns );
 
-                if (cols.length === 0) {
-                    const selColumns = fld.type === 'char' ? typeColumns.charColumns : typeColumns.numColumns;
-
-                    if (selColumns.findIndex((col) => (col === val)) < 0) {
-                        valid = false;
-                    }
-                } else if (!cols.includes(val)) {
-                    valid = false;
-                }
-                return valid ? {valid, message: ''} : {valid, message: `${val} is not a valid column name`};
-            };
-        return all;
-    }, {});
 }
 
 
@@ -254,7 +132,8 @@ export function basicOnNewRawTable(rawTable, missionEntries, generalEntries, con
 
     // Update default values AND sortInfo and
     const metaInfo = rawTable && rawTable.tableMeta;
-    const numericalCols = getNumericColNames(get(rawTable, ['tableData', 'columns'], []));
+    const tblColumns = get(rawTable, ['tableData', 'columns'], []);
+    const numericalCols = getColsByType(tblColumns, COL_TYPE.NUMBER).map((c) => c.name);
 
     //let strCols = getStringCol(rawTable);
     //strCols.push('');// Empty means no images
@@ -269,8 +148,7 @@ export function basicOnNewRawTable(rawTable, missionEntries, generalEntries, con
     const defaultValues = {
         [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, defaultCTimeName),
         [LC.META_FLUX_CNAME]: get(metaInfo, LC.META_FLUX_CNAME, defaultYColName)
-        //[LC.META_URL_CNAME]: get(metaInfo, LC.META_URL_CNAME, converterData.dataSource),
-        //[LC.META_URL_NAMES]: get(metaInfo, LC.META_URL_NAMES, strCols)
+
     };
 
     missionEntries = Object.assign({}, missionEntries, defaultValues);
@@ -286,7 +164,6 @@ export function basicRawTableRequest(converter, source, uploadFileName='') {
         pageSize: LC.TABLE_PAGESIZE,
         uploadFileName
     };
-
    return  makeFileRequest('Input Data', source, null, options);
 
 
@@ -294,11 +171,7 @@ export function basicRawTableRequest(converter, source, uploadFileName='') {
 
 export function basicOnFieldUpdate(fieldKey, value) {
     if ([LC.META_TIME_CNAME].includes(fieldKey)) {
-        const {missionEntries}= getLayouInfo() || {};
-        if (!missionEntries) return;
-
-        onTimeColumnChange(missionEntries[fieldKey], value);
-        return {[fieldKey]: value};
+        return fileUpdateOnTimeColumn(fieldKey, value);
     } else if ([LC.META_FLUX_CNAME].includes(fieldKey)) {
         return {[fieldKey]: value};
     }

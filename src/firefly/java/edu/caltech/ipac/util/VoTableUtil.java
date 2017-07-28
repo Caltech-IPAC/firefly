@@ -30,6 +30,13 @@ import java.util.Arrays;
  */
 public class VoTableUtil {
 
+    private static final Pattern HMS_UCD_PATTERN =
+            Pattern.compile( "POS_EQ_RA.*|pos\\.eq\\.ra.*",
+                    Pattern.CASE_INSENSITIVE );
+    private static final Pattern DMS_UCD_PATTERN =
+            Pattern.compile( "POS_EQ_DEC.*|pos\\.eq\\.dec.*",
+                    Pattern.CASE_INSENSITIVE );
+
     public static DataGroup[] voToDataGroups(String voTableFile) {
         return voToDataGroups(voTableFile,false);
     }
@@ -205,10 +212,10 @@ public class VoTableUtil {
             }
             String ucd = cinfo.getUCD();
             if ( ucd != null) { // should we save all UCDs?
-                if (ucd.equals("POS_EQ_RA_MAIN")) {
+                if (HMS_UCD_PATTERN.matcher( ucd ).matches()) {
                     raCol = cinfo.getName();
                 }
-                if (ucd.equals("POS_EQ_DEC_MAIN")) {
+                if (DMS_UCD_PATTERN.matcher( ucd ).matches()) {
                     decCol = cinfo.getName();
                 }
             }

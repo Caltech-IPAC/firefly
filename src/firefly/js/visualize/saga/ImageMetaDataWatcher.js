@@ -33,10 +33,17 @@ const MAX_GRID_SIZE= 50;
  * </ul>
  * @param viewerId
  */
-export function* watchImageMetaData({viewerId}) {
+export function* watchImageMetaData({viewerId, paused=true}) {
 
     var tbl_id;
-    var paused= true;
+
+    if (!paused) {
+        tbl_id= getActiveTableId();
+        if (tbl_id) updateImagePlots(tbl_id, viewerId);
+    }
+
+
+
     while (true) {
         const action= yield take([TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE,
                                   TBL_RESULTS_ACTIVE,

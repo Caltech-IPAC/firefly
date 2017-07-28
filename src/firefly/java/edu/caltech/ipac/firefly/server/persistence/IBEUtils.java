@@ -63,7 +63,13 @@ public class IBEUtils {
                 return new SortInfo("coadd_id","band");
             }
         } else if (source instanceof PtfIbeDataSource) {
-            // TODO PTF
+            // Add PTF
+            String productLevel = ((PtfIbeDataSource)source).getTableName();
+            if (productLevel.equalsIgnoreCase("LEVEL1")) {
+                return new SortInfo("nid","obsdate","ccdid");
+            } else if (productLevel.equalsIgnoreCase("LEVEL2")) {
+                return new SortInfo("ptffield","fid","ccdid");
+            }
             return null;
         }
         return null;
@@ -105,7 +111,24 @@ public class IBEUtils {
             relatedCols = "coadd_key";
 
         } else if (source instanceof PtfIbeDataSource) {
-            // TODO: PTF
+            // ADD: PTF
+            String productLevel = ((PtfIbeDataSource)source).getTableName();
+            if (productLevel.equalsIgnoreCase("LEVEL1")) {
+                //level1
+                sortByCols.put("nid", "nid,obsdate,ccdid,filter");
+                sortByCols.put("expid", "expid,ccdid");
+                sortByCols.put("pid", "pid");
+                colsToHide = new String[]{"in_row_id", "in_ra", "in_dec","ra_1", "dec_1",
+                        "ra_2", "dec_2", "ra_2=3", "dec_3", "ra_4", "dec_4"};
+            } else {
+                //level2
+                sortByCols.put("ptffield", "rfid,ptffield,fid,ccdid");
+                colsToHide = new String[]{"in_row_id", "in_ra", "in_dec","ra_1", "dec_1",
+                        "ra_2", "dec_2", "ra_2=3", "dec_3", "ra_4", "dec_4"};
+                relatedCols = "ccdid";
+            }
+
+
         }
 
         for (String sortCol : sortByCols.keySet()) {

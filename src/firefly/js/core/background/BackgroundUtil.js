@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get} from 'lodash';
+import {get, omit} from 'lodash';
 import Enum from 'enum';
 
 import {flux} from '../../Firefly.js';
@@ -24,6 +24,14 @@ export function getBackgroundInfo() {
  */
 export function getBackgroundJobs() {
     return get(flux.getState(), [BACKGROUND_PATH, 'jobs']);
+}
+
+/**
+ * returns background status for the given id.
+ * @returns {BgStatus}
+ */
+export function getBgStatusById(id) {
+    return get(flux.getState(), [BACKGROUND_PATH, 'jobs', id]);
 }
 
 /**
@@ -57,6 +65,12 @@ export function isSuccess(state) {
 
 export function isActive(state) {
     return BG_STATE.get('WAITING | WORKING | STARTING').has(state);
+}
+
+export function getErrMsg(bgStatus) {
+    return Object.entries(omit(bgStatus, 'MESSAGE_CNT')).filter( ([k,v]) => k.startsWith('MESSAGE_'))
+                            .map(([k,v]) => v)
+                            .join('; ');
 }
 
 

@@ -96,12 +96,21 @@ const overlayCoverageDrawing= makeOverlayCoverageDrawing();
 export function* watchCoverage(options) {
 
     const {viewerId='DefCoverageId'}= options;
+    let {paused=true}= options;
     const decimatedTables=  {};
     let tbl_id;
-    let paused= !get(getViewer(getMultiViewRoot(), viewerId), 'mounted' , false);
+    paused= paused || !get(getViewer(getMultiViewRoot(), viewerId), 'mounted' , false);
     options= Object.assign(defOptions,cleanUpOptions(options));
     let displayedTableId= null;
     let previousDisplayedTableId;
+
+    if (!paused) {
+        const firstId= getActiveTableId();
+        if (firstId) displayedTableId = updateCoverage(firstId, viewerId, decimatedTables, options);
+    }
+
+
+
     while (true) {
         previousDisplayedTableId= displayedTableId;
         const action= yield take([TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,
@@ -130,11 +139,8 @@ export function* watchCoverage(options) {
 
             case TABLE_LOADED:
                 if (!getTableInGroup(tbl_id)) continue;
-                if (get(action, 'payload.invokedBy') !== TABLE_SORT) {
-                    // no need to update coverage on table sort.. data have not changed.
-                    decimatedTables[tbl_id]= null;
-                    displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
-                }
+                decimatedTables[tbl_id]= null;
+                displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
                 break;
 
             case TBL_RESULTS_ACTIVE:

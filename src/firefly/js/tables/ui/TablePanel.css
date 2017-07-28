@@ -191,6 +191,23 @@
     cursor: pointer;
 }
 
+.TablePanel__mask {
+    box-sizing: content-box;
+    background-color: rgba(255,255,255,.8);
+    display: flex;
+    position: relative;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+.TablePanel__mask--button {
+    z-index: 1;
+    margin-top: 80px;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    box-sizing: content-box;
+    background-color: rgba(255,255,255,.8);
+}
 
 /** below are taken from FixedDataTable with some modifications */
 

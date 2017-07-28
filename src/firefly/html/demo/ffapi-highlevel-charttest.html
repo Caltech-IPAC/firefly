@@ -23,6 +23,10 @@
     </h2>
 </div>
 
+<div id="table-lg" style="width: 800px; height: 550px; border: solid 1px;"></div>
+<br/><br/>
+<div id="heatmapHere" style="width: 800px; height: 550px; border: solid 1px;"></div>
+<br/><br/>
 <div id="histogramHere" style="width: 800px; height: 550px; border: solid 1px"></div>
 <br/><br/>
 <div id="xyplotHere" style="width: 800px; height: 550px; border: solid 1px;"></div>
@@ -30,6 +34,7 @@
 <div id="plotly" style="resize: both; overflow: auto; padding: 5px; width: 800px; height: 550px; border: solid 1px gray;"></div>
 <br/><br/>
 <div id="table-1" style="width: 800px; height: 550px; border: solid 1px;"></div>
+<br/><br/>
 
 <script type="text/javascript">
     if (!window.firefly) window.firefly= {};
@@ -169,6 +174,47 @@
             };
 
             firefly.showPlot('plotly', {chartId: 'plotly-tbl', chartType: 'plot.ly', data: [trace1], fireflyData: [{dataType: 'fireflyScatter'}]});
+
+
+            var tblReqLg =  firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
+                    {   position: '10.68479;41.26906;EQ_J2000',
+                        SearchMethod: 'Cone',
+                        radius: 1200
+                    },
+                    {tbl_id: 'test-tbl-lg'});
+            firefly.showTable('table-lg', tblReqLg);
+
+            var dataHM = [
+                {
+                    type: 'heatmap',
+                    name: 'w1-w2',
+                    x: "tables::test-tbl-lg,w1mpro",
+                    y: "tables::test-tbl-lg,w2mpro",
+                    colorscale: 'Blues'
+                },
+                {
+                    type: 'heatmap',
+                    name: 'w1-w3',
+                    x: "tables::test-tbl-lg,w1mpro",
+                    y: "tables::test-tbl-lg,w3mpro",
+                    colorscale: 'Reds',
+                    reversescale: true
+                },
+                {
+                    type: 'heatmap',
+                    name: 'w1-w4',
+                    x: "tables::test-tbl-lg,w1mpro",
+                    y: "tables::test-tbl-lg,w4mpro",
+                    colorscale: 'Greens'
+                }
+            ];
+            var	fireflyDataHM = [
+                {dataType: 'fireflyHeatmap'},
+                {dataType: 'fireflyHeatmap'},
+                {dataType: 'fireflyHeatmap'}
+            ];
+
+            firefly.showPlot('heatmapHere', {chartId: 'plotly-tbl-lg', chartType: 'plot.ly', data: dataHM, fireflyData: fireflyDataHM});
 
         }
     }

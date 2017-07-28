@@ -15,7 +15,6 @@ import {deleteAllDrawLayers} from '../../visualize/PlotViewUtil.js';
 import {CHART_ADD} from '../../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../../visualize/MultiViewCntlr.js';
 
-
 /**
  * Configurable part of this template
  * @typedef {object} Config
@@ -82,13 +81,7 @@ function handleNewSearch(layoutInfo, action) {
     var {showTables=true, showXyPlots=true, showImages=true, images={}} = layoutInfo;
 
     if (currentSearch && currentSearch !== activeSearch) {
-        // remove all tables
-        const groups = getAllTableGroupIds() || [];
-        groups.forEach((k) => removeTablesFromGroup(k));
-        // remove all plots
-        visRoot().plotViewAry.forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId}));
-        // remove all drawing layers
-        deleteAllDrawLayers();
+        cleanup();
         // remove all charts
         removeChartsInGroup();
         showTables=showXyPlots=showImages=true;
@@ -99,3 +92,15 @@ function handleNewSearch(layoutInfo, action) {
     return layoutInfo;
 }
 
+
+export function cleanup() {
+
+    // remove all tables
+    const groups = getAllTableGroupIds() || [];
+    groups.forEach((k) => removeTablesFromGroup(k));
+    // remove all plots
+    visRoot().plotViewAry.forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId}));
+    // remove all drawing layers
+    deleteAllDrawLayers();
+
+}

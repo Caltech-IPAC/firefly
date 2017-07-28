@@ -67,6 +67,7 @@
     -webkit-order: 1;
     -ms-flex-order: 1;
     order: 1;
+    height: 75px;
 }
 
 #App > footer {

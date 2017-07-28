@@ -57,10 +57,16 @@
     <a href='javascript:firefly.getViewer().showTable(tblReq3)'>Open a table</a>
     <a href='javascript:firefly.getViewer().showTable(tblReq1)'>Open allwise</a>
     <a href='javascript:tblReq1.sortInfo="ASC,ra"; firefly.getViewer().fetchTable(tblReq1)'>Sort allwise by ra</a>
-    <a href='javascript:launchLC()'>Launch WISE LcViewer</a></div>
-<div>
-    <div id="tables-2" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white"></div>
-    <div id="tables-1" style="display: inline-block; width: 550px; height: 300px; margin: 10px; background-color: white; position: absolute"></div>
+    <a href='javascript:launchLC()'>Launch WISE LcViewer</a>
+    <div style="display: inline-flex; background-color: white">
+        <div id="tables-2" style="width: 550px; height: 300px; margin: 10px"></div>
+        <div id="tables-1" style="width: 550px; height: 300px; margin: 10px"></div>
+        <div>
+            <div style="font-size: small">show getSelectedData API call to 2nd table of 2nd tablpanel ('http://web.ip....')</div>
+            <input type="button" value="show selected" onclick="javascript:loadSelectRows()">
+            <div id="selectedRows" style="height: 275px; overflow: auto"></div>
+        </div>
+    </div>
 </div>
 <div>XYPlot from API calls:
     <a href='javascript:firefly.getViewer().showXYPlot(xyPlotOpsReq3)'>Show XY Plot</a>
@@ -175,6 +181,30 @@
 
 <script type="text/javascript">
     {
+        function loadSelectRows() {
+            firefly.util.table.getSelectedData(tblReq3.tbl_id, ['crval1', 'crval2'])
+                    .then( function (tableModel) {
+                        var rowCnt = tableModel.totalRows;
+                        var cell = firefly.util.table.getCellValue;
+                        var cnames = firefly.util.table.getColumns(tableModel).map(function (c) {return c.name});
+
+                        var txt = "<table border='1'><tr>"
+                        cnames.forEach( function(col) {
+                            txt += "<td>" + col + "</td>";
+                        });
+                        txt += "</tr>";
+                        for (var idx =0; idx < rowCnt; idx++) {
+                            txt += "<tr>";
+                            cnames.forEach( function(col) {
+                                txt += "<td>" + cell(tableModel, idx, col) + "</td>";
+                            });
+                            txt += "</tr>";
+                        }
+                        txt += "</table>"
+                        document.getElementById("selectedRows").innerHTML = txt;
+                    });
+        }
+
         function launchLC(req) {
             var req = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/ejoliet/demo/WISE-mep-2764p772_ac51-010204.tbl',null,
                     { tbl_id: 'raw_table',
@@ -315,7 +345,12 @@
 //
             firefly.showImage('imageViewHere', {
                 url:'http://bacchus1.ipac.caltech.edu:9070/cgi-bin/Subimage/nph-subimage?origfile=/irsadata/COSMOS//images%2Facs_2.0%2FI%2Facs_I_095921%2B0228_unrot_wht_20.fits&ra=149.858180&dec=2.479260&xsize=0.200000',
-                plotId: 'badURLTest'
+                plotId: 'badURLTest',
+                title     : 'Failure Test',
+            });
+            firefly.showImage('imageViewHere', {
+                file : '/external/wise-m31-level1-3.fits',
+                title     : 'From a Container',
             });
 
             firefly.showCoverage('coverageHere', {gridOn:true});
@@ -590,6 +625,7 @@
    
 </script>
 
+<!-- to try a container: <script  type="text/javascript" src="http://localhost:8090/firefly/firefly_loader.js"></script>-->
 
 <script  type="text/javascript" src="../firefly_loader.js"></script>
 

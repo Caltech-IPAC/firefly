@@ -41,13 +41,15 @@ public abstract class Expr {
     /** Unary operator: cosine    */       public static final int COS   = 105;
     /** Unary operator: e to the x*/       public static final int EXP   = 106;
     /** Unary operator: floor     */       public static final int FLOOR = 107;
-    /** Unary operator: log 10*/           public static final int LOG   = 108;
+    /** Unary operator: natural log */     public static final int LOG   = 108;
     /** Unary operator: negation        */ public static final int NEG   = 109;
     /** Unary operator: rounding  */       public static final int ROUND = 110;
     /** Unary operator: sine      */       public static final int SIN   = 111;
     /** Unary operator: square root */     public static final int SQRT  = 112;
     /** Unary operator: tangent */         public static final int TAN   = 113;
-    /** Unary operator: natural log*/      public static final int LN   = 114;
+    /** Unary operator: natural log*/      public static final int LN    = 114;
+    /** Unary operator: log 10 */          public static final int LOG10 = 115;
+    /** Unary operator: log 10 */          public static final int LG    = 116;
 
     /** Make a literal expression.
      * @param v the constant value of the expression
@@ -126,8 +128,10 @@ class UnaryExpr extends Expr {
             case COS:   return Math.cos(arg);
             case EXP:   return Math.exp(arg);
             case FLOOR: return Math.floor(arg);
-            case LOG:   return Math.log10(arg);
-            case LN:   return Math.log(arg);
+            case LOG:   return Math.log(arg);
+            case LN:    return Math.log(arg);
+            case LOG10: return Math.log10(arg);
+            case LG:    return Math.log10(arg);
             case NEG:   return -arg;
             case ROUND: return Math.rint(arg);
             case SIN:   return Math.sin(arg);

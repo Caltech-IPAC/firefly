@@ -160,6 +160,7 @@ export class CysConverter {
     pointOnDisplay(pt) {
         if (!isValidPoint(pt)) return false;
         const devPt= this.getDeviceCoords(pt);
+        if (!devPt) return false;
         const {x,y}= devPt;
         const {width,height}= this.viewDim;
         let retval= (x>=0 && y>=0 && x<=width && y<=height);

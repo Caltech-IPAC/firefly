@@ -26,6 +26,8 @@ public class DecimateInfo implements Serializable, Comparable {
     private double yMin = Double.NaN;
     private double yMax = Double.NaN;
 
+    private int deciEnableSize = -1;
+
     public DecimateInfo() {
     }
 
@@ -104,6 +106,10 @@ public class DecimateInfo implements Serializable, Comparable {
         this.yMax = yMax;
     }
 
+    public int getDeciEnableSize() { return this.deciEnableSize; }
+
+    public void setDeciEnableSize(int deciEnableSize) { this.deciEnableSize = deciEnableSize; }
+
     public boolean isValid() {
         return !StringUtils.isEmpty(xColumnName) && !StringUtils.isEmpty(yColumnName);
     }
@@ -137,6 +143,9 @@ public class DecimateInfo implements Serializable, Comparable {
             if (values.length > 7 && !StringUtils.isEmpty(values[7])) {
                 dinfo.setYMax(StringUtils.getDouble(values[7]));
             }
+            if (values.length > 8 && !StringUtils.isEmpty(values[8])) {
+                dinfo.setDeciEnableSize(StringUtils.getInt(values[8], -1));
+            }
 
             return dinfo.isValid() ? dinfo : null;
         }
@@ -152,6 +161,7 @@ public class DecimateInfo implements Serializable, Comparable {
         s += "," + (Double.isNaN(xMax) ? "" : xMax);
         s += "," + (Double.isNaN(yMin) ? "" : yMin);
         s += "," + (Double.isNaN(yMax) ? "" : yMax);
+        s += "," + (deciEnableSize > -1 ? "" : deciEnableSize);
         return s;
     }
 

@@ -258,7 +258,7 @@ const now = Date.now();
                         break;
                 }
                 set(getChartData(chartId), 'lastUpdated', Date.now());
-isDebug() && console.log(`${renderType.toString()} elapsed: ${Date.now() - now}`);
+isDebug() && console.log(`${renderType.toString()} ${dataUpdateTraces} elapsed: ${Date.now() - now}`);
             }
         } ).catch( (e) => {
             console.log('Plotly not loaded',e);

@@ -46,6 +46,7 @@
  * @prop {string} label     display name of the column
  * @prop {string} type      data type
  * @prop {string} units     data units
+ * @prop {string} nullString string used to represent null value
  * @prop {string} desc      description of the column
  * @prop {number} width     column display width
  * @prop {number} prefWidth     preferred width.  if width is not defined

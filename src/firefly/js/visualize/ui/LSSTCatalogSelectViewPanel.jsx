@@ -399,11 +399,6 @@ function doImage(request, imgPart) {
         title += `([${loc}])`;
     }
 
-    //TODO: remove when cutouts are supported for deepCoadd
-    if (subsize && cattable === 'DeepCooad') {
-        subsize = undefined;
-    }
-
     var tReq = makeLsstCatalogRequest(title, projectName, database, cattable,
                                       {[ServerParams.USER_TARGET_WORLD_PT]: wp,
                                        intersect,

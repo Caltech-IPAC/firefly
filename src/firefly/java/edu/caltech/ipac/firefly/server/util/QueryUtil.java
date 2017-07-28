@@ -110,6 +110,29 @@ public class QueryUtil {
         return retval;
     }
 
+    public static BackgroundStatus convertToBackgroundStatus(String jsonBgStatus) {
+        BackgroundStatus retval = new BackgroundStatus();
+        if (!StringUtils.isEmpty(jsonBgStatus)) {
+            try {
+                JSONObject jsonReq = (JSONObject) new JSONParser().parse(jsonBgStatus);
+                for (Object key : jsonReq.keySet()) {
+                    String skey = String.valueOf(key);
+                    Object val = jsonReq.get(key);
+                    if (val != null) {
+                        if (skey.equals(BackgroundStatus.ITEMS.substring(0, BackgroundStatus.ITEMS.length()-1))) {
+                            parseBgItems(retval, val.toString());
+                        } else {
+                            retval.setParam(skey, val.toString());
+                        }
+                    }
+                }
+            } catch (ParseException e) {
+                LOGGER.error(e);
+            }
+        }
+        return retval;
+    }
+
     public static JSONObject convertToJsonObject(BackgroundStatus bgStat) {
         List<String> intParams = Arrays.asList(MESSAGE_CNT, PACKAGE_CNT, TOTAL_BYTES, RESPONSE_CNT, ACTIVE_REQUEST_CNT);
 
@@ -119,7 +142,7 @@ public class QueryUtil {
             for(Map.Entry<String,String> p :  Collections.unmodifiableSet(params.entrySet())) {
                 String key = p.getKey();
                 Object val = p.getValue();
-                if (key.startsWith(PACKAGE_PROGRESS_BASE)) {
+                if (key.startsWith(ITEMS)) {
                     val = convertToJsonObject(PackageProgress.parse(p.getValue()));
                 } else if (intParams.contains(key)) {
                     val = bgStat.getIntParam(key);
@@ -170,6 +193,22 @@ public class QueryUtil {
         rval.put("finalCompressedBytes", progress.getFinalCompressedBytes());
         rval.put("url", progress.getURL());
         return rval;
+    }
+
+    private static void parseBgItems(BackgroundStatus retval, String val) throws ParseException {
+        JSONArray items = (JSONArray) new JSONParser().parse(val);
+        for (int i = 0; i < items.size(); i++) {
+            JSONObject item = (JSONObject) items.get(i);
+            PackageProgress pp = new PackageProgress(
+                    getInt(item.get("totalFiles")),
+                    getInt(item.get("processedFiles")),
+                    getLong(item.get("totalBytes")),
+                    getLong(item.get("processedBytes")),
+                    getLong(item.get("finalCompressedBytes")),
+                    String.valueOf(item.get("url"))
+                );
+            retval.setParam(BackgroundStatus.ITEMS+i, pp.serialize());
+        }
     }
 
     public static String encodeUrl(ServerRequest req) {
@@ -410,6 +449,26 @@ public class QueryUtil {
         return Integer.MIN_VALUE;
     }
 
+    /**
+     * return Long.MIN_VALUE if val is null or not an long
+     * @param val
+     * @return
+     */
+    public static long getLong(Object val) {
+        if (val != null) {
+            if (val instanceof Long) {
+                return (Long)val;
+            } else {
+                try {
+                    return Long.parseLong(String.valueOf(val));
+                } catch(NumberFormatException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+        return Long.MIN_VALUE;
+    }
+
     public static String test(Double d) {
         return unchecked(d.toString());
     }
@@ -638,7 +697,8 @@ public class QueryUtil {
 
         int maxPoints = decimateInfo.getMaxPoints() == 0 ? DECI_DEF_MAX_POINTS : decimateInfo.getMaxPoints();
 
-        boolean doDecimation = dg.size() >= DECI_ENABLE_SIZE;
+        int deciEnableSize = decimateInfo.getDeciEnableSize() > -1 ? decimateInfo.getDeciEnableSize() : DECI_ENABLE_SIZE;
+        boolean doDecimation = dg.size() >= deciEnableSize;
 
         DataType[] columns = new DataType[doDecimation ? 5 : 3];
         Class xColClass = Double.class;
@@ -739,7 +799,7 @@ public class QueryUtil {
                 if (yDeciMax < yMax) { yMax = yDeciMax; checkLimits = true; }
             }
 
-            if (outRows < DECI_ENABLE_SIZE) {
+            if (outRows < deciEnableSize) {
                 // no decimation needed
                 // because the number of rows in the output
                 // is less than decimation limit

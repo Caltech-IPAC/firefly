@@ -31,7 +31,7 @@ export function MultiItemViewerView(props) {
 
     const {layoutType, activeItemId,
         viewerItemIds, forceRowSize, forceColSize, gridDefFunc,
-        additionalStyle, insideFlex=false, defaultDecoration=true,
+        style, insideFlex=false, defaultDecoration=true,
         makeToolbar, makeItemViewer, makeItemViewerFull}= props;
     var wrapperStyle;
     if (insideFlex) {
@@ -64,7 +64,7 @@ export function MultiItemViewerView(props) {
         container= makePackedGrid(viewerItemIds,dim.rows,dim.cols,true,makeItemViewer);
     }
 
-    var s= Object.assign({}, additionalStyle, wrapperStyle, defaultDecoration? defDecStyle: {});
+    var s= Object.assign({}, style, wrapperStyle, defaultDecoration? defDecStyle: {});
 
     return (
         <div style={s}>
@@ -83,7 +83,7 @@ export function MultiItemViewerView(props) {
 
 MultiItemViewerView.propTypes= {
     viewerId : PropTypes.string.isRequired,
-    additionalStyle : PropTypes.object,
+    style : PropTypes.object,
     defaultDecoration : PropTypes.bool,
     layoutType : PropTypes.oneOf([GRID,SINGLE]),
     forceRowSize : PropTypes.number,   //optional - force a certain number of rows

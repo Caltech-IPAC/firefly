@@ -129,6 +129,7 @@ public class ServerParams {
     public static final String PROGRESS = "CmdProgress";
     public static final String SUB_BACKGROUND_SEARCH= "subBackgroundSearch";
     public static final String GET_STATUS= "status";
+    public static final String ADD_JOB = "addBgJob";
     public static final String REMOVE_JOB = "removeBgJob";
     public static final String CANCEL= "cancel";
     public static final String ADD_ID_TO_CRITERIA= "addIDToCriteria";
@@ -169,5 +170,10 @@ public class ServerParams {
 
     public static final String INIT_APP = "CmdInitApp";
     public static final String LOGOUT = "CmdLogout";
+
+    //Workspaces
+    public static final String WS_LIST = "wsList";
+    public static final String WS_GET_FILE = "wsGet";
+    public static final String WS_PUT_FILE = "wsPut";
 }
 

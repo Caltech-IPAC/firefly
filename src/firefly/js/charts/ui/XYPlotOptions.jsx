@@ -20,6 +20,7 @@ import {plotParamsShape} from './XYPlotPropTypes.js';
 import {hideColSelectPopup} from './ColSelectView.jsx';
 import {ColumnOrExpression, getColValidator} from './ColumnOrExpression.jsx';
 import {updateSet} from '../../util/WebUtil.js';
+import {ERR_TYPE_OPTIONS} from '../ui/options/Errors.jsx';
 
 const DECI_ENABLE_SIZE = 5000;
 
@@ -37,13 +38,6 @@ const Y_AXIS_OPTIONS = [
     {label: 'reverse', value: 'flip'},
     {label: 'right', value: 'opposite'},
     {label: 'log', value: 'log'}
-];
-
-const ERR_TYPE_OPTIONS = [
-    {label: 'None', value: 'none'},
-    {label: 'Sym', value: 'sym'},
-    {label: 'Asym', value: 'asym'}
-
 ];
 
 const Y_AXIS_OPTIONS_NOLOG = Y_AXIS_OPTIONS.filter((el) => {return el.label !== 'log';});

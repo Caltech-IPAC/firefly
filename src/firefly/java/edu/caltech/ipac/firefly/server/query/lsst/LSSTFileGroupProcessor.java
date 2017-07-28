@@ -37,10 +37,11 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
         try {
             logger.info("compute file groups");
             return computeFileGroup((DownloadRequest) request);
+        } catch (IOException | DataAccessException ee) {
+            throw ee;
         } catch (Exception e) {
-            e.printStackTrace();
-            logger.info("failed at computing file groups");
-            throw new DataAccessException(e.getMessage());
+            logger.info("failed at computing file groups: "+e.getMessage());
+            throw new DataAccessException(e.getMessage(), e);
         }
     }
 
@@ -63,7 +64,7 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
 
 
         String baseFileName = request.getParam(DownloadRequest.BASE_FILE_NAME);
-        boolean isDeepCoadd = baseFileName.equalsIgnoreCase("deepCoadd")? true:false;
+        boolean isDeepCoadd = baseFileName.equalsIgnoreCase("deepCoadd");
 
 
         String[] sccdCols = { "scienceCcdExposureId","run",  "camcol", "field", "filterName"};

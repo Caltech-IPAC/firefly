@@ -6,10 +6,10 @@
  * Date: 3/5/12
  */
 
-import {get} from 'lodash';
+import {get, set} from 'lodash';
 
 import {ServerParams} from '../data/ServerParams.js';
-import {doService, DEF_BASE_URL} from '../core/JsonUtils.js';
+import {doJsonRequest, DEF_BASE_URL} from '../core/JsonUtils.js';
 import {BackgroundStatus} from '../core/background/BackgroundStatus.js';
 import {MAX_ROW} from '../tables/TableUtil.js';
 import {getBgEmail} from '../core/background/BackgroundUtil.js';
@@ -26,10 +26,6 @@ export const ScriptAttributes= new Enum(['URLsOnly', 'Unzip', 'Ditto', 'Curl', '
 
 const DOWNLOAD_REQUEST = 'downloadRequest';
 const SELECTION_INFO = 'selectionInfo';
-
-const doJsonP= function() {
-    return false;
-};
 
 //TODO: convert FileStatus
 
@@ -54,7 +50,7 @@ export function fetchTable(tableRequest, hlRowIdx) {
         [ServerParams.REQUEST]: JSON.stringify(tableRequest),
     };
 
-    return doService(doJsonP(), ServerParams.TABLE_SEARCH, params)
+    return doJsonRequest(ServerParams.TABLE_SEARCH, params)
     .then( (tableModel) => {
         const startIdx = get(tableModel, 'request.startIdx', 0);
         if (startIdx > 0) {
@@ -81,40 +77,27 @@ export function findTableIndex(tableRequest, filterInfo) {
         [ServerParams.REQUEST]: JSON.stringify(tableRequest),
         filterInfo
     };
-    return doService(doJsonP(), ServerParams.TABLE_FIND_INDEX, params)
+    return doJsonRequest(ServerParams.TABLE_FIND_INDEX, params)
         .then( (index) => {
             return index;
         });
 }
 
 /**
- * returns the values of the data from the given parameters
+ * returns the table data for the given parameters
  * @param {Object} p  parameters object
- * @param {string} p.columnName name of the column
+ * @param {string[]} p.columnNames an array of column names
  * @param {string} p.filePath   location of the file on the server
  * @param {string} p.selectedRows   a comma-separated string of indices of the rows to get the data from
- * @return {Promise}
+ * @return {Promise<TableModel>}
  */
-export const selectedValues = function({columnName, filePath, selectedRows}) {
-    return doService(doJsonP(), ServerParams.SELECTED_VALUES, {columnName, filePath, selectedRows})
-            .then((data) => {
-                // JsonUtil may not interpret array values correctly due to error-checking.
-                // returning array as a prop 'values' inside an object instead.
-                return get(data, 'values');
+export const selectedValues = function({columnNames, filePath, selectedRows}) {
+    columnNames = Array.isArray(columnNames) ? columnNames.join() : String(columnNames);
+    selectedRows = Array.isArray(selectedRows) ? selectedRows.join() : String(selectedRows);
+    return doJsonRequest(ServerParams.SELECTED_VALUES, {columnNames, filePath, selectedRows})
+            .then((tableModel) => {
+                return tableModel;
             });
-};
-
-
-/**
- *
- * @param {TableRequest} request
- * @return {Promise}
- */
-export const jsonSearch = function(request) {
-    const params = {
-        [ServerParams.REQUEST]: JSON.stringify(request),
-    };
-    return doService(doJsonP(), ServerParams.JSON_SEARCH, params);
 };
 
 
@@ -141,7 +124,7 @@ export function packageRequest(dlRequest, searchRequest, selectionInfo) {
         [SELECTION_INFO]: selectionInfo
     };
 
-    return doService(doJsonP(), ServerParams.PACKAGE_REQUEST, params);
+    return doJsonRequest(ServerParams.PACKAGE_REQUEST, params);
 }
 
 
@@ -154,7 +137,7 @@ export const getJsonData = function(request) {
     var paramList = [];
     paramList.push({name:ServerParams.REQUEST, value: request.toString()});
 
-    return doService(doJsonP(), ServerParams.JSON_DATA, paramList
+    return doJsonRequest(ServerParams.JSON_DATA, paramList
     ).then((data) => {return data; });
 };
 
@@ -166,17 +149,26 @@ export const getJsonData = function(request) {
  * @return {Promise}
  */
 export const submitBackgroundSearch= function(request, clientRequest, waitMillis) {
-    var paramList = [];
-    paramList.push({name: ServerParams.REQUEST, value: request.toString()});
-    if (clientRequest !== null) {
-        paramList.push({name: ServerParams.CLIENT_REQUEST, value: clientRequest.toString()});
+    if (getBgEmail()) {
+        request = set(request, ['META_INFO', ServerParams.EMAIL], getBgEmail());
     }
-    paramList.push({name: ServerParams.WAIT_MILS, value: `${waitMillis}`});
+    const params = {
+        [ServerParams.REQUEST]: JSON.stringify(request),
+        [ServerParams.WAIT_MILS]: String(waitMillis)
+    };
+    clientRequest && (params[ServerParams.CLIENT_REQUEST] = JSON.stringify(clientRequest));
 
-    return doService(doJsonP(), ServerParams.SUB_BACKGROUND_SEARCH, paramList
-    ).then((data) => {
-               return BackgroundStatus.parse(data);
-           });
+    return doJsonRequest(ServerParams.SUB_BACKGROUND_SEARCH, params);
+};
+
+/**
+ * add this job to the background
+ * @param {string} id background id
+ * @return {Promise}
+ */
+export function addBgJob(bgStats) {
+    const params = {bgStats: JSON.stringify(bgStats)};
+    return doJsonRequest(ServerParams.ADD_JOB, params).then( () => true);
 };
 
 /**
@@ -186,8 +178,7 @@ export const submitBackgroundSearch= function(request, clientRequest, waitMillis
  */
 export function removeBgJob(id) {
     const params = {[ServerParams.ID]: id};
-    return doService(doJsonP(), ServerParams.REMOVE_JOB, params
-    ).then( () => true);
+    return doJsonRequest(ServerParams.REMOVE_JOB, params).then( () => true);
 };
 
 /**
@@ -198,19 +189,7 @@ export function removeBgJob(id) {
 export const cancel= function(id) {
     var paramList = [];
     paramList.push({name: ServerParams.ID, value: id});
-    return doService(doJsonP(), ServerParams.CANCEL, paramList
-    ).then( () => true);
-};
-
-/**
- *
- * @param {string} id background id
- * @return {Promise}
- */
-export const addIDToPushCriteria= function(id) {
-    var paramList = [];
-    paramList.push({name: ServerParams.ID, value: id});
-    return doService(doJsonP(), ServerParams.ADD_ID_TO_CRITERIA, paramList
+    return doJsonRequest(ServerParams.CANCEL, paramList
     ).then( () => true);
 };
 
@@ -222,7 +201,7 @@ export const addIDToPushCriteria= function(id) {
 export const getDownloadProgress= function(fileKey) {
     var paramList = [];
     paramList.push({name: ServerParams.FILE, value: fileKey});
-    return doService(doJsonP(), ServerParams.DOWNLOAD_PROGRESS, paramList
+    return doJsonRequest(ServerParams.DOWNLOAD_PROGRESS, paramList
     ).then((data) => {return DownloadProgress.get(data); });
 };
 
@@ -238,7 +217,7 @@ export const setEmail= function(email) {
     } );
     if(paramList.length > 0) {
         paramList.push({name:ServerParams.EMAIL, value:email});
-        return doService(doJsonP(), ServerParams.SET_EMAIL, paramList
+        return doJsonRequest(ServerParams.SET_EMAIL, paramList
         ).then( () => true);
     }
 };
@@ -255,7 +234,7 @@ export const setAttribute= function(ids, attribute) {
         return {name:ServerParams.ID, value: id};
     } );
     paramList.push({name:ServerParams.ATTRIBUTE, value:attribute.toString()});
-    return doService(doJsonP(), ServerParams.SET_ATTR, paramList
+    return doJsonRequest(ServerParams.SET_ATTR, paramList
     ).then( () => true);
 };
 
@@ -265,7 +244,7 @@ export const setAttribute= function(ids, attribute) {
  * @return {Promise}
  */
 export const resendEmail= function(email) {
-    return doService(doJsonP(), ServerParams.RESEND_EMAIL, {[ServerParams.EMAIL]: email}
+    return doJsonRequest(ServerParams.RESEND_EMAIL, {[ServerParams.EMAIL]: email}
     ).then( () => true);
 };
 
@@ -279,7 +258,7 @@ export const clearPushEntry= function(id, idx ) {
     var paramList = [];
     paramList.push({name: ServerParams.ID, value: id});
     paramList.push({name: ServerParams.IDX, value: `${idx}`});
-    return doService(doJsonP(), ServerParams.CLEAR_PUSH_ENTRY, paramList
+    return doJsonRequest(ServerParams.CLEAR_PUSH_ENTRY, paramList
     ).then( () => true);
 };
 
@@ -295,7 +274,7 @@ export const reportUserAction= function(channel, desc, data) {
     paramList.push({name: ServerParams.CHANNEL_ID, value: channel});
     paramList.push({name: ServerParams.DATA, value: data});
     paramList.push({name: ServerParams.DESC, value: desc});
-    return doService(doJsonP(), ServerParams.REPORT_USER_ACTION, paramList
+    return doJsonRequest(ServerParams.REPORT_USER_ACTION, paramList
     ).then( () => true);
 };
 
@@ -314,7 +293,7 @@ export const createDownloadScript= function(id, fname, dataSource, attributes) {
     paramList.push({name: ServerParams.ID, value: id});
     paramList.push({name: ServerParams.FILE, value: fname});
     paramList.push({name: ServerParams.SOURCE, value: dataSource});
-    return doService(doJsonP(), ServerParams.CREATE_DOWNLOAD_SCRIPT, paramList);
+    return doJsonRequest(ServerParams.CREATE_DOWNLOAD_SCRIPT, paramList);
 };
 
 /**

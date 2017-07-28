@@ -101,7 +101,7 @@ public class StatisticsProcessorTest {
 
 
     }
-
+/*
     public static void main(String args[]) throws IpacTableException, IOException, DataAccessException, FitsException, ClassNotFoundException {
         String fileName = "ipacTableTestFile.tbl";
         StatisticsProcessorTest myTest = new StatisticsProcessorTest();
@@ -109,6 +109,6 @@ public class StatisticsProcessorTest {
         inDg = FileLoader.loadIpacTable(StatisticsProcessor.class, fileName );
         myTest.testCreateStatisticTable();
         myTest.testStatisticDataArray();
-    }
+    }*/
 
 }

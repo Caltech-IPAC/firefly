@@ -30,8 +30,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @version $Id: ServerContext.java,v 1.26 2012/10/19 23:02:33 tatianag Exp $
  */
 public class ServerContext {
-    public static final String WEBAPP_CONFIG_DIR = "webapp-confi-dir";
-    public static final String APP_NAME = "app.name";
 
     public static final String CACHE_DIR_PREFIX       = "${cache-dir}";
     public static final String UPLOAD_DIR_PREFIX      = "${upload-dir}";
@@ -61,9 +59,8 @@ public class ServerContext {
 
 
     private static RequestOwnerThreadLocal owner = new RequestOwnerThreadLocal();
-    private static String appName;
     private static String webappConfigPath;
-    private static String contextName;
+    private static String contextName;      // synonymous to appName.. during build, we set display-name to app_name
     private static String contextPath;
     private static File workingDir;
     private static File appConfigDir;
@@ -115,10 +112,9 @@ public class ServerContext {
         // load configurational properties...
         Assert.setServerMode(true);
         String configDirname = System.getProperty(CONFIG_DIR, System.getenv(CONFIG_DIR));
-        appName = AppProperties.getProperty(APP_NAME, contextName);
-        configDirname = configDirname + "/" + appName;
+        configDirname = configDirname == null ? null : configDirname + "/" + contextName;
 
-        if (StringUtils.isEmpty(appName)) {
+        if (StringUtils.isEmpty(contextName)) {
             String errmsg = " is not setup correctly.  System will not function properly";
             throw new RuntimeException(errmsg);
         };
@@ -170,7 +166,7 @@ public class ServerContext {
         if (f == null || !f.canWrite()) {
             f = new File(System.getProperty("java.io.tmpdir"),"workarea");
         }
-        setWorkingDir(new File(f, appName));
+        setWorkingDir(new File(f, contextName));
 
         DEBUG_MODE = AppProperties.getBooleanProperty("debug.mode", false);
 
@@ -268,7 +264,7 @@ public class ServerContext {
     }
 
     public static String getAppName() {
-        return appName;
+        return contextName;
     }
     public static String getContextName() {
         return contextName;

@@ -26,12 +26,23 @@ public class WspaceMeta implements Serializable {
     public static final String DESC = "desc";
     public static final String TYPE = "type";
 
+    public void setUrl(String url) {
+        this.url = url;
+    }
 
-    public enum Includes {NONE(false,0), NONE_PROPS(true, 0), CHILDREN(false,1), CHILDREN_PROPS(true, 1), ALL(false), ALL_PROPS(true);
+    public String getUrl() {
+        return url;
+    }
+
+    public enum Includes {
+        NONE(false, 0), NONE_PROPS(true, 0), CHILDREN(false, 1), CHILDREN_PROPS(true, 1), ALL(false), ALL_PROPS(true);
         public boolean inclProps = false;
         public int depth = 0;
 
-        Includes(boolean b) {this(b, Integer.MAX_VALUE);}
+        Includes(boolean b) {
+            this(b, Integer.MAX_VALUE);
+        }
+
         Includes(boolean b, int d) {
             inclProps = b;
             depth = d;
@@ -45,8 +56,11 @@ public class WspaceMeta implements Serializable {
     private long size = -1;
     private String lastModified;
     private String contentType;
+    private String creationDate;
+    private String url;
 
-    public WspaceMeta() {}
+    public WspaceMeta() {
+    }
 
     public WspaceMeta(String relPath) {
         this(null, relPath, null);
@@ -88,16 +102,17 @@ public class WspaceMeta implements Serializable {
 
     /**
      * returns the name of the file, it's a file type, or "" otherwise.
+     *
      * @return
      */
     public String getFileName() {
         int idx = relPath.lastIndexOf("/");
         if (idx < 0) {
             return relPath;
-        } else if(idx == relPath.length() -1) {
+        } else if (idx == relPath.length() - 1) {
             return "";
         } else {
-            return relPath.substring(idx+1);
+            return relPath.substring(idx + 1);
         }
     }
 
@@ -106,13 +121,13 @@ public class WspaceMeta implements Serializable {
         if (s.equals("/")) return null;
 
         if (s.endsWith("/")) {
-            s.substring(0, s.length()-1);
+            s.substring(0, s.length() - 1);
         }
         int idx = relPath.lastIndexOf("/");
         if (idx <= 0) {
             return "/";
         } else {
-            return relPath.substring(0, idx+1);
+            return relPath.substring(0, idx + 1);
         }
     }
 
@@ -120,11 +135,13 @@ public class WspaceMeta implements Serializable {
     public String toString() {
         StringBuffer s = new StringBuffer("-----------------------------\n");
         s.append(wsHome).append(relPath).append("\n");
+        s.append("creationDate:").append(creationDate).append("\n");
         s.append("lastModified:").append(lastModified).append("\n");
         s.append("contentType:").append(contentType).append("\n");
         s.append("size:").append(size).append("\n");
+        s.append("url:").append(url).append("\n");
         if (getProperties() != null && getProperties().size() > 0) {
-            for(String key : getProperties().keySet()) {
+            for (String key : getProperties().keySet()) {
                 s.append("\t").append(key).append(": ").append(getProperty(key)).append("\n");
             }
         }
@@ -183,6 +200,14 @@ public class WspaceMeta implements Serializable {
         return contentType;
     }
 
+    public void setCreationDate(String val) {
+        this.creationDate = val;
+    }
+
+    public String getCreationDate() {
+        return this.creationDate;
+    }
+
     //====================================================================
 //  nodes graph
 //====================================================================
@@ -208,6 +233,7 @@ public class WspaceMeta implements Serializable {
 
     /**
      * return a list of all the nodes under this one in depth first order.
+     *
      * @return
      */
     public List<WspaceMeta> getAllNodes() {
@@ -237,6 +263,7 @@ public class WspaceMeta implements Serializable {
     /**
      * searches this node and all of its descendant to find the
      * first matching path given.
+     *
      * @param path
      * @return
      */
@@ -265,7 +292,7 @@ public class WspaceMeta implements Serializable {
             return "";
         }
         s = !s.startsWith("/") ? "/" + s : s;
-        s = s.endsWith("/") ? s.substring(0, s.length()-1): s;
+        s = s.endsWith("/") ? s.substring(0, s.length() - 1) : s;
         return s;
     }
 

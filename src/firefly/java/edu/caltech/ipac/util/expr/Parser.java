@@ -180,13 +180,13 @@ public class Parser {
     static private final String[] procs1 = {
             "abs", "acos", "asin", "atan",
             "ceil", "cos", "exp", "floor",
-            "log", "ln", "round", "sin", "sqrt",
+            "log", "ln", "lg", "log10", "round", "sin", "sqrt",
             "tan"
     };
     static private final int[] rators1 = {
             Expr.ABS, Expr.ACOS, Expr.ASIN, Expr.ATAN,
             Expr.CEIL, Expr.COS, Expr.EXP, Expr.FLOOR,
-            Expr.LOG, Expr.LN, Expr.ROUND, Expr.SIN, Expr.SQRT,
+            Expr.LOG, Expr.LN, Expr.LG, Expr.LOG10, Expr.ROUND, Expr.SIN, Expr.SQRT,
             Expr.TAN
     };
 

@@ -36,7 +36,7 @@ export function ListBoxInputFieldView({inline, value, onChange, fieldKey, option
                     const optLabel = option.label || option.value;
                     return (
                         <option value={option.value}
-                                key={option.value}
+                                key={option.value||0}
                                 style={{paddingLeft: 5, paddingRight: 3}}
                                 title={option.tooltip}
                                 disabled={option.disabled ? 'disabled' : false}>

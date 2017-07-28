@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.astro.IpacTableException;
 
+import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
@@ -13,14 +14,11 @@ import java.util.Arrays;
 /**
  * Created by zhang on 10/29/15.
  */
-public class HistogramProcessorTest {
-
-
+public class HistogramProcessorTest extends ConfigTest {
 
 
     @Test
-    public void testFixedBinSize() throws DataAccessException {
-
+    public  void testFixedBinSize() throws DataAccessException {
         //create five bin histData
         double[] histData = {
                 0.00000,
@@ -53,7 +51,38 @@ public class HistogramProcessorTest {
         validateResult(expectedDG, outDG);
 
 
+        HistogramProcessor hp1 = new HistogramProcessor();
+        hp1.setBinNumber(6);
+        //showEmptyBins = true
+        double[] histData1 = {
+                2.70000,
+                2.50000,
+                6.00000,
+                6.20000,
+                7.00000,
+                4.05000,
+                7.10000,
+                7.30000,
+                7.40000,
+                9.8000,
+                9.20000,
+                8.50000,
+        };
+        hp1.showEmptyBin=true;
+        hp1.min= 0;
+        hp1.max = 12;
+        int[] expectedNumPointsInBin1={0, 2, 1, 6, 3,  0};
+        double[] expectedBinMin1={0.0, 2, 4,  6.0, 8.0, 10.0};
+        double[] expectedBinMax1={2, 4, 6,  8, 10, 12};
+        DataGroup expectedDG1= createDataGroup(expectedNumPointsInBin1, expectedBinMin1, expectedBinMax1);
+
+        DataGroup outDG1 = hp1.createHistogramTable(histData1);
+
+        validateResult(expectedDG1, outDG1);
+
+
     }
+
 
     private void validateResult(DataGroup expected, DataGroup calculated){
         for (int i=0; i<expected.size(); i++ ){
@@ -105,8 +134,6 @@ public class HistogramProcessorTest {
      *
      *
      */
-
-
     public void testVariableBinSize() {
 
         double[] histData = {
@@ -309,7 +336,7 @@ public class HistogramProcessorTest {
         int nbin=6;
         double delta =( max -min)/100*nbin;
         //double[] expectedBins={ -14.3997518146, -6.0146658712, 1.1825927451, 2.7383052264, 5.4734012726, 12.938348639};
-        boolean showEmptyBin=false;
+
 
         int[] expectedNumPointInBin = {12, 59, 68, 36, 16};
 
@@ -337,6 +364,9 @@ public class HistogramProcessorTest {
         try {
 
             HistogramProcessor hp = new HistogramProcessor();
+            hp.showEmptyBin=false;
+
+            //Algorithm=null, the variable bin size is used
             DataGroup outDG = hp.createHistogramTable(histData);
 
             DataGroup expectedDG = createDataGroup(expectedNumPointInBin, expectedBinMin, expectedBinMax );
@@ -346,17 +376,6 @@ public class HistogramProcessorTest {
         catch (Exception ex){
             ex.printStackTrace();
         }
-            ;
-
-
-    }
-    public static void main(String args[]) throws IpacTableException, IOException, DataAccessException {
-        HistogramProcessorTest myTest = new HistogramProcessorTest();
-
-        myTest.testFixedBinSize();
-        myTest.testVariableBinSize();
-
-
 
     }
 

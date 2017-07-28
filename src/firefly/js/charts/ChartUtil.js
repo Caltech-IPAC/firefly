@@ -19,6 +19,7 @@ import {Expression} from '../util/expr/Expression.js';
 import {logError, flattenObject} from '../util/WebUtil.js';
 import {UI_PREFIX} from './ChartsCntlr.js';
 import {ScatterOptions} from './ui/options/ScatterOptions.jsx';
+import {HeatmapOptions} from './ui/options/HeatmapOptions.jsx';
 import {FireflyHistogramOptions} from './ui/options/FireflyHistogramOptions.jsx';
 import {HistogramOptions} from './ui/options/PlotlyHistogramOptions.jsx';
 import {BasicOptions} from './ui/options/BasicOptions.jsx';
@@ -26,8 +27,10 @@ import {ScatterToolbar, BasicToolbar} from './ui/PlotlyToolbar';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {getTraceTSEntries as scatterTSGetter} from './dataTypes/FireflyScatter.js';
 import {getTraceTSEntries as histogramTSGetter} from './dataTypes/FireflyHistogram.js';
+import {getTraceTSEntries as heatmapTSGetter} from './dataTypes/FireflyHeatmap.js';
 
 export const SCATTER = 'scatter';
+export const HEATMAP = 'heatmap';
 export const HISTOGRAM = 'histogram';
 
 export const SELECTED_COLOR = '#ffc800';
@@ -272,6 +275,7 @@ export function getRowIdx(traceData, pointIdx) {
  */
 export function getPointIdx(traceData, rowIdx) {
     const rowIdxArray = get(traceData, 'firefly.rowIdx');
+    // use double equal in case we compare string to Number
     return rowIdxArray ? rowIdxArray.findIndex((e) => e == rowIdx) : rowIdx;
 }
 
@@ -286,13 +290,15 @@ export function getOptionsUI(chartId) {
         return HistogramOptions;
     } else if (dataType === 'fireflyHistogram') {
             return FireflyHistogramOptions;
+    } else if (dataType === 'fireflyHeatmap') {
+            return HeatmapOptions;
     } else {
         return BasicOptions;
     }
 }
 
 export function getToolbarUI(chartId, activeTrace=0) {
-    const {data, fireflyData} =  getChartData(chartId);
+    const {data} =  getChartData(chartId);
     const type = get(data, [activeTrace, 'type'], '');
     if (type.includes('scatter')) {
         return ScatterToolbar;
@@ -501,6 +507,8 @@ function getTraceTSEntries({chartDataType, traceTS, chartId, traceNum}) {
         return scatterTSGetter({traceTS, chartId, traceNum});
     } else if (chartDataType === 'fireflyHistogram') {
             return histogramTSGetter({traceTS, chartId, traceNum});
+    } else if (chartDataType === 'fireflyHeatmap') {
+                return heatmapTSGetter({traceTS, chartId, traceNum});
     } else {
         return {};
     }
@@ -558,12 +566,18 @@ const TRACE_COLORS = [  '#333333', '#ff3333', '#00ccff','#336600',
 export function getNewTraceDefaults(type='', traceNum=0) {
     if (type.includes(SCATTER)) {
         return {
-            [`data.${traceNum}.type`] : type, //make sure trace type is set
+            [`data.${traceNum}.type`]: type, //make sure trace type is set
             [`data.${traceNum}.marker.color`]: TRACE_COLORS[traceNum] || undefined,
             [`data.${traceNum}.marker.line`]: 'none',
             [`data.${traceNum}.showlegend`]: true,
-            ['layout.xaxis.range'] : undefined, //clear out fixed range
-            ['layout.yaxis.range'] : undefined, //clear out fixed range
+            ['layout.xaxis.range']: undefined, //clear out fixed range
+            ['layout.yaxis.range']: undefined //clear out fixed range
+        };
+    } else if (type.includes(HEATMAP)) {
+        return {
+            [`data.${traceNum}.showlegend`]: true,
+            ['layout.xaxis.range']: undefined, //clear out fixed range
+            ['layout.yaxis.range']: undefined //clear out fixed range
         };
     } else {
         return {

@@ -438,7 +438,7 @@ function setActiveTrace(action) {
             const {selectInfo, highlightedRow} = getTblById(tbl_id) || {};
             if (selectInfo) {
                 const selectInfoCls = SelectInfo.newInstance(selectInfo);
-                const selIndexes = Array.from(selectInfoCls.getSelected()).map((e)=>getPointIdx(data[activeTrace], e));;
+                const selIndexes = Array.from(selectInfoCls.getSelected()).map((e)=>getPointIdx(data[activeTrace], e));
                 if (selIndexes.length > 0) {
                     selected = newTraceFrom(data[activeTrace], selIndexes, SELECTED_PROPS);
                 }

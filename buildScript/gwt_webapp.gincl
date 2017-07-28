@@ -166,7 +166,7 @@ war {
   outputs.dir gwt.warDir
   classpath = configurations.webappLib
   from gwt.warDir
-  destinationDir = file("${rootDir}/build/libs")
+  destinationDir = file(project.distDir)
 
   doFirst {
     archiveName = "${webapp.baseWarName}.war"

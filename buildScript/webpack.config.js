@@ -31,7 +31,7 @@ export default function makeWebpackConfig(config) {
 
     var def_config = {
         env         : process.env.NODE_ENV || 'development',
-        dist        : process.env.WP_BUILD_DIR || path.resolve(config.project, `build/${config.name}/gwt/${config.name}`),
+        dist        : process.env.WP_BUILD_DIR || path.resolve(config.project, `build/${config.name}/war`),
         do_lint     : process.env.DO_LINT || process.env.DO_LINT_STRICT || false,
         html_dir    : 'html',
         use_loader  : true,

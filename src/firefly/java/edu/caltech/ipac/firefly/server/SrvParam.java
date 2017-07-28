@@ -245,9 +245,12 @@ public class SrvParam {
 //  Table related convenience methods
 //====================================================================
     public TableServerRequest getTableServerRequest() {
-        String reqString = getRequired(ServerParams.REQUEST);
-        return QueryUtil.convertToServerRequest(reqString);
+        return getTableServerRequest(ServerParams.REQUEST);
     }
 
+    public TableServerRequest getTableServerRequest(String key) {
+        String reqString = getRequired(key);
+        return QueryUtil.convertToServerRequest(reqString);
+    }
 }
 

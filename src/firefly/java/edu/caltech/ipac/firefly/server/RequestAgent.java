@@ -137,16 +137,16 @@ public class RequestAgent {
             this.response = response;
 
             String remoteIP = getHeader("X-Forwarded-For", request.getRemoteAddr());
-            String protocol = getHeader("X-Forwarded-Proto", request.getProtocol());
+            String scheme = getHeader("X-Forwarded-Proto", request.getScheme());
             String serverName = request.getServerName();
             int serverPort = request.getServerPort();
             String serverPortDesc = serverPort == 80 || serverPort == 443 ? "" : ":" + serverPort;
 
-            String baseUrl = String.format("%s://%s%s%s/", protocol, serverName, serverPortDesc, request.getContextPath());
-            String requestUrl = String.format("%s://%s%s%s", protocol, serverName, serverPortDesc, request.getRequestURI());
+            String baseUrl = String.format("%s://%s%s%s/", scheme, serverName, serverPortDesc, request.getContextPath());
+            String requestUrl = String.format("%s://%s%s%s", scheme, serverName, serverPortDesc, request.getRequestURI());
 
             setRemoteIP(remoteIP);
-            setProtocol(protocol);
+            setProtocol(scheme);
             setRequestUrl(requestUrl);
             setBaseUrl(baseUrl);
             setSessId(request.getSession(true).getId());

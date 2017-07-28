@@ -51,7 +51,7 @@ function makeCcdReqBuilder(table, rowIdx) {
     sr.setParam('run', `${run}`);
     sr.setParam('camcol', `${camcol}`);
     sr.setParam('field', `${field}`);
-    if (subsize) {
+    if (subsize && subsize>0) {
         sr.setParam('subsize', `${subsize}`);
         sr.setParam([ServerParams.USER_TARGET_WORLD_PT], get(table, ['request', [ServerParams.USER_TARGET_WORLD_PT]]));
         sr.setParam('imageId', getCellValue(table, rowIdx, 'scienceCcdExposureId'));
@@ -74,7 +74,7 @@ function makeCcdReqBuilder(table, rowIdx) {
  * @param rowIdx - {int}
  * @returns {Function}
  */
-function makeCoadReqBuilder(table, rowIdx) {
+function makeCoaddReqBuilder(table, rowIdx) {
 
     const tract= getCellValue(table, rowIdx, 'tract');
     const patch= getCellValue(table, rowIdx, 'patch');
@@ -83,7 +83,7 @@ function makeCoadReqBuilder(table, rowIdx) {
     const sr= new ServerRequest('LSSTImageSearch');
     sr.setParam('tract', `${tract}`);
     sr.setParam('patch', `${patch}`);
-    if (subsize) {
+    if (subsize && subsize>0) {
         sr.setParam('subsize', `${subsize}`);
         sr.setParam([ServerParams.USER_TARGET_WORLD_PT], get(table, ['request', [ServerParams.USER_TARGET_WORLD_PT]]));
         sr.setParam('imageId', getCellValue(table, rowIdx, 'deepCoaddId'));
@@ -117,7 +117,7 @@ export function makeLsstSdssPlotRequest(table, row, includeSingle, includeStanda
         id= Number(getCellValue(table, row, 'scienceCcdExposureId'));
     }
     else {
-        builder= makeCoadReqBuilder(table, row);
+        builder= makeCoaddReqBuilder(table, row);
         const deepCoaddId= Number(getCellValue(table, row, 'deepCoaddId'));
         id = deepCoaddId - deepCoaddId%8;
 

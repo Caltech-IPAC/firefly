@@ -6,7 +6,6 @@ import {getChartData} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 
-//import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
 import {BasicOptionFields, OptionTopBar, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
 import {updateSet} from '../../../util/WebUtil.js';
@@ -119,7 +118,7 @@ export function fieldReducer({chartId, activeTrace}) {
             fieldKey: errorMinusFieldKey(activeTrace, 'x'),
             value: get(tablesourceMappings, ['error_x.arrayminus'], ''),
             //tooltip: 'X error',
-            label: 'X Err\u2193:',
+            label: 'Error\u2193:',
             ...fieldProps
         },
         [errorFieldKey(activeTrace, 'y')]: {

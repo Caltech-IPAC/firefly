@@ -22,7 +22,7 @@ export class ChartsContainer extends PureComponent {
     }
 
     render() {
-        const {chartId, expandedMode, closeable} = this.props;
+        const {chartId, expandedMode, closeable, viewerId} = this.props;
 
         if (chartId) {
             return expandedMode ?
@@ -30,7 +30,7 @@ export class ChartsContainer extends PureComponent {
                 <ChartPanel key={chartId} expandable={true} chartId={chartId}/>;
         } else {
             return (
-                <MultiChartViewer closeable={closeable} viewerId={DEFAULT_PLOT2D_VIEWER_ID} expandedMode={expandedMode}/>
+                <MultiChartViewer closeable={closeable} viewerId={viewerId || DEFAULT_PLOT2D_VIEWER_ID} expandedMode={expandedMode}/>
             );
         }
     }
@@ -40,7 +40,8 @@ ChartsContainer.propTypes = {
     expandedMode: PropTypes.bool,
     closeable: PropTypes.bool,
     chartId: PropTypes.string,
-    tblId: PropTypes.string
+    tblId: PropTypes.string,
+    viewerId : PropTypes.string
 };
 
 function ExpandedView(props) {

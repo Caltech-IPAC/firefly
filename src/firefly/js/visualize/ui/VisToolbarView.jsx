@@ -98,9 +98,10 @@ const tipStyle= {
  * @param p.toolTip tool tip to show
  * @param p.dlCount drawing layer count
  * @param p.messageUnder put the help message under
+ * @param p.style
  * @return {XML}
  */
-export function VisToolbarViewWrapper({visRoot,toolTip,dlCount, messageUnder}) {
+export function VisToolbarViewWrapper({visRoot,toolTip,dlCount, messageUnder, style= {}}) {
 
     const rS= {
         width: 'calc(100% - 2px)',
@@ -117,7 +118,7 @@ export function VisToolbarViewWrapper({visRoot,toolTip,dlCount, messageUnder}) {
     const ts= messageUnder ? Object.assign({},tipStyle, {maxWidth:'100%'}) : tipStyle;
 
     return (
-        <div style={rS}>
+        <div style={Object.assign({}, rS, style) }>
             <VisToolbarView visRoot={visRoot} dlCount={dlCount}/>
             <div style={ts}>{toolTip}</div>
         </div>
@@ -131,6 +132,7 @@ export function VisToolbarViewWrapper({visRoot,toolTip,dlCount, messageUnder}) {
 
 VisToolbarViewWrapper.propTypes= {
     visRoot : PropTypes.object.isRequired,
+    style : PropTypes.object,
     toolTip : PropTypes.string,
     dlCount : PropTypes.number,
     messageUnder : PropTypes.bool

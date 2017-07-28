@@ -316,6 +316,18 @@ public class DataType implements Serializable, Cloneable {
     }
 
     /**
+     * this is similar to clone without having to deal with exception and casting.
+     * @return
+     */
+    public DataType copyOf() {
+        try {
+            return (DataType) clone();
+        } catch (CloneNotSupportedException e) {
+            return null; // should not happen;
+        }
+    }
+
+    /**
      * FormatInfo defines the formatting behavior of this DataType.
      * This includes column width, column header alignment, column data alignment,
      * and data format.

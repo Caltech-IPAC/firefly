@@ -170,8 +170,9 @@ export class HistogramPlotly extends Component {
                     side: get(xAxis, OPP) ? 'top' : 'bottom',
                     titlefont: {
                         size: FSIZE
-                    }
-                },
+                    },
+                     exponentformat:'e'
+                 },
                 yaxis: {
                     title: 'Number',
                     gridLineWidth: 1,
@@ -182,7 +183,8 @@ export class HistogramPlotly extends Component {
                     side: get(yAxis, OPP) ? 'right' : 'left',
                     titlefont: {
                         size: FSIZE
-                    }
+                    },
+                    exponentformat:'e'
                 },
                 margin: {
                     l: leftMargin,

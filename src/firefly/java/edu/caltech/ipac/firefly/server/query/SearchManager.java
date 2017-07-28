@@ -19,6 +19,7 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
+import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.IpacTableUtil;
@@ -31,6 +32,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
+
+import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.CLIENT_REQ;
+import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.SERVER_REQ;
 
 
 /**
@@ -99,10 +103,14 @@ public class SearchManager {
                 dgp.getTableDef().getMetaFrom(meta);
                 return dgp;
             } catch (Exception ex) {
-                String source = dgp != null && dgp.getTableDef() != null ? dgp.getTableDef().getSource() : "unknown";
-                String errMsg = ex.getClass().getSimpleName() + ":" + ex.getMessage() + " from:" + source;
-                LOGGER.error(ex, errMsg);
-                throw new DataAccessException(errMsg, ex);
+                String source = dgp != null && dgp.getTableDef() != null ? dgp.getTableDef().getSource() : null;
+                if (source != null || !(ex instanceof DataAccessException)) {
+                    String errMsg = ex.getClass().getSimpleName() + ":" + ex.getMessage() + " from:" + source;
+                    LOGGER.error(ex, errMsg);
+                    throw new DataAccessException(errMsg, ex);
+                } else {
+                    throw ex;
+                }
             }
         } else {
             throw new DataAccessException("Request fail inspection.  Operation aborted.");
@@ -198,14 +206,15 @@ public class SearchManager {
     public BackgroundStatus getRawDataSetBackground(TableServerRequest request, Request clientRequest, int waitMillis) throws RPCException {
 
         Logger.briefDebug("Backgrounded search started:" + waitMillis + " wait, req:" + request);
-        String email= request.containsParam(ServerParams.EMAIL)? request.getParam(ServerParams.EMAIL) : "";
+        String email= request.getMeta(ServerParams.EMAIL) == null ? "" : request.getMeta(ServerParams.EMAIL);
         SearchWorker worker= new SearchWorker(request, clientRequest);
+        String title = request.getTblTitle() == null ? request.getRequestId() : request.getTblTitle();
         BackgroundEnv.BackgroundProcessor processor=
                               new BackgroundEnv.BackgroundProcessor(worker,  null,
-                                                                    request.getRequestId(),
+                                                                    title,
                                                                     email, request.getRequestId(),
                                                                     ServerContext.getRequestOwner() );
-        return BackgroundEnv.backgroundProcess(waitMillis, processor);
+        return BackgroundEnv.backgroundProcess(waitMillis, processor, BackgroundStatus.BgType.SEARCH);
     }
 
     public RawDataSet getEnumValues(File file) throws IOException {
@@ -233,8 +242,12 @@ public class SearchManager {
         public BackgroundStatus work(BackgroundEnv.BackgroundProcessor p)  throws Exception {
             RawDataSet data= getRawDataSet(request);
             BackgroundStatus bgStat= new BackgroundStatus(p.getBID(), BackgroundState.SUCCESS, BackgroundStatus.BgType.SEARCH);
-            bgStat.setServerRequest(request);
-            bgStat.setClientRequest(clientRequest);
+            if (request != null) {
+                bgStat.setParam(SERVER_REQ, JsonTableUtil.toJsonTableRequest(request).toJSONString());
+            }
+            if (clientRequest != null) {
+                bgStat.setParam(CLIENT_REQ, JsonTableUtil.toJsonTableRequest(clientRequest).toJSONString());
+            }
             if (data.getTotalRows() > 0)  bgStat.setFilePath(data.getMeta().getSource());
             return bgStat;
         }

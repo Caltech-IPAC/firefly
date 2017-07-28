@@ -32,6 +32,7 @@ function actionCreators() {
         [BG_MONITOR_SHOW]: bgMonitorShow,
         [BG_SET_EMAIL]: bgSetEmail,
         [BG_Package]: bgPackage,
+        [BG_JOB_ADD]: bgJobAdd,
         [BG_JOB_REMOVE]: bgJobRemove,
         [BG_JOB_CANCEL]: bgJobCancel
     };
@@ -133,6 +134,16 @@ function bgMonitorShow(action) {
     };
 }
 
+function bgJobAdd(action) {
+    return (dispatch) => {
+        const bgStatus = action.payload;
+        if (bgStatus) {
+            SearchServices.addBgJob(bgStatus);
+            dispatch(action);
+        }
+    };
+}
+
 function bgJobRemove(action) {
     return (dispatch) => {
         const {id} = action.payload;
@@ -174,6 +185,8 @@ function bgPackage(action) {
                     if (url && isSuccess(get(bgStatus, 'STATE'))) {
                         download(url);
                         dispatch({type: BG_JOB_IMMEDIATE, payload: bgStatus});       // allow saga to catch flow.
+                    } else {
+                        dispatchJobAdd(bgStatus);
                     }
                 }
             });
@@ -235,13 +248,13 @@ function handleBgJobRemove(state, action) {
  */
 function transform(bgstats) {
     const ITEMS = Object.keys(bgstats)
-        .filter( (k) => k.startsWith('PACKAGE_PROGRESS_') )
+        .filter( (k) => k.startsWith('ITEMS_') )
         .map( (k) => {
-            const [,,index] = k.split('_');
+            const [,index] = k.split('_');
             const INDEX = Number(index);
             return {INDEX, ...bgstats[k]};
         }).sort((a, b) => a.INDEX - b.INDEX);
-    const REST = pick(bgstats,  Object.keys(bgstats).filter( (k) => !k.startsWith('PACKAGE_PROGRESS_')));
+    const REST = pick(bgstats,  Object.keys(bgstats).filter( (k) => !k.startsWith('ITEMS_')));
 
     return {ITEMS, ...REST};
 }

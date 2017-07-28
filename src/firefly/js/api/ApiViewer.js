@@ -26,18 +26,51 @@ import {makeFileRequest}  from '../tables/TableUtil.js';
 import {makeXYPlotParams, makeHistogramParams, uniqueChartId} from '../charts/ChartUtil.js';
 import {getWsChannel, getWsConnId} from '../core/messaging/WebSocketClient.js';
 import {getConnectionCount, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS} from '../core/AppDataCntlr.js';
+import {dispatchAddCell, dispatchEnableSpecialViewer, LO_VIEW} from '../core/LayoutCntlr.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
+import Enum from 'enum';
+
+
+
+export const ViewerType= new Enum([
+    'TriView',  // use what it in the title
+    'Grid', // use the plot description key
+], { ignoreCase: true });
+
 
 const VIEWER_ID = '__viewer';
-var viewerWindow;
+let viewerWindow;
+
+let defaultViewerFile='';
+let defaultViewerType=ViewerType.TriView;
+
+
+
 
 /**
  * @returns {{getViewer: getViewer, getExternalViewer: getExternalViewer}}
  * @ignore
  */
 export function buildViewerApi() {
-    return {getViewer,getExternalViewer};
+    return {getViewer,setViewerConfig,ViewerType};
+}
+
+
+/**
+ *
+ * @param {Object} viewerType must be either ViewerType.TriView or ViewerType.Grid
+ * @param {string} [htmlFile]
+ */
+export function setViewerConfig(viewerType, htmlFile= '') {
+    if (!htmlFile) {
+        if (viewerType===ViewerType.Grid) {
+            htmlFile= 'slate.html';
+        }
+    }
+
+    defaultViewerType= viewerType;
+    defaultViewerFile= htmlFile;
 }
 
 /**
@@ -49,7 +82,7 @@ export function buildViewerApi() {
  * @memberof firefly
  *
  */
-export function getViewer(channel= getWsChannel(),file='') {
+export function getViewer(channel= getWsChannel(),file=defaultViewerFile) {
     channel += VIEWER_ID;
     const dispatch= (action) => dispatchRemoteAction(channel,action);
 
@@ -58,29 +91,96 @@ export function getViewer(channel= getWsChannel(),file='') {
      * @public
      * @namespace firefly.ApiViewer
      */
-    return Object.assign({dispatch, channel},
-                          buildImagePart(channel,file,dispatch),
-                          buildTablePart(channel,file,dispatch),
-                          buildChartPart(channel,file,dispatch)
+    const viewer= Object.assign({dispatch, channel},
+        buildImagePart(channel,file,dispatch),
+        buildTablePart(channel,file,dispatch),
+        buildChartPart(channel,file,dispatch)
     );
+
+
+    // add anything else
+    switch (defaultViewerType) {
+        case ViewerType.TriView:
+            return viewer;
+            break;
+        case ViewerType.Grid:
+            return Object.assign({}, viewer, buildSlateControl(channel,file,dispatch));
+            break;
+        default:
+            debug('Unknown viewer type: ${defaultViewerType}, returning TriView');
+            return viewer;
+            break;
+
+    }
 }
 
-/**
- *
- * @deprecated
- * @memberof firefly
- * @ignore
- */
-function getExternalViewer() {
-    debug('getExternalViewer is deprecated, use firefly.getViewer() instead');
-    return getViewer();
-}
 
+function buildSlateControl(channel,file,dispatcher) {
+
+
+    /**
+     *
+     * @param {number} row
+     * @param {number} col
+     * @param {number} width
+     * @param {number} height
+     * @param {LO_VIEW} type must be 'tables', 'images' or 'xyPlots' (use 'xyPlots' for histograms)
+     * @param {string} cellId
+     */
+    const addCell= (row, col, width, height, type, cellId) => {
+
+        doViewerOperation(channel,file, () => {
+            if (LO_VIEW.get(type)===LO_VIEW.tables) {
+                if (cellId!=='main') debug('for tables type is force to be "main"');
+                cellId= 'main';
+            }
+            dispatchAddCell({row,col,width,height,type, cellId,dispatcher});
+        });
+
+
+    };
+
+
+    // const enableSpecialViewer= (viewerType, cellId= undefined, tableGroup= 'main') =>
+    //     dispatchEnableSpecialViewer({viewerType, cellId:(cellId || `${viewerType}-${tableGroup}`), dispatcher});
+
+
+    /**
+     *
+     * @param {string} cellId  cell id to add to
+     * @param {string} [tableGroup] tableGroup to connect to, currently only main supported
+     */
+    const showCoverage = (cellId, tableGroup= 'main') => {
+        doViewerOperation(channel,file, () => {
+            dispatchEnableSpecialViewer({viewerType:LO_VIEW.coverageImage,
+                cellId:(cellId || `${LO_VIEW.coverageImage}-${tableGroup}`),
+                dispatcher});
+        });
+    };
+
+    /**
+     *
+     * @param {string} cellId  cell id to add to
+     * @param {string} [tableGroup] tableGroup to connect to, currently only main supported
+     */
+    const showImageMetaDataViewer = (cellId, tableGroup= 'main') => {
+        doViewerOperation(channel,file, () => {
+            dispatchEnableSpecialViewer({
+                viewerType: LO_VIEW.tableImageMeta,
+                cellId: (cellId || `${LO_VIEW.tableImageMeta}-${tableGroup}`),
+                dispatcher
+            });
+        });
+    };
+
+    return {addCell, showCoverage, showImageMetaDataViewer};
+
+}
 
 
 function buildImagePart(channel,file,dispatch) {
 
-    var defP= {};
+    let defP= {};
 
     /**
      * @summary set the default params the will be add to image plot request
@@ -93,10 +193,11 @@ function buildImagePart(channel,file,dispatch) {
     /**
      * @summary show a image in the firefly viewer in another tab
      * @param request Web plot request
+     * @param {String} viewerId
      * @memberof firefly.ApiViewer
      * @public
      */
-    const showImage= (request) => {
+    const showImage= (request, viewerId) => {
         doViewerOperation(channel,file, () => {
             if (isArray(request)) {
                 request= request.map( (r) => clone(r,defP));
@@ -104,7 +205,7 @@ function buildImagePart(channel,file,dispatch) {
             else {
                 request= clone(request,defP);
             }
-            plotRemoteImage(request,dispatch);
+            plotRemoteImage(request,viewerId, dispatch);
         });
     };
 
@@ -157,7 +258,7 @@ function buildTablePart(channel,file,dispatch) {
 
     const fetchTable= (request, hlRowIdx) => {
         doViewerOperation(channel,file, () => {
-            dispatchTableFetch(request, hlRowIdx, dispatch);
+            dispatchTableFetch(request, hlRowIdx, undefined, dispatch);
         });
     };
 
@@ -169,24 +270,26 @@ function buildChartPart(channel,file,dispatch) {
     /**
      * @summary Show XY Plot
      * @param {XYPlotOptions} xyPlotOptions
+     * @param {string} viewerId
      * @memberof firefly.ApiViewer
      * @public
      */
-    const showXYPlot= (xyPlotOptions) => {
+    const showXYPlot= (xyPlotOptions, viewerId) => {
         doViewerOperation(channel, file, () => {
-            plotRemoteXYPlot(xyPlotOptions, dispatch);
+            plotRemoteXYPlot(xyPlotOptions, viewerId, dispatch);
         });
     };
 
     /**
      * @summary Show Histogram
      * @param {HistogramOptions} histogramOptions
+     * @param {string} viewerId
      * @memberof firefly.ApiViewer
      * @public
      */
-    const showHistogram= (histogramOptions) => {
+    const showHistogram= (histogramOptions, viewerId) => {
         doViewerOperation(channel, file, () => {
-            plotRemoteHistogram(histogramOptions, dispatch);
+            plotRemoteHistogram(histogramOptions, viewerId, dispatch);
         });
     };
 
@@ -211,13 +314,15 @@ function doViewerOperation(channel,file,f) {
 }
 
 export function* doOnWindowConnected({channel, f}) {
-    var isLoaded = false;
+    let isLoaded = false;
     while (!isLoaded) {
         const action = yield take([WS_CONN_UPDATED]);
         const cnt = get(action, ['payload', channel, 'length'], 0);
         isLoaded = cnt > 0;
     }
-    f && f();
+    // Added a half second delay before ready to combat a race condition
+    // TODO: loi is going to look it it to determine if application it truely ready
+    setTimeout(() => f && f(), 500);
 }
 
 
@@ -227,9 +332,10 @@ export function* doOnWindowConnected({channel, f}) {
 
 /**
  * @param {XYPlotOptions} params - XY plot parameters
+ * @param {string} viewerId
  * @param {Function} dispatch - dispatch function
  */
-function plotRemoteXYPlot(params, dispatch) {
+function plotRemoteXYPlot(params, viewerId, dispatch) {
     const xyPlotParams = makeXYPlotParams(params);
     let tblId = params.tbl_id;
     if (!tblId) {
@@ -242,7 +348,7 @@ function plotRemoteXYPlot(params, dispatch) {
                 {pageSize: 0} // table options
             );
             tblId = searchRequest.tbl_id;
-            dispatchTableFetch(searchRequest, 0, dispatch);
+            dispatchTableFetch(searchRequest, 0, undefined, dispatch);
         } else {
             logError('Either tbl_id or source must be specified in the parameters');
             return;
@@ -250,7 +356,7 @@ function plotRemoteXYPlot(params, dispatch) {
     }
     const chartId = uniqueChartId();
     // SCATTER
-    dispatchChartAdd({chartId, chartType: SCATTER, groupId: 'default',
+    dispatchChartAdd({chartId, chartType: SCATTER, groupId: viewerId || 'default',
         chartDataElements: [
             {
                 type: DT_XYCOLS,
@@ -263,9 +369,10 @@ function plotRemoteXYPlot(params, dispatch) {
 
 /**
  * @param {HistogramOptions} params - histogram parameters
+ * @param {string} viewerId
  * @param {Function} dispatch - dispatch function
  */
-function plotRemoteHistogram(params, dispatch) {
+function plotRemoteHistogram(params, viewerId, dispatch) {
     const histogramParams = makeHistogramParams(params);
     let tblId = params.tbl_id;
     if (!tblId) {
@@ -278,7 +385,7 @@ function plotRemoteHistogram(params, dispatch) {
                 {pageSize: 0} // table options
             );
             tblId = searchRequest.tbl_id;
-            dispatchTableFetch(searchRequest, 0, dispatch);
+            dispatchTableFetch(searchRequest, 0, undefined, dispatch);
         } else {
             logError('Either tbl_id or source must be specified in the parameters');
             return;
@@ -286,7 +393,7 @@ function plotRemoteHistogram(params, dispatch) {
     }
     const chartId = uniqueChartId();
     // HISTOGRAM
-    dispatchChartAdd({chartId, chartType: HISTOGRAM, groupId: 'default',
+    dispatchChartAdd({chartId, chartType: HISTOGRAM, groupId: viewerId || 'default',
         chartDataElements: [
             {
                 type: DT_HISTOGRAM,
@@ -308,7 +415,7 @@ function plotRemoteHistogram(params, dispatch) {
 
 
 
-function plotRemoteImage(request, dispatch) {
+function plotRemoteImage(request, viewerId, dispatch) {
 
     const testR= Array.isArray(request) ? request : [request];
     testR.forEach( (r) => {
@@ -317,10 +424,10 @@ function plotRemoteImage(request, dispatch) {
     });
 
     request= confirmPlotRequest(request,{},'remoteGroup',makePlotId);
-    dispatchPlotImage({wpRequest:request, viewerId:DEFAULT_FITS_VIEWER_ID, dispatcher:dispatch});
+    dispatchPlotImage({wpRequest:request, viewerId:viewerId || DEFAULT_FITS_VIEWER_ID, dispatcher:dispatch});
 }
 
-var plotCnt= 0;
+let plotCnt= 0;
 
 function makePlotId() {
     plotCnt++;

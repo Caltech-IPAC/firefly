@@ -54,11 +54,18 @@ export class BasicToolbar extends SimpleComponent {
     render() {
         const {chartId, expandable, toggleOptions} = this.props;
         //const {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected, dragmode} = this.state;
-        const {activeTrace, tbl_id, dragmode} = this.state;
+        const {activeTrace, hasFilter, hasSelection, tbl_id, dragmode} = this.state;
+
+        const showSelectionPart = get(getChartData(chartId), `data.${activeTrace}.type`, '').includes('heatmap');
+
         return (
             <div className='ChartToolbar'>
                 <ActiveTraceSelect style={{marginRight: 20}} {...{chartId, activeTrace}}/>
                 <DragModePart {...{chartId, tbl_id, dragmode}}/>
+                {showSelectionPart && <div className='ChartToolbar__buttons' style={{margin: '0 5px'}}>
+                    {hasFilter    && <ClearFilter {...{tbl_id}} />}
+                    {hasSelection && <FilterSelection {...{chartId}} />}
+                </div>}
                 <div className='ChartToolbar__buttons'>
                     <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />
                     <SaveBtn {...{chartId}} />

@@ -135,7 +135,7 @@ class SuggestBoxInputFieldView extends PureComponent {
         var displayValue = get(ev, 'target.value');
         var {valid,message} = this.props.validator(displayValue);
         const inputWidth = ev.target.offsetWidth ? ev.target.offsetWidth : this.state.inputWidth;
-        this.setState({displayValue, valid, message, isOpen: false, suggestions: [], inputWidth});
+        this.setState({displayValue, valid, message, inputWidth});
         this.updateSuggestions(displayValue);
         this.props.fireValueChange({ value : displayValue, message, valid});
     }
@@ -147,6 +147,8 @@ class SuggestBoxInputFieldView extends PureComponent {
             // make sure the suggestions are still relevant when promise returns
             if (arrayOrPromise === this.suggestionsPromise && isArray(suggestions) && suggestions.length > 0) {
                 this.setState({isOpen: true, suggestions});
+            } else {
+                this.setState({isOpen: false, suggestions: []});
             }
         }).catch((err) => logError(err));
     }

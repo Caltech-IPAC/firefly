@@ -26,6 +26,7 @@ export const dropDownMap = {
     TestSearch: <TestSearchPanel />,
     TestSearches: <TestQueriesPanel />,
     ImageSelectDropDownCmd: <ImageSelectDropdown />,
+    ImageSelectDropDownSlateCmd: <ImageSelectDropdown gridSupport={true}/>,
     ChartSelectDropDownCmd: <ChartSelectDropdown />,
     IrsaCatalogDropDown: <CatalogSelectViewPanel/>,
     LsstCatalogDropDown: <LSSTCatalogSelectViewPanel/>,

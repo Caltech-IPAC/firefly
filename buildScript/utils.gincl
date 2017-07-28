@@ -35,7 +35,7 @@ task deployAllWars(dependsOn: loadConfig) {
       execCmd(rhost, true, ["rm", "-r", "$tomcat_home/temp/ehcache"])
 
       // copy all of the war files
-      def wars = fileTree(dir: "${project.buildRoot}/libs", include: '*.war')
+      def wars = fileTree(dir: "${project.distDir}", include: '*.war')
       wars.each { File file ->
         copyWar(file, rhost)
       }

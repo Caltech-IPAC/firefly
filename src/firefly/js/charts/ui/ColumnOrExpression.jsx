@@ -11,6 +11,10 @@ import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 import ColValuesStatistics from '../ColValuesStatistics.js';
 import {showColSelectPopup} from './ColSelectView.jsx';
 
+const EXPRESSION_TTIPS = `
+Supported operators: ^, *, /, +, -, <, <=, =, <>, >=, >, and, or.
+Supported functions: abs(x), acos(x), asin(x), atan(x), atan2(x,y), ceil(x), cos(x), exp(x), floor(x), if(x,y,z), lg(x), ln(x), log10(x), log(x), max(x,y), min(x,y), round(x), sin(x), sqrt(x), tan(x).
+Example: sqrt(b^2 - 4*a*c) / (2*a), where a, b, c are column names.`;
 
 /*
  * Split content into prior content and the last alphanumeric token in the text
@@ -55,6 +59,9 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
 
     const getSuggestions = (val)=>{
         const {token} = parseSuggestboxContent(val);
+        if (val && val.endsWith(')')) {
+            return [];
+        }
         const matches = allSuggestions.filter( (idx)=>{return colValStats[idx].name.startsWith(token);} );
         return matches.length ? matches : allSuggestions;
     };
@@ -91,7 +98,7 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
                     valid,
                     message,
                     validator: colValidator,
-                    tooltip: `Column or expression for ${tooltip ? tooltip : name}`,
+                    tooltip: `Column or expression for ${tooltip ? tooltip : name}.${EXPRESSION_TTIPS}`,
                     nullAllowed
                 }}
                 getSuggestions={getSuggestions}
