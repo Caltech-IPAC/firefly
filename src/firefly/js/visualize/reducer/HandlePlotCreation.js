@@ -30,6 +30,7 @@ export function reducer(state, action) {
     let plotViewAry;
     let plotGroupAry;
     let plotRequestDefaults;
+    const {setNewPlotAsActive=true}= action.payload;
     switch (action.type) {
         case Cntlr.PLOT_IMAGE_START  :
             plotRequestDefaults= updateDefaults(state.plotRequestDefaults,action);
@@ -40,13 +41,14 @@ export function reducer(state, action) {
                 if (plotViewAry) retState.plotViewAry= plotViewAry;
                 if (plotGroupAry) retState.plotGroupAry= plotGroupAry;
                 if (plotRequestDefaults) retState.plotRequestDefaults= plotRequestDefaults;
+                if (setNewPlotAsActive) retState.activePlotId= action.payload.plotId;
             }
             break;
         case Cntlr.PLOT_IMAGE_FAIL  :
             retState= plotFail(state,action);
             break;
         case Cntlr.PLOT_IMAGE  :
-            retState= addPlot(state,action, action.payload.setNewPlotAsActive, true);
+            retState= addPlot(state,action, action.payload.setNewPlotAsActive, setNewPlotAsActive);
             // todo: also process adding to history
             break;
 
