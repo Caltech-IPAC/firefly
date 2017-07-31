@@ -462,12 +462,16 @@ export function findCurrentCenterPoint(plotView,scrollX,scrollY) {
     const {viewDim}= plotView;
 
     let cc;
-    if (isUndefined(scrollX) || isUndefined(scrollY)) {
-        cc= CysConverter.make(plot);
-    }
-    else {
+    if (!isUndefined(scrollX) && isUndefined(!scrollY)) {
         const trans= makeTransform(0,0, scrollX, scrollY,  plotView.rotation, plotView.flipX, plotView.flipY, viewDim);
         cc= CysConverter.make(plot,trans);
+    }
+    else if (isUndefined(plotView.scrollX) || isUndefined(plotView.scrollY)) {
+        const trans= makeTransform(0,0, 0, 0,  plotView.rotation, plotView.flipX, plotView.flipY, viewDim);
+        cc= CysConverter.make(plot,trans);
+    }
+    else {
+        cc= CysConverter.make(plot);
     }
     const pt= makeDevicePt(viewDim.width/2, viewDim.height/2);
     return cc.getImageCoords(pt);
