@@ -396,10 +396,13 @@ function updateViewSize(state,action) {
             const newSp= findWCSMatchScrollPosition(state, state.mpwWcsPrimId, plotId, makeScreenPt(scrollX,scrollY));
             pv= updatePlotViewScrollXY(pv, newSp);
         }
+        else if (isUndefined(pv.scrollX) || isUndefined(pv.scrollY)) {
+            pv= recenterPv(null, false)(pv);
+        }
         else {
             const centerImagePt= (pv.scrollX<0 || pv.scrollY<0) ?
-                                 makeImagePt(plot.dataWidth/2, plot.dataHeight/2) :
-                                 findCurrentCenterPoint(pv);
+                makeImagePt(plot.dataWidth/2, plot.dataHeight/2) :
+                findCurrentCenterPoint(pv);
             pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt));
         }
 

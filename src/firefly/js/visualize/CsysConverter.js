@@ -356,7 +356,7 @@ export class CysConverter {
 
     getDevicePtCoordsOptimize(wpt, retPt) {
         const success= this.getScreenCoordsOptimize(wpt,retPt);
-        if (!success) return false;
+        if (!success  || !this.affTrans) return false;
         const {x,y}= Matrix.from(this.affTrans).applyToPoint(retPt.x,retPt.y);
         retPt.x= x;
         retPt.y= y;
@@ -371,7 +371,7 @@ export class CysConverter {
      * @return {DevicePt}
      */
      makeDevicePtFromSp(sp, altTransform) {
-        if (!sp) return null;
+        if (!sp || !this.affTrans) return null;
         const {x,y}= Matrix.from(altTransform || this.affTrans).applyToPoint(sp.x,sp.y);
         return makeDevicePt(x,y);
     }
@@ -421,7 +421,7 @@ export class CysConverter {
     }
 
     makeSpFromDevPt(devPt) {
-         if (!devPt) return null;
+         if (!devPt || !this.affTrans) return null;
          const {x,y}= Matrix.from(this.affTrans).inverse().applyToPoint(devPt.x,devPt.y);
          return makeScreenPt(x,y);
      }
