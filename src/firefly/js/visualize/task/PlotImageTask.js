@@ -132,7 +132,7 @@ function makePlotImageAction(rawAction) {
         else {
             const {viewerId=DEFAULT_FITS_VIEWER_ID, attributes,
                    setNewPlotAsActive= true, pvOptions= {},
-                   addToHistory= false,useContextModifications= true}= rawAction.Payload;
+                   addToHistory= false,useContextModifications= true}= rawAction.payload;
             payload= {
                 wpRequestAry:ensureWPR(wpRequestAry),
                 viewerId,
