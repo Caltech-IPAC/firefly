@@ -7,7 +7,7 @@ import Enum from 'enum';
 
 import {flux} from '../../Firefly.js';
 import {BACKGROUND_PATH} from './BackgroundCntlr.js';
-import {parseUrl} from '../../util/WebUtil.js';
+import {getModuleName} from '../../util/WebUtil.js';
 
 
 /**
@@ -71,6 +71,27 @@ export function getErrMsg(bgStatus) {
     return Object.entries(omit(bgStatus, 'MESSAGE_CNT')).filter( ([k,v]) => k.startsWith('MESSAGE_'))
                             .map(([k,v]) => v)
                             .join('; ');
+}
+
+
+/**
+ * returns a regex used to filter the incoming BackgroundStatus's DataTag.
+ * @returns {RegExp}
+ */
+export function getDataTagMatcher() {
+    var patterns = get(flux.getState(), [BACKGROUND_PATH, 'allowDataTag']) || [`^${getModuleName()}-.*`, 'catalog'];
+    patterns = Array.isArray(patterns) ? patterns : patterns.split(',').map((s) => s.trim());
+    return new RegExp(patterns.join('|'));
+}
+
+/**
+ * returns a regex used to filter the incoming BackgroundStatus's DataTag.
+ * @returns {RegExp}
+ */
+export function setDataTagMatcher() {
+    var patterns = get(flux.getState(), [BACKGROUND_PATH, 'allowDataTag']) || [`^${getModuleName()}-.*`, 'catalog'];
+    patterns = Array.isArray(patterns) ? patterns : patterns.split(',').map((s) => s.trim());
+    return new RegExp(patterns.join('|'));
 }
 
 

@@ -4,6 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
+import {set, cloneDeep} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
@@ -22,6 +23,7 @@ import {makeTblRequest, getTblInfoById, getActiveTableId} from '../tables/TableU
 import {dispatchPackage, doOnPackage} from '../core/background/BackgroundCntlr.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
+import {DataTagMeta} from '../tables/TableUtil.js';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
 
@@ -149,12 +151,13 @@ export class DownloadOptionPanel extends PureComponent {
     }
 
     onSubmit(options) {
-        const {tbl_id, dlParams, cutoutSize} = this.props;
-        const {request, selectInfo} = getTblInfoById(tbl_id);
+        const {tbl_id, dlParams, dataTag, cutoutSize} = this.props;
+        var {request, selectInfo} = getTblInfoById(tbl_id);
         const {FileGroupProcessor} = dlParams;
         const Title = dlParams.Title || options.Title;
         const dreq = makeTblRequest(FileGroupProcessor, Title, Object.assign(dlParams, {cutoutSize}, options));
         this.setState({mask: true});
+        request = set(cloneDeep(request), DataTagMeta, dataTag);
         dispatchAddSaga(doOnPackage, {title: Title, callback:() => {
             this.setState({mask: false});
             showDownloadDialog(this, false);
@@ -166,7 +169,7 @@ export class DownloadOptionPanel extends PureComponent {
         const {groupKey, cutoutSize, help_id, children, style, title} = this.props;
         const {mask, sendEmail} = this.state;
         const labelWidth = 110;
-        let ttl = title || DOWNLOAD_DIALOG_ID;
+        const ttl = title || DOWNLOAD_DIALOG_ID;
         return (
             <div style = {Object.assign({margin: '4px', position: 'relative', minWidth: 350}, style)}>
                 {mask && <div style={{width: '100%', height: '100%'}} className='loading-mask'/>}
@@ -248,6 +251,7 @@ DownloadOptionPanel.propTypes = {
     title:      PropTypes.string,
     mask:       PropTypes.bool,
     style:      PropTypes.object,
+    dataTag:    PropTypes.string,
     dlParams:   PropTypes.shape({
         TitlePrefix:    PropTypes.string,
         FilePrefix:     PropTypes.string,

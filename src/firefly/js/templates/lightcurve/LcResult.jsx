@@ -24,7 +24,7 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {getTblById, doFetchTable, isTblDataAvail, MAX_ROW} from '../../tables/TableUtil.js';
 import {dispatchMultiValueChange, dispatchRestoreDefaults}  from '../../fieldGroup/FieldGroupCntlr.js';
 import {logError} from '../../util/WebUtil.js';
-import {getConverter, getMissionName, defaultDownloaderOptPanel} from './LcConverterFactory.js';
+import {getConverter, getMissionName, defaultDownloaderOptPanel, DL_DATA_TAG} from './LcConverterFactory.js';
 import {ERROR_MSG_KEY} from '../lightcurve/generic/errorMsg.js';
 import {convertAngle} from '../../visualize/VisUtil.js';
 
@@ -133,6 +133,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
         return (
             <DownloadButton>
                 <DownloadOptionPanel
+                    dataTag = {DL_DATA_TAG}
                     cutoutSize={c}
                     title={'Image Download Option'}
                     dlParams={{

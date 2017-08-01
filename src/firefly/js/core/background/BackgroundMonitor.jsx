@@ -179,6 +179,8 @@ function SinglePackage({ID, Title, STATE, ITEMS=[]}) {
     var progress;
     if (BG_STATE.WAITING.is(STATE)) {
         progress = <div className='BGMon__header--waiting'>Computing number of packages... <img style={{marginLeft: 3}} src={LOADING}/></div>;
+    } else if (BG_STATE.WORKING.is(STATE)) {
+            progress = <div className='BGMon__header--waiting'>In progress.... <img style={{marginLeft: 3}} src={LOADING}/></div>;
     } else if (BG_STATE.CANCELED.is(STATE)) {
         progress = <div>User aborted this request</div>;
     } else {

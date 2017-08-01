@@ -18,8 +18,9 @@ import {ServerParams} from '../data/ServerParams.js';
 import {doUpload} from '../ui/FileUpload.jsx';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {getWsConnId} from '../core/messaging/WebSocketClient.js';
+import {Keys} from '../core/background/BackgroundStatus.js';
 
-export const TableTagMeta = 'META_INFO.TableTag'; // a tag describing the content of this table.  ie. 'catalog', 'imagemeta'
+export const DataTagMeta = ['META_INFO', Keys.DATA_TAG]; // a tag describing the content of this table.  ie. 'catalog', 'imagemeta'
 export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT']);
 export const MAX_ROW = Math.pow(2,31) - 1;
 /* TABLE_REQUEST should match QueryUtil on the server-side */

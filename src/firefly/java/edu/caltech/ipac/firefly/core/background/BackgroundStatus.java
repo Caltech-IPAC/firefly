@@ -44,6 +44,9 @@ public class BackgroundStatus implements Serializable {
     public static final String WEB_PLOT_REQ = "WEB_PLOT_REQ";
     public static final String FILE_PATH = "FILE_PATH";
     public static final String TOTAL_BYTES = "TOTAL_BYTES";
+    public static final String DATA_TAG = "DataTag";
+
+    // most likely not used anymore  <---
     public static final String PUSH_DATA_BASE = "PUSH_DATA_#";
     public static final String PUSH_TYPE_BASE = "PUSH_TYPE_#";
     public static final String PUSH_CNT =       "PUSH_CNT";
@@ -51,6 +54,7 @@ public class BackgroundStatus implements Serializable {
     public static final String USER_DESC     =  "USER_DESC_#";
     public static final String RESPONSE_CNT =   "RESPONSE_CNT";
     public static final String ACTIVE_REQUEST_CNT ="ACTIVE_REQUEST_CNT";
+    // ---->
 
     protected static final String URL_SUB = "URL_PARAM_SEP";
     private LinkedHashMap<String, String> params = new LinkedHashMap<String, String>();     // a map of Param keyed by name
@@ -91,11 +95,6 @@ public class BackgroundStatus implements Serializable {
         retval.setState(state);
         return retval;
     }
-
-//    public BackgroundStatus(BackgroundState state, BackgroundStatus copyFromReq) {
-//        if (copyFromReq!=null) this.copyFrom(copyFromReq);
-//        setState(state);
-//    }
 
     public static BackgroundStatus createUnknownFailStat() {
         return new BackgroundStatus(NO_ID, BackgroundState.FAIL, BgType.UNKNOWN);
@@ -428,6 +427,9 @@ public class BackgroundStatus implements Serializable {
 
     public void setFilePath(String filePath) { setParam(FILE_PATH,filePath); }
 
+    public String getDataTag() { return getParam(DATA_TAG); }
+    public void setDataTag(String dataTag) { setParam(DATA_TAG, dataTag); }
+
     /**
      * @return processed bytes if all bundles were processed successfully, otherwise previously estimated size in bytes
      */
@@ -478,17 +480,13 @@ public class BackgroundStatus implements Serializable {
     }
 
     public BackgroundStatus cloneWithState(BackgroundState state) {
-        BackgroundStatus s = newInstance();
+        BackgroundStatus s = new BackgroundStatus();
         s.copyFrom(this);
         s.setState(state);
         return s;
     }
 
-    public BackgroundStatus newInstance() {
-        return new BackgroundStatus();
-    }
-
-    //====================================================================
+//====================================================================
 //  overriding equals
 //====================================================================
     @Override
@@ -504,7 +502,7 @@ public class BackgroundStatus implements Serializable {
         return false;
     }
 
-    //====================================================================
+//====================================================================
 //  convenience data converting routines
 //====================================================================
     public boolean getBooleanParam(String key, boolean defValue) {

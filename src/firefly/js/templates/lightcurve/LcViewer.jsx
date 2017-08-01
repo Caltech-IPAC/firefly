@@ -27,10 +27,11 @@ import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {HelpIcon} from './../../ui/HelpIcon.jsx';
-import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
+import {getAllConverterIds, getConverter, getMissionName, DL_DATA_TAG} from './LcConverterFactory.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {HelpText} from './../../ui/HelpText.jsx';
+import {dispatchAllowDataTag} from '../../core/background/BackgroundCntlr.js';
 
 const vFileKey = LC.FG_FILE_FINDER;
 const DEFAULT_TITLE = 'Time Series Tool';
@@ -175,6 +176,7 @@ function onReady({menu}) {
         const goto = getActionFromUrl() || {type: SHOW_DROPDOWN};
         if (goto) firefly.process(goto);
     }
+    dispatchAllowDataTag([DL_DATA_TAG]);
 }
 
 

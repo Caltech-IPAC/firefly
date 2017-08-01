@@ -117,7 +117,6 @@ public class Histogram {
                 int histMinIndex = getLowSumIndex(lowLimit);
 
                 if (histMaxIndex==-1 || histMinIndex==-1){
-                    System.out.println("the index can not be negative");
                     break;
                 }
 

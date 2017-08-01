@@ -21,7 +21,7 @@ import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {makeTblRequest, makeLsstCatalogRequest, TableTagMeta} from '../../tables/TableUtil.js';
+import {makeTblRequest, makeLsstCatalogRequest} from '../../tables/TableUtil.js';
 import {CatalogConstraintsPanel, getTblId} from './CatalogConstraintsPanel.jsx';
 import {validateSql, validateConstraints} from './CatalogSelectViewPanel.jsx';
 import {LSSTImageSpatialType} from './LSSTImageSpatialType.jsx';
@@ -426,7 +426,6 @@ function doImage(request, imgPart) {
 
                 );
             };
-    set(tReq, TableTagMeta, 'lsst-imagemeta');
     dispatchTableSearch(tReq, {leftButtons: [downloadButton], backgroundable:true});
 }
 
@@ -495,7 +494,6 @@ function doCatalog(request, spatPart) {
 
     tReq = addConstraintToQuery(tReq);
 
-    set(tReq, TableTagMeta, 'lsst-catalog');
     dispatchTableSearch(tReq, {backgroundable:true});
 }
 

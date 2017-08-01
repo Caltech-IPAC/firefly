@@ -211,7 +211,7 @@ public class SearchManager {
         String title = request.getTblTitle() == null ? request.getRequestId() : request.getTblTitle();
         BackgroundEnv.BackgroundProcessor processor=
                               new BackgroundEnv.BackgroundProcessor(worker,  null,
-                                                                    title,
+                                                                    title, request.getMeta(BackgroundStatus.DATA_TAG),
                                                                     email, request.getRequestId(),
                                                                     ServerContext.getRequestOwner() );
         return BackgroundEnv.backgroundProcess(waitMillis, processor, BackgroundStatus.BgType.SEARCH);

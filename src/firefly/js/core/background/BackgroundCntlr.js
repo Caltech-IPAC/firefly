@@ -3,14 +3,15 @@
  */
 
 import {take} from 'redux-saga/effects';
-import {set, get, has, pick, isNil} from 'lodash';
+import {set, get, has, pick} from 'lodash';
 
 import {flux} from '../../Firefly.js';
 import {smartMerge} from '../../tables/TableUtil.js';
 import {updateDelete, updateSet, download} from '../../util/WebUtil.js';
 import {showBackgroundMonitor} from './BackgroundMonitor.jsx';
-import {isSuccess} from './BackgroundUtil.js';
+import {isSuccess, getDataTagMatcher} from './BackgroundUtil.js';
 import * as SearchServices from '../../rpc/SearchServicesJson.js';
+import {Keys} from './BackgroundStatus.js';
 
 export const BACKGROUND_PATH = 'background';
 
@@ -18,11 +19,13 @@ export const BACKGROUND_PATH = 'background';
 export const BG_STATUS          = `${BACKGROUND_PATH}.bgStatus`;
 export const BG_MONITOR_SHOW    = `${BACKGROUND_PATH}.bgMonitorShow`;
 export const BG_JOB_ADD         = `${BACKGROUND_PATH}.bgJobAdd`;
+export const BG_JOB_UPDATE         = `${BACKGROUND_PATH}.bgJobUpdate`;
 export const BG_JOB_REMOVE      = `${BACKGROUND_PATH}.bgJobRemove`;
 export const BG_JOB_CANCEL      = `${BACKGROUND_PATH}.bgJobCancel`;
 export const BG_JOB_IMMEDIATE   = `${BACKGROUND_PATH}.bgJobImmediate`;
 export const BG_SET_EMAIL       = `${BACKGROUND_PATH}.bgSetEmail`;
 export const BG_Package         = `${BACKGROUND_PATH}.bgPackage`;
+export const BG_ALLOW_DATA_TAG  = `${BACKGROUND_PATH}.bgAllowDataTag`;
 
 export default {actionCreators, reducers};
 
@@ -71,6 +74,14 @@ export function dispatchBgStatus(bgStatus) {
  */
 export function dispatchBgSetEmail(email) {
     flux.process({ type : BG_SET_EMAIL, payload: {email} });
+}
+
+/**
+ * a list of patterns use to filter the incoming background jobs.
+ * @param {string[]}  patterns
+ */
+export function dispatchAllowDataTag(patterns) {
+    flux.process({ type : BG_ALLOW_DATA_TAG, payload: {patterns} });
 }
 
 /**
@@ -136,9 +147,9 @@ function bgMonitorShow(action) {
 
 function bgJobAdd(action) {
     return (dispatch) => {
-        const bgStatus = action.payload;
-        if (bgStatus) {
-            SearchServices.addBgJob(bgStatus);
+        const bgInfo = action.payload;
+        if ( bgInfo && get(bgInfo, [Keys.DATA_TAG], '').match(getDataTagMatcher()) ) {
+            SearchServices.addBgJob(bgInfo);
             dispatch(action);
         }
     };
@@ -204,6 +215,10 @@ function reducer(state={}, action={}) {
             const {email} = action.payload;
             return updateSet(state, 'email', email);
             break;
+        case BG_ALLOW_DATA_TAG :
+            const {patterns} = action.payload;
+            return updateSet(state, 'allowDataTag', patterns);
+            break;
         case BG_JOB_ADD :
             return handleBgJobAdd(state, action);
             break;
@@ -228,7 +243,7 @@ function handleBgJobAdd(state, action) {
     var bgstats = action.payload;
     bgstats = transform(bgstats);
     const nState = set({}, ['jobs', bgstats.ID], bgstats);
-    if (!isNil(bgstats.email)) nState.email = bgstats.email;
+    if (bgstats.email) nState.email = bgstats.email;
     return smartMerge(state, nState);
 }
 
@@ -243,18 +258,18 @@ function handleBgJobRemove(state, action) {
  * on the client.  It will also apply some processing that was previously done at
  * the component level.
  * NOTE:  added INDEX
- * @param bgstats
+ * @param bgStatus
  * @returns {{ITEMS: Array.<*>}}
  */
-function transform(bgstats) {
-    const ITEMS = Object.keys(bgstats)
+function transform(bgStatus) {
+    const ITEMS = Object.keys(bgStatus)
         .filter( (k) => k.startsWith('ITEMS_') )
         .map( (k) => {
             const [,index] = k.split('_');
             const INDEX = Number(index);
-            return {INDEX, ...bgstats[k]};
+            return {INDEX, ...bgStatus[k]};
         }).sort((a, b) => a.INDEX - b.INDEX);
-    const REST = pick(bgstats,  Object.keys(bgstats).filter( (k) => !k.startsWith('ITEMS_')));
+    const REST = pick(bgStatus,  Object.keys(bgStatus).filter( (k) => !k.startsWith('ITEMS_')));
 
     return {ITEMS, ...REST};
 }
