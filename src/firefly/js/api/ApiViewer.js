@@ -9,6 +9,7 @@
  */
 import {take} from 'redux-saga/effects';
 import {isArray, get} from 'lodash';
+import Enum from 'enum';
 
 import {debug} from './ApiUtil.js';
 import {getRootURL}  from '../util/BrowserUtil.js';
@@ -29,7 +30,7 @@ import {getConnectionCount, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS} from '../core/Ap
 import {dispatchAddCell, dispatchEnableSpecialViewer, LO_VIEW} from '../core/LayoutCntlr.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
-import Enum from 'enum';
+import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 
 
@@ -86,15 +87,18 @@ export function getViewer(channel= getWsChannel(),file=defaultViewerFile) {
     channel += VIEWER_ID;
     const dispatch= (action) => dispatchRemoteAction(channel,action);
 
+
+    const reinitViewer= () => dispatch({ type: REINIT_APP, payload: {}});
+
     /**
      * The interface to remotely communicate to the firefly viewer.
      * @public
      * @namespace firefly.ApiViewer
      */
-    const viewer= Object.assign({dispatch, channel},
+    const viewer= Object.assign({dispatch, reinitViewer, channel},
         buildImagePart(channel,file,dispatch),
         buildTablePart(channel,file,dispatch),
-        buildChartPart(channel,file,dispatch)
+        buildChartPart(channel,file,dispatch),
     );
 
 
@@ -268,6 +272,21 @@ function buildTablePart(channel,file,dispatch) {
 function buildChartPart(channel,file,dispatch) {
 
     /**
+     * @summary Show a chart
+     * @param {XYPlotOptions} xyPlotOptions
+     * @param {string} viewerId
+     * @memberof firefly.ApiViewer
+     * @public
+     */
+    const showPlot= (xyPlotOptions, tbl_id, viewerId) => {
+        doViewerOperation(channel, file, () => {
+            plotRemotePlot(xyPlotOptions, tbl_id, viewerId, dispatch);
+        });
+    };
+
+
+
+    /**
      * @summary Show XY Plot
      * @param {XYPlotOptions} xyPlotOptions
      * @param {string} viewerId
@@ -293,7 +312,7 @@ function buildChartPart(channel,file,dispatch) {
         });
     };
 
-    return {showXYPlot, showHistogram};
+    return {showPlot, showXYPlot, showHistogram};
 }
 
 
@@ -329,6 +348,26 @@ export function* doOnWindowConnected({channel, f}) {
 //================================================================
 //---------- Private XYPlot functions
 //================================================================
+
+
+/**
+ * @param {XYPlotOptions} params - XY plot parameters
+ * @param {string} viewerId
+ * @param {Function} dispatch - dispatch function
+ */
+function plotRemotePlot(params, tblId, viewerId, dispatch) {
+
+    const dispatchParams= clone({
+        viewerId:viewerId || 'default',
+        chartId: params.chartId || uniqueChartId(),
+        chartType: 'plot.ly',
+        closeable: true,
+        dispatcher: dispatch
+    }, params);
+
+    dispatchChartAdd(dispatchParams);
+}
+
 
 /**
  * @param {XYPlotOptions} params - XY plot parameters

@@ -37,6 +37,7 @@ import {plotImageMaskActionCreator,
 
 import {colorChangeActionCreator, stretchChangeActionCreator, cropActionCreator} from './task/PlotChangeTask.js';
 import {RotateType} from './PlotState.js';
+import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 import {wcsMatchActionCreator} from './task/WcsMatchTask.js';
 
@@ -1060,6 +1061,9 @@ function reducer(state=initState(), action={}) {
             retState= clone(state,{wcsMatchCenterWP,wcsMatchType,mpwWcsPrimId});
             break;
 
+        case REINIT_APP:
+            retState= initState();
+            break;
 
         default:
             break;
@@ -1079,7 +1083,7 @@ function validateState(state,originalState,action) {
     if (has(state,'activePlotId') && has(state,'plotViewAry') && has(state,'plotGroupAry')) {
         return state;
     }
-    if (console.group) console.group('state invalid after: ' + action.type);
+    if (console.group) console.group('ImagePlotCntlr state invalid after: ' + action.type);
     console.log(action.type);
     console.log('originalState',originalState);
     console.log('new (bad) state',state);

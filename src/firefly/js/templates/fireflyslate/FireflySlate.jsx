@@ -60,7 +60,7 @@ export class FireflySlate extends PureComponent {
         const layoutInfo = getLayouInfo();
         const isReady = isAppReady();
 
-        return Object.assign({}, this.props,
+        return Object.assign({gridView:undefined}, this.props,
             {menu, isReady, ...layoutInfo});
     }
 

@@ -18,6 +18,7 @@ export const COMMAND = 'COMMAND';
 /*---------------------------- ACTIONS -----------------------------*/
 
 export const APP_LOAD = `${APP_DATA_PATH}.appLoad`;
+export const REINIT_APP= `${APP_DATA_PATH}.reinitApp`;
 export const APP_UPDATE = `${APP_DATA_PATH}.appUpdate`;
 export const ADD_TASK_COUNT = `${APP_DATA_PATH}.addTaskCount`;
 export const REMOVE_TASK_COUNT = `${APP_DATA_PATH}.removeTaskCount`;
@@ -121,9 +122,7 @@ export function dispatchSetMenu(menu) {
 
 /**
  * Load search info into the application
- * @param {Object[]} p  dispatch parameters
- * @param {Search[]} p.title      the title or name of this group.
- * @param {Search[]} p.searches   an array of searches.
+ * @param groups
  * @param {string}   [activeSearch] the current selected search.  defaults to the first search.
  */
 export function dispatchLoadSearches(groups, activeSearch) {

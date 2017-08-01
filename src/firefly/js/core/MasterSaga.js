@@ -12,7 +12,7 @@ export const ADD_SAGA= 'MasterSaga.addSaga';
  * @param {generator} saga a generator function that uses redux-saga
  * @param {{}} params this object is passed the to sega as the first parrmeter
  */
-export function dispatchAddSaga(saga, params) {
+export function dispatchAddSaga(saga, params={}) {
     flux.process({ type: ADD_SAGA, payload: { saga,params}});
 }
 
