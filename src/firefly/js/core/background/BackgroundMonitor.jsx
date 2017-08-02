@@ -103,7 +103,7 @@ class BgFooter extends PureComponent {
                 <button className='button std hl' onClick={this.onHide}
                         title='Hide Background Monitor'>Hide</button>
                 <div>
-                    <div style={{width: 235}}><input type='checkbox' checked={enableEmail} value='' onChange={toggleEnableEmail}/>Enable email notification</div>
+                    <div style={{width: 250}}><input type='checkbox' checked={enableEmail} value='' onChange={toggleEnableEmail}/>Enable email notification</div>
                     {enableEmail &&
                         <InputField
                             validator={Validate.validateEmail.bind(null, 'an email field')}
@@ -112,7 +112,7 @@ class BgFooter extends PureComponent {
                             labelStyle={{display: 'inline-block', marginLeft: 18, width: 32, fontWeight: 'bold'}}
                             value={email}
                             placeholder='Enter an email to get notification'
-                            size={27}
+                            style={{width: 170}}
                             onChange={this.onEmailChanged.bind(this)}
                             actOn={['blur','enter']}
                         />

@@ -203,7 +203,7 @@ export class DownloadOptionPanel extends SimpleComponent {
                             labelWidth = {labelWidth}
                         />
 
-                        <div style={{width: 235, marginTop: 10}}><input type='checkbox' checked={enableEmail} onChange={toggleEnableEmail}/>Enable email notification</div>
+                        <div style={{width: 250, marginTop: 10}}><input type='checkbox' checked={enableEmail} onChange={toggleEnableEmail}/>Enable email notification</div>
                         {enableEmail &&
                         <InputField
                             validator={Validate.validateEmail.bind(null, 'an email field')}
@@ -212,7 +212,7 @@ export class DownloadOptionPanel extends SimpleComponent {
                             labelStyle={{display: 'inline-block', marginLeft: 18, width: 32, fontWeight: 'bold'}}
                             value={email}
                             placeholder='Enter an email to get notification'
-                            size={27}
+                            style={{width: 170}}
                             onChange={this.onEmailChanged.bind(this)}
                             actOn={['blur','enter']}
                         />
