@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, omit} from 'lodash';
+import {get, omit, isNil} from 'lodash';
 import Enum from 'enum';
 
 import {flux} from '../../Firefly.js';
@@ -42,6 +42,15 @@ export function getBgEmail() {
     return get(flux.getState(), [BACKGROUND_PATH, 'email']);
 }
 
+/**
+ * returns the email related info.  Currently, it's email and enableEmail.
+ * @returns {object.<string, }
+ */
+export function getBgEmailInfo() {
+    let {email, enableEmail} =  get(flux.getState(), BACKGROUND_PATH) || {};
+    enableEmail = isNil(enableEmail) ? !!email : enableEmail;
+    return {email, enableEmail};
+}
 
 export function emailSent(bgStatus) {
     return get(bgStatus, 'ATTRIBUTES', '').includes('EmailSent');

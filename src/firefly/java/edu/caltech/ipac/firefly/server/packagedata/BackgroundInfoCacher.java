@@ -171,21 +171,9 @@ public class BackgroundInfoCacher {
      */
     private static void mergeInfoIntoStatus(BackgroundInfo info, BackgroundStatus bgStatus) {
         if (info != null && bgStatus != null) {
-            if (bgStatus.getParam(ServerParams.TITLE) == null) {
-                bgStatus.setParam(ServerParams.TITLE, info.getTitle());
-            } else {
-                info.setTitle(bgStatus.getParam(ServerParams.TITLE));
-            }
-            if (bgStatus.getParam(ServerParams.EMAIL) == null) {
-                bgStatus.setParam(ServerParams.EMAIL, info.getEmailAddress());
-            } else {
-                info.setEmail(bgStatus.getParam(ServerParams.EMAIL));
-            }
-            if (bgStatus.getParam(BackgroundStatus.DATA_TAG) == null) {
-                bgStatus.setParam(BackgroundStatus.DATA_TAG, info.getDataTag());
-            } else {
-                info.setDataTag(bgStatus.getParam(BackgroundStatus.DATA_TAG));
-            }
+            bgStatus.setParam(ServerParams.TITLE, info.getTitle());
+            bgStatus.setParam(ServerParams.EMAIL, info.getEmailAddress());
+            bgStatus.setParam(BackgroundStatus.DATA_TAG, info.getDataTag());
         }
     }
 

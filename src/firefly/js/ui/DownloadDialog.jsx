@@ -4,7 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {set, cloneDeep} from 'lodash';
+import {set, cloneDeep, get} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
@@ -13,16 +13,17 @@ import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js'
 import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import Validate from '../util/Validate.js';
+import {InputField} from './InputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {ValidationField} from './ValidationField.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
+import {SimpleComponent} from './SimpleComponent.jsx';
 
 import {makeTblRequest, getTblInfoById, getActiveTableId} from '../tables/TableUtil.js';
-import {dispatchPackage, doOnPackage} from '../core/background/BackgroundCntlr.js';
+import {dispatchPackage, dispatchBgSetEmailInfo} from '../core/background/BackgroundCntlr.js';
+import {getBgEmailInfo} from '../core/background/BackgroundUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
-import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {DataTagMeta} from '../tables/TableUtil.js';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
@@ -124,59 +125,49 @@ DownloadButton.propTypes = {
 };
 
 
-export class DownloadOptionPanel extends PureComponent {
+export class DownloadOptionPanel extends SimpleComponent {
 
-    constructor(props) {
-        super(props);
-        const sendEmail = FieldGroupUtils.getFldValue(FieldGroupUtils.getGroupFields(props.groupKey), 'sendEmail');
-        this.state = {sendEmail, mask: false};
-        this.onSubmit = this.onSubmit.bind(this);
+    getNextState() {
+        const {email, enableEmail} = getBgEmailInfo();
+        return {mask:false, email, enableEmail};
     }
 
-    componentDidMount() {
-        this.removeListener= flux.addListener(() => this.storeUpdate());
-    }
-
-    componentWillUnmount() {
-        this.removeListener && this.removeListener();
-        this.isUnmounted = true;
-    }
-
-    storeUpdate() {
-        const {groupKey} = this.props;
-        if (!this.isUnmounted) {
-            const sendEmail = FieldGroupUtils.getFldValue(FieldGroupUtils.getGroupFields(groupKey), 'sendEmail');
-            this.setState({sendEmail});
+    onEmailChanged(v) {
+        if (get(v, 'valid')) {
+            const {email} = this.state;
+            if (email !== v.value) dispatchBgSetEmailInfo({email: v.value});
         }
     }
 
-    onSubmit(options) {
-        const {tbl_id, dlParams, dataTag, cutoutSize} = this.props;
-        var {request, selectInfo} = getTblInfoById(tbl_id);
-        const {FileGroupProcessor} = dlParams;
-        const Title = dlParams.Title || options.Title;
-        const dreq = makeTblRequest(FileGroupProcessor, Title, Object.assign(dlParams, {cutoutSize}, options));
-        this.setState({mask: true});
-        request = set(cloneDeep(request), DataTagMeta, dataTag);
-        dispatchAddSaga(doOnPackage, {title: Title, callback:() => {
-            this.setState({mask: false});
-            showDownloadDialog(this, false);
-        }});
-        dispatchPackage(dreq, request, SelectInfo.newInstance(selectInfo).toString());
-    }
-
     render() {
-        const {groupKey, cutoutSize, help_id, children, style, title} = this.props;
-        const {mask, sendEmail} = this.state;
+        const {groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag} = this.props;
+        const {mask, email, enableEmail} = this.state;
         const labelWidth = 110;
         const ttl = title || DOWNLOAD_DIALOG_ID;
+
+        const onSubmit = (options) => {
+            var {request, selectInfo} = getTblInfoById(tbl_id);
+            const {FileGroupProcessor} = dlParams;
+            const Title = dlParams.Title || options.Title;
+            const dreq = makeTblRequest(FileGroupProcessor, Title, Object.assign(dlParams, {cutoutSize}, options));
+            request = set(cloneDeep(request), DataTagMeta, dataTag);
+            dispatchPackage(dreq, request, SelectInfo.newInstance(selectInfo).toString());
+            showDownloadDialog(this, false);
+        };
+
+        const toggleEnableEmail = (e) => {
+            const enableEmail = e.target.checked;
+            const email = enableEmail ? email : ''; 
+            dispatchBgSetEmailInfo({email, enableEmail});
+        };
+
         return (
             <div style = {Object.assign({margin: '4px', position: 'relative', minWidth: 350}, style)}>
                 {mask && <div style={{width: '100%', height: '100%'}} className='loading-mask'/>}
                 <FormPanel
                     submitText = 'Prepare Download'
                     groupKey = {groupKey}
-                    onSubmit = {this.onSubmit}
+                    onSubmit = {onSubmit}
                     onCancel = {() => dispatchHideDialog(ttl)}
                     help_id  = {help_id}>
                     <FieldGroup groupKey={'DownloadDialog'} keepState={true}>
@@ -211,29 +202,20 @@ export class DownloadOptionPanel extends PureComponent {
                                     ]}
                             labelWidth = {labelWidth}
                         />
-                        <CheckboxGroupInputField
-                            wrapperStyle={{marginTop: 20}}
-                            fieldKey='sendEmail'
-                            initialState= {{label : ' '}}
-                            options={[
-                                        {label: 'Also send me email with URLs to download', value: 'true'}
-                                    ]}
-                            labelWidth = {0}
+
+                        <div style={{width: 235, marginTop: 10}}><input type='checkbox' checked={enableEmail} onChange={toggleEnableEmail}/>Enable email notification</div>
+                        {enableEmail &&
+                        <InputField
+                            validator={Validate.validateEmail.bind(null, 'an email field')}
+                            tooltip='Enter an email to be notified when a process completes.'
+                            label='Email:'
+                            labelStyle={{display: 'inline-block', marginLeft: 18, width: 32, fontWeight: 'bold'}}
+                            value={email}
+                            placeholder='Enter an email to get notification'
+                            size={27}
+                            onChange={this.onEmailChanged.bind(this)}
+                            actOn={['blur','enter']}
                         />
-                        {sendEmail &&
-                            <div>
-                                <ValidationField
-                                    wrapperStyle={{marginTop: 5, marginLeft: 80}}
-                                    initialState = {{
-                                           value: '',
-                                           validator: Validate.validateEmail.bind(null, 'Email'),
-                                           label : 'Email:',
-                                           tooltip: 'Enter or modify your email address',
-                                       }}
-                                    fieldKey = 'Email'
-                                    size = {30}
-                                    labelWidth = {30}/>
-                            </div>
                         }
                     </FieldGroup>
                 </FormPanel>
@@ -275,7 +257,7 @@ DownloadOptionPanel.defaultProps= {
  * @param {boolean} [show=true] show or hide this dialog
  */
 function showDownloadDialog(panel, show=true) {
-    let ttl = panel.props.title || DOWNLOAD_DIALOG_ID;
+    const ttl = panel.props.title || DOWNLOAD_DIALOG_ID;
     if (show) {
         const content= (
             <PopupPanel title={ttl} >

@@ -3,7 +3,7 @@
  */
 
 import {take} from 'redux-saga/effects';
-import {set, get, has, pick} from 'lodash';
+import {set, get, has, pick, isNil} from 'lodash';
 
 import {flux} from '../../Firefly.js';
 import {smartMerge} from '../../tables/TableUtil.js';
@@ -72,8 +72,8 @@ export function dispatchBgStatus(bgStatus) {
  * set the email used for background status notification 
  * @param {string}  email
  */
-export function dispatchBgSetEmail(email) {
-    flux.process({ type : BG_SET_EMAIL, payload: {email} });
+export function dispatchBgSetEmailInfo({email, enableEmail}) {
+    flux.process({ type : BG_SET_EMAIL, payload: {email, enableEmail} });
 }
 
 /**
@@ -176,12 +176,11 @@ function bgJobCancel(action) {
 
 function bgSetEmail(action) {
     return (dispatch) => {
-        const {email=''} = action.payload;
-        SearchServices.setEmail(email);
-        dispatch(action);
-        if (email) {
-            SearchServices.resendEmail(email);
+        const {email, enableEmail} = action.payload;
+        if (!isNil(email)) {
+            SearchServices.setEmail(email);
         }
+        dispatch(action);
     };
 }
 
@@ -211,10 +210,14 @@ function reducer(state={}, action={}) {
         case BG_STATUS :
             return handleBgStatusUpdate(state, action);
             break;
-        case BG_SET_EMAIL :
-            const {email} = action.payload;
-            return updateSet(state, 'email', email);
+        case BG_SET_EMAIL : {
+            const {email, enableEmail} = action.payload;
+            let nstate = state;
+            if (!isNil(email)) nstate = updateSet(state, 'email', email);
+            if (!isNil(enableEmail)) nstate = updateSet(state, 'enableEmail', enableEmail);
+            return nstate;
             break;
+        }
         case BG_ALLOW_DATA_TAG :
             const {patterns} = action.payload;
             return updateSet(state, 'allowDataTag', patterns);
@@ -243,7 +246,7 @@ function handleBgJobAdd(state, action) {
     var bgstats = action.payload;
     bgstats = transform(bgstats);
     const nState = set({}, ['jobs', bgstats.ID], bgstats);
-    if (bgstats.email) nState.email = bgstats.email;
+    if (!nState.email && !isNil(bgstats.email)) nState.email = bgstats.email;       // use email from server if one is not set
     return smartMerge(state, nState);
 }
 
