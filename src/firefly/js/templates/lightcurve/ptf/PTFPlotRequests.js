@@ -12,16 +12,6 @@ import {ERROR_MSG_KEY} from '../generic/errorMsg.js';
 import {addCommonReqParams} from '../LcConverterFactory.js';
 import {convertAngle} from '../../../visualize/VisUtil.js';
 
-var filterNames = {
-    'g' : 1,
-    'R' : 2,
-    'I' : 4,
-    'HA656' : 11,
-    'HA663' : 12,
-    'HA672' : 13,
-    'HA681' : 14
-};
-
 /**
  *
  * @param tableModel
