@@ -11,7 +11,6 @@ import {ERROR_MSG_KEY} from '../generic/errorMsg.js';
 
 import {addCommonReqParams} from '../LcConverterFactory.js';
 import {convertAngle} from '../../../visualize/VisUtil.js';
-import Enum from 'enum';
 
 var filterNames = {
     'g' : 1,
