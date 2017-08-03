@@ -41,7 +41,7 @@ public class IpacTableParser {
         } else {
             selCols = Arrays.stream(colNames).map( (s -> {
                 if (s.equals(DataGroup.ROWID_NAME)) {
-                    return new DataType(s, Long.class);
+                    return DataGroup.makeRowId();
                 } else {
                     DataType dt = meta.getColByName(s);
                     return dt != null ? dt.copyOf() : new DataType(s, String.class);
@@ -70,7 +70,7 @@ public class IpacTableParser {
                     for (String s : colNames) {
                         Object val = null;
                         if (s.equals(DataGroup.ROWID_NAME) && !hasRowid) {
-                            val = cidx;
+                            val = (int)cidx;
                         } else if (dg.containsKey(s)) {
                             val = row.getDataElement(s);
                         }
