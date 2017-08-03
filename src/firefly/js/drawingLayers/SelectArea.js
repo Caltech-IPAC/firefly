@@ -152,7 +152,7 @@ function getLayerChanges(drawLayer, action) {
             return end(drawLayer,action);
             break;
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-            if (!get(action.payload, 'isExistingDrawLayer', false)) {
+            if (isEmpty(get(drawLayer, ['drawData', 'data']))) {
                 return attach();
             }
             break;

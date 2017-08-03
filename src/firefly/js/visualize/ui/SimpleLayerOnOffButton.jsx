@@ -64,7 +64,7 @@ function onOff(pv,typeId,todo) {
     }
 
     if (!isDrawLayerAttached(dl,pv.plotId)) {
-        dispatchAttachLayerToPlot(typeId,pv.plotId,true, true);
+        dispatchAttachLayerToPlot(typeId,pv.plotId,true);
     }
     else {
         dispatchDetachLayerFromPlot(typeId,pv.plotId,true,true, dl.destroyWhenAllDetached);

@@ -108,7 +108,7 @@ function createRegionLayer(regionAry, title, drawLayerId, plotId,
     }
 
     if (pId) {
-        dispatchAttachLayerToPlot(drawLayerId, pId, true, true);
+        dispatchAttachLayerToPlot(drawLayerId, pId, true);
     }
 }
 

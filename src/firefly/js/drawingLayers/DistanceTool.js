@@ -3,7 +3,7 @@
  */
 
 import numeral from 'numeral';
-import {isBoolean, get} from 'lodash';
+import {isBoolean, isEmpty, get} from 'lodash';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import {getPreference} from '../core/AppDataCntlr.js';
 import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
@@ -123,7 +123,7 @@ function getLayerChanges(drawLayer, action) {
             return end(action);
             break;
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-            if (!get(action.payload, 'isExistingDrawLayer', false)) {
+            if (isEmpty(get(drawLayer, ['drawData', 'data']))) {
                 return attach();
             }
             break;

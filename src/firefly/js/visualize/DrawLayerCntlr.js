@@ -3,7 +3,7 @@
  */
 
 import {flux} from '../Firefly.js';
-import {getPlotViewIdListInGroup, getDrawLayerById, getConnectedPlotsIds, getPlotViewAry} from './PlotViewUtil.js';
+import {getPlotViewIdListInGroup, getDrawLayerById, getConnectedPlotsIds, getAllPlotViewId} from './PlotViewUtil.js';
 import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
 import {without,union,isEmpty} from 'lodash';
@@ -131,7 +131,7 @@ export function getDrawLayerCntlrDef(drawLayerFactory) {
                 [REGION_ADD_ENTRY] :  regionUpdateEntryActionCreator,
                 [REGION_REMOVE_ENTRY] :  regionUpdateEntryActionCreator
             };
-        },
+        }
     };
 }
 
@@ -299,29 +299,24 @@ export function dispatchDestroyDrawLayer(id) {
  * @summary attach drawing layer to plot
  * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param {string|string[]} plotId to attach this may by a string or an array of strings
- * @param attachPlotGroup
- * @param {boolean} isExistingDrawLayer this drawing layer already exists, attach it to a new plot
+ * @param attachAllPlot
  * @memberof firefly.action
  * @public
  * @function  dispatchAttachLayerToPlot
  */
-export function dispatchAttachLayerToPlot(id,plotId,  attachPlotGroup=false, attachAllPlot=false, isExistingDrawLayer) {
+export function dispatchAttachLayerToPlot(id,plotId,  attachAllPlot=false) {
     var plotIdAry;
 
     if (Array.isArray(plotId)) {
         plotIdAry= plotId;
     }
     else {
-        if (attachAllPlot) {
-            plotIdAry = getPlotViewAry(visRoot()).map((pv) => pv.plotId);
-        } else {
-            plotIdAry = attachPlotGroup ? getPlotViewIdListInGroup(visRoot(), plotId) : [plotId];
-        }
+        plotIdAry = attachAllPlot ? getAllPlotViewId(visRoot(), plotId) : [plotId];
     }
 
     getDrawLayerIdAry(dlRoot(),id,false)
         .forEach( (drawLayerId) => {
-            flux.process({type: ATTACH_LAYER_TO_PLOT, payload: {drawLayerId, plotIdAry, isExistingDrawLayer} });
+            flux.process({type: ATTACH_LAYER_TO_PLOT, payload: {drawLayerId, plotIdAry} });
         });
 }
 
@@ -330,14 +325,14 @@ export function dispatchAttachLayerToPlot(id,plotId,  attachPlotGroup=false, att
  * @summary Detatch drawing layer from the plot
  * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param {string|string[]} plotId to attach this may by a string or an array of string
- * @param detachPlotGroup
+ * @param detachAllPlot
  * @param useLayerGroup
  * @param destroyWhenAllDetached if all plots are detached then destroy this plot
  * @public
  * @memberof firefly.action
  * @function dispatchDetachLayerFromPlot
  */
-export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
+export function dispatchDetachLayerFromPlot(id,plotId, detachAllPlot=false,
                                             useLayerGroup=true, destroyWhenAllDetached=false) {
     var plotIdAry;
 
@@ -345,7 +340,7 @@ export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false,
         plotIdAry= plotId;
     }
     else {
-        plotIdAry= detachPlotGroup ? getPlotViewIdListInGroup(visRoot(), plotId) : [plotId];
+        plotIdAry= detachAllPlot ? getAllPlotViewId(visRoot(), plotId) : [plotId];
     }
 
     getDrawLayerIdAry(dlRoot(),id,useLayerGroup)

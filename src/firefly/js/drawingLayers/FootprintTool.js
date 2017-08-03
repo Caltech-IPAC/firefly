@@ -67,7 +67,7 @@ export function footprintCreateLayerActionCreator(rawAction) {
                             get(visRoot(), 'activePlotId') : isArray(plotId) ? plotId[0] : plotId;
 
                         if (pId) {
-                            dispatchAttachLayerToPlot(drawLayerId, pId, attachPlotGroup, attachPlotGroup);
+                            dispatchAttachLayerToPlot(drawLayerId, pId, attachPlotGroup);
 
                             var plot = primePlot(visRoot(), pId);
                             if (plot) {
@@ -322,7 +322,7 @@ function getLayerChanges(drawLayer, action) {
             }
             break;
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-            if (get(action.payload, 'isExistingDrawLayer', false)) {
+            if (!isEmpty(get(drawLayer, ['drawData', 'data']))) {
                 return attachToNewPlot(drawLayer, get(action.payload, ['plotIdAry', '0']));
             }
             break;

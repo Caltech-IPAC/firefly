@@ -315,7 +315,7 @@ function addDrawLayers(request, plot ) {
                     DrawLayerCntlr.dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
                 }
             } else if (dl.canAttachNewPlot) {
-                DrawLayerCntlr.dispatchAttachLayerToPlot(dl.drawLayerId, plotId, false, false, true);
+                DrawLayerCntlr.dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
             }
         });
     });
@@ -324,7 +324,7 @@ function addDrawLayers(request, plot ) {
         const dl = getDrawLayerByType(dlRoot(), WebGrid.TYPE_ID);
         const useLabels= request.getGridOn()===GridOnStatus.TRUE;
         if (!dl) dispatchCreateDrawLayer(WebGrid.TYPE_ID, {useLabels});
-        dispatchAttachLayerToPlot(WebGrid.TYPE_ID, plotId, true, true);
+        dispatchAttachLayerToPlot(WebGrid.TYPE_ID, plotId, true);
     }
 }
 

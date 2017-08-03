@@ -15,7 +15,7 @@ import CsysConverter from '../visualize/CsysConverter.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
-import {get} from 'lodash';
+import {get, isEmpty} from 'lodash';
 
 const ID= 'POINT_SELECTION';
 const TYPE_ID= 'POINT_SELECTION_TYPE';
@@ -61,8 +61,7 @@ function creator(initPayload, presetDefaults) {
     var options= {
         isPointData:true,
         hasPerPlotData:true,
-        canUserChangeColor: ColorChangeType.DYNAMIC,
-        destroyWhenAllDetached: true
+        canUserChangeColor: ColorChangeType.DYNAMIC
     };
     return DrawLayer.makeDrawLayer(`${ID}-${idCnt}`,TYPE_ID, 'Selected Point', options, drawingDef, actionTypes, pairs);
 }
@@ -98,11 +97,18 @@ function makeSelectedPt(screenPt,plotId) {
 function selectAPoint(drawLayer, action, active, pId) {
     var {screenPt, plotId, plotIdAry}= action.payload;
 
+    const isEmptyData = () => {
+        const data = get(drawLayer, ['drawData', 'data']);
+
+        if (isEmpty(data)) return true;
+        const idx = Object.keys(data).findIndex((onePid) => !isEmpty(data[onePid]));
+
+        return idx < 0;
+    };
     // attach drawing layer to the plot which is created after the drawing layer
     if (!screenPt &&
         action.type === DrawLayerCntlr.ATTACH_LAYER_TO_PLOT &&
-        get(action.payload, 'isExistingDrawLayer', false) &&
-        plotIdAry && plotIdAry.includes(pId))  {
+        !isEmptyData() && plotIdAry && plotIdAry.includes(pId))  {
         if (drawLayer.plotIdAry) {
             let dAry;
 
