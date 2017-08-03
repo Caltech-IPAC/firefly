@@ -11,6 +11,17 @@ import {ERROR_MSG_KEY} from '../generic/errorMsg.js';
 
 import {addCommonReqParams} from '../LcConverterFactory.js';
 import {convertAngle} from '../../../visualize/VisUtil.js';
+import Enum from 'enum';
+
+var filterNames = {
+    'g' : 1,
+    'R' : 2,
+    'I' : 4,
+    'HA656' : 11,
+    'HA663' : 12,
+    'HA672' : 13,
+    'HA681' : 14
+};
 
 /**
  *
@@ -32,11 +43,22 @@ export function getWebPlotRequestViaPTFIbe(tableModel, hlrow, cutoutSize, params
     // convert the default Cutout size in arcmin to deg for WebPlotRequest
     const cutoutSizeInDeg = convertAngle('arcmin','deg', cutoutSize);
     var band = null;
+
     if (fid == '1') {
-           band = 'g';
-        } else if (fid == '2') {
-           band = 'R';
-        }
+        band = 'g';
+    } else if (fid == '2') {
+        band = 'R';
+    } else if (fid == '4') {
+        band = 'I';
+    } else if (fid == '11') {
+        band = 'HA656';
+    } else if (fid == '12') {
+        band = 'HA663';
+    } else if (fid == '13') {
+        band = 'HA672';
+    } else if (fid == '14') {
+        band = 'HA681';
+    }
 
     try {
 
