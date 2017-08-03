@@ -5,6 +5,8 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, truncate, get} from 'lodash';
+import shallowequal from 'shallowequal';
+
 import {flux} from '../../Firefly.js';
 import {download} from '../../util/WebUtil.js';
 import * as TblUtil from '../TableUtil.js';
@@ -33,7 +35,6 @@ const TT_EXPAND = 'Expand this panel to take up a larger area';
 export class TablePanel extends PureComponent {
     constructor(props) {
         super(props);
-        this.componentWillReceiveProps(props);
 
         this.toggleFilter = this.toggleFilter.bind(this);
         this.toggleTextView = this.toggleTextView.bind(this);
@@ -43,9 +44,12 @@ export class TablePanel extends PureComponent {
         this.expandTable = this.expandTable.bind(this);
         this.onOptionUpdate = this.onOptionUpdate.bind(this);
         this.onOptionReset = this.onOptionReset.bind(this);
+        this.setupInitState = this.setupInitState.bind(this);
+
+        this.state = this.setupInitState(props);
     }
 
-    componentWillReceiveProps(props) {
+    setupInitState(props) {
         var {tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize} = props;
 
         if (!tbl_id && tableModel) {
@@ -57,7 +61,13 @@ export class TablePanel extends PureComponent {
         tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
         this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize);
         const uiState = TblUtil.getTableUiById(tbl_ui_id);
-        this.state = Object.assign({}, this.props, uiState);
+        return Object.assign({}, this.props, uiState);
+    }
+
+    componentWillReceiveProps(props) {
+        if (!shallowequal(this.props, props)) {
+            this.setState(this.setupInitState(props));
+        }
     }
 
     componentDidMount() {
