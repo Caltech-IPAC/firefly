@@ -26,19 +26,24 @@ export function getWebPlotRequestViaPTFIbe(tableModel, hlrow, cutoutSize, params
 }) {
     const ra = getCellValue(tableModel, hlrow, 'ra');
     const dec = getCellValue(tableModel, hlrow, 'dec');
-
+    const fid = getCellValue(tableModel, hlrow, 'fid');
     const pid = getCellValue(tableModel, hlrow, 'pid');
-
 
     // convert the default Cutout size in arcmin to deg for WebPlotRequest
     const cutoutSizeInDeg = convertAngle('arcmin','deg', cutoutSize);
+    var band = null;
+    if (fid == '1') {
+           band = 'g';
+        } else if (fid == '2') {
+           band = 'R';
+        }
 
     try {
 
         // flux/value column control this | unless UI has radio button band enabled, put bandName back here to match band
         //const band = `${params.bandName}`;
 
-        let title = 'PTF-' + pid;
+        let title = 'PTF-' + pid + '-'+ band;
 
         const sr = new ServerRequest('ibe_file_retrieve');
         sr.setParam('mission', 'ptf');
@@ -58,7 +63,7 @@ export function getWebPlotRequestViaPTFIbe(tableModel, hlrow, cutoutSize, params
             sr.setParam('doCutout', 'true');
             sr.setParam('size', `${cutoutSizeInDeg}`);
             sr.setParam('subsize', `${cutoutSizeInDeg}`);
-            title = 'PTF-' + pid + (cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
+            title ='PTF-' + pid + '-'+ band + (cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
         }
 
         const reqParams = WebPlotRequest.makeProcessorRequest(sr, 'ptf');
