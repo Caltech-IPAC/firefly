@@ -24,7 +24,6 @@ public class DataGroup implements Serializable,
 
     //TODO: take this out!!!
     public static final String ROWID_NAME = "ROWID";         // all row ids and indexes start from 0
-    public static final DataType ROWID = new DataType(ROWID_NAME, Integer.class);
     private final ArrayList<DataObject> _objects = new ArrayList<DataObject>(200);
     private final ArrayList<DataType> _dataDefinitions = new ArrayList<DataType>(30);
     private String _title;
@@ -45,6 +44,10 @@ public class DataGroup implements Serializable,
 
     public DataGroup(String title, List<DataType> dataDefs) {
         this(title, dataDefs.toArray(new DataType[dataDefs.size()]));
+    }
+
+    public static DataType makeRowId() {
+        return new DataType(ROWID_NAME, Integer.class);
     }
 
     public static boolean containsKey(DataType[] dataTypes, String key) {

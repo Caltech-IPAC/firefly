@@ -52,7 +52,7 @@ public class FilterHanlder extends BgIpacTableHandler {
         }
         // if this file does not contain ROWID, add it.
         if (!DataGroup.containsKey(headers.toArray(new DataType[headers.size()]), DataGroup.ROWID_NAME)) {
-            headers.add(DataGroup.ROWID);
+            headers.add(DataGroup.makeRowId());
             attributes.add(new DataGroup.Attribute("col." + DataGroup.ROWID_NAME + ".Visibility", "hidden"));
         }
         dg = new DataGroup(null, headers);
